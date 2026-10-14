@@ -5507,15 +5507,37 @@
         "doc": ""
       },
       {
-        "name": "onDone",
-        "type": "(method: string) => void",
+        "name": "onMethod",
+        "type": "(method: AuthMethod, kind: 'login' | 'signup') => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Method that completed: passkey, ii, eth, sol, nfid, email or signup."
+        "doc": "Start sign-in / sign-up with a method (passkey prompt, wallet, II window). Waits until it settles; reject to go back."
+      },
+      {
+        "name": "onRequestEmailLink",
+        "type": "(email: string) => Promise<unknown> | void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Send a sign-in link to this address. The dialog shows \"Check your inbox\" once it resolves; also used to resend."
+      },
+      {
+        "name": "onSignup",
+        "type": "(details: SignupDetails) => Promise<unknown> | void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Create the account from the form. Waits until it settles; reject to stay on the form."
       }
     ],
     "group": "features"
@@ -12385,15 +12407,15 @@
         "doc": ""
       },
       {
-        "name": "linkCodeTtl",
-        "type": "number",
+        "name": "onRequestLinkCode",
+        "type": "() => Promise<{ code: string; expiresAt: number }>",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "180",
-        "doc": "Seconds a device-link code stays valid."
+        "componentDefault": null,
+        "doc": "Issue a device-link code (from the backend). The countdown runs to its expiresAt (ms epoch); without this the Show code button is hidden."
       },
       {
         "name": "inviteLink",
@@ -14934,15 +14956,59 @@
         "doc": "Your OpenChat handle, shown on Receive."
       },
       {
-        "name": "onSent",
-        "type": "(x: { symbol: string; amount: number; fiat: number; to: string; dp: number; person: boolean }) => void",
+        "name": "addresses",
+        "type": "Partial<Record<NetworkId, string>>",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Your receiving address per network, for Receive."
+      },
+      {
+        "name": "contacts",
+        "type": "SendContact[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "People to pick from in \"OpenChat user\" mode. Without any, only the address mode is useful."
+      },
+      {
+        "name": "onPickSaved",
+        "type": "() => Promise<string | null | undefined>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Opens the host's saved-address picker; resolve with the chosen address (or nothing to cancel). Hidden without it."
+      },
+      {
+        "name": "onScanQr",
+        "type": "() => Promise<string | null | undefined>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Opens the host's QR scanner; resolve with the scanned address. Hidden without it."
+      },
+      {
+        "name": "onSent",
+        "type": "(v: WalletSendRequest) => Promise<unknown> | void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Make the transfer: full address or user id, network, memo and PIN. Reject (e.g. wrong PIN) to keep the PIN dialog open with an error."
       },
       {
         "name": "onMessage",
@@ -15222,6 +15288,17 @@
         "doc": "Your OpenChat handle; shows the \"From OpenChat\" row."
       },
       {
+        "name": "addresses",
+        "type": "Partial<Record<NetworkId, string>>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The user's own receiving address per network. A network without one shows no address, copy, share or QR."
+      },
+      {
         "name": "onShare",
         "type": "(v: { chat: string; message: string; symbol: string; network: string; address: string }) => void",
         "default": null,
@@ -15365,6 +15442,39 @@
         "doc": "Pre-fills the address mode, e.g. from a saved recipient."
       },
       {
+        "name": "contacts",
+        "type": "SendContact[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "People to pick from in \"OpenChat user\" mode. Without any, only the address mode is useful."
+      },
+      {
+        "name": "onPickSaved",
+        "type": "() => Promise<string | null | undefined>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Opens the host's saved-address picker; resolve with the chosen address (or nothing to cancel). Hidden without it."
+      },
+      {
+        "name": "onScanQr",
+        "type": "() => Promise<string | null | undefined>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Opens the host's QR scanner; resolve with the scanned address. Hidden without it."
+      },
+      {
         "name": "onClose",
         "type": "() => void",
         "default": null,
@@ -15377,14 +15487,14 @@
       },
       {
         "name": "onSent",
-        "type": "(v: { symbol: string; amount: number; fiat: number; to: string; dp: number; person: boolean }) => void",
+        "type": "(v: WalletSendRequest) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Make the transfer: full address or user id, network, memo and PIN. Reject (e.g. wrong PIN) to keep the PIN dialog open with an error."
       }
     ],
     "group": "features"

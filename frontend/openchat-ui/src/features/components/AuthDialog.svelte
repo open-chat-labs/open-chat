@@ -1,14 +1,27 @@
 <!-- Sign in / create account. Methods: passkey (primary), email magic link (sign-in only), Internet Identity, Ethereum,
      Solana and NFID (sign-in only), shown as a grid or a stacked list; the split variant adds a brand panel.
      Sign-up is a form: username (live availability check), optional recovery email, optional referrer, then Continue.
-     Picking a method waits for its approval (simulated here) before onDone(method). Esc closes unless `inline`. -->
+     The host does the real work: onMethod (passkey, wallets …), onRequestEmailLink and onSignup each return a promise;
+     the dialog shows the waiting state until it settles and goes back to the choices if it rejects. The host decides
+     when sign-in has succeeded and closes the dialog. Esc and the scrim close it unless `inline`. -->
+<script lang="ts" module>
+  export type AuthMethod = 'passkey' | 'ii' | 'eth' | 'sol' | 'nfid';
+  export interface SignupDetails {
+    username: string;
+    /** Optional recovery email. */
+    email?: string;
+    /** Handle of the person who referred them. */
+    referrer?: string;
+  }
+</script>
+
 <script lang="ts">
   import { modal } from '../../lib/behaviours/modal';
   import { useT } from '../../lib/i18n';
   import Translate from '../../lib/components/Translate.svelte';
   import { onMount } from 'svelte';
 
-  type Method = 'passkey' | 'ii' | 'eth' | 'sol' | 'nfid';
+  type Method = AuthMethod;
 
   const OTHERS: { key: Exclude<Method, 'passkey'>; name: string; short?: string; loginOnly?: boolean; wait: string }[] = [
     // names are product names (or keys, where they carry copy); wait lines are keys
@@ -17,7 +30,6 @@
     { key: 'sol', name: 'Solana', wait: 'ui.authDialog.waitWallet' },
     { key: 'nfid', name: 'ui.authDialog.nfidLegacy', short: 'NFID', loginOnly: true, wait: 'ui.authDialog.waitNfid' },
   ];
-  const WAIT_MS = 1600;
   const CHECK_MS = 450;
 
   interface Person {
@@ -39,24 +51,29 @@
     /** Sign-up: whether a well-formed username is free. Defaults to always free. */
     checkUsername?: (username: string) => boolean | Promise<boolean>;
     onClose?: () => void;
-    /** Method that completed: passkey, ii, eth, sol, nfid, email or signup. */
-    onDone?: (method: string) => void;
+    /** Start sign-in / sign-up with a method (passkey prompt, wallet, II window). Waits until it settles; reject to go back. */
+    onMethod?: (method: AuthMethod, kind: 'login' | 'signup') => Promise<unknown> | void;
+    /** Send a sign-in link to this address. The dialog shows "Check your inbox" once it resolves; also used to resend. */
+    onRequestEmailLink?: (email: string) => Promise<unknown> | void;
+    /** Create the account from the form. Waits until it settles; reject to stay on the form. */
+    onSignup?: (details: SignupDetails) => Promise<unknown> | void;
   }
 
-  let { kind = 'login', variant = 'grid', inline = false, reason = '', referrers = [], checkUsername = () => true, onClose, onDone }: Props = $props();
+  let { kind = 'login', variant = 'grid', inline = false, reason = '', referrers = [], checkUsername = () => true, onClose, onMethod, onRequestEmailLink, onSignup }: Props = $props();
   const t = useT();
 
   // switching between sign-in and sign-up sticks until the host changes `kind`
   let mode = $derived(kind);
   let step = $state<'methods' | 'sent'>('methods');
-  let waiting = $state<Method | null>(null);
+  let waiting = $state<Method | 'email' | 'signup' | null>(null);
+  // a newer action (or Back / switching mode) makes an older pending one stale
+  let run = 0;
   let email = $state('');
   let username = $state('');
   let checked = $state<{ name: string; free: boolean } | null>(null);
   let refQuery = $state('');
   let referrer = $state<Person | null>(null);
 
-  let waitTimer: ReturnType<typeof setTimeout> | undefined;
   let checkTimer: ReturnType<typeof setTimeout> | undefined;
 
   const signup = $derived(mode === 'signup');
@@ -74,19 +91,44 @@
     return q ? referrers.filter((p) => p.name.toLowerCase().includes(q) || p.handle.includes(q)).slice(0, 4) : [];
   });
   const waitText = $derived(
-    !waiting ? '' : t(waiting === 'passkey' ? (signup ? 'ui.authDialog.waitPasskeyCreate' : 'ui.authDialog.waitPasskeyChoose') : OTHERS.find((o) => o.key === waiting)!.wait),
+    !waiting || waiting === 'email' || waiting === 'signup'
+      ? ''
+      : t(waiting === 'passkey' ? (signup ? 'ui.authDialog.waitPasskeyCreate' : 'ui.authDialog.waitPasskeyChoose') : OTHERS.find((o) => o.key === waiting)!.wait),
   );
   const others = $derived(OTHERS.filter((o) => !(signup && o.loginOnly)));
 
   function close() {
-    clearTimeout(waitTimer);
+    run++;
     onClose?.();
   }
 
+  // runs a host action with `what` as the waiting state; resolves true when it succeeded and is still current
+  async function attempt(what: NonNullable<typeof waiting>, action: () => Promise<unknown> | void): Promise<boolean> {
+    if (waiting) return false;
+    const mine = ++run;
+    waiting = what;
+    try {
+      await action();
+      return mine === run;
+    } catch {
+      return false;
+    } finally {
+      if (mine === run) waiting = null;
+    }
+  }
+
   function pick(m: Method) {
-    if (waiting) return;
-    waiting = m;
-    waitTimer = setTimeout(() => onDone?.(m), WAIT_MS);
+    if (onMethod) attempt(m, () => onMethod(m, signup ? 'signup' : 'login'));
+  }
+
+  async function requestLink() {
+    if (!emailOk || !onRequestEmailLink) return;
+    if (await attempt('email', () => onRequestEmailLink(email))) step = 'sent';
+  }
+
+  function submitSignup() {
+    if (!free || !onSignup) return;
+    attempt('signup', () => onSignup({ username, email: emailOk ? email : undefined, referrer: referrer?.handle }));
   }
 
   function typedUsername(value: string) {
@@ -102,7 +144,7 @@
   }
 
   function switchMode() {
-    clearTimeout(waitTimer);
+    run++;
     mode = signup ? 'login' : 'signup';
     step = 'methods';
     waiting = null;
@@ -110,14 +152,15 @@
 
   onMount(() => {
     return () => {
-      clearTimeout(waitTimer);
+      run++;
       clearTimeout(checkTimer);
     };
   });
 </script>
 
-<div class="backdrop" class:inline onclick={close} role="button" tabindex="0">
-  <div class="card {variant}" class:signup role="dialog" aria-modal="true" aria-labelledby="oc-auth-title" onclick={(e) => e.stopPropagation()} use:modal={inline ? undefined : close}>
+<div class="backdrop" class:inline>
+  {#if !inline}<div class="scrim" onclick={close} aria-hidden="true"></div>{/if}
+  <div class="card {variant}" class:signup role="dialog" aria-modal={inline ? undefined : 'true'} aria-labelledby="oc-auth-title" use:modal={inline ? undefined : close}>
     {#if variant === 'split'}
       <div class="brand">
         <img class="brand-logo" src="assets/openchat-logo.svg" alt="" width="56" height="56" />
@@ -138,7 +181,7 @@
           <button
             class="head-button"
             onclick={() => {
-              clearTimeout(waitTimer);
+              run++;
               step = 'methods';
               waiting = null;
             }}
@@ -160,7 +203,7 @@
               style:opacity={waiting ? 0.45 : 1}
               onsubmit={(e) => {
                 e.preventDefault();
-                if (emailOk && !waiting) step = 'sent';
+                requestLink();
               }}
             >
               <span class="email-icon"></span>
@@ -195,7 +238,7 @@
           <span class="sent-tile"><span class="sent-icon"></span></span>
           <span class="sent-title">{t('ui.authDialog.checkInbox')}</span>
           <span class="sent-text"><Translate key="ui.authDialog.sent">{#snippet address()}<span class="sent-email">{email}</span>{/snippet}</Translate></span>
-          <button class="link" onclick={() => onDone?.('email')}>{t('ui.authDialog.openedLink')}</button>
+          <button class="link" onclick={requestLink} disabled={!!waiting}>{t(waiting === 'email' ? 'ui.authDialog.sending' : 'ui.authDialog.resendLink')}</button>
         </div>
       {/if}
 
@@ -204,7 +247,7 @@
           class="form"
           onsubmit={(e) => {
             e.preventDefault();
-            if (free) onDone?.('signup');
+            submitSignup();
           }}
         >
           <label class="field-group">
@@ -263,7 +306,7 @@
           </div>
           <div class="submit-row">
             <span class="terms"><Translate key="ui.authDialog.terms">{#snippet link()}<a href="#">{t('ui.authDialog.termsLink')}</a>{/snippet}</Translate></span>
-            <button class="continue" class:ready={free} type="submit" disabled={!free}>{t('ui.common.continue')}</button>
+            <button class="continue" class:ready={free && !waiting} type="submit" disabled={!free || !!waiting}>{t(waiting === 'signup' ? 'ui.authDialog.creating' : 'ui.common.continue')}</button>
           </div>
         </form>
       {/if}
@@ -294,6 +337,12 @@
     overflow-y: visible;
     background: none;
     backdrop-filter: none;
+  }
+
+  /* catches presses around the card; the backdrop paints the dim */
+  .scrim {
+    position: fixed;
+    inset: 0;
   }
 
   .card {

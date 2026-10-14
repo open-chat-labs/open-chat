@@ -10,6 +10,7 @@
   import IconButton from '../../lib/components/IconButton.svelte';
   import TokenPicker from '../../lib/components/TokenPicker.svelte';
   import { getI18n, useT, durationText } from '../../lib/i18n';
+  import { cleanAmount, parseAmount } from '../../lib/amount';
   const i18n = getI18n(); // number formatting follows the host locale
 
   // sample balances and prices until the wallet is wired
@@ -72,8 +73,8 @@
 
   const G = $derived(TOK[give]);
   const R = $derived(TOK[get]);
-  const a = $derived(parseFloat(amt) || 0);
-  const w = $derived(parseFloat(want) || 0);
+  const a = $derived(parseAmount(amt));
+  const w = $derived(parseAmount(want));
   const fees = $derived(G.fee * 2);
   const lock = $derived(a + fees);
   const max = $derived(Math.max(0, G.bal - fees));
@@ -177,8 +178,8 @@
           meta={t('ui.swapOfferDialog.balance', { amount: fmt(G.bal, G.dp), symbol: G.symbol })}
           value={amt}
           onChange={(e) => {
-            amt = e.currentTarget.value.replace(/[^0-9.]/g, '');
-            wantFor(parseFloat(amt) || 0, prem);
+            amt = cleanAmount(e.currentTarget.value);
+            wantFor(parseAmount(amt), prem);
           }}
           tone={a > max ? 'danger' : 'default'}
           note="≈ {usdFmt(a * G.usd)}"
@@ -199,7 +200,7 @@
           meta={t('ui.swapOfferDialog.youHold', { amount: fmt(R.bal, R.dp), symbol: R.symbol })}
           value={want}
           onChange={(e) => {
-            want = e.currentTarget.value.replace(/[^0-9.]/g, '');
+            want = cleanAmount(e.currentTarget.value);
             prem = null;
           }}
           note="≈ {usdFmt(w * R.usd)}"

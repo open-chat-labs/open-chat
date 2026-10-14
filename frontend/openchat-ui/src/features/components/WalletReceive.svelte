@@ -1,6 +1,10 @@
 <!-- Receive in the wallet main column: network picker (when a token travels on several), your address with copy and
      share-to-chat, a warning naming exactly what to send, your OpenChat handle, and a QR card. Below 760px the QR card
      moves above the form. Sharing posts the address to a chat (ChatPicker) and confirms with a toast. -->
+<script lang="ts" module>
+  export type NetworkId = 'icp' | 'eth' | 'btc' | 'xrpl';
+</script>
+
 <script lang="ts">
   import { useT } from '../../lib/i18n';
   import CopyButton from '../../lib/components/CopyButton.svelte';
@@ -11,14 +15,12 @@
   import PageHeader from '../../lib/components/PageHeader.svelte';
   import UndoToast from '../../lib/components/UndoToast.svelte';
 
-  type NetworkId = 'icp' | 'eth' | 'btc' | 'xrpl';
-
-  // sample receiving addresses until the wallet backend is wired; label / short / time / blurb are resource keys
-  const NET: Record<NetworkId, { label: string; short: string; time: string; blurb: string; address: string }> = {
-    icp: { label: 'ui.walletReceive.net.icp.label', short: 'ui.walletReceive.net.icp.short', time: 'ui.walletReceive.net.icp.time', blurb: 'ui.walletReceive.net.icp.blurb', address: '5sj6i-pqaaa-aaaaf-a3cmq-cai' },
-    eth: { label: 'ui.walletReceive.net.eth.label', short: 'ui.walletReceive.net.eth.short', time: 'ui.walletReceive.net.eth.time', blurb: 'ui.walletReceive.net.eth.blurb', address: '0x7Bf3c9A1e64D25aB8f0C3e7d19A4b62F5dE81Ca0' },
-    btc: { label: 'ui.walletReceive.net.btc.label', short: 'ui.walletReceive.net.btc.short', time: 'ui.walletReceive.net.btc.time', blurb: 'ui.walletReceive.net.btc.blurb', address: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh' },
-    xrpl: { label: 'ui.walletReceive.net.xrpl.label', short: 'ui.walletReceive.net.xrpl.short', time: 'ui.walletReceive.net.xrpl.time', blurb: 'ui.walletReceive.net.xrpl.blurb', address: 'rPdvC6ccq8hCdPKSPJkPmyZ4Mi1oG2FFkT' },
+  // label / short / time / blurb are resource keys; the addresses themselves always come from the host
+  const NET: Record<NetworkId, { label: string; short: string; time: string; blurb: string }> = {
+    icp: { label: 'ui.walletReceive.net.icp.label', short: 'ui.walletReceive.net.icp.short', time: 'ui.walletReceive.net.icp.time', blurb: 'ui.walletReceive.net.icp.blurb' },
+    eth: { label: 'ui.walletReceive.net.eth.label', short: 'ui.walletReceive.net.eth.short', time: 'ui.walletReceive.net.eth.time', blurb: 'ui.walletReceive.net.eth.blurb' },
+    btc: { label: 'ui.walletReceive.net.btc.label', short: 'ui.walletReceive.net.btc.short', time: 'ui.walletReceive.net.btc.time', blurb: 'ui.walletReceive.net.btc.blurb' },
+    xrpl: { label: 'ui.walletReceive.net.xrpl.label', short: 'ui.walletReceive.net.xrpl.short', time: 'ui.walletReceive.net.xrpl.time', blurb: 'ui.walletReceive.net.xrpl.blurb' },
   };
   // wrapped forms on ICP get their chain-key name, so the warning names exactly what to send
   const ICP_AS: Record<string, string> = { BTC: 'ckBTC', ETH: 'ckETH', USDC: 'ckUSDC', USDT: 'ckUSDT', XRP: 'ckXRP' };
@@ -40,11 +42,13 @@
     token?: string;
     /** Your OpenChat handle; shows the "From OpenChat" row. */
     handle?: string;
+    /** The user's own receiving address per network. A network without one shows no address, copy, share or QR. */
+    addresses?: Partial<Record<NetworkId, string>>;
     onShare?: (v: { chat: string; message: string; symbol: string; network: string; address: string }) => void;
     onClose?: () => void;
   }
 
-  let { tokens, token, handle = '', onShare, onClose }: Props = $props();
+  let { tokens, token, handle = '', addresses = {}, onShare, onClose }: Props = $props();
   const t = useT();
 
   let width = $state(0);
@@ -81,10 +85,10 @@
         }
       : null,
   );
-  const address = $derived(id ? NET[id].address : '');
+  const address = $derived((id && addresses[id]) || '');
 
   function share(v: { chat: string; message: string }) {
-    if (!tok || !net) return;
+    if (!tok || !net || !address) return;
     const tid = Date.now();
     sharing = false;
     toast = { id: tid, message: t('ui.walletReceive.shared', { chat: v.chat }) };
@@ -140,6 +144,9 @@
         <div class="group">
           <ListSectionLabel label={t('ui.walletReceive.yourAddress')} />
           <div class="address-box">
+            {#if !address}
+              <span class="address-missing">{t('ui.walletReceive.noAddress')}</span>
+            {:else}
             <div class="address-wrap">
               <span class="address">{address.slice(0, 6)}<span class="address-mid">{address.slice(6, -6)}</span>{address.slice(-6)}</span>
             </div>
@@ -147,6 +154,7 @@
               {#key address}<CopyButton value={address} label="ui.walletReceive.copyAddress" variant="filled" size="lg" />{/key}
               <span class="square" onclick={() => (sharing = true)} role="button" tabindex="0" title={t('ui.walletReceive.shareToChat')} aria-label={t('ui.walletReceive.shareToChat')}><span class="square-icon" style:mask={mask('share')}></span></span>
             </div>
+            {/if}
           </div>
         </div>
         <div class="warning">
@@ -171,14 +179,16 @@
           </div>
         {/if}
       </div>
+      {#if address}
       <div class="qr-card">
         <span class="qr-kicker">{t('ui.walletReceive.scanToPay')}</span>
         <div class="qr"><span class="qr-code"><span class="qr-mark" style:background={tok.grad}>{tok.mark}</span></span></div>
         <span class="qr-title">{t('ui.walletReceive.qrTitle', { symbol: tok.symbol, network: t(net.label) })}</span>
         <span class="qr-blurb">{t(net.blurb)}</span>
       </div>
+      {/if}
     </div>
-    {#if sharing}
+    {#if sharing && address}
       <ChatPicker
         title={t('ui.walletReceive.shareToChat')}
         previewLabel={t('ui.walletReceive.sharingAddress')}
@@ -387,6 +397,13 @@
   .address-box {
     gap: 12px;
     padding: 14px 12px 14px 18px;
+  }
+
+  .address-missing {
+    flex: 1;
+    min-width: 0;
+    font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-sans);
+    color: var(--ink-3, #9a9aa8);
   }
 
   .address-wrap {

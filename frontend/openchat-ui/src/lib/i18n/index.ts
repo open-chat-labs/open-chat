@@ -43,11 +43,12 @@ export function lookup(dict: Dict, key: string): string | undefined {
 export function interpolate(text: string, params: I18nParams = {}, locale = 'en'): string {
   if (!text.includes('{')) return text;
   let i = 0;
-  const parse = (hash?: string): string => {
+  // nested = inside an option's {message}; a stray } at the top level is literal text
+  const parse = (hash?: string, nested = false): string => {
     let out = '';
     while (i < text.length) {
       const c = text[i];
-      if (c === '}') return out;
+      if (c === '}' && nested) return out;
       if (c === '#' && hash !== undefined) {
         out += hash;
         i++;
@@ -61,14 +62,24 @@ export function interpolate(text: string, params: I18nParams = {}, locale = 'en'
     }
     return out;
   };
+  // malformed input (an unclosed { …) is kept as literal text and never moves i backwards
+  const skipPastClose = () => {
+    const close = text.indexOf('}', i);
+    i = close < 0 ? text.length : close + 1;
+  };
   const argument = (hash?: string): string => {
+    const start = i;
     const head = text.slice(i).match(/^\s*(\w+)\s*(?:,\s*(plural|select)\s*,)?/);
     if (!head) return '{';
     i += head[0].length;
     const [, name, kind] = head;
     const value = params[name];
     if (!kind) {
-      i = text.indexOf('}', i) + 1;
+      if (text.indexOf('}', i) < 0) {
+        i = text.length;
+        return '{' + text.slice(start);
+      }
+      skipPastClose();
       return value == null ? `{${name}}` : String(value);
     }
     // options: selector {message} …
@@ -78,10 +89,10 @@ export function interpolate(text: string, params: I18nParams = {}, locale = 'en'
       if (!sel) break;
       i += sel[0].length;
       const n = Number(value);
-      options[sel[1]] = parse(kind === 'plural' ? new Intl.NumberFormat(locale).format(n) : hash);
+      options[sel[1]] = parse(kind === 'plural' ? new Intl.NumberFormat(locale).format(n) : hash, true);
       i++; // closing }
     }
-    i = text.indexOf('}', i) + 1;
+    skipPastClose();
     if (kind === 'select') return options[String(value)] ?? options.other ?? '';
     const n = Number(value);
     return options['=' + n] ?? options[new Intl.PluralRules(locale).select(n)] ?? options.other ?? '';

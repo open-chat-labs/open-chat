@@ -47,6 +47,39 @@ const walletTokens = [
 ];
 
 // Opened from a button in the docs. Every *Dialog is treated as an overlay too.
+// stand-ins for host work in the demos (the components themselves never fake it)
+const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const demoLinkCode = async () => {
+  await wait(500);
+  const bytes = crypto.getRandomValues(new Uint8Array(6));
+  return { code: Array.from(bytes, (b) => CODE_ALPHABET[b % CODE_ALPHABET.length]).join(''), expiresAt: Date.now() + 180_000 };
+};
+
+// sample receiving addresses for the wallet demos (hosts pass the user's own)
+export const receiveAddresses = { icp: '5sj6i-pqaaa-aaaaf-a3cmq-cai', eth: '0x7Bf3c9A1e64D25aB8f0C3e7d19A4b62F5dE81Ca0', btc: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh', xrpl: 'rPdvC6ccq8hCdPKSPJkPmyZ4Mi1oG2FFkT' };
+// people for WalletSend's "OpenChat user" mode, with recent transfers
+const sendContacts = [
+  { userId: 'u-jane', name: 'Jane Doe', handle: '@common_jane', grad: 'linear-gradient(140deg,#FFB35C,#FF6B6B)', history: [{ date: '28 Sep', amount: 50, incoming: false }, { date: '14 Sep', amount: 20, incoming: true }, { date: '2 Sep', amount: 120, incoming: false }] },
+  { userId: 'u-annie', name: 'Annie Schwartz', handle: '@anti_ice_cold', grad: 'linear-gradient(140deg,#8B7BFF,#FF6FD8)' },
+  { userId: 'u-nikki', name: 'Nikki Laudia', handle: '@the_pineal', grad: 'linear-gradient(140deg,#5CD0FF,#4B7BFF)' },
+  { userId: 'u-chris', name: 'Chris Hanls', handle: '@guru_of_thunder', grad: 'linear-gradient(140deg,#63E6A8,#2AA6FF)' },
+  { userId: 'u-neil', name: 'Neil Armstrong', handle: '@i_walked_on_moon', grad: 'linear-gradient(140deg,#FFD166,#F2795C)' },
+];
+// demo PIN is 123456: anything else rejects, so the error state can be seen
+const demoSend = async (x: { pin: string }) => {
+  await wait(700);
+  if (x.pin !== '123456') throw new Error('wrong PIN');
+};
+const sendDemo = {
+  contacts: sendContacts,
+  onPickSaved: async () => {
+    await wait(300);
+    return '6fe2b-qpkus-3dzpo-iuc7d-nwyfk-7tqaf-2lhi4-cpm5c-ys7gz-wbf3a-dae';
+  },
+  onSent: demoSend,
+};
+
 // sample deposit address for the top-up rows (hosts pass the user's own)
 export const depositAddress = 'wq4pz-ixa3f-ubm7c-2jtw4-7d41e-cai';
 
@@ -195,10 +228,10 @@ export const samples: Record<string, Record<string, unknown>> = {
   },
   Menu: { items: menuItems },
   StepIndicator: { steps: ['Details', 'Quote', 'Swap'] },
-  WalletMain: { tokens: walletTokens, handle: '@you' },
+  WalletMain: { tokens: walletTokens, handle: '@you', addresses: receiveAddresses, ...sendDemo },
   WalletPanel: { tokens: walletTokens },
-  WalletReceive: { tokens: walletTokens },
-  WalletSend: { tokens: walletTokens },
+  WalletReceive: { tokens: walletTokens, addresses: receiveAddresses },
+  WalletSend: { tokens: walletTokens, ...sendDemo },
   WalletSwap: { tokens: walletTokens },
   WalletRecipients: {
     tokens: walletTokens,
@@ -266,6 +299,9 @@ export const samples: Record<string, Record<string, unknown>> = {
       { name: 'Hannah', handle: 'hannah_k', grad: 'linear-gradient(140deg,#FF8FA8,#E0456A)' },
     ],
     checkUsername: (name: string) => !['openchat', 'hamish', 'admin', 'julian_jelfs', 'matt'].includes(name),
+    onMethod: () => wait(1600),
+    onRequestEmailLink: () => wait(600),
+    onSignup: () => wait(1200),
   },
   NavRail: {
     items: [{ icon: 'messages', label: 'docs.features.navRail.chats', dot: true, count: 3 }, { icon: 'bell', label: 'ui.navRail.notifications' }, { icon: 'wallet', label: 'ui.navRail.wallet' }],
@@ -335,6 +371,7 @@ export const samples: Record<string, Record<string, unknown>> = {
   },
   // the export's built-in demo data, now passed in
   ProfileDialog: {
+    onRequestLinkCode: demoLinkCode,
     chitEarned: 539400,
     achievementsLeft: 12,
     onlineMinutes: 2942,

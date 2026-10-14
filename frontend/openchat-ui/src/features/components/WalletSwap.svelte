@@ -3,6 +3,7 @@
      stacks under the form. Pay offers only held tokens; Get offers anything swappable, yours first. -->
 <script lang="ts">
   import { getI18n, useT } from '../../lib/i18n';
+  import { cleanAmount, parseAmount } from '../../lib/amount';
   import { onDestroy } from 'svelte';
   import type { WalletToken } from '../../lib/types';
   import AmountCard from '../../lib/components/AmountCard.svelte';
@@ -73,7 +74,7 @@
   const narrow = $derived(width > 0 && width < 760);
   const f = $derived(list.find((x) => x.symbol === from) ?? list[0]);
   const t = $derived(list.find((x) => x.symbol === to) ?? list[0]);
-  const n = $derived(parseFloat(amt.replace(/,/g, '')) || 0);
+  const n = $derived(parseAmount(amt));
   const usdIn = $derived(f ? n * f.price : 0);
   const impactPct = $derived(Math.min(9, (usdIn / 40000) * 100));
   const out = $derived(t ? (usdIn / t.price) * (1 - impactPct / 100) * 0.997 : 0);
@@ -230,7 +231,7 @@
               value={amt}
               onChange={(e) => {
                 drop();
-                amt = e.currentTarget.value.replace(/[^0-9.,]/g, '');
+                amt = cleanAmount(e.currentTarget.value);
               }}
               tone={over ? 'danger' : 'default'}
               note={over ? tr('ui.walletSwap.overBalance') : `≈ ${usd(usdIn)}`}

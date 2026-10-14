@@ -4,6 +4,7 @@
      Esc closes the open picker, then the dialog; Cmd/Ctrl+Enter attaches. -->
 <script lang="ts">
   import { getI18n, useT } from '../../lib/i18n';
+  import { cleanAmount, parseAmount } from '../../lib/amount';
   import { onMount } from 'svelte';
   import type { Transfer } from '../../lib/types';
   import Button from '../../lib/components/Button.svelte';
@@ -65,7 +66,7 @@
   const F = (n: number) => fmt(n, T.dp);
   const canPick = $derived(!recipient && members.length > 0);
   const toMember = $derived(recipient ?? members.find((m) => m.handle === to) ?? null);
-  const a = $derived(parseFloat(amt) || 0);
+  const a = $derived(parseAmount(amt));
   const max = $derived(Math.max(0, T.bal - T.fee));
   // why Attach is disabled: a resource key ('' = ready) and its params
   const reason = $derived(
@@ -190,7 +191,7 @@
           class="amount"
           bind:this={amountInput}
           value={amt}
-          oninput={(e) => (amt = e.currentTarget.value.replace(/[^0-9.]/g, ''))}
+          oninput={(e) => (amt = cleanAmount(e.currentTarget.value))}
           inputmode="decimal"
           placeholder="0"
           aria-label={t('ui.sendCryptoDialog.amount')}

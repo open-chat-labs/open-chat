@@ -20,7 +20,8 @@
   import UndoToast from '../../lib/components/UndoToast.svelte';
   import WalletReceive from './WalletReceive.svelte';
   import WalletRecipients, { type Recipient } from './WalletRecipients.svelte';
-  import WalletSend from './WalletSend.svelte';
+  import WalletSend, { type SendContact, type WalletSendRequest } from './WalletSend.svelte';
+  import type { NetworkId } from './WalletReceive.svelte';
   import WalletSwap from './WalletSwap.svelte';
   const i18n = getI18n(); // number formatting follows the host locale
 
@@ -118,12 +119,20 @@
     balanceHidden?: boolean;
     /** Your OpenChat handle, shown on Receive. */
     handle?: string;
-    onSent?: (x: { symbol: string; amount: number; fiat: number; to: string; dp: number; person: boolean }) => void;
+    /** Your receiving address per network, for Receive. */
+    addresses?: Partial<Record<NetworkId, string>>;
+    /** People to pick from on Send. */
+    contacts?: SendContact[];
+    /** Send's saved-address picker and QR scanner (see WalletSend). */
+    onPickSaved?: () => Promise<string | null | undefined>;
+    onScanQr?: () => Promise<string | null | undefined>;
+    /** Make the transfer; reject (e.g. wrong PIN) to keep Send open with an error. */
+    onSent?: (x: WalletSendRequest) => Promise<unknown> | void;
     /** Toast "Message" action after sending to a person. */
     onMessage?: (message: string) => void;
   }
 
-  let { tokens, request = null, onViewChange, onCount, balanceHidden = false, handle, onSent, onMessage }: Props = $props();
+  let { tokens, request = null, onViewChange, onCount, balanceHidden = false, handle, addresses, contacts, onPickSaved, onScanQr, onSent, onMessage }: Props = $props();
   const t = useT();
 
   let view = $state<View>('all');
@@ -216,16 +225,16 @@
   }
 
   // a send lands back on the token page: pending row at the top of Activity + a toast; no done screen
-  function handleSent(x: { symbol: string; amount: number; fiat: number; to: string; dp: number; person: boolean }) {
+  // the host makes the transfer first; if it rejects, the error propagates back to Send's PIN dialog
+  async function handleSent(x: WalletSendRequest) {
+    await onSent?.(x);
     const id = Date.now();
     const amt = `${num(x.amount, Math.min(x.dp, 8))} ${x.symbol}`;
     view = fromAll || backToAll ? 'all' : 'token';
     fromAll = backToAll = false;
     sym = x.symbol;
-    toast = { id, message: t('ui.walletMain.sentToast', { amount: amt, name: x.to }), person: x.person };
-    sent = [{ id, sym: x.symbol, status: 'pending', row: { title: t('ui.walletMain.sentTo', { name: x.to }), day: 'today', sub: t('ui.walletMain.justNow'), kind: 1, amount: `\u2212${amt}`, fiat: usd(x.fiat) } }, ...sent];
-    // the host hears about the send before the view change, as the prototype did
-    onSent?.(x);
+    toast = { id, message: t('ui.walletMain.sentToast', { amount: amt, name: x.toLabel }), person: x.person };
+    sent = [{ id, sym: x.symbol, status: 'pending', row: { title: t('ui.walletMain.sentTo', { name: x.toLabel }), day: 'today', sub: t('ui.walletMain.justNow'), kind: 1, amount: `\u2212${amt}`, fiat: usd(x.fiat) } }, ...sent];
     report();
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => {
@@ -322,8 +331,8 @@
 </script>
 
 <div class="main" data-screen-label="Wallet main">
-  {#if view === 'send'}{#key flowKey}<WalletSend {tokens} token={flowToken} address={sendAddr} onClose={leaveFlow} onSent={handleSent} />{/key}{/if}
-  {#if view === 'receive'}{#key flowKey}<WalletReceive {tokens} token={flowToken} {handle} onClose={leaveFlow} />{/key}{/if}
+  {#if view === 'send'}{#key flowKey}<WalletSend {tokens} token={flowToken} address={sendAddr} {contacts} {onPickSaved} {onScanQr} onClose={leaveFlow} onSent={handleSent} />{/key}{/if}
+  {#if view === 'receive'}{#key flowKey}<WalletReceive {tokens} token={flowToken} {handle} {addresses} onClose={leaveFlow} />{/key}{/if}
   {#if view === 'swap'}{#key flowKey}<WalletSwap {tokens} token={flowToken} onClose={leaveFlow} />{/key}{/if}
   {#if view === 'recipients'}
     <WalletRecipients {tokens} {recipients} onChange={(list) => (recipients = list)} onSend={sendToRecipient} onClose={() => go({ view: 'all' })} />

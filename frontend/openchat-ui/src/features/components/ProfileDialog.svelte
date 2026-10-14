@@ -203,7 +203,6 @@
   ];
 
   const LINK_STEPS = ['ui.profileDialog.device.step1', 'ui.profileDialog.device.step2', 'ui.profileDialog.device.step3'];
-  const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   const icon = (name: string) => `var(--icon-${name}) center/contain no-repeat`;
   const BLANK_GIF = 'data:image/gif;base64,R0lGODlhAQABAAAAACw=';
 </script>
@@ -271,8 +270,9 @@
     accentPref?: 'pink' | 'blue' | 'orange' | 'green';
     fontSize?: 'small' | 'default' | 'large' | 'larger';
     storageUsedMB?: number;
-    /** Seconds a device-link code stays valid. */
-    linkCodeTtl?: number;
+    /** Issue a device-link code (from the backend). The countdown runs to its expiresAt (ms epoch); without this the
+     *  Show code button is hidden. */
+    onRequestLinkCode?: () => Promise<{ code: string; expiresAt: number }>;
     inviteLink?: string;
     icHost?: string;
     storageIndex?: string;
@@ -337,7 +337,7 @@
     accentPref = 'pink',
     fontSize = 'default',
     storageUsedMB,
-    linkCodeTtl = 180,
+    onRequestLinkCode,
     inviteLink,
     icHost = 'https://icp-api.io',
     storageIndex = 'rturd-qaaaa-aaaaf-aabaq-cai',
@@ -706,13 +706,29 @@
   let lcTicker: ReturnType<typeof setInterval> | undefined;
   const lcLive = $derived(!!lcCode && lcLeft > 0);
 
-  function newLinkCode() {
-    const code = Array.from({ length: 6 }, () => CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)]).join('');
-    const end = Date.now() + linkCodeTtl * 1000;
+  let lcSpan = 1; // seconds the current code was issued for, for the progress bar
+  let lcState = $state<'idle' | 'loading' | 'failed'>('idle');
+  let lcRun = 0;
+
+  async function newLinkCode() {
+    if (!onRequestLinkCode || lcState === 'loading') return;
+    const mine = ++lcRun;
+    lcState = 'loading';
+    let issued: { code: string; expiresAt: number };
+    try {
+      issued = await onRequestLinkCode();
+    } catch {
+      if (mine === lcRun) lcState = 'failed';
+      return;
+    }
+    if (mine !== lcRun) return;
+    lcState = 'idle';
+    const end = issued.expiresAt;
     clearInterval(lcTicker);
     lcHidden = false;
-    lcCode = code;
-    lcLeft = linkCodeTtl;
+    lcCode = issued.code;
+    lcLeft = Math.max(0, Math.ceil((end - Date.now()) / 1000));
+    lcSpan = Math.max(1, lcLeft);
     lcCopied = false;
     lcTicker = setInterval(() => {
       lcLeft = Math.max(0, Math.ceil((end - Date.now()) / 1000));
@@ -1578,8 +1594,11 @@
             <div class="code-intro">
               {@render glyph('shield', 'shield-glyph')}
               <span class="code-warning">{t('ui.profileDialog.device.warning')}</span>
-              <span class="show-code" onclick={newLinkCode} role="button" tabindex="0">{t('ui.profileDialog.device.showCode')}</span>
+              {#if onRequestLinkCode}
+                <span class="show-code" onclick={newLinkCode} role="button" tabindex="0" aria-disabled={lcState === 'loading'}>{t(lcState === 'loading' ? 'ui.profileDialog.device.requesting' : 'ui.profileDialog.device.showCode')}</span>
+              {/if}
             </div>
+            {#if lcState === 'failed'}<span class="code-error" role="alert">{t('ui.profileDialog.device.failed')}</span>{/if}
           {:else}
             {@const warn = lcLeft <= 30}
             <div class="code-live">
@@ -1587,7 +1606,7 @@
                 <span class="code" class:hidden={lcHidden}>{(lcCode ?? '').slice(0, 3)} {(lcCode ?? '').slice(3)}</span>
                 <CopyButton value={lcCode ?? ''} label="ui.profileDialog.device.copyCode" variant="outline" size="md" bind:copied={lcCopied} />
               </div>
-              <div class="code-track"><div class="code-fill" class:warn style:width="{Math.max(0, Math.min(100, (lcLeft / linkCodeTtl) * 100)).toFixed(1)}%"></div></div>
+              <div class="code-track"><div class="code-fill" class:warn style:width="{Math.max(0, Math.min(100, (lcLeft / lcSpan) * 100)).toFixed(1)}%"></div></div>
               <div class="code-foot">
                 <span class="code-status" class:warn
                   >{t('ui.profileDialog.device.expires', { time: `${String(Math.floor(lcLeft / 60)).padStart(2, '0')}:${String(lcLeft % 60).padStart(2, '0')}` })}</span
@@ -3981,6 +4000,11 @@
     font: var(--weight-regular) var(--text-sm) / 1.45 var(--font-sans);
     color: var(--ink-2, #b9b9c6);
     text-wrap: pretty;
+  }
+
+  .code-error {
+    font: var(--weight-medium) var(--text-sm) / 1.4 var(--font-sans);
+    color: var(--status-danger, #f5493d);
   }
 
   .show-code {

@@ -1,6 +1,39 @@
 <!-- Send in the wallet main column: recipient (OpenChat user or address, with network detection), amount (token or USD,
      quick chips), optional message, and a live summary beside the form; below 760px the summary becomes a sticky footer.
-     Continue opens a PIN dialog over the form; confirming hands the transfer back through onSent. -->
+     Continue opens a PIN dialog over the form; confirming hands the full transfer (address or user id, network, memo,
+     PIN) back through onSent. Contacts, saved addresses and QR scanning come from the host; Paste reads the clipboard. -->
+<script lang="ts" module>
+  export interface SendContact {
+    userId: string;
+    name: string;
+    handle: string;
+    /** Avatar background. */
+    grad?: string;
+    /** Recent transfers with this person, newest first ("You sent · 28 Sep"). */
+    history?: { date: string; amount: number; incoming: boolean }[];
+  }
+
+  export interface WalletSendRequest {
+    symbol: string;
+    amount: number;
+    fee: number;
+    fiat: number;
+    /** Full destination: the wallet address, or the user id in user mode. */
+    to: string;
+    /** Set when sending to an OpenChat user. */
+    userId?: string;
+    /** Display name for the recipient (person's name or shortened address). Display only. */
+    toLabel: string;
+    /** openchat | icp | btc | ckbtc | eth | xrp */
+    network: string;
+    memo?: string;
+    /** The 6-digit PIN the user typed, for the host to verify. */
+    pin: string;
+    dp: number;
+    person: boolean;
+  }
+</script>
+
 <script lang="ts">
   import type { WalletToken } from '../../lib/types';
   import DetailRow from '../../lib/components/DetailRow.svelte';
@@ -10,40 +43,20 @@
   import QuickAmountChips from '../../lib/components/QuickAmountChips.svelte';
   import SideCard from '../../lib/components/SideCard.svelte';
   import { getI18n, useT } from '../../lib/i18n';
+  import { cleanAmount, parseAmount } from '../../lib/amount';
+  import { tick } from 'svelte';
 
   const mask = (n: string) => `var(--icon-${n}) center/contain no-repeat`;
-  // sample contacts and pasted addresses until the address book is wired
-  const UG = [
-    'linear-gradient(140deg,#FFB35C,#FF6B6B)',
-    'linear-gradient(140deg,#8B7BFF,#FF6FD8)',
-    'linear-gradient(140deg,#5CD0FF,#4B7BFF)',
-    'linear-gradient(140deg,#63E6A8,#2AA6FF)',
-    'linear-gradient(140deg,#FFD166,#F2795C)',
-  ];
-  const PEOPLE = ['Jane Doe', 'Annie Schwartz', 'Nikki Laudia', 'Chris Hanls', 'Neil Armstrong'];
-  const HANDLES = ['@common_jane', '@anti_ice_cold', '@the_pineal', '@guru_of_thunder', '@i_walked_on_moon'];
-  const SAMPLE: Record<string, string> = {
-    ICP: '6fe2b-qpkus-3dzpo-iuc7d-nwyfk-7tqaf-2lhi4-cpm5c-ys7gz-wbf3a-dae',
-    BTC: 'bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq',
-    CHAT: '5sj6i-pqaaa-aaaaf-a3cmq-cai',
-    ETH: '0x4E2a9F07c1B3dD58e7A9b2c06F1d3E8a5C7b9D21',
-    USDT: '0x4E2a9F07c1B3dD58e7A9b2c06F1d3E8a5C7b9D21',
-    XRP: 'rPEPPER7kfTD9w2To4CQk6UCfuHM9c6GDY',
-  };
+  const PIN_LENGTH = 6;
+  const FALLBACK_GRAD = 'linear-gradient(140deg,#8B7BFF,#5B3FD9)';
   // label / short / time: resource keys (or literal text, e.g. network names)
   const NETS = [
-    { label: 'Bitcoin', short: 'ui.walletSend.nativeBtc', time: 'ui.walletSend.btcTime', fee: '~0.0000042 BTC', f: 0.0000042 },
-    { label: 'ui.walletSend.ckBtcOnIcp', short: 'ui.walletSend.needsIcpWallet', time: 'ui.walletSend.seconds', fee: '0.0000001 BTC', f: 0.0000001 },
+    { id: 'btc', label: 'Bitcoin', short: 'ui.walletSend.nativeBtc', time: 'ui.walletSend.btcTime', fee: '~0.0000042 BTC', f: 0.0000042 },
+    { id: 'ckbtc', label: 'ui.walletSend.ckBtcOnIcp', short: 'ui.walletSend.needsIcpWallet', time: 'ui.walletSend.seconds', fee: '0.0000001 BTC', f: 0.0000001 },
   ];
   const MODES = [
     ['user', 'ui.walletSend.openChatUser', 'user'],
     ['address', 'ui.walletSend.walletAddress', 'wallet'],
-  ];
-  // address helpers: [label key, icon]; the QR one isn't wired yet
-  const TOOLS = [
-    ['ui.walletSend.paste', 'paste'],
-    ['ui.walletSend.saved', 'bookmark'],
-    ['ui.walletSend.scanQr', 'qr'],
   ];
   type Chain = 'BTC' | 'ETH' | 'XRP' | 'ICP';
   const NET_NAME: Record<Chain, string> = { BTC: 'Bitcoin', ETH: 'Ethereum', XRP: 'XRP Ledger', ICP: 'Internet Computer' };
@@ -67,11 +80,18 @@
     token?: string;
     /** Pre-fills the address mode, e.g. from a saved recipient. */
     address?: string;
+    /** People to pick from in "OpenChat user" mode. Without any, only the address mode is useful. */
+    contacts?: SendContact[];
+    /** Opens the host's saved-address picker; resolve with the chosen address (or nothing to cancel). Hidden without it. */
+    onPickSaved?: () => Promise<string | null | undefined>;
+    /** Opens the host's QR scanner; resolve with the scanned address. Hidden without it. */
+    onScanQr?: () => Promise<string | null | undefined>;
     onClose?: () => void;
-    onSent?: (v: { symbol: string; amount: number; fiat: number; to: string; dp: number; person: boolean }) => void;
+    /** Make the transfer. Reject (e.g. wrong PIN) to keep the PIN dialog open with an error. */
+    onSent?: (v: WalletSendRequest) => Promise<unknown> | void;
   }
 
-  let { tokens, token, address: initialAddress = '', onClose, onSent }: Props = $props();
+  let { tokens, token, address: initialAddress = '', contacts = [], onPickSaved, onScanQr, onClose, onSent }: Props = $props();
   const t = useT();
   const i18n = getI18n();
 
@@ -83,7 +103,7 @@
 
   const sym = $state(startSymbol);
   let mode = $state<'user' | 'address'>(initialAddress ? 'address' : 'user');
-  let user = $state<number | null>(null);
+  let user = $state<string | null>(null);
   let address = $state(initialAddress);
   let amt = $state('');
   let msg = $state('');
@@ -93,17 +113,21 @@
   let footOpen = $state(false);
   let net = $state(0);
   let step = $state<'form' | 'pin' | 'done'>('form');
-  let pin = $state(0);
+  let pinText = $state('');
+  let pinState = $state<'idle' | 'sending' | 'failed'>('idle');
+  let pinInput = $state<HTMLInputElement>();
+  const pin = $derived(pinText.length);
   let width = $state(0);
 
   const narrow = $derived(width > 0 && width < 760);
   const tk = $derived(held.find((x) => x.symbol === sym) ?? held[0]);
-  const typed = $derived(parseFloat(amt.replace(/,/g, '')) || 0);
+  const typed = $derived(parseAmount(amt));
   const n = $derived(tk ? (inUsd ? typed / tk.price : typed) : 0);
   const det = $derived(mode === 'address' ? detectNet(address) : null);
   const multi = $derived(mode === 'address' && tk?.symbol === 'BTC' && det === 'BTC');
   const fee = $derived(multi ? NETS[net].f : (tk?.fee ?? 0));
-  const person = $derived(user != null ? { name: PEOPLE[user], handle: HANDLES[user], grad: UG[user] } : null);
+  const contact = $derived(contacts.find((c) => c.userId === user) ?? null);
+  const person = $derived(contact ? { name: contact.name, handle: contact.handle, grad: contact.grad ?? FALLBACK_GRAD } : null);
   const first = $derived(person ? person.name.split(' ')[0] : '');
   const wrongNet = $derived(!!det && det !== 'unknown' && det !== tk?.symbol);
   const badAddress = $derived(det === 'unknown' || wrongNet);
@@ -122,15 +146,16 @@
     { k: mode === 'user' && person ? t('ui.walletSend.nameReceives', { name: first }) : t('ui.walletSend.theyReceive'), v: `${fmt(n, tk?.dp ?? 0)} ${tk?.symbol}`, ink: n > 0 ? 'var(--ink,#ECECF1)' : 'var(--ink-5,#6E6E7C)' },
   ]);
 
-  const history = $derived.by(() => {
-    if (!person || !tk) return [];
-    const big = tk.held > 10;
-    return [
-      { label: t('ui.walletSend.youSent', { date: '28 Sep' }), sign: '−', v: big ? 50 : 0.002, mask: mask('arrow-up'), incoming: false },
-      { label: t('ui.walletSend.nameSent', { name: first, date: '14 Sep' }), sign: '+', v: big ? 20 : 0.001, mask: mask('arrow-down'), incoming: true },
-      { label: t('ui.walletSend.youSent', { date: '2 Sep' }), sign: '−', v: big ? 120 : 0.005, mask: mask('arrow-up'), incoming: false },
-    ];
-  });
+  const history = $derived(
+    (contact?.history ?? []).map((h) => ({
+      label: h.incoming ? t('ui.walletSend.nameSent', { name: first, date: h.date }) : t('ui.walletSend.youSent', { date: h.date }),
+      sign: h.incoming ? '+' : '−',
+      v: h.amount,
+      mask: mask(h.incoming ? 'arrow-down' : 'arrow-up'),
+      incoming: h.incoming,
+    })),
+  );
+  const network = $derived(mode === 'user' ? 'openchat' : multi ? NETS[net].id : det && det !== 'unknown' ? det.toLowerCase() : '');
 
   const ctaLabel = $derived(
     t(ok ? 'ui.common.continue' : !recipOk ? (mode === 'user' ? 'ui.walletSend.chooseRecipient' : 'ui.walletSend.addValidAddress') : n <= 0 ? 'ui.walletSend.enterAmount' : 'ui.walletSend.tooHigh'),
@@ -153,25 +178,90 @@
     amt = inUsd ? (v * tk.price).toFixed(2) : String(v);
   }
 
+  function openPin() {
+    if (!ok) return;
+    pinText = '';
+    pinState = 'idle';
+    step = 'pin';
+  }
+
+  function closePin() {
+    step = 'form';
+    pinText = '';
+    pinState = 'idle';
+  }
+
   function back() {
-    if (step === 'pin') {
-      step = 'form';
-      pin = 0;
-      return;
-    }
+    if (step === 'pin') return closePin();
     onClose?.();
   }
 
+  // Paste reads the clipboard; Saved and QR ask the host
+  async function fill(source: 'paste' | 'saved' | 'qr') {
+    let next: string | null | undefined;
+    try {
+      next = source === 'paste' ? await navigator.clipboard.readText() : source === 'saved' ? await onPickSaved?.() : await onScanQr?.();
+    } catch {
+      return; // clipboard permission denied, picker cancelled …
+    }
+    if (!next?.trim()) return;
+    address = next.trim();
+    net = 0;
+  }
+
+  const tools = $derived(
+    [
+      ['paste', 'ui.walletSend.paste', 'paste'],
+      ...(onPickSaved ? [['saved', 'ui.walletSend.saved', 'bookmark']] : []),
+      ...(onScanQr ? [['qr', 'ui.walletSend.scanQr', 'qr']] : []),
+    ] as ['paste' | 'saved' | 'qr', string, string][],
+  );
+
+  function typedPin(value: string) {
+    pinText = value.replace(/\D/g, '').slice(0, PIN_LENGTH);
+    if (pinState === 'failed') pinState = 'idle';
+  }
+
   // confirming hands back to the wallet, which shows the pending row and a toast
-  function confirmPin() {
-    if (!tk) return;
-    if (pin < 6) {
-      pin = 6;
+  async function confirmPin() {
+    if (!tk || pin < PIN_LENGTH || pinState === 'sending') {
+      pinInput?.focus();
       return;
     }
-    if (onSent) onSent({ symbol: tk.symbol, amount: n, fiat: n * tk.price, to: toLabel, dp: tk.dp, person: mode === 'user' && !!person });
-    else step = 'done';
+    if (!onSent) {
+      step = 'done';
+      return;
+    }
+    const request: WalletSendRequest = {
+      symbol: tk.symbol,
+      amount: n,
+      fee,
+      fiat: n * tk.price,
+      to: mode === 'user' ? (contact?.userId ?? '') : address,
+      userId: mode === 'user' ? contact?.userId : undefined,
+      toLabel,
+      network,
+      memo: msg.trim() || undefined,
+      pin: pinText,
+      dp: tk.dp,
+      person: mode === 'user' && !!person,
+    };
+    pinState = 'sending';
+    try {
+      await onSent(request);
+      pinState = 'idle';
+      step = 'done'; // inside WalletMain the view has already moved on
+    } catch {
+      pinState = 'failed';
+      pinText = '';
+      await tick(); // the input is re-enabled on the next render
+      pinInput?.focus();
+    }
   }
+
+  $effect(() => {
+    if (step === 'pin') pinInput?.focus();
+  });
 </script>
 
 {#snippet column()}
@@ -196,13 +286,15 @@
           {:else}
             <div class="search"><span class="search-icon"></span><span class="search-placeholder">{t('ui.walletSend.searchUsers')}</span></div>
           {/if}
-          <div class="quick">
-            {#each PEOPLE as name, i}
-              <span class="quick-person" class:on={user === i} onclick={() => (user = i)} tabindex="0" role="button"
-                ><span class="quick-avatar" style:background={UG[i]}></span><span class="quick-name">{name.split(' ')[0]}</span></span
-              >
-            {/each}
-          </div>
+          {#if contacts.length}
+            <div class="quick">
+              {#each contacts as c (c.userId)}
+                <span class="quick-person" class:on={user === c.userId} onclick={() => (user = c.userId)} tabindex="0" role="button"
+                  ><span class="quick-avatar" style:background={c.grad ?? FALLBACK_GRAD}></span><span class="quick-name">{c.name.split(' ')[0]}</span></span
+                >
+              {/each}
+            </div>
+          {/if}
         {:else}
           <span class="kicker">{t('ui.walletSend.addressKicker')}</span>
           <div class="address-box" class:bad={badAddress} class:good={!!det && !badAddress}>
@@ -227,17 +319,8 @@
             {/if}
           </div>
           <div class="tools">
-            {#each TOOLS as [label, icon]}
-              <span
-                class="tool"
-                onclick={() => {
-                  if (icon === 'qr') return;
-                  address = SAMPLE[tk.symbol] ?? '';
-                  net = 0;
-                }}
-                tabindex="0"
-                role="button"><span class="tool-icon" style:mask={mask(icon)}></span>{t(label)}</span
-              >
+            {#each tools as [source, label, icon]}
+              <span class="tool" onclick={() => fill(source)} tabindex="0" role="button"><span class="tool-icon" style:mask={mask(icon)}></span>{t(label)}</span>
             {/each}
           </div>
         {/if}
@@ -284,7 +367,7 @@
               {#if inUsd}<span class="dollar">$</span>{/if}<input
                 class="amount-input"
                 value={amt}
-                oninput={(e) => (amt = e.currentTarget.value.replace(/[^0-9.,]/g, ''))}
+                oninput={(e) => (amt = cleanAmount(e.currentTarget.value))}
                 inputmode="decimal"
                 placeholder="0"
                 aria-label={t('ui.walletSend.amount')}
@@ -373,7 +456,7 @@
               </div>
             {/if}
             <span class="grow"></span>
-            <span class="cta" class:blocked={!ok} onclick={() => ok && ((step = 'pin'), (pin = 0))} tabindex="0" role="button" aria-disabled={!ok}>{ctaLabel}</span>
+            <span class="cta" class:blocked={!ok} onclick={openPin} tabindex="0" role="button" aria-disabled={!ok}>{ctaLabel}</span>
             <span class="cta-hint">{t(ok ? 'ui.walletSend.confirmHint' : 'ui.walletSend.summaryHint')}</span>
           </SideCard>
         </div>
@@ -391,7 +474,7 @@
           <span class="foot-summary" onclick={() => (footOpen = !footOpen)} tabindex="0" role="button"
             ><span class="foot-total" class:over>{fmt(n + fee, tk.dp)} {tk.symbol}<span class="foot-caret" class:open={footOpen}></span></span><span class="foot-to">{t('ui.walletSend.toWho', { name: toMain })}</span></span
           >
-          <span class="cta foot-cta" class:blocked={!ok} onclick={() => ok && ((step = 'pin'), (pin = 0))} tabindex="0" role="button">{ctaLabel}</span>
+          <span class="cta foot-cta" class:blocked={!ok} onclick={openPin} tabindex="0" role="button">{ctaLabel}</span>
         </div>
       </div>
     {/if}
@@ -401,18 +484,38 @@
         width={420}
         height="auto"
         flush={true}
-        onClose={() => {
-          step = 'form';
-          pin = 0;
-        }}
+        onClose={closePin}
       >
-        <div class="pin">
+        <form
+          class="pin"
+          onsubmit={(e) => {
+            e.preventDefault();
+            confirmPin();
+          }}
+        >
           <span class="pin-sub">{t('ui.walletSend.confirmSending', { amount: fmt(n, tk.dp), symbol: tk.symbol, to: toLabel })}</span>
-          <div class="pin-dots">
-            {#each [0, 1, 2, 3, 4, 5] as i}<span class="pin-box" class:current={i === pin}><span class="pin-dot" class:filled={i < pin}></span></span>{/each}
-          </div>
-          <span class="cta pin-cta" onclick={confirmPin} tabindex="0" role="button">{t(pin < 6 ? 'ui.walletSend.typePin' : 'ui.common.send')}</span>
-        </div>
+          <!-- one real input under the boxes: typing, paste and one-time-code autofill all work -->
+          <label class="pin-dots">
+            <input
+              class="pin-input"
+              bind:this={pinInput}
+              value={pinText}
+              oninput={(e) => typedPin(e.currentTarget.value)}
+              type="password"
+              inputmode="numeric"
+              autocomplete="one-time-code"
+              maxlength={PIN_LENGTH}
+              aria-label={t('ui.walletSend.enterPin')}
+              aria-invalid={pinState === 'failed'}
+              disabled={pinState === 'sending'}
+            />
+            {#each Array.from({ length: PIN_LENGTH }, (_, i) => i) as i}<span class="pin-box" class:current={i === pin} aria-hidden="true"><span class="pin-dot" class:filled={i < pin}></span></span>{/each}
+          </label>
+          {#if pinState === 'failed'}<span class="pin-error" role="alert">{t('ui.walletSend.pinFailed')}</span>{/if}
+          <button class="cta pin-cta" class:blocked={pin < PIN_LENGTH || pinState === 'sending'} type="submit" aria-disabled={pin < PIN_LENGTH || pinState === 'sending'}
+            >{t(pinState === 'sending' ? 'ui.walletSend.sending' : pin < PIN_LENGTH ? 'ui.walletSend.typePin' : 'ui.common.send')}</button
+          >
+        </form>
       </DialogShell>
     {/if}
     {#if step === 'done'}
@@ -1323,8 +1426,35 @@
   }
 
   .pin-dots {
+    position: relative;
     display: flex;
     gap: 10px;
+    cursor: text;
+  }
+
+  /* the real input covers the boxes, invisible, so a tap anywhere on them focuses it */
+  .pin-input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    border: 0;
+    padding: 0;
+    font-size: 16px;
+    caret-color: transparent;
+  }
+
+  .pin-dots:focus-within .pin-box.current {
+    box-shadow:
+      inset 0 0 0 1px var(--accent, #ff5672),
+      0 0 0 3px color-mix(in srgb, var(--accent, #ff5672) 25%, transparent);
+  }
+
+  .pin-error {
+    margin-block-start: -10px;
+    font: 500 13px/1.4 var(--sans);
+    color: var(--status-danger, #f5493d);
   }
 
   .pin-box {
@@ -1355,6 +1485,8 @@
 
   .pin-cta {
     align-self: stretch;
+    border: 0;
+    padding: 0;
   }
 
   .done {

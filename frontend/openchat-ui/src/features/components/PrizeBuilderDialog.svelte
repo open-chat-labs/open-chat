@@ -20,6 +20,7 @@
 
 <script lang="ts">
   import { getI18n, useT } from '../../lib/i18n';
+  import { cleanAmount, parseAmount } from '../../lib/amount';
   import { onMount } from 'svelte';
   import type { Prize, PrizeDraft } from '../../lib/types';
   import Button from '../../lib/components/Button.svelte';
@@ -85,7 +86,7 @@
   let amountInput: HTMLInputElement;
 
   const T = $derived(tokens.find((t) => t.symbol === tok) ?? tokens[0]);
-  const a = $derived(parseFloat(amt) || 0);
+  const a = $derived(parseAmount(amt));
   const w = $derived(parseInt(win, 10) || 0);
   const fee = $derived(T.fee * (Math.max(w, 1) + 1));
   const min = $derived(T.minPer * Math.max(w, 1));
@@ -222,7 +223,7 @@
             class="amount"
             bind:this={amountInput}
             value={amt}
-            oninput={(e) => (amt = e.currentTarget.value.replace(/[^0-9.]/g, ''))}
+            oninput={(e) => (amt = cleanAmount(e.currentTarget.value))}
             inputmode="decimal"
             placeholder="0"
             aria-label={t(K + 'totalAmount')}

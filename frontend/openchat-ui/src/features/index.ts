@@ -59,3 +59,7 @@ export { default as WalletSend } from './components/WalletSend.svelte';
 export { default as WalletSettingsDialog } from './components/WalletSettingsDialog.svelte';
 export { default as WalletSwap } from './components/WalletSwap.svelte';
 export { default as WebhookDialog } from './components/WebhookDialog.svelte';
+
+export type { AuthMethod, SignupDetails } from './components/AuthDialog.svelte';
+export type { NetworkId } from './components/WalletReceive.svelte';
+export type { SendContact, WalletSendRequest } from './components/WalletSend.svelte';
