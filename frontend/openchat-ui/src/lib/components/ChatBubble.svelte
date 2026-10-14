@@ -333,12 +333,16 @@
     white-space: nowrap;
   }
 
+  /* quoted text wraps up to three lines, then ends in an ellipsis */
   .quote-text {
     font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-sans);
     color: var(--quote-text);
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    overflow-wrap: anywhere;
   }
 
   .forwarded {
