@@ -22,7 +22,7 @@ type Meta = { name: string; description: string; group?: string; props: { name: 
 const label = (g: GroupId) => groups.find((x) => x.id === g)!.label;
 const words = (s: string) => new Set(s.replace(/\.dc\.html/g, '').split(/[^A-Za-z0-9]+/).filter(Boolean));
 
-const demoGroups: GroupId[] = ['foundations', 'general', 'app'];
+const demoGroups: GroupId[] = ['foundations', 'general', 'features'];
 
 const sectionHits: Hit[] = demoGroups.flatMap((g) =>
   sectionsFor[g].map((s) => ({
@@ -42,7 +42,7 @@ const componentHits: Hit[] = (meta as Meta[]).map((c) => {
   return {
     kind: 'component' as const,
     title: c.name,
-    sub: c.description.split('\n')[0] || (c.group === 'app' ? 'App component' : 'Library component'),
+    sub: c.description.split('\n')[0] || (c.group === 'features' ? 'Feature component' : 'Library component'),
     target: links[0] ?? { group: 'api', id: '' },
     links,
     haystack: (c.description + ' ' + c.props.map((p) => p.name).join(' ')).toLowerCase(),

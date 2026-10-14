@@ -6,19 +6,19 @@ Package name: `@openchat/ui` (change in package.json if needed).
 ## Run
 ```
 npm install
-npm run dev      # Component Library: Foundations / General / App / API, mode · accent · direction controls
+npm run dev      # Component Library: Foundations / General / Features / API, mode · accent · direction controls
 npm run check    # svelte-check (types)
 ```
 
 ## Layout
 - `src/lib/components/X.svelte` — **library** (app-agnostic) components. Markup + scoped CSS for hover/active/focus states, typed `Props`.
-- `src/app/components/X.svelte` — **app** components: OpenChat screens, panels, dialogs and flows, built on the library. Entry: `src/app/index.ts`.
+- `src/features/components/X.svelte` — **feature** components: OpenChat screens, panels, dialogs and flows, built on the library. Entry: `src/features/index.ts`. Library components never import from here.
 - Every component is plain Svelte 5: typed `Props` via `$props()`, state in runes, scoped CSS. The export's `.logic.js` classes and the `useLogic` runtime are gone (see "Converted to plain Svelte 5").
 - `src/lib/types.ts` — shared prop types (menu items, messages, wallet tokens, prizes / transfers / swaps, group settings, composer attachments …), exported from `src/lib/index.ts`.
 - `src/lib/styles/tokens.css` (+ generated `icons.css`), `global.css` (keyframes and global rules collected from components).
 - `src/lib/icons.js` — canonical icon set; `Icon.svelte` or `mask: var(--icon-<name>)`.
 - `src/lib/behaviours/a11y.js` and `tooltip.js` — imported once in `main.ts`.
-- `src/docs/` — the Component Library page: `Docs.svelte` (nav shell, scroll spy), `sections.ts` (section ids/titles per group), `groups/` (Foundations, General, App, Api), `Section`/`Frame`, `meta.json` (props metadata for the API group), `samples.ts` (all demo data).
+- `src/docs/` — the Component Library page: `Docs.svelte` (nav shell, scroll spy), `sections.ts` (section ids/titles per group), `groups/` (Foundations, General, Features, Api), `Section`/`Frame`, `meta.json` (props metadata for the API group), `samples.ts` (all demo data).
 
 ## Conventions (same as the prototype)
 - Theme on the app root only: `data-mode="dark|light"` + `data-accent="pink|orange|blue|green"`. Components take no theme props.
@@ -167,13 +167,13 @@ No `.logic.js` and no `useLogic`: state in runes, view values in `$derived`, sty
 ## Known gaps
 - `npm run build` and `svelte-check` pass (0 errors). The remaining warnings are a11y notes on custom `role="button"` elements; keyboard activation for those is handled globally by `a11y.js`.
 - The app **shell** (`OpenChat App.dc.html`: layout, routing between chats/wallet/explore, call persistence, demo data) is not exported — only its components. Wire them in your own routes.
-- App components still carry local sample data where the prototype did; move it to fixtures when connecting the backend.
+- Feature components still carry local sample data where the prototype did; move it to fixtures when connecting the backend.
 - `Countdown` isn't used by the message bubbles yet (they take pre-formatted strings).
 
 ## Keeping in sync with the prototype
 Every component was hand-converted after export, so **do not re-export**: regenerating a component would overwrite the conversion. Each file's source hash (in `export-manifest.json` and the tables below) records which prototype version it was converted from; when the prototype changes, compare against that hash and port the change by hand.
 
-## Library (73)
+## Library (74)
 | Component | Source | Source hash | Exported |
 |---|---|---|---|
 | ActivityRow | `lib/ActivityRow.dc.html` | `ada8248e` | 2026-10-07 |
@@ -239,6 +239,7 @@ Every component was hand-converted after export, so **do not re-export**: regene
 | TimedToggle | `lib/TimedToggle.dc.html` | `3ee63b57` | 2026-10-07 |
 | Toggle | `lib/Toggle.dc.html` | `4b90cec2` | 2026-10-07 |
 | TokenAvatar | `lib/TokenAvatar.dc.html` | `362ee2f9` | 2026-10-07 |
+| TokenCoin | `lib/TokenCoin.dc.html` | `8398db54` | 2026-10-13 |
 | TokenPicker | `lib/TokenPicker.dc.html` | `8699ab5d` | 2026-10-07 |
 | Tooltip | `lib/Tooltip.dc.html` | `27d349b2` | 2026-10-07 |
 | TransactionRow | `lib/TransactionRow.dc.html` | `235ffaf2` | 2026-10-13 |
@@ -250,7 +251,7 @@ Every component was hand-converted after export, so **do not re-export**: regene
 | VoiceMessage | `lib/VoiceMessage.dc.html` | `e210f6a8` | 2026-10-13 |
 | Waveform | `lib/Waveform.dc.html` | `d43e3c8e` | 2026-10-13 |
 
-## App (56)
+## Features (55)
 | Component | Source | Source hash | Exported |
 |---|---|---|---|
 | AccessGates | `lib/AccessGates.dc.html` | `fceffeb8` | 2026-10-13 |
@@ -296,7 +297,6 @@ Every component was hand-converted after export, so **do not re-export**: regene
 | SwapOfferDialog | `lib/SwapOfferDialog.dc.html` | `35fa8254` | 2026-10-13 |
 | ThreadList | `lib/ThreadList.dc.html` | `4e4977fb` | 2026-10-13 |
 | ThreadPanel | `lib/ThreadPanel.dc.html` | `e35352d5` | 2026-10-13 |
-| TokenCoin | `lib/TokenCoin.dc.html` | `8398db54` | 2026-10-13 |
 | UpgradeBanner | `lib/UpgradeBanner.dc.html` | `af894647` | 2026-10-13 |
 | UserDialog | `lib/UserDialog.dc.html` | `47a5b5d4` | 2026-10-13 |
 | UserGroupDialog | `lib/UserGroupDialog.dc.html` | `2c0cc062` | 2026-10-13 |

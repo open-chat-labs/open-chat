@@ -1,9 +1,9 @@
-<!-- App: OpenChat-specific components and patterns, one <Section> per entry in sections.ts `app`. Demo data in samples.ts. -->
+<!-- Features: OpenChat-specific components and patterns, one <Section> per entry in sections.ts `features`. Demo data in samples.ts. -->
 <script lang="ts">
   import { onMount, tick } from 'svelte';
   import Section from '../Section.svelte';
   import Frame from '../Frame.svelte';
-  import { app, sec } from '../sections';
+  import { features, sec } from '../sections';
   import {
     samples, callPeople, coinSizes as coins, dividerThread, headerMenu, infoDetails, joinGate, messageActionItems,
     patternRows, receivedGroup, sentGroup, threadFaces, threadGroups, threadReplies, threadRoot, tiles,
@@ -13,13 +13,13 @@
     ActivityRow, CallEvent, ChatBubble, ChatRow, ComposerBar, EmojiPicker, EmptyState, FileMessage, LinkPreview,
     MediaMessage, MemberRow, MessageComposer, PanelCover, PanelNavRow, PollMessage, PrizeMessage, ProposalMessage,
     StatCard, StatsDonut, SwapOffer as SwapOfferMessage, TileButtons, TransferMessage, TypingIndicator, VoiceMessage,
-    Button, MessageActions, MessageGroup, UnreadDivider,
+    Button, MessageActions, MessageGroup, TokenCoin, UnreadDivider,
   } from '../../lib/index';
   import {
-    BalanceCard, NavRail, TokenCoin, CallPanel, ChatListHeader, ChatListPanel, ConversationHeader, DailyPuzzleCard,
+    BalanceCard, NavRail, CallPanel, ChatListHeader, ChatListPanel, ConversationHeader, DailyPuzzleCard,
     DmPanel, GroupPanel, GroupStats, InfoPanel, JoinGateDialog, MiniCall, PollBuilderDialog, PuzzleDialog, ThreadList,
     ThreadPanel, VideoTile,
-  } from '../../app/index';
+  } from '../../features/index';
   import type { GroupMessage } from '../../lib/types';
 
   let selectedRow = $state(2);
@@ -106,7 +106,7 @@
 
 <!-- App group, part A: chat summaries … wallet blocks. -->
 
-<Section {...sec(app, 'chat-summaries')}>
+<Section {...sec(features, 'chat-summaries')}>
   <div class="grid2">
     <Frame label="ChatRow · states">
       <div class="stack">
@@ -135,7 +135,7 @@
   </div>
 </Section>
 
-<Section {...sec(app, 'messages')}>
+<Section {...sec(features, 'messages')}>
   <div class="grid2">
     <Frame label="Received">
       <div class="thread">
@@ -165,7 +165,7 @@
   </div>
 </Section>
 
-<Section {...sec(app, 'rich-messages')}>
+<Section {...sec(features, 'rich-messages')}>
   <div class="grid2">
     <Frame label="Media & files">
       <div class="thread">
@@ -198,13 +198,13 @@
   </Frame>
 </Section>
 
-<Section {...sec(app, 'emoji-picker')}>
+<Section {...sec(features, 'emoji-picker')}>
   <Frame>
     <EmojiPicker selected={picked} onPick={(e) => (picked = picked.includes(e) ? picked.filter((x) => x !== e) : [...picked, e])} />
   </Frame>
 </Section>
 
-<Section {...sec(app, 'message-composer')}>
+<Section {...sec(features, 'message-composer')}>
   <div class="grid2">
     <Frame label="Default"><div class="fill"><MessageComposer demo="idle" /></div></Frame>
     <Frame label="Typing"><div class="fill them"><ComposerBar typingNames={['Danielle', 'Priya']} /></div></Frame>
@@ -215,7 +215,7 @@
   </div>
 </Section>
 
-<Section {...sec(app, 'navigation')}>
+<Section {...sec(features, 'navigation')}>
   <Frame label="NavRail · collapsed · expanded">
     <div class="rail">
       <NavRail items={S.navRail.items} pins={S.navRail.pins} activeIndex={navActive} onSelect={(i) => (navActive = i)} profileLabel="James Smith" profileHandle="@james" chitShown chitStreak={12} chitClaimable />
@@ -226,7 +226,7 @@
   </Frame>
 </Section>
 
-<Section {...sec(app, 'panel-blocks')}>
+<Section {...sec(features, 'panel-blocks')}>
   <div class="grid2">
     <Frame label="PanelCover · TileButtons">
       <div class="fill stack">
@@ -253,7 +253,7 @@
   </Frame>
 </Section>
 
-<Section {...sec(app, 'empty-error')}>
+<Section {...sec(features, 'empty-error')}>
   <Frame cols={280}>
     <EmptyState preset="no-conversations" />
     <EmptyState preset="no-results" />
@@ -263,7 +263,7 @@
   </Frame>
 </Section>
 
-<Section {...sec(app, 'density-overflow')}>
+<Section {...sec(features, 'density-overflow')}>
   <div class="grid2">
     <Frame label="Rows">
       <div class="stack">
@@ -286,7 +286,7 @@
   </div>
 </Section>
 
-<Section {...sec(app, 'wallet-blocks')}>
+<Section {...sec(features, 'wallet-blocks')}>
   <div class="grid2">
     <Frame label="BalanceCard">
       <div class="fill">
@@ -304,7 +304,7 @@
 <!-- App group, part B: the assembled patterns (list header → message group), call, daily puzzle, token coin,
      threads and the dialogs opened from buttons. -->
 
-<Section {...sec(app, 'pattern-list-header')}>
+<Section {...sec(features, 'pattern-list-header')}>
   <Frame cols={320}>
     <div class="strip"><ChatListHeader kind="dms" title="Chats" /></div>
     <div class="strip">
@@ -316,7 +316,7 @@
   </Frame>
 </Section>
 
-<Section {...sec(app, 'pattern-chat-list')}>
+<Section {...sec(features, 'pattern-chat-list')}>
   <Frame cols={300}>
     <div class="panel" style:height="560px">
       <ChatListPanel rows={patternRows as any} headerKind="dms" headerTitle="Chats" searchable showThreads threadCount={2} />
@@ -330,7 +330,7 @@
   </Frame>
 </Section>
 
-<Section {...sec(app, 'pattern-header')}>
+<Section {...sec(features, 'pattern-header')}>
   <Frame cols="minmax(0, 1fr)">
     <div class="strip"><ConversationHeader title="Danielle Moreau" kind="user" color="violet" online presence="Online" statusFav isFavourite /></div>
     <div class="strip">
@@ -342,7 +342,7 @@
   </Frame>
 </Section>
 
-<Section {...sec(app, 'pattern-info-panel')}>
+<Section {...sec(features, 'pattern-info-panel')}>
   <Frame cols={320}>
     <div class="panel" style:height="900px">
       <InfoPanel kind="user" title="Alice Anderson" handle="@alice_anderson" verified online color="violet" details={infoDetails as any} footerLabel="Report" />
@@ -362,7 +362,7 @@
   </Frame>
 </Section>
 
-<Section {...sec(app, 'pattern-group-panel')}>
+<Section {...sec(features, 'pattern-group-panel')}>
   <Frame cols="minmax(0, 400px) minmax(0, 340px)" style="justify-content: center">
     <div class="panel" style:height="720px">
       <GroupPanel {...groupPanel as any} title="The Awesome Group" memberTotal={18} storageKey="oc.docs.groupPanel.view" />
@@ -373,7 +373,7 @@
   </Frame>
 </Section>
 
-<Section {...sec(app, 'pattern-dividers')}>
+<Section {...sec(features, 'pattern-dividers')}>
   <Frame label="Opens pinned to the newest message">
     <div class="dividers" bind:this={thread} role="region" aria-label="Thread">
       {#each dividerThread as item}
@@ -387,7 +387,7 @@
   </Frame>
 </Section>
 
-<Section {...sec(app, 'pattern-message-group')}>
+<Section {...sec(features, 'pattern-message-group')}>
   <Frame cols={380}>
     <div class="col">
       <MessageGroup side="received" senderName="Danielle Moreau" color="violet" messages={received} recentReactions={['❤️', '👍', '🔥', '😂']} onReact={(i, e) => toggle(received, i, e)} />
@@ -398,7 +398,7 @@
   </Frame>
 </Section>
 
-<Section {...sec(app, 'app-call')}>
+<Section {...sec(features, 'app-call')}>
   <Frame>
     <div class="call" style:width="420px" style:height="440px">
       <CallPanel title="Julian Jelfs" people={callPeople} start={Date.now() - 754000} />
@@ -418,7 +418,7 @@
   </Frame>
 </Section>
 
-<Section {...sec(app, 'app-daily-puzzle')}>
+<Section {...sec(features, 'app-daily-puzzle')}>
   <Frame cols={360}>
     <DailyPuzzleCard state="new" countdown="10:10:10" {remind} onAction={(k) => k.startsWith('puzzleRemind') && (remind = k === 'puzzleRemindOn')} />
     <DailyPuzzleCard state="progress" sub="7 of 12 words found" countdown="10:10:10" />
@@ -426,7 +426,7 @@
   </Frame>
 </Section>
 
-<Section {...sec(app, 'app-token-coin')}>
+<Section {...sec(features, 'app-token-coin')}>
   <Frame align="center" style="justify-content: center; gap: 32px">
     {#each coins as c}
       <TokenCoin {...c} />
@@ -434,7 +434,7 @@
   </Frame>
 </Section>
 
-<Section {...sec(app, 'app-threads')}>
+<Section {...sec(features, 'app-threads')}>
   <Frame cols="minmax(0, 325px) minmax(0, 370px)" style="justify-content: center">
     <div class="panel" style:height="620px">
       <ThreadList groups={threadGroups} />
@@ -445,7 +445,7 @@
   </Frame>
 </Section>
 
-<Section {...sec(app, 'app-dialogs')}>
+<Section {...sec(features, 'app-dialogs')}>
   <Frame label="Try it · opens the real overlay">
     <Button variant="secondary" label="Join gate" onClick={() => (dialog = 'join')} />
     <Button variant="secondary" label="Poll builder" onClick={() => (dialog = 'poll')} />

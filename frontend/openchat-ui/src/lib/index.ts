@@ -1,6 +1,6 @@
 // OpenChat UI — public entry. Import the styles once in your app:
 //   import "@openchat/ui/src/lib/styles/tokens.css"; import "@openchat/ui/src/lib/styles/global.css";
-// Library = app-agnostic components. OpenChat screens/dialogs live in src/app (see src/app/index.ts).
+// Library = app-agnostic components. OpenChat screens/dialogs live in src/features (see src/features/index.ts).
 export { default as ActivityRow } from './components/ActivityRow.svelte';
 export { default as AmountCard } from './components/AmountCard.svelte';
 export { default as Avatar } from './components/Avatar.svelte';
@@ -64,6 +64,7 @@ export { default as TileButtons } from './components/TileButtons.svelte';
 export { default as TimedToggle } from './components/TimedToggle.svelte';
 export { default as Toggle } from './components/Toggle.svelte';
 export { default as TokenAvatar } from './components/TokenAvatar.svelte';
+export { default as TokenCoin } from './components/TokenCoin.svelte';
 export { default as TokenPicker } from './components/TokenPicker.svelte';
 export { default as Tooltip } from './components/Tooltip.svelte';
 export { default as TransactionRow } from './components/TransactionRow.svelte';

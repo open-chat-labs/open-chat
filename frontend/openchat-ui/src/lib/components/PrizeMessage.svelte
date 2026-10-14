@@ -5,7 +5,7 @@
 <script lang="ts">
   import Confetti from './Confetti.svelte';
   import RequirementChip from './RequirementChip.svelte';
-  import TokenCoin from '../../app/components/TokenCoin.svelte';
+  import TokenCoin from './TokenCoin.svelte';
 
   interface Props {
     token: { symbol: string; mark?: string; gradient?: string; edge?: string; edge2?: string };

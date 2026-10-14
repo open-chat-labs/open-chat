@@ -6,7 +6,7 @@
   import { groups, sectionsFor, type GroupId } from './sections';
   import Foundations from './groups/Foundations.svelte';
   import General from './groups/General.svelte';
-  import App from './groups/App.svelte';
+  import Features from './groups/Features.svelte';
   import Api from './groups/Api.svelte';
   import Search from './Search.svelte';
   import type { Target } from './search';
@@ -24,7 +24,7 @@
   const ACCENTS = ['pink', 'orange', 'blue', 'green'] as const;
   const DIRS = ['ltr', 'rtl'] as const;
 
-  let group = $state<GroupId>(pick(load('group'), ['foundations', 'general', 'app', 'api'], 'foundations'));
+  let group = $state<GroupId>(pick(load('group'), ['foundations', 'general', 'features', 'api'], 'foundations'));
   let mode = $state(pick(load('mode'), MODES, 'dark'));
   let accent = $state(pick(load('accent'), ACCENTS, 'pink'));
   let dir = $state(pick(load('dir'), DIRS, 'ltr'));
@@ -182,8 +182,8 @@
         <Foundations theme={mode + accent} />
       {:else if group === 'general'}
         <General />
-      {:else if group === 'app'}
-        <App />
+      {:else if group === 'features'}
+        <Features />
       {:else}
         <Api />
       {/if}

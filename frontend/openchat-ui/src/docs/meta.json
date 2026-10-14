@@ -5153,7 +5153,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "AccessGatesCards",
@@ -5199,7 +5199,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "AchievementToast",
@@ -5278,7 +5278,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "AchievementsDialog",
@@ -5335,7 +5335,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "ActivityPanel",
@@ -5381,7 +5381,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "AuthDialog",
@@ -5489,7 +5489,7 @@
         "doc": "Method that completed: passkey, ii, eth, sol, nfid, email or signup."
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "AvatarStack",
@@ -5698,7 +5698,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "BotDialog",
@@ -5802,7 +5802,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "CallEvent",
@@ -6127,7 +6127,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "ChatListHeader",
@@ -6261,7 +6261,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "ChatListPanel",
@@ -6537,7 +6537,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "ChitDialog",
@@ -6748,7 +6748,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "Confetti",
@@ -7129,7 +7129,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "ConvertToCommunityDialog",
@@ -7211,7 +7211,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "Countdown",
@@ -7422,7 +7422,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "DailyPuzzleCard",
@@ -7496,7 +7496,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "DeleteGroupDialog",
@@ -7553,7 +7553,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "DiamondDialog",
@@ -7681,7 +7681,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "DmChatSettings",
@@ -7767,7 +7767,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "DmPanel",
@@ -8023,7 +8023,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "EmojiPicker",
@@ -8209,7 +8209,7 @@
         "doc": "Defaults to onSignIn."
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "FileMessage",
@@ -9052,7 +9052,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "GroupSettingsDialog",
@@ -9279,7 +9279,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "GroupStats",
@@ -9380,7 +9380,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "ImportToCommunityDialog",
@@ -9437,7 +9437,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "InfoPanel",
@@ -9715,7 +9715,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "InviteDialog",
@@ -9952,7 +9952,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "JoinGateDialog",
@@ -10111,7 +10111,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "LeaderboardDialog",
@@ -10190,7 +10190,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "LeaveGroupDialog",
@@ -10258,7 +10258,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "LinkPreview",
@@ -10646,7 +10646,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "MessageActions",
@@ -11193,7 +11193,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "NavRail",
@@ -11437,7 +11437,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "NewChannelDialog",
@@ -11494,7 +11494,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "PollBuilderDialog",
@@ -11551,7 +11551,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "PollMessage",
@@ -11778,7 +11778,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "PrizeMessage",
@@ -12642,7 +12642,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "ProposalMessage",
@@ -13039,7 +13039,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "RequirementChip",
@@ -13293,7 +13293,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "SnapFloat",
@@ -13619,7 +13619,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "SwapOffer",
@@ -13806,7 +13806,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "ThreadList",
@@ -13863,7 +13863,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "ThreadPanel",
@@ -14019,7 +14019,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "ThresholdBar",
@@ -14188,7 +14188,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "library"
   },
   {
     "name": "TransferMessage",
@@ -14360,7 +14360,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "UserDialog",
@@ -14634,7 +14634,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "UserGroupDialog",
@@ -14739,7 +14739,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "VideoTile",
@@ -14851,7 +14851,7 @@
         "doc": "Corner radius, px."
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "WalletMain",
@@ -14949,7 +14949,7 @@
         "doc": "Toast \"Message\" action after sending to a person."
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "WalletPanel",
@@ -15160,7 +15160,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "WalletReceive",
@@ -15237,7 +15237,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "WalletRecipients",
@@ -15305,7 +15305,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "WalletSend",
@@ -15380,7 +15380,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "WalletSettingsDialog",
@@ -15453,7 +15453,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "WalletSwap",
@@ -15516,7 +15516,7 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   },
   {
     "name": "Waveform",
@@ -15754,6 +15754,6 @@
         "doc": ""
       }
     ],
-    "group": "app"
+    "group": "features"
   }
 ]

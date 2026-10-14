@@ -3,7 +3,7 @@
 import meta from './meta.json';
 
 export type SectionMeta = { id: string; title: string; meta: string };
-export type GroupId = 'foundations' | 'general' | 'app' | 'api';
+export type GroupId = 'foundations' | 'general' | 'features' | 'api';
 
 export const groups: { id: GroupId; label: string; title: string; intro: string }[] = [
   {
@@ -19,9 +19,9 @@ export const groups: { id: GroupId; label: string; title: string; intro: string 
     intro: 'Product-agnostic components: buttons, inputs, menus, overlays, feedback and the small pieces every screen reuses. None of them know about chats or wallets.',
   },
   {
-    id: 'app',
-    label: 'App',
-    title: 'App components',
+    id: 'features',
+    label: 'Features',
+    title: 'Features',
     intro: 'Components that only make sense in OpenChat: chat rows, messages, the composer, navigation, panels, wallet blocks, and the patterns they assemble into.',
   },
   {
@@ -79,7 +79,8 @@ export const general: SectionMeta[] = [
   { id: 'progress-timeline', title: 'Progress timeline', meta: 'ProgressTimeline.dc.html' },
 ];
 
-export const app: SectionMeta[] = [
+// ids keep the prototype's app-* anchors so deep links still work
+export const features: SectionMeta[] = [
   { id: 'chat-summaries', title: 'Chat summaries', meta: 'ChatRow.dc.html · ActivityRow.dc.html' },
   { id: 'messages', title: 'Messages', meta: 'ChatBubble.dc.html · VoiceMessage.dc.html · TypingIndicator.dc.html' },
   { id: 'rich-messages', title: 'Rich messages', meta: 'MediaMessage · FileMessage · LinkPreview · TransferMessage · SwapOffer · PollMessage · PrizeMessage · ProposalMessage · CallEvent' },
@@ -112,7 +113,7 @@ export const api: SectionMeta[] = apiComponents.map((m) => ({
   meta: `${m.source.split('/').pop()} · ${m.props.length} props`,
 }));
 
-export const sectionsFor: Record<GroupId, SectionMeta[]> = { foundations, general, app, api };
+export const sectionsFor: Record<GroupId, SectionMeta[]> = { foundations, general, features, api };
 
 /** Section header props by id, for `<Section {...sec(general, 'icons')}>`. */
 export const sec = (list: SectionMeta[], id: string): SectionMeta => {

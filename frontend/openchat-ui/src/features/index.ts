@@ -1,4 +1,4 @@
-// OpenChat app components (screens, panels, dialogs, flows) — built on the library in src/lib.
+// OpenChat feature components (screens, panels, dialogs, flows) — built on the library in src/lib.
 // Exported 2026-10-13 (pass 2). They still carry local sample data where the prototype did; move it to fixtures when wiring the backend.
 export { default as AccessGates } from './components/AccessGates.svelte';
 export { default as AccessGatesCards } from './components/AccessGatesCards.svelte';
@@ -43,7 +43,6 @@ export { default as StreakInsuranceDialog } from './components/StreakInsuranceDi
 export { default as SwapOfferDialog } from './components/SwapOfferDialog.svelte';
 export { default as ThreadList } from './components/ThreadList.svelte';
 export { default as ThreadPanel } from './components/ThreadPanel.svelte';
-export { default as TokenCoin } from './components/TokenCoin.svelte';
 export { default as UpgradeBanner } from './components/UpgradeBanner.svelte';
 export { default as UserDialog } from './components/UserDialog.svelte';
 export { default as UserGroupDialog } from './components/UserGroupDialog.svelte';
