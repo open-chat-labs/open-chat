@@ -7,7 +7,6 @@ mod events_map;
 mod expiring_events;
 mod hybrid_map;
 mod last_updated_timestamps;
-mod legacy_heap_entries;
 mod message_content_internal;
 mod message_event_indexes;
 mod message_ids;

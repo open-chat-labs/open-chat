@@ -1,4 +1,3 @@
-use crate::legacy_heap_entries::LegacyHeapEntries;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::{ChatEventKeyPrefix, ExpiringEventKeyPrefix, KeyPrefix, with_map, with_map_mut};
 use types::{EventIndex, MAX_EVENT_INDEX, MIN_EVENT_INDEX, TimestampMillis};
@@ -7,9 +6,6 @@ use types::{EventIndex, MAX_EVENT_INDEX, MIN_EVENT_INDEX, TimestampMillis};
 // stable memory map for small entries.
 #[derive(Serialize, Deserialize, Default)]
 pub struct ExpiringEvents {
-    // Entries from before they were stored in stable memory (see `LegacyHeapEntries`)
-    #[serde(rename = "event_expiry_dates", default, skip_serializing)]
-    legacy_on_heap: LegacyHeapEntries,
     // A lower bound for the expiry dates of the entries in stable memory, or `None` if there are
     // none, so that checking when the next event expires doesn't require reading from stable
     // memory. This is exact other than while expired events are being taken.
@@ -58,10 +54,6 @@ impl ExpiringEvents {
     pub fn refresh_next_expiry(&mut self, events_prefix: &ChatEventKeyPrefix) {
         let prefix = ExpiringEventKeyPrefix::new_from_events_prefix(events_prefix);
         self.next_expiry_in_stable_memory = first_entry_in_stable_memory(&prefix).map(|(ts, _)| ts);
-    }
-
-    pub(crate) fn legacy_heap_entries(&self) -> usize {
-        self.legacy_on_heap.count()
     }
 }
 
@@ -122,29 +114,6 @@ mod tests {
             taken_count += 1;
         }
         assert_eq!(taken_count, 100);
-    }
-
-    #[test]
-    fn entries_from_before_stable_memory_are_counted_but_not_kept() {
-        #[derive(Serialize)]
-        struct Legacy {
-            event_expiry_dates: BTreeSet<(TimestampMillis, EventIndex)>,
-            n: Option<TimestampMillis>,
-        }
-        let legacy = Legacy {
-            event_expiry_dates: (0..10u32).map(|i| (1000 + i as u64, i.into())).collect(),
-            n: Some(2000),
-        };
-
-        let expiring_events: ExpiringEvents = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&legacy));
-        assert_eq!(expiring_events.legacy_heap_entries(), 10);
-        assert_eq!(expiring_events.next_event_expiry(), Some(2000));
-
-        let bytes = msgpack::serialize_then_unwrap(&expiring_events);
-        assert!(!bytes.windows(18).any(|w| w == b"event_expiry_dates"));
-        let expiring_events: ExpiringEvents = msgpack::deserialize_then_unwrap(&bytes);
-        assert_eq!(expiring_events.legacy_heap_entries(), 0);
-        assert_eq!(expiring_events.next_event_expiry(), Some(2000));
     }
 
     #[test]

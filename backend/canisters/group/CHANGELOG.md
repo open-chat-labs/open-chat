@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove refusing to upgrade while chat events data is held on the heap, and reading the layouts from before that data was moved into stable memory ([#LEGACY](https://github.com/open-chat-labs/open-chat/pull/LEGACY))
+
 ## [[2.0.2141](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2141-group)] - 2026-10-14
 
 ### Changed

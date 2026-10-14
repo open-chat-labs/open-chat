@@ -1,4 +1,3 @@
-use crate::legacy_heap_entries::LegacyHeapEntries;
 use search::simple::Document;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::{
@@ -34,12 +33,10 @@ const MAX_STEPS_BEFORE_SEEKING: usize = 8;
 // A search finds the messages containing a match for every query term (and, if any users are
 // specified, sent by one of those users), most recent first, by intersecting the lists of
 // messages matching each term, skipping over the parts of each list which can't contain a match.
+//
+// It holds nothing itself, but is kept a struct rather than a unit struct, since it is stored as a map.
 #[derive(Serialize, Deserialize, Default)]
-pub struct SearchIndex {
-    // Messages from before the index was stored in stable memory (see `LegacyHeapEntries`)
-    #[serde(rename = "map", default, skip_serializing)]
-    legacy_on_heap: LegacyHeapEntries,
-}
+pub struct SearchIndex {}
 
 impl SearchIndex {
     pub fn add(
@@ -162,10 +159,6 @@ impl SearchIndex {
         }
 
         with_map(|m| search_stable_memory(m, events_prefix, min_visible_message_index, &terms, users, max_results))
-    }
-
-    pub(crate) fn legacy_heap_entries(&self) -> usize {
-        self.legacy_on_heap.count()
     }
 
     pub(crate) fn entries(

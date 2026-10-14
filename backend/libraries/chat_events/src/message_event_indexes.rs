@@ -1,10 +1,6 @@
-use serde::de::value::{MapAccessDeserializer, SeqAccessDeserializer};
-use serde::de::{MapAccess, SeqAccess, Visitor};
-use serde::ser::SerializeStruct;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use stable_memory_map::{ChatEventKeyPrefix, KeyPrefix, MessageEventIndexesKeyPrefix, with_map, with_map_mut};
-use std::fmt::Formatter;
 use std::io::Cursor;
 use types::{EventIndex, MessageIndex};
 
@@ -22,15 +18,16 @@ const CHUNK_SIZE: usize = 128;
 // Each chunk is encoded as a sequence of unsigned LEB128 values, being its first event index
 // followed by the difference between each event index and the previous one. Most messages directly
 // follow the previous message, so most event indexes take a single byte.
-#[derive(Default)]
+#[derive(Serialize, Deserialize, Default)]
 pub struct MessageEventIndexes {
     // The event indexes of the messages which aren't in stable memory, starting from the message
     // index `chunk_first_event_indexes.len() * CHUNK_SIZE`. This holds fewer than `CHUNK_SIZE`
-    // entries, other than for a list from before the event indexes were stored in stable memory
-    // (see `legacy_full_chunks_on_heap`).
+    // entries.
+    #[serde(rename = "h")]
     on_heap: Vec<EventIndex>,
     // The first event index of each chunk in stable memory, so that an event index can be mapped to
     // a message index by reading a single chunk
+    #[serde(rename = "c")]
     chunk_first_event_indexes: Vec<EventIndex>,
 }
 
@@ -137,12 +134,6 @@ impl MessageEventIndexes {
         });
     }
 
-    // The number of full chunks on the heap, which a list only holds if it is from before the event
-    // indexes were stored in stable memory (see `LegacyHeapEntries`)
-    pub fn legacy_full_chunks_on_heap(&self) -> usize {
-        self.on_heap.len() / CHUNK_SIZE
-    }
-
     fn stable_memory_len(&self) -> usize {
         self.chunk_first_event_indexes.len() * CHUNK_SIZE
     }
@@ -175,57 +166,6 @@ fn decode_chunk(bytes: Vec<u8>) -> impl Iterator<Item = EventIndex> {
         previous += leb128::read::unsigned(&mut cursor).unwrap() as u32;
         Some(EventIndex::from(previous))
     })
-}
-
-impl Serialize for MessageEventIndexes {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut state = serializer.serialize_struct("MessageEventIndexes", 2)?;
-        state.serialize_field("h", &self.on_heap)?;
-        state.serialize_field("c", &self.chunk_first_event_indexes)?;
-        state.end()
-    }
-}
-
-// A list with nothing in stable memory used to be serialized as a plain list of its event indexes,
-// which is still read
-
-impl<'de> Deserialize<'de> for MessageEventIndexes {
-    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        deserializer.deserialize_any(MessageEventIndexesVisitor)
-    }
-}
-
-struct MessageEventIndexesVisitor;
-
-#[derive(Deserialize)]
-struct MessageEventIndexesFields {
-    #[serde(rename = "h")]
-    on_heap: Vec<EventIndex>,
-    #[serde(rename = "c")]
-    chunk_first_event_indexes: Vec<EventIndex>,
-}
-
-impl<'de> Visitor<'de> for MessageEventIndexesVisitor {
-    type Value = MessageEventIndexes;
-
-    fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
-        formatter.write_str("a list of event indexes or a map")
-    }
-
-    fn visit_seq<A: SeqAccess<'de>>(self, seq: A) -> Result<Self::Value, A::Error> {
-        Ok(MessageEventIndexes {
-            on_heap: Vec::deserialize(SeqAccessDeserializer::new(seq))?,
-            chunk_first_event_indexes: Vec::new(),
-        })
-    }
-
-    fn visit_map<A: MapAccess<'de>>(self, map: A) -> Result<Self::Value, A::Error> {
-        let fields = MessageEventIndexesFields::deserialize(MapAccessDeserializer::new(map))?;
-        Ok(MessageEventIndexes {
-            on_heap: fields.on_heap,
-            chunk_first_event_indexes: fields.chunk_first_event_indexes,
-        })
-    }
 }
 
 #[cfg(test)]
@@ -278,26 +218,6 @@ mod tests {
         assert_eq!(bytes.len(), 2 + 2 + (CHUNK_SIZE - 2));
         assert_eq!(&bytes[..3], &[0xe8, 0x07, 0x01]);
         assert_eq!(decode_chunk(bytes).collect::<Vec<_>>(), model);
-    }
-
-    #[test]
-    fn a_plain_list_from_before_stable_memory_is_read() {
-        init_stable_memory_map();
-        let events_prefix = events_prefix(1);
-
-        // A list with fewer than a chunk of event indexes, as it was serialized before
-        let model = random_event_indexes(CHUNK_SIZE - 5);
-        let message_event_indexes: MessageEventIndexes =
-            msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&model));
-        assert_eq!(message_event_indexes.legacy_full_chunks_on_heap(), 0);
-        assert_matches_model(&message_event_indexes, &events_prefix, &model);
-
-        // Whereas a list with full chunks on the heap is counted as legacy, though it is still read
-        let model = random_event_indexes(3 * CHUNK_SIZE + 5);
-        let message_event_indexes: MessageEventIndexes =
-            msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&model));
-        assert_eq!(message_event_indexes.legacy_full_chunks_on_heap(), 3);
-        assert_matches_model(&message_event_indexes, &events_prefix, &model);
     }
 
     #[test]

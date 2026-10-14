@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove the job which rewrote every direct chat in the current format, now that it has run, and reading the layouts from before chat events data was moved into stable memory ([#LEGACY](https://github.com/open-chat-labs/open-chat/pull/LEGACY))
+
 ## [[2.0.2143](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2143-multi_user)] - 2026-10-14
 
 ### Changed
