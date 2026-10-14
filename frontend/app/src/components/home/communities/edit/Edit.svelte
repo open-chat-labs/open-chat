@@ -1,6 +1,7 @@
 <script lang="ts">
     import { menuCloser } from "component-lib";
     import {
+        hasAccessGateChanged,
         mobileWidth,
         type CandidateMember,
         type CommunitySummary,
@@ -205,7 +206,7 @@
     let visDirty = $derived(editing && candidate.public !== original.public);
     let infoDirty = $derived(nameDirty || descDirty || avatarDirty || bannerDirty || languageDirty);
     let gateDirty = $derived(
-        client.hasAccessGateChanged(candidate.gateConfig, original.gateConfig),
+        hasAccessGateChanged(candidate.gateConfig, original.gateConfig),
     );
     let dirty = $derived(infoDirty || rulesDirty || permissionsDirty || visDirty || gateDirty);
     let stepIndex = $derived(steps.findIndex((s) => s.key === step) ?? 0);

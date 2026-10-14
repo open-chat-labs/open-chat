@@ -16,7 +16,7 @@
     import GroupCard from "../createOrUpdateGroup/GroupCard.svelte";
     import PermissionsRoleSlider from "../PermissionsRoleSlider.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
-    import { updateGroupState } from "./group.svelte";
+    import { updateGroupState } from "@shared_components/home/createOrUpdateGroup/group.svelte";
 
     type Selected = {
         role?: ChatPermissionRole;

@@ -2,29 +2,24 @@
     import { menuCloser } from "component-lib";
     import {
         type CandidateGroupChat,
-        type CandidateMember,
-        chatIdentifierUnset,
         chatListScopeStore,
-        type Level,
         mobileWidth,
         type MultiUserChatIdentifier,
         type OpenChat,
-        type ResourceKey,
         ROLE_ADMIN,
         routeForChatIdentifier,
         selectedCommunitySummaryStore,
-        UnsupportedValueError,
-        type UpdateGroupResponse,
         type UserSummary,
     } from "@client";
     import { navigate } from "@utils/navigation";
-    import { getContext, tick } from "svelte";
+    import { getContext, tick, untrack } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
     import AreYouSure from "../../AreYouSure.svelte";
     import Button from "../../Button.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
+    import { UpdateGroupState } from "@shared_components/home/createOrUpdateGroup/group.svelte";
     import ChooseMembers from "../ChooseMembers.svelte";
     import GroupPermissionsEditor from "../GroupPermissionsEditor.svelte";
     import GroupPermissionsViewer from "../GroupPermissionsViewer.svelte";
@@ -41,17 +36,17 @@
         onClose: () => void;
     }
 
-    let { candidateGroup = $bindable(), embeddedContent, onClose }: Props = $props();
-    let confirming = $state(false);
-    let showingVerificationWarning = $state(false);
-    let busy = $state(false);
+    let { candidateGroup, embeddedContent, onClose }: Props = $props();
+
+    // The modal is opened for one group
+    const ugs = new UpdateGroupState();
+    ugs.initialise(untrack(() => candidateGroup));
+
     let step = $state("details");
     let actualWidth = $state(0);
     let detailsValid = $state(true);
     let visibilityValid = $state(true);
-    let originalGroup = $state<CandidateGroupChat>($state.snapshot(candidateGroup));
     let rulesValid = $state(true);
-    let usersToInvite = $state<CandidateMember[]>([]);
 
     function getSteps(
         editing: boolean,
@@ -82,252 +77,91 @@
         const canInvite =
             $selectedCommunitySummaryStore === undefined ||
             client.canInviteUsers($selectedCommunitySummaryStore.id);
-        return client.searchUsersForInvite(term, 20, candidateGroup.level, true, canInvite);
+        return client.searchUsersForInvite(term, 20, ugs.candidate.level, true, canInvite);
     }
 
-    function groupUpdateErrorMessage(
-        resp: UpdateGroupResponse,
-        level: Level,
-    ): ResourceKey | undefined {
-        console.log("Group update response: ", resp);
-        if (resp.kind === "success") return undefined;
-        if (resp.kind === "unchanged") return undefined;
-        if (resp.kind === "name_too_short") return i18nKey("groupNameTooShort");
-        if (resp.kind === "name_too_long") return i18nKey("groupNameTooLong");
-        if (resp.kind === "name_reserved") return i18nKey("groupNameReserved");
-        if (resp.kind === "desc_too_long") return i18nKey("groupDescTooLong");
-        if (resp.kind === "name_taken" && level === "group") return i18nKey("groupAlreadyExists");
-        if (resp.kind === "name_taken") return i18nKey("channelAlreadyExists");
-        if (resp.kind === "not_in_group") return i18nKey("userNotInGroup");
-        if (resp.kind === "internal_error") return i18nKey("groupUpdateFailed");
-        if (resp.kind === "not_authorized") return i18nKey("groupUpdateFailed");
-        if (resp.kind === "avatar_too_big") return i18nKey("avatarTooBig");
-        if (resp.kind === "rules_too_short") return i18nKey("groupRulesTooShort");
-        if (resp.kind === "rules_too_long") return i18nKey("groupRulesTooLong");
-        if (resp.kind === "user_suspended") return i18nKey("userSuspended");
-        if (resp.kind === "user_lapsed") return i18nKey("userLapsed");
-        if (resp.kind === "chat_frozen") return i18nKey("chatFrozen");
-        if (resp.kind === "failure" || resp.kind === "error") return i18nKey("failure");
-        if (resp.kind === "offline") return i18nKey("offlineError");
-        if (resp.kind === "access_gate_invalid") return i18nKey("access.gateInvalid");
-        throw new UnsupportedValueError(`Unexpected UpdateGroupResponse type received`, resp);
-    }
-
-    function optionallyInviteUsers(chatId: MultiUserChatIdentifier): Promise<void> {
-        if (usersToInvite.length === 0) {
-            return Promise.resolve();
-        }
-        return client
-            .inviteUsers(
-                chatId,
-                usersToInvite.map((u) => u.user.userId),
-            )
-            .then((resp) => {
-                if (!resp) {
-                    Promise.reject("Unable to invite users to the new group");
-                }
-            });
-    }
-
-    function updateGroup(yes: boolean = true): Promise<void> {
-        busy = true;
-
-        const changeVisibility = visDirty && candidateGroup.public !== originalGroup.public;
-
-        if (verificationWarning && !showingVerificationWarning) {
-            showingVerificationWarning = true;
-            return Promise.resolve();
-        }
-
-        if (changeVisibility && !confirming) {
-            confirming = true;
-            return Promise.resolve();
-        }
-
-        if (verificationWarning && showingVerificationWarning && !yes) {
-            showingVerificationWarning = false;
-            busy = false;
-            candidateGroup.name = originalGroup.name;
-            return Promise.resolve();
-        }
-
-        if (changeVisibility && confirming && !yes) {
-            confirming = false;
-            busy = false;
-            return Promise.resolve();
-        }
-
-        confirming = false;
-
-        const updatedGroup = $state.snapshot(candidateGroup);
-
-        return client
-            .updateGroup(
-                updatedGroup.id,
-                nameDirty ? updatedGroup.name : undefined,
-                descDirty ? updatedGroup.description : undefined,
-                rulesDirty && rulesValid ? updatedGroup.rules : undefined,
-                permissionsDirty
-                    ? client.diffGroupPermissions(
-                          originalGroup.permissions,
-                          updatedGroup.permissions,
-                      )
-                    : undefined,
-                avatarDirty ? updatedGroup.avatar?.blobData : undefined,
-                ttlDirty
-                    ? updatedGroup.eventsTTL === undefined
-                        ? "set_to_none"
-                        : { value: updatedGroup.eventsTTL }
-                    : undefined,
-                gateDirty ? updatedGroup.gateConfig : undefined,
-                visDirty ? updatedGroup.public : undefined,
-                messagesVisibleToNonMembersDirty
-                    ? updatedGroup.messagesVisibleToNonMembers
-                    : undefined,
-                externalUrlDirty ? updatedGroup.externalUrl : undefined,
-            )
-            .then((resp) => {
-                if (resp.kind === "success") {
-                    originalGroup = updatedGroup;
-                } else {
-                    const resourceKey = groupUpdateErrorMessage(resp, updatedGroup.level);
-                    if (resourceKey) {
-                        toastStore.showFailureToast({
-                            ...resourceKey,
-                            level: updatedGroup.level,
-                            lowercase: true,
-                        });
-                    }
-                }
-            })
-            .finally(() => {
-                busy = false;
+    async function save(yes: boolean = true) {
+        const outcome = await ugs.saveGroup(client, yes);
+        switch (outcome.kind) {
+            case "needs_confirmation":
+            case "declined":
+            case "invalid":
+                break;
+            case "success":
+            case "unchanged":
                 onClose();
-            });
-    }
-
-    function createGroup() {
-        busy = true;
-
-        const level = candidateGroup.level;
-
-        client
-            .createGroupChat($state.snapshot(candidateGroup))
-            .then((resp) => {
-                if (resp.kind !== "success") {
-                    const resourceKey = client.groupCreationErrorMessage(resp, level);
-                    if (resourceKey)
-                        toastStore.showFailureToast({
-                            ...resourceKey,
-                            level,
-                            lowercase: true,
-                        });
-                    step = "details";
-                } else if (!hideInviteUsers) {
-                    optionallyInviteUsers(resp.canisterId).catch((_err) => {
-                        toastStore.showFailureToast(i18nKey("inviteUsersFailed"));
-                        step = "details";
-                    });
-                    onGroupCreated(resp.canisterId);
+                break;
+            case "failed":
+                toastStore.showFailureToast(outcome.message);
+                if (editing) {
+                    onClose();
                 } else {
-                    onGroupCreated(resp.canisterId);
+                    step = "details";
                 }
-            })
-            .catch((err) => {
-                toastStore.showFailureToast(i18nKey("groupCreationFailed"));
-                console.error("Error creating group: ", err);
-                step = "details";
-            })
-            .finally(() => (busy = false));
+                break;
+            case "created_without_invites":
+                toastStore.showFailureToast(outcome.message);
+                openCreatedGroup(outcome.chatId);
+                break;
+            case "created":
+                openCreatedGroup(outcome.chatId);
+                break;
+            default:
+                outcome satisfies never;
+        }
     }
 
-    function onGroupCreated(canisterId: MultiUserChatIdentifier) {
-        const url = routeForChatIdentifier($chatListScopeStore.kind, canisterId);
+    function openCreatedGroup(chatId: MultiUserChatIdentifier) {
         onClose();
         // tick ensure that the new chat will have made its way in to the chat list by the time we arrive at the route
-        tick().then(() => navigate(url)); // trigger the selection of the chat
+        tick().then(() => navigate(routeForChatIdentifier($chatListScopeStore.kind, chatId)));
     }
 
-    let editing = $derived(!chatIdentifierUnset(candidateGroup.id));
-    let hideInviteUsers = $derived(candidateGroup.level === "channel" && candidateGroup.public);
+    let editing = $derived(ugs.editMode);
     let steps = $derived(
         getSteps(
             editing,
             detailsValid,
             visibilityValid,
             rulesValid,
-            hideInviteUsers,
+            ugs.hideInviteUsers,
             embeddedContent,
         ),
     );
     let stepIndex = $derived(steps.findIndex((s) => s.key === step) ?? 0);
     let canEditPermissions = $derived(
-        !editing ? true : client.canChangePermissions(candidateGroup.id),
+        !editing ? true : client.canChangePermissions(ugs.candidate.id),
     );
     let canEditDisappearingMessages = $derived(
-        !editing ? true : client.hasOwnerRights(candidateGroup.membership.role),
+        !editing ? true : client.hasOwnerRights(ugs.candidate.membership.role),
     );
-    let permissionsDirty = $derived(
-        client.haveGroupPermissionsChanged(originalGroup.permissions, candidateGroup.permissions),
-    );
-    let rulesDirty = $derived(
-        editing &&
-            candidateGroup.rules !== undefined &&
-            (candidateGroup.rules.enabled !== originalGroup.rules.enabled ||
-                candidateGroup.rules.text !== originalGroup.rules.text),
-    );
-    let nameDirty = $derived(editing && candidateGroup.name !== originalGroup.name);
-    let descDirty = $derived(editing && candidateGroup.description !== originalGroup.description);
-    let externalUrlDirty = $derived(
-        editing && candidateGroup.externalUrl !== originalGroup.externalUrl,
-    );
-    let avatarDirty = $derived(
-        editing && candidateGroup.avatar?.blobUrl !== originalGroup.avatar?.blobUrl,
-    );
-    let visDirty = $derived(editing && candidateGroup.public !== originalGroup.public);
-    let infoDirty = $derived(nameDirty || descDirty || avatarDirty || externalUrlDirty);
-    let gateDirty = $derived(
-        editing && client.hasAccessGateChanged(candidateGroup.gateConfig, originalGroup.gateConfig),
-    );
-    let ttlDirty = $derived(editing && candidateGroup.eventsTTL !== originalGroup.eventsTTL);
-    let messagesVisibleToNonMembersDirty = $derived(
-        editing &&
-            candidateGroup.messagesVisibleToNonMembers !==
-                originalGroup.messagesVisibleToNonMembers,
-    );
-    let dirty = $derived(
-        infoDirty ||
-            rulesDirty ||
-            permissionsDirty ||
-            visDirty ||
-            gateDirty ||
-            ttlDirty ||
-            messagesVisibleToNonMembersDirty,
-    );
+    let gateDirty = $derived(editing && ugs.accessGatesChanged());
+    let dirty = $derived(editing && ugs.hasChanges());
     let valid = $derived(detailsValid && visibilityValid && rulesValid);
     $effect(() => {
-        if (candidateGroup.public) {
-            candidateGroup.permissions.startVideoCall = ROLE_ADMIN;
+        if (ugs.candidate.public) {
+            ugs.candidate.permissions.startVideoCall = ROLE_ADMIN;
         }
     });
-    let verificationWarning = $derived(nameDirty && editing && originalGroup.verified);
 </script>
 
-{#if confirming}
+{#if ugs.confirming}
     <AreYouSure
         message={i18nKey(
-            `confirmMakeGroup${candidateGroup.public ? "Public" : "Private"}`,
+            `confirmMakeGroup${ugs.candidate.public ? "Public" : "Private"}`,
             undefined,
-            candidateGroup.level,
+            ugs.candidate.level,
             true,
         )}
-        action={updateGroup} />
+        action={save}
+    />
 {/if}
 
-{#if showingVerificationWarning}
+{#if ugs.showingVerificationWarning}
     <AreYouSure
-        message={i18nKey("verified.nameChangeWarning", undefined, candidateGroup.level, true)}
-        action={updateGroup} />
+        message={i18nKey("verified.nameChangeWarning", undefined, ugs.candidate.level, true)}
+        action={save}
+    />
 {/if}
 
 <ModalContent bind:actualWidth closeIcon {onClose}>
@@ -335,8 +169,9 @@
         <div class="header">
             <Translatable
                 resourceKey={editing
-                    ? i18nKey("group.edit", undefined, candidateGroup.level, true)
-                    : i18nKey("group.createTitle", undefined, candidateGroup.level, true)} />
+                    ? i18nKey("group.edit", undefined, ugs.candidate.level, true)
+                    : i18nKey("group.createTitle", undefined, ugs.candidate.level, true)}
+            />
         </div>
     {/snippet}
     {#snippet body()}
@@ -348,8 +183,9 @@
                         <GroupDetails
                             {embeddedContent}
                             bind:valid={detailsValid}
-                            {busy}
-                            bind:candidateGroup />
+                            busy={ugs.busy}
+                            bind:candidateGroup={ugs.candidateGroup}
+                        />
                     </div>
                 {/if}
                 {#if step === "visibility"}
@@ -360,17 +196,19 @@
                             history
                             {canEditDisappearingMessages}
                             bind:valid={visibilityValid}
-                            bind:candidate={candidateGroup}
-                            {gateDirty} />
+                            bind:candidate={ugs.candidateGroup}
+                            {gateDirty}
+                        />
                     </div>
                 {/if}
                 {#if !embeddedContent && step === "rules"}
                     <div class="rules">
                         <RulesEditor
                             bind:valid={rulesValid}
-                            level={candidateGroup.level}
-                            bind:rules={candidateGroup.rules}
-                            {editing} />
+                            level={ugs.candidate.level}
+                            bind:rules={ugs.candidateGroup.rules}
+                            {editing}
+                        />
                     </div>
                 {/if}
                 {#if step === "permissions"}
@@ -379,26 +217,29 @@
                             <GroupPermissionsEditor
                                 {embeddedContent}
                                 {editing}
-                                bind:permissions={candidateGroup.permissions}
-                                isPublic={candidateGroup.public}
+                                bind:permissions={ugs.candidateGroup.permissions}
+                                isPublic={ugs.candidate.public}
                                 isCommunityPublic={$selectedCommunitySummaryStore?.public ?? true}
-                                isChannel={candidateGroup.id.kind === "channel"} />
+                                isChannel={ugs.candidate.id.kind === "channel"}
+                            />
                         {:else}
                             <GroupPermissionsViewer
                                 {embeddedContent}
-                                permissions={candidateGroup.permissions}
-                                isPublic={candidateGroup.public}
+                                permissions={ugs.candidate.permissions}
+                                isPublic={ugs.candidate.public}
                                 isCommunityPublic={$selectedCommunitySummaryStore?.public ?? true}
-                                isChannel={candidateGroup.id.kind === "channel"} />
+                                isChannel={ugs.candidate.id.kind === "channel"}
+                            />
                         {/if}
                     </div>
                 {/if}
-                {#if !editing && !hideInviteUsers && step === "invite"}
+                {#if !editing && !ugs.hideInviteUsers && step === "invite"}
                     <div class="members">
                         <ChooseMembers
                             userLookup={searchUsers}
-                            bind:members={usersToInvite}
-                            {busy} />
+                            bind:members={ugs.candidateMembers}
+                            busy={ugs.busy}
+                        />
                     </div>
                 {/if}
             </div>
@@ -410,11 +251,12 @@
                 <div class="back">
                     {#if !editing && stepIndex > 0}
                         <Button
-                            disabled={busy}
+                            disabled={ugs.busy}
                             small={!$mobileWidth}
                             tiny={$mobileWidth}
                             onClick={() => (step = steps[stepIndex - 1].key)}
-                            ><Translatable resourceKey={i18nKey("group.back")} /></Button>
+                            ><Translatable resourceKey={i18nKey("group.back")} /></Button
+                        >
                     {/if}
                 </div>
                 <div class="actions">
@@ -423,22 +265,25 @@
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
                         onClick={onClose}
-                        secondary><Translatable resourceKey={i18nKey("cancel")} /></Button>
+                        secondary><Translatable resourceKey={i18nKey("cancel")} /></Button
+                    >
 
                     {#if editing}
                         <Button
-                            disabled={!dirty || busy || !valid}
-                            loading={busy}
+                            disabled={!dirty || ugs.busy || !valid}
+                            loading={ugs.busy}
                             small={!$mobileWidth}
                             tiny={$mobileWidth}
-                            onClick={() => updateGroup()}
+                            onClick={() => save()}
                             ><Translatable
                                 resourceKey={i18nKey(
                                     "group.update",
                                     undefined,
-                                    candidateGroup.level,
+                                    ugs.candidate.level,
                                     true,
-                                )} /></Button>
+                                )}
+                            /></Button
+                        >
                     {:else if stepIndex < steps.length - 1}
                         <Button
                             small={!$mobileWidth}
@@ -448,18 +293,20 @@
                         </Button>
                     {:else}
                         <Button
-                            disabled={busy || !valid}
-                            loading={busy}
+                            disabled={ugs.busy || !valid}
+                            loading={ugs.busy}
                             small={!$mobileWidth}
                             tiny={$mobileWidth}
-                            onClick={createGroup}
+                            onClick={() => save()}
                             ><Translatable
                                 resourceKey={i18nKey(
                                     "group.create",
                                     undefined,
-                                    candidateGroup.level,
+                                    ugs.candidate.level,
                                     true,
-                                )} /></Button>
+                                )}
+                            /></Button
+                        >
                     {/if}
                 </div>
             </div>

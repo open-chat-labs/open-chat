@@ -38,7 +38,7 @@
     import Edit from "svelte-material-icons/SquareEditOutline.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
     import AccessGateSummary from "../../AccessGateSummary.svelte";
-    import { updateGroupState } from "../../createOrUpdateGroup/group.svelte";
+    import { updateGroupState } from "@shared_components/home/createOrUpdateGroup/group.svelte";
     import Markdown from "@shared_components/Markdown.svelte";
     import BotsSummary from "../../membership/BotsSummary.svelte";
     import MembersSummary from "../../membership/MembersSummary.svelte";

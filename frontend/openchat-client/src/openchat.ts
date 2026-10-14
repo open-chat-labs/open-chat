@@ -68,11 +68,8 @@ import {
     i18nKey,
     indexRangeForChat,
     isAccountOfMultiUserCanisterUserId,
-    isBalanceGate,
     isCaptionedContent,
-    isChitEarnedGate,
     isCompositeGate,
-    isCredentialGate,
     isDeletedUser,
     isEditableContent,
     isNeuronGate,
@@ -145,7 +142,6 @@ import {
     type ChatIdentifier,
     type ChatListRoute,
     type ChatListScope,
-    type ChatPermissions,
     type ChatSummary,
     type ChatUnfrozenEvent,
     type CheckUsernameResponse,
@@ -174,6 +170,7 @@ import {
     type CommunitySummary,
     type CompletedCryptocurrencyTransfer,
     type CreateCommunityResponse,
+    type CreateGroupOutcome,
     type CreateGroupResponse,
     type CreateMultiUserCanisterResponse,
     type FundsInPreviousWallet,
@@ -263,7 +260,6 @@ import {
     type OneSecForwardingStatus,
     type OneSecTransferFees,
     type OptionUpdate,
-    type OptionalChatPermissions,
     type PartitionedUserIds,
     type PayForDiamondMembershipResponse,
     type PayForPremiumItemResponse,
@@ -291,7 +287,6 @@ import {
     type RemoteUserToggledReaction,
     type RemoveIdentityLinkResponse,
     type RemoveMemberResponse,
-    type ResourceKey,
     type RightPanelContent,
     type RoadmapRoute,
     type RouteParams,
@@ -328,6 +323,8 @@ import {
     type TipMessageResponse,
     type TokenInfo,
     type TransferSuccess,
+    type GroupChangeConfirmation,
+    type UpdateGroupOutcome,
     type UpdateGroupResponse,
     type UpdateMarketMakerConfigArgs,
     type UpdateMarketMakerConfigResponse,
@@ -558,7 +555,6 @@ import {
     containsReaction,
     createMessage,
     detailsLastUpdated,
-    diffGroupPermissions,
     doesMessageFailFilter,
     eventIndexesLoaded,
     findMessageById,
@@ -592,6 +588,12 @@ import {
 import { disableInviteCodeResult, inviteCodeResult } from "./utils/inviteLink";
 import { proposalVoteResult } from "./utils/proposalVote";
 import { withdrawFailed, withdrawResult } from "./utils/withdraw";
+import {
+    groupChangeConfirmationNeeded,
+    groupChanges,
+    groupCreationFailure,
+    groupUpdateResult,
+} from "./utils/group.svelte";
 import {
     swapError,
     swapInsufficientFunds,
@@ -4283,8 +4285,6 @@ export class OpenChat {
         localUpdates.removeCommunityPreview(id);
     }
 
-    diffGroupPermissions = diffGroupPermissions;
-
     messageContentFromFile(
         file: File | LazyFile,
         context: MessageContext,
@@ -4301,50 +4301,6 @@ export class OpenChat {
     haveCommunityPermissionsChanged(p1: CommunityPermissions, p2: CommunityPermissions): boolean {
         const args = mergeKeepingOnlyChanged(p1, p2);
         return Object.keys(args).length > 0;
-    }
-
-    haveGroupPermissionsChanged(p1: ChatPermissions, p2: ChatPermissions): boolean {
-        return this.diffGroupPermissions(p1, p2) !== undefined;
-    }
-
-    hasAccessGateChanged(
-        currentConfig: AccessGateConfig,
-        originalConfig: AccessGateConfig,
-    ): boolean {
-        if (currentConfig === originalConfig) return false;
-        const current = currentConfig.gate;
-        const original = originalConfig.gate;
-        if (current.kind !== original.kind) return true;
-        if (currentConfig.expiry !== originalConfig.expiry) return true;
-        if (isChitEarnedGate(current) && isChitEarnedGate(original)) {
-            return current.minEarned !== original.minEarned;
-        }
-        if (isNeuronGate(current) && isNeuronGate(original)) {
-            return (
-                current.governanceCanister !== original.governanceCanister ||
-                current.minDissolveDelay !== original.minDissolveDelay ||
-                current.minStakeE8s !== original.minStakeE8s
-            );
-        }
-        if (isPaymentGate(current) && isPaymentGate(original)) {
-            return (
-                current.ledgerCanister !== original.ledgerCanister ||
-                current.amount !== original.amount
-            );
-        }
-        if (isBalanceGate(current) && isBalanceGate(original)) {
-            return (
-                current.ledgerCanister !== original.ledgerCanister ||
-                current.minBalance !== original.minBalance
-            );
-        }
-        if (isCredentialGate(current) && isCredentialGate(original)) {
-            return JSON.stringify(current.credential) !== JSON.stringify(original.credential);
-        }
-        if (isCompositeGate(current) && isCompositeGate(original)) {
-            return JSON.stringify(current) !== JSON.stringify(original);
-        }
-        return false;
     }
 
     getTokenDetailsForAccessGate(gate: AccessGate): CryptocurrencyDetails | undefined {
@@ -7705,59 +7661,66 @@ export class OpenChat {
         return collection.public ? { kind: "public" } : { kind: "none" };
     }
 
-    updateGroup(
-        chatId: MultiUserChatIdentifier,
-        name?: string,
-        desc?: string,
-        rules?: UpdatedRules,
-        permissions?: OptionalChatPermissions,
-        avatar?: Uint8Array,
-        eventsTimeToLive?: OptionUpdate<bigint>,
-        gateConfig?: AccessGateConfig,
-        isPublic?: boolean,
-        messagesVisibleToNonMembers?: boolean,
-        externalUrl?: string,
-    ): Promise<UpdateGroupResponse> {
-        return this.#worker
-            .send({
+    /**
+     * Saves the changes the user has made to a group, sending only the fields that differ. A change the
+     * user has to confirm (see `GroupChangeConfirmation`) and hasn't is returned for them to confirm
+     * before anything is sent.
+     */
+    async updateGroup(
+        original: CandidateGroupChat,
+        candidate: CandidateGroupChat,
+        confirmed: GroupChangeConfirmation[] = [],
+    ): Promise<UpdateGroupOutcome> {
+        const changes = groupChanges(original, candidate);
+        if (Object.keys(changes).length === 0) return { kind: "unchanged" };
+
+        const confirmation = groupChangeConfirmationNeeded(original, changes, confirmed);
+        if (confirmation !== undefined) return { kind: "needs_confirmation", confirmation };
+
+        const chatId = candidate.id;
+        let resp: UpdateGroupResponse;
+        try {
+            resp = await this.#worker.send({
                 kind: "updateGroup",
                 chatId,
-                name,
-                desc,
-                rules,
-                permissions,
-                avatar,
-                eventsTimeToLive,
-                gateConfig,
-                isPublic,
-                messagesVisibleToNonMembers,
-                externalUrl,
-            })
-            .then((resp) => {
-                if (resp.kind === "success") {
-                    localUpdates.updateChatProperties(
-                        chatId,
-                        name,
-                        desc,
-                        permissions,
-                        gateConfig,
-                        eventsTimeToLive,
-                        isPublic,
-                    );
+                name: changes.name,
+                desc: changes.description,
+                rules: changes.rules,
+                permissions: changes.permissions,
+                avatar: changes.avatar,
+                eventsTimeToLive: changes.eventsTimeToLive,
+                gateConfig: changes.gateConfig,
+                isPublic: changes.isPublic,
+                messagesVisibleToNonMembers: changes.messagesVisibleToNonMembers,
+                externalUrl: changes.externalUrl,
+            });
+        } catch (err) {
+            this.logError("Unable to update group", err);
+            resp = { kind: "failure" };
+        }
 
-                    if (rules !== undefined && resp.rulesVersion !== undefined) {
-                        localUpdates.updateChatRules(chatId, {
-                            text: rules.text,
-                            enabled: rules.enabled,
-                            version: resp.rulesVersion,
-                        });
-                    }
-                } else {
-                    this.#logger.error("Update group rules failed: ", resp.kind);
-                }
-                return resp;
-            })
-            .catch(() => ({ kind: "failure" }));
+        if (resp.kind === "success") {
+            localUpdates.updateChatProperties(
+                chatId,
+                changes.name,
+                changes.description,
+                changes.permissions,
+                changes.gateConfig,
+                changes.eventsTimeToLive,
+                changes.isPublic,
+            );
+
+            if (changes.rules !== undefined && resp.rulesVersion !== undefined) {
+                localUpdates.updateChatRules(chatId, {
+                    text: changes.rules.text,
+                    enabled: changes.rules.enabled,
+                    version: resp.rulesVersion,
+                });
+            }
+        } else {
+            this.logMessage("Unable to update group", resp);
+        }
+        return groupUpdateResult(resp, candidate.level);
     }
 
     #isMultiUserChat(chat: ChatSummary): chat is MultiUserChat {
@@ -7773,14 +7736,40 @@ export class OpenChat {
         );
     }
 
-    createGroupChat(candidate: CandidateGroupChat): Promise<CreateGroupResponse> {
-        return this.#worker.send({ kind: "createGroupChat", candidate }).then((resp) => {
-            if (resp.kind === "success") {
-                const group = groupChatFromCandidate(resp.canisterId, candidate);
-                localUpdates.addChat(group);
+    // Creates a group, then invites `invitees` to it
+    async createGroup(
+        candidate: CandidateGroupChat,
+        invitees: string[],
+    ): Promise<CreateGroupOutcome> {
+        let resp: CreateGroupResponse;
+        try {
+            resp = await this.#worker.send({ kind: "createGroupChat", candidate });
+        } catch (err) {
+            this.logError("Unable to create group", err);
+            return { kind: "failed", message: i18nKey("groupCreationFailed") };
+        }
+        if (resp.kind !== "success") {
+            this.logMessage("Unable to create group", resp);
+            return { kind: "failed", message: groupCreationFailure(resp, candidate.level) };
+        }
+
+        const chatId = resp.canisterId;
+        localUpdates.addChat(groupChatFromCandidate(chatId, candidate));
+
+        if (invitees.length > 0) {
+            const invited = await this.inviteUsers(chatId, invitees).catch((err) => {
+                this.logError("Unable to invite users to a new group", err);
+                return false;
+            });
+            if (!invited) {
+                return {
+                    kind: "created_without_invites",
+                    chatId,
+                    message: i18nKey("inviteUsersFailed"),
+                };
             }
-            return resp;
-        });
+        }
+        return { kind: "created", chatId };
     }
 
     markThreadSummaryUpdated(threadRootMessageId: bigint, summary: Partial<ThreadSummary>): void {
@@ -13093,30 +13082,6 @@ export class OpenChat {
             externalUrl: embeddedContent ? "" : undefined,
             verified: false,
         };
-    }
-
-    groupCreationErrorMessage(resp: CreateGroupResponse, level: Level): ResourceKey | undefined {
-        if (resp.kind === "success") return undefined;
-        if (resp.kind === "offline") return i18nKey("offlineError");
-        if (resp.kind === "error") {
-            if (resp.code === ErrorCode.NameTooShort) return i18nKey("groupNameTooShort");
-            if (resp.code === ErrorCode.NameTooLong) return i18nKey("groupNameTooLong");
-            if (resp.code === ErrorCode.NameReserved) return i18nKey("groupNameReserved");
-            if (resp.code === ErrorCode.DescriptionTooLong) return i18nKey("groupDescTooLong");
-            if (resp.code === ErrorCode.NameTaken && level === "group")
-                return i18nKey("groupAlreadyExists");
-            if (resp.code === ErrorCode.NameTaken) return i18nKey("channelAlreadyExists");
-            if (resp.code === ErrorCode.AvatarTooBig) return i18nKey("groupAvatarTooBig");
-            if (resp.code === ErrorCode.MaxGroupsCreated) return i18nKey("maxGroupsCreated");
-            if (resp.code === ErrorCode.Throttled) return i18nKey("groupCreationFailed");
-            if (resp.code === ErrorCode.RulesTooShort) return i18nKey("groupRulesTooShort");
-            if (resp.code === ErrorCode.RulesTooLong) return i18nKey("groupRulesTooLong");
-            if (resp.code === ErrorCode.InitiatorSuspended) return i18nKey("userSuspended");
-            if (resp.code === ErrorCode.NotDiamondMember)
-                return i18nKey("unauthorizedToCreatePublicGroup");
-            if (resp.code === ErrorCode.InvalidAccessGate) return i18nKey("access.gateInvalid");
-        }
-        return i18nKey("groupCreationFailed");
     }
 
     extractDimensionsFromMessageContent(content: MessageContent): Dimensions | undefined {

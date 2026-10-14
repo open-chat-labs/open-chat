@@ -14,7 +14,7 @@ import {
     type VersionedRules,
 } from "@client";
 import { navigate } from "@utils/navigation";
-import { UpdateGroupOrCommunityState } from "../../groupOrCommunity.svelte";
+import { UpdateGroupOrCommunityState } from "@shared_components/home/groupOrCommunity.svelte";
 
 export const MAX_RULES_LENGTH = 1024;
 export const MIN_NAME_LENGTH = 3;
@@ -213,7 +213,7 @@ class UpdateCommunityState extends UpdateGroupOrCommunityState {
                     permissionsDirty ? community.permissions : undefined,
                     this.#avatarChanged ? community.avatar.blobData : undefined,
                     this.#bannerChanged ? community.banner.blobData : undefined,
-                    this.accessGatesChanged(client) ? community.gateConfig : undefined,
+                    this.accessGatesChanged() ? community.gateConfig : undefined,
                     this.#visibilityChanged ? community.public : undefined,
                     this.#languageChanged ? community.primaryLanguage : undefined,
                 )

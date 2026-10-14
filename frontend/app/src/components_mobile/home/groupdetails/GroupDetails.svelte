@@ -20,6 +20,7 @@
     import {
         allUsersStore,
         anonUserStore,
+        candidateGroupFromChat,
         chatIdentifiersEqual,
         communitiesStore,
         defaultChatRules,
@@ -48,7 +49,7 @@
     import Translatable from "@shared_components/Translatable.svelte";
     import AccessGateSummary from "../AccessGateSummary.svelte";
     import ImportToCommunity from "../communities/Import.svelte";
-    import { updateGroupState } from "../createOrUpdateGroup/group.svelte";
+    import { updateGroupState } from "@shared_components/home/createOrUpdateGroup/group.svelte";
     import Markdown from "@shared_components/Markdown.svelte";
     import BotsSummary from "../membership/BotsSummary.svelte";
     import MembersSummary from "../membership/MembersSummary.svelte";
@@ -139,30 +140,7 @@
 
     function editGroup() {
         if (canEdit) {
-            updateGroupState.initialise({
-                id: chat.id,
-                kind: "candidate_group_chat",
-                name: chat.name,
-                description: chat.description,
-                historyVisible: chat.historyVisible,
-                public: chat.public,
-                frozen: chat.frozen,
-                members: [],
-                permissions: structuredClone(chat.permissions),
-                rules: { ...rules, newVersion: false },
-                avatar: {
-                    blobReference: chat.blobReference,
-                    blobUrl: chat.blobUrl,
-                    blobData: chat.blobData,
-                },
-                gateConfig: structuredClone(chat.gateConfig),
-                level: chat.level,
-                membership: chat.membership,
-                eventsTTL: chat.eventsTTL,
-                messagesVisibleToNonMembers: chat.messagesVisibleToNonMembers,
-                externalUrl: chat.kind === "channel" ? chat.externalUrl : undefined,
-                verified: chat.kind === "group_chat" ? chat.verified : false,
-            });
+            updateGroupState.initialise(candidateGroupFromChat(chat, rules));
             publish("updateGroup");
         }
     }

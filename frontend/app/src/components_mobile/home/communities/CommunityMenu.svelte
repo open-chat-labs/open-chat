@@ -12,7 +12,7 @@
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
     import Translatable from "@shared_components/Translatable.svelte";
-    import { updateGroupState } from "../createOrUpdateGroup/group.svelte";
+    import { updateGroupState } from "@shared_components/home/createOrUpdateGroup/group.svelte";
 
     const client = getContext<OpenChat>("client");
 

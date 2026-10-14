@@ -2,7 +2,7 @@
     import { ColourVars } from "component-lib";
     import { OpenChat, publish, type PaymentGate } from "@client";
     import { getContext } from "svelte";
-    import type { UpdateGroupOrCommunityState } from "../groupOrCommunity.svelte";
+    import type { UpdateGroupOrCommunityState } from "@shared_components/home/groupOrCommunity.svelte";
     import AboutPaymentGate from "./AboutPaymentGate.svelte";
     import AccessGateList from "./AccessGateList.svelte";
 

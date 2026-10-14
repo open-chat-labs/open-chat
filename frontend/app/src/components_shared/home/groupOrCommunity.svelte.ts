@@ -1,9 +1,9 @@
 import { flattenGateConfig } from "@src/utils/access";
 import {
     defaultChatRules,
+    hasAccessGateChanged,
     isCompositeGate,
     isLeafGate,
-    OpenChat,
     ROLE_MEMBER,
     type AccessControlled,
     type AccessGate,
@@ -49,7 +49,7 @@ export abstract class UpdateGroupOrCommunityState {
     #rulesValid = $derived.by(() => {
         return (
             !this.rules.enabled ||
-            (this.rules.text.length > 0 && this.rules.text.length < MAX_RULES_LENGTH)
+            (this.rules.text.length > 0 && this.rules.text.length <= MAX_RULES_LENGTH)
         );
     });
     #candidateUsers = $derived(this.#candidateMembers.map((m) => m.user));
@@ -92,8 +92,8 @@ export abstract class UpdateGroupOrCommunityState {
         );
     }
 
-    accessGatesChanged(client: OpenChat) {
-        return client.hasAccessGateChanged(this.original.gateConfig, this.candidate.gateConfig);
+    accessGatesChanged() {
+        return hasAccessGateChanged(this.original.gateConfig, this.candidate.gateConfig);
     }
 
     toggleRulesEnabled() {
@@ -148,6 +148,10 @@ export abstract class UpdateGroupOrCommunityState {
 
     get candidateMembers() {
         return this.#candidateMembers;
+    }
+
+    set candidateMembers(val: CandidateMember[]) {
+        this.#candidateMembers = val;
     }
 
     get candidateUsers() {
