@@ -167,15 +167,21 @@ impl<V: HeapStableSplitMapValue> HeapStableSplitMap<V> {
         result
     }
 
-    // Writes back each value which `f` returns true for, eg. so that it is stored in the format
-    // values are serialized in now, rather than as when it was last written. Every value is read,
-    // and those written back are written together (see `update_many`). Returns how many were.
+    // Writes back each value which `f` returns true for, if it is stored differently than it would be
+    // written now, eg. having been written by an earlier version, so that it is stored in the format
+    // values are serialized in now. Every value is read, and those written back are written together
+    // (see `update_many`). Returns how many were.
     pub fn rewrite(&mut self, mut f: impl FnMut(&V::Id, &V) -> bool) -> usize {
         let mut to_write = Vec::new();
         for (id, entry) in self.in_stable_memory.iter() {
-            let value: V = read(id, entry);
+            let stored = with_map(|m| m.get(V::key(id, entry)))
+                .unwrap_or_else(|| panic!("Value with id {id:?} not found in stable memory"));
+            let value = V::from_bytes(&stored);
             if f(id, &value) {
-                to_write.push((V::key(id, entry), value.to_bytes()));
+                let bytes = value.to_bytes();
+                if bytes != stored {
+                    to_write.push((V::key(id, entry), bytes));
+                }
             }
         }
         let count = to_write.len();
@@ -370,7 +376,7 @@ mod tests {
     }
 
     #[test]
-    fn rewrite_writes_back_the_values_chosen_in_the_current_format() {
+    fn rewrite_writes_back_the_values_chosen_which_are_stored_in_an_earlier_format() {
         init();
         let mut values = HeapStableSplitMap::default();
         values.insert(1, item("a", 10));
@@ -395,11 +401,15 @@ mod tests {
             m.insert(Item::key(&2, &20), earlier("b", 20));
         });
 
-        assert_eq!(values.rewrite(|id, _| *id == 1), 1);
-
         let stored = |id: u32, entry: u64| with_map(|m| m.get(Item::key(&id, &entry))).unwrap();
+        assert_eq!(values.rewrite(|id, _| *id == 1), 1);
         assert_eq!(stored(1, 10), item("a", 10).to_bytes());
         assert_eq!(stored(2, 20), earlier("b", 20));
+
+        // A value already stored as it would be written now isn't written again
+        assert_eq!(values.rewrite(|_, _| true), 1);
+        assert_eq!(stored(2, 20), item("b", 20).to_bytes());
+        assert_eq!(values.rewrite(|_, _| true), 0);
         assert_eq!(*values.get(&1).unwrap(), item("a", 10));
         assert_eq!(*values.get(&2).unwrap(), item("b", 20));
     }

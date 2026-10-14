@@ -16,7 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Show in the metrics whether the jobs replacing migrated users' old ids were last reported complete ([#9950](https://github.com/open-chat-labs/open-chat/pull/9950))
 - Resolve a User canister's id to the user's latest id when blocking, adding a contact or paying a user in another canister, and refuse one which can't be resolved ([#9953](https://github.com/open-chat-labs/open-chat/pull/9953))
 - Replace old user ids in the mentions in report notes and bot command text ([#9954](https://github.com/open-chat-labs/open-chat/pull/9954))
-- Rewrite every direct chat in the current format, so that the code reading earlier formats can be removed ([#9956](https://github.com/open-chat-labs/open-chat/pull/9956))
+- Rewrite every direct chat in the current format ([#9956](https://github.com/open-chat-labs/open-chat/pull/9956))
 
 ### Removed
 

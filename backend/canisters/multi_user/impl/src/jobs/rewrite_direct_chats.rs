@@ -18,6 +18,7 @@ pub struct DirectChatsRewrite {
     // The index from which the next run starts
     pub next_user_index: u16,
     pub complete: bool,
+    // The chats which were stored in an earlier format
     pub chats_rewritten: u32,
     // The chats left as they were, since they still hold data on the heap from before their events
     // data was stored in stable memory (see `DirectChats::rewrite_all`)
@@ -26,9 +27,11 @@ pub struct DirectChatsRewrite {
 
 // Writes every user's direct chats back to stable memory, a batch of users at a time, so that each is
 // stored in the current format rather than as when it last changed. Once it has completed in every
-// MultiUser canister, with no chats left, what reads the earlier formats can be removed (eg. the
-// `LegacyHeapEntries` in `chat_events`, and reading a plain list of message event indexes), along
-// with this.
+// MultiUser canister, with no chats left, and every Group and Community canister has been upgraded
+// past the upgrade guard which refuses to drop chat events data held on the heap (see
+// `ChatEvents::legacy_heap_entries`), with no import exported by a Group from before then still in
+// progress, what reads the earlier formats can be removed (eg. the `LegacyHeapEntries` in
+// `chat_events`, and reading a plain list of message event indexes), along with this.
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     if TIMER_ID.get().is_none() && !state.data.direct_chats_rewrite.complete {
         let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, async { run() });
@@ -67,10 +70,8 @@ fn rewrite_batch(users: &mut Users, rewrite: &mut DirectChatsRewrite, should_sto
                 rewrite.chats_left += left;
             }
         }
-        let Some(next_user_index) = index.checked_add(1) else {
-            break;
-        };
-        rewrite.next_user_index = next_user_index;
+        // An index is at most `MAX_USER_INDEX`, so this can't overflow
+        rewrite.next_user_index = index + 1;
         if should_stop() {
             return;
         }
@@ -92,7 +93,7 @@ mod tests {
         stable_memory_map::init_multi_user(memory.get(MemoryId::new(0)), memory.get(MemoryId::new(1)));
         let user_id = |i: u8| UserId::from(Principal::from_slice(&[i]));
         let mut users = Users::default();
-        // Users 1, 3 and 4, the first two of whom have a chat
+        // Users 1, 3 and 4
         for i in 1..=4u8 {
             users.add(Principal::from_slice(&[i]), format!("user{i}"), None, 0).unwrap();
         }
@@ -118,7 +119,9 @@ mod tests {
         }
 
         assert_eq!(rewrite.next_user_index, 5);
-        assert_eq!(rewrite.chats_rewritten, 2);
+        // The chats were created in the current format, so needn't be written again (see
+        // `DirectChats::rewrite_all` for chats which do)
+        assert_eq!(rewrite.chats_rewritten, 0);
         assert_eq!(rewrite.chats_left, 0);
     }
 }
