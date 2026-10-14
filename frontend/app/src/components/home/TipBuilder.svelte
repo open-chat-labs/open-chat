@@ -1,22 +1,7 @@
 <script lang="ts">
-    import type {
-        Message,
-        MessageContext,
-        OpenChat,
-        PendingCryptocurrencyTransfer,
-        SignerWallet,
-    } from "@client";
-    import {
-        cryptoBalanceStore,
-        cryptoLookup,
-        currentUserIdStore,
-        exchangeRatesLookupStore as exchangeRatesLookup,
-        lastCryptoSent,
-        LEDGER_CANISTER_ICP,
-        mobileWidth,
-        walletApprovalFee,
-    } from "@client";
-    import { getContext, onMount } from "svelte";
+    import type { Message, MessageContext, OpenChat } from "@client";
+    import { mobileWidth } from "@client";
+    import { getContext, onMount, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import { quadOut } from "svelte/easing";
     import { Tween } from "svelte/motion";
@@ -30,6 +15,11 @@
     import ModalContent from "../ModalContent.svelte";
     import Overlay from "../Overlay.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
+    import {
+        TIP_INCREMENTS,
+        TipForm,
+        type TipIncrement,
+    } from "@shared_components/home/tip/tipForm.svelte";
     import AccountInfo from "./AccountInfo.svelte";
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
     import CryptoSelector from "./CryptoSelector.svelte";
@@ -39,8 +29,6 @@
     import TokenInput from "./TokenInput.svelte";
 
     const client = getContext<OpenChat>("client");
-    const increments: Increment[] = [1, 10, 100];
-    type Increment = 1 | 10 | 100;
 
     interface Props {
         ledger: string;
@@ -49,31 +37,31 @@
         onClose: () => void;
     }
 
-    let { ledger = $bindable(), msg, messageContext, onClose }: Props = $props();
+    let { ledger, msg, messageContext, onClose }: Props = $props();
 
     const tweenOptions = {
         duration: 800,
         easing: quadOut,
     };
 
+    // The balance is refreshed by BalanceWithRefresh, which tells the form when it has been
+    const form = new TipForm(
+        client,
+        untrack(() => ledger),
+        { refreshBalance: false },
+    );
+    let tokenState = $derived(form.tokenState);
     let refreshing = $state(false);
+    // Why the balance couldn't be refreshed, if it couldn't
     let error: string | undefined = $state(undefined);
     let toppingUp = $state(false);
-    let tokenChanging = $state(true);
     let balanceWithRefresh: BalanceWithRefresh;
     let dollar = $state<HTMLElement | undefined>();
     const dollarTop = new Tween(-1000, tweenOptions);
     const dollarOpacity = new Tween(0, tweenOptions);
     const dollarScale = new Tween(0, tweenOptions);
-    let centAmount = $state(0);
     let showCustomTip = $state(false);
     let validAmount: boolean = $state(false);
-    let draftAmount = $state(0n);
-    // The external wallet the tip will come from, or undefined for the user's own OpenChat
-    // account. Paying from an external wallet spends that wallet's balance rather than the user's
-    // OpenChat one, so none of the limits derived from the latter apply while one is selected.
-    let sourceWallet = $state<SignerWallet | undefined>();
-    let payFromWallet = $derived(sourceWallet !== undefined);
     let approval: ExternalWalletApproval | undefined = $state();
     let approving = $state(false);
 
@@ -90,24 +78,8 @@
         dollar = d;
     });
 
-    function amountLabel(n: Increment): string {
+    function amountLabel(n: TipIncrement): string {
         return `$${(n / 100).toFixed(2)}`;
-    }
-
-    function calculateCentAmount(e8s: bigint, exchangeRate: number): number {
-        const tokens = Number(e8s) / Math.pow(10, tokenDetails.decimals);
-        const dollar = tokens * exchangeRate;
-        const cents = dollar * 100;
-        return Math.round(cents);
-    }
-
-    function to2SigFigs(num: number): number {
-        return parseFloat(num.toPrecision(2));
-    }
-
-    function calculateAmount(centAmount: number, exchangeRate: number): bigint {
-        const e8s = ((centAmount / 100) * Math.pow(10, tokenDetails.decimals)) / exchangeRate;
-        return BigInt(Math.round(e8s));
     }
 
     function reset() {
@@ -120,25 +92,15 @@
     }
 
     function onBalanceRefreshed() {
-        onBalanceRefreshFinished();
+        toppingUp = false;
         error = undefined;
+        form.balanceChecked();
     }
 
     function onBalanceRefreshError(err: string) {
-        onBalanceRefreshFinished();
-        error = err;
-    }
-
-    function onBalanceRefreshFinished() {
         toppingUp = false;
-        tokenChanging = false;
-        if (remainingBalance < 0 && !payFromWallet) {
-            remainingBalance = 0n;
-            draftAmount = cryptoBalance - transferFees;
-            if (draftAmount < 0) {
-                draftAmount = 0n;
-            }
-        }
+        error = err;
+        form.balanceChecked();
     }
 
     function bounceMoneyMouthFrom(target: HTMLElement) {
@@ -162,15 +124,10 @@
         dollar.style.left = `${left}px`;
     }
 
-    function clickAmount(e: MouseEvent, increment: Increment) {
+    function clickAmount(e: MouseEvent, increment: TipIncrement) {
         e.preventDefault();
         bounceMoneyMouthFrom(e.target as HTMLElement);
-        centAmount += increment;
-        draftAmount = calculateAmount(centAmount, exchangeRate);
-    }
-
-    function maxAmount(balance: bigint): bigint {
-        return balance - transferFees;
+        form.add(increment);
     }
 
     function send(e: Event) {
@@ -193,83 +150,27 @@
         }
     }
 
-    // `fromAccount` is an external wallet which has just approved us taking the tip. Without it the
-    // tip comes from the user's own OpenChat account, as it always has.
     function tip(fromAccount?: string) {
-        const transfer: PendingCryptocurrencyTransfer = {
-            kind: "pending",
-            ledger,
-            token: tokenDetails.symbol,
-            recipient: msg.sender,
-            amountE8s: draftAmount,
-            feeE8s: tokenDetails.transferFee,
-            createdAtNanos: BigInt(Date.now()) * 1_000_000n,
-            fromAccount,
-        };
-        lastCryptoSent.set(ledger);
-
-        const currentTip = (msg.tips[transfer.ledger] ?? {})[$currentUserIdStore] ?? 0n;
-
-        client.tipMessage(messageContext, msg.messageId, transfer, currentTip).then((resp) => {
-            if (resp.kind === "failure") {
-                toastStore.showFailureToast(i18nKey("tip.failure"));
-            } else if (resp.kind !== "success") {
-                toastStore.showFailureToast(pinNumberErrorMessageStore);
+        form.tip(messageContext, msg, fromAccount).then((outcome) => {
+            switch (outcome.kind) {
+                case "tipped":
+                case "cancelled":
+                    break;
+                case "pin_failed":
+                    toastStore.showFailureToast(pinNumberErrorMessageStore);
+                    break;
+                case "failed":
+                    toastStore.showFailureToast(outcome.message);
+                    break;
+                default:
+                    outcome satisfies never;
             }
         });
-
         onClose();
     }
-    // The ledger may have been removed from the registry (eg. if it was uninstalled)
-    // in which case fall back to ICP which will always be present
-    let tokenDetails = $derived(
-        $cryptoLookup.get(ledger) ?? $cryptoLookup.get(LEDGER_CANISTER_ICP)!,
-    );
-    $effect(() => {
-        if (!$cryptoLookup.has(ledger)) {
-            ledger = LEDGER_CANISTER_ICP;
-        }
-    });
-    let cryptoBalance = $derived($cryptoBalanceStore.get(ledger) ?? 0n);
-    // What the tip costs in fees, which includes the approval the wallet makes before the tip is
-    // pulled from it
-    let transferFees = $derived(
-        tokenDetails.transferFee + walletApprovalFee(tokenDetails.transferFee),
-    );
-    let exchangeRate = $derived(
-        to2SigFigs($exchangeRatesLookup.get(tokenDetails.ledger)?.toUSD ?? 0),
-    );
-    $effect(() => {
-        if (ledger !== undefined) {
-            // reset when ledger changes
-            centAmount = 0;
-            tokenChanging = true;
-            draftAmount = 0n;
-        }
-    });
-    let displayDraftAmount = $derived(client.formatTokens(draftAmount, tokenDetails.decimals));
-    let displayFee = $derived(client.formatTokens(transferFees, tokenDetails.decimals));
-    let remainingBalance = $state(0n);
-    $effect(() => {
-        remainingBalance =
-            draftAmount > 0n && !payFromWallet
-                ? cryptoBalance - draftAmount - transferFees
-                : cryptoBalance;
-    });
-    // What the user is able to spend, or undefined when that is the external wallet's business
-    // rather than ours
-    let spendingLimit = $derived(payFromWallet ? undefined : maxAmount(cryptoBalance));
-    let valid = $derived(
-        draftAmount > 0n &&
-            (payFromWallet || remainingBalance >= 0n) &&
-            error === undefined &&
-            !tokenChanging,
-    );
-    // An empty OpenChat account is only a dead end while the user is paying from it
-    let zero = $derived(cryptoBalance <= transferFees && !tokenChanging && !payFromWallet);
-    $effect(() => {
-        centAmount = calculateCentAmount(draftAmount, exchangeRate);
-    });
+
+    let valid = $derived(form.valid && error === undefined);
+
     $effect(() => {
         if (dollar) {
             dollar.style.setProperty("top", `${dollarTop.current}px`);
@@ -290,19 +191,19 @@
                     <div class="main-title">
                         <div><Translatable resourceKey={i18nKey("tip.title")} /></div>
                         <div>
-                            <CryptoSelector bind:ledger />
+                            <CryptoSelector bind:ledger={() => form.ledger, (l) => (form.ledger = l)} />
                         </div>
                     </div>
                 </div>
-                <SourceWalletSelector bind:wallet={sourceWallet} {ledger} />
+                <SourceWalletSelector bind:wallet={form.sourceWallet} ledger={form.ledger} />
                 <!-- The balance is the external wallet's business while one is selected, so only
                      show OpenChat's own - but keep its space so the selector does not move -->
-                <div class="oc-balance" class:hidden={payFromWallet}>
+                <div class="oc-balance" class:hidden={form.payFromWallet}>
                     <BalanceWithRefresh
                         bind:toppingUp
                         bind:this={balanceWithRefresh}
-                        {ledger}
-                        value={remainingBalance}
+                        ledger={form.ledger}
+                        value={tokenState.remainingBalance}
                         label={i18nKey("cryptoAccount.shortBalanceLabel")}
                         bold
                         showTopUp
@@ -314,48 +215,43 @@
         {/snippet}
         {#snippet body()}
             <form onsubmit={send}>
-                <div class="body" class:zero={zero || toppingUp}>
-                    {#if zero || toppingUp}
-                        <AccountInfo {ledger} />
-                        {#if zero}
+                <div class="body" class:zero={form.zero || toppingUp}>
+                    {#if form.zero || toppingUp}
+                        <AccountInfo ledger={form.ledger} />
+                        {#if form.zero}
                             <p>
                                 <Translatable
                                     resourceKey={i18nKey("tokenTransfer.zeroBalance", {
-                                        token: tokenDetails.symbol,
+                                        token: tokenState.symbol,
                                     })} />
                             </p>
                         {/if}
                         <p><Translatable resourceKey={i18nKey("tokenTransfer.makeDeposit")} /></p>
                     {:else}
-                        {#if exchangeRate > 0}
+                        {#if form.exchangeRate > 0}
                             <div class="amounts">
-                                {#each increments as increment}
+                                {#each TIP_INCREMENTS as increment}
                                     <TipButton
                                         label={i18nKey(amountLabel(increment))}
                                         onClick={(e) => clickAmount(e, increment)}
-                                        disabled={exchangeRate === 0 ||
-                                            (spendingLimit !== undefined &&
-                                                calculateAmount(
-                                                    centAmount + increment,
-                                                    exchangeRate,
-                                                ) > spendingLimit)} />
+                                        disabled={!form.canAdd(increment)} />
                                 {/each}
                             </div>
                             <div in:fade|local={{ duration: 300 }} class="message">
-                                {#if draftAmount > 0}
+                                {#if tokenState.draftAmount > 0}
                                     <div class="summary">
                                         <div class="dollar-amount">
-                                            ${(centAmount / 100).toFixed(2)}
+                                            ${(form.centAmount / 100).toFixed(2)}
                                         </div>
                                         <div class="token-amount">
-                                            {displayDraftAmount}
-                                            {tokenDetails.symbol}
+                                            {form.displayDraftAmount}
+                                            {tokenState.symbol}
                                         </div>
                                         <div class="fee">
                                             <Translatable
                                                 resourceKey={i18nKey("tip.plusFee", {
-                                                    fee: displayFee,
-                                                    token: tokenDetails.symbol,
+                                                    fee: form.displayFee,
+                                                    token: tokenState.symbol,
                                                 })} />
                                         </div>
                                     </div>
@@ -367,7 +263,7 @@
                             </div>
                         {/if}
                         <div class="custom-tip">
-                            {#if !showCustomTip && exchangeRate > 0}
+                            {#if !showCustomTip && form.exchangeRate > 0}
                                 <!-- svelte-ignore a11y_click_events_have_key_events -->
                                 <!-- svelte-ignore a11y_missing_attribute -->
                                 <a
@@ -381,14 +277,14 @@
                                 </a>
                             {/if}
 
-                            {#if showCustomTip || exchangeRate <= 0}
+                            {#if showCustomTip || form.exchangeRate <= 0}
                                 <div in:fade|local={{ duration: 500 }} class="custom-tip-amount">
                                     <TokenInput
-                                        {ledger}
-                                        {transferFees}
+                                        ledger={form.ledger}
+                                        transferFees={tokenState.transferFees}
                                         bind:valid={validAmount}
-                                        maxAmount={spendingLimit}
-                                        bind:amount={draftAmount} />
+                                        maxAmount={form.spendingLimit}
+                                        bind:amount={tokenState.draftAmount} />
                                 </div>
                             {/if}
                         </div>
@@ -398,13 +294,13 @@
                             </div>
                         {/if}
                     {/if}
-                    {#if sourceWallet !== undefined}
+                    {#if form.sourceWallet !== undefined}
                         <div class="funding">
                             <ExternalWalletApproval
                                 bind:this={approval}
-                                wallet={sourceWallet}
-                                {ledger}
-                                amount={draftAmount}
+                                wallet={form.sourceWallet}
+                                ledger={form.ledger}
+                                amount={tokenState.draftAmount}
                                 chatId={messageContext.chatId} />
                         </div>
                     {/if}
@@ -416,7 +312,7 @@
                 <ButtonGroup>
                     <Button small={!$mobileWidth} tiny={$mobileWidth} secondary onClick={cancel}
                         ><Translatable resourceKey={i18nKey("cancel")} /></Button>
-                    {#if toppingUp || zero}
+                    {#if toppingUp || form.zero}
                         <Button
                             small={!$mobileWidth}
                             disabled={refreshing}
