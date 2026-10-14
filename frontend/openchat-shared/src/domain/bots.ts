@@ -224,6 +224,25 @@ export function definitionToPermissions(definition: BotDefinition): GrantedBotPe
     };
 }
 
+/**
+ * The permissions to offer the user to grant a bot being installed: what it asks for, without any
+ * community permissions when it isn't being installed in a community, where they mean nothing
+ */
+export function permissionsToGrant(
+    definition: BotDefinition,
+    location: BotInstallationLocation,
+): GrantedBotPermissions {
+    const permissions = definitionToPermissions(definition);
+    if (location.kind === "community") return permissions;
+    return {
+        command: { ...permissions.command, communityPermissions: [] },
+        autonomous:
+            permissions.autonomous === undefined
+                ? undefined
+                : { ...permissions.autonomous, communityPermissions: [] },
+    };
+}
+
 function mergeLists<T>(l1: T[], l2: T[]): T[] {
     return [...new Set([...l1, ...l2])];
 }

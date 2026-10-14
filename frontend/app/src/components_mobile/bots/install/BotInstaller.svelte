@@ -17,14 +17,13 @@
         botContainerFrom,
         type ChatSummary,
         type CommunitySummary,
-        definitionToPermissions,
         type ExternalBotLike,
         type GrantedBotPermissions,
         installationLocationFrom,
         OpenChat,
         publish,
     } from "@client";
-    import { getContext, tick } from "svelte";
+    import { getContext, tick, untrack } from "svelte";
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
     import Cloud from "svelte-material-icons/CloudDownloadOutline.svelte";
     import Save from "svelte-material-icons/ContentSaveOutline.svelte";
@@ -34,6 +33,7 @@
     import SlidingPageContent from "../../home/SlidingPageContent.svelte";
     import MulticolourText from "../../MulticolourText.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
+    import { BotInstall } from "@shared_components/bots/install/botInstall.svelte";
     import BotAvatar from "../BotAvatar.svelte";
     import BotCommands from "../BotCommands.svelte";
     import BotsPermissionInfo from "../BotsPermissionInfo.svelte";
@@ -52,12 +52,13 @@
     }
 
     let { bot, collection, installedWithPermissions }: Props = $props();
-    let requestedPermissions = $derived(definitionToPermissions(bot.definition));
-    const grantedPermissions = $state(
-        installedWithPermissions ?? filterByLocation(definitionToPermissions(bot.definition)),
-    );
-    const installing = $state(installedWithPermissions === undefined);
     let location = $derived(installationLocationFrom(collection));
+    const form = new BotInstall(
+        client,
+        untrack(() => bot),
+        untrack(() => location),
+        untrack(() => installedWithPermissions),
+    );
     let level = $derived(collection.kind === "direct_chat" ? "group" : collection.level); // TODO suspect
     let container = $derived(botContainerFrom(collection));
     let containerAvatarUrl = $derived.by(() => {
@@ -81,47 +82,19 @@
         }
     });
 
-    let busy = $state(false);
-
-    function filterByLocation(perm: GrantedBotPermissions): GrantedBotPermissions {
-        if (collection.kind === "group_chat") {
-            perm.command.communityPermissions = [];
-            if (perm.autonomous !== undefined) {
-                perm.autonomous.communityPermissions = [];
-            }
+    async function save() {
+        const outcome = await form.save();
+        switch (outcome.kind) {
+            case "installed":
+            case "updated":
+                publish("closeModalPage");
+                break;
+            case "failed":
+                toastStore.showFailureToast(outcome.message);
+                break;
+            default:
+                outcome satisfies never;
         }
-        return perm;
-    }
-
-    function update() {
-        busy = true;
-        client
-            .updateInstalledBot(location, bot.id, grantedPermissions)
-            .then((success) => {
-                if (!success) {
-                    toastStore.showFailureToast(i18nKey("bots.edit.failure"));
-                } else {
-                    publish("closeModalPage");
-                }
-            })
-            .finally(() => (busy = false));
-    }
-
-    function install() {
-        busy = true;
-        client
-            .installBot(location, bot.id, {
-                command: grantedPermissions.command,
-                autonomous: grantedPermissions.autonomous,
-            })
-            .then((success) => {
-                if (!success) {
-                    toastStore.showFailureToast(i18nKey("bots.add.failure"));
-                } else {
-                    publish("closeModalPage");
-                }
-            })
-            .finally(() => (busy = false));
     }
 
     function cancel() {
@@ -136,7 +109,7 @@
 <SlidingPageContent
     onBack={cancel}
     title={i18nKey(
-        installing ? "bots.add.title" : "Review bot permissions",
+        form.installing ? "bots.add.title" : "Review bot permissions",
         undefined,
         level,
         true,
@@ -158,7 +131,7 @@
                     width={"fill"}>
                     <Body colour={"textPrimary"} fontWeight={"bold"}>
                         <Translatable
-                            resourceKey={i18nKey(installing ? "Installing" : "Reviewing")} />
+                            resourceKey={i18nKey(form.installing ? "Installing" : "Reviewing")} />
                     </Body>
                     <Subtitle colour={"textOnPrimary"} fontWeight={"bold"}>
                         {bot.name}
@@ -184,7 +157,7 @@
                             <Translatable resourceKey={i18nKey("As a direct chat with")} />
                         {:else}
                             <Translatable
-                                resourceKey={i18nKey(installing ? "Into" : "Installed in")} />
+                                resourceKey={i18nKey(form.installing ? "Into" : "Installed in")} />
                         {/if}
                     </Body>
                     <Subtitle colour={"textOnPrimary"} fontWeight={"bold"}>
@@ -222,8 +195,8 @@
                 </Body>
                 <ChoosePermissions
                     {level}
-                    bind:granted={grantedPermissions.command}
-                    requested={requestedPermissions.command} />
+                    bind:granted={form.grantedPermissions.command}
+                    requested={form.requestedPermissions.command} />
             </Container>
         {/if}
 
@@ -234,8 +207,8 @@
                 </Body>
                 <ChoosePermissions
                     {level}
-                    bind:granted={grantedPermissions.autonomous!}
-                    requested={requestedPermissions.autonomous!} />
+                    bind:granted={form.grantedPermissions.autonomous!}
+                    requested={form.requestedPermissions.autonomous!} />
             </Container>
         {/if}
 
@@ -243,7 +216,7 @@
             <BodySmall fontWeight={"bold"} colour={"textSecondary"}>
                 <Translatable resourceKey={i18nKey("Commands")} />
             </BodySmall>
-            <BotCommands {grantedPermissions} commands={bot.definition.commands} />
+            <BotCommands grantedPermissions={form.grantedPermissions} commands={bot.definition.commands} />
         </Container>
 
         <Container padding={["zero", "md"]} direction={"vertical"} gap={"sm"}>
@@ -253,7 +226,7 @@
                 body={"Granting limited permissions will limit bot's supported commands. Unavailable commands are greyed out."} />
         </Container>
 
-        {#if installing}
+        {#if form.installing}
             <Container padding={["zero", "md"]} direction={"vertical"} gap={"lg"}>
                 <BodySmall align={"center"} colour={"textSecondary"}>
                     <MulticolourText
@@ -275,20 +248,20 @@
                         ]}>
                     </MulticolourText>
                 </BodySmall>
-                <Button disabled={busy} loading={busy} onClick={install}>
+                <Button disabled={form.busy} loading={form.busy} onClick={save}>
                     {#snippet icon(color)}
                         <Cloud {color} />
                     {/snippet}
                     <Translatable resourceKey={i18nKey("bots.add.install")} />
                 </Button>
-                <Button secondary disabled={busy} onClick={cancel}>
+                <Button secondary disabled={form.busy} onClick={cancel}>
                     <Translatable resourceKey={i18nKey("cancel")} />
                 </Button>
             </Container>
         {/if}
     </Container>
-    {#if !installing}
-        <FloatingButton loading={busy} pos={{ bottom: "lg", right: "lg" }} onClick={update}>
+    {#if !form.installing}
+        <FloatingButton loading={form.busy} pos={{ bottom: "lg", right: "lg" }} onClick={save}>
             {#snippet icon(color)}
                 <Save {color} />
             {/snippet}

@@ -1,7 +1,6 @@
 <script lang="ts">
     import {
         type BotInstallationLocation,
-        definitionToPermissions,
         type ExternalBotLike,
         type GrantedBotPermissions,
         type Level,
@@ -10,7 +9,7 @@
         type ReadonlyMap,
         type ResourceKey,
     } from "@client";
-    import { getContext } from "svelte";
+    import { getContext, untrack } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
     import Button from "../../Button.svelte";
@@ -18,12 +17,11 @@
     import ModalContent from "../../ModalContent.svelte";
     import Overlay from "../../Overlay.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
+    import { BotInstall } from "@shared_components/bots/install/botInstall.svelte";
     import BotProperties from "./BotProperties.svelte";
     import ChoosePermissions from "./ChoosePermissions.svelte";
 
     const client = getContext<OpenChat>("client");
-
-    type Step = "choose_command_permissions" | "choose_autonomous_permissions" | "unknown";
 
     interface Props {
         location: BotInstallationLocation;
@@ -34,73 +32,32 @@
     }
 
     let { location, bot, onClose, level, installedBots }: Props = $props();
-    let requestedPermissions = $derived(definitionToPermissions(bot.definition));
-    const grantedPermissions = $state(filterByLocation(definitionToPermissions(bot.definition)));
+    const form = new BotInstall(
+        client,
+        untrack(() => bot),
+        untrack(() => location),
+    );
 
-    let busy = $state(false);
-    let step = $state<Step>(firstStep());
-
-    function filterByLocation(perm: GrantedBotPermissions): GrantedBotPermissions {
-        if (level === "group") {
-            perm.command.communityPermissions = [];
-            if (perm.autonomous !== undefined) {
-                perm.autonomous.communityPermissions = [];
-            }
+    async function nextStep() {
+        if (form.hasNextStep) {
+            form.next();
+            return;
         }
-        return perm;
-    }
-
-    function firstStep(): Step {
-        if (bot.definition.commands.length > 0) {
-            return "choose_command_permissions";
-        } else if (bot.definition.autonomousConfig !== undefined) {
-            return "choose_autonomous_permissions";
-        } else {
-            return "unknown";
-        }
-    }
-
-    function nextStep(current: Step) {
-        switch (current) {
-            case "choose_command_permissions":
-                if (bot.definition.autonomousConfig !== undefined) {
-                    step = "choose_autonomous_permissions";
-                } else {
-                    busy = true;
-                    install(() => onClose(true));
-                }
-                break;
-            case "choose_autonomous_permissions":
-                busy = true;
-                install();
-                break;
-        }
-    }
-
-    function install(then?: () => void) {
         if (installedBots.has(bot.id)) {
-            if (then) {
-                then();
-            } else {
+            onClose(true);
+            return;
+        }
+        const outcome = await form.save();
+        switch (outcome.kind) {
+            case "installed":
+            case "updated":
                 onClose(true);
-            }
-        } else {
-            client
-                .installBot(location, bot.id, {
-                    command: grantedPermissions.command,
-                    autonomous: grantedPermissions.autonomous,
-                })
-                .then((success) => {
-                    if (!success) {
-                        toastStore.showFailureToast(i18nKey("bots.add.failure"));
-                    } else {
-                        if (then) {
-                            then();
-                        } else {
-                            onClose(true);
-                        }
-                    }
-                });
+                break;
+            case "failed":
+                toastStore.showFailureToast(outcome.message);
+                break;
+            default:
+                outcome satisfies never;
         }
     }
 </script>
@@ -115,21 +72,21 @@
         {/snippet}
         {#snippet body()}
             <div class="body">
-                <BotProperties installing={busy} {grantedPermissions} {bot}>
-                    {#if step === "choose_command_permissions"}
+                <BotProperties installing={form.busy} grantedPermissions={form.grantedPermissions} {bot}>
+                    {#if form.step === "choose_command_permissions"}
                         <ChoosePermissions
                             {level}
                             title={i18nKey("bots.add.chooseCommandPermissions")}
                             subtitle={i18nKey("bots.add.commandPermissionsInfo")}
-                            bind:granted={grantedPermissions.command}
-                            requested={requestedPermissions.command} />
-                    {:else if step === "choose_autonomous_permissions"}
+                            bind:granted={form.grantedPermissions.command}
+                            requested={form.requestedPermissions.command} />
+                    {:else if form.step === "choose_autonomous_permissions"}
                         <ChoosePermissions
                             {level}
                             title={i18nKey("bots.add.chooseAutonomousPermissions")}
                             subtitle={i18nKey("bots.add.autonomousPermissionsInfo")}
-                            bind:granted={grantedPermissions.autonomous!}
-                            requested={requestedPermissions.autonomous!} />
+                            bind:granted={form.grantedPermissions.autonomous!}
+                            requested={form.requestedPermissions.autonomous!} />
                     {/if}
                 </BotProperties>
             </div>
@@ -137,11 +94,11 @@
         {#snippet footer()}
             <div class="footer">
                 <ButtonGroup>
-                    {#if step === "choose_command_permissions" && bot.definition.autonomousConfig !== undefined}
-                        {@render button(i18nKey("bots.add.next"), () => nextStep(step))}
+                    {#if form.hasNextStep}
+                        {@render button(i18nKey("bots.add.next"), nextStep)}
                     {:else}
                         {@render button(i18nKey("cancel"), () => onClose(false), true)}
-                        {@render button(i18nKey("bots.add.install"), () => nextStep(step))}
+                        {@render button(i18nKey("bots.add.install"), nextStep)}
                     {/if}
                 </ButtonGroup>
             </div>
@@ -153,8 +110,8 @@
     txt: ResourceKey,
     click: () => void,
     secondary = false,
-    disabled = busy,
-    loading = busy,
+    disabled = form.busy,
+    loading = form.busy,
 )}
     <Button
         {secondary}

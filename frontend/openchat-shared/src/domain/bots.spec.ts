@@ -1,4 +1,10 @@
-import { commandSupportsDirectMessages, type CommandDefinition, type CommandParam } from "./bots";
+import {
+    commandSupportsDirectMessages,
+    permissionsToGrant,
+    type BotDefinition,
+    type CommandDefinition,
+    type CommandParam,
+} from "./bots";
 import { ROLE_MEMBER } from "../constants";
 
 function stringParam(required: boolean): CommandParam {
@@ -93,5 +99,42 @@ describe("a date argument typed in words", () => {
         await broken.loadDateParser();
         expect(typeof when(broken, "tomorrow at 9am")).toBe("bigint");
         vi.restoreAllMocks();
+    });
+});
+
+describe("the permissions offered when installing a bot", () => {
+    const permissions = {
+        chatPermissions: [],
+        communityPermissions: ["createPublicChannel" as const],
+        messagePermissions: [],
+    };
+    const definition: BotDefinition = {
+        kind: "bot_definition",
+        description: "",
+        commands: [{ ...command, permissions }],
+        autonomousConfig: { permissions },
+        defaultSubscriptions: undefined,
+        dataEncoding: undefined,
+        restrictedLocations: undefined,
+    };
+
+    // Invariant: a bot installed outside a community is never granted community permissions, in
+    // either tree. Mobile granted them to a bot installed in a direct chat.
+    test("include community permissions only when installing in a community", () => {
+        const inCommunity = permissionsToGrant(definition, {
+            kind: "community",
+            communityId: "rrkah-fqaaa-aaaaa-aaaaq-cai",
+        });
+        expect(inCommunity.command.communityPermissions).toEqual(["createPublicChannel"]);
+        expect(inCommunity.autonomous?.communityPermissions).toEqual(["createPublicChannel"]);
+
+        for (const location of [
+            { kind: "group_chat" as const, groupId: "rrkah-fqaaa-aaaaa-aaaaq-cai" },
+            { kind: "direct_chat" as const, userId: "rrkah-fqaaa-aaaaa-aaaaq-cai" },
+        ]) {
+            const outside = permissionsToGrant(definition, location);
+            expect(outside.command.communityPermissions).toEqual([]);
+            expect(outside.autonomous?.communityPermissions).toEqual([]);
+        }
     });
 });
