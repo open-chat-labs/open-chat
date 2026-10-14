@@ -8,6 +8,8 @@
   import General from './groups/General.svelte';
   import App from './groups/App.svelte';
   import Api from './groups/Api.svelte';
+  import Search from './Search.svelte';
+  import type { Target } from './search';
 
   const KEY = 'openchat-library-';
   const load = (k: string) => {
@@ -104,6 +106,23 @@
     };
   });
 
+  // Search jumps: same group scrolls straight there; another group is switched to with the target stored as its
+  // section, so the restore above lands on it. The section's heading flashes once it's in place.
+  function jump(t: Target) {
+    const same = t.group === group;
+    if (same) {
+      const el = document.getElementById(t.id);
+      if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - OFFSET, behavior: 'smooth' });
+    } else {
+      save('section-' + t.group, t.id);
+      group = t.group;
+    }
+    setTimeout(() => {
+      const head = document.getElementById(t.id)?.querySelector('h2');
+      head?.animate([{ color: 'var(--accent)' }, { color: 'var(--accent)', offset: 0.6 }, { color: 'var(--ink)' }], { duration: 1400, easing: 'ease-out' });
+    }, same ? 350 : 700);
+  }
+
   // A user scroll gesture ends the restore early, so it never fights the reader.
   const stopRestore = () => {
     restoring = false;
@@ -130,24 +149,28 @@
 
   <main>
     <div class="bar" role="toolbar" aria-label="Theme">
+      <Search onGo={jump} />
       <span class="crumb">{info.label}{#if activeTitle}<span class="crumb-sep">/</span><span class="crumb-section">{activeTitle}</span>{/if}</span>
       <div class="controls">
-        <div class="seg" role="radiogroup" aria-label="Mode">
-          {#each MODES as m}
-            <span role="radio" tabindex="0" aria-checked={mode === m} class:on={mode === m} onclick={() => (mode = m)}>{m === 'dark' ? 'Dark' : 'Light'}</span>
-          {/each}
-        </div>
-        <div class="seg" role="radiogroup" aria-label="Direction">
-          {#each DIRS as d}
-            <span role="radio" tabindex="0" aria-checked={dir === d} class:on={dir === d} onclick={() => (dir = d)}>{d.toUpperCase()}</span>
-          {/each}
-        </div>
-        <div class="swatches" role="radiogroup" aria-label="Accent">
-          {#each ACCENTS as a}
-            <!-- each swatch carries its own theme attributes so it paints that accent's --accent -->
-            <span role="radio" tabindex="0" aria-checked={accent === a} aria-label={a} class="swatch" class:on={accent === a} data-mode={mode} data-accent={a} onclick={() => (accent = a)}></span>
-          {/each}
-        </div>
+        <label class="pick">
+          <span class="sr">Mode</span>
+          <select bind:value={mode}>
+            {#each MODES as m}<option value={m}>{m === 'dark' ? 'Dark' : 'Light'}</option>{/each}
+          </select>
+        </label>
+        <label class="pick">
+          <span class="sr">Direction</span>
+          <select bind:value={dir}>
+            {#each DIRS as d}<option value={d}>{d.toUpperCase()}</option>{/each}
+          </select>
+        </label>
+        <label class="pick accent">
+          <span class="sr">Accent</span>
+          <span class="dot" aria-hidden="true"></span>
+          <select bind:value={accent}>
+            {#each ACCENTS as a}<option value={a}>{a[0].toUpperCase() + a.slice(1)}</option>{/each}
+          </select>
+        </label>
       </div>
     </div>
     <div class="group">
@@ -198,16 +221,18 @@
   .root nav a.on { background: var(--overlay-1); color: var(--accent); }
 
   .bar { position: sticky; top: 12px; z-index: var(--z-backdrop); /* above demo content, below modals */ box-sizing: border-box; display: flex; align-items: center; gap: 16px; min-height: 52px; margin-bottom: 28px; padding-block: 8px; padding-inline: 18px 10px; border-radius: var(--radius-xl); background: color-mix(in srgb, var(--surface-1) 82%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: inset 0 0 0 1px var(--line-1), var(--shadow-panel); }
-  .crumb { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 13px/1 var(--font-sans); color: var(--ink); }
+  .crumb { flex: 1; min-width: 0; text-align: end; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 13px/1 var(--font-sans); color: var(--ink); }
   .crumb-sep { margin-inline: 8px; color: var(--ink-4); }
   .crumb-section { font-weight: 500; color: var(--ink-3); }
-  .controls { flex: none; display: flex; align-items: center; gap: 10px; }
-  .seg { display: flex; gap: 2px; padding: 2px; border-radius: var(--radius-sm); background: var(--overlay-1); }
-  .seg span { flex: 1; min-width: 52px; padding: 7px 12px; border-radius: 7px; text-align: center; font: 600 11.5px/1 var(--font-sans); color: var(--ink-3); cursor: pointer; user-select: none; }
-  .seg span.on { background: var(--surface-2); color: var(--ink); box-shadow: var(--shadow-raised); }
-  .swatches { display: flex; gap: 10px; padding: 0 6px; }
-  .swatch { width: 20px; height: 20px; border-radius: 50%; background: var(--accent); cursor: pointer; box-shadow: inset 0 0 0 1px var(--line-2); }
-  .swatch.on { box-shadow: 0 0 0 2px var(--surface-1), 0 0 0 4px var(--accent); }
+  .controls { flex: none; display: flex; align-items: center; gap: 8px; }
+  .pick { position: relative; display: flex; align-items: center; }
+  .pick select { appearance: none; height: 34px; padding-inline: 12px 30px; border: 0; border-radius: var(--radius-sm); background: var(--overlay-1); box-shadow: inset 0 0 0 1px var(--line-1); color: var(--ink); font: 600 12.5px/1 var(--font-sans); cursor: pointer; }
+  .pick select:hover { background: var(--overlay-2); }
+  .pick select option { background: var(--surface-1); color: var(--ink); }
+  .pick::after { content: ''; position: absolute; inset-inline-end: 10px; width: 12px; height: 12px; background: var(--ink-3); mask: var(--icon-chevron-down) center/contain no-repeat; pointer-events: none; }
+  .accent select { padding-inline-start: 30px; }
+  .dot { position: absolute; inset-inline-start: 11px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); pointer-events: none; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
   .group { display: flex; flex-direction: column; gap: 56px; max-width: 1000px; margin: 0 auto; }
   .intro h1 { margin: 0 0 12px; font: 700 34px/1.05 var(--font-sans); letter-spacing: -0.02em; }
