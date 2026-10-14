@@ -1,6 +1,8 @@
 <!-- Confirm deleting a group, channel or community: Delete arms only once the name is typed (case-insensitive).
      Cancel plays the close animation, then calls back; Delete calls onConfirm and waits: the dialog closes once it resolves
-     and stays open (with the typed name) and an error if it rejects. -->
+     and stays open (with the typed name) and an error if it rejects.
+     Success contract (same in every confirm/create dialog): once the host's promise resolves the dialog animates out and
+     then calls onCancel, so the host unmounts it; it stays hidden (no reappearing, no invisible layer catching clicks). -->
 <script lang="ts">
   import { onDestroy } from 'svelte';
   import { modal } from '../../lib/behaviours/modal';
@@ -29,10 +31,7 @@
   function close(then?: () => void) {
     if (closing) return;
     closing = true;
-    timer = setTimeout(() => {
-      closing = false;
-      then?.();
-    }, 170);
+    timer = setTimeout(() => then?.(), 170);
   }
 
   // confirming waits for the host: the dialog closes once it resolves, and stays with an error if it rejects
@@ -50,13 +49,14 @@
     } finally {
       busy = false;
     }
-    close();
+    // success: animate out, then hand back to the host (see the header)
+    close(onCancel);
   }
   // no dismissing while the host is working on it
   const dismiss = () => !busy && close(onCancel);
 </script>
 
-<div class="layer" class:closing role="dialog" aria-modal="true" use:modal={dismiss}>
+<div class="layer" class:closing role="dialog" aria-modal="true" use:modal={closing ? undefined : dismiss}>
   <div class="veil" onclick={dismiss} aria-hidden="true"></div>
   <div class="card">
     <div class="head">
@@ -126,6 +126,11 @@
       var(--shadow-modal, 0 30px 70px rgba(0, 0, 0, 0.45));
     overflow: hidden;
     animation: oc-dlg-in var(--duration-slow, 280ms) var(--ease-out) both;
+  }
+
+  /* fading out: no longer catches clicks while (or after) it leaves */
+  .layer.closing {
+    pointer-events: none;
   }
 
   .closing .veil {

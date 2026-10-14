@@ -7328,7 +7328,7 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "false",
+        "componentDefault": "statusFav",
         "doc": "Flips the favourite item's wording; defaults to statusFav."
       },
       {
@@ -8031,7 +8031,7 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": null,
+        "componentDefault": "{ privateGroups: { free: 5, diamond: 25 }, publicGroups: 10, storageMultiplier: 10 }",
         "doc": "Group and storage limits shown in the comparison."
       },
       {
@@ -8124,7 +8124,7 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "'Back'",
+        "componentDefault": "'ui.common.back'",
         "doc": ""
       },
       {
@@ -9398,6 +9398,28 @@
         "required": false,
         "componentDefault": "null",
         "doc": ""
+      },
+      {
+        "name": "gateTokens",
+        "type": "GateAsset[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "[]",
+        "doc": "Tokens (ledger canister ids), to name the assets in balance and payment gate rules."
+      },
+      {
+        "name": "gateSystems",
+        "type": "GateAsset[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "[]",
+        "doc": "Nervous systems (governance canister ids), to name the assets in neuron gate rules."
       },
       {
         "name": "gateCount",
@@ -13030,8 +13052,8 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "120",
-        "doc": "Local time offset used for the calendar’s claim times; defaults to this browser’s."
+        "componentDefault": "-new Date().getTimezoneOffset()",
+        "doc": "Your UTC offset in minutes; defaults to the browser's."
       },
       {
         "name": "achievementsLeft",
@@ -13217,7 +13239,7 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": null,
+        "componentDefault": "[]",
         "doc": "Claim history for the CHIT calendar: { day: \"YYYY-MM-DD\", streakDay, amount?, minute?, insured? }."
       },
       {
@@ -13261,7 +13283,7 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": null,
+        "componentDefault": "[]",
         "doc": "Rewards for inviting friends; the list is hidden when empty."
       },
       {
@@ -13283,7 +13305,7 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": null,
+        "componentDefault": "'https://github.com/open-chat-labs/open-chat-bots'",
         "doc": "\"Bot docs\" link on the Bot configuration page."
       },
       {

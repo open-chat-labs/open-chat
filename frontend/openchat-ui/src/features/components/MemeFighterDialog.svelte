@@ -301,7 +301,7 @@
             <span class="foot-name">{T.name}</span>
             {#if attachFailed}<span class="attach-error" role="alert">{t('ui.memeFighterDialog.attachFailed')}</span>{/if}
             {#if hasText}<Button label="ui.memeFighterDialog.clearText" variant="ghost" onClick={() => (texts = { ...texts, [T.id]: [] })} />{/if}
-            <Button label={busy ? 'ui.memeFighterDialog.adding' : 'ui.memeFighterDialog.addToMessage'} disabled={!hasText || busy} onClick={generate} />
+            {#if onAttach}<Button label={busy ? 'ui.memeFighterDialog.adding' : 'ui.memeFighterDialog.addToMessage'} disabled={!hasText || busy} onClick={generate} />{/if}
           </div>
         </div>
       </div>
@@ -315,7 +315,7 @@
       <div class="foot narrow">
         {#if attachFailed}<span class="attach-error" role="alert">{t('ui.memeFighterDialog.attachFailed')}</span>{/if}
         {#if hasText}<Button label="ui.memeFighterDialog.clear" variant="ghost" onClick={() => (texts = { ...texts, [T.id]: [] })} />{/if}
-        <div class="grow"><Button label={busy ? 'ui.memeFighterDialog.adding' : 'ui.memeFighterDialog.addToMessage'} disabled={!hasText || busy} onClick={generate} fullWidth={true} /></div>
+        {#if onAttach}<div class="grow"><Button label={busy ? 'ui.memeFighterDialog.adding' : 'ui.memeFighterDialog.addToMessage'} disabled={!hasText || busy} onClick={generate} fullWidth={true} /></div>{/if}
       </div>
     {/if}
   </div>

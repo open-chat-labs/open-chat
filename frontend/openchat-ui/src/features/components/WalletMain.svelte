@@ -272,7 +272,9 @@
     const tid = Date.now();
     const amt = `${num(x.amount, Math.min(x.dp, 8))} ${x.symbol}`;
     view = fromAll || backToAll ? 'all' : 'token';
-    fromAll = backToAll = false;
+    // the next send starts fresh: no pre-filled recipient, and Back no longer returns to Recipients
+    fromAll = backToAll = backToRecipients = false;
+    sendAddr = '';
     sym = x.symbol;
     toast = { id: tid, message: t('ui.walletMain.sentToast', { amount: amt, name: x.toLabel }), userId: x.person ? (x.userId ?? null) : null };
     const txId = res && typeof res === 'object' && 'id' in res && typeof res.id === 'string' ? res.id : null;

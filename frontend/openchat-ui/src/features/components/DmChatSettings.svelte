@@ -39,13 +39,17 @@
   let receipts = $derived(readReceipts);
   let failed = $state(false);
 
-  // optimistic: apply now, put the previous values back if the host rejects
-  async function save(apply: () => void, undo: () => void, call: () => Promise<unknown> | void) {
+  // optimistic: apply now, put the previous values back if the host rejects — only when the rejected call is still the
+  // latest for that field (a newer change may already have replaced it)
+  const latest: Record<string, number> = {};
+  async function save(field: string, apply: () => void, undo: () => void, call: () => Promise<unknown> | void) {
+    const seq = (latest[field] = (latest[field] ?? 0) + 1);
     failed = false;
     apply();
     try {
       await call();
     } catch {
+      if (latest[field] !== seq) return;
       undo();
       failed = true;
     }
@@ -54,6 +58,7 @@
   function setDisappear(nextOn: boolean, nextAfter: string) {
     const was = { on, after };
     save(
+      'disappear',
       () => {
         on = nextOn;
         after = nextAfter;
@@ -89,6 +94,7 @@
       onclick={() => {
         const next = !receipts;
         save(
+          'receipts',
           () => (receipts = next),
           () => (receipts = !next),
           () => onReadReceiptsChange?.(next),

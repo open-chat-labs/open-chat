@@ -177,6 +177,8 @@
   let answered = $state<boolean | null>(null);
   let hinting = $state(false);
   let checking = $state(false);
+  let checkFailed = $state(false);
+  let sharing = $state(false);
   const PUZZLE = $derived<Puzzle>({ grid: puzzle.grid, isl: puzzle.islands });
   const NB = $derived(neighbours(PUZZLE.isl));
   let innerWidth = $state(typeof window !== 'undefined' ? window.innerWidth : 1200);
@@ -242,18 +244,28 @@
     }
     hist = [...hist, br].slice(-50);
     br = next;
-    save();
-    if (isSolved(PUZZLE.isl, next)) solveTimer = setTimeout(() => submit(next), 550);
+    boardChanged();
   }
 
-  // the host has the final say on a solve
-  async function submit(bridges: Bridges) {
-    if (checking) return;
+  // any move cancels a pending check; a complete board is checked shortly after, as it is then
+  function boardChanged() {
+    clearTimeout(solveTimer);
+    checkFailed = false;
+    save();
+    if (isSolved(PUZZLE.isl, br)) solveTimer = setTimeout(submit, 550);
+  }
+
+  // the host has the final say on a solve; the board is locked while it checks
+  async function submit() {
+    if (checking || !isSolved(PUZZLE.isl, br)) return;
+    const bridges = br;
     checking = true;
+    checkFailed = false;
     try {
       await onSolved?.({ puzzleId: puzzle.id, bridges, elapsed, hints });
       view = 'solved';
     } catch {
+      checkFailed = true;
       flash(false, 'ui.puzzleDialog.solveFailed');
     } finally {
       checking = false;
@@ -261,6 +273,7 @@
   }
 
   function press(tut: boolean, i: number) {
+    if (!tut && checking) return;
     const P = tut ? TUT : PUZZLE, nb = tut ? TNB : NB;
     const current = tut ? tsel : sel;
     const select = (v: number | null) => (tut ? (tsel = v) : (sel = v));
@@ -279,6 +292,7 @@
   }
 
   function remove(tut: boolean, k: string) {
+    if (!tut && checking) return;
     const updated = { ...(tut ? tbr : br) };
     delete updated[k];
     commit(tut, updated);
@@ -288,7 +302,7 @@
 
   // the host charges for the hint and returns one bridge of the solution; it's applied only once that resolves
   async function hint() {
-    if (!canHint || !onHint) return;
+    if (!canHint || !onHint || checking) return;
     hinting = true;
     let target: [number, number, number];
     try {
@@ -318,28 +332,32 @@
   }
 
   async function share() {
+    if (!onShare || sharing) return;
+    sharing = true;
     try {
       await onShare?.({ puzzleId: puzzle.id, number: puzzle.number, time: solved && solvedTime != null ? solvedTime : elapsed, hints: solved && solvedHints != null ? solvedHints : hints, streak: solved ? puzzleStreak : streak });
     } catch {
       return; // stays open so sharing can be retried
+    } finally {
+      sharing = false;
     }
     close();
   }
 
   function undo() {
-    if (!hist.length) return;
+    if (!hist.length || checking) return;
     br = hist[hist.length - 1];
     hist = hist.slice(0, -1);
     sel = null;
-    save();
+    boardChanged();
   }
 
   function reset() {
-    if (!Object.keys(br).length) return;
+    if (!Object.keys(br).length || checking) return;
     hist = [...hist, br];
     br = {};
     sel = null;
-    save();
+    boardChanged();
   }
 
   function finishTutorial() {
@@ -390,7 +408,7 @@
 <svelte:window bind:innerWidth />
 
 {#snippet boardView(b: ReturnType<typeof board>, tut: boolean, message: string, extra: boolean)}
-  <div class="board" class:tutorial={tut} style:background-size="{b.cell} {b.cell}">
+  <div class="board" class:tutorial={tut} class:locked={!tut && checking} aria-busy={!tut && checking} style:background-size="{b.cell} {b.cell}">
     {#each b.lines as line (line.k)}<span
         class="bridge"
         class:vertical={!line.h}
@@ -413,6 +431,7 @@
         style:width="{b.size}%"
         style:font-size={b.fontSize}
         onclick={() => press(tut, i)}
+        disabled={!tut && checking}
         aria-label={t('ui.puzzleDialog.island', { n: island.n, count: island.count, selected: String(island.selected) })}>{island.n}</button
       >{/each}
     {#if extra}<span class="toast ok"><span class="toast-check"></span>{t('ui.puzzleDialog.nice')}</span>{/if}
@@ -499,6 +518,13 @@
                 ><span class="action-icon" style:mask="var(--icon-refresh) center/contain no-repeat"></span>{t('ui.puzzleDialog.reset')}</span
               >
             </div>
+            {#if checking}
+              <span class="check-status" role="status">{t('ui.puzzleDialog.checking')}</span>
+            {:else if checkFailed}
+              <span class="action retry" onclick={submit} role="button" tabindex="0"
+                ><span class="action-icon" style:mask="var(--icon-refresh) center/contain no-repeat"></span>{t('ui.puzzleDialog.checkAgain')}</span
+              >
+            {/if}
             {#if hintsAllowed > 0 && onHint}
               <span class="hint" style:opacity={canHint ? 1 : 0.45} onclick={hint} role="button" tabindex="0" aria-disabled={!canHint}
                 ><span class="hint-icon"></span>{t('ui.puzzleDialog.useHint')}<span class="hint-meta">{hints >= hintsAllowed ? t('ui.puzzleDialog.noneLeft') : t('ui.puzzleDialog.hintCost', { cost: hintCost, left: hintsAllowed - hints })}</span></span
@@ -544,12 +570,9 @@
           >
         {/if}
         <div class="finish">
-          <span
-            class="finish-button"
-            onclick={share}
-            role="button"
-            tabindex="0"><span class="share-icon"></span>{t('ui.puzzleDialog.share')}</span
-          >
+          {#if onShare}
+            <span class="finish-button" onclick={share} role="button" tabindex="0" aria-disabled={sharing}><span class="share-icon"></span>{t('ui.puzzleDialog.share')}</span>
+          {/if}
           <span class="finish-button" onclick={close} role="button" tabindex="0">{t('ui.common.done')}</span>
         </div>
         <span class="next">{t('ui.puzzleDialog.nextIn', { countdown })}</span>
@@ -1300,5 +1323,19 @@
   .next {
     font: var(--weight-medium, 500) var(--text-xs, 12px) / 1 var(--font-mono);
     color: var(--ink-4, #8a8a99);
+  }
+
+  .board.locked {
+    opacity: 0.7;
+    pointer-events: none;
+  }
+
+  .check-status {
+    font: var(--weight-medium) var(--text-sm) / 1.3 var(--font-sans);
+    color: var(--ink-3, #9a9aa8);
+  }
+
+  .action.retry {
+    align-self: flex-start;
   }
 </style>

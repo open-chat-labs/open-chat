@@ -164,7 +164,7 @@
   );
   const primaryIcon = $derived(isRemove ? 'trash' : isConfigure ? (installed ? 'check' : 'receive') : 'arrow');
   const detailsFootnote = $derived(
-    t(viewOnly ? 'ui.botDialog.footnoteViewOnly' : installed ? 'ui.botDialog.footnoteInstalled' : 'ui.botDialog.footnoteInstall', { name, group }),
+    t(viewOnly ? (installed ? 'ui.botDialog.footnoteViewOnly' : 'ui.botDialog.footnoteViewOnlyNotInstalled') : installed ? 'ui.botDialog.footnoteInstalled' : 'ui.botDialog.footnoteInstall', { name, group }),
   );
 
   // the card animates out before the parent hears about it

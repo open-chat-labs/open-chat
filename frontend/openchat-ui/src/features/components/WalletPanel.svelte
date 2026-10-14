@@ -24,6 +24,7 @@
   import TokenAvatar from '../../lib/components/TokenAvatar.svelte';
   import UndoToast from '../../lib/components/UndoToast.svelte';
   import { getI18n, useT } from '../../lib/i18n';
+  import { parseAmount } from '../../lib/amount';
   const i18n = getI18n(); // number formatting follows the host locale
 
   const mask = (name: string) => `var(--icon-${name}) center/contain no-repeat`;
@@ -172,7 +173,7 @@
   // wallet settings decide which tokens exist here at all: either a minimum
   // dollar value (automatic) or an explicit list (manual)
   const held = $derived.by(() => {
-    const floor = manual ? 0 : parseFloat(settings.minBalance || '0') || 0;
+    const floor = manual ? 0 : parseAmount(settings.minBalance || '');
     const allow = manual && settings.tokens ? settings.tokens : null;
     return tokens
       .filter((t) => t.held > 0)

@@ -215,20 +215,19 @@
     if (!addPicked.length || !onAdd) return;
     const ids = addPicked.slice();
     if (!(await attempt('add', () => onAdd(ids)))) return;
-    if (embedded) {
-      addPicked = [];
-      addQuery = '';
-    }
+    // done: clear the picks (so the same people can't be sent twice) and confirm, embedded or not
+    addPicked = [];
+    addQuery = '';
+    showToast(t('ui.inviteDialog.peopleAdded', { count: ids.length }));
   }
 
   async function send() {
     if (!picked.length || !onInvite) return;
     const ids = picked.slice();
     if (!(await attempt('invite', () => onInvite(ids)))) return;
-    if (embedded) {
-      picked = [];
-      query = '';
-    }
+    picked = [];
+    query = '';
+    showToast(t('ui.inviteDialog.invitesSent', { count: ids.length }));
   }
 
   // optimistic: the switch moves at once and goes back if the host rejects

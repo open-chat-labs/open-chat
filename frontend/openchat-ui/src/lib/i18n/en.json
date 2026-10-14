@@ -140,6 +140,7 @@
       "recheck": "Re-check members periodically",
       "recheckOff": "Members are checked once, when they join.",
       "removeGate": "Remove gate",
+      "searchAssets": "Search for another…",
       "soon": "SOON",
       "types": {
         "balance": "Minimum token balance",
@@ -374,6 +375,7 @@
       "footnoteInstalling": "By installing, {name} can act in {group} with the permissions above.",
       "footnoteSaving": "By saving, {name} can act in {group} with the permissions above.",
       "footnoteViewOnly": "{name} is installed in {group}. Only admins can change its permissions or remove it.",
+      "footnoteViewOnlyNotInstalled": "{name} isn’t installed in {group}. Only admins can install it.",
       "forMessages": "FOR MESSAGES",
       "helpCommand": "List what this bot can do",
       "inThisChat": "IN THIS CHAT",
@@ -1639,6 +1641,7 @@
       "inviteInstead": "Invite “{query}” instead",
       "inviteLink": "Invite link",
       "inviteLinkCaps": "INVITE LINK",
+      "invitesSent": "{count, plural, one {Invite sent} other {# invites sent}}",
       "linkReset": "New link ready. The old one no longer works.",
       "linkSent": "Invite link sent to {chat}",
       "noOneMatches": "No one in {community} matches “{query}”.",
@@ -1646,6 +1649,7 @@
       "pending": "PENDING",
       "pendingCount": "PENDING · {count}",
       "pendingHint": "Invited, but they have not accepted yet.",
+      "peopleAdded": "{count, plural, one {Added 1 person} other {Added # people}}",
       "qrCaption": "{noun, select, channel {Scan to preview and join the channel.} community {Scan to preview and join the community.} other {Scan to preview and join the group.}}",
       "qrCode": "QR CODE",
       "resetLink": "Reset link",
@@ -2427,6 +2431,8 @@
     "puzzleDialog": {
       "backToPuzzle": "Back to puzzle",
       "cantCross": "Bridges can't cross",
+      "checkAgain": "Check again",
+      "checking": "Checking your board…",
       "dailyTitle": "The Daily #{number}",
       "dayCount": "{count, plural, one {# day} other {# days}}",
       "difficulty": {
@@ -2875,6 +2881,7 @@
       "shareToChat": "Share to chat",
       "shared": "Address shared to {chat}",
       "sharingAddress": "SHARING YOUR ADDRESS",
+      "sharingNow": "Sharing…",
       "warning": "Only send {token} on the {network} to this address. Sending other tokens, or {symbol} on another network, can't be recovered.",
       "yourAddress": "YOUR ADDRESS"
     },

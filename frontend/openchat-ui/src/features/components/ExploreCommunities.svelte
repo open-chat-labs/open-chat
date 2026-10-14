@@ -169,11 +169,12 @@
 
   // popular: biggest public communities you haven't joined
   const top = $derived(q ? [] : list.filter((c) => !isJoined(c) && !isPrivate(c)).sort((a, b) => b.members - a.members).slice(0, 4));
-  const languages = $derived(
-    Array.from(new Set(languageOptions ?? communities.map(langOf)))
-      .map((l) => ({ label: l, count: communities.filter((c) => langOf(c) === l).length }))
-      .sort((a, b) => b.count - a.count),
-  );
+  // per-language counts only mean something when the whole list is here; when the host pages the results they're hidden
+  const languages = $derived.by(() => {
+    const opts = Array.from(new Set(languageOptions ?? communities.map(langOf)));
+    if (remote) return opts.map((l) => ({ label: l, count: null as number | null }));
+    return opts.map((l) => ({ label: l, count: communities.filter((c) => langOf(c) === l).length as number | null })).sort((a, b) => (b.count ?? 0) - (a.count ?? 0));
+  });
   const langLabel = $derived(!langs.length ? t('ui.exploreCommunities.anyLanguage') : langs.length === 1 ? t(langs[0]) : t('ui.exploreCommunities.languagesCount', { count: langs.length }));
   const emptyTitle = $derived(q ? t('ui.exploreCommunities.noMatch', { query }) : t('ui.exploreCommunities.noneInLanguages'));
   const rows = $derived(remote ? list : list.slice(0, shown));
@@ -207,7 +208,7 @@
           <div class="lang-option" onclick={() => toggleLang(l.label)} tabindex="0" role="option" aria-selected={on}>
             <span class="lang-box" class:on><span class="lang-check" class:on></span></span>
             <span class="lang-label">{t(l.label)}</span>
-            <span class="lang-count">{l.count}</span>
+            {#if l.count != null}<span class="lang-count">{l.count}</span>{/if}
           </div>
         {/each}
       </div>

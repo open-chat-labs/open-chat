@@ -35,6 +35,8 @@
   import Toggle from '../../lib/components/Toggle.svelte';
   import { modal } from '../../lib/behaviours/modal';
   import { getI18n, useT } from '../../lib/i18n';
+  // minBalance accepts "," or "." as the decimal mark and is stored with "." so hosts can parse it as a number
+  import { cleanAmount, parseAmount } from '../../lib/amount';
   const i18n = getI18n(); // number formatting follows the host locale
 
   type Section = 'tokens' | 'recipients' | 'security' | 'currency';
@@ -135,7 +137,7 @@
     ...local,
   });
   const tab = $derived(tabOverride ?? section);
-  const floor = $derived(parseFloat(settings.minBalance || '0') || 0);
+  const floor = $derived(parseAmount(settings.minBalance || '0'));
   const picked = $derived(settings.tokens);
   const autoOn = $derived(settings.autoConfig !== false);
   const shown = $derived(autoOn ? held.filter((t) => t.value >= floor) : held.filter((t) => picked.includes(t.symbol)));
@@ -199,12 +201,19 @@
       apply({ recipients: saved.filter((x) => x.id !== id) });
       return;
     }
-    const before = saved;
+    // remember the row and where it sat, so a failure puts back only this row and keeps other changes
+    const at = saved.findIndex((x) => x.id === id);
+    const row = saved[at];
+    const prevId = at > 0 ? saved[at - 1].id : null;
     showRecipients(saved.filter((x) => x.id !== id));
     try {
       await onRemoveRecipient(id);
     } catch {
-      showRecipients(before);
+      if (row && !saved.some((x) => x.id === id)) {
+        const p = prevId == null ? -1 : saved.findIndex((x) => x.id === prevId);
+        const i = prevId == null ? 0 : p >= 0 ? p + 1 : Math.min(at, saved.length);
+        showRecipients([...saved.slice(0, i), row, ...saved.slice(i)]);
+      }
       recipError = true;
     }
   }
@@ -323,7 +332,7 @@
                 <span class="dollar">$</span>
                 <input
                   value={settings.minBalance}
-                  oninput={(e) => apply({ minBalance: e.currentTarget.value.replace(/[^0-9.]/g, '') }, true)}
+                  oninput={(e) => apply({ minBalance: cleanAmount(e.currentTarget.value).replace(',', '.') }, true)}
                   placeholder="0"
                   inputmode="decimal"
                 />

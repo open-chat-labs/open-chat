@@ -128,22 +128,33 @@
     }, CLOSE_MS);
   }
 
-  // optimistic: shows the change now, restores it with an error if the host rejects
-  async function optimistic(apply: () => void, undo: () => void, call: () => Promise<unknown> | void) {
+  // optimistic: shows the change now, restores it with an error if the host rejects — but only when the rejected call
+  // is still the latest for that field (a newer change may already have replaced it)
+  const latest: Record<string, number> = {};
+  async function optimistic(field: string, apply: () => void, undo: () => void, call: () => Promise<unknown> | void) {
+    const seq = (latest[field] = (latest[field] ?? 0) + 1);
     failed = null;
     apply();
     try {
       await call();
     } catch {
+      if (latest[field] !== seq) return;
       undo();
       failed = 'ui.userDialog.actionFailed';
     }
+  }
+
+  // Esc, the veil and the cover's close: never while a block / unblock is in flight (it closes itself when done)
+  function dismiss() {
+    if (blockStep === 'busy') return;
+    close(onCancel);
   }
 
   function setMute(key: MuteKey | null) {
     const was = isMuted;
     muteMenu = null;
     optimistic(
+      'mute',
       () => (isMuted = key),
       () => (isMuted = was),
       () => onMuteChange?.(key),
@@ -154,6 +165,7 @@
     if (!onToggleFavourite) return;
     const next = !isFav;
     optimistic(
+      'fav',
       () => (isFav = next),
       () => (isFav = !next),
       () => onToggleFavourite(next),
@@ -167,7 +179,9 @@
   }
 
   async function confirmBlock() {
-    const call = blocked ? onUnblock : onBlock;
+    // the host may flip `blocked` before it resolves, so decide everything from the state the user acted on
+    const wasBlocked = blocked;
+    const call = wasBlocked ? onUnblock : onBlock;
     if (!call || blockStep === 'busy') return;
     blockStep = 'busy';
     failed = null;
@@ -175,11 +189,11 @@
       await call();
     } catch {
       blockStep = 'confirm';
-      failed = blocked ? 'ui.userDialog.unblockFailed' : 'ui.userDialog.blockFailed';
+      failed = wasBlocked ? 'ui.userDialog.unblockFailed' : 'ui.userDialog.blockFailed';
       return;
     }
     blockStep = 'idle';
-    if (!blocked) close(onCancel);
+    if (!wasBlocked) close(onCancel);
   }
 
   function openMuteMenu(e: MouseEvent & { currentTarget: HTMLElement }) {
@@ -190,8 +204,8 @@
   }
 </script>
 
-<div class="layer" role="dialog" aria-modal="true" use:modal={() => close(onCancel)}>
-  <div class="veil" class:closing onclick={() => close(onCancel)} aria-hidden="true"></div>
+<div class="layer" role="dialog" aria-modal="true" use:modal={dismiss}>
+  <div class="veil" class:closing onclick={dismiss} aria-hidden="true"></div>
   <div class="card" class:closing data-panel-root="true">
     <div class="cover">
       <!-- in a DM the favourite lives in the pill row, so the cover only closes -->
@@ -199,7 +213,7 @@
         {cover}
         actions={['close']}
         trailActions={isSelf || dm || !onToggleFavourite ? [] : ['favourite']}
-        handlers={{ close: () => close(onCancel), favourite: toggleFav }}
+        handlers={{ close: dismiss, favourite: toggleFav }}
         labels={{ favourite: isFav ? 'ui.userDialog.favourited' : 'ui.userDialog.favourite' }}
       />
     </div>

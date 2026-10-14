@@ -232,8 +232,13 @@
     }, 100);
   }
 
+  // a pending microphone request: a newer request, Delete / Esc, or unmounting makes it stale (its stream is stopped)
+  let startRun = 0;
+  let starting = false;
+  let destroyed = false;
+
   async function startRecording() {
-    if (voice || !canRecord) return;
+    if (voice || starting || !canRecord) return;
     menu = null;
     failure = null;
     if (demo !== 'interactive') {
@@ -243,13 +248,23 @@
       startTicking();
       return;
     }
+    const run = ++startRun;
+    starting = true;
     let stream: MediaStream;
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     } catch {
-      failure = 'mic';
+      if (run === startRun) {
+        starting = false;
+        if (!destroyed) failure = 'mic';
+      }
       return;
     }
+    if (destroyed || run !== startRun) {
+      stream.getTracks().forEach((track) => track.stop());
+      return;
+    }
+    starting = false;
     const recorder = new MediaRecorder(stream);
     const chunks: Blob[] = [];
     recorder.ondataavailable = (e) => {
@@ -316,6 +331,9 @@
   }
 
   function resetVoice() {
+    // also cancels a microphone request still waiting on the permission prompt
+    startRun++;
+    starting = false;
     clearInterval(recTimer);
     clearInterval(playTimer);
     void finishTake(false);
@@ -325,6 +343,12 @@
     levels = [];
     playing = false;
     playPos = 0;
+  }
+
+  // Delete / Esc: not while the voice note is being sent (a failure keeps the take for another try)
+  function discardVoice() {
+    if (sending) return;
+    resetVoice();
   }
 
   async function sendVoice() {
@@ -381,9 +405,9 @@
       e.stopPropagation();
       menu = null;
       input?.focus();
-    } else if (voice) {
+    } else if (voice || starting) {
       e.stopPropagation();
-      resetVoice();
+      discardVoice();
     }
   }
 
@@ -418,19 +442,25 @@
     window.addEventListener('pointerup', up);
   }
 
+  // moves the playhead; the real take follows, so the play timer doesn't snap it back
+  function seekTo(pos: number) {
+    playPos = pos;
+    if (audio && clip) audio.currentTime = Math.min(pos, 0.999) * clip.duration;
+  }
+
   function seekKey(e: KeyboardEvent) {
     if (voice !== 'review') return;
     const step = 1 / Math.max(1, secs);
     const k = ({ ArrowRight: step, ArrowUp: step, ArrowLeft: -step, ArrowDown: -step } as Record<string, number>)[e.key];
     if (k != null) {
       e.preventDefault();
-      playPos = Math.max(0, Math.min(1, playPos + k));
+      seekTo(Math.max(0, Math.min(1, playPos + k)));
     } else if (e.key === 'Home') {
       e.preventDefault();
-      playPos = 0;
+      seekTo(0);
     } else if (e.key === 'End') {
       e.preventDefault();
-      playPos = 1;
+      seekTo(1);
     } else if (e.key === ' ') {
       e.preventDefault();
       togglePlay();
@@ -516,6 +546,8 @@
     ro.observe(root);
     fit();
     return () => {
+      destroyed = true;
+      startRun++;
       document.removeEventListener('mousedown', down);
       ro.disconnect();
       endSeek?.();
@@ -709,7 +741,7 @@
         <span class="action mic" onclick={startRecording} role="button" tabindex="0" aria-label={t('ui.messageComposer.recordVoice')} title={t('ui.messageComposer.recordVoice')}><span class="mic-icon"></span></span>
       {/if}
     {:else}
-      <span class="action delete" onclick={resetVoice} role="button" tabindex="0" aria-label={t('ui.messageComposer.deleteRecording')} title={t('ui.messageComposer.deleteHint')}><span class="delete-icon"></span></span>
+      <span class="action delete" onclick={discardVoice} role="button" tabindex="0" aria-disabled={sending} aria-label={t('ui.messageComposer.deleteRecording')} title={t('ui.messageComposer.deleteHint')}><span class="delete-icon"></span></span>
       <div class="voice">
         {#if voice === 'recording'}
           <span class="rec-dot" aria-hidden="true"></span>
@@ -748,7 +780,7 @@
       {#if voice === 'recording'}
         <span class="action stop" onclick={stopRecording} role="button" tabindex="0" aria-label={t('ui.messageComposer.stopRecording')} title={t('ui.messageComposer.stopHint')}><span class="stop-icon"></span></span>
       {/if}
-      <span class="action send" onclick={sendVoice} role="button" tabindex="0" aria-label={t('ui.messageComposer.sendVoice')} title={t('ui.messageComposer.sendVoice')}
+      <span class="action send" onclick={sendVoice} role="button" tabindex="0" aria-disabled={sending} aria-label={t('ui.messageComposer.sendVoice')} title={t('ui.messageComposer.sendVoice')}
         ><span class="send-icon" style:mask="var(--icon-send) center/contain no-repeat"></span></span
       >
     {/if}
@@ -1487,6 +1519,11 @@
 
   .rec-hint.failure {
     color: var(--status-danger, #f5493d);
+  }
+
+  .action.delete[aria-disabled='true'] {
+    opacity: 0.4;
+    cursor: default;
   }
 
   .action.send[aria-disabled='true'] {

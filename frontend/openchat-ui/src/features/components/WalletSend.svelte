@@ -238,14 +238,16 @@
     amt = inUsd ? (v * tk.price).toFixed(2) : String(v);
   }
 
+  // the PIN dialog can't be closed or reopened while a send is in flight, so a send can never run twice
   function openPin() {
-    if (!ok) return;
+    if (!ok || pinState === 'sending') return;
     pinText = '';
     pinState = 'idle';
     step = 'pin';
   }
 
   function closePin() {
+    if (pinState === 'sending') return;
     step = 'form';
     pinText = '';
     pinState = 'idle';
@@ -563,7 +565,7 @@
         width={420}
         height="auto"
         flush={true}
-        onClose={closePin}
+        onClose={pinState === 'sending' ? undefined : closePin}
       >
         <form
           class="pin"

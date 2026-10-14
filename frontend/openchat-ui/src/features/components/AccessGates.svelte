@@ -158,7 +158,12 @@
   // stored values (emitted as `every`) and shown as-is by TimedToggle — not translated until it takes labels apart from values;
   // `everyDays` gives the host the same interval as a number
   const INTERVALS = ['1 day', '1 week', '2 weeks', '1 month', '3 months', '6 months'];
-  const INTERVAL_DAYS: Record<string, number> = { '1 day': 1, '1 week': 7, '2 weeks': 14, '1 month': 30, '3 months': 90, '6 months': 180 };
+  const UNIT_DAYS: Record<string, number> = { day: 1, week: 7, month: 30, year: 365 };
+  // "3 months" → 90; anything unparseable is unknown rather than a guess
+  const intervalDays = (label: string) => {
+    const m = label.trim().match(/^(\d+)\s*(day|week|month|year)s?$/i);
+    return m ? Number(m[1]) * UNIT_DAYS[m[2].toLowerCase()] : undefined;
+  };
   const mask = (icon: string) => `var(--icon-${icon}) center/contain no-repeat`;
 
   // title / body / chip: resource keys (or literal text)
@@ -218,7 +223,9 @@
   const recurring = $derived(intervalOn && rules.length > 0);
 
   function emit() {
-    onChange?.({ count: rules.length, joiner, rules, intervalOn, every, everyDays: INTERVAL_DAYS[every] ?? 30 });
+    // an interval the host gave that isn't a label we can read keeps the host's own day count
+    const everyDays = intervalDays(every) ?? (every === initial.every ? initial.everyDays : undefined);
+    onChange?.({ count: rules.length, joiner, rules, intervalOn, every, everyDays });
   }
 
   function add(key: string) {

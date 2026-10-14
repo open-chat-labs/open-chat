@@ -285,12 +285,14 @@ const groupPanel = {
     rules: [
       { id: 'g1', type: 'lifetime' },
       { id: 'g2', type: 'unique' },
-      { id: 'g3', type: 'balance', asset: 'CHAT', a: '100' },
-      { id: 'g4', type: 'neuron', asset: 'OpenChat', a: '90' },
+      // assets are canister ids (CHAT ledger, OpenChat SNS governance), as AccessGates stores them
+      { id: 'g3', type: 'balance', asset: '2ouva-viaaa-aaaaq-aaamq-cai', a: '100' },
+      { id: 'g4', type: 'neuron', asset: '2jvtu-yqaaa-aaaaq-aaama-cai', a: '90' },
     ],
     joiner: 'All',
     intervalOn: true,
-    every: '90 days',
+    every: '3 months',
+    everyDays: 90,
   },
   rules: {
     enabled: true,
@@ -580,7 +582,17 @@ export const samples: Record<string, Record<string, unknown>> = {
   AccessGates: { isDiamond: true, tokens: gateTokens, nervousSystems: gateSystems },
   AccessGatesCards: { isDiamond: true, tokens: gateTokens, nervousSystems: gateSystems },
   ExploreCommunities: { communities: exploreCommunities, joinedKeys: ['oc'] },
-  WalletSettingsDialog: { tokens: ['ICP', 'CHAT', 'BTC', 'USDT'], ...pinDemo },
+  WalletSettingsDialog: {
+    tokens: walletTokens,
+    value: { recipients: walletRecipients.map(({ id, name, address, token }) => ({ id, name, address, token })) },
+    ...pinDemo,
+    // review-wallet: recipients are saved and removed through the host (it assigns the id)
+    onSaveRecipient: async (r: { id?: string; name: string; address: string; token?: string | null }) => {
+      await wait(400);
+      return { ...r, id: r.id ?? `r-${r.address.slice(0, 6)}` };
+    },
+    onRemoveRecipient: () => wait(400),
+  },
   ChatRow: { menuItems },
   ChatPicker: { item: { title: 'Invite link', sub: 'oc.app/group/the-awesome-group-8f2a', icon: 'link' }, chats },
   ProgressTimeline: {
@@ -620,6 +632,11 @@ export const samples: Record<string, Record<string, unknown>> = {
     ],
   },
   MemeFighterDialog: {
+    // the demo "host" takes the meme (and frees its preview URL)
+    onAttach: async ({ src }: { src: string }) => {
+      await wait(300);
+      URL.revokeObjectURL(src);
+    },
     // placeholder art: gradient "panels", text boxes in % of the image
     templates: [
       { id: 'distracted', name: 'Distracted', vibes: ['lol'], ar: 1.5, cols: 1, cells: ['linear-gradient(150deg,#d8b48a,#5b7a96)'], boxes: [[12, 60, 34, 22], [46, 40, 26, 18], [73, 46, 25, 28]] },
@@ -1168,3 +1185,6 @@ Object.assign(samples, {
   StreakInsuranceDialog: { prices: [1, 2, 4, 12, 28, 60, 124], onBuy: () => wait(600) },
   PuzzleDialog: puzzleDemo,
 });
+
+// review-groups: GroupPanel names its gate assets
+Object.assign(samples.GroupPanel, { gateTokens, gateSystems });

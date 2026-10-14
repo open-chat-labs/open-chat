@@ -98,12 +98,18 @@
     if (!onRemove) return;
     confirmFor = null;
     error = '';
-    const before = list;
+    // remember where it sat (after which row), so a failure puts back only this row and keeps other changes
+    const at = list.findIndex((x) => x.id === r.id);
+    const prevId = at > 0 ? list[at - 1].id : null;
     list = list.filter((x) => x.id !== r.id);
     try {
       await onRemove(r.id);
     } catch {
-      list = before;
+      if (!list.some((x) => x.id === r.id)) {
+        const p = prevId == null ? -1 : list.findIndex((x) => x.id === prevId);
+        const i = prevId == null ? 0 : p >= 0 ? p + 1 : Math.min(at, list.length);
+        list = [...list.slice(0, i), r, ...list.slice(i)];
+      }
       error = 'remove';
     }
   }

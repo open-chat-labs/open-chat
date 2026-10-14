@@ -1,6 +1,8 @@
 <!-- Import a group into a community you own, as a channel: pick a community → confirm (irreversible warning).
      onConfirm(community) gets the picked community (with its id) and is awaited: the dialog shows "Importing…", closes once
-     it resolves and stays on the confirm step with an error if it rejects. It can't be dismissed while importing. -->
+     it resolves and stays on the confirm step with an error if it rejects. It can't be dismissed while importing.
+     Success contract (same in every confirm/create dialog): once the host's promise resolves the dialog animates out and
+     then calls onCancel, so the host unmounts it; it stays hidden (no reappearing, no invisible layer catching clicks). -->
 <script lang="ts" module>
   export interface ImportCommunity {
     id: string;
@@ -48,10 +50,7 @@
   function close(then?: () => void) {
     if (closing || importing) return;
     closing = true;
-    timer = setTimeout(() => {
-      closing = false;
-      then?.();
-    }, 170);
+    timer = setTimeout(() => then?.(), 170);
   }
 
   async function confirm() {
@@ -66,14 +65,14 @@
     } finally {
       importing = false;
     }
-    // animate out and stay hidden; the host unmounts the dialog once onConfirm has resolved
-    closing = true;
+    // success: animate out, then hand back to the host (see the header)
+    close(onCancel);
   }
 
   const avatarOf = (c: Community, i: number) => (c.avatarUrl ? `url(${c.avatarUrl}) center/cover no-repeat` : GRADIENTS[i % GRADIENTS.length]);
 </script>
 
-<div class="layer" class:closing role="dialog" aria-modal="true" use:modal={() => close(onCancel)}>
+<div class="layer" class:closing role="dialog" aria-modal="true" use:modal={closing ? undefined : () => close(onCancel)}>
   <div class="veil" onclick={() => close(onCancel)} aria-hidden="true"></div>
   <div class="card">
     <div class="head">
@@ -211,6 +210,11 @@
       var(--shadow-modal, 0 30px 70px rgba(0, 0, 0, 0.45));
     overflow: hidden;
     animation: oc-dlg-in var(--duration-slow, 280ms) var(--ease-out) both;
+  }
+
+  /* fading out: no longer catches clicks while (or after) it leaves */
+  .layer.closing {
+    pointer-events: none;
   }
 
   .closing .veil {

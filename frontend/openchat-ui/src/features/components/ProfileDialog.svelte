@@ -450,16 +450,19 @@
 
   function go(next: ProfileSection) {
     section = next;
-    editing = null;
+    if (!fieldBusy) editing = null;
   }
 
+  // while a field save is pending the editor stays on that field, so its result or error lands where it belongs
   function startEdit(key: string, value: string) {
+    if (fieldBusy) return;
     editing = key;
     draft = value;
     fieldError = null;
   }
 
   function stopEdit() {
+    if (fieldBusy) return;
     editing = null;
     draft = '';
     fieldError = null;
@@ -653,8 +656,11 @@
     return q ? communities.filter((c) => c.name.toLowerCase().includes(q)) : communities;
   });
 
-  // optimistic; restores the previous name with an error if the host rejects
+  // optimistic; restores the previous name with an error if the host rejects — only when the rejected call is still
+  // the latest for that community (a newer name may already have replaced it)
+  const commLatest: Record<string, number> = {};
   async function commitCommunity(c: ProfileCommunity, value: string) {
+    const seq = (commLatest[c.id] = (commLatest[c.id] ?? 0) + 1);
     const had = Object.prototype.hasOwnProperty.call(commOverrides, c.id);
     const before = commOverrides[c.id];
     commOverrides = { ...commOverrides, [c.id]: value };
@@ -663,6 +669,7 @@
     try {
       await onCommunityName?.(c.id, value || null);
     } catch {
+      if (commLatest[c.id] !== seq) return;
       const next = { ...commOverrides };
       if (had) next[c.id] = before;
       else delete next[c.id];
@@ -681,7 +688,8 @@
   let siToastTimer: ReturnType<typeof setTimeout> | undefined;
   let siRun = 0;
 
-  const siAll = $derived([...signinMethods, ...siAdded].filter((x) => !siRemoved.includes(x.id)));
+  // a method linked here is listed until the host's signinMethods includes it, then only once
+  const siAll = $derived([...signinMethods, ...siAdded.filter((a) => !signinMethods.some((m) => m.id === a.id))].filter((x) => !siRemoved.includes(x.id)));
   // only the method the host marks as current is locked; nothing is guessed
   const siCurrent = $derived(siAll.find((x) => x.current));
   const emailOk = $derived(!!siAdding && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(siAdding.email));
@@ -827,7 +835,7 @@
   let lcTicker: ReturnType<typeof setInterval> | undefined;
   const lcLive = $derived(!!lcCode && lcLeft > 0);
 
-  let lcSpan = 1; // seconds the current code was issued for, for the progress bar
+  let lcSpan = $state(1); // seconds the current code was issued for, for the progress bar
   let lcState = $state<'idle' | 'loading' | 'failed'>('idle');
   let lcRun = 0;
 
@@ -1042,6 +1050,8 @@
   onDestroy(() => {
     timers.forEach(clearTimeout);
     clearInterval(lcTicker);
+    // a host sound that loops would otherwise keep playing after the dialog closes
+    stopPreview?.();
   });
 </script>
 

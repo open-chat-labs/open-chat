@@ -135,6 +135,21 @@
   let gates = $state<AccessGateRule[]>(Array.isArray(initial.gates) ? initial.gates : []);
   let modeIndex = $state(initial.mode === 'Any' ? 1 : 0);
   let editing = $state<string | null>(null);
+  // long directories show their featured assets (plus the one picked); the rest are found by searching
+  const PILL_LIMIT = 8;
+  let assetQuery = $state('');
+  $effect(() => {
+    void editing;
+    assetQuery = '';
+  });
+  function pillsFor(kind: 'token' | 'sns', selected: string) {
+    const all = dirFor(kind);
+    if (all.length <= PILL_LIMIT) return { pills: all, more: false };
+    const base = all.filter((a) => a.featured || a.id === selected);
+    const q = assetQuery.trim().toLowerCase();
+    const found = q ? all.filter((a) => !base.includes(a) && `${a.symbol} ${a.name}`.toLowerCase().includes(q)).slice(0, PILL_LIMIT) : [];
+    return { pills: [...base, ...found], more: true };
+  }
   let pickerOpen = $state(false);
   let intervalOn = $state(!!initial.intervalOn);
   let everyDays = $state(initial.everyDays ?? 30);
@@ -234,15 +249,20 @@
           {#if editing === g.id}
             <div class="editor">
               {#if type.assets}
+                {@const picker = pillsFor(type.assets, g.asset)}
                 <div class="assets">
-                  {#each dirFor(type.assets) as a}
+                  {#each picker.pills as a (a.id)}
                     {@const name = labelOf(type.assets, a.id)}
                     {@const taken = !!type.uniqueAsset && gates.some((x) => x.type === g.type && x.asset === a.id && x.id !== g.id)}
                     <span
                       class="asset"
                       class:selected={g.asset === a.id}
                       class:unavailable={taken}
-                      onclick={() => !taken && patch(g.id, { asset: a.id })}
+                      onclick={() => {
+                        if (taken) return;
+                        patch(g.id, { asset: a.id });
+                        assetQuery = '';
+                      }}
                       role="button"
                       tabindex="0"
                     >
@@ -250,6 +270,9 @@
                       <span>{taken ? t('ui.accessGatesCards.assetUsed', { name }) : name}</span>
                     </span>
                   {/each}
+                  {#if picker.more}
+                    <input class="asset-search" bind:value={assetQuery} placeholder={t('ui.accessGatesCards.searchAssets')} aria-label={t('ui.accessGatesCards.searchAssets')} />
+                  {/if}
                 </div>
               {/if}
               {#each type.fields ?? [] as f}
@@ -565,6 +588,25 @@
     flex-wrap: wrap;
     gap: var(--space-6);
     min-width: 0;
+  }
+
+  .asset-search {
+    flex: 1 1 140px;
+    min-width: 120px;
+    height: 30px;
+    padding: 0 var(--space-10);
+    box-sizing: border-box;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: var(--field, #14141a);
+    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.08));
+    font: var(--weight-medium) var(--text-sm) / 1 var(--font-sans);
+    color: var(--ink, #ececf1);
+    outline: none;
+  }
+
+  .asset-search:focus-visible {
+    box-shadow: var(--focus-ring);
   }
 
   .asset {

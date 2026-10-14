@@ -44,7 +44,8 @@
   const qty = $derived(Math.min(picked, room));
   const total = $derived(STEPS.slice(held, held + qty).reduce((sum, v) => sum + v, 0));
   const affordable = $derived(total <= balance);
-  const canPay = $derived(qty > 0 && affordable);
+  // nothing to pay with when the host can't take the purchase
+  const canPay = $derived(qty > 0 && affordable && !!onBuy);
 
   const summaryTitle = $derived(qty > 0 ? t('ui.streakInsuranceDialog.adding', { days: days(qty) }) : t(room === 0 ? 'ui.streakInsuranceDialog.fullWeek' : 'ui.streakInsuranceDialog.tapToAddCover'));
   const summaryHint = $derived(

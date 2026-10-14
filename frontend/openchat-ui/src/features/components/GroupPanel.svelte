@@ -14,6 +14,7 @@
   import Translate from '../../lib/components/Translate.svelte';
   import { onDestroy, onMount, tick, untrack, type ComponentProps } from 'svelte';
   import type { GroupRole, GroupSettings, MenuItem } from '../../lib/types';
+  import type { GateAsset } from './AccessGates.svelte';
   import Field from '../../lib/components/Field.svelte';
   import GroupStats from './GroupStats.svelte';
   import IconButton from '../../lib/components/IconButton.svelte';
@@ -155,12 +156,20 @@
 
   // the builder stores an asset plus up to two numeric fields per rule; this turns that back into the
   // one-line value the read view shows ("min 100 CHAT", "10 USDT", neuron reads asset first)
+  // rule assets are canister ids (as AccessGates stores them): tokens read as their symbol, nervous systems by name
+  function assetLabel(r: GateState['rules'][number]) {
+    if (!r.asset) return '';
+    const list = r.type === 'neuron' ? gateSystems : gateTokens;
+    const a = list.find((x) => x.id === r.asset);
+    return a ? (r.type === 'neuron' ? a.name : a.symbol) : r.asset;
+  }
   function gateValue(r: GateState['rules'][number]) {
-    if (r.type === 'balance') return r.asset && r.a ? t('ui.groupPanel.gateValue.minAsset', { amount: r.a, asset: r.asset }) : r.a ? t('ui.groupPanel.gateValue.min', { amount: r.a }) : r.asset || '';
-    if (r.type === 'payment') return r.asset && r.a ? t('ui.groupPanel.gateValue.payment', { amount: r.a, asset: r.asset }) : r.a || r.asset || '';
+    const asset = assetLabel(r);
+    if (r.type === 'balance') return asset && r.a ? t('ui.groupPanel.gateValue.minAsset', { amount: r.a, asset }) : r.a ? t('ui.groupPanel.gateValue.min', { amount: r.a }) : asset;
+    if (r.type === 'payment') return asset && r.a ? t('ui.groupPanel.gateValue.payment', { amount: r.a, asset }) : r.a || asset;
     if (r.type === 'chit') return r.a ? t('ui.groupPanel.gateValue.chit', { amount: r.a }) : '';
-    if (r.type === 'neuron') return [r.asset, r.a && t('ui.groupPanel.gateValue.dissolveDelay', { days: r.a }), r.b && t('ui.groupPanel.gateValue.staked', { amount: r.b })].filter(Boolean).join(' · ');
-    return r.asset || '';
+    if (r.type === 'neuron') return [asset, r.a && t('ui.groupPanel.gateValue.dissolveDelay', { days: r.a }), r.b && t('ui.groupPanel.gateValue.staked', { amount: r.b })].filter(Boolean).join(' · ');
+    return asset;
   }
 
   const MUTE_SPANS: { key: MuteKey; label: string; tile: string }[] = [
@@ -274,6 +283,9 @@
     userGroups?: UserGroup[];
     permissions?: Permissions;
     gateState?: GateState | null;
+    /** Tokens (ledger canister ids) and nervous systems (governance canister ids), to name the assets in gate rules. */
+    gateTokens?: GateAsset[];
+    gateSystems?: GateAsset[];
     /** Overrides the number of gates in the nav row. */
     gateCount?: number;
     rules?: { enabled: boolean; text: string };
@@ -367,6 +379,8 @@
     userGroups = [],
     permissions,
     gateState = null,
+    gateTokens = [],
+    gateSystems = [],
     gateCount,
     rules = { enabled: false, text: '' },
     pinned = [],
@@ -549,22 +563,30 @@
     return { top: r.bottom - b.top + 6, left: Math.max(16, Math.min(r.left - b.left, b.width - 232)) };
   };
 
+  // overlapping changes: a rejected call only rolls back if nothing newer has been asked for since
+  let muteSeq = 0;
+  let muteAllSeq = 0;
+
   function setMute(key: MuteKey | null) {
     muteMenu = null;
-    const before = ownMute;
+    const before = ownMute, seq = ++muteSeq;
     memberAction(
       () => onMuteChange?.(key),
       () => (ownMute = key),
-      () => (ownMute = before),
+      () => {
+        if (seq === muteSeq) ownMute = before;
+      },
     );
   }
 
   function toggleMuteAll() {
-    const next = !muteAll, before = ownMuteAll;
+    const next = !muteAll, before = ownMuteAll, seq = ++muteAllSeq;
     memberAction(
       () => onMuteEveryoneChange?.(next),
       () => (ownMuteAll = next),
-      () => (ownMuteAll = before),
+      () => {
+        if (seq === muteAllSeq) ownMuteAll = before;
+      },
     );
   }
 

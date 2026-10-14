@@ -95,7 +95,7 @@
   );
   const address = $derived((id && addresses[id]) || '');
 
-  let shareBusy = false;
+  let shareBusy = $state(false);
   const canShare = $derived(!!onShare && chats.length > 0);
 
   function notify(message: string, tone: 'success' | 'danger') {
@@ -221,12 +221,16 @@
         previewLabel={t('ui.walletReceive.sharingAddress')}
         item={{ title: t('ui.walletReceive.shareItemTitle', { symbol: tok.symbol, network: t(net.label) }), sub: `${address.slice(0, 10)}…${address.slice(-8)}`, mark: tok.mark, grad: tok.grad }}
         chats={chats.map((c) => ({ id: c.id, name: c.name, kind: c.kind, grad: c.grad ?? 'var(--overlay-2)', radius: c.radius }))}
+        sendLabel={shareBusy ? 'ui.walletReceive.sharingNow' : 'ui.common.send'}
         onSend={share}
-        onClose={() => (sharing = false)}
+        onClose={() => {
+          if (!shareBusy) sharing = false;
+        }}
       />
     {/if}
     {#if toast}
-      <div class="toast">
+      <!-- above the chat picker while it's open, so a failed share is visible where the user is looking -->
+      <div class="toast" class:over-picker={sharing}>
         <div class="toast-box">
           {#key toast.id}<UndoToast shown={true} tone={toast.tone === 'success' ? 'success' : 'neutral'} size="lg" icon={toast.tone === 'success' ? 'check' : 'none'} message={toast.message} onClose={() => (toast = null)} />{/key}
         </div>
@@ -614,6 +618,10 @@
     display: flex;
     justify-content: center;
     pointer-events: none;
+  }
+
+  .toast.over-picker {
+    z-index: 100;
   }
 
   .toast-box {

@@ -21,7 +21,7 @@
 </script>
 
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, untrack } from 'svelte';
   import Button from '../../lib/components/Button.svelte';
   import IconButton from '../../lib/components/IconButton.svelte';
   import PollMessage from '../../lib/components/PollMessage.svelte';
@@ -71,6 +71,18 @@
 
   let box: HTMLDivElement;
   let questionField = $state<HTMLTextAreaElement>();
+
+  // any edit clears a stale "couldn't publish", so the current validation reason shows again
+  $effect(() => {
+    void question;
+    void answers;
+    void duration;
+    void publicVotes;
+    void multiple;
+    void locked;
+    void hideResults;
+    untrack(() => (failed = false));
+  });
 
   const wide = $derived(vw >= 960 && preview);
   const clean = $derived(answers.map((x) => x.trim()));

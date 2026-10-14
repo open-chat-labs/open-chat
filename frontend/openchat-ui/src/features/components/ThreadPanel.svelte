@@ -106,13 +106,22 @@
     await result;
   }
 
+  // the optimistic follow state gives way as soon as the host's `following` moves
+  $effect(() => {
+    void following;
+    untrack(() => (followOverride = undefined));
+  });
+
+  let followSeq = 0;
   async function follow() {
     const next = !on;
+    const seq = ++followSeq;
     followOverride = next;
     try {
       await onFollowChange?.(next);
     } catch {
-      followOverride = undefined;
+      // only the latest toggle rolls back
+      if (seq === followSeq) followOverride = undefined;
     }
   }
 </script>
