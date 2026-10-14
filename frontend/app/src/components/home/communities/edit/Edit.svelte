@@ -1,9 +1,8 @@
 <script lang="ts">
     import { menuCloser } from "component-lib";
     import {
-        hasAccessGateChanged,
         mobileWidth,
-        type CandidateMember,
+        type CommunityIdentifier,
         type CommunitySummary,
         type DefaultChannel,
         type OpenChat,
@@ -11,15 +10,15 @@
         type UserSummary,
     } from "@client";
     import { navigate } from "@utils/navigation";
-    import { getContext, onMount } from "svelte";
+    import { getContext, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../../../i18n/i18n";
-    import { createCandidateCommunity } from "../../../../stores/community";
     import { toastStore } from "../../../../stores/toast";
     import AreYouSure from "../../../AreYouSure.svelte";
     import Button from "../../../Button.svelte";
     import ModalContent from "../../../ModalContent.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
+    import { UpdateCommunityState } from "@shared_components/home/communities/createOrUpdate/community.svelte";
     import ChooseMembers from "../../ChooseMembers.svelte";
     import RulesEditor from "../../RulesEditor.svelte";
     import StageHeader from "../../StageHeader.svelte";
@@ -30,24 +29,24 @@
     import PermissionsEditor from "./PermissionsEditor.svelte";
 
     interface Props {
-        original?: CommunitySummary;
+        original: CommunitySummary;
         originalRules: Rules;
         onClose: () => void;
     }
 
-    let { original = createCandidateCommunity("", 0), originalRules, onClose }: Props = $props();
+    let { original, originalRules, onClose }: Props = $props();
 
     const client = getContext<OpenChat>("client");
 
+    const ucs = new UpdateCommunityState();
+    ucs.initialise(
+        untrack(() => original),
+        untrack(() => originalRules),
+    );
+
     let actualWidth = $state(0);
-    const editing = original.id.communityId !== "";
+    const editing = ucs.editMode;
     let step = $state("details");
-    let busy = $state(false);
-    let confirming = $state(false);
-    let showingVerificationWarning = $state(false);
-    let candidate = $state<CommunitySummary>($state.snapshot(original));
-    let candidateRules = $state({ ...originalRules, newVersion: false });
-    let members: CandidateMember[] = $state([]);
     let channels: DefaultChannel[] = $state([
         { name: $_("communities.general"), createdAt: Date.now() },
     ]);
@@ -77,152 +76,66 @@
         return steps;
     }
 
-    onMount(() => {
-        candidate = $state.snapshot(original);
-        candidateRules = { ...originalRules, newVersion: false };
-    });
-
     function searchUsers(term: string): Promise<[UserSummary[], UserSummary[]]> {
         return client.searchUsersForInvite(term, 20, "community", !editing, true);
     }
 
-    function optionallyInviteUsers(communityId: string): Promise<void> {
-        if (members.length === 0) {
-            return Promise.resolve();
-        }
-        return client
-            .inviteUsers(
-                { kind: "community", communityId },
-                members.map((m) => m.user.userId),
-            )
-            .then((resp) => {
-                if (!resp) {
-                    Promise.reject("Unable to invite users to the new community");
-                }
-            });
-    }
-
-    function save(yes: boolean = true): Promise<void> {
-        busy = true;
-        if (editing) {
-            const makePrivate = visDirty && !candidate.public && original.public;
-
-            if (verificationWarning && !showingVerificationWarning) {
-                showingVerificationWarning = true;
-                return Promise.resolve();
-            }
-
-            if (makePrivate && !confirming) {
-                confirming = true;
-                return Promise.resolve();
-            }
-
-            if (verificationWarning && showingVerificationWarning && !yes) {
-                showingVerificationWarning = false;
-                busy = false;
-                candidate.name = original.name;
-                return Promise.resolve();
-            }
-
-            if (makePrivate && confirming && !yes) {
-                confirming = false;
-                busy = false;
-                candidate.public = true;
-                return Promise.resolve();
-            }
-
-            confirming = false;
-            showingVerificationWarning = false;
-
-            const community = $state.snapshot(candidate);
-            const communityRules = $state.snapshot(candidateRules);
-            return client
-                .saveCommunity(
-                    community,
-                    community.name !== original.name ? community.name : undefined,
-                    community.description !== original.description
-                        ? community.description
-                        : undefined,
-                    rulesDirty ? communityRules : undefined,
-                    permissionsDirty ? community.permissions : undefined,
-                    avatarDirty ? community.avatar.blobData : undefined,
-                    bannerDirty ? community.banner.blobData : undefined,
-                    gateDirty ? community.gateConfig : undefined,
-                    community.public !== original.public ? community.public : undefined,
-                    languageDirty ? community.primaryLanguage : undefined,
-                )
-                .then((success: boolean) => {
-                    if (success) {
-                        toastStore.showSuccessToast(i18nKey("communities.saved"));
-                        onClose();
-                    } else {
-                        toastStore.showFailureToast(i18nKey("communities.errors.saveFailed"));
-                    }
-                })
-                .finally(() => (busy = false));
-        } else {
-            const community = $state.snapshot(candidate);
-            const communityRules = $state.snapshot(candidateRules);
-            return client
-                .createCommunity(
-                    community,
-                    communityRules,
-                    channels.map((c) => c.name),
-                )
-                .then((response) => {
-                    if (response.kind === "success") {
-                        toastStore.showSuccessToast(i18nKey("communities.created"));
-                        onClose();
-                        navigate(`/community/${response.id}`);
-                        optionallyInviteUsers(response.id).catch((_err) => {
-                            toastStore.showFailureToast(i18nKey("inviteUsersFailed"));
-                        });
-                    } else {
-                        toastStore.showFailureToast(i18nKey(`communities.errors.${response.kind}`));
-                    }
-                })
-                .finally(() => (busy = false));
+    async function save(yes: boolean = true) {
+        ucs.channelNames = channels.map((c) => c.name);
+        const outcome = await ucs.saveCommunity(client, yes);
+        switch (outcome.kind) {
+            case "needs_confirmation":
+            case "declined":
+            case "invalid":
+                break;
+            case "success":
+                toastStore.showSuccessToast(i18nKey("communities.saved"));
+                onClose();
+                break;
+            case "unchanged":
+                onClose();
+                break;
+            case "failed":
+                toastStore.showFailureToast(outcome.message);
+                break;
+            case "created_without_invites":
+                toastStore.showFailureToast(outcome.message);
+                openCreatedCommunity(outcome.id);
+                break;
+            case "created":
+                toastStore.showSuccessToast(i18nKey("communities.created"));
+                openCreatedCommunity(outcome.id);
+                break;
+            default:
+                outcome satisfies never;
         }
     }
+
+    function openCreatedCommunity(id: CommunityIdentifier) {
+        onClose();
+        navigate(`/community/${id.communityId}`);
+    }
+
     let steps = $derived(
         getSteps(editing, detailsValid, visibilityValid, channelsValid, rulesValid),
     );
     let canEditPermissions = $derived(
-        !editing || client.canChangeCommunityPermissions(candidate.id),
+        !editing || client.canChangeCommunityPermissions(ucs.candidate.id),
     );
-    let permissionsDirty = $derived(
-        client.haveCommunityPermissionsChanged(original.permissions, candidate.permissions),
-    );
-    let rulesDirty = $derived(
-        editing &&
-            (candidateRules.enabled !== originalRules.enabled ||
-                candidateRules.text !== originalRules.text),
-    );
-    let nameDirty = $derived(editing && candidate.name !== original.name);
-    let descDirty = $derived(editing && candidate.description !== original.description);
-    let languageDirty = $derived(editing && candidate.primaryLanguage !== original.primaryLanguage);
-    let avatarDirty = $derived(editing && candidate.avatar?.blobUrl !== original.avatar?.blobUrl);
-    let bannerDirty = $derived(editing && candidate.banner.blobUrl !== original.banner.blobUrl);
-    let visDirty = $derived(editing && candidate.public !== original.public);
-    let infoDirty = $derived(nameDirty || descDirty || avatarDirty || bannerDirty || languageDirty);
-    let gateDirty = $derived(
-        hasAccessGateChanged(candidate.gateConfig, original.gateConfig),
-    );
-    let dirty = $derived(infoDirty || rulesDirty || permissionsDirty || visDirty || gateDirty);
+    let gateDirty = $derived(ucs.accessGatesChanged());
     let stepIndex = $derived(steps.findIndex((s) => s.key === step) ?? 0);
     let valid = $derived(detailsValid && channelsValid && rulesValid && visibilityValid);
-    let verificationWarning = $derived(nameDirty && editing && original.verified);
 </script>
 
-{#if confirming}
+{#if ucs.confirming}
     <AreYouSure
-        message={i18nKey("confirmMakeGroupPrivate", undefined, candidate.level, true)}
+        message={i18nKey("confirmMakeGroupPrivate", undefined, ucs.candidate.level, true)}
         action={save} />
 {/if}
 
-{#if showingVerificationWarning}
+{#if ucs.showingVerificationWarning}
     <AreYouSure
-        message={i18nKey("verified.nameChangeWarning", undefined, candidate.level, true)}
+        message={i18nKey("verified.nameChangeWarning", undefined, ucs.candidate.level, true)}
         action={save} />
 {/if}
 
@@ -239,14 +152,17 @@
             <div use:menuCloser class="wrapper">
                 {#if step === "details"}
                     <div class="details">
-                        <Details bind:valid={detailsValid} bind:busy bind:candidate />
+                        <Details
+                            bind:valid={detailsValid}
+                            bind:busy={ucs.busy}
+                            bind:candidate={ucs.candidateCommunity} />
                     </div>
                 {/if}
                 {#if step === "visibility"}
                     <div class="visibility">
                         <VisibilityControl
                             canEditDisappearingMessages={false}
-                            bind:candidate
+                            bind:candidate={ucs.candidateCommunity}
                             bind:valid={visibilityValid}
                             {editing}
                             {gateDirty}
@@ -257,19 +173,19 @@
                     <div class="rules">
                         <RulesEditor
                             bind:valid={rulesValid}
-                            level={candidate.level}
-                            bind:rules={candidateRules}
+                            level={ucs.candidate.level}
+                            bind:rules={ucs.rules}
                             {editing} />
                     </div>
                 {/if}
                 {#if step === "permissions"}
                     <div class="permissions">
                         {#if canEditPermissions}
-                            <PermissionsEditor bind:permissions={candidate.permissions} />
+                            <PermissionsEditor bind:permissions={ucs.candidateCommunity.permissions} />
                         {:else}
                             <PermissionsViewer
-                                isPublic={candidate.public}
-                                permissions={candidate.permissions} />
+                                isPublic={ucs.candidate.public}
+                                permissions={ucs.candidate.permissions} />
                         {/if}
                     </div>
                 {/if}
@@ -281,7 +197,10 @@
                     {/if}
                     {#if step === "invite"}
                         <div class="members">
-                            <ChooseMembers userLookup={searchUsers} bind:members {busy} />
+                            <ChooseMembers
+                                userLookup={searchUsers}
+                                bind:members={ucs.candidateMembers}
+                                busy={ucs.busy} />
                         </div>
                     {/if}
                 {/if}
@@ -294,7 +213,7 @@
                 <div class="back">
                     {#if !editing && stepIndex > 0}
                         <Button
-                            disabled={busy}
+                            disabled={ucs.busy}
                             small={!$mobileWidth}
                             tiny={$mobileWidth}
                             onClick={() => (step = steps[stepIndex - 1].key)}
@@ -311,8 +230,8 @@
 
                     {#if editing}
                         <Button
-                            disabled={!dirty || busy || !valid}
-                            loading={busy}
+                            disabled={!ucs.hasChanges() || ucs.busy || !valid}
+                            loading={ucs.busy}
                             small={!$mobileWidth}
                             tiny={$mobileWidth}
                             onClick={() => save()}
@@ -332,8 +251,8 @@
                         </Button>
                     {:else}
                         <Button
-                            disabled={busy || !valid}
-                            loading={busy}
+                            disabled={ucs.busy || !valid}
+                            loading={ucs.busy}
                             small={!$mobileWidth}
                             tiny={$mobileWidth}
                             onClick={() => save()}

@@ -47,6 +47,7 @@
         suspendedUserStore,
     } from "@client";
     import { getContext, onMount, tick, untrack } from "svelte";
+    import { openCommunityCreation } from "./communities/createOrUpdate/createCommunity";
     import { communityPreviewState, groupPreviewState } from "@src/utils/preview.svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
@@ -518,6 +519,12 @@
                     ? groupPreviewState.joinGroup(client, join.group)
                     : communityPreviewState.joinCommunity(client, join.community),
             );
+        } else if (
+            $identityStateStore.kind === "logged_in" &&
+            $identityStateStore.postLogin?.kind === "create_community"
+        ) {
+            client.clearPostLoginState();
+            tick().then(() => openCommunityCreation(client));
         }
     });
 

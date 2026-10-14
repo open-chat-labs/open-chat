@@ -109,7 +109,6 @@ import {
     type AcceptP2PSwapResponse,
     type AcceptedRules,
     type AccessGate,
-    type AccessGateConfig,
     type AccessTokenType,
     type AccountLinkingCode,
     type AccountTransactionResult,
@@ -166,9 +165,10 @@ import {
     type CommunityDetailsResponse,
     type CommunityIdentifier,
     type CommunityInvite,
-    type CommunityPermissions,
     type CommunitySummary,
     type CompletedCryptocurrencyTransfer,
+    type CommunityAndRules,
+    type CreateCommunityOutcome,
     type CreateCommunityResponse,
     type CreateGroupOutcome,
     type CreateGroupResponse,
@@ -324,13 +324,14 @@ import {
     type TokenInfo,
     type TransferSuccess,
     type GroupChangeConfirmation,
+    type UpdateCommunityOutcome,
+    type UpdateCommunityResponse,
     type UpdateGroupOutcome,
     type UpdateGroupResponse,
     type UpdateMarketMakerConfigArgs,
     type UpdateMarketMakerConfigResponse,
     type UpdateUserGroupResponse,
     type UpdatedEvent,
-    type UpdatedRules,
     type UpdatesResult,
     type User,
     type UserGroupDetails,
@@ -621,6 +622,10 @@ import {
     canManageUserGroups,
     canRemoveMembers as canRemoveCommunityMembers,
     canUnblockUsers as canUnblockCommunityUsers,
+    communityChangeConfirmationNeeded,
+    communityChanges,
+    communityCreationFailure,
+    communityUpdateResult,
     isCommunityLapsed,
 } from "./utils/community";
 import { verifyCredential } from "./utils/credentials";
@@ -652,7 +657,6 @@ import {
     messageContentFromFile,
     type MaxMediaSizes,
 } from "./utils/media";
-import { mergeKeepingOnlyChanged } from "./utils/object";
 import { hasOwnerRights } from "./utils/permissions";
 import { Poller } from "./utils/poller";
 import { watchForResume, type ResumeReason } from "./utils/resumeDetector";
@@ -4297,11 +4301,6 @@ export class OpenChat {
     }
 
     formatFileSize = formatFileSize;
-
-    haveCommunityPermissionsChanged(p1: CommunityPermissions, p2: CommunityPermissions): boolean {
-        const args = mergeKeepingOnlyChanged(p1, p2);
-        return Object.keys(args).length > 0;
-    }
 
     getTokenDetailsForAccessGate(gate: AccessGate): CryptocurrencyDetails | undefined {
         if (gate.kind === "neuron_gate") {
@@ -11155,35 +11154,51 @@ export class OpenChat {
             });
     }
 
-    createCommunity(
-        candidate: CommunitySummary,
-        rules: Rules,
+    // Creates a community with the given channels, then invites `invitees` to it
+    async createCommunity(
+        { community: candidate, rules }: CommunityAndRules,
         defaultChannels: string[],
-    ): Promise<CreateCommunityResponse> {
-        return this.#worker
-            .send({
+        invitees: string[],
+    ): Promise<CreateCommunityOutcome> {
+        let resp: CreateCommunityResponse;
+        try {
+            resp = await this.#worker.send({
                 kind: "createCommunity",
                 community: candidate,
                 rules,
                 defaultChannels,
                 defaultChannelRules: defaultChatRules("channel"),
-            })
-            .then((resp) => {
-                if (resp.kind === "success") {
-                    localUpdates.addCommunity({
-                        ...candidate,
-                        id: {
-                            kind: "community",
-                            communityId: resp.id,
-                        },
-                        channels: resp.channels.map(([id, name]) => newDefaultChannel(id, name)),
-                    });
-                }
-                return resp;
-            })
-            .catch(() => ({
-                kind: "failure",
-            }));
+            });
+        } catch (err) {
+            this.logError("Unable to create community", err);
+            resp = { kind: "failure" };
+        }
+        if (resp.kind !== "success") {
+            this.logMessage("Unable to create community", resp);
+            return { kind: "failed", message: communityCreationFailure(resp) };
+        }
+
+        const id: CommunityIdentifier = { kind: "community", communityId: resp.id };
+        localUpdates.addCommunity({
+            ...candidate,
+            id,
+            channels: resp.channels.map(([id, name]) => newDefaultChannel(id, name)),
+        });
+
+        if (invitees.length > 0) {
+            const invited = await this.inviteUsers(id, invitees).catch((err) => {
+                this.logError("Unable to invite users to a new community", err);
+                return false;
+            });
+            if (!invited) {
+                return {
+                    kind: "created_without_invites",
+                    id,
+                    message: i18nKey("inviteUsersFailed"),
+                };
+            }
+        }
+        return { kind: "created", id };
     }
 
     addToFavourites(chatId: ChatIdentifier): Promise<boolean> {
@@ -11222,47 +11237,52 @@ export class OpenChat {
             });
     }
 
-    saveCommunity(
-        community: CommunitySummary,
-        name: string | undefined,
-        description: string | undefined,
-        rules: UpdatedRules | undefined,
-        permissions: CommunityPermissions | undefined,
-        avatar: Uint8Array | undefined,
-        banner: Uint8Array | undefined,
-        gateConfig: AccessGateConfig | undefined,
-        isPublic: boolean | undefined,
-        primaryLanguage: string | undefined,
-    ): Promise<boolean> {
-        return this.#worker
-            .send({
+    /**
+     * Saves the changes the user has made to a community, sending only the fields that differ. A
+     * change the user has to confirm (see `GroupChangeConfirmation`) and hasn't is returned for them
+     * to confirm before anything is sent.
+     */
+    async updateCommunity(
+        original: CommunityAndRules,
+        candidate: CommunityAndRules,
+        confirmed: GroupChangeConfirmation[] = [],
+    ): Promise<UpdateCommunityOutcome> {
+        const changes = communityChanges(original, candidate);
+        if (Object.keys(changes).length === 0) return { kind: "unchanged" };
+
+        const confirmation = communityChangeConfirmationNeeded(
+            original.community,
+            changes,
+            confirmed,
+        );
+        if (confirmation !== undefined) return { kind: "needs_confirmation", confirmation };
+
+        const community = candidate.community;
+        let resp: UpdateCommunityResponse;
+        try {
+            resp = await this.#worker.send({
                 kind: "updateCommunity",
                 communityId: community.id.communityId,
-                name,
-                description,
-                rules,
-                permissions,
-                avatar,
-                banner,
-                gateConfig,
-                isPublic,
-                primaryLanguage,
-            })
-            .then((resp) => {
-                if (resp.kind === "success") {
-                    localUpdates.addCommunity(community);
-                    if (rules !== undefined && resp.rulesVersion !== undefined) {
-                        localUpdates.updateCommunityRules(community.id, {
-                            text: rules.text,
-                            enabled: rules.enabled,
-                            version: resp.rulesVersion,
-                        });
-                    }
-                    return true;
-                }
-                return false;
-            })
-            .catch(() => false);
+                ...changes,
+            });
+        } catch (err) {
+            this.logError("Unable to update community", err);
+            resp = CommonResponses.unknownError(undefined);
+        }
+
+        if (resp.kind === "success") {
+            localUpdates.addCommunity(community);
+            if (changes.rules !== undefined && resp.rulesVersion !== undefined) {
+                localUpdates.updateCommunityRules(community.id, {
+                    text: changes.rules.text,
+                    enabled: changes.rules.enabled,
+                    version: resp.rulesVersion,
+                });
+            }
+        } else {
+            this.logMessage("Unable to update community", resp);
+        }
+        return communityUpdateResult(resp);
     }
 
     convertGroupToCommunity(

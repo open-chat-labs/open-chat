@@ -3,7 +3,7 @@
     import { BodySmall, CommonButton, Container, Form, Input, Sheet, Title } from "component-lib";
     import Save from "svelte-material-icons/ContentSaveOutline.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
-    import { updateCommunityState } from "./community.svelte";
+    import { updateCommunityState } from "@shared_components/home/communities/createOrUpdate/community.svelte";
 
     const MAX_LENGTH = 40;
     const MIN_LENGTH = 3;

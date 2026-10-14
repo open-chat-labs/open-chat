@@ -13,7 +13,7 @@
     import ChevronLeft from "svelte-material-icons/ChevronLeft.svelte";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
     import { fade } from "svelte/transition";
-    import { updateCommunityState } from "../communities/createOrUpdate/community.svelte";
+    import { openCommunityCreation } from "../communities/createOrUpdate/createCommunity";
     import CommunitiesList from "./CommunitiesList.svelte";
     import CommunitiesScroller from "./CommunitiesScroller.svelte";
 
@@ -95,7 +95,7 @@
     function createCommunity() {
         // Delaying collapse, allows the create community screen to animate in first!
         setTimeout(() => anchoredSheet.collapse(), 500);
-        updateCommunityState.createCommunity(client);
+        openCommunityCreation(client);
     }
 
     function exploreCommunities() {

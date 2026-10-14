@@ -37,7 +37,6 @@
         chatListScopeStore,
         chatsInitialisedStore,
         chatSummariesListStore,
-        communitiesStore,
         ANON_USER_ID,
         CURRENT_TERMS_VERSION,
         currentUserStore,
@@ -65,7 +64,7 @@
     import { getContext, onMount, tick, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
-    import { createCandidateCommunity } from "../../stores/community";
+    import { newCommunity } from "@shared_components/home/communities/createOrUpdate/community.svelte";
     import { messageToForwardStore } from "../../stores/messageToForward";
     import { chitPopup, disableChit } from "../../stores/settings";
     import { toastStore } from "../../stores/toast";
@@ -799,13 +798,9 @@
     }
 
     function createCommunity() {
-        const maxIndex = $communitiesStore.reduce(
-            (m, [_, c]) => (c.membership.index > m ? c.membership.index : m),
-            0,
-        );
         modal = {
             kind: "edit_community",
-            community: createCandidateCommunity("", maxIndex + 1),
+            community: newCommunity(),
             communityRules: defaultChatRules("community"),
         };
     }

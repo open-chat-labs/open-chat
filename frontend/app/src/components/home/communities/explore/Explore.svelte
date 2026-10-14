@@ -1,12 +1,10 @@
 <script lang="ts">
     import type { OpenChat } from "@client";
     import {
-        anonUserStore,
         exploreCommunitiesFiltersStore,
         iconSize,
         identityStateStore,
         ipadWidth,
-        isDiamondStore,
         mobileWidth,
         offlineStore,
         publish,
@@ -21,6 +19,7 @@
     import Tune from "svelte-material-icons/Tune.svelte";
     import { i18nKey } from "../../../../i18n/i18n";
     import { communitySearchState } from "../../../../stores/search.svelte";
+    import { startCommunityCreation } from "@shared_components/home/communities/createOrUpdate/community.svelte";
     import Search from "../../..//Search.svelte";
     import Button from "../../../Button.svelte";
     import Fab from "../../../Fab.svelte";
@@ -49,17 +48,15 @@
     }
 
     function createCommunity() {
-        if ($anonUserStore) {
-            client.updateIdentityState({
-                kind: "logging_in",
-                postLogin: { kind: "create_community" },
-            });
-            return;
-        }
-        if (!$isDiamondStore) {
-            publish("upgrade");
-        } else {
-            publish("createCommunity");
+        switch (startCommunityCreation(client)) {
+            case "logging_in":
+                break;
+            case "needs_diamond":
+                publish("upgrade");
+                break;
+            case "ready":
+                publish("createCommunity");
+                break;
         }
     }
 
