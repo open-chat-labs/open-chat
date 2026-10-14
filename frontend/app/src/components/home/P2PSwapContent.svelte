@@ -8,6 +8,7 @@
         ResourceKey,
     } from "@client";
     import {
+        calculateDollarAmount,
         cryptoLookup,
         currentUserIdStore,
         exchangeRatesLookupStore as exchangeRatesLookup,
@@ -23,7 +24,6 @@
     import { rtlStore } from "../../stores/rtl";
     import { now500 } from "../../stores/time";
     import { toastStore } from "../../stores/toast";
-    import { calculateDollarAmount } from "../../utils/exchange";
     import AreYouSure from "../AreYouSure.svelte";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";

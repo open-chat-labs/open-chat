@@ -10,20 +10,12 @@
         Switch,
     } from "component-lib";
     import {
-        exchangeRatesLookupStore as exchangeRatesLookup,
-        formatTokens,
         swappableTokensStore,
-        type DexId,
         type EnhancedTokenDetails,
-        type InterpolationValues,
         type OpenChat,
         type ResourceKey,
-        type SwapFromWalletStep,
-        type SwapTokensResponse,
     } from "@client";
-    import { random128 } from "@shared";
-    import { getContext, onMount } from "svelte";
-    import { _ } from "svelte-i18n";
+    import { getContext, untrack } from "svelte";
     import Alert from "svelte-material-icons/AlertOutline.svelte";
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
     import Check from "svelte-material-icons/Check.svelte";
@@ -33,7 +25,6 @@
     import SwapVertical from "svelte-material-icons/SwapVertical.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
-    import { calculateDollarAmount } from "../../../utils/exchange";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
@@ -41,14 +32,15 @@
     import SwapProgress from "./SwapProgress.svelte";
     import TokenCard from "./TokenCard.svelte";
     import TokenSelector from "./TokenSelector.svelte";
-    import { TokenState } from "@shared_components/home/wallet/walletState.svelte";
+    import type { TokenState } from "@shared_components/home/wallet/walletState.svelte";
+    import { SwapForm } from "@shared_components/home/wallet/swapForm.svelte";
 
     interface Props {
         inToken: TokenState;
         onClose: () => void;
     }
 
-    let { inToken = $bindable() }: Props = $props();
+    let { inToken }: Props = $props();
 
     const client = getContext<OpenChat>("client");
 
@@ -57,203 +49,33 @@
         onSelect: (token: EnhancedTokenDetails) => void;
         extraFilter?: (token: EnhancedTokenDetails) => boolean;
     };
-    type SwapState = "quote" | "swap";
 
-    let outToken = $state<TokenState>();
-    let ledgerIn = $derived(inToken.ledger);
+    // The page is opened for one token; the user can pick another
+    const form = new SwapForm(
+        client,
+        untrack(() => inToken),
+    );
     let tokenSelector = $state<TokenSelectorParams>();
-    let error: string | undefined = $state(undefined);
-    let busy = $state(false);
-    let valid = $state(false);
-    let swapState = $state<SwapState>("quote");
-    let validAmount = $state(false);
-    let ledgerOut = $derived(outToken?.ledger);
-    let swaps = $state({} as Record<string, DexId[]>);
-    let swapMessageValues: InterpolationValues | undefined = $state(undefined);
-    let bestQuote: [DexId, bigint] | undefined = $state(undefined);
-    let swapId: bigint | undefined = $state();
-    let swapResponse = $state<SwapTokensResponse>();
-    let swapStep = $state<SwapFromWalletStep>();
-    let userAcceptedWarning = $state(false);
-    let warnValueUnknown = $state(false);
-    let warnValueDropped = $state(false);
-    let initialized = $state(false);
-    let detailsIn = $derived(inToken.token);
-    let detailsOut = $derived(outToken?.token);
-    let anySwapsAvailable = $derived(Object.keys(swaps).length > 0 && detailsOut !== undefined);
-    let swapping = $derived(swapState === "swap" && busy);
-    let amountInText = $derived(formatTokens(inToken.draftAmount, detailsIn.decimals));
-
-    onMount(() => loadSwaps(inToken.ledger));
-
-    function quote() {
-        if (!valid) return;
-
-        busy = true;
-        error = undefined;
-        swapId = undefined;
-
-        client
-            .getTokenSwapQuotes(
-                ledgerIn,
-                ledgerOut!,
-                inToken.draftAmount - BigInt(2) * detailsIn.transferFee,
-            )
-            .then((response) => {
-                if (response.length === 0) {
-                    error = $_("tokenSwap.noQuotes", { values: { tokenIn: detailsIn.symbol } });
-                } else {
-                    bestQuote = response[0];
-
-                    const [dexId, quote] = bestQuote!;
-
-                    const amountOutText = formatTokens(quote, detailsOut!.decimals);
-                    const rate = (Number(amountOutText) / Number(amountInText)).toPrecision(3);
-                    const dex = dexName(dexId);
-                    const minAmountOut = BigInt(10) * detailsOut!.transferFee;
-                    const minAmountOutText = formatTokens(minAmountOut, detailsOut!.decimals);
-
-                    const usdInText = calculateDollarAmount(
-                        inToken.draftAmount,
-                        $exchangeRatesLookup.get(detailsIn.ledger)?.toUSD,
-                        detailsIn.decimals,
-                    );
-                    const usdOutText = calculateDollarAmount(
-                        bestQuote[1],
-                        $exchangeRatesLookup.get(detailsOut!.ledger)?.toUSD,
-                        detailsOut!.decimals,
-                    );
-
-                    warnValueUnknown = usdInText === "???" || usdOutText === "???";
-                    warnValueDropped =
-                        !warnValueUnknown && Number(usdOutText) < 0.9 * Number(usdInText);
-
-                    swapMessageValues = {
-                        amountIn: amountInText,
-                        tokenIn: detailsIn.symbol,
-                        rate,
-                        amountOut: amountOutText,
-                        tokenOut: detailsOut!.symbol,
-                        dex,
-                        minAmountOut: minAmountOutText,
-                        usdOut: usdOutText,
-                        usdIn: usdInText,
-                    };
-
-                    if (quote > minAmountOut) {
-                        swapState = "swap";
-                    } else {
-                        error = $_("tokenSwap.quoteTooLow", { values: swapMessageValues });
-                    }
-                }
-            })
-            .catch((err) => {
-                client.logError(`Error getting swap quotes for token: ${detailsIn.symbol}`, err);
-                error = $_("tokenSwap.quoteError", { values: { tokenIn: detailsIn.symbol } });
-            })
-            .finally(() => (busy = false));
-    }
-
-    function swap() {
-        if (!valid || bestQuote === undefined) return;
-
-        busy = true;
-        error = undefined;
-
-        const ledgerInLocal = ledgerIn;
-        const ledgerOutLocal = ledgerOut!;
-        const bestQuoteLocal = bestQuote;
-
-        const minAmountOut = (bestQuoteLocal[1] * BigInt(98)) / BigInt(100);
-
-        client
-            .refreshAccountBalance(ledgerIn)
-            .then((balance) => {
-                if (balance < inToken.draftAmount) {
-                    error = $_("tokenSwap.progress.insufficientFunds");
-                    return false;
-                } else {
-                    return true;
-                }
-            })
-            .then((balanceCheckSuccess) => {
-                if (balanceCheckSuccess) {
-                    swapId = random128();
-                    swapResponse = undefined;
-                    swapStep = undefined;
-                    return client.swapTokens(
-                        swapId,
-                        ledgerInLocal,
-                        ledgerOutLocal,
-                        inToken.draftAmount,
-                        minAmountOut,
-                        bestQuoteLocal[0],
-                        (step) => (swapStep = step),
-                    );
-                }
-            })
-            .then((response) => {
-                swapResponse = response;
-            })
-            .catch(() => {
-                swapId = undefined;
-                busy = false;
-            });
-    }
-
-    function dexName(dex: DexId): string {
-        switch (dex) {
-            case "icpswap":
-                return "ICPSwap";
-            case "taco":
-                return "TACO";
-        }
-        return dex;
-    }
-
-    function loadSwaps(ledger: string) {
-        client.getTokenSwaps(ledger).then((results) => {
-            outToken = undefined;
-            swaps = results;
-            client.refreshSwappableTokens();
-            initialized = true;
-        });
-    }
+    let errorMessage = $derived($pinNumberErrorMessageStore ?? form.error);
 
     function onPrimaryClick() {
-        switch (swapState) {
-            case "quote":
-                quote();
-                break;
-            case "swap":
-                swap();
-                break;
+        if (form.stage === "confirm") {
+            form.swap();
+        } else {
+            form.getQuote();
         }
     }
-
-    $effect(() => {
-        valid =
-            anySwapsAvailable &&
-            validAmount &&
-            (swapState === "swap"
-                ? (bestQuote !== undefined && userAcceptedWarning) ||
-                  (!warnValueUnknown && !warnValueDropped)
-                : true);
-    });
-
-    let pinNumberError = $derived($pinNumberErrorMessageStore);
 
     function selectFrom() {
         tokenSelector = {
             title: i18nKey("Select token to swap from"),
             onSelect: (token: EnhancedTokenDetails) => {
-                inToken = new TokenState(token, "usd");
+                form.selectIn(token);
                 tokenSelector = undefined;
-                loadSwaps(inToken.ledger);
             },
             extraFilter: (token: EnhancedTokenDetails) =>
                 $swappableTokensStore.has(token.ledger) &&
-                token.symbol !== outToken?.symbol &&
+                token.symbol !== form.outToken?.symbol &&
                 token.balance > 0n,
         };
     }
@@ -262,11 +84,11 @@
         tokenSelector = {
             title: i18nKey("Select token to swap to"),
             onSelect: (token: EnhancedTokenDetails) => {
-                outToken = new TokenState(token, "usd");
+                form.selectOut(token);
                 tokenSelector = undefined;
             },
-            extraFilter: (token: EnhancedTokenDetails) =>
-                $swappableTokensStore.has(token.ledger) && token.symbol !== inToken?.symbol,
+            // Only the tokens the DEXes have a pool for with the input token
+            extraFilter: (token: EnhancedTokenDetails) => token.ledger in form.swaps,
         };
     }
 </script>
@@ -282,7 +104,8 @@
         placeholder={i18nKey("Find token...")}
         extraFilter={tokenSelector.extraFilter}
         onDismiss={() => (tokenSelector = undefined)}
-        title={tokenSelector.title} />
+        title={tokenSelector.title}
+    />
 {/if}
 
 {#snippet selectedToken(onClick: () => void, token?: EnhancedTokenDetails)}
@@ -294,7 +117,8 @@
         borderRadius={"circle"}
         gap={"sm"}
         mainAxisAlignment={"spaceBetween"}
-        crossAxisAlignment={"center"}>
+        crossAxisAlignment={"center"}
+    >
         {#if token !== undefined}
             <Container crossAxisAlignment={"center"} gap={"sm"}>
                 <Avatar url={token.logo} customSize={"1.5rem"}></Avatar>
@@ -319,45 +143,50 @@
         gap={"xl"}
         direction={"vertical"}
         borderRadius={"lg"}
-        padding={["xl", "lg"]}>
+        padding={["xl", "lg"]}
+    >
         <Container direction={"vertical"} gap={"md"} crossAxisAlignment={"center"}>
-            {@render selectedToken(selectFrom, inToken.token)}
+            {@render selectedToken(selectFrom, form.inToken.token)}
             <Container
                 supplementalClass={"swap_down_arrow"}
                 width={{ size: "2.5rem" }}
                 borderRadius={"circle"}
                 background={ColourVars.surface1}
                 mainAxisAlignment={"center"}
-                crossAxisAlignment={"center"}>
+                crossAxisAlignment={"center"}
+            >
                 <ArrowDown size={"1.5rem"} />
             </Container>
-            {@render selectedToken(selectTo, outToken?.token)}
+            {@render selectedToken(selectTo, form.outToken?.token)}
         </Container>
 
         <TokenInput
-            balance={inToken.cryptoBalance}
-            ledger={inToken.ledger}
-            minAmount={inToken.minAmount}
-            disabled={busy}
-            error={!validAmount}
-            bind:valid={validAmount}
-            bind:amount={inToken.draftAmount}>
+            balance={form.inToken.cryptoBalance}
+            ledger={form.inToken.ledger}
+            minAmount={form.inToken.minAmount}
+            disabled={form.busy}
+            error={!form.validAmount}
+            bind:valid={form.validAmount}
+            bind:amount={form.inToken.draftAmount}
+        >
             {#snippet subtext()}
-                {`Minimum amount ${inToken.minAmountLabel} ${inToken.symbol}`}
+                {`Minimum amount ${form.inToken.minAmountLabel} ${form.inToken.symbol}`}
             {/snippet}
         </TokenInput>
     </Container>
 {/snippet}
 
 {#snippet swapView()}
-    {#if outToken !== undefined && swapMessageValues !== undefined}
-        <TokenCard tokenState={outToken} />
+    {#if form.outToken !== undefined && form.quote !== undefined}
+        {@const swapMessageValues = form.quote.values}
+        <TokenCard tokenState={form.outToken} />
         <Container
             gap={"lg"}
             background={ColourVars.surface1}
             padding={"lg"}
             borderRadius={"lg"}
-            direction={"vertical"}>
+            direction={"vertical"}
+        >
             <Container mainAxisAlignment={"spaceBetween"}>
                 <BodySmall colour={"textSecondary"}>
                     <Translatable resourceKey={i18nKey("You swap")} />
@@ -370,7 +199,8 @@
                         align={"end"}
                         width={"hug"}
                         fontWeight={"bold"}
-                        colour={"textSecondary"}>
+                        colour={"textSecondary"}
+                    >
                         ≈ ${swapMessageValues.usdIn}
                     </BodySmall>
                 </Container>
@@ -387,7 +217,8 @@
                         align={"end"}
                         width={"hug"}
                         fontWeight={"bold"}
-                        colour={"textSecondary"}>
+                        colour={"textSecondary"}
+                    >
                         ≈ ${swapMessageValues.usdOut}
                     </BodySmall>
                 </Container>
@@ -410,13 +241,14 @@
             </Container>
         </Container>
 
-        {#if warnValueDropped || warnValueUnknown}
+        {#if form.quote.valueWarning !== undefined}
             <Container
                 gap={"md"}
                 background={ColourVars.surface1}
                 padding={"lg"}
                 borderRadius={"lg"}
-                direction={"vertical"}>
+                direction={"vertical"}
+            >
                 <Container crossAxisAlignment={"center"} gap={"sm"}>
                     <Alert color={ColourVars.validationWarning} />
                     <Body fontWeight={"bold"} colour={"validationWarning"}>
@@ -424,21 +256,23 @@
                     </Body>
                 </Container>
                 <Body colour={"textSecondary"}>
-                    {#if warnValueDropped}
+                    {#if form.quote.valueWarning === "dropped"}
                         <Translatable
                             resourceKey={i18nKey(
                                 "tokenSwap.warningValueDropped",
                                 swapMessageValues,
-                            )} />
+                            )}
+                        />
                     {:else}
                         <Translatable
                             resourceKey={i18nKey(
                                 "tokenSwap.warningValueUnknown",
                                 swapMessageValues,
-                            )} />
+                            )}
+                        />
                     {/if}
                 </Body>
-                <Switch reverse bind:checked={userAcceptedWarning}>
+                <Switch reverse bind:checked={form.warningConfirmed}>
                     <Translatable resourceKey={i18nKey("tokenSwap.confirmUnderstanding")} />
                 </Switch>
             </Container>
@@ -449,7 +283,8 @@
             background={ColourVars.surface1}
             padding={"lg"}
             borderRadius={"lg"}
-            direction={"vertical"}>
+            direction={"vertical"}
+        >
             <Container crossAxisAlignment={"center"} gap={"sm"}>
                 <Info color={ColourVars.secondary} />
                 <Body fontWeight={"bold"} colour={"secondary"}>
@@ -458,7 +293,8 @@
             </Container>
             <Body colour={"textSecondary"}>
                 <Translatable
-                    resourceKey={i18nKey("tokenSwap.proceedWithSwap", swapMessageValues)} />
+                    resourceKey={i18nKey("tokenSwap.proceedWithSwap", swapMessageValues)}
+                />
             </Body>
         </Container>
     {/if}
@@ -469,36 +305,31 @@
         <!-- Title and description -->
         <Container gap={"md"} direction={"vertical"} padding={["zero", "sm"]}>
             <Body fontWeight={"bold"}>
-                <Translatable resourceKey={i18nKey(`Swap ${inToken.symbol}`)} />
+                <Translatable resourceKey={i18nKey(`Swap ${form.inToken.symbol}`)} />
             </Body>
             <Body colour={"textSecondary"}>
                 <Translatable
                     resourceKey={i18nKey(
                         "Provide values first to obtain our best quote from DEX partners. If you accept the quote your tokens are securely sent, exchanged for the selected token, and the swapped tokens are automatically returned to your wallet.",
-                    )} />
+                    )}
+                />
             </Body>
         </Container>
 
         <!-- Content -->
         <Column gap="sm">
-            <TokenCard tokenState={inToken} />
+            <TokenCard tokenState={form.inToken} />
 
-            {#if initialized}
-                {#if swapState === "quote"}
+            {#if form.loaded}
+                {#if form.stage === "quote"}
                     {@render quoteView()}
-                {/if}
-
-                {#if swapState === "swap"}
+                {:else}
                     {@render swapView()}
                 {/if}
             {/if}
-            {#if error !== undefined || pinNumberError !== undefined}
+            {#if errorMessage !== undefined}
                 <ErrorMessage>
-                    {#if pinNumberError !== undefined}
-                        <Translatable resourceKey={pinNumberError} />
-                    {:else}
-                        {error}
-                    {/if}
+                    <Translatable resourceKey={errorMessage} />
                 </ErrorMessage>
             {/if}
         </Column>
@@ -506,25 +337,33 @@
         <!-- Buttons -->
         <Container
             crossAxisAlignment="center"
-            mainAxisAlignment={swapState === "quote" ? "end" : "spaceBetween"}>
-            {#if swapState === "swap"}
+            mainAxisAlignment={form.stage === "quote" ? "end" : "spaceBetween"}
+        >
+            {#if form.stage !== "quote"}
                 <CommonButton2
-                    onClick={() => (swapState = "quote")}
+                    onClick={() => form.backToQuote()}
                     variant="primary"
                     mode="text"
-                    disabled={swapping}>
+                    disabled={form.busy}
+                >
                     <Translatable resourceKey={i18nKey("cancel")} />
                 </CommonButton2>
             {/if}
-            <CommonButton2 loading={busy} onClick={onPrimaryClick} variant="primary" mode="small">
+            <CommonButton2
+                loading={form.busy}
+                disabled={form.stage === "confirm" ? !form.canSwap : !form.canQuote}
+                onClick={onPrimaryClick}
+                variant="primary"
+                mode="small"
+            >
                 {#snippet icon(color, size)}
-                    {#if swapState === "swap"}
+                    {#if form.stage === "confirm"}
                         <Check {color} {size} />
                     {:else}
                         <ShareOutline {color} {size} />
                     {/if}
                 {/snippet}
-                {#if swapState === "swap"}
+                {#if form.stage === "confirm"}
                     <Translatable resourceKey={i18nKey("Accept quote & proceed")} />
                 {:else}
                     <Translatable resourceKey={i18nKey("Get swap quote")} />
@@ -534,17 +373,13 @@
     </Container>
 </SlidingPageContent>
 
-{#if swapping && swapId !== undefined && detailsOut !== undefined && bestQuote !== undefined}
+{#if (form.stage === "swapping" || form.stage === "done") && form.quote !== undefined && form.outToken !== undefined}
     <SwapProgress
-        tokenIn={detailsIn.symbol}
-        tokenOut={detailsOut.symbol}
-        ledgerIn={detailsIn.ledger}
-        ledgerOut={detailsOut.ledger}
-        amountIn={amountInText}
-        decimalsOut={detailsOut.decimals}
-        dex={dexName(bestQuote[0])}
-        {swapResponse}
-        {swapStep} />
+        values={form.quote.values}
+        decimalsOut={form.outToken.decimals}
+        step={form.step}
+        outcome={form.outcome}
+    />
 {/if}
 
 <style lang="scss">

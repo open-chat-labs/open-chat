@@ -1,5 +1,6 @@
 <script lang="ts">
     import {
+        calculateDollarAmount,
         cryptoLookup,
         exchangeRatesLookupStore as exchangeRatesLookup,
         iconSize,
@@ -8,7 +9,6 @@
     import { getContext, onMount, untrack } from "svelte";
     import Alert from "svelte-material-icons/Alert.svelte";
     import { i18nKey } from "../../i18n/i18n";
-    import { calculateDollarAmount } from "../../utils/exchange";
     import Legend from "../Legend.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
 

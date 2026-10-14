@@ -1,3 +1,5 @@
+import type { InterpolationValues, ResourceKey } from "../../utils/i18n";
+
 export type DexId = "icpswap" | "taco";
 
 export type TokenSwapPool = {
@@ -32,3 +34,34 @@ export type UnfinishedTokenSwap = {
 export type DexSwapResult =
     | { kind: "success"; amountOut: bigint }
     | { kind: "error"; error: string };
+
+/**
+ * The best quote for swapping `amountIn` of one token in the user's wallet for another. `amountIn` is
+ * what leaves the wallet, fees included. `valueWarning` is set when the quote is worth less than 90%
+ * of what goes in, or when either token's dollar price is unknown, and the user has to confirm it
+ * before swapping. `values` fill in the messages that describe the quote.
+ */
+export type SwapQuote = {
+    ledgerIn: string;
+    ledgerOut: string;
+    dex: DexId;
+    amountIn: bigint;
+    amountOut: bigint;
+    valueWarning: "dropped" | "unknown" | undefined;
+    values: NonNullable<InterpolationValues>;
+};
+
+export type SwapQuoteOutcome =
+    | { kind: "quoted"; quote: SwapQuote }
+    | { kind: "failed"; message: ResourceKey };
+
+/**
+ * How a swap from the wallet went. `cancelled` means the user dismissed the PIN prompt, so nothing was
+ * sent. The user can quote again after `rate_changed`, and change the amount after `insufficient_funds`.
+ */
+export type SwapOutcome =
+    | { kind: "swapped"; amountOut: bigint }
+    | { kind: "cancelled" }
+    | { kind: "rate_changed"; message: ResourceKey }
+    | { kind: "insufficient_funds"; message: ResourceKey }
+    | { kind: "failed"; message: ResourceKey };
