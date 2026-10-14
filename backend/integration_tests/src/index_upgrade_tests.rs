@@ -5,9 +5,9 @@ use crate::{TestEnv, client, wasms};
 use std::ops::Deref;
 use testing::rng::random_string;
 
-// The UserIndex and GroupIndex can be upgraded onto their own wasms, which runs their one-offs, and
-// carry on working afterwards. The one-offs call other canisters from timers, since a canister can't
-// make a call during its upgrade, which would fail the upgrade.
+// The UserIndex and GroupIndex can be upgraded onto their own wasms, and carry on working afterwards.
+// A call made during an upgrade fails it, so a one-off which calls another canister must do so from a
+// timer, which this catches.
 #[test]
 fn the_user_index_and_group_index_can_be_upgraded() {
     // A new env, since upgrading the UserIndex in one shared with other tests can disrupt them

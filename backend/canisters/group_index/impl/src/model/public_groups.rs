@@ -6,13 +6,12 @@ use constants::DAY_IN_MS;
 use search::weighted::*;
 use serde::{Deserialize, Serialize};
 use std::cmp;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use types::{
     AccessGate, AccessGateConfig, AccessGateConfigInternal, BuildVersion, ChatId, FrozenGroupInfo, GroupMatch, GroupSubtype,
-    PublicGroupActivity, PublicGroupSummary, TimestampMillis, UserId,
+    PublicGroupActivity, PublicGroupSummary, TimestampMillis,
 };
 use utils::iterator_extensions::IteratorExtensions;
-use utils::mentions::replace_mentioned_users;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct PublicGroups {
@@ -149,29 +148,6 @@ impl PublicGroups {
 
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut PublicGroupInfo> {
         self.groups.values_mut()
-    }
-
-    // Adds the users mentioned in the groups' descriptions to `user_ids`
-    pub fn add_users_mentioned_in_descriptions(&self, user_ids: &mut HashSet<UserId>) {
-        for group in self.groups.values() {
-            replace_mentioned_users(&group.description, |user_id| {
-                user_ids.insert(user_id);
-                user_id
-            });
-        }
-    }
-
-    // Replaces each user mentioned in the groups' descriptions with the id `f` returns for them,
-    // returning how many descriptions changed
-    pub fn replace_users_mentioned_in_descriptions(&mut self, mut f: impl FnMut(UserId) -> UserId) -> usize {
-        let mut changed = 0;
-        for group in self.groups.values_mut() {
-            if let Some(description) = replace_mentioned_users(&group.description, &mut f) {
-                group.description = description;
-                changed += 1;
-            }
-        }
-        changed
     }
 
     pub fn calculate_hot_groups(&self, now: TimestampMillis) -> Vec<ChatId> {
