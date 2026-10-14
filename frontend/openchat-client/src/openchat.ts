@@ -7764,7 +7764,7 @@ export class OpenChat {
                 return {
                     kind: "created_without_invites",
                     chatId,
-                    message: i18nKey("inviteUsersFailed"),
+                    message: i18nKey("group.inviteUsersFailed", undefined, candidate.level, true),
                 };
             }
         }
@@ -11194,7 +11194,7 @@ export class OpenChat {
                 return {
                     kind: "created_without_invites",
                     id,
-                    message: i18nKey("inviteUsersFailed"),
+                    message: i18nKey("group.inviteUsersFailed", undefined, "community", true),
                 };
             }
         }

@@ -25,6 +25,13 @@ function fakeClient() {
             confirmed: GroupChangeConfirmation[] = [],
         ): Promise<UpdateCommunityOutcome> => {
             if (
+                original.community.verified &&
+                candidate.community.name !== original.community.name &&
+                !confirmed.includes("verified_name")
+            ) {
+                return { kind: "needs_confirmation", confirmation: "verified_name" };
+            }
+            if (
                 original.community.public &&
                 !candidate.community.public &&
                 !confirmed.includes("visibility")
@@ -37,9 +44,9 @@ function fakeClient() {
     return { client: { updateCommunity } as unknown as OpenChat, updateCommunity };
 }
 
-function editing(): UpdateCommunityState {
+function editing(original: CommunitySummary = community): UpdateCommunityState {
     const state = new UpdateCommunityState();
-    state.initialise(community, defaultChatRules("community"));
+    state.initialise(original, defaultChatRules("community"));
     return state;
 }
 
@@ -68,6 +75,20 @@ describe("saving a community", () => {
         expect((await state.saveCommunity(client, false)).kind).toBe("declined");
 
         expect(state.candidateCommunity.public).toBe(true);
+        expect(updateCommunity).toHaveBeenCalledTimes(1);
+    });
+
+    // Invariant: declining to rename a verified community puts its name back and sends nothing
+    test("declining to rename a verified community puts its name back", async () => {
+        const { client, updateCommunity } = fakeClient();
+        const state = editing({ ...community, verified: true });
+        state.candidateCommunity.name = "Renamed";
+
+        await state.saveCommunity(client);
+        expect(state.showingVerificationWarning).toBe(true);
+        expect((await state.saveCommunity(client, false)).kind).toBe("declined");
+
+        expect(state.candidateCommunity.name).toBe("Community");
         expect(updateCommunity).toHaveBeenCalledTimes(1);
     });
 });
