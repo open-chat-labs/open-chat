@@ -291,6 +291,11 @@
     gap: var(--space-26);
   }
 
+  /* content scrolls instead of squashing: no child of the scroll column may shrink */
+  .scroll > :global(*) {
+    flex-shrink: 0;
+  }
+
   .details {
     min-width: 0;
     display: grid;

@@ -6,7 +6,7 @@ Package name: `@openchat/ui` (change in package.json if needed).
 ## Run
 ```
 npm install
-npm run dev      # docs page: Library / App tabs, live demo + props table per component, mode/accent switcher
+npm run dev      # Component Library: Foundations / General / App / API, mode · accent · direction controls
 npm run check    # svelte-check (types)
 ```
 
@@ -18,7 +18,7 @@ npm run check    # svelte-check (types)
 - `src/lib/styles/tokens.css` (+ generated `icons.css`), `global.css` (keyframes and global rules collected from components).
 - `src/lib/icons.js` — canonical icon set; `Icon.svelte` or `mask: var(--icon-<name>)`.
 - `src/lib/behaviours/a11y.js` and `tooltip.js` — imported once in `main.ts`.
-- `src/docs/` — docs page, `meta.json` (props metadata + group), `samples.ts` (demo data).
+- `src/docs/` — the Component Library page: `Docs.svelte` (nav shell, scroll spy), `sections.ts` (section ids/titles per group), `groups/` (Foundations, General, App, Api), `Section`/`Frame`, `meta.json` (props metadata for the API group), `samples.ts` (all demo data).
 
 ## Conventions (same as the prototype)
 - Theme on the app root only: `data-mode="dark|light"` + `data-accent="pink|orange|blue|green"`. Components take no theme props.

@@ -29,7 +29,8 @@
   let box: HTMLDivElement;
 
   onMount(() => {
-    const self = {};
+    // boxRef lets a11y.js tell whether a hand-built modal sits above or below this one
+    const self = { boxRef: { get current() { return box; } } };
     const returnTo = document.activeElement as HTMLElement | null;
     stack().push(self);
 

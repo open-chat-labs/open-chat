@@ -168,6 +168,7 @@
   let errTimer: ReturnType<typeof setTimeout> | undefined;
   let closeTimer: ReturnType<typeof setTimeout> | undefined;
   let solveTimer: ReturnType<typeof setTimeout> | undefined;
+  let layer: HTMLDivElement;
 
   function save() {
     onProgress?.({ br, elapsed, hints, done: counts(PUZZLE.isl, br).filter((v, i) => v === PUZZLE.isl[i][2]).length, total: PUZZLE.isl.length });
@@ -177,7 +178,24 @@
     const tick = setInterval(() => {
       if (view === 'play' && !closing) elapsed++;
     }, 1000);
-    return () => clearInterval(tick);
+    // Esc closes, but only while this is the topmost dialog (shared stack with DialogShell)
+    const self = { boxRef: { get current() { return layer; } } };
+    const stack = (): object[] => ((window as any).__ocDialogs ??= []);
+    stack().push(self);
+    const key = (e: KeyboardEvent) => {
+      const s = stack();
+      if (e.key === 'Escape' && s[s.length - 1] === self) {
+        e.preventDefault();
+        close();
+      }
+    };
+    window.addEventListener('keydown', key);
+    return () => {
+      clearInterval(tick);
+      window.removeEventListener('keydown', key);
+      const s = stack(), i = s.indexOf(self);
+      if (i >= 0) s.splice(i, 1);
+    };
   });
 
   onDestroy(() => {
@@ -349,7 +367,7 @@
   </div>
 {/snippet}
 
-<div class="layer" class:closing data-screen-label="Daily puzzle" role="dialog" aria-modal="true" aria-label="The Daily puzzle">
+<div class="layer" bind:this={layer} class:closing data-screen-label="Daily puzzle" role="dialog" aria-modal="true" aria-label="The Daily puzzle">
   <div class="veil" onclick={close} aria-hidden="true"></div>
   <div class="card" class:wide={view === 'play' && wide}>
     <div class="head">

@@ -325,6 +325,9 @@
   .quote-name {
     font: var(--weight-bold) var(--text-sm) / 1.3 var(--font-sans);
     color: var(--quote-name);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .quote-text {
@@ -398,12 +401,13 @@
   .spacer {
     visibility: hidden;
     vertical-align: bottom;
-    margin: 0 0 -1px 9px;
+    margin-block-end: -1px;
+    margin-inline-start: 9px;
   }
 
   .corner {
     position: absolute;
-    right: 0;
+    inset-inline-end: 0;
     bottom: 0;
   }
 

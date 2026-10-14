@@ -4,6 +4,8 @@
 <script lang="ts">
   // legacy aliases → canonical names in lib/icons.js
   const ALIASES: Record<string, string> = { userPlus: 'invite' };
+  // glyphs that point along the reading direction; mirrored under dir="rtl" via [data-oc-flip]
+  const DIRECTIONAL = new Set(['arrow', 'back', 'chevron-right', 'chevrons-right', 'exit', 'forward', 'reply', 'send']);
   const LABELS: Record<string, string> = { back: 'Back', close: 'Close', more: 'More options', kebab: 'More options', search: 'Search', plus: 'Add', userPlus: 'Add members', copy: 'Copy', share: 'Share', edit: 'Edit', settings: 'Settings', bell: 'Notifications', send: 'Send', menu: 'Menu' };
 
   interface Props {
@@ -22,7 +24,7 @@
 
 <div class="box" class:accent={variant === 'accent'}>
   <div class="button {variant} {look}" class:pressed onclick={onClick} role="button" tabindex="0" aria-label={name} title={name}>
-    <span class="icon" style:mask="var(--icon-{ALIASES[icon] ?? icon}) center/contain no-repeat"></span>
+    <span class="icon" style:mask="var(--icon-{ALIASES[icon] ?? icon}) center/contain no-repeat" data-oc-flip={DIRECTIONAL.has(icon) ? '' : undefined}></span>
   </div>
 </div>
 

@@ -46,7 +46,10 @@
     if (e.key !== "Tab" || !open.length) return;
     var managed = window.__ocDialogs && window.__ocDialogs.length;
     var top = open[open.length - 1].el;
-    if (managed && top.compareDocumentPosition && window.__ocDialogs[window.__ocDialogs.length - 1].boxRef.current && (top.compareDocumentPosition(window.__ocDialogs[window.__ocDialogs.length - 1].boxRef.current) & Node.DOCUMENT_POSITION_FOLLOWING)) return;
+    // a self-managed dialog (DialogShell, PuzzleDialog) traps its own focus; entries may carry boxRef.current
+    var entry = managed && window.__ocDialogs[window.__ocDialogs.length - 1];
+    var box = entry && entry.boxRef && entry.boxRef.current;
+    if (box && top.compareDocumentPosition && (top.compareDocumentPosition(box) & Node.DOCUMENT_POSITION_FOLLOWING)) return;
     var els = [].slice.call(top.querySelectorAll(FOCUSABLE)).filter(function (x) { return x.offsetParent !== null; });
     if (!els.length) { e.preventDefault(); return; }
     var first = els[0], last = els[els.length - 1], a = document.activeElement;

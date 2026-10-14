@@ -74,7 +74,8 @@
   let search = $state<HTMLInputElement>();
   let wave = $state<HTMLDivElement>();
 
-  let draft = $state('');
+  // mounting straight into edit mode starts from the original text (later context changes are handled below)
+  let draft = $state(untrack(() => (context?.mode === 'edit' ? context.text ?? '' : '')));
   let menu = $state<'plus' | 'picker' | null>(null);
   let tab = $state(0);
   let query = $state('');

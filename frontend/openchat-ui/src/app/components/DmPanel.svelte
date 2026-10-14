@@ -212,6 +212,11 @@
     flex-direction: column;
   }
 
+  /* content scrolls instead of squashing: no child of the scroll column may shrink */
+  .scroll > :global(*) {
+    flex-shrink: 0;
+  }
+
   .cover {
     flex: none;
     display: grid;

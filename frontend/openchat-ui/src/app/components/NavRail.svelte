@@ -410,7 +410,7 @@
   .dot {
     position: absolute;
     top: 4px;
-    left: 32px;
+    inset-inline-start: 32px;
     width: 8px;
     height: 8px;
     border-radius: var(--radius-pill);
@@ -494,7 +494,7 @@
     height: 3px;
     border-radius: var(--radius-pill);
     background: var(--line-2, rgba(255, 255, 255, 0.12));
-    transition: margin-left var(--duration-slow) var(--ease-out);
+    transition: margin-inline-start var(--duration-slow) var(--ease-out);
   }
 
   .open .heading-line {
@@ -520,7 +520,8 @@
     position: absolute;
     top: 0;
     inset-inline-start: 50%;
-    transform: translateX(-50%);
+    /* --oc-dir is -1 under dir="rtl", where inset-inline-start measures from the right */
+    transform: translateX(calc(-50% * var(--oc-dir, 1)));
     width: 34px;
     height: 34px;
     border-radius: var(--radius-md);
@@ -554,7 +555,7 @@
 
   .pin-eye {
     position: absolute;
-    right: -6px;
+    inset-inline-end: -6px;
     bottom: -6px;
     display: flex;
     align-items: center;
@@ -576,7 +577,7 @@
   .pin-dot {
     position: absolute;
     top: -5px;
-    left: 28px;
+    inset-inline-start: 28px;
     width: 8px;
     height: 8px;
     border-radius: var(--radius-pill);
@@ -656,7 +657,7 @@
   .chit-dot {
     position: absolute;
     top: -2px;
-    right: -4px;
+    inset-inline-end: -4px;
     width: 7px;
     height: 7px;
     border-radius: var(--radius-pill);
@@ -736,7 +737,7 @@
   .me-online {
     position: absolute;
     top: 26px;
-    left: 28px;
+    inset-inline-start: 28px;
     width: 11px;
     height: 11px;
     border-radius: var(--radius-pill);
@@ -789,11 +790,12 @@
     height: 20px;
     background: var(--ink-4, #5f5f6c);
     mask: var(--icon-chevrons-right) center/contain no-repeat;
+    transform: scaleX(var(--oc-dir, 1));
     transition: transform var(--duration-slow) var(--ease-out);
   }
 
   .open .collapse-icon {
-    transform: rotate(180deg);
+    transform: scaleX(var(--oc-dir, 1)) rotate(180deg);
   }
 
   .collapse-label {

@@ -81,9 +81,10 @@
     --button-ink: var(--on-accent, #2e0512);
   }
 
+  /* inverted: ink-coloured disc with a surface-coloured glyph, in either mode */
   .off {
-    --button-bg: #ececf1;
-    --button-ink: #0e0e12;
+    --button-bg: var(--ink, #ececf1);
+    --button-ink: var(--surface-1, #0e0e12);
   }
 
   .danger {

@@ -57,10 +57,14 @@
     return Array.from({ length: n }, (_, i) => source[Math.min(source.length - 1, Math.floor((i * source.length) / n))]);
   });
 
+  const rtl = () => getComputedStyle(root).direction === 'rtl';
+
   function seekAt(clientX: number) {
     if (!onSeek) return;
     const r = root.getBoundingClientRect();
-    onSeek(Math.max(0, Math.min(1, (clientX - r.left) / r.width)));
+    // bars run along the inline axis, so under dir="rtl" progress grows leftwards
+    const x = rtl() ? r.right - clientX : clientX - r.left;
+    onSeek(Math.max(0, Math.min(1, x / r.width)));
   }
 
   function down(e: PointerEvent) {
@@ -77,7 +81,9 @@
 
   function key(e: KeyboardEvent) {
     if (!seek || !onSeek) return;
-    const d = e.key === 'ArrowRight' ? 0.05 : e.key === 'ArrowLeft' ? -0.05 : 0;
+    const fwd = rtl() ? 'ArrowLeft' : 'ArrowRight';
+    const back = rtl() ? 'ArrowRight' : 'ArrowLeft';
+    const d = e.key === fwd ? 0.05 : e.key === back ? -0.05 : 0;
     if (!d) return;
     e.preventDefault();
     onSeek(Math.max(0, Math.min(1, prog + d)));
@@ -103,7 +109,7 @@
     <span class="bar" style:height="{Math.max(3, Math.round(level * height))}px" style:background={(i + 0.5) / bars.length <= prog ? playedColor : restColor}></span>
   {/each}
   {#if seek && handle}
-    <span class="handle" style:left="{(prog * 100).toFixed(2)}%" style:background={playedColor} style:box-shadow="0 0 0 2px {ring}" aria-hidden="true"></span>
+    <span class="handle" style:inset-inline-start="{(prog * 100).toFixed(2)}%" style:background={playedColor} style:box-shadow="0 0 0 2px {ring}" aria-hidden="true"></span>
   {/if}
 </div>
 
@@ -135,7 +141,8 @@
     top: 50%;
     width: 12px;
     height: 12px;
-    margin: -6px 0 0 -6px;
+    margin-block-start: -6px;
+    margin-inline-start: -6px;
     border-radius: 50%;
     pointer-events: none;
   }
