@@ -1352,18 +1352,47 @@
         "doc": ""
       },
       {
+        "default": "ghost",
+        "section": null,
+        "required": false,
+        "componentDefault": "'ghost'",
+        "name": "variant",
+        "type": "'ghost' | 'soft' | 'outline' | 'filled' | 'text'",
+        "editor": "enum",
+        "options": [
+          "ghost",
+          "soft",
+          "outline",
+          "filled",
+          "text"
+        ],
+        "doc": "ghost (icon, hover fill) · soft (tinted square) · outline (hairline ring) · filled (accent) · text (icon + Copy pill)."
+      },
+      {
         "name": "size",
-        "type": "'sm' | 'md'",
+        "type": "'sm' | 'md' | 'lg'",
         "default": "sm",
         "editor": "enum",
         "options": [
           "sm",
-          "md"
+          "md",
+          "lg"
         ],
         "section": null,
         "required": false,
         "componentDefault": "'sm'",
-        "doc": ""
+        "doc": "sm 26px · md 34px · lg 40px (icon variants)."
+      },
+      {
+        "default": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "name": "copied",
+        "type": "boolean",
+        "editor": null,
+        "options": null,
+        "doc": "Bindable: true while the check is showing."
       },
       {
         "name": "onCopy",
