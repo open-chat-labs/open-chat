@@ -87,6 +87,7 @@ import {
     parseBigInt,
     pinNumberFailureFromError,
     publish,
+    random128,
     random64,
     removeEmailSignInSession,
     removeOpenGraphPreviews,
@@ -313,6 +314,9 @@ import {
     type SubmitProofOfUniquePersonhoodResponse,
     type Success,
     type SwapFromWalletStep,
+    type SwapOutcome,
+    type SwapQuote,
+    type SwapQuoteOutcome,
     type SwapTokensResponse,
     type TermsRoute,
     type PrivacyRoute,
@@ -588,6 +592,13 @@ import {
 import { disableInviteCodeResult, inviteCodeResult } from "./utils/inviteLink";
 import { proposalVoteResult } from "./utils/proposalVote";
 import { withdrawFailed, withdrawResult } from "./utils/withdraw";
+import {
+    swapError,
+    swapInsufficientFunds,
+    swapQuoteResult,
+    swapResult,
+    swapUnconfirmed,
+} from "./utils/swap";
 import { joinGroupFailureMessage } from "./utils/join";
 import {
     bioResult,
@@ -740,6 +751,9 @@ const USERS_SEARCHED_TO_FIND_MEMBERS = 255;
 const MAX_PAGES_SEARCHED_FOR_MEMBERS = 4;
 // How many members to find to offer as mentions for what has been typed
 const MEMBERS_FOUND_TO_MENTION = 50;
+// How often, and how many times, to check for the output of a swap reaching the wallet
+const SWAP_OUTPUT_CHECK_INTERVAL_MS = 2000;
+const SWAP_OUTPUT_CHECKS = 10;
 
 export class OpenChat {
     #mobileLayout: "v1" | "v2";
@@ -9608,22 +9622,118 @@ export class OpenChat {
         });
     }
 
-    getTokenSwapQuotes(
-        inputTokenLedger: string,
-        outputTokenLedger: string,
+    // The best quote for swapping `amountIn` from the user's wallet, fees included
+    async getSwapQuote(
+        ledgerIn: string,
+        ledgerOut: string,
         amountIn: bigint,
-    ): Promise<[DexId, bigint][]> {
-        return this.#worker.send({
-            kind: "getTokenSwapQuotes",
-            inputTokenLedger,
-            outputTokenLedger,
-            amountIn,
-        });
+    ): Promise<SwapQuoteOutcome> {
+        const tokenIn = cryptoLookup.value.get(ledgerIn)!;
+        const tokenOut = cryptoLookup.value.get(ledgerOut)!;
+        try {
+            // What reaches the DEX is less the fees for approving the pool and for its pull
+            const quotes = await this.#worker.send({
+                kind: "getTokenSwapQuotes",
+                inputTokenLedger: ledgerIn,
+                outputTokenLedger: ledgerOut,
+                amountIn: amountIn - 2n * tokenIn.transferFee,
+            });
+            const rates = exchangeRatesLookupStore.value;
+            return swapQuoteResult(
+                tokenIn,
+                tokenOut,
+                amountIn,
+                quotes,
+                (ledger) => rates.get(ledger)?.toUSD,
+            );
+        } catch (err) {
+            this.logError(`Error getting swap quotes for token: ${tokenIn.symbol}`, err);
+            return {
+                kind: "failed",
+                message: i18nKey("tokenSwap.quoteError", { tokenIn: tokenIn.symbol }),
+            };
+        }
+    }
+
+    /**
+     * Swaps the quoted amount straight from the user's wallet, provided the wallet still holds it and
+     * the output is at least 98% of the quote. A quote with a value warning is only swapped once the
+     * user has confirmed it. `onStep` is told of each step of the swap as it starts (see
+     * `SwapFromWalletStep`). Both balances are refreshed once the swap has been sent.
+     */
+    async swapTokens(
+        quote: SwapQuote,
+        warningConfirmed: boolean,
+        onStep?: (step: SwapFromWalletStep) => void,
+    ): Promise<SwapOutcome> {
+        if (quote.valueWarning !== undefined && !warningConfirmed) {
+            return { kind: "failed", message: i18nKey("tokenSwap.confirmUnderstanding") };
+        }
+
+        let balance: bigint;
+        // The output balance before the swap, to tell when its output has reached the wallet
+        let balanceOut: bigint | undefined;
+        try {
+            [balance, balanceOut] = await Promise.all([
+                this.refreshAccountBalance(quote.ledgerIn),
+                this.refreshAccountBalance(quote.ledgerOut).catch(() => undefined),
+            ]);
+        } catch (err) {
+            this.logError("Unable to check the balance before a swap", err);
+            return { kind: "failed", message: swapError };
+        }
+        if (balance < quote.amountIn) {
+            return { kind: "insufficient_funds", message: swapInsufficientFunds };
+        }
+
+        let outcome: SwapOutcome;
+        try {
+            const resp = await this.#swapTokens(
+                random128(),
+                quote.ledgerIn,
+                quote.ledgerOut,
+                quote.amountIn,
+                (quote.amountOut * 98n) / 100n,
+                quote.dex,
+                onStep,
+            );
+            outcome = swapResult(resp);
+            if (outcome.kind !== "swapped") {
+                this.logMessage("Unable to swap tokens", resp);
+            }
+        } catch (err) {
+            // the user dismissed the PIN prompt
+            if (err === "cancelled") return { kind: "cancelled" };
+            this.logError("Unable to swap tokens", err);
+            outcome = { kind: "failed", message: swapUnconfirmed };
+        }
+
+        this.refreshAccountBalance(quote.ledgerIn).catch((err) =>
+            this.logError("Unable to refresh a balance after a swap", err),
+        );
+        this.#refreshSwapOutput(
+            quote.ledgerOut,
+            outcome.kind === "swapped" ? balanceOut : undefined,
+        ).catch((err) => this.logError("Unable to refresh a balance after a swap", err));
+        return outcome;
+    }
+
+    // ICPSwap pays the output of a swap out of a queue, so it can reach the wallet a few seconds after
+    // the swap is reported done. Given the balance before a successful swap, this keeps refreshing
+    // until the balance has gone up, so the user doesn't see their input gone and no output.
+    async #refreshSwapOutput(ledger: string, balanceBefore: bigint | undefined): Promise<void> {
+        for (let check = 1; check <= SWAP_OUTPUT_CHECKS; check++) {
+            if (check > 1) {
+                await new Promise((resolve) => setTimeout(resolve, SWAP_OUTPUT_CHECK_INTERVAL_MS));
+            }
+            const balance = await this.refreshAccountBalance(ledger);
+            if (balanceBefore === undefined || balance > balanceBefore) return;
+        }
     }
 
     // Swaps tokens straight from the user's wallet, asking for the user's PIN first if they have set
     // one. `onStep` is told of each step of the swap as it starts (see `SwapFromWalletStep`).
-    async swapTokens(
+    async #swapTokens(
         swapId: bigint,
         inputTokenLedger: string,
         outputTokenLedger: string,
