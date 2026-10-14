@@ -63,24 +63,26 @@
   };
   const release = () => (pinned = false);
   onMount(() => {
+    // bind:this nulls the refs before teardown runs (e.g. on hot reload), so hold the elements locally
+    const el = thread, btn = trigger;
     pin();
     const ro = new ResizeObserver(pin);
-    ro.observe(thread);
-    for (const child of thread.children) ro.observe(child);
+    ro.observe(el);
+    for (const child of el.children) ro.observe(child);
     // programmatic pinning fires scroll events too; only a scroll away from the bottom counts as the reader's
     const onScroll = () => {
-      if (thread.scrollHeight - thread.scrollTop - thread.clientHeight > 2) release();
+      if (el.scrollHeight - el.scrollTop - el.clientHeight > 2) release();
     };
     const gestures = ['wheel', 'touchstart', 'keydown'] as const;
-    thread.addEventListener('scroll', onScroll, { passive: true });
-    for (const g of gestures) thread.addEventListener(g, release, { passive: true });
+    el.addEventListener('scroll', onScroll, { passive: true });
+    for (const g of gestures) el.addEventListener(g, release, { passive: true });
     const remember = (e: PointerEvent) => (pointer = { x: e.clientX, y: e.clientY });
-    trigger.addEventListener('pointerdown', remember);
+    btn.addEventListener('pointerdown', remember);
     return () => {
       ro.disconnect();
-      thread.removeEventListener('scroll', onScroll);
-      for (const g of gestures) thread.removeEventListener(g, release);
-      trigger.removeEventListener('pointerdown', remember);
+      el.removeEventListener('scroll', onScroll);
+      for (const g of gestures) el.removeEventListener(g, release);
+      btn.removeEventListener('pointerdown', remember);
     };
   });
 
