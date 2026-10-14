@@ -325,6 +325,7 @@ import {
     type ThreadSummary,
     type ThreadSyncDetails,
     type TipMessageResponse,
+    type TipOutcome,
     type TokenInfo,
     type TransferSuccess,
     type GroupChangeConfirmation,
@@ -607,6 +608,7 @@ import {
     swapUnconfirmed,
 } from "./utils/swap";
 import { joinGroupFailureMessage } from "./utils/join";
+import { currentTip, tipResult } from "./utils/tip";
 import {
     executionPaymentAmount,
     PROPOSAL_EXECUTION_WINDOW,
@@ -9308,58 +9310,66 @@ export class OpenChat {
             });
     }
 
+    /**
+     * Tips a message, prompting for the user's PIN if they have one. The tip shows on the message
+     * straight away and is taken off again if it fails. The ledger's balance is refreshed once it
+     * has gone.
+     */
     async tipMessage(
         messageContext: MessageContext,
-        messageId: bigint,
+        message: Message,
         transfer: PendingCryptocurrencyTransfer,
-        currentTip: bigint,
-    ): Promise<TipMessageResponse> {
+    ): Promise<TipOutcome> {
         const chat = chatSummariesStore.value.get(messageContext.chatId);
-        if (chat === undefined) {
-            return Promise.resolve({ kind: "failure" });
-        }
+        if (chat === undefined) return tipResult({ kind: "failure" });
 
         let pin: string | undefined = undefined;
-
         if (pinNumberRequiredStore.value) {
-            pin = await this.#promptForCurrentPin("pinNumber.enterPinInfo");
+            try {
+                pin = await this.#promptForCurrentPin("pinNumber.enterPinInfo");
+            } catch {
+                // the user dismissed the PIN prompt
+                return { kind: "cancelled" };
+            }
         }
 
         const userId = currentUserIdStore.value;
-        const totalTip = transfer.amountE8s + currentTip;
+        const totalTip = transfer.amountE8s + currentTip(message, transfer.ledger, userId);
         const decimals = cryptoLookup.value.get(transfer.ledger)?.decimals ?? 0;
-        const undo = localUpdates.markTip(messageId, transfer.ledger, userId, totalTip);
+        const undo = localUpdates.markTip(message.messageId, transfer.ledger, userId, totalTip);
 
-        return this.#worker
-            .send({
+        let resp: TipMessageResponse;
+        try {
+            resp = await this.#worker.send({
                 kind: "tipMessage",
                 messageContext,
-                messageId,
+                messageId: message.messageId,
                 transfer,
                 decimals,
                 pin,
                 username: currentUserStore.value.username,
                 displayName: currentUserStore.value.displayName,
                 newAchievement: !achievementsStore.value.has("tipped_message"),
-            })
-            .then((resp) => {
-                if (resp.kind !== "success") {
-                    undo();
-
-                    if (resp.kind === "error") {
-                        const pinNumberFailure = pinNumberFailureFromError(resp);
-                        if (pinNumberFailure !== undefined) {
-                            pinNumberFailureStore.set(pinNumberFailure);
-                        }
-                    }
-                }
-
-                return resp;
-            })
-            .catch((_) => {
-                undo();
-                return { kind: "failure" };
             });
+        } catch (err) {
+            this.logError("Unable to tip message", err);
+            resp = { kind: "failure" };
+        }
+
+        if (resp.kind === "success") {
+            this.refreshAccountBalance(transfer.ledger, false).catch((err) =>
+                this.logError("Unable to refresh the balance after a tip", err),
+            );
+        } else {
+            undo();
+            if (resp.kind === "error") {
+                const pinNumberFailure = pinNumberFailureFromError(resp);
+                if (pinNumberFailure !== undefined) {
+                    pinNumberFailureStore.set(pinNumberFailure);
+                }
+            }
+        }
+        return tipResult(resp);
     }
 
     loadSavedCryptoAccounts(): Promise<NamedAccount[]> {

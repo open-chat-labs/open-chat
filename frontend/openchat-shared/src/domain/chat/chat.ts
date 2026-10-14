@@ -2614,6 +2614,16 @@ export type GroupMoved = { kind: "group_moved"; location: ChannelIdentifier };
 
 export type TipMessageResponse = Success | OCError | Failure;
 
+/**
+ * How tipping a message went. `pin_failed` means the PIN the user entered was refused; the message
+ * to show for that is in the PIN failure store, since it counts down to the next attempt.
+ */
+export type TipOutcome =
+    | { kind: "tipped" }
+    | { kind: "cancelled" }
+    | { kind: "pin_failed" }
+    | { kind: "failed"; message: ResourceKey };
+
 export type GroupAndCommunitySummaryUpdatesArgs = {
     canisterId: string;
     isCommunity: boolean;
