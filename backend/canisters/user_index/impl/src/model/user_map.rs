@@ -27,7 +27,6 @@ pub struct UserMap {
     deleted_users: HashMap<UserId, TimestampMillis>,
     bot_updates: BTreeSet<(TimestampMillis, BotUpdate)>,
     suspended_or_unsuspended_users: BTreeSet<(TimestampMillis, UserId)>,
-    unique_person_proofs_submitted: u32,
 
     #[serde(skip)]
     username_to_user_id: CaseInsensitiveHashMap<UserId>,
@@ -933,19 +932,12 @@ impl UserMap {
         now: TimestampMillis,
     ) -> bool {
         if let Some(user) = self.users.get_mut(&user_id) {
-            if user.unique_person_proof.is_none() {
-                self.unique_person_proofs_submitted += 1;
-            }
             user.unique_person_proof = Some(proof);
             user.date_updated = now;
             true
         } else {
             false
         }
-    }
-
-    pub fn unique_person_proofs_submitted(&self) -> u32 {
-        self.unique_person_proofs_submitted
     }
 
     pub fn search_bots(
@@ -1051,7 +1043,6 @@ struct UserMapTrimmed {
     deleted_users: HashMap<UserId, TimestampMillis>,
     bot_updates: BTreeSet<(TimestampMillis, BotUpdate)>,
     suspended_or_unsuspended_users: BTreeSet<(TimestampMillis, UserId)>,
-    unique_person_proofs_submitted: u32,
 }
 
 impl From<UserMapTrimmed> for UserMap {
@@ -1062,7 +1053,6 @@ impl From<UserMapTrimmed> for UserMap {
             deleted_users: value.deleted_users,
             bot_updates: value.bot_updates,
             suspended_or_unsuspended_users: value.suspended_or_unsuspended_users,
-            unique_person_proofs_submitted: value.unique_person_proofs_submitted,
             bots: value.bots,
             username_to_user_id: CaseInsensitiveHashMap::default(),
             botname_to_user_id: CaseInsensitiveHashMap::default(),
@@ -1090,10 +1080,6 @@ impl From<UserMapTrimmed> for UserMap {
 
             if let Some(other_user_id) = user_map.principal_to_user_id.insert(user.principal, *user_id) {
                 user_map.users_with_duplicate_principals.push((*user_id, other_user_id));
-            }
-
-            if user.unique_person_proof.is_some() {
-                user_map.unique_person_proofs_submitted += 1;
             }
         }
 
