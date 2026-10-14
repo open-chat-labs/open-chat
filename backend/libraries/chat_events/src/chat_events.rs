@@ -633,7 +633,7 @@ impl ChatEvents {
                 let bot_notification = result.bot_notification;
                 let (message_index, event, documents) = result.value;
                 if thread_root_message_index.is_none()
-                    && let Some((_, old_document, new_document)) = documents
+                    && let Some((old_document, new_document)) = documents
                 {
                     self.search_index
                         .update(self.main.stable_memory_prefix(), message_index, &old_document, &new_document);
@@ -675,7 +675,7 @@ impl ChatEvents {
         migrated_user_ids: &MigratedUserIds,
         mut event_pusher: Option<P>,
     ) -> Result<
-        (MessageIndex, EventMetaData, Option<(UserId, Document, Document)>),
+        (MessageIndex, EventMetaData, Option<(Document, Document)>),
         UpdateEventError<OCResult<(MessageIndex, EventMetaData)>>,
     > {
         if !migrated_user_ids.is_same_user(message.sender, args.sender)
@@ -702,7 +702,7 @@ impl ChatEvents {
             let documents = message
                 .deleted_by
                 .is_none()
-                .then(|| (message.sender, old_document, Document::from(&message.content)));
+                .then(|| (old_document, Document::from(&message.content)));
 
             if edited {
                 if let Some(block_level_markdown) = block_level_markdown_update {
@@ -4339,5 +4339,59 @@ mod tests {
             None,
         );
         message.event.message_index
+    }
+
+    #[test]
+    fn data_from_before_stable_memory_is_counted_but_not_kept() {
+        #[derive(Serialize)]
+        struct LegacyChatEventsList<'a> {
+            #[serde(flatten)]
+            list: &'a ChatEventsList,
+            message_id_map: std::collections::HashMap<MessageId, EventIndex>,
+        }
+        #[derive(Serialize)]
+        struct LegacySearchIndex {
+            map: BTreeMap<MessageIndex, (UserId, String)>,
+        }
+        #[derive(Serialize)]
+        struct LegacyChatEvents<'a> {
+            #[serde(flatten)]
+            events: &'a ChatEvents,
+            per_user_metrics: BTreeMap<UserId, ChatMetricsInternal>,
+        }
+        fn round_trip<T: Serialize, R: serde::de::DeserializeOwned>(value: T) -> R {
+            msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(value))
+        }
+
+        let (events, _, _) = setup_events();
+        let user1: UserId = Principal::from_slice(&[1]).into();
+        let user2: UserId = Principal::from_slice(&[2]).into();
+
+        let list: ChatEventsList = round_trip(LegacyChatEventsList {
+            list: &events.main,
+            message_id_map: (0..3u64).map(|i| (MessageId::from(i), EventIndex::from(i as u32))).collect(),
+        });
+        assert_eq!(list.legacy_heap_entries(), 3);
+
+        let search_index: SearchIndex = round_trip(LegacySearchIndex {
+            map: (0..2u32)
+                .map(|i| (MessageIndex::from(i), (user1, "hello".to_string())))
+                .collect(),
+        });
+        assert_eq!(search_index.legacy_heap_entries(), 2);
+
+        let legacy = LegacyChatEvents {
+            events: &events,
+            per_user_metrics: [user1, user2]
+                .into_iter()
+                .map(|u| (u, ChatMetricsInternal::default()))
+                .collect(),
+        };
+        let chat_events: ChatEvents = round_trip(legacy);
+        assert_eq!(chat_events.legacy_heap_entries(), 2);
+
+        // And they are dropped once serialized again
+        let chat_events: ChatEvents = round_trip(&chat_events);
+        assert_eq!(chat_events.legacy_heap_entries(), 0);
     }
 }

@@ -198,9 +198,18 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
 
             let mut bytes = group.bytes();
             let mut chat: GroupChatCore = msgpack::deserialize(&mut bytes).unwrap();
-            // Groups on earlier versions export their `GroupChatCore` alone. The extras are not
-            // essential to the import, and this also runs in `post_upgrade`, so failing to
-            // deserialize them must not trap.
+            // A group on the previous version exported its users' metrics and message event indexes
+            // on the heap rather than in the extras. Its metrics would be lost, and this canister
+            // wouldn't upgrade while the message event indexes stayed on the heap (see
+            // `ChatEvents::legacy_heap_entries`). Group is released before Community so that this
+            // doesn't happen.
+            let legacy_heap_entries = chat.events.legacy_heap_entries();
+            if legacy_heap_entries > 0 {
+                error!(%group_id, legacy_heap_entries, "The group's export held chat events data on the heap");
+            }
+            // The extras carry the users' metrics and message event indexes, without which lookups by
+            // message index would fail, so every group on the current version sends them. This also
+            // runs in `post_upgrade`, so failing to deserialize them mustn't trap.
             let extras: ExportExtras = if bytes.is_empty() {
                 ExportExtras::default()
             } else {

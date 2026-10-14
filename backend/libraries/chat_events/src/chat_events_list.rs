@@ -1033,14 +1033,25 @@ mod tests {
         let mut events = setup_group_events();
         push_events(&mut events, 200);
         push_events(&mut events, 400);
+        // Plus a thread with more than a chunk of replies
+        let root = MessageIndex::from(5);
+        push_thread_replies(&mut events, root, 130, 600);
         let expected = expected_message_event_indexes(&events);
+        let expected_thread = expected_thread_message_event_indexes(&events, root);
+        assert_eq!(expected_thread.len(), 130);
         let sender = Principal::from_slice(&[2]).into();
         let metrics = events.user_metrics(&sender, None).unwrap();
 
         // As done by the group when it starts being imported
         let export = events.export_for_import_into_community();
-        assert_eq!(export.message_event_index_chunks.len(), 1);
-        assert_eq!(export.message_event_index_chunks[0].1.len(), 2);
+        assert_eq!(
+            export
+                .message_event_index_chunks
+                .iter()
+                .map(|(root, chunks)| (*root, chunks.len()))
+                .collect_vec(),
+            vec![(None, 2), (Some(root), 1)]
+        );
         assert!(!export.user_metrics.is_empty());
 
         let channel = Chat::Channel(Principal::from_slice(&[3]).into(), ChannelId::from(1u32));
@@ -1051,6 +1062,7 @@ mod tests {
         imported.import_from_group(export);
         assert_eq!(imported.legacy_heap_entries(), 0);
         assert_message_index_lookups(&imported, &expected);
+        assert_eq!(expected_thread_message_event_indexes(&imported, root), expected_thread);
         assert_eq!(imported.user_metrics(&sender, None), Some(metrics));
 
         let events_prefix = ChatEventKeyPrefix::new_from_chat(channel, None);
@@ -1243,6 +1255,38 @@ mod tests {
         push_events(&mut events, 2);
 
         events
+    }
+
+    fn push_thread_replies(events: &mut ChatEvents, root: MessageIndex, count: u64, now: TimestampMillis) {
+        for i in 0..count {
+            events.push_message::<NullEventPusher>(
+                PushMessageArgs {
+                    sender: Principal::from_slice(&[2]).into(),
+                    thread_root_message_index: Some(root),
+                    message_id: MessageId::from(10_000_000 + (now + i) as u128),
+                    content: MessageContentInternal::Text(TextContentInternal {
+                        text: "reply".to_string(),
+                    }),
+                    sender_context: None,
+                    mentioned: Vec::new(),
+                    replies_to: None,
+                    now: now + i,
+                    forwarded: false,
+                    sender_is_bot: false,
+                    block_level_markdown: false,
+                    og_previews: Vec::new(),
+                },
+                None,
+            );
+        }
+    }
+
+    // The event index of every message in the thread, in message index order
+    fn expected_thread_message_event_indexes(events: &ChatEvents, root: MessageIndex) -> Vec<EventIndex> {
+        let reader = events.events_reader(EventIndex::default(), Some(root), None).unwrap();
+        (0..)
+            .map_while(|i: u32| reader.event_index(EventKey::MessageIndex(i.into())))
+            .collect()
     }
 
     fn push_events(events: &mut ChatEvents, now: TimestampMillis) {
