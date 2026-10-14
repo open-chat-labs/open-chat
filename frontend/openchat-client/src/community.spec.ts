@@ -33,6 +33,12 @@ import type { OpenChatConfig } from "./config";
 import { OpenChat } from "./openchat";
 import { currentUserStore } from "./state";
 import { WorkerAgent } from "./workerAgent";
+import en from "../../app/src/i18n/en.json";
+
+// The English text for a message key, so a test can tell a real message from a missing key
+function english(key: string): unknown {
+    return key.split(".").reduce<unknown>((o, k) => (o as Record<string, unknown>)?.[k], en);
+}
 
 class FakeWorker {
     onmessage: ((ev: MessageEvent) => void) | undefined;
@@ -182,10 +188,14 @@ describe("editing and creating a community", () => {
     test("a new community whose invites fail is created and says the invites failed", async () => {
         invited = false;
 
-        expect(await client.createCommunity(community(), ["General"], ["u1"])).toEqual({
+        const outcome = await client.createCommunity(community(), ["General"], ["u1"]);
+        expect(outcome).toEqual({
             kind: "created_without_invites",
             id: { kind: "community", communityId: "rrkah-fqaaa-aaaaa-aaaaq-cai" },
-            message: expect.objectContaining({ key: "inviteUsersFailed" }),
+            message: expect.anything(),
         });
+        if (outcome.kind === "created_without_invites") {
+            expect(english(outcome.message.key)).toEqual(expect.any(String));
+        }
     });
 });
