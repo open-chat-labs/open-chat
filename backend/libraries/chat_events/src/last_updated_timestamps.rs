@@ -1,10 +1,10 @@
+use crate::legacy_heap_entries::LegacyHeapEntries;
 use constants::calculate_summary_updates_data_removal_cutoff;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::{
     ChatEventKeyPrefix, EventLastUpdatedKeyPrefix, EventsByLastUpdatedKeyPrefix, KeyPrefix, with_map, with_map_mut,
 };
-use std::cmp::{Reverse, max};
-use std::collections::{BTreeMap, BTreeSet};
+use std::cmp::max;
 use types::{EventIndex, MAX_EVENT_INDEX, MIN_EVENT_INDEX, MessageIndex, TimestampMillis};
 
 // The maximum number of expired entries to remove from stable memory each time an event is marked
@@ -14,18 +14,11 @@ const MAX_STABLE_MEMORY_ENTRIES_TO_PRUNE: usize = 100;
 // When each event (including events in threads) was last updated. The entries are stored in the
 // stable memory map for small entries, both keyed by event and ordered by timestamp.
 #[derive(Serialize, Deserialize, Default)]
-#[serde(from = "LastUpdatedTimestampsTrimmed")]
 pub struct LastUpdatedTimestamps {
-    // Entries which haven't yet been moved into stable memory. New entries are always written to
-    // stable memory, and existing ones are moved across in batches by `migrate_to_stable_memory`.
-    // This can be removed once every chat has been migrated. It is always serialized so that a
-    // canister can still be rolled back to a version expecting it.
-    //
-    // An event with an entry here has no entry in stable memory, since marking an event as updated
-    // removes its entry from here before writing to stable memory.
-    by_timestamp: BTreeSet<(TimestampMillis, Option<MessageIndex>, EventIndex)>,
-    #[serde(skip)]
-    by_event_index: BTreeMap<(Option<MessageIndex>, EventIndex), TimestampMillis>,
+    // Entries from before they were stored in stable memory (see `LegacyHeapEntries`)
+    #[serde(rename = "by_timestamp", default, skip_serializing)]
+    legacy_on_heap: LegacyHeapEntries,
+    #[serde(default)]
     latest_update_removed: TimestampMillis,
     // The most recent time that any event was marked as updated, which is always at least as
     // recent as every entry, so that it can be read without reading from stable memory
@@ -42,10 +35,6 @@ impl LastUpdatedTimestamps {
         now: TimestampMillis,
     ) {
         self.prune(events_prefix, now);
-
-        if let Some(previous) = self.by_event_index.remove(&(thread_root_message_index, event_index)) {
-            self.by_timestamp.remove(&(previous, thread_root_message_index, event_index));
-        }
         insert_into_stable_memory(events_prefix, thread_root_message_index, event_index, now);
         self.latest_update = max(self.latest_update, Some(now));
     }
@@ -67,26 +56,13 @@ impl LastUpdatedTimestamps {
         let prefix = EventsByLastUpdatedKeyPrefix::new_from_events_prefix(events_prefix);
         let start = prefix.create_key(&(from, None, MIN_EVENT_INDEX));
         let end = prefix.create_key(&(TimestampMillis::MAX, Some(u32::MAX.into()), MAX_EVENT_INDEX));
-        let mut events: Vec<_> = with_map(|m| {
+        with_map(|m| {
             m.range(start..=end)
                 .rev()
                 .take(max_count)
                 .map(|(k, _)| (k.thread_root_message_index(), k.event_index(), k.last_updated()))
                 .collect()
-        });
-
-        if !self.by_timestamp.is_empty() {
-            events.extend(
-                self.by_timestamp
-                    .range((from, None, MIN_EVENT_INDEX)..)
-                    .rev()
-                    .take(max_count)
-                    .map(|(ts, r, e)| (*r, *e, *ts)),
-            );
-            events.sort_unstable_by_key(|(r, e, ts)| Reverse((*ts, *r, *e)));
-            events.truncate(max_count);
-        }
-        events
+        })
     }
 
     pub fn last_updated(
@@ -95,9 +71,6 @@ impl LastUpdatedTimestamps {
         thread_root_message_index: Option<MessageIndex>,
         event_index: EventIndex,
     ) -> Option<TimestampMillis> {
-        if let Some(ts) = self.by_event_index.get(&(thread_root_message_index, event_index)) {
-            return Some(*ts);
-        }
         self.latest_update?;
 
         let key = EventLastUpdatedKeyPrefix::new_from_events_prefix(events_prefix)
@@ -113,45 +86,8 @@ impl LastUpdatedTimestamps {
         self.latest_update_removed
     }
 
-    // Moves up to `max_count` entries from the heap into stable memory, returning how many were
-    // moved
-    pub fn migrate_to_stable_memory(&mut self, events_prefix: &ChatEventKeyPrefix, max_count: usize) -> usize {
-        let mut batch = Vec::new();
-        while batch.len() < max_count
-            && let Some((ts, thread_root_message_index, event_index)) = self.by_timestamp.pop_first()
-        {
-            self.by_event_index.remove(&(thread_root_message_index, event_index));
-            batch.push((ts, thread_root_message_index, event_index));
-        }
-        let count = batch.len();
-        if count == 0 {
-            return 0;
-        }
-
-        // None of these events have entries in stable memory, so there are no previous entries to
-        // remove and the entries can be inserted in bulk
-        let by_event_prefix = EventLastUpdatedKeyPrefix::new_from_events_prefix(events_prefix);
-        let by_timestamp_prefix = EventsByLastUpdatedKeyPrefix::new_from_events_prefix(events_prefix);
-
-        with_map_mut(|m| {
-            // The batch is in timestamp order, which is the key order of the entries keyed by timestamp
-            m.insert_many(
-                batch
-                    .iter()
-                    .map(|&(ts, tr, e)| (by_timestamp_prefix.create_key(&(ts, tr, e)), Vec::new())),
-            );
-            batch.sort_unstable_by_key(|&(_, tr, e)| (tr, e));
-            m.insert_many(
-                batch
-                    .into_iter()
-                    .map(|(ts, tr, e)| (by_event_prefix.create_key(&(tr, e)), ts.to_be_bytes().to_vec())),
-            );
-        });
-        count
-    }
-
-    pub fn on_heap_count(&self) -> usize {
-        self.by_timestamp.len()
+    pub(crate) fn legacy_heap_entries(&self) -> usize {
+        self.legacy_on_heap.count()
     }
 
     // Removes the entries which are too old to be included in summary updates. Only a limited
@@ -159,16 +95,6 @@ impl LastUpdatedTimestamps {
     // removed by subsequent calls.
     fn prune(&mut self, events_prefix: &ChatEventKeyPrefix, now: TimestampMillis) {
         let cutoff = calculate_summary_updates_data_removal_cutoff(now);
-
-        let still_valid = self.by_timestamp.split_off(&(cutoff, None, MIN_EVENT_INDEX));
-        let removed = std::mem::replace(&mut self.by_timestamp, still_valid);
-
-        if let Some((ts, _, _)) = removed.last() {
-            self.latest_update_removed = max(self.latest_update_removed, *ts);
-        }
-        for (_, tr, e) in removed {
-            self.by_event_index.remove(&(tr, e));
-        }
 
         let by_event_prefix = EventLastUpdatedKeyPrefix::new_from_events_prefix(events_prefix);
         let by_timestamp_prefix = EventsByLastUpdatedKeyPrefix::new_from_events_prefix(events_prefix);
@@ -218,32 +144,6 @@ fn bytes_to_timestamp(bytes: &[u8]) -> TimestampMillis {
     TimestampMillis::from_be_bytes(bytes.try_into().unwrap())
 }
 
-#[derive(Deserialize)]
-pub struct LastUpdatedTimestampsTrimmed {
-    by_timestamp: BTreeSet<(TimestampMillis, Option<MessageIndex>, EventIndex)>,
-    #[serde(default)]
-    latest_update_removed: TimestampMillis,
-    #[serde(rename = "l", default)]
-    latest_update: Option<TimestampMillis>,
-}
-
-impl From<LastUpdatedTimestampsTrimmed> for LastUpdatedTimestamps {
-    fn from(value: LastUpdatedTimestampsTrimmed) -> Self {
-        let mut by_event_index = BTreeMap::new();
-        for (ts, tr, e) in value.by_timestamp.iter() {
-            by_event_index.insert((*tr, *e), *ts);
-        }
-        let latest_on_heap = value.by_timestamp.last().map(|(ts, _, _)| *ts);
-
-        LastUpdatedTimestamps {
-            by_timestamp: value.by_timestamp,
-            by_event_index,
-            latest_update_removed: value.latest_update_removed,
-            latest_update: max(value.latest_update, latest_on_heap),
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -252,6 +152,8 @@ mod tests {
     use ic_stable_structures::DefaultMemoryImpl;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
     use rand::{Rng, RngExt, rng};
+    use std::cmp::Reverse;
+    use std::collections::{BTreeMap, BTreeSet};
     use types::Chat;
 
     type Model = BTreeMap<(Option<MessageIndex>, EventIndex), TimestampMillis>;
@@ -302,69 +204,37 @@ mod tests {
     }
 
     #[test]
-    fn heap_entries_are_migrated_to_stable_memory() {
-        init_stable_memory_map();
-        let chat = ChatEventKeyPrefix::new_from_chat(Chat::Group(Principal::from_slice(&[1]).into()), None);
-        let mut model = Model::new();
-
-        // Recreate the state of a chat from before the timestamps were stored in stable memory
-        let mut by_timestamp = BTreeSet::new();
-        for i in 0..100u32 {
-            let thread_root_message_index = (i % 3 == 0).then(|| MessageIndex::from(i % 7));
-            by_timestamp.insert((1000 + i as u64, thread_root_message_index, EventIndex::from(i)));
-            model.insert((thread_root_message_index, i.into()), 1000 + i as u64);
+    fn entries_from_before_stable_memory_are_counted_but_not_kept() {
+        #[derive(Serialize)]
+        struct Legacy {
+            by_timestamp: BTreeSet<(TimestampMillis, Option<MessageIndex>, EventIndex)>,
+            latest_update_removed: TimestampMillis,
+            l: Option<TimestampMillis>,
         }
-        let mut timestamps = LastUpdatedTimestamps::from(LastUpdatedTimestampsTrimmed {
-            by_timestamp,
-            latest_update_removed: 0,
-            latest_update: None,
-        });
-        assert_eq!(timestamps.latest_update(), Some(1099));
+        let legacy = Legacy {
+            by_timestamp: (0..10u32).map(|i| (1000 + i as u64, None, EventIndex::from(i))).collect(),
+            latest_update_removed: 5,
+            l: Some(2000),
+        };
 
-        // Plus some updates since then, including to events whose timestamps are on the heap
-        for i in 90..110u32 {
-            let thread_root_message_index = (i % 3 == 0).then(|| MessageIndex::from(i % 7));
-            timestamps.mark_updated(&chat, thread_root_message_index, i.into(), 2000 + i as u64);
-            model.insert((thread_root_message_index, i.into()), 2000 + i as u64);
-        }
-        assert_eq!(timestamps.on_heap_count(), 90);
-        assert_eq!(timestamps.latest_update(), Some(2109));
-        assert_recently_updated_events_match(&timestamps, &chat, &model);
+        let timestamps: LastUpdatedTimestamps = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&legacy));
+        assert_eq!(timestamps.legacy_heap_entries(), 10);
+        assert_eq!(timestamps.latest_update(), Some(2000));
+        assert_eq!(timestamps.latest_update_removed(), 5);
 
         let bytes = msgpack::serialize_then_unwrap(&timestamps);
-        // Must keep the field name used by the previous version so that upgrades and rollbacks both work
-        assert!(bytes.windows(12).any(|w| w == b"by_timestamp"));
-        let mut timestamps: LastUpdatedTimestamps = msgpack::deserialize_then_unwrap(&bytes);
-        assert_eq!(timestamps.on_heap_count(), 90);
-        assert_eq!(timestamps.latest_update(), Some(2109));
-        assert_recently_updated_events_match(&timestamps, &chat, &model);
-
-        assert_eq!(timestamps.migrate_to_stable_memory(&chat, 30), 30);
-        assert_eq!(timestamps.on_heap_count(), 60);
-        assert_recently_updated_events_match(&timestamps, &chat, &model);
-        assert_eq!(timestamps.migrate_to_stable_memory(&chat, 1000), 60);
-        assert_eq!(timestamps.on_heap_count(), 0);
-        assert_eq!(timestamps.migrate_to_stable_memory(&chat, 1000), 0);
-        assert_recently_updated_events_match(&timestamps, &chat, &model);
-
-        for ((thread_root_message_index, event_index), ts) in model.iter() {
-            assert_eq!(
-                timestamps.last_updated(&chat, *thread_root_message_index, *event_index),
-                Some(*ts)
-            );
-        }
+        assert!(!bytes.windows(12).any(|w| w == b"by_timestamp"));
+        let timestamps: LastUpdatedTimestamps = msgpack::deserialize_then_unwrap(&bytes);
+        assert_eq!(timestamps.legacy_heap_entries(), 0);
+        assert_eq!(timestamps.latest_update(), Some(2000));
     }
 
     #[test]
     fn old_entries_are_pruned() {
         init_stable_memory_map();
         let chat = ChatEventKeyPrefix::new_from_chat(Chat::Channel(Principal::from_slice(&[1]).into(), 1u32.into()), None);
-        let mut timestamps = LastUpdatedTimestamps::from(LastUpdatedTimestampsTrimmed {
-            by_timestamp: (0..10u32).map(|i| (i as u64, None, EventIndex::from(i))).collect(),
-            latest_update_removed: 0,
-            latest_update: None,
-        });
-        for i in 10..250u32 {
+        let mut timestamps = LastUpdatedTimestamps::default();
+        for i in 0..250u32 {
             timestamps.mark_updated(&chat, None, i.into(), i as u64);
         }
         assert_eq!(timestamps.latest_update_removed(), 0);
@@ -373,14 +243,13 @@ mod tests {
         // from stable memory each time an event is updated.
         let now = DURATION_TO_MAINTAIN_SUMMARY_UPDATES_DATA + 300;
         timestamps.mark_updated(&chat, None, 1000.into(), now);
-        assert_eq!(timestamps.on_heap_count(), 0);
-        assert_eq!(timestamps.latest_update_removed(), 109);
-        assert_eq!(timestamps.recently_updated_events(&chat, 0, usize::MAX).len(), 141);
-        assert_eq!(timestamps.last_updated(&chat, None, 109.into()), None);
-        assert_eq!(timestamps.last_updated(&chat, None, 110.into()), Some(110));
+        assert_eq!(timestamps.latest_update_removed(), 99);
+        assert_eq!(timestamps.recently_updated_events(&chat, 0, usize::MAX).len(), 151);
+        assert_eq!(timestamps.last_updated(&chat, None, 99.into()), None);
+        assert_eq!(timestamps.last_updated(&chat, None, 100.into()), Some(100));
 
         timestamps.mark_updated(&chat, None, 1001.into(), now);
-        assert_eq!(timestamps.latest_update_removed(), 209);
+        assert_eq!(timestamps.latest_update_removed(), 199);
         timestamps.mark_updated(&chat, None, 1002.into(), now);
         assert_eq!(timestamps.latest_update_removed(), 249);
 
@@ -389,16 +258,6 @@ mod tests {
             vec![(None, 1002.into(), now), (None, 1001.into(), now), (None, 1000.into(), now)]
         );
         assert_eq!(timestamps.latest_update(), Some(now));
-    }
-
-    fn assert_recently_updated_events_match(timestamps: &LastUpdatedTimestamps, chat: &ChatEventKeyPrefix, model: &Model) {
-        for (since, max_count) in [(0, usize::MAX), (0, 25), (1050, usize::MAX), (1050, 60), (2100, usize::MAX)] {
-            assert_eq!(
-                timestamps.recently_updated_events(chat, since, max_count),
-                expected_recently_updated_events(model, since, max_count),
-                "since: {since}, max_count: {max_count}"
-            );
-        }
     }
 
     fn expected_recently_updated_events(

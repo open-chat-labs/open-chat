@@ -1,6 +1,7 @@
 use crate::chat_events_list::Reader;
 use crate::expiring_events::ExpiringEvents;
 use crate::last_updated_timestamps::LastUpdatedTimestamps;
+use crate::legacy_heap_entries::LegacyHeapEntries;
 use crate::metrics::{ChatMetricsInternal, MetricKey};
 use crate::per_user_metrics::PerUserMetrics;
 use crate::search_index::SearchIndex;
@@ -45,13 +46,24 @@ pub struct ModerationReportUpdates {
     pub reporters: Option<Vec<UserId>>,
 }
 
+// See `ChatEvents::export_for_import_into_community`
+#[derive(Default)]
+pub struct ChatEventsExport {
+    pub user_metrics: Vec<(UserId, ByteBuf)>,
+    pub message_event_index_chunks: Vec<(Option<MessageIndex>, Vec<ByteBuf>)>,
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct ChatEvents {
     chat: Chat,
     main: ChatEventsList,
     threads: BTreeMap<MessageIndex, ChatEventsList>,
     metrics: ChatMetricsInternal,
+    #[serde(skip)]
     per_user_metrics: PerUserMetrics,
+    // Each user's metrics from before they were stored in stable memory (see `LegacyHeapEntries`)
+    #[serde(rename = "per_user_metrics", default, skip_serializing)]
+    legacy_per_user_metrics: LegacyHeapEntries,
     frozen: bool,
     events_ttl: Timestamped<Option<Milliseconds>>,
     expiring_events: ExpiringEvents,
@@ -113,7 +125,8 @@ impl ChatEvents {
             main: ChatEventsList::new(ChatEventKeyPrefix::new_from_direct_chat_key_id(key_id, None)),
             threads: BTreeMap::new(),
             metrics: ChatMetricsInternal::default(),
-            per_user_metrics: PerUserMetrics::default(),
+            per_user_metrics: PerUserMetrics,
+            legacy_per_user_metrics: LegacyHeapEntries::default(),
             frozen: false,
             events_ttl: Timestamped::new(events_ttl, now),
             expiring_events: ExpiringEvents::default(),
@@ -145,7 +158,8 @@ impl ChatEvents {
             main: ChatEventsList::new(ChatEventKeyPrefix::new_from_chat(chat, None)),
             threads: BTreeMap::new(),
             metrics: ChatMetricsInternal::default(),
-            per_user_metrics: PerUserMetrics::default(),
+            per_user_metrics: PerUserMetrics,
+            legacy_per_user_metrics: LegacyHeapEntries::default(),
             frozen: false,
             events_ttl: Timestamped::new(events_ttl, now),
             expiring_events: ExpiringEvents::default(),
@@ -252,64 +266,35 @@ impl ChatEvents {
             .recently_updated_events(self.main.stable_memory_prefix(), since, max_count)
     }
 
-    // Moves up to `max_count` entries from the heap into stable memory, returning how many were
-    // moved
-    pub fn migrate_to_stable_memory(&mut self, max_count: usize) -> usize {
-        let mut moved = self
-            .expiring_events
-            .migrate_to_stable_memory(self.main.stable_memory_prefix(), max_count);
-        if moved < max_count {
-            moved += self
-                .last_updated_timestamps
-                .migrate_to_stable_memory(self.main.stable_memory_prefix(), max_count - moved);
+    // What the chat holds in stable memory which isn't carried over with its events when a group is
+    // imported into a community (see `import_events`): each user's metrics, and the chunks of each
+    // events list's message event indexes. The community writes them under the channel's prefixes
+    // with `import_from_group`.
+    pub fn export_for_import_into_community(&self) -> ChatEventsExport {
+        ChatEventsExport {
+            user_metrics: self.per_user_metrics.export(self.main.stable_memory_prefix()),
+            message_event_index_chunks: std::iter::once((None, &self.main))
+                .chain(self.threads.iter().map(|(root, thread)| (Some(*root), thread)))
+                .map(|(root, list)| (root, list.export_message_event_index_chunks()))
+                .filter(|(_, chunks)| !chunks.is_empty())
+                .collect(),
         }
-        if moved < max_count {
-            moved += self
-                .per_user_metrics
-                .migrate_to_stable_memory(self.main.stable_memory_prefix(), max_count - moved);
-        }
-        if moved < max_count {
-            moved +=
-                self.search_index
-                    .migrate_to_stable_memory(self.main.stable_memory_prefix(), &self.main, max_count - moved);
-        }
-        for events_list in std::iter::once(&mut self.main).chain(self.threads.values_mut()) {
-            if moved >= max_count {
-                break;
+    }
+
+    // Writes what a group exported (see `export_for_import_into_community`) under this chat's
+    // prefixes. This chat must be the group's, deserialized from its export, with its chat set to
+    // the channel.
+    pub fn import_from_group(&mut self, export: ChatEventsExport) {
+        self.per_user_metrics
+            .import(self.main.stable_memory_prefix(), export.user_metrics);
+        for (root, chunks) in export.message_event_index_chunks {
+            let list = match root {
+                None => Some(&self.main),
+                Some(root) => self.threads.get(&root),
+            };
+            if let Some(list) = list {
+                list.import_message_event_index_chunks(chunks);
             }
-            moved += events_list.migrate_message_ids_to_stable_memory(max_count - moved);
-            if moved < max_count {
-                moved += events_list.migrate_message_event_indexes_to_stable_memory(max_count - moved);
-            }
-        }
-        moved
-    }
-
-    // When a group is imported into a community, `import_events` writes the message id of every
-    // message which still exists into stable memory, so any ids left on the heap are either
-    // duplicates of those or belong to events which were removed before the import
-    pub fn discard_message_ids_on_heap(&mut self) {
-        self.main.discard_message_ids_on_heap();
-        for thread in self.threads.values_mut() {
-            thread.discard_message_ids_on_heap();
-        }
-    }
-
-    // Similarly, `import_events` writes an expiring event for every imported event which has an
-    // expiry date, so any expiring events left on the heap are duplicates of those
-    pub fn discard_expiring_events_on_heap(&mut self) {
-        self.expiring_events.discard_on_heap();
-    }
-
-    // Copies each user's metrics and each events list's message event indexes from stable memory onto
-    // the heap, so that they are included when the chat is serialized to be imported into a community.
-    // The community moves them back into stable memory, under the new channel's prefixes, via
-    // `migrate_to_stable_memory`.
-    pub fn copy_to_heap_for_export(&mut self) {
-        self.per_user_metrics.copy_to_heap(self.main.stable_memory_prefix());
-        self.main.copy_message_event_indexes_to_heap();
-        for thread in self.threads.values_mut() {
-            thread.copy_message_event_indexes_to_heap();
         }
     }
 
@@ -324,15 +309,16 @@ impl ChatEvents {
         }
     }
 
-    // The number of entries on the heap which are yet to be moved into stable memory
-    pub fn heap_entries_to_migrate_count(&self) -> usize {
-        self.expiring_events.on_heap_count()
-            + self.last_updated_timestamps.on_heap_count()
-            + self.per_user_metrics.on_heap_count()
-            + self.search_index.on_heap_count()
+    // The entries held on the heap from before they were stored in stable memory (see
+    // `LegacyHeapEntries`), which a canister must have none of to upgrade
+    pub fn legacy_heap_entries(&self) -> usize {
+        self.expiring_events.legacy_heap_entries()
+            + self.last_updated_timestamps.legacy_heap_entries()
+            + self.legacy_per_user_metrics.count()
+            + self.search_index.legacy_heap_entries()
             + std::iter::once(&self.main)
                 .chain(self.threads.values())
-                .map(|l| l.message_ids_on_heap_count() + l.message_event_indexes_on_heap_count())
+                .map(|l| l.legacy_heap_entries())
                 .sum::<usize>()
     }
 
@@ -471,7 +457,7 @@ impl ChatEvents {
                         sender_changes.push((m.message_index, old_sender, m.sender));
                     }
                     if let Some(old_document) = document {
-                        document_changes.push((m.message_index, m.sender, old_document, Document::from(&m.content)));
+                        document_changes.push((m.message_index, old_document, Document::from(&m.content)));
                     }
                 }
                 updated.push(event);
@@ -647,16 +633,10 @@ impl ChatEvents {
                 let bot_notification = result.bot_notification;
                 let (message_index, event, documents) = result.value;
                 if thread_root_message_index.is_none()
-                    && let Some((message_sender, old_document, new_document)) = documents
+                    && let Some((_, old_document, new_document)) = documents
                 {
-                    // The message is indexed under its sender, which may be an earlier id of the editor
-                    self.search_index.update(
-                        self.main.stable_memory_prefix(),
-                        message_index,
-                        message_sender,
-                        &old_document,
-                        &new_document,
-                    );
+                    self.search_index
+                        .update(self.main.stable_memory_prefix(), message_index, &old_document, &new_document);
                 }
 
                 add_to_metrics(
@@ -2483,11 +2463,6 @@ impl ChatEvents {
             .migrate_user(self.main.stable_memory_prefix(), old_user_id, new_user_id)
     }
 
-    // The ids of the users whose metrics are still held on the heap (see `PerUserMetrics`)
-    pub fn user_ids_with_metrics_on_heap(&self) -> impl Iterator<Item = UserId> + '_ {
-        self.per_user_metrics.user_ids_on_heap()
-    }
-
     // The ids of up to `max_count` of the users with metrics in stable memory, in key order,
     // starting after `after`
     pub fn user_ids_with_metrics_in_stable_memory(&self, after: Option<UserId>, max_count: usize) -> Vec<UserId> {
@@ -2757,16 +2732,6 @@ impl ChatEvents {
 
     pub fn main_events_list(&self) -> &ChatEventsList {
         &self.main
-    }
-
-    #[cfg(test)]
-    pub(crate) fn main_events_list_mut(&mut self) -> &mut ChatEventsList {
-        &mut self.main
-    }
-
-    #[cfg(test)]
-    pub(crate) fn search_index_mut(&mut self) -> &mut SearchIndex {
-        &mut self.search_index
     }
 
     pub fn end_video_call<P: EventPusher>(
@@ -4237,25 +4202,16 @@ mod tests {
         assert_eq!(events.recently_updated_events(0, 1000), recently_updated);
     }
 
-    // `on_heap`: whether the message is still in the search index's legacy heap map
     // `sender_migrated`: whether the message's sender is the migrated user too
-    #[test_case::test_case(false, false)]
-    #[test_case::test_case(false, true)]
-    #[test_case::test_case(true, false)]
-    #[test_case::test_case(true, true)]
-    fn search_finds_a_mention_under_the_users_latest_id(on_heap: bool, sender_migrated: bool) {
+    #[test_case::test_case(false)]
+    #[test_case::test_case(true)]
+    fn search_finds_a_mention_under_the_users_latest_id(sender_migrated: bool) {
         let (mut events, _, _) = setup_events();
         let old_user_id: UserId = Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap().into();
         let new_user_id = UserId::new_indexed(Principal::from_text("yaxqu-oqaaa-aaaaf-br7ya-cai").unwrap(), 1);
         let sender = if sender_migrated { old_user_id } else { Principal::from_slice(&[2]).into() };
         let content = text_content(&format!("hi @UserId({old_user_id})"));
-        let message_index = push_message(&mut events, sender, 100, content.clone());
-        if on_heap {
-            let prefix = events.main.stable_memory_prefix().clone();
-            events
-                .search_index
-                .move_to_heap(&prefix, message_index, sender, Document::from(&content));
-        }
+        let message_index = push_message(&mut events, sender, 100, content);
         let search = |events: &ChatEvents, term: &str, users: &[UserId]| -> Vec<MessageIndex> {
             events
                 .search_messages(MessageIndex::default(), term, &users.iter().copied().collect(), 10)

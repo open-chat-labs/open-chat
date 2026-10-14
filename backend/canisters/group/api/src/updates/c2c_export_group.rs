@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
-use types::UserId;
+use types::{MessageIndex, UserId};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -22,6 +22,11 @@ pub enum Response {
 pub struct ExportExtras {
     // Each migration from a user's old id to their new id
     pub migrated_user_ids: Vec<(UserId, UserId)>,
+    // What the group's chat holds in stable memory which isn't carried over with its events: each
+    // user's metrics, and the chunks of each events list's message event indexes, keyed by the root
+    // message of its thread, or None for the main events list
+    pub user_metrics: Vec<(UserId, ByteBuf)>,
+    pub message_event_index_chunks: Vec<(Option<MessageIndex>, Vec<ByteBuf>)>,
 }
 
 #[cfg(test)]
@@ -51,6 +56,7 @@ mod tests {
         let mut bytes = msgpack::serialize_then_unwrap(chat());
         let extras = ExportExtras {
             migrated_user_ids: vec![(user_id(3), user_id(4))],
+            ..Default::default()
         };
         msgpack::serialize(&extras, &mut bytes).unwrap();
         bytes

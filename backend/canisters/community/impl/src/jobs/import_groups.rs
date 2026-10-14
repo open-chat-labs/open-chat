@@ -1,5 +1,5 @@
 use crate::activity_notifications::extract_activity;
-use crate::jobs::{migrate_chat_events_to_stable_memory, unlapse_members, update_user_ids_in_events, update_user_ids_in_state};
+use crate::jobs::{unlapse_members, update_user_ids_in_events, update_user_ids_in_state};
 use crate::model::channels::Channel;
 use crate::model::events::{CommunityEventInternal, GroupImportedInternal};
 use crate::model::groups_being_imported::{GroupToImport, GroupToImportAction};
@@ -9,7 +9,7 @@ use crate::timer_job_types::{
     TimerJob,
 };
 use crate::{Data, RuntimeState, mutate_state, read_state, run_regular_jobs};
-use chat_events::ChatEvents;
+use chat_events::{ChatEvents, ChatEventsExport};
 use constants::{OPENCHAT_BOT_USER_ID, SECOND_IN_MS};
 use group_canister::c2c_export_group::{Args, ExportExtras, Response};
 use group_chat_core::{GroupChatCore, GroupMembers};
@@ -215,13 +215,13 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
 
             chat.events.set_chat(Chat::Channel(community_id, channel_id));
             chat.members.set_chat(MultiUserChat::Channel(community_id, channel_id));
-            // The message ids and expiring events were written to stable memory as the events were
-            // imported. The imported messages were also added to the search index, but any messages
-            // still in the group's legacy search index on the heap are left there to be re-indexed
-            // under the channel's prefix by `migrate_chat_events_to_stable_memory`, in case some
-            // events were imported by a version of this canister which didn't index them.
-            chat.events.discard_message_ids_on_heap();
-            chat.events.discard_expiring_events_on_heap();
+            // The message ids, expiring events and search index were written to stable memory as the
+            // events were imported, and the users' metrics and message event indexes, which the group
+            // exported alongside its chat, are written under the channel's prefixes now
+            chat.events.import_from_group(ChatEventsExport {
+                user_metrics: extras.user_metrics,
+                message_event_index_chunks: extras.message_event_index_chunks,
+            });
 
             let blocked: Vec<_> = chat.members.blocked();
             if !blocked.is_empty() {
@@ -253,9 +253,6 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
                 date_imported: None, // This is only set once everything is complete
             });
 
-            // Moves the imported group's data which is still on the heap (eg. its users' metrics)
-            // into stable memory under the channel's prefixes
-            migrate_chat_events_to_stable_memory::start_job_if_required(state);
             // The group may have been unlapsing its members when it was exported
             unlapse_members::start_job_if_required(state);
             // The job which replaces the ids users had before being migrated to MultiUser canisters
