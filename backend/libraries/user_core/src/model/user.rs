@@ -373,7 +373,6 @@ impl User {
 #[cfg(test)]
 mod tests {
     use super::*;
-
     use ic_stable_structures::DefaultMemoryImpl;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
     use multi_user_canister::ManualWallet;

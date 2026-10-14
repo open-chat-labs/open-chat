@@ -7,8 +7,7 @@ use std::collections::HashMap;
 use types::UserIdAndPrincipal;
 
 // Called by a community importing a group, for the members of the group it adds. Each is found by
-// their latest id, since the group may hold them by an id they've since been migrated from, in which
-// case the community moves them onto it.
+// their latest id, which the community checks is the id it asked for.
 #[update(guard = "caller_is_local_community_canister", msgpack = true)]
 #[trace]
 fn c2c_user_principals_v2(args: Args) -> Response {

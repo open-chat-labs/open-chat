@@ -70,7 +70,7 @@ async fn process_gate_check_async(details: ExpiringMemberActionDetails) {
 
     // The gate is also checked under any ids the user had before being migrated to a MultiUser
     // canister (see `check_if_passes_gate_under_any_id`), which the LocalUserIndex holds. A failed
-    // lookup is treated as a failed check, which is queued again rather than lapsing the member.
+    // lookup is treated as an error, so the check is queued again rather than the member lapsing.
     let local_user_index_canister_id = read_state(|state| state.data.local_user_index_canister_id);
     let result = match lookup_previous_user_ids(prep.details.user_id, local_user_index_canister_id).await {
         Ok(previous_user_ids) => {

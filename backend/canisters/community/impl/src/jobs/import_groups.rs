@@ -272,8 +272,8 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
 
 // The channel's members are processed a batch at a time, in order of user id:
 // 1. For channel members already in the community, add the new channel to their set of channels.
-// 2. For channel members who are not yet community members, lookup their latest ids and principals,
-// then join them to the community, add the new channel to their set of channels, and add them to the
+// 2. For channel members who are not yet community members, look up their principals, then join them
+// to the community, add the new channel to their set of channels, and add them to the
 // community's other public channels (via `JoinMembersToPublicChannelJob`).
 // Once every batch has been processed, if the channel is public, the community members not in it
 // are added to it.
@@ -304,6 +304,12 @@ pub(crate) async fn process_channel_members(mut job: ProcessGroupImportChannelMe
             // Added together, so that they're written to stable memory together
             let mut to_add = MembersToAdd::default();
             for (user_id, user) in users {
+                // Every group holds its members by their latest ids, so a member found under another
+                // id, ie. one they've since been migrated from, is never expected
+                if user.user_id != user_id {
+                    error!(%group_id, %user_id, latest = %user.user_id, "Imported member found under another id");
+                    continue;
+                }
                 to_add.push(
                     user_id,
                     user.principal,

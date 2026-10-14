@@ -64,7 +64,7 @@ async fn c2c_bot_remove_user_impl(args: community_canister::c2c_bot_remove_user:
 async fn remove_member_impl(user_id: UserId, block: bool, ext_caller: Option<Caller>) -> UnitResult {
     if let Err(error) = read_state(|state| state.data.verify_not_old_user_id(user_id)) {
         return Response::Error(error);
-    };
+    }
 
     // Check the caller can remove the user
     let prepare_result = match read_state(|state| prepare(user_id, block, ext_caller, state)) {

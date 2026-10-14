@@ -1596,7 +1596,9 @@ pub struct PrizeContentInternal {
     // The sender's principal, which along with their user id determines the wallet any refund is
     // paid to. Recorded when the prize is sent, as the sender may have left the chat by the time it
     // ends. Anonymous for prizes sent before it was recorded, whose senders were then all in their own
-    // User canisters, so are refunded at their user id.
+    // User canisters, so are refunded at their user id. A sender since migrated to a MultiUser
+    // canister had this set to their User canister's id when their id in the message was replaced, so
+    // only a sender who was never migrated is left with it anonymous.
     #[serde(rename = "pr", default = "Principal::anonymous")]
     pub principal: Principal,
 }

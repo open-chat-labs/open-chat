@@ -10,6 +10,6 @@ pub struct Args {
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     // Each user found, by the id asked for, with their latest id, which differs if they've been
-    // migrated to a MultiUser canister, and their principal
+    // migrated to a MultiUser canister since having it, and their principal
     Success(HashMap<UserId, UserIdAndPrincipal>),
 }

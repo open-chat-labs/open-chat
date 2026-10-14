@@ -39,12 +39,7 @@ pub fn manage_favourite_chats(user: &mut User, args: Args, now: TimestampMillis)
 mod tests {
     use super::*;
     use candid::Principal;
-
     use types::Chat;
-
-    fn manage(user: &mut User, args: Args, now: TimestampMillis) -> OCResult<bool> {
-        manage_favourite_chats(user, args, now)
-    }
 
     #[test]
     fn nothing_is_changed_if_the_limit_would_be_exceeded() {
@@ -53,7 +48,7 @@ mod tests {
         let args = |to_add: Vec<Chat>, to_remove: Vec<Chat>| Args { to_add, to_remove };
 
         assert!(
-            manage(
+            manage_favourite_chats(
                 &mut user,
                 args((0..MAX_FAVOURITE_CHATS as u32).map(chat).collect(), Vec::new()),
                 1
@@ -61,14 +56,14 @@ mod tests {
             .unwrap()
         );
 
-        let error = manage(&mut user, args(vec![chat(1000), chat(1001)], vec![chat(0)]), 2).unwrap_err();
+        let error = manage_favourite_chats(&mut user, args(vec![chat(1000), chat(1001)], vec![chat(0)]), 2).unwrap_err();
         assert!(error.matches_code(OCErrorCode::LimitReached), "{error:?}");
         assert!(user.favourite_chats.contains(&chat(0)));
         assert!(!user.favourite_chats.contains(&chat(1000)));
 
         // Re-adding chats which are already favourites is fine, as is adding one in place of one removed
-        assert!(manage(&mut user, args(vec![chat(0)], Vec::new()), 3).unwrap());
-        assert!(manage(&mut user, args(vec![chat(1000)], vec![chat(0)]), 4).unwrap());
+        assert!(manage_favourite_chats(&mut user, args(vec![chat(0)], Vec::new()), 3).unwrap());
+        assert!(manage_favourite_chats(&mut user, args(vec![chat(1000)], vec![chat(0)]), 4).unwrap());
         assert!(user.favourite_chats.contains(&chat(1000)));
         assert!(!user.favourite_chats.contains(&chat(0)));
         assert_eq!(user.favourite_chats.len(), MAX_FAVOURITE_CHATS);
@@ -83,7 +78,7 @@ mod tests {
             user.favourite_chats.add_without_limit(chat(i), 1);
         }
 
-        let removed = manage(
+        let removed = manage_favourite_chats(
             &mut user,
             Args {
                 to_add: Vec::new(),
@@ -95,7 +90,7 @@ mod tests {
         assert_eq!(user.favourite_chats.len(), MAX_FAVOURITE_CHATS + 4);
 
         // But can't add any until they're back under it
-        let error = manage(
+        let error = manage_favourite_chats(
             &mut user,
             Args {
                 to_add: vec![chat(0)],
