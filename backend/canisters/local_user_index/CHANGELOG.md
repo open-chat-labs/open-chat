@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Removed
 
-- Remove the one-offs which replaced old user ids in the bots and dropped the User canister's wasm, now that they have run ([#TIDY](https://github.com/open-chat-labs/open-chat/pull/TIDY))
+- Remove the one-offs which replaced old user ids in the bots and dropped the User canister's wasm, now that they have run ([#9965](https://github.com/open-chat-labs/open-chat/pull/9965))
 
 ## [[2.0.2139](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2139-local_user_index)] - 2026-10-14
 

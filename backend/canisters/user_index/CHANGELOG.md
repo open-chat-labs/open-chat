@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - Remove the `unique_person_proofs_submitted` metric ([#9961](https://github.com/open-chat-labs/open-chat/pull/9961))
-- Remove the one-offs which replaced old user ids in the reports, told the storage buckets the vault reviewers' latest ids and dropped the User canister's wasm, now that they have run ([#TIDY](https://github.com/open-chat-labs/open-chat/pull/TIDY))
+- Remove the one-offs which replaced old user ids in the reports, told the storage buckets the vault reviewers' latest ids and dropped the User canister's wasm, now that they have run ([#9965](https://github.com/open-chat-labs/open-chat/pull/9965))
 
 ## [[2.0.2140](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2140-user_index)] - 2026-10-14
 
