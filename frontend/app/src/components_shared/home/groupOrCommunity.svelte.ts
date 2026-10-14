@@ -10,12 +10,14 @@ import {
     type AccessGateConfig,
     type CandidateMember,
     type ChitEarnedGate,
+    type GroupChangeConfirmation,
     type HasLevel,
     type LeafGate,
     type NeuronGate,
     type PaymentGate,
     type TokenBalanceGate,
     type UpdatedRules,
+    type UpdateGroupOutcome,
     type UserOrUserGroup,
     type UserSummary,
 } from "@client";
@@ -34,7 +36,7 @@ function gatesByKind(config: AccessGateConfig, kind: AccessGate["kind"]): Access
     return [];
 }
 
-type Entity = AccessControlled & HasLevel;
+type Entity = AccessControlled & HasLevel & { name: string };
 
 export abstract class UpdateGroupOrCommunityState {
     abstract get candidate(): Entity;
@@ -46,6 +48,8 @@ export abstract class UpdateGroupOrCommunityState {
     #busy = $state(false);
     #showingVerificationWarning = $state(false);
     #candidateMembers = $state<CandidateMember[]>([]);
+    // The changes the user has confirmed while saving
+    #confirmed: GroupChangeConfirmation[] = [];
     #rulesValid = $derived.by(() => {
         return (
             !this.rules.enabled ||
@@ -75,6 +79,50 @@ export abstract class UpdateGroupOrCommunityState {
         this.#confirming = false;
         this.#candidateMembers = [];
         this.#showingVerificationWarning = false;
+    }
+
+    /**
+     * Saves the user's changes with `send`, which says when a change needs the user to confirm it.
+     * `confirming` or `showingVerificationWarning` is then set, and the user's answer comes back here
+     * as `yes`. Every answer is kept until the save goes through.
+     */
+    protected async sendChanges(
+        yes: boolean,
+        send: (confirmed: GroupChangeConfirmation[]) => Promise<UpdateGroupOutcome>,
+    ): Promise<UpdateGroupOutcome | { kind: "declined" }> {
+        const answering: GroupChangeConfirmation | undefined = this.showingVerificationWarning
+            ? "verified_name"
+            : this.confirming
+              ? "visibility"
+              : undefined;
+        this.showingVerificationWarning = false;
+        this.confirming = false;
+
+        if (answering === undefined) {
+            this.#confirmed = [];
+        } else if (yes) {
+            this.#confirmed.push(answering);
+        } else {
+            this.declined(answering);
+            return { kind: "declined" };
+        }
+
+        this.busy = true;
+        const outcome = await send(this.#confirmed);
+        this.busy = false;
+
+        if (outcome.kind === "needs_confirmation") {
+            this.showingVerificationWarning = outcome.confirmation === "verified_name";
+            this.confirming = outcome.confirmation === "visibility";
+        }
+        return outcome;
+    }
+
+    // Undoes a change the user declined to confirm
+    protected declined(confirmation: GroupChangeConfirmation) {
+        if (confirmation === "verified_name") {
+            this.candidate.name = this.original.name;
+        }
     }
 
     get defaultRules() {

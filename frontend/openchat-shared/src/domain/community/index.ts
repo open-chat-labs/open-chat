@@ -1,4 +1,5 @@
-import type { AccessControlled, AccessGateConfig, VersionedRules } from "../access";
+import type { ResourceKey } from "../../utils/i18n";
+import type { AccessControlled, AccessGateConfig, UpdatedRules, VersionedRules } from "../access";
 import type { GrantedBotPermissions, InstalledBotDetails } from "../bots";
 import type {
     CanisterNotFound,
@@ -7,6 +8,7 @@ import type {
     EventWrapper,
     GateCheckFailed,
     GateCheckFailedReason,
+    GroupChangeConfirmation,
     GroupMembershipUpdates,
     GroupSubtype,
     Member,
@@ -139,6 +141,37 @@ export type UpdateCommunityResponse =
     | { kind: "success"; rulesVersion: number | undefined }
     | OCError
     | Offline;
+
+// A community and its rules, as the user is creating or editing them
+export type CommunityAndRules = {
+    community: CommunitySummary;
+    rules: UpdatedRules;
+};
+
+// What the user has changed about a community they are editing, holding only the fields that differ
+export type CommunityChanges = {
+    name?: string;
+    description?: string;
+    rules?: UpdatedRules;
+    permissions?: CommunityPermissions;
+    avatar?: Uint8Array;
+    banner?: Uint8Array;
+    gateConfig?: AccessGateConfig;
+    isPublic?: boolean;
+    primaryLanguage?: string;
+};
+
+export type UpdateCommunityOutcome =
+    | { kind: "success" }
+    | { kind: "unchanged" }
+    | { kind: "needs_confirmation"; confirmation: GroupChangeConfirmation }
+    | { kind: "failed"; message: ResourceKey };
+
+/** `created_without_invites` means the community was created but inviting the chosen users failed */
+export type CreateCommunityOutcome =
+    | { kind: "created"; id: CommunityIdentifier }
+    | { kind: "created_without_invites"; id: CommunityIdentifier; message: ResourceKey }
+    | { kind: "failed"; message: ResourceKey };
 
 export type CreateCommunityResponse =
     | Offline

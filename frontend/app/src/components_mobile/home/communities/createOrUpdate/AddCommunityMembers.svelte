@@ -6,7 +6,7 @@
     import Check from "svelte-material-icons/Check.svelte";
     import SelectUsers from "../../SelectUsers.svelte";
     import SlidingPageContent from "../../SlidingPageContent.svelte";
-    import { updateCommunityState } from "./community.svelte";
+    import { updateCommunityState } from "@shared_components/home/communities/createOrUpdate/community.svelte";
 
     const client = getContext<OpenChat>("client");
 

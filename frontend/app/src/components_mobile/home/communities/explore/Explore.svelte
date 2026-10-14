@@ -50,7 +50,7 @@
     import Translatable from "@shared_components/Translatable.svelte";
     import AnonFooter from "../../AnonFooter.svelte";
     import NothingToSee from "../../NothingToSee.svelte";
-    import { updateCommunityState } from "../createOrUpdate/community.svelte";
+    import { openCommunityCreation } from "../createOrUpdate/createCommunity";
     import BotCard from "./BotCard.svelte";
     import BotFilters from "./BotFilters.svelte";
     import CommunityCard from "./CommunityCard.svelte";
@@ -84,7 +84,7 @@
     }
 
     function createCommunity() {
-        updateCommunityState.createCommunity(client);
+        openCommunityCreation(client);
     }
 
     function registerBot() {

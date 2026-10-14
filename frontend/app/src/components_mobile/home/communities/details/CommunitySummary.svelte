@@ -44,7 +44,7 @@
     import MembersSummary from "../../membership/MembersSummary.svelte";
     import Separator from "../../Separator.svelte";
     import Stats from "../../Stats.svelte";
-    import { updateCommunityState } from "../createOrUpdate/community.svelte";
+    import { updateCommunityState } from "@shared_components/home/communities/createOrUpdate/community.svelte";
     import { CommunityState } from "./communityState.svelte";
     import PermissionsSummary from "./PermissionsSummary.svelte";
     import UserGroupSummary from "./UserGroupSummary.svelte";

@@ -8,7 +8,6 @@ import {
     type CandidateGroupChat,
     type ChatPermissions,
     type CreateGroupOutcome,
-    type GroupChangeConfirmation,
     type UpdateGroupOutcome,
 } from "@client";
 import { UpdateGroupOrCommunityState } from "../groupOrCommunity.svelte";
@@ -31,8 +30,6 @@ export class UpdateGroupState extends UpdateGroupOrCommunityState {
     #embedded = $state(false);
     #candidateGroup = $state<CandidateGroupChat>();
     #originalGroup: CandidateGroupChat | undefined;
-    // The changes the user has confirmed while saving
-    #confirmed: GroupChangeConfirmation[] = [];
     #nameValid = $derived(
         this.#candidateGroup !== undefined &&
             this.#candidateGroup.name.length >= MIN_NAME_LENGTH &&
@@ -164,34 +161,11 @@ export class UpdateGroupState extends UpdateGroupOrCommunityState {
     }
 
     async #updateGroup(client: OpenChat, yes: boolean): Promise<SaveGroupOutcome> {
-        const answering: GroupChangeConfirmation | undefined = this.showingVerificationWarning
-            ? "verified_name"
-            : this.confirming
-              ? "visibility"
-              : undefined;
-        this.showingVerificationWarning = false;
-        this.confirming = false;
-
-        if (answering === undefined) {
-            this.#confirmed = [];
-        } else if (yes) {
-            this.#confirmed.push(answering);
-        } else {
-            if (answering === "verified_name") {
-                this.candidateGroup.name = this.original.name;
-            }
-            return { kind: "declined" };
-        }
-
-        this.busy = true;
         const updatedGroup = $state.snapshot(this.candidateGroup);
-        const outcome = await client.updateGroup(this.original, updatedGroup, this.#confirmed);
-        this.busy = false;
-
-        if (outcome.kind === "needs_confirmation") {
-            this.showingVerificationWarning = outcome.confirmation === "verified_name";
-            this.confirming = outcome.confirmation === "visibility";
-        } else if (outcome.kind === "success") {
+        const outcome = await this.sendChanges(yes, (confirmed) =>
+            client.updateGroup(this.original, updatedGroup, confirmed),
+        );
+        if (outcome.kind === "success") {
             this.#originalGroup = updatedGroup;
         }
         return outcome;

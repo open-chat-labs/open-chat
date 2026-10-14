@@ -28,6 +28,7 @@ export {
 } from "./utils/chat";
 export * from "./utils/cryptoFormatter";
 export { candidateGroupFromChat, groupChanges, hasAccessGateChanged } from "./utils/group.svelte";
+export { communityChanges } from "./utils/community";
 export { inviteLinkUrl } from "./utils/inviteLink";
 export { postLoginJoin } from "./utils/join";
 export { profileChanges } from "./utils/profile";
