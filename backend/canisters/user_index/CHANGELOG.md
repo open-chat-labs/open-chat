@@ -15,7 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Remove the one-off which deleted the two users stuck on 0.0.0, now that it has run ([#9915](https://github.com/open-chat-labs/open-chat/pull/9915))
 - Remove the User canister, along with upgrading User canisters and migrating users to MultiUser canisters ([#9919](https://github.com/open-chat-labs/open-chat/pull/9919))
-- Remove the `unique_person_proofs_submitted` metric, which grew at every upgrade ([#9961](https://github.com/open-chat-labs/open-chat/pull/9961))
+- Remove the `unique_person_proofs_submitted` metric ([#9961](https://github.com/open-chat-labs/open-chat/pull/9961))
 
 ### Fixed
 
