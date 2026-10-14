@@ -167,6 +167,23 @@ impl<V: HeapStableSplitMapValue> HeapStableSplitMap<V> {
         result
     }
 
+    // Writes back each value which `f` returns true for, eg. so that it is stored in the format
+    // values are serialized in now, rather than as when it was last written. Every value is read,
+    // and those written back are written together (see `update_many`). Returns how many were.
+    pub fn rewrite(&mut self, mut f: impl FnMut(&V::Id, &V) -> bool) -> usize {
+        let mut to_write = Vec::new();
+        for (id, entry) in self.in_stable_memory.iter() {
+            let value: V = read(id, entry);
+            if f(id, &value) {
+                to_write.push((V::key(id, entry), value.to_bytes()));
+            }
+        }
+        let count = to_write.len();
+        to_write.sort_unstable_by(|(k1, _), (k2, _)| k1.cmp(k2));
+        with_map_mut(|m| m.insert_many(to_write));
+        count
+    }
+
     pub fn len(&self) -> usize {
         self.in_stable_memory.len()
     }
@@ -350,6 +367,41 @@ mod tests {
         for (id, updated) in [(1, 111), (2, 112), (3, 113), (4, 104)] {
             assert_eq!(values.get(&id).unwrap().updated, updated);
         }
+    }
+
+    #[test]
+    fn rewrite_writes_back_the_values_chosen_in_the_current_format() {
+        init();
+        let mut values = HeapStableSplitMap::default();
+        values.insert(1, item("a", 10));
+        values.insert(2, item("b", 20));
+
+        // Both values were stored in an earlier format, with a field which is no longer read
+        #[derive(Serialize)]
+        struct Earlier<'a> {
+            name: &'a str,
+            updated: u64,
+            dropped: u32,
+        }
+        let earlier = |name, updated| {
+            msgpack::serialize_then_unwrap(Earlier {
+                name,
+                updated,
+                dropped: 5,
+            })
+        };
+        with_map_mut(|m| {
+            m.insert(Item::key(&1, &10), earlier("a", 10));
+            m.insert(Item::key(&2, &20), earlier("b", 20));
+        });
+
+        assert_eq!(values.rewrite(|id, _| *id == 1), 1);
+
+        let stored = |id: u32, entry: u64| with_map(|m| m.get(Item::key(&id, &entry))).unwrap();
+        assert_eq!(stored(1, 10), item("a", 10).to_bytes());
+        assert_eq!(stored(2, 20), earlier("b", 20));
+        assert_eq!(*values.get(&1).unwrap(), item("a", 10));
+        assert_eq!(*values.get(&2).unwrap(), item("b", 20));
     }
 
     #[test]

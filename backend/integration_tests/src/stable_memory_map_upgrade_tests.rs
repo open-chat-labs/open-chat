@@ -82,6 +82,11 @@ fn stable_memory_maps_survive_upgrades() {
         assert!(matches!(response.events[0].event, ChatEvent::Message(_)));
     }
 
+    // The MultiUser canister has rewritten its direct chats, none of which held data on the heap
+    let rewrite = metrics(env, user1.canister())["direct_chats_rewrite"].clone();
+    assert_eq!(rewrite["complete"], true);
+    assert_eq!(rewrite["chats_left"], 0);
+
     // Upgrading every canister to a new version would break later tests which draw this env
     wrapper.discard();
 }
