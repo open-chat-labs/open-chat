@@ -22,7 +22,7 @@
 </section>
 
 <style>
-  .section { scroll-margin-top: 24px; display: flex; flex-direction: column; gap: 20px; }
+  .section { scroll-margin-top: 80px; /* clears the floating theme bar */ display: flex; flex-direction: column; gap: 20px; }
   .head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line-1); }
   h2 { margin: 0; font: 700 17px/1 var(--font-sans); letter-spacing: -0.015em; color: var(--ink); }
   .meta { font: 400 12px/1.4 var(--font-mono); color: var(--ink-4); }
