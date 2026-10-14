@@ -112,6 +112,15 @@ export function segments(t: TranslateFn, key: string, slots: string[], params: I
     .filter((seg) => !('text' in seg) || seg.text !== '');
 }
 
+/**
+ * Durations travel between components as stable English ids ('1 hour', '12 hours', '6 months'); show them with this
+ * so they translate (ICU plurals under ui.duration.*). Anything else is treated as a resource key or literal text.
+ */
+export function durationText(t: TranslateFn, value: string): string {
+  const m = value.match(/^(\d+) (minute|hour|day|week|month|year)s?$/);
+  return m ? t(`ui.duration.${m[2]}s`, { count: Number(m[1]) }) : t(value);
+}
+
 const KEY = Symbol('openchat-ui-i18n');
 
 /** Call once in the host's root component (or any subtree) to supply translations. */

@@ -1,16 +1,6 @@
 <!-- Title, hint and a wrap of duration chips (one selected). `branch` draws the elbow connector that hangs it off a Toggle row above. -->
-<script lang="ts" module>
-  import type { TranslateFn } from '../i18n';
-
-  /** Option values are stable English ids ('12 hours'); shown through ICU plurals so they translate. Other values are resource keys or literal text. */
-  export function durationText(t: TranslateFn, value: string): string {
-    const m = value.match(/^(\d+) (minute|hour|day|week|month|year)s?$/);
-    return m ? t(`ui.duration.${m[2]}s`, { count: Number(m[1]) }) : t(value);
-  }
-</script>
-
 <script lang="ts">
-  import { useT } from '../i18n';
+  import { durationText, useT } from '../i18n';
   const DURATIONS = ['1 hour', '12 hours', '1 day', '1 week', '2 weeks', '1 month', '3 months', '6 months'];
 
   interface Props {

@@ -7,7 +7,7 @@
      other pages show their values as plain On/Off facts. -->
 <script lang="ts">
   import { useT } from '../../lib/i18n';
-  import { durationText } from '../../lib/components/DurationChips.svelte';
+  import { durationText } from '../../lib/i18n';
   import { onDestroy, tick, untrack } from 'svelte';
   import type { AccessGatesState, GroupRole, GroupSettings } from '../../lib/types';
   import AccessGates from './AccessGates.svelte';

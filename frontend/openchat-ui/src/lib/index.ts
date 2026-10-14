@@ -79,5 +79,5 @@ export { default as Waveform } from './components/Waveform.svelte';
 export { ICONS, iconSvg, iconMask } from './icons.js';
 
 export type * from './types';
-export { setI18n, getI18n, useT, segments, messages, dictionaryTranslator, fallbackI18n, lookup, interpolate } from './i18n';
+export { setI18n, getI18n, useT, segments, durationText, messages, dictionaryTranslator, fallbackI18n, lookup, interpolate } from './i18n';
 export type { I18n, I18nParams, TranslateFn, Segment } from './i18n';
