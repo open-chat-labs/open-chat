@@ -10,7 +10,7 @@ export const groups: { id: GroupId; label: string; title: string; intro: string 
     id: 'foundations',
     label: 'Foundations',
     title: 'Foundations',
-    intro: 'The raw material every screen is built from: colour, scales, type and the responsive layout ladder. Values are read live from the tokens, so they follow the mode and accent you pick.',
+    intro: 'The raw material every screen is built from: colour, scales, type, the responsive layout ladder, and how copy and accessibility work across every component. Values are read live from the tokens, so they follow the mode and accent you pick.',
   },
   {
     id: 'general',
@@ -37,6 +37,8 @@ export const foundations: SectionMeta[] = [
   { id: 'scales', title: 'Scales', meta: 'tokens.css · space, radius, size, type, motion, elevation, z' },
   { id: 'typography', title: 'Typography', meta: 'Plus Jakarta Sans · JetBrains Mono' },
   { id: 'layout', title: 'Layout', meta: 'tokens.css · --bp-* · --panel-*' },
+  { id: 'i18n', title: 'Internationalisation', meta: 'src/lib/i18n · Translate · useT · en.json' },
+  { id: 'accessibility', title: 'Accessibility', meta: 'a11y.js · modal.ts · rove.ts · tooltip.js · tokens.css' },
 ];
 
 export const general: SectionMeta[] = [

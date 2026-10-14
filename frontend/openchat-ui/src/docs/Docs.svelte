@@ -255,17 +255,17 @@
   .root nav a:hover { background: var(--overlay-1); color: var(--ink); }
   .root nav a.on { background: var(--overlay-1); color: var(--accent); }
 
-  .bar { position: sticky; top: 12px; z-index: var(--z-backdrop); /* above demo content, below modals */ box-sizing: border-box; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 460px) minmax(0, 1fr); align-items: center; gap: 16px; min-height: 64px; margin-bottom: 28px; padding-block: 8px; padding-inline: 18px 10px; border-radius: var(--radius-xl); background: color-mix(in srgb, var(--surface-1) 82%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: inset 0 0 0 1px var(--line-1), var(--shadow-panel); }
+  .bar { position: sticky; top: 12px; z-index: var(--z-backdrop); /* above demo content, below modals */ box-sizing: border-box; display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, 460px) minmax(max-content, 1fr); /* search centred while there's room; the controls never overlap it */ align-items: center; gap: 16px; min-height: 64px; margin-bottom: 28px; padding-block: 8px; padding-inline: 18px 10px; border-radius: var(--radius-xl); background: color-mix(in srgb, var(--surface-1) 82%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: inset 0 0 0 1px var(--line-1), var(--shadow-panel); }
   .crumb { min-width: 0; text-align: start; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 13px/1 var(--font-sans); color: var(--ink); }
   .crumb-sep { margin-inline: 8px; color: var(--ink-4); }
   .crumb-section { font-weight: 500; color: var(--ink-3); }
   .controls { min-width: 0; display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
   .pick { position: relative; display: flex; align-items: center; }
-  .pick select { appearance: none; height: 34px; padding-inline: 12px 30px; border: 0; border-radius: var(--radius-sm); background: var(--overlay-1); box-shadow: inset 0 0 0 1px var(--line-1); color: var(--ink); font: 600 12.5px/1 var(--font-sans); cursor: pointer; }
+  .pick select { appearance: none; height: 34px; padding-inline: 10px 26px; border: 0; border-radius: var(--radius-sm); background: var(--overlay-1); box-shadow: inset 0 0 0 1px var(--line-1); color: var(--ink); font: 600 12.5px/1 var(--font-sans); cursor: pointer; }
   .pick select:hover { background: var(--overlay-2); }
   .pick select option { background: var(--surface-1); color: var(--ink); }
-  .pick::after { content: ''; position: absolute; inset-inline-end: 10px; width: 12px; height: 12px; background: var(--ink-3); mask: var(--icon-chevron-down) center/contain no-repeat; pointer-events: none; }
-  .accent select { padding-inline-start: 30px; }
+  .pick::after { content: ''; position: absolute; inset-inline-end: 8px; width: 12px; height: 12px; background: var(--ink-3); mask: var(--icon-chevron-down) center/contain no-repeat; pointer-events: none; }
+  .accent select { padding-inline-start: 28px; }
   .dot { position: absolute; inset-inline-start: 11px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); pointer-events: none; }
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 

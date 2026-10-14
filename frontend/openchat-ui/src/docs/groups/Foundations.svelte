@@ -5,6 +5,8 @@
   import Section from '../Section.svelte';
   import Frame from '../Frame.svelte';
   import { foundations, sec } from '../sections';
+  import { Button, Translate } from '../../lib/index';
+  import { messages } from '../../lib/i18n';
 
   interface Props {
     /** Changes whenever mode or accent changes; triggers a re-read of the computed token values. */
@@ -62,6 +64,81 @@
     { bp: 'bp-3xl', list: 'panel-list-3xl', info: 'panel-info-3xl', note: '' },
   ];
 
+  // ── i18n ──
+  const countKeys = (o: unknown): number => (typeof o === 'object' && o ? Object.values(o).reduce((n: number, v) => n + countKeys(v), 0) : 1);
+  const keyCount = countKeys(messages.en);
+  const componentCount = Object.keys((messages.en as { ui: object }).ui).length - 2; // minus the shared common + duration groups
+  let replies = $state(1);
+  let typing = $state(1);
+  let noun = $state<'group' | 'channel' | 'community'>('group');
+  const wiring = `<script lang="ts">
+  import { addMessages, _ } from 'svelte-i18n';
+  import { fromStore } from 'svelte/store';
+  import { setI18n, messages } from '@openchat/ui/src/lib';
+
+  addMessages('en', messages.en);   // the library's English, under ui.*
+  const format = fromStore(_);      // reactive: components re-render on locale change
+  setI18n({ t: (key, params) => format.current(key, { values: params }) });
+<\/script>`;
+  const usage = `<!-- copy props take a key -->
+<Button label="ui.common.save" />
+
+<!-- your own markup: just the text -->
+<Translate key="ui.chatBubble.replies" params={{ count }} />
+
+<!-- markup inside a sentence: a snippet per placeholder -->
+<Translate key="ui.leaveGroupDialog.question">
+  {#snippet name()}<strong>{group}</strong>{/snippet}
+</Translate>
+
+<!-- in script -->
+const t = useT();
+t('ui.duration.hours', { count: 12 });`;
+
+  // ── accessibility: WCAG contrast of text tokens on surfaces, read live ──
+  type RGBA = [number, number, number, number];
+  const parseColour = (v: string): RGBA | null => {
+    v = v.trim();
+    const hex = v.match(/^#([0-9a-f]{3,8})$/i);
+    if (hex) {
+      let h = hex[1];
+      if (h.length <= 4) h = [...h].map((c) => c + c).join('');
+      const n = (i: number) => parseInt(h.slice(i, i + 2), 16);
+      return [n(0), n(2), n(4), h.length === 8 ? n(6) / 255 : 1];
+    }
+    const m = v.match(/rgba?\(([^)]+)\)/);
+    if (!m) return null;
+    const p = m[1].split(/[\s,/]+/).filter(Boolean).map(parseFloat);
+    return [p[0], p[1], p[2], p[3] ?? 1];
+  };
+  const luminance = ([r, g, b]: RGBA) => {
+    const ch = (x: number) => ((x /= 255) <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4);
+    return 0.2126 * ch(r) + 0.7152 * ch(g) + 0.0722 * ch(b);
+  };
+  const contrast = (fg: RGBA, bg: RGBA) => {
+    const a = fg[3];
+    const mixed: RGBA = [fg[0] * a + bg[0] * (1 - a), fg[1] * a + bg[1] * (1 - a), fg[2] * a + bg[2] * (1 - a), 1];
+    const [hi, lo] = [luminance(mixed), luminance(bg)].sort((x, y) => y - x);
+    return (hi + 0.05) / (lo + 0.05);
+  };
+  const contrastPairs: { fg: string; bg: string; use: string }[] = [
+    { fg: 'ink', bg: 'surface-1', use: 'Body text' },
+    { fg: 'ink-2', bg: 'surface-1', use: 'Secondary text' },
+    { fg: 'ink-3', bg: 'surface-1', use: 'Tertiary text, hints' },
+    { fg: 'ink-4', bg: 'surface-1', use: 'Metadata, timestamps' },
+    { fg: 'ink-4', bg: 'surface-0', use: 'Metadata on the page' },
+    { fg: 'accent', bg: 'surface-1', use: 'Links, accent labels' },
+    { fg: 'accent-bright', bg: 'surface-1', use: 'Accent text' },
+    { fg: 'on-accent', bg: 'accent', use: 'Primary button label' },
+    { fg: 'status-danger', bg: 'surface-1', use: 'Errors' },
+    { fg: 'status-online', bg: 'surface-1', use: 'Success, online' },
+    { fg: 'status-warning', bg: 'surface-1', use: 'Warnings' },
+    { fg: 'bubble-text', bg: 'bubble-send-bg', use: 'Sent message' },
+    { fg: 'bubble-text-soft', bg: 'bubble-send-bg', use: 'Sent timestamp, quote' },
+    { fg: 'bubble-recv-text', bg: 'bubble-recv-bg', use: 'Received message' },
+  ];
+  let contrasts = $state<{ fg: string; bg: string; use: string; ratio: number }[]>([]);
+
   let host: HTMLDivElement;
   let values = $state<Record<string, string>>({});
 
@@ -89,6 +166,10 @@
       const out: Record<string, string> = {};
       for (const t of all) if (t) out[t] = pretty(cs.getPropertyValue('--' + t));
       values = out;
+      contrasts = contrastPairs.flatMap((p) => {
+        const fg = parseColour(cs.getPropertyValue('--' + p.fg)), bg = parseColour(cs.getPropertyValue('--' + p.bg));
+        return fg && bg ? [{ ...p, ratio: contrast(fg, bg) }] : [];
+      });
     });
   });
 </script>
@@ -173,6 +254,115 @@
       </div>
     </Frame>
   </Section>
+
+  <Section {...sec(foundations, 'i18n')}>
+    <Frame label="How it works" style="flex-direction: column; flex-wrap: nowrap">
+      <div class="flow">
+        <div class="step"><span class="step-k">Component</span><code>t('ui.chatBubble.replies', {'{'} count {'}'})</code><span class="step-d">asks for a resource key</span></div>
+        <span class="arrow" aria-hidden="true"></span>
+        <div class="step"><span class="step-k">Host translator</span><code>setI18n({'{'} t {'}'})</code><span class="step-d">the app decides how: svelte-i18n, locale, edit mode</span></div>
+        <span class="arrow" aria-hidden="true"></span>
+        <div class="step"><span class="step-k">Text</span><code>"3 replies"</code><span class="step-d">rendered as plain text</span></div>
+      </div>
+      <p class="note">
+        Components never contain copy. Every label, title, placeholder and aria-label is a key under <code>ui.*</code>
+        ({keyCount.toLocaleString()} keys across {componentCount} components in <code>src/lib/i18n/en.json</code>). Without a host translator
+        the bundled English is used, and a string that isn't a key renders as itself. Switch Language in the bar to
+        <b>Keys</b> or <b>Pseudo</b>: copy that stays plain English is hard-coded, and Pseudo shows where longer translations overflow.
+      </p>
+    </Frame>
+    <div class="pair">
+      <Frame label="Try it · plurals and variants" style="flex-direction: column; flex-wrap: nowrap">
+        <div class="demo-row">
+          <Button variant="secondary" label="−" onClick={() => (replies = Math.max(0, replies - 1))} />
+          <Button variant="secondary" label="+" onClick={() => (replies += 1)} />
+          <span class="out"><Translate key="ui.chatBubble.replies" params={{ count: replies }} /></span>
+        </div>
+        <div class="demo-row">
+          <Button variant="secondary" label="−" onClick={() => (typing = Math.max(1, typing - 1))} />
+          <Button variant="secondary" label="+" onClick={() => (typing += 1)} />
+          <span class="out"><Translate key="ui.typingIndicator.typing" params={{ count: typing, name: 'Lucy' }} /></span>
+        </div>
+        <div class="demo-row">
+          {#each ['group', 'channel', 'community'] as const as n}
+            <Button variant={noun === n ? 'primary' : 'ghost'} label={n} onClick={() => (noun = n)} />
+          {/each}
+          <span class="out"><Translate key="ui.leaveGroupDialog.confirm" params={{ noun }} /></span>
+        </div>
+        <div class="demo-row">
+          <span class="out">
+            <Translate key="ui.leaveGroupDialog.question">{#snippet name()}<strong class="hl">The Awesome Group</strong>{/snippet}</Translate>
+          </span>
+          <span class="tag">snippet slot</span>
+        </div>
+      </Frame>
+      <Frame label="Rules" style="flex-direction: column; flex-wrap: nowrap">
+        <ul class="rules">
+          <li><b>Keys are plain strings</b> under <code>ui.&lt;component&gt;.*</code>; shared words live in <code>ui.common.*</code>.</li>
+          <li><b>Copy props take a key</b> (<code>label</code>, <code>title</code>, <code>placeholder</code> …). Data (names, messages, amounts) is never translated.</li>
+          <li><b>Whole sentences</b> in ICU MessageFormat: <code>plural</code> for counts, <code>select</code> for variants. Never concatenate fragments.</li>
+          <li><b>Markup inside a sentence</b> is a snippet named after its placeholder, so translators can move it.</li>
+          <li><b>Values stay ids</b>: durations travel as <code>'12 hours'</code> and display through <code>durationText()</code>; menus report keys.</li>
+          <li><b>Numbers and dates</b> format with the host locale (<code>getI18n().locale</code>).</li>
+        </ul>
+      </Frame>
+    </div>
+    <div class="pair">
+      <Frame label="Using it" style="flex-direction: column; flex-wrap: nowrap"><pre class="code">{usage}</pre></Frame>
+      <Frame label="Wiring it into the app (once, in the root)" style="flex-direction: column; flex-wrap: nowrap"><pre class="code">{wiring}</pre></Frame>
+    </div>
+  </Section>
+
+  <Section {...sec(foundations, 'accessibility')}>
+    <div class="grid3">
+      <Frame label="Keyboard" style="flex-direction: column; flex-wrap: nowrap">
+        <p class="note">Every custom control (a <code>role</code> on a span) activates with Enter and Space through <code>a11y.js</code>. Tabs and menus move with the arrow keys (<code>rove()</code>), Home and End jump to the ends.</p>
+      </Frame>
+      <Frame label="Focus" style="flex-direction: column; flex-wrap: nowrap">
+        <p class="note">One visible ring for every interactive role (<code>:focus-visible</code>, accent, 2px). Dialogs move focus to their first field, keep Tab inside, and hand focus back to the opener on close.</p>
+      </Frame>
+      <Frame label="Dialogs" style="flex-direction: column; flex-wrap: nowrap">
+        <p class="note">DialogShell and <code>use:modal</code> share one stack: Esc closes only the topmost dialog, through the dialog's own close path, and stops at inner pickers that handle Esc first.</p>
+      </Frame>
+      <Frame label="Names" style="flex-direction: column; flex-wrap: nowrap">
+        <p class="note">Icon-only buttons carry an accessible name (IconButton derives one from common icons). Every <code>aria-label</code>, <code>title</code> and placeholder is a translated key.</p>
+      </Frame>
+      <Frame label="Motion" style="flex-direction: column; flex-wrap: nowrap">
+        <p class="note">With <code>prefers-reduced-motion</code>, animations and transitions collapse to an instant (tokens.css); the achievement toast fades instead of flying.</p>
+      </Frame>
+      <Frame label="Direction" style="flex-direction: column; flex-wrap: nowrap">
+        <p class="note">Layout uses logical properties, so <code>dir="rtl"</code> mirrors every component. Direction-bearing glyphs (back, send, reply, chevrons) flip via <code>[data-oc-flip]</code>; pointer maths reads <code>--oc-dir</code>.</p>
+      </Frame>
+    </div>
+
+    <Frame label="Text contrast · WCAG 2.2, read live for this mode and accent" style="flex-direction: column; flex-wrap: nowrap">
+      <div class="ladder" role="table" aria-label="Text contrast">
+        <div class="lrow crow head" role="row">
+          <span role="columnheader">SAMPLE</span><span role="columnheader">TEXT ON</span><span role="columnheader">USED FOR</span><span role="columnheader">RATIO</span><span role="columnheader">AA</span>
+        </div>
+        {#each contrasts as c (c.fg + c.bg)}
+          {@const level = c.ratio >= 7 ? 'AAA' : c.ratio >= 4.5 ? 'AA' : c.ratio >= 3 ? 'Large only' : 'Fails'}
+          <div class="lrow crow" role="row">
+            <span role="cell"><span class="sample-chip" style:background="var(--{c.bg})" style:color="var(--{c.fg})">Aa</span></span>
+            <span role="cell">--{c.fg} on --{c.bg}</span>
+            <span role="cell" class="note">{c.use}</span>
+            <span role="cell">{c.ratio.toFixed(2)}:1</span>
+            <span role="cell"><span class="grade" class:pass={c.ratio >= 4.5} class:warn={c.ratio >= 3 && c.ratio < 4.5} class:fail={c.ratio < 3}>{level}</span></span>
+          </div>
+        {/each}
+      </div>
+    </Frame>
+
+    <Frame label="Known gaps · found while building the library" style="flex-direction: column; flex-wrap: nowrap">
+      <ul class="rules">
+        <li><b>Low-contrast text tokens.</b> <code>--ink-4</code> (metadata, timestamps) is below 4.5:1 on every dark surface. In light mode, the pink accent as text (links, Retry, accent labels) and white on the pink primary button fall to about 2.4–3.1:1, and green success text to about 2.4–3:1. Check the table in each accent; these need a design decision on the tokens.</li>
+        <li><b>Custom controls instead of native buttons.</b> Interactive elements are <code>role="button"</code> spans in 87 files (446 svelte-check a11y warnings). Keyboard works through <code>a11y.js</code>, but native <code>&lt;button&gt;</code>s would give that, disabled state and form semantics for free; worth migrating component by component.</li>
+        <li><b>Few live regions.</b> Spinner, Skeleton, Countdown, UndoToast, AchievementToast and a handful of dialogs announce themselves; Banner, TypingIndicator, send failures and copy confirmations don't yet (<code>role="status"</code> / <code>aria-live="polite"</code>).</li>
+        <li><b>Uppercase copy in the strings.</b> Some labels are written in capitals in <code>en.json</code> (DAY STREAK, FREQUENTLY USED) instead of uppercased by CSS, so screen readers may spell them and translators see shouting.</li>
+        <li><b>Colour as the only signal</b> on a few indicators (online dot, unread dot): fine next to a count or text, but check each use has a text equivalent.</li>
+      </ul>
+    </Frame>
+  </Section>
 </div>
 
 <style>
@@ -205,6 +395,29 @@
   .sample.mono.caps { letter-spacing: 0.09em; }
 
   .ladder { display: flex; flex-direction: column; width: 100%; }
+  .flow { display: flex; align-items: stretch; gap: 12px; width: 100%; }
+  .step { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; padding: 14px; border-radius: var(--radius-md); background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line-1); }
+  .step-k { font: 500 10px/1 var(--font-mono); letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink-3); }
+  .step code { font: 500 12px/1.4 var(--font-mono); color: var(--ink); overflow-wrap: anywhere; }
+  .step-d { font: 400 12px/1.4 var(--font-sans); color: var(--ink-3); }
+  .arrow { flex: none; align-self: center; width: 16px; height: 16px; background: var(--ink-4); mask: var(--icon-arrow) center/contain no-repeat; }
+  :global([dir='rtl']) .arrow { transform: scaleX(-1); }
+  .note { margin: 0; font: 400 13px/1.55 var(--font-sans); color: var(--ink-2); }
+  .note code, .rules code { font: 500 11.5px/1 var(--font-mono); color: var(--ink); }
+  .pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); gap: 16px; }
+  .demo-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; width: 100%; }
+  .out { margin-inline-start: 8px; font: 500 14px/1.4 var(--font-sans); color: var(--ink); }
+  .hl { color: var(--accent-bright); }
+  .tag { font: 500 10px/1 var(--font-mono); letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink-4); }
+  .rules { margin: 0; padding-inline-start: 18px; display: flex; flex-direction: column; gap: 9px; font: 400 13px/1.5 var(--font-sans); color: var(--ink-2); }
+  .rules b { color: var(--ink); font-weight: 600; }
+  .code { margin: 0; width: 100%; box-sizing: border-box; overflow-x: auto; padding: 14px; border-radius: var(--radius-md); background: var(--surface-0); box-shadow: inset 0 0 0 1px var(--line-1); font: 400 11.5px/1.6 var(--font-mono); color: var(--ink-2); direction: ltr; text-align: left; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .crow { grid-template-columns: 56px 1.6fr 1.4fr 0.7fr 0.8fr; align-items: center; }
+  .sample-chip { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 28px; border-radius: 8px; box-shadow: inset 0 0 0 1px var(--line-1); font: 600 13px/1 var(--font-sans); }
+  .grade { display: inline-block; padding: 4px 8px; border-radius: var(--radius-pill); font: 600 11px/1 var(--font-sans); }
+  .grade.pass { background: color-mix(in srgb, var(--status-online) 16%, transparent); color: var(--status-online); }
+  .grade.warn { background: color-mix(in srgb, var(--status-warning) 16%, transparent); color: var(--status-warning); }
+  .grade.fail { background: var(--status-danger-soft); color: var(--status-danger); }
   .lrow { display: grid; grid-template-columns: 1.3fr 1.2fr 1.2fr 1fr 1.4fr; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line-1); font: 400 11.5px/1.4 var(--font-mono); color: var(--ink-2); }
   .lrow:last-child { border-bottom: 0; }
   .lrow.head { padding-top: 0; font: 500 10px/1 var(--font-mono); letter-spacing: 0.09em; color: var(--ink-4); }
