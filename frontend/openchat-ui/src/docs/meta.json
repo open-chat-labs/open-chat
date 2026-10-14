@@ -5134,8 +5134,30 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "true",
-        "doc": "false shows the explainer and upgrade banner instead of the editor (ignored when readOnly)."
+        "componentDefault": "false",
+        "doc": "false (the default) shows the explainer and upgrade banner instead of the editor (ignored when readOnly)."
+      },
+      {
+        "name": "tokens",
+        "type": "GateAsset[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Tokens payment / balance gates can name (ledger canister ids). Those gates are hidden while this is empty."
+      },
+      {
+        "name": "nervousSystems",
+        "type": "GateAsset[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Nervous systems neuron gates can name (governance canister ids)."
       },
       {
         "name": "readOnly",
@@ -5202,8 +5224,41 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "true",
-        "doc": "false shows the upgrade card instead of the editor."
+        "componentDefault": "false",
+        "doc": "false (the default) shows the upgrade card instead of the editor."
+      },
+      {
+        "name": "tokens",
+        "type": "GateAsset[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Tokens payment / balance gates can name (ledger canister ids). Those gates are hidden while this is empty."
+      },
+      {
+        "name": "nervousSystems",
+        "type": "GateAsset[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Nervous systems neuron gates can name (governance canister ids)."
+      },
+      {
+        "name": "value",
+        "type": "Partial<AccessGatesCardsState> | null",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "State last handed out by onChange; read once, on mount."
       },
       {
         "name": "onUpgrade",
@@ -5320,6 +5375,17 @@
     },
     "props": [
       {
+        "name": "achievements",
+        "type": "Achievement[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Every achievement with its group, reward and whether it's done."
+      },
+      {
         "name": "unlocked",
         "type": "string[]",
         "default": null,
@@ -5385,18 +5451,40 @@
         "section": null,
         "required": true,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Items with id, chatId and optional messageId; `unread` is the source of read state."
       },
       {
         "name": "onOpen",
-        "type": "(chat: string | undefined, item: ActivityItem) => void",
+        "type": "(item: ActivityItem) => void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Open the item: land on item.messageId in item.chatId."
+      },
+      {
+        "name": "onMarkRead",
+        "type": "(ids: string[]) => Promise<unknown> | void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Mark these items read (opening one marks it). Rolls back if it rejects."
+      },
+      {
+        "name": "onMarkAllRead",
+        "type": "() => Promise<unknown> | void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "\"Mark all read\"; hidden without it (or onMarkRead). Rolls back if it rejects."
       },
       {
         "name": "loading",
@@ -5485,6 +5573,28 @@
         "doc": "People a new user can name as their referrer (searched by name or handle)."
       },
       {
+        "name": "searchReferrers",
+        "type": "(query: string) => Promise<AuthPerson[]>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Search referrers on the server; replaces the local `referrers` filter."
+      },
+      {
+        "name": "termsUrl",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Terms and conditions page; without it the words aren’t a link."
+      },
+      {
         "name": "checkUsername",
         "type": "(username: string) => boolean | Promise<boolean>",
         "default": null,
@@ -5492,8 +5602,8 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "() => true",
-        "doc": "Sign-up: whether a well-formed username is free. Defaults to always free."
+        "componentDefault": null,
+        "doc": "Sign-up: whether a well-formed username is free. Without it no availability is shown (the host checks on signup)."
       },
       {
         "name": "onClose",
@@ -5763,14 +5873,14 @@
     "props": [
       {
         "name": "bot",
-        "type": "{ name?: string; title?: string; description?: string; color?: Color }",
+        "type": "BotDefinition",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": true,
         "componentDefault": null,
-        "doc": "name (or title) picks the catalogue entry; description / color override it."
+        "doc": "The bot's definition: id, name, creator, description, color, the permissions it asks for, its commands and (installed) what it is granted now."
       },
       {
         "name": "groupName",
@@ -5795,15 +5905,15 @@
         "doc": ""
       },
       {
-        "name": "readOnly",
+        "name": "canManage",
         "type": "boolean",
-        "default": null,
-        "editor": null,
+        "default": true,
+        "editor": "boolean",
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": "false",
-        "doc": "Installed bot shown to someone without bot rights: details only."
+        "doc": "The viewer has bot rights here: can install, change permissions and remove. Without it: details only."
       },
       {
         "name": "initialStep",
@@ -5821,25 +5931,25 @@
       },
       {
         "name": "onRemove",
-        "type": "(b: { name: string }) => void",
+        "type": "(b: { botId: string }) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Remove the bot. The dialog closes when this resolves and shows an error if it rejects."
       },
       {
         "name": "onInstall",
-        "type": "(bot: InstalledBot) => void",
+        "type": "(bot: BotInstall) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Install a new bot, or save an installed bot's permissions ({ botId, granted }). Closes on resolve, error on reject."
       },
       {
         "name": "onCancel",
@@ -6033,14 +6143,25 @@
       },
       {
         "name": "people",
-        "type": "Person[]",
+        "type": "CallPerson[]",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": true,
         "componentDefault": null,
-        "doc": "The other participants."
+        "doc": "The other participants: id, name, initial, grad, muted, speaking (from audio levels), stream (MediaStream)."
+      },
+      {
+        "name": "self",
+        "type": "{ initial?: string; grad?: string; stream?: MediaStream | null }",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "You: avatar letter / background and your camera stream."
       },
       {
         "name": "media",
@@ -6079,6 +6200,39 @@
         "doc": ""
       },
       {
+        "name": "camera",
+        "type": "boolean",
+        "default": null,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Your camera is on (defaults to on for video calls)."
+      },
+      {
+        "name": "sharing",
+        "type": "boolean",
+        "default": null,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "You are sharing your screen."
+      },
+      {
+        "name": "screenStream",
+        "type": "MediaStream | null",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Your shared screen, shown on stage while sharing."
+      },
+      {
         "name": "start",
         "type": "number",
         "default": null,
@@ -6087,7 +6241,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Call start, ms epoch."
+        "doc": "Call start, ms epoch; the duration is hidden without it."
       },
       {
         "name": "avatarGrad",
@@ -6110,6 +6264,28 @@
         "required": false,
         "componentDefault": null,
         "doc": ""
+      },
+      {
+        "name": "onToggleCamera",
+        "type": "(on: boolean) => Promise<unknown> | void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Turn your camera on / off. Hidden without it; rolls back if it rejects."
+      },
+      {
+        "name": "onToggleShare",
+        "type": "(on: boolean) => Promise<unknown> | void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Start / stop sharing your screen. Hidden without it; rolls back if it rejects."
       },
       {
         "name": "onToggleFull",
@@ -6276,7 +6452,40 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Replaces the default menu; give items an `id` to be told which was picked."
+      },
+      {
+        "name": "canEdit",
+        "type": "boolean",
+        "default": null,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Community: show Edit community."
+      },
+      {
+        "name": "canCreateChannel",
+        "type": "boolean",
+        "default": null,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Community: show New channel / Add embedded channel."
+      },
+      {
+        "name": "canInvite",
+        "type": "boolean",
+        "default": null,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Community: show Invite."
       },
       {
         "name": "openDetails",
@@ -6302,14 +6511,14 @@
       },
       {
         "name": "onMenu",
-        "type": "(label: string) => void",
+        "type": "(id: string) => void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "The picked item's id (or label when it has none): members, invite, editCommunity, newChannel, addEmbeddedChannel, markAllRead, leave."
       }
     ],
     "group": "features"
@@ -6333,7 +6542,7 @@
         "section": null,
         "required": true,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Rows; each needs an `id` (reported by onSelect)."
       },
       {
         "name": "showLabels",
@@ -6348,14 +6557,14 @@
       },
       {
         "name": "onSelect",
-        "type": "(title: string) => void",
+        "type": "(id: string, row: Row) => void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "The picked chat, by id."
       },
       {
         "name": "headerKind",
@@ -6436,14 +6645,47 @@
       },
       {
         "name": "onHeaderMenu",
-        "type": "(label: string) => void",
+        "type": "(id: string) => void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Header ⋯ menu pick: the item's id (see ChatListHeader)."
+      },
+      {
+        "name": "headerCanEdit",
+        "type": "boolean",
+        "default": null,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Header (community): show Edit community."
+      },
+      {
+        "name": "headerCanCreateChannel",
+        "type": "boolean",
+        "default": null,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Header (community): show New channel / Add embedded channel."
+      },
+      {
+        "name": "headerCanInvite",
+        "type": "boolean",
+        "default": null,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Header (community): show Invite."
       },
       {
         "name": "onHeaderDetails",
@@ -6488,6 +6730,28 @@
         "required": false,
         "componentDefault": "false",
         "doc": "Live search; otherwise the field is a static chip."
+      },
+      {
+        "name": "query",
+        "type": "string",
+        "default": null,
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Initial search text."
+      },
+      {
+        "name": "onSearch",
+        "type": "(query: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Server-side search: called as the user types; local title filtering is then off."
       },
       {
         "name": "showThreads",
@@ -6652,8 +6916,30 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "true",
-        "doc": ""
+        "componentDefault": "false",
+        "doc": "Whether today's claim is open (defaults to false)."
+      },
+      {
+        "name": "milestones",
+        "type": "number[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Milestone days that pay a bonus (backend schedule); defaults to 3, 7, 14, 30, 100, 365."
+      },
+      {
+        "name": "achievements",
+        "type": "{ total: number; left: number }",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Achievements for the \"Ways to earn\" row; the count is hidden without it."
       },
       {
         "name": "countdown",
@@ -6767,14 +7053,14 @@
       },
       {
         "name": "onClaim",
-        "type": "(amount: number) => void",
+        "type": "(r: { amount: number }) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Claim today's CHIT; shown as claimed once it resolves, an error if it rejects. Without it there is no claim button."
       },
       {
         "name": "onAction",
@@ -7043,7 +7329,18 @@
         "section": null,
         "required": false,
         "componentDefault": "false",
-        "doc": "Channels: flips the favourite item's wording."
+        "doc": "Flips the favourite item's wording; defaults to statusFav."
+      },
+      {
+        "name": "canInvite",
+        "type": "boolean",
+        "default": null,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Channels: show Invite."
       },
       {
         "name": "menuItems",
@@ -7054,7 +7351,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Replaces the default menu; give items an `id` to be told which was picked (\"leave\" calls onLeave)."
       },
       {
         "name": "showMenu",
@@ -7148,14 +7445,14 @@
       },
       {
         "name": "onMenu",
-        "type": "(label: string) => void",
+        "type": "(id: string) => void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "The picked item's id (or label when it has none): favourite, unfavourite, copyUrl, mute, unmute, muteEveryone, unmuteEveryone, block, delete, invite."
       },
       {
         "name": "onTogglePanel",
@@ -7219,14 +7516,14 @@
       },
       {
         "name": "onConfirm",
-        "type": "() => void",
+        "type": "() => Promise<{ communityId: string } | unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Convert it. Awaited (\"Converting…\"); the done step shows once it resolves. Resolve with the new community id for onGoTo."
       },
       {
         "name": "onCancel",
@@ -7252,14 +7549,14 @@
       },
       {
         "name": "onGoTo",
-        "type": "() => void",
+        "type": "(communityId?: string) => void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Go to the new community (its id, when onConfirm returned one)."
       }
     ],
     "group": "features"
@@ -7386,25 +7683,25 @@
       },
       {
         "name": "people",
-        "type": "Person[]",
+        "type": "CreateGroupPerson[]",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": "[]",
-        "doc": "People to add (groups: invite; channels: community members). The first six are shown as frequently contacted."
+        "doc": "People to add: { userId, name, handle, color? }. The first six show as frequently contacted."
       },
       {
         "name": "invitePeople",
-        "type": "Person[]",
+        "type": "CreateGroupPerson[]",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": "[]",
-        "doc": "Channels: anyone on OpenChat, for the \"Invite people\" mode."
+        "doc": "Channels: people to invite from outside the community (or use onSearchPeople)."
       },
       {
         "name": "preselected",
@@ -7415,7 +7712,7 @@
         "section": null,
         "required": false,
         "componentDefault": "[]",
-        "doc": "Handles already picked when the dialog opens."
+        "doc": "User ids already picked when the dialog opens."
       },
       {
         "name": "advanced",
@@ -7449,6 +7746,72 @@
         "required": false,
         "componentDefault": null,
         "doc": ""
+      },
+      {
+        "name": "gateTokens",
+        "type": "GateAsset[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "[]",
+        "doc": "Tokens (ledger canister ids) the gate editor offers."
+      },
+      {
+        "name": "gateSystems",
+        "type": "GateAsset[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "[]",
+        "doc": "Nervous systems (governance canister ids) the gate editor offers."
+      },
+      {
+        "name": "onSearchPeople",
+        "type": "(query: string, scope: 'members' | 'invite') => Promise<CreateGroupPerson[]>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Search beyond people / invitePeople (server side)."
+      },
+      {
+        "name": "checkName",
+        "type": "(name: string, kind: 'group' | 'community' | 'channel' | 'embedded') => Promise<NameCheck>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Is this name free? Debounced as the user types; taken or invalid blocks Create."
+      },
+      {
+        "name": "languages",
+        "type": "{ code: string; label: string }[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Communities: the languages offered; codes reach the host."
+      },
+      {
+        "name": "defaultLanguage",
+        "type": "string",
+        "default": "en",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'en'",
+        "doc": "Communities: the language picked at first (a code, e.g. the user's locale)."
       },
       {
         "name": "onCreate",
@@ -7583,14 +7946,14 @@
       },
       {
         "name": "onConfirm",
-        "type": "() => void",
+        "type": "() => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Delete. The dialog closes once it resolves; a rejection keeps it open (with the typed name) and an error."
       },
       {
         "name": "onCancel",
@@ -7637,6 +8000,50 @@
         "required": true,
         "componentDefault": null,
         "doc": "CHAT balance (other tokens use their own `held`)."
+      },
+      {
+        "name": "prices",
+        "type": "Partial<Record<PlanKey, number>>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Plan prices in CHAT, from the backend. Plans without a price aren't offered."
+      },
+      {
+        "name": "chatUsd",
+        "type": "number",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "USD price of one CHAT, to convert prices for other payable tokens; defaults to the CHAT token's price. Without either, only CHAT can pay."
+      },
+      {
+        "name": "limits",
+        "type": "DiamondLimits",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Group and storage limits shown in the comparison."
+      },
+      {
+        "name": "autoRenewDefault",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Auto-renew starts on (opt-out) only when the host says so."
       },
       {
         "name": "plan",
@@ -7732,15 +8139,26 @@
         "doc": ""
       },
       {
-        "name": "onUpgrade",
-        "type": "(p: DiamondPurchase) => void",
+        "name": "onRefreshBalance",
+        "type": "() => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Re-read balances (the host updates tokens / balance). Without it the refresh link is hidden."
+      },
+      {
+        "name": "onUpgrade",
+        "type": "(p: DiamondPurchase) => Promise<{ until?: string | null } | void> | void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Charge and activate. Resolve with the membership end the backend set; reject to stay on the confirm step with an error. Without it the upgrade buttons are hidden."
       }
     ],
     "group": "features"
@@ -7808,25 +8226,25 @@
       },
       {
         "name": "onDisappearChange",
-        "type": "(v: { on: boolean; after: string }) => void",
+        "type": "(v: { on: boolean; after: string; afterMs: number }) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Applies at once; rolls back with an error on rejection."
       },
       {
         "name": "onReadReceiptsChange",
-        "type": "(on: boolean) => void",
+        "type": "(on: boolean) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Applies at once; rolls back with an error on rejection."
       }
     ],
     "group": "features"
@@ -7892,6 +8310,39 @@
         "required": false,
         "componentDefault": "'violet'",
         "doc": ""
+      },
+      {
+        "name": "avatar",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "CSS background (image URL or gradient) for the avatar; falls back to the colour gradient."
+      },
+      {
+        "name": "blocked",
+        "type": "boolean",
+        "default": null,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "You have blocked this person (shows Unblock)."
+      },
+      {
+        "name": "onUnblock",
+        "type": "() => Promise<unknown> | void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Unblock after the user confirms."
       },
       {
         "name": "online",
@@ -8020,25 +8471,25 @@
       },
       {
         "name": "onMuteChange",
-        "type": "(key: MuteKey | null) => void",
+        "type": "(key: MuteKey | null) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Applies at once; rolls back with an error on rejection."
       },
       {
         "name": "onToggleFavourite",
-        "type": "() => void",
+        "type": "(fav: boolean) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Receives the new state; rolls back on rejection. Favourite is hidden without it."
       },
       {
         "name": "onDisappearChange",
@@ -8075,14 +8526,14 @@
       },
       {
         "name": "onBlock",
-        "type": "() => void",
+        "type": "() => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Block after the user confirms. Hidden without it."
       }
     ],
     "group": "features"
@@ -8227,7 +8678,7 @@
         "doc": ""
       },
       {
-        "name": "onJoin",
+        "name": "onPreview",
         "type": "(key: string) => void",
         "default": null,
         "editor": null,
@@ -8235,7 +8686,51 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "The table's Preview button."
+        "doc": "The table's Preview button: open the community's preview (not a join)."
+      },
+      {
+        "name": "onQuery",
+        "type": "(q: ExploreQuery) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Server-side search / filter / sort / paging: called with offset 0 on every change and offset = loaded count for \"Load more\"."
+      },
+      {
+        "name": "total",
+        "type": "number",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Matching communities in all (onQuery mode); defaults to communities.length."
+      },
+      {
+        "name": "loading",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "A page is being fetched (onQuery mode)."
+      },
+      {
+        "name": "languageOptions",
+        "type": "string[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Languages to offer in the filter (onQuery mode); defaults to the languages of the loaded communities."
       },
       {
         "name": "onCreate",
@@ -8538,8 +9033,8 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "true",
-        "doc": ""
+        "componentDefault": null,
+        "doc": "Left out of the settings dialog when not given (never guessed)."
       },
       {
         "name": "disappearOn",
@@ -8549,8 +9044,8 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "true",
-        "doc": ""
+        "componentDefault": null,
+        "doc": "Left out of the settings dialog when not given (never guessed)."
       },
       {
         "name": "disappearAfter",
@@ -8560,8 +9055,8 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "'12 hours'",
-        "doc": ""
+        "componentDefault": null,
+        "doc": "e.g. \"12 hours\"; left out of the settings dialog when not given."
       },
       {
         "name": "communityName",
@@ -8715,7 +9210,7 @@
         "section": null,
         "required": false,
         "componentDefault": "[]",
-        "doc": ""
+        "doc": "Installed bots; each needs an `id` (bots are matched and reported by id, never by name)."
       },
       {
         "name": "extraBots",
@@ -8737,7 +9232,7 @@
         "section": null,
         "required": false,
         "componentDefault": "[]",
-        "doc": ""
+        "doc": "Ids of bots removed this session."
       },
       {
         "name": "webhooks",
@@ -8770,7 +9265,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Webhook endpoint by webhook id."
       },
       {
         "name": "recommendedBots",
@@ -8793,6 +9288,72 @@
         "required": false,
         "componentDefault": "false",
         "doc": ""
+      },
+      {
+        "name": "canEdit",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Settings, permissions / gates / rules editing, convert, import, new channel."
+      },
+      {
+        "name": "canDelete",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "The Delete entry."
+      },
+      {
+        "name": "canManageUserGroups",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Create, edit and delete user groups (communities)."
+      },
+      {
+        "name": "canPin",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Unpin pinned messages."
+      },
+      {
+        "name": "ownerCount",
+        "type": "number",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Owner count for the summary line (otherwise counted from `members`)."
+      },
+      {
+        "name": "adminCount",
+        "type": "number",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Admin count for the summary line (otherwise counted from `members`)."
       },
       {
         "name": "botsPart",
@@ -8869,7 +9430,7 @@
         "section": null,
         "required": false,
         "componentDefault": "[]",
-        "doc": ""
+        "doc": "Pinned messages; each needs a `messageId` (passed to onOpenPinned / onUnpin)."
       },
       {
         "name": "pinnedOnly",
@@ -9060,25 +9621,25 @@
       },
       {
         "name": "onMuteChange",
-        "type": "(key: MuteKey | null) => void",
+        "type": "(key: MuteKey | null) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Rolls the mute back with an error on rejection (when the host does not control mutedUntil)."
       },
       {
         "name": "onMuteEveryoneChange",
-        "type": "(on: boolean) => void",
+        "type": "(on: boolean) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Rolls back with an error on rejection (when the host does not control muteEveryone)."
       },
       {
         "name": "onClose",
@@ -9101,6 +9662,50 @@
         "required": false,
         "componentDefault": null,
         "doc": "Change a member's role (your own row when stepping down). Offered only when given; rolls back with an error on rejection."
+      },
+      {
+        "name": "onOpenOwner",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The owner's handle in the byline opens their profile."
+      },
+      {
+        "name": "onOpenPinned",
+        "type": "(messageId: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Jump to a pinned message in the chat."
+      },
+      {
+        "name": "onUnpin",
+        "type": "(messageId: string) => Promise<unknown> | void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Unpin a message (needs canPin). Rolls back with an error on rejection."
+      },
+      {
+        "name": "onSearchMembers",
+        "type": "(query: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Members search as the user types (server-side); the shown list is still filtered locally."
       },
       {
         "name": "onRemoveMember",
@@ -9157,7 +9762,7 @@
         "section": null,
         "required": false,
         "componentDefault": "null",
-        "doc": ""
+        "doc": "The current settings. While the form is clean, a new value re-seeds it."
       },
       {
         "name": "initialTab",
@@ -9196,6 +9801,28 @@
         "required": false,
         "componentDefault": null,
         "doc": "Upgrade action on the \"Public group\" Diamond banner."
+      },
+      {
+        "name": "gateTokens",
+        "type": "GateAsset[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "[]",
+        "doc": "Tokens (ledger canister ids) the gate editor offers."
+      },
+      {
+        "name": "gateSystems",
+        "type": "GateAsset[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "[]",
+        "doc": "Nervous systems (governance canister ids) the gate editor offers."
       },
       {
         "name": "noun",
@@ -9283,7 +9910,7 @@
         "section": null,
         "required": false,
         "componentDefault": "false",
-        "doc": "Embedded only: view-only (no edit permission)."
+        "doc": "View-only (no edit permission): no editing and no Save, embedded or as a modal."
       },
       {
         "name": "ownerMoves",
@@ -9342,25 +9969,36 @@
       },
       {
         "name": "onMuteChange",
-        "type": "(mute: 'forever' | null) => void",
+        "type": "(mute: 'forever' | null) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "About page Mute. Optimistic; rolls back if this rejects."
       },
       {
-        "name": "onToggleFavourite",
-        "type": "() => void",
+        "name": "onFavouriteChange",
+        "type": "(favourite: boolean) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Shows the Favourite action on the About page."
+        "doc": "Shows the Favourite action on the About page. Optimistic; rolls back if this rejects."
+      },
+      {
+        "name": "checkName",
+        "type": "(name: string) => Promise<NameCheck>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Is the new name free? Checked when the name changes (debounced); taken or invalid blocks Save."
       },
       {
         "name": "onOpenRules",
@@ -9410,14 +10048,14 @@
       },
       {
         "name": "people",
-        "type": "{ name: string; count: number; gradient?: string }[]",
+        "type": "{ userId?: string; name: string; count: number; gradient?: string; avatarUrl?: string }[]",
         "default": [],
         "editor": null,
         "options": null,
         "section": null,
         "required": true,
         "componentDefault": null,
-        "doc": "Top senders."
+        "doc": "Top senders; avatarUrl replaces the initials."
       },
       {
         "name": "engagement",
@@ -9439,7 +10077,7 @@
         "section": null,
         "required": true,
         "componentDefault": null,
-        "doc": "Total for the previous 30 days."
+        "doc": "Total for the previous 30 days; 0 hides the comparison."
       },
       {
         "name": "otherPeople",
@@ -9500,25 +10138,25 @@
       },
       {
         "name": "communities",
-        "type": "Community[]",
+        "type": "ImportCommunity[]",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": true,
         "componentDefault": null,
-        "doc": "Communities you own."
+        "doc": "Communities you own: { id, name, avatarUrl?, members, channels }."
       },
       {
         "name": "onConfirm",
-        "type": "(community: string) => void",
+        "type": "(community: ImportCommunity) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Import the group into this community. Awaited (\"Importing…\"); a rejection keeps the dialog open with an error."
       },
       {
         "name": "onCancel",
@@ -9641,6 +10279,39 @@
         "doc": ""
       },
       {
+        "name": "avatar",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "CSS background (image URL or gradient) for the avatar; falls back to the colour gradient."
+      },
+      {
+        "name": "onDisappearChange",
+        "type": "(v: { on: boolean; after: string; afterMs: number }) => Promise<unknown> | void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The `disappearing` toggle row and its duration; rolls back with an error on rejection."
+      },
+      {
+        "name": "onByline",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Opens the byline person; without it the name is plain text."
+      },
+      {
         "name": "cover",
         "type": "string",
         "default": "",
@@ -9730,7 +10401,7 @@
         "section": null,
         "required": false,
         "componentDefault": "[]",
-        "doc": ""
+        "doc": "Chat-setting toggles; mark the disappearing-messages row with `disappearing: true`."
       },
       {
         "name": "disappearOn",
@@ -9740,7 +10411,7 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "true",
+        "componentDefault": "false",
         "doc": ""
       },
       {
@@ -9862,13 +10533,46 @@
       {
         "name": "shareLink",
         "type": "string",
-        "default": "oc.app/group/the-awesome-group-8f2a",
+        "default": "https://oc.app/group/the-awesome-group-8f2a",
         "editor": "text",
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Defaults to a link made from groupName."
+        "doc": "The invite link, as the host issued it (a full URL). Without it the link, QR and share-to-chat are hidden."
+      },
+      {
+        "name": "onShareToggle",
+        "type": "(on: boolean) => Promise<unknown> | void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Turn link sharing on or off. Rolls back with an error if it rejects; the switch is read-only without it."
+      },
+      {
+        "name": "onResetLink",
+        "type": "() => Promise<{ link: string }>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Issue a new link (the old one stops working). Hidden without it."
+      },
+      {
+        "name": "qr",
+        "type": "Snippet<[string]>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Renders a QR code for the link (the host brings the QR library). The QR card is hidden without it."
       },
       {
         "name": "noun",
@@ -9905,7 +10609,7 @@
       },
       {
         "name": "communityMembers",
-        "type": "{ name: string; handle: string; color: Color }[]",
+        "type": "{ id: string; name: string; handle: string; color: Color }[]",
         "default": null,
         "editor": null,
         "options": null,
@@ -9923,7 +10627,7 @@
         "section": null,
         "required": false,
         "componentDefault": "[]",
-        "doc": "Handles already in the channel (shown, not pickable)."
+        "doc": "User ids already in the channel (shown, not pickable)."
       },
       {
         "name": "people",
@@ -9934,7 +10638,7 @@
         "section": null,
         "required": true,
         "componentDefault": null,
-        "doc": "Everyone you can invite."
+        "doc": "Everyone you can invite ({ id, name, handle, color, frequent? })."
       },
       {
         "name": "pending",
@@ -9955,8 +10659,8 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "true",
-        "doc": "Without invite rights the page is view-only: no footer."
+        "componentDefault": "false",
+        "doc": "Invite rights. Without them (the default) the page is view-only: no footer, no sharing switch."
       },
       {
         "name": "embedded",
@@ -9971,25 +10675,25 @@
       },
       {
         "name": "onAdd",
-        "type": "(handles: string[]) => void",
+        "type": "(userIds: string[]) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Add community members (user ids) to the channel. The picks are kept and an error shown if it rejects."
       },
       {
         "name": "onInvite",
-        "type": "(handles: string[]) => void",
+        "type": "(userIds: string[]) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Invite people (user ids). The picks are kept and an error shown if it rejects."
       },
       {
         "name": "onCancel",
@@ -10026,7 +10730,7 @@
       },
       {
         "name": "chats",
-        "type": "{ name: string; kind?: string; grad: string; radius?: string }[]",
+        "type": "{ id: string; name: string; kind?: string; grad: string; radius?: string }[]",
         "default": null,
         "editor": null,
         "options": null,
@@ -10037,14 +10741,14 @@
       },
       {
         "name": "onShareToChat",
-        "type": "(v: { chat: string; message: string }) => void",
+        "type": "(v: { chatId: string; message: string; link: string }) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Post the link to a chat; the confirmation toast shows once it resolves."
       }
     ],
     "group": "features"
@@ -10093,7 +10797,7 @@
         "section": null,
         "required": true,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Gates; pay / balance gates carry symbol, ledger (canister id) and amount."
       },
       {
         "name": "tokens",
@@ -10169,8 +10873,8 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "0.98",
-        "doc": "Share of payments that goes to the community owner (the rest to the treasury)."
+        "componentDefault": null,
+        "doc": "Share of payments that goes to the community owner (the rest to the treasury). The split is hidden without it."
       },
       {
         "name": "z",
@@ -10196,14 +10900,25 @@
       },
       {
         "name": "onJoin",
-        "type": "(r: { paid: { symbol: string; amount: number }[] }) => void",
+        "type": "(r: { paid: { ledger: string; symbol: string; amount: number }[]; neuronConfirmed: boolean }) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Join, paying `paid`. Reject to end the spinner and show an error with everything kept."
+      },
+      {
+        "name": "onRecheck",
+        "type": "() => Promise<unknown>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Fetch fresh balances (the host then passes new tokens / chatBalance). \"Check again\" is hidden without it."
       },
       {
         "name": "onClose",
@@ -10343,14 +11058,14 @@
       },
       {
         "name": "onConfirm",
-        "type": "() => void",
+        "type": "() => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Leave. The dialog closes once it resolves; a rejection keeps it open with an error."
       },
       {
         "name": "onCancel",
@@ -10731,14 +11446,14 @@
       },
       {
         "name": "onAttach",
-        "type": "(meme: { src: string; template: string }) => void",
+        "type": "(meme: { blob: Blob; src: string; templateId: string; template: string }) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "The rendered PNG and an object URL the host owns; a rejection keeps the editor open with an error."
       },
       {
         "name": "onClose",
@@ -10978,14 +11693,14 @@
       },
       {
         "name": "onSend",
-        "type": "(text: string) => void",
+        "type": "(text: string) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Send the text. Return a promise to keep the draft until it resolves (kept with an error if it rejects)."
       },
       {
         "name": "onAttach",
@@ -11011,14 +11726,14 @@
       },
       {
         "name": "onVoice",
-        "type": "(r: { duration: number }) => void",
+        "type": "(r: { blob: Blob; duration: number; mimeType: string }) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "A recorded voice message (real MediaRecorder audio, duration in seconds). The mic is hidden without it. Reject to keep the take."
       },
       {
         "name": "attachment",
@@ -11166,7 +11881,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Call start, ms epoch; defaults to when the mini call mounted."
+        "doc": "Call start, ms epoch; the timer is hidden without it."
       },
       {
         "name": "people",
@@ -11331,7 +12046,7 @@
         "section": null,
         "required": true,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Pinned communities; each needs an `id` (reported by onSelectPin) and may have an avatarUrl."
       },
       {
         "name": "expanded",
@@ -11389,8 +12104,30 @@
         "doc": ""
       },
       {
+        "name": "profileAvatarUrl",
+        "type": "string",
+        "default": null,
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Your avatar image."
+      },
+      {
+        "name": "profileOnline",
+        "type": "boolean",
+        "default": null,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "true",
+        "doc": "Your own presence dot."
+      },
+      {
         "name": "onSelect",
-        "type": "(i: number) => void",
+        "type": "(i: number, item: Item) => void",
         "default": null,
         "editor": null,
         "options": null,
@@ -11401,14 +12138,14 @@
       },
       {
         "name": "onSelectPin",
-        "type": "(i: number) => void",
+        "type": "(id: string, pin: Pin) => void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "The picked community, by id."
       },
       {
         "name": "exploreActive",
@@ -11578,6 +12315,28 @@
         "doc": ""
       },
       {
+        "name": "defaultPublic",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Whether a new channel starts public."
+      },
+      {
+        "name": "checkName",
+        "type": "(name: string) => Promise<NameCheck>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Is this channel name free in the community? Debounced as the user types; taken or invalid blocks create."
+      },
+      {
         "name": "onCancel",
         "type": "() => void",
         "default": null,
@@ -11590,14 +12349,14 @@
       },
       {
         "name": "onCreate",
-        "type": "(c: NewChannel) => void",
+        "type": "(c: NewChannel) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Create it. The dialog closes when this resolves; a rejection keeps the form with an error."
       }
     ],
     "group": "features"
@@ -11636,14 +12395,14 @@
       },
       {
         "name": "onPublish",
-        "type": "(poll: PollDraft) => void",
+        "type": "(poll: PollDraft) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Publish (durationMs + endsAt stamped at publish). Awaited, no second publish meanwhile; a rejection keeps the poll with an error."
       },
       {
         "name": "onClose",
@@ -12174,7 +12933,7 @@
         "options": null,
         "section": "CHIT",
         "required": false,
-        "componentDefault": "true",
+        "componentDefault": "false",
         "doc": "Today's CHIT can still be claimed."
       },
       {
@@ -12272,18 +13031,7 @@
         "section": null,
         "required": false,
         "componentDefault": "120",
-        "doc": "Local time offset used for the calendar's claim times."
-      },
-      {
-        "name": "claimMinute",
-        "type": "number",
-        "default": null,
-        "editor": null,
-        "options": null,
-        "section": null,
-        "required": false,
-        "componentDefault": "560",
-        "doc": "Minute of day today's claim was made (when already claimed)."
+        "doc": "Local time offset used for the calendar’s claim times; defaults to this browser’s."
       },
       {
         "name": "achievementsLeft",
@@ -12364,14 +13112,14 @@
       },
       {
         "name": "communities",
-        "type": "{ name: string; color: string }[]",
+        "type": "ProfileCommunity[]",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": "[]",
-        "doc": ""
+        "doc": "Communities you’ve joined: { id, name, color?, avatar? }."
       },
       {
         "name": "communityNames",
@@ -12382,7 +13130,7 @@
         "section": null,
         "required": false,
         "componentDefault": "{}",
-        "doc": "Custom display name per community name."
+        "doc": "Custom display name per community id."
       },
       {
         "name": "signinMethods",
@@ -12462,6 +13210,149 @@
         "doc": ""
       },
       {
+        "name": "claimHistory",
+        "type": "ClaimDay[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Claim history for the CHIT calendar: { day: \"YYYY-MM-DD\", streakDay, amount?, minute?, insured? }."
+      },
+      {
+        "name": "today",
+        "type": "number",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "\"Today\" for the calendar, ms epoch; defaults to now."
+      },
+      {
+        "name": "joined",
+        "type": "number",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "When the account was created, ms epoch; the calendar doesn’t page back before it."
+      },
+      {
+        "name": "storageLimitMB",
+        "type": "number",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Storage allowance in MB; defaults to 1024 for Diamond, else 100."
+      },
+      {
+        "name": "inviteRewards",
+        "type": "{ label: string; amount: number }[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Rewards for inviting friends; the list is hidden when empty."
+      },
+      {
+        "name": "aboutBaseUrl",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'https://oc.app'",
+        "doc": "Base for the About links."
+      },
+      {
+        "name": "botDocsUrl",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "\"Bot docs\" link on the Bot configuration page."
+      },
+      {
+        "name": "checkHandle",
+        "type": "(handle: string) => Promise<boolean>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Whether a username is free (checked before saving a new one)."
+      },
+      {
+        "name": "onPreviewRingtone",
+        "type": "(tone) => void | (() => void)",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Play a ringtone preview; may return a stop function. Play buttons are hidden without it."
+      },
+      {
+        "name": "onLinkMethod",
+        "type": "(type: 'passkey' | 'ii') => Promise<SigninMethod>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Create a passkey / sign in with II and link it (the host also confirms with the current method). Hidden without it."
+      },
+      {
+        "name": "onRequestEmailCode",
+        "type": "(email: string) => Promise<unknown>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Email a one-time code to this address."
+      },
+      {
+        "name": "onVerifyEmailCode",
+        "type": "(email: string, code: string) => Promise<SigninMethod>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Check the code and link the email."
+      },
+      {
+        "name": "onUnlinkMethod",
+        "type": "(id: string) => Promise<unknown>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Unlink a sign-in method. Hidden without it."
+      },
+      {
         "name": "onRequestLinkCode",
         "type": "() => Promise<{ code: string; expiresAt: number }>",
         "default": null,
@@ -12491,8 +13382,8 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "'https://icp-api.io'",
-        "doc": ""
+        "componentDefault": null,
+        "doc": "Bot configuration; the row is hidden when absent."
       },
       {
         "name": "storageIndex",
@@ -12502,8 +13393,8 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "'rturd-qaaaa-aaaaf-aabaq-cai'",
-        "doc": ""
+        "componentDefault": null,
+        "doc": "Bot configuration; the row is hidden when absent."
       },
       {
         "name": "publicKey",
@@ -12513,8 +13404,8 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "'-----BEGIN PUBLIC KEY-----\\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEquEHzJr9605Oy796e4z7LKow46DVNUnDOQWavi86vEhRAAfdbVh/Lgmxfi44LPb6S0wnCRm9kI/XdK1DYw2Eaw==\\n-----END PUBLIC KEY-----'",
-        "doc": ""
+        "componentDefault": null,
+        "doc": "Bot configuration; the row is hidden when absent."
       },
       {
         "name": "platform",
@@ -12584,36 +13475,36 @@
       },
       {
         "name": "onSave",
-        "type": "(v: { name: string; handle: string; about: string }) => void",
+        "type": "(v: { name: string; handle: string; about: string }) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Save the profile fields. Reject to keep the editor open with an error."
       },
       {
         "name": "onLogout",
-        "type": "() => void",
+        "type": "() => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Log out; the dialog closes once it resolves. Hidden without it."
       },
       {
         "name": "onDeleteAccount",
-        "type": "() => void",
+        "type": "(confirmedHandle: string) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Delete the account after the user typed their handle; the host re-authenticates. Hidden without it."
       },
       {
         "name": "onShareApp",
@@ -12672,14 +13563,14 @@
       },
       {
         "name": "onCommunityName",
-        "type": "(community: string, name: string | null) => void",
+        "type": "(communityId: string, name: string | null) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Set (or clear) your name in a community; rolls back with an error on rejection."
       },
       {
         "name": "onChatSettings",
@@ -12705,14 +13596,14 @@
       },
       {
         "name": "onClearCache",
-        "type": "() => void",
+        "type": "() => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Clear this device’s cache; “Cleared” shows once it resolves. Hidden without it."
       },
       {
         "name": "onReportIssue",
@@ -12991,6 +13882,39 @@
         "doc": "Days in a row solved before today."
       },
       {
+        "name": "puzzle",
+        "type": "DailyPuzzle",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Today's board from the host: id, number, grid, islands [x, y, n], difficulty. The solution never ships."
+      },
+      {
+        "name": "hintCost",
+        "type": "number",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "0",
+        "doc": "CHIT per hint."
+      },
+      {
+        "name": "hintsAllowed",
+        "type": "number",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "0",
+        "doc": "Hints a day; hints are hidden at 0 (the default)."
+      },
+      {
         "name": "balance",
         "type": "number",
         "default": 102000,
@@ -12998,8 +13922,8 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "Infinity",
-        "doc": "CHIT available for hints; unlimited when absent."
+        "componentDefault": "0",
+        "doc": "CHIT available for hints."
       },
       {
         "name": "countdown",
@@ -13047,7 +13971,7 @@
       },
       {
         "name": "onProgress",
-        "type": "(p: Saved & { done: number; total: number }) => void",
+        "type": "(p: { puzzleId: string; br: Bridges; elapsed: number; hints: number; done: number; total: number }) => void",
         "default": null,
         "editor": null,
         "options": null,
@@ -13058,29 +13982,29 @@
       },
       {
         "name": "onSolved",
-        "type": "(r: { elapsed: number; hints: number }) => void",
+        "type": "(r: { puzzleId: string; bridges: Bridges; elapsed: number; hints: number }) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "The host verifies the board; the solved view shows once it resolves, an error if it rejects."
       },
       {
         "name": "onHint",
-        "type": "(cost: number) => void",
+        "type": "(r: { puzzleId: string; bridges: Bridges; cost: number }) => Promise<[number, number, number]>",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Charge for a hint and return one correct bridge [i, j, count]; applied only once it resolves."
       },
       {
         "name": "onRemind",
-        "type": "(on: boolean) => void",
+        "type": "(on: boolean) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
@@ -13102,7 +14026,7 @@
       },
       {
         "name": "onShare",
-        "type": "() => void",
+        "type": "(r: { puzzleId: string; number: number; time: number; hints: number; streak: number }) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
@@ -13311,6 +14235,17 @@
     },
     "props": [
       {
+        "name": "tokens",
+        "type": "CryptoToken[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Tokens that can be sent, with live balances, fees, minimums and USD prices; the first is the default."
+      },
+      {
         "name": "z",
         "type": "number",
         "default": 80,
@@ -13323,25 +14258,25 @@
       },
       {
         "name": "recipient",
-        "type": "Member | null",
+        "type": "CryptoMember | null",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "null",
-        "doc": "Fixed recipient (a DM)."
+        "componentDefault": null,
+        "doc": "Fixed recipient (a DM): { id, name, handle, grad? }; id is the user id the funds go to."
       },
       {
         "name": "members",
-        "type": "Member[]",
+        "type": "CryptoMember[]",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "[]",
-        "doc": "Pickable recipients (a group), when there is no fixed one."
+        "componentDefault": null,
+        "doc": "Pickable recipients (a group), when there is no fixed one; each has the user id."
       },
       {
         "name": "initial",
@@ -13670,15 +14605,26 @@
         "doc": "CHAT balance."
       },
       {
+        "name": "prices",
+        "type": "number[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Price in CHAT of each position in your holding (1st day, 2nd …); its length is the most you can hold."
+      },
+      {
         "name": "onBuy",
-        "type": "(days: number, cost: number) => void",
+        "type": "(req: { days: number; cost: number; fromPosition: number }) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Buy more days of cover. The dialog closes once it resolves; a rejection keeps it open with an error."
       },
       {
         "name": "onBack",
@@ -13845,6 +14791,17 @@
       "height": 760
     },
     "props": [
+      {
+        "name": "tokens",
+        "type": "CryptoToken[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": true,
+        "componentDefault": null,
+        "doc": "Tokens to offer or ask for: balances, fees, minimums and USD prices (for the market rate)."
+      },
       {
         "name": "z",
         "type": "number",
@@ -14038,14 +14995,14 @@
       },
       {
         "name": "onFollowChange",
-        "type": "(on: boolean) => void",
+        "type": "(on: boolean) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Rolls the toggle back if it rejects."
       },
       {
         "name": "onJump",
@@ -14060,14 +15017,36 @@
       },
       {
         "name": "onSend",
-        "type": "(message: string | GroupMessage) => void",
+        "type": "(r: { threadKey?: string; text: string }) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Text, \"GIF · query\" for a GIF, or a voice message."
+        "doc": "A text reply. Reject to keep the draft (with an error)."
+      },
+      {
+        "name": "onGif",
+        "type": "(r: { threadKey?: string; query: string }) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The GIF picked in the composer's picker (the host resolves and sends it)."
+      },
+      {
+        "name": "onVoice",
+        "type": "(r: { threadKey?: string; blob: Blob; duration: number; mimeType: string }) => Promise<unknown> | void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "A recorded voice reply; voice is hidden without it. Reject to keep the take."
       },
       {
         "name": "onAttach",
@@ -14509,6 +15488,39 @@
         "doc": ""
       },
       {
+        "name": "avatar",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "CSS background (image URL or gradient) for the avatar; falls back to the colour gradient."
+      },
+      {
+        "name": "blocked",
+        "type": "boolean",
+        "default": null,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "You have blocked this person (shows Unblock)."
+      },
+      {
+        "name": "onUnblock",
+        "type": "() => Promise<unknown> | void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Unblock after the user confirms."
+      },
+      {
         "name": "online",
         "type": "boolean",
         "default": true,
@@ -14642,25 +15654,25 @@
       },
       {
         "name": "onMuteChange",
-        "type": "(key: MuteKey | null) => void",
+        "type": "(key: MuteKey | null) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Applies at once; rolls back with an error on rejection."
       },
       {
         "name": "onToggleFavourite",
-        "type": "() => void",
+        "type": "(fav: boolean) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Receives the new state; rolls back on rejection. Favourite is hidden without it."
       },
       {
         "name": "onDisappearChange",
@@ -14693,18 +15705,18 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Defaults to onCancel."
+        "doc": "Message action; hidden without it."
       },
       {
         "name": "onBlock",
-        "type": "() => void",
+        "type": "() => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Defaults to onCancel."
+        "doc": "Block after the user confirms. Hidden without it."
       },
       {
         "name": "onCancel",
@@ -14758,25 +15770,36 @@
       },
       {
         "name": "group",
-        "type": "{ key?: string; title: string; members: Person[] } | null",
+        "type": "{ key: string; title: string; members: UserGroupPerson[]; mention?: string } | null",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": "null",
-        "doc": "The group being edited or deleted."
+        "doc": "The group being edited or deleted. `mention` is its real @handle (otherwise one is previewed from the name)."
       },
       {
         "name": "people",
-        "type": "Person[]",
+        "type": "UserGroupPerson[]",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": "[]",
-        "doc": "Community members you can add."
+        "doc": "Community members you can add, each with a userId (the initial list; onSearch can find more)."
+      },
+      {
+        "name": "onSearch",
+        "type": "(query: string) => Promise<UserGroupPerson[]>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Search the whole community; replaces the local filter while there is a query."
       },
       {
         "name": "takenNames",
@@ -14802,25 +15825,25 @@
       },
       {
         "name": "onSave",
-        "type": "(g: { key: string | null; title: string; members: string[] }) => void",
+        "type": "(g: { key: string | null; title: string; memberIds: string[] }) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Create (key null) or update a group. Reject to keep the dialog open with an error."
       },
       {
         "name": "onDelete",
-        "type": "(key: string | undefined) => void",
+        "type": "(key: string) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Delete the group. Reject to keep the dialog open with an error."
       }
     ],
     "group": "features"
@@ -14877,7 +15900,29 @@
         "section": null,
         "required": false,
         "componentDefault": "'linear-gradient(165deg,#4a3b45,#1d1a22)'",
-        "doc": "Feed background (placeholder for the video)."
+        "doc": "Placeholder background when there is no stream."
+      },
+      {
+        "name": "stream",
+        "type": "MediaStream | null",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Live video for this participant (played muted; audio is the host's to route)."
+      },
+      {
+        "name": "mirror",
+        "type": "boolean",
+        "default": null,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Mirror the video (your own camera)."
       },
       {
         "name": "ratio",
@@ -15056,25 +16101,179 @@
       },
       {
         "name": "onSent",
-        "type": "(v: WalletSendRequest) => Promise<unknown> | void",
+        "type": "(x: WalletSendRequest) => Promise<{ id?: string } | unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Make the transfer: full address or user id, network, memo and PIN. Reject (e.g. wrong PIN) to keep the PIN dialog open with an error."
+        "doc": "Make the transfer; reject (e.g. wrong PIN) to keep Send open with an error. Resolve with the transaction's { id } to show a pending row until `activity` lists it."
       },
       {
         "name": "onMessage",
-        "type": "(message: string) => void",
+        "type": "(x: { userId: string; text: string }) => void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Toast \"Message\" action after sending to a person."
+        "doc": "Toast \"Message\" action after sending to a person: open the DM with them."
+      },
+      {
+        "name": "activity",
+        "type": "WalletActivity[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Transactions to show ({ id, symbol, kind, title, timestamp, context?, amount, fiat, status? }); the host keeps statuses current."
+      },
+      {
+        "name": "receivable",
+        "type": "ReceivableToken[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Tokens offered on Receive that you don't hold yet."
+      },
+      {
+        "name": "recipients",
+        "type": "Recipient[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Saved recipients."
+      },
+      {
+        "name": "onAddRecipient",
+        "type": "(r: RecipientDraft) => Promise<Recipient>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "See WalletRecipients.onAdd."
+      },
+      {
+        "name": "onUpdateRecipient",
+        "type": "(r: Recipient) => Promise<unknown> | void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "See WalletRecipients.onUpdate."
+      },
+      {
+        "name": "onRemoveRecipient",
+        "type": "(id: string) => Promise<unknown> | void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "See WalletRecipients.onRemove."
+      },
+      {
+        "name": "onSearchUsers",
+        "type": "(query: string) => Promise<SendContact[]>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Search all OpenChat users by name or handle. Without it, only `contacts` can be picked."
+      },
+      {
+        "name": "btcFees",
+        "type": "Partial<Record<'btc' | 'ckbtc', number>>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Current fee (in BTC) for sending BTC to a Bitcoin address natively or as ckBTC; a route without a fee can't be used."
+      },
+      {
+        "name": "dexes",
+        "type": "string[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "DEX names shown while a quote is found."
+      },
+      {
+        "name": "onQuote",
+        "type": "(r: SwapRequest) => Promise<SwapQuote>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Find the best quote (dex, dexFee, out, impactPct, networkFeeUsd, expiresAt). Reject to go back to the form with an error. Without it, no quote can be fetched."
+      },
+      {
+        "name": "onSwap",
+        "type": "(r: { request: SwapRequest; quote: SwapQuote; onStep: (step: number) => void }) => Promise<{ out?: number } | void>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Run the swap, calling onStep(0–4) as each on-chain step starts. Resolve when it is in the wallet; reject to show an error."
+      },
+      {
+        "name": "chats",
+        "type": "ShareChat[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Chats the address can be shared to ({ id, name, kind?, grad?, radius? }). Share is hidden without chats or onShare."
+      },
+      {
+        "name": "onShare",
+        "type": "(v: { chatId: string; message: string; symbol: string; network: NetworkId; address: string }) => Promise<unknown> | void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "See WalletReceive.onShare."
+      },
+      {
+        "name": "qr",
+        "type": "Snippet<[string]>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Draws a scannable QR code for the address (inside a white 240px square). Without it the QR card is hidden."
       }
     ],
     "group": "features"
@@ -15132,6 +16331,17 @@
         "required": false,
         "componentDefault": null,
         "doc": ""
+      },
+      {
+        "name": "onRefresh",
+        "type": "(symbol?: string) => Promise<unknown> | void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Reload balances (one token, or all). The spinner runs until it settles; Refresh is hidden without it."
       },
       {
         "name": "hidden",
@@ -15354,15 +16564,37 @@
         "doc": "The user's own receiving address per network. A network without one shows no address, copy, share or QR."
       },
       {
-        "name": "onShare",
-        "type": "(v: { chat: string; message: string; symbol: string; network: string; address: string }) => void",
+        "name": "chats",
+        "type": "ShareChat[]",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Chats the address can be shared to ({ id, name, kind?, grad?, radius? }). Share is hidden without chats or onShare."
+      },
+      {
+        "name": "qr",
+        "type": "Snippet<[string]>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Draws a scannable QR code for the address (inside a white 240px square). Without it the QR card is hidden."
+      },
+      {
+        "name": "onShare",
+        "type": "(v: { chatId: string; message: string; symbol: string; network: NetworkId; address: string }) => Promise<unknown> | void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Post the address to a chat. Reject to keep the picker open with an error."
       },
       {
         "name": "onClose",
@@ -15411,15 +16643,37 @@
         "doc": ""
       },
       {
-        "name": "onChange",
-        "type": "(list: Recipient[]) => void",
+        "name": "onAdd",
+        "type": "(r: RecipientDraft) => Promise<Recipient>",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Save a new recipient; resolve with it as stored (the host assigns the id). Add is hidden without it."
+      },
+      {
+        "name": "onUpdate",
+        "type": "(r: Recipient) => Promise<unknown> | void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Save an edit. Edit is hidden without it."
+      },
+      {
+        "name": "onRemove",
+        "type": "(id: string) => Promise<unknown> | void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Remove a saved recipient (rolled back on rejection). Remove is hidden without it."
       },
       {
         "name": "onSend",
@@ -15508,6 +16762,28 @@
         "doc": "People to pick from in \"OpenChat user\" mode. Without any, only the address mode is useful."
       },
       {
+        "name": "onSearchUsers",
+        "type": "(query: string) => Promise<SendContact[]>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Search all OpenChat users by name or handle. Without it, only `contacts` can be picked."
+      },
+      {
+        "name": "btcFees",
+        "type": "Partial<Record<'btc' | 'ckbtc', number>>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Current fee (in BTC) for sending BTC to a Bitcoin address natively or as ckBTC; a route without a fee can't be used."
+      },
+      {
         "name": "onPickSaved",
         "type": "() => Promise<string | null | undefined>",
         "default": null,
@@ -15549,7 +16825,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Make the transfer: full address or user id, network, memo and PIN. Reject (e.g. wrong PIN) to keep the PIN dialog open with an error."
+        "doc": "Make the transfer: full address or user id, network, memo and PIN. Reject (e.g. wrong PIN) to keep the PIN dialog open with an error. Without it nothing can be sent."
       }
     ],
     "group": "features"
@@ -15647,6 +16923,28 @@
         "doc": "Turn the PIN off; reject if `current` is wrong."
       },
       {
+        "name": "onSaveRecipient",
+        "type": "(r: Omit<SavedRecipient, 'id'> & { id?: string }) => Promise<SavedRecipient>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Add (no id) or edit a saved recipient; resolve with the stored entry and its id. Reject to keep the sheet open with an error."
+      },
+      {
+        "name": "onRemoveRecipient",
+        "type": "(id: string) => Promise<unknown>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Remove a saved recipient. The row comes back if this rejects."
+      },
+      {
         "name": "onCancel",
         "type": "() => void",
         "default": null,
@@ -15699,6 +16997,39 @@
         "doc": "Symbol to pay with; falls back to ICP."
       },
       {
+        "name": "dexes",
+        "type": "string[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "DEX names shown while a quote is found."
+      },
+      {
+        "name": "onQuote",
+        "type": "(r: SwapRequest) => Promise<SwapQuote>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Find the best quote (dex, dexFee, out, impactPct, networkFeeUsd, expiresAt). Reject to go back to the form with an error. Without it, no quote can be fetched."
+      },
+      {
+        "name": "onSwap",
+        "type": "(r: { request: SwapRequest; quote: SwapQuote; onStep: (step: number) => void }) => Promise<{ out?: number } | void>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Run the swap, calling onStep(0–4) as each on-chain step starts. Resolve when it is in the wallet; reject to show an error."
+      },
+      {
         "name": "onClose",
         "type": "() => void",
         "default": null,
@@ -15718,7 +17049,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "After a completed swap, when the user leaves with Done."
       }
     ],
     "group": "features"
@@ -15894,7 +17225,7 @@
       },
       {
         "name": "webhook",
-        "type": "Webhook | null",
+        "type": "{ id: string; name: string; color?: WebhookColour; url: string; avatarUrl?: string | null } | null",
         "default": null,
         "editor": null,
         "options": null,
@@ -15915,37 +17246,37 @@
         "doc": ""
       },
       {
-        "name": "urlPrefix",
-        "type": "string",
+        "name": "takenNames",
+        "type": "string[]",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
-        "required": true,
+        "required": false,
         "componentDefault": null,
-        "doc": "Webhook URLs are this prefix plus a 32-hex-digit secret."
+        "doc": "Names already used by webhooks in this chat (the one being edited may be included)."
       },
       {
         "name": "onSave",
-        "type": "(hook: { name: string; color: Colour; url: string; avatarUrl: string | null; isNew: boolean }) => void",
+        "type": "(hook: WebhookSave) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Register (no id) or update a webhook; a new photo arrives as a File. Closes on resolve and keeps the form if it rejects."
       },
       {
         "name": "onRegenerate",
-        "type": "(url: string) => void",
+        "type": "(hook: { id: string }) => Promise<{ url: string }>",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Replace the secret; resolve with the new URL (issued by the host). Hidden without it."
       },
       {
         "name": "onCancel",

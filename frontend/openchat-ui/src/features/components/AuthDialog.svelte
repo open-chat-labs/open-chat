@@ -12,6 +12,17 @@
     email?: string;
     /** Handle of the person who referred them. */
     referrer?: string;
+    /** User id of the referrer, when the host supplied one. */
+    referrerId?: string;
+  }
+
+  export interface AuthPerson {
+    /** Passed back as SignupDetails.referrerId. */
+    userId?: string;
+    name: string;
+    handle: string;
+    /** Avatar background. */
+    grad: string;
   }
 </script>
 
@@ -19,7 +30,7 @@
   import { modal } from '../../lib/behaviours/modal';
   import { useT } from '../../lib/i18n';
   import Translate from '../../lib/components/Translate.svelte';
-  import { onMount } from 'svelte';
+  import { onMount, untrack } from 'svelte';
 
   type Method = AuthMethod;
 
@@ -32,12 +43,7 @@
   ];
   const CHECK_MS = 450;
 
-  interface Person {
-    name: string;
-    handle: string;
-    /** Avatar background. */
-    grad: string;
-  }
+  type Person = AuthPerson;
 
   interface Props {
     kind?: 'login' | 'signup';
@@ -48,8 +54,12 @@
     reason?: string;
     /** People a new user can name as their referrer (searched by name or handle). */
     referrers?: Person[];
-    /** Sign-up: whether a well-formed username is free. Defaults to always free. */
+    /** Search referrers on the server; replaces the local `referrers` filter when given. */
+    searchReferrers?: (query: string) => Promise<Person[]>;
+    /** Sign-up: whether a well-formed username is free. Without it no availability is shown (the host checks on signup). */
     checkUsername?: (username: string) => boolean | Promise<boolean>;
+    /** Terms and conditions page; without it the words aren't a link. */
+    termsUrl?: string;
     onClose?: () => void;
     /** Start sign-in / sign-up with a method (passkey prompt, wallet, II window). Waits until it settles; reject to go back. */
     onMethod?: (method: AuthMethod, kind: 'login' | 'signup') => Promise<unknown> | void;
@@ -59,7 +69,7 @@
     onSignup?: (details: SignupDetails) => Promise<unknown> | void;
   }
 
-  let { kind = 'login', variant = 'grid', inline = false, reason = '', referrers = [], checkUsername = () => true, onClose, onMethod, onRequestEmailLink, onSignup }: Props = $props();
+  let { kind = 'login', variant = 'grid', inline = false, reason = '', referrers = [], searchReferrers, checkUsername, termsUrl, onClose, onMethod, onRequestEmailLink, onSignup }: Props = $props();
   const t = useT();
 
   // switching between sign-in and sign-up sticks until the host changes `kind`
@@ -70,7 +80,13 @@
   let run = 0;
   let email = $state('');
   let username = $state('');
-  let checked = $state<{ name: string; free: boolean } | null>(null);
+  // free: available; taken; error: the check itself failed
+  let checked = $state<{ name: string; state: 'free' | 'taken' | 'error' } | null>(null);
+  // the last host action that failed (shown under the form / methods)
+  let failed = $state<Method | 'email' | 'signup' | null>(null);
+  let remoteResults = $state<Person[] | null>(null);
+  let searchTimer: ReturnType<typeof setTimeout> | undefined;
+  let searchRun = 0;
   let refQuery = $state('');
   let referrer = $state<Person | null>(null);
 
@@ -81,14 +97,40 @@
   const withMethod = (name: string) => t(signup ? 'ui.authDialog.continueWith' : 'ui.authDialog.signInWith', { name: t(name) });
   const wellFormed = $derived(/^[A-Za-z0-9_]{5,20}$/.test(username));
   const known = $derived(wellFormed && checked?.name === username.toLowerCase() ? checked : null);
-  const taken = $derived(!!known && !known.free);
-  const free = $derived(!!known && known.free);
+  const taken = $derived(known?.state === 'taken');
+  const checkFailed = $derived(known?.state === 'error');
+  // without a checker any well-formed name can be submitted; the host decides
+  const free = $derived(checkUsername ? known?.state === 'free' : wellFormed);
   const badChars = $derived(!!username && /[^A-Za-z0-9_]/.test(username));
   const userMsg = $derived(badChars ? t('ui.authDialog.onlyLetters') : username && username.length < 5 ? t('ui.authDialog.atLeast5') : '');
   const emailOk = $derived(/^\S+@\S+\.\S+$/.test(email));
+  // sign-up's recovery email is optional, but a malformed one blocks Continue instead of being dropped
+  const recoveryBad = $derived(!!email.trim() && !emailOk);
   const results = $derived.by(() => {
     const q = refQuery.trim().toLowerCase();
-    return q ? referrers.filter((p) => p.name.toLowerCase().includes(q) || p.handle.includes(q)).slice(0, 4) : [];
+    if (!q) return [];
+    if (searchReferrers) return (remoteResults ?? []).slice(0, 4);
+    return referrers.filter((p) => p.name.toLowerCase().includes(q) || p.handle.includes(q)).slice(0, 4);
+  });
+
+  // server-side referrer search, debounced; only the latest query's answer is kept
+  $effect(() => {
+    const q = refQuery.trim();
+    if (!searchReferrers) return;
+    untrack(() => {
+      clearTimeout(searchTimer);
+      remoteResults = null;
+      if (!q) return;
+      const mine = ++searchRun;
+      searchTimer = setTimeout(async () => {
+        try {
+          const found = await searchReferrers(q);
+          if (mine === searchRun) remoteResults = found;
+        } catch {
+          if (mine === searchRun) remoteResults = [];
+        }
+      }, CHECK_MS);
+    });
   });
   const waitText = $derived(
     !waiting || waiting === 'email' || waiting === 'signup'
@@ -107,10 +149,12 @@
     if (waiting) return false;
     const mine = ++run;
     waiting = what;
+    failed = null;
     try {
       await action();
       return mine === run;
     } catch {
+      if (mine === run) failed = what;
       return false;
     } finally {
       if (mine === run) waiting = null;
@@ -127,19 +171,25 @@
   }
 
   function submitSignup() {
-    if (!free || !onSignup) return;
-    attempt('signup', () => onSignup({ username, email: emailOk ? email : undefined, referrer: referrer?.handle }));
+    if (!free || recoveryBad || !onSignup) return;
+    attempt('signup', () => onSignup({ username, email: emailOk ? email.trim() : undefined, referrer: referrer?.handle, referrerId: referrer?.userId }));
   }
 
   function typedUsername(value: string) {
     username = value;
     checked = null;
     clearTimeout(checkTimer);
-    if (!/^[A-Za-z0-9_]{5,20}$/.test(value)) return;
+    if (!checkUsername || !/^[A-Za-z0-9_]{5,20}$/.test(value)) return;
+    const check = checkUsername;
     checkTimer = setTimeout(async () => {
       const name = value.toLowerCase();
-      const ok = await checkUsername(name);
-      if (username.toLowerCase() === name) checked = { name, free: ok };
+      let state: 'free' | 'taken' | 'error';
+      try {
+        state = (await check(name)) ? 'free' : 'taken';
+      } catch {
+        state = 'error';
+      }
+      if (username.toLowerCase() === name) checked = { name, state };
     }, CHECK_MS);
   }
 
@@ -148,12 +198,15 @@
     mode = signup ? 'login' : 'signup';
     step = 'methods';
     waiting = null;
+    failed = null;
   }
 
   onMount(() => {
     return () => {
       run++;
+      searchRun++;
       clearTimeout(checkTimer);
+      clearTimeout(searchTimer);
     };
   });
 </script>
@@ -229,6 +282,8 @@
           {/if}
           {#if waiting}
             <span class="wait" role="status">{waitText}…</span>
+          {:else if failed && failed !== 'signup'}
+            <span class="wait failed" role="alert">{t(failed === 'email' ? 'ui.authDialog.linkFailed' : 'ui.authDialog.methodFailed')}</span>
           {/if}
         </div>
       {/if}
@@ -254,13 +309,11 @@
             <span class="field-label"><span>{t('ui.authDialog.username')}</span><span class="field-note">{t('ui.authDialog.usernameNote')}</span></span>
             <span class="field" class:bad={taken || badChars} class:good={free}>
               <input data-auth-input="" value={username} oninput={(e) => typedUsername(e.currentTarget.value)} placeholder={t('ui.authDialog.usernamePlaceholder')} maxlength="20" autocomplete="username" />
-              {#if wellFormed}
-                <span class="chip" class:taken class:free role="status"
-                  ><span class="chip-icon" style:mask="var(--icon-{taken ? 'close' : free ? 'check' : 'more'}) center/contain no-repeat"></span>{t(taken
-                    ? 'ui.authDialog.taken'
-                    : free
-                      ? 'ui.authDialog.available'
-                      : 'ui.authDialog.checking')}</span
+              {#if wellFormed && checkUsername}
+                <span class="chip" class:taken={taken || checkFailed} class:free role="status"
+                  ><span class="chip-icon" style:mask="var(--icon-{taken || checkFailed ? 'close' : free ? 'check' : 'more'}) center/contain no-repeat"></span>{t(
+                    taken ? 'ui.authDialog.taken' : checkFailed ? 'ui.authDialog.checkFailed' : free ? 'ui.authDialog.available' : 'ui.authDialog.checking',
+                  )}</span
                 >
               {/if}
               <span class="left">{20 - username.length}</span>
@@ -271,7 +324,8 @@
           </label>
           <label class="field-group spaced">
             <span class="field-label"><span>{t('ui.authDialog.email')}</span><span class="field-note">{t('ui.authDialog.emailNote')}</span></span>
-            <span class="field"><input data-auth-input="" type="email" bind:value={email} placeholder={t('ui.authDialog.emailExample')} autocomplete="email" /></span>
+            <span class="field" class:bad={recoveryBad}><input data-auth-input="" type="email" bind:value={email} placeholder={t('ui.authDialog.emailExample')} autocomplete="email" /></span>
+            {#if recoveryBad}<span class="user-msg bad">{t('ui.authDialog.emailInvalid')}</span>{/if}
           </label>
           <div class="referral">
             <span class="field-label">{t('ui.authDialog.referredQuestion')}</span>
@@ -305,8 +359,12 @@
             {/if}
           </div>
           <div class="submit-row">
-            <span class="terms"><Translate key="ui.authDialog.terms">{#snippet link()}<a href="#">{t('ui.authDialog.termsLink')}</a>{/snippet}</Translate></span>
-            <button class="continue" class:ready={free && !waiting} type="submit" disabled={!free || !!waiting}>{t(waiting === 'signup' ? 'ui.authDialog.creating' : 'ui.common.continue')}</button>
+            <span class="terms"
+              ><Translate key="ui.authDialog.terms"
+                >{#snippet link()}{#if termsUrl}<a href={termsUrl} target="_blank" rel="noopener">{t('ui.authDialog.termsLink')}</a>{:else}{t('ui.authDialog.termsLink')}{/if}{/snippet}</Translate
+              >{#if failed === 'signup'}<span class="signup-error" role="alert">{t('ui.authDialog.signupFailed')}</span>{/if}</span
+            >
+            <button class="continue" class:ready={free && !recoveryBad && !waiting} type="submit" disabled={!free || recoveryBad || !!waiting}>{t(waiting === 'signup' ? 'ui.authDialog.creating' : 'ui.common.continue')}</button>
           </div>
         </form>
       {/if}
@@ -920,6 +978,16 @@
     gap: 16px;
     flex-wrap: wrap;
     padding-top: 4px;
+  }
+
+  .wait.failed,
+  .signup-error {
+    color: var(--status-danger, #f5493d);
+  }
+
+  .signup-error {
+    display: block;
+    margin-block-start: 4px;
   }
 
   .terms {

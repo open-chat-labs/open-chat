@@ -1,8 +1,22 @@
 <!-- Explore communities: hero search, language filter, "Popular on OpenChat" (featured + cards, communities you haven't
      joined) and the full table with sort and paging. Typing switches to search results (best match + more results,
-     name matches ranked first). guest adds a sticky sign-in banner. -->
+     name matches ranked first). guest adds a sticky sign-in banner.
+     With onQuery the host does the searching, filtering, sorting and paging: every change (debounced for typing) and
+     "Load more" ask it for a page, `communities` is shown as given and `total` drives the counts. Without onQuery the
+     list is filtered and paged locally (small, fully loaded lists). -->
+<script lang="ts" module>
+  export interface ExploreQuery {
+    text: string;
+    /** Language values as the communities carry them. */
+    languages: string[];
+    sort: 'members' | 'active' | 'newest';
+    offset: number;
+    limit: number;
+  }
+</script>
+
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, untrack } from 'svelte';
   import { useT } from '../../lib/i18n';
   import Translate from '../../lib/components/Translate.svelte';
 
@@ -26,8 +40,9 @@
     violet: 'linear-gradient(120deg,#1e1a44,#332a70)',
     rose: 'linear-gradient(120deg,#3b1522,#5a1f36)',
   };
-  // rows per page in the table; the real list is paged from the backend
+  // rows per page in the table (and the page size asked of the host)
   const PAGE = 6;
+  const SORT_KEYS: ExploreQuery['sort'][] = ['members', 'active', 'newest'];
   const fmt = (n: number) => (n >= 1e6 ? `${+(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${+(n / 1e3).toFixed(1)}K` : String(n));
 
   export interface ExploreCommunity {
@@ -58,15 +73,24 @@
     joinedKeys?: string[];
     guest?: boolean;
     onOpen?: (key: string) => void;
-    /** The table's Preview button. */
-    onJoin?: (key: string) => void;
+    /** The table's Preview button: open the community's preview (not a join). */
+    onPreview?: (key: string) => void;
+    /** Server-side search / filter / sort / paging. Called with offset 0 on every change and offset = loaded count
+     *  for "Load more"; the host replaces or appends `communities`. */
+    onQuery?: (q: ExploreQuery) => void;
+    /** Matching communities in all (onQuery mode); defaults to communities.length. */
+    total?: number;
+    /** A page is being fetched (onQuery mode). */
+    loading?: boolean;
+    /** Languages to offer in the filter (onQuery mode); defaults to the languages of the loaded communities. */
+    languageOptions?: string[];
     onCreate?: () => void;
     onSignIn?: () => void;
     /** Defaults to onSignIn. */
     onCreateAccount?: () => void;
   }
 
-  let { communities, joinedKeys = [], guest = false, onOpen, onJoin, onCreate, onSignIn, onCreateAccount }: Props = $props();
+  let { communities, joinedKeys = [], guest = false, onOpen, onPreview, onQuery, total, loading = false, languageOptions, onCreate, onSignIn, onCreateAccount }: Props = $props();
   const t = useT();
 
   let query = $state('');
@@ -89,6 +113,7 @@
     document.addEventListener('pointerdown', away, true);
     document.addEventListener('keydown', esc);
     return () => {
+      clearTimeout(queryTimer);
       document.removeEventListener('pointerdown', away, true);
       document.removeEventListener('keydown', esc);
     };
@@ -102,14 +127,36 @@
     (a, b) => (b.active || 0) - (a.active || 0),
     (a, b) => (b.created || 0) - (a.created || 0),
   ];
+  // onQuery: the host has already searched, filtered and sorted
+  const remote = $derived(!!onQuery);
   const list = $derived(
-    communities
-      .filter((c) => (!langs.length || langs.includes(langOf(c))) && (!q || `${c.name} ${c.about || ''}`.toLowerCase().includes(q)))
-      .sort(SORTS[sort]),
+    remote
+      ? communities
+      : communities.filter((c) => (!langs.length || langs.includes(langOf(c))) && (!q || `${c.name} ${c.about || ''}`.toLowerCase().includes(q))).sort(SORTS[sort]),
   );
+  const totalCount = $derived(remote ? (total ?? communities.length) : list.length);
+
+  // every change asks the host for the first page again; typing waits for a pause
+  let queryTimer: ReturnType<typeof setTimeout> | undefined;
+  let firstQuery = true;
+  const ask = (offset: number) => onQuery?.({ text: query.trim(), languages: [...langs], sort: SORT_KEYS[sort], offset, limit: PAGE });
+  $effect(() => {
+    void query;
+    void langs;
+    void sort;
+    untrack(() => {
+      if (firstQuery) {
+        firstQuery = false;
+        return;
+      }
+      if (!onQuery) return;
+      clearTimeout(queryTimer);
+      queryTimer = setTimeout(() => ask(0), 250);
+    });
+  });
   // search ranks name matches above description matches, then by size
   const score = (c: ExploreCommunity) => (q && c.name.toLowerCase().includes(q) ? 2 : 0) + (q && c.name.toLowerCase().startsWith(q) ? 1 : 0);
-  const found = $derived(q ? list.slice().sort((a, b) => score(b) - score(a) || b.members - a.members) : []);
+  const found = $derived(q ? (remote ? list : list.slice().sort((a, b) => score(b) - score(a) || b.members - a.members)) : []);
 
   const isJoined = (c: ExploreCommunity) => joinedKeys.includes(c.key);
   const isPrivate = (c: ExploreCommunity) => c.visibility === 'Private';
@@ -123,13 +170,20 @@
   // popular: biggest public communities you haven't joined
   const top = $derived(q ? [] : list.filter((c) => !isJoined(c) && !isPrivate(c)).sort((a, b) => b.members - a.members).slice(0, 4));
   const languages = $derived(
-    Array.from(new Set(communities.map(langOf)))
+    Array.from(new Set(languageOptions ?? communities.map(langOf)))
       .map((l) => ({ label: l, count: communities.filter((c) => langOf(c) === l).length }))
       .sort((a, b) => b.count - a.count),
   );
   const langLabel = $derived(!langs.length ? t('ui.exploreCommunities.anyLanguage') : langs.length === 1 ? t(langs[0]) : t('ui.exploreCommunities.languagesCount', { count: langs.length }));
   const emptyTitle = $derived(q ? t('ui.exploreCommunities.noMatch', { query }) : t('ui.exploreCommunities.noneInLanguages'));
-  const rows = $derived(list.slice(0, shown));
+  const rows = $derived(remote ? list : list.slice(0, shown));
+  const hasMore = $derived(remote ? list.length < totalCount : list.length > shown);
+
+  function loadMore() {
+    if (remote) {
+      if (!loading) ask(list.length);
+    } else shown += PAGE;
+  }
 
   function toggleLang(l: string) {
     shown = PAGE;
@@ -239,7 +293,7 @@
         </div>
       </div>
       <div class="results-row">
-        <span class="result-count">{t('ui.exploreCommunities.results', { count: found.length })}</span>
+        <span class="result-count">{t('ui.exploreCommunities.results', { count: remote ? totalCount : found.length })}</span>
         {@render langPicker(false)}
       </div>
     </div>
@@ -307,7 +361,7 @@
     <div class="table-wrap">
       <div class="table">
         <div class="table-head">
-          <span class="table-title">{t(langs.length ? 'ui.exploreCommunities.filtered' : 'ui.exploreCommunities.allCommunities')} <span class="table-count">· {list.length}</span></span>
+          <span class="table-title">{t(langs.length ? 'ui.exploreCommunities.filtered' : 'ui.exploreCommunities.allCommunities')} <span class="table-count">· {totalCount}</span></span>
           {#if langs.length}
             <span class="clear-filters" onclick={() => (langs = [])} role="button" tabindex="0">{t('ui.exploreCommunities.clearFilters')}</span>
           {/if}
@@ -357,7 +411,7 @@
                   class="preview"
                   onclick={(e) => {
                     e.stopPropagation();
-                    onJoin?.(c.key);
+                    onPreview?.(c.key);
                   }}
                   role="button"
                   tabindex="0">{t('ui.exploreCommunities.preview')}</span
@@ -366,12 +420,12 @@
             </div>
           </div>
         {/each}
-        {#if list.length > shown}
+        {#if hasMore}
           <div class="more">
-            <span class="load-more" onclick={() => (shown += PAGE)} role="button" tabindex="0"
-              >{t('ui.exploreCommunities.loadMore', { count: Math.min(PAGE, list.length - shown) })}{@render icon('chevron-down', 13, 'var(--ink,#ECECF1)')}</span
+            <span class="load-more" onclick={loadMore} role="button" tabindex="0" aria-busy={loading}
+              >{loading ? t('ui.exploreCommunities.loading') : t('ui.exploreCommunities.loadMore', { count: Math.min(PAGE, totalCount - rows.length) })}{@render icon('chevron-down', 13, 'var(--ink,#ECECF1)')}</span
             >
-            <span class="shown">{t('ui.exploreCommunities.showing', { shown: Math.min(shown, list.length), total: list.length })}</span>
+            <span class="shown">{t('ui.exploreCommunities.showing', { shown: rows.length, total: totalCount })}</span>
           </div>
         {/if}
         {#if list.length === 0}

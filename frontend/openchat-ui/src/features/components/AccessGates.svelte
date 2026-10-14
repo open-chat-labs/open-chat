@@ -1,19 +1,19 @@
 <!-- Access gates editor ("who can join"): requirement rows read as sentences ("Members must hold …") with value chips,
      joined by AND / OR; configurable rows edit inline (asset pills, a searchable token / nervous-system picker, numeric fields).
      An optional periodic re-check sits below. Non-diamond users see an explainer and an upgrade banner; readOnly shows the
-     requirements as facts. `value` restores the last state handed out by onChange, so gates survive the tab being remounted. -->
+     requirements as facts. `value` restores the last state handed out by onChange, so gates survive the tab being remounted.
+     The tokens and nervous systems come from the host (`tokens`, `nervousSystems`); a rule stores the canister id. Gate
+     types that need one of those lists are not offered while it is empty. -->
 <script lang="ts" module>
-  type Entry = { symbol: string; name: string };
-  const parse = (list: string, sep: string): Entry[] =>
-    list.split(sep).map((s) => {
-      const [symbol, name] = s.split('|');
-      return { symbol, name };
-    });
-
-  // full token directory behind the curated pills — searchable in the picker modal
-  const DIRECTORY = parse('CHAT|OpenChat·ICP|Internet Computer·BTC|ckBTC — Bitcoin·ETH|ckETH — Ethereum·USDC|ckUSDC·USDT|ckUSDT·BOB|BOB·KINIC|Kinic·GLDGov|Gold DAO·OGY|Origyn·MOD|Modclub·BOOM|Boom DAO·CTZ|Catalyze·NUA|Nuance·TRAX|Trax·SONIC|Sonic·HOT|HotOrNot·GHOST|Ghost·ICL|ICLighthouse·ELNA|ELNA AI·NTN|Neutrinite·DCD|DecideAI·DKP|Dragginz Karma Points·ICS|ICPSwap·SEER|Seers·WTN|WaterNeuron·ALICE|ALICE DAO·YUKU|Yuku DAO·NFIDW|NFID Wallet·PANDA|ICPanda·TACO|TACO DAO·MOTOKO|Motoko·KONG|KongSwap·EXE|Windoge98·DOGMI|DOGMI·SNEED|Sneed DAO·NICP|Neuron ICP·CLOWN|Clown·ND64|ND64·TENDY|Tendy·DAMONIC|Damonic·WUMBO|Wumbo·CLOUD|Cloud·SWAMP|Swampies·FOMO|FOMO·ckLINK|ckLINK·ckUNI|ckUNI·ckPEPE|ckPEPE·ckSHIB|ckSHIB·ckWBTC|ckWBTC·ckWSTETH|ckwstETH·ckXAUT|ckXAUt·ckOCT|ckOCT·ckEURC|ckEURC·DAI|Dai·PYUSD|PayPal USD·FDUSD|First Digital USD·TUSD|TrueUSD·EURC|Euro Coin·SOL|Solana·BNB|BNB·XRP|XRP·ADA|Cardano·DOGE|Dogecoin·TRX|TRON·AVAX|Avalanche·DOT|Polkadot·MATIC|Polygon·LINK|Chainlink·TON|Toncoin·LTC|Litecoin·BCH|Bitcoin Cash·ATOM|Cosmos·NEAR|NEAR Protocol·APT|Aptos·SUI|Sui·FIL|Filecoin·TIA|Celestia·INJ|Injective·SEI|Sei·ARB|Arbitrum·OP|Optimism·STX|Stacks·RNDR|Render·GRT|The Graph·UNI|Uniswap·AAVE|Aave·MKR|Maker·LDO|Lido DAO·CRV|Curve DAO·SNX|Synthetix·COMP|Compound·BAL|Balancer·YFI|yearn.finance·SUSHI|SushiSwap·1INCH|1inch·CAKE|PancakeSwap·GMX|GMX·DYDX|dYdX·PENDLE|Pendle·ENA|Ethena·ETHFI|Ether.fi·EIGEN|EigenLayer·JUP|Jupiter·PYTH|Pyth Network·JTO|Jito·RAY|Raydium·ORCA|Orca·WIF|dogwifhat·BONK|Bonk·PEPE|Pepe·FLOKI|Floki·SHIB|Shiba Inu·BRETT|Brett·POPCAT|Popcat·MEW|cat in a dogs world·TURBO|Turbo·MOG|Mog Coin·ENS|Ethereum Name Service·IMX|Immutable·SAND|The Sandbox·MANA|Decentraland·AXS|Axie Infinity·GALA|Gala·CHZ|Chiliz·APE|ApeCoin·ILV|Illuvium·BLUR|Blur·LOOKS|LooksRare·RARE|SuperRare·FTM|Fantom·ALGO|Algorand·XLM|Stellar·HBAR|Hedera·VET|VeChain·EGLD|MultiversX·KAVA|Kava·RUNE|THORChain·OSMO|Osmosis·JUNO|Juno·SCRT|Secret·ROSE|Oasis·ONE|Harmony·CELO|Celo·KSM|Kusama·ZIL|Zilliqa·IOTA|IOTA·NEO|Neo·EOS|EOS·QNT|Quant·XMR|Monero·ZEC|Zcash·DASH|Dash·XTZ|Tezos·THETA|Theta·FLOW|Flow·MINA|Mina·KAS|Kaspa·TAO|Bittensor·FET|Artificial Superintelligence·AGIX|SingularityNET·OCEAN|Ocean Protocol·AKT|Akash·AR|Arweave·STORJ|Storj·HNT|Helium·IOTX|IoTeX·ANKR|Ankr·BAT|Basic Attention·ZRX|0x·KNC|Kyber Network·REN|Ren·BAND|Band Protocol·UMA|UMA·API3|API3·TRB|Tellor·NMR|Numeraire·RPL|Rocket Pool·FXS|Frax Share·SPELL|Spell·CVX|Convex·MPL|Maple·GNO|Gnosis·SAFE|Safe·ARKM|Arkham·WLD|Worldcoin·ZK|zkSync·STRK|Starknet·MANTA|Manta Network·METIS|Metis·BOBA|Boba Network·SKL|SKALE·CTSI|Cartesi·LRC|Loopring', '·');
-  // SNS nervous systems — curated pills first, the rest searchable in the picker
-  const SNS = parse('OpenChat|CHAT — messaging;Motoko|MOTOKO — developer tooling;ICPanda|PANDA — community;TACO DAO|TACO — treasury;Dragginz|DKP — game;WaterNeuron|WTN — liquid staking;Gold DAO|GLDGov — tokenized gold;Origyn|OGY — digital certificates;Modclub|MOD — moderation;Boom DAO|BOOM — gaming;Catalyze|CTZ — communities;Nuance|NUA — publishing;Trax|TRAX — music;Sonic|SONIC — DEX;HotOrNot|HOT — short video;Ghost|GHOST — meme;ICLighthouse|ICL — trading;ELNA AI|ELNA — AI agents;Neutrinite|NTN — analytics;DecideAI|DCD — AI;ICPSwap|ICS — DEX;Seers|SEER — prediction markets;ALICE DAO|ALICE — quant trading;Yuku DAO|YUKU — NFTs;NFID Wallet|NFIDW — identity;KongSwap|KONG — DEX;Sneed DAO|SNEED — community;Windoge98|EXE — meme;Cecil the Lion|CECIL — meme;FomoWell|FOMO — social;Swampies|SWAMP — game;Cycles Transfer Station|CTS — infrastructure;Personal DAO|PDAO — tooling;EstateDAO|EST — real estate;Kinic|KINIC — search;SNS-1|SNS1 — first SNS;Dolr AI|DOLR — video;Funded|FND — crowdfunding;CyclOps|CYC — cycles management;Konecta|KONECTA — AI;Pogo|POGO — social;Nuance Labs|NUAL — publishing', ';');
+  /** A token (ledger canister) or nervous system (governance canister) a gate can name. */
+  export interface GateAsset {
+    /** Canister id: stored as the rule's `asset`. */
+    id: string;
+    symbol: string;
+    name: string;
+    /** Offered as a quick pill above the searchable list. */
+    featured?: boolean;
+  }
 </script>
 
 <script lang="ts">
@@ -33,7 +33,8 @@
     desc: string;
     sentence: string;
     assetLabel?: string;
-    assets?: string[];
+    /** Needs an asset from the `picker` list (tokens or nervous systems). */
+    assets?: boolean;
     searchable?: boolean;
     picker?: 'token' | 'sns';
     pickerSub?: string;
@@ -71,15 +72,11 @@
     return `linear-gradient(140deg,${GRADS[h % GRADS.length]})`;
   }
 
-  const TOKENS = ['CHAT', 'ICP', 'BTC', 'BOB', 'USDC', 'USDT'];
-  const NERVOUS = ['OpenChat', 'ICPanda', 'Dragginz', 'WaterNeuron', 'Gold DAO'];
-
   // copy fields are resource keys
   const PICKERS = {
-    token: { title: 'ui.accessGates.tokenPickerTitle', search: 'ui.accessGates.tokenSearch', all: 'ui.accessGates.allTokens', empty: 'ui.accessGates.tokenEmpty', dir: DIRECTORY, more: 'ui.accessGates.moreTokens', change: 'ui.accessGates.changeToken' },
-    sns: { title: 'ui.accessGates.snsPickerTitle', search: 'ui.accessGates.snsSearch', all: 'ui.accessGates.allSystems', empty: 'ui.accessGates.snsEmpty', dir: SNS, more: 'ui.accessGates.moreSystems', change: 'ui.accessGates.changeSystem' },
+    token: { title: 'ui.accessGates.tokenPickerTitle', search: 'ui.accessGates.tokenSearch', all: 'ui.accessGates.allTokens', empty: 'ui.accessGates.tokenEmpty', more: 'ui.accessGates.moreTokens', change: 'ui.accessGates.changeToken' },
+    sns: { title: 'ui.accessGates.snsPickerTitle', search: 'ui.accessGates.snsSearch', all: 'ui.accessGates.allSystems', empty: 'ui.accessGates.snsEmpty', more: 'ui.accessGates.moreSystems', change: 'ui.accessGates.changeSystem' },
   };
-  const entryName = (dir: Entry[], symbol: string) => dir.find((x) => x.symbol === symbol)?.name ?? symbol;
   const nonEmpty = (chips: (Chip | '' | false)[]) => chips.filter((c): c is Chip => !!c);
 
   // label / desc / sentence / assetLabel / pickerSub / field placeholder + unit: resource keys (chips are built when shown)
@@ -91,7 +88,7 @@
       icon: 'neuron',
       desc: 'ui.accessGates.neuronDesc',
       assetLabel: 'ui.accessGates.nervousSystem',
-      assets: NERVOUS,
+      assets: true,
       searchable: true,
       picker: 'sns',
       repeatable: true,
@@ -103,7 +100,7 @@
       sentence: 'ui.accessGates.neuronRule',
       chips: (r) =>
         nonEmpty([
-          r.asset && { label: r.asset, dot: true },
+          r.asset && { label: assetText(r), dot: true },
           r.a && { label: t('ui.accessGates.dissolveChip', { days: r.a }) },
           r.b && { label: t('ui.accessGates.stakedChip', { amount: r.b }) },
         ]),
@@ -113,7 +110,7 @@
       icon: 'payment',
       desc: 'ui.accessGates.paymentDesc',
       assetLabel: 'ui.accessGates.token',
-      assets: TOKENS,
+      assets: true,
       searchable: true,
       picker: 'token',
       repeatable: true,
@@ -121,14 +118,14 @@
       fields: [{ key: 'a', placeholder: 'ui.accessGates.amount', unit: 'ui.accessGates.unitTokens', required: true }],
       sentence: 'ui.accessGates.paymentRule',
       chips: (r) =>
-        r.asset && r.a ? [{ label: `${r.a} ${r.asset}`, dot: r.asset }] : nonEmpty([r.asset && { label: r.asset, dot: r.asset }, r.a && { label: r.a }]),
+        r.asset && r.a ? [{ label: `${r.a} ${assetText(r)}`, dot: assetText(r) }] : nonEmpty([r.asset && { label: assetText(r), dot: assetText(r) }, r.a && { label: r.a }]),
     },
     balance: {
       label: 'ui.accessGates.balanceLabel',
       icon: 'balance',
       desc: 'ui.accessGates.balanceDesc',
       assetLabel: 'ui.accessGates.token',
-      assets: TOKENS,
+      assets: true,
       searchable: true,
       picker: 'token',
       repeatable: true,
@@ -138,8 +135,8 @@
       sentence: 'ui.accessGates.balanceRule',
       chips: (r) =>
         r.asset && r.a
-          ? [{ label: t('ui.accessGates.minChip', { amount: `${r.a} ${r.asset}` }), dot: r.asset }]
-          : nonEmpty([r.asset && { label: r.asset, dot: r.asset }, r.a && { label: t('ui.accessGates.minChip', { amount: r.a }) }]),
+          ? [{ label: t('ui.accessGates.minChip', { amount: `${r.a} ${assetText(r)}` }), dot: assetText(r) }]
+          : nonEmpty([r.asset && { label: assetText(r), dot: assetText(r) }, r.a && { label: t('ui.accessGates.minChip', { amount: r.a }) }]),
     },
     credential: { label: 'ui.accessGates.credentialLabel', icon: 'credential', desc: 'ui.accessGates.credentialDesc', sentence: 'ui.accessGates.credentialRule' },
     unique: { label: 'ui.accessGates.uniqueLabel', icon: 'person', desc: 'ui.accessGates.uniqueDesc', sentence: 'ui.accessGates.uniqueRule' },
@@ -158,8 +155,10 @@
   // stored values (emitted in AccessGatesState); shown through JOINER_LABELS
   const JOINERS = ['All', 'Any'];
   const JOINER_LABELS = ['ui.accessGates.all', 'ui.accessGates.any'];
-  // stored values (emitted as `every`) and shown as-is by TimedToggle — not translated until it takes labels apart from values
+  // stored values (emitted as `every`) and shown as-is by TimedToggle — not translated until it takes labels apart from values;
+  // `everyDays` gives the host the same interval as a number
   const INTERVALS = ['1 day', '1 week', '2 weeks', '1 month', '3 months', '6 months'];
+  const INTERVAL_DAYS: Record<string, number> = { '1 day': 1, '1 week': 7, '2 weeks': 14, '1 month': 30, '3 months': 90, '6 months': 180 };
   const mask = (icon: string) => `var(--icon-${icon}) center/contain no-repeat`;
 
   // title / body / chip: resource keys (or literal text)
@@ -174,8 +173,12 @@
   ];
 
   interface Props {
-    /** false shows the explainer and upgrade banner instead of the editor (ignored when readOnly). */
+    /** false (the default) shows the explainer and upgrade banner instead of the editor (ignored when readOnly). */
     isDiamond?: boolean;
+    /** Tokens payment / balance gates can name (ledger canister ids). Those gates are hidden while this is empty. */
+    tokens?: GateAsset[];
+    /** Nervous systems neuron gates can name (governance canister ids). */
+    nervousSystems?: GateAsset[];
     /** Members' view: requirements as facts, nothing to change. */
     readOnly?: boolean;
     /** State last handed out by onChange; read once, on mount. */
@@ -184,8 +187,20 @@
     onChange?: (state: AccessGatesState) => void;
   }
 
-  let { isDiamond = true, readOnly = false, value = null, onUpgrade, onChange }: Props = $props();
+  let { isDiamond = false, tokens = [], nervousSystems = [], readOnly = false, value = null, onUpgrade, onChange }: Props = $props();
   const t = useT();
+
+  const dirFor = (kind: 'token' | 'sns' | undefined) => (kind === 'sns' ? nervousSystems : tokens);
+  // tokens read as their symbol, nervous systems as their name; an id no list knows is shown as it is
+  function labelOf(kind: 'token' | 'sns' | undefined, id: string) {
+    const a = dirFor(kind).find((x) => x.id === id);
+    return a ? (kind === 'sns' ? a.name : a.symbol) : id;
+  }
+  function assetText(r: AccessGateRule) {
+    return labelOf(TYPES[r.type]?.picker, r.asset);
+  }
+  const featuredFor = (gt: GateType) => dirFor(gt.picker).filter((a) => a.featured).map((a) => a.id);
+  const offered = (gt: GateType) => !gt.assets || dirFor(gt.picker).length > 0;
 
 
   // the host can hand back the state it was last given, so gates survive the tab being unmounted and remounted
@@ -203,7 +218,7 @@
   const recurring = $derived(intervalOn && rules.length > 0);
 
   function emit() {
-    onChange?.({ count: rules.length, joiner, rules, intervalOn, every });
+    onChange?.({ count: rules.length, joiner, rules, intervalOn, every, everyDays: INTERVAL_DAYS[every] ?? 30 });
   }
 
   function add(key: string) {
@@ -249,15 +264,16 @@
     if (!picking) return null;
     const gt = TYPES[picking.type];
     const P = PICKERS[gt.picker ?? 'token'];
+    const dir = dirFor(gt.picker);
     const q = tokenQuery.trim().toLowerCase();
-    const matches = q ? P.dir.filter((tk) => tk.symbol.toLowerCase().includes(q) || tk.name.toLowerCase().includes(q)) : null;
+    const matches = q ? dir.filter((tk) => tk.symbol.toLowerCase().includes(q) || tk.name.toLowerCase().includes(q)) : null;
     const groups = matches
       ? matches.length
         ? [{ label: t('ui.accessGates.results', { count: matches.length }), tokens: matches }]
         : []
       : [
-          { label: t('ui.accessGates.mostUsed'), tokens: (gt.assets ?? []).map((symbol) => ({ symbol, name: entryName(P.dir, symbol) })) },
-          { label: t(P.all, { count: P.dir.length }), tokens: P.dir },
+          ...(dir.some((a) => a.featured) ? [{ label: t('ui.accessGates.mostUsed'), tokens: dir.filter((a) => a.featured) }] : []),
+          { label: t(P.all, { count: dir.length }), tokens: dir },
         ];
     return { rule: picking, P, sub: gt.pickerSub ?? '', groups, none: !!matches && matches.length === 0 };
   });
@@ -267,9 +283,9 @@
     tokenQuery = '';
   }
 
-  function pickToken(rule: AccessGateRule, symbol: string) {
-    if (takenBy(rule, symbol)) return;
-    patch(rule.id, { asset: symbol });
+  function pickToken(rule: AccessGateRule, id: string) {
+    if (takenBy(rule, id)) return;
+    patch(rule.id, { asset: id });
     closePicker();
   }
 </script>
@@ -374,13 +390,15 @@
                 <div class="editor">
                   {#if gt.assets}
                     {@const P = PICKERS[gt.picker ?? 'token']}
-                    {@const shown = gt.searchable && r.asset && !gt.assets.includes(r.asset) ? [...gt.assets, r.asset] : gt.assets}
+                    {@const featured = featuredFor(gt)}
+                    {@const shown = gt.searchable && r.asset && !featured.includes(r.asset) ? [...featured, r.asset] : featured}
                     <div class="asset-block">
                       <span class="asset-label">{gt.assetLabel ? t(gt.assetLabel) : ''}</span>
                       <div class="assets">
-                        {#each shown as name}
-                          {@const taken = takenBy(r, name)}
-                          <span class="asset" class:selected={r.asset === name} class:unavailable={taken} onclick={() => !taken && patch(r.id, { asset: name })} role="button" tabindex="0">
+                        {#each shown as id}
+                          {@const taken = takenBy(r, id)}
+                          {@const name = labelOf(gt.picker, id)}
+                          <span class="asset" class:selected={r.asset === id} class:unavailable={taken} onclick={() => !taken && patch(r.id, { asset: id })} role="button" tabindex="0">
                             <span class="asset-dot" style:background={dotFor(name)}></span>
                             <span>{taken ? t('ui.accessGates.assetUsed', { name }) : name}</span>
                           </span>
@@ -396,7 +414,7 @@
                             tabindex="0"
                           >
                             <span class="browse-icon"></span>
-                            <span>{t(r.asset && !gt.assets.includes(r.asset) ? P.change : P.more)}</span>
+                            <span>{t(r.asset && !featured.includes(r.asset) ? P.change : P.more)}</span>
                           </span>
                         {/if}
                       </div>
@@ -489,7 +507,7 @@
           <span class="close" onclick={() => (addOpen = false)} role="button" tabindex="0" aria-label={t('ui.common.close')}><span class="tool-icon" style:mask={mask('close')}></span></span>
         </div>
         <div class="catalogue">
-          {#each Object.entries(TYPES) as [key, gt]}
+          {#each Object.entries(TYPES).filter(([, gt]) => offered(gt)) as [key, gt]}
             {@const used = !gt.repeatable && rules.some((r) => r.type === key)}
             <div class="option" class:unavailable={gt.soon || used} onclick={() => !used && add(key)} role="button" tabindex="0">
               <span class="option-tile"><span class="option-icon" style:mask={mask(gt.icon)}></span></span>
@@ -535,9 +553,9 @@
             <div class="token-group">
               <span class="token-group-label">{group.label}</span>
               {#each group.tokens as tk}
-                {@const taken = takenBy(picker.rule, tk.symbol)}
-                {@const selected = picker.rule.asset === tk.symbol}
-                <div class="token" class:selected class:taken onclick={() => pickToken(picker.rule, tk.symbol)} role="button" tabindex="0">
+                {@const taken = takenBy(picker.rule, tk.id)}
+                {@const selected = picker.rule.asset === tk.id}
+                <div class="token" class:selected class:taken onclick={() => pickToken(picker.rule, tk.id)} role="button" tabindex="0">
                   <span class="token-dot" style:background={dotFor(tk.symbol)}></span>
                   <div class="token-text">
                     <span class="token-symbol">{tk.symbol}</span>

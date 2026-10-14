@@ -1,7 +1,9 @@
 <!-- Profile & settings: a nav rail of sections (profile, stats, CHIT, Diamond, chats & calls, communities, sign-in providers,
      appearance, storage, bots, link device, delete account, invite, about) and the selected section. Profile fields edit
      in place; delete account runs a four-step "are you sure" flow; log out confirms first. Esc closes the innermost layer.
-     The CHIT calendar draws on a synthetic claim history (as exported) until a real history is passed in. -->
+     Everything that changes the account goes through the host and waits on its promise (profile save, sign-in methods,
+     community names, clear cache, log out, delete account); a rejection keeps the user's input with an error. Actions
+     whose callback is absent are hidden. The CHIT calendar draws `claimHistory`. -->
 <script lang="ts" module>
   export type ProfileSection =
     | 'profile'
@@ -44,6 +46,29 @@
     adult: boolean;
     underReview: boolean;
     ringtone: 'boring' | 'pleasant' | 'boomboom' | 'twostep' | 'siren';
+  }
+
+  /** One day of the CHIT claim history (UTC calendar days). */
+  export interface ClaimDay {
+    /** YYYY-MM-DD (UTC). */
+    day: string;
+    /** Streak day this claim counted as. */
+    streakDay: number;
+    /** CHIT claimed (absent for insured days). */
+    amount?: number;
+    /** Minute of the UTC day the claim was made. */
+    minute?: number;
+    /** Covered by streak insurance instead of a claim. */
+    insured?: boolean;
+  }
+
+  export interface ProfileCommunity {
+    id: string;
+    name: string;
+    /** Gradient key (teal, violet, amber, blue, plum, rose, slate), used when there is no avatar. */
+    color?: string;
+    /** CSS background (image URL or gradient) for the community face. */
+    avatar?: string;
   }
 
   export interface ChitSettingsPatch {
@@ -152,33 +177,9 @@
   };
   const RINGTONES: [ChatSettings['ringtone'], string][] = [['boring', 'ui.profileDialog.ringtones.boring'], ['pleasant', 'ui.profileDialog.ringtones.pleasant'], ['boomboom', 'ui.profileDialog.ringtones.boomboom'], ['twostep', 'ui.profileDialog.ringtones.twostep'], ['siren', 'ui.profileDialog.ringtones.siren']];
 
-  // synthetic claim history back to the join month, against a fixed "today" (as exported)
-  const TODAY = Date.UTC(2026, 8, 23);
   const DAY = 864e5;
-  const JOINED = { y: 2021, m: 10 };
-  const tier = (d: number) => (d >= 365 ? 600 : d >= 100 ? 500 : d >= 30 ? 400 : d >= 14 ? 300 : d >= 7 ? 200 : d >= 3 ? 150 : 100);
   const dayKey = (t: number) => new Date(t).toISOString().slice(0, 10);
-  type ClaimRecord = { amount: number; day: number; min: number; insured?: false } | { insured: true; day: number };
-
-  function buildHistory(runLength: number, insuredDays: string[]) {
-    const map: Record<string, ClaimRecord> = {};
-    const runStart = TODAY - runLength * DAY;
-    let t = Date.UTC(JOINED.y, JOINED.m, 1), run = 0, seed = 7;
-    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-    while (t < runStart - DAY) {
-      if (rnd() < 0.1) run = 0;
-      else {
-        run++;
-        map[dayKey(t)] = { amount: tier(run), day: run, min: 300 + Math.floor(rnd() * 960) };
-      }
-      t += DAY;
-    }
-    for (let i = 0; i < runLength; i++) {
-      const k = dayKey(runStart + i * DAY);
-      map[k] = insuredDays.includes(k) ? { insured: true, day: i + 1 } : { amount: tier(i + 1), day: i + 1, min: 300 + ((i * 137 + 61) % 960) };
-    }
-    return map;
-  }
+  const dayStart = (t: number) => Math.floor(t / DAY) * DAY;
 
   const SI_TYPES = {
     passkey: { label: 'ui.profileDialog.signin.passkeys', icon: 'passkey', noun: 'ui.profileDialog.signin.passkey', addLabel: 'ui.profileDialog.signin.addPasskey', addTitle: 'ui.profileDialog.signin.addPasskey', empty: 'ui.profileDialog.signin.noPasskeys' },
@@ -243,10 +244,14 @@
     puzzleRemind?: boolean;
     /** Calendar shows claim times in UTC instead of local time. */
     chitUtc?: boolean;
-    /** Local time offset used for the calendar's claim times. */
+    /** Local time offset used for the calendar's claim times; defaults to this browser's. */
     utcOffsetMinutes?: number;
-    /** Minute of day today's claim was made (when already claimed). */
-    claimMinute?: number;
+    /** Claim history for the calendar (any order). */
+    claimHistory?: ClaimDay[];
+    /** "Today" for the calendar, ms epoch; defaults to now. */
+    today?: number;
+    /** When the account was created, ms epoch: the calendar doesn't page back before it. Defaults to `today`. */
+    joined?: number;
     achievementsLeft?: number;
     /** All-time CHIT earned, shown in the delete flow. */
     chitEarned?: number;
@@ -259,8 +264,8 @@
     reported?: number;
 
     // settings
-    communities?: { name: string; color: string }[];
-    /** Custom display name per community name. */
+    communities?: ProfileCommunity[];
+    /** Custom display name per community id. */
     communityNames?: Record<string, string>;
     signinMethods?: SigninMethod[];
     /** Resource key (or literal text): how the log-out confirmation names the sign-in method. */
@@ -270,13 +275,22 @@
     accentPref?: 'pink' | 'blue' | 'orange' | 'green';
     fontSize?: 'small' | 'default' | 'large' | 'larger';
     storageUsedMB?: number;
+    /** Storage allowance in MB; defaults to 1024 for Diamond, else 100. */
+    storageLimitMB?: number;
     /** Issue a device-link code (from the backend). The countdown runs to its expiresAt (ms epoch); without this the
      *  Show code button is hidden. */
     onRequestLinkCode?: () => Promise<{ code: string; expiresAt: number }>;
     inviteLink?: string;
+    /** Rewards for inviting friends ("Becomes a Diamond member" → 5000); the list is hidden when empty. */
+    inviteRewards?: { label: string; amount: number }[];
+    /** Bot configuration values; a row is hidden when its value is absent. */
     icHost?: string;
     storageIndex?: string;
     publicKey?: string;
+    /** Base for the About links (`${aboutBaseUrl}/features` …). */
+    aboutBaseUrl?: string;
+    /** "Bot docs" link on the Bot configuration page. */
+    botDocsUrl?: string;
     platform?: string;
     version?: string;
 
@@ -284,18 +298,35 @@
     onChit?: () => void;
     onEarn?: () => void;
     onDiamond?: () => void;
-    onSave?: (v: { name: string; handle: string; about: string }) => void;
-    onLogout?: () => void;
-    onDeleteAccount?: () => void;
+    /** Save the profile fields. Reject to keep the editor open with an error. */
+    onSave?: (v: { name: string; handle: string; about: string }) => Promise<unknown> | void;
+    /** Whether a username is free (checked before saving a new one). */
+    checkHandle?: (handle: string) => Promise<boolean>;
+    /** Log out; the dialog closes once it resolves. Hidden without it. */
+    onLogout?: () => Promise<unknown> | void;
+    /** Delete the account after the user typed their handle; the host re-authenticates. Hidden without it. */
+    onDeleteAccount?: (confirmedHandle: string) => Promise<unknown> | void;
     onShareApp?: (link: string) => void;
     onCoverEdit?: (isDiamond: boolean) => void;
     onPhotoEdit?: () => void;
     onChitSettings?: (patch: ChitSettingsPatch) => void;
     onChitBribe?: () => void;
-    onCommunityName?: (community: string, name: string | null) => void;
+    /** Set (or clear, with null) your name in a community. Rolls back with an error on rejection. */
+    onCommunityName?: (communityId: string, name: string | null) => Promise<unknown> | void;
     onChatSettings?: (settings: ChatSettings) => void;
     onAppearance?: (patch: { theme?: string; accent?: string; font?: string }) => void;
-    onClearCache?: () => void;
+    /** Clear this device's cache; "Cleared" shows once it resolves. Hidden without it. */
+    onClearCache?: () => Promise<unknown> | void;
+    /** Play a ringtone preview; may return a function that stops it. The play buttons are hidden without it. */
+    onPreviewRingtone?: (tone: ChatSettings['ringtone']) => void | (() => void);
+    /** Sign-in methods. Each control is hidden when its callback is absent; rejections show an error. */
+    /** Create a passkey / sign in with II and link it (the host also confirms with the current method). */
+    onLinkMethod?: (type: 'passkey' | 'ii') => Promise<SigninMethod>;
+    /** Email a one-time code to this address. */
+    onRequestEmailCode?: (email: string) => Promise<unknown>;
+    /** Check the code and link the email. */
+    onVerifyEmailCode?: (email: string, code: string) => Promise<SigninMethod>;
+    onUnlinkMethod?: (id: string) => Promise<unknown>;
     onReportIssue?: () => void;
   }
 
@@ -311,7 +342,7 @@
     cover = 'var(--cover-pattern)',
     isDiamond = false,
     isVerified = false,
-    claimable = true,
+    claimable = false,
     section: initialSection = 'profile',
     chitEnabled = true,
     chitNotify = true,
@@ -319,8 +350,10 @@
     puzzleShown = true,
     puzzleRemind = false,
     chitUtc = false,
-    utcOffsetMinutes = 120,
-    claimMinute = 560,
+    utcOffsetMinutes = -new Date().getTimezoneOffset(),
+    claimHistory = [],
+    today: todayProp,
+    joined: joinedProp,
     achievementsLeft = 0,
     chitEarned = 0,
     onlineMinutes = 0,
@@ -337,11 +370,15 @@
     accentPref = 'pink',
     fontSize = 'default',
     storageUsedMB,
+    storageLimitMB,
     onRequestLinkCode,
     inviteLink,
-    icHost = 'https://icp-api.io',
-    storageIndex = 'rturd-qaaaa-aaaaf-aabaq-cai',
-    publicKey = '-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEquEHzJr9605Oy796e4z7LKow46DVNUnDOQWavi86vEhRAAfdbVh/Lgmxfi44LPb6S0wnCRm9kI/XdK1DYw2Eaw==\n-----END PUBLIC KEY-----',
+    inviteRewards = [],
+    icHost,
+    storageIndex,
+    publicKey,
+    aboutBaseUrl = 'https://oc.app',
+    botDocsUrl = 'https://github.com/open-chat-labs/open-chat-bots',
     platform = 'Web',
     version = '',
     onClose,
@@ -349,6 +386,7 @@
     onEarn,
     onDiamond,
     onSave,
+    checkHandle,
     onLogout,
     onDeleteAccount,
     onShareApp,
@@ -360,6 +398,11 @@
     onChatSettings,
     onAppearance,
     onClearCache,
+    onPreviewRingtone,
+    onLinkMethod,
+    onRequestEmailCode,
+    onVerifyEmailCode,
+    onUnlinkMethod,
     onReportIssue,
   }: Props = $props();
   const t = useT();
@@ -413,11 +456,13 @@
   function startEdit(key: string, value: string) {
     editing = key;
     draft = value;
+    fieldError = null;
   }
 
   function stopEdit() {
     editing = null;
     draft = '';
+    fieldError = null;
   }
 
   // focus the field being edited, caret at the end
@@ -436,8 +481,18 @@
   });
 
   // ---- profile ----
+  // values the host has confirmed but not yet sent back as props; dropped whenever the props change
   let saved = $state<Partial<Record<FieldKey, string>>>({});
+  $effect.pre(() => {
+    void name;
+    void handle;
+    void about;
+    untrack(() => (saved = {}));
+  });
   const values = $derived({ name: saved.name ?? name, handle: saved.handle ?? handle, about: saved.about ?? about });
+  let fieldBusy = $state(false);
+  // a resource key: handle taken / save failed
+  let fieldError = $state<string | null>(null);
   const shownName = $derived(values.name || values.handle);
 
   function validate(key: string, v: string) {
@@ -448,13 +503,27 @@
     return null;
   }
 
-  function saveField() {
+  async function saveField() {
     const key = editing as FieldKey | null;
-    if (!key || validate(key, draft)) return;
+    if (!key || fieldBusy || validate(key, draft)) return;
     const v = key === 'about' ? draft : draft.trim();
+    if (v === values[key]) return stopEdit();
+    fieldBusy = true;
+    fieldError = null;
+    try {
+      if (key === 'handle' && checkHandle && !(await checkHandle(v))) {
+        fieldError = 'ui.profileDialog.fields.handleTaken';
+        return;
+      }
+      await onSave?.({ ...values, [key]: v });
+    } catch {
+      fieldError = 'ui.profileDialog.fields.saveFailed';
+      return;
+    } finally {
+      fieldBusy = false;
+    }
     saved = { ...saved, [key]: v };
     stopEdit();
-    onSave?.({ ...values, [key]: v });
   }
 
   const chitTag = $derived(balance >= 1e6 ? `${+(balance / 1e6).toFixed(1)}M` : balance >= 1e3 ? `${+(balance / 1e3).toFixed(1)}K` : String(balance));
@@ -472,13 +541,14 @@
   const setChit = (patch: ChitSettingsPatch) => onChitSettings?.(patch);
   const puzzleMode = $derived(!puzzleShown ? 'off' : puzzleRemind ? 'remind' : 'show');
 
+  const TODAY = $derived(dayStart(todayProp ?? Date.now()));
+  const hist = $derived(Object.fromEntries(claimHistory.map((c) => [c.day, c])) as Record<string, ClaimDay>);
+
   const calendar = $derived.by(() => {
-    const runLength = claimable ? streak : streak - 1;
-    const hist = buildHistory(runLength, ['2026-09-07']);
-    if (!claimable) hist[dayKey(TODAY)] = { amount: tier(runLength + 1), day: runLength + 1, min: claimMinute };
     const now = new Date(TODAY);
     const total = now.getUTCFullYear() * 12 + now.getUTCMonth();
-    const minTotal = JOINED.y * 12 + JOINED.m;
+    const joinedAt = new Date(joinedProp ?? TODAY);
+    const minTotal = Math.min(total, joinedAt.getUTCFullYear() * 12 + joinedAt.getUTCMonth());
     const view = Math.max(minTotal, total - monthOffset);
     const y = Math.floor(view / 12), mo = view % 12;
     const lead = new Date(Date.UTC(y, mo, 1)).getUTCDay();
@@ -513,13 +583,18 @@
           head,
           lines: [
             { text: t('ui.profileDialog.calendar.insured'), tone: 'online' },
-            { text: t('ui.profileDialog.calendar.streakKept', { day: rec.day }), tone: 'muted' },
+            { text: t('ui.profileDialog.calendar.streakKept', { day: rec.streakDay }), tone: 'muted' },
           ],
         });
-      } else if (rec && 'amount' in rec) {
+      } else if (rec && rec.amount != null) {
         chit += rec.amount;
         claimed++;
-        const time = chitUtc ? t('ui.profileDialog.calendar.timeUtc', { time: hhmm(rec.min) }) : t('ui.profileDialog.calendar.timeLocal', { time: hhmm(rec.min + utcOffsetMinutes) });
+        const time =
+          rec.minute == null
+            ? null
+            : chitUtc
+              ? t('ui.profileDialog.calendar.timeUtc', { time: hhmm(rec.minute) })
+              : t('ui.profileDialog.calendar.timeLocal', { time: hhmm(rec.minute + utcOffsetMinutes) });
         cells.push({
           day: d,
           kind: 'claimed',
@@ -527,8 +602,8 @@
           col,
           head,
           lines: [
-            { text: t('ui.profileDialog.calendar.claimedAt', { time }), tone: 'ink' },
-            { text: t('ui.profileDialog.calendar.claimedAmount', { amount: rec.amount, day: rec.day }), tone: 'chit' },
+            ...(time ? [{ text: t('ui.profileDialog.calendar.claimedAt', { time }), tone: 'ink' as const }] : []),
+            { text: t('ui.profileDialog.calendar.claimedAmount', { amount: rec.amount, day: rec.streakDay }), tone: 'chit' },
           ],
         });
       } else cells.push({ day: d, kind: 'missed', col, title: t('ui.profileDialog.calendar.notClaimed', { day: d, month: dateFmt({ month: 'short' }, ts) }) });
@@ -541,6 +616,7 @@
   let chatOverrides = $state<Partial<ChatSettings>>({});
   let playing = $state<ChatSettings['ringtone'] | null>(null);
   let previewTimer: ReturnType<typeof setTimeout> | undefined;
+  let stopPreview: (() => void) | undefined;
   const chat = $derived<ChatSettings>({ ...CHAT_DEFAULTS, ...chatSettings, ...chatOverrides });
 
   function setChat<K extends keyof ChatSettings>(key: K, value: ChatSettings[K]) {
@@ -549,50 +625,73 @@
     onChatSettings?.({ ...current, [key]: value });
   }
 
+  function endPreview() {
+    cancel(previewTimer);
+    stopPreview?.();
+    stopPreview = undefined;
+    playing = null;
+  }
+
+  // the host plays the sound; the waveform animates for the preview's length
   function preview(e: Event, tone: ChatSettings['ringtone']) {
     e.stopPropagation();
-    cancel(previewTimer);
-    if (playing === tone) {
-      playing = null;
-      return;
-    }
+    const same = playing === tone;
+    endPreview();
+    if (same || !onPreviewRingtone) return;
     playing = tone;
-    previewTimer = later(() => (playing = null), 2500);
+    stopPreview = onPreviewRingtone(tone) || undefined;
+    previewTimer = later(endPreview, 2500);
   }
 
   // ---- communities ----
   let commOverrides = $state<Record<string, string>>({});
   let commQuery = $state('');
+  let commError = $state<string | null>(null);
   const commNames = $derived({ ...communityNames, ...commOverrides });
   const shownCommunities = $derived.by(() => {
     const q = commQuery.trim().toLowerCase();
     return q ? communities.filter((c) => c.name.toLowerCase().includes(q)) : communities;
   });
 
-  function commitCommunity(community: string, value: string) {
-    commOverrides = { ...commOverrides, [community]: value };
+  // optimistic; restores the previous name with an error if the host rejects
+  async function commitCommunity(c: ProfileCommunity, value: string) {
+    const had = Object.prototype.hasOwnProperty.call(commOverrides, c.id);
+    const before = commOverrides[c.id];
+    commOverrides = { ...commOverrides, [c.id]: value };
+    commError = null;
     stopEdit();
-    onCommunityName?.(community, value || null);
+    try {
+      await onCommunityName?.(c.id, value || null);
+    } catch {
+      const next = { ...commOverrides };
+      if (had) next[c.id] = before;
+      else delete next[c.id];
+      commOverrides = next;
+      commError = t('ui.profileDialog.communities.saveFailed', { community: c.name });
+    }
   }
 
   // ---- sign-in providers ----
-  type Adding = { type: SigninMethod['type']; step: 'new' | 'email' | 'code' | 'confirm'; email: string; code: string; waiting?: boolean };
+  // passkey / II: one host call (create or sign in, then confirm with the current method); email: send a code, verify it
+  type Adding = { type: SigninMethod['type']; step: 'new' | 'email' | 'code'; email: string; code: string; waiting?: boolean; error?: string };
   let siRemoved = $state<string[]>([]);
   let siAdded = $state<SigninMethod[]>([]);
   let siAdding = $state<Adding | null>(null);
-  let siToast = $state<{ text: string; undo?: () => void } | null>(null);
-  let siStepTimer: ReturnType<typeof setTimeout> | undefined;
+  let siToast = $state<{ text: string } | null>(null);
   let siToastTimer: ReturnType<typeof setTimeout> | undefined;
+  let siRun = 0;
 
   const siAll = $derived([...signinMethods, ...siAdded].filter((x) => !siRemoved.includes(x.id)));
-  const siCurrent = $derived(siAll.find((x) => x.current) ?? siAll[0]);
+  // only the method the host marks as current is locked; nothing is guessed
+  const siCurrent = $derived(siAll.find((x) => x.current));
   const emailOk = $derived(!!siAdding && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(siAdding.email));
   const codeOk = $derived(!!siAdding && /^\d{6}$/.test(siAdding.code));
-  const siBlocked = $derived(!!siAdding && ((siAdding.step === 'email' && !emailOk) || (siAdding.step === 'code' && !codeOk)));
+  const siBlocked = $derived(!!siAdding && (!!siAdding.waiting || (siAdding.step === 'email' && !emailOk) || (siAdding.step === 'code' && !codeOk)));
+  const canAdd = (type: SigninMethod['type']) => (type === 'email' ? !!onRequestEmailCode && !!onVerifyEmailCode : !!onLinkMethod);
 
-  function toast(text: string, undo?: () => void) {
+  function toast(text: string) {
     cancel(siToastTimer);
-    siToast = { text, undo };
+    siToast = { text };
     siToastTimer = later(() => (siToast = null), 5000);
   }
 
@@ -601,72 +700,90 @@
   }
 
   function finishAdding(method: SigninMethod) {
-    siAdded = [...siAdded, method];
+    siAdded = [...siAdded, { ...method, current: false }];
     siAdding = null;
     toast(t('ui.profileDialog.signin.linked', { method: t(SI_TYPES[method.type].noun) }));
   }
 
+  // runs a host step for the open "add" form; a newer form or Cancel makes it stale
+  async function siStep<T>(call: () => Promise<T>, failKey: string, done: (v: T) => void) {
+    const mine = ++siRun;
+    updateAdding({ waiting: true, error: undefined });
+    let value: T;
+    try {
+      value = await call();
+    } catch {
+      if (mine === siRun) updateAdding({ waiting: false, error: failKey });
+      return;
+    }
+    if (mine !== siRun) return;
+    updateAdding({ waiting: false });
+    done(value);
+  }
+
   function startAdding(type: SigninMethod['type']) {
-    cancel(siStepTimer);
+    siRun++;
     siAdding = { type, step: type === 'email' ? 'email' : 'new', email: '', code: '' };
   }
 
   function cancelAdding() {
-    cancel(siStepTimer);
+    siRun++;
     siAdding = null;
   }
 
-  function unlink(x: SigninMethod) {
+  function sendCode() {
+    const a = siAdding;
+    if (!a || !emailOk || a.waiting || !onRequestEmailCode) return;
+    siStep(() => onRequestEmailCode(a.email), 'ui.profileDialog.signin.sendFailed', () => updateAdding({ step: 'code', code: '' }));
+  }
+
+  function verifyCode() {
+    const a = siAdding;
+    if (!a || !codeOk || a.waiting || !onVerifyEmailCode) return;
+    siStep(() => onVerifyEmailCode(a.email, a.code), 'ui.profileDialog.signin.verifyFailed', finishAdding);
+  }
+
+  function linkMethod() {
+    const a = siAdding;
+    if (!a || a.type === 'email' || a.waiting || !onLinkMethod) return;
+    const type = a.type;
+    siStep(() => onLinkMethod(type), 'ui.profileDialog.signin.linkFailed', finishAdding);
+  }
+
+  // hidden while it runs, restored with a message if the host rejects
+  async function unlink(x: SigninMethod) {
+    if (!onUnlinkMethod) return;
     siRemoved = [...siRemoved, x.id];
-    toast(t('ui.profileDialog.signin.unlinked', { method: x.title }), () => {
+    try {
+      await onUnlinkMethod(x.id);
+      toast(t('ui.profileDialog.signin.unlinked', { method: x.title }));
+    } catch {
       siRemoved = siRemoved.filter((id) => id !== x.id);
-      siToast = null;
-    });
+      toast(t('ui.profileDialog.signin.unlinkFailed', { method: x.title }));
+    }
   }
 
   type CheckItem = { label: string; state: 'done' | 'now' | 'wait' | 'todo'; action?: string; run?: () => void };
   const checklist = $derived.by((): CheckItem[] => {
     const a = siAdding;
-    if (!a || !siCurrent) return [];
-    const confirm = (method: SigninMethod): CheckItem => ({
-      label: t('ui.profileDialog.signin.confirmWith', { method: siCurrent.short }),
-      state: a.step === 'confirm' ? (a.waiting ? 'wait' : 'now') : 'todo',
-      action: t('ui.common.confirm'),
-      run: () => {
-        updateAdding({ waiting: true });
-        cancel(siStepTimer);
-        siStepTimer = later(() => finishAdding({ current: false, ...method }), 900);
+    if (!a || a.type === 'email') return [];
+    const state = a.waiting ? 'wait' : 'now';
+    return [
+      {
+        label: t(a.type === 'passkey' ? 'ui.profileDialog.signin.createPasskey' : 'ui.profileDialog.signin.signInIi'),
+        state,
+        action: t(a.type === 'passkey' ? 'ui.profileDialog.signin.create' : 'ui.profileDialog.signin.signIn'),
+        run: linkMethod,
       },
-    });
-    if (a.type !== 'email') {
-      const method: SigninMethod =
-        a.type === 'passkey'
-          ? { type: 'passkey', id: `k${Date.now().toString(36).slice(-4)}-new…-lnk1d-cai`, title: t('ui.profileDialog.signin.passkeyHere'), short: t('ui.profileDialog.signin.passkeyHereShort') }
-          : { type: 'ii', id: '7hq2m-ab3x…-ne9kd-cai', title: t('ui.profileDialog.signin.ii'), short: t('ui.profileDialog.signin.ii') };
-      return [
-        {
-          label: t(a.type === 'passkey' ? 'ui.profileDialog.signin.createPasskey' : 'ui.profileDialog.signin.signInIi'),
-          state: a.step === 'new' ? (a.waiting ? 'wait' : 'now') : 'done',
-          action: t(a.type === 'passkey' ? 'ui.profileDialog.signin.create' : 'ui.profileDialog.signin.signIn'),
-          run: () => {
-            updateAdding({ waiting: true });
-            cancel(siStepTimer);
-            siStepTimer = later(() => updateAdding({ step: 'confirm', waiting: false }), 900);
-          },
-        },
-        a.step === 'new' ? { label: t('ui.profileDialog.signin.confirmWith', { method: siCurrent.short }), state: 'todo' } : confirm(method),
-      ];
-    }
-    if (a.step === 'confirm')
-      return [{ label: t('ui.profileDialog.signin.verifyEmail', { email: a.email }), state: 'done' }, confirm({ type: 'email', id: a.email, title: a.email, short: t('ui.profileDialog.signin.emailShort') })];
-    return [];
+      ...(siCurrent ? [{ label: t('ui.profileDialog.signin.confirmWith', { method: siCurrent.short ?? siCurrent.title }), state: a.waiting ? ('wait' as const) : ('todo' as const) }] : []),
+    ];
   });
 
-  function addingKey(e: KeyboardEvent, ok: boolean, next: Adding['step']) {
-    if (e.key === 'Enter' && ok) updateAdding({ step: next });
+  function addingKey(e: KeyboardEvent, ok: boolean, run: () => void) {
+    if (e.key === 'Enter' && ok) run();
     if (e.key === 'Escape') {
       e.stopPropagation();
-      siAdding = null;
+      cancelAdding();
     }
   }
 
@@ -675,28 +792,32 @@
   const sampleSize = $derived(onAppearance ? '13.5px' : `${Math.round(13.5 * (FONT_SIZES.find((f) => f.key === fontSize) ?? FONT_SIZES[1]).scale * 10) / 10}px`);
 
   // ---- storage ----
-  let cache = $state<'idle' | 'busy' | 'done'>('idle');
-  const storageCap = $derived(isDiamond ? 1024 : 100);
+  let cache = $state<'idle' | 'busy' | 'done' | 'failed'>('idle');
+  const storageCap = $derived(storageLimitMB ?? (isDiamond ? 1024 : 100));
   const storageUsed = $derived(Math.min(storageCap, storageUsedMB ?? 0));
   const storageRatio = $derived(storageUsed / storageCap);
   const storageTone = $derived(storageRatio >= 0.95 ? 'var(--status-danger,#F5493D)' : storageRatio >= 0.8 ? 'var(--status-chit,#FF9F45)' : null);
   const mb = (v: number) => (v >= 1000 ? `${(v / 1024).toFixed(2).replace(/\.?0+$/, '')} GB` : `${Math.round(v * 10) / 10} MB`);
 
-  function clearCache() {
-    if (cache !== 'idle') return;
+  async function clearCache() {
+    if (!onClearCache || cache === 'busy' || cache === 'done') return;
     cache = 'busy';
-    later(() => {
+    try {
+      await onClearCache();
       cache = 'done';
-      onClearCache?.();
-    }, 1200);
+    } catch {
+      cache = 'failed';
+    }
   }
 
   // ---- bots ----
-  const botRows = $derived([
-    { key: 'host', label: 'ui.profileDialog.bots.host', value: icHost },
-    { key: 'storage', label: 'ui.profileDialog.bots.storage', value: storageIndex },
-    { key: 'key', label: 'ui.profileDialog.bots.publicKey', value: publicKey },
-  ]);
+  const botRows = $derived(
+    [
+      { key: 'host', label: 'ui.profileDialog.bots.host', value: icHost },
+      { key: 'storage', label: 'ui.profileDialog.bots.storage', value: storageIndex },
+      { key: 'key', label: 'ui.profileDialog.bots.publicKey', value: publicKey },
+    ].filter((r): r is { key: string; label: string; value: string } => !!r.value),
+  );
 
   // ---- link device ----
   let lcCode = $state<string | null>(null);
@@ -745,7 +866,7 @@
   let delStep = $state(0);
   let delBusy = $state(false);
   let delTyped = $state('');
-  let delTimer: ReturnType<typeof setTimeout> | undefined;
+  let delError = $state(false);
   const delMatch = $derived(delTyped.trim().replace(/^@/, '').toLowerCase() === values.handle.toLowerCase());
   const delNextMile = $derived.by(() => {
     const n = [14, 30, 100, 365].find((v) => v > streak);
@@ -758,28 +879,36 @@
     delStep = 0;
     delBusy = false;
     delTyped = '';
+    delError = false;
   }
 
   function stayNow() {
-    cancel(delTimer);
     delOpen = false;
     delStep = 0;
     delBusy = false;
     delTyped = '';
+    delError = false;
   }
 
-  function deletePrimary() {
+  // the host re-authenticates and deletes; the sheet stays (with an error) unless it resolves
+  async function deletePrimary() {
     if (delStep < 3) {
       if (delStep === 2) onChitBribe?.();
       stayNow();
       return;
     }
-    if (delLocked) return;
+    if (delLocked || !onDeleteAccount) return;
     delBusy = true;
-    delTimer = later(() => {
-      stayNow();
-      close(onDeleteAccount ?? onClose);
-    }, 1400);
+    delError = false;
+    try {
+      await onDeleteAccount(values.handle);
+    } catch {
+      delBusy = false;
+      delError = true;
+      return;
+    }
+    stayNow();
+    close(onClose);
   }
 
   function deleteSecondary() {
@@ -829,15 +958,22 @@
   // ---- log out ----
   let loOpen = $state(false);
   let loBusy = $state(false);
+  let loError = $state(false);
 
-  function confirmLogout() {
-    if (loBusy) return;
+  async function confirmLogout() {
+    if (loBusy || !onLogout) return;
     loBusy = true;
-    later(() => {
-      loOpen = false;
+    loError = false;
+    try {
+      await onLogout();
+    } catch {
       loBusy = false;
-      close(onLogout ?? onClose);
-    }, 900);
+      loError = true;
+      return;
+    }
+    loOpen = false;
+    loBusy = false;
+    close(onClose);
   }
 
   // ---- invite ----
@@ -952,11 +1088,13 @@
         {/each}
       </div>
       <div class="rail-foot">
+        {#if onLogout}
         <div
           class="nav-item"
           onclick={() => {
             loOpen = true;
             loBusy = false;
+            loError = false;
           }}
           role="button"
           tabindex="0"
@@ -964,6 +1102,7 @@
           <span class="nav-icon logout" style:mask={icon('leave')}></span>
           <span class="nav-title">{t('ui.profileDialog.logout.action')}</span>
         </div>
+        {/if}
       </div>
     </div>
 
@@ -1053,9 +1192,11 @@
                       </div>
                     {/if}
                     <div class="editor-foot">
-                      <span class="editor-hint" class:invalid={!!err}>{t(err || f.hint)}</span>
+                      <span class="editor-hint" class:invalid={!!err || !!fieldError} role={fieldError ? 'alert' : undefined}>{t(err || fieldError || f.hint)}</span>
                       <span class="cancel" onclick={stopEdit} role="button" tabindex="0">{t('ui.common.cancel')}</span>
-                      <span class="save" class:blocked={!!err} onclick={saveField} role="button" tabindex="0">{t('ui.common.save')}</span>
+                      <span class="save" class:blocked={!!err || fieldBusy} onclick={saveField} role="button" tabindex="0" aria-disabled={!!err || fieldBusy}
+                        >{t(fieldBusy ? 'ui.profileDialog.fields.saving' : 'ui.common.save')}</span
+                      >
                     </div>
                   </div>
                 {/if}
@@ -1273,7 +1414,7 @@
                         style:height="{Math.max(3, Math.round(WAVES[tone](j / 27) * 20))}px"
                       ></span>{/each}
                   </span>
-                  <span
+                  {#if onPreviewRingtone}<span
                     class="play"
                     onclick={(e) => preview(e, tone)}
                     aria-label={isPlaying ? t('ui.profileDialog.chats.stopPreview') : t('ui.profileDialog.chats.preview', { name: t(label) })}
@@ -1281,7 +1422,7 @@
                     tabindex="0"
                     title={isPlaying ? t('ui.profileDialog.chats.stopPreview') : t('ui.profileDialog.chats.preview', { name: t(label) })}
                     ><span class="play-glyph" class:playing={isPlaying} style:mask={icon(isPlaying ? 'stop' : 'play')}></span></span
-                  >
+                  >{/if}
                   <span class="tick-slot"><span class="tick" class:on></span></span>
                 </div>
               {/each}
@@ -1297,6 +1438,7 @@
         <div class="scroll gap-8">
           <span class="lead-text">{t('ui.profileDialog.communities.lead')}</span>
           <span class="caps flat spaced">{t('ui.profileDialog.communities.caps')}</span>
+          {#if commError}<span class="inline-error" role="alert">{commError}</span>{/if}
           {#if communities.length > 10}
             <div class="filter">
               {@render glyph('search', 'filter-glyph')}<input bind:value={commQuery} placeholder={t('ui.profileDialog.communities.filter')} />
@@ -1304,12 +1446,12 @@
           {/if}
           <div class="list flat">
             {#each shownCommunities as c, i}
-              {@const custom = commNames[c.name] || ''}
-              {@const key = `comm:${c.name}`}
+              {@const custom = commNames[c.id] || ''}
+              {@const key = `comm:${c.id}`}
               {#if i > 0}<div class="rule"></div>{/if}
               {#if editing !== key}
-                <div class="community" onclick={() => startEdit(key, custom)} role="button" tabindex="0">
-                  <span class="community-face" style:background={GRADS[c.color] || GRADS.slate}></span>
+                <div class="community" onclick={() => onCommunityName && startEdit(key, custom)} role="button" tabindex={onCommunityName ? 0 : -1} aria-disabled={!onCommunityName}>
+                  <span class="community-face" style:background={c.avatar || GRADS[c.color ?? ''] || GRADS.slate}></span>
                   <span class="community-name">{c.name}</span>
                   <span class="community-shown" class:custom={!!custom}>{custom || shownName}</span>
                   <span class="community-tag">{custom ? '' : t('ui.profileDialog.communities.defaultTag')}</span>
@@ -1317,7 +1459,7 @@
                 </div>
               {:else}
                 <div class="editor">
-                  <div class="community-edit-head"><span class="community-chip" style:background={GRADS[c.color] || GRADS.slate}></span><span class="editor-label">{t('ui.profileDialog.communities.yourNameIn', { community: c.name })}</span></div>
+                  <div class="community-edit-head"><span class="community-chip" style:background={c.avatar || GRADS[c.color ?? ''] || GRADS.slate}></span><span class="editor-label">{t('ui.profileDialog.communities.yourNameIn', { community: c.name })}</span></div>
                   <div class="line-input">
                     <input
                       bind:this={field}
@@ -1329,7 +1471,7 @@
                           stopEdit();
                         } else if (e.key === 'Enter') {
                           e.preventDefault();
-                          commitCommunity(c.name, draft.trim());
+                          commitCommunity(c, draft.trim());
                         }
                       }}
                       maxlength="25"
@@ -1337,10 +1479,10 @@
                     />
                   </div>
                   <div class="editor-foot">
-                    {#if custom}<span class="reset" onclick={() => commitCommunity(c.name, '')} role="button" tabindex="0">{t('ui.profileDialog.communities.useDefault')}</span>{/if}
+                    {#if custom}<span class="reset" onclick={() => commitCommunity(c, '')} role="button" tabindex="0">{t('ui.profileDialog.communities.useDefault')}</span>{/if}
                     <span class="editor-hint">{t('ui.profileDialog.communities.leaveEmpty', { name: shownName })}</span>
                     <span class="cancel" onclick={stopEdit} role="button" tabindex="0">{t('ui.common.cancel')}</span>
-                    <span class="save" onclick={() => commitCommunity(c.name, draft.trim())} role="button" tabindex="0">{t('ui.common.save')}</span>
+                    <span class="save" onclick={() => commitCommunity(c, draft.trim())} role="button" tabindex="0">{t('ui.common.save')}</span>
                   </div>
                 </div>
               {/if}
@@ -1374,14 +1516,14 @@
                     <div class="method">
                       {@render glyph(T.icon, 'method-glyph')}
                       <div class="method-text"><span class="method-title">{x.title + (type === 'email' ? '' : ` · ${x.id.slice(0, 5)}`)}</span><span class="method-sub">{x.used || t('ui.profileDialog.signin.justLinked')}</span></div>
-                      <span class="unlink" onclick={() => unlink(x)} role="button" tabindex="0">{@render glyph('unlink', 'unlink-glyph')}{t('ui.profileDialog.signin.unlink')}</span>
+                      {#if onUnlinkMethod}<span class="unlink" onclick={() => unlink(x)} role="button" tabindex="0">{@render glyph('unlink', 'unlink-glyph')}{t('ui.profileDialog.signin.unlink')}</span>{/if}
                     </div>
                   {/each}
                   {#if !items.length && !adding}
                     <div class="method-empty">{t(T.empty)}</div>
                   {/if}
                   {#if !adding}
-                    <div class="add" onclick={() => startAdding(type)} role="button" tabindex="0">{@render glyph('plus', 'add-glyph')}{t(T.addLabel)}</div>
+                    {#if canAdd(type)}<div class="add" onclick={() => startAdding(type)} role="button" tabindex="0">{@render glyph('plus', 'add-glyph')}{t(T.addLabel)}</div>{/if}
                   {:else if siAdding}
                     <div class="adding">
                       <div class="adding-head"><span class="adding-title">{t(SI_TYPES[siAdding.type].addTitle)}</span><span class="adding-cancel" onclick={cancelAdding} role="button" tabindex="0">{t('ui.common.cancel')}</span></div>
@@ -1392,15 +1534,18 @@
                               bind:this={field}
                               value={siAdding.email}
                               oninput={(e) => updateAdding({ email: e.currentTarget.value })}
-                              onkeydown={(e) => addingKey(e, emailOk, 'code')}
+                              onkeydown={(e) => addingKey(e, emailOk, sendCode)}
                               placeholder={t('ui.profileDialog.signin.emailPlaceholder')}
                               type="email"
+                              disabled={siAdding.waiting}
                             />
                           </div>
-                          <span class="primary" class:blocked={siBlocked} onclick={() => updateAdding({ step: 'code' })} role="button" tabindex="0">{t('ui.profileDialog.signin.sendCode')}</span>
+                          <span class="primary" class:blocked={siBlocked} onclick={sendCode} role="button" tabindex="0" aria-disabled={siBlocked}
+                            >{t(siAdding.waiting ? 'ui.profileDialog.signin.sending' : 'ui.profileDialog.signin.sendCode')}</span
+                          >
                         </div>
-                        <span class="adding-hint" class:invalid={!!siAdding.email && !emailOk}
-                          >{siAdding.email && !emailOk ? t('ui.profileDialog.signin.emailInvalid') : t('ui.profileDialog.signin.emailHint', { method: siCurrent?.short })}</span
+                        <span class="adding-hint" class:invalid={(!!siAdding.email && !emailOk) || !!siAdding.error} role={siAdding.error ? 'alert' : undefined}
+                          >{siAdding.error ? t(siAdding.error) : siAdding.email && !emailOk ? t('ui.profileDialog.signin.emailInvalid') : t('ui.profileDialog.signin.emailHint')}</span
                         >
                       {/if}
                       {#if siAdding.type === 'email' && siAdding.step === 'code'}
@@ -1410,17 +1555,22 @@
                               bind:this={field}
                               value={siAdding.code}
                               oninput={(e) => updateAdding({ code: e.currentTarget.value.replace(/\D/g, '').slice(0, 6) })}
-                              onkeydown={(e) => addingKey(e, codeOk, 'confirm')}
+                              onkeydown={(e) => addingKey(e, codeOk, verifyCode)}
                               placeholder={t('ui.profileDialog.signin.codePlaceholder')}
                               inputmode="numeric"
                               maxlength="6"
+                              disabled={siAdding.waiting}
                             />
                           </div>
-                          <span class="primary" class:blocked={siBlocked} onclick={() => updateAdding({ step: 'confirm' })} role="button" tabindex="0">{t('ui.profileDialog.signin.verify')}</span>
+                          <span class="primary" class:blocked={siBlocked} onclick={verifyCode} role="button" tabindex="0" aria-disabled={siBlocked}
+                            >{t(siAdding.waiting ? 'ui.profileDialog.signin.waiting' : 'ui.profileDialog.signin.verify')}</span
+                          >
                         </div>
-                        <span class="adding-hint">{t('ui.profileDialog.signin.codeHint', { email: siAdding.email })}</span>
+                        <span class="adding-hint" class:invalid={!!siAdding.error} role={siAdding.error ? 'alert' : undefined}
+                          >{siAdding.error ? t(siAdding.error) : t('ui.profileDialog.signin.codeHint', { email: siAdding.email })}</span
+                        >
                       {/if}
-                      {#if siAdding.type !== 'email' || siAdding.step === 'confirm'}
+                      {#if siAdding.type !== 'email'}
                         {#each checklist as c}
                           <div class="check-row">
                             <span class="check-mark {c.state}"><span class="check-glyph"></span></span>
@@ -1429,6 +1579,7 @@
                             {#if c.state === 'wait'}<span class="waiting">{t('ui.profileDialog.signin.waiting')}</span>{/if}
                           </div>
                         {/each}
+                        {#if siAdding.error}<span class="adding-hint invalid" role="alert">{t(siAdding.error)}</span>{/if}
                       {/if}
                     </div>
                   {/if}
@@ -1438,16 +1589,7 @@
           </div>
           {#if siToast}
             <div class="toast">
-              <span class="toast-text">{siToast.text}</span>
-              {#if siToast.undo}<span
-                  class="toast-undo"
-                  onclick={() => {
-                    cancel(siToastTimer);
-                    siToast?.undo?.();
-                  }}
-                  role="button"
-                  tabindex="0">{t('ui.common.undo')}</span
-                >{/if}
+              <span class="toast-text" role="status">{siToast.text}</span>
             </div>
           {/if}
         </div>
@@ -1515,7 +1657,7 @@
               <div class="usage">
                 <div class="usage-head">
                   <span class="usage-figure">{mb(storageUsed)}</span>
-                  <span class="usage-of">{t('ui.profileDialog.storage.usedOf', { total: isDiamond ? '1 GB' : '100 MB' })}</span>
+                  <span class="usage-of">{t('ui.profileDialog.storage.usedOf', { total: mb(storageCap) })}</span>
                   <span class="usage-pct" style:color={storageTone ?? 'var(--ink-3,#8A8A99)'}>{Math.round(storageRatio * 100)}%</span>
                 </div>
                 <div class="usage-track"><div class="usage-fill" style:width="{Math.round(storageRatio * 100)}%" style:background={storageTone ?? 'var(--accent,#FF5672)'}></div></div>
@@ -1539,12 +1681,13 @@
                     >{t('ui.profileDialog.storage.clearHint')}</span
                   >
                 </div>
-                <span class="outline-button {cache}" onclick={clearCache} role="button" tabindex="0"
-                  ><span class="outline-glyph" class:spin={cache === 'busy'} style:mask={icon(cache === 'done' ? 'check' : 'refresh')}></span>{t(
-                    cache === 'busy' ? 'ui.profileDialog.storage.clearing' : cache === 'done' ? 'ui.profileDialog.storage.cleared' : 'ui.profileDialog.storage.clear',
-                  )}</span
-                >
+                {#if onClearCache}<span class="outline-button {cache}" onclick={clearCache} role="button" tabindex="0" aria-disabled={cache === 'busy' || cache === 'done'}
+                    ><span class="outline-glyph" class:spin={cache === 'busy'} style:mask={icon(cache === 'done' ? 'check' : 'refresh')}></span>{t(
+                      cache === 'busy' ? 'ui.profileDialog.storage.clearing' : cache === 'done' ? 'ui.profileDialog.storage.cleared' : 'ui.profileDialog.storage.clear',
+                    )}</span
+                  >{/if}
               </div>
+              {#if cache === 'failed'}<span class="inline-error padded" role="alert">{t('ui.profileDialog.storage.clearFailed')}</span>{/if}
               <div class="cache-row ruled">
                 <div class="cache-text">
                   <span class="setting-title">{t(cache === 'done' ? 'ui.profileDialog.storage.fixed' : 'ui.profileDialog.storage.problems')}</span>
@@ -1561,7 +1704,7 @@
         <div class="scroll gap-18">
           <span class="lead-text tight"
             ><Translate key="ui.profileDialog.bots.lead"
-              >{#snippet docs()}<a href="https://github.com/open-chat-labs/open-chat-bots" target="_blank" rel="noopener">{t('ui.profileDialog.bots.docs')}</a
+              >{#snippet docs()}<a href={botDocsUrl} target="_blank" rel="noopener">{t('ui.profileDialog.bots.docs')}</a
                 >{/snippet}</Translate
             ></span
           >
@@ -1636,7 +1779,7 @@
           </div>
           <div class="danger-zone">
             <span class="danger-text">{t('ui.profileDialog.delete.permanent')}</span>
-            <span class="danger-button" onclick={openDelete} role="button" tabindex="0">{@render glyph('trash', 'danger-glyph')}{t('ui.profileDialog.delete.open')}</span>
+            {#if onDeleteAccount}<span class="danger-button" onclick={openDelete} role="button" tabindex="0">{@render glyph('trash', 'danger-glyph')}{t('ui.profileDialog.delete.open')}</span>{/if}
           </div>
         </div>
       {/if}
@@ -1656,7 +1799,7 @@
               <span class="caps">{t(group.label)}</span>
               <div class="list">
                 {#each group.keys as k, i}
-                  <a class="about-link" class:ruled={i > 0} href="https://oc.app/{k}" target="_blank" rel="noopener">
+                  <a class="about-link" class:ruled={i > 0} href="{aboutBaseUrl}/{k}" target="_blank" rel="noopener">
                     {@render glyph(ABOUT_LINKS[k][1], 'about-glyph')}
                     <span class="about-label">{t(ABOUT_LINKS[k][0])}</span>
                     {@render glyph('external', 'external-glyph')}
@@ -1682,19 +1825,21 @@
               </div>
             </div>
           </div>
-          <div class="block wide-gap">
-            <span class="caps">{t('ui.profileDialog.invite.earnCaps')}</span>
-            <div class="list">
-              {#each [['ui.profileDialog.invite.rewardDiamond', '5,000'], ['ui.profileDialog.invite.rewardLifetime', '15,000']] as [label, amount], i}
-                <div class="reward" class:ruled={i > 0}>
-                  {@render glyph('gem', 'about-glyph')}
-                  <span class="reward-label">{t(label)}</span>
-                  <span class="reward-amount">{@render glyph('zap', 'reward-glyph')}{amount}</span>
-                </div>
-              {/each}
+          {#if inviteRewards.length}
+            <div class="block wide-gap">
+              <span class="caps">{t('ui.profileDialog.invite.earnCaps')}</span>
+              <div class="list">
+                {#each inviteRewards as r, i}
+                  <div class="reward" class:ruled={i > 0}>
+                    {@render glyph('gem', 'about-glyph')}
+                    <span class="reward-label">{t(r.label)}</span>
+                    <span class="reward-amount">{@render glyph('zap', 'reward-glyph')}{fmt(r.amount)}</span>
+                  </div>
+                {/each}
+              </div>
+              <span class="invite-note">{t('ui.profileDialog.invite.note')}</span>
             </div>
-            <span class="invite-note">{t('ui.profileDialog.invite.note')}</span>
-          </div>
+          {/if}
         </div>
       {/if}
 
@@ -1753,8 +1898,9 @@
               <span class="confirm-label"
                 ><Translate key="ui.profileDialog.delete.typeToConfirm">{#snippet handle()}<span class="confirm-handle">@{values.handle}</span>{/snippet}</Translate></span
               >
-              <input class="confirm-input" class:match={delMatch} bind:value={delTyped} placeholder="@{values.handle}" spellcheck="false" autocomplete="off" />
+              <input class="confirm-input" class:match={delMatch} bind:value={delTyped} placeholder="@{values.handle}" spellcheck="false" autocomplete="off" disabled={delBusy} />
             </div>
+            {#if delError}<span class="inline-error" role="alert">{t('ui.profileDialog.delete.failed')}</span>{/if}
           {/if}
         </div>
         <div class="sub-actions">
@@ -1783,6 +1929,7 @@
         <div class="lo-copy">
           <span class="lo-title">{t('ui.profileDialog.logout.title')}</span>
           <span class="lo-body">{t('ui.profileDialog.logout.body', { provider: t(signInProvider) })}</span>
+          {#if loError}<span class="inline-error" role="alert">{t('ui.profileDialog.logout.failed')}</span>{/if}
         </div>
         <div class="lo-actions">
           <span class="lo-cancel" class:busy={loBusy} onclick={() => !loBusy && (loOpen = false)} role="button" tabindex="0">{t('ui.common.cancel')}</span>
@@ -1796,6 +1943,15 @@
 </div>
 
 <style>
+  .inline-error {
+    font: var(--weight-medium) var(--text-sm) / 1.4 var(--font-sans);
+    color: var(--status-danger, #f5493d);
+  }
+
+  .inline-error.padded {
+    padding: 0 var(--space-16, 16px) var(--space-12, 12px);
+  }
+
   /* ---- shell ---- */
   .layer {
     position: fixed;

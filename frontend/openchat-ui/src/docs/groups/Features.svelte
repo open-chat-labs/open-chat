@@ -380,6 +380,10 @@
         memberSince="Nov 2021"
         chit="339,400"
         disappearOn
+        onMuteChange={async () => {}}
+        onToggleFavourite={async () => {}}
+        onBlock={async () => {}}
+        onUnblock={async () => {}}
       />
     </div>
   </Frame>
@@ -424,7 +428,7 @@
 <Section {...sec(features, 'app-call')}>
   <Frame>
     <div class="call" style:width="420px" style:height="440px">
-      <CallPanel title="Julian Jelfs" people={callPeople} start={Date.now() - 754000} />
+      <CallPanel title="Julian Jelfs" people={callPeople} start={Date.now() - 754000} onToggleCamera={() => {}} onToggleShare={() => {}} />
     </div>
   </Frame>
   <Frame align="center" style="justify-content: center">
@@ -463,7 +467,9 @@
       <ThreadList groups={threadGroups} />
     </div>
     <div class="panel" style:height="620px">
-      <ThreadPanel chatName="The Awesome Group" threadKey="scale" root={threadRoot} replies={threadReplies} faces={threadFaces} {following} onFollowChange={(on) => (following = on)} />
+      <ThreadPanel chatName="The Awesome Group" threadKey="scale" root={threadRoot} replies={threadReplies} faces={threadFaces} {following} onFollowChange={(on) => {
+        following = on;
+      }} />
     </div>
   </Frame>
 </Section>
@@ -478,11 +484,15 @@
     </span>
   </Frame>
   {#if dialog === 'join'}
-    <JoinGateDialog {...joinGate as unknown as ComponentProps<typeof JoinGateDialog>} chatBalance={60501} recheckDays={84} onClose={() => (dialog = '')} onJoin={() => (dialog = '')} />
+    <JoinGateDialog {...joinGate as unknown as ComponentProps<typeof JoinGateDialog>} chatBalance={60501} recheckDays={84} onClose={() => (dialog = '')} onJoin={() => {
+      dialog = '';
+    }} />
   {:else if dialog === 'poll'}
-    <PollBuilderDialog onClose={() => (dialog = '')} onPublish={() => (dialog = '')} />
+    <PollBuilderDialog onClose={() => (dialog = '')} onPublish={() => {
+        dialog = '';
+      }} />
   {:else if dialog === 'puzzle'}
-    <PuzzleDialog tutorialSeen puzzleStreak={4} balance={102000} countdown="10:57:11" onClose={() => (dialog = '')} />
+    <PuzzleDialog {...S.puzzleDemo} tutorialSeen puzzleStreak={4} balance={102000} countdown="10:57:11" onClose={() => (dialog = '')} />
   {/if}
   <MessageActions open={!!actionsAt} point={actionsAt} items={[...messageActionItems]} recent={['❤️', '👍', '🔥', '😂']} onReact={() => (actionsAt = null)} onClose={() => (actionsAt = null)} />
 </Section>

@@ -1,6 +1,7 @@
 <!-- Convert a group into a community: confirm (irreversible warning + what the conversion does) → done.
-     Confirm calls onConfirm and moves to the done step locally; a new `step` from the parent takes over again.
-     Finish falls back to onCancel; "Go to the community" falls back to onFinish, then onCancel. -->
+     Confirm awaits onConfirm ("Converting…", not dismissable): the done step only shows once it resolves (with the new
+     community's id, if the host returns one); a rejection stays on confirm with an error. A new `step` from the parent
+     takes over again. Finish falls back to onCancel; "Go to the community" passes that id to onGoTo (else onFinish, onCancel). -->
 <script lang="ts">
   import { onDestroy } from 'svelte';
   import { modal } from '../../lib/behaviours/modal';
@@ -12,10 +13,11 @@
   interface Props {
     groupName: string;
     step?: 'confirm' | 'done';
-    onConfirm?: () => void;
+    /** Convert it. Resolve with the new community's id (passed on to onGoTo); reject to stay on confirm with an error. */
+    onConfirm?: () => Promise<{ communityId: string } | unknown> | void;
     onCancel?: () => void;
     onFinish?: () => void;
-    onGoTo?: () => void;
+    onGoTo?: (communityId?: string) => void;
   }
 
   let { groupName, step = 'confirm', onConfirm, onCancel, onFinish, onGoTo }: Props = $props();
@@ -28,12 +30,15 @@
   let current = $derived(step);
 
   let closing = $state(false);
+  let converting = $state(false);
+  let failed = $state(false);
+  let communityId = $state<string | undefined>();
   let timer: ReturnType<typeof setTimeout> | undefined;
   onDestroy(() => clearTimeout(timer));
 
   // play the exit animation, then hand control back
   function close(then?: () => void) {
-    if (closing) return;
+    if (closing || converting) return;
     closing = true;
     timer = setTimeout(() => {
       closing = false;
@@ -41,8 +46,20 @@
     }, 170);
   }
 
-  function confirm() {
-    onConfirm?.();
+  async function confirm() {
+    if (converting) return;
+    converting = true;
+    failed = false;
+    try {
+      const r = await onConfirm?.();
+      const id = (r as { communityId?: unknown } | undefined)?.communityId;
+      communityId = typeof id === 'string' ? id : undefined;
+    } catch {
+      failed = true;
+      return;
+    } finally {
+      converting = false;
+    }
     current = 'done';
   }
 </script>
@@ -103,16 +120,19 @@
 
     <div class="foot">
       {#if current !== 'done'}
-        <span class="text-button" onclick={() => close(onCancel)} role="button" tabindex="0">{t('ui.common.cancel')}</span>
+        <span class="text-button" onclick={() => close(onCancel)} role="button" tabindex="0" aria-disabled={converting}>{t('ui.common.cancel')}</span>
         <span class="grow"></span>
-        <div class="primary" onclick={confirm} role="button" tabindex="0">
+        {#if failed}
+          <span class="error" role="alert">{t('ui.convertToCommunityDialog.failed')}</span>
+        {/if}
+        <div class="primary" class:busy={converting} onclick={confirm} role="button" tabindex="0" aria-disabled={converting}>
           <span class="primary-icon community"></span>
-          <span>{t('ui.convertToCommunityDialog.title')}</span>
+          <span>{t(converting ? 'ui.convertToCommunityDialog.converting' : 'ui.convertToCommunityDialog.title')}</span>
         </div>
       {:else}
         <span class="text-button" onclick={() => close(onFinish ?? onCancel)} role="button" tabindex="0">{t('ui.convertToCommunityDialog.finish')}</span>
         <span class="grow"></span>
-        <div class="primary" onclick={() => close(onGoTo ?? onFinish ?? onCancel)} role="button" tabindex="0">
+        <div class="primary" onclick={() => close(onGoTo ? () => onGoTo(communityId) : (onFinish ?? onCancel))} role="button" tabindex="0">
           <span>{t('ui.convertToCommunityDialog.goTo')}</span>
           <span class="primary-icon arrow"></span>
         </div>
@@ -122,6 +142,16 @@
 </div>
 
 <style>
+  .error {
+    font: var(--weight-medium) var(--text-sm) / 1.4 var(--font-sans);
+    color: var(--status-danger, #f5493d);
+  }
+
+  .primary.busy {
+    opacity: 0.6;
+    cursor: default;
+  }
+
   .layer {
     position: fixed;
     inset: 0;

@@ -1,6 +1,8 @@
 <!-- Profile dialog for a person: cover, avatar, name, facts and about, then Block and Message.
      dmTabs (opened from your DM with them): Mute / Favourite pills and Profile / This chat tabs instead of Message.
-     isSelf: your own profile — nothing to message, block or favourite. Closing plays the exit animation first. -->
+     isSelf: your own profile — nothing to message, block or favourite. Closing plays the exit animation first.
+     Mute / favourite / chat settings apply at once and roll back with an error if the host rejects. Block asks first and
+     waits for the host; Block, Message and Favourite are hidden when their callbacks are absent. -->
 <script lang="ts">
   import { onDestroy, type ComponentProps } from 'svelte';
   import Badge from '../../lib/components/Badge.svelte';
@@ -37,6 +39,8 @@
     handle?: string;
     about?: string;
     color?: keyof typeof GRADIENTS;
+    /** CSS background (image URL or gradient) for the avatar; falls back to the colour gradient. */
+    avatar?: string;
     online?: boolean;
     verified?: boolean;
     cover?: string;
@@ -50,14 +54,18 @@
     disappearOn?: boolean;
     disappearAfter?: string;
     readReceipts?: boolean;
-    onMuteChange?: (key: MuteKey | null) => void;
-    onToggleFavourite?: () => void;
+    onMuteChange?: (key: MuteKey | null) => Promise<unknown> | void;
+    /** Receives the new state. */
+    onToggleFavourite?: (fav: boolean) => Promise<unknown> | void;
     onDisappearChange?: Settings['onDisappearChange'];
     onReadReceiptsChange?: Settings['onReadReceiptsChange'];
-    /** Defaults to onCancel. */
+    /** Hidden without it. */
     onMessage?: () => void;
-    /** Defaults to onCancel. */
-    onBlock?: () => void;
+    /** You have blocked this person (shows Unblock instead of Block). */
+    blocked?: boolean;
+    /** Block after the user confirms; the dialog closes once it resolves. Hidden without it. */
+    onBlock?: () => Promise<unknown> | void;
+    onUnblock?: () => Promise<unknown> | void;
     onCancel?: () => void;
   }
 
@@ -66,6 +74,7 @@
     handle = '',
     about = '',
     color = 'violet',
+    avatar,
     online = false,
     verified = false,
     cover = '',
@@ -83,7 +92,9 @@
     onDisappearChange,
     onReadReceiptsChange,
     onMessage,
+    blocked = false,
     onBlock,
+    onUnblock,
     onCancel,
   }: Props = $props();
   const t = useT();
@@ -96,6 +107,8 @@
   let isMuted = $derived(muted);
   let isFav = $derived(fav);
   let muteMenu = $state<{ top: number; left: number } | null>(null);
+  let failed = $state<string | null>(null);
+  let blockStep = $state<'idle' | 'confirm' | 'busy'>('idle');
 
   const dm = $derived(dmTabs && !isSelf);
   const tab = $derived(dm ? (tabOverride ?? initialTab) : 'profile');
@@ -115,10 +128,58 @@
     }, CLOSE_MS);
   }
 
+  // optimistic: shows the change now, restores it with an error if the host rejects
+  async function optimistic(apply: () => void, undo: () => void, call: () => Promise<unknown> | void) {
+    failed = null;
+    apply();
+    try {
+      await call();
+    } catch {
+      undo();
+      failed = 'ui.userDialog.actionFailed';
+    }
+  }
+
   function setMute(key: MuteKey | null) {
-    isMuted = key;
+    const was = isMuted;
     muteMenu = null;
-    onMuteChange?.(key);
+    optimistic(
+      () => (isMuted = key),
+      () => (isMuted = was),
+      () => onMuteChange?.(key),
+    );
+  }
+
+  function toggleFav() {
+    if (!onToggleFavourite) return;
+    const next = !isFav;
+    optimistic(
+      () => (isFav = next),
+      () => (isFav = !next),
+      () => onToggleFavourite(next),
+    );
+  }
+
+  function cancelBlock() {
+    if (blockStep === 'busy') return;
+    blockStep = 'idle';
+    failed = null;
+  }
+
+  async function confirmBlock() {
+    const call = blocked ? onUnblock : onBlock;
+    if (!call || blockStep === 'busy') return;
+    blockStep = 'busy';
+    failed = null;
+    try {
+      await call();
+    } catch {
+      blockStep = 'confirm';
+      failed = blocked ? 'ui.userDialog.unblockFailed' : 'ui.userDialog.blockFailed';
+      return;
+    }
+    blockStep = 'idle';
+    if (!blocked) close(onCancel);
   }
 
   function openMuteMenu(e: MouseEvent & { currentTarget: HTMLElement }) {
@@ -134,11 +195,17 @@
   <div class="card" class:closing data-panel-root="true">
     <div class="cover">
       <!-- in a DM the favourite lives in the pill row, so the cover only closes -->
-      <PanelCover {cover} actions={['close']} trailActions={isSelf || dm ? [] : ['favourite']} handlers={{ close: () => close(onCancel) }} />
+      <PanelCover
+        {cover}
+        actions={['close']}
+        trailActions={isSelf || dm || !onToggleFavourite ? [] : ['favourite']}
+        handlers={{ close: () => close(onCancel), favourite: toggleFav }}
+        labels={{ favourite: isFav ? 'ui.userDialog.favourited' : 'ui.userDialog.favourite' }}
+      />
     </div>
 
     <div class="scroll" onscroll={() => (muteMenu = null)}>
-      <span class="avatar" style:background={GRADIENTS[color] ?? GRADIENTS.violet}>
+      <span class="avatar" style:background={avatar || (GRADIENTS[color] ?? GRADIENTS.violet)}>
         {#if online}
           <span class="online"></span>
         {/if}
@@ -161,17 +228,9 @@
             <span class="pill-icon" style:mask="var(--icon-{isMuted ? 'bell-off' : 'bell'}) center/contain no-repeat"></span>{t(span ? span.tile : 'ui.userDialog.mute')}
             <span class="pill-divider"></span><span class="caret"></span>
           </span>
-          <span
-            class="pill fav"
-            class:on={isFav}
-            onclick={() => {
-              isFav = !isFav;
-              onToggleFavourite?.();
-            }}
-            role="button"
-            tabindex="0"
-            aria-pressed={isFav}><span class="pill-icon heart"></span>{t(isFav ? 'ui.userDialog.favourited' : 'ui.userDialog.favourite')}</span
-          >
+          {#if onToggleFavourite}<span class="pill fav" class:on={isFav} onclick={toggleFav} role="button" tabindex="0" aria-pressed={isFav}
+              ><span class="pill-icon heart"></span>{t(isFav ? 'ui.userDialog.favourited' : 'ui.userDialog.favourite')}</span
+            >{/if}
         </div>
         <div class="tabs">
           <SegmentedTabs labels={[t('ui.userDialog.profile'), t('ui.userDialog.thisChat')]} selectedIndex={tab === 'chat' ? 1 : 0} dotOnLast={false} onSelect={(i) => (tabOverride = i === 1 ? 'chat' : 'profile')} />
@@ -194,12 +253,25 @@
       {/if}
     </div>
 
-    {#if !isSelf}
+    {#if failed && blockStep === 'idle'}<span class="error" role="alert">{t(failed)}</span>{/if}
+    {#if !isSelf && blockStep !== 'idle'}
+      <div class="footer confirm">
+        <span class="confirm-text"
+          >{failed ? t(failed) : t(blocked ? 'ui.userDialog.unblockConfirm' : 'ui.userDialog.blockConfirm', { name: title })}</span
+        >
+        <span class="cancel" onclick={cancelBlock} role="button" tabindex="0">{t('ui.common.cancel')}</span>
+        <span class="block" class:busy={blockStep === 'busy'} onclick={confirmBlock} role="button" tabindex="0" aria-disabled={blockStep === 'busy'}
+          >{t(blockStep === 'busy' ? 'ui.userDialog.working' : blocked ? 'ui.userDialog.unblock' : 'ui.userDialog.block')}</span
+        >
+      </div>
+    {:else if !isSelf && ((blocked ? onUnblock : onBlock) || (!dm && onMessage))}
       <div class="footer">
-        <span class="block" onclick={() => close(onBlock ?? onCancel)} role="button" tabindex="0">{t('ui.userDialog.block')}</span>
+        {#if blocked ? onUnblock : onBlock}
+          <span class="block" onclick={() => (blockStep = 'confirm')} role="button" tabindex="0">{t(blocked ? 'ui.userDialog.unblock' : 'ui.userDialog.block')}</span>
+        {/if}
         <span class="grow"></span>
-        {#if !dm}
-          <div class="message" onclick={() => close(onMessage ?? onCancel)} role="button" tabindex="0">
+        {#if !dm && onMessage && !blocked}
+          <div class="message" onclick={() => close(onMessage)} role="button" tabindex="0">
             <span>{t('ui.userDialog.message')}</span>
             <span class="message-icon"></span>
           </div>
@@ -451,6 +523,36 @@
     gap: var(--space-8);
     padding: var(--space-16) var(--space-26);
     border-block-start: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .error {
+    padding: var(--space-8) var(--space-26) 0;
+    font: var(--weight-medium) var(--text-sm) / 1.4 var(--font-sans);
+    color: var(--status-danger, #f5493d);
+  }
+
+  .footer.confirm {
+    gap: var(--space-12);
+  }
+
+  .confirm-text {
+    flex: 1;
+    min-width: 0;
+    font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-sans);
+    color: var(--ink-2, #c9c9d4);
+  }
+
+  .cancel {
+    flex: none;
+    padding: var(--space-10) var(--space-12);
+    font: var(--weight-semibold) var(--text-base) / 1 var(--font-sans);
+    color: var(--ink-2, #c9c9d4);
+    cursor: pointer;
+  }
+
+  .block.busy {
+    opacity: 0.6;
+    cursor: default;
   }
 
   .block {

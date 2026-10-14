@@ -1,5 +1,22 @@
-<!-- Register or edit a group webhook: avatar (photo or colour), name (letters, digits, underscores; unique in the chat),
-     and in edit mode the secret URL (click to copy) with a guarded "Regenerate" that confirms before replacing the secret. -->
+<!-- Register or edit a group webhook: avatar (photo or colour), name (letters, digits, underscores; unique in the chat,
+     checked against `takenNames`), and in edit mode the secret URL (click to copy) with a guarded "Regenerate" that
+     confirms before replacing the secret. The secret is always issued by the host: onRegenerate resolves with the new URL,
+     which is only shown once it arrives. Save and regenerate wait on the host and keep everything on rejection. -->
+<script lang="ts" module>
+  export type WebhookColour = 'slate' | 'teal' | 'blue' | 'plum' | 'amber' | 'rose';
+
+  export interface WebhookSave {
+    /** Missing when registering a new webhook. */
+    id?: string;
+    name: string;
+    color: WebhookColour;
+    /** A newly picked photo, for the host to upload. */
+    avatar: File | null;
+    /** The existing photo was removed. */
+    removeAvatar: boolean;
+  }
+</script>
+
 <script lang="ts">
   import { useT } from '../../lib/i18n';
   import CopyButton from '../../lib/components/CopyButton.svelte';
@@ -15,13 +32,14 @@
     amber: 'linear-gradient(140deg,#ffb03d,#ff4d4d)',
     rose: 'linear-gradient(140deg,#FF6B8B,#C13584)',
   };
-  type Colour = keyof typeof GRADIENTS;
+  type Colour = WebhookColour;
 
   const VALID = /^[A-Za-z0-9_]+$/;
   const NAME_MAX = 30;
   const LEAVE_MS = 170;
 
   interface Webhook {
+    id: string;
     name: string;
     color?: Colour;
     url: string;
@@ -33,27 +51,27 @@
     /** The webhook being edited (edit mode). */
     webhook?: Webhook | null;
     groupName: string;
-    /** Webhook URLs are this prefix plus a 32-hex-digit secret. */
-    urlPrefix: string;
-    onSave?: (hook: { name: string; color: Colour; url: string; avatarUrl: string | null; isNew: boolean }) => void;
-    onRegenerate?: (url: string) => void;
+    /** Names already used by webhooks in this chat (the one being edited may be included). */
+    takenNames?: string[];
+    /** Register (no id) or update a webhook. The dialog closes when this resolves and keeps the form if it rejects. */
+    onSave?: (hook: WebhookSave) => Promise<unknown> | void;
+    /** Replace the secret; resolve with the new URL. Hidden without it. */
+    onRegenerate?: (hook: { id: string }) => Promise<{ url: string }>;
     onCancel?: () => void;
   }
 
-  let { dialogMode = 'register', webhook = null, groupName, urlPrefix, onSave, onRegenerate, onCancel }: Props = $props();
+  let { dialogMode = 'register', webhook = null, groupName, takenNames = [], onSave, onRegenerate, onCancel }: Props = $props();
   const t = useT();
-
-  const secret = () => {
-    let s = '';
-    while (s.length < 32) s += Math.floor(Math.random() * 16).toString(16);
-    return s.slice(0, 32);
-  };
-  const freshUrl = urlPrefix + secret();
 
   let nameEdit = $state<string | null>(null);
   let colourEdit = $state<Colour | null>(null);
   let urlEdit = $state<string | null>(null);
+  // a newly picked photo: the File goes to the host, the object URL is only the preview
+  let photoFile = $state<File | null>(null);
   let photoEdit = $state<string | null>(null);
+  let photoRemoved = $state(false);
+  let busy = $state<'' | 'save' | 'regenerate'>('');
+  let failed = $state<'' | 'save' | 'regenerate'>('');
   let confirming = $state(false);
   let copied = $state(false);
   let regenerated = $state(false);
@@ -63,15 +81,17 @@
   let leaveTimer: ReturnType<typeof setTimeout> | undefined;
   onDestroy(() => {
     clearTimeout(leaveTimer);
+    if (photoEdit) URL.revokeObjectURL(photoEdit);
   });
 
   const isEdit = $derived(dialogMode === 'edit');
   const name = $derived(nameEdit ?? webhook?.name ?? '');
   const colour = $derived(colourEdit ?? webhook?.color ?? 'slate');
-  const url = $derived(urlEdit ?? webhook?.url ?? freshUrl);
-  const photo = $derived(photoEdit ?? webhook?.avatarUrl ?? null);
-  const valid = $derived(VALID.test(name));
-  const invalid = $derived(name.length > 0 && !valid);
+  const url = $derived(urlEdit ?? webhook?.url ?? '');
+  const photo = $derived(photoEdit ?? (photoRemoved ? null : (webhook?.avatarUrl ?? null)));
+  const taken = $derived(!!name && name.toLowerCase() !== webhook?.name.toLowerCase() && takenNames.some((n) => n.toLowerCase() === name.toLowerCase()));
+  const valid = $derived(VALID.test(name) && !taken);
+  const invalid = $derived(name.length > 0 && !VALID.test(name));
 
   function close(then?: () => void) {
     if (closing) return;
@@ -82,21 +102,37 @@
     }, LEAVE_MS);
   }
 
-  function save() {
-    if (!valid) return;
-    close(() => {
-      if (onSave) onSave({ name, color: colour, url, avatarUrl: photo, isNew: !isEdit });
-      else onCancel?.();
-    });
+  async function save() {
+    if (!valid || busy || !onSave) return;
+    busy = 'save';
+    failed = '';
+    try {
+      await onSave({ id: isEdit ? webhook?.id : undefined, name, color: colour, avatar: photoFile, removeAvatar: photoRemoved && !photoFile });
+    } catch {
+      failed = 'save';
+      return;
+    } finally {
+      busy = '';
+    }
+    close(onCancel);
   }
 
-  function regenerate() {
-    const next = urlPrefix + secret();
-    urlEdit = next;
-    confirming = false;
-    regenerated = true;
-    copied = false;
-    onRegenerate?.(next);
+  // the new URL is shown only once the host has issued it; a failure keeps the old one
+  async function regenerate() {
+    if (busy || !onRegenerate || !webhook) return;
+    busy = 'regenerate';
+    failed = '';
+    try {
+      const next = await onRegenerate({ id: webhook.id });
+      urlEdit = next.url;
+      confirming = false;
+      regenerated = true;
+      copied = false;
+    } catch {
+      failed = 'regenerate';
+    } finally {
+      busy = '';
+    }
   }
 
   // the URL itself is a second way to copy
@@ -106,17 +142,23 @@
     const f = e.currentTarget.files?.[0];
     if (!f) return;
     if (photoEdit) URL.revokeObjectURL(photoEdit);
+    photoFile = f;
     photoEdit = URL.createObjectURL(f);
+    e.currentTarget.value = '';
   }
 
   function clearPhoto() {
     if (photoEdit) URL.revokeObjectURL(photoEdit);
     photoEdit = null;
+    photoFile = null;
+    photoRemoved = true;
   }
+
+  const dismiss = () => !busy && close(onCancel);
 </script>
 
-<div class="layer" class:closing role="dialog" aria-modal="true" use:modal={() => close(onCancel)}>
-  <div class="veil" onclick={() => close(onCancel)} aria-hidden="true"></div>
+<div class="layer" class:closing role="dialog" aria-modal="true" use:modal={dismiss}>
+  <div class="veil" onclick={dismiss} aria-hidden="true"></div>
   <div class="card">
     <div class="head">
       {#if confirming}
@@ -133,7 +175,7 @@
         <span class="head-title">{confirming ? t('ui.webhookDialog.regenerateTitle') : isEdit ? name : t('ui.webhookDialog.registerTitle')}</span>
         <span class="head-sub">{confirming ? `${name} · ${groupName}` : isEdit ? t('ui.webhookDialog.inGroup', { group: groupName }) : groupName}</span>
       </div>
-      <span class="close" onclick={() => close(onCancel)} role="button" tabindex="0"><span class="close-icon"></span></span>
+      <span class="close" onclick={dismiss} role="button" tabindex="0" aria-label={t('ui.common.close')}><span class="close-icon"></span></span>
     </div>
 
     <div class="body">
@@ -172,8 +214,8 @@
               <input value={name} oninput={(e) => (nameEdit = e.currentTarget.value.slice(0, NAME_MAX))} placeholder={t('ui.webhookDialog.namePlaceholder')} maxlength="30" />
               <span class="left">{NAME_MAX - name.length}</span>
             </div>
-            <span class="hint" class:invalid>
-              {t(invalid ? 'ui.webhookDialog.nameInvalid' : 'ui.webhookDialog.nameHint')}
+            <span class="hint" class:invalid={invalid || taken}>
+              {t(invalid ? 'ui.webhookDialog.nameInvalid' : taken ? 'ui.webhookDialog.nameTaken' : 'ui.webhookDialog.nameHint')}
             </span>
             {#if isEdit}
               <span class="hint">{t('ui.webhookDialog.renameHint')}</span>
@@ -214,10 +256,12 @@
               </div>
               <span class="url" onclick={() => copier?.copy()} role="button" tabindex="0">{url}</span>
             </div>
-            <div class="regen-row">
-              <span class="regen-note">{t('ui.webhookDialog.regenNote')}</span>
-              <span class="regen" onclick={() => (confirming = true)} role="button" tabindex="0"><span class="regen-icon"></span><span class="regen-label">{t('ui.webhookDialog.regenerate')}</span></span>
-            </div>
+            {#if onRegenerate}
+              <div class="regen-row">
+                <span class="regen-note">{t('ui.webhookDialog.regenNote')}</span>
+                <span class="regen" onclick={() => (confirming = true)} role="button" tabindex="0"><span class="regen-icon"></span><span class="regen-label">{t('ui.webhookDialog.regenerate')}</span></span>
+              </div>
+            {/if}
           </div>
         {/if}
       {:else}
@@ -242,10 +286,21 @@
     </div>
 
     <div class="foot">
-      <span class="secondary" onclick={() => (confirming ? (confirming = false) : close(onCancel))} role="button" tabindex="0">{t(confirming ? 'ui.common.back' : 'ui.common.cancel')}</span>
+      <span class="secondary" onclick={() => (busy ? undefined : confirming ? (confirming = false) : close(onCancel))} role="button" tabindex="0">{t(confirming ? 'ui.common.back' : 'ui.common.cancel')}</span>
       <span class="spacer"></span>
-      <div class="primary" class:warn={confirming} class:ready={confirming || valid} onclick={() => (confirming ? regenerate() : save())} role="button" tabindex="0">
-        <span>{t(confirming ? 'ui.webhookDialog.regenerateCta' : isEdit ? 'ui.webhookDialog.updateCta' : 'ui.webhookDialog.registerCta')}</span>
+      {#if failed}
+        <span class="error" role="alert">{t(failed === 'save' ? 'ui.webhookDialog.saveFailed' : 'ui.webhookDialog.regenerateFailed')}</span>
+      {/if}
+      <div
+        class="primary"
+        class:warn={confirming}
+        class:ready={!busy && (confirming || (valid && !!onSave))}
+        onclick={() => (confirming ? regenerate() : save())}
+        role="button"
+        tabindex="0"
+        aria-disabled={!!busy || (!confirming && (!valid || !onSave))}
+      >
+        <span>{t(busy ? 'ui.webhookDialog.working' : confirming ? 'ui.webhookDialog.regenerateCta' : isEdit ? 'ui.webhookDialog.updateCta' : 'ui.webhookDialog.registerCta')}</span>
         <span class="primary-icon" style:mask="var(--icon-{confirming ? 'refresh' : isEdit ? 'check' : 'hook'}) center/contain no-repeat"></span>
       </div>
     </div>
@@ -261,6 +316,11 @@
     align-items: center;
     justify-content: center;
     padding: var(--space-22);
+  }
+
+  .error {
+    font: var(--weight-medium) var(--text-sm) / 1.4 var(--font-sans);
+    color: var(--status-danger, #f5493d);
   }
 
   .veil {

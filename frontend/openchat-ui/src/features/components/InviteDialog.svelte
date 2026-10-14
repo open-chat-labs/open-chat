@@ -1,8 +1,25 @@
 <!-- Add or invite people to a group / channel, or share its link. Tabs: Add from community (canAdd: channels inside a
      community), Invite people (search `people`; `frequent` ones are listed until you search) and Share link (toggle,
      copy, share to a chat, QR). embedded renders it as the Invite page of a manage dialog: no veil, own header, no
-     footer on Share link, and the host can switch tabs through initialTab. -->
+     footer on Share link, and the host can switch tabs through initialTab.
+     People are picked by id. Adding, inviting, switching link sharing, resetting the link and sharing it to a chat all
+     wait on the host: the picks are only cleared (and the toast only shown) once it resolves; a rejection keeps them
+     and shows an error. The link comes from the host (`shareLink`); without it the link, QR and share are hidden. -->
+<script lang="ts" module>
+  export type InviteColor = 'violet' | 'amber' | 'teal' | 'blue' | 'slate' | 'plum';
+
+  export interface InvitePerson {
+    id: string;
+    name: string;
+    handle: string;
+    color: InviteColor;
+    /** Listed before you search. */
+    frequent?: boolean;
+  }
+</script>
+
 <script lang="ts">
+  import type { Snippet } from 'svelte';
   import { useT } from '../../lib/i18n';
   import CopyButton from '../../lib/components/CopyButton.svelte';
   import { onDestroy, untrack } from 'svelte';
@@ -14,7 +31,7 @@
   import UndoToast from '../../lib/components/UndoToast.svelte';
   import { modal } from '../../lib/behaviours/modal';
 
-  type Color = 'violet' | 'amber' | 'teal' | 'blue' | 'slate' | 'plum';
+  type Color = InviteColor;
   type TabKey = 'add' | 'invite' | 'share';
 
   const GRADIENTS: Record<Color, string> = {
@@ -26,45 +43,45 @@
     plum: 'linear-gradient(140deg,#b06bff,#6a2bff)',
   };
 
-  export interface InvitePerson {
-    name: string;
-    handle: string;
-    color: Color;
-    /** Listed before you search. */
-    frequent?: boolean;
-  }
-
   interface Props {
     groupName: string;
     /** "people" opens Add from community when canAdd, else Invite people. */
     initialTab?: 'people' | 'invite' | 'share';
     shareOn?: boolean;
-    /** Defaults to a link made from groupName. */
+    /** The invite link, as the host issued it (a full URL). Without it the link, QR and share-to-chat are hidden. */
     shareLink?: string;
+    /** Turn link sharing on or off. Rolls back with an error if it rejects; the switch is read-only without it. */
+    onShareToggle?: (on: boolean) => Promise<unknown> | void;
+    /** Issue a new link (the old one stops working). Hidden without it. */
+    onResetLink?: () => Promise<{ link: string }>;
+    /** Renders a QR code for the link (the host brings the QR library). The QR card is hidden without it. */
+    qr?: Snippet<[string]>;
     /** Which share copy to use: "group", "channel" or "community". */
     noun?: string;
     /** Channels inside a community: adds the "Add from community" tab. */
     canAdd?: boolean;
     communityName?: string;
-    communityMembers?: { name: string; handle: string; color: Color }[];
-    /** Handles already in the channel (shown, not pickable). */
+    communityMembers?: { id: string; name: string; handle: string; color: Color }[];
+    /** User ids already in the channel (shown, not pickable). */
     inChannel?: string[];
     /** Everyone you can invite. */
     people: InvitePerson[];
     /** Invited but not accepted yet. */
     pending?: { title: string; handle: string; color: Color }[];
-    /** Without invite rights the page is view-only: no footer. */
+    /** Invite rights. Without them (the default) the page is view-only: no footer, no sharing switch. */
     canInvite?: boolean;
     embedded?: boolean;
-    onAdd?: (handles: string[]) => void;
-    onInvite?: (handles: string[]) => void;
+    /** Add community members (user ids) to the channel. */
+    onAdd?: (userIds: string[]) => Promise<unknown> | void;
+    /** Invite people (user ids). */
+    onInvite?: (userIds: string[]) => Promise<unknown> | void;
     onCancel?: () => void;
     /** Embedded: the close button. */
     onClose?: () => void;
     /** Embedded: reports whether anything is picked. */
     onDirtyChange?: (dirty: boolean) => void;
-    chats?: { name: string; kind?: string; grad: string; radius?: string }[];
-    onShareToChat?: (v: { chat: string; message: string }) => void;
+    chats?: { id: string; name: string; kind?: string; grad: string; radius?: string }[];
+    onShareToChat?: (v: { chatId: string; message: string; link: string }) => Promise<unknown> | void;
   }
 
   let {
@@ -72,6 +89,9 @@
     initialTab = 'people',
     shareOn: shareOnProp = true,
     shareLink,
+    onShareToggle,
+    onResetLink,
+    qr,
     noun = 'group',
     canAdd = false,
     communityName = 'the community',
@@ -79,7 +99,7 @@
     inChannel = [],
     people,
     pending = [],
-    canInvite = true,
+    canInvite = false,
     embedded = false,
     onAdd,
     onInvite,
@@ -103,8 +123,10 @@
   let query = $state('');
   let picked = $state<string[]>([]);
   let shareOn = $state(untrack(() => shareOnProp));
+  let linkOverride = $state<string | null>(null);
   let pickerOpen = $state(false);
-  let toast = $state<{ id: number; text: string } | null>(null);
+  let busy = $state<'' | 'add' | 'invite' | 'share' | 'reset' | 'chat'>('');
+  let toast = $state<{ id: number; text: string; tone: 'success' | 'neutral' } | null>(null);
   let toastTimer: ReturnType<typeof setTimeout> | undefined;
   onDestroy(() => {
     clearTimeout(toastTimer);
@@ -135,24 +157,20 @@
 
   const aq = $derived(addQuery.trim().toLowerCase());
   const addPool = $derived((aq ? communityMembers.filter((p) => matches(p, aq)) : communityMembers).slice(0, 30));
-  const outsideMatch = $derived(!!aq && people.some((p) => !communityMembers.some((m) => m.handle === p.handle) && matches(p, aq)));
+  const outsideMatch = $derived(!!aq && people.some((p) => !communityMembers.some((m) => m.id === p.id) && matches(p, aq)));
 
   const q = $derived(query.trim().toLowerCase());
   const pool = $derived(q ? people.filter((p) => matches(p, q)) : people.filter((p) => p.frequent));
 
-  const link = $derived(
-    shareLink ??
-      `oc.app/group/${groupName
-        .toLowerCase()
-        .replace(/^#/, '')
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, '')}-8f2a`,
-  );
+  // copied exactly as issued; shown without the scheme
+  const link = $derived(linkOverride ?? shareLink ?? '');
+  const linkShown = $derived(link.replace(/^https?:\/\//, ''));
   const tabLabels = $derived(keys.map((k) => t(k === 'add' ? 'ui.inviteDialog.tabAdd' : k === 'invite' ? 'ui.inviteDialog.tabInvite' : 'ui.inviteDialog.tabShare')));
   const tabCounts = $derived(keys.map((k) => (k === 'add' ? addPicked.length || null : k === 'invite' ? picked.length || null : null)));
 
-  const gradientOf = (handle: string, list: { handle: string; color: Color }[]) => GRADIENTS[list.find((p) => p.handle === handle)?.color ?? 'violet'] ?? GRADIENTS.slate;
-  const toggleIn = (list: string[], handle: string) => (list.includes(handle) ? list.filter((h) => h !== handle) : [...list, handle]);
+  const personOf = (id: string, list: { id: string; handle: string; color: Color }[]) => list.find((p) => p.id === id);
+  const gradientOf = (id: string, list: { id: string; handle: string; color: Color }[]) => GRADIENTS[personOf(id, list)?.color ?? 'violet'] ?? GRADIENTS.slate;
+  const toggleIn = (list: string[], id: string) => (list.includes(id) ? list.filter((h) => h !== id) : [...list, id]);
   const countLabel = (n: number) => t('ui.inviteDialog.selectedCount', { count: n });
 
   function cancel() {
@@ -160,36 +178,82 @@
     else onCancel?.();
   }
 
-  function sentToChat(x: { chat: string; message: string }) {
+  function showToast(text: string, tone: 'success' | 'neutral' = 'success') {
     const id = Date.now();
-    pickerOpen = false;
-    toast = { id, text: t('ui.inviteDialog.linkSent', { chat: x.chat }) };
+    toast = { id, text, tone };
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => {
       if (toast?.id === id) toast = null;
     }, 4000);
-    onShareToChat?.(x);
   }
 
-  function add() {
-    if (addPicked.length) onAdd?.(addPicked.slice());
+  // runs one host call at a time; resolves true when it succeeded
+  async function attempt(what: Exclude<typeof busy, ''>, call: () => Promise<unknown> | void): Promise<boolean> {
+    if (busy) return false;
+    busy = what;
+    try {
+      await call();
+      return true;
+    } catch {
+      showToast(t('ui.inviteDialog.failed'), 'neutral');
+      return false;
+    } finally {
+      busy = '';
+    }
+  }
+
+  async function sentToChat(x: { chat: string; message: string }) {
+    // ChatPicker reports the chat it shows by name; the id is looked up from the same list
+    const chat = chats.find((c) => c.name === x.chat);
+    if (!chat || !onShareToChat) return;
+    if (await attempt('chat', () => onShareToChat({ chatId: chat.id, message: x.message, link }))) {
+      pickerOpen = false;
+      showToast(t('ui.inviteDialog.linkSent', { chat: chat.name }));
+    }
+  }
+
+  async function add() {
+    if (!addPicked.length || !onAdd) return;
+    const ids = addPicked.slice();
+    if (!(await attempt('add', () => onAdd(ids)))) return;
     if (embedded) {
       addPicked = [];
       addQuery = '';
     }
   }
 
-  function send() {
-    if (!picked.length) return;
-    onInvite?.(picked.slice());
+  async function send() {
+    if (!picked.length || !onInvite) return;
+    const ids = picked.slice();
+    if (!(await attempt('invite', () => onInvite(ids)))) return;
     if (embedded) {
       picked = [];
       query = '';
     }
   }
+
+  // optimistic: the switch moves at once and goes back if the host rejects
+  async function toggleSharing(on: boolean) {
+    if (!onShareToggle) return;
+    shareOn = on;
+    if (!(await attempt('share', () => onShareToggle(on)))) shareOn = !on;
+  }
+
+  async function resetLink() {
+    if (!onResetLink || busy) return;
+    busy = 'reset';
+    try {
+      linkOverride = (await onResetLink()).link;
+      showToast(t('ui.inviteDialog.linkReset'));
+    } catch {
+      showToast(t('ui.inviteDialog.failed'), 'neutral');
+    } finally {
+      busy = '';
+    }
+  }
 </script>
 
-{#snippet chips(handles: string[], list: { handle: string; color: Color }[], label: string, clear: () => void, toggle: (h: string) => void)}
+{#snippet chips(ids: string[], list: { id: string; handle: string; color: Color }[], label: string, clear: () => void, toggle: (h: string) => void)}
   <div class="picked">
     <div class="picked-head">
       <span class="list-label">{label}</span>
@@ -197,11 +261,11 @@
       <span class="clear-all" onclick={clear} role="button" tabindex="0">{t('ui.inviteDialog.clearAll')}</span>
     </div>
     <div class="chips">
-      {#each handles as handle}
+      {#each ids as id}
         <span class="chip">
-          <span class="chip-face" style:background={gradientOf(handle, list)}></span>
-          <span class="chip-handle">{handle}</span>
-          <span class="chip-remove" onclick={() => toggle(handle)} role="button" tabindex="0"><span class="chip-remove-icon"></span></span>
+          <span class="chip-face" style:background={gradientOf(id, list)}></span>
+          <span class="chip-handle">{personOf(id, list)?.handle ?? id}</span>
+          <span class="chip-remove" onclick={() => toggle(id)} role="button" tabindex="0"><span class="chip-remove-icon"></span></span>
         </span>
       {/each}
     </div>
@@ -263,17 +327,17 @@
             <span class="list-label start">{aq ? t('ui.inviteDialog.searchResults') : t('ui.inviteDialog.communityMembers', { community: communityName.toUpperCase() })}</span>
             <div class="rows">
               {#each addPool as u}
-                {@const member = inChannel.includes(u.handle)}
+                {@const member = inChannel.includes(u.id)}
                 <div class="row">
                   <MemberRow
                     title={u.name}
                     subtitle={u.handle}
                     color={u.color || 'slate'}
                     icon="toggle"
-                    selected={addPicked.includes(u.handle)}
+                    selected={addPicked.includes(u.id)}
                     disabled={member}
                     badge={member ? t('ui.inviteDialog.inChannel') : ''}
-                    onClick={() => !member && (addPicked = toggleIn(addPicked, u.handle))}
+                    onClick={() => !member && (addPicked = toggleIn(addPicked, u.id))}
                   />
                 </div>
               {/each}
@@ -311,7 +375,7 @@
             <div class="rows">
               {#each pool as u}
                 <div class="row">
-                  <MemberRow title={u.name} subtitle={u.handle} color={u.color} icon="toggle" selected={picked.includes(u.handle)} onClick={() => (picked = toggleIn(picked, u.handle))} />
+                  <MemberRow title={u.name} subtitle={u.handle} color={u.color} icon="toggle" selected={picked.includes(u.id)} onClick={() => (picked = toggleIn(picked, u.id))} />
                 </div>
               {/each}
             </div>
@@ -339,10 +403,10 @@
               <span class="share-title">{t('ui.inviteDialog.enableSharing')}</span>
               <span class="share-sub">{t('ui.inviteDialog.shareSub', { noun })}</span>
             </div>
-            <div class="toggle"><Toggle on={shareOn} onChange={(on) => (shareOn = on)} /></div>
+            <div class="toggle"><Toggle on={shareOn} disabled={!canInvite || !onShareToggle || busy === 'share'} onChange={toggleSharing} /></div>
           </div>
 
-          {#if shareOn}
+          {#if shareOn && link}
             <div class="share-body">
               <div class="warning">
                 <div class="warning-head">
@@ -355,18 +419,25 @@
               <div class="link-box">
                 <div class="link-text">
                   <span class="link-heading">{t('ui.inviteDialog.shareViaLink', { noun })}</span>
-                  <span class="link">{link}</span>
+                  <span class="link">{linkShown}</span>
                 </div>
                 <span class="link-actions">
-                  <CopyButton value={`https://${link}`} label="ui.inviteDialog.copyLink" size="md" />
-                  <span class="icon-button large" onclick={() => (pickerOpen = true)} role="button" tabindex="0" title={t('ui.inviteDialog.shareToChat')} aria-label={t('ui.inviteDialog.shareToChat')}><span class="send-icon"></span></span>
+                  <CopyButton value={link} label="ui.inviteDialog.copyLink" size="md" />
+                  {#if onShareToChat && chats.length}
+                    <span class="icon-button large" onclick={() => (pickerOpen = true)} role="button" tabindex="0" title={t('ui.inviteDialog.shareToChat')} aria-label={t('ui.inviteDialog.shareToChat')}><span class="send-icon"></span></span>
+                  {/if}
                 </span>
               </div>
+              {#if onResetLink && canInvite}
+                <span class="reset-link" onclick={resetLink} role="button" tabindex="0" aria-disabled={busy === 'reset'}>{t(busy === 'reset' ? 'ui.inviteDialog.resetting' : 'ui.inviteDialog.resetLink')}</span>
+              {/if}
 
-              <div class="qr-box">
-                <span class="qr">{t('ui.inviteDialog.qrCode')}</span>
-                <span class="qr-caption">{t('ui.inviteDialog.qrCaption', { noun })}</span>
-              </div>
+              {#if qr}
+                <div class="qr-box">
+                  <span class="qr">{@render qr(link)}</span>
+                  <span class="qr-caption">{t('ui.inviteDialog.qrCaption', { noun })}</span>
+                </div>
+              {/if}
             </div>
           {/if}
         {/if}
@@ -383,7 +454,7 @@
           {#if addPicked.length > 0}
             <span class="note">{countLabel(addPicked.length)}</span>
           {/if}
-          <div class="cta" class:ready={addPicked.length > 0} onclick={add} role="button" tabindex="0">
+          <div class="cta" class:ready={addPicked.length > 0 && !busy && !!onAdd} onclick={add} role="button" tabindex="0" aria-disabled={!addPicked.length || !!busy || !onAdd}>
             <span class="cta-icon" style:mask="var(--icon-plus) center/contain no-repeat"></span>
             <span>{t('ui.inviteDialog.addTo', { group: groupName })}</span>
           </div>
@@ -392,7 +463,7 @@
           {#if picked.length > 0}
             <span class="note">{countLabel(picked.length)}</span>
           {/if}
-          <div class="cta" class:ready={picked.length > 0} onclick={send} role="button" tabindex="0">
+          <div class="cta" class:ready={picked.length > 0 && !busy && !!onInvite} onclick={send} role="button" tabindex="0" aria-disabled={!picked.length || !!busy || !onInvite}>
             <span class="cta-icon" style:mask="var(--icon-invite) center/contain no-repeat"></span>
             <span>{t('ui.inviteDialog.sendInvites')}</span>
           </div>
@@ -401,12 +472,12 @@
     {/if}
   </div>
   {#if pickerOpen}
-    <ChatPicker title={t('ui.inviteDialog.shareInviteLink')} previewLabel={t('ui.inviteDialog.inviteLinkCaps')} item={{ title: t('ui.inviteDialog.inviteLink'), sub: link, icon: 'link' }} {chats} z={95} onSend={sentToChat} onClose={() => (pickerOpen = false)} />
+    <ChatPicker title={t('ui.inviteDialog.shareInviteLink')} previewLabel={t('ui.inviteDialog.inviteLinkCaps')} item={{ title: t('ui.inviteDialog.inviteLink'), sub: linkShown, icon: 'link' }} {chats} z={95} onSend={sentToChat} onClose={() => (pickerOpen = false)} />
   {/if}
   {#if toast}
     <div class="toast-layer">
       <div class="toast">
-        {#key toast.id}<UndoToast shown={true} tone="success" icon="check" message={toast.text} actionLabel="" onClose={() => (toast = null)} />{/key}
+        {#key toast.id}<UndoToast shown={true} tone={toast.tone} icon={toast.tone === 'success' ? 'check' : 'none'} message={toast.text} actionLabel="" onClose={() => (toast = null)} />{/key}
       </div>
     </div>
   {/if}
@@ -427,6 +498,13 @@
   .layer.embedded {
     position: absolute;
     padding: 0;
+  }
+
+  .reset-link {
+    align-self: flex-start;
+    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
+    color: var(--accent, #ff5672);
+    cursor: pointer;
   }
 
   .veil {

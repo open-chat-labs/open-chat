@@ -1,7 +1,25 @@
 <!-- Poll builder dialog (composer + → Poll). Question first; answers keep one empty row at the end (up to 10, drag/remove);
      duration pills; settings in a summary row that expands in place; live preview beside the form at ≥960px.
-     Publish → onPublish(poll) (host closes and shows "Poll sent · Undo"). Closing with content asks "Discard this poll?".
+     Publish → onPublish(poll) (host closes and shows "Poll sent · Undo"); a promise is awaited (no second publish while it
+     runs) and a rejection keeps the poll with an error. Closing with content asks "Discard this poll?".
      Ctrl/⌘+Enter publishes; Enter in an answer moves to the next one. -->
+<script lang="ts" module>
+  export interface PollDraft {
+    question: string;
+    options: { label: string; votes: number }[];
+    multiple: boolean;
+    publicVotes: boolean;
+    canChange: boolean;
+    hideResults: boolean;
+    /** How long it runs; stamp the end when it is actually sent. */
+    durationMs: number;
+    /** Display label for the duration ("1 day"). */
+    endsIn: string;
+    /** Now + durationMs at the moment Publish was pressed. */
+    endsAt: number;
+  }
+</script>
+
 <script lang="ts">
   import { onMount } from 'svelte';
   import Button from '../../lib/components/Button.svelte';
@@ -23,22 +41,12 @@
     ['ui.pollBuilderDialog.durations.month1', 30 * 86400e3],
   ];
 
-  export interface PollDraft {
-    question: string;
-    options: { label: string; votes: number }[];
-    multiple: boolean;
-    publicVotes: boolean;
-    canChange: boolean;
-    hideResults: boolean;
-    endsIn: string;
-    endsAt: number;
-  }
-
   interface Props {
     z?: number;
     /** Show the live preview beside the form on wide screens. */
     preview?: boolean;
-    onPublish?: (poll: PollDraft) => void;
+    /** Reject to keep the dialog open with an error. */
+    onPublish?: (poll: PollDraft) => Promise<unknown> | void;
     onClose?: () => void;
   }
 
@@ -57,6 +65,8 @@
   let hideResults = $state(false);
   let settingsOpen = $state(false);
   let confirming = $state(false);
+  let publishing = $state(false);
+  let failed = $state(false);
   let vw = $state(typeof window === 'undefined' ? 1200 : window.innerWidth);
 
   let box: HTMLDivElement;
@@ -106,18 +116,29 @@
     t.style.height = `${t.scrollHeight}px`;
   }
 
-  function publish() {
-    if (!ok) return;
-    onPublish?.({
-      question: question.trim(),
-      options: filled.map((label) => ({ label, votes: 0 })),
-      multiple,
-      publicVotes,
-      canChange: !locked,
-      hideResults,
-      endsIn: t(DURATIONS[duration][0]),
-      endsAt: end.getTime(),
-    });
+  async function publish() {
+    if (!ok || publishing) return;
+    const ms = DURATIONS[duration][1];
+    publishing = true;
+    failed = false;
+    try {
+      await onPublish?.({
+        question: question.trim(),
+        options: filled.map((label) => ({ label, votes: 0 })),
+        multiple,
+        publicVotes,
+        canChange: !locked,
+        hideResults,
+        durationMs: ms,
+        endsIn: t(DURATIONS[duration][0]),
+        // stamped now, not when the duration was picked
+        endsAt: Date.now() + ms,
+      });
+    } catch {
+      failed = true;
+    } finally {
+      publishing = false;
+    }
   }
 
   // closing with content asks first; an empty poll just closes
@@ -240,8 +261,12 @@
       {/if}
     </div>
     <div class="footer">
-      <span class="reason" class:ok>{reason}</span>
-      <span class="publish" class:ok onclick={publish} role="button" tabindex={ok ? 0 : -1} aria-disabled={!ok}><span class="publish-icon"></span>{t('ui.pollBuilderDialog.publish')}</span>
+      {#if failed}
+        <span class="reason failed" role="alert">{t('ui.pollBuilderDialog.publishFailed')}</span>
+      {:else}
+        <span class="reason" class:ok>{reason}</span>
+      {/if}
+      <span class="publish" class:ok={ok && !publishing} onclick={publish} role="button" tabindex={ok ? 0 : -1} aria-disabled={!ok || publishing}><span class="publish-icon"></span>{t('ui.pollBuilderDialog.publish')}</span>
     </div>
     {#if confirming}
       <div class="confirm-layer">
@@ -533,6 +558,10 @@
     font: 500 12.5px/1.4 var(--font-sans);
     color: var(--status-warning, #ffb03d);
     text-wrap: pretty;
+  }
+
+  .reason.failed {
+    color: var(--status-danger, #f5493d);
   }
 
   .reason.ok {

@@ -1,7 +1,37 @@
 <!-- Send crypto (composer + → Send crypto). Recipient at the top: fixed in a DM (`recipient`), picked from `members` in a group.
      Token pill + amount with live USD, quick chips, fee in the hint; irreversibility line by the button.
      "Attach" → onAttach(transfer): host puts it in the composer as a chip; caption + Send posts it. `initial` edits a previous value.
+     Tokens (balances, fees, minimums, prices) and the people you can pay come from the host; recipients are identified by id.
      Esc closes the open picker, then the dialog; Cmd/Ctrl+Enter attaches. -->
+<script lang="ts" module>
+  /** A token you can send or offer: wallet balance, ledger fee, minimum amount and USD price. */
+  export interface CryptoToken {
+    symbol: string;
+    name?: string;
+    mark: string;
+    gradient: string;
+    /** Wallet balance. */
+    bal: number;
+    /** Ledger fee per transfer. */
+    fee: number;
+    /** Smallest amount accepted. */
+    min: number;
+    /** USD per unit. */
+    usd: number;
+    /** Display decimals. */
+    dp: number;
+  }
+
+  export interface CryptoMember {
+    /** User id (principal) the transfer goes to. */
+    id: string;
+    name: string;
+    handle: string;
+    /** Avatar background. */
+    grad?: string;
+  }
+</script>
+
 <script lang="ts">
   import { getI18n, useT } from '../../lib/i18n';
   import { cleanAmount, parseAmount } from '../../lib/amount';
@@ -12,27 +42,17 @@
   import QuickAmountChips from '../../lib/components/QuickAmountChips.svelte';
   import TokenAvatar from '../../lib/components/TokenAvatar.svelte';
 
-  // sample balances and prices until the wallet is wired
-  const TOK = {
-    CHAT: { symbol: 'CHAT', mark: 'C', gradient: 'linear-gradient(140deg,#ff5f9e,#ffb03d)', bal: 132.332136, fee: 0.001, min: 0.01, usd: 0.053, dp: 4 },
-    ICP: { symbol: 'ICP', mark: '∞', gradient: 'linear-gradient(140deg,#ff5f9e,#6a2bff)', bal: 4.2153, fee: 0.0001, min: 0.0001, usd: 4.8, dp: 4 },
-    ckBTC: { symbol: 'ckBTC', mark: '₿', gradient: 'linear-gradient(140deg,#ffb03d,#f7931a)', bal: 0.00213, fee: 0.0000001, min: 0.0000001, usd: 62000, dp: 8 },
-    ckUSDC: { symbol: 'ckUSDC', mark: '$', gradient: 'linear-gradient(140deg,#2775ca,#1FB6FF)', bal: 48.5, fee: 0.01, min: 0.01, usd: 1, dp: 2 },
-  };
-  type Sym = keyof typeof TOK;
   const DEFAULT_GRAD = 'linear-gradient(140deg,#2EE6A8,#1FB6FF)';
+  const EMPTY: CryptoToken = { symbol: '', mark: '', gradient: DEFAULT_GRAD, bal: 0, fee: 0, min: 0, usd: 0, dp: 2 };
 
   const fmt = (n: number, dp: number) => Number(n.toFixed(dp)).toLocaleString(i18n.locale ?? 'en', { maximumFractionDigits: dp });
   const usdFmt = (v: number) => (v === 0 ? '$0.00' : v < 0.01 ? '<$0.01' : `$${v.toLocaleString(i18n.locale ?? 'en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
 
-  interface Member {
-    name: string;
-    handle: string;
-    /** Avatar background. */
-    grad?: string;
-  }
+  type Member = CryptoMember;
 
   interface Props {
+    /** Tokens that can be sent, with live balances and fees; the first is the default. */
+    tokens: CryptoToken[];
     z?: number;
     /** Fixed recipient (a DM). */
     recipient?: Member | null;
@@ -43,12 +63,12 @@
     onClose?: () => void;
   }
 
-  let { z = 80, recipient = null, members = [], initial = null, onAttach, onClose }: Props = $props();
+  let { tokens, z = 80, recipient = null, members = [], initial = null, onAttach, onClose }: Props = $props();
   const t = useT();
   const i18n = getI18n();
 
   const draft = initial?.draft;
-  let tok = $state<Sym>((draft?.tok as Sym) in TOK ? (draft?.tok as Sym) : 'CHAT');
+  let tok = $state(draft?.tok ?? '');
   let amt = $state(draft?.amt ?? '');
   let to = $state<string | null>(draft?.to ?? null);
   let toOpen = $state(false);
@@ -62,10 +82,11 @@
     return () => clearTimeout(t);
   });
 
-  const T = $derived(TOK[tok]);
+  // an edited transfer keeps its token; one the host no longer lists can't be sent until another is picked
+  const T = $derived(tokens.find((x) => x.symbol === tok) ?? (draft?.tok ? { ...EMPTY, symbol: draft.tok } : (tokens[0] ?? EMPTY)));
   const F = (n: number) => fmt(n, T.dp);
   const canPick = $derived(!recipient && members.length > 0);
-  const toMember = $derived(recipient ?? members.find((m) => m.handle === to) ?? null);
+  const toMember = $derived(recipient ?? members.find((m) => m.id === to) ?? null);
   const a = $derived(parseAmount(amt));
   const max = $derived(Math.max(0, T.bal - T.fee));
   // why Attach is disabled: a resource key ('' = ready) and its params
@@ -95,13 +116,13 @@
       amountText: `${F(a)} ${T.symbol}`,
       usd,
       usdText: usdFmt(usd),
-      recipient: { name: toMember.name, handle: toMember.handle },
+      recipient: { id: toMember.id, name: toMember.name, handle: toMember.handle },
       fee: T.fee,
       feeText: `${F(T.fee)} ${T.symbol}`,
       totalText: `${F(a + T.fee)} ${T.symbol}`,
       title: `${F(a)} ${T.symbol}`,
       summary: t('ui.sendCryptoDialog.summary', { handle: toMember.handle, usd: usdFmt(usd) }),
-      draft: { tok, amt, to: toMember.handle },
+      draft: { tok: T.symbol, amt, to: toMember.id },
     });
   }
 
@@ -160,12 +181,12 @@
           <div class="members" role="listbox" aria-label={t('ui.sendCryptoDialog.members')}>
             <input class="member-search" bind:this={searchInput} bind:value={query} placeholder={t('ui.sendCryptoDialog.searchMembers')} aria-label={t('ui.sendCryptoDialog.searchMembers')} />
             {#each shownMembers as m}
-              {@const sel = !!toMember && m.handle === toMember.handle}
+              {@const sel = !!toMember && m.id === toMember.id}
               <div
                 class="member"
                 class:sel
                 onclick={() => {
-                  to = m.handle;
+                  to = m.id;
                   toOpen = false;
                 }}
                 role="option"
@@ -213,12 +234,12 @@
         <div class="token-dialog" role="dialog" aria-label={t('ui.sendCryptoDialog.token')}>
           <div class="token-head"><span class="token-title">{t('ui.sendCryptoDialog.token')}</span><IconButton variant="ghost" icon="close" label="ui.common.close" onClick={() => (tokOpen = false)} /></div>
           <div class="token-list">
-            {#each Object.values(TOK) as tk}
+            {#each tokens as tk (tk.symbol)}
               <div
                 class="token-row"
                 class:sel={tk.symbol === T.symbol}
                 onclick={() => {
-                  tok = tk.symbol as Sym;
+                  tok = tk.symbol;
                   tokOpen = false;
                 }}
                 role="button"

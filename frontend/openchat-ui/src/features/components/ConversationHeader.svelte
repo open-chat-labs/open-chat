@@ -1,6 +1,8 @@
 <!-- Header above a conversation: avatar, name (opens details), presence or "Public · N members", your status icons
      (favourite / muted / @everyone muted), call buttons, extra action icons, the ⋯ menu and an optional side-panel toggle.
-     The menu defaults to the standard actions per kind; "Leave …" items call onLeave, items without onSelect report via onMenu. -->
+     The menu defaults to the standard actions per kind, worded from the current state (favourite, muted). The item with id
+     "leave" calls onLeave; other items without onSelect report their `id` (else their label) via onMenu. Channel Invite only
+     shows with canInvite. Actions are matched by id, never by label text. -->
 <script lang="ts">
   import { useT } from '../../lib/i18n';
   import { onMount } from 'svelte';
@@ -11,21 +13,9 @@
   import Menu from '../../lib/components/Menu.svelte';
 
   const mask = (name: string) => `var(--icon-${name}) center/contain no-repeat`;
-  // built-in menu labels are resource keys; onMenu reports an item's label (the key, or a host item's own label)
+  // built-in menu labels are resource keys; onMenu reports an item's id
   const K = 'ui.conversationHeader.menu.';
-  const FAVOURITE: MenuItem = { label: K + 'addToFavourites', mask: mask('heart'), variant: 'regular' };
-  const COPY_URL: MenuItem = { label: K + 'copyUrl', mask: mask('link'), variant: 'regular' };
-  const MUTE: MenuItem = { label: K + 'muteNotifications', mask: mask('bell-off'), variant: 'regular' };
-  const MUTE_EVERYONE: MenuItem = { label: K + 'muteEveryone', mask: mask('at'), variant: 'regular' };
-  const GROUP_MENU: MenuItem[] = [FAVOURITE, COPY_URL, MUTE, MUTE_EVERYONE, { label: K + 'leaveGroup', mask: mask('exit'), variant: 'danger' }];
-  const DM_MENU: MenuItem[] = [
-    FAVOURITE,
-    COPY_URL,
-    MUTE,
-    { label: K + 'blockUser', mask: mask('ban'), variant: 'danger' },
-    { label: K + 'deleteChat', mask: mask('trash'), variant: 'danger' },
-  ];
-  const LEAVE = new Set([K + 'leaveGroup', K + 'leaveChannel']);
+  type ActionItem = MenuItem & { id?: string };
 
   type Action = string | { icon: string; minVw?: number; maxVw?: number; onPress?: () => void };
 
@@ -48,9 +38,12 @@
     /** true, or the mute duration ('8h' | '1w') for the tooltip. */
     statusMuted?: boolean | '8h' | '1w';
     statusEveryone?: boolean;
-    /** Channels: flips the favourite item's wording. */
+    /** Flips the favourite item's wording; defaults to statusFav. */
     isFavourite?: boolean;
-    menuItems?: MenuItem[];
+    /** Channels: show Invite. */
+    canInvite?: boolean;
+    /** Replaces the default menu; give items an `id` to be told which was picked ("leave" calls onLeave). */
+    menuItems?: ActionItem[];
     showMenu?: boolean;
     showCall?: boolean;
     /** Resource key (or literal text). */
@@ -61,7 +54,9 @@
     actions?: Action[];
     actionHandlers?: Record<string, () => void>;
     onLeave?: () => void;
-    onMenu?: (label: string) => void;
+    /** The picked item's id (or label when it has none): favourite, unfavourite, copyUrl, mute, unmute, muteEveryone,
+     *  unmuteEveryone, block, delete, invite. */
+    onMenu?: (id: string) => void;
     onTogglePanel?: () => void;
     panelOpen?: boolean;
   }
@@ -81,7 +76,8 @@
     statusFav = false,
     statusMuted = false,
     statusEveryone = false,
-    isFavourite = false,
+    isFavourite,
+    canInvite = false,
     menuItems,
     showMenu = true,
     showCall = true,
@@ -107,13 +103,35 @@
   const privateChat = $derived(visibility === 'Private');
 
   const items = $derived.by(() => {
-    const base =
+    const fav = isFavourite ?? statusFav;
+    const favourite: ActionItem = fav
+      ? { id: 'unfavourite', label: K + 'removeFromFavourites', mask: mask('heart'), variant: 'regular' }
+      : { id: 'favourite', label: K + 'addToFavourites', mask: mask('heart'), variant: 'regular' };
+    const copyUrl: ActionItem = { id: 'copyUrl', label: K + 'copyUrl', mask: mask('link'), variant: 'regular' };
+    const mute: ActionItem = statusMuted
+      ? { id: 'unmute', label: K + 'unmuteNotifications', mask: mask('bell'), variant: 'regular' }
+      : { id: 'mute', label: K + 'muteNotifications', mask: mask('bell-off'), variant: 'regular' };
+    const muteEveryone: ActionItem = statusEveryone
+      ? { id: 'unmuteEveryone', label: K + 'unmuteEveryone', mask: mask('at'), variant: 'regular' }
+      : { id: 'muteEveryone', label: K + 'muteEveryone', mask: mask('at'), variant: 'regular' };
+    const base: ActionItem[] =
       menuItems ??
       (channel
-        ? [{ label: K + 'invite', mask: mask('invite') }, { ...FAVOURITE, label: K + (isFavourite ? 'removeFromFavourites' : 'addToFavourites') }, COPY_URL, { label: K + 'leaveChannel', mask: mask('exit'), variant: 'danger' as const }]
+        ? [
+            ...(canInvite ? [{ id: 'invite', label: K + 'invite', mask: mask('invite') }] : []),
+            favourite,
+            copyUrl,
+            { id: 'leave', label: K + 'leaveChannel', mask: mask('exit'), variant: 'danger' as const },
+          ]
         : kind === 'group'
-          ? GROUP_MENU
-          : DM_MENU);
+          ? [favourite, copyUrl, mute, muteEveryone, { id: 'leave', label: K + 'leaveGroup', mask: mask('exit'), variant: 'danger' as const }]
+          : [
+              favourite,
+              copyUrl,
+              mute,
+              { id: 'block', label: K + 'blockUser', mask: mask('ban'), variant: 'danger' as const },
+              { id: 'delete', label: K + 'deleteChat', mask: mask('trash'), variant: 'danger' as const },
+            ]);
     return base.map((it) => ({
       ...it,
       label: t(it.label),
@@ -121,8 +139,8 @@
         menuOpen = false;
         if (it.onSelect) it.onSelect();
         // dialogs are rendered by the host so their fixed layout isn't trapped in this column
-        else if (LEAVE.has(it.label) || /^leave/i.test(it.label)) onLeave?.();
-        else onMenu?.(it.label);
+        else if (it.id === 'leave') onLeave?.();
+        else onMenu?.(it.id ?? it.label);
       },
     }));
   });

@@ -174,8 +174,11 @@
       even,
       endsIn: t(DURS[dur][1]),
       endsInLabel: t(DURS[dur][0]),
+      // provisional: the prize posts later from the composer, so the host sets the real end from durationMs at send time
       endsAt: Date.now() + DURS[dur][2],
+      durationMs: DURS[dur][2],
       gates: gateOn.map((g) => ({ label: gateLabel(g), met: true })),
+      rules: gateOn.map((g) => (g.pick ? { kind: g.k, min: g.pick === 'streak' ? streak : chit } : { kind: g.k })),
       fee,
       feeText: `${F(fee)} ${T.symbol}`,
       totalText: `${F(total)} ${T.symbol}`,

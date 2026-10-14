@@ -1,7 +1,8 @@
 <!-- Saved recipients, shown in the wallet's main area (opened from the panel ⋯ → Manage recipients).
      List: search, Add recipient, rows with network + optional token lock, quick Send, ⋯ (Edit / Copy address / Remove).
-     Add / Edit run in place in the same column. onChange(list) on every save/remove; onSend(recipient) hands off to Send.
-     The list is local once edited; a parent that passes new `recipients` replaces it. -->
+     Add / Edit run in place in the same column. Saving and removing go to the host (onAdd / onUpdate / onRemove) and are
+     only kept once it confirms: a rejected save keeps the form open with an error, a rejected remove puts the row back.
+     onSend(recipient) hands off to Send. A parent that passes new `recipients` replaces the list. -->
 <script lang="ts" module>
   export interface Recipient {
     id: string;
@@ -14,6 +15,8 @@
   }
 
   export type RecipientNetwork = 'BTC' | 'ETH' | 'XRP' | 'ICP';
+
+  export type RecipientDraft = Omit<Recipient, 'id' | 'last'>;
 </script>
 
 <script lang="ts">
@@ -22,18 +25,7 @@
   import PageHeader from '../../lib/components/PageHeader.svelte';
   import { useT } from '../../lib/i18n';
   import { copyText } from '../../lib/clipboard';
-
-  const NETWORKS: { id: RecipientNetwork; test: (a: string) => boolean }[] = [
-    { id: 'BTC', test: (a) => /^(bc1[a-z0-9]{20,}|[13][a-km-zA-HJ-NP-Z1-9]{25,34})$/.test(a) },
-    { id: 'ETH', test: (a) => /^0x[0-9a-fA-F]{40}$/.test(a) },
-    { id: 'XRP', test: (a) => /^r[1-9A-HJ-NP-Za-km-z]{24,34}$/.test(a) },
-    { id: 'ICP', test: (a) => /^([a-z0-9]{5}-){4,10}[a-z0-9]{3}$/.test(a) || /^[0-9a-f]{64}$/.test(a) },
-  ];
-  const detect = (a: string): RecipientNetwork | 'unknown' | null => {
-    const v = (a || '').trim();
-    if (!v) return null;
-    return NETWORKS.find((n) => n.test(v))?.id ?? 'unknown';
-  };
+  import { detectNetwork as detect } from '../../lib/networks';
   const NET_NAME: Record<RecipientNetwork, string> = { BTC: 'Bitcoin', ETH: 'Ethereum', XRP: 'XRP Ledger', ICP: 'Internet Computer' };
   const short = (a: string) => ((a || '').length > 26 ? `${a.slice(0, 12)}…${a.slice(-8)}` : a);
   const GRADS = [
@@ -55,12 +47,17 @@
     /** Held tokens are offered as token locks. */
     tokens: WalletToken[];
     recipients?: Recipient[];
-    onChange?: (list: Recipient[]) => void;
+    /** Save a new recipient; resolve with it as stored (the host assigns the id). Add is hidden without it. */
+    onAdd?: (r: RecipientDraft) => Promise<Recipient>;
+    /** Save an edit. Edit is hidden without it. */
+    onUpdate?: (r: Recipient) => Promise<unknown> | void;
+    /** Remove a saved recipient. Remove is hidden without it. */
+    onRemove?: (id: string) => Promise<unknown> | void;
     onSend?: (recipient: Recipient & { network: RecipientNetwork | 'unknown' | null }) => void;
     onClose?: () => void;
   }
 
-  let { tokens, recipients = [], onChange, onSend, onClose }: Props = $props();
+  let { tokens, recipients = [], onAdd, onUpdate, onRemove, onSend, onClose }: Props = $props();
   const t = useT();
 
   // local edits stick until the parent sends a new list
@@ -70,6 +67,8 @@
   let confirmFor = $state<string | null>(null);
   let copiedFor = $state<string | null>(null);
   let form = $state<{ id: string | null; address: string; name: string; token: string | null } | null>(null);
+  let saving = $state(false);
+  let error = $state<'' | 'save' | 'remove'>('');
   let copyTimer: ReturnType<typeof setTimeout> | undefined;
   onDestroy(() => clearTimeout(copyTimer));
 
@@ -87,14 +86,26 @@
   // labels are resource keys (token symbols render as themselves)
   const chips = $derived([{ symbol: null as string | null, label: 'ui.walletRecipients.anyToken', mark: '', grad: 'transparent' }].concat(held.map((tok) => ({ symbol: tok.symbol, label: tok.symbol, mark: tok.mark, grad: tok.grad }))));
 
-  function commit(next: Recipient[]) {
-    list = next;
-    onChange?.(next);
-  }
-
   function back() {
+    if (saving) return;
+    error = '';
     if (form) form = null;
     else onClose?.();
+  }
+
+  // optimistic: the row goes now and comes back if the host rejects
+  async function remove(r: Recipient) {
+    if (!onRemove) return;
+    confirmFor = null;
+    error = '';
+    const before = list;
+    list = list.filter((x) => x.id !== r.id);
+    try {
+      await onRemove(r.id);
+    } catch {
+      list = before;
+      error = 'remove';
+    }
   }
 
   async function copyAddress(r: Recipient) {
@@ -105,15 +116,29 @@
     copyTimer = setTimeout(() => (copiedFor = null), 1600);
   }
 
-  function save() {
-    if (!valid || !form) return;
+  // the form stays (with an error) until the host has stored it
+  async function save() {
+    if (!valid || !form || saving) return;
     const name = form.name.trim() || t('ui.walletRecipients.defaultName', { network: NET_NAME[net as RecipientNetwork] });
     const f = form;
-    const next = f.id
-      ? list.map((r) => (r.id === f.id ? { ...r, name, address: addr, token: f.token } : r))
-      : [...list, { id: `r${Date.now()}`, name, address: addr, token: f.token, last: '' }];
-    form = null;
-    commit(next);
+    saving = true;
+    error = '';
+    try {
+      if (f.id) {
+        const prev = list.find((r) => r.id === f.id);
+        const next: Recipient = { ...(prev ?? { id: f.id }), name, address: addr, token: f.token };
+        await onUpdate?.(next);
+        list = list.map((r) => (r.id === f.id ? next : r));
+      } else if (onAdd) {
+        const stored = await onAdd({ name, address: addr, token: f.token });
+        list = [...list, stored];
+      }
+      form = null;
+    } catch {
+      error = 'save';
+    } finally {
+      saving = false;
+    }
   }
 </script>
 
@@ -127,7 +152,7 @@
             <span class="search-icon"></span>
             <input bind:value={query} placeholder={t('ui.walletRecipients.searchPlaceholder')} aria-label={t('ui.walletRecipients.searchLabel')} />
           </div>
-          <span
+          {#if onAdd}<span
             class="add"
             onclick={() => {
               form = { id: null, address: '', name: '', token: null };
@@ -139,8 +164,9 @@
           >
             <span class="add-icon"></span>
             <span class="add-label">{t('ui.walletRecipients.addRecipient')}</span>
-          </span>
+          </span>{/if}
         </div>
+        {#if error === 'remove'}<span class="error" role="alert">{t('ui.walletRecipients.removeFailed')}</span>{/if}
 
         <div class="list">
           {#each shown as r (r.id)}
@@ -181,10 +207,7 @@
                 <span class="cancel" onclick={() => (confirmFor = null)} role="button" tabindex="0">{t('ui.common.cancel')}</span>
                 <span
                   class="remove"
-                  onclick={() => {
-                    confirmFor = null;
-                    commit(list.filter((x) => x.id !== r.id));
-                  }}
+                  onclick={() => remove(r)}
                   role="button"
                   tabindex="0">{t('ui.common.remove')}</span
                 >
@@ -192,25 +215,26 @@
               {#if open}
                 <div class="menu-away" onclick={() => (menuFor = null)} role="presentation"></div>
                 <div class="menu" role="menu">
-                  <span
-                    class="menu-item"
-                    onclick={() => {
-                      menuFor = null;
-                      form = { id: r.id, address: r.address, name: r.name, token: r.token ?? null };
-                    }}
-                    role="menuitem"
-                    tabindex="0"><span class="menu-icon" style:mask={mask('edit')}></span>{t('ui.common.edit')}</span
-                  >
+                  {#if onUpdate}<span
+                      class="menu-item"
+                      onclick={() => {
+                        menuFor = null;
+                        error = '';
+                        form = { id: r.id, address: r.address, name: r.name, token: r.token ?? null };
+                      }}
+                      role="menuitem"
+                      tabindex="0"><span class="menu-icon" style:mask={mask('edit')}></span>{t('ui.common.edit')}</span
+                    >{/if}
                   <span class="menu-item" onclick={() => copyAddress(r)} role="menuitem" tabindex="0"><span class="menu-icon" style:mask={mask('copy')}></span>{t('ui.walletRecipients.copyAddress')}</span>
-                  <span
-                    class="menu-item danger"
-                    onclick={() => {
-                      menuFor = null;
-                      confirmFor = r.id;
-                    }}
-                    role="menuitem"
-                    tabindex="0"><span class="menu-icon" style:mask={mask('trash')}></span>{t('ui.common.remove')}</span
-                  >
+                  {#if onRemove}<span
+                      class="menu-item danger"
+                      onclick={() => {
+                        menuFor = null;
+                        confirmFor = r.id;
+                      }}
+                      role="menuitem"
+                      tabindex="0"><span class="menu-icon" style:mask={mask('trash')}></span>{t('ui.common.remove')}</span
+                    >{/if}
                 </div>
               {/if}
             </div>
@@ -266,9 +290,12 @@
             </div>
             <span class="hint wrap">{form.token ? t('ui.walletRecipients.onlyTokenHint', { token: form.token }) : t('ui.walletRecipients.anyTokenHint')}</span>
           </div>
+          {#if error === 'save'}<span class="error" role="alert">{t('ui.walletRecipients.saveFailed')}</span>{/if}
           <div class="form-actions">
             <span class="form-cancel" onclick={back} role="button" tabindex="0">{t('ui.common.cancel')}</span>
-            <span class="save" class:valid onclick={save} role="button" tabindex="0" aria-disabled={!valid}>{t(form.id ? 'ui.common.saveChanges' : 'ui.walletRecipients.saveRecipient')}</span>
+            <span class="save" class:valid={valid && !saving} onclick={save} role="button" tabindex="0" aria-disabled={!valid || saving}
+              >{t(saving ? 'ui.walletRecipients.saving' : form.id ? 'ui.common.saveChanges' : 'ui.walletRecipients.saveRecipient')}</span
+            >
           </div>
         </div>
       {/if}
@@ -286,6 +313,11 @@
     flex-direction: column;
     overflow: hidden;
     background: var(--surface-1, #0e0e12);
+  }
+
+  .error {
+    font: 500 13px/1.4 var(--font-sans);
+    color: var(--status-danger, #f5493d);
   }
 
   .scroll {

@@ -1,5 +1,6 @@
 <!-- Confirm deleting a group, channel or community: Delete arms only once the name is typed (case-insensitive).
-     Cancel / confirm play the close animation, then call back. -->
+     Cancel plays the close animation, then calls back; Delete calls onConfirm and waits: the dialog closes once it resolves
+     and stays open (with the typed name) and an error if it rejects. -->
 <script lang="ts">
   import { onDestroy } from 'svelte';
   import { modal } from '../../lib/behaviours/modal';
@@ -9,13 +10,13 @@
   interface Props {
     groupName: string;
     noun?: 'group' | 'channel' | 'community';
-    onConfirm?: () => void;
+    /** Delete. Reject to keep the dialog open with an error. */
+    onConfirm?: () => Promise<unknown> | void;
     onCancel?: () => void;
   }
 
   let { groupName, noun = 'group', onConfirm, onCancel }: Props = $props();
   const t = useT();
-
 
   let typed = $state('');
   const armed = $derived(typed.trim().toLowerCase() === groupName.trim().toLowerCase());
@@ -33,10 +34,30 @@
       then?.();
     }, 170);
   }
+
+  // confirming waits for the host: the dialog closes once it resolves, and stays with an error if it rejects
+  let busy = $state(false);
+  let failed = $state(false);
+  async function confirm() {
+    if (!armed || busy || closing) return;
+    busy = true;
+    failed = false;
+    try {
+      await onConfirm?.();
+    } catch {
+      failed = true;
+      return;
+    } finally {
+      busy = false;
+    }
+    close();
+  }
+  // no dismissing while the host is working on it
+  const dismiss = () => !busy && close(onCancel);
 </script>
 
-<div class="layer" class:closing role="dialog" aria-modal="true" use:modal={() => close(onCancel)}>
-  <div class="veil" onclick={() => close(onCancel)} aria-hidden="true"></div>
+<div class="layer" class:closing role="dialog" aria-modal="true" use:modal={dismiss}>
+  <div class="veil" onclick={dismiss} aria-hidden="true"></div>
   <div class="card">
     <div class="head">
       <span class="badge"><span class="badge-icon"></span></span>
@@ -44,7 +65,7 @@
         <span class="title">{t('ui.deleteGroupDialog.title', { noun })}</span>
         <span class="subtitle">{groupName}</span>
       </div>
-      <span class="close" onclick={() => close(onCancel)} role="button" tabindex="0" aria-label={t('ui.common.close')}><span class="close-icon"></span></span>
+      <span class="close" onclick={dismiss} role="button" tabindex="0" aria-label={t('ui.common.close')}><span class="close-icon"></span></span>
     </div>
 
     <div class="body">
@@ -59,11 +80,12 @@
     </div>
 
     <div class="foot">
-      <span class="cancel" onclick={() => close(onCancel)} role="button" tabindex="0">{t('ui.deleteGroupDialog.keep', { noun })}</span>
+      <span class="cancel" onclick={dismiss} role="button" tabindex="0">{t('ui.deleteGroupDialog.keep', { noun })}</span>
       <span class="grow"></span>
-      <div class="delete" class:armed onclick={() => armed && close(onConfirm)} role="button" tabindex="0" aria-disabled={!armed}>
+      {#if failed}<span class="error" role="alert">{t('ui.deleteGroupDialog.failed', { noun })}</span>{/if}
+      <div class="delete" class:armed={armed && !busy} onclick={confirm} role="button" tabindex="0" aria-disabled={!armed || busy}>
         <span class="delete-icon"></span>
-        <span>{t('ui.common.delete')}</span>
+        <span>{t(busy ? 'ui.deleteGroupDialog.deleting' : 'ui.common.delete')}</span>
       </div>
     </div>
   </div>
@@ -249,6 +271,12 @@
     padding-inline-start: var(--space-14);
     font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-sans);
     color: var(--ink-4, #7c7c8c);
+  }
+
+  .error {
+    min-width: 0;
+    font: var(--weight-medium) var(--text-sm) / 1.3 var(--font-sans);
+    color: var(--status-danger, #f5493d);
   }
 
   .foot {

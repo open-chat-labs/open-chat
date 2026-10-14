@@ -1,12 +1,9 @@
 <!-- Create a channel in a community, or (embedded) add a channel that shows a web app in place of messages.
      Name is slugged as you type; create arms once the name has 2+ characters (and, embedded, the URL looks valid).
-     Esc, the veil, the × and Cancel all close with the exit animation. -->
-<script lang="ts">
-  import { useT } from '../../lib/i18n';
-  import { onDestroy } from 'svelte';
-  import Toggle from '../../lib/components/Toggle.svelte';
-  import { modal } from '../../lib/behaviours/modal';
-
+     checkName (optional) reports whether the name is free in the community; a taken name blocks create.
+     Create awaits onCreate ("Creating…"): the dialog closes once it resolves and keeps the form with an error if it
+     rejects. Esc, the veil, the × and Cancel close with the exit animation, except while creating. -->
+<script lang="ts" module>
   export interface NewChannel {
     name: string;
     about: string;
@@ -15,14 +12,28 @@
     url: string;
   }
 
+  export type NameCheck = 'ok' | 'taken' | 'invalid';
+</script>
+
+<script lang="ts">
+  import { useT } from '../../lib/i18n';
+  import { onDestroy, untrack } from 'svelte';
+  import Toggle from '../../lib/components/Toggle.svelte';
+  import { modal } from '../../lib/behaviours/modal';
+
   interface Props {
     communityName: string;
     embedded?: boolean;
+    /** Whether a new channel starts public. */
+    defaultPublic?: boolean;
+    /** Is this channel name free in the community? Checked as the user types (debounced). */
+    checkName?: (name: string) => Promise<NameCheck>;
     onCancel?: () => void;
-    onCreate?: (c: NewChannel) => void;
+    /** Create it. The dialog closes when this resolves; a rejection keeps it open with an error. */
+    onCreate?: (c: NewChannel) => Promise<unknown> | void;
   }
 
-  let { communityName, embedded = false, onCancel, onCreate }: Props = $props();
+  let { communityName, embedded = false, defaultPublic = false, checkName, onCancel, onCreate }: Props = $props();
   const t = useT();
 
   const slug = (v: string) =>
@@ -34,25 +45,63 @@
   let name = $state('');
   let about = $state('');
   let url = $state('');
-  let isPublic = $state(true);
+  let isPublic = $state(untrack(() => defaultPublic));
+  let creating = $state(false);
+  let failed = $state(false);
 
-  const ok = $derived(name.length > 1 && (!embedded || /^https?:\/\/\S+\.\S+/.test(url.trim())));
+  // name availability: the latest answer for the current name ('pending' while a check runs)
+  let nameState = $state<{ name: string; result: NameCheck | 'pending' } | null>(null);
+  let checkTimer: ReturnType<typeof setTimeout> | undefined;
+  function typedName(value: string) {
+    name = slug(value);
+    clearTimeout(checkTimer);
+    nameState = null;
+    if (!checkName || name.length < 2) return;
+    const asked = name;
+    nameState = { name: asked, result: 'pending' };
+    checkTimer = setTimeout(async () => {
+      let result: NameCheck | null;
+      try {
+        result = await checkName(asked);
+      } catch {
+        result = null; // can't tell; the host still validates on create
+      }
+      if (name === asked) nameState = result ? { name: asked, result } : null;
+    }, 400);
+  }
+  const nameResult = $derived(nameState?.name === name ? nameState.result : null);
+
+  const ok = $derived(name.length > 1 && (!embedded || /^https?:\/\/\S+\.\S+/.test(url.trim())) && (nameResult === null || nameResult === 'ok'));
 
   let closing = $state(false);
   let timer: ReturnType<typeof setTimeout> | undefined;
-  onDestroy(() => clearTimeout(timer));
+  onDestroy(() => {
+    clearTimeout(timer);
+    clearTimeout(checkTimer);
+  });
 
   // play the exit animation, then hand control back
   function close(then?: () => void) {
-    if (closing) return;
+    if (closing || creating) return;
     closing = true;
     timer = setTimeout(() => then?.(), 170);
   }
 
-  function create() {
-    if (!ok) return;
+  async function create() {
+    if (!ok || creating) return;
     const result = { name, about, isPublic, embedded, url: url.trim() };
-    close(() => onCreate?.(result));
+    creating = true;
+    failed = false;
+    try {
+      await onCreate?.(result);
+    } catch {
+      failed = true;
+      return;
+    } finally {
+      creating = false;
+    }
+    // animate out and stay hidden; the host unmounts the dialog once onCreate has resolved
+    closing = true;
   }
 </script>
 
@@ -73,9 +122,19 @@
         <span class="label">{t('ui.newChannelDialog.nameLabel')}</span>
         <div class="name-box" class:filled={!!name}>
           <span class="hash">#</span>
-          <input value={name} oninput={(e) => (name = slug(e.currentTarget.value))} placeholder={t('ui.newChannelDialog.namePlaceholder')} maxlength="40" />
+          <input value={name} oninput={(e) => typedName(e.currentTarget.value)} placeholder={t('ui.newChannelDialog.namePlaceholder')} maxlength="40" />
         </div>
-        <span class="hint">{t('ui.newChannelDialog.nameHint')}</span>
+        <span class="hint" class:bad={nameResult === 'taken' || nameResult === 'invalid'} role={nameResult === 'taken' || nameResult === 'invalid' ? 'alert' : undefined}
+          >{t(
+            nameResult === 'taken'
+              ? 'ui.newChannelDialog.nameTaken'
+              : nameResult === 'invalid'
+                ? 'ui.newChannelDialog.nameInvalid'
+                : nameResult === 'pending'
+                  ? 'ui.newChannelDialog.nameChecking'
+                  : 'ui.newChannelDialog.nameHint',
+          )}</span
+        >
       </label>
 
       {#if embedded}
@@ -101,17 +160,29 @@
     </div>
 
     <div class="foot">
-      <span class="cancel" onclick={() => close(onCancel)} role="button" tabindex="0">{t('ui.common.cancel')}</span>
+      <span class="cancel" onclick={() => close(onCancel)} role="button" tabindex="0" aria-disabled={creating}>{t('ui.common.cancel')}</span>
       <span class="grow"></span>
-      <div class="cta" class:ok onclick={create} role="button" tabindex="0" aria-disabled={!ok}>
+      {#if failed}
+        <span class="error" role="alert">{t('ui.newChannelDialog.createFailed')}</span>
+      {/if}
+      <div class="cta" class:ok={ok && !creating} onclick={create} role="button" tabindex="0" aria-disabled={!ok || creating}>
         <span class="cta-icon" class:embedded></span>
-        <span>{t(embedded ? 'ui.newChannelDialog.addCta' : 'ui.newChannelDialog.createCta')}</span>
+        <span>{t(creating ? 'ui.newChannelDialog.creating' : embedded ? 'ui.newChannelDialog.addCta' : 'ui.newChannelDialog.createCta')}</span>
       </div>
     </div>
   </div>
 </div>
 
 <style>
+  .error {
+    font: var(--weight-medium) var(--text-sm) / 1.4 var(--font-sans);
+    color: var(--status-danger, #f5493d);
+  }
+
+  .hint.bad {
+    color: var(--status-danger, #f5493d);
+  }
+
   .layer {
     position: fixed;
     inset: 0;

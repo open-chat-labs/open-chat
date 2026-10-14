@@ -1,5 +1,5 @@
 // OpenChat feature components (screens, panels, dialogs, flows) — built on the library in src/lib.
-// Exported 2026-10-13 (pass 2). They still carry local sample data where the prototype did; move it to fixtures when wiring the backend.
+// Account, chain and backend data come in through props and every change goes out through a callback; demo data lives in src/docs/samples.ts.
 import { installBehaviours } from '../lib/behaviours';
 
 installBehaviours();
@@ -64,3 +64,20 @@ export type { AuthMethod, SignupDetails } from './components/AuthDialog.svelte';
 export type { NetworkId } from './components/WalletReceive.svelte';
 export type { SendContact, WalletSendRequest } from './components/WalletSend.svelte';
 export type { MemberRole } from './components/GroupPanel.svelte';
+export type { CryptoToken, CryptoMember } from './components/SendCryptoDialog.svelte';
+export type { DiamondPurchase, DiamondLimits, PlanKey } from './components/DiamondDialog.svelte';
+export type { UserGroupPerson } from './components/UserGroupDialog.svelte';
+export type { CreateGroupPerson, NameCheck } from './components/CreateGroupDialog.svelte';
+export type { ImportCommunity } from './components/ImportToCommunityDialog.svelte';
+export type { NewChannel } from './components/NewChannelDialog.svelte';
+export type { PollDraft } from './components/PollBuilderDialog.svelte';
+export type { CallPerson } from './components/CallPanel.svelte';
+export type { ActivityItem } from './components/ActivityPanel.svelte';
+export type { GateAsset } from './components/AccessGates.svelte';
+export type { BotDefinition, BotInstall, BotPerm, BotColor } from './components/BotDialog.svelte';
+export type { WebhookSave, WebhookColour } from './components/WebhookDialog.svelte';
+export type { InvitePerson } from './components/InviteDialog.svelte';
+export type { ExploreQuery } from './components/ExploreCommunities.svelte';
+export type { AuthPerson } from './components/AuthDialog.svelte';
+export type { ClaimDay, ProfileCommunity } from './components/ProfileDialog.svelte';
+export type { DisappearSetting } from './components/DmChatSettings.svelte';

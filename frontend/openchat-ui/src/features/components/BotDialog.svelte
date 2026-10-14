@@ -1,5 +1,36 @@
-<!-- Bot details → permissions → install (or edit / remove an installed bot). Every permission starts granted;
-     revoking one greys out the commands that need it. readOnly (installed bots, no bot rights) shows details only. -->
+<!-- Bot details → permissions → install (or edit / remove an installed bot). The bot's definition (creator, the
+     permissions it asks for, its commands) comes from the host. A new install starts with nothing granted; an installed
+     bot starts from its current `granted`. Revoking a permission greys out the commands that need it. Without
+     `canManage` (bot rights) the dialog shows details only. Install / save / remove wait on the host's promise: the
+     dialog closes when it resolves and stays open with an error if it rejects. -->
+<script lang="ts" module>
+  export type BotPerm = 'read' | 'summary' | 'members' | 'pinned' | 'threads' | 'react' | 'send' | 'images' | 'remove' | 'pin' | 'everyone';
+  export type BotColor = 'violet' | 'amber' | 'teal' | 'blue' | 'rose' | 'plum' | 'slate';
+
+  /** A bot as its definition declares it, plus what it is currently granted in this chat (installed bots). */
+  export interface BotDefinition {
+    id: string;
+    name: string;
+    /** Handle of the bot's creator. */
+    creator: string;
+    /** Resource key (or literal text). */
+    description?: string;
+    color?: BotColor;
+    /** Permissions the bot asks for. */
+    perms: BotPerm[];
+    /** `about` is a resource key (or literal text); `needs` lists the permissions each command requires. */
+    commands: { name: string; about: string; needs: BotPerm[] }[];
+    /** Installed bots: what is granted now. Missing = not granted. */
+    granted?: Partial<Record<BotPerm, boolean>>;
+  }
+
+  export interface BotInstall {
+    botId: string;
+    /** Every requested permission with its final on/off state. */
+    granted: Record<BotPerm, boolean>;
+  }
+</script>
+
 <script lang="ts">
   import { segments, useT } from '../../lib/i18n';
   import Translate from '../../lib/components/Translate.svelte';
@@ -7,8 +38,8 @@
   import Toggle from '../../lib/components/Toggle.svelte';
   import { modal } from '../../lib/behaviours/modal';
 
-  type PermKey = 'read' | 'summary' | 'members' | 'pinned' | 'threads' | 'react' | 'send' | 'images' | 'remove' | 'pin' | 'everyone';
-  type Color = 'violet' | 'amber' | 'teal' | 'blue' | 'rose' | 'plum' | 'slate';
+  type PermKey = BotPerm;
+  type Color = BotColor;
 
   const GRADIENTS: Record<Color, string> = {
     violet: 'linear-gradient(140deg,#ff5f9e,#6a2bff)',
@@ -51,123 +82,21 @@
   };
   const CAN_DO_ORDER: PermKey[] = ['read', 'summary', 'threads', 'pinned', 'members', 'send', 'images', 'remove', 'pin', 'everyone'];
 
-  interface Spec {
-    creator: string;
-    color: Color;
-    description: string;
-    perms: PermKey[];
-    commands: { name: string; about: string; needs: PermKey[] }[];
-  }
-
-  // each bot declares the permissions it asks for and which ones every command needs
-  const CATALOG: Record<string, Spec> = {
-    ReminderBot: {
-      creator: '@jane_smith',
-      color: 'slate',
-      description: 'Sends one-off and recurring reminder messages into this chat.',
-      perms: ['read', 'send'],
-      commands: [
-        { name: '/remind_at', about: 'One-off reminder at a date and time', needs: ['send'] },
-        { name: '/remind_recurring', about: 'Repeating reminder on a schedule', needs: ['send'] },
-        { name: '/list_reminders', about: 'Show every reminder set in this chat', needs: ['read', 'send'] },
-        { name: '/delete_reminder', about: 'Cancel a reminder you set', needs: ['read'] },
-      ],
-    },
-    LlamaBot: {
-      creator: '@openchat_labs',
-      color: 'slate',
-      description: 'Sends prompts to the Llama 3 LLM and posts the reply in the thread.',
-      perms: ['read', 'summary', 'send'],
-      commands: [
-        { name: '/ask', about: 'Answer a question in the thread', needs: ['send'] },
-        { name: '/summarise', about: 'Summarise the recent conversation', needs: ['summary', 'send'] },
-      ],
-    },
-    WelcomeBot: {
-      creator: '@jane_smith',
-      color: 'plum',
-      description: 'Greets new members with a custom message when they join.',
-      perms: ['read', 'send'],
-      commands: [
-        { name: '/set_welcome', about: 'Set the message new members see', needs: ['send'] },
-        { name: '/preview_welcome', about: 'Show the current welcome message', needs: ['read'] },
-      ],
-    },
-    YoutubeBot: {
-      creator: '@tubetools',
-      color: 'rose',
-      description: 'Subscribe to a YouTube channel to get updates about new video releases.',
-      perms: ['send'],
-      commands: [
-        { name: '/subscribe', about: 'Follow a channel and post its new videos', needs: ['send'] },
-        { name: '/unsubscribe', about: 'Stop following a channel', needs: ['send'] },
-      ],
-    },
-    DiscordBot: {
-      creator: '@bridgeworks',
-      color: 'blue',
-      description: 'Proxy messages from your Discord community into OpenChat.',
-      perms: ['read', 'send'],
-      commands: [
-        { name: '/link_channel', about: 'Bridge a Discord channel to this chat', needs: ['send'] },
-        { name: '/unlink_channel', about: 'Remove a bridged channel', needs: ['read'] },
-      ],
-    },
-    AdventureBot: {
-      creator: '@mira_dev',
-      color: 'amber',
-      description: 'Play a selection of classic text-based adventures in chat.',
-      perms: ['read', 'send', 'images', 'react'],
-      commands: [
-        { name: '/play', about: 'Start an adventure in this chat', needs: ['send'] },
-        { name: '/inventory', about: 'Show what your party is carrying', needs: ['read', 'send'] },
-        { name: '/quit', about: 'End the current game', needs: ['read'] },
-      ],
-    },
-    ModerationBot: {
-      creator: '@openchat_labs',
-      color: 'teal',
-      description: 'Performs automated moderation using rules you configure.',
-      perms: ['read', 'summary', 'members', 'pinned', 'threads', 'send', 'remove', 'pin', 'everyone'],
-      commands: [
-        { name: '/watchlist', about: 'Manage the words and links it acts on', needs: ['read'] },
-        { name: '/purge', about: 'Remove the last N messages from a member', needs: ['remove'] },
-        { name: '/pin_rules', about: 'Pin the group rules to the top', needs: ['pin'] },
-      ],
-    },
-  };
-
-  const FALLBACK: Spec = {
-    creator: '@openchat_labs',
-    color: 'slate',
-    description: 'ui.botDialog.noDescription',
-    perms: ['read', 'send'],
-    commands: [{ name: '/help', about: 'ui.botDialog.helpCommand', needs: ['send'] }],
-  };
-
-
-  export interface InstalledBot {
-    name: string;
-    color: Color;
-    description: string;
-    granted: Partial<Record<PermKey, boolean>>;
-  }
-
   interface Props {
-    /** name (or title) picks the catalogue entry; description / color override it. */
-    bot: { name?: string; title?: string; description?: string; color?: Color };
+    bot: BotDefinition;
     /** Group name (data); defaults to "this group". */
     groupName?: string;
     installed?: boolean;
-    /** Installed bot shown to someone without bot rights: details only. */
-    readOnly?: boolean;
+    /** The viewer has bot rights here: can install, change permissions and remove. Without it: details only. */
+    canManage?: boolean;
     initialStep?: 'details' | 'configure' | 'remove';
-    onRemove?: (b: { name: string }) => void;
-    onInstall?: (bot: InstalledBot) => void;
+    onRemove?: (b: { botId: string }) => Promise<unknown> | void;
+    /** Install a new bot, or save an installed bot's permissions. */
+    onInstall?: (bot: BotInstall) => Promise<unknown> | void;
     onCancel?: () => void;
   }
 
-  let { bot, groupName = 'ui.botDialog.thisGroup', installed = false, readOnly = false, initialStep = 'details', onRemove, onInstall, onCancel }: Props = $props();
+  let { bot, groupName = 'ui.botDialog.thisGroup', installed = false, canManage = false, initialStep = 'details', onRemove, onInstall, onCancel }: Props = $props();
 
   const t = useT();
   // "a", "a and b", "a, b and c" — separator and final conjunction are translatable
@@ -178,19 +107,23 @@
   let stepOverride = $state<'details' | 'configure' | 'remove' | null>(null);
   let grantedOverride = $state<Partial<Record<PermKey, boolean>> | null>(null);
   let closing = $state(false);
+  let busy = $state(false);
+  let failed = $state(false);
   let timer: ReturnType<typeof setTimeout> | undefined;
   onDestroy(() => clearTimeout(timer));
 
-  const name = $derived(bot.name ?? bot.title ?? '');
-  const spec = $derived(CATALOG[name] ?? FALLBACK);
-  const color = $derived(bot.color ?? spec.color);
-  const description = $derived(bot.description ?? spec.description);
-  const viewOnly = $derived(readOnly && installed);
-  const step = $derived(stepOverride ?? initialStep);
+  const name = $derived(bot.name);
+  const spec = $derived(bot);
+  const color = $derived<Color>(bot.color ?? 'slate');
+  const description = $derived(bot.description || 'ui.botDialog.noDescription');
+  const viewOnly = $derived(!canManage);
+  // without bot rights only the details step exists
+  const step = $derived(viewOnly ? 'details' : (stepOverride ?? initialStep));
   const isConfigure = $derived(step === 'configure');
   const isRemove = $derived(step === 'remove');
 
-  const granted = $derived(grantedOverride ?? Object.fromEntries(spec.perms.map((k) => [k, true])));
+  // nothing is granted until the owner switches it on; an installed bot starts from what it has now
+  const granted = $derived<Partial<Record<PermKey, boolean>>>(grantedOverride ?? (installed ? { ...(bot.granted ?? {}) } : {}));
   const asked = $derived(spec.perms.map((k) => ({ key: k, ...PERMS[k] })));
   const groups = $derived(
     [
@@ -201,16 +134,17 @@
 
   // view-only: commands the bot can't run here are simply left out
   const commands = $derived(
-    (viewOnly ? spec.commands.filter((c) => !c.needs.some((k) => granted[k] === false)) : spec.commands).map((c) => ({
+    (viewOnly && installed ? spec.commands.filter((c) => c.needs.every((k) => granted[k])) : spec.commands).map((c) => ({
       ...c,
-      blocked: isConfigure && c.needs.some((k) => granted[k] === false),
+      blocked: isConfigure && c.needs.some((k) => !granted[k]),
     })),
   );
   const blocked = $derived(commands.filter((c) => c.blocked));
 
   // one plain-language sentence for everyone; the parts that act on people's messages are highlighted
   const summary = $derived.by(() => {
-    const on = CAN_DO_ORDER.filter((k) => spec.perms.includes(k) && granted[k] !== false);
+    // installed: what it can do now; not installed: everything it asks for
+    const on = CAN_DO_ORDER.filter((k) => spec.perms.includes(k) && (!installed || granted[k]));
     const form = installed ? 'can' : 'ask';
     const plain = list(on.filter((k) => !CAN_DO[k]!.risky).map((k) => t(`ui.botDialog.${form}.${CAN_DO[k]!.text}`)));
     const risky = list(on.filter((k) => CAN_DO[k]!.risky).map((k) => t(`ui.botDialog.ask.${CAN_DO[k]!.text}`)));
@@ -230,7 +164,7 @@
   );
   const primaryIcon = $derived(isRemove ? 'trash' : isConfigure ? (installed ? 'check' : 'receive') : 'arrow');
   const detailsFootnote = $derived(
-    t(installed ? (viewOnly ? 'ui.botDialog.footnoteViewOnly' : 'ui.botDialog.footnoteInstalled') : 'ui.botDialog.footnoteInstall', { name, group }),
+    t(viewOnly ? 'ui.botDialog.footnoteViewOnly' : installed ? 'ui.botDialog.footnoteInstalled' : 'ui.botDialog.footnoteInstall', { name, group }),
   );
 
   // the card animates out before the parent hears about it
@@ -243,24 +177,43 @@
     }, 170);
   }
 
+  // waits on the host; closes when it resolves, stays with an error when it rejects
+  async function run(call: () => Promise<unknown> | void) {
+    if (busy) return;
+    busy = true;
+    failed = false;
+    try {
+      await call();
+    } catch {
+      failed = true;
+      return;
+    } finally {
+      busy = false;
+    }
+    close(onCancel);
+  }
+
   function primary() {
-    if (isRemove) close(() => onRemove?.({ name }));
-    else if (isConfigure)
-      close(() => {
-        if (onInstall) onInstall({ name, color, description, granted });
-        else onCancel?.();
-      });
-    else stepOverride = 'configure';
+    if (busy || viewOnly) return;
+    if (isRemove) {
+      if (onRemove) run(() => onRemove({ botId: bot.id }));
+    } else if (isConfigure) {
+      if (!onInstall) return;
+      const all = Object.fromEntries(spec.perms.map((k) => [k, !!granted[k]])) as Record<PermKey, boolean>;
+      run(() => onInstall({ botId: bot.id, granted: all }));
+    } else stepOverride = 'configure';
   }
 
   function secondary() {
+    if (busy) return;
+    failed = false;
     if (isConfigure || isRemove) stepOverride = 'details';
     else close(onCancel);
   }
 </script>
 
-<div class="layer" role="dialog" aria-modal="true" use:modal={() => close(onCancel)}>
-  <div class="veil" class:closing onclick={() => close(onCancel)} aria-hidden="true"></div>
+<div class="layer" role="dialog" aria-modal="true" use:modal={() => !busy && close(onCancel)}>
+  <div class="veil" class:closing onclick={() => !busy && close(onCancel)} aria-hidden="true"></div>
   <div class="card" class:closing>
     <div class="header">
       <span class="header-tile"><span class="header-icon"></span></span>
@@ -268,7 +221,7 @@
         <span class="header-title">{headerTitle}</span>
         <span class="header-sub">{headerSub}</span>
       </div>
-      <span class="close" onclick={() => close(onCancel)} role="button" tabindex="0"><span class="close-icon"></span></span>
+      <span class="close" onclick={() => !busy && close(onCancel)} role="button" tabindex="0" aria-label={t('ui.common.close')}><span class="close-icon"></span></span>
     </div>
 
     <div class="body">
@@ -281,7 +234,7 @@
               ><span><Translate key="ui.botDialog.createdBy">{#snippet creator()}<span class="creator">{spec.creator}</span>{/snippet}</Translate></span>{#if installed}<span class="dot">·</span><span class="installed"><span class="installed-icon"></span>{t('ui.botDialog.installed')}</span>{/if}</span
             >
           </div>
-          {#if installed && !!onRemove && !viewOnly}
+          {#if installed && !!onRemove && canManage}
             <div class="identity-actions">
               <span
                 class="remove"
@@ -397,9 +350,12 @@
     <div class="footer">
       <span class="secondary" onclick={secondary} role="button" tabindex="0">{t(isConfigure || isRemove ? 'ui.common.back' : viewOnly ? 'ui.common.close' : 'ui.common.cancel')}</span>
       <span class="grow"></span>
-      {#if !viewOnly}
-        <div class="primary" class:danger={isRemove} onclick={primary} role="button" tabindex="0">
-          <span>{primaryLabel}</span>
+      {#if failed}
+        <span class="error" role="alert">{t(isRemove ? 'ui.botDialog.removeFailed' : installed ? 'ui.botDialog.saveFailed' : 'ui.botDialog.installFailed')}</span>
+      {/if}
+      {#if !viewOnly && (step === 'details' || (isConfigure ? !!onInstall : !!onRemove))}
+        <div class="primary" class:danger={isRemove} class:busy onclick={primary} role="button" tabindex="0" aria-disabled={busy}>
+          <span>{busy ? t('ui.botDialog.working') : primaryLabel}</span>
           <span class="primary-icon" style:mask="var(--icon-{primaryIcon}) center/contain no-repeat"></span>
         </div>
       {/if}
@@ -1044,6 +1000,16 @@
     color: var(--primary-ink);
     cursor: pointer;
     user-select: none;
+  }
+
+  .primary.busy {
+    opacity: 0.6;
+    cursor: default;
+  }
+
+  .error {
+    font: var(--weight-medium) var(--text-sm) / 1.4 var(--font-sans);
+    color: var(--status-danger, #f5493d);
   }
 
   .primary.danger {

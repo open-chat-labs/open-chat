@@ -1,6 +1,7 @@
 <!-- Meme Fighter (composer + → Meme Fighter). ≥960px: templates beside a preview + numbered fields.
      Narrower: two steps, pick → write, Back in the header. "Add to message" (or Cmd/Ctrl+Enter) renders the meme to a PNG
-     and calls onAttach({ src, template }); the host adds it to the composer's photo tray. Esc goes back, then closes.
+     and calls onAttach({ blob, src, templateId }) — src is an object URL the host owns (and revokes); a rejected
+     onAttach keeps the editor open with an error. The host adds it to the composer's photo tray. Esc goes back, then closes.
      Text is fitted with the same rule in the preview and the PNG: the largest size where whole words fit each box. -->
 <script lang="ts" module>
   export interface MemeTemplate {
@@ -103,14 +104,15 @@
         x.fillText(l, bx + bw / 2, top + k * lh);
       });
     });
-    // blob URL, not a data URL: inline style strings split on ";" and would cut "data:image/png;base64"
-    return new Promise<string>((res) => c.toBlob((blob) => res(URL.createObjectURL(blob!)), 'image/png'));
+    return new Promise<Blob>((res, rej) => c.toBlob((blob) => (blob ? res(blob) : rej(new Error('render failed'))), 'image/png'));
   }
 
   interface Props {
     templates: MemeTemplate[];
     z?: number;
-    onAttach?: (meme: { src: string; template: string }) => void;
+    /** The rendered PNG, plus an object URL for previews (a blob URL, not a data URL: inline style strings split on ";").
+     *  The host owns the URL; reject to keep the editor open with an error. */
+    onAttach?: (meme: { blob: Blob; src: string; templateId: string; template: string }) => Promise<unknown> | void;
     onClose?: () => void;
   }
 
@@ -126,6 +128,7 @@
   let vibe = $state<string | null>(null);
   let focused = $state<number | null>(null);
   let busy = $state(false);
+  let attachFailed = $state(false);
   let fontsReady = $state(0);
 
   const wide = $derived(vw >= 960);
@@ -174,13 +177,23 @@
   async function generate() {
     if (!hasText || busy || !onAttach) return;
     busy = true;
+    attachFailed = false;
     try {
       await document.fonts.load('48px Anton');
     } catch {
       // font unavailable: render with the fallback face
     }
-    const src = await renderMeme(T, current);
-    onAttach({ src, template: T.name });
+    let src = '';
+    try {
+      const blob = await renderMeme(T, current);
+      src = URL.createObjectURL(blob);
+      await onAttach({ blob, src, templateId: T.id, template: T.name });
+    } catch {
+      if (src) URL.revokeObjectURL(src);
+      attachFailed = true;
+    } finally {
+      busy = false;
+    }
   }
 
   function onKey(e: KeyboardEvent) {
@@ -286,6 +299,7 @@
           <div class="main-scroll">{@render editor(false)}</div>
           <div class="foot">
             <span class="foot-name">{T.name}</span>
+            {#if attachFailed}<span class="attach-error" role="alert">{t('ui.memeFighterDialog.attachFailed')}</span>{/if}
             {#if hasText}<Button label="ui.memeFighterDialog.clearText" variant="ghost" onClick={() => (texts = { ...texts, [T.id]: [] })} />{/if}
             <Button label={busy ? 'ui.memeFighterDialog.adding' : 'ui.memeFighterDialog.addToMessage'} disabled={!hasText || busy} onClick={generate} />
           </div>
@@ -299,6 +313,7 @@
     {:else}
       <div class="narrow-scroll edit">{@render editor(true)}</div>
       <div class="foot narrow">
+        {#if attachFailed}<span class="attach-error" role="alert">{t('ui.memeFighterDialog.attachFailed')}</span>{/if}
         {#if hasText}<Button label="ui.memeFighterDialog.clear" variant="ghost" onClick={() => (texts = { ...texts, [T.id]: [] })} />{/if}
         <div class="grow"><Button label={busy ? 'ui.memeFighterDialog.adding' : 'ui.memeFighterDialog.addToMessage'} disabled={!hasText || busy} onClick={generate} fullWidth={true} /></div>
       </div>
@@ -737,5 +752,10 @@
   .grow {
     flex: 1;
     min-width: 0;
+  }
+
+  .attach-error {
+    font: var(--weight-medium) var(--text-sm) / 1.3 var(--font-sans);
+    color: var(--status-danger, #f5493d);
   }
 </style>

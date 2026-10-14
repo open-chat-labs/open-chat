@@ -1,6 +1,29 @@
 <!-- Diamond membership: compare Free vs Diamond → pick a duration and the token to pay with → confirm (auto-renew for
      timed plans) → pay. Members see their benefits and can extend; extensions start from the current expiry.
-     Prices are in CHAT and converted to other payable tokens at their USD price. Esc closes (not while paying). -->
+     Prices (`prices`, in CHAT) and limits come from the host and are converted to other payable tokens at their USD price.
+     Paying calls onUpgrade and waits: the member view only shows once it resolves, a rejection stays on confirm with an
+     error. Esc closes (not while paying). -->
+<script lang="ts" module>
+  export type PlanKey = '1m' | '3m' | '1y' | 'life';
+
+  export interface DiamondPurchase {
+    lifetime: boolean;
+    /** Requested end (ISO date) for timed plans; the host's resolved value wins. */
+    until: string | null;
+    autoRenew: boolean;
+    plan: PlanKey;
+    token: string;
+    amount: number;
+  }
+
+  export interface DiamondLimits {
+    privateGroups: { free: number; diamond: number };
+    publicGroups: number;
+    /** Storage multiplier over the free plan, e.g. 10 (shown as "10×"). */
+    storageMultiplier: number;
+  }
+</script>
+
 <script lang="ts">
   import { modal } from '../../lib/behaviours/modal';
   import { getI18n, useT } from '../../lib/i18n';
@@ -10,12 +33,10 @@
   import Toggle from '../../lib/components/Toggle.svelte';
   import CopyButton from '../../lib/components/CopyButton.svelte';
 
-  type PlanKey = '1m' | '3m' | '1y' | 'life';
-
   // [label, icon, free (true | false | text), diamond (true | text)]
   type Row = [string, string, boolean | string, boolean | string];
-  // labels and text cells are resource keys (plain numbers render as themselves)
-  const GROUPS: { label: string; rows: Row[] }[] = [
+  // labels and text cells are resource keys (plain numbers render as themselves); the group limits come from `limits`
+  const groupsFor = (l: DiamondLimits): { label: string; rows: Row[] }[] => [
     {
       label: 'ui.diamondDialog.group.messaging',
       rows: [
@@ -41,8 +62,8 @@
       label: 'ui.diamondDialog.group.groups',
       rows: [
         ['ui.diamondDialog.feature.directChats', 'dm', true, true],
-        ['ui.diamondDialog.feature.privateGroups', 'lock', '5', '25'],
-        ['ui.diamondDialog.feature.publicGroups', 'globe', false, '10'],
+        ['ui.diamondDialog.feature.privateGroups', 'lock', String(l.privateGroups.free), String(l.privateGroups.diamond)],
+        ['ui.diamondDialog.feature.publicGroups', 'globe', false, String(l.publicGroups)],
         ['ui.diamondDialog.feature.gatedGroups', 'gate', false, true],
         ['ui.diamondDialog.feature.createCommunities', 'community', false, true],
       ],
@@ -56,14 +77,15 @@
       ],
     },
   ];
-  // placeholder prices until the backend supplies them
+  // plan lengths; prices come from the `prices` prop and a plan without one isn't offered
   // copy for each plan is selected by its key in the messages (ui.diamondDialog.plan*)
-  const PLANS: { key: PlanKey; months: number; price: number }[] = [
-    { key: '1m', months: 1, price: 2 },
-    { key: '3m', months: 3, price: 5 },
-    { key: '1y', months: 12, price: 15 },
-    { key: 'life', months: 0, price: 60 },
+  const PLAN_MONTHS: { key: PlanKey; months: number }[] = [
+    { key: '1m', months: 1 },
+    { key: '3m', months: 3 },
+    { key: '1y', months: 12 },
+    { key: 'life', months: 0 },
   ];
+  const DEFAULT_LIMITS: DiamondLimits = { privateGroups: { free: 5, diamond: 25 }, publicGroups: 10, storageMultiplier: 10 };
   const DAY = 86400000;
   // dates in the host's locale; plain 'en' keeps the day-month order ('28 Sep 2026')
   const dateLocale = () => (i18n.locale && i18n.locale !== 'en' ? i18n.locale : 'en-GB');
@@ -77,20 +99,20 @@
   const fmtAmt = (n: number) =>
     Number.isInteger(n) ? n.toLocaleString(i18n.locale ?? 'en') : n.toLocaleString(i18n.locale ?? 'en', { minimumFractionDigits: n >= 1 ? 2 : 0, maximumFractionDigits: dp(n) });
 
-  export interface DiamondPurchase {
-    lifetime: boolean;
-    until: string | null;
-    autoRenew: boolean;
-    plan: PlanKey;
-    token: string;
-    amount: number;
-  }
-
   interface Props {
     /** Wallet tokens; the payable ones can pay. */
     tokens: WalletToken[];
     /** CHAT balance (other tokens use their own `held`). */
     balance: number;
+    /** Plan prices in CHAT, from the backend. Plans without a price aren't offered. */
+    prices: Partial<Record<PlanKey, number>>;
+    /** USD price of one CHAT, to convert prices for other payable tokens; defaults to the CHAT token's `price`.
+     *  Without either, only CHAT can pay. */
+    chatUsd?: number;
+    /** Group and storage limits shown in the comparison. */
+    limits?: DiamondLimits;
+    /** Auto-renew starts on (opt-out) only when the host says so. */
+    autoRenewDefault?: boolean;
     /** Opens straight on the plans step. */
     plan?: PlanKey | null;
     isDiamond?: boolean;
@@ -104,10 +126,31 @@
     /** Resource key (or literal text). */
     backLabel?: string;
     onClose?: () => void;
-    onUpgrade?: (p: DiamondPurchase) => void;
+    /** Charge and activate. Resolve with the membership end the backend set (or nothing to keep `until`); reject to
+     *  stay on the confirm step with an error. Without it the upgrade buttons are hidden. */
+    onUpgrade?: (p: DiamondPurchase) => Promise<{ until?: string | null } | void> | void;
+    /** Re-read balances (the host updates `tokens` / `balance`). Without it the refresh link is hidden. */
+    onRefreshBalance?: () => Promise<unknown> | void;
   }
 
-  let { tokens, balance: chatBalance, plan: initialPlan = null, isDiamond = false, lifetime: lifetimeProp = false, depositAddress, memberUntil = '', onBack, backLabel = 'ui.common.back', onClose, onUpgrade }: Props = $props();
+  let {
+    tokens,
+    balance: chatBalance,
+    prices,
+    chatUsd: chatUsdProp,
+    limits = DEFAULT_LIMITS,
+    autoRenewDefault = false,
+    plan: initialPlan = null,
+    isDiamond = false,
+    lifetime: lifetimeProp = false,
+    depositAddress,
+    memberUntil = '',
+    onBack,
+    backLabel = 'ui.common.back',
+    onClose,
+    onUpgrade,
+    onRefreshBalance,
+  }: Props = $props();
   const t = useT();
   const i18n = getI18n();
 
@@ -115,12 +158,12 @@
   let onlyDiff = $state(false);
   let step = $state<'compare' | 'plans' | 'confirm'>('compare');
   let planKey = $state<PlanKey | null>(null);
-  let autoRenew = $state(true);
+  let autoRenew = $state(false);
+  let payError = $state(false);
   let busy = $state(false);
   let refreshing = $state(false);
   let topUp = $state(false);
   let bought = $state<DiamondPurchase | null>(null);
-  let spent = $state<Record<string, number>>({});
   let tokenSymbol = $state('CHAT');
   let picker = $state(false);
   const timers: ReturnType<typeof setTimeout>[] = [];
@@ -134,19 +177,28 @@
   });
   onDestroy(() => timers.forEach(clearTimeout));
 
+  // USD per CHAT: the host's figure, else the CHAT token's price; without one other tokens can't be priced
+  const chatUsd = $derived(chatUsdProp ?? tokens.find((x) => x.symbol === 'CHAT')?.price ?? 0);
   // payable wallet tokens, CHAT first; CHAT's balance comes from `balance`
   const payable = $derived(
     tokens
-      .filter((t) => t.payable)
+      .filter((t) => t.payable && (t.symbol === 'CHAT' || (chatUsd > 0 && t.price > 0)))
       .map((t) => ({ symbol: t.symbol, name: t.name, mark: t.mark, usd: t.price, held: t.symbol === 'CHAT' ? null : t.held, grad: t.grad }))
       .sort((x, y) => Number(y.symbol === 'CHAT') - Number(x.symbol === 'CHAT')),
   );
-  const heldOf = (t: (typeof payable)[number]) => Math.max(0, (t.held ?? chatBalance) - (spent[t.symbol] || 0));
-  const tok = $derived(payable.find((t) => t.symbol === tokenSymbol) ?? payable[0]);
+  const heldOf = (t: (typeof payable)[number]) => Math.max(0, t.held ?? chatBalance);
+  const CHAT_ONLY = { symbol: 'CHAT', name: 'OpenChat', mark: 'C', usd: 0, held: null, grad: 'var(--accent)' };
+  const tok = $derived(payable.find((t) => t.symbol === tokenSymbol) ?? payable[0] ?? CHAT_ONLY);
   const balance = $derived(heldOf(tok));
   const sym = $derived(tok.symbol);
-  const chatUsd = $derived(payable[0]?.usd ?? 0.152);
-  const cost = (pl: (typeof PLANS)[number]) => (tok.symbol === 'CHAT' ? pl.price : +((pl.price * chatUsd) / tok.usd).toPrecision(3));
+  const PLANS = $derived(PLAN_MONTHS.filter((pl) => typeof prices[pl.key] === 'number').map((pl) => ({ ...pl, price: prices[pl.key] as number })));
+  type Plan = { key: PlanKey; months: number; price: number };
+  // converted prices round up (4 significant digits) so the charge never falls short of the CHAT price
+  const roundUp = (n: number) => {
+    const m = Math.pow(10, Math.max(0, 3 - Math.floor(Math.log10(n))));
+    return Math.ceil(n * m) / m;
+  };
+  const cost = (pl: Plan) => (tok.symbol === 'CHAT' ? pl.price : roundUp((pl.price * chatUsd) / tok.usd));
   const fmtToken = (n: number) => `${fmtAmt(n)} ${sym}`;
 
   const member = $derived(isDiamond || !!bought);
@@ -157,11 +209,14 @@
     const d = new Date(memberUntil);
     return isNaN(d.getTime()) ? new Date() : d;
   });
-  const until = (pl: (typeof PLANS)[number]) => addMonths(extend ? expiry : new Date(), pl.months);
+  const until = (pl: Plan) => addMonths(extend ? expiry : new Date(), pl.months);
   const plan = $derived(PLANS.find((x) => x.key === planKey) ?? PLANS[0]);
+  const cheapest = $derived(PLANS.length ? Math.min(...PLANS.map(cost)) : 0);
+  const dearest = $derived(PLANS.length ? Math.max(...PLANS.map(cost)) : 0);
+  const canUpgrade = $derived(!!onUpgrade && PLANS.length > 0);
 
   const groups = $derived(
-    GROUPS.map((g) => ({ label: g.label, rows: g.rows.filter((r) => !onlyDiff || r[2] !== r[3]) })).filter((g) => g.rows.length),
+    groupsFor(limits).map((g) => ({ label: g.label, rows: g.rows.filter((r) => !onlyDiff || r[2] !== r[3]) })).filter((g) => g.rows.length),
   );
 
   const plans = $derived(
@@ -181,11 +236,11 @@
       };
     }),
   );
-  const isShort = $derived(balance < cost(PLANS[PLANS.length - 1]));
-  const price = $derived(cost(plan));
-  const timed = $derived(!!plan.months);
+  const isShort = $derived(balance < dearest);
+  const price = $derived(plan ? cost(plan) : 0);
+  const timed = $derived(!!plan?.months);
   const daysLeft = $derived(Math.max(0, Math.ceil((expiry.getTime() - Date.now()) / DAY)));
-  const confirmTitle = $derived(t(extend ? 'ui.diamondDialog.confirmTitleExtend' : 'ui.diamondDialog.confirmTitleNew', { plan: plan.key }));
+  const confirmTitle = $derived(t(extend ? 'ui.diamondDialog.confirmTitleExtend' : 'ui.diamondDialog.confirmTitleNew', { plan: plan?.key }));
   const confirmBody = $derived(
     !timed
       ? t('ui.diamondDialog.lifetimeBody')
@@ -219,18 +274,27 @@
     if (!ok) return;
     step = 'confirm';
     planKey = key;
-    autoRenew = true;
+    autoRenew = autoRenewDefault;
+    payError = false;
   }
 
-  function refresh() {
-    if (refreshing) return;
+  // spins until the host has re-read the balances
+  async function refresh() {
+    if (refreshing || !onRefreshBalance) return;
     refreshing = true;
-    later(() => (refreshing = false), 900);
+    try {
+      await onRefreshBalance();
+    } catch {
+      // the old balance stays; the user can try again
+    } finally {
+      refreshing = false;
+    }
   }
 
-  function pay() {
-    if (busy) return;
+  async function pay() {
+    if (busy || !plan || !onUpgrade) return;
     busy = true;
+    payError = false;
     const purchase: DiamondPurchase = {
       lifetime: !timed,
       until: timed ? until(plan).toISOString() : null,
@@ -239,13 +303,18 @@
       token: sym,
       amount: price,
     };
-    later(() => {
+    let result: { until?: string | null } | void;
+    try {
+      result = await onUpgrade(purchase);
+    } catch {
+      payError = true;
+      return;
+    } finally {
       busy = false;
-      step = 'compare';
-      bought = purchase;
-      spent = { ...spent, [purchase.token]: (spent[purchase.token] || 0) + purchase.amount };
-      onUpgrade?.(purchase);
-    }, 1200);
+    }
+    // balances come back from the host through `tokens` / `balance`
+    bought = { ...purchase, until: result && result.until !== undefined ? result.until : purchase.until };
+    step = 'compare';
   }
 </script>
 
@@ -296,7 +365,7 @@
         )}
 
         <div class="highlights">
-          {#each [{ value: '10×', label: 'ui.diamondDialog.highlight.storage' }, { value: '25', label: 'ui.diamondDialog.highlight.privateGroups' }, { value: '10', label: 'ui.diamondDialog.highlight.publicGroups' }] as h}
+          {#each [{ value: `${limits.storageMultiplier}×`, label: 'ui.diamondDialog.highlight.storage' }, { value: String(limits.privateGroups.diamond), label: 'ui.diamondDialog.highlight.privateGroups' }, { value: String(limits.publicGroups), label: 'ui.diamondDialog.highlight.publicGroups' }] as h}
             <div class="highlight">
               <span class="highlight-value">{h.value}</span>
               <span class="highlight-label">{t(h.label)}</span>
@@ -401,8 +470,8 @@
               </div>
             </div>
           {/if}
-          {#if balance < cost(PLANS[0])}
-            {@render warn(t('ui.diamondDialog.insufficientTitle'), t('ui.diamondDialog.insufficientBody', { amount: fmtToken(cost(PLANS[0])) }))}
+          {#if PLANS.length && balance < cheapest}
+            {@render warn(t('ui.diamondDialog.insufficientTitle'), t('ui.diamondDialog.insufficientBody', { amount: fmtToken(cheapest) }))}
           {/if}
         </div>
 
@@ -420,7 +489,7 @@
               </div>
             {/each}
           </div>
-          {#if isShort}
+          {#if isShort && onRefreshBalance}
             <span class="refresh" onclick={refresh} role="button" tabindex="0">{@render icon('refresh', `refresh-icon${refreshing ? ' spinning' : ''}`)}{refreshing ? t('ui.diamondDialog.refreshing') : t('ui.diamondDialog.refreshBalance', { symbol: sym })}</span>
           {/if}
         </div>
@@ -448,6 +517,10 @@
           {/if}
         {/if}
 
+        {#if payError}
+          <span class="pay-error" role="alert">{t('ui.diamondDialog.payFailed')}</span>
+        {/if}
+
         <div class="summary">
           {#each [{ label: 'ui.diamondDialog.summary.amount', value: fmtToken(price), accent: true }, { label: 'ui.diamondDialog.summary.treasury', value: fmtToken(price), accent: false }, { label: 'ui.diamondDialog.summary.after', value: fmtToken(+(balance - price).toFixed(dp(balance))), accent: false }] as s}
             <div class="summary-row">
@@ -462,13 +535,15 @@
     <div class="footer">
       {#if step === 'compare' && member}
         <span class="member-line"><span class="member-badge">{@render icon('check', 'member-check')}</span>{lifetime ? t('ui.diamondDialog.lifetimeMember') : t('ui.diamondDialog.memberUntil', { date: fmtDate(expiry) })}</span>
-        {#if extend}
+        {#if extend && canUpgrade}
           <span class="text-button accent" onclick={() => (step = 'plans')} role="button" tabindex="0">{t('ui.diamondDialog.extend')}</span>
         {/if}
         <span class="solid-button" onclick={() => !busy && close(onClose)} role="button" tabindex="0">{t('ui.common.done')}</span>
       {:else if step === 'compare'}
         <span class="text-button" onclick={() => !busy && close(onClose)} role="button" tabindex="0">{t('ui.diamondDialog.maybeLater')}</span>
-        <span class="cta" onclick={() => (step = 'plans')} role="button" tabindex="0">{@render icon('gem', 'cta-icon')}{t('ui.diamondDialog.upgrade')}</span>
+        {#if canUpgrade}
+          <span class="cta" onclick={() => (step = 'plans')} role="button" tabindex="0">{@render icon('gem', 'cta-icon')}{t('ui.diamondDialog.upgrade')}</span>
+        {/if}
       {:else if step === 'plans'}
         <span class="footer-note">{t('ui.diamondDialog.footerNote')}</span>
         <span class="solid-button" onclick={back} role="button" tabindex="0">{t('ui.common.back')}</span>
@@ -1091,6 +1166,11 @@
     white-space: nowrap;
     font: var(--weight-medium) var(--text-md) / 1 var(--font-mono);
     color: var(--ink, #ececf1);
+  }
+
+  .pay-error {
+    font: var(--weight-medium) var(--text-sm) / 1.4 var(--font-sans);
+    color: var(--status-danger, #f5493d);
   }
 
   .warn {

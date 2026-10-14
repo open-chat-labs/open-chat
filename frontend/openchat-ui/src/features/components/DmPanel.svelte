@@ -1,5 +1,6 @@
 <!-- Side panel for a direct chat: cover (⋯ opens menuItems), big avatar and name (open the profile), Mute and Favourite pills,
-     member-since / CHIT / about cards, the per-chat settings and Block. Mute and favourite stick locally until the parent changes them. -->
+     member-since / CHIT / about cards, the per-chat settings and Block. Mute and favourite apply at once and roll back with an
+     error if the host rejects; Block asks first and waits for the host. Favourite and Block are hidden without callbacks. -->
 <script lang="ts">
   import { useT } from '../../lib/i18n';
   import type { ComponentProps } from 'svelte';
@@ -33,6 +34,8 @@
     handle?: string;
     about?: string;
     color?: keyof typeof GRADIENTS;
+    /** CSS background (image URL or gradient) for the avatar; falls back to the colour gradient. */
+    avatar?: string;
     online?: boolean;
     memberSince: string;
     chit: string;
@@ -45,12 +48,17 @@
     /** Behind the cover's ⋯; the button only shows when there are items. */
     menuItems?: MenuItem[];
     coverHandlers?: { close?: () => void };
-    onMuteChange?: (key: MuteKey | null) => void;
-    onToggleFavourite?: () => void;
+    onMuteChange?: (key: MuteKey | null) => Promise<unknown> | void;
+    /** Receives the new state. */
+    onToggleFavourite?: (fav: boolean) => Promise<unknown> | void;
     onDisappearChange?: Settings['onDisappearChange'];
     onReadReceiptsChange?: Settings['onReadReceiptsChange'];
     onOpenProfile?: (tab: 'profile') => void;
-    onBlock?: () => void;
+    /** You have blocked this person (shows Unblock). */
+    blocked?: boolean;
+    /** Block after the user confirms. Hidden without it. */
+    onBlock?: () => Promise<unknown> | void;
+    onUnblock?: () => Promise<unknown> | void;
   }
 
   let {
@@ -58,6 +66,7 @@
     handle = '',
     about = '',
     color = 'violet',
+    avatar,
     online = false,
     memberSince,
     chit,
@@ -74,7 +83,9 @@
     onDisappearChange,
     onReadReceiptsChange,
     onOpenProfile,
+    blocked = false,
     onBlock,
+    onUnblock,
   }: Props = $props();
   const t = useT();
 
@@ -82,6 +93,8 @@
   let isFav = $derived(fav);
   let menuOpen = $state(false);
   let muteMenu = $state<{ top: number; left: number } | null>(null);
+  let failed = $state<string | null>(null);
+  let blockStep = $state<'idle' | 'confirm' | 'busy'>('idle');
 
   const span = $derived(MUTE_SPANS.find((o) => o.key === isMuted));
   const items = $derived(
@@ -103,10 +116,57 @@
       : MUTE_SPANS.map((o) => ({ label: o.label, key: o.key })),
   );
 
+  // optimistic: shows the change now, restores it with an error if the host rejects
+  async function optimistic(apply: () => void, undo: () => void, call: () => Promise<unknown> | void) {
+    failed = null;
+    apply();
+    try {
+      await call();
+    } catch {
+      undo();
+      failed = 'ui.dmPanel.actionFailed';
+    }
+  }
+
   function setMute(key: MuteKey | null) {
-    isMuted = key;
+    const was = isMuted;
     muteMenu = null;
-    onMuteChange?.(key);
+    optimistic(
+      () => (isMuted = key),
+      () => (isMuted = was),
+      () => onMuteChange?.(key),
+    );
+  }
+
+  function toggleFav() {
+    if (!onToggleFavourite) return;
+    const next = !isFav;
+    optimistic(
+      () => (isFav = next),
+      () => (isFav = !next),
+      () => onToggleFavourite(next),
+    );
+  }
+
+  function cancelBlock() {
+    if (blockStep === 'busy') return;
+    blockStep = 'idle';
+    failed = null;
+  }
+
+  async function confirmBlock() {
+    const call = blocked ? onUnblock : onBlock;
+    if (!call || blockStep === 'busy') return;
+    blockStep = 'busy';
+    failed = null;
+    try {
+      await call();
+    } catch {
+      blockStep = 'confirm';
+      failed = blocked ? 'ui.dmPanel.unblockFailed' : 'ui.dmPanel.blockFailed';
+      return;
+    }
+    blockStep = 'idle';
   }
 
   // mute: same pill + span menu as the group side panel, placed under the pill inside the panel
@@ -125,7 +185,7 @@
     </div>
     <div class="body">
       <div class="identity">
-        <div class="avatar" style:background={GRADIENTS[color] ?? GRADIENTS.violet} onclick={() => onOpenProfile?.('profile')} aria-label={t('ui.dmPanel.viewProfile')} role="button" tabindex="0" title={t('ui.dmPanel.viewProfile')}>
+        <div class="avatar" style:background={avatar || (GRADIENTS[color] ?? GRADIENTS.violet)} onclick={() => onOpenProfile?.('profile')} aria-label={t('ui.dmPanel.viewProfile')} role="button" tabindex="0" title={t('ui.dmPanel.viewProfile')}>
           {#if online}
             <span class="online"></span>
           {/if}
@@ -139,19 +199,11 @@
             <span class="pill-icon" style:mask="var(--icon-{isMuted ? 'bell-off' : 'bell'}) center/contain no-repeat"></span>{t(span ? span.tile : 'ui.mute.mute')}
             <span class="pill-divider"></span><span class="caret"></span>
           </span>
-          <span
-            class="pill fav"
-            class:on={isFav}
-            onclick={() => {
-              isFav = !isFav;
-              onToggleFavourite?.();
-            }}
-            role="button"
-            tabindex="0"
-            aria-pressed={isFav}
-          >
-            <span class="pill-icon heart"></span>{t(isFav ? 'ui.dmPanel.favourited' : 'ui.dmPanel.favourite')}
-          </span>
+          {#if onToggleFavourite}
+            <span class="pill fav" class:on={isFav} onclick={toggleFav} role="button" tabindex="0" aria-pressed={isFav}>
+              <span class="pill-icon heart"></span>{t(isFav ? 'ui.dmPanel.favourited' : 'ui.dmPanel.favourite')}
+            </span>
+          {/if}
         </div>
       </div>
       <div class="cards">
@@ -163,6 +215,7 @@
           <div class="cell"><DetailSection label="ui.dmPanel.about" value={about} variant="prose" clamp={3} /></div>
         {/if}
       </div>
+      {#if failed && blockStep === 'idle'}<span class="error" role="alert">{t(failed)}</span>{/if}
     </div>
   </div>
 
@@ -171,9 +224,21 @@
     <div class="cell"><DmChatSettings peerName={title} {disappearOn} {disappearAfter} {readReceipts} {onDisappearChange} {onReadReceiptsChange} /></div>
   </div>
 
-  <div class="footer">
-    <span class="block" onclick={() => onBlock?.()} role="button" tabindex="0"><span class="ban"></span>{t('ui.dmPanel.blockUser')}</span>
-  </div>
+  {#if blockStep !== 'idle'}
+    <div class="footer confirm">
+      <span class="confirm-text">{failed ? t(failed) : t(blocked ? 'ui.dmPanel.unblockConfirm' : 'ui.dmPanel.blockConfirm', { name: title })}</span>
+      <div class="confirm-actions">
+        <span class="cancel" onclick={cancelBlock} role="button" tabindex="0">{t('ui.common.cancel')}</span>
+        <span class="block" class:busy={blockStep === 'busy'} onclick={confirmBlock} role="button" tabindex="0" aria-disabled={blockStep === 'busy'}
+          ><span class="ban"></span>{t(blockStep === 'busy' ? 'ui.dmPanel.working' : blocked ? 'ui.dmPanel.unblockUser' : 'ui.dmPanel.blockUser')}</span
+        >
+      </div>
+    </div>
+  {:else if blocked ? onUnblock : onBlock}
+    <div class="footer">
+      <span class="block" onclick={() => (blockStep = 'confirm')} role="button" tabindex="0"><span class="ban"></span>{t(blocked ? 'ui.dmPanel.unblockUser' : 'ui.dmPanel.blockUser')}</span>
+    </div>
+  {/if}
 
   {#if muteMenu}
     <div class="backdrop mute-backdrop" onclick={() => (muteMenu = null)} aria-hidden="true"></div>
@@ -388,6 +453,43 @@
     align-items: center;
     padding: 0 var(--space-16);
     border-top: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .error {
+    font: var(--weight-medium) var(--text-sm) / 1.4 var(--font-sans);
+    color: var(--status-danger, #f5493d);
+  }
+
+  .footer.confirm {
+    height: auto;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-10);
+    padding: var(--space-14) var(--space-16);
+  }
+
+  .confirm-text {
+    font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-sans);
+    color: var(--ink-2, #c9c9d4);
+  }
+
+  .confirm-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+  }
+
+  .cancel {
+    flex: none;
+    padding: 0 var(--space-14);
+    font: var(--weight-semibold) var(--text-base) / 1 var(--font-sans);
+    color: var(--ink-2, #c9c9d4);
+    cursor: pointer;
+  }
+
+  .block.busy {
+    opacity: 0.6;
+    cursor: default;
   }
 
   .block {

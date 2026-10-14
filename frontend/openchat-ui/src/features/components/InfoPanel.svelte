@@ -1,6 +1,7 @@
 <!-- Side-panel details for a user or group: cover with actions, avatar (online dot for users), name, handle or byline,
      quick tiles, detail cards, chat-setting toggles and a footer (secondary + danger action).
-     A toggle titled "Disappearing messages" grows a duration picker while on; its state is kept here. -->
+     The toggle marked `disappearing` grows a duration picker while on; changes go to onDisappearChange (on + duration),
+     show at once and roll back with an error if the host rejects. -->
 <script lang="ts">
   import type { ComponentProps } from 'svelte';
   import Badge from '../../lib/components/Badge.svelte';
@@ -11,6 +12,7 @@
   import TileButtons from '../../lib/components/TileButtons.svelte';
   import Toggle from '../../lib/components/Toggle.svelte';
   import { durationText, useT } from '../../lib/i18n';
+  import { durationMs, type DisappearSetting } from './DmChatSettings.svelte';
 
   const GRADIENTS = {
     violet: 'linear-gradient(140deg,#ff5f9e,#6a2bff)',
@@ -34,8 +36,10 @@
   }
 
   interface SettingToggle {
-    /** Resource key (or literal text). A title containing "disappearing" grows the duration picker. */
+    /** Resource key (or literal text). */
     title: string;
+    /** The disappearing-messages row: grows the duration picker and reports through onDisappearChange. */
+    disappearing?: boolean;
     /** Resource key (or literal text). */
     hint: string;
     on: boolean;
@@ -53,6 +57,8 @@
     verified?: boolean;
     online?: boolean;
     color?: keyof typeof GRADIENTS;
+    /** CSS background (image URL or gradient) for the avatar; falls back to the colour gradient. */
+    avatar?: string;
     cover?: string;
     coverActions?: CoverProps['actions'];
     /** Defaults to favourite (users) or favourite, share, more (groups). */
@@ -64,6 +70,9 @@
     toggles?: SettingToggle[];
     disappearOn?: boolean;
     disappearAfter?: string;
+    onDisappearChange?: (v: DisappearSetting) => Promise<unknown> | void;
+    /** Opens the byline person; without it the name is plain text. */
+    onByline?: () => void;
     showFooter?: boolean;
     /** Resource key (or literal text) for the secondary footer action (e.g. Report); empty hides it. */
     footerLabel?: string;
@@ -82,6 +91,7 @@
     verified = false,
     online = false,
     color = 'violet',
+    avatar,
     cover = '',
     coverActions = ['close'],
     coverTrailActions,
@@ -90,8 +100,10 @@
     tileHandlers = {},
     details = [],
     toggles = [],
-    disappearOn = true,
+    disappearOn = false,
     disappearAfter = '12 hours',
+    onDisappearChange,
+    onByline,
     showFooter = true,
     footerLabel = '',
     dangerLabel = 'ui.infoPanel.blockUser',
@@ -102,19 +114,36 @@
 
   let dmOn = $derived(disappearOn);
   let dmAfter = $derived(disappearAfter);
+  let failed = $state(false);
+
+  // optimistic; a rejection restores the previous on/duration
+  async function setDisappear(row: SettingToggle, on: boolean, after: string) {
+    const was = { on: dmOn, after: dmAfter };
+    dmOn = on;
+    dmAfter = after;
+    failed = false;
+    try {
+      await (onDisappearChange ? onDisappearChange({ on, after, afterMs: durationMs(after) }) : row.onChange?.(on));
+    } catch {
+      dmOn = was.on;
+      dmAfter = was.after;
+      failed = true;
+    }
+  }
 
   const user = $derived(kind === 'user');
   const rows = $derived(
     toggles.map((row) =>
-      /disappearing/i.test(row.title)
+      row.disappearing
         ? {
             ...row,
             disappearing: true,
             on: dmOn,
             hint: dmOn ? t('ui.infoPanel.disappearOnHint', { after: durationText(t, dmAfter) }) : t('ui.infoPanel.disappearOffHint'),
-            onChange: (next: boolean) => (dmOn = next),
+            onChange: (next: boolean) => setDisappear(row, next, dmAfter),
+            source: row,
           }
-        : { ...row, hint: t(row.hint), disappearing: false },
+        : { ...row, hint: t(row.hint), disappearing: false, source: row },
     ),
   );
 </script>
@@ -125,7 +154,7 @@
   </div>
 
   <div class="identity">
-    <div class="avatar" class:squircle={!user} style:background={GRADIENTS[color] ?? GRADIENTS.violet}>
+    <div class="avatar" class:squircle={!user} style:background={avatar || (GRADIENTS[color] ?? GRADIENTS.violet)}>
       {#if online && user}
         <span class="online"></span>
       {/if}
@@ -141,7 +170,10 @@
         <span class="handle">{handle}</span>
       {/if}
       {#if bylineName}
-        <span class="byline">{t(bylinePrefix)} <a href="#top">{bylineName}</a></span>
+        <span class="byline"
+          >{t(bylinePrefix)}
+          {#if onByline}<span class="byline-name" onclick={onByline} role="button" tabindex="0">{bylineName}</span>{:else}{bylineName}{/if}</span
+        >
       {/if}
     </div>
     <div class="tiles">
@@ -170,9 +202,10 @@
               <div class="setting-toggle"><Toggle on={row.on} onChange={row.onChange} /></div>
             </div>
             {#if row.disappearing && dmOn}
-              <DurationChips value={dmAfter} title={t('ui.infoPanel.disappearTimeout')} hint={t('ui.infoPanel.disappearTimeoutHint')} onChange={(d) => (dmAfter = d)} />
+              <DurationChips value={dmAfter} title={t('ui.infoPanel.disappearTimeout')} hint={t('ui.infoPanel.disappearTimeoutHint')} onChange={(d) => setDisappear(row.source, true, d)} />
             {/if}
           {/each}
+          {#if failed}<span class="error" role="alert">{t('ui.infoPanel.saveFailed')}</span>{/if}
         </div>
       </div>
     {/if}
@@ -277,8 +310,14 @@
     color: var(--ink-3, #9a9aa8);
   }
 
-  .byline a {
+  .byline-name {
     color: var(--accent, #ff5672);
+    cursor: pointer;
+  }
+
+  .error {
+    font: var(--weight-medium) var(--text-sm) / 1.4 var(--font-sans);
+    color: var(--status-danger, #f5493d);
   }
 
   .tiles {

@@ -48,6 +48,8 @@
 
 
   interface Bot {
+    /** Stable id; bots and webhooks are matched, removed and reported by it. */
+    id: string;
     variant?: 'bot' | 'webhook';
     title: string;
     subtitle?: string;
@@ -62,8 +64,10 @@
   interface UserGroup {
     key: string;
     title: string;
+    /** Its real @handle; otherwise one is shown from the title. */
+    mention?: string;
     color?: MemberColor;
-    members: { name: string; handle: string; color?: MemberColor }[];
+    members: { userId?: string; name: string; handle: string; color?: MemberColor }[];
   }
 
   /** Builder-shaped, so the read view and the editor open from the same object. */
@@ -75,8 +79,11 @@
   }
 
   interface Pin {
+    /** The pinned message; passed to onOpenPinned / onUnpin. */
+    messageId: string;
     date: string;
     author: string;
+    authorId?: string;
     color?: 'violet' | 'amber' | 'teal' | 'blue';
     text?: string;
     code?: string;
@@ -219,6 +226,7 @@
     cover?: string;
     avatar?: string;
     isPublic?: boolean;
+    /** Settings the host knows; anything left out is left out of the settings dialog's starting values too. */
     visibleHistory?: boolean;
     disappearOn?: boolean;
     disappearAfter?: string;
@@ -241,13 +249,26 @@
     bots?: Bot[];
     /** Bots added this session (one row per title). */
     extraBots?: Bot[];
+    /** Ids of bots removed this session. */
     removedBots?: string[];
     webhooks?: Bot[];
     extraWebhooks?: Bot[];
+    /** Webhook endpoint by webhook id. */
     webhookUrls?: Record<string, string>;
     /** Offered in the bots view when not installed. */
     recommendedBots?: Bot[];
     canManageBots?: boolean;
+    /** Settings, permissions / gates / rules editing, convert, import, new channel. */
+    canEdit?: boolean;
+    /** The Delete entry. */
+    canDelete?: boolean;
+    /** Create, edit and delete user groups (communities). */
+    canManageUserGroups?: boolean;
+    /** Unpin pinned messages. */
+    canPin?: boolean;
+    /** Owner and admin counts for the summary line (otherwise counted from `members`). */
+    ownerCount?: number;
+    adminCount?: number;
     /** Manage dialog: show only bots or only webhooks. */
     botsPart?: '' | 'bots' | 'webhooks';
     userGroups?: UserGroup[];
@@ -281,12 +302,21 @@
     onManage?: (view: View) => void;
     onViewChange?: (view: View) => void;
     onToggleFavourite?: () => void;
-    onMuteChange?: (key: MuteKey | null) => void;
-    onMuteEveryoneChange?: (on: boolean) => void;
+    /** Reject to roll the mute back (when the host doesn't control mutedUntil / muteEveryone). */
+    onMuteChange?: (key: MuteKey | null) => Promise<unknown> | void;
+    onMuteEveryoneChange?: (on: boolean) => Promise<unknown> | void;
     onClose?: () => void;
     /** Member actions; each item is only offered when its callback is given. The list updates at once and rolls
      *  back with an error if the promise rejects. `member` is your own row when stepping down. */
     onRoleChange?: (member: Person, role: MemberRole) => Promise<unknown> | void;
+    /** The owner's handle in the byline opens their profile. */
+    onOpenOwner?: () => void;
+    /** Jump to a pinned message in the chat. */
+    onOpenPinned?: (messageId: string) => void;
+    /** Unpin a message (needs canPin). Rolls back with an error on rejection. */
+    onUnpin?: (messageId: string) => Promise<unknown> | void;
+    /** Members search as the user types (server-side); the shown list is still filtered locally. */
+    onSearchMembers?: (query: string) => void;
     onRemoveMember?: (member: Person) => Promise<unknown> | void;
     onUnblock?: (member: Person) => Promise<unknown> | void;
     onRemoveBlocked?: (member: Person) => Promise<unknown> | void;
@@ -303,9 +333,9 @@
     cover,
     avatar = '',
     isPublic = false,
-    visibleHistory = true,
-    disappearOn = true,
-    disappearAfter = '12 hours',
+    visibleHistory,
+    disappearOn,
+    disappearAfter,
     communityName,
     communityColor = 'amber',
     onOpenCommunity,
@@ -327,6 +357,12 @@
     webhookUrls,
     recommendedBots = [],
     canManageBots = false,
+    canEdit = false,
+    canDelete = false,
+    canManageUserGroups = false,
+    canPin = false,
+    ownerCount,
+    adminCount,
     botsPart = '',
     userGroups = [],
     permissions,
@@ -354,6 +390,10 @@
     onMuteChange,
     onMuteEveryoneChange,
     onRoleChange,
+    onOpenOwner,
+    onOpenPinned,
+    onUnpin,
+    onSearchMembers,
     onRemoveMember,
     onUnblock,
     onRemoveBlocked,
@@ -389,18 +429,20 @@
   let removedMembers = $state<string[]>([]);
   let unblocked = $state<string[]>([]);
   let removedBlocked = $state<string[]>([]);
-  let memberError = $state('');
+  let actionError = $state('');
+  let memberQuery = $state('');
+  let unpinned = $state<string[]>([]);
 
-  // optimistic: `change` updates the list now, `undo` restores it if the host rejects
+  // optimistic: `change` updates the panel now, `undo` restores it if the host rejects
   async function memberAction(call: () => Promise<unknown> | void, change: () => void, undo: () => void) {
     popover = null;
-    memberError = '';
+    actionError = '';
     change();
     try {
       await call();
     } catch {
       undo();
-      memberError = t('ui.groupPanel.actionFailed');
+      actionError = t('ui.groupPanel.actionFailed');
     }
   }
   let ownMute = $state<MuteKey | null>(null);
@@ -440,9 +482,11 @@
     }
   }
 
+  // only what the host actually told us: a missing setting stays missing rather than becoming a guess the dialog would save
+  const defined = <T extends object>(o: T) => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined)) as Partial<T>;
   const settingsPayload = () => ({
-    info: { name: title, about: aboutText, color, coverKey: coverKey ?? 'plum', avatar },
-    settings: { isPublic, history: visibleHistory, disappearOn, after: disappearAfter },
+    info: defined({ name: title, about: aboutText, color, coverKey, coverUrl, avatar }),
+    settings: defined({ isPublic, history: visibleHistory, disappearOn, after: disappearAfter }),
     gates: gateState,
     rules,
     permissions: perms,
@@ -507,22 +551,39 @@
 
   function setMute(key: MuteKey | null) {
     muteMenu = null;
-    ownMute = key;
-    onMuteChange?.(key);
+    const before = ownMute;
+    memberAction(
+      () => onMuteChange?.(key),
+      () => (ownMute = key),
+      () => (ownMute = before),
+    );
   }
 
   function toggleMuteAll() {
-    ownMuteAll = !muteAll;
-    onMuteEveryoneChange?.(!muteAll);
+    const next = !muteAll, before = ownMuteAll;
+    memberAction(
+      () => onMuteEveryoneChange?.(next),
+      () => (ownMuteAll = next),
+      () => (ownMuteAll = before),
+    );
   }
 
-  const openUser = (m: Person) => () => onDialog?.('user', { title: m.title, handle: m.handle, color: m.color, isSelf: m.tag === 'YOU' });
-  const openBot = (b: Bot, installed: boolean) => () => onDialog?.('bot', { name: b.title, description: b.subtitle, color: b.color, installed });
-  const openHook = (h: Bot) => () => onDialog?.('webhook', { dialogMode: 'edit', name: h.title, color: h.color, url: webhookUrls?.[h.title] ?? h.url, avatarUrl: h.image });
+  function unpin(messageId: string) {
+    if (!onUnpin) return;
+    memberAction(
+      () => onUnpin(messageId),
+      () => (unpinned = [...unpinned, messageId]),
+      () => (unpinned = unpinned.filter((id) => id !== messageId)),
+    );
+  }
 
-  // ── bots & webhooks ──
-  const installedBots = $derived(bots.concat(extraBots.filter((e) => !bots.some((b) => b.title === e.title))).filter((b) => !removedBots.includes(b.title)));
-  const hooks = $derived(webhooks.concat(extraWebhooks.filter((e) => !webhooks.some((h) => h.title === e.title))));
+  const openUser = (m: Person) => () => onDialog?.('user', { userId: m.userId, title: m.title, handle: m.handle, color: m.color, isSelf: m.tag === 'YOU' });
+  const openBot = (b: Bot, installed: boolean) => () => onDialog?.('bot', { id: b.id, name: b.title, description: b.subtitle, color: b.color, installed });
+  const openHook = (h: Bot) => () => onDialog?.('webhook', { dialogMode: 'edit', id: h.id, name: h.title, color: h.color, url: webhookUrls?.[h.id] ?? h.url, avatarUrl: h.image });
+
+  // ── bots & webhooks (matched by id, so two with the same name never collide) ──
+  const installedBots = $derived(bots.concat(extraBots.filter((e) => !bots.some((b) => b.id === e.id))).filter((b) => !removedBots.includes(b.id)));
+  const hooks = $derived(webhooks.concat(extraWebhooks.filter((e) => !webhooks.some((h) => h.id === e.id))));
   // people who can't manage bots only see what's installed: no webhooks, no recommendations
   const allowHooks = $derived(scope !== 'community' && canManageBots && botsPart !== 'bots');
   const showBotLists = $derived(botsPart !== 'webhooks');
@@ -531,7 +592,7 @@
   const botMatches = (x: Bot) => !botNeedle || `${x.title} ${x.subtitle || ''}`.toLowerCase().includes(botNeedle);
   const shownBots = $derived(installedBots.filter(botMatches));
   const shownHooks = $derived(allowHooks ? hooks.filter(botMatches) : []);
-  const shownRecommended = $derived(recommendedBots.filter((r) => !installedBots.some((b) => b.title === r.title)).filter(botMatches));
+  const shownRecommended = $derived(recommendedBots.filter((r) => !installedBots.some((b) => b.id === r.id)).filter(botMatches));
 
   // ── members ──
   const youFirst = (list: Person[]) => {
@@ -540,7 +601,9 @@
   };
   const withRole = (list: Person[]) => list.filter((m) => !removedMembers.includes(m.handle)).map((m) => (roles[m.handle] != null ? { ...m, tag: roles[m.handle] } : m));
   const visibleBlocked = $derived(blocked.filter((m) => !unblocked.includes(m.handle) && !removedBlocked.includes(m.handle)));
-  const memberSets = $derived([youFirst(withRole(members)), youFirst(withRole(lapsed)), youFirst(visibleBlocked)]);
+  const memberNeedle = $derived(memberQuery.trim().toLowerCase());
+  const matchesQuery = (list: Person[]) => (memberNeedle ? list.filter((m) => `${m.title} ${m.handle}`.toLowerCase().includes(memberNeedle)) : list);
+  const memberSets = $derived([youFirst(matchesQuery(withRole(members))), youFirst(matchesQuery(withRole(lapsed))), youFirst(matchesQuery(visibleBlocked))]);
   const tabIdx = $derived(canModerate ? memberTab : 0);
   const viewerIsOwner = $derived(viewerRole.toUpperCase() === 'OWNER');
 
@@ -682,8 +745,8 @@
   );
   // role split reads at a glance; the raw total lives in "View all"
   const roleSummary = $derived.by(() => {
-    const owners = members.filter((m) => m.tag === 'OWNER').length || 1;
-    const admins = members.filter((m) => m.tag === 'ADMIN').length;
+    const owners = ownerCount ?? members.filter((m) => m.tag === 'OWNER').length;
+    const admins = adminCount ?? members.filter((m) => m.tag === 'ADMIN').length;
     return t('ui.groupPanel.roleSummary', { owners, admins, members: Math.max(total - owners - admins, 0) });
   });
   const muteSpan = $derived(MUTE_SPANS.find((o) => o.key === muted));
@@ -755,7 +818,9 @@
       : [],
   );
   const gatesN = $derived(gateCount ?? gateCards.length);
-  const every = $derived(durationText(t, gateState?.every ?? '90 days'));
+  // re-checking is only claimed when the host gives an interval
+  const every = $derived(gateState?.every ? durationText(t, gateState.every) : '');
+  const rechecks = $derived(gateState?.intervalOn !== false && !!every);
   const navRows = $derived([
     { label: t('ui.groupPanel.views.permissions'), hint: permHint, view: 'permissions' as const },
     {
@@ -764,7 +829,7 @@
         scope === 'channel' && !gatesN
           ? t('ui.groupPanel.gatesHintChannel')
           : gatesN
-            ? t('ui.groupPanel.gatesHint', { count: gatesN, recheck: gateState?.intervalOn === false ? t('ui.groupPanel.checkedOnce') : t('ui.groupPanel.recheckedEvery', { every }) })
+            ? t('ui.groupPanel.gatesHint', { count: gatesN, recheck: rechecks ? t('ui.groupPanel.recheckedEvery', { every }) : t('ui.groupPanel.checkedOnce') })
             : t('ui.groupPanel.noGatesHint'),
       view: 'gates' as const,
     },
@@ -785,11 +850,12 @@
     go('usergroup');
   }
   const ugDialog = (dialogMode: 'create' | 'edit' | 'delete', key: string | null) => onDialog?.('usergroup', { dialogMode, key });
+  const ugMention = (g: UserGroup) => g.mention ?? '@' + g.title.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
 
   // ── pinned ──
   const pinnedDays = $derived.by(() => {
     const days: { date: string; items: (Pin & { messages: { text: string; code: string; time: string }[] })[] }[] = [];
-    for (const p of pinned) {
+    for (const p of pinned.filter((x) => !unpinned.includes(x.messageId))) {
       let d = days.find((x) => x.date === p.date);
       if (!d) days.push((d = { date: p.date, items: [] }));
       d.items.push({ ...p, messages: [{ text: p.text || '', code: p.code || '', time: p.time }] });
@@ -809,7 +875,7 @@
             ? t('ui.groupPanel.views.scopeMembers', { scope })
             : t(view === 'bots' && !allowHooks ? SUBVIEWS.botsOnly : SUBVIEWS[view], { scope }),
   );
-  const subviewSub = $derived(view === 'usergroup' && ugCur ? t('ui.groupPanel.userGroupIn', { name: title }) : view === 'members' && scope === 'channel' ? t('ui.groupPanel.channelIn', { channel: title, community: communityName ?? '' }) : '');
+  const subviewSub = $derived(view === 'usergroup' && ugCur ? t('ui.groupPanel.userGroupIn', { name: title }) : view === 'members' && scope === 'channel' ? t('ui.groupPanel.channelIn', { channel: title, community: communityName ?? t('ui.groupPanel.theCommunity') }) : '');
   const userGroupsView = $derived(view === 'usergroups' || (view === 'usergroup' && !ugCur));
 
   // ── ⋯ menu ──
@@ -819,10 +885,30 @@
       menuOpen = false;
       fn?.();
     };
-    return MENU_ITEMS.filter((it) => scope === 'group' || !['convert', 'import', 'sep-after-bots'].includes(it.action ?? ''))
+    // manager-only entries need the matching capability
+    const allowed = (a?: string) =>
+      a === 'settings' || a === 'convert' || a === 'import' || a === 'newchannel' || a === 'embed'
+        ? canEdit
+        : a === 'addbot' || a === 'webhook'
+          ? canManageBots
+          : a === 'delete'
+            ? canDelete
+            : a === 'newusergroup'
+              ? canManageUserGroups
+              : true;
+    const entries = MENU_ITEMS.filter((it) => scope === 'group' || !['convert', 'import', 'sep-after-bots'].includes(it.action ?? ''))
       .filter((it) => scope !== 'community' || !['favourite', 'webhook'].includes(it.action ?? ''))
       .flatMap((it) => (scope === 'community' && it.view === 'stats' ? [it, ...SCOPE_MENU_EXTRA] : [it]))
-      .map((it): MenuItem => {
+      .filter((it) => it.variant === 'separator' || allowed(it.action));
+    // drop separators left leading, trailing or doubled by the filtering
+    const tidy: MenuEntry[] = [];
+    for (const it of entries) {
+      const sep = it.variant === 'separator';
+      if (sep && (!tidy.length || tidy[tidy.length - 1].variant === 'separator')) continue;
+      tidy.push(it);
+    }
+    if (tidy.length && tidy[tidy.length - 1].variant === 'separator') tidy.pop();
+    return tidy.map((it): MenuItem => {
         const label = it.action === 'favourite' ? t(isFavourite ? 'ui.groupPanel.menu.removeFavourite' : 'ui.groupPanel.menu.addFavourite') : t(it.label, { scope });
         const a = it.action;
         const onSelect = it.view
@@ -887,6 +973,8 @@
   </div>
 {/snippet}
 
+{#snippet owner()}{#if onOpenOwner}<a href="#top" onclick={link(onOpenOwner)}>{ownerHandle}</a>{:else}<span class="owner">{ownerHandle}</span>{/if}{/snippet}
+
 {#snippet rowMenu(heading: string, items: MenuItem[], minWidth: string)}
   <div class="scrim" onclick={() => (popover = null)} role="presentation"></div>
   <div class="row-menu"><Menu {minWidth} {heading} {items} /></div>
@@ -895,10 +983,10 @@
 <div class="panel" class:embedded bind:this={root} data-panel-root="true">
   {#if view === 'main'}
     <div class="main" class:quick onscroll={() => (muteMenu = null)}>
-      <div class="cover"><PanelCover cover={coverCss} actions={['close']} trailActions={quick ? [manageIcon, 'more'] : ['invite', 'share', 'more']} handlers={coverHandlersAll} /></div>
+      <div class="cover"><PanelCover cover={coverCss} actions={['close']} trailActions={quick ? [manageIcon, 'more'] : canInvite ? ['invite', 'share', 'more'] : ['more']} handlers={coverHandlersAll} /></div>
 
       <div class="identity" class:quick>
-        <div class="avatar" class:round={scope === 'channel'} style:background={grad(color)}></div>
+        <div class="avatar" class:round={scope === 'channel'} style:background={avatar ? `url(${avatar}) center/cover no-repeat` : grad(color)}></div>
         <div class="names">
           <div class="title-line">
             <span class="title">{scope === 'channel' ? '#' : ''}{title}</span>
@@ -913,8 +1001,8 @@
                   aria-label={t('ui.groupPanel.viewCommunity')}
                   role="button"
                   tabindex="0"
-                  title={t('ui.groupPanel.viewCommunity')}>{communityName ?? 'OpenChat'}<span class="chip-chevron" data-oc-flip=""></span></span
-                >{:else}<a href="#top" onclick={link(() => onOpenCommunity?.())}>{communityName ?? 'OpenChat'}</a>{/if}{/snippet}
+                  title={t('ui.groupPanel.viewCommunity')}>{communityName ?? t('ui.groupPanel.theCommunity')}<span class="chip-chevron" data-oc-flip=""></span></span
+                >{:else}<a href="#top" onclick={link(() => onOpenCommunity?.())}>{communityName ?? t('ui.groupPanel.theCommunity')}</a>{/if}{/snippet}
             <span class="byline"
               >{#if quick}<span class="access-icon" class:public={isPublic}></span>{/if}<Translate
                 key={quick ? 'ui.groupPanel.channelInAccess' : 'ui.groupPanel.channelInPlain'}
@@ -923,10 +1011,10 @@
               /></span
             >
           {:else if quick}
-            {#snippet ownerLink()}<a href="#top">{ownerHandle}</a>{/snippet}
+            {#snippet ownerLink()}{@render owner()}{/snippet}
             <span class="byline"><span class="access-icon" class:public={isPublic}></span><Translate key="ui.groupPanel.createdByAccess" params={{ access: isPublic ? 'public' : 'private', scope }} owner={ownerLink} /></span>
           {:else}
-            {#snippet ownerLinkPlain()}<a href="#top">{ownerHandle}</a>{/snippet}
+            {#snippet ownerLinkPlain()}{@render owner()}{/snippet}
             <span class="byline plain"><Translate key="ui.groupPanel.createdBy" params={{ scope }} owner={ownerLinkPlain} /></span>
           {/if}
           {#if !quick}
@@ -981,11 +1069,14 @@
           <div class="card link-card" onclick={() => onOpenCommunity?.()} role="button" tabindex="0">
             <span class="community-mark" style:background={grad(communityColor)}></span>
             <div class="card-text">
-              <span class="card-title clip">{communityName ?? 'OpenChat'}</span>
+              <span class="card-title clip">{communityName ?? t('ui.groupPanel.theCommunity')}</span>
               <span class="card-body">{t('ui.groupPanel.viewCommunityDetails')}</span>
             </div>
             <span class="chevron"></span>
           </div>
+        {/if}
+        {#if actionError && view === 'main'}
+          <span class="member-error" role="alert">{actionError}</span>
         {/if}
         <div class="about">
           <p class="about-text" class:empty={!aboutText} bind:this={aboutEl} style:-webkit-line-clamp={aboutOpen ? 'unset' : quick ? '2' : '4'}>{aboutText || t('ui.groupPanel.noDescription')}</p>
@@ -1104,16 +1195,18 @@
         {/if}
       </div>
       {#if view === 'members' && !embedded}
-        <div class="slot"><IconButton label="ui.iconButton.addMembers" variant="ghost" icon="userPlus" onClick={() => onDialog?.('invite', null, 'people')} /></div>
-        <div class="slot"><IconButton label="ui.groupPanel.shareInviteLink" variant="ghost" icon="share" onClick={() => onDialog?.('invite', null, 'share')} /></div>
+        {#if canInvite}
+          <div class="slot"><IconButton label="ui.iconButton.addMembers" variant="ghost" icon="userPlus" onClick={() => onDialog?.('invite', null, 'people')} /></div>
+          <div class="slot"><IconButton label="ui.groupPanel.shareInviteLink" variant="ghost" icon="share" onClick={() => onDialog?.('invite', null, 'share')} /></div>
+        {/if}
       {/if}
-      {#if userGroupsView}
+      {#if userGroupsView && canManageUserGroups}
         <div class="head-button" onclick={() => ugDialog('create', null)} role="button" tabindex="0"><span class="plus-icon"></span>{t('ui.groupPanel.menu.newUserGroup')}</div>
       {/if}
-      {#if view === 'usergroup' && ugCur}
+      {#if view === 'usergroup' && ugCur && canManageUserGroups}
         <div class="slot"><IconButton label="ui.groupPanel.editUserGroup" variant="ghost" icon="edit" onClick={() => ugCur && ugDialog('edit', ugCur.key)} /></div>
       {/if}
-      {#if view === 'permissions' || view === 'gates' || view === 'rules'}
+      {#if canEdit && (view === 'permissions' || view === 'gates' || view === 'rules')}
         <!-- the sidebar is for reading; editing happens in a focused modal the host renders, deep-linked to this tab -->
         <div class="slot"><IconButton variant="ghost" icon="edit" onClick={() => onDialog?.('settings', settingsPayload(), view)} /></div>
       {/if}
@@ -1142,11 +1235,25 @@
           {#if canModerate}
             <div class="cell tabs"><SegmentedTabs labels={MEMBER_TABS.map((k) => t(k))} selectedIndex={tabIdx} dotOnLast={false} dotIndexes={lapsed.length ? [1] : []} onSelect={(i) => (memberTab = i)} /></div>
           {/if}
-          <div class="cell" class:pad-top={!canModerate}><Field placeholder={t(MEMBER_SEARCH[tabIdx])} showShortcut={false} /></div>
+          <div class="cell" class:pad-top={!canModerate}>
+            <Field
+              placeholder={t(MEMBER_SEARCH[tabIdx])}
+              value={memberQuery}
+              onInput={(e) => {
+                memberQuery = e.currentTarget.value;
+                onSearchMembers?.(memberQuery.trim());
+              }}
+              onClear={() => {
+                memberQuery = '';
+                onSearchMembers?.('');
+              }}
+              showShortcut={false}
+            />
+          </div>
           {#if scope === 'channel' && tabIdx === 0}
             <div class="banner" onclick={() => onOpenCommunity?.('members')} role="button" tabindex="0">
               <div class="card-text">
-                <span class="banner-title">{t('ui.groupPanel.lookingFor', { community: communityName ?? 'OpenChat' })}</span>
+                <span class="banner-title">{t('ui.groupPanel.lookingFor', { community: communityName ?? t('ui.groupPanel.theCommunity') })}</span>
                 <span class="banner-body">{t('ui.groupPanel.channelOnlyList')}</span>
               </div>
               <span class="chevron accent"></span>
@@ -1154,8 +1261,8 @@
           {/if}
           <div class="list-block">
             <span class="list-title">{t(MEMBER_LIST_TITLES[tabIdx], { count: [total, lapsed.length, visibleBlocked.length][tabIdx] })}</span>
-            {#if memberError}
-              <span class="member-error" role="alert">{memberError}</span>
+            {#if actionError}
+              <span class="member-error" role="alert">{actionError}</span>
             {/if}
             {#if MEMBER_NOTES[tabIdx]}
               <span class="list-note">{t(MEMBER_NOTES[tabIdx])}</span>
@@ -1298,9 +1405,7 @@
             <div class="recheck">
               <span class="clock-icon"></span>
               <span class="recheck-line"
-                >{gateState?.intervalOn === false
-                  ? t('ui.groupPanel.checkedAtJoin')
-                  : t('ui.groupPanel.recheckLine', { every })}</span
+                >{rechecks ? t('ui.groupPanel.recheckLine', { every }) : t('ui.groupPanel.checkedAtJoin')}</span
               >
             </div>
             <div class="gate-block">
@@ -1354,8 +1459,15 @@
           <div class="rows padded">
             {#each ugShown as g}
               <div class="cell anchor">
-                <MemberRow title={g.title} subtitle={ugSubtitle(g)} color={g.color || 'slate'} onClick={() => openUserGroup(g)} onMenu={() => (popover = popover === g.key ? null : g.key)} />
-                {#if popover === g.key}
+                <MemberRow
+                  title={g.title}
+                  subtitle={ugSubtitle(g)}
+                  color={g.color || 'slate'}
+                  onClick={() => openUserGroup(g)}
+                  onMenu={canManageUserGroups ? () => (popover = popover === g.key ? null : g.key) : undefined}
+                  showMenu={canManageUserGroups}
+                />
+                {#if popover === g.key && canManageUserGroups}
                   {@render rowMenu(
                     '',
                     [
@@ -1379,11 +1491,11 @@
           <div class="cell tabs"><Field placeholder={t('ui.groupPanel.searchGroupMembers')} value={ugMemberQuery} onInput={(e) => (ugMemberQuery = e.currentTarget.value)} onClear={() => (ugMemberQuery = '')} showShortcut={false} /></div>
           <div class="ug-intro">
             <span class="ug-title">{t('ui.groupPanel.membersCount', { count: ugCur.members.length })}</span>
-            <span class="list-note"><Translate key="ui.groupPanel.mentionAll">{#snippet tag()}<span class="mention">@{ugCur.title.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')}</span>{/snippet}</Translate></span>
+            <span class="list-note"><Translate key="ui.groupPanel.mentionAll">{#snippet tag()}<span class="mention">{ugMention(ugCur)}</span>{/snippet}</Translate></span>
           </div>
           <div class="rows padded">
             {#each ugMembersShown as m}
-              <div class="cell"><MemberRow title={m.name} subtitle={m.handle} color={m.color} showMenu={false} onClick={() => onDialog?.('user', { title: m.name, handle: m.handle, color: m.color })} /></div>
+              <div class="cell"><MemberRow title={m.name} subtitle={m.handle} color={m.color} showMenu={false} onClick={() => onDialog?.('user', { userId: m.userId, title: m.name, handle: m.handle, color: m.color })} /></div>
             {/each}
             {#if ugMembersShown.length === 0 && ugMemberQuery}
               <span class="ug-empty">{t('ui.groupPanel.noMembersMatch', { query: ugMemberQuery })}</span>
@@ -1397,12 +1509,21 @@
           {#each pinnedDays as day}
             <div class="pin-day">
               <span class="pin-date">{day.date}</span>
-              {#each day.items as p}
+              {#each day.items as p (p.messageId)}
                 <div class="cell"><MessageGroup side="received" senderName={p.author} color={p.color} showAvatar={true} showName={true} messages={p.messages} /></div>
+                {#if onOpenPinned || (canPin && onUnpin)}
+                  <div class="pin-actions">
+                    {#if onOpenPinned}<span class="pin-action" onclick={() => onOpenPinned(p.messageId)} role="button" tabindex="0">{t('ui.groupPanel.goToMessage')}</span>{/if}
+                    {#if canPin && onUnpin}<span class="pin-action" onclick={() => unpin(p.messageId)} role="button" tabindex="0">{t('ui.groupPanel.unpin')}</span>{/if}
+                  </div>
+                {/if}
               {/each}
             </div>
           {/each}
-          {#if pinned.length === 0}
+          {#if actionError}
+            <span class="member-error" role="alert">{actionError}</span>
+          {/if}
+          {#if pinnedDays.length === 0}
             <span class="empty-line center">{t('ui.groupPanel.nothingPinned')}</span>
           {/if}
         </div>
@@ -2244,6 +2365,23 @@
     letter-spacing: var(--tracking-wide);
     text-transform: uppercase;
     color: var(--ink-4, #7c7c8c);
+  }
+
+  .pin-actions {
+    display: flex;
+    gap: var(--space-14);
+    padding-inline-start: 52px;
+    margin-block-start: -4px;
+  }
+
+  .pin-action {
+    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
+    color: var(--ink-3, #9a9aa8);
+    cursor: pointer;
+  }
+
+  .pin-action:hover {
+    color: var(--ink, #ececf1);
   }
 
   .member-error {

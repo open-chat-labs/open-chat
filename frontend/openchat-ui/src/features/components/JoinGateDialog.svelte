@@ -1,10 +1,11 @@
 <!-- Join dialog for a gated community. Gates are a checklist; "all" shows progress, "any" turns rows into choices.
      Free checks (balance, neuron, Diamond) are resolved first; payments are charged together on "Pay and join".
      Diamond is bought in the Diamond dialog (onGetDiamond) and never appears in this payment summary.
-     Balances come from the host (tokens / chatBalance): pass fresh values to re-check, e.g. when the tab regains focus. -->
+     Balances come from the host (tokens / chatBalance): pass fresh values to re-check, e.g. when the tab regains focus;
+     "Check again" calls onRecheck. "Pay and join" calls onJoin with the ledger of every payment and waits: a rejection
+     ends the spinner and shows an error, with everything left as it was. -->
 <script lang="ts">
   import { getI18n, useT } from '../../lib/i18n';
-  import { onDestroy } from 'svelte';
   import Button from '../../lib/components/Button.svelte';
   import DialogShell from '../../lib/components/DialogShell.svelte';
   import Spinner from '../../lib/components/Spinner.svelte';
@@ -19,8 +20,9 @@
 
   export interface Gate {
     kind: 'pay' | 'balance' | 'neuron' | 'diamond';
-    /** pay / balance: token and amount. */
+    /** pay / balance: token, its ledger canister id and the amount. */
     symbol?: string;
+    ledger?: string;
     amount?: number;
     /** neuron: title, detail and the confirmation wording — resource keys (or literal text). */
     label?: string;
@@ -41,11 +43,14 @@
     isDiamond?: boolean;
     isLifetime?: boolean;
     recheckDays?: number;
-    /** Share of payments that goes to the community owner (the rest to the treasury). */
+    /** Share of payments that goes to the community owner (the rest to the treasury). The split is hidden without it. */
     ownerShare?: number;
     z?: number;
     onGetDiamond?: () => void;
-    onJoin?: (r: { paid: { symbol: string; amount: number }[] }) => void;
+    /** Join, paying `paid` (ledger + amount each). Reject to keep the dialog open with an error. */
+    onJoin?: (r: { paid: { ledger: string; symbol: string; amount: number }[]; neuronConfirmed: boolean }) => Promise<unknown> | void;
+    /** Fetch fresh balances (the host then passes new `tokens` / `chatBalance`). "Check again" is hidden without it. */
+    onRecheck?: () => Promise<unknown>;
     onClose?: () => void;
   }
 
@@ -59,10 +64,11 @@
     isDiamond = false,
     isLifetime = false,
     recheckDays,
-    ownerShare = 0.98,
+    ownerShare,
     z = 70,
     onGetDiamond,
     onJoin,
+    onRecheck,
     onClose,
   }: Props = $props();
   const t = useT();
@@ -71,9 +77,7 @@
   let picked = $state<number | null>(null);
   let busy = $state(false);
   let checking = $state(false);
-  let joinTimer: ReturnType<typeof setTimeout> | undefined;
-  let checkTimer: ReturnType<typeof setTimeout> | undefined;
-  onDestroy(() => [joinTimer, checkTimer].forEach(clearTimeout));
+  let failed = $state(false);
 
   const any = $derived(rule === 'any');
 
@@ -137,7 +141,7 @@
   const pays = $derived(chosen.filter((r) => r.gate.kind === 'pay' && r.state === 'pay'));
   const nReady = $derived(rows.filter(ready).length);
   const canJoin = $derived(chosen.length > 0 && chosen.every(ready));
-  const enabled = $derived(canJoin && !busy);
+  const enabled = $derived(canJoin && !busy && !!onJoin);
   const selGate = $derived(any ? rows[selected] : null);
 
   const reason = $derived.by(() => {
@@ -151,7 +155,7 @@
   });
 
   const split = $derived(
-    pays.length
+    pays.length && ownerShare != null
       ? [
           { label: t('ui.joinGateDialog.ownerShare', { pct: Math.round(ownerShare * 100) }), value: pays.map((r) => `${fmt((r.gate.amount ?? 0) * ownerShare)} ${r.gate.symbol}`).join(' · ') },
           { label: t('ui.joinGateDialog.treasuryShare', { pct: Math.round((1 - ownerShare) * 100) }), value: pays.map((r) => `${fmt((r.gate.amount ?? 0) * (1 - ownerShare))} ${r.gate.symbol}`).join(' · ') },
@@ -159,18 +163,31 @@
       : [],
   );
 
-  function recheck(e: Event) {
+  async function recheck(e: Event) {
     e.stopPropagation();
+    if (checking || !onRecheck) return;
     checking = true;
-    clearTimeout(checkTimer);
-    checkTimer = setTimeout(() => (checking = false), 700);
+    try {
+      await onRecheck();
+    } catch {
+      // balances stay as they were; the user can try again
+    } finally {
+      checking = false;
+    }
   }
 
-  function join() {
-    if (!enabled) return;
+  async function join() {
+    if (!enabled || !onJoin) return;
     busy = true;
-    const paid = pays.map((r) => ({ symbol: r.gate.symbol ?? '', amount: r.gate.amount ?? 0 }));
-    joinTimer = setTimeout(() => onJoin?.({ paid }), 1300);
+    failed = false;
+    const paid = pays.map((r) => ({ ledger: r.gate.ledger ?? '', symbol: r.gate.symbol ?? '', amount: r.gate.amount ?? 0 }));
+    try {
+      await onJoin({ paid, neuronConfirmed: confirmed });
+    } catch {
+      failed = true;
+    } finally {
+      busy = false;
+    }
   }
 
   function close() {
@@ -246,10 +263,12 @@
                 <CopyButton value={depositAddress} label="ui.joinGateDialog.copyWalletAddress" size="md" />
               </div>
               {/if}
-              <div class="recheck-row">
-                <span class="recheck" onclick={recheck} role="button" tabindex="0"><span class="recheck-icon" class:spinning={checking}></span>{t(checking ? 'ui.joinGateDialog.checking' : 'ui.joinGateDialog.checkAgain')}</span>
-                <span class="recheck-hint">{t('ui.joinGateDialog.recheckHint')}</span>
-              </div>
+              {#if onRecheck}
+                <div class="recheck-row">
+                  <span class="recheck" onclick={recheck} role="button" tabindex="0" aria-busy={checking}><span class="recheck-icon" class:spinning={checking}></span>{t(checking ? 'ui.joinGateDialog.checking' : 'ui.joinGateDialog.checkAgain')}</span>
+                  <span class="recheck-hint">{t('ui.joinGateDialog.recheckHint')}</span>
+                </div>
+              {/if}
             </div>
           {/if}
           {#if active && r.gate.kind === 'neuron' && r.state === 'todo'}
@@ -279,7 +298,11 @@
         </div>
       {/if}
       <div class="action-row">
-        <span class="reason" class:ready={canJoin} class:free={canJoin && any && !!selGate?.free} aria-live="polite">{reason}</span>
+        {#if failed}
+          <span class="reason failed" role="alert">{t('ui.joinGateDialog.joinFailed')}</span>
+        {:else}
+          <span class="reason" class:ready={canJoin} class:free={canJoin && any && !!selGate?.free} aria-live="polite">{reason}</span>
+        {/if}
         <span class="cta" class:ready={canJoin} class:enabled class:busy onclick={join} role="button" tabindex={enabled ? 0 : -1} aria-disabled={!canJoin} aria-busy={busy}>
           {#if busy}
             <Spinner size={16} tone="ink" label={t('ui.joinGateDialog.joining')} />
@@ -760,5 +783,9 @@
 
   .cta:focus-visible {
     box-shadow: var(--focus-ring);
+  }
+
+  .reason.failed {
+    color: var(--status-danger, #f5493d);
   }
 </style>

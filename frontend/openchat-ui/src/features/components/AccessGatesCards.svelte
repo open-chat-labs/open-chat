@@ -1,20 +1,24 @@
 <!-- Access gates as cards (alternative layout to AccessGates): each gate is a card with its icon, description and
      value chips; configurable gates open inline editors (asset picker + numeric fields) until complete.
      "Add gate" opens a catalogue. All / Any decides how gates combine; an optional periodic re-check sits below.
-     Non-diamond users see an upgrade card instead. onChange({ count, mode, gates }) on every gate change. -->
+     Non-diamond users see an upgrade card instead. onChange({ count, mode, gates, intervalOn, everyDays }) on every change
+     (gates, All / Any, re-check). Tokens and nervous systems come from the host; a gate stores the canister id. `value`
+     restores the last state handed out, so the editor survives a remount. -->
 <script lang="ts">
+  import { untrack } from 'svelte';
   import type { AccessGatesCardsState, AccessGateRule } from '../../lib/types';
+  import type { GateAsset } from './AccessGates.svelte';
   import SegmentedTabs from '../../lib/components/SegmentedTabs.svelte';
   import TimedToggle from '../../lib/components/TimedToggle.svelte';
   import { useT } from '../../lib/i18n';
 
-  type Asset = string | { label: string; soon: true };
   type Field = { key: 'a' | 'b'; placeholder: string; unit: string; required?: boolean };
   type GateType = {
     label: string;
     icon: string;
     desc: string;
-    assets?: Asset[];
+    /** Needs an asset from this list. */
+    assets?: 'token' | 'sns';
     repeatable?: boolean;
     uniqueAsset?: boolean;
     fields?: Field[];
@@ -38,8 +42,6 @@
   };
   const DOT_FALLBACK = 'linear-gradient(140deg,#8E9BB3,#5A6478)';
 
-  const TOKENS: Asset[] = ['CHAT', 'ICP', 'BTC', 'BOB', 'USDC', 'USDT', 'KINIC'];
-  const NERVOUS: Asset[] = ['CHAT', 'Motoko', 'ICPanda', 'TACO', 'Dragging Karma Points', { label: 'Internet Computer', soon: true }];
 
   // labels, descriptions, placeholders and units are resource keys; chips are built (translated) at render time
   const TYPES: Record<string, GateType> = {
@@ -49,32 +51,32 @@
       label: 'ui.accessGatesCards.types.neuron',
       icon: 'neuron',
       desc: 'ui.accessGatesCards.types.neuronDesc',
-      assets: NERVOUS,
+      assets: 'sns',
       repeatable: true,
       fields: [
         { key: 'a', placeholder: 'ui.accessGatesCards.fields.minDissolveDelay', unit: 'ui.accessGatesCards.units.days' },
         { key: 'b', placeholder: 'ui.accessGatesCards.fields.minStake', unit: 'ui.accessGatesCards.units.tokens' },
       ],
-      chips: (g) => [g.asset && { label: g.asset, dot: true }, g.a && { label: t('ui.accessGatesCards.chips.delay', { days: g.a }) }, g.b && { label: t('ui.accessGatesCards.chips.staked', { amount: g.b }) }],
+      chips: (g) => [g.asset && { label: assetText(g), dot: true }, g.a && { label: t('ui.accessGatesCards.chips.delay', { days: g.a }) }, g.b && { label: t('ui.accessGatesCards.chips.staked', { amount: g.b }) }],
     },
     payment: {
       label: 'ui.accessGatesCards.types.payment',
       icon: 'payment',
       desc: 'ui.accessGatesCards.types.paymentDesc',
-      assets: TOKENS,
+      assets: 'token',
       repeatable: true,
       fields: [{ key: 'a', placeholder: 'ui.accessGatesCards.fields.amount', unit: 'ui.accessGatesCards.units.tokens', required: true }],
-      chips: (g) => [g.asset && { label: g.asset, dot: true }, g.a && { label: t('ui.accessGatesCards.chips.tokens', { amount: g.a }) }],
+      chips: (g) => [g.asset && { label: assetText(g), dot: true }, g.a && { label: t('ui.accessGatesCards.chips.tokens', { amount: g.a }) }],
     },
     balance: {
       label: 'ui.accessGatesCards.types.balance',
       icon: 'balance',
       desc: 'ui.accessGatesCards.types.balanceDesc',
-      assets: TOKENS,
+      assets: 'token',
       repeatable: true,
       uniqueAsset: true,
       fields: [{ key: 'a', placeholder: 'ui.accessGatesCards.fields.minBalance', unit: 'ui.accessGatesCards.units.tokens', required: true }],
-      chips: (g) => [g.asset && { label: g.asset, dot: true }, g.a && { label: t('ui.accessGatesCards.chips.min', { amount: g.a }) }],
+      chips: (g) => [g.asset && { label: assetText(g), dot: true }, g.a && { label: t('ui.accessGatesCards.chips.min', { amount: g.a }) }],
     },
     credential: { label: 'ui.accessGatesCards.types.credential', icon: 'credential', desc: 'ui.accessGatesCards.types.credentialDesc' },
     unique: { label: 'ui.accessGatesCards.types.unique', icon: 'person', desc: 'ui.accessGatesCards.types.uniqueDesc' },
@@ -91,29 +93,55 @@
 
   const MODES = ['All', 'Any'] as const;
   const MODE_LABELS = ['ui.accessGatesCards.modes.all', 'ui.accessGatesCards.modes.any'];
-  const INTERVALS = ['ui.accessGatesCards.intervals.day1', 'ui.accessGatesCards.intervals.week1', 'ui.accessGatesCards.intervals.weeks2', 'ui.accessGatesCards.intervals.month1', 'ui.accessGatesCards.intervals.months3', 'ui.accessGatesCards.intervals.months6'];
-  const assetName = (a: Asset) => (typeof a === 'string' ? a : a.label);
+  // labels are resource keys; the host gets the interval in days
+  const INTERVALS: [string, number][] = [
+    ['ui.accessGatesCards.intervals.day1', 1],
+    ['ui.accessGatesCards.intervals.week1', 7],
+    ['ui.accessGatesCards.intervals.weeks2', 14],
+    ['ui.accessGatesCards.intervals.month1', 30],
+    ['ui.accessGatesCards.intervals.months3', 90],
+    ['ui.accessGatesCards.intervals.months6', 180],
+  ];
   const mask = (icon: string) => `var(--icon-${icon}) center/contain no-repeat`;
 
   interface Props {
-    /** false shows the upgrade card instead of the editor. */
+    /** false (the default) shows the upgrade card instead of the editor. */
     isDiamond?: boolean;
+    /** Tokens payment / balance gates can name (ledger canister ids). Those gates are hidden while this is empty. */
+    tokens?: GateAsset[];
+    /** Nervous systems neuron gates can name (governance canister ids). */
+    nervousSystems?: GateAsset[];
+    /** State last handed out by onChange; read once, on mount. */
+    value?: Partial<AccessGatesCardsState> | null;
     onUpgrade?: () => void;
     onChange?: (state: AccessGatesCardsState) => void;
   }
 
-  let { isDiamond = true, onUpgrade, onChange }: Props = $props();
+  let { isDiamond = false, tokens = [], nervousSystems = [], value = null, onUpgrade, onChange }: Props = $props();
   const t = useT();
 
-  let gates = $state<AccessGateRule[]>([]);
-  let modeIndex = $state(0);
+  const dirFor = (kind: 'token' | 'sns' | undefined) => (kind === 'sns' ? nervousSystems : tokens);
+  // tokens read as their symbol, nervous systems as their name; an unknown id is shown as it is
+  function labelOf(kind: 'token' | 'sns' | undefined, id: string) {
+    const a = dirFor(kind).find((x) => x.id === id);
+    return a ? (kind === 'sns' ? a.name : a.symbol) : id;
+  }
+  function assetText(g: AccessGateRule) {
+    return labelOf(TYPES[g.type]?.assets, g.asset);
+  }
+  const offered = (type: GateType) => !type.assets || dirFor(type.assets).length > 0;
+
+  const initial = untrack(() => value) ?? {};
+  let gates = $state<AccessGateRule[]>(Array.isArray(initial.gates) ? initial.gates : []);
+  let modeIndex = $state(initial.mode === 'Any' ? 1 : 0);
   let editing = $state<string | null>(null);
   let pickerOpen = $state(false);
-  let intervalOn = $state(false);
-  let every = $state('ui.accessGatesCards.intervals.month1');
+  let intervalOn = $state(!!initial.intervalOn);
+  let everyDays = $state(initial.everyDays ?? 30);
+  const everyKey = $derived((INTERVALS.find(([, d]) => d === everyDays) ?? INTERVALS[3])[0]);
 
   function emit() {
-    onChange?.({ count: gates.length, mode: MODES[modeIndex], gates });
+    onChange?.({ count: gates.length, mode: MODES[modeIndex], gates, intervalOn, everyDays });
   }
 
   function add(key: string) {
@@ -157,7 +185,17 @@
         <span class="head-title">{t('ui.accessGatesCards.heading', { count: gates.length })}</span>
         <span class="head-hint">{t('ui.accessGatesCards.invitedHint')}</span>
       </div>
-      <div class="modes"><SegmentedTabs labels={MODE_LABELS.map((k) => t(k))} selectedIndex={modeIndex} dotIndexes={[]} onSelect={(i) => (modeIndex = i)} /></div>
+      <div class="modes">
+        <SegmentedTabs
+          labels={MODE_LABELS.map((k) => t(k))}
+          selectedIndex={modeIndex}
+          dotIndexes={[]}
+          onSelect={(i) => {
+            modeIndex = i;
+            emit();
+          }}
+        />
+      </div>
     </div>
 
     <div class="cards">
@@ -197,20 +235,19 @@
             <div class="editor">
               {#if type.assets}
                 <div class="assets">
-                  {#each type.assets as a}
-                    {@const name = assetName(a)}
-                    {@const soon = typeof a !== 'string' && a.soon}
-                    {@const taken = !!type.uniqueAsset && gates.some((x) => x.type === g.type && x.asset === name && x.id !== g.id)}
+                  {#each dirFor(type.assets) as a}
+                    {@const name = labelOf(type.assets, a.id)}
+                    {@const taken = !!type.uniqueAsset && gates.some((x) => x.type === g.type && x.asset === a.id && x.id !== g.id)}
                     <span
                       class="asset"
-                      class:selected={g.asset === name}
-                      class:unavailable={soon || taken}
-                      onclick={() => !soon && !taken && patch(g.id, { asset: name })}
+                      class:selected={g.asset === a.id}
+                      class:unavailable={taken}
+                      onclick={() => !taken && patch(g.id, { asset: a.id })}
                       role="button"
                       tabindex="0"
                     >
                       <span class="asset-dot" style:background={DOTS[name] ?? DOT_FALLBACK}></span>
-                      <span>{soon ? t('ui.accessGatesCards.assetSoon', { name }) : taken ? t('ui.accessGatesCards.assetUsed', { name }) : name}</span>
+                      <span>{taken ? t('ui.accessGatesCards.assetUsed', { name }) : name}</span>
                     </span>
                   {/each}
                 </div>
@@ -252,10 +289,16 @@
           prefix={t('ui.accessGatesCards.every')}
           offHint={t('ui.accessGatesCards.recheckOff')}
           on={intervalOn}
-          value={t(every)}
-          options={INTERVALS.map((k) => t(k))}
-          onChange={(on) => (intervalOn = on)}
-          onDurationChange={(value) => (every = INTERVALS.find((k) => t(k) === value) ?? every)}
+          value={t(everyKey)}
+          options={INTERVALS.map(([k]) => t(k))}
+          onChange={(on) => {
+            intervalOn = on;
+            emit();
+          }}
+          onDurationChange={(label) => {
+            everyDays = INTERVALS.find(([k]) => t(k) === label)?.[1] ?? everyDays;
+            emit();
+          }}
         />
       </div>
     </div>
@@ -270,7 +313,7 @@
           <span class="picker-close" onclick={() => (pickerOpen = false)} role="button" tabindex="0"><span class="tool-icon" style:mask={mask('close')}></span></span>
         </div>
         <div class="catalogue">
-          {#each Object.entries(TYPES) as [key, type]}
+          {#each Object.entries(TYPES).filter(([, type]) => offered(type)) as [key, type]}
             {@const used = !type.repeatable && gates.some((g) => g.type === key)}
             <div class="option" class:unavailable={type.soon || used} onclick={() => !used && add(key)} role="button" tabindex="0">
               <span class="option-tile"><span class="option-icon" style:mask={mask(type.icon)}></span></span>

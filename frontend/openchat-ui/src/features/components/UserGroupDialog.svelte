@@ -1,6 +1,18 @@
 <!-- Create, edit or delete a community user group (a mentionable set of members, e.g. @developers).
-     Form: name (checked against takenNames) and members picked from `people` with a type-ahead (↑/↓, Enter, Esc clears).
-     Delete: a confirmation. Esc, the veil, × and Cancel close with the exit animation. -->
+     Form: name (checked against takenNames) and members picked from `people` (or `onSearch` results) with a type-ahead
+     (↑/↓, Enter, Esc clears). Members are identified by userId. Save / Delete call the host and wait: the dialog closes
+     once it resolves and stays open with the form and an error if it rejects. Esc, the veil, × and Cancel close
+     (not while the host is working). -->
+<script lang="ts" module>
+  export interface UserGroupPerson {
+    userId: string;
+    name: string;
+    handle: string;
+    /** violet | teal | amber | blue | plum | rose | slate */
+    color?: string;
+  }
+</script>
+
 <script lang="ts">
   import { useT } from '../../lib/i18n';
   import Translate from '../../lib/components/Translate.svelte';
@@ -24,45 +36,51 @@
       .replace(/\s+/g, '_')
       .replace(/[^a-z0-9_]/g, '');
 
-  interface Person {
-    name: string;
-    handle: string;
-    /** violet | teal | amber | blue | plum | rose | slate */
-    color: string;
-  }
+  type Person = UserGroupPerson;
 
   interface Props {
     dialogMode?: 'create' | 'edit' | 'delete';
     communityName: string;
-    /** The group being edited or deleted. */
-    group?: { key?: string; title: string; members: Person[] } | null;
-    /** Community members you can add. */
+    /** The group being edited or deleted. `mention` is its real @handle (otherwise one is previewed from the name). */
+    group?: { key: string; title: string; members: Person[]; mention?: string } | null;
+    /** Community members you can add (the initial list; onSearch can find more). */
     people?: Person[];
+    /** Search the whole community; replaces the local filter while there is a query. */
+    onSearch?: (query: string) => Promise<Person[]>;
     /** Existing group names, to reject duplicates. */
     takenNames?: string[];
     onCancel?: () => void;
-    onSave?: (g: { key: string | null; title: string; members: string[] }) => void;
-    onDelete?: (key: string | undefined) => void;
+    /** Create (key null) or update a group. Reject to keep the dialog open with an error. */
+    onSave?: (g: { key: string | null; title: string; memberIds: string[] }) => Promise<unknown> | void;
+    /** Delete the group. Reject to keep the dialog open with an error. */
+    onDelete?: (key: string) => Promise<unknown> | void;
   }
 
-  let { dialogMode = 'create', communityName, group = null, people = [], takenNames = [], onCancel, onSave, onDelete }: Props = $props();
+  let { dialogMode = 'create', communityName, group = null, people = [], onSearch, takenNames = [], onCancel, onSave, onDelete }: Props = $props();
   const t = useT();
 
   const isDelete = $derived(dialogMode === 'delete');
   const isEdit = $derived(dialogMode === 'edit');
 
   let name = $state(untrack(() => group?.title ?? ''));
-  let picked = $state<string[]>(untrack(() => (group?.members ?? []).map((m) => m.handle)));
+  // picked user ids; `known` remembers every person seen (group members, people, search results) to render them
+  let picked = $state<string[]>(untrack(() => (group?.members ?? []).map((m) => m.userId)));
+  let known = $state<Record<string, Person>>({});
+  let remote = $state<Person[] | null>(null);
+  let searchTimer: ReturnType<typeof setTimeout> | undefined;
+  let searchRun = 0;
   let query = $state('');
   let focused = $state(false);
   let highlight = $state(0);
 
-  const byHandle = (h: string) => people.find((x) => x.handle === h) ?? { name: h, handle: h, color: 'slate' };
-  const grad = (p: Person) => GRADIENTS[p.color] ?? GRADIENTS.slate;
+  const byId = (id: string): Person => known[id] ?? people.find((x) => x.userId === id) ?? group?.members.find((x) => x.userId === id) ?? { userId: id, name: id, handle: '', color: 'slate' };
+  const grad = (p: Person) => GRADIENTS[p.color ?? 'slate'] ?? GRADIENTS.slate;
+  const mentionOf = (title: string) => group?.mention ?? slug(title);
   const haystack = (p: Person) => `${p.name} ${p.handle}`.toLowerCase();
 
   const needle = $derived(query.trim().toLowerCase());
-  const matches = $derived(needle ? people.filter((x) => !picked.includes(x.handle) && haystack(x).includes(needle)).slice(0, 8) : []);
+  const pool = $derived(remote ?? people.filter((x) => haystack(x).includes(needle)));
+  const matches = $derived(needle ? pool.filter((x) => !picked.includes(x.userId)).slice(0, 8) : []);
   const hi = $derived(Math.min(highlight, Math.max(0, matches.length - 1)));
   const dropOpen = $derived(focused && !!needle);
   const trimmed = $derived(name.trim());
@@ -70,10 +88,32 @@
   const ok = $derived(isDelete || (trimmed.length > 0 && !taken && picked.length > 0));
   const memberCount = $derived((group?.members ?? []).length);
 
-  function add(handle: string) {
-    if (!picked.includes(handle)) picked = [handle, ...picked];
+  function add(person: Person) {
+    known = { ...known, [person.userId]: person };
+    if (!picked.includes(person.userId)) picked = [person.userId, ...picked];
     query = '';
+    remote = null;
     highlight = 0;
+  }
+
+  // server-side search when the host offers it (debounced; a newer query wins)
+  function typed(v: string) {
+    query = v;
+    highlight = 0;
+    clearTimeout(searchTimer);
+    remote = null;
+    const q = v.trim();
+    if (!onSearch || !q) return;
+    const mine = ++searchRun;
+    const search = onSearch;
+    searchTimer = setTimeout(async () => {
+      try {
+        const found = await search(q);
+        if (mine === searchRun) remote = found;
+      } catch {
+        // search failed: keep filtering the local list
+      }
+    }, 250);
   }
 
   function queryKey(e: KeyboardEvent) {
@@ -85,7 +125,7 @@
       highlight = Math.max(hi - 1, 0);
     } else if (e.key === 'Enter' && matches[hi]) {
       e.preventDefault();
-      add(matches[hi].handle);
+      add(matches[hi]);
     } else if (e.key === 'Escape' && query) {
       e.preventDefault();
       e.stopPropagation();
@@ -95,7 +135,10 @@
 
   let closing = $state(false);
   let timer: ReturnType<typeof setTimeout> | undefined;
-  onDestroy(() => clearTimeout(timer));
+  onDestroy(() => {
+    clearTimeout(timer);
+    clearTimeout(searchTimer);
+  });
 
   // play the exit animation, then hand control back
   function close(then?: () => void) {
@@ -104,21 +147,33 @@
     timer = setTimeout(() => then?.(), 170);
   }
 
-  function confirm() {
-    if (!ok) return;
-    if (isDelete) {
-      const key = group?.key;
-      close(() => onDelete?.(key));
-    } else {
-      const result = { key: group?.key || null, title: trimmed, members: picked };
-      close(() => onSave?.(result));
+  let busy = $state(false);
+  let failed = $state(false);
+
+  async function confirm() {
+    if (!ok || busy || closing) return;
+    const key = group?.key;
+    if (isDelete && !key) return;
+    busy = true;
+    failed = false;
+    try {
+      if (isDelete) await onDelete?.(key!);
+      else await onSave?.({ key: key ?? null, title: trimmed, memberIds: [...picked] });
+    } catch {
+      failed = true;
+      return;
+    } finally {
+      busy = false;
     }
+    close();
   }
+
+  const dismiss = () => !busy && close(onCancel);
 
 </script>
 
-<div class="layer" class:closing data-screen-label="User group dialog" role="dialog" aria-modal="true" use:modal={() => close(onCancel)}>
-  <div class="veil" onclick={() => close(onCancel)} aria-hidden="true"></div>
+<div class="layer" class:closing data-screen-label="User group dialog" role="dialog" aria-modal="true" use:modal={dismiss}>
+  <div class="veil" onclick={dismiss} aria-hidden="true"></div>
   <div class="card" class:delete={isDelete}>
     <div class="head">
       <span class="badge" class:danger={isDelete}><span class="badge-icon"></span></span>
@@ -126,7 +181,7 @@
         <span class="title">{t(isDelete ? 'ui.userGroupDialog.deleteTitle' : isEdit ? 'ui.userGroupDialog.editTitle' : 'ui.userGroupDialog.newTitle')}</span>
         <span class="subtitle">{isEdit || isDelete ? `${group?.title ?? ''} · ${communityName}` : t('ui.userGroupDialog.inCommunity', { community: communityName })}</span>
       </div>
-      <span class="icon-button" onclick={() => close(onCancel)} role="button" tabindex="0" aria-label={t('ui.common.close')}><span class="close-icon"></span></span>
+      <span class="icon-button" onclick={dismiss} role="button" tabindex="0" aria-label={t('ui.common.close')}><span class="close-icon"></span></span>
     </div>
 
     {#if isDelete}
@@ -134,7 +189,7 @@
         <span class="delete-title"><Translate key="ui.userGroupDialog.deleteAsk">{#snippet title()}<span class="danger-ink">{group?.title ?? ''}</span>{/snippet}</Translate></span>
         <span class="delete-text"
           ><Translate key="ui.userGroupDialog.deleteBody" params={{ count: memberCount, community: communityName }}
-            >{#snippet mention()}<span class="mention">{slug(group?.title ?? '')}</span>{/snippet}</Translate
+            >{#snippet mention()}<span class="mention">{mentionOf(group?.title ?? '')}</span>{/snippet}</Translate
           ></span
         >
       </div>
@@ -145,7 +200,7 @@
             <span class="label">{t('ui.userGroupDialog.name')}</span>
             <input class="box" class:filled={!!name} class:taken bind:value={name} placeholder={t('ui.userGroupDialog.namePlaceholder')} maxlength="40" />
             <span class="help"
-              >{taken ? t('ui.userGroupDialog.nameTaken') : trimmed ? t('ui.userGroupDialog.mentionWith', { mention: slug(trimmed) }) : t('ui.userGroupDialog.mentionHint')}</span
+              >{taken ? t('ui.userGroupDialog.nameTaken') : trimmed ? t('ui.userGroupDialog.mentionWith', { mention: group?.mention && trimmed === group.title ? group.mention : slug(trimmed) }) : t('ui.userGroupDialog.mentionHint')}</span
             >
           </label>
         </div>
@@ -156,10 +211,7 @@
             <div class="search" class:focused>
               <span class="search-icon"></span>
               <input
-                bind:value={() => query, (v) => {
-                  query = v;
-                  highlight = 0;
-                }}
+                bind:value={() => query, typed}
                 onkeydown={queryKey}
                 onfocus={() => (focused = true)}
                 onblur={() => (focused = false)}
@@ -174,7 +226,7 @@
                     class:hi={i === hi}
                     onmousedown={(e) => {
                       e.preventDefault();
-                      add(person.handle);
+                      add(person);
                     }}
                     onmouseenter={() => (highlight = i)}
                     role="option"
@@ -191,7 +243,7 @@
                 {/each}
                 {#if matches.length === 0}
                   <span class="no-results"
-                    >{people.some((x) => haystack(x).includes(needle))
+                    >{pool.length > 0
                       ? t('ui.userGroupDialog.allMatchesAdded', { query })
                       : t('ui.userGroupDialog.noMatches', { community: communityName, query })}</span
                   >
@@ -201,15 +253,15 @@
           </div>
 
           <div class="picked" class:dimmed={dropOpen}>
-            {#each picked as handle (handle)}
-              {@const person = byHandle(handle)}
+            {#each picked as id (id)}
+              {@const person = byId(id)}
               <div class="member">
                 <span class="face" style:background={grad(person)}></span>
                 <div class="who">
                   <span class="who-name">{person.name}</span>
                   <span class="who-handle">{person.handle}</span>
                 </div>
-                <span class="icon-button remove" onclick={() => (picked = picked.filter((k) => k !== handle))} aria-label={t('ui.userGroupDialog.removeFromGroup')} role="button" tabindex="0" title={t('ui.userGroupDialog.removeFromGroup')}
+                <span class="icon-button remove" onclick={() => (picked = picked.filter((k) => k !== id))} aria-label={t('ui.userGroupDialog.removeFromGroup')} role="button" tabindex="0" title={t('ui.userGroupDialog.removeFromGroup')}
                   ><span class="remove-icon"></span></span
                 >
               </div>
@@ -223,11 +275,12 @@
     {/if}
 
     <div class="foot">
-      <span class="text-button tall" onclick={() => close(onCancel)} role="button" tabindex="0">{t('ui.common.cancel')}</span>
+      <span class="text-button tall" onclick={dismiss} role="button" tabindex="0">{t('ui.common.cancel')}</span>
       <span class="grow"></span>
-      <div class="cta" class:ok class:danger={isDelete} onclick={confirm} role="button" tabindex="0" aria-disabled={!ok}>
+      {#if failed}<span class="error" role="alert">{t(isDelete ? 'ui.userGroupDialog.deleteFailed' : 'ui.userGroupDialog.saveFailed')}</span>{/if}
+      <div class="cta" class:ok={ok && !busy} class:danger={isDelete} onclick={confirm} role="button" tabindex="0" aria-disabled={!ok || busy}>
         <span class="cta-icon" class:save={isEdit} class:trash={isDelete}></span>
-        <span>{t(isDelete ? 'ui.common.delete' : isEdit ? 'ui.common.saveChanges' : 'ui.userGroupDialog.create')}</span>
+        <span>{t(busy ? 'ui.userGroupDialog.working' : isDelete ? 'ui.common.delete' : isEdit ? 'ui.common.saveChanges' : 'ui.userGroupDialog.create')}</span>
       </div>
     </div>
   </div>
@@ -346,6 +399,12 @@
     height: 15px;
     background: var(--ink-3, #9a9aa8);
     mask: var(--icon-close) center/contain no-repeat;
+  }
+
+  .error {
+    min-width: 0;
+    font: var(--weight-medium) var(--text-sm) / 1.3 var(--font-sans);
+    color: var(--status-danger, #f5493d);
   }
 
   .foot {

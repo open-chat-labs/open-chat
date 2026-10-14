@@ -44,21 +44,22 @@
   import SideCard from '../../lib/components/SideCard.svelte';
   import { getI18n, useT } from '../../lib/i18n';
   import { cleanAmount, parseAmount } from '../../lib/amount';
-  import { tick } from 'svelte';
+  import { detectNetwork, type AddressNetwork } from '../../lib/networks';
+  import { onDestroy, tick } from 'svelte';
 
   const mask = (n: string) => `var(--icon-${n}) center/contain no-repeat`;
   const PIN_LENGTH = 6;
   const FALLBACK_GRAD = 'linear-gradient(140deg,#8B7BFF,#5B3FD9)';
-  // label / short / time: resource keys (or literal text, e.g. network names)
+  // label / short / time: resource keys (or literal text, e.g. network names); the fees themselves come from the host
   const NETS = [
-    { id: 'btc', label: 'Bitcoin', short: 'ui.walletSend.nativeBtc', time: 'ui.walletSend.btcTime', fee: '~0.0000042 BTC', f: 0.0000042 },
-    { id: 'ckbtc', label: 'ui.walletSend.ckBtcOnIcp', short: 'ui.walletSend.needsIcpWallet', time: 'ui.walletSend.seconds', fee: '0.0000001 BTC', f: 0.0000001 },
-  ];
+    { id: 'btc', label: 'Bitcoin', short: 'ui.walletSend.nativeBtc', time: 'ui.walletSend.btcTime' },
+    { id: 'ckbtc', label: 'ui.walletSend.ckBtcOnIcp', short: 'ui.walletSend.needsIcpWallet', time: 'ui.walletSend.seconds' },
+  ] as const;
   const MODES = [
     ['user', 'ui.walletSend.openChatUser', 'user'],
     ['address', 'ui.walletSend.walletAddress', 'wallet'],
   ];
-  type Chain = 'BTC' | 'ETH' | 'XRP' | 'ICP';
+  type Chain = AddressNetwork;
   const NET_NAME: Record<Chain, string> = { BTC: 'Bitcoin', ETH: 'Ethereum', XRP: 'XRP Ledger', ICP: 'Internet Computer' };
   const ADDR_NAME: Record<Chain, string> = { BTC: 'Bitcoin', ETH: 'Ethereum', XRP: 'XRP', ICP: 'ICP' };
   // detected address chain → the network ids WalletToken.nets uses
@@ -66,14 +67,10 @@
 
   const fmt = (v: number, dp: number) => v.toLocaleString(i18n.locale ?? 'en', { maximumFractionDigits: dp });
   const money = (v: number) => `$${v.toLocaleString(i18n.locale ?? 'en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  const detectNet = (a: string): Chain | 'unknown' | null => {
-    const v = (a || '').trim();
-    if (!v) return null;
-    if (/^(bc1[a-z0-9]{20,}|[13][a-km-zA-HJ-NP-Z1-9]{25,34})$/.test(v)) return 'BTC';
-    if (/^0x[0-9a-fA-F]{40}$/.test(v)) return 'ETH';
-    if (/^r[1-9A-HJ-NP-Za-km-z]{24,34}$/.test(v)) return 'XRP';
-    if (/^([a-z0-9]{5}-){2,10}[a-z0-9]{3}$/.test(v) || /^[0-9a-f]{64}$/.test(v)) return 'ICP';
-    return 'unknown';
+  // amounts never carry more decimals than the token has (rounded down, so a max send stays within balance)
+  const floorTo = (v: number, dp: number) => {
+    const p = Math.pow(10, Math.min(dp, 12));
+    return Math.floor(v * p + 1e-9) / p;
   };
 
   interface Props {
@@ -84,16 +81,20 @@
     address?: string;
     /** People to pick from in "OpenChat user" mode. Without any, only the address mode is useful. */
     contacts?: SendContact[];
+    /** Search all OpenChat users by name or handle. Without it, only `contacts` can be picked. */
+    onSearchUsers?: (query: string) => Promise<SendContact[]>;
+    /** Current fee (in BTC) for sending BTC to a Bitcoin address natively or as ckBTC; a route without a fee can't be used. */
+    btcFees?: Partial<Record<'btc' | 'ckbtc', number>>;
     /** Opens the host's saved-address picker; resolve with the chosen address (or nothing to cancel). Hidden without it. */
     onPickSaved?: () => Promise<string | null | undefined>;
     /** Opens the host's QR scanner; resolve with the scanned address. Hidden without it. */
     onScanQr?: () => Promise<string | null | undefined>;
     onClose?: () => void;
-    /** Make the transfer. Reject (e.g. wrong PIN) to keep the PIN dialog open with an error. */
+    /** Make the transfer. Reject (e.g. wrong PIN) to keep the PIN dialog open with an error. Without it nothing can be sent. */
     onSent?: (v: WalletSendRequest) => Promise<unknown> | void;
   }
 
-  let { tokens, token, address: initialAddress = '', contacts = [], onPickSaved, onScanQr, onClose, onSent }: Props = $props();
+  let { tokens, token, address: initialAddress = '', contacts = [], onSearchUsers, btcFees = {}, onPickSaved, onScanQr, onClose, onSent }: Props = $props();
   const t = useT();
   const i18n = getI18n();
 
@@ -105,7 +106,16 @@
 
   const sym = $state(startSymbol);
   let mode = $state<'user' | 'address'>(initialAddress ? 'address' : 'user');
-  let user = $state<string | null>(null);
+  let picked = $state<SendContact | null>(null);
+  let userQuery = $state('');
+  let userResults = $state<SendContact[]>([]);
+  let searching = $state(false);
+  let searchTimer: ReturnType<typeof setTimeout> | undefined;
+  let searchRun = 0;
+  onDestroy(() => {
+    clearTimeout(searchTimer);
+    searchRun++;
+  });
   let address = $state(initialAddress);
   let amt = $state('');
   let msg = $state('');
@@ -124,11 +134,14 @@
   const narrow = $derived(width > 0 && width < 760);
   const tk = $derived(held.find((x) => x.symbol === sym) ?? held[0]);
   const typed = $derived(parseAmount(amt));
-  const n = $derived(tk ? (inUsd ? typed / tk.price : typed) : 0);
-  const det = $derived(mode === 'address' ? detectNet(address) : null);
+  const n = $derived(tk ? floorTo(inUsd ? typed / tk.price : typed, tk.dp) : 0);
+  const det = $derived(mode === 'address' ? detectNetwork(address) : null);
   const multi = $derived(mode === 'address' && tk?.symbol === 'BTC' && det === 'BTC');
-  const fee = $derived(multi ? NETS[net].f : (tk?.fee ?? 0));
-  const contact = $derived(contacts.find((c) => c.userId === user) ?? null);
+  const routeFee = $derived(multi ? btcFees[NETS[net].id] : undefined);
+  const fee = $derived(multi ? (routeFee ?? 0) : (tk?.fee ?? 0));
+  // a BTC route without a fee from the host can't be priced, so it can't be sent
+  const feeKnown = $derived(!multi || routeFee !== undefined);
+  const contact = $derived(picked);
   const person = $derived(contact ? { name: contact.name, handle: contact.handle, grad: contact.grad ?? FALLBACK_GRAD } : null);
   const first = $derived(person ? person.name.split(' ')[0] : '');
   // a token can go to any network it lists in `nets` (CHAT and ckBTC-style sends to an ICP principal, USDT to ETH …);
@@ -138,7 +151,7 @@
   const badAddress = $derived(det === 'unknown' || wrongNet);
   const recipOk = $derived(mode === 'user' ? !!person : !!det && det !== 'unknown' && !wrongNet);
   const over = $derived(!!tk && n + fee > tk.held);
-  const ok = $derived(recipOk && n > 0 && !over);
+  const ok = $derived(recipOk && n > 0 && !over && feeKnown && !!onSent);
   const avail = $derived(tk ? Math.max(0, tk.held - fee) : 0);
   const shortAddress = $derived(address ? `${address.slice(0, 10)}…${address.slice(-6)}` : '');
   const toLabel = $derived(mode === 'user' ? (person ? person.name : '—') : shortAddress || '—');
@@ -163,8 +176,50 @@
   const network = $derived(mode === 'user' ? 'openchat' : multi ? NETS[net].id : det && det !== 'unknown' ? CHAIN_NET[det] : '');
 
   const ctaLabel = $derived(
-    t(ok ? 'ui.common.continue' : !recipOk ? (mode === 'user' ? 'ui.walletSend.chooseRecipient' : 'ui.walletSend.addValidAddress') : n <= 0 ? 'ui.walletSend.enterAmount' : 'ui.walletSend.tooHigh'),
+    t(
+      ok
+        ? 'ui.common.continue'
+        : !recipOk
+          ? mode === 'user'
+            ? 'ui.walletSend.chooseRecipient'
+            : 'ui.walletSend.addValidAddress'
+          : n <= 0
+            ? 'ui.walletSend.enterAmount'
+            : over
+              ? 'ui.walletSend.tooHigh'
+              : !feeKnown
+                ? 'ui.walletSend.feeUnavailable'
+                : 'ui.walletSend.cantSend',
+    ),
   );
+
+  function searchUsers(q: string) {
+    userQuery = q;
+    clearTimeout(searchTimer);
+    const mine = ++searchRun;
+    if (!onSearchUsers || !q.trim()) {
+      userResults = [];
+      searching = false;
+      return;
+    }
+    searching = true;
+    searchTimer = setTimeout(async () => {
+      try {
+        const found = await onSearchUsers(q.trim());
+        if (mine === searchRun) userResults = found;
+      } catch {
+        if (mine === searchRun) userResults = [];
+      } finally {
+        if (mine === searchRun) searching = false;
+      }
+    }, 250);
+  }
+
+  function pickUser(c: SendContact) {
+    picked = c;
+    userQuery = '';
+    userResults = [];
+  }
 
   function toggleUnit() {
     if (!tk) return;
@@ -233,10 +288,7 @@
       pinInput?.focus();
       return;
     }
-    if (!onSent) {
-      step = 'done';
-      return;
-    }
+    if (!onSent) return;
     const request: WalletSendRequest = {
       symbol: tk.symbol,
       amount: n,
@@ -286,15 +338,37 @@
             <div class="person">
               <span class="person-avatar" style:background={person.grad}></span>
               <span class="person-text"><span class="person-name">{person.name}</span><span class="person-handle">{person.handle}</span></span>
-              <span class="icon-button" onclick={() => (user = null)} role="button" tabindex="0" aria-label={t('ui.walletSend.clear')} title={t('ui.walletSend.clear')}><span class="icon-button-icon" style:mask={mask('close')}></span></span>
+              <span class="icon-button" onclick={() => (picked = null)} role="button" tabindex="0" aria-label={t('ui.walletSend.clear')} title={t('ui.walletSend.clear')}><span class="icon-button-icon" style:mask={mask('close')}></span></span>
             </div>
           {:else}
-            <div class="search"><span class="search-icon"></span><span class="search-placeholder">{t('ui.walletSend.searchUsers')}</span></div>
+            {#if onSearchUsers}
+              <div class="search">
+                <span class="search-icon"></span><input
+                  class="search-input"
+                  value={userQuery}
+                  oninput={(e) => searchUsers(e.currentTarget.value)}
+                  placeholder={t('ui.walletSend.searchUsers')}
+                  aria-label={t('ui.walletSend.searchUsers')}
+                />
+              </div>
+              {#if userQuery.trim()}
+                <div class="results" role="listbox" aria-busy={searching}>
+                  {#each userResults as c (c.userId)}
+                    <span class="result" onclick={() => pickUser(c)} role="option" aria-selected="false" tabindex="0"
+                      ><span class="quick-avatar" style:background={c.grad ?? FALLBACK_GRAD}></span><span class="person-text"
+                        ><span class="person-name">{c.name}</span><span class="person-handle">{c.handle}</span></span
+                      ></span
+                    >
+                  {/each}
+                  {#if !searching && !userResults.length}<span class="no-results">{t('ui.walletSend.noUsersFound')}</span>{/if}
+                </div>
+              {/if}
+            {/if}
           {/if}
           {#if contacts.length}
             <div class="quick">
               {#each contacts as c (c.userId)}
-                <span class="quick-person" class:on={user === c.userId} onclick={() => (user = c.userId)} tabindex="0" role="button"
+                <span class="quick-person" class:on={picked?.userId === c.userId} onclick={() => pickUser(c)} tabindex="0" role="button"
                   ><span class="quick-avatar" style:background={c.grad ?? FALLBACK_GRAD}></span><span class="quick-name">{c.name.split(' ')[0]}</span></span
                 >
               {/each}
@@ -336,7 +410,7 @@
           <div class="net-picker">
             <div class="net-select" class:open={netOpen} onclick={() => (netOpen = !netOpen)} tabindex="0" role="button" aria-expanded={netOpen}>
               <span class="net-label">{t(NETS[net].label)}</span>
-              <span class="net-meta">{t(NETS[net].time)} · {NETS[net].fee}</span>
+              <span class="net-meta">{t(NETS[net].time)} · {routeFee !== undefined ? `${fmt(routeFee, 8)} BTC` : t('ui.walletSend.feeUnknown')}</span>
               <span class="caret" class:open={netOpen}></span>
             </div>
             {#if netOpen}
@@ -355,7 +429,7 @@
                   >
                     <span class="net-option-text"><span class="net-label">{t(x.label)}</span><span class="net-short">{t(x.short)}</span></span>
                     <span class="net-time">{t(x.time)}</span>
-                    <span class="net-fee">{x.fee}</span>
+                    <span class="net-fee">{btcFees[x.id] !== undefined ? `${fmt(btcFees[x.id] ?? 0, 8)} BTC` : t('ui.walletSend.feeUnknown')}</span>
                     <span class="net-tick" class:on={net === i}></span>
                   </div>
                 {/each}
@@ -700,10 +774,42 @@
     mask: var(--icon-search) center/contain no-repeat;
   }
 
-  .search-placeholder {
+  .search-input {
     flex: 1;
-    font: 400 14px/1 var(--sans);
-    color: var(--ink-5, #6e6e7c);
+    min-width: 0;
+    height: 100%;
+    border: 0;
+    outline: none;
+    background: transparent;
+    padding: 0;
+    font: 500 14px/1 var(--sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .results {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-block-start: 6px;
+  }
+
+  .result {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+
+  .result:hover {
+    background: var(--overlay-2, rgba(255, 255, 255, 0.07));
+  }
+
+  .no-results {
+    padding: 8px 10px;
+    font: 400 13px/1.4 var(--sans);
+    color: var(--ink-4, #8a8a99);
   }
 
   .quick {

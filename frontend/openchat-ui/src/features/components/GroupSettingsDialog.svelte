@@ -4,13 +4,26 @@
      a blocked save jumps to the tab that needs attention.
      embedded: the Overview page of a Manage dialog — no tab strip (the host's `section` picks the page), stays open
      after saving, and Cancel becomes "Discard changes". embedded + readOnly: Overview turns into an About page and the
-     other pages show their values as plain On/Off facts. -->
+     other pages show their values as plain On/Off facts. readOnly also works as a modal (no editing, no Save).
+     Save awaits onSave and can't be dismissed while pending. While the form is clean, a new `value` from the host
+     re-seeds it (another admin's change, a late load); once edited, the user's draft wins until saved or discarded. -->
+<script lang="ts" module>
+  export type NameCheck = 'ok' | 'taken' | 'invalid';
+
+  /** Disappearing-message durations as TimedToggle labels ("12 hours") → milliseconds. */
+  const UNIT_MS: Record<string, number> = { minute: 6e4, hour: 36e5, day: 864e5, week: 6048e5, month: 2592e6, year: 31536e6 };
+  export function durationMs(label: string): number | null {
+    const m = label.match(/^(\d+) (minute|hour|day|week|month|year)s?$/);
+    return m ? Number(m[1]) * UNIT_MS[m[2]] : null;
+  }
+</script>
+
 <script lang="ts">
   import { useT } from '../../lib/i18n';
   import { durationText } from '../../lib/i18n';
   import { onDestroy, untrack } from 'svelte';
   import type { AccessGatesState, GroupRole, GroupSettings } from '../../lib/types';
-  import AccessGates from './AccessGates.svelte';
+  import AccessGates, { type GateAsset } from './AccessGates.svelte';
   import SegmentedTabs from '../../lib/components/SegmentedTabs.svelte';
   import TextArea from '../../lib/components/TextArea.svelte';
   import TimedToggle from '../../lib/components/TimedToggle.svelte';
@@ -56,7 +69,7 @@
     { key: 'nobody', label: 'ui.groupSettingsDialog.role.nobody' },
   ];
   const VALUE_LABEL: Record<GroupRole, string> = { member: 'ui.groupSettingsDialog.value.member', moderator: 'ui.groupSettingsDialog.value.moderator', admin: 'ui.groupSettingsDialog.value.admin', owner: 'ui.groupSettingsDialog.value.owner', nobody: 'ui.groupSettingsDialog.value.nobody' };
-  const GENERAL: { key: string; label: string; group: string; def: GroupRole }[] = [
+  const GENERAL: { key: string; label: string; group: string; def: GroupRole; only?: 'community' }[] = [
     { key: 'roles', label: 'ui.groupSettingsDialog.perm.roles', group: 'Members', def: 'owner' },
     { key: 'edit', label: 'ui.groupSettingsDialog.perm.edit', group: 'Members', def: 'admin' },
     { key: 'invite', label: 'ui.groupSettingsDialog.perm.invite', group: 'Members', def: 'member' },
@@ -66,9 +79,16 @@
     { key: 'react', label: 'ui.groupSettingsDialog.perm.react', group: 'Moderation', def: 'member' },
     { key: 'everyone', label: 'ui.groupSettingsDialog.perm.everyone', group: 'Moderation', def: 'admin' },
     { key: 'calls', label: 'ui.groupSettingsDialog.perm.calls', group: 'Moderation', def: 'member' },
+    // communities only, matching CreateGroupDialog
+    { key: 'pubChannels', label: 'ui.groupSettingsDialog.perm.pubChannels', group: 'Channels', def: 'admin', only: 'community' },
+    { key: 'privChannels', label: 'ui.groupSettingsDialog.perm.privChannels', group: 'Channels', def: 'member', only: 'community' },
+    { key: 'userGroups', label: 'ui.groupSettingsDialog.perm.userGroups', group: 'Channels', def: 'owner', only: 'community' },
   ];
-  const PERM_GROUPS = ['Members', 'Moderation'];
-  const PERM_GROUP_LABEL: Record<string, string> = { Members: 'ui.groupSettingsDialog.permGroup.members', Moderation: 'ui.groupSettingsDialog.permGroup.moderation' };
+  const PERM_GROUP_LABEL: Record<string, string> = {
+    Members: 'ui.groupSettingsDialog.permGroup.members',
+    Moderation: 'ui.groupSettingsDialog.permGroup.moderation',
+    Channels: 'ui.groupSettingsDialog.permGroup.channels',
+  };
   const CONTENT = [
     { key: 'text', label: 'ui.groupSettingsDialog.content.text' },
     { key: 'image', label: 'ui.groupSettingsDialog.content.image' },
@@ -84,9 +104,9 @@
   ];
   const INHERIT = 'inherit';
 
-  function defaultPerms(): Perms {
+  function defaultPerms(community: boolean): Perms {
     const o: Perms = { general: {}, messages: { default: 'member' }, threads: { default: 'member' } };
-    GENERAL.forEach((p) => (o.general[p.key] = p.def));
+    GENERAL.filter((p) => community || !p.only).forEach((p) => (o.general[p.key] = p.def));
     CONTENT.forEach((c) => {
       o.messages[c.key] = INHERIT;
       o.threads[c.key] = INHERIT;
@@ -112,6 +132,9 @@
     /** false (the default) stops a private group being made public; making a public group private is always allowed. */
     isDiamond?: boolean;
     onUpgrade?: () => void;
+    /** Tokens (ledger canisters) and nervous systems (governance canisters) the gate editor offers. */
+    gateTokens?: GateAsset[];
+    gateSystems?: GateAsset[];
     /** "community" also allows a custom cover image (and a taller cover). */
     noun?: 'group' | 'community';
     /** Save it. The form only counts as saved once this resolves; a rejection keeps the edits with an error. */
@@ -134,9 +157,12 @@
     roleLabel?: string;
     isMuted?: boolean;
     isFavourite?: boolean;
-    onMuteChange?: (mute: 'forever' | null) => void;
-    /** Shows the Favourite action on the About page. */
-    onToggleFavourite?: () => void;
+    /** About page Mute. Optimistic; rolls back if this rejects. */
+    onMuteChange?: (mute: 'forever' | null) => Promise<unknown> | void;
+    /** Shows the Favourite action on the About page. Optimistic; rolls back if this rejects. */
+    onFavouriteChange?: (favourite: boolean) => Promise<unknown> | void;
+    /** Is this name free? Checked when the name is changed (debounced); a taken or invalid name blocks Save. */
+    checkName?: (name: string) => Promise<NameCheck>;
     onOpenRules?: () => void;
   }
 
@@ -144,6 +170,8 @@
     value = null,
     initialTab = 'group',
     isDiamond = false,
+    gateTokens = [],
+    gateSystems = [],
     onUpgrade,
     noun = 'group',
     onSave,
@@ -159,25 +187,21 @@
     isMuted = false,
     isFavourite = false,
     onMuteChange,
-    onToggleFavourite,
+    onFavouriteChange,
+    checkName,
     onOpenRules,
   }: Props = $props();
   const t = useT();
 
-  // --- the draft: everything Save writes
-  const start = untrack(() => value) ?? {};
-  const startInfo = start.info ?? ({} as Partial<GroupSettings['info']>);
-  const startSet = start.settings ?? ({} as Partial<GroupSettings['settings']>);
-  const startRules = start.rules ?? ({} as Partial<GroupSettings['rules']>);
-  const startPerms = start.permissions ?? null;
-  const base = defaultPerms();
+  // --- the draft: everything Save writes (seeded from `value`, see seed())
+  const base = defaultPerms(untrack(() => noun) === 'community');
 
-  let name = $state(startInfo.name || '');
-  let about = $state(startInfo.about || '');
-  let color = $state(startInfo.color || 'teal');
-  let coverKey = $state(startInfo.coverKey || 'plum');
-  let coverUrl = $state<string | null>(startInfo.coverUrl || null);
-  let avatar = $state(startInfo.avatar || '');
+  let name = $state('');
+  let about = $state('');
+  let color = $state('teal');
+  let coverKey = $state('plum');
+  let coverUrl = $state<string | null>(null);
+  let avatar = $state('');
   // newly picked images: the files go to the host, the object URLs are previews only and are always released here
   let avatarFile = $state<File | null>(null);
   let coverFile = $state<File | null>(null);
@@ -200,22 +224,89 @@
   const fileKey = (f: File | null) => (f ? `${f.name}:${f.size}:${f.lastModified}` : null);
   let saving = $state(false);
   let saveError = $state(false);
-  let isPublic = $state(!!startSet.isPublic);
-  let history = $state(startSet.history !== undefined ? !!startSet.history : true);
-  let disappearOn = $state(!!startSet.disappearOn);
-  let after = $state(startSet.after || '12 hours');
-  let gates = $state<AccessGatesState | null>(start.gates || null);
-  let rulesOn = $state(startRules.enabled !== undefined ? !!startRules.enabled : !!(startRules.text || '').trim());
-  let rulesText = $state(startRules.text || '');
-  let perms = $state<Perms>({
-    general: { ...base.general, ...(startPerms?.general ?? {}) },
-    messages: { ...base.messages, ...(startPerms?.messages ?? {}) },
-    threads: { ...base.threads, ...(startPerms?.threads ?? {}) },
-  });
-  let threadsOverride = $state(!!startPerms?.threads);
+  let isPublic = $state(false);
+  let history = $state(false);
+  let disappearOn = $state(false);
+  let after = $state('12 hours');
+  let gates = $state<AccessGatesState | null>(null);
+  let rulesOn = $state(false);
+  let rulesText = $state('');
+  let savedRulesText = '';
+  let rulesNewVersion = $state(false);
+  let perms = $state<Perms>(defaultPerms(false));
+  let threadsOverride = $state(false);
 
-  const snapshot = () => ({ name, about, color, coverKey, coverUrl, avatar, avatarFile: fileKey(avatarFile), coverFile: fileKey(coverFile), isPublic, history, disappearOn, after, gates, rulesOn, rulesText, perms, threadsOverride });
+  function seed(v: Partial<GroupSettings>) {
+    const info = v.info ?? ({} as Partial<GroupSettings['info']>);
+    const set = v.settings ?? ({} as Partial<GroupSettings['settings']>);
+    const rules = v.rules ?? ({} as Partial<GroupSettings['rules']>);
+    const p = v.permissions ?? null;
+    name = info.name || '';
+    about = info.about || '';
+    color = info.color || 'teal';
+    coverKey = info.coverKey || 'plum';
+    coverUrl = info.coverUrl || null;
+    avatar = info.avatar || '';
+    setAvatarFile(null);
+    setCoverFile(null);
+    isPublic = !!set.isPublic;
+    // matches CreateGroupDialog: history is hidden unless the host says otherwise
+    history = !!set.history;
+    disappearOn = !!set.disappearOn;
+    after = set.after || '12 hours';
+    gates = v.gates || null;
+    rulesOn = rules.enabled !== undefined ? !!rules.enabled : !!(rules.text || '').trim();
+    rulesText = rules.text || '';
+    savedRulesText = rulesText;
+    rulesNewVersion = false;
+    perms = {
+      general: { ...base.general, ...(p?.general ?? {}) },
+      messages: { ...base.messages, ...(p?.messages ?? {}) },
+      threads: { ...base.threads, ...(p?.threads ?? {}) },
+    };
+    threadsOverride = !!p?.threads;
+  }
+
+  const snapshot = () => ({ name, about, color, coverKey, coverUrl, avatar, avatarFile: fileKey(avatarFile), coverFile: fileKey(coverFile), isPublic, history, disappearOn, after, gates, rulesOn, rulesText, rulesNewVersion, perms, threadsOverride });
+  untrack(() => seed(value ?? {}));
   let initial = $state(JSON.stringify(untrack(snapshot)));
+  const savedName = $derived((JSON.parse(initial) as { name: string }).name);
+
+  // a new `value` re-seeds a clean form; an edited draft is kept (its Save is a deliberate overwrite)
+  let seededFrom = untrack(() => value);
+  $effect.pre(() => {
+    const v = value;
+    untrack(() => {
+      if (v === seededFrom) return;
+      seededFrom = v;
+      if (dirty || saving) return;
+      seed(v ?? {});
+      initial = JSON.stringify(snapshot());
+      nameState = null;
+    });
+  });
+
+  // name availability (only once the name differs from the saved one)
+  let nameState = $state<{ name: string; result: NameCheck | 'pending' } | null>(null);
+  let nameTimer: ReturnType<typeof setTimeout> | undefined;
+  function checkNameSoon(value: string) {
+    clearTimeout(nameTimer);
+    nameState = null;
+    const asked = value.trim();
+    if (!checkName || !asked || asked === savedName.trim()) return;
+    nameState = { name: asked, result: 'pending' };
+    nameTimer = setTimeout(async () => {
+      let result: NameCheck | null;
+      try {
+        result = await checkName(asked);
+      } catch {
+        result = null; // can't tell; the host still validates on save
+      }
+      if (name.trim() === asked) nameState = result ? { name: asked, result } : null;
+    }, 400);
+  }
+  const nameResult = $derived(nameState?.name === name.trim() ? nameState.result : null);
+  const nameTaken = $derived(nameResult === 'taken' || nameResult === 'invalid');
 
   // --- view state
   const startTab = untrack(() => TAB_KEYS.indexOf(initialTab));
@@ -227,6 +318,25 @@
   let submitted = $state(false);
   let aboutMuted = $state<boolean | null>(null);
   let aboutFav = $state<boolean | null>(null);
+  // a new value from the host replaces the local override
+  $effect.pre(() => {
+    void isMuted;
+    untrack(() => (aboutMuted = null));
+  });
+  $effect.pre(() => {
+    void isFavourite;
+    untrack(() => (aboutFav = null));
+  });
+  async function toggleAbout(kind: 'mute' | 'fav') {
+    const was = kind === 'mute' ? muted : favourite;
+    const set = (v: boolean | null) => (kind === 'mute' ? (aboutMuted = v) : (aboutFav = v));
+    set(!was);
+    try {
+      await (kind === 'mute' ? onMuteChange?.(was ? null : 'forever') : onFavouriteChange?.(!was));
+    } catch {
+      set(was);
+    }
+  }
 
   let avatarInput = $state<HTMLInputElement>();
   let coverInput = $state<HTMLInputElement>();
@@ -235,7 +345,7 @@
   const nameOk = $derived(name.trim().length > 0);
   const rulesBad = $derived(rulesOn && !rulesText.trim());
   const dirty = $derived(JSON.stringify(snapshot()) !== initial);
-  const viewOnly = $derived(embedded && readOnlyProp);
+  const viewOnly = $derived(readOnlyProp);
   // embedded: the host's nav picks the section, so the tab strip is hidden
   const tabIdx = $derived(embedded ? Math.max(0, TAB_KEYS.indexOf(section)) : tab);
   const isAbout = $derived(tabIdx === 0 && viewOnly);
@@ -245,7 +355,11 @@
 
   const gateCount = $derived(gates && Array.isArray(gates.rules) ? gates.rules.length : 0);
   const ruleLines = $derived(rulesOn ? rulesText.split('\n').map((l) => l.replace(/^[•\-\s]+/, '').trim()).filter(Boolean).length : 0);
-  const generalChanged = $derived(GENERAL.filter((p) => perms.general[p.key] !== p.def).length);
+  const generalList = $derived(GENERAL.filter((p) => isCommunity || !p.only));
+  const permGroups = $derived([...new Set(generalList.map((p) => p.group))]);
+  const generalChanged = $derived(generalList.filter((p) => perms.general[p.key] !== p.def).length);
+  // the text changed from the saved rules: offer making members accept them again
+  const rulesChanged = $derived(rulesOn && rulesText.trim() !== savedRulesText.trim());
   const msgExceptions = $derived(CONTENT.filter((c) => perms.messages[c.key] !== INHERIT).length);
   const thrExceptions = $derived(CONTENT.filter((c) => perms.threads[c.key] !== INHERIT).length);
   const permsChanged = $derived(
@@ -281,6 +395,7 @@
   onDestroy(() => {
     if (avatarPreview) URL.revokeObjectURL(avatarPreview);
     if (coverPreview) URL.revokeObjectURL(coverPreview);
+    clearTimeout(nameTimer);
   });
 
   function openPermMenu(target: HTMLElement, scopeKey: Scope, key: string, allowInherit: boolean) {
@@ -302,9 +417,16 @@
     permMenu = null;
   }
 
+  // a pending save can't be dismissed; its result decides what happens next
+  function dismiss(then?: () => void) {
+    if (saving) return;
+    then?.();
+  }
+
   function discard() {
     const s = JSON.parse(initial);
-    ({ name, about, color, coverKey, coverUrl, avatar, isPublic, history, disappearOn, after, gates, rulesOn, rulesText, perms, threadsOverride } = s);
+    ({ name, about, color, coverKey, coverUrl, avatar, isPublic, history, disappearOn, after, gates, rulesOn, rulesText, rulesNewVersion, perms, threadsOverride } = s);
+    nameState = null;
     // the baseline never holds a picked file once saved, except the one just saved (kept as the preview)
     if (s.avatarFile !== fileKey(avatarFile)) setAvatarFile(null);
     if (s.coverFile !== fileKey(coverFile)) setCoverFile(null);
@@ -314,7 +436,11 @@
   }
 
   async function save() {
-    if (!dirty || saving) return;
+    if (!dirty || saving || viewOnly) return;
+    if (nameTaken || nameResult === 'pending') {
+      tab = 0;
+      return;
+    }
     if (!nameOk) {
       submitted = true;
       tab = 0;
@@ -328,9 +454,9 @@
     const saved = snapshot();
     const all: GroupSettings = {
       info: { name: name.trim(), about, color, coverKey, coverUrl: coverFile ? null : coverUrl, avatar: avatarFile ? '' : avatar, avatarFile, coverFile },
-      settings: { isPublic, history, disappearOn, after },
+      settings: { isPublic, history, disappearOn, after, afterMs: disappearOn ? durationMs(after) : null },
       gates,
-      rules: { enabled: rulesOn, text: rulesOn ? rulesText.trim() : '' },
+      rules: { enabled: rulesOn, text: rulesOn ? rulesText.trim() : '', newVersion: rulesChanged && rulesNewVersion },
       permissions: {
         general: { ...perms.general },
         messages: { ...perms.messages },
@@ -351,6 +477,8 @@
     // embedded stays open after saving, so the saved draft becomes the new baseline (only once the host confirms)
     if (embedded) {
       initial = JSON.stringify(saved);
+      savedRulesText = rulesOn ? rulesText : '';
+      rulesNewVersion = false;
       submitted = false;
     }
   }
@@ -396,8 +524,8 @@
   // permissions list for the current sub-tab
   const permRows = $derived.by(() => {
     if (permSub === 0)
-      return PERM_GROUPS.map((g) => {
-        const items = GENERAL.filter((x) => x.group === g);
+      return permGroups.map((g) => {
+        const items = generalList.filter((x) => x.group === g);
         return {
           label: t(PERM_GROUP_LABEL[g]).toUpperCase(),
           items: items.map((x, i) => {
@@ -437,9 +565,9 @@
   <span class="status">{t(on ? 'ui.groupSettingsDialog.on' : 'ui.groupSettingsDialog.off')}</span>
 {/snippet}
 
-<div class="root" class:embedded use:modal={embedded ? undefined : () => (onClose ?? onCancel)?.()}>
+<div class="root" class:embedded use:modal={embedded ? undefined : () => dismiss(onClose ?? onCancel)}>
   {#if !embedded}
-    <div class="veil" onclick={onCancel} aria-hidden="true"></div>
+    <div class="veil" onclick={() => dismiss(onCancel)} aria-hidden="true"></div>
   {/if}
 
   <div class="card">
@@ -456,7 +584,7 @@
             <span class="head-title">{t('ui.groupSettingsDialog.title')}</span>
             <span class="head-name">{value?.info?.name || t('ui.groupSettingsDialog.thisGroup')}</span>
           </div>
-          <span class="icon-button" onclick={onCancel} role="button" tabindex="0" aria-label={t('ui.common.close')}><span class="icon-15" style:mask={mask('close')}></span></span>
+          <span class="icon-button" onclick={() => dismiss(onCancel)} role="button" tabindex="0" aria-label={t('ui.common.close')}><span class="icon-15" style:mask={mask('close')}></span></span>
         </div>
         <div class="cell">
           <SegmentedTabs
@@ -569,6 +697,7 @@
                       value={name}
                       oninput={(e) => {
                         name = e.currentTarget.value;
+                        checkNameSoon(name);
                         touched = true;
                       }}
                       placeholder={t('ui.groupSettingsDialog.groupName')}
@@ -578,6 +707,8 @@
                   </div>
                   {#if !nameOk && (touched || submitted)}
                     <span class="name-error">{t('ui.groupSettingsDialog.nameError')}</span>
+                  {:else if nameTaken}
+                    <span class="name-error" role="alert">{t(nameResult === 'taken' ? 'ui.groupSettingsDialog.nameTaken' : 'ui.groupSettingsDialog.nameInvalid')}</span>
                   {/if}
                 </div>
 
@@ -653,23 +784,15 @@
                 <span
                   class="about-action"
                   class:active={muted}
-                  onclick={() => {
-                    const was = muted;
-                    aboutMuted = !was;
-                    onMuteChange?.(was ? null : 'forever');
-                  }}
+                  onclick={() => toggleAbout('mute')}
                   role="button"
                   tabindex="0"><span class="about-action-icon" style:mask={mask(muted ? 'bell-off' : 'bell')}></span>{t(muted ? 'ui.groupSettingsDialog.muted' : 'ui.groupSettingsDialog.mute')}</span
                 >
-                {#if onToggleFavourite}
+                {#if onFavouriteChange}
                   <span
                     class="about-action"
                     class:active={favourite}
-                    onclick={() => {
-                      const was = favourite;
-                      aboutFav = !was;
-                      onToggleFavourite?.();
-                    }}
+                    onclick={() => toggleAbout('fav')}
                     role="button"
                     tabindex="0"><span class="about-action-icon" style:mask={mask('heart')}></span>{t(favourite ? 'ui.groupSettingsDialog.favourited' : 'ui.groupSettingsDialog.favourite')}</span
                   >
@@ -704,7 +827,7 @@
         {#if tabIdx === 1}
           <div class="gates-page">
             <div class="column cell">
-              <AccessGates readOnly={viewOnly} {isDiamond} value={gates} onChange={(g) => (gates = g)} />
+              <AccessGates tokens={gateTokens} nervousSystems={gateSystems} readOnly={viewOnly} {isDiamond} value={gates} onChange={(g) => (gates = g)} />
             </div>
           </div>
         {/if}
@@ -772,6 +895,12 @@
                       errorText={t('ui.groupSettingsDialog.rulesError')}
                     />
                   </div>
+                  {#if rulesChanged && savedRulesText.trim() && !viewOnly}
+                    <!-- a real change (not a typo fix) can ask everyone to accept the rules again -->
+                    <div class="cell">
+                      <Toggle label="ui.groupSettingsDialog.rulesNewVersion" help="ui.groupSettingsDialog.rulesNewVersionHint" on={rulesNewVersion} onChange={(on) => (rulesNewVersion = on)} />
+                    </div>
+                  {/if}
                 </div>
               {/if}
             </div>
@@ -805,7 +934,7 @@
                   <span
                     class="text-action"
                     onclick={() => {
-                      perms = defaultPerms();
+                      perms = defaultPerms(isCommunity);
                       threadsOverride = false;
                       permMenu = null;
                     }}
@@ -867,7 +996,7 @@
     {#if !viewOnly}
       <div class="footer">
         {#if !embedded || dirty}
-          <span class="cancel" onclick={() => (embedded ? discard() : onCancel?.())} role="button" tabindex="0">{t(embedded ? 'ui.groupSettingsDialog.discardChanges' : 'ui.common.cancel')}</span>
+          <span class="cancel" onclick={() => (embedded ? !saving && discard() : dismiss(onCancel))} role="button" tabindex="0" aria-disabled={saving}>{t(embedded ? 'ui.groupSettingsDialog.discardChanges' : 'ui.common.cancel')}</span>
         {/if}
         <span class="grow"></span>
         {#if saveError}

@@ -1,22 +1,27 @@
 <!-- The Daily puzzle: Bridges (hashi). Tutorial (a small board + four steps) → play (today's board, timer, hints,
      undo / reset) → solved (time, hints, streak, a one-time "remind me each day?" ask, share).
-     Progress is reported through onProgress (on every move and on close) and restored from `saved`. -->
+     Progress is reported through onProgress (on every move and on close) and restored from `saved`.
+     Today's board comes from the host (`puzzle`, islands only: the solution never reaches the client). The host checks
+     the result (onSolved) and supplies hints (onHint, charged there); both wait on its promise. -->
 <script lang="ts" module>
-  type Puzzle = { grid: number; isl: [number, number, number][]; sol: [number, number, number][] };
+  type Puzzle = { grid: number; isl: [number, number, number][]; sol?: [number, number, number][] };
   export type Bridges = Record<string, number>;
+  /** Today's board. Islands are [x, y, bridges needed]. */
+  export interface DailyPuzzle {
+    id: string;
+    /** Shown as "The Daily #number". */
+    number: number;
+    grid: number;
+    islands: [number, number, number][];
+    /** Resource key (or literal text); defaults to "Easy". */
+    difficulty?: string;
+  }
 
-  // islands [x, y, n]; sol lists [i, j, count] — a valid solution used for hints
-  const PUZZLE: Puzzle = {
-    grid: 7,
-    isl: [[0, 0, 3], [3, 0, 3], [6, 0, 3], [0, 2, 4], [2, 2, 4], [5, 2, 1], [2, 4, 3], [4, 4, 4], [6, 4, 4], [0, 6, 3], [4, 6, 4], [6, 6, 2]],
-    sol: [[0, 1, 2], [1, 2, 1], [0, 3, 1], [2, 8, 2], [3, 4, 2], [4, 5, 1], [4, 6, 1], [6, 7, 2], [7, 8, 1], [7, 10, 1], [3, 9, 1], [9, 10, 2], [10, 11, 1], [8, 11, 1]],
-  };
+  // the tutorial board is fixed and ships with its solution; today's puzzle never does
   const TUT: Puzzle = { grid: 6, isl: [[1, 1, 3], [4, 1, 3], [1, 4, 2], [4, 4, 2]], sol: [[0, 1, 2], [0, 2, 1], [1, 3, 1], [2, 3, 1]] };
   // tutorial steps and rules are resource keys, translated at render
   const STEPS = ['target', 'connect', 'straight', 'linkAll'].map((k) => ({ t: `ui.puzzleDialog.tutorial.${k}.title`, b: `ui.puzzleDialog.tutorial.${k}.body` }));
   const RULES = ['count', 'connect', 'straight', 'connected'].map((k) => `ui.puzzleDialog.rules.${k}`);
-  const HINT_COST = 100;
-  const HINTS = 3;
 
   const pairKey = (i: number, j: number) => (i < j ? `${i}-${j}` : `${j}-${i}`);
   const ends = (k: string) => k.split('-').map(Number) as [number, number];
@@ -84,7 +89,6 @@
     return seen.size === isl.length;
   }
 
-  const NB = neighbours(PUZZLE.isl);
   const TNB = neighbours(TUT.isl);
 </script>
 
@@ -109,20 +113,28 @@
     asked?: boolean;
     /** Days in a row solved before today. */
     puzzleStreak: number;
-    /** CHIT available for hints; unlimited when absent. */
+    /** Today's board, from the host. */
+    puzzle: DailyPuzzle;
+    /** CHIT available for hints. */
     balance?: number;
+    /** CHIT per hint and how many a day; hints are hidden when hintsAllowed is 0 (the default). */
+    hintCost?: number;
+    hintsAllowed?: number;
     /** Time until the next puzzle. */
     countdown?: string;
     saved?: Saved | null;
     /** Solved view: the recorded time / hints. */
     solvedTime?: number | null;
     solvedHints?: number | null;
-    onProgress?: (p: Saved & { done: number; total: number }) => void;
-    onSolved?: (r: { elapsed: number; hints: number }) => void;
-    onHint?: (cost: number) => void;
-    onRemind?: (on: boolean) => void;
+    onProgress?: (p: Saved & { puzzleId: string; done: number; total: number }) => void;
+    /** The board is complete: the host verifies it (and records the time). The solved view shows once this resolves;
+     *  a rejection keeps the board in play with an error. */
+    onSolved?: (r: { puzzleId: string; bridges: Bridges; elapsed: number; hints: number }) => Promise<unknown> | void;
+    /** Charge for a hint and return one correct bridge [island i, island j, count]. Nothing changes if it rejects. */
+    onHint?: (r: { puzzleId: string; bridges: Bridges; cost: number }) => Promise<[number, number, number]>;
+    onRemind?: (on: boolean) => Promise<unknown> | void;
     onTutorialDone?: () => void;
-    onShare?: () => void;
+    onShare?: (r: { puzzleId: string; number: number; time: number; hints: number; streak: number }) => Promise<unknown> | void;
     onClose?: () => void;
   }
 
@@ -132,7 +144,10 @@
     remind = false,
     asked = false,
     puzzleStreak,
-    balance = Infinity,
+    puzzle,
+    balance = 0,
+    hintCost = 0,
+    hintsAllowed = 0,
     countdown = '',
     saved = null,
     solvedTime = null,
@@ -160,6 +175,10 @@
   let terr = $state('');
   let closing = $state(false);
   let answered = $state<boolean | null>(null);
+  let hinting = $state(false);
+  let checking = $state(false);
+  const PUZZLE = $derived<Puzzle>({ grid: puzzle.grid, isl: puzzle.islands });
+  const NB = $derived(neighbours(PUZZLE.isl));
   let innerWidth = $state(typeof window !== 'undefined' ? window.innerWidth : 1200);
   const wide = $derived(innerWidth >= 900);
 
@@ -169,7 +188,7 @@
   let layer: HTMLDivElement;
 
   function save() {
-    onProgress?.({ br, elapsed, hints, done: counts(PUZZLE.isl, br).filter((v, i) => v === PUZZLE.isl[i][2]).length, total: PUZZLE.isl.length });
+    onProgress?.({ puzzleId: puzzle.id, br, elapsed, hints, done: counts(PUZZLE.isl, br).filter((v, i) => v === PUZZLE.isl[i][2]).length, total: PUZZLE.isl.length });
   }
 
   onMount(() => {
@@ -224,11 +243,21 @@
     hist = [...hist, br].slice(-50);
     br = next;
     save();
-    if (isSolved(PUZZLE.isl, next))
-      solveTimer = setTimeout(() => {
-        view = 'solved';
-        onSolved?.({ elapsed, hints });
-      }, 550);
+    if (isSolved(PUZZLE.isl, next)) solveTimer = setTimeout(() => submit(next), 550);
+  }
+
+  // the host has the final say on a solve
+  async function submit(bridges: Bridges) {
+    if (checking) return;
+    checking = true;
+    try {
+      await onSolved?.({ puzzleId: puzzle.id, bridges, elapsed, hints });
+      view = 'solved';
+    } catch {
+      flash(false, 'ui.puzzleDialog.solveFailed');
+    } finally {
+      checking = false;
+    }
   }
 
   function press(tut: boolean, i: number) {
@@ -255,20 +284,46 @@
     commit(tut, updated);
   }
 
-  const canHint = $derived(hints < HINTS && balance >= HINT_COST);
+  const canHint = $derived(!!onHint && hints < hintsAllowed && balance >= hintCost && !hinting);
 
-  function hint() {
-    if (!canHint) return;
-    const target = PUZZLE.sol.find(([i, j, n]) => (br[pairKey(i, j)] || 0) !== n);
-    if (!target) return;
+  // the host charges for the hint and returns one bridge of the solution; it's applied only once that resolves
+  async function hint() {
+    if (!canHint || !onHint) return;
+    hinting = true;
+    let target: [number, number, number];
+    try {
+      target = await onHint({ puzzleId: puzzle.id, bridges: br, cost: hintCost });
+    } catch {
+      flash(false, 'ui.puzzleDialog.hintFailed');
+      return;
+    } finally {
+      hinting = false;
+    }
     const [i, j, n] = target, next = { ...br };
-    // drop wrong bridges that would block the hinted one
-    for (const k of Object.keys(next)) if (crossesAny(PUZZLE.isl, { [k]: next[k] }, i, j) && !PUZZLE.sol.some(([a, b]) => pairKey(a, b) === k)) delete next[k];
+    // a correct bridge can't cross another correct one, so whatever blocks it is wrong
+    for (const k of Object.keys(next)) if (crossesAny(PUZZLE.isl, { [k]: next[k] }, i, j)) delete next[k];
     next[pairKey(i, j)] = n;
     hints++;
-    onHint?.(HINT_COST);
     sel = null;
     commit(false, next);
+  }
+
+  async function remindAnswer(on: boolean) {
+    try {
+      await onRemind?.(on);
+      answered = on;
+    } catch {
+      // the ask stays so the user can try again
+    }
+  }
+
+  async function share() {
+    try {
+      await onShare?.({ puzzleId: puzzle.id, number: puzzle.number, time: solved && solvedTime != null ? solvedTime : elapsed, hints: solved && solvedHints != null ? solvedHints : hints, streak: solved ? puzzleStreak : streak });
+    } catch {
+      return; // stays open so sharing can be retried
+    }
+    close();
   }
 
   function undo() {
@@ -371,8 +426,8 @@
     <div class="head">
       <span class="badge"><span class="badge-icon"></span></span>
       <span class="heading"
-        ><span class="title">{view === 'tutorial' ? t('ui.puzzleDialog.howTitle') : t('ui.puzzleDialog.dailyTitle', { number: '20734' })}</span><span class="subtitle"
-          >{view === 'tutorial' ? t('ui.puzzleDialog.tutorialStep', { step: step + 1, total: STEPS.length }) : t('ui.puzzleDialog.gameMeta')}</span
+        ><span class="title">{view === 'tutorial' ? t('ui.puzzleDialog.howTitle') : t('ui.puzzleDialog.dailyTitle', { number: puzzle.number })}</span><span class="subtitle"
+          >{view === 'tutorial' ? t('ui.puzzleDialog.tutorialStep', { step: step + 1, total: STEPS.length }) : t('ui.puzzleDialog.gameMeta', { difficulty: t(puzzle.difficulty ?? 'ui.puzzleDialog.difficulty.easy') })}</span
         ></span
       >
       {#if view === 'tutorial'}
@@ -444,9 +499,11 @@
                 ><span class="action-icon" style:mask="var(--icon-refresh) center/contain no-repeat"></span>{t('ui.puzzleDialog.reset')}</span
               >
             </div>
-            <span class="hint" style:opacity={canHint ? 1 : 0.45} onclick={hint} role="button" tabindex="0" aria-disabled={!canHint}
-              ><span class="hint-icon"></span>{t('ui.puzzleDialog.useHint')}<span class="hint-meta">{hints >= HINTS ? t('ui.puzzleDialog.noneLeft') : t('ui.puzzleDialog.hintCost', { cost: HINT_COST, left: HINTS - hints })}</span></span
-            >
+            {#if hintsAllowed > 0 && onHint}
+              <span class="hint" style:opacity={canHint ? 1 : 0.45} onclick={hint} role="button" tabindex="0" aria-disabled={!canHint}
+                ><span class="hint-icon"></span>{t('ui.puzzleDialog.useHint')}<span class="hint-meta">{hints >= hintsAllowed ? t('ui.puzzleDialog.noneLeft') : t('ui.puzzleDialog.hintCost', { cost: hintCost, left: hintsAllowed - hints })}</span></span
+              >
+            {/if}
           </div>
         </div>
       </div>
@@ -455,7 +512,7 @@
     {#if view === 'solved'}
       <div class="solved-view">
         <span class="trophy"><span class="trophy-icon"></span></span>
-        <span class="solved-heading"><span class="solved-title">{t('ui.puzzleDialog.solvedIn', { time: resultTime })}</span><span class="solved-sub">{t('ui.puzzleDialog.dailyTitle', { number: '20734' })} · {t('ui.puzzleDialog.gameMeta')}</span></span>
+        <span class="solved-heading"><span class="solved-title">{t('ui.puzzleDialog.solvedIn', { time: resultTime })}</span><span class="solved-sub">{t('ui.puzzleDialog.dailyTitle', { number: puzzle.number })} · {t('ui.puzzleDialog.gameMeta', { difficulty: t(puzzle.difficulty ?? 'ui.puzzleDialog.difficulty.easy') })}</span></span>
         <div class="results">
           <span class="result"><span class="result-value">{resultTime}</span><span class="result-label">{t('ui.puzzleDialog.time')}</span></span>
           <span class="result"><span class="result-value">{solved && solvedHints != null ? solvedHints : hints}</span><span class="result-label">{t('ui.puzzleDialog.hints')}</span></span>
@@ -468,19 +525,13 @@
             <span class="ask-buttons">
               <span
                 class="ask-no"
-                onclick={() => {
-                  answered = false;
-                  onRemind?.(false);
-                }}
+                onclick={() => remindAnswer(false)}
                 role="button"
                 tabindex="0">{t('ui.puzzleDialog.notNow')}</span
               >
               <span
                 class="ask-yes"
-                onclick={() => {
-                  answered = true;
-                  onRemind?.(true);
-                }}
+                onclick={() => remindAnswer(true)}
                 role="button"
                 tabindex="0">{t('ui.puzzleDialog.yes')}</span
               >
@@ -495,10 +546,7 @@
         <div class="finish">
           <span
             class="finish-button"
-            onclick={() => {
-              onShare?.();
-              close();
-            }}
+            onclick={share}
             role="button"
             tabindex="0"><span class="share-icon"></span>{t('ui.puzzleDialog.share')}</span
           >

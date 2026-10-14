@@ -1,7 +1,8 @@
 <!-- App navigation rail: destinations (chats, notifications, wallet …), pinned communities, create / explore,
      the CHIT streak button, profile and a collapse toggle. Collapsed it is an icon column; expanded it shows labels.
      When the host gives the rail a fixed slot ([data-rail-slot] narrower than 200px) the expanded rail floats over the
-     content, so it closes again on an outside press or a pick. Guests get Home and Sign in instead of their own items. -->
+     content, so it closes again on an outside press or a pick. Guests get Home and Sign in instead of their own items.
+     Pins (communities) are identified by `id`; onSelectPin reports it. Pin and profile images come from avatarUrl. -->
 <script lang="ts">
   import { onMount, tick } from 'svelte';
   import { useT } from '../../lib/i18n';
@@ -29,6 +30,10 @@
   }
 
   interface Pin {
+    /** The community's id, reported by onSelectPin. */
+    id: string;
+    /** Community avatar image; the colour gradient shows without it. */
+    avatarUrl?: string;
     color: keyof typeof GRADIENTS;
     name?: string;
     /** Accessible name. Resource key (or literal text); defaults to the name. */
@@ -47,8 +52,12 @@
     activePin?: number | null;
     profileLabel: string;
     profileHandle: string;
-    onSelect?: (i: number) => void;
-    onSelectPin?: (i: number) => void;
+    /** Your avatar image. */
+    profileAvatarUrl?: string;
+    /** Your own presence dot. */
+    profileOnline?: boolean;
+    onSelect?: (i: number, item: Item) => void;
+    onSelectPin?: (id: string, pin: Pin) => void;
     exploreActive?: boolean;
     onExplore?: () => void;
     guest?: boolean;
@@ -74,6 +83,8 @@
     activePin,
     profileLabel,
     profileHandle,
+    profileAvatarUrl,
+    profileOnline = true,
     onSelect,
     onSelectPin,
     exploreActive = false,
@@ -161,7 +172,7 @@
           picked();
           localActive = i;
           localPin = null;
-          onSelect?.(i);
+          onSelect?.(i, item);
         }}
         role="button"
         tabindex="0"
@@ -188,7 +199,7 @@
     <div class="heading-line"></div>
   </div>
   <div class="pins">
-    {#each pins as pin, i}
+    {#each pins as pin, i (pin.id)}
       {@const selected = i === pinIndex}
       <div
         class="row"
@@ -197,7 +208,7 @@
         onclick={() => {
           picked();
           localPin = i;
-          onSelectPin?.(i);
+          onSelectPin?.(pin.id, pin);
         }}
         role="button"
         tabindex="0"
@@ -205,7 +216,12 @@
         aria-current={selected ? 'page' : undefined}
       >
         <span class="slot">
-          <span class="pin" class:selected class:preview={selected && pin.preview} style:background={GRADIENTS[pin.color] ?? GRADIENTS.blue}>
+          <span
+            class="pin"
+            class:selected
+            class:preview={selected && pin.preview}
+            style:background={pin.avatarUrl ? `center/cover no-repeat url(${JSON.stringify(pin.avatarUrl)})` : (GRADIENTS[pin.color] ?? GRADIENTS.blue)}
+          >
             {#if selected && pin.preview}
               <span class="pin-veil"></span>
               <span class="pin-eye" title={t('ui.navRail.previewing')}><span class="pin-eye-icon"></span></span>
@@ -261,7 +277,9 @@
   {:else}
     <div class="row profile" onclick={() => onProfile?.()} role="button" tabindex="0">
       <span class="slot tall">
-        <span class="me"><span class="me-online"></span></span>
+        <span class="me" style:background={profileAvatarUrl ? `center/cover no-repeat url(${JSON.stringify(profileAvatarUrl)})` : undefined}
+          >{#if profileOnline}<span class="me-online"></span>{/if}</span
+        >
       </span>
       <div class="profile-text">
         <span class="profile-name">{profileLabel}</span>

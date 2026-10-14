@@ -1,10 +1,13 @@
 <!-- Swap offer builder (composer + → Swap crypto). You offer / You want cards (wallet Swap parts) with flip,
      price chips (Market / +2 / +5 / +10% fill "You want"), expiry pills, escrow line by the button. No review step.
      "Attach offer" → onAttach(offer); host shows the composer chip and posts a SwapOffer on send. `initial` edits a previous value.
+     Tokens (balances, fees, minimums, USD prices for the market rate) come from the host via `tokens`. The offer carries
+     numeric amounts and the expiry in ms alongside the display strings.
      Esc closes the token picker, then the dialog; Cmd/Ctrl+Enter attaches. -->
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, untrack } from 'svelte';
   import type { SwapOffer } from '../../lib/types';
+  import type { CryptoToken } from './SendCryptoDialog.svelte';
   import AmountCard from '../../lib/components/AmountCard.svelte';
   import Button from '../../lib/components/Button.svelte';
   import IconButton from '../../lib/components/IconButton.svelte';
@@ -13,23 +16,15 @@
   import { cleanAmount, parseAmount } from '../../lib/amount';
   const i18n = getI18n(); // number formatting follows the host locale
 
-  // sample balances and prices until the wallet is wired
-  const TOK = {
-    CHAT: { symbol: 'CHAT', name: 'OpenChat', mark: 'C', gradient: 'linear-gradient(140deg,#ff5f9e,#ffb03d)', bal: 132.332136, fee: 0.001, min: 0.01, usd: 0.053, dp: 4 },
-    ICP: { symbol: 'ICP', name: 'Internet Computer', mark: '∞', gradient: 'linear-gradient(140deg,#ff5f9e,#6a2bff)', bal: 4.2153, fee: 0.0001, min: 0.001, usd: 2.84, dp: 5 },
-    ckBTC: { symbol: 'ckBTC', name: 'Chain-key Bitcoin', mark: '₿', gradient: 'linear-gradient(140deg,#ffb03d,#f7931a)', bal: 0.00213, fee: 0.0000001, min: 0.000001, usd: 62000, dp: 8 },
-    ckUSDC: { symbol: 'ckUSDC', name: 'Chain-key USDC', mark: '$', gradient: 'linear-gradient(140deg,#2775ca,#1FB6FF)', bal: 48.5, fee: 0.01, min: 0.1, usd: 1, dp: 2 },
-    STK: { symbol: 'STK', name: 'Stake', mark: 'S', gradient: 'linear-gradient(140deg,#1b2a6b,#4fc3ff)', bal: 0, fee: 0.0001, min: 1, usd: 0.0021, dp: 2 },
-  };
-  type Sym = keyof typeof TOK;
   // expiry options: the duration id (shown via durationText) and the short form reported as expiresIn
-  const DURS: { id: string; count: number; unit: 'h' | 'd'; short: string }[] = [
-    { id: '1 hour', count: 1, unit: 'h', short: '1h' },
-    { id: '6 hours', count: 6, unit: 'h', short: '6h' },
-    { id: '1 day', count: 1, unit: 'd', short: '1d' },
-    { id: '7 days', count: 7, unit: 'd', short: '7d' },
-    { id: '30 days', count: 30, unit: 'd', short: '30d' },
-    { id: '90 days', count: 90, unit: 'd', short: '90d' },
+  const H = 3600e3, D = 24 * H;
+  const DURS: { id: string; count: number; unit: 'h' | 'd'; short: string; ms: number }[] = [
+    { id: '1 hour', count: 1, unit: 'h', short: '1h', ms: H },
+    { id: '6 hours', count: 6, unit: 'h', short: '6h', ms: 6 * H },
+    { id: '1 day', count: 1, unit: 'd', short: '1d', ms: D },
+    { id: '7 days', count: 7, unit: 'd', short: '7d', ms: 7 * D },
+    { id: '30 days', count: 30, unit: 'd', short: '30d', ms: 30 * D },
+    { id: '90 days', count: 90, unit: 'd', short: '90d', ms: 90 * D },
   ];
   // price chip labels: resource keys or literal text
   const PRICES: [string, number][] = [
@@ -41,23 +36,26 @@
   const fmt = (n: number, dp: number) => Number(n.toFixed(dp)).toLocaleString(i18n.locale ?? 'en', { maximumFractionDigits: dp });
   const usdFmt = (v: number) => (!v ? '$0.00' : v < 0.01 ? `$${v.toPrecision(2)}` : `$${v.toLocaleString(i18n.locale ?? 'en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
   const q4 = (n: number) => String(Number(n.toPrecision(4)));
-  const sym = (s: string | undefined, fallback: Sym): Sym => (s && s in TOK ? (s as Sym) : fallback);
 
   interface Props {
+    /** Tokens to offer or ask for: balances, fees, minimums and USD prices (for the market rate). */
+    tokens: CryptoToken[];
     z?: number;
     initial?: SwapOffer | null;
     onAttach?: (offer: SwapOffer) => void;
     onClose?: () => void;
   }
 
-  let { z = 80, initial = null, onAttach, onClose }: Props = $props();
+  let { tokens, z = 80, initial = null, onAttach, onClose }: Props = $props();
   const t = useT();
   const durLabel = (i: number) => durationText(t, DURS[i].id);
   const durShort = (i: number) => t('ui.swapOfferDialog.durationShort', { count: DURS[i].count, unit: DURS[i].unit });
 
   const draft = initial?.draft;
-  let give = $state<Sym>(sym(draft?.give, 'CHAT'));
-  let get = $state<Sym>(sym(draft?.get, 'ICP'));
+  // a new offer starts from the first token you hold, asking for the next one
+  const firstHeld = untrack(() => tokens.find((x) => x.bal > 0) ?? tokens[0]);
+  let give = $state(draft?.give ?? firstHeld?.symbol ?? '');
+  let get = $state(draft?.get ?? untrack(() => tokens.find((x) => x.symbol !== give))?.symbol ?? '');
   let amt = $state(draft?.amt ?? '');
   let want = $state(draft?.want ?? '');
   let dur = $state(draft?.dur ?? 2);
@@ -71,14 +69,18 @@
     return () => clearTimeout(timer);
   });
 
-  const G = $derived(TOK[give]);
-  const R = $derived(TOK[get]);
+  const EMPTY: CryptoToken = { symbol: '', mark: '', gradient: 'var(--overlay-2)', bal: 0, fee: 0, min: 0, usd: 0, dp: 2 };
+  // a token the host no longer lists keeps its symbol but has no balance or price
+  const lookup = (s: string) => tokens.find((x) => x.symbol === s) ?? { ...EMPTY, symbol: s };
+  const G = $derived(lookup(give));
+  const R = $derived(lookup(get));
   const a = $derived(parseAmount(amt));
   const w = $derived(parseAmount(want));
   const fees = $derived(G.fee * 2);
   const lock = $derived(a + fees);
   const max = $derived(Math.max(0, G.bal - fees));
-  const market = $derived((a * G.usd) / R.usd);
+  // no market rate without both prices
+  const market = $derived(G.usd > 0 && R.usd > 0 ? (a * G.usd) / R.usd : 0);
   // why the offer can't be attached yet: a prompt (quiet) or a problem (warn)
   const problem = $derived<{ text: string; quiet: boolean } | null>(
     !a
@@ -93,14 +95,15 @@
   );
   const ok = $derived(!problem);
   const pct = $derived(market && w ? Math.round((w / market - 1) * 100) : 0);
+  const hasMarket = $derived(G.usd > 0 && R.usd > 0);
   const vs = $derived(
-    !a || !w ? '' : Math.abs(pct) < 1 ? t('ui.swapOfferDialog.atMarket') : t(pct > 0 ? 'ui.swapOfferDialog.aboveMarket' : 'ui.swapOfferDialog.belowMarket', { pct: Math.abs(pct) }),
+    !a || !w || !hasMarket ? '' : Math.abs(pct) < 1 ? t('ui.swapOfferDialog.atMarket') : t(pct > 0 ? 'ui.swapOfferDialog.aboveMarket' : 'ui.swapOfferDialog.belowMarket', { pct: Math.abs(pct) }),
   );
   const title = $derived(t(initial ? 'ui.swapOfferDialog.editTitle' : 'ui.swapOfferDialog.createTitle'));
 
   // amount edits keep the chosen price chip in sync
   function wantFor(v: number, premium: number | null) {
-    if (premium == null) return;
+    if (premium == null || !(G.usd > 0 && R.usd > 0)) return;
     want = v ? q4(((v * G.usd) / R.usd) * (1 + premium)) : '';
   }
 
@@ -116,7 +119,10 @@
         { symbol: G.symbol, mark: G.mark, gradient: G.gradient },
         { symbol: R.symbol, mark: R.mark, gradient: R.gradient },
       ],
+      giveAmount: a,
+      getAmount: w,
       expiresIn: DURS[dur].short,
+      expiresInMs: DURS[dur].ms,
       title: `${giveSide.amount} ${G.symbol} → ${getSide.amount} ${R.symbol}`,
       summary: t('ui.swapOfferDialog.summary', { expires: durShort(dur), amount: fmt(lock, G.dp), symbol: G.symbol }),
       hint: t('ui.swapOfferDialog.hint', { duration: durLabel(dur), amount: fmt(lock, G.dp), symbol: G.symbol }),
@@ -143,16 +149,16 @@
   }
 
   function picked(s: string) {
-    if (picker === 'give') give = s as Sym;
-    else get = s as Sym;
+    if (picker === 'give') give = s;
+    else get = s;
     picker = null;
     if (prem != null) want = '';
   }
 
   const pickerTokens = $derived(
-    Object.values(TOK).map((tok) => ({
+    tokens.map((tok) => ({
       symbol: tok.symbol,
-      name: tok.name,
+      name: tok.name ?? tok.symbol,
       mark: tok.mark,
       gradient: tok.gradient,
       held: fmt(tok.bal, tok.dp),
@@ -213,6 +219,7 @@
       </div>
       <div class="price">
         <div class="price-head"><label>{t('ui.swapOfferDialog.price')}</label><span class="vs" class:warn={pct <= -5}>{vs}</span></div>
+        {#if hasMarket}
         <div class="price-chips">
           {#each PRICES as [label, k]}
             <button
@@ -226,7 +233,9 @@
             >
           {/each}
         </div>
-        <span class="rate">{a && w ? `1 ${G.symbol} = ${q4(w / a)} ${R.symbol}` : t('ui.swapOfferDialog.marketRate', { from: G.symbol, rate: q4(G.usd / R.usd), to: R.symbol })}</span>
+        {/if}
+        <!-- without both USD prices there is no market rate to show, only the rate the offer itself sets -->
+        <span class="rate">{a && w ? `1 ${G.symbol} = ${q4(w / a)} ${R.symbol}` : hasMarket ? t('ui.swapOfferDialog.marketRate', { from: G.symbol, rate: q4(G.usd / R.usd), to: R.symbol }) : ''}</span>
       </div>
       <div class="expiry">
         <label>{t('ui.swapOfferDialog.expiresAfter')}</label>

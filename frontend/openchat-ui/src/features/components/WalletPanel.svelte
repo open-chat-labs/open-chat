@@ -30,8 +30,8 @@
   const OTHER = 'transparent';
   const UNDO_MS = 6000;
   const DOTS = '••••';
+  // display currencies; BTC / ETH / ICP are offered when the host's tokens price them (USD per unit)
   const CURRENCIES = ['USD', 'BTC', 'ETH', 'ICP'];
-  const RATES: Record<string, number> = { USD: 1, BTC: 103819.98, ETH: 2622.86, ICP: 5.481 };
   const PREFIX: Record<string, string> = { USD: '$', BTC: '₿', ETH: 'Ξ', ICP: '' };
 
   const num = (v: number, dp: number) => v.toLocaleString(i18n.locale ?? 'en', { minimumFractionDigits: dp, maximumFractionDigits: dp });
@@ -62,6 +62,8 @@
     /** Veiled balances when a host owns the veil. */
     balanceHidden?: boolean;
     onBalanceHiddenChange?: (hidden: boolean) => void;
+    /** Reload balances (one token, or all when no symbol). The spinner runs until it settles; Refresh is hidden without it. */
+    onRefresh?: (symbol?: string) => Promise<unknown> | void;
     /** "settings", "recipients", "send", "receive", "swap", or "send:ICP" etc. for a token's own menu. */
     onAction?: (kind: string) => void;
     onToken?: (symbol: string) => void;
@@ -77,6 +79,7 @@
     loading = false,
     settings = {},
     onSettingsChange,
+    onRefresh,
     hidden: hiddenProp,
     onHiddenChange,
     onRemoveToken,
@@ -105,7 +108,6 @@
   let undo = $state<{ symbol: string; hidden: string[] } | null>(null);
   let menu = $state<{ items: MenuItem[]; key: string | null; point: { x: number; y: number } | null; anchor: Rect | null; align: 'start' | 'end' } | null>(null);
 
-  let spinTimer: ReturnType<typeof setTimeout> | undefined;
   let undoTimer: ReturnType<typeof setTimeout> | undefined;
   let pressTimer: ReturnType<typeof setTimeout> | undefined;
   let pressStart: { x: number; y: number } | null = null;
@@ -120,7 +122,6 @@
     return () => document.removeEventListener('pointerdown', away, true);
   });
   onDestroy(() => {
-    clearTimeout(spinTimer);
     clearTimeout(undoTimer);
     clearTimeout(pressTimer);
   });
@@ -136,8 +137,34 @@
     t(sort === 'name' ? (dir === 'asc' ? 'ui.walletPanel.aToZ' : 'ui.walletPanel.zToA') : dir === 'asc' ? 'ui.walletPanel.smallestFirst' : 'ui.walletPanel.largestFirst'),
   );
 
+  // USD per unit of each display currency, from the tokens' own prices
+  const rates = $derived.by(() => {
+    const out: Record<string, number> = { USD: 1 };
+    for (const c of CURRENCIES.slice(1)) {
+      const p = tokens.find((tk) => tk.symbol === c)?.price;
+      if (p && p > 0) out[c] = p;
+    }
+    return out;
+  });
+  const currencies = $derived(CURRENCIES.filter((c) => rates[c]));
+
+  async function refresh(symbol?: string) {
+    if (!onRefresh || spinning) return;
+    spinning = true;
+    try {
+      await onRefresh(symbol);
+    } catch {
+      // the balances simply stay as they were; the host reports its own errors
+    } finally {
+      spinning = false;
+    }
+  }
+
   function money(v: number) {
-    const c = v / RATES[currency];
+    const rate = rates[currency];
+    // a currency the tokens can't price falls back to USD
+    if (!rate) return `$${num(v, 2)}`;
+    const c = v / rate;
     if (currency === 'USD') return `$${num(c, 2)}`;
     return PREFIX[currency] + num(c, c < 1 ? 4 : 2) + (currency === 'ICP' ? ' ICP' : '');
   }
@@ -243,7 +270,7 @@
       { label: t('ui.walletPanel.send', { symbol }), mask: mask('wallet-send'), onSelect: () => onAction?.(`send:${symbol}`) },
       { label: t('ui.walletPanel.receive', { symbol }), mask: mask('receive'), onSelect: () => onAction?.(`receive:${symbol}`) },
       { label: t('ui.walletPanel.swap', { symbol }), mask: mask('swap'), onSelect: () => onAction?.(`swap:${symbol}`) },
-      { label: t('ui.walletPanel.refresh'), mask: mask('refresh') },
+      ...(onRefresh ? [{ label: t('ui.walletPanel.refresh'), mask: mask('refresh'), onSelect: () => refresh(symbol) }] : []),
     ];
     if (manual) items.push({ label: t('ui.walletPanel.hide'), mask: mask('eye-off'), onSelect: () => removeToken(symbol) });
     return items;
@@ -251,7 +278,7 @@
 
   function openCurrency(e: Event) {
     openMenu(
-      CURRENCIES.map((c) => ({
+      currencies.map((c) => ({
         label: c,
         checkMask: c === currency ? mask('check') : undefined,
         onSelect: () => {
@@ -348,10 +375,7 @@
       {spinning}
       {allocation}
       onToggleVeil={() => (onBalanceHiddenChange ? onBalanceHiddenChange(!veiled) : (localVeil = !veiled))}
-      onRefresh={() => {
-        spinning = true;
-        spinTimer = setTimeout(() => (spinning = false), 720);
-      }}
+      onRefresh={onRefresh ? () => refresh() : undefined}
       onSend={() => onAction?.('send')}
       onReceive={() => onAction?.('receive')}
       onSwap={() => onAction?.('swap')}

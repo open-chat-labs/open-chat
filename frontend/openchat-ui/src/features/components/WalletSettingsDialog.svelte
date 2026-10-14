@@ -3,7 +3,10 @@
      Recipients (saved addresses; only reachable via `section`).
      The PIN itself goes to the host: setting it (choose + confirm) calls onSetPin, changing it asks for the current PIN
      first (onChangePin), and turning it off needs the current PIN too (onDisablePin). `pinOn` only changes once the host's
-     promise resolves; a rejection keeps the sheet open with an error. Without those callbacks the PIN can't be managed. -->
+     promise resolves; a rejection keeps the sheet open with an error. Without those callbacks the PIN can't be managed.
+     `value` stays the source of truth: edits made here show at once and are dropped when the host sends a new `value`.
+     Saved recipients go through onSaveRecipient / onRemoveRecipient when given (the host assigns ids; a rejection keeps
+     the sheet open, a failed removal comes back); otherwise they ride along in onChange. -->
 <script lang="ts" module>
   /** A saved send-to address; the network is read off the address itself. */
   export interface SavedRecipient {
@@ -27,7 +30,7 @@
 </script>
 
 <script lang="ts">
-  import { onDestroy, tick } from 'svelte';
+  import { onDestroy, tick, untrack } from 'svelte';
   import type { WalletToken } from '../../lib/types';
   import Toggle from '../../lib/components/Toggle.svelte';
   import { modal } from '../../lib/behaviours/modal';
@@ -70,10 +73,14 @@
     onChangePin?: (current: string, next: string) => Promise<unknown>;
     /** Turn the PIN off; reject if `current` is wrong. */
     onDisablePin?: (current: string) => Promise<unknown>;
+    /** Add (no id) or edit a saved recipient; resolve with the stored entry, with its id. Reject to keep the sheet open. */
+    onSaveRecipient?: (r: Omit<SavedRecipient, 'id'> & { id?: string }) => Promise<SavedRecipient>;
+    /** Remove a saved recipient. The row comes back if this rejects. */
+    onRemoveRecipient?: (id: string) => Promise<unknown>;
     onCancel?: () => void;
   }
 
-  let { tokens, value = null, section = 'tokens', onChange, onSetPin, onChangePin, onDisablePin, onCancel }: Props = $props();
+  let { tokens, value = null, section = 'tokens', onChange, onSetPin, onChangePin, onDisablePin, onSaveRecipient, onRemoveRecipient, onCancel }: Props = $props();
   const t = useT();
 
   // values in USD, matching the wallet panel's holdings
@@ -82,11 +89,17 @@
   let tabOverride = $state<Section | null>(null);
   let closing = $state(false);
   // the dialog keeps its own copy once anything changes
-  let local = $state<WalletSettings | null>(null);
+  // edits made here since the host last sent `value`; a new `value` from the host replaces them
+  let local = $state<Partial<WalletSettings>>({});
+  $effect.pre(() => {
+    void value;
+    untrack(() => (local = {}));
+  });
   let listOpen = $state(false);
   let query = $state('');
   let recipQuery = $state('');
-  let sheet = $state<{ editId: string | null; address: string; name: string; token: string | null } | null>(null);
+  let sheet = $state<{ editId: string | null; address: string; name: string; token: string | null; busy?: boolean; error?: boolean } | null>(null);
+  let recipError = $state(false);
   let confirmId = $state<string | null>(null);
   type PinFlow = {
     mode: 'set' | 'change' | 'disable';
@@ -102,18 +115,25 @@
   const PIN_STEPS: Record<PinFlow['mode'], PinFlow['step'][]> = { set: ['set', 'confirm'], change: ['current', 'set', 'confirm'], disable: ['current'] };
   let pinInput = $state<HTMLInputElement>();
   let timer: ReturnType<typeof setTimeout> | undefined;
-  onDestroy(() => clearTimeout(timer));
+  let notifyTimer: ReturnType<typeof setTimeout> | undefined;
+  onDestroy(() => {
+    clearTimeout(timer);
+    // a pending typed value still reaches the host
+    if (notifyTimer) {
+      clearTimeout(notifyTimer);
+      onChange?.(settings);
+    }
+  });
 
-  const settings = $derived<WalletSettings>(
-    local ?? {
-      pinOn: value?.pinOn ?? false,
-      autoConfig: value?.autoConfig ?? true,
-      minBalance: value?.minBalance ?? '',
-      tokens: value?.tokens ?? held.map((t) => t.symbol),
-      currency: value?.currency ?? 'USD',
-      recipients: value?.recipients ?? [],
-    },
-  );
+  const settings = $derived<WalletSettings>({
+    pinOn: value?.pinOn ?? false,
+    autoConfig: value?.autoConfig ?? true,
+    minBalance: value?.minBalance ?? '',
+    tokens: value?.tokens ?? held.map((t) => t.symbol),
+    currency: value?.currency ?? 'USD',
+    recipients: value?.recipients ?? [],
+    ...local,
+  });
   const tab = $derived(tabOverride ?? section);
   const floor = $derived(parseFloat(settings.minBalance || '0') || 0);
   const picked = $derived(settings.tokens);
@@ -130,12 +150,21 @@
   const dupe = $derived(saved.find((r) => r.address === draftAddr && r.id !== sheet?.editId));
   const draftValid = $derived(!!draftNet && draftNet !== 'unknown' && !dupe);
 
-  // apply-as-you-go: every change lands in the parent immediately
-  function apply(patch: Partial<WalletSettings>) {
-    const next = { ...settings, ...patch };
-    local = next;
-    onChange?.(next);
+  // apply-as-you-go: every change shows at once and reaches the parent; typing (`defer`) is sent once it pauses
+  function apply(patch: Partial<WalletSettings>, defer = false) {
+    local = { ...local, ...patch };
+    clearTimeout(notifyTimer);
+    notifyTimer = undefined;
+    if (defer) {
+      notifyTimer = setTimeout(() => {
+        notifyTimer = undefined;
+        onChange?.(settings);
+      }, 500);
+    } else onChange?.({ ...settings, ...patch });
   }
+
+  // recipients changed through the host's own callbacks: shown here, not re-sent through onChange
+  const showRecipients = (recipients: SavedRecipient[]) => (local = { ...local, recipients });
 
   function close() {
     if (closing) return;
@@ -143,12 +172,41 @@
     timer = setTimeout(() => onCancel?.(), 170);
   }
 
-  function saveRecipient() {
-    if (!sheet || !draftValid) return;
-    const entry: SavedRecipient = { id: sheet.editId ?? `r${Date.now()}`, name: sheet.name.trim() || t('ui.walletSettingsDialog.defaultRecipientName', { network: draftNet }), address: draftAddr, token: sheet.token };
-    const next = sheet.editId ? saved.map((r) => (r.id === sheet!.editId ? entry : r)) : [...saved, entry];
-    sheet = null;
-    apply({ recipients: next });
+  async function saveRecipient() {
+    if (!sheet || !draftValid || sheet.busy) return;
+    const editId = sheet.editId;
+    const fields = { name: sheet.name.trim() || t('ui.walletSettingsDialog.defaultRecipientName', { network: draftNet }), address: draftAddr, token: sheet.token };
+    const merge = (entry: SavedRecipient) => (editId ? saved.map((r) => (r.id === editId ? entry : r)) : [...saved, entry]);
+    if (!onSaveRecipient) {
+      sheet = null;
+      apply({ recipients: merge({ id: editId ?? `r${Date.now()}`, ...fields }) });
+      return;
+    }
+    sheet = { ...sheet, busy: true, error: false };
+    try {
+      const stored = await onSaveRecipient(editId ? { id: editId, ...fields } : fields);
+      sheet = null;
+      showRecipients(merge(stored));
+    } catch {
+      if (sheet) sheet = { ...sheet, busy: false, error: true };
+    }
+  }
+
+  async function removeRecipient(id: string) {
+    confirmId = null;
+    recipError = false;
+    if (!onRemoveRecipient) {
+      apply({ recipients: saved.filter((x) => x.id !== id) });
+      return;
+    }
+    const before = saved;
+    showRecipients(saved.filter((x) => x.id !== id));
+    try {
+      await onRemoveRecipient(id);
+    } catch {
+      showRecipients(before);
+      recipError = true;
+    }
   }
 
   const startPin = (mode: PinFlow['mode']) => (pin = { mode, step: PIN_STEPS[mode][0], value: '', current: '', first: '', error: null, busy: false });
@@ -265,7 +323,7 @@
                 <span class="dollar">$</span>
                 <input
                   value={settings.minBalance}
-                  oninput={(e) => apply({ minBalance: e.currentTarget.value.replace(/[^0-9.]/g, '') })}
+                  oninput={(e) => apply({ minBalance: e.currentTarget.value.replace(/[^0-9.]/g, '') }, true)}
                   placeholder="0"
                   inputmode="decimal"
                 />
@@ -374,6 +432,9 @@
               </div>
             {/if}
 
+            {#if recipError}
+              <span class="recip-error" role="alert">{t('ui.walletSettingsDialog.removeFailed')}</span>
+            {/if}
             <div class="recipient-list">
               {#each shownRecips as r}
                 {@const net = detect(r.address)}
@@ -394,10 +455,7 @@
                       <span class="keep" onclick={() => (confirmId = null)} role="button" tabindex="0">{t('ui.walletSettingsDialog.keep')}</span>
                       <span
                         class="remove"
-                        onclick={() => {
-                          confirmId = null;
-                          apply({ recipients: saved.filter((x) => x.id !== r.id) });
-                        }}
+                        onclick={() => removeRecipient(r.id)}
                         role="button"
                         tabindex="0">{t('ui.common.remove')}</span
                       >
@@ -659,8 +717,9 @@
           <div class="sheet-foot">
             <span class="cancel" onclick={() => (sheet = null)} role="button" tabindex="0">{t('ui.common.cancel')}</span>
             <span class="grow"></span>
-            <div class="primary" class:ready={draftValid} onclick={saveRecipient} role="button" tabindex="0">
-              <span>{t(sheet.editId ? 'ui.common.saveChanges' : 'ui.walletSettingsDialog.saveRecipient')}</span>
+            {#if sheet.error}<span class="recip-error" role="alert">{t('ui.walletSettingsDialog.saveRecipientFailed')}</span>{/if}
+            <div class="primary" class:ready={draftValid && !sheet.busy} onclick={saveRecipient} role="button" tabindex="0" aria-disabled={!draftValid || !!sheet.busy}>
+              <span>{t(sheet.busy ? 'ui.walletSettingsDialog.saving' : sheet.editId ? 'ui.common.saveChanges' : 'ui.walletSettingsDialog.saveRecipient')}</span>
               {@render glyph('check', 15, 'var(--primary-ink)')}
             </div>
           </div>
@@ -1020,6 +1079,11 @@
 
   .none {
     font: var(--weight-regular) var(--text-sm) / 1.6 var(--font-sans);
+    color: var(--status-danger, #f5493d);
+  }
+
+  .recip-error {
+    font: var(--weight-medium) var(--text-sm) / 1.4 var(--font-sans);
     color: var(--status-danger, #f5493d);
   }
 

@@ -1,5 +1,22 @@
 <!-- Per-DM settings: disappearing messages (timed) and read receipts. Shared by the DM side panel and the profile dialog's "This chat" tab.
-     Edits stick locally until the parent sends new values. -->
+     Changes show at once and roll back with an error if the host's promise rejects; new prop values always win. -->
+<script lang="ts" module>
+  // the duration ids TimedToggle uses ('12 hours', '1 week' …) in milliseconds; months count as 30 days
+  const UNIT_MS: Record<string, number> = { minute: 6e4, hour: 36e5, day: 864e5, week: 6048e5, month: 2592e6, year: 31536e6 };
+  export const durationMs = (id: string) => {
+    const m = id.match(/^(\d+) (minute|hour|day|week|month|year)s?$/);
+    return m ? Number(m[1]) * UNIT_MS[m[2]] : 0;
+  };
+
+  export interface DisappearSetting {
+    on: boolean;
+    /** Duration id, e.g. "12 hours". */
+    after: string;
+    /** The same duration in milliseconds. */
+    afterMs: number;
+  }
+</script>
+
 <script lang="ts">
   import TimedToggle from '../../lib/components/TimedToggle.svelte';
   import { useT } from '../../lib/i18n';
@@ -10,8 +27,8 @@
     disappearOn?: boolean;
     disappearAfter?: string;
     readReceipts?: boolean;
-    onDisappearChange?: (v: { on: boolean; after: string }) => void;
-    onReadReceiptsChange?: (on: boolean) => void;
+    onDisappearChange?: (v: DisappearSetting) => Promise<unknown> | void;
+    onReadReceiptsChange?: (on: boolean) => Promise<unknown> | void;
   }
 
   let { peerName, disappearOn = false, disappearAfter = '12 hours', readReceipts = false, onDisappearChange, onReadReceiptsChange }: Props = $props();
@@ -20,6 +37,34 @@
   let on = $derived(disappearOn);
   let after = $derived(disappearAfter);
   let receipts = $derived(readReceipts);
+  let failed = $state(false);
+
+  // optimistic: apply now, put the previous values back if the host rejects
+  async function save(apply: () => void, undo: () => void, call: () => Promise<unknown> | void) {
+    failed = false;
+    apply();
+    try {
+      await call();
+    } catch {
+      undo();
+      failed = true;
+    }
+  }
+
+  function setDisappear(nextOn: boolean, nextAfter: string) {
+    const was = { on, after };
+    save(
+      () => {
+        on = nextOn;
+        after = nextAfter;
+      },
+      () => {
+        on = was.on;
+        after = was.after;
+      },
+      () => onDisappearChange?.({ on: nextOn, after: nextAfter, afterMs: durationMs(nextAfter) }),
+    );
+  }
 </script>
 
 <div class="settings">
@@ -31,14 +76,8 @@
       label={t('ui.dmChatSettings.disappearingMessages')}
       {on}
       value={after}
-      onChange={(next) => {
-        on = next;
-        onDisappearChange?.({ on: next, after });
-      }}
-      onDurationChange={(next) => {
-        after = next;
-        onDisappearChange?.({ on: true, after: next });
-      }}
+      onChange={(next) => setDisappear(next, after)}
+      onDurationChange={(next) => setDisappear(true, next)}
     />
   </div>
   <div class="row">
@@ -48,8 +87,12 @@
       class="switch"
       class:on={receipts}
       onclick={() => {
-        receipts = !receipts;
-        onReadReceiptsChange?.(receipts);
+        const next = !receipts;
+        save(
+          () => (receipts = next),
+          () => (receipts = !next),
+          () => onReadReceiptsChange?.(next),
+        );
       }}
       tabindex="0"
       role="switch"
@@ -57,9 +100,16 @@
       aria-label={t('ui.dmChatSettings.readReceipts')}><span class="knob"></span></span
     >
   </div>
+  {#if failed}<span class="error" role="alert">{t('ui.dmChatSettings.saveFailed')}</span>{/if}
 </div>
 
 <style>
+  .error {
+    padding: 0 var(--space-16) var(--space-12);
+    font: var(--weight-medium) var(--text-sm) / 1.4 var(--font-sans);
+    color: var(--status-danger, #f5493d);
+  }
+
   .settings {
     display: flex;
     flex-direction: column;

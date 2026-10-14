@@ -1,9 +1,10 @@
 <!-- An open thread: the root stays pinned as a compact card above the replies, with who's in it and a Follow toggle.
      Lives in the right side panel on wide windows (back arrow) and in a modal on narrow ones (asModal: close button).
-     Scrolls to the newest reply on open, on a new threadKey and when replies arrive. -->
+     Scrolls to the newest reply on open, on a new threadKey and when replies arrive. Sends carry the threadKey; a send that
+     returns a promise keeps the draft until it resolves. Follow flips at once and rolls back if onFollowChange rejects. -->
 <script lang="ts">
   import { untrack } from 'svelte';
-  import type { GroupMessage, MessageGroupItem } from '../../lib/types';
+  import type { MessageGroupItem } from '../../lib/types';
   import IconButton from '../../lib/components/IconButton.svelte';
   import MessageComposer from '../../lib/components/MessageComposer.svelte';
   import MessageGroup from '../../lib/components/MessageGroup.svelte';
@@ -33,10 +34,15 @@
     /** Participant colours (first four shown). */
     faces?: string[];
     following?: boolean;
-    onFollowChange?: (on: boolean) => void;
+    /** Rolls the toggle back if it rejects. */
+    onFollowChange?: (on: boolean) => Promise<unknown> | void;
     onJump?: () => void;
-    /** Text, "GIF · query" for a GIF, or a voice message. */
-    onSend?: (message: string | GroupMessage) => void;
+    /** A text reply. Reject to keep the draft (with an error). */
+    onSend?: (r: { threadKey?: string; text: string }) => Promise<unknown> | void;
+    /** The GIF picked in the composer's picker (the host resolves and sends it). */
+    onGif?: (r: { threadKey?: string; query: string }) => void;
+    /** A recorded voice reply; voice is hidden without it. Reject to keep the take. */
+    onVoice?: (r: { threadKey?: string; blob: Blob; duration: number; mimeType: string }) => Promise<unknown> | void;
     onAttach?: (kind: 'media' | 'file' | 'poll' | 'prize' | 'crypto' | 'swap' | 'memeFighter') => void;
     asModal?: boolean;
     onClose?: () => void;
@@ -53,6 +59,8 @@
     onFollowChange,
     onJump,
     onSend,
+    onGif,
+    onVoice,
     onAttach,
     asModal = false,
     onClose,
@@ -92,9 +100,20 @@
     toBottom();
   });
 
-  function send(message: string | GroupMessage) {
-    onSend?.(message);
+  async function send(text: string) {
+    const result = onSend?.({ threadKey, text });
     toBottom();
+    await result;
+  }
+
+  async function follow() {
+    const next = !on;
+    followOverride = next;
+    try {
+      await onFollowChange?.(next);
+    } catch {
+      followOverride = undefined;
+    }
   }
 </script>
 
@@ -123,10 +142,7 @@
       <span
         class="follow"
         class:on
-        onclick={() => {
-          followOverride = !on;
-          onFollowChange?.(!on);
-        }}
+        onclick={follow}
         role="button"
         tabindex="0"
         aria-pressed={on}><span class="bell"></span>{t(on ? 'ui.threadPanel.following' : 'ui.threadPanel.follow')}</span
@@ -151,11 +167,8 @@
     <MessageComposer
       placeholder={t('ui.threadPanel.replyTo', { name: firstName })}
       onSend={send}
-      onGif={(q) => send(`GIF · ${q}`)}
-      onVoice={(r) => {
-        const d = Math.max(1, Math.round(r?.duration || 0));
-        send({ kind: 'voice', progress: 0, elapsed: '0:00', total: `${Math.floor(d / 60)}:${String(d % 60).padStart(2, '0')}`, time: t('ui.threadPanel.now') });
-      }}
+      onGif={onGif ? (query) => onGif({ threadKey, query }) : undefined}
+      onVoice={onVoice ? (r) => onVoice({ threadKey, ...r }) : undefined}
       {onAttach}
     />
   </div>

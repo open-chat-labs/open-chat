@@ -1,6 +1,8 @@
 <!-- Daily CHIT: streak ring (fills toward the next milestone), collected balance, milestone bar, claim button,
-     the daily puzzle card, streak insurance and "ways to earn". Without onClaim it applies the claim itself
-     (streak +1, balance + daily). onAction: settings | leaderboard | insurance | earn | puzzle… (see DailyPuzzleCard). -->
+     the daily puzzle card, streak insurance and "ways to earn". Claiming goes to the host (onClaim): the button waits
+     on its promise, shows the claim only once it resolves and an error if it rejects; the host then passes the new
+     streak / balance. Without onClaim there is no claim button. onAction: settings | leaderboard | insurance | earn |
+     puzzle… (see DailyPuzzleCard). -->
 <script lang="ts" module>
   import type { PuzzleAction } from './DailyPuzzleCard.svelte';
 
@@ -15,8 +17,8 @@
 
   // milestone days that pay a bonus on top of the daily claim, with the position each one takes on the bar —
   // hand-spaced so the early run stays readable and the long haul to 365 still reads as long
-  const TIERS = [3, 7, 14, 30, 100, 365];
-  const TIER_POS: Record<number, number> = { 3: 8, 7: 16, 14: 32, 30: 48, 100: 67, 365: 100 };
+  const DEFAULT_TIERS = [3, 7, 14, 30, 100, 365];
+  const DEFAULT_POS: Record<number, number> = { 3: 8, 7: 16, 14: 32, 30: 48, 100: 67, 365: 100 };
   // numbers in the host's locale (i18n is set up below; fmt only runs after init)
   const fmt = (n: number) => n.toLocaleString(i18n.locale ?? 'en');
 
@@ -27,7 +29,12 @@
     earned: number;
     /** Today's claim. */
     daily: number;
+    /** Whether today's claim is open (defaults to false). */
     claimable?: boolean;
+    /** Milestone days that pay a bonus (backend schedule); defaults to 3, 7, 14, 30, 100, 365. */
+    milestones?: number[];
+    /** Achievements for the "Ways to earn" row; the count is hidden without it. */
+    achievements?: { total: number; left: number };
     /** Time until the next claim (and the next puzzle). */
     countdown?: string;
     /** Insured days bought / already used. */
@@ -43,7 +50,8 @@
     onBack?: () => void;
     /** Resource key (or literal text). */
     backLabel?: string;
-    onClaim?: (amount: number) => void;
+    /** Claim today's CHIT. Reject to show an error; resolve once the host has applied it. */
+    onClaim?: (r: { amount: number }) => Promise<unknown> | void;
     onAction?: (kind: ChitAction) => void;
     onClose?: () => void;
   }
@@ -53,7 +61,9 @@
     balance,
     earned,
     daily,
-    claimable = true,
+    claimable = false,
+    milestones,
+    achievements,
     countdown = '',
     insured = 0,
     used = 0,
@@ -72,12 +82,18 @@
   const i18n = getI18n();
 
   let claimedHere = $state<boolean | null>(null);
-  let bonus = $state(0);
+  let claiming = $state(false);
+  let claimFailed = $state(false);
   let closing = $state(false);
   let closeTimer: ReturnType<typeof setTimeout> | undefined;
   onDestroy(() => clearTimeout(closeTimer));
 
-  const days = $derived(streak + (onClaim ? 0 : claimedHere ? 1 : 0));
+  const days = $derived(streak);
+  const TIERS = $derived(milestones?.length ? [...milestones].sort((a, b) => a - b) : DEFAULT_TIERS);
+  // the default schedule keeps its hand-tuned spacing; a custom one is spaced evenly
+  const TIER_POS = $derived<Record<number, number>>(
+    milestones?.length ? Object.fromEntries(TIERS.map((d, i) => [d, ((i + 1) / TIERS.length) * 100])) : DEFAULT_POS,
+  );
   const claimed = $derived(claimedHere ?? !claimable);
   const insuredLeft = $derived(Math.max(insured - used, 0));
 
@@ -112,11 +128,18 @@
       `var(--overlay-2,rgba(255,255,255,.09)) ${(0.16 + within * 0.7).toFixed(3)}turn, var(--overlay-2,rgba(255,255,255,.09)) 1turn)`,
   );
 
-  function claim() {
-    // a host that owns the balance applies the claim itself
-    claimedHere = true;
-    bonus = onClaim ? 0 : daily;
-    onClaim?.(daily);
+  async function claim() {
+    if (!onClaim || claiming || claimedHere) return;
+    claiming = true;
+    claimFailed = false;
+    try {
+      await onClaim({ amount: daily });
+      claimedHere = true;
+    } catch {
+      claimFailed = true;
+    } finally {
+      claiming = false;
+    }
   }
 
   function close() {
@@ -157,7 +180,7 @@
         </div>
         <div class="totals">
           <span class="caps wide">{t('ui.chitDialog.collected')}</span>
-          <span class="balance">{t('ui.chitDialog.amount', { amount: fmt(balance + bonus) })}</span>
+          <span class="balance">{t('ui.chitDialog.amount', { amount: fmt(balance) })}</span>
           <span class="muted">{t('ui.chitDialog.earnedAllTime', { amount: fmt(earned) })}</span>
         </div>
       </div>
@@ -185,11 +208,13 @@
 
       <div class="claim-area">
         {#if !claimed}
-          <div class="claim" onclick={claim} role="button" tabindex="0">
-            <span class="flame"></span>
-            <span class="claim-label">{t('ui.chitDialog.claim', { amount: fmt(daily) })}</span>
-          </div>
-          <span class="note">{t('ui.chitDialog.claimNote')}</span>
+          {#if onClaim}
+            <div class="claim" onclick={claim} role="button" tabindex="0" aria-disabled={claiming}>
+              <span class="flame"></span>
+              <span class="claim-label">{t(claiming ? 'ui.chitDialog.claiming' : 'ui.chitDialog.claim', { amount: fmt(daily) })}</span>
+            </div>
+          {/if}
+          <span class="note" class:error={claimFailed} role={claimFailed ? 'alert' : undefined}>{t(claimFailed ? 'ui.chitDialog.claimFailed' : 'ui.chitDialog.claimNote')}</span>
         {:else}
           <div class="claimed">
             <span class="check"></span>
@@ -222,7 +247,7 @@
           <span class="tile"><span class="tile-glyph spark"></span></span>
           <div class="row-text">
             <span class="row-title">{t('ui.chitDialog.waysToEarn')}</span>
-            <span class="row-hint">{t('ui.chitDialog.achievementsLeft', { total: 51, left: 12 })}</span>
+            {#if achievements}<span class="row-hint">{t('ui.chitDialog.achievementsLeft', { total: achievements.total, left: achievements.left })}</span>{/if}
           </div>
           <span class="chevron"></span>
         </div>
@@ -562,6 +587,10 @@
     color: var(--ink-4, #7c7c8c);
     text-align: center;
     text-wrap: pretty;
+  }
+
+  .note.error {
+    color: var(--status-danger, #f5493d);
   }
 
   .note.strong {

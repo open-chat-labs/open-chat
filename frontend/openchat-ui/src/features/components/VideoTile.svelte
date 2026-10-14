@@ -1,5 +1,6 @@
 <!-- One call participant. The feed keeps its own shape (ratio, default 4:3) and letterboxes inside the tile — never cropped.
-     Avatar shows while the camera is off / no feed. speaking → accent ring (drawn above the feed). Name pill + mic state bottom-left. -->
+     `stream` (a MediaStream) plays as the feed, muted: call audio is the host's to route. Without it the avatar shows on
+     the `feed` placeholder. speaking → accent ring (drawn above the feed). Name pill + mic state bottom-left. -->
 <script lang="ts">
   import { useT } from '../../lib/i18n';
   interface Props {
@@ -8,8 +9,12 @@
     initial?: string;
     /** Avatar background. */
     grad?: string;
-    /** Feed background (placeholder for the video). */
+    /** Placeholder background when there is no stream. */
     feed?: string;
+    /** Live video for this participant. */
+    stream?: MediaStream | null;
+    /** Mirror the video (your own camera). */
+    mirror?: boolean;
     /** Feed aspect ratio, width / height. */
     ratio?: number;
     muted?: boolean;
@@ -25,6 +30,8 @@
     initial,
     grad = 'linear-gradient(140deg,#B48CFF,#6A5CFF)',
     feed = 'linear-gradient(165deg,#4a3b45,#1d1a22)',
+    stream = null,
+    mirror = false,
     ratio = 4 / 3,
     muted = false,
     speaking = false,
@@ -32,12 +39,29 @@
     radius = 10,
   }: Props = $props();
   const t = useT();
+
+  // a MediaStream can't be set as an attribute; bind it as srcObject
+  function video(node: HTMLVideoElement, s: MediaStream | null) {
+    node.srcObject = s;
+    return {
+      update(next: MediaStream | null) {
+        if (node.srcObject !== next) node.srcObject = next;
+      },
+      destroy() {
+        node.srcObject = null;
+      },
+    };
+  }
 </script>
 
 <div class="tile" style:border-radius="{radius}px" role="img" aria-label={t('ui.videoTile.label', { name: nameLabel, muted: String(muted), speaking: String(speaking) })}>
   <span class="ring" class:speaking aria-hidden="true"></span>
   <div class="feed" style:--ratio={ratio || 4 / 3} style:background={feed}>
-    <span class="avatar" class:big style:background={grad}>{initial ?? nameLabel.slice(0, 1).toUpperCase()}</span>
+    {#if stream}
+      <video class="video" class:mirror use:video={stream} autoplay playsinline muted></video>
+    {:else}
+      <span class="avatar" class:big style:background={grad}>{initial ?? nameLabel.slice(0, 1).toUpperCase()}</span>
+    {/if}
   </div>
   <span class="name"
     ><span class="mic" class:muted style:mask="var(--icon-{muted ? 'mic-off' : 'mic'}) center/contain no-repeat"></span><span class="label">{nameLabel}</span></span
@@ -80,6 +104,16 @@
     display: flex;
     align-items: center;
     justify-content: center;
+  }
+
+  .video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .video.mirror {
+    transform: scaleX(-1);
   }
 
   .avatar {

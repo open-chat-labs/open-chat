@@ -1,124 +1,48 @@
 <!-- "Ways to earn CHIT": a "next up" trio (one quick win, one middling task, one referral) and every achievement
-     by group, with progress per group. `unlocked` (achievement ids) marks achievements earned this session as done;
+     by group, with progress per group. The catalogue, rewards and done flags come from `achievements`; `unlocked`
+     (achievement ids) marks achievements earned this session as done;
      `highlight` opens that row's group, marks the row and scrolls it into view. -->
+<script lang="ts" module>
+  export type AchievementBand = 'quick' | 'mid' | 'big';
+  export interface Achievement {
+    id: string;
+    /** messaging | … (one of the dialog's groups). */
+    group: string;
+    reward: number;
+    done: boolean;
+    /** Tags what the "next up" trio draws from. */
+    band?: AchievementBand;
+    icon?: string;
+    /** Resource key (or literal text); defaults to ui.achievementsDialog.achievements.<id>. */
+    label?: string;
+  }
+</script>
+
 <script lang="ts">
   import { getI18n, useT } from '../../lib/i18n';
   import { onMount } from 'svelte';
   import { modal } from '../../lib/behaviours/modal';
   const i18n = getI18n(); // number formatting follows the host locale
 
-  type Band = 'quick' | 'mid' | 'big';
-  // [id, done, reward, band, icon] — band tags what the "next up" trio draws from; the text is ui.achievementsDialog.achievements.<id>
-  type Entry = [string, boolean, number, Band?, string?];
+  type Band = AchievementBand;
 
-  // the catalogue as exported, including which ones the sample account has already done
-  const GROUPS: { key: string; label: string; icon: string; ink: string; items: Entry[] }[] = [
-    {
-      key: 'messaging',
-      label: 'ui.achievementsDialog.groups.messaging',
-      icon: 'chat',
-      ink: 'var(--status-chit,#FF9F45)',
-      items: [
-        ['tipAMessage', false, 1000, 'mid', 'coin'],
-        ['sendAPrizeMessage', false, 1000, 'mid', 'gift'],
-        ['receiveAMessageTip', false, 1000, 'mid', 'coin'],
-        ['sendAMemeMessage', false, 500, 'quick', 'image'],
-        ['followAThread', false, 500, 'quick', 'chat'],
-        ['sendATextMessage', true, 500],
-        ['reactToAMessage', true, 500],
-        ['sendADirectMessage', true, 500],
-        ['receiveADirectMessage', true, 500],
-        ['editAMessage', true, 500],
-        ['deleteAMessage', true, 500],
-        ['forwardAMessage', true, 500],
-        ['sendAnImage', false, 500, 'quick', 'image'],
-        ['sendAFile', true, 500],
-        ['sendAPoll', true, 500],
-        ['sendACryptoMessage', true, 1000],
-        ['receiveACryptoMessage', true, 1000],
-        ['sendAVideo', true, 500],
-        ['sendAnAudioMessage', true, 500],
-        ['sendAnAnimatedGif', true, 500],
-        ['quoteReplyToAMessage', true, 500],
-        ['startAReplyInAThread', true, 500],
-        ['sendAReminder', true, 500],
-        ['receiveAReactionOnAMessage', true, 500],
-        ['voteOnAPoll', true, 500],
-      ],
-    },
-    {
-      key: 'profile',
-      label: 'ui.achievementsDialog.groups.profile',
-      icon: 'user',
-      ink: 'var(--accent,#FF5672)',
-      items: [
-        ['updateYourProfileBio', false, 500, 'quick', 'user'],
-        ['uploadYourProfileAvatar', true, 500],
-        ['updateYourDisplayName', true, 500],
-        ['upgradeToDiamondMembership', true, 5000],
-        ['upgradeToLifetimeDiamondMembership', true, 20000],
-      ],
-    },
-    {
-      key: 'wallet',
-      label: 'ui.achievementsDialog.groups.wallet',
-      icon: 'wallet',
-      ink: 'var(--status-verified,#3D9BFF)',
-      items: [
-        ['acceptASwapOffer', false, 2000, 'mid', 'wallet'],
-        ['setAPinNumberOnYourWallet', true, 500],
-        ['swapATokenFromTheWallet', true, 1000],
-        ['sendAP2PSwapOffer', true, 1000],
-      ],
-    },
-    {
-      key: 'community',
-      label: 'ui.achievementsDialog.groups.community',
-      icon: 'users',
-      ink: 'var(--status-online,#2EE6A8)',
-      items: [
-        ['joinACommunity', true, 500],
-        ['joinAGroup', true, 500],
-        ['joinACall', true, 500],
-        ['markAChatAsAFavourite', true, 500],
-        ['pinAChatToTheTopOfTheList', true, 500],
-        ['setACommunityDisplayName', true, 500],
-      ],
-    },
-    {
-      key: 'streaks',
-      label: 'ui.achievementsDialog.groups.streaks',
-      icon: 'flame',
-      ink: 'var(--status-chit,#FF9F45)',
-      items: [
-        ['achieveA3DayStreak', true, 500],
-        ['achieveA7DayStreak', true, 1000],
-        ['achieveA14DayStreak', true, 2000],
-        ['achieveA30DayStreak', true, 5000],
-        ['achieveA100DayStreak', true, 10000],
-        ['achieveA365DayStreak', true, 25000],
-      ],
-    },
-    {
-      key: 'referrals',
-      label: 'ui.achievementsDialog.groups.referrals',
-      icon: 'users',
-      ink: 'var(--ink-3,#9A9AA8)',
-      items: [
-        ['referYour1stVerifiedUser', false, 5000, 'big', 'users'],
-        ['referYour3rdVerifiedUser', false, 7500, 'big', 'users'],
-        ['referYour10thVerifiedUser', false, 10000, 'big', 'users'],
-        ['referYour20thVerifiedUser', false, 15000],
-        ['referYour50thVerifiedUser', false, 25000],
-      ],
-    },
-    { key: 'partners', label: 'ui.achievementsDialog.groups.partners', icon: 'link', ink: 'var(--ink-4,#7C7C8C)', items: [] },
+  // group metadata stays here; the achievements themselves (ids, rewards, done) come from the host
+  const GROUPS: { key: string; label: string; icon: string; ink: string }[] = [
+    { key: 'messaging', label: 'ui.achievementsDialog.groups.messaging', icon: 'chat', ink: 'var(--status-chit,#FF9F45)' },
+    { key: 'profile', label: 'ui.achievementsDialog.groups.profile', icon: 'user', ink: 'var(--accent,#FF5672)' },
+    { key: 'wallet', label: 'ui.achievementsDialog.groups.wallet', icon: 'wallet', ink: 'var(--status-verified,#3D9BFF)' },
+    { key: 'community', label: 'ui.achievementsDialog.groups.community', icon: 'users', ink: 'var(--status-online,#2EE6A8)' },
+    { key: 'streaks', label: 'ui.achievementsDialog.groups.streaks', icon: 'flame', ink: 'var(--status-chit,#FF9F45)' },
+    { key: 'referrals', label: 'ui.achievementsDialog.groups.referrals', icon: 'users', ink: 'var(--ink-3,#9A9AA8)' },
+    { key: 'partners', label: 'ui.achievementsDialog.groups.partners', icon: 'link', ink: 'var(--ink-4,#7C7C8C)' },
   ];
 
   const fmt = (n: number) => n.toLocaleString(i18n.locale ?? 'en');
   const achievement = (id: string) => 'ui.achievementsDialog.achievements.' + id;
 
   interface Props {
+    /** Every achievement with its reward and whether it's done. */
+    achievements: Achievement[];
     /** Ids of achievements earned this session (e.g. 'tipAMessage'). */
     unlocked?: string[];
     /** Id of the achievement just earned. */
@@ -128,7 +52,7 @@
     onClose?: () => void;
   }
 
-  let { unlocked = [], highlight = '', onBack, onClose }: Props = $props();
+  let { achievements, unlocked = [], highlight = '', onBack, onClose }: Props = $props();
   const t = useT();
 
   // the trio is drawn once per open, so it changes between visits but never shuffles under the reader
@@ -139,7 +63,7 @@
 
   const isDone = (label: string, done: boolean) => done || unlocked.includes(label);
 
-  const all = $derived(GROUPS.flatMap((g) => g.items.map(([label, done, reward, band, icon]) => ({ label, done: isDone(label, done), reward, band, icon }))));
+  const all = $derived(achievements.map((a) => ({ label: a.id, text: a.label, done: isDone(a.id, a.done), reward: a.reward, band: a.band, icon: a.icon })));
   const left = $derived(all.filter((a) => !a.done));
   const doneCount = $derived(all.length - left.length);
   const earned = $derived(all.filter((a) => a.done).reduce((sum, a) => sum + a.reward, 0));
@@ -157,13 +81,14 @@
 
   const groups = $derived(
     GROUPS.map((g) => {
-      const open = openKey === undefined ? !!highlight && g.items.some((i) => i[0] === highlight) : openKey === g.key;
-      const gotten = g.items.filter((i) => isDone(i[0], i[1])).length;
+      const items = achievements.filter((a) => a.group === g.key);
+      const open = openKey === undefined ? !!highlight && items.some((i) => i.id === highlight) : openKey === g.key;
+      const gotten = items.filter((i) => isDone(i.id, i.done)).length;
       // the just-earned row leads; then unfinished first: the list should read as work left, then history
-      const rows = g.items
-        .map(([label, done, reward]) => ({ label, done: isDone(label, done), reward, hl: label === highlight }))
+      const rows = items
+        .map((a) => ({ label: a.id, text: a.label, done: isDone(a.id, a.done), reward: a.reward, hl: a.id === highlight }))
         .sort((a, b) => Number(b.hl) - Number(a.hl) || Number(a.done) - Number(b.done));
-      return { ...g, open, count: `${gotten} / ${g.items.length}`, pct: g.items.length ? Math.round((gotten / g.items.length) * 100) : 0, rows };
+      return { ...g, items, open, count: `${gotten} / ${items.length}`, pct: items.length ? Math.round((gotten / items.length) * 100) : 0, rows };
     }),
   );
 
@@ -199,7 +124,7 @@
             {#each next as item, i}
               <div class="next next-{i}">
                 <span class="next-icon" style:mask="var(--icon-{item.icon ?? 'chat'}) center/contain no-repeat"></span>
-                <span class="next-label">{t(achievement(item.label))}</span>
+                <span class="next-label">{t(item.text ?? achievement(item.label))}</span>
                 <span class="next-reward">{t('ui.achievementsDialog.reward', { amount: fmt(item.reward) })}</span>
               </div>
             {/each}
@@ -225,7 +150,7 @@
                 {#each g.rows as r}
                   <div class="row" class:hl={r.hl} class:done={r.done} data-ach-hl={r.hl ? '1' : '0'}>
                     <span class="mark"><span class="mark-check"></span></span>
-                    <span class="row-label">{t(achievement(r.label))}</span>
+                    <span class="row-label">{t(r.text ?? achievement(r.label))}</span>
                     <span class="row-reward">{r.hl ? t('ui.achievementsDialog.justEarned', { amount: fmt(r.reward) }) : r.done ? t('ui.achievementsDialog.earned') : t('ui.achievementsDialog.reward', { amount: fmt(r.reward) })}</span>
                   </div>
                 {/each}

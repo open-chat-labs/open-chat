@@ -1,13 +1,12 @@
 <!-- Buy streak insurance: a week of day-cells (covered / adding now / tap to add) on a rising price ladder, a summary
      and Pay. Priced on each day's position in your holding, so buying one day at a time costs the same as several at once.
-     Back returns to CHIT (onBack, else onClose); ×, the veil and a purchase close. -->
+     Prices come from the host (`prices`, one per position; its length is the cap). Pay calls onBuy and waits: the dialog
+     closes once it resolves and stays open with an error if it rejects. Back returns to CHIT (onBack, else onClose). -->
 <script lang="ts">
   import { getI18n, useT } from '../../lib/i18n';
   import { onDestroy } from 'svelte';
   import { modal } from '../../lib/behaviours/modal';
 
-  const STEPS = [1, 2, 4, 12, 28, 60, 124];
-  const MAX_DAYS = STEPS.length;
   const fmt = (n: number) => n.toLocaleString(i18n.locale ?? 'en');
 
   interface Props {
@@ -19,12 +18,17 @@
     used?: number;
     /** CHAT balance. */
     balance: number;
-    onBuy?: (days: number, cost: number) => void;
+    /** Price in CHAT of each position in your holding (1st day, 2nd …); its length is the most you can hold. */
+    prices: number[];
+    /** Buy `days` more days of cover from `fromPosition` (0-based) for `cost` CHAT. Reject to keep the dialog open. */
+    onBuy?: (req: { days: number; cost: number; fromPosition: number }) => Promise<unknown> | void;
     onBack?: () => void;
     onClose?: () => void;
   }
 
-  let { streak, insured = 0, used = 0, balance, onBuy, onBack, onClose }: Props = $props();
+  let { streak, insured = 0, used = 0, balance, prices, onBuy, onBack, onClose }: Props = $props();
+  const STEPS = $derived(prices);
+  const MAX_DAYS = $derived(prices.length);
   const t = useT();
 
   const i18n = getI18n();
@@ -55,6 +59,8 @@
   const payLabel = $derived(room === 0 ? t('ui.streakInsuranceDialog.fullyCovered') : qty === 0 ? t('ui.streakInsuranceDialog.pickADay') : t('ui.streakInsuranceDialog.pay', { days: days(qty), amount: fmt(total) }));
 
   let closing = $state(false);
+  let buying = $state(false);
+  let failed = $state(false);
   let timer: ReturnType<typeof setTimeout> | undefined;
   onDestroy(() => clearTimeout(timer));
 
@@ -65,9 +71,19 @@
     timer = setTimeout(() => then?.(), 170);
   }
 
-  function pay() {
-    if (!canPay) return;
-    onBuy?.(qty, total);
+  async function pay() {
+    // one purchase at a time, and never during the exit animation
+    if (!canPay || buying || closing) return;
+    buying = true;
+    failed = false;
+    try {
+      await onBuy?.({ days: qty, cost: total, fromPosition: held });
+    } catch {
+      failed = true;
+      return;
+    } finally {
+      buying = false;
+    }
     leave(onClose);
   }
 
@@ -121,10 +137,14 @@
     </div>
 
     <div class="foot">
-      <span class="balance" class:short={!affordable}
-        >{t(affordable ? 'ui.streakInsuranceDialog.balanceCap' : 'ui.streakInsuranceDialog.balanceShort', { amount: fmt(balance), max: MAX_DAYS })}</span
-      >
-      <span class="pay" class:ready={canPay} onclick={pay} role="button" tabindex="0" aria-disabled={!canPay}>{payLabel}</span>
+      {#if failed}
+        <span class="balance short" role="alert">{t('ui.streakInsuranceDialog.buyFailed')}</span>
+      {:else}
+        <span class="balance" class:short={!affordable}
+          >{t(affordable ? 'ui.streakInsuranceDialog.balanceCap' : 'ui.streakInsuranceDialog.balanceShort', { amount: fmt(balance), max: MAX_DAYS })}</span
+        >
+      {/if}
+      <span class="pay" class:ready={canPay && !buying} onclick={pay} role="button" tabindex="0" aria-disabled={!canPay || buying}>{buying ? t('ui.streakInsuranceDialog.paying') : payLabel}</span>
     </div>
   </div>
 </div>

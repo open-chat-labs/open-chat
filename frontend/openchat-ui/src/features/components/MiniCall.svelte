@@ -1,6 +1,6 @@
 <!-- Minimised call: floats over the app (SnapFloat — drag anywhere, 8 snap spots, clear of header/composer via safeTop/safeBottom).
      Video calls show the lead feed; tap it or "Back to call" → onOpen. Mount inside a positioned container (fills it, passes clicks through).
-     The call timer ticks every second from `start`. -->
+     The call timer ticks every second from `start` and is hidden without it (a mount time would be a made-up duration). -->
 <script lang="ts">
   import { onMount } from 'svelte';
   import AvatarStack from '../../lib/components/AvatarStack.svelte';
@@ -13,7 +13,7 @@
   interface Props {
     title: string;
     media?: 'video' | 'voice';
-    /** Call start, ms epoch; defaults to when the mini call mounted. */
+    /** Call start, ms epoch; the timer is hidden without it. */
     start?: number;
     /** Participants; the first is the lead feed. */
     people?: { name?: string; initial?: string; grad?: string }[];
@@ -49,7 +49,6 @@
   }: Props = $props();
   const t = useT();
 
-  const mountedAt = Date.now();
   let now = $state(Date.now());
   onMount(() => {
     const timer = setInterval(() => (now = Date.now()), 1000);
@@ -57,7 +56,8 @@
   });
 
   const timer = $derived.by(() => {
-    const secs = Math.max(0, Math.floor((now - (start ?? mountedAt)) / 1000));
+    if (start == null) return '';
+    const secs = Math.max(0, Math.floor((now - start) / 1000));
     const h = Math.floor(secs / 3600), m = Math.floor(secs / 60) % 60, s = secs % 60;
     const p = (n: number) => String(n).padStart(2, '0');
     return `${h ? `${h}:${p(m)}` : m}:${p(s)}`;
@@ -88,7 +88,7 @@
       {/if}
       <div class="status">
         <span class="pulse"><span class="phone"></span></span>
-        <span class="text"><span class="title">{title}</span><span class="meta">{t('ui.miniCall.meta', { media, timer })}</span></span>
+        <span class="text"><span class="title">{title}</span><span class="meta">{timer ? t('ui.miniCall.meta', { media, timer }) : t('ui.miniCall.mediaOnly', { media })}</span></span>
       </div>
       <div class="controls">
         <span class="faces"><AvatarStack people={faces ?? people.map((x) => x.grad).filter((g): g is string => !!g)} size={26} max={4} /></span>

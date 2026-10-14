@@ -2,36 +2,58 @@
      Layout rule: with 1–2 other people your own video floats as a draggable window that snaps to a corner;
      with 3+ others everyone, you included, gets an equal tile. Sharing your screen puts it on stage with people in a strip.
      Full screen hides the top bar and controls after 3s without pointer movement.
-     Host owns mute (`muted` + onToggleMute) so the call bar / mini window stay in sync; camera and sharing live here. -->
+     The host owns every media state: mute (`muted` + onToggleMute), camera (`camera` + onToggleCamera) and screen sharing
+     (`sharing` + onToggleShare). Camera / share flip at once and roll back if the host's promise rejects; their buttons are
+     hidden without the callback. Feeds are MediaStreams (person.stream, self.stream, screenStream); who is talking comes
+     from person.speaking. The timer only shows with `start`. -->
+<script lang="ts" module>
+  export interface CallPerson {
+    id?: string;
+    name: string;
+    initial: string;
+    grad: string;
+    muted?: boolean;
+    /** Highlighted as the active speaker (from the host's audio levels). */
+    speaking?: boolean;
+    /** Live video; the avatar shows without it. */
+    stream?: MediaStream | null;
+    /** Placeholder feed background when there is no stream; defaults from a palette. */
+    bg?: string;
+    /** Feed aspect ratio, width / height. */
+    ratio?: number;
+  }
+</script>
+
 <script lang="ts">
   import { onMount, tick, untrack } from 'svelte';
   import RoundIconButton from '../../lib/components/RoundIconButton.svelte';
   import VideoTile from './VideoTile.svelte';
   import { useT } from '../../lib/i18n';
 
-  interface Person {
-    name: string;
-    initial: string;
-    grad: string;
-    muted?: boolean;
-    /** Feed background; defaults from a palette. */
-    bg?: string;
-    /** Feed aspect ratio, width / height. */
-    ratio?: number;
-  }
-
   interface Props {
     title: string;
     /** The other participants. */
-    people: Person[];
+    people: CallPerson[];
+    /** You: avatar letter / background and your camera stream. */
+    self?: { initial?: string; grad?: string; stream?: MediaStream | null };
     media?: 'video' | 'voice';
     full?: boolean;
     muted?: boolean;
-    /** Call start, ms epoch. */
+    /** Your camera is on (defaults to on for video calls). */
+    camera?: boolean;
+    /** You are sharing your screen. */
+    sharing?: boolean;
+    /** Your shared screen, shown on stage while sharing. */
+    screenStream?: MediaStream | null;
+    /** Call start, ms epoch; the duration is hidden without it. */
     start?: number;
     /** Header avatar; defaults to the first participant's. */
     avatarGrad?: string;
     onToggleMute?: () => void;
+    /** Turn your camera on / off. Hidden without it; rolls back if it rejects. */
+    onToggleCamera?: (on: boolean) => Promise<unknown> | void;
+    /** Start / stop sharing your screen. Hidden without it; rolls back if it rejects. */
+    onToggleShare?: (on: boolean) => Promise<unknown> | void;
     onToggleFull?: (full: boolean) => void;
     panelOpen?: boolean;
     /** Shows the details toggle (with panelOpen state). */
@@ -48,9 +70,15 @@
     media = 'video',
     full = false,
     muted = false,
+    camera,
+    sharing: sharingProp = false,
+    screenStream = null,
+    self,
     start,
     avatarGrad,
     onToggleMute,
+    onToggleCamera,
+    onToggleShare,
     onToggleFull,
     panelOpen = false,
     onTogglePanel,
@@ -60,7 +88,8 @@
   }: Props = $props();
   const t = useT();
 
-  const ME = { name: 'ui.callPanel.you', initial: 'I', grad: 'linear-gradient(140deg,#FF9F45,#FF5672)', bg: 'linear-gradient(165deg,#3d434c,#22262d)' };
+  const ME_GRAD = 'linear-gradient(140deg,#FF9F45,#FF5672)';
+  const ME_BG = 'linear-gradient(165deg,#3d434c,#22262d)';
   const BGS = [
     'linear-gradient(165deg,#4a3b45,#1d1a22)',
     'linear-gradient(165deg,#2f3a44,#1a2026)',
@@ -75,8 +104,9 @@
 
   let root: HTMLDivElement;
   let pip = $state<HTMLDivElement>();
+  // optimistic overrides while the host applies a camera / share change; cleared when the prop moves or on rejection
   let camOverride = $state<boolean | null>(null);
-  let sharing = $state(false);
+  let shareOverride = $state<boolean | null>(null);
   let idle = $state(false);
   let corner = $state('br');
   let now = $state(Date.now());
@@ -84,26 +114,74 @@
   let idleTimer: ReturnType<typeof setTimeout> | undefined;
   let drag: { x: number; y: number; moved: boolean } | null = null;
 
-  const cam = $derived(camOverride ?? media === 'video');
+  const cam = $derived(camOverride ?? camera ?? media === 'video');
+  const sharing = $derived(shareOverride ?? sharingProp);
+  $effect(() => {
+    void camera;
+    camOverride = null;
+  });
+  $effect(() => {
+    void sharingProp;
+    shareOverride = null;
+  });
+
+  async function flip(kind: 'cam' | 'share') {
+    const next = kind === 'cam' ? !cam : !sharing;
+    const call = kind === 'cam' ? onToggleCamera : onToggleShare;
+    if (!call) return;
+    if (kind === 'cam') camOverride = next;
+    else shareOverride = next;
+    try {
+      await call(next);
+    } catch {
+      if (kind === 'cam') camOverride = null;
+      else shareOverride = null;
+    }
+  }
+
   const others = $derived(people.map((o, i) => ({ bg: BGS[i % BGS.length], ...o })));
-  // the active speaker rotates every 2.6s until real audio levels are wired in
-  const speaking = $derived(others.length ? Math.floor(now / 2600) % others.length : -1);
   const pipMode = $derived(!sharing && others.length <= 2);
 
-  type Tile = { name: string; initial: string; grad: string; bg: string; ratio: number; muted: boolean; speaking: boolean; big: boolean };
-  const selfTile = $derived<Tile>({ ...ME, name: t(ME.name), bg: cam ? ME.bg : '#16161c', ratio: 4 / 3, muted, speaking: false, big: false });
+  type Tile = { key: string; name: string; initial: string; grad: string; bg: string; ratio: number; muted: boolean; speaking: boolean; big: boolean; stream: MediaStream | null };
+  const selfTile = $derived<Tile>({
+    key: 'self',
+    name: t('ui.callPanel.you'),
+    initial: self?.initial ?? t('ui.callPanel.you').slice(0, 1),
+    grad: self?.grad ?? ME_GRAD,
+    bg: cam ? ME_BG : '#16161c',
+    ratio: 4 / 3,
+    muted,
+    speaking: false,
+    big: false,
+    stream: cam ? (self?.stream ?? null) : null,
+  });
   const tileOf = (o: (typeof others)[number], i: number, big = false): Tile => ({
+    key: o.id ?? `p${i}`,
     name: o.name,
     initial: o.initial,
     grad: o.grad,
     bg: o.bg,
     ratio: o.ratio || 4 / 3,
     muted: !!o.muted,
-    speaking: i === speaking,
+    speaking: !!o.speaking,
     big,
+    stream: o.stream ?? null,
   });
   const tiles = $derived(sharing ? [] : pipMode ? others.map((o, i) => tileOf(o, i, others.length === 1)) : [...others.map((o, i) => tileOf(o, i)), selfTile]);
   const strip = $derived(sharing ? [...others.map((o, i) => tileOf(o, i)), selfTile] : []);
+
+  // a MediaStream can't be set as an attribute; bind it as srcObject
+  function feed(node: HTMLVideoElement, stream: MediaStream | null) {
+    node.srcObject = stream;
+    return {
+      update(next: MediaStream | null) {
+        if (node.srcObject !== next) node.srcObject = next;
+      },
+      destroy() {
+        node.srcObject = null;
+      },
+    };
+  }
   const cols = $derived(
     sharing || (pipMode && others.length !== 2)
       ? 'minmax(0,1fr)'
@@ -170,27 +248,35 @@
   }
 
   const pipInset = $derived(full ? '20px' : '12px');
-  const controls = $derived([
-    { label: muted ? 'ui.callPanel.unmute' : 'ui.callPanel.mute', icon: muted ? 'mic-off' : 'mic', variant: muted ? 'off' : 'default', pressed: muted, press: () => onToggleMute?.() },
-    { label: cam ? 'ui.callPanel.cameraOff' : 'ui.callPanel.cameraOn', icon: cam ? 'video' : 'video-off', variant: cam ? 'default' : 'off', pressed: !cam, press: () => (camOverride = !cam) },
-    { label: sharing ? 'ui.callPanel.stopSharing' : 'ui.callPanel.shareScreen', icon: 'screen-share', variant: sharing ? 'on' : 'default', pressed: sharing, press: () => (sharing = !sharing) },
-    { label: 'ui.callPanel.leave', icon: 'phone-off', variant: 'danger', pressed: undefined, press: () => onLeave?.() },
-  ] as const);
+  type Control = { label: string; icon: string; variant: 'default' | 'off' | 'on' | 'danger'; pressed: boolean | undefined; press: () => void };
+  const controls = $derived(
+    [
+      { label: muted ? 'ui.callPanel.unmute' : 'ui.callPanel.mute', icon: muted ? 'mic-off' : 'mic', variant: muted ? 'off' : 'default', pressed: muted, press: () => onToggleMute?.() },
+      onToggleCamera && { label: cam ? 'ui.callPanel.cameraOff' : 'ui.callPanel.cameraOn', icon: cam ? 'video' : 'video-off', variant: cam ? 'default' : 'off', pressed: !cam, press: () => flip('cam') },
+      onToggleShare && { label: sharing ? 'ui.callPanel.stopSharing' : 'ui.callPanel.shareScreen', icon: 'screen-share', variant: sharing ? 'on' : 'default', pressed: sharing, press: () => flip('share') },
+      { label: 'ui.callPanel.leave', icon: 'phone-off', variant: 'danger', pressed: undefined, press: () => onLeave?.() },
+    ].filter(Boolean) as Control[],
+  );
 </script>
 
 <div class="call" class:full class:idle={chromeHidden} bind:this={root} onmousemove={wake} data-screen-label={full ? 'Call · full screen' : 'Call'} role="group">
   <div class="stage" class:sharing style:grid-template-columns={cols}>
     {#if sharing}
-      <div class="shared"><span class="shared-label">{t('ui.callPanel.yourSharedScreen')}</span></div>
+      <div class="shared">
+        {#if screenStream}<video class="shared-video" use:feed={screenStream} autoplay playsinline muted></video>{/if}
+        <span class="shared-label">{t('ui.callPanel.yourSharedScreen')}</span>
+      </div>
     {/if}
-    {#each tiles as tile}
-      <div class="cell"><VideoTile nameLabel={tile.name} initial={tile.initial} grad={tile.grad} feed={tile.bg} ratio={tile.ratio} muted={tile.muted} speaking={tile.speaking} big={tile.big} /></div>
+    {#each tiles as tile (tile.key)}
+      <div class="cell">
+        <VideoTile nameLabel={tile.name} initial={tile.initial} grad={tile.grad} feed={tile.bg} stream={tile.stream} mirror={tile.key === 'self'} ratio={tile.ratio} muted={tile.muted} speaking={tile.speaking} big={tile.big} />
+      </div>
     {/each}
   </div>
 
   {#if sharing}
     <div class="strip">
-      {#each strip as tile}
+      {#each strip as tile (tile.key)}
         <div class="strip-tile" class:speaking={tile.speaking} style:background={tile.bg}>
           <div class="strip-center"><span class="strip-avatar" style:background={tile.grad}>{tile.initial}</span></div>
           <span class="tag"><span class="tag-mic" class:muted={tile.muted} style:mask="var(--icon-{tile.muted ? 'mic-off' : 'mic'}) center/contain no-repeat"></span>{tile.name}</span>
@@ -216,7 +302,11 @@
       role="img"
       aria-label={t('ui.callPanel.yourVideo')}
     >
-      <div class="strip-center"><span class="pip-avatar" style:background={selfTile.grad}>{selfTile.initial}</span></div>
+      {#if selfTile.stream}
+        <video class="pip-video" use:feed={selfTile.stream} autoplay playsinline muted></video>
+      {:else}
+        <div class="strip-center"><span class="pip-avatar" style:background={selfTile.grad}>{selfTile.initial}</span></div>
+      {/if}
       <span class="tag"><span class="tag-mic" class:muted style:mask="var(--icon-{muted ? 'mic-off' : 'mic'}) center/contain no-repeat"></span>{t('ui.callPanel.you')}</span>
     </div>
   {/if}
@@ -225,10 +315,14 @@
     <span class="top-avatar" style:background={avatarGrad ?? others[0]?.grad ?? 'transparent'}></span>
     <span class="top-text">
       <span class="top-title">{title}</span>
-      <span class="top-meta"><span class="live-dot"></span>{t('ui.callPanel.duration', { time: fmt(Math.max(0, Math.floor((now - (start ?? now)) / 1000))), count: others.length + 1 })}</span>
+      <span class="top-meta"
+        ><span class="live-dot"></span>{start != null
+          ? t('ui.callPanel.duration', { time: fmt(Math.max(0, Math.floor((now - start) / 1000))), count: others.length + 1 })
+          : t('ui.callPanel.inCall', { count: others.length + 1 })}</span
+      >
     </span>
     {#if sharing}
-      <span class="sharing" onclick={() => (sharing = !sharing)} role="button" tabindex="0"><span class="sharing-icon"></span>{t('ui.callPanel.youreSharing')}<span class="sharing-stop">{t('ui.callPanel.stop')}</span></span>
+      <span class="sharing" onclick={() => flip('share')} role="button" tabindex="0"><span class="sharing-icon"></span>{t('ui.callPanel.youreSharing')}<span class="sharing-stop">{t('ui.callPanel.stop')}</span></span>
     {/if}
     {#if !full && (onTogglePanel || onDetails)}
       <span
@@ -563,5 +657,20 @@
     background: rgba(14, 14, 18, 0.8);
     backdrop-filter: blur(12px);
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  }
+
+  .shared-video,
+  .pip-video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: inherit;
+  }
+
+  .pip-video {
+    object-fit: cover;
+    transform: scaleX(-1);
   }
 </style>

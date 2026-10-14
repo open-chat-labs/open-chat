@@ -1,13 +1,10 @@
 <!-- Activity feed: reactions, mentions, replies and payments, grouped by day, filtered by All / Mentions / Payments.
-     Opening a row marks it read and calls onOpen(chat, item) — every row lands on the message in its chat, payments included. -->
-<script lang="ts">
-  import { useT } from '../../lib/i18n';
-  import ActivityRow from '../../lib/components/ActivityRow.svelte';
-  import EmptyState from '../../lib/components/EmptyState.svelte';
-  import SegmentedTabs from '../../lib/components/SegmentedTabs.svelte';
-  import Skeleton from '../../lib/components/Skeleton.svelte';
-
-  interface ActivityItem {
+     Opening a row calls onOpen(item) (chatId + messageId land on the message, payments included) and marks it read through
+     onMarkRead; "Mark all read" calls onMarkAllRead. Read state comes from `unread` on each item; local marks are optimistic
+     and roll back with an error if the host rejects. Items are identified by `id`, never by title. -->
+<script lang="ts" module>
+  export interface ActivityItem {
+    id: string;
     /** Day heading the item sits under; consecutive items share it. */
     day: string;
     title: string;
@@ -20,30 +17,64 @@
     reactions?: string[];
     type?: 'reaction' | 'mention' | 'reply' | 'payment';
     /** Chat to open. */
-    chat?: string;
+    chatId: string;
+    /** Message to land on. */
+    messageId?: string;
   }
+</script>
+
+<script lang="ts">
+  import { useT } from '../../lib/i18n';
+  import ActivityRow from '../../lib/components/ActivityRow.svelte';
+  import EmptyState from '../../lib/components/EmptyState.svelte';
+  import SegmentedTabs from '../../lib/components/SegmentedTabs.svelte';
+  import Skeleton from '../../lib/components/Skeleton.svelte';
 
   interface Props {
     items: ActivityItem[];
-    onOpen?: (chat: string | undefined, item: ActivityItem) => void;
+    onOpen?: (item: ActivityItem) => void;
+    /** Mark these items read (opening one marks it). Rolls back if it rejects. */
+    onMarkRead?: (ids: string[]) => Promise<unknown> | void;
+    /** "Mark all read"; hidden without it (or onMarkRead). Rolls back if it rejects. */
+    onMarkAllRead?: () => Promise<unknown> | void;
     loading?: boolean;
   }
 
-  let { items, onOpen, loading = false }: Props = $props();
+  let { items, onOpen, onMarkRead, onMarkAllRead, loading = false }: Props = $props();
   const t = useT();
 
   let tab = $state(0);
-  // titles opened (or marked) here
+  // ids marked read here, until the host's items catch up
   let read = $state<string[]>([]);
+  let failed = $state(false);
 
-  const isUnread = (it: ActivityItem) => !!it.unread && !read.includes(it.title);
+  const isUnread = (it: ActivityItem) => !!it.unread && !read.includes(it.id);
   const shown = $derived(items.filter((it) => tab === 0 || (tab === 1 && it.type === 'mention') || (tab === 2 && it.type === 'payment')));
   const counts = $derived([items.length, items.filter((i) => i.type === 'mention').length, items.filter((i) => i.type === 'payment').length]);
   const hasUnread = $derived(items.some(isUnread));
 
+  async function markRead(ids: string[], call: () => Promise<unknown> | void) {
+    const fresh = ids.filter((id) => !read.includes(id));
+    if (!fresh.length) return;
+    failed = false;
+    read = [...read, ...fresh];
+    try {
+      await call();
+    } catch {
+      read = read.filter((id) => !fresh.includes(id));
+      failed = true;
+    }
+  }
+
   function open(it: ActivityItem) {
-    if (!read.includes(it.title)) read = [...read, it.title];
-    onOpen?.(it.chat, it);
+    if (isUnread(it) && onMarkRead) markRead([it.id], () => onMarkRead([it.id]));
+    onOpen?.(it);
+  }
+
+  function markAll() {
+    const ids = items.filter(isUnread).map((i) => i.id);
+    if (onMarkAllRead) markRead(ids, onMarkAllRead);
+    else if (onMarkRead) markRead(ids, () => onMarkRead(ids));
   }
 </script>
 
@@ -51,10 +82,11 @@
   <div class="top">
     <div class="title-row">
       <span class="title">{t('ui.activityPanel.title')}</span>
-      {#if hasUnread}
-        <span class="mark-all" onclick={() => (read = items.map((i) => i.title))} role="button" tabindex="0">{t('ui.activityPanel.markAllRead')}</span>
+      {#if hasUnread && (onMarkAllRead || onMarkRead)}
+        <span class="mark-all" onclick={markAll} role="button" tabindex="0">{t('ui.activityPanel.markAllRead')}</span>
       {/if}
     </div>
+    {#if failed}<span class="failed" role="alert">{t('ui.activityPanel.markFailed')}</span>{/if}
     <div class="tabs"><SegmentedTabs labels={[t('ui.activityPanel.tabAll'), t('ui.activityPanel.tabMentions'), t('ui.activityPanel.tabPayments')]} {counts} selectedIndex={tab} dotOnLast={false} onSelect={(i) => (tab = i)} /></div>
   </div>
 
@@ -62,7 +94,7 @@
     {#if loading}
       <Skeleton variant="activity" count={7} />
     {:else}
-      {#each shown as it, i}
+      {#each shown as it, i (it.id)}
         {#if i === 0 || shown[i - 1].day !== it.day}
           <span class="day" class:first={i === 0}>{it.day}</span>
         {/if}
@@ -128,6 +160,12 @@
     font: var(--weight-bold) var(--text-xl) / 1.2 var(--font-sans);
     letter-spacing: var(--tracking-tight);
     color: var(--ink, #ececf1);
+  }
+
+  .failed {
+    padding: 0 var(--space-10);
+    font: var(--weight-medium) var(--text-sm) / 1.4 var(--font-sans);
+    color: var(--status-danger, #f5493d);
   }
 
   .mark-all {

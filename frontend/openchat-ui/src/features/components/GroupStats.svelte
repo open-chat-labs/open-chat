@@ -11,11 +11,11 @@
     mix: { label: string; count: number; color?: string }[];
     /** Messages per week, oldest first; the last reads as this week. */
     weeks: number[];
-    /** Top senders. */
-    people: { name: string; count: number; gradient?: string }[];
+    /** Top senders; avatarUrl replaces the initials. */
+    people: { userId?: string; name: string; count: number; gradient?: string; avatarUrl?: string }[];
     /** Labels: resource keys (or literal text). */
     engagement: { count: string; label: string }[];
-    /** Total for the previous 30 days. */
+    /** Total for the previous 30 days; 0 hides the comparison. */
     totalPrev: number;
     /** Members beyond `people` who sent the rest. */
     otherPeople: number;
@@ -36,8 +36,11 @@
       .map((p) => p[0].toUpperCase())
       .join('');
 
-  const total = $derived(mix.reduce((s, x) => s + x.count, 0) || 1);
-  const pct = $derived(Math.round(((total - totalPrev) / totalPrev) * 1000) / 10);
+  const total = $derived(mix.reduce((s, x) => s + x.count, 0));
+  // shares divide by at least 1, so an empty period reads 0 rather than NaN
+  const whole = $derived(total || 1);
+  // no previous period: nothing to compare against
+  const pct = $derived(totalPrev > 0 ? Math.round(((total - totalPrev) / totalPrev) * 1000) / 10 : null);
   const peak = $derived(Math.max(...weeks) || 1);
   const topCount = $derived(people.reduce((m, p) => Math.max(m, p.count), 1));
   const others = $derived(Math.max(total - people.reduce((s, p) => s + p.count, 0), 0));
@@ -50,13 +53,15 @@
       <span class="total">{fmt(total)}</span>
       <span class="total-unit">{t('ui.groupStats.messagesUnit', { count: total })}</span>
     </div>
-    <div class="delta-line">
-      <span class="delta" class:down={pct < 0}>
-        <span class="delta-icon"></span>
-        <span class="delta-label">{pct >= 0 ? '+' : ''}{pct}%</span>
-      </span>
-      <span class="delta-note">{t('ui.groupStats.vsPrevious')}</span>
-    </div>
+    {#if pct != null}
+      <div class="delta-line">
+        <span class="delta" class:down={pct < 0}>
+          <span class="delta-icon"></span>
+          <span class="delta-label">{pct >= 0 ? '+' : ''}{pct}%</span>
+        </span>
+        <span class="delta-note">{t('ui.groupStats.vsPrevious')}</span>
+      </div>
+    {/if}
   </div>
 
   <div class="block weeks-block">
@@ -66,7 +71,7 @@
       {/each}
     </div>
     <div class="weeks-axis">
-      <span class="axis">{t('ui.groupStats.weeksAgo')}</span>
+      <span class="axis">{t('ui.groupStats.weeksAgo', { count: weeks.length })}</span>
       <span class="axis now">{t('ui.groupStats.thisWeek')}</span>
     </div>
   </div>
@@ -77,7 +82,7 @@
     <span class="section-title">{t('ui.groupStats.whatGetsSent')}</span>
     <div class="mix-bar">
       {#each mix as m, i}
-        <div class="mix-part" style:width="{((m.count / total) * 100).toFixed(2)}%" style:background={m.color || MIX_COLORS[i % MIX_COLORS.length]}></div>
+        <div class="mix-part" style:width="{((m.count / whole) * 100).toFixed(2)}%" style:background={m.color || MIX_COLORS[i % MIX_COLORS.length]}></div>
       {/each}
     </div>
     <div class="mix-list">
@@ -86,7 +91,7 @@
           <span class="mix-dot" style:background={m.color || MIX_COLORS[i % MIX_COLORS.length]}></span>
           <span class="mix-label">{t(m.label)}</span>
           <span class="mix-count">{fmt(m.count)}</span>
-          <span class="mix-pct">{Math.round((m.count / total) * 100)}%</span>
+          <span class="mix-pct">{Math.round((m.count / whole) * 100)}%</span>
         </div>
       {/each}
     </div>
@@ -99,7 +104,9 @@
     <div class="people">
       {#each people as p}
         <div class="person">
-          <span class="initials" style:background={p.gradient || 'linear-gradient(145deg,#C9B4FF,#8A6BE0)'}>{initials(p.name)}</span>
+          <span class="initials" style:background={p.avatarUrl ? `url(${p.avatarUrl}) center/cover no-repeat` : p.gradient || 'linear-gradient(145deg,#C9B4FF,#8A6BE0)'}
+            >{p.avatarUrl ? '' : initials(p.name)}</span
+          >
           <div class="person-body">
             <div class="person-line">
               <span class="person-name">{p.name}</span>

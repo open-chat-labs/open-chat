@@ -1,6 +1,33 @@
-<!-- In-place Swap for the wallet main column: Details → Quote (30s, single best DEX) → Swap (three on-chain steps).
+<!-- In-place Swap for the wallet main column: Details → Quote (host's best DEX, until its expiresAt) → Swap (five on-chain
+     steps grouped into three phases). The host does the work: onQuote returns the quote (output, fees, impact, expiry) and
+     onSwap runs it, reporting progress through onStep; either rejecting keeps the amount and shows an error.
      Editing amount/tokens drops a live quote; slippage doesn't (min. received recomputes). Below 760px the quote panel
      stacks under the form. Pay offers only held tokens; Get offers anything swappable, yours first. -->
+<script lang="ts" module>
+  export interface SwapRequest {
+    from: string;
+    to: string;
+    amount: number;
+    /** Max slippage, in percent. */
+    slippagePct: number;
+  }
+
+  export interface SwapQuote {
+    /** Host's handle for this quote, passed back to onSwap. */
+    id?: string;
+    /** DEX that gave the best rate. */
+    dex: string;
+    /** e.g. "0.30%". */
+    dexFee: string;
+    /** Amount of `to` received at the quoted rate. */
+    out: number;
+    impactPct: number;
+    networkFeeUsd: number;
+    /** When the quote stops being valid (ms epoch). */
+    expiresAt: number;
+  }
+</script>
+
 <script lang="ts">
   import { getI18n, useT } from '../../lib/i18n';
   import { cleanAmount, parseAmount } from '../../lib/amount';
@@ -21,13 +48,8 @@
   import TokenPicker from '../../lib/components/TokenPicker.svelte';
   const i18n = getI18n(); // number formatting follows the host locale
 
-  const DEX = [
-    { name: 'KongSwap', fee: '0.30%' },
-    { name: 'ICPSwap', fee: '0.30%' },
-    { name: 'Sonic', fee: '0.25%' },
-  ];
   const SLIPS = [0.1, 0.5, 1, 3];
-  const QUOTE_SECS = 30;
+  const STEPS = 5;
   const fmt = (v: number, dp: number) => v.toLocaleString(i18n.locale ?? 'en', { minimumFractionDigits: 0, maximumFractionDigits: dp });
   const usd = (v: number) => `$${v.toLocaleString(i18n.locale ?? 'en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -37,11 +59,19 @@
     tokens: WalletToken[];
     /** Symbol to pay with; falls back to ICP. */
     token?: string;
+    /** DEX names shown while a quote is found ("Checking KongSwap, ICPSwap and Sonic"). */
+    dexes?: string[];
+    /** Find the best quote. Reject to go back to the form with an error. Without it, no quote can be fetched. */
+    onQuote?: (r: SwapRequest) => Promise<SwapQuote>;
+    /** Run the swap; call onStep(i) as each of the 5 steps (deposit, transfer, notify, swap, withdraw) starts.
+     *  Resolve (optionally with the actual output) when it's in the wallet; reject to show an error. */
+    onSwap?: (r: { request: SwapRequest; quote: SwapQuote; onStep: (step: number) => void }) => Promise<{ out?: number } | void>;
     onClose?: () => void;
+    /** After a completed swap, when the user leaves with Done. */
     onSwapped?: (s: { from: string; to: string; amount: number; out: number; fiat: number; fromDp: number; toDp: number }) => void;
   }
 
-  let { tokens, token, onClose, onSwapped }: Props = $props();
+  let { tokens, token, dexes = [], onQuote, onSwap, onClose, onSwapped }: Props = $props();
   // `t` is the receiving token below, so the translator is `tr`
   const tr = useT();
 
@@ -56,19 +86,21 @@
   let amt = $state('');
   let slipIdx = $state(1);
   let stage = $state<Stage>('form');
-  let left = $state(QUOTE_SECS);
+  let left = $state(0);
   let prog = $state(0);
-  let dexIdx = $state(0);
+  let quote = $state<SwapQuote | null>(null);
+  let received = $state<number | null>(null);
+  let error = $state<'' | 'quote' | 'swap'>('');
+  // a newer quote request (or an edit) makes an older pending one stale
+  let run = 0;
   let pick = $state<'from' | 'to' | null>(null);
   let width = $state(0);
 
+  // display-only: counts down to the host's expiresAt
   let countdown: ReturnType<typeof setInterval> | undefined;
-  let progress: ReturnType<typeof setInterval> | undefined;
-  let quoteTimer: ReturnType<typeof setTimeout> | undefined;
   onDestroy(() => {
+    run++;
     clearInterval(countdown);
-    clearInterval(progress);
-    clearTimeout(quoteTimer);
   });
 
   const narrow = $derived(width > 0 && width < 760);
@@ -76,12 +108,13 @@
   const t = $derived(list.find((x) => x.symbol === to) ?? list[0]);
   const n = $derived(parseAmount(amt));
   const usdIn = $derived(f ? n * f.price : 0);
-  const impactPct = $derived(Math.min(9, (usdIn / 40000) * 100));
-  const out = $derived(t ? (usdIn / t.price) * (1 - impactPct / 100) * 0.997 : 0);
+  const impactPct = $derived(quote?.impactPct ?? 0);
+  const out = $derived(received ?? quote?.out ?? 0);
   const slip = $derived(SLIPS[slipIdx]);
   const over = $derived(!!f && n > f.held);
-  const ok = $derived(n > 0 && !over);
-  const dex = $derived(DEX[dexIdx]);
+  const ok = $derived(n > 0 && !over && !!onQuote);
+  const dexName = $derived(quote?.dex ?? '');
+  const listFmt = new Intl.ListFormat(i18n.locale ?? 'en', { type: 'conjunction' });
   const quoted = $derived(stage === 'quoted');
   const done = $derived(stage === 'done');
   const busy = $derived(stage === 'progress' || done);
@@ -93,15 +126,15 @@
   // the real swap is 5 on-chain steps; grouped into the 3 phases people care about
   const subSteps = $derived([
     tr('ui.walletSwap.sub.deposit'),
-    tr('ui.walletSwap.sub.transfer', { amount: amtIn, dex: dex.name }),
-    tr('ui.walletSwap.sub.notify', { dex: dex.name }),
+    tr('ui.walletSwap.sub.transfer', { amount: amtIn, dex: dexName }),
+    tr('ui.walletSwap.sub.notify', { dex: dexName }),
     tr('ui.walletSwap.sub.swap', { from: f?.symbol, to: t?.symbol }),
-    tr('ui.walletSwap.sub.withdraw', { amount: amtOut, dex: dex.name }),
+    tr('ui.walletSwap.sub.withdraw', { amount: amtOut, dex: dexName }),
   ]);
   const phases = $derived(
     (
       [
-        [tr('ui.walletSwap.phase.send', { dex: dex.name }), [0, 1, 2]],
+        [tr('ui.walletSwap.phase.send', { dex: dexName }), [0, 1, 2]],
         [tr('ui.walletSwap.phase.swap'), [3]],
         [tr('ui.walletSwap.phase.return'), [4]],
       ] as [string, number[]][]
@@ -115,11 +148,11 @@
     const impact = `${impactPct < 0.01 ? '<0.01' : impactPct.toFixed(2)}%`;
     const impactInk = impactPct > 3 ? 'var(--status-danger,#F5493D)' : impactPct > 1 ? '#FFB03D' : '#2EE6A8';
     const all = [
-      { k: tr('ui.walletSwap.row.via'), v: dex.name, ink: 'var(--ink,#ECECF1)' },
+      { k: tr('ui.walletSwap.row.via'), v: dexName, ink: 'var(--ink,#ECECF1)' },
       { k: tr('ui.walletSwap.row.priceImpact'), v: impact, ink: impactInk },
       { k: tr('ui.walletSwap.row.minReceived'), v: `${fmt(out * (1 - slip / 100), t.dp)} ${t.symbol}`, ink: 'var(--ink,#ECECF1)' },
-      { k: tr('ui.walletSwap.row.dexFee'), v: dex.fee, ink: 'var(--ink,#ECECF1)' },
-      { k: tr('ui.walletSwap.row.networkFees'), v: '~$0.01', ink: 'var(--ink,#ECECF1)' },
+      { k: tr('ui.walletSwap.row.dexFee'), v: quote?.dexFee ?? '', ink: 'var(--ink,#ECECF1)' },
+      { k: tr('ui.walletSwap.row.networkFees'), v: `~${usd(quote?.networkFeeUsd ?? 0)}`, ink: 'var(--ink,#ECECF1)' },
     ];
     return all.map((r, i) => ({ ...r, rule: (i < all.length - 1 ? 'bottom' : 'none') as 'bottom' | 'none' }));
   });
@@ -142,39 +175,65 @@
 
   // editing amount or tokens drops a pending or live quote
   function drop() {
+    error = '';
     if (stage === 'quoted' || stage === 'quoting') {
+      run++;
       clearInterval(countdown);
-      clearTimeout(quoteTimer);
+      quote = null;
       stage = 'form';
     }
   }
 
-  function getQuote() {
-    if (!ok) return;
+  const request = (): SwapRequest => ({ from: f.symbol, to: t.symbol, amount: n, slippagePct: slip });
+
+  async function getQuote() {
+    if (!ok || !onQuote) return;
+    const mine = ++run;
     clearInterval(countdown);
-    clearTimeout(quoteTimer);
+    error = '';
     stage = 'quoting';
-    quoteTimer = setTimeout(() => {
-      stage = 'quoted';
-      left = QUOTE_SECS;
-      dexIdx = Math.floor(Math.random() * DEX.length);
-      countdown = setInterval(() => {
-        if (left > 0) left--;
-      }, 1000);
-    }, 1300);
+    let q: SwapQuote;
+    try {
+      q = await onQuote(request());
+    } catch {
+      if (mine !== run) return;
+      error = 'quote';
+      stage = 'form';
+      return;
+    }
+    if (mine !== run) return;
+    quote = q;
+    received = null;
+    stage = 'quoted';
+    const tickLeft = () => (left = Math.max(0, Math.ceil((q.expiresAt - Date.now()) / 1000)));
+    tickLeft();
+    countdown = setInterval(tickLeft, 1000);
   }
 
-  function swap() {
+  async function swap() {
+    if (!quote || !onSwap || left <= 0) return;
+    const q = quote;
+    const mine = ++run;
     clearInterval(countdown);
+    error = '';
     stage = 'progress';
     prog = 0;
-    progress = setInterval(() => {
-      prog++;
-      if (prog >= 5) {
-        clearInterval(progress);
-        stage = 'done';
-      }
-    }, 900);
+    try {
+      const onStep = (i: number) => {
+        if (mine === run) prog = Math.max(prog, Math.min(i, STEPS - 1));
+      };
+      const res = await onSwap({ request: request(), quote: q, onStep });
+      if (mine !== run) return;
+      if (res && typeof res.out === 'number') received = res.out;
+      prog = STEPS;
+      stage = 'done';
+    } catch {
+      if (mine !== run) return;
+      // the quote is spent either way; the amount stays for a fresh quote
+      quote = null;
+      error = 'swap';
+      stage = 'form';
+    }
   }
 
   function chooseAmount(k: number) {
@@ -274,15 +333,16 @@
                 <span class="placeholder-title">{tr('ui.walletSwap.noQuote')}</span>
                 <span class="placeholder-body">{tr('ui.walletSwap.noQuoteBody')}</span>
               </div>
+              {#if error}<span class="swap-error" role="alert">{tr(error === 'quote' ? 'ui.walletSwap.quoteFailed' : 'ui.walletSwap.swapFailed')}</span>{/if}
               <span class="cta" class:disabled={!ok} onclick={getQuote} tabindex="0" role="button" aria-disabled={!ok}
-                >{ok ? tr('ui.walletSwap.getQuote') : over ? tr('ui.walletSwap.notEnough', { symbol: f.symbol }) : tr('ui.walletSwap.enterAmount')}</span
+                >{over ? tr('ui.walletSwap.notEnough', { symbol: f.symbol }) : n > 0 ? tr('ui.walletSwap.getQuote') : tr('ui.walletSwap.enterAmount')}</span
               >
             {:else if stage === 'quoting'}
               <ListSectionLabel label={tr('ui.walletSwap.quoteLabel')} />
               <div class="finding">
                 <Spinner size={36} label={tr('ui.walletSwap.findingRate')} />
                 <span class="finding-title">{tr('ui.walletSwap.findingRateEllipsis')}</span>
-                <span class="finding-note">{tr('ui.walletSwap.checkingDexes', { a: DEX[0].name, b: DEX[1].name, c: DEX[2].name })}</span>
+                {#if dexes.length}<span class="finding-note">{tr('ui.walletSwap.checkingDexList', { list: listFmt.format(dexes) })}</span>{/if}
               </div>
             {:else if quoted}
               <div class="quote-head">
@@ -294,7 +354,7 @@
               </div>
               <div class="quote-figures">
                 <span class="pair">{n > 0 ? fmt(n, f.dp) : '0'} {f.symbol} → {n > 0 ? fmt(out, t.dp) : '0'} {t.symbol}</span>
-                <span class="rate">1 {f.symbol} ≈ {fmt(f.price / t.price, t.symbol === 'BTC' ? 8 : 4)} {t.symbol}</span>
+                <span class="rate">1 {f.symbol} ≈ {fmt(n > 0 ? out / n : 0, t.symbol === 'BTC' ? 8 : 4)} {t.symbol}</span>
               </div>
               <div class="rows">
                 <DetailRow label={tr('ui.walletSwap.row.maxSlippage')} value="{slip}%" rule="bottom" />
@@ -310,7 +370,9 @@
               <ListSectionLabel label={tr(done ? 'ui.walletSwap.completeLabel' : 'ui.walletSwap.swappingLabel')} />
               <div class="progress-head">
                 <span class="progress-title">{done ? tr('ui.walletSwap.swapped', { amountIn: amtIn, amountOut: amtOut }) : `${amtIn} → ${amtOut}`}</span>
-                <span class="progress-note">{done ? tr('ui.walletSwap.inWallet') : tr('ui.walletSwap.stepOf', { step: Math.min(prog + 1, 5), total: 5, label: subSteps[Math.min(prog, 4)] })}</span>
+                <span class="progress-note"
+                  >{done ? tr('ui.walletSwap.inWallet') : tr('ui.walletSwap.stepOf', { step: Math.min(prog + 1, STEPS), total: STEPS, label: subSteps[Math.min(prog, STEPS - 1)] })}</span
+                >
               </div>
               <ProgressTimeline {phases} density="compact" collapseDone={true} />
               <span class="spacer"></span>
@@ -457,6 +519,12 @@
     align-items: center;
     justify-content: center;
     gap: 14px;
+  }
+
+  .swap-error {
+    font: 500 13px/1.4 var(--font-sans);
+    color: var(--status-danger, #f5493d);
+    text-align: center;
   }
 
   .placeholder {

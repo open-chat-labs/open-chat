@@ -1,8 +1,10 @@
 <!-- The chat list column: optional header (dms or community), search, All / Direct / Groups / Unread filter, a "Thread replies"
-     entry, then rows grouped into sections (Pinned, Recent). Section order is fixed, never inherited from row order. -->
+     entry, then rows grouped into sections (Pinned, Recent). Section order is fixed, never inherited from row order.
+     Rows are identified by `id` (titles repeat: two DMs with "Alex"). Search filters `rows` by title; with onSearch the host
+     searches instead (users and groups not loaded yet) and supplies the rows. -->
 <script lang="ts">
   import { useT } from '../../lib/i18n';
-  import type { ComponentProps } from 'svelte';
+  import { untrack, type ComponentProps } from 'svelte';
   import type { MenuItem } from '../../lib/types';
   import Badge from '../../lib/components/Badge.svelte';
   import ChatListHeader from './ChatListHeader.svelte';
@@ -25,6 +27,8 @@
   type RowProps = Omit<ComponentProps<typeof ChatRow>, 'onClick' | 'menuItems'>;
 
   interface Row extends RowProps {
+    /** The chat's id, reported by onSelect. */
+    id: string;
     /** Section heading; "Pinned" also pins the row. Defaults to Recent. */
     section?: string;
     /** Row menu. */
@@ -37,7 +41,7 @@
     rows: Row[];
     /** Section headings with counts; off = one flat list. */
     showLabels?: boolean;
-    onSelect?: (title: string) => void;
+    onSelect?: (id: string, row: Row) => void;
     /** Shows the header. */
     headerKind?: HeaderProps['kind'];
     headerTitle?: string;
@@ -45,13 +49,22 @@
     headerMembers?: number;
     headerColor?: HeaderProps['color'];
     headerMenuItems?: MenuItem[];
-    onHeaderMenu?: (label: string) => void;
+    /** Header ⋯ menu pick: the item's id (see ChatListHeader). */
+    onHeaderMenu?: (id: string) => void;
+    /** Header capabilities (community): see ChatListHeader. */
+    headerCanEdit?: boolean;
+    headerCanCreateChannel?: boolean;
+    headerCanInvite?: boolean;
     onHeaderDetails?: () => void;
     onCreateGroup?: () => void;
     /** Resource key (or literal text). */
     searchPlaceholder?: string;
     /** Live search; otherwise the field is a static chip. */
     searchable?: boolean;
+    /** Initial search text. */
+    query?: string;
+    /** Server-side search: called as the user types; local title filtering is then off. */
+    onSearch?: (query: string) => void;
     showThreads?: boolean;
     threadCount?: number;
     threadsAction?: () => void;
@@ -74,10 +87,15 @@
     headerColor = 'teal',
     headerMenuItems,
     onHeaderMenu,
+    headerCanEdit = false,
+    headerCanCreateChannel = false,
+    headerCanInvite = false,
     onHeaderDetails,
     onCreateGroup,
     searchPlaceholder = 'ui.chatListPanel.searchPlaceholder',
     searchable = false,
+    query: initialQuery = '',
+    onSearch,
     showThreads = true,
     threadCount = 0,
     threadsAction,
@@ -91,12 +109,17 @@
 
   // the user's pick sticks until the parent selects a different filter
   let filter = $derived(selectedFilter);
-  let query = $state('');
+  let query = $state(untrack(() => initialQuery));
+  const search = (q: string) => {
+    query = q;
+    onSearch?.(q);
+  };
 
   const all = $derived(rows.map((r) => ({ ...r, kind: r.kind ?? 'user', pinned: r.pinned ?? r.section === 'Pinned' })));
   const filterKey = $derived((filterLabels[filter] ?? 'All').toLowerCase());
   const shown = $derived.by(() => {
-    const q = searchable ? query.trim().toLowerCase() : '';
+    // with onSearch the host has already filtered `rows`
+    const q = searchable && !onSearch ? query.trim().toLowerCase() : '';
     return all
       .filter((r) => !q || r.title.toLowerCase().includes(q))
       .filter((r) =>
@@ -132,6 +155,9 @@
         memberCount={headerMembers}
         color={headerColor}
         menuItems={headerMenuItems}
+        canEdit={headerCanEdit}
+        canCreateChannel={headerCanCreateChannel}
+        canInvite={headerCanInvite}
         {onCreateGroup}
         onMenu={onHeaderMenu}
         openDetails={onHeaderDetails}
@@ -139,11 +165,11 @@
     </div>
   {/if}
   <div class="cell">
-    <Field placeholder={t(searchPlaceholder)} value={query} onInput={searchable ? (e) => (query = e.currentTarget.value) : undefined} onClear={() => (query = '')} />
+    <Field placeholder={t(searchPlaceholder)} value={query} onInput={searchable ? (e) => search(e.currentTarget.value) : undefined} onClear={() => search('')} />
   </div>
   {#if showTabs}
     <div class="cell">
-      <SegmentedTabs labels={filterLabels.map((l) => FILTER_KEYS[l] ?? l)} selectedIndex={filter} dotIndexes={hasUnread ? [filterLabels.length - 1] : []} onSelect={(i) => (filter = i)} />
+      <SegmentedTabs labels={filterLabels.map((l) => FILTER_KEYS[l] ?? l)} selectedIndex={filter} dotIndexes={hasUnread && filterLabels.includes('Unread') ? [filterLabels.indexOf('Unread')] : []} onSelect={(i) => (filter = i)} />
     </div>
   {/if}
   {#if showThreads && shown.length > 0}
@@ -165,7 +191,7 @@
             {#if group.label}
               <div class="section-label">{t(SECTION_KEYS[group.label] ?? group.label).toUpperCase()} <span class="section-count">{group.rows.length}</span></div>
             {/if}
-            {#each group.rows as row}
+            {#each group.rows as row (row.id)}
               <div class="cell">
                 <ChatRow
                   liveCall={row.liveCall}
@@ -181,7 +207,7 @@
                   pinned={row.pinned}
                   selected={row.selected}
                   typing={row.typing}
-                  onClick={onSelect ? () => onSelect(row.title) : undefined}
+                  onClick={onSelect ? () => onSelect(row.id, row) : undefined}
                   menuItems={row.menu}
                 />
               </div>

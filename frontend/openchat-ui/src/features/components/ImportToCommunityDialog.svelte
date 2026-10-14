@@ -1,5 +1,17 @@
 <!-- Import a group into a community you own, as a channel: pick a community → confirm (irreversible warning).
-     onConfirm(communityName) fires after the close animation. -->
+     onConfirm(community) gets the picked community (with its id) and is awaited: the dialog shows "Importing…", closes once
+     it resolves and stays on the confirm step with an error if it rejects. It can't be dismissed while importing. -->
+<script lang="ts" module>
+  export interface ImportCommunity {
+    id: string;
+    name: string;
+    /** Avatar image URL; falls back to a gradient. */
+    avatarUrl?: string;
+    members: number;
+    channels: number;
+  }
+</script>
+
 <script lang="ts">
   import { onDestroy } from 'svelte';
   import { modal } from '../../lib/behaviours/modal';
@@ -8,17 +20,14 @@
 
   const GRADIENTS = ['linear-gradient(140deg,#ff8a5f,#b3407a)', 'linear-gradient(140deg,#5fa8ff,#8c6bff)', 'linear-gradient(140deg,#2ee6a8,#1fb6ff)'];
 
-  interface Community {
-    name: string;
-    members: number;
-    channels: number;
-  }
+  type Community = ImportCommunity;
 
   interface Props {
     groupName: string;
     /** Communities you own. */
     communities: Community[];
-    onConfirm?: (community: string) => void;
+    /** Import the group into this community. Reject to keep the dialog open with an error. */
+    onConfirm?: (community: ImportCommunity) => Promise<unknown> | void;
     onCancel?: () => void;
   }
 
@@ -27,16 +36,17 @@
   const t = useT();
   const meta = (c: Community) => t('ui.importToCommunityDialog.meta', { members: c.members, channels: c.channels });
 
-
   let target = $state<{ community: Community; gradient: string } | null>(null);
 
   let closing = $state(false);
+  let importing = $state(false);
+  let failed = $state(false);
   let timer: ReturnType<typeof setTimeout> | undefined;
   onDestroy(() => clearTimeout(timer));
 
   // play the exit animation, then hand control back
   function close(then?: () => void) {
-    if (closing) return;
+    if (closing || importing) return;
     closing = true;
     timer = setTimeout(() => {
       closing = false;
@@ -44,10 +54,23 @@
     }, 170);
   }
 
-  function confirm() {
-    const name = target?.community.name;
-    close(() => onConfirm?.(name ?? ''));
+  async function confirm() {
+    if (!target || importing) return;
+    importing = true;
+    failed = false;
+    try {
+      await onConfirm?.(target.community);
+    } catch {
+      failed = true;
+      return;
+    } finally {
+      importing = false;
+    }
+    // animate out and stay hidden; the host unmounts the dialog once onConfirm has resolved
+    closing = true;
   }
+
+  const avatarOf = (c: Community, i: number) => (c.avatarUrl ? `url(${c.avatarUrl}) center/cover no-repeat` : GRADIENTS[i % GRADIENTS.length]);
 </script>
 
 <div class="layer" class:closing role="dialog" aria-modal="true" use:modal={() => close(onCancel)}>
@@ -55,7 +78,16 @@
   <div class="card">
     <div class="head">
       {#if target}
-        <span class="icon-button" onclick={() => (target = null)} role="button" tabindex="0" aria-label={t('ui.common.back')}><span class="back-icon"></span></span>
+        <span
+          class="icon-button"
+          onclick={() => {
+            if (importing) return;
+            target = null;
+            failed = false;
+          }}
+          role="button"
+          tabindex="0"
+          aria-label={t('ui.common.back')}><span class="back-icon"></span></span>
       {:else}
         <span class="badge"><span class="badge-icon import"></span></span>
       {/if}
@@ -79,7 +111,7 @@
             <span class="pick-label">{t('ui.importToCommunityDialog.selectCommunity', { count: communities.length })}</span>
             <div class="list">
               {#each communities as community, i}
-                {@const gradient = GRADIENTS[i % GRADIENTS.length]}
+                {@const gradient = avatarOf(community, i)}
                 <div class="community" onclick={() => (target = { community, gradient })} role="button" tabindex="0">
                   <span class="avatar" style:background={gradient}></span>
                   <div class="names">
@@ -120,12 +152,15 @@
     </div>
 
     <div class="foot">
-      <span class="text-button" onclick={() => close(onCancel)} role="button" tabindex="0">{t('ui.common.cancel')}</span>
+      <span class="text-button" onclick={() => close(onCancel)} role="button" tabindex="0" aria-disabled={importing}>{t('ui.common.cancel')}</span>
       <span class="grow"></span>
+      {#if failed}
+        <span class="error" role="alert">{t('ui.importToCommunityDialog.failed')}</span>
+      {/if}
       {#if target}
-        <div class="primary" onclick={confirm} role="button" tabindex="0">
+        <div class="primary" class:busy={importing} onclick={confirm} role="button" tabindex="0" aria-disabled={importing}>
           <span class="primary-icon import"></span>
-          <span>{t('ui.importToCommunityDialog.proceed')}</span>
+          <span>{t(importing ? 'ui.importToCommunityDialog.importing' : 'ui.importToCommunityDialog.proceed')}</span>
         </div>
       {/if}
     </div>
@@ -133,6 +168,16 @@
 </div>
 
 <style>
+  .error {
+    font: var(--weight-medium) var(--text-sm) / 1.4 var(--font-sans);
+    color: var(--status-danger, #f5493d);
+  }
+
+  .primary.busy {
+    opacity: 0.6;
+    cursor: default;
+  }
+
   .layer {
     position: fixed;
     inset: 0;

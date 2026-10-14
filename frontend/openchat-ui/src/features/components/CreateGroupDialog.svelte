@@ -4,10 +4,30 @@
      can be folded away again. Create validates the name (and the URL for embedded channels) and blank rules, jumping to
      the tab that needs attention, then calls onCreate with everything set (photos as File objects) and waits on its promise:
      the dialog closes once it resolves, and stays open with the form intact and an error if it rejects. -->
+<script lang="ts" module>
+  export interface CreateGroupPerson {
+    /** Stable id; picked people reach the host as these. */
+    userId: string;
+    name: string;
+    handle: string;
+    /** Avatar gradient key: violet | amber | teal | blue. */
+    color?: string;
+  }
+
+  export type NameCheck = 'ok' | 'taken' | 'invalid';
+
+  /** Disappearing-message durations as TimedToggle labels ("12 hours") → milliseconds. */
+  const UNIT_MS: Record<string, number> = { minute: 6e4, hour: 36e5, day: 864e5, week: 6048e5, month: 2592e6, year: 31536e6 };
+  export function durationMs(label: string): number | null {
+    const m = label.match(/^(\d+) (minute|hour|day|week|month|year)s?$/);
+    return m ? Number(m[1]) * UNIT_MS[m[2]] : null;
+  }
+</script>
+
 <script lang="ts">
   import { onDestroy, untrack } from 'svelte';
   import type { AccessGatesState, CreateGroupResult, GroupRole, MenuItem } from '../../lib/types';
-  import AccessGates from './AccessGates.svelte';
+  import AccessGates, { type GateAsset } from './AccessGates.svelte';
   import Field from '../../lib/components/Field.svelte';
   import Menu from '../../lib/components/Menu.svelte';
   import SegmentedTabs from '../../lib/components/SegmentedTabs.svelte';
@@ -84,7 +104,26 @@
   ];
   const PERM_GROUPS = ['Members', 'Moderation', 'Channels'];
   const PERM_GROUP_KEYS: Record<string, string> = { Members: CG + 'permGroups.members', Moderation: CG + 'permGroups.moderation', Channels: CG + 'permGroups.channels' };
-  const LANGUAGES = ['English', 'Français', 'Deutsch', 'Italiano', 'Español', 'Português', 'Türkçe', 'Polski', 'Nederlands', 'Русский', 'Українська', '日本語', '한국어', '中文', 'हिन्दी', 'Tiếng Việt', 'Bahasa Indonesia'];
+  // fallback list when the host doesn't pass `languages`; codes are what reach the host
+  const LANGUAGES = [
+    { code: 'en', label: 'English' },
+    { code: 'fr', label: 'Français' },
+    { code: 'de', label: 'Deutsch' },
+    { code: 'it', label: 'Italiano' },
+    { code: 'es', label: 'Español' },
+    { code: 'pt', label: 'Português' },
+    { code: 'tr', label: 'Türkçe' },
+    { code: 'pl', label: 'Polski' },
+    { code: 'nl', label: 'Nederlands' },
+    { code: 'ru', label: 'Русский' },
+    { code: 'uk', label: 'Українська' },
+    { code: 'ja', label: '日本語' },
+    { code: 'ko', label: '한국어' },
+    { code: 'zh', label: '中文' },
+    { code: 'hi', label: 'हिन्दी' },
+    { code: 'vi', label: 'Tiếng Việt' },
+    { code: 'id', label: 'Bahasa Indonesia' },
+  ];
   // messages and threads share this list; each type inherits the master unless set
   const CONTENT = [
     { key: 'text', label: CG + 'content.text' },
@@ -115,12 +154,7 @@
   const mask = (icon: string) => `var(--icon-${icon}) center/contain no-repeat`;
   const ring = (on: boolean) => (on ? '0 0 0 2px var(--surface-1,#0e0e12), 0 0 0 4px var(--accent,#FF5672)' : 'inset 0 0 0 1px var(--line-2,rgba(255,255,255,.14))');
 
-  interface Person {
-    name: string;
-    handle: string;
-    /** violet | amber | teal | blue */
-    color: string;
-  }
+  type Person = CreateGroupPerson;
 
   interface Props {
     kind?: Kind;
@@ -130,13 +164,24 @@
     people?: Person[];
     /** Channels: anyone on OpenChat, for the "Invite people" mode. */
     invitePeople?: Person[];
-    /** Handles already picked when the dialog opens. */
+    /** User ids already picked when the dialog opens. */
     preselected?: string[];
     /** false: every tab shows from the start, with no "More options" step. */
     advanced?: boolean;
     /** Groups: false (the default) locks "Public group" behind an upgrade banner (channels are never locked). */
     isDiamond?: boolean;
     onUpgrade?: () => void;
+    /** Tokens (ledger canisters) and nervous systems (governance canisters) the gate editor offers. */
+    gateTokens?: GateAsset[];
+    gateSystems?: GateAsset[];
+    /** Search beyond `people` / `invitePeople` (server side): 'members' = the community's members, 'invite' = anyone. */
+    onSearchPeople?: (query: string, scope: 'members' | 'invite') => Promise<Person[]>;
+    /** Is this name free? Checked as the user types (debounced); a taken or invalid name blocks Create. */
+    checkName?: (name: string, kind: 'group' | 'community' | 'channel' | 'embedded') => Promise<NameCheck>;
+    /** Communities: the languages offered (codes reach the host). */
+    languages?: { code: string; label: string }[];
+    /** Communities: the language picked at first, e.g. the user's locale. */
+    defaultLanguage?: string;
     /** Create it. The dialog closes when this resolves; a rejection keeps it open with an error. */
     onCreate?: (group: CreateGroupResult) => Promise<unknown> | void;
     onCancel?: () => void;
@@ -150,7 +195,13 @@
     preselected = [],
     advanced = true,
     isDiamond: isDiamondProp = false,
+    gateTokens = [],
+    gateSystems = [],
     onUpgrade,
+    onSearchPeople,
+    checkName,
+    languages: languagesProp,
+    defaultLanguage = 'en',
     onCreate,
     onCancel,
   }: Props = $props();
@@ -202,7 +253,9 @@
   let chanEditValue = $state('');
   let chanMenu = $state<number | null>(null);
   let chanTried = $state(false);
-  let lang = $state('English');
+  const languageList = $derived(languagesProp?.length ? languagesProp : LANGUAGES);
+  let lang = $state(untrack(() => defaultLanguage));
+  const langLabel = $derived(languageList.find((l) => l.code === lang)?.label ?? lang);
   let langOpen = $state(false);
   let langQuery = $state('');
   let publicOn = $state(untrack(() => kindProp === 'embedded'));
@@ -230,6 +283,8 @@
 
   onDestroy(() => {
     clearTimeout(closeTimer);
+    clearTimeout(nameTimer);
+    clearTimeout(searchTimer);
     if (avatarUrl) URL.revokeObjectURL(avatarUrl);
     if (coverUrl) URL.revokeObjectURL(coverUrl);
   });
@@ -265,7 +320,8 @@
   }
 
   function close(then?: () => void) {
-    if (closing) return;
+    // a pending create can't be dismissed; its result decides what happens next
+    if (closing || creating) return;
     closing = true;
     closeTimer = setTimeout(() => {
       closing = false;
@@ -275,6 +331,27 @@
 
   // --- derived state
   const gateCount = $derived(gates?.count ?? 0);
+  // name availability: the latest answer for the current name ('pending' while a check runs)
+  let nameState = $state<{ name: string; result: NameCheck | 'pending' } | null>(null);
+  let nameTimer: ReturnType<typeof setTimeout> | undefined;
+  function checkNameSoon(value: string) {
+    clearTimeout(nameTimer);
+    nameState = null;
+    const asked = value.trim();
+    if (!checkName || !asked) return;
+    nameState = { name: asked, result: 'pending' };
+    nameTimer = setTimeout(async () => {
+      let result: NameCheck | null;
+      try {
+        result = await checkName(asked, kind);
+      } catch {
+        result = null; // can't tell; the host still validates on create
+      }
+      if (name.trim() === asked) nameState = result ? { name: asked, result } : null;
+    }, 400);
+  }
+  const nameResult = $derived(nameState?.name === name.trim() ? nameState.result : null);
+  const nameTaken = $derived(nameResult === 'taken' || nameResult === 'invalid');
   const nameOk = $derived(name.trim().length > 0);
   const nameBad = $derived(!nameOk && nameTouched);
   const urlOk = $derived(/^https?:\/\/\S+\.\S+/.test(url.trim()));
@@ -303,15 +380,39 @@
   // someone already added can't also be invited, and vice versa
   const other = $derived(isChan ? (inviting ? picked : invited) : []);
   const sourcePool = $derived(inviting ? invitePeople : people);
-  const modePool = $derived(sourcePool.filter((p) => !other.includes(p.handle)));
-  const frequent = $derived(sourcePool.slice(0, 6).map((p) => p.handle));
+  const modePool = $derived(sourcePool.filter((p) => !other.includes(p.userId)));
+  const frequent = $derived(sourcePool.slice(0, 6).map((p) => p.userId));
   const needle = $derived(query.trim().toLowerCase());
-  const listed = $derived(
-    needle ? modePool.filter((p) => `${p.name} ${p.handle}`.toLowerCase().includes(needle)) : isChan && !inviting ? people : modePool.filter((p) => frequent.includes(p.handle)),
-  );
+  // server-side search results for the current query and mode (host's onSearchPeople)
+  let remote = $state<{ q: string; scope: 'members' | 'invite'; people: Person[] } | null>(null);
+  let searchTimer: ReturnType<typeof setTimeout> | undefined;
+  $effect(() => {
+    const q = needle, scope: 'members' | 'invite' = inviting ? 'invite' : 'members';
+    clearTimeout(searchTimer);
+    if (!onSearchPeople || !q) return;
+    searchTimer = setTimeout(async () => {
+      try {
+        const found = await onSearchPeople(q, scope);
+        if (needle === q) remote = { q, scope, people: found };
+      } catch {
+        // keep the local matches
+      }
+    }, 300);
+  });
+  const remoteHits = $derived(remote && remote.q === needle && remote.scope === (inviting ? 'invite' : 'members') ? remote.people.filter((p) => !other.includes(p.userId)) : []);
+  const listed = $derived.by(() => {
+    if (!needle) return isChan && !inviting ? people : modePool.filter((p) => frequent.includes(p.userId));
+    const local = modePool.filter((p) => `${p.name} ${p.handle}`.toLowerCase().includes(needle));
+    return [...local, ...remoteHits.filter((r) => !local.some((p) => p.userId === r.userId))];
+  });
+  // everyone seen so far, so picked chips can show people found by search
+  let seen = $state<Record<string, Person>>({});
+  const personOf = (id: string) => seen[id] ?? people.find((p) => p.userId === id) ?? invitePeople.find((p) => p.userId === id);
 
-  function toggleHandle(handle: string) {
-    const flip = (list: string[]) => (list.includes(handle) ? list.filter((h) => h !== handle) : [...list, handle]);
+  function togglePerson(u: Person) {
+    seen = { ...seen, [u.userId]: u };
+    const id = u.userId;
+    const flip = (list: string[]) => (list.includes(id) ? list.filter((h) => h !== id) : [...list, id]);
     if (inviting) invited = flip(invited);
     else picked = flip(picked);
   }
@@ -357,7 +458,7 @@
     },
   ];
 
-  const languages = $derived(LANGUAGES.filter((l) => !langQuery.trim() || l.toLowerCase().includes(langQuery.trim().toLowerCase())));
+  const languages = $derived(languageList.filter((l) => !langQuery.trim() || l.label.toLowerCase().includes(langQuery.trim().toLowerCase())));
 
   // the details tab's switches differ per kind
   type Switch = { title: string; hint: string; on: boolean; set: (v: boolean) => void; disabled?: boolean; locked?: boolean; timed?: boolean };
@@ -482,12 +583,12 @@
       .join(' • '),
   );
   const showFooterNote = $derived(!!(nameOk || nameBad || picked.length || gateCount || rulesOn || permsChanged));
-  const canCreate = $derived(nameOk && (!isEmb || urlOk));
+  const canCreate = $derived(nameOk && (!isEmb || urlOk) && (nameResult === null || nameResult === 'ok'));
 
   async function create() {
     if (creating) return;
     // pressing Create without a name sends the user back to the field that needs it
-    if (!nameOk || (isEmb && !urlOk)) {
+    if (!nameOk || nameTaken || nameResult === 'pending' || (isEmb && !urlOk)) {
       nameTouched = true;
       urlTouched = isEmb;
       submitted = true;
@@ -516,6 +617,7 @@
         isPublic: publicOn,
         visibleHistory: historyOn || (isChan && publicOn),
         disappearAfter: disappearOn ? after : null,
+        disappearAfterMs: disappearOn ? durationMs(after) : null,
         members: [...picked],
         invites: isChan ? [...invited] : [],
         gates: gates ?? { count: 0 },
@@ -698,20 +800,29 @@
                   <span class="field-label">{t(isChan ? CG + 'name.channel' : isComm ? CG + 'name.community' : CG + 'name.group')}</span>
                   <span class="required">*</span>
                 </div>
-                <div class="input-box" class:bad={nameBad}>
+                <div class="input-box" class:bad={nameBad || nameTaken}>
                   {#if isChan}<span class="hash">#</span>{/if}
                   <input
                     value={name}
                     oninput={(e) => {
                       name = isChan ? slug(e.currentTarget.value) : e.currentTarget.value;
                       nameTouched = true;
+                      checkNameSoon(name);
                     }}
                     placeholder={t(isChan ? CG + 'name.channelPlaceholder' : isComm ? CG + 'name.community' : CG + 'name.group')}
                     maxlength={NAME_MAX}
                   />
                   <span class="name-left" class:low={NAME_MAX - name.length <= 5}>{NAME_MAX - name.length}</span>
                 </div>
-                <span class="hint" class:bad={nameBad}>{nameHint}</span>
+                <span class="hint" class:bad={nameBad || nameTaken} role={nameTaken ? 'alert' : undefined}
+                  >{nameResult === 'taken'
+                    ? t(CG + 'nameTaken')
+                    : nameResult === 'invalid'
+                      ? t(CG + 'nameInvalid')
+                      : nameResult === 'pending'
+                        ? t(CG + 'nameChecking')
+                        : nameHint}</span
+                >
               </div>
 
               {#if isComm}
@@ -727,7 +838,7 @@
                     role="button"
                     tabindex="0"
                   >
-                    <span class="select-value">{lang}</span>
+                    <span class="select-value">{langLabel}</span>
                     <span class="select-chevron" class:open={langOpen}></span>
                   </div>
                   <span class="hint">{t(CG + 'languageHint')}</span>
@@ -736,19 +847,19 @@
                     <div class="dropdown">
                       <div class="cell flex-none"><Field placeholder={t(CG + 'searchLanguages')} value={langQuery} onInput={(e) => (langQuery = e.currentTarget.value)} onClear={() => (langQuery = '')} showShortcut={false} /></div>
                       <div class="dropdown-list">
-                        {#each languages as l}
+                        {#each languages as l (l.code)}
                           <div
                             class="option"
-                            class:selected={l === lang}
+                            class:selected={l.code === lang}
                             onclick={() => {
-                              lang = l;
+                              lang = l.code;
                               langOpen = false;
                             }}
                             tabindex="0"
                             role="option"
-                            aria-selected={l === lang}
+                            aria-selected={l.code === lang}
                           >
-                            <span class="option-label">{l}</span>
+                            <span class="option-label">{l.label}</span>
                             <span class="option-check"></span>
                           </div>
                         {/each}
@@ -874,12 +985,20 @@
               </div>
               {#if active.length > 0}
                 <div class="chips">
-                  {#each active as handle}
-                    {@const person = modePool.find((p) => p.handle === handle)}
+                  {#each active as id (id)}
+                    {@const person = personOf(id)}
                     <span class="person-chip">
                       <span class="chip-face" style:background={GRADIENTS[person?.color ?? 'violet'] ?? GRADIENTS.violet}></span>
-                      <span class="chip-handle">{person?.handle ?? handle}</span>
-                      <span class="chip-remove" onclick={() => toggleHandle(handle)} role="button" tabindex="0"><span class="chip-remove-icon"></span></span>
+                      <span class="chip-handle">{person?.handle ?? id}</span>
+                      <span
+                        class="chip-remove"
+                        onclick={() => {
+                          if (inviting) invited = invited.filter((x) => x !== id);
+                          else picked = picked.filter((x) => x !== id);
+                        }}
+                        role="button"
+                        tabindex="0"><span class="chip-remove-icon"></span></span
+                      >
                     </span>
                   {/each}
                 </div>
@@ -899,10 +1018,10 @@
             <div class="list-block small-gap">
               <span class="small-label padded">{needle ? t(CG + 'searchResults') : isChan && !inviting ? t(CG + 'membersOf', { community: community.toUpperCase() }) : t(CG + 'frequent')}</span>
               <div class="people">
-                {#each listed as u}
-                  {@const sel = active.includes(u.handle)}
-                  <div class="person" class:selected={sel} onclick={() => toggleHandle(u.handle)} role="button" tabindex="0">
-                    <span class="person-face" style:background={GRADIENTS[u.color] ?? GRADIENTS.violet}></span>
+                {#each listed as u (u.userId)}
+                  {@const sel = active.includes(u.userId)}
+                  <div class="person" class:selected={sel} onclick={() => togglePerson(u)} role="button" tabindex="0">
+                    <span class="person-face" style:background={GRADIENTS[u.color ?? 'violet'] ?? GRADIENTS.violet}></span>
                     <div class="person-text">
                       <span class="person-name">{u.name}</span>
                       <span class="person-handle">{u.handle}</span>
@@ -1024,7 +1143,7 @@
               <span class="info-text"><Translate key={CG + 'gatesInfo'} params={{ kind: isComm ? 'community' : isChan ? 'channel' : 'group' }}>{#snippet strong()}<span class="info-strong">{t(CG + 'gatesInfoStrong')}</span>{/snippet}</Translate></span>
             </div>
             <!-- the draft, not a prop: the builder unmounts on tab switch and must return showing the edits, which are also what Create submits -->
-            <AccessGates {isDiamond} {onUpgrade} value={gates} onChange={(g) => (gates = g)} />
+            <AccessGates tokens={gateTokens} nervousSystems={gateSystems} {isDiamond} {onUpgrade} value={gates} onChange={(g) => (gates = g)} />
           </div>
         </div>
       {/if}
@@ -1188,7 +1307,7 @@
     </div>
 
     <div class="footer">
-      <span class="cancel" onclick={() => close(onCancel)} role="button" tabindex="0">{t('ui.common.cancel')}</span>
+      <span class="cancel" onclick={() => close(onCancel)} role="button" tabindex="0" aria-disabled={creating}>{t('ui.common.cancel')}</span>
       <span class="grow"></span>
       {#if createError}
         <span class="note error" role="alert">{t(CG + 'createFailed')}</span>

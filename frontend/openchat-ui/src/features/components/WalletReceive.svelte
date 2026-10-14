@@ -1,14 +1,26 @@
 <!-- Receive in the wallet main column: network picker (when a token travels on several), your address with copy and
      share-to-chat, a warning naming exactly what to send, your OpenChat handle, and a QR card. Below 760px the QR card
-     moves above the form. Sharing posts the address to a chat (ChatPicker) and confirms with a toast. -->
+     moves above the form. Sharing posts the address to one of the host's `chats` (ChatPicker) through onShare and confirms
+     with a toast once the host does. The QR is drawn by the host (`qr` snippet); without it there is no QR card. -->
 <script lang="ts" module>
   export type NetworkId = 'icp' | 'eth' | 'btc' | 'xrpl';
+
+  export interface ShareChat {
+    id: string;
+    name: string;
+    /** "Direct chat", "Group · 248 members" … */
+    kind?: string;
+    /** Avatar background. */
+    grad?: string;
+    /** 50% for people, 11px for groups. */
+    radius?: string;
+  }
 </script>
 
 <script lang="ts">
   import { useT } from '../../lib/i18n';
   import CopyButton from '../../lib/components/CopyButton.svelte';
-  import { onDestroy } from 'svelte';
+  import { onDestroy, type Snippet } from 'svelte';
   import type { WalletToken } from '../../lib/types';
   import ChatPicker from '../../lib/components/ChatPicker.svelte';
   import ListSectionLabel from '../../lib/components/ListSectionLabel.svelte';
@@ -24,15 +36,6 @@
   };
   // wrapped forms on ICP get their chain-key name, so the warning names exactly what to send
   const ICP_AS: Record<string, string> = { BTC: 'ckBTC', ETH: 'ckETH', USDC: 'ckUSDC', USDT: 'ckUSDT', XRP: 'ckXRP' };
-  // sample chats for share-to-chat until the chat list is wired
-  const CHATS = [
-    { name: 'Lucy Linden', kind: 'Direct chat', grad: 'linear-gradient(140deg,#2EE6A8,#1FB6FF)', radius: '50%' },
-    { name: 'The Awesome Group', kind: 'Group · 248 members', grad: 'linear-gradient(140deg,#5FA8FF,#8C6BFF)', radius: '11px' },
-    { name: 'Matt Rivers', kind: 'Direct chat', grad: 'linear-gradient(140deg,#ffb03d,#ff4d4d)', radius: '50%' },
-    { name: '#general', kind: 'OpenChat community', grad: 'linear-gradient(140deg,#ff5f9e,#6a2bff)', radius: '11px' },
-    { name: 'Design Guild', kind: 'Group · 112 members', grad: 'linear-gradient(140deg,#b06bff,#5b2a86)', radius: '11px' },
-    { name: 'Ryan Rogers', kind: 'Direct chat', grad: 'linear-gradient(140deg,#5FA8FF,#8C6BFF)', radius: '50%' },
-  ];
   const mask = (n: string) => `var(--icon-${n}) center/contain no-repeat`;
 
   interface Props {
@@ -44,11 +47,16 @@
     handle?: string;
     /** The user's own receiving address per network. A network without one shows no address, copy, share or QR. */
     addresses?: Partial<Record<NetworkId, string>>;
-    onShare?: (v: { chat: string; message: string; symbol: string; network: string; address: string }) => void;
+    /** Chats the address can be shared to. Share is hidden without chats or onShare. */
+    chats?: ShareChat[];
+    /** Post the address to a chat. Reject to keep the picker open with an error. */
+    onShare?: (v: { chatId: string; message: string; symbol: string; network: NetworkId; address: string }) => Promise<unknown> | void;
+    /** Draws a scannable QR code for the address (inside a white 240px square). Without it the QR card is hidden. */
+    qr?: Snippet<[string]>;
     onClose?: () => void;
   }
 
-  let { tokens, token, handle = '', addresses = {}, onShare, onClose }: Props = $props();
+  let { tokens, token, handle = '', addresses = {}, chats = [], onShare, qr, onClose }: Props = $props();
   const t = useT();
 
   let width = $state(0);
@@ -63,7 +71,7 @@
   });
   let handleCopied = $state(false);
   let sharing = $state(false);
-  let toast = $state<{ id: number; message: string } | null>(null);
+  let toast = $state<{ id: number; message: string; tone: 'success' | 'danger' } | null>(null);
   let toastTimer: ReturnType<typeof setTimeout> | undefined;
   onDestroy(() => {
     clearTimeout(toastTimer);
@@ -87,16 +95,34 @@
   );
   const address = $derived((id && addresses[id]) || '');
 
-  function share(v: { chat: string; message: string }) {
-    if (!tok || !net || !address) return;
+  let shareBusy = false;
+  const canShare = $derived(!!onShare && chats.length > 0);
+
+  function notify(message: string, tone: 'success' | 'danger') {
     const tid = Date.now();
-    sharing = false;
-    toast = { id: tid, message: t('ui.walletReceive.shared', { chat: v.chat }) };
+    toast = { id: tid, message, tone };
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => {
       if (toast?.id === tid) toast = null;
     }, 5000);
-    onShare?.({ chat: v.chat, message: v.message, symbol: tok.symbol, network: t(net.label), address });
+  }
+
+  // the picker stays open until the host has posted it
+  async function share(v: { chat: string; message: string }) {
+    if (!tok || !net || !address || !id || !onShare || shareBusy) return;
+    // ChatPicker reports the chat it shows by name; map it back to the host's id
+    const target = chats.find((c) => c.name === v.chat);
+    if (!target) return;
+    shareBusy = true;
+    try {
+      await onShare({ chatId: target.id, message: v.message, symbol: tok.symbol, network: id, address });
+      sharing = false;
+      notify(t('ui.walletReceive.shared', { chat: target.name }), 'success');
+    } catch {
+      notify(t('ui.walletReceive.shareFailed', { chat: target.name }), 'danger');
+    } finally {
+      shareBusy = false;
+    }
   }
 </script>
 
@@ -152,7 +178,9 @@
             </div>
             <div class="address-actions">
               {#key address}<CopyButton value={address} label="ui.walletReceive.copyAddress" variant="filled" size="lg" />{/key}
-              <span class="square" onclick={() => (sharing = true)} role="button" tabindex="0" title={t('ui.walletReceive.shareToChat')} aria-label={t('ui.walletReceive.shareToChat')}><span class="square-icon" style:mask={mask('share')}></span></span>
+              {#if canShare}<span class="square" onclick={() => (sharing = true)} role="button" tabindex="0" title={t('ui.walletReceive.shareToChat')} aria-label={t('ui.walletReceive.shareToChat')}
+                  ><span class="square-icon" style:mask={mask('share')}></span></span
+                >{/if}
             </div>
             {/if}
           </div>
@@ -179,21 +207,21 @@
           </div>
         {/if}
       </div>
-      {#if address}
+      {#if address && qr}
       <div class="qr-card">
         <span class="qr-kicker">{t('ui.walletReceive.scanToPay')}</span>
-        <div class="qr"><span class="qr-code"><span class="qr-mark" style:background={tok.grad}>{tok.mark}</span></span></div>
+        <div class="qr">{@render qr(address)}</div>
         <span class="qr-title">{t('ui.walletReceive.qrTitle', { symbol: tok.symbol, network: t(net.label) })}</span>
         <span class="qr-blurb">{t(net.blurb)}</span>
       </div>
       {/if}
     </div>
-    {#if sharing && address}
+    {#if sharing && address && canShare}
       <ChatPicker
         title={t('ui.walletReceive.shareToChat')}
         previewLabel={t('ui.walletReceive.sharingAddress')}
         item={{ title: t('ui.walletReceive.shareItemTitle', { symbol: tok.symbol, network: t(net.label) }), sub: `${address.slice(0, 10)}…${address.slice(-8)}`, mark: tok.mark, grad: tok.grad }}
-        chats={CHATS}
+        chats={chats.map((c) => ({ name: c.name, kind: c.kind, grad: c.grad ?? 'var(--overlay-2)', radius: c.radius }))}
         onSend={share}
         onClose={() => (sharing = false)}
       />
@@ -201,7 +229,7 @@
     {#if toast}
       <div class="toast">
         <div class="toast-box">
-          {#key toast.id}<UndoToast shown={true} tone="success" size="lg" icon="check" message={toast.message} onClose={() => (toast = null)} />{/key}
+          {#key toast.id}<UndoToast shown={true} tone={toast.tone === 'success' ? 'success' : 'neutral'} size="lg" icon={toast.tone === 'success' ? 'check' : 'none'} message={toast.message} onClose={() => (toast = null)} />{/key}
         </div>
       </div>
     {/if}
@@ -563,32 +591,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-  }
-
-  /* placeholder pattern until real QR codes are generated */
-  .qr-code {
-    width: 204px;
-    height: 204px;
-    border-radius: 8px;
-    background:
-      repeating-linear-gradient(0deg, #0b0b10 0 9px, transparent 9px 18px),
-      repeating-linear-gradient(90deg, #0b0b10 0 9px, transparent 9px 18px);
-    opacity: 0.85;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .qr-mark {
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 0 0 6px #fff;
-    font: 700 20px/1 var(--font-sans);
-    color: #0b0b10;
   }
 
   .qr-title {

@@ -1,5 +1,5 @@
 <!-- CHIT high scores: one board per period (tabs), top rows with the podium in green, and your own row pinned below.
-     Your row comes from `you` (per period or one value) or the board; a rank the board itself contradicts is corrected. -->
+     Your row comes from `you` (per period or one value) or the board, exactly as the host ranks it; hidden without one. -->
 <script lang="ts">
   import { modal } from '../../lib/behaviours/modal';
   import { useT } from '../../lib/i18n';
@@ -11,7 +11,7 @@
     label: string;
     /** [handle, score], best first. */
     rows: [string, number][];
-    you: Standing;
+    you?: Standing;
   }
 
   interface Props {
@@ -36,13 +36,10 @@
   const period = $derived(chosen ?? initialPeriod ?? keys[0]);
   const board = $derived(boards[period]);
 
-  const mine = $derived.by(() => {
-    const supplied = you && 'rank' in you ? (you as Standing) : (you as Record<string, Standing> | null)?.[period];
-    const standing = supplied ?? board.you;
-    // never claim a rank the board itself contradicts
-    const beaten = board.rows.filter((r) => r[1] <= standing.score).length;
-    return beaten > 0 ? { rank: board.rows.length - beaten + 1, score: standing.score } : standing;
-  });
+  // the host's ranking is authoritative (ties are its call), so the row shows it as given
+  const mine = $derived<Standing | null>(
+    (you && 'rank' in you ? (you as Standing) : (you as Record<string, Standing> | null)?.[period]) ?? board.you ?? null,
+  );
 </script>
 
 <div class="layer" data-screen-label="Leaderboard" role="dialog" aria-modal="true" use:modal={() => onClose?.()}>
@@ -81,11 +78,13 @@
       {/each}
     </div>
 
-    <div class="row you">
-      <span class="rank">{mine.rank}</span>
-      <span class="name">{t('ui.leaderboardDialog.you', { handle })}</span>
-      <span class="score">{mine.score}</span>
-    </div>
+    {#if mine}
+      <div class="row you">
+        <span class="rank">{mine.rank}</span>
+        <span class="name">{t('ui.leaderboardDialog.you', { handle })}</span>
+        <span class="score">{mine.score}</span>
+      </div>
+    {/if}
   </div>
 </div>
 

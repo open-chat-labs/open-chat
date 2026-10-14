@@ -13,6 +13,8 @@ import type VoiceMessage from './components/VoiceMessage.svelte';
 
 /** One entry of Menu `items` (and DmPanel `menuItems`), rendered as a MenuItem. */
 export interface MenuItem {
+  /** Stable action id; menus report and match it instead of the (translated) label. */
+  id?: string;
   label: string;
   variant?: 'regular' | 'danger' | 'separator';
   icon?: string;
@@ -96,6 +98,8 @@ export interface PrizeDraft {
 }
 
 /** PrizeBuilderDialog `onAttach` value; pass it back as `initial` to edit. */
+export type PrizeGateKind = 'auth' | 'diamond' | 'lifetime' | 'chit' | 'streak';
+
 export interface Prize {
   token: TokenRef;
   amount: number;
@@ -104,8 +108,13 @@ export interface Prize {
   even: boolean;
   endsIn: string;
   endsInLabel: string;
+  /** Provisional end (attach time + durationMs); set the real end from durationMs when the prize is posted. */
   endsAt: number;
+  durationMs: number;
+  /** Display labels for the entry rules. */
   gates: { label: string; met: boolean }[];
+  /** Machine-readable entry rules (min: CHIT amount or streak days). */
+  rules: { kind: PrizeGateKind; min?: number }[];
   fee: number;
   feeText: string;
   totalText: string;
@@ -113,7 +122,7 @@ export interface Prize {
   draft: PrizeDraft;
 }
 
-/** SendCryptoDialog form state, carried in `Transfer.draft`. `to` is the recipient handle. */
+/** SendCryptoDialog form state, carried in `Transfer.draft`. `to` is the recipient's user id. */
 export interface TransferDraft {
   tok: string;
   amt: string;
@@ -128,7 +137,8 @@ export interface Transfer {
   amountText: string;
   usd: number;
   usdText: string;
-  recipient: { name: string; handle: string };
+  /** `id` is the user id (principal) the funds go to. */
+  recipient: { id: string; name: string; handle: string };
   fee: number;
   feeText: string;
   totalText: string;
@@ -160,7 +170,12 @@ export interface SwapOffer {
   give: SwapSide;
   get: SwapSide;
   pair: [TokenRef, TokenRef];
+  /** Exact amounts for the escrow (give/get carry the formatted text). */
+  giveAmount: number;
+  getAmount: number;
+  /** Short display label, e.g. "1d". */
   expiresIn: string;
+  expiresInMs: number;
   title: string;
   summary: string;
   hint: string;
@@ -175,7 +190,9 @@ export interface AccessGatesState {
   joiner: string;
   rules: AccessGateRule[];
   intervalOn: boolean;
+  /** Re-check interval as shown ('1 month'); everyDays is the same in days. */
   every: string;
+  everyDays?: number;
 }
 
 /** GroupSettingsDialog `onSave` value; also accepted (partially) as `value`. */
@@ -194,9 +211,11 @@ export interface GroupSettings {
     /** A newly picked cover image (onSave only). */
     coverFile?: File | null;
   };
-  settings: { isPublic: boolean; history: boolean; disappearOn: boolean; after: string };
+  /** `after` is the duration label ("12 hours"); `afterMs` the same in milliseconds (onSave only). */
+  settings: { isPublic: boolean; history: boolean; disappearOn: boolean; after: string; afterMs?: number | null };
   gates: AccessGatesState | null;
-  rules: { enabled: boolean; text: string };
+  /** newVersion: the text changed and members must accept the rules again (onSave only). */
+  rules: { enabled: boolean; text: string; newVersion?: boolean };
   permissions: {
     /** Lowest role allowed per action (roles, edit, invite, …). */
     general: Record<string, GroupRole>;
@@ -257,6 +276,12 @@ export interface WalletToken {
   payable?: boolean;
   /** Networks it can be sent on: icp, btc, eth … */
   nets?: string[];
+  /** Price change over the last 24h, in percent (token page pill; hidden without it). */
+  change24h?: number;
+  /** Ledger canister id (token page; hidden without it). */
+  ledger?: string;
+  /** Token standard, e.g. "ICRC-1" (token page; hidden without it). */
+  standard?: string;
 }
 
 /** One configured access gate (AccessGates rules, AccessGatesCards gates). `a` / `b` are the type's numeric fields as typed. */
@@ -264,7 +289,7 @@ export interface AccessGateRule {
   id: string;
   /** Gate type key: lifetime, diamond, neuron, payment, balance, credential, unique, locked, chit … */
   type: string;
-  /** Token / governance asset, for gate types that need one. */
+  /** Canister id of the token ledger / SNS governance, for gate types that need one. */
   asset: string;
   a: string;
   b: string;
@@ -276,6 +301,9 @@ export interface AccessGatesCardsState {
   /** How gates combine. */
   mode: 'All' | 'Any';
   gates: AccessGateRule[];
+  /** Periodic re-check of the gates. */
+  intervalOn: boolean;
+  everyDays: number;
 }
 
 /** CreateGroupDialog `onCreate` value. */
@@ -290,6 +318,7 @@ export interface CreateGroupResult {
   kind: 'group' | 'community' | 'channel' | 'embedded';
   embedded: boolean;
   /** Communities only. */
+  /** Communities only: a language code such as 'en' or 'fr'. */
   language: string | null;
   /** The picked cover image file, or null for a swatch (coverKey). */
   coverFile: File | null;
@@ -302,9 +331,11 @@ export interface CreateGroupResult {
   visibleHistory: boolean;
   /** e.g. "12 hours", or null when messages are kept. */
   disappearAfter: string | null;
-  /** Handles added (channels) or invited (groups, communities). */
+  /** The same duration in milliseconds, or null when messages are kept. */
+  disappearAfterMs: number | null;
+  /** User ids added (channels) or invited (groups, communities). */
   members: string[];
-  /** Channels: handles invited from outside the community. */
+  /** Channels: user ids invited from outside the community. */
   invites: string[];
   /** `{ count: 0 }` when no gate was touched. */
   gates: AccessGatesState | { count: 0 };

@@ -1,7 +1,10 @@
 <!-- Message composer: + menu (photo/video, file, poll, prize, send / swap crypto, Meme Fighter), emoji/GIF picker, auto-growing text,
      mic ↔ send swap, and a voice flow: recording (live waveform + timer) → review (play back, seek) → send or delete.
      Optional reply / edit strip (context) and a staged attachment (chip or media tray). Esc closes menus, cancels the
-     reply/edit, or deletes a recording. `demo` forces a state for docs/screenshots; otherwise fully interactive. -->
+     reply/edit, or deletes a recording. `demo` forces a state for docs/screenshots; otherwise fully interactive.
+     Sending: when onSend returns a promise the draft stays until it resolves (and stays, with an error, if it rejects).
+     Voice is real: the mic records with MediaRecorder (live levels from the microphone) and onVoice gets the audio Blob;
+     the mic only shows with onVoice and a browser that can record. Forced demo states are visual only and never send. -->
 <script lang="ts">
   import { onMount, tick, untrack } from 'svelte';
   import type { ComposerAttachment, ComposerContext, MenuItem } from '../types';
@@ -33,6 +36,7 @@
   };
   const HEIGHTS = ['112px', '150px', '132px', '96px', '140px', '118px', '104px', '146px'];
   const mmss = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+  // demo states only: the forced recording/review screens draw a made-up waveform
   const amp = () => 0.18 + Math.random() * 0.82;
 
   interface Props {
@@ -40,10 +44,12 @@
     demo?: 'interactive' | 'idle' | 'typing' | 'plus' | 'emoji' | 'gif' | 'recording' | 'review';
     /** Resource key (or literal text). */
     placeholder?: string;
-    onSend?: (text: string) => void;
+    /** Send the text. Return a promise to keep the draft until it resolves (kept with an error if it rejects). */
+    onSend?: (text: string) => Promise<unknown> | void;
     onAttach?: (kind: AttachKind) => void;
     onGif?: (query: string) => void;
-    onVoice?: (r: { duration: number }) => void;
+    /** A recorded voice message (duration in seconds). The mic is hidden without it. Reject to keep the take. */
+    onVoice?: (r: { blob: Blob; duration: number; mimeType: string }) => Promise<unknown> | void;
     attachment?: ComposerAttachment | null;
     onEditAttachment?: () => void;
     onRemoveAttachment?: () => void;
@@ -95,6 +101,15 @@
   let barCount = $state(40);
 
   let recTimer: ReturnType<typeof setInterval> | undefined;
+  // a live recording, and the finished take under review
+  let take: { recorder: MediaRecorder; stream: MediaStream; ctx: AudioContext; chunks: Blob[]; started: number } | null = null;
+  let clip: { blob: Blob; url: string; duration: number } | null = null;
+  let audio: HTMLAudioElement | null = null;
+  let sending = $state(false);
+  let failure = $state<'send' | 'voice' | 'mic' | null>(null);
+  const canRecord = $derived(
+    demo !== 'interactive' || (!!onVoice && typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia && typeof MediaRecorder !== 'undefined'),
+  );
   let playTimer: ReturnType<typeof setInterval> | undefined;
   let endSeek: (() => void) | null = null;
 
@@ -157,12 +172,24 @@
       if (draft.trim()) onSubmitEdit?.(draft.trim());
       return;
     }
-    if (!hasContent) return;
+    if (!hasContent || sending) return;
     const text = draft.trim();
-    draft = '';
+    failure = null;
+    const result = onSend?.(text);
+    if (result && typeof (result as Promise<unknown>).then === 'function') {
+      sending = true;
+      try {
+        await result;
+        // anything typed while it was sending stays
+        if (draft.trim() === text) draft = '';
+      } catch {
+        failure = 'send';
+      } finally {
+        sending = false;
+      }
+    } else draft = '';
     await tick();
     grow();
-    onSend?.(text);
     input?.focus();
   }
 
@@ -180,6 +207,20 @@
     const dur = Math.max(1, secs) * 1000;
     clearInterval(playTimer);
     playing = true;
+    if (clip) {
+      // the real take: play it and follow its position
+      const a = (audio ??= new Audio(clip.url));
+      const length = clip.duration;
+      a.currentTime = Math.min(playPos, 0.999) * length;
+      a.onended = () => {
+        clearInterval(playTimer);
+        playPos = 1;
+        playing = false;
+      };
+      a.play().catch(() => (playing = false));
+      playTimer = setInterval(() => (playPos = Math.min(1, a.currentTime / length)), 100);
+      return;
+    }
     playTimer = setInterval(() => {
       const next = playPos + 100 / dur;
       if (next >= 1) {
@@ -190,16 +231,84 @@
     }, 100);
   }
 
-  function startRecording() {
+  async function startRecording() {
+    if (voice || !canRecord) return;
+    menu = null;
+    failure = null;
+    if (demo !== 'interactive') {
+      voice = 'recording';
+      secs = 0;
+      levels = [];
+      startTicking();
+      return;
+    }
+    let stream: MediaStream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch {
+      failure = 'mic';
+      return;
+    }
+    const recorder = new MediaRecorder(stream);
+    const chunks: Blob[] = [];
+    recorder.ondataavailable = (e) => {
+      if (e.data.size) chunks.push(e.data);
+    };
+    // live levels from the microphone for the waveform
+    const ctx = new AudioContext();
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 256;
+    ctx.createMediaStreamSource(stream).connect(analyser);
+    const buf = new Uint8Array(analyser.fftSize);
+    const started = performance.now();
+    take = { recorder, stream, ctx, chunks, started };
+    recorder.start();
     voice = 'recording';
     secs = 0;
     levels = [];
-    menu = null;
-    startTicking();
+    clearInterval(recTimer);
+    recTimer = setInterval(() => {
+      analyser.getByteTimeDomainData(buf);
+      let sum = 0;
+      for (const v of buf) sum += ((v - 128) / 128) ** 2;
+      levels = [...levels, Math.min(1, 0.12 + Math.sqrt(sum / buf.length) * 3)].slice(-200);
+      secs = Math.floor((performance.now() - started) / 1000);
+    }, 125);
   }
 
-  function stopRecording() {
+  // stops the live recording and hands back its audio (null when there was none, e.g. a demo state)
+  async function finishTake(keep: boolean): Promise<{ blob: Blob; duration: number } | null> {
     clearInterval(recTimer);
+    const tk = take;
+    take = null;
+    if (!tk) return null;
+    const duration = (performance.now() - tk.started) / 1000;
+    if (tk.recorder.state !== 'inactive') {
+      const stopped = new Promise<void>((resolve) => (tk.recorder.onstop = () => resolve()));
+      tk.recorder.stop();
+      await stopped;
+    }
+    tk.stream.getTracks().forEach((track) => track.stop());
+    tk.ctx.close().catch(() => {
+      // already closed
+    });
+    return keep ? { blob: new Blob(tk.chunks, { type: tk.recorder.mimeType }), duration } : null;
+  }
+
+  function dropClip() {
+    audio?.pause();
+    audio = null;
+    if (clip) URL.revokeObjectURL(clip.url);
+    clip = null;
+  }
+
+  async function stopRecording() {
+    const got = await finishTake(true);
+    if (got) {
+      dropClip();
+      clip = { blob: got.blob, url: URL.createObjectURL(got.blob), duration: got.duration };
+      secs = Math.max(1, Math.round(got.duration));
+    }
     voice = 'review';
     playPos = 0;
     playing = false;
@@ -208,6 +317,8 @@
   function resetVoice() {
     clearInterval(recTimer);
     clearInterval(playTimer);
+    void finishTake(false);
+    dropClip();
     voice = null;
     secs = 0;
     levels = [];
@@ -215,15 +326,34 @@
     playPos = 0;
   }
 
-  function sendVoice() {
-    const duration = secs;
-    resetVoice();
-    onVoice?.({ duration });
+  async function sendVoice() {
+    if (sending) return;
+    if (voice === 'recording') await stopRecording();
+    // demo states have no audio: nothing is sent
+    if (!clip || !onVoice) {
+      resetVoice();
+      return;
+    }
+    clearInterval(playTimer);
+    audio?.pause();
+    playing = false;
+    failure = null;
+    sending = true;
+    try {
+      await onVoice({ blob: clip.blob, duration: Math.round(clip.duration * 10) / 10, mimeType: clip.blob.type });
+      resetVoice();
+    } catch {
+      // the take stays in review so it can be sent again
+      failure = 'voice';
+    } finally {
+      sending = false;
+    }
   }
 
   function togglePlay() {
     if (playing) {
       clearInterval(playTimer);
+      audio?.pause();
       playing = false;
       return;
     }
@@ -267,6 +397,7 @@
     };
     const wasPlaying = playing;
     clearInterval(playTimer);
+    audio?.pause();
     playPos = at(e.clientX);
     seeking = true;
     playing = false;
@@ -389,6 +520,8 @@
       endSeek?.();
       clearInterval(recTimer);
       clearInterval(playTimer);
+      void finishTake(false);
+      dropClip();
     };
   });
 
@@ -567,8 +700,8 @@
           aria-label={t(att ? 'ui.messageComposer.addCaption' : placeholder)}
         ></textarea>
       </div>
-      {#if hasContent || editing}
-        <span class="action send" onclick={send} role="button" tabindex="0" aria-disabled={editing && !draft.trim()} aria-label={t(editing ? 'ui.messageComposer.saveEdit' : 'ui.messageComposer.sendMessage')} title={t(editing ? 'ui.messageComposer.saveHint' : 'ui.messageComposer.sendHint')}
+      {#if hasContent || editing || !canRecord}
+        <span class="action send" onclick={send} role="button" tabindex="0" aria-disabled={editing ? !draft.trim() : !hasContent || sending} aria-label={t(editing ? 'ui.messageComposer.saveEdit' : 'ui.messageComposer.sendMessage')} title={t(editing ? 'ui.messageComposer.saveHint' : 'ui.messageComposer.sendHint')}
           ><span class="send-icon" style:mask="var(--icon-{editing ? 'check' : 'send'}) center/contain no-repeat"></span></span
         >
       {:else}
@@ -619,7 +752,11 @@
       >
     {/if}
   </div>
-  {#if voice === 'recording'}
+  {#if failure}
+    <span class="rec-hint failure" role="alert"
+      >{t(failure === 'send' ? 'ui.messageComposer.sendFailed' : failure === 'voice' ? 'ui.messageComposer.voiceFailed' : 'ui.messageComposer.micUnavailable')}</span
+    >
+  {:else if voice === 'recording'}
     <span class="rec-hint">{t('ui.messageComposer.recordingHint')}</span>
   {/if}
 </div>
@@ -1345,6 +1482,10 @@
     text-align: center;
     font: var(--weight-regular) var(--text-xs) / 1 var(--font-sans);
     color: var(--ink-4, #8a8a99);
+  }
+
+  .rec-hint.failure {
+    color: var(--status-danger, #f5493d);
   }
 
   .action.send[aria-disabled='true'] {

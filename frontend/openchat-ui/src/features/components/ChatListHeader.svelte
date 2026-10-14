@@ -1,6 +1,7 @@
 <!-- Top of the chat list. dms: a plain "Chats" title. community: the community's avatar, name and lock + meta line (opens details).
-     The ⋯ menu defaults to the standard actions for each kind; "Create new group" calls onCreateGroup, other items without
-     their own onSelect report their label through onMenu. -->
+     The ⋯ menu defaults to the standard actions for each kind; the community admin items only show with canEdit /
+     canCreateChannel / canInvite (all off by default). "Create new group" calls onCreateGroup; other items without their own
+     onSelect report their `id` (else their label) through onMenu. Actions are matched by id, never by label text. -->
 <script lang="ts">
   import { useT } from '../../lib/i18n';
   import { onMount } from 'svelte';
@@ -11,21 +12,22 @@
 
   const icon = (name: string) => `var(--icon-${name}) center/contain no-repeat`;
 
-  // labels are resource keys; onMenu reports the key of the item picked
-  const CREATE_GROUP = 'ui.chatListHeader.createGroup';
-  const DMS_MENU: MenuItem[] = [
-    { label: CREATE_GROUP, mask: icon('group') },
-    { label: 'ui.chatListHeader.markAllRead', mask: icon('check-double') },
+  // labels are resource keys; onMenu reports the id of the item picked
+  type ActionItem = MenuItem & { id?: string };
+  const DMS_MENU: ActionItem[] = [
+    { id: 'createGroup', label: 'ui.chatListHeader.createGroup', mask: icon('group') },
+    { id: 'markAllRead', label: 'ui.chatListHeader.markAllRead', mask: icon('check-double') },
   ];
 
-  const COMMUNITY_MENU: MenuItem[] = [
-    { label: 'ui.chatListHeader.members', mask: icon('users') },
-    { label: 'ui.chatListHeader.invite', mask: icon('invite') },
-    { label: 'ui.chatListHeader.editCommunity', mask: icon('edit') },
-    { label: 'ui.chatListHeader.newChannel', mask: icon('plus') },
-    { label: 'ui.chatListHeader.addEmbeddedChannel', mask: icon('embed') },
-    { label: 'ui.chatListHeader.markAllRead', mask: icon('check-double') },
-    { label: 'ui.chatListHeader.leaveCommunity', mask: icon('exit'), variant: 'danger' },
+  // need: which capability shows the item (none = everyone)
+  const COMMUNITY_MENU: (ActionItem & { need?: 'invite' | 'edit' | 'channels' })[] = [
+    { id: 'members', label: 'ui.chatListHeader.members', mask: icon('users') },
+    { id: 'invite', label: 'ui.chatListHeader.invite', mask: icon('invite'), need: 'invite' },
+    { id: 'editCommunity', label: 'ui.chatListHeader.editCommunity', mask: icon('edit'), need: 'edit' },
+    { id: 'newChannel', label: 'ui.chatListHeader.newChannel', mask: icon('plus'), need: 'channels' },
+    { id: 'addEmbeddedChannel', label: 'ui.chatListHeader.addEmbeddedChannel', mask: icon('embed'), need: 'channels' },
+    { id: 'markAllRead', label: 'ui.chatListHeader.markAllRead', mask: icon('check-double') },
+    { id: 'leave', label: 'ui.chatListHeader.leaveCommunity', mask: icon('exit'), variant: 'danger' },
   ];
 
   interface Props {
@@ -37,28 +39,51 @@
     /** Overrides the "Public · 248 members" line. Resource key (or literal text). */
     meta?: string;
     color?: 'violet' | 'amber' | 'teal' | 'blue';
-    menuItems?: MenuItem[];
+    /** Replaces the default menu; give items an `id` to be told which was picked. */
+    menuItems?: ActionItem[];
+    /** Community: show Edit community. */
+    canEdit?: boolean;
+    /** Community: show New channel / Add embedded channel. */
+    canCreateChannel?: boolean;
+    /** Community: show Invite. */
+    canInvite?: boolean;
     openDetails?: () => void;
     onCreateGroup?: () => void;
-    onMenu?: (label: string) => void;
+    /** The picked item's id (or label when it has none). */
+    onMenu?: (id: string) => void;
   }
 
-  let { kind = 'dms', title, visibility = 'Public', memberCount = 0, meta, color = 'teal', menuItems, openDetails, onCreateGroup, onMenu }: Props = $props();
+  let {
+    kind = 'dms',
+    title,
+    visibility = 'Public',
+    memberCount = 0,
+    meta,
+    color = 'teal',
+    menuItems,
+    canEdit = false,
+    canCreateChannel = false,
+    canInvite = false,
+    openDetails,
+    onCreateGroup,
+    onMenu,
+  }: Props = $props();
   const t = useT();
 
   let open = $state(false);
   let menuBox: HTMLDivElement;
 
   const community = $derived(kind === 'community');
+  const allowed = (need?: 'invite' | 'edit' | 'channels') => !need || (need === 'invite' ? canInvite : need === 'edit' ? canEdit : canCreateChannel);
   const items = $derived(
-    (menuItems ?? (community ? COMMUNITY_MENU : DMS_MENU)).map((it) => ({
+    (menuItems ?? (community ? COMMUNITY_MENU.filter((it) => allowed(it.need)) : DMS_MENU)).map((it) => ({
       ...it,
       onSelect: () => {
         open = false;
         if (it.onSelect) it.onSelect();
         // the host renders the dialog; mounting it here would trap its fixed layout inside the list column
-        else if (it.label === CREATE_GROUP || /^create new group$/i.test(it.label)) onCreateGroup?.();
-        else onMenu?.(it.label);
+        else if (it.id === 'createGroup') onCreateGroup?.();
+        else onMenu?.(it.id ?? it.label);
       },
     })),
   );

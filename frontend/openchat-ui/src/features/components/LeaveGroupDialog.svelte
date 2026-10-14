@@ -1,4 +1,5 @@
-<!-- Confirm leaving a group, channel or community. Cancel / confirm play the close animation, then call back. -->
+<!-- Confirm leaving a group, channel or community. Cancel plays the close animation, then calls back; Leave calls onConfirm
+     and waits: the dialog closes once it resolves and stays open with an error if it rejects (e.g. the sole owner). -->
 <script lang="ts">
   import { useT } from '../../lib/i18n';
   import Translate from '../../lib/components/Translate.svelte';
@@ -10,7 +11,8 @@
     noun?: 'group' | 'channel' | 'community';
     /** Overrides the explanation, which otherwise depends on the noun. Resource key (or literal text). */
     body?: string;
-    onConfirm?: () => void;
+    /** Leave. Reject to keep the dialog open with an error. */
+    onConfirm?: () => Promise<unknown> | void;
     onCancel?: () => void;
   }
 
@@ -32,10 +34,30 @@
       then?.();
     }, 170);
   }
+
+  // confirming waits for the host: the dialog closes once it resolves, and stays with an error if it rejects
+  let busy = $state(false);
+  let failed = $state(false);
+  async function confirm() {
+    if (busy || closing) return;
+    busy = true;
+    failed = false;
+    try {
+      await onConfirm?.();
+    } catch {
+      failed = true;
+      return;
+    } finally {
+      busy = false;
+    }
+    close();
+  }
+  // no dismissing while the host is working on it
+  const dismiss = () => !busy && close(onCancel);
 </script>
 
-<div class="layer" class:closing role="dialog" aria-modal="true" use:modal={() => close(onCancel)}>
-  <div class="veil" onclick={() => close(onCancel)} aria-hidden="true"></div>
+<div class="layer" class:closing role="dialog" aria-modal="true" use:modal={dismiss}>
+  <div class="veil" onclick={dismiss} aria-hidden="true"></div>
   <div class="card">
     <div class="head">
       <span class="badge"><span class="badge-icon"></span></span>
@@ -43,7 +65,7 @@
         <span class="title">{t('ui.leaveGroupDialog.title', { noun })}</span>
         <span class="subtitle">{groupName}</span>
       </div>
-      <span class="close" onclick={() => close(onCancel)} role="button" tabindex="0"><span class="close-icon"></span></span>
+      <span class="close" onclick={dismiss} role="button" tabindex="0" aria-label={t('ui.common.close')}><span class="close-icon"></span></span>
     </div>
 
     <div class="body">
@@ -54,11 +76,12 @@
     </div>
 
     <div class="foot">
-      <span class="cancel" onclick={() => close(onCancel)} role="button" tabindex="0">{t('ui.common.cancel')}</span>
+      <span class="cancel" onclick={dismiss} role="button" tabindex="0">{t('ui.common.cancel')}</span>
       <span class="grow"></span>
-      <div class="confirm" onclick={() => close(onConfirm)} role="button" tabindex="0">
+      {#if failed}<span class="error" role="alert">{t('ui.leaveGroupDialog.failed', { noun })}</span>{/if}
+      <div class="confirm" class:busy onclick={confirm} role="button" tabindex="0" aria-disabled={busy}>
         <span class="confirm-icon"></span>
-        <span>{t('ui.leaveGroupDialog.confirm', { noun })}</span>
+        <span>{t(busy ? 'ui.leaveGroupDialog.leaving' : 'ui.leaveGroupDialog.confirm', { noun })}</span>
       </div>
     </div>
   </div>
@@ -256,6 +279,17 @@
     color: var(--on-accent, #2e0512);
     cursor: pointer;
     user-select: none;
+  }
+
+  .confirm.busy {
+    opacity: 0.6;
+    cursor: default;
+  }
+
+  .error {
+    min-width: 0;
+    font: var(--weight-medium) var(--text-sm) / 1.3 var(--font-sans);
+    color: var(--status-danger, #f5493d);
   }
 
   .confirm:hover {
