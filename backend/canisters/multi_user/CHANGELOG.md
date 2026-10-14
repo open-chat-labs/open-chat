@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Remove the `withdraw_btc` and `withdraw_via_one_sec` stubs ([#9921](https://github.com/open-chat-labs/open-chat/pull/9921))
 - Remove what was only needed while users were being migrated, including the `UserIdMigrated` event and reading the heap layouts kept for imported users ([#9922](https://github.com/open-chat-labs/open-chat/pull/9922))
 - Remove the endpoints the website only called for users outside MultiUser canisters: `swap_tokens`, `approve_transfer`, `withdraw_crypto_v2`, `token_swap_status` and `c2c_withdraw_from_icpswap` ([#9924](https://github.com/open-chat-labs/open-chat/pull/9924))
+- Stop reading chat events data held on the heap from before it was moved into stable memory ([#9955](https://github.com/open-chat-labs/open-chat/pull/9955))
 
 ### Fixed
 

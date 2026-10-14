@@ -1486,9 +1486,9 @@ impl GroupChatCore {
         members_updated || invitations_updated || metrics_updated
     }
 
-    // The ids under which `migrate_user_id` moves records, ie. memberships, blocks, invitations
-    // (along with who sent them) and the metrics still held on the heap. Those in stable memory are
-    // read a batch at a time via `ChatEvents::user_ids_with_metrics_in_stable_memory`.
+    // The ids under which `migrate_user_id` moves records, ie. memberships, blocks and invitations
+    // (along with who sent them). The users with metrics are read a batch at a time via
+    // `ChatEvents::user_ids_with_metrics_in_stable_memory`.
     pub fn user_ids_holding_records(&self) -> impl Iterator<Item = UserId> + '_ {
         self.members
             .member_ids()
@@ -1496,7 +1496,6 @@ impl GroupChatCore {
             .copied()
             .chain(self.members.blocked())
             .chain(self.invited_users.user_ids_and_inviters())
-            .chain(self.events.user_ids_with_metrics_on_heap())
     }
 
     // Passes each user id the chat holds outside its events and the records moved by

@@ -1,18 +1,15 @@
+use crate::legacy_heap_entries::LegacyHeapEntries;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::{ChatEventKeyPrefix, ExpiringEventKeyPrefix, KeyPrefix, with_map, with_map_mut};
-use std::collections::BTreeSet;
 use types::{EventIndex, MAX_EVENT_INDEX, MIN_EVENT_INDEX, TimestampMillis};
 
 // The events which are due to expire, ordered by their expiry dates. The entries are stored in the
 // stable memory map for small entries.
 #[derive(Serialize, Deserialize, Default)]
 pub struct ExpiringEvents {
-    // Entries which haven't yet been moved into stable memory. New entries are always written to
-    // stable memory, and existing ones are moved across in batches by `migrate_to_stable_memory`.
-    // This can be removed once every chat has been migrated. It is always serialized so that a
-    // canister can still be rolled back to a version expecting it.
-    #[serde(rename = "event_expiry_dates", default)]
-    on_heap: BTreeSet<(TimestampMillis, EventIndex)>,
+    // Entries from before they were stored in stable memory (see `LegacyHeapEntries`)
+    #[serde(rename = "event_expiry_dates", default, skip_serializing)]
+    legacy_on_heap: LegacyHeapEntries,
     // A lower bound for the expiry dates of the entries in stable memory, or `None` if there are
     // none, so that checking when the next event expires doesn't require reading from stable
     // memory. This is exact other than while expired events are being taken.
@@ -31,15 +28,10 @@ impl ExpiringEvents {
     }
 
     pub fn next_event_expiry(&self) -> Option<TimestampMillis> {
-        let next_on_heap = self.on_heap.first().map(|(ts, _)| *ts);
-        [next_on_heap, self.next_expiry_in_stable_memory].into_iter().flatten().min()
+        self.next_expiry_in_stable_memory
     }
 
     pub fn take_next_expired_event(&mut self, events_prefix: &ChatEventKeyPrefix, now: TimestampMillis) -> Option<EventIndex> {
-        if self.on_heap.first().is_some_and(|(ts, _)| *ts <= now) {
-            return self.on_heap.pop_first().map(|(_, i)| i);
-        }
-
         if self.next_expiry_in_stable_memory.is_none_or(|ts| ts > now) {
             return None;
         }
@@ -68,40 +60,8 @@ impl ExpiringEvents {
         self.next_expiry_in_stable_memory = first_entry_in_stable_memory(&prefix).map(|(ts, _)| ts);
     }
 
-    // Moves up to `max_count` entries from the heap into stable memory, returning how many were
-    // moved
-    pub fn migrate_to_stable_memory(&mut self, events_prefix: &ChatEventKeyPrefix, max_count: usize) -> usize {
-        if max_count == 0 {
-            return 0;
-        }
-        let Some((first_expiry, _)) = self.on_heap.first().copied() else {
-            return 0;
-        };
-        if self.next_expiry_in_stable_memory.is_none_or(|ts| first_expiry < ts) {
-            self.next_expiry_in_stable_memory = Some(first_expiry);
-        }
-
-        let prefix = ExpiringEventKeyPrefix::new_from_events_prefix(events_prefix);
-        let mut count = 0;
-
-        // Entries are popped in (expiry date, event index) order, which is also their key order
-        with_map_mut(|m| {
-            m.insert_many(
-                std::iter::from_fn(|| self.on_heap.pop_first())
-                    .take(max_count)
-                    .inspect(|_| count += 1)
-                    .map(|key| (prefix.create_key(&key), Vec::new())),
-            )
-        });
-        count
-    }
-
-    pub fn on_heap_count(&self) -> usize {
-        self.on_heap.len()
-    }
-
-    pub fn discard_on_heap(&mut self) {
-        self.on_heap = BTreeSet::new();
+    pub(crate) fn legacy_heap_entries(&self) -> usize {
+        self.legacy_on_heap.count()
     }
 }
 
@@ -118,6 +78,7 @@ mod tests {
     use ic_stable_structures::DefaultMemoryImpl;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
     use rand::{Rng, rng};
+    use std::collections::BTreeSet;
     use types::Chat;
 
     #[test]
@@ -164,66 +125,26 @@ mod tests {
     }
 
     #[test]
-    fn heap_entries_are_migrated_to_stable_memory() {
-        init_stable_memory_map();
-        let chat = ChatEventKeyPrefix::new_from_chat(Chat::Group(Principal::from_slice(&[1]).into()), None);
-        let mut expiring_events = ExpiringEvents::default();
+    fn entries_from_before_stable_memory_are_counted_but_not_kept() {
+        #[derive(Serialize)]
+        struct Legacy {
+            event_expiry_dates: BTreeSet<(TimestampMillis, EventIndex)>,
+            n: Option<TimestampMillis>,
+        }
+        let legacy = Legacy {
+            event_expiry_dates: (0..10u32).map(|i| (1000 + i as u64, i.into())).collect(),
+            n: Some(2000),
+        };
 
-        // Recreate the state of a chat from before expiring events were stored in stable memory
-        for i in 0..100u32 {
-            expiring_events.on_heap.insert((1000 + i as u64, i.into()));
-        }
-        // Plus some entries added since then
-        for i in 100..110u32 {
-            expiring_events.insert(&chat, i.into(), 2000 + i as u64);
-        }
-        assert_eq!(expiring_events.on_heap_count(), 100);
-        assert_eq!(expiring_events.next_event_expiry(), Some(1000));
+        let expiring_events: ExpiringEvents = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&legacy));
+        assert_eq!(expiring_events.legacy_heap_entries(), 10);
+        assert_eq!(expiring_events.next_event_expiry(), Some(2000));
 
         let bytes = msgpack::serialize_then_unwrap(&expiring_events);
-        // Must keep the field name used by the previous version so that upgrades and rollbacks both work
-        assert!(bytes.windows(18).any(|w| w == b"event_expiry_dates"));
-        let mut expiring_events: ExpiringEvents = msgpack::deserialize_then_unwrap(&bytes);
-        assert_eq!(expiring_events.on_heap_count(), 100);
-        assert_eq!(expiring_events.next_event_expiry(), Some(1000));
-
-        assert_eq!(expiring_events.migrate_to_stable_memory(&chat, 30), 30);
-        assert_eq!(expiring_events.on_heap_count(), 70);
-        assert_eq!(expiring_events.migrate_to_stable_memory(&chat, 1000), 70);
-        assert_eq!(expiring_events.on_heap_count(), 0);
-        assert_eq!(expiring_events.migrate_to_stable_memory(&chat, 1000), 0);
-        assert_eq!(expiring_events.next_event_expiry(), Some(1000));
-
-        let mut taken = Vec::new();
-        while let Some(event_index) = expiring_events.take_next_expired_event(&chat, 3000) {
-            taken.push(u32::from(event_index));
-        }
-        assert_eq!(taken, (0..110).collect::<Vec<_>>());
-        assert_eq!(expiring_events.next_event_expiry(), None);
-    }
-
-    #[test]
-    fn heap_and_stable_memory_entries_are_both_taken() {
-        init_stable_memory_map();
-        let chat = ChatEventKeyPrefix::new_from_chat(Chat::Group(Principal::from_slice(&[1]).into()), None);
-        let mut expiring_events = ExpiringEvents::default();
-
-        expiring_events.on_heap.insert((1000, 1.into()));
-        expiring_events.on_heap.insert((3000, 3.into()));
-        expiring_events.insert(&chat, 2.into(), 2000);
-        expiring_events.insert(&chat, 4.into(), 4000);
-
-        let mut next_expiry_dates = Vec::new();
-        let mut taken = Vec::new();
-        for now in [1000, 2000, 3000, 4000] {
-            next_expiry_dates.push(expiring_events.next_event_expiry().unwrap());
-            while let Some(event_index) = expiring_events.take_next_expired_event(&chat, now) {
-                taken.push(u32::from(event_index));
-            }
-        }
-        assert_eq!(next_expiry_dates, vec![1000, 2000, 3000, 4000]);
-        assert_eq!(taken, vec![1, 2, 3, 4]);
-        assert_eq!(expiring_events.next_event_expiry(), None);
+        assert!(!bytes.windows(18).any(|w| w == b"event_expiry_dates"));
+        let expiring_events: ExpiringEvents = msgpack::deserialize_then_unwrap(&bytes);
+        assert_eq!(expiring_events.legacy_heap_entries(), 0);
+        assert_eq!(expiring_events.next_event_expiry(), Some(2000));
     }
 
     #[test]
@@ -241,29 +162,6 @@ mod tests {
 
         expiring_events.refresh_next_expiry(&chat);
         assert_eq!(expiring_events.next_event_expiry(), Some(1000));
-    }
-
-    #[test]
-    fn discarding_heap_entries_keeps_stable_memory_entries() {
-        init_stable_memory_map();
-        let chat = ChatEventKeyPrefix::new_from_chat(Chat::Group(Principal::from_slice(&[1]).into()), None);
-        let mut expiring_events = ExpiringEvents::default();
-
-        // Recreate an imported group whose heap entries are duplicates of those written to stable
-        // memory during the import
-        for i in 0..10u32 {
-            expiring_events.on_heap.insert((1000 + i as u64, i.into()));
-            expiring_events.insert(&chat, i.into(), 1000 + i as u64);
-        }
-        expiring_events.discard_on_heap();
-        assert_eq!(expiring_events.on_heap_count(), 0);
-        assert_eq!(expiring_events.next_event_expiry(), Some(1000));
-
-        let mut taken = Vec::new();
-        while let Some(event_index) = expiring_events.take_next_expired_event(&chat, u64::MAX) {
-            taken.push(u32::from(event_index));
-        }
-        assert_eq!(taken, (0..10).collect::<Vec<_>>());
     }
 
     fn init_stable_memory_map() {

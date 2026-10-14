@@ -11,8 +11,8 @@ use std::collections::HashMap;
 use std::ops::Deref;
 use testing::rng::{random_from_u128, random_string};
 use types::{
-    CanisterId, Chat, ChatEvent, ChatId, CommunityId, CryptoTransaction, EventIndex, MessageContentInitial, MultiUserChat,
-    PendingCryptoTransaction, PrizeContentInitial, ReplyContext, TextContent, icrc1,
+    CanisterId, Chat, ChatEvent, ChatId, CommunityId, CryptoTransaction, EventIndex, MessageContent, MessageContentInitial,
+    MessageIndex, MultiUserChat, PendingCryptoTransaction, PrizeContentInitial, ReplyContext, TextContent, icrc1,
 };
 
 #[test]
@@ -43,6 +43,16 @@ fn import_group_succeeds() {
 
         client::group::happy_path::send_text_message(env, &user1, group_id, None, text, None);
     }
+    // Enough messages for the group to hold full chunks of its messages' event indexes in stable memory
+    for i in 0..140 {
+        client::group::happy_path::send_text_message(env, &user2, group_id, None, format!("message {i}"), None);
+    }
+    let user2_text_messages = client::group::happy_path::summary(env, user2.principal, group_id)
+        .membership
+        .unwrap()
+        .my_metrics
+        .text_messages;
+    assert_eq!(user2_text_messages, 140);
 
     let import_group_response = client::community::happy_path::import_group(env, user1.principal, community_id, group_id);
 
@@ -94,6 +104,34 @@ fn import_group_succeeds() {
         100,
     );
     assert!(events.events.len() > 10);
+
+    // The users' metrics and the messages' event indexes were carried over from the group
+    let channel_id = import_group_response.channel_id;
+    let channel_summary = client::community::happy_path::channel_summary(env, &user2, community_id, channel_id);
+    assert_eq!(
+        channel_summary.membership.unwrap().my_metrics.text_messages,
+        user2_text_messages
+    );
+    let message_indexes = [0u32, 9, 100, 148].map(MessageIndex::from);
+    let response = client::community::messages_by_message_index(
+        env,
+        user1.principal,
+        community_id.into(),
+        &community_canister::messages_by_message_index::Args {
+            channel_id,
+            thread_root_message_index: None,
+            messages: message_indexes.to_vec(),
+            latest_known_update: None,
+        },
+    );
+    let community_canister::messages_by_message_index::Response::Success(result) = response else {
+        panic!("'messages_by_message_index' error: {response:?}");
+    };
+    assert_eq!(
+        result.messages.iter().map(|m| m.event.message_index).collect_vec(),
+        message_indexes.to_vec()
+    );
+    assert!(matches!(&result.messages[3].event.content, MessageContent::Text(t) if t.text == "message 139"));
 
     // Check that the group has been deleted, leaving its canister uninstalled
     wait_for_deleted_canister_to_be_uninstalled(env, group_id.into());
