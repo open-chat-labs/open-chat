@@ -2,7 +2,7 @@ benches:
   add_reactions:
     total:
       calls: 1
-      instructions: 1602043580
+      instructions: 1601487052
       heap_increase: 3
       stable_memory_increase: 0
     scopes: {}
@@ -16,21 +16,28 @@ benches:
   import_events:
     total:
       calls: 1
-      instructions: 122269584
+      instructions: 122299893
       heap_increase: 3
+      stable_memory_increase: 0
+    scopes: {}
+  import_from_group:
+    total:
+      calls: 1
+      instructions: 8585712
+      heap_increase: 0
       stable_memory_increase: 0
     scopes: {}
   push_simple_text_messages:
     total:
       calls: 1
-      instructions: 646968873
+      instructions: 646969157
       heap_increase: 3
       stable_memory_increase: 0
     scopes: {}
   search_messages:
     total:
       calls: 1
-      instructions: 129123389
+      instructions: 128749985
       heap_increase: 0
       stable_memory_increase: 0
     scopes: {}
