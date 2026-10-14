@@ -22,6 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Remove the one-off which checked recurring gates again for lapsed migrated members, now that it has run ([#9915](https://github.com/open-chat-labs/open-chat/pull/9915))
 - Remove what was only used for users in User canisters, including `register_proposal_vote` and `c2c_tip_message` ([#9919](https://github.com/open-chat-labs/open-chat/pull/9919))
 - Remove what was only needed while users were being migrated, including the `UserIdMigrated` event and the record of former members ([#9922](https://github.com/open-chat-labs/open-chat/pull/9922))
+- Remove moving chat events data from the heap into stable memory, refusing to upgrade while any is left, and export users' metrics and message event indexes alongside the group when importing it ([#9955](https://github.com/open-chat-labs/open-chat/pull/9955))
 
 ### Fixed
 
