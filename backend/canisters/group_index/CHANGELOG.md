@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove the one-off which replaced old user ids in the descriptions of public groups and communities, now that it has run ([#TIDY](https://github.com/open-chat-labs/open-chat/pull/TIDY))
+
+## [[2.0.2144](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2144-group_index)] - 2026-10-14
+
 ### Changed
 
 - Replace old user ids mentioned in the descriptions of public groups and communities ([#9954](https://github.com/open-chat-labs/open-chat/pull/9954))
