@@ -87,8 +87,8 @@
   }
 
   $effect(() => {
-    sig;
-    box;
+    void sig;
+    void box;
     untrack(place);
   });
 

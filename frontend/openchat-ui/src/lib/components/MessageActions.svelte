@@ -110,7 +110,7 @@
     if (sig) modeOverride = { sig, mode: next };
   }
 
-  function place(force = false) {
+  function place() {
     if (!open || !box) return;
     const key = `${openSig}|${mode}`;
     const r = box.getBoundingClientRect(), w = r.width, h = r.height, vw = window.innerWidth, vh = window.innerHeight;
@@ -183,16 +183,16 @@
   }
 
   $effect(() => {
-    sig;
-    mode;
-    box;
-    cloneSlot;
+    void sig;
+    void mode;
+    void box;
+    void cloneSlot;
     untrack(sync);
   });
 
   $effect(() => {
     if (!box) return;
-    const ro = new ResizeObserver(() => untrack(() => place(true)));
+    const ro = new ResizeObserver(() => untrack(() => place()));
     ro.observe(box);
     return () => ro.disconnect();
   });

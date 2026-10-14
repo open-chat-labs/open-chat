@@ -320,7 +320,9 @@
       hover = -1;
       try {
         rows[i].setPointerCapture(e.pointerId);
-      } catch {}
+      } catch {
+        // the pointer is already gone (released or cancelled): nothing to capture
+      }
       window.getSelection?.()?.removeAllRanges();
     }
     e.preventDefault();

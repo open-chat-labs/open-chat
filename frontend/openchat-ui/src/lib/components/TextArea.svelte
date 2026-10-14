@@ -33,8 +33,8 @@
   }
 
   $effect(() => {
-    value;
-    minHeight;
+    void value;
+    void minHeight;
     fit();
   });
 </script>

@@ -96,7 +96,7 @@
   // no arithmetic: let the browser wrap, read how many rows it actually used,
   // and drop one chip per pass until it fits. Monotonic, so it always terminates.
   $effect(() => {
-    shown;
+    void shown;
     const el = chips;
     if (!el || untrack(() => expanded)) return;
     const kids = [...el.children];

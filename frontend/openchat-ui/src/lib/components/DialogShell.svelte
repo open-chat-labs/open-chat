@@ -5,7 +5,7 @@
 <script lang="ts" module>
   const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),textarea:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])';
   // shared with hand-built dialogs elsewhere, hence a window global
-  const stack = (): object[] => ((window as any).__ocDialogs ??= []);
+  const stack = (): object[] => ((window as unknown as { __ocDialogs?: object[] }).__ocDialogs ??= []);
 </script>
 
 <script lang="ts">

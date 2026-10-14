@@ -1,6 +1,6 @@
 // Shared prop types. The export referenced these by name without defining them;
 // each shape mirrors what the matching .logic.js file produces or reads.
-import type { Component, ComponentProps } from 'svelte';
+import type { Component } from 'svelte';
 import type ChatBubble from './components/ChatBubble.svelte';
 import type FileMessage from './components/FileMessage.svelte';
 import type LinkPreview from './components/LinkPreview.svelte';
@@ -37,7 +37,7 @@ interface GroupMessageBase {
 /** Props a message kind takes from MessageGroup itself rather than from the message. */
 type GroupOwned = 'side' | 'lastInGroup' | 'onToggleReaction';
 
-type KindProps<C extends Component<any>> = Omit<ComponentProps<C>, GroupOwned | 'time'>;
+type KindProps<C> = C extends Component<infer P> ? Omit<P, GroupOwned | 'time'> : never;
 
 /** One message inside a MessageGroup; `kind` picks the component that renders it (text when absent). */
 export type GroupMessage = GroupMessageBase &
