@@ -9,10 +9,8 @@
         Subtitle,
         type SizeMode,
     } from "component-lib";
-    import type { OpenChat, SwapFromWalletStep, SwapTokensResponse } from "@client";
-    import { publish } from "@client";
-    import { swapFromWalletOutcome, type SwapOutcome } from "../../../utils/tokenSwap";
-    import { getContext } from "svelte";
+    import type { InterpolationValues, SwapFromWalletStep, SwapOutcome } from "@client";
+    import { formatTokens, publish } from "@client";
     import Check from "svelte-material-icons/Check.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import Robot from "svelte-material-icons/RobotOutline.svelte";
@@ -20,46 +18,30 @@
     import Translatable from "@shared_components/Translatable.svelte";
 
     interface Props {
-        tokenIn: string;
-        tokenOut: string;
-        ledgerIn: string;
-        ledgerOut: string;
-        amountIn: string;
+        // The quote's values, which fill in the step labels
+        values: InterpolationValues;
         decimalsOut: number;
-        dex: string;
-        // What swapping returned, once it has
-        swapResponse: SwapTokensResponse | undefined;
         // The step the swap, which the user makes straight from their wallet, has reached, once it
         // is past initialising. Its steps are reported as they start.
-        swapStep: SwapFromWalletStep | undefined;
+        step: SwapFromWalletStep | undefined;
+        // How the swap went, once it has
+        outcome: Exclude<SwapOutcome, { kind: "cancelled" }> | undefined;
     }
 
-    let {
-        tokenIn,
-        tokenOut,
-        ledgerIn,
-        ledgerOut,
-        amountIn,
-        decimalsOut,
-        dex,
-        swapResponse,
-        swapStep,
-    }: Props = $props();
+    let { values, decimalsOut, step, outcome }: Props = $props();
 
     const height: SizeMode = { size: "16rem" };
-    const client = getContext<OpenChat>("client");
     const labelPrefix = "tokenSwap.progress.";
 
-    let amountOut = $state("");
-    let outcome = $state<SwapOutcome>();
+    let amountOut = $derived(
+        outcome?.kind === "swapped"
+            ? formatTokens(outcome.amountOut, decimalsOut)
+            : step?.step === "withdraw"
+              ? formatTokens(step.amountOut, decimalsOut)
+              : "",
+    );
 
-    let labelValues = $derived({
-        tokenIn,
-        tokenOut,
-        amountIn,
-        amountOut,
-        dex,
-    });
+    let labelValues = $derived({ ...values, amountOut });
 
     type Stage =
         | { kind: "init" }
@@ -70,43 +52,14 @@
 
     const stages: Stage["kind"][] = ["init", "approve", "swap", "withdraw", "done"];
 
-    let currentStage = $state<Stage["kind"]>("init");
+    let currentStage = $derived<Stage["kind"]>(
+        outcome?.kind === "swapped" ? "done" : (step?.step ?? "init"),
+    );
     let currentStageIndex = $derived(stages.findIndex((s) => s === currentStage));
-    let error = $state(false);
-
-    $effect(() => {
-        if (swapStep !== undefined && outcome === undefined) {
-            if (swapStep.step === "withdraw") {
-                amountOut = client.formatTokens(swapStep.amountOut, decimalsOut);
-            }
-            currentStage = swapStep.step;
-        }
-    });
-
-    $effect(() => {
-        if (swapResponse !== undefined && outcome === undefined) {
-            showSwapFromWalletOutcome(swapResponse);
-        }
-    });
-
-    function showSwapFromWalletOutcome(response: SwapTokensResponse) {
-        if (response.kind === "success") {
-            amountOut = client.formatTokens(response.amountOut, decimalsOut);
-            currentStage = "done";
-        } else {
-            error = true;
-        }
-        outcome = swapFromWalletOutcome(response);
-    }
+    let error = $derived(outcome !== undefined && outcome.kind !== "swapped");
 
     function percentFromIndex(idx: number) {
         return (idx / (stages.length - 1)) * 100;
-    }
-
-    function onFinished() {
-        client.refreshAccountBalance(ledgerIn);
-        client.refreshAccountBalance(ledgerOut);
-        closeModalStack();
     }
 
     function closeModalStack() {
@@ -123,16 +76,20 @@
         <Container
             supplementalClass={`permission_slider`}
             mainAxisAlignment={"start"}
-            padding={["zero", "sm"]}>
+            padding={["zero", "sm"]}
+        >
             <Container
                 width={"hug"}
                 {height}
                 direction={"vertical"}
                 overflow={"visible"}
-                padding={["md", "xxl", "md", "zero"]}>
+                padding={["md", "xxl", "md", "zero"]}
+            >
                 <div class="track">
-                    <div class="progress" style={`height: ${percentFromIndex(currentStageIndex)}%`}>
-                    </div>
+                    <div
+                        class="progress"
+                        style={`height: ${percentFromIndex(currentStageIndex)}%`}
+                    ></div>
                     {#each stages as _, i}
                         {@const active = i <= currentStageIndex}
                         {@const current = i === currentStageIndex}
@@ -143,8 +100,8 @@
                                 class:current
                                 class:inerror
                                 class="marker"
-                                class:end={i === 0 || i === stages.length - 1}>
-                            </div>
+                                class:end={i === 0 || i === stages.length - 1}
+                            ></div>
                         </div>
                     {/each}
                 </div>
@@ -154,7 +111,8 @@
                 {height}
                 direction={"vertical"}
                 padding={"zero"}
-                mainAxisAlignment={"spaceBetween"}>
+                mainAxisAlignment={"spaceBetween"}
+            >
                 {#each stages as stage, i}
                     {@const active = i <= currentStageIndex}
                     {@const current = i === currentStageIndex}
@@ -168,9 +126,11 @@
                                     : active
                                       ? "textPrimary"
                                       : "textSecondary"}
-                                width={"hug"}>
+                                width={"hug"}
+                            >
                                 <Translatable
-                                    resourceKey={i18nKey(`${labelPrefix}${stage}`, labelValues)} />
+                                    resourceKey={i18nKey(`${labelPrefix}${stage}`, labelValues)}
+                                />
                             </Body>
                             {#if inerror}
                                 <Close color={ColourVars.validationError} />
@@ -183,28 +143,21 @@
             </Container>
         </Container>
 
-        {#if outcome && outcome !== "success"}
+        {#if outcome !== undefined && outcome.kind !== "swapped"}
             <ErrorMessage>
-                {#if outcome === "error"}
-                    <Translatable resourceKey={i18nKey("tokenSwap.progress.error")} />
-                {:else if outcome === "unknown"}
-                    <Translatable resourceKey={i18nKey("tokenSwap.progress.unknown")} />
-                {:else if outcome === "insufficientFunds"}
-                    <Translatable resourceKey={i18nKey("Insufficient funds")} />
-                {:else if outcome === "rateChanged"}
-                    <Translatable resourceKey={i18nKey("Rate changed")} />
-                {/if}
+                <Translatable resourceKey={outcome.message} />
             </ErrorMessage>
         {/if}
 
         <Container mainAxisAlignment={"end"}>
             <Button
-                secondary={outcome !== undefined && outcome !== "success"}
-                onClick={outcome ? onFinished : undefined}
-                loading={outcome === undefined}>
+                secondary={error}
+                onClick={outcome ? closeModalStack : undefined}
+                loading={outcome === undefined}
+            >
                 {#if outcome === undefined}
                     <Translatable resourceKey={i18nKey("In progress")} />
-                {:else if outcome === "success"}
+                {:else if outcome.kind === "swapped"}
                     <Translatable resourceKey={i18nKey("Swap complete")} />
                 {:else}
                     <Translatable resourceKey={i18nKey("Unable to complete swap")} />

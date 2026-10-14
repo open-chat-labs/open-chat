@@ -134,7 +134,7 @@
         {:else if actionMode === "send"}
             <SendCrypto ledger={selectedLedger} onClose={hideManageModal} />
         {:else if actionMode === "swap"}
-            <SwapCrypto bind:ledgerIn={selectedLedger} onClose={hideManageModal} />
+            <SwapCrypto ledgerIn={selectedLedger} onClose={hideManageModal} />
         {:else if actionMode === "transactions"}
             <AccountTransactions
                 ledger={selectedLedger}
