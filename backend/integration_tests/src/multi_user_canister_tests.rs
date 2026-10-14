@@ -3203,12 +3203,10 @@ fn local_user_index_events_update_the_state_each_user_holds() {
                 created_at: now_millis(env),
                 idempotency_id: 1,
                 value: multi_user_canister::c2c_user_canister_v2::Event {
-                    sender_previous_user_ids: Vec::new(),
                     sender: carol.user_id,
                     recipient: alice_id,
                     event: UserCanisterEvent::SetReferralStatusV2(Box::new(multi_user_canister::SetReferralStatusV2 {
                         status: ReferralStatus::Diamond,
-                        previous_user_ids: Vec::new(),
                     })),
                 },
             }],
@@ -3229,52 +3227,6 @@ fn local_user_index_events_update_the_state_each_user_holds() {
     );
     assert!(has_achievement(&alice_state_after, Achievement::Referred1stUser));
     assert!(alice_state_after.chit_balance > alice_state.chit_balance);
-    let alice_state = alice_state_after;
-
-    // A referred user migrated to a MultiUser canister sends the ids they had before along with the
-    // status, and the referral held under one of them is updated, earning only the difference, rather
-    // than a new referral being added under their new id
-    let other_canister_id =
-        client::user_index::happy_path::create_multi_user_canister(env, *platform_operator, canister_ids, local_user_index);
-    let migrated_user_id = UserId::new_indexed(other_canister_id, 1);
-    let response = client::user::c2c_user_canister_v2(
-        env,
-        other_canister_id,
-        canister_id,
-        &multi_user_canister::c2c_user_canister_v2::Args {
-            events: vec![IdempotentEnvelope {
-                created_at: now_millis(env),
-                idempotency_id: 1,
-                value: multi_user_canister::c2c_user_canister_v2::Event {
-                    sender_previous_user_ids: Vec::new(),
-                    sender: migrated_user_id,
-                    recipient: alice_id,
-                    event: UserCanisterEvent::SetReferralStatusV2(Box::new(multi_user_canister::SetReferralStatusV2 {
-                        status: ReferralStatus::Diamond,
-                        previous_user_ids: vec![referred_elsewhere],
-                    })),
-                },
-            }],
-        },
-    );
-    assert!(
-        matches!(response, multi_user_canister::c2c_user_canister_v2::Response::Success),
-        "{response:?}"
-    );
-    let alice_state_after = initial_state(env, alice, canister_id);
-    assert_eq!(alice_state_after.referrals.len(), alice_state.referrals.len());
-    assert!(
-        alice_state_after
-            .referrals
-            .iter()
-            .any(|r| r.user_id == referred_elsewhere && matches!(r.status, ReferralStatus::Diamond)),
-        "{:?}",
-        alice_state_after.referrals
-    );
-    assert_eq!(
-        alice_state_after.chit_balance,
-        alice_state.chit_balance + ReferralStatus::Diamond.chit_reward() as i32
-    );
     let alice_state = alice_state_after;
 
     // Bob buying Diamond tells Alice, his referrer in this canister, so she earns the CHIT
@@ -4224,7 +4176,6 @@ fn events_from_users_in_other_canisters_are_applied_to_their_chats() {
                     created_at: now_millis(env),
                     idempotency_id: next_id,
                     value: multi_user_canister::c2c_user_canister_v2::Event {
-                        sender_previous_user_ids: Vec::new(),
                         sender,
                         recipient: bob_id,
                         event,
@@ -4366,7 +4317,6 @@ fn events_from_users_in_other_canisters_are_applied_to_their_chats() {
         created_at: now_millis(env),
         idempotency_id: 1_000,
         value: multi_user_canister::c2c_user_canister_v2::Event {
-            sender_previous_user_ids: Vec::new(),
             sender: alice.user_id,
             recipient: bob_id,
             event: send_text(random_from_u128(), 1, "once"),
@@ -4397,7 +4347,6 @@ fn events_from_users_in_other_canisters_are_applied_to_their_chats() {
                 created_at: now_millis(env),
                 idempotency_id: 1_001,
                 value: multi_user_canister::c2c_user_canister_v2::Event {
-                    sender_previous_user_ids: Vec::new(),
                     sender: alice.user_id,
                     recipient: UserId::new_indexed(canister_id, 99),
                     event: send_text(random_from_u128(), 2, "nobody"),
@@ -4596,7 +4545,6 @@ fn events_for_users_in_other_canisters_are_sent_to_their_canisters() {
                 created_at: now_millis(env),
                 idempotency_id: 1,
                 value: multi_user_canister::c2c_user_canister_v2::Event {
-                    sender_previous_user_ids: Vec::new(),
                     sender: UserId::new_indexed(impostor, 1),
                     recipient: bob_id,
                     event: UserCanisterEvent::SetEventsTtl(Box::new(multi_user_canister::SetEventsTtl {
@@ -4626,7 +4574,6 @@ fn events_for_users_in_other_canisters_are_sent_to_their_canisters() {
                 created_at: now_millis(env),
                 idempotency_id: 1,
                 value: multi_user_canister::c2c_user_canister_v2::Event {
-                    sender_previous_user_ids: Vec::new(),
                     sender: canister_ids.proposals_bot.into(),
                     recipient: bob_id,
                     event: UserCanisterEvent::SetEventsTtl(Box::new(multi_user_canister::SetEventsTtl {
@@ -4675,7 +4622,6 @@ fn a_multi_user_canister_is_verified_once_then_trusted_for_any_of_its_users() {
         created_at: now_millis(env),
         idempotency_id: id,
         value: multi_user_canister::c2c_user_canister_v2::Event {
-            sender_previous_user_ids: Vec::new(),
             sender,
             recipient: carol_id,
             event: UserCanisterEvent::SendMessages(Box::new(multi_user_canister::SendMessagesArgs {

@@ -5,20 +5,13 @@ use types::{
     CallDismissalKind, DirectCallDismissedNotification, DirectChatUserNotificationPayload, OCResult, TimestampMillis, UserId,
     VideoCallPresence,
 };
-use utils::migrated_user_ids::MigratedUserIds;
 
 // Records the user joining the call in their chat. On success the caller tells the other user's
 // canister and awards the `JoinedCall` achievement.
-pub fn join_video_call(
-    user: &mut User,
-    args: &Args,
-    my_user_id: UserId,
-    migrated_user_ids: &MigratedUserIds,
-    now: TimestampMillis,
-) -> OCResult {
+pub fn join_video_call(user: &mut User, args: &Args, my_user_id: UserId, now: TimestampMillis) -> OCResult {
     user.verify_not_suspended()?;
 
-    if user.has_blocked(args.user_id, migrated_user_ids) {
+    if user.has_blocked(args.user_id) {
         return Err(OCErrorCode::TargetUserBlocked.into());
     }
 

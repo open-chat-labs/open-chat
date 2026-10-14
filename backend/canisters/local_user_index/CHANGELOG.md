@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `c2c_previous_user_ids`, for groups and communities checking a member's gate again ([#REMOVE](https://github.com/open-chat-labs/open-chat/pull/REMOVE))
+
+### Changed
+
+- Pass on the referrer of a user joining a community by their latest id ([#REMOVE](https://github.com/open-chat-labs/open-chat/pull/REMOVE))
+
 ### Removed
 
 - Remove the one-offs which replaced old user ids in the bots and dropped the User canister's wasm, now that they have run ([#9965](https://github.com/open-chat-labs/open-chat/pull/9965))

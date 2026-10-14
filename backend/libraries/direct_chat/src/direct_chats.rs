@@ -8,10 +8,9 @@ use stable_memory_map::{
     DirectChatKey, DirectChatKeyPrefix, HeapStableSplitMap, HeapStableSplitMapMut, HeapStableSplitMapRef,
     HeapStableSplitMapValue, KeyPrefix, RemovedChatKeyPrefix,
 };
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::ops::ControlFlow;
 use types::{Chat, ChatId, MessageIndex, OCResult, TimestampMillis, Timestamped, UserId, UserType};
-use utils::migrated_user_ids::MigratedUserIds;
 
 pub type DirectChatRef<'a> = HeapStableSplitMapRef<'a, DirectChat>;
 pub type DirectChatMut<'a> = HeapStableSplitMapMut<'a, DirectChat>;
@@ -145,18 +144,6 @@ impl DirectChats {
         self.direct_chats_v2.iter()
     }
 
-    // The id of each chat, ordered by its key_id, which, unlike its id, stays the same for as long as
-    // the chat exists (see `migrate_their_user_id`)
-    pub fn ids_ordered_by_key_id(&self) -> Vec<(u32, ChatId)> {
-        let mut ids: Vec<_> = self
-            .direct_chats_v2
-            .entries()
-            .map(|(chat_id, entry)| (entry.key_id, chat_id))
-            .collect();
-        ids.sort_unstable();
-        ids
-    }
-
     // Applies `f` to each of the chats given in turn until it returns `Break`, then writes back
     // every chat it was applied to together (see `HeapStableSplitMap::update_many`)
     pub fn update_many<B>(
@@ -186,21 +173,12 @@ impl DirectChats {
         }
     }
 
-    // Points the private replies to messages in the `old` chat at the `new` chat. Each reply is
-    // recorded under the id the other user in its chat had when it was sent, which the chat may
-    // since have moved off (see `migrate_their_user_id`).
-    pub fn migrate_replies(
-        &mut self,
-        old: ChatInternal,
-        new: ChatInternal,
-        migrated_user_ids: &MigratedUserIds,
-        now: TimestampMillis,
-    ) {
+    // Points the private replies to messages in the `old` chat at the `new` chat
+    pub fn migrate_replies(&mut self, old: ChatInternal, new: ChatInternal, now: TimestampMillis) {
         if let ChatInternal::Group(chat_id) = old {
             // The replies are all read and removed up front, since updating each one writes to the
             // stable memory map
             for (user_id, message_index) in private_replies::take(chat_id) {
-                let user_id = self.latest_user_id(user_id, migrated_user_ids);
                 if let Some(mut chat) = self.get_mut(&user_id.into()) {
                     chat.migrate_reply(message_index, old, new, now);
                 }
@@ -264,120 +242,6 @@ impl DirectChats {
         }
     }
 
-    // Moves the chat with another user onto their new id, once they are migrated to a MultiUser
-    // canister, along with its pin, so that events from them under their new id are added to it. The
-    // chat under their old id is recorded as removed, so that clients drop it and pick it up under
-    // the new id. If there is already a chat under the new id, eg. because a message from them under
-    // it arrived first, both chats are left as they are. A pin under the old id with no chat, since
-    // a chat can be pinned before it has any messages, is moved too. Returns whether the chat was
-    // moved.
-    pub fn migrate_their_user_id(&mut self, old_user_id: UserId, new_user_id: UserId, now: TimestampMillis) -> bool {
-        let old_chat_id: ChatId = old_user_id.into();
-        let new_chat_id: ChatId = new_user_id.into();
-        let moved = if !self.exists(&new_chat_id)
-            && let Some(mut chat) = self.direct_chats_v2.remove(&old_chat_id)
-        {
-            chat.migrate_their_user_id(new_user_id, now);
-            self.direct_chats_v2.insert(new_chat_id, chat);
-            removed_chats::add(&RemovedChatKeyPrefix::new_for_direct_chats(), old_chat_id.into(), now);
-            true
-        } else {
-            false
-        };
-        if !self.exists(&old_chat_id)
-            && let Some(pinned_at) = self.pinned.value.remove(&old_chat_id)
-        {
-            // A pin already under the new id is kept
-            self.pinned.value.entry(new_chat_id).or_insert(pinned_at);
-            self.pinned.timestamp = now;
-        }
-        moved
-    }
-
-    // Moves what each chat holds outside its events under ids which either user had before being
-    // migrated to a MultiUser canister onto the ids the chat has for them now (see
-    // `DirectChat::migrate_user_ids`), returning how many chats were changed. Every chat is read,
-    // but only those which change are written back.
-    pub fn migrate_user_ids_in_chats(&mut self, my_user_id: UserId, migrated_user_ids: &MigratedUserIds) -> u32 {
-        let chat_ids: Vec<_> = self
-            .ids()
-            .filter(|chat_id| {
-                self.get(chat_id)
-                    .is_some_and(|chat| chat.holds_user_ids_to_migrate(my_user_id, migrated_user_ids))
-            })
-            .collect();
-        let mut updated = 0;
-        self.update_many(chat_ids, |_, chat| {
-            if chat.migrate_user_ids(my_user_id, migrated_user_ids) {
-                updated += 1;
-            }
-            ControlFlow::<()>::Continue(())
-        });
-        updated
-    }
-
-    // The ids of the users the private replies were sent to (see `mark_private_reply`)
-    pub fn private_reply_user_ids(&self) -> HashSet<UserId> {
-        private_replies::user_ids()
-    }
-
-    // Moves each private reply recorded under an id the other user in its chat had before being
-    // migrated onto the id of the chat it is in now (see `latest_user_id`), so that
-    // `migrate_replies` finds its chat without `MigratedUserIds`. Returns how many were moved.
-    pub fn migrate_private_reply_user_ids(&mut self, migrated_user_ids: &MigratedUserIds) -> u32 {
-        let direct_chats = &*self;
-        private_replies::update_user_ids(|user_id| direct_chats.latest_user_id(user_id, migrated_user_ids))
-    }
-
-    // The ids a pin or favourite of the chat which `user_id` names may be under until the
-    // `migrate_their_user_ids` job reaches the user, so which removing one acts on: the id the chat
-    // is under now (see `latest_user_id`) and, if that is the other user's latest id, each id they
-    // had before which no chat is under, since the job moves a pin or favourite under one of those
-    // onto the latest id. A chat left under an id they had before is a chat of its own, so is only
-    // named by that id.
-    pub fn ids_naming_chat(&self, user_id: UserId, migrated_user_ids: &MigratedUserIds) -> Vec<UserId> {
-        let chat_user_id = self.latest_user_id(user_id, migrated_user_ids);
-        let latest = migrated_user_ids.latest(user_id);
-        if chat_user_id != latest {
-            return vec![chat_user_id];
-        }
-        let mut user_ids: Vec<_> = migrated_user_ids
-            .previous_ids(latest)
-            .into_iter()
-            .filter(|previous| !self.exists(&(*previous).into()))
-            .collect();
-        user_ids.push(latest);
-        user_ids
-    }
-
-    // Every way the chat may be named (see `ids_naming_chat`) if it is a direct chat
-    pub fn chats_naming_chat(&self, chat: Chat, migrated_user_ids: &MigratedUserIds) -> Vec<Chat> {
-        match chat {
-            Chat::Direct(chat_id) => self
-                .ids_naming_chat(chat_id.into(), migrated_user_ids)
-                .into_iter()
-                .map(|user_id| Chat::Direct(user_id.into()))
-                .collect(),
-            _ => vec![chat],
-        }
-    }
-
-    // `chat` as `latest_user_id` names it if it is a direct chat
-    pub fn latest_chat(&self, chat: Chat, migrated_user_ids: &MigratedUserIds) -> Chat {
-        match chat {
-            Chat::Direct(chat_id) => Chat::Direct(self.latest_user_id(chat_id.into(), migrated_user_ids).into()),
-            _ => chat,
-        }
-    }
-
-    // The id of the other user in the chat recorded as being with `user_id`: `user_id` itself, or, if
-    // the chat has since been moved onto their new id after they were migrated to a MultiUser
-    // canister, that id. For what was recorded against the chat before it moved, such as timer jobs
-    // and the locations of P2P swaps.
-    pub fn latest_user_id(&self, user_id: UserId, migrated_user_ids: &MigratedUserIds) -> UserId {
-        if self.exists(&user_id.into()) { user_id } else { migrated_user_ids.latest(user_id) }
-    }
-
     pub fn remove(&mut self, chat_id: ChatId, now: TimestampMillis) -> Option<DirectChat> {
         let chat = self.direct_chats_v2.remove(&chat_id)?;
         removed_chats::add(&RemovedChatKeyPrefix::new_for_direct_chats(), chat_id.into(), now);
@@ -390,237 +254,11 @@ impl DirectChats {
 mod tests {
     use super::*;
     use candid::Principal;
-    use chat_events::{
-        MessageContentInternal, NullEventPusher, PushMessageArgs, Reader, ReplyContextInternal, TextContentInternal,
-    };
+    use chat_events::{MessageContentInternal, NullEventPusher, PushMessageArgs, TextContentInternal};
     use ic_stable_structures::DefaultMemoryImpl;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
     use stable_memory_map::{KeyScope, with_key_scope, with_map, with_map_mut};
     use types::MessageId;
-
-    #[test]
-    fn chat_with_a_migrated_user_is_moved_onto_their_new_id() {
-        init_stable_memory_map();
-        let (me, old, new) = (user(1), user(2), user(3));
-        let mut direct_chats = DirectChats::default();
-        direct_chats.get_or_create(me, old, UserType::User, || 1, 10);
-        direct_chats.pin(old.into(), 20).unwrap();
-
-        assert!(direct_chats.migrate_their_user_id(old, new, 100));
-
-        let chat = direct_chats.get(&new.into()).unwrap();
-        assert_eq!(chat.them, new);
-        assert!(direct_chats.get(&old.into()).is_none());
-        assert_eq!(
-            direct_chats.pinned_chats(),
-            HashMap::from([(types::Chat::Direct(new.into()), 20)])
-        );
-        // Clients which last synced before the move are sent the chat as a new one, and told the chat
-        // under the old id was removed, while later ones hear of neither
-        assert!(chat.added_since(99) && chat.has_updates_since(99));
-        assert!(!chat.added_since(100) && !chat.has_updates_since(100));
-        assert_eq!(direct_chats.removed_since(99), vec![ChatId::from(old)]);
-        assert!(direct_chats.removed_since(100).is_empty());
-        assert!(direct_chats.pinned_chats_if_updated(99).is_some());
-        assert_eq!(updated_since(&direct_chats, 99), vec![new]);
-        assert!(updated_since(&direct_chats, 100).is_empty());
-    }
-
-    #[test]
-    fn chat_already_under_a_migrated_users_new_id_is_left_as_it_is() {
-        init_stable_memory_map();
-        let (me, old, new) = (user(1), user(2), user(3));
-        let mut direct_chats = DirectChats::default();
-        direct_chats.get_or_create(me, old, UserType::User, || 1, 10);
-        direct_chats.get_or_create(me, new, UserType::User, || 2, 20);
-
-        assert!(!direct_chats.migrate_their_user_id(old, new, 100));
-
-        assert_eq!(direct_chats.get(&old.into()).unwrap().them, old);
-        assert_eq!(direct_chats.get(&new.into()).unwrap().them, new);
-        assert!(direct_chats.removed_since(0).is_empty());
-        // Nor is anything done for a user there is no chat with
-        assert!(!direct_chats.migrate_their_user_id(user(4), user(5), 100));
-    }
-
-    #[test]
-    fn pins_without_a_chat_are_moved_onto_a_migrated_users_new_id() {
-        init_stable_memory_map();
-        let me = user(1);
-        let mut direct_chats = DirectChats::default();
-        // Pinned before any messages were sent
-        direct_chats.pin(user(2).into(), 10).unwrap();
-        // A chat left under the old id, since there is already one under the new id
-        direct_chats.get_or_create(me, user(4), UserType::User, || 1, 10);
-        direct_chats.get_or_create(me, user(5), UserType::User, || 2, 10);
-        direct_chats.pin(user(4).into(), 20).unwrap();
-        // Pinned under both ids
-        direct_chats.pin(user(6).into(), 30).unwrap();
-        direct_chats.pin(user(7).into(), 40).unwrap();
-
-        assert!(!direct_chats.migrate_their_user_id(user(2), user(3), 100));
-        assert!(!direct_chats.migrate_their_user_id(user(4), user(5), 100));
-        assert!(!direct_chats.migrate_their_user_id(user(6), user(7), 100));
-
-        let pinned = |i: u8, at| (Chat::Direct(user(i).into()), at);
-        assert_eq!(
-            direct_chats.pinned_chats(),
-            HashMap::from([pinned(3, 10), pinned(4, 20), pinned(7, 40)])
-        );
-        assert!(direct_chats.pinned_chats_if_updated(99).is_some());
-        assert!(direct_chats.pinned_chats_if_updated(100).is_none());
-    }
-
-    #[test]
-    fn chats_holding_ids_from_before_a_migration_outside_their_events_are_updated() {
-        init_stable_memory_map();
-        let (me, my_old, their_old, them) = (user(1), user(11), user(12), user(2));
-        let mut migrated_user_ids = MigratedUserIds::default();
-        migrated_user_ids.insert(my_old, me);
-        migrated_user_ids.insert(their_old, them);
-        let mut direct_chats = DirectChats::default();
-        direct_chats
-            .get_or_create(me, them, UserType::User, || 1, 10)
-            .set_events_time_to_live(their_old, Some(1000), 20);
-        direct_chats
-            .get_or_create(me, user(3), UserType::User, || 2, 10)
-            .set_events_time_to_live(my_old, Some(1000), 20);
-        direct_chats
-            .get_or_create(me, user(4), UserType::User, || 3, 10)
-            .set_events_time_to_live(me, Some(1000), 20);
-
-        assert_eq!(direct_chats.migrate_user_ids_in_chats(me, &migrated_user_ids), 2);
-
-        let changed_by = |them: UserId| match direct_chats.get(&them.into()).unwrap().events_ttl_latest_change() {
-            crate::EventsTtlLatestChange::Changed(change) => change.by,
-            _ => panic!("The TTL was changed"),
-        };
-        assert_eq!(changed_by(them), them);
-        assert_eq!(changed_by(user(3)), me);
-        assert_eq!(changed_by(user(4)), me);
-        assert_eq!(direct_chats.migrate_user_ids_in_chats(me, &migrated_user_ids), 0);
-    }
-
-    #[test]
-    fn private_replies_are_moved_onto_the_id_of_the_chat_they_are_in() {
-        init_stable_memory_map();
-        let me = user(1);
-        let group = ChatInternal::Group(Principal::from_slice(&[10; 10]).into());
-        let ChatInternal::Group(group_id) = group else {
-            unreachable!()
-        };
-        let mut migrated_user_ids = MigratedUserIds::default();
-        let mut direct_chats = DirectChats::default();
-        // Their chat has been moved onto their new id
-        direct_chats.get_or_create(me, user(3), UserType::User, || 1, 10);
-        migrated_user_ids.insert(user(2), user(3));
-        direct_chats.mark_private_reply(user(2), group, 1.into());
-        // Their chat was left under the old id
-        direct_chats.get_or_create(me, user(4), UserType::User, || 2, 10);
-        direct_chats.get_or_create(me, user(5), UserType::User, || 3, 10);
-        migrated_user_ids.insert(user(4), user(5));
-        direct_chats.mark_private_reply(user(4), group, 2.into());
-        // They haven't been migrated
-        direct_chats.mark_private_reply(user(6), group, 3.into());
-
-        assert_eq!(
-            direct_chats.private_reply_user_ids(),
-            HashSet::from([user(2), user(4), user(6)])
-        );
-        assert_eq!(direct_chats.migrate_private_reply_user_ids(&migrated_user_ids), 1);
-
-        assert_eq!(
-            private_replies::take(group_id),
-            vec![(user(3), 1.into()), (user(4), 2.into()), (user(6), 3.into())]
-        );
-    }
-
-    #[test]
-    fn direct_chats_are_named_by_the_id_the_chat_is_under() {
-        init_stable_memory_map();
-        let me = user(1);
-        let mut migrated_user_ids = MigratedUserIds::default();
-        migrated_user_ids.insert(user(2), user(3));
-        migrated_user_ids.insert(user(4), user(5));
-        let mut direct_chats = DirectChats::default();
-        direct_chats.get_or_create(me, user(4), UserType::User, || 1, 10);
-        let group = Chat::Group(Principal::from_slice(&[10; 10]).into());
-
-        let latest = |i: u8| direct_chats.latest_chat(Chat::Direct(user(i).into()), &migrated_user_ids);
-        assert_eq!(latest(2), Chat::Direct(user(3).into()));
-        // A chat left under an old id is named by it
-        assert_eq!(latest(4), Chat::Direct(user(4).into()));
-        assert_eq!(latest(6), Chat::Direct(user(6).into()));
-        assert_eq!(direct_chats.latest_chat(group, &migrated_user_ids), group);
-    }
-
-    #[test]
-    fn a_chat_is_named_by_every_id_without_a_chat_of_its_own() {
-        init_stable_memory_map();
-        let me = user(1);
-        // User 2 was migrated to 3 then to 4, and user 5 to 6, and the chat with user 5 was left
-        // under their old id, since there is one under their new id too
-        let mut migrated_user_ids = MigratedUserIds::default();
-        migrated_user_ids.insert(user(2), user(3));
-        migrated_user_ids.insert(user(3), user(4));
-        migrated_user_ids.insert(user(5), user(6));
-        let mut direct_chats = DirectChats::default();
-        direct_chats.get_or_create(me, user(4), UserType::User, || 1, 10);
-        direct_chats.get_or_create(me, user(5), UserType::User, || 2, 10);
-        direct_chats.get_or_create(me, user(6), UserType::User, || 3, 10);
-
-        for i in [2, 3, 4] {
-            assert_eq!(
-                direct_chats.ids_naming_chat(user(i), &migrated_user_ids),
-                vec![user(2), user(3), user(4)]
-            );
-        }
-        assert_eq!(direct_chats.ids_naming_chat(user(5), &migrated_user_ids), vec![user(5)]);
-        assert_eq!(direct_chats.ids_naming_chat(user(6), &migrated_user_ids), vec![user(6)]);
-        assert_eq!(direct_chats.ids_naming_chat(user(7), &migrated_user_ids), vec![user(7)]);
-
-        let group = Chat::Group(Principal::from_slice(&[10; 10]).into());
-        assert_eq!(direct_chats.chats_naming_chat(group, &migrated_user_ids), vec![group]);
-        assert_eq!(
-            direct_chats.chats_naming_chat(Chat::Direct(user(6).into()), &migrated_user_ids),
-            vec![Chat::Direct(user(6).into())]
-        );
-    }
-
-    #[test]
-    fn private_replies_are_migrated_in_a_chat_moved_onto_a_migrated_users_new_id() {
-        init_stable_memory_map();
-        let (me, old, new) = (user(1), user(2), user(3));
-        let group = ChatInternal::Group(Principal::from_slice(&[10; 10]).into());
-        let channel = ChatInternal::Channel(Principal::from_slice(&[11; 10]).into(), 1u32.into());
-        let mut direct_chats = DirectChats::default();
-        let mut chat = direct_chats.get_or_create(me, old, UserType::User, || 1, 10);
-        let message_index = chat
-            .push_message::<NullEventPusher>(
-                PushMessageArgs {
-                    replies_to: Some(ReplyContextInternal {
-                        chat_if_other: Some((group, None)),
-                        event_index: 5.into(),
-                    }),
-                    ..message(me, 1, 10)
-                },
-                None,
-                None,
-            )
-            .event
-            .message_index;
-        drop(chat);
-        direct_chats.mark_private_reply(old, group, message_index);
-        direct_chats.migrate_their_user_id(old, new, 20);
-        let mut migrated_user_ids = MigratedUserIds::default();
-        migrated_user_ids.insert(old, new);
-
-        direct_chats.migrate_replies(group, channel, &migrated_user_ids, 30);
-
-        let chat = direct_chats.get(&new.into()).unwrap();
-        let message = chat.main_events_reader().message_internal(message_index.into()).unwrap();
-        assert_eq!(message.replies_to.unwrap().chat_if_other, Some((channel, None)));
-    }
 
     #[test]
     fn chats_are_stored_in_stable_memory_and_written_back_when_changed() {
@@ -727,10 +365,7 @@ mod tests {
             with_map_mut(|m| m.insert(DirectChatKeyPrefix::new().create_key(&key_id), bytes));
         }
 
-        direct_chats
-            .get_mut(&user(4).into())
-            .unwrap()
-            .remove_expired_events(&MigratedUserIds::default(), 60);
+        direct_chats.get_mut(&user(4).into()).unwrap().remove_expired_events(60);
         assert_eq!(direct_chats.next_event_expiry(), Some(110));
         assert!(direct_chats.chats_with_events_expiring_by(109).is_empty());
     }

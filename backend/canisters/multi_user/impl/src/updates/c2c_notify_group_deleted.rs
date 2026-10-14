@@ -20,12 +20,7 @@ fn c2c_notify_group_deleted_impl(args: Args, state: &mut RuntimeState) -> Respon
     let chat_id = args.deleted_group.id;
     let data = &mut state.data;
     let Some(deleted) = data.users.with_user_mut(user_index, |user| {
-        user_core::updates::c2c_notify_group_deleted::c2c_notify_group_deleted(
-            user,
-            args.deleted_group,
-            &data.migrated_user_ids,
-            now,
-        )
+        user_core::updates::c2c_notify_group_deleted::c2c_notify_group_deleted(user, args.deleted_group, now)
     }) else {
         return Response::Success;
     };

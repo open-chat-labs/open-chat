@@ -17,19 +17,16 @@ fn delete_direct_chat(args: Args) -> Response {
 fn delete_direct_chat_impl(args: Args, state: &mut RuntimeState) -> Response {
     let my_index = state.caller_user_index_or_trap();
     let now = state.env.now();
-    // The chat is deleted even if it is under a User canister's id which can't be resolved, but
-    // nobody is blocked under one (see `verify_not_old_user_id`)
-    let block_user = args.block_user && verify_not_old_user_id(state.data.migrated_user_ids.latest(args.user_id)).is_ok();
+    // The chat is deleted even if it is under a User canister's id, but nobody is blocked under one
+    // (see `verify_not_old_user_id`)
+    let block_user = args.block_user && verify_not_old_user_id(args.user_id).is_ok();
 
     let data = &mut state.data;
     let Some((prefixes, blocked)) = data
         .users
         .with_user_mut(my_index, |user| {
             let chat = user.remove_direct_chat(args.user_id, now)?;
-            // Under the other user's latest id, which the chat may not be under (see `block_user`)
-            let blocked = block_user
-                .then(|| user.block_user(args.user_id, &data.migrated_user_ids, now))
-                .flatten();
+            let blocked = block_user && user.block_user(args.user_id, now);
             Some((chat.stable_memory_key_prefixes(), blocked))
         })
         .flatten()
@@ -37,8 +34,8 @@ fn delete_direct_chat_impl(args: Args, state: &mut RuntimeState) -> Response {
         return Response::Error(OCErrorCode::ChatNotFound.into());
     };
 
-    if let Some(user_id) = blocked {
-        state.push_local_user_index_canister_event(my_index, LocalUserIndexEvent::UserBlocked(user_id), now);
+    if blocked {
+        state.push_local_user_index_canister_event(my_index, LocalUserIndexEvent::UserBlocked(args.user_id), now);
     }
     state.garbage_collect_stable_memory_keys(my_index, prefixes);
 

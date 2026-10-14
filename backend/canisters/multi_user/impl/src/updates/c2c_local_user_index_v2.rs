@@ -49,13 +49,7 @@ fn process_event(user_index: u16, event: LocalUserIndexEvent, state: &mut Runtim
         openchat_bot::send_message(user_index, message.content, message.mentioned, false, state);
     }
     if let Some((referred_by, status)) = effects.referral_status {
-        // A user migrated here sends the ids they had before, which their referrer may hold their
-        // referral under
-        let previous_user_ids = state.data.migrated_user_ids.previous_ids(state.user_id(user_index));
-        let event = UserCanisterEvent::SetReferralStatusV2(Box::new(SetReferralStatusV2 {
-            status,
-            previous_user_ids,
-        }));
+        let event = UserCanisterEvent::SetReferralStatusV2(Box::new(SetReferralStatusV2 { status }));
         state.send_user_canister_event(user_index, referred_by, event);
     }
     state.garbage_collect_stable_memory_keys(user_index, effects.garbage_collect);

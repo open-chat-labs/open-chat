@@ -272,9 +272,7 @@ impl Job for HardDeleteMessageContentJob {
                                 })
                                 .is_some()
                             {
-                                for pending_transaction in
-                                    prize.final_payments(sender, &state.data.migrated_user_ids, state.env.now_nanos())
-                                {
+                                for pending_transaction in prize.final_payments(sender, state.env.now_nanos()) {
                                     follow_on_jobs.push(TimerJob::MakeTransfer(Box::new(MakeTransferJob {
                                         pending_transaction,
                                         attempt: 0,
@@ -376,12 +374,7 @@ impl Job for FinalPrizePaymentsJob {
                 .data
                 .channels
                 .get_mut(&self.channel_id)
-                .map(|channel| {
-                    channel
-                        .chat
-                        .events
-                        .final_payments(self.message_index, &state.data.migrated_user_ids, state.env.now_nanos())
-                })
+                .map(|channel| channel.chat.events.final_payments(self.message_index, state.env.now_nanos()))
                 .unwrap_or_default()
         });
 
@@ -604,8 +597,6 @@ impl JoinMembersToPublicChannelJob {
             while !self.members.is_empty() {
                 let mut users = Vec::new();
                 for user_id in self.members.drain(self.members.len().saturating_sub(100)..).rev() {
-                    // A member queued under an id the community has since been told they've been migrated from
-                    let user_id = state.data.migrated_user_ids.latest(user_id);
                     if let Some(member) = state.data.members.get_by_user_id(&user_id) {
                         users.push((user_id, member.user_type));
                     }

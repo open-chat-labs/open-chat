@@ -29,7 +29,7 @@ fn cancel_p2p_swap_impl(args: Args, state: &mut RuntimeState) -> OCResult<u32> {
         .data
         .users
         .with_user_mut(my_index, |user| {
-            user_core::updates::cancel_p2p_swap(user, my_user_id, args, now, &state.data.migrated_user_ids)
+            user_core::updates::cancel_p2p_swap(user, my_user_id, args, now)
         })
         .expect("User not found")
 }

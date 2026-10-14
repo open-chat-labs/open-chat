@@ -11,11 +11,23 @@ use utils::canister::delay_if_should_retry_failed_c2c_call;
 
 // The user escrow names by `principal` as the offerer of a swap, the principal being the owner of
 // their wallet: their user id for a swap offered under an old id, which was a User canister's id,
-// otherwise their principal, which the LocalUserIndex resolves to their user id. None if there is
-// no such user.
+// otherwise their principal. The LocalUserIndex resolves either to the user's id, an old id to the
+// id they were migrated to. None if there is no such user.
 pub async fn offerer_user_id(principal: Principal, local_user_index_canister_id: CanisterId) -> Option<UserId> {
     if UserId::from(principal).is_canister() {
-        return Some(principal.into());
+        let user_id = principal.into();
+        return match local_user_index_canister_c2c_client::lookup_migrated_user_id(user_id, local_user_index_canister_id).await
+        {
+            Ok(latest) => Some(latest.unwrap_or(user_id)),
+            // Failing the call has the escrow canister try again
+            Err(error) if delay_if_should_retry_failed_c2c_call(&error).is_some() => {
+                ic_cdk::trap(format!("Failed to look up the offerer of a P2P swap: {error:?}"))
+            }
+            Err(error) => {
+                error!(?error, %principal, "Failed to look up the offerer of a P2P swap");
+                None
+            }
+        };
     }
     let args = local_user_index_canister::c2c_lookup_user::Args {
         user_id_or_principal: principal,

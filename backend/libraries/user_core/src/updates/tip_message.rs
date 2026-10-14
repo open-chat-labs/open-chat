@@ -3,7 +3,6 @@ use chat_events::{EventPusher, TipMessageArgs};
 use multi_user_canister::tip_message::Args;
 use oc_error_codes::OCErrorCode;
 use types::{CanisterId, Chat, EventIndex, OCResult, TimestampMillis, UserId};
-use utils::migrated_user_ids::MigratedUserIds;
 
 // Checks the user may give the tip: they aren't suspended, it isn't nothing or to themselves, any
 // account it is given from isn't one of this canister's, and their PIN, if they have one, is right
@@ -28,15 +27,8 @@ pub fn verify(
 }
 
 // The tip of a message in the user's direct chat. Checked before any funds move, as a group does:
-// the tip must be to the other user in the chat, on a message they sent, possibly under an id they
-// have since been migrated from.
-pub fn direct_tip_args(
-    user: &User,
-    my_user_id: UserId,
-    args: &Args,
-    migrated_user_ids: &MigratedUserIds,
-    now: TimestampMillis,
-) -> OCResult<TipMessageArgs> {
+// the tip must be to the other user in the chat, on a message they sent.
+pub fn direct_tip_args(user: &User, my_user_id: UserId, args: &Args, now: TimestampMillis) -> OCResult<TipMessageArgs> {
     let Chat::Direct(chat_id) = args.chat else {
         return Err(OCErrorCode::ChatNotFound.into());
     };
@@ -48,7 +40,7 @@ pub fn direct_tip_args(
         .events()
         .message_internal(EventIndex::default(), args.thread_root_message_index, args.message_id.into())
         .ok_or(OCErrorCode::MessageNotFound)?;
-    if !migrated_user_ids.is_same_user(message.sender, args.recipient) {
+    if message.sender != args.recipient {
         return Err(OCErrorCode::RecipientMismatch.into());
     }
     Ok(TipMessageArgs {
@@ -69,14 +61,13 @@ pub fn tip_direct_chat_message<P: EventPusher>(
     user: &mut User,
     args: TipMessageArgs,
     decimals: u8,
-    migrated_user_ids: &MigratedUserIds,
     event_pusher: Option<P>,
 ) -> OCResult<multi_user_canister::TipMessageArgs> {
     let mut chat = user
         .direct_chats
         .get_mut(&args.recipient.into())
         .ok_or(OCErrorCode::ChatNotFound)?;
-    chat.tip_message(args.clone(), migrated_user_ids, event_pusher)?;
+    chat.tip_message(args.clone(), event_pusher)?;
     let thread_root_message_id = chat.thread_root_message_id(args.thread_root_message_index)?;
     Ok(multi_user_canister::TipMessageArgs {
         thread_root_message_id,

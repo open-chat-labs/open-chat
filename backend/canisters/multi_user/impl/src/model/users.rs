@@ -76,11 +76,6 @@ impl Users {
         self.users.contains_key(&index)
     }
 
-    // The lowest index held of `from` or above
-    pub fn next_index(&self, from: u16) -> Option<u16> {
-        self.users.range(from..).next().map(|(index, _)| *index)
-    }
-
     pub fn with_user<R>(&self, index: u16, f: impl FnOnce(&User) -> R) -> Option<R> {
         self.users
             .get(&index)

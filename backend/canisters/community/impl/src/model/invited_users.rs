@@ -26,23 +26,6 @@ impl InvitedUsers {
         Some(invitation)
     }
 
-    // Moves the invitation of a user migrated to a MultiUser canister onto their new id, and updates
-    // the invitations they sent
-    pub fn migrate_user_id(&mut self, old_user_id: UserId, new_user_id: UserId, now: TimestampMillis) {
-        let mut updated = false;
-        if let Some(invitation) = self.users.remove(&old_user_id) {
-            self.users.entry(new_user_id).or_insert(invitation);
-            updated = true;
-        }
-        for invitation in self.users.values_mut().filter(|i| i.invited_by == old_user_id) {
-            invitation.invited_by = new_user_id;
-            updated = true;
-        }
-        if updated {
-            self.last_updated = now;
-        }
-    }
-
     pub fn get(&self, user_id: &UserId) -> Option<&UserInvitation> {
         self.users.get(user_id)
     }
@@ -65,10 +48,5 @@ impl InvitedUsers {
 
     pub fn user_ids(&self) -> impl Iterator<Item = &UserId> {
         self.users.keys()
-    }
-
-    // The id of each invited user and of whoever invited them
-    pub fn user_ids_and_inviters(&self) -> impl Iterator<Item = UserId> + '_ {
-        self.users.iter().flat_map(|(user_id, i)| [*user_id, i.invited_by])
     }
 }

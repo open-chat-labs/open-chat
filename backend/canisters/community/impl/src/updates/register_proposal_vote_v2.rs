@@ -18,14 +18,10 @@ fn register_proposal_vote_impl(args: Args, state: &mut RuntimeState) -> OCResult
     let min_visible_event_index = channel_member.min_visible_event_index();
     let now = state.env.now();
 
-    channel.chat.events.record_proposal_vote(
-        user_id,
-        min_visible_event_index,
-        args.message_index,
-        args.adopt,
-        now,
-        &state.data.migrated_user_ids,
-    )?;
+    channel
+        .chat
+        .events
+        .record_proposal_vote(user_id, min_visible_event_index, args.message_index, args.adopt, now)?;
 
     channel.chat.members.register_proposal_vote(&user_id, args.message_index, now);
 
