@@ -20,6 +20,7 @@
   import Translate from '../../lib/components/Translate.svelte';
   import { onDestroy, untrack } from 'svelte';
   import { modal } from '../../lib/behaviours/modal';
+  import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
 
   const GRADIENTS: Record<string, string> = {
     violet: 'linear-gradient(140deg,#8B7BFF,#5B3FD9)',
@@ -135,47 +136,25 @@
     }
   }
 
-  let closing = $state(false);
-  let timer: ReturnType<typeof setTimeout> | undefined;
+  // busy / leaving / the exit: the shared dialog contract (lib/behaviours/dialog.svelte.ts)
+  const flow = new DialogFlow();
   onDestroy(() => {
-    clearTimeout(timer);
+    flow.destroy();
     clearTimeout(searchTimer);
   });
 
-  // play the exit animation, then hand control back
-  function close(then?: () => void) {
-    if (closing) return;
-    closing = true;
-    timer = setTimeout(() => then?.(), 170);
-  }
-
-  let busy = $state(false);
-  let failed = $state(false);
-
   async function confirm() {
-    if (!ok || busy || closing) return;
+    if (!ok) return;
     const key = group?.key;
     if (isDelete && !key) return;
-    busy = true;
-    failed = false;
-    try {
-      if (isDelete) await onDelete?.(key!);
-      else await onSave?.({ key: key ?? null, title: trimmed, memberIds: [...picked] });
-    } catch {
-      failed = true;
-      return;
-    } finally {
-      busy = false;
-    }
-    // success: animate out, then hand back to the host (see the header)
-    close(onCancel);
+    const result = await flow.run(() => (isDelete ? onDelete?.(key!) : onSave?.({ key: key ?? null, title: trimmed, memberIds: [...picked] })));
+    if (result.ok) flow.leave(onCancel);
   }
 
-  const dismiss = () => !busy && close(onCancel);
-
+  const dismiss = () => flow.dismiss(onCancel);
 </script>
 
-<div class="layer" class:closing data-screen-label="User group dialog" role="dialog" aria-modal="true" use:modal={closing ? undefined : dismiss}>
+<div class="layer" class:closing={flow.closing} data-screen-label="User group dialog" role="dialog" aria-modal="true" use:modal={flow.escape(onCancel)}>
   <div class="veil" onclick={dismiss} aria-hidden="true"></div>
   <div class="card" class:delete={isDelete}>
     <div class="head">
@@ -278,12 +257,12 @@
     {/if}
 
     <div class="foot">
-      <span class="text-button tall" onclick={dismiss} role="button" tabindex="0">{t('ui.common.cancel')}</span>
+      <span class="text-button tall" onclick={dismiss} role="button" tabindex="0" aria-disabled={flow.locked}>{t('ui.common.cancel')}</span>
       <span class="grow"></span>
-      {#if failed}<span class="error" role="alert">{t(isDelete ? 'ui.userGroupDialog.deleteFailed' : 'ui.userGroupDialog.saveFailed')}</span>{/if}
-      <div class="cta" class:ok={ok && !busy} class:danger={isDelete} onclick={confirm} role="button" tabindex="0" aria-disabled={!ok || busy}>
+      {#if flow.failed}<span class="error" role="alert">{t(isDelete ? 'ui.userGroupDialog.deleteFailed' : 'ui.userGroupDialog.saveFailed')}</span>{/if}
+      <div class="cta" class:ok={ok && !flow.busy} class:danger={isDelete} onclick={confirm} role="button" tabindex="0" aria-disabled={!ok || flow.locked}>
         <span class="cta-icon" class:save={isEdit} class:trash={isDelete}></span>
-        <span>{t(busy ? 'ui.userGroupDialog.working' : isDelete ? 'ui.common.delete' : isEdit ? 'ui.common.saveChanges' : 'ui.userGroupDialog.create')}</span>
+        <span>{t(flow.busy ? 'ui.userGroupDialog.working' : isDelete ? 'ui.common.delete' : isEdit ? 'ui.common.saveChanges' : 'ui.userGroupDialog.create')}</span>
       </div>
     </div>
   </div>

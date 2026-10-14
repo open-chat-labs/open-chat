@@ -6,6 +6,7 @@
   import { getI18n, useT } from '../../lib/i18n';
   import { onDestroy } from 'svelte';
   import { modal } from '../../lib/behaviours/modal';
+  import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
 
   const fmt = (n: number) => n.toLocaleString(i18n.locale ?? 'en');
 
@@ -59,34 +60,16 @@
   );
   const payLabel = $derived(room === 0 ? t('ui.streakInsuranceDialog.fullyCovered') : qty === 0 ? t('ui.streakInsuranceDialog.pickADay') : t('ui.streakInsuranceDialog.pay', { days: days(qty), amount: fmt(total) }));
 
-  let closing = $state(false);
-  let buying = $state(false);
-  let failed = $state(false);
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  onDestroy(() => clearTimeout(timer));
-
-  // play the exit animation, then hand control back
-  // a purchase in flight can't be dismissed: its result (charged or failed) must be seen
-  function leave(then?: () => void) {
-    if (closing || buying) return;
-    closing = true;
-    timer = setTimeout(() => then?.(), 170);
-  }
+  // busy / leaving / the exit: the shared dialog contract (lib/behaviours/dialog.svelte.ts). A purchase in flight
+  // can't be dismissed: its result (charged or failed) must be seen.
+  const flow = new DialogFlow();
+  onDestroy(() => flow.destroy());
+  const leave = (then?: () => void) => flow.dismiss(then);
 
   async function pay() {
-    // one purchase at a time, and never during the exit animation
-    if (!canPay || buying || closing) return;
-    buying = true;
-    failed = false;
-    try {
-      await onBuy?.({ days: qty, cost: total, fromPosition: held });
-    } catch {
-      failed = true;
-      return;
-    } finally {
-      buying = false;
-    }
-    leave(onClose);
+    if (!canPay) return;
+    const result = await flow.run(() => onBuy?.({ days: qty, cost: total, fromPosition: held }));
+    if (result.ok) flow.leave(onClose);
   }
 
   // tapping the last added cell takes it back off again
@@ -95,7 +78,7 @@
   }
 </script>
 
-<div class="layer" class:closing data-screen-label="Streak insurance" role="dialog" aria-modal="true" use:modal={() => leave(onClose)}>
+<div class="layer" class:closing={flow.closing} data-screen-label="Streak insurance" role="dialog" aria-modal="true" use:modal={flow.escape(onClose)}>
   <div class="veil" onclick={() => leave(onClose)} aria-hidden="true"></div>
 
   <div class="card">
@@ -139,14 +122,14 @@
     </div>
 
     <div class="foot">
-      {#if failed}
+      {#if flow.failed}
         <span class="balance short" role="alert">{t('ui.streakInsuranceDialog.buyFailed')}</span>
       {:else}
         <span class="balance" class:short={!affordable}
           >{t(affordable ? 'ui.streakInsuranceDialog.balanceCap' : 'ui.streakInsuranceDialog.balanceShort', { amount: fmt(balance), max: MAX_DAYS })}</span
         >
       {/if}
-      <span class="pay" class:ready={canPay && !buying} onclick={pay} role="button" tabindex="0" aria-disabled={!canPay || buying}>{buying ? t('ui.streakInsuranceDialog.paying') : payLabel}</span>
+      <span class="pay" class:ready={canPay && !flow.busy} onclick={pay} role="button" tabindex="0" aria-disabled={!canPay || flow.locked}>{flow.busy ? t('ui.streakInsuranceDialog.paying') : payLabel}</span>
     </div>
   </div>
 </div>
@@ -186,6 +169,10 @@
       var(--shadow-modal, 0 30px 70px rgba(0, 0, 0, 0.45));
     overflow: hidden;
     animation: oc-dlg-in var(--duration-slow, 280ms) var(--ease-out) both;
+  }
+
+  .layer.closing {
+    pointer-events: none;
   }
 
   .closing .veil {

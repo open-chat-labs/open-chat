@@ -104,7 +104,7 @@
     <div class="people">
       {#each people as p}
         <div class="person">
-          <span class="initials" style:background={p.avatarUrl ? `url(${p.avatarUrl}) center/cover no-repeat` : p.gradient || 'linear-gradient(145deg,#C9B4FF,#8A6BE0)'}
+          <span class="initials" style:background={p.avatarUrl ? `url(${JSON.stringify(p.avatarUrl)}) center/cover no-repeat` : p.gradient || 'linear-gradient(145deg,#C9B4FF,#8A6BE0)'}
             >{p.avatarUrl ? '' : initials(p.name)}</span
           >
           <div class="person-body">

@@ -6,8 +6,10 @@
      ends the spinner and shows an error, with everything left as it was. -->
 <script lang="ts">
   import { getI18n, useT } from '../../lib/i18n';
+  import { onDestroy } from 'svelte';
   import Button from '../../lib/components/Button.svelte';
   import DialogShell from '../../lib/components/DialogShell.svelte';
+  import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
   import Spinner from '../../lib/components/Spinner.svelte';
   import Toggle from '../../lib/components/Toggle.svelte';
   import TokenAvatar from '../../lib/components/TokenAvatar.svelte';
@@ -75,9 +77,11 @@
 
   let confirmed = $state(false);
   let picked = $state<number | null>(null);
-  let busy = $state(false);
   let checking = $state(false);
-  let failed = $state(false);
+  // join (and pay) in flight / leaving after it: the shared dialog contract (lib/behaviours/dialog.svelte.ts)
+  const flow = new DialogFlow();
+  onDestroy(() => flow.destroy());
+  const busy = $derived(flow.busy);
 
   const any = $derived(rule === 'any');
 
@@ -141,7 +145,7 @@
   const pays = $derived(chosen.filter((r) => r.gate.kind === 'pay' && r.state === 'pay'));
   const nReady = $derived(rows.filter(ready).length);
   const canJoin = $derived(chosen.length > 0 && chosen.every(ready));
-  const enabled = $derived(canJoin && !busy && !!onJoin);
+  const enabled = $derived(canJoin && !flow.locked && !!onJoin);
   const selGate = $derived(any ? rows[selected] : null);
 
   const reason = $derived.by(() => {
@@ -178,21 +182,14 @@
 
   async function join() {
     if (!enabled || !onJoin) return;
-    busy = true;
-    failed = false;
     const paid = pays.map((r) => ({ ledger: r.gate.ledger ?? '', symbol: r.gate.symbol ?? '', amount: r.gate.amount ?? 0 }));
-    try {
-      await onJoin({ paid, neuronConfirmed: confirmed });
-    } catch {
-      failed = true;
-    } finally {
-      busy = false;
-    }
+    // one join (and one payment) at a time; once joined the dialog leaves and hands back to the host
+    const result = await flow.run(() => onJoin({ paid, neuronConfirmed: confirmed }));
+    if (result.ok) flow.leave(onClose);
   }
 
-  function close() {
-    if (!busy) onClose?.();
-  }
+  // nothing closes while paying or leaving
+  const close = () => flow.dismiss(onClose);
 </script>
 
 <DialogShell title={t('ui.joinGateDialog.title')} width={520} height="auto" flush={true} {z} onClose={close}>
@@ -298,7 +295,7 @@
         </div>
       {/if}
       <div class="action-row">
-        {#if failed}
+        {#if flow.failed}
           <span class="reason failed" role="alert">{t('ui.joinGateDialog.joinFailed')}</span>
         {:else}
           <span class="reason" class:ready={canJoin} class:free={canJoin && any && !!selGate?.free} aria-live="polite">{reason}</span>

@@ -7,6 +7,7 @@
   import Translate from '../../lib/components/Translate.svelte';
   import { onDestroy } from 'svelte';
   import { modal } from '../../lib/behaviours/modal';
+  import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
 
   interface Props {
     groupName: string;
@@ -23,40 +24,18 @@
 
   const text = $derived(t(body ?? 'ui.leaveGroupDialog.body', { noun }));
 
-  let closing = $state(false);
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  onDestroy(() => clearTimeout(timer));
+  // busy / leaving / the exit: the shared dialog contract (lib/behaviours/dialog.svelte.ts)
+  const flow = new DialogFlow();
+  onDestroy(() => flow.destroy());
 
-  // play the exit animation, then hand control back
-  function close(then?: () => void) {
-    if (closing) return;
-    closing = true;
-    timer = setTimeout(() => then?.(), 170);
-  }
-
-  // confirming waits for the host: the dialog closes once it resolves, and stays with an error if it rejects
-  let busy = $state(false);
-  let failed = $state(false);
   async function confirm() {
-    if (busy || closing) return;
-    busy = true;
-    failed = false;
-    try {
-      await onConfirm?.();
-    } catch {
-      failed = true;
-      return;
-    } finally {
-      busy = false;
-    }
-    // success: animate out, then hand back to the host (see the header)
-    close(onCancel);
+    const result = await flow.run(() => onConfirm?.());
+    if (result.ok) flow.leave(onCancel);
   }
-  // no dismissing while the host is working on it
-  const dismiss = () => !busy && close(onCancel);
+  const dismiss = () => flow.dismiss(onCancel);
 </script>
 
-<div class="layer" class:closing role="dialog" aria-modal="true" use:modal={closing ? undefined : dismiss}>
+<div class="layer" class:closing={flow.closing} role="dialog" aria-modal="true" use:modal={flow.escape(onCancel)}>
   <div class="veil" onclick={dismiss} aria-hidden="true"></div>
   <div class="card">
     <div class="head">
@@ -78,10 +57,10 @@
     <div class="foot">
       <span class="cancel" onclick={dismiss} role="button" tabindex="0">{t('ui.common.cancel')}</span>
       <span class="grow"></span>
-      {#if failed}<span class="error" role="alert">{t('ui.leaveGroupDialog.failed', { noun })}</span>{/if}
-      <div class="confirm" class:busy onclick={confirm} role="button" tabindex="0" aria-disabled={busy}>
+      {#if flow.failed}<span class="error" role="alert">{t('ui.leaveGroupDialog.failed', { noun })}</span>{/if}
+      <div class="confirm" class:busy={flow.busy} onclick={confirm} role="button" tabindex="0" aria-disabled={flow.locked}>
         <span class="confirm-icon"></span>
-        <span>{t(busy ? 'ui.leaveGroupDialog.leaving' : 'ui.leaveGroupDialog.confirm', { noun })}</span>
+        <span>{t(flow.busy ? 'ui.leaveGroupDialog.leaving' : 'ui.leaveGroupDialog.confirm', { noun })}</span>
       </div>
     </div>
   </div>

@@ -1,10 +1,13 @@
 <!-- Convert a group into a community: confirm (irreversible warning + what the conversion does) → done.
      Confirm awaits onConfirm ("Converting…", not dismissable): the done step only shows once it resolves (with the new
      community's id, if the host returns one); a rejection stays on confirm with an error. A new `step` from the parent
-     takes over again. Finish falls back to onCancel; "Go to the community" passes that id to onGoTo (else onFinish, onCancel). -->
+     takes over again. Finish falls back to onCancel; "Go to the community" passes that id to onGoTo (else onFinish, onCancel).
+     Without onConfirm there is no Convert button. Leaving (Cancel, Finish, Go to) animates out and stays out; nothing can
+     be started while converting or leaving (lib/behaviours/dialog.svelte.ts). -->
 <script lang="ts">
   import { onDestroy } from 'svelte';
   import { modal } from '../../lib/behaviours/modal';
+  import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
   import { useT, segments, type Segment } from '../../lib/i18n';
 
   // resource keys, translated at render
@@ -29,45 +32,27 @@
   // confirming shows the done step until the parent sends a new step
   let current = $derived(step);
 
-  let closing = $state(false);
-  let converting = $state(false);
-  let failed = $state(false);
   let communityId = $state<string | undefined>();
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  onDestroy(() => clearTimeout(timer));
-
-  // play the exit animation, then hand control back
-  function close(then?: () => void) {
-    if (closing || converting) return;
-    closing = true;
-    timer = setTimeout(() => {
-      closing = false;
-      then?.();
-    }, 170);
-  }
+  // busy / leaving / the exit: the shared dialog contract
+  const flow = new DialogFlow();
+  onDestroy(() => flow.destroy());
+  const dismiss = (then?: () => void) => flow.dismiss(then);
 
   async function confirm() {
-    if (converting) return;
-    converting = true;
-    failed = false;
-    try {
-      const r = await onConfirm?.();
-      const id = (r as { communityId?: unknown } | undefined)?.communityId;
-      communityId = typeof id === 'string' ? id : undefined;
-    } catch {
-      failed = true;
-      return;
-    } finally {
-      converting = false;
-    }
+    if (!onConfirm || current === 'done') return;
+    const confirmFn = onConfirm;
+    const result = await flow.run(() => confirmFn());
+    if (!result.ok) return;
+    const id = (result.value as { communityId?: unknown } | undefined)?.communityId;
+    communityId = typeof id === 'string' ? id : undefined;
     current = 'done';
   }
 </script>
 
 {#snippet sentence(segs: Segment[])}{#each segs as seg}{#if 'slot' in seg}<span class="accent">{groupName}</span>{:else}{#each seg.text.split('\n') as part, i}{#if i}<br />{/if}{part}{/each}{/if}{/each}{/snippet}
 
-<div class="layer" class:closing role="dialog" aria-modal="true" use:modal={() => close(onCancel)}>
-  <div class="veil" onclick={() => close(onCancel)} aria-hidden="true"></div>
+<div class="layer" class:closing={flow.closing} role="dialog" aria-modal="true" use:modal={flow.escape(onCancel)}>
+  <div class="veil" onclick={() => dismiss(onCancel)} aria-hidden="true"></div>
   <div class="card">
     <div class="head">
       <span class="badge"><span class="badge-icon community"></span></span>
@@ -75,7 +60,7 @@
         <span class="title">{t('ui.convertToCommunityDialog.title')}</span>
         <span class="subtitle">{groupName}</span>
       </div>
-      <span class="icon-button" onclick={() => close(onCancel)} role="button" tabindex="0"><span class="close-icon"></span></span>
+      <span class="icon-button" onclick={() => dismiss(onCancel)} role="button" tabindex="0" aria-label={t('ui.common.close')}><span class="close-icon"></span></span>
     </div>
 
     <div class="body">
@@ -120,19 +105,21 @@
 
     <div class="foot">
       {#if current !== 'done'}
-        <span class="text-button" onclick={() => close(onCancel)} role="button" tabindex="0" aria-disabled={converting}>{t('ui.common.cancel')}</span>
+        <span class="text-button" onclick={() => dismiss(onCancel)} role="button" tabindex="0" aria-disabled={flow.locked}>{t('ui.common.cancel')}</span>
         <span class="grow"></span>
-        {#if failed}
+        {#if flow.failed}
           <span class="error" role="alert">{t('ui.convertToCommunityDialog.failed')}</span>
         {/if}
-        <div class="primary" class:busy={converting} onclick={confirm} role="button" tabindex="0" aria-disabled={converting}>
-          <span class="primary-icon community"></span>
-          <span>{t(converting ? 'ui.convertToCommunityDialog.converting' : 'ui.convertToCommunityDialog.title')}</span>
-        </div>
+        {#if onConfirm}
+          <div class="primary" class:busy={flow.busy} onclick={confirm} role="button" tabindex="0" aria-disabled={flow.locked}>
+            <span class="primary-icon community"></span>
+            <span>{t(flow.busy ? 'ui.convertToCommunityDialog.converting' : 'ui.convertToCommunityDialog.title')}</span>
+          </div>
+        {/if}
       {:else}
-        <span class="text-button" onclick={() => close(onFinish ?? onCancel)} role="button" tabindex="0">{t('ui.convertToCommunityDialog.finish')}</span>
+        <span class="text-button" onclick={() => dismiss(onFinish ?? onCancel)} role="button" tabindex="0">{t('ui.convertToCommunityDialog.finish')}</span>
         <span class="grow"></span>
-        <div class="primary" onclick={() => close(onGoTo ? () => onGoTo(communityId) : (onFinish ?? onCancel))} role="button" tabindex="0">
+        <div class="primary" onclick={() => dismiss(onGoTo ? () => onGoTo(communityId) : (onFinish ?? onCancel))} role="button" tabindex="0">
           <span>{t('ui.convertToCommunityDialog.goTo')}</span>
           <span class="primary-icon arrow"></span>
         </div>
@@ -185,6 +172,10 @@
       var(--shadow-modal, 0 30px 70px rgba(0, 0, 0, 0.45));
     overflow: hidden;
     animation: oc-dlg-in var(--duration-slow, 280ms) var(--ease-out) both;
+  }
+
+  .layer.closing {
+    pointer-events: none;
   }
 
   .closing .veil {

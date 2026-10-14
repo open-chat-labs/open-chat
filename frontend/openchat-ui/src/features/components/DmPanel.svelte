@@ -7,6 +7,7 @@
   import type { MenuItem } from '../../lib/types';
   import DetailSection from '../../lib/components/DetailSection.svelte';
   import DmChatSettings from './DmChatSettings.svelte';
+  import { Optimistic } from '../../lib/behaviours/optimistic.svelte';
   import Menu from '../../lib/components/Menu.svelte';
   import PanelCover from '../../lib/components/PanelCover.svelte';
 
@@ -89,11 +90,25 @@
   }: Props = $props();
   const t = useT();
 
-  let isMuted = $derived(muted);
-  let isFav = $derived(fav);
+  // optimistic fields (lib/behaviours/optimistic.svelte.ts): latest call wins, a rejected latest call falls back to the
+  // host's last accepted value, host changes are followed once nothing is in flight
+  const mute = new Optimistic<MuteKey | null>(() => muted);
+  const favourite = new Optimistic(() => fav);
+  $effect.pre(() => {
+    void muted;
+    untrack(() => mute.sync());
+  });
+  $effect.pre(() => {
+    void fav;
+    untrack(() => favourite.sync());
+  });
+  const isMuted = $derived(mute.current);
+  const isFav = $derived(favourite.current);
+  let lastToggle = $state<'mute' | 'fav'>('mute');
+  const toggleFailed = $derived(lastToggle === 'mute' ? mute.failed : favourite.failed);
   let menuOpen = $state(false);
   let muteMenu = $state<{ top: number; left: number } | null>(null);
-  let failed = $state<string | null>(null);
+  let blockError = $state<string | null>(null);
   let blockStep = $state<'idle' | 'confirm' | 'busy'>('idle');
 
   const span = $derived(MUTE_SPANS.find((o) => o.key === isMuted));
@@ -116,68 +131,23 @@
       : MUTE_SPANS.map((o) => ({ label: o.label, key: o.key })),
   );
 
-  // optimistic changes per field: shown at once. When the latest call for a field rejects, the field falls back to the
-  // value the host last accepted (or its prop), never to an earlier optimistic value it didn't confirm. An older call
-  // that succeeds after every newer one failed still lands, since that's what the host has now.
-  const latest: Record<string, number> = {};
-  const settled: Record<string, number> = {};
-  const lostLatest: Record<string, number> = {};
-  const accepted: Record<string, { value: unknown }> = {};
-  async function optimistic<T>(field: string, value: T, set: (v: T) => void, host: () => T, call: () => Promise<unknown> | void) {
-    const seq = (latest[field] = (latest[field] ?? 0) + 1);
-    failed = null;
-    set(value);
-    try {
-      await call();
-      if (seq <= (settled[field] ?? 0)) return;
-      settled[field] = seq;
-      accepted[field] = { value };
-      if (lostLatest[field] === latest[field]) set(value);
-    } catch {
-      if (latest[field] !== seq) return;
-      lostLatest[field] = seq;
-      set(field in accepted ? (accepted[field].value as T) : host());
-      failed = 'ui.dmPanel.actionFailed';
-    }
-  }
-
-  // a new value from the host replaces whatever was accepted before it
-  $effect.pre(() => {
-    void muted;
-    untrack(() => delete accepted.mute);
-  });
-  $effect.pre(() => {
-    void fav;
-    untrack(() => delete accepted.fav);
-  });
-
   function setMute(key: MuteKey | null) {
     muteMenu = null;
-    optimistic(
-      'mute',
-      key,
-      (v) => (isMuted = v),
-      () => muted,
-      () => onMuteChange?.(key),
-    );
+    lastToggle = 'mute';
+    mute.set(key, () => onMuteChange?.(key));
   }
 
   function toggleFav() {
     if (!onToggleFavourite) return;
+    lastToggle = 'fav';
     const next = !isFav;
-    optimistic(
-      'fav',
-      next,
-      (v) => (isFav = v),
-      () => fav,
-      () => onToggleFavourite(next),
-    );
+    favourite.set(next, () => onToggleFavourite(next));
   }
 
   function cancelBlock() {
     if (blockStep === 'busy') return;
     blockStep = 'idle';
-    failed = null;
+    blockError = null;
   }
 
   async function confirmBlock() {
@@ -186,12 +156,12 @@
     const call = wasBlocked ? onUnblock : onBlock;
     if (!call || blockStep === 'busy') return;
     blockStep = 'busy';
-    failed = null;
+    blockError = null;
     try {
       await call();
     } catch {
       blockStep = 'confirm';
-      failed = wasBlocked ? 'ui.dmPanel.unblockFailed' : 'ui.dmPanel.blockFailed';
+      blockError = wasBlocked ? 'ui.dmPanel.unblockFailed' : 'ui.dmPanel.blockFailed';
       return;
     }
     blockStep = 'idle';
@@ -243,7 +213,7 @@
           <div class="cell"><DetailSection label="ui.dmPanel.about" value={about} variant="prose" clamp={3} /></div>
         {/if}
       </div>
-      {#if failed && blockStep === 'idle'}<span class="error" role="alert">{t(failed)}</span>{/if}
+      {#if toggleFailed && blockStep === 'idle'}<span class="error" role="alert">{t('ui.dmPanel.actionFailed')}</span>{/if}
     </div>
   </div>
 
@@ -254,7 +224,7 @@
 
   {#if blockStep !== 'idle'}
     <div class="footer confirm">
-      <span class="confirm-text">{failed ? t(failed) : t(blocked ? 'ui.dmPanel.unblockConfirm' : 'ui.dmPanel.blockConfirm', { name: title })}</span>
+      <span class="confirm-text">{blockError ? t(blockError) : t(blocked ? 'ui.dmPanel.unblockConfirm' : 'ui.dmPanel.blockConfirm', { name: title })}</span>
       <div class="confirm-actions">
         <span class="cancel" onclick={cancelBlock} role="button" tabindex="0">{t('ui.common.cancel')}</span>
         <span class="block" class:busy={blockStep === 'busy'} onclick={confirmBlock} role="button" tabindex="0" aria-disabled={blockStep === 'busy'}

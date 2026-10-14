@@ -8,6 +8,8 @@ import { installBehaviours } from './behaviours';
 installBehaviours();
 
 export { installBehaviours, installA11y, installTooltips } from './behaviours';
+export { DialogFlow } from './behaviours/dialog.svelte';
+export { Optimistic } from './behaviours/optimistic.svelte';
 export { default as ActivityRow } from './components/ActivityRow.svelte';
 export { default as AmountCard } from './components/AmountCard.svelte';
 export { default as Avatar } from './components/Avatar.svelte';

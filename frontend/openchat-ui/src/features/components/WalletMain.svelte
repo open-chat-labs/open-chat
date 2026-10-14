@@ -4,6 +4,8 @@
      pending row until the host's activity lists it. Saved recipients, swaps, sharing and the QR are all host-provided and
      passed through to the flows. An empty wallet shows All activity only. -->
 <script lang="ts" module>
+  import type { NetworkId } from './WalletReceive.svelte';
+
   /** One transaction in the wallet's activity (rows are sorted by timestamp, newest first). */
   export interface WalletActivity {
     id: string;
@@ -28,6 +30,8 @@
     name: string;
     mark: string;
     grad: string;
+    /** Networks it arrives on (Receive picks the address from these); a token without any isn't offered. */
+    nets: NetworkId[];
   }
 </script>
 
@@ -52,7 +56,6 @@
   import WalletReceive, { type ShareChat } from './WalletReceive.svelte';
   import WalletRecipients, { type Recipient, type RecipientDraft } from './WalletRecipients.svelte';
   import WalletSend, { type SendContact, type WalletSendRequest } from './WalletSend.svelte';
-  import type { NetworkId } from './WalletReceive.svelte';
   import WalletSwap, { type SwapQuote, type SwapRequest } from './WalletSwap.svelte';
   const i18n = getI18n(); // number formatting follows the host locale
 
@@ -188,6 +191,8 @@
   let sendAddr = $state('');
   let extTok = $state<string | null>(null);
   let flowNonce = $state(0);
+  // a send or swap waiting on the host: the flow must stay mounted until its result is in
+  let flowBusy = $state(0);
   let filter = $state(0);
   let tokFilter = $state(0);
   let pick = $state<{ view: 'send' | 'receive' } | null>(null);
@@ -210,6 +215,7 @@
   }
 
   function apply(r: WalletRequest) {
+    extTok = null;
     const flow = isFlow(r.view);
     if (r.view === 'token' && r.token && isFlow(view)) {
       sym = r.token;
@@ -222,6 +228,8 @@
       pick = { view: r.view };
       return;
     }
+    // receiving a token you don't hold yet (one of `receivable`)
+    if (r.view === 'receive' && r.token && !rows.some((x) => x.symbol === r.token) && receivable.some((x) => x.symbol === r.token && x.nets.length)) extTok = r.token;
     const startFromAll = flow && !r.token && view === 'all';
     if (r.token && r.token !== sym) tokFilter = 0;
     view = r.view || 'all';
@@ -235,10 +243,25 @@
     const r = request;
     if (!r || r.nonce === lastNonce) return;
     lastNonce = r.nonce;
-    untrack(() => apply(r));
+    untrack(() => {
+      // a send or swap in flight keeps its view (remounting it would lose the result); the host hears where we are
+      if (flowBusy > 0) return report();
+      apply(r);
+    });
   });
 
+  // runs a send / swap host call with the flow pinned in place
+  async function pinned<T>(call: () => Promise<T>): Promise<T> {
+    flowBusy++;
+    try {
+      return await call();
+    } finally {
+      flowBusy--;
+    }
+  }
+
   function go(next: Partial<{ view: View; sym: string; fromAll: boolean }>) {
+    extTok = null;
     if (next.view) view = next.view;
     if (next.sym) sym = next.sym;
     if (next.fromAll !== undefined) fromAll = next.fromAll;
@@ -246,6 +269,7 @@
   }
 
   function leaveFlow() {
+    extTok = null;
     view = backToRecipients ? 'recipients' : fromAll || backToAll ? 'all' : 'token';
     fromAll = backToAll = backToRecipients = false;
     sendAddr = '';
@@ -268,7 +292,10 @@
   // The host makes the transfer first (a rejection propagates back to Send's PIN dialog). If it resolves with the
   // transaction's id, a pending row shows until the host's `activity` lists that id; its status is the host's.
   async function handleSent(x: WalletSendRequest) {
-    const res = await onSent?.(x);
+    const key = flowKey;
+    const res = await pinned(async () => onSent?.(x));
+    // the host's transfer went through; only move the view if the user is still on this send
+    if (flowKey !== key || view !== 'send') return;
     const tid = Date.now();
     const amt = `${num(x.amount, Math.min(x.dp, 8))} ${x.symbol}`;
     view = fromAll || backToAll ? 'all' : 'token';
@@ -370,12 +397,20 @@
   const ledger = $derived(raw?.ledger);
   const flowKey = $derived(`${view}:${fromAll ? '-' : raw?.symbol}:${flowNonce}`);
   const flowToken = $derived(extTok && view === 'receive' ? extTok : fromAll ? '' : (raw?.symbol ?? ''));
+  // Receive also offers tokens you don't hold yet, on their own networks
+  const receiveTokens = $derived<WalletToken[]>([
+    ...tokens,
+    ...receivable
+      .filter((x) => x.nets.length && !tokens.some((tk) => tk.symbol === x.symbol))
+      .map((x) => ({ symbol: x.symbol, name: x.name, mark: x.mark, grad: x.grad, held: 0, price: 0, dp: 4, nets: x.nets })),
+  ]);
+  const swapPinned = $derived(onSwap ? (r: Parameters<NonNullable<typeof onSwap>>[0]) => pinned(() => onSwap(r)) : undefined);
   const showToken = $derived(view === 'token' && !!raw);
 
   const pickTokens = $derived(
     rows
       .map((tk) => ({ symbol: tk.symbol, name: tk.name, mark: tk.mark, gradient: tk.grad, owned: true, held: `${num(tk.held, tk.dp)} ${tk.symbol}`, note: usd(tk.value) }))
-      .concat(pick?.view === 'receive' ? receivable.map((x) => ({ symbol: x.symbol, name: x.name, mark: x.mark, gradient: x.grad, owned: false, held: '', note: '' })) : []),
+      .concat(pick?.view === 'receive' ? receivable.filter((x) => x.nets.length && !rows.some((r) => r.symbol === x.symbol)).map((x) => ({ symbol: x.symbol, name: x.name, mark: x.mark, gradient: x.grad, owned: false, held: '', note: '' })) : []),
   );
 </script>
 
@@ -392,8 +427,8 @@
         onClose={leaveFlow}
         onSent={onSent ? handleSent : undefined}
       />{/key}{/if}
-  {#if view === 'receive'}{#key flowKey}<WalletReceive {tokens} token={flowToken} {handle} {addresses} {chats} {onShare} {qr} onClose={leaveFlow} />{/key}{/if}
-  {#if view === 'swap'}{#key flowKey}<WalletSwap {tokens} token={flowToken} {dexes} {onQuote} {onSwap} onClose={leaveFlow} />{/key}{/if}
+  {#if view === 'receive'}{#key flowKey}<WalletReceive tokens={receiveTokens} token={flowToken} {handle} {addresses} {chats} {onShare} {qr} onClose={leaveFlow} />{/key}{/if}
+  {#if view === 'swap'}{#key flowKey}<WalletSwap {tokens} token={flowToken} {dexes} {onQuote} onSwap={swapPinned} onClose={leaveFlow} />{/key}{/if}
   {#if view === 'recipients'}
     <WalletRecipients
       {tokens}
@@ -535,7 +570,7 @@
             onAction={() => {
               const done = toast;
               toast = null;
-              view = 'token';
+              go({ view: 'token' });
               if (done?.userId) onMessage?.({ userId: done.userId, text: done.message });
             }}
             onClose={() => (toast = null)}

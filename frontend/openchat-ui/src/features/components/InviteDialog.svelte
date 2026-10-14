@@ -4,7 +4,9 @@
      footer on Share link, and the host can switch tabs through initialTab.
      People are picked by id. Adding, inviting, switching link sharing, resetting the link and sharing it to a chat all
      wait on the host: the picks are only cleared (and the toast only shown) once it resolves; a rejection keeps them
-     and shows an error. The link comes from the host (`shareLink`); without it the link, QR and share are hidden. -->
+     and shows an error. The link comes from the host (`shareLink`); without it the link, QR and share are hidden.
+     It can't be dismissed while a host call is pending (lib/behaviours/dialog.svelte.ts); the sharing switch is
+     optimistic and falls back to the host's value if the latest change is rejected (optimistic.svelte.ts). -->
 <script lang="ts" module>
   export type InviteColor = 'violet' | 'amber' | 'teal' | 'blue' | 'slate' | 'plum';
 
@@ -30,6 +32,8 @@
   import Toggle from '../../lib/components/Toggle.svelte';
   import UndoToast from '../../lib/components/UndoToast.svelte';
   import { modal } from '../../lib/behaviours/modal';
+  import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
+  import { Optimistic } from '../../lib/behaviours/optimistic.svelte';
 
   type Color = InviteColor;
   type TabKey = 'add' | 'invite' | 'share';
@@ -122,14 +126,25 @@
   let addPicked = $state<string[]>([]);
   let query = $state('');
   let picked = $state<string[]>([]);
-  let shareOn = $state(untrack(() => shareOnProp));
+  // the sharing switch: optimistic, latest change wins, falls back to the host's value when it's rejected
+  const share = new Optimistic(() => shareOnProp);
+  $effect.pre(() => {
+    void shareOnProp;
+    untrack(() => share.sync());
+  });
+  const shareOn = $derived(share.current);
   let linkOverride = $state<string | null>(null);
   let pickerOpen = $state(false);
-  let busy = $state<'' | 'add' | 'invite' | 'share' | 'reset' | 'chat'>('');
+  // one host call at a time (add, invite, reset, share to chat); `action` says which one is pending.
+  // No exit animation here, so it leaves at once (exitMs 0) — but never while a call is pending.
+  const flow = new DialogFlow({ exitMs: 0 });
+  let action = $state<'add' | 'invite' | 'reset' | 'chat'>('add');
+  const busy = $derived(flow.busy ? action : '');
   let toast = $state<{ id: number; text: string; tone: 'success' | 'neutral' } | null>(null);
   let toastTimer: ReturnType<typeof setTimeout> | undefined;
   onDestroy(() => {
     clearTimeout(toastTimer);
+    flow.destroy();
   });
 
   // embedded: the host can re-point the open page at another tab
@@ -173,9 +188,11 @@
   const toggleIn = (list: string[], id: string) => (list.includes(id) ? list.filter((h) => h !== id) : [...list, id]);
   const countLabel = (n: number) => t('ui.inviteDialog.selectedCount', { count: n });
 
+  // nothing dismisses while a call (or a sharing change) is pending
   function cancel() {
+    if (flow.locked || share.pending) return;
     if (embedded && onClose) onClose();
-    else onCancel?.();
+    else flow.leave(onCancel);
   }
 
   function showToast(text: string, tone: 'success' | 'neutral' = 'success') {
@@ -188,18 +205,12 @@
   }
 
   // runs one host call at a time; resolves true when it succeeded
-  async function attempt(what: Exclude<typeof busy, ''>, call: () => Promise<unknown> | void): Promise<boolean> {
-    if (busy) return false;
-    busy = what;
-    try {
-      await call();
-      return true;
-    } catch {
-      showToast(t('ui.inviteDialog.failed'), 'neutral');
-      return false;
-    } finally {
-      busy = '';
-    }
+  async function attempt(what: typeof action, call: () => Promise<unknown> | void): Promise<boolean> {
+    if (flow.locked) return false;
+    action = what;
+    const result = await flow.run(call);
+    if (!result.ok) showToast(t('ui.inviteDialog.failed'), 'neutral');
+    return result.ok;
   }
 
   async function sentToChat(x: { chatId: string; chat: string; message: string }) {
@@ -233,22 +244,22 @@
 
   // optimistic: the switch moves at once and goes back if the host rejects
   async function toggleSharing(on: boolean) {
-    if (!onShareToggle) return;
-    shareOn = on;
-    if (!(await attempt('share', () => onShareToggle(on)))) shareOn = !on;
+    if (!onShareToggle || flow.closing) return;
+    const toggle = onShareToggle;
+    if (!(await share.set(on, (v) => toggle(v))) && share.failed) showToast(t('ui.inviteDialog.failed'), 'neutral');
   }
 
   async function resetLink() {
-    if (!onResetLink || busy) return;
-    busy = 'reset';
-    try {
-      linkOverride = (await onResetLink()).link;
-      showToast(t('ui.inviteDialog.linkReset'));
-    } catch {
+    if (!onResetLink || flow.locked) return;
+    const reset = onResetLink;
+    action = 'reset';
+    const result = await flow.run(() => reset());
+    if (!result.ok) {
       showToast(t('ui.inviteDialog.failed'), 'neutral');
-    } finally {
-      busy = '';
+      return;
     }
+    linkOverride = result.value.link;
+    showToast(t('ui.inviteDialog.linkReset'));
   }
 </script>
 
@@ -275,7 +286,7 @@
   <SegmentedTabs labels={tabLabels} counts={tabCounts} selectedIndex={tab} dotIndexes={[]} onSelect={(i) => (tab = i)} />
 {/snippet}
 
-<div class="layer" class:embedded use:modal={embedded ? undefined : cancel}>
+<div class="layer" class:embedded use:modal={embedded || flow.closing ? undefined : cancel}>
   {#if !embedded}
     <div class="veil" onclick={cancel} aria-hidden="true"></div>
   {/if}
@@ -402,7 +413,7 @@
               <span class="share-title">{t('ui.inviteDialog.enableSharing')}</span>
               <span class="share-sub">{t('ui.inviteDialog.shareSub', { noun })}</span>
             </div>
-            <div class="toggle"><Toggle on={shareOn} disabled={!canInvite || !onShareToggle || busy === 'share'} onChange={toggleSharing} /></div>
+            <div class="toggle"><Toggle on={shareOn} disabled={!canInvite || !onShareToggle} onChange={toggleSharing} /></div>
           </div>
 
           {#if shareOn && link}
@@ -446,7 +457,7 @@
     {#if canInvite && !(embedded && key === 'share')}
       <div class="footer">
         {#if !embedded}
-          <span class="cancel" onclick={cancel} role="button" tabindex="0">{t(key === 'share' ? 'ui.common.done' : 'ui.common.cancel')}</span>
+          <span class="cancel" onclick={cancel} role="button" tabindex="0" aria-disabled={flow.locked || share.pending}>{t(key === 'share' ? 'ui.common.done' : 'ui.common.cancel')}</span>
         {/if}
         <span class="grow"></span>
         {#if key === 'add'}

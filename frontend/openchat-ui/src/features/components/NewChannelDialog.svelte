@@ -22,6 +22,7 @@
   import { onDestroy, untrack } from 'svelte';
   import Toggle from '../../lib/components/Toggle.svelte';
   import { modal } from '../../lib/behaviours/modal';
+  import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
 
   interface Props {
     communityName: string;
@@ -48,8 +49,6 @@
   let about = $state('');
   let url = $state('');
   let isPublic = $state(untrack(() => defaultPublic));
-  let creating = $state(false);
-  let failed = $state(false);
 
   // name availability: the latest answer for the current name ('pending' while a check runs)
   let nameState = $state<{ name: string; result: NameCheck | 'pending' } | null>(null);
@@ -75,41 +74,24 @@
 
   const ok = $derived(name.length > 1 && (!embedded || /^https?:\/\/\S+\.\S+/.test(url.trim())) && (nameResult === null || nameResult === 'ok'));
 
-  let closing = $state(false);
-  let timer: ReturnType<typeof setTimeout> | undefined;
+  // busy / leaving / the exit: the shared dialog contract (lib/behaviours/dialog.svelte.ts)
+  const flow = new DialogFlow();
   onDestroy(() => {
-    clearTimeout(timer);
+    flow.destroy();
     clearTimeout(checkTimer);
   });
-
-  // play the exit animation, then hand control back
-  function close(then?: () => void) {
-    if (closing || creating) return;
-    closing = true;
-    timer = setTimeout(() => then?.(), 170);
-  }
+  const dismiss = () => flow.dismiss(onCancel);
 
   async function create() {
-    // nothing new once closing (cancelled, or the exit after a success)
-    if (!ok || creating || closing) return;
-    const result = { name, about, isPublic, embedded, url: url.trim() };
-    creating = true;
-    failed = false;
-    try {
-      await onCreate?.(result);
-    } catch {
-      failed = true;
-      return;
-    } finally {
-      creating = false;
-    }
-    // success: animate out, then hand back to the host (see the header)
-    close(onCancel);
+    if (!ok) return;
+    const channel = { name, about, isPublic, embedded, url: url.trim() };
+    const result = await flow.run(() => onCreate?.(channel));
+    if (result.ok) flow.leave(onCancel);
   }
 </script>
 
-<div class="layer" class:closing role="dialog" aria-modal="true" use:modal={closing ? undefined : () => close(onCancel)}>
-  <div class="veil" onclick={() => close(onCancel)} aria-hidden="true"></div>
+<div class="layer" class:closing={flow.closing} role="dialog" aria-modal="true" use:modal={flow.escape(onCancel)}>
+  <div class="veil" onclick={dismiss} aria-hidden="true"></div>
   <div class="card">
     <div class="head">
       <span class="badge"><span class="head-icon" class:embedded></span></span>
@@ -117,7 +99,7 @@
         <span class="title">{t(embedded ? 'ui.newChannelDialog.titleEmbedded' : 'ui.newChannelDialog.title')}</span>
         <span class="subtitle">{t('ui.newChannelDialog.subtitle', { community: communityName })}</span>
       </div>
-      <span class="close" onclick={() => close(onCancel)} role="button" tabindex="0" aria-label={t('ui.common.close')}><span class="close-icon"></span></span>
+      <span class="close" onclick={dismiss} role="button" tabindex="0" aria-label={t('ui.common.close')}><span class="close-icon"></span></span>
     </div>
 
     <div class="body">
@@ -163,14 +145,14 @@
     </div>
 
     <div class="foot">
-      <span class="cancel" onclick={() => close(onCancel)} role="button" tabindex="0" aria-disabled={creating}>{t('ui.common.cancel')}</span>
+      <span class="cancel" onclick={dismiss} role="button" tabindex="0" aria-disabled={flow.locked}>{t('ui.common.cancel')}</span>
       <span class="grow"></span>
-      {#if failed}
+      {#if flow.failed}
         <span class="error" role="alert">{t('ui.newChannelDialog.createFailed')}</span>
       {/if}
-      <div class="cta" class:ok={ok && !creating} onclick={create} role="button" tabindex="0" aria-disabled={!ok || creating}>
+      <div class="cta" class:ok={ok && !flow.busy} onclick={create} role="button" tabindex="0" aria-disabled={!ok || flow.locked}>
         <span class="cta-icon" class:embedded></span>
-        <span>{t(creating ? 'ui.newChannelDialog.creating' : embedded ? 'ui.newChannelDialog.addCta' : 'ui.newChannelDialog.createCta')}</span>
+        <span>{t(flow.busy ? 'ui.newChannelDialog.creating' : embedded ? 'ui.newChannelDialog.addCta' : 'ui.newChannelDialog.createCta')}</span>
       </div>
     </div>
   </div>

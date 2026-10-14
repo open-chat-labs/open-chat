@@ -100,10 +100,10 @@ const walletActivity = [
   { id: 'a5', symbol: 'CHAT', kind: 'send', title: 'Sent to Ryan Rogers', timestamp: ago(24 * 13), context: '#general', amount: 4, fiat: 0.21, status: 'sent' },
   { id: 'a6', symbol: 'ICP', kind: 'receive', title: 'Received from Lucy Linden', timestamp: ago(24 * 14), context: 'direct chat', amount: 0.2, fiat: 1.1 },
 ] as const;
+// mig-wallet: receivable tokens carry their networks (Receive picks the address from them; SOL isn't receivable here)
 const receivableTokens = [
-  { symbol: 'ckBTC', name: 'Chain-key Bitcoin', mark: '\u20BF', grad: 'linear-gradient(140deg,#F9C97E,#E07A2F)' },
-  { symbol: 'USDC', name: 'USD Coin', mark: '$', grad: 'linear-gradient(140deg,#7EB7FF,#2775CA)' },
-  { symbol: 'SOL', name: 'Solana', mark: 'S', grad: 'linear-gradient(140deg,#9CE7C8,#7B5BFF)' },
+  { symbol: 'ckBTC', name: 'Chain-key Bitcoin', mark: '\u20BF', grad: 'linear-gradient(140deg,#F9C97E,#E07A2F)', nets: ['icp' as const] },
+  { symbol: 'USDC', name: 'USD Coin', mark: '$', grad: 'linear-gradient(140deg,#7EB7FF,#2775CA)', nets: ['eth' as const, 'icp' as const] },
 ];
 const recipientsDemo = {
   onAdd: async (r: { name: string; address: string; token?: string | null }) => {

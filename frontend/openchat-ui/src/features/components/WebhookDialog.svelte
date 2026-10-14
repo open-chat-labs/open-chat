@@ -23,6 +23,7 @@
   import Translate from '../../lib/components/Translate.svelte';
   import { onDestroy } from 'svelte';
   import { modal } from '../../lib/behaviours/modal';
+  import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
 
   const GRADIENTS = {
     slate: 'linear-gradient(140deg,#8E9BB3,#5A6478)',
@@ -70,17 +71,19 @@
   let photoFile = $state<File | null>(null);
   let photoEdit = $state<string | null>(null);
   let photoRemoved = $state(false);
-  let busy = $state<'' | 'save' | 'regenerate'>('');
-  let failed = $state<'' | 'save' | 'regenerate'>('');
+  // one flow for both host calls (save leaves on success, regenerate stays): busy / leaving / the exit
+  // (lib/behaviours/dialog.svelte.ts); `action` says which call the busy / failed state belongs to
+  const flow = new DialogFlow({ exitMs: LEAVE_MS });
+  let action = $state<'save' | 'regenerate'>('save');
+  const busy = $derived(flow.busy ? action : '');
+  const failed = $derived(flow.failed ? action : '');
   let confirming = $state(false);
   let copied = $state(false);
   let regenerated = $state(false);
   let explainer = $state(false);
-  let closing = $state(false);
   let avatarInput: HTMLInputElement;
-  let leaveTimer: ReturnType<typeof setTimeout> | undefined;
   onDestroy(() => {
-    clearTimeout(leaveTimer);
+    flow.destroy();
     if (photoEdit) URL.revokeObjectURL(photoEdit);
   });
 
@@ -93,47 +96,28 @@
   const valid = $derived(VALID.test(name) && !taken);
   const invalid = $derived(name.length > 0 && !VALID.test(name));
 
-  function close(then?: () => void) {
-    if (closing) return;
-    // like the other dialogs: once it leaves it never comes back; the host unmounts it
-    closing = true;
-    leaveTimer = setTimeout(() => {
-      then?.();
-    }, LEAVE_MS);
-  }
-
   async function save() {
-    // nothing new once closing (cancelled, or the exit after a success)
-    if (!valid || busy || closing || !onSave) return;
-    busy = 'save';
-    failed = '';
-    try {
-      await onSave({ id: isEdit ? webhook?.id : undefined, name, color: colour, avatar: photoFile, removeAvatar: photoRemoved && !photoFile });
-    } catch {
-      failed = 'save';
-      return;
-    } finally {
-      busy = '';
-    }
-    close(onCancel);
+    // nothing new while a call is pending or once leaving (cancelled, or the exit after a success)
+    if (!valid || flow.locked || !onSave) return;
+    const saveFn = onSave;
+    action = 'save';
+    const result = await flow.run(() =>
+      saveFn({ id: isEdit ? webhook?.id : undefined, name, color: colour, avatar: photoFile, removeAvatar: photoRemoved && !photoFile }),
+    );
+    if (result.ok) flow.leave(onCancel);
   }
 
   // the new URL is shown only once the host has issued it; a failure keeps the old one
   async function regenerate() {
-    if (busy || !onRegenerate || !webhook) return;
-    busy = 'regenerate';
-    failed = '';
-    try {
-      const next = await onRegenerate({ id: webhook.id });
-      urlEdit = next.url;
-      confirming = false;
-      regenerated = true;
-      copied = false;
-    } catch {
-      failed = 'regenerate';
-    } finally {
-      busy = '';
-    }
+    if (flow.locked || !onRegenerate || !webhook) return;
+    const regen = onRegenerate, id = webhook.id;
+    action = 'regenerate';
+    const result = await flow.run(() => regen({ id }));
+    if (!result.ok) return;
+    urlEdit = result.value.url;
+    confirming = false;
+    regenerated = true;
+    copied = false;
   }
 
   // the URL itself is a second way to copy
@@ -155,10 +139,10 @@
     photoRemoved = true;
   }
 
-  const dismiss = () => !busy && close(onCancel);
+  const dismiss = () => flow.dismiss(onCancel);
 </script>
 
-<div class="layer" class:closing role="dialog" aria-modal="true" use:modal={closing ? undefined : dismiss}>
+<div class="layer" class:closing={flow.closing} role="dialog" aria-modal="true" use:modal={flow.escape(onCancel)}>
   <div class="veil" onclick={dismiss} aria-hidden="true"></div>
   <div class="card">
     <div class="head">
@@ -166,7 +150,7 @@
         <span class="head-tile warn"><span class="head-glyph" style:mask="var(--icon-refresh) center/contain no-repeat"></span></span>
       {:else if isEdit}
         <span class="head-avatar" style:background={GRADIENTS[colour] ?? GRADIENTS.slate}>
-          <span class="photo" style:background={photo ? `url(${photo}) center/cover no-repeat` : 'none'}></span>
+          <span class="photo" style:background={photo ? `url(${JSON.stringify(photo)}) center/cover no-repeat` : 'none'}></span>
           <span class="hook-badge"><span class="hook-badge-icon"></span></span>
         </span>
       {:else}
@@ -185,7 +169,7 @@
           <div class="avatar-row">
             <div class="avatar-wrap">
               <div class="avatar" style:background={GRADIENTS[colour] ?? GRADIENTS.slate}>
-                <div class="avatar-photo" style:background={photo ? `url(${photo}) center/cover no-repeat` : 'none'}></div>
+                <div class="avatar-photo" style:background={photo ? `url(${JSON.stringify(photo)}) center/cover no-repeat` : 'none'}></div>
               </div>
               <input class="file" bind:this={avatarInput} type="file" accept="image/*" oninput={pickedFile} />
               <div class="upload" onclick={() => avatarInput.click()} role="button" tabindex="0" aria-label={t('ui.webhookDialog.uploadImage')} title={t('ui.webhookDialog.uploadImage')}><span class="upload-icon"></span></div>
@@ -260,7 +244,7 @@
             {#if onRegenerate}
               <div class="regen-row">
                 <span class="regen-note">{t('ui.webhookDialog.regenNote')}</span>
-                <span class="regen" onclick={() => (confirming = true)} role="button" tabindex="0"><span class="regen-icon"></span><span class="regen-label">{t('ui.webhookDialog.regenerate')}</span></span>
+                <span class="regen" onclick={() => !flow.locked && (confirming = true)} role="button" tabindex="0"><span class="regen-icon"></span><span class="regen-label">{t('ui.webhookDialog.regenerate')}</span></span>
               </div>
             {/if}
           </div>
@@ -287,7 +271,7 @@
     </div>
 
     <div class="foot">
-      <span class="secondary" onclick={() => (busy ? undefined : confirming ? (confirming = false) : close(onCancel))} role="button" tabindex="0">{t(confirming ? 'ui.common.back' : 'ui.common.cancel')}</span>
+      <span class="secondary" onclick={() => (flow.locked ? undefined : confirming ? (confirming = false) : dismiss())} role="button" tabindex="0" aria-disabled={flow.locked}>{t(confirming ? 'ui.common.back' : 'ui.common.cancel')}</span>
       <span class="spacer"></span>
       {#if failed}
         <span class="error" role="alert">{t(failed === 'save' ? 'ui.webhookDialog.saveFailed' : 'ui.webhookDialog.regenerateFailed')}</span>
@@ -295,11 +279,11 @@
       <div
         class="primary"
         class:warn={confirming}
-        class:ready={!busy && (confirming || (valid && !!onSave))}
+        class:ready={!flow.locked && (confirming || (valid && !!onSave))}
         onclick={() => (confirming ? regenerate() : save())}
         role="button"
         tabindex="0"
-        aria-disabled={!!busy || (!confirming && (!valid || !onSave))}
+        aria-disabled={flow.locked || (!confirming && (!valid || !onSave))}
       >
         <span>{t(busy ? 'ui.webhookDialog.working' : confirming ? 'ui.webhookDialog.regenerateCta' : isEdit ? 'ui.webhookDialog.updateCta' : 'ui.webhookDialog.registerCta')}</span>
         <span class="primary-icon" style:mask="var(--icon-{confirming ? 'refresh' : isEdit ? 'check' : 'hook'}) center/contain no-repeat"></span>

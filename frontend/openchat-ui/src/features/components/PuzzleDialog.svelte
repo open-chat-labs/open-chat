@@ -95,6 +95,7 @@
 <script lang="ts">
   import { useT } from '../../lib/i18n';
   import { onDestroy, onMount, untrack } from 'svelte';
+  import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
 
   interface Saved {
     br: Bridges;
@@ -173,19 +174,20 @@
   let tbr = $state<Bridges>({});
   let tsel = $state<number | null>(null);
   let terr = $state('');
-  let closing = $state(false);
   let answered = $state<boolean | null>(null);
-  let hinting = $state(false);
-  let checking = $state(false);
   let checkFailed = $state(false);
-  let sharing = $state(false);
+  // the shared dialog contract (lib/behaviours/dialog.svelte.ts): `flow` owns the solve check, sharing and the exit;
+  // `hintFlow` the paid hint. Nothing closes while either is pending, and nothing starts while leaving.
+  const flow = new DialogFlow();
+  const hintFlow = new DialogFlow();
+  const checking = $derived(flow.busy);
+  const hinting = $derived(hintFlow.busy);
   const PUZZLE = $derived<Puzzle>({ grid: puzzle.grid, isl: puzzle.islands });
   const NB = $derived(neighbours(PUZZLE.isl));
   let innerWidth = $state(typeof window !== 'undefined' ? window.innerWidth : 1200);
   const wide = $derived(innerWidth >= 900);
 
   let errTimer: ReturnType<typeof setTimeout> | undefined;
-  let closeTimer: ReturnType<typeof setTimeout> | undefined;
   let solveTimer: ReturnType<typeof setTimeout> | undefined;
   let layer: HTMLDivElement;
 
@@ -195,7 +197,7 @@
 
   onMount(() => {
     const tick = setInterval(() => {
-      if (view === 'play' && !closing) elapsed++;
+      if (view === 'play' && !flow.closing) elapsed++;
     }, 1000);
     // Esc closes, but only while this is the topmost dialog (shared stack with DialogShell)
     const self = { boxRef: { get current() { return layer; } } };
@@ -219,15 +221,16 @@
 
   onDestroy(() => {
     clearTimeout(errTimer);
-    clearTimeout(closeTimer);
+    flow.destroy();
+    hintFlow.destroy();
     clearTimeout(solveTimer);
     save();
   });
 
+  // Esc / veil / × / Done: not while a hint is being bought or the board is being checked
   function close() {
-    if (closing) return;
-    closing = true;
-    closeTimer = setTimeout(() => onClose?.(), 170);
+    if (hinting) return;
+    flow.dismiss(onClose);
   }
 
   function flash(tut: boolean, msg: string) {
@@ -247,28 +250,26 @@
     boardChanged();
   }
 
-  // any move cancels a pending check; a complete board is checked shortly after, as it is then
+  // any move cancels a pending check; a complete board is checked shortly after, as it is then — but not while a hint
+  // is being bought (the hint's own move schedules the check once it lands)
   function boardChanged() {
     clearTimeout(solveTimer);
     checkFailed = false;
     save();
-    if (isSolved(PUZZLE.isl, br)) solveTimer = setTimeout(submit, 550);
+    if (isSolved(PUZZLE.isl, br) && !hinting) solveTimer = setTimeout(submit, 550);
   }
 
   // the host has the final say on a solve; the board is locked while it checks
   async function submit() {
-    if (checking || !isSolved(PUZZLE.isl, br)) return;
+    if (hinting || !isSolved(PUZZLE.isl, br)) return;
     const bridges = br;
-    checking = true;
     checkFailed = false;
-    try {
-      await onSolved?.({ puzzleId: puzzle.id, bridges, elapsed, hints });
-      view = 'solved';
-    } catch {
+    // ignored while a check is already running or the dialog is leaving
+    const result = await flow.run(() => onSolved?.({ puzzleId: puzzle.id, bridges, elapsed, hints }));
+    if (result.ok) view = 'solved';
+    else if (flow.failed) {
       checkFailed = true;
       flash(false, 'ui.puzzleDialog.solveFailed');
-    } finally {
-      checking = false;
     }
   }
 
@@ -302,20 +303,19 @@
 
   // the host charges for the hint and returns one bridge of the solution; it's applied only once that resolves
   async function hint() {
-    if (!canHint || !onHint || checking) return;
-    hinting = true;
-    let target: [number, number, number];
-    try {
-      target = await onHint({ puzzleId: puzzle.id, bridges: br, cost: hintCost });
-    } catch {
-      flash(false, 'ui.puzzleDialog.hintFailed');
+    // not while the board is being checked or the dialog is leaving
+    if (!canHint || !onHint || flow.locked) return;
+    clearTimeout(solveTimer); // a check waits for the hint
+    const result = await hintFlow.run(() => onHint({ puzzleId: puzzle.id, bridges: br, cost: hintCost }));
+    if (!result.ok) {
+      if (hintFlow.failed) flash(false, 'ui.puzzleDialog.hintFailed');
+      boardChanged(); // a complete board that waited for the hint is checked now
       return;
-    } finally {
-      hinting = false;
     }
-    // a hint that lands after the board went in for checking (or left play) mustn't change what the host is verifying
-    if (checking || view !== 'play') return;
-    const [i, j, n] = target, next = { ...br };
+    // the host has charged for it, so it is applied (also from the tutorial or after a failed check) unless the
+    // puzzle is already solved
+    if (view === 'solved') return;
+    const [i, j, n] = result.value, next = { ...br };
     // a correct bridge can't cross another correct one, so whatever blocks it is wrong
     for (const k of Object.keys(next)) if (crossesAny(PUZZLE.isl, { [k]: next[k] }, i, j)) delete next[k];
     next[pairKey(i, j)] = n;
@@ -334,16 +334,10 @@
   }
 
   async function share() {
-    if (!onShare || sharing) return;
-    sharing = true;
-    try {
-      await onShare?.({ puzzleId: puzzle.id, number: puzzle.number, time: solved && solvedTime != null ? solvedTime : elapsed, hints: solved && solvedHints != null ? solvedHints : hints, streak: solved ? puzzleStreak : streak });
-    } catch {
-      return; // stays open so sharing can be retried
-    } finally {
-      sharing = false;
-    }
-    close();
+    if (!onShare) return;
+    // one share at a time; it stays open (to retry) if it fails, and leaves once it's done
+    const result = await flow.run(() => onShare({ puzzleId: puzzle.id, number: puzzle.number, time: solved && solvedTime != null ? solvedTime : elapsed, hints: solved && solvedHints != null ? solvedHints : hints, streak: solved ? puzzleStreak : streak }));
+    if (result.ok) flow.leave(onClose);
   }
 
   function undo() {
@@ -441,7 +435,7 @@
   </div>
 {/snippet}
 
-<div class="layer" bind:this={layer} class:closing data-screen-label="Daily puzzle" role="dialog" aria-modal="true" aria-label={t('ui.puzzleDialog.label')}>
+<div class="layer" bind:this={layer} class:closing={flow.closing} data-screen-label="Daily puzzle" role="dialog" aria-modal="true" aria-label={t('ui.puzzleDialog.label')}>
   <div class="veil" onclick={close} aria-hidden="true"></div>
   <div class="card" class:wide={view === 'play' && wide}>
     <div class="head">
@@ -573,7 +567,7 @@
         {/if}
         <div class="finish">
           {#if onShare}
-            <span class="finish-button" onclick={share} role="button" tabindex="0" aria-disabled={sharing}><span class="share-icon"></span>{t('ui.puzzleDialog.share')}</span>
+            <span class="finish-button" onclick={share} role="button" tabindex="0" aria-disabled={flow.locked}><span class="share-icon"></span>{t('ui.puzzleDialog.share')}</span>
           {/if}
           <span class="finish-button" onclick={close} role="button" tabindex="0">{t('ui.common.done')}</span>
         </div>
@@ -625,6 +619,10 @@
 
   .card.wide {
     max-width: 880px;
+  }
+
+  .layer.closing {
+    pointer-events: none;
   }
 
   .closing .veil {

@@ -10,6 +10,7 @@
 </script>
 
 <script lang="ts">
+  import { Optimistic } from '../../lib/behaviours/optimistic.svelte';
   import { getI18n, useT, durationText } from '../../lib/i18n';
   import Translate from '../../lib/components/Translate.svelte';
   import { onDestroy, onMount, tick, untrack, type ComponentProps } from 'svelte';
@@ -438,65 +439,34 @@
   let ugQuery = $state('');
   let ugMemberQuery = $state('');
   let botQuery = $state('');
-  let roles = $state<Record<string, string>>({});
-  let selfRole = $state<string | null>(null);
-  let removedMembers = $state<string[]>([]);
-  let unblocked = $state<string[]>([]);
-  let removedBlocked = $state<string[]>([]);
-  let actionError = $state('');
   let memberQuery = $state('');
-  let unpinned = $state<string[]>([]);
 
-  // optimistic: `change` updates the panel now, `undo` restores it if the host rejects. With `isLatest`, a rejection
-  // that a newer change has already superseded neither undoes anything nor shows an error; `onDone` runs on success.
-  async function memberAction(
-    call: () => Promise<unknown> | void,
-    change: () => void,
-    undo: () => void,
-    opts: { isLatest?: () => boolean; onDone?: () => void } = {},
-  ) {
+  // optimistic, one value per thing (lib/behaviours/optimistic.svelte.ts): a member's role, whether a member / blocked
+  // person / pin is gone, the mutes. Shown at once; the latest call for a thing decides; a rejected latest call falls
+  // back to the value the host last accepted; new host data is followed again once nothing is in flight.
+  const optimistic = $state<Record<string, Optimistic<unknown>>>({});
+  let lastAction = $state<string | null>(null);
+  const actionError = $derived(lastAction && optimistic[lastAction]?.failed ? t('ui.groupPanel.actionFailed') : '');
+  function act<T>(key: string, host: () => T, value: T, call: () => Promise<unknown> | void) {
     popover = null;
-    actionError = '';
-    change();
-    try {
-      await call();
-      opts.onDone?.();
-    } catch {
-      if (opts.isLatest && !opts.isLatest()) return;
-      undo();
-      actionError = t('ui.groupPanel.actionFailed');
-    }
+    lastAction = key;
+    const state = (optimistic[key] ??= new Optimistic(host) as unknown as Optimistic<unknown>) as unknown as Optimistic<T>;
+    state.set(value, () => call());
   }
-
-  // overlapping changes to one thing (a member's role, the mute): the latest call decides. When it rejects, the value
-  // falls back to the one the host last accepted (never to an earlier optimistic value it didn't confirm); an older
-  // call that succeeds after every newer one failed still lands, since that's what the host has now.
-  type Track = { seq: number; settled: number; lost: number; accepted?: { value: unknown } };
-  const tracks: Record<string, Track> = {};
-  function tracked<T>(key: string, value: T, current: () => T, set: (v: T) => void, call: () => Promise<unknown> | void) {
-    const tr = (tracks[key] ??= { seq: 0, settled: 0, lost: 0 });
-    tr.accepted ??= { value: current() };
-    const seq = ++tr.seq;
-    memberAction(
-      call,
-      () => set(value),
-      () => {
-        tr.lost = seq;
-        set(tr.accepted!.value as T);
-      },
-      {
-        isLatest: () => tr.seq === seq,
-        onDone: () => {
-          if (seq <= tr.settled) return;
-          tr.settled = seq;
-          tr.accepted = { value };
-          if (tr.lost === tr.seq) set(value);
-        },
-      },
-    );
-  }
-  let ownMute = $state<MuteKey | null>(null);
-  let ownMuteAll = $state(false);
+  const gone = (key: string) => (optimistic[key]?.current as boolean | undefined) ?? false;
+  const hostSelfRole = () => viewerRole.toUpperCase().replace('MEMBER', '');
+  const selfRoleNow = $derived(optimistic['role:\u0000you']?.current as string | undefined);
+  // member / pin overlays give way to new host data (the mutes follow their own props below)
+  $effect.pre(() => {
+    void members;
+    void lapsed;
+    void blocked;
+    void pinned;
+    void viewerRole;
+    untrack(() => {
+      for (const [key, state] of Object.entries(optimistic)) if (key !== 'mute' && key !== 'muteAll') state.sync();
+    });
+  });
   let aboutOpen = $state(false);
   let aboutLong = $state(false);
   let copyTimer: ReturnType<typeof setTimeout> | undefined;
@@ -507,8 +477,18 @@
 
   const view = $derived<View>(quick && storedView !== 'pinned' ? 'main' : storedView);
   const perms = $derived(permissions ?? defaultPermissions());
-  const muted = $derived(mutedUntil !== undefined ? mutedUntil : ownMute);
-  const muteAll = $derived(muteEveryone ?? ownMuteAll);
+  const hostMute = () => mutedUntil ?? null;
+  const hostMuteAll = () => muteEveryone ?? false;
+  const muted = $derived((optimistic.mute?.current as MuteKey | null | undefined) ?? hostMute());
+  const muteAll = $derived((optimistic.muteAll?.current as boolean | undefined) ?? hostMuteAll());
+  $effect.pre(() => {
+    void mutedUntil;
+    untrack(() => optimistic.mute?.sync());
+  });
+  $effect.pre(() => {
+    void muteEveryone;
+    untrack(() => optimistic.muteAll?.sync());
+  });
   const total = $derived(memberTotal ?? members.length);
   const aboutText = $derived(about ?? '');
 
@@ -601,21 +581,17 @@
 
   function setMute(key: MuteKey | null) {
     muteMenu = null;
-    tracked<MuteKey | null>('mute', key, () => ownMute, (v) => (ownMute = v), () => onMuteChange?.(key));
+    act<MuteKey | null>('mute', hostMute, key, () => onMuteChange?.(key));
   }
 
   function toggleMuteAll() {
     const next = !muteAll;
-    tracked('muteAll', next, () => ownMuteAll, (v) => (ownMuteAll = v), () => onMuteEveryoneChange?.(next));
+    act('muteAll', hostMuteAll, next, () => onMuteEveryoneChange?.(next));
   }
 
   function unpin(messageId: string) {
     if (!onUnpin) return;
-    memberAction(
-      () => onUnpin(messageId),
-      () => (unpinned = [...unpinned, messageId]),
-      () => (unpinned = unpinned.filter((id) => id !== messageId)),
-    );
+    act(`unpinned:${messageId}`, () => false, true, () => onUnpin(messageId));
   }
 
   const openUser = (m: Person) => () => onDialog?.('user', { userId: m.userId, title: m.title, handle: m.handle, color: m.color, isSelf: m.tag === 'YOU' });
@@ -640,8 +616,14 @@
     const i = list.findIndex((m) => m.tag === 'YOU');
     return i > 0 ? [list[i], ...list.slice(0, i), ...list.slice(i + 1)] : list;
   };
-  const withRole = (list: Person[]) => list.filter((m) => !removedMembers.includes(m.handle)).map((m) => (roles[m.handle] != null ? { ...m, tag: roles[m.handle] } : m));
-  const visibleBlocked = $derived(blocked.filter((m) => !unblocked.includes(m.handle) && !removedBlocked.includes(m.handle)));
+  const withRole = (list: Person[]) =>
+    list
+      .filter((m) => !gone(`removed:${m.handle}`))
+      .map((m) => {
+        const role = optimistic[`role:${m.handle}`]?.current as string | undefined;
+        return role !== undefined ? { ...m, tag: role } : m;
+      });
+  const visibleBlocked = $derived(blocked.filter((m) => !gone(`unblocked:${m.handle}`) && !gone(`removedBlocked:${m.handle}`)));
   const memberNeedle = $derived(memberQuery.trim().toLowerCase());
   const matchesQuery = (list: Person[]) => (memberNeedle ? list.filter((m) => `${m.title} ${m.handle}`.toLowerCase().includes(memberNeedle)) : list);
   const memberSets = $derived([youFirst(matchesQuery(withRole(members))), youFirst(matchesQuery(withRole(lapsed))), youFirst(matchesQuery(visibleBlocked))]);
@@ -658,20 +640,13 @@
       // members can't act on anyone; moderators can remove regular members; owners are only managed by owners,
       // and your own row only offers stepping down once someone else is an owner
       const canAct = blockedTab ? canModerate : self ? viewerIsOwner : rank === 3 ? viewerIsOwner : canModerate && rank >= 0 && (canChangeRoles || rank === 0);
-      const current = self ? (selfRole ?? viewerRole.toUpperCase().replace('MEMBER', '')) : (LADDER[rank] ?? '');
+      const current = self ? (selfRoleNow ?? hostSelfRole()) : (LADDER[rank] ?? '');
       const soleOwner = self && current === 'OWNER' && otherOwners === 0;
       const setRole = (r: string) => {
         if (!onRoleChange) return;
-        const before = self ? selfRole : roles[m.handle];
-        const put = (v: string | null | undefined) => {
-          if (self) selfRole = v ?? null;
-          else if (v == null) {
-            const rest = { ...roles };
-            delete rest[m.handle];
-            roles = rest;
-          } else roles = { ...roles, [m.handle]: v };
-        };
-        tracked<string | null | undefined>(self ? 'role:\u0000you' : `role:${m.handle}`, r, () => before, put, () => onRoleChange(m, (r || 'MEMBER') as MemberRole));
+        // the host's own value for this row, read fresh each time (it may have changed since)
+        const host = self ? hostSelfRole : () => [...members, ...lapsed].find((x) => x.handle === m.handle)?.tag ?? '';
+        act(self ? 'role:\u0000you' : `role:${m.handle}`, host, r, () => onRoleChange(m, (r || 'MEMBER') as MemberRole));
       };
       const roleItems: MenuItem[] =
         blockedTab || !canChangeRoles || !onRoleChange
@@ -703,11 +678,7 @@
                       mask: mask('user-minus'),
                       variant: 'danger' as const,
                       onSelect: () =>
-                        memberAction(
-                          () => onRemoveMember(m),
-                          () => (removedMembers = [...removedMembers, m.handle]),
-                          () => (removedMembers = removedMembers.filter((h) => h !== m.handle)),
-                        ),
+                        act(`removed:${m.handle}`, () => false, true, () => onRemoveMember(m)),
                     },
                   ]
                 : []),
@@ -719,11 +690,7 @@
                       label: t('ui.groupPanel.unblock'),
                       mask: mask('circle-check'),
                       onSelect: () =>
-                        memberAction(
-                          () => onUnblock(m),
-                          () => (unblocked = [...unblocked, m.handle]),
-                          () => (unblocked = unblocked.filter((h) => h !== m.handle)),
-                        ),
+                        act(`unblocked:${m.handle}`, () => false, true, () => onUnblock(m)),
                     },
                   ]
                 : []),
@@ -734,18 +701,14 @@
                       mask: mask('user-minus'),
                       variant: 'danger' as const,
                       onSelect: () =>
-                        memberAction(
-                          () => onRemoveBlocked(m),
-                          () => (removedBlocked = [...removedBlocked, m.handle]),
-                          () => (removedBlocked = removedBlocked.filter((h) => h !== m.handle)),
-                        ),
+                        act(`removedBlocked:${m.handle}`, () => false, true, () => onRemoveBlocked(m)),
                     },
                   ]
                 : []),
             ];
       // a menu with nothing in it (no callbacks) isn't offered
       const hasMenu = canAct && items.some((it) => it.variant !== 'separator');
-      const selfTag = self ? ({ OWNER: 'OWNER', ADMIN: 'ADMIN', MODERATOR: 'MODERATOR' } as Record<string, string>)[selfRole ?? viewerRole.toUpperCase()] || '' : undefined;
+      const selfTag = self ? ({ OWNER: 'OWNER', ADMIN: 'ADMIN', MODERATOR: 'MODERATOR' } as Record<string, string>)[selfRoleNow ?? viewerRole.toUpperCase()] || '' : undefined;
       return {
         ...m,
         tag: self ? selfTag : m.tag,
@@ -782,7 +745,7 @@
 
   // ── main view bits ──
   const coverCss = $derived(
-    coverUrl ? `url(${coverUrl}) center/cover no-repeat` : coverKey ? `var(--cover-${COVER_KEYS.includes(coverKey) ? coverKey : 'plum'})` : cover || 'var(--cover-plum)',
+    coverUrl ? `url(${JSON.stringify(coverUrl)}) center/cover no-repeat` : coverKey ? `var(--cover-${COVER_KEYS.includes(coverKey) ? coverKey : 'plum'})` : cover || 'var(--cover-plum)',
   );
   // role split reads at a glance; the raw total lives in "View all"
   const roleSummary = $derived.by(() => {
@@ -896,7 +859,7 @@
   // ── pinned ──
   const pinnedDays = $derived.by(() => {
     const days: { date: string; items: (Pin & { messages: { text: string; code: string; time: string }[] })[] }[] = [];
-    for (const p of pinned.filter((x) => !unpinned.includes(x.messageId))) {
+    for (const p of pinned.filter((x) => !gone(`unpinned:${x.messageId}`))) {
       let d = days.find((x) => x.date === p.date);
       if (!d) days.push((d = { date: p.date, items: [] }));
       d.items.push({ ...p, messages: [{ text: p.text || '', code: p.code || '', time: p.time }] });
@@ -1027,7 +990,7 @@
       <div class="cover"><PanelCover cover={coverCss} actions={['close']} trailActions={quick ? [manageIcon, 'more'] : canInvite ? ['invite', 'share', 'more'] : ['more']} handlers={coverHandlersAll} /></div>
 
       <div class="identity" class:quick>
-        <div class="avatar" class:round={scope === 'channel'} style:background={avatar ? `url(${avatar}) center/cover no-repeat` : grad(color)}></div>
+        <div class="avatar" class:round={scope === 'channel'} style:background={avatar ? `url(${JSON.stringify(avatar)}) center/cover no-repeat` : grad(color)}></div>
         <div class="names">
           <div class="title-line">
             <span class="title">{scope === 'channel' ? '#' : ''}{title}</span>

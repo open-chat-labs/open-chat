@@ -21,7 +21,8 @@
 </script>
 
 <script lang="ts">
-  import { onMount, tick } from 'svelte';
+  import { onDestroy, onMount, tick } from 'svelte';
+  import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
   import Button from '../../lib/components/Button.svelte';
   import IconButton from '../../lib/components/IconButton.svelte';
   import { useT } from '../../lib/i18n';
@@ -127,8 +128,10 @@
   let query = $state('');
   let vibe = $state<string | null>(null);
   let focused = $state<number | null>(null);
-  let busy = $state(false);
-  let attachFailed = $state(false);
+  // attach in flight: the shared dialog contract (lib/behaviours/dialog.svelte.ts)
+  const flow = new DialogFlow();
+  onDestroy(() => flow.destroy());
+  const busy = $derived(flow.busy);
   let fontsReady = $state(0);
 
   const wide = $derived(vw >= 960);
@@ -175,25 +178,20 @@
   }
 
   async function generate() {
-    if (!hasText || busy || !onAttach) return;
-    busy = true;
-    attachFailed = false;
-    try {
-      await document.fonts.load('48px Anton');
-    } catch {
-      // font unavailable: render with the fallback face
-    }
+    if (!hasText || !onAttach) return;
     let src = '';
-    try {
+    // one attach at a time; a failure (render or host) keeps the editor with an error
+    const result = await flow.run(async () => {
+      try {
+        await document.fonts.load('48px Anton');
+      } catch {
+        // font unavailable: render with the fallback face
+      }
       const blob = await renderMeme(T, current);
       src = URL.createObjectURL(blob);
       await onAttach({ blob, src, templateId: T.id, template: T.name });
-    } catch {
-      if (src) URL.revokeObjectURL(src);
-      attachFailed = true;
-    } finally {
-      busy = false;
-    }
+    });
+    if (!result.ok && src) URL.revokeObjectURL(src);
   }
 
   // nothing leaves the dialog while an attach is pending: its result (or error) has to be seen here
@@ -305,7 +303,7 @@
           <div class="main-scroll">{@render editor(false)}</div>
           <div class="foot">
             <span class="foot-name">{T.name}</span>
-            {#if attachFailed}<span class="attach-error" role="alert">{t('ui.memeFighterDialog.attachFailed')}</span>{/if}
+            {#if flow.failed}<span class="attach-error" role="alert">{t('ui.memeFighterDialog.attachFailed')}</span>{/if}
             {#if hasText}<Button label="ui.memeFighterDialog.clearText" variant="ghost" onClick={() => (texts = { ...texts, [T.id]: [] })} />{/if}
             {#if onAttach}<Button label={busy ? 'ui.memeFighterDialog.adding' : 'ui.memeFighterDialog.addToMessage'} disabled={!hasText || busy} onClick={generate} />{/if}
           </div>
@@ -319,7 +317,7 @@
     {:else}
       <div class="narrow-scroll edit">{@render editor(true)}</div>
       <div class="foot narrow">
-        {#if attachFailed}<span class="attach-error" role="alert">{t('ui.memeFighterDialog.attachFailed')}</span>{/if}
+        {#if flow.failed}<span class="attach-error" role="alert">{t('ui.memeFighterDialog.attachFailed')}</span>{/if}
         {#if hasText}<Button label="ui.memeFighterDialog.clear" variant="ghost" onClick={() => (texts = { ...texts, [T.id]: [] })} />{/if}
         {#if onAttach}<div class="grow"><Button label={busy ? 'ui.memeFighterDialog.adding' : 'ui.memeFighterDialog.addToMessage'} disabled={!hasText || busy} onClick={generate} fullWidth={true} /></div>{/if}
       </div>

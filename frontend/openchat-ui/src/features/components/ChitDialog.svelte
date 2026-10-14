@@ -13,6 +13,7 @@
   import { onDestroy } from 'svelte';
   import DailyPuzzleCard from './DailyPuzzleCard.svelte';
   import { modal } from '../../lib/behaviours/modal';
+  import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
   import { getI18n, useT } from '../../lib/i18n';
 
   // milestone days that pay a bonus on top of the daily claim, with the position each one takes on the bar —
@@ -82,11 +83,10 @@
   const i18n = getI18n();
 
   let claimedHere = $state<boolean | null>(null);
-  let claiming = $state(false);
-  let claimFailed = $state(false);
-  let closing = $state(false);
-  let closeTimer: ReturnType<typeof setTimeout> | undefined;
-  onDestroy(() => clearTimeout(closeTimer));
+  // busy / leaving / the exit: the shared dialog contract (lib/behaviours/dialog.svelte.ts). A claim in flight
+  // can't be dismissed or navigated away from: its result must be seen.
+  const flow = new DialogFlow();
+  onDestroy(() => flow.destroy());
 
   const days = $derived(streak);
   const TIERS = $derived(milestones?.length ? [...milestones].sort((a, b) => a - b) : DEFAULT_TIERS);
@@ -129,42 +129,33 @@
   );
 
   async function claim() {
-    if (!onClaim || claiming || claimedHere) return;
-    claiming = true;
-    claimFailed = false;
-    try {
-      await onClaim({ amount: daily });
-      claimedHere = true;
-    } catch {
-      claimFailed = true;
-    } finally {
-      claiming = false;
-    }
+    if (!onClaim || claimedHere) return;
+    const result = await flow.run(() => onClaim({ amount: daily }));
+    if (result.ok) claimedHere = true;
   }
 
-  function close() {
-    if (closing) return;
-    closing = true;
-    closeTimer = setTimeout(() => onClose?.(), 170);
-  }
+  const close = () => flow.dismiss(onClose);
+  // other dialogs open from here: not while a claim is pending or the dialog is leaving
+  const act = (kind: ChitAction) => !flow.locked && onAction?.(kind);
+  const back = () => !flow.locked && onBack?.();
 </script>
 
-<div class="layer" class:closing data-screen-label="CHIT" role="dialog" aria-modal="true" use:modal={() => close()}>
+<div class="layer" class:closing={flow.closing} data-screen-label="CHIT" role="dialog" aria-modal="true" use:modal={flow.escape(onClose)}>
   <div class="veil" onclick={close} aria-hidden="true"></div>
 
   <div class="card">
     <div class="head">
       {#if onBack}
-        <span class="icon-button back" onclick={onBack} role="button" tabindex="0" aria-label={t(backLabel)} title={t(backLabel)}><span class="glyph back-glyph"></span></span>
+        <span class="icon-button back" onclick={back} role="button" tabindex="0" aria-label={t(backLabel)} title={t(backLabel)}><span class="glyph back-glyph"></span></span>
       {/if}
       <div class="heading">
         <span class="title">{t('ui.chitDialog.title')}</span>
         <span class="subtitle">{t(claimed ? 'ui.chitDialog.claimedToday' : 'ui.chitDialog.claimToday')}</span>
       </div>
-      <span class="icon-button" onclick={() => onAction?.('settings')} role="button" tabindex="0" aria-label={t('ui.chitDialog.settings')} title={t('ui.chitDialog.settings')}
+      <span class="icon-button" onclick={() => act('settings')} role="button" tabindex="0" aria-label={t('ui.chitDialog.settings')} title={t('ui.chitDialog.settings')}
         ><span class="glyph" style:mask="var(--icon-gear) center/contain no-repeat"></span></span
       >
-      <span class="icon-button" onclick={() => onAction?.('leaderboard')} role="button" tabindex="0" aria-label={boardHint} title={boardHint}
+      <span class="icon-button" onclick={() => act('leaderboard')} role="button" tabindex="0" aria-label={boardHint} title={boardHint}
         ><span class="glyph" style:mask="var(--icon-trophy) center/contain no-repeat"></span></span
       >
       <span class="icon-button" onclick={close} role="button" tabindex="0"><span class="glyph close-glyph"></span></span>
@@ -209,12 +200,12 @@
       <div class="claim-area">
         {#if !claimed}
           {#if onClaim}
-            <div class="claim" onclick={claim} role="button" tabindex="0" aria-disabled={claiming}>
+            <div class="claim" onclick={claim} role="button" tabindex="0" aria-disabled={flow.locked}>
               <span class="flame"></span>
-              <span class="claim-label">{t(claiming ? 'ui.chitDialog.claiming' : 'ui.chitDialog.claim', { amount: fmt(daily) })}</span>
+              <span class="claim-label">{t(flow.busy ? 'ui.chitDialog.claiming' : 'ui.chitDialog.claim', { amount: fmt(daily) })}</span>
             </div>
           {/if}
-          <span class="note" class:error={claimFailed} role={claimFailed ? 'alert' : undefined}>{t(claimFailed ? 'ui.chitDialog.claimFailed' : 'ui.chitDialog.claimNote')}</span>
+          <span class="note" class:error={flow.failed} role={flow.failed ? 'alert' : undefined}>{t(flow.failed ? 'ui.chitDialog.claimFailed' : 'ui.chitDialog.claimNote')}</span>
         {:else}
           <div class="claimed">
             <span class="check"></span>
@@ -225,8 +216,8 @@
       </div>
 
       <div class="extras">
-        <DailyPuzzleCard state={puzzleState} sub={puzzleSub} {countdown} remind={puzzleRemind} onAction={(k) => onAction?.(k)} />
-        <div class="row cover" class:insured={insuredLeft > 0} onclick={() => onAction?.('insurance')} role="button" tabindex="0">
+        <DailyPuzzleCard state={puzzleState} sub={puzzleSub} {countdown} remind={puzzleRemind} onAction={(k) => act(k)} />
+        <div class="row cover" class:insured={insuredLeft > 0} onclick={() => act('insurance')} role="button" tabindex="0">
           <span class="tile cover-tile"><span class="tile-glyph shield"></span></span>
           <div class="row-text">
             <span class="row-title">{insuredLeft > 0 ? t('ui.chitDialog.insuredFor', { count: insuredLeft }) : t('ui.chitDialog.noInsurance')}</span>
@@ -243,7 +234,7 @@
           {/if}
           <span class="chevron cover-chevron"></span>
         </div>
-        <div class="row link" onclick={() => onAction?.('earn')} role="button" tabindex="0">
+        <div class="row link" onclick={() => act('earn')} role="button" tabindex="0">
           <span class="tile"><span class="tile-glyph spark"></span></span>
           <div class="row-text">
             <span class="row-title">{t('ui.chitDialog.waysToEarn')}</span>
@@ -291,6 +282,10 @@
       var(--shadow-modal, 0 30px 70px rgba(0, 0, 0, 0.45));
     overflow: hidden;
     animation: oc-dlg-in var(--duration-slow, 280ms) var(--ease-out) both;
+  }
+
+  .layer.closing {
+    pointer-events: none;
   }
 
   .closing .veil {

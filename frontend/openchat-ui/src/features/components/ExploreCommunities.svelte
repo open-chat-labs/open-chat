@@ -139,7 +139,13 @@
   // every change asks the host for the first page again; typing waits for a pause
   let queryTimer: ReturnType<typeof setTimeout> | undefined;
   let firstQuery = true;
-  const ask = (offset: number) => onQuery?.({ text: query.trim(), languages: [...langs], sort: SORT_KEYS[sort], offset, limit: PAGE });
+  // what the host was last asked for: until it has answered for the current text the search shows "Searching…",
+  // never the previous text's results
+  let lastAsk = $state<{ text: string; offset: number } | null>(null);
+  const ask = (offset: number) => {
+    lastAsk = { text: query.trim(), offset };
+    onQuery?.({ text: query.trim(), languages: [...langs], sort: SORT_KEYS[sort], offset, limit: PAGE });
+  };
   $effect(() => {
     void query;
     void langs;
@@ -157,6 +163,8 @@
   // search ranks name matches above description matches, then by size
   const score = (c: ExploreCommunity) => (q && c.name.toLowerCase().includes(q) ? 2 : 0) + (q && c.name.toLowerCase().startsWith(q) ? 1 : 0);
   const found = $derived(q ? (remote ? list : list.slice().sort((a, b) => score(b) - score(a) || b.members - a.members)) : []);
+  // onQuery: the shown page belongs to an older text (debounce not fired yet, or the first page still loading)
+  const searching = $derived(remote && !!q && (lastAsk?.text !== query.trim() || (loading && lastAsk?.offset === 0)));
 
   const isJoined = (c: ExploreCommunity) => joinedKeys.includes(c.key);
   const isPrivate = (c: ExploreCommunity) => c.visibility === 'Private';
@@ -294,13 +302,18 @@
         </div>
       </div>
       <div class="results-row">
-        <span class="result-count">{t('ui.exploreCommunities.results', { count: remote ? totalCount : found.length })}</span>
+        <span class="result-count">{searching ? t('ui.exploreCommunities.searching') : t('ui.exploreCommunities.results', { count: remote ? totalCount : found.length })}</span>
         {@render langPicker(false)}
       </div>
     </div>
 
     <div class="results-wrap">
       <div class="results">
+        {#if searching}
+          <div class="empty" role="status" aria-busy="true">
+            <span class="empty-title">{t('ui.exploreCommunities.searching')}</span>
+          </div>
+        {:else}
         {#if found.length > 0}
           {@render bigCard(found[0], 'ui.exploreCommunities.bestMatch')}
         {/if}
@@ -318,6 +331,15 @@
             <span class="empty-body">{t('ui.exploreCommunities.emptyBody')}</span>
             <span class="create" onclick={onCreate} role="button" tabindex="0">{@render icon('plus', 15, 'var(--on-accent,#2E0512)')}{t('ui.exploreCommunities.createCommunity')}</span>
           </div>
+        {/if}
+        {#if remote && hasMore && found.length > 0}
+          <div class="more">
+            <span class="load-more" onclick={loadMore} role="button" tabindex="0" aria-busy={loading}
+              >{loading ? t('ui.exploreCommunities.loading') : t('ui.exploreCommunities.loadMore', { count: Math.min(PAGE, totalCount - found.length) })}{@render icon('chevron-down', 13, 'var(--ink,#ECECF1)')}</span
+            >
+            <span class="shown">{t('ui.exploreCommunities.showing', { shown: found.length, total: totalCount })}</span>
+          </div>
+        {/if}
         {/if}
       </div>
     </div>

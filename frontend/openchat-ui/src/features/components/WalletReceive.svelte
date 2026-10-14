@@ -21,6 +21,7 @@
   import { useT } from '../../lib/i18n';
   import CopyButton from '../../lib/components/CopyButton.svelte';
   import { onDestroy, type Snippet } from 'svelte';
+  import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
   import type { WalletToken } from '../../lib/types';
   import ChatPicker from '../../lib/components/ChatPicker.svelte';
   import ListSectionLabel from '../../lib/components/ListSectionLabel.svelte';
@@ -95,7 +96,8 @@
   );
   const address = $derived((id && addresses[id]) || '');
 
-  let shareBusy = $state(false);
+  // the share's host call: one at a time, and the picker stays until it settles
+  const shareFlow = new DialogFlow();
   const canShare = $derived(!!onShare && chats.length > 0);
 
   function notify(message: string, tone: 'success' | 'danger') {
@@ -109,19 +111,16 @@
 
   // the picker stays open until the host has posted it
   async function share(v: { chatId: string; chat: string; message: string }) {
-    if (!tok || !net || !address || !id || !onShare || shareBusy) return;
+    if (!tok || !net || !address || !id || !onShare || shareFlow.busy) return;
     const target = chats.find((c) => c.id === v.chatId);
     if (!target) return;
-    shareBusy = true;
-    try {
-      await onShare({ chatId: target.id, message: v.message, symbol: tok.symbol, network: id, address });
+    const post = onShare;
+    const symbol = tok.symbol, network = id;
+    const result = await shareFlow.run(() => post({ chatId: target.id, message: v.message, symbol, network, address }));
+    if (result.ok) {
       sharing = false;
       notify(t('ui.walletReceive.shared', { chat: target.name }), 'success');
-    } catch {
-      notify(t('ui.walletReceive.shareFailed', { chat: target.name }), 'danger');
-    } finally {
-      shareBusy = false;
-    }
+    } else if (shareFlow.failed) notify(t('ui.walletReceive.shareFailed', { chat: target.name }), 'danger');
   }
 </script>
 
@@ -221,10 +220,10 @@
         previewLabel={t('ui.walletReceive.sharingAddress')}
         item={{ title: t('ui.walletReceive.shareItemTitle', { symbol: tok.symbol, network: t(net.label) }), sub: `${address.slice(0, 10)}…${address.slice(-8)}`, mark: tok.mark, grad: tok.grad }}
         chats={chats.map((c) => ({ id: c.id, name: c.name, kind: c.kind, grad: c.grad ?? 'var(--overlay-2)', radius: c.radius }))}
-        sendLabel={shareBusy ? 'ui.walletReceive.sharingNow' : 'ui.common.send'}
+        sendLabel={shareFlow.busy ? 'ui.walletReceive.sharingNow' : 'ui.common.send'}
         onSend={share}
         onClose={() => {
-          if (!shareBusy) sharing = false;
+          if (!shareFlow.busy) sharing = false;
         }}
       />
     {/if}

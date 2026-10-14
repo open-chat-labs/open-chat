@@ -20,7 +20,7 @@
       typeof x === 'string'
         ? { bg: x, initial: '' }
         : {
-            bg: x.src ? `center/cover url(${x.src})` : x.grad || x.color || 'var(--surface-3,#24242e)',
+            bg: x.src ? `center/cover url(${JSON.stringify(x.src)})` : x.grad || x.color || 'var(--surface-3,#24242e)',
             initial: initials ? x.initial || '' : '',
           },
     ),

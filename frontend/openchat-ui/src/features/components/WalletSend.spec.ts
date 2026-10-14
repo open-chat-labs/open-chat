@@ -1,0 +1,130 @@
+import { flushSync, mount, unmount } from 'svelte';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import type { WalletToken } from '../../lib/types';
+import WalletSend, { type WalletSendRequest } from './WalletSend.svelte';
+
+const deferred = () => {
+  let resolve!: () => void, reject!: (e: unknown) => void;
+  const promise = new Promise<void>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+};
+const settle = async () => {
+  await vi.advanceTimersByTimeAsync(0);
+  flushSync();
+};
+const esc = () => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+const icp: WalletToken = { symbol: 'ICP', name: 'Internet Computer', mark: '∞', grad: 'red', held: 10, price: 5, dp: 4, fee: 0.0001, nets: ['icp'] };
+const ADDRESS = '5sj6i-pqaaa-aaaaf-a3cmq-cai';
+
+// jsdom has no ResizeObserver (bind:clientWidth); the wide layout is used
+globalThis.ResizeObserver ??= class {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+} as unknown as typeof ResizeObserver;
+
+describe('WalletSend PIN step', () => {
+  let target: HTMLElement;
+  let app: object | undefined;
+  beforeEach(() => {
+    vi.useFakeTimers();
+    target = document.body.appendChild(document.createElement('div'));
+  });
+  afterEach(() => {
+    if (app) unmount(app);
+    app = undefined;
+    target.remove();
+    document.body.innerHTML = '';
+    vi.useRealTimers();
+  });
+
+  /** Fills the form (address prefilled, 1 ICP) and opens the PIN dialog. */
+  function openPinStep(onSent: (r: WalletSendRequest) => Promise<unknown> | void) {
+    const sent = vi.fn(onSent);
+    const onClose = vi.fn();
+    app = mount(WalletSend, { target, props: { tokens: [icp], token: 'ICP', address: ADDRESS, onSent: sent, onClose } });
+    flushSync();
+    const amount = target.querySelector<HTMLInputElement>('.amount-input')!;
+    amount.value = '1';
+    amount.dispatchEvent(new Event('input', { bubbles: true }));
+    flushSync();
+    (target.querySelector('.summary-cell .cta') as HTMLElement).click();
+    flushSync();
+    return { sent, onClose };
+  }
+  const pinDialog = () => document.querySelector('form.pin');
+  function typePin(pin: string) {
+    const input = document.querySelector<HTMLInputElement>('.pin-input')!;
+    input.value = pin;
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    flushSync();
+  }
+  const submit = () => pinDialog()!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+  const headerBack = () => (target.querySelector('.page-header .back [role=button]') as HTMLElement).click();
+
+  test('opens the PIN dialog for a valid send', () => {
+    openPinStep(() => undefined);
+    expect(pinDialog()).not.toBeNull();
+  });
+
+  test('a send can only run once while it is pending', async () => {
+    const d = deferred();
+    const { sent } = openPinStep(() => d.promise);
+    typePin('123456');
+    submit();
+    submit();
+    await settle();
+    expect(sent).toHaveBeenCalledOnce();
+    expect(sent.mock.calls[0][0]).toMatchObject({ symbol: 'ICP', amount: 1, to: ADDRESS, network: 'icp', pin: '123456' });
+  });
+
+  test('Esc and Back can neither close nor reopen the PIN dialog while sending', async () => {
+    const d = deferred();
+    const { sent, onClose } = openPinStep(() => d.promise);
+    typePin('123456');
+    submit();
+    await settle();
+    esc();
+    headerBack();
+    await settle();
+    expect(pinDialog()).not.toBeNull();
+    expect(onClose).not.toHaveBeenCalled();
+    submit();
+    await settle();
+    expect(sent).toHaveBeenCalledOnce();
+    d.resolve();
+    await settle();
+    expect(pinDialog()).toBeNull();
+  });
+
+  test('a wrong PIN keeps the dialog open with an error, clears the PIN and allows a retry', async () => {
+    let attempt = 0;
+    const { sent } = openPinStep(() => (++attempt === 1 ? Promise.reject(new Error('wrong PIN')) : Promise.resolve()));
+    typePin('111111');
+    submit();
+    await settle();
+    expect(pinDialog()).not.toBeNull();
+    expect(document.querySelector('.pin-error')).not.toBeNull();
+    expect(document.querySelector<HTMLInputElement>('.pin-input')!.value).toBe('');
+    typePin('123456');
+    expect(document.querySelector('.pin-error')).toBeNull();
+    submit();
+    await settle();
+    expect(sent).toHaveBeenCalledTimes(2);
+    expect(pinDialog()).toBeNull();
+  });
+
+  test('after a failure the dialog can be closed again', async () => {
+    const { onClose } = openPinStep(() => Promise.reject(new Error('no')));
+    typePin('123456');
+    submit();
+    await settle();
+    headerBack();
+    await settle();
+    expect(pinDialog()).toBeNull();
+    expect(onClose).not.toHaveBeenCalled(); // Back from the PIN step returns to the form, not out of Send
+  });
+});

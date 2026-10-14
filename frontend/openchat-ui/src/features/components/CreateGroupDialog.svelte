@@ -38,6 +38,7 @@
   import Toggle from '../../lib/components/Toggle.svelte';
   import UpgradeBanner from './UpgradeBanner.svelte';
   import { modal } from '../../lib/behaviours/modal';
+  import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
   import { useT } from '../../lib/i18n';
   import Translate from '../../lib/components/Translate.svelte';
 
@@ -220,7 +221,6 @@
 
   // --- draft
   let tab = $state(0);
-  let closing = $state(false);
   let nameTouched = $state(false);
   let advancedOpenState = $state(false);
   let name = $state('');
@@ -232,8 +232,9 @@
   let coverFile = $state<File | null>(null);
   let avatarUrl = $state<string | null>(null);
   let coverUrl = $state<string | null>(null);
-  let creating = $state(false);
-  let createError = $state(false);
+  // creating / leaving / the exit: the shared dialog contract (lib/behaviours/dialog.svelte.ts)
+  const flow = new DialogFlow();
+  const dismiss = () => flow.dismiss(onCancel);
   const preview = (old: string | null, file: File | null) => {
     if (old) URL.revokeObjectURL(old);
     return file ? URL.createObjectURL(file) : null;
@@ -281,10 +282,9 @@
   let avatarInput = $state<HTMLInputElement>();
   let coverInput = $state<HTMLInputElement>();
   let permPanel = $state<HTMLDivElement>();
-  let closeTimer: ReturnType<typeof setTimeout> | undefined;
 
   onDestroy(() => {
-    clearTimeout(closeTimer);
+    flow.destroy();
     clearTimeout(nameTimer);
     clearTimeout(searchTimer);
     if (avatarUrl) URL.revokeObjectURL(avatarUrl);
@@ -319,13 +319,6 @@
   function setPerm(scope: Scope, key: string, role: PermValue) {
     perms = { ...perms, [scope]: { ...perms[scope], [key]: role } };
     permMenu = null;
-  }
-
-  function close(then?: () => void) {
-    // a pending create can't be dismissed; its result decides what happens next
-    if (closing || creating) return;
-    closing = true;
-    closeTimer = setTimeout(() => then?.(), 170);
   }
 
   // --- derived state
@@ -585,7 +578,8 @@
   const canCreate = $derived(nameOk && (!isEmb || urlOk) && (nameResult === null || nameResult === 'ok'));
 
   async function create() {
-    if (creating || closing) return;
+    // a pending create can't be repeated or dismissed; its result decides what happens next
+    if (flow.locked) return;
     // pressing Create without a name sends the user back to the field that needs it
     if (!nameOk || nameTaken || nameResult === 'pending' || (isEmb && !urlOk)) {
       nameTouched = true;
@@ -623,19 +617,9 @@
         rules: rulesOn ? { enabled: true, text: rulesText.trim() } : { enabled: false, text: '' },
         permissions: { general: { ...perms.general }, messages: { ...perms.messages }, threads: threadsOverride ? { ...perms.threads } : null },
     };
-    // the dialog (and the whole form) stays until the host confirms
-    creating = true;
-    createError = false;
-    try {
-      await onCreate?.(result);
-    } catch {
-      createError = true;
-      return;
-    } finally {
-      creating = false;
-    }
-    // success: animate out, then hand back to the host (see the header)
-    close(onCancel);
+    // the dialog (and the whole form) stays until the host confirms; success animates out, then hands back
+    const outcome = await flow.run(() => onCreate?.(result));
+    if (outcome.ok) flow.leave(onCancel);
   }
 
   const nameHint = $derived(
@@ -660,8 +644,8 @@
   <span class="section-label">{text}</span>
 {/snippet}
 
-<div class="root" class:closing role="dialog" aria-modal="true" use:modal={closing ? undefined : () => close(onCancel)}>
-  <div class="veil" onclick={() => close(onCancel)} aria-hidden="true"></div>
+<div class="root" class:closing={flow.closing} role="dialog" aria-modal="true" use:modal={flow.escape(onCancel)}>
+  <div class="veil" onclick={dismiss} aria-hidden="true"></div>
   <div class="card">
     <div class="head">
       <div class="head-row">
@@ -670,7 +654,7 @@
           <span class="head-title">{t(isComm ? CG + 'title.community' : isEmb ? CG + 'title.embedded' : isChan ? CG + 'title.channel' : CG + 'title.group')}</span>
           {#if isChan}<span class="head-sub">{t(CG + 'inCommunity', { community })}</span>{/if}
         </div>
-        <span class="icon-button" onclick={() => close(onCancel)} role="button" tabindex="0" aria-label={t('ui.common.close')} title={t('ui.common.close')}><span class="icon-15" style:mask={mask('close')}></span></span>
+        <span class="icon-button" onclick={dismiss} role="button" tabindex="0" aria-label={t('ui.common.close')} title={t('ui.common.close')}><span class="icon-15" style:mask={mask('close')}></span></span>
       </div>
       <div class="tabs-row">
         <div class="cell grow">
@@ -1306,16 +1290,16 @@
     </div>
 
     <div class="footer">
-      <span class="cancel" onclick={() => close(onCancel)} role="button" tabindex="0" aria-disabled={creating}>{t('ui.common.cancel')}</span>
+      <span class="cancel" onclick={dismiss} role="button" tabindex="0" aria-disabled={flow.locked}>{t('ui.common.cancel')}</span>
       <span class="grow"></span>
-      {#if createError}
+      {#if flow.failed}
         <span class="note error" role="alert">{t(CG + 'createFailed')}</span>
       {:else if showFooterNote}
         <span class="note" class:error={nameBad || rulesBad || urlBad}>{footerNote}</span>
       {/if}
-      <div class="create" class:ready={canCreate && !creating} onclick={create} role="button" tabindex="0" aria-disabled={creating}>
+      <div class="create" class:ready={canCreate && !flow.busy} onclick={create} role="button" tabindex="0" aria-disabled={flow.locked}>
         <span class="create-icon" style:mask={mask(kindIcon)}></span>
-        <span>{t(creating ? CG + 'creating' : isComm ? CG + 'create.community' : isEmb ? CG + 'create.embedded' : isChan ? CG + 'create.channel' : CG + 'create.group')}</span>
+        <span>{t(flow.busy ? CG + 'creating' : isComm ? CG + 'create.community' : isEmb ? CG + 'create.embedded' : isChan ? CG + 'create.channel' : CG + 'create.group')}</span>
       </div>
     </div>
   </div>

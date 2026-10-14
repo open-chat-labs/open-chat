@@ -209,6 +209,8 @@
 </script>
 
 <script lang="ts">
+  import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
+  import { Optimistic } from '../../lib/behaviours/optimistic.svelte';
   import { modal } from '../../lib/behaviours/modal';
   import { onDestroy, onMount, untrack } from 'svelte';
   import Badge from '../../lib/components/Badge.svelte';
@@ -418,7 +420,7 @@
 
   // ---- shell ----
   let section = $derived<ProfileSection>(initialSection);
-  let closing = $state(false);
+  // the exit (lib/behaviours/dialog.svelte.ts): once the dialog leaves it never comes back and drops off the modal stack
   /** Field being edited: a profile field key or "comm:<community>". */
   let editing = $state<string | null>(null);
   let draft = $state('');
@@ -439,13 +441,12 @@
     timers.delete(t);
   };
 
+  const flow = new DialogFlow();
+  onDestroy(() => flow.destroy());
+  // nothing dismisses the dialog while a field save, the delete or the log-out is in flight: its result must be seen
   function close(fn?: () => void) {
-    if (closing) return;
-    closing = true;
-    later(() => {
-      closing = false;
-      fn?.();
-    }, 170);
+    if (fieldBusy || delBusy || loBusy) return;
+    flow.leave(fn);
   }
 
   function go(next: ProfileSection) {
@@ -647,35 +648,27 @@
   }
 
   // ---- communities ----
-  let commOverrides = $state<Record<string, string>>({});
   let commQuery = $state('');
-  let commError = $state<string | null>(null);
-  const commNames = $derived({ ...communityNames, ...commOverrides });
+  // optimistic per community (lib/behaviours/optimistic.svelte.ts): latest call wins, a rejected latest call falls back
+  // to the name the host last accepted, new host names are followed once nothing is in flight
+  const commStates = $state<Record<string, Optimistic<string | undefined>>>({});
+  let lastComm = $state<ProfileCommunity | null>(null);
+  $effect.pre(() => {
+    void communityNames;
+    untrack(() => Object.values(commStates).forEach((o) => o.sync()));
+  });
+  const commNames = $derived(Object.fromEntries([...new Set([...Object.keys(communityNames), ...Object.keys(commStates)])].map((id) => [id, commStates[id] ? commStates[id].current : communityNames[id]])) as Record<string, string | undefined>);
+  const commError = $derived(lastComm && commStates[lastComm.id]?.failed ? t('ui.profileDialog.communities.saveFailed', { community: lastComm.name }) : null);
   const shownCommunities = $derived.by(() => {
     const q = commQuery.trim().toLowerCase();
     return q ? communities.filter((c) => c.name.toLowerCase().includes(q)) : communities;
   });
 
-  // optimistic; restores the previous name with an error if the host rejects — only when the rejected call is still
-  // the latest for that community (a newer name may already have replaced it)
-  const commLatest: Record<string, number> = {};
-  async function commitCommunity(c: ProfileCommunity, value: string) {
-    const seq = (commLatest[c.id] = (commLatest[c.id] ?? 0) + 1);
-    const had = Object.prototype.hasOwnProperty.call(commOverrides, c.id);
-    const before = commOverrides[c.id];
-    commOverrides = { ...commOverrides, [c.id]: value };
-    commError = null;
+  function commitCommunity(c: ProfileCommunity, value: string) {
+    lastComm = c;
     stopEdit();
-    try {
-      await onCommunityName?.(c.id, value || null);
-    } catch {
-      if (commLatest[c.id] !== seq) return;
-      const next = { ...commOverrides };
-      if (had) next[c.id] = before;
-      else delete next[c.id];
-      commOverrides = next;
-      commError = t('ui.profileDialog.communities.saveFailed', { community: c.name });
-    }
+    const state = (commStates[c.id] ??= new Optimistic(() => communityNames[c.id]));
+    state.set(value, () => onCommunityName?.(c.id, value || null));
   }
 
   // ---- sign-in providers ----
@@ -916,7 +909,8 @@
       return;
     }
     stayNow();
-    close(onClose);
+    delBusy = false;
+    flow.leave(onClose);
   }
 
   function deleteSecondary() {
@@ -981,7 +975,7 @@
     }
     loOpen = false;
     loBusy = false;
-    close(onClose);
+    flow.leave(onClose);
   }
 
   // ---- invite ----
@@ -1076,7 +1070,7 @@
   </div>
 {/snippet}
 
-<div class="layer" class:closing role="dialog" aria-modal="true" use:modal={escape}>
+<div class="layer" class:closing={flow.closing} role="dialog" aria-modal="true" use:modal={flow.closing ? undefined : escape}>
   <div class="veil" onclick={() => close(onClose)} aria-hidden="true"></div>
   <div class="card">
     <div class="rail">
@@ -1996,6 +1990,10 @@
     box-shadow: var(--shadow-modal, 0 30px 70px rgba(0, 0, 0, 0.45));
     overflow: hidden;
     animation: oc-dlg-in var(--duration-slow, 280ms) var(--ease-out) both;
+  }
+
+  .layer.closing {
+    pointer-events: none;
   }
 
   .closing .veil {

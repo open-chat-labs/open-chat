@@ -1,7 +1,8 @@
 <!-- Poll builder dialog (composer + → Poll). Question first; answers keep one empty row at the end (up to 10, drag/remove);
      duration pills; settings in a summary row that expands in place; live preview beside the form at ≥960px.
      Publish → onPublish(poll) (host closes and shows "Poll sent · Undo"); a promise is awaited (no second publish while it
-     runs) and a rejection keeps the poll with an error. Closing with content asks "Discard this poll?".
+     runs, no closing or discarding either) and a rejection keeps the poll with an error. Once it resolves the dialog
+     stops taking input until the host closes it. Closing with content asks "Discard this poll?".
      Ctrl/⌘+Enter publishes; Enter in an answer moves to the next one. -->
 <script lang="ts" module>
   export interface PollDraft {
@@ -21,7 +22,8 @@
 </script>
 
 <script lang="ts">
-  import { onMount, untrack } from 'svelte';
+  import { onDestroy, onMount, untrack } from 'svelte';
+  import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
   import Button from '../../lib/components/Button.svelte';
   import IconButton from '../../lib/components/IconButton.svelte';
   import PollMessage from '../../lib/components/PollMessage.svelte';
@@ -65,8 +67,9 @@
   let hideResults = $state(false);
   let settingsOpen = $state(false);
   let confirming = $state(false);
-  let publishing = $state(false);
-  let failed = $state(false);
+  // publish / after-publish lock: the shared dialog contract (lib/behaviours/dialog.svelte.ts)
+  const flow = new DialogFlow();
+  onDestroy(() => flow.destroy());
   let vw = $state(typeof window === 'undefined' ? 1200 : window.innerWidth);
 
   let box: HTMLDivElement;
@@ -81,7 +84,7 @@
     void multiple;
     void locked;
     void hideResults;
-    untrack(() => (failed = false));
+    untrack(() => (flow.failed = false));
   });
 
   const wide = $derived(vw >= 960 && preview);
@@ -129,12 +132,10 @@
   }
 
   async function publish() {
-    if (!ok || publishing) return;
+    if (!ok) return;
     const ms = DURATIONS[duration][1];
-    publishing = true;
-    failed = false;
-    try {
-      await onPublish?.({
+    const result = await flow.run(() =>
+      onPublish?.({
         question: question.trim(),
         options: filled.map((label) => ({ label, votes: 0 })),
         multiple,
@@ -145,18 +146,16 @@
         endsIn: t(DURATIONS[duration][0]),
         // stamped now, not when the duration was picked
         endsAt: Date.now() + ms,
-      });
-    } catch {
-      failed = true;
-    } finally {
-      publishing = false;
-    }
+      }),
+    );
+    // published: no second publish while the host closes it
+    if (result.ok) flow.leave();
   }
 
   // closing with content asks first; an empty poll just closes. Nothing closes while a publish is pending: the poll may
   // still be posted, and its result (or error) has to be seen here
   function requestClose() {
-    if (publishing) return;
+    if (flow.locked) return;
     if (question.trim() || filled.length) confirming = true;
     else onClose?.();
   }
@@ -176,7 +175,7 @@
     }
     if (e.key === 'Escape') {
       e.stopPropagation();
-      if (publishing) return;
+      if (flow.locked) return;
       if (confirming) confirming = false;
       else requestClose();
     }
@@ -199,7 +198,7 @@
   });
 </script>
 
-<div class="layer" style:z-index={z}>
+<div class="layer" class:closing={flow.closing} style:z-index={z}>
   <div class="scrim" onclick={requestClose} aria-hidden="true"></div>
   <div class="dialog" class:wide bind:this={box} data-oc-managed="" tabindex="-1" role="dialog" aria-modal="true" aria-label={t('ui.pollBuilderDialog.title')} onkeydown={onKey}>
     <div class="header">
@@ -276,12 +275,12 @@
       {/if}
     </div>
     <div class="footer">
-      {#if failed}
+      {#if flow.failed}
         <span class="reason failed" role="alert">{t('ui.pollBuilderDialog.publishFailed')}</span>
       {:else}
         <span class="reason" class:ok>{reason}</span>
       {/if}
-      <span class="publish" class:ok={ok && !publishing} onclick={publish} role="button" tabindex={ok ? 0 : -1} aria-disabled={!ok || publishing}><span class="publish-icon"></span>{t('ui.pollBuilderDialog.publish')}</span>
+      <span class="publish" class:ok={ok && !flow.locked} onclick={publish} role="button" tabindex={ok ? 0 : -1} aria-disabled={!ok || flow.locked}><span class="publish-icon"></span>{t('ui.pollBuilderDialog.publish')}</span>
     </div>
     {#if confirming}
       <div class="confirm-layer">
@@ -290,7 +289,7 @@
           <span class="confirm-text">{t('ui.pollBuilderDialog.discardText')}</span>
           <div class="confirm-actions">
             <Button label="ui.pollBuilderDialog.keepEditing" variant="ghost" onClick={() => (confirming = false)} />
-            <Button label="ui.pollBuilderDialog.discard" variant="danger" onClick={() => !publishing && onClose?.()} />
+            <Button label="ui.pollBuilderDialog.discard" variant="danger" onClick={() => !flow.locked && onClose?.()} />
           </div>
         </div>
       </div>
@@ -299,6 +298,10 @@
 </div>
 
 <style>
+  .layer.closing {
+    pointer-events: none;
+  }
+
   .layer {
     position: fixed;
     inset: 0;

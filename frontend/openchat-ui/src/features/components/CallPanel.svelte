@@ -25,6 +25,7 @@
 </script>
 
 <script lang="ts">
+  import { Optimistic } from '../../lib/behaviours/optimistic.svelte';
   import { onMount, tick, untrack } from 'svelte';
   import RoundIconButton from '../../lib/components/RoundIconButton.svelte';
   import VideoTile from './VideoTile.svelte';
@@ -104,9 +105,6 @@
 
   let root: HTMLDivElement;
   let pip = $state<HTMLDivElement>();
-  // optimistic overrides while the host applies a camera / share change; cleared when the prop moves or on rejection
-  let camOverride = $state<boolean | null>(null);
-  let shareOverride = $state<boolean | null>(null);
   let idle = $state(false);
   let corner = $state('br');
   let now = $state(Date.now());
@@ -114,29 +112,31 @@
   let idleTimer: ReturnType<typeof setTimeout> | undefined;
   let drag: { x: number; y: number; moved: boolean } | null = null;
 
-  const cam = $derived(camOverride ?? camera ?? media === 'video');
-  const sharing = $derived(shareOverride ?? sharingProp);
-  $effect(() => {
+  // camera / share flip at once (lib/behaviours/optimistic.svelte.ts): the latest call wins, a rejected latest call
+  // falls back to the host's last accepted value with an error, host changes are followed once nothing is in flight
+  const camState = new Optimistic(() => camera ?? media === 'video');
+  const shareState = new Optimistic(() => sharingProp);
+  $effect.pre(() => {
     void camera;
-    camOverride = null;
+    void media;
+    untrack(() => camState.sync());
   });
-  $effect(() => {
+  $effect.pre(() => {
     void sharingProp;
-    shareOverride = null;
+    untrack(() => shareState.sync());
   });
+  const cam = $derived(camState.current);
+  const sharing = $derived(shareState.current);
+  let lastFlip = $state<'cam' | 'share'>('cam');
+  const flipFailed = $derived(lastFlip === 'cam' ? camState.failed : shareState.failed);
 
-  async function flip(kind: 'cam' | 'share') {
-    const next = kind === 'cam' ? !cam : !sharing;
+  function flip(kind: 'cam' | 'share') {
+    const state = kind === 'cam' ? camState : shareState;
     const call = kind === 'cam' ? onToggleCamera : onToggleShare;
     if (!call) return;
-    if (kind === 'cam') camOverride = next;
-    else shareOverride = next;
-    try {
-      await call(next);
-    } catch {
-      if (kind === 'cam') camOverride = null;
-      else shareOverride = null;
-    }
+    lastFlip = kind;
+    const next = !state.current;
+    state.set(next, () => call(next));
   }
 
   const others = $derived(people.map((o, i) => ({ bg: BGS[i % BGS.length], ...o })));
@@ -345,6 +345,7 @@
   </div>
 
   <div class="bottom chrome">
+    {#if flipFailed}<span class="flip-error" role="alert">{t('ui.callPanel.toggleFailed')}</span>{/if}
     <div class="pill" role="toolbar" aria-label={t('ui.callPanel.controls')}>
       {#each controls as b}<RoundIconButton icon={b.icon} label={b.label} variant={b.variant} pressed={b.pressed} size={full ? 'lg' : 'md'} onPress={b.press} />{/each}
     </div>
@@ -641,11 +642,21 @@
     inset-inline: 0;
     bottom: 12px;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
   }
 
   .full .bottom {
     bottom: 20px;
+  }
+
+  .flip-error {
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(14, 14, 18, 0.8);
+    font: 500 13px/1.3 var(--font-sans);
+    color: var(--status-danger, #f5493d);
   }
 
   .pill {

@@ -17,6 +17,7 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
   import { modal } from '../../lib/behaviours/modal';
+  import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
   import { segments, useT } from '../../lib/i18n';
   import Translate from '../../lib/components/Translate.svelte';
 
@@ -40,50 +41,32 @@
 
   let target = $state<{ community: Community; gradient: string } | null>(null);
 
-  let closing = $state(false);
-  let importing = $state(false);
-  let failed = $state(false);
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  onDestroy(() => clearTimeout(timer));
-
-  // play the exit animation, then hand control back
-  function close(then?: () => void) {
-    if (closing || importing) return;
-    closing = true;
-    timer = setTimeout(() => then?.(), 170);
-  }
+  // busy / leaving / the exit: the shared dialog contract (lib/behaviours/dialog.svelte.ts)
+  const flow = new DialogFlow();
+  onDestroy(() => flow.destroy());
+  const dismiss = () => flow.dismiss(onCancel);
 
   async function confirm() {
-    // nothing new once closing (cancelled, or the exit after a success)
-    if (!target || importing || closing) return;
-    importing = true;
-    failed = false;
-    try {
-      await onConfirm?.(target.community);
-    } catch {
-      failed = true;
-      return;
-    } finally {
-      importing = false;
-    }
-    // success: animate out, then hand back to the host (see the header)
-    close(onCancel);
+    if (!target) return;
+    const community = target.community;
+    const result = await flow.run(() => onConfirm?.(community));
+    if (result.ok) flow.leave(onCancel);
   }
 
-  const avatarOf = (c: Community, i: number) => (c.avatarUrl ? `url(${c.avatarUrl}) center/cover no-repeat` : GRADIENTS[i % GRADIENTS.length]);
+  const avatarOf = (c: Community, i: number) => (c.avatarUrl ? `url(${JSON.stringify(c.avatarUrl)}) center/cover no-repeat` : GRADIENTS[i % GRADIENTS.length]);
 </script>
 
-<div class="layer" class:closing role="dialog" aria-modal="true" use:modal={closing ? undefined : () => close(onCancel)}>
-  <div class="veil" onclick={() => close(onCancel)} aria-hidden="true"></div>
+<div class="layer" class:closing={flow.closing} role="dialog" aria-modal="true" use:modal={flow.escape(onCancel)}>
+  <div class="veil" onclick={dismiss} aria-hidden="true"></div>
   <div class="card">
     <div class="head">
       {#if target}
         <span
           class="icon-button"
           onclick={() => {
-            if (importing) return;
+            if (flow.locked) return;
             target = null;
-            failed = false;
+            flow.failed = false;
           }}
           role="button"
           tabindex="0"
@@ -95,7 +78,7 @@
         <span class="title">{t('ui.importToCommunityDialog.title')}</span>
         <span class="subtitle">{groupName}</span>
       </div>
-      <span class="icon-button" onclick={() => close(onCancel)} role="button" tabindex="0" aria-label={t('ui.common.close')}><span class="close-icon"></span></span>
+      <span class="icon-button" onclick={dismiss} role="button" tabindex="0" aria-label={t('ui.common.close')}><span class="close-icon"></span></span>
     </div>
 
     <div class="body">
@@ -112,7 +95,7 @@
             <div class="list">
               {#each communities as community, i}
                 {@const gradient = avatarOf(community, i)}
-                <div class="community" onclick={() => (target = { community, gradient })} role="button" tabindex="0">
+                <div class="community" onclick={() => !flow.locked && (target = { community, gradient })} role="button" tabindex="0">
                   <span class="avatar" style:background={gradient}></span>
                   <div class="names">
                     <span class="name">{community.name}</span>
@@ -152,15 +135,15 @@
     </div>
 
     <div class="foot">
-      <span class="text-button" onclick={() => close(onCancel)} role="button" tabindex="0" aria-disabled={importing}>{t('ui.common.cancel')}</span>
+      <span class="text-button" onclick={dismiss} role="button" tabindex="0" aria-disabled={flow.locked}>{t('ui.common.cancel')}</span>
       <span class="grow"></span>
-      {#if failed}
+      {#if flow.failed}
         <span class="error" role="alert">{t('ui.importToCommunityDialog.failed')}</span>
       {/if}
       {#if target}
-        <div class="primary" class:busy={importing} onclick={confirm} role="button" tabindex="0" aria-disabled={importing}>
+        <div class="primary" class:busy={flow.busy} onclick={confirm} role="button" tabindex="0" aria-disabled={flow.locked}>
           <span class="primary-icon import"></span>
-          <span>{t(importing ? 'ui.importToCommunityDialog.importing' : 'ui.importToCommunityDialog.proceed')}</span>
+          <span>{t(flow.busy ? 'ui.importToCommunityDialog.importing' : 'ui.importToCommunityDialog.proceed')}</span>
         </div>
       {/if}
     </div>

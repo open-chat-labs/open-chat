@@ -37,6 +37,7 @@
   import { onDestroy } from 'svelte';
   import Toggle from '../../lib/components/Toggle.svelte';
   import { modal } from '../../lib/behaviours/modal';
+  import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
 
   type PermKey = BotPerm;
   type Color = BotColor;
@@ -106,11 +107,10 @@
 
   let stepOverride = $state<'details' | 'configure' | 'remove' | null>(null);
   let grantedOverride = $state<Partial<Record<PermKey, boolean>> | null>(null);
-  let closing = $state(false);
-  let busy = $state(false);
-  let failed = $state(false);
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  onDestroy(() => clearTimeout(timer));
+  // busy / leaving / the exit: the shared dialog contract (lib/behaviours/dialog.svelte.ts)
+  const flow = new DialogFlow();
+  onDestroy(() => flow.destroy());
+  const dismiss = () => flow.dismiss(onCancel);
 
   const name = $derived(bot.name);
   const spec = $derived(bot);
@@ -149,7 +149,19 @@
     const plain = list(on.filter((k) => !CAN_DO[k]!.risky).map((k) => t(`ui.botDialog.${form}.${CAN_DO[k]!.text}`)));
     const risky = list(on.filter((k) => CAN_DO[k]!.risky).map((k) => t(`ui.botDialog.ask.${CAN_DO[k]!.text}`)));
     // the risky phrase is highlighted inside the sentence: one message, with {risky} rendered as markup
-    const key = plain ? (installed ? 'summaryInstalled' : 'summaryAsk') : installed ? 'summaryInstalledRiskyOnly' : 'summaryAskRiskyOnly';
+    // nothing granted (or nothing it asks for has a description): its own sentence instead of an empty list
+    const key =
+      !plain && !risky
+        ? installed
+          ? 'summaryInstalledNothing'
+          : 'summaryAskNothing'
+        : plain
+          ? installed
+            ? 'summaryInstalled'
+            : 'summaryAsk'
+          : installed
+            ? 'summaryInstalledRiskyOnly'
+            : 'summaryAskRiskyOnly';
     const parts = segments(t, `ui.botDialog.${key}`, ['risky'], { plain, group, hasRisky: risky ? 'yes' : 'no' });
     // sentence case: the message can start with a lowercase list item
     const first = parts[0];
@@ -167,35 +179,14 @@
     t(viewOnly ? (installed ? 'ui.botDialog.footnoteViewOnly' : 'ui.botDialog.footnoteViewOnlyNotInstalled') : installed ? 'ui.botDialog.footnoteInstalled' : 'ui.botDialog.footnoteInstall', { name, group }),
   );
 
-  // the card animates out before the parent hears about it
-  function close(then?: () => void) {
-    if (closing) return;
-    // like the other dialogs: once it leaves it never comes back; the host unmounts it
-    closing = true;
-    timer = setTimeout(() => {
-      then?.();
-    }, 170);
-  }
-
-  // waits on the host; closes when it resolves, stays with an error when it rejects
+  // waits on the host; leaves when it resolves, stays with an error when it rejects
   async function run(call: () => Promise<unknown> | void) {
-    if (busy || closing) return;
-    busy = true;
-    failed = false;
-    try {
-      await call();
-    } catch {
-      failed = true;
-      return;
-    } finally {
-      busy = false;
-    }
-    close(onCancel);
+    const result = await flow.run(call);
+    if (result.ok) flow.leave(onCancel);
   }
 
   function primary() {
-    // nothing new once closing (cancelled, or the exit after a success)
-    if (busy || closing || viewOnly) return;
+    if (flow.locked || viewOnly) return;
     if (isRemove) {
       if (onRemove) run(() => onRemove({ botId: bot.id }));
     } else if (isConfigure) {
@@ -206,23 +197,23 @@
   }
 
   function secondary() {
-    if (busy) return;
-    failed = false;
+    if (flow.locked) return;
+    flow.failed = false;
     if (isConfigure || isRemove) stepOverride = 'details';
-    else close(onCancel);
+    else flow.leave(onCancel);
   }
 </script>
 
-<div class="layer" class:closing role="dialog" aria-modal="true" use:modal={closing ? undefined : () => !busy && close(onCancel)}>
-  <div class="veil" class:closing onclick={() => !busy && close(onCancel)} aria-hidden="true"></div>
-  <div class="card" class:closing>
+<div class="layer" class:closing={flow.closing} role="dialog" aria-modal="true" use:modal={flow.escape(onCancel)}>
+  <div class="veil" class:closing={flow.closing} onclick={dismiss} aria-hidden="true"></div>
+  <div class="card" class:closing={flow.closing}>
     <div class="header">
       <span class="header-tile"><span class="header-icon"></span></span>
       <div class="header-text">
         <span class="header-title">{headerTitle}</span>
         <span class="header-sub">{headerSub}</span>
       </div>
-      <span class="close" onclick={() => !busy && close(onCancel)} role="button" tabindex="0" aria-label={t('ui.common.close')}><span class="close-icon"></span></span>
+      <span class="close" onclick={dismiss} role="button" tabindex="0" aria-label={t('ui.common.close')}><span class="close-icon"></span></span>
     </div>
 
     <div class="body">
@@ -239,7 +230,7 @@
             <div class="identity-actions">
               <span
                 class="remove"
-                onclick={() => (stepOverride = 'remove')}
+                onclick={() => !flow.locked && (stepOverride = 'remove')}
                 aria-label={t('ui.botDialog.removeFrom', { name, group })}
                 role="button"
                 tabindex="0"
@@ -349,14 +340,14 @@
     </div>
 
     <div class="footer">
-      <span class="secondary" onclick={secondary} role="button" tabindex="0">{t(isConfigure || isRemove ? 'ui.common.back' : viewOnly ? 'ui.common.close' : 'ui.common.cancel')}</span>
+      <span class="secondary" onclick={secondary} role="button" tabindex="0" aria-disabled={flow.locked}>{t(isConfigure || isRemove ? 'ui.common.back' : viewOnly ? 'ui.common.close' : 'ui.common.cancel')}</span>
       <span class="grow"></span>
-      {#if failed}
+      {#if flow.failed}
         <span class="error" role="alert">{t(isRemove ? 'ui.botDialog.removeFailed' : installed ? 'ui.botDialog.saveFailed' : 'ui.botDialog.installFailed')}</span>
       {/if}
       {#if !viewOnly && (step === 'details' || (isConfigure ? !!onInstall : !!onRemove))}
-        <div class="primary" class:danger={isRemove} class:busy onclick={primary} role="button" tabindex="0" aria-disabled={busy}>
-          <span>{busy ? t('ui.botDialog.working') : primaryLabel}</span>
+        <div class="primary" class:danger={isRemove} class:busy={flow.busy} onclick={primary} role="button" tabindex="0" aria-disabled={flow.locked}>
+          <span>{flow.busy ? t('ui.botDialog.working') : primaryLabel}</span>
           <span class="primary-icon" style:mask="var(--icon-{primaryIcon}) center/contain no-repeat"></span>
         </div>
       {/if}

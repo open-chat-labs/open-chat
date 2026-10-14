@@ -31,6 +31,7 @@
 
 <script lang="ts">
   import { onDestroy, tick, untrack } from 'svelte';
+  import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
   import type { WalletToken } from '../../lib/types';
   import Toggle from '../../lib/components/Toggle.svelte';
   import { modal } from '../../lib/behaviours/modal';
@@ -89,7 +90,8 @@
   const held = $derived(tokens.filter((t) => t.held > 0).map((t) => ({ symbol: t.symbol, mark: t.mark, grad: t.grad, value: Math.round(t.price * t.held) })));
 
   let tabOverride = $state<Section | null>(null);
-  let closing = $state(false);
+  // the dialog's own exit (the sheets' host calls block it, see `pending`)
+  const flow = new DialogFlow();
   // the dialog keeps its own copy once anything changes
   // edits made here since the host last sent `value`; a new `value` from the host replaces them
   let local = $state<Partial<WalletSettings>>({});
@@ -100,7 +102,10 @@
   let listOpen = $state(false);
   let query = $state('');
   let recipQuery = $state('');
-  let sheet = $state<{ editId: string | null; address: string; name: string; token: string | null; busy?: boolean; error?: boolean } | null>(null);
+  // each opened recipient sheet has its own DialogFlow: its save is one call at a time, and only that sheet closes on success
+  type Sheet = { editId: string | null; address: string; name: string; token: string | null; flow: DialogFlow };
+  let sheet = $state<Sheet | null>(null);
+  const openSheet = (s: Omit<Sheet, 'flow'>) => (sheet = { ...s, flow: new DialogFlow() });
   let recipError = $state(false);
   let confirmId = $state<string | null>(null);
   type PinFlow = {
@@ -116,10 +121,9 @@
   let pin = $state<PinFlow | null>(null);
   const PIN_STEPS: Record<PinFlow['mode'], PinFlow['step'][]> = { set: ['set', 'confirm'], change: ['current', 'set', 'confirm'], disable: ['current'] };
   let pinInput = $state<HTMLInputElement>();
-  let timer: ReturnType<typeof setTimeout> | undefined;
   let notifyTimer: ReturnType<typeof setTimeout> | undefined;
   onDestroy(() => {
-    clearTimeout(timer);
+    flow.destroy();
     // a pending typed value still reaches the host
     if (notifyTimer) {
       clearTimeout(notifyTimer);
@@ -169,22 +173,25 @@
   const showRecipients = (recipients: SavedRecipient[]) => (local = { ...local, recipients });
 
   // a save or PIN call in flight can't be dismissed (sheet, PIN sheet or the whole dialog): its result decides what's next
-  const pending = $derived(!!sheet?.busy || !!pin?.busy);
+  // like the wallet panel: USD, plus each currency one of the tokens prices (so the panel can show it); a currency
+  // already chosen stays listed so it can be switched away from
+  const currencies = $derived(CURRENCIES.filter((c) => c === 'USD' || c === settings.currency || tokens.some((tk) => tk.symbol === c && tk.price > 0)));
+
+  const pending = $derived(!!sheet?.flow.busy || !!pin?.busy);
   const closeSheet = () => {
-    if (!sheet?.busy) sheet = null;
+    if (!sheet?.flow.busy) sheet = null;
   };
   const closePin = () => {
     if (!pin?.busy) pin = null;
   };
 
   function close() {
-    if (closing || pending) return;
-    closing = true;
-    timer = setTimeout(() => onCancel?.(), 170);
+    if (pending) return;
+    flow.dismiss(onCancel);
   }
 
   async function saveRecipient() {
-    if (!sheet || !draftValid || sheet.busy) return;
+    if (!sheet || !draftValid || sheet.flow.locked) return;
     const editId = sheet.editId;
     const fields = { name: sheet.name.trim() || t('ui.walletSettingsDialog.defaultRecipientName', { network: draftNet }), address: draftAddr, token: sheet.token };
     const merge = (entry: SavedRecipient) => (editId ? saved.map((r) => (r.id === editId ? entry : r)) : [...saved, entry]);
@@ -193,15 +200,13 @@
       apply({ recipients: merge({ id: editId ?? `r${Date.now()}`, ...fields }) });
       return;
     }
-    sheet = { ...sheet, busy: true, error: false };
-    try {
-      const stored = await onSaveRecipient(editId ? { id: editId, ...fields } : fields);
-      // only the sheet this save belongs to (still busy) closes
-      if (sheet?.busy) sheet = null;
-      showRecipients(merge(stored));
-    } catch {
-      if (sheet) sheet = { ...sheet, busy: false, error: true };
-    }
+    const own = sheet.flow;
+    const save = onSaveRecipient;
+    const result = await own.run(() => save(editId ? { id: editId, ...fields } : fields));
+    if (!result.ok) return; // the sheet stays with its error (own.failed)
+    // only the sheet this save belongs to closes
+    if (sheet?.flow === own) sheet = null;
+    showRecipients(merge(result.value));
   }
 
   async function removeRecipient(id: string) {
@@ -298,10 +303,10 @@
   </div>
 {/snippet}
 
-<div class="layer" data-screen-label="Wallet settings" role="dialog" aria-modal="true" use:modal={() => close()}>
-  <div class="veil" class:closing onclick={close} aria-hidden="true"></div>
+<div class="layer" class:closing={flow.closing} data-screen-label="Wallet settings" role="dialog" aria-modal="true" use:modal={flow.closing ? undefined : close}>
+  <div class="veil" class:closing={flow.closing} onclick={close} aria-hidden="true"></div>
 
-  <div class="card" class:closing>
+  <div class="card" class:closing={flow.closing}>
     <div class="header">
       <div class="header-text">
         <span class="header-title">{t('ui.walletSettingsDialog.title')}</span>
@@ -415,7 +420,7 @@
         {#if tab === 'currency'}
           <span class="eyebrow">{t('ui.walletSettingsDialog.showValuesIn')}</span>
           <div class="currencies">
-            {#each CURRENCIES as c}
+            {#each currencies as c}
               {@const on = settings.currency === c}
               <span class="currency" class:on onclick={() => apply({ currency: c })} role="button" tabindex="0">
                 <span class="currency-code">{c}</span>
@@ -436,7 +441,7 @@
               <span
                 class="add"
                 onclick={() => {
-                  sheet = { editId: null, address: '', name: '', token: null };
+                  openSheet({ editId: null, address: '', name: '', token: null });
                   confirmId = null;
                 }}
                 role="button"
@@ -484,7 +489,7 @@
                       <span
                         class="square"
                         onclick={() => {
-                          sheet = { editId: r.id, address: r.address, name: r.name, token: r.token ?? null };
+                          openSheet({ editId: r.id, address: r.address, name: r.name, token: r.token ?? null });
                           confirmId = null;
                         }}
                         role="button"
@@ -734,11 +739,11 @@
           </div>
 
           <div class="sheet-foot">
-            <span class="cancel" onclick={closeSheet} role="button" tabindex="0" aria-disabled={!!sheet.busy}>{t('ui.common.cancel')}</span>
+            <span class="cancel" onclick={closeSheet} role="button" tabindex="0" aria-disabled={sheet.flow.busy}>{t('ui.common.cancel')}</span>
             <span class="grow"></span>
-            {#if sheet.error}<span class="recip-error" role="alert">{t('ui.walletSettingsDialog.saveRecipientFailed')}</span>{/if}
-            <div class="primary" class:ready={draftValid && !sheet.busy} onclick={saveRecipient} role="button" tabindex="0" aria-disabled={!draftValid || !!sheet.busy}>
-              <span>{t(sheet.busy ? 'ui.walletSettingsDialog.saving' : sheet.editId ? 'ui.common.saveChanges' : 'ui.walletSettingsDialog.saveRecipient')}</span>
+            {#if sheet.flow.failed}<span class="recip-error" role="alert">{t('ui.walletSettingsDialog.saveRecipientFailed')}</span>{/if}
+            <div class="primary" class:ready={draftValid && !sheet.flow.busy} onclick={saveRecipient} role="button" tabindex="0" aria-disabled={!draftValid || sheet.flow.busy}>
+              <span>{t(sheet.flow.busy ? 'ui.walletSettingsDialog.saving' : sheet.editId ? 'ui.common.saveChanges' : 'ui.walletSettingsDialog.saveRecipient')}</span>
               {@render glyph('check', 15, 'var(--primary-ink)')}
             </div>
           </div>
@@ -766,6 +771,10 @@
     backdrop-filter: var(--oc-veil-blur, blur(4px));
     -webkit-backdrop-filter: var(--oc-veil-blur, blur(4px));
     animation: oc-veil-in var(--duration-base, 200ms) var(--ease-out) both;
+  }
+
+  .layer.closing {
+    pointer-events: none;
   }
 
   .veil.closing {

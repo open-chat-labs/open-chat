@@ -119,6 +119,8 @@
   const done = $derived(stage === 'done');
   const busy = $derived(stage === 'progress' || done);
   const showOut = $derived(quoted || busy);
+  // while quoting, swapping or done the form can't change under the quote: no flip, amount, chips or token picks
+  const locked = $derived(busy || stage === 'quoting');
   const stepIdx = $derived(stage === 'form' || stage === 'quoting' ? 0 : quoted ? 1 : 2);
   const amtIn = $derived(`${n > 0 ? fmt(n, f.dp) : '0'} ${f?.symbol}`);
   const amtOut = $derived(`${n > 0 ? fmt(out, t.dp) : '0'} ${t?.symbol}`);
@@ -211,7 +213,8 @@
   }
 
   async function swap() {
-    if (!quote || !onSwap || left <= 0) return;
+    // only from a live quote: a second press (even before the next render) can't start another swap
+    if (stage !== 'quoted' || !quote || !onSwap || left <= 0) return;
     const q = quote;
     const mine = ++run;
     clearInterval(countdown);
@@ -237,12 +240,14 @@
   }
 
   function chooseAmount(k: number) {
+    if (locked) return;
     const p = Math.pow(10, Math.min(f.dp, 6));
     drop();
     amt = String(Math.floor(f.held * k * p) / p);
   }
 
   function flip() {
+    if (locked) return;
     const nextAmt = n > 0 && showOut ? String(+out.toFixed(Math.min(t.dp, 6))) : amt;
     drop();
     [from, to] = [to, from];
@@ -251,6 +256,7 @@
 
   // picking the other side's token flips the pair; paying with a token you don't hold keeps the pay side
   function picked(sym: string) {
+    if (locked) return;
     const chosen = list.find((x) => x.symbol === sym);
     if (!chosen) return;
     const other = pick === 'from' ? to : from;
@@ -288,13 +294,14 @@
     >
     <div class="scroll">
       <div class="layout" class:narrow>
-        <div class="form" class:busy class:locked={busy || stage === 'quoting'}>
+        <div class="form" class:busy class:locked inert={locked}>
           <div class="cards">
             <AmountCard
               label={tr('ui.walletSwap.youPay')}
               meta={tr('ui.walletSwap.balance', { amount: fmt(f.held, f.dp), symbol: f.symbol })}
               value={amt}
               onChange={(e) => {
+                if (locked) return;
                 drop();
                 amt = cleanAmount(e.currentTarget.value);
               }}
@@ -303,7 +310,7 @@
               symbol={f.symbol}
               mark={f.mark}
               gradient={f.grad}
-              onTokenClick={() => (pick = 'from')}
+              onTokenClick={() => !locked && (pick = 'from')}
               onQuickSelect={chooseAmount}
               position="top"
             />
@@ -316,7 +323,7 @@
               symbol={t.symbol}
               mark={t.mark}
               gradient={t.grad}
-              onTokenClick={() => (pick = 'to')}
+              onTokenClick={() => !locked && (pick = 'to')}
               position="bottom"
             />
           </div>

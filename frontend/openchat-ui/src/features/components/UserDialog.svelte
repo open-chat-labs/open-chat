@@ -11,6 +11,8 @@
   import PanelCover from '../../lib/components/PanelCover.svelte';
   import SegmentedTabs from '../../lib/components/SegmentedTabs.svelte';
   import { modal } from '../../lib/behaviours/modal';
+  import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
+  import { Optimistic } from '../../lib/behaviours/optimistic.svelte';
   import { useT } from '../../lib/i18n';
 
   type MuteKey = '8h' | '1w' | 'always';
@@ -30,7 +32,6 @@
     { key: '1w', label: 'ui.userDialog.mute1w', tile: 'ui.userDialog.muted1w' },
     { key: 'always', label: 'ui.userDialog.muteAlways', tile: 'ui.userDialog.muted' },
   ];
-  const CLOSE_MS = 170;
 
   type Settings = ComponentProps<typeof DmChatSettings>;
 
@@ -99,16 +100,29 @@
   }: Props = $props();
   const t = useT();
 
-  let closing = $state(false);
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  onDestroy(() => clearTimeout(timer));
+  // the dialog contract (busy / leaving / exit) and optimistic fields: lib/behaviours
+  const flow = new DialogFlow();
+  onDestroy(() => flow.destroy());
+  const mute = new Optimistic<MuteKey | null>(() => muted);
+  const favourite = new Optimistic(() => fav);
+  $effect.pre(() => {
+    void muted;
+    untrack(() => mute.sync());
+  });
+  $effect.pre(() => {
+    void fav;
+    untrack(() => favourite.sync());
+  });
 
   let tabOverride = $state<'profile' | 'chat' | null>(null);
-  let isMuted = $derived(muted);
-  let isFav = $derived(fav);
+  const isMuted = $derived(mute.current);
+  const isFav = $derived(favourite.current);
   let muteMenu = $state<{ top: number; left: number } | null>(null);
-  let failed = $state<string | null>(null);
-  let blockStep = $state<'idle' | 'confirm' | 'busy'>('idle');
+  // the error belongs to whichever toggle changed last
+  let lastToggle = $state<'mute' | 'fav'>('mute');
+  const toggleFailed = $derived(lastToggle === 'mute' ? mute.failed : favourite.failed);
+  let blockStep = $state<'idle' | 'confirm'>('idle');
+  let blockError = $state<string | null>(null);
 
   const dm = $derived(dmTabs && !isSelf);
   const tab = $derived(dm ? (tabOverride ?? initialTab) : 'profile');
@@ -119,101 +133,42 @@
       : MUTE_SPANS.map((o) => ({ label: o.label, key: o.key })),
   );
 
-  function close(fn?: () => void) {
-    if (closing) return;
-    closing = true;
-    timer = setTimeout(() => {
-      closing = false;
-      fn?.();
-    }, CLOSE_MS);
-  }
-
-  // optimistic changes per field: shown at once. When the latest call for a field rejects, the field falls back to the
-  // value the host last accepted (or its prop), never to an earlier optimistic value it didn't confirm. An older call
-  // that succeeds after every newer one failed still lands, since that's what the host has now.
-  const latest: Record<string, number> = {};
-  const settled: Record<string, number> = {};
-  const lostLatest: Record<string, number> = {};
-  const accepted: Record<string, { value: unknown }> = {};
-  async function optimistic<T>(field: string, value: T, set: (v: T) => void, host: () => T, call: () => Promise<unknown> | void) {
-    const seq = (latest[field] = (latest[field] ?? 0) + 1);
-    failed = null;
-    set(value);
-    try {
-      await call();
-      if (seq <= (settled[field] ?? 0)) return;
-      settled[field] = seq;
-      accepted[field] = { value };
-      if (lostLatest[field] === latest[field]) set(value);
-    } catch {
-      if (latest[field] !== seq) return;
-      lostLatest[field] = seq;
-      set(field in accepted ? (accepted[field].value as T) : host());
-      failed = 'ui.userDialog.actionFailed';
-    }
-  }
-
-  // a new value from the host replaces whatever was accepted before it
-  $effect.pre(() => {
-    void muted;
-    untrack(() => delete accepted.mute);
-  });
-  $effect.pre(() => {
-    void fav;
-    untrack(() => delete accepted.fav);
-  });
-
   // Esc, the veil and the cover's close: never while a block / unblock is in flight (it closes itself when done)
-  function dismiss() {
-    if (blockStep === 'busy') return;
-    close(onCancel);
-  }
+  const dismiss = () => flow.dismiss(onCancel);
 
   function setMute(key: MuteKey | null) {
     muteMenu = null;
-    optimistic(
-      'mute',
-      key,
-      (v) => (isMuted = v),
-      () => muted,
-      () => onMuteChange?.(key),
-    );
+    lastToggle = 'mute';
+    mute.set(key, () => onMuteChange?.(key));
   }
 
   function toggleFav() {
     if (!onToggleFavourite) return;
+    lastToggle = 'fav';
     const next = !isFav;
-    optimistic(
-      'fav',
-      next,
-      (v) => (isFav = v),
-      () => fav,
-      () => onToggleFavourite(next),
-    );
+    favourite.set(next, () => onToggleFavourite(next));
   }
 
   function cancelBlock() {
-    if (blockStep === 'busy') return;
+    if (flow.busy) return;
     blockStep = 'idle';
-    failed = null;
+    blockError = null;
   }
 
   async function confirmBlock() {
     // the host may flip `blocked` before it resolves, so decide everything from the state the user acted on
     const wasBlocked = blocked;
     const call = wasBlocked ? onUnblock : onBlock;
-    if (!call || blockStep === 'busy') return;
-    blockStep = 'busy';
-    failed = null;
-    try {
-      await call();
-    } catch {
-      blockStep = 'confirm';
-      failed = wasBlocked ? 'ui.userDialog.unblockFailed' : 'ui.userDialog.blockFailed';
+    if (!call) return;
+    blockError = null;
+    const result = await flow.run(call);
+    if (!result.ok) {
+      // { ok: false } is also an ignored press (busy / leaving): only a real rejection shows an error
+      if (flow.failed) blockError = wasBlocked ? 'ui.userDialog.unblockFailed' : 'ui.userDialog.blockFailed';
       return;
     }
     blockStep = 'idle';
-    if (!wasBlocked) close(onCancel);
+    if (!wasBlocked) flow.leave(onCancel);
   }
 
   function openMuteMenu(e: MouseEvent & { currentTarget: HTMLElement }) {
@@ -224,9 +179,9 @@
   }
 </script>
 
-<div class="layer" role="dialog" aria-modal="true" use:modal={dismiss}>
-  <div class="veil" class:closing onclick={dismiss} aria-hidden="true"></div>
-  <div class="card" class:closing data-panel-root="true">
+<div class="layer" class:closing={flow.closing} role="dialog" aria-modal="true" use:modal={flow.escape(onCancel)}>
+  <div class="veil" class:closing={flow.closing} onclick={dismiss} aria-hidden="true"></div>
+  <div class="card" class:closing={flow.closing} data-panel-root="true">
     <div class="cover">
       <!-- in a DM the favourite lives in the pill row, so the cover only closes -->
       <PanelCover
@@ -287,15 +242,15 @@
       {/if}
     </div>
 
-    {#if failed && blockStep === 'idle'}<span class="error" role="alert">{t(failed)}</span>{/if}
+    {#if toggleFailed && blockStep === 'idle'}<span class="error" role="alert">{t('ui.userDialog.actionFailed')}</span>{/if}
     {#if !isSelf && blockStep !== 'idle'}
       <div class="footer confirm">
         <span class="confirm-text"
-          >{failed ? t(failed) : t(blocked ? 'ui.userDialog.unblockConfirm' : 'ui.userDialog.blockConfirm', { name: title })}</span
+          >{blockError ? t(blockError) : t(blocked ? 'ui.userDialog.unblockConfirm' : 'ui.userDialog.blockConfirm', { name: title })}</span
         >
         <span class="cancel" onclick={cancelBlock} role="button" tabindex="0">{t('ui.common.cancel')}</span>
-        <span class="block" class:busy={blockStep === 'busy'} onclick={confirmBlock} role="button" tabindex="0" aria-disabled={blockStep === 'busy'}
-          >{t(blockStep === 'busy' ? 'ui.userDialog.working' : blocked ? 'ui.userDialog.unblock' : 'ui.userDialog.block')}</span
+        <span class="block" class:busy={flow.busy} onclick={confirmBlock} role="button" tabindex="0" aria-disabled={flow.locked}
+          >{t(flow.busy ? 'ui.userDialog.working' : blocked ? 'ui.userDialog.unblock' : 'ui.userDialog.block')}</span
         >
       </div>
     {:else if !isSelf && ((blocked ? onUnblock : onBlock) || (!dm && onMessage))}
@@ -305,7 +260,7 @@
         {/if}
         <span class="grow"></span>
         {#if !dm && onMessage && !blocked}
-          <div class="message" onclick={() => close(onMessage)} role="button" tabindex="0">
+          <div class="message" onclick={() => flow.dismiss(onMessage)} role="button" tabindex="0">
             <span>{t('ui.userDialog.message')}</span>
             <span class="message-icon"></span>
           </div>
@@ -342,6 +297,10 @@
     backdrop-filter: var(--oc-veil-blur, blur(4px));
     -webkit-backdrop-filter: var(--oc-veil-blur, blur(4px));
     animation: oc-veil-in var(--duration-base, 200ms) var(--ease-out) both;
+  }
+
+  .layer.closing {
+    pointer-events: none;
   }
 
   .veil.closing {

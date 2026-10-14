@@ -21,6 +21,7 @@
 
 <script lang="ts">
   import { onDestroy } from 'svelte';
+  import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
   import type { WalletToken } from '../../lib/types';
   import PageHeader from '../../lib/components/PageHeader.svelte';
   import { useT } from '../../lib/i18n';
@@ -67,8 +68,9 @@
   let confirmFor = $state<string | null>(null);
   let copiedFor = $state<string | null>(null);
   let form = $state<{ id: string | null; address: string; name: string; token: string | null } | null>(null);
-  let saving = $state(false);
-  let error = $state<'' | 'save' | 'remove'>('');
+  // the form's host call: one save at a time, the form stays (with saveFlow.failed) until the host has stored it
+  const saveFlow = new DialogFlow();
+  let error = $state<'' | 'remove'>('');
   let copyTimer: ReturnType<typeof setTimeout> | undefined;
   onDestroy(() => clearTimeout(copyTimer));
 
@@ -87,8 +89,9 @@
   const chips = $derived([{ symbol: null as string | null, label: 'ui.walletRecipients.anyToken', mark: '', grad: 'transparent' }].concat(held.map((tok) => ({ symbol: tok.symbol, label: tok.symbol, mark: tok.mark, grad: tok.grad }))));
 
   function back() {
-    if (saving) return;
+    if (saveFlow.busy) return;
     error = '';
+    saveFlow.failed = false;
     if (form) form = null;
     else onClose?.();
   }
@@ -124,27 +127,23 @@
 
   // the form stays (with an error) until the host has stored it
   async function save() {
-    if (!valid || !form || saving) return;
+    if (!valid || !form) return;
     const name = form.name.trim() || t('ui.walletRecipients.defaultName', { network: NET_NAME[net as RecipientNetwork] });
     const f = form;
-    saving = true;
+    const address = addr;
     error = '';
-    try {
+    const result = await saveFlow.run(async () => {
       if (f.id) {
         const prev = list.find((r) => r.id === f.id);
-        const next: Recipient = { ...(prev ?? { id: f.id }), name, address: addr, token: f.token };
+        const next: Recipient = { ...(prev ?? { id: f.id }), name, address, token: f.token };
         await onUpdate?.(next);
         list = list.map((r) => (r.id === f.id ? next : r));
       } else if (onAdd) {
-        const stored = await onAdd({ name, address: addr, token: f.token });
+        const stored = await onAdd({ name, address, token: f.token });
         list = [...list, stored];
       }
-      form = null;
-    } catch {
-      error = 'save';
-    } finally {
-      saving = false;
-    }
+    });
+    if (result.ok) form = null;
   }
 </script>
 
@@ -162,6 +161,7 @@
             class="add"
             onclick={() => {
               form = { id: null, address: '', name: '', token: null };
+              saveFlow.failed = false;
               menuFor = null;
               confirmFor = null;
             }}
@@ -227,6 +227,7 @@
                         menuFor = null;
                         error = '';
                         form = { id: r.id, address: r.address, name: r.name, token: r.token ?? null };
+                        saveFlow.failed = false;
                       }}
                       role="menuitem"
                       tabindex="0"><span class="menu-icon" style:mask={mask('edit')}></span>{t('ui.common.edit')}</span
@@ -296,11 +297,11 @@
             </div>
             <span class="hint wrap">{form.token ? t('ui.walletRecipients.onlyTokenHint', { token: form.token }) : t('ui.walletRecipients.anyTokenHint')}</span>
           </div>
-          {#if error === 'save'}<span class="error" role="alert">{t('ui.walletRecipients.saveFailed')}</span>{/if}
+          {#if saveFlow.failed}<span class="error" role="alert">{t('ui.walletRecipients.saveFailed')}</span>{/if}
           <div class="form-actions">
             <span class="form-cancel" onclick={back} role="button" tabindex="0">{t('ui.common.cancel')}</span>
-            <span class="save" class:valid={valid && !saving} onclick={save} role="button" tabindex="0" aria-disabled={!valid || saving}
-              >{t(saving ? 'ui.walletRecipients.saving' : form.id ? 'ui.common.saveChanges' : 'ui.walletRecipients.saveRecipient')}</span
+            <span class="save" class:valid={valid && !saveFlow.busy} onclick={save} role="button" tabindex="0" aria-disabled={!valid || saveFlow.locked}
+              >{t(saveFlow.busy ? 'ui.walletRecipients.saving' : form.id ? 'ui.common.saveChanges' : 'ui.walletRecipients.saveRecipient')}</span
             >
           </div>
         </div>

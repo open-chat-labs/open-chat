@@ -3,6 +3,7 @@
      The toggle marked `disappearing` grows a duration picker while on; changes go to onDisappearChange (on + duration),
      show at once and roll back with an error if the host rejects. -->
 <script lang="ts">
+  import { Optimistic } from '../../lib/behaviours/optimistic.svelte';
   import { untrack, type ComponentProps } from 'svelte';
   import Badge from '../../lib/components/Badge.svelte';
   import Button from '../../lib/components/Button.svelte';
@@ -112,52 +113,20 @@
   }: Props = $props();
   const t = useT();
 
-  let dmOn = $derived(disappearOn);
-  let dmAfter = $derived(disappearAfter);
-  let failed = $state(false);
-
-  // optimistic changes per field: shown at once. When the latest call for a field rejects, the field falls back to the
-  // value the host last accepted (or its prop), never to an earlier optimistic value it didn't confirm. An older call
-  // that succeeds after every newer one failed still lands, since that's what the host has now.
-  const latest: Record<string, number> = {};
-  const settled: Record<string, number> = {};
-  const lostLatest: Record<string, number> = {};
-  const accepted: Record<string, { value: unknown }> = {};
-  async function optimistic<T>(field: string, value: T, set: (v: T) => void, host: () => T, call: () => Promise<unknown> | void) {
-    const seq = (latest[field] = (latest[field] ?? 0) + 1);
-    failed = false;
-    set(value);
-    try {
-      await call();
-      if (seq <= (settled[field] ?? 0)) return;
-      settled[field] = seq;
-      accepted[field] = { value };
-      if (lostLatest[field] === latest[field]) set(value);
-    } catch {
-      if (latest[field] !== seq) return;
-      lostLatest[field] = seq;
-      set(field in accepted ? (accepted[field].value as T) : host());
-      failed = true;
-    }
-  }
-  // a new value from the host replaces whatever was accepted before it
+  // optimistic (lib/behaviours/optimistic.svelte.ts): latest call wins, a rejected latest call falls back to the host's
+  // last accepted value, host changes are followed once nothing is in flight
+  const disappear = new Optimistic(() => ({ on: disappearOn, after: disappearAfter }));
   $effect.pre(() => {
     void disappearOn;
     void disappearAfter;
-    untrack(() => delete accepted.disappear);
+    untrack(() => disappear.sync());
   });
+  const dmOn = $derived(disappear.current.on);
+  const dmAfter = $derived(disappear.current.after);
+  const failed = $derived(disappear.failed);
 
   function setDisappear(row: SettingToggle, on: boolean, after: string) {
-    optimistic(
-      'disappear',
-      { on, after },
-      (v) => {
-        dmOn = v.on;
-        dmAfter = v.after;
-      },
-      () => ({ on: disappearOn, after: disappearAfter }),
-      () => (onDisappearChange ? onDisappearChange({ on, after, afterMs: durationMs(after) }) : row.onChange?.(on)),
-    );
+    disappear.set({ on, after }, () => (onDisappearChange ? onDisappearChange({ on, after, afterMs: durationMs(after) }) : row.onChange?.(on)));
   }
 
   const user = $derived(kind === 'user');

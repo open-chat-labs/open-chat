@@ -19,6 +19,8 @@
 </script>
 
 <script lang="ts">
+  import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
+  import { Optimistic } from '../../lib/behaviours/optimistic.svelte';
   import { useT } from '../../lib/i18n';
   import { durationText } from '../../lib/i18n';
   import { onDestroy, untrack } from 'svelte';
@@ -222,8 +224,12 @@
   const avatarShown = $derived(avatarPreview ?? avatar);
   const coverShown = $derived(coverPreview ?? coverUrl);
   const fileKey = (f: File | null) => (f ? `${f.name}:${f.size}:${f.lastModified}` : null);
-  let saving = $state(false);
-  let saveError = $state(false);
+  // the dialog contract (lib/behaviours/dialog.svelte.ts): Save runs once at a time, nothing dismisses it while pending,
+  // and a modal leaves (and stays out) once a save succeeds
+  const flow = new DialogFlow();
+  onDestroy(() => flow.destroy());
+  const saving = $derived(flow.busy);
+  const saveError = $derived(flow.failed);
   let isPublic = $state(false);
   let history = $state(false);
   let disappearOn = $state(false);
@@ -318,25 +324,28 @@
   let rulesPreset = $state<string | null>(null);
   let touched = $state(false);
   let submitted = $state(false);
-  let aboutMuted = $state<boolean | null>(null);
-  let aboutFav = $state<boolean | null>(null);
-  // a new value from the host replaces the local override
+  // About page mute / favourite (lib/behaviours/optimistic.svelte.ts): latest call wins, a rejected latest call falls
+  // back to the host's last accepted value with an error, host changes are followed once nothing is in flight
+  const muteState = new Optimistic(() => isMuted);
+  const favState = new Optimistic(() => isFavourite);
   $effect.pre(() => {
     void isMuted;
-    untrack(() => (aboutMuted = null));
+    untrack(() => muteState.sync());
   });
   $effect.pre(() => {
     void isFavourite;
-    untrack(() => (aboutFav = null));
+    untrack(() => favState.sync());
   });
-  async function toggleAbout(kind: 'mute' | 'fav') {
-    const was = kind === 'mute' ? muted : favourite;
-    const set = (v: boolean | null) => (kind === 'mute' ? (aboutMuted = v) : (aboutFav = v));
-    set(!was);
-    try {
-      await (kind === 'mute' ? onMuteChange?.(was ? null : 'forever') : onFavouriteChange?.(!was));
-    } catch {
-      set(was);
+  let lastAbout = $state<'mute' | 'fav'>('mute');
+  const aboutFailed = $derived(lastAbout === 'mute' ? muteState.failed : favState.failed);
+  function toggleAbout(kind: 'mute' | 'fav') {
+    lastAbout = kind;
+    if (kind === 'mute') {
+      const next = !muteState.current;
+      muteState.set(next, () => onMuteChange?.(next ? 'forever' : null));
+    } else {
+      const next = !favState.current;
+      favState.set(next, () => onFavouriteChange?.(next));
     }
   }
 
@@ -421,10 +430,7 @@
   }
 
   // a pending save can't be dismissed; its result decides what happens next
-  function dismiss(then?: () => void) {
-    if (saving) return;
-    then?.();
-  }
+  const dismiss = (then?: () => void) => flow.dismiss(then);
 
   function discard() {
     const s = JSON.parse(initial);
@@ -433,13 +439,13 @@
     // the baseline never holds a picked file once saved, except the one just saved (kept as the preview)
     if (s.avatarFile !== fileKey(avatarFile)) setAvatarFile(null);
     if (s.coverFile !== fileKey(coverFile)) setCoverFile(null);
-    saveError = false;
+    flow.failed = false;
     submitted = false;
     touched = false;
   }
 
   async function save() {
-    if (!dirty || saving || viewOnly) return;
+    if (!dirty || flow.locked || viewOnly) return;
     if (nameTaken || nameResult === 'pending') {
       tab = 0;
       return;
@@ -466,25 +472,17 @@
         threads: threadsOverride ? { ...perms.threads } : null,
       },
     };
-    saving = true;
-    saveError = false;
-    try {
-      await onSave?.(all);
-    } catch {
-      // the edits and the unsaved-changes guard stay as they were
-      saveError = true;
-      return;
-    } finally {
-      saving = false;
-    }
-    // embedded stays open after saving, so the saved draft becomes the new baseline (only once the host confirms)
-    if (embedded) {
-      initial = JSON.stringify(saved);
-      savedRulesText = rulesOn ? rulesText : '';
-      savedRulesOn = rulesOn;
-      rulesNewVersion = false;
-      submitted = false;
-    }
+    const result = await flow.run(() => onSave?.(all));
+    // a rejection keeps the edits and the unsaved-changes guard as they were (flow.failed shows the error)
+    if (!result.ok) return;
+    // the saved draft becomes the new baseline (only once the host confirms), so the form reads clean again
+    initial = JSON.stringify(saved);
+    savedRulesText = rulesOn ? rulesText : '';
+    savedRulesOn = rulesOn;
+    rulesNewVersion = false;
+    submitted = false;
+    // a modal leaves on success (the shared dialog contract); embedded stays open
+    if (!embedded) flow.leave(onCancel);
   }
 
   const ringOf = (on: boolean) => (on ? '0 0 0 2px var(--surface-1,#0e0e12), 0 0 0 4px var(--accent,#FF5672)' : 'inset 0 0 0 1px var(--line-2,rgba(255,255,255,.14))');
@@ -513,8 +511,8 @@
   ]);
 
   // --- About page (embedded + view-only Overview)
-  const muted = $derived(aboutMuted ?? isMuted);
-  const favourite = $derived(aboutFav ?? isFavourite);
+  const muted = $derived(muteState.current);
+  const favourite = $derived(favState.current);
   const ruleCount = $derived(rulesText.split('\n').map((l) => l.trim()).filter(Boolean).length);
   const facts = $derived([
     history ? { text: t('ui.groupSettingsDialog.factHistory'), icon: 'history' } : { text: t('ui.groupSettingsDialog.factNoHistory'), icon: 'hidden' },
@@ -569,7 +567,7 @@
   <span class="status">{t(on ? 'ui.groupSettingsDialog.on' : 'ui.groupSettingsDialog.off')}</span>
 {/snippet}
 
-<div class="root" class:embedded use:modal={embedded ? undefined : () => dismiss(onClose ?? onCancel)}>
+<div class="root" class:embedded class:closing={flow.closing} use:modal={embedded ? undefined : flow.escape(onClose ?? onCancel)}>
   {#if !embedded}
     <div class="veil" onclick={() => dismiss(onCancel)} aria-hidden="true"></div>
   {/if}
@@ -609,7 +607,7 @@
       <div class="body-inner" inert={statusOnly ? true : undefined}>
         {#if tabIdx === 0 && !viewOnly}
           <div class="group-page">
-            <div class="cover" style:height={isCommunity ? '150px' : '112px'} style:background={coverShown ? `url(${coverShown}) center/cover no-repeat` : `var(--cover-${COVERS[coverKey] ? coverKey : 'plum'})`}>
+            <div class="cover" style:height={isCommunity ? '150px' : '112px'} style:background={coverShown ? `url(${JSON.stringify(coverShown)}) center/cover no-repeat` : `var(--cover-${COVERS[coverKey] ? coverKey : 'plum'})`}>
               <div class="cover-tools">
                 <div class="cover-tools-inner">
                   {#if isCommunity}
@@ -654,7 +652,7 @@
                 <div class="photo-row">
                   <div class="photo">
                     <div class="photo-frame" style:background={(GRADIENTS[color] ?? GRADIENTS.teal).value}>
-                      <div class="photo-image" style:background={avatarShown ? `url(${avatarShown}) center/cover no-repeat` : 'none'}></div>
+                      <div class="photo-image" style:background={avatarShown ? `url(${JSON.stringify(avatarShown)}) center/cover no-repeat` : 'none'}></div>
                     </div>
                     <input
                       class="hidden-input"
@@ -774,10 +772,10 @@
 
         {#if isAbout}
           <div class="about">
-            <div class="about-cover" style:height={isCommunity ? '150px' : '112px'} style:background={coverShown ? `url(${coverShown}) center/cover no-repeat` : `var(--cover-${COVERS[coverKey] ? coverKey : 'plum'})`}></div>
+            <div class="about-cover" style:height={isCommunity ? '150px' : '112px'} style:background={coverShown ? `url(${JSON.stringify(coverShown)}) center/cover no-repeat` : `var(--cover-${COVERS[coverKey] ? coverKey : 'plum'})`}></div>
             <div class="about-body">
               <div class="photo-frame about-photo" style:background={(GRADIENTS[color] ?? GRADIENTS.teal).value}>
-                <div class="photo-image" style:background={avatarShown ? `url(${avatarShown}) center/cover no-repeat` : 'none'}></div>
+                <div class="photo-image" style:background={avatarShown ? `url(${JSON.stringify(avatarShown)}) center/cover no-repeat` : 'none'}></div>
               </div>
               <div class="about-names">
                 <span class="about-name">{name}</span>
@@ -785,13 +783,15 @@
               </div>
               <div class="about-actions">
                 {#if roleLabel}<span class="role-chip">{t(roleLabel)}</span>{/if}
-                <span
-                  class="about-action"
-                  class:active={muted}
-                  onclick={() => toggleAbout('mute')}
-                  role="button"
-                  tabindex="0"><span class="about-action-icon" style:mask={mask(muted ? 'bell-off' : 'bell')}></span>{t(muted ? 'ui.groupSettingsDialog.muted' : 'ui.groupSettingsDialog.mute')}</span
-                >
+                {#if onMuteChange}
+                  <span
+                    class="about-action"
+                    class:active={muted}
+                    onclick={() => toggleAbout('mute')}
+                    role="button"
+                    tabindex="0"><span class="about-action-icon" style:mask={mask(muted ? 'bell-off' : 'bell')}></span>{t(muted ? 'ui.groupSettingsDialog.muted' : 'ui.groupSettingsDialog.mute')}</span
+                  >
+                {/if}
                 {#if onFavouriteChange}
                   <span
                     class="about-action"
@@ -802,6 +802,7 @@
                   >
                 {/if}
               </div>
+              {#if aboutFailed}<span class="about-error" role="alert">{t('ui.groupSettingsDialog.aboutFailed')}</span>{/if}
               {#if about.trim()}
                 <p class="about-text">{about}</p>
               {/if}
@@ -1044,6 +1045,25 @@
     justify-content: center;
     padding: var(--space-22);
     box-sizing: border-box;
+  }
+
+  /* leaving after a save: out of the way at once, the exit plays, and it never comes back */
+  .root.closing {
+    pointer-events: none;
+  }
+
+  .root.closing .veil {
+    animation: oc-veil-out 170ms var(--ease-standard) both;
+  }
+
+  .root.closing .card {
+    animation: oc-dlg-out 170ms var(--ease-standard) both;
+  }
+
+  .about-error {
+    font: var(--weight-medium) var(--text-sm) / 1.4 var(--font-sans);
+    color: var(--status-danger, #f5493d);
+    text-align: center;
   }
 
   .root.embedded {

@@ -1,5 +1,6 @@
 <!-- Per-DM settings: disappearing messages (timed) and read receipts. Shared by the DM side panel and the profile dialog's "This chat" tab.
-     Changes show at once and roll back with an error if the host's promise rejects; new prop values always win. -->
+     Changes show at once; when the latest one is rejected the field falls back to the host's last accepted value with an
+     error. New prop values are followed once nothing is in flight. -->
 <script lang="ts" module>
   // the duration ids TimedToggle uses ('12 hours', '1 week' …) in milliseconds; months count as 30 days
   const UNIT_MS: Record<string, number> = { minute: 6e4, hour: 36e5, day: 864e5, week: 6048e5, month: 2592e6, year: 31536e6 };
@@ -20,6 +21,7 @@
 <script lang="ts">
   import { untrack } from 'svelte';
   import TimedToggle from '../../lib/components/TimedToggle.svelte';
+  import { Optimistic } from '../../lib/behaviours/optimistic.svelte';
   import { useT } from '../../lib/i18n';
 
   interface Props {
@@ -35,58 +37,34 @@
   let { peerName, disappearOn = false, disappearAfter = '12 hours', readReceipts = false, onDisappearChange, onReadReceiptsChange }: Props = $props();
   const t = useT();
 
-  let on = $derived(disappearOn);
-  let after = $derived(disappearAfter);
-  let receipts = $derived(readReceipts);
-  let failed = $state(false);
-
-  // optimistic changes per field: shown at once. When the latest call for a field rejects, the field falls back to the
-  // value the host last accepted (or its prop), never to an earlier optimistic value it didn't confirm. An older call
-  // that succeeds after every newer one failed still lands, since that's what the host has now.
-  const latest: Record<string, number> = {};
-  const settled: Record<string, number> = {};
-  const lostLatest: Record<string, number> = {};
-  const accepted: Record<string, { value: unknown }> = {};
-  async function optimistic<T>(field: string, value: T, set: (v: T) => void, host: () => T, call: () => Promise<unknown> | void) {
-    const seq = (latest[field] = (latest[field] ?? 0) + 1);
-    failed = false;
-    set(value);
-    try {
-      await call();
-      if (seq <= (settled[field] ?? 0)) return;
-      settled[field] = seq;
-      accepted[field] = { value };
-      if (lostLatest[field] === latest[field]) set(value);
-    } catch {
-      if (latest[field] !== seq) return;
-      lostLatest[field] = seq;
-      set(field in accepted ? (accepted[field].value as T) : host());
-      failed = true;
-    }
-  }
-
-  // a new value from the host replaces whatever was accepted before it
+  // optimistic per field (lib/behaviours/optimistic.svelte.ts): shown at once, the latest call wins, a rejected latest
+  // call falls back to the value the host last accepted; new host values are followed once nothing is in flight
+  const disappear = new Optimistic(() => ({ on: disappearOn, after: disappearAfter }));
+  const receipts = new Optimistic(() => readReceipts);
   $effect.pre(() => {
     void disappearOn;
     void disappearAfter;
-    untrack(() => delete accepted.disappear);
+    untrack(() => disappear.sync());
   });
   $effect.pre(() => {
     void readReceipts;
-    untrack(() => delete accepted.receipts);
+    untrack(() => receipts.sync());
   });
+  const on = $derived(disappear.current.on);
+  const after = $derived(disappear.current.after);
+  // the error belongs to whichever field changed last
+  let lastField = $state<'disappear' | 'receipts'>('disappear');
+  const failed = $derived(lastField === 'disappear' ? disappear.failed : receipts.failed);
 
   function setDisappear(nextOn: boolean, nextAfter: string) {
-    optimistic(
-      'disappear',
-      { on: nextOn, after: nextAfter },
-      (v) => {
-        on = v.on;
-        after = v.after;
-      },
-      () => ({ on: disappearOn, after: disappearAfter }),
-      () => onDisappearChange?.({ on: nextOn, after: nextAfter, afterMs: durationMs(nextAfter) }),
-    );
+    lastField = 'disappear';
+    disappear.set({ on: nextOn, after: nextAfter }, () => onDisappearChange?.({ on: nextOn, after: nextAfter, afterMs: durationMs(nextAfter) }));
+  }
+
+  function toggleReceipts() {
+    lastField = 'receipts';
+    const next = !receipts.current;
+    receipts.set(next, () => onReadReceiptsChange?.(next));
   }
 </script>
 
@@ -108,20 +86,11 @@
     <span class="text"><span class="label">{t('ui.dmChatSettings.readReceipts')}</span><span class="hint">{t('ui.dmChatSettings.readReceiptsHint', { name: peerName.split(' ')[0] })}</span></span>
     <span
       class="switch"
-      class:on={receipts}
-      onclick={() => {
-        const next = !receipts;
-        optimistic(
-          'receipts',
-          next,
-          (v) => (receipts = v),
-          () => readReceipts,
-          () => onReadReceiptsChange?.(next),
-        );
-      }}
+      class:on={receipts.current}
+      onclick={toggleReceipts}
       tabindex="0"
       role="switch"
-      aria-checked={receipts}
+      aria-checked={receipts.current}
       aria-label={t('ui.dmChatSettings.readReceipts')}><span class="knob"></span></span
     >
   </div>

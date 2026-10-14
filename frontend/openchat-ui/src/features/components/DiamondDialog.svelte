@@ -26,6 +26,7 @@
 
 <script lang="ts">
   import { modal } from '../../lib/behaviours/modal';
+  import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
   import { getI18n, useT } from '../../lib/i18n';
   import Translate from '../../lib/components/Translate.svelte';
   import { onDestroy, onMount } from 'svelte';
@@ -158,20 +159,15 @@
   const t = useT();
   const i18n = getI18n();
 
-  let closing = $state(false);
   let onlyDiff = $state(false);
   let step = $state<'compare' | 'plans' | 'confirm'>('compare');
   let planKey = $state<PlanKey | null>(null);
   let autoRenew = $state(false);
-  let payError = $state(false);
-  let busy = $state(false);
   let refreshing = $state(false);
   let topUp = $state(false);
   let bought = $state<DiamondPurchase | null>(null);
   let tokenSymbol = $state('CHAT');
   let picker = $state(false);
-  const timers: ReturnType<typeof setTimeout>[] = [];
-  const later = (fn: () => void, ms: number) => timers.push(setTimeout(fn, ms));
 
   onMount(() => {
     if (initialPlan) {
@@ -179,7 +175,10 @@
       planKey = initialPlan;
     }
   });
-  onDestroy(() => timers.forEach(clearTimeout));
+  // paying / leaving / the exit: the shared dialog contract (lib/behaviours/dialog.svelte.ts)
+  const flow = new DialogFlow();
+  onDestroy(() => flow.destroy());
+  const close = (then?: () => void) => flow.dismiss(then);
 
   // USD per CHAT: the host's figure, else the CHAT token's price; without one other tokens can't be priced
   const chatUsd = $derived(chatUsdProp ?? tokens.find((x) => x.symbol === 'CHAT')?.price ?? 0);
@@ -257,15 +256,8 @@
     t(step === 'plans' ? (extend ? 'ui.diamondDialog.subExtend' : 'ui.diamondDialog.subChoose') : step === 'confirm' ? 'ui.diamondDialog.subConfirm' : member ? 'ui.diamondDialog.subMember' : 'ui.diamondDialog.subCompare'),
   );
 
-  // the card animates out before the parent hears about it
-  function close(then?: () => void) {
-    if (closing) return;
-    closing = true;
-    later(() => then?.(), 170);
-  }
-
   function back() {
-    if (busy) return;
+    if (flow.locked) return;
     if (step === 'confirm') step = 'plans';
     else if (step === 'plans') {
       step = 'compare';
@@ -279,12 +271,12 @@
     step = 'confirm';
     planKey = key;
     autoRenew = autoRenewDefault;
-    payError = false;
+    flow.failed = false;
   }
 
   // spins until the host has re-read the balances
   async function refresh() {
-    if (refreshing || !onRefreshBalance) return;
+    if (refreshing || flow.closing || !onRefreshBalance) return;
     refreshing = true;
     try {
       await onRefreshBalance();
@@ -296,9 +288,7 @@
   }
 
   async function pay() {
-    if (busy || !plan || !onUpgrade) return;
-    busy = true;
-    payError = false;
+    if (!plan || !onUpgrade) return;
     const purchase: DiamondPurchase = {
       lifetime: !timed,
       until: timed ? until(plan).toISOString() : null,
@@ -307,15 +297,10 @@
       token: sym,
       amount: price,
     };
-    let result: { until?: string | null } | void;
-    try {
-      result = await onUpgrade(purchase);
-    } catch {
-      payError = true;
-      return;
-    } finally {
-      busy = false;
-    }
+    // ignored while paying or leaving (× then Pay must not charge)
+    const run = await flow.run(() => onUpgrade(purchase));
+    if (!run.ok) return;
+    const result = run.value;
     // balances come back from the host through `tokens` / `balance`
     bought = { ...purchase, until: result && result.until !== undefined ? result.until : purchase.until };
     step = 'compare';
@@ -344,10 +329,10 @@
   </div>
 {/snippet}
 
-<div class="layer" data-screen-label="Diamond" role="dialog" aria-modal="true" use:modal={() => !busy && close(onClose)}>
-  <div class="veil" class:closing onclick={() => !busy && close(onClose)} aria-hidden="true"></div>
+<div class="layer" class:closing={flow.closing} data-screen-label="Diamond" role="dialog" aria-modal="true" use:modal={flow.escape(onClose)}>
+  <div class="veil" class:closing={flow.closing} onclick={() => close(onClose)} aria-hidden="true"></div>
 
-  <div class="card" class:closing>
+  <div class="card" class:closing={flow.closing}>
     <div class="header">
       {#if step !== 'compare' || onBack}
         <span class="square back" onclick={back} aria-label={t(step === 'compare' ? backLabel : 'ui.common.back')} role="button" tabindex="0" title={t(step === 'compare' ? backLabel : 'ui.common.back')}
@@ -358,7 +343,7 @@
         <span class="header-title">{t('ui.diamondDialog.title')}</span>
         <span class="header-sub">{subtitle}</span>
       </div>
-      <span class="square" onclick={() => !busy && close(onClose)} role="button" tabindex="0">{@render icon('close', 'close-icon')}</span>
+      <span class="square" onclick={() => close(onClose)} role="button" tabindex="0">{@render icon('close', 'close-icon')}</span>
     </div>
 
     {#if step === 'compare'}
@@ -521,7 +506,7 @@
           {/if}
         {/if}
 
-        {#if payError}
+        {#if flow.failed}
           <span class="pay-error" role="alert">{t('ui.diamondDialog.payFailed')}</span>
         {/if}
 
@@ -542,9 +527,9 @@
         {#if extend && canUpgrade}
           <span class="text-button accent" onclick={() => (step = 'plans')} role="button" tabindex="0">{t('ui.diamondDialog.extend')}</span>
         {/if}
-        <span class="solid-button" onclick={() => !busy && close(onClose)} role="button" tabindex="0">{t('ui.common.done')}</span>
+        <span class="solid-button" onclick={() => close(onClose)} role="button" tabindex="0">{t('ui.common.done')}</span>
       {:else if step === 'compare'}
-        <span class="text-button" onclick={() => !busy && close(onClose)} role="button" tabindex="0">{t('ui.diamondDialog.maybeLater')}</span>
+        <span class="text-button" onclick={() => close(onClose)} role="button" tabindex="0">{t('ui.diamondDialog.maybeLater')}</span>
         {#if canUpgrade}
           <span class="cta" onclick={() => (step = 'plans')} role="button" tabindex="0">{@render icon('gem', 'cta-icon')}{t('ui.diamondDialog.upgrade')}</span>
         {/if}
@@ -552,9 +537,9 @@
         <span class="footer-note">{t('ui.diamondDialog.footerNote')}</span>
         <span class="solid-button" onclick={back} role="button" tabindex="0">{t('ui.common.back')}</span>
       {:else}
-        <span class="text-button" class:busy onclick={back} role="button" tabindex="0">{t('ui.common.back')}</span>
-        <span class="cta" class:busy onclick={pay} role="button" tabindex="0"
-          >{@render icon(busy ? 'spin' : 'gem', `cta-icon${busy ? ' spinning' : ''}`)}{busy
+        <span class="text-button" class:busy={flow.busy} onclick={back} role="button" tabindex="0">{t('ui.common.back')}</span>
+        <span class="cta" class:busy={flow.busy} onclick={pay} role="button" tabindex="0" aria-disabled={flow.locked}
+          >{@render icon(flow.busy ? 'spin' : 'gem', `cta-icon${flow.busy ? ' spinning' : ''}`)}{flow.busy
             ? t('ui.diamondDialog.processing')
             : t(extend ? 'ui.diamondDialog.confirmExtend' : 'ui.diamondDialog.confirmNew', { plan: plan.key })}</span
         >
@@ -564,6 +549,10 @@
 </div>
 
 <style>
+  .layer.closing {
+    pointer-events: none;
+  }
+
   .layer {
     position: fixed;
     inset: 0;

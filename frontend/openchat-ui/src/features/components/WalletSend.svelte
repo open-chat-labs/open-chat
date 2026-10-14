@@ -46,6 +46,7 @@
   import { cleanAmount, parseAmount } from '../../lib/amount';
   import { detectNetwork, type AddressNetwork } from '../../lib/networks';
   import { onDestroy, tick } from 'svelte';
+  import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
 
   const mask = (n: string) => `var(--icon-${n}) center/contain no-repeat`;
   const PIN_LENGTH = 6;
@@ -126,7 +127,8 @@
   let net = $state(0);
   let step = $state<'form' | 'pin' | 'done'>('form');
   let pinText = $state('');
-  let pinState = $state<'idle' | 'sending' | 'failed'>('idle');
+  // the PIN step's host call: busy while sending (nothing reopens, closes or resubmits), failed after a rejection
+  const pinFlow = new DialogFlow();
   let pinInput = $state<HTMLInputElement>();
   const pin = $derived(pinText.length);
   let width = $state(0);
@@ -240,17 +242,17 @@
 
   // the PIN dialog can't be closed or reopened while a send is in flight, so a send can never run twice
   function openPin() {
-    if (!ok || pinState === 'sending') return;
+    if (!ok || pinFlow.busy) return;
     pinText = '';
-    pinState = 'idle';
+    pinFlow.failed = false;
     step = 'pin';
   }
 
   function closePin() {
-    if (pinState === 'sending') return;
+    if (pinFlow.busy) return;
     step = 'form';
     pinText = '';
-    pinState = 'idle';
+    pinFlow.failed = false;
   }
 
   function back() {
@@ -281,12 +283,12 @@
 
   function typedPin(value: string) {
     pinText = value.replace(/\D/g, '').slice(0, PIN_LENGTH);
-    if (pinState === 'failed') pinState = 'idle';
+    if (pinFlow.failed) pinFlow.failed = false;
   }
 
   // confirming hands back to the wallet, which shows the pending row and a toast
   async function confirmPin() {
-    if (!tk || pin < PIN_LENGTH || pinState === 'sending') {
+    if (!tk || pin < PIN_LENGTH || pinFlow.busy) {
       pinInput?.focus();
       return;
     }
@@ -305,17 +307,16 @@
       dp: tk.dp,
       person: mode === 'user' && !!person,
     };
-    pinState = 'sending';
-    try {
-      await onSent(request);
-      pinState = 'idle';
+    const sending = onSent;
+    const result = await pinFlow.run(() => sending(request));
+    if (result.ok) {
       step = 'done'; // inside WalletMain the view has already moved on
-    } catch {
-      pinState = 'failed';
-      pinText = '';
-      await tick(); // the input is re-enabled on the next render
-      pinInput?.focus();
+      return;
     }
+    if (!pinFlow.failed) return; // ignored (already sending)
+    pinText = '';
+    await tick(); // the input is re-enabled on the next render
+    pinInput?.focus();
   }
 
   $effect(() => {
@@ -565,7 +566,7 @@
         width={420}
         height="auto"
         flush={true}
-        onClose={pinState === 'sending' ? undefined : closePin}
+        onClose={pinFlow.busy ? undefined : closePin}
       >
         <form
           class="pin"
@@ -587,14 +588,14 @@
               autocomplete="one-time-code"
               maxlength={PIN_LENGTH}
               aria-label={t('ui.walletSend.enterPin')}
-              aria-invalid={pinState === 'failed'}
-              disabled={pinState === 'sending'}
+              aria-invalid={pinFlow.failed}
+              disabled={pinFlow.busy}
             />
             {#each Array.from({ length: PIN_LENGTH }, (_, i) => i) as i}<span class="pin-box" class:current={i === pin} aria-hidden="true"><span class="pin-dot" class:filled={i < pin}></span></span>{/each}
           </label>
-          {#if pinState === 'failed'}<span class="pin-error" role="alert">{t('ui.walletSend.pinFailed')}</span>{/if}
-          <button class="cta pin-cta" class:blocked={pin < PIN_LENGTH || pinState === 'sending'} type="submit" aria-disabled={pin < PIN_LENGTH || pinState === 'sending'}
-            >{t(pinState === 'sending' ? 'ui.walletSend.sending' : pin < PIN_LENGTH ? 'ui.walletSend.typePin' : 'ui.common.send')}</button
+          {#if pinFlow.failed}<span class="pin-error" role="alert">{t('ui.walletSend.pinFailed')}</span>{/if}
+          <button class="cta pin-cta" class:blocked={pin < PIN_LENGTH || pinFlow.busy} type="submit" aria-disabled={pin < PIN_LENGTH || pinFlow.busy}
+            >{t(pinFlow.busy ? 'ui.walletSend.sending' : pin < PIN_LENGTH ? 'ui.walletSend.typePin' : 'ui.common.send')}</button
           >
         </form>
       </DialogShell>

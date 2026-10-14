@@ -3,6 +3,7 @@
      Scrolls to the newest reply on open, on a new threadKey and when replies arrive. Sends carry the threadKey; a send that
      returns a promise keeps the draft until it resolves. Follow flips at once and rolls back if onFollowChange rejects. -->
 <script lang="ts">
+  import { Optimistic } from '../../lib/behaviours/optimistic.svelte';
   import { untrack } from 'svelte';
   import type { MessageGroupItem } from '../../lib/types';
   import IconButton from '../../lib/components/IconButton.svelte';
@@ -69,8 +70,9 @@
 
   let list: HTMLDivElement;
   let rootOpen = $state(false);
-  let followOverride = $state<boolean | undefined>(undefined);
-  const on = $derived(followOverride ?? following);
+  // optimistic follow (lib/behaviours/optimistic.svelte.ts); a new thread starts from the host's value
+  let followState = $state.raw(new Optimistic(() => following));
+  const on = $derived(followState.current);
 
   const total = $derived(replies.length + newReplies.length);
   const firstName = $derived(root.author.split(' ')[0]);
@@ -89,7 +91,7 @@
       if (key !== lastKey) {
         lastKey = key;
         rootOpen = false;
-        followOverride = undefined;
+        followState = new Optimistic(() => following);
       }
     });
   });
@@ -106,23 +108,15 @@
     await result;
   }
 
-  // the optimistic follow state gives way as soon as the host's `following` moves
-  $effect(() => {
+  // the host's `following` is followed again once nothing is in flight
+  $effect.pre(() => {
     void following;
-    untrack(() => (followOverride = undefined));
+    untrack(() => followState.sync());
   });
 
-  let followSeq = 0;
-  async function follow() {
+  function follow() {
     const next = !on;
-    const seq = ++followSeq;
-    followOverride = next;
-    try {
-      await onFollowChange?.(next);
-    } catch {
-      // only the latest toggle rolls back
-      if (seq === followSeq) followOverride = undefined;
-    }
+    followState.set(next, () => onFollowChange?.(next));
   }
 </script>
 
