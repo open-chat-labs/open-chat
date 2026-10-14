@@ -16,7 +16,7 @@
     Button, MessageActions, MessageGroup, SegmentedTabs, TokenCoin, UnreadDivider,
   } from '../../lib/index';
   import {
-    BalanceCard, NavRail, CallPanel, ChatListHeader, ChatListPanel, ConversationHeader, DailyPuzzleCard,
+    AchievementToast, BalanceCard, NavRail, CallPanel, ChatListHeader, ChatListPanel, ConversationHeader, DailyPuzzleCard,
     DmPanel, GroupPanel, GroupStats, InfoPanel, JoinGateDialog, MiniCall, PollBuilderDialog, PuzzleDialog, ThreadList,
     ThreadPanel, VideoTile,
   } from '../../features/index';
@@ -110,6 +110,15 @@
   const walletScreens = ['WalletMain', 'WalletSend', 'WalletReceive', 'WalletSwap', 'WalletRecipients'];
   let walletScreen = $state(0);
   let openDialog = $state<string | null>(null);
+
+  // AchievementToast plays once on mount: each press remounts it (new key) with the next achievement
+  const achievements = [
+    { title: 'Say cheese', icon: 'camera', reward: 500 },
+    { title: 'First swap', icon: 'swap', reward: 1200 },
+    { title: 'Streak of 7', icon: 'flame', reward: 250 },
+  ];
+  let toastRuns = 0;
+  let toast = $state(0);
   const dialogLabel = (n: string) => n.replace(/Dialog$/, '').replace(/([a-z])([A-Z])/g, '$1 $2');
 </script>
 
@@ -478,7 +487,7 @@
   {@const C = featureComponents[name]}
   {@const size = previewSize(name)}
   <Frame {label} style="justify-content: center">
-    <div class="screen" class:contain={name === 'AchievementToast'} style:width="min(100%, {size.width})" style:height={height ?? size.height}>
+    <div class="screen" style:width="min(100%, {size.width})" style:height={height ?? size.height}>
       <svelte:boundary>
         <C {...demoProps(name) as any} />
         {#snippet failed(e)}<pre class="demo-error">{String((e as Error)?.message ?? e)}</pre>{/snippet}
@@ -542,7 +551,17 @@
 </Section>
 
 <Section {...sec(features, 'features-rewards')}>
-  {@render live('AchievementToast', 'AchievementToast', '110px')}
+  <Frame label="AchievementToast · try it" align="center" style="flex-direction: column; flex-wrap: nowrap">
+    <div class="screen contain toast-stage">
+      {#if toast}
+        {#key toast}
+          {@const a = achievements[(toast - 1) % achievements.length]}
+          <AchievementToast title={a.title} icon={a.icon} reward={a.reward} onDone={() => (toast = 0)} />
+        {/key}
+      {/if}
+    </div>
+    <Button variant="secondary" label={toast ? 'Play again' : 'Unlock an achievement'} onClick={() => (toast = toastRuns += 1)} />
+  </Frame>
   {@render openers(['AchievementsDialog', 'ChitDialog', 'StreakInsuranceDialog', 'LeaderboardDialog', 'MemeFighterDialog'])}
 </Section>
 
@@ -584,6 +603,7 @@
   .screen { position: relative; min-width: 0; max-width: 100%; display: grid; grid-template-columns: minmax(0, 1fr); }
   /* transform: a fixed-position toast is laid out inside its frame, not the viewport */
   .screen.contain { transform: translateZ(0); }
+  .toast-stage { width: 100%; height: 96px; }
   .screen.wide { width: 100%; height: 800px; }
   .demo-error { margin: 0; padding: 12px 14px; border-radius: 10px; background: var(--status-danger-soft); color: var(--status-danger); font: 500 12px/1.5 var(--font-mono); white-space: pre-wrap; }
   .dialog-error { position: fixed; inset-block-end: 24px; inset-inline-start: 50%; z-index: var(--z-modal); }
