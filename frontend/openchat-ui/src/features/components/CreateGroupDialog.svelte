@@ -2,7 +2,8 @@
      switches), Invite / Members, Channels (communities), Gates, Rules and Permissions. Basic shows the first tabs only;
      "More options" (or making the group public, or any advanced value) reveals the rest, and an unused advanced section
      can be folded away again. Create validates the name (and the URL for embedded channels) and blank rules, jumping to
-     the tab that needs attention, then animates out and calls onCreate with everything set. -->
+     the tab that needs attention, then calls onCreate with everything set (photos as File objects) and waits on its promise:
+     the dialog closes once it resolves, and stays open with the form intact and an error if it rejects. -->
 <script lang="ts">
   import { onDestroy, untrack } from 'svelte';
   import type { AccessGatesState, CreateGroupResult, GroupRole, MenuItem } from '../../lib/types';
@@ -133,10 +134,11 @@
     preselected?: string[];
     /** false: every tab shows from the start, with no "More options" step. */
     advanced?: boolean;
-    /** Groups: false locks "Public group" behind an upgrade banner (channels are never locked). */
+    /** Groups: false (the default) locks "Public group" behind an upgrade banner (channels are never locked). */
     isDiamond?: boolean;
     onUpgrade?: () => void;
-    onCreate?: (group: CreateGroupResult) => void;
+    /** Create it. The dialog closes when this resolves; a rejection keeps it open with an error. */
+    onCreate?: (group: CreateGroupResult) => Promise<unknown> | void;
     onCancel?: () => void;
   }
 
@@ -147,7 +149,7 @@
     invitePeople = [],
     preselected = [],
     advanced = true,
-    isDiamond: isDiamondProp = true,
+    isDiamond: isDiamondProp = false,
     onUpgrade,
     onCreate,
     onCancel,
@@ -172,8 +174,25 @@
   let about = $state('');
   let color = $state('teal');
   let cover = $state('plum');
+  // the files go to the host; the object URLs are previews only and are always released here
+  let avatarFile = $state<File | null>(null);
+  let coverFile = $state<File | null>(null);
   let avatarUrl = $state<string | null>(null);
   let coverUrl = $state<string | null>(null);
+  let creating = $state(false);
+  let createError = $state(false);
+  const preview = (old: string | null, file: File | null) => {
+    if (old) URL.revokeObjectURL(old);
+    return file ? URL.createObjectURL(file) : null;
+  };
+  const setAvatar = (file: File | null) => {
+    avatarFile = file;
+    avatarUrl = preview(avatarUrl, file);
+  };
+  const setCover = (file: File | null) => {
+    coverFile = file;
+    coverUrl = preview(coverUrl, file);
+  };
   let picked = $state<string[]>(untrack(() => [...preselected]));
   let invited = $state<string[]>([]);
   let memberMode = $state(0);
@@ -212,6 +231,7 @@
   onDestroy(() => {
     clearTimeout(closeTimer);
     if (avatarUrl) URL.revokeObjectURL(avatarUrl);
+    if (coverUrl) URL.revokeObjectURL(coverUrl);
   });
 
   // the role menu is fixed-positioned so the dialog's scrolling body can never clip it;
@@ -464,7 +484,8 @@
   const showFooterNote = $derived(!!(nameOk || nameBad || picked.length || gateCount || rulesOn || permsChanged));
   const canCreate = $derived(nameOk && (!isEmb || urlOk));
 
-  function create() {
+  async function create() {
+    if (creating) return;
     // pressing Create without a name sends the user back to the field that needs it
     if (!nameOk || (isEmb && !urlOk)) {
       nameTouched = true;
@@ -479,17 +500,16 @@
       tab = rulesTab;
       return;
     }
-    close(() =>
-      onCreate?.({
+    const result: CreateGroupResult = {
         name: name.trim(),
         about,
         color,
         coverKey: cover,
-        avatar: avatarUrl,
+        avatarFile,
         kind,
         embedded: isEmb,
         language: isComm ? lang : null,
-        coverUrl,
+        coverFile,
         channels: isComm ? [...channels] : [],
         url: url.trim(),
         previewForNonMembers: isEmb && publicOn && previewOn,
@@ -501,8 +521,20 @@
         gates: gates ?? { count: 0 },
         rules: rulesOn ? { enabled: true, text: rulesText.trim() } : { enabled: false, text: '' },
         permissions: { general: { ...perms.general }, messages: { ...perms.messages }, threads: threadsOverride ? { ...perms.threads } : null },
-      }),
-    );
+    };
+    // the dialog (and the whole form) stays until the host confirms
+    creating = true;
+    createError = false;
+    try {
+      await onCreate?.(result);
+    } catch {
+      createError = true;
+      return;
+    } finally {
+      creating = false;
+    }
+    // animate out and stay hidden; the host unmounts the dialog once onCreate has resolved
+    closing = true;
   }
 
   const nameHint = $derived(
@@ -596,9 +628,7 @@
                     accept="image/*"
                     oninput={(e) => {
                       const file = e.currentTarget.files?.[0];
-                      if (!file) return;
-                      if (coverUrl) URL.revokeObjectURL(coverUrl);
-                      coverUrl = URL.createObjectURL(file);
+                      if (file) setCover(file);
                     }}
                   />
                   <span class="cover-upload" onclick={() => coverInput?.click()} role="button" tabindex="0"><span class="cover-edit" style:mask={mask('edit')}></span>{t(coverUrl ? CG + 'changeCover' : CG + 'uploadCover')}</span>
@@ -610,7 +640,7 @@
                         style:box-shadow={ring(key === cover)}
                         onclick={() => {
                           cover = key;
-                          coverUrl = null;
+                          setCover(null);
                         }}
                         role="button"
                         tabindex="0"
@@ -638,9 +668,7 @@
                     accept="image/*"
                     oninput={(e) => {
                       const f = e.currentTarget.files?.[0];
-                      if (!f) return;
-                      if (avatarUrl) URL.revokeObjectURL(avatarUrl);
-                      avatarUrl = URL.createObjectURL(f);
+                      if (f) setAvatar(f);
                     }}
                   />
                   <div class="photo-pick" onclick={() => avatarInput?.click()} role="button" tabindex="0"><span class="icon-15 ink" style:mask={mask('edit')}></span></div>
@@ -653,10 +681,7 @@
                     {#if avatarUrl}
                       <span
                         class="remove-photo"
-                        onclick={() => {
-                          if (avatarUrl) URL.revokeObjectURL(avatarUrl);
-                          avatarUrl = null;
-                        }}
+                        onclick={() => setAvatar(null)}
                         role="button"
                         tabindex="0">{t(CG + 'photo.remove')}</span
                       >
@@ -1165,12 +1190,14 @@
     <div class="footer">
       <span class="cancel" onclick={() => close(onCancel)} role="button" tabindex="0">{t('ui.common.cancel')}</span>
       <span class="grow"></span>
-      {#if showFooterNote}
+      {#if createError}
+        <span class="note error" role="alert">{t(CG + 'createFailed')}</span>
+      {:else if showFooterNote}
         <span class="note" class:error={nameBad || rulesBad || urlBad}>{footerNote}</span>
       {/if}
-      <div class="create" class:ready={canCreate} onclick={create} role="button" tabindex="0">
+      <div class="create" class:ready={canCreate && !creating} onclick={create} role="button" tabindex="0" aria-disabled={creating}>
         <span class="create-icon" style:mask={mask(kindIcon)}></span>
-        <span>{t(isComm ? CG + 'create.community' : isEmb ? CG + 'create.embedded' : isChan ? CG + 'create.channel' : CG + 'create.group')}</span>
+        <span>{t(creating ? CG + 'creating' : isComm ? CG + 'create.community' : isEmb ? CG + 'create.embedded' : isChan ? CG + 'create.channel' : CG + 'create.group')}</span>
       </div>
     </div>
   </div>
@@ -1229,6 +1256,10 @@
       var(--shadow-modal, 0 30px 70px rgba(0, 0, 0, 0.45));
     overflow: hidden;
     animation: oc-dlg-in var(--duration-slow, 280ms) var(--ease-out) both;
+  }
+
+  .root.closing {
+    pointer-events: none;
   }
 
   .closing .veil {

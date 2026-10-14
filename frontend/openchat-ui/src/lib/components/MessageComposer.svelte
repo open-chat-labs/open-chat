@@ -339,8 +339,10 @@
     untrack(() => applyDemo(d));
   });
 
-  // reply/edit context: edit pre-fills the original text, leaving edit clears it; both move focus into the input
+  // reply/edit context: edit pre-fills the original text; leaving edit puts back whatever the user had been writing
+  // before it (never the edited message's text); both move focus into the input
   let prevContext = untrack(() => context);
+  let savedDraft: string | null = null;
   $effect(() => {
     const next = context;
     untrack(async () => {
@@ -348,6 +350,8 @@
       prevContext = next;
       if (prev?.key === next?.key) return;
       if (next?.mode === 'edit') {
+        // edit → another edit keeps the draft saved from before the first one
+        if (prev?.mode !== 'edit') savedDraft = draft;
         draft = next.text ?? '';
         menu = null;
         await tick();
@@ -359,7 +363,8 @@
       } else {
         // leaving edit (cancel, or straight into a reply) drops the edited message's text
         if (prev?.mode === 'edit') {
-          draft = '';
+          draft = savedDraft ?? '';
+          savedDraft = null;
           await tick();
           grow();
         }

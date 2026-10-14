@@ -63,3 +63,4 @@ export { default as WebhookDialog } from './components/WebhookDialog.svelte';
 export type { AuthMethod, SignupDetails } from './components/AuthDialog.svelte';
 export type { NetworkId } from './components/WalletReceive.svelte';
 export type { SendContact, WalletSendRequest } from './components/WalletSend.svelte';
+export type { MemberRole } from './components/GroupPanel.svelte';

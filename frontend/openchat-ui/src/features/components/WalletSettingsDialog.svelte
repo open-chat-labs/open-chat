@@ -1,6 +1,9 @@
 <!-- Wallet settings, applied as you go (every change reaches onChange at once). Sections: Tokens (automatic list by
-     minimum value, or hand-picked through the Token list sheet), Security (PIN on transfers, set or changed through a
-     two-step sheet), Display currency, and Recipients (saved addresses; only reachable via `section`). -->
+     minimum value, or hand-picked through the Token list sheet), Security (PIN on transfers), Display currency, and
+     Recipients (saved addresses; only reachable via `section`).
+     The PIN itself goes to the host: setting it (choose + confirm) calls onSetPin, changing it asks for the current PIN
+     first (onChangePin), and turning it off needs the current PIN too (onDisablePin). `pinOn` only changes once the host's
+     promise resolves; a rejection keeps the sheet open with an error. Without those callbacks the PIN can't be managed. -->
 <script lang="ts" module>
   /** A saved send-to address; the network is read off the address itself. */
   export interface SavedRecipient {
@@ -61,10 +64,16 @@
     value?: Partial<WalletSettings> | null;
     section?: Section;
     onChange?: (settings: WalletSettings) => void;
+    /** Store a new transfer PIN. Reject to show an error. */
+    onSetPin?: (pin: string) => Promise<unknown>;
+    /** Replace the PIN; reject if `current` is wrong. */
+    onChangePin?: (current: string, next: string) => Promise<unknown>;
+    /** Turn the PIN off; reject if `current` is wrong. */
+    onDisablePin?: (current: string) => Promise<unknown>;
     onCancel?: () => void;
   }
 
-  let { tokens, value = null, section = 'tokens', onChange, onCancel }: Props = $props();
+  let { tokens, value = null, section = 'tokens', onChange, onSetPin, onChangePin, onDisablePin, onCancel }: Props = $props();
   const t = useT();
 
   // values in USD, matching the wallet panel's holdings
@@ -79,7 +88,18 @@
   let recipQuery = $state('');
   let sheet = $state<{ editId: string | null; address: string; name: string; token: string | null } | null>(null);
   let confirmId = $state<string | null>(null);
-  let pin = $state<{ mode: 'set' | 'change'; step: 'set' | 'confirm'; value: string; first: string; error: boolean } | null>(null);
+  type PinFlow = {
+    mode: 'set' | 'change' | 'disable';
+    step: 'current' | 'set' | 'confirm';
+    value: string;
+    /** The current PIN (change / disable), held until the host call. */
+    current: string;
+    first: string;
+    error: null | 'mismatch' | 'rejected' | 'failed';
+    busy: boolean;
+  };
+  let pin = $state<PinFlow | null>(null);
+  const PIN_STEPS: Record<PinFlow['mode'], PinFlow['step'][]> = { set: ['set', 'confirm'], change: ['current', 'set', 'confirm'], disable: ['current'] };
   let pinInput = $state<HTMLInputElement>();
   let timer: ReturnType<typeof setTimeout> | undefined;
   onDestroy(() => clearTimeout(timer));
@@ -131,19 +151,45 @@
     apply({ recipients: next });
   }
 
+  const startPin = (mode: PinFlow['mode']) => (pin = { mode, step: PIN_STEPS[mode][0], value: '', current: '', first: '', error: null, busy: false });
+
   function togglePin(on: boolean) {
-    if (on) pin = { mode: 'set', step: 'set', value: '', first: '', error: false };
-    else apply({ pinOn: false });
+    startPin(on ? 'set' : 'disable');
+  }
+
+  // waits on the host; on success the flow closes and pinOn follows, on rejection `back` decides where the user retries
+  async function commitPin(call: () => Promise<unknown> | undefined, pinOn: boolean, back: Partial<PinFlow>) {
+    if (!pin) return;
+    pin = { ...pin, busy: true, error: null };
+    try {
+      await call();
+      pin = null;
+      apply({ pinOn });
+    } catch {
+      if (pin) pin = { ...pin, busy: false, value: '', ...back };
+    }
   }
 
   function pinNext() {
-    if (!pin || pin.value.length !== 6) return;
-    if (pin.step === 'set') pin = { ...pin, step: 'confirm', first: pin.value, value: '', error: false };
-    else if (pin.value !== pin.first) pin = { ...pin, value: '', error: true };
-    else {
-      pin = null;
-      apply({ pinOn: true });
-    }
+    if (!pin || pin.busy || pin.value.length !== 6) return;
+    const { mode, step, value } = pin;
+    if (step === 'current') {
+      if (mode === 'disable') commitPin(() => onDisablePin?.(value), false, { error: 'rejected' });
+      else pin = { ...pin, step: 'set', current: value, value: '', error: null };
+    } else if (step === 'set') pin = { ...pin, step: 'confirm', first: value, value: '', error: null };
+    else if (value !== pin.first) pin = { ...pin, value: '', error: 'mismatch' };
+    else if (mode === 'change') {
+      const current = pin.current;
+      // a wrong current PIN sends the user back to the first step
+      commitPin(() => onChangePin?.(current, value), true, { step: 'current', current: '', first: '', error: 'rejected' });
+    } else commitPin(() => onSetPin?.(value), true, { error: 'failed' });
+  }
+
+  function pinBack() {
+    if (!pin || pin.busy) return;
+    const steps = PIN_STEPS[pin.mode];
+    const i = steps.indexOf(pin.step);
+    if (i > 0) pin = { ...pin, step: steps[i - 1], value: '', error: null };
   }
 
   // keep the hidden PIN input focused while the sheet is open
@@ -152,6 +198,7 @@
     void pin.value;
     void pin.step;
     void pin.error;
+    void pin.busy;
     tick().then(() => {
       if (pinInput && document.activeElement !== pinInput) pinInput.focus();
     });
@@ -271,10 +318,17 @@
                 >{t(settings.pinOn ? 'ui.walletSettingsDialog.pinOnDesc' : 'ui.walletSettingsDialog.pinOffDesc')}</span
               >
             </div>
-            <div class="setting-toggle"><Toggle on={settings.pinOn || pin?.mode === 'set'} onChange={togglePin} /></div>
+            <!-- on follows the open sheet too, so cancelling a sheet puts the switch back -->
+            <div class="setting-toggle">
+              <Toggle
+                on={settings.pinOn ? pin?.mode !== 'disable' : pin?.mode === 'set'}
+                disabled={settings.pinOn ? !onDisablePin : !onSetPin}
+                onChange={togglePin}
+              />
+            </div>
           </div>
-          {#if settings.pinOn}
-            <span class="change-pin" onclick={() => (pin = { mode: 'change', step: 'set', value: '', first: '', error: false })} role="button" tabindex="0">
+          {#if settings.pinOn && onChangePin}
+            <span class="change-pin" onclick={() => startPin('change')} role="button" tabindex="0">
               <span class="change-pin-label">{t('ui.walletSettingsDialog.changePin')}</span>
               {@render glyph('lock', 14, 'var(--accent,#FF5672)')}
             </span>
@@ -452,38 +506,70 @@
 
     {#if pin}
       {@const confirmStep = pin.step === 'confirm'}
-      {@const ready = pin.value.length === 6}
+      {@const currentStep = pin.step === 'current'}
+      {@const steps = PIN_STEPS[pin.mode]}
+      {@const ready = pin.value.length === 6 && !pin.busy}
       <div class="sheet-layer pin-layer">
         <div class="sheet-veil" onclick={() => (pin = null)} aria-hidden="true"></div>
         <div class="sheet pin-sheet">
           {@render sheetHeader(
-            t(confirmStep ? 'ui.walletSettingsDialog.confirmPin' : pin.mode === 'set' ? 'ui.walletSettingsDialog.setUpPin' : 'ui.walletSettingsDialog.chooseNewPin'),
-            t('ui.walletSettingsDialog.step', { step: confirmStep ? 2 : 1, total: 2 }),
+            t(
+              currentStep
+                ? 'ui.walletSettingsDialog.currentPin'
+                : confirmStep
+                  ? 'ui.walletSettingsDialog.confirmPin'
+                  : pin.mode === 'set'
+                    ? 'ui.walletSettingsDialog.setUpPin'
+                    : 'ui.walletSettingsDialog.chooseNewPin',
+            ),
+            steps.length > 1 ? t('ui.walletSettingsDialog.step', { step: steps.indexOf(pin.step) + 1, total: steps.length }) : '',
             true,
             () => (pin = null),
-            confirmStep ? () => (pin = pin && { ...pin, step: 'set', value: pin.first, error: false }) : undefined,
+            steps.indexOf(pin.step) > 0 ? pinBack : undefined,
           )}
 
           <div class="sheet-body">
             <span class="pin-blurb"
-              >{t(confirmStep ? 'ui.walletSettingsDialog.pinConfirmBlurb' : 'ui.walletSettingsDialog.pinBlurb')}</span
+              >{t(
+                currentStep
+                  ? pin.mode === 'disable'
+                    ? 'ui.walletSettingsDialog.disablePinBlurb'
+                    : 'ui.walletSettingsDialog.currentPinBlurb'
+                  : confirmStep
+                    ? 'ui.walletSettingsDialog.pinConfirmBlurb'
+                    : 'ui.walletSettingsDialog.pinBlurb',
+              )}</span
             >
             <div class="pin-pad" onclick={() => pinInput?.focus()} role="button" tabindex="0">
               <div class="pin-digits">
                 {#each [0, 1, 2, 3, 4, 5] as i}
-                  <span class="pin-digit" class:filled={pin.value.length >= i} class:error={pin.error}>{pin.value.length > i ? '•' : ''}</span>
+                  <span class="pin-digit" class:filled={pin.value.length >= i} class:error={!!pin.error}>{pin.value.length > i ? '•' : ''}</span>
                 {/each}
                 <input
                   class="pin-input"
                   bind:this={pinInput}
                   value={pin.value}
-                  oninput={(e) => (pin = pin && { ...pin, value: e.currentTarget.value.replace(/[^0-9]/g, '').slice(0, 6), error: false })}
+                  oninput={(e) => (pin = pin && { ...pin, value: e.currentTarget.value.replace(/[^0-9]/g, '').slice(0, 6), error: null })}
+                  onkeydown={(e) => e.key === 'Enter' && pinNext()}
+                  type="password"
                   inputmode="numeric"
                   autocomplete="off"
                   maxlength="6"
+                  disabled={pin.busy}
+                  aria-label={t(currentStep ? 'ui.walletSettingsDialog.currentPin' : confirmStep ? 'ui.walletSettingsDialog.confirmPin' : 'ui.walletSettingsDialog.setUpPin')}
                 />
               </div>
-              <span class="pin-note" class:error={pin.error}>{t(pin.error ? 'ui.walletSettingsDialog.pinMismatch' : 'ui.walletSettingsDialog.numbersOnly')}</span>
+              <span class="pin-note" class:error={!!pin.error} role={pin.error ? 'alert' : undefined}
+                >{t(
+                  pin.error === 'mismatch'
+                    ? 'ui.walletSettingsDialog.pinMismatch'
+                    : pin.error === 'rejected'
+                      ? 'ui.walletSettingsDialog.pinRejected'
+                      : pin.error === 'failed'
+                        ? 'ui.walletSettingsDialog.pinSaveFailed'
+                        : 'ui.walletSettingsDialog.numbersOnly',
+                )}</span
+              >
             </div>
           </div>
 
@@ -491,8 +577,18 @@
             <span class="cancel" onclick={() => (pin = null)} role="button" tabindex="0">{t('ui.common.cancel')}</span>
             <span class="grow"></span>
             <div class="primary" class:ready onclick={pinNext} role="button" tabindex="0">
-              <span>{t(confirmStep ? 'ui.walletSettingsDialog.savePin' : 'ui.common.continue')}</span>
-              {@render glyph(confirmStep ? 'lock' : 'arrow', 15, 'var(--primary-ink)')}
+              <span
+                >{t(
+                  pin.busy
+                    ? 'ui.walletSettingsDialog.saving'
+                    : pin.mode === 'disable'
+                      ? 'ui.walletSettingsDialog.turnOffPin'
+                      : confirmStep
+                        ? 'ui.walletSettingsDialog.savePin'
+                        : 'ui.common.continue',
+                )}</span
+              >
+              {@render glyph(confirmStep || pin.mode === 'disable' ? 'lock' : 'arrow', 15, 'var(--primary-ink)')}
             </div>
           </div>
         </div>

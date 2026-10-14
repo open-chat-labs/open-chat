@@ -80,6 +80,24 @@ const sendDemo = {
   onSent: demoSend,
 };
 
+// WalletSettingsDialog's PIN lives "on the server" here; the demo accepts the PIN that was last set (initially 123456)
+let demoPin = '123456';
+const pinDemo = {
+  onSetPin: async (pin: string) => {
+    await wait(400);
+    demoPin = pin;
+  },
+  onChangePin: async (current: string, next: string) => {
+    await wait(400);
+    if (current !== demoPin) throw new Error('wrong PIN');
+    demoPin = next;
+  },
+  onDisablePin: async (current: string) => {
+    await wait(400);
+    if (current !== demoPin) throw new Error('wrong PIN');
+  },
+};
+
 // sample deposit address for the top-up rows (hosts pass the user's own)
 export const depositAddress = 'wq4pz-ixa3f-ubm7c-2jtw4-7d41e-cai';
 
@@ -114,14 +132,24 @@ const groupStats = {
 
 const groupPanel = {
   ownerHandle: '@jane_smith',
+  // the demo viewer is an owner with every permission; the component defaults to the least powerful
+  viewerRole: 'Owner',
+  canModerate: true,
+  canChangeRoles: true,
+  canInvite: true,
+  canManageBots: true,
+  onRoleChange: () => wait(300),
+  onRemoveMember: () => wait(300),
+  onUnblock: () => wait(300),
+  onRemoveBlocked: () => wait(300),
   members: [
     { title: 'Jane Smith', handle: '@jane_smith', tag: 'OWNER', color: 'violet' },
     { title: 'John Smith', handle: '@john_smith', tag: 'YOU', color: 'blue' },
-    { title: 'Alice Anderson', handle: '@alice_anderson', tag: 'ADMIN', color: 'rose' },
-    { title: 'Lucy Linden', handle: '@lucy_linden', tag: 'ADMIN', color: 'teal' },
-    { title: 'Ryan Rogers', handle: '@ryan_rogers', tag: '', color: 'amber' },
-    { title: 'Christina Cameron', handle: '@christina_cameron', tag: '', color: 'plum' },
-    { title: 'Marcus Webb', handle: '@marcus_webb', tag: '', color: 'slate' },
+    { title: 'Alice Anderson', handle: '@alice_anderson', tag: 'ADMIN', color: 'rose', online: true, activity: 'typing' },
+    { title: 'Lucy Linden', handle: '@lucy_linden', tag: 'ADMIN', color: 'teal', online: true, activity: 'now' },
+    { title: 'Ryan Rogers', handle: '@ryan_rogers', tag: '', color: 'amber', online: true, activity: '2m' },
+    { title: 'Christina Cameron', handle: '@christina_cameron', tag: '', color: 'plum', activity: '3h' },
+    { title: 'Marcus Webb', handle: '@marcus_webb', tag: '', color: 'slate', activity: '1d' },
     { title: 'Priya Raman', handle: '@priya_raman', tag: '', color: 'teal' },
   ],
   lapsed: [
@@ -212,7 +240,8 @@ const exploreCommunities = [
 ];
 
 export const samples: Record<string, Record<string, unknown>> = {
-  CreateGroupDialog: { people: createGroupPeople, invitePeople: createGroupPeople, preselected: ['@alice_anderson', '@lucy_linden'] },
+  CreateGroupDialog: { people: createGroupPeople, invitePeople: createGroupPeople, preselected: ['@alice_anderson', '@lucy_linden'], isDiamond: true, onCreate: () => wait(600) },
+  GroupSettingsDialog: { isDiamond: true, onSave: () => wait(500) },
   GroupPanel: groupPanel,
   GroupStats: groupStats,
   ActivityPanel: { items: activityItems },
@@ -247,7 +276,7 @@ export const samples: Record<string, Record<string, unknown>> = {
   BotDialog: { bot: { name: 'ReminderBot' } },
   InviteDialog: { people: invitePeople, pending: invitePending, chats: chats.slice(0, 3) },
   ExploreCommunities: { communities: exploreCommunities, joinedKeys: ['oc'] },
-  WalletSettingsDialog: { tokens: ['ICP', 'CHAT', 'BTC', 'USDT'] },
+  WalletSettingsDialog: { tokens: ['ICP', 'CHAT', 'BTC', 'USDT'], ...pinDemo },
   ChatRow: { menuItems },
   ChatPicker: { item: { title: 'Invite link', sub: 'oc.app/group/the-awesome-group-8f2a', icon: 'link' }, chats },
   ProgressTimeline: {

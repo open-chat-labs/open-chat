@@ -24,7 +24,7 @@
     userId?: string;
     /** Display name for the recipient (person's name or shortened address). Display only. */
     toLabel: string;
-    /** openchat | icp | btc | ckbtc | eth | xrp */
+    /** openchat | icp | btc | ckbtc | eth | xrpl */
     network: string;
     memo?: string;
     /** The 6-digit PIN the user typed, for the host to verify. */
@@ -61,6 +61,8 @@
   type Chain = 'BTC' | 'ETH' | 'XRP' | 'ICP';
   const NET_NAME: Record<Chain, string> = { BTC: 'Bitcoin', ETH: 'Ethereum', XRP: 'XRP Ledger', ICP: 'Internet Computer' };
   const ADDR_NAME: Record<Chain, string> = { BTC: 'Bitcoin', ETH: 'Ethereum', XRP: 'XRP', ICP: 'ICP' };
+  // detected address chain → the network ids WalletToken.nets uses
+  const CHAIN_NET: Record<Chain, string> = { BTC: 'btc', ETH: 'eth', XRP: 'xrpl', ICP: 'icp' };
 
   const fmt = (v: number, dp: number) => v.toLocaleString(i18n.locale ?? 'en', { maximumFractionDigits: dp });
   const money = (v: number) => `$${v.toLocaleString(i18n.locale ?? 'en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -129,7 +131,10 @@
   const contact = $derived(contacts.find((c) => c.userId === user) ?? null);
   const person = $derived(contact ? { name: contact.name, handle: contact.handle, grad: contact.grad ?? FALLBACK_GRAD } : null);
   const first = $derived(person ? person.name.split(' ')[0] : '');
-  const wrongNet = $derived(!!det && det !== 'unknown' && det !== tk?.symbol);
+  // a token can go to any network it lists in `nets` (CHAT and ckBTC-style sends to an ICP principal, USDT to ETH …);
+  // tokens without `nets` are ICP ledger tokens
+  const tokenNets = $derived(tk?.nets?.length ? tk.nets : ['icp']);
+  const wrongNet = $derived(!!det && det !== 'unknown' && !tokenNets.includes(CHAIN_NET[det]));
   const badAddress = $derived(det === 'unknown' || wrongNet);
   const recipOk = $derived(mode === 'user' ? !!person : !!det && det !== 'unknown' && !wrongNet);
   const over = $derived(!!tk && n + fee > tk.held);
@@ -155,7 +160,7 @@
       incoming: h.incoming,
     })),
   );
-  const network = $derived(mode === 'user' ? 'openchat' : multi ? NETS[net].id : det && det !== 'unknown' ? det.toLowerCase() : '');
+  const network = $derived(mode === 'user' ? 'openchat' : multi ? NETS[net].id : det && det !== 'unknown' ? CHAIN_NET[det] : '');
 
   const ctaLabel = $derived(
     t(ok ? 'ui.common.continue' : !recipOk ? (mode === 'user' ? 'ui.walletSend.chooseRecipient' : 'ui.walletSend.addValidAddress') : n <= 0 ? 'ui.walletSend.enterAmount' : 'ui.walletSend.tooHigh'),

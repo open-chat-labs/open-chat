@@ -5,6 +5,10 @@
      quick: the compact panel built around who's online now, your mute / @everyone / favourite pills and an invite card;
      it never drills in (sub-views go to onManage) except to read pinned messages.
      embedded: the same sub-views inside the host's manage dialog. The open sub-view persists under storageKey. -->
+<script lang="ts" module>
+  export type MemberRole = 'MEMBER' | 'MODERATOR' | 'ADMIN' | 'OWNER';
+</script>
+
 <script lang="ts">
   import { getI18n, useT, durationText } from '../../lib/i18n';
   import Translate from '../../lib/components/Translate.svelte';
@@ -31,10 +35,17 @@
   interface Person {
     title: string;
     handle: string;
+    /** Passed back with member actions (onRoleChange, onRemoveMember …). */
+    userId?: string;
     /** OWNER, ADMIN, MODERATOR, YOU (your own row), LAPSED, BLOCKED or empty. */
     tag?: string;
     color?: MemberColor;
+    /** Presence from the host; nobody is shown online without it. */
+    online?: boolean;
+    /** "typing", "now", "2m", or last seen ("3h") for people who are offline. */
+    activity?: string;
   }
+
 
   interface Bot {
     variant?: 'bot' | 'webhook';
@@ -192,8 +203,6 @@
   // role ladder: member → moderator → admin → owner
   const LADDER = ['', 'MODERATOR', 'ADMIN', 'OWNER'];
   const ROLE_NAMES: Record<string, string> = { '': 'ui.groupPanel.roleNames.member', MODERATOR: 'ui.groupPanel.roleNames.moderator', ADMIN: 'ui.groupPanel.roleNames.admin', OWNER: 'ui.groupPanel.roleNames.owner' };
-  // presence until it is wired: the first few people online are typing / active
-  const ACTIVITY = ['typing', 'now', '2m', '6m'];
 
   interface Props {
     scope?: 'group' | 'community' | 'channel';
@@ -223,7 +232,7 @@
     lapsed?: Person[];
     blocked?: Person[];
     membersLoading?: boolean;
-    /** Quick panel: how many are online (defaults to an estimate). */
+    /** Quick panel: how many are online (defaults to the members marked online). */
     onlineCount?: number;
     viewerRole?: string;
     canModerate?: boolean;
@@ -275,6 +284,12 @@
     onMuteChange?: (key: MuteKey | null) => void;
     onMuteEveryoneChange?: (on: boolean) => void;
     onClose?: () => void;
+    /** Member actions; each item is only offered when its callback is given. The list updates at once and rolls
+     *  back with an error if the promise rejects. `member` is your own row when stepping down. */
+    onRoleChange?: (member: Person, role: MemberRole) => Promise<unknown> | void;
+    onRemoveMember?: (member: Person) => Promise<unknown> | void;
+    onUnblock?: (member: Person) => Promise<unknown> | void;
+    onRemoveBlocked?: (member: Person) => Promise<unknown> | void;
   }
 
   let {
@@ -300,10 +315,10 @@
     blocked = [],
     membersLoading = false,
     onlineCount,
-    viewerRole = 'Owner',
-    canModerate = true,
-    canChangeRoles = true,
-    canInvite = true,
+    viewerRole = 'Member',
+    canModerate = false,
+    canChangeRoles = false,
+    canInvite = false,
     bots = [],
     extraBots = [],
     removedBots = [],
@@ -311,7 +326,7 @@
     extraWebhooks = [],
     webhookUrls,
     recommendedBots = [],
-    canManageBots = true,
+    canManageBots = false,
     botsPart = '',
     userGroups = [],
     permissions,
@@ -338,6 +353,10 @@
     onToggleFavourite,
     onMuteChange,
     onMuteEveryoneChange,
+    onRoleChange,
+    onRemoveMember,
+    onUnblock,
+    onRemoveBlocked,
     onClose,
   }: Props = $props();
   const t = useT();
@@ -370,6 +389,20 @@
   let removedMembers = $state<string[]>([]);
   let unblocked = $state<string[]>([]);
   let removedBlocked = $state<string[]>([]);
+  let memberError = $state('');
+
+  // optimistic: `change` updates the list now, `undo` restores it if the host rejects
+  async function memberAction(call: () => Promise<unknown> | void, change: () => void, undo: () => void) {
+    popover = null;
+    memberError = '';
+    change();
+    try {
+      await call();
+    } catch {
+      undo();
+      memberError = t('ui.groupPanel.actionFailed');
+    }
+  }
   let ownMute = $state<MuteKey | null>(null);
   let ownMuteAll = $state(false);
   let aboutOpen = $state(false);
@@ -515,23 +548,29 @@
     const all = memberSets[tabIdx];
     const blockedTab = tabIdx === 2;
     const otherOwners = memberSets[0].filter((x) => x.tag === 'OWNER').length;
-    const others = all.filter((x) => x.tag !== 'YOU');
-    const onlineN = tabIdx === 0 ? Math.min(Math.max(others.length - 2, 0), Math.max(Math.round((Number(total) || others.length) / 4), 1)) : 0;
     return all.map((m) => {
       const self = m.tag === 'YOU';
       const rank = LADDER.indexOf(m.tag === 'LAPSED' ? '' : m.tag || '');
       // members can't act on anyone; moderators can remove regular members; owners are only managed by owners,
       // and your own row only offers stepping down once someone else is an owner
-      const hasMenu = blockedTab ? canModerate : self ? viewerIsOwner : rank === 3 ? viewerIsOwner : canModerate && rank >= 0 && (canChangeRoles || rank === 0);
+      const canAct = blockedTab ? canModerate : self ? viewerIsOwner : rank === 3 ? viewerIsOwner : canModerate && rank >= 0 && (canChangeRoles || rank === 0);
       const current = self ? (selfRole ?? viewerRole.toUpperCase().replace('MEMBER', '')) : (LADDER[rank] ?? '');
       const soleOwner = self && current === 'OWNER' && otherOwners === 0;
       const setRole = (r: string) => {
-        popover = null;
-        if (self) selfRole = r;
-        else roles = { ...roles, [m.handle]: r };
+        if (!onRoleChange) return;
+        const before = self ? selfRole : roles[m.handle];
+        const put = (v: string | null | undefined) => {
+          if (self) selfRole = v ?? null;
+          else if (v == null) {
+            const rest = { ...roles };
+            delete rest[m.handle];
+            roles = rest;
+          } else roles = { ...roles, [m.handle]: v };
+        };
+        memberAction(() => onRoleChange(m, (r || 'MEMBER') as MemberRole), () => put(r), () => put(before));
       };
       const roleItems: MenuItem[] =
-        blockedTab || !canChangeRoles
+        blockedTab || !canChangeRoles || !onRoleChange
           ? []
           : [
               ...LADDER.slice()
@@ -553,44 +592,62 @@
         : !blockedTab
           ? [
               ...roleItems,
-              {
-                label: t('ui.groupPanel.removeMember'),
-                mask: mask('user-minus'),
-                variant: 'danger',
-                onSelect: () => {
-                  popover = null;
-                  removedMembers = [...removedMembers, m.handle];
-                },
-              },
+              ...(onRemoveMember
+                ? [
+                    {
+                      label: t('ui.groupPanel.removeMember'),
+                      mask: mask('user-minus'),
+                      variant: 'danger' as const,
+                      onSelect: () =>
+                        memberAction(
+                          () => onRemoveMember(m),
+                          () => (removedMembers = [...removedMembers, m.handle]),
+                          () => (removedMembers = removedMembers.filter((h) => h !== m.handle)),
+                        ),
+                    },
+                  ]
+                : []),
             ]
           : [
-              {
-                label: t('ui.groupPanel.unblock'),
-                mask: mask('circle-check'),
-                onSelect: () => {
-                  popover = null;
-                  unblocked = [...unblocked, m.handle];
-                },
-              },
-              {
-                label: t('ui.common.remove'),
-                mask: mask('user-minus'),
-                variant: 'danger',
-                onSelect: () => {
-                  popover = null;
-                  removedBlocked = [...removedBlocked, m.handle];
-                },
-              },
+              ...(onUnblock
+                ? [
+                    {
+                      label: t('ui.groupPanel.unblock'),
+                      mask: mask('circle-check'),
+                      onSelect: () =>
+                        memberAction(
+                          () => onUnblock(m),
+                          () => (unblocked = [...unblocked, m.handle]),
+                          () => (unblocked = unblocked.filter((h) => h !== m.handle)),
+                        ),
+                    },
+                  ]
+                : []),
+              ...(onRemoveBlocked
+                ? [
+                    {
+                      label: t('ui.common.remove'),
+                      mask: mask('user-minus'),
+                      variant: 'danger' as const,
+                      onSelect: () =>
+                        memberAction(
+                          () => onRemoveBlocked(m),
+                          () => (removedBlocked = [...removedBlocked, m.handle]),
+                          () => (removedBlocked = removedBlocked.filter((h) => h !== m.handle)),
+                        ),
+                    },
+                  ]
+                : []),
             ];
+      // a menu with nothing in it (no callbacks) isn't offered
+      const hasMenu = canAct && items.some((it) => it.variant !== 'separator');
       const selfTag = self ? ({ OWNER: 'OWNER', ADMIN: 'ADMIN', MODERATOR: 'MODERATOR' } as Record<string, string>)[selfRole ?? viewerRole.toUpperCase()] || '' : undefined;
-      const oi = others.indexOf(m);
-      const isOn = !self && oi >= 0 && oi < onlineN;
       return {
         ...m,
         tag: self ? selfTag : m.tag,
         isYou: self,
-        online: isOn || (self && tabIdx === 0),
-        activity: isOn ? ACTIVITY[oi] || '' : '',
+        online: tabIdx === 0 && (self || !!m.online),
+        activity: tabIdx === 0 && !self ? (m.activity ?? '') : '',
         hasMenu,
         menuKey: soleOwner ? `sole:${m.handle}` : `m:${m.handle}`,
         heading: blockedTab || !canChangeRoles ? '' : t(self ? 'ui.groupPanel.yourRole' : 'ui.groupPanel.role'),
@@ -605,11 +662,13 @@
     if (!quick) return { rows: [] as (Person & { online: boolean; activity: string })[], count: 0 };
     const others = members.filter((m) => m.tag !== 'YOU');
     const totalN = Number(memberTotal ?? others.length) || others.length;
-    const count = onlineCount ?? Math.min(Math.max(others.length - 2, 0), Math.max(Math.round(totalN / 4), 1));
-    const shown = others.slice(0, Math.min(24, Math.max(count, 0)));
-    const list = shown.length ? shown : count === 0 ? others.slice(0, 3) : [];
+    // presence comes from the host: the people marked online, or (when nobody is) the ones with a last-seen time
+    const onlineRows = others.filter((m) => m.online);
+    const count = onlineCount ?? onlineRows.length;
+    const shown = onlineRows.slice(0, 24);
+    const list = shown.length ? shown : others.filter((m) => m.activity).slice(0, 3);
     return {
-      rows: list.map((m, i) => ({ ...m, online: count > 0, activity: count > 0 ? ACTIVITY[i] || '' : ['1h', '3h', '1d'][i] || '' })),
+      rows: list.map((m) => ({ ...m, online: !!m.online, activity: m.activity ?? '' })),
       count,
       shown: shown.length,
       total: totalN,
@@ -1095,6 +1154,9 @@
           {/if}
           <div class="list-block">
             <span class="list-title">{t(MEMBER_LIST_TITLES[tabIdx], { count: [total, lapsed.length, visibleBlocked.length][tabIdx] })}</span>
+            {#if memberError}
+              <span class="member-error" role="alert">{memberError}</span>
+            {/if}
             {#if MEMBER_NOTES[tabIdx]}
               <span class="list-note">{t(MEMBER_NOTES[tabIdx])}</span>
             {/if}
@@ -2182,6 +2244,11 @@
     letter-spacing: var(--tracking-wide);
     text-transform: uppercase;
     color: var(--ink-4, #7c7c8c);
+  }
+
+  .member-error {
+    font: var(--weight-medium) var(--text-sm) / 1.4 var(--font-sans);
+    color: var(--status-danger, #f5493d);
   }
 
   .list-note {

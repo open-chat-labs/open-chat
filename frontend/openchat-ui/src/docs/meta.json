@@ -7436,8 +7436,8 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "true",
-        "doc": "Groups: false locks \"Public group\" behind an upgrade banner (channels are never locked)."
+        "componentDefault": "false",
+        "doc": "Groups: false (the default) locks \"Public group\" behind an upgrade banner (channels are never locked)."
       },
       {
         "name": "onUpgrade",
@@ -7452,14 +7452,14 @@
       },
       {
         "name": "onCreate",
-        "type": "(group: CreateGroupResult) => void",
+        "type": "(group: CreateGroupResult) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Create it (photos arrive as File objects). The dialog closes when this resolves; a rejection keeps it open with an error."
       },
       {
         "name": "onCancel",
@@ -8616,7 +8616,7 @@
         "section": null,
         "required": false,
         "componentDefault": "[]",
-        "doc": ""
+        "doc": "Members, with optional userId and presence (online, activity: \"typing\", \"now\", \"2m\", or last seen). Nobody is shown online without it."
       },
       {
         "name": "lapsed",
@@ -8660,7 +8660,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Quick panel: how many are online (defaults to an estimate)."
+        "doc": "Quick panel: how many are online (defaults to the members marked online)."
       },
       {
         "name": "viewerRole",
@@ -8670,7 +8670,7 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "'Owner'",
+        "componentDefault": "'Member'",
         "doc": ""
       },
       {
@@ -8681,7 +8681,7 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "true",
+        "componentDefault": "false",
         "doc": ""
       },
       {
@@ -8692,7 +8692,7 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "true",
+        "componentDefault": "false",
         "doc": ""
       },
       {
@@ -8703,7 +8703,7 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "true",
+        "componentDefault": "false",
         "doc": ""
       },
       {
@@ -8791,7 +8791,7 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "true",
+        "componentDefault": "false",
         "doc": ""
       },
       {
@@ -9090,6 +9090,50 @@
         "required": false,
         "componentDefault": null,
         "doc": ""
+      },
+      {
+        "name": "onRoleChange",
+        "type": "(member: Person, role: MemberRole) => Promise<unknown> | void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Change a member's role (your own row when stepping down). Offered only when given; rolls back with an error on rejection."
+      },
+      {
+        "name": "onRemoveMember",
+        "type": "(member: Person) => Promise<unknown> | void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Remove a member. Offered only when given; rolls back on rejection."
+      },
+      {
+        "name": "onUnblock",
+        "type": "(member: Person) => Promise<unknown> | void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Unblock someone on the Blocked tab. Offered only when given."
+      },
+      {
+        "name": "onRemoveBlocked",
+        "type": "(member: Person) => Promise<unknown> | void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Remove someone from the Blocked list. Offered only when given."
       }
     ],
     "group": "features"
@@ -9139,8 +9183,19 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "true",
-        "doc": ""
+        "componentDefault": "false",
+        "doc": "false (the default) stops a private group being made public; making a public group private is always allowed."
+      },
+      {
+        "name": "onUpgrade",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Upgrade action on the \"Public group\" Diamond banner."
       },
       {
         "name": "noun",
@@ -9155,14 +9210,14 @@
       },
       {
         "name": "onSave",
-        "type": "(all: GroupSettings) => void",
+        "type": "(all: GroupSettings) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Save it (new photos arrive as avatarFile / coverFile). The form only counts as saved once this resolves; a rejection keeps the edits with an error."
       },
       {
         "name": "onCancel",
@@ -15557,6 +15612,39 @@
         "required": false,
         "componentDefault": null,
         "doc": ""
+      },
+      {
+        "name": "onSetPin",
+        "type": "(pin: string) => Promise<unknown>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Store a new transfer PIN. Reject to show an error."
+      },
+      {
+        "name": "onChangePin",
+        "type": "(current: string, next: string) => Promise<unknown>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Replace the PIN; reject if `current` is wrong."
+      },
+      {
+        "name": "onDisablePin",
+        "type": "(current: string) => Promise<unknown>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Turn the PIN off; reject if `current` is wrong."
       },
       {
         "name": "onCancel",

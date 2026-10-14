@@ -15,6 +15,7 @@
   import TextArea from '../../lib/components/TextArea.svelte';
   import TimedToggle from '../../lib/components/TimedToggle.svelte';
   import Toggle from '../../lib/components/Toggle.svelte';
+  import UpgradeBanner from './UpgradeBanner.svelte';
   import { modal } from '../../lib/behaviours/modal';
 
   type Section = 'group' | 'gates' | 'rules' | 'permissions';
@@ -108,10 +109,13 @@
   interface Props {
     value?: Partial<GroupSettings> | null;
     initialTab?: Section;
+    /** false (the default) stops a private group being made public; making a public group private is always allowed. */
     isDiamond?: boolean;
+    onUpgrade?: () => void;
     /** "community" also allows a custom cover image (and a taller cover). */
     noun?: 'group' | 'community';
-    onSave?: (all: GroupSettings) => void;
+    /** Save it. The form only counts as saved once this resolves; a rejection keeps the edits with an error. */
+    onSave?: (all: GroupSettings) => Promise<unknown> | void;
     onCancel?: () => void;
     /** Embedded close button; falls back to onCancel. */
     onClose?: () => void;
@@ -139,7 +143,8 @@
   let {
     value = null,
     initialTab = 'group',
-    isDiamond = true,
+    isDiamond = false,
+    onUpgrade,
     noun = 'group',
     onSave,
     onCancel,
@@ -173,6 +178,28 @@
   let coverKey = $state(startInfo.coverKey || 'plum');
   let coverUrl = $state<string | null>(startInfo.coverUrl || null);
   let avatar = $state(startInfo.avatar || '');
+  // newly picked images: the files go to the host, the object URLs are previews only and are always released here
+  let avatarFile = $state<File | null>(null);
+  let coverFile = $state<File | null>(null);
+  let avatarPreview = $state<string | null>(null);
+  let coverPreview = $state<string | null>(null);
+  const preview = (old: string | null, file: File | null) => {
+    if (old) URL.revokeObjectURL(old);
+    return file ? URL.createObjectURL(file) : null;
+  };
+  const setAvatarFile = (f: File | null) => {
+    avatarFile = f;
+    avatarPreview = preview(avatarPreview, f);
+  };
+  const setCoverFile = (f: File | null) => {
+    coverFile = f;
+    coverPreview = preview(coverPreview, f);
+  };
+  const avatarShown = $derived(avatarPreview ?? avatar);
+  const coverShown = $derived(coverPreview ?? coverUrl);
+  const fileKey = (f: File | null) => (f ? `${f.name}:${f.size}:${f.lastModified}` : null);
+  let saving = $state(false);
+  let saveError = $state(false);
   let isPublic = $state(!!startSet.isPublic);
   let history = $state(startSet.history !== undefined ? !!startSet.history : true);
   let disappearOn = $state(!!startSet.disappearOn);
@@ -187,7 +214,7 @@
   });
   let threadsOverride = $state(!!startPerms?.threads);
 
-  const snapshot = () => ({ name, about, color, coverKey, coverUrl, avatar, isPublic, history, disappearOn, after, gates, rulesOn, rulesText, perms, threadsOverride });
+  const snapshot = () => ({ name, about, color, coverKey, coverUrl, avatar, avatarFile: fileKey(avatarFile), coverFile: fileKey(coverFile), isPublic, history, disappearOn, after, gates, rulesOn, rulesText, perms, threadsOverride });
   let initial = $state(JSON.stringify(untrack(snapshot)));
 
   // --- view state
@@ -252,7 +279,8 @@
   });
 
   onDestroy(() => {
-    if (avatar && avatar !== startInfo.avatar) URL.revokeObjectURL(avatar);
+    if (avatarPreview) URL.revokeObjectURL(avatarPreview);
+    if (coverPreview) URL.revokeObjectURL(coverPreview);
   });
 
   function openPermMenu(target: HTMLElement, scopeKey: Scope, key: string, allowInherit: boolean) {
@@ -277,12 +305,16 @@
   function discard() {
     const s = JSON.parse(initial);
     ({ name, about, color, coverKey, coverUrl, avatar, isPublic, history, disappearOn, after, gates, rulesOn, rulesText, perms, threadsOverride } = s);
+    // the baseline never holds a picked file once saved, except the one just saved (kept as the preview)
+    if (s.avatarFile !== fileKey(avatarFile)) setAvatarFile(null);
+    if (s.coverFile !== fileKey(coverFile)) setCoverFile(null);
+    saveError = false;
     submitted = false;
     touched = false;
   }
 
-  function save() {
-    if (!dirty) return;
+  async function save() {
+    if (!dirty || saving) return;
     if (!nameOk) {
       submitted = true;
       tab = 0;
@@ -293,13 +325,9 @@
       tab = 2;
       return;
     }
-    // embedded stays open after saving, so the saved draft becomes the new baseline
-    if (embedded) {
-      initial = JSON.stringify(snapshot());
-      submitted = false;
-    }
-    onSave?.({
-      info: { name: name.trim(), about, color, coverKey, coverUrl, avatar },
+    const saved = snapshot();
+    const all: GroupSettings = {
+      info: { name: name.trim(), about, color, coverKey, coverUrl: coverFile ? null : coverUrl, avatar: avatarFile ? '' : avatar, avatarFile, coverFile },
       settings: { isPublic, history, disappearOn, after },
       gates,
       rules: { enabled: rulesOn, text: rulesOn ? rulesText.trim() : '' },
@@ -308,7 +336,23 @@
         messages: { ...perms.messages },
         threads: threadsOverride ? { ...perms.threads } : null,
       },
-    });
+    };
+    saving = true;
+    saveError = false;
+    try {
+      await onSave?.(all);
+    } catch {
+      // the edits and the unsaved-changes guard stay as they were
+      saveError = true;
+      return;
+    } finally {
+      saving = false;
+    }
+    // embedded stays open after saving, so the saved draft becomes the new baseline (only once the host confirms)
+    if (embedded) {
+      initial = JSON.stringify(saved);
+      submitted = false;
+    }
   }
 
   const ringOf = (on: boolean) => (on ? '0 0 0 2px var(--surface-1,#0e0e12), 0 0 0 4px var(--accent,#FF5672)' : 'inset 0 0 0 1px var(--line-2,rgba(255,255,255,.14))');
@@ -318,7 +362,12 @@
       title: t('ui.groupSettingsDialog.publicGroup'),
       hint: t(isPublic ? 'ui.groupSettingsDialog.publicHintOn' : 'ui.groupSettingsDialog.publicHintOff'),
       on: isPublic,
-      set: (v: boolean) => (isPublic = v),
+      // going public needs Diamond; going private never does
+      locked: !isDiamond && !isPublic,
+      set: (v: boolean) => {
+        if (v && !isDiamond) return;
+        isPublic = v;
+      },
       timed: false,
     },
     {
@@ -428,7 +477,7 @@
       <div class="body-inner" inert={statusOnly ? true : undefined}>
         {#if tabIdx === 0 && !viewOnly}
           <div class="group-page">
-            <div class="cover" style:height={isCommunity ? '150px' : '112px'} style:background={coverUrl ? `url(${coverUrl}) center/cover no-repeat` : `var(--cover-${COVERS[coverKey] ? coverKey : 'plum'})`}>
+            <div class="cover" style:height={isCommunity ? '150px' : '112px'} style:background={coverShown ? `url(${coverShown}) center/cover no-repeat` : `var(--cover-${COVERS[coverKey] ? coverKey : 'plum'})`}>
               <div class="cover-tools">
                 <div class="cover-tools-inner">
                   {#if isCommunity}
@@ -440,11 +489,11 @@
                       oninput={(e) => {
                         const f = e.currentTarget.files?.[0];
                         if (!f) return;
-                        coverUrl = URL.createObjectURL(f);
+                        setCoverFile(f);
                         e.currentTarget.value = '';
                       }}
                     />
-                    <span class="cover-upload" onclick={() => coverInput?.click()} role="button" tabindex="0"><span class="cover-camera" style:mask={mask('camera')}></span>{t(coverUrl ? 'ui.groupSettingsDialog.changeCover' : 'ui.groupSettingsDialog.uploadCover')}</span>
+                    <span class="cover-upload" onclick={() => coverInput?.click()} role="button" tabindex="0"><span class="cover-camera" style:mask={mask('camera')}></span>{t(coverShown ? 'ui.groupSettingsDialog.changeCover' : 'ui.groupSettingsDialog.uploadCover')}</span>
                   {/if}
                   <div class="swatches">
                     {#each Object.entries(COVERS) as [key, label]}
@@ -455,6 +504,7 @@
                         onclick={() => {
                           coverKey = key;
                           coverUrl = null;
+                          setCoverFile(null);
                         }}
                         role="button"
                         tabindex="0"
@@ -472,7 +522,7 @@
                 <div class="photo-row">
                   <div class="photo">
                     <div class="photo-frame" style:background={(GRADIENTS[color] ?? GRADIENTS.teal).value}>
-                      <div class="photo-image" style:background={avatar ? `url(${avatar}) center/cover no-repeat` : 'none'}></div>
+                      <div class="photo-image" style:background={avatarShown ? `url(${avatarShown}) center/cover no-repeat` : 'none'}></div>
                     </div>
                     <input
                       class="hidden-input"
@@ -481,7 +531,8 @@
                       accept="image/*"
                       oninput={(e) => {
                         const f = e.currentTarget.files?.[0];
-                        if (f) avatar = URL.createObjectURL(f);
+                        if (f) setAvatarFile(f);
+                        e.currentTarget.value = '';
                       }}
                     />
                     <div class="photo-pick" onclick={() => avatarInput?.click()} role="button" tabindex="0"><span class="icon-15 ink" style:mask={mask('camera')}></span></div>
@@ -491,8 +542,15 @@
                     <div class="photo-line">
                       <span class="photo-hint">{t('ui.groupSettingsDialog.photoHint')}</span>
                       <span class="grow"></span>
-                      {#if avatar}
-                        <span class="remove-photo" onclick={() => (avatar = '')} role="button" tabindex="0">{t('ui.groupSettingsDialog.removePhoto')}</span>
+                      {#if avatarShown}
+                        <span
+                          class="remove-photo"
+                          onclick={() => {
+                            avatar = '';
+                            setAvatarFile(null);
+                          }}
+                          role="button"
+                          tabindex="0">{t('ui.groupSettingsDialog.removePhoto')}</span>
                       {/if}
                       {#each Object.entries(GRADIENTS) as [key, g]}
                         <span class="swatch flex-none" style:background={g.value} style:box-shadow={ringOf(key === color)} onclick={() => (color = key)} role="button" tabindex="0" aria-label={t(g.label)} title={t(g.label)}></span>
@@ -546,8 +604,11 @@
                               <span class="switch-title">{s.title}</span>
                               <span class="switch-hint">{s.hint}</span>
                             </div>
-                            <div class="toggle-cell"><Toggle on={s.on} onChange={s.set} /></div>
+                            <div class="toggle-cell"><Toggle on={s.on} disabled={!!s.locked} onChange={s.set} /></div>
                           </div>
+                          {#if s.locked}
+                            <UpgradeBanner text={t('ui.groupSettingsDialog.diamondOnly')} {onUpgrade} />
+                          {/if}
                         {/if}
                       </div>
                     {/each}
@@ -578,10 +639,10 @@
 
         {#if isAbout}
           <div class="about">
-            <div class="about-cover" style:height={isCommunity ? '150px' : '112px'} style:background={coverUrl ? `url(${coverUrl}) center/cover no-repeat` : `var(--cover-${COVERS[coverKey] ? coverKey : 'plum'})`}></div>
+            <div class="about-cover" style:height={isCommunity ? '150px' : '112px'} style:background={coverShown ? `url(${coverShown}) center/cover no-repeat` : `var(--cover-${COVERS[coverKey] ? coverKey : 'plum'})`}></div>
             <div class="about-body">
               <div class="photo-frame about-photo" style:background={(GRADIENTS[color] ?? GRADIENTS.teal).value}>
-                <div class="photo-image" style:background={avatar ? `url(${avatar}) center/cover no-repeat` : 'none'}></div>
+                <div class="photo-image" style:background={avatarShown ? `url(${avatarShown}) center/cover no-repeat` : 'none'}></div>
               </div>
               <div class="about-names">
                 <span class="about-name">{name}</span>
@@ -809,12 +870,14 @@
           <span class="cancel" onclick={() => (embedded ? discard() : onCancel?.())} role="button" tabindex="0">{t(embedded ? 'ui.groupSettingsDialog.discardChanges' : 'ui.common.cancel')}</span>
         {/if}
         <span class="grow"></span>
-        {#if showNote}
+        {#if saveError}
+          <span class="note error" role="alert">{t('ui.groupSettingsDialog.saveFailed')}</span>
+        {:else if showNote}
           <span class="note" class:error={noteError}>{t(submitted && !nameOk ? 'ui.groupSettingsDialog.nameNeeded' : submitted && rulesBad ? 'ui.groupSettingsDialog.rulesNeeded' : 'ui.groupSettingsDialog.unsaved')}</span>
         {/if}
-        <div class="save" class:ready={dirty} onclick={save} role="button" tabindex="0">
+        <div class="save" class:ready={dirty && !saving} onclick={save} role="button" tabindex="0" aria-disabled={!dirty || saving}>
           <span class="save-icon"></span>
-          <span>{t('ui.common.saveChanges')}</span>
+          <span>{t(saving ? 'ui.groupSettingsDialog.saving' : 'ui.common.saveChanges')}</span>
         </div>
       </div>
     {/if}

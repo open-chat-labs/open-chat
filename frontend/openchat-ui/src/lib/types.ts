@@ -180,7 +180,20 @@ export interface AccessGatesState {
 
 /** GroupSettingsDialog `onSave` value; also accepted (partially) as `value`. */
 export interface GroupSettings {
-  info: { name: string; about: string; color: string; coverKey: string; coverUrl: string | null; avatar: string };
+  info: {
+    name: string;
+    about: string;
+    color: string;
+    coverKey: string;
+    /** The existing cover image URL; null for a swatch or when a new coverFile replaces it. */
+    coverUrl: string | null;
+    /** The existing photo URL; '' when removed or when a new avatarFile replaces it. */
+    avatar: string;
+    /** A newly picked photo, for the host to upload (onSave only). */
+    avatarFile?: File | null;
+    /** A newly picked cover image (onSave only). */
+    coverFile?: File | null;
+  };
   settings: { isPublic: boolean; history: boolean; disappearOn: boolean; after: string };
   gates: AccessGatesState | null;
   rules: { enabled: boolean; text: string };
@@ -272,13 +285,14 @@ export interface CreateGroupResult {
   /** Avatar gradient key when there is no photo. */
   color: string;
   coverKey: string;
-  /** Object URL of the picked photo. */
-  avatar: string | null;
+  /** The picked photo file (upload it yourself; the dialog's preview URL is revoked when it closes). */
+  avatarFile: File | null;
   kind: 'group' | 'community' | 'channel' | 'embedded';
   embedded: boolean;
   /** Communities only. */
   language: string | null;
-  coverUrl: string | null;
+  /** The picked cover image file, or null for a swatch (coverKey). */
+  coverFile: File | null;
   /** Communities: the public channels to create. */
   channels: string[];
   /** Embedded channels: the page shown. */
