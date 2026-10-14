@@ -932,12 +932,16 @@
     color: var(--ink-2, #c9c9d4);
   }
 
+  /* the quoted message wraps up to three lines, then ends in an ellipsis (same as the bubble's reply quote) */
   .context-quote {
-    font: 400 13px/1.2 var(--font-sans);
+    font: 400 13px/1.3 var(--font-sans);
     color: var(--ink-3, #a3a3b2);
-    white-space: nowrap;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
     overflow: hidden;
-    text-overflow: ellipsis;
+    overflow-wrap: anywhere;
   }
 
   .round-close {
