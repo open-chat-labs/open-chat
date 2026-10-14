@@ -8,11 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Add `c2c_previous_user_ids`, for groups and communities checking a member's gate again ([#REMOVE](https://github.com/open-chat-labs/open-chat/pull/REMOVE))
+- Add `c2c_previous_user_ids`, for groups and communities checking a member's gate again ([#9970](https://github.com/open-chat-labs/open-chat/pull/9970))
 
 ### Changed
 
-- Pass on the referrer of a user joining a community by their latest id ([#REMOVE](https://github.com/open-chat-labs/open-chat/pull/REMOVE))
+- Pass on the referrer of a user joining a community by their latest id ([#9970](https://github.com/open-chat-labs/open-chat/pull/9970))
 
 ### Removed
 

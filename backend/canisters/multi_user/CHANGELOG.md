@@ -8,13 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Look up the latest id of a P2P swap's offerer named by their old id in the LocalUserIndex ([#REMOVE](https://github.com/open-chat-labs/open-chat/pull/REMOVE))
+- Look up the latest id of a P2P swap's offerer named by their old id in the LocalUserIndex ([#9970](https://github.com/open-chat-labs/open-chat/pull/9970))
 
 ### Removed
 
 - Remove the job which rewrote every direct chat into the new format ([#9968](https://github.com/open-chat-labs/open-chat/pull/9968))
 - Remove the code which read event data from the heap now that it has all moved into stable memory ([#9968](https://github.com/open-chat-labs/open-chat/pull/9968))
-- Remove the jobs which replaced users' old ids, and the mapping of old ids to new, now that every id held is the latest ([#REMOVE](https://github.com/open-chat-labs/open-chat/pull/REMOVE))
+- Remove the jobs which replaced users' old ids, and the mapping of old ids to new, now that every id held is the latest ([#9970](https://github.com/open-chat-labs/open-chat/pull/9970))
 
 ## [[2.0.2143](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2143-multi_user)] - 2026-10-14
 
