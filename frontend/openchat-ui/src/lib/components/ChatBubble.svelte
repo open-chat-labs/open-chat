@@ -270,7 +270,10 @@
   }
 
   /* every bubble is left-aligned, so the avatar-facing edge is inline-start for both sides */
+  /* never wider than its column: nowrap quote lines would otherwise set the bubble's minimum width */
   .bubble {
+    box-sizing: border-box;
+    max-width: 100%;
     text-align: start;
     background: var(--bubble-recv-bg, #191921);
     box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
