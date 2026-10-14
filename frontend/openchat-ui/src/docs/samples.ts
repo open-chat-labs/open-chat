@@ -40,7 +40,7 @@ const menuItems = [
 ];
 
 const walletTokens = [
-  { symbol: 'ICP', name: 'Internet Computer', mark: '\u221E', grad: 'linear-gradient(140deg,#ff5f9e,#6a2bff)', held: 4820, price: 5.48, dp: 4, fee: 0.0001, payable: true, nets: ['icp'] },
+  { symbol: 'ICP', name: 'Internet Computer', mark: '\u221E', grad: 'linear-gradient(140deg,#ff5f9e,#6a2bff)', held: 0.5, price: 5.48, dp: 4, fee: 0.0001, payable: true, nets: ['icp'] },
   { symbol: 'CHAT', name: 'OpenChat', mark: 'C', grad: 'linear-gradient(140deg,#2EE6A8,#1FB6FF)', held: 132.33, price: 0.053, dp: 4, fee: 0.001, payable: true, nets: ['icp'] },
   { symbol: 'BTC', name: 'Bitcoin', mark: '\u20BF', grad: 'linear-gradient(140deg,#F7A63B,#F7931A)', held: 0.0213, price: 62000, dp: 8, fee: 0.0000001, payable: true, nets: ['btc', 'icp'] },
   { symbol: 'USDT', name: 'Tether', mark: 'T', grad: 'linear-gradient(140deg,#4BD6A8,#1E9E7E)', held: 250, price: 1, dp: 2, fee: 0.01, nets: ['eth', 'icp'] },
@@ -407,7 +407,7 @@ export const contextRows = [
 ] as const;
 
 export const pickerTokens: TokenOption[] = [
-  { symbol: 'ICP', name: 'Internet Computer', mark: '∞', gradient: 'linear-gradient(140deg,#ff5f9e,#6a2bff)', held: '4,820' },
+  { symbol: 'ICP', name: 'Internet Computer', mark: '∞', gradient: 'linear-gradient(140deg,#ff5f9e,#6a2bff)', held: '0.5' },
   { symbol: 'CHAT', name: 'OpenChat', mark: 'C', gradient: 'linear-gradient(140deg,#2EE6A8,#1FB6FF)', held: '132.33' },
   { symbol: 'BTC', name: 'Bitcoin', mark: '₿', gradient: 'linear-gradient(140deg,#F7A63B,#F7931A)', held: '0.0213' },
   { symbol: 'USDT', name: 'Tether', mark: 'T', gradient: 'linear-gradient(140deg,#4BD6A8,#1E9E7E)' },
@@ -651,7 +651,7 @@ export const joinGate = {
   ] as const,
   tokens: [
     { symbol: 'CHAT', held: 132.33, mark: 'C', grad: 'linear-gradient(140deg,#2EE6A8,#1FB6FF)' },
-    { symbol: 'ICP', held: 4820, mark: '∞', grad: 'linear-gradient(140deg,#ff5f9e,#6a2bff)' },
+    { symbol: 'ICP', held: 0.5, mark: '∞', grad: 'linear-gradient(140deg,#ff5f9e,#6a2bff)' },
   ],
 };
 

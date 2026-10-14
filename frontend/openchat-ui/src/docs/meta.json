@@ -143,7 +143,7 @@
       {
         "name": "meta",
         "type": "string",
-        "default": "Balance 4,820 ICP",
+        "default": "Balance 0.5 ICP",
         "editor": "text",
         "options": null,
         "section": null,

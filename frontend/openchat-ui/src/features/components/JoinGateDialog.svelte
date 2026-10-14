@@ -255,8 +255,7 @@
           {#if active && r.gate.kind === 'neuron' && r.state === 'todo'}
             <div class="extra">
               <div class="confirm">
-                <Toggle on={confirmed} label="" onChange={(v) => (confirmed = v)} />
-                <span class="confirm-text">{t(r.gate.confirm || 'ui.joinGateDialog.confirmNeuron')}</span>
+                <Toggle on={confirmed} label={r.gate.confirm || 'ui.joinGateDialog.confirmNeuron'} onChange={(v) => (confirmed = v)} />
               </div>
               <span class="small">{t('ui.joinGateDialog.checkedOnJoin')}</span>
             </div>
@@ -631,19 +630,9 @@
 
   .confirm {
     display: flex;
-    gap: var(--space-10);
-    align-items: flex-start;
     padding: var(--space-12);
     border-radius: 10px;
     background: var(--overlay-1, rgba(255, 255, 255, 0.04));
-  }
-
-  .confirm-text {
-    flex: 1;
-    min-width: 0;
-    font: var(--weight-medium) var(--text-sm) / 1.5 var(--font-sans);
-    color: var(--ink-2, #c9c9d4);
-    text-wrap: pretty;
   }
 
   .small {

@@ -359,7 +359,7 @@
                 </div>
                 <span class="link-actions">
                   <CopyButton value={`https://${link}`} label="ui.inviteDialog.copyLink" size="md" />
-                  <span class="icon-button" onclick={() => (pickerOpen = true)} role="button" tabindex="0" title={t('ui.inviteDialog.shareToChat')} aria-label={t('ui.inviteDialog.shareToChat')}><span class="send-icon"></span></span>
+                  <span class="icon-button large" onclick={() => (pickerOpen = true)} role="button" tabindex="0" title={t('ui.inviteDialog.shareToChat')} aria-label={t('ui.inviteDialog.shareToChat')}><span class="send-icon"></span></span>
                 </span>
               </div>
 

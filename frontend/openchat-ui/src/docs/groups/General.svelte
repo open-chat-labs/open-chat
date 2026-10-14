@@ -309,7 +309,7 @@
   <Frame style="flex-direction: column; flex-wrap: nowrap; gap: 14px; max-width: 420px" align="stretch">
     <ListSectionLabel label="docs.general.sectionLabels.today" />
     <ListSectionLabel label="docs.general.tabs.members" meta="112" />
-    <ListSectionLabel label="docs.general.amounts.youPay" meta={t('docs.general.amounts.balance', { amount: '4,820 ICP' })} inset />
+    <ListSectionLabel label="docs.general.amounts.youPay" meta={t('docs.general.amounts.balance', { amount: '0.5 ICP' })} inset />
   </Frame>
 </Section>
 
@@ -478,7 +478,7 @@
   <div class="pair">
     <Frame cols="minmax(0, 1fr)" label="Swap pair · top + bottom, editable">
       <div class="stack">
-        <AmountCard label="docs.general.amounts.youPay" meta={t('docs.general.amounts.balance', { amount: '4,820 ICP' })} value={payValue} note="≈ $657.72" symbol="ICP" mark={tokenIcp.mark} gradient={tokenIcp.gradient} position="top" onChange={(e) => (payValue = e.currentTarget.value)} onQuickSelect={() => {}} onTokenClick={() => {}} />
+        <AmountCard label="docs.general.amounts.youPay" meta={t('docs.general.amounts.balance', { amount: '0.5 ICP' })} value={payValue} note="≈ $657.72" symbol="ICP" mark={tokenIcp.mark} gradient={tokenIcp.gradient} position="top" onChange={(e) => (payValue = e.currentTarget.value)} onQuickSelect={() => {}} onTokenClick={() => {}} />
         <AmountCard label="docs.general.amounts.youGet" value="2,412.6" note="≈ $127.87" symbol="CHAT" mark={tokenChat.mark} gradient={tokenChat.gradient} position="bottom" muted onTokenClick={() => {}} />
       </div>
     </Frame>
