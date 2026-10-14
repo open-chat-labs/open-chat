@@ -19,9 +19,9 @@
   interface Props {
     onlineMinutes: number;
     onlineMinutesPrev: number;
-    /** label picks the icon (Text, Image, Video, Audio, File, Poll, Crypto, GIF) and is shown as a resource key (or
+    /** type picks the icon (text, image, video, audio, file, poll, crypto, gif; falls back to the label); label is a resource key (or
         literal text); colour defaults from a palette. */
-    slices: { label: string; count: number; color?: string }[];
+    slices: { label: string; count: number; color?: string; type?: string }[];
     /** label: resource key (or literal text). */
     extras?: { label: string; count: string }[];
   }
@@ -66,7 +66,7 @@
       <div class="tile">
         <span class="count" style:color={slice.color}>{fmt(slice.count)}</span>
         <span class="label-row">
-          <span class="type-icon" style:mask="var(--icon-{TYPE_ICONS[slice.label.toLowerCase()] ?? 'chat'}) center/contain no-repeat"></span>
+          <span class="type-icon" style:mask="var(--icon-{TYPE_ICONS[(slice.type ?? slice.label).toLowerCase()] ?? 'chat'}) center/contain no-repeat"></span>
           <span class="label">{t(slice.label)}</span>
         </span>
       </div>

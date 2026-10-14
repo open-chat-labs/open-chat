@@ -1682,7 +1682,16 @@
       "now": "now",
       "typing": "Typing",
       "webhook": "Webhook",
-      "you": "YOU"
+      "you": "YOU",
+      "tags": {
+        "admin": "ADMIN",
+        "blocked": "BLOCKED",
+        "bot": "BOT",
+        "lapsed": "LAPSED",
+        "member": "MEMBER",
+        "moderator": "MODERATOR",
+        "owner": "OWNER"
+      }
     },
     "memeFighterDialog": {
       "adding": "Adding…",
@@ -2445,7 +2454,17 @@
     "statsDonut": {
       "messages": "MESSAGES",
       "onlinePreviousMonth": "{count, plural, one {{figure} minute the previous month} other {{figure} minutes the previous month}}",
-      "onlineThisMonth": "{count, plural, one {{figure} minute online this month} other {{figure} minutes online this month}}"
+      "onlineThisMonth": "{count, plural, one {{figure} minute online this month} other {{figure} minutes online this month}}",
+      "types": {
+        "audio": "Audio",
+        "crypto": "Crypto",
+        "file": "File",
+        "gif": "GIF",
+        "image": "Image",
+        "poll": "Poll",
+        "text": "Text",
+        "video": "Video"
+      }
     },
     "stepIndicator": {
       "progress": "Step {step} of {total}"

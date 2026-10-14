@@ -30,6 +30,7 @@
     subtitle?: string;
     variant?: 'member' | 'bot' | 'webhook' | 'invite';
     /** Role chip next to the name. Resource key (or literal text). */
+    /** A role id (OWNER, ADMIN, MODERATOR, MEMBER, YOU, LAPSED, BLOCKED, BOT: shown translated) or a resource key / literal text. */
     tag?: string;
     /** Your own row: adds a YOU chip. */
     isYou?: boolean;
@@ -84,6 +85,17 @@
     onMenu,
     onClick,
   }: Props = $props();
+  // role tags are ids ('OWNER', 'YOU' …) that hosts compare against; only the displayed text is translated
+  const TAGS: Record<string, string> = {
+    OWNER: 'ui.memberRow.tags.owner',
+    ADMIN: 'ui.memberRow.tags.admin',
+    MODERATOR: 'ui.memberRow.tags.moderator',
+    MEMBER: 'ui.memberRow.tags.member',
+    YOU: 'ui.memberRow.you',
+    LAPSED: 'ui.memberRow.tags.lapsed',
+    BLOCKED: 'ui.memberRow.tags.blocked',
+    BOT: 'ui.memberRow.tags.bot',
+  };
   const t = useT();
 
   const invite = $derived(variant === 'invite');
@@ -118,7 +130,7 @@
     <div class="name-line">
       <span class="name" class:invite class:muted>{invite ? t(title) : title}</span>
       {#if tag}
-        <span class="chip">{t(tag)}</span>
+        <span class="chip">{t(TAGS[tag] ?? tag)}</span>
       {/if}
       {#if isYou}
         <span class="chip you">{t('ui.memberRow.you')}</span>

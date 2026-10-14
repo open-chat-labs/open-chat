@@ -110,18 +110,20 @@
   // ── Whole feature screens and dialogs, rendered with their demo props (demo.ts) ──
   const featureComponents = F as unknown as Record<string, typeof Button>;
   const walletScreens = ['WalletMain', 'WalletSend', 'WalletReceive', 'WalletSwap', 'WalletRecipients'];
+  const walletTabs = ['docs.features.wallet.main', 'ui.common.send', 'docs.features.wallet.receive', 'docs.features.wallet.swap', 'docs.features.wallet.recipients'];
   let walletScreen = $state(0);
   let openDialog = $state<string | null>(null);
 
   // AchievementToast plays once on mount: each press remounts it (new key) with the next achievement
   const achievements = [
-    { title: 'Say cheese', icon: 'camera', reward: 500 },
-    { title: 'First swap', icon: 'swap', reward: 1200 },
-    { title: 'Streak of 7', icon: 'flame', reward: 250 },
+    { title: 'docs.features.achievements.sayCheese', icon: 'camera', reward: 500 },
+    { title: 'docs.features.achievements.firstSwap', icon: 'swap', reward: 1200 },
+    { title: 'docs.features.achievements.streak7', icon: 'flame', reward: 250 },
   ];
   let toastRuns = 0;
   let toast = $state(0);
-  const dialogLabel = (n: string) => n.replace(/Dialog$/, '').replace(/([a-z])([A-Z])/g, '$1 $2');
+  // opener labels are docs keys: docs.features.open.<dialog name without 'Dialog', camelCase>
+  const dialogLabel = (n: string) => 'docs.features.open.' + n.replace(/Dialog$/, '').replace(/^./, (c) => c.toLowerCase());
 </script>
 
 <!-- App group, part A: chat summaries … wallet blocks. -->
@@ -204,9 +206,9 @@
         <div class="end"><TransferMessage side="sent" amount="100" symbol="CHAT" mark={S.chat.mark} gradient={S.chat.gradient} usd="$5.30" time="12:02" /></div>
         <SwapOfferMessage side="received" give={S.swapLegs.give} get={S.swapLegs.get} expiresIn="9d 21h" time="12:03" />
         <PollMessage side="received" question={S.poll.question} options={S.poll.options} publicVotes endsIn="2d" myVotes={[1]} time="12:04" />
-        <PrizeMessage token={S.prizeToken} winners={20} claimed={7} endsIn="4m 12s" endingSoon gates={[{ label: 'Diamond member', met: true }, { label: 'Hold 10 CHAT', met: true }]} time="12:05" />
-        <PrizeMessage token={S.prizeToken} winners={10} claimed={2} endsIn="1h 03m" gates={[{ label: 'Diamond member', met: true }, { label: 'Hold 1,000 CHAT', met: false }]} time="12:06" />
-        <ProposalMessage title="Fund the design system work" kind="Transfer SNS treasury funds" proposer="hamish" adopt={41} reject={6} when="Voting ends in 2d 4h" canVote time="12:07" />
+        <PrizeMessage token={S.prizeToken} winners={20} claimed={7} endsIn="4m 12s" endingSoon gates={[{ label: 'docs.features.prize.diamondMember', met: true }, { label: 'docs.features.prize.hold10Chat', met: true }]} time="12:05" />
+        <PrizeMessage token={S.prizeToken} winners={10} claimed={2} endsIn="1h 03m" gates={[{ label: 'docs.features.prize.diamondMember', met: true }, { label: 'docs.features.prize.hold1000Chat', met: false }]} time="12:06" />
+        <ProposalMessage title="Fund the design system work" kind="Transfer SNS treasury funds" proposer="hamish" adopt={41} reject={6} when="docs.features.proposal.votingEnds" canVote time="12:07" />
       </div>
     </Frame>
   </div>
@@ -257,12 +259,12 @@
     </Frame>
     <Frame label="PanelNavRow · StatCard">
       <div class="fill stack">
-        <PanelNavRow label="Members" value="112" />
-        <PanelNavRow label="Access gates" hint="Who can join" value="2" />
-        <PanelNavRow label="Upgrade to Diamond" highlight />
+        <PanelNavRow label="docs.features.panel.members" value="112" />
+        <PanelNavRow label="docs.features.panel.accessGates" hint="docs.features.panel.whoCanJoin" value="2" />
+        <PanelNavRow label="docs.features.panel.upgradeDiamond" highlight />
         <div class="stats">
-          <StatCard label="MESSAGES" value="1,417" />
-          <StatCard label="MEMBERS" value="112" />
+          <StatCard label="docs.features.panel.messages" value="1,417" />
+          <StatCard label="docs.features.panel.membersCaps" value="112" />
           <StatCard label="CHIT" value="339,400" emphasis />
         </div>
       </div>
@@ -290,7 +292,7 @@
         <ChatRow title={S.longName} preview="An unreasonably long preview line that keeps going well past the edge of the row so it has to truncate" time="23:59" color="amber" unreadCount={9999} verified online />
         <ChatRow title={S.longGroup} kind="group" preview="x" time="Mon" color="violet" unreadCount={9999} pinned muted />
         <ChatRow title="A" preview="." time="1m" color="teal" unreadCount={1} />
-        <MemberRow title={S.longName} subtitle="@bartholomew_montgomery_fitzgerald_the_third" tag="Owner" online activity="now" />
+        <MemberRow title={S.longName} subtitle="@bartholomew_montgomery_fitzgerald_the_third" tag="docs.features.panel.owner" online activity="now" />
         <MemberRow title="Q" subtitle="@q" isYou />
       </div>
     </Frame>
@@ -326,7 +328,7 @@
 
 <Section {...sec(features, 'pattern-list-header')}>
   <Frame cols={320}>
-    <div class="strip"><ChatListHeader kind="dms" title="Chats" /></div>
+    <div class="strip"><ChatListHeader kind="dms" title="ui.chatListHeader.chats" /></div>
     <div class="strip">
       <ChatListHeader kind="community" title="OpenChat Devs" visibility="Public" memberCount={2481} color="amber" menuItems={headerMenu} />
     </div>
@@ -339,20 +341,20 @@
 <Section {...sec(features, 'pattern-chat-list')}>
   <Frame cols={300}>
     <div class="panel" style:height="560px">
-      <ChatListPanel rows={patternRows as any} headerKind="dms" headerTitle="Chats" searchable showThreads threadCount={2} />
+      <ChatListPanel rows={patternRows as any} headerKind="dms" headerTitle="ui.chatListHeader.chats" searchable showThreads threadCount={2} />
     </div>
     <div class="panel" style:height="560px">
       <ChatListPanel rows={patternRows as any} headerKind="community" headerTitle="OpenChat Devs" headerMembers={2481} headerColor="amber" loading showThreads={false} />
     </div>
     <div class="panel" style:height="560px">
-      <ChatListPanel rows={[]} headerKind="dms" headerTitle="Chats" showThreads={false} emptyPreset="no-conversations" />
+      <ChatListPanel rows={[]} headerKind="dms" headerTitle="ui.chatListHeader.chats" showThreads={false} emptyPreset="no-conversations" />
     </div>
   </Frame>
 </Section>
 
 <Section {...sec(features, 'pattern-header')}>
   <Frame cols="minmax(0, 1fr)">
-    <div class="strip"><ConversationHeader title="Danielle Moreau" kind="user" color="violet" online presence="Online" statusFav isFavourite /></div>
+    <div class="strip"><ConversationHeader title="Danielle Moreau" kind="user" color="violet" online presence="ui.conversationHeader.online" statusFav isFavourite /></div>
     <div class="strip">
       <ConversationHeader title="The Awesome Group" kind="group" color="teal" visibility="Public" memberCount={248} statusMuted="8h" statusEveryone actions={['search', 'threads'] as any} />
     </div>
@@ -365,7 +367,7 @@
 <Section {...sec(features, 'pattern-info-panel')}>
   <Frame cols={320}>
     <div class="panel" style:height="900px">
-      <InfoPanel kind="user" title="Alice Anderson" handle="@alice_anderson" verified online color="violet" details={infoDetails as any} footerLabel="Report" />
+      <InfoPanel kind="user" title="Alice Anderson" handle="@alice_anderson" verified online color="violet" details={infoDetails as any} footerLabel="docs.features.info.report" />
     </div>
     <div class="panel" style:height="900px">
       <DmPanel
@@ -441,8 +443,8 @@
 <Section {...sec(features, 'app-daily-puzzle')}>
   <Frame cols={360}>
     <DailyPuzzleCard state="new" countdown="10:10:10" {remind} onAction={(k) => k.startsWith('puzzleRemind') && (remind = k === 'puzzleRemindOn')} />
-    <DailyPuzzleCard state="progress" sub="7 of 12 words found" countdown="10:10:10" />
-    <DailyPuzzleCard state="solved" sub="Solved in 4:12 · 1 hint" countdown="10:10:10" />
+    <DailyPuzzleCard state="progress" sub="docs.features.puzzle.progress" countdown="10:10:10" />
+    <DailyPuzzleCard state="solved" sub="docs.features.puzzle.solved" countdown="10:10:10" />
   </Frame>
 </Section>
 
@@ -467,11 +469,11 @@
 
 <Section {...sec(features, 'app-dialogs')}>
   <Frame label="Try it · opens the real overlay">
-    <Button variant="secondary" label="Join gate" onClick={() => (dialog = 'join')} />
-    <Button variant="secondary" label="Poll builder" onClick={() => (dialog = 'poll')} />
-    <Button variant="secondary" label="Daily puzzle" onClick={() => (dialog = 'puzzle')} />
+    <Button variant="secondary" label="docs.features.dialogs.joinGate" onClick={() => (dialog = 'join')} />
+    <Button variant="secondary" label="docs.features.dialogs.pollBuilder" onClick={() => (dialog = 'poll')} />
+    <Button variant="secondary" label="docs.features.dialogs.dailyPuzzle" onClick={() => (dialog = 'puzzle')} />
     <span class="actions-trigger" bind:this={trigger}>
-      <Button variant="secondary" label="Message actions" onClick={openActions} />
+      <Button variant="secondary" label="docs.features.dialogs.messageActions" onClick={openActions} />
     </span>
   </Frame>
   {#if dialog === 'join'}
@@ -508,7 +510,7 @@
   <div class="wallet">
     {@render live('WalletPanel', 'WalletPanel · side panel')}
     <Frame label="Wallet screens" style="flex-direction: column; flex-wrap: nowrap">
-      <SegmentedTabs labels={walletScreens.map((n) => n.replace('Wallet', ''))} selectedIndex={walletScreen} dotOnLast={false} onSelect={(i) => (walletScreen = i)} />
+      <SegmentedTabs labels={walletTabs} selectedIndex={walletScreen} dotOnLast={false} onSelect={(i) => (walletScreen = i)} />
       {#key walletScreen}
         {@const C = featureComponents[walletScreens[walletScreen]]}
         <div class="screen wide">
@@ -562,7 +564,7 @@
         {/key}
       {/if}
     </div>
-    <Button variant="secondary" label={toast ? 'Play again' : 'Unlock an achievement'} onClick={() => (toast = toastRuns += 1)} />
+    <Button variant="secondary" label={toast ? 'docs.features.achievements.playAgain' : 'docs.features.achievements.unlock'} onClick={() => (toast = toastRuns += 1)} />
   </Frame>
   {@render openers(['AchievementsDialog', 'ChitDialog', 'StreakInsuranceDialog', 'LeaderboardDialog', 'MemeFighterDialog'])}
 </Section>

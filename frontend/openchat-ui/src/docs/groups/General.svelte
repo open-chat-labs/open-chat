@@ -8,6 +8,7 @@
     tokenBtc, transactions, stackPeople, thresholds, timelineRunning, timelineDone, timelineFailed, sortableStart,
   } from '../samples';
   import { ICONS } from '../../lib/icons.js';
+  import { useT } from '../../lib/i18n';
   import {
     Avatar, Badge, UserChip, MemberRow, Button, IconButton, Field, TextArea, Toggle, TimedToggle, SegmentedTabs,
     DurationChips, Menu, ChatRow, ChatPicker, Tooltip, Skeleton, Banner, UndoToast, Spinner, Pill, ListSectionLabel,
@@ -15,6 +16,9 @@
     DialogShell, PageHeader, ProgressTimeline, QuickAmountChips, RequirementChip, RoundIconButton, ShareBar, SideCard,
     SnapFloat, SortableInputList, StepIndicator, ThresholdBar, TransactionRow, Waveform,
   } from '../../lib/index';
+
+  // demo copy is translated like product copy: keys for copy props, t() for props the component treats as data
+  const t = useT();
 
   const icons = Object.keys(ICONS).sort();
   const variants = ['primary', 'secondary', 'ghost', 'danger'] as const;
@@ -63,11 +67,11 @@
   // play the waveform: advance progress until the end, then stop
   $effect(() => {
     if (!playing) return;
-    const t = setInterval(() => {
+    const timer = setInterval(() => {
       progress = Math.min(1, progress + 0.01);
       if (progress >= 1) playing = false;
     }, 80);
-    return () => clearInterval(t);
+    return () => clearInterval(timer);
   });
 
   const fmtFraction = (f: number) => (f === 1 ? 'Max' : Math.round(f * 100) + '%');
@@ -101,8 +105,8 @@
     <Frame label="Badge · variants" align="center">
       <Badge variant="count" label="3" />
       <Badge variant="count" label="128" />
-      <Badge variant="tag" label="Admin" />
-      <Badge variant="neutral" label="Bot" />
+      <Badge variant="tag" label="docs.general.badges.admin" />
+      <Badge variant="neutral" label="docs.general.badges.bot" />
       <Badge variant="chit" label="1,250" />
       <Badge variant="chit" label="1.2k" short />
       <Badge variant="dot" />
@@ -116,16 +120,16 @@
     <Frame label="Size · variant" align="center">
       <UserChip label="Alice" size="sm" color="violet" />
       <UserChip label="Alice Anderson" size="md" color="teal" online />
-      <UserChip label="Alice Anderson" size="lg" color="amber" tag="Owner" />
-      <UserChip label="Pending" variant="accent" showAvatar={false} />
-      <UserChip label="Blocked" variant="danger" color="slate" />
+      <UserChip label="Alice Anderson" size="lg" color="amber" tag="docs.general.people.owner" />
+      <UserChip label={t('docs.general.people.pending')} variant="accent" showAvatar={false} />
+      <UserChip label={t('docs.general.people.blocked')} variant="danger" color="slate" />
     </Frame>
     <Frame label="Try it · removable" align="center">
       {#each chips as name (name)}
         <UserChip label={name} color="blue" showRemove onRemove={() => (chips = chips.filter((c) => c !== name))} />
       {/each}
       {#if !chips.length}
-        <Button label="Reset" variant="secondary" onClick={() => (chips = ['Alice Anderson', 'Lucy Linden', 'Priya Raman'])} />
+        <Button label="docs.general.people.reset" variant="secondary" onClick={() => (chips = ['Alice Anderson', 'Lucy Linden', 'Priya Raman'])} />
       {/if}
     </Frame>
   </div>
@@ -134,14 +138,14 @@
 <Section {...sec(general, 'user-cards')}>
   <div class="grid2">
     <Frame label="Members" style="flex-direction: column; flex-wrap: nowrap; gap: 0" align="stretch">
-      <MemberRow title="Jane Smith" subtitle="@jane_smith" tag="Owner" color="violet" online activity="now" />
-      <MemberRow title="You" subtitle="@you" isYou color="teal" />
+      <MemberRow title="Jane Smith" subtitle="@jane_smith" tag="docs.general.people.owner" color="violet" online activity="now" />
+      <MemberRow title={t('docs.general.people.you')} subtitle="@you" isYou color="teal" />
       <MemberRow title="Priya Raman" subtitle="@priya_raman" color="amber" activity="typing" online />
-      <MemberRow title="Tom Beckett" subtitle="@tom_beckett" muted badge="Pending" color="blue" />
-      <MemberRow title="Invite people" variant="invite" />
+      <MemberRow title="Tom Beckett" subtitle="@tom_beckett" muted badge="docs.general.people.pending" color="blue" />
+      <MemberRow title="docs.general.people.invitePeople" variant="invite" />
     </Frame>
     <Frame label="Bots · webhooks · pickers" style="flex-direction: column; flex-wrap: nowrap; gap: 0" align="stretch">
-      <MemberRow title="ReminderBot" subtitle="Schedules reminders for the group and pings people when it's time." variant="bot" actionLabel="Add" onAction={() => {}} />
+      <MemberRow title="ReminderBot" subtitle="Schedules reminders for the group and pings people when it's time." variant="bot" actionLabel="ui.common.add" onAction={() => {}} />
       <MemberRow title="GitHub releases" subtitle="Posts a message for each release" variant="webhook" showMenu onMenu={() => {}} />
       <MemberRow title="Lucy Linden" subtitle="@lucy_linden" color="teal" icon="toggle" selected />
       <MemberRow title="Robert Lang" subtitle="@robert_lang" color="slate" icon="toggle" disabled />
@@ -152,19 +156,19 @@
 <Section {...sec(general, 'buttons')}>
   <div class="grid2">
     <Frame label="Button · variant" align="center">
-      <Button label="Primary" />
-      <Button label="Secondary" variant="secondary" />
-      <Button label="Ghost" variant="ghost" />
-      <Button label="Delete" variant="danger" />
-      <Button label="Disabled" disabled />
-      <div class="full"><Button label="Full width" fullWidth /></div>
+      <Button label="docs.general.buttons.primary" />
+      <Button label="docs.general.buttons.secondary" variant="secondary" />
+      <Button label="docs.general.buttons.ghost" variant="ghost" />
+      <Button label="ui.common.delete" variant="danger" />
+      <Button label="docs.general.buttons.disabled" disabled />
+      <div class="full"><Button label="docs.general.buttons.fullWidth" fullWidth /></div>
     </Frame>
     <Frame label="IconButton · variant · pressed" align="center">
-      <IconButton icon="search" label="Search" />
-      <IconButton icon="more" label="More" variant="ghost" />
-      <IconButton icon="more" label="More (open)" variant="ghost" pressed />
-      <IconButton icon="plus" label="New chat" variant="accent" />
-      <div class="on-cover"><IconButton icon="close" label="Close" variant="overlay" /></div>
+      <IconButton icon="search" label="ui.common.search" />
+      <IconButton icon="more" label="ui.common.more" variant="ghost" />
+      <IconButton icon="more" label="docs.general.buttons.moreOpen" variant="ghost" pressed />
+      <IconButton icon="plus" label="docs.general.buttons.newChat" variant="accent" />
+      <div class="on-cover"><IconButton icon="close" label="ui.common.close" variant="overlay" /></div>
     </Frame>
   </div>
 </Section>
@@ -179,9 +183,9 @@
         {#each states as s}
           <div class="cell">
             {#if s === 'disabled'}
-              <Button label="Button" variant={v} disabled />
+              <Button label="docs.general.buttons.button" variant={v} disabled />
             {:else}
-              <Button label="Button" variant={v} state={s} />
+              <Button label="docs.general.buttons.button" variant={v} state={s} />
             {/if}
           </div>
         {/each}
@@ -193,20 +197,20 @@
 <Section {...sec(general, 'inputs-controls')}>
   <div class="grid2">
     <Frame label="Field · TextArea" style="flex-direction: column; flex-wrap: nowrap" align="stretch">
-      <Field placeholder="Search chats" shortcut="⌘K" />
-      <Field placeholder="Search people" value={search} onInput={(e) => (search = e.currentTarget.value)} onClear={() => (search = '')} />
-      <TextArea value={bio} placeholder="About you" maxLength={120} help="Shown on your profile" onInput={(e) => (bio = e.currentTarget.value)} />
-      <TextArea value="" placeholder="Group name" error errorText="A name is required" />
+      <Field placeholder="docs.general.inputs.searchChats" shortcut="⌘K" />
+      <Field placeholder="docs.general.inputs.searchPeople" value={search} onInput={(e) => (search = e.currentTarget.value)} onClear={() => (search = '')} />
+      <TextArea value={bio} placeholder="docs.general.inputs.aboutYou" maxLength={120} help="docs.general.inputs.aboutHelp" onInput={(e) => (bio = e.currentTarget.value)} />
+      <TextArea value="" placeholder="docs.general.inputs.groupName" error errorText="docs.general.inputs.nameRequired" />
     </Frame>
     <Frame label="Toggle · TimedToggle · DurationChips" style="flex-direction: column; flex-wrap: nowrap" align="stretch">
-      <Toggle on={notify} label="Notifications" help="Mentions and replies only" onChange={(v) => (notify = v)} />
-      <Toggle on={false} label="Disabled" disabled />
-      <TimedToggle label="Disappearing messages" on value="1 day" options={['1 hour', '1 day', '1 week']} prefix="After" />
-      <DurationChips title="Mute for" hint="You'll still see mentions" value={duration} options={['1 hour', '8 hours', '1 day', '1 week', 'Always']} onChange={(v) => (duration = v)} />
+      <Toggle on={notify} label="docs.general.inputs.notifications" help="docs.general.inputs.notificationsHelp" onChange={(v) => (notify = v)} />
+      <Toggle on={false} label="docs.general.buttons.disabled" disabled />
+      <TimedToggle label="docs.general.inputs.disappearing" on value="1 day" options={['1 hour', '1 day', '1 week']} prefix="ui.timedToggle.after" />
+      <DurationChips title="docs.general.inputs.muteFor" hint="docs.general.inputs.muteHint" value={duration} options={['1 hour', '8 hours', '1 day', '1 week', 'ui.timedToggle.always']} onChange={(v) => (duration = v)} />
     </Frame>
     <div class="span"><Frame label="SegmentedTabs" style="flex-direction: column; flex-wrap: nowrap" align="stretch">
-      <SegmentedTabs labels={['All', 'Direct', 'Groups', 'Unread']} selectedIndex={tab} onSelect={(i) => (tab = i)} />
-      <SegmentedTabs labels={['Members', 'Bots', 'Invited']} counts={[112, 3, 8]} selectedIndex={0} dotOnLast />
+      <SegmentedTabs labels={['docs.general.tabs.all', 'docs.general.tabs.direct', 'docs.general.tabs.groups', 'docs.general.tabs.unread']} selectedIndex={tab} onSelect={(i) => (tab = i)} />
+      <SegmentedTabs labels={['docs.general.tabs.members', 'docs.general.tabs.bots', 'docs.general.tabs.invited']} counts={[112, 3, 8]} selectedIndex={0} dotOnLast />
     </Frame></div>
   </div>
 </Section>
@@ -214,7 +218,7 @@
 <Section {...sec(general, 'menus')}>
   <div class="grid3">
     <Frame label="Icons · shortcuts · danger"><Menu items={menuDemo} /></Frame>
-    <Frame label="Heading · selected"><Menu heading="Sort by" items={sortMenu} /></Frame>
+    <Frame label="Heading · selected"><Menu heading="docs.general.menus.sortBy" items={sortMenu} /></Frame>
     <Frame label="Row menu"><Menu items={rowMenu} /></Frame>
   </div>
 </Section>
@@ -229,7 +233,7 @@
 
 <Section {...sec(general, 'chat-picker')}>
   <Frame label="Opens the real overlay">
-    <Button label="Share invite link" variant="secondary" onClick={() => (pickerOpen = true)} />
+    <Button label="docs.general.chatPicker.shareInviteLink" variant="secondary" onClick={() => (pickerOpen = true)} />
     {#if pickerOpen}
       <ChatPicker {...(samples.ChatPicker as any)} onSend={() => (pickerOpen = false)} onClose={() => (pickerOpen = false)} />
     {/if}
@@ -239,13 +243,13 @@
 <Section {...sec(general, 'tooltip')}>
   <div class="grid2">
     <Frame label="Spec · placement" align="center" style="justify-content: center; padding-block: 34px">
-      <div class="tip-demo"><Tooltip label="Placed above" /></div>
-      <div class="tip-demo"><Tooltip label="Flips below near the top edge" placement="bottom" /></div>
+      <div class="tip-demo"><Tooltip label="docs.general.tooltip.above" /></div>
+      <div class="tip-demo"><Tooltip label="docs.general.tooltip.below" placement="bottom" /></div>
     </Frame>
     <Frame label="Try it · hover or focus" align="center" style="justify-content: center">
-      <IconButton icon="search" label="Search" />
-      <IconButton icon="bell" label="Notifications" />
-      <IconButton icon="share" label="Share" />
+      <IconButton icon="search" label="ui.common.search" />
+      <IconButton icon="bell" label="docs.general.inputs.notifications" />
+      <IconButton icon="share" label="ui.common.share" />
       <span class="hint" title="Any element with a title gets the tooltip">Hover this text</span>
     </Frame>
   </div>
@@ -262,16 +266,16 @@
 
 <Section {...sec(general, 'banners')}>
   <Frame label="Banner · tone" style="flex-direction: column; flex-wrap: nowrap" align="stretch">
-    <Banner text="New members need approval before they can post." actionLabel="Review" actionHandler={() => {}} />
-    <Banner tone="warning" text="Your storage is almost full." actionLabel="Upgrade" actionHandler={() => {}} />
-    <Banner tone="danger" text="This group was reported and is under review." />
-    <Banner tone="offline" text="You're offline. Messages will send when you reconnect." />
+    <Banner text="docs.general.banners.approval" actionLabel="docs.general.banners.review" actionHandler={() => {}} />
+    <Banner tone="warning" text="docs.general.banners.storage" actionLabel="docs.general.banners.upgrade" actionHandler={() => {}} />
+    <Banner tone="danger" text="docs.general.banners.reported" />
+    <Banner tone="offline" text="docs.general.banners.offline" />
   </Frame>
   <Frame label="UndoToast · tone · size" style="flex-direction: column; flex-wrap: nowrap">
-    <UndoToast message="Chat archived" actionLabel="Undo" onAction={() => {}} onClose={() => {}} />
-    <UndoToast message="Invite link copied" tone="success" icon="check" />
-    <UndoToast message="Message deleted for everyone" size="lg" shown={toastShown} actionLabel="Undo" onAction={() => (toastShown = false)} onClose={() => (toastShown = false)} />
-    {#if !toastShown}<Button label="Show again" variant="ghost" onClick={() => (toastShown = true)} />{/if}
+    <UndoToast message="docs.general.toasts.archived" actionLabel="ui.common.undo" onAction={() => {}} onClose={() => {}} />
+    <UndoToast message="docs.general.toasts.linkCopied" tone="success" icon="check" />
+    <UndoToast message="docs.general.toasts.deleted" size="lg" shown={toastShown} actionLabel="ui.common.undo" onAction={() => (toastShown = false)} onClose={() => (toastShown = false)} />
+    {#if !toastShown}<Button label="docs.general.toasts.showAgain" variant="ghost" onClick={() => (toastShown = true)} />{/if}
   </Frame>
 </Section>
 
@@ -285,41 +289,41 @@
 <Section {...sec(general, 'pills')}>
   <div class="grid2">
     <Frame label="sm · row statuses" align="center">
-      <Pill label="Pending" />
-      <Pill label="Active" tone="success" dot />
-      <Pill label="Expiring" tone="warning" />
-      <Pill label="Failed" tone="danger" />
-      <Pill label="New" tone="accent" />
+      <Pill label="docs.general.pills.pending" />
+      <Pill label="docs.general.pills.active" tone="success" dot />
+      <Pill label="docs.general.pills.expiring" tone="warning" />
+      <Pill label="docs.general.pills.failed" tone="danger" />
+      <Pill label="docs.general.pills.new" tone="accent" />
     </Frame>
     <Frame label="md · numbers" align="center">
       <Pill label="02:14:09" size="md" />
       <Pill label="+12.4%" size="md" tone="success" />
       <Pill label="−3.1%" size="md" tone="danger" />
-      <Pill label="LIVE" size="md" tone="accent" dot />
+      <Pill label="docs.general.pills.live" size="md" tone="accent" dot />
     </Frame>
   </div>
 </Section>
 
 <Section {...sec(general, 'section-labels')}>
   <Frame style="flex-direction: column; flex-wrap: nowrap; gap: 14px; max-width: 420px" align="stretch">
-    <ListSectionLabel label="Today" />
-    <ListSectionLabel label="Members" meta="112" />
-    <ListSectionLabel label="You pay" meta="Balance 4,820 ICP" inset />
+    <ListSectionLabel label="docs.general.sectionLabels.today" />
+    <ListSectionLabel label="docs.general.tabs.members" meta="112" />
+    <ListSectionLabel label="docs.general.amounts.youPay" meta={t('docs.general.amounts.balance', { amount: '4,820 ICP' })} inset />
   </Frame>
 </Section>
 
 <Section {...sec(general, 'copy-button')}>
   <div class="grid2">
     <Frame label="Sizes · try it, copies to the clipboard" style="flex-direction: column; flex-wrap: nowrap">
-      <div class="tok-row"><span class="mono size-label">sm</span><CopyButton value="oc.app/group/the-awesome-group-8f2a" label="Copy link" size="sm" /></div>
-      <div class="tok-row"><span class="mono size-label">md</span><CopyButton value="oc.app/group/the-awesome-group-8f2a" label="Copy link" size="md" /></div>
+      <div class="tok-row"><span class="mono size-label">sm</span><CopyButton value="oc.app/group/the-awesome-group-8f2a" label="docs.general.copy.copyLink" size="sm" /></div>
+      <div class="tok-row"><span class="mono size-label">md</span><CopyButton value="oc.app/group/the-awesome-group-8f2a" label="docs.general.copy.copyLink" size="md" /></div>
     </Frame>
     <Frame label="In context · beside the value it copies" style="flex-direction: column; flex-wrap: nowrap">
-      {#each [{ k: 'Principal', v: 'eypkj-sqjl7-lhksa-5j6vq-cae' }, { k: 'Invite link', v: 'oc.app/group/the-awesome-group-8f2a' }] as f}
+      {#each [{ k: 'docs.general.copy.principal', copy: 'docs.general.copy.copyPrincipal', v: 'eypkj-sqjl7-lhksa-5j6vq-cae' }, { k: 'docs.general.copy.inviteLink', copy: 'docs.general.copy.copyInviteLink', v: 'oc.app/group/the-awesome-group-8f2a' }] as f}
         <div class="copy-field">
-          <span class="copy-key">{f.k}</span>
+          <span class="copy-key">{t(f.k)}</span>
           <span class="mono address">{f.v}</span>
-          <CopyButton value={f.v} label={'Copy ' + f.k.toLowerCase()} size="sm" />
+          <CopyButton value={f.v} label={f.copy} size="sm" />
         </div>
       {/each}
     </Frame>
@@ -352,28 +356,28 @@
 
 <Section {...sec(general, 'page-header')}>
   <Frame cols="minmax(0, 1fr)">
-    <PageHeader onBack={() => {}} title="Swap ICP" avatarMark={tokenIcp.mark} avatarGradient={tokenIcp.gradient}>
-      <StepIndicator steps={['Details', 'Quote', 'Swap']} current={1} />
+    <PageHeader onBack={() => {}} title="docs.general.pageHeader.swapIcp" avatarMark={tokenIcp.mark} avatarGradient={tokenIcp.gradient}>
+      <StepIndicator steps={['docs.general.steps.details', 'docs.general.steps.quote', 'docs.general.steps.swap']} current={1} />
     </PageHeader>
-    <PageHeader onBack={() => {}} title="Send CHAT" avatarMark={tokenChat.mark} avatarGradient={tokenChat.gradient}>
-      <span class="trail">Balance 132.33 CHAT</span>
+    <PageHeader onBack={() => {}} title="docs.general.pageHeader.sendChat" avatarMark={tokenChat.mark} avatarGradient={tokenChat.gradient}>
+      <span class="trail">{t('docs.general.amounts.balance', { amount: '132.33 CHAT' })}</span>
     </PageHeader>
-    <PageHeader onBack={() => {}} title="Receive" backLabel="Wallet" />
+    <PageHeader onBack={() => {}} title="docs.general.pageHeader.receive" backLabel="docs.general.pageHeader.wallet" />
   </Frame>
 </Section>
 
 <Section {...sec(general, 'dialog-shell')}>
   <Frame label="Try it · opens the real overlay" align="center">
-    <Button label="Open dialog" variant="secondary" onClick={() => (dialogOpen = true)} />
+    <Button label="docs.general.dialog.open" variant="secondary" onClick={() => (dialogOpen = true)} />
     <span class="note">Esc, the close button or a click on the backdrop dismisses it; Tab stays inside.</span>
   </Frame>
   {#if dialogOpen}
-    <DialogShell title="Rename group" width={420} height="auto" onClose={() => (dialogOpen = false)}>
+    <DialogShell title="docs.general.dialog.renameGroup" width={420} height="auto" onClose={() => (dialogOpen = false)}>
       <div class="dialog-body">
         <p class="prose">DialogShell is the frame every dialog shares: blurred backdrop, a header with the title and close button, and a body from children.</p>
         <div class="dialog-actions">
-          <Button label="Cancel" variant="ghost" onClick={() => (dialogOpen = false)} />
-          <Button label="Save" onClick={() => (dialogOpen = false)} />
+          <Button label="ui.common.cancel" variant="ghost" onClick={() => (dialogOpen = false)} />
+          <Button label="ui.common.save" onClick={() => (dialogOpen = false)} />
         </div>
       </div>
     </DialogShell>
@@ -391,8 +395,8 @@
   <div class="pair">
     <Frame cols="minmax(0, 1fr)" label="Single token · neutral kind icon">
       <div class="stack">
-        <TransactionRow title="Received from Lucy Linden" sub="10:42" amount="+385.60 ICP" fiat="$2,113.47" kind="receive" />
-        <TransactionRow title="Sent to Matt Rivers" sub="Yesterday" amount="−4.00 ICP" fiat="$21.92" kind="send" divider />
+        <TransactionRow title={t('docs.general.tx.receivedFrom', { name: 'Lucy Linden' })} sub="10:42" amount="+385.60 ICP" fiat="$2,113.47" kind="receive" />
+        <TransactionRow title={t('docs.general.tx.sentTo', { name: 'Matt Rivers' })} sub={t('docs.general.tx.yesterday')} amount="−4.00 ICP" fiat="$21.92" kind="send" divider />
       </div>
     </Frame>
     <Frame cols="minmax(0, 1fr)" label="Balances hidden">
@@ -408,21 +412,21 @@
   <div class="pair">
     <Frame cols="minmax(0, 1fr)" label="DetailRow · tones, sizes, rules">
       <div class="stack">
-        <DetailRow label="You send" value="100 CHAT" rule="none" />
-        <DetailRow label="Rate" value="1 CHAT ≈ 0.0219 ICP" tone="muted" rule="none" />
-        <DetailRow label="Price impact" value="−0.42%" tone="warning" rule="none" />
-        <DetailRow label="Transfer fee" value="0.0001 ICP" rule="top" />
-        <DetailRow label="Deposit account" value="5sj6i-pqaaa…a3cmq-cai" copyValue="5sj6i-pqaaa-aaaaf-a3cmq-cai" rule="none" size="sm" />
-        <DetailRow label="You receive" value="+2.19425 ICP" tone="positive" size="lg" strong rule="top" />
+        <DetailRow label="docs.general.details.youSend" value="100 CHAT" rule="none" />
+        <DetailRow label="docs.general.details.rate" value="1 CHAT ≈ 0.0219 ICP" tone="muted" rule="none" />
+        <DetailRow label="docs.general.details.priceImpact" value="−0.42%" tone="warning" rule="none" />
+        <DetailRow label="docs.general.details.transferFee" value="0.0001 ICP" rule="top" />
+        <DetailRow label="docs.general.details.depositAccount" value="5sj6i-pqaaa…a3cmq-cai" copyValue="5sj6i-pqaaa-aaaaf-a3cmq-cai" rule="none" size="sm" />
+        <DetailRow label="docs.general.details.youReceive" value="+2.19425 ICP" tone="positive" size="lg" strong rule="top" />
       </div>
     </Frame>
     <Frame cols="minmax(0, 1fr)" label="DetailSection · value and prose">
       <div class="stack gap">
-        <DetailSection label="Member since" value="1 Nov 2021" />
-        <DetailSection label="Status" value="Online now" dot />
-        <DetailSection label="Chit earned" value="339,400" highlight />
+        <DetailSection label="docs.general.details.memberSince" value="1 Nov 2021" />
+        <DetailSection label="docs.general.details.status" value={t('docs.general.details.onlineNow')} dot />
+        <DetailSection label="docs.general.details.chitEarned" value="339,400" highlight />
         <DetailSection
-          label="About"
+          label="docs.general.details.about"
           variant="prose"
           clamp={3}
           value="A place for product designers working on OpenChat to share work in progress, critique each other's flows, and keep the component library honest. Post screenshots early; the worst feedback is the one that arrives after the build. Weekly crit is on Thursdays at 16:00 UTC in the voice channel."
@@ -456,15 +460,15 @@
 <Section {...sec(general, 'side-card')}>
   <div class="pair">
     <SideCard>
-      <span class="label">Summary</span>
-      <DetailRow label="Amount" value="12.00 CHAT" rule="none" />
-      <DetailRow label="Network fee" value="0.001 CHAT" rule="none" tone="muted" />
-      <DetailRow label="Total" value="12.001 CHAT" rule="top" strong />
+      <span class="label">{t('docs.general.sideCard.summary')}</span>
+      <DetailRow label="docs.general.details.amount" value="12.00 CHAT" rule="none" />
+      <DetailRow label="docs.general.details.networkFee" value="0.001 CHAT" rule="none" tone="muted" />
+      <DetailRow label="docs.general.details.total" value="12.001 CHAT" rule="top" strong />
     </SideCard>
     <SideCard minHeight="200px">
-      <span class="label">Quote</span>
-      <DetailRow label="Best route" value="ICPSwap" rule="none" />
-      <DetailRow label="You receive" value="+2.19425 ICP" tone="positive" size="lg" strong rule="top" />
+      <span class="label">{t('docs.general.steps.quote')}</span>
+      <DetailRow label="docs.general.details.bestRoute" value="ICPSwap" rule="none" />
+      <DetailRow label="docs.general.details.youReceive" value="+2.19425 ICP" tone="positive" size="lg" strong rule="top" />
     </SideCard>
   </div>
 </Section>
@@ -473,12 +477,12 @@
   <div class="pair">
     <Frame cols="minmax(0, 1fr)" label="Swap pair · top + bottom, editable">
       <div class="stack">
-        <AmountCard label="You pay" meta="Balance 4,820 ICP" value={payValue} note="≈ $657.72" symbol="ICP" mark={tokenIcp.mark} gradient={tokenIcp.gradient} position="top" onChange={(e) => (payValue = e.currentTarget.value)} onQuickSelect={() => {}} onTokenClick={() => {}} />
-        <AmountCard label="You get" value="2,412.6" note="≈ $127.87" symbol="CHAT" mark={tokenChat.mark} gradient={tokenChat.gradient} position="bottom" muted onTokenClick={() => {}} />
+        <AmountCard label="docs.general.amounts.youPay" meta={t('docs.general.amounts.balance', { amount: '4,820 ICP' })} value={payValue} note="≈ $657.72" symbol="ICP" mark={tokenIcp.mark} gradient={tokenIcp.gradient} position="top" onChange={(e) => (payValue = e.currentTarget.value)} onQuickSelect={() => {}} onTokenClick={() => {}} />
+        <AmountCard label="docs.general.amounts.youGet" value="2,412.6" note="≈ $127.87" symbol="CHAT" mark={tokenChat.mark} gradient={tokenChat.gradient} position="bottom" muted onTokenClick={() => {}} />
       </div>
     </Frame>
     <Frame cols="minmax(0, 1fr)" label="Alone · over balance">
-      <AmountCard label="You send" meta="Balance 132.33 CHAT" value="150" note="More than your balance" tone="danger" symbol="CHAT" mark={tokenChat.mark} gradient={tokenChat.gradient} position="alone" onChange={() => {}} />
+      <AmountCard label="docs.general.details.youSend" meta={t('docs.general.amounts.balance', { amount: '132.33 CHAT' })} value="150" note="docs.general.amounts.overBalance" tone="danger" symbol="CHAT" mark={tokenChat.mark} gradient={tokenChat.gradient} position="alone" onChange={() => {}} />
     </Frame>
   </div>
 </Section>
@@ -509,16 +513,16 @@
 <Section {...sec(general, 'round-icon-button')}>
   <div class="pair">
     <Frame label="Variants" align="center">
-      <RoundIconButton icon="mic" label="Mute" />
-      <RoundIconButton icon="mic" label="Microphone on" variant="on" />
-      <RoundIconButton icon="camera" label="Camera off" variant="off" />
-      <RoundIconButton icon="phone" label="Leave call" variant="danger" />
-      <span class="overlay-bg"><RoundIconButton icon="mic-off" label="Unmute" variant="overlay" /></span>
+      <RoundIconButton icon="mic" label="docs.general.call.mute" />
+      <RoundIconButton icon="mic" label="docs.general.call.micOn" variant="on" />
+      <RoundIconButton icon="camera" label="docs.general.call.cameraOff" variant="off" />
+      <RoundIconButton icon="phone" label="docs.general.call.leaveCall" variant="danger" />
+      <span class="overlay-bg"><RoundIconButton icon="mic-off" label="docs.general.call.unmute" variant="overlay" /></span>
     </Frame>
     <Frame label="Sizes · sm 34 · md 50 · lg 56 · try it" align="center">
-      <RoundIconButton icon="mic" label={muted ? 'Unmute' : 'Mute'} size="sm" variant={muted ? 'off' : 'default'} pressed={muted} onPress={() => (muted = !muted)} />
-      <RoundIconButton icon="camera" label={camera ? 'Camera off' : 'Camera on'} size="md" variant={camera ? 'default' : 'off'} pressed={!camera} onPress={() => (camera = !camera)} />
-      <RoundIconButton icon="phone" label="Leave call" size="lg" variant="danger" />
+      <RoundIconButton icon="mic" label={muted ? 'docs.general.call.unmute' : 'docs.general.call.mute'} size="sm" variant={muted ? 'off' : 'default'} pressed={muted} onPress={() => (muted = !muted)} />
+      <RoundIconButton icon="camera" label={camera ? 'docs.general.call.cameraOff' : 'docs.general.call.cameraOn'} size="md" variant={camera ? 'default' : 'off'} pressed={!camera} onPress={() => (camera = !camera)} />
+      <RoundIconButton icon="phone" label="docs.general.call.leaveCall" size="lg" variant="danger" />
     </Frame>
   </div>
 </Section>
@@ -526,8 +530,8 @@
 <Section {...sec(general, 'waveform')}>
   <Frame cols="minmax(0, 1fr)" label="Try it · click or drag to seek, arrow keys when focused">
     <div class="row">
-      <RoundIconButton icon={playing ? 'pause-filled' : 'play-filled'} label={playing ? 'Pause' : 'Play'} size="sm" variant="on" onPress={() => { if (progress >= 1) progress = 0; playing = !playing; }} />
-      <div class="grow"><Waveform count={48} seed={7} {progress} handle height={26} label="Voice message" onSeek={(f) => (progress = f)} /></div>
+      <RoundIconButton icon={playing ? 'pause-filled' : 'play-filled'} label={playing ? 'docs.general.waveform.pause' : 'docs.general.waveform.play'} size="sm" variant="on" onPress={() => { if (progress >= 1) progress = 0; playing = !playing; }} />
+      <div class="grow"><Waveform count={48} seed={7} {progress} handle height={26} label="docs.general.waveform.voiceMessage" onSeek={(f) => (progress = f)} /></div>
       <span class="code">{Math.round(progress * 100)}%</span>
     </div>
   </Frame>
@@ -544,9 +548,9 @@
 <Section {...sec(general, 'snap-float')}>
   <Frame cols="minmax(0, 1fr)" label="Try it · drag the card; it snaps to the nearest corner or edge">
     <div class="snap-stage">
-      <SnapFloat width={220} inset={16} position="br" label="Floating card" onSnap={(p) => (snapped = p)}>
+      <SnapFloat width={220} inset={16} position="br" label="docs.general.snapFloat.card" onSnap={(p) => (snapped = p)}>
         <div class="float-card">
-          <span class="float-title">Mini call</span>
+          <span class="float-title">{t('docs.general.snapFloat.miniCall')}</span>
           <span class="code">Snapped · {snapped}</span>
         </div>
       </SnapFloat>
@@ -557,11 +561,11 @@
 <Section {...sec(general, 'confetti')}>
   <Frame label="Try it" align="center" style="gap: 24px">
     <span class="burst">
-      <Button label="Celebrate" onClick={() => celebrate++} />
+      <Button label="docs.general.confetti.celebrate" onClick={() => celebrate++} />
       <Confetti fire={celebrate} />
     </span>
     <span class="burst">
-      <Button label="Small burst" variant="secondary" onClick={() => celebrateSm++} />
+      <Button label="docs.general.confetti.smallBurst" variant="secondary" onClick={() => celebrateSm++} />
       <Confetti fire={celebrateSm} count={30} spread={60} power={0.7} />
     </span>
   </Frame>
@@ -570,34 +574,34 @@
 <Section {...sec(general, 'requirement-chip')}>
   <div class="pair">
     <Frame label="md · 26" align="center">
-      <RequirementChip label="Diamond member" state="met" />
-      <RequirementChip label="Hold 100 CHAT" state="unmet" />
-      <RequirementChip label="Verified human" state="neutral" icon="user" />
+      <RequirementChip label="docs.general.requirements.diamond" state="met" />
+      <RequirementChip label="docs.general.requirements.hold" state="unmet" />
+      <RequirementChip label="docs.general.requirements.verified" state="neutral" icon="user" />
     </Frame>
     <Frame label="sm · 22 · met shorthand" align="center">
-      <RequirementChip label="Diamond member" met size="sm" />
-      <RequirementChip label="Hold 100 CHAT" met={false} size="sm" />
-      <RequirementChip label="Neutral" size="sm" state="neutral" />
+      <RequirementChip label="docs.general.requirements.diamond" met size="sm" />
+      <RequirementChip label="docs.general.requirements.hold" met={false} size="sm" />
+      <RequirementChip label="docs.general.requirements.neutral" size="sm" state="neutral" />
     </Frame>
   </div>
 </Section>
 
 <Section {...sec(general, 'countdown')}>
   <Frame cols={200} label="Live · ticks every second under an hour">
-    <div class="cd"><span class="label">auto · days</span><span class="cd-val"><Countdown to={inDays} prefix="Ends in" /></span></div>
-    <div class="cd"><span class="label">auto · minutes</span><span class="cd-val"><Countdown to={inMinutes} suffix="left" /></span></div>
+    <div class="cd"><span class="label">auto · days</span><span class="cd-val"><Countdown to={inDays} prefix="docs.general.countdown.endsIn" /></span></div>
+    <div class="cd"><span class="label">auto · minutes</span><span class="cd-val"><Countdown to={inMinutes} suffix="docs.general.countdown.left" /></span></div>
     <div class="cd"><span class="label">clock</span><span class="cd-val mono-val"><Countdown to={inHours} format="clock" /></span></div>
-    <div class="cd"><span class="label">words</span><span class="cd-val"><Countdown to={inHours} format="words" prefix="Closes in" /></span></div>
-    <div class="cd"><span class="label">ended</span><span class="cd-val"><Countdown to={ended} ended="Voting closed" /></span></div>
+    <div class="cd"><span class="label">words</span><span class="cd-val"><Countdown to={inHours} format="words" prefix="docs.general.countdown.closesIn" /></span></div>
+    <div class="cd"><span class="label">ended</span><span class="cd-val"><Countdown to={ended} ended="docs.general.countdown.votingClosed" /></span></div>
   </Frame>
 </Section>
 
 <Section {...sec(general, 'threshold-bar')}>
   <Frame cols="minmax(0, 1fr)">
     <div class="stack gap">
-      <div class="tb"><span class="code">Yes 62% · No 14%</span><ThresholdBar yes={0.62} no={0.14} {thresholds} label="Proposal votes" /></div>
-      <div class="tb"><span class="code">Yes 81% · No 6% — past the strong line</span><ThresholdBar yes={0.81} no={0.06} {thresholds} label="Proposal votes" /></div>
-      <div class="tb"><span class="code">Yes 18% · No 47% · 12px</span><ThresholdBar yes={0.18} no={0.47} {thresholds} height={12} label="Proposal votes" /></div>
+      <div class="tb"><span class="code">Yes 62% · No 14%</span><ThresholdBar yes={0.62} no={0.14} {thresholds} label="docs.general.thresholds.proposalVotes" /></div>
+      <div class="tb"><span class="code">Yes 81% · No 6% — past the strong line</span><ThresholdBar yes={0.81} no={0.06} {thresholds} label="docs.general.thresholds.proposalVotes" /></div>
+      <div class="tb"><span class="code">Yes 18% · No 47% · 12px</span><ThresholdBar yes={0.18} no={0.47} {thresholds} height={12} label="docs.general.thresholds.proposalVotes" /></div>
     </div>
   </Frame>
 </Section>
@@ -605,7 +609,7 @@
 <Section {...sec(general, 'sortable-input-list')}>
   <div class="pair">
     <Frame cols="minmax(0, 1fr)" label="Try it · drag the handles, type to add">
-      <SortableInputList values={sortable} min={2} max={6} itemLabel="answer" label="Poll answers" onChange={(v) => (sortable = v)} />
+      <SortableInputList values={sortable} min={2} max={6} itemLabel="docs.general.sortable.answer" label="docs.general.sortable.pollAnswers" onChange={(v) => (sortable = v)} />
     </Frame>
     <Frame cols="minmax(0, 1fr)" label="onChange values">
       <ol class="values">
@@ -617,13 +621,13 @@
 
 <Section {...sec(general, 'step-indicator')}>
   <Frame cols="minmax(0, 1fr)">
-    <div class="row"><span class="code w">current</span><StepIndicator steps={['Details', 'Quote', 'Swap']} current={step} /></div>
-    <div class="row"><span class="code w">complete</span><StepIndicator steps={['Details', 'Quote', 'Swap']} current={2} complete /></div>
-    <div class="row"><span class="code w">compact</span><StepIndicator steps={['Details', 'Quote', 'Swap']} current={step} compact /></div>
+    <div class="row"><span class="code w">current</span><StepIndicator steps={['docs.general.steps.details', 'docs.general.steps.quote', 'docs.general.steps.swap']} current={step} /></div>
+    <div class="row"><span class="code w">complete</span><StepIndicator steps={['docs.general.steps.details', 'docs.general.steps.quote', 'docs.general.steps.swap']} current={2} complete /></div>
+    <div class="row"><span class="code w">compact</span><StepIndicator steps={['docs.general.steps.details', 'docs.general.steps.quote', 'docs.general.steps.swap']} current={step} compact /></div>
     <div class="row">
       <span class="code w">try it</span>
-      <Button label="Back" variant="ghost" disabled={step === 0} onClick={() => (step = Math.max(0, step - 1))} />
-      <Button label="Next" variant="secondary" disabled={step === 2} onClick={() => (step = Math.min(2, step + 1))} />
+      <Button label="ui.common.back" variant="ghost" disabled={step === 0} onClick={() => (step = Math.max(0, step - 1))} />
+      <Button label="ui.common.next" variant="secondary" disabled={step === 2} onClick={() => (step = Math.min(2, step + 1))} />
     </div>
   </Frame>
 </Section>
@@ -638,7 +642,7 @@
     </Frame>
     <Frame cols="minmax(0, 1fr)" label="Failed">
       <ProgressTimeline phases={timelineFailed} density="compact" />
-      <Banner tone="warning" text="Your 100 CHAT is safe in ICPSwap. Retry the swap or withdraw it back to your wallet." actionLabel="Withdraw" actionHandler={() => {}} />
+      <Banner tone="warning" text="docs.general.timeline.fundsSafe" actionLabel="docs.general.timeline.withdraw" actionHandler={() => {}} />
     </Frame>
   </div>
 </Section>

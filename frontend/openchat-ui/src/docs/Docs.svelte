@@ -40,7 +40,15 @@
     const body = text.replace(/./g, (m) => ACCENTS_MAP[m] ?? m);
     return '[' + body + ' ' + '·'.repeat(Math.max(1, Math.round(text.length * 0.35))) + ']';
   };
-  const en = messages.en as Parameters<typeof lookup>[0];
+  // the library's English plus the docs page's own demo copy (docs.*), so demo labels translate like real ones
+  type Dict = Parameters<typeof lookup>[0];
+  const docsCopy = import.meta.glob<Dict>('./i18n/*.json', { eager: true, import: 'default' });
+  const merge = (a: Dict, b: Dict): Dict => {
+    const out: Dict = { ...a };
+    for (const [k, v] of Object.entries(b)) out[k] = typeof v === 'object' && typeof out[k] === 'object' ? merge(out[k] as Dict, v) : v;
+    return out;
+  };
+  const en = Object.values(docsCopy).reduce(merge, messages.en as Dict);
   setI18n({
     get locale() {
       return 'en';

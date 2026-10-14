@@ -285,7 +285,7 @@ t('ui.duration.hours', { count: 12 });`;
         </div>
         <div class="demo-row">
           {#each ['group', 'channel', 'community'] as const as n}
-            <Button variant={noun === n ? 'primary' : 'ghost'} label={n} onClick={() => (noun = n)} />
+            <Button variant={noun === n ? 'primary' : 'ghost'} label={'docs.foundations.nouns.' + n} onClick={() => (noun = n)} />
           {/each}
           <span class="out"><Translate key="ui.leaveGroupDialog.confirm" params={{ noun }} /></span>
         </div>

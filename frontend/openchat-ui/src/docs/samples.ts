@@ -33,10 +33,10 @@ const invitePending = [
 ];
 
 const menuItems = [
-  { label: 'Add to favourites', mask: icon('heart') },
-  { label: 'Mute notifications', mask: icon('bell-off') },
-  { label: 'Mark as read', mask: icon('check') },
-  { label: 'Leave group', variant: 'danger', mask: icon('leave') },
+  { label: 'docs.features.menu.addFavourites', mask: icon('heart') },
+  { label: 'docs.features.menu.muteNotifications', mask: icon('bell-off') },
+  { label: 'docs.features.menu.markRead', mask: icon('check') },
+  { label: 'docs.features.menu.leaveGroup', variant: 'danger', mask: icon('leave') },
 ];
 
 const walletTokens = [
@@ -52,11 +52,11 @@ export const overlays = ['DialogShell', 'ChatPicker', 'MessageActions'];
 // Group / chat fixtures the panels used to carry inline (GroupPanel, GroupStats, ChatListPanel, ActivityPanel, ThreadPanel, UserDialog).
 const groupStats = {
   mix: [
-    { label: 'Text', count: 1286 },
-    { label: 'Images', count: 56 },
-    { label: 'Files', count: 25 },
-    { label: 'GIFs', count: 21 },
-    { label: 'Polls, video & audio', count: 29 },
+    { label: 'docs.features.groupStats.text', count: 1286 },
+    { label: 'docs.features.groupStats.images', count: 56 },
+    { label: 'docs.features.groupStats.files', count: 25 },
+    { label: 'docs.features.groupStats.gifs', count: 21 },
+    { label: 'docs.features.groupStats.pollsVideoAudio', count: 29 },
   ],
   weeks: [186, 241, 198, 274, 312, 268, 355, 298, 389, 341, 402, 447],
   people: [
@@ -65,10 +65,10 @@ const groupStats = {
     { name: 'Jonah Weiss', count: 191, gradient: 'linear-gradient(145deg,#FFD79A,#E8A13C)' },
   ],
   engagement: [
-    { count: '462', label: 'Reactions' },
-    { count: '75', label: 'Replies' },
-    { count: '11', label: 'Poll votes' },
-    { count: '5', label: 'Deleted' },
+    { count: '462', label: 'docs.features.groupStats.reactions' },
+    { count: '75', label: 'docs.features.groupStats.replies' },
+    { count: '11', label: 'docs.features.groupStats.pollVotes' },
+    { count: '5', label: 'docs.features.groupStats.deleted' },
   ],
   totalPrev: 1298,
   otherPeople: 37,
@@ -185,9 +185,9 @@ export const samples: Record<string, Record<string, unknown>> = {
   ThreadList: { groups: [] },
   UserDialog: {
     facts: [
-      { label: 'Member since', value: '1 Nov 2021' },
-      { label: 'Chit earned', value: '339,400', highlight: true },
-      { label: 'Status', value: 'Online now', dot: true },
+      { label: 'docs.features.userFacts.memberSince', value: '1 Nov 2021' },
+      { label: 'docs.features.userFacts.chitEarned', value: '339,400', highlight: true },
+      { label: 'docs.features.userFacts.status', value: 'docs.features.userFacts.onlineNow', dot: true },
     ],
   },
   Menu: { items: menuItems },
@@ -265,7 +265,7 @@ export const samples: Record<string, Record<string, unknown>> = {
     checkUsername: (name: string) => !['openchat', 'hamish', 'admin', 'julian_jelfs', 'matt'].includes(name),
   },
   NavRail: {
-    items: [{ icon: 'messages', label: 'DM & Group Chats', dot: true, count: 3 }, { icon: 'bell', label: 'Notifications' }, { icon: 'wallet', label: 'Wallet' }],
+    items: [{ icon: 'messages', label: 'docs.features.navRail.chats', dot: true, count: 3 }, { icon: 'bell', label: 'ui.navRail.notifications' }, { icon: 'wallet', label: 'ui.navRail.wallet' }],
     pins: [{ color: 'sunset', name: 'Community 01' }, { color: 'blue', name: 'Community 02' }, { color: 'teal', name: 'Community 03', dot: true }, { color: 'plum', name: 'Community 04' }],
   },
   CallPanel: { people: [{ name: 'julian_jelfs', initial: 'J', grad: 'linear-gradient(140deg,#9BD94B,#4E8F2B)' }] },
@@ -273,43 +273,46 @@ export const samples: Record<string, Record<string, unknown>> = {
     initialPeriod: 'september',
     boards: {
       august: {
-        label: 'AUGUST',
+        label: 'docs.features.leaderboard.august',
         rows: [['SKYE_TERRIER', 64200], ['AKMANNURIYE', 61500], ['KEYTAATGLU', 52800], ['ZARINAZARI', 44100], ['KAY', 38900], ['HAFSAT001', 33200], ['0XCLD', 31800], ['VA867', 29400], ['PIKO_NETWORK', 25600], ['BRITTANY91', 24900]],
         you: { rank: 312, score: 17800 },
       },
       september: {
-        label: 'SEPTEMBER',
+        label: 'docs.features.leaderboard.september',
         rows: [['AKMANNURIYE', 70800], ['SKYE_TERRIER', 70800], ['ZARINAZARI', 70600], ['KEYTAATGLU', 38400], ['HAFSAT001', 37000], ['KAY', 36800], ['VA867', 36000], ['0XCLD', 34600], ['BRITTANY91', 31500], ['PIKO_NETWORK', 27700]],
         you: { rank: 245, score: 21400 },
       },
       all: {
-        label: 'ALL TIME',
+        label: 'docs.features.leaderboard.allTime',
         rows: [['AKMANNURIYE', 3853800], ['SKYE_TERRIER', 3577200], ['KEYTAATGLU', 2894400], ['ZARINAZARI', 2706900], ['KAY', 2344500], ['0XCLD', 2117700], ['HAFSAT001', 2064600], ['VA867', 1838100], ['BRITTANY91', 1678200], ['PIKO_NETWORK', 1494300]],
         you: { rank: 188, score: 539400 },
       },
     },
   },
   MessageActions: { open: true, point: { x: 240, y: 240 } },
+  // copy props whose meta.json demo value is English: pass keys so the docs language switch reaches them
+  UpgradeBanner: { text: 'docs.features.upgradeBanner.publicGroups', actionLabel: 'ui.upgradeBanner.upgrade' },
+  LeaveGroupDialog: { body: 'ui.leaveGroupDialog.body' },
   PanelCover: { actions: ['close'], trailActions: ['favourite'] },
   TileButtons: { tiles: ['video', 'mute', 'search'] },
   TypingIndicator: { names: ['Danielle', 'Priya'], colors: ['violet', 'teal'] },
   ComposerBar: { typingNames: ['Danielle', 'Priya'] },
   StatsDonut: {
     slices: [
-      { label: 'Text', count: 1286 },
-      { label: 'Image', count: 56 },
-      { label: 'Video', count: 11 },
-      { label: 'Audio', count: 3 },
-      { label: 'File', count: 25 },
-      { label: 'Poll', count: 12 },
-      { label: 'Crypto', count: 3 },
-      { label: 'GIF', count: 21 },
+      { type: 'text', label: 'ui.statsDonut.types.text', count: 1286 },
+      { type: 'image', label: 'ui.statsDonut.types.image', count: 56 },
+      { type: 'video', label: 'ui.statsDonut.types.video', count: 11 },
+      { type: 'audio', label: 'ui.statsDonut.types.audio', count: 3 },
+      { type: 'file', label: 'ui.statsDonut.types.file', count: 25 },
+      { type: 'poll', label: 'ui.statsDonut.types.poll', count: 12 },
+      { type: 'crypto', label: 'ui.statsDonut.types.crypto', count: 3 },
+      { type: 'gif', label: 'ui.statsDonut.types.gif', count: 21 },
     ],
     extras: [
-      { label: 'POLL VOTES', count: '11' },
-      { label: 'REPLIES', count: '75' },
-      { label: 'REACTIONS', count: '462' },
-      { label: 'DELETED', count: '5' },
+      { label: 'docs.features.statsDonut.pollVotes', count: '11' },
+      { label: 'docs.features.statsDonut.replies', count: '75' },
+      { label: 'docs.features.statsDonut.reactions', count: '462' },
+      { label: 'docs.features.statsDonut.deleted', count: '5' },
     ],
   },
   // the export rendered an empty community with no gates by default
@@ -375,23 +378,23 @@ export const samples: Record<string, Record<string, unknown>> = {
 
 
 export const contextMenuItems: MenuItem[] = [
-  { label: 'Add to favourites', mask: icon('heart') },
-  { label: 'Mute notifications', mask: icon('bell-off') },
-  { label: 'Mark as read', mask: icon('check') },
-  { label: 'Leave group', variant: 'danger', mask: icon('leave') },
+  { label: 'docs.general.samples.menu.addToFavourites', mask: icon('heart') },
+  { label: 'docs.general.samples.menu.muteNotifications', mask: icon('bell-off') },
+  { label: 'docs.general.samples.menu.markAsRead', mask: icon('check') },
+  { label: 'docs.general.samples.menu.leaveGroup', variant: 'danger', mask: icon('leave') },
 ];
 
 export const menuDemo: MenuItem[] = [
-  { label: 'Reply', icon: 'reply', shortcut: 'R' },
-  { label: 'Forward', icon: 'forward' },
-  { label: 'Copy text', icon: 'copy', shortcut: '⌘C' },
-  { label: 'Delete', variant: 'danger', icon: 'trash' },
+  { label: 'ui.common.reply', icon: 'reply', shortcut: 'R' },
+  { label: 'docs.general.samples.menu.forward', icon: 'forward' },
+  { label: 'docs.general.samples.menu.copyText', icon: 'copy', shortcut: '⌘C' },
+  { label: 'ui.common.delete', variant: 'danger', icon: 'trash' },
 ];
 
 export const sortMenu: MenuItem[] = [
-  { label: 'Newest first', checkMask: icon('check') },
-  { label: 'Oldest first' },
-  { label: 'Most members' },
+  { label: 'docs.general.samples.sort.newestFirst', checkMask: icon('check') },
+  { label: 'docs.general.samples.sort.oldestFirst' },
+  { label: 'docs.general.samples.sort.mostMembers' },
 ];
 
 export const contextRows = [
@@ -420,8 +423,8 @@ export const tokenBtc = { symbol: 'BTC', mark: '₿', gradient: 'linear-gradient
 export const transactions = [
   { title: 'Received from Lucy Linden', sub: '10:42 · in The Awesome Group', amount: '+385.60 ICP', fiat: '$2,113.47', kind: 'receive' as const, ...tokenIcp, fresh: true },
   { title: 'Sent to Matt Rivers', sub: 'Yesterday · direct chat', amount: '−12.00 CHAT', fiat: '$0.64', kind: 'send' as const, ...tokenChat },
-  { title: 'Swapped CHAT → ICP', sub: 'Mon · ICPSwap', amount: '+2.19 ICP', fiat: '$12.02', kind: 'swap' as const, ...tokenIcp, status: 'Pending', statusTone: 'warning' as const },
-  { title: 'Sent to bc1qar0…5mdq', sub: '12 Oct · Bitcoin network', amount: '−0.0012 BTC', fiat: '$74.40', kind: 'send' as const, ...tokenBtc, status: 'Failed', statusTone: 'danger' as const },
+  { title: 'Swapped CHAT → ICP', sub: 'Mon · ICPSwap', amount: '+2.19 ICP', fiat: '$12.02', kind: 'swap' as const, ...tokenIcp, status: 'docs.general.samples.status.pending', statusTone: 'warning' as const },
+  { title: 'Sent to bc1qar0…5mdq', sub: '12 Oct · Bitcoin network', amount: '−0.0012 BTC', fiat: '$74.40', kind: 'send' as const, ...tokenBtc, status: 'docs.general.samples.status.failed', statusTone: 'danger' as const },
 ];
 
 // people as CSS backgrounds built from theme tokens, so the stack follows mode and accent
@@ -436,30 +439,30 @@ export const stackPeople = [
 ];
 
 export const thresholds = [
-  { at: 0.5, label: 'Majority — adopted when voting ends' },
-  { at: 0.75, label: 'Adopted immediately', strong: true },
+  { at: 0.5, label: 'docs.general.samples.thresholds.majorityAdoptedWhenVotingEnds' },
+  { at: 0.75, label: 'docs.general.samples.thresholds.adoptedImmediately', strong: true },
 ];
 
 export const timelineRunning = [
-  { title: 'Send to ICPSwap', steps: [{ label: 'Get deposit account', state: 'done' as const }, { label: 'Transfer 100 CHAT to ICPSwap', state: 'done' as const }, { label: 'Notify ICPSwap of the deposit', state: 'active' as const }] },
-  { title: 'Swap', steps: [{ label: 'Swap CHAT for ICP', state: 'todo' as const }] },
-  { title: 'Return to your wallet', steps: [{ label: 'Withdraw 2.19425 ICP from ICPSwap', state: 'todo' as const }] },
+  { title: 'docs.general.samples.timeline.sendToIcpswap', steps: [{ label: 'docs.general.samples.timeline.getDepositAccount', state: 'done' as const }, { label: 'Transfer 100 CHAT to ICPSwap', state: 'done' as const }, { label: 'docs.general.samples.timeline.notifyIcpswapOfTheDeposit', state: 'active' as const }] },
+  { title: 'docs.general.samples.timeline.swap', steps: [{ label: 'docs.general.samples.timeline.swapChatForIcp', state: 'todo' as const }] },
+  { title: 'docs.general.samples.timeline.returnToYourWallet', steps: [{ label: 'Withdraw 2.19425 ICP from ICPSwap', state: 'todo' as const }] },
 ];
 
 export const timelineDone = [
-  { title: 'Send to ICPSwap', steps: [{ label: 'Get deposit account', state: 'done' as const }, { label: 'Transfer 100 CHAT to ICPSwap', state: 'done' as const }, { label: 'Notify ICPSwap of the deposit', state: 'done' as const }] },
-  { title: 'Swap', steps: [{ label: 'Swap CHAT for ICP', state: 'done' as const }] },
-  { title: 'Return to your wallet', steps: [{ label: 'Withdraw 2.19425 ICP from ICPSwap', state: 'done' as const }] },
+  { title: 'docs.general.samples.timeline.sendToIcpswap', steps: [{ label: 'docs.general.samples.timeline.getDepositAccount', state: 'done' as const }, { label: 'Transfer 100 CHAT to ICPSwap', state: 'done' as const }, { label: 'docs.general.samples.timeline.notifyIcpswapOfTheDeposit', state: 'done' as const }] },
+  { title: 'docs.general.samples.timeline.swap', steps: [{ label: 'docs.general.samples.timeline.swapChatForIcp', state: 'done' as const }] },
+  { title: 'docs.general.samples.timeline.returnToYourWallet', steps: [{ label: 'Withdraw 2.19425 ICP from ICPSwap', state: 'done' as const }] },
 ];
 
 export const timelineFailed = [
-  { title: 'Send to ICPSwap', steps: [{ label: 'Get deposit account', state: 'done' as const }, { label: 'Transfer 100 CHAT to ICPSwap', state: 'done' as const }, { label: 'Notify ICPSwap of the deposit', state: 'done' as const }] },
+  { title: 'docs.general.samples.timeline.sendToIcpswap', steps: [{ label: 'docs.general.samples.timeline.getDepositAccount', state: 'done' as const }, { label: 'Transfer 100 CHAT to ICPSwap', state: 'done' as const }, { label: 'docs.general.samples.timeline.notifyIcpswapOfTheDeposit', state: 'done' as const }] },
   {
-    title: 'Swap',
+    title: 'docs.general.samples.timeline.swap',
     error: 'ICPSwap rejected the swap: price moved past your slippage limit.',
-    steps: [{ label: 'Swap CHAT for ICP', state: 'failed' as const }],
+    steps: [{ label: 'docs.general.samples.timeline.swapChatForIcp', state: 'failed' as const }],
   },
-  { title: 'Return to your wallet', steps: [{ label: 'Withdraw 100 CHAT from ICPSwap', state: 'todo' as const }] },
+  { title: 'docs.general.samples.timeline.returnToYourWallet', steps: [{ label: 'Withdraw 100 CHAT from ICPSwap', state: 'todo' as const }] },
 ];
 
 export const sortableStart = ['Pizza', 'Tacos', 'Sushi'];
@@ -544,9 +547,9 @@ export const longGroup = 'The International Association of Decentralised Messagi
 
 
 export const headerMenu: MenuItem[] = [
-  { label: 'Community details', mask: icon('info') },
-  { label: 'Mute notifications', mask: icon('bell-off') },
-  { label: 'Leave community', variant: 'danger', mask: icon('leave') },
+  { label: 'docs.features.menu.communityDetails', mask: icon('info') },
+  { label: 'docs.features.menu.muteNotifications', mask: icon('bell-off') },
+  { label: 'ui.chatListHeader.leaveCommunity', variant: 'danger', mask: icon('leave') },
 ];
 
 export const patternRows = [
@@ -559,8 +562,8 @@ export const patternRows = [
 ] as const;
 
 export const infoDetails = [
-  { label: 'Username', value: '@alice_anderson' },
-  { label: 'Member since', value: 'Nov 2021' },
+  { label: 'docs.features.info.username', value: '@alice_anderson' },
+  { label: 'docs.features.info.memberSince', value: 'Nov 2021' },
 ];
 
 const day = (time: string, text: string, extra: Record<string, unknown> = {}): GroupMessage => ({ text, time, ...extra }) as GroupMessage;
@@ -570,10 +573,10 @@ export const dividerThread: ({ divider: string; tone: 'accent' | 'neutral' } | M
   { divider: 'Monday', tone: 'neutral' },
   { side: 'received', name: 'Priya Raman', color: 'teal', messages: [day('16:02', 'Did anyone check the staging build?'), day('16:03', 'The chat list jumps when a new message lands')] },
   { side: 'sent', messages: [day('16:10', 'On it — looks like the scroll anchor resets on resize', { status: 'delivered' })] },
-  { divider: 'Yesterday', tone: 'neutral' },
+  { divider: 'docs.features.divider.yesterday', tone: 'neutral' },
   { side: 'received', name: 'Danielle Moreau', color: 'violet', messages: [day('09:41', 'Fixed in the latest push. Pinning to newest now survives image loads.'), day('09:42', 'Can someone confirm on mobile?', { reactions: [{ emoji: '👍', count: 2 }] })] },
   { side: 'sent', messages: [day('11:20', 'Confirmed on iOS and Android', { status: 'delivered' }), day('11:20', 'Nice work 🎉', { status: 'delivered' })] },
-  { divider: 'Unread messages', tone: 'accent' },
+  { divider: 'ui.unreadDivider.unread', tone: 'accent' },
   { side: 'received', name: 'Jonah Weiss', color: 'amber', messages: [day('08:05', 'Morning! Release train leaves at 3'), day('08:06', 'Please get your PRs merged before lunch'), day('08:06', "I'll post the changelog in the thread")] },
 ];
 
@@ -640,7 +643,7 @@ export const joinGate = {
   gates: [
     { kind: 'pay', symbol: 'CHAT', amount: 50 },
     { kind: 'balance', symbol: 'ICP', amount: 10 },
-    { kind: 'neuron', label: 'OpenChat neuron', detail: 'Staked for at least 90 days', confirm: 'I hold an OpenChat neuron staked 90+ days' },
+    { kind: 'neuron', label: 'docs.features.joinGate.neuron', detail: 'docs.features.joinGate.neuronDetail', confirm: 'docs.features.joinGate.neuronConfirm' },
   ] as const,
   tokens: [
     { symbol: 'CHAT', held: 132.33, mark: 'C', grad: 'linear-gradient(140deg,#2EE6A8,#1FB6FF)' },
@@ -650,9 +653,9 @@ export const joinGate = {
 
 // MessageActions takes the bare mask image (it adds the positioning itself)
 export const messageActionItems = [
-  { label: 'Reply', mask: 'var(--icon-reply)' },
-  { label: 'Copy text', mask: 'var(--icon-copy)' },
-  { label: 'Forward', mask: 'var(--icon-forward)' },
+  { label: 'ui.common.reply', mask: 'var(--icon-reply)' },
+  { label: 'docs.features.menu.copyText', mask: 'var(--icon-copy)' },
+  { label: 'docs.features.menu.forward', mask: 'var(--icon-forward)' },
   { variant: 'separator', label: '' },
-  { label: 'Delete', variant: 'danger', mask: 'var(--icon-trash)' },
+  { label: 'ui.common.delete', variant: 'danger', mask: 'var(--icon-trash)' },
 ] as const;
