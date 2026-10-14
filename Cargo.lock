@@ -3104,6 +3104,7 @@ dependencies = [
  "msgpack",
  "oc_error_codes",
  "serde",
+ "serde-value",
  "stable_memory_map",
  "types",
  "utils",
