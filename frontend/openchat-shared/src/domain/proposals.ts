@@ -1,9 +1,24 @@
+import type { ResourceKey } from "../utils/i18n";
+
 export type CandidateProposal = {
     title: string;
     url: string | undefined;
     summary: string;
     action: CandidateProposalAction;
 };
+
+/**
+ * A payment a proposal's execution takes once it passes, on top of the fee for submitting it: the
+ * listing fee for adding a token, or the CHAT that pays for an achievement's CHIT awards
+ */
+export type ProposalExecutionPayment =
+    | { kind: "token_listing" }
+    | { kind: "achievement"; chitReward: number; maxAwards: number };
+
+export type MakeProposalOutcome =
+    | { kind: "submitted" }
+    | { kind: "cancelled" }
+    | { kind: "failed"; message: ResourceKey };
 
 export type CandidateProposalAction =
     | Motion

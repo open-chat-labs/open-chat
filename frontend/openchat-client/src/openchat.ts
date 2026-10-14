@@ -97,6 +97,7 @@ import {
     storeEmailSignInSession,
     stripLinkDisabledMarker,
     todaysPuzzle,
+    APPROVAL_VALIDITY_MS,
     toDer,
     toTitleCase,
     updateCreatedUser,
@@ -230,6 +231,7 @@ import {
     type LinkedAuthenticationPrincipal,
     type LogLevel,
     type Logger,
+    type MakeProposalOutcome,
     type MarkReadRequest,
     type Member,
     type MemberRole,
@@ -270,7 +272,9 @@ import {
     type PendingCryptocurrencyWithdrawal,
     type PreprocessedGate,
     type ProposalContent,
+    type ProposalExecutionPayment,
     type ProposalVoteDetails,
+    type SubmitProposalResponse,
     type ProposalVoteOutcome,
     type Withdrawal,
     type WithdrawOutcome,
@@ -603,6 +607,13 @@ import {
     swapUnconfirmed,
 } from "./utils/swap";
 import { joinGroupFailureMessage } from "./utils/join";
+import {
+    executionPaymentAmount,
+    PROPOSAL_EXECUTION_WINDOW,
+    proposalFailed,
+    proposalFee,
+    submitProposalResult,
+} from "./utils/proposal";
 import {
     bioResult,
     displayNameResult,
@@ -2118,7 +2129,7 @@ export class OpenChat {
             });
     }
 
-    async approveTransfer(
+    async #approveTransfer(
         spender: string,
         ledger: string,
         amount: bigint,
@@ -9554,36 +9565,80 @@ export class OpenChat {
         }
     }
 
-    submitProposal(governanceCanisterId: string, proposal: CandidateProposal): Promise<boolean> {
+    /**
+     * Makes a proposal to an SNS, prompting for the user's PIN if they have one. The ProposalsBot is
+     * approved to take the proposal's fee, and the canister that takes the payment the proposal's
+     * execution needs, if any, is approved to take that. Nothing is submitted unless every approval
+     * succeeds.
+     */
+    async makeProposal(
+        governanceCanisterId: string,
+        proposal: CandidateProposal,
+        executionPayment?: ProposalExecutionPayment,
+    ): Promise<MakeProposalOutcome> {
         const nervousSystem = this.tryGetNervousSystem(governanceCanisterId);
         if (nervousSystem === undefined) {
-            this.#logger.error(
-                "Cannot find NervousSystemDetails for governanceCanisterId",
+            this.logError(
+                "Cannot find the nervous system to make a proposal to",
                 governanceCanisterId,
             );
-            return Promise.resolve(false);
+            return proposalFailed();
+        }
+        const { ledger, symbol, transferFee } = nervousSystem.token;
+
+        const approvals: { spender: string; amount: bigint; expiresIn: bigint }[] = [
+            {
+                spender: this.config.proposalBotCanister,
+                amount: proposalFee(nervousSystem),
+                expiresIn: BigInt(APPROVAL_VALIDITY_MS),
+            },
+        ];
+        if (executionPayment !== undefined) {
+            approvals.push({
+                spender:
+                    executionPayment.kind === "token_listing"
+                        ? this.config.registryCanister
+                        : this.config.userIndexCanister,
+                amount: executionPaymentAmount(executionPayment, transferFee),
+                expiresIn: PROPOSAL_EXECUTION_WINDOW,
+            });
         }
 
-        return this.#worker
-            .send({
+        try {
+            const pin = await this.#promptForPinIfRequired();
+            for (const { spender, amount, expiresIn } of approvals) {
+                const resp = await this.#approveTransfer(spender, ledger, amount, expiresIn, pin);
+                if (resp.kind !== "success") {
+                    return { kind: "failed", message: i18nKey("proposal.maker.approvalError") };
+                }
+            }
+        } catch (err) {
+            // the user dismissed the PIN prompt
+            if (err === "cancelled") return { kind: "cancelled" };
+            this.logError("Unable to approve the payments for a proposal", err);
+            return proposalFailed();
+        }
+
+        let resp: SubmitProposalResponse;
+        try {
+            resp = await this.#worker.send({
                 kind: "submitProposal",
                 currentUserId: currentUserIdStore.value,
                 governanceCanisterId,
                 proposal,
-                ledger: nervousSystem.token.ledger,
-                token: nervousSystem.token.symbol,
+                ledger,
+                token: symbol,
                 proposalRejectionFee: nervousSystem.proposalRejectionFee,
-                transactionFee: nervousSystem.token.transferFee,
-            })
-            .then((resp) => {
-                if (resp.kind === "success" || resp.kind === "retrying") {
-                    return true;
-                }
-
-                this.#logger.error("Failed to submit proposal", resp);
-                return false;
-            })
-            .catch(() => false);
+                transactionFee: transferFee,
+            });
+        } catch (err) {
+            this.logError("Unable to submit proposal", err);
+            return proposalFailed();
+        }
+        if (resp.kind !== "success" && resp.kind !== "retrying") {
+            this.logError("Failed to submit proposal", resp);
+        }
+        return submitProposalResult(resp);
     }
 
     refreshSwappableTokens(): Promise<Set<string>> {
@@ -11440,7 +11495,7 @@ export class OpenChat {
         });
     }
 
-    promptForPinIfRequired(): Promise<string | undefined> {
+    #promptForPinIfRequired(): Promise<string | undefined> {
         return pinNumberRequiredStore.value
             ? this.#promptForCurrentPin("pinNumber.enterPinInfo")
             : Promise.resolve(undefined);
