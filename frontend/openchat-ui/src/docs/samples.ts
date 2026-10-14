@@ -163,6 +163,18 @@ const createGroupPeople = [
   { name: 'Otto Lindqvist', handle: '@otto_l', color: 'blue' },
 ];
 
+// Explore: a spread of sizes, languages and activity so every sort and the language filter have something to do.
+const exploreCommunities = [
+  { key: 'oc', name: 'OpenChat', about: 'The official OpenChat community: product news, feedback and support.', members: 48210, active: 98, created: 1, verified: true, pin: 'rose', channels: [{ title: 'general' }, { title: 'announcements' }, { title: 'feedback' }] },
+  { key: 'icp', name: 'Internet Computer', about: 'Developers and enthusiasts building on the Internet Computer.', members: 31544, active: 91, created: 2, verified: true, pin: 'violet', channels: [{ title: 'general' }, { title: 'dev' }] },
+  { key: 'design', name: 'Design Guild', about: 'Critique, tools and inspiration for product designers.', members: 6120, active: 74, created: 7, pin: 'plum', cover: 'violet', channels: [{ title: 'crit' }, { title: 'jobs' }] },
+  { key: 'dragon', name: 'Dragon Paladins', about: 'Weekly raids, guild events and loot talk.', members: 12890, active: 86, created: 5, pin: 'sunset', channels: [{ title: 'raids' }, { title: 'trading' }, { title: 'officers', visibility: 'Private' as const }] },
+  { key: 'cafe', name: 'Café Crypto', about: 'Discussions sur les cryptomonnaies, en français.', members: 3405, active: 52, created: 9, language: 'French', pin: 'amber', channels: [{ title: 'général' }] },
+  { key: 'tokyo', name: '東京 Builders', about: '東京のWeb3ビルダーのためのコミュニティ。', members: 2210, active: 61, created: 11, language: 'Japanese', pin: 'teal', channels: [{ title: 'general' }] },
+  { key: 'photo', name: 'Analog Photography', about: 'Film stocks, darkroom tips and weekly photo threads.', members: 1876, active: 40, created: 12, pin: 'blue', channels: [{ title: 'gallery' }, { title: 'gear' }] },
+  { key: 'es', name: 'Comunidad ICP', about: 'La comunidad hispanohablante del Internet Computer.', members: 4502, active: 58, created: 8, language: 'Spanish', pin: 'teal', verified: true, channels: [{ title: 'general' }] },
+];
+
 export const samples: Record<string, Record<string, unknown>> = {
   CreateGroupDialog: { people: createGroupPeople, invitePeople: createGroupPeople, preselected: ['@alice_anderson', '@lucy_linden'] },
   GroupPanel: groupPanel,
@@ -198,8 +210,8 @@ export const samples: Record<string, Record<string, unknown>> = {
   DiamondDialog: { tokens: walletTokens },
   BotDialog: { bot: { name: 'ReminderBot' } },
   InviteDialog: { people: invitePeople, pending: invitePending, chats: chats.slice(0, 3) },
-  ExploreCommunities: { communities: [] },
-  WalletSettingsDialog: { tokens: [] },
+  ExploreCommunities: { communities: exploreCommunities, joinedKeys: ['oc'] },
+  WalletSettingsDialog: { tokens: ['ICP', 'CHAT', 'BTC', 'USDT'] },
   ChatRow: { menuItems },
   ChatPicker: { item: { title: 'Invite link', sub: 'oc.app/group/the-awesome-group-8f2a', icon: 'link' }, chats },
   ProgressTimeline: {

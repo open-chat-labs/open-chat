@@ -13,6 +13,7 @@
   import TextArea from '../../lib/components/TextArea.svelte';
   import TimedToggle from '../../lib/components/TimedToggle.svelte';
   import Toggle from '../../lib/components/Toggle.svelte';
+  import { modal } from '../../lib/behaviours/modal';
 
   type Section = 'group' | 'gates' | 'rules' | 'permissions';
   type Scope = 'general' | 'messages' | 'threads';
@@ -380,7 +381,7 @@
   <span class="status">{on ? 'On' : 'Off'}</span>
 {/snippet}
 
-<div class="root" class:embedded>
+<div class="root" class:embedded use:modal={embedded ? undefined : () => (onClose ?? onCancel)?.()}>
   {#if !embedded}
     <div class="veil" onclick={onCancel} aria-hidden="true"></div>
   {/if}

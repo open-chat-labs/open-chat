@@ -4,6 +4,7 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
   import Toggle from '../../lib/components/Toggle.svelte';
+  import { modal } from '../../lib/behaviours/modal';
 
   export interface NewChannel {
     name: string;
@@ -61,7 +62,7 @@
   });
 </script>
 
-<div class="layer" class:closing role="dialog" aria-modal="true">
+<div class="layer" class:closing role="dialog" aria-modal="true" use:modal={() => close(onCancel)}>
   <div class="veil" onclick={() => close(onCancel)} aria-hidden="true"></div>
   <div class="card">
     <div class="head">

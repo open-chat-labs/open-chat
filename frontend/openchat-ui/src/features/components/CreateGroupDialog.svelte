@@ -14,6 +14,7 @@
   import TimedToggle from '../../lib/components/TimedToggle.svelte';
   import Toggle from '../../lib/components/Toggle.svelte';
   import UpgradeBanner from './UpgradeBanner.svelte';
+  import { modal } from '../../lib/behaviours/modal';
 
   type Kind = 'group' | 'community' | 'channel' | 'embedded';
   type TabKey = 'Group' | 'Invite' | 'Channels' | 'Gates' | 'Rules' | 'Permissions';
@@ -520,7 +521,7 @@
   <span class="section-label">{text}</span>
 {/snippet}
 
-<div class="root" class:closing role="dialog" aria-modal="true">
+<div class="root" class:closing role="dialog" aria-modal="true" use:modal={() => close(onCancel)}>
   <div class="veil" onclick={() => close(onCancel)} aria-hidden="true"></div>
   <div class="card">
     <div class="head">

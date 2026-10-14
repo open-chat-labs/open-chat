@@ -2,6 +2,7 @@
      and in edit mode the secret URL (click to copy) with a guarded "Regenerate" that confirms before replacing the secret. -->
 <script lang="ts">
   import { onDestroy } from 'svelte';
+  import { modal } from '../../lib/behaviours/modal';
 
   const GRADIENTS = {
     slate: 'linear-gradient(140deg,#8E9BB3,#5A6478)',
@@ -118,7 +119,7 @@
   }
 </script>
 
-<div class="layer" class:closing role="dialog" aria-modal="true">
+<div class="layer" class:closing role="dialog" aria-modal="true" use:modal={() => close(onCancel)}>
   <div class="veil" onclick={() => close(onCancel)} aria-hidden="true"></div>
   <div class="card">
     <div class="head">

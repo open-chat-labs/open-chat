@@ -2,6 +2,7 @@
      onConfirm(communityName) fires after the close animation. -->
 <script lang="ts">
   import { onDestroy } from 'svelte';
+  import { modal } from '../../lib/behaviours/modal';
 
   const GRADIENTS = ['linear-gradient(140deg,#ff8a5f,#b3407a)', 'linear-gradient(140deg,#5fa8ff,#8c6bff)', 'linear-gradient(140deg,#2ee6a8,#1fb6ff)'];
 
@@ -45,7 +46,7 @@
   }
 </script>
 
-<div class="layer" class:closing role="dialog" aria-modal="true">
+<div class="layer" class:closing role="dialog" aria-modal="true" use:modal={() => close(onCancel)}>
   <div class="veil" onclick={() => close(onCancel)} aria-hidden="true"></div>
   <div class="card">
     <div class="head">

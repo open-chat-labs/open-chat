@@ -3,6 +3,7 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
   import Toggle from '../../lib/components/Toggle.svelte';
+  import { modal } from '../../lib/behaviours/modal';
 
   type PermKey = 'read' | 'summary' | 'members' | 'pinned' | 'threads' | 'react' | 'send' | 'images' | 'remove' | 'pin' | 'everyone';
   type Color = 'violet' | 'amber' | 'teal' | 'blue' | 'rose' | 'plum' | 'slate';
@@ -256,7 +257,7 @@
   }
 </script>
 
-<div class="layer" role="dialog" aria-modal="true">
+<div class="layer" role="dialog" aria-modal="true" use:modal={() => close(onCancel)}>
   <div class="veil" class:closing onclick={() => close(onCancel)} aria-hidden="true"></div>
   <div class="card" class:closing>
     <div class="header">

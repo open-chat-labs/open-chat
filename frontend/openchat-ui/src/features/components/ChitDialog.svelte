@@ -10,6 +10,7 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
   import DailyPuzzleCard from './DailyPuzzleCard.svelte';
+  import { modal } from '../../lib/behaviours/modal';
 
   // milestone days that pay a bonus on top of the daily claim, with the position each one takes on the bar —
   // hand-spaced so the early run stays readable and the long haul to 365 still reads as long
@@ -120,7 +121,7 @@
   }
 </script>
 
-<div class="layer" class:closing data-screen-label="CHIT" role="dialog" aria-modal="true">
+<div class="layer" class:closing data-screen-label="CHIT" role="dialog" aria-modal="true" use:modal={() => close()}>
   <div class="veil" onclick={close} aria-hidden="true"></div>
 
   <div class="card">

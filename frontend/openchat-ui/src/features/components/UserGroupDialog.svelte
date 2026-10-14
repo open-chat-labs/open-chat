@@ -3,6 +3,7 @@
      Delete: a confirmation. Esc, the veil, × and Cancel close with the exit animation. -->
 <script lang="ts">
   import { onDestroy, onMount, untrack } from 'svelte';
+  import { modal } from '../../lib/behaviours/modal';
 
   const GRADIENTS: Record<string, string> = {
     violet: 'linear-gradient(140deg,#8B7BFF,#5B3FD9)',
@@ -120,7 +121,7 @@
   });
 </script>
 
-<div class="layer" class:closing data-screen-label="User group dialog" role="dialog" aria-modal="true">
+<div class="layer" class:closing data-screen-label="User group dialog" role="dialog" aria-modal="true" use:modal={() => close(onCancel)}>
   <div class="veil" onclick={() => close(onCancel)} aria-hidden="true"></div>
   <div class="card" class:delete={isDelete}>
     <div class="head">

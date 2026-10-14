@@ -27,6 +27,7 @@
   import { onDestroy, tick } from 'svelte';
   import type { WalletToken } from '../../lib/types';
   import Toggle from '../../lib/components/Toggle.svelte';
+  import { modal } from '../../lib/behaviours/modal';
 
   type Section = 'tokens' | 'recipients' | 'security' | 'currency';
 
@@ -170,7 +171,7 @@
   </div>
 {/snippet}
 
-<div class="layer" data-screen-label="Wallet settings" role="dialog" aria-modal="true">
+<div class="layer" data-screen-label="Wallet settings" role="dialog" aria-modal="true" use:modal={() => close()}>
   <div class="veil" class:closing onclick={close} aria-hidden="true"></div>
 
   <div class="card" class:closing>

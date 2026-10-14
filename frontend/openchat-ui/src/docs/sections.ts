@@ -103,6 +103,14 @@ export const features: SectionMeta[] = [
   { id: 'app-token-coin', title: 'Token coin', meta: 'TokenCoin.dc.html' },
   { id: 'app-threads', title: 'Threads', meta: 'ThreadList.dc.html · ThreadPanel.dc.html' },
   { id: 'app-dialogs', title: 'Dialogs', meta: 'JoinGateDialog · PollBuilderDialog · PuzzleDialog · MessageActions' },
+  { id: 'features-wallet', title: 'Wallet', meta: 'WalletPanel · WalletMain · WalletSend · WalletReceive · WalletSwap · WalletRecipients' },
+  { id: 'features-wallet-dialogs', title: 'Wallet dialogs', meta: 'WalletSettingsDialog · SendCryptoDialog · SwapOfferDialog · DiamondDialog · PrizeBuilderDialog' },
+  { id: 'features-activity', title: 'Activity', meta: 'ActivityPanel.dc.html' },
+  { id: 'features-access-gates', title: 'Access gates', meta: 'AccessGates · AccessGatesCards · UpgradeBanner' },
+  { id: 'features-explore', title: 'Explore & sign-in', meta: 'ExploreCommunities · AuthDialog' },
+  { id: 'features-people', title: 'People & profile', meta: 'DmChatSettings · ProfileDialog · UserDialog' },
+  { id: 'features-group-dialogs', title: 'Group & community dialogs', meta: 'CreateGroupDialog · GroupSettingsDialog · NewChannelDialog · ConvertToCommunityDialog · ImportToCommunityDialog · UserGroupDialog · InviteDialog · WebhookDialog · BotDialog · LeaveGroupDialog · DeleteGroupDialog' },
+  { id: 'features-rewards', title: 'Rewards & games', meta: 'AchievementToast · AchievementsDialog · ChitDialog · StreakInsuranceDialog · LeaderboardDialog · MemeFighterDialog' },
 ];
 
 type Meta = { name: string; source: string; props: unknown[] };

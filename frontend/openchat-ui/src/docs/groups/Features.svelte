@@ -13,13 +13,15 @@
     ActivityRow, CallEvent, ChatBubble, ChatRow, ComposerBar, EmojiPicker, EmptyState, FileMessage, LinkPreview,
     MediaMessage, MemberRow, MessageComposer, PanelCover, PanelNavRow, PollMessage, PrizeMessage, ProposalMessage,
     StatCard, StatsDonut, SwapOffer as SwapOfferMessage, TileButtons, TransferMessage, TypingIndicator, VoiceMessage,
-    Button, MessageActions, MessageGroup, TokenCoin, UnreadDivider,
+    Button, MessageActions, MessageGroup, SegmentedTabs, TokenCoin, UnreadDivider,
   } from '../../lib/index';
   import {
     BalanceCard, NavRail, CallPanel, ChatListHeader, ChatListPanel, ConversationHeader, DailyPuzzleCard,
     DmPanel, GroupPanel, GroupStats, InfoPanel, JoinGateDialog, MiniCall, PollBuilderDialog, PuzzleDialog, ThreadList,
     ThreadPanel, VideoTile,
   } from '../../features/index';
+  import * as F from '../../features/index';
+  import { demoProps, previewSize } from '../demo';
   import type { GroupMessage } from '../../lib/types';
 
   let selectedRow = $state(2);
@@ -102,6 +104,13 @@
     await tick();
     actionsAt = at;
   }
+
+  // ── Whole feature screens and dialogs, rendered with their demo props (demo.ts) ──
+  const featureComponents = F as unknown as Record<string, typeof Button>;
+  const walletScreens = ['WalletMain', 'WalletSend', 'WalletReceive', 'WalletSwap', 'WalletRecipients'];
+  let walletScreen = $state(0);
+  let openDialog = $state<string | null>(null);
+  const dialogLabel = (n: string) => n.replace(/Dialog$/, '').replace(/([a-z])([A-Z])/g, '$1 $2');
 </script>
 
 <!-- App group, part A: chat summaries … wallet blocks. -->
@@ -464,6 +473,87 @@
   <MessageActions open={!!actionsAt} point={actionsAt} items={messageActionItems as any} recent={['❤️', '👍', '🔥', '😂']} onReact={() => (actionsAt = null)} onClose={() => (actionsAt = null)} />
 </Section>
 
+
+{#snippet live(name: string, label: string = name, height: string | null = null)}
+  {@const C = featureComponents[name]}
+  {@const size = previewSize(name)}
+  <Frame {label} style="justify-content: center">
+    <div class="screen" class:contain={name === 'AchievementToast'} style:width="min(100%, {size.width})" style:height={height ?? size.height}>
+      <svelte:boundary>
+        <C {...demoProps(name) as any} />
+        {#snippet failed(e)}<pre class="demo-error">{String((e as Error)?.message ?? e)}</pre>{/snippet}
+      </svelte:boundary>
+    </div>
+  </Frame>
+{/snippet}
+
+{#snippet openers(names: string[])}
+  <Frame label="Try it · opens the real dialog">
+    {#each names as n}<Button variant="secondary" label={dialogLabel(n)} onClick={() => (openDialog = n)} />{/each}
+  </Frame>
+{/snippet}
+
+<Section {...sec(features, 'features-wallet')}>
+  <div class="wallet">
+    {@render live('WalletPanel', 'WalletPanel · side panel')}
+    <Frame label="Wallet screens" style="flex-direction: column; flex-wrap: nowrap">
+      <SegmentedTabs labels={walletScreens.map((n) => n.replace('Wallet', ''))} selectedIndex={walletScreen} dotOnLast={false} onSelect={(i) => (walletScreen = i)} />
+      {#key walletScreen}
+        {@const C = featureComponents[walletScreens[walletScreen]]}
+        <div class="screen wide">
+          <svelte:boundary>
+            <C {...demoProps(walletScreens[walletScreen]) as any} />
+            {#snippet failed(e)}<pre class="demo-error">{String((e as Error)?.message ?? e)}</pre>{/snippet}
+          </svelte:boundary>
+        </div>
+      {/key}
+    </Frame>
+  </div>
+</Section>
+
+<Section {...sec(features, 'features-wallet-dialogs')}>
+  {@render openers(['WalletSettingsDialog', 'SendCryptoDialog', 'SwapOfferDialog', 'DiamondDialog', 'PrizeBuilderDialog'])}
+</Section>
+
+<Section {...sec(features, 'features-activity')}>
+  {@render live('ActivityPanel')}
+</Section>
+
+<Section {...sec(features, 'features-access-gates')}>
+  {@render live('UpgradeBanner', 'UpgradeBanner', 'auto')}
+  <div class="pair">
+    {@render live('AccessGates', 'AccessGates · list editor', 'auto')}
+    {@render live('AccessGatesCards', 'AccessGatesCards · card picker', 'auto')}
+  </div>
+</Section>
+
+<Section {...sec(features, 'features-explore')}>
+  {@render live('ExploreCommunities', 'ExploreCommunities', 'auto')}
+  {@render openers(['AuthDialog'])}
+</Section>
+
+<Section {...sec(features, 'features-people')}>
+  {@render live('DmChatSettings', 'DmChatSettings', 'auto')}
+  {@render openers(['ProfileDialog', 'UserDialog'])}
+</Section>
+
+<Section {...sec(features, 'features-group-dialogs')}>
+  {@render openers(['CreateGroupDialog', 'GroupSettingsDialog', 'NewChannelDialog', 'ConvertToCommunityDialog', 'ImportToCommunityDialog', 'UserGroupDialog', 'InviteDialog', 'WebhookDialog', 'BotDialog', 'LeaveGroupDialog', 'DeleteGroupDialog'])}
+</Section>
+
+<Section {...sec(features, 'features-rewards')}>
+  {@render live('AchievementToast', 'AchievementToast', '110px')}
+  {@render openers(['AchievementsDialog', 'ChitDialog', 'StreakInsuranceDialog', 'LeaderboardDialog', 'MemeFighterDialog'])}
+</Section>
+
+{#if openDialog}
+  {@const D = featureComponents[openDialog]}
+  <svelte:boundary>
+    <D {...demoProps(openDialog) as any} onClose={() => (openDialog = null)} onCancel={() => (openDialog = null)} />
+    {#snippet failed(e)}<pre class="demo-error dialog-error">{String((e as Error)?.message ?? e)}</pre>{/snippet}
+  </svelte:boundary>
+{/if}
+
 <style>
   .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
   .stack { display: flex; flex-direction: column; gap: 6px; width: 100%; min-width: 0; }
@@ -489,4 +579,12 @@
   .tile { position: absolute; inset: 0; }
   .stage { position: relative; width: 100%; height: 420px; border-radius: var(--radius-lg); overflow: hidden; background: var(--surface-0); box-shadow: inset 0 0 0 1px var(--line-1); }
   .actions-trigger { display: inline-flex; }
+  .wallet { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; align-items: start; }
+  .pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); gap: 16px; }
+  .screen { position: relative; min-width: 0; max-width: 100%; display: grid; grid-template-columns: minmax(0, 1fr); }
+  /* transform: a fixed-position toast is laid out inside its frame, not the viewport */
+  .screen.contain { transform: translateZ(0); }
+  .screen.wide { width: 100%; height: 800px; }
+  .demo-error { margin: 0; padding: 12px 14px; border-radius: 10px; background: var(--status-danger-soft); color: var(--status-danger); font: 500 12px/1.5 var(--font-mono); white-space: pre-wrap; }
+  .dialog-error { position: fixed; inset-block-end: 24px; inset-inline-start: 50%; z-index: var(--z-modal); }
 </style>

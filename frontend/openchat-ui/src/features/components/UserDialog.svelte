@@ -8,6 +8,7 @@
   import DmChatSettings from './DmChatSettings.svelte';
   import PanelCover from '../../lib/components/PanelCover.svelte';
   import SegmentedTabs from '../../lib/components/SegmentedTabs.svelte';
+  import { modal } from '../../lib/behaviours/modal';
 
   type MuteKey = '8h' | '1w' | 'always';
 
@@ -125,7 +126,7 @@
   }
 </script>
 
-<div class="layer" role="dialog" aria-modal="true">
+<div class="layer" role="dialog" aria-modal="true" use:modal={() => close(onCancel)}>
   <div class="veil" class:closing onclick={() => close(onCancel)} aria-hidden="true"></div>
   <div class="card" class:closing data-panel-root="true">
     <div class="cover">

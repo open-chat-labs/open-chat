@@ -3,6 +3,7 @@
      `highlight` opens that row's group, marks the row and scrolls it into view. -->
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { modal } from '../../lib/behaviours/modal';
 
   type Band = 'quick' | 'mid' | 'big';
   // [label, done, reward, band, icon] — band tags what the "next up" trio draws from
@@ -173,7 +174,7 @@
   });
 </script>
 
-<div class="layer" data-screen-label="Achievements" role="dialog" aria-modal="true">
+<div class="layer" data-screen-label="Achievements" role="dialog" aria-modal="true" use:modal={() => onClose?.()}>
   <div class="veil" onclick={() => onClose?.()} aria-hidden="true"></div>
 
   <div class="card">

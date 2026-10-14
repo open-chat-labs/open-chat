@@ -10,6 +10,7 @@
   import SegmentedTabs from '../../lib/components/SegmentedTabs.svelte';
   import Toggle from '../../lib/components/Toggle.svelte';
   import UndoToast from '../../lib/components/UndoToast.svelte';
+  import { modal } from '../../lib/behaviours/modal';
 
   type Color = 'violet' | 'amber' | 'teal' | 'blue' | 'slate' | 'plum';
   type TabKey = 'add' | 'invite' | 'share';
@@ -220,7 +221,7 @@
   <SegmentedTabs labels={tabLabels} counts={tabCounts} selectedIndex={tab} dotIndexes={[]} onSelect={(i) => (tab = i)} />
 {/snippet}
 
-<div class="layer" class:embedded>
+<div class="layer" class:embedded use:modal={embedded ? undefined : cancel}>
   {#if !embedded}
     <div class="veil" onclick={cancel} aria-hidden="true"></div>
   {/if}

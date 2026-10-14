@@ -1,6 +1,8 @@
 <!-- CHIT high scores: one board per period (tabs), top rows with the podium in green, and your own row pinned below.
      Your row comes from `you` (per period or one value) or the board; a rank the board itself contradicts is corrected. -->
 <script lang="ts">
+  import { modal } from '../../lib/behaviours/modal';
+
   type Standing = { rank: number; score: number };
 
   interface Board {
@@ -41,7 +43,7 @@
   });
 </script>
 
-<div class="layer" data-screen-label="Leaderboard" role="dialog" aria-modal="true">
+<div class="layer" data-screen-label="Leaderboard" role="dialog" aria-modal="true" use:modal={() => onClose?.()}>
   <div class="veil" onclick={() => onClose?.()} aria-hidden="true"></div>
 
   <div class="card">

@@ -1,6 +1,7 @@
 <!-- Confirm leaving a group, channel or community. Cancel / confirm play the close animation, then call back. -->
 <script lang="ts">
   import { onDestroy } from 'svelte';
+  import { modal } from '../../lib/behaviours/modal';
 
   interface Props {
     groupName: string;
@@ -35,7 +36,7 @@
   }
 </script>
 
-<div class="layer" class:closing role="dialog" aria-modal="true">
+<div class="layer" class:closing role="dialog" aria-modal="true" use:modal={() => close(onCancel)}>
   <div class="veil" onclick={() => close(onCancel)} aria-hidden="true"></div>
   <div class="card">
     <div class="head">

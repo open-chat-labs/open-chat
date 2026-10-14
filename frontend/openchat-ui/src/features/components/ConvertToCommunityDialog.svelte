@@ -3,6 +3,7 @@
      Finish falls back to onCancel; "Go to the community" falls back to onFinish, then onCancel. -->
 <script lang="ts">
   import { onDestroy } from 'svelte';
+  import { modal } from '../../lib/behaviours/modal';
 
   const STEPS = [
     'Freeze the existing group',
@@ -47,7 +48,7 @@
   }
 </script>
 
-<div class="layer" class:closing role="dialog" aria-modal="true">
+<div class="layer" class:closing role="dialog" aria-modal="true" use:modal={() => close(onCancel)}>
   <div class="veil" onclick={() => close(onCancel)} aria-hidden="true"></div>
   <div class="card">
     <div class="head">

@@ -3,6 +3,7 @@
      Back returns to CHIT (onBack, else onClose); ×, the veil and a purchase close. -->
 <script lang="ts">
   import { onDestroy } from 'svelte';
+  import { modal } from '../../lib/behaviours/modal';
 
   const STEPS = [1, 2, 4, 12, 28, 60, 124];
   const MAX_DAYS = STEPS.length;
@@ -70,7 +71,7 @@
   }
 </script>
 
-<div class="layer" class:closing data-screen-label="Streak insurance" role="dialog" aria-modal="true">
+<div class="layer" class:closing data-screen-label="Streak insurance" role="dialog" aria-modal="true" use:modal={() => leave(onClose)}>
   <div class="veil" onclick={() => leave(onClose)} aria-hidden="true"></div>
 
   <div class="card">
