@@ -33,7 +33,7 @@
   const activeTitle = $derived(sectionsFor[group].find((s) => s.id === active)?.title ?? '');
 
   /** Distance from the viewport top a section lands at: clears the floating theme bar. */
-  const OFFSET = 80;
+  const OFFSET = 92;
 
   const sections = $derived(sectionsFor[group]);
   const info = $derived(groups.find((g) => g.id === group)!);
@@ -149,8 +149,8 @@
 
   <main>
     <div class="bar" role="toolbar" aria-label="Theme">
-      <Search onGo={jump} />
       <span class="crumb">{info.label}{#if activeTitle}<span class="crumb-sep">/</span><span class="crumb-section">{activeTitle}</span>{/if}</span>
+      <Search onGo={jump} />
       <div class="controls">
         <label class="pick">
           <span class="sr">Mode</span>
@@ -220,11 +220,11 @@
   .root nav a:hover { background: var(--overlay-1); color: var(--ink); }
   .root nav a.on { background: var(--overlay-1); color: var(--accent); }
 
-  .bar { position: sticky; top: 12px; z-index: var(--z-backdrop); /* above demo content, below modals */ box-sizing: border-box; display: flex; align-items: center; gap: 16px; min-height: 52px; margin-bottom: 28px; padding-block: 8px; padding-inline: 18px 10px; border-radius: var(--radius-xl); background: color-mix(in srgb, var(--surface-1) 82%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: inset 0 0 0 1px var(--line-1), var(--shadow-panel); }
-  .crumb { flex: 1; min-width: 0; text-align: end; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 13px/1 var(--font-sans); color: var(--ink); }
+  .bar { position: sticky; top: 12px; z-index: var(--z-backdrop); /* above demo content, below modals */ box-sizing: border-box; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 460px) minmax(0, 1fr); align-items: center; gap: 16px; min-height: 64px; margin-bottom: 28px; padding-block: 8px; padding-inline: 18px 10px; border-radius: var(--radius-xl); background: color-mix(in srgb, var(--surface-1) 82%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: inset 0 0 0 1px var(--line-1), var(--shadow-panel); }
+  .crumb { min-width: 0; text-align: start; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 13px/1 var(--font-sans); color: var(--ink); }
   .crumb-sep { margin-inline: 8px; color: var(--ink-4); }
   .crumb-section { font-weight: 500; color: var(--ink-3); }
-  .controls { flex: none; display: flex; align-items: center; gap: 8px; }
+  .controls { min-width: 0; display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
   .pick { position: relative; display: flex; align-items: center; }
   .pick select { appearance: none; height: 34px; padding-inline: 12px 30px; border: 0; border-radius: var(--radius-sm); background: var(--overlay-1); box-shadow: inset 0 0 0 1px var(--line-1); color: var(--ink); font: 600 12.5px/1 var(--font-sans); cursor: pointer; }
   .pick select:hover { background: var(--overlay-2); }

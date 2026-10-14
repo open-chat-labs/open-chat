@@ -129,15 +129,15 @@
 </div>
 
 <style>
-  .search { position: relative; flex: 1; min-width: 0; max-width: 420px; display: flex; align-items: center; gap: 8px; height: 36px; padding-inline: 12px 8px; border-radius: var(--radius-md); background: var(--field); box-shadow: inset 0 0 0 1px var(--line-1); }
+  .search { position: relative; min-width: 0; display: flex; align-items: center; gap: 10px; height: 44px; padding-inline: 14px 10px; border-radius: var(--radius-md); background: var(--field); box-shadow: inset 0 0 0 1px var(--line-1); }
   .search:focus-within { box-shadow: inset 0 0 0 1px var(--accent-dim); }
-  .glyph { flex: none; width: 15px; height: 15px; background: var(--ink-4); mask: var(--icon-search) center/contain no-repeat; }
-  input { flex: 1; min-width: 0; height: 100%; padding: 0; border: 0; background: none; outline: none; color: var(--ink); font: 500 13px/1 var(--font-sans); }
+  .glyph { flex: none; width: 16px; height: 16px; background: var(--ink-4); mask: var(--icon-search) center/contain no-repeat; }
+  input { flex: 1; min-width: 0; height: 100%; padding: 0; border: 0; background: none; outline: none; color: var(--ink); font: 500 14px/1 var(--font-sans); }
   input::placeholder { color: var(--ink-4); }
   input:focus-visible { outline: none; }
   kbd { flex: none; padding: 3px 6px; border-radius: 6px; background: var(--overlay-1); box-shadow: inset 0 0 0 1px var(--line-1); font: 500 10.5px/1 var(--font-mono); color: var(--ink-4); }
 
-  .results { position: absolute; top: calc(100% + 8px); inset-inline-start: 0; width: min(560px, 80vw); max-height: min(520px, 70vh); overflow-y: auto; box-sizing: border-box; padding: 6px; border-radius: var(--radius-lg); background: var(--surface-1); box-shadow: inset 0 0 0 1px var(--line-2), var(--shadow-modal); }
+  .results { position: absolute; top: calc(100% + 10px); left: 50%; translate: -50% 0; width: min(560px, 80vw); max-height: min(520px, 70vh); overflow-y: auto; box-sizing: border-box; padding: 6px; border-radius: var(--radius-lg); background: var(--surface-1); box-shadow: inset 0 0 0 1px var(--line-2), var(--shadow-modal); }
   .option { padding: 9px 10px; border-radius: var(--radius-sm); cursor: pointer; }
   .option.active { background: var(--overlay-1); }
   .line { display: flex; align-items: baseline; gap: 10px; }
