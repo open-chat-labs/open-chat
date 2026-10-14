@@ -2,11 +2,13 @@
      | accent | overlay (smaller, ringed, for use on covers). `state` forces a look for specimens.
      icon: any name from icons.css, or a legacy alias (userPlus). The accessible name falls back to a label derived from the icon. -->
 <script lang="ts">
+  import { useT } from '../i18n';
   // legacy aliases → canonical names in lib/icons.js
   const ALIASES: Record<string, string> = { userPlus: 'invite' };
   // glyphs that point along the reading direction; mirrored under dir="rtl" via [data-oc-flip]
   const DIRECTIONAL = new Set(['arrow', 'back', 'chevron-right', 'chevrons-right', 'exit', 'forward', 'reply', 'send']);
-  const LABELS: Record<string, string> = { back: 'Back', close: 'Close', more: 'More options', kebab: 'More options', search: 'Search', plus: 'Add', userPlus: 'Add members', copy: 'Copy', share: 'Share', edit: 'Edit', settings: 'Settings', bell: 'Notifications', send: 'Send', menu: 'Menu' };
+  // default accessible names (resource keys) for common glyphs
+  const LABELS: Record<string, string> = { back: 'ui.common.back', close: 'ui.common.close', more: 'ui.common.moreOptions', kebab: 'ui.common.moreOptions', search: 'ui.common.search', plus: 'ui.common.add', userPlus: 'ui.iconButton.addMembers', copy: 'ui.common.copy', share: 'ui.common.share', edit: 'ui.common.edit', settings: 'ui.common.settings', bell: 'ui.iconButton.notifications', send: 'ui.common.send', menu: 'ui.iconButton.menu' };
 
   interface Props {
     icon: string;
@@ -19,7 +21,8 @@
 
   let { icon, variant = 'surface', state: look = 'default', pressed = false, label = '', onClick }: Props = $props();
 
-  const name = $derived(label || LABELS[icon] || icon.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, (c) => c.toUpperCase()));
+  const t = useT();
+  const name = $derived(t(label || LABELS[icon] || icon.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, (c) => c.toUpperCase())));
 </script>
 
 <div class="box" class:accent={variant === 'accent'}>

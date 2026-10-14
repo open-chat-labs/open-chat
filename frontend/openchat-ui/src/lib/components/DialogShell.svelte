@@ -9,10 +9,12 @@
 </script>
 
 <script lang="ts">
+  import { useT } from '../i18n';
   import { onMount, type Snippet } from 'svelte';
   import IconButton from './IconButton.svelte';
 
   interface Props {
+    /** Resource key (or literal text). */
     title: string;
     /** Max width, px. */
     width?: number;
@@ -25,6 +27,7 @@
   }
 
   let { title, width = 440, height = 'min(560px,100%)', flush = false, z = 80, onClose, children }: Props = $props();
+  const t = useT();
 
   let box: HTMLDivElement;
 
@@ -90,11 +93,11 @@
     tabindex="-1"
     role="dialog"
     aria-modal="true"
-    aria-label={title}
+    aria-label={t(title)}
   >
     <div class="header">
-      <span class="title">{title}</span>
-      <div class="close"><IconButton label="Close" variant="ghost" icon="close" onClick={onClose}></IconButton></div>
+      <span class="title">{t(title)}</span>
+      <div class="close"><IconButton label="ui.common.close" variant="ghost" icon="close" onClick={onClose}></IconButton></div>
     </div>
     <div class="body" class:flush>{@render children?.()}</div>
   </div>

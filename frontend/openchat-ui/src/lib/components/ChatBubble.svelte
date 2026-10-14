@@ -2,6 +2,7 @@
      failed + Retry line, thread link and reaction chips. Emoji-only messages of one or two emoji render large.
      Reaction chips are limited to maxReactionRows; the rest fold into a "+N" chip that expands them. -->
 <script lang="ts">
+  import { useT } from '../i18n';
   import { untrack } from 'svelte';
 
   // count grapheme clusters so flags, skin tones and ZWJ families read as one emoji
@@ -64,7 +65,7 @@
     forwarded = false,
     edited = false,
     deleted = false,
-    deletedText = 'This message was deleted',
+    deletedText = 'ui.chatBubble.deleted',
     quoteName = '',
     quoteText = '',
     reactions = [],
@@ -75,6 +76,7 @@
     threadLastAt = '',
     onOpenThread,
   }: Props = $props();
+  const t = useT();
 
   const sent = $derived(side === 'sent');
   const emojiCount = $derived(emojiOnlyCount(text));
@@ -122,13 +124,13 @@
   });
 </script>
 
-{#snippet stamp()}{edited ? 'edited · ' : ''}{time}{#if sent}<span class="tick" style:mask="var(--icon-{STATUS[status] ?? 'check-double'}) center/contain no-repeat"></span>{/if}{/snippet}
+{#snippet stamp()}{edited ? t('ui.chatBubble.edited') + ' · ' : ''}{time}{#if sent}<span class="tick" style:mask="var(--icon-{STATUS[status] ?? 'check-double'}) center/contain no-repeat"></span>{/if}{/snippet}
 
 <div class="wrap">
   {#if deleted}
     <div class="deleted" class:sent>
       <span class="trash"></span>
-      <span class="deleted-text">{deletedText}</span>
+      <span class="deleted-text">{t(deletedText)}</span>
       <span class="deleted-time">{time}</span>
     </div>
   {:else}
@@ -144,7 +146,7 @@
           </div>
         {/if}
         {#if forwarded}
-          <div class="forwarded"><span class="forward-icon"></span><span class="forward-label">Forwarded</span></div>
+          <div class="forwarded"><span class="forward-icon"></span><span class="forward-label">{t('ui.chatBubble.forwarded')}</span></div>
         {/if}
         {#if code}
           <pre class="code">{code}</pre>
@@ -153,15 +155,15 @@
       </div>
       {#if status === 'failed'}
         <div class="failed">
-          <span class="failed-text">{failedText || (sent ? 'Not delivered' : "Couldn't load")}</span>
-          <span class="retry" onclick={retryAction} role="button" tabindex="0">Retry</span>
+          <span class="failed-text">{t(failedText || (sent ? 'ui.chatBubble.notDelivered' : 'ui.chatBubble.couldNotLoad'))}</span>
+          <span class="retry" onclick={retryAction} role="button" tabindex="0">{t('ui.common.retry')}</span>
         </div>
       {/if}
       {#if threadCount > 0}
         <div class="thread" onclick={onOpenThread} role="button" tabindex="0">
           <span class="thread-icon" data-oc-flip></span>
-          <span class="thread-count">{threadCount === 1 ? '1 reply' : `${threadCount} replies`}</span>
-          <span class="thread-meta">{threadLastAt ? `Last reply ${threadLastAt}` : ''}</span>
+          <span class="thread-count">{t('ui.chatBubble.replies', { count: threadCount })}</span>
+          <span class="thread-meta">{threadLastAt ? t('ui.chatBubble.lastReply', { when: threadLastAt }) : ''}</span>
         </div>
       {/if}
       {#if reactions.length > 0}
@@ -175,7 +177,7 @@
               role="button"
               tabindex="0"
               aria-pressed={!!r.mine}
-              aria-label="{r.mine ? 'Remove your ' : 'Add '}{r.emoji} · {r.count}">{r.emoji} {r.count}</span
+              aria-label={t(r.mine ? 'ui.chatBubble.removeReaction' : 'ui.chatBubble.addReaction', { emoji: r.emoji, count: r.count })}>{r.emoji} {r.count}</span
             >
           {/each}
           {#if hidden > 0}

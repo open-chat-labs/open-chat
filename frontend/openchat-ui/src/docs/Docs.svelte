@@ -10,6 +10,7 @@
   import Api from './groups/Api.svelte';
   import Search from './Search.svelte';
   import type { Target } from './search';
+  import { setI18n, lookup, interpolate, messages } from '../lib/i18n';
 
   const KEY = 'openchat-library-';
   const load = (k: string) => {
@@ -23,11 +24,35 @@
   const MODES = ['dark', 'light'] as const;
   const ACCENTS = ['pink', 'orange', 'blue', 'green'] as const;
   const DIRS = ['ltr', 'rtl'] as const;
+  // English · raw keys · pseudo-locale (accented, ~35% longer, bracketed): Keys and Pseudo make hard-coded copy stand
+  // out — it stays plain English — and Pseudo shows where longer translations would overflow
+  const LANGS = ['en', 'keys', 'pseudo'] as const;
 
   let group = $state<GroupId>(pick(load('group'), ['foundations', 'general', 'features', 'api'], 'foundations'));
   let mode = $state(pick(load('mode'), MODES, 'dark'));
   let accent = $state(pick(load('accent'), ACCENTS, 'pink'));
   let dir = $state(pick(load('dir'), DIRS, 'ltr'));
+  let lang = $state(pick(load('lang'), LANGS, 'en'));
+
+  const ACCENTS_MAP: Record<string, string> = { a: 'á', e: 'é', i: 'í', o: 'ö', u: 'ü', c: 'ç', n: 'ñ', s: 'š', y: 'ý', A: 'Å', E: 'É', I: 'Î', O: 'Ø', U: 'Û', C: 'Ç', N: 'Ñ', S: 'Š', Y: 'Ý' };
+  const pseudo = (text: string) => {
+    // accent every letter and pad by ~35% (applied after formatting, so ICU syntax is untouched)
+    const body = text.replace(/./g, (m) => ACCENTS_MAP[m] ?? m);
+    return '[' + body + ' ' + '·'.repeat(Math.max(1, Math.round(text.length * 0.35))) + ']';
+  };
+  const en = messages.en as Parameters<typeof lookup>[0];
+  setI18n({
+    get locale() {
+      return 'en';
+    },
+    t(key, params) {
+      const text = lookup(en, key);
+      if (text === undefined) return interpolate(key, params); // not a key: literal text, shown as-is in every mode
+      if (lang === 'keys') return key;
+      const out = interpolate(text, params);
+      return lang === 'pseudo' ? pseudo(out) : out;
+    },
+  });
   let active = $state('');
   let linksEl: HTMLDivElement;
   const activeTitle = $derived(sectionsFor[group].find((s) => s.id === active)?.title ?? '');
@@ -42,6 +67,7 @@
   $effect(() => save('mode', mode));
   $effect(() => save('accent', accent));
   $effect(() => save('dir', dir));
+  $effect(() => save('lang', lang));
 
   // Scroll spy: the active link is the last section whose top is within 140px of the viewport top.
   // While a restore is in flight the stored section isn't overwritten by intermediate scroll positions.
@@ -169,6 +195,14 @@
           <span class="dot" aria-hidden="true"></span>
           <select bind:value={accent}>
             {#each ACCENTS as a}<option value={a}>{a[0].toUpperCase() + a.slice(1)}</option>{/each}
+          </select>
+        </label>
+        <label class="pick">
+          <span class="sr">Language</span>
+          <select bind:value={lang}>
+            <option value="en">English</option>
+            <option value="keys">Keys</option>
+            <option value="pseudo">Pseudo</option>
           </select>
         </label>
       </div>

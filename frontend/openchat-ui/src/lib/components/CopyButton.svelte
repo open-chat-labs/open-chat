@@ -1,21 +1,24 @@
 <!-- Icon-only copy: writes value to the clipboard, shows a check for 1.6s. -->
 <script lang="ts">
+  import { useT } from '../i18n';
   import { onDestroy } from 'svelte';
 
   interface Props {
     value: string;
+    /** Resource key (or literal text) for the tooltip / accessible name. */
     label?: string;
     size?: 'sm' | 'md';
     onCopy?: () => void;
   }
 
-  let { value, label = 'Copy', size = 'sm', onCopy }: Props = $props();
+  let { value, label = 'ui.common.copy', size = 'sm', onCopy }: Props = $props();
+  const t = useT();
 
   let done = $state(false);
   let timer: ReturnType<typeof setTimeout> | undefined;
   onDestroy(() => clearTimeout(timer));
 
-  const tip = $derived(done ? 'Copied' : label);
+  const tip = $derived(t(done ? 'ui.common.copied' : label));
 
   function copy(e: Event) {
     e.stopPropagation();

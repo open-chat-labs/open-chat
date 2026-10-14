@@ -1,0 +1,49 @@
+{
+  "ui": {
+    "common": {
+      "add": "Add",
+      "back": "Back",
+      "cancel": "Cancel",
+      "close": "Close",
+      "confirm": "Confirm",
+      "continue": "Continue",
+      "copied": "Copied",
+      "copy": "Copy",
+      "delete": "Delete",
+      "done": "Done",
+      "edit": "Edit",
+      "less": "Less",
+      "loading": "Loading…",
+      "more": "More",
+      "moreOptions": "More options",
+      "next": "Next",
+      "remove": "Remove",
+      "reply": "Reply",
+      "retry": "Retry",
+      "save": "Save",
+      "saveChanges": "Save changes",
+      "search": "Search",
+      "send": "Send",
+      "settings": "Settings",
+      "share": "Share",
+      "showAll": "Show all",
+      "undo": "Undo"
+    },
+    "chatBubble": {
+      "addReaction": "Add {emoji} · {count}",
+      "couldNotLoad": "Couldn't load",
+      "deleted": "This message was deleted",
+      "edited": "edited",
+      "forwarded": "Forwarded",
+      "lastReply": "Last reply {when}",
+      "notDelivered": "Not delivered",
+      "removeReaction": "Remove your {emoji} · {count}",
+      "replies": "{count, plural, one {# reply} other {# replies}}"
+    },
+    "iconButton": {
+      "addMembers": "Add members",
+      "menu": "Menu",
+      "notifications": "Notifications"
+    }
+  }
+}

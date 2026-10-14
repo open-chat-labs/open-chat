@@ -1,7 +1,10 @@
 <!-- Text button. variant: primary | secondary | ghost | danger; disabled overrides the variant.
      `state` forces a look (hover / focus / active) for specimens; leave it at default in real use. -->
 <script lang="ts">
+  import { useT } from '../i18n';
+
   interface Props {
+    /** Resource key (or literal text). */
     label: string;
     variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
     state?: 'default' | 'hover' | 'focus' | 'active';
@@ -11,13 +14,14 @@
   }
 
   let { label, variant = 'primary', state = 'default', fullWidth = false, disabled = false, onClick }: Props = $props();
+  const t = useT();
 </script>
 
 <div class="wrap" class:full={fullWidth}>
   {#if disabled}
-    <div class="button disabled">{label}</div>
+    <div class="button disabled">{t(label)}</div>
   {:else}
-    <div class="button {variant} {state}" onclick={onClick} role="button" tabindex="0">{label}</div>
+    <div class="button {variant} {state}" onclick={onClick} role="button" tabindex="0">{t(label)}</div>
   {/if}
 </div>
 

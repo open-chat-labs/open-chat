@@ -69,6 +69,7 @@ export { default as TokenPicker } from './components/TokenPicker.svelte';
 export { default as Tooltip } from './components/Tooltip.svelte';
 export { default as TransactionRow } from './components/TransactionRow.svelte';
 export { default as TransferMessage } from './components/TransferMessage.svelte';
+export { default as Translate } from './components/Translate.svelte';
 export { default as TypingIndicator } from './components/TypingIndicator.svelte';
 export { default as UndoToast } from './components/UndoToast.svelte';
 export { default as UnreadDivider } from './components/UnreadDivider.svelte';
@@ -78,3 +79,5 @@ export { default as Waveform } from './components/Waveform.svelte';
 export { ICONS, iconSvg, iconMask } from './icons.js';
 
 export type * from './types';
+export { setI18n, getI18n, useT, messages, dictionaryTranslator, fallbackI18n, lookup, interpolate } from './i18n';
+export type { I18n, I18nParams, TranslateFn } from './i18n';
