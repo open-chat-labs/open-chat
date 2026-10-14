@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Await work inside timers rather than spawning a task from them ([#9971](https://github.com/open-chat-labs/open-chat/pull/9971))
+
 ### Removed
 
 - Remove the one-off which cancelled the open swaps set to stay open for more than 90 days, now that it has run ([#9871](https://github.com/open-chat-labs/open-chat/pull/9871))
