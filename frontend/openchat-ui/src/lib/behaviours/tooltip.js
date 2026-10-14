@@ -1,9 +1,9 @@
 // Plain-label tooltips for every element with a title (icon buttons, status icons, chips).
 // 400ms hover delay, shows on keyboard focus too; one tooltip at a time; Esc / press / scroll hide it.
 // The native title is moved to data-tip so the browser tooltip never doubles up; aria-label is kept.
-// Visual spec lives in lib/Tooltip.dc.html. (Svelte export: a `use:tooltip` action with the same rules.)
-(function () {
-  if (window.__ocTip) return; window.__ocTip = true;
+// Visual spec lives in lib/Tooltip.dc.html. Installed once per page by installTooltips() (lib/index.ts calls it on import).
+export function installTooltips() {
+  if (typeof window === "undefined" || window.__ocTip) return; window.__ocTip = true;
   var DELAY = 400, GAP = 8, M = 8;
   var tip = null, timer = null, current = null;
   function el() {
@@ -82,4 +82,4 @@
   document.addEventListener("scroll", hide, true);
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") hide(); });
   window.addEventListener("blur", hide);
-})();
+}

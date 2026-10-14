@@ -140,7 +140,7 @@
   const hasText = $derived(current.some((v) => v && v.trim()));
 
   const boxes = $derived.by(() => {
-    fontsReady;
+    void fontsReady;
     const RH = RENDER_W / T.ar, cq = (px: number) => `${((px / RENDER_W) * 100).toFixed(2)}cqw`;
     return T.boxes.map((b, i) => {
       const raw = (current[i] || '').trim();
@@ -176,7 +176,9 @@
     busy = true;
     try {
       await document.fonts.load('48px Anton');
-    } catch {}
+    } catch {
+      // font unavailable: render with the fallback face
+    }
     const src = await renderMeme(T, current);
     onAttach({ src, template: T.name });
   }

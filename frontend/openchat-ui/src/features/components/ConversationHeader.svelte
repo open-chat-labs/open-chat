@@ -139,7 +139,9 @@
       if (menuOpen && menuBox && !menuBox.contains(e.target as Node)) menuOpen = false;
     };
     const esc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && menuOpen) menuOpen = false;
+      if (e.key !== 'Escape' || !menuOpen) return;
+      e.preventDefault(); // keeps an enclosing dialog open
+      menuOpen = false;
     };
     document.addEventListener('click', away, true);
     document.addEventListener('keydown', esc);

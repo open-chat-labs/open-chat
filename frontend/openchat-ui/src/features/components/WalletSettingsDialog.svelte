@@ -149,9 +149,9 @@
   // keep the hidden PIN input focused while the sheet is open
   $effect(() => {
     if (!pin || !pinInput) return;
-    pin.value;
-    pin.step;
-    pin.error;
+    void pin.value;
+    void pin.step;
+    void pin.error;
     tick().then(() => {
       if (pinInput && document.activeElement !== pinInput) pinInput.focus();
     });

@@ -130,7 +130,7 @@
   });
 
   $effect(() => {
-    full;
+    void full;
     untrack(wake);
   });
 

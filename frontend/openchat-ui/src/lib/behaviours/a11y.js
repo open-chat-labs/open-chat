@@ -1,8 +1,8 @@
 // Keyboard parity for custom controls: Enter/Space on any non-native element with an
 // interactive role activates it, unless the component already handled the key.
-// (Svelte export: a `use:pressable` action on the same elements.)
-(function () {
-  if (window.__ocA11y) return; window.__ocA11y = true;
+// Installed once per page by installA11y() (lib/index.ts calls it on import; safe to call again, no-op without a DOM).
+export function installA11y() {
+  if (typeof window === "undefined" || window.__ocA11y) return; window.__ocA11y = true;
   var ROLES = { button: 1, tab: 1, menuitem: 1, option: 1, switch: 1, checkbox: 1, radio: 1, link: 1 };
   document.addEventListener("keydown", function (e) {
     if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return;
@@ -21,27 +21,43 @@
   // Hand-built modals (any [role=dialog][aria-modal=true] not managed by DialogShell):
   // move focus in on open, keep Tab inside the top-most one, return focus to the opener on close.
   var FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),textarea:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])';
+  var SELECTOR = '[role="dialog"][aria-modal="true"]:not([data-oc-managed])';
   var open = [];
-  function scan() {
-    var found = [].slice.call(document.querySelectorAll('[role="dialog"][aria-modal="true"]:not([data-oc-managed])'));
-    found.forEach(function (d) {
-      if (open.some(function (o) { return o.el === d; })) return;
-      var rec = { el: d, back: document.activeElement };
-      open.push(rec);
-      setTimeout(function () {
-        if (!d.isConnected || d.contains(document.activeElement)) return;
-        var field = d.querySelector("input:not([type=hidden]):not([disabled]),textarea:not([disabled])");
-        if (!field && !d.hasAttribute("tabindex")) d.setAttribute("tabindex", "-1");
-        (field || d).focus({ preventScroll: true });
-      }, 60);
-    });
+  function adopt(d) {
+    if (open.some(function (o) { return o.el === d; })) return;
+    var rec = { el: d, back: document.activeElement };
+    open.push(rec);
+    setTimeout(function () {
+      if (!d.isConnected || d.contains(document.activeElement)) return;
+      var field = d.querySelector("input:not([type=hidden]):not([disabled]),textarea:not([disabled])");
+      if (!field && !d.hasAttribute("tabindex")) d.setAttribute("tabindex", "-1");
+      (field || d).focus({ preventScroll: true });
+    }, 60);
+  }
+  function dialogsIn(node) {
+    if (node.nodeType !== 1) return [];
+    var found = [].slice.call(node.querySelectorAll(SELECTOR));
+    if (node.matches(SELECTOR)) found.unshift(node);
+    return found;
+  }
+  function prune() {
     open = open.filter(function (o) {
       if (o.el.isConnected) return true;
       if (o.back && o.back.isConnected && o.back.focus) setTimeout(function () { o.back.focus({ preventScroll: true }); }, 0);
       return false;
     });
   }
-  new MutationObserver(scan).observe(document.documentElement, { childList: true, subtree: true });
+  dialogsIn(document.documentElement).forEach(adopt);
+  // only the added subtrees are searched, so busy chats (new messages, timers, waveforms) stay cheap
+  new MutationObserver(function (records) {
+    var removed = false;
+    for (var i = 0; i < records.length; i++) {
+      var r = records[i];
+      for (var j = 0; j < r.addedNodes.length; j++) dialogsIn(r.addedNodes[j]).forEach(adopt);
+      if (r.removedNodes.length) removed = true;
+    }
+    if (removed && open.length) prune();
+  }).observe(document.documentElement, { childList: true, subtree: true });
   document.addEventListener("keydown", function (e) {
     if (e.key !== "Tab" || !open.length) return;
     var managed = window.__ocDialogs && window.__ocDialogs.length;
@@ -56,4 +72,4 @@
     if (e.shiftKey && (a === first || !top.contains(a))) { e.preventDefault(); last.focus(); }
     else if (!e.shiftKey && (a === last || !top.contains(a))) { e.preventDefault(); first.focus(); }
   });
-})();
+}

@@ -56,7 +56,7 @@
   <div class="donut-row">
     <div class="donut" style:background={ring}>
       <div class="hole">
-        <span class="total">{fmt(total || 1)}</span>
+        <span class="total">{fmt(total)}</span>
         <span class="caption">{t('ui.statsDonut.messages')}</span>
       </div>
     </div>

@@ -7,13 +7,12 @@
   import { onDestroy } from 'svelte';
   import Button from '../../lib/components/Button.svelte';
   import DialogShell from '../../lib/components/DialogShell.svelte';
-  import IconButton from '../../lib/components/IconButton.svelte';
   import Spinner from '../../lib/components/Spinner.svelte';
   import Toggle from '../../lib/components/Toggle.svelte';
   import TokenAvatar from '../../lib/components/TokenAvatar.svelte';
+  import CopyButton from '../../lib/components/CopyButton.svelte';
   const i18n = getI18n(); // number formatting follows the host locale
 
-  const ADDRESS = 'wq4pz-ixa3f-ubm7c-2jtw4-7d41e-cai';
   const fmt = (n: number, dp?: number) => Number(n).toLocaleString(i18n.locale ?? 'en', { maximumFractionDigits: dp ?? 4 });
 
   type GateState = 'met' | 'pay' | 'todo' | 'short';
@@ -37,6 +36,8 @@
     tokens?: { symbol: string; held: number; mark: string; grad: string }[];
     /** Overrides the CHAT entry in tokens. */
     chatBalance?: number;
+    /** The user's own deposit address, shown when a balance falls short. Without it the address row is hidden. */
+    depositAddress?: string;
     isDiamond?: boolean;
     isLifetime?: boolean;
     recheckDays?: number;
@@ -54,6 +55,7 @@
     gates,
     tokens = [],
     chatBalance,
+    depositAddress,
     isDiamond = false,
     isLifetime = false,
     recheckDays,
@@ -68,12 +70,10 @@
   let confirmed = $state(false);
   let picked = $state<number | null>(null);
   let busy = $state(false);
-  let copied = $state(false);
   let checking = $state(false);
   let joinTimer: ReturnType<typeof setTimeout> | undefined;
-  let copyTimer: ReturnType<typeof setTimeout> | undefined;
   let checkTimer: ReturnType<typeof setTimeout> | undefined;
-  onDestroy(() => [joinTimer, copyTimer, checkTimer].forEach(clearTimeout));
+  onDestroy(() => [joinTimer, checkTimer].forEach(clearTimeout));
 
   const any = $derived(rule === 'any');
 
@@ -159,16 +159,6 @@
       : [],
   );
 
-  function copy(e?: Event) {
-    e?.stopPropagation();
-    try {
-      navigator.clipboard?.writeText(ADDRESS);
-    } catch {}
-    copied = true;
-    clearTimeout(copyTimer);
-    copyTimer = setTimeout(() => (copied = false), 1600);
-  }
-
   function recheck(e: Event) {
     e.stopPropagation();
     checking = true;
@@ -250,10 +240,12 @@
                   ? t('ui.joinGateDialog.addToCover', { amount: fmt(r.short, 2), symbol: r.gate.symbol ?? '' })
                   : t('ui.joinGateDialog.topUp', { amount: fmt(r.short, 2), symbol: r.gate.symbol ?? '' })}</span
               >
+              {#if depositAddress}
               <div class="address">
-                <span class="address-text">{ADDRESS}</span>
-                <IconButton variant="ghost" icon={copied ? 'check' : 'copy'} label={t(copied ? 'ui.common.copied' : 'ui.joinGateDialog.copyWalletAddress')} onClick={copy} />
+                <span class="address-text">{depositAddress}</span>
+                <CopyButton value={depositAddress} label="ui.joinGateDialog.copyWalletAddress" size="md" />
               </div>
+              {/if}
               <div class="recheck-row">
                 <span class="recheck" onclick={recheck} role="button" tabindex="0"><span class="recheck-icon" class:spinning={checking}></span>{t(checking ? 'ui.joinGateDialog.checking' : 'ui.joinGateDialog.checkAgain')}</span>
                 <span class="recheck-hint">{t('ui.joinGateDialog.recheckHint')}</span>

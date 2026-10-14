@@ -7626,6 +7626,17 @@
         "doc": ""
       },
       {
+        "name": "depositAddress",
+        "type": "string",
+        "default": null,
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The user's own deposit address for topping up. Without it the Top up option is hidden."
+      },
+      {
         "name": "memberUntil",
         "type": "string",
         "default": "",
@@ -8645,17 +8656,6 @@
         "doc": ""
       },
       {
-        "name": "inviteLink",
-        "type": "string",
-        "default": null,
-        "editor": null,
-        "options": null,
-        "section": null,
-        "required": false,
-        "componentDefault": null,
-        "doc": ""
-      },
-      {
         "name": "bots",
         "type": "Bot[]",
         "default": null,
@@ -8907,17 +8907,6 @@
         "required": false,
         "componentDefault": "'manage'",
         "doc": "Quick panel cover icon: manage (managers) or info."
-      },
-      {
-        "name": "manageLabel",
-        "type": "string",
-        "default": null,
-        "editor": null,
-        "options": null,
-        "section": null,
-        "required": false,
-        "componentDefault": null,
-        "doc": ""
       },
       {
         "name": "menuOverride",
@@ -10021,6 +10010,17 @@
         "required": false,
         "componentDefault": null,
         "doc": "Overrides the CHAT entry in tokens."
+      },
+      {
+        "name": "depositAddress",
+        "type": "string",
+        "default": null,
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The user's own deposit address, shown when a balance falls short. Without it the address row is hidden."
       },
       {
         "name": "isDiamond",
@@ -12510,17 +12510,6 @@
         "doc": ""
       },
       {
-        "name": "onShare",
-        "type": "() => void",
-        "default": null,
-        "editor": null,
-        "options": null,
-        "section": null,
-        "required": false,
-        "componentDefault": null,
-        "doc": ""
-      },
-      {
         "name": "onShareApp",
         "type": "(link: string) => void",
         "default": null,
@@ -12544,17 +12533,6 @@
       },
       {
         "name": "onPhotoEdit",
-        "type": "() => void",
-        "default": null,
-        "editor": null,
-        "options": null,
-        "section": null,
-        "required": false,
-        "componentDefault": null,
-        "doc": ""
-      },
-      {
-        "name": "onVerify",
         "type": "() => void",
         "default": null,
         "editor": null,

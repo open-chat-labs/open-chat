@@ -20,7 +20,7 @@
   const isMac = typeof navigator !== 'undefined' && /Mac|iP(hone|ad)/.test(navigator.platform);
 
   $effect(() => {
-    query;
+    void query;
     index = 0;
   });
 

@@ -1,6 +1,13 @@
 // OpenChat UI — public entry. Import the styles once in your app:
 //   import "@openchat/ui/src/lib/styles/tokens.css"; import "@openchat/ui/src/lib/styles/global.css";
 // Library = app-agnostic components. OpenChat screens/dialogs live in src/features (see src/features/index.ts).
+// Importing this entry installs the keyboard / modal-focus / tooltip behaviours (installBehaviours); hosts that
+// deep-import component files call installBehaviours() once themselves.
+import { installBehaviours } from './behaviours';
+
+installBehaviours();
+
+export { installBehaviours, installA11y, installTooltips } from './behaviours';
 export { default as ActivityRow } from './components/ActivityRow.svelte';
 export { default as AmountCard } from './components/AmountCard.svelte';
 export { default as Avatar } from './components/Avatar.svelte';
@@ -77,6 +84,7 @@ export { default as UserChip } from './components/UserChip.svelte';
 export { default as VoiceMessage } from './components/VoiceMessage.svelte';
 export { default as Waveform } from './components/Waveform.svelte';
 export { ICONS, iconSvg, iconMask } from './icons.js';
+export { copyText } from './clipboard';
 
 export type * from './types';
 export { setI18n, getI18n, useT, segments, durationText, messages, dictionaryTranslator, fallbackI18n, lookup, interpolate } from './i18n';

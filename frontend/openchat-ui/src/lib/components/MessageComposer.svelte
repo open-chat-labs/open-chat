@@ -152,11 +152,12 @@
   }
 
   async function send() {
-    if (!hasContent && !editing) return;
     if (editing) {
-      onSubmitEdit?.(draft.trim());
+      // an emptied edit is not submitted; deleting the message is a separate action
+      if (draft.trim()) onSubmitEdit?.(draft.trim());
       return;
     }
+    if (!hasContent) return;
     const text = draft.trim();
     draft = '';
     await tick();
@@ -338,7 +339,7 @@
     untrack(() => applyDemo(d));
   });
 
-  // reply/edit context: edit pre-fills the original text; both move focus into the input
+  // reply/edit context: edit pre-fills the original text, leaving edit clears it; both move focus into the input
   let prevContext = untrack(() => context);
   $effect(() => {
     const next = context;
@@ -355,11 +356,15 @@
           input.selectionStart = input.selectionEnd = input.value.length;
           grow();
         }
-      } else if (prev?.mode === 'edit' && !next) {
-        draft = '';
-        await tick();
-        grow();
-      } else if (next) input?.focus({ preventScroll: true });
+      } else {
+        // leaving edit (cancel, or straight into a reply) drops the edited message's text
+        if (prev?.mode === 'edit') {
+          draft = '';
+          await tick();
+          grow();
+        }
+        if (next) input?.focus({ preventScroll: true });
+      }
     });
   });
 
@@ -558,7 +563,7 @@
         ></textarea>
       </div>
       {#if hasContent || editing}
-        <span class="action send" onclick={send} role="button" tabindex="0" aria-label={t(editing ? 'ui.messageComposer.saveEdit' : 'ui.messageComposer.sendMessage')} title={t(editing ? 'ui.messageComposer.saveHint' : 'ui.messageComposer.sendHint')}
+        <span class="action send" onclick={send} role="button" tabindex="0" aria-disabled={editing && !draft.trim()} aria-label={t(editing ? 'ui.messageComposer.saveEdit' : 'ui.messageComposer.sendMessage')} title={t(editing ? 'ui.messageComposer.saveHint' : 'ui.messageComposer.sendHint')}
           ><span class="send-icon" style:mask="var(--icon-{editing ? 'check' : 'send'}) center/contain no-repeat"></span></span
         >
       {:else}
@@ -1335,5 +1340,10 @@
     text-align: center;
     font: var(--weight-regular) var(--text-xs) / 1 var(--font-sans);
     color: var(--ink-4, #8a8a99);
+  }
+
+  .action.send[aria-disabled='true'] {
+    opacity: 0.4;
+    cursor: default;
   }
 </style>

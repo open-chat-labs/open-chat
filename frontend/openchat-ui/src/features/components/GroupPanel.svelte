@@ -229,7 +229,6 @@
     canModerate?: boolean;
     canChangeRoles?: boolean;
     canInvite?: boolean;
-    inviteLink?: string;
     bots?: Bot[];
     /** Bots added this session (one row per title). */
     extraBots?: Bot[];
@@ -261,7 +260,6 @@
     embedded?: boolean;
     /** Quick panel cover icon: manage (managers) or info. */
     manageIcon?: 'manage' | 'info';
-    manageLabel?: string;
     /** Replaces the ⋯ menu. */
     menuOverride?: MenuItem[];
     coverHandlers?: ComponentProps<typeof PanelCover>['handlers'];
@@ -306,7 +304,6 @@
     canModerate = true,
     canChangeRoles = true,
     canInvite = true,
-    inviteLink,
     bots = [],
     extraBots = [],
     removedBots = [],
@@ -330,7 +327,6 @@
     quick = false,
     embedded = false,
     manageIcon = 'manage',
-    manageLabel,
     menuOverride,
     coverHandlers = {},
     tileHandlers = {},
@@ -378,7 +374,6 @@
   let ownMuteAll = $state(false);
   let aboutOpen = $state(false);
   let aboutLong = $state(false);
-  let linkCopied = $state(false);
   let copyTimer: ReturnType<typeof setTimeout> | undefined;
   onDestroy(() => clearTimeout(copyTimer));
 
@@ -406,7 +401,9 @@
     if (storageKey) {
       try {
         localStorage.setItem(storageKey, next);
-      } catch {}
+      } catch {
+        // storage blocked (private mode): the view just isn't remembered
+      }
     }
   }
 
@@ -447,8 +444,8 @@
 
   // offer More only when the text is actually clamped
   $effect(() => {
-    aboutText;
-    view;
+    void aboutText;
+    void view;
     const el = aboutEl;
     if (!el || untrack(() => aboutOpen)) return;
     tick().then(() => (aboutLong = el.scrollHeight - el.clientHeight > 2));
@@ -788,7 +785,6 @@
       });
   });
 
-  const inviteText = $derived(inviteLink || `oc.app/${scope === 'channel' ? 'c/' : 'g/'}${(title || 'group').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`);
 
   const coverHandlersAll = $derived({
     ...coverHandlers,

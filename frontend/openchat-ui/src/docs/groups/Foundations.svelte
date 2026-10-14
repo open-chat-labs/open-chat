@@ -79,7 +79,7 @@
   addMessages('en', messages.en);   // the library's English, under ui.*
   const format = fromStore(_);      // reactive: components re-render on locale change
   setI18n({ t: (key, params) => format.current(key, { values: params }) });
-<\/script>`;
+${'<'}/script>`;
   const usage = `<!-- copy props take a key -->
 <Button label="ui.common.save" />
 
@@ -158,7 +158,7 @@ t('ui.duration.hours', { count: 12 });`;
   const all = [...colours.flatMap((g) => g.tokens), ...scales.flatMap((g) => g.tokens), ...ladder.flatMap((r) => [r.bp, r.list, r.info]), 'panel-chat-min', 'island-min'];
 
   $effect(() => {
-    theme;
+    void theme;
     tick().then(() => {
       const root = host?.closest<HTMLElement>('[data-mode]');
       if (!root) return;

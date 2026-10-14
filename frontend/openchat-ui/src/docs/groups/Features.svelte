@@ -1,6 +1,6 @@
 <!-- Features: OpenChat-specific components and patterns, one <Section> per entry in sections.ts `features`. Demo data in samples.ts. -->
 <script lang="ts">
-  import { onMount, tick } from 'svelte';
+  import { onMount, tick, type Component, type ComponentProps } from 'svelte';
   import Section from '../Section.svelte';
   import Frame from '../Frame.svelte';
   import { features, sec } from '../sections';
@@ -34,11 +34,11 @@
   const donut = samples.StatsDonut as { slices: { label: string; count: number }[]; extras: { label: string; count: string }[] };
 
   // ── AppB ──
-  const groupPanel = samples.GroupPanel as Record<string, any>;
-  const groupStats = samples.GroupStats as any;
+  const groupPanel = samples.GroupPanel as unknown as ComponentProps<typeof GroupPanel>;
+  const groupStats = samples.GroupStats as unknown as ComponentProps<typeof GroupStats>;
 
   // Pattern · Message group: reactions toggle locally
-  let received = $state<GroupMessage[]>(structuredClone(receivedGroup));
+  const received = $state<GroupMessage[]>(structuredClone(receivedGroup));
   function toggle(list: GroupMessage[], index: number, emoji: string) {
     const m = list[index];
     const rs = (m.reactions ??= []);
@@ -108,7 +108,8 @@
   }
 
   // ── Whole feature screens and dialogs, rendered with their demo props (demo.ts) ──
-  const featureComponents = F as unknown as Record<string, typeof Button>;
+  // demo props come from data, so every component is treated as taking loose props
+  const featureComponents = F as unknown as Record<string, Component<Record<string, unknown>>>;
   const walletScreens = ['WalletMain', 'WalletSend', 'WalletReceive', 'WalletSwap', 'WalletRecipients'];
   const walletTabs = ['docs.features.wallet.main', 'ui.common.send', 'docs.features.wallet.receive', 'docs.features.wallet.swap', 'docs.features.wallet.recipients'];
   let walletScreen = $state(0);
@@ -341,10 +342,10 @@
 <Section {...sec(features, 'pattern-chat-list')}>
   <Frame cols={300}>
     <div class="panel" style:height="560px">
-      <ChatListPanel rows={patternRows as any} headerKind="dms" headerTitle="ui.chatListHeader.chats" searchable showThreads threadCount={2} />
+      <ChatListPanel rows={[...patternRows]} headerKind="dms" headerTitle="ui.chatListHeader.chats" searchable showThreads threadCount={2} />
     </div>
     <div class="panel" style:height="560px">
-      <ChatListPanel rows={patternRows as any} headerKind="community" headerTitle="OpenChat Devs" headerMembers={2481} headerColor="amber" loading showThreads={false} />
+      <ChatListPanel rows={[...patternRows]} headerKind="community" headerTitle="OpenChat Devs" headerMembers={2481} headerColor="amber" loading showThreads={false} />
     </div>
     <div class="panel" style:height="560px">
       <ChatListPanel rows={[]} headerKind="dms" headerTitle="ui.chatListHeader.chats" showThreads={false} emptyPreset="no-conversations" />
@@ -356,7 +357,7 @@
   <Frame cols="minmax(0, 1fr)">
     <div class="strip"><ConversationHeader title="Danielle Moreau" kind="user" color="violet" online presence="ui.conversationHeader.online" statusFav isFavourite /></div>
     <div class="strip">
-      <ConversationHeader title="The Awesome Group" kind="group" color="teal" visibility="Public" memberCount={248} statusMuted="8h" statusEveryone actions={['search', 'threads'] as any} />
+      <ConversationHeader title="The Awesome Group" kind="group" color="teal" visibility="Public" memberCount={248} statusMuted="8h" statusEveryone actions={['search', 'threads'] as ComponentProps<typeof ConversationHeader>['actions']} />
     </div>
     <div class="strip">
       <ConversationHeader title="announcements" kind="channel" color="amber" visibility="Private" memberCount={2481} titleChevron titleHint="OpenChat Devs" showCall={false} panelOpen />
@@ -367,7 +368,7 @@
 <Section {...sec(features, 'pattern-info-panel')}>
   <Frame cols={320}>
     <div class="panel" style:height="900px">
-      <InfoPanel kind="user" title="Alice Anderson" handle="@alice_anderson" verified online color="violet" details={infoDetails as any} footerLabel="docs.features.info.report" />
+      <InfoPanel kind="user" title="Alice Anderson" handle="@alice_anderson" verified online color="violet" details={infoDetails as ComponentProps<typeof InfoPanel>['details']} footerLabel="docs.features.info.report" />
     </div>
     <div class="panel" style:height="900px">
       <DmPanel
@@ -387,7 +388,7 @@
 <Section {...sec(features, 'pattern-group-panel')}>
   <Frame cols="minmax(0, 400px) minmax(0, 340px)" style="justify-content: center">
     <div class="panel" style:height="720px">
-      <GroupPanel {...groupPanel as any} title="The Awesome Group" memberTotal={18} storageKey="oc.docs.groupPanel.view" />
+      <GroupPanel {...groupPanel} title="The Awesome Group" memberTotal={18} storageKey="oc.docs.groupPanel.view" />
     </div>
     <div class="panel" style:height="720px">
       <GroupStats {...groupStats} />
@@ -477,13 +478,13 @@
     </span>
   </Frame>
   {#if dialog === 'join'}
-    <JoinGateDialog {...joinGate as any} chatBalance={60501} recheckDays={84} onClose={() => (dialog = '')} onJoin={() => (dialog = '')} />
+    <JoinGateDialog {...joinGate as unknown as ComponentProps<typeof JoinGateDialog>} chatBalance={60501} recheckDays={84} onClose={() => (dialog = '')} onJoin={() => (dialog = '')} />
   {:else if dialog === 'poll'}
     <PollBuilderDialog onClose={() => (dialog = '')} onPublish={() => (dialog = '')} />
   {:else if dialog === 'puzzle'}
     <PuzzleDialog tutorialSeen puzzleStreak={4} balance={102000} countdown="10:57:11" onClose={() => (dialog = '')} />
   {/if}
-  <MessageActions open={!!actionsAt} point={actionsAt} items={messageActionItems as any} recent={['❤️', '👍', '🔥', '😂']} onReact={() => (actionsAt = null)} onClose={() => (actionsAt = null)} />
+  <MessageActions open={!!actionsAt} point={actionsAt} items={[...messageActionItems]} recent={['❤️', '👍', '🔥', '😂']} onReact={() => (actionsAt = null)} onClose={() => (actionsAt = null)} />
 </Section>
 
 
@@ -493,7 +494,7 @@
   <Frame {label} style="justify-content: center">
     <div class="screen" style:width="min(100%, {size.width})" style:height={height ?? size.height}>
       <svelte:boundary>
-        <C {...demoProps(name) as any} />
+        <C {...demoProps(name)} />
         {#snippet failed(e)}<pre class="demo-error">{String((e as Error)?.message ?? e)}</pre>{/snippet}
       </svelte:boundary>
     </div>
@@ -515,7 +516,7 @@
         {@const C = featureComponents[walletScreens[walletScreen]]}
         <div class="screen wide">
           <svelte:boundary>
-            <C {...demoProps(walletScreens[walletScreen]) as any} />
+            <C {...demoProps(walletScreens[walletScreen])} />
             {#snippet failed(e)}<pre class="demo-error">{String((e as Error)?.message ?? e)}</pre>{/snippet}
           </svelte:boundary>
         </div>
@@ -572,7 +573,7 @@
 {#if openDialog}
   {@const D = featureComponents[openDialog]}
   <svelte:boundary>
-    <D {...demoProps(openDialog) as any} onClose={() => (openDialog = null)} onCancel={() => (openDialog = null)} />
+    <D {...demoProps(openDialog)} onClose={() => (openDialog = null)} onCancel={() => (openDialog = null)} />
     {#snippet failed(e)}<pre class="demo-error dialog-error">{String((e as Error)?.message ?? e)}</pre>{/snippet}
   </svelte:boundary>
 {/if}

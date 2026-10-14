@@ -3,6 +3,7 @@
      moves above the form. Sharing posts the address to a chat (ChatPicker) and confirms with a toast. -->
 <script lang="ts">
   import { useT } from '../../lib/i18n';
+  import CopyButton from '../../lib/components/CopyButton.svelte';
   import { onDestroy } from 'svelte';
   import type { WalletToken } from '../../lib/types';
   import ChatPicker from '../../lib/components/ChatPicker.svelte';
@@ -56,19 +57,11 @@
     void token;
     return false;
   });
-  let copied = $derived.by(() => {
-    void token;
-    return false;
-  });
   let handleCopied = $state(false);
   let sharing = $state(false);
   let toast = $state<{ id: number; message: string } | null>(null);
-  let copyTimer: ReturnType<typeof setTimeout> | undefined;
-  let handleTimer: ReturnType<typeof setTimeout> | undefined;
   let toastTimer: ReturnType<typeof setTimeout> | undefined;
   onDestroy(() => {
-    clearTimeout(copyTimer);
-    clearTimeout(handleTimer);
     clearTimeout(toastTimer);
   });
 
@@ -89,21 +82,6 @@
       : null,
   );
   const address = $derived(id ? NET[id].address : '');
-
-  function copy() {
-    try {
-      navigator.clipboard?.writeText(address);
-    } catch {}
-    copied = true;
-    clearTimeout(copyTimer);
-    copyTimer = setTimeout(() => (copied = false), 1600);
-  }
-
-  function copyHandle() {
-    handleCopied = true;
-    clearTimeout(handleTimer);
-    handleTimer = setTimeout(() => (handleCopied = false), 1600);
-  }
 
   function share(v: { chat: string; message: string }) {
     if (!tok || !net) return;
@@ -142,7 +120,6 @@
                       onclick={() => {
                         netIdx = i;
                         open = false;
-                        copied = false;
                       }}
                       tabindex="0"
                       role="option"
@@ -167,9 +144,7 @@
               <span class="address">{address.slice(0, 6)}<span class="address-mid">{address.slice(6, -6)}</span>{address.slice(-6)}</span>
             </div>
             <div class="address-actions">
-              <span class="square copy" class:copied onclick={copy} role="button" tabindex="0" title={t(copied ? 'ui.common.copied' : 'ui.walletReceive.copyAddress')} aria-label={t(copied ? 'ui.common.copied' : 'ui.walletReceive.copyAddress')}
-                ><span class="square-icon" style:mask={mask(copied ? 'check' : 'copy')}></span></span
-              >
+              {#key address}<CopyButton value={address} label="ui.walletReceive.copyAddress" variant="filled" size="lg" />{/key}
               <span class="square" onclick={() => (sharing = true)} role="button" tabindex="0" title={t('ui.walletReceive.shareToChat')} aria-label={t('ui.walletReceive.shareToChat')}><span class="square-icon" style:mask={mask('share')}></span></span>
             </div>
           </div>
@@ -191,9 +166,7 @@
                 >
                 <span class="handle-note">{t('ui.walletReceive.handleNote')}</span>
               </div>
-              <span class="square handle-copy" class:copied={handleCopied} onclick={copyHandle} role="button" tabindex="0" title={t('ui.walletReceive.copyUsername')} aria-label={t('ui.walletReceive.copyUsername')}
-                ><span class="square-icon" style:mask={mask(handleCopied ? 'check' : 'copy')}></span></span
-              >
+              <CopyButton value={handle} label="ui.walletReceive.copyUsername" variant="soft" size="lg" bind:copied={handleCopied} />
             </div>
           </div>
         {/if}
@@ -452,16 +425,6 @@
     justify-content: center;
     background: var(--overlay-2, rgba(255, 255, 255, 0.07));
     cursor: pointer;
-  }
-
-  .square.copy {
-    --square-ink: var(--on-accent, #2e0512);
-    background: var(--accent, #ff5672);
-  }
-
-  .square.copied {
-    --square-ink: var(--status-online, #2ee6a8);
-    background: rgba(46, 230, 168, 0.14);
   }
 
   .square:hover {

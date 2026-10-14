@@ -94,12 +94,12 @@
   // local clicks win until the host changes the matching prop
   let open = $derived(expanded);
   let localActive = $derived.by<number | null>(() => {
-    activeIndex;
+    void activeIndex;
     return null;
   });
   let localPin = $derived.by<number | null | undefined>(() => {
-    activeIndex;
-    activePin;
+    void activeIndex;
+    void activePin;
     return undefined;
   });
 
@@ -117,13 +117,13 @@
   }
 
   $effect(() => {
-    active;
-    pinIndex;
-    open;
-    exploreActive;
-    guest;
-    items;
-    pins;
+    void active;
+    void pinIndex;
+    void open;
+    void exploreActive;
+    void guest;
+    void items;
+    void pins;
     syncBar();
   });
 

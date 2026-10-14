@@ -8,7 +8,7 @@
 <script lang="ts">
   import { useT } from '../../lib/i18n';
   import { durationText } from '../../lib/i18n';
-  import { onDestroy, tick, untrack } from 'svelte';
+  import { onDestroy, untrack } from 'svelte';
   import type { AccessGatesState, GroupRole, GroupSettings } from '../../lib/types';
   import AccessGates from './AccessGates.svelte';
   import SegmentedTabs from '../../lib/components/SegmentedTabs.svelte';

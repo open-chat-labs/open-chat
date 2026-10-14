@@ -21,6 +21,7 @@
   import type { WalletToken } from '../../lib/types';
   import PageHeader from '../../lib/components/PageHeader.svelte';
   import { useT } from '../../lib/i18n';
+  import { copyText } from '../../lib/clipboard';
 
   const NETWORKS: { id: RecipientNetwork; test: (a: string) => boolean }[] = [
     { id: 'BTC', test: (a) => /^(bc1[a-z0-9]{20,}|[13][a-km-zA-HJ-NP-Z1-9]{25,34})$/.test(a) },
@@ -96,12 +97,10 @@
     else onClose?.();
   }
 
-  function copyAddress(r: Recipient) {
-    try {
-      navigator.clipboard.writeText(r.address);
-    } catch {}
-    clearTimeout(copyTimer);
+  async function copyAddress(r: Recipient) {
     menuFor = null;
+    if (!(await copyText(r.address))) return;
+    clearTimeout(copyTimer);
     copiedFor = r.id;
     copyTimer = setTimeout(() => (copiedFor = null), 1600);
   }

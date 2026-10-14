@@ -26,9 +26,13 @@
 
   let now = $state(Date.now());
 
-  const end = $derived(typeof to === 'number' ? to : Date.parse(to));
+  const parsed = $derived(typeof to === 'number' ? to : Date.parse(to));
+  // empty or malformed `to` (e.g. before data loads) renders nothing and doesn't tick
+  const valid = $derived(Number.isFinite(parsed));
+  const end = $derived(valid ? parsed : 0);
 
   $effect(() => {
+    if (!valid) return;
     const stop = end;
     const fast = format === 'clock';
     let timer: ReturnType<typeof setTimeout>;
@@ -49,6 +53,7 @@
   const z = (n: number) => String(n).padStart(2, '0');
 
   const text = $derived.by(() => {
+    if (!valid) return '';
     const s = Math.max(0, Math.floor((end - now) / 1000));
     if (s === 0) return t(ended);
     const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
@@ -68,7 +73,7 @@
   });
 </script>
 
-<time datetime={new Date(end).toISOString()} aria-live="off" title={new Date(end).toLocaleString(i18n.locale)}>{text}</time>
+<time datetime={valid ? new Date(end).toISOString() : undefined} aria-live="off" title={valid ? new Date(end).toLocaleString(i18n.locale) : undefined}>{text}</time>
 
 <style>
   time {

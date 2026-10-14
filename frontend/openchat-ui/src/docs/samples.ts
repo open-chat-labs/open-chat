@@ -47,6 +47,9 @@ const walletTokens = [
 ];
 
 // Opened from a button in the docs. Every *Dialog is treated as an overlay too.
+// sample deposit address for the top-up rows (hosts pass the user's own)
+export const depositAddress = 'wq4pz-ixa3f-ubm7c-2jtw4-7d41e-cai';
+
 export const overlays = ['DialogShell', 'ChatPicker', 'MessageActions'];
 
 // Group / chat fixtures the panels used to carry inline (GroupPanel, GroupStats, ChatListPanel, ActivityPanel, ThreadPanel, UserDialog).
@@ -207,7 +210,7 @@ export const samples: Record<string, Record<string, unknown>> = {
       { id: 'r5', name: 'Kraken deposit', address: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F', token: null, last: 'Sent yesterday' },
     ],
   },
-  DiamondDialog: { tokens: walletTokens },
+  DiamondDialog: { tokens: walletTokens, depositAddress: depositAddress },
   BotDialog: { bot: { name: 'ReminderBot' } },
   InviteDialog: { people: invitePeople, pending: invitePending, chats: chats.slice(0, 3) },
   ExploreCommunities: { communities: exploreCommunities, joinedKeys: ['oc'] },
@@ -639,6 +642,7 @@ export const threadReplies: MessageGroupItem[] = [
 export const threadFaces = ['linear-gradient(140deg,#B48CFF,#6A5CFF)', 'linear-gradient(140deg,#FFC061,#FF8A3D)', 'linear-gradient(140deg,#2EE6A8,#1FB6FF)'];
 
 export const joinGate = {
+  depositAddress,
   community: { name: 'OpenChat Devs', members: 2481, grad: 'linear-gradient(140deg,#2EE6A8,#1FB6FF)' },
   gates: [
     { kind: 'pay', symbol: 'CHAT', amount: 50 },

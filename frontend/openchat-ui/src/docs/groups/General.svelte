@@ -1,5 +1,6 @@
 <!-- General: product-agnostic components, one <Section> per entry in sections.ts `general`. Demo data in samples.ts. -->
 <script lang="ts">
+  import type { ComponentProps } from 'svelte';
   import Section from '../Section.svelte';
   import Frame from '../Frame.svelte';
   import { general, sec } from '../sections';
@@ -235,7 +236,7 @@
   <Frame label="Opens the real overlay">
     <Button label="docs.general.chatPicker.shareInviteLink" variant="secondary" onClick={() => (pickerOpen = true)} />
     {#if pickerOpen}
-      <ChatPicker {...(samples.ChatPicker as any)} onSend={() => (pickerOpen = false)} onClose={() => (pickerOpen = false)} />
+      <ChatPicker {...(samples.ChatPicker as unknown as ComponentProps<typeof ChatPicker>)} onSend={() => (pickerOpen = false)} onClose={() => (pickerOpen = false)} />
     {/if}
   </Frame>
 </Section>

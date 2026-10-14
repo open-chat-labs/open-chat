@@ -1,5 +1,9 @@
 // OpenChat feature components (screens, panels, dialogs, flows) — built on the library in src/lib.
 // Exported 2026-10-13 (pass 2). They still carry local sample data where the prototype did; move it to fixtures when wiring the backend.
+import { installBehaviours } from '../lib/behaviours';
+
+installBehaviours();
+
 export { default as AccessGates } from './components/AccessGates.svelte';
 export { default as AccessGatesCards } from './components/AccessGatesCards.svelte';
 export { default as AchievementToast } from './components/AchievementToast.svelte';

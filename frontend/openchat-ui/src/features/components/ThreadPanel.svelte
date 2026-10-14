@@ -2,7 +2,7 @@
      Lives in the right side panel on wide windows (back arrow) and in a modal on narrow ones (asModal: close button).
      Scrolls to the newest reply on open, on a new threadKey and when replies arrive. -->
 <script lang="ts">
-  import { tick, untrack } from 'svelte';
+  import { untrack } from 'svelte';
   import type { GroupMessage, MessageGroupItem } from '../../lib/types';
   import IconButton from '../../lib/components/IconButton.svelte';
   import MessageComposer from '../../lib/components/MessageComposer.svelte';
@@ -87,8 +87,8 @@
   });
 
   $effect(() => {
-    threadKey;
-    replies.length;
+    void threadKey;
+    void replies.length;
     toBottom();
   });
 

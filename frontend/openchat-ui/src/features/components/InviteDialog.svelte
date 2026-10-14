@@ -4,6 +4,7 @@
      footer on Share link, and the host can switch tabs through initialTab. -->
 <script lang="ts">
   import { useT } from '../../lib/i18n';
+  import CopyButton from '../../lib/components/CopyButton.svelte';
   import { onDestroy, untrack } from 'svelte';
   import ChatPicker from '../../lib/components/ChatPicker.svelte';
   import Field from '../../lib/components/Field.svelte';
@@ -102,13 +103,10 @@
   let query = $state('');
   let picked = $state<string[]>([]);
   let shareOn = $state(untrack(() => shareOnProp));
-  let linkCopied = $state(false);
   let pickerOpen = $state(false);
   let toast = $state<{ id: number; text: string } | null>(null);
-  let copyTimer: ReturnType<typeof setTimeout> | undefined;
   let toastTimer: ReturnType<typeof setTimeout> | undefined;
   onDestroy(() => {
-    clearTimeout(copyTimer);
     clearTimeout(toastTimer);
   });
 
@@ -160,15 +158,6 @@
   function cancel() {
     if (embedded && onClose) onClose();
     else onCancel?.();
-  }
-
-  function copyLink() {
-    try {
-      navigator.clipboard?.writeText(`https://${link}`);
-    } catch {}
-    linkCopied = true;
-    clearTimeout(copyTimer);
-    copyTimer = setTimeout(() => (linkCopied = false), 1600);
   }
 
   function sentToChat(x: { chat: string; message: string }) {
@@ -369,9 +358,7 @@
                   <span class="link">{link}</span>
                 </div>
                 <span class="link-actions">
-                  <span class="icon-button" onclick={copyLink} role="button" tabindex="0" title={t(linkCopied ? 'ui.common.copied' : 'ui.inviteDialog.copyLink')} aria-label={t(linkCopied ? 'ui.common.copied' : 'ui.inviteDialog.copyLink')}
-                    ><span class="link-icon" class:copied={linkCopied}></span></span
-                  >
+                  <CopyButton value={`https://${link}`} label="ui.inviteDialog.copyLink" size="md" />
                   <span class="icon-button" onclick={() => (pickerOpen = true)} role="button" tabindex="0" title={t('ui.inviteDialog.shareToChat')} aria-label={t('ui.inviteDialog.shareToChat')}><span class="send-icon"></span></span>
                 </span>
               </div>
@@ -894,20 +881,10 @@
     gap: var(--space-4);
   }
 
-  .link-icon,
   .send-icon {
     width: 16px;
     height: 16px;
     background: var(--ink-3, #9a9aa8);
-  }
-
-  .link-icon {
-    mask: var(--icon-copy) center/contain no-repeat;
-  }
-
-  .link-icon.copied {
-    background: var(--status-online, #2ee6a8);
-    mask: var(--icon-check) center/contain no-repeat;
   }
 
   .send-icon {

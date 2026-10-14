@@ -82,7 +82,9 @@
       if (langOpen && !(e.target as Element).closest?.('[data-ex-lang]')) langOpen = false;
     };
     const esc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && langOpen) langOpen = false;
+      if (e.key !== 'Escape' || !langOpen) return;
+      e.preventDefault(); // keeps an enclosing dialog open
+      langOpen = false;
     };
     document.addEventListener('pointerdown', away, true);
     document.addEventListener('keydown', esc);

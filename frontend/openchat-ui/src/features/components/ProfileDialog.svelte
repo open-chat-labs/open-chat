@@ -210,10 +210,11 @@
 
 <script lang="ts">
   import { modal } from '../../lib/behaviours/modal';
-  import { onDestroy, onMount, tick, untrack } from 'svelte';
+  import { onDestroy, onMount, untrack } from 'svelte';
   import Badge from '../../lib/components/Badge.svelte';
   import Toggle from '../../lib/components/Toggle.svelte';
   import { getI18n, segments, useT, type I18nParams } from '../../lib/i18n';
+  import CopyButton from '../../lib/components/CopyButton.svelte';
   import Translate from '../../lib/components/Translate.svelte';
 
   interface Props {
@@ -286,11 +287,9 @@
     onSave?: (v: { name: string; handle: string; about: string }) => void;
     onLogout?: () => void;
     onDeleteAccount?: () => void;
-    onShare?: () => void;
     onShareApp?: (link: string) => void;
     onCoverEdit?: (isDiamond: boolean) => void;
     onPhotoEdit?: () => void;
-    onVerify?: () => void;
     onChitSettings?: (patch: ChitSettingsPatch) => void;
     onChitBribe?: () => void;
     onCommunityName?: (community: string, name: string | null) => void;
@@ -352,11 +351,9 @@
     onSave,
     onLogout,
     onDeleteAccount,
-    onShare,
     onShareApp,
     onCoverEdit,
     onPhotoEdit,
-    onVerify,
     onChitSettings,
     onChitBribe,
     onCommunityName,
@@ -432,7 +429,9 @@
       const n = el.value.length;
       try {
         el.setSelectionRange(n, n);
-      } catch {}
+      } catch {
+        // input types without a selection (email, number) keep the default caret
+      }
     });
   });
 
@@ -440,8 +439,6 @@
   let saved = $state<Partial<Record<FieldKey, string>>>({});
   const values = $derived({ name: saved.name ?? name, handle: saved.handle ?? handle, about: saved.about ?? about });
   const shownName = $derived(values.name || values.handle);
-  let copied = $state(false);
-  let copiedTimer: ReturnType<typeof setTimeout> | undefined;
 
   function validate(key: string, v: string) {
     if (key === 'handle') {
@@ -458,19 +455,6 @@
     saved = { ...saved, [key]: v };
     stopEdit();
     onSave?.({ ...values, [key]: v });
-  }
-
-  function copyText(text: string) {
-    try {
-      navigator.clipboard?.writeText(text);
-    } catch {}
-  }
-
-  function copyUserId() {
-    copyText(userId);
-    cancel(copiedTimer);
-    copied = true;
-    copiedTimer = later(() => (copied = false), 1400);
   }
 
   const chitTag = $derived(balance >= 1e6 ? `${+(balance / 1e6).toFixed(1)}M` : balance >= 1e3 ? `${+(balance / 1e3).toFixed(1)}K` : String(balance));
@@ -708,20 +692,11 @@
   }
 
   // ---- bots ----
-  let botCopied = $state<string | null>(null);
-  let botTimer: ReturnType<typeof setTimeout> | undefined;
   const botRows = $derived([
     { key: 'host', label: 'ui.profileDialog.bots.host', value: icHost },
     { key: 'storage', label: 'ui.profileDialog.bots.storage', value: storageIndex },
     { key: 'key', label: 'ui.profileDialog.bots.publicKey', value: publicKey },
   ]);
-
-  function copyBot(key: string, value: string) {
-    copyText(value);
-    cancel(botTimer);
-    botCopied = key;
-    botTimer = later(() => (botCopied = null), 1400);
-  }
 
   // ---- link device ----
   let lcCode = $state<string | null>(null);
@@ -729,7 +704,6 @@
   let lcHidden = $state(false);
   let lcCopied = $state(false);
   let lcTicker: ReturnType<typeof setInterval> | undefined;
-  let lcCopyTimer: ReturnType<typeof setTimeout> | undefined;
   const lcLive = $derived(!!lcCode && lcLeft > 0);
 
   function newLinkCode() {
@@ -748,13 +722,6 @@
         lcHidden = false;
       }
     }, 250);
-  }
-
-  function copyLinkCode() {
-    copyText(lcCode ?? '');
-    cancel(lcCopyTimer);
-    lcCopied = true;
-    lcCopyTimer = later(() => (lcCopied = false), 1400);
   }
 
   // ---- delete account ----
@@ -858,18 +825,17 @@
   }
 
   // ---- invite ----
-  let invCopied = $state(false);
-  let invTimer: ReturnType<typeof setTimeout> | undefined;
   let qr = $state<{ link: string; src: string } | null>(null);
   const link = $derived(inviteLink ?? `https://oc.app/?ref=${userId}`);
 
   // the QR library loads as a global script; retry until it is there
+  type QrFactory = (typeNumber: number, level: string) => { addData(s: string): void; make(): void; getModuleCount(): number; isDark(y: number, x: number): boolean };
   $effect(() => {
     if (section !== 'invite' || qr?.link === link) return;
     const target = link;
     let retry: ReturnType<typeof setTimeout> | undefined;
     const build = () => {
-      const lib = (window as any).qrcode;
+      const lib = (window as unknown as { qrcode?: QrFactory }).qrcode;
       if (!lib) {
         retry = setTimeout(build, 300);
         return;
@@ -888,13 +854,6 @@
     build();
     return () => clearTimeout(retry);
   });
-
-  function copyInvite() {
-    copyText(link);
-    cancel(invTimer);
-    invCopied = true;
-    invTimer = later(() => (invCopied = false), 1400);
-  }
 
   function shareInvite() {
     if (navigator.share) navigator.share({ title: t('ui.profileDialog.invite.shareTitle'), url: link }).catch(() => {});
@@ -1101,9 +1060,7 @@
             <div class="kv-row ruled">
               <span class="kv-label">{t('ui.profileDialog.profile.userId')}</span>
               <span class="kv-id">{userId}</span>
-              <span class="copy" onclick={copyUserId} aria-label={t(copied ? 'ui.common.copied' : 'ui.profileDialog.profile.copyUserId')} role="button" tabindex="0" title={t(copied ? 'ui.common.copied' : 'ui.profileDialog.profile.copyUserId')}
-                >{@render glyph(copied ? 'check' : 'copy', copied ? 'copy-glyph done' : 'copy-glyph')}</span
-              >
+              <span class="copy"><CopyButton value={userId} label="ui.profileDialog.profile.copyUserId" size="md" /></span>
             </div>
           </div>
         </div>
@@ -1594,15 +1551,12 @@
           >
           <div class="list">
             {#each botRows as b, i}
-              {@const on = botCopied === b.key}
               <div class="bot-row" class:ruled={i > 0}>
                 <div class="bot-text">
                   <span class="small-label">{t(b.label)}</span>
                   <span class="bot-value" class:pre={b.key === 'key'}>{b.value}</span>
                 </div>
-                <span class="bot-copy" onclick={() => copyBot(b.key, b.value)} aria-label={on ? t('ui.common.copied') : t('ui.profileDialog.bots.copy', { label: t(b.label) })} role="button" tabindex="0" title={on ? t('ui.common.copied') : t('ui.profileDialog.bots.copy', { label: t(b.label) })}
-                  ><span class="bot-copy-glyph" class:on style:mask={icon(on ? 'check' : 'copy')}></span></span
-                >
+                <span class="bot-copy"><CopyButton value={b.value} label={t('ui.profileDialog.bots.copy', { label: t(b.label) })} size="md" /></span>
               </div>
             {/each}
           </div>
@@ -1631,9 +1585,7 @@
             <div class="code-live">
               <div class="code-line">
                 <span class="code" class:hidden={lcHidden}>{(lcCode ?? '').slice(0, 3)} {(lcCode ?? '').slice(3)}</span>
-                <span class="code-copy" onclick={copyLinkCode} aria-label={t(lcCopied ? 'ui.common.copied' : 'ui.profileDialog.device.copyCode')} role="button" tabindex="0" title={t(lcCopied ? 'ui.common.copied' : 'ui.profileDialog.device.copyCode')}
-                  ><span class="code-copy-glyph" class:on={lcCopied} style:mask={icon(lcCopied ? 'check' : 'copy')}></span></span
-                >
+                <CopyButton value={lcCode ?? ''} label="ui.profileDialog.device.copyCode" variant="outline" size="md" bind:copied={lcCopied} />
               </div>
               <div class="code-track"><div class="code-fill" class:warn style:width="{Math.max(0, Math.min(100, (lcLeft / linkCodeTtl) * 100)).toFixed(1)}%"></div></div>
               <div class="code-foot">
@@ -1706,9 +1658,7 @@
               <span class="invite-caps">{t('ui.profileDialog.invite.caps')}</span>
               <span class="invite-link">{link}</span>
               <div class="invite-actions">
-                <span class="invite-copy" onclick={copyInvite} role="button" tabindex="0"
-                  ><span class="invite-copy-glyph" class:on={invCopied} style:mask={icon(invCopied ? 'check' : 'copy')}></span>{t(invCopied ? 'ui.common.copied' : 'ui.common.copy')}</span
-                >
+                <span class="invite-copy"><CopyButton value={link} variant="text" /></span>
                 <span class="invite-share" onclick={shareInvite} role="button" tabindex="0">{@render glyph('share', 'invite-share-glyph')}{t('ui.common.share')}</span>
               </div>
             </div>
@@ -2536,27 +2486,7 @@
   .copy {
     flex: none;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 30px;
-    height: 30px;
     margin-inline-end: -8px;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-  }
-
-  .copy:hover {
-    background: var(--btn-hover, rgba(255, 255, 255, 0.1));
-  }
-
-  .copy-glyph {
-    width: 14px;
-    height: 14px;
-    background: var(--ink-3, #8a8a99);
-  }
-
-  .copy-glyph.done {
-    background: var(--status-online, #2ee6a8);
   }
 
   /* ---- stats ---- */
@@ -3993,30 +3923,7 @@
   .bot-copy {
     flex: none;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 30px;
-    height: 30px;
     margin: -6px -8px 0 0;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-  }
-
-  .bot-copy:hover,
-  .code-copy:hover {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
-  }
-
-  .bot-copy-glyph {
-    width: 15px;
-    height: 15px;
-    background: var(--ink-3, #8a8a99);
-  }
-
-  .bot-copy-glyph.on,
-  .code-copy-glyph.on,
-  .invite-copy-glyph.on {
-    background: var(--status-online, #2ee6a8);
   }
 
   /* ---- link device ---- */
@@ -4130,24 +4037,6 @@
   .code.hidden {
     user-select: none;
     filter: blur(9px);
-  }
-
-  .code-copy {
-    flex: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 34px;
-    height: 34px;
-    border-radius: var(--radius-sm);
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1));
-    cursor: pointer;
-  }
-
-  .code-copy-glyph {
-    width: 15px;
-    height: 15px;
-    background: var(--ink-2, #b9b9c6);
   }
 
   .code-track {
@@ -4413,7 +4302,6 @@
     gap: var(--space-10);
   }
 
-  .invite-copy,
   .invite-share {
     flex: 1;
     display: flex;
@@ -4428,18 +4316,15 @@
   }
 
   .invite-copy {
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12));
-    color: var(--ink, #ececf1);
+    flex: 1;
+    display: flex;
   }
 
-  .invite-copy:hover {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
-  }
-
-  .invite-copy-glyph {
-    width: 14px;
-    height: 14px;
-    background: var(--ink-2, #b9b9c6);
+  /* CopyButton's text pill stretched to sit level with Share */
+  .invite-copy > :global(.copy) {
+    flex: 1;
+    height: 38px;
+    font-size: var(--text-md);
   }
 
   .invite-share {

@@ -4,7 +4,7 @@
 <script lang="ts">
   import { useT } from '../../lib/i18n';
   import Translate from '../../lib/components/Translate.svelte';
-  import { onDestroy, onMount, untrack } from 'svelte';
+  import { onDestroy, untrack } from 'svelte';
   import { modal } from '../../lib/behaviours/modal';
 
   const GRADIENTS: Record<string, string> = {

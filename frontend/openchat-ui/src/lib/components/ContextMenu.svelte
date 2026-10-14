@@ -3,7 +3,8 @@
        kebab / keyboard (Shift+F10, Menu key) → `anchor` rect (opens under it, end-aligned)
        touch long-press → `anchor` {left:x,right:x,top,bottom} of the row with align "start" (anchored popover, no bottom sheet)
      Flips to stay on screen; closes on outside press, Esc, scroll or resize. Rows own open/close state.
-     Focus moves to the first item on open and back to the opener on close. -->
+     Focus moves to the first item on open and back to the opener on close (not when closed by pressing elsewhere).
+     Esc is consumed, so a dialog around the menu stays open. -->
 <script lang="ts">
   import { onMount, untrack } from 'svelte';
   import type { MenuItem } from '../types';
@@ -35,13 +36,14 @@
   const raw = $derived(point ? { x: point.x, y: point.y } : { x: anchor?.left ?? 0, y: anchor?.bottom ?? 0 });
   const placed = $derived(!!pos && pos.sig === sig);
 
-  function close() {
+  // refocus = false when the user pressed elsewhere: focus stays where they put it
+  function close(refocus = true) {
     placedSig = null;
     focusedFor = null;
     const back = returnTo;
     returnTo = null;
     onClose?.();
-    if (back?.isConnected && typeof back.focus === 'function') requestAnimationFrame(() => back.focus({ preventScroll: true }));
+    if (refocus && back?.isConnected && typeof back.focus === 'function') requestAnimationFrame(() => back.focus({ preventScroll: true }));
   }
 
   function place() {
@@ -100,10 +102,14 @@
 
   onMount(() => {
     const down = (e: PointerEvent) => {
-      if (open && box && !box.contains(e.target as Node)) close();
+      if (open && box && !box.contains(e.target as Node)) close(false);
     };
     const key = (e: KeyboardEvent) => {
-      if (open && e.key === 'Escape') close();
+      if (!open || e.key !== 'Escape') return;
+      // handled here, so an enclosing dialog (use:modal, DialogShell) doesn't close on the same press
+      e.preventDefault();
+      e.stopPropagation();
+      close();
     };
     const gone = () => {
       if (open) close();

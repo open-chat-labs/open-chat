@@ -41,6 +41,8 @@
       const s = stack();
       if (s[s.length - 1] !== self) return;
       if (e.key === 'Escape') {
+        // an inner control (menu, picker) already handled this Esc
+        if (e.defaultPrevented) return;
         if (onClose) {
           e.preventDefault();
           onClose();

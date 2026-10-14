@@ -8,6 +8,7 @@
   import { onDestroy, onMount } from 'svelte';
   import type { WalletToken } from '../../lib/types';
   import Toggle from '../../lib/components/Toggle.svelte';
+  import CopyButton from '../../lib/components/CopyButton.svelte';
 
   type PlanKey = '1m' | '3m' | '1y' | 'life';
 
@@ -63,7 +64,6 @@
     { key: '1y', months: 12, price: 15 },
     { key: 'life', months: 0, price: 60 },
   ];
-  const ADDRESS = '2vxsx-fae3q-kzn7w-ot4qa-cai';
   const DAY = 86400000;
   // dates in the host's locale; plain 'en' keeps the day-month order ('28 Sep 2026')
   const dateLocale = () => (i18n.locale && i18n.locale !== 'en' ? i18n.locale : 'en-GB');
@@ -95,6 +95,8 @@
     plan?: PlanKey | null;
     isDiamond?: boolean;
     lifetime?: boolean;
+    /** The user's own deposit address for topping up. Without it the Top up option is hidden. */
+    depositAddress?: string;
     /** Current membership end (ISO date); members without it are treated as expiring today. */
     memberUntil?: string;
     /** Shows a back arrow on the first step. */
@@ -105,7 +107,7 @@
     onUpgrade?: (p: DiamondPurchase) => void;
   }
 
-  let { tokens, balance: chatBalance, plan: initialPlan = null, isDiamond = false, lifetime: lifetimeProp = false, memberUntil = '', onBack, backLabel = 'ui.common.back', onClose, onUpgrade }: Props = $props();
+  let { tokens, balance: chatBalance, plan: initialPlan = null, isDiamond = false, lifetime: lifetimeProp = false, depositAddress, memberUntil = '', onBack, backLabel = 'ui.common.back', onClose, onUpgrade }: Props = $props();
   const t = useT();
   const i18n = getI18n();
 
@@ -117,7 +119,6 @@
   let busy = $state(false);
   let refreshing = $state(false);
   let topUp = $state(false);
-  let copied = $state(false);
   let bought = $state<DiamondPurchase | null>(null);
   let spent = $state<Record<string, number>>({});
   let tokenSymbol = $state('CHAT');
@@ -219,14 +220,6 @@
     step = 'confirm';
     planKey = key;
     autoRenew = true;
-  }
-
-  function copyAddress() {
-    try {
-      navigator.clipboard.writeText(ADDRESS);
-    } catch {}
-    copied = true;
-    later(() => (copied = false), 1600);
   }
 
   function refresh() {
@@ -395,16 +388,16 @@
                 </div>
               {/if}
             </div>
-            {#if isShort}
+            {#if isShort && depositAddress}
               <span class="top-up" class:open={topUp} onclick={() => (topUp = !topUp)} aria-label={t('ui.diamondDialog.topUp')} role="button" tabindex="0" title={t('ui.diamondDialog.topUp')}>{@render icon('qr', 'top-up-icon')}{t('ui.diamondDialog.topUp')}</span>
             {/if}
           </div>
-          {#if topUp}
+          {#if topUp && depositAddress}
             <div class="address-box">
               <span class="address-hint">{t('ui.diamondDialog.addressHint', { symbol: tok.symbol })}</span>
               <div class="address-row">
-                <span class="address">{ADDRESS}</span>
-                <span class="copy" onclick={copyAddress} role="button" tabindex="0">{@render icon(copied ? 'check' : 'copy', 'copy-icon')}{t(copied ? 'ui.common.copied' : 'ui.common.copy')}</span>
+                <span class="address">{depositAddress}</span>
+                <CopyButton value={depositAddress} variant="text" />
               </div>
             </div>
           {/if}
@@ -1098,31 +1091,6 @@
     white-space: nowrap;
     font: var(--weight-medium) var(--text-md) / 1 var(--font-mono);
     color: var(--ink, #ececf1);
-  }
-
-  .copy {
-    flex: none;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    height: 30px;
-    padding: 0 10px;
-    border-radius: var(--radius-sm);
-    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
-    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
-    color: var(--ink, #ececf1);
-    cursor: pointer;
-    user-select: none;
-  }
-
-  .copy:hover {
-    background: var(--overlay-3, rgba(255, 255, 255, 0.14));
-  }
-
-  .copy-icon {
-    width: 13px;
-    height: 13px;
-    background: var(--ink, #ececf1);
   }
 
   .warn {

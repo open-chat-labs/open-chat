@@ -75,7 +75,12 @@
       adj[q].push(p);
     }
     const seen = new Set([0]), stack = [0];
-    while (stack.length) for (const n of adj[stack.pop()!]) if (!seen.has(n)) (seen.add(n), stack.push(n));
+    while (stack.length)
+      for (const n of adj[stack.pop()!])
+        if (!seen.has(n)) {
+          seen.add(n);
+          stack.push(n);
+        }
     return seen.size === isl.length;
   }
 
@@ -173,7 +178,7 @@
     }, 1000);
     // Esc closes, but only while this is the topmost dialog (shared stack with DialogShell)
     const self = { boxRef: { get current() { return layer; } } };
-    const stack = (): object[] => ((window as any).__ocDialogs ??= []);
+    const stack = (): object[] => ((window as unknown as { __ocDialogs?: object[] }).__ocDialogs ??= []);
     stack().push(self);
     const key = (e: KeyboardEvent) => {
       const s = stack();

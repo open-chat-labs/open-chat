@@ -81,7 +81,7 @@
     return (list.find((x) => x.symbol === token) ?? list.find((x) => x.symbol === 'ICP') ?? list[0])?.symbol ?? '';
   })();
 
-  let sym = $state(startSymbol);
+  const sym = $state(startSymbol);
   let mode = $state<'user' | 'address'>(initialAddress ? 'address' : 'user');
   let user = $state<number | null>(null);
   let address = $state(initialAddress);

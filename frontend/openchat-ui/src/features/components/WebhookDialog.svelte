@@ -2,6 +2,7 @@
      and in edit mode the secret URL (click to copy) with a guarded "Regenerate" that confirms before replacing the secret. -->
 <script lang="ts">
   import { useT } from '../../lib/i18n';
+  import CopyButton from '../../lib/components/CopyButton.svelte';
   import Translate from '../../lib/components/Translate.svelte';
   import { onDestroy } from 'svelte';
   import { modal } from '../../lib/behaviours/modal';
@@ -60,10 +61,8 @@
   let closing = $state(false);
   let avatarInput: HTMLInputElement;
   let leaveTimer: ReturnType<typeof setTimeout> | undefined;
-  let copyTimer: ReturnType<typeof setTimeout> | undefined;
   onDestroy(() => {
     clearTimeout(leaveTimer);
-    clearTimeout(copyTimer);
   });
 
   const isEdit = $derived(dialogMode === 'edit');
@@ -100,14 +99,8 @@
     onRegenerate?.(next);
   }
 
-  function copy() {
-    try {
-      navigator.clipboard?.writeText(url);
-    } catch {}
-    clearTimeout(copyTimer);
-    copied = true;
-    copyTimer = setTimeout(() => (copied = false), 1600);
-  }
+  // the URL itself is a second way to copy
+  let copier = $state<CopyButton>();
 
   function pickedFile(e: Event & { currentTarget: HTMLInputElement }) {
     const f = e.currentTarget.files?.[0];
@@ -217,9 +210,9 @@
             <div class="url-box">
               <div class="url-head">
                 <span class="copy-hint">{t(copied ? 'ui.webhookDialog.copied' : 'ui.webhookDialog.clickToCopy')}</span>
-                <span class="copy" onclick={copy} role="button" tabindex="0" aria-label={t('ui.webhookDialog.copyUrl')} title={t('ui.webhookDialog.copyUrl')}><span class="copy-icon" class:copied></span></span>
+                <CopyButton bind:this={copier} bind:copied value={url} label="ui.webhookDialog.copyUrl" variant="soft" size="md" />
               </div>
-              <span class="url" onclick={copy} role="button" tabindex="0">{url}</span>
+              <span class="url" onclick={() => copier?.copy()} role="button" tabindex="0">{url}</span>
             </div>
             <div class="regen-row">
               <span class="regen-note">{t('ui.webhookDialog.regenNote')}</span>
@@ -412,8 +405,7 @@
   }
 
   .close:hover,
-  .upload:hover,
-  .copy:hover {
+  .upload:hover {
     background: var(--overlay-2, rgba(255, 255, 255, 0.09));
   }
 
@@ -711,30 +703,6 @@
     min-width: 0;
     font: var(--weight-regular) var(--text-sm) / 1.3 var(--font-sans);
     color: var(--ink-4, #7c7c8c);
-  }
-
-  .copy {
-    flex: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: var(--radius-sm);
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
-    cursor: pointer;
-  }
-
-  .copy-icon {
-    width: 16px;
-    height: 16px;
-    background: var(--ink-3, #9a9aa8);
-    mask: var(--icon-copy) center/contain no-repeat;
-  }
-
-  .copy-icon.copied {
-    background: var(--status-online, #2ee6a8);
-    mask: var(--icon-check) center/contain no-repeat;
   }
 
   .url {

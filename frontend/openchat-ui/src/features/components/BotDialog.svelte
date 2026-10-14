@@ -192,7 +192,6 @@
 
   const granted = $derived(grantedOverride ?? Object.fromEntries(spec.perms.map((k) => [k, true])));
   const asked = $derived(spec.perms.map((k) => ({ key: k, ...PERMS[k] })));
-  const riskyNames = $derived(list(asked.filter((p) => p.risky).map((p) => t(p.label).toLowerCase())));
   const groups = $derived(
     [
       { label: 'ui.botDialog.inThisChat', icon: 'chat', items: asked.filter((p) => p.scope === 'chat') },
