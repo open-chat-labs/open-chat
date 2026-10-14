@@ -102,4 +102,30 @@ describe('Optimistic', () => {
     await flush();
     expect(value.current).toBe('on');
   });
+
+  test('an older success after a newer success does not become the fallback', async () => {
+    const { value } = setup('a');
+    const a = deferred(), b = deferred(), c = deferred();
+    const p1 = value.set('b', () => a.promise);
+    const p2 = value.set('c', () => b.promise);
+    b.resolve();
+    await p2; // host accepted c
+    a.resolve();
+    await p1; // older success lands late: must not replace c as the accepted value
+    const p3 = value.set('d', () => c.promise);
+    c.reject(new Error('x'));
+    await p3;
+    expect(value.current).toBe('c');
+  });
+
+  test('a host change during a flight is the fallback if that flight rejects', async () => {
+    const { value, setHost } = setup('off');
+    await value.set('on', () => Promise.resolve()); // accepted: on
+    const d = deferred();
+    const p = value.set('high', () => d.promise);
+    setHost('mid'); // the host moved on while the call was in flight
+    d.reject(new Error('x'));
+    await p;
+    expect(value.current).toBe('mid');
+  });
 });

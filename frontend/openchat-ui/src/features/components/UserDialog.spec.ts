@@ -82,7 +82,10 @@ describe('UserDialog', () => {
       startBlock();
       await settle();
       expect(layer.classList.contains('closing')).toBe(false);
-      expect(target.querySelector('.footer.confirm .confirm-text')!.textContent).toMatch(/block/i);
+      // the error replaces the prompt (and is announced), so assert on the error itself
+      const error = target.querySelector('.footer.confirm [role=alert]');
+      expect(error?.textContent).toMatch(/couldn.t block/i);
+      expect(error?.textContent).not.toMatch(/won.t be able/i);
       target.querySelector<HTMLElement>('.footer.confirm .block')!.click();
       await settle();
       expect(onBlock).toHaveBeenCalledTimes(2);

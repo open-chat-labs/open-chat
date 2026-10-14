@@ -245,7 +245,7 @@
     {#if toggleFailed && blockStep === 'idle'}<span class="error" role="alert">{t('ui.userDialog.actionFailed')}</span>{/if}
     {#if !isSelf && blockStep !== 'idle'}
       <div class="footer confirm">
-        <span class="confirm-text"
+        <span class="confirm-text" class:failed={!!blockError} role={blockError ? 'alert' : undefined}
           >{blockError ? t(blockError) : t(blocked ? 'ui.userDialog.unblockConfirm' : 'ui.userDialog.blockConfirm', { name: title })}</span
         >
         <span class="cancel" onclick={cancelBlock} role="button" tabindex="0">{t('ui.common.cancel')}</span>

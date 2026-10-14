@@ -134,7 +134,8 @@
   let width = $state(0);
 
   const narrow = $derived(width > 0 && width < 760);
-  const tk = $derived(held.find((x) => x.symbol === sym) ?? held[0]);
+  // the chosen token stays the chosen token even if its balance reaches 0 (e.g. while sending all of it)
+  const tk = $derived(tokens.find((x) => x.symbol === sym) ?? held[0]);
   const typed = $derived(parseAmount(amt));
   const n = $derived(tk ? floorTo(inUsd ? typed / tk.price : typed, tk.dp) : 0);
   const det = $derived(mode === 'address' ? detectNetwork(address) : null);

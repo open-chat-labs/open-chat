@@ -1,6 +1,7 @@
 import { flushSync, mount, unmount } from 'svelte';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import GroupPanel from './GroupPanel.svelte';
+import { reactiveProps } from '../../lib/testing/reactiveProps.svelte';
 
 const deferred = () => {
   let resolve!: () => void, reject!: (e: unknown) => void;
@@ -114,5 +115,101 @@ describe('GroupPanel member actions', () => {
   test('without callbacks there is no member menu', () => {
     open({});
     expect(row('Ryan Rogers')!.querySelector('.kebab')).toBeNull();
+  });
+});
+
+describe('GroupPanel mute', () => {
+  let target: HTMLElement;
+  let app: object;
+  beforeEach(() => {
+    target = document.body.appendChild(document.createElement('div'));
+  });
+  afterEach(() => {
+    unmount(app);
+    target.remove();
+  });
+
+  function open(props: Record<string, unknown>) {
+    const host = reactiveProps<Record<string, unknown>>({ title: 'Devs', ownerHandle: '@jane', members, storageKey: '', ...props });
+    app = mount(GroupPanel, { target, props: host as never });
+    flushSync();
+    return host;
+  }
+  const tile = (text: RegExp) => [...target.querySelectorAll<HTMLElement>('.tiles .tile')].find((el) => text.test((el.textContent ?? '').trim()))!;
+  const muteTile = () => tile(/^Mute$|^Muted/);
+  const everyoneTile = () => tile(/everyone/i);
+  const label = (el: HTMLElement) => el.textContent!.trim();
+  const press = (el: HTMLElement) => {
+    el.click();
+    flushSync();
+  };
+  const error = () => target.querySelector('.member-error');
+
+  test('Unmute shows at once and stays once the host accepts; a repeat tap sends nothing', async () => {
+    const d = deferred();
+    const onMuteChange = vi.fn(() => d.promise);
+    open({ mutedUntil: '8h', onMuteChange });
+    expect(label(muteTile())).toBe('Muted · 8h');
+    press(muteTile());
+    expect(onMuteChange).toHaveBeenCalledWith(null);
+    expect(label(muteTile())).toBe('Mute');
+    expect(muteTile().classList.contains('on')).toBe(false);
+    press(muteTile()); // now reads "Mute": opens the span menu, no second unmute
+    expect(onMuteChange).toHaveBeenCalledOnce();
+    d.resolve();
+    await settle();
+    expect(label(muteTile())).toBe('Mute');
+  });
+
+  test('a rejected unmute falls back to the host mute and shows an error', async () => {
+    open({ mutedUntil: '8h', onMuteChange: () => Promise.reject(new Error('x')) });
+    press(muteTile());
+    await settle();
+    expect(label(muteTile())).toBe('Muted · 8h');
+    expect(error()).not.toBeNull();
+  });
+
+  test('muting picks a span and shows it at once', async () => {
+    const d = deferred();
+    const onMuteChange = vi.fn(() => d.promise);
+    open({ onMuteChange });
+    press(muteTile());
+    press([...target.querySelectorAll<HTMLElement>('.mute-option')].find((o) => /8 hours/.test(o.textContent ?? ''))!);
+    expect(onMuteChange).toHaveBeenCalledExactlyOnceWith('8h');
+    expect(label(muteTile())).toBe('Muted · 8h');
+    d.resolve();
+    await settle();
+    expect(label(muteTile())).toBe('Muted · 8h');
+  });
+
+  test('mute @everyone: the latest call wins and a rejection falls back to the host', async () => {
+    const a = deferred(), b = deferred();
+    const calls = [a, b];
+    const onMuteEveryoneChange = vi.fn(() => calls.shift()!.promise);
+    open({ muteEveryone: false, onMuteEveryoneChange });
+    press(everyoneTile()); // on
+    press(everyoneTile()); // off
+    expect(onMuteEveryoneChange.mock.calls).toEqual([[true], [false]]);
+    a.reject(new Error('late')); // superseded: ignored
+    await settle();
+    expect(everyoneTile().classList.contains('on')).toBe(false);
+    expect(error()).toBeNull();
+    b.reject(new Error('x')); // latest rejects: back to the host's value
+    await settle();
+    expect(everyoneTile().classList.contains('on')).toBe(false);
+    expect(error()).not.toBeNull();
+  });
+
+  test('a new host mute is followed once nothing is in flight', async () => {
+    const host = open({ mutedUntil: null, onMuteChange: () => Promise.resolve() });
+    press(muteTile());
+    press([...target.querySelectorAll<HTMLElement>('.mute-option')].find((o) => /1 week/.test(o.textContent ?? ''))!);
+    await settle();
+    expect(label(muteTile())).toBe('Muted · 1w');
+    host.mutedUntil = '1w'; // the host catches up
+    flushSync();
+    host.mutedUntil = null; // then it's unmuted elsewhere
+    flushSync();
+    expect(label(muteTile())).toBe('Mute');
   });
 });

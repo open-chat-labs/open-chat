@@ -1,0 +1,119 @@
+import { flushSync, mount, unmount } from 'svelte';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import AuthDialog from './AuthDialog.svelte';
+
+const deferred = () => {
+  let resolve!: () => void, reject!: (e: unknown) => void;
+  const promise = new Promise<void>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+};
+const settle = async () => {
+  await vi.advanceTimersByTimeAsync(0);
+  flushSync();
+};
+
+describe('AuthDialog: one host call at a time', () => {
+  let target: HTMLElement;
+  let app: object;
+  beforeEach(() => {
+    vi.useFakeTimers();
+    target = document.body.appendChild(document.createElement('div'));
+  });
+  afterEach(() => {
+    unmount(app);
+    target.remove();
+    vi.useRealTimers();
+  });
+
+  function open(props: Record<string, unknown>) {
+    app = mount(AuthDialog, { target, props: { inline: true, ...props } });
+    flushSync();
+  }
+  const q = <T extends Element = HTMLElement>(sel: string) => target.querySelector<T & HTMLElement>(sel);
+  const typeInto = (input: HTMLInputElement | null, value: string) => {
+    input!.value = value;
+    input!.dispatchEvent(new Event('input', { bubbles: true }));
+    flushSync();
+  };
+  const submit = (form: HTMLFormElement | null) => {
+    form!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    flushSync();
+  };
+  const switchMode = () => {
+    q('.switch-cta')!.click();
+    flushSync();
+  };
+
+  test('switching mode while a sign-up is pending cannot start a second one', async () => {
+    const d = deferred();
+    const onSignup = vi.fn(() => d.promise);
+    open({ kind: 'signup', onSignup });
+    typeInto(q<HTMLInputElement>('input[autocomplete=username]'), 'newperson1');
+    submit(q<HTMLFormElement>('form.form'));
+    expect(onSignup).toHaveBeenCalledOnce();
+    // Sign in → Create account → Continue, all while the first sign-up is still with the host
+    switchMode();
+    switchMode();
+    expect(q('.switch-cta')!.hasAttribute('disabled')).toBe(true);
+    const form = q<HTMLFormElement>('form.form');
+    if (form) submit(form);
+    await settle();
+    expect(onSignup).toHaveBeenCalledOnce();
+    d.resolve();
+    await settle();
+    expect(q('.switch-cta')!.hasAttribute('disabled')).toBe(false);
+  });
+
+  test('a method that is pending blocks the email link (and a second method)', async () => {
+    const d = deferred();
+    const onMethod = vi.fn(() => d.promise);
+    const onRequestEmailLink = vi.fn(() => Promise.resolve());
+    open({ kind: 'login', onMethod, onRequestEmailLink });
+    q('.passkey')!.click();
+    flushSync();
+    // switching to sign-up and back must not clear the pending state either
+    switchMode();
+    switchMode();
+    typeInto(q<HTMLInputElement>('form.email input'), 'me@example.com');
+    submit(q<HTMLFormElement>('form.email'));
+    q('.passkey')!.click();
+    await settle();
+    expect(onMethod).toHaveBeenCalledOnce();
+    expect(onRequestEmailLink).not.toHaveBeenCalled();
+    d.reject(new Error('cancelled'));
+    await settle();
+    // after it settles the user can try again
+    q('.passkey')!.click();
+    await settle();
+    expect(onMethod).toHaveBeenCalledTimes(2);
+  });
+
+  test('Back from "Check your inbox" waits for a pending resend', async () => {
+    let call = 0;
+    const second = deferred();
+    const onRequestEmailLink = vi.fn(() => (++call === 1 ? Promise.resolve() : second.promise));
+    const onMethod = vi.fn(() => Promise.resolve());
+    open({ kind: 'login', onMethod, onRequestEmailLink });
+    typeInto(q<HTMLInputElement>('form.email input'), 'me@example.com');
+    submit(q<HTMLFormElement>('form.email'));
+    await settle();
+    expect(target.textContent).toContain('Check your inbox');
+    q('.sent .link')!.click(); // resend, pending
+    flushSync();
+    const back = target.querySelector<HTMLButtonElement>('.head-button[aria-label="Back"]')!;
+    back.click();
+    flushSync();
+    expect(target.textContent).toContain('Check your inbox');
+    expect(back.disabled).toBe(true);
+    second.resolve();
+    await settle();
+    back.click();
+    flushSync();
+    q('.passkey')!.click();
+    await settle();
+    expect(onMethod).toHaveBeenCalledOnce();
+  });
+});

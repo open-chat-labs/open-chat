@@ -71,6 +71,23 @@ describe('PollBuilderDialog publish', () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 
+  test('Discard in the open "discard?" prompt is ignored while a publish (Ctrl+Enter) is pending', async () => {
+    const d = deferred();
+    const { onClose, publish, esc } = open(() => d.promise);
+    esc(); // content: asks "Discard this poll?"
+    flushSync();
+    const prompt = target.querySelector('.confirm')!;
+    expect(prompt).not.toBeNull();
+    // publish from the keyboard while the prompt is still up
+    target.querySelector<HTMLElement>('.dialog')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true, bubbles: true }));
+    await settle();
+    expect(publish).toHaveBeenCalledOnce();
+    const discard = [...prompt.querySelectorAll<HTMLElement>('button, [role=button]')].find((b) => /discard/i.test(b.textContent ?? ''))!;
+    press(discard);
+    await vi.runAllTimersAsync();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
   test('once published, nothing more is published', async () => {
     const { publish, publishButton } = open(() => Promise.resolve());
     press(publishButton);

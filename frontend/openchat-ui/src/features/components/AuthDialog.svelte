@@ -28,6 +28,7 @@
 
 <script lang="ts">
   import { modal } from '../../lib/behaviours/modal';
+  import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
   import { useT } from '../../lib/i18n';
   import Translate from '../../lib/components/Translate.svelte';
   import { onMount, untrack } from 'svelte';
@@ -144,21 +145,23 @@
     onClose?.();
   }
 
+  // one host call at a time (the shared dialog contract); switching mode and Back wait for it too, so nothing can
+  // start a second sign-up / method / link request while one is pending. `waiting` says which call it is.
+  const flow = new DialogFlow({ exitMs: 0 });
+
   // runs a host action with `what` as the waiting state; resolves true when it succeeded and is still current
   async function attempt(what: NonNullable<typeof waiting>, action: () => Promise<unknown> | void): Promise<boolean> {
-    if (waiting) return false;
+    if (flow.busy) return false;
     const mine = ++run;
     waiting = what;
     failed = null;
-    try {
-      await action();
-      return mine === run;
-    } catch {
-      if (mine === run) failed = what;
-      return false;
-    } finally {
-      if (mine === run) waiting = null;
-    }
+    const result = await flow.run(action);
+    // nothing else can have started meanwhile, so the waiting state always ends here
+    waiting = null;
+    // closed (or unmounted) meanwhile: the result is stale
+    if (mine !== run) return false;
+    if (!result.ok) failed = what;
+    return result.ok;
   }
 
   function pick(m: Method) {
@@ -194,10 +197,15 @@
   }
 
   function switchMode() {
-    run++;
+    if (flow.busy) return;
     mode = signup ? 'login' : 'signup';
     step = 'methods';
-    waiting = null;
+    failed = null;
+  }
+
+  function backToMethods() {
+    if (flow.busy) return;
+    step = 'methods';
     failed = null;
   }
 
@@ -205,6 +213,7 @@
     return () => {
       run++;
       searchRun++;
+      flow.destroy();
       clearTimeout(checkTimer);
       clearTimeout(searchTimer);
     };
@@ -233,11 +242,8 @@
         {#if step === 'sent'}
           <button
             class="head-button"
-            onclick={() => {
-              run++;
-              step = 'methods';
-              waiting = null;
-            }}
+            onclick={backToMethods}
+            disabled={flow.busy}
             aria-label={t('ui.common.back')}><span class="head-icon back"></span></button
           >
         {/if}
@@ -369,7 +375,7 @@
         </form>
       {/if}
 
-      <div class="switch">{t(signup ? 'ui.authDialog.haveAccount' : 'ui.authDialog.newToOpenChat')}<button class="switch-cta" onclick={switchMode}>{t(signup ? 'ui.authDialog.signIn' : 'ui.authDialog.createAnAccount')}</button></div>
+      <div class="switch">{t(signup ? 'ui.authDialog.haveAccount' : 'ui.authDialog.newToOpenChat')}<button class="switch-cta" onclick={switchMode} disabled={flow.busy}>{t(signup ? 'ui.authDialog.signIn' : 'ui.authDialog.createAnAccount')}</button></div>
     </div>
   </div>
 </div>

@@ -7048,7 +7048,7 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "'Back'",
+        "componentDefault": "'ui.common.back'",
         "doc": ""
       },
       {

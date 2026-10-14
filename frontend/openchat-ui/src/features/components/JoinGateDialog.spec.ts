@@ -91,4 +91,11 @@ describe('JoinGateDialog join', () => {
     await settle();
     expect(join).toHaveBeenCalledTimes(2);
   });
+
+  test('closes at once when idle (DialogShell has no exit animation to wait for)', async () => {
+    const { onClose } = open(() => Promise.resolve());
+    esc();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(onClose).toHaveBeenCalledOnce();
+  });
 });

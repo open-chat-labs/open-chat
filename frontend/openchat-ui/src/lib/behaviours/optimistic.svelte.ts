@@ -6,6 +6,7 @@
 // - an older call that succeeds after every newer one failed still lands;
 // - sync() (call it when the host's value changes) drops local state once nothing is in flight, so the host is
 //   followed again.
+// Read the value through .current (it may legitimately be null/undefined); don't write `opt?.current ?? host`.
 export class Optimistic<T> {
   failed = $state(false);
   #override = $state<{ value: T } | null>(null);
@@ -55,10 +56,11 @@ export class Optimistic<T> {
     }
   }
 
-  /** The host's value changed: follow it again unless a call is still in flight. */
+  /** The host's value changed: follow it again. While a call is in flight the shown value stays, but what the host
+   *  last accepted is now its own value, so a rejection falls back to it. */
   sync() {
+    this.#accepted = null;
     if (this.#inflight > 0) return;
     this.#override = null;
-    this.#accepted = null;
   }
 }

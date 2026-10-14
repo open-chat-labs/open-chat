@@ -102,6 +102,15 @@ describe('BotDialog', () => {
     expect(text).not.toBe('Can .');
   });
 
+  test('a react-only bot says it reacts, not that it asks for nothing', () => {
+    open({ bot: { ...bot, perms: ['react'] } });
+    expect(target.querySelector('.plain-text')!.textContent).not.toMatch(/doesn.t ask/i);
+    unmount(app);
+    target.replaceChildren();
+    open({ installed: true, bot: { ...bot, perms: ['react'], granted: { react: true } } });
+    expect(target.querySelector('.plain-text')!.textContent).not.toMatch(/can.t do anything/i);
+  });
+
   test('view-only users get no actions', () => {
     open({ canManage: false, installed: true, onRemove: vi.fn(), onInstall: vi.fn() });
     expect(primary()).toBeNull();

@@ -94,4 +94,38 @@ describe('ExploreCommunities with onQuery', () => {
     type('rusty');
     expect(searching()).toBe(true);
   });
+
+  test('clearing the search shows a loading state, not the old results as "All communities", until the host answers', async () => {
+    const { props, onQuery } = open();
+    type('rust');
+    await vi.advanceTimersByTimeAsync(250);
+    props.communities = page('Rust', 0, 2);
+    props.total = 2;
+    flushSync();
+    type('');
+    const homeLoading = () => !!target.querySelector('.table [role=status][aria-busy=true]');
+    expect(homeLoading()).toBe(true);
+    expect(text()).not.toContain('Rust community');
+    await vi.advanceTimersByTimeAsync(250);
+    flushSync();
+    expect(onQuery).toHaveBeenLastCalledWith(expect.objectContaining({ text: '', offset: 0 }));
+    expect(homeLoading()).toBe(true); // asked, not answered yet
+    props.loading = true;
+    flushSync();
+    expect(homeLoading()).toBe(true);
+    props.communities = page('All', 0, 6);
+    props.total = 1234;
+    props.loading = false;
+    flushSync();
+    expect(homeLoading()).toBe(false);
+    expect(text()).toContain('All community 0');
+    expect(text()).not.toContain('Rust community');
+  });
+
+  test('the hero counts every community the host has, not the loaded page', () => {
+    const { props } = open();
+    props.total = 1234;
+    flushSync();
+    expect(target.querySelector('.hero-sub')?.textContent).toContain('1,234 communities');
+  });
 });

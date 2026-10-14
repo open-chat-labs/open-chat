@@ -75,4 +75,16 @@ describe('DialogFlow', () => {
     vi.runAllTimers();
     expect(then).not.toHaveBeenCalled();
   });
+
+  test('a call that resolves after destroy never calls back', async () => {
+    const flow = new DialogFlow();
+    const d = deferred();
+    const onCancel = vi.fn();
+    const pending = flow.run(() => d.promise).then((r) => r.ok && flow.leave(onCancel));
+    flow.destroy();
+    d.resolve();
+    await pending;
+    vi.runAllTimers();
+    expect(onCancel).not.toHaveBeenCalled();
+  });
 });

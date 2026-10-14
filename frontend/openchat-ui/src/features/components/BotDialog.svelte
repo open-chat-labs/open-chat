@@ -74,6 +74,7 @@
     summary: { text: 'summary' },
     threads: { text: 'threads' },
     pinned: { text: 'pinned' },
+    react: { text: 'react' },
     members: { text: 'members' },
     send: { text: 'send' },
     images: { text: 'images' },
@@ -81,7 +82,7 @@
     pin: { text: 'pin', risky: true },
     everyone: { text: 'everyone', risky: true },
   };
-  const CAN_DO_ORDER: PermKey[] = ['read', 'summary', 'threads', 'pinned', 'members', 'send', 'images', 'remove', 'pin', 'everyone'];
+  const CAN_DO_ORDER: PermKey[] = ['read', 'summary', 'threads', 'pinned', 'members', 'react', 'send', 'images', 'remove', 'pin', 'everyone'];
 
   interface Props {
     bot: BotDefinition;

@@ -12,6 +12,7 @@ export class DialogFlow {
   failed = $state(false);
   #timer: ReturnType<typeof setTimeout> | undefined;
   #exitMs: number;
+  #destroyed = false;
 
   constructor(opts: { exitMs?: number } = {}) {
     this.#exitMs = opts.exitMs ?? 170;
@@ -46,7 +47,7 @@ export class DialogFlow {
 
   /** Plays the exit and stays out; `then` runs once it has finished. */
   leave(then?: () => void) {
-    if (this.closing) return;
+    if (this.closing || this.#destroyed) return;
     this.closing = true;
     this.#timer = setTimeout(() => then?.(), this.#exitMs);
   }
@@ -56,8 +57,9 @@ export class DialogFlow {
     return this.closing ? undefined : () => this.dismiss(then);
   }
 
-  /** Call from onDestroy. */
+  /** Call from onDestroy. A call that resolves after this never calls back (no onCancel on a dead dialog). */
   destroy() {
+    this.#destroyed = true;
     clearTimeout(this.#timer);
   }
 }

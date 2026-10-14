@@ -127,4 +127,16 @@ describe('WalletSend PIN step', () => {
     expect(pinDialog()).toBeNull();
     expect(onClose).not.toHaveBeenCalled(); // Back from the PIN step returns to the form, not out of Send
   });
+
+  test('the chosen token stays chosen when its balance drops to 0 (never silently another token)', async () => {
+    const usdt: WalletToken = { symbol: 'USDT', name: 'Tether', mark: 'T', grad: 'green', held: 100, price: 1, dp: 2, nets: ['eth', 'icp'] };
+    const { reactiveProps } = await import('../../lib/testing/reactiveProps.svelte');
+    const props = reactiveProps<Record<string, unknown>>({ tokens: [icp, usdt], token: 'ICP', address: ADDRESS, onSent: () => new Promise(() => {}) });
+    app = mount(WalletSend, { target, props: props as never });
+    flushSync();
+    props.tokens = [{ ...icp, held: 0 }, usdt];
+    flushSync();
+    expect(target.querySelector('.page-header')!.textContent).toContain('ICP');
+    expect(target.querySelector('.page-header')!.textContent).not.toContain('USDT');
+  });
 });

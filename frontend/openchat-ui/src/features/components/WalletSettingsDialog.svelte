@@ -190,6 +190,16 @@
     flow.dismiss(onCancel);
   }
 
+  // Esc closes the topmost layer first (recipient sheet, then PIN sheet, then token list), the dialog last;
+  // nothing while a sheet's call is pending
+  function escape() {
+    if (pending) return;
+    if (sheet) closeSheet();
+    else if (pin) closePin();
+    else if (listOpen) listOpen = false;
+    else close();
+  }
+
   async function saveRecipient() {
     if (!sheet || !draftValid || sheet.flow.locked) return;
     const editId = sheet.editId;
@@ -303,7 +313,7 @@
   </div>
 {/snippet}
 
-<div class="layer" class:closing={flow.closing} data-screen-label="Wallet settings" role="dialog" aria-modal="true" use:modal={flow.closing ? undefined : close}>
+<div class="layer" class:closing={flow.closing} data-screen-label="Wallet settings" role="dialog" aria-modal="true" use:modal={flow.closing ? undefined : escape}>
   <div class="veil" class:closing={flow.closing} onclick={close} aria-hidden="true"></div>
 
   <div class="card" class:closing={flow.closing}>

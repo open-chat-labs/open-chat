@@ -2,7 +2,8 @@
      joined) and the full table with sort and paging. Typing switches to search results (best match + more results,
      name matches ranked first). guest adds a sticky sign-in banner.
      With onQuery the host does the searching, filtering, sorting and paging: every change (debounced for typing) and
-     "Load more" ask it for a page, `communities` is shown as given and `total` drives the counts. Without onQuery the
+     "Load more" ask it for a page, `communities` is shown as given and `total` drives the counts. A first page counts as
+     answered once `communities` is a new array and `loading` is false. Without onQuery the
      list is filtered and paged locally (small, fully loaded lists). -->
 <script lang="ts" module>
   export interface ExploreQuery {
@@ -142,8 +143,11 @@
   // what the host was last asked for: until it has answered for the current text the search shows "Searching…",
   // never the previous text's results
   let lastAsk = $state<{ text: string; offset: number } | null>(null);
+  // the page shown when a first page was asked for: until `communities` is a new page the host hasn't answered yet
+  let askedOn = $state.raw<ExploreCommunity[] | null>(null);
   const ask = (offset: number) => {
     lastAsk = { text: query.trim(), offset };
+    if (offset === 0) askedOn = communities;
     onQuery?.({ text: query.trim(), languages: [...langs], sort: SORT_KEYS[sort], offset, limit: PAGE });
   };
   $effect(() => {
@@ -164,7 +168,13 @@
   const score = (c: ExploreCommunity) => (q && c.name.toLowerCase().includes(q) ? 2 : 0) + (q && c.name.toLowerCase().startsWith(q) ? 1 : 0);
   const found = $derived(q ? (remote ? list : list.slice().sort((a, b) => score(b) - score(a) || b.members - a.members)) : []);
   // onQuery: the shown page belongs to an older text (debounce not fired yet, or the first page still loading)
-  const searching = $derived(remote && !!q && (lastAsk?.text !== query.trim() || (loading && lastAsk?.offset === 0)));
+  // the shown page belongs to an older ask: a different text, or the first page asked for and not answered (still the
+  // same `communities`, or the host says it's loading)
+  const firstPagePending = $derived(!!lastAsk && lastAsk.offset === 0 && (loading || communities === askedOn));
+  const searching = $derived(remote && !!q && (lastAsk?.text !== query.trim() || firstPagePending));
+  // onQuery: the home list still holds an older query's page (just after clearing the search, or a sort / language
+  // change the host hasn't answered yet); it shows a loading state instead of passing that page off as "All communities"
+  const homeStale = $derived(remote && !q && !!lastAsk && (lastAsk.text !== query.trim() || firstPagePending));
 
   const isJoined = (c: ExploreCommunity) => joinedKeys.includes(c.key);
   const isPrivate = (c: ExploreCommunity) => c.visibility === 'Private';
@@ -176,7 +186,7 @@
   };
 
   // popular: biggest public communities you haven't joined
-  const top = $derived(q ? [] : list.filter((c) => !isJoined(c) && !isPrivate(c)).sort((a, b) => b.members - a.members).slice(0, 4));
+  const top = $derived(q || homeStale ? [] : list.filter((c) => !isJoined(c) && !isPrivate(c)).sort((a, b) => b.members - a.members).slice(0, 4));
   // per-language counts only mean something when the whole list is here; when the host pages the results they're hidden
   const languages = $derived.by(() => {
     const opts = Array.from(new Set(languageOptions ?? communities.map(langOf)));
@@ -347,7 +357,7 @@
     <div class="hero">
       <div class="hero-text">
         <span class="hero-title">{t('ui.exploreCommunities.heroTitle')}</span>
-        <span class="hero-sub">{t('ui.exploreCommunities.heroSub', { count: communities.length })}</span>
+        <span class="hero-sub">{t('ui.exploreCommunities.heroSub', { count: remote ? totalCount : communities.length })}</span>
       </div>
       <div class="search large" class:focused>
         {@render icon('search', 18, 'var(--ink-3,#9A9AA8)')}
@@ -384,7 +394,7 @@
     <div class="table-wrap">
       <div class="table">
         <div class="table-head">
-          <span class="table-title">{t(langs.length ? 'ui.exploreCommunities.filtered' : 'ui.exploreCommunities.allCommunities')} <span class="table-count">· {totalCount}</span></span>
+          <span class="table-title">{t(langs.length ? 'ui.exploreCommunities.filtered' : 'ui.exploreCommunities.allCommunities')} <span class="table-count">· {homeStale ? t('ui.exploreCommunities.loading') : totalCount}</span></span>
           {#if langs.length}
             <span class="clear-filters" onclick={() => (langs = [])} role="button" tabindex="0">{t('ui.exploreCommunities.clearFilters')}</span>
           {/if}
@@ -406,7 +416,7 @@
         <div class="row columns" data-ex-row="">
           <span>{t('ui.exploreCommunities.colCommunity')}</span><span>{t('ui.exploreCommunities.colMembers')}</span><span data-ex-col="">{t('ui.exploreCommunities.colChannels')}</span><span data-ex-col="">{t('ui.exploreCommunities.colLanguage')}</span><span></span>
         </div>
-        {#each rows as c}
+        {#each homeStale ? [] : rows as c}
           {@const joined = isJoined(c)}
           {@const priv = isPrivate(c)}
           <div class="row entry" class:locked={priv && !joined} data-ex-row="" onclick={() => open(c)} role="button" tabindex="0">
@@ -443,7 +453,7 @@
             </div>
           </div>
         {/each}
-        {#if hasMore}
+        {#if hasMore && !homeStale}
           <div class="more">
             <span class="load-more" onclick={loadMore} role="button" tabindex="0" aria-busy={loading}
               >{loading ? t('ui.exploreCommunities.loading') : t('ui.exploreCommunities.loadMore', { count: Math.min(PAGE, totalCount - rows.length) })}{@render icon('chevron-down', 13, 'var(--ink,#ECECF1)')}</span
@@ -451,7 +461,11 @@
             <span class="shown">{t('ui.exploreCommunities.showing', { shown: rows.length, total: totalCount })}</span>
           </div>
         {/if}
-        {#if list.length === 0}
+        {#if homeStale}
+          <div class="table-empty" role="status" aria-busy="true">
+            <span class="table-empty-title">{t('ui.exploreCommunities.loading')}</span>
+          </div>
+        {:else if list.length === 0}
           <div class="table-empty">
             <span class="table-empty-title">{emptyTitle}</span>
             <span class="table-empty-body">{t('ui.exploreCommunities.tableEmptyBody')}</span>

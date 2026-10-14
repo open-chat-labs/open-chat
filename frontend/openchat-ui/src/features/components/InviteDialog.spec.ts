@@ -111,6 +111,24 @@ describe('InviteDialog', () => {
     expect(sw.getAttribute('aria-checked')).toBe('true');
   });
 
+  test('nothing dismisses while a sharing change is pending', async () => {
+    const d = deferred();
+    const onShareToggle = vi.fn(() => d.promise);
+    const { onCancel } = open({ initialTab: 'share', shareOn: true, shareLink: 'https://oc.app/g/x', onShareToggle });
+    press(target.querySelector('.toggle [role=switch]'));
+    flushSync();
+    esc();
+    press(target.querySelector('.veil'));
+    press(target.querySelector('.cancel'));
+    await vi.runAllTimersAsync();
+    expect(onCancel).not.toHaveBeenCalled();
+    d.resolve();
+    await settle();
+    press(target.querySelector('.cancel'));
+    await vi.runAllTimersAsync();
+    expect(onCancel).toHaveBeenCalledOnce();
+  });
+
   test('Esc closes when nothing is pending', async () => {
     const { onCancel } = open({});
     esc();

@@ -235,7 +235,14 @@
     view = r.view || 'all';
     sym = r.token || sym;
     fromAll = flow ? startFromAll || !!r.fromAll : false;
+    pinFlowSym();
     report();
+  }
+
+  // a flow opened on the shown token (sym still empty) records that token, so the flow stays on it even if its
+  // balance reaches 0 and the shown token changes
+  function pinFlowSym() {
+    if (isFlow(view) && !fromAll && !sym && raw) sym = raw.symbol;
   }
 
   let lastNonce: number | undefined;
@@ -264,6 +271,7 @@
     extTok = null;
     if (next.view) view = next.view;
     if (next.sym) sym = next.sym;
+    pinFlowSym();
     if (next.fromAll !== undefined) fromAll = next.fromAll;
     report();
   }
@@ -395,8 +403,11 @@
 
   const change = $derived(raw?.change24h);
   const ledger = $derived(raw?.ledger);
-  const flowKey = $derived(`${view}:${fromAll ? '-' : raw?.symbol}:${flowNonce}`);
-  const flowToken = $derived(extTok && view === 'receive' ? extTok : fromAll ? '' : (raw?.symbol ?? ''));
+  // keyed on the chosen symbol, not the shown row: a token whose balance reaches 0 (e.g. sending all of it) leaves
+  // `rows`, and keying on that would remount a send or swap the host is still working on
+  const flowSym = $derived(sym || raw?.symbol || '');
+  const flowKey = $derived(`${view}:${fromAll ? '-' : flowSym}:${flowNonce}`);
+  const flowToken = $derived(extTok && view === 'receive' ? extTok : fromAll ? '' : flowSym);
   // Receive also offers tokens you don't hold yet, on their own networks
   const receiveTokens = $derived<WalletToken[]>([
     ...tokens,

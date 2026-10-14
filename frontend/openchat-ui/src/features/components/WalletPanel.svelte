@@ -235,7 +235,8 @@
     const snapshot = undo;
     clearTimeout(undoTimer);
     undo = null;
-    if (snapshot) localHidden = snapshot.hidden;
+    // restore the same way the hide went: through the host when it owns `hidden`
+    if (snapshot) setHidden(snapshot.hidden);
   }
 
   function dismissUndo() {

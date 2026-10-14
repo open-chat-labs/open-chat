@@ -453,7 +453,8 @@
     const state = (optimistic[key] ??= new Optimistic(host) as unknown as Optimistic<unknown>) as unknown as Optimistic<T>;
     state.set(value, () => call());
   }
-  const gone = (key: string) => (optimistic[key]?.current as boolean | undefined) ?? false;
+  // read through .current when there is one: an optimistic null (unmute) or false is a real value, not "absent"
+  const gone = (key: string) => (optimistic[key] ? (optimistic[key].current as boolean) : false);
   const hostSelfRole = () => viewerRole.toUpperCase().replace('MEMBER', '');
   const selfRoleNow = $derived(optimistic['role:\u0000you']?.current as string | undefined);
   // member / pin overlays give way to new host data (the mutes follow their own props below)
@@ -479,8 +480,8 @@
   const perms = $derived(permissions ?? defaultPermissions());
   const hostMute = () => mutedUntil ?? null;
   const hostMuteAll = () => muteEveryone ?? false;
-  const muted = $derived((optimistic.mute?.current as MuteKey | null | undefined) ?? hostMute());
-  const muteAll = $derived((optimistic.muteAll?.current as boolean | undefined) ?? hostMuteAll());
+  const muted = $derived(optimistic.mute ? (optimistic.mute.current as MuteKey | null) : hostMute());
+  const muteAll = $derived(optimistic.muteAll ? (optimistic.muteAll.current as boolean) : hostMuteAll());
   $effect.pre(() => {
     void mutedUntil;
     untrack(() => optimistic.mute?.sync());
@@ -581,6 +582,8 @@
 
   function setMute(key: MuteKey | null) {
     muteMenu = null;
+    // already showing that (e.g. a repeat tap while the call is pending): nothing to send
+    if (key === muted) return;
     act<MuteKey | null>('mute', hostMute, key, () => onMuteChange?.(key));
   }
 

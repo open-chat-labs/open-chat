@@ -79,7 +79,8 @@
   let picked = $state<number | null>(null);
   let checking = $state(false);
   // join (and pay) in flight / leaving after it: the shared dialog contract (lib/behaviours/dialog.svelte.ts)
-  const flow = new DialogFlow();
+  // DialogShell has no exit animation, so leaving is immediate
+  const flow = new DialogFlow({ exitMs: 0 });
   onDestroy(() => flow.destroy());
   const busy = $derived(flow.busy);
 

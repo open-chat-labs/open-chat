@@ -112,4 +112,22 @@ describe('WalletMain', () => {
     go(props, { view: 'receive', token: 'USDC' }, 1);
     expect(target.querySelector('.page-header')!.textContent).toContain('USDC');
   });
+
+  test('sending the whole balance: the pending send stays when the host reports a 0 balance, and still lands', async () => {
+    const d = deferred();
+    const onSent = vi.fn(() => d.promise);
+    const { props, onViewChange } = setup({ onSent });
+    await sendPending(props);
+    // the host reflects the outgoing transfer before it confirms: ICP is now 0 (and drops out of the held rows)
+    props.tokens = [{ ...tokens[0], held: 0 }, tokens[1]];
+    await settle();
+    expect(document.querySelector('form.pin')).not.toBeNull();
+    expect(target.querySelector('.page-header')!.textContent).toContain('ICP');
+    expect(target.querySelector('.page-header')!.textContent).not.toContain('USDT');
+    d.resolve();
+    await settle();
+    expect(document.querySelector('form.pin')).toBeNull();
+    expect(target.querySelector('.toast')!.textContent).toContain('ICP');
+    expect(onViewChange).toHaveBeenLastCalledWith({ view: 'token', token: 'ICP' });
+  });
 });
