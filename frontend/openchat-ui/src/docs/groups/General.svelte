@@ -309,12 +309,21 @@
 </Section>
 
 <Section {...sec(general, 'copy-button')}>
-  <Frame label="Try it · copies to the clipboard" align="center">
-    <CopyButton value="oc.app/group/the-awesome-group-8f2a" label="Copy link" size="sm" />
-    <CopyButton value="oc.app/group/the-awesome-group-8f2a" label="Copy link" />
-    <span class="mono address">eypkj-sqjl7-lhksa-5j6vq</span>
-    <CopyButton value="eypkj-sqjl7-lhksa-5j6vq" label="Copy principal" size="sm" />
-  </Frame>
+  <div class="grid2">
+    <Frame label="Sizes · try it, copies to the clipboard" style="flex-direction: column; flex-wrap: nowrap">
+      <div class="tok-row"><span class="mono size-label">sm</span><CopyButton value="oc.app/group/the-awesome-group-8f2a" label="Copy link" size="sm" /></div>
+      <div class="tok-row"><span class="mono size-label">md</span><CopyButton value="oc.app/group/the-awesome-group-8f2a" label="Copy link" size="md" /></div>
+    </Frame>
+    <Frame label="In context · beside the value it copies" style="flex-direction: column; flex-wrap: nowrap">
+      {#each [{ k: 'Principal', v: 'eypkj-sqjl7-lhksa-5j6vq-cae' }, { k: 'Invite link', v: 'oc.app/group/the-awesome-group-8f2a' }] as f}
+        <div class="copy-field">
+          <span class="copy-key">{f.k}</span>
+          <span class="mono address">{f.v}</span>
+          <CopyButton value={f.v} label={'Copy ' + f.k.toLowerCase()} size="sm" />
+        </div>
+      {/each}
+    </Frame>
+  </div>
 </Section>
 
 <Section {...sec(general, 'token-avatars')}>
@@ -656,7 +665,10 @@
 
   .tip-demo { position: relative; display: flex; }
   .hint { font: 500 12.5px/1 var(--font-sans); color: var(--ink-2); text-decoration: underline dotted; text-underline-offset: 3px; cursor: default; }
-  .address { color: var(--ink-2); }
+  .address { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink-2); }
+  .size-label { width: 28px; }
+  .copy-field { display: flex; align-items: center; gap: 12px; width: 100%; box-sizing: border-box; padding: 10px 10px 10px 14px; padding-inline: 14px 10px; border-radius: var(--radius-md); background: var(--field); box-shadow: inset 0 0 0 1px var(--line-1); }
+  .copy-key { flex: none; width: 84px; font: 600 12.5px/1 var(--font-sans); color: var(--ink-3); }
   .tok-row { display: flex; align-items: center; gap: 14px; }
   .tok-row .mono { width: 44px; }
   .picker { width: 100%; max-width: 360px; }
