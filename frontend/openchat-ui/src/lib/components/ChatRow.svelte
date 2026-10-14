@@ -2,6 +2,7 @@
      Row menu (menuItems): right-click opens at the cursor, the kebab (hover / focus only) anchors under itself,
      a touch long-press anchors to the row at the finger, Shift+F10 / Menu key anchors to the row. All share one ContextMenu. -->
 <script lang="ts">
+  import { useT } from '../i18n';
   import { onDestroy } from 'svelte';
   import type { MenuItem } from '../types';
   import Avatar from './Avatar.svelte';
@@ -46,6 +47,7 @@
     menuItems = [],
     onClick,
   }: Props = $props();
+  const t = useT();
 
   let root: HTMLDivElement;
   let kebab = $state<HTMLSpanElement>();
@@ -186,7 +188,7 @@
           <span class="flag pin"></span>
         {/if}
         {#if muted}
-          <span class="flag mute" title="Notifications muted"></span>
+          <span class="flag mute" title={t('ui.chatRow.muted')}></span>
         {/if}
         <span class="time">{time}</span>
       </div>
@@ -198,7 +200,7 @@
             <span class="dot dim"></span>
           </div>
         {:else if liveCall}
-          <span class="call"><span class="call-icon" style:mask="var(--icon-{liveCall === 'video' ? 'video' : 'phone'}) center/contain no-repeat"></span><span class="call-label">{liveCall === 'video' ? 'Video' : 'Voice'} call in progress</span></span>
+          <span class="call"><span class="call-icon" style:mask="var(--icon-{liveCall === 'video' ? 'video' : 'phone'}) center/contain no-repeat"></span><span class="call-label">{t(liveCall === 'video' ? 'ui.chatRow.videoCallLive' : 'ui.chatRow.voiceCallLive')}</span></span>
         {:else}
           <span class="preview" class:unread={unreadCount > 0}>{preview}</span>
         {/if}
@@ -210,11 +212,11 @@
               class="kebab"
               bind:this={kebab}
               onclick={toggleMenu}
-              aria-label="More"
+              aria-label={t('ui.common.more')}
               onpointerdown={(e) => e.stopPropagation()}
               role="button"
               tabindex="-1"
-              title="More"
+              title={t('ui.common.more')}
               aria-haspopup="menu"
               aria-expanded={!!menu}><span class="kebab-icon"></span></span
             ></span

@@ -1,6 +1,7 @@
 <!-- Voice note bubble: play/pause button, seekable waveform, speed toggle (1x → 1.5x → 2x), elapsed / total and time.
      cornerBottomLeft (px or any CSS length) overrides the tail corner, e.g. to sit flush against a reply strip. -->
 <script lang="ts">
+  import { useT } from '../i18n';
   import Waveform from './Waveform.svelte';
 
   const H = [7, 14, 20, 11, 17, 9, 15, 21, 10, 16, 6, 13, 19, 8, 12, 18, 10, 15, 7, 20];
@@ -26,6 +27,7 @@
   }
 
   let { progress = 0, elapsed, total, speed = '1x', side = 'received', lastInGroup = true, time, cornerBottomLeft = null, playing = false, onPlay, onPause, onSpeedChange, onSeek }: Props = $props();
+  const t = useT();
 
   // play state, seeking and speed changes stick locally until the parent sends new values
   let isPlaying = $derived(playing);
@@ -59,10 +61,10 @@
 <div class="row">
   <div class="bubble" class:sent class:last={lastInGroup} style:border-end-start-radius={bottomLeft}>
     <div class="controls">
-      <div class="play" class:playing={isPlaying} onclick={togglePlay} role="button" tabindex="0" aria-label={isPlaying ? 'Pause voice message' : 'Play voice message'}>
+      <div class="play" class:playing={isPlaying} onclick={togglePlay} role="button" tabindex="0" aria-label={t(isPlaying ? 'ui.voiceMessage.pause' : 'ui.voiceMessage.play')}>
         <span class="play-icon"></span>
       </div>
-      <div class="wave"><Waveform levels={LEVELS} progress={at} seekable={true} onSeek={seek} height={22} label="Seek voice message" /></div>
+      <div class="wave"><Waveform levels={LEVELS} progress={at} seekable={true} onSeek={seek} height={22} label={t('ui.voiceMessage.seek')} /></div>
       <div class="speed" onclick={cycleSpeed} role="button" tabindex="0">{SPEEDS[speedIndex]}</div>
     </div>
     <div class="meta">

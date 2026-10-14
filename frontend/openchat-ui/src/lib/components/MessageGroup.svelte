@@ -4,6 +4,7 @@
      toward start = onReply, toward end = onEdit (own text) / onSwipeLeft — rubber-banded past the threshold, accent + haptic there,
      mirrored in RTL (host: edit own / forward others'). pos always carries el (the message node) and rect for the focus clone. -->
 <script lang="ts">
+  import { useT } from '../i18n';
   import { onDestroy, type ComponentProps } from 'svelte';
   import type { GroupMessage } from '../types';
   import Avatar from './Avatar.svelte';
@@ -70,6 +71,7 @@
     onEdit,
     onSwipeLeft,
   }: Props = $props();
+  const t = useT();
 
   const SWIPE_AT = 150;
   const SWIPE_MAX = 400;
@@ -414,7 +416,7 @@
           <ChatBubble {...(m as ComponentProps<typeof ChatBubble>)} {side} lastInGroup={last} onToggleReaction={(c) => onReact?.(i, c)} />
         {/if}
         {#if menuable(m) && hover === i && !touch && activeMenu !== i}
-          <span class="bar" style:left={barLeft} data-msg-acts="" role="toolbar" aria-label="Message actions">
+          <span class="bar" style:left={barLeft} data-msg-acts="" role="toolbar" aria-label={t('ui.messageGroup.actions')}>
             {#each quickReactions as c}
               {@const on = mine.includes(c)}
               <span
@@ -424,7 +426,7 @@
                 onkeydown={onKeys(() => onReact?.(i, c))}
                 role="button"
                 tabindex="0"
-                aria-label="{on ? 'Remove' : 'React'} {c}"
+                aria-label={t(on ? 'ui.messageGroup.removeReaction' : 'ui.messageGroup.react', { emoji: c })}
                 aria-pressed={on}>{c}</span
               >
             {/each}
@@ -438,9 +440,9 @@
               onkeydown={onKeys(() => reactPicker(i))}
               role="button"
               tabindex="0"
-              aria-label="More reactions"
+              aria-label={t('ui.messageGroup.moreReactions')}
               aria-haspopup="dialog"
-              data-tip="React"><span class="tool-icon" style:mask="var(--icon-emoji) center/contain no-repeat"></span></span
+              data-tip={t('ui.messageGroup.reactTip')}><span class="tool-icon" style:mask="var(--icon-emoji) center/contain no-repeat"></span></span
             >
             <span class="divider"></span>
             <span
@@ -449,8 +451,8 @@
               onkeydown={onKeys(() => primary(i, m))}
               role="button"
               tabindex="0"
-              aria-label={canEdit ? 'Edit' : 'Reply'}
-              data-tip={canEdit ? 'Edit' : 'Reply'}><span class="tool-icon" style:mask="var(--icon-{canEdit ? 'edit' : 'reply'}) center/contain no-repeat"></span></span
+              aria-label={t(canEdit ? 'ui.common.edit' : 'ui.common.reply')}
+              data-tip={t(canEdit ? 'ui.common.edit' : 'ui.common.reply')}><span class="tool-icon" style:mask="var(--icon-{canEdit ? 'edit' : 'reply'}) center/contain no-repeat"></span></span
             >
             <span
               class="tool"
@@ -461,12 +463,12 @@
                 if (activeMenu !== i) openMenu(i, { anchor: rectOf(mores[i]), align: 'end', fromBar: true });
               }}
               onkeydown={onKeys(() => openMenu(i, { anchor: rectOf(mores[i]), align: 'end', keyboard: true, fromBar: true }))}
-              aria-label="More actions"
+              aria-label={t('ui.messageGroup.moreActions')}
               aria-haspopup="menu"
               aria-expanded={activeMenu === i}
               role="button"
               tabindex="0"
-              data-tip="More"><span class="tool-icon" style:mask="var(--icon-more) center/contain no-repeat"></span></span
+              data-tip={t('ui.common.more')}><span class="tool-icon" style:mask="var(--icon-more) center/contain no-repeat"></span></span
             >
           </span>
         {/if}

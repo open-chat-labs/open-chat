@@ -3,6 +3,7 @@
      copy, share to a chat, QR). embedded renders it as the Invite page of a manage dialog: no veil, own header, no
      footer on Share link, and the host can switch tabs through initialTab. -->
 <script lang="ts">
+  import { useT } from '../../lib/i18n';
   import { onDestroy, untrack } from 'svelte';
   import ChatPicker from '../../lib/components/ChatPicker.svelte';
   import Field from '../../lib/components/Field.svelte';
@@ -39,7 +40,7 @@
     shareOn?: boolean;
     /** Defaults to a link made from groupName. */
     shareLink?: string;
-    /** Word used in the share copy ("group", "channel", "community"). */
+    /** Which share copy to use: "group", "channel" or "community". */
     noun?: string;
     /** Channels inside a community: adds the "Add from community" tab. */
     canAdd?: boolean;
@@ -87,6 +88,7 @@
     chats = [],
     onShareToChat,
   }: Props = $props();
+  const t = useT();
 
   const keys = $derived<TabKey[]>(canAdd ? ['add', 'invite', 'share'] : ['invite', 'share']);
   const tabFor = (want: Props['initialTab']) => {
@@ -148,12 +150,12 @@
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-|-$/g, '')}-8f2a`,
   );
-  const tabLabels = $derived(keys.map((k) => (k === 'add' ? 'Add from community' : k === 'invite' ? 'Invite people' : 'Share link')));
+  const tabLabels = $derived(keys.map((k) => t(k === 'add' ? 'ui.inviteDialog.tabAdd' : k === 'invite' ? 'ui.inviteDialog.tabInvite' : 'ui.inviteDialog.tabShare')));
   const tabCounts = $derived(keys.map((k) => (k === 'add' ? addPicked.length || null : k === 'invite' ? picked.length || null : null)));
 
   const gradientOf = (handle: string, list: { handle: string; color: Color }[]) => GRADIENTS[list.find((p) => p.handle === handle)?.color ?? 'violet'] ?? GRADIENTS.slate;
   const toggleIn = (list: string[], handle: string) => (list.includes(handle) ? list.filter((h) => h !== handle) : [...list, handle]);
-  const countLabel = (n: number) => `${n}${n === 1 ? ' person selected' : ' people selected'}`;
+  const countLabel = (n: number) => t('ui.inviteDialog.selectedCount', { count: n });
 
   function cancel() {
     if (embedded && onClose) onClose();
@@ -172,7 +174,7 @@
   function sentToChat(x: { chat: string; message: string }) {
     const id = Date.now();
     pickerOpen = false;
-    toast = { id, text: `Invite link sent to ${x.chat}` };
+    toast = { id, text: t('ui.inviteDialog.linkSent', { chat: x.chat }) };
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => {
       if (toast?.id === id) toast = null;
@@ -203,7 +205,7 @@
     <div class="picked-head">
       <span class="list-label">{label}</span>
       <span class="grow"></span>
-      <span class="clear-all" onclick={clear} role="button" tabindex="0">Clear all</span>
+      <span class="clear-all" onclick={clear} role="button" tabindex="0">{t('ui.inviteDialog.clearAll')}</span>
     </div>
     <div class="chips">
       {#each handles as handle}
@@ -229,15 +231,15 @@
   <div class="card">
     {#if embedded}
       <div class="embedded-head">
-        <span class="embedded-title">Invite and share</span>
-        <span class="icon-button large" onclick={cancel} role="button" tabindex="0" aria-label="Close" title="Close"><span class="close-icon large"></span></span>
+        <span class="embedded-title">{t('ui.inviteDialog.inviteAndShare')}</span>
+        <span class="icon-button large" onclick={cancel} role="button" tabindex="0" aria-label={t('ui.common.close')} title={t('ui.common.close')}><span class="close-icon large"></span></span>
       </div>
     {:else}
       <div class="head">
         <div class="head-row">
           <span class="head-tile"><span class="head-icon"></span></span>
           <div class="head-text">
-            <span class="head-title">{canAdd ? 'Add or invite people' : 'Invite people'}</span>
+            <span class="head-title">{t(canAdd ? 'ui.inviteDialog.addOrInvite' : 'ui.inviteDialog.tabInvite')}</span>
             <span class="head-sub">{groupName}</span>
           </div>
           <span class="icon-button" onclick={cancel} role="button" tabindex="0"><span class="close-icon"></span></span>
@@ -255,21 +257,21 @@
         {#if key === 'add'}
           <div class="field">
             <Field
-              placeholder="Search {communityName} members"
+              placeholder={t('ui.inviteDialog.searchMembers', { community: communityName })}
               value={addQuery}
               onInput={(e) => (addQuery = e.currentTarget.value)}
               onClear={() => (addQuery = '')}
               showShortcut={false}
             />
           </div>
-          <span class="hint">People you add join {groupName} straight away. Only {communityName} members can be added.</span>
+          <span class="hint">{t('ui.inviteDialog.addHint', { group: groupName, community: communityName })}</span>
 
           {#if addPicked.length > 0}
-            {@render chips(addPicked, communityMembers, `SELECTED · ${addPicked.length}`, () => (addPicked = []), (h) => (addPicked = toggleIn(addPicked, h)))}
+            {@render chips(addPicked, communityMembers, t('ui.inviteDialog.selected', { count: addPicked.length }), () => (addPicked = []), (h) => (addPicked = toggleIn(addPicked, h)))}
           {/if}
 
           <div class="list-block">
-            <span class="list-label start">{aq ? 'SEARCH RESULTS' : `${communityName.toUpperCase()} MEMBERS`}</span>
+            <span class="list-label start">{aq ? t('ui.inviteDialog.searchResults') : t('ui.inviteDialog.communityMembers', { community: communityName.toUpperCase() })}</span>
             <div class="rows">
               {#each addPool as u}
                 {@const member = inChannel.includes(u.handle)}
@@ -281,7 +283,7 @@
                     icon="toggle"
                     selected={addPicked.includes(u.handle)}
                     disabled={member}
-                    badge={member ? 'IN CHANNEL' : ''}
+                    badge={member ? t('ui.inviteDialog.inChannel') : ''}
                     onClick={() => !member && (addPicked = toggleIn(addPicked, u.handle))}
                   />
                 </div>
@@ -289,7 +291,7 @@
             </div>
             {#if aq && addPool.length === 0}
               <div class="no-results">
-                <span class="no-results-text">No one in {communityName} matches “{addQuery}”.</span>
+                <span class="no-results-text">{t('ui.inviteDialog.noOneMatches', { community: communityName, query: addQuery })}</span>
                 {#if outsideMatch}
                   <span
                     class="invite-instead"
@@ -298,7 +300,7 @@
                       query = addQuery;
                     }}
                     role="button"
-                    tabindex="0"><span>Invite “{addQuery}” instead</span></span
+                    tabindex="0"><span>{t('ui.inviteDialog.inviteInstead', { query: addQuery })}</span></span
                   >
                 {/if}
               </div>
@@ -308,15 +310,15 @@
 
         {#if key === 'invite'}
           <div class="field">
-            <Field placeholder="Search people by name or @handle" value={query} onInput={(e) => (query = e.currentTarget.value)} onClear={() => (query = '')} showShortcut={false} />
+            <Field placeholder={t('ui.inviteDialog.searchPeople')} value={query} onInput={(e) => (query = e.currentTarget.value)} onClear={() => (query = '')} showShortcut={false} />
           </div>
 
           {#if picked.length > 0}
-            {@render chips(picked, people, `SELECTED · ${picked.length}`, () => (picked = []), (h) => (picked = toggleIn(picked, h)))}
+            {@render chips(picked, people, t('ui.inviteDialog.selected', { count: picked.length }), () => (picked = []), (h) => (picked = toggleIn(picked, h)))}
           {/if}
 
           <div class="list-block">
-            <span class="list-label start">{q ? 'SEARCH RESULTS' : 'FREQUENTLY CONTACTED'}</span>
+            <span class="list-label start">{t(q ? 'ui.inviteDialog.searchResults' : 'ui.inviteDialog.frequent')}</span>
             <div class="rows">
               {#each pool as u}
                 <div class="row">
@@ -325,17 +327,17 @@
               {/each}
             </div>
             {#if q && pool.length === 0}
-              <span class="no-people">No people match “{query}”.</span>
+              <span class="no-people">{t('ui.inviteDialog.noPeopleMatch', { query })}</span>
             {/if}
           </div>
 
           {#if pending.length > 0 && !q}
             <div class="pending">
-              <span class="list-label start">PENDING · {pending.length}</span>
-              <span class="hint plain">Invited, but they have not accepted yet.</span>
+              <span class="list-label start">{t('ui.inviteDialog.pendingCount', { count: pending.length })}</span>
+              <span class="hint plain">{t('ui.inviteDialog.pendingHint')}</span>
               <div class="rows">
                 {#each pending as u}
-                  <div class="row"><MemberRow title={u.title} subtitle={u.handle} color={u.color} muted={true} badge="PENDING" showMenu={false} /></div>
+                  <div class="row"><MemberRow title={u.title} subtitle={u.handle} color={u.color} muted={true} badge={t('ui.inviteDialog.pending')} showMenu={false} /></div>
                 {/each}
               </div>
             </div>
@@ -345,8 +347,8 @@
         {#if key === 'share'}
           <div class="share-toggle">
             <div class="share-text">
-              <span class="share-title">Enable sharing via link</span>
-              <span class="share-sub">A link and QR code anyone can use to preview and join the {noun}.</span>
+              <span class="share-title">{t('ui.inviteDialog.enableSharing')}</span>
+              <span class="share-sub">{t('ui.inviteDialog.shareSub', { noun })}</span>
             </div>
             <div class="toggle"><Toggle on={shareOn} onChange={(on) => (shareOn = on)} /></div>
           </div>
@@ -356,27 +358,27 @@
               <div class="warning">
                 <div class="warning-head">
                   <span class="warning-icon"></span>
-                  <span class="warning-title">Anyone with the link can join</span>
+                  <span class="warning-title">{t('ui.inviteDialog.anyoneCanJoin')}</span>
                 </div>
-                <span class="warning-body">Access gates are ignored for people who join by link.</span>
+                <span class="warning-body">{t('ui.inviteDialog.gatesIgnored')}</span>
               </div>
 
               <div class="link-box">
                 <div class="link-text">
-                  <span class="link-heading">SHARE {noun.toUpperCase()} VIA LINK</span>
+                  <span class="link-heading">{t('ui.inviteDialog.shareViaLink', { noun })}</span>
                   <span class="link">{link}</span>
                 </div>
                 <span class="link-actions">
-                  <span class="icon-button" onclick={copyLink} role="button" tabindex="0" title={linkCopied ? 'Copied' : 'Copy link'} aria-label={linkCopied ? 'Copied' : 'Copy link'}
+                  <span class="icon-button" onclick={copyLink} role="button" tabindex="0" title={t(linkCopied ? 'ui.common.copied' : 'ui.inviteDialog.copyLink')} aria-label={t(linkCopied ? 'ui.common.copied' : 'ui.inviteDialog.copyLink')}
                     ><span class="link-icon" class:copied={linkCopied}></span></span
                   >
-                  <span class="icon-button" onclick={() => (pickerOpen = true)} role="button" tabindex="0" title="Share to chat" aria-label="Share to chat"><span class="send-icon"></span></span>
+                  <span class="icon-button" onclick={() => (pickerOpen = true)} role="button" tabindex="0" title={t('ui.inviteDialog.shareToChat')} aria-label={t('ui.inviteDialog.shareToChat')}><span class="send-icon"></span></span>
                 </span>
               </div>
 
               <div class="qr-box">
-                <span class="qr">QR CODE</span>
-                <span class="qr-caption">Scan to preview and join the {noun}.</span>
+                <span class="qr">{t('ui.inviteDialog.qrCode')}</span>
+                <span class="qr-caption">{t('ui.inviteDialog.qrCaption', { noun })}</span>
               </div>
             </div>
           {/if}
@@ -387,7 +389,7 @@
     {#if canInvite && !(embedded && key === 'share')}
       <div class="footer">
         {#if !embedded}
-          <span class="cancel" onclick={cancel} role="button" tabindex="0">{key === 'share' ? 'Done' : 'Cancel'}</span>
+          <span class="cancel" onclick={cancel} role="button" tabindex="0">{t(key === 'share' ? 'ui.common.done' : 'ui.common.cancel')}</span>
         {/if}
         <span class="grow"></span>
         {#if key === 'add'}
@@ -396,7 +398,7 @@
           {/if}
           <div class="cta" class:ready={addPicked.length > 0} onclick={add} role="button" tabindex="0">
             <span class="cta-icon" style:mask="var(--icon-plus) center/contain no-repeat"></span>
-            <span>Add to {groupName}</span>
+            <span>{t('ui.inviteDialog.addTo', { group: groupName })}</span>
           </div>
         {/if}
         {#if key === 'invite'}
@@ -405,14 +407,14 @@
           {/if}
           <div class="cta" class:ready={picked.length > 0} onclick={send} role="button" tabindex="0">
             <span class="cta-icon" style:mask="var(--icon-invite) center/contain no-repeat"></span>
-            <span>Send invites</span>
+            <span>{t('ui.inviteDialog.sendInvites')}</span>
           </div>
         {/if}
       </div>
     {/if}
   </div>
   {#if pickerOpen}
-    <ChatPicker title="Share invite link" previewLabel="INVITE LINK" item={{ title: 'Invite link', sub: link, icon: 'link' }} {chats} z={95} onSend={sentToChat} onClose={() => (pickerOpen = false)} />
+    <ChatPicker title={t('ui.inviteDialog.shareInviteLink')} previewLabel={t('ui.inviteDialog.inviteLinkCaps')} item={{ title: t('ui.inviteDialog.inviteLink'), sub: link, icon: 'link' }} {chats} z={95} onSend={sentToChat} onClose={() => (pickerOpen = false)} />
   {/if}
   {#if toast}
     <div class="toast-layer">

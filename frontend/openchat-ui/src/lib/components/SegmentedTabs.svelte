@@ -1,9 +1,11 @@
 <!-- Segmented tab bar. Left/Right/Home/End move and select (automatic activation), RTL-aware.
      With onSelect the parent owns the selection; without, it keeps its own. counts are index-aligned (null = no pill). -->
 <script lang="ts">
+  import { useT } from '../i18n';
   import { rove } from '../behaviours/rove';
 
   interface Props {
+    /** Tab labels: resource keys (or literal text). */
     labels: string[];
     counts?: (number | null | undefined)[];
     selectedIndex?: number;
@@ -14,6 +16,7 @@
   }
 
   let { labels, counts = [], selectedIndex = 0, dotIndexes = null, dotOnLast = true, onSelect }: Props = $props();
+  const t = useT();
 
   let own = $state<number | null>(null);
   const active = $derived(onSelect ? selectedIndex : (own ?? selectedIndex));
@@ -36,7 +39,7 @@
         {#if selected}
           <div class="plate"></div>
         {/if}
-        <span class="label">{label}</span>
+        <span class="label">{t(label)}</span>
         {#if counts[i] != null}
           <span class="count">{counts[i]}</span>
         {/if}

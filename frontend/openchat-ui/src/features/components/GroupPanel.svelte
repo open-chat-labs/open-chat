@@ -6,6 +6,7 @@
      it never drills in (sub-views go to onManage) except to read pinned messages.
      embedded: the same sub-views inside the host's manage dialog. The open sub-view persists under storageKey. -->
 <script lang="ts">
+  import { useT } from '../../lib/i18n';
   import { onDestroy, onMount, tick, untrack, type ComponentProps } from 'svelte';
   import type { GroupRole, GroupSettings, MenuItem } from '../../lib/types';
   import Field from '../../lib/components/Field.svelte';
@@ -82,35 +83,35 @@
   const mask = (name: string) => `var(--icon-${name}) center/contain no-repeat`;
 
   const PERM_ROLES: { key: GroupRole; label: string; tint: string }[] = [
-    { key: 'member', label: 'Members', tint: '#5FA8FF' },
-    { key: 'moderator', label: 'Moderator', tint: '#2EE6A8' },
-    { key: 'admin', label: 'Admin', tint: '#FFB03D' },
-    { key: 'owner', label: 'Owner', tint: '#FF5672' },
-    { key: 'nobody', label: 'Nobody', tint: '#6E6E7C' },
+    { key: 'member', label: 'ui.groupPanel.roleHeadings.member', tint: '#5FA8FF' },
+    { key: 'moderator', label: 'ui.groupPanel.roleHeadings.moderator', tint: '#2EE6A8' },
+    { key: 'admin', label: 'ui.groupPanel.roleHeadings.admin', tint: '#FFB03D' },
+    { key: 'owner', label: 'ui.groupPanel.roleHeadings.owner', tint: '#FF5672' },
+    { key: 'nobody', label: 'ui.groupPanel.roleHeadings.nobody', tint: '#6E6E7C' },
   ];
   const PERM_GENERAL: { key: string; short: string; def: GroupRole }[] = [
-    { key: 'roles', short: 'Change roles', def: 'owner' },
-    { key: 'edit', short: 'Edit group info', def: 'admin' },
-    { key: 'invite', short: 'Invite users', def: 'member' },
-    { key: 'remove', short: 'Remove members', def: 'moderator' },
-    { key: 'delete', short: 'Delete messages', def: 'moderator' },
-    { key: 'pin', short: 'Pin messages', def: 'moderator' },
-    { key: 'react', short: 'React', def: 'member' },
-    { key: 'everyone', short: 'Mention @everyone', def: 'admin' },
-    { key: 'calls', short: 'Start calls', def: 'member' },
+    { key: 'roles', short: 'ui.groupPanel.perms.roles', def: 'owner' },
+    { key: 'edit', short: 'ui.groupPanel.perms.edit', def: 'admin' },
+    { key: 'invite', short: 'ui.groupPanel.perms.invite', def: 'member' },
+    { key: 'remove', short: 'ui.groupPanel.perms.remove', def: 'moderator' },
+    { key: 'delete', short: 'ui.groupPanel.perms.delete', def: 'moderator' },
+    { key: 'pin', short: 'ui.groupPanel.perms.pin', def: 'moderator' },
+    { key: 'react', short: 'ui.groupPanel.perms.react', def: 'member' },
+    { key: 'everyone', short: 'ui.groupPanel.perms.everyone', def: 'admin' },
+    { key: 'calls', short: 'ui.groupPanel.perms.calls', def: 'member' },
   ];
   const PERM_CONTENT = [
-    { key: 'text', label: 'Text messages' },
-    { key: 'image', label: 'Images' },
-    { key: 'video', label: 'Videos' },
-    { key: 'audio', label: 'Audio' },
-    { key: 'file', label: 'Files' },
-    { key: 'poll', label: 'Polls' },
-    { key: 'crypto', label: 'Crypto transfers' },
-    { key: 'giphy', label: 'GIFs' },
-    { key: 'prize', label: 'Prizes' },
-    { key: 'meme', label: 'Meme Fighter' },
-    { key: 'p2p', label: 'P2P swaps' },
+    { key: 'text', label: 'ui.groupPanel.content.text' },
+    { key: 'image', label: 'ui.groupPanel.content.image' },
+    { key: 'video', label: 'ui.groupPanel.content.video' },
+    { key: 'audio', label: 'ui.groupPanel.content.audio' },
+    { key: 'file', label: 'ui.groupPanel.content.file' },
+    { key: 'poll', label: 'ui.groupPanel.content.poll' },
+    { key: 'crypto', label: 'ui.groupPanel.content.crypto' },
+    { key: 'giphy', label: 'ui.groupPanel.content.giphy' },
+    { key: 'prize', label: 'ui.groupPanel.content.prize' },
+    { key: 'meme', label: 'ui.groupPanel.content.meme' },
+    { key: 'p2p', label: 'ui.groupPanel.content.p2p' },
   ];
   const INHERIT = 'inherit';
   // the shape the create-group modal emits; used when the panel gets no permissions
@@ -122,77 +123,74 @@
   }
 
   const GATE_TYPES: Record<string, { label: string; icon: string; tint: string }> = {
-    lifetime: { label: 'Lifetime diamond membership', icon: 'diamond', tint: '#7FC0FF' },
-    diamond: { label: 'Diamond membership', icon: 'diamond', tint: '#7FC0FF' },
-    unique: { label: 'Unique person', icon: 'person', tint: '#5CE9BC' },
-    credential: { label: 'Verified credential', icon: 'credential', tint: '#5CE9BC' },
-    balance: { label: 'Minimum token balance', icon: 'balance', tint: '#FFB03D' },
-    chit: { label: 'Minimum CHIT earned', icon: 'chit', tint: '#FFB03D' },
-    payment: { label: 'Payment', icon: 'payment', tint: '#FF8298' },
-    neuron: { label: 'Neuron holder', icon: 'neuron', tint: '#FF8298' },
-    locked: { label: 'Locked', icon: 'lock', tint: '#9A9AA8' },
+    lifetime: { label: 'ui.groupPanel.gates.lifetime', icon: 'diamond', tint: '#7FC0FF' },
+    diamond: { label: 'ui.groupPanel.gates.diamond', icon: 'diamond', tint: '#7FC0FF' },
+    unique: { label: 'ui.groupPanel.gates.unique', icon: 'person', tint: '#5CE9BC' },
+    credential: { label: 'ui.groupPanel.gates.credential', icon: 'credential', tint: '#5CE9BC' },
+    balance: { label: 'ui.groupPanel.gates.balance', icon: 'balance', tint: '#FFB03D' },
+    chit: { label: 'ui.groupPanel.gates.chit', icon: 'chit', tint: '#FFB03D' },
+    payment: { label: 'ui.groupPanel.gates.payment', icon: 'payment', tint: '#FF8298' },
+    neuron: { label: 'ui.groupPanel.gates.neuron', icon: 'neuron', tint: '#FF8298' },
+    locked: { label: 'ui.groupPanel.gates.locked', icon: 'lock', tint: '#9A9AA8' },
   };
 
   // the builder stores an asset plus up to two numeric fields per rule; this turns that back into the
   // one-line value the read view shows ("min 100 CHAT", "10 USDT", neuron reads asset first)
   function gateValue(r: GateState['rules'][number]) {
-    if (r.type === 'balance') return r.asset && r.a ? `min ${r.a} ${r.asset}` : r.a ? `min ${r.a}` : r.asset || '';
-    if (r.type === 'payment') return r.asset && r.a ? `${r.a} ${r.asset}` : r.a || r.asset || '';
-    if (r.type === 'chit') return r.a ? `${r.a} CHIT` : '';
-    if (r.type === 'neuron') return [r.asset, r.a && `${r.a}d dissolve delay`, r.b && `${r.b} staked`].filter(Boolean).join(' · ');
+    if (r.type === 'balance') return r.asset && r.a ? t('ui.groupPanel.gateValue.minAsset', { amount: r.a, asset: r.asset }) : r.a ? t('ui.groupPanel.gateValue.min', { amount: r.a }) : r.asset || '';
+    if (r.type === 'payment') return r.asset && r.a ? t('ui.groupPanel.gateValue.payment', { amount: r.a, asset: r.asset }) : r.a || r.asset || '';
+    if (r.type === 'chit') return r.a ? t('ui.groupPanel.gateValue.chit', { amount: r.a }) : '';
+    if (r.type === 'neuron') return [r.asset, r.a && t('ui.groupPanel.gateValue.dissolveDelay', { days: r.a }), r.b && t('ui.groupPanel.gateValue.staked', { amount: r.b })].filter(Boolean).join(' · ');
     return r.asset || '';
   }
 
   const MUTE_SPANS: { key: MuteKey; label: string; tile: string }[] = [
-    { key: '8h', label: 'For 8 hours', tile: 'Muted · 8h' },
-    { key: '1w', label: 'For 1 week', tile: 'Muted · 1w' },
-    { key: 'always', label: 'Until I turn it back on', tile: 'Muted' },
+    { key: '8h', label: 'ui.mute.for8h', tile: 'ui.mute.muted8h' },
+    { key: '1w', label: 'ui.mute.for1w', tile: 'ui.mute.muted1w' },
+    { key: 'always', label: 'ui.mute.untilOn', tile: 'ui.mute.muted' },
   ];
 
   type MenuEntry = MenuItem & { action?: string; view?: View };
   const MENU_ITEMS: MenuEntry[] = [
-    { label: 'Favourite', action: 'favourite', mask: mask('heart') },
-    { label: 'Group settings', action: 'settings', mask: mask('gear') },
-    { label: 'Group stats', view: 'stats', mask: mask('poll') },
+    { label: 'ui.groupPanel.menu.favourite', action: 'favourite', mask: mask('heart') },
+    { label: 'ui.groupPanel.menu.settings', action: 'settings', mask: mask('gear') },
+    { label: 'ui.groupPanel.menu.stats', view: 'stats', mask: mask('poll') },
     { variant: 'separator', label: '', action: 'sep-bots' },
-    { label: 'Add a bot', action: 'addbot', mask: mask('bot') },
-    { label: 'Create a webhook', action: 'webhook', mask: mask('hook') },
+    { label: 'ui.groupPanel.menu.addBot', action: 'addbot', mask: mask('bot') },
+    { label: 'ui.groupPanel.menu.webhook', action: 'webhook', mask: mask('hook') },
     { variant: 'separator', label: '', action: 'sep-after-bots' },
-    { label: 'Convert to community', action: 'convert', mask: mask('community') },
-    { label: 'Import to community', action: 'import', mask: mask('import') },
-    { label: 'Leave group', variant: 'danger', action: 'leave', mask: mask('leave') },
-    { label: 'Delete group', variant: 'danger', action: 'delete', mask: mask('trash') },
+    { label: 'ui.groupPanel.menu.convert', action: 'convert', mask: mask('community') },
+    { label: 'ui.groupPanel.menu.import', action: 'import', mask: mask('import') },
+    { label: 'ui.groupPanel.menu.leave', variant: 'danger', action: 'leave', mask: mask('leave') },
+    { label: 'ui.groupPanel.menu.delete', variant: 'danger', action: 'delete', mask: mask('trash') },
   ];
   const SCOPE_MENU_EXTRA: MenuEntry[] = [
     { variant: 'separator', label: '', action: 'sep-channels' },
-    { label: 'New channel', action: 'newchannel', mask: mask('plus') },
-    { label: 'Add embedded channel', action: 'embed', mask: mask('embed') },
-    { label: 'New user group', action: 'newusergroup', mask: mask('invite') },
+    { label: 'ui.groupPanel.menu.newChannel', action: 'newchannel', mask: mask('plus') },
+    { label: 'ui.groupPanel.menu.embed', action: 'embed', mask: mask('embed') },
+    { label: 'ui.groupPanel.menu.newUserGroup', action: 'newusergroup', mask: mask('invite') },
   ];
   const SUBVIEWS: Record<Exclude<View, 'main'>, string> & { botsOnly: string } = {
-    usergroups: 'User groups',
-    usergroup: 'User group',
-    members: 'Members',
-    bots: 'Bots & webhooks',
-    botsOnly: 'Bots',
-    permissions: 'Permissions',
-    gates: 'Access gates',
-    rules: 'Group rules',
-    stats: 'Group stats',
-    pinned: 'Pinned messages',
+    usergroups: 'ui.groupPanel.views.usergroups',
+    usergroup: 'ui.groupPanel.views.usergroup',
+    members: 'ui.groupPanel.views.members',
+    bots: 'ui.groupPanel.views.bots',
+    botsOnly: 'ui.groupPanel.views.botsOnly',
+    permissions: 'ui.groupPanel.views.permissions',
+    gates: 'ui.groupPanel.views.gates',
+    rules: 'ui.groupPanel.views.rules',
+    stats: 'ui.groupPanel.views.stats',
+    pinned: 'ui.groupPanel.views.pinned',
   };
   const isView = (v: string): v is View => v === 'main' || (v in SUBVIEWS && v !== 'botsOnly');
 
-  const MEMBER_TABS = ['Members', 'Lapsed', 'Blocked'];
-  const MEMBER_LIST_TITLES = ['Current', 'Lapsed', 'Blocked'];
-  const MEMBER_NOTES = [
-    '',
-    'When a member of your group no longer satisfies the access gates set in the group settings, they become a lapsed member!',
-    'Users which have been blocked from accessing this group.',
-  ];
+  const MEMBER_TABS = ['ui.groupPanel.memberTabs.members', 'ui.groupPanel.memberTabs.lapsed', 'ui.groupPanel.memberTabs.blocked'];
+  const MEMBER_SEARCH = ['ui.groupPanel.memberSearch.members', 'ui.groupPanel.memberSearch.lapsed', 'ui.groupPanel.memberSearch.blocked'];
+  const MEMBER_LIST_TITLES = ['ui.groupPanel.memberLists.current', 'ui.groupPanel.memberLists.lapsed', 'ui.groupPanel.memberLists.blocked'];
+  const MEMBER_NOTES = ['', 'ui.groupPanel.memberNotes.lapsed', 'ui.groupPanel.memberNotes.blocked'];
   // role ladder: member → moderator → admin → owner
   const LADDER = ['', 'MODERATOR', 'ADMIN', 'OWNER'];
-  const ROLE_NAMES: Record<string, string> = { '': 'Member', MODERATOR: 'Moderator', ADMIN: 'Admin', OWNER: 'Owner' };
+  const ROLE_NAMES: Record<string, string> = { '': 'ui.groupPanel.roleNames.member', MODERATOR: 'ui.groupPanel.roleNames.moderator', ADMIN: 'ui.groupPanel.roleNames.admin', OWNER: 'ui.groupPanel.roleNames.owner' };
   // presence until it is wired: the first few people online are typing / active
   const ACTIVITY = ['typing', 'now', '2m', '6m'];
 
@@ -345,6 +343,7 @@
     onMuteEveryoneChange,
     onClose,
   }: Props = $props();
+  const t = useT();
 
   // per-instance key so a second mount (library specimen, community panel) cannot overwrite the running app's view
   function readStored(key: string): View {
@@ -384,8 +383,6 @@
   let aboutEl = $state<HTMLParagraphElement>();
 
   const view = $derived<View>(quick && storedView !== 'pinned' ? 'main' : storedView);
-  const noun = $derived(scope === 'community' ? 'Community' : scope === 'channel' ? 'Channel' : 'Group');
-  const nounLower = $derived(noun.toLowerCase());
   const perms = $derived(permissions ?? defaultPermissions());
   const muted = $derived(mutedUntil !== undefined ? mutedUntil : ownMute);
   const muteAll = $derived(muteEveryone ?? ownMuteAll);
@@ -541,7 +538,7 @@
                 .reverse()
                 .filter((r) => r !== 'OWNER' || viewerIsOwner)
                 .map((r) => ({
-                  label: ROLE_NAMES[r],
+                  label: t(ROLE_NAMES[r]),
                   checkMask: r === current ? mask('check') : '',
                   onSelect: () => {
                     if (r === current) popover = null;
@@ -557,7 +554,7 @@
           ? [
               ...roleItems,
               {
-                label: 'Remove member',
+                label: t('ui.groupPanel.removeMember'),
                 mask: mask('user-minus'),
                 variant: 'danger',
                 onSelect: () => {
@@ -568,7 +565,7 @@
             ]
           : [
               {
-                label: 'Unblock',
+                label: t('ui.groupPanel.unblock'),
                 mask: mask('circle-check'),
                 onSelect: () => {
                   popover = null;
@@ -576,7 +573,7 @@
                 },
               },
               {
-                label: 'Remove',
+                label: t('ui.common.remove'),
                 mask: mask('user-minus'),
                 variant: 'danger',
                 onSelect: () => {
@@ -596,7 +593,7 @@
         activity: isOn ? ACTIVITY[oi] || '' : '',
         hasMenu,
         menuKey: soleOwner ? `sole:${m.handle}` : `m:${m.handle}`,
-        heading: blockedTab || !canChangeRoles ? '' : self ? 'YOUR ROLE' : 'ROLE',
+        heading: blockedTab || !canChangeRoles ? '' : t(self ? 'ui.groupPanel.yourRole' : 'ui.groupPanel.role'),
         items,
         confirmOwner: () => setRole('OWNER'),
       };
@@ -628,13 +625,13 @@
   const roleSummary = $derived.by(() => {
     const owners = members.filter((m) => m.tag === 'OWNER').length || 1;
     const admins = members.filter((m) => m.tag === 'ADMIN').length;
-    return `${owners} owner · ${admins} admins · ${Math.max(total - owners - admins, 0)} members`;
+    return t('ui.groupPanel.roleSummary', { owners, admins, members: Math.max(total - owners - admins, 0) });
   });
   const muteSpan = $derived(MUTE_SPANS.find((o) => o.key === muted));
   const tiles = $derived([
     ...(scope === 'community' ? [] : (['video'] as const)),
-    { icon: 'mute' as const, label: scope === 'community' && !muted ? 'Mute all channels' : muted ? (muteSpan?.tile ?? 'Muted') : 'Mute', on: !!muted },
-    { icon: 'everyone' as const, label: muteAll ? '@everyone muted' : 'Mute @everyone', on: muteAll },
+    { icon: 'mute' as const, label: t(scope === 'community' && !muted ? 'ui.groupPanel.muteAllChannels' : muted ? (muteSpan?.tile ?? 'ui.mute.muted') : 'ui.mute.mute'), on: !!muted },
+    { icon: 'everyone' as const, label: t(muteAll ? 'ui.groupPanel.everyoneMuted' : 'ui.groupPanel.muteEveryone'), on: muteAll },
   ]);
   const tileHandlersAll = $derived({
     ...tileHandlers,
@@ -647,7 +644,7 @@
     everyone: toggleMuteAll,
   });
   const muteOptions = $derived<{ label: string; key: MuteKey | null; separator?: boolean }[]>(
-    muted && quick ? [{ label: 'Unmute notifications', key: null }] : MUTE_SPANS.map((o) => ({ label: o.label, key: o.key })),
+    muted && quick ? [{ label: 'ui.mute.unmute', key: null }] : MUTE_SPANS.map((o) => ({ label: o.label, key: o.key })),
   );
 
   // ── permissions, gates, rules ──
@@ -656,7 +653,7 @@
     PERM_ROLES.filter((r) => r.key !== 'nobody').map((r, ri) => {
       // each role lists what IT adds; the trailing chip carries the inheritance
       const own = [...PERM_GENERAL.filter((p) => perms.general[p.key] === r.key).map((p) => p.short), ...PERM_CONTENT.filter((c) => effective(c.key) === r.key).map((c) => c.label)];
-      return { label: r.label.toUpperCase(), tint: r.tint, caps: own, none: own.length === 0 && ri === 0, inherits: ri > 0 ? `Everything ${PERM_ROLES[ri - 1].label.replace(/s$/, '').toLowerCase()} can do` : '' };
+      return { label: r.label, tint: r.tint, caps: own, none: own.length === 0 && ri === 0, inherits: ri > 0 ? t('ui.groupPanel.inherits', { role: PERM_ROLES[ri - 1].key }) : '' };
     }),
   );
   // anything set to Nobody belongs to no role, so it gets its own line
@@ -668,9 +665,9 @@
   const threadLine = $derived(
     perms.threads
       ? threadExceptions
-        ? `${threadExceptions} ${threadExceptions === 1 ? 'exception' : 'exceptions'} set for threads`
-        : 'Threads use their own set.'
-      : 'Threads follow the message permissions.',
+        ? t('ui.groupPanel.threadExceptions', { count: threadExceptions })
+        : t('ui.groupPanel.threadsOwnSet')
+      : t('ui.groupPanel.threadsFollow'),
   );
   // the most-asked question first ("can members invite?"), then how far the set has been tuned
   const permHint = $derived.by(() => {
@@ -680,13 +677,13 @@
       (perms.messages.default !== 'member' ? 1 : 0) +
       (perms.threads ? 1 : 0);
     const invite = perms.general.invite;
-    const who = invite === 'member' ? 'Members can invite' : invite === 'nobody' ? 'Nobody can invite' : `${PERM_ROLES.find((r) => r.key === invite)?.label ?? 'Admin'} can invite`;
-    return `${who} · ${changed ? `${changed} changed from defaults` : 'defaults everywhere'}`;
+    const who = t('ui.groupPanel.canInvite', { role: PERM_ROLES.some((r) => r.key === invite) ? invite : 'admin' });
+    return t('ui.groupPanel.permHint', { who, changed });
   });
   const gateCards = $derived(
     (gateState?.rules ?? []).map((r) => {
-      const t = GATE_TYPES[r.type] || GATE_TYPES.locked;
-      return { label: t.label, detail: gateValue(r), icon: t.icon, tint: t.tint };
+      const g = GATE_TYPES[r.type] || GATE_TYPES.locked;
+      return { label: g.label, detail: gateValue(r), icon: g.icon, tint: g.tint };
     }),
   );
   // rules arrive as free text; the sub-view splits it into numbered lines
@@ -699,26 +696,26 @@
       : [],
   );
   const gatesN = $derived(gateCount ?? gateCards.length);
-  const every = $derived(gateState?.every ?? '90 days');
+  const every = $derived(gateState?.every ?? t('ui.groupPanel.defaultEvery'));
   const navRows = $derived([
-    { label: 'Permissions', hint: permHint, view: 'permissions' as const },
+    { label: t('ui.groupPanel.views.permissions'), hint: permHint, view: 'permissions' as const },
     {
-      label: 'Access gates',
+      label: t('ui.groupPanel.views.gates'),
       hint:
         scope === 'channel' && !gatesN
-          ? 'Community gates apply · none set for this channel'
+          ? t('ui.groupPanel.gatesHintChannel')
           : gatesN
-            ? `${gatesN} gates · ${gateState?.intervalOn === false ? 'checked once at join' : `re-checked every ${every}`}`
-            : 'No gates — anyone invited can join',
+            ? t('ui.groupPanel.gatesHint', { count: gatesN, recheck: gateState?.intervalOn === false ? t('ui.groupPanel.checkedOnce') : t('ui.groupPanel.recheckedEvery', { every }) })
+            : t('ui.groupPanel.noGatesHint'),
       view: 'gates' as const,
     },
-    { label: `${noun} rules`, hint: ruleLines.length ? `${ruleLines.length} rules for members` : 'No rules set yet', view: 'rules' as const },
+    { label: t('ui.groupPanel.views.rules', { scope }), hint: ruleLines.length ? t('ui.groupPanel.rulesHint', { count: ruleLines.length }) : t('ui.groupPanel.noRulesHint'), view: 'rules' as const },
   ]);
 
   // ── user groups ──
   const ugCur = $derived(userGroups.find((g) => g.key === ugKey) ?? null);
   const ugShown = $derived(userGroups.filter((g) => !ugQuery.trim() || g.title.toLowerCase().includes(ugQuery.trim().toLowerCase())));
-  const ugSubtitle = (g: UserGroup) => (g.members.length === 1 ? '1 member' : `${g.members.length} members`);
+  const ugSubtitle = (g: UserGroup) => t('ui.groupPanel.memberCount', { count: g.members.length });
   const ugMembersShown = $derived(
     ugCur ? ugCur.members.filter((m) => !ugMemberQuery.trim() || `${m.name} ${m.handle}`.toLowerCase().includes(ugMemberQuery.trim().toLowerCase())) : [],
   );
@@ -746,14 +743,14 @@
     view === 'main'
       ? ''
       : view === 'bots' && botsPart === 'webhooks'
-        ? 'Webhooks'
+        ? t('ui.groupPanel.views.webhooks')
         : view === 'usergroup' && ugCur
           ? ugCur.title
           : view === 'members' && scope !== 'group'
-            ? `${noun} members`
-            : (view === 'bots' && !allowHooks ? SUBVIEWS.botsOnly : SUBVIEWS[view]).replace(/^Group\b/, noun),
+            ? t('ui.groupPanel.views.scopeMembers', { scope })
+            : t(view === 'bots' && !allowHooks ? SUBVIEWS.botsOnly : SUBVIEWS[view], { scope }),
   );
-  const subviewSub = $derived(view === 'usergroup' && ugCur ? `User group in ${title}` : view === 'members' && scope === 'channel' ? `#${title} in ${communityName ?? ''}` : '');
+  const subviewSub = $derived(view === 'usergroup' && ugCur ? t('ui.groupPanel.userGroupIn', { name: title }) : view === 'members' && scope === 'channel' ? t('ui.groupPanel.channelIn', { channel: title, community: communityName ?? '' }) : '');
   const userGroupsView = $derived(view === 'usergroups' || (view === 'usergroup' && !ugCur));
 
   // ── ⋯ menu ──
@@ -767,14 +764,7 @@
       .filter((it) => scope !== 'community' || !['favourite', 'webhook'].includes(it.action ?? ''))
       .flatMap((it) => (scope === 'community' && it.view === 'stats' ? [it, ...SCOPE_MENU_EXTRA] : [it]))
       .map((it): MenuItem => {
-        const label =
-          it.action === 'favourite'
-            ? isFavourite
-              ? 'Remove from favourites'
-              : 'Add to favourites'
-            : it.action === 'newusergroup'
-              ? it.label
-              : it.label.replace(/\bgroup\b/i, (m) => (m[0] === 'G' ? noun : nounLower));
+        const label = it.action === 'favourite' ? t(isFavourite ? 'ui.groupPanel.menu.removeFavourite' : 'ui.groupPanel.menu.addFavourite') : t(it.label, { scope });
         const a = it.action;
         const onSelect = it.view
           ? () => go(it.view!)
@@ -817,7 +807,7 @@
 {#snippet sectionHead(label: string, count: number, onView: () => void)}
   <div class="section-head">
     <span class="section-label">{label}</span>
-    <a class="view-all" href="#top" onclick={link(onView)}>View all ({count})</a>
+    <a class="view-all" href="#top" onclick={link(onView)}>{t('ui.groupPanel.viewAll', { count })}</a>
   </div>
 {/snippet}
 
@@ -830,7 +820,7 @@
     </div>
     <div class="ask-actions">
       {#if onAction}
-        <span class="ask-cancel" onclick={() => (popover = null)} role="button" tabindex="0">Cancel</span>
+        <span class="ask-cancel" onclick={() => (popover = null)} role="button" tabindex="0">{t('ui.common.cancel')}</span>
         <span class="ask-confirm" onclick={onAction} role="button" tabindex="0">{action}</span>
       {:else}
         <span class="ask-ok" onclick={() => (popover = null)} role="button" tabindex="0">{action}</span>
@@ -855,24 +845,24 @@
           <div class="title-line">
             <span class="title">{scope === 'channel' ? '#' : ''}{title}</span>
             {#if !quick && isFavourite}
-              <span class="fav-heart" title="In your favourites"></span>
+              <span class="fav-heart" title={t('ui.groupPanel.inFavourites')}></span>
             {/if}
           </div>
           {#if scope === 'channel'}
             <span class="byline"
-              >{#if quick}<span class="access-icon" class:public={isPublic}></span>{/if}{quick ? `${isPublic ? 'Public' : 'Private'} channel in` : 'channel in'}{#if quick}<span
+              >{#if quick}<span class="access-icon" class:public={isPublic}></span>{/if}{quick ? t('ui.groupPanel.channelInAccess', { access: isPublic ? 'public' : 'private' }) : t('ui.groupPanel.channelInPlain')}{#if quick}<span
                   class="community-chip"
                   onclick={() => onOpenCommunity?.()}
-                  aria-label="View community"
+                  aria-label={t('ui.groupPanel.viewCommunity')}
                   role="button"
                   tabindex="0"
-                  title="View community">{communityName ?? 'OpenChat'}<span class="chip-chevron" data-oc-flip=""></span></span
+                  title={t('ui.groupPanel.viewCommunity')}>{communityName ?? 'OpenChat'}<span class="chip-chevron" data-oc-flip=""></span></span
                 >{:else}<a href="#top" onclick={link(() => onOpenCommunity?.())}>{communityName ?? 'OpenChat'}</a>{/if}</span
             >
           {:else if quick}
-            <span class="byline"><span class="access-icon" class:public={isPublic}></span>{isPublic ? 'Public' : 'Private'} {nounLower} · created by <a href="#top">{ownerHandle}</a></span>
+            <span class="byline"><span class="access-icon" class:public={isPublic}></span>{t('ui.groupPanel.createdByAccess', { access: isPublic ? 'public' : 'private', scope })} <a href="#top">{ownerHandle}</a></span>
           {:else}
-            <span class="byline plain">{nounLower} created by <a href="#top">{ownerHandle}</a></span>
+            <span class="byline plain">{t('ui.groupPanel.createdBy', { scope })} <a href="#top">{ownerHandle}</a></span>
           {/if}
           {#if !quick}
             <div class="role-summary" onclick={() => go('members')} role="button" tabindex="0">
@@ -883,8 +873,8 @@
         </div>
         {#if quick}
           <div class="pills">
-            <span class="pill mute" class:on={!!muted} onclick={(e) => (muteMenu = placeUnder(e.currentTarget))} aria-label={muted ? 'Unmute notifications' : 'Mute notifications'} role="button" tabindex="0" title={muted ? 'Unmute notifications' : 'Mute notifications'}>
-              <span class="pill-icon" style:mask={mask(muted ? 'bell-off' : 'bell')}></span>{muted ? 'Muted' : 'Mute'}
+            <span class="pill mute" class:on={!!muted} onclick={(e) => (muteMenu = placeUnder(e.currentTarget))} aria-label={t(muted ? 'ui.mute.unmute' : 'ui.mute.muteNotifications')} role="button" tabindex="0" title={t(muted ? 'ui.mute.unmute' : 'ui.mute.muteNotifications')}>
+              <span class="pill-icon" style:mask={mask(muted ? 'bell-off' : 'bell')}></span>{t(muted ? 'ui.mute.muted' : 'ui.mute.mute')}
               <span class="pill-divider"></span><span class="caret"></span>
             </span>
             <!-- @everyone is its own toggle: it silences mass mentions, not notifications -->
@@ -892,14 +882,14 @@
               class="pill everyone"
               class:on={muteAll}
               onclick={toggleMuteAll}
-              aria-label={muteAll ? '@everyone mentions are muted. Click to allow them' : 'Mute @everyone mentions'}
+              aria-label={t(muteAll ? 'ui.groupPanel.everyoneMentionsMuted' : 'ui.groupPanel.muteEveryoneMentions')}
               role="button"
               tabindex="0"
-              title={muteAll ? '@everyone mentions are muted. Click to allow them' : 'Mute @everyone mentions'}
+              title={t(muteAll ? 'ui.groupPanel.everyoneMentionsMuted' : 'ui.groupPanel.muteEveryoneMentions')}
               aria-pressed={muteAll}><span class="pill-icon" style:mask={mask(muteAll ? 'at-off' : 'at')}></span>@everyone</span
             >
             {#if onToggleFavourite}
-              <span class="pill fav" class:on={!!isFavourite} onclick={onToggleFavourite} role="button" tabindex="0"><span class="pill-icon" style:mask={mask('heart')}></span>{isFavourite ? 'Favourited' : 'Favourite'}</span>
+              <span class="pill fav" class:on={!!isFavourite} onclick={onToggleFavourite} role="button" tabindex="0"><span class="pill-icon" style:mask={mask('heart')}></span>{t(isFavourite ? 'ui.groupPanel.favourited' : 'ui.groupPanel.favourite')}</span>
             {/if}
           </div>
         {:else}
@@ -909,15 +899,15 @@
           <div class="card">
             <span class="card-icon"><span class="card-glyph" style:mask={mask(isPublic ? 'globe' : 'lock')}></span></span>
             <div class="card-text">
-              <span class="card-title">{isPublic ? 'Public' : 'Private'} {scope === 'channel' ? 'channel' : 'community'}</span>
+              <span class="card-title">{t('ui.groupPanel.accessTitle', { access: isPublic ? 'public' : 'private', scope })}</span>
               <span class="card-body"
                 >{scope === 'channel'
                   ? isPublic
-                    ? `Anyone in ${communityName ?? 'the community'} can find and join it.`
-                    : 'Only people added or invited can join, even though the community may be public.'
+                    ? t('ui.groupPanel.channelPublic', { community: communityName ?? t('ui.groupPanel.theCommunity') })
+                    : t('ui.groupPanel.channelPrivate')
                   : isPublic
-                    ? 'Anyone can find and join. Individual channels can still be private.'
-                    : 'Only people you invite can join, and it won’t appear in search.'}</span
+                    ? t('ui.groupPanel.communityPublic')
+                    : t('ui.groupPanel.communityPrivate')}</span
               >
             </div>
           </div>
@@ -927,15 +917,15 @@
             <span class="community-mark" style:background={grad(communityColor)}></span>
             <div class="card-text">
               <span class="card-title clip">{communityName ?? 'OpenChat'}</span>
-              <span class="card-body">View community details</span>
+              <span class="card-body">{t('ui.groupPanel.viewCommunityDetails')}</span>
             </div>
             <span class="chevron"></span>
           </div>
         {/if}
         <div class="about">
-          <p class="about-text" class:empty={!aboutText} bind:this={aboutEl} style:-webkit-line-clamp={aboutOpen ? 'unset' : quick ? '2' : '4'}>{aboutText || 'No description yet'}</p>
+          <p class="about-text" class:empty={!aboutText} bind:this={aboutEl} style:-webkit-line-clamp={aboutOpen ? 'unset' : quick ? '2' : '4'}>{aboutText || t('ui.groupPanel.noDescription')}</p>
           {#if aboutLong}
-            <span class="about-toggle" onclick={() => (aboutOpen = !aboutOpen)} role="button" tabindex="0">{aboutOpen ? (quick ? 'Less' : 'Show less') : quick ? 'More' : 'Show more'}</span>
+            <span class="about-toggle" onclick={() => (aboutOpen = !aboutOpen)} role="button" tabindex="0">{t(aboutOpen ? (quick ? 'ui.common.less' : 'ui.groupPanel.showLess') : quick ? 'ui.common.more' : 'ui.groupPanel.showMore')}</span>
           {/if}
         </div>
       </div>
@@ -945,8 +935,8 @@
           <div class="online-card">
             <div class="online-head">
               <span class="online-dot"></span>
-              <span class="online-title">{quickOnline.count > 0 ? 'Online now' : 'Members'} <span class="online-count">{quickOnline.count > 0 ? `· ${quickOnline.count}` : ''}</span></span>
-              <span class="online-of">{quickOnline.count > 0 ? `of ${quickOnline.total?.toLocaleString('en-US')}` : ''}</span>
+              <span class="online-title">{t(quickOnline.count > 0 ? 'ui.groupPanel.onlineNow' : 'ui.groupPanel.memberTabs.members')} <span class="online-count">{quickOnline.count > 0 ? `· ${quickOnline.count}` : ''}</span></span>
+              <span class="online-of">{quickOnline.count > 0 ? t('ui.groupPanel.onlineOf', { total: quickOnline.total?.toLocaleString('en-US') }) : ''}</span>
             </div>
             <!-- the online list fills down to the panel edge -->
             <div class="online-list">
@@ -971,23 +961,23 @@
                 {/each}
               {/if}
               {#if quickOnline.count === 0}
-                <span class="none-online">No one else is online. Recently active:</span>
+                <span class="none-online">{t('ui.groupPanel.noneOnline')}</span>
               {/if}
               {#if quickOnline.count > (quickOnline.shown ?? 0)}
-                <span class="more-online">+ {(quickOnline.count - (quickOnline.shown ?? 0)).toLocaleString('en-US')} more online</span>
+                <span class="more-online">{t('ui.groupPanel.moreOnline', { count: (quickOnline.count - (quickOnline.shown ?? 0)).toLocaleString('en-US') })}</span>
               {/if}
             </div>
             <div class="online-foot">
               {#if canInvite}
-                <span class="foot-action invite" onclick={() => onDialog?.('invite', null, 'people')} role="button" tabindex="0"><span class="invite-icon"></span>Invite</span>
+                <span class="foot-action invite" onclick={() => onDialog?.('invite', null, 'people')} role="button" tabindex="0"><span class="invite-icon"></span>{t('ui.groupPanel.invite')}</span>
               {/if}
-              <span class="foot-action all" onclick={() => go('members')} role="button" tabindex="0">View all {quickOnline.total?.toLocaleString('en-US')}</span>
+              <span class="foot-action all" onclick={() => go('members')} role="button" tabindex="0">{t('ui.groupPanel.viewAllTotal', { total: quickOnline.total?.toLocaleString('en-US') })}</span>
             </div>
           </div>
           {#if slimBots.length > 0}
             <div class="bots-slim" onclick={() => go('bots')} role="button" tabindex="0">
               <div class="bot-stack">{#each slimBots as b}<span class="bot-face" style:background={grad(b.color)}></span>{/each}</div>
-              <span class="bots-text">Bots <span class="bots-names">· {slimBots.map((b) => b.title).join(', ')}</span></span>
+              <span class="bots-text">{t('ui.groupPanel.views.botsOnly')} <span class="bots-names">· {slimBots.map((b) => b.title).join(', ')}</span></span>
               <span class="chevron small" data-oc-flip=""></span>
             </div>
           {/if}
@@ -995,7 +985,7 @@
 
         {#if !embedded && !quick}
           <div class="section">
-            {@render sectionHead(scope === 'group' ? 'MEMBERS' : `${noun.toUpperCase()} MEMBERS`, total, () => go('members'))}
+            {@render sectionHead(t('ui.groupPanel.membersHeading', { scope }), total, () => go('members'))}
             <div class="rows">
               {#each members.slice(0, allBots.length ? 3 : 5) as m}
                 <div class="cell"><MemberRow title={m.title} subtitle={m.handle} tag={m.tag} color={m.color} onClick={openUser(m)} /></div>
@@ -1005,7 +995,7 @@
 
           {#if allBots.length > 0}
             <div class="section">
-              {@render sectionHead(allowHooks ? 'BOTS & WEBHOOKS' : 'BOTS', allBots.length, () => go('bots'))}
+              {@render sectionHead(t(allowHooks ? 'ui.groupPanel.botsWebhooksHeading' : 'ui.groupPanel.botsHeading'), allBots.length, () => go('bots'))}
               <div class="rows">
                 {#each allBots.slice(0, 2) as b}
                   <div class="cell">
@@ -1018,7 +1008,7 @@
 
           {#if scope === 'community'}
             <div class="section">
-              {@render sectionHead('USER GROUPS', userGroups.length, () => go('usergroups'))}
+              {@render sectionHead(t('ui.groupPanel.userGroupsHeading'), userGroups.length, () => go('usergroups'))}
               <div class="rows">
                 {#each userGroups.slice(0, 2) as g}
                   <div class="cell"><MemberRow title={g.title} subtitle={ugSubtitle(g)} color={g.color || 'slate'} icon="chevron" showMenu={false} onClick={() => openUserGroup(g)} /></div>
@@ -1028,7 +1018,7 @@
           {/if}
 
           <div class="nav">
-            <div class="nav-head"><span class="section-label">ACCESS &amp; RULES</span></div>
+            <div class="nav-head"><span class="section-label">{t('ui.groupPanel.accessRulesHeading')}</span></div>
             {#each navRows as nav}
               <div class="cell"><PanelNavRow label={nav.label} hint={nav.hint} value="" highlight={false} onClick={() => go(nav.view)} /></div>
             {/each}
@@ -1040,7 +1030,7 @@
     <div class="sub-head">
       <!-- narrow windows open the pinned list on its own: close only, nothing to go back to -->
       {#if (!embedded || view === 'usergroup') && !(pinnedOnly && view === 'pinned')}
-        <span class="back" onclick={() => go(view === 'usergroup' ? 'usergroups' : 'main')} role="button" tabindex="0"><span class="back-icon"></span></span>
+        <span class="back" onclick={() => go(view === 'usergroup' ? 'usergroups' : 'main')} role="button" tabindex="0" aria-label={t('ui.common.back')}><span class="back-icon"></span></span>
       {/if}
       <div class="sub-titles">
         <span class="sub-title">{subviewTitle}</span>
@@ -1049,14 +1039,14 @@
         {/if}
       </div>
       {#if view === 'members' && !embedded}
-        <div class="slot"><IconButton label="Add members" variant="ghost" icon="userPlus" onClick={() => onDialog?.('invite', null, 'people')} /></div>
-        <div class="slot"><IconButton label="Share invite link" variant="ghost" icon="share" onClick={() => onDialog?.('invite', null, 'share')} /></div>
+        <div class="slot"><IconButton label="ui.iconButton.addMembers" variant="ghost" icon="userPlus" onClick={() => onDialog?.('invite', null, 'people')} /></div>
+        <div class="slot"><IconButton label="ui.groupPanel.shareInviteLink" variant="ghost" icon="share" onClick={() => onDialog?.('invite', null, 'share')} /></div>
       {/if}
       {#if userGroupsView}
-        <div class="head-button" onclick={() => ugDialog('create', null)} role="button" tabindex="0"><span class="plus-icon"></span>New user group</div>
+        <div class="head-button" onclick={() => ugDialog('create', null)} role="button" tabindex="0"><span class="plus-icon"></span>{t('ui.groupPanel.menu.newUserGroup')}</div>
       {/if}
       {#if view === 'usergroup' && ugCur}
-        <div class="slot"><IconButton label="Edit user group" variant="ghost" icon="edit" onClick={() => ugCur && ugDialog('edit', ugCur.key)} /></div>
+        <div class="slot"><IconButton label="ui.groupPanel.editUserGroup" variant="ghost" icon="edit" onClick={() => ugCur && ugDialog('edit', ugCur.key)} /></div>
       {/if}
       {#if view === 'permissions' || view === 'gates' || view === 'rules'}
         <!-- the sidebar is for reading; editing happens in a focused modal the host renders, deep-linked to this tab -->
@@ -1064,12 +1054,12 @@
       {/if}
       {#if embedded && botsPart === 'webhooks' && allowHooks && view === 'bots'}
         <!-- in the manage dialog's Webhooks section the create action lives in the header, like New channel -->
-        <div class="head-button" onclick={() => onDialog?.('webhook', { dialogMode: 'register' })} role="button" tabindex="0"><span class="plus-icon"></span>Register webhook</div>
+        <div class="head-button" onclick={() => onDialog?.('webhook', { dialogMode: 'register' })} role="button" tabindex="0"><span class="plus-icon"></span>{t('ui.groupPanel.registerWebhookShort')}</div>
       {/if}
       {#if embedded || (pinnedOnly && view === 'pinned')}
         <div class="slot">
           <IconButton
-            label="Close"
+            label="ui.common.close"
             variant="ghost"
             icon="close"
             onClick={() => {
@@ -1085,22 +1075,22 @@
       {#if view === 'members'}
         <div class="column">
           {#if canModerate}
-            <div class="cell tabs"><SegmentedTabs labels={MEMBER_TABS} selectedIndex={tabIdx} dotOnLast={false} dotIndexes={lapsed.length ? [1] : []} onSelect={(i) => (memberTab = i)} /></div>
+            <div class="cell tabs"><SegmentedTabs labels={MEMBER_TABS.map((k) => t(k))} selectedIndex={tabIdx} dotOnLast={false} dotIndexes={lapsed.length ? [1] : []} onSelect={(i) => (memberTab = i)} /></div>
           {/if}
-          <div class="cell" class:pad-top={!canModerate}><Field placeholder="Search {MEMBER_TABS[tabIdx].toLowerCase()}" showShortcut={false} /></div>
+          <div class="cell" class:pad-top={!canModerate}><Field placeholder={t(MEMBER_SEARCH[tabIdx])} showShortcut={false} /></div>
           {#if scope === 'channel' && tabIdx === 0}
             <div class="banner" onclick={() => onOpenCommunity?.('members')} role="button" tabindex="0">
               <div class="card-text">
-                <span class="banner-title">Looking for {communityName ?? 'OpenChat'} community members?</span>
-                <span class="banner-body">This list only shows who's in this channel.</span>
+                <span class="banner-title">{t('ui.groupPanel.lookingFor', { community: communityName ?? 'OpenChat' })}</span>
+                <span class="banner-body">{t('ui.groupPanel.channelOnlyList')}</span>
               </div>
               <span class="chevron accent"></span>
             </div>
           {/if}
           <div class="list-block">
-            <span class="list-title">{MEMBER_LIST_TITLES[tabIdx]} members · {[total, lapsed.length, visibleBlocked.length][tabIdx]}</span>
+            <span class="list-title">{t(MEMBER_LIST_TITLES[tabIdx], { count: [total, lapsed.length, visibleBlocked.length][tabIdx] })}</span>
             {#if MEMBER_NOTES[tabIdx]}
-              <span class="list-note">{MEMBER_NOTES[tabIdx]}</span>
+              <span class="list-note">{t(MEMBER_NOTES[tabIdx])}</span>
             {/if}
             <div class="rows">
               {#each memberRows as m}
@@ -1121,10 +1111,10 @@
                     {@render rowMenu(m.heading, m.items, '220px')}
                   {/if}
                   {#if popover === `sole:${m.handle}`}
-                    {@render confirm("You're the only owner", 'Make someone else an owner before you change your own role.', 'Got it', null)}
+                    {@render confirm(t('ui.groupPanel.onlyOwnerTitle'), t('ui.groupPanel.onlyOwnerBody'), t('ui.groupPanel.gotIt'), null)}
                   {/if}
                   {#if popover === `owner:${m.handle}`}
-                    {@render confirm(`Make ${m.title} an owner?`, `Owners have full control, including deleting the ${nounLower} and changing other owners.`, 'Make owner', m.confirmOwner)}
+                    {@render confirm(t('ui.groupPanel.makeOwnerTitle', { name: m.title }), t('ui.groupPanel.makeOwnerBody', { scope }), t('ui.groupPanel.makeOwner'), m.confirmOwner)}
                   {/if}
                 </div>
               {/each}
@@ -1137,7 +1127,7 @@
         <div class="column roomy">
           <div class="cell">
             <Field
-              placeholder={!showBotLists ? 'Search webhooks' : allowHooks ? 'Search bots and webhooks' : 'Search bots'}
+              placeholder={t(!showBotLists ? 'ui.groupPanel.searchWebhooks' : allowHooks ? 'ui.groupPanel.searchBotsWebhooks' : 'ui.groupPanel.searchBots')}
               value={botQuery}
               onInput={(e) => (botQuery = e.currentTarget.value)}
               onClear={() => (botQuery = '')}
@@ -1147,7 +1137,7 @@
 
           {#if shownBots.length > 0 && showBotLists}
             <div class="bot-block">
-              <span class="list-title">INSTALLED BOTS · {installedBots.length}</span>
+              <span class="list-title">{t('ui.groupPanel.installedBots', { count: installedBots.length })}</span>
               <div class="rows">
                 {#each shownBots as b}
                   <div class="cell"><MemberRow variant="bot" title={b.title} subtitle={b.subtitle} color={b.color} icon="chevron" showMenu={false} onClick={openBot(b, true)} /></div>
@@ -1158,16 +1148,16 @@
 
           {#if allowHooks}
             <div class="bot-block">
-              <span class="list-title">WEBHOOKS · {hooks.length}</span>
-              <span class="list-note small">Webhooks let your own tools post into this group over HTTP.</span>
+              <span class="list-title">{t('ui.groupPanel.webhooksHeading', { count: hooks.length })}</span>
+              <span class="list-note small">{t('ui.groupPanel.webhooksNote')}</span>
               {#if !(embedded && botsPart === 'webhooks')}
                 <div class="register" onclick={() => onDialog?.('webhook', { dialogMode: 'register' })} role="button" tabindex="0">
                   <span class="register-tile"><span class="hook-icon"></span></span>
-                  <span class="register-label">Register a webhook</span>
+                  <span class="register-label">{t('ui.groupPanel.registerWebhook')}</span>
                 </div>
               {/if}
               {#if embedded && botsPart === 'webhooks' && hooks.length === 0 && !botNeedle}
-                <span class="no-hooks">No webhooks yet. <a href="#top" onclick={link(() => onDialog?.('webhook', { dialogMode: 'register' }))}>Register a webhook</a></span>
+                <span class="no-hooks">{t('ui.groupPanel.noWebhooks')} <a href="#top" onclick={link(() => onDialog?.('webhook', { dialogMode: 'register' }))}>{t('ui.groupPanel.registerWebhook')}</a></span>
               {/if}
               <div class="rows">
                 {#each shownHooks as h}
@@ -1179,7 +1169,7 @@
 
           {#if shownRecommended.length > 0 && canManageBots && showBotLists}
             <div class="bot-block">
-              <span class="list-title">RECOMMENDED BOTS · {shownRecommended.length}</span>
+              <span class="list-title">{t('ui.groupPanel.recommendedBots', { count: shownRecommended.length })}</span>
               <div class="rows">
                 {#each shownRecommended as b}
                   <div class="cell"><MemberRow variant="bot" title={b.title} subtitle={b.subtitle} color={b.color} icon="chevron" showMenu={false} onClick={openBot(b, false)} /></div>
@@ -1189,10 +1179,10 @@
           {/if}
 
           {#if !canManageBots && !botNeedle && shownBots.length === 0}
-            <span class="empty-line">No bots are installed in this {nounLower}.</span>
+            <span class="empty-line">{t('ui.groupPanel.noBots', { scope })}</span>
           {/if}
           {#if botNeedle && (!showBotLists || shownBots.length === 0) && (!allowHooks || shownHooks.length === 0) && (!canManageBots || !showBotLists || shownRecommended.length === 0)}
-            <span class="empty-line">Nothing matches “{botQuery}”.</span>
+            <span class="empty-line">{t('ui.groupPanel.nothingMatches', { query: botQuery })}</span>
           {/if}
         </div>
       {/if}
@@ -1201,13 +1191,13 @@
         <div class="perms">
           {#each roleDigest as r}
             <div class="perm-role">
-              <span class="list-title" style:color={r.tint}>{r.label}</span>
+              <span class="list-title" style:color={r.tint}>{t(r.label)}</span>
               <div class="caps">
                 {#each r.caps as cap}
-                  <span class="cap" style:background="color-mix(in srgb, {r.tint} 12%, transparent)" style:box-shadow="inset 0 0 0 1px color-mix(in srgb, {r.tint} 30%, transparent)">{cap}</span>
+                  <span class="cap" style:background="color-mix(in srgb, {r.tint} 12%, transparent)" style:box-shadow="inset 0 0 0 1px color-mix(in srgb, {r.tint} 30%, transparent)">{t(cap)}</span>
                 {/each}
                 {#if r.none}
-                  <span class="reading-only">Reading only</span>
+                  <span class="reading-only">{t('ui.groupPanel.readingOnly')}</span>
                 {/if}
                 {#if r.inherits}
                   <span class="inherits"><span class="inherits-icon"></span><span>{r.inherits}</span></span>
@@ -1218,17 +1208,17 @@
 
           {#if disabledPerms.length}
             <div class="perm-role">
-              <span class="list-title">OFF FOR EVERYONE</span>
+              <span class="list-title">{t('ui.groupPanel.offForEveryone')}</span>
               <div class="caps">
                 {#each disabledPerms as d}
-                  <span class="cap off">{d}</span>
+                  <span class="cap off">{t(d)}</span>
                 {/each}
               </div>
             </div>
           {/if}
 
           <div class="threads-card">
-            <span class="threads-title">Threads</span>
+            <span class="threads-title">{t('ui.groupPanel.threads')}</span>
             <span class="threads-line">{threadLine}</span>
           </div>
         </div>
@@ -1241,18 +1231,18 @@
               <span class="clock-icon"></span>
               <span class="recheck-line"
                 >{gateState?.intervalOn === false
-                  ? 'Members are checked when they join, and not re-checked after that.'
-                  : `Members are re-checked every ${every}. Anyone who no longer qualifies is moved to Lapsed.`}</span
+                  ? t('ui.groupPanel.checkedAtJoin')
+                  : t('ui.groupPanel.recheckLine', { every })}</span
               >
             </div>
             <div class="gate-block">
-              <span class="list-title">{(gateState?.joiner ?? 'All') === 'All' ? 'ALL OF THESE' : 'ANY ONE OF THESE'}</span>
+              <span class="list-title">{t((gateState?.joiner ?? 'All') === 'All' ? 'ui.groupPanel.allOfThese' : 'ui.groupPanel.anyOfThese')}</span>
               <div class="gate-list">
                 {#each gateCards as g}
                   <div class="gate">
                     <span class="gate-badge" style:background="color-mix(in srgb, {g.tint} 14%, transparent)"><span class="gate-icon" style:background={g.tint} style:mask={mask(g.icon)}></span></span>
                     <div class="card-text">
-                      <span class="gate-label">{g.label}</span>
+                      <span class="gate-label">{t(g.label)}</span>
                       {#if g.detail}
                         <span class="gate-detail">{g.detail}</span>
                       {/if}
@@ -1263,8 +1253,8 @@
             </div>
           {:else}
             <div class="dashed">
-              <span class="dashed-title">No gates set</span>
-              <span class="dashed-body">Anyone invited can join without meeting a requirement.</span>
+              <span class="dashed-title">{t('ui.groupPanel.noGatesTitle')}</span>
+              <span class="dashed-body">{t('ui.groupPanel.noGatesBody')}</span>
             </div>
           {/if}
         </div>
@@ -1276,11 +1266,11 @@
             {#each ruleLines as text, i}
               <div class="rule"><span class="rule-n">{i + 1}.</span><span class="rule-text">{text}</span></div>
             {/each}
-            <span class="rules-note">Break the rules and your messages may be deleted, or you may be blocked from the group.</span>
+            <span class="rules-note">{t('ui.groupPanel.rulesNote')}</span>
           {:else}
             <div class="dashed">
-              <span class="dashed-title">No rules set</span>
-              <span class="dashed-body">Members can join without agreeing to anything.</span>
+              <span class="dashed-title">{t('ui.groupPanel.noRulesTitle')}</span>
+              <span class="dashed-body">{t('ui.groupPanel.noRulesBody')}</span>
             </div>
           {/if}
         </div>
@@ -1288,10 +1278,10 @@
 
       {#if userGroupsView}
         <div class="column">
-          <div class="cell tabs"><Field placeholder="Search user groups" value={ugQuery} onInput={(e) => (ugQuery = e.currentTarget.value)} onClear={() => (ugQuery = '')} showShortcut={false} /></div>
+          <div class="cell tabs"><Field placeholder={t('ui.groupPanel.searchUserGroups')} value={ugQuery} onInput={(e) => (ugQuery = e.currentTarget.value)} onClear={() => (ugQuery = '')} showShortcut={false} /></div>
           <div class="ug-intro">
-            <span class="ug-title">User groups ({userGroups.length})</span>
-            <span class="list-note">Mention a set of members at once, like @developers, and give them permissions together.</span>
+            <span class="ug-title">{t('ui.groupPanel.userGroupsCount', { count: userGroups.length })}</span>
+            <span class="list-note">{t('ui.groupPanel.userGroupsNote')}</span>
           </div>
           <div class="rows padded">
             {#each ugShown as g}
@@ -1301,8 +1291,8 @@
                   {@render rowMenu(
                     '',
                     [
-                      { label: 'Edit', mask: mask('edit'), onSelect: () => ((popover = null), ugDialog('edit', g.key)) },
-                      { label: 'Delete', mask: mask('trash'), variant: 'danger', onSelect: () => ((popover = null), ugDialog('delete', g.key)) },
+                      { label: t('ui.common.edit'), mask: mask('edit'), onSelect: () => ((popover = null), ugDialog('edit', g.key)) },
+                      { label: t('ui.common.delete'), mask: mask('trash'), variant: 'danger', onSelect: () => ((popover = null), ugDialog('delete', g.key)) },
                     ],
                     '180px',
                   )}
@@ -1310,7 +1300,7 @@
               </div>
             {/each}
             {#if ugShown.length === 0}
-              <span class="ug-empty">{userGroups.length ? `No user groups match “${ugQuery}”` : 'No user groups yet. Create one with +.'}</span>
+              <span class="ug-empty">{userGroups.length ? t('ui.groupPanel.noUserGroupsMatch', { query: ugQuery }) : t('ui.groupPanel.noUserGroups')}</span>
             {/if}
           </div>
         </div>
@@ -1318,17 +1308,17 @@
 
       {#if view === 'usergroup' && ugCur}
         <div class="column">
-          <div class="cell tabs"><Field placeholder="Search group members" value={ugMemberQuery} onInput={(e) => (ugMemberQuery = e.currentTarget.value)} onClear={() => (ugMemberQuery = '')} showShortcut={false} /></div>
+          <div class="cell tabs"><Field placeholder={t('ui.groupPanel.searchGroupMembers')} value={ugMemberQuery} onInput={(e) => (ugMemberQuery = e.currentTarget.value)} onClear={() => (ugMemberQuery = '')} showShortcut={false} /></div>
           <div class="ug-intro">
-            <span class="ug-title">Members ({ugCur.members.length})</span>
-            <span class="list-note">Mention them all with <span class="mention">@{ugCur.title.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')}</span>.</span>
+            <span class="ug-title">{t('ui.groupPanel.membersCount', { count: ugCur.members.length })}</span>
+            <span class="list-note">{t('ui.groupPanel.mentionAll')} <span class="mention">@{ugCur.title.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')}</span>.</span>
           </div>
           <div class="rows padded">
             {#each ugMembersShown as m}
               <div class="cell"><MemberRow title={m.name} subtitle={m.handle} color={m.color} showMenu={false} onClick={() => onDialog?.('user', { title: m.name, handle: m.handle, color: m.color })} /></div>
             {/each}
             {#if ugMembersShown.length === 0 && ugMemberQuery}
-              <span class="ug-empty">No members match “{ugMemberQuery}”</span>
+              <span class="ug-empty">{t('ui.groupPanel.noMembersMatch', { query: ugMemberQuery })}</span>
             {/if}
           </div>
         </div>
@@ -1345,7 +1335,7 @@
             </div>
           {/each}
           {#if pinned.length === 0}
-            <span class="empty-line center">Nothing is pinned yet.</span>
+            <span class="empty-line center">{t('ui.groupPanel.nothingPinned')}</span>
           {/if}
         </div>
       {/if}
@@ -1355,7 +1345,7 @@
           {#if stats}
             <GroupStats {...stats} />
           {:else}
-            <span class="empty-line center">No stats yet.</span>
+            <span class="empty-line center">{t('ui.groupPanel.noStats')}</span>
           {/if}
         </div>
       {/if}
@@ -1365,9 +1355,9 @@
   {#if muteMenu}
     <div class="local-scrim mute-scrim" onclick={() => (muteMenu = null)} aria-hidden="true"></div>
     <div class="mute-menu" style:top="{muteMenu.top}px" style:left="{muteMenu.left}px">
-      <span class="mute-title">Mute notifications for</span>
+      <span class="mute-title">{t('ui.mute.muteFor')}</span>
       {#each muteOptions as o}
-        <div class="mute-option" onclick={() => setMute(o.key)} role="button" tabindex="0">{o.label}</div>
+        <div class="mute-option" onclick={() => setMute(o.key)} role="button" tabindex="0">{t(o.label)}</div>
       {/each}
     </div>
   {/if}

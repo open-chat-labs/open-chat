@@ -1,6 +1,7 @@
 <!-- Audio waveform. levels: array of 0–1 (or `count` bars from a stable seed). progress 0–1 colours the played part.
      seekable → handle + pointer/arrow-key seeking → onSeek(fraction). Bars fill the width, so it never cuts off. -->
 <script lang="ts">
+  import { useT } from '../i18n';
   interface Props {
     levels?: number[];
     /** Bars to generate when no levels are given. */
@@ -15,6 +16,7 @@
     restColor?: string;
     /** Ring around the handle; match the surface behind. */
     ring?: string;
+    /** Accessible name. Resource key (or literal text). */
     label?: string;
     onSeek?: (fraction: number) => void;
   }
@@ -30,9 +32,10 @@
     playedColor = 'var(--accent,#FF5672)',
     restColor = 'var(--bubble-wave-off,#4A4A56)',
     ring = 'var(--bubble-recv-bg,#191921)',
-    label = 'Waveform',
+    label = 'ui.waveform.label',
     onSeek,
   }: Props = $props();
+  const t = useT();
 
   let root: HTMLDivElement;
   let width = $state(0);
@@ -100,7 +103,7 @@
   onkeydown={key}
   role={seek ? 'slider' : 'img'}
   tabindex={seek ? 0 : undefined}
-  aria-label={label}
+  aria-label={t(label)}
   aria-valuemin={0}
   aria-valuemax={100}
   aria-valuenow={Math.round(prog * 100)}

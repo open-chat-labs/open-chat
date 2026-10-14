@@ -1,19 +1,22 @@
 <!-- Divider in a message list: tone "accent" is the unread marker (a labelled rule), "neutral" a date pill. -->
 <script lang="ts">
+  import { useT } from '../i18n';
   interface Props {
+    /** Resource key (or literal text); defaults to "Today" (neutral) or "Unread messages" (accent). */
     label?: string;
     tone?: 'accent' | 'neutral';
   }
 
   let { label, tone = 'accent' }: Props = $props();
+  const t = useT();
 </script>
 
 <div class="divider">
   {#if tone === 'neutral'}
-    <span class="pill">{label ?? 'Today'}</span>
+    <span class="pill">{t(label ?? 'ui.unreadDivider.today')}</span>
   {:else}
     <span class="rule"></span>
-    <span class="label">{label ?? 'Unread messages'}</span>
+    <span class="label">{t(label ?? 'ui.unreadDivider.unread')}</span>
     <span class="rule"></span>
   {/if}
 </div>

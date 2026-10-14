@@ -22,6 +22,7 @@
   import SegmentedTabs from '../../lib/components/SegmentedTabs.svelte';
   import TimedToggle from '../../lib/components/TimedToggle.svelte';
   import UpgradeBanner from './UpgradeBanner.svelte';
+  import { useT } from '../../lib/i18n';
 
   type Field = { key: 'a' | 'b'; placeholder: string; unit: string; required?: boolean };
   type Chip = { label: string; dot?: boolean | string };
@@ -72,92 +73,103 @@
   const TOKENS = ['CHAT', 'ICP', 'BTC', 'BOB', 'USDC', 'USDT'];
   const NERVOUS = ['OpenChat', 'ICPanda', 'Dragginz', 'WaterNeuron', 'Gold DAO'];
 
+  // copy fields are resource keys
   const PICKERS = {
-    token: { title: 'Select a token', search: 'Search by symbol or name', all: 'ALL TOKENS', empty: 'Try the symbol instead of the full name.', dir: DIRECTORY, more: 'More tokens', change: 'Change token' },
-    sns: { title: 'Select a nervous system', search: 'Search nervous systems', all: 'ALL NERVOUS SYSTEMS', empty: 'Search by DAO name or token symbol.', dir: SNS, more: 'More systems', change: 'Change system' },
+    token: { title: 'ui.accessGates.tokenPickerTitle', search: 'ui.accessGates.tokenSearch', all: 'ui.accessGates.allTokens', empty: 'ui.accessGates.tokenEmpty', dir: DIRECTORY, more: 'ui.accessGates.moreTokens', change: 'ui.accessGates.changeToken' },
+    sns: { title: 'ui.accessGates.snsPickerTitle', search: 'ui.accessGates.snsSearch', all: 'ui.accessGates.allSystems', empty: 'ui.accessGates.snsEmpty', dir: SNS, more: 'ui.accessGates.moreSystems', change: 'ui.accessGates.changeSystem' },
   };
   const entryName = (dir: Entry[], symbol: string) => dir.find((x) => x.symbol === symbol)?.name ?? symbol;
   const nonEmpty = (chips: (Chip | '' | false)[]) => chips.filter((c): c is Chip => !!c);
 
+  // label / desc / sentence / assetLabel / pickerSub / field placeholder + unit: resource keys (chips are built when shown)
   const TYPES: Record<string, GateType> = {
-    lifetime: { label: 'Lifetime diamond membership', icon: 'diamond', desc: 'Holders of a lifetime membership.', sentence: 'must hold a lifetime diamond membership' },
-    diamond: { label: 'Diamond membership', icon: 'diamond-outline', desc: 'Anyone with an active diamond membership.', sentence: 'must have an active diamond membership' },
+    lifetime: { label: 'ui.accessGates.lifetimeLabel', icon: 'diamond', desc: 'ui.accessGates.lifetimeDesc', sentence: 'ui.accessGates.lifetimeRule' },
+    diamond: { label: 'ui.accessGates.diamondLabel', icon: 'diamond-outline', desc: 'ui.accessGates.diamondDesc', sentence: 'ui.accessGates.diamondRule' },
     neuron: {
-      label: 'Neuron holder',
+      label: 'ui.accessGates.neuronLabel',
       icon: 'neuron',
-      desc: 'Stake a neuron with specific criteria.',
-      assetLabel: 'NERVOUS SYSTEM',
+      desc: 'ui.accessGates.neuronDesc',
+      assetLabel: 'ui.accessGates.nervousSystem',
       assets: NERVOUS,
       searchable: true,
       picker: 'sns',
       repeatable: true,
-      pickerSub: 'Members must stake a neuron in this nervous system.',
+      pickerSub: 'ui.accessGates.neuronPickerSub',
       fields: [
-        { key: 'a', placeholder: 'Minimum dissolve delay (optional)', unit: 'days' },
-        { key: 'b', placeholder: 'Minimum stake (optional)', unit: 'tokens' },
+        { key: 'a', placeholder: 'ui.accessGates.minDissolveDelay', unit: 'ui.accessGates.unitDays' },
+        { key: 'b', placeholder: 'ui.accessGates.minStake', unit: 'ui.accessGates.unitTokens' },
       ],
-      sentence: 'must stake a neuron',
-      chips: (r) => nonEmpty([r.asset && { label: r.asset, dot: true }, r.a && { label: `${r.a}d dissolve delay` }, r.b && { label: `${r.b} staked` }]),
+      sentence: 'ui.accessGates.neuronRule',
+      chips: (r) =>
+        nonEmpty([
+          r.asset && { label: r.asset, dot: true },
+          r.a && { label: t('ui.accessGates.dissolveChip', { days: r.a }) },
+          r.b && { label: t('ui.accessGates.stakedChip', { amount: r.b }) },
+        ]),
     },
     payment: {
-      label: 'Payment',
+      label: 'ui.accessGates.paymentLabel',
       icon: 'payment',
-      desc: 'Pay a one-time or recurring entry fee.',
-      assetLabel: 'TOKEN',
+      desc: 'ui.accessGates.paymentDesc',
+      assetLabel: 'ui.accessGates.token',
       assets: TOKENS,
       searchable: true,
       picker: 'token',
       repeatable: true,
-      pickerSub: 'Members pay the entry fee in this token.',
-      fields: [{ key: 'a', placeholder: 'Amount', unit: 'tokens', required: true }],
-      sentence: 'must pay an entry fee',
+      pickerSub: 'ui.accessGates.paymentPickerSub',
+      fields: [{ key: 'a', placeholder: 'ui.accessGates.amount', unit: 'ui.accessGates.unitTokens', required: true }],
+      sentence: 'ui.accessGates.paymentRule',
       chips: (r) =>
         r.asset && r.a ? [{ label: `${r.a} ${r.asset}`, dot: r.asset }] : nonEmpty([r.asset && { label: r.asset, dot: r.asset }, r.a && { label: r.a }]),
     },
     balance: {
-      label: 'Minimum token balance',
+      label: 'ui.accessGates.balanceLabel',
       icon: 'balance',
-      desc: 'Hold a minimum amount of a token.',
-      assetLabel: 'TOKEN',
+      desc: 'ui.accessGates.balanceDesc',
+      assetLabel: 'ui.accessGates.token',
       assets: TOKENS,
       searchable: true,
       picker: 'token',
       repeatable: true,
       uniqueAsset: true,
-      pickerSub: 'Members must hold a balance of this token.',
-      fields: [{ key: 'a', placeholder: 'Minimum balance', unit: 'tokens', required: true }],
-      sentence: 'must hold a minimum token balance',
+      pickerSub: 'ui.accessGates.balancePickerSub',
+      fields: [{ key: 'a', placeholder: 'ui.accessGates.minBalance', unit: 'ui.accessGates.unitTokens', required: true }],
+      sentence: 'ui.accessGates.balanceRule',
       chips: (r) =>
         r.asset && r.a
-          ? [{ label: `min ${r.a} ${r.asset}`, dot: r.asset }]
-          : nonEmpty([r.asset && { label: r.asset, dot: r.asset }, r.a && { label: `min ${r.a}` }]),
+          ? [{ label: t('ui.accessGates.minChip', { amount: `${r.a} ${r.asset}` }), dot: r.asset }]
+          : nonEmpty([r.asset && { label: r.asset, dot: r.asset }, r.a && { label: t('ui.accessGates.minChip', { amount: r.a }) }]),
     },
-    credential: { label: 'Verified credential', icon: 'credential', desc: 'Present a valid external credential.', sentence: 'must present a verified credential' },
-    unique: { label: 'Unique person', icon: 'person', desc: 'Verified unique human.', sentence: 'must be a verified unique person' },
-    locked: { label: 'Locked', icon: 'lock', desc: 'Invited users only.', sentence: 'must be invited — the group is locked' },
+    credential: { label: 'ui.accessGates.credentialLabel', icon: 'credential', desc: 'ui.accessGates.credentialDesc', sentence: 'ui.accessGates.credentialRule' },
+    unique: { label: 'ui.accessGates.uniqueLabel', icon: 'person', desc: 'ui.accessGates.uniqueDesc', sentence: 'ui.accessGates.uniqueRule' },
+    locked: { label: 'ui.accessGates.lockedLabel', icon: 'lock', desc: 'ui.accessGates.lockedDesc', sentence: 'ui.accessGates.lockedRule' },
     chit: {
-      label: 'Minimum CHIT earned',
+      label: 'ui.accessGates.chitLabel',
       icon: 'chit',
-      desc: 'Earn a minimum amount of CHIT.',
-      fields: [{ key: 'a', placeholder: 'Minimum CHIT earned', unit: 'CHIT', required: true }],
-      sentence: 'must have earned a minimum amount of CHIT',
+      desc: 'ui.accessGates.chitDesc',
+      fields: [{ key: 'a', placeholder: 'ui.accessGates.chitLabel', unit: 'CHIT', required: true }],
+      sentence: 'ui.accessGates.chitRule',
       chips: (r) => (r.a ? [{ label: `${r.a} CHIT` }] : []),
     },
-    nft: { label: 'NFT holder', icon: 'nft', desc: 'Hold a specific NFT.', soon: true, sentence: 'must hold a specific NFT' },
+    nft: { label: 'ui.accessGates.nftLabel', icon: 'nft', desc: 'ui.accessGates.nftDesc', soon: true, sentence: 'ui.accessGates.nftRule' },
   };
 
+  // stored values (emitted in AccessGatesState); shown through JOINER_LABELS
   const JOINERS = ['All', 'Any'];
+  const JOINER_LABELS = ['ui.accessGates.all', 'ui.accessGates.any'];
+  // stored values (emitted as `every`) and shown as-is by TimedToggle — not translated until it takes labels apart from values
   const INTERVALS = ['1 day', '1 week', '2 weeks', '1 month', '3 months', '6 months'];
   const mask = (icon: string) => `var(--icon-${icon}) center/contain no-repeat`;
 
+  // title / body / chip: resource keys (or literal text)
   const LOCKED_WHY = [
-    { icon: 'shield', title: 'Keep out spam and bots', body: 'Require a verified unique person or earned CHIT.' },
-    { icon: 'balance', title: 'Reward your holders', body: 'Open the group only to people holding your token or staking in your DAO.' },
-    { icon: 'payment', title: 'Charge for entry', body: 'Set a one-time or recurring fee, paid in any supported token.' },
+    { icon: 'shield', title: 'ui.accessGates.whySpamTitle', body: 'ui.accessGates.whySpamBody' },
+    { icon: 'balance', title: 'ui.accessGates.whyHoldersTitle', body: 'ui.accessGates.whyHoldersBody' },
+    { icon: 'payment', title: 'ui.accessGates.whyChargeTitle', body: 'ui.accessGates.whyChargeBody' },
   ];
   const LOCKED_EXAMPLE = [
     { icon: 'balance', sentence: TYPES.balance.sentence, chip: '500 CHAT', dot: DOTS.CHAT },
-    { icon: 'person', sentence: TYPES.unique.sentence, chip: 'Unique person', dot: '' },
+    { icon: 'person', sentence: TYPES.unique.sentence, chip: 'ui.accessGates.uniqueLabel', dot: '' },
   ];
 
   interface Props {
@@ -172,6 +184,11 @@
   }
 
   let { isDiamond = true, readOnly = false, value = null, onUpgrade, onChange }: Props = $props();
+  const t = useT();
+
+  // "Members <strong>must …</strong>": the sentence is translated whole and split around the emphasised rule
+  const MARK = '\u0000';
+  const membersParts = $derived(t('ui.accessGates.members', { rule: MARK }).split(MARK));
 
   // the host can hand back the state it was last given, so gates survive the tab being unmounted and remounted
   const initial = untrack(() => value) ?? {};
@@ -192,12 +209,12 @@
   }
 
   function add(key: string) {
-    const t = TYPES[key];
-    if (t.soon) return;
+    const gt = TYPES[key];
+    if (gt.soon) return;
     const rule = { id: `r${Date.now()}`, type: key, asset: '', a: '', b: '' };
     rules = [...rules, rule];
     addOpen = false;
-    editing = t.fields || t.assets ? rule.id : null;
+    editing = gt.fields || gt.assets ? rule.id : null;
     emit();
   }
 
@@ -213,38 +230,38 @@
   }
 
   function complete(r: AccessGateRule) {
-    const t = TYPES[r.type];
-    if (t.assets && !r.asset) return false;
-    return !(t.fields ?? []).some((f) => f.required && !r[f.key].trim());
+    const gt = TYPES[r.type];
+    if (gt.assets && !r.asset) return false;
+    return !(gt.fields ?? []).some((f) => f.required && !r[f.key].trim());
   }
 
   const takenBy = (r: AccessGateRule, asset: string) => !!TYPES[r.type].uniqueAsset && rules.some((x) => x.type === r.type && x.asset === asset && x.id !== r.id);
 
   const summary = $derived(
     rules.length === 0
-      ? 'No requirements — anyone you invite or who finds the group can join.'
+      ? t('ui.accessGates.summaryNone')
       : rules.length === 1
-        ? 'Members must satisfy the requirement below.'
-        : `Members must satisfy ${joiner === 'All' ? 'all' : 'any'} of the ${rules.length} requirements below.`,
+        ? t('ui.accessGates.summaryOne')
+        : t('ui.accessGates.summaryMany', { joiner: joiner === 'All' ? 'all' : 'any', count: rules.length }),
   );
 
   // token / nervous-system picker for the rule in tokenFor
   const picking = $derived(rules.find((r) => r.id === tokenFor) ?? null);
   const picker = $derived.by(() => {
     if (!picking) return null;
-    const t = TYPES[picking.type];
-    const P = PICKERS[t.picker ?? 'token'];
+    const gt = TYPES[picking.type];
+    const P = PICKERS[gt.picker ?? 'token'];
     const q = tokenQuery.trim().toLowerCase();
     const matches = q ? P.dir.filter((tk) => tk.symbol.toLowerCase().includes(q) || tk.name.toLowerCase().includes(q)) : null;
     const groups = matches
       ? matches.length
-        ? [{ label: `${matches.length}${matches.length === 1 ? ' RESULT' : ' RESULTS'}`, tokens: matches }]
+        ? [{ label: t('ui.accessGates.results', { count: matches.length }), tokens: matches }]
         : []
       : [
-          { label: 'MOST USED', tokens: (t.assets ?? []).map((symbol) => ({ symbol, name: entryName(P.dir, symbol) })) },
-          { label: `${P.all} · ${P.dir.length}`, tokens: P.dir },
+          { label: t('ui.accessGates.mostUsed'), tokens: (gt.assets ?? []).map((symbol) => ({ symbol, name: entryName(P.dir, symbol) })) },
+          { label: t(P.all, { count: P.dir.length }), tokens: P.dir },
         ];
-    return { rule: picking, P, sub: t.pickerSub ?? '', groups, none: !!matches && matches.length === 0 };
+    return { rule: picking, P, sub: gt.pickerSub ?? '', groups, none: !!matches && matches.length === 0 };
   });
 
   function closePicker() {
@@ -261,7 +278,7 @@
 
 {#snippet joinerLine(label: string)}
   <div class="joiner">
-    <span class="joiner-label">{label}</span>
+    <span class="joiner-label">{t(label)}</span>
     <span class="joiner-rule"></span>
   </div>
 {/snippet}
@@ -273,8 +290,8 @@
 <div class="gates">
   {#if locked}
     <div class="section">
-      <span class="label">WHAT ARE ACCESS GATES</span>
-      <span class="intro">Gates are conditions people must meet before they can join. OpenChat checks them automatically, so you don't have to screen members by hand.</span>
+      <span class="label">{t('ui.accessGates.whatAreGates')}</span>
+      <span class="intro">{t('ui.accessGates.intro')}</span>
     </div>
 
     <div class="why">
@@ -282,44 +299,44 @@
         <div class="why-row">
           <span class="why-tile"><span class="why-icon" style:mask={mask(w.icon)}></span></span>
           <div class="why-text">
-            <span class="why-title">{w.title}</span>
-            <span class="why-body">{w.body}</span>
+            <span class="why-title">{t(w.title)}</span>
+            <span class="why-body">{t(w.body)}</span>
           </div>
         </div>
       {/each}
     </div>
 
     <div class="section">
-      <span class="label">EXAMPLE</span>
+      <span class="label">{t('ui.accessGates.example')}</span>
       <div class="example">
         {#each LOCKED_EXAMPLE as r, i}
-          {#if i > 0}{@render joinerLine('AND')}{/if}
+          {#if i > 0}{@render joinerLine('ui.accessGates.and')}{/if}
           <div class="rule-card example-card">
             {@render badge(r.icon)}
             <div class="sentence-line">
-              <span class="sentence">Members <span class="sentence-strong">{r.sentence}</span></span>
+              <span class="sentence">{membersParts[0]}<span class="sentence-strong">{t(r.sentence)}</span>{membersParts[1] ?? ''}</span>
               <span class="chip">
                 {#if r.dot}<span class="chip-dot" style:background={r.dot}></span>{/if}
-                <span class="chip-label">{r.chip}</span>
+                <span class="chip-label">{t(r.chip)}</span>
               </span>
             </div>
           </div>
         {/each}
       </div>
-      <span class="example-note">A holders' group: only people with 500 CHAT and a verified unique identity can join.</span>
+      <span class="example-note">{t('ui.accessGates.exampleNote')}</span>
     </div>
 
-    <UpgradeBanner text="Access gates are a Diamond feature." {onUpgrade} />
+    <UpgradeBanner text={t('ui.accessGates.diamondFeature')} {onUpgrade} />
   {:else}
     <div class="head">
       <div class="head-text">
-        <span class="label">WHO CAN JOIN</span>
+        <span class="label">{t('ui.accessGates.whoCanJoin')}</span>
         <span class="summary">{summary}</span>
       </div>
       {#if !readOnly && rules.length > 0}
         <div class="joiners">
           <SegmentedTabs
-            labels={JOINERS}
+            labels={JOINER_LABELS.map((k) => t(k))}
             selectedIndex={JOINERS.indexOf(joiner)}
             dotIndexes={[]}
             onSelect={(i) => {
@@ -333,18 +350,18 @@
 
     <div class="rules">
       {#each rules as r, i}
-        {@const t = TYPES[r.type]}
+        {@const gt = TYPES[r.type]}
         {@const ok = complete(r)}
         {@const open = editing === r.id}
-        {@const chips = t.chips?.(r) ?? []}
+        {@const chips = gt.chips?.(r) ?? []}
         <div class="rule">
-          {#if i > 0}{@render joinerLine(joiner === 'All' ? 'AND' : 'OR')}{/if}
+          {#if i > 0}{@render joinerLine(joiner === 'All' ? 'ui.accessGates.and' : 'ui.accessGates.or')}{/if}
           <!-- collapsed rows are one line, so the icon centres against it; the open editor grows downward and must top-align -->
           <div class="rule-card" class:open class:incomplete={!ok}>
-            {@render badge(t.icon)}
+            {@render badge(gt.icon)}
             <div class="rule-body">
               <div class="sentence-line">
-                <span class="sentence">Members <span class="sentence-strong">{t.sentence}</span></span>
+                <span class="sentence">{membersParts[0]}<span class="sentence-strong">{t(gt.sentence)}</span>{membersParts[1] ?? ''}</span>
                 {#if !open}
                   {#each chips as chip}
                     <span class="chip">
@@ -357,20 +374,20 @@
 
               {#if open && !readOnly}
                 <div class="editor">
-                  {#if t.assets}
-                    {@const P = PICKERS[t.picker ?? 'token']}
-                    {@const shown = t.searchable && r.asset && !t.assets.includes(r.asset) ? [...t.assets, r.asset] : t.assets}
+                  {#if gt.assets}
+                    {@const P = PICKERS[gt.picker ?? 'token']}
+                    {@const shown = gt.searchable && r.asset && !gt.assets.includes(r.asset) ? [...gt.assets, r.asset] : gt.assets}
                     <div class="asset-block">
-                      <span class="asset-label">{t.assetLabel ?? ''}</span>
+                      <span class="asset-label">{gt.assetLabel ? t(gt.assetLabel) : ''}</span>
                       <div class="assets">
                         {#each shown as name}
                           {@const taken = takenBy(r, name)}
                           <span class="asset" class:selected={r.asset === name} class:unavailable={taken} onclick={() => !taken && patch(r.id, { asset: name })} role="button" tabindex="0">
                             <span class="asset-dot" style:background={dotFor(name)}></span>
-                            <span>{taken ? `${name} (used)` : name}</span>
+                            <span>{taken ? t('ui.accessGates.assetUsed', { name }) : name}</span>
                           </span>
                         {/each}
-                        {#if t.searchable}
+                        {#if gt.searchable}
                           <span
                             class="browse"
                             onclick={() => {
@@ -381,23 +398,23 @@
                             tabindex="0"
                           >
                             <span class="browse-icon"></span>
-                            <span>{r.asset && !t.assets.includes(r.asset) ? P.change : P.more}</span>
+                            <span>{t(r.asset && !gt.assets.includes(r.asset) ? P.change : P.more)}</span>
                           </span>
                         {/if}
                       </div>
                     </div>
                   {/if}
 
-                  {#each t.fields ?? [] as f}
+                  {#each gt.fields ?? [] as f}
                     <div class="field" class:missing={f.required && !r[f.key].trim()}>
-                      <input value={r[f.key]} oninput={(e) => patch(r.id, { [f.key]: e.currentTarget.value.replace(/[^\d.]/g, '') })} placeholder={f.placeholder} inputmode="numeric" />
-                      <span class="unit">{f.unit}</span>
+                      <input value={r[f.key]} oninput={(e) => patch(r.id, { [f.key]: e.currentTarget.value.replace(/[^\d.]/g, '') })} placeholder={t(f.placeholder)} inputmode="numeric" />
+                      <span class="unit">{t(f.unit)}</span>
                     </div>
                   {/each}
 
                   <div class="editor-actions">
-                    <div class="done" class:ready={ok} onclick={() => ok && (editing = null)} role="button" tabindex="0">Done</div>
-                    <div class="remove-text" onclick={() => remove(r.id)} role="button" tabindex="0">Remove</div>
+                    <div class="done" class:ready={ok} onclick={() => ok && (editing = null)} role="button" tabindex="0">{t('ui.common.done')}</div>
+                    <div class="remove-text" onclick={() => remove(r.id)} role="button" tabindex="0">{t('ui.common.remove')}</div>
                   </div>
                 </div>
               {/if}
@@ -405,10 +422,10 @@
 
             {#if !open && !readOnly}
               <div class="tools">
-                {#if t.fields || t.assets}
-                  <span class="tool" onclick={() => (editing = r.id)} role="button" tabindex="0" aria-label="Edit" title="Edit"><span class="tool-icon" style:mask={mask('edit')}></span></span>
+                {#if gt.fields || gt.assets}
+                  <span class="tool" onclick={() => (editing = r.id)} role="button" tabindex="0" aria-label={t('ui.common.edit')} title={t('ui.common.edit')}><span class="tool-icon" style:mask={mask('edit')}></span></span>
                 {/if}
-                <span class="tool" onclick={() => remove(r.id)} role="button" tabindex="0" aria-label="Remove" title="Remove"><span class="tool-icon" style:mask={mask('close')}></span></span>
+                <span class="tool" onclick={() => remove(r.id)} role="button" tabindex="0" aria-label={t('ui.common.remove')} title={t('ui.common.remove')}><span class="tool-icon" style:mask={mask('close')}></span></span>
               </div>
             {/if}
           </div>
@@ -417,8 +434,8 @@
 
       {#if rules.length === 0}
         <div class="empty">
-          <span class="empty-title">Anyone invited can join</span>
-          <span class="empty-hint">{readOnly ? 'There are no extra requirements to join.' : 'Add a requirement to gate the group. People you invite directly never have to pass gates.'}</span>
+          <span class="empty-title">{t('ui.accessGates.emptyTitle')}</span>
+          <span class="empty-hint">{t(readOnly ? 'ui.accessGates.emptyReadOnly' : 'ui.accessGates.emptyHint')}</span>
         </div>
       {/if}
     </div>
@@ -426,7 +443,7 @@
     {#if !readOnly}
       <div class="add" onclick={() => (addOpen = true)} role="button" tabindex="0">
         <span class="add-icon"></span>
-        <span>Add requirement</span>
+        <span>{t('ui.accessGates.addRequirement')}</span>
       </div>
     {/if}
 
@@ -436,12 +453,8 @@
       <div class="recheck">
         <span class="why-tile"><span class="why-icon" style:mask={mask('refresh')}></span></span>
         <div class="recheck-text">
-          <span class="recheck-title">{recurring ? `Re-checked every ${every}` : 'Checked once, when members join'}</span>
-          <span class="recheck-body"
-            >{recurring
-              ? `Every ${every}, members are checked against these requirements again. Anyone who no longer meets them is marked as lapsed.`
-              : "Members don't need to keep meeting these requirements after they've joined."}</span
-          >
+          <span class="recheck-title">{recurring ? t('ui.accessGates.recheckedEvery', { every }) : t('ui.accessGates.checkedOnce')}</span>
+          <span class="recheck-body">{recurring ? t('ui.accessGates.recheckBody', { every }) : t('ui.accessGates.onceBody')}</span>
         </div>
       </div>
     {:else}
@@ -449,9 +462,9 @@
         <div class="cell">
           <TimedToggle
             density="flush"
-            label="Re-check members periodically"
-            prefix="Every"
-            offHint="Members are checked once, when they join."
+            label={t('ui.accessGates.recheckLabel')}
+            prefix={t('ui.accessGates.every')}
+            offHint={t('ui.accessGates.recheckOffHint')}
             on={intervalOn}
             value={every}
             options={INTERVALS}
@@ -474,20 +487,20 @@
       <div class="scrim" onclick={() => (addOpen = false)} aria-hidden="true"></div>
       <div class="modal">
         <div class="modal-head">
-          <span class="modal-title">Add a requirement</span>
-          <span class="close" onclick={() => (addOpen = false)} role="button" tabindex="0"><span class="tool-icon" style:mask={mask('close')}></span></span>
+          <span class="modal-title">{t('ui.accessGates.addTitle')}</span>
+          <span class="close" onclick={() => (addOpen = false)} role="button" tabindex="0" aria-label={t('ui.common.close')}><span class="tool-icon" style:mask={mask('close')}></span></span>
         </div>
         <div class="catalogue">
-          {#each Object.entries(TYPES) as [key, t]}
-            {@const used = !t.repeatable && rules.some((r) => r.type === key)}
-            <div class="option" class:unavailable={t.soon || used} onclick={() => !used && add(key)} role="button" tabindex="0">
-              <span class="option-tile"><span class="option-icon" style:mask={mask(t.icon)}></span></span>
+          {#each Object.entries(TYPES) as [key, gt]}
+            {@const used = !gt.repeatable && rules.some((r) => r.type === key)}
+            <div class="option" class:unavailable={gt.soon || used} onclick={() => !used && add(key)} role="button" tabindex="0">
+              <span class="option-tile"><span class="option-icon" style:mask={mask(gt.icon)}></span></span>
               <div class="option-text">
                 <div class="option-line">
-                  <span class="option-label">{t.label}</span>
-                  {#if t.soon}<span class="pill">SOON</span>{/if}
+                  <span class="option-label">{t(gt.label)}</span>
+                  {#if gt.soon}<span class="pill">{t('ui.accessGates.soon')}</span>{/if}
                 </div>
-                <span class="option-desc">{used ? 'Already added' : t.desc}</span>
+                <span class="option-desc">{t(used ? 'ui.accessGates.alreadyAdded' : gt.desc)}</span>
               </div>
             </div>
           {/each}
@@ -502,17 +515,17 @@
       <div class="modal token-modal">
         <div class="modal-head">
           <div class="token-head">
-            <span class="modal-title">{picker.P.title}</span>
-            <span class="token-sub">{picker.sub}</span>
+            <span class="modal-title">{t(picker.P.title)}</span>
+            <span class="token-sub">{picker.sub ? t(picker.sub) : ''}</span>
           </div>
-          <span class="close" onclick={closePicker} role="button" tabindex="0"><span class="tool-icon" style:mask={mask('close')}></span></span>
+          <span class="close" onclick={closePicker} role="button" tabindex="0" aria-label={t('ui.common.close')}><span class="tool-icon" style:mask={mask('close')}></span></span>
         </div>
 
         <div class="token-search-wrap">
           <div class="token-search">
             <span class="search-icon"></span>
             <!-- svelte-ignore a11y_autofocus -->
-            <input bind:value={tokenQuery} placeholder={picker.P.search} autofocus={true} />
+            <input bind:value={tokenQuery} placeholder={t(picker.P.search)} autofocus={true} />
             {#if tokenQuery.length > 0}
               <span class="clear" onclick={() => (tokenQuery = '')} role="button" tabindex="0"><span class="clear-icon"></span></span>
             {/if}
@@ -530,9 +543,9 @@
                   <span class="token-dot" style:background={dotFor(tk.symbol)}></span>
                   <div class="token-text">
                     <span class="token-symbol">{tk.symbol}</span>
-                    <span class="token-name">{taken ? `${tk.name} — already gated` : tk.name}</span>
+                    <span class="token-name">{taken ? t('ui.accessGates.alreadyGated', { name: tk.name }) : tk.name}</span>
                   </div>
-                  {#if taken}<span class="pill in-use">IN USE</span>{/if}
+                  {#if taken}<span class="pill in-use">{t('ui.accessGates.inUse')}</span>{/if}
                   {#if selected}<span class="check"><span class="check-icon"></span></span>{/if}
                 </div>
               {/each}
@@ -540,8 +553,8 @@
           {/each}
           {#if picker.none}
             <div class="empty">
-              <span class="empty-title">Nothing matches “{tokenQuery}”</span>
-              <span class="empty-hint centered">{picker.P.empty}</span>
+              <span class="empty-title">{t('ui.accessGates.noMatch', { query: tokenQuery })}</span>
+              <span class="empty-hint centered">{t(picker.P.empty)}</span>
             </div>
           {/if}
         </div>

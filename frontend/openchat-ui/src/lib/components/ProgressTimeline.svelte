@@ -2,8 +2,11 @@
      A phase's state is derived from its steps when omitted. Sub-steps show only on the active/failed phase (or when expanded).
      collapseDone: once everything is done, fold into "N steps done · View details". density "compact" tightens rows. -->
 <script lang="ts">
+  import { useT } from '../i18n';
+
   type StepState = 'done' | 'active' | 'todo' | 'failed';
 
+  /** title, sub, error and step labels: resource keys (or literal text). */
   interface Phase {
     title: string;
     sub?: string;
@@ -20,6 +23,7 @@
   }
 
   let { phases, density = 'regular', collapseDone = false }: Props = $props();
+  const t = useT();
 
   let expanded = $state(false);
 
@@ -42,8 +46,8 @@
   {#if collapsed}
     <div class="summary" role="listitem">
       <span class="node done"><span class="mark"></span></span>
-      <span class="summary-text">{totalSteps} steps done</span>
-      <span class="link" onclick={() => (expanded = !expanded)} role="button" tabindex="0" aria-expanded={expanded}>View details</span>
+      <span class="summary-text">{t('ui.progressTimeline.stepsDone', { count: totalSteps })}</span>
+      <span class="link" onclick={() => (expanded = !expanded)} role="button" tabindex="0" aria-expanded={expanded}>{t('ui.progressTimeline.viewDetails')}</span>
     </div>
   {:else}
     {#each phases as ph, i}
@@ -56,17 +60,17 @@
           <span class="line" class:last={i === phases.length - 1}></span>
         </div>
         <div class="body">
-          <span class="title">{ph.title}</span>
-          {#if sub && (st !== 'done' || expanded)}<span class="sub">{sub}</span>{/if}
+          <span class="title">{t(ph.title)}</span>
+          {#if sub && (st !== 'done' || expanded)}<span class="sub">{t(sub)}</span>{/if}
           {#if open && ph.steps?.length}
             <div class="steps">
-              {#each ph.steps as step}<div class="step {step.state ?? 'todo'}"><span class="step-slot"><span class="step-mark"></span></span><span class="step-label">{step.label}</span></div>{/each}
+              {#each ph.steps as step}<div class="step {step.state ?? 'todo'}"><span class="step-slot"><span class="step-mark"></span></span><span class="step-label">{t(step.label)}</span></div>{/each}
             </div>
           {/if}
         </div>
       </div>
     {/each}
-    {#if collapseDone && allDone && expanded}<span class="link hide" onclick={() => (expanded = !expanded)} role="button" tabindex="0">Hide details</span>{/if}
+    {#if collapseDone && allDone && expanded}<span class="link hide" onclick={() => (expanded = !expanded)} role="button" tabindex="0">{t('ui.progressTimeline.hideDetails')}</span>{/if}
   {/if}
 </div>
 

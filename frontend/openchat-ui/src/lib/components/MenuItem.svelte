@@ -1,6 +1,8 @@
 <!-- One Menu row (icon, label, optional check and shortcut) or a separator. minVw / maxVw show it only within a viewport width range. -->
 <script lang="ts">
+  import { useT } from '../i18n';
   interface Props {
+    /** Resource key (or literal text). */
     label?: string;
     variant?: 'regular' | 'danger' | 'separator';
     /** Icon name from icons.css (--icon-<name>). */
@@ -16,6 +18,7 @@
   }
 
   let { label = '', variant = 'regular', icon, mask = '', checkMask = '', shortcut = '', minVw, maxVw, onSelect }: Props = $props();
+  const t = useT();
 
   let vw = $state(typeof window === 'undefined' ? 1920 : window.innerWidth);
 
@@ -33,7 +36,7 @@
       {#if iconMask}
         <span class="icon" style:mask={iconMask}></span>
       {/if}
-      <span class="label">{label}</span>
+      <span class="label">{t(label)}</span>
       {#if checkMask}
         <span class="check" style:mask={checkMask}></span>
       {/if}

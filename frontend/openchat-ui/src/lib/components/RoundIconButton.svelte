@@ -1,11 +1,13 @@
 <!-- Circular icon control (call controls, mini call, recorder).
      variant: default | on (accent) | off (inverted — e.g. camera off) | danger | overlay (on video). size: sm 34 | md 50 | lg 56. -->
 <script lang="ts">
+  import { useT } from '../i18n';
   type Variant = 'default' | 'on' | 'off' | 'danger' | 'overlay';
   type Size = 'sm' | 'md' | 'lg';
 
   interface Props {
     icon: string;
+    /** Resource key (or literal text): accessible name and tooltip. */
     label: string;
     variant?: Variant;
     size?: Size;
@@ -15,6 +17,7 @@
   }
 
   let { icon, label, variant = 'default', size = 'sm', pressed, tooltip = true, onPress }: Props = $props();
+  const t = useT();
 
   function onkeydown(e: KeyboardEvent) {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -30,9 +33,9 @@
   {onkeydown}
   role="button"
   tabindex="0"
-  aria-label={label}
+  aria-label={t(label)}
   aria-pressed={pressed == null ? undefined : pressed}
-  data-tip={tooltip ? label || undefined : undefined}
+  data-tip={tooltip ? (label ? t(label) : undefined) : undefined}
 >
   <span class="glyph" style:mask="var(--icon-{icon}) center/contain no-repeat"></span>
 </span>

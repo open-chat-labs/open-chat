@@ -2,6 +2,7 @@
      Natural ratio capped at 360×420 (single), fixed grids for albums (2, 3, 4, 5+ → "+N"). Clicking a tile calls onOpen(index) → fullscreen viewer.
      items: [{ src?, bg?, w?, h? }] — src is an image URL; bg a CSS background fallback (placeholders). -->
 <script lang="ts">
+  import { useT } from '../i18n';
   type Status = 'sending' | 'sent' | 'delivered' | 'read';
 
   interface Props {
@@ -16,6 +17,7 @@
     duration?: string;
     size?: string;
     upload?: { state: 'uploading' | 'failed'; progress?: number } | null;
+    /** Resource key (or literal text). */
     failedText?: string;
     lastInGroup?: boolean;
     onOpen?: (index: number) => void;
@@ -34,13 +36,14 @@
     duration = '',
     size = '',
     upload = null,
-    failedText = "Couldn't send",
+    failedText = 'ui.mediaMessage.couldNotSend',
     lastInGroup = true,
     onOpen,
     onRetry,
     onCancel,
     onDelete,
   }: Props = $props();
+  const t = useT();
 
   const ALBUM: Record<number, [string, string, number]> = { 1: ['1fr', '1fr', 220], 2: ['1fr 1fr', '1fr', 200], 3: ['1fr 1fr', '1fr 1fr', 260], 4: ['1fr 1fr', '1fr 1fr', 280] };
 
@@ -85,26 +88,26 @@
           onclick={() => onOpen?.(i)}
           role="button"
           tabindex="0"
-          aria-label={kind === 'video' ? 'Open video' : `Open image ${i + 1}${count > 1 ? ` of ${count}` : ''}`}
+          aria-label={kind === 'video' ? t('ui.mediaMessage.openVideo') : t('ui.mediaMessage.openImage', { index: i + 1, count })}
         >
           {#if count > 4 && i === 3}<span class="more">+{count - 3}</span>{/if}
         </div>
       {/each}
       {#if kind === 'video' && !uploading && !failed}
-        <span class="play" onclick={() => onOpen?.(0)} role="button" tabindex="0" aria-label="Play video{duration ? `, ${duration}` : ''}"><span class="play-icon"></span></span>
+        <span class="play" onclick={() => onOpen?.(0)} role="button" tabindex="0" aria-label={t(duration ? 'ui.mediaMessage.playVideoDuration' : 'ui.mediaMessage.playVideo', { duration })}><span class="play-icon"></span></span>
         <span class="chip video-meta"><span class="video-icon"></span>{[duration, size].filter(Boolean).join(' · ')}</span>
       {/if}
-      {#if kind === 'gif'}<span class="gif">GIF</span>{/if}
+      {#if kind === 'gif'}<span class="gif">{t('ui.mediaMessage.gif')}</span>{/if}
       {#if uploading}
         <span class="veil">
           <span class="progress">
             <span class="ring" style:background="conic-gradient(#fff {Math.round((upload?.progress || 0) * 360)}deg,rgba(255,255,255,.22) 0)"></span>
-            <span class="cancel" onclick={onCancel} role="button" tabindex="0" aria-label="Cancel upload"></span>
+            <span class="cancel" onclick={onCancel} role="button" tabindex="0" aria-label={t('ui.mediaMessage.cancelUpload')}></span>
           </span>
         </span>
       {/if}
       {#if failed}
-        <span class="veil dark"><span class="retry" onclick={onRetry} role="button" tabindex="0"><span class="retry-icon"></span>Retry</span></span>
+        <span class="veil dark"><span class="retry" onclick={onRetry} role="button" tabindex="0"><span class="retry-icon"></span>{t('ui.common.retry')}</span></span>
       {/if}
       {#if !caption && !uploading && !failed}<span class="chip on-media">{@render stamp()}</span>{/if}
     </div>
@@ -112,7 +115,7 @@
       <p class="caption">{caption}<span class="stamp spacer" aria-hidden="true">{@render stamp()}</span><span class="stamp corner">{@render stamp()}</span></p>
     {/if}
   </div>
-  {#if failed}<span class="failed-line"><span class="failed-icon"></span>{failedText}{#if onDelete} · <span class="delete" onclick={onDelete} role="button" tabindex="0">Delete</span>{/if}</span>{/if}
+  {#if failed}<span class="failed-line"><span class="failed-icon"></span>{t(failedText)}{#if onDelete} · <span class="delete" onclick={onDelete} role="button" tabindex="0">{t('ui.common.delete')}</span>{/if}</span>{/if}
 </div>
 
 <style>

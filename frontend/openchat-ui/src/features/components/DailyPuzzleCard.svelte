@@ -6,9 +6,11 @@
 </script>
 
 <script lang="ts">
+  import { useT } from '../../lib/i18n';
+
   interface Props {
     state?: 'new' | 'progress' | 'solved' | 'hidden' | 'off';
-    /** Progress: status line ("3 of 7 bridges"). Solved: the title ("Solved in 4:12"). */
+    /** Resource key (or literal text). Progress: status line ("3 of 7 bridges"). Solved: the title ("Solved in 4:12"). */
     sub?: string;
     /** Solved: time until the next puzzle. */
     countdown?: string;
@@ -18,21 +20,22 @@
   }
 
   let { state: status = 'new', sub, countdown = '', remind = false, onAction }: Props = $props();
+  const t = useT();
 
   let menuOpen = $state(false);
 
   const card = $derived(
     status === 'progress'
-      ? { title: "Today's puzzle · Bridges", sub: sub ?? 'In progress', btn: 'Continue', icon: 'joystick' }
+      ? { title: t('ui.dailyPuzzleCard.title'), sub: t(sub ?? 'ui.dailyPuzzleCard.inProgress'), btn: t('ui.common.continue'), icon: 'joystick' }
       : status === 'solved'
-        ? { title: sub ?? 'Solved', sub: `Next puzzle in ${countdown}`, btn: 'View', icon: 'circle-check' }
-        : { title: "Today's puzzle · Bridges", sub: 'A 5-minute logic puzzle', btn: 'Try it', icon: 'joystick' },
+        ? { title: t(sub ?? 'ui.dailyPuzzleCard.solved'), sub: t('ui.dailyPuzzleCard.nextIn', { countdown }), btn: t('ui.dailyPuzzleCard.view'), icon: 'circle-check' }
+        : { title: t('ui.dailyPuzzleCard.title'), sub: t('ui.dailyPuzzleCard.teaser'), btn: t('ui.dailyPuzzleCard.tryIt'), icon: 'joystick' },
   );
 
   const items = $derived([
-    { label: 'Remind me daily', icon: 'bell', on: remind, key: (remind ? 'puzzleRemindOff' : 'puzzleRemindOn') as PuzzleAction },
-    { label: 'How to play', icon: 'info', on: false, key: 'puzzleHow' as PuzzleAction },
-    { label: 'Hide daily puzzle', icon: 'eye-off', on: false, key: 'puzzleHide' as PuzzleAction },
+    { label: 'ui.dailyPuzzleCard.remind', icon: 'bell', on: remind, key: (remind ? 'puzzleRemindOff' : 'puzzleRemindOn') as PuzzleAction },
+    { label: 'ui.dailyPuzzleCard.howToPlay', icon: 'info', on: false, key: 'puzzleHow' as PuzzleAction },
+    { label: 'ui.dailyPuzzleCard.hide', icon: 'eye-off', on: false, key: 'puzzleHide' as PuzzleAction },
   ]);
 </script>
 
@@ -40,7 +43,7 @@
   {#if status !== 'off' && status !== 'hidden'}
     <div class="card {status}">
       <span class="tile"
-        ><span class="tile-icon" style:mask="var(--icon-{card.icon}) center/contain no-repeat"></span>{#if remind}<span class="bell" title="Daily reminder on" aria-label="Daily reminder on"
+        ><span class="tile-icon" style:mask="var(--icon-{card.icon}) center/contain no-repeat"></span>{#if remind}<span class="bell" title={t('ui.dailyPuzzleCard.reminderOn')} aria-label={t('ui.dailyPuzzleCard.reminderOn')}
             ><span class="bell-icon"></span></span
           >{/if}</span
       >
@@ -49,7 +52,7 @@
         <span class="sub">{card.sub}</span>
       </div>
       <span class="go" onclick={() => onAction?.('puzzle')} role="button" tabindex="0">{card.btn}</span>
-      <span class="more" class:open={menuOpen} onclick={() => (menuOpen = !menuOpen)} role="button" tabindex="0" title="Puzzle options" aria-label="Puzzle options" aria-expanded={menuOpen}
+      <span class="more" class:open={menuOpen} onclick={() => (menuOpen = !menuOpen)} role="button" tabindex="0" title={t('ui.dailyPuzzleCard.options')} aria-label={t('ui.dailyPuzzleCard.options')} aria-expanded={menuOpen}
         ><span class="more-icon"></span></span
       >
       {#if menuOpen}
@@ -62,7 +65,7 @@
               }}
               role="menuitem"
               tabindex="0"
-              ><span class="item-icon" style:mask="var(--icon-{item.icon}) center/contain no-repeat"></span><span class="item-label">{item.label}</span>{#if item.on}<span class="check"></span>{/if}</span
+              ><span class="item-icon" style:mask="var(--icon-{item.icon}) center/contain no-repeat"></span><span class="item-label">{t(item.label)}</span>{#if item.on}<span class="check"></span>{/if}</span
             >{/each}
         </div>
       {/if}
@@ -70,11 +73,11 @@
   {/if}
   {#if status === 'hidden'}
     <div class="hidden-note" role="status">
-      <span class="hidden-icon"></span><span class="hidden-text">Daily puzzle hidden. Bring it back in Profile → CHIT.</span><span
+      <span class="hidden-icon"></span><span class="hidden-text">{t('ui.dailyPuzzleCard.hiddenNote')}</span><span
         class="undo"
         onclick={() => onAction?.('puzzleUnhide')}
         role="button"
-        tabindex="0">Undo</span
+        tabindex="0">{t('ui.common.undo')}</span
       >
     </div>
   {/if}

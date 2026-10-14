@@ -1,5 +1,7 @@
 <!-- Fraction-of-balance shortcuts. Emits onSelect(fraction); the parent turns it into an amount (respecting decimals and fees). -->
 <script lang="ts">
+  import { useT } from '../i18n';
+
   interface Props {
     options?: number[];
     size?: 'sm' | 'md';
@@ -7,12 +9,13 @@
   }
 
   let { options = [0.25, 0.5, 0.75, 1], size = 'sm', onSelect }: Props = $props();
+  const t = useT();
 </script>
 
-<div class="chips" role="group" aria-label="Quick amounts">
+<div class="chips" role="group" aria-label={t('ui.quickAmountChips.label')}>
   {#each options as fraction}
     <span class="chip" class:md={size === 'md'} onclick={() => onSelect?.(fraction)} role="button" tabindex="0">
-      {fraction >= 1 ? 'Max' : `${Math.round(fraction * 100)}%`}
+      {fraction >= 1 ? t('ui.quickAmountChips.max') : t('ui.quickAmountChips.percent', { percent: Math.round(fraction * 100) })}
     </span>
   {/each}
 </div>

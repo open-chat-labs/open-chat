@@ -1,14 +1,18 @@
 <!-- You pay / you get card: label + balance, big amount (input when onChange is given), token pill that opens a picker,
      fiat/notice line, optional quick chips. position "top" | "bottom" adds the extra padding a flip button overlapping the seam needs. -->
 <script lang="ts">
+  import { useT } from '../i18n';
   import ListSectionLabel from './ListSectionLabel.svelte';
   import QuickAmountChips from './QuickAmountChips.svelte';
   import TokenAvatar from './TokenAvatar.svelte';
 
   interface Props {
+    /** Resource key (or literal text). */
     label: string;
+    /** Resource key (or literal text). */
     meta?: string;
     value?: string;
+    /** Resource key (or literal text), e.g. a fiat estimate or a balance warning. */
     note?: string;
     tone?: 'default' | 'danger';
     muted?: boolean;
@@ -36,6 +40,7 @@
     onQuickSelect,
     onTokenClick,
   }: Props = $props();
+  const t = useT();
 
   const empty = $derived(!onChange && (value == null || value === ''));
 </script>
@@ -52,19 +57,19 @@
         oninput={onChange}
         inputmode="decimal"
         placeholder="0"
-        aria-label={label}
+        aria-label={t(label)}
       />
     {:else}
       <span class="amount shown" class:danger={tone === 'danger'} class:muted={empty || muted}>{empty ? '—' : value}</span>
     {/if}
-    <span class="token" onclick={onTokenClick} aria-label="Change token" role="button" tabindex="0" title="Change token">
+    <span class="token" onclick={onTokenClick} aria-label={t('ui.amountCard.changeToken')} role="button" tabindex="0" title={t('ui.amountCard.changeToken')}>
       <TokenAvatar size={28} {symbol} {mark} {gradient} />
       <span class="symbol">{symbol}</span>
       <span class="caret"></span>
     </span>
   </div>
   <div class="foot">
-    <span class="note" class:danger={tone === 'danger'}>{note}</span>
+    <span class="note" class:danger={tone === 'danger'}>{t(note)}</span>
     {#if onQuickSelect}<QuickAmountChips onSelect={onQuickSelect} />{/if}
   </div>
 </div>

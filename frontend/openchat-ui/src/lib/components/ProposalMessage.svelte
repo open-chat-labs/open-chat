@@ -2,6 +2,7 @@
      Native's two-threshold bar: ▾ softThreshold = passes when voting ends, ▼ hardThreshold = adopted immediately. Adopt/Reject only while you can vote.
      Without myVote it remembers the vote cast here. -->
 <script lang="ts">
+  import { useT } from '../i18n';
   import ThresholdBar from './ThresholdBar.svelte';
 
   type Vote = 'adopt' | 'reject';
@@ -19,7 +20,7 @@
     reject: number;
     softThreshold?: number;
     hardThreshold?: number;
-    /** e.g. "Voting ends in 2d 4h"; closed proposals default to "Voting ended". */
+    /** e.g. "Voting ends in 2d 4h"; closed proposals default to "Voting ended". Resource key (or literal text). */
     when?: string;
     myVote?: Vote | null;
     canVote?: boolean;
@@ -47,6 +48,7 @@
     onVote,
     onDetails,
   }: Props = $props();
+  const t = useT();
 
   let castHere = $state<Vote | null>(null);
 
@@ -56,17 +58,21 @@
   const hard = $derived(hardThreshold ?? (critical ? 67 : 50));
   const passing = $derived(adopt >= soft);
   const adopted = $derived(adopt >= hard);
-  const softLabel = $derived(`Passes when voting ends (${soft}%)`);
-  const hardLabel = $derived(`Passes immediately (${hard}%)`);
+  const softLabel = $derived(t('ui.proposalMessage.passesWhenEnds', { percent: soft }));
+  const hardLabel = $derived(t('ui.proposalMessage.passesImmediately', { percent: hard }));
 
   const tone = $derived(mine ? (mine === 'adopt' ? 'good' : 'bad') : status === 'rejected' ? 'bad' : status === 'expired' ? 'muted' : adopted || passing ? 'good' : 'info');
   const outcome = $derived(
-    open
-      ? mine
-        ? mine === 'adopt' ? 'You voted to adopt' : 'You voted to reject'
-        : adopted ? 'Adopted' : passing ? 'Passing' : 'Open'
-      : status === 'rejected' ? 'Rejected' : status === 'executed' ? 'Executed' : 'Expired',
+    t(
+      open
+        ? mine
+          ? mine === 'adopt' ? 'ui.proposalMessage.votedAdopt' : 'ui.proposalMessage.votedReject'
+          : adopted ? 'ui.proposalMessage.adopted' : passing ? 'ui.proposalMessage.passing' : 'ui.proposalMessage.open'
+        : status === 'rejected' ? 'ui.proposalMessage.rejected' : status === 'executed' ? 'ui.proposalMessage.executed' : 'ui.proposalMessage.expired',
+    ),
   );
+  // the proposer is styled inside the sentence: split the translated byline around a marker
+  const byline = $derived(t('ui.proposalMessage.byline', { kind, proposer: '\u0001' }).split('\u0001'));
   const icon = $derived(mine || status === 'executed' ? 'check' : status === 'rejected' ? 'close' : status === 'expired' ? 'clock' : 'dot');
 
   function cast(side: Vote) {
@@ -81,10 +87,10 @@
     <div class="head">
       <div class="pills">
         <span class="pill outcome {tone}"><span class="pill-icon" style:mask="var(--icon-{icon}) center/contain no-repeat"></span>{outcome}</span>
-        {#if critical}<span class="pill critical"><span class="shield"></span>Critical</span>{/if}
+        {#if critical}<span class="pill critical"><span class="shield"></span>{t('ui.proposalMessage.critical')}</span>{/if}
       </div>
       <span class="title">{title}</span>
-      <span class="byline">{kind} · by <span class="proposer">{proposer}</span></span>
+      <span class="byline">{byline[0]}<span class="proposer">{proposer}</span>{byline[1] ?? ''}</span>
     </div>
     <div class="tally">
       <ThresholdBar
@@ -94,22 +100,22 @@
           { at: soft / 100, label: softLabel },
           { at: hard / 100, label: hardLabel, strong: true },
         ]}
-        label="{adopt.toFixed(2)}% adopt, {reject.toFixed(2)}% reject"
+        label={t('ui.proposalMessage.tally', { adopt: adopt.toFixed(2), reject: reject.toFixed(2) })}
       />
       <div class="figures">
-        <span class="figure yes">{adopt.toFixed(2)}%<span class="figure-label after">adopt</span></span>
-        <span class="figure no"><span class="figure-label before">reject</span>{reject.toFixed(2)}%</span>
+        <span class="figure yes">{adopt.toFixed(2)}%<span class="figure-label after">{t('ui.proposalMessage.adoptShort')}</span></span>
+        <span class="figure no"><span class="figure-label before">{t('ui.proposalMessage.rejectShort')}</span>{reject.toFixed(2)}%</span>
       </div>
       <div class="legend"><span class="key"><span class="soft-mark"></span>{softLabel}</span><span class="key"><span class="hard-mark"></span>{hardLabel}</span></div>
-      <span class="when" class:open><span class="clock"></span>{when ?? (open ? '' : 'Voting ended')}</span>
+      <span class="when" class:open><span class="clock"></span>{t(when ?? (open ? '' : 'ui.proposalMessage.votingEnded'))}</span>
     </div>
     {#if open && !mine && canVote}
       <div class="votes">
-        <span class="vote adopt" onclick={() => cast('adopt')} role="button" tabindex="0"><span class="vote-icon check"></span>Adopt</span>
-        <span class="vote reject" onclick={() => cast('reject')} role="button" tabindex="0"><span class="vote-icon cross"></span>Reject</span>
+        <span class="vote adopt" onclick={() => cast('adopt')} role="button" tabindex="0"><span class="vote-icon check"></span>{t('ui.proposalMessage.adopt')}</span>
+        <span class="vote reject" onclick={() => cast('reject')} role="button" tabindex="0"><span class="vote-icon cross"></span>{t('ui.proposalMessage.reject')}</span>
       </div>
     {/if}
-    <span class="details" onclick={onDetails} role="button" tabindex="0">Proposal details<span class="external"></span></span>
+    <span class="details" onclick={onDetails} role="button" tabindex="0">{t('ui.proposalMessage.details')}<span class="external"></span></span>
   </div>
   <div class="time">{time}</div>
 </div>

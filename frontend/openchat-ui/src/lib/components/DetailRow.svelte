@@ -1,9 +1,11 @@
 <!-- Label left, mono value right; for quotes, summaries and token facts. Optional copy, value tone (or raw valueColor),
      rule above/below, bold total. -->
 <script lang="ts">
+  import { useT } from '../i18n';
   import CopyButton from './CopyButton.svelte';
 
   interface Props {
+    /** Resource key (or literal text). */
     label: string;
     value: string;
     tone?: 'default' | 'positive' | 'warning' | 'danger' | 'muted';
@@ -12,6 +14,7 @@
     rule?: 'top' | 'bottom' | 'none';
     strong?: boolean;
     copyValue?: string;
+    /** Resource key (or literal text). */
     copyLabel?: string;
   }
 
@@ -24,12 +27,13 @@
     rule = 'top',
     strong = false,
     copyValue = '',
-    copyLabel = 'Copy',
+    copyLabel = 'ui.common.copy',
   }: Props = $props();
+  const t = useT();
 </script>
 
 <div class="detail-row {size}" class:rule-top={rule === 'top'} class:rule-bottom={rule === 'bottom'} class:strong>
-  <span class="label">{label}</span>
+  <span class="label">{t(label)}</span>
   <span class="value {tone}" style:color={valueColor || undefined}>{value}</span>
   {#if copyValue}
     <span class="copy"><CopyButton value={copyValue} label={copyLabel} /></span>

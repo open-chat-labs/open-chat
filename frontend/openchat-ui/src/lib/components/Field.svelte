@@ -1,7 +1,9 @@
 <!-- Search field. With onInput it is a live text input (plus a clear button once there is text and onClear is set);
      without, it stays the static placeholder chip used in the library. Optional help line aligns with the text. -->
 <script lang="ts">
+  import { useT } from '../i18n';
   interface Props {
+    /** Resource key (or literal text). */
     placeholder: string;
     value?: string;
     onInput?: (e: Event & { currentTarget: HTMLInputElement }) => void;
@@ -10,10 +12,12 @@
     showIcon?: boolean;
     /** Defaults to on for the static chip, off for a live input. */
     showShortcut?: boolean;
+    /** Resource key (or literal text). */
     help?: string;
   }
 
   let { placeholder, value = '', onInput, onClear, shortcut = '⌘K', showIcon = true, showShortcut, help = '' }: Props = $props();
+  const t = useT();
 
   const live = $derived(typeof onInput === 'function');
   const showClear = $derived(live && value.length > 0 && typeof onClear === 'function');
@@ -25,9 +29,9 @@
       <span class="search-icon"></span>
     {/if}
     {#if live}
-      <input {value} oninput={onInput} {placeholder} />
+      <input {value} oninput={onInput} placeholder={t(placeholder)} />
     {:else}
-      <span class="placeholder">{placeholder}</span>
+      <span class="placeholder">{t(placeholder)}</span>
     {/if}
     {#if showClear}
       <span class="clear" onclick={onClear} role="button" tabindex="0">
@@ -43,7 +47,7 @@
       {#if showIcon}
         <span class="indent"></span>
       {/if}
-      <span class="help-text">{help}</span>
+      <span class="help-text">{t(help)}</span>
     </div>
   {/if}
 </div>

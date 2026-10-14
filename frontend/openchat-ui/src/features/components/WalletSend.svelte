@@ -9,6 +9,7 @@
   import PageHeader from '../../lib/components/PageHeader.svelte';
   import QuickAmountChips from '../../lib/components/QuickAmountChips.svelte';
   import SideCard from '../../lib/components/SideCard.svelte';
+  import { useT } from '../../lib/i18n';
 
   const mask = (n: string) => `var(--icon-${n}) center/contain no-repeat`;
   // sample contacts and pasted addresses until the address book is wired
@@ -29,9 +30,20 @@
     USDT: '0x4E2a9F07c1B3dD58e7A9b2c06F1d3E8a5C7b9D21',
     XRP: 'rPEPPER7kfTD9w2To4CQk6UCfuHM9c6GDY',
   };
+  // label / short / time: resource keys (or literal text, e.g. network names)
   const NETS = [
-    { label: 'Bitcoin', short: 'Native BTC', time: '10–60 min', fee: '~0.0000042 BTC', f: 0.0000042 },
-    { label: 'ckBTC on ICP', short: 'Needs an ICP wallet', time: 'Seconds', fee: '0.0000001 BTC', f: 0.0000001 },
+    { label: 'Bitcoin', short: 'ui.walletSend.nativeBtc', time: 'ui.walletSend.btcTime', fee: '~0.0000042 BTC', f: 0.0000042 },
+    { label: 'ui.walletSend.ckBtcOnIcp', short: 'ui.walletSend.needsIcpWallet', time: 'ui.walletSend.seconds', fee: '0.0000001 BTC', f: 0.0000001 },
+  ];
+  const MODES = [
+    ['user', 'ui.walletSend.openChatUser', 'user'],
+    ['address', 'ui.walletSend.walletAddress', 'wallet'],
+  ];
+  // address helpers: [label key, icon]; the QR one isn't wired yet
+  const TOOLS = [
+    ['ui.walletSend.paste', 'paste'],
+    ['ui.walletSend.saved', 'bookmark'],
+    ['ui.walletSend.scanQr', 'qr'],
   ];
   type Chain = 'BTC' | 'ETH' | 'XRP' | 'ICP';
   const NET_NAME: Record<Chain, string> = { BTC: 'Bitcoin', ETH: 'Ethereum', XRP: 'XRP Ledger', ICP: 'Internet Computer' };
@@ -60,10 +72,11 @@
   }
 
   let { tokens, token, address: initialAddress = '', onClose, onSent }: Props = $props();
+  const t = useT();
 
-  const held = $derived(tokens.filter((t) => t.held > 0));
+  const held = $derived(tokens.filter((tok) => tok.held > 0));
   const startSymbol = (() => {
-    const list = tokens.filter((t) => t.held > 0);
+    const list = tokens.filter((tok) => tok.held > 0);
     return (list.find((x) => x.symbol === token) ?? list.find((x) => x.symbol === 'ICP') ?? list[0])?.symbol ?? '';
   })();
 
@@ -99,26 +112,28 @@
   const avail = $derived(tk ? Math.max(0, tk.held - fee) : 0);
   const shortAddress = $derived(address ? `${address.slice(0, 10)}…${address.slice(-6)}` : '');
   const toLabel = $derived(mode === 'user' ? (person ? person.name : '—') : shortAddress || '—');
-  const toMain = $derived(mode === 'user' ? (person ? person.name : 'Not chosen yet') : shortAddress || 'Not entered yet');
+  const toMain = $derived(mode === 'user' ? (person ? person.name : t('ui.walletSend.notChosen')) : shortAddress || t('ui.walletSend.notEntered'));
   const dpCap = $derived(Math.pow(10, Math.min(tk?.dp ?? 0, 6)));
 
   const rows = $derived([
-    { k: 'Network', v: mode === 'user' ? 'OpenChat' : multi ? NETS[net].label : det && det !== 'unknown' ? NET_NAME[det] : '—', ink: 'var(--ink,#ECECF1)' },
-    { k: 'Network fee', v: `${fmt(fee, tk?.dp ?? 0)} ${tk?.symbol}`, ink: 'var(--ink,#ECECF1)' },
-    { k: mode === 'user' && person ? `${first} receives` : 'They receive', v: `${fmt(n, tk?.dp ?? 0)} ${tk?.symbol}`, ink: n > 0 ? 'var(--ink,#ECECF1)' : 'var(--ink-5,#6E6E7C)' },
+    { k: t('ui.walletSend.network'), v: mode === 'user' ? 'OpenChat' : multi ? t(NETS[net].label) : det && det !== 'unknown' ? NET_NAME[det] : '—', ink: 'var(--ink,#ECECF1)' },
+    { k: t('ui.walletSend.networkFee'), v: `${fmt(fee, tk?.dp ?? 0)} ${tk?.symbol}`, ink: 'var(--ink,#ECECF1)' },
+    { k: mode === 'user' && person ? t('ui.walletSend.nameReceives', { name: first }) : t('ui.walletSend.theyReceive'), v: `${fmt(n, tk?.dp ?? 0)} ${tk?.symbol}`, ink: n > 0 ? 'var(--ink,#ECECF1)' : 'var(--ink-5,#6E6E7C)' },
   ]);
 
   const history = $derived.by(() => {
     if (!person || !tk) return [];
     const big = tk.held > 10;
     return [
-      { label: 'You sent · 28 Sep', sign: '−', v: big ? 50 : 0.002, mask: mask('arrow-up'), incoming: false },
-      { label: `${first} sent · 14 Sep`, sign: '+', v: big ? 20 : 0.001, mask: mask('arrow-down'), incoming: true },
-      { label: 'You sent · 2 Sep', sign: '−', v: big ? 120 : 0.005, mask: mask('arrow-up'), incoming: false },
+      { label: t('ui.walletSend.youSent', { date: '28 Sep' }), sign: '−', v: big ? 50 : 0.002, mask: mask('arrow-up'), incoming: false },
+      { label: t('ui.walletSend.nameSent', { name: first, date: '14 Sep' }), sign: '+', v: big ? 20 : 0.001, mask: mask('arrow-down'), incoming: true },
+      { label: t('ui.walletSend.youSent', { date: '2 Sep' }), sign: '−', v: big ? 120 : 0.005, mask: mask('arrow-up'), incoming: false },
     ];
   });
 
-  const ctaLabel = $derived(ok ? 'Continue' : !recipOk ? (mode === 'user' ? 'Choose a recipient' : 'Add a valid address') : n <= 0 ? 'Enter an amount' : 'Amount too high');
+  const ctaLabel = $derived(
+    t(ok ? 'ui.common.continue' : !recipOk ? (mode === 'user' ? 'ui.walletSend.chooseRecipient' : 'ui.walletSend.addValidAddress') : n <= 0 ? 'ui.walletSend.enterAmount' : 'ui.walletSend.tooHigh'),
+  );
 
   function toggleUnit() {
     if (!tk) return;
@@ -163,22 +178,22 @@
     <div class="column">
       <div class="group">
         <div class="modes">
-          {#each [['user', 'OpenChat user', 'user'], ['address', 'Wallet address', 'wallet']] as [key, label, icon]}
+          {#each MODES as [key, label, icon]}
             <span class="mode" class:on={mode === key} onclick={() => (mode = key as 'user' | 'address')} tabindex="0" role="tab" aria-selected={mode === key}
-              ><span class="mode-icon" style:mask={mask(icon)}></span>{label}</span
+              ><span class="mode-icon" style:mask={mask(icon)}></span>{t(label)}</span
             >
           {/each}
         </div>
         {#if mode === 'user'}
-          <span class="kicker">OPENCHAT USER</span>
+          <span class="kicker">{t('ui.walletSend.openChatUserKicker')}</span>
           {#if person}
             <div class="person">
               <span class="person-avatar" style:background={person.grad}></span>
               <span class="person-text"><span class="person-name">{person.name}</span><span class="person-handle">{person.handle}</span></span>
-              <span class="icon-button" onclick={() => (user = null)} role="button" tabindex="0" aria-label="Clear" title="Clear"><span class="icon-button-icon" style:mask={mask('close')}></span></span>
+              <span class="icon-button" onclick={() => (user = null)} role="button" tabindex="0" aria-label={t('ui.walletSend.clear')} title={t('ui.walletSend.clear')}><span class="icon-button-icon" style:mask={mask('close')}></span></span>
             </div>
           {:else}
-            <div class="search"><span class="search-icon"></span><span class="search-placeholder">Search OpenChat users</span></div>
+            <div class="search"><span class="search-icon"></span><span class="search-placeholder">{t('ui.walletSend.searchUsers')}</span></div>
           {/if}
           <div class="quick">
             {#each PEOPLE as name, i}
@@ -188,7 +203,7 @@
             {/each}
           </div>
         {:else}
-          <span class="kicker">ADDRESS</span>
+          <span class="kicker">{t('ui.walletSend.addressKicker')}</span>
           <div class="address-box" class:bad={badAddress} class:good={!!det && !badAddress}>
             <input
               class="address-input"
@@ -197,30 +212,30 @@
                 address = e.currentTarget.value.trim();
                 net = 0;
               }}
-              placeholder="Paste or type an address"
-              aria-label="Destination address"
+              placeholder={t('ui.walletSend.addressPlaceholder')}
+              aria-label={t('ui.walletSend.destinationAddress')}
             />
             {#if det}
               <span class="detect" class:bad={badAddress}
                 ><span class="detect-icon" style:mask={mask(badAddress ? 'close' : 'check')}></span>{det === 'unknown'
-                  ? 'Unrecognised address'
+                  ? t('ui.walletSend.unrecognised')
                   : wrongNet
-                    ? `${det} address — not ${tk.symbol}`
-                    : `${ADDR_NAME[det]} address`}</span
+                    ? t('ui.walletSend.wrongNetwork', { chain: det, symbol: tk.symbol })
+                    : t('ui.walletSend.chainAddress', { chain: ADDR_NAME[det] })}</span
               >
             {/if}
           </div>
           <div class="tools">
-            {#each [['Paste', 'paste'], ['Saved', 'bookmark'], ['Scan QR', 'qr']] as [label, icon]}
+            {#each TOOLS as [label, icon]}
               <span
                 class="tool"
                 onclick={() => {
-                  if (label === 'Scan QR') return;
+                  if (icon === 'qr') return;
                   address = SAMPLE[tk.symbol] ?? '';
                   net = 0;
                 }}
                 tabindex="0"
-                role="button"><span class="tool-icon" style:mask={mask(icon)}></span>{label}</span
+                role="button"><span class="tool-icon" style:mask={mask(icon)}></span>{t(label)}</span
               >
             {/each}
           </div>
@@ -228,11 +243,11 @@
       </div>
       {#if multi}
         <div class="group">
-          <ListSectionLabel label="NETWORK" />
+          <ListSectionLabel label={t('ui.walletSend.networkKicker')} />
           <div class="net-picker">
             <div class="net-select" class:open={netOpen} onclick={() => (netOpen = !netOpen)} tabindex="0" role="button" aria-expanded={netOpen}>
-              <span class="net-label">{NETS[net].label}</span>
-              <span class="net-meta">{NETS[net].time} · {NETS[net].fee}</span>
+              <span class="net-label">{t(NETS[net].label)}</span>
+              <span class="net-meta">{t(NETS[net].time)} · {NETS[net].fee}</span>
               <span class="caret" class:open={netOpen}></span>
             </div>
             {#if netOpen}
@@ -249,8 +264,8 @@
                     role="option"
                     aria-selected={net === i}
                   >
-                    <span class="net-option-text"><span class="net-label">{x.label}</span><span class="net-short">{x.short}</span></span>
-                    <span class="net-time">{x.time}</span>
+                    <span class="net-option-text"><span class="net-label">{t(x.label)}</span><span class="net-short">{t(x.short)}</span></span>
+                    <span class="net-time">{t(x.time)}</span>
                     <span class="net-fee">{x.fee}</span>
                     <span class="net-tick" class:on={net === i}></span>
                   </div>
@@ -261,7 +276,7 @@
         </div>
       {/if}
       <div class="group">
-        <div class="amount-head"><span class="kicker plain">AMOUNT</span><span class="available">Available {fmt(avail, tk.dp)} {tk.symbol}</span></div>
+        <div class="amount-head"><span class="kicker plain">{t('ui.walletSend.amountKicker')}</span><span class="available">{t('ui.walletSend.available', { amount: fmt(avail, tk.dp), symbol: tk.symbol })}</span></div>
         <div class="amount-box" class:over class:filled={n > 0 && !over}>
           <div class="amount-main">
             <div class="amount-line">
@@ -271,34 +286,32 @@
                 oninput={(e) => (amt = e.currentTarget.value.replace(/[^0-9.,]/g, ''))}
                 inputmode="decimal"
                 placeholder="0"
-                aria-label="Amount"
+                aria-label={t('ui.walletSend.amount')}
               />
             </div>
             <span class="amount-note" class:over
               >{over
-                ? 'More than you can send'
+                ? t('ui.walletSend.moreThanYouCan')
                 : n > 0
                   ? `≈ ${inUsd ? `${fmt(n, tk.dp)} ${tk.symbol}` : money(n * tk.price)}`
-                  : inUsd
-                    ? 'Type an amount in USD'
-                    : `Type an amount in ${tk.symbol}`}</span
+                  : t('ui.walletSend.typeAmountIn', { unit: inUsd ? 'USD' : tk.symbol })}</span
             >
           </div>
-          <span class="unit" onclick={toggleUnit} tabindex="0" aria-label="Switch between token and USD" role="button" title="Switch between token and USD"
+          <span class="unit" onclick={toggleUnit} tabindex="0" aria-label={t('ui.walletSend.switchUnit')} role="button" title={t('ui.walletSend.switchUnit')}
             >{inUsd ? 'USD' : tk.symbol}<span class="unit-icon"></span></span
           >
         </div>
         <QuickAmountChips size="md" onSelect={chooseFraction} />
       </div>
       {#if !msgOpen && !msg}
-        <span class="add-message" onclick={() => (msgOpen = true)} tabindex="0" role="button"><span class="add-icon"></span>Add a message</span>
+        <span class="add-message" onclick={() => (msgOpen = true)} tabindex="0" role="button"><span class="add-icon"></span>{t('ui.walletSend.addMessage')}</span>
       {:else}
         <div class="group">
-          <div class="message-head"><ListSectionLabel label="MESSAGE" /><span class="optional">· OPTIONAL</span></div>
+          <div class="message-head"><ListSectionLabel label={t('ui.walletSend.messageKicker')} /><span class="optional">{t('ui.walletSend.optional')}</span></div>
           <textarea
             class="message"
             bind:value={msg}
-            placeholder={mode === 'user' && person ? `Add a note ${first} will see in your chat` : 'A note for your own records'}
+            placeholder={mode === 'user' && person ? t('ui.walletSend.notePerson', { name: first }) : t('ui.walletSend.noteSelf')}
             rows="5"
           ></textarea>
         </div>
@@ -309,7 +322,7 @@
 
 <div class="send" bind:clientWidth={width} data-screen-label="Wallet send">
   {#if tk}
-    <PageHeader title="Send {tk.symbol}" onBack={back} avatarMark={step === 'done' ? '' : tk.mark} avatarGradient={tk.grad}
+    <PageHeader title={t('ui.walletSend.title', { symbol: tk.symbol })} onBack={back} avatarMark={step === 'done' ? '' : tk.mark} avatarGradient={tk.grad}
       >{#if step !== 'done'}<span class="balance">{fmt(tk.held, tk.dp)} {tk.symbol} · {money(tk.held * tk.price)}</span>{/if}</PageHeader
     >
     {#if step !== 'done' && !narrow}
@@ -317,7 +330,7 @@
         {@render column()}
         <div class="summary-cell">
           <SideCard>
-            <ListSectionLabel label="SUMMARY" />
+            <ListSectionLabel label={t('ui.walletSend.summaryKicker')} />
             <div class="summary-amount">
               <span class="summary-mark" style:background={tk.grad}>{tk.mark}</span>
               <div class="summary-figures"
@@ -326,30 +339,30 @@
             </div>
             <div class="summary-rows">
               <div class="to-row">
-                <span class="to-label">To</span>
+                <span class="to-label">{t('ui.walletSend.to')}</span>
                 <span class="to-value">
                   {#if mode === 'user' && person}<span class="to-avatar" style:background={person.grad}></span>{/if}
                   <span class="to-text"
                     ><span class="to-main" class:empty={!recipOk}>{toMain}</span>{#if mode === 'user' ? !!person : !!det && det !== 'unknown'}<span class="to-sub"
-                        >{mode === 'user' ? (person?.handle ?? '') : 'Wallet address'}</span
+                        >{mode === 'user' ? (person?.handle ?? '') : t('ui.walletSend.walletAddress')}</span
                       >{/if}</span
                   >
                 </span>
               </div>
               {#each rows as r}<DetailRow label={r.k} value={r.v} valueColor={r.ink} size="lg" rule="bottom" />{/each}
-              {#if msg.trim()}<div class="summary-message"><span class="summary-message-label">Message</span><span class="summary-message-text">{msg}</span></div>{/if}
+              {#if msg.trim()}<div class="summary-message"><span class="summary-message-label">{t('ui.walletSend.message')}</span><span class="summary-message-text">{msg}</span></div>{/if}
               <div class="total-row">
-                <span class="total-label">Total</span><span class="total-figures"
+                <span class="total-label">{t('ui.walletSend.total')}</span><span class="total-figures"
                   ><span class="total" class:over>{fmt(n + fee, tk.dp)} {tk.symbol}</span><span class="total-fiat">≈ {money((n + fee) * tk.price)}</span></span
                 >
               </div>
             </div>
             {#if mode === 'user' && person}
               <div class="history">
-                <ListSectionLabel label="BETWEEN YOU AND {first.toUpperCase()}" />
+                <ListSectionLabel label={t('ui.walletSend.between', { name: first.toUpperCase() })} />
                 <div class="history-rows">
                   {#each history as h}
-                    <div class="history-row" onclick={() => reuse(h.v)} tabindex="0" aria-label="Use this amount" role="button" title="Use this amount">
+                    <div class="history-row" onclick={() => reuse(h.v)} tabindex="0" aria-label={t('ui.walletSend.useAmount')} role="button" title={t('ui.walletSend.useAmount')}>
                       <span class="history-badge"><span class="history-icon" style:mask={h.mask}></span></span>
                       <span class="history-label">{h.label}</span>
                       <span class="history-amount" class:incoming={h.incoming}>{h.sign}{fmt(h.v, tk.dp)} {tk.symbol}</span>
@@ -360,7 +373,7 @@
             {/if}
             <span class="grow"></span>
             <span class="cta" class:blocked={!ok} onclick={() => ok && ((step = 'pin'), (pin = 0))} tabindex="0" role="button" aria-disabled={!ok}>{ctaLabel}</span>
-            <span class="cta-hint">{ok ? "You'll confirm with your PIN next. Transfers can't be reversed." : 'The summary fills in as you go.'}</span>
+            <span class="cta-hint">{t(ok ? 'ui.walletSend.confirmHint' : 'ui.walletSend.summaryHint')}</span>
           </SideCard>
         </div>
       </div>
@@ -375,7 +388,7 @@
         {/if}
         <div class="foot-bar">
           <span class="foot-summary" onclick={() => (footOpen = !footOpen)} tabindex="0" role="button"
-            ><span class="foot-total" class:over>{fmt(n + fee, tk.dp)} {tk.symbol}<span class="foot-caret" class:open={footOpen}></span></span><span class="foot-to">To {toMain}</span></span
+            ><span class="foot-total" class:over>{fmt(n + fee, tk.dp)} {tk.symbol}<span class="foot-caret" class:open={footOpen}></span></span><span class="foot-to">{t('ui.walletSend.toWho', { name: toMain })}</span></span
           >
           <span class="cta foot-cta" class:blocked={!ok} onclick={() => ok && ((step = 'pin'), (pin = 0))} tabindex="0" role="button">{ctaLabel}</span>
         </div>
@@ -383,7 +396,7 @@
     {/if}
     {#if step === 'pin'}
       <DialogShell
-        title="Enter your PIN"
+        title="ui.walletSend.enterPin"
         width={420}
         height="auto"
         flush={true}
@@ -393,24 +406,24 @@
         }}
       >
         <div class="pin">
-          <span class="pin-sub">Confirm sending {fmt(n, tk.dp)} {tk.symbol} to {toLabel}.</span>
+          <span class="pin-sub">{t('ui.walletSend.confirmSending', { amount: fmt(n, tk.dp), symbol: tk.symbol, to: toLabel })}</span>
           <div class="pin-dots">
             {#each [0, 1, 2, 3, 4, 5] as i}<span class="pin-box" class:current={i === pin}><span class="pin-dot" class:filled={i < pin}></span></span>{/each}
           </div>
-          <span class="cta pin-cta" onclick={confirmPin} tabindex="0" role="button">{pin < 6 ? 'Type PIN (demo)' : 'Send'}</span>
+          <span class="cta pin-cta" onclick={confirmPin} tabindex="0" role="button">{t(pin < 6 ? 'ui.walletSend.typePin' : 'ui.common.send')}</span>
         </div>
       </DialogShell>
     {/if}
     {#if step === 'done'}
       <div class="done">
         <span class="done-badge"><span class="done-icon"></span></span>
-        <span class="done-title">Sent {fmt(n, tk.dp)} {tk.symbol} to {toLabel}</span>
-        <span class="done-sub">{multi && net === 0 ? 'Bitcoin transfers take 10 to 60 minutes to confirm.' : 'It usually arrives within a few seconds.'}</span>
-        <span class="done-back" onclick={() => onClose?.()} tabindex="0" role="button">Back to {tk.symbol}</span>
+        <span class="done-title">{t('ui.walletSend.sent', { amount: fmt(n, tk.dp), symbol: tk.symbol, to: toLabel })}</span>
+        <span class="done-sub">{t(multi && net === 0 ? 'ui.walletSend.btcSlow' : 'ui.walletSend.arrivesFast')}</span>
+        <span class="done-back" onclick={() => onClose?.()} tabindex="0" role="button">{t('ui.walletSend.backTo', { symbol: tk.symbol })}</span>
       </div>
     {/if}
   {:else}
-    <PageHeader title="Send" onBack={() => onClose?.()} />
+    <PageHeader title={t('ui.common.send')} onBack={() => onClose?.()} />
   {/if}
 </div>
 

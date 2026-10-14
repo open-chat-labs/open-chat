@@ -7,6 +7,7 @@
   import { onMount, tick, untrack } from 'svelte';
   import RoundIconButton from '../../lib/components/RoundIconButton.svelte';
   import VideoTile from './VideoTile.svelte';
+  import { useT } from '../../lib/i18n';
 
   interface Person {
     name: string;
@@ -57,8 +58,9 @@
     onMinimise,
     onLeave,
   }: Props = $props();
+  const t = useT();
 
-  const ME = { name: 'You', initial: 'I', grad: 'linear-gradient(140deg,#FF9F45,#FF5672)', bg: 'linear-gradient(165deg,#3d434c,#22262d)' };
+  const ME = { name: 'ui.callPanel.you', initial: 'I', grad: 'linear-gradient(140deg,#FF9F45,#FF5672)', bg: 'linear-gradient(165deg,#3d434c,#22262d)' };
   const BGS = [
     'linear-gradient(165deg,#4a3b45,#1d1a22)',
     'linear-gradient(165deg,#2f3a44,#1a2026)',
@@ -89,7 +91,7 @@
   const pipMode = $derived(!sharing && others.length <= 2);
 
   type Tile = { name: string; initial: string; grad: string; bg: string; ratio: number; muted: boolean; speaking: boolean; big: boolean };
-  const selfTile = $derived<Tile>({ ...ME, bg: cam ? ME.bg : '#16161c', ratio: 4 / 3, muted, speaking: false, big: false });
+  const selfTile = $derived<Tile>({ ...ME, name: t(ME.name), bg: cam ? ME.bg : '#16161c', ratio: 4 / 3, muted, speaking: false, big: false });
   const tileOf = (o: (typeof others)[number], i: number, big = false): Tile => ({
     name: o.name,
     initial: o.initial,
@@ -169,17 +171,17 @@
 
   const pipInset = $derived(full ? '20px' : '12px');
   const controls = $derived([
-    { label: muted ? 'Unmute' : 'Mute', icon: muted ? 'mic-off' : 'mic', variant: muted ? 'off' : 'default', pressed: muted, press: () => onToggleMute?.() },
-    { label: cam ? 'Turn camera off' : 'Turn camera on', icon: cam ? 'video' : 'video-off', variant: cam ? 'default' : 'off', pressed: !cam, press: () => (camOverride = !cam) },
-    { label: sharing ? 'Stop sharing' : 'Share screen', icon: 'screen-share', variant: sharing ? 'on' : 'default', pressed: sharing, press: () => (sharing = !sharing) },
-    { label: 'Leave call', icon: 'phone-off', variant: 'danger', pressed: undefined, press: () => onLeave?.() },
+    { label: muted ? 'ui.callPanel.unmute' : 'ui.callPanel.mute', icon: muted ? 'mic-off' : 'mic', variant: muted ? 'off' : 'default', pressed: muted, press: () => onToggleMute?.() },
+    { label: cam ? 'ui.callPanel.cameraOff' : 'ui.callPanel.cameraOn', icon: cam ? 'video' : 'video-off', variant: cam ? 'default' : 'off', pressed: !cam, press: () => (camOverride = !cam) },
+    { label: sharing ? 'ui.callPanel.stopSharing' : 'ui.callPanel.shareScreen', icon: 'screen-share', variant: sharing ? 'on' : 'default', pressed: sharing, press: () => (sharing = !sharing) },
+    { label: 'ui.callPanel.leave', icon: 'phone-off', variant: 'danger', pressed: undefined, press: () => onLeave?.() },
   ] as const);
 </script>
 
 <div class="call" class:full class:idle={chromeHidden} bind:this={root} onmousemove={wake} data-screen-label={full ? 'Call · full screen' : 'Call'} role="group">
   <div class="stage" class:sharing style:grid-template-columns={cols}>
     {#if sharing}
-      <div class="shared"><span class="shared-label">Your shared screen</span></div>
+      <div class="shared"><span class="shared-label">{t('ui.callPanel.yourSharedScreen')}</span></div>
     {/if}
     {#each tiles as tile}
       <div class="cell"><VideoTile nameLabel={tile.name} initial={tile.initial} grad={tile.grad} feed={tile.bg} ratio={tile.ratio} muted={tile.muted} speaking={tile.speaking} big={tile.big} /></div>
@@ -210,12 +212,12 @@
       onpointerdown={pipDown}
       onpointermove={pipMove}
       onpointerup={pipUp}
-      title="Drag to move"
+      title={t('ui.callPanel.dragToMove')}
       role="img"
-      aria-label="Your video"
+      aria-label={t('ui.callPanel.yourVideo')}
     >
       <div class="strip-center"><span class="pip-avatar" style:background={selfTile.grad}>{selfTile.initial}</span></div>
-      <span class="tag"><span class="tag-mic" class:muted style:mask="var(--icon-{muted ? 'mic-off' : 'mic'}) center/contain no-repeat"></span>You</span>
+      <span class="tag"><span class="tag-mic" class:muted style:mask="var(--icon-{muted ? 'mic-off' : 'mic'}) center/contain no-repeat"></span>{t('ui.callPanel.you')}</span>
     </div>
   {/if}
 
@@ -223,10 +225,10 @@
     <span class="top-avatar" style:background={avatarGrad ?? others[0]?.grad ?? 'transparent'}></span>
     <span class="top-text">
       <span class="top-title">{title}</span>
-      <span class="top-meta"><span class="live-dot"></span>{fmt(Math.max(0, Math.floor((now - (start ?? now)) / 1000)))} · {others.length + 1} in call</span>
+      <span class="top-meta"><span class="live-dot"></span>{t('ui.callPanel.duration', { time: fmt(Math.max(0, Math.floor((now - (start ?? now)) / 1000))), count: others.length + 1 })}</span>
     </span>
     {#if sharing}
-      <span class="sharing" onclick={() => (sharing = !sharing)} role="button" tabindex="0"><span class="sharing-icon"></span>You're sharing<span class="sharing-stop">Stop</span></span>
+      <span class="sharing" onclick={() => (sharing = !sharing)} role="button" tabindex="0"><span class="sharing-icon"></span>{t('ui.callPanel.youreSharing')}<span class="sharing-stop">{t('ui.callPanel.stop')}</span></span>
     {/if}
     {#if !full && (onTogglePanel || onDetails)}
       <span
@@ -235,21 +237,21 @@
         onclick={() => (onTogglePanel ? onTogglePanel() : onDetails?.())}
         role="button"
         tabindex="0"
-        aria-label={panelShown ? 'Hide details' : 'Details'}
+        aria-label={t(panelShown ? 'ui.callPanel.hideDetails' : 'ui.callPanel.details')}
         aria-pressed={panelShown}
-        title={panelShown ? 'Hide details' : 'Details'}><span class="top-icon" style:mask="var(--icon-panel) center/contain no-repeat"></span></span
+        title={t(panelShown ? 'ui.callPanel.hideDetails' : 'ui.callPanel.details')}><span class="top-icon" style:mask="var(--icon-panel) center/contain no-repeat"></span></span
       >
     {/if}
-    <span class="top-button" onclick={() => onMinimise?.()} role="button" tabindex="0" aria-label="Minimise to see messages" title="Minimise to see messages"
+    <span class="top-button" onclick={() => onMinimise?.()} role="button" tabindex="0" aria-label={t('ui.callPanel.minimise')} title={t('ui.callPanel.minimise')}
       ><span class="top-icon" style:mask="var(--icon-chat) center/contain no-repeat"></span></span
     >
-    <span class="top-button" onclick={() => onToggleFull?.(!full)} role="button" tabindex="0" aria-label={full ? 'Exit full screen' : 'Full screen'} title={full ? 'Exit full screen' : 'Full screen'}
+    <span class="top-button" onclick={() => onToggleFull?.(!full)} role="button" tabindex="0" aria-label={t(full ? 'ui.callPanel.exitFullScreen' : 'ui.callPanel.fullScreen')} title={t(full ? 'ui.callPanel.exitFullScreen' : 'ui.callPanel.fullScreen')}
       ><span class="top-icon" style:mask="var(--icon-{full ? 'minimize' : 'maximize'}) center/contain no-repeat"></span></span
     >
   </div>
 
   <div class="bottom chrome">
-    <div class="pill" role="toolbar" aria-label="Call controls">
+    <div class="pill" role="toolbar" aria-label={t('ui.callPanel.controls')}>
       {#each controls as b}<RoundIconButton icon={b.icon} label={b.label} variant={b.variant} pressed={b.pressed} size={full ? 'lg' : 'md'} onPress={b.press} />{/each}
     </div>
   </div>

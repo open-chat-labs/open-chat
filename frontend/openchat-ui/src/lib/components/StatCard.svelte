@@ -1,16 +1,19 @@
 <script lang="ts">
+  import { useT } from '../i18n';
   interface Props {
+    /** Resource key (or literal text). */
     label: string;
     value: string;
     emphasis?: boolean;
   }
 
   let { label, value, emphasis = false }: Props = $props();
+  const t = useT();
 </script>
 
 <div class="stat-card">
   <div class="card">
-    <span class="label">{label}</span>
+    <span class="label">{t(label)}</span>
     <span class="value" class:emphasis>{value}</span>
   </div>
 </div>

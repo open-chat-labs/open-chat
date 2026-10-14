@@ -1,6 +1,7 @@
 <!-- Centred empty / offline / error message with an icon tile and an optional action.
      A preset fills icon, title, body, action and tone; any of them can be overridden. -->
 <script lang="ts">
+  import { useT } from '../i18n';
   // public icon keys → canonical names in lib/icons.js
   const ICONS = {
     search: 'search',
@@ -17,20 +18,20 @@
   type Tone = 'neutral' | 'warning' | 'danger';
 
   const PRESETS: Record<string, { icon: IconKey; title: string; body: string; actionLabel: string; tone?: Tone }> = {
-    'no-conversations': { icon: 'emoji', title: 'No conversations yet', body: 'Start a direct message or join a community to see it here.', actionLabel: 'New message' },
-    'no-results': { icon: 'search', title: 'No matches', body: 'Nothing matched that search. Try a different name or keyword.', actionLabel: '' },
-    'no-members': { icon: 'users', title: 'Just you in here', body: 'Invite people to the group and their messages will appear in this thread.', actionLabel: 'Invite people' },
-    offline: { icon: 'offline', title: "You're offline", body: 'Messages you send will queue and deliver once the connection is back.', actionLabel: 'Retry now', tone: 'warning' },
-    error: { icon: 'alert', title: "Couldn't load messages", body: 'Something went wrong on our side. Your drafts are safe.', actionLabel: 'Try again', tone: 'danger' },
+    'no-conversations': { icon: 'emoji', title: 'ui.emptyState.noConversationsTitle', body: 'ui.emptyState.noConversationsBody', actionLabel: 'ui.emptyState.newMessage' },
+    'no-results': { icon: 'search', title: 'ui.emptyState.noResultsTitle', body: 'ui.emptyState.noResultsBody', actionLabel: '' },
+    'no-members': { icon: 'users', title: 'ui.emptyState.noMembersTitle', body: 'ui.emptyState.noMembersBody', actionLabel: 'ui.emptyState.invitePeople' },
+    offline: { icon: 'offline', title: 'ui.emptyState.offlineTitle', body: 'ui.emptyState.offlineBody', actionLabel: 'ui.emptyState.retryNow', tone: 'warning' },
+    error: { icon: 'alert', title: 'ui.emptyState.errorTitle', body: 'ui.emptyState.errorBody', actionLabel: 'ui.emptyState.tryAgain', tone: 'danger' },
   };
 
   interface Props {
     preset?: 'no-conversations' | 'no-results' | 'no-members' | 'offline' | 'error';
-    /** Empty uses the preset's. */
+    /** Resource key (or literal text). Empty uses the preset's. */
     title?: string;
-    /** Empty uses the preset's. */
+    /** Resource key (or literal text). Empty uses the preset's. */
     body?: string;
-    /** Empty string hides the preset's action. */
+    /** Resource key (or literal text). Empty string hides the preset's action. */
     actionLabel?: string;
     icon?: IconKey;
     tone?: Tone;
@@ -38,6 +39,7 @@
   }
 
   let { preset = 'no-conversations', title, body, actionLabel, icon, tone, actionHandler }: Props = $props();
+  const t = useT();
 
   const p = $derived(PRESETS[preset] ?? PRESETS['no-conversations']);
   const label = $derived(actionLabel ?? p.actionLabel);
@@ -48,11 +50,11 @@
     <span class="icon" style:mask="var(--icon-{ICONS[icon ?? p.icon] ?? ICONS.emoji}) center/contain no-repeat"></span>
   </span>
   <div class="copy">
-    <span class="title">{title || p.title}</span>
-    <span class="body">{body || p.body}</span>
+    <span class="title">{t(title || p.title)}</span>
+    <span class="body">{t(body || p.body)}</span>
   </div>
   {#if label}
-    <div class="action" onclick={actionHandler} role="button" tabindex="0">{label}</div>
+    <div class="action" onclick={actionHandler} role="button" tabindex="0">{t(label)}</div>
   {/if}
 </div>
 

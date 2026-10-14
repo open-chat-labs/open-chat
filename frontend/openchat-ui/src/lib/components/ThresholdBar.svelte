@@ -1,8 +1,10 @@
 <!-- Two-sided vote bar with threshold lines. yes grows from the left, no from the right (fractions 0–1).
      thresholds: [{ at: 0–1, label, strong }] — strong = auto-accept (triangle), else soft "accepted when time runs out" (chevron). -->
 <script lang="ts">
+  import { useT } from '../i18n';
   interface Threshold {
     at: number;
+    /** Resource key (or literal text). */
     label?: string;
     strong?: boolean;
   }
@@ -14,6 +16,7 @@
     height?: number;
     yesColor?: string;
     noColor?: string;
+    /** Resource key (or literal text); defaults to "62% yes, 14% no". */
     label?: string;
   }
 
@@ -21,14 +24,15 @@
     yes,
     no,
     thresholds = [
-      { at: 0.5, label: 'Majority — adopted when voting ends' },
-      { at: 0.75, label: 'Adopted immediately', strong: true },
+      { at: 0.5, label: 'ui.thresholdBar.majority' },
+      { at: 0.75, label: 'ui.thresholdBar.immediate', strong: true },
     ],
     height = 8,
     yesColor = 'var(--status-online,#2EE6A8)',
     noColor = 'var(--status-danger,#FF4D4D)',
     label,
   }: Props = $props();
+  const t = useT();
 
   const pc = (x: number) => `${(Math.max(0, Math.min(1, x)) * 100).toFixed(2)}%`;
 </script>
@@ -36,14 +40,14 @@
 <div class="threshold-bar">
   <div class="marks">
     {#each thresholds as th}
-      <span class={th.strong ? 'strong' : 'soft'} style:left={pc(th.at)} title={th.label ?? ''}></span>
+      <span class={th.strong ? 'strong' : 'soft'} style:left={pc(th.at)} title={th.label ? t(th.label) : ''}></span>
     {/each}
   </div>
   <div
     class="bar"
     style:height="{height}px"
     role="img"
-    aria-label={label ?? `${Math.round(yes * 100)}% yes, ${Math.round(no * 100)}% no`}
+    aria-label={label ? t(label) : t('ui.thresholdBar.summary', { yes: Math.round(yes * 100), no: Math.round(no * 100) })}
   >
     <span class="yes" style:width={pc(yes)} style:background={yesColor}></span>
     <span class="no" style:width={pc(no)} style:background={noColor}></span>

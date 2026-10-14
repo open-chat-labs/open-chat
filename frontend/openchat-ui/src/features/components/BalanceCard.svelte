@@ -16,7 +16,9 @@
 </script>
 
 <script lang="ts">
+  import { useT } from '../../lib/i18n';
   interface Props {
+    /** Resource key (or literal text). */
     label?: string;
     amount: string;
     fiat?: string;
@@ -32,7 +34,8 @@
     onSwap?: () => void;
   }
 
-  let { label = 'TOTAL BALANCE', amount, fiat = '', veiled = false, spinning = false, allocation = [], onToggleVeil, onRefresh, onSend, onReceive, onSwap }: Props = $props();
+  let { label = 'ui.balanceCard.totalBalance', amount, fiat = '', veiled = false, spinning = false, allocation = [], onToggleVeil, onRefresh, onSend, onReceive, onSwap }: Props = $props();
+  const t = useT();
 
   let hovered = $state<number | null>(null);
 
@@ -51,14 +54,14 @@
 
 <div class="card">
   <div class="head">
-    <span class="label">{label}</span>
+    <span class="label">{t(label)}</span>
     {#if onToggleVeil}
-      <span class="head-button" onclick={onToggleVeil} role="button" tabindex="0" aria-label={veiled ? 'Show balance' : 'Hide balance'} title={veiled ? 'Show balance' : 'Hide balance'}>
+      <span class="head-button" onclick={onToggleVeil} role="button" tabindex="0" aria-label={t(veiled ? 'ui.balanceCard.showBalance' : 'ui.balanceCard.hideBalance')} title={t(veiled ? 'ui.balanceCard.showBalance' : 'ui.balanceCard.hideBalance')}>
         <span class="head-icon" style:mask="var(--icon-{veiled ? 'eye-off' : 'eye'}) center/contain no-repeat"></span>
       </span>
     {/if}
     {#if onRefresh}
-      <span class="head-button" onclick={onRefresh} role="button" tabindex="0" aria-label="Refresh balances" title="Refresh balances">
+      <span class="head-button" onclick={onRefresh} role="button" tabindex="0" aria-label={t('ui.balanceCard.refresh')} title={t('ui.balanceCard.refresh')}>
         <span class="head-icon refresh" class:spinning></span>
       </span>
     {/if}
@@ -99,13 +102,13 @@
   <div class="actions">
     <span class="action send" onclick={onSend} role="button" tabindex="0">
       <span class="action-icon" style:mask="var(--icon-wallet-send) center/contain no-repeat"></span>
-      <span class="action-label">Send</span>
+      <span class="action-label">{t('ui.common.send')}</span>
     </span>
     <span class="action outline" onclick={onReceive} role="button" tabindex="0">
       <span class="action-icon" style:mask="var(--icon-receive) center/contain no-repeat"></span>
-      <span class="action-label">Receive</span>
+      <span class="action-label">{t('ui.balanceCard.receive')}</span>
     </span>
-    <span class="action outline square" onclick={onSwap} role="button" tabindex="0" aria-label="Swap" title="Swap">
+    <span class="action outline square" onclick={onSwap} role="button" tabindex="0" aria-label={t('ui.balanceCard.swap')} title={t('ui.balanceCard.swap')}>
       <span class="action-icon" style:mask="var(--icon-swap) center/contain no-repeat"></span>
     </span>
   </div>

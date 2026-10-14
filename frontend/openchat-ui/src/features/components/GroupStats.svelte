@@ -1,15 +1,18 @@
 <!-- Group statistics: message total vs the previous 30 days, a 12-week activity strip, what gets sent (type mix),
      who is talking (top members + the rest) and engagement counters. -->
 <script lang="ts">
+  import { useT } from '../../lib/i18n';
+
   const MIX_COLORS = ['#5B8CFF', '#B06BFF', '#FFB03D', '#2EE6A8', '#6E6E7C'];
 
   interface Props {
-    /** Messages by type over the last 30 days; the total is their sum. */
+    /** Messages by type over the last 30 days; the total is their sum. Labels: resource keys (or literal text). */
     mix: { label: string; count: number; color?: string }[];
     /** Messages per week, oldest first; the last reads as this week. */
     weeks: number[];
     /** Top senders. */
     people: { name: string; count: number; gradient?: string }[];
+    /** Labels: resource keys (or literal text). */
     engagement: { count: string; label: string }[];
     /** Total for the previous 30 days. */
     totalPrev: number;
@@ -20,6 +23,7 @@
   }
 
   let { mix, weeks, people, engagement, totalPrev, otherPeople, onlineMinutes, onlineMinutesPrev }: Props = $props();
+  const t = useT();
 
   const fmt = (n: number) => Number(n).toLocaleString('en-US');
   const initials = (name: string) =>
@@ -36,39 +40,43 @@
   const topCount = $derived(people.reduce((m, p) => Math.max(m, p.count), 1));
   const others = $derived(Math.max(total - people.reduce((s, p) => s + p.count, 0), 0));
   const onlineUp = $derived(onlineMinutes >= onlineMinutesPrev);
+  // one sentence with two styled numbers: format it with marker values, then split on the markers
+  const onlineParts = $derived(
+    t('ui.groupStats.onlineMinutes', { now: '\u0001now\u0001', prev: '\u0001prev\u0001', direction: onlineUp ? 'up' : 'down' }).split(/\u0001(now|prev)\u0001/),
+  );
 </script>
 
 <div class="stats">
   <div class="block">
     <div class="total-line">
       <span class="total">{fmt(total)}</span>
-      <span class="total-unit">messages</span>
+      <span class="total-unit">{t('ui.groupStats.messagesUnit', { count: total })}</span>
     </div>
     <div class="delta-line">
       <span class="delta" class:down={pct < 0}>
         <span class="delta-icon"></span>
         <span class="delta-label">{pct >= 0 ? '+' : ''}{pct}%</span>
       </span>
-      <span class="delta-note">vs previous 30 days</span>
+      <span class="delta-note">{t('ui.groupStats.vsPrevious')}</span>
     </div>
   </div>
 
   <div class="block weeks-block">
     <div class="weeks">
       {#each weeks as w, i}
-        <div class="week" class:current={i === weeks.length - 1} style:height="{Math.max(Math.round((w / peak) * 100), 8)}%" title="{fmt(w)} messages"></div>
+        <div class="week" class:current={i === weeks.length - 1} style:height="{Math.max(Math.round((w / peak) * 100), 8)}%" title={t('ui.groupStats.weekMessages', { count: w })}></div>
       {/each}
     </div>
     <div class="weeks-axis">
-      <span class="axis">12 WEEKS AGO</span>
-      <span class="axis now">THIS WEEK</span>
+      <span class="axis">{t('ui.groupStats.weeksAgo')}</span>
+      <span class="axis now">{t('ui.groupStats.thisWeek')}</span>
     </div>
   </div>
 
   <div class="rule"></div>
 
   <div class="section">
-    <span class="section-title">WHAT GETS SENT</span>
+    <span class="section-title">{t('ui.groupStats.whatGetsSent')}</span>
     <div class="mix-bar">
       {#each mix as m, i}
         <div class="mix-part" style:width="{((m.count / total) * 100).toFixed(2)}%" style:background={m.color || MIX_COLORS[i % MIX_COLORS.length]}></div>
@@ -78,7 +86,7 @@
       {#each mix as m, i}
         <div class="mix-row">
           <span class="mix-dot" style:background={m.color || MIX_COLORS[i % MIX_COLORS.length]}></span>
-          <span class="mix-label">{m.label}</span>
+          <span class="mix-label">{t(m.label)}</span>
           <span class="mix-count">{fmt(m.count)}</span>
           <span class="mix-pct">{Math.round((m.count / total) * 100)}%</span>
         </div>
@@ -89,7 +97,7 @@
   <div class="rule"></div>
 
   <div class="section">
-    <span class="section-title">WHO IS TALKING</span>
+    <span class="section-title">{t('ui.groupStats.whoIsTalking')}</span>
     <div class="people">
       {#each people as p}
         <div class="person">
@@ -106,22 +114,22 @@
         </div>
       {/each}
     </div>
-    <span class="rest">{fmt(others)} messages from {otherPeople} other members</span>
+    <span class="rest">{t('ui.groupStats.rest', { count: others, people: otherPeople })}</span>
   </div>
 
   <div class="rule"></div>
 
   <div class="section">
-    <span class="section-title">ENGAGEMENT</span>
+    <span class="section-title">{t('ui.groupStats.engagement')}</span>
     <span class="online"
-      ><span class="online-now" class:down={!onlineUp}>{fmt(onlineMinutes)}</span> minutes of member activity this month, {onlineUp ? 'up' : 'down'} from
-      <span class="online-prev">{fmt(onlineMinutesPrev)}</span>.</span
+      >{#each onlineParts as part, i}{#if i % 2 === 0}{part}{:else if part === 'now'}<span class="online-now" class:down={!onlineUp}>{fmt(onlineMinutes)}</span
+          >{:else}<span class="online-prev">{fmt(onlineMinutesPrev)}</span>{/if}{/each}</span
     >
     <div class="engagement">
       {#each engagement as e}
         <div class="counter">
           <span class="counter-value">{e.count}</span>
-          <span class="counter-label">{e.label}</span>
+          <span class="counter-label">{t(e.label)}</span>
         </div>
       {/each}
     </div>

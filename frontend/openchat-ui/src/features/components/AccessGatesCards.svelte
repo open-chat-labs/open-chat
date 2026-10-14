@@ -6,6 +6,7 @@
   import type { AccessGatesCardsState, AccessGateRule } from '../../lib/types';
   import SegmentedTabs from '../../lib/components/SegmentedTabs.svelte';
   import TimedToggle from '../../lib/components/TimedToggle.svelte';
+  import { useT } from '../../lib/i18n';
 
   type Asset = string | { label: string; soon: true };
   type Field = { key: 'a' | 'b'; placeholder: string; unit: string; required?: boolean };
@@ -40,55 +41,57 @@
   const TOKENS: Asset[] = ['CHAT', 'ICP', 'BTC', 'BOB', 'USDC', 'USDT', 'KINIC'];
   const NERVOUS: Asset[] = ['CHAT', 'Motoko', 'ICPanda', 'TACO', 'Dragging Karma Points', { label: 'Internet Computer', soon: true }];
 
+  // labels, descriptions, placeholders and units are resource keys; chips are built (translated) at render time
   const TYPES: Record<string, GateType> = {
-    lifetime: { label: 'Lifetime diamond membership', icon: 'diamond', desc: 'Grants access to users who hold a lifetime membership.' },
-    diamond: { label: 'Diamond membership', icon: 'diamond-outline', desc: 'Requires an active diamond membership.' },
+    lifetime: { label: 'ui.accessGatesCards.types.lifetime', icon: 'diamond', desc: 'ui.accessGatesCards.types.lifetimeDesc' },
+    diamond: { label: 'ui.accessGatesCards.types.diamond', icon: 'diamond-outline', desc: 'ui.accessGatesCards.types.diamondDesc' },
     neuron: {
-      label: 'Neuron holder',
+      label: 'ui.accessGatesCards.types.neuron',
       icon: 'neuron',
-      desc: 'Users must stake a neuron with specific criteria.',
+      desc: 'ui.accessGatesCards.types.neuronDesc',
       assets: NERVOUS,
       repeatable: true,
       fields: [
-        { key: 'a', placeholder: 'Minimum dissolve delay', unit: 'days' },
-        { key: 'b', placeholder: 'Minimum stake', unit: 'tokens' },
+        { key: 'a', placeholder: 'ui.accessGatesCards.fields.minDissolveDelay', unit: 'ui.accessGatesCards.units.days' },
+        { key: 'b', placeholder: 'ui.accessGatesCards.fields.minStake', unit: 'ui.accessGatesCards.units.tokens' },
       ],
-      chips: (g) => [g.asset && { label: g.asset, dot: true }, g.a && { label: `${g.a}d delay` }, g.b && { label: `${g.b} staked` }],
+      chips: (g) => [g.asset && { label: g.asset, dot: true }, g.a && { label: t('ui.accessGatesCards.chips.delay', { days: g.a }) }, g.b && { label: t('ui.accessGatesCards.chips.staked', { amount: g.b }) }],
     },
     payment: {
-      label: 'Payment',
+      label: 'ui.accessGatesCards.types.payment',
       icon: 'payment',
-      desc: 'Access is granted after a one-time or recurring entry fee.',
+      desc: 'ui.accessGatesCards.types.paymentDesc',
       assets: TOKENS,
       repeatable: true,
-      fields: [{ key: 'a', placeholder: 'Amount', unit: 'tokens', required: true }],
-      chips: (g) => [g.asset && { label: g.asset, dot: true }, g.a && { label: `${g.a} tokens` }],
+      fields: [{ key: 'a', placeholder: 'ui.accessGatesCards.fields.amount', unit: 'ui.accessGatesCards.units.tokens', required: true }],
+      chips: (g) => [g.asset && { label: g.asset, dot: true }, g.a && { label: t('ui.accessGatesCards.chips.tokens', { amount: g.a }) }],
     },
     balance: {
-      label: 'Minimum token balance',
+      label: 'ui.accessGatesCards.types.balance',
       icon: 'balance',
-      desc: 'Requires holding a minimum amount of a token.',
+      desc: 'ui.accessGatesCards.types.balanceDesc',
       assets: TOKENS,
       repeatable: true,
       uniqueAsset: true,
-      fields: [{ key: 'a', placeholder: 'Minimum balance', unit: 'tokens', required: true }],
-      chips: (g) => [g.asset && { label: g.asset, dot: true }, g.a && { label: `min ${g.a}` }],
+      fields: [{ key: 'a', placeholder: 'ui.accessGatesCards.fields.minBalance', unit: 'ui.accessGatesCards.units.tokens', required: true }],
+      chips: (g) => [g.asset && { label: g.asset, dot: true }, g.a && { label: t('ui.accessGatesCards.chips.min', { amount: g.a }) }],
     },
-    credential: { label: 'Verified credential', icon: 'credential', desc: 'Only users with a valid external credential can enter.' },
-    unique: { label: 'Unique person', icon: 'person', desc: 'Limited to verified unique humans.' },
-    locked: { label: 'Locked', icon: 'lock', desc: 'Invited users only; not open to the public.' },
+    credential: { label: 'ui.accessGatesCards.types.credential', icon: 'credential', desc: 'ui.accessGatesCards.types.credentialDesc' },
+    unique: { label: 'ui.accessGatesCards.types.unique', icon: 'person', desc: 'ui.accessGatesCards.types.uniqueDesc' },
+    locked: { label: 'ui.accessGatesCards.types.locked', icon: 'lock', desc: 'ui.accessGatesCards.types.lockedDesc' },
     chit: {
-      label: 'Minimum CHIT earned',
+      label: 'ui.accessGatesCards.types.chit',
       icon: 'chit',
-      desc: 'Requires a minimum amount of CHIT earned.',
-      fields: [{ key: 'a', placeholder: 'Minimum CHIT earned', unit: 'CHIT', required: true }],
-      chips: (g) => [g.a && { label: `${g.a} CHIT` }],
+      desc: 'ui.accessGatesCards.types.chitDesc',
+      fields: [{ key: 'a', placeholder: 'ui.accessGatesCards.fields.minChit', unit: 'CHIT', required: true }],
+      chips: (g) => [g.a && { label: t('ui.accessGatesCards.chips.chit', { amount: g.a }) }],
     },
-    nft: { label: 'NFT holder', icon: 'nft', desc: 'Must hold a specific NFT.', soon: true },
+    nft: { label: 'ui.accessGatesCards.types.nft', icon: 'nft', desc: 'ui.accessGatesCards.types.nftDesc', soon: true },
   };
 
   const MODES = ['All', 'Any'] as const;
-  const INTERVALS = ['1 day', '1 week', '2 weeks', '1 month', '3 months', '6 months'];
+  const MODE_LABELS = ['ui.accessGatesCards.modes.all', 'ui.accessGatesCards.modes.any'];
+  const INTERVALS = ['ui.accessGatesCards.intervals.day1', 'ui.accessGatesCards.intervals.week1', 'ui.accessGatesCards.intervals.weeks2', 'ui.accessGatesCards.intervals.month1', 'ui.accessGatesCards.intervals.months3', 'ui.accessGatesCards.intervals.months6'];
   const assetName = (a: Asset) => (typeof a === 'string' ? a : a.label);
   const mask = (icon: string) => `var(--icon-${icon}) center/contain no-repeat`;
 
@@ -100,13 +103,14 @@
   }
 
   let { isDiamond = true, onUpgrade, onChange }: Props = $props();
+  const t = useT();
 
   let gates = $state<AccessGateRule[]>([]);
   let modeIndex = $state(0);
   let editing = $state<string | null>(null);
   let pickerOpen = $state(false);
   let intervalOn = $state(false);
-  let every = $state('1 month');
+  let every = $state('ui.accessGatesCards.intervals.month1');
 
   function emit() {
     onChange?.({ count: gates.length, mode: MODES[modeIndex], gates });
@@ -143,36 +147,36 @@
 <div class="gates">
   {#if !isDiamond}
     <div class="upsell">
-      <span class="upsell-title">Upgrade to Diamond</span>
-      <span class="upsell-text">Only diamond members can add access gates.</span>
-      <div class="upsell-button" onclick={onUpgrade} role="button" tabindex="0">Get Diamond</div>
+      <span class="upsell-title">{t('ui.accessGatesCards.upgradeTitle')}</span>
+      <span class="upsell-text">{t('ui.accessGatesCards.upgradeText')}</span>
+      <div class="upsell-button" onclick={onUpgrade} role="button" tabindex="0">{t('ui.accessGatesCards.getDiamond')}</div>
     </div>
   {:else}
     <div class="head">
       <div class="head-text">
-        <span class="head-title">ACCESS GATES {gates.length ? `(${gates.length})` : ''}</span>
-        <span class="head-hint">Invited people never have to pass gates.</span>
+        <span class="head-title">{t('ui.accessGatesCards.heading', { count: gates.length })}</span>
+        <span class="head-hint">{t('ui.accessGatesCards.invitedHint')}</span>
       </div>
-      <div class="modes"><SegmentedTabs labels={[...MODES]} selectedIndex={modeIndex} dotIndexes={[]} onSelect={(i) => (modeIndex = i)} /></div>
+      <div class="modes"><SegmentedTabs labels={MODE_LABELS.map((k) => t(k))} selectedIndex={modeIndex} dotIndexes={[]} onSelect={(i) => (modeIndex = i)} /></div>
     </div>
 
     <div class="cards">
       {#each gates as g}
-        {@const t = TYPES[g.type]}
+        {@const type = TYPES[g.type]}
         {@const ok = complete(g)}
-        {@const chips = (t.chips?.(g) ?? []).filter((c) => !!c)}
+        {@const chips = (type.chips?.(g) ?? []).filter((c) => !!c)}
         <div class="card" class:incomplete={!ok}>
           <div class="card-head">
-            <span class="tile"><span class="tile-icon" style:mask={mask(t.icon)}></span></span>
+            <span class="tile"><span class="tile-icon" style:mask={mask(type.icon)}></span></span>
             <div class="card-text">
-              <span class="card-title">{t.label}</span>
-              <span class="card-desc">{t.desc}</span>
+              <span class="card-title">{t(type.label)}</span>
+              <span class="card-desc">{t(type.desc)}</span>
             </div>
             <div class="card-tools">
-              {#if t.fields || t.assets}
-                <span class="tool" onclick={() => (editing = g.id)} role="button" tabindex="0" aria-label="Edit values" title="Edit values"><span class="tool-icon" style:mask={mask('edit')}></span></span>
+              {#if type.fields || type.assets}
+                <span class="tool" onclick={() => (editing = g.id)} role="button" tabindex="0" aria-label={t('ui.accessGatesCards.editValues')} title={t('ui.accessGatesCards.editValues')}><span class="tool-icon" style:mask={mask('edit')}></span></span>
               {/if}
-              <span class="tool" onclick={() => remove(g.id)} role="button" tabindex="0" aria-label="Remove gate" title="Remove gate"><span class="tool-icon" style:mask={mask('close')}></span></span>
+              <span class="tool" onclick={() => remove(g.id)} role="button" tabindex="0" aria-label={t('ui.accessGatesCards.removeGate')} title={t('ui.accessGatesCards.removeGate')}><span class="tool-icon" style:mask={mask('close')}></span></span>
             </div>
           </div>
 
@@ -191,12 +195,12 @@
 
           {#if editing === g.id}
             <div class="editor">
-              {#if t.assets}
+              {#if type.assets}
                 <div class="assets">
-                  {#each t.assets as a}
+                  {#each type.assets as a}
                     {@const name = assetName(a)}
                     {@const soon = typeof a !== 'string' && a.soon}
-                    {@const taken = !!t.uniqueAsset && gates.some((x) => x.type === g.type && x.asset === name && x.id !== g.id)}
+                    {@const taken = !!type.uniqueAsset && gates.some((x) => x.type === g.type && x.asset === name && x.id !== g.id)}
                     <span
                       class="asset"
                       class:selected={g.asset === name}
@@ -206,19 +210,19 @@
                       tabindex="0"
                     >
                       <span class="asset-dot" style:background={DOTS[name] ?? DOT_FALLBACK}></span>
-                      <span>{soon ? `${name} (soon)` : taken ? `${name} (used)` : name}</span>
+                      <span>{soon ? t('ui.accessGatesCards.assetSoon', { name }) : taken ? t('ui.accessGatesCards.assetUsed', { name }) : name}</span>
                     </span>
                   {/each}
                 </div>
               {/if}
-              {#each t.fields ?? [] as f}
+              {#each type.fields ?? [] as f}
                 <div class="field" class:missing={f.required && !g[f.key].trim()}>
-                  <input value={g[f.key]} oninput={(e) => patch(g.id, { [f.key]: e.currentTarget.value.replace(/[^\d.]/g, '') })} placeholder={f.placeholder} inputmode="numeric" />
-                  <span class="unit">{f.unit}</span>
+                  <input value={g[f.key]} oninput={(e) => patch(g.id, { [f.key]: e.currentTarget.value.replace(/[^\d.]/g, '') })} placeholder={t(f.placeholder)} inputmode="numeric" />
+                  <span class="unit">{t(f.unit)}</span>
                 </div>
               {/each}
               <div class="done-row">
-                <div class="done" class:ready={ok} onclick={() => ok && (editing = null)} role="button" tabindex="0">Done</div>
+                <div class="done" class:ready={ok} onclick={() => ok && (editing = null)} role="button" tabindex="0">{t('ui.common.done')}</div>
               </div>
             </div>
           {/if}
@@ -227,14 +231,14 @@
 
       {#if gates.length === 0}
         <div class="empty">
-          <span class="empty-title">No gates yet</span>
-          <span class="empty-hint">Add a gate to control who can join.</span>
+          <span class="empty-title">{t('ui.accessGatesCards.emptyTitle')}</span>
+          <span class="empty-hint">{t('ui.accessGatesCards.emptyHint')}</span>
         </div>
       {/if}
 
       <div class="add" onclick={() => (pickerOpen = true)} role="button" tabindex="0">
         <span class="add-icon"></span>
-        <span>Add gate</span>
+        <span>{t('ui.accessGatesCards.addGate')}</span>
       </div>
     </div>
 
@@ -244,14 +248,14 @@
       <div class="recheck-cell">
         <TimedToggle
           density="flush"
-          label="Re-check members periodically"
-          prefix="Every"
-          offHint="Members are checked once, when they join."
+          label={t('ui.accessGatesCards.recheck')}
+          prefix={t('ui.accessGatesCards.every')}
+          offHint={t('ui.accessGatesCards.recheckOff')}
           on={intervalOn}
-          value={every}
-          options={INTERVALS}
+          value={t(every)}
+          options={INTERVALS.map((k) => t(k))}
           onChange={(on) => (intervalOn = on)}
-          onDurationChange={(value) => (every = value)}
+          onDurationChange={(value) => (every = INTERVALS.find((k) => t(k) === value) ?? every)}
         />
       </div>
     </div>
@@ -262,20 +266,20 @@
       <div class="scrim" onclick={() => (pickerOpen = false)} aria-hidden="true"></div>
       <div class="picker">
         <div class="picker-head">
-          <span class="picker-title">Add a gate</span>
+          <span class="picker-title">{t('ui.accessGatesCards.pickerTitle')}</span>
           <span class="picker-close" onclick={() => (pickerOpen = false)} role="button" tabindex="0"><span class="tool-icon" style:mask={mask('close')}></span></span>
         </div>
         <div class="catalogue">
-          {#each Object.entries(TYPES) as [key, t]}
-            {@const used = !t.repeatable && gates.some((g) => g.type === key)}
-            <div class="option" class:unavailable={t.soon || used} onclick={() => !used && add(key)} role="button" tabindex="0">
-              <span class="option-tile"><span class="option-icon" style:mask={mask(t.icon)}></span></span>
+          {#each Object.entries(TYPES) as [key, type]}
+            {@const used = !type.repeatable && gates.some((g) => g.type === key)}
+            <div class="option" class:unavailable={type.soon || used} onclick={() => !used && add(key)} role="button" tabindex="0">
+              <span class="option-tile"><span class="option-icon" style:mask={mask(type.icon)}></span></span>
               <div class="option-text">
                 <div class="option-line">
-                  <span class="option-label">{t.label}</span>
-                  {#if t.soon}<span class="soon">SOON</span>{/if}
+                  <span class="option-label">{t(type.label)}</span>
+                  {#if type.soon}<span class="soon">{t('ui.accessGatesCards.soon')}</span>{/if}
                 </div>
-                <span class="option-desc">{used ? 'Already added' : t.desc}</span>
+                <span class="option-desc">{used ? t('ui.accessGatesCards.alreadyAdded') : t(type.desc)}</span>
               </div>
             </div>
           {/each}

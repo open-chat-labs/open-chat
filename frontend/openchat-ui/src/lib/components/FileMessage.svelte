@@ -1,6 +1,7 @@
 <!-- File / document message: type tile, middle-truncated name (extension always visible), size, download.
      upload: { state: 'uploading', progress, sent } → ring + cancel, "3.2 of 5.4 MB · 60%"; { state: 'failed' } → retry + red line. -->
 <script lang="ts">
+  import { useT } from '../i18n';
   const TYPE: Record<string, string> = {
     pdf: 'var(--status-danger,#FF4D4D)',
     doc: 'var(--status-verified,#3D9BFF)',
@@ -20,6 +21,7 @@
     caption?: string;
     time: string;
     upload?: { state: 'uploading' | 'failed'; progress?: number; sent?: string } | null;
+    /** Resource key (or literal text). */
     failedText?: string;
     lastInGroup?: boolean;
     onDownload?: () => void;
@@ -34,12 +36,13 @@
     caption = '',
     time,
     upload = null,
-    failedText = "Couldn't send the file",
+    failedText = 'ui.fileMessage.failed',
     lastInGroup = true,
     onDownload,
     onCancel,
     onRetry,
   }: Props = $props();
+  const t = useT();
 
   const ext = $derived.by(() => {
     const dot = fileName.lastIndexOf('.');
@@ -52,7 +55,11 @@
   const failed = $derived(upload?.state === 'failed');
   const pct = $derived(Math.round((upload?.progress || 0) * 100));
   const meta = $derived(
-    uploading ? `${upload?.sent ? `${upload.sent} of ` : ''}${size} · ${pct}%` : [size, ext.toUpperCase()].filter(Boolean).join(' · '),
+    uploading
+      ? upload?.sent
+        ? t('ui.fileMessage.uploadProgressOf', { sent: upload.sent, size, pct })
+        : t('ui.fileMessage.uploadProgress', { size, pct })
+      : [size, ext.toUpperCase()].filter(Boolean).join(' · '),
   );
   const ticked = $derived(side === 'sent' && !uploading && !failed);
 </script>
@@ -63,29 +70,29 @@
       {#if uploading}
         <span class="progress">
           <span class="ring" style:background="conic-gradient(var(--msg-ink) {Math.round(pct * 3.6)}deg,var(--msg-track) 0)"></span>
-          <span class="cancel" onclick={onCancel} role="button" tabindex="0" aria-label="Cancel upload"></span>
+          <span class="cancel" onclick={onCancel} role="button" tabindex="0" aria-label={t('ui.fileMessage.cancelUpload')}></span>
         </span>
       {:else if !failed}
-        <span class="type" style:background="color-mix(in oklch,{hue} 18%,transparent)" style:color={hue}>{(ext || 'FILE').toUpperCase().slice(0, 4)}</span>
+        <span class="type" style:background="color-mix(in oklch,{hue} 18%,transparent)" style:color={hue}>{(ext || t('ui.fileMessage.genericType')).toUpperCase().slice(0, 4)}</span>
       {/if}
       <span class="names">
         <span class="name" title={fileName}><span class="head">{fileName.slice(0, fileName.length - tailLen)}</span><span class="tail">{fileName.slice(fileName.length - tailLen)}</span></span>
         <span class="meta">{meta}</span>
       </span>
       {#if failed}
-        <span class="action" onclick={onRetry} role="button" tabindex="0" aria-label="Retry upload"><span class="retry-icon"></span></span>
+        <span class="action" onclick={onRetry} role="button" tabindex="0" aria-label={t('ui.fileMessage.retryUpload')}><span class="retry-icon"></span></span>
       {:else if !uploading}
-        <span class="action download" onclick={onDownload} role="button" tabindex="0" aria-label="Download {fileName}"><span class="download-icon"></span></span>
+        <span class="action download" onclick={onDownload} role="button" tabindex="0" aria-label={t('ui.fileMessage.download', { name: fileName })}><span class="download-icon"></span></span>
       {/if}
     </div>
     {#if caption}
       <p class="caption">{caption}<span class="stamp spacer" aria-hidden="true">{time}{#if ticked}<span class="tick"></span>{/if}</span><span class="stamp corner">{time}{#if ticked}<span class="tick"></span>{/if}</span></p>
     {:else}
-      <div class="foot">{uploading ? 'Sending…' : time}{#if ticked}<span class="tick"></span>{/if}</div>
+      <div class="foot">{uploading ? t('ui.fileMessage.sending') : time}{#if ticked}<span class="tick"></span>{/if}</div>
     {/if}
   </div>
   {#if failed}
-    <span class="failed"><span class="failed-icon"></span>{failedText}</span>
+    <span class="failed"><span class="failed-icon"></span>{t(failedText)}</span>
   {/if}
 </div>
 

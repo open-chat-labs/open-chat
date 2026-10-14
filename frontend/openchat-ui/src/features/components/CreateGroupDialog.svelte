@@ -15,6 +15,10 @@
   import Toggle from '../../lib/components/Toggle.svelte';
   import UpgradeBanner from './UpgradeBanner.svelte';
   import { modal } from '../../lib/behaviours/modal';
+  import { useT } from '../../lib/i18n';
+
+  // resource-key prefix; constants below hold keys, resolved with t() at render time
+  const CG = 'ui.createGroupDialog.';
 
   type Kind = 'group' | 'community' | 'channel' | 'embedded';
   type TabKey = 'Group' | 'Invite' | 'Channels' | 'Gates' | 'Rules' | 'Permissions';
@@ -30,6 +34,8 @@
   };
   // swatches are the theme's --cover-<key> tokens
   const COVERS = ['plum', 'teal', 'violet', 'amber', 'slate'];
+  // accessible names for the cover and photo swatches
+  const colourName = (key: string) => CG + 'colours.' + key;
 
   const NAME_MAX = 40;
   const ABOUT_MAX = 500;
@@ -39,59 +45,57 @@
   const TABS: TabKey[] = ['Group', 'Invite', 'Gates', 'Rules', 'Permissions'];
   // same builder for groups and community channels; internal keys stay the group ones
   const KINDS: Record<Kind, { keys: TabKey[]; labels: string[]; basic: number }> = {
-    group: { keys: TABS, labels: TABS, basic: 2 },
-    channel: { keys: TABS, labels: ['Channel', 'Members', 'Gates', 'Rules', 'Permissions'], basic: 2 },
-    community: { keys: ['Group', 'Invite', 'Channels', 'Gates', 'Rules', 'Permissions'], labels: ['Community', 'Invite', 'Channels', 'Gates', 'Rules', 'Permissions'], basic: 3 },
-    embedded: { keys: ['Group', 'Invite', 'Gates', 'Permissions'], labels: ['Embedded channel', 'Members', 'Gates', 'Permissions'], basic: 2 },
+    group: { keys: TABS, labels: ['group', 'invite', 'gates', 'rules', 'permissions'].map((k) => CG + 'tabs.' + k), basic: 2 },
+    channel: { keys: TABS, labels: ['channel', 'members', 'gates', 'rules', 'permissions'].map((k) => CG + 'tabs.' + k), basic: 2 },
+    community: { keys: ['Group', 'Invite', 'Channels', 'Gates', 'Rules', 'Permissions'], labels: ['community', 'invite', 'channels', 'gates', 'rules', 'permissions'].map((k) => CG + 'tabs.' + k), basic: 3 },
+    embedded: { keys: ['Group', 'Invite', 'Gates', 'Permissions'], labels: ['embedded', 'members', 'gates', 'permissions'].map((k) => CG + 'tabs.' + k), basic: 2 },
   };
 
-  const RULE_TEMPLATES = [
-    { key: 'standard', label: 'Community standard', desc: 'Respect, no impersonation, stay on topic', rules: ['Do not impersonate others in a deceptive or misleading manner', 'Do not intentionally share false or misleading information', 'Keep messages relevant to the group'] },
-    { key: 'trading', label: 'Trading group', desc: 'No financial advice, no pump talk', rules: ['No financial advice — do your own research', 'No coordinated pumping or shilling', 'Disclose any position you hold in a token you post about'] },
-    { key: 'support', label: 'Support group', desc: 'Privacy and no self-promotion', rules: ["Do not share other members' private details", 'No promotion or recruiting', 'Assume good faith — disagree without insults'] },
-    { key: 'civil', label: 'Keep it civil', desc: 'Harassment and slur policy', rules: ['No harassment, slurs, or hate speech', 'No sexually explicit content', 'Take heated arguments to DMs'] },
-    { key: 'project', label: 'Project team', desc: 'Stay on task, decisions in writing', rules: ['Keep discussion to the work in hand', 'Write decisions down so nobody has to scroll for them', 'Use threads for side conversations'] },
-    { key: 'announce', label: 'Announcements', desc: 'Few posters, replies in threads', rules: ['Only owners and admins post to the main channel', 'Reply in a thread rather than the channel', 'No promotion of other groups or products'] },
-  ];
+  // label / desc / rules are keys under templates.<key>; applying a template writes the translated rules
+  const RULE_TEMPLATES = ['standard', 'trading', 'support', 'civil', 'project', 'announce'].map((key) => {
+    const base = CG + 'templates.' + key + '.';
+    return { key, label: base + 'label', desc: base + 'desc', rules: [base + 'rule1', base + 'rule2', base + 'rule3'] };
+  });
 
   // role ladder, lowest first; "nobody" switches a permission off entirely
   const ROLES: { key: GroupRole; label: string }[] = [
-    { key: 'member', label: 'Members' },
-    { key: 'moderator', label: 'Moderator' },
-    { key: 'admin', label: 'Admin' },
-    { key: 'owner', label: 'Owner' },
-    { key: 'nobody', label: 'Nobody' },
+    { key: 'member', label: CG + 'roles.member' },
+    { key: 'moderator', label: CG + 'roles.moderator' },
+    { key: 'admin', label: CG + 'roles.admin' },
+    { key: 'owner', label: CG + 'roles.owner' },
+    { key: 'nobody', label: CG + 'roles.nobody' },
   ];
-  const VALUE_LABEL: Record<GroupRole, string> = { member: 'Everyone', moderator: 'Moderator +', admin: 'Admin +', owner: 'Owner only', nobody: 'Nobody' };
+  const VALUE_LABEL: Record<GroupRole, string> = { member: CG + 'values.member', moderator: CG + 'values.moderator', admin: CG + 'values.admin', owner: CG + 'values.owner', nobody: CG + 'values.nobody' };
   const PERMS: { key: string; label: string; group: string; def: GroupRole; only?: Kind }[] = [
-    { key: 'roles', label: 'Change member roles', group: 'Members', def: 'owner' },
-    { key: 'edit', label: 'Edit group info', group: 'Members', def: 'admin' },
-    { key: 'invite', label: 'Invite users', group: 'Members', def: 'member' },
-    { key: 'remove', label: 'Remove / block members', group: 'Members', def: 'moderator' },
-    { key: 'delete', label: 'Delete messages', group: 'Moderation', def: 'moderator' },
-    { key: 'pin', label: 'Pin messages', group: 'Moderation', def: 'moderator' },
-    { key: 'react', label: 'React to messages', group: 'Moderation', def: 'member' },
-    { key: 'everyone', label: 'Mention all members (@everyone)', group: 'Moderation', def: 'admin' },
-    { key: 'calls', label: 'Start video calls', group: 'Moderation', def: 'member' },
-    { key: 'pubChannels', label: 'Create public channels', group: 'Channels', def: 'admin', only: 'community' },
-    { key: 'privChannels', label: 'Create private channels', group: 'Channels', def: 'member', only: 'community' },
-    { key: 'userGroups', label: 'Manage user groups', group: 'Channels', def: 'owner', only: 'community' },
+    { key: 'roles', label: CG + 'perms.roles', group: 'Members', def: 'owner' },
+    { key: 'edit', label: CG + 'perms.edit', group: 'Members', def: 'admin' },
+    { key: 'invite', label: CG + 'perms.invite', group: 'Members', def: 'member' },
+    { key: 'remove', label: CG + 'perms.remove', group: 'Members', def: 'moderator' },
+    { key: 'delete', label: CG + 'perms.delete', group: 'Moderation', def: 'moderator' },
+    { key: 'pin', label: CG + 'perms.pin', group: 'Moderation', def: 'moderator' },
+    { key: 'react', label: CG + 'perms.react', group: 'Moderation', def: 'member' },
+    { key: 'everyone', label: CG + 'perms.everyone', group: 'Moderation', def: 'admin' },
+    { key: 'calls', label: CG + 'perms.calls', group: 'Moderation', def: 'member' },
+    { key: 'pubChannels', label: CG + 'perms.pubChannels', group: 'Channels', def: 'admin', only: 'community' },
+    { key: 'privChannels', label: CG + 'perms.privChannels', group: 'Channels', def: 'member', only: 'community' },
+    { key: 'userGroups', label: CG + 'perms.userGroups', group: 'Channels', def: 'owner', only: 'community' },
   ];
   const PERM_GROUPS = ['Members', 'Moderation', 'Channels'];
+  const PERM_GROUP_KEYS: Record<string, string> = { Members: CG + 'permGroups.members', Moderation: CG + 'permGroups.moderation', Channels: CG + 'permGroups.channels' };
   const LANGUAGES = ['English', 'Français', 'Deutsch', 'Italiano', 'Español', 'Português', 'Türkçe', 'Polski', 'Nederlands', 'Русский', 'Українська', '日本語', '한국어', '中文', 'हिन्दी', 'Tiếng Việt', 'Bahasa Indonesia'];
   // messages and threads share this list; each type inherits the master unless set
   const CONTENT = [
-    { key: 'text', label: 'Text messages' },
-    { key: 'image', label: 'Images' },
-    { key: 'video', label: 'Videos' },
-    { key: 'audio', label: 'Audio' },
-    { key: 'file', label: 'Files' },
-    { key: 'poll', label: 'Polls' },
-    { key: 'crypto', label: 'Crypto transfers' },
-    { key: 'giphy', label: 'GIFs' },
-    { key: 'prize', label: 'Prizes' },
-    { key: 'meme', label: 'Meme Fighter' },
-    { key: 'p2p', label: 'P2P swaps' },
+    { key: 'text', label: CG + 'content.text' },
+    { key: 'image', label: CG + 'content.image' },
+    { key: 'video', label: CG + 'content.video' },
+    { key: 'audio', label: CG + 'content.audio' },
+    { key: 'file', label: CG + 'content.file' },
+    { key: 'poll', label: CG + 'content.poll' },
+    { key: 'crypto', label: CG + 'content.crypto' },
+    { key: 'giphy', label: CG + 'content.giphy' },
+    { key: 'prize', label: CG + 'content.prize' },
+    { key: 'meme', label: CG + 'content.meme' },
+    { key: 'p2p', label: CG + 'content.p2p' },
   ];
   const INHERIT = 'inherit';
 
@@ -118,7 +122,7 @@
 
   interface Props {
     kind?: Kind;
-    /** Channels: the community they're created in. */
+    /** Channels: the community they're created in (or a resource key; defaults to "the community"). */
     communityName?: string;
     /** People to add (groups: invite; channels: community members). The first six are shown as frequently contacted. */
     people?: Person[];
@@ -137,7 +141,7 @@
 
   let {
     kind: kindProp = 'group',
-    communityName = 'the community',
+    communityName = 'ui.createGroupDialog.theCommunity',
     people = [],
     invitePeople = [],
     preselected = [],
@@ -147,13 +151,17 @@
     onCreate,
     onCancel,
   }: Props = $props();
+  const t = useT();
+  const community = $derived(t(communityName));
+  // sentences with a styled piece inside: format around a marker, then split on it
+  const MARK = '\u0001';
+  const split = (key: string, params: Record<string, string | number>) => t(key, params).split(MARK);
 
   const kind = $derived<Kind>(KINDS[kindProp] ? kindProp : 'group');
   const K = $derived(KINDS[kind]);
   const isComm = $derived(kind === 'community');
   const isChan = $derived(kind === 'channel' || kind === 'embedded');
   const isEmb = $derived(kind === 'embedded');
-  const noun = $derived(isComm ? 'community' : 'group');
   // channels live in an existing community, so group-level Diamond limits don't apply
   const isDiamond = $derived(isChan || isDiamondProp !== false);
 
@@ -311,7 +319,7 @@
 
   const channelMenu = (i: number, channel: string): MenuItem[] => [
     {
-      label: 'Edit',
+      label: t('ui.common.edit'),
       mask: mask('edit'),
       onSelect: () => {
         chanMenu = null;
@@ -320,7 +328,7 @@
       },
     },
     {
-      label: 'Remove',
+      label: t('ui.common.remove'),
       mask: mask('trash'),
       variant: 'danger',
       onSelect: () => {
@@ -335,15 +343,13 @@
 
   // the details tab's switches differ per kind
   type Switch = { title: string; hint: string; on: boolean; set: (v: boolean) => void; disabled?: boolean; locked?: boolean; timed?: boolean };
-  const disappearing = $derived<Switch>({ title: 'Disappearing messages', hint: '', on: disappearOn, set: (v) => (disappearOn = v), timed: true });
-  const publicChannelHint = $derived(
-    `Channels are private by default and limited to people you invite. Public channels need a unique name, and ${communityName} members are added automatically.`,
-  );
+  const disappearing = $derived<Switch>({ title: t(CG + 'disappearing'), hint: '', on: disappearOn, set: (v) => (disappearOn = v), timed: true });
+  const publicChannelHint = $derived(t(CG + 'publicChannelHint', { community }));
   const switches = $derived<Switch[]>(
     isEmb
       ? [
           {
-            title: 'Public channel',
+            title: t(CG + 'publicChannel'),
             hint: publicChannelHint,
             on: publicOn,
             set: (v) => {
@@ -352,8 +358,8 @@
             },
           },
           {
-            title: 'Non-members can preview messages',
-            hint: publicOn ? 'People who haven’t joined can read the channel before joining.' : 'Only available for public channels.',
+            title: t(CG + 'previewTitle'),
+            hint: t(publicOn ? CG + 'previewHint' : CG + 'previewUnavailable'),
             on: publicOn && previewOn,
             disabled: !publicOn,
             set: (v) => publicOn && (previewOn = v),
@@ -361,10 +367,10 @@
         ]
       : isChan
         ? [
-            { title: 'Public channel', hint: publicChannelHint, on: publicOn, set: (v) => (publicOn = v) },
+            { title: t(CG + 'publicChannel'), hint: publicChannelHint, on: publicOn, set: (v) => (publicOn = v) },
             {
-              title: 'Visible chat history',
-              hint: publicOn ? 'Always on for public channels.' : 'New joiners see the full history when on, and only messages sent after they joined when off.',
+              title: t(CG + 'historyTitle'),
+              hint: t(publicOn ? CG + 'historyAlwaysOn' : CG + 'historyHint'),
               on: historyOn || publicOn,
               disabled: publicOn,
               set: (v) => !publicOn && (historyOn = v),
@@ -374,20 +380,20 @@
         : isComm
           ? [
               {
-                title: 'Public community',
-                hint: 'Private by default — only invited people can join. Public communities appear in Explore and anyone can join. Channels inside can still be private.',
+                title: t(CG + 'publicCommunity'),
+                hint: t(CG + 'publicCommunityHint'),
                 on: publicOn,
                 set: (v) => {
                   advancedOpenState = v || advancedOpenState;
                   publicOn = v;
                 },
               },
-              { title: 'Visible chat history', hint: 'The default for new channels: new joiners see the full history when on.', on: historyOn, set: (v) => (historyOn = v) },
+              { title: t(CG + 'historyTitle'), hint: t(CG + 'historyCommunityHint'), on: historyOn, set: (v) => (historyOn = v) },
             ]
           : [
               {
-                title: 'Public group',
-                hint: 'Private by default — only invited people can join. Public groups can be found and joined by anyone.',
+                title: t(CG + 'publicGroup'),
+                hint: t(CG + 'publicGroupHint'),
                 on: publicOn && isDiamond,
                 locked: !isDiamond,
                 disabled: !isDiamond,
@@ -397,7 +403,7 @@
                   publicOn = v;
                 },
               },
-              { title: 'Visible chat history', hint: 'New joiners see the full history when on, and only messages sent after they joined when off.', on: historyOn, set: (v) => (historyOn = v) },
+              { title: t(CG + 'historyTitle'), hint: t(CG + 'historyHint'), on: historyOn, set: (v) => (historyOn = v) },
               disappearing,
             ],
   );
@@ -408,14 +414,14 @@
       return PERM_GROUPS.filter((g) => permList.some((x) => x.group === g)).map((g) => {
         const items = permList.filter((x) => x.group === g);
         return {
-          label: g.toUpperCase(),
+          label: t(PERM_GROUP_KEYS[g] ?? g).toUpperCase(),
           items: items.map((x, i) => {
             const cur = perms.general[x.key];
             return {
-              label: x.key === 'edit' ? `Edit ${noun} info` : x.label,
+              label: t(x.key === 'edit' ? (isComm ? CG + 'perms.editCommunity' : CG + 'perms.edit') : x.label),
               master: false,
               last: i === items.length - 1,
-              valueLabel: VALUE_LABEL[cur],
+              valueLabel: t(VALUE_LABEL[cur]),
               tone: cur === 'nobody' ? 'off' : 'set',
               open: (el: HTMLElement) => openPermMenu(el, 'general', x.key, false),
             };
@@ -424,15 +430,15 @@
       });
     const scope: Scope = permSub === 2 ? 'threads' : 'messages';
     const set = perms[scope];
-    const master = { label: 'Send messages by default', master: true, last: false, valueLabel: VALUE_LABEL[set.default as GroupRole], tone: 'set', open: (el: HTMLElement) => openPermMenu(el, scope, 'default', false) };
+    const master = { label: t(CG + 'sendByDefault'), master: true, last: false, valueLabel: t(VALUE_LABEL[set.default as GroupRole]), tone: 'set', open: (el: HTMLElement) => openPermMenu(el, scope, 'default', false) };
     const content = CONTENT.map((c, i) => {
       const inherited = set[c.key] === INHERIT;
       const eff = (inherited ? set.default : set[c.key]) as GroupRole;
       return {
-        label: c.label,
+        label: t(c.label),
         master: false,
         last: i === CONTENT.length - 1,
-        valueLabel: inherited ? `Default · ${VALUE_LABEL[eff]}` : VALUE_LABEL[eff],
+        valueLabel: inherited ? t(CG + 'valueDefault', { value: t(VALUE_LABEL[eff]) }) : t(VALUE_LABEL[eff]),
         tone: inherited ? 'inherited' : 'set',
         open: (el: HTMLElement) => openPermMenu(el, scope, c.key, true),
       };
@@ -440,19 +446,19 @@
     return [{ label: '', items: [master, ...content] }];
   });
 
-  const permOptions = $derived(permMenu ? [...(permMenu.allowInherit ? [{ key: INHERIT as PermValue, label: 'Same as default' }] : []), ...ROLES] : []);
+  const permOptions = $derived(permMenu ? [...(permMenu.allowInherit ? [{ key: INHERIT as PermValue, label: CG + 'sameAsDefault' }] : []), ...ROLES] : []);
 
   // one running summary of the whole dialog, so no section hides its own state
   const footerNote = $derived(
     [
-      nameOk ? 'Name set' : nameBad ? 'Name needed' : null,
-      isEmb ? (urlOk ? 'URL set' : urlBad ? 'URL needed' : null) : null,
-      isComm ? `${channels.length}${channels.length === 1 ? ' channel' : ' channels'}` : null,
-      picked.length ? `${picked.length}${isChan ? (picked.length === 1 ? ' member' : ' members') : picked.length === 1 ? ' invite' : ' invites'}` : null,
-      isChan && invited.length ? `${invited.length}${invited.length === 1 ? ' invite' : ' invites'}` : null,
-      gateCount ? `${gateCount}${gateCount === 1 ? ' gate' : ' gates'}` : null,
-      rulesOn ? (rulesText.trim() ? 'Rules on' : 'Rules needed') : null,
-      permsChanged ? 'Permissions edited' : null,
+      nameOk ? t(CG + 'note.nameSet') : nameBad ? t(CG + 'note.nameNeeded') : null,
+      isEmb ? (urlOk ? t(CG + 'note.urlSet') : urlBad ? t(CG + 'note.urlNeeded') : null) : null,
+      isComm ? t(CG + 'note.channels', { count: channels.length }) : null,
+      picked.length ? t(isChan ? CG + 'note.members' : CG + 'note.invites', { count: picked.length }) : null,
+      isChan && invited.length ? t(CG + 'note.invites', { count: invited.length }) : null,
+      gateCount ? t(CG + 'note.gates', { count: gateCount }) : null,
+      rulesOn ? t(rulesText.trim() ? CG + 'note.rulesOn' : CG + 'note.rulesNeeded') : null,
+      permsChanged ? t(CG + 'note.permissionsEdited') : null,
     ]
       .filter(Boolean)
       .join(' • '),
@@ -502,17 +508,19 @@
   }
 
   const nameHint = $derived(
-    isChan
-      ? nameOk
-        ? 'Lowercase, no spaces. Spaces become dashes.'
-        : '#channel name is required *'
-      : nameOk
-        ? isComm
-          ? 'Shown in the nav rail and in Explore'
-          : 'The name members see in their chat list'
-        : isComm
-          ? 'Community name is required *'
-          : 'Group name is required *',
+    t(
+      isChan
+        ? nameOk
+          ? CG + 'nameHint.channel'
+          : CG + 'nameHint.channelRequired'
+        : nameOk
+          ? isComm
+            ? CG + 'nameHint.community'
+            : CG + 'nameHint.group'
+          : isComm
+            ? CG + 'nameHint.communityRequired'
+            : CG + 'nameHint.groupRequired',
+    ),
   );
   const kindIcon = $derived(isEmb ? 'embed' : isChan ? 'hash' : 'community');
 </script>
@@ -528,8 +536,8 @@
       <div class="head-row">
         <span class="kind-tile"><span class="kind-icon" style:mask={mask(kindIcon)}></span></span>
         <div class="head-text">
-          <span class="head-title">{isComm ? 'Create community' : isEmb ? 'Add embedded #channel' : isChan ? 'Add new #channel' : 'Create group'}</span>
-          {#if isChan}<span class="head-sub">in {communityName}</span>{/if}
+          <span class="head-title">{t(isComm ? CG + 'title.community' : isEmb ? CG + 'title.embedded' : isChan ? CG + 'title.channel' : CG + 'title.group')}</span>
+          {#if isChan}<span class="head-sub">{t(CG + 'inCommunity', { community })}</span>{/if}
         </div>
         <span class="icon-button" onclick={() => close(onCancel)} role="button" tabindex="0"><span class="icon-15" style:mask={mask('close')}></span></span>
       </div>
@@ -537,13 +545,13 @@
         <div class="cell grow">
           <SegmentedTabs
             labels={K.labels.slice(0, visibleKeys.length)}
-            counts={visibleKeys.map((t) =>
+            counts={visibleKeys.map((k) =>
               // the invite count sits on its tab so the total is visible from any section; nothing yet means no badge
-              t === 'Invite' && picked.length + (isChan ? invited.length : 0)
+              k === 'Invite' && picked.length + (isChan ? invited.length : 0)
                 ? picked.length + (isChan ? invited.length : 0)
-                : t === 'Gates' && gateCount
+                : k === 'Gates' && gateCount
                   ? gateCount
-                  : t === 'Channels' && channels.length
+                  : k === 'Channels' && channels.length
                     ? channels.length
                     : null,
             )}
@@ -563,13 +571,13 @@
             }}
             role="button"
             tabindex="0"
-            aria-label="Hide the extra options"
-            title="Hide the extra options"><span class="collapse-icon"></span></span
+            aria-label={t(CG + 'hideExtra')}
+            title={t(CG + 'hideExtra')}><span class="collapse-icon"></span></span
           >
         {/if}
         {#if !advancedOpen}
           <span class="more-options" onclick={() => (advancedOpenState = true)} role="button" tabindex="0">
-            <span>More options</span>
+            <span>{t(CG + 'moreOptions')}</span>
             <span class="more-icon"></span>
           </span>
         {/if}
@@ -595,7 +603,7 @@
                       coverUrl = URL.createObjectURL(file);
                     }}
                   />
-                  <span class="cover-upload" onclick={() => coverInput?.click()} role="button" tabindex="0"><span class="cover-edit" style:mask={mask('edit')}></span>{coverUrl ? 'Change cover' : 'Upload cover'}</span>
+                  <span class="cover-upload" onclick={() => coverInput?.click()} role="button" tabindex="0"><span class="cover-edit" style:mask={mask('edit')}></span>{t(coverUrl ? CG + 'changeCover' : CG + 'uploadCover')}</span>
                   <div class="swatches">
                     {#each COVERS as key}
                       <span
@@ -608,8 +616,8 @@
                         }}
                         role="button"
                         tabindex="0"
-                        aria-label={key}
-                        title={key}
+                        aria-label={t(colourName(key))}
+                        title={t(colourName(key))}
                       ></span>
                     {/each}
                   </div>
@@ -640,9 +648,9 @@
                   <div class="photo-pick" onclick={() => avatarInput?.click()} role="button" tabindex="0"><span class="icon-15 ink" style:mask={mask('edit')}></span></div>
                 </div>
                 <div class="photo-text">
-                  <span class="photo-title">{isChan ? 'Channel photo' : isComm ? 'Community photo' : 'Group photo'}</span>
+                  <span class="photo-title">{t(isChan ? CG + 'photo.channel' : isComm ? CG + 'photo.community' : CG + 'photo.group')}</span>
                   <div class="photo-line">
-                    <span class="photo-hint">Upload one, or pick a colour</span>
+                    <span class="photo-hint">{t(CG + 'photo.hint')}</span>
                     <span class="grow"></span>
                     {#if avatarUrl}
                       <span
@@ -652,11 +660,11 @@
                           avatarUrl = null;
                         }}
                         role="button"
-                        tabindex="0">Remove photo</span
+                        tabindex="0">{t(CG + 'photo.remove')}</span
                       >
                     {/if}
                     {#each Object.entries(GRADIENTS) as [key, gradient]}
-                      <span class="swatch flex-none" style:background={gradient} style:box-shadow={ring(key === color)} onclick={() => (color = key)} role="button" tabindex="0" aria-label={key} title={key}></span>
+                      <span class="swatch flex-none" style:background={gradient} style:box-shadow={ring(key === color)} onclick={() => (color = key)} role="button" tabindex="0" aria-label={t(colourName(key))} title={t(colourName(key))}></span>
                     {/each}
                   </div>
                 </div>
@@ -664,7 +672,7 @@
 
               <div class="field-block">
                 <div class="field-label-row">
-                  <span class="field-label">{isChan ? 'Channel name' : isComm ? 'Community name' : 'Group name'}</span>
+                  <span class="field-label">{t(isChan ? CG + 'name.channel' : isComm ? CG + 'name.community' : CG + 'name.group')}</span>
                   <span class="required">*</span>
                 </div>
                 <div class="input-box" class:bad={nameBad}>
@@ -675,7 +683,7 @@
                       name = isChan ? slug(e.currentTarget.value) : e.currentTarget.value;
                       nameTouched = true;
                     }}
-                    placeholder={isChan ? 'channel-name' : isComm ? 'Community name' : 'Group name'}
+                    placeholder={t(isChan ? CG + 'name.channelPlaceholder' : isComm ? CG + 'name.community' : CG + 'name.group')}
                     maxlength={NAME_MAX}
                   />
                   <span class="name-left" class:low={NAME_MAX - name.length <= 5}>{NAME_MAX - name.length}</span>
@@ -685,7 +693,7 @@
 
               {#if isComm}
                 <div class="field-block language">
-                  <span class="field-label">Language</span>
+                  <span class="field-label">{t(CG + 'language')}</span>
                   <div
                     class="input-box select"
                     class:open={langOpen}
@@ -699,11 +707,11 @@
                     <span class="select-value">{lang}</span>
                     <span class="select-chevron" class:open={langOpen}></span>
                   </div>
-                  <span class="hint">The default language for your community, shown in Explore.</span>
+                  <span class="hint">{t(CG + 'languageHint')}</span>
                   {#if langOpen}
                     <div class="catcher" onclick={() => (langOpen = false)} role="presentation"></div>
                     <div class="dropdown">
-                      <div class="cell flex-none"><Field placeholder="Search languages" value={langQuery} onInput={(e) => (langQuery = e.currentTarget.value)} onClear={() => (langQuery = '')} showShortcut={false} /></div>
+                      <div class="cell flex-none"><Field placeholder={t(CG + 'searchLanguages')} value={langQuery} onInput={(e) => (langQuery = e.currentTarget.value)} onClear={() => (langQuery = '')} showShortcut={false} /></div>
                       <div class="dropdown-list">
                         {#each languages as l}
                           <div
@@ -730,7 +738,7 @@
               {#if isEmb}
                 <div class="field-block">
                   <div class="field-label-row">
-                    <span class="field-label">External URL</span>
+                    <span class="field-label">{t(CG + 'externalUrl')}</span>
                     <span class="required">*</span>
                   </div>
                   <div class="input-box" class:bad={urlBad}>
@@ -744,20 +752,20 @@
                       placeholder="https://"
                     />
                   </div>
-                  <span class="hint url-hint" class:bad={urlBad}>{urlBad ? 'Enter a full URL starting with https://' : 'The site must allow being shown in an iframe. OpenChat can’t control that.'}</span>
+                  <span class="hint url-hint" class:bad={urlBad}>{t(urlBad ? CG + 'urlBad' : CG + 'urlHint')}</span>
                 </div>
               {/if}
 
               <div class="field-block">
                 <div class="field-label-row wide">
-                  <span class="field-label">Description</span>
-                  <span class="optional">Optional</span>
+                  <span class="field-label">{t(CG + 'description')}</span>
+                  <span class="optional">{t(CG + 'optional')}</span>
                 </div>
                 <div class="cell">
                   <TextArea
                     value={about}
                     onInput={(e) => (about = e.currentTarget.value)}
-                    placeholder={isChan ? 'Optionally, tell people what this channel is about' : isComm ? 'Tell people what your community is about' : 'Tell people what your group is about'}
+                    placeholder={t(isChan ? CG + 'aboutPlaceholder.channel' : isComm ? CG + 'aboutPlaceholder.community' : CG + 'aboutPlaceholder.group')}
                     maxLength={ABOUT_MAX}
                     minHeight={49}
                   />
@@ -765,13 +773,13 @@
               </div>
 
               <div class="list-block">
-                {@render sectionLabel('SETTINGS')}
+                {@render sectionLabel(t(CG + 'settings'))}
                 <div class="list">
                   {#each switches as s, i}
                     <div class="switch-row" class:last={i === switches.length - 1}>
                       {#if s.timed}
                         <div class="cell">
-                          <TimedToggle density="flush" label={s.title} on={s.on} value={after} offHint="Messages are kept until someone deletes them." defaultOpen={true} stayOpen={true} onChange={s.set} onDurationChange={(label) => (after = label)} />
+                          <TimedToggle density="flush" label={s.title} on={s.on} value={after} offHint={t(CG + 'disappearingOff')} defaultOpen={true} stayOpen={true} onChange={s.set} onDurationChange={(label) => (after = label)} />
                         </div>
                       {:else}
                         <div class="switch-line">
@@ -783,7 +791,7 @@
                         </div>
                       {/if}
                       {#if s.locked}
-                        <UpgradeBanner text="Public groups are a Diamond feature." {onUpgrade} />
+                        <UpgradeBanner text={t(CG + 'diamondOnly')} {onUpgrade} />
                       {/if}
                     </div>
                   {/each}
@@ -801,7 +809,7 @@
               <div class="list-block small-gap">
                 <div class="cell">
                   <SegmentedTabs
-                    labels={['Add from community', 'Invite people']}
+                    labels={[CG + 'addFromCommunity', CG + 'invitePeople']}
                     counts={[picked.length || null, invited.length || null]}
                     selectedIndex={memberMode}
                     dotIndexes={[]}
@@ -811,13 +819,13 @@
                     }}
                   />
                 </div>
-                <span class="mode-hint">{inviting ? 'Anyone on OpenChat. They join once they accept the invite.' : `People you pick join straight away. Only ${communityName} members can be added.`}</span>
+                <span class="mode-hint">{inviting ? t(CG + 'inviteHint') : t(CG + 'addHint', { community })}</span>
               </div>
             {/if}
 
             <div class="cell">
               <Field
-                placeholder={inviting ? 'Search people by name or @handle' : isChan ? `Search ${communityName} members` : 'Search people by name or @handle'}
+                placeholder={inviting ? t(CG + 'searchPeople') : isChan ? t(CG + 'searchMembersOf', { community }) : t(CG + 'searchPeople')}
                 value={query}
                 onInput={(e) => (query = e.currentTarget.value)}
                 onClear={() => (query = '')}
@@ -827,7 +835,7 @@
 
             <div class="picked-block">
               <div class="picked-head">
-                <span class="small-label">{isChan && !inviting ? 'ADDED · ' : 'INVITED · '}{active.length}</span>
+                <span class="small-label">{t(isChan && !inviting ? CG + 'addedCount' : CG + 'invitedCount', { count: active.length })}</span>
                 <span class="grow"></span>
                 {#if active.length > 0}
                   <span
@@ -837,7 +845,7 @@
                       else picked = [];
                     }}
                     role="button"
-                    tabindex="0">Clear all</span
+                    tabindex="0">{t(CG + 'clearAll')}</span
                   >
                 {/if}
               </div>
@@ -856,9 +864,9 @@
                 <span class="none-picked"
                   >{isChan
                     ? inviting
-                      ? 'Nobody invited yet — you can send invites once the channel exists.'
-                      : 'Nobody added yet — you can create the channel empty and add people later.'
-                    : 'Nobody yet — you can create the group empty and invite people once it exists.'}</span
+                      ? t(CG + 'noneInvited')
+                      : t(CG + 'noneAdded')
+                    : t(CG + 'noneYet')}</span
                 >
               {/if}
             </div>
@@ -866,7 +874,7 @@
             <div class="divider"></div>
 
             <div class="list-block small-gap">
-              <span class="small-label padded">{needle ? 'SEARCH RESULTS' : isChan && !inviting ? `${communityName.toUpperCase()} MEMBERS` : 'FREQUENTLY CONTACTED'}</span>
+              <span class="small-label padded">{needle ? t(CG + 'searchResults') : isChan && !inviting ? t(CG + 'membersOf', { community: community.toUpperCase() }) : t(CG + 'frequent')}</span>
               <div class="people">
                 {#each listed as u}
                   {@const sel = active.includes(u.handle)}
@@ -881,7 +889,7 @@
                 {/each}
               </div>
               {#if needle && listed.length === 0}
-                <span class="no-results">No people match “{query}”.</span>
+                <span class="no-results">{t(CG + 'noPeople', { query })}</span>
               {/if}
             </div>
           </div>
@@ -893,7 +901,7 @@
           <div class="column mid-gap">
             <div class="list-block tight">
               <div class="channels-head">
-                <span class="big-title">Public channels</span>
+                <span class="big-title">{t(CG + 'channels.title')}</span>
                 {#if channels.length > 1}
                   <span
                     class="remove-all"
@@ -903,11 +911,11 @@
                       chanMenu = null;
                     }}
                     role="button"
-                    tabindex="0">Remove all</span
+                    tabindex="0">{t(CG + 'channels.removeAll')}</span
                   >
                 {/if}
               </div>
-              <span class="lead">Everyone who joins the community is added to these channels automatically. You can add private channels, and edit these, once the community exists.</span>
+              <span class="lead">{t(CG + 'channels.lead')}</span>
             </div>
 
             <div class="channel-list">
@@ -934,11 +942,11 @@
                       maxlength={CHAN_MAX}
                       autofocus={true}
                     />
-                    <span class="channel-save" onclick={saveChannelEdit} role="button" tabindex="0">Save</span>
-                    <span class="channel-cancel" onclick={() => (chanEdit = null)} role="button" tabindex="0">Cancel</span>
+                    <span class="channel-save" onclick={saveChannelEdit} role="button" tabindex="0">{t('ui.common.save')}</span>
+                    <span class="channel-cancel" onclick={() => (chanEdit = null)} role="button" tabindex="0">{t('ui.common.cancel')}</span>
                   {:else}
                     <span class="channel-name">{channel}</span>
-                    <span class="kebab" class:open={chanMenu === i} onclick={() => (chanMenu = chanMenu === i ? null : i)} aria-label="More options" role="button" tabindex="0" title="More options"
+                    <span class="kebab" class:open={chanMenu === i} onclick={() => (chanMenu = chanMenu === i ? null : i)} aria-label={t('ui.common.moreOptions')} role="button" tabindex="0" title={t('ui.common.moreOptions')}
                       ><span class="kebab-icon"></span></span
                     >
                   {/if}
@@ -949,12 +957,12 @@
                 </div>
               {/each}
               {#if channels.length === 0}
-                <span class="no-channels">No public channels. Newcomers will only see private channels they're added to, so add at least one to give them somewhere to start.</span>
+                <span class="no-channels">{t(CG + 'channels.empty')}</span>
               {/if}
             </div>
 
             <div class="field-block">
-              <span class="field-label">Add a channel</span>
+              <span class="field-label">{t(CG + 'channels.add')}</span>
               <div class="add-row">
                 <div class="add-box" class:bad={draftDup || (chanTried && !chanDraft)} class:filled={!!chanDraft}>
                   <span class="hash">#</span>
@@ -970,15 +978,15 @@
                         addChannel();
                       }
                     }}
-                    placeholder="channel-name"
+                    placeholder={t(CG + 'name.channelPlaceholder')}
                     maxlength={CHAN_MAX}
                   />
                   <span class="name-left">{CHAN_MAX - chanDraft.length}</span>
                 </div>
-                <span class="add-button" class:ready={draftOk} onclick={addChannel} role="button" tabindex="0"><span class="add-icon"></span>Add</span>
+                <span class="add-button" class:ready={draftOk} onclick={addChannel} role="button" tabindex="0"><span class="add-icon"></span>{t('ui.common.add')}</span>
               </div>
               <span class="hint plain" class:bad={draftDup || (chanTried && !chanDraft)}
-                >{draftDup ? `#${chanDraft} is already in the list.` : chanTried && !chanDraft ? 'Your channel needs a name.' : 'Lowercase, no spaces. Press Enter to add.'}</span
+                >{draftDup ? t(CG + 'channels.duplicate', { name: chanDraft }) : chanTried && !chanDraft ? t(CG + 'channels.needsName') : t(CG + 'channels.hint')}</span
               >
             </div>
           </div>
@@ -986,13 +994,12 @@
       {/if}
 
       {#if current === 'Gates'}
+        {@const info = split(CG + 'gatesInfo', { kind: isComm ? 'community' : isChan ? 'channel' : 'group', strong: MARK })}
         <div class="gates-page">
           <div class="gates-column">
             <div class="info">
               <span class="info-icon"></span>
-              <span class="info-text"
-                >People you invite to this {isComm ? 'community' : isChan ? 'channel' : 'group'} <span class="info-strong">don’t have to pass</span> access gates. Gates only apply to people who find and join it themselves.</span
-              >
+              <span class="info-text">{info[0]}<span class="info-strong">{t(CG + 'gatesInfoStrong')}</span>{info[1] ?? ''}</span>
             </div>
             <!-- the draft, not a prop: the builder unmounts on tab switch and must return showing the edits, which are also what Create submits -->
             <AccessGates {isDiamond} {onUpgrade} value={gates} onChange={(g) => (gates = g)} />
@@ -1005,15 +1012,15 @@
           <div class="column huge-gap">
             <div class="switch-line">
               <div class="switch-text">
-                <span class="switch-title">Enable rules for the group</span>
-                <span class="switch-hint">New members have to agree to the rules before they join.</span>
+                <span class="switch-title">{t(CG + 'rules.enable')}</span>
+                <span class="switch-hint">{t(CG + 'rules.enableHint')}</span>
               </div>
               <div class="toggle-cell"><Toggle on={rulesOn} onChange={(on) => (rulesOn = on)} /></div>
             </div>
 
             {#if rulesOn}
               <div class="list-block small-gap">
-                {@render sectionLabel('START FROM A TEMPLATE')}
+                {@render sectionLabel(t(CG + 'rules.templates'))}
                 <div class="templates">
                   {#each RULE_TEMPLATES as tpl}
                     <div
@@ -1022,15 +1029,15 @@
                       onclick={() => {
                         rulesPreset = tpl.key;
                         rulesText = tpl.rules
-                          .map((r, i) => `${i + 1}. ${r}`)
+                          .map((r, i) => `${i + 1}. ${t(r)}`)
                           .join('\n')
                           .slice(0, RULES_MAX);
                       }}
                       role="button"
                       tabindex="0"
                     >
-                      <span class="template-label">{tpl.label}</span>
-                      <span class="template-desc">{tpl.desc}</span>
+                      <span class="template-label">{t(tpl.label)}</span>
+                      <span class="template-desc">{t(tpl.desc)}</span>
                     </div>
                   {/each}
                 </div>
@@ -1038,7 +1045,7 @@
 
               <div class="list-block small-gap">
                 <div class="rules-head">
-                  {@render sectionLabel('RULES')}
+                  {@render sectionLabel(t(CG + 'rules.label'))}
                   <span class="grow"></span>
                   {#if rulesText}
                     <span
@@ -1048,7 +1055,7 @@
                         rulesPreset = null;
                       }}
                       role="button"
-                      tabindex="0">Clear</span
+                      tabindex="0">{t(CG + 'rules.clear')}</span
                     >
                   {/if}
                 </div>
@@ -1059,12 +1066,12 @@
                       rulesText = e.currentTarget.value;
                       rulesPreset = null;
                     }}
-                    placeholder="Anything members should know before they join"
+                    placeholder={t(CG + 'rules.placeholder')}
                     maxLength={RULES_MAX}
                     minHeight={162}
-                    help="The field grows as you type."
+                    help={t(CG + 'rules.help')}
                     error={rulesBad}
-                    errorText="Rules are enabled — write them here, or turn rules off."
+                    errorText={t(CG + 'rules.error')}
                   />
                 </div>
               </div>
@@ -1077,13 +1084,13 @@
         <div class="centered">
           <div class="column mid-gap">
             <div class="perm-intro">
-              <span class="switch-title">Who can do what</span>
-              <span class="switch-hint">Each permission is set to the lowest role that has it. Higher roles inherit it automatically.</span>
+              <span class="switch-title">{t(CG + 'permissions.title')}</span>
+              <span class="switch-hint">{t(CG + 'permissions.hint')}</span>
             </div>
 
             <div class="cell">
               <SegmentedTabs
-                labels={['General', 'Messages', 'Threads']}
+                labels={[CG + 'permissions.general', CG + 'permissions.messages', CG + 'permissions.threads']}
                 counts={[generalChanged || null, msgExceptions || null, threadsOverride ? thrExceptions || null : null]}
                 selectedIndex={permSub}
                 dotIndexes={[]}
@@ -1096,7 +1103,7 @@
 
             {#if permsChanged > 0}
               <div class="changed">
-                <span class="changed-text">{permsChanged}{permsChanged === 1 ? ' permission differs from the defaults' : ' permissions differ from the defaults'}</span>
+                <span class="changed-text">{t(CG + 'permissions.changed', { count: permsChanged })}</span>
                 <span
                   class="text-action"
                   onclick={() => {
@@ -1105,7 +1112,7 @@
                     permMenu = null;
                   }}
                   role="button"
-                  tabindex="0">Reset to defaults</span
+                  tabindex="0">{t(CG + 'permissions.reset')}</span
                 >
               </div>
             {/if}
@@ -1113,8 +1120,8 @@
             {#if permSub === 2}
               <div class="thread-switch">
                 <div class="switch-text">
-                  <span class="switch-title small">Use different permissions in threads</span>
-                  <span class="switch-hint">{threadsOverride ? 'Threads use the set below. Messages outside threads are unaffected.' : 'Threads currently follow whatever you set for messages.'}</span>
+                  <span class="switch-title small">{t(CG + 'permissions.threadsOverride')}</span>
+                  <span class="switch-hint">{t(threadsOverride ? CG + 'permissions.threadsOwn' : CG + 'permissions.threadsFollow')}</span>
                 </div>
                 <div class="toggle-cell">
                   <Toggle
@@ -1149,8 +1156,8 @@
 
             {#if permSub === 2 && !threadsOverride}
               <div class="inherited">
-                <span class="inherited-title">Threads follow the message permissions</span>
-                <span class="inherited-hint">Turn the switch on to give threads their own set.</span>
+                <span class="inherited-title">{t(CG + 'permissions.inheritedTitle')}</span>
+                <span class="inherited-hint">{t(CG + 'permissions.inheritedHint')}</span>
               </div>
             {/if}
           </div>
@@ -1159,14 +1166,14 @@
     </div>
 
     <div class="footer">
-      <span class="cancel" onclick={() => close(onCancel)} role="button" tabindex="0">Cancel</span>
+      <span class="cancel" onclick={() => close(onCancel)} role="button" tabindex="0">{t('ui.common.cancel')}</span>
       <span class="grow"></span>
       {#if showFooterNote}
         <span class="note" class:error={nameBad || rulesBad || urlBad}>{footerNote}</span>
       {/if}
       <div class="create" class:ready={canCreate} onclick={create} role="button" tabindex="0">
         <span class="create-icon" style:mask={mask(kindIcon)}></span>
-        <span>{isComm ? 'Create community' : isEmb ? 'Create embedded channel' : isChan ? 'Create channel' : 'Create group'}</span>
+        <span>{t(isComm ? CG + 'create.community' : isEmb ? CG + 'create.embedded' : isChan ? CG + 'create.channel' : CG + 'create.group')}</span>
       </div>
     </div>
   </div>
@@ -1176,12 +1183,12 @@
     <div class="menu-layer">
       <div class="menu-catch" onclick={() => (permMenu = null)} aria-hidden="true"></div>
       <!-- hidden for the one frame between mount and measurement, so it never paints mis-placed -->
-      <div class="perm-menu" bind:this={permPanel} style:top={permMenu.top} style:left={permMenu.left} style:visibility={permMenu.measured ? 'visible' : 'hidden'} role="menu" aria-label="Who can do this">
-        <span class="perm-menu-hint">{permMenu.allowInherit ? 'Who can send this' : 'Lowest role with this permission'}</span>
+      <div class="perm-menu" bind:this={permPanel} style:top={permMenu.top} style:left={permMenu.left} style:visibility={permMenu.measured ? 'visible' : 'hidden'} role="menu" aria-label={t(CG + 'permMenu.label')}>
+        <span class="perm-menu-hint">{t(permMenu.allowInherit ? CG + 'permMenu.whoCanSend' : CG + 'permMenu.lowestRole')}</span>
         {#each permOptions as o}
           <div class="perm-option" class:selected={o.key === selected} onclick={() => permMenu && setPerm(permMenu.scope, permMenu.key, o.key)} role="button" tabindex="0">
             <span class="perm-dot"><span class="perm-tick"></span></span>
-            <span class="perm-option-label">{o.label}</span>
+            <span class="perm-option-label">{t(o.label)}</span>
           </div>
         {/each}
       </div>

@@ -1,6 +1,7 @@
 <!-- Person pill: gradient avatar (optional online dot), name, optional tag, and a remove ×. onClick makes the whole chip pressable.
      variant: neutral | accent | danger. size: sm | md | lg. -->
 <script lang="ts">
+  import { useT } from '../i18n';
   const GRADIENTS = {
     violet: 'linear-gradient(140deg,#ff5f9e,#6a2bff)',
     amber: 'linear-gradient(140deg,#ffb03d,#ff4d4d)',
@@ -16,6 +17,7 @@
     size?: 'sm' | 'md' | 'lg';
     variant?: 'neutral' | 'accent' | 'danger';
     color?: keyof typeof GRADIENTS;
+    /** Resource key (or literal text), e.g. a role. */
     tag?: string;
     showAvatar?: boolean;
     showRemove?: boolean;
@@ -25,6 +27,7 @@
   }
 
   let { label, size = 'md', variant = 'neutral', color = 'violet', tag = '', showAvatar = true, showRemove = true, online = false, onRemove, onClick }: Props = $props();
+  const t = useT();
 </script>
 
 <div class="chip {size} {variant}" class:pressable={!!onClick} class:bare={!showAvatar} onclick={onClick} role="button" tabindex="0">
@@ -37,10 +40,10 @@
   {/if}
   <span class="label">{label}</span>
   {#if tag}
-    <span class="tag">{tag}</span>
+    <span class="tag">{t(tag)}</span>
   {/if}
   {#if showRemove}
-    <span class="remove" onclick={onRemove} role="button" tabindex="0" aria-label="Remove" title="Remove">
+    <span class="remove" onclick={onRemove} role="button" tabindex="0" aria-label={t('ui.common.remove')} title={t('ui.common.remove')}>
       <span class="remove-icon"></span>
     </span>
   {/if}

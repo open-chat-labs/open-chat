@@ -1,6 +1,7 @@
 <!-- Overlapping avatars. Up to `max` shown; past that, max-1 faces + a "+N" badge.
      people: [{ grad|color|src, initial?, name? }] or plain CSS background strings. -->
 <script lang="ts">
+  import { useT } from '../i18n';
   type Person = string | { grad?: string; color?: string; src?: string; initial?: string; name?: string };
 
   interface Props {
@@ -12,6 +13,7 @@
   }
 
   let { people = [], max = 4, size = 28, initials = false, ring = 'var(--surface-2,#191921)' }: Props = $props();
+  const t = useT();
 
   const faces = $derived(
     people.map((x) =>
@@ -36,7 +38,7 @@
   style:--overlap="-{overlap}"
   style:--ring={ring}
   role="img"
-  aria-label="{faces.length} {faces.length === 1 ? 'person' : 'people'}"
+  aria-label={t('ui.avatarStack.people', { count: faces.length })}
 >
   {#each shown as face}
     <span class="face" style:background={face.bg}>{face.initial}</span>

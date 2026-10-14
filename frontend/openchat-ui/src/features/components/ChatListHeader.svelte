@@ -2,6 +2,7 @@
      The ⋯ menu defaults to the standard actions for each kind; "Create new group" calls onCreateGroup, other items without
      their own onSelect report their label through onMenu. -->
 <script lang="ts">
+  import { useT } from '../../lib/i18n';
   import { onMount } from 'svelte';
   import type { MenuItem } from '../../lib/types';
   import Avatar from '../../lib/components/Avatar.svelte';
@@ -10,28 +11,30 @@
 
   const icon = (name: string) => `var(--icon-${name}) center/contain no-repeat`;
 
+  // labels are resource keys; onMenu reports the key of the item picked
+  const CREATE_GROUP = 'ui.chatListHeader.createGroup';
   const DMS_MENU: MenuItem[] = [
-    { label: 'Create new group', mask: icon('group') },
-    { label: 'Mark all as read', mask: icon('check-double') },
+    { label: CREATE_GROUP, mask: icon('group') },
+    { label: 'ui.chatListHeader.markAllRead', mask: icon('check-double') },
   ];
 
   const COMMUNITY_MENU: MenuItem[] = [
-    { label: 'Members', mask: icon('users') },
-    { label: 'Invite', mask: icon('invite') },
-    { label: 'Edit community', mask: icon('edit') },
-    { label: 'New channel', mask: icon('plus') },
-    { label: 'Add embedded channel', mask: icon('embed') },
-    { label: 'Mark all as read', mask: icon('check-double') },
-    { label: 'Leave community', mask: icon('exit'), variant: 'danger' },
+    { label: 'ui.chatListHeader.members', mask: icon('users') },
+    { label: 'ui.chatListHeader.invite', mask: icon('invite') },
+    { label: 'ui.chatListHeader.editCommunity', mask: icon('edit') },
+    { label: 'ui.chatListHeader.newChannel', mask: icon('plus') },
+    { label: 'ui.chatListHeader.addEmbeddedChannel', mask: icon('embed') },
+    { label: 'ui.chatListHeader.markAllRead', mask: icon('check-double') },
+    { label: 'ui.chatListHeader.leaveCommunity', mask: icon('exit'), variant: 'danger' },
   ];
 
   interface Props {
     kind?: 'dms' | 'community';
-    /** Community name; the dms header reads "Chats" unless given. */
+    /** Community name (or a resource key); the dms header reads "Chats" unless given. */
     title?: string;
     visibility?: 'Public' | 'Private';
     memberCount?: number;
-    /** Overrides the "Public · 248 members" line. */
+    /** Overrides the "Public · 248 members" line. Resource key (or literal text). */
     meta?: string;
     color?: 'violet' | 'amber' | 'teal' | 'blue';
     menuItems?: MenuItem[];
@@ -41,6 +44,7 @@
   }
 
   let { kind = 'dms', title, visibility = 'Public', memberCount = 0, meta, color = 'teal', menuItems, openDetails, onCreateGroup, onMenu }: Props = $props();
+  const t = useT();
 
   let open = $state(false);
   let menuBox: HTMLDivElement;
@@ -53,7 +57,7 @@
         open = false;
         if (it.onSelect) it.onSelect();
         // the host renders the dialog; mounting it here would trap its fixed layout inside the list column
-        else if (/^create new group$/i.test(it.label)) onCreateGroup?.();
+        else if (it.label === CREATE_GROUP || /^create new group$/i.test(it.label)) onCreateGroup?.();
         else onMenu?.(it.label);
       },
     })),
@@ -83,12 +87,12 @@
         <span class="name">{title}</span>
         <div class="meta-line">
           <span class="lock" class:private={visibility === 'Private'}></span>
-          <span class="meta">{meta ?? `${visibility} · ${memberCount} members`}</span>
+          <span class="meta">{meta ? t(meta) : t('ui.chatListHeader.meta', { visibility, count: memberCount })}</span>
         </div>
       </div>
     </div>
   {:else}
-    <span class="title">{title ?? 'Chats'}</span>
+    <span class="title">{t(title ?? 'ui.chatListHeader.chats')}</span>
   {/if}
   <div class="menu-anchor" bind:this={menuBox}>
     <div class="menu-button" onclick={() => (open = !open)} role="presentation">

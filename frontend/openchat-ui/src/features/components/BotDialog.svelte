@@ -1,6 +1,7 @@
 <!-- Bot details → permissions → install (or edit / remove an installed bot). Every permission starts granted;
      revoking one greys out the commands that need it. readOnly (installed bots, no bot rights) shows details only. -->
 <script lang="ts">
+  import { useT } from '../../lib/i18n';
   import { onDestroy } from 'svelte';
   import Toggle from '../../lib/components/Toggle.svelte';
   import { modal } from '../../lib/behaviours/modal';
@@ -20,31 +21,32 @@
 
   // permission vocabulary — the two scopes a bot can be granted in a chat
   const PERMS: Record<PermKey, { label: string; scope: 'chat' | 'message'; risky?: boolean }> = {
-    read: { label: 'Read messages', scope: 'chat' },
-    summary: { label: 'Read chat summary', scope: 'chat' },
-    members: { label: 'Read members', scope: 'chat' },
-    pinned: { label: 'Read pinned messages', scope: 'chat' },
-    threads: { label: 'Read thread replies', scope: 'chat' },
-    react: { label: 'React to messages', scope: 'chat' },
-    send: { label: 'Send text messages', scope: 'message' },
-    images: { label: 'Send images and files', scope: 'message' },
-    remove: { label: 'Delete messages', scope: 'message', risky: true },
-    pin: { label: 'Pin messages', scope: 'message', risky: true },
-    everyone: { label: 'Mention all members', scope: 'message', risky: true },
+    read: { label: 'ui.botDialog.perms.readMessages', scope: 'chat' },
+    summary: { label: 'ui.botDialog.perms.readSummary', scope: 'chat' },
+    members: { label: 'ui.botDialog.perms.readMembers', scope: 'chat' },
+    pinned: { label: 'ui.botDialog.perms.readPinned', scope: 'chat' },
+    threads: { label: 'ui.botDialog.perms.readThreads', scope: 'chat' },
+    react: { label: 'ui.botDialog.perms.react', scope: 'chat' },
+    send: { label: 'ui.botDialog.perms.sendText', scope: 'message' },
+    images: { label: 'ui.botDialog.perms.sendImages', scope: 'message' },
+    remove: { label: 'ui.botDialog.perms.deleteMessages', scope: 'message', risky: true },
+    pin: { label: 'ui.botDialog.perms.pinMessages', scope: 'message', risky: true },
+    everyone: { label: 'ui.botDialog.perms.mentionAll', scope: 'message', risky: true },
   };
 
-  // plain-language phrases for the summary sentence, in the order they are listed
+  // plain-language phrases for the summary sentence, in the order they are listed; `text` names the phrase, which
+  // comes in two forms: ui.botDialog.can.* ("reads messages", installed) and ui.botDialog.ask.* ("read messages")
   const CAN_DO: Partial<Record<PermKey, { text: string; risky?: boolean }>> = {
-    read: { text: 'reads messages' },
-    summary: { text: 'reads chat summaries' },
-    threads: { text: 'reads thread replies' },
-    pinned: { text: 'reads pinned messages' },
-    members: { text: "sees who's here" },
-    send: { text: 'posts messages' },
-    images: { text: 'posts images and files' },
-    remove: { text: 'delete messages', risky: true },
-    pin: { text: 'pin messages', risky: true },
-    everyone: { text: 'mention everyone', risky: true },
+    read: { text: 'read' },
+    summary: { text: 'summary' },
+    threads: { text: 'threads' },
+    pinned: { text: 'pinned' },
+    members: { text: 'members' },
+    send: { text: 'send' },
+    images: { text: 'images' },
+    remove: { text: 'remove', risky: true },
+    pin: { text: 'pin', risky: true },
+    everyone: { text: 'everyone', risky: true },
   };
   const CAN_DO_ORDER: PermKey[] = ['read', 'summary', 'threads', 'pinned', 'members', 'send', 'images', 'remove', 'pin', 'everyone'];
 
@@ -137,13 +139,11 @@
   const FALLBACK: Spec = {
     creator: '@openchat_labs',
     color: 'slate',
-    description: 'This bot has not published a description yet.',
+    description: 'ui.botDialog.noDescription',
     perms: ['read', 'send'],
-    commands: [{ name: '/help', about: 'List what this bot can do', needs: ['send'] }],
+    commands: [{ name: '/help', about: 'ui.botDialog.helpCommand', needs: ['send'] }],
   };
 
-  // "a", "a and b", "a, b and c"
-  const list = (a: string[]) => (a.length > 1 ? `${a.slice(0, -1).join(', ')} and ${a[a.length - 1]}` : (a[0] ?? ''));
 
   export interface InstalledBot {
     name: string;
@@ -155,6 +155,7 @@
   interface Props {
     /** name (or title) picks the catalogue entry; description / color override it. */
     bot: { name?: string; title?: string; description?: string; color?: Color };
+    /** Group name (data); defaults to "this group". */
     groupName?: string;
     installed?: boolean;
     /** Installed bot shown to someone without bot rights: details only. */
@@ -165,7 +166,13 @@
     onCancel?: () => void;
   }
 
-  let { bot, groupName = 'this group', installed = false, readOnly = false, initialStep = 'details', onRemove, onInstall, onCancel }: Props = $props();
+  let { bot, groupName = 'ui.botDialog.thisGroup', installed = false, readOnly = false, initialStep = 'details', onRemove, onInstall, onCancel }: Props = $props();
+
+  const t = useT();
+  // "a", "a and b", "a, b and c" — separator and final conjunction are translatable
+  const list = (a: string[]) =>
+    a.length > 1 ? t('ui.botDialog.listAnd', { items: a.slice(0, -1).join(t('ui.botDialog.listSeparator')), last: a[a.length - 1] }) : (a[0] ?? '');
+  const group = $derived(t(groupName));
 
   let stepOverride = $state<'details' | 'configure' | 'remove' | null>(null);
   let grantedOverride = $state<Partial<Record<PermKey, boolean>> | null>(null);
@@ -184,11 +191,11 @@
 
   const granted = $derived(grantedOverride ?? Object.fromEntries(spec.perms.map((k) => [k, true])));
   const asked = $derived(spec.perms.map((k) => ({ key: k, ...PERMS[k] })));
-  const riskyNames = $derived(list(asked.filter((p) => p.risky).map((p) => p.label.toLowerCase())));
+  const riskyNames = $derived(list(asked.filter((p) => p.risky).map((p) => t(p.label).toLowerCase())));
   const groups = $derived(
     [
-      { label: 'IN THIS CHAT', icon: 'chat', items: asked.filter((p) => p.scope === 'chat') },
-      { label: 'FOR MESSAGES', icon: 'message', items: asked.filter((p) => p.scope === 'message') },
+      { label: 'ui.botDialog.inThisChat', icon: 'chat', items: asked.filter((p) => p.scope === 'chat') },
+      { label: 'ui.botDialog.forMessages', icon: 'message', items: asked.filter((p) => p.scope === 'message') },
     ].filter((g) => g.items.length > 0),
   );
 
@@ -204,31 +211,26 @@
   // one plain-language sentence for everyone; the parts that act on people's messages are highlighted
   const summary = $derived.by(() => {
     const on = CAN_DO_ORDER.filter((k) => spec.perms.includes(k) && granted[k] !== false);
-    const plain = list(on.filter((k) => !CAN_DO[k]!.risky).map((k) => CAN_DO[k]!.text));
-    const risky = list(on.filter((k) => CAN_DO[k]!.risky).map((k) => CAN_DO[k]!.text));
-    const verbs: Record<string, string> = { reads: 'read', sees: 'see', posts: 'post' };
-    const lead = plain
-      ? (installed ? plain.charAt(0).toUpperCase() + plain.slice(1) : `Asks to ${plain.replace(/(^|, | and )(reads|sees|posts)/g, (_, p, v) => p + verbs[v])}`) +
-        ` in ${groupName}` +
-        (risky ? (installed ? ', and can also ' : ', and to ') : '')
-      : installed
-        ? 'Can '
-        : 'Asks to ';
-    return { lead, risky };
+    const form = installed ? 'can' : 'ask';
+    const plain = list(on.filter((k) => !CAN_DO[k]!.risky).map((k) => t(`ui.botDialog.${form}.${CAN_DO[k]!.text}`)));
+    const risky = list(on.filter((k) => CAN_DO[k]!.risky).map((k) => t(`ui.botDialog.ask.${CAN_DO[k]!.text}`)));
+    // the risky phrase is highlighted inside the sentence: translate around a marker, then split on it
+    const key = plain ? (installed ? 'summaryInstalled' : 'summaryAsk') : installed ? 'summaryInstalledRiskyOnly' : 'summaryAskRiskyOnly';
+    let text = t(`ui.botDialog.${key}`, { plain, group, risky: '\u0001', hasRisky: risky ? 'yes' : 'no' });
+    text = text.charAt(0).toUpperCase() + text.slice(1);
+    const [lead, tail = ''] = text.split('\u0001');
+    return { lead, risky: text.includes('\u0001') ? risky : '', tail };
   });
 
-  const headerTitle = $derived(isRemove ? 'Remove bot' : isConfigure ? (installed ? 'Bot permissions' : 'Install a bot') : 'Bot details');
-  const headerSub = $derived(isConfigure && !installed ? `Step 2 of 2 · ${name} in ${groupName}` : `${name} · ${groupName}`);
+  const headerTitle = $derived(t(isRemove ? 'ui.botDialog.removeBot' : isConfigure ? (installed ? 'ui.botDialog.botPermissions' : 'ui.botDialog.installBot') : 'ui.botDialog.botDetails'));
+  const headerSub = $derived(t(isConfigure && !installed ? 'ui.botDialog.stepSub' : 'ui.botDialog.sub', { name, group }));
   const primaryLabel = $derived(
-    isRemove ? 'Remove bot' : isConfigure ? (installed ? 'Save permissions' : 'Install into group') : installed ? 'Edit permissions' : 'Choose permissions',
+    t(isRemove ? 'ui.botDialog.removeBot' : isConfigure ? (installed ? 'ui.botDialog.savePermissions' : 'ui.botDialog.installIntoGroup') : installed ? 'ui.botDialog.editPermissions' : 'ui.botDialog.choosePermissions'),
   );
+  const createdBy = $derived(t('ui.botDialog.createdBy', { creator: '\u0001' }).split('\u0001'));
   const primaryIcon = $derived(isRemove ? 'trash' : isConfigure ? (installed ? 'check' : 'receive') : 'arrow');
   const detailsFootnote = $derived(
-    installed
-      ? viewOnly
-        ? `${name} is installed in ${groupName}. Only admins can change its permissions or remove it.`
-        : `${name} is installed in ${groupName}. Editing permissions changes what it can do here.`
-      : `Installing adds ${name} to ${groupName}. You choose which permissions to grant on the next step.`,
+    t(installed ? (viewOnly ? 'ui.botDialog.footnoteViewOnly' : 'ui.botDialog.footnoteInstalled') : 'ui.botDialog.footnoteInstall', { name, group }),
   );
 
   // the card animates out before the parent hears about it
@@ -276,7 +278,7 @@
           <div class="identity-text">
             <span class="bot-name">{name}</span>
             <span class="byline"
-              ><span>created by <span class="creator">{spec.creator}</span></span>{#if installed}<span class="dot">·</span><span class="installed"><span class="installed-icon"></span>Installed</span>{/if}</span
+              ><span>{createdBy[0]}<span class="creator">{spec.creator}</span>{createdBy[1] ?? ''}</span>{#if installed}<span class="dot">·</span><span class="installed"><span class="installed-icon"></span>{t('ui.botDialog.installed')}</span>{/if}</span
             >
           </div>
           {#if installed && !!onRemove && !viewOnly}
@@ -284,24 +286,24 @@
               <span
                 class="remove"
                 onclick={() => (stepOverride = 'remove')}
-                aria-label="Remove {name} from {groupName}"
+                aria-label={t('ui.botDialog.removeFrom', { name, group })}
                 role="button"
                 tabindex="0"
-                title="Remove {name} from {groupName}">Remove</span
+                title={t('ui.botDialog.removeFrom', { name, group })}>{t('ui.common.remove')}</span
               >
             </div>
           {/if}
         </div>
 
-        <span class="description">{description}</span>
+        <span class="description">{t(description)}</span>
 
         <div class="section">
-          <span class="section-label">COMMANDS · {commands.length}</span>
+          <span class="section-label">{t('ui.botDialog.commands', { count: commands.length })}</span>
           <div class="panel">
             {#each commands as c}
               <div class="command">
                 <span class="command-name">{c.name}</span>
-                <span class="command-about">{c.about}</span>
+                <span class="command-about">{t(c.about)}</span>
               </div>
             {/each}
           </div>
@@ -309,7 +311,7 @@
 
         <div class="plain">
           <span class="lock"></span>
-          <span class="plain-text">{summary.lead}<span class="risky-text">{summary.risky}</span>.</span>
+          <span class="plain-text">{summary.lead}<span class="risky-text">{summary.risky}</span>{summary.tail}</span>
         </div>
 
         <span class="footnote">{detailsFootnote}</span>
@@ -321,12 +323,12 @@
             <span class="remove-face-fill" style:background={GRADIENTS[color] ?? GRADIENTS.slate}></span>
             <span class="remove-badge"><span class="remove-badge-icon"></span></span>
           </div>
-          <span class="remove-title">Remove {name} from {groupName}?</span>
+          <span class="remove-title">{t('ui.botDialog.removeTitle', { name, group })}</span>
         </div>
         <div class="panel">
-          <div class="fact"><span class="fact-icon danger" style:mask="var(--icon-warning) center/contain no-repeat"></span><span class="fact-text">Its commands stop working for everyone in {groupName}.</span></div>
-          <div class="fact"><span class="fact-icon" style:mask="var(--icon-lock) center/contain no-repeat"></span><span class="fact-text">The permissions you granted are revoked.</span></div>
-          <div class="fact"><span class="fact-icon" style:mask="var(--icon-rotate-back) center/contain no-repeat"></span><span class="fact-text">You can reinstall it later from Bots.</span></div>
+          <div class="fact"><span class="fact-icon danger" style:mask="var(--icon-warning) center/contain no-repeat"></span><span class="fact-text">{t('ui.botDialog.factCommandsStop', { group })}</span></div>
+          <div class="fact"><span class="fact-icon" style:mask="var(--icon-lock) center/contain no-repeat"></span><span class="fact-text">{t('ui.botDialog.factRevoked')}</span></div>
+          <div class="fact"><span class="fact-icon" style:mask="var(--icon-rotate-back) center/contain no-repeat"></span><span class="fact-text">{t('ui.botDialog.factReinstall')}</span></div>
         </div>
       {/if}
 
@@ -336,29 +338,29 @@
             <span class="target-face" style:background={GRADIENTS[color] ?? GRADIENTS.slate}></span>
             <span class="target-bot">{name}</span>
             <span class="target-arrow"></span>
-            <span class="target-group">{groupName}</span>
+            <span class="target-group">{group}</span>
           </div>
         {/if}
 
         <div class="intro-row">
-          <span class="intro">Grant only what this bot needs. Commands that rely on a permission you revoke stop working.</span>
+          <span class="intro">{t('ui.botDialog.intro')}</span>
         </div>
 
         {#each groups as g}
           <div class="section">
             <div class="group-head">
               <span class="group-icon" style:mask="var(--icon-{g.icon}) center/contain no-repeat"></span>
-              <span class="group-label">{g.label}</span>
+              <span class="group-label">{t(g.label)}</span>
             </div>
             <div class="panel">
               {#each g.items as p}
                 <div class="perm">
                   <span class="perm-label" class:off={!granted[p.key]}>
-                    <span>{p.label}</span>
+                    <span>{t(p.label)}</span>
                     {#if p.risky}
-                      <span class="risky" title="Consequential — it can change other people's messages">
+                      <span class="risky" title={t('ui.botDialog.consequentialHint')}>
                         <span class="risky-icon"></span>
-                        <span class="risky-label">CONSEQUENTIAL</span>
+                        <span class="risky-label">{t('ui.botDialog.consequential')}</span>
                       </span>
                     {/if}
                   </span>
@@ -370,10 +372,10 @@
         {/each}
 
         <div class="section">
-          <span class="section-label">COMMANDS · {commands.length}</span>
+          <span class="section-label">{t('ui.botDialog.commands', { count: commands.length })}</span>
           <div class="chips">
             {#each commands as c}
-              <span class="command-chip" class:blocked={c.blocked} title={c.about}>{c.name}</span>
+              <span class="command-chip" class:blocked={c.blocked} title={t(c.about)}>{c.name}</span>
             {/each}
           </div>
         </div>
@@ -382,18 +384,18 @@
           <div class="blocked">
             <div class="blocked-head">
               <span class="blocked-icon"></span>
-              <span class="blocked-title">{blocked.length === 1 ? '1 command will stop working' : `${blocked.length} commands will stop working`}</span>
+              <span class="blocked-title">{t('ui.botDialog.blockedTitle', { count: blocked.length })}</span>
             </div>
-            <span class="blocked-body">{blocked.map((c) => c.name).join(', ')} need{blocked.length === 1 ? 's' : ''} a permission you revoked. You can grant it again at any time.</span>
+            <span class="blocked-body">{t('ui.botDialog.blockedBody', { count: blocked.length, commands: blocked.map((c) => c.name).join(', ') })}</span>
           </div>
         {/if}
 
-        <span class="footnote">By {installed ? 'saving' : 'installing'}, {name} can act in {groupName} with the permissions above.</span>
+        <span class="footnote">{t(installed ? 'ui.botDialog.footnoteSaving' : 'ui.botDialog.footnoteInstalling', { name, group })}</span>
       {/if}
     </div>
 
     <div class="footer">
-      <span class="secondary" onclick={secondary} role="button" tabindex="0">{isConfigure || isRemove ? 'Back' : viewOnly ? 'Close' : 'Cancel'}</span>
+      <span class="secondary" onclick={secondary} role="button" tabindex="0">{t(isConfigure || isRemove ? 'ui.common.back' : viewOnly ? 'ui.common.close' : 'ui.common.cancel')}</span>
       <span class="grow"></span>
       {#if !viewOnly}
         <div class="primary" class:danger={isRemove} onclick={primary} role="button" tabindex="0">

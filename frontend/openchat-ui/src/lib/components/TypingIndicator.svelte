@@ -1,5 +1,6 @@
 <!-- Who is typing: overlapping gradient faces, three bouncing dots and a label ("Priya is typing", "2 people are typing"). -->
 <script lang="ts">
+  import { useT } from '../i18n';
   const GRADIENTS: Record<string, string> = {
     violet: 'linear-gradient(140deg,#8C6BFF,#FF5EAE)',
     amber: 'linear-gradient(140deg,#ffb03d,#ff4d4d)',
@@ -13,13 +14,14 @@
     colors?: string[];
     /** Ring around each face; match the surface behind. */
     ringColor?: string;
-    /** Overrides the generated label. */
+    /** Overrides the generated label. Resource key (or literal text). */
     label?: string;
   }
 
   let { names, colors = ['violet', 'teal'], ringColor = 'var(--card,#0e0e12)', label = '' }: Props = $props();
+  const t = useT();
 
-  const text = $derived(label || (names.length > 1 ? `${names.length} people are typing` : `${names[0]} is typing`));
+  const text = $derived(label ? t(label) : t('ui.typingIndicator.typing', { count: names.length, name: names[0] }));
 </script>
 
 <div class="typing">

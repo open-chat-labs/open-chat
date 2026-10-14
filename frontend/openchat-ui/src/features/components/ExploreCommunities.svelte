@@ -3,6 +3,7 @@
      name matches ranked first). guest adds a sticky sign-in banner. -->
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { useT } from '../../lib/i18n';
 
   type Swatch = 'sunset' | 'amber' | 'blue' | 'teal' | 'plum' | 'violet' | 'rose';
 
@@ -36,7 +37,7 @@
     /** Sort keys for "Most active" and "Newest". */
     active?: number;
     created?: number;
-    /** Defaults to English. */
+    /** Language name or resource key; defaults to English. */
     language?: string;
     visibility?: 'Public' | 'Private';
     verified?: boolean;
@@ -65,6 +66,18 @@
   }
 
   let { communities, joinedKeys = [], guest = false, onOpen, onJoin, onCreate, onSignIn, onCreateAccount }: Props = $props();
+  const t = useT();
+
+  // A translated sentence split around its {placeholders}, so part of it can be styled or clickable without breaking
+  // the sentence up for translators: text segments alternate with placeholder names.
+  const MARK = '\u0001';
+  function segments(key: string, names: string[]): { text?: string; name?: string }[] {
+    const params = Object.fromEntries(names.map((n) => [n, MARK + n + MARK]));
+    return t(key, params)
+      .split(MARK)
+      .map((part, i) => (i % 2 ? { name: part } : { text: part }))
+      .filter((seg) => seg.name || seg.text);
+  }
 
   let query = $state('');
   let sort = $state(0);
@@ -89,7 +102,8 @@
     };
   });
 
-  const langOf = (c: ExploreCommunity) => c.language || 'English';
+  // the filter compares these values; they render through t(), so keys and plain names both work
+  const langOf = (c: ExploreCommunity) => c.language || 'ui.exploreCommunities.english';
   const q = $derived(query.trim().toLowerCase());
   const SORTS: ((a: ExploreCommunity, b: ExploreCommunity) => number)[] = [
     (a, b) => b.members - a.members,
@@ -121,8 +135,8 @@
       .map((l) => ({ label: l, count: communities.filter((c) => langOf(c) === l).length }))
       .sort((a, b) => b.count - a.count),
   );
-  const langLabel = $derived(!langs.length ? 'Any language' : langs.length === 1 ? langs[0] : `${langs.length} languages`);
-  const emptyTitle = $derived(q ? `No communities match “${query}”` : 'No communities in these languages yet');
+  const langLabel = $derived(!langs.length ? t('ui.exploreCommunities.anyLanguage') : langs.length === 1 ? t(langs[0]) : t('ui.exploreCommunities.languagesCount', { count: langs.length }));
+  const emptyTitle = $derived(q ? t('ui.exploreCommunities.noMatch', { query }) : t('ui.exploreCommunities.noneInLanguages'));
   const rows = $derived(list.slice(0, shown));
 
   function toggleLang(l: string) {
@@ -146,7 +160,7 @@
           {@const on = langs.includes(l.label)}
           <div class="lang-option" onclick={() => toggleLang(l.label)} tabindex="0" role="option" aria-selected={on}>
             <span class="lang-box" class:on><span class="lang-check" class:on></span></span>
-            <span class="lang-label">{l.label}</span>
+            <span class="lang-label">{t(l.label)}</span>
             <span class="lang-count">{l.count}</span>
           </div>
         {/each}
@@ -160,15 +174,15 @@
   <div class="big-card" class:locked={isPrivate(c) && !joined} onclick={() => open(c)} role="button" tabindex="0">
     <span style:background={coverOf(c)}></span>
     <div class="big-body">
-      <span class="kicker">{kicker}</span>
+      <span class="kicker">{t(kicker)}</span>
       <div class="big-identity">
         <span class="big-avatar" style:background={avatarOf(c)}></span>
         <div class="big-names">
           <div class="name-line"><span class="big-name">{c.name}</span>{#if c.verified}{@render icon('verified', 16, 'var(--status-verified,#3D9BFF)')}{/if}</div>
-          <span class="big-meta">{fmt(c.members)} members · {channelCount(c)} channels · {langOf(c)}</span>
+          <span class="big-meta">{t('ui.exploreCommunities.bigMeta', { count: c.members, members: fmt(c.members), channels: channelCount(c), language: t(langOf(c)) })}</span>
         </div>
       </div>
-      <span class="big-about">{c.about || 'No description yet.'}</span>
+      <span class="big-about">{c.about || t('ui.exploreCommunities.noDescription')}</span>
       <span class="big-channels"
         >{(c.channels ?? [])
           .filter((ch) => ch.visibility !== 'Private')
@@ -178,16 +192,16 @@
       >
       <div class="big-actions">
         {#if joined || !isPrivate(c)}
-          <span class="preview-cta">{@render icon('eye', 15, 'var(--on-accent,#2E0512)')}{joined ? 'Open community' : 'Preview community'}</span>
+          <span class="preview-cta">{@render icon('eye', 15, 'var(--on-accent,#2E0512)')}{t(joined ? 'ui.exploreCommunities.openCommunity' : 'ui.exploreCommunities.previewCommunity')}</span>
           <span class="cta-hint"
             >{joined
-              ? 'You’re a member'
+              ? t('ui.exploreCommunities.youreAMember')
               : c.gate
-                ? `Joining has ${c.gate.items.length} requirements. Preview first, then check them`
-                : 'Read the public channels first, then decide whether to join'}</span
+                ? t('ui.exploreCommunities.gateHint', { count: c.gate.items.length })
+                : t('ui.exploreCommunities.publicHint')}</span
           >
         {:else}
-          <span class="invite-only">{@render icon('lock', 12, 'var(--ink-3,#9A9AA8)')}Invite only — join with an invite link</span>
+          <span class="invite-only">{@render icon('lock', 12, 'var(--ink-3,#9A9AA8)')}{t('ui.exploreCommunities.inviteOnlyHint')}</span>
         {/if}
       </div>
     </div>
@@ -204,17 +218,17 @@
         <span class="card-avatar" style:background={avatarOf(c)}></span>
         {#if joined || priv || c.gate}
           <span class="tag" class:joined
-            >{@render icon(joined ? 'check' : priv ? 'lock' : 'gate', 11, 'currentColor')}{joined ? 'Joined' : priv ? 'Invite only' : 'Gated'}</span
+            >{@render icon(joined ? 'check' : priv ? 'lock' : 'gate', 11, 'currentColor')}{t(joined ? 'ui.exploreCommunities.joined' : priv ? 'ui.exploreCommunities.inviteOnly' : 'ui.exploreCommunities.gated')}</span
           >
         {/if}
       </div>
       <div class="name-line"><span class="card-name">{c.name}</span>{#if c.verified}{@render icon('verified', 15, 'var(--status-verified,#3D9BFF)')}{/if}</div>
-      <span class="card-about">{c.about || 'No description yet.'}</span>
+      <span class="card-about">{c.about || t('ui.exploreCommunities.noDescription')}</span>
       <div class="card-foot">
-        <span class="stat" title="{fmt(c.members)} members">{@render icon('users', 14, 'var(--ink-3,#9A9AA8)')}{fmt(c.members)}</span><span class="stat" title="{channelCount(c)} channels"
+        <span class="stat" title={t('ui.exploreCommunities.membersTitle', { count: c.members, members: fmt(c.members) })}>{@render icon('users', 14, 'var(--ink-3,#9A9AA8)')}{fmt(c.members)}</span><span class="stat" title={t('ui.exploreCommunities.channelsTitle', { count: channelCount(c) })}
           >{@render icon('hash', 14, 'var(--ink-3,#9A9AA8)')}{channelCount(c)}</span
         ><span class="grow"></span>
-        <span class="card-cta" class:muted={priv && !joined}>{joined ? 'Open →' : priv ? 'Invite only' : 'Preview →'}</span>
+        <span class="card-cta" class:muted={priv && !joined}>{t(joined ? 'ui.exploreCommunities.openArrow' : priv ? 'ui.exploreCommunities.inviteOnly' : 'ui.exploreCommunities.previewArrow')}</span>
       </div>
     </div>
   </div>
@@ -224,16 +238,16 @@
   {#if q}
     <div class="search-bar">
       <div class="search-row">
-        <span class="back" onclick={() => (query = '')} role="button" tabindex="0">{@render icon('back', 15, 'var(--ink-3,#9A9AA8)')}Explore</span>
+        <span class="back" onclick={() => (query = '')} role="button" tabindex="0">{@render icon('back', 15, 'var(--ink-3,#9A9AA8)')}{t('ui.exploreCommunities.explore')}</span>
         <div class="search small" class:focused>
           {@render icon('search', 16, 'var(--ink-3,#9A9AA8)')}
           <!-- svelte-ignore a11y_autofocus -->
-          <input bind:value={query} onfocus={() => (focused = true)} onblur={() => (focused = false)} autofocus placeholder="Search by name or description" />
-          <span class="clear" onclick={() => (query = '')} aria-label="Clear" role="button" tabindex="0" title="Clear">{@render icon('close', 12, 'var(--ink-3,#9A9AA8)')}</span>
+          <input bind:value={query} onfocus={() => (focused = true)} onblur={() => (focused = false)} autofocus placeholder={t('ui.exploreCommunities.searchPlaceholder')} />
+          <span class="clear" onclick={() => (query = '')} aria-label={t('ui.exploreCommunities.clear')} role="button" tabindex="0" title={t('ui.exploreCommunities.clear')}>{@render icon('close', 12, 'var(--ink-3,#9A9AA8)')}</span>
         </div>
       </div>
       <div class="results-row">
-        <span class="result-count">{found.length === 1 ? '1 result' : `${found.length} results`}</span>
+        <span class="result-count">{t('ui.exploreCommunities.results', { count: found.length })}</span>
         {@render langPicker(false)}
       </div>
     </div>
@@ -241,11 +255,11 @@
     <div class="results-wrap">
       <div class="results">
         {#if found.length > 0}
-          {@render bigCard(found[0], 'BEST MATCH')}
+          {@render bigCard(found[0], 'ui.exploreCommunities.bestMatch')}
         {/if}
 
         {#if found.length > 1}
-          <span class="section-label">MORE RESULTS</span>
+          <span class="section-label">{t('ui.exploreCommunities.moreResults')}</span>
           <div class="card-grid">
             {#each found.slice(1) as c}{@render card(c)}{/each}
           </div>
@@ -254,8 +268,8 @@
         {#if found.length === 0}
           <div class="empty">
             <span class="empty-title">{emptyTitle}</span>
-            <span class="empty-body">Try another search or language, or start the community you were looking for.</span>
-            <span class="create" onclick={onCreate} role="button" tabindex="0">{@render icon('plus', 15, 'var(--on-accent,#2E0512)')}Create community</span>
+            <span class="empty-body">{t('ui.exploreCommunities.emptyBody')}</span>
+            <span class="create" onclick={onCreate} role="button" tabindex="0">{@render icon('plus', 15, 'var(--on-accent,#2E0512)')}{t('ui.exploreCommunities.createCommunity')}</span>
           </div>
         {/if}
       </div>
@@ -263,21 +277,21 @@
   {:else}
     <div class="hero">
       <div class="hero-text">
-        <span class="hero-title">Explore communities. Find your people!</span>
-        <span class="hero-sub">{communities.length}{communities.length === 1 ? ' community' : ' communities'} on OpenChat</span>
+        <span class="hero-title">{t('ui.exploreCommunities.heroTitle')}</span>
+        <span class="hero-sub">{t('ui.exploreCommunities.heroSub', { count: communities.length })}</span>
       </div>
       <div class="search large" class:focused>
         {@render icon('search', 18, 'var(--ink-3,#9A9AA8)')}
-        <input bind:value={query} onfocus={() => (focused = true)} onblur={() => (focused = false)} placeholder="Search by name or description" />
+        <input bind:value={query} onfocus={() => (focused = true)} onblur={() => (focused = false)} placeholder={t('ui.exploreCommunities.searchPlaceholder')} />
         {#if query}
-          <span class="clear large" onclick={() => (query = '')} aria-label="Clear" role="button" tabindex="0" title="Clear">{@render icon('close', 13, 'var(--ink-3,#9A9AA8)')}</span>
+          <span class="clear large" onclick={() => (query = '')} aria-label={t('ui.exploreCommunities.clear')} role="button" tabindex="0" title={t('ui.exploreCommunities.clear')}>{@render icon('close', 13, 'var(--ink-3,#9A9AA8)')}</span>
         {/if}
       </div>
       <div class="hero-filters">
-        <span class="hero-note">Showing communities in</span>
+        <span class="hero-note">{t('ui.exploreCommunities.showingIn')}</span>
         {@render langPicker(true)}
         <span class="hero-divider"></span>
-        <span class="hero-note">or <span class="create-link" onclick={onCreate} role="button" tabindex="0">create your own community</span></span>
+        <span class="hero-note">{#each segments('ui.exploreCommunities.orCreate', ['link']) as seg}{#if seg.name}<span class="create-link" onclick={onCreate} role="button" tabindex="0">{t('ui.exploreCommunities.createOwn')}</span>{:else}{seg.text}{/if}{/each}</span>
       </div>
     </div>
 
@@ -285,10 +299,10 @@
       <div class="popular-wrap">
         <div class="popular">
           <div class="popular-head">
-            <span class="popular-title">{langs.length === 1 ? `Popular in ${langs[0]}` : 'Popular on OpenChat'}</span>
-            <span class="popular-sub">By members · communities you haven’t joined</span>
+            <span class="popular-title">{langs.length === 1 ? t('ui.exploreCommunities.popularIn', { language: t(langs[0]) }) : t('ui.exploreCommunities.popularOnOpenChat')}</span>
+            <span class="popular-sub">{t('ui.exploreCommunities.popularSub')}</span>
           </div>
-          {@render bigCard(top[0], 'FEATURED · MOST MEMBERS')}
+          {@render bigCard(top[0], 'ui.exploreCommunities.featured')}
           <div class="popular-container" data-ex-popular="">
             <div class="popular-grid" data-ex-popular-grid="">
               {#each top.slice(1) as c}{@render card(c)}{/each}
@@ -301,12 +315,12 @@
     <div class="table-wrap">
       <div class="table">
         <div class="table-head">
-          <span class="table-title">{langs.length ? 'Filtered' : 'All communities'} <span class="table-count">· {list.length}</span></span>
+          <span class="table-title">{t(langs.length ? 'ui.exploreCommunities.filtered' : 'ui.exploreCommunities.allCommunities')} <span class="table-count">· {list.length}</span></span>
           {#if langs.length}
-            <span class="clear-filters" onclick={() => (langs = [])} role="button" tabindex="0">Clear filters</span>
+            <span class="clear-filters" onclick={() => (langs = [])} role="button" tabindex="0">{t('ui.exploreCommunities.clearFilters')}</span>
           {/if}
           <div class="sorts">
-            {#each ['Most members', 'Most active', 'Newest'] as label, i}
+            {#each ['ui.exploreCommunities.sortMembers', 'ui.exploreCommunities.sortActive', 'ui.exploreCommunities.sortNewest'] as label, i}
               <span
                 class="sort"
                 class:on={sort === i}
@@ -315,13 +329,13 @@
                   shown = PAGE;
                 }}
                 role="button"
-                tabindex="0">{label}</span
+                tabindex="0">{t(label)}</span
               >
             {/each}
           </div>
         </div>
         <div class="row columns" data-ex-row="">
-          <span>COMMUNITY</span><span>MEMBERS</span><span data-ex-col="">CHANNELS</span><span data-ex-col="">LANGUAGE</span><span></span>
+          <span>{t('ui.exploreCommunities.colCommunity')}</span><span>{t('ui.exploreCommunities.colMembers')}</span><span data-ex-col="">{t('ui.exploreCommunities.colChannels')}</span><span data-ex-col="">{t('ui.exploreCommunities.colLanguage')}</span><span></span>
         </div>
         {#each rows as c}
           {@const joined = isJoined(c)}
@@ -332,20 +346,20 @@
               <div class="entry-text">
                 <div class="name-line">
                   <span class="entry-title">{c.name}</span>
-                  {#if c.verified}<span class="glyph-wrap" title="Verified">{@render icon('verified', 14, 'var(--status-verified,#3D9BFF)')}</span>{/if}
-                  {#if priv}<span class="glyph-wrap" title="Private">{@render icon('lock', 12, 'var(--ink-3,#9A9AA8)')}</span>{/if}
+                  {#if c.verified}<span class="glyph-wrap" title={t('ui.exploreCommunities.verified')}>{@render icon('verified', 14, 'var(--status-verified,#3D9BFF)')}</span>{/if}
+                  {#if priv}<span class="glyph-wrap" title={t('ui.exploreCommunities.private')}>{@render icon('lock', 12, 'var(--ink-3,#9A9AA8)')}</span>{/if}
                 </div>
-                <span class="entry-about">{c.about || 'No description yet.'}</span>
+                <span class="entry-about">{c.about || t('ui.exploreCommunities.noDescription')}</span>
               </div>
             </div>
             <span class="mono">{fmt(c.members)}</span>
             <span class="mono" data-ex-col="">{channelCount(c)}</span>
-            <span class="entry-lang" data-ex-col="">{langOf(c)}</span>
+            <span class="entry-lang" data-ex-col="">{t(langOf(c))}</span>
             <div class="entry-action">
               {#if joined}
-                <span class="pill joined">{@render icon('check', 12, 'var(--status-online,#2EE6A8)')}Joined</span>
+                <span class="pill joined">{@render icon('check', 12, 'var(--status-online,#2EE6A8)')}{t('ui.exploreCommunities.joined')}</span>
               {:else if priv}
-                <span class="pill">{@render icon('lock', 11, 'var(--ink-3,#9A9AA8)')}Invite only</span>
+                <span class="pill">{@render icon('lock', 11, 'var(--ink-3,#9A9AA8)')}{t('ui.exploreCommunities.inviteOnly')}</span>
               {:else}
                 <span
                   class="preview"
@@ -354,7 +368,7 @@
                     onJoin?.(c.key);
                   }}
                   role="button"
-                  tabindex="0">Preview</span
+                  tabindex="0">{t('ui.exploreCommunities.preview')}</span
                 >
               {/if}
             </div>
@@ -363,15 +377,15 @@
         {#if list.length > shown}
           <div class="more">
             <span class="load-more" onclick={() => (shown += PAGE)} role="button" tabindex="0"
-              >Load {Math.min(PAGE, list.length - shown)} more{@render icon('chevron-down', 13, 'var(--ink,#ECECF1)')}</span
+              >{t('ui.exploreCommunities.loadMore', { count: Math.min(PAGE, list.length - shown) })}{@render icon('chevron-down', 13, 'var(--ink,#ECECF1)')}</span
             >
-            <span class="shown">Showing {Math.min(shown, list.length)} of {list.length}</span>
+            <span class="shown">{t('ui.exploreCommunities.showing', { shown: Math.min(shown, list.length), total: list.length })}</span>
           </div>
         {/if}
         {#if list.length === 0}
           <div class="table-empty">
             <span class="table-empty-title">{emptyTitle}</span>
-            <span class="table-empty-body">Try other languages, or start the community you were looking for.</span>
+            <span class="table-empty-body">{t('ui.exploreCommunities.tableEmptyBody')}</span>
           </div>
         {/if}
       </div>
@@ -383,12 +397,12 @@
       <div class="guest" data-screen-label="Guest banner">
         <img class="guest-logo" src="assets/openchat-logo.svg" alt="" width="40" height="40" />
         <div class="guest-text">
-          <span class="guest-title">You're browsing as a guest</span>
-          <span class="guest-body">Create an account to join communities, send messages and vote on proposals. No phone number needed.</span>
+          <span class="guest-title">{t('ui.exploreCommunities.guestTitle')}</span>
+          <span class="guest-body">{t('ui.exploreCommunities.guestBody')}</span>
         </div>
         <div class="guest-actions">
-          <span class="sign-in" onclick={onSignIn} role="button" tabindex="0">Sign in</span>
-          <span class="create-account" onclick={onCreateAccount ?? onSignIn} role="button" tabindex="0">Create account</span>
+          <span class="sign-in" onclick={onSignIn} role="button" tabindex="0">{t('ui.exploreCommunities.signIn')}</span>
+          <span class="create-account" onclick={onCreateAccount ?? onSignIn} role="button" tabindex="0">{t('ui.exploreCommunities.createAccount')}</span>
         </div>
       </div>
     </div>

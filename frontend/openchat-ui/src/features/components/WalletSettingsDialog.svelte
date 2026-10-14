@@ -28,6 +28,7 @@
   import type { WalletToken } from '../../lib/types';
   import Toggle from '../../lib/components/Toggle.svelte';
   import { modal } from '../../lib/behaviours/modal';
+  import { useT } from '../../lib/i18n';
 
   type Section = 'tokens' | 'recipients' | 'security' | 'currency';
 
@@ -48,9 +49,9 @@
   const CURRENCIES = ['USD', 'BTC', 'ETH', 'ICP'] as const;
   const CHIP_CAP = 10;
   const NAV: { key: Section; label: string; icon: string }[] = [
-    { key: 'tokens', label: 'Tokens', icon: 'coins' },
-    { key: 'security', label: 'Security', icon: 'lock' },
-    { key: 'currency', label: 'Display currency', icon: 'currency' },
+    { key: 'tokens', label: 'ui.walletSettingsDialog.nav.tokens', icon: 'coins' },
+    { key: 'security', label: 'ui.walletSettingsDialog.nav.security', icon: 'lock' },
+    { key: 'currency', label: 'ui.walletSettingsDialog.nav.currency', icon: 'currency' },
   ];
 
   interface Props {
@@ -63,6 +64,7 @@
   }
 
   let { tokens, value = null, section = 'tokens', onChange, onCancel }: Props = $props();
+  const t = useT();
 
   // values in USD, matching the wallet panel's holdings
   const held = $derived(tokens.filter((t) => t.held > 0).map((t) => ({ symbol: t.symbol, mark: t.mark, grad: t.grad, value: Math.round(t.price * t.held) })));
@@ -122,7 +124,7 @@
 
   function saveRecipient() {
     if (!sheet || !draftValid) return;
-    const entry: SavedRecipient = { id: sheet.editId ?? `r${Date.now()}`, name: sheet.name.trim() || `${draftNet} recipient`, address: draftAddr, token: sheet.token };
+    const entry: SavedRecipient = { id: sheet.editId ?? `r${Date.now()}`, name: sheet.name.trim() || t('ui.walletSettingsDialog.defaultRecipientName', { network: draftNet }), address: draftAddr, token: sheet.token };
     const next = sheet.editId ? saved.map((r) => (r.id === sheet!.editId ? entry : r)) : [...saved, entry];
     sheet = null;
     apply({ recipients: next });
@@ -177,8 +179,8 @@
   <div class="card" class:closing>
     <div class="header">
       <div class="header-text">
-        <span class="header-title">Wallet settings</span>
-        <span class="header-sub">Changes apply as you make them</span>
+        <span class="header-title">{t('ui.walletSettingsDialog.title')}</span>
+        <span class="header-sub">{t('ui.walletSettingsDialog.subtitle')}</span>
       </div>
       <span class="square" onclick={close} role="button" tabindex="0">{@render glyph('close', 15, 'var(--ink-3,#9A9AA8)')}</span>
     </div>
@@ -188,7 +190,7 @@
         {#each NAV as n}
           <span class="nav-item" class:on={tab === n.key} onclick={() => (tabOverride = n.key)} role="button" tabindex="0">
             {@render glyph(n.icon, 16, 'var(--nav-ink)')}
-            <span class="nav-label">{n.label}</span>
+            <span class="nav-label">{t(n.label)}</span>
           </span>
         {/each}
       </div>
@@ -197,8 +199,8 @@
         {#if tab === 'tokens'}
           <div class="setting">
             <div class="setting-text">
-              <span class="setting-title">Automatic configuration</span>
-              <span class="setting-desc">{autoOn ? 'Any token with a balance shows up, as long as it clears the minimum value.' : 'Off — the wallet shows only the tokens you picked.'}</span>
+              <span class="setting-title">{t('ui.walletSettingsDialog.autoConfig')}</span>
+              <span class="setting-desc">{t(autoOn ? 'ui.walletSettingsDialog.autoConfigOn' : 'ui.walletSettingsDialog.autoConfigOff')}</span>
             </div>
             <div class="setting-toggle">
               <Toggle
@@ -210,7 +212,7 @@
 
           {#if autoOn}
             <div class="minimum">
-              <span class="eyebrow grow">MINIMUM VALUE</span>
+              <span class="eyebrow grow">{t('ui.walletSettingsDialog.minimumValue')}</span>
               <div class="money-field">
                 <span class="dollar">$</span>
                 <input
@@ -234,9 +236,9 @@
           >
             <div class="list-card-head">
               <div class="list-card-text">
-                <span class="list-card-title">Token list</span>
+                <span class="list-card-title">{t('ui.walletSettingsDialog.tokenList')}</span>
                 <span class="list-card-sub"
-                  >{autoOn ? `${shown.length} of ${held.length} tokens shown · set by the minimum` : `${picked.length} of ${held.length} tokens shown · chosen by you`}</span
+                  >{t(autoOn ? 'ui.walletSettingsDialog.shownByMinimum' : 'ui.walletSettingsDialog.shownByYou', { shown: autoOn ? shown.length : picked.length, total: held.length })}</span
                 >
               </div>
               {@render glyph('chevron-right', 14, 'var(--ink-4,#7C7C8C)')}
@@ -246,10 +248,10 @@
                 <span class="chip"><span class="chip-mark" style:background={c.grad}>{c.mark}</span><span class="chip-symbol">{c.symbol}</span></span>
               {/each}
               {#if shown.length > CHIP_CAP}
-                <span class="chip-more">+{shown.length - CHIP_CAP} more</span>
+                <span class="chip-more">{t('ui.walletSettingsDialog.moreChips', { count: shown.length - CHIP_CAP })}</span>
               {/if}
               {#if shown.length === 0}
-                <span class="none">Nothing selected — the wallet is empty.</span>
+                <span class="none">{t('ui.walletSettingsDialog.nothingSelected')}</span>
               {/if}
             </div>
           </div>
@@ -259,35 +261,33 @@
           <div class="setting">
             <div class="setting-text">
               <div class="pin-head">
-                <span class="setting-title">PIN on transfers</span>
+                <span class="setting-title">{t('ui.walletSettingsDialog.pinOnTransfers')}</span>
                 <span class="pin-badge" class:set={settings.pinOn}
-                  >{@render glyph(settings.pinOn ? 'check' : 'lock', 10, 'var(--badge-ink)')}<span class="pin-badge-label">{settings.pinOn ? 'SET' : 'NOT SET'}</span></span
+                  >{@render glyph(settings.pinOn ? 'check' : 'lock', 10, 'var(--badge-ink)')}<span class="pin-badge-label">{t(settings.pinOn ? 'ui.walletSettingsDialog.pinSet' : 'ui.walletSettingsDialog.pinNotSet')}</span></span
                 >
               </div>
               <span class="setting-desc"
-                >{settings.pinOn
-                  ? 'Six digits, asked for before anything leaves the wallet. Receiving and swapping are unaffected.'
-                  : 'Turn this on to add a six-digit step before anything leaves the wallet.'}</span
+                >{t(settings.pinOn ? 'ui.walletSettingsDialog.pinOnDesc' : 'ui.walletSettingsDialog.pinOffDesc')}</span
               >
             </div>
             <div class="setting-toggle"><Toggle on={settings.pinOn || pin?.mode === 'set'} onChange={togglePin} /></div>
           </div>
           {#if settings.pinOn}
             <span class="change-pin" onclick={() => (pin = { mode: 'change', step: 'set', value: '', first: '', error: false })} role="button" tabindex="0">
-              <span class="change-pin-label">Change PIN</span>
+              <span class="change-pin-label">{t('ui.walletSettingsDialog.changePin')}</span>
               {@render glyph('lock', 14, 'var(--accent,#FF5672)')}
             </span>
           {/if}
         {/if}
 
         {#if tab === 'currency'}
-          <span class="eyebrow">SHOW VALUES IN</span>
+          <span class="eyebrow">{t('ui.walletSettingsDialog.showValuesIn')}</span>
           <div class="currencies">
             {#each CURRENCIES as c}
               {@const on = settings.currency === c}
               <span class="currency" class:on onclick={() => apply({ currency: c })} role="button" tabindex="0">
                 <span class="currency-code">{c}</span>
-                <span class="currency-note">{c === 'USD' ? 'Default' : `Priced from ${c}`}</span>
+                <span class="currency-note">{c === 'USD' ? t('ui.walletSettingsDialog.currencyDefault') : t('ui.walletSettingsDialog.pricedFrom', { currency: c })}</span>
                 {@render glyph('check', 16, on ? 'var(--accent,#FF5672)' : 'transparent')}
               </span>
             {/each}
@@ -298,8 +298,8 @@
           <div class="recipients">
             <div class="recipients-head">
               <div class="setting-text">
-                <span class="setting-title">Saved recipients</span>
-                <span class="setting-desc">Addresses you can pick when sending. The network is detected from the address itself.</span>
+                <span class="setting-title">{t('ui.walletSettingsDialog.savedRecipients')}</span>
+                <span class="setting-desc">{t('ui.walletSettingsDialog.savedRecipientsDesc')}</span>
               </div>
               <span
                 class="add"
@@ -308,14 +308,14 @@
                   confirmId = null;
                 }}
                 role="button"
-                tabindex="0">{@render glyph('plus', 13, 'var(--on-accent,#2E0512)')}<span class="add-label">Add</span></span
+                tabindex="0">{@render glyph('plus', 13, 'var(--on-accent,#2E0512)')}<span class="add-label">{t('ui.common.add')}</span></span
               >
             </div>
 
             {#if saved.length > 5}
               <div class="search">
                 {@render glyph('search', 14, 'var(--ink-4,#7C7C8C)')}
-                <input bind:value={recipQuery} placeholder="Search name or address…" />
+                <input bind:value={recipQuery} placeholder={t('ui.walletSettingsDialog.searchRecipients')} />
               </div>
             {/if}
 
@@ -330,13 +330,13 @@
                   <div class="recipient-text">
                     <div class="recipient-line">
                       <span class="recipient-name">{r.name}</span>
-                      <span class="recipient-badge">{r.token ? r.token : net === 'unknown' ? 'UNKNOWN' : net}</span>
+                      <span class="recipient-badge">{r.token ? r.token : net === 'unknown' ? t('ui.walletSettingsDialog.unknownNetwork') : net}</span>
                     </div>
                     <span class="recipient-address">{shortAddr(r.address)}</span>
                   </div>
                   {#if confirmId === r.id}
                     <div class="confirm">
-                      <span class="keep" onclick={() => (confirmId = null)} role="button" tabindex="0">Keep</span>
+                      <span class="keep" onclick={() => (confirmId = null)} role="button" tabindex="0">{t('ui.walletSettingsDialog.keep')}</span>
                       <span
                         class="remove"
                         onclick={() => {
@@ -344,7 +344,7 @@
                           apply({ recipients: saved.filter((x) => x.id !== r.id) });
                         }}
                         role="button"
-                        tabindex="0">Remove</span
+                        tabindex="0">{t('ui.common.remove')}</span
                       >
                     </div>
                   {:else}
@@ -357,10 +357,10 @@
                         }}
                         role="button"
                         tabindex="0"
-                        aria-label="Edit recipient"
-                        title="Edit recipient">{@render glyph('edit', 15, 'var(--ink-3,#9A9AA8)')}</span
+                        aria-label={t('ui.walletSettingsDialog.editRecipient')}
+                        title={t('ui.walletSettingsDialog.editRecipient')}>{@render glyph('edit', 15, 'var(--ink-3,#9A9AA8)')}</span
                       >
-                      <span class="square" onclick={() => (confirmId = r.id)} role="button" tabindex="0" aria-label="Remove recipient" title="Remove recipient"
+                      <span class="square" onclick={() => (confirmId = r.id)} role="button" tabindex="0" aria-label={t('ui.walletSettingsDialog.removeRecipient')} title={t('ui.walletSettingsDialog.removeRecipient')}
                         >{@render glyph('trash', 15, 'var(--ink-3,#9A9AA8)')}</span
                       >
                     </div>
@@ -372,7 +372,7 @@
                 <div class="recipients-empty">
                   {@render glyph('users', 22, 'var(--ink-4,#7C7C8C)')}
                   <span class="recipients-empty-text"
-                    >{saved.length === 0 ? 'No saved recipients yet. Add one and it will be offered whenever you send.' : `Nothing matches "${recipQuery.trim()}".`}</span
+                    >{saved.length === 0 ? t('ui.walletSettingsDialog.noRecipients') : t('ui.walletSettingsDialog.noRecipientMatch', { query: recipQuery.trim() })}</span
                   >
                 </div>
               {/if}
@@ -383,20 +383,20 @@
     </div>
 
     <div class="footer">
-      <span class="footer-note">Saved automatically · values in {settings.currency}</span>
-      <div class="done" onclick={close} role="button" tabindex="0">Done</div>
+      <span class="footer-note">{t('ui.walletSettingsDialog.footerNote', { currency: settings.currency })}</span>
+      <div class="done" onclick={close} role="button" tabindex="0">{t('ui.common.done')}</div>
     </div>
 
     {#if listOpen}
       <div class="sheet-layer">
         <div class="sheet-veil dim" onclick={() => (listOpen = false)} aria-hidden="true"></div>
         <div class="sheet list-sheet">
-          {@render sheetHeader('Token list', autoOn ? 'Set automatically' : 'You choose what appears', false, () => (listOpen = false))}
+          {@render sheetHeader(t('ui.walletSettingsDialog.tokenList'), t(autoOn ? 'ui.walletSettingsDialog.setAutomatically' : 'ui.walletSettingsDialog.youChoose'), false, () => (listOpen = false))}
 
           <div class="list-search-wrap">
             <div class="search tall">
               {@render glyph('search', 15, 'var(--ink-4,#7C7C8C)')}
-              <input bind:value={query} placeholder="Search tokens…" />
+              <input bind:value={query} placeholder={t('ui.walletSettingsDialog.searchTokens')} />
               {#if query.length > 0}
                 <span class="clear" onclick={() => (query = '')} role="button" tabindex="0">{@render glyph('close', 11, 'var(--ink-3,#9A9AA8)')}</span>
               {/if}
@@ -406,9 +406,9 @@
           <div class="sheet-body list-body">
             {#if autoOn}
               <div class="take-over">
-                <span class="take-over-text">Automatic configuration decides this list right now — it follows the minimum value. Take it over to choose by hand.</span>
+                <span class="take-over-text">{t('ui.walletSettingsDialog.takeOverText')}</span>
                 <span class="take-over-button" onclick={() => apply({ autoConfig: false, tokens: held.filter((t) => t.value >= floor).map((t) => t.symbol) })} role="button" tabindex="0"
-                  >Take over the list</span
+                  >{t('ui.walletSettingsDialog.takeOver')}</span
                 >
               </div>
             {/if}
@@ -434,16 +434,16 @@
                 </div>
               {/each}
               {#if filtered.length === 0}
-                <span class="no-rows">No token matches "{query.trim()}".</span>
+                <span class="no-rows">{t('ui.walletSettingsDialog.noTokenMatch', { query: query.trim() })}</span>
               {/if}
             </div>
           </div>
 
           <div class="sheet-foot">
             <span class="sheet-foot-note" class:warn={!autoOn && picked.length === 0}
-              >{autoOn ? `Follows the minimum of ${money(floor)}.` : picked.length === 0 ? 'Pick at least one token — the wallet is empty.' : 'Applied as you pick.'}</span
+              >{autoOn ? t('ui.walletSettingsDialog.followsMinimum', { amount: money(floor) }) : picked.length === 0 ? t('ui.walletSettingsDialog.pickAtLeastOne') : t('ui.walletSettingsDialog.appliedAsYouPick')}</span
             >
-            <div class="done small" onclick={() => (listOpen = false)} role="button" tabindex="0">Done</div>
+            <div class="done small" onclick={() => (listOpen = false)} role="button" tabindex="0">{t('ui.common.done')}</div>
           </div>
         </div>
       </div>
@@ -456,8 +456,8 @@
         <div class="sheet-veil" onclick={() => (pin = null)} aria-hidden="true"></div>
         <div class="sheet pin-sheet">
           {@render sheetHeader(
-            confirmStep ? 'Confirm your PIN' : pin.mode === 'set' ? 'Set up a PIN' : 'Choose a new PIN',
-            confirmStep ? 'Step 2 of 2' : 'Step 1 of 2',
+            t(confirmStep ? 'ui.walletSettingsDialog.confirmPin' : pin.mode === 'set' ? 'ui.walletSettingsDialog.setUpPin' : 'ui.walletSettingsDialog.chooseNewPin'),
+            t('ui.walletSettingsDialog.step', { step: confirmStep ? 2 : 1, total: 2 }),
             true,
             () => (pin = null),
             confirmStep ? () => (pin = pin && { ...pin, step: 'set', value: pin.first, error: false }) : undefined,
@@ -465,9 +465,7 @@
 
           <div class="sheet-body">
             <span class="pin-blurb"
-              >{confirmStep
-                ? 'Type the same six digits again — a typo here would lock you out of transfers.'
-                : 'Six digits, asked for before anything leaves the wallet. Receiving and swapping stay unaffected.'}</span
+              >{t(confirmStep ? 'ui.walletSettingsDialog.pinConfirmBlurb' : 'ui.walletSettingsDialog.pinBlurb')}</span
             >
             <div class="pin-pad" onclick={() => pinInput?.focus()} role="button" tabindex="0">
               <div class="pin-digits">
@@ -484,15 +482,15 @@
                   maxlength="6"
                 />
               </div>
-              <span class="pin-note" class:error={pin.error}>{pin.error ? 'Those did not match — start again.' : 'Numbers only'}</span>
+              <span class="pin-note" class:error={pin.error}>{t(pin.error ? 'ui.walletSettingsDialog.pinMismatch' : 'ui.walletSettingsDialog.numbersOnly')}</span>
             </div>
           </div>
 
           <div class="sheet-foot">
-            <span class="cancel" onclick={() => (pin = null)} role="button" tabindex="0">Cancel</span>
+            <span class="cancel" onclick={() => (pin = null)} role="button" tabindex="0">{t('ui.common.cancel')}</span>
             <span class="grow"></span>
             <div class="primary" class:ready onclick={pinNext} role="button" tabindex="0">
-              <span>{confirmStep ? 'Save PIN' : 'Continue'}</span>
+              <span>{t(confirmStep ? 'ui.walletSettingsDialog.savePin' : 'ui.common.continue')}</span>
               {@render glyph(confirmStep ? 'lock' : 'arrow', 15, 'var(--primary-ink)')}
             </div>
           </div>
@@ -504,18 +502,18 @@
       <div class="sheet-layer recipient-layer">
         <div class="sheet-veil" onclick={() => (sheet = null)} aria-hidden="true"></div>
         <div class="sheet recipient-sheet">
-          {@render sheetHeader(sheet.editId ? 'Edit recipient' : 'Add a recipient', 'The network is detected from the address', false, () => (sheet = null))}
+          {@render sheetHeader(t(sheet.editId ? 'ui.walletSettingsDialog.editRecipient' : 'ui.walletSettingsDialog.addRecipient'), t('ui.walletSettingsDialog.networkDetected'), false, () => (sheet = null))}
 
           <div class="sheet-body">
             <div class="form-field">
-              <span class="eyebrow small">ADDRESS</span>
+              <span class="eyebrow small">{t('ui.walletSettingsDialog.address')}</span>
               <textarea
                 class="address-input"
                 class:valid={draftValid}
                 class:invalid={!!draftAddr && !draftValid}
                 value={sheet.address}
                 oninput={(e) => (sheet = sheet && { ...sheet, address: e.currentTarget.value })}
-                placeholder="Paste the recipient's address"
+                placeholder={t('ui.walletSettingsDialog.addressPlaceholder')}
                 rows="2"
               ></textarea>
               {#if draftAddr}
@@ -523,30 +521,30 @@
                   {@render glyph(draftValid ? 'check' : 'warning', 14, 'var(--note-ink)')}
                   <span class="address-note-text"
                     >{dupe
-                      ? `Already saved as “${dupe.name}”.`
+                      ? t('ui.walletSettingsDialog.alreadySaved', { name: dupe.name })
                       : draftNet === 'unknown'
-                        ? 'That is not an address we recognise — check for a missing character.'
-                        : `${draftNet} address detected`}</span
+                        ? t('ui.walletSettingsDialog.unrecognisedAddress')
+                        : t('ui.walletSettingsDialog.addressDetected', { network: draftNet })}</span
                   >
                 </div>
               {/if}
             </div>
 
             <div class="form-field">
-              <span class="eyebrow small">NAME</span>
+              <span class="eyebrow small">{t('ui.walletSettingsDialog.name')}</span>
               <input
                 class="name-input"
                 value={sheet.name}
                 oninput={(e) => (sheet = sheet && { ...sheet, name: e.currentTarget.value })}
-                placeholder={draftValid ? `${draftNet} recipient` : "Recipient's name or title"}
+                placeholder={draftValid ? t('ui.walletSettingsDialog.defaultRecipientName', { network: draftNet }) : t('ui.walletSettingsDialog.namePlaceholder')}
               />
-              <span class="field-hint">Only you see this — it replaces the address in send screens.</span>
+              <span class="field-hint">{t('ui.walletSettingsDialog.nameHint')}</span>
             </div>
 
             <div class="form-field">
-              <span class="eyebrow small">RESTRICT TO ONE TOKEN <span class="optional">· OPTIONAL</span></span>
+              <span class="eyebrow small">{t('ui.walletSettingsDialog.restrictToken')} <span class="optional">{t('ui.walletSettingsDialog.optional')}</span></span>
               <div class="token-chips">
-                {#each [{ symbol: null, label: 'Any token', mark: '', grad: 'transparent' }, ...held.map((t) => ({ symbol: t.symbol, label: t.symbol, mark: t.mark, grad: t.grad }))] as c}
+                {#each [{ symbol: null, label: t('ui.walletSettingsDialog.anyToken'), mark: '', grad: 'transparent' }, ...held.map((t) => ({ symbol: t.symbol, label: t.symbol, mark: t.mark, grad: t.grad }))] as c}
                   <span class="token-chip" class:on={sheet.token === c.symbol} class:dotted={!!c.symbol} onclick={() => (sheet = sheet && { ...sheet, token: c.symbol })} role="button" tabindex="0">
                     {#if c.symbol}
                       <span class="token-chip-mark" style:background={c.grad}>{c.mark}</span>
@@ -556,16 +554,16 @@
                 {/each}
               </div>
               <span class="field-hint wrap"
-                >{sheet.token ? `Send screens will only offer ${sheet.token} for this recipient.` : 'Leave as Any token to send anything this network supports.'}</span
+                >{sheet.token ? t('ui.walletSettingsDialog.restrictHint', { token: sheet.token }) : t('ui.walletSettingsDialog.anyTokenHint')}</span
               >
             </div>
           </div>
 
           <div class="sheet-foot">
-            <span class="cancel" onclick={() => (sheet = null)} role="button" tabindex="0">Cancel</span>
+            <span class="cancel" onclick={() => (sheet = null)} role="button" tabindex="0">{t('ui.common.cancel')}</span>
             <span class="grow"></span>
             <div class="primary" class:ready={draftValid} onclick={saveRecipient} role="button" tabindex="0">
-              <span>{sheet.editId ? 'Save changes' : 'Save recipient'}</span>
+              <span>{t(sheet.editId ? 'ui.common.saveChanges' : 'ui.walletSettingsDialog.saveRecipient')}</span>
               {@render glyph('check', 15, 'var(--primary-ink)')}
             </div>
           </div>

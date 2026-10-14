@@ -23,13 +23,14 @@
   import { onMount, tick } from 'svelte';
   import Button from '../../lib/components/Button.svelte';
   import IconButton from '../../lib/components/IconButton.svelte';
+  import { useT } from '../../lib/i18n';
 
   const VIBES: [string, string, string][] = [
-    ['fresh', '🌱', 'Fresh'],
-    ['happy', '😁', 'Happy'],
-    ['anxiety', '😬', 'Anxiety'],
-    ['lol', '🤣', 'LOL'],
-    ['angry', '😡', 'Angry'],
+    ['fresh', '🌱', 'ui.memeFighterDialog.vibeFresh'],
+    ['happy', '😁', 'ui.memeFighterDialog.vibeHappy'],
+    ['anxiety', '😬', 'ui.memeFighterDialog.vibeAnxiety'],
+    ['lol', '🤣', 'ui.memeFighterDialog.vibeLol'],
+    ['angry', '😡', 'ui.memeFighterDialog.vibeAngry'],
   ];
   const RENDER_W = 900;
   const colsCss = (n: number) => (n === 1 ? 'minmax(0,1fr)' : `repeat(${n},minmax(0,1fr))`);
@@ -114,6 +115,7 @@
   }
 
   let { templates, z = 80, onAttach, onClose }: Props = $props();
+  const t = useT();
 
   let box: HTMLDivElement;
   let vw = $state(typeof window === 'undefined' ? 1200 : window.innerWidth);
@@ -160,7 +162,7 @@
     tplId = t.id;
     view = 'edit';
     await tick();
-    box.querySelector<HTMLInputElement>('input[aria-label^="Text 1"]')?.focus();
+    box.querySelector<HTMLInputElement>('input[data-box="0"]')?.focus();
   }
 
   function setText(i: number, value: string) {
@@ -211,17 +213,17 @@
       </div>
     {/each}
   </div>
-  {#if list.length === 0}<span class="none">No templates match</span>{/if}
+  {#if list.length === 0}<span class="none">{t('ui.memeFighterDialog.noTemplates')}</span>{/if}
 {/snippet}
 
 {#snippet filters(narrow: boolean)}
   <div class="search" class:narrow>
     <span class="search-icon"></span>
-    <input bind:value={query} placeholder="Search templates" aria-label="Search templates" />
+    <input bind:value={query} placeholder={t('ui.memeFighterDialog.searchTemplates')} aria-label={t('ui.memeFighterDialog.searchTemplates')} />
   </div>
   <div class="vibes" class:narrow>
     {#each VIBES as [key, emoji, label]}
-      <button class="vibe" class:on={vibe === key} onclick={() => (vibe = vibe === key ? null : key)} aria-pressed={vibe === key}><span class="vibe-emoji">{emoji}</span>{label}</button>
+      <button class="vibe" class:on={vibe === key} onclick={() => (vibe = vibe === key ? null : key)} aria-pressed={vibe === key}><span class="vibe-emoji">{emoji}</span>{t(label)}</button>
     {/each}
   </div>
 {/snippet}
@@ -255,8 +257,9 @@
           oninput={(e) => setText(i, e.currentTarget.value)}
           onfocus={() => (focused = i)}
           onblur={() => (focused = null)}
-          placeholder="Text for box {i + 1}"
-          aria-label="Text {i + 1} of {T.boxes.length}"
+          data-box={i}
+          placeholder={t('ui.memeFighterDialog.boxPlaceholder', { n: i + 1 })}
+          aria-label={t('ui.memeFighterDialog.boxLabel', { n: i + 1, total: T.boxes.length })}
         />
       </label>
     {/each}
@@ -265,11 +268,11 @@
 
 <div class="layer" class:wide style:z-index={z}>
   <div class="scrim" onclick={() => onClose?.()} aria-hidden="true"></div>
-  <div class="dialog" bind:this={box} data-oc-managed="" tabindex="-1" role="dialog" aria-modal="true" aria-label="Meme Fighter" onkeydown={onKey}>
+  <div class="dialog" bind:this={box} data-oc-managed="" tabindex="-1" role="dialog" aria-modal="true" aria-label={t('ui.memeFighterDialog.title')} onkeydown={onKey}>
     <div class="head" class:back={narrowEdit}>
-      {#if narrowEdit}<IconButton variant="ghost" icon="back" label="Back to templates" onClick={() => (view = 'browse')} />{/if}
-      <span class="title">{narrowEdit ? T.name : 'Meme Fighter'}</span>
-      <IconButton variant="ghost" icon="close" label="Close" onClick={() => onClose?.()} />
+      {#if narrowEdit}<IconButton variant="ghost" icon="back" label="ui.memeFighterDialog.backToTemplates" onClick={() => (view = 'browse')} />{/if}
+      <span class="title">{narrowEdit ? T.name : t('ui.memeFighterDialog.title')}</span>
+      <IconButton variant="ghost" icon="close" label="ui.common.close" onClick={() => onClose?.()} />
     </div>
     {#if wide}
       <div class="split">
@@ -281,8 +284,8 @@
           <div class="main-scroll">{@render editor(false)}</div>
           <div class="foot">
             <span class="foot-name">{T.name}</span>
-            {#if hasText}<Button label="Clear text" variant="ghost" onClick={() => (texts = { ...texts, [T.id]: [] })} />{/if}
-            <Button label={busy ? 'Adding…' : 'Add to message'} disabled={!hasText || busy} onClick={generate} />
+            {#if hasText}<Button label="ui.memeFighterDialog.clearText" variant="ghost" onClick={() => (texts = { ...texts, [T.id]: [] })} />{/if}
+            <Button label={busy ? 'ui.memeFighterDialog.adding' : 'ui.memeFighterDialog.addToMessage'} disabled={!hasText || busy} onClick={generate} />
           </div>
         </div>
       </div>
@@ -294,8 +297,8 @@
     {:else}
       <div class="narrow-scroll edit">{@render editor(true)}</div>
       <div class="foot narrow">
-        {#if hasText}<Button label="Clear" variant="ghost" onClick={() => (texts = { ...texts, [T.id]: [] })} />{/if}
-        <div class="grow"><Button label={busy ? 'Adding…' : 'Add to message'} disabled={!hasText || busy} onClick={generate} fullWidth={true} /></div>
+        {#if hasText}<Button label="ui.memeFighterDialog.clear" variant="ghost" onClick={() => (texts = { ...texts, [T.id]: [] })} />{/if}
+        <div class="grow"><Button label={busy ? 'ui.memeFighterDialog.adding' : 'ui.memeFighterDialog.addToMessage'} disabled={!hasText || busy} onClick={generate} fullWidth={true} /></div>
       </div>
     {/if}
   </div>

@@ -1,18 +1,22 @@
 <!-- Inline upsell: gem icon, a line about the Diamond-only feature, and an Upgrade button. -->
 <script lang="ts">
+  import { useT } from '../../lib/i18n';
   interface Props {
+    /** Resource key (or literal text). */
     text: string;
+    /** Resource key (or literal text). */
     actionLabel?: string;
     onUpgrade?: () => void;
   }
 
-  let { text, actionLabel = 'Upgrade', onUpgrade }: Props = $props();
+  let { text, actionLabel = 'ui.upgradeBanner.upgrade', onUpgrade }: Props = $props();
+  const t = useT();
 </script>
 
 <div class="banner">
   <span class="gem"></span>
-  <span class="text">{text}</span>
-  <span class="upgrade" onclick={onUpgrade} role="button" tabindex="0">{actionLabel}</span>
+  <span class="text">{t(text)}</span>
+  <span class="upgrade" onclick={onUpgrade} role="button" tabindex="0">{t(actionLabel)}</span>
 </div>
 
 <style>

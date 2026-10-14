@@ -1,5 +1,6 @@
 <!-- 3D spinning token coin: stacked edge layers + two faces with the token mark, soft floor shadow. Paused with reduced motion. -->
 <script lang="ts">
+  import { useT } from '../i18n';
   interface Props {
     symbol: string;
     /** Face glyph; defaults to the symbol's first letter. */
@@ -12,6 +13,7 @@
   }
 
   let { symbol, mark, gradient = 'linear-gradient(140deg,#ff5f9e,#6a2bff)', edge = '#7a2bd0', edge2 = '#5a1fa0', size = 80 }: Props = $props();
+  const t = useT();
 
   const thickness = $derived(Math.round(size * 0.14));
   const layers = $derived.by(() => {
@@ -22,7 +24,7 @@
   const faceZ = $derived(thickness / 2 + 0.5);
 </script>
 
-<span class="coin-wrap" role="img" aria-label="{symbol} token"
+<span class="coin-wrap" role="img" aria-label={t('ui.tokenCoin.label', { symbol })}
   ><span class="stage" aria-hidden="true" style:perspective="{size * 6}px">
     <span class="coin" data-oc-motion="" style:width="{size}px" style:height="{size}px">
       {#each layers as layer}<span class="layer" style:transform="translateZ({layer.z}px)" style:background={layer.bg}></span>{/each}

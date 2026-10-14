@@ -58,17 +58,17 @@
   type NavItem = [ProfileSection, string, string, ('chit' | 'diamond' | 'danger')?];
 
   const NAV: { label: string; items: NavItem[] }[] = [
-    { label: 'ACCOUNT', items: [['profile', 'Profile', 'user'], ['stats', 'Your stats', 'poll'], ['chit', 'CHIT', 'zap', 'chit'], ['diamond', 'Diamond', 'gem', 'diamond']] },
-    { label: 'SETTINGS', items: [['chats', 'Chats & calls', 'chat'], ['communities', 'Communities', 'users'], ['signin', 'Sign-in providers', 'key'], ['appearance', 'Appearance', 'eye']] },
-    { label: 'ADVANCED', items: [['storage', 'Storage & cache', 'refresh'], ['bots', 'Bot configuration', 'bot'], ['device', 'Link new device', 'device'], ['delete', 'Delete account', 'trash', 'danger']] },
-    { label: 'OPENCHAT', items: [['invite', 'Invite friends', 'share'], ['about', 'About', 'info']] },
+    { label: 'ui.profileDialog.nav.account', items: [['profile', 'ui.profileDialog.nav.profile', 'user'], ['stats', 'ui.profileDialog.nav.stats', 'poll'], ['chit', 'CHIT', 'zap', 'chit'], ['diamond', 'ui.profileDialog.nav.diamond', 'gem', 'diamond']] },
+    { label: 'ui.profileDialog.nav.settings', items: [['chats', 'ui.profileDialog.nav.chats', 'chat'], ['communities', 'ui.profileDialog.nav.communities', 'users'], ['signin', 'ui.profileDialog.nav.signin', 'key'], ['appearance', 'ui.profileDialog.nav.appearance', 'eye']] },
+    { label: 'ui.profileDialog.nav.advanced', items: [['storage', 'ui.profileDialog.nav.storage', 'refresh'], ['bots', 'ui.profileDialog.nav.bots', 'bot'], ['device', 'ui.profileDialog.nav.device', 'device'], ['delete', 'ui.profileDialog.nav.delete', 'trash', 'danger']] },
+    { label: 'ui.profileDialog.nav.openchat', items: [['invite', 'ui.profileDialog.nav.invite', 'share'], ['about', 'ui.profileDialog.nav.about', 'info']] },
   ];
   const TITLES: Record<string, string> = Object.fromEntries(NAV.flatMap((g) => g.items.map((i) => [i[0], i[1]])));
 
   const FIELDS = [
-    { key: 'name', label: 'Display name', max: 25, placeholder: 'Add a display name', hint: 'Optional · shown instead of your username', mono: false, area: false },
-    { key: 'handle', label: 'Username', max: 20, placeholder: '', hint: 'Letters, numbers and underscores', mono: true, area: false },
-    { key: 'about', label: 'About', max: 2000, placeholder: 'Tell people about yourself', hint: 'Optional', mono: false, area: true },
+    { key: 'name', label: 'ui.profileDialog.fields.name', max: 25, placeholder: 'ui.profileDialog.fields.namePlaceholder', hint: 'ui.profileDialog.fields.nameHint', mono: false, area: false },
+    { key: 'handle', label: 'ui.profileDialog.fields.handle', max: 20, placeholder: '', hint: 'ui.profileDialog.fields.handleHint', mono: true, area: false },
+    { key: 'about', label: 'ui.profileDialog.fields.about', max: 2000, placeholder: 'ui.profileDialog.fields.aboutPlaceholder', hint: 'ui.profileDialog.fields.aboutHint', mono: false, area: true },
   ] as const;
   type FieldKey = (typeof FIELDS)[number]['key'];
 
@@ -85,10 +85,10 @@
   };
 
   const FONT_SIZES = [
-    { key: 'small', label: 'Small', glyph: '11px', scale: 0.92 },
-    { key: 'default', label: 'Default', glyph: '13px', scale: 1 },
-    { key: 'large', label: 'Large', glyph: '15px', scale: 1.1 },
-    { key: 'larger', label: 'Larger', glyph: '17px', scale: 1.2 },
+    { key: 'small', label: 'ui.profileDialog.sizes.small', glyph: '11px', scale: 0.92 },
+    { key: 'default', label: 'ui.profileDialog.sizes.default', glyph: '13px', scale: 1 },
+    { key: 'large', label: 'ui.profileDialog.sizes.large', glyph: '15px', scale: 1.1 },
+    { key: 'larger', label: 'ui.profileDialog.sizes.larger', glyph: '17px', scale: 1.2 },
   ] as const;
 
   const THEME_PREVIEW = {
@@ -96,34 +96,34 @@
     dark: { bg: '#0e0e12', recv: '#22222c', bar: '#191921' },
     light: { bg: '#FFFFFF', recv: '#EFEDE8', bar: '#E7E5E0' },
   };
-  const THEMES = [['system', 'System'], ['dark', 'Dark'], ['light', 'Light']] as const;
-  const ACCENTS = [['pink', 'Pink', '#FF5672'], ['blue', 'Blue', '#3D9BFF'], ['orange', 'Orange', '#FF8A3D'], ['green', 'Green', '#2EE6A8']] as const;
+  const THEMES = [['system', 'ui.profileDialog.themes.system'], ['dark', 'ui.profileDialog.themes.dark'], ['light', 'ui.profileDialog.themes.light']] as const;
+  const ACCENTS = [['pink', 'ui.profileDialog.accents.pink', '#FF5672'], ['blue', 'ui.profileDialog.accents.blue', '#3D9BFF'], ['orange', 'ui.profileDialog.accents.orange', '#FF8A3D'], ['green', 'ui.profileDialog.accents.green', '#2EE6A8']] as const;
 
   const CHAT_GROUPS: { label: string; rows: [keyof ChatSettings, string, string][] }[] = [
     {
-      label: 'CHATS',
+      label: 'ui.profileDialog.chats.groupChats',
       rows: [
-        ['enterSends', 'Enter key sends message', 'Use Shift + Enter for a new line.'],
-        ['doubleClick', 'Double-click to reply or edit', 'Double-click someone else’s message to reply, or your own to edit it.'],
-        ['notifications', 'Notifications', 'Get notified about new messages while OpenChat is in the background.'],
-        ['lowBandwidth', 'Low bandwidth', 'Uses less data when your connection is poor. Media loads on demand.'],
-        ['hideBlocked', 'Hide messages from blocked users', 'Removes their messages from group and community chats too. You may lose some conversation context.'],
+        ['enterSends', 'ui.profileDialog.chats.enterSends', 'ui.profileDialog.chats.enterSendsHint'],
+        ['doubleClick', 'ui.profileDialog.chats.doubleClick', 'ui.profileDialog.chats.doubleClickHint'],
+        ['notifications', 'ui.profileDialog.chats.notifications', 'ui.profileDialog.chats.notificationsHint'],
+        ['lowBandwidth', 'ui.profileDialog.chats.lowBandwidth', 'ui.profileDialog.chats.lowBandwidthHint'],
+        ['hideBlocked', 'ui.profileDialog.chats.hideBlocked', 'ui.profileDialog.chats.hideBlockedHint'],
       ],
     },
     {
-      label: 'VIDEO CALLS',
+      label: 'ui.profileDialog.chats.groupCalls',
       rows: [
-        ['cameraOn', 'Start with camera on', 'Your camera is live as soon as you join a call.'],
-        ['micOn', 'Start with microphone on', 'You join calls unmuted.'],
-        ['activeSpeaker', 'Start in speaker view', 'Calls open with whoever is talking shown large, instead of a grid.'],
+        ['cameraOn', 'ui.profileDialog.chats.cameraOn', 'ui.profileDialog.chats.cameraOnHint'],
+        ['micOn', 'ui.profileDialog.chats.micOn', 'ui.profileDialog.chats.micOnHint'],
+        ['activeSpeaker', 'ui.profileDialog.chats.activeSpeaker', 'ui.profileDialog.chats.activeSpeakerHint'],
       ],
     },
     {
-      label: 'RESTRICTED CONTENT',
+      label: 'ui.profileDialog.chats.groupRestricted',
       rows: [
-        ['offensive', 'Offensive', 'Show communities and groups marked as offensive.'],
-        ['adult', 'Adult', 'Show communities and groups flagged as adult content.'],
-        ['underReview', 'Under review', 'Show communities and groups that are currently under review.'],
+        ['offensive', 'ui.profileDialog.chats.offensive', 'ui.profileDialog.chats.offensiveHint'],
+        ['adult', 'ui.profileDialog.chats.adult', 'ui.profileDialog.chats.adultHint'],
+        ['underReview', 'ui.profileDialog.chats.underReview', 'ui.profileDialog.chats.underReviewHint'],
       ],
     },
   ];
@@ -150,14 +150,12 @@
     twostep: (x) => (Math.floor(x * 8) % 2 ? 0.35 : 0.8) * (0.7 + 0.3 * Math.abs(Math.sin(x * 37))),
     siren: (x) => 0.25 + 0.7 * Math.abs(Math.sin(x * Math.PI * 2)),
   };
-  const RINGTONES: [ChatSettings['ringtone'], string][] = [['boring', 'Boring'], ['pleasant', 'Pleasant'], ['boomboom', 'Boom boom'], ['twostep', 'Two step flava'], ['siren', 'Siren']];
+  const RINGTONES: [ChatSettings['ringtone'], string][] = [['boring', 'ui.profileDialog.ringtones.boring'], ['pleasant', 'ui.profileDialog.ringtones.pleasant'], ['boomboom', 'ui.profileDialog.ringtones.boomboom'], ['twostep', 'ui.profileDialog.ringtones.twostep'], ['siren', 'ui.profileDialog.ringtones.siren']];
 
   // synthetic claim history back to the join month, against a fixed "today" (as exported)
   const TODAY = Date.UTC(2026, 8, 23);
   const DAY = 864e5;
   const JOINED = { y: 2021, m: 10 };
-  const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-  const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const tier = (d: number) => (d >= 365 ? 600 : d >= 100 ? 500 : d >= 30 ? 400 : d >= 14 ? 300 : d >= 7 ? 200 : d >= 3 ? 150 : 100);
   const dayKey = (t: number) => new Date(t).toISOString().slice(0, 10);
   type ClaimRecord = { amount: number; day: number; min: number; insured?: false } | { insured: true; day: number };
@@ -183,28 +181,28 @@
   }
 
   const SI_TYPES = {
-    passkey: { label: 'PASSKEYS', icon: 'passkey', noun: 'Passkey', addLabel: 'Add a passkey', addTitle: 'Add a passkey', empty: 'No other passkeys yet.' },
-    ii: { label: 'INTERNET IDENTITY', icon: 'ii', noun: 'Internet Identity', addLabel: 'Link an Internet Identity', addTitle: 'Link an Internet Identity', empty: 'No Internet Identity linked.' },
-    email: { label: 'EMAIL', icon: 'mail', noun: 'Email', addLabel: 'Add an email', addTitle: 'Add an email', empty: 'No email linked.' },
+    passkey: { label: 'ui.profileDialog.signin.passkeys', icon: 'passkey', noun: 'ui.profileDialog.signin.passkey', addLabel: 'ui.profileDialog.signin.addPasskey', addTitle: 'ui.profileDialog.signin.addPasskey', empty: 'ui.profileDialog.signin.noPasskeys' },
+    ii: { label: 'ui.profileDialog.signin.iiCaps', icon: 'ii', noun: 'ui.profileDialog.signin.ii', addLabel: 'ui.profileDialog.signin.linkIi', addTitle: 'ui.profileDialog.signin.linkIi', empty: 'ui.profileDialog.signin.noIi' },
+    email: { label: 'ui.profileDialog.signin.emailCaps', icon: 'mail', noun: 'ui.profileDialog.signin.email', addLabel: 'ui.profileDialog.signin.addEmail', addTitle: 'ui.profileDialog.signin.addEmail', empty: 'ui.profileDialog.signin.noEmail' },
   };
 
   const ABOUT_LINKS: Record<string, [string, string]> = {
-    architecture: ['Architecture', 'layers'],
-    blog: ['Blog', 'news'],
-    faq: ['FAQ', 'info'],
-    features: ['Features', 'sparkle'],
-    guidelines: ['Guidelines', 'shield'],
-    metrics: ['Metrics', 'poll'],
-    roadmap: ['Roadmap', 'map'],
-    whitepaper: ['Whitepaper', 'file'],
+    architecture: ['ui.profileDialog.about.architecture', 'layers'],
+    blog: ['ui.profileDialog.about.blog', 'news'],
+    faq: ['ui.profileDialog.about.faq', 'info'],
+    features: ['ui.profileDialog.about.features', 'sparkle'],
+    guidelines: ['ui.profileDialog.about.guidelines', 'shield'],
+    metrics: ['ui.profileDialog.about.metrics', 'poll'],
+    roadmap: ['ui.profileDialog.about.roadmap', 'map'],
+    whitepaper: ['ui.profileDialog.about.whitepaper', 'file'],
   };
   const ABOUT_GROUPS = [
-    { label: 'THE PRODUCT', keys: ['features', 'roadmap', 'metrics'] },
-    { label: 'HOW IT WORKS', keys: ['architecture', 'whitepaper', 'faq'] },
-    { label: 'COMMUNITY', keys: ['blog', 'guidelines'] },
+    { label: 'ui.profileDialog.about.groupProduct', keys: ['features', 'roadmap', 'metrics'] },
+    { label: 'ui.profileDialog.about.groupHow', keys: ['architecture', 'whitepaper', 'faq'] },
+    { label: 'ui.profileDialog.about.groupCommunity', keys: ['blog', 'guidelines'] },
   ];
 
-  const LINK_STEPS = ['Open the OpenChat app on your new device', 'Choose “Link an existing account”', 'Enter the code shown here'];
+  const LINK_STEPS = ['ui.profileDialog.device.step1', 'ui.profileDialog.device.step2', 'ui.profileDialog.device.step3'];
   const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   const fmt = (n: number) => Number(n).toLocaleString('en-US');
   const icon = (name: string) => `var(--icon-${name}) center/contain no-repeat`;
@@ -215,6 +213,7 @@
   import { onDestroy, onMount, tick, untrack } from 'svelte';
   import Badge from '../../lib/components/Badge.svelte';
   import Toggle from '../../lib/components/Toggle.svelte';
+  import { getI18n, useT, type I18nParams } from '../../lib/i18n';
 
   interface Props {
     handle: string;
@@ -263,7 +262,7 @@
     /** Custom display name per community name. */
     communityNames?: Record<string, string>;
     signinMethods?: SigninMethod[];
-    /** How the log-out confirmation names the sign-in method. */
+    /** Resource key (or literal text): how the log-out confirmation names the sign-in method. */
     signInProvider?: string;
     chatSettings?: Partial<ChatSettings>;
     themePref?: 'system' | 'dark' | 'light';
@@ -332,7 +331,7 @@
     communities = [],
     communityNames = {},
     signinMethods = [],
-    signInProvider = 'your passkey',
+    signInProvider = 'ui.profileDialog.logout.defaultProvider',
     chatSettings = {},
     themePref = 'dark',
     accentPref = 'pink',
@@ -365,6 +364,19 @@
     onClearCache,
     onReportIssue,
   }: Props = $props();
+  const t = useT();
+  const i18n = getI18n();
+  // month / weekday names come from Intl in the host's locale
+  const dateFmt = (opts: Intl.DateTimeFormatOptions, t: number) => new Intl.DateTimeFormat(i18n.locale ?? 'en', { timeZone: 'UTC', ...opts }).format(t);
+  /** Splits a formatted message into [text, strong] runs: `bold` values are wrapped in markers before formatting. */
+  type Run = [string, boolean?];
+  const rich = (key: string, bold: Record<string, string>, params: I18nParams = {}): Run[] => {
+    const marked = Object.fromEntries(Object.entries(bold).map(([k, v]) => [k, `\u0001${v}\u0001`]));
+    return t(key, { ...params, ...marked })
+      .split('\u0001')
+      .map((text, i): Run => [text, i % 2 === 1])
+      .filter(([text]) => text !== '');
+  };
 
   // ---- shell ----
   let section = $derived<ProfileSection>(initialSection);
@@ -435,8 +447,8 @@
 
   function validate(key: string, v: string) {
     if (key === 'handle') {
-      if (v.length < 3) return 'At least 3 characters';
-      if (!/^[A-Za-z0-9_]+$/.test(v)) return 'Only letters, numbers and underscores';
+      if (v.length < 3) return 'ui.profileDialog.fields.handleTooShort';
+      if (!/^[A-Za-z0-9_]+$/.test(v)) return 'ui.profileDialog.fields.handleInvalid';
     }
     return null;
   }
@@ -506,10 +518,10 @@
     let chit = 0, claimed = 0, insured = 0;
     for (let i = 0; i < lead; i++) cells.push({ kind: 'blank', col: i });
     for (let d = 1; d <= dim; d++) {
-      const t = Date.UTC(y, mo, d), rec = hist[dayKey(t)], col = (lead + d - 1) % 7;
-      const head = `${WEEKDAYS[new Date(t).getUTCDay()]} ${d} ${MONTHS[mo]}`;
-      if (t === TODAY && claimable) cells.push({ day: d, kind: 'claim', col, title: 'Claim today’s CHIT' });
-      else if (t > TODAY) cells.push({ day: d, kind: 'future', col });
+      const ts = Date.UTC(y, mo, d), rec = hist[dayKey(ts)], col = (lead + d - 1) % 7;
+      const head = t('ui.profileDialog.calendar.dayHead', { weekday: dateFmt({ weekday: 'short' }, ts), day: d, month: dateFmt({ month: 'long' }, ts) });
+      if (ts === TODAY && claimable) cells.push({ day: d, kind: 'claim', col, title: t('ui.profileDialog.calendar.claimToday') });
+      else if (ts > TODAY) cells.push({ day: d, kind: 'future', col });
       else if (rec?.insured) {
         insured++;
         cells.push({
@@ -518,14 +530,14 @@
           col,
           head,
           lines: [
-            { text: 'Missed · covered by insurance', tone: 'online' },
-            { text: `Streak kept at day ${rec.day}`, tone: 'muted' },
+            { text: t('ui.profileDialog.calendar.insured'), tone: 'online' },
+            { text: t('ui.profileDialog.calendar.streakKept', { day: rec.day }), tone: 'muted' },
           ],
         });
       } else if (rec && 'amount' in rec) {
         chit += rec.amount;
         claimed++;
-        const time = chitUtc ? `${hhmm(rec.min)} UTC` : `${hhmm(rec.min + utcOffsetMinutes)} local time`;
+        const time = chitUtc ? t('ui.profileDialog.calendar.timeUtc', { time: hhmm(rec.min) }) : t('ui.profileDialog.calendar.timeLocal', { time: hhmm(rec.min + utcOffsetMinutes) });
         cells.push({
           day: d,
           kind: 'claimed',
@@ -533,14 +545,14 @@
           col,
           head,
           lines: [
-            { text: `Claimed at ${time}`, tone: 'ink' },
-            { text: `+${rec.amount} CHIT · day ${rec.day} of streak`, tone: 'chit' },
+            { text: t('ui.profileDialog.calendar.claimedAt', { time }), tone: 'ink' },
+            { text: t('ui.profileDialog.calendar.claimedAmount', { amount: rec.amount, day: rec.day }), tone: 'chit' },
           ],
         });
-      } else cells.push({ day: d, kind: 'missed', col, title: `${d} ${MONTHS[mo].slice(0, 3)} · not claimed` });
+      } else cells.push({ day: d, kind: 'missed', col, title: t('ui.profileDialog.calendar.notClaimed', { day: d, month: dateFmt({ month: 'short' }, ts) }) });
     }
     while (cells.length % 7) cells.push({ kind: 'blank', col: cells.length % 7 });
-    return { cells, label: `${MONTHS[mo]} ${y}`, chit, claimed, insured, canPrev: view > minTotal, canNext: view < total, maxOffset: total - minTotal };
+    return { cells, label: dateFmt({ month: 'long', year: 'numeric' }, Date.UTC(y, mo, 1)), chit, claimed, insured, canPrev: view > minTotal, canNext: view < total, maxOffset: total - minTotal };
   });
 
   // ---- chats & calls ----
@@ -609,7 +621,7 @@
   function finishAdding(method: SigninMethod) {
     siAdded = [...siAdded, method];
     siAdding = null;
-    toast(`${SI_TYPES[method.type].noun} linked`);
+    toast(t('ui.profileDialog.signin.linked', { method: t(SI_TYPES[method.type].noun) }));
   }
 
   function startAdding(type: SigninMethod['type']) {
@@ -624,7 +636,7 @@
 
   function unlink(x: SigninMethod) {
     siRemoved = [...siRemoved, x.id];
-    toast(`${x.title} unlinked`, () => {
+    toast(t('ui.profileDialog.signin.unlinked', { method: x.title }), () => {
       siRemoved = siRemoved.filter((id) => id !== x.id);
       siToast = null;
     });
@@ -635,9 +647,9 @@
     const a = siAdding;
     if (!a || !siCurrent) return [];
     const confirm = (method: SigninMethod): CheckItem => ({
-      label: `Confirm with your ${siCurrent.short}`,
+      label: t('ui.profileDialog.signin.confirmWith', { method: siCurrent.short }),
       state: a.step === 'confirm' ? (a.waiting ? 'wait' : 'now') : 'todo',
-      action: 'Confirm',
+      action: t('ui.common.confirm'),
       run: () => {
         updateAdding({ waiting: true });
         cancel(siStepTimer);
@@ -647,24 +659,24 @@
     if (a.type !== 'email') {
       const method: SigninMethod =
         a.type === 'passkey'
-          ? { type: 'passkey', id: `k${Date.now().toString(36).slice(-4)}-new…-lnk1d-cai`, title: 'Passkey on this device', short: 'passkey on this device' }
-          : { type: 'ii', id: '7hq2m-ab3x…-ne9kd-cai', title: 'Internet Identity', short: 'Internet Identity' };
+          ? { type: 'passkey', id: `k${Date.now().toString(36).slice(-4)}-new…-lnk1d-cai`, title: t('ui.profileDialog.signin.passkeyHere'), short: t('ui.profileDialog.signin.passkeyHereShort') }
+          : { type: 'ii', id: '7hq2m-ab3x…-ne9kd-cai', title: t('ui.profileDialog.signin.ii'), short: t('ui.profileDialog.signin.ii') };
       return [
         {
-          label: a.type === 'passkey' ? 'Create a passkey' : 'Sign in with Internet Identity',
+          label: t(a.type === 'passkey' ? 'ui.profileDialog.signin.createPasskey' : 'ui.profileDialog.signin.signInIi'),
           state: a.step === 'new' ? (a.waiting ? 'wait' : 'now') : 'done',
-          action: a.type === 'passkey' ? 'Create' : 'Sign in',
+          action: t(a.type === 'passkey' ? 'ui.profileDialog.signin.create' : 'ui.profileDialog.signin.signIn'),
           run: () => {
             updateAdding({ waiting: true });
             cancel(siStepTimer);
             siStepTimer = later(() => updateAdding({ step: 'confirm', waiting: false }), 900);
           },
         },
-        a.step === 'new' ? { label: `Confirm with your ${siCurrent.short}`, state: 'todo' } : confirm(method),
+        a.step === 'new' ? { label: t('ui.profileDialog.signin.confirmWith', { method: siCurrent.short }), state: 'todo' } : confirm(method),
       ];
     }
     if (a.step === 'confirm')
-      return [{ label: `Verify ${a.email}`, state: 'done' }, confirm({ type: 'email', id: a.email, title: a.email, short: 'email' })];
+      return [{ label: t('ui.profileDialog.signin.verifyEmail', { email: a.email }), state: 'done' }, confirm({ type: 'email', id: a.email, title: a.email, short: t('ui.profileDialog.signin.emailShort') })];
     return [];
   });
 
@@ -701,9 +713,9 @@
   let botCopied = $state<string | null>(null);
   let botTimer: ReturnType<typeof setTimeout> | undefined;
   const botRows = $derived([
-    { key: 'host', label: 'IC host URL', value: icHost },
-    { key: 'storage', label: 'OpenStorage index canister', value: storageIndex },
-    { key: 'key', label: 'OpenChat public key', value: publicKey },
+    { key: 'host', label: 'ui.profileDialog.bots.host', value: icHost },
+    { key: 'storage', label: 'ui.profileDialog.bots.storage', value: storageIndex },
+    { key: 'key', label: 'ui.profileDialog.bots.publicKey', value: publicKey },
   ]);
 
   function copyBot(key: string, value: string) {
@@ -756,7 +768,7 @@
   const delMatch = $derived(delTyped.trim().replace(/^@/, '').toLowerCase() === values.handle.toLowerCase());
   const delNextMile = $derived.by(() => {
     const n = [14, 30, 100, 365].find((v) => v > streak);
-    return n ? `${n - streak} days to your ${n}-day milestone` : 'Every milestone reached';
+    return n ? t('ui.profileDialog.delete.nextMilestone', { days: n - streak, n }) : t('ui.profileDialog.delete.allMilestones');
   });
   const delLocked = $derived(delStep === 3 && (!delMatch || delBusy));
 
@@ -795,45 +807,41 @@
     else stayNow();
   }
 
-  type Seg = [string, boolean?];
   const delSteps = $derived([
     {
       icon: 'chat',
-      title: 'You’re leaving everyone on read?',
-      body: [['All your chats, photos and contacts will '], ['vanish for good', true], ['. No backups, no take-backs — maybe keep the conversation going?']] as Seg[],
-      primary: 'Okay, I’ll stay',
+      title: t('ui.profileDialog.delete.step1Title'),
+      body: rich('ui.profileDialog.delete.step1Body', { gone: t('ui.profileDialog.delete.step1Gone') }),
+      primary: t('ui.profileDialog.delete.step1Stay'),
       primaryIcon: 'heart',
-      secondary: 'Continue anyway',
+      secondary: t('ui.profileDialog.delete.step1Next'),
     },
     {
       icon: 'wallet',
-      title: 'Your wallet goes with it',
-      body: [['Your crypto wallet lives here too. Deleting your account deletes it, so '], ['move your funds out first', true], [' — or just don’t break up with us.']] as Seg[],
-      primary: 'I’m staying for my wallet',
+      title: t('ui.profileDialog.delete.step2Title'),
+      body: rich('ui.profileDialog.delete.step2Body', { moveOut: t('ui.profileDialog.delete.step2MoveOut') }),
+      primary: t('ui.profileDialog.delete.step2Stay'),
       primaryIcon: 'wallet',
-      secondary: 'Still want to continue',
+      secondary: t('ui.profileDialog.delete.step2Next'),
     },
     {
       icon: null,
-      title: 'Think of your CHIT!',
-      body: [
-        ['You’ll lose '],
-        [`${fmt(balance)} CHIT`, true],
-        [' and your '],
-        [`${streak}-day streak`, true],
-        ['. That’s a lot of days to throw away — we could even throw in a few more CHIT…?'],
-      ] as Seg[],
-      primary: 'I love a good bribe, I’ll stay',
+      title: t('ui.profileDialog.delete.step3Title'),
+      body: rich('ui.profileDialog.delete.step3Body', {
+        balance: t('ui.profileDialog.delete.chitAmount', { amount: fmt(balance) }),
+        streak: t('ui.profileDialog.delete.streak', { count: streak }),
+      }),
+      primary: t('ui.profileDialog.delete.step3Stay'),
       primaryIcon: 'zap',
-      secondary: 'Keep going',
+      secondary: t('ui.profileDialog.delete.step3Next'),
     },
     {
       icon: 'trash',
-      title: 'This is it. No take-backs.',
-      body: [['Your account, chats, wallet and CHIT will be '], ['gone for good', true], ['. You’ll be asked to sign in again to confirm.']] as Seg[],
-      primary: delBusy ? 'Re-authenticating…' : 'Re-authenticate & delete',
+      title: t('ui.profileDialog.delete.step4Title'),
+      body: rich('ui.profileDialog.delete.step4Body', { gone: t('ui.profileDialog.delete.step4Gone') }),
+      primary: t(delBusy ? 'ui.profileDialog.delete.reauthenticating' : 'ui.profileDialog.delete.reauthenticate'),
       primaryIcon: delBusy ? 'refresh' : 'trash',
-      secondary: 'Nah, I’m kidding, I’ll stay',
+      secondary: t('ui.profileDialog.delete.step4Stay'),
     },
   ]);
 
@@ -891,7 +899,7 @@
   }
 
   function shareInvite() {
-    if (navigator.share) navigator.share({ title: 'Join me on OpenChat', url: link }).catch(() => {});
+    if (navigator.share) navigator.share({ title: t('ui.profileDialog.invite.shareTitle'), url: link }).catch(() => {});
     else onShareApp?.(link);
   }
 
@@ -932,14 +940,14 @@
 
 {#snippet toggleRow(title: string, hint: string, on: boolean, change: (v: boolean) => void)}
   <div class="setting">
-    <div class="setting-text"><span class="setting-title">{title}</span><span class="setting-hint">{hint}</span></div>
+    <div class="setting-text"><span class="setting-title">{t(title)}</span><span class="setting-hint">{t(hint)}</span></div>
     <div class="setting-control"><Toggle {on} onChange={change} /></div>
   </div>
 {/snippet}
 
 {#snippet chatGroup(group: (typeof CHAT_GROUPS)[number])}
   <div class="block">
-    <span class="caps">{group.label}</span>
+    <span class="caps">{t(group.label)}</span>
     <div class="list">
       {#each group.rows as [key, title, hint], i}
         {#if i > 0}<div class="rule"></div>{/if}
@@ -956,14 +964,14 @@
       <div class="rail-scroll">
         {#each NAV as group}
           <div class="nav-group">
-            <span class="nav-label">{group.label}</span>
+            <span class="nav-label">{t(group.label)}</span>
             {#each group.items.filter((i) => i[0] !== 'chit' || chitEnabled || section === 'chit') as [key, title, iconName, tone]}
               {@const on = key === section}
               <div class="nav-item {tone ?? ''}" class:on onclick={() => (key === 'diamond' ? close(onDiamond) : go(key))} role="button" tabindex="0">
                 <span class="nav-icon" style:mask={icon(iconName)}></span>
-                <span class="nav-title">{title}</span>
+                <span class="nav-title">{t(title)}</span>
                 <span class="nav-meta" class:upgrade={tone === 'diamond' && !isDiamond}
-                  >{tone === 'chit' && chitEnabled ? `${streak}d` : tone === 'diamond' ? (isDiamond ? 'Member' : 'Upgrade') : ''}</span
+                  >{tone === 'chit' && chitEnabled ? t('ui.profileDialog.nav.streakShort', { count: streak }) : tone === 'diamond' ? t(isDiamond ? 'ui.profileDialog.nav.member' : 'ui.profileDialog.nav.upgrade') : ''}</span
                 >
               </div>
             {/each}
@@ -981,32 +989,32 @@
           tabindex="0"
         >
           <span class="nav-icon logout" style:mask={icon('leave')}></span>
-          <span class="nav-title">Log out</span>
+          <span class="nav-title">{t('ui.profileDialog.logout.action')}</span>
         </div>
       </div>
     </div>
 
     <div class="main">
       <div class="main-head">
-        <span class="section-title">{TITLES[section] ?? 'Profile'}</span>
-        <span class="head-close" onclick={() => close(onClose)} aria-label="Close" role="button" tabindex="0" title="Close">{@render glyph('close', 'head-close-glyph')}</span>
+        <span class="section-title">{t(TITLES[section] ?? 'ui.profileDialog.nav.profile')}</span>
+        <span class="head-close" onclick={() => close(onClose)} aria-label={t('ui.common.close')} role="button" tabindex="0" title={t('ui.common.close')}>{@render glyph('close', 'head-close-glyph')}</span>
       </div>
 
       {#if section === 'profile'}
         <div class="scroll gap-18">
           <div class="cover" style:background={cover}>
-            <span class="cover-edit" onclick={() => onCoverEdit?.(isDiamond)} aria-label="Change cover" role="button" tabindex="0" title="Change cover">{@render glyph('edit', 'cover-edit-glyph')}</span>
+            <span class="cover-edit" onclick={() => onCoverEdit?.(isDiamond)} aria-label={t('ui.profileDialog.profile.changeCover')} role="button" tabindex="0" title={t('ui.profileDialog.profile.changeCover')}>{@render glyph('edit', 'cover-edit-glyph')}</span>
           </div>
           <div class="identity">
             <span class="avatar" style:background={avatar}>
-              <span class="photo-edit" onclick={() => onPhotoEdit?.()} aria-label="Change photo" role="button" tabindex="0" title="Change photo">{@render glyph('edit', 'photo-edit-glyph')}</span>
+              <span class="photo-edit" onclick={() => onPhotoEdit?.()} aria-label={t('ui.profileDialog.profile.changePhoto')} role="button" tabindex="0" title={t('ui.profileDialog.profile.changePhoto')}>{@render glyph('edit', 'photo-edit-glyph')}</span>
             </span>
             <div class="identity-text">
               <div class="name-line">
                 <span class="display-name">{shownName}</span>
                 {#if isVerified}<span class="badge-slot"><Badge variant="verified" /></span>{/if}
-                {#if isDiamond}<span class="badge-slot"><Badge variant="tag" label="DIAMOND" /></span>{/if}
-                {#if chitEnabled}<span class="badge-slot chit-tag" onclick={() => go('chit')} aria-label="{fmt(balance)} CHIT" role="button" tabindex="0" title="{fmt(balance)} CHIT"
+                {#if isDiamond}<span class="badge-slot"><Badge variant="tag" label={t('ui.profileDialog.profile.diamondTag')} /></span>{/if}
+                {#if chitEnabled}<span class="badge-slot chit-tag" onclick={() => go('chit')} aria-label={t('ui.profileDialog.delete.chitAmount', { amount: fmt(balance) })} role="button" tabindex="0" title={t('ui.profileDialog.delete.chitAmount', { amount: fmt(balance) })}
                     ><Badge variant="chit" label={chitTag} /></span
                   >{/if}
               </div>
@@ -1014,7 +1022,7 @@
             </div>
           </div>
 
-          <span class="caps lead-caps">PUBLIC PROFILE</span>
+          <span class="caps lead-caps">{t('ui.profileDialog.profile.publicProfile')}</span>
           <div class="list pull-up">
             {#each FIELDS as f, i}
               {@const value = values[f.key]}
@@ -1022,13 +1030,13 @@
               <div class="field" class:ruled={i > 0}>
                 {#if editing !== f.key}
                   <div class="kv-row editable" onclick={() => startEdit(f.key, value)} role="button" tabindex="0">
-                    <span class="kv-label">{f.label}</span>
-                    <span class="kv-value" class:mono={f.mono} class:area={f.area} class:empty={!value}>{!value ? f.placeholder : f.mono ? `@${value}` : value}</span>
+                    <span class="kv-label">{t(f.label)}</span>
+                    <span class="kv-value" class:mono={f.mono} class:area={f.area} class:empty={!value}>{!value ? t(f.placeholder) : f.mono ? `@${value}` : value}</span>
                     {@render glyph('edit', 'kv-edit')}
                   </div>
                 {:else}
                   <div class="editor">
-                    <div class="editor-head"><span class="editor-label">{f.label}</span><span class="editor-count">{f.area ? `${draft.length} / ${f.max}` : ''}</span></div>
+                    <div class="editor-head"><span class="editor-label">{t(f.label)}</span><span class="editor-count">{f.area ? `${draft.length} / ${f.max}` : ''}</span></div>
                     {#if f.area}
                       <textarea
                         class="area-input"
@@ -1067,14 +1075,14 @@
                             }
                           }}
                           maxlength={f.max}
-                          placeholder={f.placeholder}
+                          placeholder={f.placeholder ? t(f.placeholder) : ''}
                         />
                       </div>
                     {/if}
                     <div class="editor-foot">
-                      <span class="editor-hint" class:invalid={!!err}>{err || f.hint}</span>
-                      <span class="cancel" onclick={stopEdit} role="button" tabindex="0">Cancel</span>
-                      <span class="save" class:blocked={!!err} onclick={saveField} role="button" tabindex="0">Save</span>
+                      <span class="editor-hint" class:invalid={!!err}>{t(err || f.hint)}</span>
+                      <span class="cancel" onclick={stopEdit} role="button" tabindex="0">{t('ui.common.cancel')}</span>
+                      <span class="save" class:blocked={!!err} onclick={saveField} role="button" tabindex="0">{t('ui.common.save')}</span>
                     </div>
                   </div>
                 {/if}
@@ -1082,20 +1090,20 @@
             {/each}
           </div>
 
-          <span class="caps lead-caps">ACCOUNT</span>
+          <span class="caps lead-caps">{t('ui.profileDialog.profile.account')}</span>
           <div class="list pull-up">
             <div class="kv-row">
-              <span class="kv-label">Status</span>
-              <span class="status"><span class="online-dot"></span>Online</span>
+              <span class="kv-label">{t('ui.profileDialog.profile.status')}</span>
+              <span class="status"><span class="online-dot"></span>{t('ui.profileDialog.profile.online')}</span>
             </div>
             <div class="kv-row ruled">
-              <span class="kv-label">Member since</span>
+              <span class="kv-label">{t('ui.profileDialog.profile.memberSince')}</span>
               <span class="kv-plain">{memberSince}</span>
             </div>
             <div class="kv-row ruled">
-              <span class="kv-label">User ID</span>
+              <span class="kv-label">{t('ui.profileDialog.profile.userId')}</span>
               <span class="kv-id">{userId}</span>
-              <span class="copy" onclick={copyUserId} aria-label={copied ? 'Copied' : 'Copy user ID'} role="button" tabindex="0" title={copied ? 'Copied' : 'Copy user ID'}
+              <span class="copy" onclick={copyUserId} aria-label={t(copied ? 'ui.common.copied' : 'ui.profileDialog.profile.copyUserId')} role="button" tabindex="0" title={t(copied ? 'ui.common.copied' : 'ui.profileDialog.profile.copyUserId')}
                 >{@render glyph(copied ? 'check' : 'copy', copied ? 'copy-glyph done' : 'copy-glyph')}</span
               >
             </div>
@@ -1107,23 +1115,23 @@
         <div class="scroll stats-grid">
           <div class="stat-online">
             <div class="online-main">
-              <span class="small-label">Online this month</span><span class="online-figure">{fmt(onlineMinutes)}<span class="online-unit">min</span></span>
+              <span class="small-label">{t('ui.profileDialog.stats.onlineThisMonth')}</span><span class="online-figure">{fmt(onlineMinutes)}<span class="online-unit">{t('ui.profileDialog.stats.minutesUnit')}</span></span>
             </div>
             <div class="online-side">
               <span class="delta" class:down={onlinePct < 0}
                 ><span class="delta-glyph" style:mask={icon(onlinePct >= 0 ? 'chevron-up' : 'chevron-down')}></span>{onlinePct >= 0 ? '+' : ''}{onlinePct}%</span
               >
-              <span class="prev">{fmt(onlineMinutesPrev)} last month</span>
+              <span class="prev">{t('ui.profileDialog.stats.lastMonth', { amount: fmt(onlineMinutesPrev) })}</span>
             </div>
           </div>
           {#each engagement as e}
-            <div class="stat-tile"><span class="tile-figure">{e.count}</span><span class="small-label">{e.label}</span></div>
+            <div class="stat-tile"><span class="tile-figure">{e.count}</span><span class="small-label">{t(e.label)}</span></div>
           {/each}
           <div class="stat-mix">
-            <div class="mix-head"><span class="small-label grow">Messages sent</span><span class="mix-total">{fmt(mixTotal)}</span></div>
+            <div class="mix-head"><span class="small-label grow">{t('ui.profileDialog.stats.messagesSent')}</span><span class="mix-total">{fmt(mixTotal)}</span></div>
             {#each messageMix as x, i}
               <div class="mix-row">
-                <span class="mix-label">{x.label}</span>
+                <span class="mix-label">{t(x.label)}</span>
                 <div class="mix-track">
                   <div class="mix-fill" style:width="{((x.count / mixTop) * 100).toFixed(2)}%" style:background={x.color || MIX_COLORS[i % MIX_COLORS.length]}></div>
                 </div>
@@ -1134,8 +1142,8 @@
           <div class="stat-report">
             <span class="report-glyph" style:background={reportTone ?? 'var(--ink-3,#9A9AA8)'} style:mask={icon('flag')}></span>
             <div class="report-text">
-              <span class="report-title">Reported messages</span><span class="report-note"
-                >{reportTone ? 'Reported or removed often enough that communities may notice' : 'Reported by others or removed by moderators'}</span
+              <span class="report-title">{t('ui.profileDialog.stats.reported')}</span><span class="report-note"
+                >{t(reportTone ? 'ui.profileDialog.stats.reportedHigh' : 'ui.profileDialog.stats.reportedNote')}</span
               >
             </div>
             <span class="report-count" style:color={reportTone ?? 'var(--ink,#ECECF1)'}>{fmt(reported)}</span>
@@ -1148,60 +1156,62 @@
           <div class="chit-master">
             <span class="chit-badge">{@render glyph('zap', 'chit-badge-glyph')}</span>
             <div class="setting-text">
-              <span class="setting-title">Enable CHIT &amp; related features</span><span class="setting-hint"
-                >Earn CHIT for using the app and spend it on emoji packs, backgrounds and themes.</span
+              <span class="setting-title">{t('ui.profileDialog.chit.enable')}</span><span class="setting-hint"
+                >{t('ui.profileDialog.chit.enableHint')}</span
               >
             </div>
             <div class="setting-control"><Toggle on={chitEnabled} onChange={(v) => setChit({ enabled: v })} /></div>
           </div>
           {#if chitEnabled}
             <div class="block">
-              <span class="caps">NOTIFICATIONS</span>
+              <span class="caps">{t('ui.profileDialog.chit.notifications')}</span>
               <div class="list">
-                {@render toggleRow('Notify me of achievements', 'A small celebration each time you complete one.', chitNotify, (v) => setChit({ notify: v }))}
+                {@render toggleRow('ui.profileDialog.chit.notify', 'ui.profileDialog.chit.notifyHint', chitNotify, (v) => setChit({ notify: v }))}
                 <div class="rule"></div>
                 {@render toggleRow(
-                  'Hide CHIT icon after claiming',
-                  'Keeps the nav rail tidy once today’s CHIT is in. It comes back when the next claim opens.',
+                  'ui.profileDialog.chit.hideIcon',
+                  'ui.profileDialog.chit.hideIconHint',
                   chitHideAfterClaim,
                   (v) => setChit({ hideAfterClaim: v }),
                 )}
               </div>
             </div>
             <div class="block">
-              <span class="caps">DAILY PUZZLE</span>
+              <span class="caps">{t('ui.profileDialog.chit.puzzleCaps')}</span>
               <div class="list puzzle">
-                <div class="setting-text"><span class="setting-title">Daily puzzle</span><span class="setting-hint">A short logic puzzle in the CHIT modal.</span></div>
-                <div class="segments three" role="radiogroup" aria-label="Daily puzzle">
-                  {#each [['off', 'Hidden', 'eye-off'], ['show', 'Show', 'eye'], ['remind', 'Show + remind', 'bell']] as [k, label, iconName]}
+                <div class="setting-text"><span class="setting-title">{t('ui.profileDialog.chit.puzzle')}</span><span class="setting-hint">{t('ui.profileDialog.chit.puzzleHint')}</span></div>
+                <div class="segments three" role="radiogroup" aria-label={t('ui.profileDialog.chit.puzzle')}>
+                  {#each [['off', 'ui.profileDialog.chit.puzzleOff', 'eye-off'], ['show', 'ui.profileDialog.chit.puzzleShow', 'eye'], ['remind', 'ui.profileDialog.chit.puzzleRemind', 'bell']] as [k, label, iconName]}
                     <span
                       class="segment"
                       class:on={puzzleMode === k}
                       onclick={() => setChit({ puzzle: k !== 'off', puzzleRemind: k === 'remind' })}
                       role="radio"
                       aria-checked={puzzleMode === k}
-                      tabindex="0">{@render glyph(iconName, 'segment-glyph')}{label}</span
+                      tabindex="0">{@render glyph(iconName, 'segment-glyph')}{t(label)}</span
                     >
                   {/each}
                 </div>
                 <span class="setting-hint"
-                  >{puzzleMode === 'off'
-                    ? 'The puzzle card is removed from the CHIT modal.'
-                    : puzzleMode === 'show'
-                      ? 'Shown in the CHIT modal. No dot on the CHIT icon.'
-                      : 'A dot on the CHIT icon when a new puzzle is out.'}</span
+                  >{t(
+                    puzzleMode === 'off'
+                      ? 'ui.profileDialog.chit.puzzleOffHint'
+                      : puzzleMode === 'show'
+                        ? 'ui.profileDialog.chit.puzzleShowHint'
+                        : 'ui.profileDialog.chit.puzzleRemindHint',
+                  )}</span
                 >
               </div>
             </div>
           {:else}
             <p class="chit-off">
-              CHIT is off. You won’t earn CHIT, see streaks or get achievement alerts anywhere in OpenChat. Your {fmt(balance)} CHIT balance is kept for when you turn it back on.
+              {t('ui.profileDialog.chit.off', { amount: fmt(balance) })}
             </p>
           {/if}
           {#if chitEnabled}
             <div class="earn" onclick={() => close(onEarn)} role="button" tabindex="0">
               {@render glyph('trophy', 'earn-glyph')}
-              <div class="earn-text"><span class="earn-title">Ways to earn more</span><span class="earn-left">{achievementsLeft} achievements left</span></div>
+              <div class="earn-text"><span class="earn-title">{t('ui.profileDialog.chit.earnMore')}</span><span class="earn-left">{t('ui.profileDialog.chit.achievementsLeft', { count: achievementsLeft })}</span></div>
               {@render glyph('chevron-right', 'earn-chevron')}
             </div>
             <div class="month-bar">
@@ -1209,35 +1219,36 @@
                 class="month-step"
                 class:disabled={!calendar.canPrev}
                 onclick={() => (monthOffset = Math.min(calendar.maxOffset, monthOffset + 1))}
-                aria-label="Previous month"
+                aria-label={t('ui.profileDialog.calendar.prevMonth')}
                 role="button"
                 tabindex="0"
-                title="Previous month">{@render glyph('back', 'month-glyph')}</span
+                title={t('ui.profileDialog.calendar.prevMonth')}>{@render glyph('back', 'month-glyph')}</span
               >
               <div class="month-text">
                 <span class="month-label">{calendar.label}</span>
                 <span class="month-sum"
-                  ><span class="chit-ink">{fmt(calendar.chit)} CHIT</span> · {calendar.claimed} claimed · <span class:online-ink={calendar.insured > 0}>{calendar.insured} insured</span></span
+                  >{#each t('ui.profileDialog.calendar.summary', { chit: '\u0001chit\u0001', claimed: calendar.claimed, insured: '\u0001insured\u0001' }).split(/\u0001(chit|insured)\u0001/) as part, i}{#if i % 2 === 0}{part}{:else if part === 'chit'}<span class="chit-ink">{t('ui.profileDialog.delete.chitAmount', { amount: fmt(calendar.chit) })}</span
+                      >{:else}<span class:online-ink={calendar.insured > 0}>{t('ui.profileDialog.calendar.insuredCount', { count: calendar.insured })}</span>{/if}{/each}</span
                 >
               </div>
               <span
                 class="month-step"
                 class:disabled={!calendar.canNext}
                 onclick={() => (monthOffset = Math.max(0, monthOffset - 1))}
-                aria-label="Next month"
+                aria-label={t('ui.profileDialog.calendar.nextMonth')}
                 role="button"
                 tabindex="0"
-                title="Next month">{@render glyph('chevron-right', 'month-glyph')}</span
+                title={t('ui.profileDialog.calendar.nextMonth')}>{@render glyph('chevron-right', 'month-glyph')}</span
               >
               <span class="grow"></span>
               <div class="segments tz">
-                {#each [['Local', false], ['UTC', true]] as [label, utc]}
-                  <span class="tz-option" class:on={chitUtc === utc} onclick={() => setChit({ utc: utc as boolean })} role="button" tabindex="0">{label}</span>
+                {#each [['ui.profileDialog.calendar.local', false], ['UTC', true]] as [label, utc]}
+                  <span class="tz-option" class:on={chitUtc === utc} onclick={() => setChit({ utc: utc as boolean })} role="button" tabindex="0">{t(label as string)}</span>
                 {/each}
               </div>
             </div>
             <div class="calendar">
-              {#each ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'] as w}<span class="weekday">{w}</span>{/each}
+              {#each [0, 1, 2, 3, 4, 5, 6] as d}<span class="weekday">{dateFmt({ weekday: 'short' }, Date.UTC(2023, 0, 1 + d)).slice(0, 2)}</span>{/each}
               {#each calendar.cells as cell}
                 <div
                   class="day {cell.kind}"
@@ -1251,7 +1262,7 @@
                 >
                   <span class="day-num">{cell.day ?? ''}</span>
                   <span class="day-amount"
-                    >{#if cell.kind === 'insured'}<span class="day-shield"></span>{/if}{cell.kind === 'claim' ? 'Claim' : cell.kind === 'claimed' ? cell.amount : ''}</span
+                    >{#if cell.kind === 'insured'}<span class="day-shield"></span>{/if}{cell.kind === 'claim' ? t('ui.profileDialog.calendar.claim') : cell.kind === 'claimed' ? cell.amount : ''}</span
                   >
                   {#if cell.lines && hoverDay === cell.day}
                     <div class="pop" class:start={cell.col === 0} class:end={cell.col === 6}>
@@ -1272,14 +1283,14 @@
             {@render chatGroup(group)}
           {/each}
           <div class="block">
-            <span class="caps">RINGTONE</span>
+            <span class="caps">{t('ui.profileDialog.chats.ringtone')}</span>
             <div class="list">
               {#each RINGTONES as [tone, label], i}
                 {@const on = chat.ringtone === tone}
                 {@const isPlaying = playing === tone}
                 {#if i > 0}<div class="rule"></div>{/if}
                 <div class="ringtone" onclick={() => setChat('ringtone', tone)} role="button" tabindex="0">
-                  <span class="ringtone-label" class:on>{label}</span>
+                  <span class="ringtone-label" class:on>{t(label)}</span>
                   <span class="wave">
                     {#each { length: 28 } as _, j}<span
                         class="wave-bar"
@@ -1291,10 +1302,10 @@
                   <span
                     class="play"
                     onclick={(e) => preview(e, tone)}
-                    aria-label={isPlaying ? 'Stop preview' : `Preview ${label}`}
+                    aria-label={isPlaying ? t('ui.profileDialog.chats.stopPreview') : t('ui.profileDialog.chats.preview', { name: t(label) })}
                     role="button"
                     tabindex="0"
-                    title={isPlaying ? 'Stop preview' : `Preview ${label}`}
+                    title={isPlaying ? t('ui.profileDialog.chats.stopPreview') : t('ui.profileDialog.chats.preview', { name: t(label) })}
                     ><span class="play-glyph" class:playing={isPlaying} style:mask={icon(isPlaying ? 'stop' : 'play')}></span></span
                   >
                   <span class="tick-slot"><span class="tick" class:on></span></span>
@@ -1310,11 +1321,11 @@
 
       {#if section === 'communities'}
         <div class="scroll gap-8">
-          <span class="lead-text">Set a different display name in each community you’ve joined. Leave it empty to use your profile name.</span>
-          <span class="caps flat spaced">YOUR NAME IN EACH COMMUNITY</span>
+          <span class="lead-text">{t('ui.profileDialog.communities.lead')}</span>
+          <span class="caps flat spaced">{t('ui.profileDialog.communities.caps')}</span>
           {#if communities.length > 10}
             <div class="filter">
-              {@render glyph('search', 'filter-glyph')}<input bind:value={commQuery} placeholder="Filter communities" />
+              {@render glyph('search', 'filter-glyph')}<input bind:value={commQuery} placeholder={t('ui.profileDialog.communities.filter')} />
             </div>
           {/if}
           <div class="list flat">
@@ -1327,12 +1338,12 @@
                   <span class="community-face" style:background={GRADS[c.color] || GRADS.slate}></span>
                   <span class="community-name">{c.name}</span>
                   <span class="community-shown" class:custom={!!custom}>{custom || shownName}</span>
-                  <span class="community-tag">{custom ? '' : 'default'}</span>
+                  <span class="community-tag">{custom ? '' : t('ui.profileDialog.communities.defaultTag')}</span>
                   {@render glyph('edit', 'kv-edit')}
                 </div>
               {:else}
                 <div class="editor">
-                  <div class="community-edit-head"><span class="community-chip" style:background={GRADS[c.color] || GRADS.slate}></span><span class="editor-label">Your name in {c.name}</span></div>
+                  <div class="community-edit-head"><span class="community-chip" style:background={GRADS[c.color] || GRADS.slate}></span><span class="editor-label">{t('ui.profileDialog.communities.yourNameIn', { community: c.name })}</span></div>
                   <div class="line-input">
                     <input
                       bind:this={field}
@@ -1352,17 +1363,17 @@
                     />
                   </div>
                   <div class="editor-foot">
-                    {#if custom}<span class="reset" onclick={() => commitCommunity(c.name, '')} role="button" tabindex="0">Use default name</span>{/if}
-                    <span class="editor-hint">Leave empty to use {shownName}</span>
-                    <span class="cancel" onclick={stopEdit} role="button" tabindex="0">Cancel</span>
-                    <span class="save" onclick={() => commitCommunity(c.name, draft.trim())} role="button" tabindex="0">Save</span>
+                    {#if custom}<span class="reset" onclick={() => commitCommunity(c.name, '')} role="button" tabindex="0">{t('ui.profileDialog.communities.useDefault')}</span>{/if}
+                    <span class="editor-hint">{t('ui.profileDialog.communities.leaveEmpty', { name: shownName })}</span>
+                    <span class="cancel" onclick={stopEdit} role="button" tabindex="0">{t('ui.common.cancel')}</span>
+                    <span class="save" onclick={() => commitCommunity(c.name, draft.trim())} role="button" tabindex="0">{t('ui.common.save')}</span>
                   </div>
                 </div>
               {/if}
             {/each}
           </div>
           {#if shownCommunities.length === 0}
-            <span class="no-match">No communities match “{commQuery}”.</span>
+            <span class="no-match">{t('ui.profileDialog.communities.noMatch', { query: commQuery })}</span>
           {/if}
         </div>
       {/if}
@@ -1373,33 +1384,33 @@
             {#if siCurrent}
               <div class="current">
                 <span class="current-tile">{@render glyph(SI_TYPES[siCurrent.type].icon, 'current-glyph')}</span>
-                <div class="current-text"><span class="current-kicker">Signed in with</span><span class="current-title">{siCurrent.title}</span><span class="current-id">{siCurrent.id}</span></div>
-                <span class="locked" title="You’re signed in with this method, so it can’t be unlinked">{@render glyph('lock', 'locked-glyph')}Can’t unlink</span>
+                <div class="current-text"><span class="current-kicker">{t('ui.profileDialog.signin.signedInWith')}</span><span class="current-title">{siCurrent.title}</span><span class="current-id">{siCurrent.id}</span></div>
+                <span class="locked" title={t('ui.profileDialog.signin.lockedTitle')}>{@render glyph('lock', 'locked-glyph')}{t('ui.profileDialog.signin.cantUnlink')}</span>
               </div>
             {/if}
-            <span class="lead-text">The ways you can sign in to this account. You can’t remove the one you’re signed in with right now.</span>
+            <span class="lead-text">{t('ui.profileDialog.signin.lead')}</span>
             {#each ['passkey', 'ii', 'email'] as const as type}
               {@const T = SI_TYPES[type]}
               {@const items = siAll.filter((x) => x.type === type && x !== siCurrent)}
               {@const adding = siAdding?.type === type}
               <div class="block">
-                <span class="caps">{T.label}</span>
+                <span class="caps">{t(T.label)}</span>
                 <div class="list">
                   {#each items as x}
                     <div class="method">
                       {@render glyph(T.icon, 'method-glyph')}
-                      <div class="method-text"><span class="method-title">{x.title + (type === 'email' ? '' : ` · ${x.id.slice(0, 5)}`)}</span><span class="method-sub">{x.used || 'Just linked'}</span></div>
-                      <span class="unlink" onclick={() => unlink(x)} role="button" tabindex="0">{@render glyph('unlink', 'unlink-glyph')}Unlink</span>
+                      <div class="method-text"><span class="method-title">{x.title + (type === 'email' ? '' : ` · ${x.id.slice(0, 5)}`)}</span><span class="method-sub">{x.used || t('ui.profileDialog.signin.justLinked')}</span></div>
+                      <span class="unlink" onclick={() => unlink(x)} role="button" tabindex="0">{@render glyph('unlink', 'unlink-glyph')}{t('ui.profileDialog.signin.unlink')}</span>
                     </div>
                   {/each}
                   {#if !items.length && !adding}
-                    <div class="method-empty">{T.empty}</div>
+                    <div class="method-empty">{t(T.empty)}</div>
                   {/if}
                   {#if !adding}
-                    <div class="add" onclick={() => startAdding(type)} role="button" tabindex="0">{@render glyph('plus', 'add-glyph')}{T.addLabel}</div>
+                    <div class="add" onclick={() => startAdding(type)} role="button" tabindex="0">{@render glyph('plus', 'add-glyph')}{t(T.addLabel)}</div>
                   {:else if siAdding}
                     <div class="adding">
-                      <div class="adding-head"><span class="adding-title">{SI_TYPES[siAdding.type].addTitle}</span><span class="adding-cancel" onclick={cancelAdding} role="button" tabindex="0">Cancel</span></div>
+                      <div class="adding-head"><span class="adding-title">{t(SI_TYPES[siAdding.type].addTitle)}</span><span class="adding-cancel" onclick={cancelAdding} role="button" tabindex="0">{t('ui.common.cancel')}</span></div>
                       {#if siAdding.type === 'email' && siAdding.step === 'email'}
                         <div class="inline-form">
                           <div class="line-input grow">
@@ -1408,14 +1419,14 @@
                               value={siAdding.email}
                               oninput={(e) => updateAdding({ email: e.currentTarget.value })}
                               onkeydown={(e) => addingKey(e, emailOk, 'code')}
-                              placeholder="name@example.com"
+                              placeholder={t('ui.profileDialog.signin.emailPlaceholder')}
                               type="email"
                             />
                           </div>
-                          <span class="primary" class:blocked={siBlocked} onclick={() => updateAdding({ step: 'code' })} role="button" tabindex="0">Send code</span>
+                          <span class="primary" class:blocked={siBlocked} onclick={() => updateAdding({ step: 'code' })} role="button" tabindex="0">{t('ui.profileDialog.signin.sendCode')}</span>
                         </div>
                         <span class="adding-hint" class:invalid={!!siAdding.email && !emailOk}
-                          >{siAdding.email && !emailOk ? 'Enter a full email address' : `We’ll email a one-time code, then ask you to confirm with your ${siCurrent?.short}.`}</span
+                          >{siAdding.email && !emailOk ? t('ui.profileDialog.signin.emailInvalid') : t('ui.profileDialog.signin.emailHint', { method: siCurrent?.short })}</span
                         >
                       {/if}
                       {#if siAdding.type === 'email' && siAdding.step === 'code'}
@@ -1426,14 +1437,14 @@
                               value={siAdding.code}
                               oninput={(e) => updateAdding({ code: e.currentTarget.value.replace(/\D/g, '').slice(0, 6) })}
                               onkeydown={(e) => addingKey(e, codeOk, 'confirm')}
-                              placeholder="6-digit code"
+                              placeholder={t('ui.profileDialog.signin.codePlaceholder')}
                               inputmode="numeric"
                               maxlength="6"
                             />
                           </div>
-                          <span class="primary" class:blocked={siBlocked} onclick={() => updateAdding({ step: 'confirm' })} role="button" tabindex="0">Verify</span>
+                          <span class="primary" class:blocked={siBlocked} onclick={() => updateAdding({ step: 'confirm' })} role="button" tabindex="0">{t('ui.profileDialog.signin.verify')}</span>
                         </div>
-                        <span class="adding-hint">Sent to {siAdding.email}. For this prototype any 6 digits work.</span>
+                        <span class="adding-hint">{t('ui.profileDialog.signin.codeHint', { email: siAdding.email })}</span>
                       {/if}
                       {#if siAdding.type !== 'email' || siAdding.step === 'confirm'}
                         {#each checklist as c}
@@ -1441,7 +1452,7 @@
                             <span class="check-mark {c.state}"><span class="check-glyph"></span></span>
                             <span class="check-label {c.state}">{c.label}</span>
                             {#if c.state === 'now' && c.run}<span class="check-action" onclick={c.run} role="button" tabindex="0">{c.action}</span>{/if}
-                            {#if c.state === 'wait'}<span class="waiting">Waiting…</span>{/if}
+                            {#if c.state === 'wait'}<span class="waiting">{t('ui.profileDialog.signin.waiting')}</span>{/if}
                           </div>
                         {/each}
                       {/if}
@@ -1461,7 +1472,7 @@
                     siToast?.undo?.();
                   }}
                   role="button"
-                  tabindex="0">Undo</span
+                  tabindex="0">{t('ui.common.undo')}</span
                 >{/if}
             </div>
           {/if}
@@ -1471,7 +1482,7 @@
       {#if section === 'appearance'}
         <div class="scroll gap-22">
           <div class="block wide-gap">
-            <span class="caps">THEME</span>
+            <span class="caps">{t('ui.profileDialog.appearance.theme')}</span>
             <div class="themes">
               {#each THEMES as [k, label]}
                 {@const p = THEME_PREVIEW[k]}
@@ -1484,37 +1495,37 @@
                   </div>
                   <div class="theme-label">
                     <span class="radio"><span class="radio-dot"></span></span>
-                    <span class="theme-name">{label}</span>
+                    <span class="theme-name">{t(label)}</span>
                   </div>
                 </div>
               {/each}
             </div>
-            <span class="note">System follows your device’s light or dark setting.</span>
+            <span class="note">{t('ui.profileDialog.appearance.systemNote')}</span>
           </div>
           <div class="block wide-gap">
-            <span class="caps">ACCENT COLOUR</span>
+            <span class="caps">{t('ui.profileDialog.appearance.accent')}</span>
             <div class="accents">
               {#each ACCENTS as [k, label, color]}
                 <div class="accent" class:on={accentPref === k} onclick={() => setAppearance({ accent: k })} role="button" tabindex="0">
                   <span class="swatch" style:background={color}><span class="swatch-check"></span></span>
-                  <span class="theme-name">{label}</span>
+                  <span class="theme-name">{t(label)}</span>
                 </div>
               {/each}
             </div>
           </div>
           <div class="block wide-gap">
-            <span class="caps">INTERFACE SIZE</span>
+            <span class="caps">{t('ui.profileDialog.appearance.size')}</span>
             <div class="list sizes-panel">
               <div class="segments sizes">
                 {#each FONT_SIZES as f}
                   <span class="size" class:on={fontSize === f.key} onclick={() => setAppearance({ font: f.key })} role="button" tabindex="0"
-                    ><span class="size-glyph" style:font-size={f.glyph}>A</span><span class="size-label">{f.label}</span></span
+                    ><span class="size-glyph" style:font-size={f.glyph}>A</span><span class="size-label">{t(f.label)}</span></span
                   >
                 {/each}
               </div>
               <div class="sample">
-                <div class="sample-bubble recv" style:font-size={sampleSize}>Is this size easier to read?</div>
-                <div class="sample-bubble sent" style:font-size={sampleSize}>Much better, thanks.</div>
+                <div class="sample-bubble recv" style:font-size={sampleSize}>{t('ui.profileDialog.appearance.sampleQuestion')}</div>
+                <div class="sample-bubble sent" style:font-size={sampleSize}>{t('ui.profileDialog.appearance.sampleAnswer')}</div>
               </div>
             </div>
           </div>
@@ -1523,51 +1534,49 @@
 
       {#if section === 'storage'}
         <div class="scroll gap-22">
-          <span class="lead-text">Files you send are stored on the network. Cached data lives only on this device.</span>
+          <span class="lead-text">{t('ui.profileDialog.storage.lead')}</span>
           <div class="block wide-gap">
-            <span class="caps">REMOTE STORAGE</span>
+            <span class="caps">{t('ui.profileDialog.storage.remote')}</span>
             <div class="list">
               <div class="usage">
                 <div class="usage-head">
                   <span class="usage-figure">{mb(storageUsed)}</span>
-                  <span class="usage-of">of {isDiamond ? '1 GB' : '100 MB'} used</span>
+                  <span class="usage-of">{t('ui.profileDialog.storage.usedOf', { total: isDiamond ? '1 GB' : '100 MB' })}</span>
                   <span class="usage-pct" style:color={storageTone ?? 'var(--ink-3,#8A8A99)'}>{Math.round(storageRatio * 100)}%</span>
                 </div>
                 <div class="usage-track"><div class="usage-fill" style:width="{Math.round(storageRatio * 100)}%" style:background={storageTone ?? 'var(--accent,#FF5672)'}></div></div>
-                <span class="setting-hint">{mb(storageCap - storageUsed)} left for the images, videos and files you send. Deleting messages you sent frees their space.</span>
+                <span class="setting-hint">{t('ui.profileDialog.storage.left', { left: mb(storageCap - storageUsed) })}</span>
               </div>
               {#if !isDiamond}
                 <div class="upsell" onclick={() => close(onDiamond)} role="button" tabindex="0">
-                  <span class="upsell-text">Diamond members get 1 GB</span>
-                  <span class="upsell-cta">Get Diamond</span>
+                  <span class="upsell-text">{t('ui.profileDialog.storage.upsell')}</span>
+                  <span class="upsell-cta">{t('ui.profileDialog.storage.getDiamond')}</span>
                 </div>
               {/if}
             </div>
           </div>
           <div class="block wide-gap">
-            <span class="caps">CACHE ON THIS DEVICE</span>
+            <span class="caps">{t('ui.profileDialog.storage.cache')}</span>
             <div class="list">
               <div class="cache-row">
                 <div class="cache-text">
-                  <span class="setting-title">Clear cached data</span>
+                  <span class="setting-title">{t('ui.profileDialog.storage.clearTitle')}</span>
                   <span class="setting-hint muted3"
-                    >Cached data can occasionally become corrupted and stop the app working as it should. Use this as a last resort — your messages stay safe and reload from the network.</span
+                    >{t('ui.profileDialog.storage.clearHint')}</span
                   >
                 </div>
                 <span class="outline-button {cache}" onclick={clearCache} role="button" tabindex="0"
-                  ><span class="outline-glyph" class:spin={cache === 'busy'} style:mask={icon(cache === 'done' ? 'check' : 'refresh')}></span>{cache === 'busy'
-                    ? 'Clearing…'
-                    : cache === 'done'
-                      ? 'Cleared'
-                      : 'Clear cache'}</span
+                  ><span class="outline-glyph" class:spin={cache === 'busy'} style:mask={icon(cache === 'done' ? 'check' : 'refresh')}></span>{t(
+                    cache === 'busy' ? 'ui.profileDialog.storage.clearing' : cache === 'done' ? 'ui.profileDialog.storage.cleared' : 'ui.profileDialog.storage.clear',
+                  )}</span
                 >
               </div>
               <div class="cache-row ruled">
                 <div class="cache-text">
-                  <span class="setting-title">{cache === 'done' ? 'Did that fix it?' : 'Still having problems?'}</span>
-                  <span class="setting-hint muted3">Please report problems even if clearing the cache fixed them — it helps us stop them happening again.</span>
+                  <span class="setting-title">{t(cache === 'done' ? 'ui.profileDialog.storage.fixed' : 'ui.profileDialog.storage.problems')}</span>
+                  <span class="setting-hint muted3">{t('ui.profileDialog.storage.reportHint')}</span>
                 </div>
-                <span class="outline-button report" onclick={() => onReportIssue?.()} role="button" tabindex="0">{@render glyph('flag', 'outline-glyph flag')}Report an issue</span>
+                <span class="outline-button report" onclick={() => onReportIssue?.()} role="button" tabindex="0">{@render glyph('flag', 'outline-glyph flag')}{t('ui.profileDialog.storage.report')}</span>
               </div>
             </div>
           </div>
@@ -1577,19 +1586,21 @@
       {#if section === 'bots'}
         <div class="scroll gap-18">
           <span class="lead-text tight"
-            >Building an OpenChat bot? You’ll need these values for this environment — see the <a href="https://github.com/open-chat-labs/open-chat-bots" target="_blank" rel="noopener"
-              >bot development docs</a
-            > for where each one goes.</span
+            >{#each t('ui.profileDialog.bots.lead', { docs: '\u0001docs\u0001' }).split(/\u0001docs\u0001/) as part, i}{#if i > 0}<a
+                  href="https://github.com/open-chat-labs/open-chat-bots"
+                  target="_blank"
+                  rel="noopener">{t('ui.profileDialog.bots.docs')}</a
+                >{/if}{part}{/each}</span
           >
           <div class="list">
             {#each botRows as b, i}
               {@const on = botCopied === b.key}
               <div class="bot-row" class:ruled={i > 0}>
                 <div class="bot-text">
-                  <span class="small-label">{b.label}</span>
+                  <span class="small-label">{t(b.label)}</span>
                   <span class="bot-value" class:pre={b.key === 'key'}>{b.value}</span>
                 </div>
-                <span class="bot-copy" onclick={() => copyBot(b.key, b.value)} aria-label={on ? 'Copied' : `Copy ${b.label}`} role="button" tabindex="0" title={on ? 'Copied' : `Copy ${b.label}`}
+                <span class="bot-copy" onclick={() => copyBot(b.key, b.value)} aria-label={on ? t('ui.common.copied') : t('ui.profileDialog.bots.copy', { label: t(b.label) })} role="button" tabindex="0" title={on ? t('ui.common.copied') : t('ui.profileDialog.bots.copy', { label: t(b.label) })}
                   ><span class="bot-copy-glyph" class:on style:mask={icon(on ? 'check' : 'copy')}></span></span
                 >
               </div>
@@ -1600,36 +1611,36 @@
 
       {#if section === 'device'}
         <div class="scroll gap-18">
-          <span class="lead-text">Use this account on a phone or tablet with the OpenChat app.</span>
+          <span class="lead-text">{t('ui.profileDialog.device.lead')}</span>
           <div class="list">
             {#each LINK_STEPS as text, i}
               <div class="link-step" class:ruled={i > 0}>
                 <span class="step-n">{i + 1}</span>
-                <span class="step-text">{text}</span>
+                <span class="step-text">{t(text)}</span>
               </div>
             {/each}
           </div>
           {#if !lcLive}
             <div class="code-intro">
               {@render glyph('shield', 'shield-glyph')}
-              <span class="code-warning">Only use the code on a device you trust — anyone with it can sign in to your account until it expires.</span>
-              <span class="show-code" onclick={newLinkCode} role="button" tabindex="0">Show code</span>
+              <span class="code-warning">{t('ui.profileDialog.device.warning')}</span>
+              <span class="show-code" onclick={newLinkCode} role="button" tabindex="0">{t('ui.profileDialog.device.showCode')}</span>
             </div>
           {:else}
             {@const warn = lcLeft <= 30}
             <div class="code-live">
               <div class="code-line">
                 <span class="code" class:hidden={lcHidden}>{(lcCode ?? '').slice(0, 3)} {(lcCode ?? '').slice(3)}</span>
-                <span class="code-copy" onclick={copyLinkCode} aria-label={lcCopied ? 'Copied' : 'Copy code'} role="button" tabindex="0" title={lcCopied ? 'Copied' : 'Copy code'}
+                <span class="code-copy" onclick={copyLinkCode} aria-label={t(lcCopied ? 'ui.common.copied' : 'ui.profileDialog.device.copyCode')} role="button" tabindex="0" title={t(lcCopied ? 'ui.common.copied' : 'ui.profileDialog.device.copyCode')}
                   ><span class="code-copy-glyph" class:on={lcCopied} style:mask={icon(lcCopied ? 'check' : 'copy')}></span></span
                 >
               </div>
               <div class="code-track"><div class="code-fill" class:warn style:width="{Math.max(0, Math.min(100, (lcLeft / linkCodeTtl) * 100)).toFixed(1)}%"></div></div>
               <div class="code-foot">
                 <span class="code-status" class:warn
-                  >Expires in {String(Math.floor(lcLeft / 60)).padStart(2, '0')}:{String(lcLeft % 60).padStart(2, '0')} · trusted devices only</span
+                  >{t('ui.profileDialog.device.expires', { time: `${String(Math.floor(lcLeft / 60)).padStart(2, '0')}:${String(lcLeft % 60).padStart(2, '0')}` })}</span
                 >
-                <span class="code-toggle" onclick={() => (lcHidden = !lcHidden)} role="button" tabindex="0">{lcHidden ? 'Show code' : 'Hide code'}</span>
+                <span class="code-toggle" onclick={() => (lcHidden = !lcHidden)} role="button" tabindex="0">{t(lcHidden ? 'ui.profileDialog.device.showCode' : 'ui.profileDialog.device.hideCode')}</span>
               </div>
             </div>
           {/if}
@@ -1639,9 +1650,9 @@
       {#if section === 'delete'}
         <div class="scroll gap-18">
           <div class="block wide-gap">
-            <span class="caps">WHAT YOU’LL LOSE</span>
+            <span class="caps">{t('ui.profileDialog.delete.lossCaps')}</span>
             <div class="list">
-              {#each [{ icon: 'chat', title: 'Chats, photos and contacts', sub: 'Every conversation and file you’ve shared' }, { icon: 'wallet', title: 'Your crypto wallet', sub: 'Move your funds out before you delete' }, { icon: 'zap', title: `${fmt(balance)} CHIT and your ${streak}-day streak`, sub: 'Earned CHIT can’t be recovered' }] as l, i}
+              {#each [{ icon: 'chat', title: t('ui.profileDialog.delete.lossChats'), sub: t('ui.profileDialog.delete.lossChatsSub') }, { icon: 'wallet', title: t('ui.profileDialog.delete.lossWallet'), sub: t('ui.profileDialog.delete.lossWalletSub') }, { icon: 'zap', title: t('ui.profileDialog.delete.lossChit', { amount: fmt(balance), count: streak }), sub: t('ui.profileDialog.delete.lossChitSub') }] as l, i}
                 <div class="loss" class:ruled={i > 0}>
                   <span class="loss-tile">{@render glyph(l.icon, 'loss-glyph')}</span>
                   <div class="loss-text">
@@ -1653,8 +1664,8 @@
             </div>
           </div>
           <div class="danger-zone">
-            <span class="danger-text">Deleting your account is permanent and can’t be undone.</span>
-            <span class="danger-button" onclick={openDelete} role="button" tabindex="0">{@render glyph('trash', 'danger-glyph')}Delete account…</span>
+            <span class="danger-text">{t('ui.profileDialog.delete.permanent')}</span>
+            <span class="danger-button" onclick={openDelete} role="button" tabindex="0">{@render glyph('trash', 'danger-glyph')}{t('ui.profileDialog.delete.open')}</span>
           </div>
         </div>
       {/if}
@@ -1665,18 +1676,18 @@
             <span class="logo"><span class="logo-hole"></span></span>
             <div class="about-text">
               <span class="about-title">OpenChat</span>
-              <span class="about-sub">Chat that’s owned by its community</span>
+              <span class="about-sub">{t('ui.profileDialog.about.tagline')}</span>
             </div>
             <span class="version">{platform}{version ? ` · v${version}` : ''}</span>
           </div>
           {#each ABOUT_GROUPS as group}
             <div class="block wide-gap">
-              <span class="caps">{group.label}</span>
+              <span class="caps">{t(group.label)}</span>
               <div class="list">
                 {#each group.keys as k, i}
                   <a class="about-link" class:ruled={i > 0} href="https://oc.app/{k}" target="_blank" rel="noopener">
                     {@render glyph(ABOUT_LINKS[k][1], 'about-glyph')}
-                    <span class="about-label">{ABOUT_LINKS[k][0]}</span>
+                    <span class="about-label">{t(ABOUT_LINKS[k][0])}</span>
                     {@render glyph('external', 'external-glyph')}
                   </a>
                 {/each}
@@ -1688,38 +1699,38 @@
 
       {#if section === 'invite'}
         <div class="scroll gap-22">
-          <span class="lead-text">Share your link with friends and family. You earn CHIT when someone you invite upgrades.</span>
+          <span class="lead-text">{t('ui.profileDialog.invite.lead')}</span>
           <div class="invite">
-            <div class="qr"><img src={qr?.link === link ? qr.src : BLANK_GIF} alt="QR code for your invite link" /></div>
+            <div class="qr"><img src={qr?.link === link ? qr.src : BLANK_GIF} alt={t('ui.profileDialog.invite.qrAlt')} /></div>
             <div class="invite-side">
-              <span class="invite-caps">YOUR INVITE LINK</span>
+              <span class="invite-caps">{t('ui.profileDialog.invite.caps')}</span>
               <span class="invite-link">{link}</span>
               <div class="invite-actions">
                 <span class="invite-copy" onclick={copyInvite} role="button" tabindex="0"
-                  ><span class="invite-copy-glyph" class:on={invCopied} style:mask={icon(invCopied ? 'check' : 'copy')}></span>{invCopied ? 'Copied' : 'Copy'}</span
+                  ><span class="invite-copy-glyph" class:on={invCopied} style:mask={icon(invCopied ? 'check' : 'copy')}></span>{t(invCopied ? 'ui.common.copied' : 'ui.common.copy')}</span
                 >
-                <span class="invite-share" onclick={shareInvite} role="button" tabindex="0">{@render glyph('share', 'invite-share-glyph')}Share</span>
+                <span class="invite-share" onclick={shareInvite} role="button" tabindex="0">{@render glyph('share', 'invite-share-glyph')}{t('ui.common.share')}</span>
               </div>
             </div>
           </div>
           <div class="block wide-gap">
-            <span class="caps">YOU EARN WHEN A FRIEND…</span>
+            <span class="caps">{t('ui.profileDialog.invite.earnCaps')}</span>
             <div class="list">
-              {#each [['Becomes a Diamond member', '5,000'], ['Gets lifetime Diamond', '15,000']] as [label, amount], i}
+              {#each [['ui.profileDialog.invite.rewardDiamond', '5,000'], ['ui.profileDialog.invite.rewardLifetime', '15,000']] as [label, amount], i}
                 <div class="reward" class:ruled={i > 0}>
                   {@render glyph('gem', 'about-glyph')}
-                  <span class="reward-label">{label}</span>
+                  <span class="reward-label">{t(label)}</span>
                   <span class="reward-amount">{@render glyph('zap', 'reward-glyph')}{amount}</span>
                 </div>
               {/each}
             </div>
-            <span class="invite-note">If they later move up a tier, you get the difference.</span>
+            <span class="invite-note">{t('ui.profileDialog.invite.note')}</span>
           </div>
         </div>
       {/if}
 
       {#if section === 'diamond'}
-        <div class="placeholder"><span class="placeholder-text">{TITLES[section]} settings aren’t designed yet.</span></div>
+        <div class="placeholder"><span class="placeholder-text">{t('ui.profileDialog.diamondPlaceholder', { section: t(TITLES[section]) })}</span></div>
       {/if}
     </div>
   </div>
@@ -1731,13 +1742,13 @@
       <div class="sub-card delete">
         <div class="sub-head">
           {#if delStep > 0 && !delBusy}
-            <span class="sub-back" onclick={() => (delStep = Math.max(0, delStep - 1))} aria-label="Back" role="button" tabindex="0" title="Back">{@render glyph('back', 'sub-back-glyph')}</span>
+            <span class="sub-back" onclick={() => (delStep = Math.max(0, delStep - 1))} aria-label={t('ui.common.back')} role="button" tabindex="0" title={t('ui.common.back')}>{@render glyph('back', 'sub-back-glyph')}</span>
           {/if}
           <div class="sub-heading">
-            <span class="sub-title">Delete account</span>
-            <span class="sub-step">Step {delStep + 1} of 4</span>
+            <span class="sub-title">{t('ui.profileDialog.nav.delete')}</span>
+            <span class="sub-step">{t('ui.profileDialog.delete.stepOf', { step: delStep + 1, total: 4 })}</span>
           </div>
-          <span class="sub-close" onclick={() => !delBusy && stayNow()} role="button" tabindex="0">{@render glyph('close', 'sub-close-glyph')}</span>
+          <span class="sub-close" onclick={() => !delBusy && stayNow()} role="button" tabindex="0" aria-label={t('ui.common.close')}>{@render glyph('close', 'sub-close-glyph')}</span>
         </div>
         <div class="steps">
           {#each delSteps as _, k}<span class="step-dot" class:passed={k <= delStep} class:final={k === 3}></span>{/each}
@@ -1754,23 +1765,25 @@
             <div class="list">
               <div class="chit-pair">
                 <div class="chit-cell">
-                  <span class="small-label icon-label">{@render glyph('zap', 'streak-glyph')}Day streak</span>
+                  <span class="small-label icon-label">{@render glyph('zap', 'streak-glyph')}{t('ui.profileDialog.delete.dayStreak')}</span>
                   <span class="chit-figure">{streak}</span>
                 </div>
                 <div class="chit-cell ruled-start">
-                  <span class="small-label">CHIT balance</span>
+                  <span class="small-label">{t('ui.profileDialog.delete.chitBalance')}</span>
                   <span class="chit-figure">{fmt(balance)}</span>
                 </div>
               </div>
               <div class="chit-foot">
                 <span class="chit-next">{delNextMile}</span>
-                <span class="chit-earned">{fmt(chitEarned)} earned in total</span>
+                <span class="chit-earned">{t('ui.profileDialog.delete.earnedTotal', { amount: fmt(chitEarned) })}</span>
               </div>
             </div>
           {/if}
           {#if delStep === 3}
             <div class="confirm-type">
-              <span class="confirm-label">Type <span class="confirm-handle">@{values.handle}</span> to confirm</span>
+              <span class="confirm-label"
+                >{#each t('ui.profileDialog.delete.typeToConfirm', { handle: '\u0001handle\u0001' }).split(/\u0001handle\u0001/) as part, i}{#if i > 0}<span class="confirm-handle">@{values.handle}</span>{/if}{part}{/each}</span
+              >
               <input class="confirm-input" class:match={delMatch} bind:value={delTyped} placeholder="@{values.handle}" spellcheck="false" autocomplete="off" />
             </div>
           {/if}
@@ -1799,13 +1812,13 @@
           </div>
         </div>
         <div class="lo-copy">
-          <span class="lo-title">Log out of OpenChat?</span>
-          <span class="lo-body">Your chats, wallet and CHIT stay safe. You’ll sign back in with {signInProvider}.</span>
+          <span class="lo-title">{t('ui.profileDialog.logout.title')}</span>
+          <span class="lo-body">{t('ui.profileDialog.logout.body', { provider: t(signInProvider) })}</span>
         </div>
         <div class="lo-actions">
-          <span class="lo-cancel" class:busy={loBusy} onclick={() => !loBusy && (loOpen = false)} role="button" tabindex="0">Cancel</span>
+          <span class="lo-cancel" class:busy={loBusy} onclick={() => !loBusy && (loOpen = false)} role="button" tabindex="0">{t('ui.common.cancel')}</span>
           <span class="lo-confirm" class:busy={loBusy} onclick={confirmLogout} role="button" tabindex="0"
-            ><span class="lo-glyph" class:spin={loBusy} style:mask={icon(loBusy ? 'refresh' : 'leave')}></span>{loBusy ? 'Logging out…' : 'Log out'}</span
+            ><span class="lo-glyph" class:spin={loBusy} style:mask={icon(loBusy ? 'refresh' : 'leave')}></span>{t(loBusy ? 'ui.profileDialog.logout.busy' : 'ui.profileDialog.logout.action')}</span
           >
         </div>
       </div>

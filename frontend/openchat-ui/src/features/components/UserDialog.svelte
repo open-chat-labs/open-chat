@@ -9,6 +9,7 @@
   import PanelCover from '../../lib/components/PanelCover.svelte';
   import SegmentedTabs from '../../lib/components/SegmentedTabs.svelte';
   import { modal } from '../../lib/behaviours/modal';
+  import { useT } from '../../lib/i18n';
 
   type MuteKey = '8h' | '1w' | 'always';
 
@@ -21,10 +22,11 @@
     plum: 'linear-gradient(140deg,#B06BFF,#6A2BFF)',
     slate: 'linear-gradient(140deg,#8E9BB3,#5A6478)',
   };
+  // label / tile: resource keys
   const MUTE_SPANS: { key: MuteKey; label: string; tile: string }[] = [
-    { key: '8h', label: 'For 8 hours', tile: 'Muted · 8h' },
-    { key: '1w', label: 'For 1 week', tile: 'Muted · 1w' },
-    { key: 'always', label: 'Until I turn it back on', tile: 'Muted' },
+    { key: '8h', label: 'ui.userDialog.mute8h', tile: 'ui.userDialog.muted8h' },
+    { key: '1w', label: 'ui.userDialog.mute1w', tile: 'ui.userDialog.muted1w' },
+    { key: 'always', label: 'ui.userDialog.muteAlways', tile: 'ui.userDialog.muted' },
   ];
   const CLOSE_MS = 170;
 
@@ -38,7 +40,7 @@
     online?: boolean;
     verified?: boolean;
     cover?: string;
-    /** The same fields the DM panel shows (member since, CHIT, status), one column each. */
+    /** The same fields the DM panel shows (member since, CHIT, status), one column each. Labels: resource keys (or literal text). */
     facts: { label: string; value: string; dot?: boolean; highlight?: boolean }[];
     isSelf?: boolean;
     dmTabs?: boolean;
@@ -84,6 +86,7 @@
     onBlock,
     onCancel,
   }: Props = $props();
+  const t = useT();
 
   let closing = $state(false);
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -99,7 +102,7 @@
   const span = $derived(MUTE_SPANS.find((o) => o.key === isMuted));
   const muteOptions = $derived(
     isMuted
-      ? [{ label: 'Unmute notifications', key: null }, ...MUTE_SPANS.filter((o) => o.key !== isMuted).map((o) => ({ label: o.label, key: o.key }))]
+      ? [{ label: 'ui.userDialog.unmute', key: null }, ...MUTE_SPANS.filter((o) => o.key !== isMuted).map((o) => ({ label: o.label, key: o.key }))]
       : MUTE_SPANS.map((o) => ({ label: o.label, key: o.key })),
   );
 
@@ -154,8 +157,8 @@
 
       {#if dm}
         <div class="pills">
-          <span class="pill mute" class:on={!!isMuted} onclick={openMuteMenu} aria-label={isMuted ? 'Change or end the mute' : 'Mute notifications'} role="button" tabindex="0" title={isMuted ? 'Change or end the mute' : 'Mute notifications'}>
-            <span class="pill-icon" style:mask="var(--icon-{isMuted ? 'bell-off' : 'bell'}) center/contain no-repeat"></span>{span ? span.tile : 'Mute'}
+          <span class="pill mute" class:on={!!isMuted} onclick={openMuteMenu} aria-label={t(isMuted ? 'ui.userDialog.changeMute' : 'ui.userDialog.muteNotifications')} role="button" tabindex="0" title={t(isMuted ? 'ui.userDialog.changeMute' : 'ui.userDialog.muteNotifications')}>
+            <span class="pill-icon" style:mask="var(--icon-{isMuted ? 'bell-off' : 'bell'}) center/contain no-repeat"></span>{t(span ? span.tile : 'ui.userDialog.mute')}
             <span class="pill-divider"></span><span class="caret"></span>
           </span>
           <span
@@ -167,11 +170,11 @@
             }}
             role="button"
             tabindex="0"
-            aria-pressed={isFav}><span class="pill-icon heart"></span>{isFav ? 'Favourited' : 'Favourite'}</span
+            aria-pressed={isFav}><span class="pill-icon heart"></span>{t(isFav ? 'ui.userDialog.favourited' : 'ui.userDialog.favourite')}</span
           >
         </div>
         <div class="tabs">
-          <SegmentedTabs labels={['Profile', 'This chat']} selectedIndex={tab === 'chat' ? 1 : 0} dotOnLast={false} onSelect={(i) => (tabOverride = i === 1 ? 'chat' : 'profile')} />
+          <SegmentedTabs labels={[t('ui.userDialog.profile'), t('ui.userDialog.thisChat')]} selectedIndex={tab === 'chat' ? 1 : 0} dotOnLast={false} onSelect={(i) => (tabOverride = i === 1 ? 'chat' : 'profile')} />
         </div>
       {/if}
 
@@ -179,11 +182,11 @@
         <div class="profile" class:in-dm={dm}>
           <div class="facts" style:grid-template-columns="repeat({facts.length},minmax(0,1fr))">
             {#each facts as f}
-              <div class="cell"><DetailSection label={f.label} value={f.value} dot={f.dot ?? false} highlight={f.highlight ?? false} /></div>
+              <div class="cell"><DetailSection label={t(f.label)} value={t(f.value)} dot={f.dot ?? false} highlight={f.highlight ?? false} /></div>
             {/each}
           </div>
           {#if about}
-            <div class="cell"><DetailSection label="About" value={about} variant="prose" /></div>
+            <div class="cell"><DetailSection label={t('ui.userDialog.about')} value={about} variant="prose" /></div>
           {/if}
         </div>
       {:else}
@@ -193,11 +196,11 @@
 
     {#if !isSelf}
       <div class="footer">
-        <span class="block" onclick={() => close(onBlock ?? onCancel)} role="button" tabindex="0">Block user</span>
+        <span class="block" onclick={() => close(onBlock ?? onCancel)} role="button" tabindex="0">{t('ui.userDialog.block')}</span>
         <span class="grow"></span>
         {#if !dm}
           <div class="message" onclick={() => close(onMessage ?? onCancel)} role="button" tabindex="0">
-            <span>Message</span>
+            <span>{t('ui.userDialog.message')}</span>
             <span class="message-icon"></span>
           </div>
         {/if}
@@ -206,9 +209,9 @@
     {#if muteMenu}
       <div class="mute-backdrop" onclick={() => (muteMenu = null)} aria-hidden="true"></div>
       <div class="mute-menu" style:top="{muteMenu.top}px" style:left="{muteMenu.left}px">
-        <span class="mute-title">{isMuted ? 'Muted' : 'Mute notifications for'}</span>
+        <span class="mute-title">{t(isMuted ? 'ui.userDialog.muted' : 'ui.userDialog.muteFor')}</span>
         {#each muteOptions as o}
-          <div class="mute-option" onclick={() => setMute(o.key)} role="button" tabindex="0">{o.label}</div>
+          <div class="mute-option" onclick={() => setMute(o.key)} role="button" tabindex="0">{t(o.label)}</div>
         {/each}
       </div>
     {/if}

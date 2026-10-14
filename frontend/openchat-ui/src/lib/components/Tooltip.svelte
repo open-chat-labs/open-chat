@@ -1,16 +1,19 @@
 <!-- Visual spec for the app-wide tooltip (behaviour: lib/behaviours/tooltip.js — any element with a title gets it).
      Plain label only: inverted surface, 12px semibold, above the target (flips below near the top edge). -->
 <script lang="ts">
+  import { useT } from '../i18n';
   interface Props {
+    /** Resource key (or literal text). */
     label: string;
     placement?: 'top' | 'bottom';
   }
 
   let { label, placement = 'top' }: Props = $props();
+  const t = useT();
 </script>
 
 <div class="tooltip" class:below={placement !== 'top'}>
-  <span role="tooltip">{label}</span>
+  <span role="tooltip">{t(label)}</span>
 </div>
 
 <style>

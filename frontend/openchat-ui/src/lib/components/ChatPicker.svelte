@@ -6,6 +6,7 @@
   import Field from './Field.svelte';
   import IconButton from './IconButton.svelte';
   import TextArea from './TextArea.svelte';
+  import { useT } from '../i18n';
 
   interface Item {
     title: string;
@@ -27,8 +28,11 @@
   }
 
   interface Props {
+    /** Resource key (or literal text). */
     title?: string;
+    /** Resource key (or literal text). */
     sendLabel?: string;
+    /** Resource key (or literal text). */
     previewLabel?: string;
     item?: Item | null;
     chats: Chat[];
@@ -37,7 +41,8 @@
     z?: number;
   }
 
-  let { title = 'Share to chat', sendLabel = 'Send', previewLabel = 'SHARING', item = null, chats, onSend, onClose, z = 90 }: Props = $props();
+  let { title = 'ui.chatPicker.title', sendLabel = 'ui.common.send', previewLabel = 'ui.chatPicker.sharing', item = null, chats, onSend, onClose, z = 90 }: Props = $props();
+  const t = useT();
 
   let query = $state('');
   let to = $state<Chat | null>(null);
@@ -77,10 +82,10 @@
             <span class="item-text"><span class="item-title clip">{item.title}</span><span class="item-sub clip">{item.sub ?? ''}</span></span>
           </div>
         {/if}
-        <Field placeholder="Search chats" value={query} onInput={(e) => (query = e.currentTarget.value)} onClear={() => (query = '')} showShortcut={false} />
+        <Field placeholder={t('ui.chatPicker.searchChats')} value={query} onInput={(e) => (query = e.currentTarget.value)} onClear={() => (query = '')} showShortcut={false} />
       </div>
-      <div class="list" role="listbox" aria-label="Chats">
-        <span class="list-label">{needle ? 'RESULTS' : 'RECENT CHATS'}</span>
+      <div class="list" role="listbox" aria-label={t('ui.chatPicker.chats')}>
+        <span class="list-label">{t(needle ? 'ui.chatPicker.results' : 'ui.chatPicker.recentChats')}</span>
         {#each list as chat}
           <div class="chat" onclick={() => pick(chat)} role="option" aria-selected="false" tabindex="0">
             <span class="face" style:border-radius={chat.radius ?? '50%'} style:background={chat.grad}></span>
@@ -88,26 +93,26 @@
             <span class="chevron" data-oc-flip=""></span>
           </div>
         {/each}
-        {#if needle && list.length === 0}<span class="empty">No chats match “{query}”.</span>{/if}
+        {#if needle && list.length === 0}<span class="empty">{t('ui.chatPicker.noMatches', { query })}</span>{/if}
       </div>
     {:else}
       <div class="confirm">
         <div class="recipient">
-          <IconButton variant="ghost" icon="back" label="Choose another chat" onClick={() => (to = null)} />
+          <IconButton variant="ghost" icon="back" label="ui.chatPicker.chooseAnother" onClick={() => (to = null)} />
           <span class="face" style:border-radius={to.radius ?? '50%'} style:background={to.grad}></span>
-          <span class="chat-text"><span class="sending-to">Sending to</span><span class="chat-name">{to.name}</span></span>
+          <span class="chat-text"><span class="sending-to">{t('ui.chatPicker.sendingTo')}</span><span class="chat-name">{to.name}</span></span>
         </div>
         <div class="preview">
-          <span class="preview-label">{previewLabel}</span>
+          <span class="preview-label">{t(previewLabel)}</span>
           <div class="item-row">
             {@render tile()}
             <span class="item-text"><span class="item-title wrap">{item?.title ?? ''}</span><span class="item-sub wrap">{item?.sub ?? ''}</span></span>
           </div>
         </div>
-        <TextArea value={message} placeholder="Add a message (optional)" help="" maxLength={500} minHeight={76} onInput={(e) => (message = e.currentTarget.value)} />
+        <TextArea value={message} placeholder="ui.chatPicker.messagePlaceholder" help="" maxLength={500} minHeight={76} onInput={(e) => (message = e.currentTarget.value)} />
       </div>
       <div class="actions">
-        <Button label="Back" variant="secondary" onClick={() => (to = null)} />
+        <Button label="ui.common.back" variant="secondary" onClick={() => (to = null)} />
         <Button label={sendLabel} variant="primary" onClick={send} />
       </div>
     {/if}

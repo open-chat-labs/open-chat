@@ -1,6 +1,7 @@
 <!-- Group / profile message stats: minutes online (this vs previous month), a donut of messages by type
      with the total in the middle, a tile per type, and extra counters (poll votes, replies …). -->
 <script lang="ts">
+  import { useT } from '../i18n';
   const TYPE_ICONS: Record<string, string> = {
     text: 'chat',
     image: 'image',
@@ -17,14 +18,21 @@
   interface Props {
     onlineMinutes: number;
     onlineMinutesPrev: number;
-    /** label picks the icon (Text, Image, Video, Audio, File, Poll, Crypto, GIF); colour defaults from a palette. */
+    /** label picks the icon (Text, Image, Video, Audio, File, Poll, Crypto, GIF) and is shown as a resource key (or
+        literal text); colour defaults from a palette. */
     slices: { label: string; count: number; color?: string }[];
+    /** label: resource key (or literal text). */
     extras?: { label: string; count: string }[];
   }
 
   let { onlineMinutes, onlineMinutesPrev, slices, extras = [] }: Props = $props();
+  const t = useT();
 
   const fmt = (n: number) => n.toLocaleString('en-US');
+  // the formatted figure is styled separately: format the sentence around a marker, then split on it
+  const MARK = '\u0001';
+  const around = (key: string, count: number) => t(key, { count, figure: MARK }).split(MARK);
+  const now = $derived(around('ui.statsDonut.onlineThisMonth', onlineMinutes));
 
   const colored = $derived(slices.map((s, i) => ({ ...s, color: s.color || PALETTE[i % PALETTE.length] })));
   const total = $derived(slices.reduce((sum, s) => sum + s.count, 0));
@@ -44,14 +52,14 @@
 
 <div class="stats">
   <div class="online">
-    <span class="online-now"><span class="figure">{fmt(onlineMinutes)}</span> minutes online this month</span>
-    <span class="online-prev">{fmt(onlineMinutesPrev)} minutes the previous month</span>
+    <span class="online-now">{now[0]}<span class="figure">{fmt(onlineMinutes)}</span>{now[1] ?? ''}</span>
+    <span class="online-prev">{t('ui.statsDonut.onlinePreviousMonth', { count: onlineMinutesPrev, figure: fmt(onlineMinutesPrev) })}</span>
   </div>
   <div class="donut-row">
     <div class="donut" style:background={ring}>
       <div class="hole">
         <span class="total">{fmt(total || 1)}</span>
-        <span class="caption">MESSAGES</span>
+        <span class="caption">{t('ui.statsDonut.messages')}</span>
       </div>
     </div>
   </div>
@@ -61,7 +69,7 @@
         <span class="count" style:color={slice.color}>{fmt(slice.count)}</span>
         <span class="label-row">
           <span class="type-icon" style:mask="var(--icon-{TYPE_ICONS[slice.label.toLowerCase()] ?? 'chat'}) center/contain no-repeat"></span>
-          <span class="label">{slice.label}</span>
+          <span class="label">{t(slice.label)}</span>
         </span>
       </div>
     {/each}
@@ -71,7 +79,7 @@
       {#each extras as extra}
         <div class="tile">
           <span class="count">{extra.count}</span>
-          <span class="label">{extra.label}</span>
+          <span class="label">{t(extra.label)}</span>
         </div>
       {/each}
     </div>

@@ -3,6 +3,7 @@
      Diamond is bought in the Diamond dialog (onGetDiamond) and never appears in this payment summary.
      Balances come from the host (tokens / chatBalance): pass fresh values to re-check, e.g. when the tab regains focus. -->
 <script lang="ts">
+  import { useT } from '../../lib/i18n';
   import { onDestroy } from 'svelte';
   import Button from '../../lib/components/Button.svelte';
   import DialogShell from '../../lib/components/DialogShell.svelte';
@@ -21,7 +22,7 @@
     /** pay / balance: token and amount. */
     symbol?: string;
     amount?: number;
-    /** neuron: title, detail and the confirmation wording. */
+    /** neuron: title, detail and the confirmation wording — resource keys (or literal text). */
     label?: string;
     detail?: string;
     confirm?: string;
@@ -61,6 +62,7 @@
     onJoin,
     onClose,
   }: Props = $props();
+  const t = useT();
 
   let confirmed = $state(false);
   let picked = $state<number | null>(null);
@@ -90,8 +92,8 @@
           gate: g,
           token: tk,
           icon: null,
-          title: `${pay ? 'Pay' : 'Hold'} ${fmt(amount)} ${sym}`,
-          detail: `You have ${fmt(have, 2)} ${sym}`,
+          title: t(pay ? 'ui.joinGateDialog.payAmount' : 'ui.joinGateDialog.holdAmount', { amount: fmt(amount), symbol: sym }),
+          detail: t('ui.joinGateDialog.youHave', { amount: fmt(have, 2), symbol: sym }),
           state: (ok ? (pay ? 'pay' : 'met') : 'short') as GateState,
           short: ok ? 0 : amount - have,
           free: !pay,
@@ -102,8 +104,8 @@
           gate: g,
           token: null,
           icon: 'neuron',
-          title: g.label || 'Neuron holder',
-          detail: confirmed ? 'Confirmed by you' : (g.detail ?? ''),
+          title: t(g.label || 'ui.joinGateDialog.neuronHolder'),
+          detail: confirmed ? t('ui.joinGateDialog.confirmedByYou') : g.detail ? t(g.detail) : '',
           state: (confirmed ? 'met' : 'todo') as GateState,
           short: 0,
           free: true,
@@ -112,8 +114,8 @@
         gate: g,
         token: null,
         icon: 'diamond',
-        title: 'Lifetime Diamond member',
-        detail: isLifetime ? "You're a lifetime member" : isDiamond ? 'You have Diamond, but not lifetime' : "You're not a member yet",
+        title: t('ui.joinGateDialog.lifetimeDiamond'),
+        detail: t(isLifetime ? 'ui.joinGateDialog.isLifetime' : isDiamond ? 'ui.joinGateDialog.diamondNotLifetime' : 'ui.joinGateDialog.notMember'),
         state: (isLifetime ? 'met' : 'todo') as GateState,
         short: 0,
         free: true,
@@ -139,19 +141,19 @@
 
   const reason = $derived.by(() => {
     if (canJoin) {
-      if (!any) return `All ${rows.length} requirements ready`;
-      return selGate?.free ? `Free with ${selGate.gate.kind === 'diamond' ? 'your Diamond membership' : 'this requirement'}` : 'Paying is your way in';
+      if (!any) return t('ui.joinGateDialog.allReady', { count: rows.length });
+      return selGate?.free ? t(selGate.gate.kind === 'diamond' ? 'ui.joinGateDialog.freeWithDiamond' : 'ui.joinGateDialog.freeWithRequirement') : t('ui.joinGateDialog.payingWayIn');
     }
-    if (any) return selGate?.state === 'short' ? `Not enough ${selGate.gate.symbol} for this way in` : 'Finish this requirement to join';
+    if (any) return selGate?.state === 'short' ? t('ui.joinGateDialog.notEnough', { symbol: selGate.gate.symbol ?? '' }) : t('ui.joinGateDialog.finishToJoin');
     const left = rows.length - nReady;
-    return `${left} ${left === 1 ? 'requirement' : 'requirements'} left`;
+    return t('ui.joinGateDialog.left', { count: left });
   });
 
   const split = $derived(
     pays.length
       ? [
-          { label: `Community owner · ${Math.round(ownerShare * 100)}%`, value: pays.map((r) => `${fmt((r.gate.amount ?? 0) * ownerShare)} ${r.gate.symbol}`).join(' · ') },
-          { label: `OpenChat treasury · ${Math.round((1 - ownerShare) * 100)}%`, value: pays.map((r) => `${fmt((r.gate.amount ?? 0) * (1 - ownerShare))} ${r.gate.symbol}`).join(' · ') },
+          { label: t('ui.joinGateDialog.ownerShare', { pct: Math.round(ownerShare * 100) }), value: pays.map((r) => `${fmt((r.gate.amount ?? 0) * ownerShare)} ${r.gate.symbol}`).join(' · ') },
+          { label: t('ui.joinGateDialog.treasuryShare', { pct: Math.round((1 - ownerShare) * 100) }), value: pays.map((r) => `${fmt((r.gate.amount ?? 0) * (1 - ownerShare))} ${r.gate.symbol}`).join(' · ') },
         ]
       : [],
   );
@@ -185,26 +187,26 @@
   }
 </script>
 
-<DialogShell title="Join community" width={520} height="auto" flush={true} {z} onClose={close}>
+<DialogShell title={t('ui.joinGateDialog.title')} width={520} height="auto" flush={true} {z} onClose={close}>
   <div class="content">
     <div class="intro">
       <div class="community">
         <span class="avatar" style:background={community.grad || 'var(--overlay-2)'}></span>
         <div class="names">
           <span class="name">{community.name}</span>
-          <span class="meta">Community · {community.members != null ? `${Number(community.members).toLocaleString('en-US')} members` : ''}</span>
+          <span class="meta">{community.members != null ? t('ui.joinGateDialog.metaMembers', { members: Number(community.members).toLocaleString('en-US') }) : t('ui.joinGateDialog.meta')}</span>
         </div>
-        <span class="rule" class:any>{any ? `Any one of ${rows.length}` : `All ${rows.length} required`}</span>
+        <span class="rule" class:any>{t(any ? 'ui.joinGateDialog.ruleAny' : 'ui.joinGateDialog.ruleAll', { count: rows.length })}</span>
       </div>
-      <span class="lead">{any ? 'Meet any one of these to join. Pick the one that suits you.' : `Meet every requirement to join.${recheckDays ? ` Re-checked every ${recheckDays} days.` : ''}`}</span>
+      <span class="lead">{any ? t('ui.joinGateDialog.leadAny') : recheckDays ? t('ui.joinGateDialog.leadAllRecheck', { days: recheckDays }) : t('ui.joinGateDialog.leadAll')}</span>
       {#if !any}
         <div class="progress">
           <span class="segments">{#each rows as _, i}<span class="segment" class:done={i < nReady}></span>{/each}</span>
-          <span class="progress-label">{nReady} of {rows.length} ready</span>
+          <span class="progress-label">{t('ui.joinGateDialog.progress', { ready: nReady, total: rows.length })}</span>
         </div>
       {/if}
     </div>
-    <div class="list" role={any ? 'radiogroup' : 'list'} aria-label="Requirements">
+    <div class="list" role={any ? 'radiogroup' : 'list'} aria-label={t('ui.joinGateDialog.requirements')}>
       {#each rows as r, i}
         {@const isSel = any && i === selected}
         {@const skipped = any && !isSel && freeMet >= 0 && r.gate.kind === 'pay'}
@@ -226,34 +228,34 @@
             {#if r.icon}<span class="gate-icon"><span class="gate-glyph {r.icon}"></span></span>{/if}
             <span class="gate-text">
               <span class="gate-title">{r.title}</span>
-              <span class="gate-detail" class:short={r.state === 'short'}>{skipped ? 'Not needed, you already qualify' : r.detail}</span>
+              <span class="gate-detail" class:short={r.state === 'short'}>{skipped ? t('ui.joinGateDialog.notNeededQualify') : r.detail}</span>
             </span>
             <span class="chip {chip}"
               >{#if chip === 'met' || chip === 'pay'}<span class="chip-icon"></span>{/if}{chip === 'met'
-                ? 'Met'
+                ? t('ui.joinGateDialog.chipMet')
                 : chip === 'pay'
-                  ? 'Paid on join'
+                  ? t('ui.joinGateDialog.chipPay')
                   : chip === 'todo'
-                    ? 'Needs you'
+                    ? t('ui.joinGateDialog.chipTodo')
                     : chip === 'skip'
-                      ? 'Not needed'
-                      : `${fmt(r.short, 2)} short`}</span
+                      ? t('ui.joinGateDialog.chipSkip')
+                      : t('ui.joinGateDialog.chipShort', { amount: fmt(r.short, 2) })}</span
             >
           </div>
           {#if active && r.state === 'short'}
             <div class="extra">
               <span class="extra-text"
                 >{r.gate.kind === 'pay'
-                  ? `Add ${fmt(r.short, 2)} ${r.gate.symbol} to this wallet to cover the fee.`
-                  : `Top up ${fmt(r.short, 2)} ${r.gate.symbol} to this wallet. Nothing is charged; we only check the balance.`}</span
+                  ? t('ui.joinGateDialog.addToCover', { amount: fmt(r.short, 2), symbol: r.gate.symbol ?? '' })
+                  : t('ui.joinGateDialog.topUp', { amount: fmt(r.short, 2), symbol: r.gate.symbol ?? '' })}</span
               >
               <div class="address">
                 <span class="address-text">{ADDRESS}</span>
-                <IconButton variant="ghost" icon={copied ? 'check' : 'copy'} label={copied ? 'Copied' : 'Copy wallet address'} onClick={copy} />
+                <IconButton variant="ghost" icon={copied ? 'check' : 'copy'} label={t(copied ? 'ui.common.copied' : 'ui.joinGateDialog.copyWalletAddress')} onClick={copy} />
               </div>
               <div class="recheck-row">
-                <span class="recheck" onclick={recheck} role="button" tabindex="0"><span class="recheck-icon" class:spinning={checking}></span>{checking ? 'Checking…' : 'Check again'}</span>
-                <span class="recheck-hint">Also re-checked when you come back to this tab</span>
+                <span class="recheck" onclick={recheck} role="button" tabindex="0"><span class="recheck-icon" class:spinning={checking}></span>{t(checking ? 'ui.joinGateDialog.checking' : 'ui.joinGateDialog.checkAgain')}</span>
+                <span class="recheck-hint">{t('ui.joinGateDialog.recheckHint')}</span>
               </div>
             </div>
           {/if}
@@ -261,15 +263,15 @@
             <div class="extra">
               <div class="confirm">
                 <Toggle on={confirmed} label="" onChange={(v) => (confirmed = v)} />
-                <span class="confirm-text">{r.gate.confirm || 'I hold a qualifying neuron.'}</span>
+                <span class="confirm-text">{t(r.gate.confirm || 'ui.joinGateDialog.confirmNeuron')}</span>
               </div>
-              <span class="small">Checked when you join. If it isn't true, joining fails and nothing is charged.</span>
+              <span class="small">{t('ui.joinGateDialog.checkedOnJoin')}</span>
             </div>
           {/if}
           {#if active && r.gate.kind === 'diamond' && r.state === 'todo'}
             <div class="extra diamond">
-              <span class="diamond-text">60 CHAT, once. Unlocks every Diamond perk, not just this community.</span>
-              <Button label="Get Lifetime Diamond" variant="secondary" onClick={() => onGetDiamond?.()} />
+              <span class="diamond-text">{t('ui.joinGateDialog.diamondPitch')}</span>
+              <Button label={t('ui.joinGateDialog.getDiamond')} variant="secondary" onClick={() => onGetDiamond?.()} />
             </div>
           {/if}
         </div>
@@ -279,7 +281,7 @@
       {#if pays.length}
         <div class="charges">
           <div class="charge-total">
-            <span class="charge-label">Charged when you join</span><span class="charge-amount">{pays.map((r) => `${fmt(r.gate.amount ?? 0)} ${r.gate.symbol}`).join(' + ')}</span>
+            <span class="charge-label">{t('ui.joinGateDialog.chargedOnJoin')}</span><span class="charge-amount">{pays.map((r) => `${fmt(r.gate.amount ?? 0)} ${r.gate.symbol}`).join(' + ')}</span>
           </div>
           {#each split as part}<div class="charge-split"><span class="split-label">{part.label}</span><span class="split-value">{part.value}</span></div>{/each}
         </div>
@@ -288,9 +290,9 @@
         <span class="reason" class:ready={canJoin} class:free={canJoin && any && !!selGate?.free} aria-live="polite">{reason}</span>
         <span class="cta" class:ready={canJoin} class:enabled class:busy onclick={join} role="button" tabindex={enabled ? 0 : -1} aria-disabled={!canJoin} aria-busy={busy}>
           {#if busy}
-            <Spinner size={16} tone="ink" label="Joining" />
+            <Spinner size={16} tone="ink" label={t('ui.joinGateDialog.joining')} />
           {:else}
-            <span>{pays.length ? 'Pay and join' : 'Join community'}</span>
+            <span>{t(pays.length ? 'ui.joinGateDialog.payAndJoin' : 'ui.joinGateDialog.title')}</span>
           {/if}
         </span>
       </div>

@@ -1,124 +1,126 @@
 <!-- "Ways to earn CHIT": a "next up" trio (one quick win, one middling task, one referral) and every achievement
-     by group, with progress per group. `unlocked` (labels) marks achievements earned this session as done;
+     by group, with progress per group. `unlocked` (achievement ids) marks achievements earned this session as done;
      `highlight` opens that row's group, marks the row and scrolls it into view. -->
 <script lang="ts">
+  import { useT } from '../../lib/i18n';
   import { onMount } from 'svelte';
   import { modal } from '../../lib/behaviours/modal';
 
   type Band = 'quick' | 'mid' | 'big';
-  // [label, done, reward, band, icon] — band tags what the "next up" trio draws from
+  // [id, done, reward, band, icon] — band tags what the "next up" trio draws from; the text is ui.achievementsDialog.achievements.<id>
   type Entry = [string, boolean, number, Band?, string?];
 
   // the catalogue as exported, including which ones the sample account has already done
   const GROUPS: { key: string; label: string; icon: string; ink: string; items: Entry[] }[] = [
     {
       key: 'messaging',
-      label: 'Messaging',
+      label: 'ui.achievementsDialog.groups.messaging',
       icon: 'chat',
       ink: 'var(--status-chit,#FF9F45)',
       items: [
-        ['Tip a message', false, 1000, 'mid', 'coin'],
-        ['Send a prize message', false, 1000, 'mid', 'gift'],
-        ['Receive a message tip', false, 1000, 'mid', 'coin'],
-        ['Send a meme message', false, 500, 'quick', 'image'],
-        ['Follow a thread', false, 500, 'quick', 'chat'],
-        ['Send a text message', true, 500],
-        ['React to a message', true, 500],
-        ['Send a direct message', true, 500],
-        ['Receive a direct message', true, 500],
-        ['Edit a message', true, 500],
-        ['Delete a message', true, 500],
-        ['Forward a message', true, 500],
-        ['Send an image', false, 500, 'quick', 'image'],
-        ['Send a file', true, 500],
-        ['Send a poll', true, 500],
-        ['Send a crypto message', true, 1000],
-        ['Receive a crypto message', true, 1000],
-        ['Send a video', true, 500],
-        ['Send an audio message', true, 500],
-        ['Send an animated gif', true, 500],
-        ['Quote reply to a message', true, 500],
-        ['Start a reply in a thread', true, 500],
-        ['Send a reminder', true, 500],
-        ['Receive a reaction on a message', true, 500],
-        ['Vote on a poll', true, 500],
+        ['tipAMessage', false, 1000, 'mid', 'coin'],
+        ['sendAPrizeMessage', false, 1000, 'mid', 'gift'],
+        ['receiveAMessageTip', false, 1000, 'mid', 'coin'],
+        ['sendAMemeMessage', false, 500, 'quick', 'image'],
+        ['followAThread', false, 500, 'quick', 'chat'],
+        ['sendATextMessage', true, 500],
+        ['reactToAMessage', true, 500],
+        ['sendADirectMessage', true, 500],
+        ['receiveADirectMessage', true, 500],
+        ['editAMessage', true, 500],
+        ['deleteAMessage', true, 500],
+        ['forwardAMessage', true, 500],
+        ['sendAnImage', false, 500, 'quick', 'image'],
+        ['sendAFile', true, 500],
+        ['sendAPoll', true, 500],
+        ['sendACryptoMessage', true, 1000],
+        ['receiveACryptoMessage', true, 1000],
+        ['sendAVideo', true, 500],
+        ['sendAnAudioMessage', true, 500],
+        ['sendAnAnimatedGif', true, 500],
+        ['quoteReplyToAMessage', true, 500],
+        ['startAReplyInAThread', true, 500],
+        ['sendAReminder', true, 500],
+        ['receiveAReactionOnAMessage', true, 500],
+        ['voteOnAPoll', true, 500],
       ],
     },
     {
       key: 'profile',
-      label: 'Profile & membership',
+      label: 'ui.achievementsDialog.groups.profile',
       icon: 'user',
       ink: 'var(--accent,#FF5672)',
       items: [
-        ['Update your profile bio', false, 500, 'quick', 'user'],
-        ['Upload your profile avatar', true, 500],
-        ['Update your display name', true, 500],
-        ['Upgrade to Diamond membership', true, 5000],
-        ['Upgrade to Lifetime Diamond membership', true, 20000],
+        ['updateYourProfileBio', false, 500, 'quick', 'user'],
+        ['uploadYourProfileAvatar', true, 500],
+        ['updateYourDisplayName', true, 500],
+        ['upgradeToDiamondMembership', true, 5000],
+        ['upgradeToLifetimeDiamondMembership', true, 20000],
       ],
     },
     {
       key: 'wallet',
-      label: 'Wallet & swaps',
+      label: 'ui.achievementsDialog.groups.wallet',
       icon: 'wallet',
       ink: 'var(--status-verified,#3D9BFF)',
       items: [
-        ['Accept a swap offer', false, 2000, 'mid', 'wallet'],
-        ['Set a pin number on your wallet', true, 500],
-        ['Swap a token from the wallet', true, 1000],
-        ['Send a P2P swap offer', true, 1000],
+        ['acceptASwapOffer', false, 2000, 'mid', 'wallet'],
+        ['setAPinNumberOnYourWallet', true, 500],
+        ['swapATokenFromTheWallet', true, 1000],
+        ['sendAP2PSwapOffer', true, 1000],
       ],
     },
     {
       key: 'community',
-      label: 'Community & chats',
+      label: 'ui.achievementsDialog.groups.community',
       icon: 'users',
       ink: 'var(--status-online,#2EE6A8)',
       items: [
-        ['Join a community', true, 500],
-        ['Join a group', true, 500],
-        ['Join a call', true, 500],
-        ['Mark a chat as a favourite', true, 500],
-        ['Pin a chat to the top of the list', true, 500],
-        ['Set a community display name', true, 500],
+        ['joinACommunity', true, 500],
+        ['joinAGroup', true, 500],
+        ['joinACall', true, 500],
+        ['markAChatAsAFavourite', true, 500],
+        ['pinAChatToTheTopOfTheList', true, 500],
+        ['setACommunityDisplayName', true, 500],
       ],
     },
     {
       key: 'streaks',
-      label: 'Streaks',
+      label: 'ui.achievementsDialog.groups.streaks',
       icon: 'flame',
       ink: 'var(--status-chit,#FF9F45)',
       items: [
-        ['Achieve a 3 day streak', true, 500],
-        ['Achieve a 7 day streak', true, 1000],
-        ['Achieve a 14 day streak', true, 2000],
-        ['Achieve a 30 day streak', true, 5000],
-        ['Achieve a 100 day streak', true, 10000],
-        ['Achieve a 365 day streak', true, 25000],
+        ['achieveA3DayStreak', true, 500],
+        ['achieveA7DayStreak', true, 1000],
+        ['achieveA14DayStreak', true, 2000],
+        ['achieveA30DayStreak', true, 5000],
+        ['achieveA100DayStreak', true, 10000],
+        ['achieveA365DayStreak', true, 25000],
       ],
     },
     {
       key: 'referrals',
-      label: 'Referrals',
+      label: 'ui.achievementsDialog.groups.referrals',
       icon: 'users',
       ink: 'var(--ink-3,#9A9AA8)',
       items: [
-        ['Refer your 1st verified user', false, 5000, 'big', 'users'],
-        ['Refer your 3rd verified user', false, 7500, 'big', 'users'],
-        ['Refer your 10th verified user', false, 10000, 'big', 'users'],
-        ['Refer your 20th verified user', false, 15000],
-        ['Refer your 50th verified user', false, 25000],
+        ['referYour1stVerifiedUser', false, 5000, 'big', 'users'],
+        ['referYour3rdVerifiedUser', false, 7500, 'big', 'users'],
+        ['referYour10thVerifiedUser', false, 10000, 'big', 'users'],
+        ['referYour20thVerifiedUser', false, 15000],
+        ['referYour50thVerifiedUser', false, 25000],
       ],
     },
-    { key: 'partners', label: 'From partners', icon: 'link', ink: 'var(--ink-4,#7C7C8C)', items: [] },
+    { key: 'partners', label: 'ui.achievementsDialog.groups.partners', icon: 'link', ink: 'var(--ink-4,#7C7C8C)', items: [] },
   ];
 
   const fmt = (n: number) => n.toLocaleString('en-US');
+  const achievement = (id: string) => 'ui.achievementsDialog.achievements.' + id;
 
   interface Props {
-    /** Labels of achievements earned this session. */
+    /** Ids of achievements earned this session (e.g. 'tipAMessage'). */
     unlocked?: string[];
-    /** Label of the achievement just earned. */
+    /** Id of the achievement just earned. */
     highlight?: string;
     /** Defaults to onClose. */
     onBack?: () => void;
@@ -126,6 +128,7 @@
   }
 
   let { unlocked = [], highlight = '', onBack, onClose }: Props = $props();
+  const t = useT();
 
   // the trio is drawn once per open, so it changes between visits but never shuffles under the reader
   const seed = Math.floor(Math.random() * 997);
@@ -166,11 +169,11 @@
   onMount(() => {
     if (!highlight) return;
     // bring the just-earned row into view inside the dialog's own scroller
-    const t = setTimeout(() => {
+    const timer = setTimeout(() => {
       const row = scroller.querySelector('[data-ach-hl="1"]');
       if (row) scroller.scrollTop += row.getBoundingClientRect().top - scroller.getBoundingClientRect().top - scroller.clientHeight / 3;
     }, 120);
-    return () => clearTimeout(t);
+    return () => clearTimeout(timer);
   });
 </script>
 
@@ -179,24 +182,24 @@
 
   <div class="card">
     <div class="head">
-      <span class="icon-button back" onclick={() => (onBack ?? onClose)?.()} role="button" tabindex="0" aria-label="Back to CHIT" title="Back to CHIT"><span class="back-glyph"></span></span>
+      <span class="icon-button back" onclick={() => (onBack ?? onClose)?.()} role="button" tabindex="0" aria-label={t('ui.achievementsDialog.backToChit')} title={t('ui.achievementsDialog.backToChit')}><span class="back-glyph"></span></span>
       <div class="heading">
-        <span class="title">Ways to earn CHIT</span>
-        <span class="subtitle">{doneCount} of {all.length} done · {fmt(earned)} CHIT earned · {fmt(onOffer)} still on offer</span>
+        <span class="title">{t('ui.achievementsDialog.title')}</span>
+        <span class="subtitle">{t('ui.achievementsDialog.subtitle', { done: doneCount, total: all.length, earned: fmt(earned), onOffer: fmt(onOffer) })}</span>
       </div>
-      <span class="icon-button" onclick={() => onClose?.()} role="button" tabindex="0"><span class="close-glyph"></span></span>
+      <span class="icon-button" onclick={() => onClose?.()} role="button" tabindex="0" aria-label={t('ui.common.close')}><span class="close-glyph"></span></span>
     </div>
 
     <div class="body" bind:this={scroller}>
       {#if next.length > 0}
         <div class="section">
-          <span class="caps">NEXT UP</span>
+          <span class="caps">{t('ui.achievementsDialog.nextUp')}</span>
           <div class="trio">
             {#each next as item, i}
               <div class="next next-{i}">
                 <span class="next-icon" style:mask="var(--icon-{item.icon ?? 'chat'}) center/contain no-repeat"></span>
-                <span class="next-label">{item.label}</span>
-                <span class="next-reward">{fmt(item.reward)} CHIT</span>
+                <span class="next-label">{t(achievement(item.label))}</span>
+                <span class="next-reward">{t('ui.achievementsDialog.reward', { amount: fmt(item.reward) })}</span>
               </div>
             {/each}
           </div>
@@ -204,13 +207,13 @@
       {/if}
 
       <div class="section groups">
-        <span class="caps">EVERYTHING ELSE</span>
+        <span class="caps">{t('ui.achievementsDialog.everythingElse')}</span>
         {#each groups as g}
           <div class="group" class:open={g.open} style:--group-ink={g.ink}>
             <div class="group-head" onclick={() => (openKey = g.open ? null : g.key)} role="button" tabindex="0">
               <span class="group-icon" style:mask="var(--icon-{g.icon}) center/contain no-repeat"></span>
               <div class="group-main">
-                <span class="group-label">{g.label}</span>
+                <span class="group-label">{t(g.label)}</span>
                 <div class="group-bar"><div class="group-fill" style:width="{g.pct}%"></div></div>
               </div>
               <span class="group-count">{g.count}</span>
@@ -221,14 +224,12 @@
                 {#each g.rows as r}
                   <div class="row" class:hl={r.hl} class:done={r.done} data-ach-hl={r.hl ? '1' : '0'}>
                     <span class="mark"><span class="mark-check"></span></span>
-                    <span class="row-label">{r.label}</span>
-                    <span class="row-reward">{r.hl ? `Just earned · +${fmt(r.reward)}` : r.done ? 'Earned' : `${fmt(r.reward)} CHIT`}</span>
+                    <span class="row-label">{t(achievement(r.label))}</span>
+                    <span class="row-reward">{r.hl ? t('ui.achievementsDialog.justEarned', { amount: fmt(r.reward) }) : r.done ? t('ui.achievementsDialog.earned') : t('ui.achievementsDialog.reward', { amount: fmt(r.reward) })}</span>
                   </div>
                 {/each}
                 {#if g.items.length === 0}
-                  <span class="empty"
-                    >Relax! You have nothing left to do. External achievements are set by third parties — when one appears, follow its link to claim the CHIT.</span
-                  >
+                  <span class="empty">{t('ui.achievementsDialog.partnersEmpty')}</span>
                 {/if}
               </div>
             {/if}

@@ -1,11 +1,14 @@
 <script lang="ts">
+  import { useT } from '../i18n';
   interface Props {
     size?: number;
     tone?: 'accent' | 'ink';
+    /** Resource key (or literal text) for the accessible name. */
     label?: string;
   }
 
-  let { size = 32, tone = 'accent', label = 'Loading' }: Props = $props();
+  let { size = 32, tone = 'accent', label = 'ui.spinner.loading' }: Props = $props();
+  const t = useT();
 
   const stroke = $derived(size <= 20 ? 2 : size <= 36 ? 2.5 : 3);
   const r = $derived(12 - stroke / 2);
@@ -15,7 +18,7 @@
   });
 </script>
 
-<div class="spinner" role="status" aria-label={label}>
+<div class="spinner" role="status" aria-label={t(label)}>
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <circle cx="12" cy="12" {r} stroke="var(--overlay-2,rgba(255,255,255,.1))" stroke-width={stroke} />
     <circle

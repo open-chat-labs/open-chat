@@ -1,6 +1,7 @@
 <!-- Swap offer, read from the viewer's side: what leaves your wallet (−) on top, what arrives (+) below, joined by an arrow.
      state: open | done | expired. Your own offer (side 'sent') shows Cancel offer as a quiet segment; others' offers show accent Accept swap. -->
 <script lang="ts">
+  import { useT } from '../i18n';
   import TokenAvatar from './TokenAvatar.svelte';
 
   interface Leg {
@@ -21,6 +22,7 @@
     get: Leg;
     /** Open offers: time left, e.g. "9d 21h". */
     expiresIn?: string;
+    /** Resource key (or literal text). */
     doneText?: string;
     time: string;
     lastInGroup?: boolean;
@@ -28,10 +30,11 @@
     onCancel?: () => void;
   }
 
-  let { side = 'received', state = 'open', give, get, expiresIn = '', doneText = 'Swapped', time, lastInGroup = true, onAccept, onCancel }: Props = $props();
+  let { side = 'received', state = 'open', give, get, expiresIn = '', doneText = 'ui.swapOffer.swapped', time, lastInGroup = true, onAccept, onCancel }: Props = $props();
+  const t = useT();
 
   const sent = $derived(side === 'sent');
-  const when = $derived(state === 'open' ? (expiresIn ? `${expiresIn} left` : '') : state === 'done' ? 'Finished' : 'Expired');
+  const when = $derived(state === 'open' ? (expiresIn ? t('ui.swapOffer.timeLeft', { time: expiresIn }) : '') : t(state === 'done' ? 'ui.swapOffer.finished' : 'ui.swapOffer.expired'));
   const legs = $derived([
     { leg: give, sign: '−', incoming: false },
     { leg: get, sign: '+', incoming: true },
@@ -40,7 +43,7 @@
 
 <div class="shell" class:sent class:last={lastInGroup} class:expired={state === 'expired'}>
   <div class="stack">
-    <div class="head"><span class="label"><span class="swap-icon"></span><span class="grow">Swap offer</span><span class="when">{when}</span></span></div>
+    <div class="head"><span class="label"><span class="swap-icon"></span><span class="grow">{t('ui.swapOffer.title')}</span><span class="when">{when}</span></span></div>
     <div class="legs">
       {#each legs as { leg, sign, incoming }}
         <div class="leg">
@@ -51,9 +54,9 @@
       <span class="arrow" aria-hidden="true"><span class="arrow-icon"></span></span>
     </div>
     {#if state === 'open'}
-      <span class="action" onclick={sent ? onCancel : onAccept} role="button" tabindex="0">{sent ? 'Cancel offer' : 'Accept swap'}</span>
+      <span class="action" onclick={sent ? onCancel : onAccept} role="button" tabindex="0">{t(sent ? 'ui.swapOffer.cancelOffer' : 'ui.swapOffer.acceptSwap')}</span>
     {:else if state === 'done'}
-      <span class="done"><span class="check"></span>{doneText}</span>
+      <span class="done"><span class="check"></span>{t(doneText)}</span>
     {/if}
   </div>
   <div class="time">{time}</div>

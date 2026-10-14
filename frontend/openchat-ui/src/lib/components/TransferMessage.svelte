@@ -1,6 +1,7 @@
 <!-- Crypto transfer: the sign says the direction (+ received, green; − sent), USD inline, "View transaction" opens details.
      side follows the bubble (sent = you sent it). Optional caption sits under the card. -->
 <script lang="ts">
+  import { useT } from '../i18n';
   import TokenAvatar from './TokenAvatar.svelte';
 
   interface Props {
@@ -29,6 +30,7 @@
     lastInGroup = true,
     onOpen,
   }: Props = $props();
+  const t = useT();
 
   const sent = $derived(side === 'sent');
 </script>
@@ -39,7 +41,7 @@
       <TokenAvatar {symbol} {mark} {gradient} badge={sent ? 'send' : 'receive'} size={40} />
       <span class="figures"><span class="amount">{sent ? '−' : '+'}{amount} {symbol}</span><span class="usd">{usd}</span></span>
     </div>
-    <span class="open" onclick={onOpen} role="button" tabindex="0">View transaction<span class="chevron"></span></span>
+    <span class="open" onclick={onOpen} role="button" tabindex="0">{t('ui.transferMessage.viewTransaction')}<span class="chevron"></span></span>
   </div>
   {#if caption}
     <p class="caption">{caption}<span class="time spacer" aria-hidden="true">{time}</span><span class="time stamp">{time}</span></p>

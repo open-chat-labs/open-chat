@@ -2,6 +2,7 @@
      Channels and groups read as squircles, people as circles. -->
 <script lang="ts">
   import Avatar from './Avatar.svelte';
+  import { useT } from '../i18n';
 
   interface Props {
     title: string;
@@ -17,6 +18,7 @@
   }
 
   let { title, context, preview = '', time, unread = false, color = 'violet', kind = 'user', reactions = [], onClick }: Props = $props();
+  const t = useT();
 </script>
 
 <div class="row" class:unread onclick={onClick} role="button" tabindex="0">
@@ -38,7 +40,7 @@
   <div class="side">
     <span class="time">{time}</span>
     {#if unread}
-      <span class="dot" title="Unread"></span>
+      <span class="dot" title={t('ui.activityRow.unread')}></span>
     {/if}
   </div>
 </div>

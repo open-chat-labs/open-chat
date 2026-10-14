@@ -2,6 +2,7 @@
      Name is slugged as you type; create arms once the name has 2+ characters (and, embedded, the URL looks valid).
      Esc, the veil, the × and Cancel all close with the exit animation. -->
 <script lang="ts">
+  import { useT } from '../../lib/i18n';
   import { onDestroy, onMount } from 'svelte';
   import Toggle from '../../lib/components/Toggle.svelte';
   import { modal } from '../../lib/behaviours/modal';
@@ -22,6 +23,7 @@
   }
 
   let { communityName, embedded = false, onCancel, onCreate }: Props = $props();
+  const t = useT();
 
   const slug = (v: string) =>
     v
@@ -68,50 +70,50 @@
     <div class="head">
       <span class="badge"><span class="head-icon" class:embedded></span></span>
       <div class="titles">
-        <span class="title">{embedded ? 'Add embedded channel' : 'New channel'}</span>
-        <span class="subtitle">in {communityName}</span>
+        <span class="title">{t(embedded ? 'ui.newChannelDialog.titleEmbedded' : 'ui.newChannelDialog.title')}</span>
+        <span class="subtitle">{t('ui.newChannelDialog.subtitle', { community: communityName })}</span>
       </div>
       <span class="close" onclick={() => close(onCancel)} role="button" tabindex="0"><span class="close-icon"></span></span>
     </div>
 
     <div class="body">
       <label class="field">
-        <span class="label">Channel name</span>
+        <span class="label">{t('ui.newChannelDialog.nameLabel')}</span>
         <div class="name-box" class:filled={!!name}>
           <span class="hash">#</span>
-          <input value={name} oninput={(e) => (name = slug(e.currentTarget.value))} placeholder="e.g. release-notes" maxlength="40" />
+          <input value={name} oninput={(e) => (name = slug(e.currentTarget.value))} placeholder={t('ui.newChannelDialog.namePlaceholder')} maxlength="40" />
         </div>
-        <span class="hint">Lowercase, no spaces. Spaces become dashes.</span>
+        <span class="hint">{t('ui.newChannelDialog.nameHint')}</span>
       </label>
 
       {#if embedded}
         <label class="field">
-          <span class="label">App URL</span>
+          <span class="label">{t('ui.newChannelDialog.urlLabel')}</span>
           <input class="box url" bind:value={url} placeholder="https://" />
-          <span class="hint wrap">The page opens inside the chat area in place of messages. It must allow being embedded.</span>
+          <span class="hint wrap">{t('ui.newChannelDialog.urlHint')}</span>
         </label>
       {/if}
 
       <label class="field">
-        <span class="label">Description <span class="optional">· optional</span></span>
-        <textarea class="box" bind:value={about} rows="3" placeholder="What is this channel for?"></textarea>
+        <span class="label">{t('ui.newChannelDialog.descriptionLabel')} <span class="optional">{t('ui.newChannelDialog.optional')}</span></span>
+        <textarea class="box" bind:value={about} rows="3" placeholder={t('ui.newChannelDialog.descriptionPlaceholder')}></textarea>
       </label>
 
       <div class="visibility">
         <div class="vis-text">
-          <span class="vis-title">Public channel</span>
-          <span class="vis-hint">{isPublic ? 'Anyone in the community can find and join it.' : 'Only people you add or invite can join, even in a public community.'}</span>
+          <span class="vis-title">{t('ui.newChannelDialog.publicTitle')}</span>
+          <span class="vis-hint">{t(isPublic ? 'ui.newChannelDialog.publicHint' : 'ui.newChannelDialog.privateHint')}</span>
         </div>
         <div class="vis-toggle"><Toggle on={isPublic} onChange={(v) => (isPublic = v)} /></div>
       </div>
     </div>
 
     <div class="foot">
-      <span class="cancel" onclick={() => close(onCancel)} role="button" tabindex="0">Cancel</span>
+      <span class="cancel" onclick={() => close(onCancel)} role="button" tabindex="0">{t('ui.common.cancel')}</span>
       <span class="grow"></span>
       <div class="cta" class:ok onclick={create} role="button" tabindex="0" aria-disabled={!ok}>
         <span class="cta-icon" class:embedded></span>
-        <span>{embedded ? 'Add channel' : 'Create channel'}</span>
+        <span>{t(embedded ? 'ui.newChannelDialog.addCta' : 'ui.newChannelDialog.createCta')}</span>
       </div>
     </div>
   </div>

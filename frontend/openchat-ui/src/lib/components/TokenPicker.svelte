@@ -1,14 +1,19 @@
 <!-- Converted from the generated lib/TokenPicker.dc.html export (source hash 8699ab5d) to a plain Svelte 5 component;
      a re-export no longer applies here. See EXPORT.md. -->
 <script lang="ts">
+  import { useT } from '../i18n';
   import type { TokenOption } from '../types';
 
   interface Props {
     tokens?: TokenOption[];
     chevron?: boolean;
+    /** Resource key (or literal text). */
     placeholder?: string;
+    /** Resource key (or literal text). */
     ownedHeading?: string;
+    /** Resource key (or literal text). */
     otherHeading?: string;
+    /** Resource key (or literal text). */
     emptyHint?: string;
     onSelect?: (symbol: string) => void;
   }
@@ -16,12 +21,13 @@
   let {
     tokens = [],
     chevron = false,
-    placeholder = 'Search any token',
-    ownedHeading = 'IN YOUR WALLET',
-    otherHeading = 'ALL TOKENS',
-    emptyHint = 'Try the symbol instead — BTC rather than Bitcoin.',
+    placeholder = 'ui.tokenPicker.placeholder',
+    ownedHeading = 'ui.tokenPicker.ownedHeading',
+    otherHeading = 'ui.tokenPicker.otherHeading',
+    emptyHint = 'ui.tokenPicker.emptyHint',
     onSelect,
   }: Props = $props();
+  const t = useT();
 
   let query = $state('');
 
@@ -43,7 +49,7 @@
     if (owned.length === 0 || rest.length === 0) return [{ heading: '', rows: matches }];
     return [
       { heading: ownedHeading, rows: owned },
-      { heading: trimmed ? 'OTHER MATCHES' : otherHeading, rows: rest },
+      { heading: trimmed ? 'ui.tokenPicker.otherMatches' : otherHeading, rows: rest },
     ];
   });
 
@@ -58,9 +64,9 @@
   <div class="search-wrap">
     <div class="search">
       <span class="icon search-icon"></span>
-      <input bind:value={query} {placeholder} />
+      <input bind:value={query} placeholder={t(placeholder)} />
       {#if query.length > 0}
-        <span class="clear" onclick={() => (query = '')} role="button" tabindex="0" aria-label="Clear" title="Clear">
+        <span class="clear" onclick={() => (query = '')} role="button" tabindex="0" aria-label={t('ui.tokenPicker.clear')} title={t('ui.tokenPicker.clear')}>
           <span class="icon clear-icon"></span>
         </span>
       {/if}
@@ -71,7 +77,7 @@
     {#each groups as group}
       <div class="group">
         {#if group.heading}
-          <span class="heading">{group.heading}</span>
+          <span class="heading">{t(group.heading)}</span>
         {/if}
         <div class="rows">
           {#each group.rows as tk}
@@ -83,13 +89,13 @@
               role="button"
               tabindex="0"
               aria-disabled={tk.disabled || undefined}
-              aria-label={tk.title || undefined}
-              title={tk.title || undefined}
+              aria-label={tk.title ? t(tk.title) : undefined}
+              title={tk.title ? t(tk.title) : undefined}
             >
               <span class="mark" style:background={tk.gradient ?? 'var(--overlay-2,rgba(255,255,255,.09))'}>{tk.mark ?? ''}</span>
               <div class="names">
                 <span class="symbol">{tk.symbol}</span>
-                <span class="name">{tk.note ?? tk.name ?? ''}</span>
+                <span class="name">{tk.note ? t(tk.note) : (tk.name ?? '')}</span>
               </div>
               <span class="held">{tk.held ?? ''}</span>
               {#if chevron}
@@ -103,8 +109,8 @@
 
     {#if matches.length === 0}
       <div class="empty">
-        <span class="empty-title">{trimmed ? `No token called “${trimmed}”` : 'Nothing to pick'}</span>
-        <span class="empty-hint">{emptyHint}</span>
+        <span class="empty-title">{trimmed ? t('ui.tokenPicker.noMatch', { query: trimmed }) : t('ui.tokenPicker.nothingToPick')}</span>
+        <span class="empty-hint">{t(emptyHint)}</span>
       </div>
     {/if}
   </div>

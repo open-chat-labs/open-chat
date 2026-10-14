@@ -2,6 +2,7 @@
      Form: name (checked against takenNames) and members picked from `people` with a type-ahead (↑/↓, Enter, Esc clears).
      Delete: a confirmation. Esc, the veil, × and Cancel close with the exit animation. -->
 <script lang="ts">
+  import { useT } from '../../lib/i18n';
   import { onDestroy, onMount, untrack } from 'svelte';
   import { modal } from '../../lib/behaviours/modal';
 
@@ -44,6 +45,10 @@
   }
 
   let { dialogMode = 'create', communityName, group = null, people = [], takenNames = [], onCancel, onSave, onDelete }: Props = $props();
+  const t = useT();
+  // sentences with a styled piece inside: format around a marker, then split on it
+  const MARK = '\u0001';
+  const split = (key: string, params: Record<string, string | number>) => t(key, params).split(MARK);
 
   const isDelete = $derived(dialogMode === 'delete');
   const isEdit = $derived(dialogMode === 'edit');
@@ -127,34 +132,33 @@
     <div class="head">
       <span class="badge" class:danger={isDelete}><span class="badge-icon"></span></span>
       <div class="titles">
-        <span class="title">{isDelete ? 'Delete user group' : isEdit ? 'Edit user group' : 'New user group'}</span>
-        <span class="subtitle">{isEdit || isDelete ? `${group?.title ?? ''} · ${communityName}` : `in ${communityName}`}</span>
+        <span class="title">{t(isDelete ? 'ui.userGroupDialog.deleteTitle' : isEdit ? 'ui.userGroupDialog.editTitle' : 'ui.userGroupDialog.newTitle')}</span>
+        <span class="subtitle">{isEdit || isDelete ? `${group?.title ?? ''} · ${communityName}` : t('ui.userGroupDialog.inCommunity', { community: communityName })}</span>
       </div>
       <span class="icon-button" onclick={() => close(onCancel)} role="button" tabindex="0"><span class="close-icon"></span></span>
     </div>
 
     {#if isDelete}
+      {@const ask = split('ui.userGroupDialog.deleteAsk', { name: MARK })}
+      {@const body = split('ui.userGroupDialog.deleteBody', { count: memberCount, community: communityName, mention: MARK })}
       <div class="delete-body">
-        <span class="delete-title">Delete <span class="danger-ink">{group?.title ?? ''}</span>?</span>
-        <span class="delete-text"
-          >Its {memberCount === 1 ? '1 member' : `${memberCount} members`} stay in {communityName}. Mentions of <span class="mention">{slug(group?.title ?? '')}</span> stop working, and
-          permissions given to this group are removed.</span
-        >
+        <span class="delete-title">{ask[0]}<span class="danger-ink">{group?.title ?? ''}</span>{ask[1] ?? ''}</span>
+        <span class="delete-text">{body[0]}<span class="mention">{slug(group?.title ?? '')}</span>{body[1] ?? ''}</span>
       </div>
     {:else}
       <div class="form">
         <div class="name-row">
           <label class="field">
-            <span class="label">Name</span>
-            <input class="box" class:filled={!!name} class:taken bind:value={name} placeholder="e.g. Developers" maxlength="40" />
+            <span class="label">{t('ui.userGroupDialog.name')}</span>
+            <input class="box" class:filled={!!name} class:taken bind:value={name} placeholder={t('ui.userGroupDialog.namePlaceholder')} maxlength="40" />
             <span class="help"
-              >{taken ? 'A user group with this name already exists.' : trimmed ? `Members can mention everyone in it with ${slug(trimmed)}` : 'Members can mention everyone in the group at once.'}</span
+              >{taken ? t('ui.userGroupDialog.nameTaken') : trimmed ? t('ui.userGroupDialog.mentionWith', { mention: slug(trimmed) }) : t('ui.userGroupDialog.mentionHint')}</span
             >
           </label>
         </div>
 
         <div class="members">
-          <span class="label">Members <span class="count">· {picked.length}</span></span>
+          <span class="label">{t('ui.userGroupDialog.members')} <span class="count">· {picked.length}</span></span>
           <div class="search-wrap">
             <div class="search" class:focused>
               <span class="search-icon"></span>
@@ -166,7 +170,7 @@
                 onkeydown={queryKey}
                 onfocus={() => (focused = true)}
                 onblur={() => (focused = false)}
-                placeholder="Add people by name or @handle"
+                placeholder={t('ui.userGroupDialog.searchPlaceholder')}
               />
             </div>
             {#if dropOpen}
@@ -189,14 +193,14 @@
                       <span class="who-name small">{person.name}</span>
                       <span class="who-handle">{person.handle}</span>
                     </div>
-                    <span class="add-hint">↵ add</span>
+                    <span class="add-hint">{t('ui.userGroupDialog.addHint')}</span>
                   </div>
                 {/each}
                 {#if matches.length === 0}
                   <span class="no-results"
                     >{people.some((x) => haystack(x).includes(needle))
-                      ? `Everyone matching “${query}” is already in the group`
-                      : `No one in ${communityName} matches “${query}”`}</span
+                      ? t('ui.userGroupDialog.allMatchesAdded', { query })
+                      : t('ui.userGroupDialog.noMatches', { community: communityName, query })}</span
                   >
                 {/if}
               </div>
@@ -212,13 +216,13 @@
                   <span class="who-name">{person.name}</span>
                   <span class="who-handle">{person.handle}</span>
                 </div>
-                <span class="icon-button remove" onclick={() => (picked = picked.filter((k) => k !== handle))} aria-label="Remove from group" role="button" tabindex="0" title="Remove from group"
+                <span class="icon-button remove" onclick={() => (picked = picked.filter((k) => k !== handle))} aria-label={t('ui.userGroupDialog.removeFromGroup')} role="button" tabindex="0" title={t('ui.userGroupDialog.removeFromGroup')}
                   ><span class="remove-icon"></span></span
                 >
               </div>
             {/each}
             {#if picked.length === 0}
-              <span class="empty">No members yet. Search above to add people from {communityName}.</span>
+              <span class="empty">{t('ui.userGroupDialog.noMembers', { community: communityName })}</span>
             {/if}
           </div>
         </div>
@@ -226,11 +230,11 @@
     {/if}
 
     <div class="foot">
-      <span class="text-button tall" onclick={() => close(onCancel)} role="button" tabindex="0">Cancel</span>
+      <span class="text-button tall" onclick={() => close(onCancel)} role="button" tabindex="0">{t('ui.common.cancel')}</span>
       <span class="grow"></span>
       <div class="cta" class:ok class:danger={isDelete} onclick={confirm} role="button" tabindex="0" aria-disabled={!ok}>
         <span class="cta-icon" class:save={isEdit} class:trash={isDelete}></span>
-        <span>{isDelete ? 'Delete' : isEdit ? 'Save changes' : 'Create user group'}</span>
+        <span>{t(isDelete ? 'ui.common.delete' : isEdit ? 'ui.common.saveChanges' : 'ui.userGroupDialog.create')}</span>
       </div>
     </div>
   </div>

@@ -4,10 +4,12 @@
      content, so it closes again on an outside press or a pick. Guests get Home and Sign in instead of their own items. -->
 <script lang="ts">
   import { onMount, tick } from 'svelte';
+  import { useT } from '../../lib/i18n';
 
   // nav item keys → canonical names in lib/icons.js
   const ICONS = { messages: 'messages', bell: 'bell', wallet: 'wallet', chit: 'zap', heart: 'heart' };
-  const NAMES = { messages: 'Chats', bell: 'Notifications', wallet: 'Wallet', chit: 'CHIT rewards', heart: 'Favourites' };
+  // default accessible names (resource keys)
+  const NAMES = { messages: 'ui.navRail.chats', bell: 'ui.navRail.notifications', wallet: 'ui.navRail.wallet', chit: 'ui.navRail.chitRewards', heart: 'ui.navRail.favourites' };
   const GRADIENTS = {
     sunset: 'linear-gradient(140deg,#ff8a3d,#ff2d74)',
     blue: 'linear-gradient(140deg,#3d7bff,#7a3dff)',
@@ -19,6 +21,7 @@
 
   interface Item {
     icon: ItemIcon;
+    /** Resource key (or literal text). */
     label?: string;
     /** Shows the unread count (expanded) or a dot (collapsed). */
     dot?: boolean;
@@ -28,6 +31,7 @@
   interface Pin {
     color: keyof typeof GRADIENTS;
     name?: string;
+    /** Accessible name. Resource key (or literal text); defaults to the name. */
     label?: string;
     dot?: boolean;
     /** Previewing a community you haven't joined: dashed outline and an eye badge. */
@@ -85,6 +89,7 @@
     onChit,
     onProfile,
   }: Props = $props();
+  const t = useT();
 
   // local clicks win until the host changes the matching prop
   let open = $derived(expanded);
@@ -140,9 +145,7 @@
   });
 
   const chitTitle = $derived(
-    chitClaimable
-      ? `Claim today's CHIT · ${chitStreak} day streak`
-      : `Claimed today · ${chitStreak} day streak${puzzleDue ? " · today's puzzle is ready" : ''}`,
+    chitClaimable ? t('ui.navRail.chitClaim', { streak: chitStreak }) : t('ui.navRail.chitClaimed', { streak: chitStreak, puzzle: puzzleDue ? 'yes' : 'no' }),
   );
 </script>
 
@@ -162,10 +165,10 @@
         }}
         role="button"
         tabindex="0"
-        aria-label="{item.label || NAMES[item.icon] || item.icon}{item.count ? `, ${item.count} unread` : ''}"
+        aria-label={t('ui.navRail.itemLabel', { name: t(item.label || NAMES[item.icon] || item.icon), count: item.count ?? 0 })}
       >
         <span class="item-icon" style:mask="var(--icon-{ICONS[item.icon] ?? ICONS.messages}) center/contain no-repeat"></span>
-        <span class="label fold">{item.label ?? ''}</span>
+        <span class="label fold">{item.label ? t(item.label) : ''}</span>
         {#if item.dot}
           <span class="badge-slot"><span class="count">{item.count ?? ''}</span></span>
           <span class="dot"></span>
@@ -175,13 +178,13 @@
   {/if}
 
   {#if guest}
-    <a class="row" href={homeHref} data-home="" title="Back to oc.app">
+    <a class="row" href={homeHref} data-home="" title={t('ui.navRail.backHome')}>
       <span class="slot"><span class="home-icon"></span></span>
-      <span class="label muted">Home</span>
+      <span class="label muted">{t('ui.navRail.home')}</span>
     </a>
   {/if}
   <div class="heading">
-    <span class="heading-label">COMMUNITIES</span>
+    <span class="heading-label">{t('ui.navRail.communities')}</span>
     <div class="heading-line"></div>
   </div>
   <div class="pins">
@@ -198,27 +201,27 @@
         }}
         role="button"
         tabindex="0"
-        aria-label={pin.label || pin.name || `Community ${i + 1}`}
+        aria-label={pin.label ? t(pin.label) : pin.name || t('ui.navRail.communityN', { n: i + 1 })}
         aria-current={selected ? 'page' : undefined}
       >
         <span class="slot">
           <span class="pin" class:selected class:preview={selected && pin.preview} style:background={GRADIENTS[pin.color] ?? GRADIENTS.blue}>
             {#if selected && pin.preview}
               <span class="pin-veil"></span>
-              <span class="pin-eye" title="Previewing"><span class="pin-eye-icon"></span></span>
+              <span class="pin-eye" title={t('ui.navRail.previewing')}><span class="pin-eye-icon"></span></span>
             {/if}
             {#if pin.dot}
               <span class="pin-dot"></span>
             {/if}
           </span>
         </span>
-        <span class="label">{pin.name ?? 'Community'}{#if selected && pin.preview}<span class="preview-tag"> · Preview</span>{/if}</span>
+        <span class="label">{pin.name ?? t('ui.navRail.community')}{#if selected && pin.preview}<span class="preview-tag"> {t('ui.navRail.previewTag')}</span>{/if}</span>
       </div>
     {/each}
     {#if !guest}
-      <div class="row" onclick={() => onCreateCommunity?.()} role="button" tabindex="0" aria-label="Create a community" title="Create a community">
+      <div class="row" onclick={() => onCreateCommunity?.()} role="button" tabindex="0" aria-label={t('ui.navRail.createCommunity')} title={t('ui.navRail.createCommunity')}>
         <span class="slot"><span class="create"><span class="create-icon"></span></span></span>
-        <span class="label muted">Create community</span>
+        <span class="label muted">{t('ui.navRail.create')}</span>
       </div>
     {/if}
     <div
@@ -227,12 +230,12 @@
       onclick={() => onExplore?.()}
       role="button"
       tabindex="0"
-      aria-label="Explore communities"
-      title="Explore communities"
+      aria-label={t('ui.navRail.exploreCommunities')}
+      title={t('ui.navRail.exploreCommunities')}
       data-active-row={exploreActive ? '' : undefined}
     >
       <span class="slot centered"><span class="explore-icon"></span></span>
-      <span class="label explore-label">Explore Communities</span>
+      <span class="label explore-label">{t('ui.navRail.explore')}</span>
     </div>
   </div>
 
@@ -251,9 +254,9 @@
   {/if}
 
   {#if guest}
-    <div class="row sign-in" onclick={() => onSignIn?.()} aria-label="Sign in" role="button" tabindex="0" title="Sign in">
+    <div class="row sign-in" onclick={() => onSignIn?.()} aria-label={t('ui.navRail.signIn')} role="button" tabindex="0" title={t('ui.navRail.signIn')}>
       <span class="key-slot"><span class="key-icon"></span></span>
-      <span class="label sign-in-label">Sign in</span>
+      <span class="label sign-in-label">{t('ui.navRail.signIn')}</span>
     </div>
   {:else}
     <div class="row profile" onclick={() => onProfile?.()} role="button" tabindex="0">
@@ -269,7 +272,7 @@
 
   <div class="row collapse" onclick={() => (open = !open)} role="button" tabindex="0">
     <span class="collapse-icon"></span>
-    <span class="label collapse-label">Collapse</span>
+    <span class="label collapse-label">{t('ui.navRail.collapse')}</span>
   </div>
 </div>
 

@@ -3,11 +3,14 @@
      zero-height anchor (e.g. just above the composer). Remount with a new key to replay. Hover holds it open;
      click → onClick; finished → onDone. Reduced motion: fade only. -->
 <script lang="ts">
+  import { useT } from '../../lib/i18n';
   import { onMount } from 'svelte';
   import Confetti from '../../lib/components/Confetti.svelte';
 
   interface Props {
+    /** Achievement name: resource key (or literal text). */
     title: string;
+    /** Resource key (or literal text). */
     kicker?: string;
     /** CHIT counted up on the chip; 0 hides the chip. */
     reward?: number;
@@ -17,7 +20,8 @@
     onDone?: () => void;
   }
 
-  let { title, kicker = 'Achievement unlocked', reward = 0, icon = 'camera', onClick, onDone }: Props = $props();
+  let { title, kicker = 'ui.achievementToast.unlocked', reward = 0, icon = 'camera', onClick, onDone }: Props = $props();
+  const t = useT();
 
   let pill: HTMLDivElement;
   let sweep: HTMLSpanElement;
@@ -153,7 +157,7 @@
   bind:this={pill}
   role="status"
   aria-live="polite"
-  aria-label="{kicker}: {title}{reward ? `, plus ${reward} CHIT` : ''}"
+  aria-label={t(reward ? 'ui.achievementToast.announceReward' : 'ui.achievementToast.announce', { kicker: t(kicker), title: t(title), reward })}
   onclick={() => onClick?.()}
   onmouseenter={() => main && (main.currentTime as number) > 1300 && each((a) => a.pause())}
   onmouseleave={() => each((a) => a.play())}
@@ -169,8 +173,8 @@
     </div>
     <div class="text" bind:this={text}>
       <div class="roll" bind:this={roll}>
-        <span class="kicker-line">{kicker}</span>
-        <span class="title-line"><span class="kicker-small">{kicker}</span><span class="title">{title}</span></span>
+        <span class="kicker-line">{t(kicker)}</span>
+        <span class="title-line"><span class="kicker-small">{t(kicker)}</span><span class="title">{t(title)}</span></span>
       </div>
     </div>
     {#if reward > 0}

@@ -2,6 +2,7 @@
      Edits stick locally until the parent sends new values. -->
 <script lang="ts">
   import TimedToggle from '../../lib/components/TimedToggle.svelte';
+  import { useT } from '../../lib/i18n';
 
   interface Props {
     /** The other person; their first name goes in the read-receipts hint. */
@@ -14,6 +15,7 @@
   }
 
   let { peerName, disappearOn = false, disappearAfter = '12 hours', readReceipts = false, onDisappearChange, onReadReceiptsChange }: Props = $props();
+  const t = useT();
 
   let on = $derived(disappearOn);
   let after = $derived(disappearAfter);
@@ -26,7 +28,7 @@
       density="compact"
       icon="clock"
       rowRadius="var(--radius-lg) var(--radius-lg) 0 0"
-      label="Disappearing messages"
+      label={t('ui.dmChatSettings.disappearingMessages')}
       {on}
       value={after}
       onChange={(next) => {
@@ -41,7 +43,7 @@
   </div>
   <div class="row">
     <span class="eye"></span>
-    <span class="text"><span class="label">Read receipts</span><span class="hint">{peerName.split(' ')[0]} sees when you've read their messages</span></span>
+    <span class="text"><span class="label">{t('ui.dmChatSettings.readReceipts')}</span><span class="hint">{t('ui.dmChatSettings.readReceiptsHint', { name: peerName.split(' ')[0] })}</span></span>
     <span
       class="switch"
       class:on={receipts}
@@ -52,7 +54,7 @@
       tabindex="0"
       role="switch"
       aria-checked={receipts}
-      aria-label="Read receipts"><span class="knob"></span></span
+      aria-label={t('ui.dmChatSettings.readReceipts')}><span class="knob"></span></span
     >
   </div>
 </div>

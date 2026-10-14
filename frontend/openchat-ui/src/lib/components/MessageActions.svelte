@@ -4,6 +4,7 @@
      reactions=false drops the reaction row (opened from the hover bar's ⋯, which already offers them).
      pickerOnly opens straight to the picker (hover bar 🙂) with no back step. The host decides the layout and owns the items. -->
 <script lang="ts">
+  import { useT } from '../i18n';
   import { onMount, untrack } from 'svelte';
   import EmojiPicker from './EmojiPicker.svelte';
 
@@ -13,6 +14,7 @@
   type Rect = { left: number; top: number; width: number; height: number };
 
   interface Item {
+    /** Resource key (or literal text). */
     label: string;
     variant?: 'regular' | 'danger' | 'separator';
     /** CSS mask image, e.g. var(--icon-reply). */
@@ -58,6 +60,7 @@
     onReact,
     onClose,
   }: Props = $props();
+  const t = useT();
 
   let box = $state<HTMLDivElement>();
   let cloneSlot = $state<HTMLDivElement>();
@@ -245,11 +248,11 @@
 
 {#snippet emoji(c: string, big: boolean)}
   {@const on = selected.includes(c)}
-  <span class="emoji" class:big class:on onclick={() => react(c)} role="menuitemcheckbox" aria-checked={on} aria-label="{on ? 'Remove' : 'React'} {c}" tabindex="-1" data-ma-item="">{c}</span>
+  <span class="emoji" class:big class:on onclick={() => react(c)} role="menuitemcheckbox" aria-checked={on} aria-label={t(on ? 'ui.messageActions.removeReaction' : 'ui.messageActions.react', { emoji: c })} tabindex="-1" data-ma-item="">{c}</span>
 {/snippet}
 
 {#snippet more(big: boolean)}
-  <span class="more" class:big onclick={() => setMode('picker')} role="menuitem" aria-label="More reactions" tabindex="-1" data-ma-item="" data-tip="More reactions"><span class="more-icon"></span></span>
+  <span class="more" class:big onclick={() => setMode('picker')} role="menuitem" aria-label={t('ui.messageActions.moreReactions')} tabindex="-1" data-ma-item="" data-tip={t('ui.messageActions.moreReactions')}><span class="more-icon"></span></span>
 {/snippet}
 
 {#if open}
@@ -275,7 +278,7 @@
     style:top="{placed?.top ?? 0}px"
     style:visibility={placed ? 'visible' : 'hidden'}
     role="menu"
-    aria-label="Message actions"
+    aria-label={t('ui.messageActions.label')}
     onkeydown={onKey}
     oncontextmenu={(e) => e.preventDefault()}
   >
@@ -309,7 +312,7 @@
               tabindex="-1"
               data-ma-item=""
             >
-              <span class="row-icon" style:mask="{item.mask ?? ''} center/contain no-repeat"></span><span class="row-label">{item.label}</span>
+              <span class="row-icon" style:mask="{item.mask ?? ''} center/contain no-repeat"></span><span class="row-label">{t(item.label)}</span>
             </div>
           {/if}
         {/each}

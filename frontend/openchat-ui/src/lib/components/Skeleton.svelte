@@ -2,13 +2,14 @@
      keyframes oc-shimmer in tokens.css; stops under prefers-reduced-motion). Announces once as "Loading …".
      variant: chat | token | activity | member. -->
 <script lang="ts">
+  import { useT } from '../i18n';
   type Variant = 'chat' | 'token' | 'activity' | 'member';
 
   const LABELS: Record<Variant, string> = {
-    chat: 'Loading chats',
-    token: 'Loading tokens',
-    activity: 'Loading activity',
-    member: 'Loading members',
+    chat: 'ui.skeleton.loadingChats',
+    token: 'ui.skeleton.loadingTokens',
+    activity: 'ui.skeleton.loadingActivity',
+    member: 'ui.skeleton.loadingMembers',
   };
   // fixed, varied widths so rows don't look stamped; deterministic so nothing jumps between renders
   const W1 = ['46%', '62%', '38%', '54%', '70%', '42%', '58%', '50%'];
@@ -18,13 +19,15 @@
     variant?: Variant;
     count?: number;
     /** Overrides the announced label. */
+    /** Resource key (or literal text) for the accessible name; defaults per variant. */
     label?: string;
   }
 
   let { variant = 'chat', count = 6, label = '' }: Props = $props();
+  const t = useT();
 </script>
 
-<div class="skeleton {variant}" role="status" aria-live="polite" aria-busy="true" aria-label={label || LABELS[variant]}>
+<div class="skeleton {variant}" role="status" aria-live="polite" aria-busy="true" aria-label={t(label || LABELS[variant])}>
   {#each { length: count } as _, i}
     <div class="row" style:--row-delay="{i * 90}ms" aria-hidden="true">
       <span class="shim avatar"></span>

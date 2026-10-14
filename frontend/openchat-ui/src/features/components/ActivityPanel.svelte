@@ -1,6 +1,7 @@
 <!-- Activity feed: reactions, mentions, replies and payments, grouped by day, filtered by All / Mentions / Payments.
      Opening a row marks it read and calls onOpen(chat, item) — every row lands on the message in its chat, payments included. -->
 <script lang="ts">
+  import { useT } from '../../lib/i18n';
   import ActivityRow from '../../lib/components/ActivityRow.svelte';
   import EmptyState from '../../lib/components/EmptyState.svelte';
   import SegmentedTabs from '../../lib/components/SegmentedTabs.svelte';
@@ -29,6 +30,7 @@
   }
 
   let { items, onOpen, loading = false }: Props = $props();
+  const t = useT();
 
   let tab = $state(0);
   // titles opened (or marked) here
@@ -48,12 +50,12 @@
 <div class="panel" data-screen-label="Activity">
   <div class="top">
     <div class="title-row">
-      <span class="title">Activity</span>
+      <span class="title">{t('ui.activityPanel.title')}</span>
       {#if hasUnread}
-        <span class="mark-all" onclick={() => (read = items.map((i) => i.title))} role="button" tabindex="0">Mark all read</span>
+        <span class="mark-all" onclick={() => (read = items.map((i) => i.title))} role="button" tabindex="0">{t('ui.activityPanel.markAllRead')}</span>
       {/if}
     </div>
-    <div class="tabs"><SegmentedTabs labels={['All', 'Mentions', 'Payments']} {counts} selectedIndex={tab} dotOnLast={false} onSelect={(i) => (tab = i)} /></div>
+    <div class="tabs"><SegmentedTabs labels={[t('ui.activityPanel.tabAll'), t('ui.activityPanel.tabMentions'), t('ui.activityPanel.tabPayments')]} {counts} selectedIndex={tab} dotOnLast={false} onSelect={(i) => (tab = i)} /></div>
   </div>
 
   <div class="feed">
@@ -83,8 +85,8 @@
       <div class="empty">
         <EmptyState
           preset="no-results"
-          title={tab === 1 ? 'No mentions' : 'No payments'}
-          body={tab === 1 ? 'When someone @mentions you, it shows up here.' : 'Tokens sent to you in a chat show up here.'}
+          title={t(tab === 1 ? 'ui.activityPanel.noMentions' : 'ui.activityPanel.noPayments')}
+          body={t(tab === 1 ? 'ui.activityPanel.noMentionsBody' : 'ui.activityPanel.noPaymentsBody')}
         />
       </div>
     {/if}

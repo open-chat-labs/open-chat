@@ -1,7 +1,9 @@
 <!-- Horizontal journey steps for page headers (Details → Quote → Swap). current is 0-based; complete ticks every step.
      compact shows only the current step's label (narrow layouts). -->
 <script lang="ts">
+  import { useT } from '../i18n';
   interface Props {
+    /** Step labels: resource keys (or literal text). */
     steps: string[];
     current?: number;
     complete?: boolean;
@@ -9,13 +11,14 @@
   }
 
   let { steps, current = 0, complete = false, compact = false }: Props = $props();
+  const t = useT();
 </script>
 
-<div class="steps" aria-label="Step {Math.min(current, steps.length - 1) + 1} of {steps.length}">
+<div class="steps" aria-label={t('ui.stepIndicator.progress', { step: Math.min(current, steps.length - 1) + 1, total: steps.length })}>
   {#each steps as label, i}
     <span class="step" class:current={i === current} aria-current={!complete && i === current ? 'step' : undefined}>
       <span class="num" class:on={complete || i <= current}>{complete || i < current ? '✓' : i + 1}</span>
-      {#if !compact || i === current}<span>{label}</span>{/if}
+      {#if !compact || i === current}<span>{t(label)}</span>{/if}
       {#if i < steps.length - 1}<span class="sep"></span>{/if}
     </span>
   {/each}

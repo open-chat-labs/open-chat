@@ -2,6 +2,7 @@
      timed plans) → pay. Members see their benefits and can extend; extensions start from the current expiry.
      Prices are in CHAT and converted to other payable tokens at their USD price. Esc closes (not while paying). -->
 <script lang="ts">
+  import { useT } from '../../lib/i18n';
   import { onDestroy, onMount } from 'svelte';
   import type { WalletToken } from '../../lib/types';
   import Toggle from '../../lib/components/Toggle.svelte';
@@ -10,53 +11,55 @@
 
   // [label, icon, free (true | false | text), diamond (true | text)]
   type Row = [string, string, boolean | string, boolean | string];
+  // labels and text cells are resource keys (plain numbers render as themselves)
   const GROUPS: { label: string; rows: Row[] }[] = [
     {
-      label: 'MESSAGING',
+      label: 'ui.diamondDialog.group.messaging',
       rows: [
-        ['Text messages', 'chat', true, true],
-        ['GIFs', 'gif', true, true],
-        ['Reactions', 'emoji', true, true],
-        ['Polls', 'poll', true, true],
-        ['Reminders', 'clock', true, true],
-        ['Send crypto', 'coin', true, true],
-        ['Video calls', 'video', false, true],
-        ['Translations', 'lang', false, true],
-        ['Notifications', 'bell', 'Mobile & desktop', 'Mobile & desktop'],
+        ['ui.diamondDialog.feature.textMessages', 'chat', true, true],
+        ['ui.diamondDialog.feature.gifs', 'gif', true, true],
+        ['ui.diamondDialog.feature.reactions', 'emoji', true, true],
+        ['ui.diamondDialog.feature.polls', 'poll', true, true],
+        ['ui.diamondDialog.feature.reminders', 'clock', true, true],
+        ['ui.diamondDialog.feature.sendCrypto', 'coin', true, true],
+        ['ui.diamondDialog.feature.videoCalls', 'video', false, true],
+        ['ui.diamondDialog.feature.translations', 'lang', false, true],
+        ['ui.diamondDialog.feature.notifications', 'bell', 'ui.diamondDialog.value.mobileDesktop', 'ui.diamondDialog.value.mobileDesktop'],
       ],
     },
     {
-      label: 'MEDIA & STORAGE',
+      label: 'ui.diamondDialog.group.media',
       rows: [
-        ['Media messages', 'image', '1 MB / 5 MB', '5 MB / 50 MB'],
-        ['Storage', 'disk', '100 MB rolling', '1 GB rolling'],
+        ['ui.diamondDialog.feature.mediaMessages', 'image', 'ui.diamondDialog.value.mediaFree', 'ui.diamondDialog.value.mediaDiamond'],
+        ['ui.diamondDialog.feature.storage', 'disk', 'ui.diamondDialog.value.storageFree', 'ui.diamondDialog.value.storageDiamond'],
       ],
     },
     {
-      label: 'GROUPS & COMMUNITIES',
+      label: 'ui.diamondDialog.group.groups',
       rows: [
-        ['Direct chats', 'dm', true, true],
-        ['Private groups', 'lock', '5', '25'],
-        ['Public groups', 'globe', false, '10'],
-        ['Gated groups', 'gate', false, true],
-        ['Create communities', 'community', false, true],
+        ['ui.diamondDialog.feature.directChats', 'dm', true, true],
+        ['ui.diamondDialog.feature.privateGroups', 'lock', '5', '25'],
+        ['ui.diamondDialog.feature.publicGroups', 'globe', false, '10'],
+        ['ui.diamondDialog.feature.gatedGroups', 'gate', false, true],
+        ['ui.diamondDialog.feature.createCommunities', 'community', false, true],
       ],
     },
     {
-      label: 'EXTRAS',
+      label: 'ui.diamondDialog.group.extras',
       rows: [
-        ['P2P swaps', 'swap', false, true],
-        ['Diamond badge', 'gem', false, true],
-        ['Airdrops & rewards', 'party', false, 'Eligible'],
+        ['ui.diamondDialog.feature.p2pSwaps', 'swap', false, true],
+        ['ui.diamondDialog.feature.diamondBadge', 'gem', false, true],
+        ['ui.diamondDialog.feature.airdrops', 'party', false, 'ui.diamondDialog.value.eligible'],
       ],
     },
   ];
   // placeholder prices until the backend supplies them
-  const PLANS: { key: PlanKey; months: number; price: number; label: string; ext: string; noun: string; btn: string }[] = [
-    { key: '1m', months: 1, price: 2, label: 'One month', ext: '1 month extension', noun: 'one month', btn: '1 month' },
-    { key: '3m', months: 3, price: 5, label: 'Three months', ext: '3 month extension', noun: 'three months', btn: '3 month' },
-    { key: '1y', months: 12, price: 15, label: 'One year', ext: '1 year extension', noun: 'one year', btn: '1 year' },
-    { key: 'life', months: 0, price: 60, label: 'Lifetime', ext: 'Lifetime', noun: 'lifetime', btn: 'lifetime' },
+  // copy for each plan is selected by its key in the messages (ui.diamondDialog.plan*)
+  const PLANS: { key: PlanKey; months: number; price: number }[] = [
+    { key: '1m', months: 1, price: 2 },
+    { key: '3m', months: 3, price: 5 },
+    { key: '1y', months: 12, price: 15 },
+    { key: 'life', months: 0, price: 60 },
   ];
   const ADDRESS = '2vxsx-fae3q-kzn7w-ot4qa-cai';
   const DAY = 86400000;
@@ -92,12 +95,14 @@
     memberUntil?: string;
     /** Shows a back arrow on the first step. */
     onBack?: () => void;
+    /** Resource key (or literal text). */
     backLabel?: string;
     onClose?: () => void;
     onUpgrade?: (p: DiamondPurchase) => void;
   }
 
-  let { tokens, balance: chatBalance, plan: initialPlan = null, isDiamond = false, lifetime: lifetimeProp = false, memberUntil = '', onBack, backLabel = 'Back', onClose, onUpgrade }: Props = $props();
+  let { tokens, balance: chatBalance, plan: initialPlan = null, isDiamond = false, lifetime: lifetimeProp = false, memberUntil = '', onBack, backLabel = 'ui.common.back', onClose, onUpgrade }: Props = $props();
+  const t = useT();
 
   let closing = $state(false);
   let onlyDiff = $state(false);
@@ -163,17 +168,15 @@
       const c = cost(pl), ok = balance >= c;
       return {
         key: pl.key,
-        label: extend ? pl.ext : pl.label,
+        label: t(extend ? 'ui.diamondDialog.planExtension' : 'ui.diamondDialog.planLabel', { plan: pl.key }),
         price: fmtToken(c),
         life: !pl.months,
         ok,
         sub: !ok
-          ? `Need ${fmtToken(+(c - balance).toPrecision(4))} more`
+          ? t('ui.diamondDialog.needMore', { amount: fmtToken(+(c - balance).toPrecision(4)) })
           : !pl.months
-            ? extend
-              ? 'Upgrade to lifetime membership'
-              : 'Never expires'
-            : `${extend ? 'Extend to ' : 'Until '}${fmtDate(until(pl))}`,
+            ? t(extend ? 'ui.diamondDialog.upgradeLifetime' : 'ui.diamondDialog.neverExpires')
+            : t(extend ? 'ui.diamondDialog.extendTo' : 'ui.diamondDialog.until', { date: fmtDate(until(pl)) }),
       };
     }),
   );
@@ -181,20 +184,19 @@
   const price = $derived(cost(plan));
   const timed = $derived(!!plan.months);
   const daysLeft = $derived(Math.max(0, Math.ceil((expiry.getTime() - Date.now()) / DAY)));
-  const period = $derived(plan.months === 1 ? 'month' : plan.months === 12 ? 'year' : `${plan.months} months`);
-  const confirmTitle = $derived(
-    extend ? (timed ? `Extend Diamond by ${plan.noun}` : 'Upgrade to lifetime Diamond') : timed ? `Get ${plan.noun} of Diamond` : 'Get lifetime Diamond',
-  );
+  const confirmTitle = $derived(t(extend ? 'ui.diamondDialog.confirmTitleExtend' : 'ui.diamondDialog.confirmTitleNew', { plan: plan.key }));
   const confirmBody = $derived(
     !timed
-      ? 'Lifetime is our top membership level — every Diamond feature, now and in the future, with no renewals.'
+      ? t('ui.diamondDialog.lifetimeBody')
       : extend
-        ? `Your membership moves from ${fmtDate(expiry)} to ${fmtDate(until(plan))}.`
-        : `Diamond starts today and runs until ${fmtDate(until(plan))}.`,
+        ? t('ui.diamondDialog.movesFromTo', { from: fmtDate(expiry), to: fmtDate(until(plan)) })
+        : t('ui.diamondDialog.startsToday', { date: fmtDate(until(plan)) }),
   );
+  // the note emphasises the days and the date: translate the sentence, split around both placeholders
+  const extendNote = $derived(t('ui.diamondDialog.extendNote', { days: '\u0000', date: '\u0001' }).split(/(\u0000|\u0001)/).filter(Boolean));
   const tokenList = $derived(payable.filter((t) => heldOf(t) > 0 || t.symbol === 'CHAT'));
   const subtitle = $derived(
-    step === 'plans' ? (extend ? 'Extend your membership' : 'Choose a duration') : step === 'confirm' ? 'Confirm payment' : member ? 'You’re a member' : 'Free vs Diamond',
+    t(step === 'plans' ? (extend ? 'ui.diamondDialog.subExtend' : 'ui.diamondDialog.subChoose') : step === 'confirm' ? 'ui.diamondDialog.subConfirm' : member ? 'ui.diamondDialog.subMember' : 'ui.diamondDialog.subCompare'),
   );
 
   // the card animates out before the parent hears about it
@@ -284,12 +286,12 @@
   <div class="card" class:closing>
     <div class="header">
       {#if step !== 'compare' || onBack}
-        <span class="square back" onclick={back} aria-label={step === 'compare' ? backLabel : 'Back'} role="button" tabindex="0" title={step === 'compare' ? backLabel : 'Back'}
+        <span class="square back" onclick={back} aria-label={t(step === 'compare' ? backLabel : 'ui.common.back')} role="button" tabindex="0" title={t(step === 'compare' ? backLabel : 'ui.common.back')}
           >{@render icon('back', 'back-icon')}</span
         >
       {/if}
       <div class="header-text">
-        <span class="header-title">Diamond membership</span>
+        <span class="header-title">{t('ui.diamondDialog.title')}</span>
         <span class="header-sub">{subtitle}</span>
       </div>
       <span class="square" onclick={() => !busy && close(onClose)} role="button" tabindex="0">{@render icon('close', 'close-icon')}</span>
@@ -298,25 +300,25 @@
     {#if step === 'compare'}
       <div class="body">
         {@render hero(
-          member ? 'Thanks for being a Diamond member' : 'Do more with OpenChat',
-          member ? 'Here’s everything your membership includes.' : 'More storage, bigger groups, video calls and translations — plus the Diamond badge next to your name.',
+          t(member ? 'ui.diamondDialog.heroMemberTitle' : 'ui.diamondDialog.heroTitle'),
+          t(member ? 'ui.diamondDialog.heroMemberBody' : 'ui.diamondDialog.heroBody'),
         )}
 
         <div class="highlights">
-          {#each [{ value: '10×', label: 'storage (1 GB)' }, { value: '25', label: 'private groups' }, { value: '10', label: 'public groups' }] as h}
+          {#each [{ value: '10×', label: 'ui.diamondDialog.highlight.storage' }, { value: '25', label: 'ui.diamondDialog.highlight.privateGroups' }, { value: '10', label: 'ui.diamondDialog.highlight.publicGroups' }] as h}
             <div class="highlight">
               <span class="highlight-value">{h.value}</span>
-              <span class="highlight-label">{h.label}</span>
+              <span class="highlight-label">{t(h.label)}</span>
             </div>
           {/each}
         </div>
 
         <div class="compare">
           <div class="compare-head">
-            <span class="eyebrow grow">COMPARE PLANS</span>
+            <span class="eyebrow grow">{t('ui.diamondDialog.comparePlans')}</span>
             <div class="filters">
-              {#each [{ label: 'Everything', diff: false }, { label: 'What’s different', diff: true }] as f}
-                <span class="filter" class:on={onlyDiff === f.diff} onclick={() => (onlyDiff = f.diff)} role="button" tabindex="0">{f.label}</span>
+              {#each [{ label: 'ui.diamondDialog.filterAll', diff: false }, { label: 'ui.diamondDialog.filterDiff', diff: true }] as f}
+                <span class="filter" class:on={onlyDiff === f.diff} onclick={() => (onlyDiff = f.diff)} role="button" tabindex="0">{t(f.label)}</span>
               {/each}
             </div>
           </div>
@@ -325,19 +327,19 @@
             <div class="diamond-band"></div>
             <div class="table-row table-head">
               <span></span>
-              <span class="col-free">Free</span>
-              <span class="col-diamond">{@render icon('gem', 'col-gem')}Diamond</span>
+              <span class="col-free">{t('ui.diamondDialog.free')}</span>
+              <span class="col-diamond">{@render icon('gem', 'col-gem')}{t('ui.diamondDialog.diamond')}</span>
             </div>
             {#each groups as g, gi}
-              <div class="group-label" class:divided={gi > 0}><span>{g.label}</span></div>
+              <div class="group-label" class:divided={gi > 0}><span>{t(g.label)}</span></div>
               {#each g.rows as [label, glyph, free, pro]}
                 <div class="table-row feature">
-                  <span class="feature-name">{@render icon(glyph, 'feature-icon')}<span class="feature-label">{label}</span></span>
+                  <span class="feature-name">{@render icon(glyph, 'feature-icon')}<span class="feature-label">{t(label)}</span></span>
                   <span class="cell">
-                    {#if free === true}{@render icon('check', 'free-check')}{:else if free === false}<span class="dash"></span>{:else}<span class="free-text">{free}</span>{/if}
+                    {#if free === true}{@render icon('check', 'free-check')}{:else if free === false}<span class="dash"></span>{:else}<span class="free-text">{t(free)}</span>{/if}
                   </span>
                   <span class="cell">
-                    {#if pro === true}{@render icon('check', 'pro-check')}{:else if typeof pro === 'string'}<span class="pro-text">{pro}</span>{/if}
+                    {#if pro === true}{@render icon('check', 'pro-check')}{:else if typeof pro === 'string'}<span class="pro-text">{t(pro)}</span>{/if}
                   </span>
                 </div>
               {/each}
@@ -352,43 +354,43 @@
       <div class="body step">
         {#if extend}
           <span class="extend-note"
-            >Your membership ends in <span class="strong">{daysLeft === 1 ? '1 day' : `${daysLeft} days`}</span>, on <span class="strong">{fmtDate(expiry)}</span>. Extensions start from that date.</span
+            >{#each extendNote as part}{#if part === '\u0000'}<span class="strong">{t('ui.diamondDialog.days', { count: daysLeft })}</span>{:else if part === '\u0001'}<span class="strong">{fmtDate(expiry)}</span>{:else}{part}{/if}{/each}</span
           >
         {/if}
 
         <div class="stack">
-          <span class="eyebrow inset">PAY WITH</span>
+          <span class="eyebrow inset">{t('ui.diamondDialog.payWith')}</span>
           <div class="pay-row">
             <div class="token-wrap">
               <div class="token-button" class:open={picker} onclick={() => (picker = !picker)} role="button" tabindex="0">
                 <span class="token-mark" style:background={tok.grad}>{tok.mark}</span>
                 <div class="token-text">
                   <span class="token-symbol">{tok.symbol}</span>
-                  <span class="token-balance">{fmtAmt(+balance.toFixed(dp(balance)))} available</span>
+                  <span class="token-balance">{t('ui.diamondDialog.available', { amount: fmtAmt(+balance.toFixed(dp(balance))) })}</span>
                 </div>
                 {@render icon('chevron-down', `token-caret${picker ? ' open' : ''}`)}
               </div>
               {#if picker}
                 <div class="token-scrim" onclick={() => (picker = false)} role="presentation"></div>
                 <div class="token-menu">
-                  {#each tokenList as t}
+                  {#each tokenList as tk}
                     <div
                       class="token-option"
-                      class:current={t.symbol === sym}
+                      class:current={tk.symbol === sym}
                       onclick={() => {
-                        tokenSymbol = t.symbol;
+                        tokenSymbol = tk.symbol;
                         picker = false;
                         topUp = false;
                       }}
                       role="button"
                       tabindex="0"
                     >
-                      <span class="token-mark small" style:background={t.grad}>{t.mark}</span>
+                      <span class="token-mark small" style:background={tk.grad}>{tk.mark}</span>
                       <div class="token-text">
-                        <span class="token-symbol">{t.symbol}</span>
-                        <span class="token-name">{t.name}</span>
+                        <span class="token-symbol">{tk.symbol}</span>
+                        <span class="token-name">{tk.name}</span>
                       </div>
-                      <span class="token-held">{fmtAmt(+heldOf(t).toFixed(dp(heldOf(t))))}</span>
+                      <span class="token-held">{fmtAmt(+heldOf(tk).toFixed(dp(heldOf(tk))))}</span>
                       {@render icon('check', 'token-check')}
                     </div>
                   {/each}
@@ -396,25 +398,25 @@
               {/if}
             </div>
             {#if isShort}
-              <span class="top-up" class:open={topUp} onclick={() => (topUp = !topUp)} aria-label="Top up" role="button" tabindex="0" title="Top up">{@render icon('qr', 'top-up-icon')}Top up</span>
+              <span class="top-up" class:open={topUp} onclick={() => (topUp = !topUp)} aria-label={t('ui.diamondDialog.topUp')} role="button" tabindex="0" title={t('ui.diamondDialog.topUp')}>{@render icon('qr', 'top-up-icon')}{t('ui.diamondDialog.topUp')}</span>
             {/if}
           </div>
           {#if topUp}
             <div class="address-box">
-              <span class="address-hint">Send {tok.symbol} to your account address, then refresh your balance.</span>
+              <span class="address-hint">{t('ui.diamondDialog.addressHint', { symbol: tok.symbol })}</span>
               <div class="address-row">
                 <span class="address">{ADDRESS}</span>
-                <span class="copy" onclick={copyAddress} role="button" tabindex="0">{@render icon(copied ? 'check' : 'copy', 'copy-icon')}{copied ? 'Copied' : 'Copy'}</span>
+                <span class="copy" onclick={copyAddress} role="button" tabindex="0">{@render icon(copied ? 'check' : 'copy', 'copy-icon')}{t(copied ? 'ui.common.copied' : 'ui.common.copy')}</span>
               </div>
             </div>
           {/if}
           {#if balance < cost(PLANS[0])}
-            {@render warn('Insufficient funds', `You need at least ${fmtToken(cost(PLANS[0]))} to get Diamond. Pick another token, or use Top up to get your receiving address.`)}
+            {@render warn(t('ui.diamondDialog.insufficientTitle'), t('ui.diamondDialog.insufficientBody', { amount: fmtToken(cost(PLANS[0])) }))}
           {/if}
         </div>
 
         <div class="stack">
-          <span class="eyebrow inset">{extend ? 'AVAILABLE OPTIONS' : 'MEMBERSHIP DURATION'}</span>
+          <span class="eyebrow inset">{t(extend ? 'ui.diamondDialog.availableOptions' : 'ui.diamondDialog.membershipDuration')}</span>
           <div class="plans">
             {#each plans as o}
               <div class="plan" class:life={o.life} class:short={!o.ok} onclick={() => choose(o.key, o.ok)} role="button" tabindex={o.ok ? 0 : -1}>
@@ -428,7 +430,7 @@
             {/each}
           </div>
           {#if isShort}
-            <span class="refresh" onclick={refresh} role="button" tabindex="0">{@render icon('refresh', `refresh-icon${refreshing ? ' spinning' : ''}`)}{refreshing ? 'Refreshing…' : `Refresh ${sym} balance`}</span>
+            <span class="refresh" onclick={refresh} role="button" tabindex="0">{@render icon('refresh', `refresh-icon${refreshing ? ' spinning' : ''}`)}{refreshing ? t('ui.diamondDialog.refreshing') : t('ui.diamondDialog.refreshBalance', { symbol: sym })}</span>
           {/if}
         </div>
       </div>
@@ -442,23 +444,23 @@
           <div class="renew">
             <div class="renew-row">
               <div class="renew-text">
-                <span class="renew-title">Auto-renew</span>
+                <span class="renew-title">{t('ui.diamondDialog.autoRenew')}</span>
                 <span class="renew-help"
-                  >{autoRenew ? `Renews every ${period} from your ${sym} balance. @OpenChatBot reminds you before each renewal.` : 'You’ll return to the free plan when this membership ends.'}</span
+                  >{autoRenew ? t('ui.diamondDialog.renewsEvery', { plan: plan.key, symbol: sym }) : t('ui.diamondDialog.noRenew')}</span
                 >
               </div>
               <div class="renew-toggle"><Toggle on={autoRenew} onChange={(on) => (autoRenew = on)} /></div>
             </div>
           </div>
           {#if !autoRenew}
-            {@render warn('Files and media may be lost', 'When your membership ends you return to the free plan, and files and media you’ve posted may be removed.')}
+            {@render warn(t('ui.diamondDialog.lossTitle'), t('ui.diamondDialog.lossBody'))}
           {/if}
         {/if}
 
         <div class="summary">
-          {#each [{ label: 'Payment amount', value: fmtToken(price), accent: true }, { label: 'OC SNS treasury receives (100%)', value: fmtToken(price), accent: false }, { label: 'Balance after payment', value: fmtToken(+(balance - price).toFixed(dp(balance))), accent: false }] as s}
+          {#each [{ label: 'ui.diamondDialog.summary.amount', value: fmtToken(price), accent: true }, { label: 'ui.diamondDialog.summary.treasury', value: fmtToken(price), accent: false }, { label: 'ui.diamondDialog.summary.after', value: fmtToken(+(balance - price).toFixed(dp(balance))), accent: false }] as s}
             <div class="summary-row">
-              <span class="summary-label">{s.label}</span>
+              <span class="summary-label">{t(s.label)}</span>
               <span class="summary-value" class:accent={s.accent}>{s.value}</span>
             </div>
           {/each}
@@ -468,27 +470,23 @@
 
     <div class="footer">
       {#if step === 'compare' && member}
-        <span class="member-line"><span class="member-badge">{@render icon('check', 'member-check')}</span>{lifetime ? 'Lifetime Diamond member' : `Diamond until ${fmtDate(expiry)}`}</span>
+        <span class="member-line"><span class="member-badge">{@render icon('check', 'member-check')}</span>{lifetime ? t('ui.diamondDialog.lifetimeMember') : t('ui.diamondDialog.memberUntil', { date: fmtDate(expiry) })}</span>
         {#if extend}
-          <span class="text-button accent" onclick={() => (step = 'plans')} role="button" tabindex="0">Extend</span>
+          <span class="text-button accent" onclick={() => (step = 'plans')} role="button" tabindex="0">{t('ui.diamondDialog.extend')}</span>
         {/if}
-        <span class="solid-button" onclick={() => !busy && close(onClose)} role="button" tabindex="0">Done</span>
+        <span class="solid-button" onclick={() => !busy && close(onClose)} role="button" tabindex="0">{t('ui.common.done')}</span>
       {:else if step === 'compare'}
-        <span class="text-button" onclick={() => !busy && close(onClose)} role="button" tabindex="0">Maybe later</span>
-        <span class="cta" onclick={() => (step = 'plans')} role="button" tabindex="0">{@render icon('gem', 'cta-icon')}Upgrade to Diamond</span>
+        <span class="text-button" onclick={() => !busy && close(onClose)} role="button" tabindex="0">{t('ui.diamondDialog.maybeLater')}</span>
+        <span class="cta" onclick={() => (step = 'plans')} role="button" tabindex="0">{@render icon('gem', 'cta-icon')}{t('ui.diamondDialog.upgrade')}</span>
       {:else if step === 'plans'}
-        <span class="footer-note">Payments go to the OpenChat SNS treasury.</span>
-        <span class="solid-button" onclick={back} role="button" tabindex="0">Back</span>
+        <span class="footer-note">{t('ui.diamondDialog.footerNote')}</span>
+        <span class="solid-button" onclick={back} role="button" tabindex="0">{t('ui.common.back')}</span>
       {:else}
-        <span class="text-button" class:busy onclick={back} role="button" tabindex="0">Back</span>
+        <span class="text-button" class:busy onclick={back} role="button" tabindex="0">{t('ui.common.back')}</span>
         <span class="cta" class:busy onclick={pay} role="button" tabindex="0"
           >{@render icon(busy ? 'spin' : 'gem', `cta-icon${busy ? ' spinning' : ''}`)}{busy
-            ? 'Processing payment…'
-            : extend
-              ? timed
-                ? `Confirm ${plan.btn} extension`
-                : 'Confirm lifetime membership'
-              : `Confirm ${plan.btn} membership`}</span
+            ? t('ui.diamondDialog.processing')
+            : t(extend ? 'ui.diamondDialog.confirmExtend' : 'ui.diamondDialog.confirmNew', { plan: plan.key })}</span
         >
       {/if}
     </div>

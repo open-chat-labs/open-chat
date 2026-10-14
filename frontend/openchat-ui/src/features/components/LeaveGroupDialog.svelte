@@ -1,25 +1,24 @@
 <!-- Confirm leaving a group, channel or community. Cancel / confirm play the close animation, then call back. -->
 <script lang="ts">
+  import { useT } from '../../lib/i18n';
   import { onDestroy } from 'svelte';
   import { modal } from '../../lib/behaviours/modal';
 
   interface Props {
     groupName: string;
     noun?: 'group' | 'channel' | 'community';
-    /** Overrides the explanation, which otherwise depends on the noun. */
+    /** Overrides the explanation, which otherwise depends on the noun. Resource key (or literal text). */
     body?: string;
     onConfirm?: () => void;
     onCancel?: () => void;
   }
 
   let { groupName, noun = 'group', body, onConfirm, onCancel }: Props = $props();
+  const t = useT();
 
-  const text = $derived(
-    body ??
-      (noun === 'community'
-        ? 'You will leave every channel in this community, and it disappears from your nav rail. You can rejoin later if it is public, or by invite.'
-        : `You will stop receiving messages from this ${noun}, and it disappears from your chat list. Anyone in the ${noun} can invite you back later.`),
-  );
+  const text = $derived(t(body ?? 'ui.leaveGroupDialog.body', { noun }));
+  // the question wraps the group name in its own span: translate the whole sentence, split it around the name
+  const question = $derived(t('ui.leaveGroupDialog.question', { name: '\u0000' }).split('\u0000'));
 
   let closing = $state(false);
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -42,7 +41,7 @@
     <div class="head">
       <span class="badge"><span class="badge-icon"></span></span>
       <div class="titles">
-        <span class="title">Leave a {noun}</span>
+        <span class="title">{t('ui.leaveGroupDialog.title', { noun })}</span>
         <span class="subtitle">{groupName}</span>
       </div>
       <span class="close" onclick={() => close(onCancel)} role="button" tabindex="0"><span class="close-icon"></span></span>
@@ -50,17 +49,17 @@
 
     <div class="body">
       <div class="copy">
-        <span class="question">Leave <span class="name">{groupName}</span>?</span>
+        <span class="question">{question[0]}<span class="name">{groupName}</span>{question[1] ?? ''}</span>
         <span class="text">{text}</span>
       </div>
     </div>
 
     <div class="foot">
-      <span class="cancel" onclick={() => close(onCancel)} role="button" tabindex="0">Cancel</span>
+      <span class="cancel" onclick={() => close(onCancel)} role="button" tabindex="0">{t('ui.common.cancel')}</span>
       <span class="grow"></span>
       <div class="confirm" onclick={() => close(onConfirm)} role="button" tabindex="0">
         <span class="confirm-icon"></span>
-        <span>Leave {noun}</span>
+        <span>{t('ui.leaveGroupDialog.confirm', { noun })}</span>
       </div>
     </div>
   </div>

@@ -1,14 +1,15 @@
 <!-- Poll: header tile (question + rule chips), option rows with slim bars (voter avatars on public polls), footer tile.
      Results stay hidden until you vote. Radios for single choice, checkboxes for multiple. Controlled via `myVotes` + onVote(indexes), or uncontrolled. -->
 <script lang="ts">
+  import { useT } from '../i18n';
   import AvatarStack from './AvatarStack.svelte';
 
   const RULES = {
-    pub: { label: 'Public votes', icon: 'eye' },
-    anon: { label: 'Anonymous', icon: 'eye-off' },
-    multi: { label: 'Pick any', icon: 'check-double' },
-    single: { label: 'Pick one', icon: 'check' },
-    change: { label: 'Can change vote', icon: 'rotate-back' },
+    pub: { label: 'ui.pollMessage.publicVotes', icon: 'eye' },
+    anon: { label: 'ui.pollMessage.anonymous', icon: 'eye-off' },
+    multi: { label: 'ui.pollMessage.pickAny', icon: 'check-double' },
+    single: { label: 'ui.pollMessage.pickOne', icon: 'check' },
+    change: { label: 'ui.pollMessage.canChangeVote', icon: 'rotate-back' },
   };
 
   interface Props {
@@ -43,6 +44,7 @@
     onVote,
     onViewVotes,
   }: Props = $props();
+  const t = useT();
 
   let own = $state<number[]>([]);
 
@@ -55,7 +57,11 @@
   const locked = $derived(closed || (voted && !canChange));
   const rules = $derived([publicVotes ? RULES.pub : RULES.anon, multiple ? RULES.multi : RULES.single, ...(canChange ? [RULES.change] : [])]);
   const foot = $derived(
-    closed ? `${total} votes · closed` : (voted ? `${total} votes · ` : 'Vote to see results · ') + (endsIn ? `ends in ${endsIn}` : 'open'),
+    t(closed ? 'ui.pollMessage.footClosed' : voted ? 'ui.pollMessage.footVoted' : 'ui.pollMessage.footHidden', {
+      count: total,
+      hasEnd: endsIn ? 'yes' : 'no',
+      endsIn,
+    }),
   );
 
   function pick(j: number) {
@@ -69,13 +75,13 @@
 <div class="shell" class:sent class:last={lastInGroup}>
   <div class="stack">
     <div class="tile head">
-      <span class="kicker"><span class="poll-icon"></span>Poll</span>
+      <span class="kicker"><span class="poll-icon"></span>{t('ui.pollMessage.poll')}</span>
       <span class="question">{question}</span>
       <div class="rules">
-        {#each rules as rule}<span class="rule"><span class="rule-icon" style:mask="var(--icon-{rule.icon}) center/contain no-repeat"></span>{rule.label}</span>{/each}
+        {#each rules as rule}<span class="rule"><span class="rule-icon" style:mask="var(--icon-{rule.icon}) center/contain no-repeat"></span>{t(rule.label)}</span>{/each}
       </div>
     </div>
-    <div class="tile options" role={multiple ? 'group' : 'radiogroup'} aria-label="Poll options">
+    <div class="tile options" role={multiple ? 'group' : 'radiogroup'} aria-label={t('ui.pollMessage.options')}>
       {#each options as option, j}
         {@const on = mine.includes(j)}
         {@const pct = total ? Math.round((counts[j] / total) * 100) : 0}
@@ -94,7 +100,7 @@
     </div>
     <div class="tile foot">
       <span class="foot-text">{foot}</span>
-      {#if publicVotes && show}<span class="view" onclick={onViewVotes} role="button" tabindex="0">View votes</span>{/if}
+      {#if publicVotes && show}<span class="view" onclick={onViewVotes} role="button" tabindex="0">{t('ui.pollMessage.viewVotes')}</span>{/if}
     </div>
   </div>
   <div class="time">{time}</div>

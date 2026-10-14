@@ -6,6 +6,8 @@
      after saving, and Cancel becomes "Discard changes". embedded + readOnly: Overview turns into an About page and the
      other pages show their values as plain On/Off facts. -->
 <script lang="ts">
+  import { useT } from '../../lib/i18n';
+  import { durationText } from '../../lib/components/DurationChips.svelte';
   import { onDestroy, tick, untrack } from 'svelte';
   import type { AccessGatesState, GroupRole, GroupSettings } from '../../lib/types';
   import AccessGates from './AccessGates.svelte';
@@ -20,62 +22,64 @@
   type PermValue = GroupRole | 'inherit';
   type Perms = { general: Record<string, GroupRole>; messages: Record<string, PermValue>; threads: Record<string, PermValue> };
 
-  const TABS = ['Group', 'Gates', 'Rules', 'Permissions'];
+  const TABS = ['ui.groupSettingsDialog.tabGroup', 'ui.groupSettingsDialog.tabGates', 'ui.groupSettingsDialog.tabRules', 'ui.groupSettingsDialog.tabPermissions'];
   const TAB_KEYS: Section[] = ['group', 'gates', 'rules', 'permissions'];
   const NAME_MAX = 40;
   const ABOUT_MAX = 500;
   const RULES_MAX = 1000;
 
   const GRADIENTS: Record<string, { label: string; value: string }> = {
-    teal: { label: 'Teal', value: 'linear-gradient(140deg,#2EE6A8,#1FB6FF)' },
-    violet: { label: 'Violet', value: 'linear-gradient(140deg,#ff5f9e,#6a2bff)' },
-    amber: { label: 'Amber', value: 'linear-gradient(140deg,#ffb03d,#ff4d4d)' },
-    blue: { label: 'Blue', value: 'linear-gradient(140deg,#5FA8FF,#8C6BFF)' },
+    teal: { label: 'ui.groupSettingsDialog.colour.teal', value: 'linear-gradient(140deg,#2EE6A8,#1FB6FF)' },
+    violet: { label: 'ui.groupSettingsDialog.colour.violet', value: 'linear-gradient(140deg,#ff5f9e,#6a2bff)' },
+    amber: { label: 'ui.groupSettingsDialog.colour.amber', value: 'linear-gradient(140deg,#ffb03d,#ff4d4d)' },
+    blue: { label: 'ui.groupSettingsDialog.colour.blue', value: 'linear-gradient(140deg,#5FA8FF,#8C6BFF)' },
   };
   // swatches are the theme's --cover-<key> tokens
-  const COVERS: Record<string, string> = { plum: 'Plum', teal: 'Teal', violet: 'Violet', amber: 'Amber', slate: 'Slate' };
+  const COVERS: Record<string, string> = { plum: 'ui.groupSettingsDialog.colour.plum', teal: 'ui.groupSettingsDialog.colour.teal', violet: 'ui.groupSettingsDialog.colour.violet', amber: 'ui.groupSettingsDialog.colour.amber', slate: 'ui.groupSettingsDialog.colour.slate' };
 
+  // labels, descriptions and rules are resource keys; a template's rules are translated when inserted
   const RULE_TEMPLATES = [
-    { key: 'standard', label: 'Community standard', desc: 'Respect, no impersonation, stay on topic', rules: ['Do not impersonate others in a deceptive or misleading manner', 'Do not intentionally share false or misleading information', 'Keep messages relevant to the group'] },
-    { key: 'trading', label: 'Trading group', desc: 'No financial advice, no pump talk', rules: ['No financial advice — do your own research', 'No coordinated pumping or shilling', 'Disclose any position you hold in a token you post about'] },
-    { key: 'support', label: 'Support group', desc: 'Privacy and no self-promotion', rules: ["Do not share other members' private details", 'No promotion or recruiting', 'Assume good faith — disagree without insults'] },
-    { key: 'civil', label: 'Keep it civil', desc: 'Harassment and slur policy', rules: ['No harassment, slurs, or hate speech', 'No sexually explicit content', 'Take heated arguments to DMs'] },
-    { key: 'project', label: 'Project team', desc: 'Stay on task, decisions in writing', rules: ['Keep discussion to the work in hand', 'Write decisions down so nobody has to scroll for them', 'Use threads for side conversations'] },
-    { key: 'announce', label: 'Announcements', desc: 'Few posters, replies in threads', rules: ['Only owners and admins post to the main channel', 'Reply in a thread rather than the channel', 'No promotion of other groups or products'] },
+    { key: 'standard', label: 'ui.groupSettingsDialog.template.standard.label', desc: 'ui.groupSettingsDialog.template.standard.desc', rules: ['ui.groupSettingsDialog.template.standard.rule1', 'ui.groupSettingsDialog.template.standard.rule2', 'ui.groupSettingsDialog.template.standard.rule3'] },
+    { key: 'trading', label: 'ui.groupSettingsDialog.template.trading.label', desc: 'ui.groupSettingsDialog.template.trading.desc', rules: ['ui.groupSettingsDialog.template.trading.rule1', 'ui.groupSettingsDialog.template.trading.rule2', 'ui.groupSettingsDialog.template.trading.rule3'] },
+    { key: 'support', label: 'ui.groupSettingsDialog.template.support.label', desc: 'ui.groupSettingsDialog.template.support.desc', rules: ['ui.groupSettingsDialog.template.support.rule1', 'ui.groupSettingsDialog.template.support.rule2', 'ui.groupSettingsDialog.template.support.rule3'] },
+    { key: 'civil', label: 'ui.groupSettingsDialog.template.civil.label', desc: 'ui.groupSettingsDialog.template.civil.desc', rules: ['ui.groupSettingsDialog.template.civil.rule1', 'ui.groupSettingsDialog.template.civil.rule2', 'ui.groupSettingsDialog.template.civil.rule3'] },
+    { key: 'project', label: 'ui.groupSettingsDialog.template.project.label', desc: 'ui.groupSettingsDialog.template.project.desc', rules: ['ui.groupSettingsDialog.template.project.rule1', 'ui.groupSettingsDialog.template.project.rule2', 'ui.groupSettingsDialog.template.project.rule3'] },
+    { key: 'announce', label: 'ui.groupSettingsDialog.template.announce.label', desc: 'ui.groupSettingsDialog.template.announce.desc', rules: ['ui.groupSettingsDialog.template.announce.rule1', 'ui.groupSettingsDialog.template.announce.rule2', 'ui.groupSettingsDialog.template.announce.rule3'] },
   ];
 
   const ROLES: { key: GroupRole; label: string }[] = [
-    { key: 'member', label: 'Members' },
-    { key: 'moderator', label: 'Moderator' },
-    { key: 'admin', label: 'Admin' },
-    { key: 'owner', label: 'Owner' },
-    { key: 'nobody', label: 'Nobody' },
+    { key: 'member', label: 'ui.groupSettingsDialog.role.member' },
+    { key: 'moderator', label: 'ui.groupSettingsDialog.role.moderator' },
+    { key: 'admin', label: 'ui.groupSettingsDialog.role.admin' },
+    { key: 'owner', label: 'ui.groupSettingsDialog.role.owner' },
+    { key: 'nobody', label: 'ui.groupSettingsDialog.role.nobody' },
   ];
-  const VALUE_LABEL: Record<GroupRole, string> = { member: 'Everyone', moderator: 'Moderator +', admin: 'Admin +', owner: 'Owner only', nobody: 'Nobody' };
+  const VALUE_LABEL: Record<GroupRole, string> = { member: 'ui.groupSettingsDialog.value.member', moderator: 'ui.groupSettingsDialog.value.moderator', admin: 'ui.groupSettingsDialog.value.admin', owner: 'ui.groupSettingsDialog.value.owner', nobody: 'ui.groupSettingsDialog.value.nobody' };
   const GENERAL: { key: string; label: string; group: string; def: GroupRole }[] = [
-    { key: 'roles', label: 'Change member roles', group: 'Members', def: 'owner' },
-    { key: 'edit', label: 'Edit group info', group: 'Members', def: 'admin' },
-    { key: 'invite', label: 'Invite users', group: 'Members', def: 'member' },
-    { key: 'remove', label: 'Remove / block members', group: 'Members', def: 'moderator' },
-    { key: 'delete', label: 'Delete messages', group: 'Moderation', def: 'moderator' },
-    { key: 'pin', label: 'Pin messages', group: 'Moderation', def: 'moderator' },
-    { key: 'react', label: 'React to messages', group: 'Moderation', def: 'member' },
-    { key: 'everyone', label: 'Mention all members (@everyone)', group: 'Moderation', def: 'admin' },
-    { key: 'calls', label: 'Start video calls', group: 'Moderation', def: 'member' },
+    { key: 'roles', label: 'ui.groupSettingsDialog.perm.roles', group: 'Members', def: 'owner' },
+    { key: 'edit', label: 'ui.groupSettingsDialog.perm.edit', group: 'Members', def: 'admin' },
+    { key: 'invite', label: 'ui.groupSettingsDialog.perm.invite', group: 'Members', def: 'member' },
+    { key: 'remove', label: 'ui.groupSettingsDialog.perm.remove', group: 'Members', def: 'moderator' },
+    { key: 'delete', label: 'ui.groupSettingsDialog.perm.delete', group: 'Moderation', def: 'moderator' },
+    { key: 'pin', label: 'ui.groupSettingsDialog.perm.pin', group: 'Moderation', def: 'moderator' },
+    { key: 'react', label: 'ui.groupSettingsDialog.perm.react', group: 'Moderation', def: 'member' },
+    { key: 'everyone', label: 'ui.groupSettingsDialog.perm.everyone', group: 'Moderation', def: 'admin' },
+    { key: 'calls', label: 'ui.groupSettingsDialog.perm.calls', group: 'Moderation', def: 'member' },
   ];
   const PERM_GROUPS = ['Members', 'Moderation'];
+  const PERM_GROUP_LABEL: Record<string, string> = { Members: 'ui.groupSettingsDialog.permGroup.members', Moderation: 'ui.groupSettingsDialog.permGroup.moderation' };
   const CONTENT = [
-    { key: 'text', label: 'Text messages' },
-    { key: 'image', label: 'Images' },
-    { key: 'video', label: 'Videos' },
-    { key: 'audio', label: 'Audio' },
-    { key: 'file', label: 'Files' },
-    { key: 'poll', label: 'Polls' },
-    { key: 'crypto', label: 'Crypto transfers' },
-    { key: 'giphy', label: 'GIFs' },
-    { key: 'prize', label: 'Prizes' },
-    { key: 'meme', label: 'Meme Fighter' },
-    { key: 'p2p', label: 'P2P swaps' },
+    { key: 'text', label: 'ui.groupSettingsDialog.content.text' },
+    { key: 'image', label: 'ui.groupSettingsDialog.content.image' },
+    { key: 'video', label: 'ui.groupSettingsDialog.content.video' },
+    { key: 'audio', label: 'ui.groupSettingsDialog.content.audio' },
+    { key: 'file', label: 'ui.groupSettingsDialog.content.file' },
+    { key: 'poll', label: 'ui.groupSettingsDialog.content.poll' },
+    { key: 'crypto', label: 'ui.groupSettingsDialog.content.crypto' },
+    { key: 'giphy', label: 'ui.groupSettingsDialog.content.giphy' },
+    { key: 'prize', label: 'ui.groupSettingsDialog.content.prize' },
+    { key: 'meme', label: 'ui.groupSettingsDialog.content.meme' },
+    { key: 'p2p', label: 'ui.groupSettingsDialog.content.p2p' },
   ];
   const INHERIT = 'inherit';
 
@@ -92,7 +96,9 @@
   const mask = (icon: string) => `var(--icon-${icon}) center/contain no-repeat`;
 
   interface OwnerMove {
+    /** Resource key (or literal text). */
     label: string;
+    /** Resource key (or literal text). */
     desc: string;
     /** CSS mask for the row icon. */
     mask: string;
@@ -118,9 +124,9 @@
     readOnly?: boolean;
     /** Owner-only rows under the Group page ("Move to a community"). */
     ownerMoves?: OwnerMove[];
-    /** About page: e.g. "Public group · 1,204 members". */
+    /** About page, resource key (or literal text): e.g. "Public group · 1,204 members". */
     aboutMeta?: string;
-    /** About page: your role chip. */
+    /** About page: your role chip, resource key (or literal text). */
     roleLabel?: string;
     isMuted?: boolean;
     isFavourite?: boolean;
@@ -151,6 +157,7 @@
     onToggleFavourite,
     onOpenRules,
   }: Props = $props();
+  const t = useT();
 
   // --- the draft: everything Save writes
   const start = untrack(() => value) ?? {};
@@ -308,20 +315,20 @@
 
   const switches = $derived([
     {
-      title: 'Public group',
-      hint: isPublic ? 'Anyone can find this group and join it.' : 'Private — only invited people can join. Public groups can be found and joined by anyone.',
+      title: t('ui.groupSettingsDialog.publicGroup'),
+      hint: t(isPublic ? 'ui.groupSettingsDialog.publicHintOn' : 'ui.groupSettingsDialog.publicHintOff'),
       on: isPublic,
       set: (v: boolean) => (isPublic = v),
       timed: false,
     },
     {
-      title: 'Visible chat history',
-      hint: 'New joiners see the full history when on, and only messages sent after they joined when off.',
+      title: t('ui.groupSettingsDialog.visibleHistory'),
+      hint: t('ui.groupSettingsDialog.visibleHistoryHint'),
       on: history,
       set: (v: boolean) => (history = v),
       timed: false,
     },
-    { title: 'Disappearing messages', hint: '', on: disappearOn, set: (v: boolean) => (disappearOn = v), timed: true },
+    { title: t('ui.groupSettingsDialog.disappearing'), hint: '', on: disappearOn, set: (v: boolean) => (disappearOn = v), timed: true },
   ]);
 
   // --- About page (embedded + view-only Overview)
@@ -329,11 +336,11 @@
   const favourite = $derived(aboutFav ?? isFavourite);
   const ruleCount = $derived(rulesText.split('\n').map((l) => l.trim()).filter(Boolean).length);
   const facts = $derived([
-    history ? { text: 'New members can see chat history', icon: 'history' } : { text: 'New members only see messages from when they join', icon: 'hidden' },
-    ...(disappearOn ? [{ text: `Messages disappear after ${after}`, icon: 'timer' }] : []),
-    isPublic ? { text: `Public: anyone can find and join this ${noun}`, icon: 'globe' } : { text: 'Private: people join by invite only', icon: 'lock' },
+    history ? { text: t('ui.groupSettingsDialog.factHistory'), icon: 'history' } : { text: t('ui.groupSettingsDialog.factNoHistory'), icon: 'hidden' },
+    ...(disappearOn ? [{ text: t('ui.groupSettingsDialog.factDisappear', { duration: durationText(t, after) }), icon: 'timer' }] : []),
+    isPublic ? { text: t('ui.groupSettingsDialog.factPublic', { noun }), icon: 'globe' } : { text: t('ui.groupSettingsDialog.factPrivate'), icon: 'lock' },
     ...(ruleCount
-      ? [{ text: `${ruleCount}${ruleCount === 1 ? ' rule' : ' rules'}${rulesOn ? ' · new members must accept them' : ''}`, icon: 'rules', link: true }]
+      ? [{ text: t(rulesOn ? 'ui.groupSettingsDialog.factRulesAccept' : 'ui.groupSettingsDialog.factRules', { count: ruleCount }), icon: 'rules', link: true }]
       : []),
   ]);
 
@@ -343,23 +350,23 @@
       return PERM_GROUPS.map((g) => {
         const items = GENERAL.filter((x) => x.group === g);
         return {
-          label: g.toUpperCase(),
+          label: t(PERM_GROUP_LABEL[g]).toUpperCase(),
           items: items.map((x, i) => {
             const cur = perms.general[x.key];
-            return { label: x.label, master: false, last: i === items.length - 1, valueLabel: VALUE_LABEL[cur], tone: cur === 'nobody' ? 'off' : 'set', open: (el: HTMLElement) => openPermMenu(el, 'general', x.key, false) };
+            return { label: t(x.label), master: false, last: i === items.length - 1, valueLabel: t(VALUE_LABEL[cur]), tone: cur === 'nobody' ? 'off' : 'set', open: (el: HTMLElement) => openPermMenu(el, 'general', x.key, false) };
           }),
         };
       });
     const set = perms[scope];
-    const master = { label: 'Send messages by default', master: true, last: false, valueLabel: VALUE_LABEL[set.default as GroupRole], tone: 'set', open: (el: HTMLElement) => openPermMenu(el, scope, 'default', false) };
+    const master = { label: t('ui.groupSettingsDialog.sendByDefault'), master: true, last: false, valueLabel: t(VALUE_LABEL[set.default as GroupRole]), tone: 'set', open: (el: HTMLElement) => openPermMenu(el, scope, 'default', false) };
     const content = CONTENT.map((c, i) => {
       const inherited = set[c.key] === INHERIT;
       const eff = (inherited ? set.default : set[c.key]) as GroupRole;
       return {
-        label: c.label,
+        label: t(c.label),
         master: false,
         last: i === CONTENT.length - 1,
-        valueLabel: inherited ? `Default · ${VALUE_LABEL[eff]}` : VALUE_LABEL[eff],
+        valueLabel: inherited ? t('ui.groupSettingsDialog.defaultValue', { value: t(VALUE_LABEL[eff]) }) : t(VALUE_LABEL[eff]),
         tone: inherited ? 'inherited' : 'set',
         open: (el: HTMLElement) => openPermMenu(el, scope, c.key, true),
       };
@@ -367,7 +374,7 @@
     return [{ label: '', items: [master, ...content] }];
   });
 
-  const permOptions = $derived(permMenu ? [...(permMenu.allowInherit ? [{ key: INHERIT as PermValue, label: 'Same as default' }] : []), ...ROLES] : []);
+  const permOptions = $derived(permMenu ? [...(permMenu.allowInherit ? [{ key: INHERIT as PermValue, label: 'ui.groupSettingsDialog.sameAsDefault' }] : []), ...ROLES] : []);
 
   const showNote = $derived((submitted && (!nameOk || rulesBad)) || dirty);
   const noteError = $derived(submitted && (!nameOk || rulesBad));
@@ -378,7 +385,7 @@
 {/snippet}
 
 {#snippet status(on: boolean)}
-  <span class="status">{on ? 'On' : 'Off'}</span>
+  <span class="status">{t(on ? 'ui.groupSettingsDialog.on' : 'ui.groupSettingsDialog.off')}</span>
 {/snippet}
 
 <div class="root" class:embedded use:modal={embedded ? undefined : () => (onClose ?? onCancel)?.()}>
@@ -389,22 +396,22 @@
   <div class="card">
     {#if embedded}
       <div class="embedded-head">
-        <span class="embedded-title">{[viewOnly ? 'About' : 'Overview', 'Access gates', 'Rules', 'Permissions'][tabIdx]}</span>
-        <span class="icon-button big" onclick={() => (onClose ?? onCancel)?.()} role="button" tabindex="0" aria-label="Close" title="Close"><span class="icon-16" style:mask={mask('close')}></span></span>
+        <span class="embedded-title">{t([viewOnly ? 'ui.groupSettingsDialog.about' : 'ui.groupSettingsDialog.overview', 'ui.groupSettingsDialog.accessGates', 'ui.groupSettingsDialog.tabRules', 'ui.groupSettingsDialog.tabPermissions'][tabIdx])}</span>
+        <span class="icon-button big" onclick={() => (onClose ?? onCancel)?.()} role="button" tabindex="0" aria-label={t('ui.common.close')} title={t('ui.common.close')}><span class="icon-16" style:mask={mask('close')}></span></span>
       </div>
     {:else}
       <div class="head">
         <div class="head-row">
           <span class="gear-tile"><span class="gear" style:mask={mask('gear')}></span></span>
           <div class="head-text">
-            <span class="head-title">Group settings</span>
-            <span class="head-name">{value?.info?.name || 'This group'}</span>
+            <span class="head-title">{t('ui.groupSettingsDialog.title')}</span>
+            <span class="head-name">{value?.info?.name || t('ui.groupSettingsDialog.thisGroup')}</span>
           </div>
           <span class="icon-button" onclick={onCancel} role="button" tabindex="0"><span class="icon-15" style:mask={mask('close')}></span></span>
         </div>
         <div class="cell">
           <SegmentedTabs
-            labels={TABS}
+            labels={TABS.map((x) => t(x))}
             counts={[null, gateCount || null, ruleLines || null, permsChanged || null]}
             selectedIndex={tab}
             dotIndexes={[!nameOk && submitted ? 0 : null, rulesBad && submitted ? 2 : null].filter((i): i is number => i !== null)}
@@ -437,7 +444,7 @@
                         e.currentTarget.value = '';
                       }}
                     />
-                    <span class="cover-upload" onclick={() => coverInput?.click()} role="button" tabindex="0"><span class="cover-camera" style:mask={mask('camera')}></span>{coverUrl ? 'Change cover' : 'Upload cover'}</span>
+                    <span class="cover-upload" onclick={() => coverInput?.click()} role="button" tabindex="0"><span class="cover-camera" style:mask={mask('camera')}></span>{t(coverUrl ? 'ui.groupSettingsDialog.changeCover' : 'ui.groupSettingsDialog.uploadCover')}</span>
                   {/if}
                   <div class="swatches">
                     {#each Object.entries(COVERS) as [key, label]}
@@ -451,8 +458,8 @@
                         }}
                         role="button"
                         tabindex="0"
-                        aria-label={label}
-                        title={label}
+                        aria-label={t(label)}
+                        title={t(label)}
                       ></span>
                     {/each}
                   </div>
@@ -480,15 +487,15 @@
                     <div class="photo-pick" onclick={() => avatarInput?.click()} role="button" tabindex="0"><span class="icon-15 ink" style:mask={mask('camera')}></span></div>
                   </div>
                   <div class="photo-text">
-                    <span class="photo-title">Group photo</span>
+                    <span class="photo-title">{t('ui.groupSettingsDialog.groupPhoto')}</span>
                     <div class="photo-line">
-                      <span class="photo-hint">Upload one, or pick a colour</span>
+                      <span class="photo-hint">{t('ui.groupSettingsDialog.photoHint')}</span>
                       <span class="grow"></span>
                       {#if avatar}
-                        <span class="remove-photo" onclick={() => (avatar = '')} role="button" tabindex="0">Remove photo</span>
+                        <span class="remove-photo" onclick={() => (avatar = '')} role="button" tabindex="0">{t('ui.groupSettingsDialog.removePhoto')}</span>
                       {/if}
                       {#each Object.entries(GRADIENTS) as [key, g]}
-                        <span class="swatch flex-none" style:background={g.value} style:box-shadow={ringOf(key === color)} onclick={() => (color = key)} role="button" tabindex="0" aria-label={g.label} title={g.label}></span>
+                        <span class="swatch flex-none" style:background={g.value} style:box-shadow={ringOf(key === color)} onclick={() => (color = key)} role="button" tabindex="0" aria-label={t(g.label)} title={t(g.label)}></span>
                       {/each}
                     </div>
                   </div>
@@ -496,7 +503,7 @@
 
                 <div class="field-block">
                   <div class="field-label-row">
-                    <span class="field-label">Group name</span>
+                    <span class="field-label">{t('ui.groupSettingsDialog.groupName')}</span>
                     <span class="required">*</span>
                   </div>
                   <div class="name-box" class:bad={!nameOk && (touched || submitted)}>
@@ -506,32 +513,32 @@
                         name = e.currentTarget.value;
                         touched = true;
                       }}
-                      placeholder="Group name"
+                      placeholder={t('ui.groupSettingsDialog.groupName')}
                       maxlength={NAME_MAX}
                     />
                     <span class="name-left" class:low={NAME_MAX - name.length <= 5}>{NAME_MAX - name.length}</span>
                   </div>
                   {#if !nameOk && (touched || submitted)}
-                    <span class="name-error">A group needs a name.</span>
+                    <span class="name-error">{t('ui.groupSettingsDialog.nameError')}</span>
                   {/if}
                 </div>
 
                 <div class="field-block">
                   <div class="field-label-row wide">
-                    <span class="field-label">Description</span>
-                    <span class="optional">Optional</span>
+                    <span class="field-label">{t('ui.groupSettingsDialog.description')}</span>
+                    <span class="optional">{t('ui.groupSettingsDialog.optional')}</span>
                   </div>
-                  <div class="cell"><TextArea value={about} onInput={(e) => (about = e.currentTarget.value)} placeholder="Tell people what your group is about" maxLength={ABOUT_MAX} minHeight={49} /></div>
+                  <div class="cell"><TextArea value={about} onInput={(e) => (about = e.currentTarget.value)} placeholder={t('ui.groupSettingsDialog.descriptionPlaceholder')} maxLength={ABOUT_MAX} minHeight={49} /></div>
                 </div>
 
                 <div class="list-block">
-                  {@render sectionLabel('SETTINGS')}
+                  {@render sectionLabel(t('ui.groupSettingsDialog.settings'))}
                   <div class="list">
                     {#each switches as s, i}
                       <div class="switch-row" class:last={i === switches.length - 1}>
                         {#if s.timed}
                           <div class="cell">
-                            <TimedToggle density="flush" label={s.title} on={s.on} value={after} offHint="Messages are kept until someone deletes them." readOnly={statusOnly} onChange={s.set} onDurationChange={(label) => (after = label)} />
+                            <TimedToggle density="flush" label={s.title} on={s.on} value={after} offHint={t('ui.groupSettingsDialog.disappearOffHint')} readOnly={statusOnly} onChange={s.set} onDurationChange={(label) => (after = label)} />
                           </div>
                         {:else}
                           <div class="switch-line">
@@ -551,14 +558,14 @@
 
             {#if ownerMoves.length > 0}
               <div class="moves">
-                {@render sectionLabel('Move to a community')}
+                {@render sectionLabel(t('ui.groupSettingsDialog.moveToCommunity'))}
                 <div class="facts">
                   {#each ownerMoves as move}
                     <div class="fact link" onclick={move.onPress} role="button" tabindex="0">
                       <span class="fact-tile"><span class="icon-15 ink-2" style:mask={move.mask}></span></span>
                       <div class="move-text">
-                        <span class="move-label">{move.label}</span>
-                        <span class="move-desc">{move.desc}</span>
+                        <span class="move-label">{t(move.label)}</span>
+                        <span class="move-desc">{t(move.desc)}</span>
                       </div>
                       <span class="chev" data-oc-flip=""></span>
                     </div>
@@ -578,10 +585,10 @@
               </div>
               <div class="about-names">
                 <span class="about-name">{name}</span>
-                <span class="about-meta">{aboutMeta}</span>
+                <span class="about-meta">{t(aboutMeta)}</span>
               </div>
               <div class="about-actions">
-                {#if roleLabel}<span class="role-chip">{roleLabel}</span>{/if}
+                {#if roleLabel}<span class="role-chip">{t(roleLabel)}</span>{/if}
                 <span
                   class="about-action"
                   class:active={muted}
@@ -591,7 +598,7 @@
                     onMuteChange?.(was ? null : 'forever');
                   }}
                   role="button"
-                  tabindex="0"><span class="about-action-icon" style:mask={mask(muted ? 'bell-off' : 'bell')}></span>{muted ? 'Muted' : 'Mute'}</span
+                  tabindex="0"><span class="about-action-icon" style:mask={mask(muted ? 'bell-off' : 'bell')}></span>{t(muted ? 'ui.groupSettingsDialog.muted' : 'ui.groupSettingsDialog.mute')}</span
                 >
                 {#if onToggleFavourite}
                   <span
@@ -603,7 +610,7 @@
                       onToggleFavourite?.();
                     }}
                     role="button"
-                    tabindex="0"><span class="about-action-icon" style:mask={mask('heart')}></span>{favourite ? 'Favourited' : 'Favourite'}</span
+                    tabindex="0"><span class="about-action-icon" style:mask={mask('heart')}></span>{t(favourite ? 'ui.groupSettingsDialog.favourited' : 'ui.groupSettingsDialog.favourite')}</span
                   >
                 {/if}
               </div>
@@ -611,7 +618,7 @@
                 <p class="about-text">{about}</p>
               {/if}
               <div class="list-block stretch">
-                {@render sectionLabel(`How this ${noun} works`)}
+                {@render sectionLabel(t('ui.groupSettingsDialog.howItWorks', { noun }))}
                 <div class="facts">
                   {#each facts as f}
                     {#if f.link}
@@ -646,8 +653,8 @@
             <div class="column huge-gap">
               <div class="switch-line">
                 <div class="switch-text">
-                  <span class="switch-title">Enable rules for the group</span>
-                  <span class="switch-hint">New members have to agree to the rules before they join.</span>
+                  <span class="switch-title">{t('ui.groupSettingsDialog.enableRules')}</span>
+                  <span class="switch-hint">{t('ui.groupSettingsDialog.enableRulesHint')}</span>
                 </div>
                 {#if statusOnly}{@render status(rulesOn)}{:else}<div class="toggle-cell"><Toggle on={rulesOn} onChange={(on) => (rulesOn = on)} /></div>{/if}
               </div>
@@ -655,7 +662,7 @@
               {#if rulesOn}
                 {#if !statusOnly}
                   <div class="list-block small-gap">
-                    {@render sectionLabel('START FROM A TEMPLATE')}
+                    {@render sectionLabel(t('ui.groupSettingsDialog.startFromTemplate'))}
                     <div class="templates">
                       {#each RULE_TEMPLATES as tpl}
                         <div
@@ -663,13 +670,13 @@
                           class:selected={rulesPreset === tpl.key}
                           onclick={() => {
                             rulesPreset = tpl.key;
-                            rulesText = tpl.rules.map((r) => `• ${r}`).join('\n');
+                            rulesText = tpl.rules.map((r) => `• ${t(r)}`).join('\n');
                           }}
                           role="button"
                           tabindex="0"
                         >
-                          <span class="template-label">{tpl.label}</span>
-                          <span class="template-desc">{tpl.desc}</span>
+                          <span class="template-label">{t(tpl.label)}</span>
+                          <span class="template-desc">{t(tpl.desc)}</span>
                         </div>
                       {/each}
                     </div>
@@ -678,7 +685,7 @@
 
                 <div class="list-block small-gap">
                   <div class="rules-head">
-                    {@render sectionLabel('RULES')}
+                    {@render sectionLabel(t('ui.groupSettingsDialog.rules'))}
                     <span class="grow"></span>
                     {#if rulesText.length > 0 && !viewOnly}
                       <span
@@ -688,7 +695,7 @@
                           rulesPreset = null;
                         }}
                         role="button"
-                        tabindex="0">Clear</span
+                        tabindex="0">{t('ui.groupSettingsDialog.clear')}</span
                       >
                     {/if}
                   </div>
@@ -696,12 +703,12 @@
                     <TextArea
                       value={rulesText}
                       onInput={(e) => (rulesText = e.currentTarget.value)}
-                      placeholder="Anything members should know before they join"
+                      placeholder={t('ui.groupSettingsDialog.rulesPlaceholder')}
                       maxLength={RULES_MAX}
                       minHeight={162}
-                      help="The field grows as you type."
+                      help={t('ui.groupSettingsDialog.rulesHelp')}
                       error={rulesBad && submitted}
-                      errorText="Rules are enabled — write them here, or turn rules off."
+                      errorText={t('ui.groupSettingsDialog.rulesError')}
                     />
                   </div>
                 </div>
@@ -714,13 +721,13 @@
           <div class="page tall">
             <div class="column mid-gap">
               <div class="perm-intro">
-                <span class="switch-title">Who can do what</span>
-                <span class="switch-hint">Each permission is set to the lowest role that has it. Higher roles inherit it automatically.</span>
+                <span class="switch-title">{t('ui.groupSettingsDialog.whoCanDoWhat')}</span>
+                <span class="switch-hint">{t('ui.groupSettingsDialog.whoCanDoWhatHint')}</span>
               </div>
 
               <div class="cell">
                 <SegmentedTabs
-                  labels={['General', 'Messages', 'Threads']}
+                  labels={[t('ui.groupSettingsDialog.permGeneral'), t('ui.groupSettingsDialog.permMessages'), t('ui.groupSettingsDialog.permThreads')]}
                   counts={[generalChanged || null, msgExceptions || null, threadsOverride ? thrExceptions || null : null]}
                   selectedIndex={permSub}
                   dotIndexes={[]}
@@ -733,7 +740,7 @@
 
               {#if permsChanged > 0}
                 <div class="changed">
-                  <span class="changed-text">{permsChanged}{permsChanged === 1 ? ' permission differs from the defaults' : ' permissions differ from the defaults'}</span>
+                  <span class="changed-text">{t('ui.groupSettingsDialog.permsChanged', { count: permsChanged })}</span>
                   <span
                     class="text-action"
                     onclick={() => {
@@ -742,7 +749,7 @@
                       permMenu = null;
                     }}
                     role="button"
-                    tabindex="0">Reset to defaults</span
+                    tabindex="0">{t('ui.groupSettingsDialog.resetDefaults')}</span
                   >
                 </div>
               {/if}
@@ -750,8 +757,8 @@
               {#if permSub === 2}
                 <div class="thread-switch">
                   <div class="switch-text">
-                    <span class="switch-title small">Use different permissions in threads</span>
-                    <span class="switch-hint">{threadsOverride ? 'Threads use the set below. Messages outside threads are unaffected.' : 'Threads currently follow whatever you set for messages.'}</span>
+                    <span class="switch-title small">{t('ui.groupSettingsDialog.threadsOverride')}</span>
+                    <span class="switch-hint">{t(threadsOverride ? 'ui.groupSettingsDialog.threadsOverrideOn' : 'ui.groupSettingsDialog.threadsOverrideOff')}</span>
                   </div>
                   {#if statusOnly}{@render status(threadsOverride)}{:else}<div class="toggle-cell">
                       <Toggle
@@ -786,8 +793,8 @@
 
               {#if permSub === 2 && !threadsOverride}
                 <div class="inherited">
-                  <span class="inherited-title">Threads follow the message permissions</span>
-                  <span class="inherited-hint">Turn the switch on to give threads their own set.</span>
+                  <span class="inherited-title">{t('ui.groupSettingsDialog.threadsFollow')}</span>
+                  <span class="inherited-hint">{t('ui.groupSettingsDialog.threadsFollowHint')}</span>
                 </div>
               {/if}
             </div>
@@ -799,15 +806,15 @@
     {#if !viewOnly}
       <div class="footer">
         {#if !embedded || dirty}
-          <span class="cancel" onclick={() => (embedded ? discard() : onCancel?.())} role="button" tabindex="0">{embedded ? 'Discard changes' : 'Cancel'}</span>
+          <span class="cancel" onclick={() => (embedded ? discard() : onCancel?.())} role="button" tabindex="0">{t(embedded ? 'ui.groupSettingsDialog.discardChanges' : 'ui.common.cancel')}</span>
         {/if}
         <span class="grow"></span>
         {#if showNote}
-          <span class="note" class:error={noteError}>{submitted && !nameOk ? 'Name needed' : submitted && rulesBad ? 'Rules needed' : 'Unsaved changes'}</span>
+          <span class="note" class:error={noteError}>{t(submitted && !nameOk ? 'ui.groupSettingsDialog.nameNeeded' : submitted && rulesBad ? 'ui.groupSettingsDialog.rulesNeeded' : 'ui.groupSettingsDialog.unsaved')}</span>
         {/if}
         <div class="save" class:ready={dirty} onclick={save} role="button" tabindex="0">
           <span class="save-icon"></span>
-          <span>Save changes</span>
+          <span>{t('ui.common.saveChanges')}</span>
         </div>
       </div>
     {/if}
@@ -817,13 +824,13 @@
     {@const current = perms[permMenu.scope][permMenu.key]}
     <div class="menu-layer">
       <div class="menu-catch" onclick={() => (permMenu = null)} aria-hidden="true"></div>
-      <div class="perm-menu" bind:this={permPanel} style:top={permMenu.top} style:left={permMenu.left} style:visibility={permMenu.measured ? 'visible' : 'hidden'} role="menu" aria-label="Who can do this">
-        <span class="perm-menu-hint">{permMenu.allowInherit ? 'Who can send this' : 'Lowest role with this permission'}</span>
+      <div class="perm-menu" bind:this={permPanel} style:top={permMenu.top} style:left={permMenu.left} style:visibility={permMenu.measured ? 'visible' : 'hidden'} role="menu" aria-label={t('ui.groupSettingsDialog.whoCanDoThis')}>
+        <span class="perm-menu-hint">{t(permMenu.allowInherit ? 'ui.groupSettingsDialog.whoCanSend' : 'ui.groupSettingsDialog.lowestRole')}</span>
         {#each permOptions as o}
           {@const sel = o.key === current}
           <div class="perm-option" class:selected={sel} onclick={() => permMenu && setPerm(permMenu.scope, permMenu.key, o.key)} role="button" tabindex="0">
             <span class="perm-dot"><span class="perm-tick"></span></span>
-            <span class="perm-option-label">{o.label}</span>
+            <span class="perm-option-label">{t(o.label)}</span>
           </div>
         {/each}
       </div>

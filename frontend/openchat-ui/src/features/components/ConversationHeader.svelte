@@ -2,6 +2,7 @@
      (favourite / muted / @everyone muted), call buttons, extra action icons, the ⋯ menu and an optional side-panel toggle.
      The menu defaults to the standard actions per kind; "Leave …" items call onLeave, items without onSelect report via onMenu. -->
 <script lang="ts">
+  import { useT } from '../../lib/i18n';
   import { onMount } from 'svelte';
   import type { MenuItem } from '../../lib/types';
   import Avatar from '../../lib/components/Avatar.svelte';
@@ -10,18 +11,21 @@
   import Menu from '../../lib/components/Menu.svelte';
 
   const mask = (name: string) => `var(--icon-${name}) center/contain no-repeat`;
-  const FAVOURITE: MenuItem = { label: 'Add to favourites', mask: mask('heart'), variant: 'regular' };
-  const COPY_URL: MenuItem = { label: 'Copy URL', mask: mask('link'), variant: 'regular' };
-  const MUTE: MenuItem = { label: 'Mute notifications', mask: mask('bell-off'), variant: 'regular' };
-  const MUTE_EVERYONE: MenuItem = { label: 'Mute @everyone', mask: mask('at'), variant: 'regular' };
-  const GROUP_MENU: MenuItem[] = [FAVOURITE, COPY_URL, MUTE, MUTE_EVERYONE, { label: 'Leave group', mask: mask('exit'), variant: 'danger' }];
+  // built-in menu labels are resource keys; onMenu reports an item's label (the key, or a host item's own label)
+  const K = 'ui.conversationHeader.menu.';
+  const FAVOURITE: MenuItem = { label: K + 'addToFavourites', mask: mask('heart'), variant: 'regular' };
+  const COPY_URL: MenuItem = { label: K + 'copyUrl', mask: mask('link'), variant: 'regular' };
+  const MUTE: MenuItem = { label: K + 'muteNotifications', mask: mask('bell-off'), variant: 'regular' };
+  const MUTE_EVERYONE: MenuItem = { label: K + 'muteEveryone', mask: mask('at'), variant: 'regular' };
+  const GROUP_MENU: MenuItem[] = [FAVOURITE, COPY_URL, MUTE, MUTE_EVERYONE, { label: K + 'leaveGroup', mask: mask('exit'), variant: 'danger' }];
   const DM_MENU: MenuItem[] = [
     FAVOURITE,
     COPY_URL,
     MUTE,
-    { label: 'Block user', mask: mask('ban'), variant: 'danger' },
-    { label: 'Delete chat', mask: mask('trash'), variant: 'danger' },
+    { label: K + 'blockUser', mask: mask('ban'), variant: 'danger' },
+    { label: K + 'deleteChat', mask: mask('trash'), variant: 'danger' },
   ];
+  const LEAVE = new Set([K + 'leaveGroup', K + 'leaveChannel']);
 
   type Action = string | { icon: string; minVw?: number; maxVw?: number; onPress?: () => void };
 
@@ -31,12 +35,12 @@
     color?: 'violet' | 'amber' | 'teal' | 'blue';
     online?: boolean;
     verified?: boolean;
-    /** Overrides the second line ("Online", or "Public · 248 members" for groups and channels). */
+    /** Overrides the second line ("Online", or "Public · 248 members" for groups and channels): resource key (or literal text). */
     presence?: string;
     visibility?: 'Public' | 'Private';
     memberCount?: number;
     openDetails?: () => void;
-    /** Tooltip and accessible name for the name area. */
+    /** Tooltip and accessible name for the name area: resource key (or literal text). */
     titleHint?: string;
     /** Chevron after the name: the name opens the group itself. */
     titleChevron?: boolean;
@@ -49,6 +53,7 @@
     menuItems?: MenuItem[];
     showMenu?: boolean;
     showCall?: boolean;
+    /** Resource key (or literal text). */
     callLabel?: string;
     onCall?: () => void;
     onVoiceCall?: () => void;
@@ -80,7 +85,7 @@
     menuItems,
     showMenu = true,
     showCall = true,
-    callLabel = 'Video call',
+    callLabel = 'ui.conversationHeader.videoCall',
     onCall,
     onVoiceCall,
     actions = ['search'],
@@ -90,6 +95,7 @@
     onTogglePanel,
     panelOpen = false,
   }: Props = $props();
+  const t = useT();
 
   let menuOpen = $state(false);
   let menuBox = $state<HTMLDivElement>();
@@ -104,17 +110,18 @@
     const base =
       menuItems ??
       (channel
-        ? [{ label: 'Invite', mask: mask('invite') }, { ...FAVOURITE, label: isFavourite ? 'Remove from favourites' : 'Add to favourites' }, COPY_URL, { label: 'Leave channel', mask: mask('exit'), variant: 'danger' as const }]
+        ? [{ label: K + 'invite', mask: mask('invite') }, { ...FAVOURITE, label: K + (isFavourite ? 'removeFromFavourites' : 'addToFavourites') }, COPY_URL, { label: K + 'leaveChannel', mask: mask('exit'), variant: 'danger' as const }]
         : kind === 'group'
           ? GROUP_MENU
           : DM_MENU);
     return base.map((it) => ({
       ...it,
+      label: t(it.label),
       onSelect: () => {
         menuOpen = false;
         if (it.onSelect) it.onSelect();
         // dialogs are rendered by the host so their fixed layout isn't trapped in this column
-        else if (/^leave/i.test(it.label)) onLeave?.();
+        else if (LEAVE.has(it.label) || /^leave/i.test(it.label)) onLeave?.();
         else onMenu?.(it.label);
       },
     }));
@@ -146,7 +153,7 @@
 <svelte:window bind:innerWidth={vw} />
 
 <div class="header" data-oc-header>
-  <div class="identity" onclick={openDetails} role="button" tabindex="0" aria-label={titleHint || undefined} title={titleHint || undefined}>
+  <div class="identity" onclick={openDetails} role="button" tabindex="0" aria-label={titleHint ? t(titleHint) : undefined} title={titleHint ? t(titleHint) : undefined}>
     <div class="avatar"><Avatar size={42} shape={kind === 'group' ? 'squircle' : 'circle'} {color} online={online && user} /></div>
     <div class="names">
       <div class="line">
@@ -157,13 +164,13 @@
         {#if statusFav || statusMuted || statusEveryone}
           <span class="statuses">
             {#if statusFav}
-              <span class="status fav" title="In your favourites"></span>
+              <span class="status fav" title={t('ui.conversationHeader.inFavourites')}></span>
             {/if}
             {#if statusMuted}
-              <span class="status muted" title={statusMuted === '8h' ? 'Muted for 8 hours' : statusMuted === '1w' ? 'Muted for 1 week' : 'Notifications muted'}></span>
+              <span class="status muted" title={t(statusMuted === '8h' ? 'ui.conversationHeader.mutedFor8h' : statusMuted === '1w' ? 'ui.conversationHeader.mutedFor1w' : 'ui.conversationHeader.muted')}></span>
             {/if}
             {#if statusEveryone}
-              <span class="status everyone" title="@everyone mentions muted"></span>
+              <span class="status everyone" title={t('ui.conversationHeader.everyoneMuted')}></span>
             {/if}
           </span>
         {/if}
@@ -175,14 +182,14 @@
         {#if many && visibility}
           <span class="lock" class:private={privateChat}></span>
         {/if}
-        <span class="presence" class:online={online && user}>{presence || (many ? `${visibility ?? 'Public'} · ${memberCount} members` : online ? 'Online' : '')}</span>
+        <span class="presence" class:online={online && user}>{presence ? t(presence) : many ? t('ui.conversationHeader.membersLine', { visibility: visibility ?? 'Public', count: memberCount, n: memberCount }) : online ? t('ui.conversationHeader.online') : ''}</span>
       </div>
     </div>
   </div>
   <div class="actions">
     {#if showCall && !channel}
-      <div class="slot" title="Voice call"><IconButton variant="ghost" icon="phone" label="Voice call" onClick={onVoiceCall} /></div>
-      <div class="slot" data-oc-call title={callLabel}><IconButton variant="ghost" icon="video" label={callLabel} onClick={onCall} /></div>
+      <div class="slot" title={t('ui.conversationHeader.voiceCall')}><IconButton variant="ghost" icon="phone" label="ui.conversationHeader.voiceCall" onClick={onVoiceCall} /></div>
+      <div class="slot" data-oc-call title={t(callLabel)}><IconButton variant="ghost" icon="video" label={callLabel} onClick={onCall} /></div>
     {/if}
     {#each shownActions as action}
       <div class="slot"><IconButton variant="ghost" icon={action.icon} onClick={action.onPress} /></div>
@@ -205,10 +212,10 @@
         class="panel-toggle"
         class:open={panelOpen}
         onclick={onTogglePanel}
-        aria-label={panelOpen ? 'Hide side panel' : 'Show side panel'}
+        aria-label={t(panelOpen ? 'ui.conversationHeader.hidePanel' : 'ui.conversationHeader.showPanel')}
         role="button"
         tabindex="0"
-        title={panelOpen ? 'Hide side panel' : 'Show side panel'}
+        title={t(panelOpen ? 'ui.conversationHeader.hidePanel' : 'ui.conversationHeader.showPanel')}
         aria-pressed={panelOpen}
       >
         <span class="panel-icon"></span>

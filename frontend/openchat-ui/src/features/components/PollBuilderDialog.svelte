@@ -9,16 +9,18 @@
   import PollMessage from '../../lib/components/PollMessage.svelte';
   import SortableInputList from '../../lib/components/SortableInputList.svelte';
   import Toggle from '../../lib/components/Toggle.svelte';
+  import { useT } from '../../lib/i18n';
 
   const Q_MAX = 250;
   const A_MAX = 75;
+  // [label resource key, length in ms]
   const DURATIONS: [string, number][] = [
-    ['1 hour', 3600e3],
-    ['6 hours', 6 * 3600e3],
-    ['1 day', 86400e3],
-    ['3 days', 3 * 86400e3],
-    ['1 week', 7 * 86400e3],
-    ['1 month', 30 * 86400e3],
+    ['ui.pollBuilderDialog.durations.hour1', 3600e3],
+    ['ui.pollBuilderDialog.durations.hours6', 6 * 3600e3],
+    ['ui.pollBuilderDialog.durations.day1', 86400e3],
+    ['ui.pollBuilderDialog.durations.days3', 3 * 86400e3],
+    ['ui.pollBuilderDialog.durations.week1', 7 * 86400e3],
+    ['ui.pollBuilderDialog.durations.month1', 30 * 86400e3],
   ];
 
   export interface PollDraft {
@@ -41,6 +43,7 @@
   }
 
   let { z = 80, preview = true, onPublish, onClose }: Props = $props();
+  const t = useT();
 
   let question = $state('');
   let answers = $state<string[]>(['', '']);
@@ -65,27 +68,32 @@
   const end = $derived(new Date(Date.now() + DURATIONS[duration][1]));
   const reason = $derived(
     !question.trim()
-      ? 'Add a question'
+      ? t('ui.pollBuilderDialog.addQuestion')
       : filled.length < 2
-        ? 'Add at least two answers'
+        ? t('ui.pollBuilderDialog.addTwoAnswers')
         : hasDup
-          ? 'Answers must be different'
-          : `Ready · ends ${end.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}, ${end.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`,
+          ? t('ui.pollBuilderDialog.answersDifferent')
+          : t('ui.pollBuilderDialog.ready', {
+              date: end.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }),
+              time: end.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
+            }),
   );
 
   const settings = $derived([
-    { label: 'Public votes', help: 'Everyone can see who voted for what. Off: votes are anonymous.', on: publicVotes, toggle: () => (publicVotes = !publicVotes) },
-    { label: 'Allow multiple answers', help: 'People can pick more than one answer.', on: multiple, toggle: () => (multiple = !multiple) },
-    { label: 'Lock votes', help: "Once someone votes, they can't change it.", on: locked, toggle: () => (locked = !locked) },
-    { label: 'Hide results until it ends', help: 'Nobody sees the results until the poll closes.', on: hideResults, toggle: () => (hideResults = !hideResults) },
+    { label: 'ui.pollBuilderDialog.settings.publicVotes', help: 'ui.pollBuilderDialog.settings.publicVotesHelp', on: publicVotes, toggle: () => (publicVotes = !publicVotes) },
+    { label: 'ui.pollBuilderDialog.settings.multiple', help: 'ui.pollBuilderDialog.settings.multipleHelp', on: multiple, toggle: () => (multiple = !multiple) },
+    { label: 'ui.pollBuilderDialog.settings.lockVotes', help: 'ui.pollBuilderDialog.settings.lockVotesHelp', on: locked, toggle: () => (locked = !locked) },
+    { label: 'ui.pollBuilderDialog.settings.hideResults', help: 'ui.pollBuilderDialog.settings.hideResultsHelp', on: hideResults, toggle: () => (hideResults = !hideResults) },
   ]);
   const summary = $derived(
     [
-      publicVotes ? 'Public votes' : 'Anonymous',
-      multiple ? 'Multiple answers' : 'One answer',
-      locked ? 'Votes locked' : 'Can change vote',
-      hideResults ? 'Results hidden until it ends' : 'Results visible',
-    ].join(' · '),
+      publicVotes ? 'ui.pollBuilderDialog.summary.publicVotes' : 'ui.pollBuilderDialog.summary.anonymous',
+      multiple ? 'ui.pollBuilderDialog.summary.multiple' : 'ui.pollBuilderDialog.summary.single',
+      locked ? 'ui.pollBuilderDialog.summary.locked' : 'ui.pollBuilderDialog.summary.canChange',
+      hideResults ? 'ui.pollBuilderDialog.summary.resultsHidden' : 'ui.pollBuilderDialog.summary.resultsVisible',
+    ]
+      .map((k) => t(k))
+      .join(' · '),
   );
 
   // question field grows with its content (no fixed rows)
@@ -104,7 +112,7 @@
       publicVotes,
       canChange: !locked,
       hideResults,
-      endsIn: DURATIONS[duration][0],
+      endsIn: t(DURATIONS[duration][0]),
       endsAt: end.getTime(),
     });
   }
@@ -154,15 +162,15 @@
 
 <div class="layer" style:z-index={z}>
   <div class="scrim" onclick={requestClose} aria-hidden="true"></div>
-  <div class="dialog" class:wide bind:this={box} data-oc-managed="" tabindex="-1" role="dialog" aria-modal="true" aria-label="Create a poll" onkeydown={onKey}>
+  <div class="dialog" class:wide bind:this={box} data-oc-managed="" tabindex="-1" role="dialog" aria-modal="true" aria-label={t('ui.pollBuilderDialog.title')} onkeydown={onKey}>
     <div class="header">
-      <span class="heading">Create a poll</span>
-      <IconButton variant="ghost" icon="close" label="Close" onClick={requestClose} />
+      <span class="heading">{t('ui.pollBuilderDialog.title')}</span>
+      <IconButton variant="ghost" icon="close" label="ui.common.close" onClick={requestClose} />
     </div>
     <div class="content">
       <div class="form">
         <div class="section">
-          <label class="label" for="poll-question">Question</label>
+          <label class="label" for="poll-question">{t('ui.pollBuilderDialog.question')}</label>
           <div class="question">
             <textarea
               id="poll-question"
@@ -174,37 +182,37 @@
                 grow(e.currentTarget);
                 question = e.currentTarget.value.slice(0, Q_MAX);
               }}
-              placeholder="What do you want to ask?"
-              aria-label="Poll question"
+              placeholder={t('ui.pollBuilderDialog.questionPlaceholder')}
+              aria-label={t('ui.pollBuilderDialog.questionLabel')}
             ></textarea>
             {#if Q_MAX - question.length <= 40}<span class="left">{Q_MAX - question.length}</span>{/if}
           </div>
         </div>
         <div class="section">
-          <div class="label-row"><span class="label">Answers</span><span class="hint">{filled.length < 2 ? 'At least 2' : `${filled.length} of 10`}</span></div>
+          <div class="label-row"><span class="label">{t('ui.pollBuilderDialog.answers')}</span><span class="hint">{filled.length < 2 ? t('ui.pollBuilderDialog.atLeastTwo') : t('ui.pollBuilderDialog.answersCount', { count: filled.length, max: 10 })}</span></div>
           <div class="answers">
-            <SortableInputList values={answers} onChange={(vals) => (answers = [...vals, ''])} min={2} max={10} maxLength={A_MAX} itemLabel="Answer" label="Poll answers" />
+            <SortableInputList values={answers} onChange={(vals) => (answers = [...vals, ''])} min={2} max={10} maxLength={A_MAX} itemLabel="ui.pollBuilderDialog.answer" label="ui.pollBuilderDialog.answersLabel" />
           </div>
         </div>
         <div class="section durations-section">
-          <span class="label">Duration</span>
-          <div class="durations" role="radiogroup" aria-label="Poll duration">
+          <span class="label">{t('ui.pollBuilderDialog.duration')}</span>
+          <div class="durations" role="radiogroup" aria-label={t('ui.pollBuilderDialog.durationLabel')}>
             {#each DURATIONS as [label], i}
-              <span class="duration" class:on={i === duration} onclick={() => (duration = i)} role="radio" aria-checked={i === duration} tabindex="0">{label}</span>
+              <span class="duration" class:on={i === duration} onclick={() => (duration = i)} role="radio" aria-checked={i === duration} tabindex="0">{t(label)}</span>
             {/each}
           </div>
         </div>
         <div class="settings">
           <span class="settings-row" onclick={() => (settingsOpen = !settingsOpen)} role="button" tabindex="0" aria-expanded={settingsOpen}>
             <span class="gear"></span>
-            <span class="settings-text"><span class="settings-title">Settings</span><span class="settings-summary">{summary}</span></span>
+            <span class="settings-text"><span class="settings-title">{t('ui.common.settings')}</span><span class="settings-summary">{summary}</span></span>
             <span class="chevron" class:open={settingsOpen}></span>
           </span>
           {#if settingsOpen}
             <div class="settings-list">
               {#each settings as s}
                 <div class="setting">
-                  <span class="setting-text"><span class="setting-label">{s.label}</span><span class="setting-help">{s.help}</span></span>
+                  <span class="setting-text"><span class="setting-label">{t(s.label)}</span><span class="setting-help">{t(s.help)}</span></span>
                   <Toggle on={s.on} label="" onChange={s.toggle} />
                 </div>
               {/each}
@@ -214,32 +222,32 @@
       </div>
       {#if wide}
         <div class="preview">
-          <span class="preview-label">PREVIEW · HOW IT LOOKS IN THE CHAT</span>
+          <span class="preview-label">{t('ui.pollBuilderDialog.preview')}</span>
           <PollMessage
             side="sent"
-            question={question.trim() || 'Your question'}
-            options={(filled.length ? filled : ['Answer 1', 'Answer 2']).map((label) => ({ label, votes: 0 }))}
+            question={question.trim() || t('ui.pollBuilderDialog.yourQuestion')}
+            options={(filled.length ? filled : [1, 2].map((n) => t('ui.pollBuilderDialog.answerN', { n }))).map((label) => ({ label, votes: 0 }))}
             {multiple}
             {publicVotes}
             canChange={!locked}
-            endsIn={DURATIONS[duration][0]}
-            time="now"
+            endsIn={t(DURATIONS[duration][0])}
+            time={t('ui.pollBuilderDialog.now')}
           />
         </div>
       {/if}
     </div>
     <div class="footer">
       <span class="reason" class:ok>{reason}</span>
-      <span class="publish" class:ok onclick={publish} role="button" tabindex={ok ? 0 : -1} aria-disabled={!ok}><span class="publish-icon"></span>Publish</span>
+      <span class="publish" class:ok onclick={publish} role="button" tabindex={ok ? 0 : -1} aria-disabled={!ok}><span class="publish-icon"></span>{t('ui.pollBuilderDialog.publish')}</span>
     </div>
     {#if confirming}
       <div class="confirm-layer">
-        <div class="confirm" role="alertdialog" aria-label="Discard this poll?">
-          <span class="confirm-title">Discard this poll?</span>
-          <span class="confirm-text">Your question and answers will be lost.</span>
+        <div class="confirm" role="alertdialog" aria-label={t('ui.pollBuilderDialog.discardTitle')}>
+          <span class="confirm-title">{t('ui.pollBuilderDialog.discardTitle')}</span>
+          <span class="confirm-text">{t('ui.pollBuilderDialog.discardText')}</span>
           <div class="confirm-actions">
-            <Button label="Keep editing" variant="ghost" onClick={() => (confirming = false)} />
-            <Button label="Discard" variant="danger" onClick={() => onClose?.()} />
+            <Button label="ui.pollBuilderDialog.keepEditing" variant="ghost" onClick={() => (confirming = false)} />
+            <Button label="ui.pollBuilderDialog.discard" variant="danger" onClick={() => onClose?.()} />
           </div>
         </div>
       </div>

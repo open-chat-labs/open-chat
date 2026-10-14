@@ -1,6 +1,7 @@
 <!-- The chat list column: optional header (dms or community), search, All / Direct / Groups / Unread filter, a "Thread replies"
      entry, then rows grouped into sections (Pinned, Recent). Section order is fixed, never inherited from row order. -->
 <script lang="ts">
+  import { useT } from '../../lib/i18n';
   import type { ComponentProps } from 'svelte';
   import type { MenuItem } from '../../lib/types';
   import Badge from '../../lib/components/Badge.svelte';
@@ -12,6 +13,14 @@
   import Skeleton from '../../lib/components/Skeleton.svelte';
 
   const SECTION_ORDER = ['', 'Pinned', 'Recent'];
+  // sections and filters are identified by their English names (rows and logic use them); these keys are for display
+  const SECTION_KEYS: Record<string, string> = { Pinned: 'ui.chatListPanel.pinned', Recent: 'ui.chatListPanel.recent' };
+  const FILTER_KEYS: Record<string, string> = {
+    All: 'ui.chatListPanel.filters.all',
+    Direct: 'ui.chatListPanel.filters.direct',
+    Groups: 'ui.chatListPanel.filters.groups',
+    Unread: 'ui.chatListPanel.filters.unread',
+  };
 
   type RowProps = Omit<ComponentProps<typeof ChatRow>, 'onClick' | 'menuItems'>;
 
@@ -39,6 +48,7 @@
     onHeaderMenu?: (label: string) => void;
     onHeaderDetails?: () => void;
     onCreateGroup?: () => void;
+    /** Resource key (or literal text). */
     searchPlaceholder?: string;
     /** Live search; otherwise the field is a static chip. */
     searchable?: boolean;
@@ -66,7 +76,7 @@
     onHeaderMenu,
     onHeaderDetails,
     onCreateGroup,
-    searchPlaceholder = 'Search conversations',
+    searchPlaceholder = 'ui.chatListPanel.searchPlaceholder',
     searchable = false,
     showThreads = true,
     threadCount = 0,
@@ -77,6 +87,7 @@
     emptyPreset = 'no-conversations',
     loading = false,
   }: Props = $props();
+  const t = useT();
 
   // the user's pick sticks until the parent selects a different filter
   let filter = $derived(selectedFilter);
@@ -128,17 +139,17 @@
     </div>
   {/if}
   <div class="cell">
-    <Field placeholder={searchPlaceholder} value={query} onInput={searchable ? (e) => (query = e.currentTarget.value) : undefined} onClear={() => (query = '')} />
+    <Field placeholder={t(searchPlaceholder)} value={query} onInput={searchable ? (e) => (query = e.currentTarget.value) : undefined} onClear={() => (query = '')} />
   </div>
   {#if showTabs}
     <div class="cell">
-      <SegmentedTabs labels={filterLabels} selectedIndex={filter} dotIndexes={hasUnread ? [filterLabels.length - 1] : []} onSelect={(i) => (filter = i)} />
+      <SegmentedTabs labels={filterLabels.map((l) => FILTER_KEYS[l] ?? l)} selectedIndex={filter} dotIndexes={hasUnread ? [filterLabels.length - 1] : []} onSelect={(i) => (filter = i)} />
     </div>
   {/if}
   {#if showThreads && shown.length > 0}
     <div class="threads" onclick={threadsAction} role="button" tabindex="0">
       <span class="threads-slot"><span class="threads-icon"></span></span>
-      <span class="threads-label">Thread replies</span>
+      <span class="threads-label">{t('ui.chatListPanel.threadReplies')}</span>
       {#if threadCount > 0}
         <span class="threads-badge"><Badge label={String(threadCount)} variant="count" /></span>
       {/if}
@@ -152,7 +163,7 @@
         {#each groups as group, i}
           <div class="section" class:first={i === 0}>
             {#if group.label}
-              <div class="section-label">{group.label.toUpperCase()} <span class="section-count">{group.rows.length}</span></div>
+              <div class="section-label">{t(SECTION_KEYS[group.label] ?? group.label).toUpperCase()} <span class="section-count">{group.rows.length}</span></div>
             {/if}
             {#each group.rows as row}
               <div class="cell">

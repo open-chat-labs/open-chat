@@ -1,6 +1,7 @@
 <!-- List editor with drag handles. No "Add" button: a fresh empty row appears once every row is filled (up to `max`).
      Rows past `min` get ×; drag the handle (or Alt+↑/↓ on it) to reorder; duplicates are flagged. onChange(values) gets the non-empty values. -->
 <script lang="ts">
+  import { useT } from '../i18n';
   import { untrack } from 'svelte';
 
   interface Props {
@@ -8,14 +9,17 @@
     min?: number;
     max?: number;
     maxLength?: number;
-    /** Noun for one row: placeholders and labels ("Answer 1", "Remove answer 2"). */
+    /** Noun for one row, resource key (or literal text): placeholders and labels ("Answer 1", "Remove answer 2"). */
     itemLabel?: string;
+    /** Resource key (or literal text). */
     morePlaceholder?: string;
+    /** Resource key (or literal text). */
     label?: string;
     onChange?: (values: string[]) => void;
   }
 
-  let { values = [], min = 2, max = 10, maxLength = 50, itemLabel = 'Answer', morePlaceholder, label, onChange }: Props = $props();
+  let { values = [], min = 2, max = 10, maxLength = 50, itemLabel = 'ui.sortableInputList.answer', morePlaceholder, label, onChange }: Props = $props();
+  const t = useT();
 
   const clean = (a: string[]) => a.map((x) => x.trim()).filter(Boolean);
 
@@ -41,7 +45,8 @@
   const rows = $derived(pad(local ?? values));
   const lower = $derived(rows.map((x) => x.trim().toLowerCase()));
   const filled = $derived(rows.filter((x) => x.trim()).length);
-  const noun = $derived(itemLabel.toLowerCase());
+  const item = $derived(t(itemLabel));
+  const noun = $derived(item.toLowerCase());
 
   let drag = $state<{ i: number; dy: number; to: number; step: number } | null>(null);
   let list: HTMLDivElement;
@@ -97,7 +102,7 @@
   }
 </script>
 
-<div class="list" bind:this={list} role="list" aria-label={label ?? `${itemLabel}s`}>
+<div class="list" bind:this={list} role="list" aria-label={label ? t(label) : t('ui.sortableInputList.listLabel', { item })}>
   {#each rows as value, i}
     {@const trailing = i === rows.length - 1 && !value.trim() && i >= min}
     {@const dup = !!lower[i] && lower.indexOf(lower[i]) !== i}
@@ -115,8 +120,8 @@
         }}
         role="button"
         tabindex={trailing ? -1 : 0}
-        aria-label="Move {noun} {i + 1} (Alt + arrow keys)"
-        title="Drag to reorder"><span class="grip"></span></span
+        aria-label={t('ui.sortableInputList.move', { item: noun, n: i + 1 })}
+        title={t('ui.sortableInputList.dragToReorder')}><span class="grip"></span></span
       >
       <input
         {value}
@@ -127,13 +132,13 @@
         }}
         onblur={tidy}
         maxlength={maxLength}
-        placeholder={i < min ? `${itemLabel} ${i + 1}` : (morePlaceholder ?? `Another ${noun} (optional)`)}
-        aria-label="{itemLabel} {i + 1}"
+        placeholder={i < min ? t('ui.sortableInputList.itemN', { item, n: i + 1 }) : morePlaceholder ? t(morePlaceholder) : t('ui.sortableInputList.another', { item: noun })}
+        aria-label={t('ui.sortableInputList.itemN', { item, n: i + 1 })}
       />
-      {#if dup}<span class="dup-label">Duplicate</span>{/if}
+      {#if dup}<span class="dup-label">{t('ui.sortableInputList.duplicate')}</span>{/if}
       {#if maxLength - value.length <= 15}<span class="left">{maxLength - value.length}</span>{/if}
       {#if !trailing && filled > min && rows.length > min}
-        <span class="remove" onclick={() => commit(rows.filter((_, k) => k !== i))} role="button" tabindex="0" aria-label="Remove {noun} {i + 1}"><span class="remove-icon"></span></span>
+        <span class="remove" onclick={() => commit(rows.filter((_, k) => k !== i))} role="button" tabindex="0" aria-label={t('ui.sortableInputList.remove', { item: noun, n: i + 1 })}><span class="remove-icon"></span></span>
       {/if}
     </div>
   {/each}

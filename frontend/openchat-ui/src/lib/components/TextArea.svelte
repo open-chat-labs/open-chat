@@ -1,19 +1,24 @@
 <!-- Multi-line field that grows with its content. Optional character countdown (warns near the limit), help line,
      and an error state that swaps the help for errorText with an alert icon. -->
 <script lang="ts">
+  import { useT } from '../i18n';
   interface Props {
     value?: string;
+    /** Resource key (or literal text). */
     placeholder?: string;
+    /** Resource key (or literal text). */
     help?: string;
     maxLength?: number;
     /** px */
     minHeight?: number;
     error?: boolean;
+    /** Resource key (or literal text). */
     errorText?: string;
     onInput?: (e: Event & { currentTarget: HTMLTextAreaElement }) => void;
   }
 
   let { value = '', placeholder = '', help = '', maxLength, minHeight = 76, error = false, errorText = '', onInput }: Props = $props();
+  const t = useT();
 
   let area: HTMLTextAreaElement;
 
@@ -44,7 +49,7 @@
         onInput?.(e);
         fit();
       }}
-      {placeholder}
+      placeholder={t(placeholder)}
       maxlength={maxLength}
       rows={2}
     ></textarea>
@@ -57,7 +62,7 @@
       {#if error}
         <span class="alert"></span>
       {/if}
-      <span class="note-text">{note}</span>
+      <span class="note-text">{t(note)}</span>
     </div>
   {/if}
 </div>

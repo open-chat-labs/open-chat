@@ -6,6 +6,7 @@
   import AvatarStack from '../../lib/components/AvatarStack.svelte';
   import RoundIconButton from '../../lib/components/RoundIconButton.svelte';
   import SnapFloat from '../../lib/components/SnapFloat.svelte';
+  import { useT } from '../../lib/i18n';
 
   type Spot = 'tl' | 'tc' | 'tr' | 'ml' | 'mr' | 'bl' | 'bc' | 'br';
 
@@ -46,6 +47,7 @@
     onToggleMute,
     onLeave,
   }: Props = $props();
+  const t = useT();
 
   const mountedAt = Date.now();
   let now = $state(Date.now());
@@ -55,8 +57,8 @@
   });
 
   const timer = $derived.by(() => {
-    const t = Math.max(0, Math.floor((now - (start ?? mountedAt)) / 1000));
-    const h = Math.floor(t / 3600), m = Math.floor(t / 60) % 60, s = t % 60;
+    const secs = Math.max(0, Math.floor((now - (start ?? mountedAt)) / 1000));
+    const h = Math.floor(secs / 3600), m = Math.floor(secs / 60) % 60, s = secs % 60;
     const p = (n: number) => String(n).padStart(2, '0');
     return `${h ? `${h}:${p(m)}` : m}:${p(s)}`;
   });
@@ -64,7 +66,7 @@
 </script>
 
 <div class="layer">
-  <SnapFloat width={280} {position} {safeTop} {safeBottom} label="Ongoing call" {onSnap}>
+  <SnapFloat width={280} {position} {safeTop} {safeBottom} label={t('ui.miniCall.ongoing')} {onSnap}>
     <div class="card" data-screen-label="Mini call">
       {#if media === 'video'}
         <div
@@ -72,7 +74,7 @@
           onclick={() => onOpen?.()}
           role="button"
           tabindex="0"
-          aria-label="Back to call"
+          aria-label={t('ui.miniCall.backToCall')}
           onkeydown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
@@ -86,13 +88,13 @@
       {/if}
       <div class="status">
         <span class="pulse"><span class="phone"></span></span>
-        <span class="text"><span class="title">{title}</span><span class="meta">{media === 'video' ? 'Video' : 'Voice'} · {timer}</span></span>
+        <span class="text"><span class="title">{title}</span><span class="meta">{t('ui.miniCall.meta', { media, timer })}</span></span>
       </div>
       <div class="controls">
         <span class="faces"><AvatarStack people={faces ?? people.map((x) => x.grad).filter((g): g is string => !!g)} size={26} max={4} /></span>
-        <RoundIconButton icon={muted ? 'mic-off' : 'mic'} label={muted ? 'Unmute' : 'Mute'} variant={muted ? 'off' : 'default'} pressed={muted} onPress={() => onToggleMute?.()} />
-        <RoundIconButton icon="maximize" label="Back to call" onPress={() => onOpen?.()} />
-        <RoundIconButton icon="phone-off" label="Leave call" variant="danger" onPress={() => onLeave?.()} />
+        <RoundIconButton icon={muted ? 'mic-off' : 'mic'} label={t(muted ? 'ui.miniCall.unmute' : 'ui.miniCall.mute')} variant={muted ? 'off' : 'default'} pressed={muted} onPress={() => onToggleMute?.()} />
+        <RoundIconButton icon="maximize" label={t('ui.miniCall.backToCall')} onPress={() => onOpen?.()} />
+        <RoundIconButton icon="phone-off" label={t('ui.miniCall.leave')} variant="danger" onPress={() => onLeave?.()} />
       </div>
     </div>
   </SnapFloat>

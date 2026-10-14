@@ -1,12 +1,15 @@
 <!-- Header for workspace pages (wallet token page, Send, Receive, Swap): back · optional 28px token avatar · title · trailing slot.
      Trailing content (steps, balance) is passed as children. -->
 <script lang="ts">
+  import { useT } from '../i18n';
   import type { Snippet } from 'svelte';
   import IconButton from './IconButton.svelte';
   import TokenAvatar from './TokenAvatar.svelte';
 
   interface Props {
+    /** Resource key (or literal text). */
     title: string;
+    /** Resource key (or literal text) for the back button's accessible name. */
     backLabel?: string;
     avatarMark?: string;
     avatarGradient?: string;
@@ -14,7 +17,8 @@
     children?: Snippet;
   }
 
-  let { title, backLabel = 'Back', avatarMark, avatarGradient, onBack, children }: Props = $props();
+  let { title, backLabel = 'ui.common.back', avatarMark, avatarGradient, onBack, children }: Props = $props();
+  const t = useT();
 </script>
 
 <div class="page-header" class:has-back={!!onBack}>
@@ -24,7 +28,7 @@
   {#if avatarMark}
     <TokenAvatar size={28} mark={avatarMark} gradient={avatarGradient} />
   {/if}
-  <span class="title">{title}</span>
+  <span class="title">{t(title)}</span>
   {#if children}
     <div class="trailing">{@render children()}</div>
   {/if}

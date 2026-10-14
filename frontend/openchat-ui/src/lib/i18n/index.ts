@@ -19,14 +19,7 @@ export interface I18n {
 
 type Dict = { [k: string]: Dict | string };
 
-// TEMPORARY (i18n sweep in progress): per-batch key files are merged over en.json; folded into en.json when done.
-const parts = import.meta.glob<Dict>('./parts/*.json', { eager: true, import: 'default' });
-const deepMerge = (a: Dict, b: Dict): Dict => {
-  const out: Dict = { ...a };
-  for (const [k, v] of Object.entries(b)) out[k] = typeof v === 'object' && typeof out[k] === 'object' ? deepMerge(out[k] as Dict, v) : v;
-  return out;
-};
-const enAll = Object.values(parts).reduce(deepMerge, en as Dict);
+const enAll = en as Dict;
 
 /** The library's English strings, nested under `ui`. Hosts merge them into their own dictionaries. */
 export const messages = { en: enAll };
@@ -102,6 +95,22 @@ export function dictionaryTranslator(dict: Dict, locale = 'en'): I18n {
 }
 
 export const fallbackI18n: I18n = dictionaryTranslator(enAll);
+
+export type Segment = { text: string } | { slot: string };
+
+/**
+ * A message split around placeholders that the caller renders as markup (a bold name, a link …). The whole sentence
+ * stays one translatable message; each `slots` name becomes a marker param and comes back as `{ slot }` in order.
+ */
+export function segments(t: TranslateFn, key: string, slots: string[], params: I18nParams = {}): Segment[] {
+  if (!slots.length) return [{ text: t(key, params) }];
+  const marks: I18nParams = { ...params };
+  slots.forEach((name, i) => (marks[name] = `\uE000${i}\uE001`));
+  return t(key, marks)
+    .split(/\uE000(\d+)\uE001/)
+    .map((part, i) => (i % 2 ? { slot: slots[Number(part)] } : { text: part }))
+    .filter((seg) => !('text' in seg) || seg.text !== '');
+}
 
 const KEY = Symbol('openchat-ui-i18n');
 

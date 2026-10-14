@@ -3,6 +3,7 @@
      state: open | claimed | ended. gates: [{ label, met }]. Any unmet gate → "Requirements not met".
      Without onClaim it marks itself claimed. -->
 <script lang="ts">
+  import { useT } from '../i18n';
   import Confetti from './Confetti.svelte';
   import RequirementChip from './RequirementChip.svelte';
   import TokenCoin from './TokenCoin.svelte';
@@ -38,6 +39,7 @@
     lastInGroup = true,
     onClaim,
   }: Props = $props();
+  const t = useT();
 
   let claimedHere = $state(false);
   let burst = $state(0);
@@ -67,29 +69,29 @@
           size={80}
         ></TokenCoin>
       </span>
-      <span class="kicker">Prize</span>
-      <span class="headline">Win {token.symbol}</span>
-      <span class="facts">{winners} winners<span class="sep"></span><span class="ends" class:soon={endingSoon && !ended}><span class="clock"></span>{ended ? 'Ended' : `Ends in ${endsIn}`}</span></span>
+      <span class="kicker">{t('ui.prizeMessage.kicker')}</span>
+      <span class="headline">{t('ui.prizeMessage.headline', { symbol: token.symbol })}</span>
+      <span class="facts">{t('ui.prizeMessage.winners', { count: winners })}<span class="sep"></span><span class="ends" class:soon={endingSoon && !ended}><span class="clock"></span>{ended ? t('ui.prizeMessage.ended') : t('ui.prizeMessage.endsIn', { time: endsIn })}</span></span>
     </div>
     <div class="panel">
-      <div class="tally"><span>{taken >= winners ? 'All prizes claimed' : `${winners - taken} of ${winners} left`}</span><span class="mono">{taken}/{winners}</span></div>
+      <div class="tally"><span>{taken >= winners ? t('ui.prizeMessage.allClaimed') : t('ui.prizeMessage.left', { left: winners - taken, total: winners })}</span><span class="mono">{taken}/{winners}</span></div>
       <div class="track"><span class="fill" style:width="{Math.min(100, (taken / winners) * 100)}%"></span></div>
     </div>
     {#if gates.length > 0 && !ended}
       <div class="panel">
-        <span class="gates-title">TO CLAIM</span>
+        <span class="gates-title">{t('ui.prizeMessage.toClaim')}</span>
         <div class="gates" role="list">{#each gates as gate}<RequirementChip label={gate.label} state={gate.met ? 'met' : 'unmet'} />{/each}</div>
       </div>
     {/if}
     <div class="confetti-anchor" aria-hidden="true"><div class="confetti-box"><Confetti fire={burst} /></div></div>
     {#if won}
-      <span class="outcome won"><span class="outcome-icon check"></span>You won {wonAmount}</span>
+      <span class="outcome won"><span class="outcome-icon check"></span>{t('ui.prizeMessage.youWon', { amount: wonAmount })}</span>
     {:else if ended}
-      <span class="outcome"><span class="outcome-icon clock"></span>This prize has ended</span>
+      <span class="outcome"><span class="outcome-icon clock"></span>{t('ui.prizeMessage.hasEnded')}</span>
     {:else if blocked}
-      <span class="outcome" aria-disabled="true"><span class="outcome-icon lock"></span>Requirements not met</span>
+      <span class="outcome" aria-disabled="true"><span class="outcome-icon lock"></span>{t('ui.prizeMessage.requirementsNotMet')}</span>
     {:else}
-      <span class="claim" onclick={claim} role="button" tabindex="0"><span class="gift"></span>Claim prize</span>
+      <span class="claim" onclick={claim} role="button" tabindex="0"><span class="gift"></span>{t('ui.prizeMessage.claim')}</span>
     {/if}
   </div>
   {#if note}

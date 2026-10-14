@@ -1,6 +1,7 @@
 <!-- Row of square icon+label actions under a panel header (video, mute, search …). A tile with `on` is a live toggle:
      it shows its state rather than committing anything, so it reads accent-tinted when engaged. -->
 <script lang="ts">
+  import { useT } from '../i18n';
   const MASKS: Record<string, string> = {
     video: 'var(--icon-video) center/contain no-repeat',
     mute: 'var(--icon-bell-off) center/contain no-repeat',
@@ -12,12 +13,14 @@
     pin: 'var(--icon-pin) center/contain no-repeat',
   };
 
-  const LABELS: Record<string, string> = { video: 'Video call', mute: 'Mute', search: 'Search', members: 'Members', pin: 'Pinned', everyone: '@everyone' };
+  // built-in labels (resource keys); @everyone is the mention itself, not copy
+  const LABELS: Record<string, string> = { video: 'ui.tileButtons.videoCall', mute: 'ui.tileButtons.mute', search: 'ui.common.search', members: 'ui.tileButtons.members', pin: 'ui.tileButtons.pinned', everyone: '@everyone' };
 
   type TileKey = 'video' | 'mute' | 'search' | 'members' | 'everyone' | 'pin';
 
   interface Tile {
     icon: TileKey;
+    /** Resource key (or literal text). */
     label?: string;
     on?: boolean;
   }
@@ -31,6 +34,7 @@
   }
 
   let { tiles, handlers = {}, columns = 0 }: Props = $props();
+  const t = useT();
 
   const items = $derived(
     tiles.map((tile) => {
@@ -50,7 +54,7 @@
   {#each items as tile}
     <div class="tile" class:on={tile.on} onclick={tile.onPress} role="button" tabindex="0">
       <span class="icon" style:mask={tile.mask}></span>
-      <span class="label">{tile.label}</span>
+      <span class="label">{t(tile.label)}</span>
     </div>
   {/each}
 </div>

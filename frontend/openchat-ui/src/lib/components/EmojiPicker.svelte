@@ -2,13 +2,15 @@
      `selected` marks reactions you've already added (picking one again removes it — host decides). `onBack` shows a back arrow.
      Keys: arrows move in the grid, Enter picks, Esc → onBack (or onClose). -->
 <script lang="ts">
+  import { useT } from '../i18n';
   import { onMount } from 'svelte';
 
+  // labels and emoji names are resource keys, translated at render (and search) time
   const EMOJI: { label: string; items: [string, string][] }[] = [
-    { label: 'FREQUENTLY USED', items: [['😂', 'joy'], ['❤️', 'heart'], ['👍', 'thumbs up'], ['🔥', 'fire'], ['🙏', 'pray'], ['😍', 'heart eyes'], ['🎉', 'party'], ['😅', 'sweat smile']] },
-    { label: 'SMILEYS', items: [['😀', 'grin'], ['😃', 'smiley'], ['😄', 'smile'], ['😁', 'beaming'], ['😆', 'laughing'], ['🥹', 'holding back tears'], ['😊', 'blush'], ['😇', 'innocent'], ['🙂', 'slight smile'], ['😉', 'wink'], ['😌', 'relieved'], ['😋', 'yum'], ['😎', 'cool'], ['🤩', 'star struck'], ['🥳', 'partying'], ['😏', 'smirk'], ['😮', 'open mouth'], ['😢', 'cry'], ['😭', 'sob'], ['😤', 'triumph'], ['😡', 'rage'], ['🤯', 'mind blown'], ['🫡', 'salute'], ['🤔', 'thinking']] },
-    { label: 'PEOPLE', items: [['👋', 'wave'], ['👏', 'clap'], ['🙌', 'raised hands'], ['🤝', 'handshake'], ['💪', 'muscle'], ['👀', 'eyes'], ['✌️', 'victory'], ['🤞', 'fingers crossed']] },
-    { label: 'OBJECTS', items: [['🚀', 'rocket'], ['💎', 'gem'], ['🪙', 'coin'], ['📈', 'chart up'], ['🏆', 'trophy'], ['🎁', 'gift'], ['💡', 'idea'], ['✅', 'check']] },
+    { label: 'ui.emojiPicker.groups.frequentlyUsed', items: [['😂', 'ui.emojiPicker.emoji.joy'], ['❤️', 'ui.emojiPicker.emoji.heart'], ['👍', 'ui.emojiPicker.emoji.thumbsUp'], ['🔥', 'ui.emojiPicker.emoji.fire'], ['🙏', 'ui.emojiPicker.emoji.pray'], ['😍', 'ui.emojiPicker.emoji.heartEyes'], ['🎉', 'ui.emojiPicker.emoji.party'], ['😅', 'ui.emojiPicker.emoji.sweatSmile']] },
+    { label: 'ui.emojiPicker.groups.smileys', items: [['😀', 'ui.emojiPicker.emoji.grin'], ['😃', 'ui.emojiPicker.emoji.smiley'], ['😄', 'ui.emojiPicker.emoji.smile'], ['😁', 'ui.emojiPicker.emoji.beaming'], ['😆', 'ui.emojiPicker.emoji.laughing'], ['🥹', 'ui.emojiPicker.emoji.holdingBackTears'], ['😊', 'ui.emojiPicker.emoji.blush'], ['😇', 'ui.emojiPicker.emoji.innocent'], ['🙂', 'ui.emojiPicker.emoji.slightSmile'], ['😉', 'ui.emojiPicker.emoji.wink'], ['😌', 'ui.emojiPicker.emoji.relieved'], ['😋', 'ui.emojiPicker.emoji.yum'], ['😎', 'ui.emojiPicker.emoji.cool'], ['🤩', 'ui.emojiPicker.emoji.starStruck'], ['🥳', 'ui.emojiPicker.emoji.partying'], ['😏', 'ui.emojiPicker.emoji.smirk'], ['😮', 'ui.emojiPicker.emoji.openMouth'], ['😢', 'ui.emojiPicker.emoji.cry'], ['😭', 'ui.emojiPicker.emoji.sob'], ['😤', 'ui.emojiPicker.emoji.triumph'], ['😡', 'ui.emojiPicker.emoji.rage'], ['🤯', 'ui.emojiPicker.emoji.mindBlown'], ['🫡', 'ui.emojiPicker.emoji.salute'], ['🤔', 'ui.emojiPicker.emoji.thinking']] },
+    { label: 'ui.emojiPicker.groups.people', items: [['👋', 'ui.emojiPicker.emoji.wave'], ['👏', 'ui.emojiPicker.emoji.clap'], ['🙌', 'ui.emojiPicker.emoji.raisedHands'], ['🤝', 'ui.emojiPicker.emoji.handshake'], ['💪', 'ui.emojiPicker.emoji.muscle'], ['👀', 'ui.emojiPicker.emoji.eyes'], ['✌️', 'ui.emojiPicker.emoji.victory'], ['🤞', 'ui.emojiPicker.emoji.fingersCrossed']] },
+    { label: 'ui.emojiPicker.groups.objects', items: [['🚀', 'ui.emojiPicker.emoji.rocket'], ['💎', 'ui.emojiPicker.emoji.gem'], ['🪙', 'ui.emojiPicker.emoji.coin'], ['📈', 'ui.emojiPicker.emoji.chartUp'], ['🏆', 'ui.emojiPicker.emoji.trophy'], ['🎁', 'ui.emojiPicker.emoji.gift'], ['💡', 'ui.emojiPicker.emoji.idea'], ['✅', 'ui.emojiPicker.emoji.check']] },
   ];
   const ALL = EMOJI.flatMap((g) => g.items);
   const COLUMNS = 8;
@@ -24,6 +26,7 @@
   }
 
   let { recent = [], selected = [], autoFocus = true, onPick, onBack, onClose }: Props = $props();
+  const t = useT();
 
   let query = $state('');
   let search: HTMLInputElement;
@@ -35,10 +38,10 @@
 
   const groups = $derived.by(() => {
     const q = query.trim().toLowerCase();
-    const head = recent.length ? [{ label: 'RECENT', items: recent.map((c) => [c, (ALL.find((x) => x[0] === c) ?? [c, c])[1]] as [string, string]) }] : [];
+    const head = recent.length ? [{ label: 'ui.emojiPicker.groups.recent', items: recent.map((c) => [c, (ALL.find((x) => x[0] === c) ?? [c, c])[1]] as [string, string]) }] : [];
     return head
-      .concat(EMOJI.filter((g) => !head.length || g.label !== 'FREQUENTLY USED'))
-      .map((g) => ({ label: g.label, items: g.items.filter(([, name]) => !q || name.includes(q)) }))
+      .concat(EMOJI.filter((g) => !head.length || g.label !== 'ui.emojiPicker.groups.frequentlyUsed'))
+      .map((g) => ({ label: g.label, items: g.items.filter(([, name]) => !q || t(name).toLowerCase().includes(q)) }))
       .filter((g) => g.items.length);
   });
 
@@ -75,29 +78,29 @@
   }
 </script>
 
-<div class="picker" role="dialog" aria-label="Pick a reaction" onkeydown={onKey}>
+<div class="picker" role="dialog" aria-label={t('ui.emojiPicker.title')} onkeydown={onKey}>
   <div class="top">
     {#if onBack}
-      <span class="back" onclick={onBack} role="button" tabindex="0" aria-label="Back to actions" data-tip="Back"><span class="back-icon"></span></span>
+      <span class="back" onclick={onBack} role="button" tabindex="0" aria-label={t('ui.emojiPicker.backToActions')} data-tip={t('ui.common.back')}><span class="back-icon"></span></span>
     {/if}
     <div class="search">
       <span class="search-icon"></span>
-      <input bind:this={search} bind:value={query} placeholder="Search emoji" aria-label="Search emoji" />
+      <input bind:this={search} bind:value={query} placeholder={t('ui.emojiPicker.search')} aria-label={t('ui.emojiPicker.search')} />
     </div>
   </div>
   <div class="scroll" bind:this={grid}>
     {#each groups as group}
       <div class="group">
-        <span class="label">{group.label}</span>
+        <span class="label">{t(group.label)}</span>
         <div class="grid" role="grid">
           {#each group.items as [char, name]}
             {@const on = selected.includes(char)}
-            <span class="cell" class:on data-emoji="" onclick={() => onPick?.(char)} role="button" tabindex="0" aria-label={name} aria-pressed={on} title={name}>{char}</span>
+            <span class="cell" class:on data-emoji="" onclick={() => onPick?.(char)} role="button" tabindex="0" aria-label={t(name)} aria-pressed={on} title={t(name)}>{char}</span>
           {/each}
         </div>
       </div>
     {/each}
-    {#if !groups.length}<span class="none">No emoji match "{query}"</span>{/if}
+    {#if !groups.length}<span class="none">{t('ui.emojiPicker.noMatch', { query })}</span>{/if}
   </div>
 </div>
 

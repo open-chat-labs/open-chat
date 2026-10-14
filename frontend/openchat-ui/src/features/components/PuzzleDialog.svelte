@@ -12,18 +12,9 @@
     sol: [[0, 1, 2], [1, 2, 1], [0, 3, 1], [2, 8, 2], [3, 4, 2], [4, 5, 1], [4, 6, 1], [6, 7, 2], [7, 8, 1], [7, 10, 1], [3, 9, 1], [9, 10, 2], [10, 11, 1], [8, 11, 1]],
   };
   const TUT: Puzzle = { grid: 6, isl: [[1, 1, 3], [4, 1, 3], [1, 4, 2], [4, 4, 2]], sol: [[0, 1, 2], [0, 2, 1], [1, 3, 1], [2, 3, 1]] };
-  const STEPS = [
-    { t: 'Every number is a target', b: 'Each island needs exactly that many bridges. When it has them, it lights up.' },
-    { t: 'Tap two islands to connect', b: 'Tap an island, then another in the same row or column. Tap the pair again for a double bridge, a third time to clear it.' },
-    { t: 'Straight, no crossing', b: 'Bridges run straight, never cross each other, and at most two join any pair.' },
-    { t: 'Link them all', b: "Everything ends up in one connected group. Finish this little board, then start today's." },
-  ];
-  const RULES = [
-    'Each number is how many bridges touch that island.',
-    'Tap two islands in a row or column to connect them; tap again for a double.',
-    'Bridges run straight and never cross. At most two join a pair.',
-    'Everything ends up connected.',
-  ];
+  // tutorial steps and rules are resource keys, translated at render
+  const STEPS = ['target', 'connect', 'straight', 'linkAll'].map((k) => ({ t: `ui.puzzleDialog.tutorial.${k}.title`, b: `ui.puzzleDialog.tutorial.${k}.body` }));
+  const RULES = ['count', 'connect', 'straight', 'connected'].map((k) => `ui.puzzleDialog.rules.${k}`);
   const HINT_COST = 100;
   const HINTS = 3;
 
@@ -93,6 +84,7 @@
 </script>
 
 <script lang="ts">
+  import { useT } from '../../lib/i18n';
   import { onDestroy, onMount, untrack } from 'svelte';
 
   interface Saved {
@@ -148,6 +140,7 @@
     onShare,
     onClose,
   }: Props = $props();
+  const t = useT();
 
   let view = $state<'tutorial' | 'play' | 'solved'>(untrack(() => (solved ? 'solved' : tutorialSeen ? 'play' : 'tutorial')));
   let step = $state(0);
@@ -243,7 +236,7 @@
     const k = pairKey(current, i), cur = bridges[k] || 0, next = (cur + 1) % 3;
     if (cur === 0 && crossesAny(P.isl, bridges, current, i)) {
       select(null);
-      return flash(tut, "Bridges can't cross");
+      return flash(tut, 'ui.puzzleDialog.cantCross');
     }
     const updated = { ...bridges, [k]: next };
     if (!next) delete updated[k];
@@ -347,7 +340,7 @@
         style:width={line.width}
         style:height={line.height}
         onclick={() => remove(tut, line.k)}
-        title="Remove bridge">{#each { length: line.count } as _}<span class="bridge-line"></span>{/each}</span
+        title={t('ui.puzzleDialog.removeBridge')}>{#each { length: line.count } as _}<span class="bridge-line"></span>{/each}</span
       >{/each}
     {#each b.islands as island, i}<button
         class="island"
@@ -360,25 +353,25 @@
         style:width="{b.size}%"
         style:font-size={b.fontSize}
         onclick={() => press(tut, i)}
-        aria-label="Island {island.n}, {island.count} of {island.n} bridges{island.selected ? ', selected' : ''}">{island.n}</button
+        aria-label={t('ui.puzzleDialog.island', { n: island.n, count: island.count, selected: String(island.selected) })}>{island.n}</button
       >{/each}
-    {#if extra}<span class="toast ok"><span class="toast-check"></span>Nice, that's it</span>{/if}
-    {#if message}<span class="toast error" role="status">{message}</span>{/if}
+    {#if extra}<span class="toast ok"><span class="toast-check"></span>{t('ui.puzzleDialog.nice')}</span>{/if}
+    {#if message}<span class="toast error" role="status">{t(message)}</span>{/if}
   </div>
 {/snippet}
 
-<div class="layer" bind:this={layer} class:closing data-screen-label="Daily puzzle" role="dialog" aria-modal="true" aria-label="The Daily puzzle">
+<div class="layer" bind:this={layer} class:closing data-screen-label="Daily puzzle" role="dialog" aria-modal="true" aria-label={t('ui.puzzleDialog.label')}>
   <div class="veil" onclick={close} aria-hidden="true"></div>
   <div class="card" class:wide={view === 'play' && wide}>
     <div class="head">
       <span class="badge"><span class="badge-icon"></span></span>
       <span class="heading"
-        ><span class="title">{view === 'tutorial' ? 'How Bridges works' : 'The Daily #20734'}</span><span class="subtitle"
-          >{view === 'tutorial' ? `Step ${step + 1} of ${STEPS.length} · about 30 seconds` : 'Bridges · Easy'}</span
+        ><span class="title">{view === 'tutorial' ? t('ui.puzzleDialog.howTitle') : t('ui.puzzleDialog.dailyTitle', { number: '20734' })}</span><span class="subtitle"
+          >{view === 'tutorial' ? t('ui.puzzleDialog.tutorialStep', { step: step + 1, total: STEPS.length }) : t('ui.puzzleDialog.gameMeta')}</span
         ></span
       >
       {#if view === 'tutorial'}
-        <span class="skip" onclick={finishTutorial} role="button" tabindex="0">{tutorialSeen ? 'Back to puzzle' : 'Skip'}</span>
+        <span class="skip" onclick={finishTutorial} role="button" tabindex="0">{t(tutorialSeen ? 'ui.puzzleDialog.backToPuzzle' : 'ui.puzzleDialog.skip')}</span>
       {/if}
       {#if view === 'play'}
         <span
@@ -391,25 +384,25 @@
           }}
           role="button"
           tabindex="0"
-          title="How to play"
-          aria-label="How to play"><span class="head-glyph info"></span></span
+          title={t('ui.puzzleDialog.howToPlay')}
+          aria-label={t('ui.puzzleDialog.howToPlay')}><span class="head-glyph info"></span></span
         >
       {/if}
-      <span class="head-button" onclick={close} role="button" tabindex="0" title="Close" aria-label="Close"><span class="head-glyph cross"></span></span>
+      <span class="head-button" onclick={close} role="button" tabindex="0" title={t('ui.common.close')} aria-label={t('ui.common.close')}><span class="head-glyph cross"></span></span>
     </div>
 
     {#if view === 'tutorial'}
       <div class="tutorial-view">
         {@render boardView(tb, true, terr, tutDone)}
         <div class="step">
-          <span class="step-title">{STEPS[step].t}</span>
-          <span class="step-body">{STEPS[step].b}</span>
+          <span class="step-title">{t(STEPS[step].t)}</span>
+          <span class="step-body">{t(STEPS[step].b)}</span>
         </div>
         <div class="step-nav">
           <span class="dots" aria-hidden="true">{#each STEPS as _, i}<span class="dot" class:current={i === step} class:passed={i <= step}></span>{/each}</span>
-          {#if step > 0}<span class="nav-button" onclick={() => (step = Math.max(0, step - 1))} role="button" tabindex="0">Back</span>{/if}
+          {#if step > 0}<span class="nav-button" onclick={() => (step = Math.max(0, step - 1))} role="button" tabindex="0">{t('ui.common.back')}</span>{/if}
           <span class="nav-button primary" onclick={() => (step === STEPS.length - 1 ? finishTutorial() : step++)} role="button" tabindex="0"
-            >{step === STEPS.length - 1 ? (tutorialSeen ? 'Back to puzzle' : "Start today's puzzle") : 'Next'}</span
+            >{step === STEPS.length - 1 ? t(tutorialSeen ? 'ui.puzzleDialog.backToPuzzle' : 'ui.puzzleDialog.startToday') : t('ui.common.next')}</span
           >
         </div>
       </div>
@@ -418,36 +411,36 @@
     {#if view === 'play'}
       <div class="play-view">
         <div class="stats">
-          <span class="stat" title="Time"><span class="stat-icon" style:mask="var(--icon-timer) center/contain no-repeat"></span><span class="mono">{fmtT(elapsed)}</span></span>
-          <span class="stat" title="Hints used"><span class="stat-icon" style:mask="var(--icon-spark) center/contain no-repeat"></span><span>{hints} {hints === 1 ? 'hint' : 'hints'}</span></span>
-          <span class="stat streak" title="Puzzle streak"
-            ><span class="stat-icon" style:mask="var(--icon-flame) center/contain no-repeat"></span><span>{streak} {streak === 1 ? 'day' : 'days'}</span></span
+          <span class="stat" title={t('ui.puzzleDialog.time')}><span class="stat-icon" style:mask="var(--icon-timer) center/contain no-repeat"></span><span class="mono">{fmtT(elapsed)}</span></span>
+          <span class="stat" title={t('ui.puzzleDialog.hintsUsed')}><span class="stat-icon" style:mask="var(--icon-spark) center/contain no-repeat"></span><span>{t('ui.puzzleDialog.hintCount', { count: hints })}</span></span>
+          <span class="stat streak" title={t('ui.puzzleDialog.puzzleStreak')}
+            ><span class="stat-icon" style:mask="var(--icon-flame) center/contain no-repeat"></span><span>{t('ui.puzzleDialog.dayCount', { count: streak })}</span></span
           >
         </div>
         <div class="play-grid">
           {@render boardView(pb, false, err, false)}
           <div class="side">
             <div class="progress">
-              <span class="progress-head"><span>Islands complete</span><span class="mono soft">{pb.doneN} / {PUZZLE.isl.length}</span></span>
+              <span class="progress-head"><span>{t('ui.puzzleDialog.islandsComplete')}</span><span class="mono soft">{pb.doneN} / {PUZZLE.isl.length}</span></span>
               <span class="progress-track"><span class="progress-fill" style:width="{Math.round((pb.doneN / PUZZLE.isl.length) * 100)}%"></span></span>
             </div>
             {#if wide}
               <div class="rules">
-                <span class="rules-title">Rules</span>
-                {#each RULES as rule, i}<span class="rule"><span class="rule-n">{i + 1}</span>{rule}</span>{/each}
+                <span class="rules-title">{t('ui.puzzleDialog.rulesTitle')}</span>
+                {#each RULES as rule, i}<span class="rule"><span class="rule-n">{i + 1}</span>{t(rule)}</span>{/each}
               </div>
               <span class="grow"></span>
             {/if}
             <div class="actions">
               <span class="action" style:opacity={hist.length || Object.keys(br).length ? 1 : 0.45} onclick={undo} role="button" tabindex="0" aria-disabled={!hist.length}
-                ><span class="action-icon" style:mask="var(--icon-rotate-back) center/contain no-repeat"></span>Undo</span
+                ><span class="action-icon" style:mask="var(--icon-rotate-back) center/contain no-repeat"></span>{t('ui.common.undo')}</span
               >
               <span class="action" style:opacity={hist.length || Object.keys(br).length ? 1 : 0.45} onclick={reset} role="button" tabindex="0"
-                ><span class="action-icon" style:mask="var(--icon-refresh) center/contain no-repeat"></span>Reset</span
+                ><span class="action-icon" style:mask="var(--icon-refresh) center/contain no-repeat"></span>{t('ui.puzzleDialog.reset')}</span
               >
             </div>
             <span class="hint" style:opacity={canHint ? 1 : 0.45} onclick={hint} role="button" tabindex="0" aria-disabled={!canHint}
-              ><span class="hint-icon"></span>Use a hint<span class="hint-meta">{hints >= HINTS ? 'none left' : `${HINT_COST} CHIT · ${HINTS - hints} left`}</span></span
+              ><span class="hint-icon"></span>{t('ui.puzzleDialog.useHint')}<span class="hint-meta">{hints >= HINTS ? t('ui.puzzleDialog.noneLeft') : t('ui.puzzleDialog.hintCost', { cost: HINT_COST, left: HINTS - hints })}</span></span
             >
           </div>
         </div>
@@ -457,16 +450,16 @@
     {#if view === 'solved'}
       <div class="solved-view">
         <span class="trophy"><span class="trophy-icon"></span></span>
-        <span class="solved-heading"><span class="solved-title">Solved in {resultTime}</span><span class="solved-sub">The Daily #20734 · Bridges · Easy</span></span>
+        <span class="solved-heading"><span class="solved-title">{t('ui.puzzleDialog.solvedIn', { time: resultTime })}</span><span class="solved-sub">{t('ui.puzzleDialog.dailyTitle', { number: '20734' })} · {t('ui.puzzleDialog.gameMeta')}</span></span>
         <div class="results">
-          <span class="result"><span class="result-value">{resultTime}</span><span class="result-label">Time</span></span>
-          <span class="result"><span class="result-value">{solved && solvedHints != null ? solvedHints : hints}</span><span class="result-label">Hints</span></span>
-          <span class="result"><span class="result-value chit">{solved ? puzzleStreak : streak}</span><span class="result-label">Puzzle streak</span></span>
+          <span class="result"><span class="result-value">{resultTime}</span><span class="result-label">{t('ui.puzzleDialog.time')}</span></span>
+          <span class="result"><span class="result-value">{solved && solvedHints != null ? solvedHints : hints}</span><span class="result-label">{t('ui.puzzleDialog.hints')}</span></span>
+          <span class="result"><span class="result-value chit">{solved ? puzzleStreak : streak}</span><span class="result-label">{t('ui.puzzleDialog.puzzleStreak')}</span></span>
         </div>
         {#if !remind && !asked && answered === null}
           <div class="ask">
             <span class="ask-icon"><span class="bell"></span></span>
-            <span class="ask-text"><span class="ask-title">Remind me each day?</span><span class="ask-sub">A dot on CHIT when a new puzzle is out. Change it anytime.</span></span>
+            <span class="ask-text"><span class="ask-title">{t('ui.puzzleDialog.remindTitle')}</span><span class="ask-sub">{t('ui.puzzleDialog.remindSub')}</span></span>
             <span class="ask-buttons">
               <span
                 class="ask-no"
@@ -475,7 +468,7 @@
                   onRemind?.(false);
                 }}
                 role="button"
-                tabindex="0">Not now</span
+                tabindex="0">{t('ui.puzzleDialog.notNow')}</span
               >
               <span
                 class="ask-yes"
@@ -484,14 +477,14 @@
                   onRemind?.(true);
                 }}
                 role="button"
-                tabindex="0">Yes</span
+                tabindex="0">{t('ui.puzzleDialog.yes')}</span
               >
             </span>
           </div>
         {/if}
         {#if answered !== null}
           <span class="remind-note" role="status"
-            ><span class="remind-icon" class:on={answered}></span>{answered ? 'Reminders on. Turn them off in Profile → CHIT.' : "No reminders. You'll still find it in CHIT."}</span
+            ><span class="remind-icon" class:on={answered}></span>{t(answered ? 'ui.puzzleDialog.remindersOn' : 'ui.puzzleDialog.remindersOff')}</span
           >
         {/if}
         <div class="finish">
@@ -502,11 +495,11 @@
               close();
             }}
             role="button"
-            tabindex="0"><span class="share-icon"></span>Share to chat</span
+            tabindex="0"><span class="share-icon"></span>{t('ui.puzzleDialog.share')}</span
           >
-          <span class="finish-button" onclick={close} role="button" tabindex="0">Done</span>
+          <span class="finish-button" onclick={close} role="button" tabindex="0">{t('ui.common.done')}</span>
         </div>
-        <span class="next">Next puzzle in {countdown}</span>
+        <span class="next">{t('ui.puzzleDialog.nextIn', { countdown })}</span>
       </div>
     {/if}
   </div>

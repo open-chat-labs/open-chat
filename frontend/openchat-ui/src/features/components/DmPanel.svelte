@@ -1,6 +1,7 @@
 <!-- Side panel for a direct chat: cover (⋯ opens menuItems), big avatar and name (open the profile), Mute and Favourite pills,
      member-since / CHIT / about cards, the per-chat settings and Block. Mute and favourite stick locally until the parent changes them. -->
 <script lang="ts">
+  import { useT } from '../../lib/i18n';
   import type { ComponentProps } from 'svelte';
   import type { MenuItem } from '../../lib/types';
   import DetailSection from '../../lib/components/DetailSection.svelte';
@@ -11,9 +12,9 @@
   type MuteKey = '8h' | '1w' | 'always';
 
   const MUTE_SPANS: { key: MuteKey; label: string; tile: string }[] = [
-    { key: '8h', label: 'For 8 hours', tile: 'Muted · 8h' },
-    { key: '1w', label: 'For 1 week', tile: 'Muted · 1w' },
-    { key: 'always', label: 'Until I turn it back on', tile: 'Muted' },
+    { key: '8h', label: 'ui.mute.for8h', tile: 'ui.mute.muted8h' },
+    { key: '1w', label: 'ui.mute.for1w', tile: 'ui.mute.muted1w' },
+    { key: 'always', label: 'ui.mute.untilOn', tile: 'ui.mute.muted' },
   ];
   const GRADIENTS = {
     violet: 'linear-gradient(140deg,#ff5f9e,#6a2bff)',
@@ -75,6 +76,7 @@
     onOpenProfile,
     onBlock,
   }: Props = $props();
+  const t = useT();
 
   let isMuted = $derived(muted);
   let isFav = $derived(fav);
@@ -97,7 +99,7 @@
   );
   const muteOptions = $derived(
     isMuted
-      ? [{ label: 'Unmute notifications', key: null }, ...MUTE_SPANS.filter((o) => o.key !== isMuted).map((o) => ({ label: o.label, key: o.key }))]
+      ? [{ label: 'ui.mute.unmute', key: null }, ...MUTE_SPANS.filter((o) => o.key !== isMuted).map((o) => ({ label: o.label, key: o.key }))]
       : MUTE_SPANS.map((o) => ({ label: o.label, key: o.key })),
   );
 
@@ -123,18 +125,18 @@
     </div>
     <div class="body">
       <div class="identity">
-        <div class="avatar" style:background={GRADIENTS[color] ?? GRADIENTS.violet} onclick={() => onOpenProfile?.('profile')} aria-label="View profile" role="button" tabindex="0" title="View profile">
+        <div class="avatar" style:background={GRADIENTS[color] ?? GRADIENTS.violet} onclick={() => onOpenProfile?.('profile')} aria-label={t('ui.dmPanel.viewProfile')} role="button" tabindex="0" title={t('ui.dmPanel.viewProfile')}>
           {#if online}
             <span class="online"></span>
           {/if}
         </div>
-        <span class="name" onclick={() => onOpenProfile?.('profile')} aria-label="View profile" role="button" tabindex="0" title="View profile">{title}</span>
+        <span class="name" onclick={() => onOpenProfile?.('profile')} aria-label={t('ui.dmPanel.viewProfile')} role="button" tabindex="0" title={t('ui.dmPanel.viewProfile')}>{title}</span>
         {#if handle}
           <span class="handle">{handle}</span>
         {/if}
         <div class="pills">
-          <span class="pill mute" class:on={!!isMuted} onclick={openMuteMenu} aria-label={isMuted ? 'Change or end the mute' : 'Mute notifications'} role="button" tabindex="0" title={isMuted ? 'Change or end the mute' : 'Mute notifications'}>
-            <span class="pill-icon" style:mask="var(--icon-{isMuted ? 'bell-off' : 'bell'}) center/contain no-repeat"></span>{span ? span.tile : 'Mute'}
+          <span class="pill mute" class:on={!!isMuted} onclick={openMuteMenu} aria-label={t(isMuted ? 'ui.mute.change' : 'ui.mute.muteNotifications')} role="button" tabindex="0" title={t(isMuted ? 'ui.mute.change' : 'ui.mute.muteNotifications')}>
+            <span class="pill-icon" style:mask="var(--icon-{isMuted ? 'bell-off' : 'bell'}) center/contain no-repeat"></span>{t(span ? span.tile : 'ui.mute.mute')}
             <span class="pill-divider"></span><span class="caret"></span>
           </span>
           <span
@@ -148,37 +150,37 @@
             tabindex="0"
             aria-pressed={isFav}
           >
-            <span class="pill-icon heart"></span>{isFav ? 'Favourited' : 'Favourite'}
+            <span class="pill-icon heart"></span>{t(isFav ? 'ui.dmPanel.favourited' : 'ui.dmPanel.favourite')}
           </span>
         </div>
       </div>
       <div class="cards">
         <div class="pair">
-          <div class="cell"><DetailSection label="Member since" value={memberSince} /></div>
-          <div class="cell"><DetailSection label="CHIT earned" value={chit} highlight={true} /></div>
+          <div class="cell"><DetailSection label="ui.dmPanel.memberSince" value={memberSince} /></div>
+          <div class="cell"><DetailSection label="ui.dmPanel.chitEarned" value={chit} highlight={true} /></div>
         </div>
         {#if about}
-          <div class="cell"><DetailSection label="About" value={about} variant="prose" clamp={3} /></div>
+          <div class="cell"><DetailSection label="ui.dmPanel.about" value={about} variant="prose" clamp={3} /></div>
         {/if}
       </div>
     </div>
   </div>
 
   <div class="settings">
-    <span class="settings-title">This chat</span>
+    <span class="settings-title">{t('ui.dmPanel.thisChat')}</span>
     <div class="cell"><DmChatSettings peerName={title} {disappearOn} {disappearAfter} {readReceipts} {onDisappearChange} {onReadReceiptsChange} /></div>
   </div>
 
   <div class="footer">
-    <span class="block" onclick={() => onBlock?.()} role="button" tabindex="0"><span class="ban"></span>Block user</span>
+    <span class="block" onclick={() => onBlock?.()} role="button" tabindex="0"><span class="ban"></span>{t('ui.dmPanel.blockUser')}</span>
   </div>
 
   {#if muteMenu}
     <div class="backdrop mute-backdrop" onclick={() => (muteMenu = null)} aria-hidden="true"></div>
     <div class="mute-menu" style:top="{muteMenu.top}px" style:left="{muteMenu.left}px">
-      <span class="mute-title">{isMuted ? 'Muted' : 'Mute notifications for'}</span>
+      <span class="mute-title">{t(isMuted ? 'ui.mute.muted' : 'ui.mute.muteFor')}</span>
       {#each muteOptions as o}
-        <div class="mute-option" onclick={() => setMute(o.key)} role="button" tabindex="0">{o.label}</div>
+        <div class="mute-option" onclick={() => setMute(o.key)} role="button" tabindex="0">{t(o.label)}</div>
       {/each}
     </div>
   {/if}

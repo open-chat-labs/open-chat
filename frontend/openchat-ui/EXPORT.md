@@ -21,6 +21,32 @@ npm run check    # svelte-check (types)
 - `src/lib/behaviours/modal.ts` — `use:modal={onEscape}` for hand-built dialogs: Esc closes only the topmost dialog (shared stack with DialogShell).
 - `src/docs/` — the Component Library page: `Docs.svelte` (nav shell, scroll spy), `sections.ts` (section ids/titles per group), `groups/` (Foundations, General, Features, Api), `Section`/`Frame`, `meta.json` (props metadata for the API group), `samples.ts` (all demo data).
 
+## i18n
+Every piece of UI copy is a **resource key**: a plain string under the `ui.` namespace (`'ui.common.cancel'`,
+`'ui.chatBubble.replies'`). Components resolve keys through a translator the host provides; the library knows nothing
+about svelte-i18n, edit modes or how text is rendered.
+
+- `src/lib/i18n/en.json` holds the library's English, in ICU MessageFormat (`{name}`, `plural`, `select`), the
+  same syntax svelte-i18n uses. Without a host translator it is the fallback.
+- Props that take copy (`Button label`, `DialogShell title`, `placeholder` …) take a key. A string that isn't a key
+  renders as itself, so literal text still works (user data, prototypes).
+- `<Translate key="ui.common.save" />` renders just the text for a key, for use as child content.
+- Inside components: `const t = useT();` then `{t('ui.x.y', { count })}`.
+
+Wiring it into the app (svelte-i18n), once in the root component:
+```svelte
+<script lang="ts">
+  import { addMessages, _ } from 'svelte-i18n';
+  import { fromStore } from 'svelte/store';
+  import { setI18n, messages } from '@openchat/ui/src/lib';
+  addMessages('en', messages.en);               // library English, under `ui.*`; translators add ui.* to other locales
+  const format = fromStore(_);                  // reading format.current inside t() makes components re-render on locale change
+  setI18n({ t: (key, params) => format.current(key, { values: params }) });
+</script>
+```
+The docs page has a language switch (English · Keys · Pseudo): Keys shows every key, Pseudo accents and lengthens
+the text. Copy that stays plain English in either mode is hard-coded and needs a key.
+
 ## Conventions (same as the prototype)
 - Theme on the app root only: `data-mode="dark|light"` + `data-accent="pink|orange|blue|green"`. Components take no theme props.
 - Colours only through tokens. Callbacks: `onClick` activate · `onSelect(value)` pick · `onChange(value)` primary value · `onInput` text · `onClose` dismiss.

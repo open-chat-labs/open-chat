@@ -2,6 +2,7 @@
      Editing amount/tokens drops a live quote; slippage doesn't (min. received recomputes). Below 760px the quote panel
      stacks under the form. Pay offers only held tokens; Get offers anything swappable, yours first. -->
 <script lang="ts">
+  import { useT } from '../../lib/i18n';
   import { onDestroy } from 'svelte';
   import type { WalletToken } from '../../lib/types';
   import AmountCard from '../../lib/components/AmountCard.svelte';
@@ -39,6 +40,8 @@
   }
 
   let { tokens, token, onClose, onSwapped }: Props = $props();
+  // `t` is the receiving token below, so the translator is `tr`
+  const tr = useT();
 
   // swappable tokens, the ones you hold first
   const list = $derived(tokens.filter((t) => t.price > 0).sort((x, y) => Number(y.held > 0) - Number(x.held > 0)));
@@ -87,18 +90,18 @@
 
   // the real swap is 5 on-chain steps; grouped into the 3 phases people care about
   const subSteps = $derived([
-    'Get deposit account',
-    `Transfer ${amtIn} to ${dex.name}`,
-    `Notify ${dex.name} of the deposit`,
-    `Swap ${f?.symbol} for ${t?.symbol}`,
-    `Withdraw ${amtOut} from ${dex.name}`,
+    tr('ui.walletSwap.sub.deposit'),
+    tr('ui.walletSwap.sub.transfer', { amount: amtIn, dex: dex.name }),
+    tr('ui.walletSwap.sub.notify', { dex: dex.name }),
+    tr('ui.walletSwap.sub.swap', { from: f?.symbol, to: t?.symbol }),
+    tr('ui.walletSwap.sub.withdraw', { amount: amtOut, dex: dex.name }),
   ]);
   const phases = $derived(
     (
       [
-        [`Send to ${dex.name}`, [0, 1, 2]],
-        ['Swap', [3]],
-        ['Return to your wallet', [4]],
+        [tr('ui.walletSwap.phase.send', { dex: dex.name }), [0, 1, 2]],
+        [tr('ui.walletSwap.phase.swap'), [3]],
+        [tr('ui.walletSwap.phase.return'), [4]],
       ] as [string, number[]][]
     ).map(([title, ks]) => ({
       title,
@@ -110,11 +113,11 @@
     const impact = `${impactPct < 0.01 ? '<0.01' : impactPct.toFixed(2)}%`;
     const impactInk = impactPct > 3 ? 'var(--status-danger,#F5493D)' : impactPct > 1 ? '#FFB03D' : '#2EE6A8';
     const all = [
-      { k: 'Via', v: dex.name, ink: 'var(--ink,#ECECF1)' },
-      { k: 'Price impact', v: impact, ink: impactInk },
-      { k: 'Min. received', v: `${fmt(out * (1 - slip / 100), t.dp)} ${t.symbol}`, ink: 'var(--ink,#ECECF1)' },
-      { k: 'DEX fee', v: dex.fee, ink: 'var(--ink,#ECECF1)' },
-      { k: 'Network fees', v: '~$0.01', ink: 'var(--ink,#ECECF1)' },
+      { k: tr('ui.walletSwap.row.via'), v: dex.name, ink: 'var(--ink,#ECECF1)' },
+      { k: tr('ui.walletSwap.row.priceImpact'), v: impact, ink: impactInk },
+      { k: tr('ui.walletSwap.row.minReceived'), v: `${fmt(out * (1 - slip / 100), t.dp)} ${t.symbol}`, ink: 'var(--ink,#ECECF1)' },
+      { k: tr('ui.walletSwap.row.dexFee'), v: dex.fee, ink: 'var(--ink,#ECECF1)' },
+      { k: tr('ui.walletSwap.row.networkFees'), v: '~$0.01', ink: 'var(--ink,#ECECF1)' },
     ];
     return all.map((r, i) => ({ ...r, rule: (i < all.length - 1 ? 'bottom' : 'none') as 'bottom' | 'none' }));
   });
@@ -213,23 +216,23 @@
 
 <div class="swap" bind:clientWidth={width} data-screen-label="Wallet swap">
   {#if f && t}
-    <PageHeader title="Swap {f.symbol}" onBack={() => onClose?.()} avatarMark={f.mark} avatarGradient={f.grad}
-      ><StepIndicator steps={['Details', 'Quote', 'Swap']} current={stepIdx} complete={done} compact={narrow} /></PageHeader
+    <PageHeader title={tr('ui.walletSwap.titleToken', { symbol: f.symbol })} onBack={() => onClose?.()} avatarMark={f.mark} avatarGradient={f.grad}
+      ><StepIndicator steps={[tr('ui.walletSwap.step.details'), tr('ui.walletSwap.step.quote'), tr('ui.walletSwap.step.swap')]} current={stepIdx} complete={done} compact={narrow} /></PageHeader
     >
     <div class="scroll">
       <div class="layout" class:narrow>
         <div class="form" class:busy class:locked={busy || stage === 'quoting'}>
           <div class="cards">
             <AmountCard
-              label="YOU PAY"
-              meta="Balance {fmt(f.held, f.dp)} {f.symbol}"
+              label={tr('ui.walletSwap.youPay')}
+              meta={tr('ui.walletSwap.balance', { amount: fmt(f.held, f.dp), symbol: f.symbol })}
               value={amt}
               onChange={(e) => {
                 drop();
                 amt = e.currentTarget.value.replace(/[^0-9.,]/g, '');
               }}
               tone={over ? 'danger' : 'default'}
-              note={over ? 'More than your balance' : `≈ ${usd(usdIn)}`}
+              note={over ? tr('ui.walletSwap.overBalance') : `≈ ${usd(usdIn)}`}
               symbol={f.symbol}
               mark={f.mark}
               gradient={f.grad}
@@ -237,12 +240,12 @@
               onQuickSelect={chooseAmount}
               position="top"
             />
-            <div class="flip-row"><span class="flip" onclick={flip} tabindex="0" aria-label="Flip" role="button" title="Flip"><span class="flip-icon"></span></span></div>
+            <div class="flip-row"><span class="flip" onclick={flip} tabindex="0" aria-label={tr('ui.walletSwap.flip')} role="button" title={tr('ui.walletSwap.flip')}><span class="flip-icon"></span></span></div>
             <AmountCard
-              label={quoted ? 'YOU GET (QUOTED)' : 'YOU GET'}
-              meta="Balance {fmt(t.held, t.dp)} {t.symbol}"
+              label={tr(quoted ? 'ui.walletSwap.youGetQuoted' : 'ui.walletSwap.youGet')}
+              meta={tr('ui.walletSwap.balance', { amount: fmt(t.held, t.dp), symbol: t.symbol })}
               value={showOut ? (n > 0 ? fmt(out, t.dp) : '0') : ''}
-              note={showOut ? `≈ ${usd(out * t.price)}` : 'Get a quote to see this'}
+              note={showOut ? `≈ ${usd(out * t.price)}` : tr('ui.walletSwap.getQuoteToSee')}
               symbol={t.symbol}
               mark={t.mark}
               gradient={t.grad}
@@ -252,38 +255,38 @@
           </div>
           <div class="slippage">
             <div class="slippage-head">
-              <ListSectionLabel label="MAX SLIPPAGE" /><span class="slippage-note"
-                >How far the price can move against you before the swap runs. If it moves more, the swap is cancelled and your tokens stay put.</span
+              <ListSectionLabel label={tr('ui.walletSwap.maxSlippageLabel')} /><span class="slippage-note"
+                >{tr('ui.walletSwap.slippageNote')}</span
               >
             </div>
             <SegmentedTabs labels={SLIPS.map((v) => `${v}%`)} selectedIndex={slipIdx} onSelect={(i) => (slipIdx = i)} dotOnLast={false} />
           </div>
-          {#if quoted}<Banner tone="info" text="Changing the amount or tokens drops this quote." actionLabel="" />{/if}
+          {#if quoted}<Banner tone="info" text={tr('ui.walletSwap.quoteDropNote')} actionLabel="" />{/if}
         </div>
         <div class="side">
           <SideCard minHeight={narrow ? '0' : '560px'}>
             {#if stage === 'form'}
-              <ListSectionLabel label="QUOTE" />
+              <ListSectionLabel label={tr('ui.walletSwap.quoteLabel')} />
               <div class="placeholder">
                 <span class="placeholder-badge"><span class="placeholder-icon"></span></span>
-                <span class="placeholder-title">No quote yet</span>
-                <span class="placeholder-body">Get a quote to see the rate, fees and the minimum you'll receive. Quotes last 30 seconds.</span>
+                <span class="placeholder-title">{tr('ui.walletSwap.noQuote')}</span>
+                <span class="placeholder-body">{tr('ui.walletSwap.noQuoteBody')}</span>
               </div>
               <span class="cta" class:disabled={!ok} onclick={getQuote} tabindex="0" role="button" aria-disabled={!ok}
-                >{ok ? 'Get quote' : over ? `Not enough ${f.symbol}` : 'Enter an amount'}</span
+                >{ok ? tr('ui.walletSwap.getQuote') : over ? tr('ui.walletSwap.notEnough', { symbol: f.symbol }) : tr('ui.walletSwap.enterAmount')}</span
               >
             {:else if stage === 'quoting'}
-              <ListSectionLabel label="QUOTE" />
+              <ListSectionLabel label={tr('ui.walletSwap.quoteLabel')} />
               <div class="finding">
-                <Spinner size={36} label="Finding the best rate" />
-                <span class="finding-title">Finding the best rate…</span>
-                <span class="finding-note">Checking KongSwap, ICPSwap and Sonic</span>
+                <Spinner size={36} label={tr('ui.walletSwap.findingRate')} />
+                <span class="finding-title">{tr('ui.walletSwap.findingRateEllipsis')}</span>
+                <span class="finding-note">{tr('ui.walletSwap.checkingDexes', { a: DEX[0].name, b: DEX[1].name, c: DEX[2].name })}</span>
               </div>
             {:else if quoted}
               <div class="quote-head">
-                <ListSectionLabel label="QUOTE" /><span class="grow"></span><Pill
+                <ListSectionLabel label={tr('ui.walletSwap.quoteLabel')} /><span class="grow"></span><Pill
                   size="md"
-                  label={left > 0 ? `0:${String(left).padStart(2, '0')}` : 'Expired'}
+                  label={left > 0 ? `0:${String(left).padStart(2, '0')}` : tr('ui.walletSwap.expired')}
                   tone={left > 10 ? 'neutral' : left > 0 ? 'warning' : 'danger'}
                 />
               </div>
@@ -292,27 +295,27 @@
                 <span class="rate">1 {f.symbol} ≈ {fmt(f.price / t.price, t.symbol === 'BTC' ? 8 : 4)} {t.symbol}</span>
               </div>
               <div class="rows">
-                <DetailRow label="Max slippage" value="{slip}%" rule="bottom" />
+                <DetailRow label={tr('ui.walletSwap.row.maxSlippage')} value="{slip}%" rule="bottom" />
                 {#each rows as r}<DetailRow label={r.k} value={r.v} valueColor={r.ink} rule={r.rule} />{/each}
               </div>
               <span class="spacer"></span>
               {#if left > 0}
-                <span class="cta" onclick={swap} tabindex="0" role="button">Swap</span>
+                <span class="cta" onclick={swap} tabindex="0" role="button">{tr('ui.walletSwap.swapCta')}</span>
               {:else}
-                <span class="cta requote" onclick={getQuote} tabindex="0" role="button"><span class="requote-icon"></span>Quote expired · get a new one</span>
+                <span class="cta requote" onclick={getQuote} tabindex="0" role="button"><span class="requote-icon"></span>{tr('ui.walletSwap.requote')}</span>
               {/if}
             {:else}
-              <ListSectionLabel label={done ? 'SWAP COMPLETE' : 'SWAPPING'} />
+              <ListSectionLabel label={tr(done ? 'ui.walletSwap.completeLabel' : 'ui.walletSwap.swappingLabel')} />
               <div class="progress-head">
-                <span class="progress-title">{done ? `Swapped ${amtIn} for ${amtOut}` : `${amtIn} → ${amtOut}`}</span>
-                <span class="progress-note">{done ? "It's in your wallet now." : `Step ${Math.min(prog + 1, 5)} of 5 · ${subSteps[Math.min(prog, 4)]}`}</span>
+                <span class="progress-title">{done ? tr('ui.walletSwap.swapped', { amountIn: amtIn, amountOut: amtOut }) : `${amtIn} → ${amtOut}`}</span>
+                <span class="progress-note">{done ? tr('ui.walletSwap.inWallet') : tr('ui.walletSwap.stepOf', { step: Math.min(prog + 1, 5), total: 5, label: subSteps[Math.min(prog, 4)] })}</span>
               </div>
               <ProgressTimeline {phases} density="compact" collapseDone={true} />
               <span class="spacer"></span>
               {#if done}
-                <span class="cta" onclick={finish} role="button" tabindex="0">Done</span>
+                <span class="cta" onclick={finish} role="button" tabindex="0">{tr('ui.common.done')}</span>
               {:else}
-                <span class="leave-note">You can leave this page. We'll notify you when it's done.</span>
+                <span class="leave-note">{tr('ui.walletSwap.leaveNote')}</span>
               {/if}
             {/if}
           </SideCard>
@@ -320,18 +323,18 @@
       </div>
     </div>
     {#if pick}
-      <DialogShell title={pick === 'from' ? 'Pay with which token?' : 'Get which token?'} onClose={() => (pick = null)}
+      <DialogShell title={tr(pick === 'from' ? 'ui.walletSwap.pickFrom' : 'ui.walletSwap.pickTo')} onClose={() => (pick = null)}
         ><TokenPicker
           tokens={pickTokens}
-          placeholder={pick === 'from' ? 'Search your tokens' : 'Search tokens'}
-          ownedHeading="IN YOUR WALLET"
-          otherHeading={pick === 'from' ? '' : 'ALL TOKENS'}
+          placeholder={tr(pick === 'from' ? 'ui.walletSwap.searchYourTokens' : 'ui.walletSwap.searchTokens')}
+          ownedHeading="ui.tokenPicker.ownedHeading"
+          otherHeading={pick === 'from' ? '' : 'ui.tokenPicker.otherHeading'}
           onSelect={picked}
         /></DialogShell
       >
     {/if}
   {:else}
-    <PageHeader title="Swap" onBack={() => onClose?.()} />
+    <PageHeader title={tr('ui.walletSwap.title')} onBack={() => onClose?.()} />
   {/if}
 </div>
 

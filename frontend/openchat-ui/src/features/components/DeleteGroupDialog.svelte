@@ -3,6 +3,7 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
   import { modal } from '../../lib/behaviours/modal';
+  import { useT } from '../../lib/i18n';
 
   interface Props {
     groupName: string;
@@ -12,6 +13,11 @@
   }
 
   let { groupName, noun = 'group', onConfirm, onCancel }: Props = $props();
+  const t = useT();
+
+  // the question styles the name inside the sentence: translate it whole, then split around the name
+  const MARK = '\u0000';
+  const question = $derived(t('ui.deleteGroupDialog.question', { noun, name: MARK }).split(MARK));
 
   let typed = $state('');
   const armed = $derived(typed.trim().toLowerCase() === groupName.trim().toLowerCase());
@@ -37,29 +43,29 @@
     <div class="head">
       <span class="badge"><span class="badge-icon"></span></span>
       <div class="titles">
-        <span class="title">Delete a {noun}</span>
+        <span class="title">{t('ui.deleteGroupDialog.title', { noun })}</span>
         <span class="subtitle">{groupName}</span>
       </div>
-      <span class="close" onclick={() => close(onCancel)} role="button" tabindex="0"><span class="close-icon"></span></span>
+      <span class="close" onclick={() => close(onCancel)} role="button" tabindex="0" aria-label={t('ui.common.close')}><span class="close-icon"></span></span>
     </div>
 
     <div class="body">
       <div class="copy">
-        <span class="question">Delete the <span class="name">{groupName}</span> chat {noun}</span>
-        <span class="text">Do you definitely want to delete this {noun}? All of your chat history will be lost, and this cannot be undone.</span>
+        <span class="question">{question[0]}<span class="name">{groupName}</span>{question[1] ?? ''}</span>
+        <span class="text">{t('ui.deleteGroupDialog.warning', { noun })}</span>
       </div>
       <div class="field">
         <input class:armed bind:value={typed} placeholder={groupName} />
-        <span class="hint">Type in the name of the {noun} to confirm delete</span>
+        <span class="hint">{t('ui.deleteGroupDialog.typeName', { noun })}</span>
       </div>
     </div>
 
     <div class="foot">
-      <span class="cancel" onclick={() => close(onCancel)} role="button" tabindex="0">Keep my {noun}</span>
+      <span class="cancel" onclick={() => close(onCancel)} role="button" tabindex="0">{t('ui.deleteGroupDialog.keep', { noun })}</span>
       <span class="grow"></span>
       <div class="delete" class:armed onclick={() => armed && close(onConfirm)} role="button" tabindex="0" aria-disabled={!armed}>
         <span class="delete-icon"></span>
-        <span>Delete</span>
+        <span>{t('ui.common.delete')}</span>
       </div>
     </div>
   </div>

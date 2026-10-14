@@ -8,11 +8,14 @@
   type ComposerProps = ComponentProps<typeof MessageComposer>;
 
   interface Props {
+    /** Resource key (or literal text), passed to the composer. */
     placeholder?: string;
     typingNames?: string[];
     ringColor?: string;
+    /** Resource key (or literal text). */
     bannerText?: string;
     bannerTone?: 'info' | 'warning' | 'danger' | 'offline';
+    /** Resource key (or literal text). */
     bannerAction?: string;
     onSend?: ComposerProps['onSend'];
     onAttach?: ComposerProps['onAttach'];

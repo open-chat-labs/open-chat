@@ -1,8 +1,10 @@
 <!-- Gate / requirement chip. state: met (green check) | unmet (amber lock) | neutral (no verdict yet, e.g. guest). size sm 22 | md 26. -->
 <script lang="ts">
+  import { useT } from '../i18n';
   type State = 'met' | 'unmet' | 'neutral';
 
   interface Props {
+    /** Resource key (or literal text). */
     label: string;
     state?: State;
     /** Shorthand for state: true → met, false → unmet. */
@@ -13,14 +15,14 @@
   }
 
   let { label, state, met, icon, size = 'md' }: Props = $props();
+  const t = useT();
 
   const resolved: State = $derived(state ?? (met === true ? 'met' : met === false ? 'unmet' : 'neutral'));
   const glyph = $derived(resolved === 'met' ? 'check' : resolved === 'unmet' ? 'lock' : icon || 'shield');
-  const verdict = $derived(resolved === 'met' ? ' — met' : resolved === 'unmet' ? ' — not met' : '');
 </script>
 
-<span class="chip {resolved}" class:sm={size === 'sm'} role="listitem" aria-label={label + verdict}>
-  <span class="glyph" style:mask="var(--icon-{glyph}) center/contain no-repeat" aria-hidden="true"></span>{label}
+<span class="chip {resolved}" class:sm={size === 'sm'} role="listitem" aria-label={t('ui.requirementChip.status', { label: t(label), state: resolved })}>
+  <span class="glyph" style:mask="var(--icon-{glyph}) center/contain no-repeat" aria-hidden="true"></span>{t(label)}
 </span>
 
 <style>

@@ -1,21 +1,27 @@
 <script lang="ts">
+  import { useT } from '../i18n';
+
   interface Props {
+    /** Resource key (or literal text). */
     label: string;
+    /** Resource key (or literal text). */
     hint?: string;
+    /** Resource key or literal text (counts and names render as they are). */
     value?: string;
     highlight?: boolean;
     onClick?: () => void;
   }
 
   let { label, hint = '', value = '', highlight = false, onClick }: Props = $props();
+  const t = useT();
 </script>
 
 <div class="nav-row" onclick={onClick} role="button" tabindex="0">
   <div class="text">
-    <span class="label">{label}</span>
-    {#if hint}<span class="hint">{hint}</span>{/if}
+    <span class="label">{t(label)}</span>
+    {#if hint}<span class="hint">{t(hint)}</span>{/if}
   </div>
-  {#if value}<span class="value" class:highlight>{value}</span>{/if}
+  {#if value}<span class="value" class:highlight>{t(value)}</span>{/if}
   <span class="chevron"></span>
 </div>
 

@@ -10,6 +10,7 @@
   import PanelCover from '../../lib/components/PanelCover.svelte';
   import TileButtons from '../../lib/components/TileButtons.svelte';
   import Toggle from '../../lib/components/Toggle.svelte';
+  import { useT } from '../../lib/i18n';
 
   const GRADIENTS = {
     violet: 'linear-gradient(140deg,#ff5f9e,#6a2bff)',
@@ -22,6 +23,7 @@
   type TileProps = ComponentProps<typeof TileButtons>;
 
   interface Detail {
+    /** Resource key (or literal text). */
     label: string;
     value: string;
     variant?: 'value' | 'prose';
@@ -32,7 +34,9 @@
   }
 
   interface SettingToggle {
+    /** Resource key (or literal text). A title containing "disappearing" grows the duration picker. */
     title: string;
+    /** Resource key (or literal text). */
     hint: string;
     on: boolean;
     onChange?: (on: boolean) => void;
@@ -44,6 +48,7 @@
     handle?: string;
     /** Groups: "created by <bylineName>". */
     bylineName?: string;
+    /** Resource key (or literal text) before the byline name. */
     bylinePrefix?: string;
     verified?: boolean;
     online?: boolean;
@@ -60,8 +65,9 @@
     disappearOn?: boolean;
     disappearAfter?: string;
     showFooter?: boolean;
-    /** Secondary footer action (e.g. Report); empty hides it. */
+    /** Resource key (or literal text) for the secondary footer action (e.g. Report); empty hides it. */
     footerLabel?: string;
+    /** Resource key (or literal text). */
     dangerLabel?: string;
     onFooter?: () => void;
     onDanger?: () => void;
@@ -72,7 +78,7 @@
     title,
     handle = '',
     bylineName = '',
-    bylinePrefix = 'created by',
+    bylinePrefix = 'ui.infoPanel.createdBy',
     verified = false,
     online = false,
     color = 'violet',
@@ -88,10 +94,11 @@
     disappearAfter = '12 hours',
     showFooter = true,
     footerLabel = '',
-    dangerLabel = 'Block user',
+    dangerLabel = 'ui.infoPanel.blockUser',
     onFooter,
     onDanger,
   }: Props = $props();
+  const t = useT();
 
   let dmOn = $derived(disappearOn);
   let dmAfter = $derived(disappearAfter);
@@ -104,10 +111,10 @@
             ...row,
             disappearing: true,
             on: dmOn,
-            hint: dmOn ? `Messages older than ${dmAfter} are deleted automatically.` : 'Messages are kept until someone deletes them.',
+            hint: dmOn ? t('ui.infoPanel.disappearOnHint', { after: dmAfter }) : t('ui.infoPanel.disappearOffHint'),
             onChange: (next: boolean) => (dmOn = next),
           }
-        : { ...row, disappearing: false },
+        : { ...row, hint: t(row.hint), disappearing: false },
     ),
   );
 </script>
@@ -134,7 +141,7 @@
         <span class="handle">{handle}</span>
       {/if}
       {#if bylineName}
-        <span class="byline">{bylinePrefix} <a href="#top">{bylineName}</a></span>
+        <span class="byline">{t(bylinePrefix)} <a href="#top">{bylineName}</a></span>
       {/if}
     </div>
     <div class="tiles">
@@ -146,24 +153,24 @@
     <div class="details">
       {#each details as item}
         <div class="detail" class:wide={item.wide}>
-          <DetailSection label={item.label} value={item.value} variant={item.variant ?? 'value'} dot={item.dot ?? false} highlight={item.highlight ?? false} />
+          <DetailSection label={t(item.label)} value={item.value} variant={item.variant ?? 'value'} dot={item.dot ?? false} highlight={item.highlight ?? false} />
         </div>
       {/each}
     </div>
     {#if rows.length > 0}
       <div class="settings">
-        <span class="settings-title">CHAT SETTINGS</span>
+        <span class="settings-title">{t('ui.infoPanel.chatSettings')}</span>
         <div class="settings-list">
           {#each rows as row}
             <div class="setting">
               <div class="setting-text">
-                <span class="setting-title">{row.title}</span>
+                <span class="setting-title">{t(row.title)}</span>
                 <span class="setting-hint">{row.hint}</span>
               </div>
               <div class="setting-toggle"><Toggle on={row.on} onChange={row.onChange} /></div>
             </div>
             {#if row.disappearing && dmOn}
-              <DurationChips value={dmAfter} title="Disappearing messages timeout" hint="How long a message survives before it is deleted for everyone." onChange={(d) => (dmAfter = d)} />
+              <DurationChips value={dmAfter} title={t('ui.infoPanel.disappearTimeout')} hint={t('ui.infoPanel.disappearTimeoutHint')} onChange={(d) => (dmAfter = d)} />
             {/if}
           {/each}
         </div>

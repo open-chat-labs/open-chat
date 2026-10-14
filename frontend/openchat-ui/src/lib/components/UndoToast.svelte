@@ -1,6 +1,7 @@
 <!-- Toast with an optional action (Undo) and dismiss ×. Animates in when shown and out when `shown` turns false.
      tone="success" + size="lg": the prominent confirmation used after wallet sends. icon: undo | hide | trash | check | none. -->
 <script lang="ts">
+  import { useT } from '../i18n';
   import { onDestroy, untrack } from 'svelte';
 
   const ICONS = {
@@ -12,10 +13,12 @@
   const LEAVE_MS = 190;
 
   interface Props {
+    /** Resource key (or literal text). */
     message: string;
     tone?: 'neutral' | 'success';
     size?: 'md' | 'lg';
     shown?: boolean;
+    /** Resource key (or literal text). */
     actionLabel?: string;
     icon?: keyof typeof ICONS | 'none';
     /** Shows the action button. */
@@ -24,7 +27,8 @@
     onClose?: () => void;
   }
 
-  let { message, tone = 'neutral', size = 'md', shown = true, actionLabel = 'Undo', icon = 'undo', onAction, onClose }: Props = $props();
+  let { message, tone = 'neutral', size = 'md', shown = true, actionLabel = 'ui.common.undo', icon = 'undo', onAction, onClose }: Props = $props();
+  const t = useT();
 
   // the toast outlives its own `shown` by one animation so it can leave gracefully
   let leaving = $state(false);
@@ -54,12 +58,12 @@
     {#if icon !== 'none' && ICONS[icon]}
       <span class="badge"><span class="icon" style:mask={ICONS[icon]}></span></span>
     {/if}
-    <span class="message">{message}</span>
+    <span class="message">{t(message)}</span>
     {#if onAction}
-      <span class="action" onclick={onAction} role="button" tabindex="0">{actionLabel}</span>
+      <span class="action" onclick={onAction} role="button" tabindex="0">{t(actionLabel)}</span>
     {/if}
     {#if onClose}
-      <span class="close" onclick={onClose} role="button" tabindex="0" aria-label="Dismiss" title="Dismiss">
+      <span class="close" onclick={onClose} role="button" tabindex="0" aria-label={t('ui.common.dismiss')} title={t('ui.common.dismiss')}>
         <span class="close-icon"></span>
       </span>
     {/if}

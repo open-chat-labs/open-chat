@@ -4,15 +4,10 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
   import { modal } from '../../lib/behaviours/modal';
+  import { useT } from '../../lib/i18n';
 
-  const STEPS = [
-    'Freeze the existing group',
-    'Create a new community with the same name as the group',
-    'Add a public channel to the community with the same name as the group',
-    'Add all members of the group as members of the community',
-    'Copy the full message history from the group into the channel',
-    'Delete the existing group and inform its members that it has been converted',
-  ];
+  // resource keys, translated at render
+  const STEPS = ['freeze', 'createCommunity', 'addChannel', 'addMembers', 'copyHistory', 'deleteGroup'].map((k) => 'ui.convertToCommunityDialog.steps.' + k);
 
   interface Props {
     groupName: string;
@@ -24,6 +19,11 @@
   }
 
   let { groupName, step = 'confirm', onConfirm, onCancel, onFinish, onGoTo }: Props = $props();
+  const t = useT();
+  // sentences that wrap the group name in its own span: translate whole, split around the name (\n = line break)
+  const around = (key: string) => t(key, { name: '\u0000' }).split('\u0000').map((part) => part.split('\n'));
+  const headline = $derived(around('ui.convertToCommunityDialog.headline'));
+  const doneHeadline = $derived(around('ui.convertToCommunityDialog.doneHeadline'));
 
   // confirming shows the done step until the parent sends a new step
   let current = $derived(step);
@@ -48,13 +48,15 @@
   }
 </script>
 
+{#snippet lines(parts: string[])}{#each parts as part, i}{#if i}<br />{/if}{part}{/each}{/snippet}
+
 <div class="layer" class:closing role="dialog" aria-modal="true" use:modal={() => close(onCancel)}>
   <div class="veil" onclick={() => close(onCancel)} aria-hidden="true"></div>
   <div class="card">
     <div class="head">
       <span class="badge"><span class="badge-icon community"></span></span>
       <div class="titles">
-        <span class="title">Convert to community</span>
+        <span class="title">{t('ui.convertToCommunityDialog.title')}</span>
         <span class="subtitle">{groupName}</span>
       </div>
       <span class="icon-button" onclick={() => close(onCancel)} role="button" tabindex="0"><span class="close-icon"></span></span>
@@ -64,37 +66,37 @@
       {#if current !== 'done'}
         <div class="stack">
           <div class="copy">
-            <span class="headline">Convert <span class="accent">{groupName}</span><br />into a community</span>
-            <span class="lead">We take care of the whole conversion for you — the group keeps its name, members and history.</span>
+            <span class="headline">{@render lines(headline[0])}<span class="accent">{groupName}</span>{@render lines(headline[1] ?? [])}</span>
+            <span class="lead">{t('ui.convertToCommunityDialog.lead')}</span>
           </div>
 
           <div class="cards">
             <div class="notice warn">
-              <div class="notice-head"><span class="notice-icon"></span><span class="notice-title">This is irreversible</span></div>
-              <span class="notice-text">Converting a group into a community cannot be undone. Make sure you are okay with this before proceeding.</span>
+              <div class="notice-head"><span class="notice-icon"></span><span class="notice-title">{t('ui.convertToCommunityDialog.irreversibleTitle')}</span></div>
+              <span class="notice-text">{t('ui.convertToCommunityDialog.irreversibleText')}</span>
             </div>
 
             <div class="steps">
-              <span class="steps-label">CONVERSION WILL DO THE FOLLOWING</span>
+              <span class="steps-label">{t('ui.convertToCommunityDialog.stepsLabel')}</span>
               <div class="step-list">
                 {#each STEPS as label}
-                  <div class="step"><span class="step-check"></span><span class="step-label">{label}</span></div>
+                  <div class="step"><span class="step-check"></span><span class="step-label">{t(label)}</span></div>
                 {/each}
               </div>
             </div>
           </div>
 
-          <span class="patience">This might take a few minutes depending on the size of the group, so please be patient.</span>
+          <span class="patience">{t('ui.convertToCommunityDialog.patience')}</span>
         </div>
       {:else}
         <div class="stack">
           <div class="copy">
-            <span class="headline"><span class="accent">{groupName}</span> successfully converted into a community!</span>
-            <span class="lead">Your group is now available as a community, and you may start adding more channels and more members.</span>
+            <span class="headline">{@render lines(doneHeadline[0])}<span class="accent">{groupName}</span>{@render lines(doneHeadline[1] ?? [])}</span>
+            <span class="lead">{t('ui.convertToCommunityDialog.doneLead')}</span>
           </div>
           <div class="notice tip">
-            <div class="notice-head"><span class="notice-icon"></span><span class="notice-title">Consolidate your other groups</span></div>
-            <span class="notice-text">If you have more groups you'd like to bring together, you can import them into any community you own as channels.</span>
+            <div class="notice-head"><span class="notice-icon"></span><span class="notice-title">{t('ui.convertToCommunityDialog.consolidateTitle')}</span></div>
+            <span class="notice-text">{t('ui.convertToCommunityDialog.consolidateText')}</span>
           </div>
         </div>
       {/if}
@@ -102,17 +104,17 @@
 
     <div class="foot">
       {#if current !== 'done'}
-        <span class="text-button" onclick={() => close(onCancel)} role="button" tabindex="0">Cancel</span>
+        <span class="text-button" onclick={() => close(onCancel)} role="button" tabindex="0">{t('ui.common.cancel')}</span>
         <span class="grow"></span>
         <div class="primary" onclick={confirm} role="button" tabindex="0">
           <span class="primary-icon community"></span>
-          <span>Convert to community</span>
+          <span>{t('ui.convertToCommunityDialog.title')}</span>
         </div>
       {:else}
-        <span class="text-button" onclick={() => close(onFinish ?? onCancel)} role="button" tabindex="0">Finish</span>
+        <span class="text-button" onclick={() => close(onFinish ?? onCancel)} role="button" tabindex="0">{t('ui.convertToCommunityDialog.finish')}</span>
         <span class="grow"></span>
         <div class="primary" onclick={() => close(onGoTo ?? onFinish ?? onCancel)} role="button" tabindex="0">
-          <span>Go to the community</span>
+          <span>{t('ui.convertToCommunityDialog.goTo')}</span>
           <span class="primary-icon arrow"></span>
         </div>
       {/if}

@@ -1,15 +1,19 @@
 <!-- Switch, optionally with a label and help line (then it fills the row). Flips itself on click and reports onChange;
      a parent that changes `on` takes control back (e.g. a cancelled PIN flow). -->
 <script lang="ts">
+  import { useT } from '../i18n';
   interface Props {
     on: boolean;
+    /** Resource key (or literal text). */
     label?: string;
+    /** Resource key (or literal text). */
     help?: string;
     disabled?: boolean;
     onChange?: (on: boolean) => void;
   }
 
   let { on, label = '', help = '', disabled = false, onChange }: Props = $props();
+  const t = useT();
 
   let checked = $derived(on);
 
@@ -23,9 +27,9 @@
 <div class="toggle" class:labelled={!!label}>
   {#if label}
     <div class="text">
-      <span class="label">{label}</span>
+      <span class="label">{t(label)}</span>
       {#if help}
-        <span class="help">{help}</span>
+        <span class="help">{t(help)}</span>
       {/if}
     </div>
   {/if}
@@ -36,7 +40,7 @@
     onclick={toggle}
     role="switch"
     aria-checked={checked}
-    aria-label={label || undefined}
+    aria-label={label ? t(label) : undefined}
     aria-disabled={disabled || undefined}
     tabindex="0"
   >

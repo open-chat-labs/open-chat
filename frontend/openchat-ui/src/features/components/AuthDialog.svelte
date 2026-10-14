@@ -3,15 +3,17 @@
      Sign-up is a form: username (live availability check), optional recovery email, optional referrer, then Continue.
      Picking a method waits for its approval (simulated here) before onDone(method). Esc closes unless `inline`. -->
 <script lang="ts">
+  import { useT } from '../../lib/i18n';
   import { onMount } from 'svelte';
 
   type Method = 'passkey' | 'ii' | 'eth' | 'sol' | 'nfid';
 
   const OTHERS: { key: Exclude<Method, 'passkey'>; name: string; short?: string; loginOnly?: boolean; wait: string }[] = [
-    { key: 'ii', name: 'Internet Identity', short: 'Internet ID', wait: 'Finish in the Internet Identity window' },
-    { key: 'eth', name: 'Ethereum', wait: 'Approve the signature request in your wallet' },
-    { key: 'sol', name: 'Solana', wait: 'Approve the signature request in your wallet' },
-    { key: 'nfid', name: 'NFID (Legacy)', short: 'NFID', loginOnly: true, wait: 'Finish in the NFID window' },
+    // names are product names (or keys, where they carry copy); wait lines are keys
+    { key: 'ii', name: 'Internet Identity', short: 'Internet ID', wait: 'ui.authDialog.waitIi' },
+    { key: 'eth', name: 'Ethereum', wait: 'ui.authDialog.waitWallet' },
+    { key: 'sol', name: 'Solana', wait: 'ui.authDialog.waitWallet' },
+    { key: 'nfid', name: 'ui.authDialog.nfidLegacy', short: 'NFID', loginOnly: true, wait: 'ui.authDialog.waitNfid' },
   ];
   const WAIT_MS = 1600;
   const CHECK_MS = 450;
@@ -28,7 +30,7 @@
     variant?: 'stack' | 'grid' | 'split';
     /** Render in place instead of as a modal. */
     inline?: boolean;
-    /** Subtitle, e.g. why sign-in is needed. */
+    /** Subtitle, e.g. why sign-in is needed. Resource key (or literal text). */
     reason?: string;
     /** People a new user can name as their referrer (searched by name or handle). */
     referrers?: Person[];
@@ -40,6 +42,7 @@
   }
 
   let { kind = 'login', variant = 'grid', inline = false, reason = '', referrers = [], checkUsername = () => true, onClose, onDone }: Props = $props();
+  const t = useT();
 
   // switching between sign-in and sign-up sticks until the host changes `kind`
   let mode = $derived(kind);
@@ -56,20 +59,20 @@
 
   const signup = $derived(mode === 'signup');
   const view = $derived(signup && step === 'methods' ? 'form' : step);
-  const verb = $derived(signup ? 'Continue with ' : 'Sign in with ');
+  const withMethod = (name: string) => t(signup ? 'ui.authDialog.continueWith' : 'ui.authDialog.signInWith', { name: t(name) });
   const wellFormed = $derived(/^[A-Za-z0-9_]{5,20}$/.test(username));
   const known = $derived(wellFormed && checked?.name === username.toLowerCase() ? checked : null);
   const taken = $derived(!!known && !known.free);
   const free = $derived(!!known && known.free);
   const badChars = $derived(!!username && /[^A-Za-z0-9_]/.test(username));
-  const userMsg = $derived(badChars ? 'Only letters, numbers and underscores' : username && username.length < 5 ? 'At least 5 characters' : '');
+  const userMsg = $derived(badChars ? t('ui.authDialog.onlyLetters') : username && username.length < 5 ? t('ui.authDialog.atLeast5') : '');
   const emailOk = $derived(/^\S+@\S+\.\S+$/.test(email));
   const results = $derived.by(() => {
     const q = refQuery.trim().toLowerCase();
     return q ? referrers.filter((p) => p.name.toLowerCase().includes(q) || p.handle.includes(q)).slice(0, 4) : [];
   });
   const waitText = $derived(
-    !waiting ? '' : waiting === 'passkey' ? (signup ? 'Create the passkey when your browser asks' : 'Choose your passkey when your browser asks') : OTHERS.find((o) => o.key === waiting)!.wait,
+    !waiting ? '' : t(waiting === 'passkey' ? (signup ? 'ui.authDialog.waitPasskeyCreate' : 'ui.authDialog.waitPasskeyChoose') : OTHERS.find((o) => o.key === waiting)!.wait),
   );
   const others = $derived(OTHERS.filter((o) => !(signup && o.loginOnly)));
 
@@ -122,8 +125,8 @@
       <div class="brand">
         <img class="brand-logo" src="assets/openchat-logo.svg" alt="" width="56" height="56" />
         <div class="brand-copy">
-          <span class="brand-title">Fully featured. Fully yours.</span>
-          <span class="brand-sub">A decentralised messenger, owned by the people who use it. No phone number needed.</span>
+          <span class="brand-title">{t('ui.authDialog.brandTitle')}</span>
+          <span class="brand-sub">{t('ui.authDialog.brandSub')}</span>
         </div>
       </div>
     {/if}
@@ -131,8 +134,8 @@
       <div class="head">
         {#if variant !== 'split'}<img class="logo" src="assets/openchat-logo.svg" alt="" width="48" height="48" />{/if}
         <div class="head-text">
-          <h2 id="oc-auth-title">{signup ? 'Create your account' : 'Sign in to OpenChat'}</h2>
-          <span class="sub">{reason || 'Fully featured. Fully secure.'}</span>
+          <h2 id="oc-auth-title">{t(signup ? 'ui.authDialog.createAccountTitle' : 'ui.authDialog.signInTitle')}</h2>
+          <span class="sub">{t(reason || 'ui.authDialog.defaultReason')}</span>
         </div>
         {#if step === 'sent'}
           <button
@@ -142,19 +145,19 @@
               step = 'methods';
               waiting = null;
             }}
-            aria-label="Back"><span class="head-icon back"></span></button
+            aria-label={t('ui.common.back')}><span class="head-icon back"></span></button
           >
         {/if}
-        <button class="head-button" onclick={close} aria-label="Close"><span class="head-icon close"></span></button>
+        <button class="head-button" onclick={close} aria-label={t('ui.common.close')}><span class="head-icon close"></span></button>
       </div>
 
       {#if view === 'methods'}
         <div class="methods">
           <button class="passkey" style:opacity={waiting && waiting !== 'passkey' ? 0.45 : 1} onclick={() => pick('passkey')} disabled={!!waiting}
-            ><span class="method-icon" style:mask="var(--icon-passkey) center/contain no-repeat"></span><span class="method-label">{signup ? 'Create a passkey' : 'Sign in with Passkey'}</span></button
+            ><span class="method-icon" style:mask="var(--icon-passkey) center/contain no-repeat"></span><span class="method-label">{t(signup ? 'ui.authDialog.createPasskey' : 'ui.authDialog.signInPasskey')}</span></button
           >
           {#if !signup}
-            <div class="or"><span class="rule"></span>OR<span class="rule"></span></div>
+            <div class="or"><span class="rule"></span>{t('ui.authDialog.or')}<span class="rule"></span></div>
             <form
               class="email"
               style:opacity={waiting ? 0.45 : 1}
@@ -164,23 +167,23 @@
               }}
             >
               <span class="email-icon"></span>
-              <input data-auth-input="" type="email" bind:value={email} placeholder="Sign in with email" aria-label="Email address" disabled={!!waiting} />
-              <button class="send" class:ready={emailOk} type="submit" aria-label="Send sign-in link" disabled={!emailOk || !!waiting}><span class="send-icon"></span></button>
+              <input data-auth-input="" type="email" bind:value={email} placeholder={t('ui.authDialog.emailPlaceholder')} aria-label={t('ui.authDialog.emailAddress')} disabled={!!waiting} />
+              <button class="send" class:ready={emailOk} type="submit" aria-label={t('ui.authDialog.sendLink')} disabled={!emailOk || !!waiting}><span class="send-icon"></span></button>
             </form>
           {/if}
           {#if variant === 'grid'}
-            <span class="more">{signup ? 'OR CONTINUE WITH' : 'MORE WAYS TO SIGN IN'}</span>
+            <span class="more">{t(signup ? 'ui.authDialog.orContinueWith' : 'ui.authDialog.moreWays')}</span>
             <div class="tiles">
               {#each others as m}
-                <button class="tile" style:opacity={waiting && waiting !== m.key ? 0.45 : 1} onclick={() => pick(m.key)} disabled={!!waiting} title={verb + m.name}
-                  ><span class="tile-icon" style:mask="var(--icon-{m.key}) center/contain no-repeat"></span><span class="tile-label">{m.short || m.name}</span></button
+                <button class="tile" style:opacity={waiting && waiting !== m.key ? 0.45 : 1} onclick={() => pick(m.key)} disabled={!!waiting} title={withMethod(m.name)}
+                  ><span class="tile-icon" style:mask="var(--icon-{m.key}) center/contain no-repeat"></span><span class="tile-label">{t(m.short || m.name)}</span></button
                 >
               {/each}
             </div>
           {:else}
             {#each others as m}
               <button class="option" style:opacity={waiting && waiting !== m.key ? 0.45 : 1} onclick={() => pick(m.key)} disabled={!!waiting}
-                ><span class="method-icon" style:mask="var(--icon-{m.key}) center/contain no-repeat"></span><span class="method-label">{verb + m.name}</span></button
+                ><span class="method-icon" style:mask="var(--icon-{m.key}) center/contain no-repeat"></span><span class="method-label">{withMethod(m.name)}</span></button
               >
             {/each}
           {/if}
@@ -193,9 +196,9 @@
       {#if view === 'sent'}
         <div class="sent">
           <span class="sent-tile"><span class="sent-icon"></span></span>
-          <span class="sent-title">Check your inbox</span>
-          <span class="sent-text">We sent a sign-in link to <span class="sent-email">{email}</span>. Open it on this device to continue.</span>
-          <button class="link" onclick={() => onDone?.('email')}>I've opened the link</button>
+          <span class="sent-title">{t('ui.authDialog.checkInbox')}</span>
+          <span class="sent-text">{t('ui.authDialog.sentBefore')} <span class="sent-email">{email}</span>{t('ui.authDialog.sentAfter')}</span>
+          <button class="link" onclick={() => onDone?.('email')}>{t('ui.authDialog.openedLink')}</button>
         </div>
       {/if}
 
@@ -208,16 +211,16 @@
           }}
         >
           <label class="field-group">
-            <span class="field-label"><span>Username</span><span class="field-note">letters, numbers and underscores</span></span>
+            <span class="field-label"><span>{t('ui.authDialog.username')}</span><span class="field-note">{t('ui.authDialog.usernameNote')}</span></span>
             <span class="field" class:bad={taken || badChars} class:good={free}>
-              <input data-auth-input="" value={username} oninput={(e) => typedUsername(e.currentTarget.value)} placeholder="Choose a username" maxlength="20" autocomplete="username" />
+              <input data-auth-input="" value={username} oninput={(e) => typedUsername(e.currentTarget.value)} placeholder={t('ui.authDialog.usernamePlaceholder')} maxlength="20" autocomplete="username" />
               {#if wellFormed}
                 <span class="chip" class:taken class:free role="status"
-                  ><span class="chip-icon" style:mask="var(--icon-{taken ? 'close' : free ? 'check' : 'more'}) center/contain no-repeat"></span>{taken
-                    ? 'Taken'
+                  ><span class="chip-icon" style:mask="var(--icon-{taken ? 'close' : free ? 'check' : 'more'}) center/contain no-repeat"></span>{t(taken
+                    ? 'ui.authDialog.taken'
                     : free
-                      ? 'Available'
-                      : 'Checking'}</span
+                      ? 'ui.authDialog.available'
+                      : 'ui.authDialog.checking')}</span
                 >
               {/if}
               <span class="left">{20 - username.length}</span>
@@ -227,21 +230,21 @@
             {/if}
           </label>
           <label class="field-group spaced">
-            <span class="field-label"><span>Email</span><span class="field-note">optional, only used for account recovery</span></span>
-            <span class="field"><input data-auth-input="" type="email" bind:value={email} placeholder="you@example.com" autocomplete="email" /></span>
+            <span class="field-label"><span>{t('ui.authDialog.email')}</span><span class="field-note">{t('ui.authDialog.emailNote')}</span></span>
+            <span class="field"><input data-auth-input="" type="email" bind:value={email} placeholder={t('ui.authDialog.emailExample')} autocomplete="email" /></span>
           </label>
           <div class="referral">
-            <span class="field-label">Did someone refer you?</span>
+            <span class="field-label">{t('ui.authDialog.referredQuestion')}</span>
             {#if referrer}
               <span class="field picked">
                 <span class="face" style:background={referrer.grad}></span>
                 <span class="who">{referrer.name}<span class="field-note">@{referrer.handle}</span></span>
-                <button class="clear" type="button" onclick={() => (referrer = null)} aria-label="Remove referrer"><span class="head-icon close small"></span></button>
+                <button class="clear" type="button" onclick={() => (referrer = null)} aria-label={t('ui.authDialog.removeReferrer')}><span class="head-icon close small"></span></button>
               </span>
             {:else}
               <span class="field">
                 <span class="search-icon"></span>
-                <input data-auth-input="" bind:value={refQuery} placeholder="Search for the person who referred you" aria-label="Referrer" />
+                <input data-auth-input="" bind:value={refQuery} placeholder={t('ui.authDialog.referrerSearch')} aria-label={t('ui.authDialog.referrer')} />
               </span>
             {/if}
             {#if results.length}
@@ -262,13 +265,13 @@
             {/if}
           </div>
           <div class="submit-row">
-            <span class="terms">By creating an account you agree to the <a href="#">terms and conditions</a>.</span>
-            <button class="continue" class:ready={free} type="submit" disabled={!free}>Continue</button>
+            <span class="terms">{t('ui.authDialog.termsBefore')} <a href="#">{t('ui.authDialog.termsLink')}</a>{t('ui.authDialog.termsAfter')}</span>
+            <button class="continue" class:ready={free} type="submit" disabled={!free}>{t('ui.common.continue')}</button>
           </div>
         </form>
       {/if}
 
-      <div class="switch">{signup ? 'Already have an account?' : 'New to OpenChat?'}<button class="switch-cta" onclick={switchMode}>{signup ? 'Sign in' : 'Create an account'}</button></div>
+      <div class="switch">{t(signup ? 'ui.authDialog.haveAccount' : 'ui.authDialog.newToOpenChat')}<button class="switch-cta" onclick={switchMode}>{t(signup ? 'ui.authDialog.signIn' : 'ui.authDialog.createAnAccount')}</button></div>
     </div>
   </div>
 </div>

@@ -1,6 +1,7 @@
 <!-- Register or edit a group webhook: avatar (photo or colour), name (letters, digits, underscores; unique in the chat),
      and in edit mode the secret URL (click to copy) with a guarded "Regenerate" that confirms before replacing the secret. -->
 <script lang="ts">
+  import { useT } from '../../lib/i18n';
   import { onDestroy } from 'svelte';
   import { modal } from '../../lib/behaviours/modal';
 
@@ -38,6 +39,9 @@
   }
 
   let { dialogMode = 'register', webhook = null, groupName, urlPrefix, onSave, onRegenerate, onCancel }: Props = $props();
+  const t = useT();
+  // the explainer links its last phrase: translate the whole paragraph, split around the link
+  const explainerText = $derived(t('ui.webhookDialog.explainer', { link: '\u0000' }).split('\u0000'));
 
   const secret = () => {
     let s = '';
@@ -134,8 +138,8 @@
         <span class="head-tile"><span class="head-glyph" style:mask="var(--icon-hook) center/contain no-repeat"></span></span>
       {/if}
       <div class="head-text">
-        <span class="head-title">{confirming ? 'Regenerate the URL' : isEdit ? name : 'Register a webhook'}</span>
-        <span class="head-sub">{confirming ? `${name} · ${groupName}` : isEdit ? `Webhook in ${groupName}` : groupName}</span>
+        <span class="head-title">{confirming ? t('ui.webhookDialog.regenerateTitle') : isEdit ? name : t('ui.webhookDialog.registerTitle')}</span>
+        <span class="head-sub">{confirming ? `${name} · ${groupName}` : isEdit ? t('ui.webhookDialog.inGroup', { group: groupName }) : groupName}</span>
       </div>
       <span class="close" onclick={() => close(onCancel)} role="button" tabindex="0"><span class="close-icon"></span></span>
     </div>
@@ -149,7 +153,7 @@
                 <div class="avatar-photo" style:background={photo ? `url(${photo}) center/cover no-repeat` : 'none'}></div>
               </div>
               <input class="file" bind:this={avatarInput} type="file" accept="image/*" oninput={pickedFile} />
-              <div class="upload" onclick={() => avatarInput.click()} role="button" tabindex="0" aria-label="Upload an image" title="Upload an image"><span class="upload-icon"></span></div>
+              <div class="upload" onclick={() => avatarInput.click()} role="button" tabindex="0" aria-label={t('ui.webhookDialog.uploadImage')} title={t('ui.webhookDialog.uploadImage')}><span class="upload-icon"></span></div>
             </div>
             <div class="swatches">
               {#each Object.entries(GRADIENTS) as [key, gradient]}
@@ -160,43 +164,42 @@
                   onclick={() => (colourEdit = key as Colour)}
                   role="button"
                   tabindex="0"
-                  aria-label={key}
-                  title={key}
+                  aria-label={t('ui.webhookDialog.colour.' + key)}
+                  title={t('ui.webhookDialog.colour.' + key)}
                 ></span>
               {/each}
               {#if photo}
-                <span class="remove-photo" onclick={clearPhoto} role="button" tabindex="0">Remove photo</span>
+                <span class="remove-photo" onclick={clearPhoto} role="button" tabindex="0">{t('ui.webhookDialog.removePhoto')}</span>
               {/if}
             </div>
           </div>
 
           <div class="field-group">
-            <span class="caption">WEBHOOK NAME</span>
+            <span class="caption">{t('ui.webhookDialog.nameCaption')}</span>
             <div class="field" class:invalid>
-              <input value={name} oninput={(e) => (nameEdit = e.currentTarget.value.slice(0, NAME_MAX))} placeholder="deploy_notifier" maxlength="30" />
+              <input value={name} oninput={(e) => (nameEdit = e.currentTarget.value.slice(0, NAME_MAX))} placeholder={t('ui.webhookDialog.namePlaceholder')} maxlength="30" />
               <span class="left">{NAME_MAX - name.length}</span>
             </div>
             <span class="hint" class:invalid>
-              {invalid ? 'Letters, numbers and underscores only — no spaces or punctuation.' : 'Must be unique in this chat. Letters, numbers and underscores only.'}
+              {t(invalid ? 'ui.webhookDialog.nameInvalid' : 'ui.webhookDialog.nameHint')}
             </span>
             {#if isEdit}
-              <span class="hint">Renaming a webhook does not change its URL.</span>
+              <span class="hint">{t('ui.webhookDialog.renameHint')}</span>
             {/if}
           </div>
 
           {#if !isEdit}
             <div class="section">
               <div class="note-row">
-                <span class="note">Registering gives {groupName} a URL your tools can post to.</span>
+                <span class="note">{t('ui.webhookDialog.registerNote', { group: groupName })}</span>
                 <span class="explainer-toggle" onclick={() => (explainer = !explainer)} role="button" tabindex="0">
-                  <span>{explainer ? 'Hide details' : 'How webhooks work'}</span>
+                  <span>{t(explainer ? 'ui.webhookDialog.hideDetails' : 'ui.webhookDialog.howItWorks')}</span>
                   <span class="chevron" class:open={explainer}></span>
                 </span>
               </div>
               {#if explainer}
                 <span class="explainer"
-                  >Your tools send an HTTP POST to the URL and the body arrives here as a message from this webhook. The URL holds a secret, so treat it like a password — anyone
-                  with it can post to this group. The full request format is in the <a href="#">bots developer guide</a>.</span
+                  >{explainerText[0]}<a href="#">{t('ui.webhookDialog.explainerLink')}</a>{explainerText[1] ?? ''}</span
                 >
               {/if}
             </div>
@@ -205,52 +208,52 @@
 
         {#if isEdit}
           <div class="section url-section">
-            <span class="caption bright">WEBHOOK URL</span>
+            <span class="caption bright">{t('ui.webhookDialog.urlCaption')}</span>
             {#if regenerated}
               <div class="regenerated">
                 <span class="regenerated-icon"></span>
-                <span class="regenerated-text">New URL generated. The old one stopped working — copy this one into your tools.</span>
+                <span class="regenerated-text">{t('ui.webhookDialog.regenerated')}</span>
               </div>
             {/if}
             <div class="url-box">
               <div class="url-head">
-                <span class="copy-hint">{copied ? 'Copied to your clipboard' : 'Click the URL to copy it'}</span>
-                <span class="copy" onclick={copy} role="button" tabindex="0" aria-label="Copy the URL" title="Copy the URL"><span class="copy-icon" class:copied></span></span>
+                <span class="copy-hint">{t(copied ? 'ui.webhookDialog.copied' : 'ui.webhookDialog.clickToCopy')}</span>
+                <span class="copy" onclick={copy} role="button" tabindex="0" aria-label={t('ui.webhookDialog.copyUrl')} title={t('ui.webhookDialog.copyUrl')}><span class="copy-icon" class:copied></span></span>
               </div>
               <span class="url" onclick={copy} role="button" tabindex="0">{url}</span>
             </div>
             <div class="regen-row">
-              <span class="regen-note">Replaces the secret in the URL. Anything posting to the old one stops working.</span>
-              <span class="regen" onclick={() => (confirming = true)} role="button" tabindex="0"><span class="regen-icon"></span><span class="regen-label">Regenerate</span></span>
+              <span class="regen-note">{t('ui.webhookDialog.regenNote')}</span>
+              <span class="regen" onclick={() => (confirming = true)} role="button" tabindex="0"><span class="regen-icon"></span><span class="regen-label">{t('ui.webhookDialog.regenerate')}</span></span>
             </div>
           </div>
         {/if}
       {:else}
         <div class="section">
-          <span class="caption">STOPS WORKING</span>
+          <span class="caption">{t('ui.webhookDialog.stopsWorking')}</span>
           <div class="old-url"><span class="url struck">{url}</span></div>
         </div>
 
         <div class="section">
-          <span class="caption">AFTER YOU CONFIRM</span>
+          <span class="caption">{t('ui.webhookDialog.afterConfirm')}</span>
           <div class="after">
             <span class="after-icon"></span>
-            <span class="after-text">A new secret is generated on confirm and the URL appears here ready to copy. It cannot be shown in advance.</span>
+            <span class="after-text">{t('ui.webhookDialog.afterText')}</span>
           </div>
         </div>
 
         <div class="warning">
           <span class="warning-icon"></span>
-          <span class="warning-text">Nothing warns the tools posting to the old URL — they simply start failing. Have the new URL ready to paste before you regenerate.</span>
+          <span class="warning-text">{t('ui.webhookDialog.warning')}</span>
         </div>
       {/if}
     </div>
 
     <div class="foot">
-      <span class="secondary" onclick={() => (confirming ? (confirming = false) : close(onCancel))} role="button" tabindex="0">{confirming ? 'Back' : 'Cancel'}</span>
+      <span class="secondary" onclick={() => (confirming ? (confirming = false) : close(onCancel))} role="button" tabindex="0">{t(confirming ? 'ui.common.back' : 'ui.common.cancel')}</span>
       <span class="spacer"></span>
       <div class="primary" class:warn={confirming} class:ready={confirming || valid} onclick={() => (confirming ? regenerate() : save())} role="button" tabindex="0">
-        <span>{confirming ? 'Regenerate URL' : isEdit ? 'Update webhook' : 'Register webhook'}</span>
+        <span>{t(confirming ? 'ui.webhookDialog.regenerateCta' : isEdit ? 'ui.webhookDialog.updateCta' : 'ui.webhookDialog.registerCta')}</span>
         <span class="primary-icon" style:mask="var(--icon-{confirming ? 'refresh' : isEdit ? 'check' : 'hook'}) center/contain no-repeat"></span>
       </div>
     </div>

@@ -1,5 +1,6 @@
 <!-- All threads you've replied in or follow, grouped by conversation (chats) or by channel (a community). All / Unread filter. -->
 <script lang="ts">
+  import { useT } from '../../lib/i18n';
   import IconButton from '../../lib/components/IconButton.svelte';
   import SegmentedTabs from '../../lib/components/SegmentedTabs.svelte';
 
@@ -21,6 +22,7 @@
 
   interface Props {
     /** Where the threads come from, under the title. */
+    /** Resource key (or literal text). */
     scopeLabel?: string;
     groups: { name: string; grad: string; radius: string; threads: Thread[] }[];
     /** Match the chat list header: 54px plain, 62px with the community avatar. */
@@ -28,7 +30,8 @@
     onBack?: () => void;
   }
 
-  let { scopeLabel = 'Groups and direct chats', groups, headerHeight = '54px', onBack }: Props = $props();
+  let { scopeLabel = 'ui.threadList.scopeChats', groups, headerHeight = '54px', onBack }: Props = $props();
+  const t = useT();
 
   let filter = $state(0);
 
@@ -38,11 +41,11 @@
 
 <div class="threads">
   <div class="header" style:height={headerHeight}>
-    <div class="back"><IconButton label="Back to chats" variant="ghost" icon="back" onClick={() => onBack?.()} /></div>
-    <span class="heading"><span class="title">Threads</span><span class="scope">{scopeLabel}</span></span>
+    <div class="back"><IconButton label="ui.threadList.backToChats" variant="ghost" icon="back" onClick={() => onBack?.()} /></div>
+    <span class="heading"><span class="title">{t('ui.threadList.title')}</span><span class="scope">{t(scopeLabel)}</span></span>
   </div>
   <div class="filter">
-    <SegmentedTabs labels={['All', 'Unread']} counts={[null, unreadCount || null]} dotOnLast={false} selectedIndex={filter} onSelect={(i) => (filter = i)} />
+    <SegmentedTabs labels={[t('ui.threadList.all'), t('ui.threadList.unread')]} counts={[null, unreadCount || null]} dotOnLast={false} selectedIndex={filter} onSelect={(i) => (filter = i)} />
   </div>
   <div class="list">
     {#each shown as g}
@@ -59,7 +62,7 @@
               <span class="line"><span class="author">{th.author}</span><span class="time">{th.time}</span></span>
               <span class="text">{th.text}</span>
               <span class="meta"
-                >{th.count}{#if th.unread}<span class="new"><span class="dot"></span>{th.unread} new</span>{/if}{#if th.followOnly}<span class="following">· Following</span>{/if}</span
+                >{th.count}{#if th.unread}<span class="new"><span class="dot"></span>{t('ui.threadList.newCount', { count: th.unread })}</span>{/if}{#if th.followOnly}<span class="following">· {t('ui.threadList.following')}</span>{/if}</span
               >
             </span>
           </div>
@@ -67,7 +70,7 @@
       </div>
     {/each}
     {#if shown.length === 0}
-      <span class="empty">{filter === 1 ? "You're all caught up." : 'No threads yet. Reply to a message to start one.'}</span>
+      <span class="empty">{t(filter === 1 ? 'ui.threadList.caughtUp' : 'ui.threadList.empty')}</span>
     {/if}
   </div>
 </div>

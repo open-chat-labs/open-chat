@@ -2,6 +2,7 @@
      share-to-chat, a warning naming exactly what to send, your OpenChat handle, and a QR card. Below 760px the QR card
      moves above the form. Sharing posts the address to a chat (ChatPicker) and confirms with a toast. -->
 <script lang="ts">
+  import { useT } from '../../lib/i18n';
   import { onDestroy } from 'svelte';
   import type { WalletToken } from '../../lib/types';
   import ChatPicker from '../../lib/components/ChatPicker.svelte';
@@ -11,12 +12,12 @@
 
   type NetworkId = 'icp' | 'eth' | 'btc' | 'xrpl';
 
-  // sample receiving addresses until the wallet backend is wired
+  // sample receiving addresses until the wallet backend is wired; label / short / time / blurb are resource keys
   const NET: Record<NetworkId, { label: string; short: string; time: string; blurb: string; address: string }> = {
-    icp: { label: 'ICP network', short: 'Internet Computer', time: 'Seconds', blurb: 'Native on the Internet Computer. Arrives in seconds, fees in fractions of a cent.', address: '5sj6i-pqaaa-aaaaf-a3cmq-cai' },
-    eth: { label: 'Ethereum network', short: 'As an ERC-20 token', time: '1–5 min', blurb: 'Arrives on Ethereum. Widely supported, slower and dearer when the network is busy.', address: '0x7Bf3c9A1e64D25aB8f0C3e7d19A4b62F5dE81Ca0' },
-    btc: { label: 'Bitcoin network', short: 'Native BTC', time: '10–60 min', blurb: 'Settles on Bitcoin itself. Allow ten minutes or more per confirmation.', address: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh' },
-    xrpl: { label: 'XRP Ledger', short: 'Native XRP', time: 'Seconds', blurb: 'Settles on the XRP Ledger within seconds.', address: 'rPdvC6ccq8hCdPKSPJkPmyZ4Mi1oG2FFkT' },
+    icp: { label: 'ui.walletReceive.net.icp.label', short: 'ui.walletReceive.net.icp.short', time: 'ui.walletReceive.net.icp.time', blurb: 'ui.walletReceive.net.icp.blurb', address: '5sj6i-pqaaa-aaaaf-a3cmq-cai' },
+    eth: { label: 'ui.walletReceive.net.eth.label', short: 'ui.walletReceive.net.eth.short', time: 'ui.walletReceive.net.eth.time', blurb: 'ui.walletReceive.net.eth.blurb', address: '0x7Bf3c9A1e64D25aB8f0C3e7d19A4b62F5dE81Ca0' },
+    btc: { label: 'ui.walletReceive.net.btc.label', short: 'ui.walletReceive.net.btc.short', time: 'ui.walletReceive.net.btc.time', blurb: 'ui.walletReceive.net.btc.blurb', address: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh' },
+    xrpl: { label: 'ui.walletReceive.net.xrpl.label', short: 'ui.walletReceive.net.xrpl.short', time: 'ui.walletReceive.net.xrpl.time', blurb: 'ui.walletReceive.net.xrpl.blurb', address: 'rPdvC6ccq8hCdPKSPJkPmyZ4Mi1oG2FFkT' },
   };
   // wrapped forms on ICP get their chain-key name, so the warning names exactly what to send
   const ICP_AS: Record<string, string> = { BTC: 'ckBTC', ETH: 'ckETH', USDC: 'ckUSDC', USDT: 'ckUSDT', XRP: 'ckXRP' };
@@ -43,6 +44,7 @@
   }
 
   let { tokens, token, handle = '', onShare, onClose }: Props = $props();
+  const t = useT();
 
   let width = $state(0);
   // a new token starts on its first network with the picker closed
@@ -81,7 +83,7 @@
       ? {
           ...NET[id],
           ...(wrapped
-            ? { label: 'ICP network', short: `Arrives as ${wrapped}`, blurb: `Arrives as ${wrapped} on the Internet Computer within seconds, for a fraction of a cent.` }
+            ? { label: NET.icp.label, short: t('ui.walletReceive.arrivesAs', { token: wrapped }), blurb: t('ui.walletReceive.arrivesAsBlurb', { token: wrapped }) }
             : {}),
         }
       : null,
@@ -107,27 +109,27 @@
     if (!tok || !net) return;
     const tid = Date.now();
     sharing = false;
-    toast = { id: tid, message: `Address shared to ${v.chat}` };
+    toast = { id: tid, message: t('ui.walletReceive.shared', { chat: v.chat }) };
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => {
       if (toast?.id === tid) toast = null;
     }, 5000);
-    onShare?.({ chat: v.chat, message: v.message, symbol: tok.symbol, network: net.label, address });
+    onShare?.({ chat: v.chat, message: v.message, symbol: tok.symbol, network: t(net.label), address });
   }
 </script>
 
 <div class="receive" bind:clientWidth={width} data-screen-label="Wallet receive">
   {#if tok && net}
-    <PageHeader title="Receive {tok.symbol}" onBack={() => onClose?.()} avatarMark={tok.mark} avatarGradient={tok.grad} />
+    <PageHeader title={t('ui.walletReceive.receiveToken', { symbol: tok.symbol })} onBack={() => onClose?.()} avatarMark={tok.mark} avatarGradient={tok.grad} />
     <div class="layout" class:narrow>
       <div class="form">
         <div class="group">
-          <ListSectionLabel label="NETWORK" />
+          <ListSectionLabel label={t('ui.walletReceive.network')} />
           {#if ids.length > 1}
             <div class="picker">
               <div class="select" class:open onclick={() => (open = !open)} tabindex="0" role="button" aria-expanded={open}>
-                <span class="select-label">{net.label}</span>
-                <span class="select-time">{net.time}</span>
+                <span class="select-label">{t(net.label)}</span>
+                <span class="select-time">{t(net.time)}</span>
                 <span class="caret" class:open></span>
               </div>
               {#if open}
@@ -146,8 +148,8 @@
                       role="option"
                       aria-selected={i === netIdx}
                     >
-                      <span class="option-text"><span class="option-label">{NET[nid].label}</span><span class="option-short">{w ? `Arrives as ${w}` : NET[nid].short}</span></span>
-                      <span class="option-time">{NET[nid].time}</span>
+                      <span class="option-text"><span class="option-label">{t(NET[nid].label)}</span><span class="option-short">{w ? t('ui.walletReceive.arrivesAs', { token: w }) : t(NET[nid].short)}</span></span>
+                      <span class="option-time">{t(NET[nid].time)}</span>
                       <span class="tick" class:on={i === netIdx}></span>
                     </div>
                   {/each}
@@ -155,41 +157,41 @@
               {/if}
             </div>
           {:else}
-            <div class="single"><span class="select-label">{net.label}</span><span class="select-time">{net.time}</span></div>
+            <div class="single"><span class="select-label">{t(net.label)}</span><span class="select-time">{t(net.time)}</span></div>
           {/if}
         </div>
         <div class="group">
-          <ListSectionLabel label="YOUR ADDRESS" />
+          <ListSectionLabel label={t('ui.walletReceive.yourAddress')} />
           <div class="address-box">
             <div class="address-wrap">
               <span class="address">{address.slice(0, 6)}<span class="address-mid">{address.slice(6, -6)}</span>{address.slice(-6)}</span>
             </div>
             <div class="address-actions">
-              <span class="square copy" class:copied onclick={copy} role="button" tabindex="0" title={copied ? 'Copied' : 'Copy address'} aria-label={copied ? 'Copied' : 'Copy address'}
+              <span class="square copy" class:copied onclick={copy} role="button" tabindex="0" title={t(copied ? 'ui.common.copied' : 'ui.walletReceive.copyAddress')} aria-label={t(copied ? 'ui.common.copied' : 'ui.walletReceive.copyAddress')}
                 ><span class="square-icon" style:mask={mask(copied ? 'check' : 'copy')}></span></span
               >
-              <span class="square" onclick={() => (sharing = true)} role="button" tabindex="0" title="Share to chat" aria-label="Share to chat"><span class="square-icon" style:mask={mask('share')}></span></span>
+              <span class="square" onclick={() => (sharing = true)} role="button" tabindex="0" title={t('ui.walletReceive.shareToChat')} aria-label={t('ui.walletReceive.shareToChat')}><span class="square-icon" style:mask={mask('share')}></span></span>
             </div>
           </div>
         </div>
         <div class="warning">
           <span class="warning-icon"></span><span class="warning-text"
-            >Only send {wrapped || tok.symbol} on the {net.label} to this address. Sending other tokens, or {tok.symbol} on another network, can't be recovered.</span
+            >{t('ui.walletReceive.warning', { token: wrapped || tok.symbol, network: t(net.label), symbol: tok.symbol })}</span
           >
         </div>
         <span class="grow"></span>
         {#if handle}
           <div class="group">
-            <ListSectionLabel label="FROM OPENCHAT" />
+            <ListSectionLabel label={t('ui.walletReceive.fromOpenChat')} />
             <div class="handle-box">
               <span class="handle-avatar"></span>
               <div class="handle-text">
                 <span class="handle"
-                  >{handle}{#if handleCopied}<span class="handle-copied"><span class="handle-check"></span>Copied</span>{/if}</span
+                  >{handle}{#if handleCopied}<span class="handle-copied"><span class="handle-check"></span>{t('ui.common.copied')}</span>{/if}</span
                 >
-                <span class="handle-note">Other OpenChat users can pay you from any chat. No address or network needed.</span>
+                <span class="handle-note">{t('ui.walletReceive.handleNote')}</span>
               </div>
-              <span class="square handle-copy" class:copied={handleCopied} onclick={copyHandle} role="button" tabindex="0" title="Copy username" aria-label="Copy username"
+              <span class="square handle-copy" class:copied={handleCopied} onclick={copyHandle} role="button" tabindex="0" title={t('ui.walletReceive.copyUsername')} aria-label={t('ui.walletReceive.copyUsername')}
                 ><span class="square-icon" style:mask={mask(handleCopied ? 'check' : 'copy')}></span></span
               >
             </div>
@@ -197,17 +199,17 @@
         {/if}
       </div>
       <div class="qr-card">
-        <span class="qr-kicker">SCAN TO PAY</span>
+        <span class="qr-kicker">{t('ui.walletReceive.scanToPay')}</span>
         <div class="qr"><span class="qr-code"><span class="qr-mark" style:background={tok.grad}>{tok.mark}</span></span></div>
-        <span class="qr-title">{tok.symbol} on {net.label}</span>
-        <span class="qr-blurb">{net.blurb}</span>
+        <span class="qr-title">{t('ui.walletReceive.qrTitle', { symbol: tok.symbol, network: t(net.label) })}</span>
+        <span class="qr-blurb">{t(net.blurb)}</span>
       </div>
     </div>
     {#if sharing}
       <ChatPicker
-        title="Share to chat"
-        previewLabel="SHARING YOUR ADDRESS"
-        item={{ title: `My ${tok.symbol} address · ${net.label}`, sub: `${address.slice(0, 10)}…${address.slice(-8)}`, mark: tok.mark, grad: tok.grad }}
+        title={t('ui.walletReceive.shareToChat')}
+        previewLabel={t('ui.walletReceive.sharingAddress')}
+        item={{ title: t('ui.walletReceive.shareItemTitle', { symbol: tok.symbol, network: t(net.label) }), sub: `${address.slice(0, 10)}…${address.slice(-8)}`, mark: tok.mark, grad: tok.grad }}
         chats={CHATS}
         onSend={share}
         onClose={() => (sharing = false)}
@@ -221,7 +223,7 @@
       </div>
     {/if}
   {:else}
-    <PageHeader title="Receive" onBack={() => onClose?.()} />
+    <PageHeader title={t('ui.walletReceive.receive')} onBack={() => onClose?.()} />
   {/if}
 </div>
 

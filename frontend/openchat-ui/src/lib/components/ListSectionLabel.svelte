@@ -1,18 +1,22 @@
 <!-- Small mono uppercase heading for list groups and form fields (TODAY, ACTIVITY, YOU PAY).
      Optional right-side meta (e.g. "Balance 4,820 ICP"). -->
 <script lang="ts">
+  import { useT } from '../i18n';
   interface Props {
+    /** Resource key (or literal text). */
     label: string;
+    /** Resource key (or literal text), e.g. a formatted balance. */
     meta?: string;
     inset?: boolean;
   }
 
   let { label, meta = '', inset = false }: Props = $props();
+  const t = useT();
 </script>
 
 <div class="section-label" class:inset>
-  <span class="label">{label}</span>
-  {#if meta}<span class="meta">{meta}</span>{/if}
+  <span class="label">{t(label)}</span>
+  {#if meta}<span class="meta">{t(meta)}</span>{/if}
 </div>
 
 <style>

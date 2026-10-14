@@ -11,6 +11,7 @@
   import { onDestroy } from 'svelte';
   import DailyPuzzleCard from './DailyPuzzleCard.svelte';
   import { modal } from '../../lib/behaviours/modal';
+  import { getI18n, useT } from '../../lib/i18n';
 
   // milestone days that pay a bonus on top of the daily claim, with the position each one takes on the bar —
   // hand-spaced so the early run stays readable and the long haul to 365 still reads as long
@@ -39,6 +40,7 @@
     puzzleRemind?: boolean;
     /** Shows a back arrow (opened from another dialog). */
     onBack?: () => void;
+    /** Resource key (or literal text). */
     backLabel?: string;
     onClaim?: (amount: number) => void;
     onAction?: (kind: ChitAction) => void;
@@ -60,11 +62,13 @@
     puzzleSub,
     puzzleRemind = false,
     onBack,
-    backLabel = 'Back',
+    backLabel = 'ui.common.back',
     onClaim,
     onAction,
     onClose,
   }: Props = $props();
+  const t = useT();
+  const i18n = getI18n();
 
   let claimedHere = $state<boolean | null>(null);
   let bonus = $state(0);
@@ -77,10 +81,10 @@
   const insuredLeft = $derived(Math.max(insured - used, 0));
 
   const boardHint = $derived.by(() => {
-    if (boardRank == null) return 'Leaderboard';
-    const r = boardRank;
-    const suffix = r % 10 === 1 && r % 100 !== 11 ? 'st' : r % 10 === 2 && r % 100 !== 12 ? 'nd' : r % 10 === 3 && r % 100 !== 13 ? 'rd' : 'th';
-    return `You are ${r}${suffix} this month${boardScore != null ? ` · ${fmt(boardScore)} CHIT` : ''}`;
+    if (boardRank == null) return t('ui.chitDialog.leaderboard');
+    // ordinal category (one / two / few / other) so each language can pick its own suffix
+    const ord = new Intl.PluralRules(i18n.locale ?? 'en', { type: 'ordinal' }).select(boardRank);
+    return t('ui.chitDialog.boardRank', { rank: boardRank, ord, hasScore: boardScore != null ? 'yes' : 'no', score: boardScore != null ? fmt(boardScore) : '' });
   });
 
   // progress runs tier to tier so the ring means "distance to the next rate"
@@ -127,13 +131,13 @@
   <div class="card">
     <div class="head">
       {#if onBack}
-        <span class="icon-button back" onclick={onBack} role="button" tabindex="0" aria-label={backLabel} title={backLabel}><span class="glyph back-glyph"></span></span>
+        <span class="icon-button back" onclick={onBack} role="button" tabindex="0" aria-label={t(backLabel)} title={t(backLabel)}><span class="glyph back-glyph"></span></span>
       {/if}
       <div class="heading">
-        <span class="title">Daily CHIT</span>
-        <span class="subtitle">{claimed ? 'Claimed today — streak safe' : 'Claim today to keep the streak alive'}</span>
+        <span class="title">{t('ui.chitDialog.title')}</span>
+        <span class="subtitle">{t(claimed ? 'ui.chitDialog.claimedToday' : 'ui.chitDialog.claimToday')}</span>
       </div>
-      <span class="icon-button" onclick={() => onAction?.('settings')} role="button" tabindex="0" aria-label="CHIT settings" title="CHIT settings"
+      <span class="icon-button" onclick={() => onAction?.('settings')} role="button" tabindex="0" aria-label={t('ui.chitDialog.settings')} title={t('ui.chitDialog.settings')}
         ><span class="glyph" style:mask="var(--icon-gear) center/contain no-repeat"></span></span
       >
       <span class="icon-button" onclick={() => onAction?.('leaderboard')} role="button" tabindex="0" aria-label={boardHint} title={boardHint}
@@ -147,22 +151,22 @@
         <div class="ring" class:pop={!!claimedHere} style:background={ring}>
           <div class="ring-hole">
             <span class="streak">{days}</span>
-            <span class="caps">DAY STREAK</span>
+            <span class="caps">{t('ui.chitDialog.dayStreak')}</span>
           </div>
         </div>
         <div class="totals">
-          <span class="caps wide">COLLECTED</span>
-          <span class="balance">{fmt(balance + bonus)} CHIT</span>
-          <span class="muted">{fmt(earned)} earned all time</span>
+          <span class="caps wide">{t('ui.chitDialog.collected')}</span>
+          <span class="balance">{t('ui.chitDialog.amount', { amount: fmt(balance + bonus) })}</span>
+          <span class="muted">{t('ui.chitDialog.earnedAllTime', { amount: fmt(earned) })}</span>
         </div>
       </div>
 
       <div class="milestones">
         <div class="milestone-head">
           <span class="milestone-title"
-            >{days >= TIERS[TIERS.length - 1] ? `Every milestone reached — ${fmt(daily)} CHIT a day` : `${nextTier - days} days to the ${nextTier}-day milestone`}</span
+            >{days >= TIERS[TIERS.length - 1] ? t('ui.chitDialog.allMilestones', { daily: fmt(daily) }) : t('ui.chitDialog.toNextMilestone', { count: nextTier - days, tier: nextTier })}</span
           >
-          <span class="rate">{fmt(daily)} / day</span>
+          <span class="rate">{t('ui.chitDialog.perDay', { amount: fmt(daily) })}</span>
         </div>
         <div class="bar-wrap">
           <div class="bar"><div class="fill" style:width="{barPct.toFixed(1)}%"></div></div>
@@ -182,15 +186,15 @@
         {#if !claimed}
           <div class="claim" onclick={claim} role="button" tabindex="0">
             <span class="flame"></span>
-            <span class="claim-label">Claim {fmt(daily)} CHIT</span>
+            <span class="claim-label">{t('ui.chitDialog.claim', { amount: fmt(daily) })}</span>
           </div>
-          <span class="note">The longer you maintain your streak the more daily CHIT you can claim!</span>
+          <span class="note">{t('ui.chitDialog.claimNote')}</span>
         {:else}
           <div class="claimed">
             <span class="check"></span>
-            <span class="claimed-label">Come back in {countdown}</span>
+            <span class="claimed-label">{t('ui.chitDialog.comeBackIn', { countdown })}</span>
           </div>
-          <span class="note strong">Come back tomorrow to extend your streak!</span>
+          <span class="note strong">{t('ui.chitDialog.comeBackTomorrow')}</span>
         {/if}
       </div>
 
@@ -199,9 +203,9 @@
         <div class="row cover" class:insured={insuredLeft > 0} onclick={() => onAction?.('insurance')} role="button" tabindex="0">
           <span class="tile cover-tile"><span class="tile-glyph shield"></span></span>
           <div class="row-text">
-            <span class="row-title">{insuredLeft > 0 ? `Insured for ${insuredLeft} ${insuredLeft === 1 ? 'day' : 'days'}` : 'No insurance'}</span>
+            <span class="row-title">{insuredLeft > 0 ? t('ui.chitDialog.insuredFor', { count: insuredLeft }) : t('ui.chitDialog.noInsurance')}</span>
             <span class="row-hint"
-              >{insuredLeft > 0 ? 'Miss a day and one is spent — the streak carries on' : `Miss tomorrow and ${days} days are gone. Cover starts at 1 CHAT.`}</span
+              >{insuredLeft > 0 ? t('ui.chitDialog.insuredHint') : t('ui.chitDialog.uninsuredHint', { count: days })}</span
             >
           </div>
           {#if insuredLeft > 0}
@@ -216,8 +220,8 @@
         <div class="row link" onclick={() => onAction?.('earn')} role="button" tabindex="0">
           <span class="tile"><span class="tile-glyph spark"></span></span>
           <div class="row-text">
-            <span class="row-title">Ways to earn CHIT</span>
-            <span class="row-hint">51 achievements · 12 left to try</span>
+            <span class="row-title">{t('ui.chitDialog.waysToEarn')}</span>
+            <span class="row-hint">{t('ui.chitDialog.achievementsLeft', { total: 51, left: 12 })}</span>
           </div>
           <span class="chevron"></span>
         </div>

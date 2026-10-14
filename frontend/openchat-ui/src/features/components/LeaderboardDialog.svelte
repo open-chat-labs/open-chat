@@ -2,11 +2,12 @@
      Your row comes from `you` (per period or one value) or the board; a rank the board itself contradicts is corrected. -->
 <script lang="ts">
   import { modal } from '../../lib/behaviours/modal';
+  import { useT } from '../../lib/i18n';
 
   type Standing = { rank: number; score: number };
 
   interface Board {
-    /** Tab label, e.g. "SEPTEMBER". */
+    /** Tab label, e.g. "SEPTEMBER". Resource key (or literal text). */
     label: string;
     /** [handle, score], best first. */
     rows: [string, number][];
@@ -28,6 +29,7 @@
   }
 
   let { boards, initialPeriod, handle, you = null, onBack, onClose }: Props = $props();
+  const t = useT();
 
   const keys = $derived(Object.keys(boards));
   let chosen = $state<string | null>(null);
@@ -48,22 +50,22 @@
 
   <div class="card">
     <div class="head">
-      <span class="icon-button back" onclick={() => (onBack ?? onClose)?.()} role="button" tabindex="0" aria-label="Back to CHIT" title="Back to CHIT"><span class="back-icon"></span></span>
-      <span class="title">HIGH SCORES</span>
-      <span class="icon-button" title="Play (coming soon)"><span class="joystick"></span></span>
-      <span class="icon-button" onclick={() => onClose?.()} role="button" tabindex="0"><span class="close-icon"></span></span>
+      <span class="icon-button back" onclick={() => (onBack ?? onClose)?.()} role="button" tabindex="0" aria-label={t('ui.leaderboardDialog.backToChit')} title={t('ui.leaderboardDialog.backToChit')}><span class="back-icon"></span></span>
+      <span class="title">{t('ui.leaderboardDialog.title')}</span>
+      <span class="icon-button" title={t('ui.leaderboardDialog.playSoon')}><span class="joystick"></span></span>
+      <span class="icon-button" onclick={() => onClose?.()} role="button" tabindex="0" aria-label={t('ui.common.close')}><span class="close-icon"></span></span>
     </div>
 
     <div class="periods">
       {#each keys as key}
-        <span class="period" class:on={key === period} onclick={() => (chosen = key)} role="button" tabindex="0">{boards[key].label}</span>
+        <span class="period" class:on={key === period} onclick={() => (chosen = key)} role="button" tabindex="0">{t(boards[key].label)}</span>
       {/each}
     </div>
 
     <div class="columns">
       <div class="column-row">
         <span class="rank-col">#</span>
-        <span class="name-col">USERNAME</span>
+        <span class="name-col">{t('ui.leaderboardDialog.username')}</span>
         <span class="score-col">CHIT</span>
       </div>
     </div>
@@ -81,7 +83,7 @@
 
     <div class="row you">
       <span class="rank">{mine.rank}</span>
-      <span class="name">YOU — {handle}</span>
+      <span class="name">{t('ui.leaderboardDialog.you', { handle })}</span>
       <span class="score">{mine.score}</span>
     </div>
   </div>

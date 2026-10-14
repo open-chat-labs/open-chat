@@ -9,6 +9,7 @@
   import Button from '../../lib/components/Button.svelte';
   import IconButton from '../../lib/components/IconButton.svelte';
   import TokenPicker from '../../lib/components/TokenPicker.svelte';
+  import { useT } from '../../lib/i18n';
 
   // sample balances and prices until the wallet is wired
   const TOK = {
@@ -19,16 +20,18 @@
     STK: { symbol: 'STK', name: 'Stake', mark: 'S', gradient: 'linear-gradient(140deg,#1b2a6b,#4fc3ff)', bal: 0, fee: 0.0001, min: 1, usd: 0.0021, dp: 2 },
   };
   type Sym = keyof typeof TOK;
-  const DURS = [
-    ['1 hour', '1h'],
-    ['6 hours', '6h'],
-    ['1 day', '1d'],
-    ['7 days', '7d'],
-    ['30 days', '30d'],
-    ['90 days', '90d'],
+  // expiry options: label key + count, and the short form used in the offer summary
+  const DURS: { key: string; count: number; short: string }[] = [
+    { key: 'ui.swapOfferDialog.hours', count: 1, short: '1h' },
+    { key: 'ui.swapOfferDialog.hours', count: 6, short: '6h' },
+    { key: 'ui.swapOfferDialog.days', count: 1, short: '1d' },
+    { key: 'ui.swapOfferDialog.days', count: 7, short: '7d' },
+    { key: 'ui.swapOfferDialog.days', count: 30, short: '30d' },
+    { key: 'ui.swapOfferDialog.days', count: 90, short: '90d' },
   ];
+  // price chip labels: resource keys or literal text
   const PRICES: [string, number][] = [
-    ['Market', 0],
+    ['ui.swapOfferDialog.market', 0],
     ['+2%', 0.02],
     ['+5%', 0.05],
     ['+10%', 0.1],
@@ -46,6 +49,8 @@
   }
 
   let { z = 80, initial = null, onAttach, onClose }: Props = $props();
+  const t = useT();
+  const durLabel = (i: number) => t(DURS[i].key, { count: DURS[i].count });
 
   const draft = initial?.draft;
   let give = $state<Sym>(sym(draft?.give, 'CHAT'));
@@ -59,8 +64,8 @@
   let box: HTMLDivElement;
 
   onMount(() => {
-    const t = setTimeout(() => box?.querySelector('input')?.focus(), 60);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => box?.querySelector('input')?.focus(), 60);
+    return () => clearTimeout(timer);
   });
 
   const G = $derived(TOK[give]);
@@ -71,21 +76,24 @@
   const lock = $derived(a + fees);
   const max = $derived(Math.max(0, G.bal - fees));
   const market = $derived((a * G.usd) / R.usd);
-  const reason = $derived(
+  // why the offer can't be attached yet: a prompt (quiet) or a problem (warn)
+  const problem = $derived<{ text: string; quiet: boolean } | null>(
     !a
-      ? 'Enter what you offer'
+      ? { text: t('ui.swapOfferDialog.enterOffer'), quiet: true }
       : a < G.min
-        ? `Minimum is ${fmt(G.min, G.dp)} ${G.symbol}`
+        ? { text: t('ui.swapOfferDialog.minimum', { amount: fmt(G.min, G.dp), symbol: G.symbol }), quiet: false }
         : a > max
-          ? `Not enough ${G.symbol} (max ${fmt(max, G.dp)} after fees)`
+          ? { text: t('ui.swapOfferDialog.notEnough', { amount: fmt(max, G.dp), symbol: G.symbol }), quiet: false }
           : !w
-            ? 'Enter what you want in return'
-            : '',
+            ? { text: t('ui.swapOfferDialog.enterWant'), quiet: true }
+            : null,
   );
-  const ok = $derived(!reason);
+  const ok = $derived(!problem);
   const pct = $derived(market && w ? Math.round((w / market - 1) * 100) : 0);
-  const vs = $derived(!a || !w ? '' : Math.abs(pct) < 1 ? 'At market price' : `${Math.abs(pct)}% ${pct > 0 ? 'above' : 'below'} market`);
-  const title = $derived(initial ? 'Edit swap offer' : 'Create swap offer');
+  const vs = $derived(
+    !a || !w ? '' : Math.abs(pct) < 1 ? t('ui.swapOfferDialog.atMarket') : t(pct > 0 ? 'ui.swapOfferDialog.aboveMarket' : 'ui.swapOfferDialog.belowMarket', { pct: Math.abs(pct) }),
+  );
+  const title = $derived(t(initial ? 'ui.swapOfferDialog.editTitle' : 'ui.swapOfferDialog.createTitle'));
 
   // amount edits keep the chosen price chip in sync
   function wantFor(v: number, premium: number | null) {
@@ -105,10 +113,10 @@
         { symbol: G.symbol, mark: G.mark, gradient: G.gradient },
         { symbol: R.symbol, mark: R.mark, gradient: R.gradient },
       ],
-      expiresIn: DURS[dur][1],
+      expiresIn: DURS[dur].short,
       title: `${giveSide.amount} ${G.symbol} → ${getSide.amount} ${R.symbol}`,
-      summary: `${DURS[dur][1]} · locks ${fmt(lock, G.dp)} ${G.symbol}`,
-      hint: `Expires in ${DURS[dur][0]}. Locks ${fmt(lock, G.dp)} ${G.symbol} in escrow incl. 2 fees.`,
+      summary: t('ui.swapOfferDialog.summary', { expires: DURS[dur].short, amount: fmt(lock, G.dp), symbol: G.symbol }),
+      hint: t('ui.swapOfferDialog.hint', { duration: durLabel(dur), amount: fmt(lock, G.dp), symbol: G.symbol }),
       draft: { give, get, amt, want, dur, prem },
     });
   }
@@ -139,16 +147,16 @@
   }
 
   const pickerTokens = $derived(
-    Object.values(TOK).map((t) => ({
-      symbol: t.symbol,
-      name: t.name,
-      mark: t.mark,
-      gradient: t.gradient,
-      held: fmt(t.bal, t.dp),
-      owned: t.bal > 0,
-      disabled: picker === 'give' ? !t.bal || t.symbol === get : t.symbol === give,
-      current: t.symbol === (picker === 'give' ? give : get),
-      title: picker === 'give' && !t.bal ? `You don't hold any ${t.symbol}` : '',
+    Object.values(TOK).map((tok) => ({
+      symbol: tok.symbol,
+      name: tok.name,
+      mark: tok.mark,
+      gradient: tok.gradient,
+      held: fmt(tok.bal, tok.dp),
+      owned: tok.bal > 0,
+      disabled: picker === 'give' ? !tok.bal || tok.symbol === get : tok.symbol === give,
+      current: tok.symbol === (picker === 'give' ? give : get),
+      title: picker === 'give' && !tok.bal ? t('ui.swapOfferDialog.dontHold', { symbol: tok.symbol }) : '',
     })),
   );
 </script>
@@ -158,13 +166,13 @@
   <div class="dialog" bind:this={box} data-oc-managed="" tabindex="-1" role="dialog" aria-modal="true" aria-label={title} onkeydown={onKey}>
     <div class="header">
       <span class="title">{title}</span>
-      <IconButton variant="ghost" icon="close" label="Close" onClick={() => onClose?.()} />
+      <IconButton variant="ghost" icon="close" label="ui.common.close" onClick={() => onClose?.()} />
     </div>
     <div class="body">
       <div class="cards">
         <AmountCard
-          label="YOU OFFER"
-          meta="Balance {fmt(G.bal, G.dp)} {G.symbol}"
+          label={t('ui.swapOfferDialog.youOffer')}
+          meta={t('ui.swapOfferDialog.balance', { amount: fmt(G.bal, G.dp), symbol: G.symbol })}
           value={amt}
           onChange={(e) => {
             amt = e.currentTarget.value.replace(/[^0-9.]/g, '');
@@ -183,10 +191,10 @@
           }}
           position="top"
         />
-        <div class="flip-row"><span class="flip" onclick={flip} tabindex="0" aria-label="Flip" role="button" title="Flip"><span class="flip-icon"></span></span></div>
+        <div class="flip-row"><span class="flip" onclick={flip} tabindex="0" aria-label={t('ui.swapOfferDialog.flip')} role="button" title={t('ui.swapOfferDialog.flip')}><span class="flip-icon"></span></span></div>
         <AmountCard
-          label="YOU WANT"
-          meta="You hold {fmt(R.bal, R.dp)} {R.symbol}"
+          label={t('ui.swapOfferDialog.youWant')}
+          meta={t('ui.swapOfferDialog.youHold', { amount: fmt(R.bal, R.dp), symbol: R.symbol })}
           value={want}
           onChange={(e) => {
             want = e.currentTarget.value.replace(/[^0-9.]/g, '');
@@ -201,7 +209,7 @@
         />
       </div>
       <div class="price">
-        <div class="price-head"><label>Price</label><span class="vs" class:warn={pct <= -5}>{vs}</span></div>
+        <div class="price-head"><label>{t('ui.swapOfferDialog.price')}</label><span class="vs" class:warn={pct <= -5}>{vs}</span></div>
         <div class="price-chips">
           {#each PRICES as [label, k]}
             <button
@@ -211,37 +219,37 @@
                 prem = k;
                 wantFor(a, k);
               }}
-              aria-pressed={prem === k}>{label}</button
+              aria-pressed={prem === k}>{t(label)}</button
             >
           {/each}
         </div>
-        <span class="rate">{a && w ? `1 ${G.symbol} = ${q4(w / a)} ${R.symbol}` : `Market: 1 ${G.symbol} = ${q4(G.usd / R.usd)} ${R.symbol}`}</span>
+        <span class="rate">{a && w ? `1 ${G.symbol} = ${q4(w / a)} ${R.symbol}` : t('ui.swapOfferDialog.marketRate', { from: G.symbol, rate: q4(G.usd / R.usd), to: R.symbol })}</span>
       </div>
       <div class="expiry">
-        <label>Offer expires after</label>
+        <label>{t('ui.swapOfferDialog.expiresAfter')}</label>
         <div class="durations">
           {#each DURS as d, i}
-            <button class="chip pill" class:on={i === dur} onclick={() => (dur = i)} aria-pressed={i === dur}>{d[0]}</button>
+            <button class="chip pill" class:on={i === dur} onclick={() => (dur = i)} aria-pressed={i === dur}>{t(d.key, { count: d.count })}</button>
           {/each}
         </div>
       </div>
     </div>
     <div class="footer">
       <span class="lock-icon"></span>
-      <span class="foot" class:quiet={!ok && reason.startsWith('Enter')} class:warn={!ok && !reason.startsWith('Enter')}
-        >{ok ? `Locks ${fmt(lock, G.dp)} ${G.symbol} in escrow (incl. 2 fees) until it's accepted, cancelled or expires` : reason}</span
+      <span class="foot" class:quiet={problem?.quiet} class:warn={problem && !problem.quiet}
+        >{problem ? problem.text : t('ui.swapOfferDialog.locks', { amount: fmt(lock, G.dp), symbol: G.symbol })}</span
       >
-      <Button label={initial ? 'Update offer' : 'Attach offer'} disabled={!ok} onClick={attach} />
+      <Button label={initial ? 'ui.swapOfferDialog.update' : 'ui.swapOfferDialog.attach'} disabled={!ok} onClick={attach} />
     </div>
 
     {#if picker}
       <div class="picker-layer">
-        <div class="picker" role="dialog" aria-label={picker === 'give' ? 'Token to offer' : 'Token to ask for'}>
+        <div class="picker" role="dialog" aria-label={t(picker === 'give' ? 'ui.swapOfferDialog.tokenToOffer' : 'ui.swapOfferDialog.tokenToAsk')}>
           <div class="picker-head"
-            ><span class="picker-title">{picker === 'give' ? 'Token to offer' : 'Token to ask for'}</span><IconButton
+            ><span class="picker-title">{t(picker === 'give' ? 'ui.swapOfferDialog.tokenToOffer' : 'ui.swapOfferDialog.tokenToAsk')}</span><IconButton
               variant="ghost"
               icon="close"
-              label="Close"
+              label="ui.common.close"
               onClick={() => (picker = null)}
             /></div
           >

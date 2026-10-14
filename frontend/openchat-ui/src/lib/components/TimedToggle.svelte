@@ -2,17 +2,30 @@
      Used for disappearing messages (DMs, groups, channels) and access-gate re-checks.
      density: compact (64px row, clock icon) | regular (taller text, no icon) | flush (no padding or hover, for nesting). -->
 <script lang="ts">
+  import { useT } from '../i18n';
   const ICONS = { clock: 'var(--icon-clock) center/contain no-repeat', refresh: 'var(--icon-refresh) center/contain no-repeat' };
   const DURATIONS = ['1 hour', '8 hours', '12 hours', '1 day', '1 week', '30 days'];
+  // durations stay English values (what onDurationChange reports); these keys are only for display
+  const DURATION_KEYS: Record<string, string> = {
+    '1 hour': 'ui.timedToggle.durations.oneHour',
+    '8 hours': 'ui.timedToggle.durations.eightHours',
+    '12 hours': 'ui.timedToggle.durations.twelveHours',
+    '1 day': 'ui.timedToggle.durations.oneDay',
+    '1 week': 'ui.timedToggle.durations.oneWeek',
+    '30 days': 'ui.timedToggle.durations.thirtyDays',
+    Always: 'ui.timedToggle.durations.always',
+  };
 
   interface Props {
+    /** Resource key (or literal text). */
     label: string;
     on?: boolean;
     value: string;
     options?: string[];
-    /** Subtitle before the value: "After 12 hours". */
+    /** Subtitle while on: resource key with a {value} placeholder ("After {value}"); text without one is followed by
+        the value. */
     prefix?: string;
-    /** Subtitle while off. */
+    /** Subtitle while off: resource key (or literal text). */
     offHint?: string;
     /** Defaults to clock, except for density "regular" (none). */
     icon?: keyof typeof ICONS | null;
@@ -33,8 +46,8 @@
     on = false,
     value,
     options,
-    prefix = 'After',
-    offHint = 'Off',
+    prefix = 'ui.timedToggle.after',
+    offHint = 'ui.timedToggle.off',
     icon,
     density = 'compact',
     defaultOpen = false,
@@ -45,6 +58,7 @@
     onChange,
     onDurationChange,
   }: Props = $props();
+  const t = useT();
 
   // local edits stick until the parent sends new values
   let enabled = $derived(on);
@@ -54,6 +68,13 @@
   const open = $derived(!readOnly && enabled && (openState ?? defaultOpen));
   const shownIcon = $derived(icon === undefined ? (density === 'compact' ? 'clock' : null) : icon);
   const list = $derived(options?.length ? options : DURATIONS);
+
+  const duration = (v: string) => t(DURATION_KEYS[v] ?? v);
+  const MARK = '\u0001';
+  const withPrefix = (v: string) => {
+    const text = t(prefix, { value: MARK });
+    return text.includes(MARK) ? text.replace(MARK, duration(v)) : `${text} ${duration(v)}`;
+  };
 
   function setOn(next: boolean) {
     enabled = next;
@@ -89,13 +110,13 @@
       <span class="icon" style:mask={ICONS[shownIcon] ?? ICONS.clock}></span>
     {/if}
     <span class="text">
-      <span class="label">{label}</span>
+      <span class="label">{t(label)}</span>
       <span class="sub" class:on={enabled}
-        >{enabled ? `${prefix} ${current}` : offHint}{#if enabled && !readOnly}<span class="caret" class:open></span>{/if}</span
+        >{enabled ? withPrefix(current) : t(offHint)}{#if enabled && !readOnly}<span class="caret" class:open></span>{/if}</span
       >
     </span>
     {#if readOnly}
-      <span class="status">{enabled ? `On · ${current}` : 'Off'}</span>
+      <span class="status">{enabled ? t('ui.timedToggle.onValue', { value: duration(current) }) : t('ui.timedToggle.off')}</span>
     {:else}
       <span
         class="switch"
@@ -107,14 +128,14 @@
         tabindex="0"
         role="switch"
         aria-checked={enabled}
-        aria-label={label}><span class="knob"></span></span
+        aria-label={t(label)}><span class="knob"></span></span
       >
     {/if}
   </div>
   {#if open}
-    <div class="choices" role="radiogroup" aria-label={label}>
+    <div class="choices" role="radiogroup" aria-label={t(label)}>
       {#each list as choice}
-        <span class="choice" class:selected={choice === current} onclick={() => pick(choice)} tabindex="0" role="radio" aria-checked={choice === current}>{choice}</span>
+        <span class="choice" class:selected={choice === current} onclick={() => pick(choice)} tabindex="0" role="radio" aria-checked={choice === current}>{duration(choice)}</span>
       {/each}
     </div>
   {/if}

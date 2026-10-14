@@ -2,15 +2,14 @@
      and Pay. Priced on each day's position in your holding, so buying one day at a time costs the same as several at once.
      Back returns to CHIT (onBack, else onClose); ×, the veil and a purchase close. -->
 <script lang="ts">
+  import { useT } from '../../lib/i18n';
   import { onDestroy } from 'svelte';
   import { modal } from '../../lib/behaviours/modal';
+  import { getI18n } from '../../lib/i18n';
 
   const STEPS = [1, 2, 4, 12, 28, 60, 124];
   const MAX_DAYS = STEPS.length;
   const fmt = (n: number) => n.toLocaleString('en-US');
-  const ordinal = (n: number) =>
-    n + (n % 10 === 1 && n % 100 !== 11 ? 'st' : n % 10 === 2 && n % 100 !== 12 ? 'nd' : n % 10 === 3 && n % 100 !== 13 ? 'rd' : 'th');
-  const days = (n: number) => `${n} ${n === 1 ? 'day' : 'days'}`;
 
   interface Props {
     /** Current streak, in days. */
@@ -27,6 +26,12 @@
   }
 
   let { streak, insured = 0, used = 0, balance, onBuy, onBack, onClose }: Props = $props();
+  const t = useT();
+
+  const i18n = getI18n();
+  // ordinals pick their form from the locale's ordinal plural category (one → 1st, two → 2nd, few → 3rd …)
+  const ordinal = (n: number) => t('ui.streakInsuranceDialog.ordinal', { n, kind: new Intl.PluralRules(i18n.locale ?? 'en', { type: 'ordinal' }).select(n) });
+  const days = (n: number) => t('ui.streakInsuranceDialog.days', { count: n });
 
   let picked = $state(1);
 
@@ -38,15 +43,17 @@
   const affordable = $derived(total <= balance);
   const canPay = $derived(qty > 0 && affordable);
 
-  const summaryTitle = $derived(qty > 0 ? `Adding ${days(qty)} of cover` : room === 0 ? 'Covered for a full week' : 'Tap a day to add cover');
+  const summaryTitle = $derived(qty > 0 ? t('ui.streakInsuranceDialog.adding', { days: days(qty) }) : t(room === 0 ? 'ui.streakInsuranceDialog.fullWeek' : 'ui.streakInsuranceDialog.tapToAddCover'));
   const summaryHint = $derived(
     qty > 0
-      ? `${qty === 1 ? ordinal(held + 1) : `${ordinal(held + 1)} to ${ordinal(held + qty)}`} day of your holding · each day dearer than the last`
+      ? qty === 1
+        ? t('ui.streakInsuranceDialog.hintOne', { from: ordinal(held + 1) })
+        : t('ui.streakInsuranceDialog.hintRange', { from: ordinal(held + 1), to: ordinal(held + qty) })
       : used > 0
-        ? `${days(used)} used so far`
-        : 'Insured days are spent one at a time when you miss a day',
+        ? t('ui.streakInsuranceDialog.usedSoFar', { days: days(used) })
+        : t('ui.streakInsuranceDialog.hintDefault'),
   );
-  const payLabel = $derived(room === 0 ? 'Fully covered' : qty === 0 ? 'Pick a day' : `${days(qty)} · pay ${fmt(total)} CHAT`);
+  const payLabel = $derived(room === 0 ? t('ui.streakInsuranceDialog.fullyCovered') : qty === 0 ? t('ui.streakInsuranceDialog.pickADay') : t('ui.streakInsuranceDialog.pay', { days: days(qty), amount: fmt(total) }));
 
   let closing = $state(false);
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -76,11 +83,11 @@
 
   <div class="card">
     <div class="head">
-      <span class="icon-button back" onclick={() => leave(onBack ?? onClose)} role="button" tabindex="0" aria-label="Back to CHIT" title="Back to CHIT"><span class="back-icon"></span></span>
+      <span class="icon-button back" onclick={() => leave(onBack ?? onClose)} role="button" tabindex="0" aria-label={t('ui.streakInsuranceDialog.backToChit')} title={t('ui.streakInsuranceDialog.backToChit')}><span class="back-icon"></span></span>
       <span class="badge"><span class="badge-icon"></span></span>
       <div class="titles">
-        <span class="title">Streak insurance</span>
-        <span class="subtitle">{streak} day streak · {held > 0 ? `${days(held)} covered` : 'no cover yet'}</span>
+        <span class="title">{t('ui.streakInsuranceDialog.title')}</span>
+        <span class="subtitle">{t('ui.streakInsuranceDialog.subtitle', { streak, cover: held > 0 ? t('ui.streakInsuranceDialog.covered', { days: days(held) }) : t('ui.streakInsuranceDialog.noCover') })}</span>
       </div>
       <span class="icon-button close" onclick={() => leave(onClose)} role="button" tabindex="0"><span class="close-icon"></span></span>
     </div>
@@ -91,17 +98,17 @@
           {#each STEPS as price, i}
             {@const owned = i < held}
             {@const adding = !owned && i < held + qty}
-            {@const title = owned ? `Day ${i + 1} of your cover` : `${ordinal(i + 1)} day of cover · ${price} CHAT`}
+            {@const title = owned ? t('ui.streakInsuranceDialog.cellOwned', { n: i + 1 }) : t('ui.streakInsuranceDialog.cellOpen', { ordinal: ordinal(i + 1), price })}
             <div class="cell" class:owned class:adding onclick={owned ? undefined : () => tap(i)} role="button" tabindex="0" aria-label={title} {title}>
               <span class="cell-icon"></span>
-              <span class="cell-label">{owned ? `Day ${i + 1}` : `+${price}`}</span>
+              <span class="cell-label">{owned ? t('ui.streakInsuranceDialog.day', { n: i + 1 }) : `+${price}`}</span>
             </div>
           {/each}
         </div>
         <div class="legend">
-          <span class="key"><span class="swatch owned"></span>Already covered</span>
-          <span class="key"><span class="swatch adding"></span>Adding now</span>
-          <span class="key"><span class="swatch open"></span>Tap to add</span>
+          <span class="key"><span class="swatch owned"></span>{t('ui.streakInsuranceDialog.alreadyCovered')}</span>
+          <span class="key"><span class="swatch adding"></span>{t('ui.streakInsuranceDialog.addingNow')}</span>
+          <span class="key"><span class="swatch open"></span>{t('ui.streakInsuranceDialog.tapToAdd')}</span>
         </div>
       </div>
 
@@ -116,7 +123,7 @@
 
     <div class="foot">
       <span class="balance" class:short={!affordable}
-        >{affordable ? `Balance ${fmt(balance)} CHAT · cover caps at ${MAX_DAYS} days` : `Balance ${fmt(balance)} CHAT — not enough`}</span
+        >{t(affordable ? 'ui.streakInsuranceDialog.balanceCap' : 'ui.streakInsuranceDialog.balanceShort', { amount: fmt(balance), max: MAX_DAYS })}</span
       >
       <span class="pay" class:ready={canPay} onclick={pay} role="button" tabindex="0" aria-disabled={!canPay}>{payLabel}</span>
     </div>

@@ -1,7 +1,9 @@
 <!-- Labelled detail card for side panels. variant: value (one bold line, optional online dot / accent highlight)
      | prose (paragraph; `clamp` lines with a More / Less toggle when the text is long). -->
 <script lang="ts">
+  import { useT } from '../i18n';
   interface Props {
+    /** Resource key (or literal text). */
     label: string;
     value: string;
     variant?: 'value' | 'prose';
@@ -12,6 +14,7 @@
   }
 
   let { label, value, variant = 'value', clamp = 0, dot = false, highlight = false }: Props = $props();
+  const t = useT();
 
   let open = $state(false);
 
@@ -19,11 +22,11 @@
 </script>
 
 <div class="section">
-  <span class="label">{label}</span>
+  <span class="label">{t(label)}</span>
   {#if variant === 'prose'}
     <span class="prose" style:-webkit-line-clamp={long && !open ? String(clamp) : 'unset'}>{value}</span>
     {#if long}
-      <span class="more" onclick={() => (open = !open)} role="button" tabindex="0">{open ? 'Less' : 'More'}</span>
+      <span class="more" onclick={() => (open = !open)} role="button" tabindex="0">{t(open ? 'ui.common.less' : 'ui.common.more')}</span>
     {/if}
   {:else}
     <span class="value" class:highlight>

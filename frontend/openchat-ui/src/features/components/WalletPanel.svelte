@@ -23,6 +23,7 @@
   import Skeleton from '../../lib/components/Skeleton.svelte';
   import TokenAvatar from '../../lib/components/TokenAvatar.svelte';
   import UndoToast from '../../lib/components/UndoToast.svelte';
+  import { useT } from '../../lib/i18n';
 
   const mask = (name: string) => `var(--icon-${name}) center/contain no-repeat`;
   const OTHER = 'transparent';
@@ -90,6 +91,7 @@
     homeSelected = false,
     homeCount,
   }: Props = $props();
+  const t = useT();
 
   let root: HTMLDivElement;
   let localCurrency = $state<string | null>(null);
@@ -129,7 +131,9 @@
   const veiled = $derived(balanceHidden ?? localVeil);
   const manual = $derived(settings.autoConfig === false);
   const undoSymbol = $derived(undoProp || (undo ? undo.symbol : ''));
-  const dirTitle = $derived(sort === 'name' ? (dir === 'asc' ? 'A to Z' : 'Z to A') : dir === 'asc' ? 'Smallest first' : 'Largest first');
+  const dirTitle = $derived(
+    t(sort === 'name' ? (dir === 'asc' ? 'ui.walletPanel.aToZ' : 'ui.walletPanel.zToA') : dir === 'asc' ? 'ui.walletPanel.smallestFirst' : 'ui.walletPanel.largestFirst'),
+  );
 
   function money(v: number) {
     const c = v / RATES[currency];
@@ -164,14 +168,14 @@
     const buckets: Bucket[] =
       rest.length === 0
         ? lead
-        : lead.concat(rest.length === 1 ? [rest[0]] : [{ symbol: 'Other', grad: OTHER, value: rest.reduce((sum, t) => sum + t.value, 0), count: rest.length }]);
+        : lead.concat(rest.length === 1 ? [rest[0]] : [{ symbol: t('ui.walletPanel.other'), grad: OTHER, value: rest.reduce((sum, x) => sum + x.value, 0), count: rest.length }]);
     if (buckets.length < 2) return [];
-    return buckets.map((t) => ({
-      gradient: t.grad,
-      share: t.value / total,
-      ring: t.grad === OTHER ? 'inset 0 0 0 1px var(--line-3,rgba(255,255,255,.24))' : 'none',
-      tipLabel: t.count ? `${t.count} smaller holdings` : t.symbol,
-      tipValue: veiled ? DOTS : `${money(t.value)} · ${Math.round((t.value / total) * 100)}%`,
+    return buckets.map((b) => ({
+      gradient: b.grad,
+      share: b.value / total,
+      ring: b.grad === OTHER ? 'inset 0 0 0 1px var(--line-3,rgba(255,255,255,.24))' : 'none',
+      tipLabel: b.count ? t('ui.walletPanel.smallerHoldings', { count: b.count }) : b.symbol,
+      tipValue: veiled ? DOTS : `${money(b.value)} · ${Math.round((b.value / total) * 100)}%`,
     }));
   });
 
@@ -234,12 +238,13 @@
 
   function tokenItems(symbol: string): MenuItem[] {
     const items: MenuItem[] = [
-      { label: `Send ${symbol}`, mask: mask('wallet-send'), onSelect: () => onAction?.(`send:${symbol}`) },
-      { label: `Receive ${symbol}`, mask: mask('receive'), onSelect: () => onAction?.(`receive:${symbol}`) },
-      { label: `Swap ${symbol}`, mask: mask('swap'), onSelect: () => onAction?.(`swap:${symbol}`) },
-      { label: 'Refresh balance', mask: mask('refresh') },
+      // built when the menu opens, so labels are translated here (they carry the symbol)
+      { label: t('ui.walletPanel.send', { symbol }), mask: mask('wallet-send'), onSelect: () => onAction?.(`send:${symbol}`) },
+      { label: t('ui.walletPanel.receive', { symbol }), mask: mask('receive'), onSelect: () => onAction?.(`receive:${symbol}`) },
+      { label: t('ui.walletPanel.swap', { symbol }), mask: mask('swap'), onSelect: () => onAction?.(`swap:${symbol}`) },
+      { label: t('ui.walletPanel.refresh'), mask: mask('refresh') },
     ];
-    if (manual) items.push({ label: 'Hide from list', mask: mask('eye-off'), onSelect: () => removeToken(symbol) });
+    if (manual) items.push({ label: t('ui.walletPanel.hide'), mask: mask('eye-off'), onSelect: () => removeToken(symbol) });
     return items;
   }
 
@@ -260,8 +265,8 @@
   function openPanelMenu(e?: Event) {
     openMenu(
       [
-        { label: 'Settings', mask: mask('gear'), onSelect: () => onAction?.('settings') },
-        { label: 'Manage recipients', mask: mask('users'), onSelect: () => onAction?.('recipients') },
+        { label: t('ui.common.settings'), mask: mask('gear'), onSelect: () => onAction?.('settings') },
+        { label: t('ui.walletPanel.manageRecipients'), mask: mask('users'), onSelect: () => onAction?.('recipients') },
       ],
       e ?? null,
     );
@@ -326,8 +331,8 @@
 
 <div class="panel" bind:this={root} data-screen-label="Wallet">
   <div class="top">
-    <span class="title">Wallet</span>
-    <span class="currency" onclick={openCurrency} role="button" tabindex="0" aria-label="Display currency" title="Display currency">
+    <span class="title">{t('ui.walletPanel.title')}</span>
+    <span class="currency" onclick={openCurrency} role="button" tabindex="0" aria-label={t('ui.walletPanel.displayCurrency')} title={t('ui.walletPanel.displayCurrency')}>
       <span class="currency-code">{currency}</span>
       <span class="chevron"></span>
     </span>
@@ -336,7 +341,7 @@
 
   <div class="balance">
     <BalanceCard
-      label="TOTAL BALANCE"
+      label={t('ui.walletPanel.totalBalance')}
       amount={money(total)}
       {veiled}
       {spinning}
@@ -356,21 +361,21 @@
     {#if onHome}
       <div class="home" class:on={homeSelected} onclick={onHome} role="button" tabindex="0" aria-current={homeSelected}>
         <span class="home-badge"><span class="home-icon"></span></span>
-        <span class="home-label">All activity</span>
+        <span class="home-label">{t('ui.walletPanel.allActivity')}</span>
         <span class="home-count">{homeCount ?? ''}</span>
       </div>
     {/if}
     <div class="list-head">
-      <span class="heading">TOKENS · {listed.length}</span>
+      <span class="heading">{t('ui.walletPanel.tokens', { count: listed.length })}</span>
       <span
         class="sort"
         onclick={() => (sort = sort === 'name' ? 'value' : 'name')}
         role="button"
         tabindex="0"
-        aria-label={sort === 'name' ? 'Sorted by name' : 'Sorted by value'}
-        title={sort === 'name' ? 'Sorted by name' : 'Sorted by value'}
+        aria-label={t(sort === 'name' ? 'ui.walletPanel.sortedByName' : 'ui.walletPanel.sortedByValue')}
+        title={t(sort === 'name' ? 'ui.walletPanel.sortedByName' : 'ui.walletPanel.sortedByValue')}
       >
-        <span class="sort-label">{sort === 'name' ? 'Name' : 'Value'}</span>
+        <span class="sort-label">{t(sort === 'name' ? 'ui.walletPanel.name' : 'ui.walletPanel.value')}</span>
         <span class="chevron"></span>
       </span>
       <span class="direction" onclick={() => (dir = dir === 'asc' ? 'desc' : 'asc')} role="button" tabindex="0" aria-label={dirTitle} title={dirTitle}>
@@ -412,9 +417,9 @@
             }}
             role="button"
             tabindex="0"
-            aria-label="Token options"
+            aria-label={t('ui.walletPanel.tokenOptions')}
             onpointerdown={(e) => e.stopPropagation()}
-            title="Token options"
+            title={t('ui.walletPanel.tokenOptions')}
             aria-haspopup="menu"
           >
             <span class="kebab-icon"></span>
@@ -425,7 +430,7 @@
   </div>
 
   <div class="undo">
-    <UndoToast icon="hide" shown={!!undoSymbol} message={undoSymbol ? `${undoSymbol} hidden from your list` : ''} onAction={undoRemove} onClose={dismissUndo} />
+    <UndoToast icon="hide" shown={!!undoSymbol} message={undoSymbol ? t('ui.walletPanel.hidden', { symbol: undoSymbol }) : ''} onAction={undoRemove} onClose={dismissUndo} />
   </div>
 
   <ContextMenu open={!!menu} items={menu?.items ?? []} point={menu?.point} anchor={menu?.anchor} align={menu?.align} onClose={() => (menu = null)} />

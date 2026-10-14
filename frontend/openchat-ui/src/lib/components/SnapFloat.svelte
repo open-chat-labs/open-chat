@@ -4,6 +4,7 @@
      position: tl | tc | tr | ml | mr | bl | bc | br (centre drops go to the nearer side) → onSnap(position). -->
 <script lang="ts">
   import { tick, type Snippet } from 'svelte';
+  import { useT } from '../i18n';
 
   type Spot = 'tl' | 'tc' | 'tr' | 'ml' | 'mr' | 'bl' | 'bc' | 'br';
 
@@ -15,6 +16,7 @@
     safeTop?: number;
     safeBottom?: number;
     zIndex?: number;
+    /** Accessible name. Resource key (or literal text). */
     label?: string;
     role?: string;
     onSnap?: (position: Spot) => void;
@@ -22,6 +24,7 @@
   }
 
   let { position = 'br', width, inset = 20, safeTop, safeBottom, zIndex = 30, label, role = 'region', onSnap, children }: Props = $props();
+  const t = useT();
 
   // follows `position` until the user drops it somewhere else
   let spot = $derived(position);
@@ -95,7 +98,7 @@
   onpointerdown={down}
   ondragstart={(e) => e.preventDefault()}
   {role}
-  aria-label={label}
+  aria-label={label ? t(label) : undefined}
 >
   {@render children?.()}
 </div>

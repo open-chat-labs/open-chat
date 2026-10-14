@@ -9,10 +9,13 @@
   import Menu from './Menu.svelte';
   import SegmentedTabs from './SegmentedTabs.svelte';
   import TokenAvatar from './TokenAvatar.svelte';
+  import { useT } from '../i18n';
 
   type AttachKind = 'media' | 'file' | 'poll' | 'prize' | 'crypto' | 'swap' | 'memeFighter';
 
   const GIF_CATS = ['Trending', 'Reactions', 'Celebrate', 'Crypto', 'Thanks'] as const;
+  // GIF_WORDS are placeholder GIF results (data), only the category names are UI copy
+  const GIF_CAT_KEYS: Record<(typeof GIF_CATS)[number], string> = { Trending: 'ui.messageComposer.gifTrending', Reactions: 'ui.messageComposer.gifReactions', Celebrate: 'ui.messageComposer.gifCelebrate', Crypto: 'ui.messageComposer.gifCrypto', Thanks: 'ui.messageComposer.gifThanks' };
   const GIF_TONES = [
     'linear-gradient(150deg,#5CB8FF,#2F6BFF)',
     'linear-gradient(150deg,#FF8FA8,#E0456A)',
@@ -35,6 +38,7 @@
   interface Props {
     /** Forces a state for docs and screenshots. */
     demo?: 'interactive' | 'idle' | 'typing' | 'plus' | 'emoji' | 'gif' | 'recording' | 'review';
+    /** Resource key (or literal text). */
     placeholder?: string;
     onSend?: (text: string) => void;
     onAttach?: (kind: AttachKind) => void;
@@ -53,7 +57,7 @@
 
   let {
     demo = 'interactive',
-    placeholder = 'Message',
+    placeholder = 'ui.messageComposer.placeholder',
     onSend,
     onAttach,
     onGif,
@@ -68,6 +72,7 @@
     onSubmitEdit,
     onJumpContext,
   }: Props = $props();
+  const t = useT();
 
   let root: HTMLDivElement;
   let input = $state<HTMLTextAreaElement>();
@@ -110,15 +115,15 @@
     return Array.from({ length: barCount }, (_, i) => (i < pad ? { h: 3, played: false, idle: true } : { h: Math.round(4 + tail[i - pad] * 22), played: false, idle: false }));
   });
 
-  const plusItems: MenuItem[] = [
-    { label: 'Photo or video', mask: 'var(--icon-image) center/contain no-repeat', onSelect: () => attach('media') },
-    { label: 'File', mask: 'var(--icon-file) center/contain no-repeat', onSelect: () => attach('file') },
-    { label: 'Poll', mask: 'var(--icon-poll) center/contain no-repeat', onSelect: () => attach('poll') },
-    { label: 'Prize message', mask: 'var(--icon-trophy) center/contain no-repeat', onSelect: () => attach('prize') },
-    { label: 'Send crypto', mask: 'var(--icon-wallet-send) center/contain no-repeat', onSelect: () => attach('crypto') },
-    { label: 'Swap crypto', mask: 'var(--icon-swap) center/contain no-repeat', onSelect: () => attach('swap') },
-    { label: 'Meme Fighter', mask: 'var(--icon-joystick) center/contain no-repeat', onSelect: () => attach('memeFighter') },
-  ];
+  const plusItems: MenuItem[] = $derived([
+    { label: t('ui.messageComposer.photoOrVideo'), mask: 'var(--icon-image) center/contain no-repeat', onSelect: () => attach('media') },
+    { label: t('ui.messageComposer.file'), mask: 'var(--icon-file) center/contain no-repeat', onSelect: () => attach('file') },
+    { label: t('ui.messageComposer.poll'), mask: 'var(--icon-poll) center/contain no-repeat', onSelect: () => attach('poll') },
+    { label: t('ui.messageComposer.prizeMessage'), mask: 'var(--icon-trophy) center/contain no-repeat', onSelect: () => attach('prize') },
+    { label: t('ui.messageComposer.sendCrypto'), mask: 'var(--icon-wallet-send) center/contain no-repeat', onSelect: () => attach('crypto') },
+    { label: t('ui.messageComposer.swapCrypto'), mask: 'var(--icon-swap) center/contain no-repeat', onSelect: () => attach('swap') },
+    { label: t('ui.messageComposer.memeFighter'), mask: 'var(--icon-joystick) center/contain no-repeat', onSelect: () => attach('memeFighter') },
+  ]);
 
   function attach(kind: AttachKind) {
     menu = null;
@@ -126,22 +131,22 @@
   }
 
   function grow() {
-    const t = input;
-    if (!t) return;
-    t.style.height = '22px';
-    const h = t.scrollHeight - 14;
-    t.style.height = `${Math.min(h, 160)}px`;
-    t.style.overflowY = h > 160 ? 'auto' : 'hidden';
+    const el = input;
+    if (!el) return;
+    el.style.height = '22px';
+    const h = el.scrollHeight - 14;
+    el.style.height = `${Math.min(h, 160)}px`;
+    el.style.overflowY = h > 160 ? 'auto' : 'hidden';
   }
 
   async function insert(text: string) {
-    const t = input;
-    const a = t ? t.selectionStart : draft.length, b = t ? t.selectionEnd : draft.length;
+    const el = input;
+    const a = el ? el.selectionStart : draft.length, b = el ? el.selectionEnd : draft.length;
     draft = draft.slice(0, a) + text + draft.slice(b);
     await tick();
-    if (t) {
-      t.focus();
-      t.selectionStart = t.selectionEnd = a + text.length;
+    if (el) {
+      el.focus();
+      el.selectionStart = el.selectionEnd = a + text.length;
       grow();
     }
   }
@@ -377,18 +382,21 @@
     };
   });
 
+  const contextLabel = $derived(
+    editing ? t('ui.messageComposer.editingMessage') : context?.name ? t('ui.messageComposer.replyingTo', { name: context.name }) : t('ui.messageComposer.replyingToMessage'),
+  );
   const removeLabel = $derived(
-    att?.type === 'swap' ? 'Remove swap offer' : att?.type === 'transfer' ? 'Remove transfer' : att?.type === 'file' ? 'Remove file' : 'Remove prize',
+    t(att?.type === 'swap' ? 'ui.messageComposer.removeSwap' : att?.type === 'transfer' ? 'ui.messageComposer.removeTransfer' : att?.type === 'file' ? 'ui.messageComposer.removeFile' : 'ui.messageComposer.removePrize'),
   );
   const chip = $derived.by(() => {
     if (!att || att.type === 'media') return null;
     if (att.type === 'file') return { label: att.title, meta: att.summary, title: '' };
     if (att.type === 'swap') return { label: att.title, meta: att.summary, title: att.hint };
-    const label = att.type === 'transfer' ? att.title : `${att.amountText} prize`;
+    const label = att.type === 'transfer' ? att.title : t('ui.messageComposer.prizeLabel', { amount: att.amountText });
     return {
       label,
-      meta: att.summary + (att.feeText ? ` · +${att.feeText} fee` : ''),
-      title: att.totalText ? `${att.summary} · ${att.totalText} total incl. fees` : '',
+      meta: att.feeText ? t('ui.messageComposer.withFee', { summary: att.summary, fee: att.feeText }) : att.summary,
+      title: att.totalText ? t('ui.messageComposer.totalInclFees', { summary: att.summary, total: att.totalText }) : '',
     };
   });
 </script>
@@ -396,13 +404,13 @@
 <div class="composer" bind:this={root} onkeydown={rootKey} role="group">
   {#if menu === 'plus'}
     <div class="popup">
-      <Menu heading="ADD TO MESSAGE" minWidth="232px" items={plusItems} />
+      <Menu heading={t('ui.messageComposer.addHeading')} minWidth="232px" items={plusItems} />
     </div>
   {/if}
   {#if menu === 'picker'}
-    <div class="popup picker" role="dialog" aria-label={tab ? 'GIFs' : 'Emoji'}>
+    <div class="popup picker" role="dialog" aria-label={t(tab ? 'ui.messageComposer.gifs' : 'ui.messageComposer.emoji')}>
       <SegmentedTabs
-        labels={['Emoji', 'GIF']}
+        labels={[t('ui.messageComposer.emoji'), t('ui.messageComposer.gif')]}
         selectedIndex={tab}
         dotOnLast={false}
         onSelect={(i) => {
@@ -417,7 +425,7 @@
       {:else}
         <div class="search">
           <span class="search-icon"></span>
-          <input bind:this={search} bind:value={query} placeholder="Search GIFs" aria-label="Search GIFs" />
+          <input bind:this={search} bind:value={query} placeholder={t('ui.messageComposer.searchGifs')} aria-label={t('ui.messageComposer.searchGifs')} />
         </div>
         <div class="cats">
           {#each GIF_CATS as cat, i}
@@ -431,7 +439,7 @@
               }}
               role="button"
               tabindex="0"
-              aria-pressed={on}>{cat}</span
+              aria-pressed={on}>{t(GIF_CAT_KEYS[cat])}</span
             >
           {/each}
         </div>
@@ -463,30 +471,30 @@
         {#each att.items as item, i}
           <div class="thumb" style:background={item.src && item.kind === 'image' ? `center/cover no-repeat url(${item.src})` : item.bg || 'var(--surface-2,#15151b)'}>
             {#if item.kind === 'video' && item.src}<video src={item.src} muted playsinline preload="metadata"></video>{/if}
-            {#if item.kind === 'video'}<span class="duration"><span class="duration-icon"></span>{item.dur || 'Video'}</span>{/if}
-            <span class="thumb-remove" onclick={() => onRemoveMediaItem?.(i)} role="button" tabindex="0" aria-label="Remove {item.kind === 'video' ? 'video' : 'photo'} {i + 1}" title="Remove"
+            {#if item.kind === 'video'}<span class="duration"><span class="duration-icon"></span>{item.dur || t('ui.messageComposer.video')}</span>{/if}
+            <span class="thumb-remove" onclick={() => onRemoveMediaItem?.(i)} role="button" tabindex="0" aria-label={t(item.kind === 'video' ? 'ui.messageComposer.removeVideo' : 'ui.messageComposer.removePhoto', { n: i + 1 })} title={t('ui.common.remove')}
               ><span class="thumb-remove-icon"></span></span
             >
           </div>
         {/each}
         {#if att.items.length < 10}
-          <span class="tray-add" onclick={onAddMedia} role="button" tabindex="0" aria-label="Add photos or videos" title="Add more"><span class="tray-add-icon"></span></span>
+          <span class="tray-add" onclick={onAddMedia} role="button" tabindex="0" aria-label={t('ui.messageComposer.addMedia')} title={t('ui.messageComposer.addMore')}><span class="tray-add-icon"></span></span>
         {/if}
       </div>
     {/if}
     {#if context && !voice}
-      <div class="context" role="status" aria-label={editing ? 'Editing message' : `Replying to ${context.name || 'message'}`}>
-        <span class="context-main" onclick={onJumpContext} role="button" tabindex="0" title="Show original message">
+      <div class="context" role="status" aria-label={contextLabel}>
+        <span class="context-main" onclick={onJumpContext} role="button" tabindex="0" title={t('ui.messageComposer.showOriginal')}>
           {#if context.thumb}
             <span class="context-thumb" style:background={context.thumb}></span>
           {:else}
             <span class="context-icon" class:editing><span class="context-glyph" style:mask="var(--icon-{editing ? 'edit' : 'reply'}) center/contain no-repeat"></span></span>
           {/if}
           <span class="context-text"
-            ><span class="context-label" class:editing>{editing ? 'Editing message' : `Replying to ${context.name || 'message'}`}</span><span class="context-quote">{context.quote}</span></span
+            ><span class="context-label" class:editing>{contextLabel}</span><span class="context-quote">{context.quote}</span></span
           >
         </span>
-        <span class="round-close" onclick={onCancelContext} role="button" tabindex="0" aria-label={editing ? 'Cancel edit' : 'Cancel reply'} data-tip={editing ? 'Cancel edit' : 'Cancel reply'}
+        <span class="round-close" onclick={onCancelContext} role="button" tabindex="0" aria-label={t(editing ? 'ui.messageComposer.cancelEdit' : 'ui.messageComposer.cancelReply')} data-tip={t(editing ? 'ui.messageComposer.cancelEdit' : 'ui.messageComposer.cancelReply')}
           ><span class="close-icon"></span></span
         >
       </div>
@@ -505,7 +513,7 @@
         {/if}
         <span class="chip-label">{chip.label}</span>
         <span class="chip-meta" title={chip.title}>{chip.meta}</span>
-        {#if att.type !== 'file'}<span class="chip-edit" onclick={onEditAttachment} role="button" tabindex="0">Edit</span>{/if}
+        {#if att.type !== 'file'}<span class="chip-edit" onclick={onEditAttachment} role="button" tabindex="0">{t('ui.common.edit')}</span>{/if}
         <span class="round-close" onclick={onRemoveAttachment} role="button" tabindex="0" aria-label={removeLabel} title={removeLabel}><span class="close-icon"></span></span>
       </div>
     {/if}
@@ -518,13 +526,13 @@
             onclick={() => (menu = menu === 'plus' ? null : 'plus')}
             role="button"
             tabindex="0"
-            aria-label="Add to message"
+            aria-label={t('ui.messageComposer.addToMessage')}
             aria-expanded={menu === 'plus'}
             aria-haspopup="menu"
-            title="Add file, poll, prize, crypto or game"><span class="tool-icon plus"></span></span
+            title={t('ui.messageComposer.addToMessageHint')}><span class="tool-icon plus"></span></span
           >
         {/if}
-        <span class="tool" class:open={menu === 'picker'} onclick={togglePicker} role="button" tabindex="0" aria-label="Emoji and GIFs" aria-expanded={menu === 'picker'} aria-haspopup="dialog" title="Emoji and GIFs"
+        <span class="tool" class:open={menu === 'picker'} onclick={togglePicker} role="button" tabindex="0" aria-label={t('ui.messageComposer.emojiAndGifs')} aria-expanded={menu === 'picker'} aria-haspopup="dialog" title={t('ui.messageComposer.emojiAndGifs')}
           ><span class="tool-icon emoji"></span></span
         >
       </div>
@@ -545,24 +553,24 @@
           }}
           onfocus={() => (focused = true)}
           onblur={() => (focused = false)}
-          placeholder={att ? 'Add a caption' : placeholder}
-          aria-label={att ? 'Add a caption' : placeholder}
+          placeholder={t(att ? 'ui.messageComposer.addCaption' : placeholder)}
+          aria-label={t(att ? 'ui.messageComposer.addCaption' : placeholder)}
         ></textarea>
       </div>
       {#if hasContent || editing}
-        <span class="action send" onclick={send} role="button" tabindex="0" aria-label={editing ? 'Save edit' : 'Send message'} title={editing ? 'Save (Enter)' : 'Send (Enter)'}
+        <span class="action send" onclick={send} role="button" tabindex="0" aria-label={t(editing ? 'ui.messageComposer.saveEdit' : 'ui.messageComposer.sendMessage')} title={t(editing ? 'ui.messageComposer.saveHint' : 'ui.messageComposer.sendHint')}
           ><span class="send-icon" style:mask="var(--icon-{editing ? 'check' : 'send'}) center/contain no-repeat"></span></span
         >
       {:else}
-        <span class="action mic" onclick={startRecording} role="button" tabindex="0" aria-label="Record voice message" title="Record voice message"><span class="mic-icon"></span></span>
+        <span class="action mic" onclick={startRecording} role="button" tabindex="0" aria-label={t('ui.messageComposer.recordVoice')} title={t('ui.messageComposer.recordVoice')}><span class="mic-icon"></span></span>
       {/if}
     {:else}
-      <span class="action delete" onclick={resetVoice} role="button" tabindex="0" aria-label="Delete recording" title="Delete (Esc)"><span class="delete-icon"></span></span>
+      <span class="action delete" onclick={resetVoice} role="button" tabindex="0" aria-label={t('ui.messageComposer.deleteRecording')} title={t('ui.messageComposer.deleteHint')}><span class="delete-icon"></span></span>
       <div class="voice">
         {#if voice === 'recording'}
           <span class="rec-dot" aria-hidden="true"></span>
         {:else}
-          <span class="play" onclick={togglePlay} role="button" tabindex="0" aria-label={playing ? 'Pause' : 'Play recording'}
+          <span class="play" onclick={togglePlay} role="button" tabindex="0" aria-label={t(playing ? 'ui.messageComposer.pause' : 'ui.messageComposer.playRecording')}
             ><span class="play-icon" style:mask="var(--icon-{playing ? 'stop' : 'play'}) center/contain no-repeat"></span></span
           >
         {/if}
@@ -573,11 +581,11 @@
           bind:this={wave}
           role={voice === 'review' ? 'slider' : undefined}
           tabindex={voice === 'review' ? 0 : undefined}
-          aria-label={voice === 'review' ? 'Seek' : undefined}
+          aria-label={voice === 'review' ? t('ui.messageComposer.seek') : undefined}
           aria-valuemin={voice === 'review' ? 0 : undefined}
           aria-valuemax={voice === 'review' ? secs : undefined}
           aria-valuenow={voice === 'review' ? Math.round(secs * playPos) : undefined}
-          aria-valuetext={voice === 'review' ? `${mmss(secs * playPos)} of ${mmss(secs)}` : undefined}
+          aria-valuetext={voice === 'review' ? t('ui.messageComposer.seekValue', { position: mmss(secs * playPos), total: mmss(secs) }) : undefined}
           aria-hidden={voice === 'review' ? undefined : 'true'}
           onpointerdown={seekStart}
           onkeydown={seekKey}
@@ -594,15 +602,15 @@
         </div>
       </div>
       {#if voice === 'recording'}
-        <span class="action stop" onclick={stopRecording} role="button" tabindex="0" aria-label="Stop recording" title="Stop and review"><span class="stop-icon"></span></span>
+        <span class="action stop" onclick={stopRecording} role="button" tabindex="0" aria-label={t('ui.messageComposer.stopRecording')} title={t('ui.messageComposer.stopHint')}><span class="stop-icon"></span></span>
       {/if}
-      <span class="action send" onclick={sendVoice} role="button" tabindex="0" aria-label="Send voice message" title="Send voice message"
+      <span class="action send" onclick={sendVoice} role="button" tabindex="0" aria-label={t('ui.messageComposer.sendVoice')} title={t('ui.messageComposer.sendVoice')}
         ><span class="send-icon" style:mask="var(--icon-send) center/contain no-repeat"></span></span
       >
     {/if}
   </div>
   {#if voice === 'recording'}
-    <span class="rec-hint">Recording · Esc to delete · stop to listen back</span>
+    <span class="rec-hint">{t('ui.messageComposer.recordingHint')}</span>
   {/if}
 </div>
 

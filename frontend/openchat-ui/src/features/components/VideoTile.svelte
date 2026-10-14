@@ -1,6 +1,7 @@
 <!-- One call participant. The feed keeps its own shape (ratio, default 4:3) and letterboxes inside the tile — never cropped.
      Avatar shows while the camera is off / no feed. speaking → accent ring (drawn above the feed). Name pill + mic state bottom-left. -->
 <script lang="ts">
+  import { useT } from '../../lib/i18n';
   interface Props {
     nameLabel: string;
     /** Avatar letter; defaults to the name's first letter. */
@@ -30,9 +31,10 @@
     big = false,
     radius = 10,
   }: Props = $props();
+  const t = useT();
 </script>
 
-<div class="tile" style:border-radius="{radius}px" role="img" aria-label="{nameLabel}{muted ? ', muted' : ''}{speaking ? ', speaking' : ''}">
+<div class="tile" style:border-radius="{radius}px" role="img" aria-label={t('ui.videoTile.label', { name: nameLabel, muted: String(muted), speaking: String(speaking) })}>
   <span class="ring" class:speaking aria-hidden="true"></span>
   <div class="feed" style:--ratio={ratio || 4 / 3} style:background={feed}>
     <span class="avatar" class:big style:background={grad}>{initial ?? nameLabel.slice(0, 1).toUpperCase()}</span>

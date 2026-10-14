@@ -1,17 +1,32 @@
 <!-- Title, hint and a wrap of duration chips (one selected). `branch` draws the elbow connector that hangs it off a Toggle row above. -->
+<script lang="ts" module>
+  import type { TranslateFn } from '../i18n';
+
+  /** Option values are stable English ids ('12 hours'); shown through ICU plurals so they translate. Other values are resource keys or literal text. */
+  export function durationText(t: TranslateFn, value: string): string {
+    const m = value.match(/^(\d+) (minute|hour|day|week|month|year)s?$/);
+    return m ? t(`ui.duration.${m[2]}s`, { count: Number(m[1]) }) : t(value);
+  }
+</script>
+
 <script lang="ts">
+  import { useT } from '../i18n';
   const DURATIONS = ['1 hour', '12 hours', '1 day', '1 week', '2 weeks', '1 month', '3 months', '6 months'];
 
   interface Props {
+    /** One of `options`: an id like '12 hours' (shown translated) or a resource key. */
     value: string;
     options?: string[];
+    /** Resource key (or literal text). */
     title: string;
+    /** Resource key (or literal text). */
     hint?: string;
     branch?: boolean;
     onChange?: (value: string) => void;
   }
 
   let { value, options, title, hint, branch = true, onChange }: Props = $props();
+  const t = useT();
 
   const list = $derived(options?.length ? options : DURATIONS);
 </script>
@@ -21,12 +36,12 @@
     <span class="elbow"></span>
   {/if}
   <div class="head inset">
-    <span class="title">{title}</span>
-    {#if hint}<span class="hint">{hint}</span>{/if}
+    <span class="title">{t(title)}</span>
+    {#if hint}<span class="hint">{t(hint)}</span>{/if}
   </div>
   <div class="options inset">
     {#each list as label}
-      <span class="chip" class:selected={label === value} onclick={() => onChange?.(label)} role="button" tabindex="0">{label}</span>
+      <span class="chip" class:selected={label === value} onclick={() => onChange?.(label)} role="button" tabindex="0">{durationText(t, label)}</span>
     {/each}
   </div>
 </div>

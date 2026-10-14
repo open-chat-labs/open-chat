@@ -1,20 +1,23 @@
 <!-- Small marker. variant: count (accent number) | tag (accent label) | neutral | chit (amount + "CHIT"; `short` drops the word)
      | dot (unread dot) | verified (blue check). -->
 <script lang="ts">
+  import { useT } from '../i18n';
   interface Props {
+    /** Count / CHIT amount, or a resource key (or literal text) for tag and neutral chips. */
     label?: string;
     variant?: 'count' | 'tag' | 'neutral' | 'chit' | 'dot' | 'verified';
     short?: boolean;
   }
 
   let { label = '', variant = 'count', short = false }: Props = $props();
+  const t = useT();
 </script>
 
 <div class="badge">
   {#if variant === 'count'}
     <span class="count">{label}</span>
   {:else if variant === 'tag' || variant === 'neutral'}
-    <span class="chip {variant}">{label}</span>
+    <span class="chip {variant}">{t(label)}</span>
   {:else if variant === 'chit'}
     <span class="chip chit">
       <span>{label}</span>

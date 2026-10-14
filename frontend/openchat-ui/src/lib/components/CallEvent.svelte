@@ -2,6 +2,7 @@
      Grouped: pass `calls` (2+ ended/missed calls in a row) for one collapsible summary pill. Live calls are never grouped — the app decides runs. -->
 <script lang="ts">
   import AvatarStack from './AvatarStack.svelte';
+  import { useT } from '../i18n';
 
   type Media = 'video' | 'voice';
 
@@ -46,20 +47,23 @@
     onJoin,
     onCallBack,
   }: Props = $props();
+  const t = useT();
 
   let open = $state(false);
 
   const mask = (m: Media) => `var(--icon-${m === 'voice' ? 'phone' : 'video'}) center/contain no-repeat`;
-  const capital = (m: Media) => (m === 'voice' ? 'Voice' : 'Video');
 
   const grouped = $derived(calls.length > 1);
   const missedCount = $derived(calls.filter((c) => c.state === 'missed').length);
-  const groupTitle = $derived(`${calls.length} calls${missedCount ? ` · ${missedCount} missed` : ''}`);
+  const groupTitle = $derived(t('ui.callEvent.group', { count: calls.length, missed: missedCount }));
+
+  // "You" (startedBy) is your own call: no "from …" on a missed one
+  const missedTitle = (media: Media, who: string) => t('ui.callEvent.missed', { media, who, self: !who || who === 'You' ? 'yes' : 'no' });
 
   function rowTitle(c: Call) {
     const who = c.startedBy ?? '';
-    if (c.state === 'missed') return `Missed ${c.media} call${who && who !== 'You' ? ` from ${who}` : ''}`;
-    return (who === 'You' ? `You started a ${c.media} call` : `${capital(c.media)} call`) + (c.duration ? ` · ${c.duration}` : '');
+    if (c.state === 'missed') return missedTitle(c.media, who);
+    return t(who === 'You' ? 'ui.callEvent.youStarted' : 'ui.callEvent.call', { media: c.media }) + (c.duration ? ` · ${c.duration}` : '');
   }
 
   // a single call can come in through `calls` too
@@ -71,10 +75,14 @@
   const missed = $derived(st === 'missed');
   const inCall = $derived(live && joined);
   const title = $derived(
-    live ? `${who} started a ${media} call` : missed ? `Missed ${media} call${who !== 'You' ? ` from ${who}` : ''}` : `${capital(media)} call ended`,
+    live
+      ? t('ui.callEvent.started', { media, who })
+      : missed
+        ? t('ui.callEvent.missed', { media, who, self: who === 'You' ? 'yes' : 'no' })
+        : t('ui.callEvent.ended', { media }),
   );
   const sub = $derived(
-    live ? `Live · ${elapsed}${inCall ? " · You're in" : ''}` : missed ? (one.time ?? time) : `${one.duration ?? duration} · ${one.time ?? time}`,
+    live ? t('ui.callEvent.live', { elapsed, inCall: inCall ? 'yes' : 'no' }) : missed ? (one.time ?? time) : `${one.duration ?? duration} · ${one.time ?? time}`,
   );
   const people = $derived(faces.map((x) => (/^(https?:|data:|\/|\.)/.test(x) ? `center/cover no-repeat url(${JSON.stringify(x)})` : x)));
 </script>
@@ -87,7 +95,7 @@
       {#if live && people.length}<span class="faces"><AvatarStack {people} size={28} max={4} /></span>{/if}
       {#if live || missed}
         <span class="action" class:join={live && !inCall} class:leave={inCall} onclick={inCall ? onLeave : live ? onJoin : onCallBack} role="button" tabindex="0"
-          ><span class="action-icon" style:mask={mask(live ? media : 'voice')}></span>{inCall ? 'Leave' : live ? 'Join' : 'Call back'}</span
+          ><span class="action-icon" style:mask={mask(live ? media : 'voice')}></span>{t(inCall ? 'ui.callEvent.leave' : live ? 'ui.callEvent.join' : 'ui.callEvent.callBack')}</span
         >
       {/if}
     </div>
@@ -106,7 +114,7 @@
             </div>
           {/each}
           {#if missedCount > 0}
-            <div class="call-back-row"><span class="call-back" onclick={onCallBack} role="button" tabindex="0"><span class="call-back-icon"></span>Call back</span></div>
+            <div class="call-back-row"><span class="call-back" onclick={onCallBack} role="button" tabindex="0"><span class="call-back-icon"></span>{t('ui.callEvent.callBack')}</span></div>
           {/if}
         </div>
       {/if}

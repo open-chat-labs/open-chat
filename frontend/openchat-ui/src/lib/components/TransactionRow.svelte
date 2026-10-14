@@ -1,6 +1,7 @@
 <!-- One wallet transaction. With a token (mark + gradient) it shows the token avatar badged with the kind (All activity);
      without, a neutral kind icon (a single token's page). onClick makes it a hover row; divider draws the list rule above it. -->
 <script lang="ts">
+  import { useT } from '../i18n';
   import Pill from './Pill.svelte';
   import TokenAvatar from './TokenAvatar.svelte';
 
@@ -20,6 +21,7 @@
     symbol?: string;
     mark?: string;
     gradient?: string;
+    /** Status pill: resource key (or literal text). */
     status?: string;
     statusTone?: 'neutral' | 'success' | 'warning' | 'danger' | 'accent';
     divider?: boolean;
@@ -45,6 +47,7 @@
     fresh = false,
     onClick,
   }: Props = $props();
+  const t = useT();
 
   const pressable = $derived(!!onClick);
 </script>
@@ -65,9 +68,9 @@
   {/if}
   <span class="main">
     <span class="title">{title}</span>
-    <span class="sub"><span class="sub-text">{sub}</span>{#if status}<Pill label={status} tone={statusTone} dot={true} />{/if}</span>
+    <span class="sub"><span class="sub-text">{sub}</span>{#if status}<Pill label={t(status)} tone={statusTone} dot={true} />{/if}</span>
   </span>
-  <span class="figures" aria-label={hidden ? 'Amount hidden' : undefined}>
+  <span class="figures" aria-label={hidden ? t('ui.transactionRow.amountHidden') : undefined}>
     <span class="amount" class:positive={!hidden && (positive ?? kind === 'receive')}>{hidden ? '••••' : amount}</span>
     <span class="fiat">{hidden ? '••••' : fiat}</span>
   </span>

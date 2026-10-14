@@ -8,6 +8,7 @@
   import MessageComposer from '../../lib/components/MessageComposer.svelte';
   import MessageGroup from '../../lib/components/MessageGroup.svelte';
   import UnreadDivider from '../../lib/components/UnreadDivider.svelte';
+  import { useT } from '../../lib/i18n';
 
   const GRADIENTS: Record<string, string> = {
     violet: 'linear-gradient(140deg,#ff5f9e,#6a2bff)',
@@ -56,6 +57,7 @@
     asModal = false,
     onClose,
   }: Props = $props();
+  const t = useT();
 
   let list: HTMLDivElement;
   let rootOpen = $state(false);
@@ -99,11 +101,11 @@
 <div class="thread">
   <div class="header" class:modal={asModal}>
     {#if !asModal}
-      <div class="icon-slot"><IconButton label="Back to details" variant="ghost" icon="back" onClick={() => onClose?.()} /></div>
+      <div class="icon-slot"><IconButton label="ui.threadPanel.backToDetails" variant="ghost" icon="back" onClick={() => onClose?.()} /></div>
     {/if}
-    <span class="heading"><span class="title">Thread</span><span class="chat">{chatName}</span></span>
+    <span class="heading"><span class="title">{t('ui.threadPanel.title')}</span><span class="chat">{chatName}</span></span>
     {#if asModal}
-      <div class="icon-slot"><IconButton label="Close thread" variant="ghost" icon="close" onClick={() => onClose?.()} /></div>
+      <div class="icon-slot"><IconButton label="ui.threadPanel.closeThread" variant="ghost" icon="close" onClick={() => onClose?.()} /></div>
     {/if}
   </div>
   <div class="summary">
@@ -111,13 +113,13 @@
       <div class="root-line"><span class="root-face" style:background={grad(root.color)}></span><span class="root-author">{root.author}</span><span class="root-time">{root.time}</span></div>
       <span class="root-text" style:-webkit-line-clamp={rootOpen ? 'unset' : '2'}>{root.text}</span>
       <div class="root-actions">
-        <span class="jump" onclick={() => onJump?.()} role="button" tabindex="0">Jump to message</span>
-        {#if root.text.length > 110}<span class="more" onclick={() => (rootOpen = !rootOpen)} role="button" tabindex="0">{rootOpen ? 'Less' : 'More'}</span>{/if}
+        <span class="jump" onclick={() => onJump?.()} role="button" tabindex="0">{t('ui.threadPanel.jumpToMessage')}</span>
+        {#if root.text.length > 110}<span class="more" onclick={() => (rootOpen = !rootOpen)} role="button" tabindex="0">{t(rootOpen ? 'ui.common.less' : 'ui.common.more')}</span>{/if}
       </div>
     </div>
     <div class="people">
       <span class="faces">{#each faces.slice(0, 4) as f}<span class="face" style:background={grad(f)}></span>{/each}</span>
-      <span class="people-line">{faces.length}{faces.length === 1 ? ' person' : ' people'} · {total}{total === 1 ? ' reply' : ' replies'}</span>
+      <span class="people-line">{t('ui.threadPanel.peopleAndReplies', { people: faces.length, replies: total })}</span>
       <span
         class="follow"
         class:on
@@ -127,19 +129,19 @@
         }}
         role="button"
         tabindex="0"
-        aria-pressed={on}><span class="bell"></span>{on ? 'Following' : 'Follow'}</span
+        aria-pressed={on}><span class="bell"></span>{t(on ? 'ui.threadPanel.following' : 'ui.threadPanel.follow')}</span
       >
     </div>
   </div>
   <div class="replies" bind:this={list}>
     {#if total === 0}
-      <span class="empty">No replies yet. Start the thread below.</span>
+      <span class="empty">{t('ui.threadPanel.empty')}</span>
     {/if}
     {#each replies as r}
       <div class="cell"><MessageGroup side={r.side} senderName={r.name ?? ''} color={r.color} messages={r.messages} /></div>
     {/each}
     {#if newReplies.length > 0}
-      <div class="cell"><UnreadDivider label="New" tone="accent" /></div>
+      <div class="cell"><UnreadDivider label={t('ui.threadPanel.new')} tone="accent" /></div>
       {#each newReplies as r}
         <div class="cell"><MessageGroup side={r.side} senderName={r.name ?? ''} color={r.color} messages={r.messages} /></div>
       {/each}
@@ -147,12 +149,12 @@
   </div>
   <div class="composer">
     <MessageComposer
-      placeholder="Reply to {firstName}"
+      placeholder={t('ui.threadPanel.replyTo', { name: firstName })}
       onSend={send}
       onGif={(q) => send(`GIF · ${q}`)}
       onVoice={(r) => {
         const d = Math.max(1, Math.round(r?.duration || 0));
-        send({ kind: 'voice', progress: 0, elapsed: '0:00', total: `${Math.floor(d / 60)}:${String(d % 60).padStart(2, '0')}`, time: 'now' });
+        send({ kind: 'voice', progress: 0, elapsed: '0:00', total: `${Math.floor(d / 60)}:${String(d % 60).padStart(2, '0')}`, time: t('ui.threadPanel.now') });
       }}
       {onAttach}
     />

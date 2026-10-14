@@ -19,6 +19,7 @@
 </script>
 
 <script lang="ts">
+  import { useT } from '../../lib/i18n';
   import { onMount } from 'svelte';
   import type { Prize, PrizeDraft } from '../../lib/types';
   import Button from '../../lib/components/Button.svelte';
@@ -28,25 +29,28 @@
   import Toggle from '../../lib/components/Toggle.svelte';
   import TokenAvatar from '../../lib/components/TokenAvatar.svelte';
 
+  // [long label key, short label key, ms]; labels are resolved at render time
+  const D = 'ui.prizeBuilderDialog.durations.';
   const DURS: [string, string, number][] = [
-    ['1 hour', '1h', 3600e3],
-    ['6 hours', '6h', 6 * 3600e3],
-    ['1 day', '1d', 86400e3],
-    ['7 days', '7d', 7 * 86400e3],
-    ['30 days', '30d', 30 * 86400e3],
-    ['90 days', '90d', 90 * 86400e3],
+    [D + 'oneHour', D + 'oneHourShort', 3600e3],
+    [D + 'sixHours', D + 'sixHoursShort', 6 * 3600e3],
+    [D + 'oneDay', D + 'oneDayShort', 86400e3],
+    [D + 'sevenDays', D + 'sevenDaysShort', 7 * 86400e3],
+    [D + 'thirtyDays', D + 'thirtyDaysShort', 30 * 86400e3],
+    [D + 'ninetyDays', D + 'ninetyDaysShort', 90 * 86400e3],
   ];
   type GateKey = 'auth' | 'diamond' | 'lifetime' | 'chit' | 'streak';
   const GATES: { k: GateKey; label: string; icon: string; pick?: 'chit' | 'streak' }[] = [
-    { k: 'auth', label: 'Authenticated', icon: 'passkey' },
-    { k: 'diamond', label: 'Diamond', icon: 'diamond-outline' },
-    { k: 'lifetime', label: 'Lifetime Diamond', icon: 'diamond' },
-    { k: 'chit', label: 'CHIT earned', icon: 'chit', pick: 'chit' },
-    { k: 'streak', label: 'Streak', icon: 'flame', pick: 'streak' },
+    { k: 'auth', label: 'ui.prizeBuilderDialog.gates.auth', icon: 'passkey' },
+    { k: 'diamond', label: 'ui.prizeBuilderDialog.gates.diamond', icon: 'diamond-outline' },
+    { k: 'lifetime', label: 'ui.prizeBuilderDialog.gates.lifetime', icon: 'diamond' },
+    { k: 'chit', label: 'ui.prizeBuilderDialog.gates.chit', icon: 'chit', pick: 'chit' },
+    { k: 'streak', label: 'ui.prizeBuilderDialog.gates.streak', icon: 'flame', pick: 'streak' },
   ];
+  // title and amount keys; amounts are formatted with t() at render time
   const PICKS = {
-    streak: { title: 'Minimum streak', opts: [3, 7, 14, 30, 100, 365], fmt: (n: number) => `${n} days` },
-    chit: { title: 'Minimum CHIT earned', opts: [1000, 5000, 10000, 50000, 100000], fmt: (n: number) => `${n >= 1000 ? n / 1000 + 'k' : n} CHIT` },
+    streak: { title: 'ui.prizeBuilderDialog.minStreak', opts: [3, 7, 14, 30, 100, 365], amount: 'ui.prizeBuilderDialog.streakDays', short: (n: number) => n },
+    chit: { title: 'ui.prizeBuilderDialog.minChit', opts: [1000, 5000, 10000, 50000, 100000], amount: 'ui.prizeBuilderDialog.chitAmount', short: (n: number) => (n >= 1000 ? n / 1000 + 'k' : n) },
   };
   const fmt = (n: number, dp: number) => Number(n.toFixed(dp)).toLocaleString('en-US', { maximumFractionDigits: dp });
 
@@ -61,6 +65,8 @@
   }
 
   let { tokens, z = 80, initial = null, onAttach, onClose }: Props = $props();
+  const t = useT();
+  const K = 'ui.prizeBuilderDialog.';
 
   const start: PrizeDraft = { tok: tokens[0].symbol, amt: '', win: '20', dur: 2, even: false, gates: {}, streak: 7, chit: 10000, ...initial?.draft };
   let tok = $state(start.tok);
@@ -84,46 +90,49 @@
   const min = $derived(T.minPer * Math.max(w, 1));
   const max = $derived(Math.max(0, T.bal - fee));
   const F = (n: number) => fmt(n, T.dp);
+  const pickAmount = (p: 'chit' | 'streak', n: number) => t(PICKS[p].amount, { count: n, n: PICKS[p].short(n) });
+  // why Attach is disabled: a resource key under ui.prizeBuilderDialog ('' = ready)
   const reason = $derived(
     w < 1 || w > 1000
-      ? 'Choose 1 to 1,000 winners'
+      ? 'winnersRange'
       : !a
-        ? 'Enter an amount'
+        ? 'enterAmount'
         : a < min
-          ? `Minimum for ${w} winners is ${F(min)} ${T.symbol}`
+          ? 'minimum'
           : a > max
-            ? `Not enough ${T.symbol} (max ${F(max)} after fees)`
+            ? 'notEnough'
             : '',
   );
+  const reasonText = $derived(reason ? t(K + reason, { count: w, min: F(min), max: F(max), symbol: T.symbol }) : '');
   const ok = $derived(!reason);
   const gateOn = $derived(GATES.filter((g) => gates[g.k]));
   const gateLabel = (g: (typeof GATES)[number]) =>
     g.k === 'streak'
-      ? `${streak}+ day streak`
+      ? t(K + 'gateStreak', { count: streak })
       : g.k === 'chit'
-        ? `${PICKS.chit.fmt(chit)}+`
+        ? t(K + 'gateChit', { amount: pickAmount('chit', chit) })
         : g.k === 'diamond'
-          ? 'Diamond members'
+          ? t(K + 'gateDiamond')
           : g.k === 'auth'
-            ? 'Authenticated users'
-            : g.label;
+            ? t(K + 'gateAuth')
+            : t(g.label);
   const total = $derived(a + fee);
   const wide = $derived(vw >= 960);
   const perWinner = $derived(
-    !a || !w ? 'a share of the prize' : even ? `${F(a / w)} ${T.symbol} each` : `a random amount, avg ${F(a / w)} ${T.symbol}`,
+    !a || !w ? t(K + 'perWinnerShare') : t(even ? K + 'perWinnerEach' : K + 'perWinnerRandom', { amount: F(a / w), symbol: T.symbol }),
   );
   const rows = $derived([
-    { k: 'win' as const, icon: 'trophy', label: 'Winners', value: `${w} · ${even ? 'even split' : 'random amounts'}` },
-    { k: 'dur' as const, icon: 'timer', label: 'Ends after', value: DURS[dur][0] },
-    { k: 'who' as const, icon: 'shield', label: 'Who can claim', value: gateOn.length ? gateOn.map(gateLabel).join(' · ') : 'Anyone in this chat' },
+    { k: 'win' as const, icon: 'trophy', label: t(K + 'winners'), value: `${w} · ${t(even ? K + 'evenSplit' : K + 'randomAmounts')}` },
+    { k: 'dur' as const, icon: 'timer', label: t(K + 'endsAfter'), value: t(DURS[dur][0]) },
+    { k: 'who' as const, icon: 'shield', label: t(K + 'whoCanClaim'), value: gateOn.length ? gateOn.map(gateLabel).join(' · ') : t(K + 'anyone') },
   ]);
   const costRows = $derived([
-    { label: 'Prize', value: `${F(a)} ${T.symbol}` },
-    { label: 'Fees', value: `${F(fee)} ${T.symbol}` },
-    { label: 'Total', value: `${F(total)} ${T.symbol}`, strong: true },
-    { label: 'Balance after', value: `${F(Math.max(0, T.bal - total))} ${T.symbol}`, short: T.bal - total < 0 },
+    { label: t(K + 'costPrize'), value: `${F(a)} ${T.symbol}` },
+    { label: t(K + 'costFees'), value: `${F(fee)} ${T.symbol}` },
+    { label: t(K + 'costTotal'), value: `${F(total)} ${T.symbol}`, strong: true },
+    { label: t(K + 'balanceAfter'), value: `${F(Math.max(0, T.bal - total))} ${T.symbol}`, short: T.bal - total < 0 },
   ]);
-  const quiet = $derived(ok || reason === 'Enter an amount');
+  const quiet = $derived(ok || reason === 'enterAmount');
 
   function toggleGate(g: (typeof GATES)[number]) {
     if (gates[g.k]) {
@@ -161,14 +170,14 @@
       amountText: `${F(a)} ${T.symbol}`,
       winners: w,
       even,
-      endsIn: DURS[dur][1],
-      endsInLabel: DURS[dur][0],
+      endsIn: t(DURS[dur][1]),
+      endsInLabel: t(DURS[dur][0]),
       endsAt: Date.now() + DURS[dur][2],
       gates: gateOn.map((g) => ({ label: gateLabel(g), met: true })),
       fee,
       feeText: `${F(fee)} ${T.symbol}`,
       totalText: `${F(total)} ${T.symbol}`,
-      summary: [`${w}${w === 1 ? ' winner' : ' winners'}`, DURS[dur][1], ...(gateOn.length ? [`${gateOn.length}${gateOn.length > 1 ? ' rules' : ' rule'}`] : [])].join(' · '),
+      summary: [t(K + 'summaryWinners', { count: w }), t(DURS[dur][1]), ...(gateOn.length ? [t(K + 'summaryRules', { count: gateOn.length })] : [])].join(' · '),
       draft: { tok, amt, win, dur, even, gates, streak, chit },
     });
   }
@@ -185,8 +194,8 @@
   }
 
   onMount(() => {
-    const t = setTimeout(() => amountInput?.focus(), 60);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => amountInput?.focus(), 60);
+    return () => clearTimeout(timer);
   });
 </script>
 
@@ -194,15 +203,15 @@
 
 <div class="layer" style:z-index={z}>
   <div class="scrim" onclick={() => onClose?.()} aria-hidden="true"></div>
-  <div class="dialog" class:wide data-oc-managed="" tabindex="-1" role="dialog" aria-modal="true" aria-label={initial ? 'Edit prize' : 'Create a prize'} onkeydown={onKey}>
+  <div class="dialog" class:wide data-oc-managed="" tabindex="-1" role="dialog" aria-modal="true" aria-label={t(initial ? K + 'editTitle' : K + 'title')} onkeydown={onKey}>
     <div class="head">
-      <span class="title">{initial ? 'Edit prize' : 'Create a prize'}</span>
-      <IconButton variant="ghost" icon="close" label="Close" onClick={() => onClose?.()} />
+      <span class="title">{t(initial ? K + 'editTitle' : K + 'title')}</span>
+      <IconButton variant="ghost" icon="close" label="ui.common.close" onClick={() => onClose?.()} />
     </div>
     <div class="body">
       <div class="form">
         <div class="amount-card">
-          <div class="token" onclick={() => (tokOpen = true)} role="button" tabindex="0" aria-label="Change prize token" aria-haspopup="dialog">
+          <div class="token" onclick={() => (tokOpen = true)} role="button" tabindex="0" aria-label={t(K + 'changeToken')} aria-haspopup="dialog">
             <TokenAvatar symbol={T.symbol} mark={T.mark} gradient={T.gradient} size={28} />
             <span class="token-symbol">{T.symbol}</span>
             <span class="token-bal">{F(T.bal)} {T.symbol}</span>
@@ -215,9 +224,9 @@
             oninput={(e) => (amt = e.currentTarget.value.replace(/[^0-9.]/g, ''))}
             inputmode="decimal"
             placeholder="0"
-            aria-label="Total prize amount"
+            aria-label={t(K + 'totalAmount')}
           />
-          <span class="amount-hint" class:warn={!quiet}>{ok ? `Fee ${F(fee)} ${T.symbol} (${Math.max(w, 1) + 1} transfers) is added on top` : reason}</span>
+          <span class="amount-hint" class:warn={!quiet}>{ok ? t(K + 'feeAdded', { fee: F(fee), symbol: T.symbol, count: Math.max(w, 1) + 1 }) : reasonText}</span>
           <QuickAmountChips size="sm" onSelect={(f) => (amt = String(Number((max * f).toFixed(T.dp))))} />
         </div>
         <div class="rows">
@@ -241,18 +250,18 @@
               {#if row === r.k && r.k === 'win'}
                 <div class="panel column">
                   <div class="stepper">
-                    <button class="step" onclick={() => (win = String(Math.max(1, w - 1)))} aria-label="Fewer winners">−</button>
-                    <input value={win} oninput={(e) => (win = e.currentTarget.value.replace(/\D/g, '').slice(0, 4))} inputmode="numeric" aria-label="Number of winners" />
-                    <button class="step" onclick={() => (win = String(Math.min(1000, w + 1)))} aria-label="More winners">+</button>
+                    <button class="step" onclick={() => (win = String(Math.max(1, w - 1)))} aria-label={t(K + 'fewerWinners')}>−</button>
+                    <input value={win} oninput={(e) => (win = e.currentTarget.value.replace(/\D/g, '').slice(0, 4))} inputmode="numeric" aria-label={t(K + 'numberOfWinners')} />
+                    <button class="step" onclick={() => (win = String(Math.min(1000, w + 1)))} aria-label={t(K + 'moreWinners')}>+</button>
                   </div>
-                  <span class="range">1 to 1,000 winners</span>
-                  <Toggle label="Split evenly" help="Off: each winner gets a random amount." on={even} onChange={(v) => (even = v)} />
+                  <span class="range">{t(K + 'winnersRangeHint')}</span>
+                  <Toggle label={t(K + 'splitEvenly')} help={t(K + 'splitEvenlyHelp')} on={even} onChange={(v) => (even = v)} />
                 </div>
               {/if}
               {#if row === r.k && r.k === 'dur'}
                 <div class="panel wrap">
                   {#each DURS as d, j}
-                    <button class="choice" class:on={j === dur} onclick={() => (dur = j)} aria-pressed={j === dur}>{d[0]}</button>
+                    <button class="choice" class:on={j === dur} onclick={() => (dur = j)} aria-pressed={j === dur}>{t(d[0])}</button>
                   {/each}
                 </div>
               {/if}
@@ -264,7 +273,7 @@
                       <button class="choice gate" class:on onclick={() => toggleGate(g)} aria-pressed={on}>
                         <span class="gate-icon" style:mask="var(--icon-{g.icon}) center/contain no-repeat" style:-webkit-mask="var(--icon-{g.icon}) center/contain no-repeat"></span>{on
                           ? gateLabel(g)
-                          : g.label}<span
+                          : t(g.label)}<span
                           class="gate-trail"
                           style:mask="var(--icon-{on ? 'close' : g.pick ? 'chevron-down' : 'plus'}) center/contain no-repeat"
                           style:-webkit-mask="var(--icon-{on ? 'close' : g.pick ? 'chevron-down' : 'plus'}) center/contain no-repeat"
@@ -274,10 +283,10 @@
                   </div>
                   {#if pick}
                     <div class="picker">
-                      <span class="picker-title">{PICKS[pick].title}</span>
+                      <span class="picker-title">{t(PICKS[pick].title)}</span>
                       <div class="chips">
                         {#each PICKS[pick].opts as n}
-                          <button class="choice small" class:on={n === (pick === 'chit' ? chit : streak)} onclick={() => choose(n)}>{PICKS[pick].fmt(n)} or more</button>
+                          <button class="choice small" class:on={n === (pick === 'chit' ? chit : streak)} onclick={() => choose(n)}>{t(K + 'orMore', { amount: pickAmount(pick, n) })}</button>
                         {/each}
                       </div>
                     </div>
@@ -290,12 +299,12 @@
       </div>
       {#if wide}
         <div class="aside">
-          <span class="caption">PREVIEW</span>
+          <span class="caption">{t(K + 'preview')}</span>
           <PrizeMessage
             token={{ symbol: T.symbol, mark: T.mark, gradient: T.gradient }}
             winners={Math.max(1, w)}
             claimed={0}
-            endsIn={DURS[dur][1]}
+            endsIn={t(DURS[dur][1])}
             endingSoon={false}
             gates={gateOn.map((g) => ({ label: gateLabel(g), met: true }))}
             state="open"
@@ -310,34 +319,34 @@
               </div>
             {/each}
           </div>
-          <span class="per-winner">Each winner gets {perWinner}. Unclaimed prizes return to you when it ends.</span>
+          <span class="per-winner">{t(K + 'perWinnerNote', { perWinner })}</span>
         </div>
       {/if}
     </div>
     <div class="foot">
-      <span class="foot-text" class:quiet={reason === 'Enter an amount'} class:warn={!quiet}>{ok ? `Total ${F(total)} ${T.symbol} incl. fees` : reason}</span>
-      <Button label="Cancel" variant="ghost" onClick={() => onClose?.()} />
-      <Button label={initial ? 'Update prize' : 'Attach prize'} disabled={!ok} onClick={attach} />
+      <span class="foot-text" class:quiet={reason === 'enterAmount'} class:warn={!quiet}>{ok ? t(K + 'totalInclFees', { total: F(total), symbol: T.symbol }) : reasonText}</span>
+      <Button label="ui.common.cancel" variant="ghost" onClick={() => onClose?.()} />
+      <Button label={initial ? K + 'update' : K + 'attach'} disabled={!ok} onClick={attach} />
     </div>
     {#if tokOpen}
       <div class="token-layer">
-        <div class="token-sheet" role="dialog" aria-label="Prize token">
-          <div class="sheet-head"><span class="sheet-title">Prize token</span><IconButton variant="ghost" icon="close" label="Close" onClick={() => (tokOpen = false)} /></div>
+        <div class="token-sheet" role="dialog" aria-label={t(K + 'prizeToken')}>
+          <div class="sheet-head"><span class="sheet-title">{t(K + 'prizeToken')}</span><IconButton variant="ghost" icon="close" label="ui.common.close" onClick={() => (tokOpen = false)} /></div>
           <div class="sheet-list">
-            {#each tokens as t}
+            {#each tokens as tk}
               <div
                 class="sheet-row"
-                class:current={t.symbol === T.symbol}
+                class:current={tk.symbol === T.symbol}
                 onclick={() => {
-                  tok = t.symbol;
+                  tok = tk.symbol;
                   tokOpen = false;
                 }}
                 role="button"
                 tabindex="0"
               >
-                <TokenAvatar symbol={t.symbol} mark={t.mark} gradient={t.gradient} size={40} />
-                <span class="sheet-symbol">{t.symbol}</span>
-                <span class="sheet-bal">{fmt(t.bal, t.dp)}</span>
+                <TokenAvatar symbol={tk.symbol} mark={tk.mark} gradient={tk.gradient} size={40} />
+                <span class="sheet-symbol">{tk.symbol}</span>
+                <span class="sheet-bal">{fmt(tk.bal, tk.dp)}</span>
               </div>
             {/each}
           </div>

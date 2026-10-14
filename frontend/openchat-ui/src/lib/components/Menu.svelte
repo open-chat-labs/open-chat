@@ -4,9 +4,11 @@
   import type { MenuItem as Item } from '../types';
   import { rove } from '../behaviours/rove';
   import MenuItem from './MenuItem.svelte';
+  import { useT } from '../i18n';
 
   interface Props {
     items: Item[];
+    /** Resource key (or literal text). */
     heading?: string;
     minWidth?: string;
     /** Called for items without their own onSelect. */
@@ -14,6 +16,7 @@
   }
 
   let { items, heading = '', minWidth = '212px', onSelect }: Props = $props();
+  const t = useT();
 
   let vw = $state(typeof window === 'undefined' ? 1920 : window.innerWidth);
 
@@ -32,9 +35,9 @@
 
 <svelte:window bind:innerWidth={vw} />
 
-<div class="menu" style:min-width={minWidth} role="menu" aria-label={heading} onkeydown={(e) => rove(e, '[role="menuitem"]', 'v')}>
+<div class="menu" style:min-width={minWidth} role="menu" aria-label={heading ? t(heading) : undefined} onkeydown={(e) => rove(e, '[role="menuitem"]', 'v')}>
   {#if heading}
-    <span class="heading">{heading}</span>
+    <span class="heading">{t(heading)}</span>
   {/if}
   {#each rows as item}
     <MenuItem {...item} />

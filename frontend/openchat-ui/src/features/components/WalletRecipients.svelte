@@ -20,6 +20,7 @@
   import { onDestroy } from 'svelte';
   import type { WalletToken } from '../../lib/types';
   import PageHeader from '../../lib/components/PageHeader.svelte';
+  import { useT } from '../../lib/i18n';
 
   const NETWORKS: { id: RecipientNetwork; test: (a: string) => boolean }[] = [
     { id: 'BTC', test: (a) => /^(bc1[a-z0-9]{20,}|[13][a-km-zA-HJ-NP-Z1-9]{25,34})$/.test(a) },
@@ -59,6 +60,7 @@
   }
 
   let { tokens, recipients = [], onChange, onSend, onClose }: Props = $props();
+  const t = useT();
 
   // local edits stick until the parent sends a new list
   let list = $derived(recipients);
@@ -70,7 +72,7 @@
   let copyTimer: ReturnType<typeof setTimeout> | undefined;
   onDestroy(() => clearTimeout(copyTimer));
 
-  const held = $derived(tokens.filter((t) => t.held > 0));
+  const held = $derived(tokens.filter((tok) => tok.held > 0));
   const needle = $derived(query.trim().toLowerCase());
   const shown = $derived(needle ? list.filter((r) => `${r.name} ${r.address}`.toLowerCase().includes(needle)) : list);
 
@@ -79,9 +81,10 @@
   const dupe = $derived(form ? list.find((r) => r.address === addr && r.id !== form?.id) : undefined);
   const valid = $derived(!!net && net !== 'unknown' && !dupe);
   const note = $derived(
-    !addr ? '' : dupe ? `Already saved as ${dupe.name}.` : net === 'unknown' ? "This doesn't look like an address we support." : `${NET_NAME[net as RecipientNetwork]} address`,
+    !addr ? '' : dupe ? t('ui.walletRecipients.alreadySaved', { name: dupe.name }) : net === 'unknown' ? t('ui.walletRecipients.unsupported') : t('ui.walletRecipients.networkAddress', { network: NET_NAME[net as RecipientNetwork] }),
   );
-  const chips = $derived([{ symbol: null as string | null, label: 'Any token', mark: '', grad: 'transparent' }].concat(held.map((t) => ({ symbol: t.symbol, label: t.symbol, mark: t.mark, grad: t.grad }))));
+  // labels are resource keys (token symbols render as themselves)
+  const chips = $derived([{ symbol: null as string | null, label: 'ui.walletRecipients.anyToken', mark: '', grad: 'transparent' }].concat(held.map((tok) => ({ symbol: tok.symbol, label: tok.symbol, mark: tok.mark, grad: tok.grad }))));
 
   function commit(next: Recipient[]) {
     list = next;
@@ -105,25 +108,25 @@
 
   function save() {
     if (!valid || !form) return;
-    const name = form.name.trim() || `${NET_NAME[net as RecipientNetwork]} recipient`;
+    const name = form.name.trim() || t('ui.walletRecipients.defaultName', { network: NET_NAME[net as RecipientNetwork] });
     const f = form;
     const next = f.id
       ? list.map((r) => (r.id === f.id ? { ...r, name, address: addr, token: f.token } : r))
-      : [...list, { id: `r${Date.now()}`, name, address: addr, token: f.token, last: 'Never sent' }];
+      : [...list, { id: `r${Date.now()}`, name, address: addr, token: f.token, last: '' }];
     form = null;
     commit(next);
   }
 </script>
 
 <div class="recipients" data-screen-label="Wallet recipients">
-  <PageHeader title={form ? (form.id ? 'Edit recipient' : 'Add recipient') : 'Recipients'} onBack={back} backLabel={form ? 'Back to recipients' : 'Back to wallet'} />
+  <PageHeader title={t(form ? (form.id ? 'ui.walletRecipients.editRecipient' : 'ui.walletRecipients.addRecipient') : 'ui.walletRecipients.title')} onBack={back} backLabel={t(form ? 'ui.walletRecipients.backToRecipients' : 'ui.walletRecipients.backToWallet')} />
   <div class="scroll">
     <div class="column">
       {#if !form}
         <div class="toolbar">
           <div class="search">
             <span class="search-icon"></span>
-            <input bind:value={query} placeholder="Search name or address" aria-label="Search recipients" />
+            <input bind:value={query} placeholder={t('ui.walletRecipients.searchPlaceholder')} aria-label={t('ui.walletRecipients.searchLabel')} />
           </div>
           <span
             class="add"
@@ -136,7 +139,7 @@
             tabindex="0"
           >
             <span class="add-icon"></span>
-            <span class="add-label">Add recipient</span>
+            <span class="add-label">{t('ui.walletRecipients.addRecipient')}</span>
           </span>
         </div>
 
@@ -149,15 +152,15 @@
               <div class="row-body">
                 <div class="row-head">
                   <span class="name">{r.name}</span>
-                  <span class="net">{network === 'unknown' ? 'UNKNOWN' : network}</span>
-                  {#if r.token}<span class="lock" title="Only {r.token} can be sent here"><span class="lock-icon"></span>{r.token}</span>{/if}
+                  <span class="net">{network === 'unknown' ? t('ui.walletRecipients.unknownNetwork') : network}</span>
+                  {#if r.token}<span class="lock" title={t('ui.walletRecipients.lockTitle', { token: r.token })}><span class="lock-icon"></span>{r.token}</span>{/if}
                 </div>
                 <div class="row-meta">
-                  <span class="address" class:copied={copiedFor === r.id}>{copiedFor === r.id ? 'Address copied' : short(r.address)}</span><span class="last">· {r.last || 'Never sent'}</span>
+                  <span class="address" class:copied={copiedFor === r.id}>{copiedFor === r.id ? t('ui.walletRecipients.addressCopied') : short(r.address)}</span><span class="last">· {r.last || t('ui.walletRecipients.neverSent')}</span>
                 </div>
               </div>
               {#if confirmFor !== r.id}
-                <span class="send" onclick={() => onSend?.({ network, ...r })} role="button" tabindex="0" aria-label="Send to {r.name}"><span class="send-icon"></span>Send</span>
+                <span class="send" onclick={() => onSend?.({ network, ...r })} role="button" tabindex="0" aria-label={t('ui.walletRecipients.sendTo', { name: r.name })}><span class="send-icon"></span>{t('ui.common.send')}</span>
                 <span
                   class="options"
                   class:open
@@ -171,12 +174,12 @@
                   }}
                   role="button"
                   tabindex="0"
-                  aria-label="Recipient options"
+                  aria-label={t('ui.walletRecipients.options')}
                   aria-expanded={open}><span class="options-icon"></span></span
                 >
               {:else}
-                <span class="confirm-label">Remove?</span>
-                <span class="cancel" onclick={() => (confirmFor = null)} role="button" tabindex="0">Cancel</span>
+                <span class="confirm-label">{t('ui.walletRecipients.removeConfirm')}</span>
+                <span class="cancel" onclick={() => (confirmFor = null)} role="button" tabindex="0">{t('ui.common.cancel')}</span>
                 <span
                   class="remove"
                   onclick={() => {
@@ -184,7 +187,7 @@
                     commit(list.filter((x) => x.id !== r.id));
                   }}
                   role="button"
-                  tabindex="0">Remove</span
+                  tabindex="0">{t('ui.common.remove')}</span
                 >
               {/if}
               {#if open}
@@ -197,9 +200,9 @@
                       form = { id: r.id, address: r.address, name: r.name, token: r.token ?? null };
                     }}
                     role="menuitem"
-                    tabindex="0"><span class="menu-icon" style:mask={mask('edit')}></span>Edit</span
+                    tabindex="0"><span class="menu-icon" style:mask={mask('edit')}></span>{t('ui.common.edit')}</span
                   >
-                  <span class="menu-item" onclick={() => copyAddress(r)} role="menuitem" tabindex="0"><span class="menu-icon" style:mask={mask('copy')}></span>Copy address</span>
+                  <span class="menu-item" onclick={() => copyAddress(r)} role="menuitem" tabindex="0"><span class="menu-icon" style:mask={mask('copy')}></span>{t('ui.walletRecipients.copyAddress')}</span>
                   <span
                     class="menu-item danger"
                     onclick={() => {
@@ -207,7 +210,7 @@
                       confirmFor = r.id;
                     }}
                     role="menuitem"
-                    tabindex="0"><span class="menu-icon" style:mask={mask('trash')}></span>Remove</span
+                    tabindex="0"><span class="menu-icon" style:mask={mask('trash')}></span>{t('ui.common.remove')}</span
                   >
                 </div>
               {/if}
@@ -216,22 +219,22 @@
           {#if shown.length === 0}
             <div class="empty">
               <span class="empty-badge"><span class="empty-icon"></span></span>
-              <span class="empty-title">{list.length ? 'No matches' : 'No saved recipients yet'}</span>
-              <span class="empty-body">{list.length ? `Nothing matches "${query.trim()}".` : 'Save addresses you send to often and pick them by name on the send screen.'}</span>
+              <span class="empty-title">{t(list.length ? 'ui.walletRecipients.noMatches' : 'ui.walletRecipients.noRecipients')}</span>
+              <span class="empty-body">{list.length ? t('ui.walletRecipients.nothingMatches', { query: query.trim() }) : t('ui.walletRecipients.emptyBody')}</span>
             </div>
           {/if}
         </div>
       {:else}
         <div class="form">
           <div class="field">
-            <span class="field-label">ADDRESS</span>
+            <span class="field-label">{t('ui.walletRecipients.addressLabel')}</span>
             <textarea
               class="address-input"
               class:valid
               class:invalid={!!addr && !valid}
               value={form.address}
               oninput={(e) => form && (form.address = e.currentTarget.value)}
-              placeholder="Paste the recipient's address"
+              placeholder={t('ui.walletRecipients.addressPlaceholder')}
               rows="2"
             ></textarea>
             {#if addr}
@@ -242,31 +245,31 @@
             {/if}
           </div>
           <div class="field">
-            <span class="field-label">NAME</span>
+            <span class="field-label">{t('ui.walletRecipients.nameLabel')}</span>
             <input
               class="name-input"
               value={form.name}
               oninput={(e) => form && (form.name = e.currentTarget.value)}
-              placeholder={valid ? `${NET_NAME[net as RecipientNetwork]} recipient` : "Recipient's name"}
+              placeholder={valid ? t('ui.walletRecipients.defaultName', { network: NET_NAME[net as RecipientNetwork] }) : t('ui.walletRecipients.namePlaceholder')}
             />
-            <span class="hint">Only you see this. It replaces the address on send screens.</span>
+            <span class="hint">{t('ui.walletRecipients.nameHint')}</span>
           </div>
           <div class="field">
-            <span class="field-label">RESTRICT TO ONE TOKEN · OPTIONAL</span>
+            <span class="field-label">{t('ui.walletRecipients.restrictLabel')}</span>
             <div class="chips">
               {#each chips as c}
                 {@const on = form.token === c.symbol}
                 <span class="chip" class:on class:token={!!c.symbol} onclick={() => form && (form.token = c.symbol)} role="button" tabindex="0" aria-pressed={on}>
                   {#if c.symbol}<span class="chip-mark" style:background={c.grad}>{c.mark}</span>{/if}
-                  <span class="chip-label">{c.label}</span>
+                  <span class="chip-label">{t(c.label)}</span>
                 </span>
               {/each}
             </div>
-            <span class="hint wrap">{form.token ? `Send will only offer ${form.token} for this recipient.` : 'Leave as Any token to send anything this network supports.'}</span>
+            <span class="hint wrap">{form.token ? t('ui.walletRecipients.onlyTokenHint', { token: form.token }) : t('ui.walletRecipients.anyTokenHint')}</span>
           </div>
           <div class="form-actions">
-            <span class="form-cancel" onclick={back} role="button" tabindex="0">Cancel</span>
-            <span class="save" class:valid onclick={save} role="button" tabindex="0" aria-disabled={!valid}>{form.id ? 'Save changes' : 'Save recipient'}</span>
+            <span class="form-cancel" onclick={back} role="button" tabindex="0">{t('ui.common.cancel')}</span>
+            <span class="save" class:valid onclick={save} role="button" tabindex="0" aria-disabled={!valid}>{t(form.id ? 'ui.common.saveChanges' : 'ui.walletRecipients.saveRecipient')}</span>
           </div>
         </div>
       {/if}

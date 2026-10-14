@@ -2,6 +2,7 @@
      The host drives it with `request` ({ view, token, nonce }) from the wallet list on the left and hears back through
      onViewChange. A send lands back on the token page with a pending row and a toast. An empty wallet shows All activity only. -->
 <script lang="ts">
+  import { useT } from '../../lib/i18n';
   import { onDestroy, untrack } from 'svelte';
   import type { WalletToken } from '../../lib/types';
   import DetailRow from '../../lib/components/DetailRow.svelte';
@@ -54,39 +55,48 @@
     USDT: 'cngnf-vqaaa-aaaar-qag4q-cai',
     XRP: 'c6mxe-uqaaa-aaaar-qagnq-cai',
   };
-  const ORDER = ['Today', 'Yesterday', '28 Sep', '21 Sep'];
-  const FILTERS = ['All', 'Sent', 'Received', 'Swaps'];
+  // sample history days: today / yesterday are copy, the two older days are sample dates
+  type Day = 'today' | 'yesterday' | '28 Sep' | '21 Sep';
+  const ORDER: Day[] = ['today', 'yesterday', '28 Sep', '21 Sep'];
+  const FILTERS = ['ui.walletMain.filterAll', 'ui.walletMain.filterSent', 'ui.walletMain.filterReceived', 'ui.walletMain.filterSwaps'];
 
   interface Entry {
     title: string;
-    when: string;
+    day: Day;
+    /** Time and context under the title ("10:42 · direct chat"). */
+    sub: string;
+    /** 1 sent, 2 received, 3 swapped — the filter tabs' indexes. */
+    kind: 1 | 2 | 3;
     amount: string;
     fiat: string;
     fresh?: boolean;
     status?: 'pending' | 'sent';
   }
 
-  const history = (t: WalletToken, i: number): Entry[] => {
-    const q = t.symbol === 'BTC' ? 0.0012 : Math.max(1, Math.round(t.held * 0.08 * 100) / 100);
-    return [
-      { title: `Received from ${NAMES[i % 4]}`, when: 'Today, 10:42 · in The Awesome Group', sign: '+', k: 1 },
-      { title: `Sent to ${NAMES[(i + 1) % 4]}`, when: 'Yesterday, 18:05 · direct chat', sign: '\u2212', k: 0.4 },
-      { title: `Swapped to ${t.symbol === 'USDT' ? 'ICP' : 'USDT'}`, when: '28 Sep, 09:12', sign: '\u2212', k: 0.6 },
-      { title: `Received from ${NAMES[(i + 2) % 4]}`, when: '21 Sep, 14:30 · #general', sign: '+', k: 2 },
-    ]
-      .filter((x) => t.symbol !== 'XRP' || x.sign === '+')
+  const history = (tok: WalletToken, i: number): Entry[] => {
+    const q = tok.symbol === 'BTC' ? 0.0012 : Math.max(1, Math.round(tok.held * 0.08 * 100) / 100);
+    const rows: { title: string; day: Day; time: string; where: string; kind: Entry['kind']; sign: string; k: number }[] = [
+      { title: t('ui.walletMain.receivedFrom', { name: NAMES[i % 4] }), day: 'today', time: '10:42', where: t('ui.walletMain.inChat', { name: 'The Awesome Group' }), kind: 2, sign: '+', k: 1 },
+      { title: t('ui.walletMain.sentTo', { name: NAMES[(i + 1) % 4] }), day: 'yesterday', time: '18:05', where: t('ui.walletMain.directChat'), kind: 1, sign: '\u2212', k: 0.4 },
+      { title: t('ui.walletMain.swappedTo', { symbol: tok.symbol === 'USDT' ? 'ICP' : 'USDT' }), day: '28 Sep', time: '09:12', where: '', kind: 3, sign: '\u2212', k: 0.6 },
+      { title: t('ui.walletMain.receivedFrom', { name: NAMES[(i + 2) % 4] }), day: '21 Sep', time: '14:30', where: '#general', kind: 2, sign: '+', k: 2 },
+    ];
+    return rows
+      .filter((x) => tok.symbol !== 'XRP' || x.sign === '+')
       .map((x) => {
         const a = q * x.k;
+        const time = String((+x.time.slice(0, 2) + i) % 24).padStart(2, '0') + x.time.slice(2);
         return {
           title: x.title,
-          when: x.when.replace(/\d\d:\d\d/, (m) => String((+m.slice(0, 2) + i) % 24).padStart(2, '0') + m.slice(2)),
-          amount: `${x.sign}${num(a, t.dp)} ${t.symbol}`,
-          fiat: usd(a * t.price),
+          day: x.day,
+          sub: [time, x.where].filter(Boolean).join(' · '),
+          kind: x.kind,
+          amount: `${x.sign}${num(a, tok.dp)} ${tok.symbol}`,
+          fiat: usd(a * tok.price),
         };
       });
   };
-  // 1 sent, 2 received, 3 swapped — the filter tabs' indexes
-  const kindOf = (title: string) => (title.startsWith('Received') ? 2 : title.startsWith('Sent') ? 1 : 3);
+  const dayLabel = (d: Day) => (d === 'today' ? t('ui.walletMain.today') : d === 'yesterday' ? t('ui.walletMain.yesterday') : d).toUpperCase();
   const KIND: Record<number, Kind> = { 1: 'send', 2: 'receive', 3: 'swap' };
 
   export interface WalletRequest {
@@ -113,6 +123,7 @@
   }
 
   let { tokens, request = null, onViewChange, onCount, balanceHidden = false, handle, onSent, onMessage }: Props = $props();
+  const t = useT();
 
   let view = $state<View>('all');
   let sym = $state('CHAT');
@@ -210,8 +221,8 @@
     view = fromAll || backToAll ? 'all' : 'token';
     fromAll = backToAll = false;
     sym = x.symbol;
-    toast = { id, message: `Sent ${amt} to ${x.to}`, person: x.person };
-    sent = [{ id, sym: x.symbol, status: 'pending', row: { title: `Sent to ${x.to}`, when: 'Just now', amount: `\u2212${amt}`, fiat: usd(x.fiat) } }, ...sent];
+    toast = { id, message: t('ui.walletMain.sentToast', { amount: amt, name: x.to }), person: x.person };
+    sent = [{ id, sym: x.symbol, status: 'pending', row: { title: t('ui.walletMain.sentTo', { name: x.to }), day: 'today', sub: t('ui.walletMain.justNow'), kind: 1, amount: `\u2212${amt}`, fiat: usd(x.fiat) } }, ...sent];
     // the host hears about the send before the view change, as the prototype did
     onSent?.(x);
     report();
@@ -243,7 +254,7 @@
 
   // All activity: your sends first, then two sample entries per token
   const entries = $derived.by(() => {
-    const list: { sym: string; row: Entry; fresh: boolean }[] = sent.map((e) => ({ sym: e.sym, row: { ...e.row, when: 'Today, just now' }, fresh: true }));
+    const list: { sym: string; row: Entry; fresh: boolean }[] = sent.map((e) => ({ sym: e.sym, row: { ...e.row, sub: t('ui.walletMain.justNowInline') }, fresh: true }));
     rows.forEach((tk, i) => {
       const h = history(tk, i);
       [i % 4, (i + 1) % 4].forEach((a) => {
@@ -262,11 +273,11 @@
   });
 
   const allGroups = $derived(
-    ORDER.map((label) => ({
-      label: label.toUpperCase(),
+    ORDER.map((day) => ({
+      label: dayLabel(day),
       items: entries
-        .filter((e) => !filter || kindOf(e.row.title) === filter)
-        .filter((e) => e.row.when.split(',')[0] === label)
+        .filter((e) => !filter || e.row.kind === filter)
+        .filter((e) => e.row.day === day)
         .map((e) => ({ ...e, tk: rows.find((r) => r.symbol === e.sym)! })),
     })).filter((g) => g.items.length),
   );
@@ -275,28 +286,25 @@
   const tokGroups = $derived.by(() => {
     if (!raw) return [];
     const mine: Entry[] = sent.filter((e) => e.sym === raw.symbol).map((e) => ({ ...e.row, fresh: true, status: e.status }));
-    const shown = mine.concat(history(raw, idx)).filter((x) => !tokFilter || kindOf(x.title) === tokFilter);
-    const dayOf = (x: Entry) => {
-      const d = String(x.when || '').split(',')[0];
-      return ORDER.includes(d) ? d : 'Today';
-    };
-    return ORDER.map((label) => ({
-      label: label.toUpperCase(),
+    const shown = mine.concat(history(raw, idx)).filter((x) => !tokFilter || x.kind === tokFilter);
+    return ORDER.map((day) => ({
+      label: dayLabel(day),
       items: shown
-        .filter((x) => dayOf(x) === label)
+        .filter((x) => x.day === day)
         .map((x, i) => ({
           ...x,
           divider: i > 0 && !x.fresh,
-          kind: KIND[kindOf(x.title)] ?? 'receive',
-          sub: x.when.includes(',') ? x.when.split(',').slice(1).join(',').trim() : x.when || 'Just now',
+          kind: KIND[x.kind] ?? 'receive',
+          sub: x.sub || t('ui.walletMain.justNow'),
         })),
     })).filter((g) => g.items.length);
   });
 
-  const EMPTY: Record<number, { icon: Kind; title: (s: string) => string; body: (s: string) => string }> = {
-    1: { icon: 'send', title: (s) => `No ${s} sent yet`, body: (s) => `${s} you send to people or addresses will show up here.` },
-    2: { icon: 'receive', title: (s) => `No ${s} received yet`, body: (s) => `${s} people send you will show up here.` },
-    3: { icon: 'swap', title: (s) => `No ${s} swaps yet`, body: (s) => `Swaps from or into ${s} will show up here.` },
+  // empty token history per filter tab: keys take { symbol }
+  const EMPTY: Record<number, { icon: Kind; title: string; body: string }> = {
+    1: { icon: 'send', title: 'ui.walletMain.emptySentTitle', body: 'ui.walletMain.emptySentBody' },
+    2: { icon: 'receive', title: 'ui.walletMain.emptyReceivedTitle', body: 'ui.walletMain.emptyReceivedBody' },
+    3: { icon: 'swap', title: 'ui.walletMain.emptySwapsTitle', body: 'ui.walletMain.emptySwapsBody' },
   };
 
   const change = $derived([2.4, -0.8, 1.1, 3.2, 0.0, -1.6][idx % 6]);
@@ -321,26 +329,26 @@
   {/if}
   {#if view === 'all' || view === 'token'}
     <PageHeader
-      title={showToken ? raw.name : 'All activity'}
+      title={showToken ? raw.name : t('ui.walletMain.allActivity')}
       onBack={showToken ? () => go({ view: 'all' }) : undefined}
-      backLabel="Back to All activity"
+      backLabel={t('ui.walletMain.backToAll')}
       avatarMark={showToken ? raw.mark : ''}
       avatarGradient={raw?.grad}
     />
     <div class="scroll">
       <div class="column" class:wide={showToken}>
         {#if !showToken}
-          <div class="tabs"><SegmentedTabs labels={FILTERS} selectedIndex={filter} dotOnLast={false} onSelect={(i) => (filter = i)} /></div>
+          <div class="tabs"><SegmentedTabs labels={FILTERS.map((k) => t(k))} selectedIndex={filter} dotOnLast={false} onSelect={(i) => (filter = i)} /></div>
           {#each allGroups as g}
             <div class="day">
               <ListSectionLabel label={g.label} inset={true} />
               <div class="day-rows">
                 {#each g.items as e}
-                  {@const k = kindOf(e.row.title)}
+                  {@const k = e.row.kind}
                   <TransactionRow
                     hidden={balanceHidden}
                     title={e.row.title}
-                    sub="{e.tk.symbol} · {e.row.when.split(',').slice(1).join(',').trim()}"
+                    sub="{e.tk.symbol} · {e.row.sub}"
                     amount={e.row.amount}
                     fiat={e.row.fiat}
                     kind={k === 2 ? 'receive' : k === 1 ? 'send' : 'swap'}
@@ -354,12 +362,12 @@
               </div>
             </div>
           {/each}
-          {#if allGroups.length === 0}<span class="none">No transactions of this type yet.</span>{/if}
+          {#if allGroups.length === 0}<span class="none">{t('ui.walletMain.noneOfType')}</span>{/if}
         {:else}
           {@const tokenEmpty = EMPTY[tokFilter]}
           <div class="token-page">
             <div class="activity">
-              <div class="tabs"><SegmentedTabs labels={FILTERS} selectedIndex={tokFilter} dotOnLast={false} onSelect={(i) => (tokFilter = i)} /></div>
+              <div class="tabs"><SegmentedTabs labels={FILTERS.map((k) => t(k))} selectedIndex={tokFilter} dotOnLast={false} onSelect={(i) => (tokFilter = i)} /></div>
               {#each tokGroups as g}
                 <div class="day">
                   <ListSectionLabel label={g.label} />
@@ -371,7 +379,7 @@
                         amount={x.amount}
                         fiat={x.fiat}
                         kind={x.kind}
-                        status={x.status ? (x.status === 'pending' ? 'Pending' : 'Sent') : undefined}
+                        status={x.status ? t(x.status === 'pending' ? 'ui.walletMain.statusPending' : 'ui.walletMain.statusSent') : undefined}
                         statusTone={x.status === 'pending' ? 'warning' : 'success'}
                         divider={x.divider}
                         fresh={x.fresh}
@@ -382,8 +390,8 @@
               {#if tokGroups.length === 0}
                 <EmptyState
                   icon={tokenEmpty?.icon}
-                  title={tokenEmpty ? tokenEmpty.title(raw.symbol) : 'No activity yet'}
-                  body={tokenEmpty ? tokenEmpty.body(raw.symbol) : `Transactions for ${raw.symbol} will show up here.`}
+                  title={t(tokenEmpty ? tokenEmpty.title : 'ui.walletMain.emptyTitle', { symbol: raw.symbol })}
+                  body={t(tokenEmpty ? tokenEmpty.body : 'ui.walletMain.emptyBody', { symbol: raw.symbol })}
                   actionLabel=""
                 />
               {/if}
@@ -396,27 +404,27 @@
                   <span class="value-line"
                     ><span class="veilable" class:veiled={balanceHidden}>{usd(raw.value)}</span><Pill
                       size="md"
-                      label="{change > 0 ? '+' : change < 0 ? '\u2212' : ''}{Math.abs(change).toFixed(1)}% today"
+                      label={t('ui.walletMain.changeToday', { change: `${change > 0 ? '+' : change < 0 ? '\u2212' : ''}${Math.abs(change).toFixed(1)}%` })}
                       tone={change > 0 ? 'success' : change < 0 ? 'danger' : 'neutral'}
                     /></span
                   >
                 </div>
                 <div class="actions">
-                  {#each [['Send', 'send', 'wallet-send'], ['Receive', 'receive', 'receive'], ['Swap', 'swap', 'swap']] as [label, target, icon], i}
+                  {#each [['ui.walletMain.sendSymbol', 'send', 'wallet-send'], ['ui.walletMain.receiveSymbol', 'receive', 'receive'], ['ui.walletMain.swapSymbol', 'swap', 'swap']] as [label, target, icon], i}
                     <span class="action" class:primary={i === 0} onclick={() => go({ view: target as View, fromAll: false })} role="button" tabindex="0"
-                      ><span class="action-icon" style:mask={mask(icon)}></span><span>{label} {raw.symbol}</span></span
+                      ><span class="action-icon" style:mask={mask(icon)}></span><span>{t(label, { symbol: raw.symbol })}</span></span
                     >
                   {/each}
                 </div>
                 <div class="facts">
                   <div class="share">
-                    <div class="share-head"><span class="share-label">Share of wallet</span><span class="share-value">{balanceHidden ? '••••' : pct(raw.value)}</span></div>
+                    <div class="share-head"><span class="share-label">{t('ui.walletMain.shareOfWallet')}</span><span class="share-value">{balanceHidden ? '••••' : pct(raw.value)}</span></div>
                     <ShareBar share={balanceHidden ? 33 : total ? (raw.value / total) * 100 : 0} gradient={raw.grad} thickness={4} />
                   </div>
-                  <DetailRow label="Price" value={price(raw.price)} size="sm" copyLabel="Copy ledger ID" />
-                  <DetailRow label="Transfer fee" value="{raw.symbol === 'BTC' ? '0.0000001' : '0.0001'} {raw.symbol}" size="sm" copyLabel="Copy ledger ID" />
-                  <DetailRow label="Standard" value="ICRC-1" size="sm" copyLabel="Copy ledger ID" />
-                  {#if ledger}<DetailRow label="Ledger" value={`${ledger.slice(0, 5)}\u2026${ledger.slice(-4)}`} size="sm" copyValue={ledger} copyLabel="Copy ledger ID" />{/if}
+                  <DetailRow label={t('ui.walletMain.price')} value={price(raw.price)} size="sm" copyLabel={t('ui.walletMain.copyLedgerId')} />
+                  <DetailRow label={t('ui.walletMain.transferFee')} value="{raw.symbol === 'BTC' ? '0.0000001' : '0.0001'} {raw.symbol}" size="sm" copyLabel={t('ui.walletMain.copyLedgerId')} />
+                  <DetailRow label={t('ui.walletMain.standard')} value="ICRC-1" size="sm" copyLabel={t('ui.walletMain.copyLedgerId')} />
+                  {#if ledger}<DetailRow label={t('ui.walletMain.ledger')} value={`${ledger.slice(0, 5)}\u2026${ledger.slice(-4)}`} size="sm" copyValue={ledger} copyLabel={t('ui.walletMain.copyLedgerId')} />{/if}
                 </div>
               </SideCard>
             </div>
@@ -426,12 +434,12 @@
     </div>
   {/if}
   {#if pick}
-    <DialogShell title={pick.view === 'receive' ? 'Receive which token?' : 'Send which token?'} onClose={() => (pick = null)}
+    <DialogShell title={pick.view === 'receive' ? 'ui.walletMain.receiveWhich' : 'ui.walletMain.sendWhich'} onClose={() => (pick = null)}
       ><TokenPicker
         tokens={pickTokens}
-        placeholder={pick.view === 'receive' ? 'Search any token' : 'Search your tokens'}
-        ownedHeading="IN YOUR WALLET"
-        otherHeading={pick.view === 'receive' ? 'ALL SUPPORTED TOKENS' : 'ALL TOKENS'}
+        placeholder={t(pick.view === 'receive' ? 'ui.walletMain.searchAnyToken' : 'ui.walletMain.searchYourTokens')}
+        ownedHeading={t('ui.walletMain.inYourWallet')}
+        otherHeading={t(pick.view === 'receive' ? 'ui.walletMain.allSupportedTokens' : 'ui.walletMain.allTokens')}
         onSelect={pickToken}
       /></DialogShell
     >
@@ -445,12 +453,12 @@
             size="lg"
             icon="check"
             message={toast.message}
-            actionLabel={toast.person ? 'Message' : 'View'}
+            actionLabel={t(toast.person ? 'ui.walletMain.message' : 'ui.walletMain.view')}
             onAction={() => {
-              const t = toast;
+              const done = toast;
               toast = null;
               view = 'token';
-              if (t?.person) onMessage?.(t.message);
+              if (done?.person) onMessage?.(done.message);
             }}
             onClose={() => (toast = null)}
           />{/key}

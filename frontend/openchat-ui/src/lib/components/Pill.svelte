@@ -1,6 +1,9 @@
 <!-- Status / value chip. sm (18px, sans, for row statuses like Pending) or md (22px, mono, for numbers like timers and % change). -->
 <script lang="ts">
+  import { useT } from '../i18n';
+
   interface Props {
+    /** Resource key (or literal text). */
     label: string;
     tone?: 'neutral' | 'success' | 'warning' | 'danger' | 'accent';
     size?: 'sm' | 'md';
@@ -8,10 +11,11 @@
   }
 
   let { label, tone = 'neutral', size = 'sm', dot = false }: Props = $props();
+  const t = useT();
 </script>
 
 <span class="pill {tone} {size}">
-  {#if dot}<span class="dot"></span>{/if}<span class="label">{label}</span>
+  {#if dot}<span class="dot"></span>{/if}<span class="label">{t(label)}</span>
 </span>
 
 <style>

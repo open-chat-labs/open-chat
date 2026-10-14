@@ -3,6 +3,7 @@
      "Attach" → onAttach(transfer): host puts it in the composer as a chip; caption + Send posts it. `initial` edits a previous value.
      Esc closes the open picker, then the dialog; Cmd/Ctrl+Enter attaches. -->
 <script lang="ts">
+  import { useT } from '../../lib/i18n';
   import { onMount } from 'svelte';
   import type { Transfer } from '../../lib/types';
   import Button from '../../lib/components/Button.svelte';
@@ -42,6 +43,7 @@
   }
 
   let { z = 80, recipient = null, members = [], initial = null, onAttach, onClose }: Props = $props();
+  const t = useT();
 
   const draft = initial?.draft;
   let tok = $state<Sym>((draft?.tok as Sym) in TOK ? (draft?.tok as Sym) : 'CHAT');
@@ -64,21 +66,22 @@
   const toMember = $derived(recipient ?? members.find((m) => m.handle === to) ?? null);
   const a = $derived(parseFloat(amt) || 0);
   const max = $derived(Math.max(0, T.bal - T.fee));
+  // why Attach is disabled: a resource key ('' = ready) and its params
   const reason = $derived(
     !toMember
-      ? 'Choose who to send to'
+      ? 'chooseRecipient'
       : !a
-        ? 'Enter an amount'
+        ? 'enterAmount'
         : a < T.min
-          ? `Minimum is ${F(T.min)} ${T.symbol}`
+          ? 'minimum'
           : a > max
-            ? `Not enough ${T.symbol} (max ${F(max)} after fee)`
+            ? 'notEnough'
             : '',
   );
   const ok = $derived(!reason);
   const needle = $derived(query.trim().toLowerCase());
   const shownMembers = $derived(members.filter((m) => !needle || `${m.name} ${m.handle}`.toLowerCase().includes(needle)));
-  const title = $derived(initial ? 'Edit transfer' : 'Send crypto');
+  const title = $derived(t(initial ? 'ui.sendCryptoDialog.editTitle' : 'ui.sendCryptoDialog.title'));
 
   function attach() {
     if (!ok || !toMember || !onAttach) return;
@@ -95,7 +98,7 @@
       feeText: `${F(T.fee)} ${T.symbol}`,
       totalText: `${F(a + T.fee)} ${T.symbol}`,
       title: `${F(a)} ${T.symbol}`,
-      summary: `to ${toMember.handle} · ${usdFmt(usd)}`,
+      summary: t('ui.sendCryptoDialog.summary', { handle: toMember.handle, usd: usdFmt(usd) }),
       draft: { tok, amt, to: toMember.handle },
     });
   }
@@ -127,7 +130,7 @@
   <div class="dialog" data-oc-managed="" tabindex="-1" role="dialog" aria-modal="true" aria-label={title} onkeydown={onKey}>
     <div class="header">
       <span class="title">{title}</span>
-      <IconButton variant="ghost" icon="close" label="Close" onClick={() => onClose?.()} />
+      <IconButton variant="ghost" icon="close" label="ui.common.close" onClick={() => onClose?.()} />
     </div>
     <div class="body">
       <div class="recipient">
@@ -139,21 +142,21 @@
           tabindex={canPick ? 0 : -1}
           aria-haspopup={canPick ? 'listbox' : undefined}
           aria-expanded={canPick && toOpen}
-          aria-label={canPick ? `Recipient: ${toMember ? toMember.name : 'none'}` : 'Recipient'}
+          aria-label={canPick ? t(toMember ? 'ui.sendCryptoDialog.recipientNamed' : 'ui.sendCryptoDialog.recipientNone', { name: toMember?.name ?? '' }) : t('ui.sendCryptoDialog.recipient')}
         >
-          <span class="to-label">To</span>
+          <span class="to-label">{t('ui.sendCryptoDialog.to')}</span>
           {#if toMember}
             <span class="avatar" style:background={toMember.grad || DEFAULT_GRAD}>{initialOf(toMember.name)}</span>
             <div class="to-text"><span class="to-name">{toMember.name}</span><span class="to-handle">{toMember.handle}</span></div>
           {:else}
             <span class="avatar" style:background="var(--overlay-2,rgba(255,255,255,.1))">?</span>
-            <div class="to-text"><span class="to-name empty">Choose a member</span><span class="to-handle">Anyone in this chat</span></div>
+            <div class="to-text"><span class="to-name empty">{t('ui.sendCryptoDialog.chooseMember')}</span><span class="to-handle">{t('ui.sendCryptoDialog.anyoneInChat')}</span></div>
           {/if}
           {#if canPick}<span class="chevron"></span>{/if}
         </div>
         {#if canPick && toOpen}
-          <div class="members" role="listbox" aria-label="Members">
-            <input class="member-search" bind:this={searchInput} bind:value={query} placeholder="Search members" aria-label="Search members" />
+          <div class="members" role="listbox" aria-label={t('ui.sendCryptoDialog.members')}>
+            <input class="member-search" bind:this={searchInput} bind:value={query} placeholder={t('ui.sendCryptoDialog.searchMembers')} aria-label={t('ui.sendCryptoDialog.searchMembers')} />
             {#each shownMembers as m}
               {@const sel = !!toMember && m.handle === toMember.handle}
               <div
@@ -171,12 +174,12 @@
                 <span class="member-name">{m.name}</span><span class="member-handle">{m.handle}</span>
               </div>
             {/each}
-            {#if shownMembers.length === 0}<span class="no-members">No members match</span>{/if}
+            {#if shownMembers.length === 0}<span class="no-members">{t('ui.sendCryptoDialog.noMembers')}</span>{/if}
           </div>
         {/if}
       </div>
       <div class="amount-card">
-        <div class="token" onclick={() => (tokOpen = true)} role="button" tabindex="0" aria-label="Change token" aria-haspopup="dialog">
+        <div class="token" onclick={() => (tokOpen = true)} role="button" tabindex="0" aria-label={t('ui.sendCryptoDialog.changeToken')} aria-haspopup="dialog">
           <TokenAvatar symbol={T.symbol} mark={T.mark} gradient={T.gradient} size={28} />
           <span class="token-symbol">{T.symbol}</span>
           <span class="token-balance">{F(T.bal)} {T.symbol}</span>
@@ -189,22 +192,24 @@
           oninput={(e) => (amt = e.currentTarget.value.replace(/[^0-9.]/g, ''))}
           inputmode="decimal"
           placeholder="0"
-          aria-label="Amount"
+          aria-label={t('ui.sendCryptoDialog.amount')}
         />
         <span class="usd">≈ {usdFmt(a * T.usd)}</span>
         <QuickAmountChips size="sm" onSelect={(f) => (amt = String(Number((max * f).toFixed(T.dp))))} />
-        <span class="hint" class:warn={!ok && reason !== 'Enter an amount' && reason !== 'Choose who to send to'}>{ok ? `Fee ${F(T.fee)} ${T.symbol} added` : reason}</span>
+        <span class="hint" class:warn={!ok && reason !== 'enterAmount' && reason !== 'chooseRecipient'}
+          >{t('ui.sendCryptoDialog.' + (ok ? 'feeAdded' : reason), { fee: F(T.fee), min: F(T.min), max: F(max), symbol: T.symbol })}</span
+        >
       </div>
     </div>
     <div class="footer">
       <span class="warn-icon"></span>
-      <span class="footer-text">Transfers can't be reversed. Only send to people you trust.</span>
-      <Button label={initial ? 'Update' : 'Attach'} disabled={!ok} onClick={attach} />
+      <span class="footer-text">{t('ui.sendCryptoDialog.irreversible')}</span>
+      <Button label={initial ? 'ui.sendCryptoDialog.update' : 'ui.sendCryptoDialog.attach'} disabled={!ok} onClick={attach} />
     </div>
     {#if tokOpen}
       <div class="token-layer">
-        <div class="token-dialog" role="dialog" aria-label="Token">
-          <div class="token-head"><span class="token-title">Token</span><IconButton variant="ghost" icon="close" label="Close" onClick={() => (tokOpen = false)} /></div>
+        <div class="token-dialog" role="dialog" aria-label={t('ui.sendCryptoDialog.token')}>
+          <div class="token-head"><span class="token-title">{t('ui.sendCryptoDialog.token')}</span><IconButton variant="ghost" icon="close" label="ui.common.close" onClick={() => (tokOpen = false)} /></div>
           <div class="token-list">
             {#each Object.values(TOK) as tk}
               <div

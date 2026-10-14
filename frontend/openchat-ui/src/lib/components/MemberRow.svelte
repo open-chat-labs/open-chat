@@ -2,6 +2,8 @@
      Right side, in priority: actionLabel button, activity (typing dots / "now" / "2m"), badge, an icon affordance, else a kebab.
      icon "toggle" is a round add/check picker and tints the whole row while selected. -->
 <script lang="ts">
+  import { useT } from '../i18n';
+
   const ICONS = {
     check: 'check',
     plus: 'plus',
@@ -22,11 +24,12 @@
   };
 
   interface Props {
+    /** The person's / bot's name (data). For variant "invite" it's the call to action: resource key (or literal text). */
     title: string;
     /** Members: a handle (mono). Bots: a description (prose, two lines). */
     subtitle?: string;
     variant?: 'member' | 'bot' | 'webhook' | 'invite';
-    /** Role chip next to the name. */
+    /** Role chip next to the name. Resource key (or literal text). */
     tag?: string;
     /** Your own row: adds a YOU chip. */
     isYou?: boolean;
@@ -43,11 +46,13 @@
     disabled?: boolean;
     /** Dimmed avatar and name (e.g. pending). */
     muted?: boolean;
+    /** Resource key (or literal text); counts render as they are. */
     badge?: string;
     /** Row hover colour, for raised surfaces where the default is too faint. */
     hoverBg?: string;
     /** Defaults to onClick. */
     onIcon?: () => void;
+    /** Resource key (or literal text). */
     actionLabel?: string;
     onAction?: () => void;
     showMenu?: boolean;
@@ -79,6 +84,7 @@
     onMenu,
     onClick,
   }: Props = $props();
+  const t = useT();
 
   const invite = $derived(variant === 'invite');
   const toggle = $derived(icon === 'toggle');
@@ -104,18 +110,18 @@
         <span class="online" style:box-shadow="0 0 0 2px {ringColor}"></span>
       {/if}
       {#if variant === 'webhook'}
-        <span class="hook" title="Webhook"><span class="hook-icon"></span></span>
+        <span class="hook" title={t('ui.memberRow.webhook')}><span class="hook-icon"></span></span>
       {/if}
     </span>
   {/if}
   <div class="body">
     <div class="name-line">
-      <span class="name" class:invite class:muted>{title}</span>
+      <span class="name" class:invite class:muted>{invite ? t(title) : title}</span>
       {#if tag}
-        <span class="chip">{tag}</span>
+        <span class="chip">{t(tag)}</span>
       {/if}
       {#if isYou}
-        <span class="chip you">YOU</span>
+        <span class="chip you">{t('ui.memberRow.you')}</span>
       {/if}
     </div>
     {#if subtitle}
@@ -125,16 +131,16 @@
   {#if actionLabel}
     <span class="action" onclick={onAction} role="button" tabindex="0">
       <span class="action-icon"></span>
-      <span class="action-label">{actionLabel}</span>
+      <span class="action-label">{t(actionLabel)}</span>
     </span>
   {/if}
   {#if activity === 'typing'}
-    <span class="typing" title="Typing"><span class="dots">{#each [0, 1, 2] as d}<span class="typing-dot" style:animation-delay="{d * 0.15}s"></span>{/each}</span></span>
+    <span class="typing" title={t('ui.memberRow.typing')}><span class="dots">{#each [0, 1, 2] as d}<span class="typing-dot" style:animation-delay="{d * 0.15}s"></span>{/each}</span></span>
   {:else if activity}
-    <span class="activity" class:now={activity === 'now'}>{activity}</span>
+    <span class="activity" class:now={activity === 'now'}>{activity === 'now' ? t('ui.memberRow.now') : activity}</span>
   {/if}
   {#if badge}
-    <span class="badge">{badge}</span>
+    <span class="badge">{t(badge)}</span>
   {/if}
   {#if toggle && !disabled}
     <span class="toggle" class:selected><span class="toggle-icon"></span></span>
