@@ -40,7 +40,7 @@
   --btn-hover:rgba(0,0,0,.09); --btn-danger-bg:rgba(192,42,28,.07); --btn-danger-bg-hover:rgba(192,42,28,.14); --btn-danger-line:rgba(192,42,28,.38);
   --typography-primary:#241F2A; --typography-secondary:#55525E; --typography-tertiary:#5A5764; --typography-disabled:#6A6773;
   --ink:var(--typography-primary); --ink-2:var(--typography-secondary); --ink-3:var(--typography-tertiary); --ink-4:var(--typography-disabled); --meta:#5A5764;
-  --bubble-recv-bg:#EFEDE8; --bubble-recv-text:#241F2A; --card-ring-1:#FFFFFF; --card-ring-2:#EFEDE8;
+  --bubble-recv-bg:#F3F2EE; --bubble-recv-text:#241F2A; --card-ring-1:#FFFFFF; --card-ring-2:#F3F2EE;
   --bubble-wave-off:#CFCCD4; --status-verified:#1B72D8; --status-chit:#A85E1E; --status-chit-soft:rgba(196,98,26,.12);
   --status-danger:#C02A1C; --status-danger-soft:var(--btn-danger-bg); --status-danger-line:var(--btn-danger-line);
   --status-online:#12A87B; --status-warning:#A2650B;
