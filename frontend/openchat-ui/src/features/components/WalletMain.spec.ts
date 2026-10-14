@@ -130,4 +130,25 @@ describe('WalletMain', () => {
     expect(target.querySelector('.toast')!.textContent).toContain('ICP');
     expect(onViewChange).toHaveBeenLastCalledWith({ view: 'token', token: 'ICP' });
   });
+
+  test('after a whole-balance send, the token page actions act on the token shown there', async () => {
+    const onSent = vi.fn(() => Promise.resolve());
+    const { props } = setup({ onSent });
+    await sendPending(props);
+    props.tokens = [{ ...tokens[0], held: 0 }, tokens[1]];
+    await settle();
+    // the token page now shows Tether (ICP has no balance left)
+    const actions = target.querySelectorAll<HTMLElement>('.actions .action');
+    expect(actions[1].textContent).toContain('USDT');
+    actions[1].click(); // Receive USDT
+    flushSync();
+    expect(target.querySelector('.page-header')!.textContent).toContain('USDT');
+  });
+
+  test('a token-less flow request from a token page uses the token shown there', async () => {
+    const { props } = setup({ tokens: [{ ...tokens[0], held: 0 }, tokens[1]] });
+    go(props, { view: 'token', token: 'ICP' }, 1); // ICP has no balance: the page shows Tether
+    go(props, { view: 'swap' }, 2);
+    expect(target.querySelector('.page-header')!.textContent).toContain('USDT');
+  });
 });

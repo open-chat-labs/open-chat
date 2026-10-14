@@ -145,9 +145,18 @@
   let lastAsk = $state<{ text: string; offset: number } | null>(null);
   // the page shown when a first page was asked for: until `communities` is a new page the host hasn't answered yet
   let askedOn = $state.raw<ExploreCommunity[] | null>(null);
+  // the host reported loading after the ask: once it stops, the ask is answered even if the page didn't change
+  // (e.g. a failed fetch that keeps the old page), so the loading state can't get stuck
+  let sawLoading = $state(false);
+  $effect.pre(() => {
+    if (loading && lastAsk) untrack(() => (sawLoading = true));
+  });
   const ask = (offset: number) => {
     lastAsk = { text: query.trim(), offset };
-    if (offset === 0) askedOn = communities;
+    if (offset === 0) {
+      askedOn = communities;
+      sawLoading = false;
+    }
     onQuery?.({ text: query.trim(), languages: [...langs], sort: SORT_KEYS[sort], offset, limit: PAGE });
   };
   $effect(() => {
@@ -170,7 +179,7 @@
   // onQuery: the shown page belongs to an older text (debounce not fired yet, or the first page still loading)
   // the shown page belongs to an older ask: a different text, or the first page asked for and not answered (still the
   // same `communities`, or the host says it's loading)
-  const firstPagePending = $derived(!!lastAsk && lastAsk.offset === 0 && (loading || communities === askedOn));
+  const firstPagePending = $derived(!!lastAsk && lastAsk.offset === 0 && (loading || (communities === askedOn && !sawLoading)));
   const searching = $derived(remote && !!q && (lastAsk?.text !== query.trim() || firstPagePending));
   // onQuery: the home list still holds an older query's page (just after clearing the search, or a sort / language
   // change the host hasn't answered yet); it shows a loading state instead of passing that page off as "All communities"

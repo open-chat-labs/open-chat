@@ -128,4 +128,17 @@ describe('ExploreCommunities with onQuery', () => {
     flushSync();
     expect(target.querySelector('.hero-sub')?.textContent).toContain('1,234 communities');
   });
+
+  test('an answer that keeps the same page (e.g. a failed fetch) still ends "Searching…"', async () => {
+    const { props } = open();
+    type('rust');
+    await vi.advanceTimersByTimeAsync(250);
+    flushSync();
+    props.loading = true;
+    flushSync();
+    expect(searching()).toBe(true);
+    props.loading = false; // the host gave up and kept its page
+    flushSync();
+    expect(searching()).toBe(false);
+  });
 });

@@ -231,9 +231,11 @@
     // receiving a token you don't hold yet (one of `receivable`)
     if (r.view === 'receive' && r.token && !rows.some((x) => x.symbol === r.token) && receivable.some((x) => x.symbol === r.token && x.nets.length)) extTok = r.token;
     const startFromAll = flow && !r.token && view === 'all';
+    // a token-less flow opened from a token page acts on the token shown there (sym may name one with no balance)
+    const shown = raw?.symbol;
     if (r.token && r.token !== sym) tokFilter = 0;
     view = r.view || 'all';
-    sym = r.token || sym;
+    sym = r.token || (flow && !startFromAll && shown ? shown : sym);
     fromAll = flow ? startFromAll || !!r.fromAll : false;
     pinFlowSym();
     report();
@@ -535,7 +537,7 @@
                 </div>
                 <div class="actions">
                   {#each [['ui.walletMain.sendSymbol', 'send', 'wallet-send'], ['ui.walletMain.receiveSymbol', 'receive', 'receive'], ['ui.walletMain.swapSymbol', 'swap', 'swap']] as [label, target, icon], i}
-                    <span class="action" class:primary={i === 0} onclick={() => go({ view: target as View, fromAll: false })} role="button" tabindex="0"
+                    <span class="action" class:primary={i === 0} onclick={() => go({ view: target as View, sym: raw.symbol, fromAll: false })} role="button" tabindex="0"
                       ><span class="action-icon" style:mask={mask(icon)}></span><span>{t(label, { symbol: raw.symbol })}</span></span
                     >
                   {/each}

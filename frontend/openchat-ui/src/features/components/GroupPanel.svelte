@@ -582,8 +582,8 @@
 
   function setMute(key: MuteKey | null) {
     muteMenu = null;
-    // already showing that (e.g. a repeat tap while the call is pending): nothing to send
-    if (key === muted) return;
+    // a repeat of the change still in flight: nothing new to send (picking the active span when idle restarts it)
+    if (optimistic.mute?.pending && key === muted) return;
     act<MuteKey | null>('mute', hostMute, key, () => onMuteChange?.(key));
   }
 
