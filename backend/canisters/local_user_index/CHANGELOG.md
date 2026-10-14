@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - Remove the one-offs which replaced old user ids in the bots and dropped the User canister's wasm, now that they have run ([#9965](https://github.com/open-chat-labs/open-chat/pull/9965))
+- Remove the `user_id_migrations_complete` metric, which nothing reports to any more ([#9970](https://github.com/open-chat-labs/open-chat/pull/9970))
 
 ## [[2.0.2139](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2139-local_user_index)] - 2026-10-14
 
