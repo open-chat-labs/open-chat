@@ -24,6 +24,13 @@ fn post_upgrade(args: Args) {
     let (data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
         msgpack::deserialize(reader).unwrap();
 
+    // The chat's events data was moved from the heap into stable memory long ago, and what moved it
+    // has since been removed, so a canister which still holds any on the heap isn't upgraded, rather
+    // than losing it (see `ChatEvents::legacy_heap_entries`)
+    // TODO remove after the release containing this has been deployed
+    let legacy_heap_entries = data.chat.events.legacy_heap_entries();
+    assert_eq!(legacy_heap_entries, 0, "Chat events data is still held on the heap");
+
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 
     let env = Box::new(CanisterEnv::new(data.rng_seed));

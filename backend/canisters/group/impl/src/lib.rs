@@ -397,15 +397,16 @@ impl RuntimeState {
             Err(OCErrorCode::ChatFrozen.into())
         } else {
             let transfers_required = self.prepare_transfers_for_import_into_community();
-            // The community only receives what is serialized here plus the events, so the users'
-            // metrics and the message event indexes in stable memory must be copied onto the heap to
-            // be carried over
-            self.data.chat.events.copy_to_heap_for_export();
             let mut serialized = serialize_then_unwrap(&self.data.chat);
             // The channel's events still refer to users by their ids from before any migrations to
-            // MultiUser canisters, so the community needs these to recognise them
+            // MultiUser canisters, so the community needs these to recognise them. And the community
+            // only receives what is serialized here plus the events, so the users' metrics and the
+            // message event indexes in stable memory are carried over here too.
+            let chat_events_export = self.data.chat.events.export_for_import_into_community();
             let extras = ExportExtras {
                 migrated_user_ids: self.data.migrated_user_ids.iter().collect(),
+                user_metrics: chat_events_export.user_metrics,
+                message_event_index_chunks: chat_events_export.message_event_index_chunks,
             };
             msgpack::serialize(&extras, &mut serialized).unwrap();
             let total_bytes = serialized.len() as u64;

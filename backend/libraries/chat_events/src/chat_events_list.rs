@@ -1,5 +1,6 @@
 use crate::hybrid_map::HybridMap;
 use crate::last_updated_timestamps::LastUpdatedTimestamps;
+use crate::legacy_heap_entries::LegacyHeapEntries;
 use crate::message_event_indexes::MessageEventIndexes;
 use crate::message_ids::MessageIdsStableStorage;
 use crate::stable_memory::ChatEventsStableStorage;
@@ -9,25 +10,23 @@ use crate::{
 };
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
-use stable_memory_map::{ChatEventKeyPrefix, KeyPrefix, StableMemoryMap, with_map_mut};
+use serde_bytes::ByteBuf;
+use stable_memory_map::{ChatEventKeyPrefix, StableMemoryMap};
 use std::cmp::max;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::iter::Peekable;
 use std::ops::Deref;
 use types::{
     ChatEvent, ChatEventCategory, EventIndex, EventOrExpiredRange, EventWrapper, EventWrapperInternal, HydratedMention,
-    Mention, Message, MessageId, MessageIndex, TimestampMillis, UserIdAndPrincipal,
+    Mention, Message, MessageIndex, TimestampMillis, UserIdAndPrincipal,
 };
 
 #[derive(Serialize, Deserialize)]
 pub struct ChatEventsList {
     events_map: HybridMap<ChatEventsStableStorage>,
-    // Message ids which haven't yet been moved into stable memory. New message ids are always
-    // written to stable memory, and existing ones are moved across in batches by
-    // `migrate_message_ids_to_stable_memory`. This can be removed once every chat has been migrated.
-    // It is always serialized so that a canister can still be rolled back to a version expecting it.
-    #[serde(rename = "message_id_map", default)]
-    message_ids_on_heap: HashMap<MessageId, EventIndex>,
+    // Message ids from before they were stored in stable memory (see `LegacyHeapEntries`)
+    #[serde(rename = "message_id_map", default, skip_serializing)]
+    legacy_message_ids_on_heap: LegacyHeapEntries,
     message_event_indexes: MessageEventIndexes,
     latest_event_index: Option<EventIndex>,
     latest_event_timestamp: Option<TimestampMillis>,
@@ -45,7 +44,7 @@ impl ChatEventsList {
     pub fn new(stable_memory_prefix: ChatEventKeyPrefix) -> Self {
         ChatEventsList {
             events_map: HybridMap::new(stable_memory_prefix),
-            message_ids_on_heap: HashMap::new(),
+            legacy_message_ids_on_heap: LegacyHeapEntries::default(),
             message_event_indexes: MessageEventIndexes::default(),
             latest_event_index: None,
             latest_event_timestamp: None,
@@ -60,9 +59,7 @@ impl ChatEventsList {
     ) -> EventIndex {
         let event_index = self.next_event_index();
         if let ChatEventInternal::Message(m) = &event {
-            if self.message_ids_on_heap.contains_key(&m.message_id)
-                || self.message_ids().insert(m.message_id, event_index).is_some()
-            {
+            if self.message_ids().insert(m.message_id, event_index).is_some() {
                 panic!("MessageId already used: {:?}", m.message_id);
             }
             self.message_event_indexes
@@ -291,78 +288,26 @@ impl ChatEventsList {
         match event_key {
             EventKey::EventIndex(e) => Some(e),
             EventKey::MessageIndex(m) => self.message_event_indexes.get(self.events_map.stable_memory_prefix(), m),
-            EventKey::MessageId(m) => self
-                .message_ids_on_heap
-                .get(&m)
-                .copied()
-                .or_else(|| self.message_ids().get(&m)),
+            EventKey::MessageId(m) => self.message_ids().get(&m),
         }
     }
 
-    // Moves up to `max_count` message ids from the heap into stable memory, returning how many
-    // were moved
-    pub(crate) fn migrate_message_ids_to_stable_memory(&mut self, max_count: usize) -> usize {
-        if self.message_ids_on_heap.is_empty() {
-            return 0;
-        }
-
-        let batch: Vec<_> = self
-            .message_ids_on_heap
-            .iter()
-            .take(max_count)
-            .map(|(m, e)| (*m, *e))
-            .collect();
-
-        // `push_event` checks both stores and an imported group's heap ids are discarded, so there
-        // can't already be a stable entry for any of these ids. If there were, overwriting it would
-        // leave lookups unchanged, since they check the heap first.
-        let message_ids = self.message_ids();
-        let mut entries: Vec<_> = batch
-            .iter()
-            .map(|(message_id, event_index)| {
-                self.message_ids_on_heap.remove(message_id);
-                (
-                    message_ids.prefix().create_key(message_id),
-                    MessageIdsStableStorage::value_to_bytes(*event_index),
-                )
-            })
-            .collect();
-        // The heap entries are unordered, so sort them into key order to minimise the number of
-        // nodes written
-        entries.sort_unstable_by(|(k1, _), (k2, _)| k1.cmp(k2));
-        with_map_mut(|m| m.insert_many(entries));
-
-        if self.message_ids_on_heap.is_empty() {
-            // Release the map's allocation
-            self.message_ids_on_heap = HashMap::new();
-        }
-
-        batch.len()
+    // The entries held on the heap from before they were stored in stable memory (see
+    // `LegacyHeapEntries`), counting each full chunk of message event indexes as one
+    pub(crate) fn legacy_heap_entries(&self) -> usize {
+        self.legacy_message_ids_on_heap.count() + self.message_event_indexes.legacy_full_chunks_on_heap()
     }
 
-    // Moves up to `max_count` chunks of message event indexes from the heap into stable memory,
-    // returning how many were moved
-    pub(crate) fn migrate_message_event_indexes_to_stable_memory(&mut self, max_count: usize) -> usize {
+    // See `MessageEventIndexes::export_chunks`
+    pub(crate) fn export_message_event_index_chunks(&self) -> Vec<ByteBuf> {
         self.message_event_indexes
-            .migrate_to_stable_memory(self.events_map.stable_memory_prefix(), max_count)
+            .export_chunks(self.events_map.stable_memory_prefix())
     }
 
-    pub(crate) fn message_event_indexes_on_heap_count(&self) -> usize {
-        self.message_event_indexes.on_heap_count_to_migrate()
-    }
-
-    // See `MessageEventIndexes::copy_to_heap`
-    pub(crate) fn copy_message_event_indexes_to_heap(&mut self) {
+    // See `MessageEventIndexes::import_chunks`
+    pub(crate) fn import_message_event_index_chunks(&self, chunks: Vec<ByteBuf>) {
         self.message_event_indexes
-            .copy_to_heap(self.events_map.stable_memory_prefix());
-    }
-
-    pub(crate) fn discard_message_ids_on_heap(&mut self) {
-        self.message_ids_on_heap = HashMap::new();
-    }
-
-    pub(crate) fn message_ids_on_heap_count(&self) -> usize {
-        self.message_ids_on_heap.len()
+            .import_chunks(self.events_map.stable_memory_prefix(), chunks);
     }
 
     fn message_ids(&self) -> MessageIdsStableStorage {
@@ -742,7 +687,7 @@ mod tests {
     use serde_bytes::ByteBuf;
     use stable_memory_map::{ChatEventKeyPrefix, KeyPrefix};
     use std::mem::size_of;
-    use types::{ChannelId, Chat, EventContext, Milliseconds, MultiUserChat};
+    use types::{ChannelId, Chat, EventContext, MessageId, Milliseconds, MultiUserChat};
     use utils::migrated_user_ids::MigratedUserIds;
 
     #[test]
@@ -987,8 +932,6 @@ mod tests {
         let events = setup_events(None);
         let events_list = events.main_events_list();
 
-        assert_eq!(events_list.message_ids_on_heap_count(), 0);
-
         for message_id in pushed_message_ids(2) {
             let event_index = events_list.event_index(EventKey::MessageId(message_id)).unwrap();
             assert_eq!(events_list.message_ids().get(&message_id), Some(event_index));
@@ -999,64 +942,10 @@ mod tests {
     }
 
     #[test]
-    fn message_ids_on_heap_are_migrated_to_stable_memory() {
-        let mut events = setup_events(None);
-        move_message_ids_to_heap(&mut events);
-        let expected = expected_message_id_event_indexes(&events);
-
-        assert_eq!(events.heap_entries_to_migrate_count(), 100);
-        assert_message_id_lookups(&events, &expected);
-
-        assert_eq!(events.migrate_to_stable_memory(30), 30);
-        assert_eq!(events.heap_entries_to_migrate_count(), 70);
-        assert_message_id_lookups(&events, &expected);
-
-        assert_eq!(events.migrate_to_stable_memory(1000), 70);
-        assert_eq!(events.heap_entries_to_migrate_count(), 0);
-        assert_message_id_lookups(&events, &expected);
-
-        let events_list = events.main_events_list();
-        for (message_id, event_index) in expected {
-            assert_eq!(events_list.message_ids().get(&message_id), Some(event_index));
-        }
-
-        assert_eq!(events.migrate_to_stable_memory(1000), 0);
-    }
-
-    #[test]
     #[should_panic(expected = "MessageId already used")]
     fn duplicate_message_id_in_stable_memory_panics() {
         let mut events = setup_events(None);
         push_events(&mut events, 2);
-    }
-
-    #[test]
-    #[should_panic(expected = "MessageId already used")]
-    fn duplicate_message_id_on_heap_panics() {
-        let mut events = setup_events(None);
-        move_message_ids_to_heap(&mut events);
-        push_events(&mut events, 2);
-    }
-
-    #[test]
-    fn message_ids_on_heap_survive_serialization() {
-        let mut events = setup_events(None);
-        move_message_ids_to_heap(&mut events);
-        let expected = expected_message_id_event_indexes(&events);
-
-        let bytes = msgpack::serialize_then_unwrap(events.main_events_list());
-        // Must keep the field name used by the previous version so that upgrades and rollbacks both work
-        assert!(bytes.windows(14).any(|w| w == b"message_id_map"));
-
-        let deserialized: ChatEventsList = msgpack::deserialize_then_unwrap(&bytes);
-        assert_eq!(
-            deserialized.message_ids_on_heap,
-            events.main_events_list().message_ids_on_heap
-        );
-        assert_eq!(deserialized.message_ids_on_heap_count(), 100);
-        for (message_id, event_index) in expected {
-            assert_eq!(deserialized.event_index(EventKey::MessageId(message_id)), Some(event_index));
-        }
     }
 
     #[test]
@@ -1085,10 +974,8 @@ mod tests {
     }
 
     #[test]
-    fn importing_group_discards_message_ids_on_heap() {
+    fn importing_group_carries_over_the_message_ids_of_its_remaining_events() {
         let mut events = setup_group_events();
-        // The group hasn't yet moved its message ids into stable memory
-        move_message_ids_to_heap(&mut events);
         let expected = expected_message_id_event_indexes(&events);
         let (removed, remaining) = expected.split_at(10);
         for (_, event_index) in removed {
@@ -1100,9 +987,7 @@ mod tests {
 
         let mut imported: ChatEvents = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&events));
         imported.set_chat(channel);
-        imported.discard_message_ids_on_heap();
 
-        assert_eq!(imported.heap_entries_to_migrate_count(), 0);
         assert_message_id_lookups(&imported, remaining);
         for (message_id, _) in removed {
             assert!(
@@ -1125,8 +1010,7 @@ mod tests {
         let events_list = events.main_events_list();
         assert_eq!(events_list.latest_message_index(), Some(299.into()));
         assert_eq!(events_list.next_message_index(), 300.into());
-        assert_eq!(events.heap_entries_to_migrate_count(), 0);
-        assert_eq!(events_list.message_event_indexes_on_heap_count(), 0);
+        assert_eq!(events.legacy_heap_entries(), 0);
         assert_message_index_lookups(&events, &expected);
 
         // The messages pushed at 2..102 expire at 1002..1102
@@ -1145,30 +1029,41 @@ mod tests {
     }
 
     #[test]
-    fn importing_group_carries_over_message_event_indexes() {
+    fn importing_group_carries_over_message_event_indexes_and_metrics() {
         let mut events = setup_group_events();
         push_events(&mut events, 200);
         push_events(&mut events, 400);
+        // Plus a thread with more than a chunk of replies
+        let root = MessageIndex::from(5);
+        push_thread_replies(&mut events, root, 130, 600);
         let expected = expected_message_event_indexes(&events);
+        let expected_thread = expected_thread_message_event_indexes(&events, root);
+        assert_eq!(expected_thread.len(), 130);
+        let sender = Principal::from_slice(&[2]).into();
+        let metrics = events.user_metrics(&sender, None).unwrap();
 
-        // As done by the group before it is serialized for the community
-        events.copy_to_heap_for_export();
-        assert_eq!(events.main_events_list().message_event_indexes_on_heap_count(), 2);
-        assert_message_index_lookups(&events, &expected);
+        // As done by the group when it starts being imported
+        let export = events.export_for_import_into_community();
+        assert_eq!(
+            export
+                .message_event_index_chunks
+                .iter()
+                .map(|(root, chunks)| (*root, chunks.len()))
+                .collect_vec(),
+            vec![(None, 2), (Some(root), 1)]
+        );
+        assert!(!export.user_metrics.is_empty());
 
         let channel = Chat::Channel(Principal::from_slice(&[3]).into(), ChannelId::from(1u32));
         ChatEvents::import_events(channel, export_events(&events));
 
         let mut imported: ChatEvents = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&events));
         imported.set_chat(channel);
-        imported.discard_message_ids_on_heap();
-        imported.discard_expiring_events_on_heap();
+        imported.import_from_group(export);
+        assert_eq!(imported.legacy_heap_entries(), 0);
         assert_message_index_lookups(&imported, &expected);
-
-        while imported.migrate_to_stable_memory(1) > 0 {}
-        assert_eq!(imported.heap_entries_to_migrate_count(), 0);
-        assert_eq!(imported.main_events_list().message_event_indexes_on_heap_count(), 0);
-        assert_message_index_lookups(&imported, &expected);
+        assert_eq!(expected_thread_message_event_indexes(&imported, root), expected_thread);
+        assert_eq!(imported.user_metrics(&sender, None), Some(metrics));
 
         let events_prefix = ChatEventKeyPrefix::new_from_chat(channel, None);
         let chunks_key_prefix = stable_memory_map::MessageEventIndexesKeyPrefix::from(&events_prefix);
@@ -1185,7 +1080,6 @@ mod tests {
     #[test]
     fn expired_events_are_removed() {
         let mut events = setup_events(Some(1000));
-        assert_eq!(events.heap_entries_to_migrate_count(), 0);
 
         // The messages were pushed at 2..102, so expire at 1002..1102
         assert_eq!(events.next_event_expiry(), Some(1002));
@@ -1219,9 +1113,6 @@ mod tests {
 
         let mut imported: ChatEvents = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&events));
         imported.set_chat(channel);
-        imported.discard_message_ids_on_heap();
-        imported.discard_expiring_events_on_heap();
-        assert_eq!(imported.heap_entries_to_migrate_count(), 0);
         assert_eq!(imported.next_event_expiry(), Some(1002));
 
         // Every message expires, but the `DirectChatCreated` event doesn't
@@ -1268,16 +1159,6 @@ mod tests {
                 events.main_events_list().event_index(EventKey::MessageId(*message_id)),
                 Some(*event_index)
             );
-        }
-    }
-
-    // Recreates the state of a chat from before message ids were stored in stable memory
-    fn move_message_ids_to_heap(events: &mut ChatEvents) {
-        let events_list = events.main_events_list_mut();
-        let mut message_ids = events_list.message_ids();
-        for message_id in pushed_message_ids(2) {
-            let event_index = *message_ids.remove(&message_id).unwrap().value();
-            events_list.message_ids_on_heap.insert(message_id, event_index);
         }
     }
 
@@ -1374,6 +1255,38 @@ mod tests {
         push_events(&mut events, 2);
 
         events
+    }
+
+    fn push_thread_replies(events: &mut ChatEvents, root: MessageIndex, count: u64, now: TimestampMillis) {
+        for i in 0..count {
+            events.push_message::<NullEventPusher>(
+                PushMessageArgs {
+                    sender: Principal::from_slice(&[2]).into(),
+                    thread_root_message_index: Some(root),
+                    message_id: MessageId::from(10_000_000 + (now + i) as u128),
+                    content: MessageContentInternal::Text(TextContentInternal {
+                        text: "reply".to_string(),
+                    }),
+                    sender_context: None,
+                    mentioned: Vec::new(),
+                    replies_to: None,
+                    now: now + i,
+                    forwarded: false,
+                    sender_is_bot: false,
+                    block_level_markdown: false,
+                    og_previews: Vec::new(),
+                },
+                None,
+            );
+        }
+    }
+
+    // The event index of every message in the thread, in message index order
+    fn expected_thread_message_event_indexes(events: &ChatEvents, root: MessageIndex) -> Vec<EventIndex> {
+        let reader = events.events_reader(EventIndex::default(), Some(root), None).unwrap();
+        (0..)
+            .map_while(|i: u32| reader.event_index(EventKey::MessageIndex(i.into())))
+            .collect()
     }
 
     fn push_events(events: &mut ChatEvents, now: TimestampMillis) {

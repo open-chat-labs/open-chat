@@ -1,9 +1,9 @@
 use crate::metrics::ChatMetricsInternal;
 use candid::Principal;
-use serde::{Deserialize, Serialize};
+use serde_bytes::ByteBuf;
 use stable_memory_map::{ChatEventKeyPrefix, EntryExt, Key, KeyPrefix, UserMetricsKeyPrefix, with_map, with_map_mut};
-use std::cmp::{max, min};
-use std::collections::{BTreeMap, BTreeSet};
+use std::cmp::max;
+use std::collections::BTreeSet;
 use std::ops::Bound;
 use types::{Chat, ChatId, TimestampMillis, UserId};
 
@@ -12,25 +12,11 @@ use types::{Chat, ChatId, TimestampMillis, UserId};
 //
 // Only the user's own metrics are ever read from their copy of a direct chat, so the other user's
 // metrics can be skipped (see `skip_their_metrics`).
-#[derive(Serialize, Deserialize, Default)]
-#[serde(transparent)]
-pub struct PerUserMetrics {
-    // Entries which haven't yet been moved into stable memory. New entries are always written to
-    // stable memory, and existing ones are moved across in batches by `migrate_to_stable_memory`.
-    // This can be removed once every chat has been migrated. It is always serialized, which is also
-    // how the metrics are carried over when a group is imported into a community.
-    //
-    // A user with an entry here has no entry in stable memory, unless the entries in stable memory
-    // have been copied here by `copy_to_heap`, in which case both entries are the same.
-    on_heap: BTreeMap<UserId, ChatMetricsInternal>,
-}
+#[derive(Default)]
+pub struct PerUserMetrics;
 
 impl PerUserMetrics {
     pub fn get(&self, events_prefix: &ChatEventKeyPrefix, user_id: &UserId) -> Option<ChatMetricsInternal> {
-        if let Some(metrics) = self.on_heap.get(user_id) {
-            return Some(metrics.clone());
-        }
-
         let key = UserMetricsKeyPrefix::new_from_events_prefix(events_prefix).create_key(user_id);
         with_map(|m| m.get(key)).map(|bytes| ChatMetricsInternal::from_bytes(&bytes))
     }
@@ -49,15 +35,12 @@ impl PerUserMetrics {
         }
 
         let key = UserMetricsKeyPrefix::new_from_events_prefix(events_prefix).create_key(&user_id);
-
         with_map_mut(|m| {
             let entry = m.entry(key);
-            let mut metrics = self.on_heap.remove(&user_id).unwrap_or_else(|| {
-                entry
-                    .value()
-                    .map(|bytes| ChatMetricsInternal::from_bytes(&bytes))
-                    .unwrap_or_default()
-            });
+            let mut metrics = entry
+                .value()
+                .map(|bytes| ChatMetricsInternal::from_bytes(&bytes))
+                .unwrap_or_default();
             action(&mut metrics);
             metrics.last_active = max(metrics.last_active, timestamp);
             entry.set(metrics.to_bytes());
@@ -76,41 +59,34 @@ impl PerUserMetrics {
         if them == my_user_id {
             return false;
         }
-
-        self.on_heap.remove(&them);
         with_map_mut(|m| m.remove(UserMetricsKeyPrefix::new_from_events_prefix(events_prefix).create_key(&them)));
         true
     }
 
-    // Copies every entry in stable memory onto the heap, so that they are included when the chat is
-    // serialized to be imported into a community
-    pub fn copy_to_heap(&mut self, events_prefix: &ChatEventKeyPrefix) {
+    // Every user's metrics as they are stored, eg. to carry them over when a group is imported into a
+    // community (see `import`)
+    pub fn export(&self, events_prefix: &ChatEventKeyPrefix) -> Vec<(UserId, ByteBuf)> {
         let prefix = UserMetricsKeyPrefix::new_from_events_prefix(events_prefix);
         let start = prefix.create_key(&Principal::from_slice(&[]).into());
-
         with_map(|m| {
-            for (key, bytes) in m.range(start..).take_while(|(k, _)| k.matches_prefix(&prefix)) {
-                self.on_heap.insert(key.user_id(), ChatMetricsInternal::from_bytes(&bytes));
-            }
-        });
+            m.range(start..)
+                .take_while(|(k, _)| k.matches_prefix(&prefix))
+                .map(|(k, bytes)| (k.user_id(), ByteBuf::from(bytes)))
+                .collect()
+        })
     }
 
-    // Moves up to `max_count` entries from the heap into stable memory, returning how many were
-    // moved. Any existing entry in stable memory for one of these users is a copy of the heap entry
-    // (see `copy_to_heap`), so it can simply be overwritten.
-    pub fn migrate_to_stable_memory(&mut self, events_prefix: &ChatEventKeyPrefix, max_count: usize) -> usize {
+    // Writes the metrics exported from another chat (see `export`) under this chat's prefix
+    pub fn import(&mut self, events_prefix: &ChatEventKeyPrefix, metrics: Vec<(UserId, ByteBuf)>) {
         let prefix = UserMetricsKeyPrefix::new_from_events_prefix(events_prefix);
-        let count = min(max_count, self.on_heap.len());
-        let mut entries = Vec::with_capacity(count);
-        for (user_id, metrics) in std::iter::from_fn(|| self.on_heap.pop_first()).take(count) {
-            entries.push((prefix.create_key(&user_id), metrics.to_bytes()));
-        }
-
+        let mut entries: Vec<_> = metrics
+            .into_iter()
+            .map(|(user_id, bytes)| (prefix.create_key(&user_id), bytes.into_vec()))
+            .collect();
         // User ids are ordered by length before their bytes, whereas keys are ordered by their bytes
         // alone, so sort the entries into key order to minimise the number of nodes written
         entries.sort_unstable_by(|(k1, _), (k2, _)| k1.cmp(k2));
         with_map_mut(|m| m.insert_many(entries));
-        count
     }
 
     // Moves the metrics of a user who has been given a new id, having been migrated to a MultiUser
@@ -122,64 +98,43 @@ impl PerUserMetrics {
         }
 
         let prefix = UserMetricsKeyPrefix::new_from_events_prefix(events_prefix);
-
         with_map_mut(|m| {
-            // A user with an entry on the heap may also have a copy of it in stable memory (see
-            // `copy_to_heap`), so both are removed
-            let old_on_stable_memory = m.remove(prefix.create_key(&old_user_id));
-            let Some(old_metrics) = self
-                .on_heap
-                .remove(&old_user_id)
-                .or_else(|| old_on_stable_memory.map(|bytes| ChatMetricsInternal::from_bytes(&bytes)))
+            let Some(old_metrics) = m
+                .remove(prefix.create_key(&old_user_id))
+                .map(|bytes| ChatMetricsInternal::from_bytes(&bytes))
             else {
                 return false;
             };
-
             let entry = m.entry(prefix.create_key(&new_user_id));
-            let mut metrics = self.on_heap.remove(&new_user_id).unwrap_or_else(|| {
-                entry
-                    .value()
-                    .map(|bytes| ChatMetricsInternal::from_bytes(&bytes))
-                    .unwrap_or_default()
-            });
+            let mut metrics = entry
+                .value()
+                .map(|bytes| ChatMetricsInternal::from_bytes(&bytes))
+                .unwrap_or_default();
             metrics.merge(&old_metrics);
             entry.set(metrics.to_bytes());
             true
         })
     }
 
-    // The users who have metrics, whether on the heap or in stable memory
+    // The users who have metrics
     pub fn user_ids(&self, events_prefix: &ChatEventKeyPrefix) -> BTreeSet<UserId> {
         let prefix = UserMetricsKeyPrefix::new_from_events_prefix(events_prefix);
         let start = prefix.create_key(&Principal::from_slice(&[]).into());
-        let mut user_ids: BTreeSet<_> = self.on_heap.keys().copied().collect();
         with_map(|m| {
-            user_ids.extend(
-                m.range(start..)
-                    .take_while(|(k, _)| k.matches_prefix(&prefix))
-                    .map(|(k, _)| k.user_id()),
-            )
-        });
-        user_ids
+            m.range(start..)
+                .take_while(|(k, _)| k.matches_prefix(&prefix))
+                .map(|(k, _)| k.user_id())
+                .collect()
+        })
     }
 
     // Removes the user's metrics, returning whether they had any
     pub fn remove(&mut self, events_prefix: &ChatEventKeyPrefix, user_id: UserId) -> bool {
-        let on_heap = self.on_heap.remove(&user_id).is_some();
         let key = UserMetricsKeyPrefix::new_from_events_prefix(events_prefix).create_key(&user_id);
-        with_map_mut(|m| m.remove(key)).is_some() || on_heap
+        with_map_mut(|m| m.remove(key)).is_some()
     }
 
-    pub fn on_heap_count(&self) -> usize {
-        self.on_heap.len()
-    }
-
-    pub fn user_ids_on_heap(&self) -> impl Iterator<Item = UserId> + '_ {
-        self.on_heap.keys().copied()
-    }
-
-    // The ids of up to `max_count` of the users with metrics in stable memory, in key order,
-    // starting after `after`
+    // The ids of up to `max_count` of the users with metrics, in key order, starting after `after`
     pub fn user_ids_in_stable_memory(
         &self,
         events_prefix: &ChatEventKeyPrefix,
@@ -212,6 +167,7 @@ mod tests {
     use ic_stable_structures::DefaultMemoryImpl;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
     use rand::{Rng, rng};
+    use std::collections::BTreeMap;
     use types::ChannelId;
 
     type Model = BTreeMap<UserId, ChatMetricsInternal>;
@@ -221,8 +177,8 @@ mod tests {
         init_stable_memory_map();
         let chat1 = Chat::Channel(Principal::anonymous().into(), ChannelId::from(1u32));
         let chat2 = Chat::Channel(Principal::anonymous().into(), ChannelId::from(2u32));
-        let mut metrics1 = PerUserMetrics::default();
-        let mut metrics2 = PerUserMetrics::default();
+        let mut metrics1 = PerUserMetrics;
+        let mut metrics2 = PerUserMetrics;
         let mut model1 = Model::new();
         let mut model2 = Model::new();
 
@@ -235,63 +191,9 @@ mod tests {
             apply(&mut metrics2, &mut model2, chat2, false, user_id, key, !incr, now + 1000);
         }
 
-        assert_eq!(metrics1.on_heap_count(), 0);
         assert_matches_model(&metrics1, chat1, &model1);
         assert_matches_model(&metrics2, chat2, &model2);
         assert!(metrics1.get(&p(chat1), &user_id(100)).is_none());
-    }
-
-    #[test]
-    fn heap_entries_are_migrated_to_stable_memory() {
-        init_stable_memory_map();
-        let chat = Chat::Group(Principal::anonymous().into());
-        let mut model = Model::new();
-
-        // Build up some legacy entries on the heap
-        for i in 0..50 {
-            let mut metrics = ChatMetricsInternal::default();
-            metrics.last_active = 1000 + i as u64;
-            metrics.incr(MetricKey::TextMessages, i + 1);
-            model.insert(user_id(i), metrics);
-        }
-        let bytes = msgpack::serialize_then_unwrap(&model);
-        let mut metrics: PerUserMetrics = msgpack::deserialize_then_unwrap(&bytes);
-        // The legacy entries are serialized the same way as the map they were previously held in
-        assert_eq!(msgpack::serialize_then_unwrap(&metrics), bytes);
-        assert_eq!(metrics.on_heap_count(), 50);
-        assert_matches_model(&metrics, chat, &model);
-
-        // Updating a user moves their entry into stable memory
-        apply(
-            &mut metrics,
-            &mut model,
-            chat,
-            false,
-            user_id(10),
-            MetricKey::Reactions,
-            true,
-            5000,
-        );
-        apply(
-            &mut metrics,
-            &mut model,
-            chat,
-            false,
-            user_id(100),
-            MetricKey::Reactions,
-            true,
-            5000,
-        );
-        assert_eq!(metrics.on_heap_count(), 49);
-        assert_matches_model(&metrics, chat, &model);
-
-        assert_eq!(metrics.migrate_to_stable_memory(&p(chat), 20), 20);
-        assert_eq!(metrics.on_heap_count(), 29);
-        assert_matches_model(&metrics, chat, &model);
-
-        assert_eq!(metrics.migrate_to_stable_memory(&p(chat), 100), 29);
-        assert_eq!(metrics.on_heap_count(), 0);
-        assert_matches_model(&metrics, chat, &model);
     }
 
     #[test]
@@ -299,16 +201,8 @@ mod tests {
         init_stable_memory_map();
         let group = Chat::Group(Principal::anonymous().into());
         let channel = Chat::Channel(Principal::from_slice(&[1]).into(), ChannelId::from(1u32));
+        let mut metrics = PerUserMetrics;
         let mut model = Model::new();
-
-        let mut legacy = Model::new();
-        for i in 0..10 {
-            let mut metrics = ChatMetricsInternal::default();
-            metrics.incr(MetricKey::Polls, i + 1);
-            legacy.insert(user_id(i), metrics.clone());
-            model.insert(user_id(i), metrics);
-        }
-        let mut metrics: PerUserMetrics = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(legacy));
 
         for now in 1000..1200 {
             let user_id = user_id(rng().next_u32() % 30);
@@ -324,32 +218,16 @@ mod tests {
             );
         }
 
-        // The group copies its entries onto the heap before serializing them
-        metrics.copy_to_heap(&p(group));
-        assert_eq!(metrics.on_heap_count(), model.len());
-        assert_matches_model(&metrics, group, &model);
-
-        // The community deserializes them then moves them into stable memory under the channel
-        let bytes = msgpack::serialize_then_unwrap(&metrics);
-        let mut imported: PerUserMetrics = msgpack::deserialize_then_unwrap(&bytes);
+        // The group exports its entries, then the community writes them under the channel
+        let exported = metrics.export(&p(group));
+        assert_eq!(exported.len(), model.len());
+        let mut imported = PerUserMetrics;
+        imported.import(&p(channel), exported);
         assert_matches_model(&imported, channel, &model);
-        assert_eq!(imported.migrate_to_stable_memory(&p(channel), usize::MAX), model.len());
-        assert_matches_model(&imported, channel, &model);
+        assert_eq!(stable_user_ids(channel), model.keys().copied().collect::<Vec<_>>());
 
-        // If the import is abandoned, the group's copies on the heap are the same as the entries in
-        // stable memory, so it can carry on as before
-        apply(
-            &mut metrics,
-            &mut model,
-            group,
-            false,
-            user_id(3),
-            MetricKey::Edits,
-            true,
-            2000,
-        );
-        assert_matches_model(&metrics, group, &model);
-        metrics.migrate_to_stable_memory(&p(group), usize::MAX);
+        // The group's own entries are untouched, so it can carry on as before if the import is
+        // abandoned
         assert_matches_model(&metrics, group, &model);
     }
 
@@ -360,8 +238,8 @@ mod tests {
         let them = user_id(2);
         let chat = Chat::Direct(them.into());
         let group = Chat::Group(Principal::anonymous().into());
-        let mut metrics = PerUserMetrics::default();
-        let mut group_metrics = PerUserMetrics::default();
+        let mut metrics = PerUserMetrics;
+        let mut group_metrics = PerUserMetrics;
         let mut model = Model::new();
         let mut group_model = Model::new();
 
@@ -414,7 +292,7 @@ mod tests {
         init_stable_memory_map();
         let me = user_id(1);
         let chat = Chat::Direct(me.into());
-        let mut metrics = PerUserMetrics::default();
+        let mut metrics = PerUserMetrics;
         let mut model = Model::new();
 
         apply(&mut metrics, &mut model, chat, false, me, MetricKey::TextMessages, true, 1000);
@@ -435,7 +313,7 @@ mod tests {
     #[test]
     fn metrics_are_not_skipped_in_group_chats_or_channels() {
         let me = user_id(1);
-        let mut metrics = PerUserMetrics::default();
+        let mut metrics = PerUserMetrics;
 
         let group = Chat::Group(Principal::anonymous().into());
         assert!(!metrics.skip_their_metrics(&p(group), group, me));
@@ -444,48 +322,12 @@ mod tests {
     }
 
     #[test]
-    fn other_users_legacy_metrics_are_deleted_when_skipped() {
-        init_stable_memory_map();
-        let me = user_id(2);
-
-        // Where the other user's legacy entry has already been moved into stable memory, it is
-        // deleted from there
-        let them = user_id(1);
-        let chat = Chat::Direct(them.into());
-        let (mut metrics, mut model) = legacy_metrics(&[them, me]);
-        assert_eq!(metrics.migrate_to_stable_memory(&p(chat), 1), 1);
-        assert_eq!(stable_user_ids(chat), vec![them]);
-
-        assert!(metrics.skip_their_metrics(&p(chat), chat, me));
-        model.remove(&them);
-        assert!(stable_user_ids(chat).is_empty());
-        assert_matches_model(&metrics, chat, &model);
-
-        assert_eq!(metrics.migrate_to_stable_memory(&p(chat), usize::MAX), 1);
-        assert_eq!(stable_user_ids(chat), vec![me]);
-        assert_matches_model(&metrics, chat, &model);
-
-        // Where it is still on the heap, it is dropped rather than moved into stable memory
-        let them = user_id(3);
-        let chat = Chat::Direct(them.into());
-        let (mut metrics, mut model) = legacy_metrics(&[them, me]);
-
-        assert!(metrics.skip_their_metrics(&p(chat), chat, me));
-        model.remove(&them);
-        assert_eq!(metrics.on_heap_count(), 1);
-        assert_matches_model(&metrics, chat, &model);
-
-        assert_eq!(metrics.migrate_to_stable_memory(&p(chat), usize::MAX), 1);
-        assert_eq!(stable_user_ids(chat), vec![me]);
-        assert_matches_model(&metrics, chat, &model);
-    }
-
-    #[test]
     fn migrated_users_metrics_are_merged_into_their_new_id() {
         init_stable_memory_map();
         let chat = Chat::Group(Principal::anonymous().into());
-        let [old, new, other, legacy_old, legacy_new] = [1, 2, 3, 4, 5].map(user_id);
-        let (mut metrics, mut model) = legacy_metrics(&[legacy_old, legacy_new]);
+        let [old, new, other] = [1, 2, 3].map(user_id);
+        let mut metrics = PerUserMetrics;
+        let mut model = Model::new();
 
         for (i, user_id) in [old, old, new, other].into_iter().enumerate() {
             apply(
@@ -500,17 +342,14 @@ mod tests {
             );
         }
 
-        for (old, new) in [(old, new), (legacy_old, legacy_new)] {
-            assert!(metrics.migrate_user(&p(chat), old, new));
-            let old_metrics = model.remove(&old).unwrap();
-            model.get_mut(&new).unwrap().merge(&old_metrics);
-            assert!(metrics.get(&p(chat), &old).is_none());
-            assert!(!metrics.migrate_user(&p(chat), old, new));
-        }
+        assert!(metrics.migrate_user(&p(chat), old, new));
+        let old_metrics = model.remove(&old).unwrap();
+        model.get_mut(&new).unwrap().merge(&old_metrics);
+        assert!(metrics.get(&p(chat), &old).is_none());
+        assert!(!metrics.migrate_user(&p(chat), old, new));
         assert_eq!(model[&new].hydrate().text_messages, 3);
         assert_eq!(model[&new].last_active, 1002);
         assert_matches_model(&metrics, chat, &model);
-        assert_eq!(metrics.on_heap_count(), 0);
 
         // A user with no metrics under their new id takes on those under their old id
         let newest = user_id(6);
@@ -518,7 +357,7 @@ mod tests {
         let new_metrics = model.remove(&new).unwrap();
         model.insert(newest, new_metrics);
         assert_matches_model(&metrics, chat, &model);
-        assert_eq!(stable_user_ids(chat), vec![other, legacy_new, newest]);
+        assert_eq!(stable_user_ids(chat), vec![other, newest]);
     }
 
     #[test]
@@ -526,8 +365,9 @@ mod tests {
         init_stable_memory_map();
         let chat = Chat::Channel(Principal::anonymous().into(), ChannelId::from(1u32));
         let other_chat = Chat::Channel(Principal::anonymous().into(), ChannelId::from(2u32));
-        let (mut metrics, mut model) = legacy_metrics(&[user_id(100)]);
-        let mut other_metrics = PerUserMetrics::default();
+        let mut metrics = PerUserMetrics;
+        let mut model = Model::new();
+        let mut other_metrics = PerUserMetrics;
         for i in 0..5 {
             apply(&mut metrics, &mut model, chat, false, user_id(i), MetricKey::Polls, true, 1);
             apply(
@@ -553,40 +393,36 @@ mod tests {
             batches.push(user_ids);
         }
 
-        // Only the chat's entries in stable memory, those on the heap being read separately
+        // Only the chat's entries
         assert_eq!(
             batches,
             vec![vec![user_id(0), user_id(1)], vec![user_id(2), user_id(3)], vec![user_id(4)]]
         );
-        assert_eq!(metrics.user_ids_on_heap().collect::<Vec<_>>(), vec![user_id(100)]);
     }
 
     #[test]
-    fn users_with_metrics_are_found_and_removed_whether_on_the_heap_or_in_stable_memory() {
+    fn users_with_metrics_are_found_and_removed() {
         init_stable_memory_map();
         let chat = Chat::Group(Principal::anonymous().into());
-        let [on_heap, in_stable_memory, both] = [1, 2, 3].map(user_id);
-        let (mut metrics, mut model) = legacy_metrics(&[on_heap, both]);
-        apply(
-            &mut metrics,
-            &mut model,
-            chat,
-            false,
-            in_stable_memory,
-            MetricKey::TextMessages,
-            true,
-            1000,
-        );
-        // A user can have both, the heap entry having been copied from stable memory (see
-        // `copy_to_heap`)
-        with_map_mut(|m| {
-            let key = UserMetricsKeyPrefix::new_from_events_prefix(&p(chat)).create_key(&both);
-            m.insert(key, model[&both].to_bytes())
-        });
+        let mut metrics = PerUserMetrics;
+        let mut model = Model::new();
+        let user_ids = [1, 2, 3].map(user_id);
+        for user_id in user_ids {
+            apply(
+                &mut metrics,
+                &mut model,
+                chat,
+                false,
+                user_id,
+                MetricKey::TextMessages,
+                true,
+                1000,
+            );
+        }
 
-        assert_eq!(metrics.user_ids(&p(chat)), BTreeSet::from([on_heap, in_stable_memory, both]));
+        assert_eq!(metrics.user_ids(&p(chat)), BTreeSet::from(user_ids));
 
-        for user_id in [on_heap, in_stable_memory, both] {
+        for user_id in user_ids {
             assert!(metrics.remove(&p(chat), user_id));
             assert!(metrics.get(&p(chat), &user_id).is_none());
             assert!(!metrics.remove(&p(chat), user_id));
@@ -620,20 +456,6 @@ mod tests {
         for (user_id, expected) in model {
             assert_eq!(metrics.get(&p(chat), user_id).as_ref(), Some(expected));
         }
-    }
-
-    // Deserializes entries on the heap, as they were held before being moved into stable memory
-    fn legacy_metrics(user_ids: &[UserId]) -> (PerUserMetrics, Model) {
-        let mut model = Model::new();
-        for (i, user_id) in user_ids.iter().enumerate() {
-            let mut metrics = ChatMetricsInternal::default();
-            metrics.incr(MetricKey::TextMessages, i as u32 + 1);
-            model.insert(*user_id, metrics);
-        }
-        (
-            msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&model)),
-            model,
-        )
     }
 
     fn p(chat: Chat) -> ChatEventKeyPrefix {
