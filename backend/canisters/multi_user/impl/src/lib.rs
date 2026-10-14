@@ -1,5 +1,4 @@
 use crate::jobs::migrate_their_user_ids::TheirUserIdsMigration;
-use crate::jobs::rewrite_direct_chats::DirectChatsRewrite;
 use crate::model::local_user_index_event_batch::LocalUserIndexEventBatch;
 use crate::model::user_canister_event_batch::UserCanisterEventBatch;
 use crate::model::users::Users;
@@ -666,7 +665,6 @@ impl RuntimeState {
             known_multi_user_canisters: self.data.known_multi_user_canisters.len() as u32,
             user_ids_in_events_migration: self.data.user_ids_in_events_migration.metrics(),
             their_user_ids_migration: self.data.their_user_ids_migration.clone(),
-            direct_chats_rewrite: self.data.direct_chats_rewrite.clone(),
             user_id_migration_complete_reported: self.data.user_id_migration_complete_reported,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
@@ -715,8 +713,6 @@ struct Data {
     pub user_ids_in_events_migration: UserIdsInEventsMigration<(u16, u32, EventContext)>,
     #[serde(default)]
     pub their_user_ids_migration: TheirUserIdsMigration,
-    #[serde(default)]
-    pub direct_chats_rewrite: DirectChatsRewrite,
     // Whether the LocalUserIndex was last told the user id migration jobs are complete
     #[serde(default)]
     pub user_id_migration_complete_reported: bool,
@@ -761,7 +757,6 @@ impl Data {
             migrated_user_ids: MigratedUserIds::default(),
             user_ids_in_events_migration: UserIdsInEventsMigration::default(),
             their_user_ids_migration: TheirUserIdsMigration::default(),
-            direct_chats_rewrite: DirectChatsRewrite::default(),
             user_id_migration_complete_reported: false,
             rng_seed,
             test_mode,
@@ -810,7 +805,6 @@ pub struct Metrics {
     pub known_multi_user_canisters: u32,
     pub user_ids_in_events_migration: UserIdsInEventsMigrationMetrics,
     pub their_user_ids_migration: TheirUserIdsMigration,
-    pub direct_chats_rewrite: DirectChatsRewrite,
     pub user_id_migration_complete_reported: bool,
     pub canister_ids: CanisterIds,
 }

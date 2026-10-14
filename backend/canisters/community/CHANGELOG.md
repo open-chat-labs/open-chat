@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove the code which read event data from the heap now that it has all moved into stable memory ([#9968](https://github.com/open-chat-labs/open-chat/pull/9968))
+
+## [[2.0.2142](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2142-community)] - 2026-10-14
+
 ### Changed
 
 - Replace the ids users had before being migrated with their latest ids in every event ([#9929](https://github.com/open-chat-labs/open-chat/pull/9929))

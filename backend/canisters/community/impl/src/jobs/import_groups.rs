@@ -198,26 +198,13 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
 
             let mut bytes = group.bytes();
             let mut chat: GroupChatCore = msgpack::deserialize(&mut bytes).unwrap();
-            // A group on the previous version exported its users' metrics and message event indexes
-            // on the heap rather than in the extras. Its metrics would be lost, and this canister
-            // wouldn't upgrade while the message event indexes stayed on the heap (see
-            // `ChatEvents::legacy_heap_entries`). Group is released before Community so that this
-            // doesn't happen.
-            let legacy_heap_entries = chat.events.legacy_heap_entries();
-            if legacy_heap_entries > 0 {
-                error!(%group_id, legacy_heap_entries, "The group's export held chat events data on the heap");
-            }
             // The extras carry the users' metrics and message event indexes, without which lookups by
-            // message index would fail, so every group on the current version sends them. This also
-            // runs in `post_upgrade`, so failing to deserialize them mustn't trap.
-            let extras: ExportExtras = if bytes.is_empty() {
+            // message index would fail. This also runs in `post_upgrade`, so failing to deserialize
+            // them mustn't trap.
+            let extras: ExportExtras = msgpack::deserialize(bytes).unwrap_or_else(|error| {
+                error!(%group_id, ?error, "Failed to deserialize the group's export extras");
                 ExportExtras::default()
-            } else {
-                msgpack::deserialize(bytes).unwrap_or_else(|error| {
-                    error!(%group_id, ?error, "Failed to deserialize the group's export extras");
-                    ExportExtras::default()
-                })
-            };
+            });
             for (old_user_id, new_user_id) in extras.migrated_user_ids {
                 state.data.migrated_user_ids.insert(old_user_id, new_user_id);
             }

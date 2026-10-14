@@ -19,4 +19,3 @@ utils = { path = "../utils" }
 
 [dev-dependencies]
 ic-stable-structures = { workspace = true }
-serde-value = { workspace = true }

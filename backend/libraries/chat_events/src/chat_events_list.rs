@@ -1,6 +1,5 @@
 use crate::hybrid_map::HybridMap;
 use crate::last_updated_timestamps::LastUpdatedTimestamps;
-use crate::legacy_heap_entries::LegacyHeapEntries;
 use crate::message_event_indexes::MessageEventIndexes;
 use crate::message_ids::MessageIdsStableStorage;
 use crate::stable_memory::ChatEventsStableStorage;
@@ -24,9 +23,6 @@ use types::{
 #[derive(Serialize, Deserialize)]
 pub struct ChatEventsList {
     events_map: HybridMap<ChatEventsStableStorage>,
-    // Message ids from before they were stored in stable memory (see `LegacyHeapEntries`)
-    #[serde(rename = "message_id_map", default, skip_serializing)]
-    legacy_message_ids_on_heap: LegacyHeapEntries,
     message_event_indexes: MessageEventIndexes,
     latest_event_index: Option<EventIndex>,
     latest_event_timestamp: Option<TimestampMillis>,
@@ -44,7 +40,6 @@ impl ChatEventsList {
     pub fn new(stable_memory_prefix: ChatEventKeyPrefix) -> Self {
         ChatEventsList {
             events_map: HybridMap::new(stable_memory_prefix),
-            legacy_message_ids_on_heap: LegacyHeapEntries::default(),
             message_event_indexes: MessageEventIndexes::default(),
             latest_event_index: None,
             latest_event_timestamp: None,
@@ -290,12 +285,6 @@ impl ChatEventsList {
             EventKey::MessageIndex(m) => self.message_event_indexes.get(self.events_map.stable_memory_prefix(), m),
             EventKey::MessageId(m) => self.message_ids().get(&m),
         }
-    }
-
-    // The entries held on the heap from before they were stored in stable memory (see
-    // `LegacyHeapEntries`), counting each full chunk of message event indexes as one
-    pub(crate) fn legacy_heap_entries(&self) -> usize {
-        self.legacy_message_ids_on_heap.count() + self.message_event_indexes.legacy_full_chunks_on_heap()
     }
 
     // See `MessageEventIndexes::export_chunks`
@@ -1010,7 +999,6 @@ mod tests {
         let events_list = events.main_events_list();
         assert_eq!(events_list.latest_message_index(), Some(299.into()));
         assert_eq!(events_list.next_message_index(), 300.into());
-        assert_eq!(events.legacy_heap_entries(), 0);
         assert_message_index_lookups(&events, &expected);
 
         // The messages pushed at 2..102 expire at 1002..1102
@@ -1060,7 +1048,6 @@ mod tests {
         let mut imported: ChatEvents = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&events));
         imported.set_chat(channel);
         imported.import_from_group(export);
-        assert_eq!(imported.legacy_heap_entries(), 0);
         assert_message_index_lookups(&imported, &expected);
         assert_eq!(expected_thread_message_event_indexes(&imported, root), expected_thread);
         assert_eq!(imported.user_metrics(&sender, None), Some(metrics));

@@ -1,4 +1,3 @@
-use crate::legacy_heap_entries::LegacyHeapEntries;
 use constants::calculate_summary_updates_data_removal_cutoff;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::{
@@ -15,9 +14,6 @@ const MAX_STABLE_MEMORY_ENTRIES_TO_PRUNE: usize = 100;
 // stable memory map for small entries, both keyed by event and ordered by timestamp.
 #[derive(Serialize, Deserialize, Default)]
 pub struct LastUpdatedTimestamps {
-    // Entries from before they were stored in stable memory (see `LegacyHeapEntries`)
-    #[serde(rename = "by_timestamp", default, skip_serializing)]
-    legacy_on_heap: LegacyHeapEntries,
     #[serde(default)]
     latest_update_removed: TimestampMillis,
     // The most recent time that any event was marked as updated, which is always at least as
@@ -86,10 +82,6 @@ impl LastUpdatedTimestamps {
         self.latest_update_removed
     }
 
-    pub(crate) fn legacy_heap_entries(&self) -> usize {
-        self.legacy_on_heap.count()
-    }
-
     // Removes the entries which are too old to be included in summary updates. Only a limited
     // number of entries are removed from stable memory at a time, any remaining entries are
     // removed by subsequent calls.
@@ -153,7 +145,7 @@ mod tests {
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
     use rand::{Rng, RngExt, rng};
     use std::cmp::Reverse;
-    use std::collections::{BTreeMap, BTreeSet};
+    use std::collections::BTreeMap;
     use types::Chat;
 
     type Model = BTreeMap<(Option<MessageIndex>, EventIndex), TimestampMillis>;
@@ -201,32 +193,6 @@ mod tests {
                 .all(|(_, _, ts)| *ts >= 2000)
         );
         assert_eq!(timestamps2.recently_updated_events(&chat2, 0, usize::MAX).len(), model.len());
-    }
-
-    #[test]
-    fn entries_from_before_stable_memory_are_counted_but_not_kept() {
-        #[derive(Serialize)]
-        struct Legacy {
-            by_timestamp: BTreeSet<(TimestampMillis, Option<MessageIndex>, EventIndex)>,
-            latest_update_removed: TimestampMillis,
-            l: Option<TimestampMillis>,
-        }
-        let legacy = Legacy {
-            by_timestamp: (0..10u32).map(|i| (1000 + i as u64, None, EventIndex::from(i))).collect(),
-            latest_update_removed: 5,
-            l: Some(2000),
-        };
-
-        let timestamps: LastUpdatedTimestamps = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&legacy));
-        assert_eq!(timestamps.legacy_heap_entries(), 10);
-        assert_eq!(timestamps.latest_update(), Some(2000));
-        assert_eq!(timestamps.latest_update_removed(), 5);
-
-        let bytes = msgpack::serialize_then_unwrap(&timestamps);
-        assert!(!bytes.windows(12).any(|w| w == b"by_timestamp"));
-        let timestamps: LastUpdatedTimestamps = msgpack::deserialize_then_unwrap(&bytes);
-        assert_eq!(timestamps.legacy_heap_entries(), 0);
-        assert_eq!(timestamps.latest_update(), Some(2000));
     }
 
     #[test]
