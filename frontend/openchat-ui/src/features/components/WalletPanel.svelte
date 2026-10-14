@@ -23,7 +23,8 @@
   import Skeleton from '../../lib/components/Skeleton.svelte';
   import TokenAvatar from '../../lib/components/TokenAvatar.svelte';
   import UndoToast from '../../lib/components/UndoToast.svelte';
-  import { useT } from '../../lib/i18n';
+  import { getI18n, useT } from '../../lib/i18n';
+  const i18n = getI18n(); // number formatting follows the host locale
 
   const mask = (name: string) => `var(--icon-${name}) center/contain no-repeat`;
   const OTHER = 'transparent';
@@ -33,13 +34,13 @@
   const RATES: Record<string, number> = { USD: 1, BTC: 103819.98, ETH: 2622.86, ICP: 5.481 };
   const PREFIX: Record<string, string> = { USD: '$', BTC: '₿', ETH: 'Ξ', ICP: '' };
 
-  const num = (v: number, dp: number) => v.toLocaleString('en-US', { minimumFractionDigits: dp, maximumFractionDigits: dp });
+  const num = (v: number, dp: number) => v.toLocaleString(i18n.locale ?? 'en', { minimumFractionDigits: dp, maximumFractionDigits: dp });
   // under a dollar keeps four places; single and double digits keep up to four,
   // trimmed — so ICP reads $5.481 rather than $5.48
   const price = (v: number) => {
     if (v >= 100) return `$${num(v, 2)}`;
     if (v < 1) return `$${num(v, 4)}`;
-    return `$${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`;
+    return `$${v.toLocaleString(i18n.locale ?? 'en', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`;
   };
 
   type Rect = { left: number; right: number; top: number; bottom: number };

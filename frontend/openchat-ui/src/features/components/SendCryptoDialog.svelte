@@ -3,7 +3,7 @@
      "Attach" → onAttach(transfer): host puts it in the composer as a chip; caption + Send posts it. `initial` edits a previous value.
      Esc closes the open picker, then the dialog; Cmd/Ctrl+Enter attaches. -->
 <script lang="ts">
-  import { useT } from '../../lib/i18n';
+  import { getI18n, useT } from '../../lib/i18n';
   import { onMount } from 'svelte';
   import type { Transfer } from '../../lib/types';
   import Button from '../../lib/components/Button.svelte';
@@ -21,8 +21,8 @@
   type Sym = keyof typeof TOK;
   const DEFAULT_GRAD = 'linear-gradient(140deg,#2EE6A8,#1FB6FF)';
 
-  const fmt = (n: number, dp: number) => Number(n.toFixed(dp)).toLocaleString('en-US', { maximumFractionDigits: dp });
-  const usdFmt = (v: number) => (v === 0 ? '$0.00' : v < 0.01 ? '<$0.01' : `$${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+  const fmt = (n: number, dp: number) => Number(n.toFixed(dp)).toLocaleString(i18n.locale ?? 'en', { maximumFractionDigits: dp });
+  const usdFmt = (v: number) => (v === 0 ? '$0.00' : v < 0.01 ? '<$0.01' : `$${v.toLocaleString(i18n.locale ?? 'en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
 
   interface Member {
     name: string;
@@ -44,6 +44,7 @@
 
   let { z = 80, recipient = null, members = [], initial = null, onAttach, onClose }: Props = $props();
   const t = useT();
+  const i18n = getI18n();
 
   const draft = initial?.draft;
   let tok = $state<Sym>((draft?.tok as Sym) in TOK ? (draft?.tok as Sym) : 'CHAT');

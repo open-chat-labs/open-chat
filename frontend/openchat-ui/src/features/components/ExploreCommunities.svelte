@@ -4,6 +4,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { useT } from '../../lib/i18n';
+  import Translate from '../../lib/components/Translate.svelte';
 
   type Swatch = 'sunset' | 'amber' | 'blue' | 'teal' | 'plum' | 'violet' | 'rose';
 
@@ -67,17 +68,6 @@
 
   let { communities, joinedKeys = [], guest = false, onOpen, onJoin, onCreate, onSignIn, onCreateAccount }: Props = $props();
   const t = useT();
-
-  // A translated sentence split around its {placeholders}, so part of it can be styled or clickable without breaking
-  // the sentence up for translators: text segments alternate with placeholder names.
-  const MARK = '\u0001';
-  function segments(key: string, names: string[]): { text?: string; name?: string }[] {
-    const params = Object.fromEntries(names.map((n) => [n, MARK + n + MARK]));
-    return t(key, params)
-      .split(MARK)
-      .map((part, i) => (i % 2 ? { name: part } : { text: part }))
-      .filter((seg) => seg.name || seg.text);
-  }
 
   let query = $state('');
   let sort = $state(0);
@@ -291,7 +281,7 @@
         <span class="hero-note">{t('ui.exploreCommunities.showingIn')}</span>
         {@render langPicker(true)}
         <span class="hero-divider"></span>
-        <span class="hero-note">{#each segments('ui.exploreCommunities.orCreate', ['link']) as seg}{#if seg.name}<span class="create-link" onclick={onCreate} role="button" tabindex="0">{t('ui.exploreCommunities.createOwn')}</span>{:else}{seg.text}{/if}{/each}</span>
+        <span class="hero-note"><Translate key="ui.exploreCommunities.orCreate">{#snippet link()}<span class="create-link" onclick={onCreate} role="button" tabindex="0">{t('ui.exploreCommunities.createOwn')}</span>{/snippet}</Translate></span>
       </div>
     </div>
 

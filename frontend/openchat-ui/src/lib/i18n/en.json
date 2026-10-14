@@ -295,15 +295,13 @@
       "referrerSearch": "Search for the person who referred you",
       "removeReferrer": "Remove referrer",
       "sendLink": "Send sign-in link",
-      "sentAfter": ". Open it on this device to continue.",
-      "sentBefore": "We sent a sign-in link to",
+      "sent": "We sent a sign-in link to {address}. Open it on this device to continue.",
       "signIn": "Sign in",
       "signInPasskey": "Sign in with Passkey",
       "signInTitle": "Sign in to OpenChat",
       "signInWith": "Sign in with {name}",
       "taken": "Taken",
-      "termsAfter": ".",
-      "termsBefore": "By creating an account you agree to the",
+      "terms": "By creating an account you agree to the {link}.",
       "termsLink": "terms and conditions",
       "username": "Username",
       "usernameNote": "letters, numbers and underscores",
@@ -600,7 +598,10 @@
       "hours": "{count, plural, one {# hour} other {# hours}}",
       "hoursMinutes": "{hours}h {minutes}m",
       "minutes": "{count, plural, one {# minute} other {# minutes}}",
-      "seconds": "{count, plural, one {# second} other {# seconds}}"
+      "prefixed": "{prefix} {time}",
+      "prefixSuffix": "{prefix} {time} {suffix}",
+      "seconds": "{count, plural, one {# second} other {# seconds}}",
+      "suffixed": "{time} {suffix}"
     },
     "createGroupDialog": {
       "aboutPlaceholder": {
@@ -1140,6 +1141,9 @@
       "verified": "Verified",
       "youreAMember": "You’re a member"
     },
+    "field": {
+      "clear": "Clear"
+    },
     "fileMessage": {
       "cancelUpload": "Cancel upload",
       "download": "Download {name}",
@@ -1159,8 +1163,8 @@
       "botsWebhooksHeading": "BOTS & WEBHOOKS",
       "canInvite": "{role, select, member {Members can invite} nobody {Nobody can invite} moderator {Moderator can invite} owner {Owner can invite} other {Admin can invite}}",
       "channelIn": "#{channel} in {community}",
-      "channelInAccess": "{access, select, public {Public channel in} other {Private channel in}}",
-      "channelInPlain": "channel in",
+      "channelInAccess": "{access, select, public {Public channel in {community}} other {Private channel in {community}}}",
+      "channelInPlain": "channel in {community}",
       "channelOnlyList": "This list only shows who's in this channel.",
       "channelPrivate": "Only people added or invited can join, even though the community may be public.",
       "channelPublic": "Anyone in {community} can find and join it.",
@@ -1181,9 +1185,8 @@
         "text": "Text messages",
         "video": "Videos"
       },
-      "createdBy": "{scope, select, community {community} channel {channel} other {group}} created by",
-      "createdByAccess": "{access, select, public {Public} other {Private}} {scope, select, community {community} channel {channel} other {group}} · created by",
-      "defaultEvery": "90 days",
+      "createdBy": "{scope, select, community {community} channel {channel} other {group}} created by {owner}",
+      "createdByAccess": "{access, select, public {Public} other {Private}} {scope, select, community {community} channel {channel} other {group}} · created by {owner}",
       "editUserGroup": "Edit user group",
       "everyoneMentionsMuted": "@everyone mentions are muted. Click to allow them",
       "everyoneMuted": "@everyone muted",
@@ -1241,7 +1244,7 @@
         "lapsed": "Lapsed",
         "members": "Members"
       },
-      "mentionAll": "Mention them all with",
+      "mentionAll": "Mention them all with {tag}.",
       "menu": {
         "addBot": "Add a bot",
         "addFavourite": "Add to favourites",
@@ -1634,7 +1637,7 @@
       "left": "{count, plural, one {# requirement left} other {# requirements left}}",
       "lifetimeDiamond": "Lifetime Diamond member",
       "meta": "Community · ",
-      "metaMembers": "Community · {members} members",
+      "metaMembers": "Community · {count, plural, one {# member} other {# members}}",
       "neuronHolder": "Neuron holder",
       "notEnough": "Not enough {symbol} for this way in",
       "notMember": "You're not a member yet",
@@ -1830,6 +1833,12 @@
       "titleEmbedded": "Add embedded channel",
       "urlHint": "The page opens inside the chat area in place of messages. It must allow being embedded.",
       "urlLabel": "App URL"
+    },
+    "panelCover": {
+      "favourite": "Favourite",
+      "info": "Details",
+      "invite": "Invite",
+      "manage": "Manage"
     },
     "pollBuilderDialog": {
       "addQuestion": "Add a question",
@@ -2484,15 +2493,14 @@
       "balance": "Balance {amount} {symbol}",
       "belowMarket": "{pct}% below market",
       "createTitle": "Create swap offer",
-      "days": "{count, plural, one {# day} other {# days}}",
       "dontHold": "You don't hold any {symbol}",
+      "durationShort": "{unit, select, h {{count}h} other {{count}d}}",
       "editTitle": "Edit swap offer",
       "enterOffer": "Enter what you offer",
       "enterWant": "Enter what you want in return",
       "expiresAfter": "Offer expires after",
       "flip": "Flip",
       "hint": "Expires in {duration}. Locks {amount} {symbol} in escrow incl. 2 fees.",
-      "hours": "{count, plural, one {# hour} other {# hours}}",
       "locks": "Locks {amount} {symbol} in escrow (incl. 2 fees) until it's accepted, cancelled or expires",
       "market": "Market",
       "marketRate": "Market: 1 {from} = {rate} {to}",
@@ -2544,15 +2552,7 @@
     },
     "timedToggle": {
       "after": "After {value}",
-      "durations": {
-        "always": "Always",
-        "eightHours": "8 hours",
-        "oneDay": "1 day",
-        "oneHour": "1 hour",
-        "oneWeek": "1 week",
-        "thirtyDays": "30 days",
-        "twelveHours": "12 hours"
-      },
+      "always": "Always",
       "off": "Off",
       "onValue": "On · {value}"
     },
@@ -2609,7 +2609,7 @@
       "addHint": "↵ add",
       "allMatchesAdded": "Everyone matching “{query}” is already in the group",
       "create": "Create user group",
-      "deleteAsk": "Delete {name}?",
+      "deleteAsk": "Delete {title}?",
       "deleteBody": "Its {count, plural, one {1 member} other {{count} members}} stay in {community}. Mentions of {mention} stop working, and permissions given to this group are removed.",
       "deleteTitle": "Delete user group",
       "editTitle": "Edit user group",

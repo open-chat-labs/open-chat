@@ -204,16 +204,17 @@
 
   const LINK_STEPS = ['ui.profileDialog.device.step1', 'ui.profileDialog.device.step2', 'ui.profileDialog.device.step3'];
   const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  const fmt = (n: number) => Number(n).toLocaleString('en-US');
   const icon = (name: string) => `var(--icon-${name}) center/contain no-repeat`;
   const BLANK_GIF = 'data:image/gif;base64,R0lGODlhAQABAAAAACw=';
 </script>
 
 <script lang="ts">
+  import { modal } from '../../lib/behaviours/modal';
   import { onDestroy, onMount, tick, untrack } from 'svelte';
   import Badge from '../../lib/components/Badge.svelte';
   import Toggle from '../../lib/components/Toggle.svelte';
-  import { getI18n, useT, type I18nParams } from '../../lib/i18n';
+  import { getI18n, segments, useT, type I18nParams } from '../../lib/i18n';
+  import Translate from '../../lib/components/Translate.svelte';
 
   interface Props {
     handle: string;
@@ -366,17 +367,14 @@
   }: Props = $props();
   const t = useT();
   const i18n = getI18n();
+  // numbers in the host's locale
+  const fmt = (n: number) => Number(n).toLocaleString(i18n.locale ?? 'en');
   // month / weekday names come from Intl in the host's locale
   const dateFmt = (opts: Intl.DateTimeFormatOptions, t: number) => new Intl.DateTimeFormat(i18n.locale ?? 'en', { timeZone: 'UTC', ...opts }).format(t);
-  /** Splits a formatted message into [text, strong] runs: `bold` values are wrapped in markers before formatting. */
+  /** A message as [text, strong] runs: the `bold` placeholders come back as their values, marked strong. */
   type Run = [string, boolean?];
-  const rich = (key: string, bold: Record<string, string>, params: I18nParams = {}): Run[] => {
-    const marked = Object.fromEntries(Object.entries(bold).map(([k, v]) => [k, `\u0001${v}\u0001`]));
-    return t(key, { ...params, ...marked })
-      .split('\u0001')
-      .map((text, i): Run => [text, i % 2 === 1])
-      .filter(([text]) => text !== '');
-  };
+  const rich = (key: string, bold: Record<string, string>, params: I18nParams = {}): Run[] =>
+    segments(t, key, Object.keys(bold), params).map((seg): Run => ('slot' in seg ? [bold[seg.slot], true] : [seg.text, false]));
 
   // ---- shell ----
   let section = $derived<ProfileSection>(initialSection);
@@ -904,6 +902,19 @@
   }
 
   // ---- keyboard ----
+  // Esc (via use:modal, so only while this is the topmost dialog): closes the log-out / delete sheet first, then the dialog
+  function escape() {
+    if (editing) return;
+    if (loOpen) {
+      if (!loBusy) loOpen = false;
+    } else if (delOpen) {
+      if (!delBusy) {
+        delOpen = false;
+        delStep = 0;
+      }
+    } else close(onClose);
+  }
+
   onMount(() => {
     const key = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
@@ -912,19 +923,6 @@
         target.click();
         return;
       }
-      if (e.key !== 'Escape' || editing) return;
-      if (loOpen) {
-        if (!loBusy) loOpen = false;
-        return;
-      }
-      if (delOpen) {
-        if (!delBusy) {
-          delOpen = false;
-          delStep = 0;
-        }
-        return;
-      }
-      close(onClose);
     };
     window.addEventListener('keydown', key);
     return () => window.removeEventListener('keydown', key);
@@ -957,7 +955,7 @@
   </div>
 {/snippet}
 
-<div class="layer" class:closing role="dialog" aria-modal="true">
+<div class="layer" class:closing role="dialog" aria-modal="true" use:modal={escape}>
   <div class="veil" onclick={() => close(onClose)} aria-hidden="true"></div>
   <div class="card">
     <div class="rail">
@@ -1227,8 +1225,11 @@
               <div class="month-text">
                 <span class="month-label">{calendar.label}</span>
                 <span class="month-sum"
-                  >{#each t('ui.profileDialog.calendar.summary', { chit: '\u0001chit\u0001', claimed: calendar.claimed, insured: '\u0001insured\u0001' }).split(/\u0001(chit|insured)\u0001/) as part, i}{#if i % 2 === 0}{part}{:else if part === 'chit'}<span class="chit-ink">{t('ui.profileDialog.delete.chitAmount', { amount: fmt(calendar.chit) })}</span
-                      >{:else}<span class:online-ink={calendar.insured > 0}>{t('ui.profileDialog.calendar.insuredCount', { count: calendar.insured })}</span>{/if}{/each}</span
+                  ><Translate key="ui.profileDialog.calendar.summary" params={{ claimed: calendar.claimed }}
+                    >{#snippet chit()}<span class="chit-ink">{t('ui.profileDialog.delete.chitAmount', { amount: fmt(calendar.chit) })}</span>{/snippet}{#snippet insured()}<span
+                        class:online-ink={calendar.insured > 0}>{t('ui.profileDialog.calendar.insuredCount', { count: calendar.insured })}</span
+                      >{/snippet}</Translate
+                  ></span
                 >
               </div>
               <span
@@ -1586,11 +1587,10 @@
       {#if section === 'bots'}
         <div class="scroll gap-18">
           <span class="lead-text tight"
-            >{#each t('ui.profileDialog.bots.lead', { docs: '\u0001docs\u0001' }).split(/\u0001docs\u0001/) as part, i}{#if i > 0}<a
-                  href="https://github.com/open-chat-labs/open-chat-bots"
-                  target="_blank"
-                  rel="noopener">{t('ui.profileDialog.bots.docs')}</a
-                >{/if}{part}{/each}</span
+            ><Translate key="ui.profileDialog.bots.lead"
+              >{#snippet docs()}<a href="https://github.com/open-chat-labs/open-chat-bots" target="_blank" rel="noopener">{t('ui.profileDialog.bots.docs')}</a
+                >{/snippet}</Translate
+            ></span
           >
           <div class="list">
             {#each botRows as b, i}
@@ -1782,7 +1782,7 @@
           {#if delStep === 3}
             <div class="confirm-type">
               <span class="confirm-label"
-                >{#each t('ui.profileDialog.delete.typeToConfirm', { handle: '\u0001handle\u0001' }).split(/\u0001handle\u0001/) as part, i}{#if i > 0}<span class="confirm-handle">@{values.handle}</span>{/if}{part}{/each}</span
+                ><Translate key="ui.profileDialog.delete.typeToConfirm">{#snippet handle()}<span class="confirm-handle">@{values.handle}</span>{/snippet}</Translate></span
               >
               <input class="confirm-input" class:match={delMatch} bind:value={delTyped} placeholder="@{values.handle}" spellcheck="false" autocomplete="off" />
             </div>

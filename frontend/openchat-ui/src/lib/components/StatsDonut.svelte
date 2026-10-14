@@ -1,7 +1,8 @@
 <!-- Group / profile message stats: minutes online (this vs previous month), a donut of messages by type
      with the total in the middle, a tile per type, and extra counters (poll votes, replies …). -->
 <script lang="ts">
-  import { useT } from '../i18n';
+  import { getI18n, useT } from '../i18n';
+  import Translate from './Translate.svelte';
   const TYPE_ICONS: Record<string, string> = {
     text: 'chat',
     image: 'image',
@@ -27,12 +28,9 @@
 
   let { onlineMinutes, onlineMinutesPrev, slices, extras = [] }: Props = $props();
   const t = useT();
+  const i18n = getI18n();
 
-  const fmt = (n: number) => n.toLocaleString('en-US');
-  // the formatted figure is styled separately: format the sentence around a marker, then split on it
-  const MARK = '\u0001';
-  const around = (key: string, count: number) => t(key, { count, figure: MARK }).split(MARK);
-  const now = $derived(around('ui.statsDonut.onlineThisMonth', onlineMinutes));
+  const fmt = (n: number) => n.toLocaleString(i18n.locale ?? 'en');
 
   const colored = $derived(slices.map((s, i) => ({ ...s, color: s.color || PALETTE[i % PALETTE.length] })));
   const total = $derived(slices.reduce((sum, s) => sum + s.count, 0));
@@ -52,7 +50,7 @@
 
 <div class="stats">
   <div class="online">
-    <span class="online-now">{now[0]}<span class="figure">{fmt(onlineMinutes)}</span>{now[1] ?? ''}</span>
+    <span class="online-now"><Translate key="ui.statsDonut.onlineThisMonth" params={{ count: onlineMinutes }}>{#snippet figure()}<span class="figure">{fmt(onlineMinutes)}</span>{/snippet}</Translate></span>
     <span class="online-prev">{t('ui.statsDonut.onlinePreviousMonth', { count: onlineMinutesPrev, figure: fmt(onlineMinutesPrev) })}</span>
   </div>
   <div class="donut-row">

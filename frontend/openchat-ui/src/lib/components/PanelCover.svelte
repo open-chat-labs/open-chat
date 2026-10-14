@@ -1,5 +1,7 @@
 <!-- Cover band at the top of a side panel, with square icon actions pinned to its leading and trailing corners. -->
 <script lang="ts">
+  import { useT } from '../i18n';
+
   const MASKS = {
     favourite: 'var(--icon-heart) center/contain no-repeat',
     close: 'var(--icon-close) center/contain no-repeat',
@@ -13,6 +15,18 @@
 
   type Action = keyof typeof MASKS;
 
+  // accessible names (resource keys) for the icon-only actions
+  const LABELS: Record<Action, string> = {
+    favourite: 'ui.panelCover.favourite',
+    close: 'ui.common.close',
+    share: 'ui.common.share',
+    edit: 'ui.common.edit',
+    manage: 'ui.panelCover.manage',
+    info: 'ui.panelCover.info',
+    more: 'ui.common.moreOptions',
+    invite: 'ui.panelCover.invite',
+  };
+
   interface Props {
     /** CSS background; a striped placeholder when empty. */
     cover?: string;
@@ -22,15 +36,18 @@
     trailActions?: Action[];
     /** Click handler per action key. */
     handlers?: Partial<Record<Action, () => void>>;
+    /** Accessible name per action key: resource key (or literal text); defaults per action. */
+    labels?: Partial<Record<Action, string>>;
   }
 
-  let { cover = '', actions = ['close'], trailActions = [], handlers = {} }: Props = $props();
+  let { cover = '', actions = ['close'], trailActions = [], handlers = {}, labels = {} }: Props = $props();
+  const t = useT();
 </script>
 
 {#snippet group(names: Action[], side: 'lead' | 'trail')}
   <div class="actions {side}">
     {#each names as name}
-      <div class="action" onclick={handlers[name]} role="button" tabindex="0">
+      <div class="action" onclick={handlers[name]} role="button" tabindex="0" aria-label={t(labels[name] ?? LABELS[name] ?? name)} title={t(labels[name] ?? LABELS[name] ?? name)}>
         <span class="icon" style:mask={MASKS[name] ?? MASKS.close}></span>
       </div>
     {/each}

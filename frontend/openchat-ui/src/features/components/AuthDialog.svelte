@@ -3,7 +3,9 @@
      Sign-up is a form: username (live availability check), optional recovery email, optional referrer, then Continue.
      Picking a method waits for its approval (simulated here) before onDone(method). Esc closes unless `inline`. -->
 <script lang="ts">
+  import { modal } from '../../lib/behaviours/modal';
   import { useT } from '../../lib/i18n';
+  import Translate from '../../lib/components/Translate.svelte';
   import { onMount } from 'svelte';
 
   type Method = 'passkey' | 'ii' | 'eth' | 'sol' | 'nfid';
@@ -107,12 +109,7 @@
   }
 
   onMount(() => {
-    const esc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !inline) close();
-    };
-    document.addEventListener('keydown', esc);
     return () => {
-      document.removeEventListener('keydown', esc);
       clearTimeout(waitTimer);
       clearTimeout(checkTimer);
     };
@@ -120,7 +117,7 @@
 </script>
 
 <div class="backdrop" class:inline onclick={close} role="button" tabindex="0">
-  <div class="card {variant}" class:signup role="dialog" aria-modal="true" aria-labelledby="oc-auth-title" onclick={(e) => e.stopPropagation()}>
+  <div class="card {variant}" class:signup role="dialog" aria-modal="true" aria-labelledby="oc-auth-title" onclick={(e) => e.stopPropagation()} use:modal={inline ? undefined : close}>
     {#if variant === 'split'}
       <div class="brand">
         <img class="brand-logo" src="assets/openchat-logo.svg" alt="" width="56" height="56" />
@@ -197,7 +194,7 @@
         <div class="sent">
           <span class="sent-tile"><span class="sent-icon"></span></span>
           <span class="sent-title">{t('ui.authDialog.checkInbox')}</span>
-          <span class="sent-text">{t('ui.authDialog.sentBefore')} <span class="sent-email">{email}</span>{t('ui.authDialog.sentAfter')}</span>
+          <span class="sent-text"><Translate key="ui.authDialog.sent">{#snippet address()}<span class="sent-email">{email}</span>{/snippet}</Translate></span>
           <button class="link" onclick={() => onDone?.('email')}>{t('ui.authDialog.openedLink')}</button>
         </div>
       {/if}
@@ -265,7 +262,7 @@
             {/if}
           </div>
           <div class="submit-row">
-            <span class="terms">{t('ui.authDialog.termsBefore')} <a href="#">{t('ui.authDialog.termsLink')}</a>{t('ui.authDialog.termsAfter')}</span>
+            <span class="terms"><Translate key="ui.authDialog.terms">{#snippet link()}<a href="#">{t('ui.authDialog.termsLink')}</a>{/snippet}</Translate></span>
             <button class="continue" class:ready={free} type="submit" disabled={!free}>{t('ui.common.continue')}</button>
           </div>
         </form>

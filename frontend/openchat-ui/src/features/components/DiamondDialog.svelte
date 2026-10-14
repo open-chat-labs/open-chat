@@ -2,7 +2,9 @@
      timed plans) → pay. Members see their benefits and can extend; extensions start from the current expiry.
      Prices are in CHAT and converted to other payable tokens at their USD price. Esc closes (not while paying). -->
 <script lang="ts">
-  import { useT } from '../../lib/i18n';
+  import { modal } from '../../lib/behaviours/modal';
+  import { getI18n, useT } from '../../lib/i18n';
+  import Translate from '../../lib/components/Translate.svelte';
   import { onDestroy, onMount } from 'svelte';
   import type { WalletToken } from '../../lib/types';
   import Toggle from '../../lib/components/Toggle.svelte';
@@ -63,7 +65,9 @@
   ];
   const ADDRESS = '2vxsx-fae3q-kzn7w-ot4qa-cai';
   const DAY = 86400000;
-  const fmtDate = (d: Date) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  // dates in the host's locale; plain 'en' keeps the day-month order ('28 Sep 2026')
+  const dateLocale = () => (i18n.locale && i18n.locale !== 'en' ? i18n.locale : 'en-GB');
+  const fmtDate = (d: Date) => d.toLocaleDateString(dateLocale(), { day: 'numeric', month: 'short', year: 'numeric' });
   const addMonths = (d: Date, n: number) => {
     const x = new Date(d);
     x.setMonth(x.getMonth() + n);
@@ -71,7 +75,7 @@
   };
   const dp = (n: number) => (n >= 1 ? 2 : n >= 0.01 ? 4 : n >= 0.0001 ? 6 : 8);
   const fmtAmt = (n: number) =>
-    Number.isInteger(n) ? n.toLocaleString('en-US') : n.toLocaleString('en-US', { minimumFractionDigits: n >= 1 ? 2 : 0, maximumFractionDigits: dp(n) });
+    Number.isInteger(n) ? n.toLocaleString(i18n.locale ?? 'en') : n.toLocaleString(i18n.locale ?? 'en', { minimumFractionDigits: n >= 1 ? 2 : 0, maximumFractionDigits: dp(n) });
 
   export interface DiamondPurchase {
     lifetime: boolean;
@@ -103,6 +107,7 @@
 
   let { tokens, balance: chatBalance, plan: initialPlan = null, isDiamond = false, lifetime: lifetimeProp = false, memberUntil = '', onBack, backLabel = 'ui.common.back', onClose, onUpgrade }: Props = $props();
   const t = useT();
+  const i18n = getI18n();
 
   let closing = $state(false);
   let onlyDiff = $state(false);
@@ -125,11 +130,6 @@
       step = 'plans';
       planKey = initialPlan;
     }
-    const key = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !busy) close(onClose);
-    };
-    window.addEventListener('keydown', key);
-    return () => window.removeEventListener('keydown', key);
   });
   onDestroy(() => timers.forEach(clearTimeout));
 
@@ -192,8 +192,6 @@
         ? t('ui.diamondDialog.movesFromTo', { from: fmtDate(expiry), to: fmtDate(until(plan)) })
         : t('ui.diamondDialog.startsToday', { date: fmtDate(until(plan)) }),
   );
-  // the note emphasises the days and the date: translate the sentence, split around both placeholders
-  const extendNote = $derived(t('ui.diamondDialog.extendNote', { days: '\u0000', date: '\u0001' }).split(/(\u0000|\u0001)/).filter(Boolean));
   const tokenList = $derived(payable.filter((t) => heldOf(t) > 0 || t.symbol === 'CHAT'));
   const subtitle = $derived(
     t(step === 'plans' ? (extend ? 'ui.diamondDialog.subExtend' : 'ui.diamondDialog.subChoose') : step === 'confirm' ? 'ui.diamondDialog.subConfirm' : member ? 'ui.diamondDialog.subMember' : 'ui.diamondDialog.subCompare'),
@@ -280,7 +278,7 @@
   </div>
 {/snippet}
 
-<div class="layer" data-screen-label="Diamond" role="dialog" aria-modal="true">
+<div class="layer" data-screen-label="Diamond" role="dialog" aria-modal="true" use:modal={() => !busy && close(onClose)}>
   <div class="veil" class:closing onclick={() => !busy && close(onClose)} aria-hidden="true"></div>
 
   <div class="card" class:closing>
@@ -354,7 +352,7 @@
       <div class="body step">
         {#if extend}
           <span class="extend-note"
-            >{#each extendNote as part}{#if part === '\u0000'}<span class="strong">{t('ui.diamondDialog.days', { count: daysLeft })}</span>{:else if part === '\u0001'}<span class="strong">{fmtDate(expiry)}</span>{:else}{part}{/if}{/each}</span
+            ><Translate key="ui.diamondDialog.extendNote">{#snippet days()}<span class="strong">{t('ui.diamondDialog.days', { count: daysLeft })}</span>{/snippet}{#snippet date()}<span class="strong">{fmtDate(expiry)}</span>{/snippet}</Translate></span
           >
         {/if}
 

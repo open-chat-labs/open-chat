@@ -407,7 +407,7 @@
             <span class="head-title">{t('ui.groupSettingsDialog.title')}</span>
             <span class="head-name">{value?.info?.name || t('ui.groupSettingsDialog.thisGroup')}</span>
           </div>
-          <span class="icon-button" onclick={onCancel} role="button" tabindex="0"><span class="icon-15" style:mask={mask('close')}></span></span>
+          <span class="icon-button" onclick={onCancel} role="button" tabindex="0" aria-label={t('ui.common.close')}><span class="icon-15" style:mask={mask('close')}></span></span>
         </div>
         <div class="cell">
           <SegmentedTabs

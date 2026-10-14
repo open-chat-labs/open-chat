@@ -4,6 +4,7 @@
   import { onDestroy } from 'svelte';
   import { modal } from '../../lib/behaviours/modal';
   import { useT } from '../../lib/i18n';
+  import Translate from '../../lib/components/Translate.svelte';
 
   interface Props {
     groupName: string;
@@ -15,9 +16,6 @@
   let { groupName, noun = 'group', onConfirm, onCancel }: Props = $props();
   const t = useT();
 
-  // the question styles the name inside the sentence: translate it whole, then split around the name
-  const MARK = '\u0000';
-  const question = $derived(t('ui.deleteGroupDialog.question', { noun, name: MARK }).split(MARK));
 
   let typed = $state('');
   const armed = $derived(typed.trim().toLowerCase() === groupName.trim().toLowerCase());
@@ -51,7 +49,7 @@
 
     <div class="body">
       <div class="copy">
-        <span class="question">{question[0]}<span class="name">{groupName}</span>{question[1] ?? ''}</span>
+        <span class="question"><Translate key="ui.deleteGroupDialog.question" params={{ noun }}>{#snippet name()}<span class="name">{groupName}</span>{/snippet}</Translate></span>
         <span class="text">{t('ui.deleteGroupDialog.warning', { noun })}</span>
       </div>
       <div class="field">

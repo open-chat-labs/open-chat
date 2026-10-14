@@ -22,7 +22,8 @@
   import SegmentedTabs from '../../lib/components/SegmentedTabs.svelte';
   import TimedToggle from '../../lib/components/TimedToggle.svelte';
   import UpgradeBanner from './UpgradeBanner.svelte';
-  import { useT } from '../../lib/i18n';
+  import { useT, durationText } from '../../lib/i18n';
+  import Translate from '../../lib/components/Translate.svelte';
 
   type Field = { key: 'a' | 'b'; placeholder: string; unit: string; required?: boolean };
   type Chip = { label: string; dot?: boolean | string };
@@ -186,9 +187,6 @@
   let { isDiamond = true, readOnly = false, value = null, onUpgrade, onChange }: Props = $props();
   const t = useT();
 
-  // "Members <strong>must …</strong>": the sentence is translated whole and split around the emphasised rule
-  const MARK = '\u0000';
-  const membersParts = $derived(t('ui.accessGates.members', { rule: MARK }).split(MARK));
 
   // the host can hand back the state it was last given, so gates survive the tab being unmounted and remounted
   const initial = untrack(() => value) ?? {};
@@ -314,7 +312,7 @@
           <div class="rule-card example-card">
             {@render badge(r.icon)}
             <div class="sentence-line">
-              <span class="sentence">{membersParts[0]}<span class="sentence-strong">{t(r.sentence)}</span>{membersParts[1] ?? ''}</span>
+              <span class="sentence"><Translate key="ui.accessGates.members">{#snippet rule()}<span class="sentence-strong">{t(r.sentence)}</span>{/snippet}</Translate></span>
               <span class="chip">
                 {#if r.dot}<span class="chip-dot" style:background={r.dot}></span>{/if}
                 <span class="chip-label">{t(r.chip)}</span>
@@ -361,7 +359,7 @@
             {@render badge(gt.icon)}
             <div class="rule-body">
               <div class="sentence-line">
-                <span class="sentence">{membersParts[0]}<span class="sentence-strong">{t(gt.sentence)}</span>{membersParts[1] ?? ''}</span>
+                <span class="sentence"><Translate key="ui.accessGates.members">{#snippet rule()}<span class="sentence-strong">{t(gt.sentence)}</span>{/snippet}</Translate></span>
                 {#if !open}
                   {#each chips as chip}
                     <span class="chip">
@@ -453,8 +451,8 @@
       <div class="recheck">
         <span class="why-tile"><span class="why-icon" style:mask={mask('refresh')}></span></span>
         <div class="recheck-text">
-          <span class="recheck-title">{recurring ? t('ui.accessGates.recheckedEvery', { every }) : t('ui.accessGates.checkedOnce')}</span>
-          <span class="recheck-body">{recurring ? t('ui.accessGates.recheckBody', { every }) : t('ui.accessGates.onceBody')}</span>
+          <span class="recheck-title">{recurring ? t('ui.accessGates.recheckedEvery', { every: durationText(t, every) }) : t('ui.accessGates.checkedOnce')}</span>
+          <span class="recheck-body">{recurring ? t('ui.accessGates.recheckBody', { every: durationText(t, every) }) : t('ui.accessGates.onceBody')}</span>
         </div>
       </div>
     {:else}

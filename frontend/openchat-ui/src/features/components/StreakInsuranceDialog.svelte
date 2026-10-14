@@ -2,14 +2,13 @@
      and Pay. Priced on each day's position in your holding, so buying one day at a time costs the same as several at once.
      Back returns to CHIT (onBack, else onClose); ×, the veil and a purchase close. -->
 <script lang="ts">
-  import { useT } from '../../lib/i18n';
+  import { getI18n, useT } from '../../lib/i18n';
   import { onDestroy } from 'svelte';
   import { modal } from '../../lib/behaviours/modal';
-  import { getI18n } from '../../lib/i18n';
 
   const STEPS = [1, 2, 4, 12, 28, 60, 124];
   const MAX_DAYS = STEPS.length;
-  const fmt = (n: number) => n.toLocaleString('en-US');
+  const fmt = (n: number) => n.toLocaleString(i18n.locale ?? 'en');
 
   interface Props {
     /** Current streak, in days. */
@@ -89,7 +88,7 @@
         <span class="title">{t('ui.streakInsuranceDialog.title')}</span>
         <span class="subtitle">{t('ui.streakInsuranceDialog.subtitle', { streak, cover: held > 0 ? t('ui.streakInsuranceDialog.covered', { days: days(held) }) : t('ui.streakInsuranceDialog.noCover') })}</span>
       </div>
-      <span class="icon-button close" onclick={() => leave(onClose)} role="button" tabindex="0"><span class="close-icon"></span></span>
+      <span class="icon-button close" onclick={() => leave(onClose)} role="button" tabindex="0" aria-label={t('ui.common.close')} title={t('ui.common.close')}><span class="close-icon"></span></span>
     </div>
 
     <div class="body">

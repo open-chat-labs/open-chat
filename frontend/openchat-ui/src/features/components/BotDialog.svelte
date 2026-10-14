@@ -1,7 +1,8 @@
 <!-- Bot details → permissions → install (or edit / remove an installed bot). Every permission starts granted;
      revoking one greys out the commands that need it. readOnly (installed bots, no bot rights) shows details only. -->
 <script lang="ts">
-  import { useT } from '../../lib/i18n';
+  import { segments, useT } from '../../lib/i18n';
+  import Translate from '../../lib/components/Translate.svelte';
   import { onDestroy } from 'svelte';
   import Toggle from '../../lib/components/Toggle.svelte';
   import { modal } from '../../lib/behaviours/modal';
@@ -214,12 +215,13 @@
     const form = installed ? 'can' : 'ask';
     const plain = list(on.filter((k) => !CAN_DO[k]!.risky).map((k) => t(`ui.botDialog.${form}.${CAN_DO[k]!.text}`)));
     const risky = list(on.filter((k) => CAN_DO[k]!.risky).map((k) => t(`ui.botDialog.ask.${CAN_DO[k]!.text}`)));
-    // the risky phrase is highlighted inside the sentence: translate around a marker, then split on it
+    // the risky phrase is highlighted inside the sentence: one message, with {risky} rendered as markup
     const key = plain ? (installed ? 'summaryInstalled' : 'summaryAsk') : installed ? 'summaryInstalledRiskyOnly' : 'summaryAskRiskyOnly';
-    let text = t(`ui.botDialog.${key}`, { plain, group, risky: '\u0001', hasRisky: risky ? 'yes' : 'no' });
-    text = text.charAt(0).toUpperCase() + text.slice(1);
-    const [lead, tail = ''] = text.split('\u0001');
-    return { lead, risky: text.includes('\u0001') ? risky : '', tail };
+    const parts = segments(t, `ui.botDialog.${key}`, ['risky'], { plain, group, hasRisky: risky ? 'yes' : 'no' });
+    // sentence case: the message can start with a lowercase list item
+    const first = parts[0];
+    if (first && 'text' in first) parts[0] = { text: first.text.charAt(0).toUpperCase() + first.text.slice(1) };
+    return { parts, risky };
   });
 
   const headerTitle = $derived(t(isRemove ? 'ui.botDialog.removeBot' : isConfigure ? (installed ? 'ui.botDialog.botPermissions' : 'ui.botDialog.installBot') : 'ui.botDialog.botDetails'));
@@ -227,7 +229,6 @@
   const primaryLabel = $derived(
     t(isRemove ? 'ui.botDialog.removeBot' : isConfigure ? (installed ? 'ui.botDialog.savePermissions' : 'ui.botDialog.installIntoGroup') : installed ? 'ui.botDialog.editPermissions' : 'ui.botDialog.choosePermissions'),
   );
-  const createdBy = $derived(t('ui.botDialog.createdBy', { creator: '\u0001' }).split('\u0001'));
   const primaryIcon = $derived(isRemove ? 'trash' : isConfigure ? (installed ? 'check' : 'receive') : 'arrow');
   const detailsFootnote = $derived(
     t(installed ? (viewOnly ? 'ui.botDialog.footnoteViewOnly' : 'ui.botDialog.footnoteInstalled') : 'ui.botDialog.footnoteInstall', { name, group }),
@@ -278,7 +279,7 @@
           <div class="identity-text">
             <span class="bot-name">{name}</span>
             <span class="byline"
-              ><span>{createdBy[0]}<span class="creator">{spec.creator}</span>{createdBy[1] ?? ''}</span>{#if installed}<span class="dot">·</span><span class="installed"><span class="installed-icon"></span>{t('ui.botDialog.installed')}</span>{/if}</span
+              ><span><Translate key="ui.botDialog.createdBy">{#snippet creator()}<span class="creator">{spec.creator}</span>{/snippet}</Translate></span>{#if installed}<span class="dot">·</span><span class="installed"><span class="installed-icon"></span>{t('ui.botDialog.installed')}</span>{/if}</span
             >
           </div>
           {#if installed && !!onRemove && !viewOnly}
@@ -311,7 +312,7 @@
 
         <div class="plain">
           <span class="lock"></span>
-          <span class="plain-text">{summary.lead}<span class="risky-text">{summary.risky}</span>{summary.tail}</span>
+          <span class="plain-text">{#each summary.parts as part}{#if 'slot' in part}<span class="risky-text">{summary.risky}</span>{:else}{part.text}{/if}{/each}</span>
         </div>
 
         <span class="footnote">{detailsFootnote}</span>

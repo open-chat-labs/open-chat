@@ -34,7 +34,7 @@
       <span class="placeholder">{t(placeholder)}</span>
     {/if}
     {#if showClear}
-      <span class="clear" onclick={onClear} role="button" tabindex="0">
+      <span class="clear" onclick={onClear} role="button" tabindex="0" aria-label={t('ui.field.clear')}>
         <span class="clear-icon"></span>
       </span>
     {/if}

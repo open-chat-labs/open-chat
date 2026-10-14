@@ -3,7 +3,8 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
   import { modal } from '../../lib/behaviours/modal';
-  import { useT } from '../../lib/i18n';
+  import { segments, useT } from '../../lib/i18n';
+  import Translate from '../../lib/components/Translate.svelte';
 
   const GRADIENTS = ['linear-gradient(140deg,#ff8a5f,#b3407a)', 'linear-gradient(140deg,#5fa8ff,#8c6bff)', 'linear-gradient(140deg,#2ee6a8,#1fb6ff)'];
 
@@ -26,16 +27,6 @@
   const t = useT();
   const meta = (c: Community) => t('ui.importToCommunityDialog.meta', { members: c.members, channels: c.channels });
 
-  // A translated sentence split around its {placeholders}, so names can be styled without breaking the sentence up
-  // for translators: text segments alternate with placeholder names; '\n' in text is a line break.
-  const MARK = '\u0001';
-  function segments(key: string, names: string[]): { text?: string; name?: string }[] {
-    const params = Object.fromEntries(names.map((n) => [n, MARK + n + MARK]));
-    return t(key, params)
-      .split(MARK)
-      .map((part, i) => (i % 2 ? { name: part } : { text: part }))
-      .filter((seg) => seg.name || seg.text);
-  }
 
   let target = $state<{ community: Community; gradient: string } | null>(null);
 
@@ -79,9 +70,9 @@
       {#if !target}
         <div class="stack">
           <div class="copy">
-            <span class="headline">{#each segments('ui.importToCommunityDialog.headline', ['group']) as seg}{#if seg.name}<span class="accent">{groupName}</span>{:else}{#each seg.text!.split('\n') as line, li}{#if li}<br />{/if}{line}{/each}{/if}{/each}</span>
+            <span class="headline">{#each segments(t, 'ui.importToCommunityDialog.headline', ['group']) as seg}{#if 'slot' in seg}<span class="accent">{groupName}</span>{:else}{#each seg.text.split('\n') as line, li}{#if li}<br />{/if}{line}{/each}{/if}{/each}</span>
             <span class="lead"
-              >{#each segments('ui.importToCommunityDialog.lead', ['channel']) as seg}{#if seg.name}<span class="strong">{t('ui.importToCommunityDialog.channelWord')}</span>{:else}{seg.text}{/if}{/each}</span
+              ><Translate key="ui.importToCommunityDialog.lead">{#snippet channel()}<span class="strong">{t('ui.importToCommunityDialog.channelWord')}</span>{/snippet}</Translate></span
             >
           </div>
           <div class="pick">
@@ -106,7 +97,9 @@
           <div class="copy">
             <span class="headline">{t('ui.importToCommunityDialog.confirmHeadline')}</span>
             <span class="lead"
-              >{#each segments('ui.importToCommunityDialog.confirmLead', ['group', 'community']) as seg}{#if seg.name}<span class="strong accent">{seg.name === 'group' ? groupName : target.community.name}</span>{:else}{seg.text}{/if}{/each}</span
+              ><Translate key="ui.importToCommunityDialog.confirmLead"
+                >{#snippet group()}<span class="strong accent">{groupName}</span>{/snippet}{#snippet community()}<span class="strong accent">{target!.community.name}</span>{/snippet}</Translate
+              ></span
             >
           </div>
           <div class="cards">

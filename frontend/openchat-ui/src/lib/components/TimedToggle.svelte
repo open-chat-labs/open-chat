@@ -2,19 +2,12 @@
      Used for disappearing messages (DMs, groups, channels) and access-gate re-checks.
      density: compact (64px row, clock icon) | regular (taller text, no icon) | flush (no padding or hover, for nesting). -->
 <script lang="ts">
-  import { useT } from '../i18n';
+  import { durationText, segments, useT } from '../i18n';
   const ICONS = { clock: 'var(--icon-clock) center/contain no-repeat', refresh: 'var(--icon-refresh) center/contain no-repeat' };
   const DURATIONS = ['1 hour', '8 hours', '12 hours', '1 day', '1 week', '30 days'];
-  // durations stay English values (what onDurationChange reports); these keys are only for display
-  const DURATION_KEYS: Record<string, string> = {
-    '1 hour': 'ui.timedToggle.durations.oneHour',
-    '8 hours': 'ui.timedToggle.durations.eightHours',
-    '12 hours': 'ui.timedToggle.durations.twelveHours',
-    '1 day': 'ui.timedToggle.durations.oneDay',
-    '1 week': 'ui.timedToggle.durations.oneWeek',
-    '30 days': 'ui.timedToggle.durations.thirtyDays',
-    Always: 'ui.timedToggle.durations.always',
-  };
+  // values stay stable English ids (what onDurationChange reports) and are shown through durationText;
+  // 'Always' (no expiry) is the one value that isn't a duration
+  const SPECIAL: Record<string, string> = { Always: 'ui.timedToggle.always' };
 
   interface Props {
     /** Resource key (or literal text). */
@@ -69,11 +62,12 @@
   const shownIcon = $derived(icon === undefined ? (density === 'compact' ? 'clock' : null) : icon);
   const list = $derived(options?.length ? options : DURATIONS);
 
-  const duration = (v: string) => t(DURATION_KEYS[v] ?? v);
-  const MARK = '\u0001';
+  const duration = (v: string) => (SPECIAL[v] ? t(SPECIAL[v]) : durationText(t, v));
+  // a prefix with a {value} placeholder takes the value in place; literal text ("Every") is followed by it
   const withPrefix = (v: string) => {
-    const text = t(prefix, { value: MARK });
-    return text.includes(MARK) ? text.replace(MARK, duration(v)) : `${text} ${duration(v)}`;
+    const shown = duration(v);
+    const takesValue = segments(t, prefix, ['value']).some((part) => 'slot' in part);
+    return takesValue ? t(prefix, { value: shown }) : `${t(prefix)} ${shown}`;
   };
 
   function setOn(next: boolean) {

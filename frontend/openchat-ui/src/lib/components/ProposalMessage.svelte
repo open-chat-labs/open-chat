@@ -3,6 +3,7 @@
      Without myVote it remembers the vote cast here. -->
 <script lang="ts">
   import { useT } from '../i18n';
+  import Translate from './Translate.svelte';
   import ThresholdBar from './ThresholdBar.svelte';
 
   type Vote = 'adopt' | 'reject';
@@ -71,8 +72,6 @@
         : status === 'rejected' ? 'ui.proposalMessage.rejected' : status === 'executed' ? 'ui.proposalMessage.executed' : 'ui.proposalMessage.expired',
     ),
   );
-  // the proposer is styled inside the sentence: split the translated byline around a marker
-  const byline = $derived(t('ui.proposalMessage.byline', { kind, proposer: '\u0001' }).split('\u0001'));
   const icon = $derived(mine || status === 'executed' ? 'check' : status === 'rejected' ? 'close' : status === 'expired' ? 'clock' : 'dot');
 
   function cast(side: Vote) {
@@ -90,7 +89,8 @@
         {#if critical}<span class="pill critical"><span class="shield"></span>{t('ui.proposalMessage.critical')}</span>{/if}
       </div>
       <span class="title">{title}</span>
-      <span class="byline">{byline[0]}<span class="proposer">{proposer}</span>{byline[1] ?? ''}</span>
+      {#snippet proposerName()}<span class="proposer">{proposer}</span>{/snippet}
+      <span class="byline"><Translate key="ui.proposalMessage.byline" params={{ kind }} proposer={proposerName} /></span>
     </div>
     <div class="tally">
       <ThresholdBar

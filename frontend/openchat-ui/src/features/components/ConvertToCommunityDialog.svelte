@@ -4,7 +4,7 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
   import { modal } from '../../lib/behaviours/modal';
-  import { useT } from '../../lib/i18n';
+  import { useT, segments, type Segment } from '../../lib/i18n';
 
   // resource keys, translated at render
   const STEPS = ['freeze', 'createCommunity', 'addChannel', 'addMembers', 'copyHistory', 'deleteGroup'].map((k) => 'ui.convertToCommunityDialog.steps.' + k);
@@ -20,10 +20,9 @@
 
   let { groupName, step = 'confirm', onConfirm, onCancel, onFinish, onGoTo }: Props = $props();
   const t = useT();
-  // sentences that wrap the group name in its own span: translate whole, split around the name (\n = line break)
-  const around = (key: string) => t(key, { name: '\u0000' }).split('\u0000').map((part) => part.split('\n'));
-  const headline = $derived(around('ui.convertToCommunityDialog.headline'));
-  const doneHeadline = $derived(around('ui.convertToCommunityDialog.doneHeadline'));
+  // headlines wrap the group name in its own span and may contain line breaks (\n)
+  const headline = $derived(segments(t, 'ui.convertToCommunityDialog.headline', ['name']));
+  const doneHeadline = $derived(segments(t, 'ui.convertToCommunityDialog.doneHeadline', ['name']));
 
   // confirming shows the done step until the parent sends a new step
   let current = $derived(step);
@@ -48,7 +47,7 @@
   }
 </script>
 
-{#snippet lines(parts: string[])}{#each parts as part, i}{#if i}<br />{/if}{part}{/each}{/snippet}
+{#snippet sentence(segs: Segment[])}{#each segs as seg}{#if 'slot' in seg}<span class="accent">{groupName}</span>{:else}{#each seg.text.split('\n') as part, i}{#if i}<br />{/if}{part}{/each}{/if}{/each}{/snippet}
 
 <div class="layer" class:closing role="dialog" aria-modal="true" use:modal={() => close(onCancel)}>
   <div class="veil" onclick={() => close(onCancel)} aria-hidden="true"></div>
@@ -66,7 +65,7 @@
       {#if current !== 'done'}
         <div class="stack">
           <div class="copy">
-            <span class="headline">{@render lines(headline[0])}<span class="accent">{groupName}</span>{@render lines(headline[1] ?? [])}</span>
+            <span class="headline">{@render sentence(headline)}</span>
             <span class="lead">{t('ui.convertToCommunityDialog.lead')}</span>
           </div>
 
@@ -91,7 +90,7 @@
       {:else}
         <div class="stack">
           <div class="copy">
-            <span class="headline">{@render lines(doneHeadline[0])}<span class="accent">{groupName}</span>{@render lines(doneHeadline[1] ?? [])}</span>
+            <span class="headline">{@render sentence(doneHeadline)}</span>
             <span class="lead">{t('ui.convertToCommunityDialog.doneLead')}</span>
           </div>
           <div class="notice tip">

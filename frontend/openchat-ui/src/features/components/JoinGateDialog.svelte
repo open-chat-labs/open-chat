@@ -3,7 +3,7 @@
      Diamond is bought in the Diamond dialog (onGetDiamond) and never appears in this payment summary.
      Balances come from the host (tokens / chatBalance): pass fresh values to re-check, e.g. when the tab regains focus. -->
 <script lang="ts">
-  import { useT } from '../../lib/i18n';
+  import { getI18n, useT } from '../../lib/i18n';
   import { onDestroy } from 'svelte';
   import Button from '../../lib/components/Button.svelte';
   import DialogShell from '../../lib/components/DialogShell.svelte';
@@ -11,9 +11,10 @@
   import Spinner from '../../lib/components/Spinner.svelte';
   import Toggle from '../../lib/components/Toggle.svelte';
   import TokenAvatar from '../../lib/components/TokenAvatar.svelte';
+  const i18n = getI18n(); // number formatting follows the host locale
 
   const ADDRESS = 'wq4pz-ixa3f-ubm7c-2jtw4-7d41e-cai';
-  const fmt = (n: number, dp?: number) => Number(n).toLocaleString('en-US', { maximumFractionDigits: dp ?? 4 });
+  const fmt = (n: number, dp?: number) => Number(n).toLocaleString(i18n.locale ?? 'en', { maximumFractionDigits: dp ?? 4 });
 
   type GateState = 'met' | 'pay' | 'todo' | 'short';
 
@@ -194,7 +195,7 @@
         <span class="avatar" style:background={community.grad || 'var(--overlay-2)'}></span>
         <div class="names">
           <span class="name">{community.name}</span>
-          <span class="meta">{community.members != null ? t('ui.joinGateDialog.metaMembers', { members: Number(community.members).toLocaleString('en-US') }) : t('ui.joinGateDialog.meta')}</span>
+          <span class="meta">{community.members != null ? t('ui.joinGateDialog.metaMembers', { count: Number(community.members) }) : t('ui.joinGateDialog.meta')}</span>
         </div>
         <span class="rule" class:any>{t(any ? 'ui.joinGateDialog.ruleAny' : 'ui.joinGateDialog.ruleAll', { count: rows.length })}</span>
       </div>

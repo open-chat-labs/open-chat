@@ -10,7 +10,7 @@
   import PanelCover from '../../lib/components/PanelCover.svelte';
   import TileButtons from '../../lib/components/TileButtons.svelte';
   import Toggle from '../../lib/components/Toggle.svelte';
-  import { useT } from '../../lib/i18n';
+  import { durationText, useT } from '../../lib/i18n';
 
   const GRADIENTS = {
     violet: 'linear-gradient(140deg,#ff5f9e,#6a2bff)',
@@ -111,7 +111,7 @@
             ...row,
             disappearing: true,
             on: dmOn,
-            hint: dmOn ? t('ui.infoPanel.disappearOnHint', { after: dmAfter }) : t('ui.infoPanel.disappearOffHint'),
+            hint: dmOn ? t('ui.infoPanel.disappearOnHint', { after: durationText(t, dmAfter) }) : t('ui.infoPanel.disappearOffHint'),
             onChange: (next: boolean) => (dmOn = next),
           }
         : { ...row, hint: t(row.hint), disappearing: false },

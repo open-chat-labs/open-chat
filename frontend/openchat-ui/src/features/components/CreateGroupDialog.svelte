@@ -16,6 +16,7 @@
   import UpgradeBanner from './UpgradeBanner.svelte';
   import { modal } from '../../lib/behaviours/modal';
   import { useT } from '../../lib/i18n';
+  import Translate from '../../lib/components/Translate.svelte';
 
   // resource-key prefix; constants below hold keys, resolved with t() at render time
   const CG = 'ui.createGroupDialog.';
@@ -153,9 +154,6 @@
   }: Props = $props();
   const t = useT();
   const community = $derived(t(communityName));
-  // sentences with a styled piece inside: format around a marker, then split on it
-  const MARK = '\u0001';
-  const split = (key: string, params: Record<string, string | number>) => t(key, params).split(MARK);
 
   const kind = $derived<Kind>(KINDS[kindProp] ? kindProp : 'group');
   const K = $derived(KINDS[kind]);
@@ -539,7 +537,7 @@
           <span class="head-title">{t(isComm ? CG + 'title.community' : isEmb ? CG + 'title.embedded' : isChan ? CG + 'title.channel' : CG + 'title.group')}</span>
           {#if isChan}<span class="head-sub">{t(CG + 'inCommunity', { community })}</span>{/if}
         </div>
-        <span class="icon-button" onclick={() => close(onCancel)} role="button" tabindex="0"><span class="icon-15" style:mask={mask('close')}></span></span>
+        <span class="icon-button" onclick={() => close(onCancel)} role="button" tabindex="0" aria-label={t('ui.common.close')} title={t('ui.common.close')}><span class="icon-15" style:mask={mask('close')}></span></span>
       </div>
       <div class="tabs-row">
         <div class="cell grow">
@@ -994,12 +992,11 @@
       {/if}
 
       {#if current === 'Gates'}
-        {@const info = split(CG + 'gatesInfo', { kind: isComm ? 'community' : isChan ? 'channel' : 'group', strong: MARK })}
         <div class="gates-page">
           <div class="gates-column">
             <div class="info">
               <span class="info-icon"></span>
-              <span class="info-text">{info[0]}<span class="info-strong">{t(CG + 'gatesInfoStrong')}</span>{info[1] ?? ''}</span>
+              <span class="info-text"><Translate key={CG + 'gatesInfo'} params={{ kind: isComm ? 'community' : isChan ? 'channel' : 'group' }}>{#snippet strong()}<span class="info-strong">{t(CG + 'gatesInfoStrong')}</span>{/snippet}</Translate></span>
             </div>
             <!-- the draft, not a prop: the builder unmounts on tab switch and must return showing the edits, which are also what Create submits -->
             <AccessGates {isDiamond} {onUpgrade} value={gates} onChange={(g) => (gates = g)} />

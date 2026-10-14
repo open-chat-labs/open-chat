@@ -30,8 +30,14 @@ about svelte-i18n, edit modes or how text is rendered.
   same syntax svelte-i18n uses. Without a host translator it is the fallback.
 - Props that take copy (`Button label`, `DialogShell title`, `placeholder` …) take a key. A string that isn't a key
   renders as itself, so literal text still works (user data, prototypes).
-- `<Translate key="ui.common.save" />` renders just the text for a key, for use as child content.
-- Inside components: `const t = useT();` then `{t('ui.x.y', { count })}`.
+- `<Translate key="ui.common.save" />` renders just the text for a key, for use as child content. Placeholders
+  that need markup are snippets named after them, so the sentence stays one message translators can reorder:
+  `<Translate key="ui.leaveGroupDialog.question">{#snippet name()}<strong>{group}</strong>{/snippet}</Translate>`
+  (`segments(t, key, ['name'], params)` is the same thing for script code).
+- Inside components: `const t = useT();` then `{t('ui.x.y', { count })}`. Never concatenate translated fragments.
+- Values that travel between components stay stable ids and are only translated for display: durations are English
+  ids ('12 hours') shown with `durationText(t, value)`; menu items report their key to `onSelect`/`onMenu`.
+- Numbers and dates are formatted with the host locale (`getI18n().locale`).
 
 Wiring it into the app (svelte-i18n), once in the root component:
 ```svelte

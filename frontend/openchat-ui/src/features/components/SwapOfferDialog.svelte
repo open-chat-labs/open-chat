@@ -9,7 +9,8 @@
   import Button from '../../lib/components/Button.svelte';
   import IconButton from '../../lib/components/IconButton.svelte';
   import TokenPicker from '../../lib/components/TokenPicker.svelte';
-  import { useT } from '../../lib/i18n';
+  import { getI18n, useT, durationText } from '../../lib/i18n';
+  const i18n = getI18n(); // number formatting follows the host locale
 
   // sample balances and prices until the wallet is wired
   const TOK = {
@@ -20,14 +21,14 @@
     STK: { symbol: 'STK', name: 'Stake', mark: 'S', gradient: 'linear-gradient(140deg,#1b2a6b,#4fc3ff)', bal: 0, fee: 0.0001, min: 1, usd: 0.0021, dp: 2 },
   };
   type Sym = keyof typeof TOK;
-  // expiry options: label key + count, and the short form used in the offer summary
-  const DURS: { key: string; count: number; short: string }[] = [
-    { key: 'ui.swapOfferDialog.hours', count: 1, short: '1h' },
-    { key: 'ui.swapOfferDialog.hours', count: 6, short: '6h' },
-    { key: 'ui.swapOfferDialog.days', count: 1, short: '1d' },
-    { key: 'ui.swapOfferDialog.days', count: 7, short: '7d' },
-    { key: 'ui.swapOfferDialog.days', count: 30, short: '30d' },
-    { key: 'ui.swapOfferDialog.days', count: 90, short: '90d' },
+  // expiry options: the duration id (shown via durationText) and the short form reported as expiresIn
+  const DURS: { id: string; count: number; unit: 'h' | 'd'; short: string }[] = [
+    { id: '1 hour', count: 1, unit: 'h', short: '1h' },
+    { id: '6 hours', count: 6, unit: 'h', short: '6h' },
+    { id: '1 day', count: 1, unit: 'd', short: '1d' },
+    { id: '7 days', count: 7, unit: 'd', short: '7d' },
+    { id: '30 days', count: 30, unit: 'd', short: '30d' },
+    { id: '90 days', count: 90, unit: 'd', short: '90d' },
   ];
   // price chip labels: resource keys or literal text
   const PRICES: [string, number][] = [
@@ -36,8 +37,8 @@
     ['+5%', 0.05],
     ['+10%', 0.1],
   ];
-  const fmt = (n: number, dp: number) => Number(n.toFixed(dp)).toLocaleString('en-US', { maximumFractionDigits: dp });
-  const usdFmt = (v: number) => (!v ? '$0.00' : v < 0.01 ? `$${v.toPrecision(2)}` : `$${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+  const fmt = (n: number, dp: number) => Number(n.toFixed(dp)).toLocaleString(i18n.locale ?? 'en', { maximumFractionDigits: dp });
+  const usdFmt = (v: number) => (!v ? '$0.00' : v < 0.01 ? `$${v.toPrecision(2)}` : `$${v.toLocaleString(i18n.locale ?? 'en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
   const q4 = (n: number) => String(Number(n.toPrecision(4)));
   const sym = (s: string | undefined, fallback: Sym): Sym => (s && s in TOK ? (s as Sym) : fallback);
 
@@ -50,7 +51,8 @@
 
   let { z = 80, initial = null, onAttach, onClose }: Props = $props();
   const t = useT();
-  const durLabel = (i: number) => t(DURS[i].key, { count: DURS[i].count });
+  const durLabel = (i: number) => durationText(t, DURS[i].id);
+  const durShort = (i: number) => t('ui.swapOfferDialog.durationShort', { count: DURS[i].count, unit: DURS[i].unit });
 
   const draft = initial?.draft;
   let give = $state<Sym>(sym(draft?.give, 'CHAT'));
@@ -115,7 +117,7 @@
       ],
       expiresIn: DURS[dur].short,
       title: `${giveSide.amount} ${G.symbol} → ${getSide.amount} ${R.symbol}`,
-      summary: t('ui.swapOfferDialog.summary', { expires: DURS[dur].short, amount: fmt(lock, G.dp), symbol: G.symbol }),
+      summary: t('ui.swapOfferDialog.summary', { expires: durShort(dur), amount: fmt(lock, G.dp), symbol: G.symbol }),
       hint: t('ui.swapOfferDialog.hint', { duration: durLabel(dur), amount: fmt(lock, G.dp), symbol: G.symbol }),
       draft: { give, get, amt, want, dur, prem },
     });
@@ -228,8 +230,8 @@
       <div class="expiry">
         <label>{t('ui.swapOfferDialog.expiresAfter')}</label>
         <div class="durations">
-          {#each DURS as d, i}
-            <button class="chip pill" class:on={i === dur} onclick={() => (dur = i)} aria-pressed={i === dur}>{t(d.key, { count: d.count })}</button>
+          {#each DURS as d, i (d.id)}
+            <button class="chip pill" class:on={i === dur} onclick={() => (dur = i)} aria-pressed={i === dur}>{durLabel(i)}</button>
           {/each}
         </div>
       </div>

@@ -9,7 +9,7 @@
   import PollMessage from '../../lib/components/PollMessage.svelte';
   import SortableInputList from '../../lib/components/SortableInputList.svelte';
   import Toggle from '../../lib/components/Toggle.svelte';
-  import { useT } from '../../lib/i18n';
+  import { getI18n, useT } from '../../lib/i18n';
 
   const Q_MAX = 250;
   const A_MAX = 75;
@@ -44,6 +44,9 @@
 
   let { z = 80, preview = true, onPublish, onClose }: Props = $props();
   const t = useT();
+  const i18n = getI18n();
+  // dates in the host's locale; plain 'en' keeps the day-month order and 24-hour clock
+  const dateLocale = () => (i18n.locale && i18n.locale !== 'en' ? i18n.locale : 'en-GB');
 
   let question = $state('');
   let answers = $state<string[]>(['', '']);
@@ -74,8 +77,8 @@
         : hasDup
           ? t('ui.pollBuilderDialog.answersDifferent')
           : t('ui.pollBuilderDialog.ready', {
-              date: end.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }),
-              time: end.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
+              date: end.toLocaleDateString(dateLocale(), { weekday: 'short', day: 'numeric', month: 'short' }),
+              time: end.toLocaleTimeString(dateLocale(), { hour: '2-digit', minute: '2-digit' }),
             }),
   );
 
@@ -132,7 +135,7 @@
     const target = e.target as HTMLElement;
     if (e.key === 'Enter' && target.tagName === 'INPUT') {
       e.preventDefault();
-      const answerInputs = () => [...box.querySelectorAll<HTMLInputElement>('input[aria-label^="Answer"]')];
+      const answerInputs = () => [...box.querySelectorAll<HTMLInputElement>('input[data-sortable-input]')];
       const i = answerInputs().indexOf(target as HTMLInputElement);
       setTimeout(() => answerInputs()[i + 1]?.focus(), 0);
     }

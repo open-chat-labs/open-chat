@@ -1,12 +1,16 @@
 <!-- Live countdown text. `to` = end time (ms epoch or ISO). format: auto ("2d 4h" → "3h 12m" → "4:09") | clock ("10:57:11") | words ("3 hours").
-     prefix/suffix wrap it ("Ends in", "left"); `ended` text when it hits zero, then onEnd fires once. Ticks every second under an hour, else every 30s. -->
+     `label` is a whole message with a {time} placeholder ("Ends in {time}") so translators control word order; prefix/suffix
+     ("Ends in", "left") also go through messages. `ended` text when it hits zero, then onEnd fires once. Ticks every second
+     under an hour, else every 30s. -->
 <script lang="ts">
-  import { useT } from '../i18n';
+  import { getI18n, useT } from '../i18n';
   import { untrack } from 'svelte';
 
   interface Props {
     to: number | string;
     format?: 'auto' | 'clock' | 'words';
+    /** Resource key (or literal text) for the whole line, with a {time} placeholder: "Ends in {time}". Wins over prefix/suffix. */
+    label?: string;
     /** Resource key (or literal text) shown before the time. */
     prefix?: string;
     /** Resource key (or literal text) shown after the time. */
@@ -16,8 +20,9 @@
     onEnd?: () => void;
   }
 
-  let { to, format = 'auto', prefix, suffix, ended = 'ui.countdown.ended', onEnd }: Props = $props();
+  let { to, format = 'auto', label, prefix, suffix, ended = 'ui.countdown.ended', onEnd }: Props = $props();
   const t = useT();
+  const i18n = getI18n();
 
   let now = $state(Date.now());
 
@@ -55,11 +60,15 @@
         : format === 'words'
           ? d ? t('ui.countdown.days', { count: d }) : h ? t('ui.countdown.hours', { count: h }) : m ? t('ui.countdown.minutes', { count: m }) : t('ui.countdown.seconds', { count: sec })
           : d ? t('ui.countdown.daysHours', { days: d, hours: h }) : h ? t('ui.countdown.hoursMinutes', { hours: h, minutes: m }) : `${m}:${z(sec)}`;
-    return [prefix && t(prefix), body, suffix && t(suffix)].filter(Boolean).join(' ');
+    if (label) return t(label, { time: body });
+    if (prefix && suffix) return t('ui.countdown.prefixSuffix', { prefix: t(prefix), time: body, suffix: t(suffix) });
+    if (prefix) return t('ui.countdown.prefixed', { prefix: t(prefix), time: body });
+    if (suffix) return t('ui.countdown.suffixed', { time: body, suffix: t(suffix) });
+    return body;
   });
 </script>
 
-<time datetime={new Date(end).toISOString()} aria-live="off" title={new Date(end).toLocaleString()}>{text}</time>
+<time datetime={new Date(end).toISOString()} aria-live="off" title={new Date(end).toLocaleString(i18n.locale)}>{text}</time>
 
 <style>
   time {

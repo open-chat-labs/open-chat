@@ -9,7 +9,7 @@
   import PageHeader from '../../lib/components/PageHeader.svelte';
   import QuickAmountChips from '../../lib/components/QuickAmountChips.svelte';
   import SideCard from '../../lib/components/SideCard.svelte';
-  import { useT } from '../../lib/i18n';
+  import { getI18n, useT } from '../../lib/i18n';
 
   const mask = (n: string) => `var(--icon-${n}) center/contain no-repeat`;
   // sample contacts and pasted addresses until the address book is wired
@@ -49,8 +49,8 @@
   const NET_NAME: Record<Chain, string> = { BTC: 'Bitcoin', ETH: 'Ethereum', XRP: 'XRP Ledger', ICP: 'Internet Computer' };
   const ADDR_NAME: Record<Chain, string> = { BTC: 'Bitcoin', ETH: 'Ethereum', XRP: 'XRP', ICP: 'ICP' };
 
-  const fmt = (v: number, dp: number) => v.toLocaleString('en-US', { maximumFractionDigits: dp });
-  const money = (v: number) => `$${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const fmt = (v: number, dp: number) => v.toLocaleString(i18n.locale ?? 'en', { maximumFractionDigits: dp });
+  const money = (v: number) => `$${v.toLocaleString(i18n.locale ?? 'en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const detectNet = (a: string): Chain | 'unknown' | null => {
     const v = (a || '').trim();
     if (!v) return null;
@@ -73,6 +73,7 @@
 
   let { tokens, token, address: initialAddress = '', onClose, onSent }: Props = $props();
   const t = useT();
+  const i18n = getI18n();
 
   const held = $derived(tokens.filter((tok) => tok.held > 0));
   const startSymbol = (() => {

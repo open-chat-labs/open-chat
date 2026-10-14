@@ -28,7 +28,8 @@
   import type { WalletToken } from '../../lib/types';
   import Toggle from '../../lib/components/Toggle.svelte';
   import { modal } from '../../lib/behaviours/modal';
-  import { useT } from '../../lib/i18n';
+  import { getI18n, useT } from '../../lib/i18n';
+  const i18n = getI18n(); // number formatting follows the host locale
 
   type Section = 'tokens' | 'recipients' | 'security' | 'currency';
 
@@ -45,7 +46,7 @@
     return NETWORKS.find((n) => n.test(v))?.id ?? 'unknown';
   };
   const shortAddr = (a: string) => (a.length > 26 ? `${a.slice(0, 12)}…${a.slice(-8)}` : a);
-  const money = (v: number) => `$${v.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+  const money = (v: number) => `$${v.toLocaleString(i18n.locale ?? 'en', { maximumFractionDigits: 0 })}`;
   const CURRENCIES = ['USD', 'BTC', 'ETH', 'ICP'] as const;
   const CHIP_CAP = 10;
   const NAV: { key: Section; label: string; icon: string }[] = [

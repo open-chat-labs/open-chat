@@ -1,7 +1,8 @@
 <!-- Group statistics: message total vs the previous 30 days, a 12-week activity strip, what gets sent (type mix),
      who is talking (top members + the rest) and engagement counters. -->
 <script lang="ts">
-  import { useT } from '../../lib/i18n';
+  import { getI18n, useT } from '../../lib/i18n';
+  import Translate from '../../lib/components/Translate.svelte';
 
   const MIX_COLORS = ['#5B8CFF', '#B06BFF', '#FFB03D', '#2EE6A8', '#6E6E7C'];
 
@@ -24,8 +25,9 @@
 
   let { mix, weeks, people, engagement, totalPrev, otherPeople, onlineMinutes, onlineMinutesPrev }: Props = $props();
   const t = useT();
+  const i18n = getI18n();
 
-  const fmt = (n: number) => Number(n).toLocaleString('en-US');
+  const fmt = (n: number) => Number(n).toLocaleString(i18n.locale ?? 'en');
   const initials = (name: string) =>
     name
       .split(' ')
@@ -40,10 +42,6 @@
   const topCount = $derived(people.reduce((m, p) => Math.max(m, p.count), 1));
   const others = $derived(Math.max(total - people.reduce((s, p) => s + p.count, 0), 0));
   const onlineUp = $derived(onlineMinutes >= onlineMinutesPrev);
-  // one sentence with two styled numbers: format it with marker values, then split on the markers
-  const onlineParts = $derived(
-    t('ui.groupStats.onlineMinutes', { now: '\u0001now\u0001', prev: '\u0001prev\u0001', direction: onlineUp ? 'up' : 'down' }).split(/\u0001(now|prev)\u0001/),
-  );
 </script>
 
 <div class="stats">
@@ -122,8 +120,11 @@
   <div class="section">
     <span class="section-title">{t('ui.groupStats.engagement')}</span>
     <span class="online"
-      >{#each onlineParts as part, i}{#if i % 2 === 0}{part}{:else if part === 'now'}<span class="online-now" class:down={!onlineUp}>{fmt(onlineMinutes)}</span
-          >{:else}<span class="online-prev">{fmt(onlineMinutesPrev)}</span>{/if}{/each}</span
+      ><Translate key="ui.groupStats.onlineMinutes" params={{ direction: onlineUp ? 'up' : 'down' }}
+        >{#snippet now()}<span class="online-now" class:down={!onlineUp}>{fmt(onlineMinutes)}</span>{/snippet}{#snippet prev()}<span
+            class="online-prev">{fmt(onlineMinutesPrev)}</span
+          >{/snippet}</Translate
+      ></span
     >
     <div class="engagement">
       {#each engagement as e}

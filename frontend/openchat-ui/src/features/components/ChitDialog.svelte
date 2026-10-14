@@ -17,7 +17,8 @@
   // hand-spaced so the early run stays readable and the long haul to 365 still reads as long
   const TIERS = [3, 7, 14, 30, 100, 365];
   const TIER_POS: Record<number, number> = { 3: 8, 7: 16, 14: 32, 30: 48, 100: 67, 365: 100 };
-  const fmt = (n: number) => n.toLocaleString('en-US');
+  // numbers in the host's locale (i18n is set up below; fmt only runs after init)
+  const fmt = (n: number) => n.toLocaleString(i18n.locale ?? 'en');
 
   interface Props {
     streak: number;

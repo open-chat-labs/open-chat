@@ -48,7 +48,8 @@
     t(key, params) {
       const text = lookup(en, key);
       if (text === undefined) return interpolate(key, params); // not a key: literal text, shown as-is in every mode
-      if (lang === 'keys') return key;
+      // keys mode: the key, then each param in order, so values and snippet markup still show where they belong
+      if (lang === 'keys') return interpolate(key + Object.keys(params ?? {}).map((k) => ` {${k}}`).join(''), params);
       const out = interpolate(text, params);
       return lang === 'pseudo' ? pseudo(out) : out;
     },

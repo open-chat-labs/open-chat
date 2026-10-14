@@ -2,7 +2,7 @@
      Editing amount/tokens drops a live quote; slippage doesn't (min. received recomputes). Below 760px the quote panel
      stacks under the form. Pay offers only held tokens; Get offers anything swappable, yours first. -->
 <script lang="ts">
-  import { useT } from '../../lib/i18n';
+  import { getI18n, useT } from '../../lib/i18n';
   import { onDestroy } from 'svelte';
   import type { WalletToken } from '../../lib/types';
   import AmountCard from '../../lib/components/AmountCard.svelte';
@@ -18,6 +18,7 @@
   import Spinner from '../../lib/components/Spinner.svelte';
   import StepIndicator from '../../lib/components/StepIndicator.svelte';
   import TokenPicker from '../../lib/components/TokenPicker.svelte';
+  const i18n = getI18n(); // number formatting follows the host locale
 
   const DEX = [
     { name: 'KongSwap', fee: '0.30%' },
@@ -26,8 +27,8 @@
   ];
   const SLIPS = [0.1, 0.5, 1, 3];
   const QUOTE_SECS = 30;
-  const fmt = (v: number, dp: number) => v.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: dp });
-  const usd = (v: number) => `$${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const fmt = (v: number, dp: number) => v.toLocaleString(i18n.locale ?? 'en', { minimumFractionDigits: 0, maximumFractionDigits: dp });
+  const usd = (v: number) => `$${v.toLocaleString(i18n.locale ?? 'en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   type Stage = 'form' | 'quoting' | 'quoted' | 'progress' | 'done';
 

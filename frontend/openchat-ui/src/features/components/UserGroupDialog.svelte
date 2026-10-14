@@ -3,6 +3,7 @@
      Delete: a confirmation. Esc, the veil, × and Cancel close with the exit animation. -->
 <script lang="ts">
   import { useT } from '../../lib/i18n';
+  import Translate from '../../lib/components/Translate.svelte';
   import { onDestroy, onMount, untrack } from 'svelte';
   import { modal } from '../../lib/behaviours/modal';
 
@@ -46,9 +47,6 @@
 
   let { dialogMode = 'create', communityName, group = null, people = [], takenNames = [], onCancel, onSave, onDelete }: Props = $props();
   const t = useT();
-  // sentences with a styled piece inside: format around a marker, then split on it
-  const MARK = '\u0001';
-  const split = (key: string, params: Record<string, string | number>) => t(key, params).split(MARK);
 
   const isDelete = $derived(dialogMode === 'delete');
   const isEdit = $derived(dialogMode === 'edit');
@@ -117,13 +115,6 @@
     }
   }
 
-  onMount(() => {
-    const key = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !e.defaultPrevented) close(onCancel);
-    };
-    window.addEventListener('keydown', key);
-    return () => window.removeEventListener('keydown', key);
-  });
 </script>
 
 <div class="layer" class:closing data-screen-label="User group dialog" role="dialog" aria-modal="true" use:modal={() => close(onCancel)}>
@@ -135,15 +126,17 @@
         <span class="title">{t(isDelete ? 'ui.userGroupDialog.deleteTitle' : isEdit ? 'ui.userGroupDialog.editTitle' : 'ui.userGroupDialog.newTitle')}</span>
         <span class="subtitle">{isEdit || isDelete ? `${group?.title ?? ''} · ${communityName}` : t('ui.userGroupDialog.inCommunity', { community: communityName })}</span>
       </div>
-      <span class="icon-button" onclick={() => close(onCancel)} role="button" tabindex="0"><span class="close-icon"></span></span>
+      <span class="icon-button" onclick={() => close(onCancel)} role="button" tabindex="0" aria-label={t('ui.common.close')}><span class="close-icon"></span></span>
     </div>
 
     {#if isDelete}
-      {@const ask = split('ui.userGroupDialog.deleteAsk', { name: MARK })}
-      {@const body = split('ui.userGroupDialog.deleteBody', { count: memberCount, community: communityName, mention: MARK })}
       <div class="delete-body">
-        <span class="delete-title">{ask[0]}<span class="danger-ink">{group?.title ?? ''}</span>{ask[1] ?? ''}</span>
-        <span class="delete-text">{body[0]}<span class="mention">{slug(group?.title ?? '')}</span>{body[1] ?? ''}</span>
+        <span class="delete-title"><Translate key="ui.userGroupDialog.deleteAsk">{#snippet title()}<span class="danger-ink">{group?.title ?? ''}</span>{/snippet}</Translate></span>
+        <span class="delete-text"
+          ><Translate key="ui.userGroupDialog.deleteBody" params={{ count: memberCount, community: communityName }}
+            >{#snippet mention()}<span class="mention">{slug(group?.title ?? '')}</span>{/snippet}</Translate
+          ></span
+        >
       </div>
     {:else}
       <div class="form">

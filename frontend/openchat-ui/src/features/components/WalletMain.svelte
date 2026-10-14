@@ -2,7 +2,7 @@
      The host drives it with `request` ({ view, token, nonce }) from the wallet list on the left and hears back through
      onViewChange. A send lands back on the token page with a pending row and a toast. An empty wallet shows All activity only. -->
 <script lang="ts">
-  import { useT } from '../../lib/i18n';
+  import { getI18n, useT } from '../../lib/i18n';
   import { onDestroy, untrack } from 'svelte';
   import type { WalletToken } from '../../lib/types';
   import DetailRow from '../../lib/components/DetailRow.svelte';
@@ -22,15 +22,16 @@
   import WalletRecipients, { type Recipient } from './WalletRecipients.svelte';
   import WalletSend from './WalletSend.svelte';
   import WalletSwap from './WalletSwap.svelte';
+  const i18n = getI18n(); // number formatting follows the host locale
 
   type View = 'all' | 'token' | 'send' | 'receive' | 'swap' | 'recipients';
   type Kind = 'send' | 'receive' | 'swap';
 
   const mask = (n: string) => `var(--icon-${n}) center/contain no-repeat`;
-  const num = (v: number, dp: number) => v.toLocaleString('en-US', { minimumFractionDigits: dp, maximumFractionDigits: dp });
+  const num = (v: number, dp: number) => v.toLocaleString(i18n.locale ?? 'en', { minimumFractionDigits: dp, maximumFractionDigits: dp });
   const usd = (v: number) => `$${num(v, 2)}`;
   const price = (v: number) =>
-    v >= 100 ? `$${num(v, 2)}` : v < 1 ? `$${num(v, 4)}` : `$${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`;
+    v >= 100 ? `$${num(v, 2)}` : v < 1 ? `$${num(v, 4)}` : `$${v.toLocaleString(i18n.locale ?? 'en', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`;
 
   // sample counterparties, history and ledger ids until the ledger index is wired
   const NAMES = ['Lucy Linden', 'Matt Rivers', 'Ana Ferreira', 'Ryan Rogers'];

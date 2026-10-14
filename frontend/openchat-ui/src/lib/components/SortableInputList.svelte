@@ -134,6 +134,7 @@
         maxlength={maxLength}
         placeholder={i < min ? t('ui.sortableInputList.itemN', { item, n: i + 1 }) : morePlaceholder ? t(morePlaceholder) : t('ui.sortableInputList.another', { item: noun })}
         aria-label={t('ui.sortableInputList.itemN', { item, n: i + 1 })}
+        data-sortable-input
       />
       {#if dup}<span class="dup-label">{t('ui.sortableInputList.duplicate')}</span>{/if}
       {#if maxLength - value.length <= 15}<span class="left">{maxLength - value.length}</span>{/if}

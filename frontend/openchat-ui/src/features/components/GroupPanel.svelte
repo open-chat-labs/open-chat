@@ -6,7 +6,8 @@
      it never drills in (sub-views go to onManage) except to read pinned messages.
      embedded: the same sub-views inside the host's manage dialog. The open sub-view persists under storageKey. -->
 <script lang="ts">
-  import { useT } from '../../lib/i18n';
+  import { getI18n, useT, durationText } from '../../lib/i18n';
+  import Translate from '../../lib/components/Translate.svelte';
   import { onDestroy, onMount, tick, untrack, type ComponentProps } from 'svelte';
   import type { GroupRole, GroupSettings, MenuItem } from '../../lib/types';
   import Field from '../../lib/components/Field.svelte';
@@ -344,6 +345,8 @@
     onClose,
   }: Props = $props();
   const t = useT();
+  const i18n = getI18n();
+  const num = (n: number | undefined) => n?.toLocaleString(i18n.locale ?? 'en');
 
   // per-instance key so a second mount (library specimen, community panel) cannot overwrite the running app's view
   function readStored(key: string): View {
@@ -696,7 +699,7 @@
       : [],
   );
   const gatesN = $derived(gateCount ?? gateCards.length);
-  const every = $derived(gateState?.every ?? t('ui.groupPanel.defaultEvery'));
+  const every = $derived(durationText(t, gateState?.every ?? '90 days'));
   const navRows = $derived([
     { label: t('ui.groupPanel.views.permissions'), hint: permHint, view: 'permissions' as const },
     {
@@ -849,20 +852,27 @@
             {/if}
           </div>
           {#if scope === 'channel'}
-            <span class="byline"
-              >{#if quick}<span class="access-icon" class:public={isPublic}></span>{/if}{quick ? t('ui.groupPanel.channelInAccess', { access: isPublic ? 'public' : 'private' }) : t('ui.groupPanel.channelInPlain')}{#if quick}<span
+            {#snippet communityLink()}{#if quick}<span
                   class="community-chip"
                   onclick={() => onOpenCommunity?.()}
                   aria-label={t('ui.groupPanel.viewCommunity')}
                   role="button"
                   tabindex="0"
                   title={t('ui.groupPanel.viewCommunity')}>{communityName ?? 'OpenChat'}<span class="chip-chevron" data-oc-flip=""></span></span
-                >{:else}<a href="#top" onclick={link(() => onOpenCommunity?.())}>{communityName ?? 'OpenChat'}</a>{/if}</span
+                >{:else}<a href="#top" onclick={link(() => onOpenCommunity?.())}>{communityName ?? 'OpenChat'}</a>{/if}{/snippet}
+            <span class="byline"
+              >{#if quick}<span class="access-icon" class:public={isPublic}></span>{/if}<Translate
+                key={quick ? 'ui.groupPanel.channelInAccess' : 'ui.groupPanel.channelInPlain'}
+                params={{ access: isPublic ? 'public' : 'private' }}
+                community={communityLink}
+              /></span
             >
           {:else if quick}
-            <span class="byline"><span class="access-icon" class:public={isPublic}></span>{t('ui.groupPanel.createdByAccess', { access: isPublic ? 'public' : 'private', scope })} <a href="#top">{ownerHandle}</a></span>
+            {#snippet ownerLink()}<a href="#top">{ownerHandle}</a>{/snippet}
+            <span class="byline"><span class="access-icon" class:public={isPublic}></span><Translate key="ui.groupPanel.createdByAccess" params={{ access: isPublic ? 'public' : 'private', scope }} owner={ownerLink} /></span>
           {:else}
-            <span class="byline plain">{t('ui.groupPanel.createdBy', { scope })} <a href="#top">{ownerHandle}</a></span>
+            {#snippet ownerLinkPlain()}<a href="#top">{ownerHandle}</a>{/snippet}
+            <span class="byline plain"><Translate key="ui.groupPanel.createdBy" params={{ scope }} owner={ownerLinkPlain} /></span>
           {/if}
           {#if !quick}
             <div class="role-summary" onclick={() => go('members')} role="button" tabindex="0">
@@ -936,7 +946,7 @@
             <div class="online-head">
               <span class="online-dot"></span>
               <span class="online-title">{t(quickOnline.count > 0 ? 'ui.groupPanel.onlineNow' : 'ui.groupPanel.memberTabs.members')} <span class="online-count">{quickOnline.count > 0 ? `· ${quickOnline.count}` : ''}</span></span>
-              <span class="online-of">{quickOnline.count > 0 ? t('ui.groupPanel.onlineOf', { total: quickOnline.total?.toLocaleString('en-US') }) : ''}</span>
+              <span class="online-of">{quickOnline.count > 0 ? t('ui.groupPanel.onlineOf', { total: num(quickOnline.total) }) : ''}</span>
             </div>
             <!-- the online list fills down to the panel edge -->
             <div class="online-list">
@@ -964,14 +974,14 @@
                 <span class="none-online">{t('ui.groupPanel.noneOnline')}</span>
               {/if}
               {#if quickOnline.count > (quickOnline.shown ?? 0)}
-                <span class="more-online">{t('ui.groupPanel.moreOnline', { count: (quickOnline.count - (quickOnline.shown ?? 0)).toLocaleString('en-US') })}</span>
+                <span class="more-online">{t('ui.groupPanel.moreOnline', { count: num(quickOnline.count - (quickOnline.shown ?? 0)) })}</span>
               {/if}
             </div>
             <div class="online-foot">
               {#if canInvite}
                 <span class="foot-action invite" onclick={() => onDialog?.('invite', null, 'people')} role="button" tabindex="0"><span class="invite-icon"></span>{t('ui.groupPanel.invite')}</span>
               {/if}
-              <span class="foot-action all" onclick={() => go('members')} role="button" tabindex="0">{t('ui.groupPanel.viewAllTotal', { total: quickOnline.total?.toLocaleString('en-US') })}</span>
+              <span class="foot-action all" onclick={() => go('members')} role="button" tabindex="0">{t('ui.groupPanel.viewAllTotal', { total: num(quickOnline.total) })}</span>
             </div>
           </div>
           {#if slimBots.length > 0}
@@ -1311,7 +1321,7 @@
           <div class="cell tabs"><Field placeholder={t('ui.groupPanel.searchGroupMembers')} value={ugMemberQuery} onInput={(e) => (ugMemberQuery = e.currentTarget.value)} onClear={() => (ugMemberQuery = '')} showShortcut={false} /></div>
           <div class="ug-intro">
             <span class="ug-title">{t('ui.groupPanel.membersCount', { count: ugCur.members.length })}</span>
-            <span class="list-note">{t('ui.groupPanel.mentionAll')} <span class="mention">@{ugCur.title.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')}</span>.</span>
+            <span class="list-note"><Translate key="ui.groupPanel.mentionAll">{#snippet tag()}<span class="mention">@{ugCur.title.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')}</span>{/snippet}</Translate></span>
           </div>
           <div class="rows padded">
             {#each ugMembersShown as m}

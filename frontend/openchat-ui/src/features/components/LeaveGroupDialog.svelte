@@ -1,6 +1,7 @@
 <!-- Confirm leaving a group, channel or community. Cancel / confirm play the close animation, then call back. -->
 <script lang="ts">
   import { useT } from '../../lib/i18n';
+  import Translate from '../../lib/components/Translate.svelte';
   import { onDestroy } from 'svelte';
   import { modal } from '../../lib/behaviours/modal';
 
@@ -17,8 +18,6 @@
   const t = useT();
 
   const text = $derived(t(body ?? 'ui.leaveGroupDialog.body', { noun }));
-  // the question wraps the group name in its own span: translate the whole sentence, split it around the name
-  const question = $derived(t('ui.leaveGroupDialog.question', { name: '\u0000' }).split('\u0000'));
 
   let closing = $state(false);
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -49,7 +48,7 @@
 
     <div class="body">
       <div class="copy">
-        <span class="question">{question[0]}<span class="name">{groupName}</span>{question[1] ?? ''}</span>
+        <span class="question"><Translate key="ui.leaveGroupDialog.question">{#snippet name()}<span class="name">{groupName}</span>{/snippet}</Translate></span>
         <span class="text">{text}</span>
       </div>
     </div>

@@ -2,9 +2,10 @@
      by group, with progress per group. `unlocked` (achievement ids) marks achievements earned this session as done;
      `highlight` opens that row's group, marks the row and scrolls it into view. -->
 <script lang="ts">
-  import { useT } from '../../lib/i18n';
+  import { getI18n, useT } from '../../lib/i18n';
   import { onMount } from 'svelte';
   import { modal } from '../../lib/behaviours/modal';
+  const i18n = getI18n(); // number formatting follows the host locale
 
   type Band = 'quick' | 'mid' | 'big';
   // [id, done, reward, band, icon] — band tags what the "next up" trio draws from; the text is ui.achievementsDialog.achievements.<id>
@@ -114,7 +115,7 @@
     { key: 'partners', label: 'ui.achievementsDialog.groups.partners', icon: 'link', ink: 'var(--ink-4,#7C7C8C)', items: [] },
   ];
 
-  const fmt = (n: number) => n.toLocaleString('en-US');
+  const fmt = (n: number) => n.toLocaleString(i18n.locale ?? 'en');
   const achievement = (id: string) => 'ui.achievementsDialog.achievements.' + id;
 
   interface Props {

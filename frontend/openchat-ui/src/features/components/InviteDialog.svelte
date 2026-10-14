@@ -242,7 +242,7 @@
             <span class="head-title">{t(canAdd ? 'ui.inviteDialog.addOrInvite' : 'ui.inviteDialog.tabInvite')}</span>
             <span class="head-sub">{groupName}</span>
           </div>
-          <span class="icon-button" onclick={cancel} role="button" tabindex="0"><span class="close-icon"></span></span>
+          <span class="icon-button" onclick={cancel} role="button" tabindex="0" aria-label={t('ui.common.close')} title={t('ui.common.close')}><span class="close-icon"></span></span>
         </div>
         <div class="tabs">{@render tabs()}</div>
       </div>

@@ -19,7 +19,7 @@
 </script>
 
 <script lang="ts">
-  import { useT } from '../../lib/i18n';
+  import { getI18n, useT } from '../../lib/i18n';
   import { onMount } from 'svelte';
   import type { Prize, PrizeDraft } from '../../lib/types';
   import Button from '../../lib/components/Button.svelte';
@@ -52,7 +52,7 @@
     streak: { title: 'ui.prizeBuilderDialog.minStreak', opts: [3, 7, 14, 30, 100, 365], amount: 'ui.prizeBuilderDialog.streakDays', short: (n: number) => n },
     chit: { title: 'ui.prizeBuilderDialog.minChit', opts: [1000, 5000, 10000, 50000, 100000], amount: 'ui.prizeBuilderDialog.chitAmount', short: (n: number) => (n >= 1000 ? n / 1000 + 'k' : n) },
   };
-  const fmt = (n: number, dp: number) => Number(n.toFixed(dp)).toLocaleString('en-US', { maximumFractionDigits: dp });
+  const fmt = (n: number, dp: number) => Number(n.toFixed(dp)).toLocaleString(i18n.locale ?? 'en', { maximumFractionDigits: dp });
 
   interface Props {
     /** Tokens the prize can be paid in; the first is the default. */
@@ -66,6 +66,7 @@
 
   let { tokens, z = 80, initial = null, onAttach, onClose }: Props = $props();
   const t = useT();
+  const i18n = getI18n();
   const K = 'ui.prizeBuilderDialog.';
 
   const start: PrizeDraft = { tok: tokens[0].symbol, amt: '', win: '20', dur: 2, even: false, gates: {}, streak: 7, chit: 10000, ...initial?.draft };

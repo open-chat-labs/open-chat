@@ -2,6 +2,7 @@
      and in edit mode the secret URL (click to copy) with a guarded "Regenerate" that confirms before replacing the secret. -->
 <script lang="ts">
   import { useT } from '../../lib/i18n';
+  import Translate from '../../lib/components/Translate.svelte';
   import { onDestroy } from 'svelte';
   import { modal } from '../../lib/behaviours/modal';
 
@@ -40,8 +41,6 @@
 
   let { dialogMode = 'register', webhook = null, groupName, urlPrefix, onSave, onRegenerate, onCancel }: Props = $props();
   const t = useT();
-  // the explainer links its last phrase: translate the whole paragraph, split around the link
-  const explainerText = $derived(t('ui.webhookDialog.explainer', { link: '\u0000' }).split('\u0000'));
 
   const secret = () => {
     let s = '';
@@ -199,7 +198,7 @@
               </div>
               {#if explainer}
                 <span class="explainer"
-                  >{explainerText[0]}<a href="#">{t('ui.webhookDialog.explainerLink')}</a>{explainerText[1] ?? ''}</span
+                  ><Translate key="ui.webhookDialog.explainer">{#snippet link()}<a href="#">{t('ui.webhookDialog.explainerLink')}</a>{/snippet}</Translate></span
                 >
               {/if}
             </div>

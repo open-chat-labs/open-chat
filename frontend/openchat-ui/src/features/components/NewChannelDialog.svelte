@@ -3,7 +3,7 @@
      Esc, the veil, the × and Cancel all close with the exit animation. -->
 <script lang="ts">
   import { useT } from '../../lib/i18n';
-  import { onDestroy, onMount } from 'svelte';
+  import { onDestroy } from 'svelte';
   import Toggle from '../../lib/components/Toggle.svelte';
   import { modal } from '../../lib/behaviours/modal';
 
@@ -54,14 +54,6 @@
     const result = { name, about, isPublic, embedded, url: url.trim() };
     close(() => onCreate?.(result));
   }
-
-  onMount(() => {
-    const key = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') close(onCancel);
-    };
-    window.addEventListener('keydown', key);
-    return () => window.removeEventListener('keydown', key);
-  });
 </script>
 
 <div class="layer" class:closing role="dialog" aria-modal="true" use:modal={() => close(onCancel)}>
@@ -73,7 +65,7 @@
         <span class="title">{t(embedded ? 'ui.newChannelDialog.titleEmbedded' : 'ui.newChannelDialog.title')}</span>
         <span class="subtitle">{t('ui.newChannelDialog.subtitle', { community: communityName })}</span>
       </div>
-      <span class="close" onclick={() => close(onCancel)} role="button" tabindex="0"><span class="close-icon"></span></span>
+      <span class="close" onclick={() => close(onCancel)} role="button" tabindex="0" aria-label={t('ui.common.close')}><span class="close-icon"></span></span>
     </div>
 
     <div class="body">

@@ -3,9 +3,10 @@
      zero-height anchor (e.g. just above the composer). Remount with a new key to replay. Hover holds it open;
      click → onClick; finished → onDone. Reduced motion: fade only. -->
 <script lang="ts">
-  import { useT } from '../../lib/i18n';
+  import { getI18n, useT } from '../../lib/i18n';
   import { onMount } from 'svelte';
   import Confetti from '../../lib/components/Confetti.svelte';
+  const i18n = getI18n(); // number formatting follows the host locale
 
   interface Props {
     /** Achievement name: resource key (or literal text). */
@@ -41,7 +42,7 @@
   let counter: ReturnType<typeof setInterval> | undefined;
   let main: Animation | null = null;
 
-  const fmt = (n: number) => `+${n.toLocaleString('en-US')}`;
+  const fmt = (n: number) => `+${n.toLocaleString(i18n.locale ?? 'en')}`;
 
   function animate(el: Element | undefined, keys: Keyframe[], opts: KeyframeAnimationOptions) {
     if (!el) return null;
