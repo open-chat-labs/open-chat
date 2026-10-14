@@ -3,7 +3,9 @@
      "More options" (or making the group public, or any advanced value) reveals the rest, and an unused advanced section
      can be folded away again. Create validates the name (and the URL for embedded channels) and blank rules, jumping to
      the tab that needs attention, then calls onCreate with everything set (photos as File objects) and waits on its promise:
-     the dialog closes once it resolves, and stays open with the form intact and an error if it rejects. -->
+     the dialog closes once it resolves, and stays open with the form intact and an error if it rejects.
+     Closing (cancel or success) animates out, then calls onCancel so the host unmounts it; it stays hidden meanwhile
+     (no reappearing, off the modal stack, no invisible layer catching clicks). -->
 <script lang="ts" module>
   export interface CreateGroupPerson {
     /** Stable id; picked people reach the host as these. */
@@ -323,10 +325,7 @@
     // a pending create can't be dismissed; its result decides what happens next
     if (closing || creating) return;
     closing = true;
-    closeTimer = setTimeout(() => {
-      closing = false;
-      then?.();
-    }, 170);
+    closeTimer = setTimeout(() => then?.(), 170);
   }
 
   // --- derived state
@@ -586,7 +585,7 @@
   const canCreate = $derived(nameOk && (!isEmb || urlOk) && (nameResult === null || nameResult === 'ok'));
 
   async function create() {
-    if (creating) return;
+    if (creating || closing) return;
     // pressing Create without a name sends the user back to the field that needs it
     if (!nameOk || nameTaken || nameResult === 'pending' || (isEmb && !urlOk)) {
       nameTouched = true;
@@ -635,8 +634,8 @@
     } finally {
       creating = false;
     }
-    // animate out and stay hidden; the host unmounts the dialog once onCreate has resolved
-    closing = true;
+    // success: animate out, then hand back to the host (see the header)
+    close(onCancel);
   }
 
   const nameHint = $derived(
@@ -661,7 +660,7 @@
   <span class="section-label">{text}</span>
 {/snippet}
 
-<div class="root" class:closing role="dialog" aria-modal="true" use:modal={() => close(onCancel)}>
+<div class="root" class:closing role="dialog" aria-modal="true" use:modal={closing ? undefined : () => close(onCancel)}>
   <div class="veil" onclick={() => close(onCancel)} aria-hidden="true"></div>
   <div class="card">
     <div class="head">

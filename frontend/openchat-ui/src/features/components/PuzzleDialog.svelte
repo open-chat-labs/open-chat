@@ -313,6 +313,8 @@
     } finally {
       hinting = false;
     }
+    // a hint that lands after the board went in for checking (or left play) mustn't change what the host is verifying
+    if (checking || view !== 'play') return;
     const [i, j, n] = target, next = { ...br };
     // a correct bridge can't cross another correct one, so whatever blocks it is wrong
     for (const k of Object.keys(next)) if (crossesAny(PUZZLE.isl, { [k]: next[k] }, i, j)) delete next[k];

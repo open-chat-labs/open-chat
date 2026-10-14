@@ -153,8 +153,10 @@
     }
   }
 
-  // closing with content asks first; an empty poll just closes
+  // closing with content asks first; an empty poll just closes. Nothing closes while a publish is pending: the poll may
+  // still be posted, and its result (or error) has to be seen here
   function requestClose() {
+    if (publishing) return;
     if (question.trim() || filled.length) confirming = true;
     else onClose?.();
   }
@@ -174,6 +176,7 @@
     }
     if (e.key === 'Escape') {
       e.stopPropagation();
+      if (publishing) return;
       if (confirming) confirming = false;
       else requestClose();
     }
@@ -287,7 +290,7 @@
           <span class="confirm-text">{t('ui.pollBuilderDialog.discardText')}</span>
           <div class="confirm-actions">
             <Button label="ui.pollBuilderDialog.keepEditing" variant="ghost" onClick={() => (confirming = false)} />
-            <Button label="ui.pollBuilderDialog.discard" variant="danger" onClick={() => onClose?.()} />
+            <Button label="ui.pollBuilderDialog.discard" variant="danger" onClick={() => !publishing && onClose?.()} />
           </div>
         </div>
       </div>

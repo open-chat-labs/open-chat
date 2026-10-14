@@ -3,7 +3,7 @@
      error if the host rejects; Block asks first and waits for the host. Favourite and Block are hidden without callbacks. -->
 <script lang="ts">
   import { useT } from '../../lib/i18n';
-  import type { ComponentProps } from 'svelte';
+  import { untrack, type ComponentProps } from 'svelte';
   import type { MenuItem } from '../../lib/types';
   import DetailSection from '../../lib/components/DetailSection.svelte';
   import DmChatSettings from './DmChatSettings.svelte';
@@ -116,29 +116,48 @@
       : MUTE_SPANS.map((o) => ({ label: o.label, key: o.key })),
   );
 
-  // optimistic: shows the change now, restores it with an error if the host rejects — but only when the rejected call
-  // is still the latest for that field (a newer change may already have replaced it)
+  // optimistic changes per field: shown at once. When the latest call for a field rejects, the field falls back to the
+  // value the host last accepted (or its prop), never to an earlier optimistic value it didn't confirm. An older call
+  // that succeeds after every newer one failed still lands, since that's what the host has now.
   const latest: Record<string, number> = {};
-  async function optimistic(field: string, apply: () => void, undo: () => void, call: () => Promise<unknown> | void) {
+  const settled: Record<string, number> = {};
+  const lostLatest: Record<string, number> = {};
+  const accepted: Record<string, { value: unknown }> = {};
+  async function optimistic<T>(field: string, value: T, set: (v: T) => void, host: () => T, call: () => Promise<unknown> | void) {
     const seq = (latest[field] = (latest[field] ?? 0) + 1);
     failed = null;
-    apply();
+    set(value);
     try {
       await call();
+      if (seq <= (settled[field] ?? 0)) return;
+      settled[field] = seq;
+      accepted[field] = { value };
+      if (lostLatest[field] === latest[field]) set(value);
     } catch {
       if (latest[field] !== seq) return;
-      undo();
+      lostLatest[field] = seq;
+      set(field in accepted ? (accepted[field].value as T) : host());
       failed = 'ui.dmPanel.actionFailed';
     }
   }
 
+  // a new value from the host replaces whatever was accepted before it
+  $effect.pre(() => {
+    void muted;
+    untrack(() => delete accepted.mute);
+  });
+  $effect.pre(() => {
+    void fav;
+    untrack(() => delete accepted.fav);
+  });
+
   function setMute(key: MuteKey | null) {
-    const was = isMuted;
     muteMenu = null;
     optimistic(
       'mute',
-      () => (isMuted = key),
-      () => (isMuted = was),
+      key,
+      (v) => (isMuted = v),
+      () => muted,
       () => onMuteChange?.(key),
     );
   }
@@ -148,8 +167,9 @@
     const next = !isFav;
     optimistic(
       'fav',
-      () => (isFav = next),
-      () => (isFav = !next),
+      next,
+      (v) => (isFav = v),
+      () => fav,
       () => onToggleFavourite(next),
     );
   }

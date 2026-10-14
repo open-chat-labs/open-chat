@@ -196,11 +196,17 @@
     }
   }
 
+  // nothing leaves the dialog while an attach is pending: its result (or error) has to be seen here
+  function dismiss() {
+    if (!busy) onClose?.();
+  }
+
   function onKey(e: KeyboardEvent) {
     if (e.key === 'Escape') {
       e.stopPropagation();
+      if (busy) return;
       if (narrowEdit) view = 'browse';
-      else onClose?.();
+      else dismiss();
     } else if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
       generate();
@@ -282,12 +288,12 @@
 {/snippet}
 
 <div class="layer" class:wide style:z-index={z}>
-  <div class="scrim" onclick={() => onClose?.()} aria-hidden="true"></div>
+  <div class="scrim" onclick={dismiss} aria-hidden="true"></div>
   <div class="dialog" bind:this={box} data-oc-managed="" tabindex="-1" role="dialog" aria-modal="true" aria-label={t('ui.memeFighterDialog.title')} onkeydown={onKey}>
     <div class="head" class:back={narrowEdit}>
-      {#if narrowEdit}<IconButton variant="ghost" icon="back" label="ui.memeFighterDialog.backToTemplates" onClick={() => (view = 'browse')} />{/if}
+      {#if narrowEdit}<IconButton variant="ghost" icon="back" label="ui.memeFighterDialog.backToTemplates" onClick={() => !busy && (view = 'browse')} />{/if}
       <span class="title">{narrowEdit ? T.name : t('ui.memeFighterDialog.title')}</span>
-      <IconButton variant="ghost" icon="close" label="ui.common.close" onClick={() => onClose?.()} />
+      <IconButton variant="ghost" icon="close" label="ui.common.close" onClick={dismiss} />
     </div>
     {#if wide}
       <div class="split">

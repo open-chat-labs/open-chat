@@ -447,17 +447,53 @@
   let memberQuery = $state('');
   let unpinned = $state<string[]>([]);
 
-  // optimistic: `change` updates the panel now, `undo` restores it if the host rejects
-  async function memberAction(call: () => Promise<unknown> | void, change: () => void, undo: () => void) {
+  // optimistic: `change` updates the panel now, `undo` restores it if the host rejects. With `isLatest`, a rejection
+  // that a newer change has already superseded neither undoes anything nor shows an error; `onDone` runs on success.
+  async function memberAction(
+    call: () => Promise<unknown> | void,
+    change: () => void,
+    undo: () => void,
+    opts: { isLatest?: () => boolean; onDone?: () => void } = {},
+  ) {
     popover = null;
     actionError = '';
     change();
     try {
       await call();
+      opts.onDone?.();
     } catch {
+      if (opts.isLatest && !opts.isLatest()) return;
       undo();
       actionError = t('ui.groupPanel.actionFailed');
     }
+  }
+
+  // overlapping changes to one thing (a member's role, the mute): the latest call decides. When it rejects, the value
+  // falls back to the one the host last accepted (never to an earlier optimistic value it didn't confirm); an older
+  // call that succeeds after every newer one failed still lands, since that's what the host has now.
+  type Track = { seq: number; settled: number; lost: number; accepted?: { value: unknown } };
+  const tracks: Record<string, Track> = {};
+  function tracked<T>(key: string, value: T, current: () => T, set: (v: T) => void, call: () => Promise<unknown> | void) {
+    const tr = (tracks[key] ??= { seq: 0, settled: 0, lost: 0 });
+    tr.accepted ??= { value: current() };
+    const seq = ++tr.seq;
+    memberAction(
+      call,
+      () => set(value),
+      () => {
+        tr.lost = seq;
+        set(tr.accepted!.value as T);
+      },
+      {
+        isLatest: () => tr.seq === seq,
+        onDone: () => {
+          if (seq <= tr.settled) return;
+          tr.settled = seq;
+          tr.accepted = { value };
+          if (tr.lost === tr.seq) set(value);
+        },
+      },
+    );
   }
   let ownMute = $state<MuteKey | null>(null);
   let ownMuteAll = $state(false);
@@ -563,31 +599,14 @@
     return { top: r.bottom - b.top + 6, left: Math.max(16, Math.min(r.left - b.left, b.width - 232)) };
   };
 
-  // overlapping changes: a rejected call only rolls back if nothing newer has been asked for since
-  let muteSeq = 0;
-  let muteAllSeq = 0;
-
   function setMute(key: MuteKey | null) {
     muteMenu = null;
-    const before = ownMute, seq = ++muteSeq;
-    memberAction(
-      () => onMuteChange?.(key),
-      () => (ownMute = key),
-      () => {
-        if (seq === muteSeq) ownMute = before;
-      },
-    );
+    tracked<MuteKey | null>('mute', key, () => ownMute, (v) => (ownMute = v), () => onMuteChange?.(key));
   }
 
   function toggleMuteAll() {
-    const next = !muteAll, before = ownMuteAll, seq = ++muteAllSeq;
-    memberAction(
-      () => onMuteEveryoneChange?.(next),
-      () => (ownMuteAll = next),
-      () => {
-        if (seq === muteAllSeq) ownMuteAll = before;
-      },
-    );
+    const next = !muteAll;
+    tracked('muteAll', next, () => ownMuteAll, (v) => (ownMuteAll = v), () => onMuteEveryoneChange?.(next));
   }
 
   function unpin(messageId: string) {
@@ -652,7 +671,7 @@
             roles = rest;
           } else roles = { ...roles, [m.handle]: v };
         };
-        memberAction(() => onRoleChange(m, (r || 'MEMBER') as MemberRole), () => put(r), () => put(before));
+        tracked<string | null | undefined>(self ? 'role:\u0000you' : `role:${m.handle}`, r, () => before, put, () => onRoleChange(m, (r || 'MEMBER') as MemberRole));
       };
       const roleItems: MenuItem[] =
         blockedTab || !canChangeRoles || !onRoleChange

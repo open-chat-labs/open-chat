@@ -8097,7 +8097,7 @@
       {
         "name": "memberUntil",
         "type": "string",
-        "default": "",
+        "default": null,
         "editor": "text",
         "options": null,
         "section": null,
@@ -14297,7 +14297,7 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": null,
+        "componentDefault": "[]",
         "doc": "Pickable recipients (a group), when there is no fixed one; each has the user id."
       },
       {
@@ -16151,7 +16151,7 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": null,
+        "componentDefault": "[]",
         "doc": "Transactions to show ({ id, symbol, kind, title, timestamp, context?, amount, fiat, status? }); the host keeps statuses current."
       },
       {
@@ -16162,7 +16162,7 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": null,
+        "componentDefault": "[]",
         "doc": "Tokens offered on Receive that you don't hold yet."
       },
       {
@@ -16173,7 +16173,7 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": null,
+        "componentDefault": "[]",
         "doc": "Saved recipients."
       },
       {
@@ -16582,7 +16582,7 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": null,
+        "componentDefault": "{}",
         "doc": "The user's own receiving address per network. A network without one shows no address, copy, share or QR."
       },
       {
@@ -16593,7 +16593,7 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": null,
+        "componentDefault": "[]",
         "doc": "Chats the address can be shared to ({ id, name, kind?, grad?, radius? }). Share is hidden without chats or onShare."
       },
       {
@@ -16780,7 +16780,7 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": null,
+        "componentDefault": "[]",
         "doc": "People to pick from in \"OpenChat user\" mode. Without any, only the address mode is useful."
       },
       {
@@ -16802,7 +16802,7 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": null,
+        "componentDefault": "{}",
         "doc": "Current fee (in BTC) for sending BTC to a Bitcoin address natively or as ckBTC; a route without a fee can't be used."
       },
       {
@@ -17026,7 +17026,7 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": null,
+        "componentDefault": "[]",
         "doc": "DEX names shown while a quote is found."
       },
       {

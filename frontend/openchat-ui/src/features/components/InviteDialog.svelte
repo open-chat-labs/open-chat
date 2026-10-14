@@ -215,9 +215,10 @@
     if (!addPicked.length || !onAdd) return;
     const ids = addPicked.slice();
     if (!(await attempt('add', () => onAdd(ids)))) return;
-    // done: clear the picks (so the same people can't be sent twice) and confirm, embedded or not
-    addPicked = [];
-    addQuery = '';
+    // done: drop the people just added (so they can't be sent twice) and confirm, embedded or not; anyone picked while
+    // the call was pending stays picked
+    addPicked = addPicked.filter((id) => !ids.includes(id));
+    if (!addPicked.length) addQuery = '';
     showToast(t('ui.inviteDialog.peopleAdded', { count: ids.length }));
   }
 
@@ -225,8 +226,8 @@
     if (!picked.length || !onInvite) return;
     const ids = picked.slice();
     if (!(await attempt('invite', () => onInvite(ids)))) return;
-    picked = [];
-    query = '';
+    picked = picked.filter((id) => !ids.includes(id));
+    if (!picked.length) query = '';
     showToast(t('ui.inviteDialog.invitesSent', { count: ids.length }));
   }
 

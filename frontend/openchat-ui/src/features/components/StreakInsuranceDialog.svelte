@@ -66,8 +66,9 @@
   onDestroy(() => clearTimeout(timer));
 
   // play the exit animation, then hand control back
+  // a purchase in flight can't be dismissed: its result (charged or failed) must be seen
   function leave(then?: () => void) {
-    if (closing) return;
+    if (closing || buying) return;
     closing = true;
     timer = setTimeout(() => then?.(), 170);
   }

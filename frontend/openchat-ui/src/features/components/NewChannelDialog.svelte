@@ -90,7 +90,8 @@
   }
 
   async function create() {
-    if (!ok || creating) return;
+    // nothing new once closing (cancelled, or the exit after a success)
+    if (!ok || creating || closing) return;
     const result = { name, about, isPublic, embedded, url: url.trim() };
     creating = true;
     failed = false;

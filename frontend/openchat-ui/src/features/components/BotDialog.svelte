@@ -170,16 +170,16 @@
   // the card animates out before the parent hears about it
   function close(then?: () => void) {
     if (closing) return;
+    // like the other dialogs: once it leaves it never comes back; the host unmounts it
     closing = true;
     timer = setTimeout(() => {
-      closing = false;
       then?.();
     }, 170);
   }
 
   // waits on the host; closes when it resolves, stays with an error when it rejects
   async function run(call: () => Promise<unknown> | void) {
-    if (busy) return;
+    if (busy || closing) return;
     busy = true;
     failed = false;
     try {
@@ -194,7 +194,8 @@
   }
 
   function primary() {
-    if (busy || viewOnly) return;
+    // nothing new once closing (cancelled, or the exit after a success)
+    if (busy || closing || viewOnly) return;
     if (isRemove) {
       if (onRemove) run(() => onRemove({ botId: bot.id }));
     } else if (isConfigure) {
@@ -212,7 +213,7 @@
   }
 </script>
 
-<div class="layer" role="dialog" aria-modal="true" use:modal={() => !busy && close(onCancel)}>
+<div class="layer" class:closing role="dialog" aria-modal="true" use:modal={closing ? undefined : () => !busy && close(onCancel)}>
   <div class="veil" class:closing onclick={() => !busy && close(onCancel)} aria-hidden="true"></div>
   <div class="card" class:closing>
     <div class="header">
@@ -364,6 +365,10 @@
 </div>
 
 <style>
+  .layer.closing {
+    pointer-events: none;
+  }
+
   .layer {
     position: fixed;
     inset: 0;

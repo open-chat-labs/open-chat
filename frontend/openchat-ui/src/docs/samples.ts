@@ -560,7 +560,8 @@ export const samples: Record<string, Record<string, unknown>> = {
   WalletSend: { tokens: walletTokens, ...sendDemo, ...sendExtras },
   WalletSwap: { tokens: walletTokens, ...swapDemo },
   WalletRecipients: { tokens: walletTokens, recipients: walletRecipients, ...recipientsDemo },
-  DiamondDialog: { tokens: walletTokens, depositAddress: depositAddress, ...diamondDemo },
+  // review2-rollback: a timed member always has a future end date
+  DiamondDialog: { tokens: walletTokens, depositAddress: depositAddress, memberUntil: new Date(Date.now() + 90 * 864e5).toISOString().slice(0, 10), ...diamondDemo },
   SendCryptoDialog: { tokens: cryptoTokens.slice(0, 4), members: cryptoMembers },
   SwapOfferDialog: { tokens: cryptoTokens },
   BotDialog: { bot: botCatalog.ReminderBot, canManage: true, onInstall: () => wait(500), onRemove: () => wait(500) },

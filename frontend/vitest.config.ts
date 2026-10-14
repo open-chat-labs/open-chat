@@ -53,13 +53,15 @@ export default defineConfig({
             "app/src/**/*.{test,spec}.ts",
             "app/*.{test,spec}.ts",
             "component-lib/src/**/*.{test,spec}.ts",
+            "openchat-ui/src/**/*.{test,spec}.ts",
             "openchat-shared/src/**/*.{test,spec}.ts",
             "openchat-client/src/**/*.{test,spec}.ts",
             "openchat-agent/src/**/*.{test,spec}.ts",
             "src-tauri/tests/**/*.{test,spec}.ts",
             "eslint-rules/**/*.{test,spec}.ts",
         ],
-        exclude: ["**/node_modules/**", "**/lib/**"],
+        // build output of the sub-packages (openchat-*/lib); openchat-ui/src/lib is source and is tested
+        exclude: ["**/node_modules/**", "*/lib/**"],
         server: {
             deps: {
                 // Inline svelte-i18n together with its intl-messageformat /

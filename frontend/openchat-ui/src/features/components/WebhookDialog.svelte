@@ -95,15 +95,16 @@
 
   function close(then?: () => void) {
     if (closing) return;
+    // like the other dialogs: once it leaves it never comes back; the host unmounts it
     closing = true;
     leaveTimer = setTimeout(() => {
-      closing = false;
       then?.();
     }, LEAVE_MS);
   }
 
   async function save() {
-    if (!valid || busy || !onSave) return;
+    // nothing new once closing (cancelled, or the exit after a success)
+    if (!valid || busy || closing || !onSave) return;
     busy = 'save';
     failed = '';
     try {
@@ -157,7 +158,7 @@
   const dismiss = () => !busy && close(onCancel);
 </script>
 
-<div class="layer" class:closing role="dialog" aria-modal="true" use:modal={dismiss}>
+<div class="layer" class:closing role="dialog" aria-modal="true" use:modal={closing ? undefined : dismiss}>
   <div class="veil" onclick={dismiss} aria-hidden="true"></div>
   <div class="card">
     <div class="head">
@@ -308,6 +309,10 @@
 </div>
 
 <style>
+  .layer.closing {
+    pointer-events: none;
+  }
+
   .layer {
     position: fixed;
     inset: 0;

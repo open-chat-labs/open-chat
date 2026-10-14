@@ -54,7 +54,8 @@
   }
 
   async function confirm() {
-    if (!target || importing) return;
+    // nothing new once closing (cancelled, or the exit after a success)
+    if (!target || importing || closing) return;
     importing = true;
     failed = false;
     try {

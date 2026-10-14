@@ -168,8 +168,17 @@
   // recipients changed through the host's own callbacks: shown here, not re-sent through onChange
   const showRecipients = (recipients: SavedRecipient[]) => (local = { ...local, recipients });
 
+  // a save or PIN call in flight can't be dismissed (sheet, PIN sheet or the whole dialog): its result decides what's next
+  const pending = $derived(!!sheet?.busy || !!pin?.busy);
+  const closeSheet = () => {
+    if (!sheet?.busy) sheet = null;
+  };
+  const closePin = () => {
+    if (!pin?.busy) pin = null;
+  };
+
   function close() {
-    if (closing) return;
+    if (closing || pending) return;
     closing = true;
     timer = setTimeout(() => onCancel?.(), 170);
   }
@@ -187,7 +196,8 @@
     sheet = { ...sheet, busy: true, error: false };
     try {
       const stored = await onSaveRecipient(editId ? { id: editId, ...fields } : fields);
-      sheet = null;
+      // only the sheet this save belongs to (still busy) closes
+      if (sheet?.busy) sheet = null;
       showRecipients(merge(stored));
     } catch {
       if (sheet) sheet = { ...sheet, busy: false, error: true };
@@ -577,7 +587,7 @@
       {@const steps = PIN_STEPS[pin.mode]}
       {@const ready = pin.value.length === 6 && !pin.busy}
       <div class="sheet-layer pin-layer">
-        <div class="sheet-veil" onclick={() => (pin = null)} aria-hidden="true"></div>
+        <div class="sheet-veil" onclick={closePin} aria-hidden="true"></div>
         <div class="sheet pin-sheet">
           {@render sheetHeader(
             t(
@@ -591,7 +601,7 @@
             ),
             steps.length > 1 ? t('ui.walletSettingsDialog.step', { step: steps.indexOf(pin.step) + 1, total: steps.length }) : '',
             true,
-            () => (pin = null),
+            closePin,
             steps.indexOf(pin.step) > 0 ? pinBack : undefined,
           )}
 
@@ -641,7 +651,7 @@
           </div>
 
           <div class="sheet-foot">
-            <span class="cancel" onclick={() => (pin = null)} role="button" tabindex="0">{t('ui.common.cancel')}</span>
+            <span class="cancel" onclick={closePin} role="button" tabindex="0" aria-disabled={pin.busy}>{t('ui.common.cancel')}</span>
             <span class="grow"></span>
             <div class="primary" class:ready onclick={pinNext} role="button" tabindex="0">
               <span
@@ -664,9 +674,9 @@
 
     {#if sheet}
       <div class="sheet-layer recipient-layer">
-        <div class="sheet-veil" onclick={() => (sheet = null)} aria-hidden="true"></div>
+        <div class="sheet-veil" onclick={closeSheet} aria-hidden="true"></div>
         <div class="sheet recipient-sheet">
-          {@render sheetHeader(t(sheet.editId ? 'ui.walletSettingsDialog.editRecipient' : 'ui.walletSettingsDialog.addRecipient'), t('ui.walletSettingsDialog.networkDetected'), false, () => (sheet = null))}
+          {@render sheetHeader(t(sheet.editId ? 'ui.walletSettingsDialog.editRecipient' : 'ui.walletSettingsDialog.addRecipient'), t('ui.walletSettingsDialog.networkDetected'), false, closeSheet)}
 
           <div class="sheet-body">
             <div class="form-field">
@@ -724,7 +734,7 @@
           </div>
 
           <div class="sheet-foot">
-            <span class="cancel" onclick={() => (sheet = null)} role="button" tabindex="0">{t('ui.common.cancel')}</span>
+            <span class="cancel" onclick={closeSheet} role="button" tabindex="0" aria-disabled={!!sheet.busy}>{t('ui.common.cancel')}</span>
             <span class="grow"></span>
             {#if sheet.error}<span class="recip-error" role="alert">{t('ui.walletSettingsDialog.saveRecipientFailed')}</span>{/if}
             <div class="primary" class:ready={draftValid && !sheet.busy} onclick={saveRecipient} role="button" tabindex="0" aria-disabled={!draftValid || !!sheet.busy}>

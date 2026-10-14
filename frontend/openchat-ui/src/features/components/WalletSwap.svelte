@@ -269,6 +269,12 @@
     pick = null;
   }
 
+  // the swap in progress can't be left: its result (or failure) has to be shown here
+  function back() {
+    if (stage === 'progress') return;
+    onClose?.();
+  }
+
   function finish() {
     onSwapped?.({ from: f.symbol, to: t.symbol, amount: n, out, fiat: usdIn, fromDp: f.dp, toDp: t.dp });
     onClose?.();
@@ -277,7 +283,7 @@
 
 <div class="swap" bind:clientWidth={width} data-screen-label="Wallet swap">
   {#if f && t}
-    <PageHeader title={tr('ui.walletSwap.titleToken', { symbol: f.symbol })} onBack={() => onClose?.()} avatarMark={f.mark} avatarGradient={f.grad}
+    <PageHeader title={tr('ui.walletSwap.titleToken', { symbol: f.symbol })} onBack={back} avatarMark={f.mark} avatarGradient={f.grad}
       ><StepIndicator steps={[tr('ui.walletSwap.step.details'), tr('ui.walletSwap.step.quote'), tr('ui.walletSwap.step.swap')]} current={stepIdx} complete={done} compact={narrow} /></PageHeader
     >
     <div class="scroll">

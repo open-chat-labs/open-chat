@@ -18,6 +18,7 @@
 </script>
 
 <script lang="ts">
+  import { untrack } from 'svelte';
   import TimedToggle from '../../lib/components/TimedToggle.svelte';
   import { useT } from '../../lib/i18n';
 
@@ -39,34 +40,51 @@
   let receipts = $derived(readReceipts);
   let failed = $state(false);
 
-  // optimistic: apply now, put the previous values back if the host rejects — only when the rejected call is still the
-  // latest for that field (a newer change may already have replaced it)
+  // optimistic changes per field: shown at once. When the latest call for a field rejects, the field falls back to the
+  // value the host last accepted (or its prop), never to an earlier optimistic value it didn't confirm. An older call
+  // that succeeds after every newer one failed still lands, since that's what the host has now.
   const latest: Record<string, number> = {};
-  async function save(field: string, apply: () => void, undo: () => void, call: () => Promise<unknown> | void) {
+  const settled: Record<string, number> = {};
+  const lostLatest: Record<string, number> = {};
+  const accepted: Record<string, { value: unknown }> = {};
+  async function optimistic<T>(field: string, value: T, set: (v: T) => void, host: () => T, call: () => Promise<unknown> | void) {
     const seq = (latest[field] = (latest[field] ?? 0) + 1);
     failed = false;
-    apply();
+    set(value);
     try {
       await call();
+      if (seq <= (settled[field] ?? 0)) return;
+      settled[field] = seq;
+      accepted[field] = { value };
+      if (lostLatest[field] === latest[field]) set(value);
     } catch {
       if (latest[field] !== seq) return;
-      undo();
+      lostLatest[field] = seq;
+      set(field in accepted ? (accepted[field].value as T) : host());
       failed = true;
     }
   }
 
+  // a new value from the host replaces whatever was accepted before it
+  $effect.pre(() => {
+    void disappearOn;
+    void disappearAfter;
+    untrack(() => delete accepted.disappear);
+  });
+  $effect.pre(() => {
+    void readReceipts;
+    untrack(() => delete accepted.receipts);
+  });
+
   function setDisappear(nextOn: boolean, nextAfter: string) {
-    const was = { on, after };
-    save(
+    optimistic(
       'disappear',
-      () => {
-        on = nextOn;
-        after = nextAfter;
+      { on: nextOn, after: nextAfter },
+      (v) => {
+        on = v.on;
+        after = v.after;
       },
-      () => {
-        on = was.on;
-        after = was.after;
-      },
+      () => ({ on: disappearOn, after: disappearAfter }),
       () => onDisappearChange?.({ on: nextOn, after: nextAfter, afterMs: durationMs(nextAfter) }),
     );
   }
@@ -93,10 +111,11 @@
       class:on={receipts}
       onclick={() => {
         const next = !receipts;
-        save(
+        optimistic(
           'receipts',
-          () => (receipts = next),
-          () => (receipts = !next),
+          next,
+          (v) => (receipts = v),
+          () => readReceipts,
           () => onReadReceiptsChange?.(next),
         );
       }}
