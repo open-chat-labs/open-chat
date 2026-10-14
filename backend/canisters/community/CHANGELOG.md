@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Tell the LocalUserIndex when the jobs replacing migrated users' old ids have completed ([#9949](https://github.com/open-chat-labs/open-chat/pull/9949))
 - Don't report the community complete while a group's members are still being imported, and show what was last reported in the metrics ([#9950](https://github.com/open-chat-labs/open-chat/pull/9950))
 - Resolve a User canister's id to the user's latest id when removing, blocking or paying a member, and refuse one which can't be resolved, unless it's a bot's ([#9953](https://github.com/open-chat-labs/open-chat/pull/9953))
+- Replace old user ids in the mentions in the created event's description, report notes, freeze reasons and bot command text ([#9954](https://github.com/open-chat-labs/open-chat/pull/9954))
 
 ### Removed
 

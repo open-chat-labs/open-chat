@@ -9,6 +9,7 @@ use std::collections::HashMap;
 use std::time::Duration;
 use tracing::{error, info, trace};
 use types::{CanisterId, TimestampMillis, UserId};
+use utils::mentions::replace_mentioned_users;
 
 const MAX_INSTRUCTIONS_PER_BATCH: u64 = 2_000_000_000;
 const MAX_USER_IDS_PER_LOOKUP: usize = 5_000;
@@ -243,6 +244,13 @@ fn update_heap(data: &mut Data, migration: &mut UserIdsInStateMigration<StatePos
     data.bots.update_added_by(f, now);
     if let Some(frozen) = data.frozen.value.as_mut() {
         frozen.frozen_by = f(frozen.frozen_by);
+        if let Some(reason) = frozen
+            .reason
+            .as_deref()
+            .and_then(|reason| replace_mentioned_users(reason, &mut *f))
+        {
+            frozen.reason = Some(reason);
+        }
     }
     data.total_payment_receipts.update_user_ids(f);
 }
@@ -345,7 +353,7 @@ mod tests {
             Some(FrozenGroupInfo {
                 timestamp: 0,
                 frozen_by: old_user_id(5),
-                reason: None,
+                reason: Some(format!("Reported by @UserId({})", old_user_id(2))),
             }),
             0,
         );
@@ -420,6 +428,10 @@ mod tests {
         assert_eq!(data.chat.description.value, format!("Run by @UserId({})", new_user_id(1)));
         assert_eq!(data.bots.get(&bot_id()).unwrap().added_by, new_user_id(1));
         assert_eq!(data.frozen.value.as_ref().unwrap().frozen_by, new_user_id(5));
+        assert_eq!(
+            data.frozen.value.as_ref().unwrap().reason,
+            Some(format!("Reported by @UserId({})", new_user_id(2)))
+        );
         assert_eq!(data.expiring_members.user_ids().collect::<Vec<_>>(), vec![new_user_id(2)]);
         assert_eq!(data.achievements.user_ids().collect::<Vec<_>>(), vec![new_user_id(2)]);
         assert_eq!(data.user_cache.user_ids().collect::<Vec<_>>(), vec![new_user_id(2)]);

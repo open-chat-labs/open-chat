@@ -303,7 +303,10 @@ impl CommunityEventInternal {
         let mut updater = UserIdUpdater::new(f);
         let u = &mut updater;
         match self {
-            CommunityEventInternal::Created(e) => u.id(&mut e.created_by),
+            CommunityEventInternal::Created(e) => {
+                u.id(&mut e.created_by);
+                u.mentions(&mut e.description);
+            }
             CommunityEventInternal::NameChanged(e) => u.id(&mut e.changed_by),
             CommunityEventInternal::DescriptionChanged(e) => {
                 u.id(&mut e.changed_by);
@@ -345,7 +348,10 @@ impl CommunityEventInternal {
             CommunityEventInternal::PermissionsChanged(e) => u.id(&mut e.changed_by),
             CommunityEventInternal::VisibilityChanged(e) => u.id(&mut e.changed_by),
             CommunityEventInternal::InviteCodeChanged(e) => u.id(&mut e.changed_by),
-            CommunityEventInternal::Frozen(e) => u.id(&mut e.frozen_by),
+            CommunityEventInternal::Frozen(e) => {
+                u.id(&mut e.frozen_by);
+                u.optional_mentions(&mut e.reason);
+            }
             CommunityEventInternal::Unfrozen(e) => u.id(&mut e.unfrozen_by),
             CommunityEventInternal::GateUpdated(e) => u.id(&mut e.updated_by),
             CommunityEventInternal::ChannelCreated(e) => u.id(&mut e.created_by),
@@ -470,6 +476,30 @@ mod tests {
         assert_eq!(e.new_description, format!("@UserId({})", user_id(11)));
         assert_eq!(e.previous_description, format!("@UserId({})", user_id(3)));
         assert_eq!(e.changed_by, user_id(12));
+    }
+
+    #[test]
+    fn mentions_in_the_communitys_creation_and_freezing_are_replaced() {
+        let mut created = CommunityEventInternal::Created(Box::new(GroupCreated {
+            name: "community".to_string(),
+            description: format!("@UserId({})", user_id(1)),
+            created_by: user_id(3),
+        }));
+        assert!(created.update_user_ids(&mut latest));
+        let CommunityEventInternal::Created(e) = created else {
+            panic!();
+        };
+        assert_eq!(e.description, format!("@UserId({})", user_id(11)));
+
+        let mut frozen = CommunityEventInternal::Frozen(Box::new(GroupFrozen {
+            frozen_by: user_id(3),
+            reason: Some(format!("@UserId({})", user_id(2))),
+        }));
+        assert!(frozen.update_user_ids(&mut latest));
+        let CommunityEventInternal::Frozen(e) = frozen else {
+            panic!();
+        };
+        assert_eq!(e.reason, Some(format!("@UserId({})", user_id(12))));
     }
 
     #[test]

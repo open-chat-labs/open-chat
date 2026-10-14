@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Award external achievements to users' latest ids, refusing any id which isn't a user's ([#9953](https://github.com/open-chat-labs/open-chat/pull/9953))
+- Tell the storage buckets the vault reviewers' latest ids ([#9954](https://github.com/open-chat-labs/open-chat/pull/9954))
 
 ### Removed
 

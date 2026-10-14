@@ -378,6 +378,13 @@ fn update_community_heap(data: &mut Data, migration: &mut UserIdsInStateMigratio
     data.bots.update_added_by(f, now);
     if let Some(frozen) = data.frozen.value.as_mut() {
         frozen.frozen_by = f(frozen.frozen_by);
+        if let Some(reason) = frozen
+            .reason
+            .as_deref()
+            .and_then(|reason| replace_mentioned_users(reason, &mut *f))
+        {
+            frozen.reason = Some(reason);
+        }
     }
     data.total_payment_receipts.update_user_ids(f);
     // The description's and rules' timestamps are moved on if they change, but neither counts towards
@@ -478,7 +485,7 @@ mod tests {
             Some(FrozenGroupInfo {
                 timestamp: 0,
                 frozen_by: old_user_id(5),
-                reason: None,
+                reason: Some(format!("Reported by @UserId({})", old_user_id(2))),
             }),
             0,
         );
@@ -579,6 +586,10 @@ mod tests {
         assert_eq!(data.description.value, format!("Run by @UserId({})", new_user_id(1)));
         assert_eq!(data.bots.get(&bot_id()).unwrap().added_by, new_user_id(1));
         assert_eq!(data.frozen.value.as_ref().unwrap().frozen_by, new_user_id(5));
+        assert_eq!(
+            data.frozen.value.as_ref().unwrap().reason,
+            Some(format!("Reported by @UserId({})", new_user_id(2)))
+        );
         let mut receipts = data.total_payment_receipts.clone();
         assert!(!receipts.update_user_ids(&mut |user_id| {
             assert_ne!(user_id, old_user_id(2));
