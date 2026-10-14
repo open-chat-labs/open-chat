@@ -25,11 +25,9 @@ fn init(args: InitOrUpgradeArgs) {
         set_salt(salt, 0, init_args.rsa_private_key_pem)
     } else {
         ic_cdk_timers::set_timer(Duration::ZERO, async {
-            ic_cdk::futures::spawn_migratory(async {
-                let salt: [u8; 32] = ic_cdk_management_canister::raw_rand().await.unwrap().try_into().unwrap();
+            let salt: [u8; 32] = ic_cdk_management_canister::raw_rand().await.unwrap().try_into().unwrap();
 
-                set_salt(salt, env::now(), None);
-            })
+            set_salt(salt, env::now(), None);
         });
     }
 }

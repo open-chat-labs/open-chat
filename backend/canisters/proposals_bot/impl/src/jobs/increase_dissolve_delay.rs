@@ -20,7 +20,7 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
             .get_neuron_in_need_of_dissolve_delay_increase()
             .is_some()
     {
-        let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, async { run() });
+        let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, run());
         TIMER_ID.set(Some(timer_id));
         true
     } else {
@@ -28,16 +28,17 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     }
 }
 
-pub fn run() {
+pub async fn run() {
     trace!("'increase_dissolve_delay' job running");
     TIMER_ID.set(None);
 
     if let Some(neuron) = mutate_state(|state| state.data.nervous_systems.get_neuron_in_need_of_dissolve_delay_increase()) {
-        utils::async_work::spawn_tracked(increase_dissolve_delay(
+        increase_dissolve_delay(
             neuron.governance_canister_id,
             neuron.neuron_id,
             neuron.additional_dissolve_delay_seconds,
-        ));
+        )
+        .await;
     }
 }
 

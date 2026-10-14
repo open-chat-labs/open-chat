@@ -44,13 +44,13 @@ pub(crate) fn schedule(refresh: bool, delay: Duration) {
     if let Some(timer_id) = TIMER_ID.take() {
         ic_cdk_timers::clear_timer(timer_id);
     }
-    let timer_id = ic_cdk_timers::set_timer(delay, async move { run(refresh) });
+    let timer_id = ic_cdk_timers::set_timer(delay, run(refresh));
     TIMER_ID.set(Some(timer_id));
 }
 
-fn run(refresh: bool) {
+async fn run(refresh: bool) {
     TIMER_ID.set(None);
-    utils::async_work::spawn_tracked(push(refresh));
+    push(refresh).await;
 }
 
 fn retry_delay(attempt: u32) -> Duration {

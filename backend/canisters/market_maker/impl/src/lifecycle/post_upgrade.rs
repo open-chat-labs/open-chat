@@ -28,7 +28,5 @@ fn post_upgrade(args: Args) {
     let total_instructions = ic_cdk::api::call_context_instruction_counter();
     info!(version = %args.wasm_version, total_instructions, "Post-upgrade complete");
 
-    ic_cdk_timers::set_timer(Duration::ZERO, async {
-        utils::async_work::spawn_tracked(exchanges::icdex::deposit_funds())
-    });
+    ic_cdk_timers::set_timer(Duration::ZERO, exchanges::icdex::deposit_funds());
 }

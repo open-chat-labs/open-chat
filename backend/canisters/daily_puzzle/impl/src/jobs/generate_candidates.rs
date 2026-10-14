@@ -53,7 +53,7 @@ fn run() {
             // The rng has not been seeded yet. The reseed calls back here once it lands, and
             // re-issues itself if raw_rand rejected, so there is nothing to re-arm. Issued from a
             // fresh timer rather than inside this borrow of the state.
-            ic_cdk_timers::set_timer(Duration::ZERO, async { crate::lifecycle::reseed_rng() });
+            ic_cdk_timers::set_timer(Duration::ZERO, crate::lifecycle::reseed_rng());
             return;
         }
         match state.data.begin_generation(now) {

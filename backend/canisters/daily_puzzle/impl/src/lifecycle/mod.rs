@@ -21,7 +21,7 @@ thread_local! {
 
 fn init_env(rng_seed: [u8; 32]) -> Box<CanisterEnv> {
     let canister_env = if rng_seed == [0; 32] {
-        ic_cdk_timers::set_timer(Duration::ZERO, async { reseed_rng() });
+        ic_cdk_timers::set_timer(Duration::ZERO, reseed_rng());
         CanisterEnv::default()
     } else {
         CanisterEnv::new(rng_seed)
@@ -48,33 +48,30 @@ fn init_state(env: Box<dyn Environment>, mut data: Data, wasm_version: BuildVers
 // `utils::canister::get_random_seed` does, left the canister with no seed and no retry, and an
 // upgrade did not help because `pre_upgrade` had already written a non-zero `rng_seed`. So this
 // retries itself, and `generate_candidates` calls it whenever it finds the seed missing.
-pub(crate) fn reseed_rng() {
+pub(crate) async fn reseed_rng() {
     if !claim_reseed() {
         return;
     }
-    utils::async_work::spawn_tracked(reseed_rng_inner());
 
-    async fn reseed_rng_inner() {
-        let result = try_get_random_seed().await;
-        RESEED_IN_FLIGHT.set(false);
-        let seed = match on_seed(result) {
-            Reseed::Set(seed) => seed,
-            Reseed::Retry(error) => {
-                error!(error, "Failed to get a random seed, retrying");
-                ic_cdk_timers::set_timer(RESEED_RETRY_DELAY, async { reseed_rng() });
-                return;
-            }
-        };
-        mutate_state(|state| {
-            state.data.rng_seed = seed;
-            if state.data.master_seed == 0 {
-                state.data.master_seed = u64::from_le_bytes(seed[..8].try_into().unwrap());
-            }
-            state.env = Box::new(CanisterEnv::new(seed));
-            generate_candidates::start_job_if_required(state);
-        });
-        trace!("Successfully reseeded rng");
-    }
+    let result = try_get_random_seed().await;
+    RESEED_IN_FLIGHT.set(false);
+    let seed = match on_seed(result) {
+        Reseed::Set(seed) => seed,
+        Reseed::Retry(error) => {
+            error!(error, "Failed to get a random seed, retrying");
+            ic_cdk_timers::set_timer(RESEED_RETRY_DELAY, reseed_rng());
+            return;
+        }
+    };
+    mutate_state(|state| {
+        state.data.rng_seed = seed;
+        if state.data.master_seed == 0 {
+            state.data.master_seed = u64::from_le_bytes(seed[..8].try_into().unwrap());
+        }
+        state.env = Box::new(CanisterEnv::new(seed));
+        generate_candidates::start_job_if_required(state);
+    });
+    trace!("Successfully reseeded rng");
 }
 
 // One reseed in flight at a time: `generate_candidates` asks for one every time it finds no seed

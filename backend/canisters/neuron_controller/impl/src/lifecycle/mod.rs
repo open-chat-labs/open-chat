@@ -13,7 +13,7 @@ mod pre_upgrade;
 
 fn init_env(rng_seed: [u8; 32]) -> Box<CanisterEnv> {
     let canister_env = if rng_seed == [0; 32] {
-        ic_cdk_timers::set_timer(Duration::ZERO, async { reseed_rng() });
+        ic_cdk_timers::set_timer(Duration::ZERO, reseed_rng());
         CanisterEnv::default()
     } else {
         CanisterEnv::new(rng_seed)
@@ -23,7 +23,7 @@ fn init_env(rng_seed: [u8; 32]) -> Box<CanisterEnv> {
 
 fn init_state(env: Box<dyn Environment>, data: Data, wasm_version: BuildVersion) {
     if data.public_key.is_empty() {
-        ic_cdk_timers::set_timer(Duration::ZERO, async { init_public_key() });
+        ic_cdk_timers::set_timer(Duration::ZERO, init_public_key());
     }
 
     let now = env.now();
@@ -34,27 +34,19 @@ fn init_state(env: Box<dyn Environment>, data: Data, wasm_version: BuildVersion)
     WASM_VERSION.set(Timestamped::new(wasm_version, now));
 }
 
-fn reseed_rng() {
-    utils::async_work::spawn_tracked(reseed_rng_inner());
-
-    async fn reseed_rng_inner() {
-        let seed = get_random_seed().await;
-        mutate_state(|state| {
-            state.data.rng_seed = seed;
-            state.env = Box::new(CanisterEnv::new(seed))
-        });
-        trace!("Successfully reseeded rng");
-    }
+async fn reseed_rng() {
+    let seed = get_random_seed().await;
+    mutate_state(|state| {
+        state.data.rng_seed = seed;
+        state.env = Box::new(CanisterEnv::new(seed))
+    });
+    trace!("Successfully reseeded rng");
 }
 
-fn init_public_key() {
-    utils::async_work::spawn_tracked(init_public_key_inner());
+async fn init_public_key() {
+    let key_id = get_key_id(false);
 
-    async fn init_public_key_inner() {
-        let key_id = get_key_id(false);
-
-        if let Ok(public_key) = get_public_key(key_id).await {
-            mutate_state(|state| state.data.public_key = public_key);
-        }
+    if let Ok(public_key) = get_public_key(key_id).await {
+        mutate_state(|state| state.data.public_key = public_key);
     }
 }
