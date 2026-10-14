@@ -1,4 +1,6 @@
 // Demo-only data for the docs page (components carry no sample data of their own).
+import type { GroupMessage, MenuItem, MessageGroupItem, TokenOption } from '../lib/types';
+
 const icon = (n: string) => `var(--icon-${n}) center/contain no-repeat`;
 
 const chats = [
@@ -354,3 +356,291 @@ export const samples: Record<string, Record<string, unknown>> = {
     ],
   },
 };
+
+// ─── General · icons … token avatars ─────────────────────────────────────────────────────────────────
+
+// Demo data for the General group, sections icons … token-avatars (merged into samples.ts later).
+
+
+export const contextMenuItems: MenuItem[] = [
+  { label: 'Add to favourites', mask: icon('heart') },
+  { label: 'Mute notifications', mask: icon('bell-off') },
+  { label: 'Mark as read', mask: icon('check') },
+  { label: 'Leave group', variant: 'danger', mask: icon('leave') },
+];
+
+export const menuDemo: MenuItem[] = [
+  { label: 'Reply', icon: 'reply', shortcut: 'R' },
+  { label: 'Forward', icon: 'forward' },
+  { label: 'Copy text', icon: 'copy', shortcut: '⌘C' },
+  { label: 'Delete', variant: 'danger', icon: 'trash' },
+];
+
+export const sortMenu: MenuItem[] = [
+  { label: 'Newest first', checkMask: icon('check') },
+  { label: 'Oldest first' },
+  { label: 'Most members' },
+];
+
+export const contextRows = [
+  { title: 'Design Guild', preview: 'Ana: Agreed — scale first, then components.', time: '11:15', kind: 'group', color: 'violet', unreadCount: 4 },
+  { title: 'Lucy Linden', preview: 'See you at the meetup!', time: '10:02', kind: 'user', color: 'teal', online: true, verified: true },
+  { title: 'announcements', preview: 'v3 ships next week 🎉', time: 'Tue', kind: 'channel', color: 'amber', unreadCount: 12, muted: true },
+] as const;
+
+export const pickerTokens: TokenOption[] = [
+  { symbol: 'ICP', name: 'Internet Computer', mark: '∞', gradient: 'linear-gradient(140deg,#ff5f9e,#6a2bff)', held: '4,820' },
+  { symbol: 'CHAT', name: 'OpenChat', mark: 'C', gradient: 'linear-gradient(140deg,#2EE6A8,#1FB6FF)', held: '132.33' },
+  { symbol: 'BTC', name: 'Bitcoin', mark: '₿', gradient: 'linear-gradient(140deg,#F7A63B,#F7931A)', held: '0.0213' },
+  { symbol: 'USDT', name: 'Tether', mark: 'T', gradient: 'linear-gradient(140deg,#4BD6A8,#1E9E7E)' },
+  { symbol: 'ETH', name: 'Ethereum', mark: 'Ξ', gradient: 'linear-gradient(140deg,#8C9EFF,#5C6BC0)' },
+  { symbol: 'GHOST', note: 'Not supported for swaps yet', mark: 'G', gradient: 'linear-gradient(140deg,#B48CFF,#6A5CFF)' },
+];
+
+// ─── General · page header … progress timeline ───────────────────────────────────────────────────────
+
+// Demo data for the General group, page-header … progress-timeline (merged into samples.ts later).
+
+export const tokenIcp = { symbol: 'ICP', mark: '∞', gradient: 'linear-gradient(140deg,#ff5f9e,#6a2bff)' };
+export const tokenChat = { symbol: 'CHAT', mark: 'C', gradient: 'linear-gradient(140deg,#2EE6A8,#1FB6FF)' };
+export const tokenBtc = { symbol: 'BTC', mark: '₿', gradient: 'linear-gradient(140deg,#F7A63B,#F7931A)' };
+
+export const transactions = [
+  { title: 'Received from Lucy Linden', sub: '10:42 · in The Awesome Group', amount: '+385.60 ICP', fiat: '$2,113.47', kind: 'receive' as const, ...tokenIcp, fresh: true },
+  { title: 'Sent to Matt Rivers', sub: 'Yesterday · direct chat', amount: '−12.00 CHAT', fiat: '$0.64', kind: 'send' as const, ...tokenChat },
+  { title: 'Swapped CHAT → ICP', sub: 'Mon · ICPSwap', amount: '+2.19 ICP', fiat: '$12.02', kind: 'swap' as const, ...tokenIcp, status: 'Pending', statusTone: 'warning' as const },
+  { title: 'Sent to bc1qar0…5mdq', sub: '12 Oct · Bitcoin network', amount: '−0.0012 BTC', fiat: '$74.40', kind: 'send' as const, ...tokenBtc, status: 'Failed', statusTone: 'danger' as const },
+];
+
+// people as CSS backgrounds built from theme tokens, so the stack follows mode and accent
+export const stackPeople = [
+  { grad: 'linear-gradient(140deg, var(--accent-bright), var(--accent))', name: 'Lucy Linden', initial: 'L' },
+  { grad: 'linear-gradient(140deg, var(--category-a), var(--status-verified))', name: 'Matt Rivers', initial: 'M' },
+  { grad: 'linear-gradient(140deg, var(--category-b), var(--category-a))', name: 'Ana Ferreira', initial: 'A' },
+  { grad: 'linear-gradient(140deg, var(--category-c), var(--status-chit))', name: 'Priya Raman', initial: 'P' },
+  { grad: 'linear-gradient(140deg, var(--status-online), var(--category-b))', name: 'Sam Okafor', initial: 'S' },
+  { grad: 'linear-gradient(140deg, var(--status-warning), var(--accent))', name: 'Nadia Rahman', initial: 'N' },
+  { grad: 'linear-gradient(140deg, var(--category-a), var(--accent))', name: 'Otto Lindqvist', initial: 'O' },
+];
+
+export const thresholds = [
+  { at: 0.5, label: 'Majority — adopted when voting ends' },
+  { at: 0.75, label: 'Adopted immediately', strong: true },
+];
+
+export const timelineRunning = [
+  { title: 'Send to ICPSwap', steps: [{ label: 'Get deposit account', state: 'done' as const }, { label: 'Transfer 100 CHAT to ICPSwap', state: 'done' as const }, { label: 'Notify ICPSwap of the deposit', state: 'active' as const }] },
+  { title: 'Swap', steps: [{ label: 'Swap CHAT for ICP', state: 'todo' as const }] },
+  { title: 'Return to your wallet', steps: [{ label: 'Withdraw 2.19425 ICP from ICPSwap', state: 'todo' as const }] },
+];
+
+export const timelineDone = [
+  { title: 'Send to ICPSwap', steps: [{ label: 'Get deposit account', state: 'done' as const }, { label: 'Transfer 100 CHAT to ICPSwap', state: 'done' as const }, { label: 'Notify ICPSwap of the deposit', state: 'done' as const }] },
+  { title: 'Swap', steps: [{ label: 'Swap CHAT for ICP', state: 'done' as const }] },
+  { title: 'Return to your wallet', steps: [{ label: 'Withdraw 2.19425 ICP from ICPSwap', state: 'done' as const }] },
+];
+
+export const timelineFailed = [
+  { title: 'Send to ICPSwap', steps: [{ label: 'Get deposit account', state: 'done' as const }, { label: 'Transfer 100 CHAT to ICPSwap', state: 'done' as const }, { label: 'Notify ICPSwap of the deposit', state: 'done' as const }] },
+  {
+    title: 'Swap',
+    error: 'ICPSwap rejected the swap: price moved past your slippage limit.',
+    steps: [{ label: 'Swap CHAT for ICP', state: 'failed' as const }],
+  },
+  { title: 'Return to your wallet', steps: [{ label: 'Withdraw 100 CHAT from ICPSwap', state: 'todo' as const }] },
+];
+
+export const sortableStart = ['Pizza', 'Tacos', 'Sushi'];
+
+// ─── App · chat summaries … wallet blocks ────────────────────────────────────────────────────────────
+
+// Demo data for the App group's first sections (chat summaries … wallet blocks). Colours come from tokens
+// (var(--cover-*)) or reuse the gradients already in samples.ts, so nothing new is hard-coded here.
+
+const people = samples.AvatarStack.people as string[];
+const swap = samples.SwapOffer as { give: { gradient: string; mark: string }; get: { gradient: string; mark: string } };
+const tokens = samples.WalletMain.tokens as { symbol: string; mark: string; grad: string; held: number; price: number }[];
+
+export const chatRowMenu = samples.ChatRow.menuItems as MenuItem[];
+
+export const reactions = [
+  { emoji: '👍', count: 4, mine: true },
+  { emoji: '🔥', count: 2 },
+  { emoji: '😂', count: 1 },
+];
+
+export const album = [
+  { bg: 'var(--cover-teal)', w: 4, h: 3 },
+  { bg: 'var(--cover-violet)', w: 3, h: 4 },
+  { bg: 'var(--cover-amber)', w: 1, h: 1 },
+  { bg: 'var(--cover-plum)', w: 4, h: 3 },
+];
+export const wide = [{ bg: 'var(--cover-violet)', w: 16, h: 9 }];
+export const upload = [{ bg: 'var(--cover-slate)', w: 4, h: 3 }];
+
+export const icp = { symbol: 'ICP', mark: swap.give.mark, gradient: swap.give.gradient };
+export const chat = { symbol: 'CHAT', mark: swap.get.mark, gradient: swap.get.gradient };
+export const prizeToken = samples.PrizeMessage.token as { symbol: string; mark?: string; gradient?: string; edge?: string; edge2?: string };
+export const swapLegs = { give: samples.SwapOffer.give, get: samples.SwapOffer.get } as {
+  give: { amount: string; symbol: string; mark?: string; usd?: string; gradient?: string };
+  get: { amount: string; symbol: string; mark?: string; usd?: string; gradient?: string };
+};
+
+export const poll = {
+  question: 'When should we run the design review?',
+  options: [
+    { label: 'Tuesday evening', votes: 12, voters: people.slice(0, 3) },
+    { label: 'Wednesday lunch', votes: 31, voters: people.slice(1, 5) },
+    { label: 'Thursday evening', votes: 7, voters: people.slice(3, 4) },
+  ],
+};
+
+export const faces = people.slice(0, 4);
+export const groupedCalls = [
+  { state: 'ended' as const, media: 'video' as const, startedBy: 'Lucy', duration: '12:40', time: '09:12' },
+  { state: 'missed' as const, media: 'voice' as const, startedBy: 'Lucy', time: '09:40' },
+  { state: 'ended' as const, media: 'voice' as const, startedBy: 'You', duration: '3:05', time: '10:02' },
+];
+
+export const mediaTray = {
+  type: 'media' as const,
+  items: [
+    { kind: 'image' as const, bg: 'var(--cover-teal)' },
+    { kind: 'image' as const, bg: 'var(--cover-violet)' },
+    { kind: 'video' as const, bg: 'var(--cover-amber)', dur: '0:42' },
+  ],
+};
+
+export const navRail = samples.NavRail as {
+  items: { icon: 'messages' | 'bell' | 'wallet'; label?: string; dot?: boolean; count?: number }[];
+  pins: { color: 'sunset' | 'blue' | 'teal' | 'plum'; name?: string; dot?: boolean }[];
+};
+
+export const allocation = (() => {
+  const values = tokens.map((t) => t.held * t.price);
+  const total = values.reduce((a, b) => a + b, 0);
+  return tokens.map((t, i) => ({ share: values[i] / total, gradient: t.grad }));
+})();
+export const walletCoins = tokens.map((t) => ({ symbol: t.symbol, mark: t.mark, gradient: t.grad }));
+
+export const longName = 'Bartholomew Montgomery-Fitzgerald the Third, Keeper of Very Long Display Names';
+export const longGroup = 'The International Association of Decentralised Messaging Enthusiasts — Europe, Middle East & Africa chapter';
+
+// ─── App · patterns, call, puzzle, threads, dialogs ──────────────────────────────────────────────────
+
+// Demo data for the App group's pattern / call / puzzle / thread / dialog sections (merged into samples.ts later).
+
+
+export const headerMenu: MenuItem[] = [
+  { label: 'Community details', mask: icon('info') },
+  { label: 'Mute notifications', mask: icon('bell-off') },
+  { label: 'Leave community', variant: 'danger', mask: icon('leave') },
+];
+
+export const patternRows = [
+  { title: 'Danielle Moreau', section: 'Pinned', preview: 'Pushed the updated flow', time: '10:42', unreadCount: 3, color: 'violet', online: true, selected: true },
+  { title: 'The Awesome Group', kind: 'group', section: 'Pinned', preview: 'Priya: see you at 4', time: '09:18', color: 'teal', typing: true },
+  { title: 'Release Train', kind: 'group', preview: 'Julian: v2.0.2054 is on prod test', time: '08:02', unreadCount: 12, color: 'amber', muted: true },
+  { title: 'Marcus Webb', preview: 'Okay mate, that sounds good', time: 'Yest', color: 'blue', verified: true },
+  { title: 'Lucy Linden', preview: 'Voice message · 0:14', time: 'Mon', color: 'plum', liveCall: 'voice' },
+  { title: '#announcements', kind: 'channel', preview: 'Diamond members get early access', time: 'Sun', color: 'teal' },
+] as const;
+
+export const infoDetails = [
+  { label: 'Username', value: '@alice_anderson' },
+  { label: 'Member since', value: 'Nov 2021' },
+];
+
+const day = (time: string, text: string, extra: Record<string, unknown> = {}): GroupMessage => ({ text, time, ...extra }) as GroupMessage;
+
+// Pattern dividers: a short history with date dividers and the unread marker before the newest messages.
+export const dividerThread: ({ divider: string; tone: 'accent' | 'neutral' } | MessageGroupItem)[] = [
+  { divider: 'Monday', tone: 'neutral' },
+  { side: 'received', name: 'Priya Raman', color: 'teal', messages: [day('16:02', 'Did anyone check the staging build?'), day('16:03', 'The chat list jumps when a new message lands')] },
+  { side: 'sent', messages: [day('16:10', 'On it — looks like the scroll anchor resets on resize', { status: 'delivered' })] },
+  { divider: 'Yesterday', tone: 'neutral' },
+  { side: 'received', name: 'Danielle Moreau', color: 'violet', messages: [day('09:41', 'Fixed in the latest push. Pinning to newest now survives image loads.'), day('09:42', 'Can someone confirm on mobile?', { reactions: [{ emoji: '👍', count: 2 }] })] },
+  { side: 'sent', messages: [day('11:20', 'Confirmed on iOS and Android', { status: 'delivered' }), day('11:20', 'Nice work 🎉', { status: 'delivered' })] },
+  { divider: 'Unread messages', tone: 'accent' },
+  { side: 'received', name: 'Jonah Weiss', color: 'amber', messages: [day('08:05', 'Morning! Release train leaves at 3'), day('08:06', 'Please get your PRs merged before lunch'), day('08:06', "I'll post the changelog in the thread")] },
+];
+
+export const receivedGroup: GroupMessage[] = [
+  { text: 'The illustration slot is in — take a look at the spacing on mobile', time: '10:41' },
+  { text: 'Agreed, the shorter one reads better', time: '10:41', quoteName: 'You', quoteText: "Let's ship the shorter version of the copy" },
+  { text: 'Happy to iterate on the colours', time: '10:42', reactions: [{ emoji: '❤️', count: 3, mine: true }, { emoji: '🔥', count: 1 }] },
+];
+
+export const sentGroup: GroupMessage[] = [
+  { text: 'Looks great, merging now', time: '10:44', status: 'delivered' },
+  { text: 'Forwarding the release note', time: '10:45', status: 'delivered', forwarded: true },
+  { text: 'Typo fixed', time: '10:46', status: 'sent', edited: true },
+  { text: 'Shipping in 5', time: '10:46', status: 'sending' },
+];
+
+export const callPeople = [
+  { name: 'julian_jelfs', initial: 'J', grad: 'linear-gradient(140deg,#9BD94B,#4E8F2B)' },
+  { name: 'alice_anderson', initial: 'A', grad: 'linear-gradient(140deg,#B48CFF,#6A5CFF)', muted: true },
+  { name: 'priya_raman', initial: 'P', grad: 'linear-gradient(140deg,#2EE6A8,#1FB6FF)' },
+];
+
+export const tiles = [
+  { nameLabel: 'alice_anderson', ratio: 4 / 3, box: '4 / 3', w: '280px', grad: 'linear-gradient(140deg,#B48CFF,#6A5CFF)', speaking: true },
+  { nameLabel: 'julian_jelfs', ratio: 16 / 9, box: '16 / 9', w: '320px', grad: 'linear-gradient(140deg,#9BD94B,#4E8F2B)', muted: true },
+  { nameLabel: 'priya_raman', ratio: 3 / 4, box: '3 / 4', w: '180px', grad: 'linear-gradient(140deg,#2EE6A8,#1FB6FF)' },
+];
+
+export const coinSizes = [
+  { symbol: 'ICP', mark: '∞', size: 80 },
+  { symbol: 'CHAT', mark: 'C', size: 64, gradient: 'linear-gradient(140deg,#2EE6A8,#1FB6FF)', edge: '#1a8f7a', edge2: '#126b5c' },
+  { symbol: 'BTC', mark: '₿', size: 48, gradient: 'linear-gradient(140deg,#F7A63B,#F7931A)', edge: '#b8650c', edge2: '#8a4c09' },
+  { symbol: 'USDT', mark: 'T', size: 32, gradient: 'linear-gradient(140deg,#4BD6A8,#1E9E7E)', edge: '#167560', edge2: '#0f5747' },
+];
+
+export const threadGroups = [
+  {
+    name: 'The Awesome Group',
+    grad: 'linear-gradient(140deg,#2EE6A8,#1FB6FF)',
+    radius: '11px',
+    threads: [
+      { author: 'Ana Ferreira', grad: 'linear-gradient(140deg,#B48CFF,#6A5CFF)', time: '11:15', text: "Agreed. Let's decide on the scale before anyone touches a component.", count: '6 replies', unread: 2, selected: true },
+      { author: 'Priya Raman', grad: 'linear-gradient(140deg,#FFC061,#FF8A3D)', time: '09:02', text: 'Release checklist for v2.0.2054', count: '4 replies' },
+    ],
+  },
+  {
+    name: 'Danielle Moreau',
+    grad: 'linear-gradient(140deg,#B48CFF,#6A5CFF)',
+    radius: '50%',
+    threads: [{ author: 'Danielle Moreau', grad: 'linear-gradient(140deg,#B48CFF,#6A5CFF)', time: 'Yest', text: 'Onboarding copy, round two', count: '2 replies', followOnly: true }],
+  },
+];
+
+export const threadRoot = { author: 'Ana Ferreira', color: 'violet', text: "Agreed. Let's decide on the scale before anyone touches a component.", time: '11:15' };
+export const threadReplies: MessageGroupItem[] = [
+  { side: 'received', name: 'Jonah Weiss', color: 'amber', messages: [{ text: 'Spacing first, then type?', time: '11:18' }] },
+  { side: 'sent', messages: [{ text: 'Yes — 2/4/6/8 up to 32, nothing in between', time: '11:20', status: 'delivered' }] },
+  { side: 'received', name: 'Ana Ferreira', color: 'violet', messages: [{ text: "Works for me. I'll draft the tokens", time: '11:24' }] },
+];
+export const threadFaces = ['linear-gradient(140deg,#B48CFF,#6A5CFF)', 'linear-gradient(140deg,#FFC061,#FF8A3D)', 'linear-gradient(140deg,#2EE6A8,#1FB6FF)'];
+
+export const joinGate = {
+  community: { name: 'OpenChat Devs', members: 2481, grad: 'linear-gradient(140deg,#2EE6A8,#1FB6FF)' },
+  gates: [
+    { kind: 'pay', symbol: 'CHAT', amount: 50 },
+    { kind: 'balance', symbol: 'ICP', amount: 10 },
+    { kind: 'neuron', label: 'OpenChat neuron', detail: 'Staked for at least 90 days', confirm: 'I hold an OpenChat neuron staked 90+ days' },
+  ] as const,
+  tokens: [
+    { symbol: 'CHAT', held: 132.33, mark: 'C', grad: 'linear-gradient(140deg,#2EE6A8,#1FB6FF)' },
+    { symbol: 'ICP', held: 4820, mark: '∞', grad: 'linear-gradient(140deg,#ff5f9e,#6a2bff)' },
+  ],
+};
+
+// MessageActions takes the bare mask image (it adds the positioning itself)
+export const messageActionItems = [
+  { label: 'Reply', mask: 'var(--icon-reply)' },
+  { label: 'Copy text', mask: 'var(--icon-copy)' },
+  { label: 'Forward', mask: 'var(--icon-forward)' },
+  { variant: 'separator', label: '' },
+  { label: 'Delete', variant: 'danger', mask: 'var(--icon-trash)' },
+] as const;

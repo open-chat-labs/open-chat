@@ -1,179 +1,190 @@
-<!-- Component docs: one section per library component — live demo (defaults + samples), props table from meta.json. -->
+<!-- Component Library: fixed side nav (group tabs, section links with scroll spy, theme controls) + one group of
+     sections at a time in a centred 1000px column. Port of the prototype's Component Library.dc.html. -->
 <script lang="ts">
-  import * as Lib from '../lib/index';
-  import * as App from '../app/index';
-  import meta from './meta.json';
-  import { samples, overlays } from './samples';
+  import { tick, untrack } from 'svelte';
+  import { groups, sectionsFor, type GroupId } from './sections';
+  import Foundations from './groups/Foundations.svelte';
+  import General from './groups/General.svelte';
+  import App from './groups/App.svelte';
+  import Api from './groups/Api.svelte';
 
-  // `default` is the demo value (fed to the live demo); `componentDefault` is the source text of the component's own default
-  type Prop = {
-    name: string;
-    type: string;
-    default: unknown;
-    editor: string | null;
-    options: string[] | null;
-    section: string | null;
-    required?: boolean;
-    componentDefault?: string | null;
-    doc?: string;
+  const KEY = 'openchat-library-';
+  const load = (k: string) => {
+    try { return localStorage.getItem(KEY + k); } catch { return null; }
   };
-  type Meta = { group?: 'library' | 'app'; name: string; source: string; hash: string; description: string; preview: { width?: number | string; height?: number | string } | null; props: Prop[] };
-
-  const comps: Record<string, any> = { ...(Lib as any), ...(App as any) };
-  const all = (meta as Meta[]).slice().sort((a, b) => a.name.localeCompare(b.name));
-
-  let mode = $state('dark');
-  let accent = $state('pink');
-  let query = $state('');
-  let open = $state<Record<string, boolean>>({});
-  let propsOf = $state<Meta | null>(null);
-
-  let group = $state<'library' | 'app'>('library');
-  const shown = $derived(all.filter((m) => (m.group ?? 'library') === group && (!query || m.name.toLowerCase().includes(query.toLowerCase()))));
-  const isOverlay = (n: string) => overlays.includes(n) || /Dialog$/.test(n);
-
-  const defaults = (m: Meta) => {
-    const out: Record<string, unknown> = {};
-    for (const p of m.props) if (p.default !== null && p.default !== undefined && p.editor !== null) out[p.name] = p.default;
-    return out;
+  const save = (k: string, v: string) => {
+    try { localStorage.setItem(KEY + k, v); } catch { /* storage unavailable */ }
   };
-  const px = (x: number | string | undefined, fallback: string) => (x == null ? fallback : typeof x === 'number' ? x + 'px' : x);
-  const propsFor = (m: Meta) => {
-    const base = { ...defaults(m), ...(samples[m.name] ?? {}) };
-    if (isOverlay(m.name)) return { ...base, onClose: () => (open[m.name] = false), onSend: () => (open[m.name] = false) };
-    return base;
+  const pick = <T extends string>(v: string | null, allowed: readonly T[], fallback: T): T => (allowed.includes(v as T) ? (v as T) : fallback);
+
+  const MODES = ['dark', 'light'] as const;
+  const ACCENTS = ['pink', 'orange', 'blue', 'green'] as const;
+  const DIRS = ['ltr', 'rtl'] as const;
+
+  let group = $state<GroupId>(pick(load('group'), ['foundations', 'general', 'app', 'api'], 'foundations'));
+  let mode = $state(pick(load('mode'), MODES, 'dark'));
+  let accent = $state(pick(load('accent'), ACCENTS, 'pink'));
+  let dir = $state(pick(load('dir'), DIRS, 'ltr'));
+  let active = $state('');
+
+  const sections = $derived(sectionsFor[group]);
+  const info = $derived(groups.find((g) => g.id === group)!);
+
+  $effect(() => save('group', group));
+  $effect(() => save('mode', mode));
+  $effect(() => save('accent', accent));
+  $effect(() => save('dir', dir));
+
+  // Scroll spy: the active link is the last section whose top is within 140px of the viewport top.
+  // While a restore is in flight the stored section isn't overwritten by intermediate scroll positions.
+  let restoring = false;
+  let frame = 0;
+  function spy() {
+    frame = 0;
+    let id = '';
+    for (const s of sections) {
+      const el = document.getElementById(s.id);
+      if (el && el.getBoundingClientRect().top <= 140) id = s.id;
+    }
+    active = id;
+    if (!restoring && id) save('section-' + group, id);
+  }
+  const onScroll = () => {
+    if (!frame) frame = requestAnimationFrame(spy);
+  };
+
+  // On load and on every group switch: jump to the stored section (24px offset), retrying for ~1s because
+  // demos settle late; with nothing stored, go to the top.
+  $effect(() => {
+    const g = group;
+    let timer: ReturnType<typeof setInterval> | undefined;
+    untrack(() => {
+      restoring = true;
+      const target = load('section-' + g);
+      tick().then(() => {
+        if (!target || !document.getElementById(target)) {
+          window.scrollTo(0, 0);
+          restoring = false;
+          spy();
+          return;
+        }
+        const started = performance.now();
+        const jump = () => {
+          const el = document.getElementById(target);
+          if (restoring && el) window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 24);
+          if (!restoring || performance.now() - started > 1000) {
+            clearInterval(timer);
+            restoring = false;
+            spy();
+          }
+        };
+        jump();
+        timer = setInterval(jump, 100);
+      });
+    });
+    return () => {
+      clearInterval(timer);
+      restoring = false;
+    };
+  });
+
+  // A user scroll gesture ends the restore early, so it never fights the reader.
+  const stopRestore = () => {
+    restoring = false;
   };
 </script>
 
-<div data-mode={mode} data-accent={accent} class="docs">
-  <aside class="nav">
-    <div class="brand">OpenChat UI</div>
-    <div class="groups" role="tablist" aria-label="Component group">
-      <button role="tab" aria-selected={group === 'library'} class:on={group === 'library'} onclick={() => (group = 'library')}>Library</button>
-      <button role="tab" aria-selected={group === 'app'} class:on={group === 'app'} onclick={() => (group = 'app')}>App</button>
-    </div>
-    <input class="search" placeholder="Filter components" bind:value={query} aria-label="Filter components" />
-    <nav aria-label="Components">
-      {#each shown as m}
-        <a href={'#' + m.name}>{m.name}</a>
+<svelte:window onscroll={onScroll} onwheel={stopRestore} ontouchstart={stopRestore} onkeydown={stopRestore} />
+
+<div class="root" data-mode={mode} data-accent={accent} {dir}>
+  <nav aria-label="Library sections">
+    <div class="brand">OPENCHAT</div>
+    <div class="tabs" role="tablist" aria-label="Library group">
+      {#each groups as g (g.id)}
+        <span role="tab" tabindex="0" aria-selected={group === g.id} class="tab" class:on={group === g.id} onclick={() => (group = g.id)}>{g.label}</span>
       {/each}
-    </nav>
-  </aside>
+    </div>
+    <div class="links">
+      {#each sections as s (s.id)}
+        <a href={'#' + s.id} class:on={active === s.id} aria-current={active === s.id ? 'true' : undefined}>{s.title}</a>
+      {/each}
+    </div>
 
-  <main class="main">
-    <header class="top">
-      <h1>{group === 'app' ? 'App components' : 'Library'} <span>{shown.length}</span></h1>
-      <label>Mode
-        <select bind:value={mode}><option value="dark">Dark</option><option value="light">Light</option></select>
-      </label>
-      <label>Accent
-        <select bind:value={accent}>
-          <option value="pink">Pink</option><option value="orange">Orange</option><option value="blue">Blue</option><option value="green">Green</option>
-        </select>
-      </label>
-    </header>
-
-    {#each shown as m (m.name)}
-      {@const C = comps[m.name]}
-      <section id={m.name} class="section">
-        <div class="head">
-          <h2>{m.name}</h2>
-          <code>{m.source} · {m.hash}</code>
-          {#if m.props.length}
-            <button class="props-btn" onclick={() => (propsOf = m)}>Props <span>{m.props.length}</span></button>
-          {/if}
-        </div>
-        {#if m.description}<p class="desc">{m.description}</p>{/if}
-
-        <div class="demo" style="min-height:{px(m.preview?.height, '80px')}">
-          <div class="stage" style="width:min(100%, {px(m.preview?.width, '100%')})">
-            <svelte:boundary>
-              {#if isOverlay(m.name)}
-                <button class="open" onclick={() => (open[m.name] = true)}>Open {m.name}</button>
-                {#if open[m.name] && C}<C {...propsFor(m)} />{/if}
-              {:else if C}
-                <C {...propsFor(m)} />
-              {/if}
-              {#snippet failed(error)}
-                <pre class="demo-error">{String((error as Error)?.message ?? error)}</pre>
-              {/snippet}
-            </svelte:boundary>
-          </div>
-        </div>
-
-      </section>
-    {/each}
-  </main>
-
-  {#if propsOf}
-    {@const m = propsOf}
-    <Lib.DialogShell title="{m.name} props" width={820} height="auto" flush onClose={() => (propsOf = null)}>
-      <div class="props-scroll">
-        <table>
-          <thead><tr><th>Prop</th><th>Type</th><th>Default</th></tr></thead>
-          <tbody>
-            {#each m.props as p}
-              <tr>
-                <td>
-                  <code>{p.name}</code>
-                  {#if p.doc}<div class="prop-doc">{p.doc}</div>{/if}
-                </td>
-                <td><code>{p.options ? p.options.map((o) => JSON.stringify(o)).join(' | ') : p.type}</code></td>
-                <td>
-                  {#if p.required}<span class="required">required</span>{:else}<code>{p.componentDefault ?? '—'}</code>{/if}
-                </td>
-              </tr>
-            {/each}
-          </tbody>
-        </table>
+    <div class="controls">
+      <div class="seg" role="radiogroup" aria-label="Mode">
+        {#each MODES as m}
+          <span role="radio" tabindex="0" aria-checked={mode === m} class:on={mode === m} onclick={() => (mode = m)}>{m === 'dark' ? 'Dark' : 'Light'}</span>
+        {/each}
       </div>
-    </Lib.DialogShell>
-  {/if}
+      <div class="seg" role="radiogroup" aria-label="Direction">
+        {#each DIRS as d}
+          <span role="radio" tabindex="0" aria-checked={dir === d} class:on={dir === d} onclick={() => (dir = d)}>{d.toUpperCase()}</span>
+        {/each}
+      </div>
+      <div class="swatches" role="radiogroup" aria-label="Accent">
+        {#each ACCENTS as a}
+          <!-- each swatch carries its own theme attributes so it paints that accent's --accent -->
+          <span role="radio" tabindex="0" aria-checked={accent === a} aria-label={a} class="swatch" class:on={accent === a} data-mode={mode} data-accent={a} onclick={() => (accent = a)}></span>
+        {/each}
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <div class="group">
+      <header class="intro">
+        <h1>{info.title}</h1>
+        <p>{info.intro}</p>
+      </header>
+      {#if group === 'foundations'}
+        <Foundations theme={mode + accent} />
+      {:else if group === 'general'}
+        <General />
+      {:else if group === 'app'}
+        <App />
+      {:else}
+        <Api />
+      {/if}
+    </div>
+  </main>
 </div>
 
 <style>
-  .groups { display: flex; gap: 4px; padding: 2px; border-radius: 10px; background: var(--overlay-1, rgba(255,255,255,.05)); margin-bottom: 10px; }
-  .groups button { flex: 1; height: 30px; border: 0; border-radius: 8px; background: transparent; color: var(--ink-2, #B9B9C6); font: 600 12.5px/1 var(--font-sans); cursor: pointer; }
-  .groups button.on { background: var(--surface-3, #24242e); color: var(--ink, #ECECF1); }
-  .docs { display: grid; grid-template-columns: 300px minmax(0, 1fr); min-height: 100vh; background: var(--surface-0); color: var(--ink); font-family: var(--font-sans, 'Plus Jakarta Sans', system-ui, sans-serif); }
-  .nav { position: sticky; top: 0; height: 100vh; overflow-y: auto; box-sizing: border-box; padding: 20px 14px; border-right: 1px solid var(--line-1); background: var(--surface-1); display: flex; flex-direction: column; gap: 12px; }
-  /* thin scrollbars that sit on the surface instead of the OS gutter */
-  .nav, .props-scroll { scrollbar-width: thin; scrollbar-color: var(--line-2, rgba(255,255,255,.1)) transparent; }
-  .nav::-webkit-scrollbar, .props-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
-  .nav::-webkit-scrollbar-track, .props-scroll::-webkit-scrollbar-track { background: transparent; }
-  .nav::-webkit-scrollbar-thumb, .props-scroll::-webkit-scrollbar-thumb { border-radius: 3px; background: var(--line-2, rgba(255,255,255,.1)); }
-  .nav::-webkit-scrollbar-thumb:hover, .props-scroll::-webkit-scrollbar-thumb:hover { background: var(--ink-4); }
-  .brand { font: 700 15px/1 var(--font-sans); padding: 4px 8px; }
-  .search { height: 36px; padding: 0 12px; border: 0; border-radius: 10px; background: var(--field); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line-1); font: 500 13px/1 var(--font-sans); outline: none; }
-  .nav > * { flex-shrink: 0; }
-  nav { display: flex; flex-direction: column; gap: 2px; }
-  nav a { padding: 7px 10px; border-radius: 8px; color: var(--ink-2); text-decoration: none; font: 500 13px/1.2 var(--font-sans); }
-  nav a:hover { background: var(--overlay-1); color: var(--ink); }
-  .main { box-sizing: border-box; width: 100%; max-width: 1080px; justify-self: center; min-width: 0; padding: 28px 40px 80px; display: flex; flex-direction: column; gap: 56px; }
-  .top { display: flex; flex-wrap: wrap; align-items: center; gap: 20px; }
-  .top h1 { margin: 0 auto 0 0; font: 700 24px/1 var(--font-sans); letter-spacing: -0.02em; }
-  .top h1 span { font: 500 13px/1 var(--font-mono); color: var(--ink-4); margin-left: 8px; }
-  .top label { display: flex; align-items: center; gap: 8px; font: 500 12.5px/1 var(--font-sans); color: var(--ink-3); }
-  .top select { height: 32px; border-radius: 8px; border: 0; padding: 0 8px; background: var(--field); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line-1); }
-  .section { scroll-margin-top: 24px; display: flex; flex-direction: column; gap: 16px; }
-  .head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line-1); }
-  .head h2 { margin: 0; font: 700 17px/1 var(--font-sans); letter-spacing: -0.015em; }
-  .head code { font: 400 12px/1 var(--font-mono); color: var(--ink-4); }
-  .props-btn { margin-left: auto; align-self: center; display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border: 0; border-radius: 8px; background: var(--overlay-1); color: var(--ink-2); box-shadow: inset 0 0 0 1px var(--line-1); font: 600 12px/1 var(--font-sans); cursor: pointer; }
-  .props-btn:hover { background: var(--overlay-2); color: var(--ink); }
-  .props-btn span { font: 500 11px/1 var(--font-mono); color: var(--ink-4); }
-  .props-scroll { max-height: min(70vh, 640px); overflow: auto; padding: 4px 12px 12px; }
-  .props-scroll th { position: sticky; top: 0; background: var(--surface-1); }
-  .desc { margin: 0; max-width: 760px; font: 400 13.5px/1.6 var(--font-sans); color: var(--ink-3); white-space: pre-line; }
-  .demo { box-sizing: border-box; padding: 24px; border-radius: 20px; background: var(--surface-1); box-shadow: inset 0 0 0 1px var(--line-1); display: flex; align-items: flex-start; justify-content: center; }
-  .stage { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); }
-  .demo-error { margin: 0; padding: 12px 14px; border-radius: 10px; background: color-mix(in srgb, var(--status-danger, #f5493d) 14%, transparent); color: var(--status-danger, #f5493d); font: 500 12px/1.5 var(--font-mono); white-space: pre-wrap; }
-  .open { justify-self: start; height: 40px; padding: 0 16px; border: 0; border-radius: 10px; background: var(--overlay-2); color: var(--ink); font: 600 13.5px/1 var(--font-sans); cursor: pointer; }
-  table { width: 100%; border-collapse: collapse; font: 400 12.5px/1.5 var(--font-sans); }
-  th { text-align: left; font: 600 11px/1 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-4); padding: 8px 10px; border-bottom: 1px solid var(--line-1); }
-  td { padding: 8px 10px; border-bottom: 1px solid var(--line-1); vertical-align: top; color: var(--ink-2); }
-  td code { font: 400 12px/1.5 var(--font-mono); overflow-wrap: anywhere; }
-  .props-scroll td:last-child code { overflow-wrap: normal; white-space: nowrap; }
-  .prop-doc { margin-top: 2px; color: var(--ink-4); }
-  .required { font: 600 11px/1 var(--font-mono); letter-spacing: 0.04em; color: var(--accent-bright); }
+  :global(html), :global(body) { margin: 0; padding: 0; }
+  :global(body) { -webkit-font-smoothing: antialiased; }
+  :global(*) { scrollbar-width: thin; scrollbar-color: rgba(128, 128, 140, 0.35) transparent; }
+  :global(::-webkit-scrollbar) { width: 8px; height: 8px; }
+  :global(::-webkit-scrollbar-track) { background: transparent; }
+  :global(::-webkit-scrollbar-thumb) { border-radius: 99px; background: rgba(128, 128, 140, 0.35); }
+
+  .root { box-sizing: border-box; min-height: 100vh; padding: 40px 32px 88px; padding-inline-start: 244px; background: var(--bg); color: var(--ink); font-family: var(--font-sans); }
+  .root :global(a) { color: var(--accent); }
+  .root :global(a:hover) { color: var(--accent-hover); }
+
+  nav { position: fixed; inset-inline-start: 0; top: 0; bottom: 0; z-index: var(--z-sticky); box-sizing: border-box; width: 212px; padding: 26px 16px; overflow-y: auto; display: flex; flex-direction: column; gap: var(--space-4); background: var(--surface-0); box-shadow: inset -1px 0 0 var(--line-1); }
+  .root[dir='rtl'] nav { box-shadow: inset 1px 0 0 var(--line-1); }
+  nav > * { flex-shrink: 0; }
+  .brand { padding: 0 10px 12px; font: 500 10px/1 var(--font-mono); letter-spacing: 0.09em; color: var(--ink-4); }
+
+  .tabs { display: flex; flex-direction: column; gap: 2px; margin-bottom: 10px; }
+  .tab { padding: 7px 10px; border-radius: var(--radius-sm); font: 600 13px/1.2 var(--font-sans); color: var(--ink-2); cursor: pointer; user-select: none; }
+  .tab:hover { background: var(--overlay-1); }
+  .tab.on { background: var(--accent-soft); color: var(--accent); }
+
+  .links { display: flex; flex-direction: column; gap: 1px; }
+  .root nav a { padding: 6px 10px; border-radius: var(--radius-sm); font: 500 12.5px/1.2 var(--font-sans); color: var(--ink-2); text-decoration: none; }
+  .root nav a:hover { background: var(--overlay-1); color: var(--ink); }
+  .root nav a.on { background: var(--overlay-1); color: var(--accent); }
+
+  .controls { position: sticky; bottom: -26px; margin-top: auto; padding: 16px 0 26px; margin-bottom: -26px; display: flex; flex-direction: column; gap: 8px; background: var(--surface-0); }
+  .seg { display: flex; gap: 2px; padding: 2px; border-radius: var(--radius-sm); background: var(--overlay-1); }
+  .seg span { flex: 1; padding: 6px 0; border-radius: 7px; text-align: center; font: 600 11.5px/1 var(--font-sans); color: var(--ink-3); cursor: pointer; user-select: none; }
+  .seg span.on { background: var(--surface-2); color: var(--ink); box-shadow: var(--shadow-raised); }
+  .swatches { display: flex; gap: 10px; padding: 4px 4px 0; }
+  .swatch { width: 20px; height: 20px; border-radius: 50%; background: var(--accent); cursor: pointer; box-shadow: inset 0 0 0 1px var(--line-2); }
+  .swatch.on { box-shadow: 0 0 0 2px var(--surface-0), 0 0 0 4px var(--accent); }
+
+  .group { display: flex; flex-direction: column; gap: 56px; max-width: 1000px; margin: 0 auto; }
+  .intro h1 { margin: 0 0 12px; font: 700 34px/1.05 var(--font-sans); letter-spacing: -0.02em; }
+  .intro p { margin: 0; max-width: 680px; font: 400 15.5px/1.6 var(--font-sans); color: var(--ink-2); }
 </style>
