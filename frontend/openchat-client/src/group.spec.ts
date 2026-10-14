@@ -1,0 +1,157 @@
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+
+// A store the client builds at import time reads the screen width through
+// matchMedia, which jsdom does not provide
+vi.hoisted(() => {
+    window.matchMedia = ((query: string) =>
+        ({
+            matches: false,
+            media: query,
+            addEventListener: () => {},
+            removeEventListener: () => {},
+            addListener: () => {},
+            removeListener: () => {},
+            onchange: null,
+            dispatchEvent: () => false,
+        }) as unknown as MediaQueryList) as typeof window.matchMedia;
+});
+
+// The constructor starts an auth client against IndexedDB; keep it inert
+vi.mock("@icp-sdk/auth/client", async (importOriginal) => ({
+    ...(await importOriginal<object>()),
+    AuthClient: { create: () => new Promise(() => {}) },
+}));
+
+import { anonymousUser, type CandidateGroupChat, type WorkerRequest } from "@shared";
+import type { OpenChatConfig } from "./config";
+import { OpenChat } from "./openchat";
+import { currentUserStore } from "./state";
+import { WorkerAgent } from "./workerAgent";
+
+class FakeWorker {
+    onmessage: ((ev: MessageEvent) => void) | undefined;
+    postMessage() {}
+    addEventListener() {}
+}
+
+function config(): OpenChatConfig {
+    return {
+        mobileLayout: "v1",
+        websiteVersion: "test",
+        logger: { error: vi.fn(), debug: vi.fn(), warn: vi.fn(), log: vi.fn() },
+        proposalBotCanister: "aaaaa-aa",
+    } as unknown as OpenChatConfig;
+}
+
+describe("editing and creating a group", () => {
+    let client: OpenChat;
+    let sent: WorkerRequest[];
+    let invited: boolean;
+    let original: CandidateGroupChat;
+
+    beforeEach(() => {
+        vi.stubGlobal("Worker", FakeWorker);
+        currentUserStore.set({ ...anonymousUser(), userId: "me" });
+        client = new OpenChat(config());
+        sent = [];
+        invited = true;
+        original = {
+            ...client.createCandidateGroup("group", false)!,
+            id: { kind: "group_chat", groupId: "rrkah-fqaaa-aaaaa-aaaaq-cai" },
+            name: "Group",
+        };
+        vi.spyOn(WorkerAgent.prototype, "send").mockImplementation(((req: WorkerRequest) => {
+            sent.push(req);
+            switch (req.kind) {
+                case "updateGroup":
+                    return Promise.resolve({ kind: "success", rulesVersion: undefined });
+                case "createGroupChat":
+                    return Promise.resolve({ kind: "success", canisterId: original.id });
+                case "inviteUsers":
+                    return Promise.resolve(invited);
+                default:
+                    return new Promise(() => {});
+            }
+        }) as never);
+    });
+
+    afterEach(() => {
+        vi.unstubAllGlobals();
+        vi.restoreAllMocks();
+        currentUserStore.set(anonymousUser());
+    });
+
+    function updatesSent() {
+        return sent.filter((r) => r.kind === "updateGroup");
+    }
+
+    // Invariant: an edit sends exactly the fields the user changed, whichever they are. Mobile could
+    // not save a change to only the avatar or only the external URL.
+    test("a change to only the avatar or only the URL is sent, and nothing else", async () => {
+        const avatar = { blobUrl: "blob:new", blobData: new Uint8Array([1]) };
+        expect(await client.updateGroup(original, { ...original, avatar })).toEqual({
+            kind: "success",
+        });
+        expect(
+            await client.updateGroup(original, { ...original, externalUrl: "https://oc.app" }),
+        ).toEqual({ kind: "success" });
+
+        const changed = updatesSent().map((r) =>
+            Object.keys(r).filter((k) => r[k as keyof typeof r] !== undefined),
+        );
+        expect(changed).toEqual([
+            ["kind", "chatId", "avatar"],
+            ["kind", "chatId", "externalUrl"],
+        ]);
+    });
+
+    test("a group with no changes sends nothing", async () => {
+        expect(await client.updateGroup(original, structuredClone(original))).toEqual({
+            kind: "unchanged",
+        });
+        expect(sent).toEqual([]);
+    });
+
+    // Invariant: a verified group is only renamed, losing its verification, once the user confirms
+    test("renaming a verified group sends nothing until the user confirms", async () => {
+        const verified = { ...original, verified: true };
+        const renamed = { ...verified, name: "Renamed" };
+
+        expect(await client.updateGroup(verified, renamed)).toEqual({
+            kind: "needs_confirmation",
+            confirmation: "verified_name",
+        });
+        expect(sent).toEqual([]);
+
+        expect(await client.updateGroup(verified, renamed, ["verified_name"])).toEqual({
+            kind: "success",
+        });
+        expect(updatesSent()).toEqual([expect.objectContaining({ name: "Renamed" })]);
+    });
+
+    // Invariant: a group is only made public or private once the user confirms
+    test("making a group public sends nothing until the user confirms", async () => {
+        const madePublic = { ...original, public: true };
+
+        expect(await client.updateGroup(original, madePublic)).toEqual({
+            kind: "needs_confirmation",
+            confirmation: "visibility",
+        });
+        expect(sent).toEqual([]);
+
+        await client.updateGroup(original, madePublic, ["visibility"]);
+        expect(updatesSent()).toEqual([expect.objectContaining({ isPublic: true })]);
+    });
+
+    // Invariant: a new group whose invites fail still opens, and the user is told the invites failed.
+    // Both trees dropped the failure.
+    test("a new group whose invites fail is created and says the invites failed", async () => {
+        invited = false;
+
+        expect(await client.createGroup(original, ["u1"])).toEqual({
+            kind: "created_without_invites",
+            chatId: original.id,
+            message: expect.objectContaining({ key: "inviteUsersFailed" }),
+        });
+    });
+});

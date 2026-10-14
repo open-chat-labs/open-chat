@@ -14,7 +14,16 @@
         TextArea,
         UserChip,
     } from "component-lib";
-    import { isDiamondStore, publish, type OpenChat } from "@client";
+    import {
+        chatListScopeStore,
+        isDiamondStore,
+        publish,
+        routeForChatIdentifier,
+        type MultiUserChatIdentifier,
+        type OpenChat,
+    } from "@client";
+    import { toastStore } from "@src/stores/toast";
+    import { navigate } from "@utils/navigation";
     import { getContext, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import AccountGroup from "svelte-material-icons/AccountGroup.svelte";
@@ -40,7 +49,7 @@
         MAX_NAME_LENGTH,
         MIN_NAME_LENGTH,
         updateGroupState,
-    } from "./group.svelte";
+    } from "@shared_components/home/createOrUpdateGroup/group.svelte";
 
     const MIN_LENGTH = 3;
     const MAX_URL_LENGTH = 500;
@@ -54,6 +63,40 @@
         !ugs.editMode && !$isDiamondStore && ugs.candidate.level !== "channel",
     );
     let confirmExit = $state(false);
+
+    async function save(yes: boolean = true) {
+        const editing = ugs.editMode;
+        const outcome = await ugs.saveGroup(client, yes);
+        switch (outcome.kind) {
+            case "needs_confirmation":
+            case "declined":
+            case "invalid":
+                break;
+            case "success":
+            case "unchanged":
+                publish("closeModalStack");
+                break;
+            case "failed":
+                toastStore.showFailureToast(outcome.message);
+                if (editing) publish("closeModalStack");
+                break;
+            case "created_without_invites":
+                toastStore.showFailureToast(outcome.message);
+                openCreatedGroup(outcome.chatId);
+                break;
+            case "created":
+                openCreatedGroup(outcome.chatId);
+                break;
+            default:
+                outcome satisfies never;
+        }
+    }
+
+    function openCreatedGroup(chatId: MultiUserChatIdentifier) {
+        publish("closeModalStack");
+        // the new chat will have reached the chat list by the next tick
+        tick().then(() => navigate(routeForChatIdentifier($chatListScopeStore.kind, chatId)));
+    }
 </script>
 
 {#snippet rulesError()}
@@ -65,7 +108,8 @@
 {#if ugs.showingVerificationWarning}
     <AreYouSure
         message={i18nKey("verified.nameChangeWarning", undefined, ugs.candidateGroup.level, true)}
-        action={(yes) => ugs.saveGroup(client, yes)} />
+        action={save}
+    />
 {/if}
 
 {#if ugs.confirming}
@@ -76,7 +120,8 @@
             ugs.candidateGroup.level,
             true,
         )}
-        action={(yes) => ugs.saveGroup(client, yes)} />
+        action={save}
+    />
 {/if}
 
 {#if confirmExit}
@@ -89,7 +134,8 @@
                 tick().then(() => publish("closeModalPage"));
             }
             return Promise.resolve();
-        }} />
+        }}
+    />
 {/if}
 
 <SlidingPageContent
@@ -100,25 +146,29 @@
         ugs.candidateGroup.level,
         true,
     )}
-    subtitle={i18nKey(ugs.editMode ? "Update group" : "Create group")}>
+    subtitle={i18nKey(ugs.editMode ? "Update group" : "Create group")}
+>
     <Container
         supplementalClass={"group_info"}
         height={"fill"}
         gap={"xxl"}
         direction={"vertical"}
-        padding={["xxl", "lg", "lg", "lg"]}>
+        padding={["xxl", "lg", "lg", "lg"]}
+    >
         <Container
             direction={"vertical"}
             crossAxisAlignment={"center"}
-            supplementalClass={"group_avatar"}>
+            supplementalClass={"group_avatar"}
+        >
             <EditableAvatar
                 highlightBorder
                 disabled={ugs.busy}
                 size={"headline"}
                 image={ugs.candidateGroup.avatar?.blobUrl}
-                onImageSelected={(image) => ugs.groupAvatarSelected(image)} />
+                onImageSelected={(image) => ugs.groupAvatarSelected(image)}
+            />
         </Container>
-        <Form onSubmit={() => ugs.saveGroup(client)}>
+        <Form onSubmit={() => save()}>
             <Container direction={"vertical"} gap={"lg"} supplementalClass={"group_basic_info"}>
                 <Input
                     minlength={MIN_NAME_LENGTH}
@@ -128,7 +178,8 @@
                     error={!ugs.nameValid}
                     id={"group_name"}
                     placeholder={"Group name"}
-                    bind:value={ugs.candidateGroup.name}>
+                    bind:value={ugs.candidateGroup.name}
+                >
                     {#snippet subtext()}
                         <Translatable resourceKey={i18nKey("Group name is required *")}
                         ></Translatable>
@@ -149,7 +200,8 @@
                                 true,
                             ),
                         )}
-                        bind:value={ugs.candidateGroup.externalUrl}>
+                        bind:value={ugs.candidateGroup.externalUrl}
+                    >
                         {#snippet subtext()}
                             <Translatable resourceKey={i18nKey("group.externalUrlWarning")} />
                         {/snippet}
@@ -161,7 +213,8 @@
                     disabled={ugs.busy}
                     id={"group_desc"}
                     placeholder={"Description"}
-                    bind:value={ugs.candidateGroup.description}>
+                    bind:value={ugs.candidateGroup.description}
+                >
                     {#snippet subtext()}
                         <Translatable
                             resourceKey={i18nKey("Optionally, tell us what your group is about")}
@@ -177,12 +230,14 @@
             <Setting
                 disabled={requiresUpgrade}
                 toggle={() => (ugs.candidateGroup.public = !ugs.candidateGroup.public)}
-                info={"Groups are private by default, and limited to people you invite. Public channels must have unique names, and community members are automatically added to them."}>
+                info={"Groups are private by default, and limited to people you invite. Public channels must have unique names, and community members are automatically added to them."}
+            >
                 <Switch
                     disabled={requiresUpgrade}
                     width={"fill"}
                     reverse
-                    bind:checked={ugs.candidateGroup.public}>
+                    bind:checked={ugs.candidateGroup.public}
+                >
                     <Translatable resourceKey={i18nKey("Public group")}></Translatable>
                 </Switch>
             </Setting>
@@ -191,7 +246,8 @@
                 <Setting
                     toggle={() =>
                         (ugs.candidateGroup.historyVisible = !ugs.candidateGroup.historyVisible)}
-                    info={"By default new memebers in the group will see all the previous messages that were sent within the group. Enable this option to hide chat history for new members."}>
+                    info={"By default new memebers in the group will see all the previous messages that were sent within the group. Enable this option to hide chat history for new members."}
+                >
                     <Switch width={"fill"} reverse bind:checked={ugs.candidateGroup.historyVisible}>
                         <Translatable resourceKey={i18nKey("Hide chat history for new members")}
                         ></Translatable>
@@ -221,14 +277,16 @@
                             <Translatable
                                 resourceKey={i18nKey(
                                     "Members that will be added or invited to the newly created group",
-                                )}></Translatable>
+                                )}
+                            ></Translatable>
                         </BodySmall>
                     </Container>
                     <Container wrap gap={"sm"} crossAxisAlignment={"center"}>
                         {#each ugs.candidateMembers as { user } (user.userId)}
                             <UserChip
                                 avatarUrl={client.userAvatarUrl(user)}
-                                onRemove={() => ugs.deleteMember(user)}>@{user.username}</UserChip>
+                                onRemove={() => ugs.deleteMember(user)}>@{user.username}</UserChip
+                            >
                         {/each}
                     </Container>
                 {/if}
@@ -243,7 +301,8 @@
                 title={i18nKey("Access gates")}
                 info={i18nKey(
                     "Fine tune who can join your group by setting specific access gates.",
-                )}>
+                )}
+            >
                 <Container wrap gap={"sm"}>
                     {#each ugs.accessGates as gate}
                         <Chip mode={"filter"}>
@@ -273,7 +332,8 @@
                     title={i18nKey("Rules")}
                     info={i18nKey(
                         "Define a set of rules that the members of your group will have to follow.",
-                    )}>
+                    )}
+                >
                     {#if ugs.candidateGroup.rules.enabled}
                         <Chip>
                             {#snippet icon(color)}
@@ -290,22 +350,25 @@
                 title={i18nKey("Permissions")}
                 info={i18nKey(
                     "Define which user groups can access certain features within the group.",
-                )} />
+                )}
+            />
         </Container>
         <Container mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"end"}>
             <CommonButton
                 mode={"active"}
                 onClick={() => publish("closeModalPage")}
-                size={"small_text"}>
+                size={"small_text"}
+            >
                 <Translatable resourceKey={i18nKey("cancel")}></Translatable>
             </CommonButton>
             {#if !ugs.editMode}
                 <CommonButton
                     disabled={!ugs.valid}
                     loading={ugs.busy}
-                    onClick={() => ugs.saveGroup(client)}
+                    onClick={() => save()}
                     size={"medium"}
-                    mode={"active"}>
+                    mode={"active"}
+                >
                     {#snippet icon(color, size)}
                         <AccountGroup {color} {size}></AccountGroup>
                     {/snippet}
@@ -315,17 +378,19 @@
                             undefined,
                             ugs.candidateGroup.level,
                             true,
-                        )}></Translatable>
+                        )}
+                    ></Translatable>
                 </CommonButton>
             {/if}
         </Container>
     </Container>
     {#if ugs.editMode}
         <FloatingButton
-            disabled={!ugs.valid || !ugs.hasChanges(client)}
+            disabled={!ugs.valid || !ugs.hasChanges()}
             loading={ugs.busy}
             pos={{ bottom: "lg", right: "lg" }}
-            onClick={() => ugs.saveGroup(client)}>
+            onClick={() => save()}
+        >
             {#snippet icon(color)}
                 <Save {color} />
             {/snippet}

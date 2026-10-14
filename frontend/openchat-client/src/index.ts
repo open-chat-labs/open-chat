@@ -27,6 +27,7 @@ export {
     TimelineGrouper,
 } from "./utils/chat";
 export * from "./utils/cryptoFormatter";
+export { candidateGroupFromChat, groupChanges, hasAccessGateChanged } from "./utils/group.svelte";
 export { inviteLinkUrl } from "./utils/inviteLink";
 export { postLoginJoin } from "./utils/join";
 export { profileChanges } from "./utils/profile";

@@ -17,9 +17,9 @@
     import Eye from "svelte-material-icons/EyeOutline.svelte";
     import Setting from "../Setting.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
-    import { UpdateGroupState } from "./createOrUpdateGroup/group.svelte";
+    import { UpdateGroupState } from "@shared_components/home/createOrUpdateGroup/group.svelte";
     import GroupCard from "./createOrUpdateGroup/GroupCard.svelte";
-    import { MAX_RULES_LENGTH, type UpdateGroupOrCommunityState } from "./groupOrCommunity.svelte";
+    import { MAX_RULES_LENGTH, type UpdateGroupOrCommunityState } from "@shared_components/home/groupOrCommunity.svelte";
     import Markdown from "@shared_components/Markdown.svelte";
     import SlidingPageContent from "./SlidingPageContent.svelte";
 

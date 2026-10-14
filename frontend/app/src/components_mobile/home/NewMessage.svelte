@@ -24,7 +24,7 @@
     import MatchingUser from "../MatchingUser.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
     import ChatListSearch from "./ChatListSearch.svelte";
-    import { updateGroupState } from "./createOrUpdateGroup/group.svelte";
+    import { updateGroupState } from "@shared_components/home/createOrUpdateGroup/group.svelte";
     import SlidingPageContent from "./SlidingPageContent.svelte";
 
     const client = getContext<OpenChat>("client");

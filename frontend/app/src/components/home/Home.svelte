@@ -30,6 +30,7 @@
     } from "@client";
     import {
         allUsersStore,
+        candidateGroupFromChat,
         anonUserStore,
         allChatsStore,
         chatIdentifiersEqual,
@@ -747,34 +748,10 @@
 
     function editGroup(detail: { chat: MultiUserChat; rules: UpdatedRules | undefined }) {
         const chat = detail.chat;
-        const level: Level = chat.id.kind === "group_chat" ? "group" : "channel";
-        const rules = detail.rules ?? { ...defaultChatRules(level), newVersion: false };
         modal = {
             kind: "new_group",
             embeddedContent: chat.kind === "channel" && chat.externalUrl !== undefined,
-            candidate: {
-                id: chat.id,
-                kind: "candidate_group_chat",
-                name: chat.name,
-                description: chat.description,
-                historyVisible: chat.historyVisible,
-                public: chat.public,
-                frozen: chat.frozen,
-                members: [],
-                permissions: structuredClone(chat.permissions),
-                rules,
-                avatar: {
-                    blobUrl: chat.blobUrl,
-                    blobData: chat.blobData,
-                },
-                gateConfig: structuredClone(chat.gateConfig),
-                level,
-                membership: chat.membership,
-                eventsTTL: chat.eventsTTL,
-                messagesVisibleToNonMembers: chat.messagesVisibleToNonMembers,
-                externalUrl: chat.kind === "channel" ? chat.externalUrl : undefined,
-                verified: chat.kind === "group_chat" ? chat.verified : false,
-            },
+            candidate: candidateGroupFromChat(chat, detail.rules),
         };
     }
 
@@ -1058,7 +1035,7 @@
         {:else if modal.kind === "new_group"}
             <CreateOrUpdateGroup
                 embeddedContent={modal.embeddedContent}
-                bind:candidateGroup={modal.candidate}
+                candidateGroup={modal.candidate}
                 onClose={closeModal}
             />
         {:else if modal.kind === "edit_community"}

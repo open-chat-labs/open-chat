@@ -24,6 +24,7 @@ import type {
     ChatPermissions,
     HasMembershipRole,
     MemberRole,
+    OptionalChatPermissions,
     Permissioned,
 } from "../permission";
 import type {
@@ -2351,6 +2352,38 @@ export type UpdateGroupResponse =
     | { kind: "access_gate_invalid" }
     | Offline
     | OCError;
+
+/** What an edit changes about a group. A field left out stays as it is. */
+export type GroupChanges = {
+    name?: string;
+    description?: string;
+    rules?: UpdatedRules;
+    permissions?: OptionalChatPermissions;
+    avatar?: Uint8Array;
+    eventsTimeToLive?: OptionUpdate<bigint>;
+    gateConfig?: AccessGateConfig;
+    isPublic?: boolean;
+    messagesVisibleToNonMembers?: boolean;
+    externalUrl?: string;
+};
+
+/**
+ * A change the user has to confirm before it is saved: renaming a verified group, which loses its
+ * verification, or making a group public or private
+ */
+export type GroupChangeConfirmation = "verified_name" | "visibility";
+
+export type UpdateGroupOutcome =
+    | { kind: "success" }
+    | { kind: "unchanged" }
+    | { kind: "needs_confirmation"; confirmation: GroupChangeConfirmation }
+    | { kind: "failed"; message: ResourceKey };
+
+/** `created_without_invites` means the group was created but inviting the chosen users failed */
+export type CreateGroupOutcome =
+    | { kind: "created"; chatId: MultiUserChatIdentifier }
+    | { kind: "created_without_invites"; chatId: MultiUserChatIdentifier; message: ResourceKey }
+    | { kind: "failed"; message: ResourceKey };
 
 export type UpdatePermissionsResponse =
     | "success"

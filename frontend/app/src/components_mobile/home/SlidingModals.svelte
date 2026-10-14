@@ -79,7 +79,7 @@
     import Converted from "./groupdetails/Converted.svelte";
     import DirectChatDetails from "./groupdetails/DirectChatDetails.svelte";
     import GroupDetails from "./groupdetails/GroupDetails.svelte";
-    import { UpdateGroupOrCommunityState } from "./groupOrCommunity.svelte";
+    import { UpdateGroupOrCommunityState } from "@shared_components/home/groupOrCommunity.svelte";
     import InviteAndShare from "./membership/InviteAndShare.svelte";
     import MemberManagement from "./membership/MemberManagement.svelte";
     import NewMessage from "./NewMessage.svelte";
