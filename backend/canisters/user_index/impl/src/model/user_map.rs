@@ -940,10 +940,6 @@ impl UserMap {
         }
     }
 
-    pub fn unique_person_proofs_submitted(&self) -> u32 {
-        self.users.values().filter(|u| u.unique_person_proof.is_some()).count() as u32
-    }
-
     pub fn search_bots(
         &self,
         search_term: Option<String>,
@@ -1113,7 +1109,6 @@ pub enum ContestUploadSanctionResult {
 mod tests {
     use super::*;
     use itertools::Itertools;
-    use types::UniquePersonProofProvider;
 
     #[test]
     fn register_with_no_clashes() {
@@ -1372,49 +1367,5 @@ mod tests {
         assert!(!user_map.add_reported_message_if_missing(Principal::from_slice(&[3, 2]).into(), 3));
 
         assert_eq!(user_map.get_by_user_id(&user_id).unwrap().reported_messages, vec![1, 2, 4, 5]);
-    }
-
-    #[test]
-    fn unique_person_proofs_submitted_is_unchanged_by_a_round_trip() {
-        let mut user_map = UserMap::default();
-        for i in 0..3u8 {
-            let user_id: UserId = Principal::from_slice(&[3, i]).into();
-            user_map.register(
-                Principal::from_slice(&[i]),
-                user_id,
-                format!("user{i}"),
-                None,
-                1,
-                None,
-                UserType::User,
-                None,
-            );
-            if i > 0 {
-                let proof = UniquePersonProof {
-                    timestamp: 2,
-                    provider: UniquePersonProofProvider::DecideAI,
-                };
-                assert!(user_map.record_proof_of_unique_personhood(user_id, proof, 2));
-            }
-        }
-        assert_eq!(user_map.unique_person_proofs_submitted(), 2);
-
-        let bytes = msgpack::serialize_then_unwrap(&user_map);
-        let user_map: UserMap = msgpack::deserialize_then_unwrap(&bytes);
-        assert_eq!(user_map.unique_person_proofs_submitted(), 2);
-
-        // State serialized before the count was computed holds an inflated count, which is ignored
-        #[derive(Serialize)]
-        struct UserMapPrevious<'a> {
-            #[serde(flatten)]
-            user_map: &'a UserMap,
-            unique_person_proofs_submitted: u32,
-        }
-        let bytes = msgpack::serialize_then_unwrap(UserMapPrevious {
-            user_map: &user_map,
-            unique_person_proofs_submitted: 2377511,
-        });
-        let user_map: UserMap = msgpack::deserialize_then_unwrap(&bytes);
-        assert_eq!(user_map.unique_person_proofs_submitted(), 2);
     }
 }
