@@ -174,6 +174,7 @@ import {
     type CreateGroupOutcome,
     type CreateGroupResponse,
     type CreateMultiUserCanisterResponse,
+    type FinaliseAccountLinkingResponse,
     type FundsInPreviousWallet,
     type MoveFundsOutcome,
     type CreateUserGroupResponse,
@@ -6689,8 +6690,8 @@ export class OpenChat {
         return this.#worker.send({ kind: "fcmTokenExists", fcmToken });
     }
 
-    addFcmToken(fcmToken: string, onResponseError?: (error: string | null) => void): Promise<void> {
-        return this.#worker.send({ kind: "addFcmToken", fcmToken, onResponseError });
+    addFcmToken(fcmToken: string): Promise<void> {
+        return this.#worker.send({ kind: "addFcmToken", fcmToken });
     }
 
     removeFcmToken(fcmToken: string): Promise<void> {
@@ -9297,26 +9298,26 @@ export class OpenChat {
             .catch(() => undefined);
     }
 
-    setModerationFlags(flags: number): Promise<number> {
+    async setModerationFlags(flags: number): Promise<number> {
         const previousValue = moderationFlagsEnabledStore.value;
         currentUserStore.set({
             ...currentUserStore.value,
             moderationFlagsEnabled: flags,
         });
 
-        return this.#worker
+        const saved = await this.#worker
             .send({
                 kind: "setModerationFlags",
                 flags,
             })
-            .then((resp) => (resp === "success" ? flags : previousValue))
-            .catch(() => {
-                currentUserStore.set({
-                    ...currentUserStore.value,
-                    moderationFlagsEnabled: previousValue,
-                });
-                return previousValue;
-            });
+            .catch(() => false);
+        if (saved) return flags;
+
+        currentUserStore.set({
+            ...currentUserStore.value,
+            moderationFlagsEnabled: previousValue,
+        });
+        return previousValue;
     }
 
     /**
@@ -10752,7 +10753,10 @@ export class OpenChat {
         });
     }
 
-    getSignInProof(identityKey: ECDSAKeyIdentity, delegation: DelegationChain): Promise<string> {
+    getSignInProof(
+        identityKey: ECDSAKeyIdentity,
+        delegation: DelegationChain,
+    ): Promise<string | undefined> {
         return this.#worker.send({
             kind: "getSignInProof",
             identityKey: identityKey.getKeyPair(),
@@ -12226,7 +12230,7 @@ export class OpenChat {
         principal: string,
         publicKey: Uint8Array,
         webAuthnKey?: WebAuthnKeyFull,
-    ): Promise<DelegationIdentity> {
+    ): Promise<FinaliseAccountLinkingResponse> {
         return this.#worker.send({
             kind: "finaliseAccountLinkingWithCode",
             tempKey: tempKey.getKeyPair(),

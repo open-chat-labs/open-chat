@@ -114,4 +114,22 @@ describe("saving the user's profile", () => {
         expect(outcome.profile).toEqual(original);
         expect(outcome.failure).toBeDefined();
     });
+
+    // Invariant: a moderation setting that wasn't saved, because the backend said no (e.g. the
+    // user is offline) or the request failed, is put back, not left showing as saved
+    test("a moderation setting that isn't saved is put back", async () => {
+        currentUserStore.set({ ...anonymousUser(), userId: "me", moderationFlagsEnabled: 0 });
+
+        responses.setModerationFlags = false;
+        expect(await client.setModerationFlags(1)).toBe(0);
+        expect(currentUserStore.value.moderationFlagsEnabled).toBe(0);
+
+        vi.mocked(WorkerAgent.prototype.send).mockRejectedValueOnce(new Error("worker failed"));
+        expect(await client.setModerationFlags(1)).toBe(0);
+        expect(currentUserStore.value.moderationFlagsEnabled).toBe(0);
+
+        responses.setModerationFlags = true;
+        expect(await client.setModerationFlags(1)).toBe(1);
+        expect(currentUserStore.value.moderationFlagsEnabled).toBe(1);
+    });
 });

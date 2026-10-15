@@ -49,7 +49,7 @@
     let progressWidth = $state(0);
     let mouseEvent = $state<MouseEvent>();
 
-    async function claim(e: MouseEvent, auth: { signInProofJwt: string } | undefined) {
+    async function claim(e: MouseEvent, auth: { signInProofJwt: string | undefined } | undefined) {
         const signInProof = auth?.signInProofJwt;
         if (signInProof === undefined && content.requiresCaptcha) {
             mouseEvent = e;
@@ -119,7 +119,7 @@
         key: ECDSAKeyIdentity;
         delegation: DelegationChain;
         provider: AuthProvider;
-        signInProofJwt: string;
+        signInProofJwt: string | undefined;
     }) {
         if (mouseEvent !== undefined) {
             claim(mouseEvent, detail);

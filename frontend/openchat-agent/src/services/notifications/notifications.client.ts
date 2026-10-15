@@ -71,16 +71,14 @@ export class NotificationsClient extends SingleCanisterMsgpackAgent {
         );
     }
 
-    addFcmToken(fcmToken: string, onResponseError?: (error: string | null) => void): Promise<void> {
+    addFcmToken(fcmToken: string): Promise<void> {
         return this.update(
             "add_fcm_token",
             { fcm_token: fcmToken },
             (response) => {
-                if (response === "Success") {
-                    return;
-                } else {
+                if (response !== "Success") {
                     const [_, msg] = response.Error;
-                    onResponseError?.(msg);
+                    console.warn("Unable to add FCM token", msg);
                 }
             },
             NotificationsIndexAddFcmTokenArgs,

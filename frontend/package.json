@@ -19,7 +19,7 @@
         "ios:release": "cd app && bash ./build_ios.sh",
         "typecheck": "svelte-check --tsconfig ./app/tsconfig.json --threshold error",
         "typecheck:agent": "tsc --noEmit -p openchat-agent/tsconfig.json",
-        "typecheck:packages": "tsc --noEmit -p openchat-client/tsconfig.json && tsc --noEmit -p openchat-shared/tsconfig.json",
+        "typecheck:packages": "tsc --noEmit -p openchat-client/tsconfig.json && tsc --noEmit -p openchat-shared/tsconfig.json && tsc --noEmit -p openchat-worker/tsconfig.json",
         "typebox": "ts2typebox --input ../tsBindings/types.d.ts --output ./openchat-agent/src/typebox.ts",
         "lint": "eslint . --fix",
         "test": "vitest --run",

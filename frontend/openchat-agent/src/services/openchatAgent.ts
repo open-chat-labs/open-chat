@@ -3413,8 +3413,8 @@ export class OpenChatAgent extends EventTarget {
         return this._notificationClient.fcmTokenExists(fcmToken);
     }
 
-    addFcmToken(fcmToken: string, onResponseError?: (error: string | null) => void): Promise<void> {
-        return this._notificationClient.addFcmToken(fcmToken, onResponseError);
+    addFcmToken(fcmToken: string): Promise<void> {
+        return this._notificationClient.addFcmToken(fcmToken);
     }
 
     removeFcmToken(fcmToken: string): Promise<void> {

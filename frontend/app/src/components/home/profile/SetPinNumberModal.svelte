@@ -90,7 +90,7 @@
         key: ECDSAKeyIdentity;
         delegation: DelegationChain;
         provider: AuthProvider;
-        signInProofJwt: string;
+        signInProofJwt: string | undefined;
     }) {
         if (type.kind !== "forgot") return;
 

@@ -31,7 +31,7 @@
             key: ECDSAKeyIdentity;
             delegation: DelegationChain;
             provider: AuthProvider;
-            signInProofJwt: string;
+            signInProofJwt: string | undefined;
         }) => void;
     }
 
