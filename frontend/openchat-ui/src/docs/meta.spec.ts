@@ -3,7 +3,7 @@
 import { describe, expect, test } from 'vitest';
 import meta from './meta.json';
 
-const sources = import.meta.glob<string>(['../lib/components/*.svelte', '../features/components/*.svelte'], { query: '?raw', import: 'default', eager: true });
+const sources = import.meta.glob<string>(['../lib/components/*.svelte', '../features/components/*.svelte', '../pages/*.svelte'], { query: '?raw', import: 'default', eager: true });
 const byName = new Map(Object.entries(sources).map(([path, text]) => [path.split('/').pop()!.replace('.svelte', ''), text]));
 // helpers that take no props worth documenting
 const UNDOCUMENTED = ['Translate'];

@@ -113,6 +113,8 @@ export const features: SectionMeta[] = [
   { id: 'features-people', title: 'People & profile', meta: 'DmChatSettings · ProfileDialog · UserDialog' },
   { id: 'features-group-dialogs', title: 'Group & community dialogs', meta: 'CreateGroupDialog · GroupSettingsDialog · NewChannelDialog · ConvertToCommunityDialog · ImportToCommunityDialog · UserGroupDialog · InviteDialog · WebhookDialog · BotDialog · LeaveGroupDialog · DeleteGroupDialog' },
   { id: 'features-rewards', title: 'Rewards & games', meta: 'AchievementToast · AchievementsDialog · ChitDialog · StreakInsuranceDialog · LeaderboardDialog · MemeFighterDialog' },
+  { id: 'pages-landing', title: 'Page · Landing', meta: 'Landing · src/pages' },
+  { id: 'pages-learn', title: 'Page · Learn', meta: 'Learn · src/pages · learnContent.ts' },
 ];
 
 type Meta = { name: string; source: string; props: unknown[] };

@@ -9,7 +9,7 @@
   },
   "icons": {
     "source": "lib/icons.js",
-    "count": 142
+    "count": 150
   },
   "components": {
     "ActivityRow": {
@@ -1175,5 +1175,31 @@
     }
   },
   "converter": "export/tools/dc2svelte.js (prototype project)",
-  "converted": "All components hand-converted to plain Svelte 5 (no .logic.js); re-exporting would overwrite them. Port prototype changes by hand."
+  "converted": "All components hand-converted to plain Svelte 5 (no .logic.js); re-exporting would overwrite them. Port prototype changes by hand.",
+  "pages": {
+    "Landing": {
+      "source": "OpenChat Landing.dc.html",
+      "sourceHash": "e700433f",
+      "exportedAt": "2026-10-15",
+      "group": "pages",
+      "files": [
+        "src/pages/Landing.svelte",
+        "src/pages/heroBackground.ts",
+        "src/pages/pageAuth.svelte.ts",
+        "src/pages/types.ts"
+      ]
+    },
+    "Learn": {
+      "source": "OpenChat Learn.dc.html",
+      "sourceHash": "15db4213",
+      "exportedAt": "2026-10-15",
+      "group": "pages",
+      "files": [
+        "src/pages/Learn.svelte",
+        "src/pages/learnContent.ts",
+        "src/pages/pageAuth.svelte.ts",
+        "src/pages/types.ts"
+      ]
+    }
+  }
 }

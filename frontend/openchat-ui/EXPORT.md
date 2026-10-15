@@ -19,6 +19,7 @@ npm run check    # svelte-check (types)
 - `src/lib/icons.js` — canonical icon set; `Icon.svelte` or `mask: var(--icon-<name>)`.
 - `src/lib/behaviours/a11y.js` and `tooltip.js` — installed by `installBehaviours()`. Importing `src/lib/index.ts` calls it; hosts that deep-import component files call it once at startup (the docs do in `main.ts`). Without it, Enter/Space on `role="button"` spans, modal focus trapping and themed tooltips don't work.
 - `src/lib/behaviours/modal.ts` — `use:modal={onEscape}` for hand-built dialogs: Esc closes only the topmost dialog (shared stack with DialogShell).
+- `src/pages/X.svelte` — **pages**: whole screens a route mounts directly, outside the app shell (Landing, Learn). Entry: `src/pages/index.ts`. Each is its own theme root (`mode`, `accent`) and takes the host's routes and AuthDialog callbacks as props. Learn's content is data (`learnContent.ts`), placeholder until the host loads the real docs, posts, roadmap and FAQs.
 - `src/docs/` — the Component Library page: `Docs.svelte` (nav shell, scroll spy), `sections.ts` (section ids/titles per group), `groups/` (Foundations, General, Features, Api), `Section`/`Frame`, `meta.json` (props metadata for the API group), `samples.ts` (all demo data).
 
 ## i18n
@@ -206,6 +207,8 @@ No `.logic.js` and no `useLogic`: state in runes, view values in `$derived`, sty
   - **Your own presence** in `NavRail` is a boolean `profileOnline` (default `false`). Users may later choose a status (away, busy …); that would replace the flag with a status prop.
 - `Countdown` isn't used by the message bubbles yet (they take pre-formatted strings).
 
+- Pages: the logo is `assets/openchat-logo.svg` (relative, as in AuthDialog); the host serves it. Learn's docs, blog, roadmap and FAQs are placeholder copy; the host passes real `content`.
+
 ## Keeping in sync with the prototype
 Every component was hand-converted after export, so **do not re-export**: regenerating a component would overwrite the conversion. Each file's source hash (in `export-manifest.json` and the tables below) records which prototype version it was converted from; when the prototype changes, compare against that hash and port the change by hand.
 
@@ -345,3 +348,9 @@ Every component was hand-converted after export, so **do not re-export**: regene
 | WalletSettingsDialog | `lib/WalletSettingsDialog.dc.html` | `a69b5e15` | 2026-10-13 |
 | WalletSwap | `lib/WalletSwap.dc.html` | `9e10abdb` | 2026-10-13 |
 | WebhookDialog | `lib/WebhookDialog.dc.html` | `af5a6630` | 2026-10-13 |
+
+## Pages (2)
+| Page | Source | Source hash | Exported |
+|---|---|---|---|
+| Landing | `OpenChat Landing.dc.html` | `e700433f` | 2026-10-15 |
+| Learn | `OpenChat Learn.dc.html` | `15db4213` | 2026-10-15 |
