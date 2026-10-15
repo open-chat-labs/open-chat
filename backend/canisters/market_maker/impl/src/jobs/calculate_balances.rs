@@ -15,7 +15,7 @@ pub fn start_job() {
 fn run() {
     let PrepareResult { exchange_clients, now } = read_state(prepare);
     if !exchange_clients.is_empty() {
-        utils::async_work::spawn_tracked(run_async(exchange_clients, now));
+        ic_cdk::futures::spawn_migratory(run_async(exchange_clients, now));
     }
 }
 

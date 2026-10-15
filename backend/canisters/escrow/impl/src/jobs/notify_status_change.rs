@@ -31,7 +31,7 @@ pub fn run() {
     TIMER_ID.set(None);
 
     if let Some((canister_id, notification)) = mutate_state(get_next) {
-        utils::async_work::spawn_tracked(notify_swap_status(canister_id, notification, 0));
+        ic_cdk::futures::spawn_migratory(notify_swap_status(canister_id, notification, 0));
         read_state(start_job_if_required);
     }
 }
@@ -45,7 +45,7 @@ pub(crate) fn retry(swap_id: u32, failures: u32) {
             .get(swap_id)
             .and_then(|swap| notification(swap, state.env.now()))
     }) {
-        utils::async_work::spawn_tracked(notify_swap_status(canister_id, notification, failures));
+        ic_cdk::futures::spawn_migratory(notify_swap_status(canister_id, notification, failures));
     }
 }
 

@@ -29,7 +29,7 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 fn run() {
     if let Some(batch) = mutate_state(next_batch) {
         if !batch.is_empty() {
-            utils::async_work::spawn_tracked(perform_upgrades(batch));
+            ic_cdk::futures::spawn_migratory(perform_upgrades(batch));
         }
     } else {
         TIMER.set(None);

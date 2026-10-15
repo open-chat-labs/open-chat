@@ -39,7 +39,7 @@ pub fn run() {
     let (pending_payment, now_nanos) = mutate_state(|state| (state.data.pending_payments_queue.pop(), state.env.now_nanos()));
 
     if let Some(pending_payment) = pending_payment {
-        utils::async_work::spawn_tracked(process_payment(pending_payment, 0, now_nanos));
+        ic_cdk::futures::spawn_migratory(process_payment(pending_payment, 0, now_nanos));
         read_state(start_job_if_required);
     }
 }
@@ -52,7 +52,7 @@ pub(crate) fn retry(pending_payment: PendingPayment, failures: u32) {
         state.data.timer_jobs.remove_completed_jobs();
         state.env.now_nanos()
     });
-    utils::async_work::spawn_tracked(process_payment(pending_payment, failures, now_nanos));
+    ic_cdk::futures::spawn_migratory(process_payment(pending_payment, failures, now_nanos));
 }
 
 // `previous_failures` is the number of earlier attempts at the payment which failed to call into

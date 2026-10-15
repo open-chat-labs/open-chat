@@ -40,7 +40,7 @@ fn post_upgrade(args: Args) {
 // UserIndex has a migration for are rewritten, since the rest, eg. legacy ids or those of bots, are
 // current. Retried after a minute if the UserIndex can't be called.
 fn rewrite_migrated_user_ids() {
-    utils::async_work::spawn_tracked(rewrite_migrated_user_ids_inner());
+    ic_cdk::futures::spawn_migratory(rewrite_migrated_user_ids_inner());
 
     async fn rewrite_migrated_user_ids_inner() {
         let (user_index_canister_id, user_ids) = read_state(|state| {

@@ -297,7 +297,7 @@ impl Job for HardDeleteMessageContentJob {
 
 impl Job for DeleteFileReferencesJob {
     fn execute(self) {
-        utils::async_work::spawn_tracked(async move {
+        ic_cdk::futures::spawn_migratory(async move {
             let to_retry = storage_bucket_client::delete_files(self.files).await;
 
             if !to_retry.is_empty() {
@@ -403,7 +403,7 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
     fn execute(self) {
         let escrow_canister_id = read_state(|state| state.data.escrow_canister_id);
 
-        utils::async_work::spawn_tracked(async move {
+        ic_cdk::futures::spawn_migratory(async move {
             match escrow_canister_c2c_client::notify_deposit(
                 escrow_canister_id,
                 &escrow_canister::notify_deposit::Args {
@@ -448,7 +448,7 @@ impl Job for CancelP2PSwapInEscrowCanisterJob {
     fn execute(self) {
         let escrow_canister_id = read_state(|state| state.data.escrow_canister_id);
 
-        utils::async_work::spawn_tracked(async move {
+        ic_cdk::futures::spawn_migratory(async move {
             match escrow_canister_c2c_client::cancel_swap(
                 escrow_canister_id,
                 &escrow_canister::cancel_swap::Args { swap_id: self.swap_id },
