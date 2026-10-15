@@ -1,4 +1,3 @@
-import DRange from "drange";
 import {
     ChatMap,
     CommunityMap,
@@ -42,6 +41,7 @@ import {
     routeStore,
     selectedCommunityIdStore,
 } from "../path/stores";
+import { selectedChatFor, serverEventsStore, startChatVisit } from "../selectedChat";
 import { suspendedUsersStore } from "../users/stores";
 import { addToWritableMap } from "../utils";
 import {
@@ -56,7 +56,6 @@ import {
     directChatBotsStore,
     eventsStore,
     globalUnreadCountStore,
-    expiredServerEventRanges,
     getConvertedBalances,
     messageFiltersStore,
     pinnedChatsStore,
@@ -70,7 +69,6 @@ import {
     selectedServerChatStore,
     selectedServerCommunityStore,
     serverCommunitiesStore,
-    serverEventsStore,
     serverGroupChatsStore,
     serverPinnedChatsStore,
     translationsStore,
@@ -93,9 +91,9 @@ const mockContext: PageJS.Context = {
     params: {},
 };
 
+// A new visit to the selected chat, which starts with no events
 function setSelectedChat() {
-    serverEventsStore.set([]);
-    expiredServerEventRanges.set(new DRange());
+    startChatVisit(selectedChatIdStore.value);
     selectedChatUserIdsStore.set(new Set());
     selectedChatExpandedDeletedMessageStore.set(new Set());
 }
@@ -196,9 +194,10 @@ describe("app state", () => {
                     emptyRules(),
                 ),
             );
-            serverEventsStore.update(() => {
-                return [chatMessage()];
-            });
+            const selected = selectedChatIdStore.value;
+            if (selected !== undefined) {
+                selectedChatFor(selected)?.updateEvents(() => [chatMessage()]);
+            }
         }
 
         describe("setting chat details", () => {

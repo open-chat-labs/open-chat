@@ -28,7 +28,6 @@ import {
     PremiumItem,
     SafeMap,
     videoCallsInProgressForChats,
-    type ChatEvent,
     type ChatIdentifier,
     type ChatSummary,
     type ChitState,
@@ -40,7 +39,6 @@ import {
     type CryptocurrencyDetails,
     type DirectChatSummary,
     type EnhancedTokenDetails,
-    type EventWrapper,
     type GrantedBotPermissions,
     type GroupChatSummary,
     type IdentityState,
@@ -91,6 +89,13 @@ import { LocalStorageBoolStore, LocalStorageStore } from "../localStorageStore";
 import { localUpdates } from "../localUpdates";
 import { messageLocalUpdates } from "../message/localUpdates";
 import { routeStore, selectedCommunityIdStore } from "../path/stores";
+import {
+    expiredServerEventRanges,
+    serverEventsStore,
+    serverThreadEventsStore,
+    startChatVisit,
+    startThreadVisit,
+} from "../selectedChat";
 import { SnsFunctions } from "../snsFunctions.svelte";
 import { messagesRead } from "../unread/markRead";
 import { blockedUsersStore, suspendedUsersStore } from "../users/stores";
@@ -616,9 +621,6 @@ export const userGroupSummariesStore = derived(
     notEq,
 );
 
-export const serverEventsStore = writable<EventWrapper<ChatEvent>[]>([], undefined, notEq);
-export const serverThreadEventsStore = writable<EventWrapper<ChatEvent>[]>([], undefined, notEq);
-export const expiredServerEventRanges = writable<DRange>(new DRange(), undefined, notEq);
 export const selectedChatUserIdsStore = writable<Set<string>>(new Set(), undefined, notEq);
 export const selectedChatExpandedDeletedMessageStore = writable<Set<number>>(
     new Set(),
@@ -651,18 +653,19 @@ export const selectedThreadIdStore = writable<ThreadIdentifier | undefined>(
     messageContextsEqual,
 );
 
-// Whenever the selectedChatIdStore value changes the first thing we do is clear the related stores
-selectedChatIdStore.subscribe((_) => {
-    serverEventsStore.set([]);
-    expiredServerEventRanges.set(new DRange());
+// Whenever the selectedChatIdStore value changes the first thing we do is start a new visit, which
+// clears the related stores
+selectedChatIdStore.subscribe((chatId) => {
+    startChatVisit(chatId);
     selectedThreadIdStore.set(undefined);
     selectedChatUserIdsStore.set(new Set());
     selectedChatExpandedDeletedMessageStore.set(new Set());
     filteredProposalsStore.set(undefined);
 });
 
-// Whenever the selectedThreadIdStore value changes we immediately clear the serverThreadEventsStore
-selectedThreadIdStore.subscribe((_) => serverThreadEventsStore.set([]));
+// Whenever the selectedThreadIdStore value changes we start a new visit to the thread, which clears
+// the serverThreadEventsStore
+selectedThreadIdStore.subscribe((thread) => startThreadVisit(thread));
 
 export const chatListScopeStore = derived(routeStore, (route) => route.scope, dequal);
 export const chatsInitialisedStore = writable(false);
@@ -1413,14 +1416,11 @@ const mergedThreadEventsStore = derived(
 
 export const threadEventsStore = derived(mergedThreadEventsStore, (merged) => merged.events);
 
-export const confirmedThreadEventIndexesLoadedStore = derived(
-    serverThreadEventsStore,
-    (events) => {
-        const ranges = new DRange();
-        events.forEach((e) => ranges.add(e.index));
-        return ranges;
-    },
-);
+export const confirmedThreadEventIndexesLoadedStore = derived(serverThreadEventsStore, (events) => {
+    const ranges = new DRange();
+    events.forEach((e) => ranges.add(e.index));
+    return ranges;
+});
 
 export const threadEventIndexesLoadedStore = derived(
     mergedThreadEventsStore,

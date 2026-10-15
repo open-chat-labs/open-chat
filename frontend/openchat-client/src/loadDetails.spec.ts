@@ -55,10 +55,11 @@ import {
     selectedServerCommunityStore,
     serverCommunitiesStore,
     serverDirectChatsStore,
-    serverEventsStore,
     serverGroupChatsStore,
 } from "./state";
 import { userStore } from "./state/users/state";
+import { selectedChatIdStore } from "./state";
+import { startChatVisit } from "./state/selectedChat";
 import { WorkerAgent } from "./workerAgent";
 
 // The details of a chat or community can hold tens of thousands of members, and are asked for
@@ -334,7 +335,8 @@ describe("loading the selected chat's details", () => {
         vi.restoreAllMocks();
         selectedServerChatStore.set(undefined);
         serverGroupChatsStore.set(new ChatMap<GroupChatSummary>());
-        serverEventsStore.set([]);
+        // a new visit to whatever is selected, which starts with no events
+        startChatVisit(selectedChatIdStore.value);
     });
 
     test("details not yet held are asked for in full", async () => {
@@ -568,7 +570,8 @@ describe("looking up the members who appear in a chat when not all are held", ()
         currentUserStore.set(anonymousUser());
         selectedServerChatStore.set(undefined);
         serverGroupChatsStore.set(new ChatMap<GroupChatSummary>());
-        serverEventsStore.set([]);
+        // a new visit to whatever is selected, which starts with no events
+        startChatVisit(selectedChatIdStore.value);
     });
 
     test("those who aren't held are looked up, and added if they are members", async () => {
@@ -799,7 +802,8 @@ describe("looking up the members of a community who appear in one of its channel
         selectedServerChatStore.set(undefined);
         selectedServerCommunityStore.set(undefined);
         serverCommunitiesStore.set(new CommunityMap<CommunitySummary>());
-        serverEventsStore.set([]);
+        // a new visit to whatever is selected, which starts with no events
+        startChatVisit(selectedChatIdStore.value);
     });
 
     test("the senders in a channel are looked up among the community's members", async () => {
@@ -925,7 +929,8 @@ describe("finding members when not all are held", () => {
         vi.restoreAllMocks();
         selectedServerChatStore.set(undefined);
         serverGroupChatsStore.set(new ChatMap<GroupChatSummary>());
-        serverEventsStore.set([]);
+        // a new visit to whatever is selected, which starts with no events
+        startChatVisit(selectedChatIdStore.value);
     });
 
     test("those found are looked up, and those who are members are returned and held", async () => {
@@ -1144,7 +1149,8 @@ describe("finding users to add to a channel when not all members are held", () =
         selectedServerCommunityStore.set(undefined);
         serverCommunitiesStore.set(new CommunityMap<CommunitySummary>());
         serverDirectChatsStore.set(new ChatMap<DirectChatSummary>());
-        serverEventsStore.set([]);
+        // a new visit to whatever is selected, which starts with no events
+        startChatVisit(selectedChatIdStore.value);
     });
 
     test("members of the channel are left out, whether or not either holds them", async () => {
