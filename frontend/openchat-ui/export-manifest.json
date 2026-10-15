@@ -1,0 +1,1179 @@
+{
+  "package": "@openchat/ui",
+  "exportedAt": "2026-10-13",
+  "pass": 2,
+  "scope": "library + app components + docs",
+  "source": "OpenChat design prototype",
+  "tokens": {
+    "source": "lib/tokens.css"
+  },
+  "icons": {
+    "source": "lib/icons.js",
+    "count": 142
+  },
+  "components": {
+    "ActivityRow": {
+      "source": "lib/ActivityRow.dc.html",
+      "sourceHash": "ada8248e",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/ActivityRow.svelte"
+      ],
+      "group": "library"
+    },
+    "AmountCard": {
+      "source": "lib/AmountCard.dc.html",
+      "sourceHash": "39ed836c",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/AmountCard.svelte"
+      ],
+      "group": "library"
+    },
+    "Avatar": {
+      "source": "lib/Avatar.dc.html",
+      "sourceHash": "1f9bbb41",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/Avatar.svelte"
+      ],
+      "group": "library"
+    },
+    "Badge": {
+      "source": "lib/Badge.dc.html",
+      "sourceHash": "ac70dfd9",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/Badge.svelte"
+      ],
+      "group": "library"
+    },
+    "Banner": {
+      "source": "lib/Banner.dc.html",
+      "sourceHash": "0beff5f6",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/Banner.svelte"
+      ],
+      "group": "library"
+    },
+    "Button": {
+      "source": "lib/Button.dc.html",
+      "sourceHash": "8b5cf575",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/Button.svelte"
+      ],
+      "group": "library"
+    },
+    "ChatBubble": {
+      "source": "lib/ChatBubble.dc.html",
+      "sourceHash": "1c51c112",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/ChatBubble.svelte"
+      ]
+    },
+    "ChatRow": {
+      "source": "lib/ChatRow.dc.html",
+      "sourceHash": "d9730629",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/ChatRow.svelte"
+      ]
+    },
+    "ComposerBar": {
+      "source": "lib/ComposerBar.dc.html",
+      "sourceHash": "6f9180bd",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/ComposerBar.svelte"
+      ]
+    },
+    "ContextMenu": {
+      "source": "lib/ContextMenu.dc.html",
+      "sourceHash": "c325b36b",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/ContextMenu.svelte"
+      ],
+      "group": "library"
+    },
+    "CopyButton": {
+      "source": "lib/CopyButton.dc.html",
+      "sourceHash": "454e21c1",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/CopyButton.svelte"
+      ],
+      "group": "library"
+    },
+    "DetailRow": {
+      "source": "lib/DetailRow.dc.html",
+      "sourceHash": "10ca55c5",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/DetailRow.svelte"
+      ],
+      "group": "library"
+    },
+    "DetailSection": {
+      "source": "lib/DetailSection.dc.html",
+      "sourceHash": "e0ad49a0",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/DetailSection.svelte"
+      ],
+      "group": "library"
+    },
+    "DialogShell": {
+      "source": "lib/DialogShell.dc.html",
+      "sourceHash": "972fe63e",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/DialogShell.svelte"
+      ],
+      "group": "library"
+    },
+    "DurationChips": {
+      "source": "lib/DurationChips.dc.html",
+      "sourceHash": "f945e31c",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/DurationChips.svelte"
+      ],
+      "group": "library"
+    },
+    "EmptyState": {
+      "source": "lib/EmptyState.dc.html",
+      "sourceHash": "824a4c25",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/EmptyState.svelte"
+      ],
+      "group": "library"
+    },
+    "Field": {
+      "source": "lib/Field.dc.html",
+      "sourceHash": "5b2c7160",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/Field.svelte"
+      ],
+      "group": "library"
+    },
+    "Icon": {
+      "source": "lib/Icon.dc.html",
+      "sourceHash": "88fc81a7",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/Icon.svelte"
+      ],
+      "group": "library"
+    },
+    "IconButton": {
+      "source": "lib/IconButton.dc.html",
+      "sourceHash": "f00be3d6",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/IconButton.svelte"
+      ],
+      "group": "library"
+    },
+    "ListSectionLabel": {
+      "source": "lib/ListSectionLabel.dc.html",
+      "sourceHash": "0ec0eea5",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/ListSectionLabel.svelte"
+      ],
+      "group": "library"
+    },
+    "MemberRow": {
+      "source": "lib/MemberRow.dc.html",
+      "sourceHash": "d9f8023f",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/MemberRow.svelte"
+      ],
+      "group": "library"
+    },
+    "Menu": {
+      "source": "lib/Menu.dc.html",
+      "sourceHash": "fd3b9a33",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/Menu.svelte"
+      ],
+      "group": "library"
+    },
+    "MenuItem": {
+      "source": "lib/MenuItem.dc.html",
+      "sourceHash": "81252d62",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/MenuItem.svelte"
+      ],
+      "group": "library"
+    },
+    "MessageGroup": {
+      "source": "lib/MessageGroup.dc.html",
+      "sourceHash": "39508894",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/MessageGroup.svelte"
+      ]
+    },
+    "PageHeader": {
+      "source": "lib/PageHeader.dc.html",
+      "sourceHash": "5a474f84",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/PageHeader.svelte"
+      ],
+      "group": "library"
+    },
+    "PanelCover": {
+      "source": "lib/PanelCover.dc.html",
+      "sourceHash": "8d024aca",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/PanelCover.svelte"
+      ],
+      "group": "library"
+    },
+    "PanelNavRow": {
+      "source": "lib/PanelNavRow.dc.html",
+      "sourceHash": "f29bf4af",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/PanelNavRow.svelte"
+      ],
+      "group": "library"
+    },
+    "Pill": {
+      "source": "lib/Pill.dc.html",
+      "sourceHash": "594a3b26",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/Pill.svelte"
+      ],
+      "group": "library"
+    },
+    "ProgressTimeline": {
+      "source": "lib/ProgressTimeline.dc.html",
+      "sourceHash": "90f18732",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/ProgressTimeline.svelte"
+      ],
+      "group": "library"
+    },
+    "QuickAmountChips": {
+      "source": "lib/QuickAmountChips.dc.html",
+      "sourceHash": "a622f26e",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/QuickAmountChips.svelte"
+      ],
+      "group": "library"
+    },
+    "SegmentedTabs": {
+      "source": "lib/SegmentedTabs.dc.html",
+      "sourceHash": "e4cc2aed",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/SegmentedTabs.svelte"
+      ],
+      "group": "library"
+    },
+    "ShareBar": {
+      "source": "lib/ShareBar.dc.html",
+      "sourceHash": "d827e12e",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/ShareBar.svelte"
+      ],
+      "group": "library"
+    },
+    "SideCard": {
+      "source": "lib/SideCard.dc.html",
+      "sourceHash": "2385dab3",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/SideCard.svelte"
+      ],
+      "group": "library"
+    },
+    "Spinner": {
+      "source": "lib/Spinner.dc.html",
+      "sourceHash": "8547dbf9",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/Spinner.svelte"
+      ],
+      "group": "library"
+    },
+    "StatCard": {
+      "source": "lib/StatCard.dc.html",
+      "sourceHash": "99b85629",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/StatCard.svelte"
+      ],
+      "group": "library"
+    },
+    "StatsDonut": {
+      "source": "lib/StatsDonut.dc.html",
+      "sourceHash": "44598fe9",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/StatsDonut.svelte"
+      ],
+      "group": "library"
+    },
+    "StepIndicator": {
+      "source": "lib/StepIndicator.dc.html",
+      "sourceHash": "491490cf",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/StepIndicator.svelte"
+      ],
+      "group": "library"
+    },
+    "TextArea": {
+      "source": "lib/TextArea.dc.html",
+      "sourceHash": "6aad1311",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/TextArea.svelte"
+      ],
+      "group": "library"
+    },
+    "TileButtons": {
+      "source": "lib/TileButtons.dc.html",
+      "sourceHash": "58a09cd3",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/TileButtons.svelte"
+      ],
+      "group": "library"
+    },
+    "TimedToggle": {
+      "source": "lib/TimedToggle.dc.html",
+      "sourceHash": "3ee63b57",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/TimedToggle.svelte"
+      ],
+      "group": "library"
+    },
+    "Toggle": {
+      "source": "lib/Toggle.dc.html",
+      "sourceHash": "4b90cec2",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/Toggle.svelte"
+      ],
+      "group": "library"
+    },
+    "TokenAvatar": {
+      "source": "lib/TokenAvatar.dc.html",
+      "sourceHash": "362ee2f9",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/TokenAvatar.svelte"
+      ],
+      "group": "library"
+    },
+    "TokenPicker": {
+      "source": "lib/TokenPicker.dc.html",
+      "sourceHash": "8699ab5d",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/TokenPicker.svelte"
+      ],
+      "group": "library"
+    },
+    "TransactionRow": {
+      "source": "lib/TransactionRow.dc.html",
+      "sourceHash": "235ffaf2",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/TransactionRow.svelte"
+      ]
+    },
+    "TypingIndicator": {
+      "source": "lib/TypingIndicator.dc.html",
+      "sourceHash": "e4d33efe",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/TypingIndicator.svelte"
+      ],
+      "group": "library"
+    },
+    "UndoToast": {
+      "source": "lib/UndoToast.dc.html",
+      "sourceHash": "d1ec11e9",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/UndoToast.svelte"
+      ],
+      "group": "library"
+    },
+    "UnreadDivider": {
+      "source": "lib/UnreadDivider.dc.html",
+      "sourceHash": "d4f40e6e",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/UnreadDivider.svelte"
+      ],
+      "group": "library"
+    },
+    "UserChip": {
+      "source": "lib/UserChip.dc.html",
+      "sourceHash": "348ce6b7",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/UserChip.svelte"
+      ],
+      "group": "library"
+    },
+    "VoiceMessage": {
+      "source": "lib/VoiceMessage.dc.html",
+      "sourceHash": "e210f6a8",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/VoiceMessage.svelte"
+      ]
+    },
+    "ChatPicker": {
+      "source": "lib/ChatPicker.dc.html",
+      "sourceHash": "3d01a726",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/ChatPicker.svelte"
+      ],
+      "group": "library"
+    },
+    "Tooltip": {
+      "source": "lib/Tooltip.dc.html",
+      "sourceHash": "27d349b2",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/Tooltip.svelte"
+      ],
+      "group": "library"
+    },
+    "Skeleton": {
+      "source": "lib/Skeleton.dc.html",
+      "sourceHash": "a4b6cf89",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/Skeleton.svelte"
+      ],
+      "group": "library"
+    },
+    "AccessGates": {
+      "source": "lib/AccessGates.dc.html",
+      "sourceHash": "fceffeb8",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/AccessGates.svelte"
+      ]
+    },
+    "AccessGatesCards": {
+      "source": "lib/AccessGatesCards.dc.html",
+      "sourceHash": "7f4effa4",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/AccessGatesCards.svelte"
+      ]
+    },
+    "AchievementToast": {
+      "source": "lib/AchievementToast.dc.html",
+      "sourceHash": "f37efbac",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/AchievementToast.svelte"
+      ]
+    },
+    "AchievementsDialog": {
+      "source": "lib/AchievementsDialog.dc.html",
+      "sourceHash": "0faa1b00",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/AchievementsDialog.svelte"
+      ]
+    },
+    "ActivityPanel": {
+      "source": "lib/ActivityPanel.dc.html",
+      "sourceHash": "937a1630",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/ActivityPanel.svelte"
+      ]
+    },
+    "AuthDialog": {
+      "source": "lib/AuthDialog.dc.html",
+      "sourceHash": "f22ab84b",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/AuthDialog.svelte"
+      ]
+    },
+    "AvatarStack": {
+      "source": "lib/AvatarStack.dc.html",
+      "sourceHash": "5c9166f0",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/AvatarStack.svelte"
+      ]
+    },
+    "BalanceCard": {
+      "source": "lib/BalanceCard.dc.html",
+      "sourceHash": "34499a8e",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/BalanceCard.svelte"
+      ]
+    },
+    "BotDialog": {
+      "source": "lib/BotDialog.dc.html",
+      "sourceHash": "dccd49b7",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/BotDialog.svelte"
+      ]
+    },
+    "CallEvent": {
+      "source": "lib/CallEvent.dc.html",
+      "sourceHash": "229acee3",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/CallEvent.svelte"
+      ]
+    },
+    "CallPanel": {
+      "source": "lib/CallPanel.dc.html",
+      "sourceHash": "956d6791",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/CallPanel.svelte"
+      ]
+    },
+    "ChatListHeader": {
+      "source": "lib/ChatListHeader.dc.html",
+      "sourceHash": "aa5b1850",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/ChatListHeader.svelte"
+      ]
+    },
+    "ChatListPanel": {
+      "source": "lib/ChatListPanel.dc.html",
+      "sourceHash": "1eb60abb",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/ChatListPanel.svelte"
+      ]
+    },
+    "ChitDialog": {
+      "source": "lib/ChitDialog.dc.html",
+      "sourceHash": "556edac8",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/ChitDialog.svelte"
+      ]
+    },
+    "Confetti": {
+      "source": "lib/Confetti.dc.html",
+      "sourceHash": "29b4b5be",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/Confetti.svelte"
+      ]
+    },
+    "ConversationHeader": {
+      "source": "lib/ConversationHeader.dc.html",
+      "sourceHash": "ccaba540",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/ConversationHeader.svelte"
+      ]
+    },
+    "ConvertToCommunityDialog": {
+      "source": "lib/ConvertToCommunityDialog.dc.html",
+      "sourceHash": "a749f89a",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/ConvertToCommunityDialog.svelte"
+      ]
+    },
+    "Countdown": {
+      "source": "lib/Countdown.dc.html",
+      "sourceHash": "4ac813fd",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/Countdown.svelte"
+      ]
+    },
+    "CreateGroupDialog": {
+      "source": "lib/CreateGroupDialog.dc.html",
+      "sourceHash": "eedb6471",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/CreateGroupDialog.svelte"
+      ]
+    },
+    "DailyPuzzleCard": {
+      "source": "lib/DailyPuzzleCard.dc.html",
+      "sourceHash": "022361e6",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/DailyPuzzleCard.svelte"
+      ]
+    },
+    "DeleteGroupDialog": {
+      "source": "lib/DeleteGroupDialog.dc.html",
+      "sourceHash": "e8ca1d1b",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/DeleteGroupDialog.svelte"
+      ]
+    },
+    "DiamondDialog": {
+      "source": "lib/DiamondDialog.dc.html",
+      "sourceHash": "39751360",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/DiamondDialog.svelte"
+      ]
+    },
+    "DmChatSettings": {
+      "source": "lib/DmChatSettings.dc.html",
+      "sourceHash": "a1189237",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/DmChatSettings.svelte"
+      ]
+    },
+    "DmPanel": {
+      "source": "lib/DmPanel.dc.html",
+      "sourceHash": "38415146",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/DmPanel.svelte"
+      ]
+    },
+    "EmojiPicker": {
+      "source": "lib/EmojiPicker.dc.html",
+      "sourceHash": "20d1754a",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/EmojiPicker.svelte"
+      ]
+    },
+    "ExploreCommunities": {
+      "source": "lib/ExploreCommunities.dc.html",
+      "sourceHash": "8685dae7",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/ExploreCommunities.svelte"
+      ]
+    },
+    "FileMessage": {
+      "source": "lib/FileMessage.dc.html",
+      "sourceHash": "1e982d63",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/FileMessage.svelte"
+      ]
+    },
+    "GroupPanel": {
+      "source": "lib/GroupPanel.dc.html",
+      "sourceHash": "dba9b54f",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/GroupPanel.svelte"
+      ]
+    },
+    "GroupSettingsDialog": {
+      "source": "lib/GroupSettingsDialog.dc.html",
+      "sourceHash": "68b6847a",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/GroupSettingsDialog.svelte"
+      ]
+    },
+    "GroupStats": {
+      "source": "lib/GroupStats.dc.html",
+      "sourceHash": "def7d7a1",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/GroupStats.svelte"
+      ]
+    },
+    "ImportToCommunityDialog": {
+      "source": "lib/ImportToCommunityDialog.dc.html",
+      "sourceHash": "601977ac",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/ImportToCommunityDialog.svelte"
+      ]
+    },
+    "InfoPanel": {
+      "source": "lib/InfoPanel.dc.html",
+      "sourceHash": "e4f3dc4d",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/InfoPanel.svelte"
+      ]
+    },
+    "InviteDialog": {
+      "source": "lib/InviteDialog.dc.html",
+      "sourceHash": "408fbcd8",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/InviteDialog.svelte"
+      ]
+    },
+    "JoinGateDialog": {
+      "source": "lib/JoinGateDialog.dc.html",
+      "sourceHash": "3a62b79a",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/JoinGateDialog.svelte"
+      ]
+    },
+    "LeaderboardDialog": {
+      "source": "lib/LeaderboardDialog.dc.html",
+      "sourceHash": "b977d80f",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/LeaderboardDialog.svelte"
+      ]
+    },
+    "LeaveGroupDialog": {
+      "source": "lib/LeaveGroupDialog.dc.html",
+      "sourceHash": "935490b2",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/LeaveGroupDialog.svelte"
+      ]
+    },
+    "LinkPreview": {
+      "source": "lib/LinkPreview.dc.html",
+      "sourceHash": "ebdc8a5b",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/LinkPreview.svelte"
+      ]
+    },
+    "MediaMessage": {
+      "source": "lib/MediaMessage.dc.html",
+      "sourceHash": "67e8474e",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/MediaMessage.svelte"
+      ]
+    },
+    "MemeFighterDialog": {
+      "source": "lib/MemeFighterDialog.dc.html",
+      "sourceHash": "a1fc291c",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/MemeFighterDialog.svelte"
+      ]
+    },
+    "MessageActions": {
+      "source": "lib/MessageActions.dc.html",
+      "sourceHash": "b8b56d84",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/MessageActions.svelte"
+      ]
+    },
+    "MessageComposer": {
+      "source": "lib/MessageComposer.dc.html",
+      "sourceHash": "4f18c46b",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/MessageComposer.svelte"
+      ]
+    },
+    "MiniCall": {
+      "source": "lib/MiniCall.dc.html",
+      "sourceHash": "e6c8db6f",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/MiniCall.svelte"
+      ]
+    },
+    "NavRail": {
+      "source": "lib/NavRail.dc.html",
+      "sourceHash": "42bdb472",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/NavRail.svelte"
+      ]
+    },
+    "NewChannelDialog": {
+      "source": "lib/NewChannelDialog.dc.html",
+      "sourceHash": "01911d9c",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/NewChannelDialog.svelte"
+      ]
+    },
+    "PollBuilderDialog": {
+      "source": "lib/PollBuilderDialog.dc.html",
+      "sourceHash": "4e7ef431",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/PollBuilderDialog.svelte"
+      ]
+    },
+    "PollMessage": {
+      "source": "lib/PollMessage.dc.html",
+      "sourceHash": "19377bd9",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/PollMessage.svelte"
+      ]
+    },
+    "PrizeBuilderDialog": {
+      "source": "lib/PrizeBuilderDialog.dc.html",
+      "sourceHash": "5169413b",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/PrizeBuilderDialog.svelte"
+      ]
+    },
+    "PrizeMessage": {
+      "source": "lib/PrizeMessage.dc.html",
+      "sourceHash": "44eff81b",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/PrizeMessage.svelte"
+      ]
+    },
+    "ProfileDialog": {
+      "source": "lib/ProfileDialog.dc.html",
+      "sourceHash": "3f17d9eb",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/ProfileDialog.svelte"
+      ]
+    },
+    "ProposalMessage": {
+      "source": "lib/ProposalMessage.dc.html",
+      "sourceHash": "e4139d49",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/ProposalMessage.svelte"
+      ]
+    },
+    "PuzzleDialog": {
+      "source": "lib/PuzzleDialog.dc.html",
+      "sourceHash": "f417539c",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/PuzzleDialog.svelte"
+      ]
+    },
+    "RequirementChip": {
+      "source": "lib/RequirementChip.dc.html",
+      "sourceHash": "3ea36e0b",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/RequirementChip.svelte"
+      ]
+    },
+    "RoundIconButton": {
+      "source": "lib/RoundIconButton.dc.html",
+      "sourceHash": "93c63369",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/RoundIconButton.svelte"
+      ]
+    },
+    "SendCryptoDialog": {
+      "source": "lib/SendCryptoDialog.dc.html",
+      "sourceHash": "71f44ae8",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/SendCryptoDialog.svelte"
+      ]
+    },
+    "SnapFloat": {
+      "source": "lib/SnapFloat.dc.html",
+      "sourceHash": "87d22dad",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/SnapFloat.svelte"
+      ]
+    },
+    "SortableInputList": {
+      "source": "lib/SortableInputList.dc.html",
+      "sourceHash": "eb476c6d",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/SortableInputList.svelte"
+      ]
+    },
+    "StreakInsuranceDialog": {
+      "source": "lib/StreakInsuranceDialog.dc.html",
+      "sourceHash": "ba4875a6",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/StreakInsuranceDialog.svelte"
+      ]
+    },
+    "SwapOffer": {
+      "source": "lib/SwapOffer.dc.html",
+      "sourceHash": "da54ba4f",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/SwapOffer.svelte"
+      ]
+    },
+    "SwapOfferDialog": {
+      "source": "lib/SwapOfferDialog.dc.html",
+      "sourceHash": "35fa8254",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/SwapOfferDialog.svelte"
+      ]
+    },
+    "ThreadList": {
+      "source": "lib/ThreadList.dc.html",
+      "sourceHash": "4e4977fb",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/ThreadList.svelte"
+      ]
+    },
+    "ThreadPanel": {
+      "source": "lib/ThreadPanel.dc.html",
+      "sourceHash": "e35352d5",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/ThreadPanel.svelte"
+      ]
+    },
+    "ThresholdBar": {
+      "source": "lib/ThresholdBar.dc.html",
+      "sourceHash": "3a0c0b95",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/ThresholdBar.svelte"
+      ]
+    },
+    "TokenCoin": {
+      "source": "lib/TokenCoin.dc.html",
+      "sourceHash": "8398db54",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/TokenCoin.svelte"
+      ]
+    },
+    "TransferMessage": {
+      "source": "lib/TransferMessage.dc.html",
+      "sourceHash": "06196d3d",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/TransferMessage.svelte"
+      ]
+    },
+    "UpgradeBanner": {
+      "source": "lib/UpgradeBanner.dc.html",
+      "sourceHash": "af894647",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/UpgradeBanner.svelte"
+      ]
+    },
+    "UserDialog": {
+      "source": "lib/UserDialog.dc.html",
+      "sourceHash": "47a5b5d4",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/UserDialog.svelte"
+      ]
+    },
+    "UserGroupDialog": {
+      "source": "lib/UserGroupDialog.dc.html",
+      "sourceHash": "2c0cc062",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/UserGroupDialog.svelte"
+      ]
+    },
+    "VideoTile": {
+      "source": "lib/VideoTile.dc.html",
+      "sourceHash": "3d3f0853",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/VideoTile.svelte"
+      ]
+    },
+    "WalletMain": {
+      "source": "lib/WalletMain.dc.html",
+      "sourceHash": "abda06dc",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/WalletMain.svelte"
+      ]
+    },
+    "WalletPanel": {
+      "source": "lib/WalletPanel.dc.html",
+      "sourceHash": "464ebf46",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/WalletPanel.svelte"
+      ]
+    },
+    "WalletReceive": {
+      "source": "lib/WalletReceive.dc.html",
+      "sourceHash": "2b04c83d",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/WalletReceive.svelte"
+      ]
+    },
+    "WalletRecipients": {
+      "source": "lib/WalletRecipients.dc.html",
+      "sourceHash": "8d8543ca",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/WalletRecipients.svelte"
+      ]
+    },
+    "WalletSend": {
+      "source": "lib/WalletSend.dc.html",
+      "sourceHash": "7681cb15",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/WalletSend.svelte"
+      ]
+    },
+    "WalletSettingsDialog": {
+      "source": "lib/WalletSettingsDialog.dc.html",
+      "sourceHash": "a69b5e15",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/WalletSettingsDialog.svelte"
+      ]
+    },
+    "WalletSwap": {
+      "source": "lib/WalletSwap.dc.html",
+      "sourceHash": "9e10abdb",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/WalletSwap.svelte"
+      ]
+    },
+    "Waveform": {
+      "source": "lib/Waveform.dc.html",
+      "sourceHash": "d43e3c8e",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/Waveform.svelte"
+      ]
+    },
+    "WebhookDialog": {
+      "source": "lib/WebhookDialog.dc.html",
+      "sourceHash": "af5a6630",
+      "exportedAt": "2026-10-13",
+      "group": "features",
+      "files": [
+        "src/features/components/WebhookDialog.svelte"
+      ]
+    }
+  },
+  "converter": "export/tools/dc2svelte.js (prototype project)",
+  "converted": "All components hand-converted to plain Svelte 5 (no .logic.js); re-exporting would overwrite them. Port prototype changes by hand."
+}

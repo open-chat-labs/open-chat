@@ -1,0 +1,220 @@
+{
+  "docs": {
+    "foundations": {
+      "nouns": {
+        "channel": "channel",
+        "community": "community",
+        "group": "group"
+      }
+    },
+    "general": {
+      "amounts": {
+        "balance": "Balance {amount}",
+        "overBalance": "More than your balance",
+        "youGet": "You get",
+        "youPay": "You pay"
+      },
+      "badges": {
+        "admin": "Admin",
+        "bot": "Bot"
+      },
+      "banners": {
+        "approval": "New members need approval before they can post.",
+        "offline": "You're offline. Messages will send when you reconnect.",
+        "reported": "This group was reported and is under review.",
+        "review": "Review",
+        "storage": "Your storage is almost full.",
+        "upgrade": "Upgrade"
+      },
+      "buttons": {
+        "button": "Button",
+        "disabled": "Disabled",
+        "fullWidth": "Full width",
+        "ghost": "Ghost",
+        "moreOpen": "More (open)",
+        "newChat": "New chat",
+        "primary": "Primary",
+        "secondary": "Secondary"
+      },
+      "call": {
+        "cameraOff": "Camera off",
+        "cameraOn": "Camera on",
+        "leaveCall": "Leave call",
+        "micOn": "Microphone on",
+        "mute": "Mute",
+        "unmute": "Unmute"
+      },
+      "chatPicker": {
+        "shareInviteLink": "Share invite link"
+      },
+      "confetti": {
+        "celebrate": "Celebrate",
+        "smallBurst": "Small burst"
+      },
+      "copy": {
+        "copyInviteLink": "Copy invite link",
+        "copyLink": "Copy link",
+        "copyPrincipal": "Copy principal",
+        "inviteLink": "Invite link",
+        "principal": "Principal"
+      },
+      "countdown": {
+        "closesIn": "Closes in",
+        "endsIn": "Ends in",
+        "left": "left",
+        "votingClosed": "Voting closed"
+      },
+      "details": {
+        "about": "About",
+        "amount": "Amount",
+        "bestRoute": "Best route",
+        "chitEarned": "Chit earned",
+        "depositAccount": "Deposit account",
+        "memberSince": "Member since",
+        "networkFee": "Network fee",
+        "onlineNow": "Online now",
+        "priceImpact": "Price impact",
+        "rate": "Rate",
+        "status": "Status",
+        "total": "Total",
+        "transferFee": "Transfer fee",
+        "youReceive": "You receive",
+        "youSend": "You send"
+      },
+      "dialog": {
+        "open": "Open dialog",
+        "renameGroup": "Rename group"
+      },
+      "inputs": {
+        "aboutHelp": "Shown on your profile",
+        "aboutYou": "About you",
+        "disappearing": "Disappearing messages",
+        "groupName": "Group name",
+        "muteFor": "Mute for",
+        "muteHint": "You'll still see mentions",
+        "nameRequired": "A name is required",
+        "notifications": "Notifications",
+        "notificationsHelp": "Mentions and replies only",
+        "searchChats": "Search chats",
+        "searchPeople": "Search people"
+      },
+      "menus": {
+        "sortBy": "Sort by"
+      },
+      "pageHeader": {
+        "receive": "Receive",
+        "sendChat": "Send CHAT",
+        "swapIcp": "Swap ICP",
+        "wallet": "Wallet"
+      },
+      "people": {
+        "blocked": "Blocked",
+        "invitePeople": "Invite people",
+        "owner": "Owner",
+        "pending": "Pending",
+        "reset": "Reset",
+        "you": "You"
+      },
+      "pills": {
+        "active": "Active",
+        "expiring": "Expiring",
+        "failed": "Failed",
+        "live": "LIVE",
+        "new": "New",
+        "pending": "Pending"
+      },
+      "requirements": {
+        "diamond": "Diamond member",
+        "hold": "Hold 100 CHAT",
+        "neutral": "Neutral",
+        "verified": "Verified human"
+      },
+      "sectionLabels": {
+        "today": "Today"
+      },
+      "sideCard": {
+        "summary": "Summary"
+      },
+      "snapFloat": {
+        "card": "Floating card",
+        "miniCall": "Mini call"
+      },
+      "sortable": {
+        "answer": "answer",
+        "pollAnswers": "Poll answers"
+      },
+      "steps": {
+        "details": "Details",
+        "quote": "Quote",
+        "swap": "Swap"
+      },
+      "tabs": {
+        "all": "All",
+        "bots": "Bots",
+        "direct": "Direct",
+        "groups": "Groups",
+        "invited": "Invited",
+        "members": "Members",
+        "unread": "Unread"
+      },
+      "thresholds": {
+        "proposalVotes": "Proposal votes"
+      },
+      "timeline": {
+        "fundsSafe": "Your 100 CHAT is safe in ICPSwap. Retry the swap or withdraw it back to your wallet.",
+        "withdraw": "Withdraw"
+      },
+      "toasts": {
+        "archived": "Chat archived",
+        "deleted": "Message deleted for everyone",
+        "linkCopied": "Invite link copied",
+        "showAgain": "Show again"
+      },
+      "tooltip": {
+        "above": "Placed above",
+        "below": "Flips below near the top edge"
+      },
+      "tx": {
+        "receivedFrom": "Received from {name}",
+        "sentTo": "Sent to {name}",
+        "yesterday": "Yesterday"
+      },
+      "waveform": {
+        "pause": "Pause",
+        "play": "Play",
+        "voiceMessage": "Voice message"
+      },
+      "samples": {
+        "menu": {
+          "addToFavourites": "Add to favourites",
+          "muteNotifications": "Mute notifications",
+          "markAsRead": "Mark as read",
+          "leaveGroup": "Leave group",
+          "forward": "Forward",
+          "copyText": "Copy text"
+        },
+        "sort": {
+          "newestFirst": "Newest first",
+          "oldestFirst": "Oldest first",
+          "mostMembers": "Most members"
+        },
+        "status": {
+          "pending": "Pending",
+          "failed": "Failed"
+        },
+        "thresholds": {
+          "majorityAdoptedWhenVotingEnds": "Majority — adopted when voting ends",
+          "adoptedImmediately": "Adopted immediately"
+        },
+        "timeline": {
+          "sendToIcpswap": "Send to ICPSwap",
+          "swap": "Swap",
+          "returnToYourWallet": "Return to your wallet",
+          "getDepositAccount": "Get deposit account",
+          "notifyIcpswapOfTheDeposit": "Notify ICPSwap of the deposit",
+          "swapChatForIcp": "Swap CHAT for ICP"
+        }
+      }
+    }
+  }
+}

@@ -176,6 +176,15 @@ export default defineConfig([
             "local/no-pagejs-direct": "off",
         },
     },
+    // openchat-ui's plain-JS behaviours (a11y.js, tooltip.js) run in the browser.
+    {
+        files: ["openchat-ui/src/**/*.js"],
+        languageOptions: {
+            globals: {
+                ...globals.browser,
+            },
+        },
+    },
     // Lint every Svelte component with the same rules as the .ts files.
     {
         files: ["**/*.svelte"],
@@ -229,8 +238,9 @@ export default defineConfig([
     globalIgnores([
         "**/candid/*.ts",
         "**/candid/*.js",
-        // Compiled/bundled output — never lint build artifacts.
-        "**/lib/**",
+        // Compiled/bundled output — never lint build artifacts (the sub-packages' top-level lib/;
+        // openchat-ui/src/lib is library source and is linted).
+        "*/lib/**",
         "**/build/**",
         "**/dist/**",
         "**/dist-js/**",
