@@ -27,6 +27,7 @@ const chunks: Chunk[] = [
     chunk("vendor.js", []),
     chunk("desktop.js", [`${root}/src/components/App.svelte`], ["vendor.js", "shared.js"]),
     chunk("mobile.js", [`${root}/src/components_mobile/App.svelte`], ["main.js", "shared.js"]),
+    chunk("web.js", [`${root}/src/web/App.svelte`], ["vendor.js", "deep.js"]),
     chunk("shared.js", [`${root}/src/utils/urls.ts`], ["vendor.js", "deep.js"]),
     chunk("deep.js", [`${root}/src/utils/share.ts`]),
     chunk("lazy.js", [`${root}/src/components/Admin.svelte`], ["desktop.js"]),
@@ -37,6 +38,7 @@ const chunks: Chunk[] = [
 
 // What rollup.config.mjs passes for a web build
 const mobileLayout = `(window.OC_CONFIG?.OC_MOBILE_LAYOUT ?? "v1")`;
+const webLayout = `(window.OC_CONFIG?.OC_WEB_LAYOUT ?? undefined)`;
 
 class FakeWorker {
     constructor(
@@ -45,15 +47,22 @@ class FakeWorker {
     ) {}
 }
 
-function run(script = generateStartupScript({ chunks, version: "1.2.3", mobileLayout })): string[] {
+function run(
+    script = generateStartupScript({ chunks, version: "1.2.3", mobileLayout, webLayout }),
+): string[] {
     new Function(script)();
     return [...document.head.querySelectorAll("link[rel=modulepreload]")].map(
         (l) => l.getAttribute("href")!,
     );
 }
 
-function configure(flag: string | undefined, width: number) {
-    vi.stubGlobal("OC_CONFIG", flag === undefined ? undefined : { OC_MOBILE_LAYOUT: flag });
+function configure(flag: string | undefined, width: number, webFlag?: string) {
+    vi.stubGlobal(
+        "OC_CONFIG",
+        flag === undefined && webFlag === undefined
+            ? undefined
+            : { OC_MOBILE_LAYOUT: flag, OC_WEB_LAYOUT: webFlag },
+    );
     vi.stubGlobal("innerWidth", width);
 }
 
@@ -110,12 +119,24 @@ describe("the startup script in index.html", () => {
         expect(run()).toEqual(["/mobile.js", "/shared.js", "/deep.js", "/en.js"]);
     });
 
+    test("preloads the new web App chunk for the v3 web layout on a wide viewport", () => {
+        configure(undefined, 1200, "v3");
+        expect(run()).toEqual(["/web.js", "/deep.js", "/en.js"]);
+    });
+
     test("preloads the App tree which selectLayout goes on to pick", () => {
-        for (const width of [767, 768]) {
-            document.head.innerHTML = "";
-            configure("v2", width);
-            const app = selectLayout("v2", width < 768) === "v2" ? "mobile" : "desktop";
-            expect(run()[0], `v2 at ${width}px`).toBe(`/${app}.js`);
+        const trees = { v1: "desktop", v2: "mobile", v3: "web" };
+        for (const [flag, webFlag] of [
+            ["v2", undefined],
+            ["v2", "v3"],
+            [undefined, "v3"],
+        ]) {
+            for (const width of [767, 768]) {
+                document.head.innerHTML = "";
+                configure(flag, width, webFlag);
+                const app = trees[selectLayout(flag, webFlag, width < 768)];
+                expect(run()[0], `${flag}/${webFlag} at ${width}px`).toBe(`/${app}.js`);
+            }
         }
     });
 
@@ -154,9 +175,11 @@ describe("the startup script in index.html", () => {
             chunks: chunks.filter((c) => c.fileName !== fileName),
             version: "1.2.3",
             mobileLayout,
+            webLayout,
         });
         expect(() => generateStartupScript(without("desktop.js"))).toThrow(/App\.svelte/);
         expect(() => generateStartupScript(without("mobile.js"))).toThrow(/App\.svelte/);
+        expect(() => generateStartupScript(without("web.js"))).toThrow(/App\.svelte/);
         expect(() => generateStartupScript(without("en.js"))).toThrow(/en locale/);
     });
 });

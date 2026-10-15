@@ -38,19 +38,16 @@
         identityStateStore,
         inititaliseLogger,
         notFoundStore,
-        requiresLogout,
         routeForChatIdentifier,
         routeForScope,
         routeStore,
         subscribe,
     } from "@client";
-    import {
-        eventToError,
-        isIdbConnectionClosingError,
-        recordError,
-    } from "@utils/errorPostmortem";
+    import { recordError } from "@utils/errorPostmortem";
     import { navigate } from "@utils/navigation";
     import { warmRichTextEditor } from "@shared_components/richTextEditorLoader";
+    import { createOpenChatClient } from "@utils/openchatClient";
+    import { handleUnhandledError } from "@utils/unhandledError";
     import { onMount, setContext } from "svelte";
     import { overrideItemIdKeyNameBeforeInitialisingDndZones } from "svelte-dnd-action";
     import { _, isLoading, locale } from "svelte-i18n";
@@ -79,52 +76,7 @@
         import.meta.env.OC_BUILD_ENV!,
     );
 
-    function createOpenChatClient(): OpenChat {
-        const client = new OpenChat({
-            mobileLayout: import.meta.env.OC_MOBILE_LAYOUT,
-            icUrl: import.meta.env.OC_IC_URL,
-            webAuthnOrigin: import.meta.env.OC_WEBAUTHN_ORIGIN,
-            iiDerivationOrigin: import.meta.env.OC_II_DERIVATION_ORIGIN,
-            openStorageIndexCanister: import.meta.env.OC_STORAGE_INDEX_CANISTER!,
-            groupIndexCanister: import.meta.env.OC_GROUP_INDEX_CANISTER!,
-            notificationsCanister: import.meta.env.OC_NOTIFICATIONS_CANISTER!,
-            identityCanister: import.meta.env.OC_IDENTITY_CANISTER!,
-            onlineCanister: import.meta.env.OC_ONLINE_CANISTER!,
-            dailyPuzzleCanister: import.meta.env.OC_DAILY_PUZZLE_CANISTER ?? "",
-            userIndexCanister: import.meta.env.OC_USER_INDEX_CANISTER!,
-            translationsCanister: import.meta.env.OC_TRANSLATIONS_CANISTER!,
-            registryCanister: import.meta.env.OC_REGISTRY_CANISTER!,
-            internetIdentityUrl: import.meta.env.OC_INTERNET_IDENTITY_URL!,
-            nfidUrl: import.meta.env.OC_NFID_URL!,
-            userGeekApiKey: import.meta.env.OC_USERGEEK_APIKEY!,
-            videoBridgeUrl: import.meta.env.OC_VIDEO_BRIDGE_URL!,
-            translateProxyUrl: import.meta.env.OC_TRANSLATE_PROXY_URL!,
-            meteredApiKey: import.meta.env.OC_METERED_APIKEY!,
-            blobUrlPattern: import.meta.env.OC_BLOB_URL_PATTERN!,
-            canisterUrlPath: import.meta.env.OC_CANISTER_URL_PATH!,
-            proposalBotCanister: import.meta.env.OC_PROPOSALS_BOT_CANISTER!,
-            marketMakerCanister: import.meta.env.OC_MARKET_MAKER_CANISTER!,
-            signInWithEmailCanister: import.meta.env.OC_SIGN_IN_WITH_EMAIL_CANISTER!,
-            signInWithEthereumCanister: import.meta.env.OC_SIGN_IN_WITH_ETHEREUM_CANISTER!,
-            signInWithSolanaCanister: import.meta.env.OC_SIGN_IN_WITH_SOLANA_CANISTER!,
-            oneSecForwarderCanister: import.meta.env.OC_ONESEC_FORWARDER_CANISTER!,
-            oneSecMinterCanister: import.meta.env.OC_ONESEC_MINTER_CANISTER!,
-            i18nFormatter: $_,
-            logger,
-            websiteVersion: import.meta.env.OC_WEBSITE_VERSION!,
-            rollbarApiKey: import.meta.env.OC_ROLLBAR_ACCESS_TOKEN!,
-            env: import.meta.env.OC_BUILD_ENV!,
-            bitcoinMainnetEnabled: import.meta.env.OC_BITCOIN_MAINNET_ENABLED! === "true",
-            vapidPublicKey: import.meta.env.OC_VAPID_PUBLIC_KEY!,
-            accountLinkingCodesEnabled:
-                import.meta.env.OC_ACCOUNT_LINKING_CODES_ENABLED! === "true",
-            baseOrigin: import.meta.env.OC_BASE_ORIGIN!,
-        });
-
-        return client;
-    }
-
-    const client: OpenChat = createOpenChatClient();
+    const client: OpenChat = createOpenChatClient($_, logger);
     setContext<OpenChat>("client", client);
 
     const profileTrace = client.showTrace();
@@ -607,32 +559,7 @@
     }
 
     function unhandledError(ev: Event) {
-        if (
-            ev instanceof ErrorEvent &&
-            (ev.message.includes("ResizeObserver loop completed with undelivered notifications") ||
-                ev.message.includes("ResizeObserver loop limit exceeded"))
-        ) {
-            return;
-        }
-
-        const err = eventToError(ev);
-        if (isIdbConnectionClosingError(err)) {
-            ev.preventDefault();
-            return;
-        }
-        recordError("window", err);
-        // Deliberately not reported here. Rollbar's own captureUncaught /
-        // captureUnhandledRejections already reports every event this handler sees, and
-        // installs earlier than this listener, so logging again produced two Rollbar items
-        // per rejection - one titled "Unhandled error: X" and one titled "X" - splitting
-        // every defect in two and doubling the volume. Its `checkIgnore` reads the rejection
-        // reason out of the original arguments, so worker errors - which arrive as plain
-        // objects, not Errors - are still filtered on name and code. This handler keeps the
-        // crash-log record and the logout, which Rollbar's capture does not do.
-        if (ev instanceof PromiseRejectionEvent && requiresLogout(ev.reason)) {
-            client.logout();
-            ev.preventDefault();
-        }
+        handleUnhandledError(ev, () => client.logout());
     }
 
     function boundaryError(err: unknown) {

@@ -170,6 +170,10 @@ const lazyModuleCache = new Map();
 // "only dynamically reachable" and the vendor chunk would dissolve into the app chunks.
 const DESKTOP_APP_ROOT = "/src/components/App.svelte";
 const MOBILE_APP_ROOT = "/src/components_mobile/App.svelte";
+// The new web UI (OC_WEB_LAYOUT=v3) is left out of APP_ROOTS on purpose: until it
+// replaces the desktop tree, its dependencies should not grow the vendor chunk that
+// every user of the existing trees downloads.
+const WEB_APP_ROOT = "/src/web/App.svelte";
 const APP_ROOTS = [DESKTOP_APP_ROOT, MOBILE_APP_ROOT];
 function isAppRoot(id) {
     return APP_ROOTS.some((root) => id.endsWith(root));
@@ -271,7 +275,7 @@ export const STARTUP_DARK_BACKGROUND = "#1b1c21";
 // is only known in the browser. Both choices mirror what the app goes on to do (`selectLayout` in
 // utils/layout.ts and `getStoredLocale` in i18n/i18n.ts); if they ever disagree the cost is a
 // wasted download, not a broken page.
-export function generateStartupScript({ chunks, version, mobileLayout }) {
+export function generateStartupScript({ chunks, version, mobileLayout, webLayout = "undefined" }) {
     const chunksByFileName = new Map(chunks.map((c) => [c.fileName, c]));
     const entry = chunks.find((c) => c.isEntry);
     // The entry's own imports are preloaded by <link> tags, which the preload scanner can see
@@ -300,7 +304,9 @@ export function generateStartupScript({ chunks, version, mobileLayout }) {
     }
 
     return `(function () {
-    var mobile = ${mobileLayout} === "v2" && window.innerWidth < 768;
+    var narrow = window.innerWidth < 768;
+    var mobile = ${mobileLayout} === "v2" && narrow;
+    var web = ${webLayout} === "v3" && !narrow;
     var mode;
     try {
         mode = localStorage.getItem("openchat_startup_theme_mode");
@@ -314,7 +320,7 @@ export function generateStartupScript({ chunks, version, mobileLayout }) {
         link.href = "/" + file;
         document.head.appendChild(link);
     }
-    (mobile ? ${JSON.stringify(appChunks(MOBILE_APP_ROOT))} : ${JSON.stringify(appChunks(DESKTOP_APP_ROOT))}).forEach(preload);
+    (mobile ? ${JSON.stringify(appChunks(MOBILE_APP_ROOT))} : web ? ${JSON.stringify(appChunks(WEB_APP_ROOT))} : ${JSON.stringify(appChunks(DESKTOP_APP_ROOT))}).forEach(preload);
     var locales = ${JSON.stringify(locales)};
     var locale;
     try {

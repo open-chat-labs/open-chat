@@ -209,6 +209,9 @@ export default defineConfig({
         }),
     ],
     resolve: {
+        // @openchat/ui is compiled from source; a local install of its own (openchat-ui/node_modules)
+        // must not bring in a second copy of the svelte runtime.
+        dedupe: ["svelte"],
         alias: [
             ...ocPackageAliases,
             // The Tauri plugin's guest JS is resolved from source (guest-js/)

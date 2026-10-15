@@ -7,6 +7,8 @@ interface ImportMetaEnv {
     readonly OC_APP_STORE: string;
     readonly OC_APP_TYPE: "android" | "ios" | "web" | undefined;
     readonly OC_MOBILE_LAYOUT: "v1" | "v2";
+    // Set to "v3" to build the new web UI (src/web) instead of src/components
+    readonly OC_WEB_LAYOUT: "v3" | undefined;
     readonly OC_BITCOIN_MAINNET_ENABLED: string;
     readonly OC_BLOB_URL_PATTERN: string;
     readonly OC_BUILD_ENV: string;

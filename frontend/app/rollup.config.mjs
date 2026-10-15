@@ -112,6 +112,7 @@ export default {
                     ["@client", "openchat-client", "src/index.ts"],
                     ["@agent", "openchat-agent", "src/index.ts"],
                     ["@worker", "openchat-worker", "src/worker.ts"],
+                    ["@openchat/ui", "openchat-ui", "src/lib/index.ts"],
                 ].flatMap(([alias, dir, entry]) => {
                     const root = path.resolve(__dirname, "..", dir);
                     return [
@@ -164,6 +165,7 @@ export default {
                 "../openchat-agent/src/**/*",
                 "../openchat-worker/src/**/*",
                 "../tauri-plugin-oc/guest-js/**/*",
+                "../openchat-ui/src/**/*",
             ],
         }),
         inject({
@@ -181,6 +183,10 @@ export default {
             "import.meta.env.OC_MOBILE_LAYOUT": override(
                 "OC_MOBILE_LAYOUT",
                 JSON.stringify(process.env.OC_MOBILE_LAYOUT),
+            ),
+            "import.meta.env.OC_WEB_LAYOUT": override(
+                "OC_WEB_LAYOUT",
+                JSON.stringify(process.env.OC_WEB_LAYOUT),
             ),
             "import.meta.env.OC_OTA_UPDATES": override(
                 "OC_OTA_UPDATES",
@@ -341,6 +347,10 @@ export default {
                     mobileLayout: override(
                         "OC_MOBILE_LAYOUT",
                         JSON.stringify(process.env.OC_MOBILE_LAYOUT),
+                    ),
+                    webLayout: override(
+                        "OC_WEB_LAYOUT",
+                        JSON.stringify(process.env.OC_WEB_LAYOUT),
                     ),
                 });
                 const inlineScripts = [

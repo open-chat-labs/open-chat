@@ -17,6 +17,8 @@ export const ocPackages = [
     { alias: "@client", dir: "openchat-client", entry: "src/index.ts" },
     { alias: "@agent", dir: "openchat-agent", entry: "src/index.ts" },
     { alias: "@worker", dir: "openchat-worker", entry: "src/worker.ts" },
+    // The component library the new web UI (src/web) is built from
+    { alias: "@openchat/ui", dir: "openchat-ui", entry: "src/lib/index.ts" },
 ];
 
 // Vite/rollup `resolve.alias` entries mapping each alias (and its /subpath form)

@@ -11,6 +11,7 @@ const pkgAliases = [
     ["@client", "openchat-client", "src/index.ts"],
     ["@agent", "openchat-agent", "src/index.ts"],
     ["@worker", "openchat-worker", "src/worker.ts"],
+    ["@openchat/ui", "openchat-ui", "src/lib/index.ts"],
 ].flatMap(([alias, dir, entry]) => [
     { find: new RegExp(`^${alias}/(.*)$`), replacement: src(`./${dir}/src/$1`) },
     { find: new RegExp(`^${alias}$`), replacement: src(`./${dir}/${entry}`) },
