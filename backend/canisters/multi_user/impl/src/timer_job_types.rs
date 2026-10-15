@@ -6,7 +6,8 @@ use chat_events::{MessageContentInternal, MessageReminderContentInternal};
 use cksol_minter_canister::deposit_sol_status::DepositSolStatus;
 use cksol_minter_canister::{CKSOL_LEDGER_CANISTER_ID, CKSOL_MINTER_CANISTER_ID};
 use constants::{
-    MEMO_SOL_DEPOSIT, MEMO_SOL_DEPOSIT_FEE, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID, OPENCHAT_TREASURY_CANISTER_ID, SECOND_IN_MS,
+    HOUR_IN_MS, MEMO_SOL_DEPOSIT, MEMO_SOL_DEPOSIT_FEE, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID, OPENCHAT_TREASURY_CANISTER_ID,
+    SECOND_IN_MS,
 };
 use event_store_types::EventBuilder;
 use icrc_ledger_types::icrc1::account::Account;
@@ -107,23 +108,31 @@ pub struct CancelP2PSwapInEscrowCanisterJob {
 
 // Forwards the ckSOL minted for one of a user's SOL deposits from their deposit account of this
 // canister (see `sol_deposit_account`) to their wallet, less `SOL_DEPOSIT_FEE`, which goes to the
-// treasury, then tells them via the OpenChat bot. It checks every minute until the minter has swept
-// and minted the deposit. Kept if the user is deleted, since the ckSOL is still theirs.
+// treasury, then tells them via the OpenChat bot. It checks every minute (every hour after the first
+// day) until the minter has swept and minted the deposit. Kept if the user is deleted, since the
+// ckSOL is still theirs.
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ForwardSolDepositJob {
     pub user_index: u16,
     pub principal: Principal,
     pub deposit_id: u64,
-    // Fixed by the first attempt at the transfers, so that the ledger deduplicates a retry of any
-    // which went through
+    // Set once the deposit is minted
     pub transfers: Option<SolDepositTransfers>,
+    // Attempts since the deposit was queued, or since it was minted once it has been
     pub attempt: u32,
 }
 
+// The transfers forwarding a minted deposit, fixed when it is minted so that every attempt at them
+// repeats the same args, and the ledger deduplicates a retry of one which went through. They are
+// told apart from other deposits' transfers by the deposit id in their memos.
 #[derive(Serialize, Deserialize, Clone, Copy)]
 pub struct SolDepositTransfers {
-    pub created_at: TimestampNanos,
+    pub to_user: u64,
+    pub to_treasury: u64,
     pub ledger_fee: u64,
+    pub created_at: TimestampNanos,
+    // So that a retry after the treasury's transfer failed only repeats that
+    pub user_paid: bool,
 }
 
 // Marks a swap expired in one user's copy of the chat it was offered in, once its time is up
@@ -436,13 +445,28 @@ impl Job for MarkP2PSwapExpiredJob {
 }
 
 impl ForwardSolDepositJob {
-    // Checks once a minute for a day before giving up on a deposit
-    const MAX_ATTEMPTS: u32 = 24 * 60;
+    // The minter is checked every minute for the first day, then every hour
+    const MINUTELY_STATUS_CHECKS: u32 = 24 * 60;
+    // Transfers are retried every minute for half a day, well within the day the ledger deduplicates
+    // them for
+    const MAX_TRANSFER_ATTEMPTS: u32 = 12 * 60;
 
-    // Starts forwarding the deposit once the minter has had time to sweep it, unless it is already
-    // being forwarded
+    // Starts forwarding the deposit once the minter has had time to sweep it, unless it is one
+    // already forwarded or being forwarded to the user
     pub fn start(user_index: u16, principal: Principal, deposit_id: u64, state: &mut RuntimeState) {
-        if state.data.sol_deposits_being_forwarded.insert(deposit_id) {
+        let is_new = state
+            .data
+            .users
+            .with_user_mut(user_index, |user| {
+                let is_new = user.latest_sol_deposit_id.is_none_or(|latest| deposit_id > latest);
+                if is_new {
+                    user.latest_sol_deposit_id = Some(deposit_id);
+                }
+                is_new
+            })
+            .unwrap_or_default();
+
+        if is_new {
             let now = state.env.now();
             let job = ForwardSolDepositJob {
                 user_index,
@@ -459,75 +483,99 @@ impl ForwardSolDepositJob {
     }
 
     async fn run(mut self) {
-        let minted_amount =
-            match cksol_minter_canister_c2c_client::deposit_sol_status(CKSOL_MINTER_CANISTER_ID, &self.deposit_id).await {
-                Ok(DepositSolStatus::Minted { minted_amount, .. }) => minted_amount,
-                Ok(DepositSolStatus::Queued { .. } | DepositSolStatus::Swept { .. } | DepositSolStatus::Finalized { .. })
-                | Err(_) => {
-                    return self.retry();
+        let mut transfers = match self.transfers {
+            Some(transfers) => transfers,
+            None => match self.wait_for_mint().await {
+                Some(Ok(transfers)) => {
+                    self.transfers = Some(transfers);
+                    self.attempt = 0;
+                    transfers
                 }
-                Ok(DepositSolStatus::Dropped { .. }) => {
-                    // The SOL is still at the deposit address, and is swept again when next asked for
-                    info!(deposit_id = self.deposit_id, "SOL deposit dropped");
-                    return self.finish(None);
-                }
-                Ok(status @ (DepositSolStatus::NotFound | DepositSolStatus::Quarantined { .. })) => {
-                    error!(?status, deposit_id = self.deposit_id, "SOL deposit not minted");
-                    return self.finish(None);
-                }
-            };
+                Some(Err(())) => return self.finish(),
+                None => return self.retry(),
+            },
+        };
 
-        match self.forward(minted_amount).await {
-            Ok(amount) => self.finish(Some(amount)),
-            Err(true) => self.retry(),
-            Err(false) => self.finish(None),
+        if !transfers.user_paid {
+            let wallet = Account {
+                owner: self.principal,
+                subaccount: None,
+            };
+            match self.transfer(wallet, transfers.to_user, &MEMO_SOL_DEPOSIT, transfers).await {
+                TransferOutcome::Done => {
+                    transfers.user_paid = true;
+                    self.transfers = Some(transfers);
+                }
+                TransferOutcome::Retry => return self.retry(),
+                TransferOutcome::Failed => return self.finish(),
+            }
         }
+
+        // Once the user is paid, a failure to pay the treasury leaves its fee in the user's deposit
+        // account, and is logged
+        if let TransferOutcome::Retry = self
+            .transfer(
+                OPENCHAT_TREASURY_CANISTER_ID.into(),
+                transfers.to_treasury,
+                &MEMO_SOL_DEPOSIT_FEE,
+                transfers,
+            )
+            .await
+        {
+            return self.retry();
+        }
+        self.finish();
     }
 
-    // Sends the minted ckSOL, less the fee, to the user's wallet, then the fee to the treasury,
-    // returning what the user received. Err(true) if it is worth trying again.
-    async fn forward(&mut self, minted_amount: u64) -> Result<u64, bool> {
-        let transfers = match self.transfers {
-            Some(transfers) => transfers,
-            None => {
-                let ledger_fee = icrc_ledger_canister_c2c_client::icrc1_fee(CKSOL_LEDGER_CANISTER_ID)
-                    .await
-                    .map_err(|_| true)?;
-                let transfers = SolDepositTransfers {
-                    created_at: read_state(|state| state.env.now_nanos()),
-                    ledger_fee: u64::try_from(&ledger_fee.0).map_err(|_| false)?,
-                };
-                self.transfers = Some(transfers);
-                transfers
+    // Some(Ok) with the transfers to make once the deposit is minted, Some(Err) if it never will be,
+    // or None to check again later
+    async fn wait_for_mint(&self) -> Option<Result<SolDepositTransfers, ()>> {
+        let status = cksol_minter_canister_c2c_client::deposit_sol_status(CKSOL_MINTER_CANISTER_ID, &self.deposit_id)
+            .await
+            .ok()?;
+
+        let minted_amount = match deposit_step(&status) {
+            DepositStep::Wait => return None,
+            DepositStep::Forward(minted_amount) => minted_amount,
+            DepositStep::Stop => {
+                if matches!(status, DepositSolStatus::Dropped { .. }) {
+                    // The SOL is still at the deposit address, and is swept again when next asked for
+                    info!(deposit_id = self.deposit_id, "SOL deposit dropped");
+                } else {
+                    error!(?status, deposit_id = self.deposit_id, "SOL deposit not minted");
+                }
+                return Some(Err(()));
             }
         };
 
-        let Some((to_user, to_treasury)) = split_sol_deposit(minted_amount, transfers.ledger_fee) else {
+        let ledger_fee = icrc_ledger_canister_c2c_client::icrc1_fee(CKSOL_LEDGER_CANISTER_ID)
+            .await
+            .ok()?;
+        let split = u64::try_from(&ledger_fee.0)
+            .ok()
+            .and_then(|ledger_fee| split_sol_deposit(minted_amount, ledger_fee).map(|split| (split, ledger_fee)));
+        let Some(((to_user, to_treasury), ledger_fee)) = split else {
             error!(
                 minted_amount,
+                ?ledger_fee,
                 deposit_id = self.deposit_id,
-                "SOL deposit too small to forward"
+                "SOL deposit can't cover its fees"
             );
-            return Err(false);
+            return Some(Err(()));
         };
 
-        let wallet = Account {
-            owner: self.principal,
-            subaccount: None,
-        };
-        self.transfer(wallet, to_user, &MEMO_SOL_DEPOSIT, transfers).await?;
-        self.transfer(
-            OPENCHAT_TREASURY_CANISTER_ID.into(),
+        Some(Ok(SolDepositTransfers {
+            to_user,
             to_treasury,
-            &MEMO_SOL_DEPOSIT_FEE,
-            transfers,
-        )
-        .await?;
-        Ok(to_user)
+            ledger_fee,
+            created_at: read_state(|state| state.env.now_nanos()),
+            user_paid: false,
+        }))
     }
 
-    async fn transfer(&self, to: Account, amount: u64, memo: &[u8], transfers: SolDepositTransfers) -> Result<(), bool> {
+    async fn transfer(&self, to: Account, amount: u64, memo_prefix: &[u8], transfers: SolDepositTransfers) -> TransferOutcome {
         let from = read_state(|state| sol_deposit_account(state.env.canister_id(), self.principal));
+        let memo = [memo_prefix, &self.deposit_id.to_be_bytes()].concat();
         let response = icrc_ledger_canister_c2c_client::icrc1_transfer(
             CKSOL_LEDGER_CANISTER_ID,
             &TransferArg {
@@ -535,49 +583,59 @@ impl ForwardSolDepositJob {
                 to,
                 fee: Some(transfers.ledger_fee.into()),
                 created_at_time: Some(transfers.created_at),
-                memo: Some(memo.to_vec().into()),
+                memo: Some(memo.into()),
                 amount: amount.into(),
             },
         )
         .await;
 
-        match response {
-            // A duplicate is a retry of a transfer which went through
-            Ok(Ok(_)) | Ok(Err(TransferError::Duplicate { .. })) => Ok(()),
-            Ok(Err(TransferError::TemporarilyUnavailable)) | Err(_) => Err(true),
-            Ok(Err(error)) => {
-                error!(?error, deposit_id = self.deposit_id, "Failed to forward SOL deposit");
-                Err(false)
-            }
+        let outcome = match &response {
+            Ok(Ok(_)) => TransferOutcome::Done,
+            Ok(Err(error)) => transfer_outcome(error),
+            // The call is unbounded, so an error means the transfer wasn't made
+            Err(_) => TransferOutcome::Retry,
+        };
+        if matches!(outcome, TransferOutcome::Failed) {
+            error!(?response, deposit_id = self.deposit_id, "Failed to forward SOL deposit");
         }
+        outcome
     }
 
     fn retry(self) {
-        if self.attempt >= Self::MAX_ATTEMPTS {
-            error!(deposit_id = self.deposit_id, "Gave up forwarding SOL deposit");
-            return self.finish(None);
-        }
+        let delay = match self.transfers {
+            Some(transfers) if self.attempt >= Self::MAX_TRANSFER_ATTEMPTS => {
+                error!(
+                    deposit_id = self.deposit_id,
+                    user_paid = transfers.user_paid,
+                    "Gave up forwarding SOL deposit"
+                );
+                return self.finish();
+            }
+            Some(_) => MINUTE_IN_MS,
+            // Until the minter has minted or dropped the deposit, the job keeps checking, since it is
+            // the only one to forward it, the website no longer asking once the SOL is swept
+            None if self.attempt < Self::MINUTELY_STATUS_CHECKS => MINUTE_IN_MS,
+            None => HOUR_IN_MS,
+        };
         mutate_state(|state| {
             let now = state.env.now();
             let job = ForwardSolDepositJob {
-                attempt: self.attempt + 1,
+                attempt: self.attempt.saturating_add(1),
                 ..self
             };
             state
                 .data
                 .timer_jobs
-                .enqueue_job(TimerJob::ForwardSolDeposit(Box::new(job)), now + MINUTE_IN_MS, now);
+                .enqueue_job(TimerJob::ForwardSolDeposit(Box::new(job)), now + delay, now);
         });
     }
 
     // Tells the user of the amount forwarded to their wallet, if any, unless they have been deleted
-    fn finish(self, forwarded: Option<u64>) {
+    fn finish(self) {
+        let Some(amount) = self.transfers.filter(|t| t.user_paid).map(|t| t.to_user) else {
+            return;
+        };
         mutate_state(|state| {
-            state.data.sol_deposits_being_forwarded.remove(&self.deposit_id);
-
-            let Some(amount) = forwarded else {
-                return;
-            };
             let text = sol_deposit_received_text(
                 &format_crypto_amount(amount as u128, 9),
                 &format_crypto_amount(SOL_DEPOSIT_FEE as u128, 9),
@@ -608,6 +666,50 @@ impl Job for ForwardSolDepositJob {
     }
 }
 
+#[derive(Debug, PartialEq, Eq)]
+enum DepositStep {
+    // The deposit is yet to be minted
+    Wait,
+    // The deposit has been minted, this much ckSOL being in the user's deposit account
+    Forward(u64),
+    // The deposit will never be minted. Once dropped, its SOL is swept again when next asked for.
+    Stop,
+}
+
+fn deposit_step(status: &DepositSolStatus) -> DepositStep {
+    match status {
+        DepositSolStatus::Queued { .. } | DepositSolStatus::Swept { .. } | DepositSolStatus::Finalized { .. } => {
+            DepositStep::Wait
+        }
+        DepositSolStatus::Minted { minted_amount, .. } => DepositStep::Forward(*minted_amount),
+        DepositSolStatus::Dropped { .. } | DepositSolStatus::Quarantined { .. } | DepositSolStatus::NotFound => {
+            DepositStep::Stop
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+enum TransferOutcome {
+    Done,
+    Retry,
+    Failed,
+}
+
+// What a transfer the ledger refused comes to, repeating it with the same args
+fn transfer_outcome(error: &TransferError) -> TransferOutcome {
+    match error {
+        // A retry of a transfer which went through
+        TransferError::Duplicate { .. } => TransferOutcome::Done,
+        TransferError::TemporarilyUnavailable | TransferError::CreatedInFuture { .. } | TransferError::GenericError { .. } => {
+            TransferOutcome::Retry
+        }
+        TransferError::BadFee { .. }
+        | TransferError::BadBurn { .. }
+        | TransferError::InsufficientFunds { .. }
+        | TransferError::TooOld => TransferOutcome::Failed,
+    }
+}
+
 // Splits the ckSOL minted for a deposit into what the user receives and what the treasury receives,
 // after the ledger fee each transfer pays, the treasury's share being `SOL_DEPOSIT_FEE` less its
 // transfer's ledger fee. None if the deposit doesn't cover them.
@@ -620,6 +722,7 @@ fn split_sol_deposit(minted_amount: u64, ledger_fee: u64) -> Option<(u64, u64)> 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use candid::Nat;
 
     #[test]
     fn split_sol_deposit_accounts_for_every_lamport() {
@@ -638,5 +741,71 @@ mod tests {
         assert!(split_sol_deposit(SOL_DEPOSIT_FEE + 500, 500).is_none());
         assert!(split_sol_deposit(SOL_DEPOSIT_FEE + 501, 500).is_some());
         assert!(split_sol_deposit(1_000_000_000, SOL_DEPOSIT_FEE).is_none());
+    }
+
+    #[test]
+    fn deposit_step_waits_until_minted_and_stops_if_never() {
+        let signature = || "sig".to_string();
+        assert_eq!(
+            deposit_step(&DepositSolStatus::Queued { sweepable_amount: 1 }),
+            DepositStep::Wait
+        );
+        assert_eq!(
+            deposit_step(&DepositSolStatus::Swept { signature: signature() }),
+            DepositStep::Wait
+        );
+        assert_eq!(
+            deposit_step(&DepositSolStatus::Finalized { signature: signature() }),
+            DepositStep::Wait
+        );
+        assert_eq!(
+            deposit_step(&DepositSolStatus::Minted {
+                block_index: 1,
+                minted_amount: 123
+            }),
+            DepositStep::Forward(123)
+        );
+        assert_eq!(
+            deposit_step(&DepositSolStatus::Dropped { signature: signature() }),
+            DepositStep::Stop
+        );
+        assert_eq!(
+            deposit_step(&DepositSolStatus::Quarantined { signature: signature() }),
+            DepositStep::Stop
+        );
+        assert_eq!(deposit_step(&DepositSolStatus::NotFound), DepositStep::Stop);
+    }
+
+    #[test]
+    fn transfer_outcome_treats_a_duplicate_as_done_and_retries_transient_errors() {
+        let nat = || Nat::from(1u32);
+        assert_eq!(
+            transfer_outcome(&TransferError::Duplicate { duplicate_of: nat() }),
+            TransferOutcome::Done
+        );
+        assert_eq!(
+            transfer_outcome(&TransferError::TemporarilyUnavailable),
+            TransferOutcome::Retry
+        );
+        assert_eq!(
+            transfer_outcome(&TransferError::CreatedInFuture { ledger_time: 1 }),
+            TransferOutcome::Retry
+        );
+        assert_eq!(
+            transfer_outcome(&TransferError::GenericError {
+                error_code: nat(),
+                message: String::new()
+            }),
+            TransferOutcome::Retry
+        );
+        assert_eq!(
+            transfer_outcome(&TransferError::InsufficientFunds { balance: nat() }),
+            TransferOutcome::Failed
+        );
+        assert_eq!(transfer_outcome(&TransferError::TooOld), TransferOutcome::Failed);
+        assert_eq!(
+            transfer_outcome(&TransferError::BadFee { expected_fee: nat() }),
+            TransferOutcome::Failed
+        );
     }
 }

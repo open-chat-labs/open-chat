@@ -18,7 +18,7 @@ use rand::prelude::StdRng;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::BaseKeyPrefix;
 use std::cell::RefCell;
-use std::collections::{BTreeMap, BTreeSet, HashSet};
+use std::collections::{BTreeMap, HashSet};
 use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
@@ -617,7 +617,12 @@ impl RuntimeState {
             queued_local_user_index_events: self.data.local_user_index_event_sync_queue.len() as u32,
             queued_user_canister_events: self.data.user_canister_events_queue.len() as u32,
             known_multi_user_canisters: self.data.known_multi_user_canisters.len() as u32,
-            sol_deposits_being_forwarded: self.data.sol_deposits_being_forwarded.len() as u32,
+            sol_deposits_being_forwarded: self
+                .data
+                .timer_jobs
+                .iter()
+                .filter(|(_, job)| matches!(job.borrow().as_ref(), Some(TimerJob::ForwardSolDeposit(_))))
+                .count() as u32,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
@@ -656,10 +661,6 @@ struct Data {
     pub timer_jobs: TimerJobs<TimerJob>,
     // The certified transfers users have sent messages with, so that none is used twice
     pub certified_transfers: CertifiedTransfers,
-    // The ckSOL minter's ids of the SOL deposits which a `ForwardSolDeposit` job is forwarding to
-    // the user who made them, so that a deposit has only one
-    #[serde(default)]
-    pub sol_deposits_being_forwarded: BTreeSet<u64>,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
@@ -698,7 +699,6 @@ impl Data {
             known_multi_user_canisters: HashSet::new(),
             timer_jobs: TimerJobs::default(),
             certified_transfers: CertifiedTransfers::default(),
-            sol_deposits_being_forwarded: BTreeSet::new(),
             rng_seed,
             test_mode,
         }
