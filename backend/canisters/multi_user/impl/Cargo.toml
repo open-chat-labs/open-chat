@@ -17,6 +17,8 @@ canister_state_macros = { path = "../../../libraries/canister_state_macros" }
 canister_timer_jobs = { path = "../../../libraries/canister_timer_jobs" }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
 chat_events = { path = "../../../libraries/chat_events" }
+cksol_minter_canister = { path = "../../../external_canisters/cksol_minter/api" }
+cksol_minter_canister_c2c_client = { path = "../../../external_canisters/cksol_minter/c2c_client" }
 community_canister = { path = "../../community/api" }
 community_canister_c2c_client = { path = "../../community/c2c_client" }
 constants = { path = "../../../libraries/constants" }

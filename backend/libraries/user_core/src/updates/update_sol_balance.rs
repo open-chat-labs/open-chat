@@ -1,17 +1,35 @@
+use candid::Principal;
 use cksol_minter_canister::deposit_sol::{DepositSolError, InsufficientCyclesError};
 use cksol_minter_canister::{CKSOL_MINTER_CANISTER_ID, DEPOSIT_SOL_REQUIRED_CYCLES, MAX_DEPOSIT_SOL_CYCLES};
+use ledger_utils::convert_to_subaccount;
 use oc_error_codes::OCErrorCode;
+use serde::Serialize;
 use tracing::error;
-use types::{OCResult, UserIdAndPrincipal, icrc1};
+use types::{CanisterId, OCResult, icrc1};
+
+// What the canister keeps of each SOL deposit, in lamports, to cover the cycles it pays the ckSOL
+// minter to sweep the deposit, about 55B. The website shows it in the deposit view from its own copy,
+// `SOL_DEPOSIT_FEE`, which must match.
+pub const SOL_DEPOSIT_FEE: u64 = 1_000_000;
+
+// The account of the canister holding the user which their SOL deposits are minted to as ckSOL,
+// from which the canister forwards them to the user's wallet, less `SOL_DEPOSIT_FEE`. Its
+// subaccount holds the user's principal, so whose ckSOL a subaccount holds can be read from it.
+pub fn sol_deposit_account(canister_id: CanisterId, principal: Principal) -> icrc1::Account {
+    icrc1::Account {
+        owner: canister_id,
+        subaccount: Some(convert_to_subaccount(&principal).0),
+    }
+}
 
 // Asks the ckSOL minter to sweep the SOL deposited to the user's address into its own account, then
-// mint that much ckSOL, less the deposit's share of the sweep's fee, to the user's wallet. It mints
-// once the sweep is finalized, after this returns. A deposit already in flight is left as it is.
-pub async fn update_sol_balance(me: UserIdAndPrincipal) -> OCResult {
-    let wallet = icrc1::Account::from(me);
+// mint that much ckSOL, less the deposit's share of the sweep's fee, to the user's deposit account.
+// It mints once the sweep is finalized, after this returns the id of the deposit. A deposit already
+// in flight is left as it is, and its id returned.
+pub async fn update_sol_balance(deposit_account: icrc1::Account) -> OCResult<u64> {
     let args = cksol_minter_canister::deposit_sol::Args {
-        owner: Some(wallet.owner),
-        subaccount: wallet.subaccount,
+        owner: Some(deposit_account.owner),
+        subaccount: deposit_account.subaccount,
     };
 
     let mut response =
@@ -27,11 +45,16 @@ pub async fn update_sol_balance(me: UserIdAndPrincipal) -> OCResult {
     }
 
     match response {
-        Ok(_) => Ok(()),
+        Ok(deposit_id) => Ok(deposit_id),
         Err(DepositSolError::ValueTooSmall { .. } | DepositSolError::AlreadyProcessing) => Err(OCErrorCode::NoChange.into()),
         Err(error) => {
             error!(?error, "Failed to update SOL balance");
             Err(OCErrorCode::Unknown.with_json(&error))
         }
     }
+}
+
+#[derive(Serialize)]
+pub struct SolDepositEventPayload {
+    pub amount: u64,
 }

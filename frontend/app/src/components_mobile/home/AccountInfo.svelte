@@ -13,6 +13,7 @@
         LEDGER_CANISTER_CKSOL,
         OpenChat,
         type OneSecTransferFees,
+        SOL_DEPOSIT_FEE,
         SOL_SYMBOL,
         userWalletAccount,
     } from "@client";
@@ -239,6 +240,12 @@
         {:catch}
             <!-- The minimum is only informational, so a failure to fetch it shows nothing -->
         {/await}
+        <Row {background} padding={["lg", "xl"]} crossAxisAlignment="center">
+            {@render displayFee({
+                amount: `~${client.formatTokens(SOL_DEPOSIT_FEE, tokenDetails.decimals)}`,
+                token: tokenDetails.symbol,
+            })}
+        </Row>
     {:else if isOneSecNetwork}
         <Row {background} padding={["lg", "xl"]} crossAxisAlignment="center">
             {#await oneSecFeesPromise.get()}
