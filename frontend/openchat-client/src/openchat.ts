@@ -7223,7 +7223,18 @@ export class OpenChat {
             .then(async (resp) => {
                 if (resp.kind === "success") {
                     const userIds = userIdsFromTransactions(resp.transactions);
-                    await this.getMissingUsers(userIds);
+                    const users = await this.getMissingUsers(userIds);
+                    // A transfer made before the other user was migrated to a MultiUser canister
+                    // names them by their earlier id, which the UserIndex maps to their latest
+                    const latest = (id: string | undefined) =>
+                        id === undefined ? undefined : (users.migratedUserIds?.get(id) ?? id);
+                    if (users.migratedUserIds !== undefined) {
+                        resp.transactions = resp.transactions.map((t) => ({
+                            ...t,
+                            from: latest(t.from),
+                            to: latest(t.to),
+                        }));
+                    }
                 }
                 return resp;
             })

@@ -24,6 +24,7 @@ vi.mock("@icp-sdk/auth/client", async (importOriginal) => ({
 
 import {
     ChatMap,
+    type AccountTransaction,
     ROLE_OWNER,
     Stream,
     subscribe,
@@ -40,7 +41,7 @@ import { WorkerAgent } from "./workerAgent";
 
 // When the other user in a direct chat was migrated to a MultiUser canister, the chat was moved onto
 // their new id. A link to the chat under the old id is looked up by the client, which the UserIndex
-// maps to the new id.
+// maps to the new id, as it does for the old id in a referral link or a transfer made before then.
 
 class FakeWorker {
     onmessage: ((ev: MessageEvent) => void) | undefined;
@@ -118,18 +119,28 @@ function selectChat(chatId: DirectChatIdentifier, messageIndex?: number) {
     });
 }
 
-describe("a link with an id a user had before being migrated to a MultiUser canister", () => {
+describe("an id a user had before being migrated to a MultiUser canister", () => {
     let client: OpenChat;
     // Each earlier id the UserIndex knows of, mapped to the user's latest id
     let migrated: Map<string, string>;
+    // The latest ids of users who've since been deleted
+    let deleted: Set<string>;
+    let transactions: AccountTransaction[];
     let navigations: { url: string; intent?: string }[];
+    let notFound: number;
     let unsubscribes: (() => void)[];
 
     function answerGetUsers(userIds: string[]): UsersResponse {
         const migratedUserIds = new Map<string, string>();
+        const deletedUserIds = new Set<string>();
         const users: UserSummary[] = [];
         for (const userId of userIds) {
             const latest = migrated.get(userId) ?? userId;
+            if (deleted.has(latest)) {
+                // The UserIndex returns a deleted user under the id they were asked for
+                deletedUserIds.add(userId);
+                continue;
+            }
             if (latest !== userId) {
                 migratedUserIds.set(userId, latest);
             }
@@ -137,7 +148,7 @@ describe("a link with an id a user had before being migrated to a MultiUser cani
         }
         return {
             users,
-            deletedUserIds: new Set(),
+            deletedUserIds,
             migratedUserIds: migratedUserIds.size > 0 ? migratedUserIds : undefined,
         };
     }
@@ -150,8 +161,14 @@ describe("a link with an id a user had before being migrated to a MultiUser cani
         client = new OpenChat(config());
 
         migrated = new Map();
+        deleted = new Set();
+        transactions = [];
         navigations = [];
-        unsubscribes = [subscribe("navigateTo", (ev) => navigations.push(ev))];
+        notFound = 0;
+        unsubscribes = [
+            subscribe("navigateTo", (ev) => navigations.push(ev)),
+            subscribe("notFound", () => notFound++),
+        ];
 
         vi.spyOn(WorkerAgent.prototype, "stream").mockImplementation(
             (() => new Stream(() => {})) as never,
@@ -162,6 +179,8 @@ describe("a link with an id a user had before being migrated to a MultiUser cani
                     return Promise.resolve(
                         answerGetUsers(req.users.userGroups.flatMap((g) => g.users)),
                     );
+                case "getAccountTransactions":
+                    return Promise.resolve({ kind: "success", transactions });
                 default:
                     return new Promise(() => {});
             }
@@ -189,6 +208,29 @@ describe("a link with an id a user had before being migrated to a MultiUser cani
         expect(localUpdates.anyUninitialisedDirectChats()).toBe(false);
     });
 
+    test("an old link to a user with no chat yet starts one under their latest id", async () => {
+        migrated.set("old6", "new6");
+        selectChat(direct("old6"));
+
+        await client.setSelectedChat(direct("old6"));
+
+        expect(navigations).toEqual([{ url: "/chats/user/new6", intent: "auto" }]);
+        expect(localUpdates.removeUninitialisedDirectChat(direct("old6"))).toBe(false);
+        expect(localUpdates.removeUninitialisedDirectChat(direct("new6"))).toBe(true);
+    });
+
+    test("an old link to a user who has since been deleted isn't found", async () => {
+        migrated.set("old7", "new7");
+        deleted.add("new7");
+        selectChat(direct("old7"));
+
+        await client.setSelectedChat(direct("old7"));
+
+        expect(notFound).toBe(1);
+        expect(navigations).toEqual([]);
+        expect(localUpdates.anyUninitialisedDirectChats()).toBe(false);
+    });
+
     test("an old link isn't followed if another chat was chosen while the user was looked up", async () => {
         migrated.set("old4", "new4");
         serverDirectChatsStore.set(ChatMap.fromList([directChat("new4")]));
@@ -206,5 +248,24 @@ describe("a link with an id a user had before being migrated to a MultiUser cani
         client.setReferralCode("old5");
 
         expect((await client.getReferringUser())?.userId).toBe("new5");
+    });
+
+    test("a transfer made before the other user was migrated names them by their latest id", async () => {
+        migrated.set("old8", "new8");
+        migrated.set("old9", "new9");
+        const common = { timestamp: new Date(0), amount: 1n };
+        transactions = [
+            { ...common, kind: "transfer", id: 1n, from: "old8", to: "someone" },
+            { ...common, kind: "mint", id: 2n, to: "old9" },
+            { ...common, kind: "burn", id: 3n, from: "someone" },
+        ];
+
+        const result = await client.getAccountTransactions("ledgerIndex");
+
+        expect(result.kind === "success" && result.transactions).toEqual([
+            { ...common, kind: "transfer", id: 1n, from: "new8", to: "someone" },
+            { ...common, kind: "mint", id: 2n, from: undefined, to: "new9" },
+            { ...common, kind: "burn", id: 3n, from: "someone", to: undefined },
+        ]);
     });
 });
