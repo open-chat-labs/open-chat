@@ -63,6 +63,7 @@ import {
     selectedChatIdStore,
     selectedChatBlockedOrSuspendedUsersStore,
     selectedChatMembersStore,
+    selectedChatRulesStore,
     selectedChatUserIdsStore,
     selectedCommunityBlockedUsersStore,
     selectedCommunityMembersStore,
@@ -217,6 +218,34 @@ describe("app state", () => {
                 expect(selectedChatExpandedDeletedMessageStore.value.has(3)).toBe(true);
                 setChatDetails({ ...chatId, channelId: 654321 }); // reset the server state for a different chatId
                 expect(selectedChatExpandedDeletedMessageStore.value.has(3)).toBe(false);
+            });
+
+            test("the details are cleared when a different chat is selected", () => {
+                expect(selectedChatRulesStore.value).toBeDefined();
+                setRouteParams(mockContext, {
+                    kind: "selected_channel_route",
+                    chatId: { ...chatId, channelId: 654321 },
+                    communityId,
+                    messageIndex: 0,
+                    open: false,
+                    scope: { kind: "community", id: communityId },
+                });
+                expect(selectedServerChatStore.value).toBeUndefined();
+                expect(selectedChatRulesStore.value).toBeUndefined();
+                expect(selectedChatMembersStore.value.size).toBe(0);
+            });
+
+            test("the details are kept when the route changes within the chat", () => {
+                setRouteParams(mockContext, {
+                    kind: "selected_channel_route",
+                    chatId,
+                    communityId,
+                    messageIndex: 5,
+                    open: false,
+                    scope: { kind: "community", id: communityId },
+                });
+                expect(selectedServerChatStore.value?.chatId).toEqual(chatId);
+                expect(selectedChatMembersStore.value.has("user_one")).toBe(true);
             });
         });
 

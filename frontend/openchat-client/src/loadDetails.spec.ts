@@ -421,7 +421,8 @@ describe("loading the selected chat's details", () => {
         const other = { kind: "group_chat" as const, groupId: "ccccc-cc" };
         responses.push(chatDetails(10n, [member("a")]));
         await load();
-        // The store keeps the last chat's details until the next chat's arrive
+        // Selecting a chat clears the details held, so this only guards against them being
+        // another chat's
         selectedServerChatStore.update((state) => {
             if (state !== undefined) state.chatId = other;
             return state;
@@ -702,14 +703,17 @@ describe("looking up the members who appear in a chat when not all are held", ()
         await load();
         expect(lookups).toHaveLength(1);
 
-        // The store keeps the last chat's details until the next chat's arrive, which here they
-        // never do
+        // Selecting the next chat, whose details here never arrive, clears the last one's
+        const held = selectedServerChatStore.value;
         select(otherChatId);
+        expect(selectedServerChatStore.value).toBeUndefined();
+
+        // Were they still held, they'd be no help in finding the next chat's members
+        selectedServerChatStore.set(held);
         senders = [z];
         await load(otherChatId);
 
         expect(lookups).toHaveLength(1);
-        expect(selectedServerChatStore.value?.chatId).toEqual(chatId);
     });
 });
 

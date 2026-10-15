@@ -801,6 +801,10 @@ export class OpenChat {
     // cause cannot flood Rollbar.
     #chatSelectionSeq = 0;
     #emptyChatIncidents = new Set<number>();
+    // The loads of the selected chat's and community's details, which hold their rules. A message
+    // forwarded before these finish waits for them (see #sendMessageCommon).
+    #chatDetailsLoad: { chatId: ChatIdentifier; loaded: Promise<void> } | undefined;
+    #communityDetailsLoad: { communityId: CommunityIdentifier; loaded: Promise<void> } | undefined;
     #lastOnlineDatesPending = new Set<string>();
     #lastOnlineDatesPromise: Promise<Record<string, number>> | undefined;
     #dailyResultsPending = new Map<
@@ -4135,12 +4139,13 @@ export class OpenChat {
                     messageIndex !== undefined
                         ? this.loadEventWindow(chatId, messageIndex, undefined, true)
                         : this.loadPreviousMessages(chatId, undefined, true);
-                load.then(() => {
+                const loaded = load.then(() => {
                     void this.#checkForEmptyChat(chatId, path);
                     if (serverChat !== undefined) {
-                        this.#loadChatDetails(serverChat);
+                        return this.#loadChatDetails(serverChat);
                     }
                 });
+                this.#chatDetailsLoad = { chatId, loaded };
             }
             if (selectedChat.kind === "direct_chat") {
                 const them = userStore.get(selectedChat.them.userId);
@@ -4783,7 +4788,8 @@ export class OpenChat {
                             resp.moreMembersAfter,
                         ),
                     );
-                    await this.#updateUserStoreFromEvents(serverChat.id, []);
+                    // Not awaited, since a forwarded message may be waiting for the details
+                    void this.#updateUserStoreFromEvents(serverChat.id, []);
                 }
                 break;
             case "direct_chat":
@@ -5229,8 +5235,15 @@ export class OpenChat {
     ): Promise<SendMessageResponse> {
         const { chatId, threadRootMessageIndex } = messageContext;
 
+        // A forwarded message is sent as soon as the chat it's forwarded to opens, before the
+        // details of that chat and its community, which hold their rules, have loaded. So it waits
+        // for them, to ask the user to accept those rules rather than have the message rejected.
+        if (message.forwarded) {
+            await Promise.allSettled(this.#selectedDetailsLoading(chatId));
+        }
+
         let acceptedRules: AcceptedRules | undefined = undefined;
-        if (this.#rulesNeedAccepting()) {
+        if (this.#rulesNeedAccepting(chatId)) {
             acceptedRules = await this.#promptForRuleAcceptance();
             if (acceptedRules === undefined) {
                 return CommonResponses.failure();
@@ -5499,10 +5512,37 @@ export class OpenChat {
         return false;
     }
 
-    #rulesNeedAccepting(): boolean {
+    // Those loads of the selected chat's and community's details which are for the given chat and
+    // haven't yet put its details in the stores
+    #selectedDetailsLoading(chatId: ChatIdentifier): Promise<void>[] {
+        const loading: Promise<void>[] = [];
+        const chatLoad = this.#chatDetailsLoad;
+        if (
+            chatId.kind !== "direct_chat" &&
+            chatLoad !== undefined &&
+            chatIdentifiersEqual(chatLoad.chatId, chatId) &&
+            !chatIdentifiersEqual(selectedServerChatStore.value?.chatId, chatId)
+        ) {
+            loading.push(chatLoad.loaded);
+        }
+        const communityLoad = this.#communityDetailsLoad;
+        if (
+            chatId.kind === "channel" &&
+            communityLoad?.communityId.communityId === chatId.communityId &&
+            selectedServerCommunityStore.value?.communityId.communityId !== chatId.communityId
+        ) {
+            loading.push(communityLoad.loaded);
+        }
+        return loading;
+    }
+
+    #rulesNeedAccepting(chatId: ChatIdentifier): boolean {
+        // The chat's rules aren't known until its details load, but its community's may be (when
+        // the chat is in the community already selected), so each is checked on its own
         const chatRules = selectedChatRulesStore.value;
         const chat = selectedChatSummaryStore.value;
-        if (chat === undefined || chatRules === undefined) {
+        // The rules known are the selected chat's, which may no longer be the chat sent to
+        if (chat === undefined || !chatIdentifiersEqual(chat.id, chatId)) {
             return false;
         }
 
@@ -5511,14 +5551,14 @@ export class OpenChat {
 
         console.debug(
             "RULES: rulesNeedAccepting",
-            chatRules.enabled,
+            chatRules?.enabled,
             chat.membership?.rulesAccepted,
             communityRules?.enabled,
             community?.membership?.rulesAccepted,
         );
 
         return (
-            (chatRules.enabled && !(chat.membership?.rulesAccepted ?? false)) ||
+            ((chatRules?.enabled ?? false) && !(chat.membership?.rulesAccepted ?? false)) ||
             ((communityRules?.enabled ?? false) && !(community?.membership?.rulesAccepted ?? false))
         );
     }
@@ -5564,7 +5604,10 @@ export class OpenChat {
             return Promise.resolve(CommonResponses.failure());
         }
 
-        const draftMessage = localUpdates.draftMessages.value.get(messageContext);
+        // A forwarded message isn't the chat's draft, which is left for the user to carry on with
+        const draftMessage = forwarded
+            ? undefined
+            : localUpdates.draftMessages.value.get(messageContext);
         const timestamp = Date.now();
         const msg = {
             timestamp: BigInt(timestamp),
@@ -5674,7 +5717,10 @@ export class OpenChat {
                     messagesRead.markReadUpTo(context, messageEvent.event.messageIndex - 1);
                 }
 
-                localUpdates.draftMessages.delete(context);
+                // The user may have typed into the draft while a forwarded message waited to be sent
+                if (!messageEvent.event.forwarded) {
+                    localUpdates.draftMessages.delete(context);
+                }
             });
             publish("sentMessage", { context, event: messageEvent });
         }, 0);
@@ -10945,7 +10991,10 @@ export class OpenChat {
 
         if (community !== undefined) {
             lastSelectedCommunityIdStore.set(community.id);
-            this.#loadCommunityDetails(community);
+            this.#communityDetailsLoad = {
+                communityId: community.id,
+                loaded: this.#loadCommunityDetails(community),
+            };
         }
 
         return preview;

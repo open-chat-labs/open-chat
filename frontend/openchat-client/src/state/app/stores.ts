@@ -760,6 +760,12 @@ export const selectedServerChatStore = writable<ChatDetailsState | undefined>(
     undefined,
     notEq,
 );
+
+// Whenever the selectedChatIdStore value changes we immediately clear the selectedServerChatStore,
+// so until the new chat's details load nothing takes the previous chat's members or rules to be its
+// own (a message forwarded on opening a chat asked for the previous chat's rules to be accepted)
+selectedChatIdStore.subscribe((_) => selectedServerChatStore.set(undefined));
+
 export const selectedChatMembersStore = derived(
     [selectedServerChatStore, chatDetailsLocalUpdates.members],
     ([chat, members]) => {
