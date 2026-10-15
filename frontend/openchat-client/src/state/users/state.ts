@@ -13,10 +13,6 @@ export class UsersState {
     #blockedUsers!: ReadonlySet<string>;
     #suspendedUsers!: ReadonlySet<string>;
     #specialUsers: ReadonlySet<string> = new Set();
-    // Users who've been migrated to a MultiUser canister are held under their latest id, and also
-    // under each of their earlier ids, since chat events etc. still refer to them by those
-    #latestUserIds: Map<string, string> = new Map();
-    #previousUserIds: Map<string, Set<string>> = new Map();
     // Moves on whenever the users change, since the map of them is updated in place
     #version = 0;
 
@@ -56,7 +52,7 @@ export class UsersState {
 
     addUser(user: UserSummary) {
         allUsersStore.update((map) => {
-            this.#set(map, user);
+            map.set(user.userId, user);
             return map;
         });
         this.#updateSuspended([user]);
@@ -66,61 +62,10 @@ export class UsersState {
         if (users.length === 0) return;
 
         allUsersStore.update((map) => {
-            users.forEach((u) => this.#set(map, u));
+            users.forEach((u) => map.set(u.userId, u));
             return map;
         });
         this.#updateSuspended(users);
-    }
-
-    // Maps each earlier id of a user who's been migrated to a MultiUser canister to their latest id
-    addMigratedUserIds(migrated: ReadonlyMap<string, string>) {
-        const changed = new Set<string>();
-        for (const [previous, latest] of migrated) {
-            if (previous === latest || this.#latestUserIds.get(previous) === latest) continue;
-
-            // Any ids which were migrated to `previous` now resolve to `latest` too
-            const ids = [previous, ...(this.#previousUserIds.get(previous) ?? [])];
-            this.#previousUserIds.delete(previous);
-            const formerLatest = this.#latestUserIds.get(previous);
-            if (formerLatest !== undefined) {
-                this.#previousUserIds.get(formerLatest)?.delete(previous);
-            }
-
-            const previousIds = this.#previousUserIds.get(latest) ?? new Set();
-            for (const id of ids) {
-                this.#latestUserIds.set(id, latest);
-                previousIds.add(id);
-            }
-            this.#previousUserIds.set(latest, previousIds);
-            changed.add(latest);
-        }
-
-        const users = [...changed]
-            .map((userId) => this.#allUsers.get(userId))
-            .filter((u) => u !== undefined);
-        if (users.length === 0) return;
-
-        allUsersStore.update((map) => {
-            users.forEach((u) => this.#set(map, u));
-            return map;
-        });
-        this.#updateSuspended(users);
-    }
-
-    // The id a user is held under, which is their latest id if they've been migrated
-    latestUserId(userId: string): string {
-        return this.#latestUserIds.get(userId) ?? userId;
-    }
-
-    #set(map: Map<string, UserSummary>, user: UserSummary) {
-        for (const id of this.#idsOf(user.userId)) {
-            map.set(id, user);
-        }
-    }
-
-    // The user's latest id, followed by any earlier ids they're also held under
-    #idsOf(userId: string): string[] {
-        return [userId, ...(this.#previousUserIds.get(userId) ?? [])];
     }
 
     // Deleted users are left as they are, else they'd be requested again once this goes stale
@@ -136,7 +81,7 @@ export class UsersState {
                 const user = map.get(userId);
                 if (user !== undefined) {
                     user.updated = timestamp;
-                    this.#set(map, user);
+                    map.set(userId, user);
                 }
             }
             return map;
@@ -144,7 +89,6 @@ export class UsersState {
     }
 
     userSuspended(userId: string, suspended: boolean) {
-        userId = this.latestUserId(userId);
         const existing = allUsersStore.value.get(userId);
         if (existing === undefined || existing.suspended === suspended) return;
 
@@ -152,14 +96,12 @@ export class UsersState {
             const u = users.get(userId);
             if (u) {
                 u.suspended = suspended;
-                this.#set(users, u);
+                users.set(userId, u);
                 suspendedUsersStore.update((s) => {
-                    for (const id of this.#idsOf(userId)) {
-                        if (suspended) {
-                            s.add(id);
-                        } else {
-                            s.delete(id);
-                        }
+                    if (suspended) {
+                        s.add(userId);
+                    } else {
+                        s.delete(userId);
                     }
                     return s;
                 });
@@ -223,15 +165,12 @@ export class UsersState {
         const toAdd = new Set<string>();
         const toRemove = new Set<string>();
         for (const user of users) {
-            // Chat events refer to a migrated user by their earlier ids too
-            for (const id of this.#idsOf(user.userId)) {
-                if (user.suspended) {
-                    if (!this.#suspendedUsers.has(id)) {
-                        toAdd.add(id);
-                    }
-                } else if (this.#suspendedUsers.has(id)) {
-                    toRemove.add(id);
+            if (user.suspended) {
+                if (!this.#suspendedUsers.has(user.userId)) {
+                    toAdd.add(user.userId);
                 }
+            } else if (this.#suspendedUsers.has(user.userId)) {
+                toRemove.add(user.userId);
             }
         }
         if (toAdd.size > 0 || toRemove.size > 0) {
