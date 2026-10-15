@@ -51,11 +51,12 @@ import {
     selectedServerChatStore,
     selectedServerCommunityStore,
     serverCommunitiesStore,
-    serverEventsStore,
+    selectedChatIdStore,
 } from "./state";
 import { ChatDetailsState } from "./state/chat/serverDetails";
 import { CommunityDetailsState } from "./state/community/server";
 import { captureRulesAcceptanceStore } from "./stores/rules";
+import { startChatVisit } from "./state/selectedChat";
 import { WorkerAgent } from "./workerAgent";
 
 // Sending a message to a chat or community whose rules the user hasn't accepted first asks them
@@ -257,7 +258,8 @@ describe("accepting the rules before sending a message", () => {
         selectedServerChatStore.set(undefined);
         selectedServerCommunityStore.set(undefined);
         serverCommunitiesStore.set(new CommunityMap());
-        serverEventsStore.set([]);
+        // a new visit to whatever is selected, which starts with no events
+        startChatVisit(selectedChatIdStore.value);
         localUpdates.draftMessages.delete({ chatId: otherCommunity });
     });
 

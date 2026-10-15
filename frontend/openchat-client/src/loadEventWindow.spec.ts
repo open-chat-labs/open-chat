@@ -33,6 +33,8 @@ import {
 import type { OpenChatConfig } from "./config";
 import { OpenChat } from "./openchat";
 import { routeStore, serverEventsStore, serverGroupChatsStore } from "./state";
+import { selectedChatIdStore } from "./state";
+import { startChatVisit } from "./state/selectedChat";
 import { WorkerAgent } from "./workerAgent";
 
 // Invariants from #9358 (chat selection focused message jitter):
@@ -136,7 +138,8 @@ describe("loadEventWindow announces its target (#9358)", () => {
     afterEach(() => {
         vi.unstubAllGlobals();
         vi.restoreAllMocks();
-        serverEventsStore.set([]);
+        // a new visit to whatever is selected, which starts with no events
+        startChatVisit(selectedChatIdStore.value);
     });
 
     // invariant 1

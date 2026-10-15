@@ -79,7 +79,6 @@ import {
     isTransfer,
     mergeCombinedUnreadCounts,
     mergeEventStreamResponses,
-    messageContextsEqual,
     nullMembership,
     parseBigInt,
     pinNumberFailureFromError,
@@ -321,7 +320,6 @@ import {
     type SwapTokensResponse,
     type TermsRoute,
     type PrivacyRoute,
-    type ThreadIdentifier,
     type ThreadPreview,
     type ThreadRead,
     type ThreadSummary,
@@ -475,7 +473,6 @@ import {
     serverMessageActivitySummaryStore,
     serverPinnedChatsStore,
     serverStreakInsuranceStore,
-    serverThreadEventsStore,
     serverWalletConfigStore,
     setSoftDisabled,
     snsFunctionsStore,
@@ -491,6 +488,15 @@ import {
     walletTokenBySymbol,
     webhookUserIdsStore,
 } from "./state";
+import {
+    eventsVisitFor,
+    SelectedChat,
+    selectedChatFor,
+    SelectedThread,
+    selectedThreadFor,
+    startThreadVisit,
+    type EventsVisit,
+} from "./state/selectedChat";
 import { botState } from "./state/bots.svelte";
 import { ChatDetailsState } from "./state/chat/serverDetails";
 import { CommunityDetailsState } from "./state/community/server";
@@ -1173,20 +1179,16 @@ export class OpenChat {
     ): Promise<boolean> {
         if (serverChat === undefined) return false;
 
-        const seq = this.#chatSelectionSeq;
+        const visit = selectedChatFor(chatId);
         const startIndex = serverChat.latestEventIndex;
-        const resp = await this.#loadEvents(serverChat, startIndex, false);
+        const resp = await this.#loadEvents(visit, serverChat, startIndex, false);
 
         // The user may have moved on while that was in flight.
-        if (
-            seq !== this.#chatSelectionSeq ||
-            !chatIdentifiersEqual(chatId, selectedChatIdStore.value) ||
-            !isSuccessfulEventsResponse(resp)
-        ) {
+        if (visit === undefined || !visit.current || !isSuccessfulEventsResponse(resp)) {
             return false;
         }
 
-        this.#fillLoadedEventGaps(serverChat, resp, startIndex, false);
+        this.#fillLoadedEventGaps(visit, serverChat, resp, startIndex, false);
         publish("loadedPreviousMessages", {
             context: { chatId, threadRootMessageIndex: undefined },
             initialLoad: true,
@@ -1199,18 +1201,12 @@ export class OpenChat {
     // scroll-driven loading stays gated off. Load the latest history instead, from a clean
     // store, since a partially cached window may already have been applied to it.
     async #fallBackToPreviousMessages(
+        visit: EventsVisit | undefined,
         chatId: ChatIdentifier,
         threadRootEvent?: EventWrapper<Message>,
     ): Promise<void> {
-        if (threadRootEvent === undefined) {
-            if (!chatIdentifiersEqual(chatId, selectedChatIdStore.value)) return;
-            serverEventsStore.set([]);
-            expiredServerEventRanges.set(new DRange());
-        } else {
-            const context = { chatId, threadRootMessageIndex: threadRootEvent.event.messageIndex };
-            if (!messageContextsEqual(context, selectedThreadIdStore.value)) return;
-            serverThreadEventsStore.set([]);
-        }
+        if (visit === undefined || !visit.current) return;
+        visit.clearEvents();
         await this.loadPreviousMessages(chatId, threadRootEvent, true);
     }
 
@@ -3125,6 +3121,7 @@ export class OpenChat {
         const chatId = chat.id;
         const threadRootMessageIndex = threadRootEvent.event.messageIndex;
         const context = { chatId, threadRootMessageIndex };
+        const visit = selectedThreadFor(context);
 
         publish("loadingMessageWindow", { context, messageIndex });
         const eventsResponse: EventsResponse<ChatEvent> = await this.#worker
@@ -3137,14 +3134,16 @@ export class OpenChat {
                 latestKnownUpdate: chat.lastUpdated,
             })
             .aggregate(mergeEventStreamResponses, emptyEventsResponse())
-            .mapAsync((resp) => this.#handleEventsResponse(chat, threadRootMessageIndex, resp))
+            .mapAsync((resp) =>
+                this.#handleEventsResponse(visit, chat, threadRootMessageIndex, resp),
+            )
             .toPromise()
             .catch(CommonResponses.failure);
 
         if (!isSuccessfulEventsResponse(eventsResponse)) {
             publish("loadedMessageWindow", { context, messageIndex: undefined, initialLoad });
             if (initialLoad) {
-                await this.#fallBackToPreviousMessages(chatId, threadRootEvent);
+                await this.#fallBackToPreviousMessages(visit, chatId, threadRootEvent);
             }
             return undefined;
         }
@@ -3184,6 +3183,7 @@ export class OpenChat {
 
             const range = indexRangeForChat(clientChat);
             const context = { chatId: clientChat.id, threadRootMessageIndex: undefined };
+            const visit = selectedChatFor(chatId);
             publish("loadingMessageWindow", { context, messageIndex });
             const eventsResponse: EventsResponse<ChatEvent> = await this.#worker
                 .stream({
@@ -3196,7 +3196,7 @@ export class OpenChat {
                 })
                 .aggregate(mergeEventStreamResponses, emptyEventsResponse())
                 .mapAsync((resp, index) =>
-                    this.#handleEventsResponse(clientChat, undefined, resp, index > 0),
+                    this.#handleEventsResponse(visit, clientChat, undefined, resp, index > 0),
                 )
                 .toPromise()
                 .catch((err) => {
@@ -3213,7 +3213,7 @@ export class OpenChat {
             if (!isSuccessfulEventsResponse(eventsResponse)) {
                 publish("loadedMessageWindow", { context, messageIndex: undefined, initialLoad });
                 if (initialLoad) {
-                    await this.#fallBackToPreviousMessages(chatId);
+                    await this.#fallBackToPreviousMessages(visit, chatId);
                 }
                 return undefined;
             }
@@ -3224,7 +3224,9 @@ export class OpenChat {
         }
     }
 
+    // `visit` is the selection the events were loaded for: they go nowhere once it has gone
     async #handleEventsResponse(
+        visit: EventsVisit | undefined,
         chat: ChatSummary,
         threadRootMessageIndex: number | undefined,
         resp: EventsResponse<ChatEvent>,
@@ -3237,18 +3239,19 @@ export class OpenChat {
         // derived from it (e.g. the thread panel's root event) transiently disappears.
         // Equally the clear must not be deferred until after an await, or events written
         // by anything else during that await (later chunks of this same stream, rtc /
-        // confirmed messages) get wiped by it.
+        // confirmed messages) get wiped by it. Nor can the two be one publish under
+        // withPausedStores: the add checks contiguity against the stores derived from these, which
+        // would still hold the old window.
         if (!keepCurrentEvents) {
-            serverEventsStore.set([]);
-            // The expired ranges are part of the contiguity baseline
-            // (eventIndexesLoadedStore); if they survive a window replacement
-            // the freshly loaded window can be judged non-contiguous against
-            // the OLD region's ranges and silently dropped, leaving the event
-            // store empty.
-            expiredServerEventRanges.set(new DRange());
+            // The expired ranges go too: they are part of the contiguity baseline
+            // (eventIndexesLoadedStore); if they survive a window replacement the freshly loaded
+            // window can be judged non-contiguous against the OLD region's ranges and silently
+            // dropped, leaving the event store empty.
+            visit?.chat?.clearEvents();
         }
 
         this.#addServerEventsToStores(
+            visit,
             chat.id,
             resp.events,
             threadRootMessageIndex,
@@ -4197,12 +4200,12 @@ export class OpenChat {
         initiating: boolean,
         focusThreadMessageIndex?: number,
     ): void {
+        // Opening the thread that is already open starts it again too, which the store's own
+        // subscription would not, since the thread is unchanged
         withPausedStores(() => {
-            serverThreadEventsStore.set([]);
-            selectedThreadIdStore.set({
-                chatId,
-                threadRootMessageIndex: threadRootEvent.event.messageIndex,
-            });
+            const thread = { chatId, threadRootMessageIndex: threadRootEvent.event.messageIndex };
+            selectedThreadIdStore.set(thread);
+            startThreadVisit(thread);
         });
 
         if (!initiating) {
@@ -4241,6 +4244,7 @@ export class OpenChat {
             return Promise.resolve();
         }
 
+        const visit = selectedThreadFor({ chatId, threadRootMessageIndex });
         const eventsResponse: EventsResponse<ChatEvent> = await this.#worker
             .stream({
                 kind: "chatEvents",
@@ -4253,7 +4257,9 @@ export class OpenChat {
                 latestKnownUpdate: chat.lastUpdated,
             })
             .aggregate(mergeEventStreamResponses, emptyEventsResponse())
-            .mapAsync((resp) => this.#handleEventsResponse(chat, threadRootMessageIndex, resp))
+            .mapAsync((resp) =>
+                this.#handleEventsResponse(visit, chat, threadRootMessageIndex, resp),
+            )
             .toPromise()
             .catch(CommonResponses.failure);
 
@@ -4398,13 +4404,14 @@ export class OpenChat {
         }
 
         const criteria = this.#previousMessagesCriteria(serverChat);
+        const visit = selectedChatFor(chatId);
 
         const eventsResponse = criteria
-            ? await this.#loadEvents(serverChat, criteria[0], criteria[1], initialLoad)
+            ? await this.#loadEvents(visit, serverChat, criteria[0], criteria[1], initialLoad)
             : undefined;
 
         if (criteria && isSuccessfulEventsResponse(eventsResponse)) {
-            this.#fillLoadedEventGaps(serverChat, eventsResponse, criteria[0], criteria[1]);
+            this.#fillLoadedEventGaps(visit, serverChat, eventsResponse, criteria[0], criteria[1]);
             publish("loadedPreviousMessages", {
                 context: { chatId, threadRootMessageIndex: threadRootEvent?.event.messageIndex },
                 initialLoad,
@@ -4422,6 +4429,7 @@ export class OpenChat {
     // index, scroll-back keeps loading below the split while the visible
     // segment never grows — a permanent "wall" mid-history.
     #fillLoadedEventGaps(
+        visit: SelectedChat | undefined,
         serverChat: ChatSummary,
         resp: EventsSuccessResult<ChatEvent>,
         requestStart: number,
@@ -4461,7 +4469,7 @@ export class OpenChat {
         const holes = new DRange(min, max).subtract(covered);
         if (holes.length === 0) return;
 
-        this.#updateServerExpiredEventRanges(serverChat.id, (ranges) => {
+        visit?.updateExpiredEventRanges((ranges) => {
             const merged = new DRange();
             merged.add(ranges);
             merged.add(holes);
@@ -4470,6 +4478,7 @@ export class OpenChat {
     }
 
     #loadEvents(
+        visit: SelectedChat | undefined,
         serverChat: ChatSummary,
         startIndex: number,
         ascending: boolean,
@@ -4487,7 +4496,7 @@ export class OpenChat {
                 latestKnownUpdate: serverChat.lastUpdated,
             })
             .aggregate(mergeEventStreamResponses, emptyEventsResponse())
-            .mapAsync((resp) => this.#handleEventsResponse(serverChat, undefined, resp))
+            .mapAsync((resp) => this.#handleEventsResponse(visit, serverChat, undefined, resp))
             .toPromise()
             .catch((err) => {
                 if (initialLoad && !this.maskChatMessages(serverChat)) {
@@ -4566,10 +4575,11 @@ export class OpenChat {
             return;
         }
 
-        const eventsResponse = await this.#loadEvents(serverChat, criteria[0], criteria[1]);
+        const visit = selectedChatFor(chatId);
+        const eventsResponse = await this.#loadEvents(visit, serverChat, criteria[0], criteria[1]);
 
         if (isSuccessfulEventsResponse(eventsResponse)) {
-            this.#fillLoadedEventGaps(serverChat, eventsResponse, criteria[0], criteria[1]);
+            this.#fillLoadedEventGaps(visit, serverChat, eventsResponse, criteria[0], criteria[1]);
             publish("loadedNewMessages", {
                 chatId,
                 threadRootMessageIndex: threadRootEvent?.event.messageIndex,
@@ -4840,6 +4850,14 @@ export class OpenChat {
         const confirmedThreadLoaded = threadEventIndexesLoadedStore.value;
         const chatId = serverChat.id;
         const selectedThreadRootMessageIndex = selectedThreadIdStore.value?.threadRootMessageIndex;
+        const chatVisit = selectedChatFor(chatId);
+        const threadVisit =
+            selectedThreadRootMessageIndex === undefined
+                ? undefined
+                : selectedThreadFor({
+                      chatId,
+                      threadRootMessageIndex: selectedThreadRootMessageIndex,
+                  });
 
         // Partition the updated events into those that belong to the currently selected thread and those that don't
         const [currentChatEvents, currentThreadEvents] = updatedEvents.reduce(
@@ -4905,6 +4923,7 @@ export class OpenChat {
                         });
                     }
                     return this.#handleEventsResponse(
+                        isThread ? threadVisit : chatVisit,
                         serverChat,
                         isThread ? selectedThreadRootMessageIndex : undefined,
                         resp,
@@ -5038,7 +5057,11 @@ export class OpenChat {
         );
     }
 
+    // `visit` is the selection the store writes are for. The other effects of the events (on
+    // failed, unconfirmed and in-flight messages, unread counts and the chat summary) happen
+    // whether or not it is still selected.
     #addServerEventsToStores(
+        visit: EventsVisit | undefined,
         chatId: ChatIdentifier,
         newEvents: EventWrapper<ChatEvent>[],
         threadRootMessageIndex: number | undefined,
@@ -5129,7 +5152,7 @@ export class OpenChat {
                 }
 
                 if (isContiguous(chatId, newEvents, expiredEventRanges)) {
-                    this.#updateServerEventsStore(chatId, (events) =>
+                    visit?.chat?.updateEvents((events) =>
                         mergeServerEvents(events, newEvents, context),
                     );
 
@@ -5148,10 +5171,7 @@ export class OpenChat {
                             };
                         }
                     }
-                } else if (
-                    serverEventsStore.value.length === 0 &&
-                    chatIdentifiersEqual(chatId, selectedChatIdStore.value)
-                ) {
+                } else if (serverEventsStore.value.length === 0 && visit?.chat?.current) {
                     // Dropping new events while scrolled up is routine; dropping them into an
                     // empty store means the expired ranges are stale and the chat stays empty
                     const loaded = eventIndexesLoaded(chatId);
@@ -5164,13 +5184,13 @@ export class OpenChat {
                     });
                 }
             } else if (isContiguousInThread({ chatId, threadRootMessageIndex }, newEvents)) {
-                this.#updateServerThreadEventsStore({ chatId, threadRootMessageIndex }, (events) =>
-                    mergeServerEvents(events, newEvents, context),
-                );
+                if (visit instanceof SelectedThread) {
+                    visit.updateEvents((events) => mergeServerEvents(events, newEvents, context));
+                }
             }
 
             if (expiredEventRanges.length > 0) {
-                this.#updateServerExpiredEventRanges(chatId, (ranges) => {
+                visit?.chat?.updateExpiredEventRanges((ranges) => {
                     const merged = new DRange();
                     merged.add(ranges);
                     expiredEventRanges.forEach((r) => merged.add(r.start, r.end));
@@ -5182,48 +5202,6 @@ export class OpenChat {
         if (contextUpdated !== undefined) {
             publish("chatUpdated", contextUpdated);
         }
-    }
-
-    #updateServerExpiredEventRanges(chatId: ChatIdentifier, fn: (existing: DRange) => DRange) {
-        if (!chatIdentifiersEqual(chatId, selectedChatIdStore.value)) {
-            console.warn(
-                "Attempting to updateExpiredServerEventRanges for the wrong chat - probably a stale response",
-                chatId,
-                selectedChatIdStore.value,
-            );
-            return;
-        }
-        expiredServerEventRanges.update(fn);
-    }
-
-    #updateServerThreadEventsStore(
-        id: ThreadIdentifier,
-        fn: (existing: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[],
-    ) {
-        if (!messageContextsEqual(id, selectedThreadIdStore.value)) {
-            console.warn(
-                "Attempting to updateServerThreadEvents for the wrong thread - probably a stale response",
-                id,
-                selectedThreadIdStore.value,
-            );
-            return;
-        }
-        serverThreadEventsStore.update(fn);
-    }
-
-    #updateServerEventsStore(
-        chatId: ChatIdentifier,
-        fn: (existing: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[],
-    ) {
-        if (!chatIdentifiersEqual(chatId, selectedChatIdStore.value)) {
-            console.warn(
-                "Attempting to updateServerEvents for the wrong chat - probably a stale response",
-                chatId,
-                selectedChatIdStore.value,
-            );
-            return;
-        }
-        serverEventsStore.update(fn);
     }
 
     deleteFailedMessage(
@@ -5361,6 +5339,7 @@ export class OpenChat {
                         if (resp.kind === "success" || resp.kind === "transfer_success") {
                             const event = mergeSendMessageResponse(msg, resp);
                             this.#addServerEventsToStores(
+                                eventsVisitFor(chat.id, threadRootMessageIndex),
                                 chat.id,
                                 [event],
                                 threadRootMessageIndex,
@@ -5959,7 +5938,7 @@ export class OpenChat {
                 latestKnownUpdate: serverChat.lastUpdated,
             })
             .then((m) => {
-                this.#handleEventsResponse(serverChat, undefined, {
+                this.#handleEventsResponse(selectedChatFor(serverChat.id), serverChat, undefined, {
                     events: [m],
                     expiredEventRanges: [],
                     latestEventIndex: undefined,
@@ -8055,7 +8034,7 @@ export class OpenChat {
             }
         } else {
             localUpdates.updateChatFrozen(chatId, frozen);
-            this.#addServerEventsToStores(chatId, [event], undefined, []);
+            this.#addServerEventsToStores(selectedChatFor(chatId), chatId, [event], undefined, []);
         }
     }
 
@@ -12726,11 +12705,9 @@ export class OpenChat {
             chatId,
         });
 
-        if (chatIdentifiersEqual(chatId, selectedChatIdStore.value)) {
-            this.#updateServerEventsStore(chatId, (events) =>
-                updateExistingMessages(events, updatedMessages),
-            );
-        }
+        selectedChatFor(chatId)?.updateEvents((events) =>
+            updateExistingMessages(events, updatedMessages),
+        );
     }
 
     async initialiseNotifications(): Promise<boolean> {
