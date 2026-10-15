@@ -25,6 +25,7 @@
     import { now500 } from "../../stores/time";
     import { toastStore } from "../../stores/toast";
     import ButtonGroup from "../ButtonGroup.svelte";
+    import { prizeClaimStep } from "@shared_components/home/prize/prizeClaim";
     import Diamond from "../icons/Diamond.svelte";
     import SpinningToken from "@shared_components/icons/SpinningToken.svelte";
     import SecureButton from "../SecureButton.svelte";
@@ -50,18 +51,26 @@
     let mouseEvent = $state<MouseEvent>();
 
     async function claim(e: MouseEvent, auth: { signInProofJwt: string | undefined } | undefined) {
-        const signInProof = auth?.signInProofJwt;
-        if (signInProof === undefined && content.requiresCaptcha) {
+        const step = prizeClaimStep(
+            content.requiresCaptcha,
+            auth !== undefined ? { proof: auth.signInProofJwt } : undefined,
+        );
+        if (step.kind === "authenticate") {
             mouseEvent = e;
             showAuthentication = true;
             return;
         }
 
         showAuthentication = false;
+        if (step.kind === "failed") {
+            toastStore.showFailureToast(step.message);
+            return;
+        }
+
         if (e.isTrusted && chatId.kind !== "direct_chat" && !me && userEligible) {
             claimsStore.add(messageId);
             client
-                .claimPrize(chatId, messageId, e, signInProof)
+                .claimPrize(chatId, messageId, e, step.signInProof)
                 .then((success) => {
                     if (!success) {
                         toastStore.showFailureToast(i18nKey("prizes.claimFailed"));
