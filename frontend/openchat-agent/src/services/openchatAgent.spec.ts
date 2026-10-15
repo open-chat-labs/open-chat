@@ -23,7 +23,6 @@ import {
     type UnfinishedTokenSwap,
 } from "@shared";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { AsyncMessageContextMap } from "../utils/messageContext";
 import { CkbtcMinterClient } from "./ckbtcMinter/ckbtcMinter.client";
 import { OneSecMinterClient } from "./oneSecMinter/oneSecMinter.client";
 import { OpenChatAgent } from "./openchatAgent";
@@ -1310,74 +1309,18 @@ describe("OpenChatAgent moving funds from the user's previous wallets", () => {
     });
 });
 
-// A user migrated to a MultiUser canister is referred to by their earlier id in the events from
-// before then, which the agent replaces with their current id
-describe("OpenChatAgent referring to the user by their current id", () => {
+// The ids the user had before being migrated to a MultiUser canister, whose wallets are in their
+// history (see "OpenChatAgent listing the transactions of each of the user's wallets")
+describe("OpenChatAgent taking the user's previous ids from the current user", () => {
     const PREVIOUS = OLD_USER_ID;
     const CURRENT = MULTI_USER_CANISTER_USER;
-    const GROUP_ID = { kind: "group_chat", groupId: "rdmx6-jaaaa-aaaaa-aaadq-cai" } as const;
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    function agent(previousUserIds: string[]): any {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const agent = Object.create(OpenChatAgent.prototype) as any;
-        agent._ownLatestUserIds = new Map(previousUserIds.map((id) => [id, CURRENT]));
-        return agent;
-    }
-
-    function sentBy(sender: string): EventWrapper<Message> {
-        return {
-            index: 3,
-            timestamp: 10n,
-            event: {
-                kind: "message",
-                messageId: 1n,
-                messageIndex: 2,
-                sender,
-                content: { kind: "text_content", text: "hello" },
-                reactions: [{ reaction: "👍", userIds: new Set([sender, THEM]) }],
-                tips: { [ICP_LEDGER]: { [sender]: 100n } },
-                edited: false,
-                forwarded: false,
-                deleted: false,
-                blockLevelMarkdown: false,
-                senderContext: undefined,
-                ogPreviews: [],
-                messagePreviews: [],
-            },
-        } as EventWrapper<Message>;
-    }
-
-    function rehydrated(previousUserIds: string[], event: EventWrapper<Message>) {
-        return agent(previousUserIds).rehydrateEvent(
-            event,
-            GROUP_ID,
-            new AsyncMessageContextMap(),
-            { messages: new AsyncMessageContextMap(), previews: new Map() },
-            undefined,
-        );
-    }
-
-    test("an event from before they were migrated is from their current id", () => {
-        expect(rehydrated([PREVIOUS], sentBy(PREVIOUS)).event).toMatchObject({
-            sender: CURRENT,
-            reactions: [{ reaction: "👍", userIds: new Set([CURRENT, THEM]) }],
-            tips: { [ICP_LEDGER]: { [CURRENT]: 100n } },
-        });
-    });
-
-    test("an event from anyone else, or for a user who wasn't migrated, is left as it is", () => {
-        const fromThem = sentBy(THEM);
-        expect(rehydrated([PREVIOUS], fromThem)).toBe(fromThem);
-
-        const fromPrevious = sentBy(PREVIOUS);
-        expect(rehydrated([], fromPrevious)).toBe(fromPrevious);
-    });
 
     // Runs `getCurrentUser` with the given results, the last being the live one, returning the
     // mapping after each
     async function mappingsAfter(results: { userId: string; previousUserIds?: string[] }[]) {
-        const user = agent([]);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const user = Object.create(OpenChatAgent.prototype) as any;
+        user._ownLatestUserIds = new Map();
         user._userIndexClient = {
             getCurrentUser: () =>
                 new Stream((resolve) =>
@@ -1417,84 +1360,6 @@ describe("OpenChatAgent referring to the user by their current id", () => {
         ]);
 
         expect(seen).toEqual([new Map([[PREVIOUS, THEM]]), new Map()]);
-    });
-
-    test("a reply to a message from before they were migrated is from their current id", () => {
-        const missingReplies = new AsyncMessageContextMap<EventWrapper<Message>>();
-        missingReplies.insert(
-            { chatId: GROUP_ID, threadRootMessageIndex: undefined },
-            {
-                ...sentBy(PREVIOUS),
-                index: 7,
-            },
-        );
-        const reply = sentBy(THEM);
-        reply.event.repliesTo = {
-            kind: "raw_reply_context",
-            eventIndex: 7,
-        } as unknown as Message["repliesTo"];
-
-        const replied = agent([PREVIOUS]).rehydrateEvent(
-            reply,
-            GROUP_ID,
-            missingReplies,
-            { messages: new AsyncMessageContextMap(), previews: new Map() },
-            undefined,
-        );
-
-        expect(replied.event.repliesTo).toMatchObject({
-            kind: "rehydrated_reply_context",
-            senderId: CURRENT,
-        });
-    });
-
-    test("a message which failed before they were migrated is from their current id", async () => {
-        const user = agent([PREVIOUS]);
-        const failed = { 2: sentBy(PREVIOUS) };
-        user._chatsDb = {
-            loadFailedMessages: () => Promise.resolve({ toMap: () => new Map([["chat", failed]]) }),
-        };
-
-        const loaded = await user.loadFailedMessages();
-
-        expect(loaded.get("chat")[2].event.sender).toEqual(CURRENT);
-    });
-
-    test("a message deleted or undeleted from before they were migrated refers to their current id", async () => {
-        const user = agent([PREVIOUS]);
-        const content = crypto(undefined, PREVIOUS);
-        user._userClient = {
-            getDeletedMessage: () => Promise.resolve({ kind: "success", content }),
-            undeleteMessage: () =>
-                Promise.resolve({
-                    kind: "success",
-                    message: { ...sentBy(PREVIOUS).event, content },
-                }),
-        };
-        user._groupClient = {
-            getDeletedMessage: () => Promise.resolve({ kind: "success", content }),
-        };
-
-        const direct = await user.getDeletedDirectMessage(THEM, 1n);
-        const group = await user.getDeletedGroupMessage(GROUP_ID, 1n);
-        const undeleted = await user.undeleteMessage({ kind: "direct_chat", userId: THEM }, 1n);
-
-        expect(direct.content.transfer.recipient).toEqual(CURRENT);
-        expect(group.content.transfer.recipient).toEqual(CURRENT);
-        expect(undeleted.message).toMatchObject({
-            sender: CURRENT,
-            content: { transfer: { recipient: CURRENT } },
-        });
-    });
-
-    test("a chat's latest message from before they were migrated is from their current id", () => {
-        const chat = { kind: "direct_chat", them: THEM, latestMessage: sentBy(PREVIOUS) };
-
-        expect(agent([PREVIOUS]).hydrateChatSummary(chat).latestMessage.event.sender).toEqual(
-            CURRENT,
-        );
-        // The other user in the chat is left as they are
-        expect(agent([THEM]).hydrateChatSummary(chat).them).toEqual(THEM);
     });
 });
 

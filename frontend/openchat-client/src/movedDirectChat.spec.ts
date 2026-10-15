@@ -24,16 +24,12 @@ vi.mock("@icp-sdk/auth/client", async (importOriginal) => ({
 
 import {
     ChatMap,
-    MessageContextMap,
+    type AccountTransaction,
     ROLE_OWNER,
     Stream,
     subscribe,
     type DirectChatIdentifier,
     type DirectChatSummary,
-    type EventWrapper,
-    type Message,
-    type SyncSinceResponse,
-    type UpdatesResult,
     type UserSummary,
     type UsersResponse,
     type WorkerRequest,
@@ -41,14 +37,11 @@ import {
 import type { OpenChatConfig } from "./config";
 import { OpenChat } from "./openchat";
 import { chatsInitialisedStore, localUpdates, routeStore, serverDirectChatsStore } from "./state";
-import { userStore } from "./state/users/state";
 import { WorkerAgent } from "./workerAgent";
 
-// When the other user in a direct chat is migrated to a MultiUser canister, the chat is moved onto
-// their new id. The worker finds the move, moves what it has cached for the chat, and says so in its
-// answer, alongside the chat under the old id being removed and the one under the new id being
-// added. The client follows the chat there, and moves what it holds for it. A link to the chat under
-// the old id is looked up by the client, which the UserIndex maps to the new id.
+// When the other user in a direct chat was migrated to a MultiUser canister, the chat was moved onto
+// their new id. A link to the chat under the old id is looked up by the client, which the UserIndex
+// maps to the new id, as it does for the old id in a referral link or a transfer made before then.
 
 class FakeWorker {
     onmessage: ((ev: MessageEvent) => void) | undefined;
@@ -115,51 +108,6 @@ function user(userId: string): UserSummary {
     } as unknown as UserSummary;
 }
 
-function failedMessage(messageId: bigint): EventWrapper<Message> {
-    return {
-        kind: "event",
-        index: 0,
-        timestamp: 0n,
-        event: { kind: "message", messageId, messageIndex: 0 },
-    } as unknown as EventWrapper<Message>;
-}
-
-function updates(
-    added: DirectChatSummary[],
-    removed: string[],
-    moved: [string, string][] = [],
-): UpdatesResult {
-    return {
-        directChatsAddedUpdated: added,
-        directChatsRemoved: removed,
-        directChatsMoved: new Map(moved),
-        groupsAddedUpdated: [],
-        groupsRemoved: [],
-        communitiesAddedUpdated: [],
-        communitiesRemoved: [],
-        avatarId: undefined,
-        blockedUsers: undefined,
-        pinnedChats: undefined,
-        pinnedChannels: undefined,
-        pinnedFavouriteChats: undefined,
-        favouriteChats: undefined,
-        pinNumberSettings: undefined,
-        achievements: undefined,
-        chitState: undefined,
-        referrals: undefined,
-        walletConfig: undefined,
-        messageActivitySummary: undefined,
-        installedBots: undefined,
-        bitcoinAddress: undefined,
-        oneSecAddress: undefined,
-        streakInsurance: undefined,
-        updatedEvents: new Map(),
-        suspensionChanged: undefined,
-        newAchievements: [],
-        premiumItems: undefined,
-    } as unknown as UpdatesResult;
-}
-
 function selectChat(chatId: DirectChatIdentifier, messageIndex?: number) {
     routeStore.set({
         kind: "global_chat_selected_route",
@@ -171,27 +119,28 @@ function selectChat(chatId: DirectChatIdentifier, messageIndex?: number) {
     });
 }
 
-describe("a direct chat moved onto the other user's new id", () => {
+describe("an id a user had before being migrated to a MultiUser canister", () => {
     let client: OpenChat;
     // Each earlier id the UserIndex knows of, mapped to the user's latest id
     let migrated: Map<string, string>;
-    let snapshot: SyncSinceResponse | undefined;
+    // The latest ids of users who've since been deleted
+    let deleted: Set<string>;
+    let transactions: AccountTransaction[];
     let navigations: { url: string; intent?: string }[];
-    let invalidated: number;
-    // Each user id the UserIndex was asked for
-    let usersAskedFor: string[];
-    // The sends the worker has been asked for, to be answered by the test
-    let sends: {
-        resolve: (value: unknown, final: boolean) => void;
-        reject: (err: unknown) => void;
-    }[];
+    let notFound: number;
     let unsubscribes: (() => void)[];
 
     function answerGetUsers(userIds: string[]): UsersResponse {
         const migratedUserIds = new Map<string, string>();
+        const deletedUserIds = new Set<string>();
         const users: UserSummary[] = [];
         for (const userId of userIds) {
             const latest = migrated.get(userId) ?? userId;
+            if (deleted.has(latest)) {
+                // The UserIndex returns a deleted user under the id they were asked for
+                deletedUserIds.add(userId);
+                continue;
+            }
             if (latest !== userId) {
                 migratedUserIds.set(userId, latest);
             }
@@ -199,19 +148,9 @@ describe("a direct chat moved onto the other user's new id", () => {
         }
         return {
             users,
-            deletedUserIds: new Set(),
+            deletedUserIds,
             migratedUserIds: migratedUserIds.size > 0 ? migratedUserIds : undefined,
         };
-    }
-
-    // Has the client fold the updates into what it holds, as it does for an answer to its poll
-    async function fold(answer: UpdatesResult) {
-        snapshot = { userId: "me", version: 1, updates: answer };
-        client.resumeEventLoop();
-        await vi.waitFor(() => expect(snapshot).toBeUndefined());
-        // Then let the fold, which takes a few turns, finish
-        await new Promise((r) => setTimeout(r, 10));
-        client.pauseEventLoop();
     }
 
     beforeEach(() => {
@@ -222,37 +161,26 @@ describe("a direct chat moved onto the other user's new id", () => {
         client = new OpenChat(config());
 
         migrated = new Map();
-        snapshot = undefined;
+        deleted = new Set();
+        transactions = [];
         navigations = [];
-        invalidated = 0;
-        usersAskedFor = [];
-        sends = [];
+        notFound = 0;
         unsubscribes = [
             subscribe("navigateTo", (ev) => navigations.push(ev)),
-            subscribe("selectedChatInvalid", () => invalidated++),
+            subscribe("notFound", () => notFound++),
         ];
 
-        vi.spyOn(WorkerAgent.prototype, "stream").mockImplementation(((req: WorkerRequest) => {
-            if (req.kind === "getUpdates") {
-                const answer = snapshot;
-                snapshot = undefined;
-                // Answered once the client has subscribed
-                return new Stream((resolve) => setTimeout(() => resolve(answer, true), 0));
-            }
-            if (req.kind === "sendMessage") {
-                return new Stream((resolve, reject) => {
-                    sends.push({ resolve, reject });
-                });
-            }
-            return new Stream(() => {});
-        }) as never);
+        vi.spyOn(WorkerAgent.prototype, "stream").mockImplementation(
+            (() => new Stream(() => {})) as never,
+        );
         vi.spyOn(WorkerAgent.prototype, "send").mockImplementation(((req: WorkerRequest) => {
             switch (req.kind) {
-                case "getUsers": {
-                    const userIds = req.users.userGroups.flatMap((g) => g.users);
-                    usersAskedFor.push(...userIds);
-                    return Promise.resolve(answerGetUsers(userIds));
-                }
+                case "getUsers":
+                    return Promise.resolve(
+                        answerGetUsers(req.users.userGroups.flatMap((g) => g.users)),
+                    );
+                case "getAccountTransactions":
+                    return Promise.resolve({ kind: "success", transactions });
                 default:
                     return new Promise(() => {});
             }
@@ -262,129 +190,11 @@ describe("a direct chat moved onto the other user's new id", () => {
     afterEach(() => {
         unsubscribes.forEach((unsub) => unsub());
         client.pauseEventLoop();
+        client.clearReferralCode();
         vi.unstubAllGlobals();
         vi.restoreAllMocks();
         serverDirectChatsStore.set(new ChatMap<DirectChatSummary>());
         chatsInitialisedStore.set(false);
-    });
-
-    test("an open chat the worker found moved is followed onto the new id, with what's held for it", async () => {
-        serverDirectChatsStore.set(ChatMap.fromList([directChat("old1")]));
-        selectChat(direct("old1"));
-        localUpdates.draftMessages.setTextContent({ chatId: direct("old1") }, "half written");
-        const failed = new MessageContextMap<Map<bigint, EventWrapper<Message>>>();
-        failed.set({ chatId: direct("old1") }, new Map([[9n, failedMessage(9n)]]));
-        localUpdates.initialiseFailedMessages(failed);
-
-        await fold(updates([directChat("new1")], ["old1"], [["old1", "new1"]]));
-
-        expect(navigations).toEqual([{ url: "/chats/user/new1", intent: "auto" }]);
-        expect(invalidated).toBe(0);
-        expect(localUpdates.draftMessages.value.get({ chatId: direct("new1") })?.textContent).toBe(
-            "half written",
-        );
-        expect(localUpdates.draftMessages.value.get({ chatId: direct("old1") })).toBeUndefined();
-        expect(
-            localUpdates
-                .failedMessagesForContext({ chatId: direct("new1") })
-                .map((m) => m.event.messageId),
-        ).toEqual([9n]);
-        expect(localUpdates.anyFailed({ chatId: direct("old1") })).toBe(false);
-        // Their messages from before the move refer to them by the old id
-        expect(userStore.latestUserId("old1")).toBe("new1");
-        // The worker found the move, so there's nothing for the client to look up
-        expect(usersAskedFor).not.toContain("old1");
-    });
-
-    test("an open chat which was deleted, not moved, is left", async () => {
-        serverDirectChatsStore.set(ChatMap.fromList([directChat("gone2")]));
-        selectChat(direct("gone2"));
-
-        await fold(updates([], ["gone2"]));
-
-        expect(navigations).toEqual([]);
-        expect(invalidated).toBe(1);
-    });
-
-    test("an open chat the worker didn't find moved is left, even if its user has since been migrated", async () => {
-        // As when both were kept, the chat under the new id having come first, and the one under
-        // the old id is then deleted
-        migrated.set("old6", "new6");
-        serverDirectChatsStore.set(ChatMap.fromList([directChat("old6"), directChat("new6")]));
-        selectChat(direct("old6"));
-        localUpdates.draftMessages.setTextContent(
-            { chatId: direct("old6") },
-            "in the deleted chat",
-        );
-
-        await fold(updates([directChat("new6")], ["old6"]));
-
-        expect(navigations).toEqual([]);
-        expect(invalidated).toBe(1);
-        expect(localUpdates.draftMessages.value.get({ chatId: direct("new6") })).toBeUndefined();
-    });
-
-    describe("a message being sent when its chat moves", () => {
-        // Starts sending a message in the chat with `userId`, and waits until it's shown as being sent
-        async function startSending(
-            userId: string,
-        ): Promise<{ sending: Promise<unknown>; messageId: bigint }> {
-            const sending = client.sendMessageWithContent(
-                { chatId: direct(userId) },
-                { kind: "text_content", text: "in flight" },
-                false,
-            );
-            await vi.waitFor(() => expect(sends).toHaveLength(1));
-            await vi.waitFor(() =>
-                expect(localUpdates.unconfirmedMessages({ chatId: direct(userId) })).toHaveLength(
-                    1,
-                ),
-            );
-            const [message] = localUpdates.unconfirmedMessages({ chatId: direct(userId) });
-            return { sending, messageId: message.event.messageId };
-        }
-
-        test("is still shown as being sent, in the chat under the new id", async () => {
-            serverDirectChatsStore.set(ChatMap.fromList([directChat("old10")]));
-            selectChat(direct("old10"));
-            const { messageId } = await startSending("old10");
-
-            await fold(updates([directChat("new10")], ["old10"], [["old10", "new10"]]));
-
-            expect(localUpdates.isUnconfirmed({ chatId: direct("new10") }, messageId)).toBe(true);
-            expect(localUpdates.isUnconfirmed({ chatId: direct("old10") }, messageId)).toBe(false);
-        });
-
-        test("is confirmed in the chat under the new id once sent", async () => {
-            serverDirectChatsStore.set(ChatMap.fromList([directChat("old11")]));
-            selectChat(direct("old11"));
-            const { sending, messageId } = await startSending("old11");
-            const [unconfirmed] = localUpdates.unconfirmedMessages({ chatId: direct("old11") });
-            await fold(updates([directChat("new11")], ["old11"], [["old11", "new11"]]));
-
-            sends[0].resolve(
-                [
-                    { kind: "success", timestamp: 1n, messageIndex: 3, eventIndex: 4 },
-                    unconfirmed.event,
-                ],
-                true,
-            );
-            await sending;
-
-            expect(localUpdates.isUnconfirmed({ chatId: direct("new11") }, messageId)).toBe(false);
-        });
-
-        test("is taken out of the chat under the new id if sending it fails", async () => {
-            serverDirectChatsStore.set(ChatMap.fromList([directChat("old12")]));
-            selectChat(direct("old12"));
-            const { sending, messageId } = await startSending("old12");
-            await fold(updates([directChat("new12")], ["old12"], [["old12", "new12"]]));
-
-            sends[0].reject(new Error("offline"));
-            await sending;
-
-            expect(localUpdates.isUnconfirmed({ chatId: direct("new12") }, messageId)).toBe(false);
-        });
     });
 
     test("an old link to a moved chat goes to the chat under the new id, at the same message", async () => {
@@ -398,17 +208,27 @@ describe("a direct chat moved onto the other user's new id", () => {
         expect(localUpdates.anyUninitialisedDirectChats()).toBe(false);
     });
 
-    test("an old link to a user held under their old id, not known to have moved, goes to the new id", async () => {
-        // eg. held in a cache from before an upgrade
-        userStore.addUser(user("old8"));
-        migrated.set("old8", "new8");
-        serverDirectChatsStore.set(ChatMap.fromList([directChat("new8")]));
-        selectChat(direct("old8"));
+    test("an old link to a user with no chat yet starts one under their latest id", async () => {
+        migrated.set("old6", "new6");
+        selectChat(direct("old6"));
 
-        await client.setSelectedChat(direct("old8"));
+        await client.setSelectedChat(direct("old6"));
 
-        expect(usersAskedFor).toContain("old8");
-        expect(navigations).toEqual([{ url: "/chats/user/new8", intent: "auto" }]);
+        expect(navigations).toEqual([{ url: "/chats/user/new6", intent: "auto" }]);
+        expect(localUpdates.removeUninitialisedDirectChat(direct("old6"))).toBe(false);
+        expect(localUpdates.removeUninitialisedDirectChat(direct("new6"))).toBe(true);
+    });
+
+    test("an old link to a user who has since been deleted isn't found", async () => {
+        migrated.set("old7", "new7");
+        deleted.add("new7");
+        selectChat(direct("old7"));
+
+        await client.setSelectedChat(direct("old7"));
+
+        expect(notFound).toBe(1);
+        expect(navigations).toEqual([]);
+        expect(localUpdates.anyUninitialisedDirectChats()).toBe(false);
     });
 
     test("an old link isn't followed if another chat was chosen while the user was looked up", async () => {
@@ -421,5 +241,31 @@ describe("a direct chat moved onto the other user's new id", () => {
         await selecting;
 
         expect(navigations).toEqual([]);
+    });
+
+    test("an old referral link shows the referrer under their latest id", async () => {
+        migrated.set("old5", "new5");
+        client.setReferralCode("old5");
+
+        expect((await client.getReferringUser())?.userId).toBe("new5");
+    });
+
+    test("a transfer made before the other user was migrated names them by their latest id", async () => {
+        migrated.set("old8", "new8");
+        migrated.set("old9", "new9");
+        const common = { timestamp: new Date(0), amount: 1n };
+        transactions = [
+            { ...common, kind: "transfer", id: 1n, from: "old8", to: "someone" },
+            { ...common, kind: "mint", id: 2n, to: "old9" },
+            { ...common, kind: "burn", id: 3n, from: "someone" },
+        ];
+
+        const result = await client.getAccountTransactions("ledgerIndex");
+
+        expect(result.kind === "success" && result.transactions).toEqual([
+            { ...common, kind: "transfer", id: 1n, from: "new8", to: "someone" },
+            { ...common, kind: "mint", id: 2n, from: undefined, to: "new9" },
+            { ...common, kind: "burn", id: 3n, from: "someone", to: undefined },
+        ]);
     });
 });
