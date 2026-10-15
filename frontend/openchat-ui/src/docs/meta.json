@@ -1357,16 +1357,17 @@
         "required": false,
         "componentDefault": "'ghost'",
         "name": "variant",
-        "type": "'ghost' | 'soft' | 'outline' | 'filled' | 'text'",
+        "type": "'ghost' | 'soft' | 'outline' | 'filled' | 'text' | 'primary'",
         "editor": "enum",
         "options": [
           "ghost",
           "soft",
           "outline",
           "filled",
-          "text"
+          "text",
+          "primary"
         ],
-        "doc": "ghost (icon, hover fill) · soft (tinted square) · outline (hairline ring) · filled (accent) · text (icon + Copy pill)."
+        "doc": "ghost (icon, hover fill) · soft (tinted square) · outline (hairline ring) · filled (accent) · text (icon + Copy pill) · primary (icon + Copy on accent, 40px)."
       },
       {
         "name": "size",
@@ -3148,23 +3149,56 @@
   {
     "name": "ProgressTimeline",
     "source": "lib/ProgressTimeline.dc.html",
-    "hash": "90f18732",
-    "description": "Multi-step progress for on-chain flows. Phases group technical steps so 5–7 steps read as 3:\n  phases: [{ title, sub?, steps?: [{ label, state }], state?, error? }]  state: \"done\" | \"active\" | \"todo\" | \"failed\"\nA phase's state is derived from its steps when omitted. Sub-steps show only on the active/failed phase (or when expanded).\ncollapseDone: once everything is done, fold into \"N steps done · View details\". density \"compact\" tightens rows.",
+    "hash": "d566367a",
+    "description": "Multi-step progress for on-chain flows, every step always visible:\n  steps: [{ label, state: \"done\" | \"active\" | \"todo\" | \"failed\", hint?, error?, meta? }]\nhint shows under the active step, error under the failed one; meta (e.g. \"0:04\") on the right of done steps.\nfunds: { text, tone: \"active\" | \"done\" | \"warn\" } is one line saying where the user's money is right now.\nshowBar (default true) + elapsed: a \"Step 2 of 5\" bar above the list. The older grouped `phases` input is flattened into steps.",
     "preview": {
       "width": 360,
       "height": 320
     },
     "props": [
       {
-        "name": "phases",
-        "type": "Phase[]",
+        "name": "steps",
+        "type": "TimelineStep[]",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
-        "required": true,
+        "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Every step, in order."
+      },
+      {
+        "name": "funds",
+        "type": "TimelineFunds | null",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "null",
+        "doc": "One line saying where the user's money is; hidden when omitted."
+      },
+      {
+        "name": "showBar",
+        "type": "boolean",
+        "default": true,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "true",
+        "doc": "The \"Step N of M\" bar above the list."
+      },
+      {
+        "name": "elapsed",
+        "type": "string",
+        "default": "0:07",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "Right of the bar, e.g. \"0:12\" or \"Took 0:24\"."
       },
       {
         "name": "density",
@@ -3181,15 +3215,15 @@
         "doc": ""
       },
       {
-        "name": "collapseDone",
-        "type": "boolean",
-        "default": true,
-        "editor": "boolean",
+        "name": "phases",
+        "type": "TimelinePhase[]",
+        "default": null,
+        "editor": null,
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "false",
-        "doc": ""
+        "componentDefault": "[]",
+        "doc": "Older grouped input, flattened into steps; ignored when `steps` is given."
       }
     ],
     "group": "library"
@@ -3395,8 +3429,8 @@
   {
     "name": "SideCard",
     "source": "lib/SideCard.dc.html",
-    "hash": "2385dab3",
-    "description": "The right-hand card in wallet workspaces (Send summary, Swap quote, token card). Content is children.",
+    "hash": "fe2f5a08",
+    "description": "The right-hand card in wallet workspaces (Send summary, Swap quote, token card). Content is children.\nfill: stretch to the parent's height (e.g. match the form column next to it).",
     "preview": {
       "width": 360,
       "height": 300
@@ -3412,6 +3446,17 @@
         "required": false,
         "componentDefault": "'0'",
         "doc": ""
+      },
+      {
+        "name": "fill",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Stretch to the parent's height."
       },
       {
         "name": "gap",
@@ -16040,8 +16085,8 @@
   {
     "name": "WalletMain",
     "source": "lib/WalletMain.dc.html",
-    "hash": "abda06dc",
-    "description": "same holdings as WalletPanel; names and decimals are only needed here",
+    "hash": "c74f96f3",
+    "description": "The wallet's main column: All activity, a token page (summary card: balance, Send / Receive / Swap, facts, share of wallet; then that token's activity) and in-place Send / Receive / Swap / Recipients. A token request always opens that token's page, also from inside a flow, unless a send or swap is waiting on the host.",
     "preview": null,
     "props": [
       {
@@ -16163,7 +16208,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Make the transfer; reject (e.g. wrong PIN) to keep Send open with an error. Resolve with the transaction's { id } to show a pending row until `activity` lists it."
+        "doc": "Make the transfer; reject (e.g. wrong PIN) to keep Send open with an error. Resolve with the transaction's { id } to show a pending row until `activity` lists it. Send then shows its receipt; leaving it lands on the token page with a toast."
       },
       {
         "name": "onMessage",
@@ -16174,7 +16219,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Toast \"Message\" action after sending to a person: open the DM with them."
+        "doc": "Open the DM with the person a send went to: Send's \"View in chat\", or the toast's \"Message\" action."
       },
       {
         "name": "activity",
@@ -16265,17 +16310,6 @@
         "doc": "Current fee (in BTC) for sending BTC to a Bitcoin address natively or as ckBTC; a route without a fee can't be used."
       },
       {
-        "name": "dexes",
-        "type": "string[]",
-        "default": null,
-        "editor": null,
-        "options": null,
-        "section": null,
-        "required": false,
-        "componentDefault": null,
-        "doc": "DEX names shown while a quote is found."
-      },
-      {
         "name": "onQuote",
         "type": "(r: SwapRequest) => Promise<SwapQuote>",
         "default": null,
@@ -16295,7 +16329,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Run the swap, calling onStep(0–4) as each on-chain step starts. Resolve when it is in the wallet; reject to show an error."
+        "doc": "See WalletSwap.onSwap."
       },
       {
         "name": "chats",
@@ -16328,7 +16362,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Draws a scannable QR code for the address (inside a white 240px square). Without it the QR card is hidden."
+        "doc": "See WalletReceive.qr."
       }
     ],
     "group": "features"
@@ -16558,8 +16592,8 @@
   {
     "name": "WalletReceive",
     "source": "lib/WalletReceive.dc.html",
-    "hash": "2b04c83d",
-    "description": "same catalogue as the Receive dialog: any listed token can be received, held or not",
+    "hash": "27cf3447",
+    "description": "Receive in the wallet main column, one column: network picker, an address card with the QR code, Copy and Share to chat, a warning naming exactly what to send, and your OpenChat handle. The QR can be copied as an image.",
     "preview": {
       "width": 900,
       "height": 780
@@ -16638,7 +16672,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Draws a scannable QR code for the address (inside a white 240px square). Without it the QR card is hidden."
+        "doc": "Draws a scannable QR code for the address as an svg, canvas or img, scaled to fill a white square of about 135px (that element is what \"Copy QR image\" copies). Without it the address card has no QR."
       },
       {
         "name": "onShare",
@@ -16758,8 +16792,8 @@
   {
     "name": "WalletSend",
     "source": "lib/WalletSend.dc.html",
-    "hash": "7681cb15",
-    "description": "Send in the wallet main column: form + live summary side by side; below 760px the summary becomes a sticky footer.",
+    "hash": "a9dbde40",
+    "description": "Send in the wallet main column, in two steps: the form with summary rows in one column, a PIN dialog, then a receipt (Sending → Sent).",
     "preview": {
       "width": 900,
       "height": 800
@@ -16880,7 +16914,29 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Make the transfer: full address or user id, network, memo and PIN. Reject (e.g. wrong PIN) to keep the PIN dialog open with an error. Without it nothing can be sent."
+        "doc": "Make the transfer, when the PIN is submitted. Reject (e.g. wrong PIN) to reopen the PIN dialog with an error. Resolve when it's done, optionally with `{ id }` (shown as the receipt's transaction). Without it nothing can be sent."
+      },
+      {
+        "name": "onDone",
+        "type": "(v: { request: WalletSendRequest; result: unknown; openChat: boolean }) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "After a completed send, when the user leaves the receipt: Done or Back (openChat false), or \"View in chat\" (openChat true; offered for sends to a person when canOpenChat). `result` is what onSent resolved with. Without it, these close."
+      },
+      {
+        "name": "canOpenChat",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "The host can open the DM with the recipient from onDone's openChat: offers \"View in chat\" on the receipt."
       }
     ],
     "group": "features"
@@ -17016,8 +17072,8 @@
   {
     "name": "WalletSwap",
     "source": "lib/WalletSwap.dc.html",
-    "hash": "9e10abdb",
-    "description": "In-place Swap for the wallet main column: Details → Quote (30s, single best DEX) → Swap (three on-chain steps).",
+    "hash": "5e438702",
+    "description": "In-place Swap for the wallet main column, in two steps: Details (amount, slippage, inline quote) → Swap (approve, swap, withdraw).",
     "preview": {
       "width": 900,
       "height": 800
@@ -17052,17 +17108,6 @@
         "doc": "Symbol to pay with; falls back to ICP."
       },
       {
-        "name": "dexes",
-        "type": "string[]",
-        "default": null,
-        "editor": null,
-        "options": null,
-        "section": null,
-        "required": false,
-        "componentDefault": "[]",
-        "doc": "DEX names shown while a quote is found."
-      },
-      {
         "name": "onQuote",
         "type": "(r: SwapRequest) => Promise<SwapQuote>",
         "default": null,
@@ -17082,7 +17127,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Run the swap, calling onStep(0–4) as each on-chain step starts. Resolve when it is in the wallet; reject to show an error."
+        "doc": "Run the swap, calling onStep(0–2) as each on-chain step (approve, swap, withdraw) starts. Resolve when it is in the wallet; reject to show an error."
       },
       {
         "name": "onClose",
