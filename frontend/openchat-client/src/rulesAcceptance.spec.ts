@@ -33,8 +33,10 @@ import {
     type CommunityDetailsResponse,
     type CommunityIdentifier,
     type CommunitySummary,
+    type EnhancedReplyContext,
     type EventsResponse,
     type GroupChatDetailsResponse,
+    type Message,
     type RulesAcceptanceResolver,
     type SendMessageResponse,
     type VersionedRules,
@@ -44,6 +46,7 @@ import type { OpenChatConfig } from "./config";
 import { OpenChat } from "./openchat";
 import {
     currentUserStore,
+    localUpdates,
     routeStore,
     selectedServerChatStore,
     selectedServerCommunityStore,
@@ -206,8 +209,10 @@ describe("accepting the rules before sending a message", () => {
                     queueMicrotask(() => onResult([response, req.event.event])),
             };
         }) as never);
-        // The details arrive later, as they would from the network
-        const reply = <T>(value: T) => new Promise<T>((r) => setTimeout(() => r(value), 0));
+        // The details arrive later, as they would from the network, the community's last as
+        // those of a large community might
+        const reply = <T>(value: T, ms = 0) =>
+            new Promise<T>((r) => setTimeout(() => r(value), ms));
         vi.spyOn(WorkerAgent.prototype, "send").mockImplementation(((req: WorkerRequest) => {
             switch (req.kind) {
                 case "getGroupDetails":
@@ -222,17 +227,20 @@ describe("accepting the rules before sending a message", () => {
                         webhooks: [],
                     } satisfies GroupChatDetailsResponse);
                 case "getCommunityDetails":
-                    return reply({
-                        kind: "success",
-                        members: [],
-                        blockedUsers: new Set(),
-                        invitedUsers: new Set(),
-                        rules: communityRules,
-                        lastUpdated: 1n,
-                        userGroups: new Map(),
-                        referrals: new Set(),
-                        bots: [],
-                    } satisfies CommunityDetailsResponse);
+                    return reply(
+                        {
+                            kind: "success",
+                            members: [],
+                            blockedUsers: new Set(),
+                            invitedUsers: new Set(),
+                            rules: communityRules,
+                            lastUpdated: 1n,
+                            userGroups: new Map(),
+                            referrals: new Set(),
+                            bots: [],
+                        } satisfies CommunityDetailsResponse,
+                        20,
+                    );
                 case "getUsers":
                     return Promise.resolve({ users: [], deletedUserIds: new Set() });
                 default:
@@ -250,6 +258,7 @@ describe("accepting the rules before sending a message", () => {
         selectedServerCommunityStore.set(undefined);
         serverCommunitiesStore.set(new CommunityMap());
         serverEventsStore.set([]);
+        localUpdates.draftMessages.delete({ chatId: otherCommunity });
     });
 
     function setup(communityRulesAccepted: boolean, otherCommunityRulesAccepted = true) {
@@ -312,6 +321,8 @@ describe("accepting the rules before sending a message", () => {
 
     test("the community's rules are asked to be accepted before the chat's details load", async () => {
         setup(false);
+        // Nothing loads the chat's details here, as when loading them failed, or for a message
+        // sent from the composer before they've loaded
 
         const outcome = forwardTo(sameCommunity);
         await vi.waitFor(() => expect(rulesPrompt()).toBeDefined());
@@ -371,5 +382,48 @@ describe("accepting the rules before sending a message", () => {
         expect(rulesPrompt()).toBeUndefined();
         expect(sent).toHaveLength(1);
         expect(sent[0]).toMatchObject({ kind: "sendMessage", acceptedRules: undefined });
+    });
+
+    test("forwarding isn't asked to accept the rules of a chat opened while it waits", async () => {
+        setup(true);
+        channelRules = rules("the rules of the channel forwarded to");
+        select(otherCommunity);
+        await client.setSelectedCommunity(elsewhere);
+        await client.setSelectedChat(otherCommunity);
+        client.forwardMessage({ chatId: otherCommunity }, {
+            content: { kind: "text_content", text: "hello" },
+            blockLevelMarkdown: false,
+            ogPreviews: [],
+        } as unknown as Message);
+
+        // The user goes back before the details of the channel forwarded to have loaded
+        select(from);
+        selectedServerChatStore.set(chatDetails(from, rules("the rules of the channel")));
+        await vi.waitFor(() => expect(sent).toHaveLength(1));
+
+        expect(rulesPrompt()).toBeUndefined();
+        expect(sent[0]).toMatchObject({ kind: "sendMessage", acceptedRules: undefined });
+    });
+
+    test("forwarding leaves the draft of the chat forwarded to alone", async () => {
+        setup(true);
+        const draft = { chatId: otherCommunity };
+
+        const outcome = forwardToAnotherCommunity();
+        // What the user types into the chat forwarded to while the message waits to be sent
+        localUpdates.draftMessages.setTextContent(draft, "and another thing");
+        localUpdates.draftMessages.setReplyingTo(draft, {
+            sourceContext: draft,
+        } as unknown as EnhancedReplyContext);
+        await outcome;
+        // The message is added to the chat, and its draft cleared, after a timeout
+        await new Promise((r) => setTimeout(r, 0));
+
+        expect(sent).toHaveLength(1);
+        expect(sent[0]).toMatchObject({
+            kind: "sendMessage",
+            event: { event: { repliesTo: undefined } },
+        });
+        expect(localUpdates.draftMessages.value.get(draft)?.textContent).toBe("and another thing");
     });
 });

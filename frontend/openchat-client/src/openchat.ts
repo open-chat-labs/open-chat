@@ -796,7 +796,7 @@ export class OpenChat {
     #chatSelectionSeq = 0;
     #emptyChatIncidents = new Set<number>();
     // The loads of the selected chat's and community's details, which hold their rules. A message
-    // sent before these finish waits for them (see #sendMessageCommon).
+    // forwarded before these finish waits for them (see #sendMessageCommon).
     #chatDetailsLoad: { chatId: ChatIdentifier; loaded: Promise<void> } | undefined;
     #communityDetailsLoad: { communityId: CommunityIdentifier; loaded: Promise<void> } | undefined;
     #lastOnlineDatesPending = new Set<string>();
@@ -5292,12 +5292,11 @@ export class OpenChat {
     ): Promise<SendMessageResponse> {
         const { chatId, threadRootMessageIndex } = messageContext;
 
-        // A message can be sent as soon as its chat is selected (a forwarded one is), before the
-        // details of the chat and its community, which hold their rules, have loaded. So wait for
-        // them, to ask the user to accept those rules rather than have the message rejected.
-        const detailsLoading = this.#selectedDetailsLoading(chatId);
-        if (detailsLoading.length > 0) {
-            await Promise.allSettled(detailsLoading);
+        // A forwarded message is sent as soon as the chat it's forwarded to opens, before the
+        // details of that chat and its community, which hold their rules, have loaded. So it waits
+        // for them, to ask the user to accept those rules rather than have the message rejected.
+        if (message.forwarded) {
+            await Promise.allSettled(this.#selectedDetailsLoading(chatId));
         }
 
         let acceptedRules: AcceptedRules | undefined = undefined;
@@ -5666,7 +5665,10 @@ export class OpenChat {
             return Promise.resolve(CommonResponses.failure());
         }
 
-        const draftMessage = localUpdates.draftMessages.value.get(messageContext);
+        // A forwarded message isn't the chat's draft, which is left for the user to carry on with
+        const draftMessage = forwarded
+            ? undefined
+            : localUpdates.draftMessages.value.get(messageContext);
         const timestamp = Date.now();
         const msg = {
             timestamp: BigInt(timestamp),
@@ -5776,7 +5778,10 @@ export class OpenChat {
                     messagesRead.markReadUpTo(context, messageEvent.event.messageIndex - 1);
                 }
 
-                localUpdates.draftMessages.delete(context);
+                // The user may have typed into the draft while a forwarded message waited to be sent
+                if (!messageEvent.event.forwarded) {
+                    localUpdates.draftMessages.delete(context);
+                }
             });
             publish("sentMessage", { context, event: messageEvent });
         }, 0);
