@@ -39,7 +39,7 @@ thread_local! {
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     if TIMER_ID.get().is_none() && !state.data.groups_being_imported.is_empty() {
-        let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, async { run() });
+        let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, run());
         TIMER_ID.set(Some(timer_id));
         true
     } else {
@@ -47,14 +47,14 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     }
 }
 
-fn run() {
+async fn run() {
     trace!("'import_groups' job running");
     TIMER_ID.set(None);
     run_regular_jobs();
 
     let batch = mutate_state(next_batch);
     if !batch.is_empty() {
-        ic_cdk::futures::spawn_migratory(import_groups(batch));
+        import_groups(batch).await;
     }
 }
 

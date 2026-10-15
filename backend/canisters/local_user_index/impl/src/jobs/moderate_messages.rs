@@ -32,7 +32,7 @@ const MAX_QUEUE_AGE_MS: u64 = 24 * 60 * 60 * 1000;
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     if TIMER_ID.get().is_none() && state.data.openai_api_key.is_some() && !state.data.message_moderation_queue.is_empty() {
-        let timer_id = ic_cdk_timers::set_timer(next_interval(), async { run() });
+        let timer_id = ic_cdk_timers::set_timer(next_interval(), run());
         TIMER_ID.set(Some(timer_id));
         true
     } else {
@@ -51,14 +51,14 @@ fn next_interval() -> Duration {
     backoff.max(retry_after).max(PACE_DELAY.get())
 }
 
-pub fn run() {
+pub async fn run() {
     trace!("'moderate_messages' job running");
 
     if let Some((api_key, moderation_referral_config, batch)) = mutate_state(next_batch) {
         // TIMER_ID is deliberately left set while the batch is in flight so that an enqueue
         // during the outcall cannot arm a second concurrent batch; it is cleared, and the timer
         // re-armed if required, when the batch completes
-        ic_cdk::futures::spawn_migratory(process_batch(api_key, moderation_referral_config, batch));
+        process_batch(api_key, moderation_referral_config, batch).await;
     } else {
         TIMER_ID.set(None);
     }

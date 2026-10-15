@@ -13,7 +13,7 @@ mod pre_upgrade;
 
 fn init_env(rng_seed: [u8; 32]) -> Box<CanisterEnv> {
     let canister_env = if rng_seed == [0; 32] {
-        ic_cdk_timers::set_timer(Duration::ZERO, async { reseed_rng() });
+        ic_cdk_timers::set_timer(Duration::ZERO, reseed_rng());
         CanisterEnv::default()
     } else {
         CanisterEnv::new(rng_seed)
@@ -40,15 +40,11 @@ fn init_cycles_dispenser_client(cycles_dispenser_canister_id: CanisterId, min_cy
     info!("Initialized cycles dispenser client");
 }
 
-fn reseed_rng() {
-    ic_cdk::futures::spawn_migratory(reseed_rng_inner());
-
-    async fn reseed_rng_inner() {
-        let seed = get_random_seed().await;
-        mutate_state(|state| {
-            state.data.rng_seed = seed;
-            state.env = Box::new(CanisterEnv::new(seed))
-        });
-        trace!("Successfully reseeded rng");
-    }
+async fn reseed_rng() {
+    let seed = get_random_seed().await;
+    mutate_state(|state| {
+        state.data.rng_seed = seed;
+        state.env = Box::new(CanisterEnv::new(seed))
+    });
+    trace!("Successfully reseeded rng");
 }

@@ -46,7 +46,7 @@ thread_local! {
 
 pub(crate) fn start_job_if_required(state: &RuntimeState, delay: Option<Milliseconds>) -> bool {
     if TIMER_ID.get().is_none() && !state.data.cycles_refund_queue.is_empty() {
-        let timer_id = ic_cdk_timers::set_timer(Duration::from_millis(delay.unwrap_or_default()), async { run() });
+        let timer_id = ic_cdk_timers::set_timer(Duration::from_millis(delay.unwrap_or_default()), run());
         TIMER_ID.set(Some(timer_id));
         true
     } else {
@@ -65,7 +65,7 @@ pub(crate) fn is_in_progress(state: &RuntimeState, canister_id: CanisterId) -> b
             .is_some_and(|c| c.canister_id == canister_id)
 }
 
-fn run() {
+async fn run() {
     trace!("'refund_cycles' running");
     TIMER_ID.set(None);
 
@@ -76,7 +76,7 @@ fn run() {
     match mutate_state(get_next) {
         Ok(canister) => {
             IN_PROGRESS.set(true);
-            ic_cdk::futures::spawn_migratory(process_canister(canister));
+            process_canister(canister).await;
         }
         Err(Some(delay)) => {
             read_state(|state| start_job_if_required(state, Some(delay)));

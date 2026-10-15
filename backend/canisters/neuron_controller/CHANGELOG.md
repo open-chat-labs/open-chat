@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Update `ic-stable-structures` to a fork which supports choosing the page size of a map ([#9347](https://github.com/open-chat-labs/open-chat/pull/9347))
 - Pay for HTTPS outcalls using the pay-as-you-go pricing model ([#9618](https://github.com/open-chat-labs/open-chat/pull/9618))
 - Run the repeating jobs on `PerRoundTimer` rather than `set_timer_interval` ([#9772](https://github.com/open-chat-labs/open-chat/pull/9772))
+- Await work inside timers rather than spawning a task from them ([#9971](https://github.com/open-chat-labs/open-chat/pull/9971))
 
 ## [[2.0.1924](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1924-neuron_controller)] - 2025-11-26
 
