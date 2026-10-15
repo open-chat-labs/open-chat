@@ -24,11 +24,17 @@ vi.mock("@icp-sdk/auth/client", async (importOriginal) => ({
 
 import {
     CommunityMap,
+    ROLE_MEMBER,
+    Stream,
     anonymousUser,
     type ChannelIdentifier,
     type ChannelSummary,
+    type ChatEvent,
+    type CommunityDetailsResponse,
     type CommunityIdentifier,
     type CommunitySummary,
+    type EventsResponse,
+    type GroupChatDetailsResponse,
     type RulesAcceptanceResolver,
     type SendMessageResponse,
     type VersionedRules,
@@ -42,6 +48,7 @@ import {
     selectedServerChatStore,
     selectedServerCommunityStore,
     serverCommunitiesStore,
+    serverEventsStore,
 } from "./state";
 import { ChatDetailsState } from "./state/chat/serverDetails";
 import { CommunityDetailsState } from "./state/community/server";
@@ -50,7 +57,7 @@ import { WorkerAgent } from "./workerAgent";
 
 // Sending a message to a chat or community whose rules the user hasn't accepted first asks them
 // to accept those rules. Forwarding a message sends it as soon as the chat it's forwarded to
-// opens, before that chat's details (which hold its rules) have loaded.
+// opens, before that chat's details (which hold its rules) have loaded, so it waits for them.
 
 class FakeWorker {
     onmessage: ((ev: MessageEvent) => void) | undefined;
@@ -68,6 +75,7 @@ function config(): OpenChatConfig {
 }
 
 const rules = (text: string): VersionedRules => ({ text, enabled: true, version: 1 });
+const noRules: VersionedRules = { text: "", enabled: false, version: 0 };
 
 const here: CommunityIdentifier = { kind: "community", communityId: "aaaaa-aa" };
 const elsewhere: CommunityIdentifier = { kind: "community", communityId: "bbbbb-bb" };
@@ -89,10 +97,33 @@ function community(id: CommunityIdentifier, channels: ChannelIdentifier[], rules
                 ({
                     kind: "channel",
                     id: c,
-                    membership: { rulesAccepted: false },
+                    name: "c",
+                    description: "",
+                    public: true,
+                    minVisibleEventIndex: 0,
+                    minVisibleMessageIndex: 0,
+                    latestEventIndex: 0,
+                    latestMessageIndex: undefined,
+                    latestMessage: undefined,
+                    membership: {
+                        role: ROLE_MEMBER,
+                        archived: false,
+                        lapsed: false,
+                        rulesAccepted: false,
+                        latestThreads: [],
+                        mentions: [],
+                    },
+                    gateConfig: { gate: { kind: "no_gate" }, expiry: undefined },
+                    permissions: {},
+                    level: "channel",
+                    lastUpdated: 0n,
+                    memberCount: 2,
+                    frozen: false,
+                    historyVisible: true,
                 }) as unknown as ChannelSummary,
         ),
-        membership: { rulesAccepted },
+        membership: { role: ROLE_MEMBER, archived: false, pinned: [], index: 0, rulesAccepted },
+        lastUpdated: 0n,
     } as unknown as CommunitySummary;
 }
 
@@ -147,25 +178,67 @@ function select(id: ChannelIdentifier) {
 describe("accepting the rules before sending a message", () => {
     let client: OpenChat;
     let sent: WorkerRequest[];
+    // The rules the worker loads for the channel forwarded to, and for its community
+    let channelRules: VersionedRules;
+    let communityRules: VersionedRules;
 
     beforeEach(() => {
         vi.stubGlobal("Worker", FakeWorker);
         vi.spyOn(console, "debug").mockImplementation(() => {});
         currentUserStore.set({ ...anonymousUser(), userId: "me" });
         sent = [];
+        channelRules = noRules;
+        communityRules = noRules;
         vi.spyOn(WorkerAgent.prototype, "stream").mockImplementation(((req: WorkerRequest) => {
+            if (req.kind !== "sendMessage") {
+                // The events of the chat being opened
+                const events = {
+                    events: [],
+                    expiredEventRanges: [],
+                    latestEventIndex: 0,
+                } as unknown as EventsResponse<ChatEvent>;
+                return new Stream((resolve) => setTimeout(() => resolve(events, true), 0));
+            }
             sent.push(req);
             const response: SendMessageResponse = { kind: "failure" };
             return {
                 subscribe: ({ onResult }: { onResult: (r: unknown) => void }) =>
-                    queueMicrotask(() =>
-                        onResult([response, "event" in req ? req.event.event : undefined]),
-                    ),
+                    queueMicrotask(() => onResult([response, req.event.event])),
             };
         }) as never);
-        vi.spyOn(WorkerAgent.prototype, "send").mockImplementation(
-            (() => new Promise(() => {})) as never,
-        );
+        // The details arrive later, as they would from the network
+        const reply = <T>(value: T) => new Promise<T>((r) => setTimeout(() => r(value), 0));
+        vi.spyOn(WorkerAgent.prototype, "send").mockImplementation(((req: WorkerRequest) => {
+            switch (req.kind) {
+                case "getGroupDetails":
+                    return reply({
+                        members: [],
+                        blockedUsers: new Set(),
+                        invitedUsers: new Set(),
+                        pinnedMessages: new Set(),
+                        rules: channelRules,
+                        timestamp: 1n,
+                        bots: [],
+                        webhooks: [],
+                    } satisfies GroupChatDetailsResponse);
+                case "getCommunityDetails":
+                    return reply({
+                        kind: "success",
+                        members: [],
+                        blockedUsers: new Set(),
+                        invitedUsers: new Set(),
+                        rules: communityRules,
+                        lastUpdated: 1n,
+                        userGroups: new Map(),
+                        referrals: new Set(),
+                        bots: [],
+                    } satisfies CommunityDetailsResponse);
+                case "getUsers":
+                    return Promise.resolve({ users: [], deletedUserIds: new Set() });
+                default:
+                    return new Promise(() => {});
+            }
+        }) as never);
     });
 
     afterEach(() => {
@@ -174,13 +247,18 @@ describe("accepting the rules before sending a message", () => {
         currentUserStore.set(anonymousUser());
         captureRulesAcceptanceStore.set(undefined);
         selectedServerChatStore.set(undefined);
+        selectedServerCommunityStore.set(undefined);
         serverCommunitiesStore.set(new CommunityMap());
+        serverEventsStore.set([]);
     });
 
-    function setup(communityRulesAccepted: boolean) {
+    function setup(communityRulesAccepted: boolean, otherCommunityRulesAccepted = true) {
         const communities = new CommunityMap<CommunitySummary>();
         communities.set(here, community(here, [from, sameCommunity], communityRulesAccepted));
-        communities.set(elsewhere, community(elsewhere, [otherCommunity], true));
+        communities.set(
+            elsewhere,
+            community(elsewhere, [otherCommunity], otherCommunityRulesAccepted),
+        );
         serverCommunitiesStore.set(communities);
         client = new OpenChat(config());
 
@@ -198,6 +276,28 @@ describe("accepting the rules before sending a message", () => {
             false,
             [],
             true,
+        );
+    }
+
+    // Forwards the message as the app does: the route changes to the channel, which selects its
+    // community and then the channel, and the message is sent as soon as the channel opens
+    async function forwardToAnotherCommunity() {
+        select(otherCommunity);
+        await client.setSelectedCommunity(elsewhere);
+        await client.setSelectedChat(otherCommunity);
+        return client.sendMessageWithContent(
+            { chatId: otherCommunity },
+            { kind: "text_content", text: "hello" },
+            false,
+            [],
+            true,
+        );
+    }
+
+    function rulesShown(): string {
+        return client.combineRulesText(
+            selectedServerChatStore.value?.rules,
+            selectedServerCommunityStore.value?.rules,
         );
     }
 
@@ -225,5 +325,51 @@ describe("accepting the rules before sending a message", () => {
 
         expect((await outcome).kind).toBe("failure");
         expect(sent).toEqual([]);
+    });
+
+    test("forwarding to a channel asks for its rules to be accepted before sending", async () => {
+        setup(true);
+        channelRules = rules("the rules of the channel forwarded to");
+
+        const outcome = forwardToAnotherCommunity();
+        await vi.waitFor(() => expect(rulesPrompt()).toBeDefined());
+        expect(sent).toEqual([]);
+        expect(rulesShown()).toBe("the rules of the channel forwarded to");
+        rulesPrompt()?.resolve(true);
+        await outcome;
+
+        expect(sent).toHaveLength(1);
+        expect(sent[0]).toMatchObject({
+            kind: "sendMessage",
+            acceptedRules: { chat: 1, community: undefined },
+        });
+    });
+
+    test("forwarding to a channel asks for its community's rules to be accepted before sending", async () => {
+        setup(true, false);
+        communityRules = rules("the rules there");
+
+        const outcome = forwardToAnotherCommunity();
+        await vi.waitFor(() => expect(rulesPrompt()).toBeDefined());
+        expect(sent).toEqual([]);
+        expect(rulesShown()).toBe("the rules there");
+        rulesPrompt()?.resolve(true);
+        await outcome;
+
+        expect(sent).toHaveLength(1);
+        expect(sent[0]).toMatchObject({
+            kind: "sendMessage",
+            acceptedRules: { chat: undefined, community: 1 },
+        });
+    });
+
+    test("forwarding to a channel with no rules sends it without asking", async () => {
+        setup(true);
+
+        await forwardToAnotherCommunity();
+
+        expect(rulesPrompt()).toBeUndefined();
+        expect(sent).toHaveLength(1);
+        expect(sent[0]).toMatchObject({ kind: "sendMessage", acceptedRules: undefined });
     });
 });
