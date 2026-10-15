@@ -150,6 +150,7 @@ import {
     type ChitState,
     type CkbtcMinterDepositInfo,
     type CkbtcMinterWithdrawalInfo,
+    type CksolMinterDepositInfo,
     type ClaimDailyChitResponse,
     type DailyPuzzleConfig,
     type DailyPuzzleHintResponse,
@@ -429,6 +430,7 @@ import {
     notificationsSupported,
     videoProcessingProgress,
     oneSecAddress,
+    solanaAddress,
     pathContextStore,
     pinNumberFailureStore,
     pinNumberRequiredStore,
@@ -666,6 +668,7 @@ import {
     toShortTimeString,
 } from "./utils/date";
 import { getErc20TokenBalances, type Erc20TokenBalance } from "./utils/evm";
+import { getSolBalance } from "./utils/solana";
 import formatFileSize from "./utils/fileSize";
 import { gaTrack } from "./utils/ga";
 import { calculateMediaDimensions } from "./utils/layout";
@@ -845,6 +848,8 @@ export class OpenChat {
     #btcBalancePoller: Poller | undefined = undefined;
     #btcAddressUnsub: Unsubscriber | undefined = undefined;
     #oneSecAddressUnsub: Unsubscriber | undefined = undefined;
+    #solBalancePoller: Poller | undefined = undefined;
+    #solAddressUnsub: Unsubscriber | undefined = undefined;
     #userUpdatePoller: Poller | undefined = undefined;
     #exchangeRatePoller: Poller | undefined = undefined;
     #proposalTalliesPoller: Poller | undefined = undefined;
@@ -863,6 +868,7 @@ export class OpenChat {
     #vapidPublicKey: string;
     #getBtcAddressPromise: Promise<string> | undefined = undefined;
     #getOneSecAddressPromise: Promise<string> | undefined = undefined;
+    #getSolAddressPromise: Promise<string> | undefined = undefined;
     #evmContractAddresses: EvmContractAddress[] = [];
 
     currentAirdropChannel: AirdropChannelDetails | undefined = undefined;
@@ -1417,6 +1423,7 @@ export class OpenChat {
             this.#startOnlinePoller();
             this.#startBtcBalanceUpdateJob();
             this.#startOneSecBalanceUpdateJob();
+            this.#startSolBalanceUpdateJob();
             this.#startDailyPuzzlePoller();
             this.#worker
                 .send({ kind: "getUserStorageLimits" })
@@ -8362,6 +8369,9 @@ export class OpenChat {
         if (chatsResponse.oneSecAddress !== undefined) {
             oneSecAddress.set(chatsResponse.oneSecAddress);
         }
+        if (chatsResponse.solanaAddress !== undefined) {
+            solanaAddress.set(chatsResponse.solanaAddress);
+        }
     }
 
     static setGlobalStateStores(
@@ -10314,6 +10324,23 @@ export class OpenChat {
         });
     }
 
+    #startSolBalanceUpdateJob() {
+        this.#solAddressUnsub?.();
+        this.#solAddressUnsub = solanaAddress.subscribe((addr) => {
+            // store subscribers cannot return a cleanup, so stop the previous poller explicitly
+            this.#solBalancePoller?.stop();
+            this.#solBalancePoller = undefined;
+            if (addr !== undefined) {
+                this.#solBalancePoller = new Poller(
+                    () => this.#updateSolBalance(addr),
+                    ONE_MINUTE_MILLIS,
+                    5 * ONE_MINUTE_MILLIS,
+                    true,
+                );
+            }
+        });
+    }
+
     #oneSecEnableForwarding(userId: string, evmAddress: string) {
         return this.#worker.send({
             kind: "oneSecEnableForwarding",
@@ -10367,6 +10394,24 @@ export class OpenChat {
             () => (this.#getBtcAddressPromise = undefined),
         );
         bitcoinAddress.set(address);
+        return address;
+    }
+
+    async getSolAddress(): Promise<string> {
+        const storeValue = get(solanaAddress);
+        if (storeValue !== undefined) {
+            return Promise.resolve(storeValue);
+        }
+        if (this.#getSolAddressPromise !== undefined) {
+            return this.#getSolAddressPromise;
+        }
+        this.#getSolAddressPromise = this.#worker.send({
+            kind: "generateSolAddress",
+        });
+        const address = await this.#getSolAddressPromise.finally(
+            () => (this.#getSolAddressPromise = undefined),
+        );
+        solanaAddress.set(address);
         return address;
     }
 
@@ -10454,6 +10499,29 @@ export class OpenChat {
     getCkbtcMinterDepositInfo(): Promise<CkbtcMinterDepositInfo> {
         return this.#worker.send({
             kind: "ckbtcMinterDepositInfo",
+        });
+    }
+
+    // Asks the user's canister to have the ckSOL minter credit the SOL sent to the user's deposit
+    // address, once the address holds the minter's minimum. The canister pays the minter for each
+    // request, so the balance is checked first. The minter sweeps the address, then mints a minute
+    // or two later. Until the sweep the address still holds the deposit, but asking again meanwhile
+    // costs nothing, as the minter returns the deposit already in flight.
+    async #updateSolBalance(address: string): Promise<void> {
+        const [balance, depositInfo] = await Promise.all([
+            getSolBalance(address),
+            this.getCksolMinterDepositInfo(),
+        ]);
+        if (balance >= depositInfo.minimumDepositAmount) {
+            await this.#worker.send({
+                kind: "updateSolBalance",
+            });
+        }
+    }
+
+    getCksolMinterDepositInfo(): Promise<CksolMinterDepositInfo> {
+        return this.#worker.send({
+            kind: "cksolMinterDepositInfo",
         });
     }
 

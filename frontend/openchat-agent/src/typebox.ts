@@ -5038,10 +5038,25 @@ export const UserUpdateBotArgs = /* @__PURE__ */ Type.Object({
     granted_autonomous_permissions: Type.Optional(BotPermissions),
 });
 
+export type UserUpdateSolBalanceArgs = Static<typeof UserUpdateSolBalanceArgs>;
+export const UserUpdateSolBalanceArgs = /* @__PURE__ */ Type.Object({
+    user_id: UserId,
+});
+
 export type UserLeaveCommunityArgs = Static<typeof UserLeaveCommunityArgs>;
 export const UserLeaveCommunityArgs = /* @__PURE__ */ Type.Object({
     community_id: CommunityId,
 });
+
+export type UserGenerateSolAddressResponse = Static<typeof UserGenerateSolAddressResponse>;
+export const UserGenerateSolAddressResponse = /* @__PURE__ */ Type.Union([
+    Type.Object({
+        Success: Type.String(),
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
 
 export type UserAcceptP2pSwapResponse = Static<typeof UserAcceptP2pSwapResponse>;
 export const UserAcceptP2pSwapResponse = /* @__PURE__ */ Type.Union([
@@ -10713,6 +10728,7 @@ export const UserInitialStateSuccessResult = /* @__PURE__ */ Type.Object({
     bots: Type.Array(InstalledBotDetails),
     btc_address: Type.Optional(Type.String()),
     one_sec_address: Type.Optional(Type.String()),
+    sol_address: Type.Optional(Type.String()),
     premium_items: Type.Array(Type.Number()),
     pinned_chats: Type.Array(Chat),
 });
@@ -10752,6 +10768,7 @@ export const UserUpdatesSuccessResult = /* @__PURE__ */ Type.Object({
     bots_removed: Type.Optional(Type.Array(UserId)),
     btc_address: Type.Optional(Type.String()),
     one_sec_address: Type.Optional(Type.String()),
+    sol_address: Type.Optional(Type.String()),
     premium_items: Type.Optional(Type.Array(Type.Number())),
     pinned_chats: Type.Optional(Type.Array(Chat)),
 });

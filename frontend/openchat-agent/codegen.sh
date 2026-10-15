@@ -22,6 +22,7 @@ generateTsAndJs ../../backend/canisters/storage_index/api/can.did ./src/services
 generateTsAndJs ../../backend/canisters/translations/api/can.did ./src/services/translations/candid
 generateTsAndJs ./src/services/bitcoin/candid/can.did ./src/services/bitcoin/candid
 generateTsAndJs ./src/services/ckbtcMinter/candid/can.did ./src/services/ckbtcMinter/candid
+generateTsAndJs ./src/services/cksolMinter/candid/can.did ./src/services/cksolMinter/candid
 generateTsAndJs ./src/services/dexes/icpSwap/index/candid/can.did ./src/services/dexes/icpSwap/index/candid
 generateTsAndJs ./src/services/dexes/icpSwap/pool/candid/can.did ./src/services/dexes/icpSwap/pool/candid
 generateTsAndJs ./src/services/icpcoins/candid/can.did ./src/services/icpcoins/candid

@@ -663,6 +663,7 @@
         "manual": "Handbuch",
         "manualInfo": "Organisieren Sie Ihr Wallet manuell, indem Sie genau die Token auswählen, die Sie sehen möchten",
         "minDollarPlaceholder": "Mindestdollarguthaben",
+        "minimumDeposit": "Mindesteinzahlung: {amount} {token}",
         "network": "Netzwerk:",
         "networkFee": "Netzwerkgebühr: {amount} {token}",
         "receive": "Anfordern",

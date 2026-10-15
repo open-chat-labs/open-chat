@@ -46,6 +46,7 @@ fn main() {
     generate_ts_method!(multi_user, edit_message_v2);
     generate_ts_method!(multi_user, generate_btc_address);
     generate_ts_method!(multi_user, generate_one_sec_address);
+    generate_ts_method!(multi_user, generate_sol_address);
     generate_ts_method!(multi_user, join_video_call);
     generate_ts_method!(multi_user, leave_community);
     generate_ts_method!(multi_user, leave_group);
@@ -77,4 +78,5 @@ fn main() {
     generate_ts_method!(multi_user, update_bot);
     generate_ts_method!(multi_user, update_btc_balance);
     generate_ts_method!(multi_user, update_chat_settings);
+    generate_ts_method!(multi_user, update_sol_balance);
 }

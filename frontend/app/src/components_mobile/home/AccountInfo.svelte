@@ -3,6 +3,7 @@
     import {
         BTC_SYMBOL,
         CKBTC_SYMBOL,
+        CKSOL_SYMBOL,
         cryptoLookup,
         currentUserIdStore,
         currentUserStore,
@@ -11,6 +12,7 @@
         Lazy,
         OpenChat,
         type OneSecTransferFees,
+        SOL_SYMBOL,
         userWalletAccount,
     } from "@client";
     import { getContext } from "svelte";
@@ -39,6 +41,8 @@
     let selectedNetwork = $state<string>();
     let isBtc = $derived(tokenDetails.symbol === BTC_SYMBOL);
     let isBtcNetwork = $derived(selectedNetwork === BTC_SYMBOL);
+    let isSol = $derived(tokenDetails.symbol === SOL_SYMBOL);
+    let isSolNetwork = $derived(selectedNetwork === SOL_SYMBOL);
     let oneSecEnabled = $derived(
         tokenDetails.oneSecEnabled && tokenDetails.evmContractAddresses.length > 0,
     );
@@ -46,6 +50,8 @@
     let networks = $derived.by(() => {
         if (isBtc) {
             return [BTC_SYMBOL, CKBTC_SYMBOL];
+        } else if (isSol) {
+            return [SOL_SYMBOL, CKSOL_SYMBOL];
         } else if (oneSecEnabled) {
             return client.oneSecGetNetworks(tokenDetails.symbol);
         } else {
@@ -54,6 +60,7 @@
     });
     let btcAddress = $state<string>();
     let oneSecAddress = $state<string>();
+    let solAddress = $state<string>();
 
     // Whenever the networks list changes, autoselect the first one
     $effect(() => {
@@ -67,6 +74,8 @@
             return btcAddress;
         } else if (isOneSecNetwork) {
             return oneSecAddress;
+        } else if (isSolNetwork) {
+            return solAddress;
         } else {
             // The user's wallet, which is their principal's account
             return encodeIcrcAccount(
@@ -88,12 +97,17 @@
                     .getOneSecAddress()
                     .then((addr) => (oneSecAddress = addr))
                     .catch((e) => (error = e));
+            } else if (isSolNetwork) {
+                client
+                    .getSolAddress()
+                    .then((addr) => (solAddress = addr))
+                    .catch((e) => (error = e));
             }
         }
     });
 
     let tokenName = $derived.by(() => {
-        if (isBtc) return selectedNetwork;
+        if (isBtc || isSol) return selectedNetwork;
         if (selectedNetwork !== undefined) {
             return $rtlStore
                 ? `(${selectedNetwork}) ${tokenDetails.symbol}`
@@ -106,6 +120,15 @@
         client
             .getCkbtcMinterDepositInfo()
             .then((depositInfo) => `~${client.formatTokens(depositInfo.depositFee, 8)}`),
+    );
+
+    // SOL sent to the deposit address is only credited once the address holds the minter's minimum
+    const solMinimumDepositPromise = new Lazy(() =>
+        client
+            .getCksolMinterDepositInfo()
+            .then((depositInfo) =>
+                client.formatTokens(depositInfo.minimumDepositAmount, tokenDetails.decimals),
+            ),
     );
 
     const oneSecFeesPromise = new Lazy(() =>
@@ -203,6 +226,18 @@
                 {@render fetchingFeeError()}
             {/await}
         </Row>
+    {:else if isSolNetwork}
+        {#await solMinimumDepositPromise.get() then amount}
+            <Row {background} padding={["lg", "xl"]} crossAxisAlignment="center">
+                <Subtitle colour={"textSecondary"}>
+                    {$_("cryptoAccount.minimumDeposit", {
+                        values: { amount, token: tokenDetails.symbol },
+                    })}
+                </Subtitle>
+            </Row>
+        {:catch}
+            <!-- The minimum is only informational, so a failure to fetch it shows nothing -->
+        {/await}
     {:else if isOneSecNetwork}
         <Row {background} padding={["lg", "xl"]} crossAxisAlignment="center">
             {#await oneSecFeesPromise.get()}
@@ -228,7 +263,7 @@
         {#if account === undefined}
             {#if error !== undefined}
                 <Subtitle colour={"validationError"}>
-                    {$_("cryptoAccount.failedToGenera4teAddress")}
+                    {$_("cryptoAccount.failedToGenerateAddress")}
                 </Subtitle>
                 <RobotConfusedOutline color={ColourVars.validationError} size="1.25rem" />
             {:else}

@@ -2,6 +2,7 @@
     import {
         BTC_SYMBOL,
         CKBTC_SYMBOL,
+        CKSOL_SYMBOL,
         cryptoLookup,
         currentUserIdStore,
         currentUserStore,
@@ -10,6 +11,7 @@
         Lazy,
         type OneSecTransferFees,
         OpenChat,
+        SOL_SYMBOL,
         userWalletAccount,
     } from "@client";
     import { i18nKey } from "../../i18n/i18n";
@@ -43,11 +45,15 @@
     let selectedNetwork = $state<string>();
     let isBtc = $derived(tokenDetails.symbol === BTC_SYMBOL);
     let isBtcNetwork = $derived(selectedNetwork === BTC_SYMBOL);
+    let isSol = $derived(tokenDetails.symbol === SOL_SYMBOL);
+    let isSolNetwork = $derived(selectedNetwork === SOL_SYMBOL);
     let oneSecEnabled = $derived(tokenDetails.oneSecEnabled && tokenDetails.evmContractAddresses.length > 0);
     let isOneSecNetwork = $derived(oneSecEnabled && selectedNetwork !== ICP_SYMBOL);
     let networks = $derived.by(() => {
         if (isBtc) {
             return [BTC_SYMBOL, CKBTC_SYMBOL];
+        } else if (isSol) {
+            return [SOL_SYMBOL, CKSOL_SYMBOL];
         } else if (oneSecEnabled) {
             return client.oneSecGetNetworks(tokenDetails.symbol);
         } else {
@@ -56,6 +62,7 @@
     });
     let btcAddress = $state<string>();
     let oneSecAddress = $state<string>();
+    let solAddress = $state<string>();
 
     // Whenever the networks list changes, autoselect the first one
     $effect(() => {
@@ -69,6 +76,8 @@
             return btcAddress;
         } else if (isOneSecNetwork) {
             return oneSecAddress;
+        } else if (isSolNetwork) {
+            return solAddress;
         } else {
             // The user's wallet, which is their principal's account
             return encodeIcrcAccount(
@@ -84,12 +93,14 @@
                 client.getBtcAddress().then((addr) => btcAddress = addr).catch((e) => error = e);
             } else if (isOneSecNetwork) {
                 client.getOneSecAddress().then((addr) => oneSecAddress = addr).catch(e => error = e);
+            } else if (isSolNetwork) {
+                client.getSolAddress().then((addr) => solAddress = addr).catch((e) => error = e);
             }
         }
     });
 
     let tokenName = $derived.by(() => {
-        if (isBtc) return selectedNetwork;
+        if (isBtc || isSol) return selectedNetwork;
         if (selectedNetwork !== undefined) {
             return $rtlStore
                 ? `(${selectedNetwork}) ${tokenDetails.symbol}`
@@ -100,6 +111,10 @@
 
     const btcDepositFeePromise = new Lazy(() => client.getCkbtcMinterDepositInfo()
         .then((depositInfo) => `~${client.formatTokens(depositInfo.depositFee, 8)}`));
+
+    // SOL sent to the deposit address is only credited once the address holds the minter's minimum
+    const solMinimumDepositPromise = new Lazy(() => client.getCksolMinterDepositInfo()
+        .then((depositInfo) => client.formatTokens(depositInfo.minimumDepositAmount, tokenDetails.decimals)));
 
     const oneSecFeesPromise = new Lazy(() => client.oneSecGetTransferFees()
         // Filter to where source token equals destination token since we're dealing with cross-chain deposits
@@ -160,6 +175,12 @@
             <span class="label">{$_("cryptoAccount.networkFee", { values: { amount, token: tokenDetails.symbol }})}</span>
         {:catch}
             <span class="error-label">{$_("cryptoAccount.failedToFetchDepositFee")}</span>
+        {/await}
+    {:else if isSolNetwork}
+        {#await solMinimumDepositPromise.get() then amount}
+            <span class="label">{$_("cryptoAccount.minimumDeposit", { values: { amount, token: tokenDetails.symbol }})}</span>
+        {:catch}
+            <!-- The minimum is only informational, so a failure to fetch it shows nothing -->
         {/await}
     {:else if isOneSecNetwork}
         {#await oneSecFeesPromise.get()}

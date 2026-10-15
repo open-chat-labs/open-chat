@@ -9,8 +9,10 @@ import {
     BTC_SYMBOL,
     buildTokenLogoUrl,
     CKBTC_SYMBOL,
+    CKSOL_SYMBOL,
     INDEX_CANISTER_ICP,
     LEDGER_CANISTER_ICP,
+    SOL_SYMBOL,
     UnsupportedValueError,
 } from "@shared";
 import type {
@@ -114,6 +116,13 @@ function tokenDetails(
         tokenDetails.name = "Bitcoin";
         tokenDetails.symbol = BTC_SYMBOL;
         tokenDetails.logo = "/assets/btc_logo.svg";
+    }
+
+    if (tokenDetails.symbol === CKSOL_SYMBOL) {
+        // Override ckSOL to SOL
+        tokenDetails.name = "Solana";
+        tokenDetails.symbol = SOL_SYMBOL;
+        tokenDetails.logo = "/assets/sol_logo.svg";
     }
 
     return tokenDetails;

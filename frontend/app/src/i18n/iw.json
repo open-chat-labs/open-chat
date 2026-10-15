@@ -663,6 +663,7 @@
         "manual": "יָדָנִי",
         "manualInfo": "ארגן את הארנק שלך באופן ידני על ידי בחר בדיוק את האסימונים שאתה רוצה לראות",
         "minDollarPlaceholder": "יתרה מינימלית בדולר",
+        "minimumDeposit": "הפקדה מינימלית: {amount} {token}",
         "network": "רֶשֶׁת:",
         "networkFee": "דמי רשת: {amount} {token}",
         "receive": "לְקַבֵּל",

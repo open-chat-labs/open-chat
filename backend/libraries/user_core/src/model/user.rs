@@ -86,6 +86,8 @@ pub struct User {
     #[serde(default)]
     pub one_sec_address: Option<Timestamped<String>>,
     #[serde(default)]
+    pub sol_address: Option<Timestamped<String>>,
+    #[serde(default)]
     pub bots: InstalledBots,
     #[serde(default)]
     pub premium_items: PremiumItems,
@@ -131,6 +133,7 @@ impl User {
             p2p_swaps: P2PSwaps::default(),
             btc_address: None,
             one_sec_address: None,
+            sol_address: None,
             bots: InstalledBots::default(),
             premium_items: PremiumItems::default(),
         }

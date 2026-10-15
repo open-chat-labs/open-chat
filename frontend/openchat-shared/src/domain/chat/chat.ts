@@ -1366,6 +1366,7 @@ export type UpdatesResult = {
     installedBots: Map<string, GrantedBotPermissions> | undefined;
     bitcoinAddress: string | undefined;
     oneSecAddress: string | undefined;
+    solanaAddress: string | undefined;
     streakInsurance: OptionUpdate<StreakInsurance>;
     updatedEvents: Map<string, UpdatedEvent[]>;
     suspensionChanged: boolean | undefined;
@@ -1395,6 +1396,7 @@ export type ChatStateFull = {
     installedBots: Map<string, GrantedBotPermissions>;
     bitcoinAddress: string | undefined;
     oneSecAddress: string | undefined;
+    solanaAddress: string | undefined;
     streakInsurance: StreakInsurance | undefined;
     premiumItems: Set<PremiumItem>;
 };
@@ -1535,6 +1537,7 @@ export type InitialStateResponse = {
     bots: Map<string, GrantedBotPermissions>;
     bitcoinAddress: string | undefined;
     oneSecAddress: string | undefined;
+    solanaAddress: string | undefined;
     streakInsurance?: StreakInsurance;
     premiumItems: Set<PremiumItem>;
     pinnedChats: ChatIdentifier[];
@@ -1624,6 +1627,7 @@ export type UpdatesSuccessResponse = {
     botsRemoved: string[];
     bitcoinAddress: string | undefined;
     oneSecAddress: string | undefined;
+    solanaAddress: string | undefined;
     streakInsurance: OptionUpdate<StreakInsurance>;
     premiumItems: Set<PremiumItem> | undefined;
     pinnedChats: ChatIdentifier[] | undefined;

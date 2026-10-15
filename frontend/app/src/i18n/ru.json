@@ -663,6 +663,7 @@
         "manual": "Руководство",
         "manualInfo": "Организуйте свой кошелек вручную, выбрав именно те токены, которые вы хотите видеть.",
         "minDollarPlaceholder": "Минимальный баланс в долларах",
+        "minimumDeposit": "Минимальный депозит: {amount} {token}",
         "network": "Сеть:",
         "networkFee": "Сетевая плата: {amount} {token}",
         "receive": "Получать",

@@ -118,6 +118,7 @@ import {
     UserEventsWindowArgs,
     UserGenerateBtcAddressResponse,
     UserGenerateOneSecAddressResponse,
+    UserGenerateSolAddressResponse,
     UserInitialStateResponse,
     UserJoinVideoCallArgs,
     UserLeaveCommunityArgs,
@@ -163,6 +164,7 @@ import {
     UserUpdateBotArgs,
     UserUpdateBtcBalanceArgs,
     UserUpdateChatSettingsArgs,
+    UserUpdateSolBalanceArgs,
     UserUpdatesArgs,
     UserUpdatesResponse,
 } from "../../typebox";
@@ -1418,12 +1420,38 @@ export class UserClient
         );
     }
 
+    generateSolAddress(): Promise<string> {
+        return this.update(
+            "generate_sol_address",
+            {},
+            (resp) => {
+                if ("Success" in resp) {
+                    return resp.Success;
+                } else {
+                    throw new Error(`Failed to generate SOL address: ${resp}`);
+                }
+            },
+            TEmpty,
+            UserGenerateSolAddressResponse,
+        );
+    }
+
     updateBtcBalance(): Promise<boolean> {
         return this.update(
             "update_btc_balance",
             { user_id: principalStringToBytes(this.userId) },
             isSuccess,
             UserUpdateBtcBalanceArgs,
+            UnitResult,
+        );
+    }
+
+    updateSolBalance(): Promise<boolean> {
+        return this.update(
+            "update_sol_balance",
+            { user_id: principalStringToBytes(this.userId) },
+            isSuccess,
+            UserUpdateSolBalanceArgs,
             UnitResult,
         );
     }

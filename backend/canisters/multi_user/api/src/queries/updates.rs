@@ -75,6 +75,7 @@ pub struct SuccessResult {
     pub bots_removed: Vec<UserId>,
     pub btc_address: Option<String>,
     pub one_sec_address: Option<String>,
+    pub sol_address: Option<String>,
     pub premium_items: Option<Vec<u32>>,
     pub pinned_chats: Option<Vec<Chat>>,
 }

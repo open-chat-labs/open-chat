@@ -1,0 +1,22 @@
+// Copied from https://github.com/dfinity/cksol/blob/main/minter/cksol_minter.did
+
+// Smallest denomination of SOL, the native token on Solana,
+// i.e. 1_000_000_000 Lamports is 1 SOL
+type Lamport = nat64;
+
+// Information about the ckSOL minter canister.
+type MinterInfo = record {
+    deposit_sol_fee : nat;
+    minimum_withdrawal_amount : Lamport;
+    minimum_deposit_amount : Lamport;
+    withdrawal_fee : Lamport;
+    deposit_sol_required_cycles : nat;
+    balance : Lamport;
+    minter_address : opt text;
+    nonce_accounts : vec text;
+};
+
+service : {
+    // Returns information about the ckSOL minter canister.
+    get_minter_info: () -> (MinterInfo) query;
+};

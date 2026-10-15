@@ -663,6 +663,7 @@
         "manual": "دستی",
         "manualInfo": "کیف پول خود را به صورت دستی با انتخاب نشانه هایی که می خواهید ببینید، سازماندهی کنید",
         "minDollarPlaceholder": "حداقل موجودی دلار",
+        "minimumDeposit": "حداقل واریز: {amount} {token}",
         "network": "شبکه:",
         "networkFee": "کارمزد شبکه: {amount} {token}",
         "receive": "دريافت كردن",

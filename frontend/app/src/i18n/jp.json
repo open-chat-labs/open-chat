@@ -663,6 +663,7 @@
         "manual": "マニュアル",
         "manualInfo": "表示したいトークンを正確に選択してウォレットを手動で整理します",
         "minDollarPlaceholder": "最低ドル残高",
+        "minimumDeposit": "最低入金額: {amount} {token}",
         "network": "ネットワーク：",
         "networkFee": "ネットワーク料金: {amount} {token}",
         "receive": "受け取る",
