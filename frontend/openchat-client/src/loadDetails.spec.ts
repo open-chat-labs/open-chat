@@ -699,14 +699,14 @@ describe("looking up the members who appear in a chat when not all are held", ()
         await load();
         expect(lookups).toHaveLength(1);
 
-        // The store keeps the last chat's details until the next chat's arrive, which here they
-        // never do
+        // The last chat's details are cleared on selecting the next chat, whose details here never
+        // arrive
         select(otherChatId);
         senders = [z];
         await load(otherChatId);
 
         expect(lookups).toHaveLength(1);
-        expect(selectedServerChatStore.value?.chatId).toEqual(chatId);
+        expect(selectedServerChatStore.value).toBeUndefined();
     });
 });
 

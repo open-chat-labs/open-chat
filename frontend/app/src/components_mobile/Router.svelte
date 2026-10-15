@@ -8,7 +8,7 @@
     } from "@utils/native/notification_channels";
     import { handleLinkClick, removeQueryStringParam } from "@src/utils/urls";
     import type { TransitionType } from "component-lib";
-    import { type ChatIdentifier, type CommunityIdentifier, OpenChat, type RouteParams, adminRoute, chatIdentifiersEqual, chatListRoute, chatListScopeStore, chatsInitialisedStore, communitesRoute, communitiesStore, communityIdentifiersEqual, exploringStore, globalDirectChatSelectedRoute, globalGroupChatSelectedRoute, isMessageIndexRoute, messageIndexStore, notFoundStore, notificationsRoute, profileSummaryRoute, publish, routeKindStore, routeStore, routerReadyStore, selectedChannelRoute, selectedChatIdStore, selectedCommunityIdStore, selectedCommunityRoute, selectedServerChatStore, shareRoute, threadMessageIndexStore, threadOpenStore, walletRoute, welcomeRoute } from "@client";
+    import { type ChatIdentifier, type CommunityIdentifier, OpenChat, type RouteParams, adminRoute, chatIdentifiersEqual, chatListRoute, chatListScopeStore, chatsInitialisedStore, communitesRoute, communitiesStore, communityIdentifiersEqual, exploringStore, globalDirectChatSelectedRoute, globalGroupChatSelectedRoute, isMessageIndexRoute, messageIndexStore, notFoundStore, notificationsRoute, profileSummaryRoute, publish, routeKindStore, routeStore, routerReadyStore, selectedChannelRoute, selectedChatIdStore, selectedCommunityIdStore, selectedCommunityRoute, shareRoute, threadMessageIndexStore, threadOpenStore, walletRoute, welcomeRoute } from "@client";
     import page from "page";
     import { type Component, getContext, onMount, tick, untrack } from "svelte";
     import Home from "./home/HomeRoute.svelte";
@@ -391,7 +391,6 @@
     // clear selected chat
     $effect(() => {
         if ($selectedChatIdStore === undefined) {
-            selectedServerChatStore.set(undefined);
             previousChatId = undefined;
         }
     });
