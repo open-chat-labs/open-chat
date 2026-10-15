@@ -1,6 +1,7 @@
 import { createRawSnippet, flushSync, mount, unmount } from 'svelte';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import type { WalletToken } from '../../lib/types';
+import { reactiveProps } from '../../lib/testing/reactiveProps.svelte';
 import WalletReceive from './WalletReceive.svelte';
 
 // jsdom has no ResizeObserver (bind:clientWidth); the wide layout is used
@@ -148,5 +149,27 @@ describe('WalletReceive', () => {
     await settle();
     expect(document.querySelector('.confirm')).toBeNull();
     expect(text()).toContain('Address shared to Lucy');
+  });
+
+  test('used on its own: a new token starts on its first network with the picker closed', () => {
+    const aaa: WalletToken = { ...icp, symbol: 'AAA', nets: ['icp', 'eth'] };
+    const bbb: WalletToken = { ...icp, symbol: 'BBB', nets: ['icp', 'btc'] };
+    const props = reactiveProps({ tokens: [aaa, bbb], token: 'AAA', addresses: { icp: ADDRESS, eth: '0xETH-ADDRESS', btc: 'bc1-BTC-ADDRESS' }, qr });
+    app = mount(WalletReceive, { target, props });
+    flushSync();
+    const select = () => target.querySelector<HTMLElement>('.select')!;
+    select().click();
+    flushSync();
+    target.querySelectorAll<HTMLElement>('.option')[1].click();
+    flushSync();
+    expect(target.querySelector('.address')!.textContent).toBe('0xETH-ADDRESS');
+    select().click();
+    flushSync();
+    props.token = 'BBB';
+    flushSync();
+    // not BBB's second network (BTC), which was never picked for it
+    expect(target.querySelector('.address')!.textContent).toBe(ADDRESS);
+    expect(select().getAttribute('aria-expanded')).toBe('false');
+    expect(target.querySelector('.options')).toBeNull();
   });
 });

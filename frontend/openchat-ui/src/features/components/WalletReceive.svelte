@@ -64,9 +64,16 @@
   const t = useT();
 
   let width = $state(0);
-  // WalletMain remounts Receive for each token, so the network and picker start fresh there
-  let netIdx = $state(0);
-  let open = $state(false);
+  // a new token starts on its first network with the picker closed (WalletMain remounts Receive per token, but a host
+  // using it on its own can change `token` in place)
+  let netIdx = $derived.by(() => {
+    void token;
+    return 0;
+  });
+  let open = $derived.by(() => {
+    void token;
+    return false;
+  });
   let handleCopied = $state(false);
   let sharing = $state(false);
   let toast = $state<{ id: number; message: string; tone: 'success' | 'danger' } | null>(null);
