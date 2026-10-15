@@ -79,18 +79,17 @@ import { enumFromStringValue } from "../../utils/enums";
 import { derived, writable, type Subscriber } from "../../utils/stores";
 import { nullProfile } from "../../utils/user";
 import { chatDetailsLocalUpdates } from "../chat/detailsUpdates";
-import type { ChatDetailsState } from "../chat/serverDetails";
 import { chatSummaryLocalUpdates, ChatSummaryUpdates } from "../chat/summaryUpdates";
 import { communityLocalUpdates } from "../community/detailUpdates";
 import type { CommunityDetailsState } from "../community/server";
 import { communitySummaryLocalUpdates } from "../community/summaryUpdates";
-import type { FilteredProposals } from "../filteredProposals.svelte";
 import { LocalStorageBoolStore, LocalStorageStore } from "../localStorageStore";
 import { localUpdates } from "../localUpdates";
 import { messageLocalUpdates } from "../message/localUpdates";
 import { routeStore, selectedCommunityIdStore } from "../path/stores";
 import {
     expiredServerEventRanges,
+    selectedServerChatStore,
     serverEventsStore,
     serverThreadEventsStore,
     startChatVisit,
@@ -621,18 +620,6 @@ export const userGroupSummariesStore = derived(
     notEq,
 );
 
-export const selectedChatUserIdsStore = writable<Set<string>>(new Set(), undefined, notEq);
-export const selectedChatExpandedDeletedMessageStore = writable<Set<number>>(
-    new Set(),
-    undefined,
-    notEq,
-);
-export const filteredProposalsStore = writable<FilteredProposals | undefined>(
-    undefined,
-    undefined,
-    notEq,
-);
-
 export const selectedChatIdStore = derived(
     routeStore,
     (route) => {
@@ -658,9 +645,6 @@ export const selectedThreadIdStore = writable<ThreadIdentifier | undefined>(
 selectedChatIdStore.subscribe((chatId) => {
     startChatVisit(chatId);
     selectedThreadIdStore.set(undefined);
-    selectedChatUserIdsStore.set(new Set());
-    selectedChatExpandedDeletedMessageStore.set(new Set());
-    filteredProposalsStore.set(undefined);
 });
 
 // Whenever the selectedThreadIdStore value changes we start a new visit to the thread, which clears
@@ -754,17 +738,6 @@ export const selectedCommunitySummaryStore = derived(
         selectedCommunityId ? communities.get(selectedCommunityId) : undefined,
     notEq,
 );
-
-export const selectedServerChatStore = writable<ChatDetailsState | undefined>(
-    undefined,
-    undefined,
-    notEq,
-);
-
-// Whenever the selectedChatIdStore value changes we immediately clear the selectedServerChatStore,
-// so until the new chat's details load nothing takes the previous chat's members or rules to be its
-// own (a message forwarded on opening a chat asked for the previous chat's rules to be accepted)
-selectedChatIdStore.subscribe((_) => selectedServerChatStore.set(undefined));
 
 export const selectedChatMembersStore = derived(
     [selectedServerChatStore, chatDetailsLocalUpdates.members],

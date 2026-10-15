@@ -406,7 +406,6 @@ import {
     exchangeRatesLookupStore,
     expiredServerEventRanges,
     favouritesStore,
-    filteredProposalsStore,
     hasFlag,
     identityStateStore,
     initNotificationStores,
@@ -444,7 +443,6 @@ import {
     routeStore,
     selectedAuthProviderStore,
     selectedChatBlockedUsersStore,
-    selectedChatExpandedDeletedMessageStore,
     selectedChatIdStore,
     selectedChatInvitedUsersStore,
     selectedChatMembersStore,
@@ -489,7 +487,9 @@ import {
     webhookUserIdsStore,
 } from "./state";
 import {
+    currentChatVisit,
     eventsVisitFor,
+    expandDeletedMessages,
     SelectedChat,
     selectedChatFor,
     SelectedThread,
@@ -1009,7 +1009,7 @@ export class OpenChat {
         }
 
         this.#refreshUpdatedEvents(serverChat, updatedEvents);
-        this.#loadChatDetails(serverChat);
+        this.#loadChatDetails(selectedChatFor(serverChat.id), serverChat);
         publish("chatUpdated", { chatId, threadRootMessageIndex: undefined });
     }
 
@@ -2306,7 +2306,7 @@ export class OpenChat {
                             });
                         }
                         localUpdates.removeGroupPreview(chat.id);
-                        this.#loadChatDetails(resp.group);
+                        this.#loadChatDetails(selectedChatFor(resp.group.id), resp.group);
                         messagesRead.syncWithServer(
                             resp.group.id,
                             resp.group.membership?.readByMeUpTo,
@@ -2322,7 +2322,7 @@ export class OpenChat {
                         resp.community.channels.forEach((c) => {
                             localUpdates.removeGroupPreview(c.id);
                             if (chatIdentifiersEqual(c.id, chat.id)) {
-                                this.#loadChatDetails(c);
+                                this.#loadChatDetails(selectedChatFor(c.id), c);
                             }
                             if (c.latestMessage) {
                                 messagesRead.markReadUpTo(
@@ -3258,7 +3258,7 @@ export class OpenChat {
             resp.expiredEventRanges,
         );
 
-        await this.#updateUserStoreFromEvents(chat.id, resp.events);
+        await this.#updateUserStoreFromEvents(visit, chat.id, resp.events);
 
         if (!get(offlineStore)) {
             makeRtcConnections(
@@ -3729,7 +3729,7 @@ export class OpenChat {
             if (details !== undefined && chatIdentifiersEqual(details.chatId, id)) {
                 const updated = details.withLookedUpMembers(members, asOf);
                 if (updated !== undefined) {
-                    selectedServerChatStore.set(updated);
+                    selectedChatFor(id)?.setDetails(updated);
                 }
             }
         }
@@ -3746,7 +3746,10 @@ export class OpenChat {
         return [...elevated, ...rest];
     }
 
+    // `visit` is the selection the events were loaded for: the users in them are only taken to be
+    // in the selected chat if it is still that selection
     async #updateUserStoreFromEvents(
+        visit: EventsVisit | undefined,
         chatId: ChatIdentifier,
         events: EventWrapper<ChatEvent>[],
     ): Promise<void> {
@@ -3766,12 +3769,7 @@ export class OpenChat {
         const newChatUserIds = [...allUserIds].filter(
             (u) => u !== userId && !selectedChatUserIdsStore.value.has(u),
         );
-        if (newChatUserIds.length > 0) {
-            selectedChatUserIdsStore.update((set) => {
-                newChatUserIds.forEach((u) => set.add(u));
-                return set;
-            });
-        }
+        visit?.addUserIds(newChatUserIds);
         this.#lookupMembersSeen();
         await this.getMissingUsers(allUserIds);
     }
@@ -4134,6 +4132,8 @@ export class OpenChat {
         }
         if (selectedChat !== undefined) {
             if (!this.#uninstalledBotChat(selectedChat)) {
+                // Captured now: the details load after the events, by when the user may have moved on
+                const visit = selectedChatFor(chatId);
                 const path = messageIndex !== undefined ? "window" : "previous";
                 const load =
                     messageIndex !== undefined
@@ -4142,7 +4142,7 @@ export class OpenChat {
                 const loaded = load.then(() => {
                     void this.#checkForEmptyChat(chatId, path);
                     if (serverChat !== undefined) {
-                        return this.#loadChatDetails(serverChat);
+                        return this.#loadChatDetails(visit, serverChat);
                     }
                 });
                 this.#chatDetailsLoad = { chatId, loaded };
@@ -4177,7 +4177,9 @@ export class OpenChat {
                 true,
             );
 
-            filteredProposalsStore.set(FilteredProposals.fromStorage(governanceCanisterId));
+            selectedChatFor(clientChat.id)?.setFilteredProposals(
+                FilteredProposals.fromStorage(governanceCanisterId),
+            );
         }
     }
 
@@ -4698,8 +4700,12 @@ export class OpenChat {
         }
     }
 
-    async #loadChatDetails(serverChat: ChatSummary): Promise<void> {
-        if (get(offlineStore)) {
+    // `visit` is the selection the details are loaded for: they go nowhere once it has gone
+    async #loadChatDetails(
+        visit: SelectedChat | undefined,
+        serverChat: ChatSummary,
+    ): Promise<void> {
+        if (get(offlineStore) || visit === undefined) {
             return;
         }
         switch (serverChat.kind) {
@@ -4726,7 +4732,7 @@ export class OpenChat {
                     })
                     .catch(CommonResponses.failure);
                 if ("members" in resp || resp.kind === "success_no_updates") {
-                    if (!chatIdentifiersEqual(serverChat.id, selectedChatIdStore.value)) {
+                    if (!visit.current) {
                         console.warn(
                             "Attempting to set chat details on the wrong chat - probably a stale response",
                             serverChat.id,
@@ -4773,7 +4779,7 @@ export class OpenChat {
                         this.#chatMemberLookups,
                         chatIdentifierToString(serverChat.id),
                     );
-                    selectedServerChatStore.set(
+                    visit.setDetails(
                         new ChatDetailsState(
                             serverChat.id,
                             resp.timestamp,
@@ -4789,11 +4795,11 @@ export class OpenChat {
                         ),
                     );
                     // Not awaited, since a forwarded message may be waiting for the details
-                    void this.#updateUserStoreFromEvents(serverChat.id, []);
+                    void this.#updateUserStoreFromEvents(visit, serverChat.id, []);
                 }
                 break;
             case "direct_chat":
-                selectedServerChatStore.set(undefined);
+                visit.setDetails(undefined);
                 break;
         }
     }
@@ -5947,10 +5953,7 @@ export class OpenChat {
     }
 
     expandDeletedMessages(messageIndexes: Set<number>): void {
-        // A new set each time: consumers (TimelineGrouper) memoise by identity
-        selectedChatExpandedDeletedMessageStore.update(
-            (set) => new Set([...set, ...messageIndexes]),
-        );
+        expandDeletedMessages(messageIndexes);
     }
 
     remoteUserToggledReaction(
@@ -7603,6 +7606,7 @@ export class OpenChat {
         messageIndexes: number[],
     ): Promise<EventsResponse<Message>> {
         const serverChat = allServerChatsStore.value.get(chatId);
+        const visit = eventsVisitFor(chatId, threadRootMessageIndex);
 
         try {
             const resp = await this.#worker
@@ -7618,7 +7622,7 @@ export class OpenChat {
                 .catch(CommonResponses.failure);
 
             if (isSuccessfulEventsResponse(resp)) {
-                await this.#updateUserStoreFromEvents(chatId, resp.events);
+                await this.#updateUserStoreFromEvents(visit, chatId, resp.events);
             }
             return resp;
         } catch {
@@ -8289,7 +8293,7 @@ export class OpenChat {
                     // needed here, so only when the details held are not this chat's latest.
                     const serverChat = selectedServerChatSummaryStore.value;
                     if (serverChat !== undefined && this.#chatDetailsBehind(serverChat)) {
-                        this.#loadChatDetails(serverChat);
+                        this.#loadChatDetails(selectedChatFor(serverChat.id), serverChat);
                     }
                     // Still published: the timeline answers it by loading any new messages it
                     // is missing, and does nothing if there are none, so a load that failed
@@ -13077,12 +13081,7 @@ export class OpenChat {
     }
 
     #modifyFilteredProposals(fn: (fp: FilteredProposals) => void) {
-        filteredProposalsStore.update((fp) => {
-            if (fp !== undefined) {
-                fn(fp);
-                return fp;
-            }
-        });
+        currentChatVisit()?.updateFilteredProposals(fn);
     }
 
     toggleProposalFilterMessageExpansion(messageId: bigint, expand: boolean) {
