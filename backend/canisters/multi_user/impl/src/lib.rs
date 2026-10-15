@@ -29,7 +29,6 @@ use types::{
 };
 use user_core::User;
 use user_core::{Community, GroupChat};
-use utils::async_work::AsyncWorkGuard;
 use utils::env::Environment;
 use utils::idempotency_checker::IdempotencyChecker;
 use utils::regular_jobs::RegularJobs;
@@ -96,7 +95,6 @@ fn execute_update<F: FnOnce(&mut RuntimeState) -> R, R>(f: F) -> R {
 }
 
 async fn execute_update_async<F: FnOnce() -> Fut, Fut: Future<Output = R>, R>(f: F) -> R {
-    let _guard = AsyncWorkGuard::new();
     run_regular_jobs();
     let result = f().await;
     mutate_state(|state| state.data.flush_pending_events());

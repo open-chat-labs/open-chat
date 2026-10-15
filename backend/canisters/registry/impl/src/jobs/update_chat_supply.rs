@@ -15,7 +15,7 @@ pub fn start_job() {
 }
 
 fn run() {
-    utils::async_work::spawn_tracked(async {
+    ic_cdk::futures::spawn_migratory(async {
         let _ = run_async().await;
     });
 }

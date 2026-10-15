@@ -30,7 +30,7 @@ fn run() {
     if let Some(batch) = mutate_state(next_batch)
         && !batch.is_empty()
     {
-        utils::async_work::spawn_tracked(push_notifications(batch));
+        ic_cdk::futures::spawn_migratory(push_notifications(batch));
         read_state(start_job_if_required);
     }
 }
