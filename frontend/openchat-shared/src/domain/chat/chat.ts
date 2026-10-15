@@ -2635,6 +2635,21 @@ export type CryptoTransferOutcome =
     | { kind: "pin_failed" }
     | { kind: "failed"; message: ResourceKey };
 
+// What the app needs to enter a call's room
+export type VideoCallRoom = {
+    token: string;
+    roomName: string;
+    messageId: bigint;
+    callType: VideoCallType;
+    // the call was already running, so this user is joining it rather than starting it
+    joining: boolean;
+};
+
+export type VideoCallOutcome =
+    | { kind: "joined" }
+    | { kind: "no_meeting" }
+    | { kind: "failed"; message: ResourceKey };
+
 export type GroupAndCommunitySummaryUpdatesArgs = {
     canisterId: string;
     isCommunity: boolean;
