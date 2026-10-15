@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { cleanAmount, parseAmount } from './amount';
+import { amountText, cleanAmount, floorTo, parseAmount, usdText } from './amount';
 
 describe('cleanAmount', () => {
   test.each([
@@ -31,4 +31,32 @@ describe('parseAmount', () => {
   ])('%s → %d', (input, n) => expect(parseAmount(input)).toBe(n));
 
   test.each(['', '.', ',', 'abc'])('%j is 0', (input) => expect(parseAmount(input)).toBe(0));
+});
+
+describe('floorTo', () => {
+  test('float noise does not cost a unit', () => {
+    expect(floorTo(0.000251, 6)).toBe(0.000251);
+    // every 6-dp balance below 0.1 comes back whole
+    for (let u = 1; u < 100_000; u++) expect(floorTo(u / 1e6, 6)).toBe(u / 1e6);
+  });
+  test('rounds down, never up', () => {
+    expect(floorTo(1.00089901999, 8)).toBe(1.00089901);
+    expect(floorTo(0.75 * 0.00000003, 8)).toBe(0.00000002);
+  });
+});
+
+describe('amountText', () => {
+  test.each([
+    [0.00000001, 8, '0.00000001'],
+    [1.5, 8, '1.5'],
+    [100, 0, '100'],
+    [100, 2, '100'],
+  ])('%s at %s dp → %s', (x, dp, out) => expect(amountText(x, dp)).toBe(out));
+});
+
+describe('usdText', () => {
+  test('rounds down to cents', () => {
+    expect(usdText(3.337)).toBe('3.33');
+    expect(usdText(2.5)).toBe('2.50');
+  });
 });

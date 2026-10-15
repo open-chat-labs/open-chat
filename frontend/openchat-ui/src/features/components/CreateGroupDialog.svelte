@@ -351,6 +351,9 @@
   // rules on with an empty field blocks creation, but only reads as an error once Create is pressed
   const rulesOk = $derived(!rulesOn || !!rulesText.trim());
   const rulesBad = $derived(!rulesOk && submitted);
+  // same for a gate still missing its token or amount (the host would get a malformed gate)
+  const gatesOk = $derived(gates?.complete !== false);
+  const gatesBad = $derived(!gatesOk && submitted);
   const permList = $derived(PERMS.filter((x) => !x.only || x.only === kind));
   const generalChanged = $derived(PERMS.filter((p) => perms.general[p.key] !== p.def).length);
   const msgExceptions = $derived(CONTENT.filter((c) => perms.messages[c.key] !== INHERIT).length);
@@ -365,6 +368,7 @@
   const visibleKeys = $derived(advancedOpen ? K.keys : K.keys.slice(0, K.basic));
   const current = $derived<TabKey>(K.keys[tab] ?? 'Group');
   const rulesTab = $derived(K.keys.indexOf('Rules'));
+  const gatesTab = $derived(K.keys.indexOf('Gates'));
 
   // channels: mode 0 adds community members directly, mode 1 invites anyone (they must accept)
   const inviting = $derived(isChan && memberMode === 1);
@@ -567,7 +571,7 @@
       isComm ? t(CG + 'note.channels', { count: channels.length }) : null,
       picked.length ? t(isChan ? CG + 'note.members' : CG + 'note.invites', { count: picked.length }) : null,
       isChan && invited.length ? t(CG + 'note.invites', { count: invited.length }) : null,
-      gateCount ? t(CG + 'note.gates', { count: gateCount }) : null,
+      gateCount ? t(gatesOk ? CG + 'note.gates' : CG + 'note.gatesIncomplete', { count: gateCount }) : null,
       rulesOn ? t(rulesText.trim() ? CG + 'note.rulesOn' : CG + 'note.rulesNeeded') : null,
       permsChanged ? t(CG + 'note.permissionsEdited') : null,
     ]
@@ -586,6 +590,12 @@
       urlTouched = isEmb;
       submitted = true;
       tab = 0;
+      return;
+    }
+    // a gate left half set up sends the user back to it
+    if (!gatesOk && gatesTab >= 0) {
+      submitted = true;
+      tab = gatesTab;
       return;
     }
     // same for rules switched on but left blank
@@ -671,7 +681,11 @@
                     : null,
             )}
             selectedIndex={tab}
-            dotIndexes={[nameBad || urlBad ? 0 : null, rulesBad && advancedOpen && rulesTab >= 0 ? rulesTab : null].filter((i): i is number => i !== null)}
+            dotIndexes={[
+              nameBad || urlBad ? 0 : null,
+              gatesBad && advancedOpen && gatesTab >= 0 ? gatesTab : null,
+              rulesBad && advancedOpen && rulesTab >= 0 ? rulesTab : null,
+            ].filter((i): i is number => i !== null)}
             onSelect={(i) => (tab = i)}
           />
         </div>
@@ -1295,7 +1309,7 @@
       {#if flow.failed}
         <span class="note error" role="alert">{t(CG + 'createFailed')}</span>
       {:else if showFooterNote}
-        <span class="note" class:error={nameBad || rulesBad || urlBad}>{footerNote}</span>
+        <span class="note" class:error={nameBad || gatesBad || rulesBad || urlBad}>{footerNote}</span>
       {/if}
       <div class="create" class:ready={canCreate && !flow.busy} onclick={create} role="button" tabindex="0" aria-disabled={flow.locked}>
         <span class="create-icon" style:mask={mask(kindIcon)}></span>

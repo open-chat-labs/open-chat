@@ -189,6 +189,8 @@ export interface AccessGatesState {
   count: number;
   joiner: string;
   rules: AccessGateRule[];
+  /** false while a rule is missing its token or a required amount: don't save the gates then (the dialogs block it). */
+  complete: boolean;
   intervalOn: boolean;
   /** Re-check interval as shown ('1 month'); everyDays is the same in days. */
   every: string;
@@ -284,7 +286,7 @@ export interface WalletToken {
   standard?: string;
 }
 
-/** One configured access gate (AccessGates rules, AccessGatesCards gates). `a` / `b` are the type's numeric fields as typed. */
+/** One configured access gate (AccessGates rules, AccessGatesCards gates). `a` / `b` are the type's numeric fields as decimal strings with a "." mark ("1.5", also when typed "1,5"). */
 export interface AccessGateRule {
   id: string;
   /** Gate type key: lifetime, diamond, neuron, payment, balance, credential, unique, locked, chit … */
@@ -301,6 +303,8 @@ export interface AccessGatesCardsState {
   /** How gates combine. */
   mode: 'All' | 'Any';
   gates: AccessGateRule[];
+  /** false while a gate is missing its token or a required amount: don't save the gates then. */
+  complete: boolean;
   /** Periodic re-check of the gates. */
   intervalOn: boolean;
   everyDays: number;

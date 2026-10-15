@@ -30,7 +30,7 @@
 
 <script lang="ts">
   import { getI18n, useT } from '../../lib/i18n';
-  import { cleanAmount, parseAmount } from '../../lib/amount';
+  import { amountText, cleanAmount, floorTo, parseAmount } from '../../lib/amount';
   import { onDestroy } from 'svelte';
   import type { WalletToken } from '../../lib/types';
   import AmountCard from '../../lib/components/AmountCard.svelte';
@@ -61,6 +61,9 @@
     token?: string;
     /** DEX names shown while a quote is found ("Checking KongSwap, ICPSwap and Sonic"). */
     dexes?: string[];
+    /** How many of the pay token's ledger fees (WalletToken.fee) a swap spends on top of the amount, e.g. 2 for a DEX
+     *  that takes an approve and a transfer. They are kept back from Max and count against the balance. */
+    payFees?: number;
     /** Find the best quote. Reject to go back to the form with an error. Without it, no quote can be fetched. */
     onQuote?: (r: SwapRequest) => Promise<SwapQuote>;
     /** Run the swap; call onStep(i) as each of the 5 steps (deposit, transfer, notify, swap, withdraw) starts.
@@ -71,7 +74,7 @@
     onSwapped?: (s: { from: string; to: string; amount: number; out: number; fiat: number; fromDp: number; toDp: number }) => void;
   }
 
-  let { tokens, token, dexes = [], onQuote, onSwap, onClose, onSwapped }: Props = $props();
+  let { tokens, token, dexes = [], payFees = 1, onQuote, onSwap, onClose, onSwapped }: Props = $props();
   // `t` is the receiving token below, so the translator is `tr`
   const tr = useT();
 
@@ -111,7 +114,9 @@
   const impactPct = $derived(quote?.impactPct ?? 0);
   const out = $derived(received ?? quote?.out ?? 0);
   const slip = $derived(SLIPS[slipIdx]);
-  const over = $derived(!!f && n > f.held);
+  // what can be swapped: the balance less the ledger fees the swap itself costs
+  const spendable = $derived(f ? Math.max(0, f.held - (f.fee ?? 0) * payFees) : 0);
+  const over = $derived(!!f && n > spendable);
   const ok = $derived(n > 0 && !over && !!onQuote);
   const dexName = $derived(quote?.dex ?? '');
   const listFmt = new Intl.ListFormat(i18n.locale ?? 'en', { type: 'conjunction' });
@@ -241,9 +246,8 @@
 
   function chooseAmount(k: number) {
     if (locked) return;
-    const p = Math.pow(10, Math.min(f.dp, 6));
     drop();
-    amt = String(Math.floor(f.held * k * p) / p);
+    amt = amountText(floorTo(spendable * k, f.dp), f.dp);
   }
 
   function flip() {
@@ -367,7 +371,7 @@
               </div>
               <div class="quote-figures">
                 <span class="pair">{n > 0 ? fmt(n, f.dp) : '0'} {f.symbol} → {n > 0 ? fmt(out, t.dp) : '0'} {t.symbol}</span>
-                <span class="rate">1 {f.symbol} ≈ {fmt(n > 0 ? out / n : 0, t.symbol === 'BTC' ? 8 : 4)} {t.symbol}</span>
+                <span class="rate">1 {f.symbol} ≈ {fmt(n > 0 ? out / n : 0, t.dp)} {t.symbol}</span>
               </div>
               <div class="rows">
                 <DetailRow label={tr('ui.walletSwap.row.maxSlippage')} value="{slip}%" rule="bottom" />

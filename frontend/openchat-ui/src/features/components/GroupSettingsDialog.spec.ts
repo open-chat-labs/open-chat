@@ -43,6 +43,17 @@ describe('GroupSettingsDialog save', () => {
     return { onCancel, onDirtyChange, save, saveButton, root: target.querySelector('.root')! };
   }
 
+  test('a gate missing its token or amount blocks Save and shows the Gates tab', async () => {
+    const gates = { count: 1, joiner: 'All', rules: [{ id: 'r1', type: 'payment', asset: '', a: '', b: '' }], complete: false, intervalOn: false, every: '1 month' };
+    const { save, saveButton } = open(() => Promise.resolve(), { value: { info: { name: 'Devs' }, gates } as never });
+    saveButton().click();
+    await settle();
+    expect(save).not.toHaveBeenCalled();
+    const selected = target.querySelector('[role=tab][aria-selected=true]');
+    expect(selected?.textContent).toContain('Gates');
+    expect(target.querySelector('.note.error')?.textContent).toContain('Finish the access gates');
+  });
+
   test('modal: a second Save and every dismiss are ignored while saving; success leaves once', async () => {
     const d = deferred();
     const { onCancel, save, saveButton, root } = open(() => d.promise);

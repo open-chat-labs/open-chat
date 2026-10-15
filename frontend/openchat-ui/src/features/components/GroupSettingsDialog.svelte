@@ -365,6 +365,8 @@
   const isCommunity = $derived(noun === 'community');
 
   const gateCount = $derived(gates && Array.isArray(gates.rules) ? gates.rules.length : 0);
+  // a gate still missing its token or amount can't be saved (the host would get a malformed gate)
+  const gatesBad = $derived(gates?.complete === false);
   const ruleLines = $derived(rulesOn ? rulesText.split('\n').map((l) => l.replace(/^[•\-\s]+/, '').trim()).filter(Boolean).length : 0);
   const generalList = $derived(GENERAL.filter((p) => isCommunity || !p.only));
   const permGroups = $derived([...new Set(generalList.map((p) => p.group))]);
@@ -453,6 +455,11 @@
     if (!nameOk) {
       submitted = true;
       tab = 0;
+      return;
+    }
+    if (gatesBad) {
+      submitted = true;
+      tab = 1;
       return;
     }
     if (rulesBad) {
@@ -555,8 +562,8 @@
 
   const permOptions = $derived(permMenu ? [...(permMenu.allowInherit ? [{ key: INHERIT as PermValue, label: 'ui.groupSettingsDialog.sameAsDefault' }] : []), ...ROLES] : []);
 
-  const showNote = $derived((submitted && (!nameOk || rulesBad)) || dirty);
-  const noteError = $derived(submitted && (!nameOk || rulesBad));
+  const showNote = $derived((submitted && (!nameOk || gatesBad || rulesBad)) || dirty);
+  const noteError = $derived(submitted && (!nameOk || gatesBad || rulesBad));
 </script>
 
 {#snippet sectionLabel(text: string)}
@@ -593,7 +600,7 @@
             labels={TABS.map((x) => t(x))}
             counts={[null, gateCount || null, ruleLines || null, permsChanged || null]}
             selectedIndex={tab}
-            dotIndexes={[!nameOk && submitted ? 0 : null, rulesBad && submitted ? 2 : null].filter((i): i is number => i !== null)}
+            dotIndexes={[!nameOk && submitted ? 0 : null, gatesBad && submitted ? 1 : null, rulesBad && submitted ? 2 : null].filter((i): i is number => i !== null)}
             onSelect={(i) => {
               tab = i;
               permMenu = null;
@@ -1007,7 +1014,7 @@
         {#if saveError}
           <span class="note error" role="alert">{t('ui.groupSettingsDialog.saveFailed')}</span>
         {:else if showNote}
-          <span class="note" class:error={noteError}>{t(submitted && !nameOk ? 'ui.groupSettingsDialog.nameNeeded' : submitted && rulesBad ? 'ui.groupSettingsDialog.rulesNeeded' : 'ui.groupSettingsDialog.unsaved')}</span>
+          <span class="note" class:error={noteError}>{t(submitted && !nameOk ? 'ui.groupSettingsDialog.nameNeeded' : submitted && gatesBad ? 'ui.groupSettingsDialog.gatesIncomplete' : submitted && rulesBad ? 'ui.groupSettingsDialog.rulesNeeded' : 'ui.groupSettingsDialog.unsaved')}</span>
         {/if}
         <div class="save" class:ready={dirty && !saving} onclick={save} role="button" tabindex="0" aria-disabled={!dirty || saving}>
           <span class="save-icon"></span>

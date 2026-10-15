@@ -140,3 +140,60 @@ describe('WalletSend PIN step', () => {
     expect(target.querySelector('.page-header')!.textContent).not.toContain('USDT');
   });
 });
+
+describe('WalletSend quick amounts', () => {
+  let target: HTMLElement;
+  let app: object | undefined;
+  beforeEach(() => {
+    vi.useFakeTimers();
+    target = document.body.appendChild(document.createElement('div'));
+  });
+  afterEach(() => {
+    if (app) unmount(app);
+    app = undefined;
+    target.remove();
+    document.body.innerHTML = '';
+    vi.useRealTimers();
+  });
+
+  test('Max in USD sends the whole balance, though the USD figure is rounded down to cents', () => {
+    // $3.337 a token: the whole balance reads $3.33 (rounded up, $3.34 would be more than the balance)
+    const tk: WalletToken = { symbol: 'ICP', name: 'Internet Computer', mark: '∞', grad: 'red', held: 1, price: 3.337, dp: 8, fee: 0, nets: ['icp'] };
+    const sent = vi.fn();
+    app = mount(WalletSend, { target, props: { tokens: [tk], token: 'ICP', address: ADDRESS, onSent: sent } });
+    flushSync();
+    (target.querySelector('.unit') as HTMLElement).click();
+    flushSync();
+    const chips = target.querySelectorAll<HTMLElement>('.chips .chip');
+    chips[chips.length - 1].click();
+    flushSync();
+    expect(target.querySelector<HTMLInputElement>('.amount-input')!.value).toBe('3.33');
+    const cta = target.querySelector('.summary-cell .cta')!;
+    expect(cta.getAttribute('aria-disabled')).toBe('false');
+    (cta as HTMLElement).click();
+    flushSync();
+    const pin = document.querySelector<HTMLInputElement>('.pin-input')!;
+    pin.value = '123456';
+    pin.dispatchEvent(new Event('input', { bubbles: true }));
+    flushSync();
+    document.querySelector('form.pin')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    expect(sent.mock.calls[0][0]).toMatchObject({ amount: 1 });
+  });
+
+  test('typing over a picked amount sends what was typed', () => {
+    const tk: WalletToken = { symbol: 'ICP', name: 'Internet Computer', mark: '∞', grad: 'red', held: 1, price: 3.337, dp: 8, fee: 0, nets: ['icp'] };
+    app = mount(WalletSend, { target, props: { tokens: [tk], token: 'ICP', address: ADDRESS, onSent: vi.fn() } });
+    flushSync();
+    (target.querySelector('.unit') as HTMLElement).click();
+    flushSync();
+    const chips = target.querySelectorAll<HTMLElement>('.chips .chip');
+    chips[chips.length - 1].click();
+    flushSync();
+    const input = target.querySelector<HTMLInputElement>('.amount-input')!;
+    input.value = '3.34';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    flushSync();
+    // $3.34 is more than the 1 token held
+    expect(target.querySelector('.summary-cell .cta')!.getAttribute('aria-disabled')).toBe('true');
+  });
+});

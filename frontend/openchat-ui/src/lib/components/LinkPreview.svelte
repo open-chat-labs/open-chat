@@ -4,6 +4,7 @@
   interface Props {
     /** Message text; URLs inside it render as bold, underlined links. */
     text: string;
+    /** Where the card links; only http(s) URLs are linked, anything else shows the card without a link. */
     url: string;
     domain: string;
     title: string;
@@ -35,12 +36,15 @@
   const URL_RE = /((?:https?:\/\/)?(?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/[^\s]*)?)/i;
   const URL_START = /^(?:https?:\/\/)?(?:[a-z0-9-]+\.)+[a-z]{2,}/i;
 
+  // split() puts the captured URLs at odd indexes; decide by index before dropping empty strings, which shifts them
   const parts = $derived(
     text
       .split(URL_RE)
-      .filter((x) => x !== '')
-      .map((x, i) => (i % 2 === 0 && !URL_START.test(x) ? { text: x } : { text: x, href: /^https?:/.test(x) ? x : `https://${x}` })),
+      .map((x, i) => (i % 2 === 1 && URL_START.test(x) ? { text: x, href: /^https?:/i.test(x) ? x : `https://${x}` } : { text: x }))
+      .filter((p) => p.text !== ''),
   );
+  // the card links only to http(s): the URL comes from message content, and a javascript: or data: link would run in the app
+  const safeUrl = $derived(/^https?:\/\//i.test(url.trim()) ? url.trim() : undefined);
 
   const art = $derived(image ? `center/cover no-repeat url(${JSON.stringify(image)})` : imageBg || 'linear-gradient(170deg,#2b1055,#7597de 55%,#ffb36b)');
 </script>
@@ -48,7 +52,7 @@
 <div class="shell" class:sent={side === 'sent'} class:last={lastInGroup}>
   <p class="text">{#each parts as part}{#if part.href}<a class="inline" href={part.href} target="_blank" rel="noopener">{part.text}</a>{:else}{part.text}{/if}{/each}</p>
   {#if size === 'large'}
-    <a class="card large" href={url} target="_blank" rel="noopener">
+    <a class="card large" href={safeUrl} target="_blank" rel="noopener">
       {#if imageBg !== null}<div class="hero" style:background={art}></div>{/if}
       <div class="body">
         <span class="domain">{domain}</span>
@@ -57,7 +61,7 @@
       </div>
     </a>
   {:else}
-    <a class="card compact" href={url} target="_blank" rel="noopener">
+    <a class="card compact" href={safeUrl} target="_blank" rel="noopener">
       <span class="thumb" style:background={art}></span>
       <span class="names"><span class="domain">{domain}</span><span class="title">{title}</span></span>
     </a>

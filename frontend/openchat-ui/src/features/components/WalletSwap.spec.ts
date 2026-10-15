@@ -111,4 +111,52 @@ describe('WalletSwap', () => {
     expect(target.querySelector<HTMLInputElement>('input.amount')!.value).toBe('1');
     expect(target.querySelector<HTMLElement>('.form')!.inert).toBe(false);
   });
+
+  /** Mounts with ICP as the pay token and presses Max. */
+  function max(icp: Partial<WalletToken>, extra: Record<string, unknown> = {}) {
+    const list = [{ ...tokens[0], ...icp }, tokens[1]];
+    app = mount(WalletSwap, { target, props: { tokens: list, token: 'ICP', onQuote: () => Promise.resolve(quote()), ...extra } });
+    flushSync();
+    const chips = target.querySelectorAll<HTMLElement>('.chips .chip');
+    chips[3].click();
+    flushSync();
+    return target.querySelector<HTMLInputElement>('input.amount')!;
+  }
+  const over = () => cta().textContent!.includes('Not enough');
+
+  test('Max keeps back the ledger fee, and the whole balance reads as too much', () => {
+    const input = max({ held: 10, fee: 0.0001 });
+    expect(input.value).toBe('9.9999');
+    expect(over()).toBe(false);
+    input.value = '10';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    flushSync();
+    expect(over()).toBe(true);
+  });
+
+  test('payFees keeps back that many fees', () => {
+    expect(max({ held: 10, fee: 0.0001 }, { payFees: 2 }).value).toBe('9.9998');
+  });
+
+  test('Max is the whole balance to the last unit (no float rounding, no 6-decimal cap)', () => {
+    expect(max({ held: 0.000251, dp: 6, fee: 0 }).value).toBe('0.000251');
+    unmount(app!);
+    app = undefined;
+    expect(max({ held: 1.23456789, dp: 8, fee: 0 }).value).toBe('1.23456789');
+  });
+
+  test('the rate line shows the receiving token to its own decimals', async () => {
+    // a receiving token worth far more than the pay token (any symbol, not only 'BTC')
+    const dear: WalletToken = { ...tokens[1], price: 60000, dp: 8 };
+    const swapQuote = { ...quote(), out: 0.0000833 };
+    app = mount(WalletSwap, { target, props: { tokens: [tokens[0], dear], token: 'ICP', onQuote: () => Promise.resolve(swapQuote) } });
+    flushSync();
+    const input = target.querySelector<HTMLInputElement>('input.amount')!;
+    input.value = '1';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    flushSync();
+    cta().click();
+    await settle();
+    expect(target.querySelector('.rate')!.textContent).toContain('0.0000833 USDT');
+  });
 });

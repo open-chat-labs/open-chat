@@ -59,4 +59,24 @@ describe('AccessGatesCards', () => {
     flushSync();
     expect(last(onChange)).toMatchObject({ mode: 'Any', intervalOn: true, everyDays: 7 });
   });
+
+  test('a payment gate is incomplete until it has a token and amount; "1,5" is stored as 1.5', () => {
+    const onChange = vi.fn();
+    const tokens = [{ id: 'ryjl3-tyaaa-aaaaa-aaaba-cai', symbol: 'ICP', name: 'Internet Computer', featured: true }];
+    app = mount(AccessGatesCards, { target, props: { isDiamond: true, tokens, onChange } });
+    flushSync();
+    press(target.querySelector('.add'));
+    flushSync();
+    press([...document.querySelectorAll('.option')].find((o) => o.querySelector('.option-label')?.textContent === 'Payment'));
+    flushSync();
+    expect(last(onChange)).toMatchObject({ count: 1, complete: false });
+    press(target.querySelector('.asset'));
+    flushSync();
+    const input = target.querySelector<HTMLInputElement>('.field input')!;
+    input.value = '1,5';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    flushSync();
+    expect(last(onChange)).toMatchObject({ complete: true });
+    expect(last(onChange).gates[0].a).toBe('1.5');
+  });
 });

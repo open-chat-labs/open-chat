@@ -1,7 +1,7 @@
 <!-- Access gates as cards (alternative layout to AccessGates): each gate is a card with its icon, description and
      value chips; configurable gates open inline editors (asset picker + numeric fields) until complete.
      "Add gate" opens a catalogue. All / Any decides how gates combine; an optional periodic re-check sits below.
-     Non-diamond users see an upgrade card instead. onChange({ count, mode, gates, intervalOn, everyDays }) on every change
+     Non-diamond users see an upgrade card instead. onChange({ count, mode, gates, complete, intervalOn, everyDays }) on every change
      (gates, All / Any, re-check). Tokens and nervous systems come from the host; a gate stores the canister id. `value`
      restores the last state handed out, so the editor survives a remount. -->
 <script lang="ts">
@@ -10,6 +10,7 @@
   import type { GateAsset } from './AccessGates.svelte';
   import SegmentedTabs from '../../lib/components/SegmentedTabs.svelte';
   import TimedToggle from '../../lib/components/TimedToggle.svelte';
+  import { cleanAmount } from '../../lib/amount';
   import { useT } from '../../lib/i18n';
 
   type Field = { key: 'a' | 'b'; placeholder: string; unit: string; required?: boolean };
@@ -156,7 +157,7 @@
   const everyKey = $derived((INTERVALS.find(([, d]) => d === everyDays) ?? INTERVALS[3])[0]);
 
   function emit() {
-    onChange?.({ count: gates.length, mode: MODES[modeIndex], gates, intervalOn, everyDays });
+    onChange?.({ count: gates.length, mode: MODES[modeIndex], gates, complete: gates.every(complete), intervalOn, everyDays });
   }
 
   function add(key: string) {
@@ -277,7 +278,12 @@
               {/if}
               {#each type.fields ?? [] as f}
                 <div class="field" class:missing={f.required && !g[f.key].trim()}>
-                  <input value={g[f.key]} oninput={(e) => patch(g.id, { [f.key]: e.currentTarget.value.replace(/[^\d.]/g, '') })} placeholder={t(f.placeholder)} inputmode="numeric" />
+                  <input value={g[f.key]} oninput={(e) => {
+                      // "," is a decimal mark too ("1,5" is 1.5); stored with "." so the host reads it as a number
+                      const v = cleanAmount(e.currentTarget.value).replace(',', '.');
+                      e.currentTarget.value = v;
+                      patch(g.id, { [f.key]: v });
+                    }} placeholder={t(f.placeholder)} inputmode="numeric" />
                   <span class="unit">{t(f.unit)}</span>
                 </div>
               {/each}

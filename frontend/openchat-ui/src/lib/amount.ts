@@ -19,3 +19,21 @@ export function parseAmount(text: string): number {
   const n = Number(cleanAmount(text).replace(',', '.'));
   return Number.isFinite(n) ? n : 0;
 }
+
+/** x rounded down to dp decimals, so a share of a balance never exceeds it. Float noise doesn't cost a unit:
+ *  0.000251 * 1e6 is 250.99999999999997, still 251 units. */
+export function floorTo(x: number, dp: number): number {
+  const p = 10 ** dp;
+  return Math.floor(Number((x * p).toPrecision(15))) / p;
+}
+
+/** x as amount-input text: at most dp decimals, no exponent ("0.00000001", not "1e-8"), no trailing zeros. */
+export function amountText(x: number, dp: number): string {
+  const s = x.toFixed(dp);
+  return s.includes('.') ? s.replace(/\.?0+$/, '') : s;
+}
+
+/** A USD figure for an amount input, rounded down to cents so it never reads back as more than the amount. */
+export function usdText(x: number): string {
+  return floorTo(x, 2).toFixed(2);
+}

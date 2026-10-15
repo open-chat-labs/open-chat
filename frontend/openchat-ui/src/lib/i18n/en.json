@@ -724,6 +724,7 @@
       "note": {
         "channels": "{count, plural, one {{count} channel} other {{count} channels}}",
         "gates": "{count, plural, one {{count} gate} other {{count} gates}}",
+        "gatesIncomplete": "Finish the access gates",
         "invites": "{count, plural, one {{count} invite} other {{count} invites}}",
         "members": "{count, plural, one {{count} member} other {{count} members}}",
         "nameNeeded": "Name needed",
@@ -1509,6 +1510,7 @@
       "rulesError": "Rules are enabled — write them here, or turn rules off.",
       "rulesHelp": "The field grows as you type.",
       "rulesNeeded": "Rules needed",
+      "gatesIncomplete": "Finish the access gates",
       "rulesNewVersion": "Ask members to accept the new rules",
       "rulesNewVersionHint": "Turn on for new rules or a real change; leave off for a typo fix.",
       "rulesPlaceholder": "Anything members should know before they join",
@@ -3096,7 +3098,7 @@
       "noQuote": "No quote yet",
       "noQuoteBody": "Get a quote to see the rate, fees and the minimum you'll receive. Quotes last 30 seconds.",
       "notEnough": "Not enough {symbol}",
-      "overBalance": "More than your balance",
+      "overBalance": "More than your balance after fees",
       "phase": {
         "return": "Return to your wallet",
         "send": "Send to {dex}",

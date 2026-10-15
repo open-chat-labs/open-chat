@@ -43,7 +43,7 @@
   import QuickAmountChips from '../../lib/components/QuickAmountChips.svelte';
   import SideCard from '../../lib/components/SideCard.svelte';
   import { getI18n, useT } from '../../lib/i18n';
-  import { cleanAmount, parseAmount } from '../../lib/amount';
+  import { amountText, cleanAmount, floorTo, parseAmount, usdText } from '../../lib/amount';
   import { detectNetwork, type AddressNetwork } from '../../lib/networks';
   import { onDestroy, tick } from 'svelte';
   import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
@@ -68,11 +68,6 @@
 
   const fmt = (v: number, dp: number) => v.toLocaleString(i18n.locale ?? 'en', { maximumFractionDigits: dp });
   const money = (v: number) => `$${v.toLocaleString(i18n.locale ?? 'en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  // amounts never carry more decimals than the token has (rounded down, so a max send stays within balance)
-  const floorTo = (v: number, dp: number) => {
-    const p = Math.pow(10, Math.min(dp, 12));
-    return Math.floor(v * p + 1e-9) / p;
-  };
 
   interface Props {
     tokens: WalletToken[];
@@ -119,6 +114,9 @@
   });
   let address = $state(initialAddress);
   let amt = $state('');
+  // a chip (or a reused amount) picks an exact token amount; in USD mode the field shows it rounded down to cents,
+  // but the picked amount is what's sent, so Max stays the whole balance. Typing replaces it.
+  let exact = $state<{ text: string; sym: string; n: number } | null>(null);
   let msg = $state('');
   let msgOpen = $state(false);
   let inUsd = $state(false);
@@ -137,7 +135,8 @@
   // the chosen token stays the chosen token even if its balance reaches 0 (e.g. while sending all of it)
   const tk = $derived(tokens.find((x) => x.symbol === sym) ?? held[0]);
   const typed = $derived(parseAmount(amt));
-  const n = $derived(tk ? floorTo(inUsd ? typed / tk.price : typed, tk.dp) : 0);
+  // amounts never carry more decimals than the token has (rounded down, so a max send stays within balance)
+  const n = $derived(tk ? (exact && exact.text === amt && exact.sym === tk.symbol ? exact.n : floorTo(inUsd ? typed / tk.price : typed, tk.dp)) : 0);
   const det = $derived(mode === 'address' ? detectNetwork(address) : null);
   const multi = $derived(mode === 'address' && tk?.symbol === 'BTC' && det === 'BTC');
   const routeFee = $derived(multi ? btcFees[NETS[net].id] : undefined);
@@ -159,7 +158,6 @@
   const shortAddress = $derived(address ? `${address.slice(0, 10)}…${address.slice(-6)}` : '');
   const toLabel = $derived(mode === 'user' ? (person ? person.name : '—') : shortAddress || '—');
   const toMain = $derived(mode === 'user' ? (person ? person.name : t('ui.walletSend.notChosen')) : shortAddress || t('ui.walletSend.notEntered'));
-  const dpCap = $derived(Math.pow(10, Math.min(tk?.dp ?? 0, 6)));
 
   const rows = $derived([
     { k: t('ui.walletSend.network'), v: mode === 'user' ? 'OpenChat' : multi ? t(NETS[net].label) : det && det !== 'unknown' ? NET_NAME[det] : '—', ink: 'var(--ink,#ECECF1)' },
@@ -226,19 +224,27 @@
 
   function toggleUnit() {
     if (!tk) return;
-    amt = typed > 0 ? (inUsd ? String(Math.round(n * dpCap) / dpCap) : (n * tk.price).toFixed(2)) : '';
+    const v = n;
     inUsd = !inUsd;
+    if (typed > 0) pick(v);
+    else amt = '';
+  }
+
+  // shows a token amount in the current unit and keeps it as the amount sent
+  function pick(v: number) {
+    if (!tk) return;
+    amt = inUsd ? usdText(v * tk.price) : amountText(v, tk.dp);
+    exact = { text: amt, sym: tk.symbol, n: v };
   }
 
   function chooseFraction(k: number) {
     if (!tk) return;
-    const v = Math.floor(avail * k * dpCap) / dpCap;
-    amt = inUsd ? (v * tk.price).toFixed(2) : String(v);
+    pick(floorTo(avail * k, tk.dp));
   }
 
   function reuse(v: number) {
     if (!tk) return;
-    amt = inUsd ? (v * tk.price).toFixed(2) : String(v);
+    pick(floorTo(v, tk.dp));
   }
 
   // the PIN dialog can't be closed or reopened while a send is in flight, so a send can never run twice

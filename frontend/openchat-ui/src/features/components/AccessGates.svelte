@@ -1,7 +1,7 @@
 <!-- Access gates editor ("who can join"): requirement rows read as sentences ("Members must hold …") with value chips,
      joined by AND / OR; configurable rows edit inline (asset pills, a searchable token / nervous-system picker, numeric fields).
-     An optional periodic re-check sits below. Non-diamond users see an explainer and an upgrade banner; readOnly shows the
-     requirements as facts. `value` restores the last state handed out by onChange, so gates survive the tab being remounted.
+     An optional periodic re-check sits below. Non-diamond users see an explainer and an upgrade banner (or, when the group
+     already has gates, those gates — removable, not editable — above the banner); readOnly shows the requirements as facts. `value` restores the last state handed out by onChange, so gates survive the tab being remounted.
      The tokens and nervous systems come from the host (`tokens`, `nervousSystems`); a rule stores the canister id. Gate
      types that need one of those lists are not offered while it is empty. -->
 <script lang="ts" module>
@@ -23,6 +23,7 @@
   import TimedToggle from '../../lib/components/TimedToggle.svelte';
   import UpgradeBanner from './UpgradeBanner.svelte';
   import { useT, durationText } from '../../lib/i18n';
+  import { cleanAmount } from '../../lib/amount';
   import Translate from '../../lib/components/Translate.svelte';
 
   type Field = { key: 'a' | 'b'; placeholder: string; unit: string; required?: boolean };
@@ -219,13 +220,16 @@
   let tokenFor = $state<string | null>(null);
   let tokenQuery = $state('');
 
-  const locked = $derived(!readOnly && !isDiamond);
+  // without Diamond nothing can be added or changed; gates the group already has stay visible and can be removed
+  const canEdit = $derived(!readOnly && isDiamond);
+  const locked = $derived(!readOnly && !isDiamond && rules.length === 0);
+  const lapsed = $derived(!readOnly && !isDiamond && rules.length > 0);
   const recurring = $derived(intervalOn && rules.length > 0);
 
   function emit() {
     // an interval the host gave that isn't a label we can read keeps the host's own day count
     const everyDays = intervalDays(every) ?? (every === initial.every ? initial.everyDays : undefined);
-    onChange?.({ count: rules.length, joiner, rules, intervalOn, every, everyDays });
+    onChange?.({ count: rules.length, joiner, rules, complete: rules.every(complete), intervalOn, every, everyDays });
   }
 
   function add(key: string) {
@@ -354,7 +358,7 @@
         <span class="label">{t('ui.accessGates.whoCanJoin')}</span>
         <span class="summary">{summary}</span>
       </div>
-      {#if !readOnly && rules.length > 0}
+      {#if canEdit && rules.length > 0}
         <div class="joiners">
           <SegmentedTabs
             labels={JOINER_LABELS.map((k) => t(k))}
@@ -393,7 +397,7 @@
                 {/if}
               </div>
 
-              {#if open && !readOnly}
+              {#if open && canEdit}
                 <div class="editor">
                   {#if gt.assets}
                     {@const P = PICKERS[gt.picker ?? 'token']}
@@ -430,7 +434,12 @@
 
                   {#each gt.fields ?? [] as f}
                     <div class="field" class:missing={f.required && !r[f.key].trim()}>
-                      <input value={r[f.key]} oninput={(e) => patch(r.id, { [f.key]: e.currentTarget.value.replace(/[^\d.]/g, '') })} placeholder={t(f.placeholder)} inputmode="numeric" />
+                      <input value={r[f.key]} oninput={(e) => {
+                          // "," is a decimal mark too ("1,5" is 1.5); stored with "." so the host reads it as a number
+                          const v = cleanAmount(e.currentTarget.value).replace(',', '.');
+                          e.currentTarget.value = v;
+                          patch(r.id, { [f.key]: v });
+                        }} placeholder={t(f.placeholder)} inputmode="numeric" />
                       <span class="unit">{t(f.unit)}</span>
                     </div>
                   {/each}
@@ -445,7 +454,7 @@
 
             {#if !open && !readOnly}
               <div class="tools">
-                {#if gt.fields || gt.assets}
+                {#if canEdit && (gt.fields || gt.assets)}
                   <span class="tool" onclick={() => (editing = r.id)} role="button" tabindex="0" aria-label={t('ui.common.edit')} title={t('ui.common.edit')}><span class="tool-icon" style:mask={mask('edit')}></span></span>
                 {/if}
                 <span class="tool" onclick={() => remove(r.id)} role="button" tabindex="0" aria-label={t('ui.common.remove')} title={t('ui.common.remove')}><span class="tool-icon" style:mask={mask('close')}></span></span>
@@ -463,7 +472,7 @@
       {/if}
     </div>
 
-    {#if !readOnly}
+    {#if canEdit}
       <div class="add" onclick={() => (addOpen = true)} role="button" tabindex="0">
         <span class="add-icon"></span>
         <span>{t('ui.accessGates.addRequirement')}</span>
@@ -472,7 +481,7 @@
 
     <div class="divider"></div>
 
-    {#if readOnly}
+    {#if !canEdit}
       <div class="recheck">
         <span class="why-tile"><span class="why-icon" style:mask={mask('refresh')}></span></span>
         <div class="recheck-text">
@@ -502,6 +511,10 @@
           />
         </div>
       </div>
+    {/if}
+
+    {#if lapsed}
+      <UpgradeBanner text={t('ui.accessGates.diamondFeature')} {onUpgrade} />
     {/if}
   {/if}
 

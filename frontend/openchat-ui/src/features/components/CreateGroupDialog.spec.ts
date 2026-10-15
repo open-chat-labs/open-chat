@@ -98,4 +98,24 @@ describe('CreateGroupDialog', () => {
     expect(onCreate).not.toHaveBeenCalled();
     expect(onCancel).toHaveBeenCalledOnce();
   });
+
+  test('a gate left half set up blocks Create and goes back to the Gates tab', async () => {
+    const onCreate = vi.fn();
+    const tokens = [{ id: 'ryjl3-tyaaa-aaaaa-aaaba-cai', symbol: 'ICP', name: 'Internet Computer', featured: true }];
+    open({ onCreate, isDiamond: true, gateTokens: tokens, advanced: false });
+    const tab = (name: string) => [...target.querySelectorAll('[role=tab]')].find((x) => x.textContent?.includes(name))!;
+    press(tab('Gates'));
+    flushSync();
+    press(target.querySelector('.gates-page .add'));
+    flushSync();
+    press([...document.querySelectorAll('.option')].find((o) => o.textContent?.includes('Payment'))!);
+    flushSync();
+    press(tab('Group'));
+    flushSync();
+    press(create());
+    await settle();
+    expect(onCreate).not.toHaveBeenCalled();
+    expect(tab('Gates').getAttribute('aria-selected')).toBe('true');
+    expect(target.querySelector('.footer .note.error')?.textContent).toContain('Finish the access gates');
+  });
 });

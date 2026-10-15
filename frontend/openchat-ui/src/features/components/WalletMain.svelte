@@ -145,6 +145,7 @@
     btcFees?: Partial<Record<'btc' | 'ckbtc', number>>;
     /** Swap: DEX names, quote and execution (see WalletSwap). */
     dexes?: string[];
+    payFees?: number;
     onQuote?: (r: SwapRequest) => Promise<SwapQuote>;
     onSwap?: (r: { request: SwapRequest; quote: SwapQuote; onStep: (step: number) => void }) => Promise<{ out?: number } | void>;
     /** Receive: chats to share to, sharing, and the QR renderer (see WalletReceive). */
@@ -175,6 +176,7 @@
     onSearchUsers,
     btcFees,
     dexes,
+    payFees,
     onQuote,
     onSwap,
     chats,
@@ -441,7 +443,7 @@
         onSent={onSent ? handleSent : undefined}
       />{/key}{/if}
   {#if view === 'receive'}{#key flowKey}<WalletReceive tokens={receiveTokens} token={flowToken} {handle} {addresses} {chats} {onShare} {qr} onClose={leaveFlow} />{/key}{/if}
-  {#if view === 'swap'}{#key flowKey}<WalletSwap {tokens} token={flowToken} {dexes} {onQuote} onSwap={swapPinned} onClose={leaveFlow} />{/key}{/if}
+  {#if view === 'swap'}{#key flowKey}<WalletSwap {tokens} token={flowToken} {dexes} {payFees} {onQuote} onSwap={swapPinned} onClose={leaveFlow} />{/key}{/if}
   {#if view === 'recipients'}
     <WalletRecipients
       {tokens}
