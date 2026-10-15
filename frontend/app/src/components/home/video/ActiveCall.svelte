@@ -1,19 +1,13 @@
 <script lang="ts">
-    import type { DailyCall, DailyThemeConfig } from "@daily-co/daily-js";
     import {
         allUsersStore,
         chatIdentifiersEqual,
         communitiesStore,
-        currentUserIdStore,
         currentUserStore,
-        joinedCallType,
         mobileWidth,
-        NoMeetingToJoin,
         OpenChat,
         selectedChatSummaryStore,
         selectedCommunitySummaryStore,
-        startVideoOff,
-        type AccessTokenType,
         type ChatIdentifier,
         type VideoCallType,
     } from "@client";
@@ -21,24 +15,14 @@
     import { i18nKey } from "../../../i18n/i18n";
     import { videoCameraOn, videoMicOn, videoSpeakerView } from "../../../stores/settings";
     import { toastStore } from "../../../stores/toast";
-    import { setCallRingback } from "@utils/native/call_bridge";
-    import {
-        activeVideoCall,
-        camera,
-        hasPresence,
-        microphone,
-        sharing,
-        type InterCallMessage,
-    } from "../../../stores/video";
-    import {
-        armRingOut,
-        peerLeftEndsCall,
-        ringOutApplies,
-        type RingOutHandle,
-    } from "../../../utils/callRingOut";
+    import { activeVideoCall } from "../../../stores/video";
     import { currentTheme } from "../../../theme/themes";
-    import type { Theme } from "../../../theme/types";
-    import { removeQueryStringParam } from "../../../utils/urls";
+    import {
+        CallSession,
+        dailyTheme,
+        type CallFrameOptions,
+        type StartCallOutcome,
+    } from "@shared_components/home/video/callSession.svelte";
     import AreYouSure from "../../AreYouSure.svelte";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
@@ -57,19 +41,12 @@
     const client = getContext<OpenChat>("client");
 
     let iframeContainer: HTMLDivElement | undefined = $state();
-    let confirmSwitchTo:
-        | { chatId: ChatIdentifier; callType: VideoCallType; join: boolean }
-        | undefined = $state(undefined);
-    let hostEnded = $state(false);
-    let denied = $state(false);
-    let askedToSpeak = $state(false);
-    let call: DailyCall | undefined = $state();
     let chat = $derived(normaliseChatSummary($activeVideoCall?.chatId));
     let threadOpen = $derived($activeVideoCall?.threadOpen ?? false);
     let participantsOpen = $derived($activeVideoCall?.participantsOpen ?? false);
 
     $effect(() => {
-        activeVideoCall.changeTheme(getThemeConfig($currentTheme));
+        activeVideoCall.changeTheme(dailyTheme($currentTheme));
     });
 
     function normaliseChatSummary(chatId: ChatIdentifier | undefined) {
@@ -113,8 +90,37 @@
         }
     }
 
-    // Ends a direct call this client started if nobody joins within the ring window.
-    let ringOut: RingOutHandle | undefined;
+    function frameOptions(chatId: ChatIdentifier): CallFrameOptions {
+        return {
+            title: normaliseChatSummary(chatId)?.name ?? "",
+            username: $currentUserStore.username,
+            speakerView: $videoSpeakerView,
+            cameraOn: $videoCameraOn,
+            micOn: $videoMicOn,
+            theme: dailyTheme($currentTheme),
+        };
+    }
+
+    const session = new CallSession(client, frameOptions, () =>
+        toastStore.showSuccessToast(i18nKey("videoCall.noAnswer")),
+    );
+
+    function report(outcome: StartCallOutcome | undefined) {
+        switch (outcome?.kind) {
+            case undefined:
+            case "joined":
+            case "confirm_switch":
+                break;
+            case "no_meeting":
+                toastStore.showSuccessToast(i18nKey("videoCall.noMeetingToJoin"));
+                break;
+            case "failed":
+                toastStore.showFailureToast(outcome.message);
+                break;
+            default:
+                outcome satisfies never;
+        }
+    }
 
     export async function startOrJoinVideoCall(
         chatId: ChatIdentifier,
@@ -122,246 +128,24 @@
         join: boolean,
     ) {
         if (iframeContainer === undefined) return;
-
-        if (join) {
-            callType = joinedCallType(
-                callType,
-                client.lookupChatSummary(chatId)?.videoCallInProgress?.callType,
-            );
-        }
-
-        try {
-            if ($activeVideoCall !== undefined) {
-                confirmSwitchTo = { chatId, callType, join };
-                return;
-            }
-
-            // close and threads we have open in the right panel
-            client.filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
-            removeQueryStringParam("open");
-
-            activeVideoCall.joining(chatId, callType);
-
-            const accessType: AccessTokenType = join
-                ? { kind: "join_video_call", chatId }
-                : { kind: "start_video_call", callType, chatId };
-
-            // first we need to get access jwt from the oc backend
-            const { token, roomName, messageId, joining } = await client.getVideoChatAccessToken(
-                chatId,
-                accessType,
-            );
-
-            if (call !== undefined) {
-                await call.destroy();
-                call = undefined;
-            }
-
-            // daily-js is only loaded when a call actually starts so it stays out of the initial bundle
-            const { default: daily } = await import("@daily-co/daily-js");
-
-            call = daily.createFrame(iframeContainer, {
-                token,
-                activeSpeakerMode: callType === "broadcast" ? true : $videoSpeakerView,
-                showLeaveButton: false,
-                showFullscreenButton: false,
-                startVideoOff: startVideoOff(callType, $videoCameraOn),
-                startAudioOff: !$videoMicOn,
-                iframeStyle: {
-                    width: "100%",
-                    height: "100%",
-                },
-                url: `https://openchat.daily.co/${roomName}`,
-                userName: $currentUserStore.username,
-                theme: getThemeConfig($currentTheme),
-            });
-
-            call.on("app-message", (ev: InterCallMessage | undefined) => {
-                if (chatId.kind === "direct_chat") return;
-
-                if (ev && ev.action === "app-message") {
-                    if (ev.data.kind === "ask_to_speak") {
-                        activeVideoCall.captureAccessRequest(ev.data);
-                    }
-                    if (ev.data.kind === "demote_participant") {
-                        const me = call?.participants().local.session_id;
-                        if (
-                            ev.data.participantId === me &&
-                            $currentUserIdStore === ev.data.userId
-                        ) {
-                            askedToSpeak = false;
-                            client.setVideoCallPresence(chatId, BigInt(messageId), "hidden");
-                        }
-                    }
-                    if (ev.data.kind === "ask_to_speak_response") {
-                        const me = call?.participants().local.session_id;
-                        if (
-                            ev.data.participantId === me &&
-                            $currentUserIdStore === ev.data.userId
-                        ) {
-                            askedToSpeak = false;
-                            denied = !ev.data.approved;
-                            if (ev.data.approved) {
-                                client.setVideoCallPresence(chatId, BigInt(messageId), "default");
-                            }
-                        }
-                    }
-                }
-            });
-
-            // this only fires when *I* leave the meeting
-            call.on("left-meeting", () => {
-                ringOut?.cancel();
-                // at this point I have already left the meeting and so participantCount will always report 0
-                // so we can't use it.
-                activeVideoCall.endCall();
-            });
-
-            // A fatal error, such as "Meeting has ended" when the bridge deletes the room
-            // because the other side declined. The call object is finished; end the call here
-            // rather than leave Daily reporting an unhandled error.
-            call.on("error", (ev) => {
-                console.warn("Video call ended with an error", ev?.errorMsg);
-                ringOut?.cancel();
-                activeVideoCall.endCall();
-            });
-
-            // this fires when a remote participant leaves the meeting
-            call.on("participant-left", (ev) => {
-                // if the owner leaves, end the call
-                if (ev?.participant.owner && !ev.participant.local && callType === "broadcast") {
-                    hangup();
-                    hostEnded = true;
-                } else if (ev && peerLeftEndsCall(chatId, ev.participant.local)) {
-                    leave(true);
-                }
-            });
-
-            call.on("participant-joined", (ev) => {
-                if (!ev?.participant.local) ringOut?.cancel();
-            });
-
-            call.on("joined-meeting", (ev) => {
-                const me = ev?.participants?.local;
-                if (!me) return;
-                if (me.owner) {
-                    activeVideoCall.isOwner(true);
-                }
-            });
-
-            call.on("participant-updated", (ev) => {
-                if (ev?.participant.local) {
-                    microphone.set(ev?.participant.tracks.audio.state !== "off");
-                    camera.set(ev?.participant.tracks.video.state !== "off");
-                    sharing.set(ev?.participant.tracks.screenVideo.state !== "off");
-                    hasPresence.set(ev?.participant.permissions.hasPresence);
-                } else {
-                    if (ev?.participant.user_name === $currentUserStore.username) {
-                        // this means that I have joined the call from somewhere else e.g. another device
-                        hangup();
-                    }
-                }
-            });
-
-            // if we are not joining aka starting we need to tell the other users
-            if (!joining) {
-                client.ringOtherUsers(chatId, messageId, callType);
-            }
-
-            await call.join();
-
-            activeVideoCall.setCall(chatId, BigInt(messageId), call, chat?.name ?? "", (kind) =>
-                client.getVideoCallTeardownToken(chatId, kind),
-            );
-
-            if (ringOutApplies(chatId, joining)) {
-                ringOut?.cancel();
-                ringOut = armRingOut(
-                    () => (call?.participantCounts().present ?? 1) > 1,
-                    () => {
-                        toastStore.showSuccessToast(i18nKey("videoCall.noAnswer"));
-                        hangup();
-                    },
-                    setCallRingback,
-                );
-            }
-
-            if (joining) {
-                switch (chatId.kind) {
-                    case "direct_chat":
-                        await client.joinVideoCall(chatId, BigInt(messageId));
-                        break;
-                    default:
-                        await client.setVideoCallPresence(
-                            chatId,
-                            BigInt(messageId),
-                            callType === "broadcast" ? "hidden" : "default",
-                        );
-                }
-            }
-        } catch (err) {
-            if (err instanceof NoMeetingToJoin) {
-                toastStore.showSuccessToast(i18nKey("videoCall.noMeetingToJoin"));
-            } else {
-                toastStore.showFailureToast(i18nKey("videoCall.callFailed"), err);
-            }
-            activeVideoCall.endCall();
-            console.error("Unable to start video call: ", err);
-        }
-    }
-
-    function getThemeConfig(theme: Theme): DailyThemeConfig {
-        const dailyTheme = {
-            colors: {
-                accent: `${theme.daily.accent}`,
-                accentText: `${theme.daily.accentText}`,
-                background: `${theme.daily.background}`,
-                backgroundAccent: `${theme.daily.backgroundAccent}`,
-                baseText: `${theme.daily.baseText}`,
-                border: `${theme.daily.border}`,
-                mainAreaBg: `${theme.daily.mainAreaBg}`,
-                mainAreaBgAccent: `${theme.daily.mainAreaBgAccent}`,
-                mainAreaText: `${theme.daily.mainAreaText}`,
-                supportiveText: `${theme.daily.supportiveText}`,
-            },
-        };
-        return dailyTheme;
+        report(await session.startOrJoin(iframeContainer, { chatId, callType, join }));
     }
 
     function switchCall(confirmed: boolean): Promise<void> {
-        if (confirmed && confirmSwitchTo) {
-            activeVideoCall.endCall();
-            const { chatId, callType, join } = confirmSwitchTo;
-            window.setTimeout(() => startOrJoinVideoCall(chatId, callType, join), 100);
+        if (!confirmed) {
+            session.cancelSwitch();
+        } else if (iframeContainer !== undefined) {
+            session.switchCall(iframeContainer).then(report);
         }
-        confirmSwitchTo = undefined;
         return Promise.resolve();
     }
 
     export function askToSpeak() {
-        activeVideoCall.askToSpeak($currentUserIdStore);
-        askedToSpeak = true;
+        session.askToSpeak();
     }
 
     export function hangup() {
-        leave(false);
-    }
-
-    // `lastOneHere` when the caller already knows nobody else is in the call (the other
-    // party of a direct call left), so the end does not depend on presence having been
-    // reported yet. Not exported: `hangup` is bound to clicks and must take no argument.
-    function leave(lastOneHere: boolean) {
-        if ($activeVideoCall?.call) {
-            const present = $hasPresence ? $activeVideoCall.call.participantCounts().present : 0;
-            if (lastOneHere || present === 1) {
-                // I must be the last person left in the call
-                client.endVideoCall($activeVideoCall.chatId, $activeVideoCall.messageId);
-            }
-
-            // this will trigger the left-meeting event which will in turn end the call
-            $activeVideoCall.call.leave();
-            client.popRightPanelHistory();
-        }
+        session.hangup();
     }
 
     export function closeThread() {
@@ -369,11 +153,11 @@
     }
 </script>
 
-{#if confirmSwitchTo}
+{#if session.confirmSwitchTo}
     <AreYouSure message={i18nKey("videoCall.switchCall")} action={switchCall} />
 {/if}
 
-{#if hostEnded}
+{#if session.hostEnded}
     <Overlay>
         <ModalContent hideHeader>
             {#snippet body()}
@@ -383,7 +167,7 @@
             {/snippet}
             {#snippet footer()}
                 <ButtonGroup align={"center"}>
-                    <Button onClick={() => (hostEnded = false)}>
+                    <Button onClick={() => (session.hostEnded = false)}>
                         <Translatable resourceKey={i18nKey("close")} />
                     </Button>
                 </ButtonGroup>
@@ -392,7 +176,7 @@
     </Overlay>
 {/if}
 
-{#if denied}
+{#if session.denied}
     <Overlay>
         <ModalContent hideHeader>
             {#snippet body()}
@@ -403,7 +187,7 @@
             {#snippet footer()}
                 <span>
                     <ButtonGroup align={"center"}>
-                        <Button onClick={() => (denied = false)}>
+                        <Button onClick={() => (session.denied = false)}>
                             <Translatable resourceKey={i18nKey("close")} />
                         </Button>
                     </ButtonGroup>
@@ -421,14 +205,16 @@
         !showLandingPage &&
         !(threadOpen && $mobileWidth) &&
         !(participantsOpen && $mobileWidth) &&
-        chatIdentifiersEqual($activeVideoCall.chatId, $selectedChatSummaryStore?.id)}>
+        chatIdentifiersEqual($activeVideoCall.chatId, $selectedChatSummaryStore?.id)}
+>
     {#if chat !== undefined}
         <ActiveCallHeader
             {onClearSelection}
             onHangup={hangup}
             onAskToSpeak={askToSpeak}
             {chat}
-            {askedToSpeak} />
+            askedToSpeak={session.askedToSpeak}
+        />
     {/if}
     <div class="iframe-container" bind:this={iframeContainer}></div>
 </div>

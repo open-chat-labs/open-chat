@@ -21,7 +21,6 @@
         MultiUserChatIdentifier,
         NervousSystemDetails,
         OpenChat,
-        PubSubEvents,
         ResourceKey,
         RouteParams,
         Rules,
@@ -68,7 +67,7 @@
     import { messageToForwardStore } from "../../stores/messageToForward";
     import { chitPopup, disableChit } from "../../stores/settings";
     import { toastStore } from "../../stores/toast";
-    import { activeVideoCall, incomingVideoCall } from "../../stores/video";
+    import { ringForRemoteCall, stopRingingForRemoteCall } from "../../stores/video";
     import {
         currentTheme,
         currentThemeName,
@@ -256,8 +255,8 @@
             subscribe("removeBot", removeBot),
             subscribe("registerWebhook", registerWebhook),
             subscribe("updateWebhook", updateWebhook),
-            subscribe("remoteVideoCallStarted", remoteVideoCallStarted),
-            subscribe("remoteVideoCallEnded", remoteVideoCallEnded),
+            subscribe("remoteVideoCallStarted", (ev) => ringForRemoteCall(ev)),
+            subscribe("remoteVideoCallEnded", stopRingingForRemoteCall),
             subscribe("notification", (n) => client.notificationReceived(n)),
             subscribe("noAccess", () => (modal = { kind: "no_access" })),
             subscribe("notFound", () => (modal = { kind: "not_found" })),
@@ -333,25 +332,6 @@
         window.setTimeout(() => {
             document.body.classList.remove("witch");
         }, 2000);
-    }
-
-    function remoteVideoCallEnded(messageId: bigint) {
-        if ($incomingVideoCall?.messageId === messageId) {
-            incomingVideoCall.set(undefined);
-        }
-    }
-
-    function remoteVideoCallStarted(ev: PubSubEvents["remoteVideoCallStarted"]) {
-        // If current user is already in the call, or has previously been in the call, or the call started more than 2 hours ago, exit
-        if (
-            chatIdentifiersEqual($activeVideoCall?.chatId, ev.chatId) ||
-            ev.currentUserIsParticipant ||
-            Number(ev.timestamp) < Date.now() - 2 * 60 * 60 * 1000
-        ) {
-            return;
-        }
-
-        incomingVideoCall.set(ev);
     }
 
     async function routeChange(initialised: boolean, route: RouteParams): Promise<void> {
@@ -994,7 +974,8 @@
             <SelectChatModal
                 onClose={onCloseSelectChat}
                 onSelect={onSelectChat}
-                excludeCurrent={modal.excludeCurrent ?? true} />
+                excludeCurrent={modal.excludeCurrent ?? true}
+            />
         {:else if modal.kind === "suspended"}
             <SuspendedModal onClose={closeModal} />
         {:else if modal.kind === "register_bot"}

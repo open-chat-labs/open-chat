@@ -26,6 +26,34 @@ describe("stores/video", () => {
         expect(get(incomingVideoCall)?.messageId).toBe(2n);
     });
 
+    // Invariant: a call started elsewhere rings, unless the user is already in it, has been in
+    // it, or it started more than two hours ago
+    test("a call rings unless the user is in it, has been in it, or it is old", async () => {
+        const { activeVideoCall, incomingVideoCall, ringForRemoteCall } = await import("./video");
+        const chatId = { kind: "group_chat", groupId: "g1" } as const;
+        const now = 10 * 60 * 60 * 1000;
+        const call = (messageId: bigint) => ({
+            chatId,
+            userId: "u1",
+            messageId,
+            callType: "default" as const,
+            currentUserIsParticipant: false,
+            timestamp: BigInt(now),
+        });
+        incomingVideoCall.set(undefined);
+
+        ringForRemoteCall({ ...call(10n), currentUserIsParticipant: true }, now);
+        ringForRemoteCall({ ...call(11n), timestamp: BigInt(now - 2 * 60 * 60 * 1000 - 1) }, now);
+        activeVideoCall.joining(chatId, "default");
+        ringForRemoteCall(call(12n), now);
+        activeVideoCall.endCall();
+        expect(get(incomingVideoCall)).toBeUndefined();
+
+        ringForRemoteCall(call(13n), now);
+        expect(get(incomingVideoCall)?.messageId).toBe(13n);
+        incomingVideoCall.set(undefined);
+    });
+
     test("joining / setView / endCall lifecycle", async () => {
         const { activeVideoCall, microphone, camera } = await import("./video");
         const chatId = { kind: "direct_chat", userId: "u1" } as const;

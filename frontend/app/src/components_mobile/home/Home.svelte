@@ -14,7 +14,6 @@
         MultiUserChatIdentifier,
         NervousSystemDetails,
         OpenChat,
-        PubSubEvents,
         ResourceKey,
         RouteParams,
     } from "@client";
@@ -53,7 +52,7 @@
     import { i18nKey } from "../../i18n/i18n";
     import { chitPopup, disableChit } from "../../stores/settings";
     import { toastStore } from "../../stores/toast";
-    import { activeVideoCall, incomingVideoCall } from "../../stores/video";
+    import { ringForRemoteCall, stopRingingForRemoteCall } from "../../stores/video";
     import { removeQueryStringParam } from "../../utils/urls";
     import AreYouSure from "../AreYouSure.svelte";
     import LegacyInstallBanner from "../LegacyInstallBanner.svelte";
@@ -150,8 +149,8 @@
             subscribe("userSuspensionChanged", reload),
             subscribe("selectedChatInvalid", selectedChatInvalid),
             subscribe("sendMessageFailed", sendMessageFailed),
-            subscribe("remoteVideoCallStarted", remoteVideoCallStarted),
-            subscribe("remoteVideoCallEnded", remoteVideoCallEnded),
+            subscribe("remoteVideoCallStarted", (ev) => ringForRemoteCall(ev)),
+            subscribe("remoteVideoCallEnded", stopRingingForRemoteCall),
             subscribe("notification", (n) => client.notificationReceived(n)),
             subscribe("noAccess", () => (modal = { kind: "no_access" })),
             subscribe("restrictedContent", () => (modal = { kind: "restricted_content" })),
@@ -196,25 +195,6 @@
         if (alert) {
             toastStore.showFailureToast(i18nKey("errorSendingMessage"));
         }
-    }
-
-    function remoteVideoCallEnded(messageId: bigint) {
-        if ($incomingVideoCall?.messageId === messageId) {
-            incomingVideoCall.set(undefined);
-        }
-    }
-
-    function remoteVideoCallStarted(ev: PubSubEvents["remoteVideoCallStarted"]) {
-        // If current user is already in the call, or has previously been in the call, or the call started more than 2 hours ago, exit
-        if (
-            chatIdentifiersEqual($activeVideoCall?.chatId, ev.chatId) ||
-            ev.currentUserIsParticipant ||
-            Number(ev.timestamp) < Date.now() - 2 * 60 * 60 * 1000
-        ) {
-            return;
-        }
-
-        incomingVideoCall.set(ev);
     }
 
     async function routeChange(initialised: boolean, route: RouteParams): Promise<void> {
