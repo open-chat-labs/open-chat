@@ -174,6 +174,7 @@ import {
     type CreateGroupOutcome,
     type CreateGroupResponse,
     type CreateMultiUserCanisterResponse,
+    type FinaliseAccountLinkingResponse,
     type FundsInPreviousWallet,
     type MoveFundsOutcome,
     type CreateUserGroupResponse,
@@ -9297,26 +9298,26 @@ export class OpenChat {
             .catch(() => undefined);
     }
 
-    setModerationFlags(flags: number): Promise<number> {
+    async setModerationFlags(flags: number): Promise<number> {
         const previousValue = moderationFlagsEnabledStore.value;
         currentUserStore.set({
             ...currentUserStore.value,
             moderationFlagsEnabled: flags,
         });
 
-        return this.#worker
+        const saved = await this.#worker
             .send({
                 kind: "setModerationFlags",
                 flags,
             })
-            .then((resp) => (resp === "success" ? flags : previousValue))
-            .catch(() => {
-                currentUserStore.set({
-                    ...currentUserStore.value,
-                    moderationFlagsEnabled: previousValue,
-                });
-                return previousValue;
-            });
+            .catch(() => false);
+        if (saved) return flags;
+
+        currentUserStore.set({
+            ...currentUserStore.value,
+            moderationFlagsEnabled: previousValue,
+        });
+        return previousValue;
     }
 
     /**
@@ -12226,7 +12227,7 @@ export class OpenChat {
         principal: string,
         publicKey: Uint8Array,
         webAuthnKey?: WebAuthnKeyFull,
-    ): Promise<DelegationIdentity> {
+    ): Promise<FinaliseAccountLinkingResponse> {
         return this.#worker.send({
             kind: "finaliseAccountLinkingWithCode",
             tempKey: tempKey.getKeyPair(),

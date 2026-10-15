@@ -134,14 +134,10 @@ export class WorkerAgent {
     }
 
     send<Req extends WorkerRequest>(request: Req): Promise<WorkerResult<Req>> {
-        //eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        //@ts-ignore
         return new Promise<WorkerResult<Req>>(this.#sendRequestInternal(request));
     }
 
     stream<Req extends WorkerRequest>(request: Req): Stream<WorkerResult<Req>> {
-        //eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        //@ts-ignore
         return new Stream<WorkerResult<Req>>(this.#sendRequestInternal(request));
     }
 
