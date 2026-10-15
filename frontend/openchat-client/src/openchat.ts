@@ -850,6 +850,8 @@ export class OpenChat {
     #oneSecAddressUnsub: Unsubscriber | undefined = undefined;
     #solBalancePoller: Poller | undefined = undefined;
     #solAddressUnsub: Unsubscriber | undefined = undefined;
+    // Until when the user's SOL deposit address is checked every minute (see `#startSolBalanceUpdateJob`)
+    #solDepositWatchedUntil = 0;
     #userUpdatePoller: Poller | undefined = undefined;
     #exchangeRatePoller: Poller | undefined = undefined;
     #proposalTalliesPoller: Poller | undefined = undefined;
@@ -10324,6 +10326,11 @@ export class OpenChat {
         });
     }
 
+    // The user's SOL deposit address is checked once when it's loaded, which credits SOL sent to it
+    // since the user's last visit, then every minute (every 5 in the background) for an hour after
+    // the user is shown it, since SOL sent from an exchange can take a while to arrive. Each check
+    // calls Alchemy, unlike the BTC checks, which query the Bitcoin canister, so it isn't watched
+    // for longer.
     #startSolBalanceUpdateJob() {
         this.#solAddressUnsub?.();
         this.#solAddressUnsub = solanaAddress.subscribe((addr) => {
@@ -10331,8 +10338,14 @@ export class OpenChat {
             this.#solBalancePoller?.stop();
             this.#solBalancePoller = undefined;
             if (addr !== undefined) {
+                let checked = false;
                 this.#solBalancePoller = new Poller(
-                    () => this.#updateSolBalance(addr),
+                    async () => {
+                        if (!checked || Date.now() < this.#solDepositWatchedUntil) {
+                            checked = true;
+                            await this.#updateSolBalance(addr);
+                        }
+                    },
                     ONE_MINUTE_MILLIS,
                     5 * ONE_MINUTE_MILLIS,
                     true,
@@ -10397,7 +10410,10 @@ export class OpenChat {
         return address;
     }
 
+    // The address the deposit view shows the user, which is watched for deposits from then on for a
+    // while (see `#startSolBalanceUpdateJob`)
     async getSolAddress(): Promise<string> {
+        this.#solDepositWatchedUntil = Date.now() + ONE_HOUR;
         const storeValue = get(solanaAddress);
         if (storeValue !== undefined) {
             return Promise.resolve(storeValue);

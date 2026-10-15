@@ -8,6 +8,8 @@ pub const CKSOL_MINTER_CANISTER_ID: Principal = Principal::from_slice(&[0, 0, 0,
 // The cycles the minter requires attached to a `deposit_sol` call, of which it keeps the cost of
 // reading the deposit address's balance, plus its fee if a deposit is queued, and refunds the rest
 pub const DEPOSIT_SOL_REQUIRED_CYCLES: u128 = 1_000_000_000_000;
+// The most the canister will attach should the minter come to require more
+pub const MAX_DEPOSIT_SOL_CYCLES: u128 = 2_000_000_000_000;
 
 #[test]
 fn cksol_minter_canister_id() {

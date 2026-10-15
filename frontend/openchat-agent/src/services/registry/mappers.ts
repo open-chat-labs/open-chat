@@ -9,8 +9,8 @@ import {
     BTC_SYMBOL,
     buildTokenLogoUrl,
     CKBTC_SYMBOL,
-    CKSOL_SYMBOL,
     INDEX_CANISTER_ICP,
+    LEDGER_CANISTER_CKSOL,
     LEDGER_CANISTER_ICP,
     SOL_SYMBOL,
     UnsupportedValueError,
@@ -118,8 +118,9 @@ function tokenDetails(
         tokenDetails.logo = "/assets/btc_logo.svg";
     }
 
-    if (tokenDetails.symbol === CKSOL_SYMBOL) {
-        // Override ckSOL to SOL
+    if (tokenDetails.ledger === LEDGER_CANISTER_CKSOL) {
+        // Override ckSOL to SOL, by its ledger, since the deposit view gives SOL the ckSOL minter's
+        // deposit address
         tokenDetails.name = "Solana";
         tokenDetails.symbol = SOL_SYMBOL;
         tokenDetails.logo = "/assets/sol_logo.svg";

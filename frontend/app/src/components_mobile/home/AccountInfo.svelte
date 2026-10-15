@@ -10,6 +10,7 @@
         encodeIcrcAccount,
         ICP_SYMBOL,
         Lazy,
+        LEDGER_CANISTER_CKSOL,
         OpenChat,
         type OneSecTransferFees,
         SOL_SYMBOL,
@@ -41,7 +42,7 @@
     let selectedNetwork = $state<string>();
     let isBtc = $derived(tokenDetails.symbol === BTC_SYMBOL);
     let isBtcNetwork = $derived(selectedNetwork === BTC_SYMBOL);
-    let isSol = $derived(tokenDetails.symbol === SOL_SYMBOL);
+    let isSol = $derived(tokenDetails.ledger === LEDGER_CANISTER_CKSOL);
     let isSolNetwork = $derived(selectedNetwork === SOL_SYMBOL);
     let oneSecEnabled = $derived(
         tokenDetails.oneSecEnabled && tokenDetails.evmContractAddresses.length > 0,
