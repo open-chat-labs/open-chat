@@ -3085,6 +3085,7 @@
       "balance": "Balance {amount} {symbol}",
       "checkingDexList": "Checking {list}",
       "completeLabel": "SWAP COMPLETE",
+      "amountTooSmall": "Amount too small",
       "enterAmount": "Enter an amount",
       "expired": "Expired",
       "findingRate": "Finding the best rate",
@@ -3098,7 +3099,8 @@
       "noQuote": "No quote yet",
       "noQuoteBody": "Get a quote to see the rate, fees and the minimum you'll receive. Quotes last 30 seconds.",
       "notEnough": "Not enough {symbol}",
-      "overBalance": "More than your balance after fees",
+      "overBalance": "More than your balance",
+      "tooSmall": "Must be more than {min} {symbol} (the swap's ledger fees)",
       "phase": {
         "return": "Return to your wallet",
         "send": "Send to {dex}",

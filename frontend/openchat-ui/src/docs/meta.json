@@ -16243,17 +16243,6 @@
         "doc": "DEX names shown while a quote is found."
       },
       {
-        "name": "payFees",
-        "type": "number",
-        "default": null,
-        "editor": null,
-        "options": null,
-        "section": null,
-        "required": false,
-        "componentDefault": null,
-        "doc": "Swap: the pay token's ledger fees a swap spends on top of the amount (see WalletSwap)."
-      },
-      {
         "name": "onQuote",
         "type": "(r: SwapRequest) => Promise<SwapQuote>",
         "default": null,
@@ -17039,17 +17028,6 @@
         "required": false,
         "componentDefault": "[]",
         "doc": "DEX names shown while a quote is found."
-      },
-      {
-        "name": "payFees",
-        "type": "number",
-        "default": null,
-        "editor": null,
-        "options": null,
-        "section": null,
-        "required": false,
-        "componentDefault": "1",
-        "doc": "How many of the pay token's ledger fees (WalletToken.fee) a swap spends on top of the amount, e.g. 2 for a DEX that takes an approve and a transfer. They are kept back from Max and count against the balance."
       },
       {
         "name": "onQuote",

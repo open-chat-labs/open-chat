@@ -2,11 +2,14 @@
      steps grouped into three phases). The host does the work: onQuote returns the quote (output, fees, impact, expiry) and
      onSwap runs it, reporting progress through onStep; either rejecting keeps the amount and shows an error.
      Editing amount/tokens drops a live quote; slippage doesn't (min. received recomputes). Below 760px the quote panel
-     stacks under the form. Pay offers only held tokens; Get offers anything swappable, yours first. -->
+     stacks under the form. Pay offers only held tokens; Get offers anything swappable, yours first.
+     The amount is everything that leaves the wallet: the host takes the swap's ledger fees out of it (2 × WalletToken.fee,
+     approve + pull), so Max is the whole balance and an amount of 3 fees or less is too small to swap. -->
 <script lang="ts" module>
   export interface SwapRequest {
     from: string;
     to: string;
+    /** Everything taken from the wallet, ledger fees included (the host swaps it less those fees). */
     amount: number;
     /** Max slippage, in percent. */
     slippagePct: number;
@@ -61,9 +64,6 @@
     token?: string;
     /** DEX names shown while a quote is found ("Checking KongSwap, ICPSwap and Sonic"). */
     dexes?: string[];
-    /** How many of the pay token's ledger fees (WalletToken.fee) a swap spends on top of the amount, e.g. 2 for a DEX
-     *  that takes an approve and a transfer. They are kept back from Max and count against the balance. */
-    payFees?: number;
     /** Find the best quote. Reject to go back to the form with an error. Without it, no quote can be fetched. */
     onQuote?: (r: SwapRequest) => Promise<SwapQuote>;
     /** Run the swap; call onStep(i) as each of the 5 steps (deposit, transfer, notify, swap, withdraw) starts.
@@ -74,7 +74,7 @@
     onSwapped?: (s: { from: string; to: string; amount: number; out: number; fiat: number; fromDp: number; toDp: number }) => void;
   }
 
-  let { tokens, token, dexes = [], payFees = 1, onQuote, onSwap, onClose, onSwapped }: Props = $props();
+  let { tokens, token, dexes = [], onQuote, onSwap, onClose, onSwapped }: Props = $props();
   // `t` is the receiving token below, so the translator is `tr`
   const tr = useT();
 
@@ -114,10 +114,10 @@
   const impactPct = $derived(quote?.impactPct ?? 0);
   const out = $derived(received ?? quote?.out ?? 0);
   const slip = $derived(SLIPS[slipIdx]);
-  // what can be swapped: the balance less the ledger fees the swap itself costs
-  const spendable = $derived(f ? Math.max(0, f.held - (f.fee ?? 0) * payFees) : 0);
-  const over = $derived(!!f && n > spendable);
-  const ok = $derived(n > 0 && !over && !!onQuote);
+  const over = $derived(!!f && n > f.held);
+  // the approve and pull fees come out of the amount, and what's left must still be more than a fee
+  const tooSmall = $derived(!!f && n > 0 && n <= 3 * (f.fee ?? 0));
+  const ok = $derived(n > 0 && !over && !tooSmall && !!onQuote);
   const dexName = $derived(quote?.dex ?? '');
   const listFmt = new Intl.ListFormat(i18n.locale ?? 'en', { type: 'conjunction' });
   const quoted = $derived(stage === 'quoted');
@@ -247,7 +247,7 @@
   function chooseAmount(k: number) {
     if (locked) return;
     drop();
-    amt = amountText(floorTo(spendable * k, f.dp), f.dp);
+    amt = amountText(floorTo(f.held * k, f.dp), f.dp);
   }
 
   function flip() {
@@ -309,8 +309,8 @@
                 drop();
                 amt = cleanAmount(e.currentTarget.value);
               }}
-              tone={over ? 'danger' : 'default'}
-              note={over ? tr('ui.walletSwap.overBalance') : `≈ ${usd(usdIn)}`}
+              tone={over || tooSmall ? 'danger' : 'default'}
+              note={over ? tr('ui.walletSwap.overBalance') : tooSmall ? tr('ui.walletSwap.tooSmall', { min: fmt(3 * (f.fee ?? 0), f.dp), symbol: f.symbol }) : `≈ ${usd(usdIn)}`}
               symbol={f.symbol}
               mark={f.mark}
               gradient={f.grad}
@@ -352,7 +352,7 @@
               </div>
               {#if error}<span class="swap-error" role="alert">{tr(error === 'quote' ? 'ui.walletSwap.quoteFailed' : 'ui.walletSwap.swapFailed')}</span>{/if}
               <span class="cta" class:disabled={!ok} onclick={getQuote} tabindex="0" role="button" aria-disabled={!ok}
-                >{over ? tr('ui.walletSwap.notEnough', { symbol: f.symbol }) : n > 0 ? tr('ui.walletSwap.getQuote') : tr('ui.walletSwap.enterAmount')}</span
+                >{over ? tr('ui.walletSwap.notEnough', { symbol: f.symbol }) : tooSmall ? tr('ui.walletSwap.amountTooSmall') : n > 0 ? tr('ui.walletSwap.getQuote') : tr('ui.walletSwap.enterAmount')}</span
               >
             {:else if stage === 'quoting'}
               <ListSectionLabel label={tr('ui.walletSwap.quoteLabel')} />

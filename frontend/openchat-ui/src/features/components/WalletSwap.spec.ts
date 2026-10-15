@@ -124,18 +124,29 @@ describe('WalletSwap', () => {
   }
   const over = () => cta().textContent!.includes('Not enough');
 
-  test('Max keeps back the ledger fee, and the whole balance reads as too much', () => {
-    const input = max({ held: 10, fee: 0.0001 });
-    expect(input.value).toBe('9.9999');
-    expect(over()).toBe(false);
-    input.value = '10';
+  const blocked = () => cta().getAttribute('aria-disabled') === 'true';
+  function type(input: HTMLInputElement, text: string) {
+    input.value = text;
     input.dispatchEvent(new Event('input', { bubbles: true }));
     flushSync();
+  }
+
+  test('Max is the whole balance: the host takes the ledger fees out of the amount', () => {
+    const input = max({ held: 10, fee: 0.0001 });
+    expect(input.value).toBe('10');
+    expect(over()).toBe(false);
+    expect(blocked()).toBe(false);
+    type(input, '10.0001');
     expect(over()).toBe(true);
   });
 
-  test('payFees keeps back that many fees', () => {
-    expect(max({ held: 10, fee: 0.0001 }, { payFees: 2 }).value).toBe('9.9998');
+  test('an amount of 3 fees or less (approve + pull, then more than a fee left) is too small', () => {
+    const input = max({ held: 10, fee: 0.0001 });
+    type(input, '0.0003');
+    expect(blocked()).toBe(true);
+    expect(target.textContent).toContain('Must be more than 0.0003 ICP');
+    type(input, '0.0004');
+    expect(blocked()).toBe(false);
   });
 
   test('Max is the whole balance to the last unit (no float rounding, no 6-decimal cap)', () => {
