@@ -413,7 +413,7 @@
               <span class="share-title">{t('ui.inviteDialog.enableSharing')}</span>
               <span class="share-sub">{t('ui.inviteDialog.shareSub', { noun })}</span>
             </div>
-            <div class="toggle"><Toggle on={shareOn} disabled={!canInvite || !onShareToggle} onChange={toggleSharing} /></div>
+            <div class="toggle"><Toggle on={shareOn} ariaLabel="ui.inviteDialog.enableSharing" disabled={!canInvite || !onShareToggle} onChange={toggleSharing} /></div>
           </div>
 
           {#if shareOn && link}

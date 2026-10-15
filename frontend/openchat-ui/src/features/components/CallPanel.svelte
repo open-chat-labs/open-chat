@@ -1,7 +1,8 @@
 <!-- Live call surface. Inline (in the conversation column, under the header) or full screen (`full`).
      Layout rule: with 1–2 other people your own video floats as a draggable window that snaps to a corner;
-     with 3+ others everyone, you included, gets an equal tile. Sharing your screen puts it on stage with people in a strip.
-     Full screen hides the top bar and controls after 3s without pointer movement.
+     with 3+ others everyone, you included, gets an equal tile. Sharing your screen puts it on stage with people (their
+     camera feeds, yours included) in a strip.
+     Full screen hides the top bar and controls after 3s without input (pointer, keys, focus); they stay while focused.
      The host owns every media state: mute (`muted` + onToggleMute), camera (`camera` + onToggleCamera) and screen sharing
      (`sharing` + onToggleShare). Camera / share flip at once and roll back if the host's promise rejects; their buttons are
      hidden without the callback. Feeds are MediaStreams (person.stream, self.stream, screenStream); who is talking comes
@@ -191,8 +192,12 @@
   );
 
   const panelShown = $derived(!!onTogglePanel && panelOpen);
-  const chromeHidden = $derived(full && idle);
+  // the controls stay while keyboard focus is on them: hiding focused buttons would leave a keyboard user lost
+  let focusInChrome = $state(false);
+  const chromeHidden = $derived(full && idle && !focusInChrome);
+  const inChrome = (el: EventTarget | null) => el instanceof Element && root.contains(el) && !!el.closest('.chrome');
 
+  // any input brings the controls back: mouse, keys, focus moving and touch
   function wake() {
     clearTimeout(idleTimer);
     idle = false;
@@ -259,7 +264,20 @@
   );
 </script>
 
-<div class="call" class:full class:idle={chromeHidden} bind:this={root} onmousemove={wake} data-screen-label={full ? 'Call · full screen' : 'Call'} role="group">
+<div
+  class="call"
+  class:full
+  class:idle={chromeHidden}
+  bind:this={root}
+  onmousemove={wake}
+  onpointerdown={wake}
+  onkeydown={wake}
+  onfocusin={(e) => {
+    focusInChrome = inChrome(e.target);
+    wake();
+  }}
+  onfocusout={(e) => (focusInChrome = inChrome(e.relatedTarget))}
+  data-screen-label={full ? 'Call · full screen' : 'Call'} role="group">
   <div class="stage" class:sharing style:grid-template-columns={cols}>
     {#if sharing}
       <div class="shared">
@@ -278,7 +296,11 @@
     <div class="strip">
       {#each strip as tile (tile.key)}
         <div class="strip-tile" class:speaking={tile.speaking} style:background={tile.bg}>
-          <div class="strip-center"><span class="strip-avatar" style:background={tile.grad}>{tile.initial}</span></div>
+          {#if tile.stream}
+            <video class="strip-video" class:mirror={tile.key === 'self'} use:feed={tile.stream} autoplay playsinline muted></video>
+          {:else}
+            <div class="strip-center"><span class="strip-avatar" style:background={tile.grad}>{tile.initial}</span></div>
+          {/if}
           <span class="tag"><span class="tag-mic" class:muted={tile.muted} style:mask="var(--icon-{tile.muted ? 'mic-off' : 'mic'}) center/contain no-repeat"></span>{tile.name}</span>
         </div>
       {/each}
@@ -671,7 +693,8 @@
   }
 
   .shared-video,
-  .pip-video {
+  .pip-video,
+  .strip-video {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -680,8 +703,13 @@
     border-radius: inherit;
   }
 
-  .pip-video {
+  .pip-video,
+  .strip-video {
     object-fit: cover;
+  }
+
+  .pip-video,
+  .strip-video.mirror {
     transform: scaleX(-1);
   }
 </style>

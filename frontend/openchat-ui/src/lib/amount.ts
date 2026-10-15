@@ -20,16 +20,56 @@ export function parseAmount(text: string): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-/** x rounded down to dp decimals, so a share of a balance never exceeds it. Float noise doesn't cost a unit:
- *  0.000251 * 1e6 is 250.99999999999997, still 251 units. */
-export function floorTo(x: number, dp: number): number {
-  const p = 10 ** dp;
-  return Math.floor(Number((x * p).toPrecision(15))) / p;
+// Amounts are cut and compared in whole units of the token's last decimal, read from the number's shortest decimal
+// form (what String(x) prints). Multiplying by 10^dp instead adds float noise (0.000251 * 1e6 is 250.99999999999997)
+// and, past 15-17 significant digits (18-decimal tokens, large balances), can round up past the balance.
+
+/** x as plain decimal digits: String(x) without an exponent ("1e-8" → "0.00000001"). */
+function plain(x: number): string {
+  const m = String(x).match(/^(\d+)(?:\.(\d+))?e([+-]\d+)$/);
+  if (!m) return String(x);
+  const digits = m[1] + (m[2] ?? '');
+  const point = m[1].length + Number(m[3]);
+  if (point <= 0) return `0.${'0'.repeat(-point)}${digits}`;
+  if (point >= digits.length) return digits + '0'.repeat(point - digits.length);
+  return `${digits.slice(0, point)}.${digits.slice(point)}`;
 }
 
-/** x as amount-input text: at most dp decimals, no exponent ("0.00000001", not "1e-8"), no trailing zeros. */
+/** x in whole units of 10^-dp, rounded down; 0 for anything not above 0. */
+export function toUnits(x: number, dp: number): bigint {
+  if (!(x > 0) || !Number.isFinite(x)) return 0n;
+  const [whole, frac = ''] = plain(x).split('.');
+  return BigInt(whole + frac.slice(0, dp).padEnd(dp, '0'));
+}
+
+function unitsText(units: bigint, dp: number): string {
+  const s = units.toString().padStart(dp + 1, '0');
+  return dp > 0 ? `${s.slice(0, -dp)}.${s.slice(-dp)}` : s;
+}
+
+/** The largest double below a positive x. */
+function below(x: number): number {
+  const bits = new BigInt64Array(new Float64Array([x]).buffer);
+  bits[0] -= 1n;
+  return new Float64Array(bits.buffer)[0];
+}
+
+/** A count of 10^-dp units as a number, never more than that many units: past 17 significant digits the nearest
+ *  double can be above the decimal, so it steps down to the one below. */
+export function fromUnits(units: bigint, dp: number): number {
+  let x = Number(unitsText(units, dp));
+  while (x > 0 && toUnits(x, dp) > units) x = below(x);
+  return x;
+}
+
+/** x rounded down to dp decimals; never more than x, so a share of a balance never exceeds it. */
+export function floorTo(x: number, dp: number): number {
+  return fromUnits(toUnits(x, dp), dp);
+}
+
+/** x as amount-input text: rounded down to dp decimals, no exponent ("0.00000001", not "1e-8"), no trailing zeros. */
 export function amountText(x: number, dp: number): string {
-  const s = x.toFixed(dp);
+  const s = unitsText(toUnits(x, dp), dp);
   return s.includes('.') ? s.replace(/\.?0+$/, '') : s;
 }
 

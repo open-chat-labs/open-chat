@@ -498,7 +498,7 @@
                   >{autoRenew ? t('ui.diamondDialog.renewsEvery', { plan: plan.key, symbol: sym }) : t('ui.diamondDialog.noRenew')}</span
                 >
               </div>
-              <div class="renew-toggle"><Toggle on={autoRenew} onChange={(on) => (autoRenew = on)} /></div>
+              <div class="renew-toggle"><Toggle on={autoRenew} ariaLabel="ui.diamondDialog.autoRenew" onChange={(on) => (autoRenew = on)} /></div>
             </div>
           </div>
           {#if !autoRenew}

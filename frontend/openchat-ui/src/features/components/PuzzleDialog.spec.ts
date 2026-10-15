@@ -18,7 +18,12 @@ const press = (el: Element | null | undefined) => (el as HTMLElement).click();
 const esc = () => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
 
 // two islands that need one bridge between them: solved by bridge 0-1 × 1
-const puzzle = { id: 'p1', number: 7, grid: 4, islands: [[0, 0, 1] as [number, number, number], [3, 0, 1] as [number, number, number]] };
+const puzzle = {
+  id: 'p1',
+  number: 7,
+  grid: 4,
+  islands: [[0, 0, 1] as [number, number, number], [3, 0, 1] as [number, number, number]],
+};
 
 describe('PuzzleDialog hints and checks', () => {
   let target: HTMLElement;
@@ -37,7 +42,20 @@ describe('PuzzleDialog hints and checks', () => {
     const onClose = vi.fn();
     const onHint = vi.fn(opts.onHint ?? (() => Promise.resolve([0, 1, 1] as [number, number, number])));
     const onSolved = vi.fn(opts.onSolved ?? (() => Promise.resolve()));
-    app = mount(PuzzleDialog, { target, props: { puzzle, tutorialSeen: true, puzzleStreak: 1, balance: 100, hintCost: 10, hintsAllowed: 3, onHint, onSolved, onClose } });
+    app = mount(PuzzleDialog, {
+      target,
+      props: {
+        puzzle,
+        tutorialSeen: true,
+        puzzleStreak: 1,
+        balance: 100,
+        hintCost: 10,
+        hintsAllowed: 3,
+        onHint,
+        onSolved,
+        onClose,
+      },
+    });
     flushSync();
     const islands = () => [...target.querySelectorAll('.island')];
     const bridge = () => {
@@ -46,7 +64,13 @@ describe('PuzzleDialog hints and checks', () => {
       press(islands()[1]);
       flushSync();
     };
-    return { onClose, onHint, onSolved, bridge, hint: () => press(target.querySelector('.hint')) };
+    return {
+      onClose,
+      onHint,
+      onSolved,
+      bridge,
+      hint: () => press(target.querySelector('.hint')),
+    };
   }
 
   test('nothing closes while a hint is being bought', async () => {
@@ -72,7 +96,11 @@ describe('PuzzleDialog hints and checks', () => {
     await settle();
     await vi.advanceTimersByTimeAsync(600);
     expect(onSolved).toHaveBeenCalledOnce();
-    expect(((onSolved.mock.calls[0] as unknown[])[0])).toMatchObject({ puzzleId: 'p1', bridges: { '0-1': 1 }, hints: 1 });
+    expect((onSolved.mock.calls[0] as unknown[])[0]).toMatchObject({
+      puzzleId: 'p1',
+      bridges: { '0-1': 1 },
+      hints: 1,
+    });
   });
 
   test('a paid hint that lands while the tutorial is open is still applied', async () => {
@@ -86,7 +114,10 @@ describe('PuzzleDialog hints and checks', () => {
     await settle();
     await vi.advanceTimersByTimeAsync(600);
     expect(onSolved).toHaveBeenCalledOnce();
-    expect(((onSolved.mock.calls[0] as unknown[])[0])).toMatchObject({ bridges: { '0-1': 1 }, hints: 1 });
+    expect((onSolved.mock.calls[0] as unknown[])[0]).toMatchObject({
+      bridges: { '0-1': 1 },
+      hints: 1,
+    });
   });
 
   test('nothing closes while the board is being checked, and the board is locked', async () => {
@@ -120,5 +151,53 @@ describe('PuzzleDialog hints and checks', () => {
     hint();
     await vi.advanceTimersByTimeAsync(1000);
     expect(onHint).not.toHaveBeenCalled();
+  });
+});
+
+describe('PuzzleDialog saved progress', () => {
+  let target: HTMLElement;
+  let app: object;
+  beforeEach(() => {
+    vi.useFakeTimers();
+    target = document.body.appendChild(document.createElement('div'));
+  });
+  afterEach(() => {
+    unmount(app);
+    target.remove();
+    vi.useRealTimers();
+  });
+
+  function open(saved: { puzzleId: string; br: Record<string, number>; elapsed: number; hints: number }) {
+    app = mount(PuzzleDialog, {
+      target,
+      props: { puzzle, tutorialSeen: true, puzzleStreak: 1, saved },
+    });
+    flushSync();
+  }
+  const bridges = () => target.querySelectorAll('.bridge').length;
+  const time = () => target.querySelector('.stat .mono')!.textContent;
+
+  test("restores this puzzle's progress", () => {
+    open({ puzzleId: 'p1', br: { '0-1': 1 }, elapsed: 65, hints: 0 });
+    expect(bridges()).toBe(1);
+    expect(time()).toBe('1:05');
+  });
+
+  test("ignores another puzzle's progress (e.g. yesterday's after the rollover)", () => {
+    open({ puzzleId: 'p0', br: { '0-1': 1 }, elapsed: 65, hints: 2 });
+    expect(bridges()).toBe(0);
+    expect(time()).toBe('0:00');
+  });
+
+  test('a bridge to an island this board does not have is dropped instead of breaking the board', () => {
+    expect(() =>
+      open({
+        puzzleId: 'p1',
+        br: { '0-1': 1, '1-5': 2, 'x-y': 1, '0-0': 1 },
+        elapsed: 0,
+        hints: 0,
+      }),
+    ).not.toThrow();
+    expect(bridges()).toBe(1);
   });
 });

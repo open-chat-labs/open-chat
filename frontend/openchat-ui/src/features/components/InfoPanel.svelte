@@ -197,7 +197,7 @@
                 <span class="setting-title">{t(row.title)}</span>
                 <span class="setting-hint">{row.hint}</span>
               </div>
-              <div class="setting-toggle"><Toggle on={row.on} onChange={row.onChange} /></div>
+              <div class="setting-toggle"><Toggle on={row.on} ariaLabel={row.title} onChange={row.onChange} /></div>
             </div>
             {#if row.disappearing && dmOn}
               <DurationChips value={dmAfter} title={t('ui.infoPanel.disappearTimeout')} hint={t('ui.infoPanel.disappearTimeoutHint')} onChange={(d) => setDisappear(row.source, true, d)} />

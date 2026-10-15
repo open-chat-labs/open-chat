@@ -98,6 +98,8 @@
   import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
 
   interface Saved {
+    /** The puzzle this progress is for (as onProgress reported it); progress for another puzzle is ignored. */
+    puzzleId: string;
     br: Bridges;
     elapsed: number;
     hints: number;
@@ -123,11 +125,12 @@
     hintsAllowed?: number;
     /** Time until the next puzzle. */
     countdown?: string;
+    /** Progress last reported by onProgress; used only when its puzzleId is this puzzle's. */
     saved?: Saved | null;
     /** Solved view: the recorded time / hints. */
     solvedTime?: number | null;
     solvedHints?: number | null;
-    onProgress?: (p: Saved & { puzzleId: string; done: number; total: number }) => void;
+    onProgress?: (p: Saved & { done: number; total: number }) => void;
     /** The board is complete: the host verifies it (and records the time). The solved view shows once this resolves;
      *  a rejection keeps the board in play with an error. */
     onSolved?: (r: { puzzleId: string; bridges: Bridges; elapsed: number; hints: number }) => Promise<unknown> | void;
@@ -165,12 +168,24 @@
 
   let view = $state<'tutorial' | 'play' | 'solved'>(untrack(() => (solved ? 'solved' : tutorialSeen ? 'play' : 'tutorial')));
   let step = $state(0);
-  let br = $state<Bridges>(untrack(() => saved?.br ?? {}));
+  // progress for another puzzle (e.g. yesterday's, kept past the daily rollover) is ignored; bridges must join two of
+  // this board's islands, so a stale key can never break the board
+  const restored = untrack(() => (saved && saved.puzzleId === puzzle.id ? saved : null));
+  const onBoard = (b: Bridges | undefined) => {
+    const n = untrack(() => puzzle.islands.length);
+    return Object.fromEntries(
+      Object.entries(b ?? {}).filter(([k, v]) => {
+        const m = /^(\d+)-(\d+)$/.exec(k);
+        return !!m && +m[1] < +m[2] && +m[2] < n && (v === 1 || v === 2);
+      }),
+    ) as Bridges;
+  };
+  let br = $state<Bridges>(onBoard(restored?.br));
   let hist = $state<Bridges[]>([]);
   let sel = $state<number | null>(null);
   let err = $state('');
-  let elapsed = $state(untrack(() => saved?.elapsed ?? 0));
-  let hints = $state(untrack(() => saved?.hints ?? 0));
+  let elapsed = $state(restored?.elapsed ?? 0);
+  let hints = $state(restored?.hints ?? 0);
   let tbr = $state<Bridges>({});
   let tsel = $state<number | null>(null);
   let terr = $state('');

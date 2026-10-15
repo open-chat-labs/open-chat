@@ -4031,6 +4031,17 @@
         "doc": ""
       },
       {
+        "name": "ariaLabel",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Accessible name when there is no `label` (the visible text sits elsewhere in the row). Resource key (or literal text)."
+      },
+      {
         "name": "disabled",
         "type": "boolean",
         "default": false,
@@ -13967,7 +13978,7 @@
         "section": null,
         "required": false,
         "componentDefault": "null",
-        "doc": ""
+        "doc": "Progress last reported by onProgress ({ puzzleId, br, elapsed, hints }); used only when its puzzleId is this puzzle's."
       },
       {
         "name": "solvedTime",

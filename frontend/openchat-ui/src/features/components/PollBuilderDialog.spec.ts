@@ -108,4 +108,14 @@ describe('PollBuilderDialog publish', () => {
     await settle();
     expect(publish).toHaveBeenCalledTimes(2);
   });
+
+  test('each poll setting switch is named after its row', () => {
+    open(() => Promise.resolve());
+    (target.querySelector('.settings-row') as HTMLElement).click();
+    flushSync();
+    const names = [...target.querySelectorAll('.settings-list [role=switch]')].map((x) => x.getAttribute('aria-label'));
+    expect(names.length).toBeGreaterThan(0);
+    expect(names[0]).toBe('Public votes');
+    expect(names.every((n) => !!n)).toBe(true);
+  });
 });

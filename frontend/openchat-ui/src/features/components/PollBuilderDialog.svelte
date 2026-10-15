@@ -251,7 +251,7 @@
               {#each settings as s}
                 <div class="setting">
                   <span class="setting-text"><span class="setting-label">{t(s.label)}</span><span class="setting-help">{t(s.help)}</span></span>
-                  <Toggle on={s.on} label="" onChange={s.toggle} />
+                  <Toggle on={s.on} ariaLabel={s.label} onChange={s.toggle} />
                 </div>
               {/each}
             </div>

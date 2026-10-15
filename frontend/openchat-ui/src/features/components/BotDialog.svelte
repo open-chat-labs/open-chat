@@ -310,7 +310,7 @@
                       </span>
                     {/if}
                   </span>
-                  <div class="perm-toggle"><Toggle on={!!granted[p.key]} onChange={(on) => (grantedOverride = { ...granted, [p.key]: on })} /></div>
+                  <div class="perm-toggle"><Toggle on={!!granted[p.key]} ariaLabel={p.label} onChange={(on) => (grantedOverride = { ...granted, [p.key]: on })} /></div>
                 </div>
               {/each}
             </div>

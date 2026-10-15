@@ -156,6 +156,15 @@ describe('WalletSwap', () => {
     expect(max({ held: 1.23456789, dp: 8, fee: 0 }).value).toBe('1.23456789');
   });
 
+  test('Max of a large 8-decimal balance or an 18-decimal balance is the balance, not "over"', () => {
+    expect(max({ held: 19605831.33811045, dp: 8, fee: 0 }).value).toBe('19605831.33811045');
+    expect(over()).toBe(false);
+    unmount(app!);
+    app = undefined;
+    expect(max({ held: 0.044038500211371456, dp: 18, fee: 0 }).value).toBe('0.044038500211371456');
+    expect(over()).toBe(false);
+  });
+
   test('the rate line shows the receiving token to its own decimals', async () => {
     // a receiving token worth far more than the pay token (any symbol, not only 'BTC')
     const dear: WalletToken = { ...tokens[1], price: 60000, dp: 8 };

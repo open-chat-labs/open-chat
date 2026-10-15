@@ -1054,7 +1054,7 @@
 {#snippet toggleRow(title: string, hint: string, on: boolean, change: (v: boolean) => void)}
   <div class="setting">
     <div class="setting-text"><span class="setting-title">{t(title)}</span><span class="setting-hint">{t(hint)}</span></div>
-    <div class="setting-control"><Toggle {on} onChange={change} /></div>
+    <div class="setting-control"><Toggle {on} ariaLabel={title} onChange={change} /></div>
   </div>
 {/snippet}
 
@@ -1276,7 +1276,7 @@
                 >{t('ui.profileDialog.chit.enableHint')}</span
               >
             </div>
-            <div class="setting-control"><Toggle on={chitEnabled} onChange={(v) => setChit({ enabled: v })} /></div>
+            <div class="setting-control"><Toggle on={chitEnabled} ariaLabel="ui.profileDialog.chit.enable" onChange={(v) => setChit({ enabled: v })} /></div>
           </div>
           {#if chitEnabled}
             <div class="block">

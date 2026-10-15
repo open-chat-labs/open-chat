@@ -1,5 +1,6 @@
 <!-- "Ways to earn CHIT": a "next up" trio (one quick win, one middling task, one referral) and every achievement
-     by group, with progress per group. The catalogue, rewards and done flags come from `achievements`; `unlocked`
+     by group, with progress per group (groups the catalogue has nothing for are left out, except Partners).
+     The catalogue, rewards and done flags come from `achievements`; `unlocked`
      (achievement ids) marks achievements earned this session as done;
      `highlight` opens that row's group, marks the row and scrolls it into view. -->
 <script lang="ts" module>
@@ -89,7 +90,9 @@
         .map((a) => ({ label: a.id, text: a.label, done: isDone(a.id, a.done), reward: a.reward, hl: a.id === highlight }))
         .sort((a, b) => Number(b.hl) - Number(a.hl) || Number(a.done) - Number(b.done));
       return { ...g, items, open, count: `${gotten} / ${items.length}`, pct: items.length ? Math.round((gotten / items.length) * 100) : 0, rows };
-    }),
+    })
+      // a group the host's catalogue has nothing for is left out; Partners stays, its empty line explains third parties
+      .filter((g) => g.items.length > 0 || g.key === 'partners'),
   );
 
   onMount(() => {
@@ -136,7 +139,7 @@
         <span class="caps">{t('ui.achievementsDialog.everythingElse')}</span>
         {#each groups as g}
           <div class="group" class:open={g.open} style:--group-ink={g.ink}>
-            <div class="group-head" onclick={() => (openKey = g.open ? null : g.key)} role="button" tabindex="0">
+            <div class="group-head" onclick={() => (openKey = g.open ? null : g.key)} role="button" tabindex="0" aria-expanded={g.open}>
               <span class="group-icon" style:mask="var(--icon-{g.icon}) center/contain no-repeat"></span>
               <div class="group-main">
                 <span class="group-label">{t(g.label)}</span>
@@ -154,7 +157,7 @@
                     <span class="row-reward">{r.hl ? t('ui.achievementsDialog.justEarned', { amount: fmt(r.reward) }) : r.done ? t('ui.achievementsDialog.earned') : t('ui.achievementsDialog.reward', { amount: fmt(r.reward) })}</span>
                   </div>
                 {/each}
-                {#if g.items.length === 0}
+                {#if g.items.length === 0 && g.key === 'partners'}
                   <span class="empty">{t('ui.achievementsDialog.partnersEmpty')}</span>
                 {/if}
               </div>

@@ -33,7 +33,7 @@
 
 <script lang="ts">
   import { getI18n, useT } from '../../lib/i18n';
-  import { amountText, cleanAmount, floorTo, parseAmount } from '../../lib/amount';
+  import { amountText, cleanAmount, floorTo, parseAmount, toUnits } from '../../lib/amount';
   import { onDestroy } from 'svelte';
   import type { WalletToken } from '../../lib/types';
   import AmountCard from '../../lib/components/AmountCard.svelte';
@@ -114,9 +114,10 @@
   const impactPct = $derived(quote?.impactPct ?? 0);
   const out = $derived(received ?? quote?.out ?? 0);
   const slip = $derived(SLIPS[slipIdx]);
-  const over = $derived(!!f && n > f.held);
+  // compared in whole units, so Max (the balance to its last decimal) is never "over" by a float hair
+  const over = $derived(!!f && toUnits(n, f.dp) > toUnits(f.held, f.dp));
   // the approve and pull fees come out of the amount, and what's left must still be more than a fee
-  const tooSmall = $derived(!!f && n > 0 && n <= 3 * (f.fee ?? 0));
+  const tooSmall = $derived(!!f && n > 0 && toUnits(n, f.dp) <= 3n * toUnits(f.fee ?? 0, f.dp));
   const ok = $derived(n > 0 && !over && !tooSmall && !!onQuote);
   const dexName = $derived(quote?.dex ?? '');
   const listFmt = new Intl.ListFormat(i18n.locale ?? 'en', { type: 'conjunction' });

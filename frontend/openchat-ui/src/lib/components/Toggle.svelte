@@ -1,4 +1,5 @@
-<!-- Switch, optionally with a label and help line (then it fills the row). Flips itself on click and reports onChange;
+<!-- Switch, optionally with a label and help line (then it fills the row). Without a label, pass ariaLabel (the row's
+     visible title) so screen readers name the switch. Flips itself on click and reports onChange;
      a parent that changes `on` takes control back (e.g. a cancelled PIN flow). -->
 <script lang="ts">
   import { useT } from '../i18n';
@@ -8,11 +9,13 @@
     label?: string;
     /** Resource key (or literal text). */
     help?: string;
+    /** Accessible name when there is no `label` (the visible text sits elsewhere in the row). Resource key (or literal text). */
+    ariaLabel?: string;
     disabled?: boolean;
     onChange?: (on: boolean) => void;
   }
 
-  let { on, label = '', help = '', disabled = false, onChange }: Props = $props();
+  let { on, label = '', help = '', ariaLabel = '', disabled = false, onChange }: Props = $props();
   const t = useT();
 
   let checked = $derived(on);
@@ -40,7 +43,7 @@
     onclick={toggle}
     role="switch"
     aria-checked={checked}
-    aria-label={label ? t(label) : undefined}
+    aria-label={label ? t(label) : ariaLabel ? t(ariaLabel) : undefined}
     aria-disabled={disabled || undefined}
     tabindex="0"
   >

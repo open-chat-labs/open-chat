@@ -345,6 +345,7 @@
             <div class="setting-toggle">
               <Toggle
                 on={autoOn}
+                ariaLabel="ui.walletSettingsDialog.autoConfig"
                 onChange={(on) => apply({ autoConfig: on, tokens: on ? picked : held.filter((t) => t.value >= floor).map((t) => t.symbol) })}
               />
             </div>
@@ -414,6 +415,7 @@
             <div class="setting-toggle">
               <Toggle
                 on={settings.pinOn ? pin?.mode !== 'disable' : pin?.mode === 'set'}
+                ariaLabel="ui.walletSettingsDialog.pinOnTransfers"
                 disabled={settings.pinOn ? !onDisablePin : !onSetPin}
                 onChange={togglePin}
               />

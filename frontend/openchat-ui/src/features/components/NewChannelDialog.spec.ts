@@ -108,4 +108,9 @@ describe('NewChannelDialog', () => {
     await settle();
     expect(onCreate).not.toHaveBeenCalled();
   });
+
+  test('the Public switch is named after its row', () => {
+    open();
+    expect(target.querySelector('.vis-toggle [role=switch]')!.getAttribute('aria-label')).toBe('Public channel');
+  });
 });

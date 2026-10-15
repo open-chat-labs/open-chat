@@ -43,7 +43,7 @@
   import QuickAmountChips from '../../lib/components/QuickAmountChips.svelte';
   import SideCard from '../../lib/components/SideCard.svelte';
   import { getI18n, useT } from '../../lib/i18n';
-  import { amountText, cleanAmount, floorTo, parseAmount, usdText } from '../../lib/amount';
+  import { amountText, cleanAmount, floorTo, fromUnits, parseAmount, toUnits, usdText } from '../../lib/amount';
   import { detectNetwork, type AddressNetwork } from '../../lib/networks';
   import { onDestroy, tick } from 'svelte';
   import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
@@ -152,9 +152,14 @@
   const wrongNet = $derived(!!det && det !== 'unknown' && !tokenNets.includes(CHAIN_NET[det]));
   const badAddress = $derived(det === 'unknown' || wrongNet);
   const recipOk = $derived(mode === 'user' ? !!person : !!det && det !== 'unknown' && !wrongNet);
-  const over = $derived(!!tk && n + fee > tk.held);
+  // compared in whole units: float sums are off by a hair for many-decimal tokens and large balances
+  const over = $derived(!!tk && toUnits(n, tk.dp) + toUnits(fee, tk.dp) > toUnits(tk.held, tk.dp));
   const ok = $derived(recipOk && n > 0 && !over && feeKnown && !!onSent);
-  const avail = $derived(tk ? Math.max(0, tk.held - fee) : 0);
+  const avail = $derived.by(() => {
+    if (!tk) return 0;
+    const units = toUnits(tk.held, tk.dp) - toUnits(fee, tk.dp);
+    return units > 0n ? fromUnits(units, tk.dp) : 0;
+  });
   const shortAddress = $derived(address ? `${address.slice(0, 10)}…${address.slice(-6)}` : '');
   const toLabel = $derived(mode === 'user' ? (person ? person.name : '—') : shortAddress || '—');
   const toMain = $derived(mode === 'user' ? (person ? person.name : t('ui.walletSend.notChosen')) : shortAddress || t('ui.walletSend.notEntered'));

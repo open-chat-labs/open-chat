@@ -140,7 +140,7 @@
           <span class="vis-title">{t('ui.newChannelDialog.publicTitle')}</span>
           <span class="vis-hint">{t(isPublic ? 'ui.newChannelDialog.publicHint' : 'ui.newChannelDialog.privateHint')}</span>
         </div>
-        <div class="vis-toggle"><Toggle on={isPublic} onChange={(v) => (isPublic = v)} /></div>
+        <div class="vis-toggle"><Toggle on={isPublic} ariaLabel="ui.newChannelDialog.publicTitle" onChange={(v) => (isPublic = v)} /></div>
       </div>
     </div>
 

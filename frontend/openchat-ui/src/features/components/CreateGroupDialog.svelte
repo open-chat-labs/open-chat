@@ -918,7 +918,7 @@
                             <span class="switch-title">{s.title}</span>
                             <span class="switch-hint">{s.hint}</span>
                           </div>
-                          <div class="toggle-cell"><Toggle on={s.on} disabled={!!s.disabled} onChange={s.set} /></div>
+                          <div class="toggle-cell"><Toggle on={s.on} ariaLabel={s.title} disabled={!!s.disabled} onChange={s.set} /></div>
                         </div>
                       {/if}
                       {#if s.locked}
@@ -1153,7 +1153,7 @@
                 <span class="switch-title">{t(CG + 'rules.enable')}</span>
                 <span class="switch-hint">{t(CG + 'rules.enableHint')}</span>
               </div>
-              <div class="toggle-cell"><Toggle on={rulesOn} onChange={(on) => (rulesOn = on)} /></div>
+              <div class="toggle-cell"><Toggle on={rulesOn} ariaLabel={CG + 'rules.enable'} onChange={(on) => (rulesOn = on)} /></div>
             </div>
 
             {#if rulesOn}
@@ -1264,6 +1264,7 @@
                 <div class="toggle-cell">
                   <Toggle
                     on={threadsOverride}
+                    ariaLabel={CG + 'permissions.threadsOverride'}
                     onChange={(on) => {
                       threadsOverride = on;
                       permMenu = null;

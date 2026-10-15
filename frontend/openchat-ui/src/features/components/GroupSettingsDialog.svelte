@@ -744,7 +744,7 @@
                               <span class="switch-title">{s.title}</span>
                               <span class="switch-hint">{s.hint}</span>
                             </div>
-                            <div class="toggle-cell"><Toggle on={s.on} disabled={!!s.locked} onChange={s.set} /></div>
+                            <div class="toggle-cell"><Toggle on={s.on} ariaLabel={s.title} disabled={!!s.locked} onChange={s.set} /></div>
                           </div>
                           {#if s.locked}
                             <UpgradeBanner text={t('ui.groupSettingsDialog.diamondOnly')} {onUpgrade} />
@@ -852,7 +852,7 @@
                   <span class="switch-title">{t('ui.groupSettingsDialog.enableRules')}</span>
                   <span class="switch-hint">{t('ui.groupSettingsDialog.enableRulesHint')}</span>
                 </div>
-                {#if statusOnly}{@render status(rulesOn)}{:else}<div class="toggle-cell"><Toggle on={rulesOn} onChange={(on) => (rulesOn = on)} /></div>{/if}
+                {#if statusOnly}{@render status(rulesOn)}{:else}<div class="toggle-cell"><Toggle on={rulesOn} ariaLabel="ui.groupSettingsDialog.enableRules" onChange={(on) => (rulesOn = on)} /></div>{/if}
               </div>
 
               {#if rulesOn}
@@ -965,6 +965,7 @@
                   {#if statusOnly}{@render status(threadsOverride)}{:else}<div class="toggle-cell">
                       <Toggle
                         on={threadsOverride}
+                        ariaLabel="ui.groupSettingsDialog.threadsOverride"
                         onChange={(on) => {
                           threadsOverride = on;
                           permMenu = null;

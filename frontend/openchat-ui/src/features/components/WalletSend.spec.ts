@@ -1,5 +1,6 @@
 import { flushSync, mount, unmount } from 'svelte';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { toUnits } from '../../lib/amount';
 import type { WalletToken } from '../../lib/types';
 import WalletSend, { type WalletSendRequest } from './WalletSend.svelte';
 
@@ -178,6 +179,30 @@ describe('WalletSend quick amounts', () => {
     flushSync();
     document.querySelector('form.pin')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
     expect(sent.mock.calls[0][0]).toMatchObject({ amount: 1 });
+  });
+
+  test('Max of an 18-decimal balance is the balance less the fee, and can be sent', () => {
+    const eth: WalletToken = { symbol: 'ckETH', name: 'ckETH', mark: 'E', grad: 'blue', held: 0.044038500211371456, price: 2500, dp: 18, fee: 0.000002, nets: ['icp'] };
+    const sent = vi.fn();
+    app = mount(WalletSend, { target, props: { tokens: [eth], token: 'ckETH', address: ADDRESS, onSent: sent } });
+    flushSync();
+    const chips = target.querySelectorAll<HTMLElement>('.chips .chip');
+    chips[chips.length - 1].click();
+    flushSync();
+    // the whole balance less the fee, to the last unit a number can hold
+    expect(target.querySelector<HTMLInputElement>('.amount-input')!.value).toMatch(/^0\.04403650021137145\d$/);
+    const cta = target.querySelector('.summary-cell .cta')!;
+    expect(cta.getAttribute('aria-disabled')).toBe('false');
+    (cta as HTMLElement).click();
+    flushSync();
+    const pin = document.querySelector<HTMLInputElement>('.pin-input')!;
+    pin.value = '123456';
+    pin.dispatchEvent(new Event('input', { bubbles: true }));
+    flushSync();
+    document.querySelector('form.pin')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    const { amount } = sent.mock.calls[0][0];
+    expect(toUnits(amount, 18) + toUnits(eth.fee!, 18) <= toUnits(eth.held, 18)).toBe(true);
+    expect(amount).toBeGreaterThan(0.0440365002113714);
   });
 
   test('typing over a picked amount sends what was typed', () => {
