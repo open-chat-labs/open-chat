@@ -46,7 +46,6 @@ fn c2c_flag_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
             vec![args.message_id],
             true,
             now,
-            &state.data.migrated_user_ids,
         )?;
         results
             .into_iter()

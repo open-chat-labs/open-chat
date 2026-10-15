@@ -17,9 +17,7 @@ fn manage_favourite_chats_impl(args: Args, state: &mut RuntimeState) -> Response
     let data = &mut state.data;
     let result = data
         .users
-        .with_user_mut(my_index, |user| {
-            user_core::updates::manage_favourite_chats(user, args, &data.migrated_user_ids, now)
-        })
+        .with_user_mut(my_index, |user| user_core::updates::manage_favourite_chats(user, args, now))
         .expect("User not found");
     match result {
         Ok(adding) => {

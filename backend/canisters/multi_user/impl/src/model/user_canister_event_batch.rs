@@ -1,6 +1,5 @@
 use crate::{can_borrow_state, mutate_state, read_state, run_regular_jobs};
 use multi_user_canister::c2c_user_canister_v2::Event;
-use std::collections::HashSet;
 use timer_job_queues::{TimerJobItem, grouped_timer_job_batch};
 use tracing::info;
 use types::{C2CError, CanisterId, IdempotentEnvelope, Milliseconds, UserId};
@@ -41,8 +40,6 @@ impl TimerJobItem for UserCanisterEventBatch {
                     match lookup_recipient(self.key.into()).await {
                         Ok(EventRecipient::Migrated(new_user_id)) => {
                             mutate_state(|state| {
-                                state.data.migrated_user_ids.insert(self.key.into(), new_user_id);
-
                                 // Any events queued for the old id since this batch was taken are moved
                                 // too, after it, so that they stay in order. All are stamped with the
                                 // current time, since the MultiUser canister ignores any event from this
@@ -55,18 +52,6 @@ impl TimerJobItem for UserCanisterEventBatch {
                                     .cloned()
                                     .chain(state.data.user_canister_events_queue.take(&self.key))
                                     .collect();
-
-                                // The senders may not have been told of the migration, eg. if their
-                                // first message to the user was sent while the user was being
-                                // migrated, so their chats are moved onto the new id now
-                                let senders: HashSet<UserId> = pending.iter().map(|event| event.value.sender).collect();
-                                for sender in senders {
-                                    if let Some(sender_index) = state.index_of_local_user(sender) {
-                                        state.data.users.with_user_mut(sender_index, |user| {
-                                            user.migrate_their_user_id(self.key.into(), new_user_id, now)
-                                        });
-                                    }
-                                }
 
                                 let events = pending
                                     .into_iter()
@@ -114,20 +99,10 @@ impl TimerJobItem for UserCanisterEventBatch {
     }
 }
 
-// What has become of the user, whose latest id is taken from the cache if they are known to have been
-// migrated, and who is otherwise looked up from the LocalUserIndex and if need be the UserIndex. A
-// migration which hasn't yet been heard of isn't found, so the events are retried as usual until it has.
+// What has become of the user, looked up from the LocalUserIndex and if need be the UserIndex
 async fn lookup_recipient(user_id: UserId) -> Result<EventRecipient, C2CError> {
-    let (cached, local_user_index_canister_id, user_index_canister_id) = read_state(|state| {
-        (
-            state.data.migrated_user_ids.get(&user_id),
-            state.data.local_user_index_canister_id,
-            state.data.user_index_canister_id,
-        )
-    });
-    if let Some(new_user_id) = cached {
-        return Ok(EventRecipient::Migrated(new_user_id));
-    }
+    let (local_user_index_canister_id, user_index_canister_id) =
+        read_state(|state| (state.data.local_user_index_canister_id, state.data.user_index_canister_id));
 
     lookup_event_recipient(user_id, local_user_index_canister_id, user_index_canister_id).await
 }

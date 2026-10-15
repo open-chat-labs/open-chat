@@ -34,7 +34,7 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         .with_user_mut(my_index, |user| {
             user.verify_not_suspended()?;
 
-            if user.has_blocked(args.user_id, &state.data.migrated_user_ids) {
+            if user.has_blocked(args.user_id) {
                 return Err(OCErrorCode::TargetUserBlocked.into());
             }
 
@@ -52,7 +52,6 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
                     finalise_bot_message: false,
                     now,
                 },
-                &state.data.migrated_user_ids,
                 Some(event_pusher),
             )?;
             chat.thread_root_message_id(args.thread_root_message_index)

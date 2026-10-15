@@ -179,6 +179,7 @@ import {
     type CreateUserGroupResponse,
     type CreatedUser,
     type CryptocurrencyContent,
+    type CryptoTransferOutcome,
     type CryptocurrencyDetails,
     type CryptocurrencyTransfer,
     type CurrentUserResponse,
@@ -609,6 +610,7 @@ import {
 } from "./utils/swap";
 import { joinGroupFailureMessage } from "./utils/join";
 import { currentTip, tipResult } from "./utils/tip";
+import { cryptoTransferResult } from "./utils/cryptoTransfer";
 import {
     executionPaymentAmount,
     PROPOSAL_EXECUTION_WINDOW,
@@ -7401,7 +7403,10 @@ export class OpenChat {
      * Saves the profile fields that differ from `original`, in parallel. A field the backend rejects keeps its
      * unsaved value and carries the reason to show under it.
      */
-    async saveProfile(original: PublicProfile, candidate: PublicProfile): Promise<SaveProfileOutcome> {
+    async saveProfile(
+        original: PublicProfile,
+        candidate: PublicProfile,
+    ): Promise<SaveProfileOutcome> {
         const outcome: SaveProfileOutcome = { profile: original, errors: {} };
         if (anonUserStore.value) return outcome;
 
@@ -7652,7 +7657,9 @@ export class OpenChat {
     }
 
     /** Replaces the invite code, so links shared with the old one stop working */
-    async resetInviteLink(collection: MultiUserChat | CommunitySummary): Promise<InviteLinkOutcome> {
+    async resetInviteLink(
+        collection: MultiUserChat | CommunitySummary,
+    ): Promise<InviteLinkOutcome> {
         const id = this.#inviteCodeId(collection);
         if (id === undefined) return this.#codelessInviteLink(collection);
         const resp = await this.#worker
@@ -9370,6 +9377,32 @@ export class OpenChat {
             }
         }
         return tipResult(resp);
+    }
+
+    /**
+     * Sends tokens to a user in a message, prompting for the user's PIN if they have one. The
+     * ledger's balance is refreshed once the transfer has gone.
+     */
+    async sendCryptoTransfer(
+        messageContext: MessageContext,
+        transfer: PendingCryptocurrencyTransfer,
+        caption: string,
+    ): Promise<CryptoTransferOutcome> {
+        const content: CryptocurrencyContent = {
+            kind: "crypto_content",
+            caption: caption === "" ? undefined : caption,
+            transfer,
+        };
+        let resp: SendMessageResponse;
+        try {
+            resp = await this.sendMessageWithContent(messageContext, content, false);
+        } catch (err) {
+            // the user dismissed the PIN prompt
+            if (err === "cancelled") return { kind: "cancelled" };
+            this.logError("Unable to send a crypto transfer", err);
+            resp = CommonResponses.failure();
+        }
+        return cryptoTransferResult(resp);
     }
 
     loadSavedCryptoAccounts(): Promise<NamedAccount[]> {

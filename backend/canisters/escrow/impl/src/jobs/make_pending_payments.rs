@@ -37,7 +37,7 @@ pub fn run() {
     TIMER_ID.set(None);
 
     if let Some(pending_payment) = mutate_state(|state| state.data.pending_payments_queue.pop()) {
-        utils::async_work::spawn_tracked(process_payment(pending_payment, 0, false));
+        ic_cdk::futures::spawn_migratory(process_payment(pending_payment, 0, false));
         read_state(start_job_if_required);
     }
 }
@@ -47,7 +47,7 @@ pub(crate) fn retry(pending_payment: PendingPayment, failures: u32, outcome_unkn
     // Clears out the entry which the retry's timer job has left behind, along with any others, whatever
     // the outcome of the retry
     mutate_state(|state| state.data.timer_jobs.remove_completed_jobs());
-    utils::async_work::spawn_tracked(process_payment(pending_payment, failures, outcome_unknown));
+    ic_cdk::futures::spawn_migratory(process_payment(pending_payment, failures, outcome_unknown));
 }
 
 // `previous_failures` is the number of earlier attempts at the payment which failed, and

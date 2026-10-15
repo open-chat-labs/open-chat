@@ -12,7 +12,6 @@ use types::{
     EventIndex, EventWrapper, Message, MessageContent, MessageId, MessageIndex, OCResult, OgPreview, SenderContext,
     TimestampMillis, UserId, UserType,
 };
-use utils::migrated_user_ids::MigratedUserIds;
 
 // A message from a bot to the user, checked and validated
 pub struct BotMessage {
@@ -134,7 +133,6 @@ pub fn send<P: EventPusher>(
         let EditMessageSuccess {
             message_index, event, ..
         } = chat
-            // Bots are never migrated to a MultiUser canister, so have no earlier ids
             .edit_message::<P>(
                 EditMessageArgs {
                     sender: bot_id,
@@ -147,7 +145,6 @@ pub fn send<P: EventPusher>(
                     finalise_bot_message: message.finalised,
                     now,
                 },
-                &MigratedUserIds::default(),
                 None,
             )
             // Shouldn't happen

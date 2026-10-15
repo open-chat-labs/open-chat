@@ -1,16 +1,7 @@
 <script lang="ts">
-    import type { ChatSummary, OpenChat, SignerWallet, UserSummary } from "@client";
-    import {
-        allUsersStore,
-        cryptoBalanceStore,
-        enhancedCryptoLookup as cryptoLookup,
-        currentUserIdStore,
-        iconSize,
-        mobileWidth,
-        walletApprovalFee,
-    } from "@client";
-    import { type CryptocurrencyContent, type MessageContext, nowNanos } from "@shared";
-    import { getContext, onMount } from "svelte";
+    import type { ChatSummary, MessageContext, OpenChat, ResourceKey } from "@client";
+    import { iconSize, mobileWidth } from "@client";
+    import { getContext, untrack } from "svelte";
     import Alert from "svelte-material-icons/Alert.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
@@ -22,6 +13,7 @@
     import Overlay from "../Overlay.svelte";
     import TextArea from "../TextArea.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
+    import { CryptoTransferForm } from "@shared_components/home/cryptoTransfer/cryptoTransferForm.svelte";
     import AccountInfo from "./AccountInfo.svelte";
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
     import CryptoSelector from "./CryptoSelector.svelte";
@@ -41,73 +33,32 @@
         onClose: () => void;
     }
 
-    let {
-        draftAmount = $bindable(),
-        ledger = $bindable(),
-        chat,
-        defaultReceiver,
-        messageContext,
-        onClose,
-    }: Props = $props();
+    let { draftAmount, ledger, chat, defaultReceiver, messageContext, onClose }: Props = $props();
 
+    // The balance is refreshed by BalanceWithRefresh, which tells the form when it has been
+    const form = untrack(
+        () =>
+            new CryptoTransferForm(client, ledger, chat, defaultReceiver, draftAmount, {
+                refreshBalance: false,
+            }),
+    );
+    let tokenState = $derived(form.tokenState);
     const refreshing = false;
-    let error: string | undefined = $state(undefined);
+    // Why the transfer failed, or the balance couldn't be refreshed
+    let error: ResourceKey | undefined = $state(undefined);
     let message = $state("");
     let confirming = $state(false);
     let toppingUp = $state(false);
-    let tokenChanging = $state(true);
     let balanceWithRefresh: BalanceWithRefresh;
-    let receiver: UserSummary | undefined = $state(undefined);
-    let validAmount: boolean = $state(false);
     let sending = $state(false);
-    // The external wallet the transfer will come from, or undefined for the user's own OpenChat
-    // account. Paying from an external wallet spends that wallet's balance rather than the user's
-    // OpenChat one, so none of the limits derived from the latter apply while one is selected.
-    let sourceWallet = $state<SignerWallet | undefined>();
-    let payFromWallet = $derived(sourceWallet !== undefined);
     let approval: ExternalWalletApproval | undefined = $state();
 
-    let cryptoBalance = $derived($cryptoBalanceStore.get(ledger) ?? 0n);
-    let tokenDetails = $derived($cryptoLookup.get(ledger)!);
-    let symbol = $derived(tokenDetails.symbol);
-    let transferFee = $derived(tokenDetails.transferFee);
-    // What the transfer costs in fees, which includes the approval the wallet makes before the
-    // transfer is pulled from it
-    let transferFees = $derived(transferFee + walletApprovalFee(transferFee));
-    let multiUserChat = $derived(chat.kind === "group_chat" || chat.kind === "channel");
-    let remainingBalance = $state(0n);
-    $effect(() => {
-        remainingBalance =
-            draftAmount > BigInt(0) && !payFromWallet
-                ? cryptoBalance - draftAmount - transferFees
-                : cryptoBalance;
-    });
-    // What the user is able to spend, or undefined when that is the external wallet's business
-    // rather than ours
-    let spendingLimit = $derived(payFromWallet ? undefined : maxAmount(cryptoBalance));
-    let valid = $derived(
-        error === undefined && validAmount && receiver !== undefined && !tokenChanging,
-    );
-    // An empty OpenChat account is only a dead end while the user is paying from it
-    let zero = $derived(cryptoBalance <= transferFees && !tokenChanging && !payFromWallet);
-    let errorMessage = $derived(error !== undefined ? i18nKey(error) : $pinNumberErrorMessageStore);
-
-    onMount(() => {
-        // default the receiver to the other user in a direct chat
-        if (chat.kind === "direct_chat") {
-            receiver = $allUsersStore.get(chat.them.userId);
-        } else if (defaultReceiver !== undefined && defaultReceiver !== $currentUserIdStore) {
-            receiver = $allUsersStore.get(defaultReceiver);
-        }
-    });
+    let valid = $derived(error === undefined && form.valid);
+    let errorMessage = $derived(error ?? $pinNumberErrorMessageStore);
 
     function reset() {
         confirming = false;
         balanceWithRefresh?.refresh();
-    }
-
-    function maxAmount(balance: bigint): bigint {
-        return balance - transferFees;
     }
 
     function send() {
@@ -115,9 +66,6 @@
             confirming = true;
             return;
         }
-
-        const to = receiver;
-        if (to === undefined) return;
 
         sending = true;
         error = undefined;
@@ -130,42 +78,31 @@
                 if (fromAccount === undefined) {
                     sending = false;
                 } else {
-                    transfer(to, fromAccount);
+                    transfer(fromAccount);
                 }
             });
         } else {
-            transfer(to);
+            transfer();
         }
     }
 
-    // `fromAccount` is an external wallet which has just approved the transfer. Without it the
-    // funds come from the user's own OpenChat account, as they always have.
-    function transfer(to: UserSummary, fromAccount?: string) {
-        const content: CryptocurrencyContent = {
-            kind: "crypto_content",
-            caption: message === "" ? undefined : message,
-            transfer: {
-                kind: "pending",
-                ledger,
-                token: symbol,
-                recipient: to.userId,
-                amountE8s: draftAmount,
-                feeE8s: transferFee,
-                createdAtNanos: nowNanos(),
-                fromAccount,
-            },
-        };
-
-        client
-            .sendMessageWithContent(messageContext, content, false)
-            .then((resp) => {
-                if (resp.kind === "success" || resp.kind === "transfer_success") {
-                    onClose();
-                } else if ($pinNumberErrorMessageStore === undefined) {
-                    error = "errorSendingMessage";
-                }
-            })
-            .finally(() => (sending = false));
+    async function transfer(fromAccount?: string) {
+        const outcome = await form.send(messageContext, message, fromAccount);
+        sending = false;
+        switch (outcome.kind) {
+            case "sent":
+                onClose();
+                break;
+            case "cancelled":
+            case "pin_failed":
+                // a PIN failure shows the PIN failure store's message
+                break;
+            case "failed":
+                error = outcome.message;
+                break;
+            default:
+                outcome satisfies never;
+        }
     }
 
     function cancel() {
@@ -174,25 +111,15 @@
     }
 
     function onBalanceRefreshed() {
-        onBalanceRefreshFinished();
+        toppingUp = false;
         error = undefined;
+        form.balanceChecked();
     }
 
     function onBalanceRefreshError(err: string) {
-        onBalanceRefreshFinished();
-        error = err;
-    }
-
-    function onBalanceRefreshFinished() {
         toppingUp = false;
-        tokenChanging = false;
-        if (remainingBalance < 0 && !payFromWallet) {
-            remainingBalance = BigInt(0);
-            draftAmount = cryptoBalance - transferFees;
-            if (draftAmount < 0) {
-                draftAmount = BigInt(0);
-            }
-        }
+        error = i18nKey(err);
+        form.balanceChecked();
     }
 </script>
 
@@ -204,59 +131,65 @@
                     <div class="main-title">
                         <div><Translatable resourceKey={i18nKey("tokenTransfer.send")} /></div>
                         <div>
-                            <CryptoSelector bind:ledger />
+                            <CryptoSelector
+                                bind:ledger={() => form.ledger, (l) => (form.ledger = l)}
+                            />
                         </div>
                     </div>
                 </div>
-                <SourceWalletSelector bind:wallet={sourceWallet} {ledger} />
+                <SourceWalletSelector bind:wallet={form.sourceWallet} ledger={form.ledger} />
                 <!-- The balance is the external wallet's business while one is selected, so only
                      show OpenChat's own - but keep its space so the selector does not move -->
-                <div class="oc-balance" class:hidden={payFromWallet}>
+                <div class="oc-balance" class:hidden={form.payFromWallet}>
                     <BalanceWithRefresh
                         bind:toppingUp
                         bind:this={balanceWithRefresh}
-                        {ledger}
-                        value={remainingBalance}
+                        ledger={form.ledger}
+                        value={tokenState.remainingBalance}
                         label={i18nKey("cryptoAccount.shortBalanceLabel")}
                         bold
                         showTopUp
                         onClick={() => (confirming = false)}
                         onRefreshed={onBalanceRefreshed}
-                        onError={onBalanceRefreshError} />
+                        onError={onBalanceRefreshError}
+                    />
                 </div>
             </span>
         {/snippet}
         {#snippet body()}
             <form>
-                <div class="body" class:zero={zero || toppingUp}>
-                    {#if zero || toppingUp}
-                        <AccountInfo {ledger} />
-                        {#if zero}
+                <div class="body" class:zero={form.zero || toppingUp}>
+                    {#if form.zero || toppingUp}
+                        <AccountInfo ledger={form.ledger} />
+                        {#if form.zero}
                             <p>
                                 <Translatable
                                     resourceKey={i18nKey("tokenTransfer.zeroBalance", {
-                                        token: symbol,
-                                    })} />
+                                        token: tokenState.symbol,
+                                    })}
+                                />
                             </p>
                         {/if}
                         <p><Translatable resourceKey={i18nKey("tokenTransfer.makeDeposit")} /></p>
                     {:else}
-                        {#if multiUserChat}
+                        {#if form.multiUserChat}
                             <div class="receiver">
                                 <Legend label={i18nKey("tokenTransfer.receiver")} />
                                 <SingleUserSelector
-                                    bind:selectedReceiver={receiver}
-                                    autofocus={multiUserChat} />
+                                    bind:selectedReceiver={form.receiver}
+                                    autofocus={form.multiUserChat}
+                                />
                             </div>
                         {/if}
                         <div class="transfer">
                             <TokenInput
-                                {ledger}
-                                {transferFees}
-                                autofocus={!multiUserChat}
-                                bind:valid={validAmount}
-                                maxAmount={spendingLimit}
-                                bind:amount={draftAmount} />
+                                ledger={form.ledger}
+                                transferFees={tokenState.transferFees}
+                                autofocus={!form.multiUserChat}
+                                minAmount={tokenState.minAmount}
+                                maxAmount={form.spendingLimit}
+                                bind:amount={tokenState.draftAmount}
+                            />
                         </div>
                         <div class="message">
                             <Legend label={i18nKey("tokenTransfer.message")} />
@@ -265,7 +198,8 @@
                                 rows={3}
                                 autofocus={false}
                                 placeholder={i18nKey("tokenTransfer.messagePlaceholder")}
-                                bind:value={message} />
+                                bind:value={message}
+                            />
                         </div>
                         {#if confirming}
                             <div class="confirming">
@@ -275,25 +209,28 @@
                                 <div class="alert-txt">
                                     <Translatable
                                         resourceKey={i18nKey("tokenTransfer.warning", {
-                                            token: symbol,
-                                        })} />
+                                            token: tokenState.symbol,
+                                        })}
+                                    />
                                 </div>
                             </div>
                         {/if}
                         {#if errorMessage !== undefined}
                             <div class="error">
                                 <ErrorMessage
-                                    ><Translatable resourceKey={errorMessage} /></ErrorMessage>
+                                    ><Translatable resourceKey={errorMessage} /></ErrorMessage
+                                >
                             </div>
                         {/if}
                     {/if}
-                    {#if sourceWallet !== undefined}
+                    {#if form.sourceWallet !== undefined}
                         <ExternalWalletApproval
                             bind:this={approval}
-                            wallet={sourceWallet}
-                            {ledger}
-                            amount={draftAmount}
-                            chatId={messageContext.chatId} />
+                            wallet={form.sourceWallet}
+                            ledger={form.ledger}
+                            amount={tokenState.draftAmount}
+                            chatId={messageContext.chatId}
+                        />
                     {/if}
                 </div>
             </form>
@@ -302,15 +239,17 @@
             <span>
                 <ButtonGroup>
                     <Button small={!$mobileWidth} tiny={$mobileWidth} secondary onClick={cancel}
-                        ><Translatable resourceKey={i18nKey("cancel")} /></Button>
-                    {#if toppingUp || zero}
+                        ><Translatable resourceKey={i18nKey("cancel")} /></Button
+                    >
+                    {#if toppingUp || form.zero}
                         <Button
                             small={!$mobileWidth}
                             disabled={refreshing}
                             loading={refreshing}
                             tiny={$mobileWidth}
                             onClick={reset}
-                            ><Translatable resourceKey={i18nKey("refresh")} /></Button>
+                            ><Translatable resourceKey={i18nKey("refresh")} /></Button
+                        >
                     {:else}
                         <Button
                             small={!$mobileWidth}
@@ -321,7 +260,9 @@
                             ><Translatable
                                 resourceKey={i18nKey(
                                     confirming ? "tokenTransfer.confirm" : "tokenTransfer.send",
-                                )} /></Button>
+                                )}
+                            /></Button
+                        >
                     {/if}
                 </ButtonGroup>
             </span>

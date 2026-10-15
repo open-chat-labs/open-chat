@@ -12,12 +12,11 @@ use stable_memory_map::BaseKeyPrefix;
 use std::cmp::{max, min};
 use std::collections::HashSet;
 use types::{
-    BotNotification, BotUpdated, ChatEventCategory, ChatEventType, DirectChatSummary, DirectChatSummaryUpdates, EventContext,
-    EventIndex, EventWrapper, Message, MessageId, MessageIndex, Milliseconds, OCResult, OptionUpdate, P2PSwapAccepted,
-    P2PSwapCompleted, P2PSwapContent, P2PSwapStatus, ReserveP2PSwapSuccess, TimestampMillis, Timestamped, UserId,
-    UserIdAndPrincipal, UserType, VideoCallPresence,
+    BotNotification, BotUpdated, ChatEventCategory, ChatEventType, DirectChatSummary, DirectChatSummaryUpdates, EventIndex,
+    EventWrapper, Message, MessageId, MessageIndex, Milliseconds, OCResult, OptionUpdate, P2PSwapAccepted, P2PSwapCompleted,
+    P2PSwapContent, P2PSwapStatus, ReserveP2PSwapSuccess, TimestampMillis, Timestamped, UserId, UserIdAndPrincipal, UserType,
+    VideoCallPresence,
 };
-use utils::migrated_user_ids::MigratedUserIds;
 
 /// One user's copy of a direct chat. Each user of a chat holds their own copy, with its own events
 /// (so its own event and message indexes) and its own record of how far each of them has read,
@@ -102,66 +101,6 @@ impl DirectChat {
         }
     }
 
-    // Moves the chat onto the other user's new id, once they are migrated to a MultiUser canister.
-    // The ids in its events are replaced separately (see `update_user_ids_in_events`).
-    pub(crate) fn migrate_their_user_id(&mut self, new_user_id: UserId, now: TimestampMillis) {
-        self.them = new_user_id;
-        self.events.set_direct_chat_user(new_user_id);
-        self.them_migrated_at = Some(now);
-    }
-
-    // Whether the chat holds anything outside its events which `migrate_user_ids` would change
-    pub(crate) fn holds_user_ids_to_migrate(&self, my_user_id: UserId, migrated_user_ids: &MigratedUserIds) -> bool {
-        self.latest_ttl_change_by(my_user_id, migrated_user_ids).is_some()
-            || self.events.user_ids_with_metrics().iter().any(|u| *u != my_user_id)
-    }
-
-    // Moves what the chat holds outside its events under ids which either user had before being
-    // migrated to a MultiUser canister onto the ids the chat has for them now: who made the latest
-    // change to its TTL, and the user's own metrics. Any other metrics are removed, since only the
-    // user's own are ever read (see `ChatEvents::skip_their_metrics`), which leaves those of the
-    // other user under any id they had before. Returns whether anything changed.
-    pub(crate) fn migrate_user_ids(&mut self, my_user_id: UserId, migrated_user_ids: &MigratedUserIds) -> bool {
-        let mut changed = false;
-        if let Some(by) = self.latest_ttl_change_by(my_user_id, migrated_user_ids)
-            && let EventsTtlLatestChange::Changed(change) = &mut self.events_ttl_latest_change
-        {
-            change.by = by;
-            changed = true;
-        }
-        for user_id in self.events.user_ids_with_metrics() {
-            if user_id == my_user_id {
-                continue;
-            }
-            if migrated_user_ids.is_same_user(user_id, my_user_id) {
-                self.events.migrate_user_metrics(user_id, my_user_id);
-            } else {
-                self.events.remove_user_metrics(user_id);
-            }
-            changed = true;
-        }
-        changed
-    }
-
-    // Who made the latest change to the TTL, if it is recorded under an id which either user had
-    // before being migrated: the id the chat has for that user now, as a change made since would be
-    // recorded under. Both copies of the chat end up with the same ids, so they still settle a tie
-    // between two changes the same way (see `EventsTtlChange::supersedes`).
-    fn latest_ttl_change_by(&self, my_user_id: UserId, migrated_user_ids: &MigratedUserIds) -> Option<UserId> {
-        let EventsTtlLatestChange::Changed(change) = self.events_ttl_latest_change else {
-            return None;
-        };
-        if change.by == my_user_id || change.by == self.them {
-            None
-        } else if migrated_user_ids.is_same_user(change.by, my_user_id) {
-            Some(my_user_id)
-        } else if migrated_user_ids.is_same_user(change.by, self.them) {
-            Some(self.them)
-        } else {
-            None
-        }
-    }
-
     // The id unique to the chat which its stable memory keys are built from
     pub fn key_id(&self) -> u32 {
         self.events
@@ -172,25 +111,6 @@ impl DirectChat {
 
     pub fn events(&self) -> &ChatEvents {
         &self.events
-    }
-
-    // See `ChatEvents::update_user_ids`
-    pub fn update_user_ids(
-        &mut self,
-        after: Option<EventContext>,
-        f: &mut dyn FnMut(EventContext, UserId) -> UserId,
-        should_stop: &mut dyn FnMut() -> bool,
-    ) -> Option<EventContext> {
-        self.events.update_user_ids(after, f, should_stop)
-    }
-
-    // See `ChatEvents::update_user_ids_in_events`
-    pub fn update_user_ids_in_events(
-        &mut self,
-        contexts: impl IntoIterator<Item = EventContext>,
-        f: &mut dyn FnMut(UserId) -> UserId,
-    ) -> u32 {
-        self.events.update_user_ids_in_events(contexts, f)
     }
 
     pub fn main_events_reader(&self) -> ChatEventsListReader<'_> {
@@ -449,26 +369,20 @@ impl DirectChat {
     pub fn edit_message<P: EventPusher>(
         &mut self,
         args: EditMessageArgs,
-        migrated_user_ids: &MigratedUserIds,
         event_pusher: Option<P>,
     ) -> OCResult<EditMessageSuccess> {
-        self.events.edit_message(args, migrated_user_ids, event_pusher)
+        self.events.edit_message(args, event_pusher)
     }
 
-    pub fn delete_messages(
-        &mut self,
-        args: DeleteUndeleteMessagesArgs,
-        migrated_user_ids: &MigratedUserIds,
-    ) -> Vec<(MessageId, OCResult<DeleteMessageSuccess>)> {
-        self.events.delete_messages(args, migrated_user_ids)
+    pub fn delete_messages(&mut self, args: DeleteUndeleteMessagesArgs) -> Vec<(MessageId, OCResult<DeleteMessageSuccess>)> {
+        self.events.delete_messages(args)
     }
 
     pub fn undelete_messages(
         &mut self,
         args: DeleteUndeleteMessagesArgs,
-        migrated_user_ids: &MigratedUserIds,
     ) -> Vec<(MessageId, OCResult<Option<BotNotification>>)> {
-        self.events.undelete_messages(args, migrated_user_ids)
+        self.events.undelete_messages(args)
     }
 
     pub fn remove_deleted_message_content(
@@ -484,28 +398,21 @@ impl DirectChat {
     pub fn add_reaction<P: EventPusher>(
         &mut self,
         args: AddRemoveReactionArgs,
-        migrated_user_ids: &MigratedUserIds,
         event_pusher: Option<P>,
     ) -> OCResult<UpdateMessageSuccess<MessageInternal>> {
-        self.events.add_reaction(args, migrated_user_ids, event_pusher)
+        self.events.add_reaction(args, event_pusher)
     }
 
-    pub fn remove_reaction(
-        &mut self,
-        args: AddRemoveReactionArgs,
-        migrated_user_ids: &MigratedUserIds,
-    ) -> OCResult<UpdateMessageSuccess> {
-        self.events.remove_reaction(args, migrated_user_ids)
+    pub fn remove_reaction(&mut self, args: AddRemoveReactionArgs) -> OCResult<UpdateMessageSuccess> {
+        self.events.remove_reaction(args)
     }
 
     pub fn tip_message<P: EventPusher>(
         &mut self,
         args: TipMessageArgs,
-        migrated_user_ids: &MigratedUserIds,
         event_pusher: Option<P>,
     ) -> OCResult<UpdateMessageSuccess> {
-        self.events
-            .tip_message(args, EventIndex::default(), migrated_user_ids, event_pusher)
+        self.events.tip_message(args, EventIndex::default(), event_pusher)
     }
 
     pub fn mark_message_reminder_created_message_hidden(&mut self, message_index: MessageIndex, now: TimestampMillis) -> bool {
@@ -581,10 +488,9 @@ impl DirectChat {
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
         now: TimestampMillis,
-        migrated_user_ids: &MigratedUserIds,
     ) -> OCResult<UpdateMessageSuccess<u32>> {
         self.events
-            .cancel_p2p_swap(user_id, thread_root_message_index, message_id, now, migrated_user_ids)
+            .cancel_p2p_swap(user_id, thread_root_message_index, message_id, now)
     }
 
     pub fn set_p2p_swap_status(
@@ -672,8 +578,8 @@ impl DirectChat {
         });
     }
 
-    pub fn remove_expired_events(&mut self, migrated_user_ids: &MigratedUserIds, now: TimestampMillis) -> RemoveEventsResult {
-        self.events.remove_expired_events(migrated_user_ids, now)
+    pub fn remove_expired_events(&mut self, now: TimestampMillis) -> RemoveEventsResult {
+        self.events.remove_expired_events(now)
     }
 
     pub fn subscribe_bot_to_events(
@@ -703,7 +609,6 @@ mod tests {
     use chat_events::{MessageContentInternal, NullEventPusher, TextContentInternal};
     use ic_stable_structures::DefaultMemoryImpl;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
-    use std::collections::BTreeSet;
 
     #[test]
     fn messages_are_read_by_their_sender_and_read_positions_are_kept_per_user() {
@@ -810,47 +715,6 @@ mod tests {
 
     fn changed(by: u8, at: TimestampMillis) -> EventsTtlLatestChange {
         EventsTtlLatestChange::Changed(EventsTtlChange { by: user(by), at })
-    }
-
-    #[test]
-    fn ids_held_outside_the_events_are_moved_onto_the_ids_the_chat_has_now() {
-        init_stable_memory_map();
-        let (me, them, my_old, their_old, other) = (user(1), user(2), user(11), user(12), user(3));
-        let mut migrated_user_ids = MigratedUserIds::default();
-        migrated_user_ids.insert(my_old, me);
-        migrated_user_ids.insert(their_old, them);
-        let mut chat = DirectChat::new(me, them, UserType::User, 1, None, 123, 1);
-        // Messages sent under every id, the other user's metrics only being skipped under their
-        // current id
-        for (i, sender) in [me, my_old, them, their_old, other].into_iter().enumerate() {
-            chat.push_message::<NullEventPusher>(message(sender, i as u128, 10), None, None);
-        }
-        chat.set_events_time_to_live(their_old, Some(1000), 20);
-        assert_eq!(
-            chat.events().user_ids_with_metrics(),
-            BTreeSet::from([me, my_old, their_old, other])
-        );
-
-        assert!(chat.holds_user_ids_to_migrate(me, &migrated_user_ids));
-        assert!(chat.migrate_user_ids(me, &migrated_user_ids));
-
-        assert_eq!(chat.events_ttl_latest_change(), changed(2, 20));
-        // The user's metrics under their old id are merged into their own, and the rest removed
-        assert_eq!(chat.events().user_ids_with_metrics(), BTreeSet::from([me]));
-        let my_metrics = chat.events().user_metrics(&me, None).unwrap().hydrate();
-        assert_eq!(my_metrics.text_messages, 2);
-        assert!(!chat.holds_user_ids_to_migrate(me, &migrated_user_ids));
-        assert!(!chat.migrate_user_ids(me, &migrated_user_ids));
-
-        // A change recorded under the user's own old id is moved onto their id
-        chat.set_events_time_to_live(my_old, Some(2000), 30);
-        assert!(chat.migrate_user_ids(me, &migrated_user_ids));
-        assert_eq!(chat.events_ttl_latest_change(), changed(1, 30));
-
-        // As nothing is for a user who hasn't been migrated
-        chat.set_events_time_to_live(other, Some(3000), 40);
-        assert!(!chat.holds_user_ids_to_migrate(me, &migrated_user_ids));
-        assert_eq!(chat.events_ttl_latest_change(), changed(3, 40));
     }
 
     #[test]

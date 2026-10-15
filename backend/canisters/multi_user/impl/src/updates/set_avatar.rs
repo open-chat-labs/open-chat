@@ -29,7 +29,7 @@ fn set_avatar_impl(args: Args, state: &mut RuntimeState) -> OCResult {
 
     state.award_achievement_and_notify(my_index, Achievement::SetAvatar, now);
 
-    utils::async_work::spawn_tracked(update_index_canister(
+    ic_cdk::futures::spawn_migratory(update_index_canister(
         state.data.user_index_canister_id,
         state.user_id(my_index),
         id,

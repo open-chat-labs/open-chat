@@ -46,10 +46,6 @@ enum Operation {
     UnlapseSome {
         count: u8,
     },
-    Migrate {
-        user_index: usize,
-        new_user_index: usize,
-    },
     SetSuspended {
         user_index: usize,
         suspended: bool,
@@ -72,8 +68,6 @@ fn operation_strategy() -> impl Strategy<Value = Operation> {
         1 => Just(Operation::UnlapseAll),
         1 => Just(Operation::StartUnlapsing),
         3 => any::<u8>().prop_map(|count| Operation::UnlapseSome { count }),
-        2 => (any::<usize>(), any::<usize>())
-            .prop_map(|(user_index, new_user_index)| Operation::Migrate { user_index, new_user_index }),
         2 => any::<usize>().prop_map(|user_index| Operation::SetSuspended { user_index, suspended: true }),
         1 => any::<usize>().prop_map(|user_index| Operation::SetSuspended { user_index, suspended: false }),
     ]
@@ -174,14 +168,6 @@ fn execute_operation(members: &mut CommunityMembers, op: Operation, timestamp: T
                 unlapsed += 1;
                 unlapsed <= count
             });
-        }
-        Operation::Migrate {
-            user_index,
-            new_user_index,
-        } => {
-            let old_user_id = get_from_map(&members.members_and_channels, user_index);
-            let new_user_id = user_id(new_user_index);
-            members.migrate_user_id(old_user_id, new_user_id, None, timestamp);
         }
         Operation::SetSuspended { user_index, suspended } => {
             if suspended {

@@ -68,15 +68,9 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             }
         }
         GroupOrCommunityEvent::EventStoreEvent(event) => state.data.event_store_client.push(event),
-        GroupOrCommunityEvent::UserIdMigrationComplete(complete) => {
-            if is_group {
-                if let Some(group) = state.data.local_groups.get_mut(&caller.into()) {
-                    group.user_id_migration_complete = complete;
-                }
-            } else if let Some(community) = state.data.local_communities.get_mut(&caller.into()) {
-                community.user_id_migration_complete = complete;
-            }
-        }
+        // No longer sent, but still read until every group and community is on a version which
+        // doesn't send it
+        GroupOrCommunityEvent::UserIdMigrationComplete(_) => {}
         GroupOrCommunityEvent::MessageClassifyRequest(request) => {
             if request.input.is_empty() {
                 // Nothing classifiable (eg. an edit removed the text): dequeue any stale queued

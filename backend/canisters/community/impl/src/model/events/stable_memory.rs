@@ -21,17 +21,6 @@ impl EventsStableStorage {
         with_map_mut(|m| m.insert(self.prefix.create_key(&event.index), event_to_bytes(event)));
     }
 
-    // Inserts the events, which must be in order of index, together
-    pub fn insert_many(&mut self, events: Vec<EventWrapperInternal<CommunityEventInternal>>) {
-        with_map_mut(|m| {
-            m.insert_many(
-                events
-                    .into_iter()
-                    .map(|event| (self.prefix.create_key(&event.index), event_to_bytes(event))),
-            )
-        });
-    }
-
     pub fn page(
         &self,
         start: EventIndex,
