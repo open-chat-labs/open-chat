@@ -49,6 +49,7 @@
     import Streak from "./profile/Streak.svelte";
     import MessageRenderer from "./MessageRenderer.svelte";
     import { TokenState } from "@shared_components/home/wallet/walletState.svelte";
+    import { prizeClaimStep } from "@shared_components/home/prize/prizeClaim";
     import TransferFeesMessage from "./TransferFeesMessage.svelte";
     import TextContent from "./TextContent.svelte";
 
@@ -103,22 +104,27 @@
     ) {
         if (!chatId || !messageId) return;
 
-        let signInProof: string | undefined = undefined;
-        if (content.requiresCaptcha) {
-            if (auth) {
-                signInProof = await client.getSignInProof(auth.key, auth.delegation);
-            } else {
-                mouseEvent = e;
-                showAuthentication = true;
-                return;
-            }
+        const signIn =
+            content.requiresCaptcha && auth !== undefined
+                ? { proof: await client.getSignInProof(auth.key, auth.delegation) }
+                : undefined;
+        const step = prizeClaimStep(content.requiresCaptcha, signIn);
+        if (step.kind === "authenticate") {
+            mouseEvent = e;
+            showAuthentication = true;
+            return;
         }
 
         showAuthentication = false;
+        if (step.kind === "failed") {
+            toastStore.showFailureToast(step.message);
+            return;
+        }
+
         if (e.isTrusted && chatId.kind !== "direct_chat" && !me && userEligible) {
             claimsStore.add(messageId);
             client
-                .claimPrize(chatId, messageId, e, signInProof)
+                .claimPrize(chatId, messageId, e, step.signInProof)
                 .then((success) => {
                     if (!success) {
                         toastStore.showFailureToast(i18nKey("prizes.claimFailed"));

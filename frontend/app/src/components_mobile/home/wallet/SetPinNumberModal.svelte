@@ -5,16 +5,15 @@
         AuthProvider,
         pinNumberFailureStore,
         type OpenChat,
-        type Verification,
     } from "@client";
-    import { getContext, onMount } from "svelte";
+    import { getContext, onMount, untrack } from "svelte";
     import Lock from "svelte-material-icons/Lock.svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import { pinNumberErrorMessageStore, type PinOperation } from "../../../stores/pinNumber";
     import {
-        pinNumberErrorMessageStore,
-        supportsForgot,
-        type PinOperation,
-    } from "../../../stores/pinNumber";
+        PinNumberForm,
+        type PinSaveOutcome,
+    } from "@shared_components/home/pin/pinNumberForm.svelte";
     import { toastStore } from "../../../stores/toast";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import Pincode from "../../pincode/Pincode.svelte";
@@ -30,103 +29,45 @@
         onClose: () => void;
     }
 
-    let { type = $bindable(), onClose, onPinSet }: Props = $props();
+    let { type, onClose, onPinSet }: Props = $props();
 
-    let busy = $state(false);
-    let currPinArray: string[] = $state([]);
-    let newPinArray: string[] = $state([]);
-    let signInProofJwt: string | undefined = $state(undefined);
+    const form = new PinNumberForm(
+        client,
+        untrack(() => type),
+    );
 
     onMount(() => {
         pinNumberFailureStore.set(undefined);
     });
 
-    function isPinValid(pin: string[]): boolean {
-        return pin.filter((c) => /^[0-9]$/.test(c)).length === 6;
-    }
-
-    function getVerification(): Verification {
-        if (signInProofJwt !== undefined) {
-            return {
-                kind: "reauthenticated",
-                signInProofJwt,
-            };
+    function onSaved(outcome: PinSaveOutcome | undefined) {
+        if (outcome?.kind === "saved") {
+            toastStore.showSuccessToast(i18nKey(`pinNumber.${outcome.operation}PinSuccess`));
+            onPinSet?.(outcome.pin);
+            onClose();
         }
-
-        if (type.kind === "clear" || type.kind === "change") {
-            return {
-                kind: "pin_verification",
-                pin: currPinArray.join(""),
-            };
-        }
-
-        return { kind: "no_verification" };
     }
 
-    function changePin(): Promise<void> {
-        const newPin = type.kind === "clear" ? undefined : newPinArray.join("");
-
-        busy = true;
-
-        return client
-            .setPinNumber(getVerification(), newPin)
-            .then((resp) => {
-                if (resp.kind === "success") {
-                    toastStore.showSuccessToast(i18nKey(`pinNumber.${type.kind}PinSuccess`));
-                    onPinSet?.(newPin);
-                    onClose();
-                } else {
-                    console.log("SetPinNumber failed", resp);
-                }
-            })
-            .finally(() => {
-                busy = false;
-            });
+    async function changePin() {
+        onSaved(await form.save());
     }
 
-    function reauthenticated(detail: {
+    async function reauthenticated(detail: {
         key: ECDSAKeyIdentity;
         delegation: DelegationChain;
         provider: AuthProvider;
         signInProofJwt: string | undefined;
     }) {
-        if (type.kind !== "forgot") return;
-
-        signInProofJwt = detail.signInProofJwt;
-
-        switch (type.while.kind) {
-            case "clear":
-                type = { kind: "clear" };
-                changePin(); // no further input is required so just do it
-                break;
-            default:
-                type = { kind: "change" };
-        }
+        onSaved(await form.reauthenticated(detail.signInProofJwt));
     }
 
-    function onForgot() {
-        if (supportsForgot(type)) {
-            type = {
-                kind: "forgot",
-                while: type,
-            };
-        }
-    }
-
-    let title = $derived(i18nKey(`pinNumber.${type.kind}PinTitle`));
+    let operation = $derived(form.operation);
+    let title = $derived(i18nKey(`pinNumber.${operation.kind}PinTitle`));
     let message = $derived(
-        type.kind === "change" ? undefined : i18nKey(`pinNumber.${type.kind}PinMessage`),
+        operation.kind === "change" ? undefined : i18nKey(`pinNumber.${operation.kind}PinMessage`),
     );
-    let action = $derived(i18nKey(`pinNumber.${type.kind}Pin`));
-    let verificationValid = $derived(isPinValid(currPinArray) || signInProofJwt !== undefined);
-    let changeValid = $derived(
-        type.kind === "change" && isPinValid(newPinArray) && verificationValid,
-    );
-    let setValid = $derived(type.kind === "set" && isPinValid(newPinArray));
-    let clearValid = $derived(type.kind === "clear" && verificationValid);
-    let isValid = $derived(type.kind === "forgot" || changeValid || setValid || clearValid);
-    let showCurrentPin = $derived(type.kind !== "set" && signInProofJwt === undefined);
-    let errorMessage = $derived($pinNumberErrorMessageStore);
+    let action = $derived(i18nKey(`pinNumber.${operation.kind}Pin`));
+    let errorMessage = $derived(form.error ?? $pinNumberErrorMessageStore);
 </script>
 
 <Container height={"hug"} padding={"xl"} gap={"xl"} direction={"vertical"}>
@@ -135,7 +76,7 @@
     </Subtitle>
 
     <Container direction={"vertical"} gap={"lg"}>
-        {#if type.kind === "forgot"}
+        {#if operation.kind === "forgot"}
             {#if message !== undefined}
                 <ReAuthenticate onSuccess={reauthenticated} {message} />
             {/if}
@@ -145,42 +86,42 @@
                     <Translatable resourceKey={message} />
                 </Body>
             {/if}
-            {#if showCurrentPin}
+            {#if form.showCurrentPin}
                 <Container
                     overflow={"visible"}
                     crossAxisAlignment={"center"}
                     direction={"vertical"}>
                     <Pincode
-                        subtext={type.kind === "change"
+                        subtext={operation.kind === "change"
                             ? i18nKey("pinNumber.currentPin")
                             : undefined}
                         length={6}
-                        bind:code={currPinArray} />
+                        bind:code={form.currentPin} />
                 </Container>
             {/if}
-            {#if type.kind !== "clear"}
+            {#if operation.kind !== "clear"}
                 <Pincode
-                    subtext={type.kind === "change" ? i18nKey("pinNumber.newPin") : undefined}
+                    subtext={operation.kind === "change" ? i18nKey("pinNumber.newPin") : undefined}
                     length={6}
-                    bind:code={newPinArray} />
+                    bind:code={form.newPin} />
             {/if}
         {/if}
     </Container>
 
-    {#if type.kind !== "forgot"}
+    {#if operation.kind !== "forgot"}
         <Container
             padding={["xl", "zero", "zero", "zero"]}
             direction={"vertical"}
             gap={"xs"}
             crossAxisAlignment={"center"}>
-            <Button loading={busy} disabled={busy || !isValid} onClick={changePin}>
+            <Button loading={form.busy} disabled={form.busy || !form.valid} onClick={changePin}>
                 {#snippet icon(color)}
                     <Lock {color} />
                 {/snippet}
                 <Translatable resourceKey={action} />
             </Button>
-            {#if type.kind !== "set"}
-                <ForgotPinLabel {onForgot} />
+            {#if operation.kind !== "set"}
+                <ForgotPinLabel onForgot={() => form.forgot()} />
             {/if}
         </Container>
     {/if}
@@ -192,17 +133,17 @@
     {/if}
 
     <!-- <Container gap={"md"} crossAxisAlignment={"end"} mainAxisAlignment={"end"}>
-        {#if type.kind === "forgot"}
-            <CommonButton disabled={busy} onClick={onClose} size={"medium"}>
+        {#if operation.kind === "forgot"}
+            <CommonButton disabled={form.busy} onClick={onClose} size={"medium"}>
                 <Translatable resourceKey={i18nKey("cancel")} />
             </CommonButton>
         {:else}
-            <CommonButton disabled={busy} onClick={onClose} size={"small_text"}>
+            <CommonButton disabled={form.busy} onClick={onClose} size={"small_text"}>
                 <Translatable resourceKey={i18nKey("cancel")} />
             </CommonButton>
             <CommonButton
-                loading={busy}
-                disabled={busy || !isValid}
+                loading={form.busy}
+                disabled={form.busy || !form.valid}
                 onClick={changePin}
                 mode={"active"}
                 size={"medium"}>
