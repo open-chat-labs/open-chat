@@ -1,7 +1,8 @@
-<!-- Receive in the wallet main column: network picker (when a token travels on several), your address with copy and
-     share-to-chat, a warning naming exactly what to send, your OpenChat handle, and a QR card. Below 760px the QR card
-     moves above the form. Sharing posts the address to one of the host's `chats` (ChatPicker) through onShare and confirms
-     with a toast once the host does. The QR is drawn by the host (`qr` snippet); without it there is no QR card. -->
+<!-- Receive in the wallet main column, one column: network picker (when a token travels on several), then an address
+     card with the QR code, the address, Copy and Share to chat; a warning naming exactly what to send, and your OpenChat
+     handle. The QR is drawn by the host (`qr` snippet); without it the card has no QR. Hovering the card (always, on touch)
+     shows a button that copies the QR as an image; right-clicking the QR does the same where the browser can. Sharing posts
+     the address to one of the host's `chats` (ChatPicker) through onShare and confirms with a toast once the host does. -->
 <script lang="ts" module>
   export type NetworkId = 'icp' | 'eth' | 'btc' | 'xrpl';
 
@@ -22,18 +23,19 @@
   import CopyButton from '../../lib/components/CopyButton.svelte';
   import { onDestroy, type Snippet } from 'svelte';
   import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
+  import { canCopyImage, copyImage, copyText } from '../../lib/clipboard';
   import type { WalletToken } from '../../lib/types';
   import ChatPicker from '../../lib/components/ChatPicker.svelte';
   import ListSectionLabel from '../../lib/components/ListSectionLabel.svelte';
   import PageHeader from '../../lib/components/PageHeader.svelte';
   import UndoToast from '../../lib/components/UndoToast.svelte';
 
-  // label / short / time / blurb are resource keys; the addresses themselves always come from the host
-  const NET: Record<NetworkId, { label: string; short: string; time: string; blurb: string }> = {
-    icp: { label: 'ui.walletReceive.net.icp.label', short: 'ui.walletReceive.net.icp.short', time: 'ui.walletReceive.net.icp.time', blurb: 'ui.walletReceive.net.icp.blurb' },
-    eth: { label: 'ui.walletReceive.net.eth.label', short: 'ui.walletReceive.net.eth.short', time: 'ui.walletReceive.net.eth.time', blurb: 'ui.walletReceive.net.eth.blurb' },
-    btc: { label: 'ui.walletReceive.net.btc.label', short: 'ui.walletReceive.net.btc.short', time: 'ui.walletReceive.net.btc.time', blurb: 'ui.walletReceive.net.btc.blurb' },
-    xrpl: { label: 'ui.walletReceive.net.xrpl.label', short: 'ui.walletReceive.net.xrpl.short', time: 'ui.walletReceive.net.xrpl.time', blurb: 'ui.walletReceive.net.xrpl.blurb' },
+  // label / short / time are resource keys; the addresses themselves always come from the host
+  const NET: Record<NetworkId, { label: string; short: string; time: string }> = {
+    icp: { label: 'ui.walletReceive.net.icp.label', short: 'ui.walletReceive.net.icp.short', time: 'ui.walletReceive.net.icp.time' },
+    eth: { label: 'ui.walletReceive.net.eth.label', short: 'ui.walletReceive.net.eth.short', time: 'ui.walletReceive.net.eth.time' },
+    btc: { label: 'ui.walletReceive.net.btc.label', short: 'ui.walletReceive.net.btc.short', time: 'ui.walletReceive.net.btc.time' },
+    xrpl: { label: 'ui.walletReceive.net.xrpl.label', short: 'ui.walletReceive.net.xrpl.short', time: 'ui.walletReceive.net.xrpl.time' },
   };
   // wrapped forms on ICP get their chain-key name, so the warning names exactly what to send
   const ICP_AS: Record<string, string> = { BTC: 'ckBTC', ETH: 'ckETH', USDC: 'ckUSDC', USDT: 'ckUSDT', XRP: 'ckXRP' };
@@ -52,7 +54,8 @@
     chats?: ShareChat[];
     /** Post the address to a chat. Reject to keep the picker open with an error. */
     onShare?: (v: { chatId: string; message: string; symbol: string; network: NetworkId; address: string }) => Promise<unknown> | void;
-    /** Draws a scannable QR code for the address (inside a white 240px square). Without it the QR card is hidden. */
+    /** Draws a scannable QR code for the address as an svg, canvas or img, scaled to fill a white square of about 135px
+     *  (that element is what "Copy QR image" copies). Without it the address card has no QR. */
     qr?: Snippet<[string]>;
     onClose?: () => void;
   }
@@ -74,8 +77,10 @@
   let sharing = $state(false);
   let toast = $state<{ id: number; message: string; tone: 'success' | 'danger' } | null>(null);
   let toastTimer: ReturnType<typeof setTimeout> | undefined;
+  let copiedTimer: ReturnType<typeof setTimeout> | undefined;
   onDestroy(() => {
     clearTimeout(toastTimer);
+    clearTimeout(copiedTimer);
   });
 
   const narrow = $derived(width > 0 && width < 760);
@@ -84,17 +89,37 @@
   const ids = $derived((tok?.nets ?? []) as NetworkId[]);
   const id = $derived(ids[Math.min(netIdx, ids.length - 1)]);
   const wrapped = $derived(id === 'icp' && tok ? ICP_AS[tok.symbol] : undefined);
-  const net = $derived(
-    id
-      ? {
-          ...NET[id],
-          ...(wrapped
-            ? { label: NET.icp.label, short: t('ui.walletReceive.arrivesAs', { token: wrapped }), blurb: t('ui.walletReceive.arrivesAsBlurb', { token: wrapped }) }
-            : {}),
-        }
-      : null,
-  );
+  const net = $derived(id ? { ...NET[id], ...(wrapped ? { short: t('ui.walletReceive.arrivesAs', { token: wrapped }) } : {}) } : null);
   const address = $derived((id && addresses[id]) || '');
+
+  // Copy shows "Copied" only once the clipboard took the address, and never for an address no longer on screen
+  let copiedAddress = $state('');
+  const copied = $derived(!!address && copiedAddress === address);
+  async function copyAddress() {
+    const value = address;
+    if (!value || !(await copyText(value))) return;
+    copiedAddress = value;
+    clearTimeout(copiedTimer);
+    copiedTimer = setTimeout(() => (copiedAddress = ''), 1600);
+  }
+
+  // the QR as an image: offered only where the browser can put an image on the clipboard
+  const imageCopy = canCopyImage();
+  let qrBox = $state<HTMLElement>();
+  let copyingQr = false;
+  async function copyQr() {
+    if (!qrBox || copyingQr) return;
+    copyingQr = true;
+    const ok = await copyImage(qrBox);
+    copyingQr = false;
+    notify(t(ok ? 'ui.walletReceive.qrCopied' : 'ui.walletReceive.qrCopyFailed'), ok ? 'success' : 'danger');
+  }
+  // right-click copies too, but only where it can: elsewhere the browser's own menu stays
+  function qrMenu(e: MouseEvent) {
+    if (!imageCopy) return;
+    e.preventDefault();
+    copyQr();
+  }
 
   // the share's host call: one at a time, and the picker stays until it settles
   const shareFlow = new DialogFlow();
@@ -127,8 +152,8 @@
 <div class="receive" bind:clientWidth={width} data-screen-label="Wallet receive">
   {#if tok && net}
     <PageHeader title={t('ui.walletReceive.receiveToken', { symbol: tok.symbol })} onBack={() => onClose?.()} avatarMark={tok.mark} avatarGradient={tok.grad} />
-    <div class="layout" class:narrow>
-      <div class="form">
+    <div class="scroll">
+      <div class="column" class:narrow>
         <div class="group">
           <ListSectionLabel label={t('ui.walletReceive.network')} />
           {#if ids.length > 1}
@@ -167,19 +192,29 @@
         </div>
         <div class="group">
           <ListSectionLabel label={t('ui.walletReceive.yourAddress')} />
-          <div class="address-box">
+          <div class="address-card">
             {#if !address}
               <span class="address-missing">{t('ui.walletReceive.noAddress')}</span>
             {:else}
-            <div class="address-wrap">
-              <span class="address">{address.slice(0, 6)}<span class="address-mid">{address.slice(6, -6)}</span>{address.slice(-6)}</span>
-            </div>
-            <div class="address-actions">
-              {#key address}<CopyButton value={address} label="ui.walletReceive.copyAddress" variant="filled" size="lg" />{/key}
-              {#if canShare}<span class="square" onclick={() => (sharing = true)} role="button" tabindex="0" title={t('ui.walletReceive.shareToChat')} aria-label={t('ui.walletReceive.shareToChat')}
-                  ><span class="square-icon" style:mask={mask('share')}></span></span
-                >{/if}
-            </div>
+              {#if qr}
+                <div class="qr-box" oncontextmenu={qrMenu} role="presentation">
+                  <div class="qr" bind:this={qrBox}>{@render qr(address)}</div>
+                  {#if imageCopy}<span class="qr-copy" onclick={copyQr} role="button" tabindex="0" title={t('ui.walletReceive.copyQr')} aria-label={t('ui.walletReceive.copyQr')}
+                      ><span class="qr-copy-icon"></span></span
+                    >{/if}
+                </div>
+              {/if}
+              <div class="address-side">
+                <span class="address">{address.slice(0, 6)}<span class="address-mid">{address.slice(6, -6)}</span>{address.slice(-6)}</span>
+                <div class="actions">
+                  <span class="pill copy-address" class:done={copied} onclick={copyAddress} role="button" tabindex="0" aria-label={t(copied ? 'ui.common.copied' : 'ui.walletReceive.copyAddress')}
+                    ><span class="pill-icon" style:mask={mask(copied ? 'check' : 'copy')}></span>{t(copied ? 'ui.common.copied' : 'ui.common.copy')}</span
+                  >
+                  {#if canShare}<span class="pill share-address" onclick={() => (sharing = true)} role="button" tabindex="0"
+                      ><span class="pill-icon" style:mask={mask('share')}></span>{t('ui.walletReceive.shareToChat')}</span
+                    >{/if}
+                </div>
+              </div>
             {/if}
           </div>
         </div>
@@ -188,7 +223,6 @@
             >{t('ui.walletReceive.warning', { token: wrapped || tok.symbol, network: t(net.label), symbol: tok.symbol })}</span
           >
         </div>
-        <span class="grow"></span>
         {#if handle}
           <div class="group">
             <ListSectionLabel label={t('ui.walletReceive.fromOpenChat')} />
@@ -205,14 +239,6 @@
           </div>
         {/if}
       </div>
-      {#if address && qr}
-      <div class="qr-card">
-        <span class="qr-kicker">{t('ui.walletReceive.scanToPay')}</span>
-        <div class="qr">{@render qr(address)}</div>
-        <span class="qr-title">{t('ui.walletReceive.qrTitle', { symbol: tok.symbol, network: t(net.label) })}</span>
-        <span class="qr-blurb">{t(net.blurb)}</span>
-      </div>
-      {/if}
     </div>
     {#if sharing && address && canShare}
       <ChatPicker
@@ -251,33 +277,24 @@
     background: var(--surface-1, #0e0e12);
   }
 
-  .layout {
+  .scroll {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 320px;
-    align-items: stretch;
-    align-content: start;
-    gap: 28px;
-    padding: 28px max(32px, calc((100% - 960px) / 2));
   }
 
-  .layout.narrow {
-    grid-template-columns: minmax(0, 1fr);
-    padding: 24px 22px 28px;
-  }
-
-  .form {
+  .column {
+    box-sizing: content-box;
+    max-width: 700px;
+    margin: 0 auto;
     display: flex;
     flex-direction: column;
-    gap: 32px;
-    min-width: 0;
-    order: 1;
+    gap: 28px;
+    padding: 28px 32px;
   }
 
-  .narrow .form {
-    order: 2;
+  .column.narrow {
+    padding: 24px 22px 28px;
   }
 
   .group {
@@ -416,7 +433,6 @@
     background: var(--accent, #ff5672);
   }
 
-  .address-box,
   .handle-box {
     display: flex;
     align-items: center;
@@ -424,9 +440,144 @@
     background: var(--overlay-1, rgba(255, 255, 255, 0.04));
   }
 
-  .address-box {
-    gap: 12px;
-    padding: 14px 12px 14px 18px;
+  .address-card {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 20px;
+    padding: 18px;
+    border-radius: 16px;
+    background: var(--overlay-1, rgba(255, 255, 255, 0.04));
+  }
+
+  .qr-box {
+    position: relative;
+    flex: none;
+    width: min(156px, 100%);
+    aspect-ratio: 1;
+    border-radius: 14px;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .narrow .qr-box {
+    width: min(168px, 100%);
+  }
+
+  .qr {
+    width: 86%;
+    height: 86%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .qr > :global(svg),
+  .qr > :global(canvas),
+  .qr > :global(img) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  /* shown on hover of the card (always on touch screens) and when focused */
+  .qr-copy {
+    position: absolute;
+    right: 6px;
+    bottom: 6px;
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    background: rgba(14, 14, 18, 0.82);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  }
+
+  .address-card:hover .qr-copy,
+  .qr-copy:focus-visible {
+    opacity: 1;
+  }
+
+  @media (hover: none) {
+    .qr-copy {
+      opacity: 1;
+    }
+  }
+
+  .qr-copy:hover {
+    background: rgba(14, 14, 18, 0.95);
+  }
+
+  .qr-copy-icon {
+    width: 14px;
+    height: 14px;
+    background: #fff;
+    mask: var(--icon-image) center/contain no-repeat;
+  }
+
+  .address-side {
+    flex: 1 1 240px;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 14px;
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 14px;
+    border-radius: 10px;
+    font: 600 13px/1 var(--font-sans);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .pill-icon {
+    width: 14px;
+    height: 14px;
+    background: currentColor;
+  }
+
+  .copy-address {
+    background: var(--accent, #ff5672);
+    color: var(--on-accent, #2e0512);
+  }
+
+  .copy-address:hover {
+    filter: brightness(1.08);
+  }
+
+  .copy-address.done {
+    background: rgba(46, 230, 168, 0.14);
+    color: var(--status-online, #2ee6a8);
+  }
+
+  .share-address {
+    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+    color: var(--ink, #ececf1);
+  }
+
+  .share-address:hover {
+    background: var(--btn-hover, rgba(255, 255, 255, 0.12));
   }
 
   .address-missing {
@@ -436,16 +587,8 @@
     color: var(--ink-3, #9a9aa8);
   }
 
-  .address-wrap {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-
   .address {
-    font: var(--weight-medium) 16px/1.6 var(--font-mono);
+    font: var(--weight-medium) 15px/1.6 var(--font-mono);
     color: var(--ink, #ececf1);
     word-break: break-all;
   }
@@ -454,40 +597,9 @@
     color: var(--ink-3, #9a9aa8);
   }
 
-  .address-actions {
-    flex: none;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .square {
-    --square-ink: var(--ink, #ececf1);
-    flex: none;
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--overlay-2, rgba(255, 255, 255, 0.07));
-    cursor: pointer;
-  }
-
-  .square:hover {
-    background: var(--btn-hover, rgba(255, 255, 255, 0.12));
-  }
-
-  .square-icon {
-    width: 16px;
-    height: 16px;
-    background: var(--square-ink);
-  }
-
   .warning {
     display: flex;
     gap: 12px;
-    margin-top: -20px;
     padding: 14px 16px;
     border-radius: var(--radius-md, 12px);
     background: rgba(255, 176, 61, 0.08);
@@ -506,10 +618,6 @@
     font: var(--weight-regular) 13px/1.5 var(--font-sans);
     color: var(--ink-2, #e8d6b8);
     text-wrap: pretty;
-  }
-
-  .grow {
-    flex: 1;
   }
 
   .handle-box {
@@ -559,52 +667,6 @@
   .handle-note {
     font: var(--weight-regular) 12.5px/1.4 var(--font-sans);
     color: var(--ink-4, #8a8a99);
-    text-wrap: pretty;
-  }
-
-  .qr-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 16px;
-    padding: 24px;
-    border-radius: var(--radius-md, 12px);
-    background: var(--overlay-1, rgba(255, 255, 255, 0.04));
-    order: 2;
-  }
-
-  .narrow .qr-card {
-    order: 1;
-  }
-
-  .qr-kicker {
-    align-self: flex-start;
-    font: var(--weight-semibold) 11.5px/1 var(--font-mono);
-    letter-spacing: 0.08em;
-    color: var(--ink-4, #8a8a99);
-  }
-
-  .qr {
-    width: 240px;
-    height: 240px;
-    margin-top: 10px;
-    border-radius: 18px;
-    background: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .qr-title {
-    font: var(--weight-semibold) var(--text-md) / 1.3 var(--font-sans);
-    color: var(--ink, #ececf1);
-    text-align: center;
-  }
-
-  .qr-blurb {
-    font: var(--weight-regular) 12.5px/1.5 var(--font-sans);
-    color: var(--ink-4, #8a8a99);
-    text-align: center;
     text-wrap: pretty;
   }
 

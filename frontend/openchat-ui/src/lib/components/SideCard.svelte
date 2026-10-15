@@ -1,18 +1,21 @@
-<!-- The right-hand card in wallet workspaces (Send summary, Swap quote, token card). Content is children. -->
+<!-- The right-hand card in wallet workspaces (Send summary, Swap quote, token card). Content is children.
+     fill stretches it to its parent's height (e.g. to match the form column next to it). -->
 <script lang="ts">
   import type { Snippet } from 'svelte';
 
   interface Props {
     minHeight?: string;
+    /** Stretch to the parent's height. */
+    fill?: boolean;
     gap?: string;
     pad?: string;
     children?: Snippet;
   }
 
-  let { minHeight = '0', gap = '0', pad = '24px', children }: Props = $props();
+  let { minHeight = '0', fill = false, gap = '0', pad = '24px', children }: Props = $props();
 </script>
 
-<div class="side-card" style:min-height={minHeight} style:gap style:padding={pad}>{@render children?.()}</div>
+<div class="side-card" class:fill style:min-height={minHeight} style:gap style:padding={pad}>{@render children?.()}</div>
 
 <style>
   .side-card {
@@ -23,5 +26,9 @@
     flex-direction: column;
     border-radius: var(--radius-lg, 14px);
     background: var(--overlay-1, rgba(255, 255, 255, 0.04));
+  }
+
+  .fill {
+    height: 100%;
   }
 </style>

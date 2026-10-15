@@ -207,12 +207,16 @@
           "adoptedImmediately": "Adopted immediately"
         },
         "timeline": {
-          "sendToIcpswap": "Send to ICPSwap",
-          "swap": "Swap",
-          "returnToYourWallet": "Return to your wallet",
-          "getDepositAccount": "Get deposit account",
-          "notifyIcpswapOfTheDeposit": "Notify ICPSwap of the deposit",
-          "swapChatForIcp": "Swap CHAT for ICP"
+          "swapChatForIcp": "Swap CHAT for ICP",
+          "approve": "Approve ICPSwap to take 100 CHAT",
+          "approveHint": "Lets ICPSwap take this CHAT from your wallet · usually a few seconds",
+          "swapHint": "Trading at the quoted price, within 0.5% slippage",
+          "receive": "Receive 2.19425 ICP in your wallet",
+          "complete": "Swap complete",
+          "swapRejected": "ICPSwap rejected the swap: price moved past your slippage limit.",
+          "fundsAtDex": "100 CHAT is at ICPSwap, being swapped",
+          "fundsDone": "2.19425 ICP is in your wallet",
+          "fundsSafe": "Your 100 CHAT is safe at ICPSwap"
         }
       }
     }

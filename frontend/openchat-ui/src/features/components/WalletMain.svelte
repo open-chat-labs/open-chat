@@ -1,8 +1,10 @@
 <!-- The wallet's main column: All activity (home), a token page, and in-place Send / Receive / Swap / Recipients.
      The host drives it with `request` ({ view, token, nonce }) from the wallet list on the left and hears back through
-     onViewChange. Activity rows come from the host (`activity`); a send lands back on the token page with a toast, and a
-     pending row until the host's activity lists it. Saved recipients, swaps, sharing and the QR are all host-provided and
-     passed through to the flows. An empty wallet shows All activity only. -->
+     onViewChange; a token request always opens that token's page, also from inside a flow (unless a send or swap is
+     waiting on the host). Activity rows come from the host (`activity`); a confirmed send shows a pending row until the
+     host's activity lists it, and leaving Send's receipt lands back on the token page with a toast. Saved recipients,
+     swaps, sharing and the QR are all host-provided and passed through to the flows. An empty wallet shows All activity
+     only. -->
 <script lang="ts" module>
   import type { NetworkId } from './WalletReceive.svelte';
 
@@ -39,7 +41,7 @@
   import { getI18n, useT } from '../../lib/i18n';
   import { onDestroy, untrack } from 'svelte';
   import type { WalletToken } from '../../lib/types';
-  import DetailRow from '../../lib/components/DetailRow.svelte';
+  import CopyButton from '../../lib/components/CopyButton.svelte';
   import DialogShell from '../../lib/components/DialogShell.svelte';
   import EmptyState from '../../lib/components/EmptyState.svelte';
   import ListSectionLabel from '../../lib/components/ListSectionLabel.svelte';
@@ -47,7 +49,6 @@
   import Pill from '../../lib/components/Pill.svelte';
   import SegmentedTabs from '../../lib/components/SegmentedTabs.svelte';
   import ShareBar from '../../lib/components/ShareBar.svelte';
-  import SideCard from '../../lib/components/SideCard.svelte';
   import TokenAvatar from '../../lib/components/TokenAvatar.svelte';
   import TokenPicker from '../../lib/components/TokenPicker.svelte';
   import TransactionRow from '../../lib/components/TransactionRow.svelte';
@@ -127,9 +128,10 @@
     /** Send's saved-address picker and QR scanner (see WalletSend). */
     onPickSaved?: () => Promise<string | null | undefined>;
     onScanQr?: () => Promise<string | null | undefined>;
-    /** Make the transfer; reject (e.g. wrong PIN) to keep Send open with an error. */
+    /** Make the transfer; reject (e.g. wrong PIN) to keep Send open with an error. Resolve with the transaction's { id }
+     *  to show a pending row until `activity` lists it. */
     onSent?: (x: WalletSendRequest) => Promise<unknown> | void;
-    /** Toast "Message" action after sending to a person: open the DM with them. */
+    /** Open the DM with the person a send went to: Send's "View in chat", or the toast's "Message" action. */
     onMessage?: (x: { userId: string; text: string }) => void;
     /** Transactions to show (all tokens); the host keeps statuses current. */
     activity?: WalletActivity[];
@@ -143,8 +145,7 @@
     /** Send: user search and BTC route fees (see WalletSend). */
     onSearchUsers?: (query: string) => Promise<SendContact[]>;
     btcFees?: Partial<Record<'btc' | 'ckbtc', number>>;
-    /** Swap: DEX names, quote and execution (see WalletSwap). */
-    dexes?: string[];
+    /** Swap: quote and execution (see WalletSwap). */
     onQuote?: (r: SwapRequest) => Promise<SwapQuote>;
     onSwap?: (r: { request: SwapRequest; quote: SwapQuote; onStep: (step: number) => void }) => Promise<{ out?: number } | void>;
     /** Receive: chats to share to, sharing, and the QR renderer (see WalletReceive). */
@@ -174,7 +175,6 @@
     onRemoveRecipient,
     onSearchUsers,
     btcFees,
-    dexes,
     onQuote,
     onSwap,
     chats,
@@ -217,12 +217,6 @@
   function apply(r: WalletRequest) {
     extTok = null;
     const flow = isFlow(r.view);
-    if (r.view === 'token' && r.token && isFlow(view)) {
-      sym = r.token;
-      fromAll = false;
-      report();
-      return;
-    }
     // no token yet (e.g. Send in the summary card): ask which one first
     if ((r.view === 'send' || r.view === 'receive') && !r.token) {
       pick = { view: r.view };
@@ -234,6 +228,9 @@
     // a token-less flow opened from a token page acts on the token shown there (sym may name one with no balance)
     const shown = raw?.symbol;
     if (r.token && r.token !== sym) tokFilter = 0;
+    // a request starts afresh: an open flow (e.g. a token click from inside Send) is left, with nothing to return to
+    backToAll = backToRecipients = false;
+    sendAddr = '';
     view = r.view || 'all';
     sym = r.token || (flow && !startFromAll && shown ? shown : sym);
     fromAll = flow ? startFromAll || !!r.fromAll : false;
@@ -298,31 +295,46 @@
     report();
   }
 
-  // a send lands back on the token page with a toast; no done screen.
-  // The host makes the transfer first (a rejection propagates back to Send's PIN dialog). If it resolves with the
-  // transaction's id, a pending row shows until the host's `activity` lists that id; its status is the host's.
+  // The host makes the transfer (a rejection propagates back to Send's PIN dialog); Send then shows its own receipt.
+  // A result with the transaction's id adds a pending row straight away, which stays until the host's `activity`
+  // lists that id (its status is the host's), whether or not the receipt is left through Done.
   async function handleSent(x: WalletSendRequest) {
-    const key = flowKey;
     const res = await pinned(async () => onSent?.(x));
-    // the host's transfer went through; only move the view if the user is still on this send
-    if (flowKey !== key || view !== 'send') return;
-    const tid = Date.now();
-    const amt = `${num(x.amount, Math.min(x.dp, 8))} ${x.symbol}`;
+    addPending(x, res);
+    return res;
+  }
+
+  const sentAmount = (x: WalletSendRequest) => `${num(x.amount, Math.min(x.dp, 8))} ${x.symbol}`;
+
+  function addPending(x: WalletSendRequest, res: unknown) {
+    const txId = res && typeof res === 'object' && 'id' in res && typeof res.id === 'string' ? res.id : null;
+    if (!txId || sent.some((e) => e.id === txId)) return;
+    const amt = sentAmount(x);
+    sent = [
+      { id: txId, symbol: x.symbol, title: t('ui.walletMain.sentTo', { name: x.toLabel }), day: 'today', timestamp: Date.now(), sub: t('ui.walletMain.justNow'), kind: 1, amount: `\u2212${amt}`, fiat: usd(x.fiat), fresh: true, status: 'pending' },
+      ...sent,
+    ];
+  }
+
+  // Leaving Send's receipt (Done, Back or "View in chat") lands back on the token page (or All activity when the send
+  // started there) with a toast; "View in chat" opens the DM instead of the toast.
+  function handleDone({ request: x, result, openChat }: { request: WalletSendRequest; result: unknown; openChat: boolean }) {
+    addPending(x, result);
+    if (view !== 'send') return;
     view = fromAll || backToAll ? 'all' : 'token';
     // the next send starts fresh: no pre-filled recipient, and Back no longer returns to Recipients
     fromAll = backToAll = backToRecipients = false;
     sendAddr = '';
     sym = x.symbol;
-    toast = { id: tid, message: t('ui.walletMain.sentToast', { amount: amt, name: x.toLabel }), userId: x.person ? (x.userId ?? null) : null };
-    const txId = res && typeof res === 'object' && 'id' in res && typeof res.id === 'string' ? res.id : null;
-    if (txId) {
-      const now = Date.now();
-      sent = [
-        { id: txId, symbol: x.symbol, title: t('ui.walletMain.sentTo', { name: x.toLabel }), day: 'today', timestamp: now, sub: t('ui.walletMain.justNow'), kind: 1, amount: `\u2212${amt}`, fiat: usd(x.fiat), fresh: true, status: 'pending' },
-        ...sent,
-      ];
-    }
     report();
+    const message = t('ui.walletMain.sentToast', { amount: sentAmount(x), name: x.toLabel });
+    if (openChat && x.userId && onMessage) {
+      toast = null;
+      onMessage({ userId: x.userId, text: message });
+      return;
+    }
+    const tid = Date.now();
+    toast = { id: tid, message, userId: x.person ? (x.userId ?? null) : null };
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => {
       if (toast?.id === tid) toast = null;
@@ -439,9 +451,10 @@
         {onScanQr}
         onClose={leaveFlow}
         onSent={onSent ? handleSent : undefined}
+        onDone={handleDone}
       />{/key}{/if}
   {#if view === 'receive'}{#key flowKey}<WalletReceive tokens={receiveTokens} token={flowToken} {handle} {addresses} {chats} {onShare} {qr} onClose={leaveFlow} />{/key}{/if}
-  {#if view === 'swap'}{#key flowKey}<WalletSwap {tokens} token={flowToken} {dexes} {onQuote} onSwap={swapPinned} onClose={leaveFlow} />{/key}{/if}
+  {#if view === 'swap'}{#key flowKey}<WalletSwap {tokens} token={flowToken} {onQuote} onSwap={swapPinned} onClose={leaveFlow} />{/key}{/if}
   {#if view === 'recipients'}
     <WalletRecipients
       {tokens}
@@ -462,7 +475,7 @@
       avatarGradient={raw?.grad}
     />
     <div class="scroll">
-      <div class="column" class:wide={showToken}>
+      <div class="column">
         {#if !showToken}
           <div class="tabs"><SegmentedTabs labels={FILTERS.map((k) => t(k))} selectedIndex={filter} dotOnLast={false} onSelect={(i) => (filter = i)} /></div>
           {#each allGroups as g}
@@ -492,6 +505,45 @@
         {:else}
           {@const tokenEmpty = EMPTY[tokFilter]}
           <div class="token-page">
+            <div class="summary">
+              <div class="summary-top">
+                <div class="hero">
+                  <TokenAvatar size={52} symbol={raw.symbol} mark={raw.mark} gradient={raw.grad} />
+                  <div class="hero-text">
+                    <span class="held veilable" class:veiled={balanceHidden}>{num(raw.held, raw.dp)} <span class="held-symbol">{raw.symbol}</span></span>
+                    <span class="value-line"
+                      ><span class="veilable" class:veiled={balanceHidden}>{usd(raw.value)}</span>{#if change !== undefined}<Pill
+                          size="md"
+                          label={t('ui.walletMain.changeToday', { change: `${change > 0 ? '+' : change < 0 ? '\u2212' : ''}${Math.abs(change).toFixed(1)}%` })}
+                          tone={change > 0 ? 'success' : change < 0 ? 'danger' : 'neutral'}
+                        />{/if}</span
+                    >
+                  </div>
+                </div>
+                <div class="actions">
+                  {#each [['ui.walletMain.sendSymbol', 'send', 'wallet-send'], ['ui.walletMain.receiveSymbol', 'receive', 'receive'], ['ui.walletMain.swapSymbol', 'swap', 'swap']] as [label, target, icon], i}
+                    <span class="action" class:primary={i === 0} onclick={() => go({ view: target as View, sym: raw.symbol, fromAll: false })} role="button" tabindex="0"
+                      ><span class="action-icon" style:mask={mask(icon)}></span><span class="action-label">{t(label, { symbol: raw.symbol })}</span></span
+                    >
+                  {/each}
+                </div>
+              </div>
+              <div class="facts">
+                <div class="fact"><span class="fact-label">{t('ui.walletMain.price')}</span><span class="fact-value">{price(raw.price)}</span></div>
+                {#if raw.fee !== undefined}<div class="fact"><span class="fact-label">{t('ui.walletMain.transferFee')}</span><span class="fact-value">{num(raw.fee, raw.dp)} {raw.symbol}</span></div>{/if}
+                {#if raw.standard}<div class="fact"><span class="fact-label">{t('ui.walletMain.standard')}</span><span class="fact-value">{raw.standard}</span></div>{/if}
+                {#if ledger}<div class="fact">
+                    <span class="fact-label">{t('ui.walletMain.ledger')}</span><span class="fact-value"
+                      >{`${ledger.slice(0, 5)}\u2026${ledger.slice(-4)}`}<span class="fact-copy"><CopyButton value={ledger} label="ui.walletMain.copyLedgerId" /></span></span
+                    >
+                  </div>{/if}
+              </div>
+              <div class="share">
+                <span class="share-label">{t('ui.walletMain.shareOfWallet')}</span>
+                <div class="share-bar"><ShareBar share={balanceHidden ? 33 : total ? (raw.value / total) * 100 : 0} gradient={raw.grad} thickness={4} /></div>
+                <span class="share-value">{balanceHidden ? '••••' : pct(raw.value)}</span>
+              </div>
+            </div>
             <div class="activity">
               <div class="tabs"><SegmentedTabs labels={FILTERS.map((k) => t(k))} selectedIndex={tokFilter} dotOnLast={false} onSelect={(i) => (tokFilter = i)} /></div>
               {#each tokGroups as g}
@@ -521,38 +573,6 @@
                   actionLabel=""
                 />
               {/if}
-            </div>
-            <div class="side">
-              <SideCard gap="var(--space-20,20px)" pad="24px 22px 22px">
-                <div class="hero">
-                  <TokenAvatar size={52} symbol={raw.symbol} mark={raw.mark} gradient={raw.grad} />
-                  <span class="held"><span class="veilable held-num" class:veiled={balanceHidden}>{num(raw.held, raw.dp)}</span> <span class="held-symbol">{raw.symbol}</span></span>
-                  <span class="value-line"
-                    ><span class="veilable" class:veiled={balanceHidden}>{usd(raw.value)}</span>{#if change !== undefined}<Pill
-                        size="md"
-                        label={t('ui.walletMain.changeToday', { change: `${change > 0 ? '+' : change < 0 ? '\u2212' : ''}${Math.abs(change).toFixed(1)}%` })}
-                        tone={change > 0 ? 'success' : change < 0 ? 'danger' : 'neutral'}
-                      />{/if}</span
-                  >
-                </div>
-                <div class="actions">
-                  {#each [['ui.walletMain.sendSymbol', 'send', 'wallet-send'], ['ui.walletMain.receiveSymbol', 'receive', 'receive'], ['ui.walletMain.swapSymbol', 'swap', 'swap']] as [label, target, icon], i}
-                    <span class="action" class:primary={i === 0} onclick={() => go({ view: target as View, sym: raw.symbol, fromAll: false })} role="button" tabindex="0"
-                      ><span class="action-icon" style:mask={mask(icon)}></span><span>{t(label, { symbol: raw.symbol })}</span></span
-                    >
-                  {/each}
-                </div>
-                <div class="facts">
-                  <div class="share">
-                    <div class="share-head"><span class="share-label">{t('ui.walletMain.shareOfWallet')}</span><span class="share-value">{balanceHidden ? '••••' : pct(raw.value)}</span></div>
-                    <ShareBar share={balanceHidden ? 33 : total ? (raw.value / total) * 100 : 0} gradient={raw.grad} thickness={4} />
-                  </div>
-                  <DetailRow label={t('ui.walletMain.price')} value={price(raw.price)} size="sm" copyLabel={t('ui.walletMain.copyLedgerId')} />
-                  {#if raw.fee !== undefined}<DetailRow label={t('ui.walletMain.transferFee')} value="{num(raw.fee, raw.dp)} {raw.symbol}" size="sm" copyLabel={t('ui.walletMain.copyLedgerId')} />{/if}
-                  {#if raw.standard}<DetailRow label={t('ui.walletMain.standard')} value={raw.standard} size="sm" copyLabel={t('ui.walletMain.copyLedgerId')} />{/if}
-                  {#if ledger}<DetailRow label={t('ui.walletMain.ledger')} value={`${ledger.slice(0, 5)}\u2026${ledger.slice(-4)}`} size="sm" copyValue={ledger} copyLabel={t('ui.walletMain.copyLedgerId')} />{/if}
-                </div>
-              </SideCard>
             </div>
           </div>
         {/if}
@@ -617,14 +637,10 @@
 
   .column {
     width: 100%;
-    max-width: 640px;
+    max-width: 700px;
     display: flex;
     flex-direction: column;
     gap: var(--space-24, 24px);
-  }
-
-  .column.wide {
-    max-width: 960px;
   }
 
   .tabs {
@@ -658,46 +674,42 @@
 
   .token-page {
     display: flex;
-    flex-wrap: wrap-reverse;
-    align-items: flex-end;
-    gap: 28px;
-  }
-
-  .activity {
-    flex: 999 1 360px;
-    min-width: 0;
-    display: flex;
     flex-direction: column;
     gap: var(--space-20, 20px);
   }
 
-  .side {
-    flex: 1 1 300px;
-    min-width: 0;
-    position: sticky;
-    top: 0;
+  .summary {
+    border-radius: 18px;
+    background: var(--overlay-1, rgba(255, 255, 255, 0.04));
+    overflow: hidden;
+  }
+
+  .summary-top {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 22px 22px 20px;
   }
 
   .hero {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: var(--space-10);
-    text-align: center;
-    padding: 4px 0 2px;
+    gap: var(--space-16, 16px);
+  }
+
+  .hero-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
   }
 
   .held {
-    margin-top: 4px;
-    max-width: 100%;
-    font: 700 34px/1.05 var(--font-sans);
-    letter-spacing: -0.025em;
+    font: 700 30px/1.1 var(--font-sans);
+    letter-spacing: -0.02em;
     color: var(--ink, #ececf1);
     overflow-wrap: anywhere;
-  }
-
-  .held-num {
-    display: inline-block;
   }
 
   .held-symbol {
@@ -716,32 +728,40 @@
   }
 
   .value-line {
-    display: flex;
+    display: inline-flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: var(--space-8);
-    font: var(--weight-medium) var(--text-sm) / 1 var(--font-mono);
-    color: var(--ink-3, #9a9aa8);
+    gap: var(--space-10);
+    font: var(--weight-medium) 13.5px / 1 var(--font-mono);
+    color: var(--ink-2, #c9c9d4);
   }
 
   .actions {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: var(--space-8);
   }
 
   .action {
     --action-ink: var(--ink, #ececf1);
+    min-width: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 7px;
-    height: 42px;
+    gap: var(--space-8);
+    height: 46px;
+    padding: 0 10px;
     border-radius: var(--radius-md, 12px);
     background: var(--overlay-2, rgba(255, 255, 255, 0.06));
-    font: var(--weight-semibold) var(--text-md) / 1 var(--font-sans);
+    font: var(--weight-bold, 700) 13.5px / 1 var(--font-sans);
     color: var(--action-ink);
+    white-space: nowrap;
     cursor: pointer;
     user-select: none;
+  }
+
+  .action:hover {
+    filter: brightness(1.1);
   }
 
   .action.primary {
@@ -750,37 +770,82 @@
   }
 
   .action-icon {
-    width: 15px;
-    height: 15px;
+    flex: none;
+    width: 14px;
+    height: 14px;
     background: var(--action-ink);
   }
 
+  .action-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   .facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    border-top: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .fact {
     display: flex;
     flex-direction: column;
+    gap: 7px;
+    padding: 14px 18px;
+    box-shadow: inset 1px 0 0 var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .fact-label {
+    font: var(--weight-medium) 10px/1 var(--font-mono);
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ink-4, #8a8a99);
+  }
+
+  .fact-value {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font: 600 13.5px/1.2 var(--font-mono);
+    color: var(--ink, #ececf1);
+    white-space: nowrap;
+  }
+
+  .fact-copy {
+    display: flex;
+    margin: -6px 0;
   }
 
   .share {
     display: flex;
-    flex-direction: column;
-    gap: var(--space-8);
-    padding: 4px 0 14px;
-  }
-
-  .share-head {
-    display: flex;
     align-items: center;
+    gap: var(--space-12, 12px);
+    padding: 12px 18px 14px;
+    border-top: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
   }
 
   .share-label {
-    flex: 1;
-    font: var(--weight-medium) var(--text-sm) / 1 var(--font-sans);
+    flex: none;
+    font: var(--weight-medium) 12.5px/1 var(--font-sans);
     color: var(--ink-3, #9a9aa8);
   }
 
+  .share-bar {
+    flex: 1;
+    min-width: 0;
+  }
+
   .share-value {
-    font: 600 13px/1 var(--font-mono);
+    flex: none;
+    font: 600 12.5px/1 var(--font-mono);
     color: var(--ink, #ececf1);
+  }
+
+  .activity {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-20, 20px);
   }
 
   .toast {

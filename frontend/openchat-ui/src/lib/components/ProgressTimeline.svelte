@@ -1,192 +1,305 @@
-<!-- Multi-step progress for on-chain flows. Phases group technical steps so 5–7 steps read as 3.
-     A phase's state is derived from its steps when omitted. Sub-steps show only on the active/failed phase (or when expanded).
-     collapseDone: once everything is done, fold into "N steps done · View details". density "compact" tightens rows. -->
-<script lang="ts">
-  import { useT } from '../i18n';
+<!-- Multi-step progress for on-chain flows: every step always visible (no collapsing). A done step can show how long it
+     took (meta, e.g. "0:04"), the active one reads "now" and shows its hint, a failed one shows its error.
+     showBar (default true) puts a "Step 2 of 5" bar above the list, with `elapsed` on its right; `funds` is one line saying
+     where the user's money is right now. density "compact" tightens rows.
+     The older grouped `phases` input is flattened into steps (a phase's sub becomes its steps' hint, its error the failed
+     step's error); `steps` wins when both are given. -->
+<script lang="ts" module>
+  export type TimelineState = 'done' | 'active' | 'todo' | 'failed';
 
-  type StepState = 'done' | 'active' | 'todo' | 'failed';
+  /** label, hint and error: resource keys (or literal text). */
+  export interface TimelineStep {
+    label: string;
+    state: TimelineState;
+    /** Shown under the step while it's active (and under a failed one without an error). */
+    hint?: string;
+    /** Shown under the step when it failed. */
+    error?: string;
+    /** Right of a done step, e.g. how long it took ("0:04"). */
+    meta?: string;
+  }
 
-  /** title, sub, error and step labels: resource keys (or literal text). */
-  interface Phase {
+  /** Where the user's money is right now: text is a resource key (or literal text). */
+  export interface TimelineFunds {
+    text: string;
+    tone: 'active' | 'done' | 'warn';
+  }
+
+  /** Legacy grouped input: title, sub, error and step labels are resource keys (or literal text). */
+  export interface TimelinePhase {
     title: string;
     sub?: string;
-    /** Replaces sub while the phase is failed. */
     error?: string;
-    state?: StepState;
-    steps?: { label: string; state?: StepState }[];
+    state?: TimelineState;
+    steps?: { label: string; state?: TimelineState; hint?: string; error?: string }[];
   }
-
-  interface Props {
-    phases: Phase[];
-    density?: 'regular' | 'compact';
-    collapseDone?: boolean;
-  }
-
-  let { phases, density = 'regular', collapseDone = false }: Props = $props();
-  const t = useT();
-
-  let expanded = $state(false);
-
-  function derive(ph: Phase): StepState {
-    if (ph.state) return ph.state;
-    const ss = (ph.steps ?? []).map((s) => s.state);
-    if (ss.includes('failed')) return 'failed';
-    if (ss.length && ss.every((s) => s === 'done')) return 'done';
-    if (ss.some((s) => s === 'active' || s === 'done')) return 'active';
-    return 'todo';
-  }
-
-  const states = $derived(phases.map(derive));
-  const allDone = $derived(states.length > 0 && states.every((s) => s === 'done'));
-  const totalSteps = $derived(phases.reduce((n, ph) => n + Math.max(1, (ph.steps ?? []).length), 0));
-  const collapsed = $derived(collapseDone && allDone && !expanded);
 </script>
 
-<div class="timeline" class:compact={density === 'compact'} role="list">
-  {#if collapsed}
-    <div class="summary" role="listitem">
-      <span class="node done"><span class="mark"></span></span>
-      <span class="summary-text">{t('ui.progressTimeline.stepsDone', { count: totalSteps })}</span>
-      <span class="link" onclick={() => (expanded = !expanded)} role="button" tabindex="0" aria-expanded={expanded}>{t('ui.progressTimeline.viewDetails')}</span>
+<script lang="ts">
+  import { useT } from '../i18n';
+  import Spinner from './Spinner.svelte';
+
+  interface Props {
+    /** Every step, in order. */
+    steps?: TimelineStep[];
+    /** One line saying where the user's money is; hidden when omitted. */
+    funds?: TimelineFunds | null;
+    /** The "Step N of M" bar above the list. */
+    showBar?: boolean;
+    /** Right of the bar, e.g. "0:12" or "Took 0:24". */
+    elapsed?: string;
+    density?: 'regular' | 'compact';
+    /** Older grouped input, flattened into steps; ignored when `steps` is given. */
+    phases?: TimelinePhase[];
+  }
+
+  let { steps, funds = null, showBar = true, elapsed = '', density = 'regular', phases = [] }: Props = $props();
+  const t = useT();
+
+  const FUNDS_ICON = { active: 'wallet-send', done: 'wallet', warn: 'shield' } as const;
+
+  const list = $derived.by((): TimelineStep[] => {
+    if (steps?.length) return steps;
+    return phases.flatMap((ph) => {
+      const ss: NonNullable<TimelinePhase['steps']> = ph.steps?.length ? ph.steps : [{ label: ph.title, state: ph.state }];
+      return ss.map((s) => ({ label: s.label, state: s.state ?? 'todo', hint: s.hint ?? ph.sub, error: s.error ?? ph.error }));
+    });
+  });
+
+  const total = $derived(list.length);
+  const doneCount = $derived(list.filter((s) => s.state === 'done').length);
+  const failedAt = $derived(list.findIndex((s) => s.state === 'failed'));
+  const activeAt = $derived(list.findIndex((s) => s.state === 'active'));
+  const allDone = $derived(total > 0 && doneCount === total);
+  const stepOf = $derived(
+    allDone
+      ? t('ui.progressTimeline.allDone', { total })
+      : failedAt >= 0
+        ? t('ui.progressTimeline.stoppedAt', { step: failedAt + 1, total })
+        : t('ui.progressTimeline.stepOf', { step: Math.max(1, (activeAt >= 0 ? activeAt : doneCount) + 1), total }),
+  );
+  // the active step counts as part-way, a failed one as reached
+  const pct = $derived(total ? (allDone ? 100 : Math.max(4, ((doneCount + (activeAt >= 0 ? 0.4 : 0) + (failedAt >= 0 ? 1 : 0)) / total) * 100)) : 0);
+  const barTone = $derived(allDone ? 'done' : failedAt >= 0 ? 'failed' : 'active');
+</script>
+
+<div class="timeline" class:compact={density === 'compact'}>
+  {#if showBar && total > 0}
+    <div class="bar-block">
+      <div class="bar-text"><span>{stepOf}</span><span>{t(elapsed)}</span></div>
+      <div class="bar" role="progressbar" aria-valuemin={0} aria-valuemax={total} aria-valuenow={doneCount} aria-label={stepOf}>
+        <div class="bar-fill {barTone}" style:width="{pct.toFixed(1)}%"></div>
+      </div>
     </div>
-  {:else}
-    {#each phases as ph, i}
-      {@const st = states[i]}
-      {@const open = st === 'active' || st === 'failed' || (expanded && allDone)}
-      {@const sub = st === 'failed' ? ph.error || ph.sub || '' : ph.sub || ''}
-      <div class="phase {st}" role="listitem">
+  {/if}
+  {#if funds?.text}
+    <div class="funds {funds.tone}" role="status">
+      <span class="funds-badge"><span class="funds-icon" style:mask="var(--icon-{FUNDS_ICON[funds.tone] ?? FUNDS_ICON.active}) center/contain no-repeat"></span></span>
+      <span class="funds-text">{t(funds.text)}</span>
+    </div>
+  {/if}
+  <div class="steps" role="list">
+    {#each list as s, k}
+      {@const note = s.state === 'failed' ? s.error || s.hint : s.state === 'active' ? s.hint : ''}
+      <div class="step {s.state}" role="listitem" aria-current={s.state === 'active' ? 'step' : undefined}>
         <div class="rail">
-          <span class="node {st}"><span class="mark"></span></span>
-          <span class="line" class:last={i === phases.length - 1}></span>
+          <span class="dot">
+            {#if s.state === 'done'}<span class="mark check"></span>
+            {:else if s.state === 'failed'}<span class="mark cross"></span>
+            {:else if s.state === 'active'}<Spinner size={14} tone="accent" />
+            {:else}<span class="num">{k + 1}</span>{/if}
+          </span>
+          <span class="line" class:last={k === total - 1}></span>
         </div>
         <div class="body">
-          <span class="title">{t(ph.title)}</span>
-          {#if sub && (st !== 'done' || expanded)}<span class="sub">{t(sub)}</span>{/if}
-          {#if open && ph.steps?.length}
-            <div class="steps">
-              {#each ph.steps as step}<div class="step {step.state ?? 'todo'}"><span class="step-slot"><span class="step-mark"></span></span><span class="step-label">{t(step.label)}</span></div>{/each}
-            </div>
-          {/if}
+          <div class="head">
+            <span class="label">{t(s.label)}</span>
+            <span class="meta">{s.state === 'done' ? t(s.meta ?? '') : s.state === 'active' ? t('ui.progressTimeline.now') : ''}</span>
+          </div>
+          {#if note}<span class="note">{t(note)}</span>{/if}
         </div>
       </div>
     {/each}
-    {#if collapseDone && allDone && expanded}<span class="link hide" onclick={() => (expanded = !expanded)} role="button" tabindex="0">{t('ui.progressTimeline.hideDetails')}</span>{/if}
-  {/if}
+  </div>
 </div>
 
 <style>
   .timeline {
-    --node: 28px;
-    --gap-min: 18px;
-    --row-pad: 5px 0 18px;
+    --dot: 26px;
+    --row-pad: 4px 0 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .compact {
+    --dot: 24px;
+    --row-pad: 3px 0 14px;
+  }
+
+  .bar-block {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .bar-text {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font: 500 11.5px/1 var(--font-mono);
+    color: var(--ink-3, #9a9aa8);
+  }
+
+  .bar {
+    height: 4px;
+    border-radius: 2px;
+    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: var(--accent, #ff5672);
+    transition:
+      width 0.4s var(--ease-out, ease-out),
+      background 0.2s;
+  }
+
+  .bar-fill.done {
+    background: var(--status-online, #2ee6a8);
+  }
+
+  .bar-fill.failed {
+    background: var(--status-danger, #f5493d);
+  }
+
+  .funds {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 12px;
+    border-radius: 12px;
+    background: var(--overlay-1, rgba(255, 255, 255, 0.04));
+  }
+
+  .funds-badge {
+    flex: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent-soft, rgba(255, 86, 114, 0.14));
+  }
+
+  .funds-icon {
+    width: 14px;
+    height: 14px;
+    background: var(--accent-bright, #ff8298);
+  }
+
+  .funds.done .funds-badge {
+    background: rgba(46, 230, 168, 0.14);
+  }
+
+  .funds.done .funds-icon {
+    background: var(--status-online, #2ee6a8);
+  }
+
+  .funds.warn .funds-badge {
+    background: rgba(255, 176, 61, 0.16);
+  }
+
+  .funds.warn .funds-icon {
+    background: var(--status-warning, #ffb03d);
+  }
+
+  .funds-text {
+    flex: 1;
+    min-width: 0;
+    font: 600 13px/1.35 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .steps {
     display: flex;
     flex-direction: column;
   }
 
-  .compact {
-    --node: 24px;
-    --gap-min: 12px;
-    --row-pad: 3px 0 12px;
-  }
-
-  .summary {
+  .step {
     display: flex;
-    align-items: center;
     gap: 12px;
-    min-height: 44px;
-  }
-
-  .summary-text {
-    flex: 1;
-    min-width: 0;
-    font: 600 14px/1.2 var(--font-sans);
-    color: var(--ink, #ececf1);
-  }
-
-  .link {
-    flex: none;
-    font: 600 13px/1 var(--font-sans);
-    color: var(--accent-bright, #ff8298);
-    cursor: pointer;
-    user-select: none;
-  }
-
-  .hide {
-    align-self: flex-start;
-    margin: 2px 0 0 42px;
-  }
-
-  .phase {
-    display: flex;
-    gap: 14px;
   }
 
   .rail {
     flex: none;
+    width: var(--dot);
     display: flex;
     flex-direction: column;
     align-items: center;
   }
 
-  .node {
+  .dot {
     flex: none;
-    width: var(--node);
-    height: var(--node);
-    border-radius: var(--radius-pill);
+    width: var(--dot);
+    height: var(--dot);
+    box-sizing: border-box;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    font: 600 11px/1 var(--font-mono);
+    color: var(--ink-4, #8a8a99);
+    box-shadow: inset 0 0 0 1.5px var(--line-2, rgba(255, 255, 255, 0.12));
   }
 
-  .mark {
-    width: 12px;
-    height: 12px;
-    background: var(--ink-5, #6e6e7c);
-    mask: var(--icon-dot-heavy) center/contain no-repeat;
-  }
-
-  .node.done {
+  .done .dot {
     background: rgba(46, 230, 168, 0.14);
+    box-shadow: none;
   }
 
-  .node.done .mark {
-    background: var(--status-online, #2ee6a8);
-    mask: var(--icon-check) center/contain no-repeat;
-  }
-
-  .node.failed {
+  .failed .dot {
     background: rgba(245, 73, 61, 0.14);
+    box-shadow: none;
   }
 
-  .node.failed .mark {
-    background: var(--status-danger, #f5493d);
-    mask: var(--icon-close) center/contain no-repeat;
-  }
-
-  .node.active {
+  .active .dot {
     background: var(--accent-soft, rgba(255, 86, 114, 0.14));
     box-shadow: inset 0 0 0 1.5px var(--accent, #ff5672);
   }
 
-  .node.active .mark {
-    background: var(--accent-bright, #ff8298);
+  .mark.check {
+    width: 12px;
+    height: 12px;
+    background: var(--status-online, #2ee6a8);
+    mask: var(--icon-check) center/contain no-repeat;
+  }
+
+  .mark.cross {
+    width: 11px;
+    height: 11px;
+    background: var(--status-danger, #f5493d);
+    mask: var(--icon-close) center/contain no-repeat;
   }
 
   .line {
     flex: 1;
-    width: 1px;
-    min-height: var(--gap-min);
-    background: var(--line-2, rgba(255, 255, 255, 0.1));
+    width: 2px;
+    min-height: 10px;
+    margin: 3px 0;
+    border-radius: 1px;
+    background: var(--line-2, rgba(255, 255, 255, 0.12));
   }
 
   .done .line {
     background: var(--status-online, #2ee6a8);
   }
 
-  .line.last,
-  .done .line.last {
-    background: transparent;
+  .line.last {
+    opacity: 0;
   }
 
   .body {
@@ -194,98 +307,40 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
     padding: var(--row-pad);
   }
 
-  .title {
-    font: 600 14px/1.25 var(--font-sans);
+  .head {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .label {
+    flex: 1;
+    min-width: 0;
+    font: 600 13.5px/1.35 var(--font-sans);
     color: var(--ink, #ececf1);
   }
 
-  .todo .title {
+  .todo .label {
     color: var(--ink-4, #8a8a99);
   }
 
-  .sub {
-    font: 400 12.5px/1.4 var(--font-sans);
+  .meta {
+    flex: none;
+    font: 500 11.5px/1 var(--font-mono);
     color: var(--ink-4, #8a8a99);
+  }
+
+  .note {
+    font: 400 12px/1.45 var(--font-sans);
+    color: var(--ink-3, #9a9aa8);
     text-wrap: pretty;
   }
 
-  .failed .sub {
-    color: var(--status-danger, #f5493d);
-  }
-
-  .steps {
-    display: flex;
-    flex-direction: column;
-    gap: 7px;
-    padding-top: 4px;
-  }
-
-  .step {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    min-width: 0;
-  }
-
-  .step-slot {
-    flex: none;
-    width: 14px;
-    height: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .step-mark {
-    width: 8px;
-    height: 8px;
-    border-radius: var(--radius-pill);
-    background: transparent;
-  }
-
-  .step.todo .step-mark {
-    box-shadow: inset 0 0 0 1.5px var(--line-3, rgba(255, 255, 255, 0.24));
-  }
-
-  .step.active .step-mark {
-    background: var(--accent, #ff5672);
-  }
-
-  .step.done .step-mark,
-  .step.failed .step-mark {
-    width: 13px;
-    height: 13px;
-  }
-
-  .step.done .step-mark {
-    background: var(--status-online, #2ee6a8);
-    mask: var(--icon-check) center/contain no-repeat;
-  }
-
-  .step.failed .step-mark {
-    background: var(--status-danger, #f5493d);
-    mask: var(--icon-close) center/contain no-repeat;
-  }
-
-  .step-label {
-    min-width: 0;
-    font: 400 13px/1.3 var(--font-sans);
-    color: var(--ink-2, #c9c9d4);
-  }
-
-  .step.active .step-label {
-    font-weight: 600;
-  }
-
-  .step.todo .step-label {
-    color: var(--ink-4, #8a8a99);
-  }
-
-  .step.failed .step-label {
+  .failed .note {
     color: var(--status-danger, #f5493d);
   }
 </style>
