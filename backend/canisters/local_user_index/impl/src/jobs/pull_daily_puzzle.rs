@@ -24,7 +24,7 @@ pub fn pull_now() {
 
 fn run() {
     if read_state(is_required) {
-        utils::async_work::spawn_tracked(pull());
+        ic_cdk::futures::spawn_migratory(pull());
     }
 }
 

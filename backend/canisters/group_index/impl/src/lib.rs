@@ -20,7 +20,7 @@ use model::storage_index_accessors_to_remove_batch::StorageIndexAccessorsToRemov
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{BTreeMap, HashSet};
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     AccessGate, BuildVersion, CanisterId, ChatId, ChildCanisterWasms, CommunityId, Cycles, FrozenGroupInfo, IdempotentEnvelope,
@@ -29,7 +29,6 @@ use types::{
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::env::Environment;
 use utils::idempotency_checker::IdempotencyChecker;
-use utils::migrated_user_ids::MigratedUserIds;
 
 mod guards;
 mod jobs;
@@ -333,33 +332,12 @@ struct Data {
     pub rng_seed: [u8; 32],
     pub idempotency_checker: IdempotencyChecker,
     pub local_index_event_sync_queue: GroupedTimerJobQueue<LocalIndexEventBatch>,
-    // The latest ids of migrated users, as looked up from the UserIndex whenever a user's id is found to
-    // have changed
-    #[serde(default)]
-    pub migrated_user_ids: MigratedUserIds,
     // The ids of deleted groups and communities, which the files sent in them name as their only
     // accessor, to be removed from those files by the StorageIndex, which removes the files
     pub storage_index_accessors_to_remove_queue: BatchedTimerJobQueue<StorageIndexAccessorsToRemoveBatch>,
 }
 
 impl Data {
-    // The users mentioned in the descriptions of public groups and communities by ids without an
-    // index, eg. ids which users had before being migrated to MultiUser canisters
-    pub fn unindexed_user_ids_mentioned_in_descriptions(&self) -> Vec<UserId> {
-        let mut user_ids = HashSet::new();
-        self.public_groups.add_users_mentioned_in_descriptions(&mut user_ids);
-        self.public_communities.add_users_mentioned_in_descriptions(&mut user_ids);
-        user_ids.into_iter().filter(|user_id| !user_id.is_indexed()).collect()
-    }
-
-    // Replaces each user mentioned in the descriptions of public groups and communities by an id
-    // in `latest_user_ids` with their latest id, returning how many descriptions changed
-    pub fn replace_users_mentioned_in_descriptions(&mut self, latest_user_ids: &HashMap<UserId, UserId>) -> usize {
-        let latest = |user_id| latest_user_ids.get(&user_id).copied().unwrap_or(user_id);
-        self.public_groups.replace_users_mentioned_in_descriptions(latest)
-            + self.public_communities.replace_users_mentioned_in_descriptions(latest)
-    }
-
     #[expect(clippy::too_many_arguments)]
     fn new(
         governance_principals: Vec<Principal>,
@@ -404,7 +382,6 @@ impl Data {
             rng_seed: [0; 32],
             idempotency_checker: IdempotencyChecker::default(),
             local_index_event_sync_queue: GroupedTimerJobQueue::new(10, false),
-            migrated_user_ids: MigratedUserIds::default(),
             storage_index_accessors_to_remove_queue: BatchedTimerJobQueue::new(storage_index_canister_id, false),
         }
     }
@@ -515,7 +492,6 @@ impl Default for Data {
             rng_seed: [0; 32],
             idempotency_checker: IdempotencyChecker::default(),
             local_index_event_sync_queue: GroupedTimerJobQueue::new(10, false),
-            migrated_user_ids: MigratedUserIds::default(),
             storage_index_accessors_to_remove_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
         }
     }
@@ -623,56 +599,5 @@ impl AccessGateMetrics {
             AccessGate::ReferredByMember => self.referred_by_member += 1,
             AccessGate::TotalChitEarned(_) => self.total_chit_earned += 1,
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn canister_id(i: u8) -> CanisterId {
-        CanisterId::from_slice(&[0, 0, 0, 0, 0, 0, 0, i, 1, 1])
-    }
-
-    // The User canister id a migrated user had, and the id they were migrated to
-    fn old_user_id(i: u8) -> UserId {
-        canister_id(100 + i).into()
-    }
-
-    fn new_user_id(i: u8) -> UserId {
-        UserId::new_indexed(canister_id(1), i as u16)
-    }
-
-    #[test]
-    fn old_user_ids_mentioned_in_descriptions_are_replaced() {
-        let mut data = Data::default();
-        data.public_groups.add(
-            canister_id(10).into(),
-            "group".to_string(),
-            format!("Run by @UserId({}) and @UserId({})", old_user_id(1), new_user_id(2)),
-            None,
-            None,
-            None,
-            0,
-        );
-        data.public_communities.add(
-            canister_id(11).into(),
-            "community".to_string(),
-            format!("Ask @UserId({})", old_user_id(3)),
-            None,
-            None,
-            None,
-            "en".to_string(),
-            1,
-            0,
-        );
-
-        let mentioned: HashSet<_> = data.unindexed_user_ids_mentioned_in_descriptions().into_iter().collect();
-        assert_eq!(mentioned, HashSet::from([old_user_id(1), old_user_id(3)]));
-
-        // User 3 isn't known to have been migrated, so is left as they are
-        let replaced = data.replace_users_mentioned_in_descriptions(&HashMap::from([(old_user_id(1), new_user_id(1))]));
-        assert_eq!(replaced, 1);
-        assert_eq!(data.unindexed_user_ids_mentioned_in_descriptions(), vec![old_user_id(3)]);
     }
 }

@@ -3,12 +3,11 @@ use crate::model::moderation_flags::ModerationFlags;
 use crate::model::private_communities::PrivateCommunityInfo;
 use search::weighted::{Document, Query};
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use types::{
     AccessGate, AccessGateConfig, AccessGateConfigInternal, CommunityId, CommunityMatch, FrozenCommunityInfo,
-    PublicCommunityActivity, TimestampMillis, UserId,
+    PublicCommunityActivity, TimestampMillis,
 };
-use utils::mentions::replace_mentioned_users;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct PublicCommunities {
@@ -139,29 +138,6 @@ impl PublicCommunities {
 
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut PublicCommunityInfo> {
         self.communities.values_mut()
-    }
-
-    // Adds the users mentioned in the communities' descriptions to `user_ids`
-    pub fn add_users_mentioned_in_descriptions(&self, user_ids: &mut HashSet<UserId>) {
-        for community in self.communities.values() {
-            replace_mentioned_users(&community.description, |user_id| {
-                user_ids.insert(user_id);
-                user_id
-            });
-        }
-    }
-
-    // Replaces each user mentioned in the communities' descriptions with the id `f` returns for them,
-    // returning how many descriptions changed
-    pub fn replace_users_mentioned_in_descriptions(&mut self, mut f: impl FnMut(UserId) -> UserId) -> usize {
-        let mut changed = 0;
-        for community in self.communities.values_mut() {
-            if let Some(description) = replace_mentioned_users(&community.description, &mut f) {
-                community.description = description;
-                changed += 1;
-            }
-        }
-        changed
     }
 }
 

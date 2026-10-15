@@ -1,7 +1,6 @@
 use crate::chat_events_list::Reader;
 use crate::expiring_events::ExpiringEvents;
 use crate::last_updated_timestamps::LastUpdatedTimestamps;
-use crate::legacy_heap_entries::LegacyHeapEntries;
 use crate::metrics::{ChatMetricsInternal, MetricKey};
 use crate::per_user_metrics::PerUserMetrics;
 use crate::search_index::SearchIndex;
@@ -19,7 +18,7 @@ use stable_memory_map::{
 };
 use std::cmp::max;
 use std::collections::{BTreeMap, BTreeSet, HashSet};
-use std::ops::{Bound, DerefMut};
+use std::ops::DerefMut;
 use tracing::error;
 use types::{
     AuthorityReportState, BlobReference, BotChatEvent, BotNotification, CallKind, CallParticipant, CanisterId, Chat, ChatEvent,
@@ -34,8 +33,6 @@ use types::{
     UserIdAndPrincipal, VideoCall, VideoCallEndedEventPayload, VideoCallParticipants, VideoCallPresence, VoteOperation,
     is_default,
 };
-use utils::mentions::MENTION_PREFIX;
-use utils::migrated_user_ids::MigratedUserIds;
 
 // The patchable fields of a moderation-report card; each is applied when present so that
 // verdict-status, authority-report and quarantine-flip updates can be sent independently
@@ -61,9 +58,6 @@ pub struct ChatEvents {
     metrics: ChatMetricsInternal,
     #[serde(skip)]
     per_user_metrics: PerUserMetrics,
-    // Each user's metrics from before they were stored in stable memory (see `LegacyHeapEntries`)
-    #[serde(rename = "per_user_metrics", default, skip_serializing)]
-    legacy_per_user_metrics: LegacyHeapEntries,
     frozen: bool,
     events_ttl: Timestamped<Option<Milliseconds>>,
     expiring_events: ExpiringEvents,
@@ -126,7 +120,6 @@ impl ChatEvents {
             threads: BTreeMap::new(),
             metrics: ChatMetricsInternal::default(),
             per_user_metrics: PerUserMetrics,
-            legacy_per_user_metrics: LegacyHeapEntries::default(),
             frozen: false,
             events_ttl: Timestamped::new(events_ttl, now),
             expiring_events: ExpiringEvents::default(),
@@ -159,7 +152,6 @@ impl ChatEvents {
             threads: BTreeMap::new(),
             metrics: ChatMetricsInternal::default(),
             per_user_metrics: PerUserMetrics,
-            legacy_per_user_metrics: LegacyHeapEntries::default(),
             frozen: false,
             events_ttl: Timestamped::new(events_ttl, now),
             expiring_events: ExpiringEvents::default(),
@@ -233,15 +225,6 @@ impl ChatEvents {
         }
     }
 
-    // Changes the other user of a direct chat, without moving its events in stable memory, since a
-    // direct chat's events are keyed by its key id rather than by the other user. Used when a user
-    // is migrated to a new id, for their chat with themselves.
-    pub fn set_direct_chat_user(&mut self, them: UserId) {
-        if matches!(self.chat, Chat::Direct(_)) {
-            self.chat = Chat::Direct(them.into());
-        }
-    }
-
     pub fn set_chat(&mut self, chat: Chat) {
         self.chat = chat;
         let prefix = ChatEventKeyPrefix::new_from_chat(chat, None);
@@ -307,170 +290,6 @@ impl ChatEvents {
                 self.per_user_metrics
                     .skip_their_metrics(self.main.stable_memory_prefix(), self.chat, my_user_id);
         }
-    }
-
-    // The entries held on the heap from before they were stored in stable memory (see
-    // `LegacyHeapEntries`), which a canister must have none of to upgrade
-    pub fn legacy_heap_entries(&self) -> usize {
-        self.expiring_events.legacy_heap_entries()
-            + self.last_updated_timestamps.legacy_heap_entries()
-            + self.legacy_per_user_metrics.count()
-            + self.search_index.legacy_heap_entries()
-            + std::iter::once(&self.main)
-                .chain(self.threads.values())
-                .map(|l| l.legacy_heap_entries())
-                .sum::<usize>()
-    }
-
-    // Passes the user ids in each event after `after` (or in every event if `after` is None)
-    // through `f`, along with where the event is, writing back each event in which any are
-    // replaced (see `ChatEventInternal::update_user_ids`). The main events list is processed first,
-    // then each thread in turn. `should_stop` is checked after each batch of up to 100 events, and
-    // once it returns true, the last event processed is returned, from which the next call carries
-    // on. Returns None once every event has been processed.
-    //
-    // The events aren't marked as updated, so clients aren't sent them again.
-    pub fn update_user_ids(
-        &mut self,
-        after: Option<EventContext>,
-        f: &mut dyn FnMut(EventContext, UserId) -> UserId,
-        should_stop: &mut dyn FnMut() -> bool,
-    ) -> Option<EventContext> {
-        let (mut thread_root_message_index, mut start) = match after {
-            Some(context) => (context.thread_root_message_index, context.event_index.incr()),
-            None => (None, EventIndex::default()),
-        };
-
-        if thread_root_message_index.is_none() {
-            if let Some(last) =
-                Self::update_user_ids_in_list(&mut self.main, Some(&mut self.search_index), None, start, f, should_stop)
-            {
-                return Some(EventContext::new(None, last));
-            }
-            thread_root_message_index = self.threads.keys().next().copied();
-            start = EventIndex::default();
-        }
-
-        while let Some(root_message_index) = thread_root_message_index {
-            if let Some(thread) = self.threads.get_mut(&root_message_index)
-                && let Some(last) = Self::update_user_ids_in_list(thread, None, Some(root_message_index), start, f, should_stop)
-            {
-                return Some(EventContext::new(Some(root_message_index), last));
-            }
-            thread_root_message_index = self
-                .threads
-                .range((Bound::Excluded(root_message_index), Bound::Unbounded))
-                .next()
-                .map(|(k, _)| *k);
-            start = EventIndex::default();
-        }
-        None
-    }
-
-    // Passes the user ids in the events at `contexts` through `f`, writing back those in which any
-    // are replaced. Returns how many were.
-    pub fn update_user_ids_in_events(
-        &mut self,
-        contexts: impl IntoIterator<Item = EventContext>,
-        f: &mut dyn FnMut(UserId) -> UserId,
-    ) -> u32 {
-        // Grouped by events list, each in order of index, so that each list's events are written
-        // together
-        let mut event_indexes_by_list: BTreeMap<Option<MessageIndex>, BTreeSet<EventIndex>> = BTreeMap::new();
-        for context in contexts {
-            event_indexes_by_list
-                .entry(context.thread_root_message_index)
-                .or_default()
-                .insert(context.event_index);
-        }
-
-        let mut updated = 0;
-        for (thread_root_message_index, event_indexes) in event_indexes_by_list {
-            let (events_list, search_index) = match thread_root_message_index {
-                None => (&mut self.main, Some(&mut self.search_index)),
-                Some(root_message_index) => match self.threads.get_mut(&root_message_index) {
-                    Some(thread) => (thread, None),
-                    None => continue,
-                },
-            };
-            let events = event_indexes.into_iter().filter_map(|i| events_list.event_at(i)).collect();
-            updated +=
-                Self::update_events_user_ids(events_list, search_index, thread_root_message_index, events, &mut |_, u| f(u));
-        }
-        updated
-    }
-
-    fn update_user_ids_in_list(
-        events_list: &mut ChatEventsList,
-        mut search_index: Option<&mut SearchIndex>,
-        thread_root_message_index: Option<MessageIndex>,
-        mut start: EventIndex,
-        f: &mut dyn FnMut(EventContext, UserId) -> UserId,
-        should_stop: &mut dyn FnMut() -> bool,
-    ) -> Option<EventIndex> {
-        const BATCH_SIZE: usize = 100;
-
-        loop {
-            let events = events_list.events_from(start, BATCH_SIZE);
-            let last = events.last()?.index;
-            Self::update_events_user_ids(events_list, search_index.as_deref_mut(), thread_root_message_index, events, f);
-            if should_stop() {
-                return Some(last);
-            }
-            start = last.incr();
-        }
-    }
-
-    // Passes the user ids in each of `events`, which must be from `events_list` and in order of
-    // index, through `f`, then writes back those in which any are replaced together, and likewise
-    // moves the search index entries of the messages whose senders are replaced. `search_index` is
-    // only given for the main events list, since threads aren't indexed. Returns how many events
-    // were updated.
-    fn update_events_user_ids(
-        events_list: &mut ChatEventsList,
-        search_index: Option<&mut SearchIndex>,
-        thread_root_message_index: Option<MessageIndex>,
-        events: Vec<EventWrapperInternal<ChatEventInternal>>,
-        f: &mut dyn FnMut(EventContext, UserId) -> UserId,
-    ) -> u32 {
-        let mut updated = Vec::new();
-        let mut sender_changes = Vec::new();
-        let mut document_changes = Vec::new();
-        for mut event in events {
-            let context = EventContext::new(thread_root_message_index, event.index);
-            let (sender, document) = if let ChatEventInternal::Message(m) = &event.event {
-                // The document is only needed if the message is indexed and its text mentions
-                // someone whose id may be replaced
-                let document = (search_index.is_some()
-                    && m.deleted_by.is_none()
-                    && m.content.text().is_some_and(|t| t.contains(MENTION_PREFIX)))
-                .then(|| Document::from(&m.content));
-                (Some(m.sender), document)
-            } else {
-                (None, None)
-            };
-            if event.event.update_user_ids(&mut |user_id| f(context, user_id)) {
-                if let ChatEventInternal::Message(m) = &event.event {
-                    if let Some(old_sender) = sender
-                        && m.sender != old_sender
-                    {
-                        sender_changes.push((m.message_index, old_sender, m.sender));
-                    }
-                    if let Some(old_document) = document {
-                        document_changes.push((m.message_index, old_document, Document::from(&m.content)));
-                    }
-                }
-                updated.push(event);
-            }
-        }
-        if let Some(search_index) = search_index {
-            let prefix = events_list.stable_memory_prefix();
-            search_index.change_senders(prefix, sender_changes);
-            search_index.update_many(prefix, document_changes);
-        }
-        let count = updated.len() as u32;
-        events_list.replace_events(updated);
-        count
     }
 
     pub fn thread_keys(&self) -> impl Iterator<Item = MessageIndex> + '_ {
@@ -609,7 +428,6 @@ impl ChatEvents {
     pub fn edit_message<P: EventPusher>(
         &mut self,
         args: EditMessageArgs,
-        migrated_user_ids: &MigratedUserIds,
         event_pusher: Option<P>,
     ) -> OCResult<EditMessageSuccess> {
         let sender = args.sender;
@@ -625,9 +443,7 @@ impl ChatEvents {
             now,
             true,
             ChatEventType::MessageEdited,
-            |message, event| {
-                Self::edit_message_inner(message, event, args, chat, anonymized_id, migrated_user_ids, event_pusher)
-            },
+            |message, event| Self::edit_message_inner(message, event, args, chat, anonymized_id, event_pusher),
         ) {
             Ok(result) => {
                 let bot_notification = result.bot_notification;
@@ -672,15 +488,12 @@ impl ChatEvents {
         args: EditMessageArgs,
         chat: Chat,
         anonymized_id: String,
-        migrated_user_ids: &MigratedUserIds,
         mut event_pusher: Option<P>,
     ) -> Result<
         (MessageIndex, EventMetaData, Option<(Document, Document)>),
         UpdateEventError<OCResult<(MessageIndex, EventMetaData)>>,
     > {
-        if !migrated_user_ids.is_same_user(message.sender, args.sender)
-            || matches!(message.content, MessageContentInternal::Deleted(_))
-        {
+        if message.sender != args.sender || matches!(message.content, MessageContentInternal::Deleted(_)) {
             return Err(UpdateEventError::NoChange(Err(OCErrorCode::InitiatorNotAuthorized.into())));
         }
 
@@ -752,12 +565,8 @@ impl ChatEvents {
         )
     }
 
-    pub fn delete_messages(
-        &mut self,
-        args: DeleteUndeleteMessagesArgs,
-        migrated_user_ids: &MigratedUserIds,
-    ) -> Vec<(MessageId, OCResult<DeleteMessageSuccess>)> {
-        args.iter(migrated_user_ids)
+    pub fn delete_messages(&mut self, args: DeleteUndeleteMessagesArgs) -> Vec<(MessageId, OCResult<DeleteMessageSuccess>)> {
+        args.iter()
             .map(|delete_message_args| (delete_message_args.message_id, self.delete_message(delete_message_args)))
             .collect()
     }
@@ -765,9 +574,8 @@ impl ChatEvents {
     pub fn undelete_messages(
         &mut self,
         args: DeleteUndeleteMessagesArgs,
-        migrated_user_ids: &MigratedUserIds,
     ) -> Vec<(MessageId, OCResult<Option<BotNotification>>)> {
-        args.iter(migrated_user_ids)
+        args.iter()
             .map(|undelete_message_args| (undelete_message_args.message_id, self.undelete_message(undelete_message_args)))
             .collect()
     }
@@ -785,7 +593,7 @@ impl ChatEvents {
             Ok(result) => {
                 let (sender, message_index, document) = result.value;
 
-                if !args.is_caller(sender) {
+                if sender != args.caller {
                     add_to_metrics(
                         &mut self.metrics,
                         &mut self.per_user_metrics,
@@ -825,18 +633,15 @@ impl ChatEvents {
         message: &mut MessageInternal,
         args: &DeleteUndeleteMessageArgs,
     ) -> Result<(UserId, MessageIndex, Document), UpdateEventError<OCErrorCode>> {
-        if args.is_caller(message.sender) || args.is_admin {
+        if message.sender == args.caller || args.is_admin {
             if message.deleted_by.is_some() || matches!(message.content, MessageContentInternal::Deleted(_)) {
                 Err(UpdateEventError::NoChange(OCErrorCode::NoChange))
             } else if matches!(message.content, MessageContentInternal::VideoCall(ref c) if c.ended.is_none()) {
                 Err(UpdateEventError::NoChange(OCErrorCode::InitiatorNotAuthorized))
             } else {
                 let sender = message.sender;
-                // A user deleting a message they sent under an earlier id is recorded as deleting it
-                // under that id, so the message is seen, as it is, to have been deleted by its sender
-                let deleted_by = if args.is_caller(sender) { sender } else { args.caller };
                 message.deleted_by = Some(DeletedByInternal {
-                    deleted_by,
+                    deleted_by: args.caller,
                     timestamp: args.now,
                 });
                 Ok((sender, message.message_index, Document::from(&message.content)))
@@ -878,7 +683,6 @@ impl ChatEvents {
             thread_root_message_index,
             message_id,
             now,
-            migrated_user_ids: &MigratedUserIds::default(),
         })
     }
 
@@ -894,7 +698,7 @@ impl ChatEvents {
         ) {
             Ok(result) => {
                 let (sender, message_index, document) = result.value;
-                if !args.is_caller(sender) {
+                if sender != args.caller {
                     add_to_metrics(
                         &mut self.metrics,
                         &mut self.per_user_metrics,
@@ -942,7 +746,7 @@ impl ChatEvents {
             return Err(UpdateEventError::NoChange(OCErrorCode::InitiatorNotAuthorized));
         }
 
-        if args.is_caller(deleted_by) || (args.is_admin && !args.migrated_user_ids.is_same_user(message.sender, deleted_by)) {
+        if deleted_by == args.caller || (args.is_admin && message.sender != deleted_by) {
             match message.content {
                 MessageContentInternal::Deleted(_) => Err(UpdateEventError::NoChange(OCErrorCode::MessageHardDeleted)),
                 MessageContentInternal::Crypto(_) => Err(UpdateEventError::NoChange(OCErrorCode::InvalidMessageType)),
@@ -998,7 +802,6 @@ impl ChatEvents {
     pub fn register_poll_vote(
         &mut self,
         args: RegisterPollVoteArgs,
-        migrated_user_ids: &MigratedUserIds,
     ) -> OCResult<UpdateMessageSuccess<RegisterPollVoteSuccess>> {
         match self.update_message(
             args.thread_root_message_index,
@@ -1007,7 +810,7 @@ impl ChatEvents {
             args.now,
             true,
             ChatEventType::MessagePollVote,
-            |message, _| Self::register_poll_vote_inner(message, &args, migrated_user_ids),
+            |message, _| Self::register_poll_vote_inner(message, &args),
         ) {
             Ok(result) => {
                 if result.value.updated {
@@ -1050,16 +853,13 @@ impl ChatEvents {
     fn register_poll_vote_inner(
         message: &mut MessageInternal,
         args: &RegisterPollVoteArgs,
-        migrated_user_ids: &MigratedUserIds,
     ) -> Result<RegisterPollVoteSuccess, UpdateEventError<OCErrorCode>> {
         let MessageContentInternal::Poll(p) = &mut message.content else {
             return Err(UpdateEventError::NotFound);
         };
 
-        p.change_voter_ids(args.user_id, migrated_user_ids);
         let result = p.register_vote(args.user_id, args.option_index, args.operation);
-        // The creator under their latest id, in case they have been migrated since creating the poll
-        let poll_creator = migrated_user_ids.latest(message.sender);
+        let poll_creator = message.sender;
 
         match result {
             RegisterVoteResult::Success(existing_vote_removed) => Ok(RegisterPollVoteSuccess {
@@ -1116,12 +916,7 @@ impl ChatEvents {
         }
     }
 
-    pub fn final_payments(
-        &mut self,
-        message_index: MessageIndex,
-        migrated_user_ids: &MigratedUserIds,
-        now_nanos: TimestampNanos,
-    ) -> Vec<PendingCryptoTransaction> {
+    pub fn final_payments(&mut self, message_index: MessageIndex, now_nanos: TimestampNanos) -> Vec<PendingCryptoTransaction> {
         self.update_message(
             None,
             message_index.into(),
@@ -1129,7 +924,7 @@ impl ChatEvents {
             now_nanos / 1_000_000,
             false,
             ChatEventType::MessageOther,
-            |message, _| Self::final_payments_inner(message, migrated_user_ids, now_nanos),
+            |message, _| Self::final_payments_inner(message, now_nanos),
         )
         .ok()
         .map(|r| r.value)
@@ -1138,14 +933,13 @@ impl ChatEvents {
 
     fn final_payments_inner(
         message: &mut MessageInternal,
-        migrated_user_ids: &MigratedUserIds,
         now_nanos: TimestampNanos,
     ) -> Result<Vec<PendingCryptoTransaction>, UpdateEventError> {
         let MessageContentInternal::Prize(p) = &mut message.content else {
             return Err(UpdateEventError::NotFound);
         };
 
-        Ok(p.final_payments(message.sender, migrated_user_ids, now_nanos))
+        Ok(p.final_payments(message.sender, now_nanos))
     }
 
     pub fn record_proposal_vote(
@@ -1155,7 +949,6 @@ impl ChatEvents {
         message_index: MessageIndex,
         adopt: bool,
         now: TimestampMillis,
-        migrated_user_ids: &MigratedUserIds,
     ) -> OCResult<UpdateMessageSuccess> {
         match self.update_message(
             None,
@@ -1164,7 +957,7 @@ impl ChatEvents {
             now,
             false,
             ChatEventType::MessageOther,
-            |message, _| Self::record_proposal_vote_inner(message, user_id, adopt, migrated_user_ids),
+            |message, _| Self::record_proposal_vote_inner(message, user_id, adopt),
         ) {
             Ok(success) => Ok(success),
             Err(UpdateEventError::NoChange(_)) => Err(OCErrorCode::NoChange.into()),
@@ -1176,13 +969,12 @@ impl ChatEvents {
         message: &mut MessageInternal,
         user_id: UserId,
         adopt: bool,
-        migrated_user_ids: &MigratedUserIds,
     ) -> Result<(), UpdateEventError<bool>> {
         let MessageContentInternal::GovernanceProposal(proposal) = &mut message.content else {
             return Err(UpdateEventError::NotFound);
         };
 
-        if let Some(vote) = proposal.vote(user_id, migrated_user_ids) {
+        if let Some(vote) = proposal.vote(user_id) {
             return Err(UpdateEventError::NoChange(vote));
         }
 
@@ -1351,7 +1143,6 @@ impl ChatEvents {
     pub fn add_reaction<P: EventPusher>(
         &mut self,
         args: AddRemoveReactionArgs,
-        migrated_user_ids: &MigratedUserIds,
         event_pusher: Option<P>,
     ) -> OCResult<UpdateMessageSuccess<MessageInternal>> {
         if !args.reaction.is_valid() {
@@ -1370,7 +1161,7 @@ impl ChatEvents {
             now,
             true,
             ChatEventType::MessageReaction,
-            |message, _| Self::add_reaction_inner(message, args, chat, anonymized_id, migrated_user_ids, event_pusher),
+            |message, _| Self::add_reaction_inner(message, args, chat, anonymized_id, event_pusher),
         ) {
             Ok(result) => {
                 add_to_metrics(
@@ -1395,12 +1186,10 @@ impl ChatEvents {
         args: AddRemoveReactionArgs,
         chat: Chat,
         anonymized_id: String,
-        migrated_user_ids: &MigratedUserIds,
         mut event_pusher: Option<P>,
     ) -> Result<MessageInternal, UpdateEventError> {
         let added = if let Some((_, users)) = message.reactions.iter_mut().find(|(r, _)| *r == args.reaction) {
-            // The user may have reacted under an earlier id
-            !contains_user(users, args.user_id, migrated_user_ids) && users.insert(args.user_id)
+            users.insert(args.user_id)
         } else {
             message
                 .reactions
@@ -1432,11 +1221,7 @@ impl ChatEvents {
         Ok(message.clone())
     }
 
-    pub fn remove_reaction(
-        &mut self,
-        args: AddRemoveReactionArgs,
-        migrated_user_ids: &MigratedUserIds,
-    ) -> OCResult<UpdateMessageSuccess> {
+    pub fn remove_reaction(&mut self, args: AddRemoveReactionArgs) -> OCResult<UpdateMessageSuccess> {
         match self.update_message(
             args.thread_root_message_index,
             args.message_id.into(),
@@ -1444,7 +1229,7 @@ impl ChatEvents {
             args.now,
             true,
             ChatEventType::MessageReaction,
-            |message, _| Self::remove_reaction_inner(message, &args, migrated_user_ids),
+            |message, _| Self::remove_reaction_inner(message, &args),
         ) {
             Ok(result) => {
                 add_to_metrics(
@@ -1464,20 +1249,12 @@ impl ChatEvents {
         }
     }
 
-    fn remove_reaction_inner(
-        message: &mut MessageInternal,
-        args: &AddRemoveReactionArgs,
-        migrated_user_ids: &MigratedUserIds,
-    ) -> Result<(), UpdateEventError> {
-        // Including any reaction the user left under an earlier id
+    fn remove_reaction_inner(message: &mut MessageInternal, args: &AddRemoveReactionArgs) -> Result<(), UpdateEventError> {
         let (removed, is_empty) = message
             .reactions
             .iter_mut()
             .find(|(r, _)| *r == args.reaction)
-            .map(|(_, u)| {
-                let removed_earlier_ids = remove_earlier_ids(u, args.user_id, migrated_user_ids);
-                (u.remove(&args.user_id) || removed_earlier_ids, u.is_empty())
-            })
+            .map(|(_, u)| (u.remove(&args.user_id), u.is_empty()))
             .unwrap_or_default();
 
         if !removed {
@@ -1495,7 +1272,6 @@ impl ChatEvents {
         &mut self,
         args: TipMessageArgs,
         min_visible_event_index: EventIndex,
-        migrated_user_ids: &MigratedUserIds,
         event_pusher: Option<P>,
     ) -> OCResult<UpdateMessageSuccess> {
         let chat = self.chat;
@@ -1508,7 +1284,7 @@ impl ChatEvents {
             args.now,
             true,
             ChatEventType::MessageTipped,
-            |message, _| Self::tip_message_inner(message, &args, chat, anonymized_id, migrated_user_ids, event_pusher),
+            |message, _| Self::tip_message_inner(message, &args, chat, anonymized_id, event_pusher),
         ) {
             Ok(result) => {
                 add_to_metrics(
@@ -1533,15 +1309,12 @@ impl ChatEvents {
         args: &TipMessageArgs,
         chat: Chat,
         anonymized_id: String,
-        migrated_user_ids: &MigratedUserIds,
         mut event_pusher: Option<P>,
     ) -> Result<(), UpdateEventError<OCError>> {
-        if migrated_user_ids.is_same_user(message.sender, args.user_id) {
+        if message.sender == args.user_id {
             return Err(UpdateEventError::NoChange(OCErrorCode::CannotTipSelf.into()));
         }
-        // The message may have been sent under an id its sender has since been migrated from, in
-        // which case the tip is to their latest id
-        if !migrated_user_ids.is_same_user(message.sender, args.recipient) {
+        if message.sender != args.recipient {
             error!(
                 user = %args.user_id,
                 recipient = %args.recipient,
@@ -1590,7 +1363,6 @@ impl ChatEvents {
         streak: u16,
         streak_ends: TimestampMillis,
         user_reauthenticated: bool,
-        migrated_user_ids: &MigratedUserIds,
     ) -> OCResult<ReservePrizeSuccess> {
         match self.update_message(
             None,
@@ -1610,7 +1382,6 @@ impl ChatEvents {
                     streak,
                     streak_ends,
                     user_reauthenticated,
-                    migrated_user_ids,
                 )
             },
         ) {
@@ -1631,7 +1402,6 @@ impl ChatEvents {
         streak: u16,
         streak_ends: TimestampMillis,
         user_reauthenticated: bool,
-        migrated_user_ids: &MigratedUserIds,
     ) -> Result<ReservePrizeSuccess, UpdateEventError<OCErrorCode>> {
         let MessageContentInternal::Prize(content) = &mut message.content else {
             return Err(UpdateEventError::NotFound);
@@ -1667,10 +1437,7 @@ impl ChatEvents {
             return Err(UpdateEventError::NoChange(OCErrorCode::PrizeFullyClaimed));
         }
 
-        // A user who has since been migrated to a MultiUser canister may have claimed under an earlier id
-        if contains_user(&content.winners, user_id, migrated_user_ids)
-            || contains_user(&content.reservations, user_id, migrated_user_ids)
-        {
+        if content.winners.contains(&user_id) || content.reservations.contains(&user_id) {
             return Err(UpdateEventError::NoChange(OCErrorCode::PrizeAlreadyClaimed));
         }
 
@@ -2085,7 +1852,6 @@ impl ChatEvents {
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
         now: TimestampMillis,
-        migrated_user_ids: &MigratedUserIds,
     ) -> OCResult<UpdateMessageSuccess<u32>> {
         match self.update_message(
             thread_root_message_index,
@@ -2094,7 +1860,7 @@ impl ChatEvents {
             now,
             true,
             ChatEventType::MessageP2pSwapCancelled,
-            |message, _| Self::cancel_p2p_swap_inner(message, user_id, migrated_user_ids),
+            |message, _| Self::cancel_p2p_swap_inner(message, user_id),
         ) {
             Ok(result) => Ok(result),
             Err(UpdateEventError::NoChange(error)) => Err(error.into()),
@@ -2102,12 +1868,8 @@ impl ChatEvents {
         }
     }
 
-    fn cancel_p2p_swap_inner(
-        message: &mut MessageInternal,
-        user_id: UserId,
-        migrated_user_ids: &MigratedUserIds,
-    ) -> Result<u32, UpdateEventError<OCErrorCode>> {
-        if migrated_user_ids.is_same_user(message.sender, user_id)
+    fn cancel_p2p_swap_inner(message: &mut MessageInternal, user_id: UserId) -> Result<u32, UpdateEventError<OCErrorCode>> {
+        if message.sender == user_id
             && let MessageContentInternal::P2PSwap(content) = &mut message.content
         {
             return if content.cancel() {
@@ -2205,16 +1967,10 @@ impl ChatEvents {
         user_id: UserId,
         min_visible_event_index: EventIndex,
         now: TimestampMillis,
-        migrated_user_ids: &MigratedUserIds,
     ) -> OCResult {
         match self.update_thread_summary(
             thread_root_message_index,
-            |t, _| {
-                // The user may already follow the thread under an earlier id, which is moved to
-                // their current id
-                let moved = remove_earlier_ids(&mut t.followers, user_id, migrated_user_ids);
-                t.followers.insert(user_id) || moved
-            },
+            |t, _| t.followers.insert(user_id),
             min_visible_event_index,
             false,
             now,
@@ -2231,14 +1987,10 @@ impl ChatEvents {
         user_id: UserId,
         min_visible_event_index: EventIndex,
         now: TimestampMillis,
-        migrated_user_ids: &MigratedUserIds,
     ) -> OCResult {
         match self.update_thread_summary(
             thread_root_message_index,
-            |t, _| {
-                let removed_earlier_ids = remove_earlier_ids(&mut t.followers, user_id, migrated_user_ids);
-                t.followers.remove(&user_id) || removed_earlier_ids
-            },
+            |t, _| t.followers.remove(&user_id),
             min_visible_event_index,
             false,
             now,
@@ -2457,30 +2209,6 @@ impl ChatEvents {
             .filter(|m| if let Some(since) = if_updated_since { m.last_active > since } else { true })
     }
 
-    // Moves the metrics of a user migrated to a MultiUser canister onto their new id
-    pub fn migrate_user_metrics(&mut self, old_user_id: UserId, new_user_id: UserId) -> bool {
-        self.per_user_metrics
-            .migrate_user(self.main.stable_memory_prefix(), old_user_id, new_user_id)
-    }
-
-    // The ids of up to `max_count` of the users with metrics in stable memory, in key order,
-    // starting after `after`
-    pub fn user_ids_with_metrics_in_stable_memory(&self, after: Option<UserId>, max_count: usize) -> Vec<UserId> {
-        self.per_user_metrics
-            .user_ids_in_stable_memory(self.main.stable_memory_prefix(), after, max_count)
-    }
-
-    // The users who have metrics in the chat
-    pub fn user_ids_with_metrics(&self) -> BTreeSet<UserId> {
-        self.per_user_metrics.user_ids(self.main.stable_memory_prefix())
-    }
-
-    // Removes the user's metrics from the chat. `skip_their_metrics` does this for the other user in
-    // a direct chat, but only under the id they have in it now.
-    pub fn remove_user_metrics(&mut self, user_id: UserId) -> bool {
-        self.per_user_metrics.remove(self.main.stable_memory_prefix(), user_id)
-    }
-
     pub fn event_count_since<F: Fn(&ChatEventInternal) -> bool>(&self, since: TimestampMillis, filter: F) -> usize {
         self.main.event_count_since(since, &filter)
             + self
@@ -2583,14 +2311,14 @@ impl ChatEvents {
         self.expiring_events.next_event_expiry()
     }
 
-    pub fn remove_expired_events(&mut self, migrated_user_ids: &MigratedUserIds, now: TimestampMillis) -> RemoveEventsResult {
+    pub fn remove_expired_events(&mut self, now: TimestampMillis) -> RemoveEventsResult {
         let mut results = RemoveEventsResult::default();
 
         while let Some(event_index) = self
             .expiring_events
             .take_next_expired_event(self.main.stable_memory_prefix(), now)
         {
-            if let Some(result) = self.remove_event(event_index, migrated_user_ids, now) {
+            if let Some(result) = self.remove_event(event_index, now) {
                 results.merge_result(event_index, result);
             }
         }
@@ -2610,7 +2338,6 @@ impl ChatEvents {
         before: TimestampMillis,
         now: TimestampMillis,
         batch_size: u16,
-        migrated_user_ids: &MigratedUserIds,
     ) -> RemoveEventsResult {
         let mut batch_result = RemoveEventsResult::default();
 
@@ -2627,7 +2354,7 @@ impl ChatEvents {
             .collect();
 
         for event in batch_to_remove {
-            if let Some(result) = self.remove_event(event.index, migrated_user_ids, now) {
+            if let Some(result) = self.remove_event(event.index, now) {
                 batch_result.merge_result(event.index, result);
             }
         }
@@ -2635,12 +2362,7 @@ impl ChatEvents {
         batch_result
     }
 
-    pub fn remove_event(
-        &mut self,
-        event_index: EventIndex,
-        migrated_user_ids: &MigratedUserIds,
-        now: TimestampMillis,
-    ) -> Option<RemoveEventResult> {
+    pub fn remove_event(&mut self, event_index: EventIndex, now: TimestampMillis) -> Option<RemoveEventResult> {
         let event = self.main.remove(event_index)?;
 
         let mut result = RemoveEventResult::default();
@@ -2672,7 +2394,7 @@ impl ChatEvents {
                 });
             }
             if let MessageContentInternal::Prize(mut p) = m.content {
-                result.final_prize_payments = p.final_payments(m.sender, migrated_user_ids, now * 1_000_000);
+                result.final_prize_payments = p.final_payments(m.sender, now * 1_000_000);
             }
         }
 
@@ -3254,61 +2976,26 @@ pub struct DeleteUndeleteMessagesArgs {
     pub now: TimestampMillis,
 }
 
-pub struct DeleteUndeleteMessageArgs<'a> {
+pub struct DeleteUndeleteMessageArgs {
     pub caller: UserId,
     pub is_admin: bool,
     pub min_visible_event_index: EventIndex,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
     pub now: TimestampMillis,
-    pub migrated_user_ids: &'a MigratedUserIds,
-}
-
-impl DeleteUndeleteMessageArgs<'_> {
-    // Whether `user_id` is the caller's, or one of their earlier ids
-    fn is_caller(&self, user_id: UserId) -> bool {
-        self.migrated_user_ids.is_same_user(user_id, self.caller)
-    }
 }
 
 impl DeleteUndeleteMessagesArgs {
-    pub fn iter<'a>(
-        &'a self,
-        migrated_user_ids: &'a MigratedUserIds,
-    ) -> impl Iterator<Item = DeleteUndeleteMessageArgs<'a>> + 'a {
-        self.message_ids.iter().map(move |m| DeleteUndeleteMessageArgs {
+    pub fn iter(&self) -> impl Iterator<Item = DeleteUndeleteMessageArgs> + '_ {
+        self.message_ids.iter().map(|m| DeleteUndeleteMessageArgs {
             caller: self.caller,
             is_admin: self.is_admin,
             min_visible_event_index: self.min_visible_event_index,
             thread_root_message_index: self.thread_root_message_index,
             message_id: *m,
             now: self.now,
-            migrated_user_ids,
         })
     }
-}
-
-// Whether `user_ids` holds the user, under their current id or an earlier one
-fn contains_user(user_ids: &BTreeSet<UserId>, user_id: UserId, migrated_user_ids: &MigratedUserIds) -> bool {
-    if user_ids.contains(&user_id) {
-        return true;
-    }
-    if migrated_user_ids.is_empty() {
-        return false;
-    }
-    let latest = migrated_user_ids.latest(user_id);
-    user_ids.iter().any(|u| migrated_user_ids.latest(*u) == latest)
-}
-
-// Removes the user's earlier ids from `user_ids`, returning whether there were any
-fn remove_earlier_ids(user_ids: &mut BTreeSet<UserId>, user_id: UserId, migrated_user_ids: &MigratedUserIds) -> bool {
-    if migrated_user_ids.is_empty() {
-        return false;
-    }
-    let latest = migrated_user_ids.latest(user_id);
-    let len = user_ids.len();
-    user_ids.retain(|u| *u == user_id || migrated_user_ids.latest(*u) != latest);
-    user_ids.len() < len
 }
 
 pub struct RegisterPollVoteArgs {
@@ -3505,10 +3192,7 @@ mod tests {
     use candid::Principal;
     use ic_stable_structures::DefaultMemoryImpl;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
-    use types::{
-        MultiUserChat, NnsProposal, P2PSwapContentInitial, Proposal, ProposalDecisionStatus, ProposalRewardStatus, Tally,
-        TokenInfo,
-    };
+    use types::{MultiUserChat, NnsProposal, Proposal, ProposalDecisionStatus, ProposalRewardStatus, Tally};
 
     #[test]
     fn record_proposal_vote_records_one_vote_per_user() {
@@ -3517,19 +3201,19 @@ mod tests {
         let user2: UserId = Principal::from_slice(&[11]).into();
 
         events
-            .record_proposal_vote(user1, EventIndex::default(), proposal_message_index, true, 100, &none())
+            .record_proposal_vote(user1, EventIndex::default(), proposal_message_index, true, 100)
             .unwrap();
         assert_eq!(votes(&events, proposal_message_index), BTreeMap::from([(user1, true)]));
 
         let error = events
-            .record_proposal_vote(user1, EventIndex::default(), proposal_message_index, false, 101, &none())
+            .record_proposal_vote(user1, EventIndex::default(), proposal_message_index, false, 101)
             .err()
             .unwrap();
         assert!(error.matches_code(OCErrorCode::NoChange));
         assert_eq!(votes(&events, proposal_message_index), BTreeMap::from([(user1, true)]));
 
         events
-            .record_proposal_vote(user2, EventIndex::default(), proposal_message_index, false, 102, &none())
+            .record_proposal_vote(user2, EventIndex::default(), proposal_message_index, false, 102)
             .unwrap();
         assert_eq!(
             votes(&events, proposal_message_index),
@@ -3543,7 +3227,7 @@ mod tests {
         let user1: UserId = Principal::from_slice(&[10]).into();
 
         events
-            .record_proposal_vote(user1, EventIndex::default(), proposal_message_index, true, 100, &none())
+            .record_proposal_vote(user1, EventIndex::default(), proposal_message_index, true, 100)
             .unwrap();
 
         // The vote is only visible to the voter so the message must not be returned to everyone
@@ -3556,20 +3240,20 @@ mod tests {
         let user1: UserId = Principal::from_slice(&[10]).into();
 
         let error = events
-            .record_proposal_vote(user1, EventIndex::default(), text_message_index, true, 100, &none())
+            .record_proposal_vote(user1, EventIndex::default(), text_message_index, true, 100)
             .err()
             .unwrap();
         assert!(error.matches_code(OCErrorCode::ProposalNotFound));
 
         let error = events
-            .record_proposal_vote(user1, EventIndex::default(), text_message_index.incr(), true, 100, &none())
+            .record_proposal_vote(user1, EventIndex::default(), text_message_index.incr(), true, 100)
             .err()
             .unwrap();
         assert!(error.matches_code(OCErrorCode::ProposalNotFound));
 
         // The message must be visible to the voter
         let error = events
-            .record_proposal_vote(user1, EventIndex::from(100), proposal_message_index, true, 100, &none())
+            .record_proposal_vote(user1, EventIndex::from(100), proposal_message_index, true, 100)
             .err()
             .unwrap();
         assert!(error.matches_code(OCErrorCode::ProposalNotFound));
@@ -3583,330 +3267,6 @@ mod tests {
             panic!("Expected a governance proposal");
         };
         p.votes
-    }
-
-    // The text message from `setup_events` was sent under this id, before its sender was migrated
-    fn old_user_id() -> UserId {
-        Principal::from_slice(&[2]).into()
-    }
-
-    fn new_user_id() -> UserId {
-        Principal::from_slice(&[9]).into()
-    }
-
-    fn none() -> MigratedUserIds {
-        MigratedUserIds::default()
-    }
-
-    // The sender of the text message from `setup_events` has since been migrated
-    fn migrated() -> MigratedUserIds {
-        let mut migrated_user_ids = MigratedUserIds::default();
-        migrated_user_ids.insert(old_user_id(), new_user_id());
-        migrated_user_ids
-    }
-
-    fn edit_args(sender: UserId) -> EditMessageArgs {
-        EditMessageArgs {
-            sender,
-            min_visible_event_index: EventIndex::default(),
-            thread_root_message_index: None,
-            message_id: MessageId::from(2u128),
-            content: MessageContentInternal::Text(TextContentInternal {
-                text: "edited".to_string(),
-            }),
-            block_level_markdown: None,
-            og_previews: Vec::new(),
-            finalise_bot_message: false,
-            now: 20,
-        }
-    }
-
-    fn delete_args(caller: UserId, now: TimestampMillis) -> DeleteUndeleteMessagesArgs {
-        DeleteUndeleteMessagesArgs {
-            caller,
-            is_admin: false,
-            min_visible_event_index: EventIndex::default(),
-            thread_root_message_index: None,
-            message_ids: vec![MessageId::from(2u128)],
-            now,
-        }
-    }
-
-    fn text_message(events: &ChatEvents, message_index: MessageIndex) -> MessageInternal {
-        events.main_events_reader().message_internal(message_index.into()).unwrap()
-    }
-
-    #[test]
-    fn message_sent_under_an_earlier_id_can_be_edited() {
-        let (mut events, _, text_message_index) = setup_events();
-
-        assert!(
-            events
-                .edit_message::<NullEventPusher>(edit_args(new_user_id()), &none(), None)
-                .is_err()
-        );
-        assert!(
-            events
-                .edit_message::<NullEventPusher>(edit_args(new_user_id()), &migrated(), None)
-                .is_ok()
-        );
-        assert_eq!(text_message(&events, text_message_index).content.text(), Some("edited"));
-    }
-
-    #[test]
-    fn message_its_sender_deleted_under_a_later_id_cannot_be_undeleted_by_an_admin() {
-        let (mut events, _, _) = setup_events();
-
-        // The sender, as an admin, deleted their own message under their new id before the chat
-        // knew of their migration, so it was recorded as deleted by their new id
-        let mut args = delete_args(new_user_id(), 20);
-        args.is_admin = true;
-        assert!(events.delete_messages(args, &none())[0].1.is_ok());
-
-        let admin = |now| {
-            let mut args = delete_args(Principal::from_slice(&[10]).into(), now);
-            args.is_admin = true;
-            args
-        };
-        assert!(events.undelete_messages(admin(21), &migrated())[0].1.is_err());
-        assert!(events.undelete_messages(admin(22), &none())[0].1.is_ok());
-    }
-
-    #[test]
-    fn message_sent_under_an_earlier_id_can_be_deleted_and_undeleted() {
-        let (mut events, _, text_message_index) = setup_events();
-
-        let results = events.delete_messages(delete_args(new_user_id(), 20), &none());
-        assert!(results[0].1.is_err());
-
-        let results = events.delete_messages(delete_args(new_user_id(), 21), &migrated());
-        assert_eq!(results[0].1.as_ref().unwrap().sender, old_user_id());
-
-        // Deleted by its sender, as it was, so not counted as reported, and not restorable by an admin
-        let deleted_by = text_message(&events, text_message_index).deleted_by.unwrap().deleted_by;
-        assert_eq!(deleted_by, old_user_id());
-        assert_eq!(events.metrics().hydrate().reported_messages, 0);
-        let mut admin_args = delete_args(Principal::from_slice(&[10]).into(), 22);
-        admin_args.is_admin = true;
-        assert!(events.undelete_messages(admin_args, &migrated())[0].1.is_err());
-
-        let results = events.undelete_messages(delete_args(new_user_id(), 23), &migrated());
-        assert!(results[0].1.is_ok());
-        assert!(text_message(&events, text_message_index).deleted_by.is_none());
-    }
-
-    #[test]
-    fn proposal_vote_under_an_earlier_id_is_the_users_own() {
-        let (mut events, proposal_message_index, _) = setup_events();
-
-        events
-            .record_proposal_vote(
-                old_user_id(),
-                EventIndex::default(),
-                proposal_message_index,
-                true,
-                100,
-                &none(),
-            )
-            .unwrap();
-
-        let result = events.record_proposal_vote(
-            new_user_id(),
-            EventIndex::default(),
-            proposal_message_index,
-            false,
-            101,
-            &migrated(),
-        );
-        assert!(matches!(result, Err(e) if e.matches_code(OCErrorCode::NoChange)));
-        assert_eq!(
-            votes(&events, proposal_message_index),
-            BTreeMap::from([(old_user_id(), true)])
-        );
-    }
-
-    #[test]
-    fn message_sent_under_an_earlier_id_cannot_be_tipped_by_its_sender() {
-        let (mut events, _, _) = setup_events();
-
-        let args = TipMessageArgs {
-            user_id: new_user_id(),
-            recipient: old_user_id(),
-            thread_root_message_index: None,
-            message_id: MessageId::from(2u128),
-            ledger: Principal::from_slice(&[5]),
-            token_symbol: "ICP".to_string(),
-            amount: 1,
-            now: 20,
-        };
-        let result = events.tip_message::<NullEventPusher>(args, EventIndex::default(), &migrated(), None);
-
-        assert!(matches!(result, Err(e) if e.matches_code(OCErrorCode::CannotTipSelf)));
-    }
-
-    #[test]
-    fn message_sent_under_an_earlier_id_can_be_tipped_to_its_senders_latest_id() {
-        let (mut events, _, text_message_index) = setup_events();
-        let tipper: UserId = Principal::from_slice(&[10]).into();
-        let ledger = Principal::from_slice(&[5]);
-
-        let tip = |events: &mut ChatEvents, migrated_user_ids: &MigratedUserIds, now| {
-            let args = TipMessageArgs {
-                user_id: tipper,
-                recipient: new_user_id(),
-                thread_root_message_index: None,
-                message_id: MessageId::from(2u128),
-                ledger,
-                token_symbol: "ICP".to_string(),
-                amount: 1,
-                now,
-            };
-            events.tip_message::<NullEventPusher>(args, EventIndex::default(), migrated_user_ids, None)
-        };
-
-        let result = tip(&mut events, &none(), 20);
-        assert!(matches!(result, Err(e) if e.matches_code(OCErrorCode::RecipientMismatch)));
-
-        assert!(tip(&mut events, &migrated(), 21).is_ok());
-        assert_eq!(
-            *text_message(&events, text_message_index).tips,
-            vec![(ledger, vec![(tipper, 1)])]
-        );
-    }
-
-    #[test]
-    fn thread_followed_under_an_earlier_id_is_followed_by_the_user() {
-        let (mut events, _, text_message_index) = setup_events();
-        events.push_message::<NullEventPusher>(
-            PushMessageArgs {
-                sender: old_user_id(),
-                thread_root_message_index: Some(text_message_index),
-                message_id: MessageId::from(3u128),
-                content: MessageContentInternal::Text(TextContentInternal {
-                    text: "reply".to_string(),
-                }),
-                sender_context: None,
-                mentioned: Vec::new(),
-                replies_to: None,
-                forwarded: false,
-                sender_is_bot: false,
-                block_level_markdown: false,
-                og_previews: Vec::new(),
-                now: 20,
-            },
-            None,
-        );
-        let followers = |events: &ChatEvents| text_message(events, text_message_index).thread_summary.unwrap().followers;
-        assert!(followers(&events).contains(&old_user_id()));
-
-        // Following again under the new id moves the old id's follow over to it
-        events
-            .follow_thread(text_message_index, new_user_id(), EventIndex::default(), 21, &migrated())
-            .unwrap();
-        assert_eq!(followers(&events), [new_user_id()].into_iter().collect());
-
-        events
-            .follow_thread(text_message_index, old_user_id(), EventIndex::default(), 22, &none())
-            .unwrap();
-        events
-            .unfollow_thread(text_message_index, new_user_id(), EventIndex::default(), 23, &migrated())
-            .unwrap();
-        assert!(followers(&events).is_empty());
-    }
-
-    #[test]
-    fn prize_claimed_under_an_earlier_id_cannot_be_claimed_again() {
-        let (mut events, _, _) = setup_events();
-        let prize = PrizeContentInternal {
-            prizes_remaining: vec![100, 100],
-            reservations: BTreeSet::new(),
-            winners: [old_user_id()].into_iter().collect(),
-            transaction: CompletedCryptoTransactionInternal::ICRC1(
-                crate::message_content_internal::icrc1::CompletedCryptoTransactionInternal {
-                    ledger: Principal::from_slice(&[5]),
-                    token_symbol: "ICP".to_string(),
-                    amount: 300,
-                    from: crate::message_content_internal::icrc1::CryptoAccountInternal::Mint,
-                    to: crate::message_content_internal::icrc1::CryptoAccountInternal::Mint,
-                    fee: 0,
-                    memo: None,
-                    created: 0,
-                    block_index: 0,
-                },
-            ),
-            end_date: 1_000,
-            caption: None,
-            diamond_only: false,
-            lifetime_diamond_only: false,
-            unique_person_only: false,
-            streak_only: 0,
-            final_payments_started: false,
-            ledger_error: false,
-            prizes_paid: 0,
-            fee_percent: 0,
-            requires_captcha: false,
-            min_chit_earned: 0,
-            principal: Principal::anonymous(),
-        };
-        push_message(
-            &mut events,
-            Principal::from_slice(&[3]).into(),
-            10,
-            MessageContentInternal::Prize(prize),
-        );
-
-        let reserve = |events: &mut ChatEvents, migrated_user_ids: &MigratedUserIds| {
-            events.reserve_prize(
-                new_user_id(),
-                EventIndex::default(),
-                MessageId::from(10u128),
-                20,
-                false,
-                DiamondMembershipStatus::Inactive,
-                0,
-                0,
-                0,
-                false,
-                migrated_user_ids,
-            )
-        };
-
-        assert!(matches!(reserve(&mut events, &migrated()), Err(e) if e.matches_code(OCErrorCode::PrizeAlreadyClaimed)));
-        assert!(reserve(&mut events, &none()).is_ok());
-    }
-
-    #[test]
-    fn p2p_swap_offered_under_an_earlier_id_can_be_cancelled() {
-        let (mut events, _, _) = setup_events();
-        let token = |symbol: &str| TokenInfo {
-            symbol: symbol.to_string(),
-            ledger: Principal::from_slice(&[5]),
-            decimals: 8,
-            fee: 10_000,
-        };
-        let swap = P2PSwapContentInternal::new(
-            1,
-            P2PSwapContentInitial {
-                token0: token("ICP"),
-                token0_amount: 100,
-                token1: token("CHAT"),
-                token1_amount: 1_000,
-                expires_in: 1_000,
-                caption: None,
-                from_account: None,
-            },
-            0,
-            0,
-        );
-        push_message(&mut events, old_user_id(), 10, MessageContentInternal::P2PSwap(swap));
-
-        assert!(
-            events
-                .cancel_p2p_swap(new_user_id(), None, MessageId::from(10u128), 20, &none())
-                .is_err()
-        );
-        let result = events.cancel_p2p_swap(new_user_id(), None, MessageId::from(10u128), 21, &migrated());
-        assert_eq!(result.unwrap().value, 1);
     }
 
     #[test]
@@ -4108,188 +3468,12 @@ mod tests {
         push_message_in_thread(&mut events, sender, Some(other_root_message_index), 21, file_content(5));
         let root_event_index = events.main.event_index(root_message_index.into()).unwrap();
 
-        let result = events.remove_event(root_event_index, &none(), 30).unwrap();
+        let result = events.remove_event(root_event_index, 30).unwrap();
 
         assert_eq!(result.files.iter().map(|f| f.blob_id).collect::<Vec<_>>(), vec![1, 2, 3]);
         assert_eq!(result.thread.map(|t| t.root_message_index), Some(root_message_index));
         assert!(!events.threads.contains_key(&root_message_index));
         assert!(events.threads.contains_key(&other_root_message_index));
-    }
-
-    fn text_content(text: &str) -> MessageContentInternal {
-        MessageContentInternal::Text(TextContentInternal { text: text.to_string() })
-    }
-
-    #[test]
-    fn update_user_ids_replaces_ids_in_every_event_a_batch_at_a_time() {
-        let (mut events, _, _) = setup_events();
-        let old_user_id: UserId = Principal::from_slice(&[20]).into();
-        let new_user_id: UserId = Principal::from_slice(&[21]).into();
-        let other_user_id: UserId = Principal::from_slice(&[22]).into();
-
-        // More messages than are cached on the heap, so that some are only in stable memory
-        let mut message_indexes = Vec::new();
-        for i in 0..250 {
-            message_indexes.push(push_message(&mut events, old_user_id, 100 + i, text_content("hello")));
-        }
-        let root_message_index = push_message(&mut events, other_user_id, 1000, text_content("root"));
-        push_message_in_thread(
-            &mut events,
-            old_user_id,
-            Some(root_message_index),
-            1001,
-            text_content("reply"),
-        );
-
-        let main_events_count = u32::from(events.main.latest_event_index().unwrap()) as usize + 1;
-        let recently_updated = events.recently_updated_events(0, 1000);
-        let mut after = None;
-        let mut batches = 0;
-        let mut contexts_seen = HashSet::new();
-        loop {
-            let result = events.update_user_ids(
-                after,
-                &mut |context, user_id| {
-                    contexts_seen.insert(context);
-                    if user_id == old_user_id { new_user_id } else { user_id }
-                },
-                &mut || true,
-            );
-            match result {
-                Some(context) => {
-                    after = Some(context);
-                    batches += 1;
-                }
-                None => break,
-            }
-        }
-
-        // Batches of up to 100 events from the main list, then one for the thread
-        assert_eq!(batches, main_events_count.div_ceil(100) + 1);
-        assert_eq!(contexts_seen.len(), main_events_count + 1);
-        assert!(contexts_seen.contains(&EventContext::new(Some(root_message_index), EventIndex::default())));
-
-        let reader = events.main_events_reader();
-        for message_index in message_indexes {
-            let message = reader.message_internal(message_index.into()).unwrap();
-            assert_eq!(message.sender, new_user_id);
-        }
-        let root = reader.message_internal(root_message_index.into()).unwrap();
-        let thread_summary = root.thread_summary.unwrap();
-        assert_eq!(thread_summary.participants, vec![new_user_id]);
-        assert_eq!(thread_summary.followers, BTreeSet::from([new_user_id, other_user_id]));
-        let reply = events
-            .events_reader(EventIndex::default(), Some(root_message_index), None)
-            .unwrap()
-            .message_internal(MessageIndex::from(0).into())
-            .unwrap();
-        assert_eq!(reply.sender, new_user_id);
-
-        // The messages are found by searching under the sender's new id, but not their old one
-        assert_eq!(
-            events
-                .search_messages(MessageIndex::default(), "", &HashSet::from([new_user_id]), 255)
-                .len(),
-            250
-        );
-        assert!(
-            events
-                .search_messages(MessageIndex::default(), "", &HashSet::from([old_user_id]), 255)
-                .is_empty()
-        );
-
-        // Clients aren't sent the events again
-        assert_eq!(events.recently_updated_events(0, 1000), recently_updated);
-    }
-
-    // `sender_migrated`: whether the message's sender is the migrated user too
-    #[test_case::test_case(false)]
-    #[test_case::test_case(true)]
-    fn search_finds_a_mention_under_the_users_latest_id(sender_migrated: bool) {
-        let (mut events, _, _) = setup_events();
-        let old_user_id: UserId = Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap().into();
-        let new_user_id = UserId::new_indexed(Principal::from_text("yaxqu-oqaaa-aaaaf-br7ya-cai").unwrap(), 1);
-        let sender = if sender_migrated { old_user_id } else { Principal::from_slice(&[2]).into() };
-        let content = text_content(&format!("hi @UserId({old_user_id})"));
-        let message_index = push_message(&mut events, sender, 100, content);
-        let search = |events: &ChatEvents, term: &str, users: &[UserId]| -> Vec<MessageIndex> {
-            events
-                .search_messages(MessageIndex::default(), term, &users.iter().copied().collect(), 10)
-                .into_iter()
-                .map(|m| m.message_index)
-                .collect()
-        };
-        let old_term = old_user_id.to_string()[..5].to_string();
-        let new_term = new_user_id.to_string()[..5].to_string();
-        assert_eq!(search(&events, &old_term, &[]), vec![message_index]);
-
-        let mut after = None;
-        while let Some(context) =
-            events.update_user_ids(after, &mut |_, u| if u == old_user_id { new_user_id } else { u }, &mut || {
-                false
-            })
-        {
-            after = Some(context);
-        }
-
-        let message = events.main_events_reader().message_internal(message_index.into()).unwrap();
-        let MessageContentInternal::Text(text) = message.content else {
-            panic!();
-        };
-        assert_eq!(text.text, format!("hi @UserId({new_user_id})"));
-        assert_eq!(search(&events, &new_term, &[]), vec![message_index]);
-        assert!(search(&events, &old_term, &[]).is_empty());
-        let latest_sender = if sender_migrated { new_user_id } else { sender };
-        assert_eq!(search(&events, &new_term, &[latest_sender]), vec![message_index]);
-        if sender_migrated {
-            assert!(search(&events, "", &[old_user_id]).is_empty());
-        }
-    }
-
-    #[test]
-    fn update_user_ids_in_events_only_updates_those_events() {
-        let (mut events, _, _) = setup_events();
-        let old_user_id: UserId = Principal::from_slice(&[20]).into();
-        let new_user_id: UserId = Principal::from_slice(&[21]).into();
-
-        let first = push_message(&mut events, old_user_id, 100, text_content("first"));
-        let second = push_message(&mut events, old_user_id, 101, text_content("second"));
-        let third = push_message(&mut events, old_user_id, 102, text_content("third"));
-        push_message_in_thread(&mut events, old_user_id, Some(second), 103, text_content("reply"));
-        let event_index = |message_index: MessageIndex| events.main.event_index(message_index.into()).unwrap();
-        let (first_event_index, third_event_index) = (event_index(first), event_index(third));
-        let reply = EventContext::new(Some(second), EventIndex::default());
-
-        let mut update = |u| if u == old_user_id { new_user_id } else { u };
-        let contexts = [
-            EventContext::new(None, third_event_index),
-            reply,
-            EventContext::new(None, first_event_index),
-            // The same event twice
-            EventContext::new(None, first_event_index),
-            // An event which doesn't exist
-            EventContext::new(Some(first), first_event_index),
-        ];
-        assert_eq!(events.update_user_ids_in_events(contexts, &mut update), 3);
-        // Nothing is left to replace
-        assert_eq!(events.update_user_ids_in_events(contexts, &mut update), 0);
-
-        let reader = events.main_events_reader();
-        assert_eq!(reader.message_internal(first.into()).unwrap().sender, new_user_id);
-        assert_eq!(reader.message_internal(second.into()).unwrap().sender, old_user_id);
-        assert_eq!(reader.message_internal(third.into()).unwrap().sender, new_user_id);
-        let reply = events
-            .events_reader(EventIndex::default(), Some(second), None)
-            .unwrap()
-            .message_internal(MessageIndex::default().into())
-            .unwrap();
-        assert_eq!(reply.sender, new_user_id);
-        assert_eq!(
-            events
-                .search_messages(MessageIndex::default(), "", &HashSet::from([new_user_id]), 10)
-                .len(),
-            2
-        );
     }
 
     fn file_content(blob_id: u128) -> MessageContentInternal {
@@ -4339,59 +3523,5 @@ mod tests {
             None,
         );
         message.event.message_index
-    }
-
-    #[test]
-    fn data_from_before_stable_memory_is_counted_but_not_kept() {
-        #[derive(Serialize)]
-        struct LegacyChatEventsList<'a> {
-            #[serde(flatten)]
-            list: &'a ChatEventsList,
-            message_id_map: std::collections::HashMap<MessageId, EventIndex>,
-        }
-        #[derive(Serialize)]
-        struct LegacySearchIndex {
-            map: BTreeMap<MessageIndex, (UserId, String)>,
-        }
-        #[derive(Serialize)]
-        struct LegacyChatEvents<'a> {
-            #[serde(flatten)]
-            events: &'a ChatEvents,
-            per_user_metrics: BTreeMap<UserId, ChatMetricsInternal>,
-        }
-        fn round_trip<T: Serialize, R: serde::de::DeserializeOwned>(value: T) -> R {
-            msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(value))
-        }
-
-        let (events, _, _) = setup_events();
-        let user1: UserId = Principal::from_slice(&[1]).into();
-        let user2: UserId = Principal::from_slice(&[2]).into();
-
-        let list: ChatEventsList = round_trip(LegacyChatEventsList {
-            list: &events.main,
-            message_id_map: (0..3u64).map(|i| (MessageId::from(i), EventIndex::from(i as u32))).collect(),
-        });
-        assert_eq!(list.legacy_heap_entries(), 3);
-
-        let search_index: SearchIndex = round_trip(LegacySearchIndex {
-            map: (0..2u32)
-                .map(|i| (MessageIndex::from(i), (user1, "hello".to_string())))
-                .collect(),
-        });
-        assert_eq!(search_index.legacy_heap_entries(), 2);
-
-        let legacy = LegacyChatEvents {
-            events: &events,
-            per_user_metrics: [user1, user2]
-                .into_iter()
-                .map(|u| (u, ChatMetricsInternal::default()))
-                .collect(),
-        };
-        let chat_events: ChatEvents = round_trip(legacy);
-        assert_eq!(chat_events.legacy_heap_entries(), 2);
-
-        // And they are dropped once serialized again
-        let chat_events: ChatEvents = round_trip(&chat_events);
-        assert_eq!(chat_events.legacy_heap_entries(), 0);
     }
 }

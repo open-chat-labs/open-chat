@@ -35,7 +35,6 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
             finalise_bot_message: false,
             now,
         },
-        &state.data.migrated_user_ids,
         Some(CommunityEventPusher {
             now,
             rng: state.env.rng(),

@@ -1,6 +1,6 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_group_index_or_local_user_index;
-use crate::{RuntimeState, execute_update_even_if_frozen, jobs};
+use crate::{RuntimeState, execute_update_even_if_frozen};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::c2c_unfreeze_group::{Response::*, *};
@@ -21,9 +21,6 @@ pub(crate) fn c2c_unfreeze_group_impl(user_id: UserId, state: &mut RuntimeState)
         state.data.community_being_imported_into = None;
         state.push_bot_notification(push_event_result.bot_notification);
         handle_activity_notification(state);
-        // The job which replaces old user ids in the state, which is held back while the group is being
-        // imported, can carry on if an import into a community has been abandoned
-        jobs::update_user_ids_in_state::start_job_if_required(state);
 
         Success(EventWrapper {
             index: push_event_result.index,

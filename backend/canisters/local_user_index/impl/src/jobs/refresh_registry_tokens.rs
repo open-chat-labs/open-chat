@@ -14,7 +14,7 @@ pub fn start_job() {
 
 fn run() {
     let registry_canister_id = read_state(|state| state.data.registry_canister_id);
-    utils::async_work::spawn_tracked(refresh(registry_canister_id));
+    ic_cdk::futures::spawn_migratory(refresh(registry_canister_id));
 }
 
 async fn refresh(registry_canister_id: CanisterId) {

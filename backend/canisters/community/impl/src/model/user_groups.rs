@@ -101,31 +101,8 @@ impl UserGroups {
         }
     }
 
-    pub fn migrate_user_id(&mut self, old_user_id: UserId, new_user_id: UserId, now: TimestampMillis) {
-        for group in self.groups.iter_mut() {
-            if group.members.update(
-                |u| {
-                    if u.remove(&old_user_id) {
-                        u.insert(new_user_id);
-                        true
-                    } else {
-                        false
-                    }
-                },
-                now,
-            ) {
-                self.last_updated = now;
-            }
-        }
-    }
-
     pub fn last_updated(&self) -> TimestampMillis {
         self.last_updated
-    }
-
-    // The members of every user group, those in more than one being returned once for each
-    pub fn user_ids(&self) -> impl Iterator<Item = UserId> + '_ {
-        self.groups.iter().flat_map(|g| g.members.value.iter().copied())
     }
 
     pub fn deleted_since(&self, since: TimestampMillis) -> Vec<u32> {

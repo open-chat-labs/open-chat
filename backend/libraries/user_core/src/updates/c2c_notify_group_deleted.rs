@@ -4,7 +4,6 @@ use chat_events::ChatInternal;
 use multi_user_canister::mark_read::ChannelMessagesRead;
 use stable_memory_map::BaseKeyPrefix;
 use types::{ChannelId, Chat, CommunityId, CommunityImportedInto, DeletedGroupInfoInternal, MultiUserChat, TimestampMillis};
-use utils::migrated_user_ids::MigratedUserIds;
 
 // What removing the group leaves the caller to do
 pub struct GroupDeleted {
@@ -21,7 +20,6 @@ pub struct GroupDeleted {
 pub fn c2c_notify_group_deleted(
     user: &mut User,
     deleted_group: DeletedGroupInfoInternal,
-    migrated_user_ids: &MigratedUserIds,
     now: TimestampMillis,
 ) -> GroupDeleted {
     let chat_id = deleted_group.id;
@@ -66,7 +64,6 @@ pub fn c2c_notify_group_deleted(
     user.direct_chats.migrate_replies(
         ChatInternal::Group(chat_id),
         ChatInternal::Channel(community_id, channel.channel_id),
-        migrated_user_ids,
         now,
     );
 

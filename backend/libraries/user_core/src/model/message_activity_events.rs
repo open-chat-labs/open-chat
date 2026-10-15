@@ -4,7 +4,6 @@ use stable_memory_map::{
     Entry, KeyPrefix, MessageActivityEventId, MessageActivityEventIdKeyPrefix, MessageActivityEventKey,
     MessageActivityEventKeyPrefix, StableMemoryMapInner, with_map, with_map_mut,
 };
-use std::collections::HashSet;
 use std::ops::RangeInclusive;
 use types::{Chat, EventIndex, MessageId, MessageIndex, TimestampMillis, UserId};
 
@@ -54,88 +53,6 @@ impl MessageActivityEvents {
         });
 
         self.last_updated = now;
-    }
-
-    // The ids the events hold: the other users in the direct chats they are in, and the users who
-    // caused them
-    pub fn user_ids(&self) -> HashSet<UserId> {
-        with_map(|m| {
-            let mut user_ids = HashSet::new();
-            for (_, bytes) in m.range(all_keys()) {
-                let event = event_from_bytes(&bytes);
-                if let Chat::Direct(chat_id) = event.chat {
-                    user_ids.insert(chat_id.into());
-                }
-                user_ids.extend(event.user_id);
-            }
-            user_ids
-        })
-    }
-
-    // Replaces the chat each event is in with `latest_chat` of it, and the user who caused it with
-    // `latest_user_id` of them, so that events from before users were migrated to MultiUser
-    // canisters hold their latest ids. The chat is part of an event's identity, so an event which
-    // ends up with the same identity as another is only kept if it is the newer of the two, as when
-    // one is pushed. Events keep their timestamps, so clients which already have them aren't sent
-    // them again. Returns how many events were changed.
-    pub fn migrate_user_ids(
-        &mut self,
-        latest_chat: impl Fn(Chat) -> Chat,
-        latest_user_id: impl Fn(UserId) -> UserId,
-        now: TimestampMillis,
-    ) -> u32 {
-        let to_update: Vec<_> = with_map(|m| {
-            m.range(all_keys())
-                .filter_map(|(key, bytes)| {
-                    let event = event_from_bytes(&bytes);
-                    let chat = latest_chat(event.chat);
-                    let user_id = event.user_id.map(&latest_user_id);
-                    (chat != event.chat || user_id != event.user_id).then(|| {
-                        let updated = MessageActivityEvent {
-                            chat,
-                            user_id,
-                            ..event.clone()
-                        };
-                        (key, event, updated)
-                    })
-                })
-                .collect()
-        });
-        if to_update.is_empty() {
-            return 0;
-        }
-        let count = to_update.len() as u32;
-        let id_prefix = MessageActivityEventIdKeyPrefix::new();
-        let prefix = MessageActivityEventKeyPrefix::new();
-
-        with_map_mut(|m| {
-            // Each event is removed before any is added back, so that none is taken for an event
-            // with its new identity
-            let mut updated_events = Vec::with_capacity(to_update.len());
-            for (key, event, updated) in to_update {
-                m.remove(key);
-                m.remove(id_prefix.create_key(&event_id(&event)));
-                self.in_stable_memory_count = self.in_stable_memory_count.saturating_sub(1);
-                updated_events.push(updated);
-            }
-            for event in updated_events {
-                let id = event_id(&event);
-                let id_key = id_prefix.create_key(&id);
-                if let Some(existing) = m.get(id_key.clone()).map(|bytes| timestamp_from_bytes(&bytes)) {
-                    if existing >= event.timestamp {
-                        continue;
-                    }
-                    m.remove(prefix.create_key(&(existing, id.clone())));
-                    self.in_stable_memory_count = self.in_stable_memory_count.saturating_sub(1);
-                }
-                m.insert(id_key, event.timestamp.to_be_bytes().to_vec());
-                m.insert(prefix.create_key(&(event.timestamp, id)), event_to_bytes(event));
-                self.in_stable_memory_count += 1;
-            }
-        });
-
-        self.last_updated = now;
-        count
     }
 
     pub fn mark_read_up_to(&mut self, read_up_to: TimestampMillis, now: TimestampMillis) {
@@ -365,67 +282,6 @@ mod tests {
         assert_eq!(summary.unread_count, 5);
         assert_eq!(summary.latest_event_timestamp, 200);
         assert_eq!(events.last_updated(), 300);
-    }
-
-    #[test]
-    fn ids_from_before_a_migration_are_replaced_keeping_the_newer_of_two_events_which_collide() {
-        init_stable_memory_map();
-        let mut events = MessageActivityEvents::default();
-        let user = |i: u8| UserId::from(Principal::from_slice(&[i; 10]));
-        let direct = |i: u8| Chat::Direct(user(i).into());
-        let event = |chat: Chat, message_index: u32, timestamp: TimestampMillis, user_id: UserId| MessageActivityEvent {
-            chat,
-            user_id: Some(user_id),
-            ..random_event(message_index, MessageActivity::Reaction, timestamp)
-        };
-        let group = Chat::Group(Principal::from_slice(&[1; 10]).into());
-        let (old, new, other) = (1, 2, 3);
-        // In the chat with the migrated user, under their old id
-        events.push(event(direct(old), 1, 100, user(old)), 100);
-        // Collides with the next, which is newer, once moved
-        events.push(event(direct(old), 2, 110, user(old)), 110);
-        events.push(event(direct(new), 2, 120, user(new)), 120);
-        // Collides with the next, which is older, once moved
-        events.push(event(direct(old), 3, 140, user(old)), 140);
-        events.push(event(direct(new), 3, 130, user(new)), 130);
-        // In a group, caused by the migrated user under their old id
-        events.push(event(group, 4, 150, user(old)), 150);
-        // Nothing to replace
-        events.push(event(direct(other), 5, 160, user(other)), 160);
-        assert_eq!(events.user_ids(), HashSet::from([user(old), user(new), user(other)]));
-
-        let latest = |user_id: UserId| if user_id == user(old) { user(new) } else { user_id };
-        let latest_chat = |chat: Chat| match chat {
-            Chat::Direct(chat_id) => Chat::Direct(latest(chat_id.into()).into()),
-            _ => chat,
-        };
-        assert_eq!(events.migrate_user_ids(latest_chat, latest, 200), 4);
-
-        let held: Vec<_> = events
-            .latest_events(0)
-            .into_iter()
-            .map(|e| (e.chat, u32::from(e.message_index), e.timestamp, e.user_id))
-            .collect();
-        assert_eq!(
-            held,
-            vec![
-                (direct(other), 5, 160, Some(user(other))),
-                (group, 4, 150, Some(user(new))),
-                (direct(new), 3, 140, Some(user(new))),
-                (direct(new), 2, 120, Some(user(new))),
-                (direct(new), 1, 100, Some(user(new))),
-            ]
-        );
-        assert_eq!(events.len(), 5);
-        assert_eq!(events.last_updated(), 200);
-        assert!(!events.user_ids().contains(&user(old)));
-
-        // The id entries were kept in step, so a newer event for the same activity on the same
-        // message replaces the one held
-        events.push(event(direct(new), 3, 300, user(new)), 300);
-        assert_eq!(events.len(), 5);
-        assert_eq!(events.latest_events(0).len(), 5);
-        assert_eq!(events.migrate_user_ids(latest_chat, latest, 400), 0);
     }
 
     fn random_event(message_index: u32, activity: MessageActivity, timestamp: TimestampMillis) -> MessageActivityEvent {

@@ -8,6 +8,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Stop tracking the async work in progress, since nothing reads it any more ([#9972](https://github.com/open-chat-labs/open-chat/pull/9972))
+
+### Removed
+
+- Remove the `unique_person_proofs_submitted` metric ([#9961](https://github.com/open-chat-labs/open-chat/pull/9961))
+- Remove the one-offs which replaced old user ids in the reports, told the storage buckets the vault reviewers' latest ids and dropped the User canister's wasm, now that they have run ([#9965](https://github.com/open-chat-labs/open-chat/pull/9965))
+
+## [[2.0.2140](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2140-user_index)] - 2026-10-14
+
+### Changed
+
 - Award external achievements to users' latest ids, refusing any id which isn't a user's ([#9953](https://github.com/open-chat-labs/open-chat/pull/9953))
 - Tell the storage buckets the vault reviewers' latest ids ([#9954](https://github.com/open-chat-labs/open-chat/pull/9954))
 
@@ -15,7 +26,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Remove the one-off which deleted the two users stuck on 0.0.0, now that it has run ([#9915](https://github.com/open-chat-labs/open-chat/pull/9915))
 - Remove the User canister, along with upgrading User canisters and migrating users to MultiUser canisters ([#9919](https://github.com/open-chat-labs/open-chat/pull/9919))
-- Remove the `unique_person_proofs_submitted` metric ([#9961](https://github.com/open-chat-labs/open-chat/pull/9961))
 
 ### Fixed
 

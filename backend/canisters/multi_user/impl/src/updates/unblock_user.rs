@@ -20,12 +20,12 @@ fn unblock_user_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         .users
         .with_user_mut(my_index, |user| -> OCResult<_> {
             user.verify_not_suspended()?;
-            Ok(user.unblock_user(args.user_id, &data.migrated_user_ids, now))
+            Ok(user.unblock_user(args.user_id, now))
         })
         .expect("User not found")?;
 
-    for user_id in unblocked {
-        state.push_local_user_index_canister_event(my_index, LocalUserIndexEvent::UserUnblocked(user_id), now);
+    if unblocked {
+        state.push_local_user_index_canister_event(my_index, LocalUserIndexEvent::UserUnblocked(args.user_id), now);
     }
     Ok(())
 }

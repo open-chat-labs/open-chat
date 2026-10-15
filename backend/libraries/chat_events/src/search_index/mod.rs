@@ -1,4 +1,3 @@
-use crate::legacy_heap_entries::LegacyHeapEntries;
 use search::simple::Document;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::{
@@ -34,12 +33,10 @@ const MAX_STEPS_BEFORE_SEEKING: usize = 8;
 // A search finds the messages containing a match for every query term (and, if any users are
 // specified, sent by one of those users), most recent first, by intersecting the lists of
 // messages matching each term, skipping over the parts of each list which can't contain a match.
+//
+// It holds nothing itself, but is kept a struct rather than a unit struct, since it is stored as a map.
 #[derive(Serialize, Deserialize, Default)]
-pub struct SearchIndex {
-    // Messages from before the index was stored in stable memory (see `LegacyHeapEntries`)
-    #[serde(rename = "map", default, skip_serializing)]
-    legacy_on_heap: LegacyHeapEntries,
-}
+pub struct SearchIndex {}
 
 impl SearchIndex {
     pub fn add(
@@ -79,57 +76,6 @@ impl SearchIndex {
         });
     }
 
-    // Moves each message's entry from its old sender onto its new sender, eg. once the id the
-    // sender had before being migrated to a MultiUser canister has been replaced with their latest
-    // id. Nothing is added for a message which isn't in the index.
-    pub fn change_senders(&mut self, events_prefix: &ChatEventKeyPrefix, changes: Vec<(MessageIndex, UserId, UserId)>) {
-        if changes.is_empty() {
-            return;
-        }
-        let sender_prefix = SearchSenderKeyPrefix::new_from_events_prefix(events_prefix);
-        with_map_mut(|m| {
-            let mut new_keys: Vec<_> = changes
-                .into_iter()
-                .filter(|(message_index, old_sender, _)| {
-                    m.remove(sender_prefix.create_key(&(*old_sender, *message_index))).is_some()
-                })
-                .map(|(message_index, _, new_sender)| sender_prefix.create_key(&(new_sender, message_index)))
-                .collect();
-            new_keys.sort();
-            m.insert_many(new_keys.into_iter().map(|k| (k, Vec::new())));
-        });
-    }
-
-    // Updates the index of each message whose text has changed from `old` to `new`, eg. once the ids
-    // of the users it mentions have been replaced with their latest ids. The tokens added across every
-    // message are written together.
-    pub fn update_many(&mut self, events_prefix: &ChatEventKeyPrefix, changes: Vec<(MessageIndex, Document, Document)>) {
-        let token_prefix = SearchTokenKeyPrefix::new_from_events_prefix(events_prefix);
-        let mut to_remove = Vec::new();
-        let mut to_add = Vec::new();
-        for (message_index, old, new) in changes {
-            let old_tokens = document_tokens(&old);
-            let new_tokens = document_tokens(&new);
-            to_remove.extend(
-                old_tokens
-                    .difference(&new_tokens)
-                    .map(|token| token_prefix.create_key_for_token(token, message_index)),
-            );
-            to_add.extend(
-                new_tokens
-                    .difference(&old_tokens)
-                    .map(|token| token_prefix.create_key_for_token(token, message_index)),
-            );
-        }
-        to_add.sort();
-        with_map_mut(|m| {
-            for key in to_remove {
-                m.remove(key);
-            }
-            m.insert_many(to_add.into_iter().map(|key| (key, Vec::new())));
-        });
-    }
-
     fn remove_from_stable_memory(
         events_prefix: &ChatEventKeyPrefix,
         message_index: MessageIndex,
@@ -162,10 +108,6 @@ impl SearchIndex {
         }
 
         with_map(|m| search_stable_memory(m, events_prefix, min_visible_message_index, &terms, users, max_results))
-    }
-
-    pub(crate) fn legacy_heap_entries(&self) -> usize {
-        self.legacy_on_heap.count()
     }
 
     pub(crate) fn entries(

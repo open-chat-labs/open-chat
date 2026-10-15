@@ -13,7 +13,7 @@ fn block_user(args: Args) -> Response {
 }
 
 fn block_user_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    verify_not_old_user_id(state.data.migrated_user_ids.latest(args.user_id))?;
+    verify_not_old_user_id(args.user_id)?;
 
     let now = state.env.now();
     let my_index = state.caller_user_index_or_trap();
@@ -22,12 +22,12 @@ fn block_user_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         .users
         .with_user_mut(my_index, |user| -> OCResult<_> {
             user.verify_not_suspended()?;
-            Ok(user.block_user(args.user_id, &data.migrated_user_ids, now))
+            Ok(user.block_user(args.user_id, now))
         })
         .expect("User not found")?;
 
-    if let Some(user_id) = blocked {
-        state.push_local_user_index_canister_event(my_index, LocalUserIndexEvent::UserBlocked(user_id), now);
+    if blocked {
+        state.push_local_user_index_canister_event(my_index, LocalUserIndexEvent::UserBlocked(args.user_id), now);
     }
     Ok(())
 }

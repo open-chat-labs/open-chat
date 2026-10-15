@@ -44,5 +44,4 @@ pub use saved_crypto_accounts::SavedCryptoAccounts;
 pub use streak::Streak;
 pub use threads_read::ThreadsRead;
 pub use token_swaps::{SwapSuccess, TokenSwap, TokenSwaps};
-pub(crate) use user::all_ids_of;
-pub use user::{User, UserIdsMigrated};
+pub use user::User;
