@@ -23,6 +23,7 @@ pub mod create_group;
 mod end_video_call;
 pub mod generate_btc_address;
 pub mod generate_one_sec_address;
+pub mod generate_sol_address;
 mod join_video_call;
 mod manage_favourite_chats;
 mod mute_notifications;
@@ -40,6 +41,7 @@ pub mod tip_message;
 mod unpin_chat_v2;
 mod update_bot;
 pub mod update_btc_balance;
+pub mod update_sol_balance;
 
 pub use add_hot_group_exclusions::add_hot_group_exclusions;
 pub use archive_unarchive_chats::archive_unarchive_chats;

@@ -613,7 +613,8 @@
   .tile { position: absolute; inset: 0; }
   .stage { position: relative; width: 100%; height: 420px; border-radius: var(--radius-lg); overflow: hidden; background: var(--surface-0); box-shadow: inset 0 0 0 1px var(--line-1); }
   .actions-trigger { display: inline-flex; }
-  .wallet { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; align-items: start; }
+  /* stacked: side by side the screens frame got ~646px at most (never the wide layout) and collapsed on narrow pages */
+  .wallet { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
   .pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); gap: 16px; }
   .screen { position: relative; min-width: 0; max-width: 100%; display: grid; grid-template-columns: minmax(0, 1fr); }
   /* transform: a fixed-position toast is laid out inside its frame, not the viewport */

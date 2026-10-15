@@ -663,6 +663,7 @@
         "manual": "Manuel",
         "manualInfo": "Organisez votre portefeuille manuellement en sélectionnant exactement les jetons que vous souhaitez voir",
         "minDollarPlaceholder": "Solde minimum en dollars",
+        "minimumDeposit": "Dépôt minimum : {amount} {token}",
         "network": "Réseau:",
         "networkFee": "Frais de réseau : {amount} {token}",
         "receive": "Recevoir",

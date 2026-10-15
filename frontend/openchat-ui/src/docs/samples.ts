@@ -59,9 +59,9 @@ const demoLinkCode = async () => {
 
 // sample receiving addresses for the wallet demos (hosts pass the user's own)
 export const receiveAddresses = { icp: '5sj6i-pqaaa-aaaaf-a3cmq-cai', eth: '0x7Bf3c9A1e64D25aB8f0C3e7d19A4b62F5dE81Ca0', btc: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh', xrpl: 'rPdvC6ccq8hCdPKSPJkPmyZ4Mi1oG2FFkT' };
-// people for WalletSend's "OpenChat user" mode, with recent transfers
+// people for WalletSend's "OpenChat user" mode
 const sendContacts = [
-  { userId: 'u-jane', name: 'Jane Doe', handle: '@common_jane', grad: 'linear-gradient(140deg,#FFB35C,#FF6B6B)', history: [{ date: '28 Sep', amount: 50, incoming: false }, { date: '14 Sep', amount: 20, incoming: true }, { date: '2 Sep', amount: 120, incoming: false }] },
+  { userId: 'u-jane', name: 'Jane Doe', handle: '@common_jane', grad: 'linear-gradient(140deg,#FFB35C,#FF6B6B)' },
   { userId: 'u-annie', name: 'Annie Schwartz', handle: '@anti_ice_cold', grad: 'linear-gradient(140deg,#8B7BFF,#FF6FD8)' },
   { userId: 'u-nikki', name: 'Nikki Laudia', handle: '@the_pineal', grad: 'linear-gradient(140deg,#5CD0FF,#4B7BFF)' },
   { userId: 'u-chris', name: 'Chris Hanls', handle: '@guru_of_thunder', grad: 'linear-gradient(140deg,#63E6A8,#2AA6FF)' },
@@ -71,6 +71,11 @@ const sendContacts = [
 const demoSend = async (x: { pin: string }) => {
   await wait(700);
   if (x.pin !== '123456') throw new Error('wrong PIN');
+};
+// WalletSend on its own resolves with a transaction id, which its receipt shows
+const sendWithReceipt = async (x: { pin: string }) => {
+  await demoSend(x);
+  return { id: '18402117' };
 };
 const sendDemo = {
   contacts: sendContacts,
@@ -115,17 +120,18 @@ const recipientsDemo = {
 };
 const priceOf = (sym: string) => walletTokens.find((tk) => tk.symbol === sym)?.price ?? 1;
 const swapDemo = {
-  dexes: ['KongSwap', 'ICPSwap', 'Sonic'],
   onQuote: async (r: { from: string; to: string; amount: number }) => {
     await wait(1200);
     const usdIn = r.amount * priceOf(r.from);
     const impactPct = Math.min(9, (usdIn / 40000) * 100);
-    return { dex: 'KongSwap', dexFee: '0.30%', out: (usdIn / priceOf(r.to)) * (1 - impactPct / 100) * 0.997, impactPct, networkFeeUsd: 0.01, expiresAt: Date.now() + 30000 };
+    return { dex: 'ICPSwap', dexFee: '0.30%', out: (usdIn / priceOf(r.to)) * (1 - impactPct / 100) * 0.997, impactPct, networkFeeUsd: 0.01, expiresAt: Date.now() + 30000 };
   },
+  // pass3-swap: the app's three steps (approve, swap, withdraw), unevenly paced like real ledger calls
   onSwap: async (r: { onStep: (step: number) => void }) => {
-    for (let i = 0; i < 5; i++) {
+    const pace = [1400, 2200, 1700];
+    for (let i = 0; i < 3; i++) {
       r.onStep(i);
-      await wait(900);
+      await wait(pace[i]);
     }
   },
 };
@@ -134,11 +140,22 @@ const shareChats = [
   { id: 'c2', name: 'The Awesome Group', kind: 'Group · 248 members', grad: 'linear-gradient(140deg,#5FA8FF,#8C6BFF)', radius: '11px' },
   { id: 'c3', name: 'Matt Rivers', kind: 'Direct chat', grad: 'linear-gradient(140deg,#ffb03d,#ff4d4d)', radius: '50%' },
 ];
-// the docs have no QR library: the host's renderer goes in this square, so the demo says so instead of faking one
-const demoQr = createRawSnippet((address: () => string) => ({
-  render: () =>
-    `<span style="display:flex;align-items:center;justify-content:center;width:204px;height:204px;padding:16px;box-sizing:border-box;text-align:center;font:500 12px/1.4 var(--font-mono);color:#0b0b10;word-break:break-all">QR drawn by the host for ${address().replace(/[<>&"]/g, '')}</span>`,
-}));
+// the docs have no QR library: the host's renderer draws here. This svg is a stand-in pattern (not a scannable code),
+// so the layout and Copy QR image can be tried.
+const demoQr = createRawSnippet((address: () => string) => {
+  // a few modules switched on by the address, so each address looks different
+  let h = 2166136261;
+  for (const ch of address()) h = Math.imul(h ^ ch.charCodeAt(0), 16777619) >>> 0;
+  const cells: string[] = [];
+  for (let y = 0; y < 21; y++)
+    for (let x = 0; x < 21; x++) {
+      const finder = (x < 7 && y < 7) || (x > 13 && y < 7) || (x < 7 && y > 13);
+      const ring = finder && (Math.max(Math.abs((x % 14) - 3), Math.abs((y % 14) - 3)) === 3 || Math.max(Math.abs((x % 14) - 3), Math.abs((y % 14) - 3)) <= 1);
+      h = Math.imul(h ^ (x * 31 + y), 16777619) >>> 0;
+      if (finder ? ring : h % 3 === 0) cells.push(`<rect x="${x}" y="${y}" width="1" height="1"/>`);
+    }
+  return { render: () => `<svg viewBox="0 0 21 21" shape-rendering="crispEdges" fill="#0b0b10" role="img" aria-label="QR code">${cells.join('')}</svg>` };
+});
 const receiveDemo = { chats: shareChats, onShare: () => wait(500), qr: demoQr };
 const sendExtras = {
   btcFees: { btc: 0.0000042, ckbtc: 0.0000001 },
@@ -554,10 +571,10 @@ export const samples: Record<string, Record<string, unknown>> = {
   },
   Menu: { items: menuItems },
   StepIndicator: { steps: ['Details', 'Quote', 'Swap'] },
-  WalletMain: { tokens: walletTokens, handle: '@you', addresses: receiveAddresses, ...sendDemo, ...sendExtras, activity: walletActivity, receivable: receivableTokens, recipients: walletRecipients, ...{ onAddRecipient: recipientsDemo.onAdd, onUpdateRecipient: recipientsDemo.onUpdate, onRemoveRecipient: recipientsDemo.onRemove }, ...swapDemo, ...receiveDemo },
+  WalletMain: { tokens: walletTokens, handle: '@you', addresses: receiveAddresses, ...sendDemo, ...sendExtras, activity: walletActivity, receivable: receivableTokens, recipients: walletRecipients, ...{ onAddRecipient: recipientsDemo.onAdd, onUpdateRecipient: recipientsDemo.onUpdate, onRemoveRecipient: recipientsDemo.onRemove }, ...swapDemo, ...receiveDemo, onMessage: () => {} },
   WalletPanel: { tokens: walletTokens, onRefresh: () => wait(800) },
   WalletReceive: { tokens: walletTokens, addresses: receiveAddresses, ...receiveDemo },
-  WalletSend: { tokens: walletTokens, ...sendDemo, ...sendExtras },
+  WalletSend: { tokens: walletTokens, ...sendDemo, ...sendExtras, onSent: sendWithReceipt, onDone: () => {}, canOpenChat: true },
   WalletSwap: { tokens: walletTokens, ...swapDemo },
   WalletRecipients: { tokens: walletTokens, recipients: walletRecipients, ...recipientsDemo },
   // review2-rollback: a timed member always has a future end date
@@ -598,11 +615,13 @@ export const samples: Record<string, Record<string, unknown>> = {
   ChatPicker: { item: { title: 'Invite link', sub: 'oc.app/group/the-awesome-group-8f2a', icon: 'link' }, chats },
   ProgressTimeline: {
     density: 'compact',
-    phases: [
-      { title: 'Send to ICPSwap', steps: [{ label: 'Get deposit account', state: 'done' }, { label: 'Transfer 100 CHAT to ICPSwap', state: 'done' }, { label: 'Notify ICPSwap of the deposit', state: 'active' }] },
-      { title: 'Swap', steps: [{ label: 'Swap CHAT for ICP', state: 'todo' }] },
-      { title: 'Return to your wallet', steps: [{ label: 'Withdraw 2.19425 ICP from ICPSwap', state: 'todo' }] },
+    steps: [
+      { label: 'Approve ICPSwap to take 100 CHAT', state: 'done', meta: '0:03' },
+      { label: 'Swap CHAT for ICP', state: 'active', hint: 'Trading at the quoted price, within 0.5% slippage' },
+      { label: 'Receive 2.19425 ICP in your wallet', state: 'todo' },
+      { label: 'Swap complete', state: 'todo' },
     ],
+    funds: { text: '100 CHAT is at ICPSwap, being swapped', tone: 'active' },
   },
   MessageGroup: {
     messages: [
@@ -884,27 +903,40 @@ export const thresholds = [
   { at: 0.75, label: 'docs.general.samples.thresholds.adoptedImmediately', strong: true },
 ];
 
-export const timelineRunning = [
-  { title: 'docs.general.samples.timeline.sendToIcpswap', steps: [{ label: 'docs.general.samples.timeline.getDepositAccount', state: 'done' as const }, { label: 'Transfer 100 CHAT to ICPSwap', state: 'done' as const }, { label: 'docs.general.samples.timeline.notifyIcpswapOfTheDeposit', state: 'active' as const }] },
-  { title: 'docs.general.samples.timeline.swap', steps: [{ label: 'docs.general.samples.timeline.swapChatForIcp', state: 'todo' as const }] },
-  { title: 'docs.general.samples.timeline.returnToYourWallet', steps: [{ label: 'Withdraw 2.19425 ICP from ICPSwap', state: 'todo' as const }] },
-];
+// pass3-swap: the timeline demos are flat steps (approve, swap, withdraw, complete) with a funds line
+const tl = 'docs.general.samples.timeline.';
+export const timelineRunning = {
+  steps: [
+    { label: tl + 'approve', state: 'done' as const, meta: '0:03' },
+    { label: tl + 'swapChatForIcp', state: 'active' as const, hint: tl + 'swapHint' },
+    { label: tl + 'receive', state: 'todo' as const },
+    { label: tl + 'complete', state: 'todo' as const },
+  ],
+  funds: { text: tl + 'fundsAtDex', tone: 'active' as const },
+  elapsed: '0:07',
+};
 
-export const timelineDone = [
-  { title: 'docs.general.samples.timeline.sendToIcpswap', steps: [{ label: 'docs.general.samples.timeline.getDepositAccount', state: 'done' as const }, { label: 'Transfer 100 CHAT to ICPSwap', state: 'done' as const }, { label: 'docs.general.samples.timeline.notifyIcpswapOfTheDeposit', state: 'done' as const }] },
-  { title: 'docs.general.samples.timeline.swap', steps: [{ label: 'docs.general.samples.timeline.swapChatForIcp', state: 'done' as const }] },
-  { title: 'docs.general.samples.timeline.returnToYourWallet', steps: [{ label: 'Withdraw 2.19425 ICP from ICPSwap', state: 'done' as const }] },
-];
+export const timelineDone = {
+  steps: [
+    { label: tl + 'approve', state: 'done' as const, meta: '0:03' },
+    { label: tl + 'swapChatForIcp', state: 'done' as const, meta: '0:09' },
+    { label: tl + 'receive', state: 'done' as const, meta: '0:12' },
+    { label: tl + 'complete', state: 'done' as const },
+  ],
+  funds: { text: tl + 'fundsDone', tone: 'done' as const },
+  elapsed: 'Took 0:24',
+};
 
-export const timelineFailed = [
-  { title: 'docs.general.samples.timeline.sendToIcpswap', steps: [{ label: 'docs.general.samples.timeline.getDepositAccount', state: 'done' as const }, { label: 'Transfer 100 CHAT to ICPSwap', state: 'done' as const }, { label: 'docs.general.samples.timeline.notifyIcpswapOfTheDeposit', state: 'done' as const }] },
-  {
-    title: 'docs.general.samples.timeline.swap',
-    error: 'ICPSwap rejected the swap: price moved past your slippage limit.',
-    steps: [{ label: 'docs.general.samples.timeline.swapChatForIcp', state: 'failed' as const }],
-  },
-  { title: 'docs.general.samples.timeline.returnToYourWallet', steps: [{ label: 'Withdraw 100 CHAT from ICPSwap', state: 'todo' as const }] },
-];
+export const timelineFailed = {
+  steps: [
+    { label: tl + 'approve', state: 'done' as const, meta: '0:03' },
+    { label: tl + 'swapChatForIcp', state: 'failed' as const, error: tl + 'swapRejected' },
+    { label: tl + 'receive', state: 'todo' as const },
+    { label: tl + 'complete', state: 'todo' as const },
+  ],
+  funds: { text: tl + 'fundsSafe', tone: 'warn' as const },
+  elapsed: '0:11',
+};
 
 export const sortableStart = ['Pizza', 'Tacos', 'Sushi'];
 

@@ -663,6 +663,7 @@
         "manual": "Thủ công",
         "manualInfo": "Tổ chức ví của bạn theo cách thủ công bằng cách chọn chính xác các mã thông báo mà bạn muốn xem",
         "minDollarPlaceholder": "Số dư đô la tối thiểu",
+        "minimumDeposit": "Số tiền nạp tối thiểu: {amount} {token}",
         "network": "Mạng:",
         "networkFee": "Phí mạng: {amount} {token}",
         "receive": "Nhận được",

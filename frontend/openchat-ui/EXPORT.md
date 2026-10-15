@@ -145,7 +145,7 @@ No `.logic.js` and no `useLogic`: state in runes, view values in `$derived`, sty
 - **PrizeBuilderDialog** — from source hash `5169413b`.
 - **PrizeMessage** — from source hash `44eff81b`.
 - **ProfileDialog** — from source hash `3f17d9eb`.
-- **ProgressTimeline** — from source hash `90f18732`.
+- **ProgressTimeline** — from source hash `d566367a` (pass 3, ported by hand).
 - **ProposalMessage** — from source hash `e4139d49`.
 - **PuzzleDialog** — from source hash `f417539c`.
 - **QuickAmountChips** — from source hash `a622f26e`.
@@ -154,7 +154,7 @@ No `.logic.js` and no `useLogic`: state in runes, view values in `$derived`, sty
 - **SegmentedTabs** — from source hash `e4cc2aed`.
 - **SendCryptoDialog** — from source hash `71f44ae8`.
 - **ShareBar** — from source hash `d827e12e`.
-- **SideCard** — from source hash `2385dab3`.
+- **SideCard** — from source hash `fe2f5a08` (pass 3, ported by hand).
 - **Skeleton** — from source hash `a4b6cf89`.
 - **SnapFloat** — from source hash `87d22dad`.
 - **SortableInputList** — from source hash `eb476c6d`.
@@ -187,13 +187,13 @@ No `.logic.js` and no `useLogic`: state in runes, view values in `$derived`, sty
 - **UserGroupDialog** — from source hash `2c0cc062`.
 - **VideoTile** — from source hash `3d3f0853`.
 - **VoiceMessage** — from source hash `e210f6a8`.
-- **WalletMain** — from source hash `abda06dc`.
+- **WalletMain** — from source hash `c74f96f3` (pass 3, ported by hand).
 - **WalletPanel** — from source hash `464ebf46`.
-- **WalletReceive** — from source hash `2b04c83d`.
+- **WalletReceive** — from source hash `27cf3447` (pass 3, ported by hand).
 - **WalletRecipients** — from source hash `8d8543ca`.
-- **WalletSend** — from source hash `7681cb15`.
+- **WalletSend** — from source hash `a9dbde40` (pass 3, ported by hand).
 - **WalletSettingsDialog** — from source hash `a69b5e15`.
-- **WalletSwap** — from source hash `9e10abdb`.
+- **WalletSwap** — from source hash `5e438702` (pass 3, ported by hand).
 - **Waveform** — from source hash `d43e3c8e`.
 - **WebhookDialog** — from source hash `af5a6630`.
 

@@ -663,6 +663,7 @@
         "manual": "手动的",
         "manualInfo": "通过选择您想要查看的代币来手动组织您的钱包",
         "minDollarPlaceholder": "最低美元余额",
+        "minimumDeposit": "最低存款：{amount} {token}",
         "network": "网络：",
         "networkFee": "网络费用：{amount} {token}",
         "receive": "接收",

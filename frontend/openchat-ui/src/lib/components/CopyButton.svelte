@@ -1,5 +1,6 @@
 <!-- Copy control: writes value to the clipboard and shows a check (and "Copied") for 1.6s, only when the write succeeded.
-     variant: ghost (icon, hover fill) | soft (icon on a tinted square) | outline (icon, hairline ring) | filled (icon on accent) | text (icon + "Copy" pill).
+     variant: ghost (icon, hover fill) | soft (icon on a tinted square) | outline (icon, hairline ring) | filled (icon on accent)
+     | text (icon + "Copy" pill) | primary (icon + "Copy" on accent, 40px: a card's main action).
      bind:copied lets the owner show its own hint; copy() lets another element (the value itself) trigger the same copy. -->
 <script lang="ts">
   import { useT } from '../i18n';
@@ -10,7 +11,7 @@
     value: string;
     /** Resource key (or literal text) for the tooltip / accessible name (and the text variant's label). */
     label?: string;
-    variant?: 'ghost' | 'soft' | 'outline' | 'filled' | 'text';
+    variant?: 'ghost' | 'soft' | 'outline' | 'filled' | 'text' | 'primary';
     /** sm 26px · md 34px · lg 40px (icon variants). */
     size?: 'sm' | 'md' | 'lg';
     /** True while the check is showing. */
@@ -40,8 +41,8 @@
   }
 </script>
 
-{#if variant === 'text'}
-  <span class="copy text" class:done={copied} onclick={press} role="button" tabindex="0" aria-label={tip}><span class="icon"></span>{t(copied ? 'ui.common.copied' : 'ui.common.copy')}</span>
+{#if variant === 'text' || variant === 'primary'}
+  <span class="copy text" class:primary={variant === 'primary'} class:done={copied} onclick={press} role="button" tabindex="0" aria-label={tip}><span class="icon"></span>{t(copied ? 'ui.common.copied' : 'ui.common.copy')}</span>
 {:else}
   <span class="copy {size} {variant}" class:done={copied} onclick={press} role="button" tabindex="0" title={tip} aria-label={tip}><span class="icon"></span></span>
 {/if}
@@ -143,6 +144,31 @@
     width: 14px;
     height: 14px;
     background: var(--ink-2, #b9b9c6);
+  }
+
+  .primary {
+    height: 40px;
+    padding: 0 14px;
+    border-radius: 10px;
+    box-shadow: none;
+    background: var(--accent, #ff5672);
+    font: 600 13px/1 var(--font-sans);
+    color: var(--on-accent, #2e0512);
+  }
+
+  .primary:hover {
+    background: var(--accent, #ff5672);
+    filter: brightness(1.08);
+  }
+
+  .primary .icon {
+    background: currentColor;
+  }
+
+  .primary.done {
+    background: rgba(46, 230, 168, 0.14);
+    filter: none;
+    color: var(--status-online, #2ee6a8);
   }
 
   .done .icon {

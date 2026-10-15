@@ -272,6 +272,8 @@ export interface WalletToken {
   price: number;
   /** Decimal places shown for amounts. */
   dp: number;
+  /** Decimal places the amount input accepts, when fewer than dp (e.g. 8 for an 18-decimal token); defaults to dp. */
+  inputDp?: number;
   /** Ledger transfer fee, in whole tokens. */
   fee?: number;
   /** Accepted for payments (e.g. Diamond membership). */

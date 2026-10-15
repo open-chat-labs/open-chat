@@ -10,6 +10,8 @@ candid = { workspace = true }
 ckbtc_minter_canister = { path = "../../external_canisters/ckbtc_minter/api" }
 ckbtc_minter_canister_c2c_client = { path = "../../external_canisters/ckbtc_minter/c2c_client" }
 chat_events = { path = "../chat_events" }
+cksol_minter_canister = { path = "../../external_canisters/cksol_minter/api" }
+cksol_minter_canister_c2c_client = { path = "../../external_canisters/cksol_minter/c2c_client" }
 constants = { path = "../constants" }
 direct_chat = { path = "../direct_chat" }
 escrow_canister = { path = "../../canisters/escrow/api" }

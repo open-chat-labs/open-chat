@@ -38,6 +38,7 @@ export const SYNCED_FIELDS = [
     "installedBots",
     "bitcoinAddress",
     "oneSecAddress",
+    "solanaAddress",
     "streakInsurance",
     "premiumItems",
 ] as const satisfies readonly (keyof ChatStateFull)[];
@@ -385,6 +386,7 @@ export function updatesSince(
         installedBots: ifField("installedBots", state.installedBots),
         bitcoinAddress: ifField("bitcoinAddress", state.bitcoinAddress),
         oneSecAddress: ifField("oneSecAddress", state.oneSecAddress),
+        solanaAddress: ifField("solanaAddress", state.solanaAddress),
         streakInsurance: ifOption("streakInsurance", state.streakInsurance),
         premiumItems: ifField("premiumItems", state.premiumItems),
         updatedEvents: updatedEvents.toMap() as Map<string, UpdatedEvent[]>,
@@ -420,6 +422,7 @@ export function snapshotOf(state: ChatStateFull): UpdatesResult {
         installedBots: state.installedBots,
         bitcoinAddress: state.bitcoinAddress,
         oneSecAddress: state.oneSecAddress,
+        solanaAddress: state.solanaAddress,
         streakInsurance: option(state.streakInsurance),
         premiumItems: state.premiumItems,
     };
@@ -448,6 +451,7 @@ export function emptyUpdatesResult(): UpdatesResult {
         installedBots: undefined,
         bitcoinAddress: undefined,
         oneSecAddress: undefined,
+        solanaAddress: undefined,
         streakInsurance: undefined,
         premiumItems: undefined,
         updatedEvents: new Map(),

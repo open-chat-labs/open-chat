@@ -7,6 +7,8 @@ export const CHAT_SYMBOL = "CHAT";
 export const ICP_SYMBOL = "ICP";
 export const BTC_SYMBOL = "BTC";
 export const CKBTC_SYMBOL = "ckBTC";
+export const SOL_SYMBOL = "SOL";
+export const CKSOL_SYMBOL = "ckSOL";
 export const SNS1_SYMBOL = "SNS1";
 export const KINIC_SYMBOL = "KINIC";
 export const HOTORNOT_SYMBOL = "HOT";
@@ -52,6 +54,7 @@ export const INDEX_CANISTER_ICP = "qhbym-qaaaa-aaaaa-aaafq-cai";
 export const LEDGER_CANISTER_CHAT = "2ouva-viaaa-aaaaq-aaamq-cai";
 export const LEDGER_CANISTER_CKBTC = "mxzaz-hqaaa-aaaar-qaada-cai";
 export const LEDGER_CANISTER_CKETH = "ss2fx-dyaaa-aaaar-qacoq-cai";
+export const LEDGER_CANISTER_CKSOL = "ls5lp-lqaaa-aaaar-qb5oa-cai";
 
 export const DEFAULT_TOKENS = ["CHAT", "ICP", "BTC", "USDC", "USDT"];
 

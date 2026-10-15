@@ -1,0 +1,16 @@
+// Copied from https://github.com/dfinity/cksol/blob/main/minter/cksol_minter.did, keeping only the
+// fields read here, so that a change to any other field can't break decoding
+
+// Smallest denomination of SOL, the native token on Solana,
+// i.e. 1_000_000_000 Lamports is 1 SOL
+type Lamport = nat64;
+
+// Information about the ckSOL minter canister.
+type MinterInfo = record {
+    minimum_deposit_amount : Lamport;
+};
+
+service : {
+    // Returns information about the ckSOL minter canister.
+    get_minter_info: () -> (MinterInfo) query;
+};

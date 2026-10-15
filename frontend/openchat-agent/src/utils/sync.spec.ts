@@ -61,6 +61,7 @@ function state(overrides: Partial<ChatStateFull> = {}): ChatStateFull {
         installedBots: new Map(),
         bitcoinAddress: undefined,
         oneSecAddress: undefined,
+        solanaAddress: undefined,
         streakInsurance: undefined,
         premiumItems: new Set(),
         ...overrides,

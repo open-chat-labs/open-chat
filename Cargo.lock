@@ -1881,6 +1881,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "cksol_minter_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "icrc-ledger-types",
+ "serde",
+]
+
+[[package]]
+name = "cksol_minter_canister_c2c_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client",
+ "cksol_minter_canister",
+ "ic-cdk 0.20.3",
+ "types",
+]
+
+[[package]]
 name = "clap"
 version = "2.34.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -12840,6 +12860,8 @@ dependencies = [
  "chat_events",
  "ckbtc_minter_canister",
  "ckbtc_minter_canister_c2c_client",
+ "cksol_minter_canister",
+ "cksol_minter_canister_c2c_client",
  "constants",
  "direct_chat",
  "escrow_canister",
