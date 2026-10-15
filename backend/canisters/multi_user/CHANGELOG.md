@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Generate Solana deposit addresses through the ckSOL minter, and have it credit SOL sent to them as ckSOL ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+- Generate Solana deposit addresses through the ckSOL minter, and have it credit SOL sent to them as ckSOL ([#9984](https://github.com/open-chat-labs/open-chat/pull/9984))
 
 ### Changed
 
