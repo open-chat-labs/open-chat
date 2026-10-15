@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Stop tracking the async work in progress, since nothing reads it any more ([#9972](https://github.com/open-chat-labs/open-chat/pull/9972))
+
 ### Removed
 
 - Remove the one-offs which replaced old user ids in the bots and dropped the User canister's wasm, now that they have run ([#9965](https://github.com/open-chat-labs/open-chat/pull/9965))
