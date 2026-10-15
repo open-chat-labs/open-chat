@@ -1,8 +1,9 @@
-import { deleteDB, type DBSchema, type IDBPDatabase } from "idb";
+import { deleteDB, type DBSchema } from "idb";
 import { deletedUser, type DiamondMembershipStatus, type UserSummary } from "@shared";
 import { IndexedDbConnectionManager } from "./indexedDb";
 
-const CACHE_VERSION = 14;
+// With no migrations registered, a bump deletes the whole cache
+const CACHE_VERSION = 15;
 const DB_NAME = "openchat_users";
 
 export interface UserSchema extends DBSchema {
@@ -29,12 +30,6 @@ export interface UserSchema extends DBSchema {
     };
 }
 
-async function createMigratedUserIdsStore(db: IDBPDatabase<UserSchema>) {
-    if (!db.objectStoreNames.contains("migratedUserIds")) {
-        db.createObjectStore("migratedUserIds");
-    }
-}
-
 export class UserDb {
     private readonly connectionManager: IndexedDbConnectionManager<UserSchema>;
 
@@ -48,7 +43,7 @@ export class UserDb {
                 { name: "migratedUserIds" },
             ],
             CACHE_VERSION,
-        ).withMigration(13, createMigratedUserIdsStore);
+        );
     }
 
     async getCachedUsers(userIds: string[]): Promise<UserSummary[]> {
