@@ -43,6 +43,7 @@ pub struct SuccessResult {
     pub bots: Vec<InstalledBotDetails>,
     pub btc_address: Option<String>,
     pub one_sec_address: Option<String>,
+    pub sol_address: Option<String>,
     pub premium_items: Vec<u32>,
     pub pinned_chats: Vec<Chat>,
 }

@@ -663,6 +663,7 @@
         "manual": "Podręcznik",
         "manualInfo": "Zorganizuj swój portfel ręcznie, wybierając dokładnie te tokeny, które chcesz zobaczyć",
         "minDollarPlaceholder": "Minimalne saldo w dolarach",
+        "minimumDeposit": "Minimalna wpłata: {amount} {token}",
         "network": "Sieć:",
         "networkFee": "Opłata sieciowa: {amount} {token}",
         "receive": "Odbierać",

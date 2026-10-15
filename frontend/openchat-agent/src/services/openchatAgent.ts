@@ -38,6 +38,7 @@ import type {
     ChitState,
     CkbtcMinterDepositInfo,
     CkbtcMinterWithdrawalInfo,
+    CksolMinterDepositInfo,
     ClaimDailyChitResponse,
     ClaimPrizeResponse,
     CommunityCanisterCommunitySummaryUpdates,
@@ -313,6 +314,7 @@ import { Updatable, UpdatableOption } from "../utils/updatable";
 import { UserDb } from "../utils/userCache";
 import { BitcoinClient } from "./bitcoin/bitcoin.client";
 import { CkbtcMinterClient } from "./ckbtcMinter/ckbtcMinter.client";
+import { CksolMinterClient } from "./cksolMinter/cksolMinter.client";
 import { CachedChatEventsReader } from "./common/chatEvents";
 import { measure } from "./common/profiling";
 import { CommunityClient } from "./community/community.client";
@@ -417,6 +419,7 @@ export class OpenChatAgent extends EventTarget {
     private _bitcoinClient: Lazy<BitcoinClient>;
     private _ckbtcMinterClient: Lazy<CkbtcMinterClient>;
     private _ckbtcWithdrawalMinterClient: Lazy<CkbtcMinterClient>;
+    private _cksolMinterClient: Lazy<CksolMinterClient>;
     private _dexesAgent: Lazy<DexesAgent>;
     private _marketMakerClient: Lazy<MarketMakerClient>;
     private _proposalsBotClient: Lazy<ProposalsBotClient>;
@@ -504,6 +507,7 @@ export class OpenChatAgent extends EventTarget {
         this._ckbtcWithdrawalMinterClient = new Lazy(
             () => new CkbtcMinterClient(this.identity, this._agent, true),
         );
+        this._cksolMinterClient = new Lazy(() => new CksolMinterClient(this.identity, this._agent));
         this._dexesAgent = new Lazy(() => new DexesAgent(this._agent));
         this._marketMakerClient = new Lazy(
             () => new MarketMakerClient(identity, this._agent, config.marketMakerCanister),
@@ -1890,6 +1894,7 @@ export class OpenChatAgent extends EventTarget {
         let installedBots: Updatable<Map<string, GrantedBotPermissions>>;
         let bitcoinAddress: Updatable<string | undefined>;
         let oneSecAddress: Updatable<string | undefined>;
+        let solanaAddress: Updatable<string | undefined>;
         let streakInsurance: UpdatableOption<StreakInsurance>;
         let premiumItems: Updatable<Set<PremiumItem>>;
 
@@ -1969,6 +1974,7 @@ export class OpenChatAgent extends EventTarget {
             installedBots = new Updatable(userResponse.bots, true);
             bitcoinAddress = new Updatable(userResponse.bitcoinAddress, true);
             oneSecAddress = new Updatable(userResponse.oneSecAddress, true);
+            solanaAddress = new Updatable(userResponse.solanaAddress, true);
             streakInsurance = new UpdatableOption(userResponse.streakInsurance, true);
             premiumItems = new Updatable(userResponse.premiumItems, true);
         } else {
@@ -1996,6 +2002,7 @@ export class OpenChatAgent extends EventTarget {
             installedBots = new Updatable(current.installedBots);
             bitcoinAddress = new Updatable(current.bitcoinAddress);
             oneSecAddress = new Updatable(current.oneSecAddress);
+            solanaAddress = new Updatable(current.solanaAddress);
             streakInsurance = new UpdatableOption(current.streakInsurance);
             premiumItems = new Updatable(current.premiumItems);
 
@@ -2097,6 +2104,7 @@ export class OpenChatAgent extends EventTarget {
                     );
                     bitcoinAddress.updateIfNotUndefined(userResponse.bitcoinAddress);
                     oneSecAddress.updateIfNotUndefined(userResponse.oneSecAddress);
+                    solanaAddress.updateIfNotUndefined(userResponse.solanaAddress);
                     streakInsurance.applyOptionUpdate(userResponse.streakInsurance);
                     premiumItems.updateIfNotUndefined(userResponse.premiumItems);
                 }
@@ -2248,6 +2256,7 @@ export class OpenChatAgent extends EventTarget {
             installedBots: installedBots.value,
             bitcoinAddress: bitcoinAddress.value,
             oneSecAddress: oneSecAddress.value,
+            solanaAddress: solanaAddress.value,
             streakInsurance: streakInsurance.value,
             premiumItems: premiumItems.value,
         };
@@ -2294,6 +2303,7 @@ export class OpenChatAgent extends EventTarget {
                         installedBots,
                         bitcoinAddress,
                         oneSecAddress,
+                        solanaAddress,
                         streakInsurance,
                         premiumItems,
                     }),
@@ -5352,6 +5362,17 @@ export class OpenChatAgent extends EventTarget {
         return this.userClient.generateOneSecAddress();
     }
 
+    generateSolAddress(): Promise<string> {
+        return this.userClient.generateSolAddress();
+    }
+
+    // Has the user's canister ask the ckSOL minter to credit the SOL sent to the user's deposit
+    // address. The caller first checks the address holds the minter's minimum, since the canister
+    // pays the minter for each request.
+    updateSolBalance(): Promise<boolean> {
+        return this.userClient.updateSolBalance();
+    }
+
     // Query the Bitcoin canister to check for any new UTXOs for this user, if there are any, then also query the ckBTC
     // minter to check that it has processed them, if it has not, call `update_btc_balance` on the user canister which
     // will then call into `update_balance` on the ckBTC minter to pull in the new UTXOs.
@@ -5430,6 +5451,10 @@ export class OpenChatAgent extends EventTarget {
 
     getCkbtcMinterDepositInfo(): Promise<CkbtcMinterDepositInfo> {
         return this._ckbtcMinterClient.get().getDepositInfo();
+    }
+
+    getCksolMinterDepositInfo(): Promise<CksolMinterDepositInfo> {
+        return this._cksolMinterClient.get().getDepositInfo();
     }
 
     getCkbtcMinterWithdrawalInfo(amount: bigint): Promise<CkbtcMinterWithdrawalInfo> {

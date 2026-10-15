@@ -663,6 +663,7 @@
         "manual": "Manuale",
         "manualInfo": "Organizza manualmente il tuo portafoglio selezionando esattamente i token che vuoi vedere",
         "minDollarPlaceholder": "Saldo minimo in dollari",
+        "minimumDeposit": "Deposito minimo: {amount} {token}",
         "network": "Rete:",
         "networkFee": "Costo della rete: {amount} {token}",
         "receive": "Ricevere",

@@ -663,6 +663,7 @@
         "manual": "Інструкція",
         "manualInfo": "Упорядкуйте свій гаманець вручну, вибравши саме ті токени, які ви хочете бачити",
         "minDollarPlaceholder": "Мінімальний доларовий баланс",
+        "minimumDeposit": "Мінімальний депозит: {amount} {token}",
         "network": "мережа:",
         "networkFee": "Плата за мережу: {amount} {token}",
         "receive": "Отримати",

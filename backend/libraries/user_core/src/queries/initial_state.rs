@@ -68,6 +68,7 @@ pub fn initial_state(
         bots,
         btc_address: user.btc_address.as_ref().map(|a| a.value.clone()),
         one_sec_address: user.one_sec_address.as_ref().map(|a| a.value.clone()),
+        sol_address: user.sol_address.as_ref().map(|a| a.value.clone()),
         premium_items: user.premium_items.item_ids(),
         // Only direct and group chats are merged in here; pinned favourites are listed above
         pinned_chats: pinned_direct_and_group_chats(user),

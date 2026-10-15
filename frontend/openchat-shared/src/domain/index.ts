@@ -38,6 +38,7 @@ export * from "./response";
 export * from "./routing";
 export * from "./search/search";
 export * from "./serialisation";
+export * from "./solana";
 export * from "./stream";
 export * from "./structure";
 export * from "./sync";

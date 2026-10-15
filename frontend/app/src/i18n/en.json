@@ -642,6 +642,7 @@
         "manual": "Manual",
         "manualInfo": "Organise your wallet manually by selected exactly the tokens that you want to see",
         "minDollarPlaceholder": "Minimum dollar balance",
+        "minimumDeposit": "Minimum deposit: {amount} {token}",
         "network": "Network:",
         "networkFee": "Network fee: {amount} {token}",
         "receive": "Receive",

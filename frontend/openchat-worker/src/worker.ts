@@ -1001,8 +1001,10 @@ const handlers: Handlers = {
     getLocalUserIndexForUser: (payload, agent) => agent.getLocalUserIndexForUser(payload.userId),
     generateBtcAddress: (_payload, agent) => agent.generateBtcAddress(),
     generateOneSecAddress: (_payload, agent) => agent.generateOneSecAddress(),
+    generateSolAddress: (_payload, agent) => agent.generateSolAddress(),
     updateBtcBalance: (payload, agent) =>
         agent.updateBtcBalance(payload.userId, payload.bitcoinAddress),
+    updateSolBalance: (_payload, agent) => agent.updateSolBalance(),
     withdrawBtc: (payload, agent) =>
         agent.withdrawBtc(payload.address, payload.amount, payload.pin),
     withdrawViaOneSec: (payload, agent) =>
@@ -1017,6 +1019,7 @@ const handlers: Handlers = {
     ckbtcMinterDepositInfo: (_payload, agent) => agent.getCkbtcMinterDepositInfo(),
     ckbtcMinterWithdrawalInfo: (payload, agent) =>
         agent.getCkbtcMinterWithdrawalInfo(payload.amount),
+    cksolMinterDepositInfo: (_payload, agent) => agent.getCksolMinterDepositInfo(),
     currentUserWebAuthnKey: (_payload) => {
         // TODO add type for the `res`
         return (

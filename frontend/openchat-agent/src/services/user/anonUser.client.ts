@@ -127,6 +127,7 @@ export class AnonUserClient implements IChatEventsReader<DirectChatIdentifier> {
             bots: new Map(),
             bitcoinAddress: undefined,
             oneSecAddress: undefined,
+            solanaAddress: undefined,
             premiumItems: new Set(),
             pinnedChats: [],
         });
@@ -492,7 +493,15 @@ export class AnonUserClient implements IChatEventsReader<DirectChatIdentifier> {
         throw new AnonymousOperationError();
     }
 
+    generateSolAddress(): Promise<string> {
+        throw new AnonymousOperationError();
+    }
+
     updateBtcBalance(): Promise<boolean> {
+        throw new AnonymousOperationError();
+    }
+
+    updateSolBalance(): Promise<boolean> {
         throw new AnonymousOperationError();
     }
 
