@@ -7,12 +7,16 @@
     import { installBehaviours } from "@openchat/ui/lib/behaviours";
     import EmptyState from "@openchat/ui/lib/components/EmptyState.svelte";
     import { setI18n } from "@openchat/ui/lib/i18n";
-    import { rtlStore } from "@stores/rtl";
-    import { currentTheme } from "@theme/themes";
-    import { recordError } from "@utils/errorPostmortem";
+    import { currentThemeMode } from "@theme/themes";
+    import {
+        boundaryErrorHandler,
+        followDocumentDirection,
+        initialiseAppLogger,
+        subscribeToSessionEvents,
+    } from "@utils/appRoot.svelte";
     import { createOpenChatClient } from "@utils/openchatClient";
     import { handleUnhandledError } from "@utils/unhandledError";
-    import { inititaliseLogger, OpenChat, subscribe } from "@client";
+    import { OpenChat } from "@client";
     import { onMount, setContext } from "svelte";
     import { _, isLoading, json, locale } from "svelte-i18n";
     import { addUiMessages, uiTranslate } from "./i18n";
@@ -21,11 +25,7 @@
     addUiMessages();
     installBehaviours();
 
-    const logger = inititaliseLogger(
-        import.meta.env.OC_ROLLBAR_ACCESS_TOKEN!,
-        import.meta.env.OC_WEBSITE_VERSION!,
-        import.meta.env.OC_BUILD_ENV!,
-    );
+    const logger = initialiseAppLogger();
 
     const client: OpenChat = createOpenChatClient($_, logger);
     setContext<OpenChat>("client", client);
@@ -40,26 +40,19 @@
     // The theme goes on <html> rather than a wrapper so that anything mounted outside the
     // app's own tree (dialogs, menus, tooltips) is themed too.
     // TODO(design): the accent has no user setting yet, so it stays on the design's default.
-    let mode = $derived($currentTheme.mode === "light" ? "light" : "dark");
     $effect(() => {
-        document.documentElement.dataset.mode = mode;
+        document.documentElement.dataset.mode = $currentThemeMode;
         document.documentElement.dataset.accent = "pink";
     });
 
-    $effect(() => {
-        document.dir = $rtlStore ? "rtl" : "ltr";
-    });
+    followDocumentDirection();
 
     onMount(() => {
-        const unsubs = [
-            subscribe("sessionExpired", () => client.logout()),
-            // The current user has a new user id, so start again under it
-            subscribe("currentUserIdChanged", () => window.location.reload()),
-        ];
+        const unsubscribe = subscribeToSessionEvents(client);
         window.addEventListener("unhandledrejection", unhandledError);
         return () => {
             window.removeEventListener("unhandledrejection", unhandledError);
-            unsubs.forEach((u) => u());
+            unsubscribe();
         };
     });
 
@@ -67,10 +60,7 @@
         handleUnhandledError(ev, () => client.logout());
     }
 
-    function boundaryError(err: unknown) {
-        recordError("boundary", err);
-        logger?.error("Top level boundary error: ", err);
-    }
+    const boundaryError = boundaryErrorHandler(logger);
 </script>
 
 <svelte:head>
@@ -84,10 +74,11 @@
 <svelte:boundary onerror={boundaryError}>
     <!-- a failed locale load clears isLoading with no locale set, and translating then throws (#9636) -->
     {#if $localeLoadFailed}
+        <!-- no locale, so only literal text or the library's bundled English can be shown -->
         <EmptyState
             preset="error"
             title="Couldn't load OpenChat."
-            body=""
+            body="Check your connection and reload the page."
             actionLabel="Reload"
             actionHandler={() => window.location.reload()} />
     {:else if ($locale && !$isLoading) || $reviewingTranslations}

@@ -28,7 +28,9 @@ import { selectLayout } from "./utils/layout";
 // and intentionally does not implement that native cold-start routing.
 //
 // A build with OC_WEB_LAYOUT=v3 mounts the new web UI (src/web) instead of the
-// v1 App on >=768px viewports. It is opt-in per build while it is being built.
+// v1 App on >=768px viewports. It is opt-in per build while it is being built:
+// the flag is a build-time constant, so without it the condition below is
+// constant-false and the bundler leaves the web tree out of the build.
 //
 // The two trees are loaded with dynamic import() so that only the selected one
 // is downloaded and parsed. The decision is made synchronously before either
@@ -51,7 +53,7 @@ if (layout === "v2") {
 const app = (
     layout === "v2"
         ? import("./components_mobile/App.svelte")
-        : layout === "v3"
+        : import.meta.env.OC_WEB_LAYOUT === "v3" && layout === "v3"
           ? import("./web/App.svelte")
           : import("./components/App.svelte")
 ).then(({ default: App }) => {

@@ -11,10 +11,8 @@
         setStatusAndNavBarSizesForNativeApp,
         updateAndroidInterfaceSizes,
     } from "@stores/androidInterfaceSizes";
-    import { rtlStore } from "@stores/rtl";
     import { snowing } from "@stores/snow";
     import { activeVideoCall, incomingVideoCall } from "@stores/video";
-    import { broadcastLoggedInUser } from "@stores/xframe";
     import "@utils/markdown";
     import {
         expectDeepLinks,
@@ -40,14 +38,18 @@
         chatListScopeStore,
         fontSize,
         identityStateStore,
-        inititaliseLogger,
         routeForChatIdentifier,
         routeForScope,
         subscribe,
     } from "@client";
-    import { recordError } from "@utils/errorPostmortem";
     import { navigate } from "@utils/navigation";
     import { warmRichTextEditor } from "@shared_components/richTextEditorLoader";
+    import {
+        boundaryErrorHandler,
+        followDocumentDirection,
+        initialiseAppLogger,
+        subscribeToSessionEvents,
+    } from "@utils/appRoot.svelte";
     import { createOpenChatClient } from "@utils/openchatClient";
     import { handleUnhandledError } from "@utils/unhandledError";
     import { onMount, setContext } from "svelte";
@@ -71,11 +73,7 @@
 
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
-    const logger = inititaliseLogger(
-        import.meta.env.OC_ROLLBAR_ACCESS_TOKEN!,
-        import.meta.env.OC_WEBSITE_VERSION!,
-        import.meta.env.OC_BUILD_ENV!,
-    );
+    const logger = initialiseAppLogger();
 
     const client: OpenChat = createOpenChatClient($_, logger);
     setContext<OpenChat>("client", client);
@@ -83,10 +81,7 @@
     // I can't (yet) find a way to avoid using "any" here. Will try to improve but need to commit this crime for the time being
     let videoCallElement: ReturnType<typeof ActiveCall> | undefined;
 
-    trackedEffect("rtl", () => {
-        // subscribe to the rtl store so that we can set the overall page direction at the right time
-        document.dir = $rtlStore ? "rtl" : "ltr";
-    });
+    followDocumentDirection();
 
     trackedEffect("font-size", () => {
         console.log("Setting font size to: ", $fontSize);
@@ -104,15 +99,15 @@
             subscribe("startVideoCall", startVideoCall),
             subscribe("hangup", hangup),
             subscribe("askToSpeak", askToSpeak),
-            subscribe("userLoggedIn", onUserLoggedIn),
-            subscribe("sessionExpired", () => client.logout()),
-            // The current user has a new user id, so start again under it
-            subscribe("currentUserIdChanged", () => {
-                if (client.isNativeApp()) {
-                    invoke("plugin:oc|restart_app");
-                } else {
-                    window.location.reload();
-                }
+            subscribeToSessionEvents(client, {
+                onLoggedIn: onUserLoggedIn,
+                onUserIdChanged: () => {
+                    if (client.isNativeApp()) {
+                        invoke("plugin:oc|restart_app");
+                    } else {
+                        window.location.reload();
+                    }
+                },
             }),
         ];
         // Registered rather than called at each logout site: an expired session logs out from
@@ -284,10 +279,9 @@
         warmRichTextEditor();
     }
 
-    function onUserLoggedIn(userId: string) {
+    function onUserLoggedIn() {
         setupNativeApp();
         warmRichTextEditor();
-        broadcastLoggedInUser(userId);
     }
 
     function calculateHeight() {
@@ -307,10 +301,7 @@
         handleUnhandledError(ev, () => client.logout());
     }
 
-    function boundaryError(err: unknown) {
-        recordError("boundary", err);
-        logger?.error("Top level boundary error: ", err);
-    }
+    const boundaryError = boundaryErrorHandler(logger);
 
     function resize() {
         portalState.close();

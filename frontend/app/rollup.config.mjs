@@ -184,10 +184,9 @@ export default {
                 "OC_MOBILE_LAYOUT",
                 JSON.stringify(process.env.OC_MOBILE_LAYOUT),
             ),
-            "import.meta.env.OC_WEB_LAYOUT": override(
-                "OC_WEB_LAYOUT",
-                JSON.stringify(process.env.OC_WEB_LAYOUT),
-            ),
+            // A build-time constant, not overridable at runtime: a build without the flag
+            // leaves the new web UI (src/web, @openchat/ui) out of the bundle altogether.
+            "import.meta.env.OC_WEB_LAYOUT": JSON.stringify(process.env.OC_WEB_LAYOUT ?? ""),
             "import.meta.env.OC_OTA_UPDATES": override(
                 "OC_OTA_UPDATES",
                 JSON.stringify(process.env.OC_OTA_UPDATES),
@@ -348,10 +347,7 @@ export default {
                         "OC_MOBILE_LAYOUT",
                         JSON.stringify(process.env.OC_MOBILE_LAYOUT),
                     ),
-                    webLayout: override(
-                        "OC_WEB_LAYOUT",
-                        JSON.stringify(process.env.OC_WEB_LAYOUT),
-                    ),
+                    webLayout: process.env.OC_WEB_LAYOUT === "v3",
                 });
                 const inlineScripts = [
                     `window.OC_WEBSITE_VERSION = "${version}";`,

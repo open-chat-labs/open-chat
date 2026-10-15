@@ -21,7 +21,7 @@ vi.hoisted(() => {
 import { configKeys } from "@shared";
 import type { Readable } from "svelte/store";
 import { STARTUP_DARK_BACKGROUND } from "../../rollup.extras.mjs";
-import { currentTheme, themes, themeType } from "./themes";
+import { currentTheme, currentThemeMode, themes, themeType } from "./themes";
 
 // themes.ts holds svelte/store stores, which the custom stores' `get` can't read
 function get<T>(store: Readable<T>): T {
@@ -117,5 +117,36 @@ describe("a stored theme name we don't have", () => {
 describe("the background painted by index.html", () => {
     test("is the default dark theme's", () => {
         expect(STARTUP_DARK_BACKGROUND).toBe(themes.dark.bg.toLowerCase());
+    });
+});
+
+describe("the theme mode on its own", () => {
+    afterEach(() => {
+        themeType.set("system");
+        localStorage.clear();
+        document.documentElement.removeAttribute("style");
+    });
+
+    test("follows the theme in use, and is remembered for the next page load", () => {
+        const unsubscribe = currentThemeMode.subscribe(() => {});
+
+        themeType.set("dark");
+        expect(get(currentThemeMode)).toBe("dark");
+        expect(localStorage.getItem(STARTUP_THEME_MODE_KEY)).toBe("dark");
+
+        themeType.set("light");
+        expect(get(currentThemeMode)).toBe("light");
+        expect(localStorage.getItem(STARTUP_THEME_MODE_KEY)).toBe("light");
+
+        unsubscribe();
+    });
+
+    test("leaves the v1 theme's variables off <html>, where they would override the new tokens", () => {
+        const unsubscribe = currentThemeMode.subscribe(() => {});
+        themeType.set("dark");
+        themeType.set("light");
+        expect(document.documentElement.style.getPropertyValue("--accent")).toBe("");
+        expect(document.documentElement.style.getPropertyValue("--bg")).toBe("");
+        unsubscribe();
     });
 });

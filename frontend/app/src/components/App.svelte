@@ -6,10 +6,8 @@
     import Reload from "@shared_components/Reload.svelte";
     import { trackedEffect } from "@src/utils/effects.svelte";
     import { detectNeedsSafeInset, setupKeyboardTracking } from "@src/utils/safe_area";
-    import { rtlStore } from "@stores/rtl";
     import { snowing } from "@stores/snow";
     import { incomingVideoCall } from "@stores/video";
-    import { broadcastLoggedInUser } from "@stores/xframe";
     import { currentTheme } from "@theme/themes";
     import "@utils/markdown";
     import {
@@ -36,16 +34,20 @@
         chatListScopeStore,
         fontSize,
         identityStateStore,
-        inititaliseLogger,
         notFoundStore,
         routeForChatIdentifier,
         routeForScope,
         routeStore,
         subscribe,
     } from "@client";
-    import { recordError } from "@utils/errorPostmortem";
     import { navigate } from "@utils/navigation";
     import { warmRichTextEditor } from "@shared_components/richTextEditorLoader";
+    import {
+        boundaryErrorHandler,
+        followDocumentDirection,
+        initialiseAppLogger,
+        subscribeToSessionEvents,
+    } from "@utils/appRoot.svelte";
     import { createOpenChatClient } from "@utils/openchatClient";
     import { handleUnhandledError } from "@utils/unhandledError";
     import { onMount, setContext } from "svelte";
@@ -70,11 +72,7 @@
 
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
-    const logger = inititaliseLogger(
-        import.meta.env.OC_ROLLBAR_ACCESS_TOKEN!,
-        import.meta.env.OC_WEBSITE_VERSION!,
-        import.meta.env.OC_BUILD_ENV!,
-    );
+    const logger = initialiseAppLogger();
 
     const client: OpenChat = createOpenChatClient($_, logger);
     setContext<OpenChat>("client", client);
@@ -94,10 +92,7 @@
     let burstUrl = $derived(isFirefox ? `${burstPath}.png` : `${burstPath}.svg`);
     let burstFixed = $derived(isScrollingRoute($routeStore));
 
-    trackedEffect("rtl", () => {
-        // subscribe to the rtl store so that we can set the overall page direction at the right time
-        document.dir = $rtlStore ? "rtl" : "ltr";
-    });
+    followDocumentDirection();
 
     trackedEffect("landing-page", () => {
         if (!$notFoundStore && showLandingPage) {
@@ -123,10 +118,7 @@
             subscribe("startVideoCall", startVideoCall),
             subscribe("hangup", hangup),
             subscribe("askToSpeak", askToSpeak),
-            subscribe("userLoggedIn", onUserLoggedIn),
-            subscribe("sessionExpired", () => client.logout()),
-            // The current user has a new user id, so start again under it
-            subscribe("currentUserIdChanged", () => window.location.reload()),
+            subscribeToSessionEvents(client, { onLoggedIn: onUserLoggedIn }),
         ];
         window.addEventListener("orientationchange", calculateHeight);
         window.addEventListener("unhandledrejection", unhandledError);
@@ -264,10 +256,9 @@
         warmRichTextEditor();
     }
 
-    function onUserLoggedIn(userId: string) {
+    function onUserLoggedIn() {
         setupNativeApp();
         warmRichTextEditor();
-        broadcastLoggedInUser(userId);
     }
 
     function addHotGroupExclusion(chatId: string): void {
@@ -562,10 +553,7 @@
         handleUnhandledError(ev, () => client.logout());
     }
 
-    function boundaryError(err: unknown) {
-        recordError("boundary", err);
-        logger?.error("Top level boundary error: ", err);
-    }
+    const boundaryError = boundaryErrorHandler(logger);
 
     function resize() {
         portalState.close();

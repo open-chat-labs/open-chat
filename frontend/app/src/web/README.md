@@ -6,7 +6,8 @@ as they are.
 
 ## Running it
 
-It is opt-in per build with `OC_WEB_LAYOUT=v3`:
+It is opt-in per build with `OC_WEB_LAYOUT=v3`. That's a build-time flag: a build without it leaves
+this tree and `@openchat/ui` out of the bundle altogether.
 
 - dev: `npm run dev:web` (from `frontend/`)
 - build: `OC_WEB_LAYOUT=v3 npm run build:prod_test` (or any other build script)
@@ -32,8 +33,8 @@ web/
   through props and report actions through callbacks.
 - Import library components by file (`@openchat/ui/lib/components/Button.svelte`), not from the
   package entry, so a build only pulls in what it uses.
-- Don't edit `@openchat/ui` to fit the app. A change the library needs goes back to the design
-  export; note it in `GAPS.md`.
+- Don't edit `@openchat/ui` to fit the app.
+  A change the library needs goes back to the design export; note it in `GAPS.md`.
 - From the existing app, only `Container`, `Row`, `Column` (component-lib) and `VirtualList`
   (`components_shared`) are reused, for layout. Nothing else from `src/components`.
 - Colours and font sizes come from the library's tokens only. No hex.

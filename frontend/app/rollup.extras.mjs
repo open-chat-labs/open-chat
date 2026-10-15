@@ -275,7 +275,9 @@ export const STARTUP_DARK_BACKGROUND = "#1b1c21";
 // is only known in the browser. Both choices mirror what the app goes on to do (`selectLayout` in
 // utils/layout.ts and `getStoredLocale` in i18n/i18n.ts); if they ever disagree the cost is a
 // wasted download, not a broken page.
-export function generateStartupScript({ chunks, version, mobileLayout, webLayout = "undefined" }) {
+// `webLayout` is whether the build has the new web UI (OC_WEB_LAYOUT=v3); without it there is no
+// web chunk to preload.
+export function generateStartupScript({ chunks, version, mobileLayout, webLayout = false }) {
     const chunksByFileName = new Map(chunks.map((c) => [c.fileName, c]));
     const entry = chunks.find((c) => c.isEntry);
     // The entry's own imports are preloaded by <link> tags, which the preload scanner can see
@@ -306,7 +308,7 @@ export function generateStartupScript({ chunks, version, mobileLayout, webLayout
     return `(function () {
     var narrow = window.innerWidth < 768;
     var mobile = ${mobileLayout} === "v2" && narrow;
-    var web = ${webLayout} === "v3" && !narrow;
+    var web = ${webLayout ? "!narrow" : "false"};
     var mode;
     try {
         mode = localStorage.getItem("openchat_startup_theme_mode");
@@ -320,7 +322,7 @@ export function generateStartupScript({ chunks, version, mobileLayout, webLayout
         link.href = "/" + file;
         document.head.appendChild(link);
     }
-    (mobile ? ${JSON.stringify(appChunks(MOBILE_APP_ROOT))} : web ? ${JSON.stringify(appChunks(WEB_APP_ROOT))} : ${JSON.stringify(appChunks(DESKTOP_APP_ROOT))}).forEach(preload);
+    (mobile ? ${JSON.stringify(appChunks(MOBILE_APP_ROOT))} : web ? ${JSON.stringify(webLayout ? appChunks(WEB_APP_ROOT) : [])} : ${JSON.stringify(appChunks(DESKTOP_APP_ROOT))}).forEach(preload);
     var locales = ${JSON.stringify(locales)};
     var locale;
     try {

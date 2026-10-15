@@ -220,3 +220,12 @@ export const currentTheme = derived(currentThemeName, (name) => {
     rememberThemeMode(theme.mode);
     return theme;
 });
+
+// Only the current theme's mode, for the new web UI (src/web). It takes its colours from
+// @openchat/ui's tokens, so unlike `currentTheme` this doesn't write the v1 theme's variables
+// onto <html>, where their names (--accent, --bg…) would override the tokens.
+export const currentThemeMode = derived(currentThemeName, (name): Theme["mode"] => {
+    const mode = themes[name]?.mode ?? "dark";
+    rememberThemeMode(mode);
+    return mode;
+});

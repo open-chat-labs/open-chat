@@ -1,4 +1,4 @@
-import { interpolate, messages, type I18nParams } from "@openchat/ui/lib/i18n";
+import { interpolate, lookup, messages, type I18nParams } from "@openchat/ui/lib/i18n";
 import { addMessages } from "svelte-i18n";
 
 type Format = (key: string, options: { values?: I18nParams }) => string;
@@ -10,18 +10,26 @@ export function addUiMessages(): void {
     addMessages("en", messages.en);
 }
 
-// The library passes either a resource key or literal text (a user's name, a chat's title…).
-// Keys go through svelte-i18n so the app's locale and translation overrides apply; anything
-// svelte-i18n doesn't know is literal text, formatted like the library would format it.
+// The library passes either one of its resource keys (all under "ui.") or literal text (a user's
+// name, a chat's title…). Only its keys go through svelte-i18n, so the app's locale and translation
+// overrides apply to them, while literal text that happens to match one of the app's own keys (a
+// group called "home") stays as it is. With no locale loaded, svelte-i18n knows no keys, so the
+// library's bundled English is used.
 export function uiTranslate(
     format: Format,
-    lookup: RawLookup,
+    lookupRaw: RawLookup,
     key: string,
     params: I18nParams | undefined,
     locale: string,
 ): string {
-    if (typeof lookup(key) === "string") {
-        return format(key, { values: params });
+    if (key.startsWith("ui.")) {
+        if (typeof lookupRaw(key) === "string") {
+            return format(key, { values: params });
+        }
+        const english = lookup(messages.en, key);
+        if (english !== undefined) {
+            return interpolate(english, params, locale);
+        }
     }
     return interpolate(key, params, locale);
 }

@@ -145,6 +145,9 @@ export default defineConfig({
         ),
         "import.meta.env.OC_WEBSITE_VERSION": JSON.stringify(version),
         "import.meta.env.OC_SERVICE_WORKER_PATH": JSON.stringify(serviceWorkerPath),
+        // A build-time constant (see rollup.config.mjs): native builds, which go through vite,
+        // leave the new web UI out unless they set it.
+        "import.meta.env.OC_WEB_LAYOUT": JSON.stringify(process.env.OC_WEB_LAYOUT ?? ""),
     },
     server: {
         allowedHosts: ["host.docker.internal"],

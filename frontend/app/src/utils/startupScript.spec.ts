@@ -38,7 +38,6 @@ const chunks: Chunk[] = [
 
 // What rollup.config.mjs passes for a web build
 const mobileLayout = `(window.OC_CONFIG?.OC_MOBILE_LAYOUT ?? "v1")`;
-const webLayout = `(window.OC_CONFIG?.OC_WEB_LAYOUT ?? undefined)`;
 
 class FakeWorker {
     constructor(
@@ -47,8 +46,9 @@ class FakeWorker {
     ) {}
 }
 
+// `webLayout`: whether the build has the new web UI (OC_WEB_LAYOUT=v3, a build-time flag)
 function run(
-    script = generateStartupScript({ chunks, version: "1.2.3", mobileLayout, webLayout }),
+    script = generateStartupScript({ chunks, version: "1.2.3", mobileLayout, webLayout: false }),
 ): string[] {
     new Function(script)();
     return [...document.head.querySelectorAll("link[rel=modulepreload]")].map(
@@ -56,15 +56,13 @@ function run(
     );
 }
 
-function configure(flag: string | undefined, width: number, webFlag?: string) {
-    vi.stubGlobal(
-        "OC_CONFIG",
-        flag === undefined && webFlag === undefined
-            ? undefined
-            : { OC_MOBILE_LAYOUT: flag, OC_WEB_LAYOUT: webFlag },
-    );
+function configure(flag: string | undefined, width: number) {
+    vi.stubGlobal("OC_CONFIG", flag === undefined ? undefined : { OC_MOBILE_LAYOUT: flag });
     vi.stubGlobal("innerWidth", width);
 }
+
+const withWebLayout = () =>
+    generateStartupScript({ chunks, version: "1.2.3", mobileLayout, webLayout: true });
 
 describe("the startup script in index.html", () => {
     beforeEach(() => {
@@ -119,25 +117,29 @@ describe("the startup script in index.html", () => {
         expect(run()).toEqual(["/mobile.js", "/shared.js", "/deep.js", "/en.js"]);
     });
 
-    test("preloads the new web App chunk for the v3 web layout on a wide viewport", () => {
-        configure(undefined, 1200, "v3");
-        expect(run()).toEqual(["/web.js", "/deep.js", "/en.js"]);
+    test("preloads the new web App chunk in a v3 build on a wide viewport", () => {
+        expect(run(withWebLayout())).toEqual(["/web.js", "/deep.js", "/en.js"]);
     });
 
     test("preloads the App tree which selectLayout goes on to pick", () => {
         const trees = { v1: "desktop", v2: "mobile", v3: "web" };
-        for (const [flag, webFlag] of [
-            ["v2", undefined],
-            ["v2", "v3"],
-            [undefined, "v3"],
-        ]) {
-            for (const width of [767, 768]) {
-                document.head.innerHTML = "";
-                configure(flag, width, webFlag);
-                const app = trees[selectLayout(flag, webFlag, width < 768)];
-                expect(run()[0], `${flag}/${webFlag} at ${width}px`).toBe(`/${app}.js`);
+        for (const web of [false, true]) {
+            for (const flag of ["v2", undefined]) {
+                for (const width of [767, 768]) {
+                    document.head.innerHTML = "";
+                    configure(flag, width);
+                    const app = trees[selectLayout(flag, web ? "v3" : "", width < 768)];
+                    const script = web ? withWebLayout() : undefined;
+                    expect(run(script)[0], `${flag}, web ${web}, ${width}px`).toBe(`/${app}.js`);
+                }
             }
         }
+    });
+
+    test("doesn't need a web App chunk in a build without the new web UI", () => {
+        const withoutWeb = chunks.filter((c) => c.fileName !== "web.js");
+        const script = generateStartupScript({ chunks: withoutWeb, version: "1.2.3", mobileLayout });
+        expect(run(script)).toEqual(["/desktop.js", "/shared.js", "/deep.js", "/en.js"]);
     });
 
     test("preloads the stored locale as well as the English fallback", () => {
@@ -175,7 +177,7 @@ describe("the startup script in index.html", () => {
             chunks: chunks.filter((c) => c.fileName !== fileName),
             version: "1.2.3",
             mobileLayout,
-            webLayout,
+            webLayout: true,
         });
         expect(() => generateStartupScript(without("desktop.js"))).toThrow(/App\.svelte/);
         expect(() => generateStartupScript(without("mobile.js"))).toThrow(/App\.svelte/);
