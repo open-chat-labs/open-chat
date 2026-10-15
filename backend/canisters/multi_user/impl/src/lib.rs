@@ -1,4 +1,3 @@
-use crate::jobs::migrate_their_user_ids::TheirUserIdsMigration;
 use crate::model::local_user_index_event_batch::LocalUserIndexEventBatch;
 use crate::model::user_canister_event_batch::UserCanisterEventBatch;
 use crate::model::users::Users;
@@ -6,7 +5,7 @@ use crate::timer_job_types::{ClaimOrResetStreakInsuranceJob, DeleteFileReference
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
-use chat_events::{EventPusher, UserIdsInEventsMigration, UserIdsInEventsMigrationMetrics};
+use chat_events::EventPusher;
 use constants::OPENCHAT_BOT_USER_ID;
 use direct_chat::DirectChat;
 use event_store_types::{Event, EventBuilder};
@@ -24,16 +23,14 @@ use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     Achievement, BuildVersion, CanisterId, ChatId, ChitEvent, ChitEventType, CommunityId, Cycles,
-    DirectChatUserNotificationPayload, EventContext, IdempotentEnvelope, MessageId, MessageIndex, Notification, NotifyChit,
-    OCResult, ReferralStatus, TimestampMillis, Timestamped, UserCanisterStreakInsuranceClaim,
-    UserCanisterStreakInsurancePayment, UserId, UserNotification, UserType,
+    DirectChatUserNotificationPayload, IdempotentEnvelope, MessageId, MessageIndex, Notification, NotifyChit, OCResult,
+    ReferralStatus, TimestampMillis, Timestamped, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId,
+    UserNotification, UserType,
 };
 use user_core::User;
 use user_core::{Community, GroupChat};
-use utils::async_work::AsyncWorkGuard;
 use utils::env::Environment;
 use utils::idempotency_checker::IdempotencyChecker;
-use utils::migrated_user_ids::MigratedUserIds;
 use utils::regular_jobs::RegularJobs;
 
 mod crypto;
@@ -75,9 +72,7 @@ fn check_can_chat_with(user_id: UserId, user_type: UserType) -> OCResult {
 
 // Refuses a User canister's id, which users had before being migrated to MultiUser canisters. Every
 // user has been, so such an id names nobody, and no bot chatted with from here has a canister of its
-// own (see `check_can_chat_with`). Callers pass the latest id `MigratedUserIds` gives, since clients
-// still name users by their old ids in the events from before they were migrated, so only an old
-// id which this canister doesn't know the latest id for is refused.
+// own (see `check_can_chat_with`).
 fn verify_not_old_user_id(user_id: UserId) -> OCResult {
     if user_id.is_canister() { Err(OCErrorCode::TargetUserNotFound.into()) } else { Ok(()) }
 }
@@ -100,7 +95,6 @@ fn execute_update<F: FnOnce(&mut RuntimeState) -> R, R>(f: F) -> R {
 }
 
 async fn execute_update_async<F: FnOnce() -> Fut, Fut: Future<Output = R>, R>(f: F) -> R {
-    let _guard = AsyncWorkGuard::new();
     run_regular_jobs();
     let result = f().await;
     mutate_state(|state| state.data.flush_pending_events());
@@ -118,26 +112,6 @@ struct RuntimeState {
 }
 
 impl RuntimeState {
-    // Tells the LocalUserIndex when the jobs which replace migrated users' old ids with their latest
-    // ids (first in what users hold outside their chats' events, then in those events) become
-    // complete, so that it can report how many of its canisters have finished. Called at the end of
-    // each run of either. The event is about the canister, so names the canister's own id.
-    pub fn report_user_id_migration_progress(&mut self) {
-        let complete = self.data.their_user_ids_migration.complete && self.data.user_ids_in_events_migration.is_complete();
-        if complete != self.data.user_id_migration_complete_reported {
-            self.data.user_id_migration_complete_reported = complete;
-            let canister_id = self.env.canister_id();
-            self.data.local_user_index_event_sync_queue.push(IdempotentEnvelope {
-                created_at: self.env.now(),
-                idempotency_id: self.env.rng().next_u64(),
-                value: UserEventWithUserId {
-                    user_id: canister_id.into(),
-                    event: LocalUserIndexEvent::UserIdMigrationComplete(complete),
-                },
-            });
-        }
-    }
-
     pub fn new(env: Box<dyn Environment>, data: Data, regular_jobs: RegularJobs<Data>) -> RuntimeState {
         RuntimeState { env, data, regular_jobs }
     }
@@ -276,10 +250,8 @@ impl RuntimeState {
 
     // Sends a direct chat event from the user at `sender_index` to `recipient`. A recipient whose
     // id is in this canister has it applied straight away, exactly as if it had come from another
-    // canister, while any other is sent it via the canister holding their latest id (which is this
-    // one for a user migrated here since having `recipient`, keeping the order of any events
-    // already queued for them). Nothing is sent to the sender themselves or to a bot, since no bot
-    // handles these events, and they would be retried forever.
+    // canister, while any other is sent it via their canister. Nothing is sent to the sender
+    // themselves or to a bot, since no bot handles these events, and they would be retried forever.
     pub fn send_user_canister_event(&mut self, sender_index: u16, recipient: UserId, event: UserCanisterEvent) {
         let sender = self.user_id(sender_index);
         let recipient_is_bot = recipient == OPENCHAT_BOT_USER_ID
@@ -295,18 +267,13 @@ impl RuntimeState {
         if recipient == sender || recipient_is_bot {
             return;
         }
-        let sender_previous_user_ids = self.data.migrated_user_ids.previous_ids(sender);
         if self.user_index(recipient).is_some() {
             // An index in this canister which holds no user has nobody to apply the event to
             if let Some(recipient_index) = self.index_of_local_user(recipient) {
-                updates::c2c_user_canister_v2::migrate_sender_user_id(recipient_index, sender, &sender_previous_user_ids, self);
                 updates::c2c_user_canister_v2::apply_event(event, sender, recipient_index, self);
             }
             return;
         }
-        // Sent to the recipient's latest id if they are known to have been migrated since having
-        // `recipient`
-        let recipient = self.data.migrated_user_ids.latest(recipient);
         self.data.user_canister_events_queue.push(
             recipient.canister_id(),
             IdempotentEnvelope {
@@ -316,7 +283,6 @@ impl RuntimeState {
                     sender,
                     recipient,
                     event,
-                    sender_previous_user_ids,
                 },
             },
         );
@@ -371,20 +337,11 @@ impl RuntimeState {
 
     // Records the status `referred` has reached for the user at `referrer_index` who referred them,
     // telling the LocalUserIndex of their CHIT if it earned them any
-    pub fn set_referral_status(
-        &mut self,
-        referrer_index: u16,
-        referred: UserId,
-        previous_user_ids: &[UserId],
-        status: ReferralStatus,
-        now: TimestampMillis,
-    ) {
+    pub fn set_referral_status(&mut self, referrer_index: u16, referred: UserId, status: ReferralStatus, now: TimestampMillis) {
         let rewarded = self
             .data
             .users
-            .with_user_mut(referrer_index, |user| {
-                user.set_referral_status(referred, previous_user_ids, status, now)
-            })
+            .with_user_mut(referrer_index, |user| user.set_referral_status(referred, status, now))
             .unwrap_or_default();
         if rewarded {
             self.notify_user_index_of_chit(referrer_index, now);
@@ -480,8 +437,7 @@ impl RuntimeState {
     }
 
     // Cancels the job to mark the P2P swap offered in the message in the user's direct chat with
-    // `them` as expired, once the swap has ended. The job names the chat by the other user's id when
-    // it was queued, which they may since have been migrated from.
+    // `them` as expired, once the swap has ended
     pub fn cancel_mark_p2p_swap_expired_job(
         &mut self,
         user_index: u16,
@@ -489,14 +445,12 @@ impl RuntimeState {
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
     ) {
-        let migrated_user_ids = &self.data.migrated_user_ids;
-        let them = migrated_user_ids.latest(them);
         self.data.timer_jobs.cancel_job(|job| {
             matches!(job, TimerJob::MarkP2PSwapExpired(j)
                 if j.user_index == user_index
                     && j.message_id == message_id
                     && j.thread_root_message_index == thread_root_message_index
-                    && migrated_user_ids.latest(j.chat_id.into()) == them)
+                    && UserId::from(j.chat_id) == them)
         });
     }
 
@@ -614,7 +568,7 @@ impl RuntimeState {
                 let Some(mut chat) = user.direct_chats.get_mut(&chat_id) else {
                     continue;
                 };
-                let result = chat.remove_expired_events(&self.data.migrated_user_ids, now);
+                let result = chat.remove_expired_events(now);
                 files_to_delete.extend(result.files);
                 // Threads aren't currently enabled for direct chats, but if a thread's root message
                 // expires then its entries in stable memory must be garbage collected
@@ -663,9 +617,6 @@ impl RuntimeState {
             queued_local_user_index_events: self.data.local_user_index_event_sync_queue.len() as u32,
             queued_user_canister_events: self.data.user_canister_events_queue.len() as u32,
             known_multi_user_canisters: self.data.known_multi_user_canisters.len() as u32,
-            user_ids_in_events_migration: self.data.user_ids_in_events_migration.metrics(),
-            their_user_ids_migration: self.data.their_user_ids_migration.clone(),
-            user_id_migration_complete_reported: self.data.user_id_migration_complete_reported,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
@@ -704,18 +655,6 @@ struct Data {
     pub timer_jobs: TimerJobs<TimerJob>,
     // The certified transfers users have sent messages with, so that none is used twice
     pub certified_transfers: CertifiedTransfers,
-    // The latest ids of migrated users, as looked up from the LocalUserIndex whenever a user's id is found to
-    // have changed
-    pub migrated_user_ids: MigratedUserIds,
-    // Each event's location is the index of the user holding the chat, the chat's key_id and where
-    // the event is in the chat
-    #[serde(default)]
-    pub user_ids_in_events_migration: UserIdsInEventsMigration<(u16, u32, EventContext)>,
-    #[serde(default)]
-    pub their_user_ids_migration: TheirUserIdsMigration,
-    // Whether the LocalUserIndex was last told the user id migration jobs are complete
-    #[serde(default)]
-    pub user_id_migration_complete_reported: bool,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
@@ -754,10 +693,6 @@ impl Data {
             known_multi_user_canisters: HashSet::new(),
             timer_jobs: TimerJobs::default(),
             certified_transfers: CertifiedTransfers::default(),
-            migrated_user_ids: MigratedUserIds::default(),
-            user_ids_in_events_migration: UserIdsInEventsMigration::default(),
-            their_user_ids_migration: TheirUserIdsMigration::default(),
-            user_id_migration_complete_reported: false,
             rng_seed,
             test_mode,
         }
@@ -803,9 +738,6 @@ pub struct Metrics {
     pub queued_local_user_index_events: u32,
     pub queued_user_canister_events: u32,
     pub known_multi_user_canisters: u32,
-    pub user_ids_in_events_migration: UserIdsInEventsMigrationMetrics,
-    pub their_user_ids_migration: TheirUserIdsMigration,
-    pub user_id_migration_complete_reported: bool,
     pub canister_ids: CanisterIds,
 }
 

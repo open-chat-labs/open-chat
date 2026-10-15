@@ -272,9 +272,7 @@ impl Job for HardDeleteMessageContentJob {
                                 })
                                 .is_some()
                             {
-                                for pending_transaction in
-                                    prize.final_payments(sender, &state.data.migrated_user_ids, state.env.now_nanos())
-                                {
+                                for pending_transaction in prize.final_payments(sender, state.env.now_nanos()) {
                                     follow_on_jobs.push(TimerJob::MakeTransfer(Box::new(MakeTransferJob {
                                         pending_transaction,
                                         attempt: 0,
@@ -304,7 +302,7 @@ impl Job for HardDeleteMessageContentJob {
 
 impl Job for DeleteFileReferencesJob {
     fn execute(self) {
-        utils::async_work::spawn_tracked(async move {
+        ic_cdk::futures::spawn_migratory(async move {
             let to_retry = storage_bucket_client::delete_files(self.files.clone()).await;
 
             if !to_retry.is_empty() {
@@ -359,7 +357,7 @@ impl Job for FinalizeGroupImportJob {
 
 impl Job for ProcessGroupImportChannelMembersJob {
     fn execute(self) {
-        utils::async_work::spawn_tracked(process_channel_members(self));
+        ic_cdk::futures::spawn_migratory(process_channel_members(self));
     }
 }
 
@@ -376,12 +374,7 @@ impl Job for FinalPrizePaymentsJob {
                 .data
                 .channels
                 .get_mut(&self.channel_id)
-                .map(|channel| {
-                    channel
-                        .chat
-                        .events
-                        .final_payments(self.message_index, &state.data.migrated_user_ids, state.env.now_nanos())
-                })
+                .map(|channel| channel.chat.events.final_payments(self.message_index, state.env.now_nanos()))
                 .unwrap_or_default()
         });
 
@@ -398,7 +391,7 @@ impl Job for FinalPrizePaymentsJob {
 impl Job for MakeTransferJob {
     fn execute(self) {
         let pending = self.pending_transaction;
-        utils::async_work::spawn_tracked(make_transfer(pending, self.attempt));
+        ic_cdk::futures::spawn_migratory(make_transfer(pending, self.attempt));
 
         async fn make_transfer(mut pending_transaction: PendingCryptoTransaction, attempt: u32) {
             if let Err(error) = process_transaction(pending_transaction.clone(), None, true).await {
@@ -428,7 +421,7 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
     fn execute(self) {
         let escrow_canister_id = read_state(|state| state.data.escrow_canister_id);
 
-        utils::async_work::spawn_tracked(async move {
+        ic_cdk::futures::spawn_migratory(async move {
             match escrow_canister_c2c_client::notify_deposit(
                 escrow_canister_id,
                 &escrow_canister::notify_deposit::Args {
@@ -491,7 +484,7 @@ impl Job for NotifyEscrowCanisterOfSwapFundedJob {
     fn execute(self) {
         let escrow_canister_id = read_state(|state| state.data.escrow_canister_id);
 
-        utils::async_work::spawn_tracked(async move {
+        ic_cdk::futures::spawn_migratory(async move {
             match escrow_canister_c2c_client::notify_deposit(
                 escrow_canister_id,
                 &escrow_canister::notify_deposit::Args {
@@ -529,7 +522,7 @@ impl Job for CancelP2PSwapInEscrowCanisterJob {
     fn execute(self) {
         let escrow_canister_id = read_state(|state| state.data.escrow_canister_id);
 
-        utils::async_work::spawn_tracked(async move {
+        ic_cdk::futures::spawn_migratory(async move {
             match escrow_canister_c2c_client::cancel_swap(
                 escrow_canister_id,
                 &escrow_canister::cancel_swap::Args { swap_id: self.swap_id },
@@ -604,8 +597,6 @@ impl JoinMembersToPublicChannelJob {
             while !self.members.is_empty() {
                 let mut users = Vec::new();
                 for user_id in self.members.drain(self.members.len().saturating_sub(100)..).rev() {
-                    // A member queued under an id the community has since been told they've been migrated from
-                    let user_id = state.data.migrated_user_ids.latest(user_id);
                     if let Some(member) = state.data.members.get_by_user_id(&user_id) {
                         users.push((user_id, member.user_type));
                     }

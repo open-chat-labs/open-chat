@@ -2624,6 +2624,32 @@ export type TipOutcome =
     | { kind: "pin_failed" }
     | { kind: "failed"; message: ResourceKey };
 
+/**
+ * How sending tokens to a user in a message went. `pin_failed` means the PIN the user entered was
+ * refused; the message to show for that is in the PIN failure store, since it counts down to the
+ * next attempt.
+ */
+export type CryptoTransferOutcome =
+    | { kind: "sent" }
+    | { kind: "cancelled" }
+    | { kind: "pin_failed" }
+    | { kind: "failed"; message: ResourceKey };
+
+// What the app needs to enter a call's room
+export type VideoCallRoom = {
+    token: string;
+    roomName: string;
+    messageId: bigint;
+    callType: VideoCallType;
+    // the call was already running, so this user is joining it rather than starting it
+    joining: boolean;
+};
+
+export type VideoCallOutcome =
+    | { kind: "joined" }
+    | { kind: "no_meeting" }
+    | { kind: "failed"; message: ResourceKey };
+
 export type GroupAndCommunitySummaryUpdatesArgs = {
     canisterId: string;
     isCommunity: boolean;

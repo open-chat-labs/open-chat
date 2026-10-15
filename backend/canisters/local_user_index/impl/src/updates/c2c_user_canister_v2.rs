@@ -112,11 +112,9 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             state.push_event_to_user_index(UserIndexEvent::SetMaxStreak(user_id, max_streak), **now);
         }
         UserEvent::EventStoreEvent(event) => state.data.event_store_client.push(event),
-        UserEvent::UserIdMigrationComplete(complete) => {
-            if let Some(canister) = state.data.local_multi_user_canisters.get_mut(&user_id.canister_id()) {
-                canister.user_id_migration_complete = complete;
-            }
-        }
+        // No longer sent, but still read until every MultiUser canister is on a version which doesn't
+        // send it
+        UserEvent::UserIdMigrationComplete(_) => {}
         UserEvent::Notification(mut notification) => {
             if let Notification::Bot(bot_notification) = &mut *notification
                 && let BotEvent::Lifecycle(BotLifecycleEvent::Installed(event)) = &bot_notification.event

@@ -77,7 +77,7 @@ pub(crate) fn metrics() -> ChunkStoreMetrics {
 fn start(remove_stale: bool) {
     if !IN_PROGRESS.get() {
         IN_PROGRESS.set(true);
-        utils::async_work::spawn_tracked(async move {
+        ic_cdk::futures::spawn_migratory(async move {
             sync(remove_stale).await;
             IN_PROGRESS.set(false);
         });

@@ -73,7 +73,6 @@ fn prepare(args: Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
         user_id,
         args.thread_root_message_index,
         args.message_id,
-        &state.data.migrated_user_ids,
     )?;
 
     let c2c_args = TipToRecord {
@@ -156,7 +155,6 @@ fn tip_message_with_completed_transfer(user_id: UserId, args: TipToRecord, state
 
     let result = channel.chat.tip_message(
         tip_message_args,
-        &state.data.migrated_user_ids,
         CommunityEventPusher {
             now,
             rng: state.env.rng(),
@@ -169,9 +167,7 @@ fn tip_message_with_completed_transfer(user_id: UserId, args: TipToRecord, state
             .chat
             .events
             .message_internal(EventIndex::default(), args.thread_root_message_index, args.message_id.into())
-        // The sender is a member under their latest id, in case they have been migrated since
-        // sending the message
-        && let sender_id = state.data.migrated_user_ids.latest(message.sender)
+        && let sender_id = message.sender
         && let Some(sender) = channel.chat.members.get(&sender_id)
         && sender_id != user_id
         && !sender.user_type().is_bot()

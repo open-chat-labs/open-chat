@@ -12,7 +12,7 @@ use oc_error_codes::OCErrorCode;
 use std::collections::HashMap;
 use types::{
     BotCaller, BotPermissions, Caller, CanisterId, ChatPermission, CommunityMembersRemoved, CommunityPermission, CommunityRole,
-    CommunityUsersBlocked, OCResult, TimestampMillis, UnitResult, UserId,
+    CommunityUsersBlocked, OCResult, UnitResult, UserId,
 };
 
 #[update(msgpack = true)]
@@ -62,15 +62,9 @@ async fn c2c_bot_remove_user_impl(args: community_canister::c2c_bot_remove_user:
 }
 
 async fn remove_member_impl(user_id: UserId, block: bool, ext_caller: Option<Caller>) -> UnitResult {
-    let user_id = match mutate_state(|state| {
-        let now = state.env.now();
-        let latest = latest_user_id(user_id, &mut state.data, now);
-        state.data.verify_not_old_user_id(latest)?;
-        OCResult::Ok(latest)
-    }) {
-        Ok(user_id) => user_id,
-        Err(error) => return Response::Error(error),
-    };
+    if let Err(error) = read_state(|state| state.data.verify_not_old_user_id(user_id)) {
+        return Response::Error(error);
+    }
 
     // Check the caller can remove the user
     let prepare_result = match read_state(|state| prepare(user_id, block, ext_caller, state)) {
@@ -96,18 +90,6 @@ async fn remove_member_impl(user_id: UserId, block: bool, ext_caller: Option<Cal
     mutate_state(|state| commit(user_id, block, prepare_result.removed_by, state));
 
     Response::Success
-}
-
-// The latest id of a user being removed or blocked, who may be referred to by an id they had before
-// being migrated (eg. one seen in an old message), so that a block is never recorded under an old
-// id. Anything still held under an old id is moved onto the latest id first, so that a member under
-// the old id is removed.
-fn latest_user_id(user_id: UserId, data: &mut Data, now: TimestampMillis) -> UserId {
-    let latest = data.migrated_user_ids.latest(user_id);
-    if latest != user_id {
-        data.migrate_user_ids(&[user_id], latest, None, now);
-    }
-    latest
 }
 
 // The community may have been frozen while awaiting a call
@@ -231,7 +213,7 @@ fn commit(user_id: UserId, block: bool, removed_by: UserId, state: &mut RuntimeS
 mod tests {
     use super::*;
     use ic_principal::Principal;
-    use types::{ChannelId, EventIndex, MessageIndex, UserType};
+    use types::UserType;
 
     fn canister_id(i: u8) -> CanisterId {
         CanisterId::from_slice(&[0, 0, 0, 0, 0, 0, 0, i, 1, 1])
@@ -258,47 +240,5 @@ mod tests {
         assert!(data.verify_not_old_user_id(new_user_id(2)).is_ok());
         // Bots without canisters of their own and webhooks have ids which aren't canisters'
         assert!(data.verify_not_old_user_id(Principal::from_slice(&[1; 8]).into()).is_ok());
-    }
-
-    #[test]
-    fn a_member_blocked_by_an_old_id_is_moved_onto_their_latest_id_and_blocked_under_it() {
-        let owner = new_user_id(1);
-        let channel_id = ChannelId::from(1u32);
-        let mut data = Data::new_for_tests(
-            owner,
-            Principal::from_slice(&[1]),
-            String::new(),
-            vec![(channel_id, "one".to_string())],
-        );
-        let principal = Principal::from_slice(&[2]);
-        data.members.add(old_user_id(2), principal, UserType::User, None, 0);
-        data.channels.get_mut(&channel_id).unwrap().chat.members.add(
-            old_user_id(2),
-            None,
-            0,
-            EventIndex::default(),
-            MessageIndex::default(),
-            false,
-            UserType::User,
-        );
-        data.members.mark_member_joined_channel(old_user_id(2), channel_id);
-        data.migrated_user_ids.insert(old_user_id(2), new_user_id(2));
-
-        // A User canister's id which the community doesn't know the latest id for is refused
-        assert_eq!(latest_user_id(old_user_id(3), &mut data, 1), old_user_id(3));
-        assert!(data.verify_not_old_user_id(old_user_id(3)).is_err());
-
-        // Their membership is moved onto their latest id, under which they are then blocked, as
-        // `remove_member_impl` and `commit` do
-        assert_eq!(latest_user_id(old_user_id(2), &mut data, 1), new_user_id(2));
-        assert_eq!(data.members.lookup_user_id(principal), Some(new_user_id(2)));
-        data.remove_user_from_community(new_user_id(2), None, 2);
-        data.members.block(new_user_id(2), 2);
-
-        for user_id in [old_user_id(2), new_user_id(2)] {
-            assert!(!data.members.contains(&user_id));
-            assert!(!data.channels.get(&channel_id).unwrap().chat.members.contains(&user_id));
-        }
-        assert_eq!(data.members.blocked(), vec![new_user_id(2)]);
     }
 }

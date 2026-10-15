@@ -6,13 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `c2c_previous_user_ids`, for groups and communities checking a member's gate again ([#9970](https://github.com/open-chat-labs/open-chat/pull/9970))
+
 ### Changed
 
+- Pass on the referrer of a user joining a community by their latest id ([#9970](https://github.com/open-chat-labs/open-chat/pull/9970))
 - Await work inside timers rather than spawning a task from them ([#9971](https://github.com/open-chat-labs/open-chat/pull/9971))
+- Stop tracking the async work in progress, since nothing reads it any more ([#9972](https://github.com/open-chat-labs/open-chat/pull/9972))
 
 ### Removed
 
 - Remove the one-offs which replaced old user ids in the bots and dropped the User canister's wasm, now that they have run ([#9965](https://github.com/open-chat-labs/open-chat/pull/9965))
+- Remove the `user_id_migrations_complete` metric, which nothing reports to any more ([#9970](https://github.com/open-chat-labs/open-chat/pull/9970))
 
 ## [[2.0.2139](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2139-local_user_index)] - 2026-10-14
 

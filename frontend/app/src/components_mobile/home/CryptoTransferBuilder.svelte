@@ -1,94 +1,41 @@
 <script lang="ts">
     import { Body, Column, CommonButton, Container, IconButton, Row, Sheet } from "component-lib";
-    import type { ChatSummary, SignerWallet, UserSummary } from "@client";
-    import {
-        allUsersStore,
-        enhancedCryptoLookup as cryptoLookup,
-        currentUserIdStore,
-        localUpdates,
-        walletApprovalFee,
-    } from "@client";
-    import { type CryptocurrencyContent, type MessageContext, nowNanos } from "@shared";
-    import { onMount } from "svelte";
+    import type { ChatSummary, MessageContext, OpenChat } from "@client";
+    import { getContext, untrack } from "svelte";
     import Chat from "svelte-material-icons/ChatPlusOutline.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
     import ErrorMessage from "../ErrorMessage.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
+    import { CryptoTransferForm } from "@shared_components/home/cryptoTransfer/cryptoTransferForm.svelte";
     import CryptoSelector from "./CryptoSelector.svelte";
     import SingleUserSelector from "./SingleUserSelector.svelte";
     import SourceWalletSelector from "./SourceWalletSelector.svelte";
     import TokenInput from "./TokenInput.svelte";
     import TransferFeesMessage from "./TransferFeesMessage.svelte";
-    import { TokenState } from "@shared_components/home/wallet/walletState.svelte";
+
+    const client = getContext<OpenChat>("client");
 
     interface Props {
         ledger: string;
+        draftAmount: bigint;
         chat: ChatSummary;
         defaultReceiver: string | undefined;
         messageContext: MessageContext;
         onClose: () => void;
     }
 
-    let { ledger = $bindable(), chat, defaultReceiver, messageContext, onClose }: Props = $props();
+    let { ledger, draftAmount, chat, defaultReceiver, messageContext, onClose }: Props = $props();
 
-    const error: string | undefined = $state(undefined);
-    let receiver: UserSummary | undefined = $state(undefined);
-    let validAmount: boolean = $state(false);
-    // The external wallet the transfer will come from, or undefined for the user's own OpenChat
-    // account. Paying from an external wallet spends that wallet's balance rather than the user's
-    // OpenChat one, so none of the limits derived from the latter apply while one is selected.
-    let sourceWallet = $state<SignerWallet | undefined>();
-    let payFromWallet = $derived(sourceWallet !== undefined);
-    let tokenDetails = $derived($cryptoLookup.get(ledger)!);
-    let tokenState = $derived(new TokenState(tokenDetails, "usd"));
-    // What the transfer costs in fees includes the approval the wallet makes before the transfer is
-    // pulled from it
-    $effect(() => {
-        tokenState.transferFees =
-            tokenState.transferFee + walletApprovalFee(tokenState.transferFee);
-    });
-    let multiUserChat = $derived(chat.kind === "group_chat" || chat.kind === "channel");
-    let valid = $derived(error === undefined && validAmount && receiver !== undefined);
-    let errorMessage = $derived(error !== undefined ? i18nKey(error) : $pinNumberErrorMessageStore);
+    const form = untrack(
+        () => new CryptoTransferForm(client, ledger, chat, defaultReceiver, draftAmount),
+    );
+    let tokenState = $derived(form.tokenState);
 
-    onMount(() => {
-        // default the receiver to the other user in a direct chat
-        if (chat.kind === "direct_chat") {
-            receiver = $allUsersStore.get(chat.them.userId);
-        } else if (defaultReceiver !== undefined && defaultReceiver !== $currentUserIdStore) {
-            receiver = $allUsersStore.get(defaultReceiver);
-        }
-    });
-
+    // This only attaches a draft - the transfer is made when the user sends the message
     function send() {
-        const to = receiver;
-        if (to === undefined) return;
-        attach(to);
-    }
-
-    // This only attaches a draft - the transfer is made when the user sends the message. An
-    // external wallet's approval is not asked for here: it would spend a tap on an allowance the
-    // user may abandon without sending. Instead the draft carries the chosen wallet as
-    // `fromWallet`, and the send itself asks for the approval, from the tap which consumes it.
-    function attach(to: UserSummary) {
-        const content: CryptocurrencyContent = {
-            kind: "crypto_content",
-            transfer: {
-                kind: "pending",
-                ledger,
-                token: tokenState.symbol,
-                recipient: to.userId,
-                amountE8s: tokenState.draftAmount,
-                feeE8s: tokenState.transferFee,
-                createdAtNanos: nowNanos(),
-                fromWallet: sourceWallet?.id,
-            },
-        };
-
-        localUpdates.draftMessages.setAttachment(messageContext, content);
-
+        form.attach(messageContext);
         onClose();
     }
 </script>
@@ -112,17 +59,18 @@
              OpenChat balance is hidden and tokens the user holds none of stay available -->
         <CryptoSelector
             showRefresh
-            hideBalance={payFromWallet}
+            hideBalance={form.payFromWallet}
             draftAmount={tokenState.draftAmount}
             fees={tokenState.transferFees}
-            filter={payFromWallet ? undefined : (t) => t.balance > 0}
-            bind:ledger />
+            filter={form.payFromWallet ? undefined : (t) => t.balance > 0}
+            bind:ledger={() => form.ledger, (l) => (form.ledger = l)}
+        />
 
-        <SourceWalletSelector bind:wallet={sourceWallet} {ledger} />
+        <SourceWalletSelector bind:wallet={form.sourceWallet} ledger={form.ledger} />
 
         <Column gap={"md"}>
-            {#if multiUserChat}
-                <SingleUserSelector bind:selectedReceiver={receiver}>
+            {#if form.multiUserChat}
+                <SingleUserSelector bind:selectedReceiver={form.receiver}>
                     {#snippet subtext()}
                         <Translatable resourceKey={i18nKey("Choose a token recipient")} />
                     {/snippet}
@@ -130,38 +78,39 @@
             {/if}
 
             <TokenInput
-                {ledger}
-                error={!validAmount}
+                ledger={form.ledger}
+                error={!form.validAmount}
                 balance={tokenState.cryptoBalance}
                 minAmount={tokenState.minAmount}
-                maxAmount={payFromWallet ? undefined : tokenState.maxAmount}
-                bind:valid={validAmount}
-                bind:amount={tokenState.draftAmount}>
+                maxAmount={form.spendingLimit}
+                bind:amount={tokenState.draftAmount}
+            >
                 {#snippet subtext()}
                     {`Minimum amount ${tokenState.minAmountLabel} ${tokenState.symbol}`}
                 {/snippet}
             </TokenInput>
         </Column>
 
-        {#if errorMessage !== undefined}
+        {#if $pinNumberErrorMessageStore !== undefined}
             <div class="error">
-                <ErrorMessage><Translatable resourceKey={errorMessage} /></ErrorMessage>
+                <ErrorMessage
+                    ><Translatable resourceKey={$pinNumberErrorMessageStore} /></ErrorMessage
+                >
             </div>
         {/if}
 
         <Container
             mainAxisAlignment={"spaceBetween"}
             crossAxisAlignment={"center"}
-            padding={["zero", "sm"]}>
+            padding={["zero", "sm"]}
+        >
             <TransferFeesMessage
                 symbol={tokenState.symbol}
                 tokenDecimals={tokenState.decimals}
-                transferFees={tokenState.transferFees} />
+                transferFees={tokenState.transferFees}
+            />
 
-            <CommonButton
-                onClick={send}
-                disabled={!valid || !tokenState.draftAmount}
-                mode={"active"}>
+            <CommonButton onClick={send} disabled={!form.valid} mode={"active"}>
                 {#snippet icon(color, size)}
                     <Chat {color} {size} />
                 {/snippet}

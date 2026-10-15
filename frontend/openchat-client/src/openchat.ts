@@ -179,6 +179,7 @@ import {
     type CreateUserGroupResponse,
     type CreatedUser,
     type CryptocurrencyContent,
+    type CryptoTransferOutcome,
     type CryptocurrencyDetails,
     type CryptocurrencyTransfer,
     type CurrentUserResponse,
@@ -350,7 +351,9 @@ import {
     type VerifyAccountLinkingCodeResponse,
     type VersionedRules,
     type VideoCallParticipant,
+    type VideoCallOutcome,
     type VideoCallPresence,
+    type VideoCallRoom,
     type VideoCallType,
     type WalletConfig,
     type WebAuthnKey,
@@ -609,6 +612,7 @@ import {
 } from "./utils/swap";
 import { joinGroupFailureMessage } from "./utils/join";
 import { currentTip, tipResult } from "./utils/tip";
+import { cryptoTransferResult } from "./utils/cryptoTransfer";
 import {
     executionPaymentAmount,
     PROPOSAL_EXECUTION_WINDOW,
@@ -7401,7 +7405,10 @@ export class OpenChat {
      * Saves the profile fields that differ from `original`, in parallel. A field the backend rejects keeps its
      * unsaved value and carries the reason to show under it.
      */
-    async saveProfile(original: PublicProfile, candidate: PublicProfile): Promise<SaveProfileOutcome> {
+    async saveProfile(
+        original: PublicProfile,
+        candidate: PublicProfile,
+    ): Promise<SaveProfileOutcome> {
         const outcome: SaveProfileOutcome = { profile: original, errors: {} };
         if (anonUserStore.value) return outcome;
 
@@ -7652,7 +7659,9 @@ export class OpenChat {
     }
 
     /** Replaces the invite code, so links shared with the old one stop working */
-    async resetInviteLink(collection: MultiUserChat | CommunitySummary): Promise<InviteLinkOutcome> {
+    async resetInviteLink(
+        collection: MultiUserChat | CommunitySummary,
+    ): Promise<InviteLinkOutcome> {
         const id = this.#inviteCodeId(collection);
         if (id === undefined) return this.#codelessInviteLink(collection);
         const resp = await this.#worker
@@ -8792,7 +8801,7 @@ export class OpenChat {
             });
     }
 
-    joinVideoCall(chatId: ChatIdentifier, messageId: bigint): Promise<JoinVideoCallResponse> {
+    #joinVideoCall(chatId: ChatIdentifier, messageId: bigint): Promise<JoinVideoCallResponse> {
         const newAchievement = !achievementsStore.value.has("joined_call");
 
         return this.#worker.send({
@@ -9372,6 +9381,32 @@ export class OpenChat {
         return tipResult(resp);
     }
 
+    /**
+     * Sends tokens to a user in a message, prompting for the user's PIN if they have one. The
+     * ledger's balance is refreshed once the transfer has gone.
+     */
+    async sendCryptoTransfer(
+        messageContext: MessageContext,
+        transfer: PendingCryptocurrencyTransfer,
+        caption: string,
+    ): Promise<CryptoTransferOutcome> {
+        const content: CryptocurrencyContent = {
+            kind: "crypto_content",
+            caption: caption === "" ? undefined : caption,
+            transfer,
+        };
+        let resp: SendMessageResponse;
+        try {
+            resp = await this.sendMessageWithContent(messageContext, content, false);
+        } catch (err) {
+            // the user dismissed the PIN prompt
+            if (err === "cancelled") return { kind: "cancelled" };
+            this.logError("Unable to send a crypto transfer", err);
+            resp = CommonResponses.failure();
+        }
+        return cryptoTransferResult(resp);
+    }
+
     loadSavedCryptoAccounts(): Promise<NamedAccount[]> {
         return this.#worker
             .send({
@@ -9935,7 +9970,7 @@ export class OpenChat {
         }
     }
 
-    async ringOtherUsers(chatId: ChatIdentifier, messageId: bigint, callType: VideoCallType) {
+    #ringOtherUsers(chatId: ChatIdentifier, messageId: bigint, callType: VideoCallType) {
         this.#sendVideoCallUsersWebRtcMessage(
             {
                 kind: "remote_video_call_started",
@@ -10148,7 +10183,61 @@ export class OpenChat {
         });
     }
 
-    getVideoChatAccessToken(
+    /**
+     * Starts a call of the given type in the chat, or joins the one running there. `enterRoom`
+     * enters the call's room. Once it has, a join is recorded, or a new call rings the chat's
+     * other users.
+     */
+    async startOrJoinVideoCall(
+        chatId: ChatIdentifier,
+        callType: VideoCallType,
+        join: boolean,
+        enterRoom: (room: VideoCallRoom) => Promise<void>,
+    ): Promise<VideoCallOutcome> {
+        const accessType: AccessTokenType = join
+            ? { kind: "join_video_call", chatId }
+            : { kind: "start_video_call", callType, chatId };
+
+        try {
+            const access = await this.#getVideoChatAccessToken(chatId, accessType);
+            const room: VideoCallRoom = {
+                token: access.token,
+                roomName: access.roomName,
+                messageId: BigInt(access.messageId),
+                callType,
+                joining: access.joining,
+            };
+            await enterRoom(room);
+            // only a new call rings, and only once the caller is in it
+            if (room.joining) {
+                await this.#recordCallJoined(chatId, room.messageId, callType);
+            } else {
+                this.#ringOtherUsers(chatId, room.messageId, callType);
+            }
+            return { kind: "joined" };
+        } catch (err) {
+            if (err instanceof NoMeetingToJoin) return { kind: "no_meeting" };
+            console.error("Unable to start video call: ", err);
+            return { kind: "failed", message: i18nKey("videoCall.callFailed") };
+        }
+    }
+
+    // A broadcast's audience joins hidden, so it is not on stage
+    async #recordCallJoined(chatId: ChatIdentifier, messageId: bigint, callType: VideoCallType) {
+        switch (chatId.kind) {
+            case "direct_chat":
+                await this.#joinVideoCall(chatId, messageId);
+                break;
+            default:
+                await this.setVideoCallPresence(
+                    chatId,
+                    messageId,
+                    callType === "broadcast" ? "hidden" : "default",
+                );
+        }
+    }
+
+    async #getVideoChatAccessToken(
         chatId: ChatIdentifier,
         accessTokenType: AccessTokenType,
     ): Promise<{ token: string; roomName: string; messageId: bigint; joining: boolean }> {
@@ -10156,24 +10245,17 @@ export class OpenChat {
         if (chat === undefined) {
             throw new Error(`Unknown chat: ${chatId}`);
         }
-
-        return this.#getLocalUserIndex(chat).then((localUserIndex) => {
-            return this.#worker
-                .send({
-                    kind: "getAccessToken",
-                    chatId,
-                    accessTokenType,
-                    localUserIndex,
-                })
-                .then((token) => {
-                    if (token === undefined) {
-                        throw new Error("Didn't get an access token");
-                    }
-                    console.log("TOKEN: ", token);
-                    return token;
-                })
-                .then((token) => this.#getRoomAccessToken(token));
+        const localUserIndex = await this.#getLocalUserIndex(chat);
+        const token = await this.#worker.send({
+            kind: "getAccessToken",
+            chatId,
+            accessTokenType,
+            localUserIndex,
         });
+        if (token === undefined) {
+            throw new Error("Didn't get an access token");
+        }
+        return this.#getRoomAccessToken(token);
     }
 
     #translationToken: { token: string; expiresAt: number } | undefined;

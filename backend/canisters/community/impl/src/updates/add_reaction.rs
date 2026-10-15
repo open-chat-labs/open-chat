@@ -64,7 +64,6 @@ fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut Runtime
         args.message_id,
         args.reaction.clone(),
         now,
-        &state.data.migrated_user_ids,
         CommunityEventPusher {
             now,
             rng: state.env.rng(),
@@ -73,11 +72,9 @@ fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut Runtime
     )?;
 
     let message = result.value;
-    // The sender is a member under their latest id, in case they have been migrated since sending
-    // the message
-    let sender_id = state.data.migrated_user_ids.latest(message.sender);
+    let sender_id = message.sender;
     if let Some(sender) = channel.chat.members.get(&sender_id)
-        && !state.data.migrated_user_ids.is_same_user(sender_id, agent)
+        && sender_id != agent
         && !sender.user_type().is_bot()
     {
         let community_id: CommunityId = state.env.canister_id().into();

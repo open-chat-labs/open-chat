@@ -17,7 +17,12 @@ import {
     type NativeCallControl,
 } from "../utils/native/call_bridge";
 import { isAndroidTauriApp } from "@shared";
-import { type ChatIdentifier, type VideoCallType } from "@client";
+import {
+    chatIdentifiersEqual,
+    type ChatIdentifier,
+    type PubSubEvents,
+    type VideoCallType,
+} from "@client";
 import { get, type Subscriber, writable } from "svelte/store";
 import { createLocalStorageStore } from "../utils/store";
 
@@ -94,6 +99,28 @@ function rememberCall(messageId: bigint) {
     }
 }
 
+const RING_WINDOW_MS = 2 * 60 * 60 * 1000;
+
+// A call started elsewhere rings unless this user is already in it, has been in it, or it
+// started more than two hours ago
+export function ringForRemoteCall(ev: PubSubEvents["remoteVideoCallStarted"], now = Date.now()) {
+    if (
+        chatIdentifiersEqual(get(activeStore)?.chatId, ev.chatId) ||
+        ev.currentUserIsParticipant ||
+        Number(ev.timestamp) < now - RING_WINDOW_MS
+    ) {
+        return;
+    }
+    incomingVideoCall.set(ev);
+}
+
+// A call that ended elsewhere stops ringing
+export function stopRingingForRemoteCall(messageId: bigint) {
+    if (get(incomingStore)?.messageId === messageId) {
+        incomingStore.set(undefined);
+    }
+}
+
 export const incomingVideoCall = {
     subscribe: (subscriber: Subscriber<IncomingVideoCall | undefined>, invalidate?: () => void) =>
         incomingStore.subscribe(subscriber, invalidate),
@@ -143,6 +170,13 @@ export type ActiveVideoCallStore = typeof activeVideoCall;
 export const activeVideoCall = {
     subscribe: (subscriber: Subscriber<ActiveVideoCall | undefined>, invalidate?: () => void) =>
         activeStore.subscribe(subscriber, invalidate),
+    current: (): ActiveVideoCall | undefined => get(activeStore),
+    // How many are in the active call as far as this user can tell. A user without presence,
+    // such as a broadcast's audience, counts nobody.
+    present: (): number => {
+        const call = get(activeStore)?.call;
+        return call !== undefined && get(hasPresence) ? call.participantCounts().present : 0;
+    },
     // A native surface acted on the call (#9559): the ongoing notification's hang-up, a
     // headset, Telecom. Applied only to the call that is active, by message id.
     applyNativeControl: (control: NativeCallControl) => {

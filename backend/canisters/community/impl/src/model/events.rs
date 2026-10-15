@@ -1,8 +1,8 @@
 use crate::model::events::stable_memory::EventsStableStorage;
-use chat_events::{GroupGateUpdatedInternal, UserIdUpdater};
+use chat_events::GroupGateUpdatedInternal;
 use community_canister::community_events::EventsPageArgs;
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, BTreeSet, HashSet};
+use std::collections::{BTreeMap, HashSet};
 use types::{
     AvatarChanged, BannerChanged, BotAdded, BotRemoved, BotUpdated, ChannelCreated, ChannelDeleted, ChannelId, ChatId,
     CommunityEvent, CommunityEventCategory, CommunityEventType, CommunityMemberJoined, CommunityMembersRemoved,
@@ -127,66 +127,6 @@ impl CommunityEvents {
         self.latest_event_index.incr()
     }
 
-    // Passes the user ids in each event after `after` (or in every event if `after` is None)
-    // through `f`, along with the event's index, writing back each event in which any are replaced.
-    // `should_stop` is checked after each batch of up to 100 events, and once it returns true, the
-    // last event processed is returned, from which the next call carries on. Returns None once every
-    // event has been processed.
-    pub fn update_user_ids(
-        &mut self,
-        after: Option<EventIndex>,
-        f: &mut dyn FnMut(EventIndex, UserId) -> UserId,
-        should_stop: &mut dyn FnMut() -> bool,
-    ) -> Option<EventIndex> {
-        let mut start = after.map_or(EventIndex::default(), |i| i.incr());
-        loop {
-            let events = self.stable_events_map.page(start, true, 100);
-            let last = events.last()?.index;
-            self.update_events_user_ids(events, f);
-            if should_stop() {
-                return Some(last);
-            }
-            start = last.incr();
-        }
-    }
-
-    // Passes the user ids in the events at `event_indexes` through `f`, writing back those in which
-    // any are replaced. Returns how many were.
-    pub fn update_user_ids_in_events(
-        &mut self,
-        event_indexes: impl IntoIterator<Item = EventIndex>,
-        f: &mut dyn FnMut(UserId) -> UserId,
-    ) -> u32 {
-        let event_indexes: BTreeSet<_> = event_indexes.into_iter().collect();
-        let events = event_indexes
-            .into_iter()
-            .filter_map(|i| self.stable_events_map.get(i))
-            .collect();
-        self.update_events_user_ids(events, &mut |_, user_id| f(user_id))
-    }
-
-    // Passes the user ids in each of `events`, which must be in order of index, through `f`, then
-    // writes back together those in which any are replaced. Returns how many were.
-    fn update_events_user_ids(
-        &mut self,
-        events: Vec<EventWrapperInternal<CommunityEventInternal>>,
-        f: &mut dyn FnMut(EventIndex, UserId) -> UserId,
-    ) -> u32 {
-        let updated: Vec<_> = events
-            .into_iter()
-            .filter_map(|mut event| {
-                let event_index = event.index;
-                event
-                    .event
-                    .update_user_ids(&mut |user_id| f(event_index, user_id))
-                    .then_some(event)
-            })
-            .collect();
-        let count = updated.len() as u32;
-        self.stable_events_map.insert_many(updated);
-        count
-    }
-
     pub fn latest_event_index(&self) -> EventIndex {
         self.latest_event_index
     }
@@ -296,90 +236,7 @@ pub struct GroupImportedInternal {
     pub members_added: Vec<UserId>,
 }
 
-impl CommunityEventInternal {
-    // Passes every user id in the event through `f`, replacing each with the id returned, and
-    // returns whether any were replaced (see `ChatEventInternal::update_user_ids`)
-    pub fn update_user_ids(&mut self, f: &mut dyn FnMut(UserId) -> UserId) -> bool {
-        let mut updater = UserIdUpdater::new(f);
-        let u = &mut updater;
-        match self {
-            CommunityEventInternal::Created(e) => {
-                u.id(&mut e.created_by);
-                u.mentions(&mut e.description);
-            }
-            CommunityEventInternal::NameChanged(e) => u.id(&mut e.changed_by),
-            CommunityEventInternal::DescriptionChanged(e) => {
-                u.id(&mut e.changed_by);
-                u.mentions(&mut e.new_description);
-                u.mentions(&mut e.previous_description);
-            }
-            CommunityEventInternal::RulesChanged(e) => u.id(&mut e.changed_by),
-            CommunityEventInternal::AvatarChanged(e) => u.id(&mut e.changed_by),
-            CommunityEventInternal::BannerChanged(e) => u.id(&mut e.changed_by),
-            CommunityEventInternal::UsersInvited(e) => {
-                u.vec(&mut e.user_ids);
-                u.id(&mut e.invited_by);
-            }
-            CommunityEventInternal::MembersRemoved(e) => {
-                u.vec(&mut e.user_ids);
-                u.id(&mut e.removed_by);
-                u.user_map(&mut e.referred_by);
-            }
-            CommunityEventInternal::MemberJoined(e) => {
-                u.id(&mut e.user_id);
-                if let Some(invited_by) = &mut e.invited_by {
-                    u.id(invited_by);
-                }
-            }
-            CommunityEventInternal::MemberLeft(e) => u.id(&mut e.user_id),
-            CommunityEventInternal::RoleChanged(e) => {
-                u.vec(&mut e.user_ids);
-                u.id(&mut e.changed_by);
-            }
-            CommunityEventInternal::UsersBlocked(e) => {
-                u.vec(&mut e.user_ids);
-                u.id(&mut e.blocked_by);
-                u.user_map(&mut e.referred_by);
-            }
-            CommunityEventInternal::UsersUnblocked(e) => {
-                u.vec(&mut e.user_ids);
-                u.id(&mut e.unblocked_by);
-            }
-            CommunityEventInternal::PermissionsChanged(e) => u.id(&mut e.changed_by),
-            CommunityEventInternal::VisibilityChanged(e) => u.id(&mut e.changed_by),
-            CommunityEventInternal::InviteCodeChanged(e) => u.id(&mut e.changed_by),
-            CommunityEventInternal::Frozen(e) => {
-                u.id(&mut e.frozen_by);
-                u.optional_mentions(&mut e.reason);
-            }
-            CommunityEventInternal::Unfrozen(e) => u.id(&mut e.unfrozen_by),
-            CommunityEventInternal::GateUpdated(e) => u.id(&mut e.updated_by),
-            CommunityEventInternal::ChannelCreated(e) => u.id(&mut e.created_by),
-            CommunityEventInternal::ChannelDeleted(e) => {
-                u.id(&mut e.deleted_by);
-                if let Some(command) = &mut e.bot_command {
-                    u.bot_command(command);
-                }
-            }
-            CommunityEventInternal::PrimaryLanguageChanged(e) => u.id(&mut e.changed_by),
-            CommunityEventInternal::GroupImported(e) => u.vec(&mut e.members_added),
-            CommunityEventInternal::BotAdded(e) => {
-                u.id(&mut e.user_id);
-                u.id(&mut e.added_by);
-            }
-            CommunityEventInternal::BotRemoved(e) => {
-                u.id(&mut e.user_id);
-                u.id(&mut e.removed_by);
-            }
-            CommunityEventInternal::BotUpdated(e) => {
-                u.id(&mut e.user_id);
-                u.id(&mut e.updated_by);
-            }
-            CommunityEventInternal::FailedToDeserialize => {}
-        }
-        updater.changed()
-    }
-}
+impl CommunityEventInternal {}
 
 impl From<CommunityEventInternal> for CommunityEvent {
     fn from(value: CommunityEventInternal) -> Self {
@@ -438,87 +295,5 @@ impl From<CommunityMemberJoinedInternal> for CommunityMemberJoined {
             invited_by: value.invited_by,
             channel_id: value.channel_id,
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use candid::Principal;
-    use std::collections::HashMap;
-
-    fn user_id(i: u8) -> UserId {
-        Principal::from_slice(&[i]).into()
-    }
-
-    // Users 1 and 2 have been migrated to 11 and 12
-    fn latest(user_id: UserId) -> UserId {
-        match user_id.as_slice() {
-            [1] => self::user_id(11),
-            [2] => self::user_id(12),
-            _ => user_id,
-        }
-    }
-
-    #[test]
-    fn ids_and_mentions_in_a_description_change_are_replaced() {
-        let mut event = CommunityEventInternal::DescriptionChanged(Box::new(GroupDescriptionChanged {
-            new_description: format!("@UserId({})", user_id(1)),
-            previous_description: format!("@UserId({})", user_id(3)),
-            changed_by: user_id(2),
-        }));
-
-        assert!(event.update_user_ids(&mut latest));
-
-        let CommunityEventInternal::DescriptionChanged(e) = event else {
-            panic!();
-        };
-        assert_eq!(e.new_description, format!("@UserId({})", user_id(11)));
-        assert_eq!(e.previous_description, format!("@UserId({})", user_id(3)));
-        assert_eq!(e.changed_by, user_id(12));
-    }
-
-    #[test]
-    fn mentions_in_the_communitys_creation_and_freezing_are_replaced() {
-        let mut created = CommunityEventInternal::Created(Box::new(GroupCreated {
-            name: "community".to_string(),
-            description: format!("@UserId({})", user_id(1)),
-            created_by: user_id(3),
-        }));
-        assert!(created.update_user_ids(&mut latest));
-        let CommunityEventInternal::Created(e) = created else {
-            panic!();
-        };
-        assert_eq!(e.description, format!("@UserId({})", user_id(11)));
-
-        let mut frozen = CommunityEventInternal::Frozen(Box::new(GroupFrozen {
-            frozen_by: user_id(3),
-            reason: Some(format!("@UserId({})", user_id(2))),
-        }));
-        assert!(frozen.update_user_ids(&mut latest));
-        let CommunityEventInternal::Frozen(e) = frozen else {
-            panic!();
-        };
-        assert_eq!(e.reason, Some(format!("@UserId({})", user_id(12))));
-    }
-
-    #[test]
-    fn both_sides_of_referrals_are_replaced() {
-        let mut event = CommunityEventInternal::MembersRemoved(Box::new(CommunityMembersRemoved {
-            user_ids: vec![user_id(1), user_id(3)],
-            removed_by: user_id(4),
-            referred_by: HashMap::from([(user_id(1), user_id(2)), (user_id(3), user_id(4))]),
-        }));
-
-        assert!(event.update_user_ids(&mut latest));
-
-        let CommunityEventInternal::MembersRemoved(e) = event else {
-            panic!();
-        };
-        assert_eq!(e.user_ids, vec![user_id(11), user_id(3)]);
-        assert_eq!(
-            e.referred_by,
-            HashMap::from([(user_id(11), user_id(12)), (user_id(3), user_id(4))])
-        );
     }
 }

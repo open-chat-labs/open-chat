@@ -89,9 +89,8 @@ fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<PrepareOk> {
         user_core::updates::tip_message::verify(user, my_user_id, args, this_canister_id, now)?;
         OCResult::Ok((my_index, my_user_id, user.principal))
     })?;
-    let tip_args = state.with_caller_user(|_, user| {
-        user_core::updates::tip_message::direct_tip_args(user, my_user_id, args, &state.data.migrated_user_ids, now)
-    })?;
+    let tip_args =
+        state.with_caller_user(|_, user| user_core::updates::tip_message::direct_tip_args(user, my_user_id, args, now))?;
     let their_index = state.index_of_local_user(args.recipient);
     if their_index.is_none() && state.user_index(args.recipient).is_some() {
         // An index in this canister which no longer holds a user
@@ -116,13 +115,7 @@ fn tip_direct_chat_message(my_index: u16, args: TipMessageArgs, decimals: u8, st
         queue: &mut state.data.local_user_index_event_sync_queue,
     };
     let c2c_args = match state.data.users.with_user_mut(my_index, |user| {
-        user_core::updates::tip_message::tip_direct_chat_message(
-            user,
-            args,
-            decimals,
-            &state.data.migrated_user_ids,
-            Some(event_pusher),
-        )
+        user_core::updates::tip_message::tip_direct_chat_message(user, args, decimals, Some(event_pusher))
     }) {
         Some(Ok(c2c_args)) => c2c_args,
         Some(Err(error)) => return Error(error),

@@ -30,7 +30,7 @@ fn c2c_delete_group_impl(args: Args, state: &mut RuntimeState) -> OCResult {
 // the cycles which can't yet be refunded (see the refund job), which the IC may in future let us
 // recover.
 pub(crate) fn spawn_uninstall_then_refund_canister(canister_id: CanisterId) {
-    utils::async_work::spawn_tracked(async move {
+    ic_cdk::futures::spawn_migratory(async move {
         // Stopping the canister lets the calls it has in progress finish before it is uninstalled,
         // one of which is the call by which a group or community deletes itself. If it fails to
         // stop, those calls are rejected when the canister is uninstalled.

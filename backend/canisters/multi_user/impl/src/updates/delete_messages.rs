@@ -33,21 +33,17 @@ fn delete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult {
 
             let mut deleted = Vec::new();
             let mut my_messages = Vec::new();
-            for (message_id, result) in chat.delete_messages(
-                DeleteUndeleteMessagesArgs {
-                    caller: my_user_id,
-                    is_admin: true,
-                    min_visible_event_index: EventIndex::default(),
-                    thread_root_message_index: args.thread_root_message_index,
-                    message_ids: args.message_ids,
-                    now,
-                },
-                &state.data.migrated_user_ids,
-            ) {
+            for (message_id, result) in chat.delete_messages(DeleteUndeleteMessagesArgs {
+                caller: my_user_id,
+                is_admin: true,
+                min_visible_event_index: EventIndex::default(),
+                thread_root_message_index: args.thread_root_message_index,
+                message_ids: args.message_ids,
+                now,
+            }) {
                 if let Ok(success) = result {
                     deleted.push(message_id);
-                    // Including their messages sent under an earlier id, from before they were migrated
-                    if state.data.migrated_user_ids.is_same_user(success.sender, my_user_id) {
+                    if success.sender == my_user_id {
                         my_messages.push(message_id);
                     }
                 }

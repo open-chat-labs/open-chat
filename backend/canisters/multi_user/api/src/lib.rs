@@ -311,10 +311,6 @@ pub struct SetEventsTtl {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct SetReferralStatusV2 {
     pub status: ReferralStatus,
-    // The ids the referred user had before being migrated to a MultiUser canister, oldest first, any
-    // of which the referrer may hold their referral under
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub previous_user_ids: Vec<UserId>,
 }
 
 pub fn map_chats_to_chat_ids(chats: Vec<Chat>) -> Vec<ChatId> {

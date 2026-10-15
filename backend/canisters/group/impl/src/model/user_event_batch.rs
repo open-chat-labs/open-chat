@@ -40,8 +40,6 @@ impl TimerJobItem for UserEventBatch {
                     match latest_id_if_migrated(canister_id.into()).await {
                         Ok(Some(new_user_id)) => {
                             mutate_state(|state| {
-                                state.data.migrated_user_ids.insert(canister_id.into(), new_user_id);
-
                                 // Any events queued for the old id since this batch was taken are moved
                                 // too, after it, so that they stay in order. All are stamped with the
                                 // current time, since the MultiUser canister ignores any event from this
@@ -84,18 +82,9 @@ impl TimerJobItem for UserEventBatch {
 }
 
 // The user's latest id, if they have been migrated to a MultiUser canister since having `user_id`,
-// taken from the cache if it is there and otherwise looked up from the LocalUserIndex. A migration
-// the LocalUserIndex hasn't yet heard of isn't found, so the events are retried as usual until it has.
+// looked up from the LocalUserIndex
 async fn latest_id_if_migrated(user_id: UserId) -> Result<Option<UserId>, C2CError> {
-    let (cached, local_user_index_canister_id) = read_state(|state| {
-        (
-            state.data.migrated_user_ids.get(&user_id),
-            state.data.local_user_index_canister_id,
-        )
-    });
-    if cached.is_some() {
-        return Ok(cached);
-    }
+    let local_user_index_canister_id = read_state(|state| state.data.local_user_index_canister_id);
 
     local_user_index_canister_c2c_client::lookup_migrated_user_id(user_id, local_user_index_canister_id).await
 }

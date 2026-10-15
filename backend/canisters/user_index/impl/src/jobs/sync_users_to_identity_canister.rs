@@ -27,7 +27,7 @@ pub(crate) fn try_run_now(state: &mut RuntimeState) -> bool {
         if let Some(timer_id) = TIMER_ID.take() {
             ic_cdk_timers::clear_timer(timer_id);
         }
-        utils::async_work::spawn_tracked(sync_users(canister_id, users));
+        ic_cdk::futures::spawn_migratory(sync_users(canister_id, users));
         true
     } else {
         false

@@ -1,6 +1,7 @@
 <script lang="ts">
     import { i18nKey, interpolate } from "@src/i18n/i18n";
     import { pinNumberErrorMessageStore } from "@src/stores/pinNumber";
+    import { toastStore } from "@src/stores/toast";
     import {
         Avatar,
         Body,
@@ -16,7 +17,6 @@
         formatTokens,
         nowNanos,
         OpenChat,
-        type CryptocurrencyContent,
         type MessageContext,
         type UserSummary,
     } from "@client";
@@ -49,16 +49,17 @@
     // svelte-ignore state_referenced_locally
     let message = $state("");
     let valid = $derived(validAmount && selectedUser !== undefined);
-    let status = $state<"idle" | "sending" | "sent" | "error">("idle");
+    let status = $state<"idle" | "sending" | "sent">("idle");
     let busy = $derived(status === "sending");
 
-    function send() {
+    async function send() {
         if (selectedUser === undefined || messageContext === undefined) return;
 
-        const content: CryptocurrencyContent = {
-            kind: "crypto_content",
-            caption: message === "" ? undefined : message,
-            transfer: {
+        status = "sending";
+
+        const outcome = await client.sendCryptoTransfer(
+            messageContext,
+            {
                 kind: "pending",
                 ledger: tokenState.ledger,
                 token: tokenState.symbol,
@@ -67,18 +68,26 @@
                 feeE8s: tokenState.transferFee,
                 createdAtNanos: nowNanos(),
             },
-        };
-
-        status = "sending";
-
-        client.sendMessageWithContent(messageContext, content, false).then((resp) => {
-            if (resp.kind === "success" || resp.kind === "transfer_success") {
+            message,
+        );
+        switch (outcome.kind) {
+            case "sent":
                 status = "sent";
-            } else if ($pinNumberErrorMessageStore === undefined) {
-                status = "error";
-                //error = "errorSendingMessage";
-            }
-        });
+                break;
+            case "cancelled":
+                status = "idle";
+                break;
+            case "pin_failed":
+                status = "idle";
+                toastStore.showFailureToast(pinNumberErrorMessageStore);
+                break;
+            case "failed":
+                status = "idle";
+                toastStore.showFailureToast(outcome.message);
+                break;
+            default:
+                outcome satisfies never;
+        }
     }
 </script>
 
@@ -88,7 +97,8 @@
     disabled={busy}
     onSelect={(user) => (selectedUser = user)}
     selected={selectedUser}
-    placeholder={`Select user`}>
+    placeholder={`Select user`}
+>
     {#snippet subtext()}
         <!-- TODO i18n -->
         {`You may only select users you have DM'd with`}
@@ -103,7 +113,8 @@
     error={!validAmount}
     bind:valid={validAmount}
     maxAmount={tokenState.maxAmount}
-    bind:amount={tokenState.draftAmount}>
+    bind:amount={tokenState.draftAmount}
+>
     {#snippet subtext()}
         {`Minimum amount ${tokenState.minAmountLabel} ${tokenState.symbol}`}
     {/snippet}
@@ -114,7 +125,8 @@
     maxlength={200}
     rows={3}
     placeholder={interpolate($_, i18nKey("tokenTransfer.messagePlaceholder"))}
-    bind:value={message}>
+    bind:value={message}
+>
     {#snippet subtext()}
         {"Recipient will receive this message as a DM"}
     {/snippet}
@@ -126,7 +138,8 @@
         <TransferFeesMessage
             symbol={tokenState.symbol}
             tokenDecimals={tokenState.decimals}
-            transferFees={tokenState.transferFees} />
+            transferFees={tokenState.transferFees}
+        />
     </Container>
 
     <CommonButton2
@@ -134,7 +147,8 @@
         loading={status === "sending"}
         disabled={!valid}
         variant="primary"
-        mode={"regular"}>
+        mode={"regular"}
+    >
         {#snippet icon(color, size)}
             <SendOutline {color} {size} />
         {/snippet}
@@ -151,7 +165,8 @@
                 padding={"lg"}
                 gap={"md"}
                 borderRadius={["lg", "lg", "zero", "zero"]}
-                background={ColourVars.surface2}>
+                background={ColourVars.surface2}
+            >
                 <Avatar url={client.userAvatarUrl(selectedUser)}></Avatar>
                 <Container direction={"vertical"}>
                     <BodySmall colour={"textSecondary"}>
@@ -170,7 +185,8 @@
                 gap={"lg"}
                 background={ColourVars.surface2}
                 padding={"lg"}
-                direction={"vertical"}>
+                direction={"vertical"}
+            >
                 <Container mainAxisAlignment={"spaceBetween"}>
                     <BodySmall colour={"textSecondary"}>
                         <Translatable resourceKey={i18nKey("Transfer amount")} />
@@ -209,7 +225,8 @@
                 padding={"lg"}
                 gap={"md"}
                 borderRadius={["zero", "zero", "lg", "lg"]}
-                background={ColourVars.surface2}>
+                background={ColourVars.surface2}
+            >
                 <BodySmall colour={"textSecondary"}>
                     <Translatable resourceKey={i18nKey("With message")} />
                 </BodySmall>

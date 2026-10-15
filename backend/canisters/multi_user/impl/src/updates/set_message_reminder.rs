@@ -10,7 +10,6 @@ use multi_user_canister::set_message_reminder_v2::{Response::*, *};
 use oc_error_codes::OCErrorCode;
 use rand::Rng;
 use types::{Achievement, FieldTooLongResult, OCResult};
-use utils::mentions::replace_mentioned_users;
 
 const MAX_NOTES_LENGTH: usize = 1000;
 
@@ -23,21 +22,9 @@ fn set_message_reminder_v2(args: Args) -> Response {
     }
 }
 
-fn set_message_reminder_impl(mut args: Args, state: &mut RuntimeState) -> OCResult<u64> {
+fn set_message_reminder_impl(args: Args, state: &mut RuntimeState) -> OCResult<u64> {
     let my_index = state.caller_user_index_or_trap();
     state.with_caller_user(|_, user| user.verify_not_suspended())?;
-
-    // A client which hasn't yet heard that a user has been migrated to a MultiUser canister names
-    // them by their old id, both as the other user in a direct chat and when mentioned
-    let migrated_user_ids = &state.data.migrated_user_ids;
-    args.chat = state.with_caller_user(|_, user| user.direct_chats.latest_chat(args.chat, migrated_user_ids));
-    if let Some(notes) = args
-        .notes
-        .as_ref()
-        .and_then(|notes| replace_mentioned_users(notes, |user_id| migrated_user_ids.latest(user_id)))
-    {
-        args.notes = Some(notes);
-    }
 
     let now = state.env.now();
     if args.remind_at <= now {
