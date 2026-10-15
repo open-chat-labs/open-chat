@@ -3,7 +3,7 @@ use crate::{RuntimeState, activity_notifications::handle_activity_notification, 
 use gated_groups::{CheckGateArgs, CheckIfPassesGateResult, check_if_passes_gate_under_any_id};
 use group_community_common::{ExpiringMember, ExpiringMemberAction, ExpiringMemberActionDetails, Members};
 use ic_cdk_timers::TimerId;
-use local_user_index_canister_c2c_client::lookup_users;
+use local_user_index_canister_c2c_client::{lookup_previous_user_ids, lookup_users};
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
@@ -64,11 +64,21 @@ async fn process_lookup_users(user_ids: Vec<UserId>) {
 }
 
 async fn process_gate_check_async(details: ExpiringMemberActionDetails) {
-    let Some(prep) = read_state(|state| prepare_gate_check(details, state)) else {
+    let Some(mut prep) = read_state(|state| prepare_gate_check(details, state)) else {
         return;
     };
 
-    let result = check_if_passes_gate_under_any_id(prep.gate_config.gate, prep.check_gate_args).await;
+    // The gate is also checked under any ids the user had before being migrated to a MultiUser
+    // canister (see `check_if_passes_gate_under_any_id`), which the LocalUserIndex holds. A failed
+    // lookup is treated as an error, so the check is queued again rather than the member lapsing.
+    let local_user_index_canister_id = read_state(|state| state.data.local_user_index_canister_id);
+    let result = match lookup_previous_user_ids(prep.details.user_id, local_user_index_canister_id).await {
+        Ok(previous_user_ids) => {
+            prep.check_gate_args.previous_user_ids = previous_user_ids;
+            check_if_passes_gate_under_any_id(prep.gate_config.gate, prep.check_gate_args).await
+        }
+        Err(error) => CheckIfPassesGateResult::Error(error.into()),
+    };
 
     mutate_state(|state| {
         handle_gate_check_result(prep.details, result, state);
@@ -93,7 +103,8 @@ fn prepare_gate_check(details: ExpiringMemberActionDetails, state: &RuntimeState
 
     let check_gate_args = CheckGateArgs {
         user: state.member_user(details.user_id),
-        previous_user_ids: state.data.migrated_user_ids.previous_ids(details.user_id),
+        // Filled in once looked up
+        previous_user_ids: Vec::new(),
         diamond_membership_expires_at,
         this_canister: state.env.canister_id(),
         is_unique_person,

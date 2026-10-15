@@ -8,6 +8,7 @@ use types::{C2CError, CanisterId, UserId};
 // Queries
 generate_c2c_call!(c2c_lookup_user);
 generate_c2c_call!(c2c_lookup_users);
+generate_c2c_call!(c2c_previous_user_ids);
 generate_c2c_call!(chat_events);
 generate_c2c_call!(is_user_or_multi_user_canister);
 generate_c2c_call!(migrated_user_ids);
@@ -62,6 +63,17 @@ pub async fn lookup_migrated_user_id(
         crate::migrated_user_ids(local_user_index_canister_id, &args).await?;
 
     Ok(user_ids.remove(&user_id))
+}
+
+// The ids the user had before being migrated to a MultiUser canister, oldest first
+pub async fn lookup_previous_user_ids(
+    user_id: UserId,
+    local_user_index_canister_id: CanisterId,
+) -> Result<Vec<UserId>, C2CError> {
+    let args = c2c_previous_user_ids::Args { user_id };
+    let c2c_previous_user_ids::Response::Success(user_ids) =
+        crate::c2c_previous_user_ids(local_user_index_canister_id, &args).await?;
+    Ok(user_ids)
 }
 
 pub async fn push_wasm_in_chunks(

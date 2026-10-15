@@ -10,8 +10,6 @@ pub mod import_groups;
 pub mod make_pending_payments;
 pub mod process_expire_member_actions;
 pub mod unlapse_members;
-pub mod update_user_ids_in_events;
-pub mod update_user_ids_in_state;
 
 pub(crate) fn start(state: &RuntimeState) {
     expire_members::start_job_if_required(state);
@@ -20,6 +18,4 @@ pub(crate) fn start(state: &RuntimeState) {
     make_pending_payments::start_job_if_required(state);
     process_expire_member_actions::start_job_if_required(state);
     unlapse_members::start_job_if_required(state);
-    update_user_ids_in_events::start_job_if_required(state);
-    update_user_ids_in_state::start_job_if_required(state);
 }

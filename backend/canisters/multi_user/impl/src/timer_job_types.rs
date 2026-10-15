@@ -8,7 +8,6 @@ use multi_user_canister::C2CReplyContext;
 use serde::{Deserialize, Serialize};
 use tracing::error;
 use types::{BlobReference, Chat, ChatId, EventIndex, MessageId, MessageIndex, P2PSwapStatus, UserId};
-use utils::mentions::replace_mentioned_users;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
@@ -119,80 +118,6 @@ impl TimerJob {
             | TimerJob::DeleteFileReferences(_) => None,
         }
     }
-
-    // The ids of other users the job holds, which `with_latest_user_ids` replaces
-    pub fn user_ids(&self) -> Vec<UserId> {
-        match self {
-            TimerJob::HardDeleteMessageContent(job) => vec![job.chat_id.into()],
-            TimerJob::MessageReminder(job) => {
-                let mut user_ids = Vec::new();
-                if let Chat::Direct(chat_id) = job.chat {
-                    user_ids.push(chat_id.into());
-                }
-                if let Some(notes) = &job.notes {
-                    replace_mentioned_users(notes, |user_id| {
-                        user_ids.push(user_id);
-                        user_id
-                    });
-                }
-                user_ids
-            }
-            TimerJob::MarkVideoCallEnded(job) => vec![job.them],
-            TimerJob::MarkP2PSwapExpired(job) => vec![job.chat_id.into()],
-            _ => Vec::new(),
-        }
-    }
-
-    // The job with any ids held from before users were migrated to MultiUser canisters replaced, or
-    // None if it holds none. An id which names a direct chat of the user the job is for is replaced
-    // with `latest_chat_user_id`, which gives the id the chat is under now, and a user mentioned in
-    // a reminder's notes with `latest_user_id`.
-    pub fn with_latest_user_ids(
-        &self,
-        latest_chat_user_id: impl Fn(u16, UserId) -> UserId,
-        latest_user_id: impl Fn(UserId) -> UserId,
-    ) -> Option<TimerJob> {
-        let latest_chat_id = |user_index: u16, chat_id: ChatId| -> Option<ChatId> {
-            let latest: ChatId = latest_chat_user_id(user_index, chat_id.into()).into();
-            (latest != chat_id).then_some(latest)
-        };
-        match self {
-            TimerJob::HardDeleteMessageContent(job) => latest_chat_id(job.user_index, job.chat_id).map(|chat_id| {
-                TimerJob::HardDeleteMessageContent(Box::new(HardDeleteMessageContentJob {
-                    chat_id,
-                    ..(**job).clone()
-                }))
-            }),
-            TimerJob::MessageReminder(job) => {
-                let chat = match job.chat {
-                    Chat::Direct(chat_id) => latest_chat_id(job.user_index, chat_id).map(Chat::Direct),
-                    _ => None,
-                };
-                let notes = job
-                    .notes
-                    .as_ref()
-                    .and_then(|notes| replace_mentioned_users(notes, &latest_user_id));
-                (chat.is_some() || notes.is_some()).then(|| {
-                    TimerJob::MessageReminder(Box::new(MessageReminderJob {
-                        chat: chat.unwrap_or(job.chat),
-                        notes: notes.or_else(|| job.notes.clone()),
-                        ..(**job).clone()
-                    }))
-                })
-            }
-            TimerJob::MarkVideoCallEnded(job) => {
-                let them = latest_chat_user_id(job.user_index, job.them);
-                (them != job.them).then(|| TimerJob::MarkVideoCallEnded(MarkVideoCallEndedJob { them, ..job.clone() }))
-            }
-            TimerJob::MarkP2PSwapExpired(job) => latest_chat_id(job.user_index, job.chat_id).map(|chat_id| {
-                TimerJob::MarkP2PSwapExpired(Box::new(MarkP2PSwapExpiredJob {
-                    chat_id,
-                    ..(**job).clone()
-                }))
-            }),
-            _ => None,
-        }
-    }
 }
 
 impl HardDeleteMessageContentJob {
@@ -257,19 +182,14 @@ impl Job for HardDeleteMessageContentJob {
                 .data
                 .users
                 .with_user_mut(self.user_index, |user| {
-                    let chat_id = user
-                        .direct_chats
-                        .latest_user_id(self.chat_id.into(), &state.data.migrated_user_ids)
-                        .into();
-                    user.direct_chats.get_mut(&chat_id).and_then(|mut chat| {
+                    user.direct_chats.get_mut(&self.chat_id).and_then(|mut chat| {
                         chat.remove_deleted_message_content(self.thread_root_message_index, self.message_id, now)
                     })
                 })
                 .flatten()?;
             // Only the sender's copy of the message deletes its files and cancels its swap, since each
             // copy of the chat references the same files and swap.
-            // Including a message the user sent under an earlier id, from before they were migrated.
-            if !state.data.migrated_user_ids.is_same_user(sender, my_user_id) {
+            if sender != my_user_id {
                 return Some((Vec::new(), None));
             }
             let files_to_delete = content.blob_references();
@@ -364,18 +284,7 @@ impl Job for ClaimOrResetStreakInsuranceJob {
 
 impl Job for MarkVideoCallEndedJob {
     fn execute(self) {
-        let result = mutate_state(|state| {
-            // The other user may have been migrated since the call started, moving the chat onto
-            // their new id
-            let them = state
-                .data
-                .users
-                .with_user(self.user_index, |user| {
-                    user.direct_chats.latest_user_id(self.them, &state.data.migrated_user_ids)
-                })
-                .unwrap_or(self.them);
-            end_video_call_impl(self.user_index, them, self.message_id, state)
-        });
+        let result = mutate_state(|state| end_video_call_impl(self.user_index, self.them, self.message_id, state));
         if let Err(error) = result {
             error!(
                 ?error,
@@ -482,114 +391,11 @@ impl Job for MarkP2PSwapExpiredJob {
         mutate_state(|state| {
             let now = state.env.now();
             // Does nothing if the user no longer exists
-            let migrated_user_ids = &state.data.migrated_user_ids;
             state.data.users.with_user_mut(self.user_index, |user| {
-                let chat_id = user
-                    .direct_chats
-                    .latest_user_id(self.chat_id.into(), migrated_user_ids)
-                    .into();
-                if let Some(mut chat) = user.direct_chats.get_mut(&chat_id) {
+                if let Some(mut chat) = user.direct_chats.get_mut(&self.chat_id) {
                     let _ = chat.mark_p2p_swap_expired(self.thread_root_message_index, self.message_id, now);
                 }
             });
         });
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn user_id(i: u8) -> UserId {
-        Principal::from_slice(&[i; 10]).into()
-    }
-
-    fn reminder(chat: Chat, notes: Option<String>) -> TimerJob {
-        TimerJob::MessageReminder(Box::new(MessageReminderJob {
-            user_index: 1,
-            reminder_id: 1,
-            chat,
-            thread_root_message_index: None,
-            event_index: 1.into(),
-            notes,
-            reminder_created_message_index: 1.into(),
-        }))
-    }
-
-    // User 2 was migrated to user 3, and user 4 to user 5, though the user's chat with user 4 was
-    // left under their old id
-    fn latest_chat_user_id(user_index: u16, user_id: UserId) -> UserId {
-        assert_eq!(user_index, 1);
-        if user_id == self::user_id(2) { self::user_id(3) } else { user_id }
-    }
-
-    fn latest_user_id(user_id: UserId) -> UserId {
-        match user_id {
-            u if u == self::user_id(2) => self::user_id(3),
-            u if u == self::user_id(4) => self::user_id(5),
-            u => u,
-        }
-    }
-
-    fn with_latest_user_ids(job: &TimerJob) -> Option<TimerJob> {
-        job.with_latest_user_ids(latest_chat_user_id, latest_user_id)
-    }
-
-    #[test]
-    fn ids_naming_direct_chats_are_replaced_with_the_ids_the_chats_are_under() {
-        let hard_delete = TimerJob::HardDeleteMessageContent(Box::new(HardDeleteMessageContentJob {
-            user_index: 1,
-            chat_id: user_id(2).into(),
-            thread_root_message_index: None,
-            message_id: 1u64.into(),
-        }));
-        let video_call = TimerJob::MarkVideoCallEnded(MarkVideoCallEndedJob {
-            user_index: 1,
-            them: user_id(2),
-            message_id: 1u64.into(),
-        });
-        let p2p_swap = TimerJob::MarkP2PSwapExpired(Box::new(MarkP2PSwapExpiredJob {
-            user_index: 1,
-            chat_id: user_id(2).into(),
-            thread_root_message_index: None,
-            message_id: 1u64.into(),
-        }));
-        let direct_reminder = reminder(Chat::Direct(user_id(2).into()), None);
-
-        for job in [&hard_delete, &video_call, &p2p_swap, &direct_reminder] {
-            assert_eq!(job.user_ids(), vec![user_id(2)]);
-            let updated = with_latest_user_ids(job).unwrap();
-            assert_eq!(updated.user_index(), Some(1));
-            assert_eq!(updated.user_ids(), vec![user_id(3)]);
-            assert!(with_latest_user_ids(&updated).is_none());
-        }
-        // A chat left under the old id is still named by it
-        assert!(with_latest_user_ids(&reminder(Chat::Direct(user_id(4).into()), None)).is_none());
-        assert!(with_latest_user_ids(&reminder(Chat::Group(user_id(9).into()), None)).is_none());
-        let expired_events = TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob { user_index: 1 });
-        assert!(expired_events.user_ids().is_empty());
-        assert!(with_latest_user_ids(&expired_events).is_none());
-    }
-
-    #[test]
-    fn users_mentioned_in_a_reminders_notes_are_replaced_with_their_latest_ids() {
-        let group = Chat::Group(user_id(9).into());
-        let notes = |a: UserId, b: UserId| Some(format!("Ask @UserId({a}) and @UserId({b})"));
-        let job = reminder(group, notes(user_id(2), user_id(4)));
-        assert_eq!(job.user_ids(), vec![user_id(2), user_id(4)]);
-
-        let Some(TimerJob::MessageReminder(updated)) = with_latest_user_ids(&job) else {
-            panic!("The reminder wasn't updated");
-        };
-        assert_eq!(updated.notes, notes(user_id(3), user_id(5)));
-        assert_eq!(updated.chat, group);
-
-        // The chat is replaced even when the notes mention nobody who has been migrated
-        let job = reminder(Chat::Direct(user_id(2).into()), notes(user_id(6), user_id(7)));
-        let Some(TimerJob::MessageReminder(updated)) = with_latest_user_ids(&job) else {
-            panic!("The reminder wasn't updated");
-        };
-        assert_eq!(updated.chat, Chat::Direct(user_id(3).into()));
-        assert_eq!(updated.notes, notes(user_id(6), user_id(7)));
     }
 }

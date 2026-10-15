@@ -54,8 +54,6 @@ async fn push_notifications(notifications: Vec<(UserId, DeletedGroupInfoInternal
 }
 
 async fn push_notification(user_id: UserId, deleted_group: DeletedGroupInfoInternal) {
-    // Sent to the user's latest id if they are known to have been migrated since having `user_id`
-    let user_id = read_state(|state| state.data.migrated_user_ids.latest(user_id));
     let args = multi_user_canister::c2c_notify_group_deleted::Args { user_id, deleted_group };
 
     if let Err(error) = multi_user_canister_c2c_client::c2c_notify_group_deleted(user_id.canister_id(), &args).await {
@@ -67,7 +65,6 @@ async fn push_notification(user_id: UserId, deleted_group: DeletedGroupInfoInter
             let deleted_group = args.deleted_group;
 
             if let Some(new_user_id) = new_user_id {
-                state.data.migrated_user_ids.insert(user_id, new_user_id);
                 state
                     .data
                     .deleted_groups

@@ -29,7 +29,6 @@ use types::{
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::env::Environment;
 use utils::idempotency_checker::IdempotencyChecker;
-use utils::migrated_user_ids::MigratedUserIds;
 
 mod guards;
 mod jobs;
@@ -333,10 +332,6 @@ struct Data {
     pub rng_seed: [u8; 32],
     pub idempotency_checker: IdempotencyChecker,
     pub local_index_event_sync_queue: GroupedTimerJobQueue<LocalIndexEventBatch>,
-    // The latest ids of migrated users, as looked up from the UserIndex whenever a user's id is found to
-    // have changed
-    #[serde(default)]
-    pub migrated_user_ids: MigratedUserIds,
     // The ids of deleted groups and communities, which the files sent in them name as their only
     // accessor, to be removed from those files by the StorageIndex, which removes the files
     pub storage_index_accessors_to_remove_queue: BatchedTimerJobQueue<StorageIndexAccessorsToRemoveBatch>,
@@ -387,7 +382,6 @@ impl Data {
             rng_seed: [0; 32],
             idempotency_checker: IdempotencyChecker::default(),
             local_index_event_sync_queue: GroupedTimerJobQueue::new(10, false),
-            migrated_user_ids: MigratedUserIds::default(),
             storage_index_accessors_to_remove_queue: BatchedTimerJobQueue::new(storage_index_canister_id, false),
         }
     }
@@ -498,7 +492,6 @@ impl Default for Data {
             rng_seed: [0; 32],
             idempotency_checker: IdempotencyChecker::default(),
             local_index_event_sync_queue: GroupedTimerJobQueue::new(10, false),
-            migrated_user_ids: MigratedUserIds::default(),
             storage_index_accessors_to_remove_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
         }
     }

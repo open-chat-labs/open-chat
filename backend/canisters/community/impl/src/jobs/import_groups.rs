@@ -1,9 +1,9 @@
 use crate::activity_notifications::extract_activity;
-use crate::jobs::{unlapse_members, update_user_ids_in_events, update_user_ids_in_state};
+use crate::jobs::unlapse_members;
 use crate::model::channels::Channel;
 use crate::model::events::{CommunityEventInternal, GroupImportedInternal};
 use crate::model::groups_being_imported::{GroupToImport, GroupToImportAction};
-use crate::model::members::{AddResult, CommunityMembers, MembersToAdd};
+use crate::model::members::{AddResult, MembersToAdd};
 use crate::timer_job_types::{
     FinalizeGroupImportJob, JoinMembersToPublicChannelJob, MarkGroupImportCompleteJob, ProcessGroupImportChannelMembersJob,
     TimerJob,
@@ -22,7 +22,7 @@ use std::time::Duration;
 use tracing::{error, info, trace};
 use types::{
     C2CError, Caller, CanisterId, ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityUsersBlocked, Empty,
-    Milliseconds, MultiUserChat, UserId, UserIdAndPrincipal, UserType,
+    Milliseconds, MultiUserChat, UserId, UserType,
 };
 
 const PAGE_SIZE: u32 = 19 * 102 * 1024; // Roughly 1.9MB (1.9 * 1024 * 1024)
@@ -205,9 +205,6 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
                 error!(%group_id, ?error, "Failed to deserialize the group's export extras");
                 ExportExtras::default()
             });
-            for (old_user_id, new_user_id) in extras.migrated_user_ids {
-                state.data.migrated_user_ids.insert(old_user_id, new_user_id);
-            }
 
             chat.events.set_chat(Chat::Channel(community_id, channel_id));
             chat.members.set_chat(MultiUserChat::Channel(community_id, channel_id));
@@ -251,19 +248,9 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
 
             // The group may have been unlapsing its members when it was exported
             unlapse_members::start_job_if_required(state);
-            // The job which replaces the ids users had before being migrated to MultiUser canisters
-            // throughout the community's state waits until the channel's members have been added to
-            // the community (see `update_user_ids_in_state::is_held`)
+            // The channel can't be deleted until its members have been added to the community (see
+            // `is_importing_into_channel`)
             state.data.channels_importing_members.insert(channel_id);
-            // The channel's events may still hold ids which users had before being migrated to
-            // MultiUser canisters, so are scanned for them, from the start if the scan has passed it
-            let migration = &mut state.data.user_ids_in_events_migration;
-            if migration.is_scan_complete()
-                || matches!(migration.scanned_up_to(), Some(update_user_ids_in_events::EventLocation::Channel(c, _)) if c > channel_id)
-            {
-                migration.restart_scan();
-            }
-            update_user_ids_in_events::start_job_if_required(state);
 
             state.data.timer_jobs.enqueue_job(
                 TimerJob::ProcessGroupImportChannelMembers(ProcessGroupImportChannelMembersJob {
@@ -285,11 +272,9 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
 
 // The channel's members are processed a batch at a time, in order of user id:
 // 1. For channel members already in the community, add the new channel to their set of channels.
-// 2. For channel members who are not yet community members, lookup their latest ids and principals,
-// then join them to the community, add the new channel to their set of channels, and add them to the
-// community's other public channels (via `JoinMembersToPublicChannelJob`). A member the group held by
-// an id they've since been migrated from is moved onto their latest id, as when the community is told
-// of a migration, which the group, being deleted once imported, won't be.
+// 2. For channel members who are not yet community members, look up their principals, then join them
+// to the community, add the new channel to their set of channels, and add them to the
+// community's other public channels (via `JoinMembersToPublicChannelJob`).
 // Once every batch has been processed, if the channel is public, the community members not in it
 // are added to it.
 pub(crate) async fn process_channel_members(mut job: ProcessGroupImportChannelMembersJob) {
@@ -316,11 +301,24 @@ pub(crate) async fn process_channel_members(mut job: ProcessGroupImportChannelMe
             // In order of user id
             let users: BTreeMap<_, _> = users.into_iter().collect();
 
-            let ChannelMembersBatch {
-                to_add,
-                mut to_remove,
-                migrated,
-            } = plan_batch_of_channel_members(users, &batch, &state.data.members);
+            // Added together, so that they're written to stable memory together
+            let mut to_add = MembersToAdd::default();
+            for (user_id, user) in users {
+                // Every group holds its members by their latest ids, so a member found under another
+                // id, ie. one they've since been migrated from, is never expected
+                if user.user_id != user_id {
+                    error!(%group_id, %user_id, latest = %user.user_id, "Imported member found under another id");
+                    continue;
+                }
+                to_add.push(
+                    user_id,
+                    user.principal,
+                    batch.get(&user_id).copied().unwrap_or_default(),
+                    None,
+                );
+            }
+            // Those blocked from the community, who are removed from the channel
+            let mut to_remove = Vec::new();
 
             let mut added = Vec::new();
             for (user_id, result) in state.data.members.add_many(to_add, now) {
@@ -348,26 +346,6 @@ pub(crate) async fn process_channel_members(mut job: ProcessGroupImportChannelMe
                     let _ = channel
                         .chat
                         .remove_member(Caller::OCBot(OPENCHAT_BOT_USER_ID), user_id, false, now);
-                }
-            }
-
-            for (old_user_id, latest) in migrated {
-                state
-                    .data
-                    .migrate_user_ids(&[old_user_id], latest.user_id, Some(latest.principal), now);
-                if state.data.members.contains(&latest.user_id) {
-                    state.data.invited_users.remove(&latest.user_id, now);
-                    if state
-                        .data
-                        .channels
-                        .get(&channel_id)
-                        .is_some_and(|c| c.chat.members.contains(&latest.user_id))
-                    {
-                        state.data.members.mark_member_joined_channel(latest.user_id, channel_id);
-                    }
-                }
-                if let Some(added) = added.iter_mut().find(|u| **u == old_user_id) {
-                    *added = latest.user_id;
                 }
             }
 
@@ -414,53 +392,6 @@ pub(crate) async fn process_channel_members(mut job: ProcessGroupImportChannelMe
     });
 }
 
-// What's done with a batch of the channel's members who aren't members of the community, looked at
-// in order of user id. A member the group held by an id they've since been migrated from is added
-// under it, as the channel holds them, then moved onto their latest id. If they're already a member
-// under it, or are to be added under it, only the channel is moved. If they've been blocked under it,
-// they're removed from the channel as when blocked under the old.
-struct ChannelMembersBatch {
-    // Added together, so that they're written to stable memory together
-    to_add: MembersToAdd,
-    // Those blocked from the community under their latest ids, who are removed from the channel
-    to_remove: Vec<UserId>,
-    // Those the group held by ids they've since been migrated from, with their latest ids
-    migrated: Vec<(UserId, UserIdAndPrincipal)>,
-}
-
-fn plan_batch_of_channel_members(
-    users: BTreeMap<UserId, UserIdAndPrincipal>,
-    user_types: &BTreeMap<UserId, UserType>,
-    members: &CommunityMembers,
-) -> ChannelMembersBatch {
-    let mut to_add = MembersToAdd::default();
-    let mut to_remove = Vec::new();
-    let mut migrated = Vec::new();
-    for (user_id, latest) in users {
-        if latest.user_id != user_id {
-            migrated.push((user_id, latest));
-            if members.is_blocked(&latest.user_id) {
-                to_remove.push(user_id);
-                continue;
-            }
-            if members.contains(&latest.user_id) || to_add.contains(&latest.user_id) {
-                continue;
-            }
-        }
-        to_add.push(
-            user_id,
-            latest.principal,
-            user_types.get(&user_id).copied().unwrap_or_default(),
-            None,
-        );
-    }
-    ChannelMembersBatch {
-        to_add,
-        to_remove,
-        migrated,
-    }
-}
-
 // The next batch of the channel's members who aren't members of the community, with their user
 // types, and the last of the channel's members looked at. The channel's members looked at who are
 // members of the community are marked as members of the channel along the way.
@@ -500,24 +431,13 @@ fn complete_processing_channel_members(group_id: ChatId, channel_id: ChannelId, 
         // Add community members to the channel if it is public
         add_community_members_to_channel_if_public(channel_id, state);
 
-        // By their latest ids, in case the community has been told of any of their migrations since
-        // they were added
-        let members_added = members_added
-            .into_iter()
-            .map(|user_id| state.data.migrated_user_ids.latest(user_id))
-            .collect();
         state.push_community_event(CommunityEventInternal::GroupImported(Box::new(GroupImportedInternal {
             group_id,
             channel_id,
             members_added,
         })));
 
-        // The channel's state may still hold ids which users had before being migrated to MultiUser
-        // canisters (eg. its former members' metrics, or those it blocked, who are now blocked from
-        // the community), so the community's state is passed through again, which holds back the job
-        // which replaces them in the events until done
-        update_user_ids_in_state::on_channel_members_imported(&mut state.data, channel_id);
-        update_user_ids_in_state::start_job_if_required(state);
+        state.data.channels_importing_members.remove(&channel_id);
 
         // Queued as a job, so that it survives an upgrade and the channel can't be deleted until it
         // has run (see `is_importing_into_channel`)
@@ -637,56 +557,4 @@ fn trigger_upgrade_to_finalize_import(group_id: ChatId) {
             );
         }
     });
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use ic_principal::Principal;
-    use ic_stable_structures::DefaultMemoryImpl;
-    use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
-
-    #[test]
-    fn a_batch_of_channel_members_is_planned_as_when_added_one_at_a_time() {
-        let memory = MemoryManager::init(DefaultMemoryImpl::default());
-        stable_memory_map::init(memory.get(MemoryId::new(1)));
-
-        let user = |i: u8| UserId::from(Principal::from_slice(&[i]));
-        let latest = |i: u8| UserIdAndPrincipal::new(user(i), Principal::from_slice(&[100, i]));
-        // User 2 is a member and user 3 is blocked
-        let mut members = CommunityMembers::new(Principal::from_slice(&[100, 1]), user(1), UserType::User, Vec::new(), 0);
-        members.add(user(2), latest(2).principal, UserType::User, None, 0);
-        members.block(user(3), 0);
-
-        // The group holds users 5, 6, 8 and 9 by ids they've since been migrated from. User 5's latest
-        // id is blocked, user 6's is a member, user 9's is added earlier in the batch, and user 8's
-        // later. User 3 is blocked under the id the group holds.
-        let users: BTreeMap<_, _> = [(3, 3), (4, 4), (5, 3), (6, 2), (8, 11), (9, 4), (11, 11)]
-            .into_iter()
-            .map(|(id, latest_id)| (user(id), latest(latest_id)))
-            .collect();
-        let user_types = BTreeMap::from([(user(4), UserType::BotV2)]);
-
-        let batch = plan_batch_of_channel_members(users, &user_types, &members);
-
-        assert_eq!(batch.to_add.user_ids(), [3, 4, 8, 11].map(user).to_vec());
-        assert_eq!(batch.to_remove, vec![user(5)]);
-        let migrated: Vec<_> = batch.migrated.iter().map(|(u, l)| (*u, l.user_id)).collect();
-        assert_eq!(
-            migrated,
-            [(5, 3), (6, 2), (8, 11), (9, 4)].map(|(u, l)| (user(u), user(l))).to_vec()
-        );
-
-        // User 3 is then found to be blocked, so is removed from the channel too
-        let results: Vec<_> = members
-            .add_many(batch.to_add, 10)
-            .into_iter()
-            .map(|(user_id, result)| (user_id, matches!(result, AddResult::Success(_))))
-            .collect();
-        assert_eq!(
-            results,
-            vec![(user(3), false), (user(4), true), (user(8), true), (user(11), true)]
-        );
-        assert!(members.bots().contains_key(&user(4)));
-    }
 }

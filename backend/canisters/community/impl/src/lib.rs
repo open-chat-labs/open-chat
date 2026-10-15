@@ -7,10 +7,7 @@ use crate::timer_job_types::{DeleteFileReferencesJob, MakeTransferJob, RemoveExp
 use activity_notification_state::ActivityNotificationState;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
-use chat_events::{
-    ChatEventInternal, ChatEvents, ChatMetricsInternal, EventPusher, ExpiredThread, UserIdsInEventsMigration,
-    UserIdsInEventsMigrationMetrics,
-};
+use chat_events::{ChatEventInternal, ChatEvents, ChatMetricsInternal, EventPusher, ExpiredThread};
 use community_canister::add_members_to_channel::UserFailedError;
 use constants::{ICP_LEDGER_CANISTER_ID, OPENCHAT_BOT_USER_ID};
 use event_store_types::Event;
@@ -19,7 +16,7 @@ use gated_groups::{GatePayment, calculate_gate_payments};
 use group_chat_core::{AccessRulesInternal, AddResult, MembersToAdd};
 use group_community_common::{
     Achievements, ExpiringMember, ExpiringMemberActions, ExpiringMembers, Members, PaymentReceipts, PendingPaymentsQueue,
-    UserCache, UserIdsInStateMigration, UserIdsInStateMigrationMetrics,
+    UserCache,
 };
 use ic_principal::Principal;
 use installed_bots::InstalledBots;
@@ -50,7 +47,6 @@ use types::{BotSubscriptions, CommunityId};
 use utils::canister::trap_if_frozen;
 use utils::env::Environment;
 use utils::idempotency_checker::IdempotencyChecker;
-use utils::migrated_user_ids::MigratedUserIds;
 use utils::regular_jobs::RegularJobs;
 
 mod activity_notifications;
@@ -132,11 +128,10 @@ impl RuntimeState {
         Ok(self.member_user(user_id))
     }
 
-    // The member's wallet, for paying them, by their latest id. A user holds their funds under the
-    // principal held for them, and anyone else whose id carries no index, eg. a bot, under their
-    // user id, other than a User canister (see `verify_not_old_user_id`).
+    // The member's wallet, for paying them. A user holds their funds under the principal held for them,
+    // and anyone else whose id carries no index, eg. a bot, under their user id, other than a User
+    // canister (see `verify_not_old_user_id`).
     pub fn member_wallet(&self, user_id: UserId) -> OCResult<icrc1::Account> {
-        let user_id = self.data.migrated_user_ids.latest(user_id);
         if !user_id.is_indexed() {
             self.data.verify_not_old_user_id(user_id)?;
             return Ok(user_id.as_principal().into());
@@ -388,7 +383,7 @@ impl RuntimeState {
         let mut files_to_delete = Vec::new();
         let mut final_prize_payments = Vec::new();
         for channel in self.data.channels.iter_mut() {
-            let result = channel.chat.remove_expired_events(&self.data.migrated_user_ids, now);
+            let result = channel.chat.remove_expired_events(now);
             if let Some(expiry) = channel.chat.events.next_event_expiry()
                 && next_event_expiry.is_none_or(|current| expiry < current)
             {
@@ -424,9 +419,7 @@ impl RuntimeState {
         let mut finished = false;
 
         loop {
-            let result = channel
-                .chat
-                .remove_old_events_batch(before, now, BATCH_SIZE as u16, &self.data.migrated_user_ids);
+            let result = channel.chat.remove_old_events_batch(before, now, BATCH_SIZE as u16);
 
             files_to_delete.extend(result.files);
             final_prize_payments.extend(result.final_prize_payments);
@@ -501,8 +494,6 @@ impl RuntimeState {
     }
 
     pub fn push_event_to_user(&mut self, user_id: UserId, event: CommunityCanisterEvent, now: TimestampMillis) {
-        // Sent to the user's latest id if they are known to have been migrated since having `user_id`
-        let user_id = self.data.migrated_user_ids.latest(user_id);
         self.data.user_events_queue.push(
             user_id.canister_id(),
             IdempotentEnvelope {
@@ -551,10 +542,6 @@ impl RuntimeState {
             queued_user_events: self.data.user_events_queue.len() as u32,
             queued_local_index_events: self.data.local_user_index_event_sync_queue.len() as u32,
             stable_memory_sizes: memory::memory_sizes(),
-            user_ids_in_events_migration: self.data.user_ids_in_events_migration.metrics(),
-            user_ids_in_state_migration: self.data.user_ids_in_state_migration.metrics(),
-            user_id_migration_complete_reported: self.data.user_id_migration_complete_reported,
-            user_id_migration_held_for_import: jobs::update_user_ids_in_state::is_held(&self.data),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -602,21 +589,6 @@ impl RuntimeState {
             UserType::Bot => Ok(Caller::Bot(member.user_id)),
             UserType::OcControlledBot => Ok(Caller::OCBot(member.user_id)),
             UserType::BotV2 | UserType::Webhook => Err(OCErrorCode::InitiatorNotFound),
-        }
-    }
-
-    // Tells the LocalUserIndex when the jobs which replace migrated users' old ids with their latest
-    // ids (first in the community's state, then in its events) become complete, or start again, so that
-    // it can report how many of its canisters have finished. Called at the end of each run of either.
-    pub fn report_user_id_migration_progress(&mut self) {
-        let complete = self.data.user_id_migration_complete();
-        if complete != self.data.user_id_migration_complete_reported {
-            self.data.user_id_migration_complete_reported = complete;
-            self.data.local_user_index_event_sync_queue.push(IdempotentEnvelope {
-                created_at: self.env.now(),
-                idempotency_id: self.env.rng().next_u64(),
-                value: local_user_index_canister::CommunityEvent::UserIdMigrationComplete(complete),
-            });
         }
     }
 
@@ -738,21 +710,10 @@ struct Data {
     public_channel_list_updated: TimestampMillis,
     #[serde(default)]
     certified_transfers: CertifiedTransfers,
-    // The latest ids of migrated users, as looked up from the LocalUserIndex whenever a user's id is found to
-    // have changed
-    #[serde(default)]
-    migrated_user_ids: MigratedUserIds,
-    #[serde(default)]
-    user_ids_in_events_migration: UserIdsInEventsMigration<jobs::update_user_ids_in_events::EventLocation>,
-    #[serde(default)]
-    user_ids_in_state_migration: UserIdsInStateMigration<jobs::update_user_ids_in_state::StatePosition>,
     // The channels imported from groups whose members are still being added to the community (see
     // `import_groups::process_channel_members`)
     #[serde(default)]
     channels_importing_members: BTreeSet<ChannelId>,
-    // Whether the LocalUserIndex was last told the user id migration jobs are complete
-    #[serde(default)]
-    user_id_migration_complete_reported: bool,
 }
 
 impl Data {
@@ -864,30 +825,14 @@ impl Data {
             moderation_flags: Timestamped::default(),
             idempotency_checker: IdempotencyChecker::default(),
             certified_transfers: CertifiedTransfers::default(),
-            migrated_user_ids: MigratedUserIds::default(),
-            user_ids_in_events_migration: UserIdsInEventsMigration::default(),
-            user_ids_in_state_migration: UserIdsInStateMigration::default(),
             channels_importing_members: BTreeSet::new(),
-            user_id_migration_complete_reported: false,
             public_channel_list_updated: now,
         }
-    }
-
-    // Whether the jobs replacing migrated users' old ids have finished. While a group's members are
-    // still being imported the state job is certain to run again, so the community isn't complete
-    // until they have been.
-    pub fn user_id_migration_complete(&self) -> bool {
-        self.user_ids_in_state_migration.is_complete()
-            && self.user_ids_in_events_migration.is_complete()
-            && !jobs::update_user_ids_in_state::is_held(self)
     }
 
     // Refuses a User canister's id, which users had before being migrated to MultiUser canisters.
     // Every user has been, so such an id names nobody, unless it is a bot's with a canister of its
     // own, which is a member as a bot. Other bots and webhooks have ids which aren't canisters'.
-    // Callers pass the latest id `MigratedUserIds` gives, since clients still name users by their
-    // old ids in the events from before they were migrated, so only an old id which isn't known
-    // here is refused.
     pub fn verify_not_old_user_id(&self, user_id: UserId) -> OCResult {
         if user_id.is_canister() && !self.members.bots().contains_key(&user_id) {
             Err(OCErrorCode::TargetUserNotFound.into())
@@ -915,13 +860,10 @@ impl Data {
         }
     }
 
-    // The invitation is looked for under the latest id of the user the principal is mapped to as
-    // well, since while old user ids are being replaced (see `update_user_ids_in_state`) it may have
-    // been moved before the principal is
     pub fn is_invited(&self, caller: Principal) -> bool {
         self.members
             .lookup_user_id(caller)
-            .is_some_and(|u| self.invited_users.contains(&u) || self.invited_users.contains(&self.migrated_user_ids.latest(u)))
+            .is_some_and(|u| self.invited_users.contains(&u))
     }
 
     // Who referred a user joining the community: whoever invited them, if they were invited,
@@ -934,17 +876,9 @@ impl Data {
         }
     }
 
-    // The id a referrer is held under as a member. The id given may be one a user had before being
-    // migrated to a MultiUser canister (eg. one given by the client, or an inviter's which hasn't been
-    // replaced yet), or not a member's at all. It is taken as it is if it is a member's, which, while
-    // old user ids are being replaced, may still be an old id, so that the joining user is added to
-    // the referrer's referrals, both then being moved along with the referrer's membership. Otherwise
-    // it is taken as the user's latest id if that is a member's. Otherwise there is no referrer, so
-    // that an id which isn't a member's is never stored.
+    // The referrer, if they are a member, so that an id which isn't a member's is never stored
     pub fn referring_member(&self, user_id: UserId) -> Option<UserId> {
-        [user_id, self.migrated_user_ids.latest(user_id)]
-            .into_iter()
-            .find(|u| self.members.contains(u))
+        self.members.contains(&user_id).then_some(user_id)
     }
 
     pub fn build_chat_metrics(&mut self, now: TimestampMillis) {
@@ -1020,63 +954,6 @@ impl Data {
         self.achievements.remove_user(&user_id);
         self.user_cache.delete(user_id);
         removed
-    }
-
-    // Moves everything held under the previous ids of a user migrated to a MultiUser canister (their
-    // membership of the community and its channels, block, invitations, metrics, etc) onto their
-    // latest id, stepping through each migration in turn, so that from then on they only need to be
-    // looked up by their latest id. `previous_user_ids` must be ordered oldest first. `principal` is
-    // the user's principal, if known, which is needed to update the lookup of an invited user who
-    // isn't a member. The migrations are also cached, since events may refer to the user by their
-    // previous ids, and a gate is checked under them as it expires, even for a user who had nothing
-    // here under them. Returns whether anything was moved.
-    pub fn migrate_user_ids(
-        &mut self,
-        previous_user_ids: &[UserId],
-        user_id: UserId,
-        principal: Option<Principal>,
-        now: TimestampMillis,
-    ) -> bool {
-        let next_ids = previous_user_ids.iter().skip(1).chain([&user_id]);
-        let mut migrated = false;
-        for (&old_user_id, &new_user_id) in previous_user_ids.iter().zip(next_ids) {
-            migrated |= self.migrate_user_id(old_user_id, new_user_id, principal, now);
-        }
-        self.migrated_user_ids.insert_previous_ids(previous_user_ids, user_id);
-        migrated
-    }
-
-    fn migrate_user_id(
-        &mut self,
-        old_user_id: UserId,
-        new_user_id: UserId,
-        principal: Option<Principal>,
-        now: TimestampMillis,
-    ) -> bool {
-        if old_user_id == new_user_id {
-            return false;
-        }
-
-        let was_member = self.members.contains(&old_user_id);
-        let mut migrated = self.members.migrate_user_id(old_user_id, new_user_id, principal, now);
-        if was_member && !self.members.contains(&new_user_id) {
-            // The user has been blocked under their new id, so their membership under the old id was
-            // dropped, and they are removed from the community's channels as well
-            self.channels.leave_all_channels(old_user_id, now);
-            self.expiring_members.remove_member(old_user_id, None);
-            self.expiring_member_actions.remove_member(old_user_id, None);
-            self.achievements.remove_user(&old_user_id);
-            self.user_cache.delete(old_user_id);
-        }
-        for channel in self.channels.iter_mut() {
-            migrated |= channel.chat.migrate_user_id(old_user_id, new_user_id, now);
-        }
-        self.invited_users.migrate_user_id(old_user_id, new_user_id, now);
-        self.expiring_members.migrate_user_id(old_user_id, new_user_id);
-        self.expiring_member_actions.migrate_user_id(old_user_id, new_user_id);
-        self.achievements.migrate_user_id(old_user_id, new_user_id);
-        self.user_cache.migrate_user_id(old_user_id, new_user_id);
-        migrated
     }
 
     pub fn remove_user_from_channel(&mut self, user_id: UserId, channel_id: ChannelId, now: TimestampMillis) {
@@ -1624,11 +1501,6 @@ pub struct Metrics {
     pub queued_user_events: u32,
     pub queued_local_index_events: u32,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
-    pub user_ids_in_events_migration: UserIdsInEventsMigrationMetrics,
-    pub user_ids_in_state_migration: UserIdsInStateMigrationMetrics,
-    pub user_id_migration_complete_reported: bool,
-    // Whether the state job is waiting for a group's members to be imported
-    pub user_id_migration_held_for_import: bool,
     pub canister_ids: CanisterIds,
 }
 
@@ -1667,15 +1539,9 @@ fn new_user_events_queue() -> GroupedTimerJobQueue<UserEventBatch> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::invited_users::UserInvitation;
 
     fn canister_id(i: u8) -> CanisterId {
         CanisterId::from_slice(&[0, 0, 0, 0, 0, 0, 0, i, 1, 1])
-    }
-
-    // The User canister ids migrated users had, and the ids they were migrated to
-    fn old_user_id(i: u8) -> UserId {
-        canister_id(100 + i).into()
     }
 
     fn new_user_id(i: u8) -> UserId {
@@ -1683,85 +1549,22 @@ mod tests {
     }
 
     #[test]
-    fn the_referrer_is_a_members_id_or_the_latest_id_of_a_member() {
+    fn the_referrer_is_a_member() {
         let owner = new_user_id(1);
         let mut data = Data::new_for_tests(owner, Principal::from_slice(&[1]), String::new(), Vec::new());
-        // User 2 is a member under their latest id, user 3 is still a member under their old id
-        // while old ids are being replaced, and user 4 isn't a member
         data.members
             .add(new_user_id(2), Principal::from_slice(&[2]), UserType::User, None, 0);
-        data.members
-            .add(old_user_id(3), Principal::from_slice(&[3]), UserType::User, None, 0);
-        for i in 2..=4 {
-            data.migrated_user_ids.insert(old_user_id(i), new_user_id(i));
-        }
 
         assert_eq!(data.referring_member(owner), Some(owner));
-        assert_eq!(data.referring_member(old_user_id(2)), Some(new_user_id(2)));
         assert_eq!(data.referring_member(new_user_id(2)), Some(new_user_id(2)));
-        assert_eq!(data.referring_member(old_user_id(3)), Some(old_user_id(3)));
-        assert_eq!(data.referring_member(old_user_id(4)), None);
         assert_eq!(data.referring_member(new_user_id(4)), None);
 
         // Without an invitation, the referrer the client gives is taken, if they are a member
         assert_eq!(
-            data.referrer_of_joining_user(new_user_id(6), Some(old_user_id(2))),
+            data.referrer_of_joining_user(new_user_id(6), Some(new_user_id(2))),
             Some(new_user_id(2))
         );
         assert_eq!(data.referrer_of_joining_user(new_user_id(6), Some(new_user_id(4))), None);
         assert_eq!(data.referrer_of_joining_user(new_user_id(6), None), None);
-    }
-
-    #[test]
-    fn an_inviter_still_held_under_their_old_id_keeps_their_referrals_in_step() {
-        let owner = new_user_id(1);
-        let mut data = Data::new_for_tests(owner, Principal::from_slice(&[1]), String::new(), Vec::new());
-        // User 3 invited user 5, and is still a member under their old id while old ids are being
-        // replaced, though their migration is known
-        data.members
-            .add(old_user_id(3), Principal::from_slice(&[3]), UserType::User, None, 0);
-        data.migrated_user_ids.insert(old_user_id(3), new_user_id(3));
-        data.invited_users.add(
-            new_user_id(5),
-            UserInvitation {
-                invited_by: old_user_id(3),
-                timestamp: 0,
-            },
-        );
-
-        // The inviter is taken as the referrer rather than whoever the client gives, by the id they
-        // are held under, so user 5 is added to their referrals
-        let referred_by = data.referrer_of_joining_user(new_user_id(5), Some(owner));
-        assert_eq!(referred_by, Some(old_user_id(3)));
-        data.members
-            .add(new_user_id(5), Principal::from_slice(&[5]), UserType::User, referred_by, 0);
-        let inviter = data.members.get_by_user_id(&old_user_id(3)).unwrap();
-        assert_eq!(inviter.referrals(), &BTreeSet::from([new_user_id(5)]));
-
-        // Once the inviter is moved onto their latest id, both sides of the referral are
-        data.migrate_user_ids(&[old_user_id(3)], new_user_id(3), None, 1);
-        let inviter = data.members.get_by_user_id(&new_user_id(3)).unwrap();
-        assert_eq!(inviter.referrals(), &BTreeSet::from([new_user_id(5)]));
-        let invited = data.members.get_by_user_id(&new_user_id(5)).unwrap();
-        assert_eq!(invited.referred_by, Some(new_user_id(3)));
-    }
-
-    #[test]
-    fn an_invitation_moved_before_the_principal_is_still_found() {
-        let mut data = Data::new_for_tests(new_user_id(1), Principal::from_slice(&[1]), String::new(), Vec::new());
-        let principal = Principal::from_slice(&[2]);
-        data.members.add_user_id(principal, old_user_id(2));
-        data.invited_users.add(
-            new_user_id(2),
-            UserInvitation {
-                invited_by: new_user_id(1),
-                timestamp: 0,
-            },
-        );
-        assert!(!data.is_invited(principal));
-
-        data.migrated_user_ids.insert(old_user_id(2), new_user_id(2));
-
-        assert!(data.is_invited(principal));
     }
 }
