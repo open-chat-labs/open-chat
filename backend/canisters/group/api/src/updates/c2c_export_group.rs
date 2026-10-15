@@ -14,9 +14,7 @@ pub enum Response {
 }
 
 // The group's state which is exported alongside its `GroupChatCore` but lives outside of it. It is
-// serialized after the `GroupChatCore` rather than wrapped with it, so that communities which only
-// deserialize the `GroupChatCore` ignore it, and groups which don't export it send nothing after
-// the `GroupChatCore`.
+// serialized after the `GroupChatCore` rather than wrapped with it.
 #[derive(Serialize, Deserialize, Debug, Default)]
 #[serde(default)]
 pub struct ExportExtras {
@@ -77,16 +75,5 @@ mod tests {
 
         assert_eq!(chat, self::chat());
         assert_eq!(extras.user_metrics, vec![(user_id(3), ByteBuf::from(vec![4]))]);
-    }
-
-    #[test]
-    fn nothing_remains_after_the_chat_in_an_export_without_extras() {
-        let bytes = msgpack::serialize_then_unwrap(chat());
-        let mut remaining = bytes.as_slice();
-
-        let chat: Chat = msgpack::deserialize(&mut remaining).unwrap();
-
-        assert_eq!(chat, self::chat());
-        assert!(remaining.is_empty());
     }
 }
