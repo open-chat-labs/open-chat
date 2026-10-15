@@ -373,9 +373,6 @@ pub struct LocalGroup {
     #[serde(default)]
     pub latest_activity_per_user: HashMap<UserId, TimestampMillis>,
     pub cycle_top_ups: Vec<CyclesTopUp>,
-    // Whether the group has finished replacing migrated users' old ids with their latest ids
-    #[serde(default)]
-    pub user_id_migration_complete: bool,
 }
 
 impl LocalGroup {
@@ -386,7 +383,6 @@ impl LocalGroup {
             latest_activity: 0,
             latest_activity_per_user: HashMap::new(),
             cycle_top_ups: Vec::new(),
-            user_id_migration_complete: false,
         }
     }
 
@@ -419,9 +415,6 @@ pub struct LocalCommunity {
     #[serde(default)]
     pub latest_activity_per_user: HashMap<UserId, TimestampMillis>,
     pub cycle_top_ups: Vec<CyclesTopUp>,
-    // Whether the community has finished replacing migrated users' old ids with their latest ids
-    #[serde(default)]
-    pub user_id_migration_complete: bool,
 }
 
 impl LocalCommunity {
@@ -432,7 +425,6 @@ impl LocalCommunity {
             latest_activity: 0,
             latest_activity_per_user: HashMap::new(),
             cycle_top_ups: Vec::new(),
-            user_id_migration_complete: false,
         }
     }
 

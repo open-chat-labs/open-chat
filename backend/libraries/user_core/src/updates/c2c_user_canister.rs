@@ -21,7 +21,6 @@ use types::{
     DirectReactionAddedNotification, EventIndex, EventWrapper, Message, MessageContent, MessageContentInitial, MessageId,
     MessageIndex, OCResult, OgPreview, P2PSwapStatus, TimestampMillis, UserId, UserType, VideoCallPresence,
 };
-use utils::migrated_user_ids::MigratedUserIds;
 
 // Whether a sender is one a canister of this kind can act for: a MultiUser canister acts only for the
 // users it holds, whose ids carry an index, never as its own canister id
@@ -185,13 +184,7 @@ pub fn receive_message<P: EventPusher>(
     })
 }
 
-pub fn edit_message(
-    chat: &mut DirectChat,
-    sender: UserId,
-    args: C2CEditMessageArgs,
-    now: TimestampMillis,
-    migrated_user_ids: &MigratedUserIds,
-) {
+pub fn edit_message(chat: &mut DirectChat, sender: UserId, args: C2CEditMessageArgs, now: TimestampMillis) {
     let Ok(thread_root_message_index) = chat.thread_root_message_index(args.thread_root_message_id) else {
         return;
     };
@@ -207,7 +200,6 @@ pub fn edit_message(
             finalise_bot_message: false,
             now,
         },
-        migrated_user_ids,
         None,
     );
 }
@@ -219,20 +211,16 @@ pub fn delete_messages(
     sender: UserId,
     args: C2CDeleteUndeleteMessagesArgs,
     now: TimestampMillis,
-    migrated_user_ids: &MigratedUserIds,
 ) -> Option<(Option<MessageIndex>, Vec<MessageId>)> {
     let thread_root_message_index = chat.thread_root_message_index(args.thread_root_message_id).ok()?;
-    let deleted = successful(chat.delete_messages(
-        DeleteUndeleteMessagesArgs {
-            caller: sender,
-            is_admin: false,
-            min_visible_event_index: EventIndex::default(),
-            thread_root_message_index,
-            message_ids: args.message_ids,
-            now,
-        },
-        migrated_user_ids,
-    ));
+    let deleted = successful(chat.delete_messages(DeleteUndeleteMessagesArgs {
+        caller: sender,
+        is_admin: false,
+        min_visible_event_index: EventIndex::default(),
+        thread_root_message_index,
+        message_ids: args.message_ids,
+        now,
+    }));
     Some((thread_root_message_index, deleted))
 }
 
@@ -243,20 +231,16 @@ pub fn undelete_messages(
     sender: UserId,
     args: C2CDeleteUndeleteMessagesArgs,
     now: TimestampMillis,
-    migrated_user_ids: &MigratedUserIds,
 ) -> Option<(Option<MessageIndex>, Vec<MessageId>)> {
     let thread_root_message_index = chat.thread_root_message_index(args.thread_root_message_id).ok()?;
-    let undeleted = successful(chat.undelete_messages(
-        DeleteUndeleteMessagesArgs {
-            caller: sender,
-            is_admin: false,
-            min_visible_event_index: EventIndex::default(),
-            thread_root_message_index,
-            message_ids: args.message_ids,
-            now,
-        },
-        migrated_user_ids,
-    ));
+    let undeleted = successful(chat.undelete_messages(DeleteUndeleteMessagesArgs {
+        caller: sender,
+        is_admin: false,
+        min_visible_event_index: EventIndex::default(),
+        thread_root_message_index,
+        message_ids: args.message_ids,
+        now,
+    }));
     Some((thread_root_message_index, undeleted))
 }
 
@@ -283,7 +267,6 @@ pub fn toggle_reaction(
     sender: UserId,
     args: ToggleReactionArgs,
     now: TimestampMillis,
-    migrated_user_ids: &MigratedUserIds,
 ) -> Option<ReactionAdded> {
     if !args.reaction.is_valid() {
         return None;
@@ -298,17 +281,15 @@ pub fn toggle_reaction(
         now,
     };
     if !args.added {
-        let _ = chat.remove_reaction(add_remove_reaction_args, migrated_user_ids);
+        let _ = chat.remove_reaction(add_remove_reaction_args);
         return None;
     }
 
-    let result = chat
-        .add_reaction::<NullEventPusher>(add_remove_reaction_args, migrated_user_ids, None)
-        .ok()?;
+    let result = chat.add_reaction::<NullEventPusher>(add_remove_reaction_args, None).ok()?;
     let message = result.value;
     // They may be reacting to their own message; in that case we should not generate any activity
     // for the other user (push notification, activity-feed event, or achievement progress).
-    if migrated_user_ids.is_same_user(message.sender, sender) {
+    if message.sender == sender {
         return None;
     }
 
@@ -353,7 +334,6 @@ pub fn tip_message(
     my_user_id: UserId,
     args: C2CTipMessageArgs,
     now: TimestampMillis,
-    migrated_user_ids: &MigratedUserIds,
 ) -> Option<TipReceived> {
     let thread_root_message_index = chat.thread_root_message_index(args.thread_root_message_id).ok()?;
     chat.tip_message::<NullEventPusher>(
@@ -367,7 +347,6 @@ pub fn tip_message(
             amount: args.amount,
             now,
         },
-        migrated_user_ids,
         None,
     )
     .ok()?;

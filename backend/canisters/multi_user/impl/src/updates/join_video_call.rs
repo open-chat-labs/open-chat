@@ -19,7 +19,7 @@ fn join_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let dismissal = data
         .users
         .with_user_mut(my_index, |user| {
-            user_core::updates::join_video_call(user, &args, my_user_id, &data.migrated_user_ids, now)
+            user_core::updates::join_video_call(user, &args, my_user_id, now)
                 .map(|()| user_core::updates::answered_dismissal(user, &args))
         })
         .expect("User not found")?;

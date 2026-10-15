@@ -42,7 +42,6 @@ fn c2c_flag_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
             vec![args.message_id],
             true,
             now,
-            &state.data.migrated_user_ids,
         )?;
         for result in results.into_iter().filter_map(|(_, result)| result.ok()) {
             state.push_bot_notification(result.bot_notification);

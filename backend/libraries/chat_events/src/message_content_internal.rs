@@ -23,7 +23,6 @@ use types::{
     TextContentEventPayload, ThumbnailData, TimestampMillis, TimestampNanos, TokenInfo, TotalVotes, TransactionHash, UserId,
     UserIdAndPrincipal, UserType, VideoCallContent, VideoCallPresence, VideoContent, VoteOperation, is_default,
 };
-use utils::migrated_user_ids::MigratedUserIds;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum MessageContentInternal {
@@ -782,33 +781,6 @@ impl MessageContentInternalSubtype for PollContentInternal {
 }
 
 impl PollContentInternal {
-    // Moves any votes left under a user's earlier ids, from before they were migrated to a MultiUser
-    // canister, over to their current id, so that they count as the user's own
-    pub fn change_voter_ids(&mut self, user_id: UserId, migrated_user_ids: &MigratedUserIds) {
-        if migrated_user_ids.is_empty() {
-            return;
-        }
-        let latest = migrated_user_ids.latest(user_id);
-        let is_earlier_id = |u: &UserId| *u != user_id && migrated_user_ids.latest(*u) == latest;
-
-        // Where only one vote per user is allowed, a vote the user has already cast under their
-        // current id stands, and otherwise their vote under the lowest option index is kept
-        let single_vote = !self.config.allow_multiple_votes_per_user;
-        let mut has_vote = single_vote && self.votes.values().any(|votes| votes.contains(&user_id));
-
-        let mut option_indexes: Vec<_> = self.votes.keys().copied().collect();
-        option_indexes.sort();
-        for option_index in option_indexes {
-            let votes = self.votes.get_mut(&option_index).unwrap();
-            let len = votes.len();
-            votes.retain(|u| !is_earlier_id(u));
-            if votes.len() < len && !has_vote && !votes.contains(&user_id) {
-                votes.push(user_id);
-                has_vote = single_vote;
-            }
-        }
-    }
-
     pub fn register_vote(&mut self, user_id: UserId, option_index: u32, operation: VoteOperation) -> RegisterVoteResult {
         if self.ended {
             RegisterVoteResult::PollEnded
@@ -1560,19 +1532,8 @@ pub struct ProposalContentInternal {
 }
 
 impl ProposalContentInternal {
-    // The user's vote, including one recorded under an earlier id, from before they were migrated
-    // to a MultiUser canister
-    pub fn vote(&self, user_id: UserId, migrated_user_ids: &MigratedUserIds) -> Option<bool> {
-        if let Some(vote) = self.votes.get(&user_id) {
-            return Some(*vote);
-        }
-        if migrated_user_ids.is_empty() {
-            return None;
-        }
-        let latest = migrated_user_ids.latest(user_id);
-        self.votes
-            .iter()
-            .find_map(|(u, vote)| (migrated_user_ids.latest(*u) == latest).then_some(*vote))
+    pub fn vote(&self, user_id: UserId) -> Option<bool> {
+        self.votes.get(&user_id).copied()
     }
 }
 
@@ -1634,10 +1595,10 @@ pub struct PrizeContentInternal {
     pub min_chit_earned: u32,
     // The sender's principal, which along with their user id determines the wallet any refund is
     // paid to. Recorded when the prize is sent, as the sender may have left the chat by the time it
-    // ends. Anonymous for prizes sent before it was recorded, which is fine as their senders were
-    // then all in their own User canisters, so are refunded at their user id, until the sender's id
-    // is moved onto the id they were migrated to, when it is set to their User canister's id (see
-    // `MessageInternal::update_user_ids`).
+    // ends. Anonymous for prizes sent before it was recorded, whose senders were then all in their own
+    // User canisters, so are refunded at their user id. A sender since migrated to a MultiUser
+    // canister had this set to their User canister's id when their id in the message was replaced, so
+    // only a sender who was never migrated is left with it anonymous.
     #[serde(rename = "pr", default = "Principal::anonymous")]
     pub principal: Principal,
 }
@@ -1666,12 +1627,7 @@ impl PrizeContentInternal {
         }
     }
 
-    pub fn final_payments(
-        &mut self,
-        sender: UserId,
-        migrated_user_ids: &MigratedUserIds,
-        now_nanos: TimestampNanos,
-    ) -> Vec<PendingCryptoTransaction> {
+    pub fn final_payments(&mut self, sender: UserId, now_nanos: TimestampNanos) -> Vec<PendingCryptoTransaction> {
         if self.final_payments_started {
             return Vec::new();
         }
@@ -1706,16 +1662,12 @@ impl PrizeContentInternal {
         }
 
         if refund > transaction_fee {
-            // The refund goes to the sender's wallet under their latest id, in case they have been
-            // migrated since sending the prize. A prize sent before the sender's principal was
-            // recorded is refunded at the id it was sent under, which alone gives its wallet.
-            let refund_to = if self.principal == Principal::anonymous() { sender } else { migrated_user_ids.latest(sender) };
             payments.push(create_pending_transaction(
                 token_symbol,
                 ledger,
                 refund - transaction_fee,
                 transaction_fee,
-                UserIdAndPrincipal::new(refund_to, self.principal).into(),
+                UserIdAndPrincipal::new(sender, self.principal).into(),
                 Some(&MEMO_PRIZE_REFUND),
                 now_nanos,
             ));
@@ -2380,101 +2332,8 @@ mod p2p_swap_tests {
 }
 
 #[cfg(test)]
-mod poll_tests {
-    use super::*;
-    use types::PollConfig;
-
-    fn user_id(i: u8) -> UserId {
-        Principal::from_slice(&[i]).into()
-    }
-
-    fn migrated(old_user_id: UserId, new_user_id: UserId) -> MigratedUserIds {
-        let mut migrated_user_ids = MigratedUserIds::default();
-        migrated_user_ids.insert(old_user_id, new_user_id);
-        migrated_user_ids
-    }
-
-    fn poll(allow_user_to_change_vote: bool) -> PollContentInternal {
-        PollContentInternal {
-            config: PollConfig {
-                text: None,
-                options: vec!["a".to_string(), "b".to_string()],
-                end_date: None,
-                anonymous: false,
-                show_votes_before_end_date: true,
-                allow_multiple_votes_per_user: false,
-                allow_user_to_change_vote,
-            }
-            .into(),
-            votes: HashMap::new(),
-            ended: false,
-        }
-    }
-
-    #[test]
-    fn vote_under_an_earlier_id_counts_as_the_users_own() {
-        let old_user_id = user_id(1);
-        let new_user_id = user_id(2);
-
-        let mut poll = poll(false);
-        poll.register_vote(old_user_id, 0, VoteOperation::RegisterVote);
-
-        poll.change_voter_ids(new_user_id, &migrated(old_user_id, new_user_id));
-
-        assert_eq!(poll.votes.get(&0), Some(&vec![new_user_id]));
-        // The user already voted, so can't vote again for another option
-        assert!(matches!(
-            poll.register_vote(new_user_id, 1, VoteOperation::RegisterVote),
-            RegisterVoteResult::UserCannotChangeVote
-        ));
-        assert!(matches!(
-            poll.register_vote(new_user_id, 0, VoteOperation::RegisterVote),
-            RegisterVoteResult::SuccessNoChange
-        ));
-    }
-
-    #[test]
-    fn vote_under_the_current_id_stands_where_only_one_is_allowed() {
-        let old_user_id = user_id(1);
-        let new_user_id = user_id(2);
-
-        let mut poll = poll(true);
-        poll.votes.insert(0, vec![old_user_id]);
-        poll.votes.insert(1, vec![new_user_id]);
-
-        poll.change_voter_ids(new_user_id, &migrated(old_user_id, new_user_id));
-
-        assert_eq!(poll.votes.get(&0), Some(&Vec::new()));
-        assert_eq!(poll.votes.get(&1), Some(&vec![new_user_id]));
-    }
-
-    #[test]
-    fn votes_under_both_ids_are_merged() {
-        let old_user_id = user_id(1);
-        let new_user_id = user_id(2);
-
-        let mut poll = poll(true);
-        poll.votes.insert(0, vec![old_user_id, new_user_id, user_id(3)]);
-
-        poll.change_voter_ids(new_user_id, &migrated(old_user_id, new_user_id));
-
-        assert_eq!(poll.votes.get(&0), Some(&vec![new_user_id, user_id(3)]));
-    }
-}
-
-#[cfg(test)]
 mod prize_tests {
     use super::*;
-
-    // A user's old id, which was their User canister's id
-    fn old_user_id() -> UserId {
-        Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap().into()
-    }
-
-    // The same user once migrated to a MultiUser canister
-    fn new_user_id() -> UserId {
-        UserId::new_indexed(Principal::from_text("yaxqu-oqaaa-aaaaf-br7ya-cai").unwrap(), 1)
-    }
 
     fn principal() -> Principal {
         Principal::from_slice(&[7])
@@ -2513,44 +2372,8 @@ mod prize_tests {
     }
 
     // The owner of the account the prize's unclaimed remainder is refunded to
-    fn refunded_to(principal: Principal, migrated_user_ids: &MigratedUserIds) -> Principal {
-        let payments = prize(principal).final_payments(old_user_id(), migrated_user_ids, 0);
-        let [PendingCryptoTransaction::ICRC1(refund)] = payments.as_slice() else {
-            panic!("Expected a single refund: {payments:?}");
-        };
-        refund.to.owner
-    }
-
-    // The prize, as the content of a message sent under `old_user_id`, once the message's ids have
-    // been moved onto the sender's latest id
-    fn prize_sent_by_old_user_id_once_updated(principal: Principal) -> (UserId, PrizeContentInternal) {
-        let mut event = crate::ChatEventInternal::Message(Box::new(crate::MessageInternal {
-            message_index: 1.into(),
-            message_id: 1u64.into(),
-            sender: old_user_id(),
-            content: MessageContentInternal::Prize(prize(principal)),
-            sender_context: None,
-            replies_to: None,
-            reactions: Vec::new(),
-            tips: types::Tips::default(),
-            last_edited: None,
-            deleted_by: None,
-            thread_summary: None,
-            forwarded: false,
-            block_level_markdown: false,
-            og_previews: Vec::new(),
-            moderation_flags: 0,
-        }));
-        assert!(event.update_user_ids(&mut |u| if u == old_user_id() { new_user_id() } else { u }));
-        let message = event.into_message().unwrap();
-        let MessageContentInternal::Prize(prize) = message.content else {
-            panic!();
-        };
-        (message.sender, prize)
-    }
-
-    fn refund_owner(mut prize: PrizeContentInternal, sender: UserId, migrated_user_ids: &MigratedUserIds) -> Principal {
-        let payments = prize.final_payments(sender, migrated_user_ids, 0);
+    fn refunded_to(sender: UserId, principal: Principal) -> Principal {
+        let payments = prize(principal).final_payments(sender, 0);
         let [PendingCryptoTransaction::ICRC1(refund)] = payments.as_slice() else {
             panic!("Expected a single refund: {payments:?}");
         };
@@ -2558,47 +2381,16 @@ mod prize_tests {
     }
 
     #[test]
-    fn prize_moved_onto_its_senders_new_id_is_refunded_to_the_same_wallet() {
-        let mut migrated_user_ids = MigratedUserIds::default();
-        migrated_user_ids.insert(old_user_id(), new_user_id());
+    fn unclaimed_prizes_are_refunded_to_the_senders_wallet() {
+        let sender = UserId::new_indexed(Principal::from_text("yaxqu-oqaaa-aaaaf-br7ya-cai").unwrap(), 1);
 
-        // Refunded to the account of the user's principal, as when the message has the old id
-        let (sender, prize) = prize_sent_by_old_user_id_once_updated(principal());
-        assert_eq!(sender, new_user_id());
-        assert_eq!(prize.principal, principal());
-        assert_eq!(refund_owner(prize, sender, &migrated_user_ids), principal());
-
-        // Refunded to the account of the canister it was sent from, as when the message has the old
-        // id, whether or not the canister still knows of the migration
-        let (sender, prize) = prize_sent_by_old_user_id_once_updated(Principal::anonymous());
-        assert_eq!(sender, new_user_id());
-        assert_eq!(
-            refund_owner(prize.clone(), sender, &migrated_user_ids),
-            old_user_id().as_principal()
-        );
-        assert_eq!(
-            refund_owner(prize, sender, &MigratedUserIds::default()),
-            old_user_id().as_principal()
-        );
+        assert_eq!(refunded_to(sender, principal()), principal());
     }
 
     #[test]
-    fn prize_sent_before_its_sender_was_migrated_is_refunded_to_their_new_wallet() {
-        let mut migrated_user_ids = MigratedUserIds::default();
-        migrated_user_ids.insert(old_user_id(), new_user_id());
+    fn a_prize_from_before_its_senders_principal_was_recorded_is_refunded_to_their_user_id() {
+        let sender: UserId = Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap().into();
 
-        // The new id's wallet is the account of the user's principal
-        assert_eq!(refunded_to(principal(), &migrated_user_ids), principal());
-        // A user who hasn't been migrated is refunded to their canister's account, as before
-        assert_eq!(
-            refunded_to(principal(), &MigratedUserIds::default()),
-            old_user_id().as_principal()
-        );
-        // A prize which predates the sender's principal being recorded is refunded to the account of
-        // the id it was sent under, never to the anonymous principal's account
-        assert_eq!(
-            refunded_to(Principal::anonymous(), &migrated_user_ids),
-            old_user_id().as_principal()
-        );
+        assert_eq!(refunded_to(sender, Principal::anonymous()), sender.as_principal());
     }
 }

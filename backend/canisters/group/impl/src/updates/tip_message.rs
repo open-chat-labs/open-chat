@@ -69,12 +69,10 @@ fn prepare(args: Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
     };
     let user_id = user.user_id;
 
-    let recipient = state.data.chat.check_can_tip_message(
-        user_id,
-        args.thread_root_message_index,
-        args.message_id,
-        &state.data.migrated_user_ids,
-    )?;
+    let recipient = state
+        .data
+        .chat
+        .check_can_tip_message(user_id, args.thread_root_message_index, args.message_id)?;
 
     let c2c_args = TipToRecord {
         recipient,
@@ -153,7 +151,6 @@ fn tip_message_with_completed_transfer(user_id: UserId, args: TipToRecord, state
 
     let result = state.data.chat.tip_message(
         tip_message_args,
-        &state.data.migrated_user_ids,
         GroupEventPusher {
             now,
             rng: state.env.rng(),
@@ -167,9 +164,7 @@ fn tip_message_with_completed_transfer(user_id: UserId, args: TipToRecord, state
             .chat
             .events
             .message_internal(EventIndex::default(), args.thread_root_message_index, args.message_id.into())
-        // The sender is a member under their latest id, in case they have been migrated since
-        // sending the message
-        && let sender_id = state.data.migrated_user_ids.latest(message.sender)
+        && let sender_id = message.sender
         && let Some(sender) = state.data.chat.members.get(&sender_id)
         && sender_id != user_id
         && !sender.user_type().is_bot()

@@ -63,11 +63,10 @@ pub(crate) fn toggle_reaction(
                 reaction: reaction.clone(),
                 now,
             };
-            let migrated_user_ids = &state.data.migrated_user_ids;
             if added {
-                chat.add_reaction(args, migrated_user_ids, Some(event_pusher))?;
+                chat.add_reaction(args, Some(event_pusher))?;
             } else {
-                chat.remove_reaction(args, migrated_user_ids)?;
+                chat.remove_reaction(args)?;
             }
             let thread_root_message_id = chat.thread_root_message_id(thread_root_message_index)?;
 

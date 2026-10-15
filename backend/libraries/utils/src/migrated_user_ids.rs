@@ -34,15 +34,6 @@ impl MigratedUserIds {
         true
     }
 
-    // Inserts the migrations from each of the user's previous ids, ordered oldest first as
-    // returned by `previous_ids`, through to `user_id`
-    pub fn insert_previous_ids(&mut self, previous_user_ids: &[UserId], user_id: UserId) {
-        let next_ids = previous_user_ids.iter().skip(1).chain([&user_id]);
-        for (old_user_id, new_user_id) in previous_user_ids.iter().zip(next_ids) {
-            self.insert(*old_user_id, *new_user_id);
-        }
-    }
-
     // The user's latest id, if they have been migrated since having `old_user_id`
     pub fn get(&self, old_user_id: &UserId) -> Option<UserId> {
         self.map.contains_key(old_user_id).then(|| self.latest(*old_user_id))
@@ -62,23 +53,12 @@ impl MigratedUserIds {
         self.map.iter().map(|(old, new)| (*old, *new))
     }
 
-    // Whether `user_id` is the id a user had before or after any of the migrations
-    pub fn contains(&self, user_id: &UserId) -> bool {
-        self.map.contains_key(user_id) || self.previous.contains_key(user_id)
-    }
-
     pub fn len(&self) -> usize {
         self.map.len()
     }
 
     pub fn is_empty(&self) -> bool {
         self.map.is_empty()
-    }
-
-    // Whether both ids belong to the same user, one having been migrated from the other, or both from
-    // a third
-    pub fn is_same_user(&self, user_id1: UserId, user_id2: UserId) -> bool {
-        user_id1 == user_id2 || (!self.map.is_empty() && self.latest(user_id1) == self.latest(user_id2))
     }
 
     // Each of the ids the user had before `user_id`, ordered oldest first, found by following
@@ -140,40 +120,12 @@ mod tests {
     }
 
     #[test]
-    fn contains_both_sides_of_each_migration() {
-        let mut ids = MigratedUserIds::default();
-        ids.insert(user_id(1), user_id(2));
-        ids.insert(user_id(2), user_id(3));
-
-        assert!(ids.contains(&user_id(1)));
-        assert!(ids.contains(&user_id(2)));
-        assert!(ids.contains(&user_id(3)));
-        assert!(!ids.contains(&user_id(4)));
-    }
-
-    #[test]
-    fn same_user_across_migrations() {
-        let mut ids = MigratedUserIds::default();
-        ids.insert(user_id(1), user_id(2));
-        ids.insert(user_id(2), user_id(3));
-
-        assert!(ids.is_same_user(user_id(1), user_id(3)));
-        assert!(ids.is_same_user(user_id(3), user_id(1)));
-        assert!(ids.is_same_user(user_id(1), user_id(2)));
-        assert!(ids.is_same_user(user_id(4), user_id(4)));
-        assert!(!ids.is_same_user(user_id(1), user_id(4)));
-        assert_eq!(ids.latest(user_id(1)), user_id(3));
-        assert_eq!(ids.latest(user_id(4)), user_id(4));
-    }
-
-    #[test]
     fn two_ids_cannot_be_migrated_to_the_same_id() {
         let mut ids = MigratedUserIds::default();
 
         assert!(ids.insert(user_id(1), user_id(3)));
         assert!(!ids.insert(user_id(2), user_id(3)));
 
-        assert!(!ids.is_same_user(user_id(1), user_id(2)));
         assert_eq!(ids.get(&user_id(2)), None);
     }
 
@@ -278,20 +230,5 @@ mod tests {
         assert_eq!(ids.previous_ids(user_id(2)), vec![user_id(1)]);
         assert!(ids.previous_ids(user_id(1)).is_empty());
         assert!(ids.previous_ids(user_id(6)).is_empty());
-    }
-
-    #[test]
-    fn insert_previous_ids_rebuilds_the_migrations() {
-        let mut source = MigratedUserIds::default();
-        source.insert(user_id(1), user_id(2));
-        source.insert(user_id(2), user_id(3));
-
-        let mut ids = MigratedUserIds::default();
-        ids.insert_previous_ids(&source.previous_ids(user_id(3)), user_id(3));
-
-        assert_eq!(ids.get(&user_id(1)), Some(user_id(3)));
-        assert_eq!(ids.get(&user_id(2)), Some(user_id(3)));
-        assert_eq!(ids.previous_ids(user_id(3)), vec![user_id(1), user_id(2)]);
-        assert_eq!(ids.len(), 2);
     }
 }

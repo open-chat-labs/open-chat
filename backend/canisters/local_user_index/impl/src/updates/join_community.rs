@@ -9,10 +9,13 @@ use types::CanisterId;
 #[update(guard = "caller_is_openchat_user", msgpack = true)]
 #[trace]
 async fn join_community(args: Args) -> Response {
-    let (user_details, previous_user_ids) = mutate_state(|state| {
+    let (user_details, previous_user_ids, referred_by) = mutate_state(|state| {
         let user_details = state.get_calling_user_and_process_credentials(args.verified_credential_args.as_ref());
         let previous_user_ids = state.data.migrated_user_ids.previous_ids(user_details.user_id);
-        (user_details, previous_user_ids)
+        // A referral link may name the referrer by an id they had before being migrated to a
+        // MultiUser canister, which the community no longer knows them by
+        let referred_by = args.referred_by.map(|user_id| state.data.migrated_user_ids.latest(user_id));
+        (user_details, previous_user_ids, referred_by)
     });
 
     let is_bot = user_details.user_type.is_bot();
@@ -22,7 +25,7 @@ async fn join_community(args: Args) -> Response {
         principal: user_details.principal,
         channel_id: None,
         invite_code: args.invite_code,
-        referred_by: args.referred_by,
+        referred_by,
         is_platform_moderator: user_details.is_platform_moderator,
         user_type: user_details.user_type,
         diamond_membership_expires_at: user_details.diamond_membership_expires_at,

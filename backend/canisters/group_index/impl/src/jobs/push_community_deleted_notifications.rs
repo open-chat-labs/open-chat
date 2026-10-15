@@ -56,8 +56,6 @@ async fn push_notifications(notifications: Vec<(UserId, DeletedCommunityInfo)>) 
 }
 
 async fn push_notification(user_id: UserId, deleted_community: DeletedCommunityInfo) {
-    // Sent to the user's latest id if they are known to have been migrated since having `user_id`
-    let user_id = read_state(|state| state.data.migrated_user_ids.latest(user_id));
     let args = multi_user_canister::c2c_notify_community_deleted::Args {
         user_id,
         deleted_community,
@@ -72,7 +70,6 @@ async fn push_notification(user_id: UserId, deleted_community: DeletedCommunityI
             let deleted_community = args.deleted_community;
 
             if let Some(new_user_id) = new_user_id {
-                state.data.migrated_user_ids.insert(user_id, new_user_id);
                 state
                     .data
                     .deleted_communities
