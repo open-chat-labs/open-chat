@@ -388,7 +388,7 @@
         }
     });
 
-    // clear selected chat
+    // forget the previous chat once none is selected
     $effect(() => {
         if ($selectedChatIdStore === undefined) {
             previousChatId = undefined;

@@ -105,7 +105,8 @@
             $selectedChatWebhooksStore,
         ),
     );
-    // The details held can be for another chat until the next chat's details load
+    // The details held can be for another chat, when a thread preview shows a message from a chat
+    // other than the one selected
     let chatMembers = $derived(
         chatIdentifiersEqual($selectedServerChatStore?.chatId, chatId)
             ? $selectedChatMembersStore
