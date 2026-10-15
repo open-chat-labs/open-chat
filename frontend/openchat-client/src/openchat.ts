@@ -5521,9 +5521,11 @@ export class OpenChat {
     }
 
     #rulesNeedAccepting(): boolean {
+        // The chat's rules aren't known until its details load, but its community's may be (when
+        // the chat is in the community already selected), so each is checked on its own
         const chatRules = selectedChatRulesStore.value;
         const chat = selectedChatSummaryStore.value;
-        if (chat === undefined || chatRules === undefined) {
+        if (chat === undefined) {
             return false;
         }
 
@@ -5532,14 +5534,14 @@ export class OpenChat {
 
         console.debug(
             "RULES: rulesNeedAccepting",
-            chatRules.enabled,
+            chatRules?.enabled,
             chat.membership?.rulesAccepted,
             communityRules?.enabled,
             community?.membership?.rulesAccepted,
         );
 
         return (
-            (chatRules.enabled && !(chat.membership?.rulesAccepted ?? false)) ||
+            ((chatRules?.enabled ?? false) && !(chat.membership?.rulesAccepted ?? false)) ||
             ((communityRules?.enabled ?? false) && !(community?.membership?.rulesAccepted ?? false))
         );
     }
