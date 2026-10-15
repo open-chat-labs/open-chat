@@ -10,6 +10,7 @@
   import Api from './groups/Api.svelte';
   import Search from './Search.svelte';
   import type { Target } from './search';
+  import { sectionFromHash } from './hash';
   import { setI18n, lookup, interpolate, messages } from '../lib/i18n';
 
   const KEY = 'openchat-library-';
@@ -28,7 +29,10 @@
   // out — it stays plain English — and Pseudo shows where longer translations would overflow
   const LANGS = ['en', 'keys', 'pseudo'] as const;
 
-  let group = $state<GroupId>(pick(load('group'), ['foundations', 'general', 'features', 'api'], 'foundations'));
+  // a deep link (#<section id>) opens that section's group and lands on it, whatever was stored last
+  const linked = sectionFromHash(location.hash);
+  if (linked) save('section-' + linked.group, linked.id);
+  let group = $state<GroupId>(linked?.group ?? pick(load('group'), ['foundations', 'general', 'features', 'api'], 'foundations'));
   let mode = $state(pick(load('mode'), MODES, 'dark'));
   let accent = $state(pick(load('accent'), ACCENTS, 'pink'));
   let dir = $state(pick(load('dir'), DIRS, 'ltr'));
@@ -145,6 +149,7 @@
   // section, so the restore above lands on it. The section's heading flashes once it's in place.
   function jump(t: Target) {
     const same = t.group === group;
+    if (location.hash && sectionFromHash(location.hash)?.id !== t.id) dropHash();
     if (same) {
       const el = document.getElementById(t.id);
       if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - OFFSET, behavior: 'smooth' });
@@ -162,16 +167,36 @@
   const stopRestore = () => {
     restoring = false;
   };
+
+  // A hash that no longer matches where the reader is would send a reload (or a shared link) back to the old section.
+  // replaceState doesn't fire hashchange or scroll.
+  const dropHash = () => history.replaceState(history.state, '', location.pathname + location.search);
+
+  // The hash changing in-page (a section link, an edited URL, back/forward): another group's section is switched to
+  // like a search jump; in this group the browser has already scrolled to it, so only a running restore is stopped.
+  function onHashChange() {
+    const t = sectionFromHash(location.hash);
+    if (!t) return;
+    if (t.group === group) stopRestore();
+    else jump(t);
+  }
+
+  function showGroup(g: GroupId) {
+    if (g === group) return;
+    const t = sectionFromHash(location.hash);
+    if (t && t.group !== g) dropHash();
+    group = g;
+  }
 </script>
 
-<svelte:window onscroll={onScroll} onwheel={stopRestore} ontouchstart={stopRestore} onkeydown={stopRestore} />
+<svelte:window onscroll={onScroll} onwheel={stopRestore} ontouchstart={stopRestore} onkeydown={stopRestore} onhashchange={onHashChange} />
 
 <div class="root" data-mode={mode} data-accent={accent} {dir}>
   <nav aria-label="Library sections">
     <div class="brand">OPENCHAT</div>
     <div class="tabs" role="tablist" aria-label="Library group">
       {#each groups as g (g.id)}
-        <span role="tab" tabindex="0" aria-selected={group === g.id} class="tab" class:on={group === g.id} onclick={() => (group = g.id)}>{g.label}</span>
+        <span role="tab" tabindex="0" aria-selected={group === g.id} class="tab" class:on={group === g.id} onclick={() => showGroup(g.id)}>{g.label}</span>
       {/each}
     </div>
     <div class="divider" role="separator"></div>

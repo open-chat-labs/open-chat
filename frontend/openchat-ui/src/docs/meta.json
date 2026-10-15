@@ -2996,6 +2996,17 @@
         "required": false,
         "componentDefault": "{}",
         "doc": "Click handler per action key."
+      },
+      {
+        "name": "labels",
+        "type": "Partial<Record<Action, string>>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "{}",
+        "doc": "Accessible name per action key: resource key (or literal text); defaults per action."
       }
     ],
     "group": "library"
@@ -7607,6 +7618,17 @@
         "required": false,
         "componentDefault": "'auto'",
         "doc": ""
+      },
+      {
+        "name": "label",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Resource key (or literal text) for the whole line, with a {time} placeholder: \"Ends in {time}\". Wins over prefix/suffix."
       },
       {
         "name": "prefix",
