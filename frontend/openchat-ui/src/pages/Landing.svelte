@@ -29,6 +29,8 @@
     learnHref?: string;
     /** Link to a Learn sub-page; defaults to learnHref + '#page'. Map your own paths (/roadmap, /faq …) here. */
     learnPageHref?: (page: LearnPage) => string;
+    /** The Learn sub-pages to link in the menu and footer; pass learnPagesOf(content) when the host's Learn content leaves a doc out. */
+    learnPages?: LearnPage[];
     /** Featured communities for the Communities section; without any, only its heading and Browse link show. */
     communities?: LandingCommunity[];
     /** Android Play Store build; without it that choice isn't a link. */
@@ -56,6 +58,7 @@
     exploreHref = '/communities',
     learnHref = '/learn',
     learnPageHref,
+    learnPages = LEARN_PAGES,
     communities = [],
     playStoreHref,
     apkHref,
@@ -107,7 +110,17 @@
   const authState = new PageAuthState(() => ({ auth, onEnterApp, appHref }));
 
   const learnLink = (page: LearnPage) => (learnPageHref ? learnPageHref(page) : learnHashHref(learnHref, page));
-  const fmt = (n: number) => (n >= 1e6 ? `${+(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${+(n / 1e3).toFixed(1)}K` : String(n));
+  // 62504 → '62.5K'; the unit is chosen after rounding, so 999950 is '1M', not '1000K'
+  const fmt = (n: number) => {
+    if (n < 1e3) return String(n);
+    let v = n;
+    for (const unit of ['K', 'M', 'B']) {
+      v /= 1e3;
+      const rounded = +v.toFixed(1);
+      if (rounded < 1e3 || unit === 'B') return `${rounded}${unit}`;
+    }
+    return String(n);
+  };
 
   function toggleMode() {
     const next: PageMode = shownMode === 'dark' ? 'light' : 'dark';
@@ -189,7 +202,7 @@
           >
           {#if learnOpen}
             <div class="menu learn-menu" role="menu">
-              {#each LEARN_PAGES as p}
+              {#each learnPages as p}
                 <a class="learn-item" href={learnLink(p)} role="menuitem" onclick={() => (learnOpen = false)}>
                   <span class="learn-label">{t(`ui.learn.tabs.${p}`)}</span>
                   <span class="learn-hint">{t(`ui.landing.learnHints.${p}`)}</span>
@@ -473,7 +486,7 @@
         </div>
         <div class="footer-group">
           <span class="footer-heading">{t('ui.landing.footer.learn')}</span>
-          {#each LEARN_PAGES as p}<a class="footer-link" href={learnLink(p)}>{t(`ui.learn.tabs.${p}`)}</a>{/each}
+          {#each learnPages as p}<a class="footer-link" href={learnLink(p)}>{t(`ui.learn.tabs.${p}`)}</a>{/each}
         </div>
         <div class="footer-group">
           <span class="footer-heading">{t('ui.landing.footer.legal')}</span>

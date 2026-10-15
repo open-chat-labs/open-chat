@@ -87,6 +87,30 @@ describe('Learn', () => {
       flushSync();
       expect(current()).toBe('FAQs');
     });
+
+    test('back to the entry without a hash shows the roadmap again; an unknown hash leaves the sub-page alone', () => {
+      history.replaceState(null, '', '/learn');
+      show();
+      click(tab('FAQs'));
+      expect(current()).toBe('FAQs');
+      history.replaceState(null, '', '/learn');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+      flushSync();
+      expect(current()).toBe('Roadmap');
+      click(tab('FAQs'));
+      history.replaceState(null, '', '/learn#vision');
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+      flushSync();
+      expect(current()).toBe('FAQs');
+    });
+
+    test('learnPageHref is for host routing: hash-mode links stay hash links, so a click and the href agree', () => {
+      history.replaceState(null, '', '/learn');
+      show({ learnPageHref: (p: string) => `/${p}` });
+      expect(tab('FAQs').getAttribute('href')).toBe('/learn#faq');
+      click(tab('FAQs'));
+      expect(location.hash).toBe('#faq');
+    });
   });
 
   describe('with `page`, the host routes', () => {
@@ -135,6 +159,16 @@ describe('Learn', () => {
       expect(q('.article')!.textContent).toContain('That post isn’t here any more.');
       expect(q('.back')).not.toBeNull();
     });
+
+    test('a doc sub-page the content does not have shows the roadmap, whether the host or the hash asks for it', () => {
+      const content: LearnContent = { ...placeholderLearnContent, docs: { whitepaper: placeholderLearnContent.docs.whitepaper } };
+      show({ page: 'architecture', content });
+      expect([current(), h1()]).toEqual(['Roadmap', 'Where we’ve been, where we’re going']);
+      unmount(app!);
+      history.replaceState(null, '', '/learn#architecture');
+      show({ content });
+      expect([current(), h1()]).toEqual(['Roadmap', 'Where we’ve been, where we’re going']);
+    });
   });
 
   test('FAQ search filters questions and opens the matches; nothing matching says so', () => {
@@ -157,6 +191,32 @@ describe('Learn', () => {
     expect(q('.faq-empty')!.textContent).toBe('No questions match “zebra”.');
   });
 
+  test('while searching, a match can be closed and reopened; clearing the search restores the questions as they were', () => {
+    show({ page: 'faq' });
+    const search = (value: string) => {
+      const input = q<HTMLInputElement>('.search-input')!;
+      input.value = value;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      flushSync();
+    };
+    click(all('.question-button')[0]);
+    search('hotkey');
+    const match = all('.question-button')[0];
+    expect(match.getAttribute('aria-expanded')).toBe('true');
+    click(match);
+    expect([match.getAttribute('aria-expanded'), all('.answer').length]).toEqual(['false', 0]);
+    click(match);
+    expect(match.getAttribute('aria-expanded')).toBe('true');
+    click(match);
+    search('');
+    // only the question opened before the search is open
+    expect(all('.question-button').map((b) => b.getAttribute('aria-expanded')).filter((x) => x === 'true')).toHaveLength(1);
+    expect(all('.question-button')[0].getAttribute('aria-expanded')).toBe('true');
+    // a new query starts with every match open again
+    search('hotkey');
+    expect(all('.question-button')[0].getAttribute('aria-expanded')).toBe('true');
+  });
+
   test('roadmap: up-next cards, years in order, and items with detail expand', () => {
     show({ page: 'roadmap' });
     expect(all('.next-title').map((x) => x.textContent)).toEqual(['NFTs, contacts, personas and more', 'Native apps', 'Blue sky thinking']);
@@ -168,6 +228,15 @@ describe('Learn', () => {
     expect(q('.item-detail')!.textContent).toContain('Bot platform and SDK');
     click(item);
     expect(q('.item-detail')).toBeNull();
+  });
+
+  test('roadmap content out of year order still gets one heading per year', () => {
+    const done = (year: string, title: string) => ({ status: 'done' as const, year, when: 'Q1', title });
+    show({ page: 'roadmap', content: { ...placeholderLearnContent, roadmap: [done('2024', 'A'), done('2025', 'B'), done('2024', 'C')] } });
+    expect(all('.year').map((y) => [y.querySelector('.year-label')!.textContent, [...y.querySelectorAll('.item-title')].map((x) => x.textContent)])).toEqual([
+      ['2024', ['A', 'C']],
+      ['2025', ['B']],
+    ]);
   });
 
   test('host content replaces the placeholder; a doc it leaves out has no tab', () => {

@@ -8,7 +8,7 @@ export { default as Landing } from './Landing.svelte';
 export { default as Learn } from './Learn.svelte';
 export type { PageAuth } from './pageAuth.svelte';
 export type { HeroStyle } from './heroBackground';
-export { LEARN_PAGES, learnFromHash, learnHashHref, placeholderLearnContent } from './learnContent';
+export { LEARN_PAGES, learnFromHash, learnHashHref, learnPagesOf, placeholderLearnContent } from './learnContent';
 export type { FaqGroup, LearnContent, LearnDoc, LearnDocPage, LearnDocSection, LearnPage, LearnPost, RoadmapItem } from './learnContent';
 export { PAGE_ACCENTS } from './types';
 export type { LandingCommunity, PageAccent, PageMode } from './types';

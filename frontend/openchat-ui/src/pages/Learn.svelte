@@ -4,7 +4,8 @@
      default; see learnContent.ts for the shapes a host loads from markdown / JSON).
      Which sub-page shows: the host decides through `page` (and `post`) when it routes its own paths (/roadmap,
      /blog/:slug …); without `page` the URL hash does (#faq, #blog/<slug>), so deep links work either way. Links use
-     learnPageHref; in host-routed mode onNavigate takes the click instead of the link when given.
+     learnPageHref in host-routed mode (hash links otherwise); there onNavigate takes the click instead of the link when
+     given. A doc sub-page the content doesn't have shows the roadmap.
      Sign in / Create account open AuthDialog with the host's `auth` callbacks, as on Landing. -->
 <script lang="ts">
   import { onMount } from 'svelte';
@@ -12,7 +13,7 @@
   import AuthDialog from '../features/components/AuthDialog.svelte';
   import { PageAuthState, type PageAuth } from './pageAuth.svelte';
   import { prefersReducedMotion } from './heroBackground';
-  import { LEARN_PAGES, learnFromHash, learnHashHref, placeholderLearnContent, type LearnContent, type LearnPage, type RoadmapItem } from './learnContent';
+  import { learnFromHash, learnHashHref, learnPagesOf, placeholderLearnContent, type LearnContent, type LearnPage, type RoadmapItem } from './learnContent';
   import type { PageAccent, PageMode } from './types';
 
   interface Props {
@@ -28,7 +29,7 @@
     page?: LearnPage;
     /** With page 'blog': the open post's slug. */
     post?: string;
-    /** Link to a sub-page (or a blog post); defaults to learnHref + '#page' ('#blog/<slug>'). */
+    /** With `page`: link to a sub-page (or a blog post). Without `page` the links are learnHref + '#page' ('#blog/<slug>'). */
     learnPageHref?: (page: LearnPage, post?: string) => string;
     /** Called on every sub-page or post change. When the host sets `page`, it handles the click (no link navigation). */
     onNavigate?: (page: LearnPage, post?: string) => void;
@@ -61,7 +62,12 @@
 
   // the hash route, used when the host doesn't set `page`
   let fromHash = $state<{ page: LearnPage; post?: string }>({ page: 'roadmap' });
-  const current = $derived(page ?? fromHash.page);
+  const tabs = $derived(learnPagesOf(content));
+  // a doc the content doesn't have (a deep link, or a stale link from Landing) falls back to the roadmap
+  const current = $derived.by(() => {
+    const p = page ?? fromHash.page;
+    return tabs.includes(p) ? p : 'roadmap';
+  });
   const openSlug = $derived(page !== undefined ? post : fromHash.post);
 
   let faqQuery = $state('');
@@ -70,32 +76,38 @@
 
   const authState = new PageAuthState(() => ({ auth, onEnterApp, appHref }));
 
-  const tabs = $derived(LEARN_PAGES.filter((p) => (p === 'whitepaper' || p === 'architecture' ? !!content.docs[p] : true)));
   const doc = $derived(current === 'whitepaper' || current === 'architecture' ? content.docs[current] : undefined);
   const openPost = $derived(current === 'blog' && openSlug ? (content.posts.find((p) => p.slug === openSlug) ?? null) : undefined);
 
   const roadNext = $derived(content.roadmap.filter((r) => r.status === 'next'));
+  // done items grouped by year, years in the order they first appear in the content
   const roadYears = $derived.by(() => {
-    const years: { year: string; items: RoadmapItem[] }[] = [];
+    const years = new Map<string, RoadmapItem[]>();
     for (const item of content.roadmap) {
       if (item.status !== 'done') continue;
       const year = item.year ?? '';
-      const last = years[years.length - 1];
-      if (last?.year === year) last.items.push(item);
-      else years.push({ year, items: [item] });
+      const items = years.get(year);
+      if (items) items.push(item);
+      else years.set(year, [item]);
     }
-    return years;
+    return [...years].map(([year, items]) => ({ year, items }));
   });
   const roadKey = (r: RoadmapItem) => `${r.year}/${r.when}/${r.title}`;
 
   const faqSearch = $derived(faqQuery.trim().toLowerCase());
+  // while searching every match starts open; closing one only lasts for that query, so faqOpen is untouched
+  let faqClosedInSearch = $derived.by((): Record<string, boolean> => {
+    void faqSearch;
+    return {};
+  });
   const faqGroups = $derived(
     content.faq
       .map((g) => ({ title: g.title, items: g.items.filter((it) => !faqSearch || `${it.q} ${it.a}`.toLowerCase().includes(faqSearch)) }))
       .filter((g) => g.items.length),
   );
 
-  const linkFor = (p: LearnPage, slug?: string) => (learnPageHref ? learnPageHref(p, slug) : learnHashHref(learnHref, p, slug));
+  // in hash mode the links are hash links, so a click and an opened-in-new-tab link land on the same sub-page
+  const linkFor = (p: LearnPage, slug?: string) => (page !== undefined && learnPageHref ? learnPageHref(p, slug) : learnHashHref(learnHref, p, slug));
 
   function go(e: MouseEvent, p: LearnPage, slug?: string) {
     if (page !== undefined) {
@@ -113,15 +125,22 @@
     window.scrollTo?.(0, 0);
   }
 
+  function toggleFaq(question: string) {
+    if (faqSearch) faqClosedInSearch = { ...faqClosedInSearch, [question]: !faqClosedInSearch[question] };
+    else faqOpen[question] = !faqOpen[question];
+  }
+
   function jumpTo(id: string) {
     document.getElementById(id)?.scrollIntoView?.({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
   }
 
   onMount(() => {
     if (page !== undefined) return;
+    // no hash (back to the entry the page opened on) is the roadmap; an unknown one leaves the sub-page as it is
     const read = () => {
       const r = learnFromHash(location.hash);
       if (r) fromHash = r;
+      else if (!location.hash.replace(/^#/, '')) fromHash = { page: 'roadmap' };
     };
     read();
     window.addEventListener('hashchange', read);
@@ -320,9 +339,9 @@
           <section class="faq-group">
             <h2 class="faq-heading">{g.title}</h2>
             {#each g.items as q}
-              {@const open = !!faqSearch || !!faqOpen[q.q]}
+              {@const open = faqSearch ? !faqClosedInSearch[q.q] : !!faqOpen[q.q]}
               <div class="question">
-                <button class="question-button" aria-expanded={open} onclick={() => (faqOpen[q.q] = !faqOpen[q.q])}
+                <button class="question-button" aria-expanded={open} onclick={() => toggleFaq(q.q)}
                   ><span class="question-text">{q.q}</span>{@render glyph('chevron-down', open ? 'item-chev open' : 'item-chev')}</button
                 >
                 {#if open}<p class="answer">{q.a}</p>{/if}

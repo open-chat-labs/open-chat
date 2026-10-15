@@ -1,15 +1,20 @@
 // Landing hero backdrop: a field of hexagons, faded out towards the edges, that light up in the accent colour, either as
 // ripples spreading from random cells ('pulse') or a slow drifting band ('aurora'). Colours come from the canvas's
 // computed style (`--accent`, and `color` for the hexagon outlines), so they follow the theme root it sits under.
-// With reduced motion it draws one still frame and never animates. Pauses while scrolled out of view.
+// With reduced motion, or style 'off', it draws one frame and doesn't animate. Pauses while scrolled out of view.
 
 export type HeroStyle = 'pulse' | 'aurora' | 'off';
 
 const HEX_R = 30;
 const SQ3 = Math.sqrt(3);
+// a ripple's front is a gaussian of this width; beyond 3 sigma from it a cell gets no visible glow
+const RIPPLE_SIGMA = 38;
+const RIPPLE_REACH = 3 * RIPPLE_SIGMA;
 
 type Cell = { x: number; y: number; mask: number };
 type Ripple = { x: number; y: number; t0: number; speed: number; life: number; amp: number };
+/** A ripple at one moment: where its front is and how strong. */
+type Front = { x: number; y: number; front: number; strength: number };
 
 export function prefersReducedMotion(): boolean {
   return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -18,7 +23,10 @@ export function prefersReducedMotion(): boolean {
 export class HeroBackground {
   private ctx: CanvasRenderingContext2D;
   private cells: Cell[] = [];
+  /** Cells bright enough to start a ripple from; rebuilt with the cells on resize. */
+  private spawnPool: Cell[] = [];
   private ripples: Ripple[] = [];
+  private fronts: Front[] = [];
   private nextRipple = 0;
   private nextCentre = 3;
   private w = 0;
@@ -56,7 +64,6 @@ export class HeroBackground {
       this.io.observe(cv);
     }
     this.resize();
-    this.kick();
   }
 
   /** Re-measure and re-read the theme colours (call after the mode or accent changes). */
@@ -83,10 +90,13 @@ export class HeroBackground {
       }
     }
     this.cells = cells;
+    this.spawnPool = cells.filter((c) => c.mask > 0.3);
     const cs = getComputedStyle(this.cv);
     this.accent = cs.getPropertyValue('--accent').trim();
     this.ink = cs.color;
-    if (this.reduced) this.draw(performance.now() / 1000);
+    // a still backdrop draws once here; an animated one (also after a switch from 'off') runs its loop
+    if (this.still()) this.draw(performance.now() / 1000);
+    else this.kick();
   }
 
   destroy() {
@@ -96,12 +106,18 @@ export class HeroBackground {
     this.io?.disconnect();
   }
 
+  private still() {
+    return this.reduced || this.opts().style === 'off';
+  }
+
   private kick() {
-    if (this.reduced || this.raf || this.dead) return;
+    if (this.still() || this.raf || this.dead) return;
     const loop = () => {
       this.raf = 0;
       if (!this.visible || this.dead) return;
       this.draw(performance.now() / 1000);
+      // switched to 'off' mid-run: that frame cleared the canvas, and nothing else needs drawing
+      if (this.still()) return;
       this.raf = requestAnimationFrame(loop);
     };
     this.raf = requestAnimationFrame(loop);
@@ -118,13 +134,14 @@ export class HeroBackground {
     c.closePath();
   }
 
-  private glowPulse(t: number, cell: Cell) {
+  private glowPulse(cell: Cell) {
     let g = 0;
-    for (const rp of this.ripples) {
-      const age = t - rp.t0;
-      const d = Math.hypot(cell.x - rp.x, cell.y - rp.y);
-      const front = age * rp.speed;
-      g += Math.exp(-((d - front) ** 2) / (2 * 38 * 38)) * Math.max(0, 1 - age / rp.life) * rp.amp;
+    for (const f of this.fronts) {
+      const dx = cell.x - f.x;
+      const dy = cell.y - f.y;
+      const off = Math.sqrt(dx * dx + dy * dy) - f.front;
+      if (off > RIPPLE_REACH || off < -RIPPLE_REACH) continue;
+      g += Math.exp(-(off * off) / (2 * RIPPLE_SIGMA * RIPPLE_SIGMA)) * f.strength;
     }
     return Math.min(1, g);
   }
@@ -147,7 +164,7 @@ export class HeroBackground {
     if (pulse) {
       this.ripples = this.ripples.filter((r) => t - r.t0 < r.life);
       if (t > this.nextRipple) {
-        const pool = this.cells.filter((cc) => cc.mask > 0.3);
+        const pool = this.spawnPool;
         const cc = pool[Math.floor(Math.random() * pool.length)] ?? this.cells[0];
         this.ripples.push({ x: cc.x, y: cc.y, t0: t, speed: 70 + Math.random() * 40, life: 4.5, amp: 0.8 });
         this.nextRipple = t + 1.4 + Math.random() * 1.6;
@@ -156,13 +173,18 @@ export class HeroBackground {
         this.ripples.push({ x: w / 2, y: h * 0.62, t0: t, speed: 150, life: 5, amp: 1 });
         this.nextCentre = t + 8;
       }
+      // each ripple's front and fade, once per frame rather than once per cell
+      this.fronts = this.ripples.map((r) => {
+        const age = t - r.t0;
+        return { x: r.x, y: r.y, front: age * r.speed, strength: Math.max(0, 1 - age / r.life) * r.amp };
+      });
     }
     c.lineWidth = 1;
     const base = o.light ? 0.12 : 0.06;
     const fillK = (pulse ? 0.22 : 0.16) * (o.light ? 1.6 : 1);
     const strokeK = o.light ? 1.3 : 0.9;
     for (const cell of this.cells) {
-      const g = (pulse ? this.glowPulse(t, cell) : this.glowAurora(t, cell)) * cell.mask;
+      const g = (pulse ? this.glowPulse(cell) : this.glowAurora(t, cell)) * cell.mask;
       this.hex(cell.x, cell.y, HEX_R - 2);
       if (g > 0.02 && this.accent) {
         c.globalAlpha = Math.min(1, g * fillK);

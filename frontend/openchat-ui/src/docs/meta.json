@@ -17500,6 +17500,17 @@
         "doc": "Link to a Learn sub-page; defaults to learnHref + '#page'. Map your own paths (/roadmap, /faq …) here."
       },
       {
+        "name": "learnPages",
+        "type": "LearnPage[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "LEARN_PAGES",
+        "doc": "The Learn sub-pages to link in the menu and footer; pass learnPagesOf(content) when the host's Learn content leaves a doc out."
+      },
+      {
         "name": "communities",
         "type": "LandingCommunity[]",
         "default": null,
@@ -17724,7 +17735,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Link to a sub-page (or a blog post); defaults to learnHref + '#page' ('#blog/<slug>')."
+        "doc": "With `page`: link to a sub-page (or a blog post). Without `page` the links are learnHref + '#page' ('#blog/<slug>')."
       },
       {
         "name": "onNavigate",

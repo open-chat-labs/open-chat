@@ -569,6 +569,11 @@ export const placeholderLearnContent: LearnContent = {
   ],
 };
 
+/** The sub-pages the content has: a doc page (whitepaper, architecture) only when the content includes that doc. */
+export function learnPagesOf(content: LearnContent): LearnPage[] {
+  return LEARN_PAGES.filter((p) => (p === 'whitepaper' || p === 'architecture' ? !!content.docs[p] : true));
+}
+
 /** The sub-page (and blog post) a location hash names: '#faq', '#blog/<slug>'. Null for no hash or an unknown page. */
 export function learnFromHash(hash: string): { page: LearnPage; post?: string } | null {
   const raw = hash.replace(/^#/, '');

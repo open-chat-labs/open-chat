@@ -81,6 +81,19 @@ describe('Landing', () => {
     expect(q('.browse')).not.toBeNull();
   });
 
+  test('member counts round before choosing the unit', () => {
+    show({ communities: [community('A', 950_000), community('B', 999_950), community('C', 999_950_000), community('D', 999)] });
+    expect(all('.community-members').map((m) => m.textContent)).toEqual(['950K members', '1M members', '1B members', '999 members']);
+  });
+
+  test('the Learn menu and footer link only the sub-pages the host has', () => {
+    show({ learnPages: ['roadmap', 'blog', 'faq'] });
+    const footerLearn = [...all('.footer-group')[1].querySelectorAll('a')].map((a) => a.getAttribute('href'));
+    expect(footerLearn).toEqual(['/learn#roadmap', '/learn#blog', '/learn#faq']);
+    click(q('.learn-button'));
+    expect(all('.learn-item').map((a) => a.getAttribute('href'))).toEqual(['/learn#roadmap', '/learn#blog', '/learn#faq']);
+  });
+
   test('app build choices and the proposals link are links only when the host gives the URL', () => {
     show({ apkHref: '/apk' });
     expect(all('.build').map((b) => [b.tagName, b.getAttribute('href')])).toEqual([
