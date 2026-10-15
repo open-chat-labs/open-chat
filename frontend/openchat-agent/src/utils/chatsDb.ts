@@ -5,7 +5,6 @@ import {
     type IDBPCursorWithValue,
     type IDBPDatabase,
     type IDBPObjectStore,
-    type IDBPTransaction,
     type StoreNames,
     type StoreValue,
 } from "idb";
@@ -73,7 +72,8 @@ import {
     type SyncTouched,
 } from "./sync";
 
-const CACHE_VERSION = 156;
+// With no migrations registered, a bump deletes the whole cache
+const CACHE_VERSION = 157;
 const MAX_INDEX = 9999999999;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
@@ -203,28 +203,6 @@ type EventsStore = IDBPObjectStore<
     "readonly"
 >;
 
-// async function createBotsStore(
-//     db: IDBPDatabase<ChatSchema>,
-//     _principal: Principal,
-//     _tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
-// ) {
-//     if (db.objectStoreNames.contains("bots")) {
-//         db.deleteObjectStore("bots");
-//     }
-//     db.createObjectStore("bots");
-// }
-//
-// async function createActivityFeed(
-//     db: IDBPDatabase<ChatSchema>,
-//     _principal: Principal,
-//     _tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
-// ) {
-//     if (db.objectStoreNames.contains("activityFeed")) {
-//         db.deleteObjectStore("activityFeed");
-//     }
-//     db.createObjectStore("activityFeed");
-// }
-//
 function noteTimestamp(
     timestamps: Map<string, bigint>,
     key: string,
@@ -235,147 +213,6 @@ function noteTimestamp(
     } else {
         timestamps.set(key, timestamp);
     }
-}
-
-async function clearChatsStore(
-    _db: IDBPDatabase<ChatSchema>,
-    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
-) {
-    await tx.objectStore("chats").clear();
-}
-//
-// async function clearGroupDetailsStore(
-//     _db: IDBPDatabase<ChatSchema>,
-//     _principal: Principal,
-//     tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
-// ) {
-//     await tx.objectStore("group_details").clear();
-// }
-
-// The cached details of chats and communities are cleared, because:
-// - those brought up to date after being left for over 31 days may be missing updates which the
-//   canister had already pruned. Canisters now return the details in full in that case instead.
-// - those of a large chat or community hold every member, but from now on only those of chats and
-//   communities with no more than a page of members do. Clearing them has only the first page
-//   loaded in their place.
-async function clearDetailsStores(
-    _db: IDBPDatabase<ChatSchema>,
-    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
-) {
-    await tx.objectStore("group_details").clear();
-    await tx.objectStore("community_details").clear();
-}
-
-async function clearCachePrimerStore(
-    _db: IDBPDatabase<ChatSchema>,
-    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
-) {
-    await tx.objectStore("cachePrimer").clear();
-}
-
-async function clearCommunityDetailsStore(
-    _db: IDBPDatabase<ChatSchema>,
-    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
-) {
-    await tx.objectStore("community_details").clear();
-}
-//
-// async function clearEverything(
-//     db: IDBPDatabase<ChatSchema>,
-//     _principal: Principal,
-//     _tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
-// ) {
-//     nuke(db);
-// }
-//
-async function clearEvents(
-    _db: IDBPDatabase<ChatSchema>,
-    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
-) {
-    await tx.objectStore("chat_events").clear();
-}
-
-// Cached prize messages have no `ledger`, which their token is now looked up by. The event index
-// the primer has loaded each chat up to goes with the events, so that it fills the cache back in.
-async function clearEventsAndCachePrimer(
-    _db: IDBPDatabase<ChatSchema>,
-    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
-) {
-    await tx.objectStore("chat_events").clear();
-    await tx.objectStore("thread_events").clear();
-    await clearCachePrimerStore(_db, tx);
-}
-
-// async function clearChatAndGroups(
-//     _db: IDBPDatabase<ChatSchema>,
-//     _principal: Principal,
-//     tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
-// ) {
-//     await clearChatsStore(_db, _principal, tx);
-//     await clearGroupDetailsStore(_db, _principal, tx);
-// }
-//
-// async function clearExternalAchievements(
-//     _db: IDBPDatabase<ChatSchema>,
-//     _principal: Principal,
-//     tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
-// ) {
-//     await tx.objectStore("externalAchievements").clear();
-// }
-
-async function clearChatsAndCurrentUser(
-    _db: IDBPDatabase<ChatSchema>,
-    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
-) {
-    await clearChatsStore(_db, tx);
-    await tx.objectStore("currentUser").clear();
-}
-
-// So that no session starts under an id the user had before being migrated to a MultiUser
-// canister. With no cached user, the session waits for the live one, which is under their latest
-// id.
-async function clearCurrentUserStore(
-    _db: IDBPDatabase<ChatSchema>,
-    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
-) {
-    await tx.objectStore("currentUser").clear();
-}
-
-async function createPublicProfileStore(
-    db: IDBPDatabase<ChatSchema>,
-    _tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
-) {
-    if (db.objectStoreNames.contains("publicProfile")) {
-        db.deleteObjectStore("publicProfile");
-    }
-    db.createObjectStore("publicProfile");
-}
-
-async function createSyncStore(
-    db: IDBPDatabase<ChatSchema>,
-    _tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
-) {
-    if (db.objectStoreNames.contains("sync")) {
-        db.deleteObjectStore("sync");
-    }
-    db.createObjectStore("sync");
-}
-
-// The chats move from one record into a row each. The old record is dropped rather than split,
-// so the next load after the upgrade is a full one, as after any other migration that cleared
-// the chats. Its stamps go with it: they carried the per-chat versions the rows now hold.
-async function createChatRowStores(
-    db: IDBPDatabase<ChatSchema>,
-    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
-) {
-    for (const name of ["chat_rows", "chat_tombstones"] as const) {
-        if (db.objectStoreNames.contains(name)) {
-            db.deleteObjectStore(name);
-        }
-        db.createObjectStore(name).createIndex("version", "version");
-    }
-    await tx.objectStore("chats").clear();
-    await tx.objectStore("sync").delete("stamps");
 }
 
 type SyncStoreReader = { get(key: string): Promise<number | SyncStamps | undefined> };
@@ -435,25 +272,7 @@ export class ChatsDb {
                 { name: "sync" },
             ],
             CACHE_VERSION,
-        )
-            .withMigration(138, clearCommunityDetailsStore)
-            .withMigration(139, clearEvents)
-            .withMigration(140, clearChatsAndCurrentUser)
-            .withMigration(141, createPublicProfileStore)
-            .withMigration(142, clearCommunityDetailsStore)
-            .withMigration(143, clearChatsStore)
-            .withMigration(144, clearChatsStore)
-            .withMigration(145, clearCachePrimerStore)
-            .withMigration(146, clearEvents)
-            .withMigration(147, clearCachePrimerStore)
-            .withMigration(148, clearChatsStore)
-            .withMigration(149, clearChatsStore)
-            .withMigration(150, createSyncStore)
-            .withMigration(151, createChatRowStores)
-            .withMigration(152, clearDetailsStores)
-            .withMigration(153, clearChatsStore)
-            .withMigration(154, clearEventsAndCachePrimer)
-            .withMigration(155, clearCurrentUserStore);
+        );
     }
 
     getDb(): Database {
