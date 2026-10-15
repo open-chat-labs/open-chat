@@ -44,13 +44,23 @@ const versionTestEmojis: [string, number][] = [
     ["🥻", 12.1],
     ["🥰", 11],
     ["🤩", 5],
-    ["\u{1F471}‍♀️", 4], // 👱‍♀️
+    ["\u{1F471}\u200D\u2640\uFE0F", 4], // 👱‍♀️
     ["🤣", 3],
-    ["\u{1F441}️‍\u{1F5E8}️", 2], // 👁️‍🗨️
+    ["\u{1F441}\uFE0F\u200D\u{1F5E8}\uFE0F", 2], // 👁️‍🗨️
     ["😀", 1],
-    ["\u{1F610}️", 0.7], // 😐️
+    ["\u{1F610}\uFE0F", 0.7], // 😐️
     ["😃", 0.6],
 ];
+
+// Every emoji added in an x.1 version is earlier emoji joined by zero width joiners, so a font
+// without them still draws them in colour, just as two emoji side by side, and the colour test
+// can't tell x.1 from x.0. The library hides those by measuring each one, which emojiVersion turns
+// off, so instead this measures one emoji from the x.1 version and drops to x.0 if it's too wide.
+const joinedTestEmojis: Record<number, string> = {
+    15.1: "\u{1F426}\u200D\u{1F525}", // 🐦‍🔥 phoenix
+    13.1: "\u{1F62E}\u200D\u{1F4A8}", // 😮‍💨 face exhaling
+    12.1: "\u{1F9D1}\u200D\u{1F9B0}", // 🧑‍🦰 person: red hair
+};
 
 let emojiSupportLevel: number | undefined;
 
@@ -68,7 +78,9 @@ function detectEmojiSupportLevel(): number {
     try {
         const supported = versionTestEmojis.find(([emoji]) => drawsInColour(emoji));
         if (supported !== undefined) {
-            return supported[1];
+            const [, version] = supported;
+            const joined = joinedTestEmojis[version];
+            return joined === undefined || drawsAsOne(joined) ? version : Math.floor(version);
         }
     } catch (err) {
         console.warn("Failed to check which emoji versions are supported: ", err);
@@ -86,18 +98,30 @@ function drawsInColour(emoji: string): boolean {
 
 // The RGBA of the emoji drawn 100px high and then scaled down to a single pixel
 function drawnPixel(emoji: string, textColour: string): string {
+    const ctx = emojiCanvas();
+    ctx.textBaseline = "top";
+    ctx.fillStyle = textColour;
+    ctx.scale(0.01, 0.01);
+    ctx.fillText(emoji, 0, 0);
+    return ctx.getImageData(0, 0, 1, 1).data.join(",");
+}
+
+// The library's threshold: a joined emoji the font doesn't support is twice as wide as a single
+// one, but Windows draws some it does support up to half as wide again
+function drawsAsOne(joined: string): boolean {
+    const ctx = emojiCanvas();
+    return ctx.measureText(joined).width / 1.8 < ctx.measureText("😀").width;
+}
+
+function emojiCanvas(): CanvasRenderingContext2D {
     const canvas = document.createElement("canvas");
     canvas.width = canvas.height = 1;
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
     if (!ctx) {
         throw new Error("No 2d canvas context");
     }
-    ctx.textBaseline = "top";
     ctx.font = `100px ${EMOJI_FONT_FAMILY}`;
-    ctx.fillStyle = textColour;
-    ctx.scale(0.01, 0.01);
-    ctx.fillText(emoji, 0, 0);
-    return ctx.getImageData(0, 0, 1, 1).data.join(",");
+    return ctx;
 }
 
 const customEmojiRegex = /^!emoji\([^)]+\)$/;

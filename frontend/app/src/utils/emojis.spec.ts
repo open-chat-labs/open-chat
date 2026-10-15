@@ -219,9 +219,12 @@ describe("the emoji Database", () => {
 });
 
 // Stands in for the canvas on a device whose emoji font draws `inColour` in colour and every other
-// emoji in the plain text colour. Records each emoji drawn and the fonts used. `inColour` null
-// means there's no 2d canvas at all.
-function stubCanvas(inColour: string[] | null): { drawn: string[]; fonts: Set<string> } {
+// emoji in the plain text colour, and draws the emoji `drawnAsTwo` picks twice as wide as the rest.
+// Records each emoji drawn and the fonts used. `inColour` null means there's no 2d canvas at all.
+function stubCanvas(
+    inColour: string[] | null,
+    drawnAsTwo: (emoji: string) => boolean = () => false,
+): { drawn: string[]; fonts: Set<string> } {
     const drawn: string[] = [];
     const fonts = new Set<string>();
     vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockImplementation((() => {
@@ -236,6 +239,10 @@ function stubCanvas(inColour: string[] | null): { drawn: string[]; fonts: Set<st
                 text = emoji;
                 fonts.add(ctx.font);
                 if (ctx.fillStyle === "#000") drawn.push(emoji);
+            },
+            measureText: (emoji: string) => {
+                fonts.add(ctx.font);
+                return { width: drawnAsTwo(emoji) ? 200 : 100 };
             },
             getImageData: () => ({
                 data: inColour.includes(text)
@@ -281,6 +288,16 @@ describe("getEmojiSupportLevel", () => {
         expect(getEmojiSupportLevel()).toBe(13.1);
     });
 
+    // Invariant: emoji the font draws as two side by side aren't shown, as the library's own check
+    // (turned off by emojiVersion) would have hidden them
+    test("is x.0 rather than x.1 when the font draws x.1's joined emoji as two", async () => {
+        const canvas = stubCanvas(["🫨", "🫠"], (emoji) => emoji !== "😀");
+        const { getEmojiSupportLevel } = await import("./emojis");
+
+        expect(getEmojiSupportLevel()).toBe(15);
+        expect(canvas.fonts.size).toBe(1);
+    });
+
     test("is the newest version when no emoji draws in colour", async () => {
         stubCanvas([]);
         const { getEmojiSupportLevel } = await import("./emojis");
@@ -307,7 +324,8 @@ describe("getEmojiSupportLevel", () => {
     });
 
     // Invariant: the check matches emoji-picker-element's own, so the picker shows the same emoji
-    // as it would have. An upgrade that changes the library's test emoji or fonts fails here.
+    // as it would have. An upgrade that changes the library's test emoji or fonts, or adds an x.1
+    // version with no joined emoji to measure, fails here.
     test("tests the same emoji, in the same order, with the same fonts as emoji-picker-element", async () => {
         const library = libraryEmojiSupportCheck();
         expect(library.versions.length).toBeGreaterThan(10);
@@ -324,6 +342,16 @@ describe("getEmojiSupportLevel", () => {
             stubCanvas([emoji]);
             const { getEmojiSupportLevel } = await import("./emojis");
             expect(getEmojiSupportLevel()).toBe(version);
+
+            // x.1 versions (from 12.1 on) only add joined emoji, which a font without them draws
+            // as two side by side
+            vi.resetModules();
+            vi.restoreAllMocks();
+            const canvas = stubCanvas([emoji], (measured) => measured !== "😀");
+            const { getEmojiSupportLevel: withJoinedDrawnAsTwo } = await import("./emojis");
+            const joinedOnly = version > 1 && !Number.isInteger(version);
+            expect(withJoinedDrawnAsTwo()).toBe(joinedOnly ? Math.floor(version) : version);
+            expect([...canvas.fonts]).toEqual([`100px ${library.fontFamily}`]);
         }
     });
 });
