@@ -49,8 +49,8 @@ describe("userSummaryUpdate", () => {
     });
 });
 
-// The ids a user had before being migrated to a MultiUser canister, which events from before then
-// still refer to them by
+// The ids a user had before being migrated to a MultiUser canister, whose wallets may still hold
+// funds
 test("the current user comes with their previous ids", () => {
     const latest = "dfdal-2uaaa-aaaaa-qaama-cai";
     const previous = "rrkah-fqaaa-aaaaa-aaaaq-cai";

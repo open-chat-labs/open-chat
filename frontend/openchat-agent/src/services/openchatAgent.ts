@@ -297,8 +297,6 @@ import { createHttpAgentSync } from "../utils/httpAgent";
 import { icNowNanos } from "../utils/icTime";
 import { chunk, distinctBy, toRecord, toRecord2 } from "../utils/list";
 import { bytesToHexString, mapOptional } from "../utils/mapping";
-import { withLatestUserIds } from "../utils/latestUserIds";
-import { findMovedDirectChats } from "../utils/movedDirectChats";
 import { mergeAccountTransactions } from "../utils/accountTransactions";
 import { mean } from "../utils/maths";
 import { extractMessagePreviews } from "@shared";
@@ -752,7 +750,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     // Maps each of the ids the user had before being migrated to a MultiUser canister to their latest
-    // id, so that whatever they did under an earlier id shows as their own
+    // id, so that the wallets they held under an earlier id are in their history (see `walletsOf`)
     private updateOwnLatestUserIds(user: CreatedUser) {
         this._ownLatestUserIds = new Map(
             (user.previousUserIds ?? []).map((id) => [id, user.userId]),
@@ -1304,10 +1302,7 @@ export class OpenChatAgent extends EventTarget {
                     threadRootMessageIndex,
                 );
                 if (groupResp.kind === "success") {
-                    groupResp.content = withLatestUserIds(
-                        this.rehydrateMessageContent(groupResp.content),
-                        this._ownLatestUserIds,
-                    );
+                    groupResp.content = this.rehydrateMessageContent(groupResp.content);
                 }
                 return groupResp;
             case "channel":
@@ -1317,10 +1312,7 @@ export class OpenChatAgent extends EventTarget {
                     threadRootMessageIndex,
                 );
                 if (channelResp.kind === "success") {
-                    channelResp.content = withLatestUserIds(
-                        this.rehydrateMessageContent(channelResp.content),
-                        this._ownLatestUserIds,
-                    );
+                    channelResp.content = this.rehydrateMessageContent(channelResp.content);
                 }
                 return channelResp;
         }
@@ -1332,10 +1324,7 @@ export class OpenChatAgent extends EventTarget {
     ): Promise<DeletedDirectMessageResponse> {
         const response = await this.userClient.getDeletedMessage(userId, messageId);
         if (response.kind === "success") {
-            response.content = withLatestUserIds(
-                this.rehydrateMessageContent(response.content),
-                this._ownLatestUserIds,
-            );
+            response.content = this.rehydrateMessageContent(response.content);
         }
         return response;
     }
@@ -1490,31 +1479,7 @@ export class OpenChatAgent extends EventTarget {
         return { messages, previews };
     }
 
-    // Rehydrates the event's content and reply context, and refers to the user by their current id
-    // wherever it was from before they were migrated to a MultiUser canister. Events read from the
-    // cache or a canister pass through here. Those which don't, ie. the messages returned by
-    // `updateProposalTallies`, failed messages, and the content of deleted and undeleted messages,
-    // are mapped where they are returned.
     private rehydrateEvent<T extends ChatEvent>(
-        ev: EventWrapper<T>,
-        defaultChatId: ChatIdentifier,
-        missingReplies: AsyncMessageContextMap<EventWrapper<Message>>,
-        missingMessagePreviews: ResolvedMessagePreviews,
-        threadRootMessageIndex: number | undefined,
-    ): EventWrapper<T> {
-        return withLatestUserIds(
-            this.rehydrateEventContent(
-                ev,
-                defaultChatId,
-                missingReplies,
-                missingMessagePreviews,
-                threadRootMessageIndex,
-            ),
-            this._ownLatestUserIds,
-        );
-    }
-
-    private rehydrateEventContent<T extends ChatEvent>(
         ev: EventWrapper<T>,
         defaultChatId: ChatIdentifier,
         missingReplies: AsyncMessageContextMap<EventWrapper<Message>>,
@@ -1853,25 +1818,6 @@ export class OpenChatAgent extends EventTarget {
         }));
     }
 
-    // The direct chats among those the current user's canister removed which were moved onto the
-    // other user's new id, after they were migrated to a MultiUser canister, rather than deleted,
-    // each mapped to that id (see `findMovedDirectChats`). The users are looked up by the ids the
-    // chats were under, for which the UserIndex returns their latest ids. Throws if they can't be.
-    #movedDirectChats(
-        removed: string[],
-        added: DirectChatSummary[],
-        cached: DirectChatSummary[],
-    ): Promise<Map<string, string>> {
-        return findMovedDirectChats(removed, added, cached, (users) =>
-            this._userIndexClient
-                .getUsers({ userGroups: [{ users, updatedSince: BigInt(0) }] }, false)
-                .then((resp) => resp.migratedUserIds ?? new Map()),
-        ).catch((err) => {
-            this._logger.error("Failed to look up the users of removed direct chats", err);
-            throw err;
-        });
-    }
-
     private applyPinnedChannelUpdates(
         pinnedChannels: Updatable<ChannelIdentifier[]>,
         userResponse: UpdatesSuccessResponse,
@@ -1915,7 +1861,6 @@ export class OpenChatAgent extends EventTarget {
         let directChatsAdded: DirectChatSummary[] = [];
         let directChatUpdates: DirectChatSummaryUpdates[] = [];
         let directChatsRemoved: string[] = [];
-        let directChatsMoved = new Map<string, string>();
         let directChats: DirectChatSummary[] = [];
 
         let currentGroups: GroupChatSummary[] = [];
@@ -2070,17 +2015,6 @@ export class OpenChatAgent extends EventTarget {
                 const userResponse = await this.userClient.getUpdates(
                     current.latestUserCanisterUpdates,
                 );
-                // Found before anything is taken from the answer, so that if the users can't be
-                // looked up, the answer is dropped, as if the user's canister hadn't given one, and
-                // is fetched again on the next pass, rather than a move being taken for a deletion
-                const moved =
-                    userResponse.kind === "success"
-                        ? await this.#movedDirectChats(
-                              userResponse.directChats.removed,
-                              userResponse.directChats.added,
-                              currentDirectChats,
-                          )
-                        : new Map<string, string>();
 
                 if (userResponse.kind === "success") {
                     anyUpdates = true;
@@ -2089,12 +2023,8 @@ export class OpenChatAgent extends EventTarget {
                     directChatsAdded = userResponse.directChats.added;
                     directChatUpdates = userResponse.directChats.updated;
                     directChatsRemoved = userResponse.directChats.removed;
-                    directChatsMoved = moved;
-                    // A moved chat's events move with it when the cache is written
                     directChatsRemoved.forEach((id) => {
-                        if (!directChatsMoved.has(id)) {
-                            this._chatsDb.deleteEventsForChatOrCommunity(id);
-                        }
+                        this._chatsDb.deleteEventsForChatOrCommunity(id);
                     });
 
                     groupsAdded = userResponse.groupChats.added;
@@ -2346,7 +2276,6 @@ export class OpenChatAgent extends EventTarget {
             try {
                 await this._chatsDb.setCachedChats(state, {
                     directChats: directChatsAddedUpdatedIds,
-                    movedDirectChats: directChatsMoved,
                     groupChats: groupsAddedUpdatedIds,
                     communities: communitiesAddedUpdatedIds,
                     fields: touchedFields({
@@ -2755,11 +2684,6 @@ export class OpenChatAgent extends EventTarget {
     }
 
     hydrateChatSummary<T extends ChatSummary>(chat: T): T {
-        // The latest message may be from before the user was migrated to a MultiUser canister
-        const latestMessage = withLatestUserIds(chat.latestMessage, this._ownLatestUserIds);
-        if (latestMessage !== chat.latestMessage) {
-            chat = { ...chat, latestMessage };
-        }
         switch (chat.kind) {
             case "direct_chat":
                 return chat;
@@ -3354,19 +3278,6 @@ export class OpenChatAgent extends EventTarget {
     ): Promise<UndeleteMessageResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
-        return this.undeleteMessageInternal(chatId, messageId, threadRootMessageIndex).then(
-            (resp) =>
-                resp.kind === "success"
-                    ? { ...resp, message: withLatestUserIds(resp.message, this._ownLatestUserIds) }
-                    : resp,
-        );
-    }
-
-    private undeleteMessageInternal(
-        chatId: ChatIdentifier,
-        messageId: bigint,
-        threadRootMessageIndex?: number,
-    ): Promise<UndeleteMessageResponse> {
         switch (chatId.kind) {
             case "group_chat":
                 return this._groupClient.undeleteMessage(
@@ -3506,16 +3417,9 @@ export class OpenChatAgent extends EventTarget {
             .getPublicSummary(chatId.groupId)
             .then((resp) => {
                 if (resp.kind === "success") {
-                    const group = this.rehydrateDataContent(resp.group, "avatar");
                     return {
                         kind: "success",
-                        group: {
-                            ...group,
-                            latestMessage: withLatestUserIds(
-                                group.latestMessage,
-                                this._ownLatestUserIds,
-                            ),
-                        },
+                        group: this.rehydrateDataContent(resp.group, "avatar"),
                     } as PublicGroupSummaryResponse;
                 }
                 return resp;
@@ -4353,14 +4257,12 @@ export class OpenChatAgent extends EventTarget {
     }
 
     loadFailedMessages(): Promise<Map<string, Record<number, EventWrapper<Message>>>> {
-        return this._chatsDb.loadFailedMessages().then((messages) => {
-            const byChat = messages.toMap() as Map<string, Record<number, EventWrapper<Message>>>;
-            // A message which failed before the user was migrated was sent under their earlier id
-            for (const [chatKey, failed] of byChat) {
-                byChat.set(chatKey, withLatestUserIds(failed, this._ownLatestUserIds));
-            }
-            return byChat;
-        });
+        return this._chatsDb
+            .loadFailedMessages()
+            .then(
+                (messages) =>
+                    messages.toMap() as Map<string, Record<number, EventWrapper<Message>>>,
+            );
     }
 
     deleteFailedMessage(
@@ -6010,8 +5912,7 @@ export class OpenChatAgent extends EventTarget {
         if (version !== undefined) {
             await this.#announceSyncHead(version);
         }
-        // Returned straight from the cache, so not through `rehydrateEvent`
-        return withLatestUserIds(messages, this._ownLatestUserIds);
+        return messages;
     }
 
     async #updateCachedProposalTallies(localUserIndex: string, chatIds: MultiUserChatIdentifier[]) {
