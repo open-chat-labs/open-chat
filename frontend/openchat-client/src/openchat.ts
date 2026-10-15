@@ -6690,8 +6690,8 @@ export class OpenChat {
         return this.#worker.send({ kind: "fcmTokenExists", fcmToken });
     }
 
-    addFcmToken(fcmToken: string, onResponseError?: (error: string | null) => void): Promise<void> {
-        return this.#worker.send({ kind: "addFcmToken", fcmToken, onResponseError });
+    addFcmToken(fcmToken: string): Promise<void> {
+        return this.#worker.send({ kind: "addFcmToken", fcmToken });
     }
 
     removeFcmToken(fcmToken: string): Promise<void> {
@@ -10753,7 +10753,10 @@ export class OpenChat {
         });
     }
 
-    getSignInProof(identityKey: ECDSAKeyIdentity, delegation: DelegationChain): Promise<string> {
+    getSignInProof(
+        identityKey: ECDSAKeyIdentity,
+        delegation: DelegationChain,
+    ): Promise<string | undefined> {
         return this.#worker.send({
             kind: "getSignInProof",
             identityKey: identityKey.getKeyPair(),

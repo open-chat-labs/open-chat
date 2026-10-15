@@ -29,25 +29,20 @@ import {
     SyncHeadMoved,
     UsersLoaded,
     type CorrelatedWorkerRequest,
-    type CreateOpenChatIdentity,
     type CreateOpenChatIdentityError,
     type FinaliseAccountLinkingResponse,
     type GetOpenChatIdentityResponse,
-    type Init,
     type JsonnableIdentityKeyAndChain,
     type LinkIdentitiesResponse,
     type Logger,
-    type Logout,
     type RemoveIdentityLinkResponse,
-    type SetAuthIdentity,
-    type SetMinLogLevel,
     type SetAuthIdentityResponse,
     type VerifyAccountLinkingCodeResponse,
     type WorkerEvent,
     type WebAuthnKey,
     type WebAuthnKeyFull,
     type WorkerRequest,
-    type WorkerResponseInner,
+    type WorkerResult,
 } from "@shared";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -181,11 +176,11 @@ const sendError = (kind: string, correlationId: number, payload?: unknown) => {
     };
 };
 
-function streamReplies(
+function streamReplies<T extends WorkerResult<WorkerRequest>>(
     payload: WorkerRequest,
     kind: string,
     correlationId: number,
-    chain: Stream<WorkerResponseInner>,
+    chain: Stream<T>,
 ) {
     const start = Date.now();
     chain.subscribe({
@@ -207,7 +202,7 @@ function executeThenReply(
     payload: WorkerRequest,
     kind: string,
     correlationId: number,
-    promise: Promise<WorkerResponseInner>,
+    promise: Promise<WorkerResult<WorkerRequest>>,
 ) {
     promise
         .then((response) => sendResponse(kind, correlationId, response))
@@ -217,7 +212,7 @@ function executeThenReply(
 function sendResponse(
     kind: string,
     correlationId: number,
-    response: WorkerResponseInner,
+    response: WorkerResult<WorkerRequest>,
     final = true,
 ): void {
     logger.debug("WORKER: sending response: ", correlationId);
@@ -363,7 +358,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
             return;
         }
 
-        const action = getAction(payload, agent, config);
+        const action = getAction(kind, payload, agent, config);
 
         if (action instanceof Promise) {
             executeThenReply(payload, kind, correlationId, action);
@@ -376,1278 +371,825 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
     }
 });
 
-function getAction(
-    payload: Exclude<
-        WorkerRequest,
-        Init | SetAuthIdentity | CreateOpenChatIdentity | Logout | SetMinLogLevel
-    >,
+// The requests handled before an agent exists, in the message listener above
+type HandledBeforeAgent =
+    | "init"
+    | "setAuthIdentity"
+    | "createOpenChatIdentity"
+    | "logout"
+    | "setMinLogLevel"
+    | "abortInFlightQueries";
+
+type AgentRequestKind = Exclude<WorkerRequest["kind"], HandledBeforeAgent>;
+
+type RequestOf<K extends WorkerRequest["kind"]> = Extract<WorkerRequest, { kind: K }>;
+
+type Action<K extends WorkerRequest["kind"]> =
+    | Promise<WorkerResult<RequestOf<K>>>
+    | Stream<WorkerResult<RequestOf<K>>>;
+
+// One handler per kind of request, each returning that kind's declared result, so a missing
+// handler or a handler returning the wrong thing fails to compile
+type Handlers = {
+    [K in AgentRequestKind]: (
+        payload: RequestOf<K>,
+        agent: OpenChatAgent,
+        config: AgentConfig,
+    ) => Action<K>;
+};
+
+const handlers: Handlers = {
+    getCurrentUser: (_payload, agent) => agent.getCurrentUser(),
+    getDeletedGroupMessage: (payload, agent) =>
+        agent.getDeletedGroupMessage(
+            payload.chatId,
+            payload.messageId,
+            payload.threadRootMessageIndex,
+        ),
+    getDeletedDirectMessage: (payload, agent) =>
+        agent.getDeletedDirectMessage(payload.userId, payload.messageId),
+    getUpdates: (payload, agent) => agent.getUpdates(payload.initialLoad),
+    syncSince: (payload, agent) => agent.syncSince(payload.since),
+    refreshChat: (payload, agent) => agent.refreshChat(payload.chatId),
+    getBots: (payload, agent) => agent.getBots(payload.initialLoad),
+    createUserClient: (payload, agent) => {
+        agent.createUserClient(payload.userId);
+        return Promise.resolve();
+    },
+    chatEvents: (payload, agent) =>
+        agent.chatEvents(
+            payload.chatId,
+            payload.eventIndexRange,
+            payload.startIndex,
+            payload.ascending,
+            payload.threadRootMessageIndex,
+            payload.latestKnownUpdate,
+        ),
+    getUsers: (payload, agent) => agent.getUsers(payload.users, payload.allowStale),
+    getAllCachedUsers: (_payload, agent) => agent.getAllCachedUsers(),
+    markMessagesRead: (payload, agent) => agent.markMessagesRead(payload.payload),
+    getGroupDetails: (payload, agent) =>
+        agent.getGroupDetails(
+            payload.chatId,
+            payload.detailsLastUpdated,
+            payload.detailsSyncedUpTo,
+        ),
+    lookupMembers: (payload, agent) =>
+        agent.lookupMembers(payload.id, payload.userIds, payload.latestKnownUpdate),
+    searchCommunityMembers: (payload, agent) =>
+        agent.searchCommunityMembers(
+            payload.id,
+            payload.searchTerm,
+            payload.maxResults,
+            payload.latestKnownUpdate,
+        ),
+    lastOnline: (payload, agent) => agent.lastOnline(payload.userIds),
+    markAsOnline: (_payload, agent) => agent.markAsOnline(),
+    chatEventsWindow: (payload, agent) =>
+        agent.chatEventsWindow(
+            payload.eventIndexRange,
+            payload.chatId,
+            payload.messageIndex,
+            payload.threadRootMessageIndex,
+            payload.latestKnownUpdate,
+        ),
+    chatEventsByEventIndex: (payload, agent) =>
+        agent.chatEventsByEventIndex(
+            payload.chatId,
+            payload.eventIndexes,
+            payload.threadRootMessageIndex,
+            payload.latestKnownUpdate,
+        ),
+    rehydrateMessage: (payload, agent) =>
+        agent.rehydrateMessage(
+            payload.chatId,
+            payload.message,
+            payload.threadRootMessageIndex,
+            payload.latestKnownUpdate,
+        ),
+    checkUsername: (payload, agent) => agent.checkUsername(payload.username, payload.isBot),
+    searchUsers: (payload, agent) =>
+        agent.searchUsers(payload.searchTerm, payload.maxResults, payload.pageIndex),
+    getUserStorageLimits: (_payload, agent) => agent.getUserStorageLimits(),
+    getPublicGroupSummary: (payload, agent) => agent.getPublicGroupSummary(payload.chatId),
+    toggleMuteNotifications: (payload, agent) =>
+        agent.toggleMuteNotifications(payload.id, payload.mute, payload.muteAtEveryone),
+    archiveChat: (payload, agent) => agent.archiveChat(payload.chatId),
+    unarchiveChat: (payload, agent) => agent.unarchiveChat(payload.chatId),
+    pinChat: (payload, agent) => agent.pinChat(payload.chatId, payload.favourite),
+    unpinChat: (payload, agent) => agent.unpinChat(payload.chatId, payload.favourite),
+    blockUserFromDirectChat: (payload, agent) => agent.blockUserFromDirectChat(payload.userId),
+    unblockUserFromDirectChat: (payload, agent) => agent.unblockUserFromDirectChat(payload.userId),
+    setUserAvatar: (payload, agent) => agent.setUserAvatar(payload.data),
+    setProfileBackground: (payload, agent) => agent.setProfileBackground(payload.data),
+    deleteGroup: (payload, agent) => agent.deleteGroup(payload.chatId),
+    leaveGroup: (payload, agent) => agent.leaveGroup(payload.chatId),
+    joinGroup: (payload, agent) =>
+        agent.joinGroup(payload.chatId, payload.credentialArgs, payload.compositeGateIndex),
+    joinCommunity: (payload, agent) =>
+        agent.joinCommunity(payload.id, payload.credentialArgs, payload.compositeGateIndex),
+    updateGroup: (payload, agent) =>
+        agent.updateGroup(
+            payload.chatId,
+            payload.name,
+            payload.desc,
+            payload.rules,
+            payload.permissions,
+            payload.avatar,
+            payload.eventsTimeToLive,
+            payload.gateConfig,
+            payload.isPublic,
+            payload.messagesVisibleToNonMembers,
+            payload.externalUrl,
+        ),
+    registerPollVote: (payload, agent) =>
+        agent.registerPollVote(
+            payload.chatId,
+            payload.messageIdx,
+            payload.answerIdx,
+            payload.voteType,
+            payload.threadRootMessageIndex,
+            payload.newAchievement,
+        ),
+    deleteMessage: (payload, agent) =>
+        agent.deleteMessage(
+            payload.chatId,
+            payload.messageId,
+            payload.threadRootMessageIndex,
+            payload.asPlatformModerator,
+            payload.newAchievement,
+        ),
+    undeleteMessage: (payload, agent) =>
+        agent.undeleteMessage(payload.chatId, payload.messageId, payload.threadRootMessageIndex),
+    addReaction: (payload, agent) =>
+        agent.addReaction(
+            payload.chatId,
+            payload.messageId,
+            payload.reaction,
+            payload.username,
+            payload.displayName,
+            payload.threadRootMessageIndex,
+            payload.newAchievement,
+        ),
+    removeReaction: (payload, agent) =>
+        agent.removeReaction(
+            payload.chatId,
+            payload.messageId,
+            payload.reaction,
+            payload.threadRootMessageIndex,
+        ),
+    blockUserFromGroupChat: (payload, agent) =>
+        agent.blockUserFromGroupChat(payload.chatId, payload.userId),
+    unblockUserFromGroupChat: (payload, agent) =>
+        agent.unblockUserFromGroupChat(payload.chatId, payload.userId),
+    getProposalVoteDetails: (payload, agent) =>
+        agent.getProposalVoteDetails(
+            payload.governanceCanisterId,
+            payload.proposalId,
+            payload.isNns,
+        ),
+    listNervousSystemFunctions: (payload, agent) =>
+        agent.listNervousSystemFunctions(payload.snsGovernanceCanisterId),
+    unpinMessage: (payload, agent) => agent.unpinMessage(payload.chatId, payload.messageIndex),
+    pinMessage: (payload, agent) => agent.pinMessage(payload.chatId, payload.messageIndex),
+    sendMessage: (payload, agent) =>
+        agent.sendMessage(
+            payload.messageContext,
+            payload.user,
+            payload.mentioned,
+            payload.event,
+            payload.acceptedRules,
+            payload.messageFilterFailed,
+            payload.pin,
+            payload.newAchievement,
+        ),
+    editMessage: (payload, agent) =>
+        agent.editMessage(
+            payload.chatId,
+            payload.msg,
+            payload.threadRootMessageIndex,
+            payload.blockLevelMarkdown,
+            payload.newAchievement,
+        ),
+    registerUser: (payload, agent) =>
+        agent.registerUser(payload.username, payload.email, payload.referralCode),
+    subscriptionExists: (payload, agent) => agent.subscriptionExists(payload.endpoint),
+    pushSubscription: (payload, agent) =>
+        agent.pushSubscription(payload.subscription).then(() => undefined),
+    removeSubscription: (payload, agent) =>
+        agent.removeSubscription(payload.endpoint).then(() => undefined),
+    fcmTokenExists: (payload, agent) => agent.fcmTokenExists(payload.fcmToken),
+    addFcmToken: (payload, agent) => agent.addFcmToken(payload.fcmToken),
+    removeFcmToken: (payload, agent) => agent.removeFcmToken(payload.fcmToken),
+    markNotificationSubscriptionActive: (payload, agent) =>
+        agent.markNotificationSubscriptionActive(payload.endpoint),
+    inviteUsers: (payload, agent) => agent.inviteUsers(payload.id, payload.userIds),
+    removeMember: (payload, agent) => agent.removeMember(payload.chatId, payload.userId),
+    changeRole: (payload, agent) =>
+        agent.changeRole(payload.chatId, payload.userId, payload.newRole),
+    registerProposalVote: (payload, agent) =>
+        agent.registerProposalVote(
+            payload.chatId,
+            payload.messageIndex,
+            payload.governanceCanisterId,
+            payload.proposalId,
+            payload.isNns,
+            payload.adopt,
+        ),
+    getRecommendedGroups: (payload, agent) => agent.getRecommendedGroups(payload.exclusions),
+    exploreCommunities: (payload, agent) =>
+        agent.exploreCommunities(
+            payload.searchTerm,
+            payload.pageIndex,
+            payload.pageSize,
+            payload.flags,
+            payload.languages,
+        ),
+    exploreBots: (payload, agent) =>
+        agent.exploreBots(
+            payload.searchTerm,
+            payload.pageIndex,
+            payload.pageSize,
+            payload.location,
+            payload.excludeInstalled,
+        ),
+    registerBot: (payload, agent) => agent.registerBot(payload.principal, payload.bot),
+    removeBot: (payload, agent) => agent.removeBot(payload.botId),
+    updateRegisteredBot: (payload, agent) =>
+        agent.updateRegisteredBot(
+            payload.id,
+            payload.principal,
+            payload.ownerId,
+            payload.avatarUrl,
+            payload.endpoint,
+            payload.definition,
+        ),
+    searchGroups: (payload, agent) =>
+        agent.searchGroups(payload.searchTerm, payload.flags, payload.maxResults),
+    dismissRecommendation: (payload, agent) =>
+        agent.dismissRecommendation(payload.chatId).then(() => undefined),
+    communityInvite: (payload, agent) => {
+        agent.communityInvite = payload.value;
+        return Promise.resolve();
+    },
+    groupInvite: (payload, agent) => {
+        agent.groupInvite = payload.value;
+        return Promise.resolve();
+    },
+    searchGroupChat: (payload, agent) =>
+        agent.searchGroupChat(
+            payload.chatId,
+            payload.searchTerm,
+            payload.userIds,
+            payload.maxResults,
+        ),
+    searchDirectChat: (payload, agent) =>
+        agent.searchDirectChat(payload.chatId, payload.searchTerm, payload.maxResults),
+    refreshAccountBalance: (payload, agent) =>
+        agent.refreshAccountBalance(payload.ledger, payload.principal),
+    fundsInPreviousWallets: (payload, agent) =>
+        agent.fundsInPreviousWallets(payload.previousUserIds),
+    moveFundsFromPreviousWallets: (payload, agent) =>
+        agent.moveFundsFromPreviousWallets(payload.funds),
+    getAccountTransactions: (payload, agent) =>
+        agent.getAccountTransactions(payload.ledgerIndex, payload.principal, payload.fromId),
+    threadPreviews: (payload, agent) => agent.threadPreviews(payload.threadsByChat),
+    getUser: (payload, agent) => agent.getUser(payload.userId, payload.allowStale),
+    getPublicProfile: (payload, agent) => agent.getPublicProfile(payload.userId),
+    setUsername: (payload, agent) => agent.setUsername(payload.userId, payload.username),
+    setDisplayName: (payload, agent) => agent.setDisplayName(payload.userId, payload.displayName),
+    setHideOnlineStatus: (payload, agent) => agent.setHideOnlineStatus(payload.hideOnlineStatus),
+    setBio: (payload, agent) => agent.setBio(payload.bio),
+    getBio: (payload, agent) => agent.getBio(payload.userId),
+    withdrawCryptocurrency: (payload, agent) =>
+        agent.withdrawCryptocurrency(payload.domain, payload.pin),
+    getMessagesByMessageIndex: (payload, agent) =>
+        agent.getMessagesByMessageIndex(
+            payload.chatId,
+            payload.threadRootMessageIndex,
+            payload.messageIndexes,
+            payload.latestKnownUpdate,
+        ),
+    getInviteCode: (payload, agent) => agent.getInviteCode(payload.id),
+    enableInviteCode: (payload, agent) => agent.enableInviteCode(payload.id),
+    disableInviteCode: (payload, agent) => agent.disableInviteCode(payload.id),
+    resetInviteCode: (payload, agent) => agent.resetInviteCode(payload.id),
+    createGroupChat: (payload, agent) => agent.createGroupChat(payload.candidate),
+    setCachedMessageFromNotification: (payload, agent) =>
+        agent
+            .setCachedMessageFromNotification(
+                payload.chatId,
+                payload.threadRootMessageIndex,
+                payload.message,
+            )
+            .then(() => undefined),
+    freezeGroup: (payload, agent) => agent.freezeGroup(payload.chatId, payload.reason),
+    unfreezeGroup: (payload, agent) => agent.unfreezeGroup(payload.chatId),
+    freezeCommunity: (payload, agent) => agent.freezeCommunity(payload.id, payload.reason),
+    unfreezeCommunity: (payload, agent) => agent.unfreezeCommunity(payload.id),
+    deleteFrozenGroup: (payload, agent) => agent.deleteFrozenGroup(payload.chatId),
+    addHotGroupExclusion: (payload, agent) => agent.addHotGroupExclusion(payload.chatId),
+    removeHotGroupExclusion: (payload, agent) => agent.removeHotGroupExclusion(payload.chatId),
+    addRemoveSwapProvider: (payload, agent) =>
+        agent.addRemoveSwapProvider(payload.swapProvider, payload.add),
+    addMessageFilter: (payload, agent) => agent.addMessageFilter(payload.regex),
+    removeMessageFilter: (payload, agent) => agent.removeMessageFilter(payload.id),
+    setAirdropConfig: (payload, agent) =>
+        agent.setAirdropConfig(
+            payload.channelId,
+            payload.channelName,
+            payload.communityId,
+            payload.communityName,
+        ),
+    setTokenEnabled: (payload, agent) => agent.setTokenEnabled(payload.ledger, payload.enabled),
+    suspendUser: (payload, agent) => agent.suspendUser(payload.userId, payload.reason),
+    unsuspendUser: (payload, agent) => agent.unsuspendUser(payload.userId),
+    setCommunityModerationFlags: (payload, agent) =>
+        agent.setCommunityModerationFlags(payload.communityId, payload.flags),
+    setGroupModerationFlags: (payload, agent) =>
+        agent.setGroupModerationFlags(payload.chatId, payload.flags),
+    setGroupUpgradeConcurrency: (payload, agent) => agent.setGroupUpgradeConcurrency(payload.value),
+    setCommunityUpgradeConcurrency: (payload, agent) =>
+        agent.setCommunityUpgradeConcurrency(payload.value),
+    createMultiUserCanister: (payload, agent) =>
+        agent.createMultiUserCanister(payload.localUserIndexCanisterId),
+    markLocalGroupIndexFull: (payload, agent) =>
+        agent.markLocalGroupIndexFull(payload.canisterId, payload.full),
+    setDiamondMembershipFees: (payload, agent) => agent.setDiamondMembershipFees(payload.fees),
+    stakeNeuronForSubmittingProposals: (payload, agent) =>
+        agent.stakeNeuronForSubmittingProposals(payload.governanceCanisterId, payload.stake),
+    topUpNeuronForSubmittingProposals: (payload, agent) =>
+        agent.topUpNeuronForSubmittingProposals(payload.governanceCanisterId, payload.amount),
+    loadFailedMessages: (_payload, agent) => agent.loadFailedMessages(),
+    deleteFailedMessage: (payload, agent) =>
+        agent
+            .deleteFailedMessage(payload.chatId, payload.messageId, payload.threadRootMessageIndex)
+            .then(() => undefined),
+    claimPrize: (payload, agent) =>
+        agent.claimPrize(payload.chatId, payload.messageId, payload.signInProof),
+    payForDiamondMembership: (payload, agent) =>
+        agent.payForDiamondMembership(
+            payload.userId,
+            payload.ledger,
+            payload.duration,
+            payload.recurring,
+            payload.expectedPriceE8s,
+            payload.fromAccount,
+            payload.pin,
+        ),
+    updateMarketMakerConfig: (payload, agent) => agent.updateMarketMakerConfig(payload),
+    setMessageReminder: (payload, agent) =>
+        agent.setMessageReminder(
+            payload.chatId,
+            payload.eventIndex,
+            payload.remindAt,
+            payload.notes,
+            payload.threadRootMessageIndex,
+        ),
+    cancelMessageReminder: (payload, agent) => agent.cancelMessageReminder(payload.reminderId),
+    reportMessage: (payload, agent) =>
+        agent.reportMessage(
+            payload.chatId,
+            payload.threadRootMessageIndex,
+            payload.messageId,
+            payload.deleteMessage,
+            payload.csam,
+        ),
+    approveTransfer: (payload, agent) =>
+        agent.approveTransfer(
+            payload.spender,
+            payload.ledger,
+            payload.amount,
+            payload.expiresIn,
+            payload.pin,
+        ),
+    approveAccessGatePayment: (payload, agent) =>
+        agent.approveAccessGatePayment(
+            payload.canisterId,
+            payload.ledger,
+            payload.amount,
+            payload.expiresIn,
+            payload.pin,
+        ),
+    declineInvitation: (payload, agent) => agent.declineInvitation(payload.chatId),
+    // Community level functions
+    addMembersToChannel: (payload, agent) =>
+        agent.communityClient.addMembersToChannel(
+            payload.chatId,
+            payload.userIds,
+            payload.username,
+            payload.displayName,
+        ),
+    blockCommunityUser: (payload, agent) =>
+        agent.communityClient.blockUser(payload.id.communityId, payload.userId),
+    changeChannelRole: (payload, agent) =>
+        agent.communityClient.changeChannelRole(payload.chatId, payload.userId, payload.newRole),
+    changeCommunityRole: (payload, agent) =>
+        agent.communityClient.changeRole(payload.id.communityId, payload.userId, payload.newRole),
+    declineChannelInvitation: (payload, agent) =>
+        agent.communityClient.declineInvitation(payload.chatId),
+    removeCommunityMember: (payload, agent) =>
+        agent.communityClient.removeMember(payload.id.communityId, payload.userId),
+    unblockCommunityUser: (payload, agent) =>
+        agent.communityClient.unblockUser(payload.id.communityId, payload.userId),
+    updateCommunity: (payload, agent) =>
+        agent.communityClient.updateCommunity(
+            payload.communityId,
+            payload.name,
+            payload.description,
+            payload.rules,
+            payload.permissions,
+            payload.avatar,
+            payload.banner,
+            payload.gateConfig,
+            payload.isPublic,
+            payload.primaryLanguage,
+        ),
+    createCommunity: (payload, agent) =>
+        agent.userClient.createCommunity(
+            payload.community,
+            payload.rules,
+            payload.defaultChannels,
+            payload.defaultChannelRules,
+        ),
+    getCommunitySummary: (payload, agent) => agent.getCommunitySummary(payload.communityId),
+    getChannelSummary: (payload, agent) => agent.getChannelSummary(payload.chatId),
+    exploreChannels: (payload, agent) =>
+        agent.exploreChannels(payload.id, payload.searchTerm, payload.pageSize, payload.pageIndex),
+    getCommunityDetails: (payload, agent) =>
+        agent.communityClient.getCommunityDetails(
+            payload.id.communityId,
+            payload.detailsLastUpdated,
+            payload.detailsSyncedUpTo,
+        ),
+    addToFavourites: (payload, agent) =>
+        agent.userClient.manageFavouriteChats([payload.chatId], []),
+    removeFromFavourites: (payload, agent) =>
+        agent.userClient.manageFavouriteChats([], [payload.chatId]),
+    leaveCommunity: (payload, agent) => agent.userClient.leaveCommunity(payload.id),
+    deleteCommunity: (payload, agent) => agent.userClient.deleteCommunity(payload.id),
+    convertGroupToCommunity: (payload, agent) =>
+        agent.convertGroupToCommunity(payload.chatId, payload.historyVisible, payload.rules),
+    importGroupToCommunity: (payload, agent) =>
+        agent.communityClient.importGroup(payload.communityId.communityId, payload.groupId),
+    setModerationFlags: (payload, agent) => agent.setModerationFlags(payload.flags),
+    proposeSetOpenAIApiKey: (payload, agent) => agent.proposeSetOpenAIApiKey(payload.apiKey),
+    confirmProtectedAction: (payload, agent) => agent.confirmProtectedAction(payload.actionId),
+    cancelProtectedAction: (payload, agent) => agent.cancelProtectedAction(payload.actionId),
+    protectedActions: (_payload, agent) => agent.protectedActions(),
+    setModerationReferralConfig: (payload, agent) =>
+        agent.setModerationReferralConfig(payload.config),
+    proposeSetVaultLegalHold: (payload, agent) =>
+        agent.proposeSetVaultLegalHold(payload.reportIndex, payload.legalHold, payload.reference),
+    proposeSetVaultReviewers: (payload, agent) => agent.proposeSetVaultReviewers(payload.userIds),
+    proposeSetMediaScanConfig: (payload, agent) =>
+        agent.proposeSetMediaScanConfig(payload.enabled, payload.scanners),
+    proposeSetAuthorityReporter: (payload, agent) =>
+        agent.proposeSetAuthorityReporter(payload.principal),
+    setVaultLegalHold: (payload, agent) =>
+        agent.setVaultLegalHold(payload.reportIndex, payload.legalHold, payload.reference),
+    proposeDestroyVaultEvidence: (payload, agent) =>
+        agent.proposeDestroyVaultEvidence(payload.reportIndex, payload.leRequestRef),
+    vaultBuckets: (_payload, agent) => agent.vaultBuckets(),
+    vaultLog: (payload, agent) =>
+        agent.vaultLog(payload.bucketCanisterId, payload.start, payload.max, payload.fileId),
+    moderationConfig: (_payload, agent) => agent.moderationConfig(),
+    authorityReports: (_payload, agent) => agent.authorityReports(),
+    recordAuthorityReportFiled: (payload, agent) =>
+        agent.recordAuthorityReportFiled(
+            payload.reportIndex,
+            payload.portalReference,
+            payload.urgent,
+            payload.unverified,
+        ),
+    clearAuthorityReportAttempt: (payload, agent) =>
+        agent.clearAuthorityReportAttempt(payload.reportIndex),
+    authorityReportToken: (payload, agent) =>
+        agent.authorityReportToken(
+            payload.reportIndex,
+            payload.priority,
+            payload.reporter,
+            payload.oohCallAcknowledged,
+        ),
+    acceptTerms: (payload, agent) => agent.acceptTerms(payload.version),
+    proposeSetInternalModerationChannel: (payload, agent) =>
+        agent.proposeSetInternalModerationChannel(payload.channel),
+    resolveModerationReport: (payload, agent) =>
+        agent.resolveModerationReport(payload.reportIndex, payload.verdict, payload.urgent),
+    contestModerationSanction: (_payload, agent) => agent.contestModerationSanction(),
+    vaultFileChunk: (payload, agent) =>
+        agent.vaultFileChunk(payload.bucketCanisterId, payload.fileId, payload.chunkIndex),
+    vaultFileInfo: (payload, agent) =>
+        agent.vaultFileInfo(payload.bucketCanisterId, payload.fileId),
+    updateRegistry: (_payload, agent) => agent.getRegistry(),
+    setCommunityIndexes: (payload, agent) => agent.setCommunityIndexes(payload.indexes),
+    createUserGroup: (payload, agent) =>
+        agent.createUserGroup(payload.communityId, payload.name, payload.userIds),
+    updateUserGroup: (payload, agent) =>
+        agent.updateUserGroup(
+            payload.communityId,
+            payload.userGroupId,
+            payload.name,
+            payload.usersToAdd,
+            payload.usersToRemove,
+        ),
+    deleteUserGroups: (payload, agent) =>
+        agent.deleteUserGroups(payload.communityId, payload.userGroupIds),
+    setMemberDisplayName: (payload, agent) =>
+        agent.setMemberDisplayName(
+            payload.communityId,
+            payload.displayName,
+            payload.newAchievement,
+        ),
+    followThread: (payload, agent) =>
+        agent.followThread(
+            payload.chatId,
+            payload.threadRootMessageIndex,
+            payload.follow,
+            payload.newAchievement,
+        ),
+    submitProposal: (payload, agent) =>
+        agent.submitProposal(
+            payload.currentUserId,
+            payload.governanceCanisterId,
+            payload.proposal,
+            payload.ledger,
+            payload.token,
+            payload.proposalRejectionFee,
+            payload.transactionFee,
+        ),
+    tipMessage: (payload, agent) =>
+        agent.tipMessage(
+            payload.messageContext,
+            payload.messageId,
+            payload.transfer,
+            payload.decimals,
+            payload.pin,
+            payload.username,
+            payload.displayName,
+            payload.newAchievement,
+        ),
+    loadSavedCryptoAccounts: (_payload, agent) => agent.userClient.loadSavedCryptoAccounts(),
+    saveCryptoAccount: (payload, agent) => agent.userClient.saveCryptoAccount(payload.namedAccount),
+    deleteCryptoAccount: (payload, agent) => agent.userClient.deleteCryptoAccount(payload.name),
+    canSwap: (payload, agent) => agent.canSwap(payload.tokenLedgers),
+    getTokenSwaps: (payload, agent) =>
+        agent.getTokenSwaps(payload.inputTokenLedger, payload.outputTokenLedgers),
+    getTokenSwapQuotes: (payload, agent) =>
+        agent.getTokenSwapQuotes(
+            payload.inputTokenLedger,
+            payload.outputTokenLedger,
+            payload.amountIn,
+        ),
+    swapTokens: (payload, agent) =>
+        agent.swapTokens(
+            payload.swapId,
+            payload.inputTokenDetails,
+            payload.outputTokenDetails,
+            payload.amountIn,
+            payload.minAmountOut,
+            payload.dex,
+            payload.pin,
+        ),
+    recoverUnfinishedTokenSwaps: (_payload, agent) => agent.recoverUnfinishedTokenSwaps(),
+    deleteDirectChat: (payload, agent) => agent.deleteDirectChat(payload.userId, payload.blockUser),
+    diamondMembershipFees: (_payload, agent) => agent.diamondMembershipFees(),
+    reportedMessages: (payload, agent) => agent.reportedMessages(payload.userId),
+    exchangeRates: (_payload, agent) => agent.exchangeRates(),
+    proposeTranslation: (payload, agent) =>
+        agent.translationsClient().propose(payload.locale, payload.key, payload.value),
+    approveTranslation: (payload, agent) => agent.translationsClient().approve(payload.id),
+    rejectTranslation: (payload, agent) =>
+        agent.translationsClient().reject(payload.id, payload.reason),
+    getProposedTranslations: (_payload, agent) => agent.translationsClient().proposed(),
+    markTranslationsDeployed: (_payload, agent) => agent.translationsClient().markDeployed(),
+    getTranslationsPendingDeployment: (_payload, agent) =>
+        agent.translationsClient().pendingDeployment(),
+    acceptP2PSwap: (payload, agent) =>
+        agent.acceptP2PSwap(
+            payload.chatId,
+            payload.threadRootMessageIndex,
+            payload.messageId,
+            payload.token1,
+            payload.token1Amount,
+            payload.pin,
+            payload.newAchievement,
+            payload.fromAccount,
+        ),
+    cancelP2PSwap: (payload, agent) =>
+        agent.cancelP2PSwap(payload.chatId, payload.threadRootMessageIndex, payload.messageId),
+    joinVideoCall: (payload, agent) =>
+        agent.joinVideoCall(payload.chatId, payload.messageId, payload.newAchievement),
+    videoCallParticipants: (payload, agent) =>
+        agent.videoCallParticipants(payload.chatId, payload.messageId, payload.updatesSince),
+    setVideoCallPresence: (payload, agent) =>
+        agent.setVideoCallPresence(
+            payload.chatId,
+            payload.messageId,
+            payload.presence,
+            payload.newAchievement,
+        ),
+    getAccessToken: (payload, agent) =>
+        agent.getAccessToken(payload.accessTokenType, payload.localUserIndex),
+    registerWebhook: (payload, agent) =>
+        agent.registerWebhook(payload.chatId, payload.name, payload.avatar),
+    updateWebhook: (payload, agent) =>
+        agent.updateWebhook(payload.chatId, payload.id, payload.name, payload.avatar),
+    regenerateWebhook: (payload, agent) => agent.regenerateWebhook(payload.chatId, payload.id),
+    deleteWebhook: (payload, agent) => agent.deleteWebhook(payload.chatId, payload.id),
+    getWebhook: (payload, agent) => agent.getWebhook(payload.chatId, payload.id),
+    getLocalUserIndexForUser: (payload, agent) => agent.getLocalUserIndexForUser(payload.userId),
+    generateBtcAddress: (_payload, agent) => agent.generateBtcAddress(),
+    generateOneSecAddress: (_payload, agent) => agent.generateOneSecAddress(),
+    updateBtcBalance: (payload, agent) =>
+        agent.updateBtcBalance(payload.userId, payload.bitcoinAddress),
+    withdrawBtc: (payload, agent) =>
+        agent.withdrawBtc(payload.address, payload.amount, payload.pin),
+    withdrawViaOneSec: (payload, agent) =>
+        agent.withdrawViaOneSec(
+            payload.ledger,
+            payload.tokenSymbol,
+            payload.chain,
+            payload.address,
+            payload.amount,
+            payload.pin,
+        ),
+    ckbtcMinterDepositInfo: (_payload, agent) => agent.getCkbtcMinterDepositInfo(),
+    ckbtcMinterWithdrawalInfo: (payload, agent) =>
+        agent.getCkbtcMinterWithdrawalInfo(payload.amount),
+    currentUserWebAuthnKey: (_payload) => {
+        // TODO add type for the `res`
+        return (
+            identityAgent?.checkAuthPrincipal().then((res) => {
+                return res.kind === "success" ? res.webAuthnKey : undefined;
+            }) ?? Promise.resolve(undefined)
+        );
+    },
+    lookupWebAuthnPubKey: (payload, _agent, config) =>
+        IdentityAgent.create(
+            new AnonymousIdentity(),
+            config.identityCanister,
+            config.icUrl,
+            undefined,
+        ).then((ia) => ia.lookupWebAuthnPubKey(payload.credentialId)),
+    setCachedWebAuthnKey: (payload) => setCachedWebAuthnKey(payload.key),
+    generateMagicLink: (payload, agent) =>
+        agent.generateMagicLink(payload.email, payload.sessionKey),
+    getSignInWithEmailDelegation: (payload, agent) =>
+        agent.getSignInWithEmailDelegation(payload.email, payload.sessionKey, payload.expiration),
+    siwePrepareLogin: (payload, agent) => agent.siwePrepareLogin(payload.address),
+    siwsPrepareLogin: (payload, agent) => agent.siwsPrepareLogin(payload.address),
+    loginWithWallet: (payload, agent) =>
+        agent.loginWithWallet(
+            payload.token,
+            payload.address,
+            payload.signature,
+            payload.sessionKey,
+        ),
+    getDelegationWithWallet: (payload, agent) =>
+        agent.getDelegationWithWallet(
+            payload.token,
+            payload.address,
+            payload.sessionKey,
+            payload.expiration,
+        ),
+    setPinNumber: (payload, agent) => agent.setPinNumber(payload.verification, payload.newPin),
+    claimDailyChit: (payload, agent) => agent.claimDailyChit(payload.utcOffsetMins),
+    chitLeaderboard: (_payload, agent) => agent.chitLeaderboard(),
+    getChitEvents: (payload, agent) => agent.chitEvents(payload),
+    markAchievementsSeen: (_payload, agent) => agent.markAchievementsSeen(),
+    submitProofOfUniquePersonhood: (payload, agent) =>
+        agent.submitProofOfUniquePersonhood(payload.iiPrincipal, payload.credential),
+    linkIdentities: (payload, _agent, config) =>
+        linkIdentities(
+            payload.initiatorKey,
+            payload.initiatorDelegation,
+            payload.initiatorIsIIPrincipal,
+            payload.initiatorWebAuthnKey,
+            payload.approverKey,
+            payload.approverDelegation,
+            config.identityCanister,
+            config.icUrl,
+        ),
+    removeIdentityLink: (payload) => removeIdentityLink(payload.linked_principal),
+    getAuthenticationPrincipals: (_payload, agent) => agent.getAuthenticationPrincipals(),
+    configureWallet: (payload, agent) => agent.configureWallet(payload.config),
+    clearCachedData: (_payload, agent) => agent.clearCachedData(),
+    setCommunityReferral: (payload) =>
+        setCommunityReferral(payload.communityId.communityId, payload.referredBy, Date.now()),
+    getExternalAchievements: (_payload, agent) => agent.getExternalAchievements(),
+    cancelInvites: (payload, agent) => agent.cancelInvites(payload.id, payload.userIds),
+    messageActivityFeed: (_payload, agent) => agent.messageActivityFeed(),
+    markActivityFeedRead: (payload, agent) => agent.markActivityFeedRead(payload.readUpTo),
+    deleteUser: (payload, _agent, config) =>
+        deleteUser(payload.identityKey, payload.delegation, config.identityCanister, config.icUrl),
+    getSignInProof: (payload, _agent, config) =>
+        getSignInProof(
+            payload.identityKey,
+            payload.delegation,
+            config.identityCanister,
+            config.icUrl,
+        ),
+    installBot: (payload, agent) =>
+        agent.installBot(payload.id, payload.botId, payload.grantedPermissions),
+    updateInstalledBot: (payload, agent) =>
+        agent.updateInstalledBot(payload.id, payload.botId, payload.grantedPermissions),
+    uninstallBot: (payload, agent) => agent.uninstallBot(payload.id, payload.botId),
+    getBotDefinition: (payload) => getBotDefinition(payload.endpoint),
+    callBotCommandEndpoint: (payload, agent) =>
+        agent.callBotCommandEndpoint(payload.endpoint, payload.token),
+    payForStreakInsurance: (payload, agent) =>
+        agent.payForStreakInsurance(payload.additionalDays, payload.expectedPrice, payload.pin),
+    updateDirectChatSettings: (payload, agent) =>
+        agent.updateDirectChatSettings(payload.userId, payload.eventsTtl),
+    updateProposalTallies: (payload, agent) => agent.updateProposalTallies(payload.chatId),
+    createAccountLinkingCode: (_payload) =>
+        identityAgent?.createAccountLinkingCode() ?? Promise.resolve(undefined),
+    reinstateMissedDailyClaims: (payload, agent) =>
+        agent.reinstateMissedDailyClaims(payload.userId, payload.days),
+    verifyAccountLinkingCode: (payload, _agent, config) =>
+        verifyAccountLinkingCode(
+            payload.code,
+            payload.tempKey,
+            config.identityCanister,
+            config.icUrl,
+        ),
+    finaliseAccountLinkingWithCode: (payload, _agent, config) =>
+        finaliseAccountLinkingWithCode(
+            payload.tempKey,
+            payload.principal,
+            payload.publicKey,
+            payload.webAuthnKey,
+            config.identityCanister,
+            config.icUrl,
+        ),
+    payForPremiumItem: (payload, agent) => agent.payForPremiumItem(payload.userId, payload.item),
+    dailyPuzzleFetch: (payload, agent) => agent.dailyPuzzleFetch(payload.userId),
+    dailyPuzzleStart: (payload, agent) =>
+        agent.dailyPuzzleStart(
+            payload.userId,
+            payload.gameId,
+            payload.number,
+            payload.expectedEntryFee,
+        ),
+    dailyPuzzleSubmit: (payload, agent) =>
+        agent.dailyPuzzleSubmit(payload.userId, payload.gameId, payload.number, payload.grid),
+    dailyPuzzleHint: (payload, agent) =>
+        agent.dailyPuzzleHint(
+            payload.userId,
+            payload.gameId,
+            payload.number,
+            payload.level,
+            payload.filled,
+            payload.expectedPrice,
+        ),
+    dailyPuzzleSaveGrid: (payload, agent) =>
+        agent.dailyPuzzleSaveGrid(payload.userId, payload.gameId, payload.number, payload.grid),
+    dailyPuzzleCurrent: (_payload, agent) => agent.dailyPuzzleCurrent(),
+    dailyPuzzleResults: (payload, agent) =>
+        agent.dailyPuzzleResults(payload.gameId, payload.number, payload.userIds),
+    dailyPuzzleConfig: (_payload, agent) => agent.dailyPuzzleConfig(),
+    dailyPuzzleSetEnabled: (payload, agent) => agent.dailyPuzzleSetEnabled(payload.enabled),
+    callPushEnabled: (_payload, agent) => agent.callPushEnabled(),
+    setCallPushEnabled: (payload, agent) => agent.setCallPushEnabled(payload.enabled),
+    dailyPuzzleRegenerateToday: (payload, agent) =>
+        agent.dailyPuzzleRegenerateToday(payload.gameId),
+    setPremiumItemCost: (payload, agent) =>
+        agent.setPremiumItemCost(payload.item, payload.chitCost),
+    oneSecEnableForwarding: (payload, agent) =>
+        agent.oneSecEnableForwarding(payload.userId, payload.evmAddress),
+    oneSecGetTransferFees: (_payload, agent) => agent.oneSecGetTransferFees(),
+    oneSecForwardEvmToIcp: (payload, agent) =>
+        agent.oneSecForwardEvmToIcp(
+            payload.tokenSymbol,
+            payload.chain,
+            payload.address,
+            payload.receiver,
+        ),
+    oneSecGetForwardingStatus: (payload, agent) =>
+        agent.oneSecGetForwardingStatus(
+            payload.tokenSymbol,
+            payload.chain,
+            payload.address,
+            payload.receiver,
+        ),
+    updateBlockedUsernamePatterns: (payload, agent) =>
+        agent.updateBlockedUsernamePatterns(payload.pattern, payload.add),
+};
+
+function getAction<K extends AgentRequestKind>(
+    kind: K,
+    payload: RequestOf<K>,
     agent: OpenChatAgent,
     config: AgentConfig,
-) {
-    const kind = payload.kind;
-    switch (kind) {
-        case "getCurrentUser":
-            return agent.getCurrentUser();
-
-        case "getDeletedGroupMessage":
-            return agent.getDeletedGroupMessage(
-                payload.chatId,
-                payload.messageId,
-                payload.threadRootMessageIndex,
-            );
-
-        case "getDeletedDirectMessage":
-            return agent.getDeletedDirectMessage(payload.userId, payload.messageId);
-
-        case "getUpdates":
-            return agent.getUpdates(payload.initialLoad);
-
-        case "syncSince":
-            return agent.syncSince(payload.since);
-
-        case "refreshChat":
-            return agent.refreshChat(payload.chatId);
-
-        case "getBots":
-            return agent.getBots(payload.initialLoad);
-
-        case "createUserClient":
-            agent.createUserClient(payload.userId);
-            return Promise.resolve();
-
-        case "chatEvents":
-            return agent.chatEvents(
-                payload.chatId,
-                payload.eventIndexRange,
-                payload.startIndex,
-                payload.ascending,
-                payload.threadRootMessageIndex,
-                payload.latestKnownUpdate,
-            );
-
-        case "getUsers":
-            return agent.getUsers(payload.users, payload.allowStale);
-
-        case "getAllCachedUsers":
-            return agent.getAllCachedUsers();
-
-        case "markMessagesRead":
-            return agent.markMessagesRead(payload.payload);
-
-        case "getGroupDetails":
-            return agent.getGroupDetails(
-                payload.chatId,
-                payload.detailsLastUpdated,
-                payload.detailsSyncedUpTo,
-            );
-
-        case "lookupMembers":
-            return agent.lookupMembers(payload.id, payload.userIds, payload.latestKnownUpdate);
-
-        case "searchCommunityMembers":
-            return agent.searchCommunityMembers(
-                payload.id,
-                payload.searchTerm,
-                payload.maxResults,
-                payload.latestKnownUpdate,
-            );
-
-        case "lastOnline":
-            return agent.lastOnline(payload.userIds);
-
-        case "markAsOnline":
-            return agent.markAsOnline();
-
-        case "chatEventsWindow":
-            return agent.chatEventsWindow(
-                payload.eventIndexRange,
-                payload.chatId,
-                payload.messageIndex,
-                payload.threadRootMessageIndex,
-                payload.latestKnownUpdate,
-            );
-
-        case "chatEventsByEventIndex":
-            return agent.chatEventsByEventIndex(
-                payload.chatId,
-                payload.eventIndexes,
-                payload.threadRootMessageIndex,
-                payload.latestKnownUpdate,
-            );
-
-        case "rehydrateMessage":
-            return agent.rehydrateMessage(
-                payload.chatId,
-                payload.message,
-                payload.threadRootMessageIndex,
-                payload.latestKnownUpdate,
-            );
-
-        case "checkUsername":
-            return agent.checkUsername(payload.username, payload.isBot);
-
-        case "searchUsers":
-            return agent.searchUsers(payload.searchTerm, payload.maxResults, payload.pageIndex);
-
-        case "getUserStorageLimits":
-            return agent.getUserStorageLimits();
-
-        case "getPublicGroupSummary":
-            return agent.getPublicGroupSummary(payload.chatId);
-
-        case "toggleMuteNotifications":
-            return agent.toggleMuteNotifications(payload.id, payload.mute, payload.muteAtEveryone);
-
-        case "archiveChat":
-            return agent.archiveChat(payload.chatId);
-
-        case "unarchiveChat":
-            return agent.unarchiveChat(payload.chatId);
-
-        case "pinChat":
-            return agent.pinChat(payload.chatId, payload.favourite);
-
-        case "unpinChat":
-            return agent.unpinChat(payload.chatId, payload.favourite);
-
-        case "blockUserFromDirectChat":
-            return agent.blockUserFromDirectChat(payload.userId);
-
-        case "unblockUserFromDirectChat":
-            return agent.unblockUserFromDirectChat(payload.userId);
-
-        case "setUserAvatar":
-            return agent.setUserAvatar(payload.data);
-
-        case "setProfileBackground":
-            return agent.setProfileBackground(payload.data);
-
-        case "deleteGroup":
-            return agent.deleteGroup(payload.chatId);
-
-        case "leaveGroup":
-            return agent.leaveGroup(payload.chatId);
-
-        case "joinGroup":
-            return agent.joinGroup(
-                payload.chatId,
-                payload.credentialArgs,
-                payload.compositeGateIndex,
-            );
-
-        case "joinCommunity":
-            return agent.joinCommunity(
-                payload.id,
-                payload.credentialArgs,
-                payload.compositeGateIndex,
-            );
-
-        case "updateGroup":
-            return agent.updateGroup(
-                payload.chatId,
-                payload.name,
-                payload.desc,
-                payload.rules,
-                payload.permissions,
-                payload.avatar,
-                payload.eventsTimeToLive,
-                payload.gateConfig,
-                payload.isPublic,
-                payload.messagesVisibleToNonMembers,
-                payload.externalUrl,
-            );
-
-        case "registerPollVote":
-            return agent.registerPollVote(
-                payload.chatId,
-                payload.messageIdx,
-                payload.answerIdx,
-                payload.voteType,
-                payload.threadRootMessageIndex,
-                payload.newAchievement,
-            );
-
-        case "deleteMessage":
-            return agent.deleteMessage(
-                payload.chatId,
-                payload.messageId,
-                payload.threadRootMessageIndex,
-                payload.asPlatformModerator,
-                payload.newAchievement,
-            );
-
-        case "undeleteMessage":
-            return agent.undeleteMessage(
-                payload.chatId,
-                payload.messageId,
-                payload.threadRootMessageIndex,
-            );
-
-        case "addReaction":
-            return agent.addReaction(
-                payload.chatId,
-                payload.messageId,
-                payload.reaction,
-                payload.username,
-                payload.displayName,
-                payload.threadRootMessageIndex,
-                payload.newAchievement,
-            );
-
-        case "removeReaction":
-            return agent.removeReaction(
-                payload.chatId,
-                payload.messageId,
-                payload.reaction,
-                payload.threadRootMessageIndex,
-            );
-
-        case "blockUserFromGroupChat":
-            return agent.blockUserFromGroupChat(payload.chatId, payload.userId);
-
-        case "unblockUserFromGroupChat":
-            return agent.unblockUserFromGroupChat(payload.chatId, payload.userId);
-
-        case "getProposalVoteDetails":
-            return agent.getProposalVoteDetails(
-                payload.governanceCanisterId,
-                payload.proposalId,
-                payload.isNns,
-            );
-
-        case "listNervousSystemFunctions":
-            return agent.listNervousSystemFunctions(payload.snsGovernanceCanisterId);
-
-        case "unpinMessage":
-            return agent.unpinMessage(payload.chatId, payload.messageIndex);
-
-        case "pinMessage":
-            return agent.pinMessage(payload.chatId, payload.messageIndex);
-
-        case "sendMessage":
-            return agent.sendMessage(
-                payload.messageContext,
-                payload.user,
-                payload.mentioned,
-                payload.event,
-                payload.acceptedRules,
-                payload.messageFilterFailed,
-                payload.pin,
-                payload.newAchievement,
-            );
-
-        case "editMessage":
-            return agent.editMessage(
-                payload.chatId,
-                payload.msg,
-                payload.threadRootMessageIndex,
-                payload.blockLevelMarkdown,
-                payload.newAchievement,
-            );
-
-        case "registerUser":
-            return agent.registerUser(payload.username, payload.email, payload.referralCode);
-
-        case "subscriptionExists":
-            return agent.subscriptionExists(payload.endpoint);
-
-        case "pushSubscription":
-            return agent.pushSubscription(payload.subscription).then(() => undefined);
-
-        case "removeSubscription":
-            return agent.removeSubscription(payload.endpoint).then(() => undefined);
-
-        case "fcmTokenExists":
-            return agent.fcmTokenExists(payload.fcmToken);
-
-        case "addFcmToken":
-            return agent.addFcmToken(payload.fcmToken, payload.onResponseError);
-
-        case "removeFcmToken":
-            return agent.removeFcmToken(payload.fcmToken);
-
-        case "markNotificationSubscriptionActive":
-            return agent.markNotificationSubscriptionActive(payload.endpoint);
-
-        case "inviteUsers":
-            return agent.inviteUsers(payload.id, payload.userIds);
-
-        case "removeMember":
-            return agent.removeMember(payload.chatId, payload.userId);
-
-        case "changeRole":
-            return agent.changeRole(payload.chatId, payload.userId, payload.newRole);
-
-        case "registerProposalVote":
-            return agent.registerProposalVote(
-                payload.chatId,
-                payload.messageIndex,
-                payload.governanceCanisterId,
-                payload.proposalId,
-                payload.isNns,
-                payload.adopt,
-            );
-
-        case "getRecommendedGroups":
-            return agent.getRecommendedGroups(payload.exclusions);
-
-        case "exploreCommunities":
-            return agent.exploreCommunities(
-                payload.searchTerm,
-                payload.pageIndex,
-                payload.pageSize,
-                payload.flags,
-                payload.languages,
-            );
-
-        case "exploreBots":
-            return agent.exploreBots(
-                payload.searchTerm,
-                payload.pageIndex,
-                payload.pageSize,
-                payload.location,
-                payload.excludeInstalled,
-            );
-
-        case "registerBot":
-            return agent.registerBot(payload.principal, payload.bot);
-
-        case "removeBot":
-            return agent.removeBot(payload.botId);
-
-        case "updateRegisteredBot":
-            return agent.updateRegisteredBot(
-                payload.id,
-                payload.principal,
-                payload.ownerId,
-                payload.avatarUrl,
-                payload.endpoint,
-                payload.definition,
-            );
-
-        case "searchGroups":
-            return agent.searchGroups(payload.searchTerm, payload.flags, payload.maxResults);
-
-        case "dismissRecommendation":
-            return agent.dismissRecommendation(payload.chatId).then(() => undefined);
-
-        case "communityInvite":
-            agent.communityInvite = payload.value;
-            return Promise.resolve();
-
-        case "groupInvite":
-            agent.groupInvite = payload.value;
-            return Promise.resolve();
-
-        case "searchGroupChat":
-            return agent.searchGroupChat(
-                payload.chatId,
-                payload.searchTerm,
-                payload.userIds,
-                payload.maxResults,
-            );
-
-        case "searchDirectChat":
-            return agent.searchDirectChat(payload.chatId, payload.searchTerm, payload.maxResults);
-
-        case "refreshAccountBalance":
-            return agent.refreshAccountBalance(payload.ledger, payload.principal);
-
-        case "fundsInPreviousWallets":
-            return agent.fundsInPreviousWallets(payload.previousUserIds);
-
-        case "moveFundsFromPreviousWallets":
-            return agent.moveFundsFromPreviousWallets(payload.funds);
-
-        case "getAccountTransactions":
-            return agent.getAccountTransactions(
-                payload.ledgerIndex,
-                payload.principal,
-                payload.fromId,
-            );
-
-        case "threadPreviews":
-            return agent.threadPreviews(payload.threadsByChat);
-
-        case "getUser":
-            return agent.getUser(payload.userId, payload.allowStale);
-
-        case "getPublicProfile":
-            return agent.getPublicProfile(payload.userId);
-
-        case "setUsername":
-            return agent.setUsername(payload.userId, payload.username);
-
-        case "setDisplayName":
-            return agent.setDisplayName(payload.userId, payload.displayName);
-
-        case "setHideOnlineStatus":
-            return agent.setHideOnlineStatus(payload.hideOnlineStatus);
-
-        case "setBio":
-            return agent.setBio(payload.bio);
-
-        case "getBio":
-            return agent.getBio(payload.userId);
-
-        case "withdrawCryptocurrency":
-            return agent.withdrawCryptocurrency(payload.domain, payload.pin);
-
-        case "getMessagesByMessageIndex":
-            return agent.getMessagesByMessageIndex(
-                payload.chatId,
-                payload.threadRootMessageIndex,
-                payload.messageIndexes,
-                payload.latestKnownUpdate,
-            );
-
-        case "getInviteCode":
-            return agent.getInviteCode(payload.id);
-
-        case "enableInviteCode":
-            return agent.enableInviteCode(payload.id);
-
-        case "disableInviteCode":
-            return agent.disableInviteCode(payload.id);
-
-        case "resetInviteCode":
-            return agent.resetInviteCode(payload.id);
-
-        case "createGroupChat":
-            return agent.createGroupChat(payload.candidate);
-
-        case "setCachedMessageFromNotification":
-            return agent
-                .setCachedMessageFromNotification(
-                    payload.chatId,
-                    payload.threadRootMessageIndex,
-                    payload.message,
-                )
-                .then(() => undefined);
-
-        case "freezeGroup":
-            return agent.freezeGroup(payload.chatId, payload.reason);
-
-        case "unfreezeGroup":
-            return agent.unfreezeGroup(payload.chatId);
-
-        case "freezeCommunity":
-            return agent.freezeCommunity(payload.id, payload.reason);
-
-        case "unfreezeCommunity":
-            return agent.unfreezeCommunity(payload.id);
-
-        case "deleteFrozenGroup":
-            return agent.deleteFrozenGroup(payload.chatId);
-
-        case "addHotGroupExclusion":
-            return agent.addHotGroupExclusion(payload.chatId);
-
-        case "removeHotGroupExclusion":
-            return agent.removeHotGroupExclusion(payload.chatId);
-
-        case "addRemoveSwapProvider":
-            return agent.addRemoveSwapProvider(payload.swapProvider, payload.add);
-
-        case "addMessageFilter":
-            return agent.addMessageFilter(payload.regex);
-
-        case "removeMessageFilter":
-            return agent.removeMessageFilter(payload.id);
-
-        case "setAirdropConfig":
-            return agent.setAirdropConfig(
-                payload.channelId,
-                payload.channelName,
-                payload.communityId,
-                payload.communityName,
-            );
-
-        case "setTokenEnabled":
-            return agent.setTokenEnabled(payload.ledger, payload.enabled);
-
-        case "suspendUser":
-            return agent.suspendUser(payload.userId, payload.reason);
-
-        case "unsuspendUser":
-            return agent.unsuspendUser(payload.userId);
-
-        case "setCommunityModerationFlags":
-            return agent.setCommunityModerationFlags(payload.communityId, payload.flags);
-
-        case "setGroupModerationFlags":
-            return agent.setGroupModerationFlags(payload.chatId, payload.flags);
-
-        case "setGroupUpgradeConcurrency":
-            return agent.setGroupUpgradeConcurrency(payload.value);
-
-        case "setCommunityUpgradeConcurrency":
-            return agent.setCommunityUpgradeConcurrency(payload.value);
-
-        case "createMultiUserCanister":
-            return agent.createMultiUserCanister(payload.localUserIndexCanisterId);
-
-        case "markLocalGroupIndexFull":
-            return agent.markLocalGroupIndexFull(payload.canisterId, payload.full);
-
-        case "setDiamondMembershipFees":
-            return agent.setDiamondMembershipFees(payload.fees);
-
-        case "stakeNeuronForSubmittingProposals":
-            return agent.stakeNeuronForSubmittingProposals(
-                payload.governanceCanisterId,
-                payload.stake,
-            );
-
-        case "topUpNeuronForSubmittingProposals":
-            return agent.topUpNeuronForSubmittingProposals(
-                payload.governanceCanisterId,
-                payload.amount,
-            );
-
-        case "loadFailedMessages":
-            return agent.loadFailedMessages();
-
-        case "deleteFailedMessage":
-            return agent
-                .deleteFailedMessage(
-                    payload.chatId,
-                    payload.messageId,
-                    payload.threadRootMessageIndex,
-                )
-                .then(() => undefined);
-
-        case "claimPrize":
-            return agent.claimPrize(payload.chatId, payload.messageId, payload.signInProof);
-
-        case "payForDiamondMembership":
-            return agent.payForDiamondMembership(
-                payload.userId,
-                payload.ledger,
-                payload.duration,
-                payload.recurring,
-                payload.expectedPriceE8s,
-                payload.fromAccount,
-                payload.pin,
-            );
-
-        case "updateMarketMakerConfig":
-            return agent.updateMarketMakerConfig(payload);
-
-        case "setMessageReminder":
-            return agent.setMessageReminder(
-                payload.chatId,
-                payload.eventIndex,
-                payload.remindAt,
-                payload.notes,
-                payload.threadRootMessageIndex,
-            );
-
-        case "cancelMessageReminder":
-            return agent.cancelMessageReminder(payload.reminderId);
-
-        case "reportMessage":
-            return agent.reportMessage(
-                payload.chatId,
-                payload.threadRootMessageIndex,
-                payload.messageId,
-                payload.deleteMessage,
-                payload.csam,
-            );
-
-        case "approveTransfer":
-            return agent.approveTransfer(
-                payload.spender,
-                payload.ledger,
-                payload.amount,
-                payload.expiresIn,
-                payload.pin,
-            );
-
-        case "approveAccessGatePayment":
-            return agent.approveAccessGatePayment(
-                payload.canisterId,
-                payload.ledger,
-                payload.amount,
-                payload.expiresIn,
-                payload.pin,
-            );
-
-        case "declineInvitation":
-            return agent.declineInvitation(payload.chatId);
-
-        // Community level functions
-        case "addMembersToChannel":
-            return agent.communityClient.addMembersToChannel(
-                payload.chatId,
-                payload.userIds,
-                payload.username,
-                payload.displayName,
-            );
-
-        case "blockCommunityUser":
-            return agent.communityClient.blockUser(payload.id.communityId, payload.userId);
-
-        case "changeChannelRole":
-            return agent.communityClient.changeChannelRole(
-                payload.chatId,
-                payload.userId,
-                payload.newRole,
-            );
-
-        case "changeCommunityRole":
-            return agent.communityClient.changeRole(
-                payload.id.communityId,
-                payload.userId,
-                payload.newRole,
-            );
-
-        case "declineChannelInvitation":
-            return agent.communityClient.declineInvitation(payload.chatId);
-
-        case "removeCommunityMember":
-            return agent.communityClient.removeMember(payload.id.communityId, payload.userId);
-
-        case "unblockCommunityUser":
-            return agent.communityClient.unblockUser(payload.id.communityId, payload.userId);
-
-        case "updateCommunity":
-            return agent.communityClient.updateCommunity(
-                payload.communityId,
-                payload.name,
-                payload.description,
-                payload.rules,
-                payload.permissions,
-                payload.avatar,
-                payload.banner,
-                payload.gateConfig,
-                payload.isPublic,
-                payload.primaryLanguage,
-            );
-
-        case "createCommunity":
-            return agent.userClient.createCommunity(
-                payload.community,
-                payload.rules,
-                payload.defaultChannels,
-                payload.defaultChannelRules,
-            );
-
-        case "getCommunitySummary":
-            return agent.getCommunitySummary(payload.communityId);
-
-        case "getChannelSummary":
-            return agent.getChannelSummary(payload.chatId);
-
-        case "exploreChannels":
-            return agent.exploreChannels(
-                payload.id,
-                payload.searchTerm,
-                payload.pageSize,
-                payload.pageIndex,
-            );
-
-        case "getCommunityDetails":
-            return agent.communityClient.getCommunityDetails(
-                payload.id.communityId,
-                payload.detailsLastUpdated,
-                payload.detailsSyncedUpTo,
-            );
-
-        case "addToFavourites":
-            return agent.userClient.manageFavouriteChats([payload.chatId], []);
-
-        case "removeFromFavourites":
-            return agent.userClient.manageFavouriteChats([], [payload.chatId]);
-
-        case "leaveCommunity":
-            return agent.userClient.leaveCommunity(payload.id);
-
-        case "deleteCommunity":
-            return agent.userClient.deleteCommunity(payload.id);
-
-        case "convertGroupToCommunity":
-            return agent.convertGroupToCommunity(
-                payload.chatId,
-                payload.historyVisible,
-                payload.rules,
-            );
-
-        case "importGroupToCommunity":
-            return agent.communityClient.importGroup(
-                payload.communityId.communityId,
-                payload.groupId,
-            );
-
-        case "setModerationFlags":
-            return agent.setModerationFlags(payload.flags);
-
-        case "proposeSetOpenAIApiKey":
-            return agent.proposeSetOpenAIApiKey(payload.apiKey);
-        case "confirmProtectedAction":
-            return agent.confirmProtectedAction(payload.actionId);
-        case "cancelProtectedAction":
-            return agent.cancelProtectedAction(payload.actionId);
-        case "protectedActions":
-            return agent.protectedActions();
-        case "setModerationReferralConfig":
-            return agent.setModerationReferralConfig(payload.config);
-        case "proposeSetVaultLegalHold":
-            return agent.proposeSetVaultLegalHold(
-                payload.reportIndex,
-                payload.legalHold,
-                payload.reference,
-            );
-        case "proposeSetVaultReviewers":
-            return agent.proposeSetVaultReviewers(payload.userIds);
-        case "proposeSetMediaScanConfig":
-            return agent.proposeSetMediaScanConfig(payload.enabled, payload.scanners);
-        case "proposeSetAuthorityReporter":
-            return agent.proposeSetAuthorityReporter(payload.principal);
-        case "setVaultLegalHold":
-            return agent.setVaultLegalHold(
-                payload.reportIndex,
-                payload.legalHold,
-                payload.reference,
-            );
-        case "proposeDestroyVaultEvidence":
-            return agent.proposeDestroyVaultEvidence(payload.reportIndex, payload.leRequestRef);
-        case "vaultBuckets":
-            return agent.vaultBuckets();
-        case "vaultLog":
-            return agent.vaultLog(
-                payload.bucketCanisterId,
-                payload.start,
-                payload.max,
-                payload.fileId,
-            );
-        case "moderationConfig":
-            return agent.moderationConfig();
-        case "authorityReports":
-            return agent.authorityReports();
-        case "recordAuthorityReportFiled":
-            return agent.recordAuthorityReportFiled(
-                payload.reportIndex,
-                payload.portalReference,
-                payload.urgent,
-                payload.unverified,
-            );
-        case "clearAuthorityReportAttempt":
-            return agent.clearAuthorityReportAttempt(payload.reportIndex);
-        case "authorityReportToken":
-            return agent.authorityReportToken(
-                payload.reportIndex,
-                payload.priority,
-                payload.reporter,
-                payload.oohCallAcknowledged,
-            );
-        case "acceptTerms":
-            return agent.acceptTerms(payload.version);
-
-        case "proposeSetInternalModerationChannel":
-            return agent.proposeSetInternalModerationChannel(payload.channel);
-        case "resolveModerationReport":
-            return agent.resolveModerationReport(
-                payload.reportIndex,
-                payload.verdict,
-                payload.urgent,
-            );
-
-        case "contestModerationSanction":
-            return agent.contestModerationSanction();
-
-        case "vaultFileChunk":
-            return agent.vaultFileChunk(
-                payload.bucketCanisterId,
-                payload.fileId,
-                payload.chunkIndex,
-            );
-
-        case "vaultFileInfo":
-            return agent.vaultFileInfo(payload.bucketCanisterId, payload.fileId);
-
-        case "updateRegistry":
-            return agent.getRegistry();
-
-        case "setCommunityIndexes":
-            return agent.setCommunityIndexes(payload.indexes);
-
-        case "createUserGroup":
-            return agent.createUserGroup(payload.communityId, payload.name, payload.userIds);
-
-        case "updateUserGroup":
-            return agent.updateUserGroup(
-                payload.communityId,
-                payload.userGroupId,
-                payload.name,
-                payload.usersToAdd,
-                payload.usersToRemove,
-            );
-
-        case "deleteUserGroups":
-            return agent.deleteUserGroups(payload.communityId, payload.userGroupIds);
-
-        case "setMemberDisplayName":
-            return agent.setMemberDisplayName(
-                payload.communityId,
-                payload.displayName,
-                payload.newAchievement,
-            );
-
-        case "followThread":
-            return agent.followThread(
-                payload.chatId,
-                payload.threadRootMessageIndex,
-                payload.follow,
-                payload.newAchievement,
-            );
-
-        case "submitProposal":
-            return agent.submitProposal(
-                payload.currentUserId,
-                payload.governanceCanisterId,
-                payload.proposal,
-                payload.ledger,
-                payload.token,
-                payload.proposalRejectionFee,
-                payload.transactionFee,
-            );
-
-        case "tipMessage":
-            return agent.tipMessage(
-                payload.messageContext,
-                payload.messageId,
-                payload.transfer,
-                payload.decimals,
-                payload.pin,
-                payload.username,
-                payload.displayName,
-                payload.newAchievement,
-            );
-
-        case "loadSavedCryptoAccounts":
-            return agent.userClient.loadSavedCryptoAccounts();
-
-        case "saveCryptoAccount":
-            return agent.userClient.saveCryptoAccount(payload.namedAccount);
-
-        case "deleteCryptoAccount":
-            return agent.userClient.deleteCryptoAccount(payload.name);
-
-        case "canSwap":
-            return agent.canSwap(payload.tokenLedgers);
-
-        case "getTokenSwaps":
-            return agent.getTokenSwaps(payload.inputTokenLedger, payload.outputTokenLedgers);
-
-        case "getTokenSwapQuotes":
-            return agent.getTokenSwapQuotes(
-                payload.inputTokenLedger,
-                payload.outputTokenLedger,
-                payload.amountIn,
-            );
-
-        case "swapTokens":
-            return agent.swapTokens(
-                payload.swapId,
-                payload.inputTokenDetails,
-                payload.outputTokenDetails,
-                payload.amountIn,
-                payload.minAmountOut,
-                payload.dex,
-                payload.pin,
-            );
-
-        case "recoverUnfinishedTokenSwaps":
-            return agent.recoverUnfinishedTokenSwaps();
-
-        case "deleteDirectChat":
-            return agent.deleteDirectChat(payload.userId, payload.blockUser);
-
-        case "diamondMembershipFees":
-            return agent.diamondMembershipFees();
-
-        case "reportedMessages":
-            return agent.reportedMessages(payload.userId);
-
-        case "exchangeRates":
-            return agent.exchangeRates();
-
-        case "proposeTranslation":
-            return agent.translationsClient().propose(payload.locale, payload.key, payload.value);
-
-        case "approveTranslation":
-            return agent.translationsClient().approve(payload.id);
-
-        case "rejectTranslation":
-            return agent.translationsClient().reject(payload.id, payload.reason);
-
-        case "getProposedTranslations":
-            return agent.translationsClient().proposed();
-
-        case "markTranslationsDeployed":
-            return agent.translationsClient().markDeployed();
-
-        case "getTranslationsPendingDeployment":
-            return agent.translationsClient().pendingDeployment();
-
-        case "acceptP2PSwap":
-            return agent.acceptP2PSwap(
-                payload.chatId,
-                payload.threadRootMessageIndex,
-                payload.messageId,
-                payload.token1,
-                payload.token1Amount,
-                payload.pin,
-                payload.newAchievement,
-                payload.fromAccount,
-            );
-
-        case "cancelP2PSwap":
-            return agent.cancelP2PSwap(
-                payload.chatId,
-                payload.threadRootMessageIndex,
-                payload.messageId,
-            );
-
-        case "joinVideoCall":
-            return agent.joinVideoCall(payload.chatId, payload.messageId, payload.newAchievement);
-
-        case "videoCallParticipants":
-            return agent.videoCallParticipants(
-                payload.chatId,
-                payload.messageId,
-                payload.updatesSince,
-            );
-
-        case "setVideoCallPresence":
-            return agent.setVideoCallPresence(
-                payload.chatId,
-                payload.messageId,
-                payload.presence,
-                payload.newAchievement,
-            );
-
-        case "getAccessToken":
-            return agent.getAccessToken(payload.accessTokenType, payload.localUserIndex);
-
-        case "registerWebhook":
-            return agent.registerWebhook(payload.chatId, payload.name, payload.avatar);
-
-        case "updateWebhook":
-            return agent.updateWebhook(payload.chatId, payload.id, payload.name, payload.avatar);
-
-        case "regenerateWebhook":
-            return agent.regenerateWebhook(payload.chatId, payload.id);
-
-        case "deleteWebhook":
-            return agent.deleteWebhook(payload.chatId, payload.id);
-
-        case "getWebhook":
-            return agent.getWebhook(payload.chatId, payload.id);
-
-        case "getLocalUserIndexForUser":
-            return agent.getLocalUserIndexForUser(payload.userId);
-
-        case "generateBtcAddress":
-            return agent.generateBtcAddress();
-
-        case "generateOneSecAddress":
-            return agent.generateOneSecAddress();
-
-        case "updateBtcBalance":
-            return agent.updateBtcBalance(payload.userId, payload.bitcoinAddress);
-
-        case "withdrawBtc":
-            return agent.withdrawBtc(payload.address, payload.amount, payload.pin);
-
-        case "withdrawViaOneSec":
-            return agent.withdrawViaOneSec(
-                payload.ledger,
-                payload.tokenSymbol,
-                payload.chain,
-                payload.address,
-                payload.amount,
-                payload.pin,
-            );
-
-        case "ckbtcMinterDepositInfo":
-            return agent.getCkbtcMinterDepositInfo();
-
-        case "ckbtcMinterWithdrawalInfo":
-            return agent.getCkbtcMinterWithdrawalInfo(payload.amount);
-
-        case "currentUserWebAuthnKey":
-            // TODO add type for the `res`
-            return (
-                identityAgent?.checkAuthPrincipal().then((res) => {
-                    return res.kind === "success" ? res.webAuthnKey : undefined;
-                }) ?? Promise.resolve(undefined)
-            );
-
-        case "lookupWebAuthnPubKey":
-            return IdentityAgent.create(
-                new AnonymousIdentity(),
-                config.identityCanister,
-                config.icUrl,
-                undefined,
-            ).then((ia) => ia.lookupWebAuthnPubKey(payload.credentialId));
-
-        case "setCachedWebAuthnKey":
-            return setCachedWebAuthnKey(payload.key);
-
-        case "generateMagicLink":
-            return agent.generateMagicLink(payload.email, payload.sessionKey);
-
-        case "getSignInWithEmailDelegation":
-            return agent.getSignInWithEmailDelegation(
-                payload.email,
-                payload.sessionKey,
-                payload.expiration,
-            );
-
-        case "siwePrepareLogin":
-            return agent.siwePrepareLogin(payload.address);
-
-        case "siwsPrepareLogin":
-            return agent.siwsPrepareLogin(payload.address);
-
-        case "loginWithWallet":
-            return agent.loginWithWallet(
-                payload.token,
-                payload.address,
-                payload.signature,
-                payload.sessionKey,
-            );
-
-        case "getDelegationWithWallet":
-            return agent.getDelegationWithWallet(
-                payload.token,
-                payload.address,
-                payload.sessionKey,
-                payload.expiration,
-            );
-
-        case "setPinNumber":
-            return agent.setPinNumber(payload.verification, payload.newPin);
-
-        case "claimDailyChit":
-            return agent.claimDailyChit(payload.utcOffsetMins);
-
-        case "chitLeaderboard":
-            return agent.chitLeaderboard();
-
-        case "getChitEvents":
-            return agent.chitEvents(payload);
-
-        case "markAchievementsSeen":
-            return agent.markAchievementsSeen();
-
-        case "submitProofOfUniquePersonhood":
-            return agent.submitProofOfUniquePersonhood(payload.iiPrincipal, payload.credential);
-
-        case "linkIdentities":
-            return linkIdentities(
-                payload.initiatorKey,
-                payload.initiatorDelegation,
-                payload.initiatorIsIIPrincipal,
-                payload.initiatorWebAuthnKey,
-                payload.approverKey,
-                payload.approverDelegation,
-                config.identityCanister,
-                config.icUrl,
-            );
-
-        case "removeIdentityLink":
-            return removeIdentityLink(payload.linked_principal);
-
-        case "getAuthenticationPrincipals":
-            return agent.getAuthenticationPrincipals();
-
-        case "configureWallet":
-            return agent.configureWallet(payload.config);
-
-        case "clearCachedData":
-            return agent.clearCachedData();
-
-        case "setCommunityReferral":
-            return setCommunityReferral(
-                payload.communityId.communityId,
-                payload.referredBy,
-                Date.now(),
-            );
-
-        case "getExternalAchievements":
-            return agent.getExternalAchievements();
-
-        case "cancelInvites":
-            return agent.cancelInvites(payload.id, payload.userIds);
-
-        case "messageActivityFeed":
-            return agent.messageActivityFeed();
-
-        case "markActivityFeedRead":
-            return agent.markActivityFeedRead(payload.readUpTo);
-
-        case "deleteUser":
-            return deleteUser(
-                payload.identityKey,
-                payload.delegation,
-                config.identityCanister,
-                config.icUrl,
-            );
-
-        case "getSignInProof":
-            return getSignInProof(
-                payload.identityKey,
-                payload.delegation,
-                config.identityCanister,
-                config.icUrl,
-            );
-
-        case "installBot":
-            return agent.installBot(payload.id, payload.botId, payload.grantedPermissions);
-
-        case "updateInstalledBot":
-            return agent.updateInstalledBot(payload.id, payload.botId, payload.grantedPermissions);
-
-        case "uninstallBot":
-            return agent.uninstallBot(payload.id, payload.botId);
-
-        case "getBotDefinition":
-            return getBotDefinition(payload.endpoint);
-
-        case "callBotCommandEndpoint":
-            return agent.callBotCommandEndpoint(payload.endpoint, payload.token);
-
-        case "payForStreakInsurance":
-            return agent.payForStreakInsurance(
-                payload.additionalDays,
-                payload.expectedPrice,
-                payload.pin,
-            );
-
-        case "updateDirectChatSettings":
-            return agent.updateDirectChatSettings(payload.userId, payload.eventsTtl);
-
-        case "updateProposalTallies":
-            return agent.updateProposalTallies(payload.chatId);
-
-        case "createAccountLinkingCode":
-            return identityAgent?.createAccountLinkingCode() ?? Promise.resolve(undefined);
-
-        case "reinstateMissedDailyClaims":
-            return agent.reinstateMissedDailyClaims(payload.userId, payload.days);
-
-        case "verifyAccountLinkingCode":
-            return verifyAccountLinkingCode(
-                payload.code,
-                payload.tempKey,
-                config.identityCanister,
-                config.icUrl,
-            );
-
-        case "finaliseAccountLinkingWithCode":
-            return finaliseAccountLinkingWithCode(
-                payload.tempKey,
-                payload.principal,
-                payload.publicKey,
-                payload.webAuthnKey,
-                config.identityCanister,
-                config.icUrl,
-            );
-
-        case "payForPremiumItem":
-            return agent.payForPremiumItem(payload.userId, payload.item);
-
-        case "dailyPuzzleFetch":
-            return agent.dailyPuzzleFetch(payload.userId);
-
-        case "dailyPuzzleStart":
-            return agent.dailyPuzzleStart(
-                payload.userId,
-                payload.gameId,
-                payload.number,
-                payload.expectedEntryFee,
-            );
-
-        case "dailyPuzzleSubmit":
-            return agent.dailyPuzzleSubmit(
-                payload.userId,
-                payload.gameId,
-                payload.number,
-                payload.grid,
-            );
-
-        case "dailyPuzzleHint":
-            return agent.dailyPuzzleHint(
-                payload.userId,
-                payload.gameId,
-                payload.number,
-                payload.level,
-                payload.filled,
-                payload.expectedPrice,
-            );
-
-        case "dailyPuzzleSaveGrid":
-            return agent.dailyPuzzleSaveGrid(
-                payload.userId,
-                payload.gameId,
-                payload.number,
-                payload.grid,
-            );
-
-        case "dailyPuzzleCurrent":
-            return agent.dailyPuzzleCurrent();
-
-        case "dailyPuzzleResults":
-            return agent.dailyPuzzleResults(payload.gameId, payload.number, payload.userIds);
-
-        case "dailyPuzzleConfig":
-            return agent.dailyPuzzleConfig();
-
-        case "dailyPuzzleSetEnabled":
-            return agent.dailyPuzzleSetEnabled(payload.enabled);
-        case "callPushEnabled":
-            return agent.callPushEnabled();
-        case "setCallPushEnabled":
-            return agent.setCallPushEnabled(payload.enabled);
-
-        case "dailyPuzzleRegenerateToday":
-            return agent.dailyPuzzleRegenerateToday(payload.gameId);
-
-        case "setPremiumItemCost":
-            return agent.setPremiumItemCost(payload.item, payload.chitCost);
-
-        case "oneSecEnableForwarding":
-            return agent.oneSecEnableForwarding(payload.userId, payload.evmAddress);
-
-        case "oneSecGetTransferFees":
-            return agent.oneSecGetTransferFees();
-
-        case "oneSecForwardEvmToIcp":
-            return agent.oneSecForwardEvmToIcp(
-                payload.tokenSymbol,
-                payload.chain,
-                payload.address,
-                payload.receiver,
-            );
-
-        case "oneSecGetForwardingStatus":
-            return agent.oneSecGetForwardingStatus(
-                payload.tokenSymbol,
-                payload.chain,
-                payload.address,
-                payload.receiver,
-            );
-
-        case "updateBlockedUsernamePatterns":
-            return agent.updateBlockedUsernamePatterns(payload.pattern, payload.add);
-
-        default:
-            logUnknownMessageKind(kind);
-            return Promise.resolve(undefined);
+): Action<K> {
+    const handler: Handlers[K] | undefined = handlers[kind];
+    if (handler === undefined) {
+        // a request from a client built with a newer worker contract than this worker
+        logger.debug("WORKER: unknown message kind received: ", kind);
+        return Promise.resolve(undefined) as Action<K>;
     }
+    return handler(payload, agent, config);
 }
 
 async function verifyAccountLinkingCode(
@@ -1778,8 +1320,4 @@ async function getSignInProof(
 
     const getIdentityResult = await identityAgent.getOpenChatIdentity(sessionKey);
     return getIdentityResult?.signInProofJwt;
-}
-
-function logUnknownMessageKind(kind: never) {
-    logger.debug("WORKER: unknown message kind received: ", kind);
 }

@@ -264,7 +264,14 @@ export type CorrelatedWorkerRequest = WorkerRequest & {
     correlationId: number;
 };
 
-export type WorkerRequest =
+// A request is copied to the worker by postMessage, which can't copy a function: a request with a
+// function field fails to compile here instead of throwing DataCloneError when it is sent
+type NoFunctionFields<T> = {
+    [K in keyof T]: NonNullable<T[K]> extends (...args: never[]) => unknown ? never : T[K];
+};
+type Cloneable<T extends NoFunctionFields<T>> = T;
+
+export type WorkerRequest = Cloneable<
     | SetAuthIdentity
     | Logout
     | SetMinLogLevel
@@ -547,7 +554,8 @@ export type WorkerRequest =
     | OneSecGetForwardingStatus
     | UpdateBlockedUsernamePatterns
     | MarkNotificationSubscriptionActive
-    | AbortInFlightQueries;
+    | AbortInFlightQueries
+>;
 
 // Sent when the app resumes after being suspended, see `abortInFlightQueries` in openchat-agent
 type AbortInFlightQueries = {
@@ -1398,7 +1406,6 @@ type FcmTokenExists = {
 type AddFcmToken = {
     kind: "addFcmToken";
     fcmToken: string;
-    onResponseError?: (error: string | null) => void;
 };
 
 type RemoveFcmToken = {
@@ -2813,7 +2820,7 @@ export type WorkerResults = ResultsByKind<{
     setCallPushEnabled: Success | OCError;
     setPremiumItemCost: void;
     createAccountLinkingCode: AccountLinkingCode | undefined;
-    getSignInProof: string;
+    getSignInProof: string | undefined;
     reinstateMissedDailyClaims: boolean;
     oneSecEnableForwarding: void;
     oneSecGetTransferFees: OneSecTransferFees[];
