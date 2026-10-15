@@ -16,7 +16,7 @@ pub const FIRST_SOL_DEPOSIT_FEE: u64 = 2_000_000;
 pub const SOL_DEPOSIT_FEE: u64 = 1_000_000;
 
 // The account of the canister holding the user which their SOL deposits are minted to as ckSOL,
-// from which the canister forwards them to the user's wallet, less `SOL_DEPOSIT_FEE`. Its
+// from which the canister forwards them to the user's wallet, less the deposit fee. Its
 // subaccount holds the user's principal, so whose ckSOL a subaccount holds can be read from it.
 pub fn sol_deposit_account(canister_id: CanisterId, principal: Principal) -> icrc1::Account {
     icrc1::Account {

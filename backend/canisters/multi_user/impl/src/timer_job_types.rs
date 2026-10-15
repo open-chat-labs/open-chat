@@ -560,20 +560,19 @@ impl ForwardSolDepositJob {
             .ok()?;
 
         let transfers = mutate_state(|state| {
-            let ledger_fee = u64::try_from(&ledger_fee.0).ok()?;
+            let ledger_fee = u64::try_from(&ledger_fee.0).ok();
             let created_at = state.env.now_nanos();
-            // The user's first deposit to be swept left the rent reserve on their address. A deleted
-            // user's deposit is taken not to have, which can only charge them less.
-            state
+            // The sweep of the user's first deposit to be minted left the rent reserve on their
+            // address, whether or not the deposit can be forwarded. A deleted user's deposit is
+            // taken not to have, which can only charge them less.
+            let first = state
                 .data
                 .users
                 .with_user_mut(self.user_index, |user| {
-                    let first = !user.sol_deposit_address_funded;
-                    let transfers = sol_deposit_transfers(minted_amount, ledger_fee, first, created_at)?;
-                    user.sol_deposit_address_funded = true;
-                    Some(transfers)
+                    !std::mem::replace(&mut user.sol_deposit_address_funded, true)
                 })
-                .unwrap_or_else(|| sol_deposit_transfers(minted_amount, ledger_fee, false, created_at))
+                .unwrap_or_default();
+            sol_deposit_transfers(minted_amount, ledger_fee?, first, created_at)
         });
 
         if transfers.is_none() {
