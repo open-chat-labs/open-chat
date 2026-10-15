@@ -91,6 +91,10 @@ pub struct User {
     // assigned in order, so that each deposit is forwarded once
     #[serde(default)]
     pub latest_sol_deposit_id: Option<u64>,
+    // Whether one of the user's SOL deposits has been swept, leaving the minter's rent reserve on
+    // their deposit address, so that later deposits are charged the lower fee
+    #[serde(default)]
+    pub sol_deposit_address_funded: bool,
     #[serde(default)]
     pub bots: InstalledBots,
     #[serde(default)]
@@ -139,6 +143,7 @@ impl User {
             one_sec_address: None,
             sol_address: None,
             latest_sol_deposit_id: None,
+            sol_deposit_address_funded: false,
             bots: InstalledBots::default(),
             premium_items: PremiumItems::default(),
         }

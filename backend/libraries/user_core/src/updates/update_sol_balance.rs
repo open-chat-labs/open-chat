@@ -7,9 +7,12 @@ use serde::Serialize;
 use tracing::error;
 use types::{CanisterId, OCResult, icrc1};
 
-// What the canister keeps of each SOL deposit, in lamports, to cover the cycles it pays the ckSOL
-// minter to sweep the deposit, about 55B. The website shows it in the deposit view from its own copy,
-// `SOL_DEPOSIT_FEE`, which must match.
+// What the user is charged for a SOL deposit, in lamports, being what they sent less what they are
+// credited with: more for their first, whose sweep leaves the minter's rent reserve on the address.
+// Out of it come the reserve, the deposit's share of the sweep's fee and the two ledger fees, and the
+// rest goes to the treasury, covering the ~55B cycles the canister pays the minter for the sweep. The
+// website shows them in the deposit view from its own copies, which must match.
+pub const FIRST_SOL_DEPOSIT_FEE: u64 = 2_000_000;
 pub const SOL_DEPOSIT_FEE: u64 = 1_000_000;
 
 // The account of the canister holding the user which their SOL deposits are minted to as ckSOL,

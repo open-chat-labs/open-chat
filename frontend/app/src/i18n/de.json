@@ -679,6 +679,7 @@
         "shortBalanceLabel": "Kontostand",
         "shortRemainingBalanceLabel": "Restbetrag",
         "showZeroBalance": "mehr...",
+        "solDepositFee": "Einzahlungsgebühr: {first} {token} für Ihre erste Einzahlung, danach {subsequent} {token}",
         "swap": "Tauschen",
         "token": "Token",
         "tokens": "Token",

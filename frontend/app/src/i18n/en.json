@@ -659,6 +659,7 @@
         "shortBalanceLabel": "Balance",
         "shortRemainingBalanceLabel": "remaining balance",
         "showZeroBalance": "show more",
+        "solDepositFee": "Deposit fee: {first} {token} for your first deposit, then {subsequent} {token}",
         "swap": "Swap",
         "token": "Token",
         "tokens": "Tokens",

@@ -4,7 +4,9 @@ use candid::Principal;
 use canister_timer_jobs::{Job, TimerJobs};
 use chat_events::{MessageContentInternal, MessageReminderContentInternal};
 use cksol_minter_canister::deposit_sol_status::DepositSolStatus;
-use cksol_minter_canister::{CKSOL_LEDGER_CANISTER_ID, CKSOL_MINTER_CANISTER_ID};
+use cksol_minter_canister::{
+    CKSOL_LEDGER_CANISTER_ID, CKSOL_MINTER_CANISTER_ID, RENT_EXEMPTION_THRESHOLD, SWEEP_FEE_PER_DEPOSIT,
+};
 use constants::{
     HOUR_IN_MS, MEMO_SOL_DEPOSIT, MEMO_SOL_DEPOSIT_FEE, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID, OPENCHAT_TREASURY_CANISTER_ID,
     SECOND_IN_MS,
@@ -19,7 +21,9 @@ use serde::{Deserialize, Serialize};
 use tracing::{error, info};
 use types::{BlobReference, Chat, ChatId, EventIndex, MessageId, MessageIndex, P2PSwapStatus, TimestampNanos, UserId};
 use user_core::openchat_bot::sol_deposit_received_text;
-use user_core::updates::update_sol_balance::{SOL_DEPOSIT_FEE, SolDepositEventPayload, sol_deposit_account};
+use user_core::updates::update_sol_balance::{
+    FIRST_SOL_DEPOSIT_FEE, SOL_DEPOSIT_FEE, SolDepositEventPayload, sol_deposit_account,
+};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
@@ -107,8 +111,9 @@ pub struct CancelP2PSwapInEscrowCanisterJob {
 }
 
 // Forwards the ckSOL minted for one of a user's SOL deposits from their deposit account of this
-// canister (see `sol_deposit_account`) to their wallet, less `SOL_DEPOSIT_FEE`, which goes to the
-// treasury, then tells them via the OpenChat bot. It checks every minute (every hour after the first
+// canister (see `sol_deposit_account`) to their wallet, so that they are credited with what they
+// sent less `FIRST_SOL_DEPOSIT_FEE` or `SOL_DEPOSIT_FEE`, the rest going to the treasury, then tells
+// them via the OpenChat bot. It checks every minute (every hour after the first
 // day) until the minter has swept and minted the deposit. Kept if the user is deleted, since the
 // ckSOL is still theirs.
 #[derive(Serialize, Deserialize, Clone)]
@@ -129,6 +134,8 @@ pub struct ForwardSolDepositJob {
 pub struct SolDepositTransfers {
     pub to_user: u64,
     pub to_treasury: u64,
+    // What the user is charged, being what they sent less `to_user`
+    pub fee: u64,
     pub ledger_fee: u64,
     pub created_at: TimestampNanos,
     // So that a retry after the treasury's transfer failed only repeats that
@@ -551,26 +558,33 @@ impl ForwardSolDepositJob {
         let ledger_fee = icrc_ledger_canister_c2c_client::icrc1_fee(CKSOL_LEDGER_CANISTER_ID)
             .await
             .ok()?;
-        let split = u64::try_from(&ledger_fee.0)
-            .ok()
-            .and_then(|ledger_fee| split_sol_deposit(minted_amount, ledger_fee).map(|split| (split, ledger_fee)));
-        let Some(((to_user, to_treasury), ledger_fee)) = split else {
+
+        let transfers = mutate_state(|state| {
+            let ledger_fee = u64::try_from(&ledger_fee.0).ok()?;
+            let created_at = state.env.now_nanos();
+            // The user's first deposit to be swept left the rent reserve on their address. A deleted
+            // user's deposit is taken not to have, which can only charge them less.
+            state
+                .data
+                .users
+                .with_user_mut(self.user_index, |user| {
+                    let first = !user.sol_deposit_address_funded;
+                    let transfers = sol_deposit_transfers(minted_amount, ledger_fee, first, created_at)?;
+                    user.sol_deposit_address_funded = true;
+                    Some(transfers)
+                })
+                .unwrap_or_else(|| sol_deposit_transfers(minted_amount, ledger_fee, false, created_at))
+        });
+
+        if transfers.is_none() {
             error!(
                 minted_amount,
                 ?ledger_fee,
                 deposit_id = self.deposit_id,
                 "SOL deposit can't cover its fees"
             );
-            return Some(Err(()));
-        };
-
-        Some(Ok(SolDepositTransfers {
-            to_user,
-            to_treasury,
-            ledger_fee,
-            created_at: read_state(|state| state.env.now_nanos()),
-            user_paid: false,
-        }))
+        }
+        Some(transfers.ok_or(()))
     }
 
     async fn transfer(&self, to: Account, amount: u64, memo_prefix: &[u8], transfers: SolDepositTransfers) -> TransferOutcome {
@@ -632,13 +646,14 @@ impl ForwardSolDepositJob {
 
     // Tells the user of the amount forwarded to their wallet, if any, unless they have been deleted
     fn finish(self) {
-        let Some(amount) = self.transfers.filter(|t| t.user_paid).map(|t| t.to_user) else {
+        let Some(transfers) = self.transfers.filter(|t| t.user_paid) else {
             return;
         };
+        let amount = transfers.to_user;
         mutate_state(|state| {
             let text = sol_deposit_received_text(
                 &format_crypto_amount(amount as u128, 9),
-                &format_crypto_amount(SOL_DEPOSIT_FEE as u128, 9),
+                &format_crypto_amount(transfers.fee as u128, 9),
             );
             if openchat_bot::send_text_message(self.user_index, text, Vec::new(), false, state).is_some() {
                 let now = state.env.now();
@@ -710,13 +725,28 @@ fn transfer_outcome(error: &TransferError) -> TransferOutcome {
     }
 }
 
-// Splits the ckSOL minted for a deposit into what the user receives and what the treasury receives,
-// after the ledger fee each transfer pays, the treasury's share being `SOL_DEPOSIT_FEE` less its
-// transfer's ledger fee. None if the deposit doesn't cover them.
-fn split_sol_deposit(minted_amount: u64, ledger_fee: u64) -> Option<(u64, u64)> {
-    let to_treasury = SOL_DEPOSIT_FEE.checked_sub(ledger_fee).filter(|a| *a > 0)?;
-    let to_user = minted_amount.checked_sub(SOL_DEPOSIT_FEE + ledger_fee).filter(|a| *a > 0)?;
-    Some((to_user, to_treasury))
+// The transfers forwarding a minted deposit, which credit the user with what they sent less the fee,
+// and pay the treasury the rest of what was minted, after the ledger fee each transfer pays. What the
+// user sent is what was minted plus the deposit's share of the sweep's fee, plus the rent reserve if
+// this was the first sweep of their address. None if the deposit doesn't cover the fee.
+fn sol_deposit_transfers(
+    minted_amount: u64,
+    ledger_fee: u64,
+    first: bool,
+    created_at: TimestampNanos,
+) -> Option<SolDepositTransfers> {
+    let (fee, reserve) = if first { (FIRST_SOL_DEPOSIT_FEE, RENT_EXEMPTION_THRESHOLD) } else { (SOL_DEPOSIT_FEE, 0) };
+    let deposited = minted_amount + SWEEP_FEE_PER_DEPOSIT + reserve;
+    let to_user = deposited.checked_sub(fee).filter(|a| *a > 0)?;
+    let to_treasury = minted_amount.checked_sub(to_user + 2 * ledger_fee).filter(|a| *a > 0)?;
+    Some(SolDepositTransfers {
+        to_user,
+        to_treasury,
+        fee,
+        ledger_fee,
+        created_at,
+        user_paid: false,
+    })
 }
 
 #[cfg(test)]
@@ -724,23 +754,47 @@ mod tests {
     use super::*;
     use candid::Nat;
 
+    // The minter's worked example: a first deposit of 1 SOL, alone in its sweep
     #[test]
-    fn split_sol_deposit_accounts_for_every_lamport() {
-        let minted_amount = 999_099_120;
-        let ledger_fee = 500;
+    fn a_first_deposit_is_credited_less_the_first_fee() {
+        let minted_amount = 999_104_120;
 
-        let (to_user, to_treasury) = split_sol_deposit(minted_amount, ledger_fee).unwrap();
+        let transfers = sol_deposit_transfers(minted_amount, 500, true, 0).unwrap();
 
-        assert_eq!(to_user, 998_098_620);
-        assert_eq!(to_treasury, SOL_DEPOSIT_FEE - ledger_fee);
-        assert_eq!(to_user + to_treasury + 2 * ledger_fee, minted_amount);
+        assert_eq!(transfers.to_user, 998_000_000);
+        assert_eq!(transfers.fee, FIRST_SOL_DEPOSIT_FEE);
+        assert_eq!(transfers.to_treasury, 1_103_120);
+        assert_eq!(transfers.to_user + transfers.to_treasury + 2 * 500, minted_amount);
     }
 
     #[test]
-    fn split_sol_deposit_refuses_a_deposit_not_covering_the_fees() {
-        assert!(split_sol_deposit(SOL_DEPOSIT_FEE + 500, 500).is_none());
-        assert!(split_sol_deposit(SOL_DEPOSIT_FEE + 501, 500).is_some());
-        assert!(split_sol_deposit(1_000_000_000, SOL_DEPOSIT_FEE).is_none());
+    fn a_later_deposit_is_credited_less_the_lower_fee() {
+        // 1 SOL, the reserve being on the address already
+        let minted_amount = 999_995_000;
+
+        let transfers = sol_deposit_transfers(minted_amount, 500, false, 0).unwrap();
+
+        assert_eq!(transfers.to_user, 999_000_000);
+        assert_eq!(transfers.fee, SOL_DEPOSIT_FEE);
+        assert_eq!(transfers.to_treasury, 994_000);
+        assert_eq!(transfers.to_user + transfers.to_treasury + 2 * 500, minted_amount);
+    }
+
+    #[test]
+    fn the_minimum_deposit_covers_the_first_fee() {
+        // 0.02 SOL, the minter's minimum
+        let minted_amount = 20_000_000 - RENT_EXEMPTION_THRESHOLD - SWEEP_FEE_PER_DEPOSIT;
+
+        let transfers = sol_deposit_transfers(minted_amount, 500, true, 0).unwrap();
+
+        assert_eq!(transfers.to_user, 18_000_000);
+    }
+
+    #[test]
+    fn a_deposit_not_covering_the_fee_is_refused() {
+        assert!(sol_deposit_transfers(SOL_DEPOSIT_FEE - SWEEP_FEE_PER_DEPOSIT, 500, false, 0).is_none());
+        // The treasury's share has to cover both ledger fees
+        assert!(sol_deposit_transfers(10_000_000, SOL_DEPOSIT_FEE, false, 0).is_none());
     }
 
     #[test]

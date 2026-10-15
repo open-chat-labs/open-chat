@@ -9,8 +9,10 @@ export const BTC_SYMBOL = "BTC";
 export const CKBTC_SYMBOL = "ckBTC";
 export const SOL_SYMBOL = "SOL";
 export const CKSOL_SYMBOL = "ckSOL";
-// What the user's MultiUser canister keeps of each SOL deposit, in lamports, to cover what it pays
-// the ckSOL minter to sweep it. It must match `SOL_DEPOSIT_FEE` in the canister.
+// What the user is charged for a SOL deposit, in lamports, being what they send less what they are
+// credited with: more for their first, whose sweep leaves Solana's rent reserve on their address.
+// They must match `FIRST_SOL_DEPOSIT_FEE` and `SOL_DEPOSIT_FEE` in the MultiUser canister.
+export const FIRST_SOL_DEPOSIT_FEE = 2_000_000n;
 export const SOL_DEPOSIT_FEE = 1_000_000n;
 export const SNS1_SYMBOL = "SNS1";
 export const KINIC_SYMBOL = "KINIC";
