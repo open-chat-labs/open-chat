@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Update `ic-stable-structures` to a fork which supports choosing the page size of a map ([#9347](https://github.com/open-chat-labs/open-chat/pull/9347))
 - Run the repeating jobs on `PerRoundTimer` rather than `set_timer_interval` ([#9772](https://github.com/open-chat-labs/open-chat/pull/9772))
+- Await work inside timers rather than spawning a task from them ([#9971](https://github.com/open-chat-labs/open-chat/pull/9971))
 
 ## [[2.0.1890](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1890-market_maker)] - 2025-09-11
 

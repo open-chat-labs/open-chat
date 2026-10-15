@@ -13,7 +13,7 @@ thread_local! {
 
 pub(crate) fn start_job_if_required(state: &RuntimeState, delay: Option<Milliseconds>) -> bool {
     if TIMER_ID.get().is_none() && !state.data.users_to_delete_queue.is_empty() {
-        let timer_id = ic_cdk_timers::set_timer(Duration::from_millis(delay.unwrap_or_default()), async { run() });
+        let timer_id = ic_cdk_timers::set_timer(Duration::from_millis(delay.unwrap_or_default()), run());
         TIMER_ID.set(Some(timer_id));
         true
     } else {
@@ -21,12 +21,12 @@ pub(crate) fn start_job_if_required(state: &RuntimeState, delay: Option<Millisec
     }
 }
 
-fn run() {
+async fn run() {
     trace!("'delete_users' running");
     TIMER_ID.set(None);
 
     if let Some(user) = mutate_state(get_next) {
-        ic_cdk::futures::spawn_migratory(process_user(user));
+        process_user(user).await;
     }
 }
 

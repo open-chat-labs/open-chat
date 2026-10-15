@@ -17,7 +17,7 @@ thread_local! {
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     if state.data.push_to_event_store && !STARTED.get() {
-        ic_cdk_timers::set_timer(Duration::ZERO, async { run() });
+        ic_cdk_timers::set_timer(Duration::ZERO, run());
         STARTED.set(true);
         true
     } else {
@@ -25,11 +25,9 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     }
 }
 
-fn run() {
-    ic_cdk::futures::spawn_migratory(async {
-        let delay = run_async().await;
-        ic_cdk_timers::set_timer(Duration::from_millis(delay), async { run() });
-    });
+async fn run() {
+    let delay = run_async().await;
+    ic_cdk_timers::set_timer(Duration::from_millis(delay), run());
 }
 
 async fn run_async() -> Milliseconds {
