@@ -23,7 +23,7 @@
   import CopyButton from '../../lib/components/CopyButton.svelte';
   import { onDestroy, type Snippet } from 'svelte';
   import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
-  import { canCopyImage, copyImage, copyText } from '../../lib/clipboard';
+  import { canCopyImage, copyImage } from '../../lib/clipboard';
   import type { WalletToken } from '../../lib/types';
   import ChatPicker from '../../lib/components/ChatPicker.svelte';
   import ListSectionLabel from '../../lib/components/ListSectionLabel.svelte';
@@ -64,24 +64,14 @@
   const t = useT();
 
   let width = $state(0);
-  // a new token starts on its first network with the picker closed
-  let netIdx = $derived.by(() => {
-    void token;
-    return 0;
-  });
-  let open = $derived.by(() => {
-    void token;
-    return false;
-  });
+  // WalletMain remounts Receive for each token, so the network and picker start fresh there
+  let netIdx = $state(0);
+  let open = $state(false);
   let handleCopied = $state(false);
   let sharing = $state(false);
   let toast = $state<{ id: number; message: string; tone: 'success' | 'danger' } | null>(null);
   let toastTimer: ReturnType<typeof setTimeout> | undefined;
-  let copiedTimer: ReturnType<typeof setTimeout> | undefined;
-  onDestroy(() => {
-    clearTimeout(toastTimer);
-    clearTimeout(copiedTimer);
-  });
+  onDestroy(() => clearTimeout(toastTimer));
 
   const narrow = $derived(width > 0 && width < 760);
   const receivable = $derived(tokens.filter((t) => t.nets?.length));
@@ -92,16 +82,6 @@
   const net = $derived(id ? { ...NET[id], ...(wrapped ? { short: t('ui.walletReceive.arrivesAs', { token: wrapped }) } : {}) } : null);
   const address = $derived((id && addresses[id]) || '');
 
-  // Copy shows "Copied" only once the clipboard took the address, and never for an address no longer on screen
-  let copiedAddress = $state('');
-  const copied = $derived(!!address && copiedAddress === address);
-  async function copyAddress() {
-    const value = address;
-    if (!value || !(await copyText(value))) return;
-    copiedAddress = value;
-    clearTimeout(copiedTimer);
-    copiedTimer = setTimeout(() => (copiedAddress = ''), 1600);
-  }
 
   // the QR as an image: offered only where the browser can put an image on the clipboard
   const imageCopy = canCopyImage();
@@ -207,9 +187,8 @@
               <div class="address-side">
                 <span class="address">{address.slice(0, 6)}<span class="address-mid">{address.slice(6, -6)}</span>{address.slice(-6)}</span>
                 <div class="actions">
-                  <span class="pill copy-address" class:done={copied} onclick={copyAddress} role="button" tabindex="0" aria-label={t(copied ? 'ui.common.copied' : 'ui.walletReceive.copyAddress')}
-                    ><span class="pill-icon" style:mask={mask(copied ? 'check' : 'copy')}></span>{t(copied ? 'ui.common.copied' : 'ui.common.copy')}</span
-                  >
+                  <!-- keyed: "Copied" never shows for an address no longer on screen -->
+                  {#key address}<CopyButton value={address} variant="primary" label="ui.walletReceive.copyAddress" />{/key}
                   {#if canShare}<span class="pill share-address" onclick={() => (sharing = true)} role="button" tabindex="0"
                       ><span class="pill-icon" style:mask={mask('share')}></span>{t('ui.walletReceive.shareToChat')}</span
                     >{/if}
@@ -555,20 +534,6 @@
     width: 14px;
     height: 14px;
     background: currentColor;
-  }
-
-  .copy-address {
-    background: var(--accent, #ff5672);
-    color: var(--on-accent, #2e0512);
-  }
-
-  .copy-address:hover {
-    filter: brightness(1.08);
-  }
-
-  .copy-address.done {
-    background: rgba(46, 230, 168, 0.14);
-    color: var(--status-online, #2ee6a8);
   }
 
   .share-address {

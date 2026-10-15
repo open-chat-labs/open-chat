@@ -64,7 +64,7 @@ describe('WalletReceive', () => {
     const card = target.querySelector('.address-card')!;
     expect(card.querySelector('.qr svg')).not.toBeNull();
     expect(card.textContent).toContain(ADDRESS);
-    expect(card.querySelector('.copy-address')).not.toBeNull();
+    expect(card.querySelector('.actions .copy')).not.toBeNull();
   });
 
   test('Copy QR image writes a PNG and confirms with a toast', async () => {
@@ -108,7 +108,7 @@ describe('WalletReceive', () => {
   test('Copy reads "Copied" only once the clipboard took the address', async () => {
     writeText.mockRejectedValueOnce(new Error('denied'));
     open();
-    const copy = () => target.querySelector<HTMLElement>('.copy-address')!;
+    const copy = () => target.querySelector<HTMLElement>('.actions .copy')!;
     copy().click();
     await settle();
     expect(copy().textContent).toBe('Copy');
@@ -124,11 +124,11 @@ describe('WalletReceive', () => {
   test('without a qr renderer the card has no QR; without an address, no QR or actions', () => {
     open({ qr: undefined });
     expect(target.querySelector('.qr-box')).toBeNull();
-    expect(target.querySelector('.copy-address')).not.toBeNull();
+    expect(target.querySelector('.actions .copy')).not.toBeNull();
     unmount(app!);
     open({ addresses: {} });
     expect(target.querySelector('.qr-box')).toBeNull();
-    expect(target.querySelector('.copy-address')).toBeNull();
+    expect(target.querySelector('.actions .copy')).toBeNull();
     expect(text()).toContain('No address for this network yet.');
   });
 

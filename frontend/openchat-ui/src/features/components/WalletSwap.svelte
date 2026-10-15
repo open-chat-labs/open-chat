@@ -164,18 +164,18 @@
     return all.map((r, i) => ({ ...r, rule: (i < all.length - 1 ? 'bottom' : 'none') as 'bottom' | 'none' }));
   });
 
-  // the three on-chain steps plus the finished line, each with what's happening and how long it took
+  // the three on-chain steps, each with what's happening and how long it took (completion shows in funds and elapsed,
+  // so the bar counts only real steps)
   const timeline = $derived.by((): TimelineStep[] => {
     const rows = [
       [tr('ui.walletSwap.timeline.approve', { dex: dexName, amount: amtIn }), tr('ui.walletSwap.timeline.approveHint', { dex: dexName, symbol: f?.symbol })],
       [tr('ui.walletSwap.timeline.swap', { from: f?.symbol, to: t?.symbol }), tr('ui.walletSwap.timeline.swapHint', { slip })],
       [tr('ui.walletSwap.timeline.withdraw', { amount: amtOut }), tr('ui.walletSwap.timeline.withdrawHint', { dex: dexName, symbol: t?.symbol })],
-      [tr('ui.walletSwap.timeline.complete'), ''],
     ];
     return rows.map(([label, hint], k) => {
-      const state = done || k < prog ? 'done' : k === prog && k < STEPS ? 'active' : 'todo';
+      const state = done || k < prog ? 'done' : k === prog ? 'active' : 'todo';
       const took = times[k] != null && times[k + 1] != null ? clock(times[k + 1] - times[k]) : undefined;
-      return { label, hint, state, meta: k < STEPS ? took : undefined };
+      return { label, hint, state, meta: took };
     });
   });
   // where the money is: ICPSwap pulls it from the wallet as the swap runs, then pays the output back
@@ -240,9 +240,13 @@
     quote = q;
     received = null;
     stage = 'quoted';
-    const tickLeft = () => (left = Math.max(0, Math.ceil((q.expiresAt - Date.now()) / 1000)));
-    tickLeft();
+    // counts down to expiry, then stops
+    const tickLeft = () => {
+      left = Math.max(0, Math.ceil((q.expiresAt - Date.now()) / 1000));
+      if (left === 0) clearInterval(countdown);
+    };
     countdown = setInterval(tickLeft, 1000);
+    tickLeft();
   }
 
   async function swap() {

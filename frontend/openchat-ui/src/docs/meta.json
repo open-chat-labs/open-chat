@@ -1357,16 +1357,17 @@
         "required": false,
         "componentDefault": "'ghost'",
         "name": "variant",
-        "type": "'ghost' | 'soft' | 'outline' | 'filled' | 'text'",
+        "type": "'ghost' | 'soft' | 'outline' | 'filled' | 'text' | 'primary'",
         "editor": "enum",
         "options": [
           "ghost",
           "soft",
           "outline",
           "filled",
-          "text"
+          "text",
+          "primary"
         ],
-        "doc": "ghost (icon, hover fill) · soft (tinted square) · outline (hairline ring) · filled (accent) · text (icon + Copy pill)."
+        "doc": "ghost (icon, hover fill) · soft (tinted square) · outline (hairline ring) · filled (accent) · text (icon + Copy pill) · primary (icon + Copy on accent, 40px)."
       },
       {
         "name": "size",
@@ -16924,7 +16925,18 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "After a completed send, when the user leaves the receipt: Done or Back (openChat false), or \"View in chat\" (openChat true; offered for sends to a person). `result` is what onSent resolved with. Without it, these close."
+        "doc": "After a completed send, when the user leaves the receipt: Done or Back (openChat false), or \"View in chat\" (openChat true; offered for sends to a person when canOpenChat). `result` is what onSent resolved with. Without it, these close."
+      },
+      {
+        "name": "canOpenChat",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "The host can open the DM with the recipient from onDone's openChat: offers \"View in chat\" on the receipt."
       }
     ],
     "group": "features"

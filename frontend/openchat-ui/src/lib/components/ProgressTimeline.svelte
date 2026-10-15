@@ -62,7 +62,10 @@
     if (steps?.length) return steps;
     return phases.flatMap((ph) => {
       const ss: NonNullable<TimelinePhase['steps']> = ph.steps?.length ? ph.steps : [{ label: ph.title, state: ph.state }];
-      return ss.map((s) => ({ label: s.label, state: s.state ?? 'todo', hint: s.hint ?? ph.sub, error: s.error ?? ph.error }));
+      // a step without its own state takes the phase's: done/todo for all of them; active/failed for the first, the
+      // rest still to do
+      const inherit = (k: number): TimelineState => (ph.state === 'active' || ph.state === 'failed' ? (k === 0 ? ph.state : 'todo') : (ph.state ?? 'todo'));
+      return ss.map((s, k) => ({ label: s.label, state: s.state ?? inherit(k), hint: s.hint ?? ph.sub, error: s.error ?? ph.error }));
     });
   });
 

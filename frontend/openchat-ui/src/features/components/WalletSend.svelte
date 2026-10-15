@@ -49,6 +49,7 @@
   import { detectNetwork, type AddressNetwork } from '../../lib/networks';
   import { onDestroy, tick } from 'svelte';
   import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
+  import { txIdOf } from '../../lib/wallet';
 
   const mask = (n: string) => `var(--icon-${n}) center/contain no-repeat`;
   const PIN_LENGTH = 6;
@@ -93,11 +94,14 @@
      *  Resolve when it's done, optionally with `{ id }` (shown as the receipt's transaction). Without it nothing can be sent. */
     onSent?: (v: WalletSendRequest) => Promise<unknown> | void;
     /** After a completed send, when the user leaves the receipt: Done or Back (openChat false), or "View in chat"
-     *  (openChat true; offered for sends to a person). `result` is what onSent resolved with. Without it, these close. */
+     *  (openChat true; offered for sends to a person when canOpenChat). `result` is what onSent resolved with. Without
+     *  it, these close. */
     onDone?: (v: { request: WalletSendRequest; result: unknown; openChat: boolean }) => void;
+    /** The host can open the DM with the recipient from onDone's openChat: offers "View in chat" on the receipt. */
+    canOpenChat?: boolean;
   }
 
-  let { tokens, token, address: initialAddress = '', contacts = [], onSearchUsers, btcFees = {}, onPickSaved, onScanQr, onClose, onSent, onDone }: Props = $props();
+  let { tokens, token, address: initialAddress = '', contacts = [], onSearchUsers, btcFees = {}, onPickSaved, onScanQr, onClose, onSent, onDone, canOpenChat = false }: Props = $props();
   const t = useT();
   const i18n = getI18n();
 
@@ -208,7 +212,7 @@
     const r = sent.request;
     const amount = `${fmt(r.amount, inDp)} ${r.symbol}`;
     const name = r.person ? first : r.toLabel;
-    const id = sent.result && typeof sent.result === 'object' && 'id' in sent.result && typeof sent.result.id === 'string' ? sent.result.id : null;
+    const id = txIdOf(sent.result);
     const secs = sent.doneAt ? Math.max(1, Math.round((sent.doneAt - sent.at) / 1000)) : 0;
     const rcRows = [
       { k: t('ui.walletSend.networkFee'), v: `${fmt(r.fee, tk.dp)} ${r.symbol}` },
@@ -305,6 +309,9 @@
     pinText = '';
     pinFlow.failed = false;
   }
+
+  // "View in chat" only where it can open one: a send to a person, with onDone and a host that opens DMs
+  const chatOffered = $derived(!!sent?.request.person && !!onDone && canOpenChat);
 
   // leaving the receipt: once, through onDone (or onClose without it)
   function finish(openChat: boolean) {
@@ -629,8 +636,8 @@
             <span class="status-time">{rc.took}</span>
           </div>
           {#if step === 'done'}
-            <div class="done-actions" class:two={!!sent?.request.person}>
-              {#if sent?.request.person}<span class="done-button" onclick={() => finish(true)} role="button" tabindex="0">{t('ui.walletSend.viewInChat')}</span>{/if}
+            <div class="done-actions" class:two={chatOffered}>
+              {#if chatOffered}<span class="done-button" onclick={() => finish(true)} role="button" tabindex="0">{t('ui.walletSend.viewInChat')}</span>{/if}
               <span class="done-button primary" onclick={() => finish(false)} role="button" tabindex="0">{t('ui.common.done')}</span>
             </div>
           {:else}

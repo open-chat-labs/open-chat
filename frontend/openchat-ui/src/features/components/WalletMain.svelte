@@ -57,6 +57,7 @@
   import WalletReceive, { type ShareChat } from './WalletReceive.svelte';
   import WalletRecipients, { type Recipient, type RecipientDraft } from './WalletRecipients.svelte';
   import WalletSend, { type SendContact, type WalletSendRequest } from './WalletSend.svelte';
+  import { txIdOf } from '../../lib/wallet';
   import WalletSwap, { type SwapQuote, type SwapRequest } from './WalletSwap.svelte';
   const i18n = getI18n(); // number formatting follows the host locale
 
@@ -231,6 +232,8 @@
     // a request starts afresh: an open flow (e.g. a token click from inside Send) is left, with nothing to return to
     backToAll = backToRecipients = false;
     sendAddr = '';
+    // ... and a flow requested again (e.g. Send for the token whose receipt is showing) remounts as a fresh form
+    if (flow) flowNonce++;
     view = r.view || 'all';
     sym = r.token || (flow && !startFromAll && shown ? shown : sym);
     fromAll = flow ? startFromAll || !!r.fromAll : false;
@@ -307,7 +310,7 @@
   const sentAmount = (x: WalletSendRequest) => `${num(x.amount, Math.min(x.dp, 8))} ${x.symbol}`;
 
   function addPending(x: WalletSendRequest, res: unknown) {
-    const txId = res && typeof res === 'object' && 'id' in res && typeof res.id === 'string' ? res.id : null;
+    const txId = txIdOf(res);
     if (!txId || sent.some((e) => e.id === txId)) return;
     const amt = sentAmount(x);
     sent = [
@@ -452,6 +455,7 @@
         onClose={leaveFlow}
         onSent={onSent ? handleSent : undefined}
         onDone={handleDone}
+        canOpenChat={!!onMessage}
       />{/key}{/if}
   {#if view === 'receive'}{#key flowKey}<WalletReceive tokens={receiveTokens} token={flowToken} {handle} {addresses} {chats} {onShare} {qr} onClose={leaveFlow} />{/key}{/if}
   {#if view === 'swap'}{#key flowKey}<WalletSwap {tokens} token={flowToken} {onQuote} onSwap={swapPinned} onClose={leaveFlow} />{/key}{/if}

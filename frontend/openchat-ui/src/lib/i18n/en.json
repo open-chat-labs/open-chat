@@ -3131,7 +3131,6 @@
       "timeline": {
         "approve": "Approve {dex} to take {amount}",
         "approveHint": "Lets {dex} take this {symbol} from your wallet · usually a few seconds",
-        "complete": "Swap complete",
         "swap": "Swap {from} for {to}",
         "swapHint": "Trading at the quoted price, within {slip}% slippage",
         "withdraw": "Receive {amount} in your wallet",

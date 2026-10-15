@@ -204,11 +204,16 @@ describe('WalletSend receipt', () => {
   });
 
   test('to a person: "{name} received", and View in chat hands back with openChat', async () => {
-    const { onDone } = await sendTo({ contacts: [JANE] });
+    const { onDone } = await sendTo({ contacts: [JANE], canOpenChat: true });
     expect(status()).toContain('Jane received 2 ICP');
     button('View in chat')!.click();
     expect(onDone).toHaveBeenCalledOnce();
     expect(onDone.mock.calls[0][0]).toMatchObject({ request: { userId: 'u-jane', person: true }, openChat: true });
+  });
+
+  test('View in chat is only offered when the host can open the chat', async () => {
+    await sendTo({ contacts: [JANE] });
+    expect(button('View in chat')).toBeUndefined();
   });
 
   test('without onDone, Done closes', async () => {

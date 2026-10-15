@@ -116,6 +116,26 @@ describe('WalletMain', () => {
     expect(target.querySelector('.toast')).toBeNull();
   });
 
+  test('Send requested again for the token whose receipt is showing remounts as a fresh form', async () => {
+    const { props } = setup({ onSent: vi.fn(() => Promise.resolve({ id: 'tx1' })) });
+    go(props, { view: 'send', token: 'ICP' }, 1);
+    await send().onSent(request());
+    await settle();
+    go(props, { view: 'send', token: 'ICP' }, 2);
+    expect(flows.send.rec.mounts).toBe(2);
+  });
+
+  test('"View in chat" is offered only when the host can open chats', () => {
+    const { props } = setup();
+    go(props, { view: 'send', token: 'ICP' }, 1);
+    expect((flows.send.rec.props as { canOpenChat?: boolean }).canOpenChat).toBe(false);
+    unmount(app!);
+    app = undefined;
+    const second = setup({ onMessage: vi.fn() });
+    go(second.props, { view: 'send', token: 'ICP' }, 1);
+    expect((flows.send.rec.props as { canOpenChat?: boolean }).canOpenChat).toBe(true);
+  });
+
   test('a rejected send propagates back to Send (its PIN dialog shows the error)', async () => {
     const { props } = setup({ onSent: () => Promise.reject(new Error('wrong PIN')) });
     go(props, { view: 'send', token: 'ICP' }, 1);

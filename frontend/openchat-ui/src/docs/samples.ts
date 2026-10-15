@@ -574,7 +574,7 @@ export const samples: Record<string, Record<string, unknown>> = {
   WalletMain: { tokens: walletTokens, handle: '@you', addresses: receiveAddresses, ...sendDemo, ...sendExtras, activity: walletActivity, receivable: receivableTokens, recipients: walletRecipients, ...{ onAddRecipient: recipientsDemo.onAdd, onUpdateRecipient: recipientsDemo.onUpdate, onRemoveRecipient: recipientsDemo.onRemove }, ...swapDemo, ...receiveDemo, onMessage: () => {} },
   WalletPanel: { tokens: walletTokens, onRefresh: () => wait(800) },
   WalletReceive: { tokens: walletTokens, addresses: receiveAddresses, ...receiveDemo },
-  WalletSend: { tokens: walletTokens, ...sendDemo, ...sendExtras, onSent: sendWithReceipt },
+  WalletSend: { tokens: walletTokens, ...sendDemo, ...sendExtras, onSent: sendWithReceipt, onDone: () => {}, canOpenChat: true },
   WalletSwap: { tokens: walletTokens, ...swapDemo },
   WalletRecipients: { tokens: walletTokens, recipients: walletRecipients, ...recipientsDemo },
   // review2-rollback: a timed member always has a future end date

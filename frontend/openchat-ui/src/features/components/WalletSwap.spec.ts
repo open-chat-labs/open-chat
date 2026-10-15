@@ -211,6 +211,8 @@ describe('WalletSwap', () => {
     await vi.advanceTimersByTimeAsync(31_000);
     flushSync();
     expect(target.querySelector('.quote')!.textContent).toContain('Expired');
+    // the countdown stops once it reaches 0
+    expect(vi.getTimerCount()).toBe(0);
     expect(target.querySelector('.quote [aria-label="Refresh quote"]')).toBeNull();
     expect(cta().textContent).toContain('Get new quote');
     cta().click();
@@ -230,25 +232,25 @@ describe('WalletSwap', () => {
     await settle();
     const states = () => [...target.querySelectorAll('.timeline [role=listitem]')].map((r) => r.className.replace(/svelte-\S+/g, '').replace('step', '').trim());
     const funds = () => target.querySelector('.funds')!.textContent ?? '';
-    expect(states()).toEqual(['active', 'todo', 'todo', 'todo']);
+    expect(states()).toEqual(['active', 'todo', 'todo']);
     expect(funds()).toContain('1 ICP is still in your wallet');
     await vi.advanceTimersByTimeAsync(4000);
     step(1);
     flushSync();
-    expect(states()).toEqual(['done', 'active', 'todo', 'todo']);
+    expect(states()).toEqual(['done', 'active', 'todo']);
     expect(target.querySelector('.timeline [role=listitem] .meta')!.textContent).toBe('0:04');
     expect(funds()).toContain('1 ICP is at ICPSwap, being swapped');
     step(9); // out of range: the last step
     flushSync();
-    expect(states()).toEqual(['done', 'done', 'active', 'todo']);
+    expect(states()).toEqual(['done', 'done', 'active']);
     expect(funds()).toContain('4.9 USDT on its way to your wallet');
     step(0); // a step never goes back
     flushSync();
-    expect(states()).toEqual(['done', 'done', 'active', 'todo']);
-    expect(target.querySelector('.bar-text')!.textContent).toContain('Step 3 of 4');
+    expect(states()).toEqual(['done', 'done', 'active']);
+    expect(target.querySelector('.bar-text')!.textContent).toContain('Step 3 of 3');
     d.resolve({ out: 4.8 });
     await settle();
-    expect(states()).toEqual(['done', 'done', 'done', 'done']);
+    expect(states()).toEqual(['done', 'done', 'done']);
     expect(target.querySelector('.kicker')!.textContent).toContain('SWAP COMPLETE');
     expect(funds()).toContain('4.8 USDT is in your wallet');
     expect(target.querySelector('.bar-text')!.textContent).toContain('Took');

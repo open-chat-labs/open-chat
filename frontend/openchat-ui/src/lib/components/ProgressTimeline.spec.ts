@@ -78,4 +78,16 @@ describe('ProgressTimeline', () => {
     expect(rows()[2].querySelector('.note')!.textContent).toBe('Price moved');
     expect(barText()).toBe('Stopped at step 3 of 4');
   });
+
+  test('a step without its own state takes the phase state: done for all, active for the first', () => {
+    show({
+      phases: [
+        { title: 'Send', state: 'done', steps: [{ label: 'Approve' }, { label: 'Transfer' }] },
+        { title: 'Swap', state: 'active', steps: [{ label: 'Quote' }, { label: 'Trade' }] },
+        { title: 'Return' },
+      ],
+    });
+    const state = (r: Element) => r.className.replace(/svelte-\S+/g, '').replace('step', '').trim();
+    expect(rows().map(state)).toEqual(['done', 'done', 'active', 'todo', 'todo']);
+  });
 });
