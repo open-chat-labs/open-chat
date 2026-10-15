@@ -4778,7 +4778,7 @@ export class OpenChat {
                             resp.moreMembersAfter,
                         ),
                     );
-                    // Not awaited, since a message being sent may be waiting for the details
+                    // Not awaited, since a forwarded message may be waiting for the details
                     void this.#updateUserStoreFromEvents(serverChat.id, []);
                 }
                 break;
