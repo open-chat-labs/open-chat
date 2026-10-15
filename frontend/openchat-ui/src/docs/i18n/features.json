@@ -1,0 +1,128 @@
+{
+  "docs": {
+    "features": {
+      "menu": {
+        "addFavourites": "Add to favourites",
+        "muteNotifications": "Mute notifications",
+        "markRead": "Mark as read",
+        "leaveGroup": "Leave group",
+        "communityDetails": "Community details",
+        "copyText": "Copy text",
+        "forward": "Forward"
+      },
+      "groupStats": {
+        "text": "Text",
+        "images": "Images",
+        "files": "Files",
+        "gifs": "GIFs",
+        "pollsVideoAudio": "Polls, video & audio",
+        "reactions": "Reactions",
+        "replies": "Replies",
+        "pollVotes": "Poll votes",
+        "deleted": "Deleted"
+      },
+      "statsDonut": {
+        "pollVotes": "POLL VOTES",
+        "replies": "REPLIES",
+        "reactions": "REACTIONS",
+        "deleted": "DELETED"
+      },
+      "userFacts": {
+        "memberSince": "Member since",
+        "chitEarned": "Chit earned",
+        "status": "Status",
+        "onlineNow": "Online now"
+      },
+      "info": {
+        "username": "Username",
+        "memberSince": "Member since",
+        "report": "Report"
+      },
+      "navRail": {
+        "chats": "DM & Group Chats"
+      },
+      "leaderboard": {
+        "august": "AUGUST",
+        "september": "SEPTEMBER",
+        "allTime": "ALL TIME"
+      },
+      "divider": {
+        "yesterday": "Yesterday"
+      },
+      "joinGate": {
+        "neuron": "OpenChat neuron",
+        "neuronDetail": "Staked for at least 90 days",
+        "neuronConfirm": "I hold an OpenChat neuron staked 90+ days"
+      },
+      "upgradeBanner": {
+        "publicGroups": "Public groups are a Diamond feature."
+      },
+      "panel": {
+        "members": "Members",
+        "accessGates": "Access gates",
+        "whoCanJoin": "Who can join",
+        "upgradeDiamond": "Upgrade to Diamond",
+        "messages": "MESSAGES",
+        "membersCaps": "MEMBERS",
+        "owner": "Owner"
+      },
+      "prize": {
+        "diamondMember": "Diamond member",
+        "hold10Chat": "Hold 10 CHAT",
+        "hold1000Chat": "Hold 1,000 CHAT"
+      },
+      "proposal": {
+        "votingEnds": "Voting ends in 2d 4h"
+      },
+      "puzzle": {
+        "progress": "7 of 12 words found",
+        "solved": "Solved in 4:12 · 1 hint"
+      },
+      "dialogs": {
+        "joinGate": "Join gate",
+        "pollBuilder": "Poll builder",
+        "dailyPuzzle": "Daily puzzle",
+        "messageActions": "Message actions"
+      },
+      "wallet": {
+        "main": "Main",
+        "receive": "Receive",
+        "swap": "Swap",
+        "recipients": "Recipients"
+      },
+      "achievements": {
+        "sayCheese": "Say cheese",
+        "firstSwap": "First swap",
+        "streak7": "Streak of 7",
+        "unlock": "Unlock an achievement",
+        "playAgain": "Play again"
+      },
+      "open": {
+        "walletSettings": "Wallet Settings",
+        "sendCrypto": "Send Crypto",
+        "swapOffer": "Swap Offer",
+        "diamond": "Diamond",
+        "prizeBuilder": "Prize Builder",
+        "auth": "Auth",
+        "profile": "Profile",
+        "user": "User",
+        "createGroup": "Create Group",
+        "groupSettings": "Group Settings",
+        "newChannel": "New Channel",
+        "convertToCommunity": "Convert To Community",
+        "importToCommunity": "Import To Community",
+        "userGroup": "User Group",
+        "invite": "Invite",
+        "webhook": "Webhook",
+        "bot": "Bot",
+        "leaveGroup": "Leave Group",
+        "deleteGroup": "Delete Group",
+        "achievements": "Achievements",
+        "chit": "Chit",
+        "streakInsurance": "Streak Insurance",
+        "leaderboard": "Leaderboard",
+        "memeFighter": "Meme Fighter"
+      }
+    }
+  }
+}

@@ -1,0 +1,294 @@
+<!-- CHIT high scores: one board per period (tabs), top rows with the podium in green, and your own row pinned below.
+     Your row comes from `you` (per period or one value) or the board, exactly as the host ranks it; hidden without one. -->
+<script lang="ts">
+  import { modal } from '../../lib/behaviours/modal';
+  import { useT } from '../../lib/i18n';
+
+  type Standing = { rank: number; score: number };
+
+  interface Board {
+    /** Tab label, e.g. "SEPTEMBER". Resource key (or literal text). */
+    label: string;
+    /** [handle, score], best first. */
+    rows: [string, number][];
+    you?: Standing;
+  }
+
+  interface Props {
+    /** Boards in tab order, keyed by period. */
+    boards: Record<string, Board>;
+    /** Period shown first; defaults to the first board. */
+    initialPeriod?: string;
+    /** Your handle, shown as "YOU — HANDLE". */
+    handle: string;
+    /** Your standing: one for every board, or per period key. */
+    you?: Standing | Record<string, Standing> | null;
+    /** Defaults to onClose. */
+    onBack?: () => void;
+    onClose?: () => void;
+  }
+
+  let { boards, initialPeriod, handle, you = null, onBack, onClose }: Props = $props();
+  const t = useT();
+
+  const keys = $derived(Object.keys(boards));
+  let chosen = $state<string | null>(null);
+  const period = $derived(chosen ?? initialPeriod ?? keys[0]);
+  const board = $derived(boards[period]);
+
+  // the host's ranking is authoritative (ties are its call), so the row shows it as given
+  const mine = $derived<Standing | null>(
+    (you && 'rank' in you ? (you as Standing) : (you as Record<string, Standing> | null)?.[period]) ?? board.you ?? null,
+  );
+</script>
+
+<div class="layer" data-screen-label="Leaderboard" role="dialog" aria-modal="true" use:modal={() => onClose?.()}>
+  <div class="veil" onclick={() => onClose?.()} aria-hidden="true"></div>
+
+  <div class="card">
+    <div class="head">
+      <span class="icon-button back" onclick={() => (onBack ?? onClose)?.()} role="button" tabindex="0" aria-label={t('ui.leaderboardDialog.backToChit')} title={t('ui.leaderboardDialog.backToChit')}><span class="back-icon"></span></span>
+      <span class="title">{t('ui.leaderboardDialog.title')}</span>
+      <span class="icon-button" title={t('ui.leaderboardDialog.playSoon')}><span class="joystick"></span></span>
+      <span class="icon-button" onclick={() => onClose?.()} role="button" tabindex="0" aria-label={t('ui.common.close')}><span class="close-icon"></span></span>
+    </div>
+
+    <div class="periods">
+      {#each keys as key}
+        <span class="period" class:on={key === period} onclick={() => (chosen = key)} role="button" tabindex="0">{t(boards[key].label)}</span>
+      {/each}
+    </div>
+
+    <div class="columns">
+      <div class="column-row">
+        <span class="rank-col">#</span>
+        <span class="name-col">{t('ui.leaderboardDialog.username')}</span>
+        <span class="score-col">CHIT</span>
+      </div>
+    </div>
+
+    <div class="rows">
+      {#each board.rows as [name, score], i}
+        <!-- the podium lights up green, the chasing pack stays white -->
+        <div class="row" class:podium={i < 3}>
+          <span class="rank">{i + 1}</span>
+          <span class="name">{name}</span>
+          <span class="score">{score}</span>
+        </div>
+      {/each}
+    </div>
+
+    {#if mine}
+      <div class="row you">
+        <span class="rank">{mine.rank}</span>
+        <span class="name">{t('ui.leaderboardDialog.you', { handle })}</span>
+        <span class="score">{mine.score}</span>
+      </div>
+    {/if}
+  </div>
+</div>
+
+<style>
+  .layer {
+    position: fixed;
+    inset: 0;
+    z-index: 73;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-22);
+  }
+
+  .veil {
+    position: absolute;
+    inset: 0;
+    background: var(--oc-veil, rgba(3, 3, 6, 0.72));
+    backdrop-filter: var(--oc-veil-blur, blur(4px));
+    -webkit-backdrop-filter: var(--oc-veil-blur, blur(4px));
+    animation: oc-veil-in var(--duration-base, 200ms) var(--ease-out) both;
+  }
+
+  .card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 620px;
+    height: 600px;
+    max-height: 100%;
+    box-sizing: border-box;
+    border-radius: var(--radius-xl);
+    background: var(--surface-1, #0e0e12);
+    box-shadow:
+      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1)),
+      var(--shadow-modal, 0 30px 70px rgba(0, 0, 0, 0.45));
+    overflow: hidden;
+    animation: oc-dlg-in var(--duration-slow, 280ms) var(--ease-out) both;
+  }
+
+  .head {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-12);
+    padding: var(--space-24) var(--space-32) var(--space-14);
+  }
+
+  .icon-button {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+
+  .icon-button.back {
+    width: 32px;
+    height: 32px;
+    margin-inline-start: -10px;
+  }
+
+  .icon-button:hover {
+    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+  }
+
+  .back-icon {
+    width: 16px;
+    height: 16px;
+    background: var(--ink-2, #c9c9d4);
+    mask: var(--icon-back) center/contain no-repeat;
+  }
+
+  .joystick {
+    width: 17px;
+    height: 17px;
+    background: var(--status-chit, #ff9f45);
+    mask: var(--icon-joystick) center/contain no-repeat;
+  }
+
+  .close-icon {
+    width: 15px;
+    height: 15px;
+    background: var(--ink-3, #9a9aa8);
+    mask: var(--icon-close) center/contain no-repeat;
+  }
+
+  .title {
+    flex: 1;
+    min-width: 0;
+    text-align: center;
+    font: 700 22px/1 'JetBrains Mono', monospace;
+    letter-spacing: 0.14em;
+    color: var(--status-chit, #ff9f45);
+  }
+
+  .periods {
+    flex: none;
+    display: flex;
+    justify-content: center;
+    gap: var(--space-26);
+    padding: var(--space-6) var(--space-32) var(--space-18);
+  }
+
+  .period {
+    font: 500 12.5px/1 'JetBrains Mono', monospace;
+    letter-spacing: 0.1em;
+    color: var(--ink-3, #9a9aa8);
+    padding-block-end: 5px;
+    border-block-end: 2px solid transparent;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .period.on {
+    color: var(--ink, #ececf1);
+    border-block-end-color: var(--status-chit, #ff9f45);
+  }
+
+  .period:hover {
+    color: var(--ink, #ececf1);
+  }
+
+  .columns {
+    flex: none;
+    padding: 0 var(--space-32) var(--space-12);
+  }
+
+  .column-row {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    padding-block-end: var(--space-10);
+    border-block-end: 2px solid var(--accent, #ff5672);
+    font: 500 11px/1 'JetBrains Mono', monospace;
+    letter-spacing: 0.1em;
+    color: var(--status-online, #2ee6a8);
+  }
+
+  .rank-col {
+    flex: none;
+    width: 34px;
+  }
+
+  .name-col {
+    flex: 1;
+  }
+
+  .score-col {
+    flex: none;
+  }
+
+  .rows {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    padding: 0 var(--space-32);
+  }
+
+  .row {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    min-height: 30px;
+    padding: 4px 0;
+    font: 700 15px/1 'JetBrains Mono', monospace;
+    color: var(--ink, #ececf1);
+  }
+
+  .row.podium {
+    color: var(--status-online, #2ee6a8);
+  }
+
+  .rank {
+    flex: none;
+    width: 34px;
+  }
+
+  .name {
+    flex: 1;
+    min-width: 0;
+    letter-spacing: 0.04em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .score {
+    flex: none;
+  }
+
+  .row.you {
+    flex: none;
+    min-height: 0;
+    padding: var(--space-16) var(--space-32) var(--space-24);
+    margin-block-start: var(--space-10);
+    border-block-start: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+    color: var(--accent, #ff5672);
+  }
+</style>
