@@ -1,7 +1,9 @@
-<!-- Send in the wallet main column: recipient (OpenChat user or address, with network detection), amount (token or USD,
-     quick chips), optional message, and a live summary beside the form; below 760px the summary becomes a sticky footer.
-     Continue opens a PIN dialog over the form; confirming hands the full transfer (address or user id, network, memo,
-     PIN) back through onSent. Contacts, saved addresses and QR scanning come from the host; Paste reads the clipboard. -->
+<!-- Send in the wallet main column, in two steps (Details → Send). Details: recipient (OpenChat user or address, with
+     network detection), amount (token or USD, quick chips), optional message, and summary rows with the Send button, in
+     one column. Send opens a PIN dialog over the form; confirming makes the transfer through onSent while a receipt shows
+     "Sending" (a rejection, e.g. a wrong PIN, reopens the PIN dialog with its error). Once the host resolves, the receipt
+     reads "Sent"; Done, Back or "View in chat" hand back through onDone. Contacts, saved addresses and QR scanning come
+     from the host; Paste reads the clipboard. -->
 <script lang="ts" module>
   export interface SendContact {
     userId: string;
@@ -9,8 +11,6 @@
     handle: string;
     /** Avatar background. */
     grad?: string;
-    /** Recent transfers with this person, newest first ("You sent · 28 Sep"). */
-    history?: { date: string; amount: number; incoming: boolean }[];
   }
 
   export interface WalletSendRequest {
@@ -41,12 +41,15 @@
   import ListSectionLabel from '../../lib/components/ListSectionLabel.svelte';
   import PageHeader from '../../lib/components/PageHeader.svelte';
   import QuickAmountChips from '../../lib/components/QuickAmountChips.svelte';
-  import SideCard from '../../lib/components/SideCard.svelte';
+  import Spinner from '../../lib/components/Spinner.svelte';
+  import StepIndicator from '../../lib/components/StepIndicator.svelte';
+  import TokenAvatar from '../../lib/components/TokenAvatar.svelte';
   import { getI18n, useT } from '../../lib/i18n';
   import { amountText, cleanAmount, floorTo, fromUnits, parseAmount, toUnits, usdText } from '../../lib/amount';
   import { detectNetwork, type AddressNetwork } from '../../lib/networks';
   import { onDestroy, tick } from 'svelte';
   import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
+  import { txIdOf } from '../../lib/wallet';
 
   const mask = (n: string) => `var(--icon-${n}) center/contain no-repeat`;
   const PIN_LENGTH = 6;
@@ -60,6 +63,7 @@
     ['user', 'ui.walletSend.openChatUser', 'user'],
     ['address', 'ui.walletSend.walletAddress', 'wallet'],
   ];
+  const STEPS = ['ui.walletSend.stepDetails', 'ui.walletSend.stepSend'];
   type Chain = AddressNetwork;
   const NET_NAME: Record<Chain, string> = { BTC: 'Bitcoin', ETH: 'Ethereum', XRP: 'XRP Ledger', ICP: 'Internet Computer' };
   const ADDR_NAME: Record<Chain, string> = { BTC: 'Bitcoin', ETH: 'Ethereum', XRP: 'XRP', ICP: 'ICP' };
@@ -86,11 +90,18 @@
     /** Opens the host's QR scanner; resolve with the scanned address. Hidden without it. */
     onScanQr?: () => Promise<string | null | undefined>;
     onClose?: () => void;
-    /** Make the transfer. Reject (e.g. wrong PIN) to keep the PIN dialog open with an error. Without it nothing can be sent. */
+    /** Make the transfer, when the PIN is submitted. Reject (e.g. wrong PIN) to reopen the PIN dialog with an error.
+     *  Resolve when it's done, optionally with `{ id }` (shown as the receipt's transaction). Without it nothing can be sent. */
     onSent?: (v: WalletSendRequest) => Promise<unknown> | void;
+    /** After a completed send, when the user leaves the receipt: Done or Back (openChat false), or "View in chat"
+     *  (openChat true; offered for sends to a person when canOpenChat). `result` is what onSent resolved with. Without
+     *  it, these close. */
+    onDone?: (v: { request: WalletSendRequest; result: unknown; openChat: boolean }) => void;
+    /** The host can open the DM with the recipient from onDone's openChat: offers "View in chat" on the receipt. */
+    canOpenChat?: boolean;
   }
 
-  let { tokens, token, address: initialAddress = '', contacts = [], onSearchUsers, btcFees = {}, onPickSaved, onScanQr, onClose, onSent }: Props = $props();
+  let { tokens, token, address: initialAddress = '', contacts = [], onSearchUsers, btcFees = {}, onPickSaved, onScanQr, onClose, onSent, onDone, canOpenChat = false }: Props = $props();
   const t = useT();
   const i18n = getI18n();
 
@@ -114,37 +125,41 @@
   });
   let address = $state(initialAddress);
   let amt = $state('');
-  // a chip (or a reused amount) picks an exact token amount; in USD mode the field shows it rounded down to cents,
+  // a chip picks an exact token amount; in USD mode the field shows it rounded down to cents,
   // but the picked amount is what's sent, so Max stays the whole balance. Typing replaces it.
   let exact = $state<{ text: string; sym: string; n: number } | null>(null);
   let msg = $state('');
   let msgOpen = $state(false);
   let inUsd = $state(false);
   let netOpen = $state(false);
-  let footOpen = $state(false);
   let net = $state(0);
-  let step = $state<'form' | 'pin' | 'done'>('form');
+  // form → pin (dialog over the form) → sending (receipt, the host's call in flight) → done (receipt)
+  let step = $state<'form' | 'pin' | 'sending' | 'done'>('form');
   let pinText = $state('');
   // the PIN step's host call: busy while sending (nothing reopens, closes or resubmits), failed after a rejection
   const pinFlow = new DialogFlow();
   let pinInput = $state<HTMLInputElement>();
   const pin = $derived(pinText.length);
+  // the receipt shows the transfer as it was asked for, and what the host resolved with
+  let sent = $state<{ request: WalletSendRequest; at: number; doneAt?: number; result?: unknown } | null>(null);
+  let finished = false;
   let width = $state(0);
 
   const narrow = $derived(width > 0 && width < 760);
   // the chosen token stays the chosen token even if its balance reaches 0 (e.g. while sending all of it)
   const tk = $derived(tokens.find((x) => x.symbol === sym) ?? held[0]);
+  // decimals the amount accepts: inputDp when the token has more than people type (an 18-decimal token)
+  const inDp = $derived(tk ? Math.min(tk.inputDp ?? tk.dp, tk.dp) : 0);
   const typed = $derived(parseAmount(amt));
-  // amounts never carry more decimals than the token has (rounded down, so a max send stays within balance)
-  const n = $derived(tk ? (exact && exact.text === amt && exact.sym === tk.symbol ? exact.n : floorTo(inUsd ? typed / tk.price : typed, tk.dp)) : 0);
+  // amounts never carry more decimals than the input accepts (rounded down, so a max send stays within balance)
+  const n = $derived(tk ? (exact && exact.text === amt && exact.sym === tk.symbol ? exact.n : floorTo(inUsd ? typed / tk.price : typed, inDp)) : 0);
   const det = $derived(mode === 'address' ? detectNetwork(address) : null);
   const multi = $derived(mode === 'address' && tk?.symbol === 'BTC' && det === 'BTC');
   const routeFee = $derived(multi ? btcFees[NETS[net].id] : undefined);
   const fee = $derived(multi ? (routeFee ?? 0) : (tk?.fee ?? 0));
   // a BTC route without a fee from the host can't be priced, so it can't be sent
   const feeKnown = $derived(!multi || routeFee !== undefined);
-  const contact = $derived(picked);
-  const person = $derived(contact ? { name: contact.name, handle: contact.handle, grad: contact.grad ?? FALLBACK_GRAD } : null);
+  const person = $derived(picked ? { name: picked.name, handle: picked.handle, grad: picked.grad ?? FALLBACK_GRAD } : null);
   const first = $derived(person ? person.name.split(' ')[0] : '');
   // a token can go to any network it lists in `nets` (CHAT and ckBTC-style sends to an ICP principal, USDT to ETH …);
   // tokens without `nets` are ICP ledger tokens
@@ -162,42 +177,65 @@
   });
   const shortAddress = $derived(address ? `${address.slice(0, 10)}…${address.slice(-6)}` : '');
   const toLabel = $derived(mode === 'user' ? (person ? person.name : '—') : shortAddress || '—');
-  const toMain = $derived(mode === 'user' ? (person ? person.name : t('ui.walletSend.notChosen')) : shortAddress || t('ui.walletSend.notEntered'));
+  const receipt = $derived(step === 'sending' || step === 'done');
 
+  // the summary under the form: network, fee, what they receive, total
   const rows = $derived([
     { k: t('ui.walletSend.network'), v: mode === 'user' ? 'OpenChat' : multi ? t(NETS[net].label) : det && det !== 'unknown' ? NET_NAME[det] : '—', ink: 'var(--ink,#ECECF1)' },
     { k: t('ui.walletSend.networkFee'), v: `${fmt(fee, tk?.dp ?? 0)} ${tk?.symbol}`, ink: 'var(--ink,#ECECF1)' },
-    { k: mode === 'user' && person ? t('ui.walletSend.nameReceives', { name: first }) : t('ui.walletSend.theyReceive'), v: `${fmt(n, tk?.dp ?? 0)} ${tk?.symbol}`, ink: n > 0 ? 'var(--ink,#ECECF1)' : 'var(--ink-5,#6E6E7C)' },
+    { k: mode === 'user' && person ? t('ui.walletSend.nameReceives', { name: first }) : t('ui.walletSend.theyReceive'), v: `${fmt(n, inDp)} ${tk?.symbol}`, ink: n > 0 ? 'var(--ink,#ECECF1)' : 'var(--ink-5,#6E6E7C)' },
+    { k: t('ui.walletSend.total'), v: `${fmt(n + fee, tk?.dp ?? 0)} ${tk?.symbol}`, ink: over ? 'var(--status-danger,#F5493D)' : 'var(--ink,#ECECF1)' },
   ]);
-
-  const history = $derived(
-    (contact?.history ?? []).map((h) => ({
-      label: h.incoming ? t('ui.walletSend.nameSent', { name: first, date: h.date }) : t('ui.walletSend.youSent', { date: h.date }),
-      sign: h.incoming ? '+' : '−',
-      v: h.amount,
-      mask: mask(h.incoming ? 'arrow-down' : 'arrow-up'),
-      incoming: h.incoming,
-    })),
-  );
   const network = $derived(mode === 'user' ? 'openchat' : multi ? NETS[net].id : det && det !== 'unknown' ? CHAIN_NET[det] : '');
 
   const ctaLabel = $derived(
-    t(
-      ok
-        ? 'ui.common.continue'
-        : !recipOk
-          ? mode === 'user'
-            ? 'ui.walletSend.chooseRecipient'
-            : 'ui.walletSend.addValidAddress'
-          : n <= 0
-            ? 'ui.walletSend.enterAmount'
-            : over
-              ? 'ui.walletSend.tooHigh'
-              : !feeKnown
-                ? 'ui.walletSend.feeUnavailable'
-                : 'ui.walletSend.cantSend',
-    ),
+    ok
+      ? t('ui.walletSend.sendTo', { amount: fmt(n, inDp), symbol: tk?.symbol ?? '', name: mode === 'user' ? first : toLabel })
+      : t(
+          !recipOk
+            ? mode === 'user'
+              ? 'ui.walletSend.chooseRecipient'
+              : 'ui.walletSend.addValidAddress'
+            : n <= 0
+              ? 'ui.walletSend.enterAmount'
+              : over
+                ? 'ui.walletSend.tooHigh'
+                : !feeKnown
+                  ? 'ui.walletSend.feeUnavailable'
+                  : 'ui.walletSend.cantSend',
+        ),
   );
+
+  // the receipt: what was asked for, then what the host resolved with
+  const rc = $derived.by(() => {
+    if (!sent || !tk) return null;
+    const r = sent.request;
+    const amount = `${fmt(r.amount, inDp)} ${r.symbol}`;
+    const name = r.person ? first : r.toLabel;
+    const id = txIdOf(sent.result);
+    const secs = sent.doneAt ? Math.max(1, Math.round((sent.doneAt - sent.at) / 1000)) : 0;
+    const rcRows = [
+      { k: t('ui.walletSend.networkFee'), v: `${fmt(r.fee, tk.dp)} ${r.symbol}` },
+      { k: t('ui.walletSend.total'), v: `${fmt(r.amount + r.fee, tk.dp)} ${r.symbol}` },
+      ...(r.memo ? [{ k: t('ui.walletSend.message'), v: r.memo }] : []),
+      ...(step === 'done' && id ? [{ k: t('ui.walletSend.transaction'), v: `#${id}` }] : []),
+    ];
+    return {
+      amount,
+      fiat: money(r.fiat),
+      to: r.person ? (person?.name ?? r.toLabel) : r.toLabel,
+      toSub: r.person ? (person?.handle ?? '') : t('ui.walletSend.walletAddress'),
+      rows: rcRows,
+      status:
+        step === 'done'
+          ? r.person
+            ? t('ui.walletSend.statusReceived', { name, amount })
+            : t('ui.walletSend.statusSent', { amount })
+          : t('ui.walletSend.statusSending', { amount, name }),
+      took: secs ? t('ui.walletSend.took', { time: `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}` }) : '',
+      slow: r.network === 'btc',
+    };
+  });
 
   function searchUsers(q: string) {
     userQuery = q;
@@ -227,6 +265,16 @@
     userResults = [];
   }
 
+  // typed amounts keep at most the decimals the unit accepts (cents in USD)
+  function typeAmount(input: HTMLInputElement) {
+    let v = cleanAmount(input.value);
+    const cap = inUsd ? 2 : inDp;
+    const at = v.search(/[.,]/);
+    if (at >= 0) v = cap > 0 ? v.slice(0, at + 1 + cap) : v.slice(0, at);
+    input.value = v;
+    amt = v;
+  }
+
   function toggleUnit() {
     if (!tk) return;
     const v = n;
@@ -238,23 +286,18 @@
   // shows a token amount in the current unit and keeps it as the amount sent
   function pick(v: number) {
     if (!tk) return;
-    amt = inUsd ? usdText(v * tk.price) : amountText(v, tk.dp);
+    amt = inUsd ? usdText(v * tk.price) : amountText(v, inDp);
     exact = { text: amt, sym: tk.symbol, n: v };
   }
 
   function chooseFraction(k: number) {
     if (!tk) return;
-    pick(floorTo(avail * k, tk.dp));
+    pick(floorTo(avail * k, inDp));
   }
 
-  function reuse(v: number) {
-    if (!tk) return;
-    pick(floorTo(v, tk.dp));
-  }
-
-  // the PIN dialog can't be closed or reopened while a send is in flight, so a send can never run twice
+  // the PIN dialog can't be reopened while a send is in flight, so a send can never run twice
   function openPin() {
-    if (!ok || pinFlow.busy) return;
+    if (!ok || pinFlow.busy || step !== 'form') return;
     pinText = '';
     pinFlow.failed = false;
     step = 'pin';
@@ -267,8 +310,21 @@
     pinFlow.failed = false;
   }
 
+  // "View in chat" only where it can open one: a send to a person, with onDone and a host that opens DMs
+  const chatOffered = $derived(!!sent?.request.person && !!onDone && canOpenChat);
+
+  // leaving the receipt: once, through onDone (or onClose without it)
+  function finish(openChat: boolean) {
+    if (step !== 'done' || !sent || finished) return;
+    finished = true;
+    if (onDone) onDone({ request: sent.request, result: sent.result, openChat });
+    else onClose?.();
+  }
+
   function back() {
+    if (step === 'sending') return; // the transfer is in flight; the receipt stays until the host answers
     if (step === 'pin') return closePin();
+    if (step === 'done') return finish(false);
     onClose?.();
   }
 
@@ -298,9 +354,10 @@
     if (pinFlow.failed) pinFlow.failed = false;
   }
 
-  // confirming hands back to the wallet, which shows the pending row and a toast
+  // submitting the PIN makes the transfer: the receipt shows "Sending" until the host answers;
+  // a rejection (e.g. a wrong PIN) reopens the PIN dialog with its error
   async function confirmPin() {
-    if (!tk || pin < PIN_LENGTH || pinFlow.busy) {
+    if (!tk || pin < PIN_LENGTH || pinFlow.busy || step !== 'pin') {
       pinInput?.focus();
       return;
     }
@@ -310,8 +367,8 @@
       amount: n,
       fee,
       fiat: n * tk.price,
-      to: mode === 'user' ? (contact?.userId ?? '') : address,
-      userId: mode === 'user' ? contact?.userId : undefined,
+      to: mode === 'user' ? (picked?.userId ?? '') : address,
+      userId: mode === 'user' ? picked?.userId : undefined,
       toLabel,
       network,
       memo: msg.trim() || undefined,
@@ -320,14 +377,18 @@
       person: mode === 'user' && !!person,
     };
     const sending = onSent;
-    const result = await pinFlow.run(() => sending(request));
-    if (result.ok) {
-      step = 'done'; // inside WalletMain the view has already moved on
+    sent = { request, at: Date.now() };
+    step = 'sending';
+    const outcome = await pinFlow.run(() => sending(request));
+    if (outcome.ok) {
+      sent = { ...sent, doneAt: Date.now(), result: outcome.value };
+      step = 'done';
       return;
     }
-    if (!pinFlow.failed) return; // ignored (already sending)
+    sent = null;
+    step = 'pin';
     pinText = '';
-    await tick(); // the input is re-enabled on the next render
+    await tick(); // the dialog is back on the next render
     pinInput?.focus();
   }
 
@@ -355,29 +416,27 @@
               <span class="person-text"><span class="person-name">{person.name}</span><span class="person-handle">{person.handle}</span></span>
               <span class="icon-button" onclick={() => (picked = null)} role="button" tabindex="0" aria-label={t('ui.walletSend.clear')} title={t('ui.walletSend.clear')}><span class="icon-button-icon" style:mask={mask('close')}></span></span>
             </div>
-          {:else}
-            {#if onSearchUsers}
-              <div class="search">
-                <span class="search-icon"></span><input
-                  class="search-input"
-                  value={userQuery}
-                  oninput={(e) => searchUsers(e.currentTarget.value)}
-                  placeholder={t('ui.walletSend.searchUsers')}
-                  aria-label={t('ui.walletSend.searchUsers')}
-                />
+          {:else if onSearchUsers}
+            <div class="search">
+              <span class="search-icon"></span><input
+                class="search-input"
+                value={userQuery}
+                oninput={(e) => searchUsers(e.currentTarget.value)}
+                placeholder={t('ui.walletSend.searchUsers')}
+                aria-label={t('ui.walletSend.searchUsers')}
+              />
+            </div>
+            {#if userQuery.trim()}
+              <div class="results" role="listbox" aria-busy={searching}>
+                {#each userResults as c (c.userId)}
+                  <span class="result" onclick={() => pickUser(c)} role="option" aria-selected="false" tabindex="0"
+                    ><span class="quick-avatar" style:background={c.grad ?? FALLBACK_GRAD}></span><span class="person-text"
+                      ><span class="person-name">{c.name}</span><span class="person-handle">{c.handle}</span></span
+                    ></span
+                  >
+                {/each}
+                {#if !searching && !userResults.length}<span class="no-results">{t('ui.walletSend.noUsersFound')}</span>{/if}
               </div>
-              {#if userQuery.trim()}
-                <div class="results" role="listbox" aria-busy={searching}>
-                  {#each userResults as c (c.userId)}
-                    <span class="result" onclick={() => pickUser(c)} role="option" aria-selected="false" tabindex="0"
-                      ><span class="quick-avatar" style:background={c.grad ?? FALLBACK_GRAD}></span><span class="person-text"
-                        ><span class="person-name">{c.name}</span><span class="person-handle">{c.handle}</span></span
-                      ></span
-                    >
-                  {/each}
-                  {#if !searching && !userResults.length}<span class="no-results">{t('ui.walletSend.noUsersFound')}</span>{/if}
-                </div>
-              {/if}
             {/if}
           {/if}
           {#if contacts.length}
@@ -461,7 +520,7 @@
               {#if inUsd}<span class="dollar">$</span>{/if}<input
                 class="amount-input"
                 value={amt}
-                oninput={(e) => (amt = cleanAmount(e.currentTarget.value))}
+                oninput={(e) => typeAmount(e.currentTarget)}
                 inputmode="decimal"
                 placeholder="0"
                 aria-label={t('ui.walletSend.amount')}
@@ -471,7 +530,7 @@
               >{over
                 ? t('ui.walletSend.moreThanYouCan')
                 : n > 0
-                  ? `≈ ${inUsd ? `${fmt(n, tk.dp)} ${tk.symbol}` : money(n * tk.price)}`
+                  ? `≈ ${inUsd ? `${fmt(n, inDp)} ${tk.symbol}` : money(n * tk.price)}`
                   : t('ui.walletSend.typeAmountIn', { unit: inUsd ? 'USD' : tk.symbol })}</span
             >
           </div>
@@ -494,6 +553,13 @@
           ></textarea>
         </div>
       {/if}
+      <div class="summary">
+        <div class="summary-rows">
+          {#each rows as r, i}<DetailRow label={r.k} value={r.v} valueColor={r.ink} size="sm" rule={i === rows.length - 1 ? 'none' : 'bottom'} />{/each}
+        </div>
+        <span class="cta" class:blocked={!ok} onclick={openPin} tabindex="0" role="button" aria-disabled={!ok}>{ctaLabel}</span>
+        <span class="cta-hint">{t(ok ? 'ui.walletSend.confirmHint' : 'ui.walletSend.summaryHint')}</span>
+      </div>
     </div>
   {/if}
 {/snippet}
@@ -501,85 +567,13 @@
 <div class="send" bind:clientWidth={width} data-screen-label="Wallet send">
   {#if tk}
     <PageHeader title={t('ui.walletSend.title', { symbol: tk.symbol })} onBack={back} avatarMark={step === 'done' ? '' : tk.mark} avatarGradient={tk.grad}
-      >{#if step !== 'done'}<span class="balance">{fmt(tk.held, tk.dp)} {tk.symbol} · {money(tk.held * tk.price)}</span>{/if}</PageHeader
+      ><StepIndicator steps={STEPS} current={receipt ? 1 : 0} complete={step === 'done'} compact={narrow} /></PageHeader
     >
-    {#if step !== 'done' && !narrow}
-      <div class="wide">
-        {@render column()}
-        <div class="summary-cell">
-          <SideCard>
-            <ListSectionLabel label={t('ui.walletSend.summaryKicker')} />
-            <div class="summary-amount">
-              <span class="summary-mark" style:background={tk.grad}>{tk.mark}</span>
-              <div class="summary-figures"
-                ><span class="summary-value" class:empty={n <= 0}>{n > 0 ? `${fmt(n, tk.dp)} ${tk.symbol}` : `0 ${tk.symbol}`}</span><span class="summary-fiat">≈ {money(n * tk.price)}</span></div
-              >
-            </div>
-            <div class="summary-rows">
-              <div class="to-row">
-                <span class="to-label">{t('ui.walletSend.to')}</span>
-                <span class="to-value">
-                  {#if mode === 'user' && person}<span class="to-avatar" style:background={person.grad}></span>{/if}
-                  <span class="to-text"
-                    ><span class="to-main" class:empty={!recipOk}>{toMain}</span>{#if mode === 'user' ? !!person : !!det && det !== 'unknown'}<span class="to-sub"
-                        >{mode === 'user' ? (person?.handle ?? '') : t('ui.walletSend.walletAddress')}</span
-                      >{/if}</span
-                  >
-                </span>
-              </div>
-              {#each rows as r}<DetailRow label={r.k} value={r.v} valueColor={r.ink} size="lg" rule="bottom" />{/each}
-              {#if msg.trim()}<div class="summary-message"><span class="summary-message-label">{t('ui.walletSend.message')}</span><span class="summary-message-text">{msg}</span></div>{/if}
-              <div class="total-row">
-                <span class="total-label">{t('ui.walletSend.total')}</span><span class="total-figures"
-                  ><span class="total" class:over>{fmt(n + fee, tk.dp)} {tk.symbol}</span><span class="total-fiat">≈ {money((n + fee) * tk.price)}</span></span
-                >
-              </div>
-            </div>
-            {#if mode === 'user' && person}
-              <div class="history">
-                <ListSectionLabel label={t('ui.walletSend.between', { name: first.toUpperCase() })} />
-                <div class="history-rows">
-                  {#each history as h}
-                    <div class="history-row" onclick={() => reuse(h.v)} tabindex="0" aria-label={t('ui.walletSend.useAmount')} role="button" title={t('ui.walletSend.useAmount')}>
-                      <span class="history-badge"><span class="history-icon" style:mask={h.mask}></span></span>
-                      <span class="history-label">{h.label}</span>
-                      <span class="history-amount" class:incoming={h.incoming}>{h.sign}{fmt(h.v, tk.dp)} {tk.symbol}</span>
-                    </div>
-                  {/each}
-                </div>
-              </div>
-            {/if}
-            <span class="grow"></span>
-            <span class="cta" class:blocked={!ok} onclick={openPin} tabindex="0" role="button" aria-disabled={!ok}>{ctaLabel}</span>
-            <span class="cta-hint">{t(ok ? 'ui.walletSend.confirmHint' : 'ui.walletSend.summaryHint')}</span>
-          </SideCard>
-        </div>
-      </div>
-    {/if}
-    {#if step !== 'done' && narrow}
-      <div class="narrow">{@render column()}</div>
-      <div class="foot">
-        {#if footOpen}
-          <div class="foot-rows">
-            {#each rows as r}<DetailRow label={r.k} value={r.v} valueColor={r.ink} size="sm" rule="bottom" />{/each}
-          </div>
-        {/if}
-        <div class="foot-bar">
-          <span class="foot-summary" onclick={() => (footOpen = !footOpen)} tabindex="0" role="button"
-            ><span class="foot-total" class:over>{fmt(n + fee, tk.dp)} {tk.symbol}<span class="foot-caret" class:open={footOpen}></span></span><span class="foot-to">{t('ui.walletSend.toWho', { name: toMain })}</span></span
-          >
-          <span class="cta foot-cta" class:blocked={!ok} onclick={openPin} tabindex="0" role="button">{ctaLabel}</span>
-        </div>
-      </div>
+    {#if !receipt}
+      <div class="scroll"><div class="page" class:narrow>{@render column()}</div></div>
     {/if}
     {#if step === 'pin'}
-      <DialogShell
-        title="ui.walletSend.enterPin"
-        width={420}
-        height="auto"
-        flush={true}
-        onClose={pinFlow.busy ? undefined : closePin}
-      >
+      <DialogShell title="ui.walletSend.enterPin" width={420} height="auto" flush={true} onClose={pinFlow.busy ? undefined : closePin}>
         <form
           class="pin"
           onsubmit={(e) => {
@@ -587,7 +581,7 @@
             confirmPin();
           }}
         >
-          <span class="pin-sub">{t('ui.walletSend.confirmSending', { amount: fmt(n, tk.dp), symbol: tk.symbol, to: toLabel })}</span>
+          <span class="pin-sub">{t('ui.walletSend.confirmSending', { amount: fmt(n, inDp), symbol: tk.symbol, to: toLabel })}</span>
           <!-- one real input under the boxes: typing, paste and one-time-code autofill all work -->
           <label class="pin-dots">
             <input
@@ -601,23 +595,55 @@
               maxlength={PIN_LENGTH}
               aria-label={t('ui.walletSend.enterPin')}
               aria-invalid={pinFlow.failed}
-              disabled={pinFlow.busy}
             />
             {#each Array.from({ length: PIN_LENGTH }, (_, i) => i) as i}<span class="pin-box" class:current={i === pin} aria-hidden="true"><span class="pin-dot" class:filled={i < pin}></span></span>{/each}
           </label>
           {#if pinFlow.failed}<span class="pin-error" role="alert">{t('ui.walletSend.pinFailed')}</span>{/if}
-          <button class="cta pin-cta" class:blocked={pin < PIN_LENGTH || pinFlow.busy} type="submit" aria-disabled={pin < PIN_LENGTH || pinFlow.busy}
-            >{t(pinFlow.busy ? 'ui.walletSend.sending' : pin < PIN_LENGTH ? 'ui.walletSend.typePin' : 'ui.common.send')}</button
-          >
+          <button class="cta pin-cta" class:blocked={pin < PIN_LENGTH} type="submit" aria-disabled={pin < PIN_LENGTH}>{t(pin < PIN_LENGTH ? 'ui.walletSend.typePin' : 'ui.common.send')}</button>
         </form>
       </DialogShell>
     {/if}
-    {#if step === 'done'}
-      <div class="done">
-        <span class="done-badge"><span class="done-icon"></span></span>
-        <span class="done-title">{t('ui.walletSend.sent', { amount: fmt(n, tk.dp), symbol: tk.symbol, to: toLabel })}</span>
-        <span class="done-sub">{t(multi && net === 0 ? 'ui.walletSend.btcSlow' : 'ui.walletSend.arrivesFast')}</span>
-        <span class="done-back" onclick={() => onClose?.()} tabindex="0" role="button">{t('ui.walletSend.backTo', { symbol: tk.symbol })}</span>
+    {#if receipt && rc}
+      <div class="scroll">
+        <div class="page receipt" class:narrow>
+          <div class="tag-line"><span class="tag" class:done={step === 'done'}>{t(step === 'done' ? 'ui.walletSend.receiptSent' : 'ui.walletSend.receiptSending')}</span><span class="tag-rule"></span></div>
+          <div class="rc-card">
+            <div class="rc-row">
+              <TokenAvatar mark={tk.mark} gradient={tk.grad} size={40} />
+              <div class="rc-text"><span class="rc-kicker">{t('ui.walletSend.youSend')}</span><span class="rc-amount">{rc.amount}</span></div>
+              <span class="rc-fiat">{rc.fiat}</span>
+            </div>
+            <div class="rc-row">
+              {#if sent?.request.person}
+                <span class="rc-avatar" style:background={person?.grad ?? FALLBACK_GRAD}></span>
+              {:else}
+                <span class="rc-avatar wallet"><span class="rc-wallet-icon"></span></span>
+              {/if}
+              <div class="rc-text">
+                <span class="rc-kicker">{t('ui.walletSend.toKicker')}</span>
+                <span class="rc-to">{rc.to}{#if rc.toSub}<span class="rc-to-sub">{rc.toSub}</span>{/if}</span>
+              </div>
+            </div>
+            <div class="rc-rows">
+              {#each rc.rows as r, i}<DetailRow label={r.k} value={r.v} size="sm" rule={i === rc.rows.length - 1 ? 'none' : 'bottom'} />{/each}
+            </div>
+          </div>
+          <div class="status" class:done={step === 'done'} role="status">
+            <span class="status-dot">
+              {#if step === 'done'}<span class="status-check"></span>{:else}<Spinner size={14} tone="accent" label="ui.walletSend.sending" />{/if}
+            </span>
+            <span class="status-text">{rc.status}</span>
+            <span class="status-time">{rc.took}</span>
+          </div>
+          {#if step === 'done'}
+            <div class="done-actions" class:two={chatOffered}>
+              {#if chatOffered}<span class="done-button" onclick={() => finish(true)} role="button" tabindex="0">{t('ui.walletSend.viewInChat')}</span>{/if}
+              <span class="done-button primary" onclick={() => finish(false)} role="button" tabindex="0">{t('ui.common.done')}</span>
+            </div>
+          {:else}
+            <span class="sending-note">{t(rc.slow ? 'ui.walletSend.btcSlow' : 'ui.walletSend.arrivesFast')}</span>
+          {/if}
+        </div>
       </div>
     {/if}
   {:else}
@@ -636,31 +662,6 @@
     background: var(--surface-1, #0e0e12);
     --sans: 'Plus Jakarta Sans', sans-serif;
     --mono: 'JetBrains Mono', monospace;
-  }
-
-  .balance {
-    font: 500 12.5px/1 var(--mono);
-    color: var(--ink-4, #8a8a99);
-  }
-
-  .wide {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 320px;
-    grid-auto-rows: auto;
-    align-content: start;
-    gap: 28px;
-    padding: 28px max(32px, calc((100% - 960px) / 2));
-    align-items: stretch;
-  }
-
-  .narrow {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    padding: 24px 22px 28px;
   }
 
   .column {
@@ -1176,8 +1177,7 @@
     user-select: none;
   }
 
-  .add-message:hover,
-  .history-row:hover {
+  .add-message:hover {
     background: var(--overlay-1);
   }
 
@@ -1212,330 +1212,6 @@
     color: var(--ink, #ececf1);
   }
 
-  .summary-cell {
-    min-width: 0;
-    align-self: stretch;
-    display: grid;
-  }
-
-  .summary-amount {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 22px 0 24px;
-  }
-
-  .summary-mark {
-    flex: none;
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font: 700 19px/1 var(--sans);
-    color: #0b0b10;
-  }
-
-  .summary-figures {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .summary-value {
-    font: 700 30px/1.05 var(--sans);
-    letter-spacing: -0.02em;
-    color: var(--ink, #ececf1);
-    word-break: break-word;
-  }
-
-  .summary-value.empty,
-  .to-main.empty {
-    color: var(--ink-5, #6e6e7c);
-  }
-
-  .summary-fiat {
-    font: 500 13px/1 var(--mono);
-    color: var(--ink-3, #9a9aa8);
-  }
-
-  .summary-rows {
-    display: flex;
-    flex-direction: column;
-    border-top: 1px solid var(--line-1);
-  }
-
-  .to-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    min-height: 64px;
-    border-bottom: 1px solid var(--line-1);
-  }
-
-  .to-label {
-    flex: none;
-    font: 500 13.5px/1 var(--sans);
-    color: var(--ink-3, #9a9aa8);
-  }
-
-  .to-value {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 10px;
-  }
-
-  .to-avatar {
-    flex: none;
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-  }
-
-  .to-text {
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 4px;
-  }
-
-  .to-main {
-    max-width: 100%;
-    font: 600 14px/1.2 var(--sans);
-    color: var(--ink, #ececf1);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .to-sub {
-    font: 400 12px/1 var(--mono);
-    color: var(--ink-4, #8a8a99);
-  }
-
-  .summary-message {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 16px 0;
-    border-bottom: 1px solid var(--line-1);
-  }
-
-  .summary-message-label {
-    font: 500 13.5px/1 var(--sans);
-    color: var(--ink-3, #9a9aa8);
-  }
-
-  .summary-message-text {
-    font: 400 13.5px/1.5 var(--sans);
-    color: var(--ink-2, #c9c9d4);
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .total-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    min-height: 64px;
-  }
-
-  .total-label {
-    flex: none;
-    font: 700 14.5px/1 var(--sans);
-    color: var(--ink, #ececf1);
-  }
-
-  .total-figures {
-    flex: 1;
-    min-width: 0;
-    text-align: end;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 5px;
-  }
-
-  .total,
-  .foot-total {
-    font: 700 15px/1.2 var(--mono);
-    color: var(--ink, #ececf1);
-  }
-
-  .total.over,
-  .foot-total.over {
-    color: var(--status-danger, #f5493d);
-  }
-
-  .total-fiat {
-    font: 400 12px/1 var(--mono);
-    color: var(--ink-4, #8a8a99);
-  }
-
-  .history {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding-top: 24px;
-  }
-
-  .history-rows {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .history-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    min-height: 44px;
-    padding: 0 10px;
-    margin: 0 -10px;
-    border-radius: 10px;
-    cursor: pointer;
-  }
-
-  .history-badge {
-    flex: none;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--overlay-2);
-  }
-
-  .history-icon {
-    width: 11px;
-    height: 11px;
-    background: var(--ink-2, #c9c9d4);
-  }
-
-  .history-label {
-    flex: 1;
-    min-width: 0;
-    font: 500 13px/1.2 var(--sans);
-    color: var(--ink-2, #c9c9d4);
-  }
-
-  .history-amount {
-    flex: none;
-    font: 600 12.5px/1 var(--mono);
-    color: var(--ink, #ececf1);
-  }
-
-  .history-amount.incoming {
-    color: #2ee6a8;
-  }
-
-  .grow {
-    flex: 1;
-    min-height: 24px;
-  }
-
-  .cta {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 46px;
-    border-radius: 12px;
-    background: var(--accent, #ff5672);
-    font: 700 14px/1 var(--sans);
-    color: var(--on-accent, #2e0512);
-    cursor: pointer;
-    user-select: none;
-  }
-
-  .cta.blocked {
-    background: var(--overlay-2);
-    color: #7c7c8c;
-    cursor: default;
-  }
-
-  .cta-hint {
-    margin-top: 14px;
-    font: 400 12px/1.5 var(--sans);
-    color: var(--ink-4, #8a8a99);
-    text-align: center;
-    text-wrap: pretty;
-  }
-
-  .foot {
-    flex: none;
-    display: flex;
-    flex-direction: column;
-    border-top: 1px solid var(--line-1);
-    background: #121217;
-  }
-
-  .foot-rows {
-    display: flex;
-    flex-direction: column;
-    padding: 6px 22px 0;
-  }
-
-  .foot-bar {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    min-height: 80px;
-    padding: 0 22px;
-  }
-
-  .foot-summary {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    cursor: pointer;
-  }
-
-  .foot-total {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .foot-caret {
-    width: 12px;
-    height: 12px;
-    background: var(--ink-3, #9a9aa8);
-    mask: var(--icon-chevron-down) center/contain no-repeat;
-    transform: rotate(180deg);
-  }
-
-  .foot-caret.open {
-    transform: none;
-  }
-
-  .foot-to {
-    font: 400 12px/1 var(--sans);
-    color: var(--ink-4, #8a8a99);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .foot-cta {
-    flex: none;
-    min-width: 160px;
-    padding: 0 16px;
-    white-space: nowrap;
-    user-select: auto;
-  }
-
   .pin {
     display: flex;
     flex-direction: column;
@@ -1558,7 +1234,9 @@
     cursor: text;
   }
 
-  /* the real input covers the boxes, invisible, so a tap anywhere on them focuses it */
+  /* the real input covers the boxes,
+  invisible,
+  so a tap anywhere on them focuses it */
   .pin-input {
     position: absolute;
     inset: 0;
@@ -1615,58 +1293,257 @@
     padding: 0;
   }
 
-  .done {
+  .scroll {
     flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 14px;
-    padding: 32px;
-    text-align: center;
+    min-height: 0;
+    overflow-y: auto;
   }
 
-  .done-badge {
-    width: 64px;
-    height: 64px;
+  .page {
+    box-sizing: content-box;
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 28px 32px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .page.narrow {
+    padding: 24px 22px 28px;
+  }
+
+  .summary {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .summary-rows {
+    padding: 4px 16px;
+    border-radius: 14px;
+    background: var(--overlay-1, rgba(255, 255, 255, 0.04));
+  }
+
+  .cta {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 52px;
+    padding: 0 16px;
+    border-radius: 12px;
+    background: var(--accent, #ff5672);
+    font: 700 14.5px/1 var(--sans);
+    color: var(--on-accent, #2e0512);
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .cta:not(.blocked):hover {
+    filter: brightness(1.08);
+  }
+
+  .cta.blocked {
+    background: var(--overlay-2);
+    color: #7c7c8c;
+    cursor: default;
+  }
+
+  .cta-hint {
+    font: 400 12.5px/1.5 var(--sans);
+    color: var(--ink-4, #8a8a99);
+    text-align: center;
+    text-wrap: pretty;
+  }
+
+  .receipt {
+    gap: 22px;
+  }
+
+  .tag-line {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .tag {
+    font: 500 10px/1 var(--mono);
+    letter-spacing: 0.09em;
+    color: var(--accent-bright, #ff8298);
+  }
+
+  .tag.done {
+    color: var(--status-online, #2ee6a8);
+  }
+
+  .tag-rule {
+    flex: 1;
+    height: 1px;
+    background: var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .rc-card {
+    border-radius: 16px;
+    background: var(--overlay-1, rgba(255, 255, 255, 0.04));
+    overflow: hidden;
+  }
+
+  .rc-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .rc-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .rc-kicker {
+    font: 500 10px/1 var(--mono);
+    letter-spacing: 0.09em;
+    color: var(--ink-4, #8a8a99);
+  }
+
+  .rc-amount {
+    font: 700 18px/1.15 var(--sans);
+    color: var(--ink, #ececf1);
+    overflow-wrap: anywhere;
+  }
+
+  .rc-fiat {
+    flex: none;
+    font: 500 12.5px/1 var(--mono);
+    color: var(--ink-3, #9a9aa8);
+  }
+
+  .rc-avatar {
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+  }
+
+  .rc-avatar.wallet {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+  }
+
+  .rc-wallet-icon {
+    width: 16px;
+    height: 16px;
+    background: var(--ink-3, #9a9aa8);
+    mask: var(--icon-wallet) center/contain no-repeat;
+  }
+
+  .rc-to {
+    font: 700 16px/1.2 var(--sans);
+    color: var(--ink, #ececf1);
+    overflow-wrap: anywhere;
+  }
+
+  .rc-to-sub {
+    margin-inline-start: 6px;
+    font: 400 12.5px/1 var(--mono);
+    color: var(--ink-4, #8a8a99);
+  }
+
+  .rc-rows {
+    display: flex;
+    flex-direction: column;
+    padding: 2px 16px 6px;
+  }
+
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: var(--overlay-1, rgba(255, 255, 255, 0.04));
+  }
+
+  .status-dot {
+    flex: none;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(46, 230, 168, 0.12);
+    background: var(--accent-soft, rgba(255, 86, 114, 0.14));
   }
 
-  .done-icon {
-    width: 28px;
-    height: 28px;
-    background: var(--status-online);
+  .status.done .status-dot {
+    background: rgba(46, 230, 168, 0.14);
+  }
+
+  .status-check {
+    width: 13px;
+    height: 13px;
+    background: var(--status-online, #2ee6a8);
     mask: var(--icon-check) center/contain no-repeat;
   }
 
-  .done-title {
-    margin-top: 6px;
-    font: 700 24px/1.25 var(--sans);
+  .status-text {
+    flex: 1;
+    min-width: 0;
+    font: 600 13px/1.35 var(--sans);
     color: var(--ink, #ececf1);
-    max-width: 480px;
-    text-wrap: pretty;
   }
 
-  .done-sub {
-    font: 400 14px/1.5 var(--sans);
-    color: var(--ink-3, #9a9aa8);
+  .status-time {
+    font: 500 11.5px/1 var(--mono);
+    color: var(--ink-4, #8a8a99);
   }
 
-  .done-back {
-    margin-top: 10px;
+  .done-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .done-actions.two {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .done-button {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 220px;
-    height: 46px;
+    height: 52px;
     border-radius: 12px;
-    background: var(--overlay-2);
+    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
     font: 600 14px/1 var(--sans);
     color: var(--ink, #ececf1);
     cursor: pointer;
+    user-select: none;
+  }
+
+  .done-button:hover {
+    background: var(--btn-hover, rgba(255, 255, 255, 0.14));
+  }
+
+  .done-button.primary {
+    background: var(--accent, #ff5672);
+    font: 700 14.5px/1 var(--sans);
+    color: var(--on-accent, #2e0512);
+  }
+
+  .done-button.primary:hover {
+    filter: brightness(1.08);
+  }
+
+  .sending-note {
+    font: 400 12.5px/1.5 var(--sans);
+    color: var(--ink-4, #8a8a99);
   }
 </style>

@@ -1,8 +1,9 @@
-<!-- In-place Swap for the wallet main column: Details → Quote (host's best DEX, until its expiresAt) → Swap (five on-chain
-     steps grouped into three phases). The host does the work: onQuote returns the quote (output, fees, impact, expiry) and
-     onSwap runs it, reporting progress through onStep; either rejecting keeps the amount and shows an error.
-     Editing amount/tokens drops a live quote; slippage doesn't (min. received recomputes). Below 760px the quote panel
-     stacks under the form. Pay offers only held tokens; Get offers anything swappable, yours first.
+<!-- In-place Swap for the wallet main column, in two steps: Details (amount, slippage, then a quote fetched with "Get quote"
+     and shown inline until its expiresAt) → Swap (what you pay and get, then the three on-chain steps: approve, swap,
+     withdraw). One column at most 700px wide. The host does the work: onQuote returns the quote (DEX, output, fees, impact,
+     expiry) and onSwap runs it, reporting each step through onStep; either rejecting keeps the amount and shows an error.
+     Editing amount/tokens drops a live quote; slippage doesn't (min. received recomputes). Pay offers only held tokens;
+     Get offers anything swappable, yours first.
      The amount is everything that leaves the wallet: the host takes the swap's ledger fees out of it (2 × WalletToken.fee,
      approve + pull), so Max is the whole balance and an amount of 3 fees or less is too small to swap. -->
 <script lang="ts" module>
@@ -40,21 +41,28 @@
   import Banner from '../../lib/components/Banner.svelte';
   import DetailRow from '../../lib/components/DetailRow.svelte';
   import DialogShell from '../../lib/components/DialogShell.svelte';
+  import IconButton from '../../lib/components/IconButton.svelte';
   import ListSectionLabel from '../../lib/components/ListSectionLabel.svelte';
   import PageHeader from '../../lib/components/PageHeader.svelte';
   import Pill from '../../lib/components/Pill.svelte';
-  import ProgressTimeline from '../../lib/components/ProgressTimeline.svelte';
+  import ProgressTimeline, { type TimelineFunds, type TimelineStep } from '../../lib/components/ProgressTimeline.svelte';
   import SegmentedTabs from '../../lib/components/SegmentedTabs.svelte';
-  import SideCard from '../../lib/components/SideCard.svelte';
   import Spinner from '../../lib/components/Spinner.svelte';
   import StepIndicator from '../../lib/components/StepIndicator.svelte';
+  import TokenAvatar from '../../lib/components/TokenAvatar.svelte';
   import TokenPicker from '../../lib/components/TokenPicker.svelte';
   const i18n = getI18n(); // number formatting follows the host locale
 
   const SLIPS = [0.1, 0.5, 1, 3];
-  const STEPS = 5;
+  // the on-chain steps the host reports through onStep: approve, swap, withdraw
+  const STEPS = 3;
   const fmt = (v: number, dp: number) => v.toLocaleString(i18n.locale ?? 'en', { minimumFractionDigits: 0, maximumFractionDigits: dp });
   const usd = (v: number) => `$${v.toLocaleString(i18n.locale ?? 'en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  // m:ss, at least a second
+  const clock = (ms: number) => {
+    const sec = Math.max(1, Math.round(ms / 1000));
+    return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
+  };
 
   type Stage = 'form' | 'quoting' | 'quoted' | 'progress' | 'done';
 
@@ -62,11 +70,9 @@
     tokens: WalletToken[];
     /** Symbol to pay with; falls back to ICP. */
     token?: string;
-    /** DEX names shown while a quote is found ("Checking KongSwap, ICPSwap and Sonic"). */
-    dexes?: string[];
     /** Find the best quote. Reject to go back to the form with an error. Without it, no quote can be fetched. */
     onQuote?: (r: SwapRequest) => Promise<SwapQuote>;
-    /** Run the swap; call onStep(i) as each of the 5 steps (deposit, transfer, notify, swap, withdraw) starts.
+    /** Run the swap; call onStep(i) as each of the 3 on-chain steps (0 approve, 1 swap, 2 withdraw) starts.
      *  Resolve (optionally with the actual output) when it's in the wallet; reject to show an error. */
     onSwap?: (r: { request: SwapRequest; quote: SwapQuote; onStep: (step: number) => void }) => Promise<{ out?: number } | void>;
     onClose?: () => void;
@@ -74,7 +80,7 @@
     onSwapped?: (s: { from: string; to: string; amount: number; out: number; fiat: number; fromDp: number; toDp: number }) => void;
   }
 
-  let { tokens, token, dexes = [], onQuote, onSwap, onClose, onSwapped }: Props = $props();
+  let { tokens, token, onQuote, onSwap, onClose, onSwapped }: Props = $props();
   // `t` is the receiving token below, so the translator is `tr`
   const tr = useT();
 
@@ -91,6 +97,9 @@
   let stage = $state<Stage>('form');
   let left = $state(0);
   let prog = $state(0);
+  // when each step started (index STEPS: when the swap finished), for per-step times and the elapsed clock
+  let times = $state<number[]>([]);
+  let now = $state(Date.now());
   let quote = $state<SwapQuote | null>(null);
   let received = $state<number | null>(null);
   let error = $state<'' | 'quote' | 'swap'>('');
@@ -99,11 +108,13 @@
   let pick = $state<'from' | 'to' | null>(null);
   let width = $state(0);
 
-  // display-only: counts down to the host's expiresAt
+  // display-only: counts down to the host's expiresAt, and ticks the elapsed clock while swapping
   let countdown: ReturnType<typeof setInterval> | undefined;
+  let ticker: ReturnType<typeof setInterval> | undefined;
   onDestroy(() => {
     run++;
     clearInterval(countdown);
+    clearInterval(ticker);
   });
 
   const narrow = $derived(width > 0 && width < 760);
@@ -120,50 +131,64 @@
   const tooSmall = $derived(!!f && n > 0 && toUnits(n, f.dp) <= 3n * toUnits(f.fee ?? 0, f.dp));
   const ok = $derived(n > 0 && !over && !tooSmall && !!onQuote);
   const dexName = $derived(quote?.dex ?? '');
-  const listFmt = new Intl.ListFormat(i18n.locale ?? 'en', { type: 'conjunction' });
+  const quoting = $derived(stage === 'quoting');
   const quoted = $derived(stage === 'quoted');
   const done = $derived(stage === 'done');
   const busy = $derived(stage === 'progress' || done);
   const showOut = $derived(quoted || busy);
-  // while quoting, swapping or done the form can't change under the quote: no flip, amount, chips or token picks
-  const locked = $derived(busy || stage === 'quoting');
-  const stepIdx = $derived(stage === 'form' || stage === 'quoting' ? 0 : quoted ? 1 : 2);
+  const live = $derived(quoted && left > 0);
   const amtIn = $derived(`${n > 0 ? fmt(n, f.dp) : '0'} ${f?.symbol}`);
   const amtOut = $derived(`${n > 0 ? fmt(out, t.dp) : '0'} ${t?.symbol}`);
 
-  // the real swap is 5 on-chain steps; grouped into the 3 phases people care about
-  const subSteps = $derived([
-    tr('ui.walletSwap.sub.deposit'),
-    tr('ui.walletSwap.sub.transfer', { amount: amtIn, dex: dexName }),
-    tr('ui.walletSwap.sub.notify', { dex: dexName }),
-    tr('ui.walletSwap.sub.swap', { from: f?.symbol, to: t?.symbol }),
-    tr('ui.walletSwap.sub.withdraw', { amount: amtOut, dex: dexName }),
-  ]);
-  const phases = $derived(
-    (
-      [
-        [tr('ui.walletSwap.phase.send', { dex: dexName }), [0, 1, 2]],
-        [tr('ui.walletSwap.phase.swap'), [3]],
-        [tr('ui.walletSwap.phase.return'), [4]],
-      ] as [string, number[]][]
-    ).map(([title, ks]) => ({
-      title,
-      steps: ks.map((k) => ({ label: subSteps[k], state: (done || k < prog ? 'done' : k === prog ? 'active' : 'todo') as 'done' | 'active' | 'todo' })),
-    })),
+  const ctaText = $derived(
+    quoting
+      ? tr('ui.walletSwap.gettingQuote')
+      : over
+        ? tr('ui.walletSwap.notEnough', { symbol: f.symbol })
+        : tooSmall
+          ? tr('ui.walletSwap.amountTooSmall')
+          : n > 0
+            ? tr('ui.walletSwap.getQuote')
+            : tr('ui.walletSwap.enterAmount'),
   );
 
-  const rows = $derived.by(() => {
+  // the quote in three lines: what you'll get at least, what it costs, how much the price moves
+  const quoteRows = $derived.by(() => {
     const impact = `${impactPct < 0.01 ? '<0.01' : impactPct.toFixed(2)}%`;
-    const impactInk = impactPct > 3 ? 'var(--status-danger,#F5493D)' : impactPct > 1 ? '#FFB03D' : '#2EE6A8';
+    const impactInk = impactPct > 3 ? 'var(--status-danger,#F5493D)' : impactPct > 1 ? 'var(--status-warning,#FFB03D)' : 'var(--status-online,#2EE6A8)';
     const all = [
-      { k: tr('ui.walletSwap.row.via'), v: dexName, ink: 'var(--ink,#ECECF1)' },
+      { k: tr('ui.walletSwap.row.minimumReceived'), v: `${fmt(out * (1 - slip / 100), t.dp)} ${t.symbol}`, ink: 'var(--ink,#ECECF1)' },
+      { k: tr('ui.walletSwap.row.fees'), v: tr('ui.walletSwap.feesValue', { dexFee: quote?.dexFee ?? '', network: usd(quote?.networkFeeUsd ?? 0) }), ink: 'var(--ink,#ECECF1)' },
       { k: tr('ui.walletSwap.row.priceImpact'), v: impact, ink: impactInk },
-      { k: tr('ui.walletSwap.row.minReceived'), v: `${fmt(out * (1 - slip / 100), t.dp)} ${t.symbol}`, ink: 'var(--ink,#ECECF1)' },
-      { k: tr('ui.walletSwap.row.dexFee'), v: quote?.dexFee ?? '', ink: 'var(--ink,#ECECF1)' },
-      { k: tr('ui.walletSwap.row.networkFees'), v: `~${usd(quote?.networkFeeUsd ?? 0)}`, ink: 'var(--ink,#ECECF1)' },
     ];
     return all.map((r, i) => ({ ...r, rule: (i < all.length - 1 ? 'bottom' : 'none') as 'bottom' | 'none' }));
   });
+
+  // the three on-chain steps, each with what's happening and how long it took (completion shows in funds and elapsed,
+  // so the bar counts only real steps)
+  const timeline = $derived.by((): TimelineStep[] => {
+    const rows = [
+      [tr('ui.walletSwap.timeline.approve', { dex: dexName, amount: amtIn }), tr('ui.walletSwap.timeline.approveHint', { dex: dexName, symbol: f?.symbol })],
+      [tr('ui.walletSwap.timeline.swap', { from: f?.symbol, to: t?.symbol }), tr('ui.walletSwap.timeline.swapHint', { slip })],
+      [tr('ui.walletSwap.timeline.withdraw', { amount: amtOut }), tr('ui.walletSwap.timeline.withdrawHint', { dex: dexName, symbol: t?.symbol })],
+    ];
+    return rows.map(([label, hint], k) => {
+      const state = done || k < prog ? 'done' : k === prog ? 'active' : 'todo';
+      const took = times[k] != null && times[k + 1] != null ? clock(times[k + 1] - times[k]) : undefined;
+      return { label, hint, state, meta: took };
+    });
+  });
+  // where the money is: ICPSwap pulls it from the wallet as the swap runs, then pays the output back
+  const funds = $derived<TimelineFunds>(
+    done
+      ? { text: tr('ui.walletSwap.funds.done', { amount: amtOut }), tone: 'done' }
+      : prog === 0
+        ? { text: tr('ui.walletSwap.funds.wallet', { amount: amtIn }), tone: 'active' }
+        : prog === 1
+          ? { text: tr('ui.walletSwap.funds.atDex', { amount: amtIn, dex: dexName }), tone: 'active' }
+          : { text: tr('ui.walletSwap.funds.returning', { amount: amtOut }), tone: 'active' },
+  );
+  const elapsed = $derived(times[0] == null ? '' : done ? tr('ui.walletSwap.took', { time: clock((times[STEPS] ?? now) - times[0]) }) : clock(now - times[0]));
 
   const pickTokens = $derived(
     !pick
@@ -194,8 +219,9 @@
 
   const request = (): SwapRequest => ({ from: f.symbol, to: t.symbol, amount: n, slippagePct: slip });
 
+  // "Get quote", the refresh button on a live quote and "Get new quote" on an expired one
   async function getQuote() {
-    if (!ok || !onQuote) return;
+    if (!ok || !onQuote || quoting || busy) return;
     const mine = ++run;
     clearInterval(countdown);
     error = '';
@@ -205,6 +231,7 @@
       q = await onQuote(request());
     } catch {
       if (mine !== run) return;
+      quote = null;
       error = 'quote';
       stage = 'form';
       return;
@@ -213,9 +240,13 @@
     quote = q;
     received = null;
     stage = 'quoted';
-    const tickLeft = () => (left = Math.max(0, Math.ceil((q.expiresAt - Date.now()) / 1000)));
-    tickLeft();
+    // counts down to expiry, then stops
+    const tickLeft = () => {
+      left = Math.max(0, Math.ceil((q.expiresAt - Date.now()) / 1000));
+      if (left === 0) clearInterval(countdown);
+    };
     countdown = setInterval(tickLeft, 1000);
+    tickLeft();
   }
 
   async function swap() {
@@ -227,13 +258,29 @@
     error = '';
     stage = 'progress';
     prog = 0;
+    times = [Date.now()];
+    now = Date.now();
+    clearInterval(ticker);
+    ticker = setInterval(() => (now = Date.now()), 1000);
     try {
       const onStep = (i: number) => {
-        if (mine === run) prog = Math.max(prog, Math.min(i, STEPS - 1));
+        if (mine !== run) return;
+        const next = Math.min(Math.max(0, Math.floor(i)), STEPS - 1);
+        if (next <= prog) return;
+        // a skipped report still starts every step up to this one now
+        const at = Date.now();
+        const nextTimes = [...times];
+        for (let k = prog + 1; k <= next; k++) nextTimes[k] = at;
+        times = nextTimes;
+        prog = next;
       };
       const res = await onSwap({ request: request(), quote: q, onStep });
       if (mine !== run) return;
       if (res && typeof res.out === 'number') received = res.out;
+      const at = Date.now();
+      const nextTimes = [...times];
+      for (let k = prog + 1; k <= STEPS; k++) nextTimes[k] = at;
+      times = nextTimes;
       prog = STEPS;
       stage = 'done';
     } catch {
@@ -242,26 +289,20 @@
       quote = null;
       error = 'swap';
       stage = 'form';
+    } finally {
+      if (mine === run) clearInterval(ticker);
     }
   }
 
   function chooseAmount(k: number) {
-    if (locked) return;
+    if (stage === 'quoting') return;
     drop();
     amt = amountText(floorTo(f.held * k, f.dp), f.dp);
   }
 
-  function flip() {
-    if (locked) return;
-    const nextAmt = n > 0 && showOut ? String(+out.toFixed(Math.min(t.dp, 6))) : amt;
-    drop();
-    [from, to] = [to, from];
-    amt = nextAmt;
-  }
-
   // picking the other side's token flips the pair; paying with a token you don't hold keeps the pay side
   function picked(sym: string) {
-    if (locked) return;
+    if (stage === 'quoting' || busy) return;
     const chosen = list.find((x) => x.symbol === sym);
     if (!chosen) return;
     const other = pick === 'from' ? to : from;
@@ -286,6 +327,19 @@
     onClose?.();
   }
 
+  // after a finished swap: back to an empty form for the next one
+  function again() {
+    if (!done) return;
+    run++;
+    quote = null;
+    received = null;
+    prog = 0;
+    times = [];
+    amt = '';
+    error = '';
+    stage = 'form';
+  }
+
   function finish() {
     onSwapped?.({ from: f.symbol, to: t.symbol, amount: n, out, fiat: usdIn, fromDp: f.dp, toDp: t.dp });
     onClose?.();
@@ -295,113 +349,101 @@
 <div class="swap" bind:clientWidth={width} data-screen-label="Wallet swap">
   {#if f && t}
     <PageHeader title={tr('ui.walletSwap.titleToken', { symbol: f.symbol })} onBack={back} avatarMark={f.mark} avatarGradient={f.grad}
-      ><StepIndicator steps={[tr('ui.walletSwap.step.details'), tr('ui.walletSwap.step.quote'), tr('ui.walletSwap.step.swap')]} current={stepIdx} complete={done} compact={narrow} /></PageHeader
+      ><StepIndicator steps={[tr('ui.walletSwap.step.details'), tr('ui.walletSwap.step.swap')]} current={busy ? 1 : 0} complete={done} compact={narrow} /></PageHeader
     >
     <div class="scroll">
-      <div class="layout" class:narrow>
-        <div class="form" class:busy class:locked inert={locked}>
-          <div class="cards">
-            <AmountCard
-              label={tr('ui.walletSwap.youPay')}
-              meta={tr('ui.walletSwap.balance', { amount: fmt(f.held, f.dp), symbol: f.symbol })}
-              value={amt}
-              onChange={(e) => {
-                if (locked) return;
-                drop();
-                amt = cleanAmount(e.currentTarget.value);
-              }}
-              tone={over || tooSmall ? 'danger' : 'default'}
-              note={over ? tr('ui.walletSwap.overBalance') : tooSmall ? tr('ui.walletSwap.tooSmall', { min: fmt(3 * (f.fee ?? 0), f.dp), symbol: f.symbol }) : `≈ ${usd(usdIn)}`}
-              symbol={f.symbol}
-              mark={f.mark}
-              gradient={f.grad}
-              onTokenClick={() => !locked && (pick = 'from')}
-              onQuickSelect={chooseAmount}
-              position="top"
-            />
-            <div class="flip-row"><span class="flip" onclick={flip} tabindex="0" aria-label={tr('ui.walletSwap.flip')} role="button" title={tr('ui.walletSwap.flip')}><span class="flip-icon"></span></span></div>
-            <AmountCard
-              label={tr(quoted ? 'ui.walletSwap.youGetQuoted' : 'ui.walletSwap.youGet')}
-              meta={tr('ui.walletSwap.balance', { amount: fmt(t.held, t.dp), symbol: t.symbol })}
-              value={showOut ? (n > 0 ? fmt(out, t.dp) : '0') : ''}
-              note={showOut ? `≈ ${usd(out * t.price)}` : tr('ui.walletSwap.getQuoteToSee')}
-              symbol={t.symbol}
-              mark={t.mark}
-              gradient={t.grad}
-              onTokenClick={() => !locked && (pick = 'to')}
-              position="bottom"
-            />
-          </div>
-          <div class="slippage">
-            <div class="slippage-head">
-              <ListSectionLabel label={tr('ui.walletSwap.maxSlippageLabel')} /><span class="slippage-note"
-                >{tr('ui.walletSwap.slippageNote')}</span
-              >
+      <div class="column" class:narrow>
+        {#if !busy}
+          <div class="form" class:quoting inert={quoting}>
+            <div class="cards">
+              <AmountCard
+                label={tr('ui.walletSwap.youPay')}
+                meta={tr('ui.walletSwap.balance', { amount: fmt(f.held, f.dp), symbol: f.symbol })}
+                value={amt}
+                onChange={(e) => {
+                  if (quoting) return;
+                  drop();
+                  amt = cleanAmount(e.currentTarget.value);
+                }}
+                tone={over || tooSmall ? 'danger' : 'default'}
+                note={over ? tr('ui.walletSwap.overBalance') : tooSmall ? tr('ui.walletSwap.tooSmall', { min: fmt(3 * (f.fee ?? 0), f.dp), symbol: f.symbol }) : `≈ ${usd(usdIn)}`}
+                symbol={f.symbol}
+                mark={f.mark}
+                gradient={f.grad}
+                onTokenClick={() => !quoting && (pick = 'from')}
+                onQuickSelect={chooseAmount}
+                position="top"
+              />
+              <div class="arrow-row" aria-hidden="true"><span class="arrow"><span class="arrow-icon"></span></span></div>
+              <AmountCard
+                label={tr(quoted ? 'ui.walletSwap.youGetQuoted' : 'ui.walletSwap.youGet')}
+                meta={tr('ui.walletSwap.balance', { amount: fmt(t.held, t.dp), symbol: t.symbol })}
+                value={showOut ? (n > 0 ? fmt(out, t.dp) : '0') : ''}
+                note={showOut ? `≈ ${usd(out * t.price)}` : tr('ui.walletSwap.getQuoteToSee')}
+                muted={true}
+                symbol={t.symbol}
+                mark={t.mark}
+                gradient={t.grad}
+                onTokenClick={() => !quoting && (pick = 'to')}
+                position="bottom"
+              />
             </div>
-            <SegmentedTabs labels={SLIPS.map((v) => `${v}%`)} selectedIndex={slipIdx} onSelect={(i) => (slipIdx = i)} dotOnLast={false} />
-          </div>
-          {#if quoted}<Banner tone="info" text={tr('ui.walletSwap.quoteDropNote')} actionLabel="" />{/if}
-        </div>
-        <div class="side">
-          <SideCard minHeight={narrow ? '0' : '560px'}>
-            {#if stage === 'form'}
-              <ListSectionLabel label={tr('ui.walletSwap.quoteLabel')} />
-              <div class="placeholder">
-                <span class="placeholder-badge"><span class="placeholder-icon"></span></span>
-                <span class="placeholder-title">{tr('ui.walletSwap.noQuote')}</span>
-                <span class="placeholder-body">{tr('ui.walletSwap.noQuoteBody')}</span>
+            <div class="slippage">
+              <div class="slippage-head">
+                <ListSectionLabel label={tr('ui.walletSwap.maxSlippageLabel')} /><span class="slippage-note">{tr('ui.walletSwap.slippageNote')}</span>
               </div>
-              {#if error}<span class="swap-error" role="alert">{tr(error === 'quote' ? 'ui.walletSwap.quoteFailed' : 'ui.walletSwap.swapFailed')}</span>{/if}
-              <span class="cta" class:disabled={!ok} onclick={getQuote} tabindex="0" role="button" aria-disabled={!ok}
-                >{over ? tr('ui.walletSwap.notEnough', { symbol: f.symbol }) : tooSmall ? tr('ui.walletSwap.amountTooSmall') : n > 0 ? tr('ui.walletSwap.getQuote') : tr('ui.walletSwap.enterAmount')}</span
-              >
-            {:else if stage === 'quoting'}
-              <ListSectionLabel label={tr('ui.walletSwap.quoteLabel')} />
-              <div class="finding">
-                <Spinner size={36} label={tr('ui.walletSwap.findingRate')} />
-                <span class="finding-title">{tr('ui.walletSwap.findingRateEllipsis')}</span>
-                {#if dexes.length}<span class="finding-note">{tr('ui.walletSwap.checkingDexList', { list: listFmt.format(dexes) })}</span>{/if}
+              <SegmentedTabs labels={SLIPS.map((v) => `${v}%`)} selectedIndex={slipIdx} onSelect={(i) => (slipIdx = i)} dotOnLast={false} />
+            </div>
+            {#if quoted}<Banner tone="info" text={tr('ui.walletSwap.quoteDropNote')} actionLabel="" />{/if}
+            {#if error}<span class="swap-error" role="alert">{tr(error === 'quote' ? 'ui.walletSwap.quoteFailed' : 'ui.walletSwap.swapFailed')}</span>{/if}
+            {#if quoted}
+              <div class="quote">
+                <div class="quote-head">
+                  <span class="rate">1 {f.symbol} ≈ {fmt(n > 0 ? out / n : 0, t.dp)} {t.symbol}</span>
+                  <Pill size="md" label={left > 0 ? `0:${String(left).padStart(2, '0')}` : tr('ui.walletSwap.expired')} tone={left > 10 ? 'neutral' : left > 0 ? 'warning' : 'danger'} />
+                  {#if live}<IconButton icon="refresh" label="ui.walletSwap.refreshQuote" variant="ghost" onClick={getQuote} />{/if}
+                </div>
+                <div class="quote-rows">
+                  {#each quoteRows as r}<DetailRow label={r.k} value={r.v} valueColor={r.ink} size="sm" rule={r.rule} />{/each}
+                </div>
               </div>
-            {:else if quoted}
-              <div class="quote-head">
-                <ListSectionLabel label={tr('ui.walletSwap.quoteLabel')} /><span class="grow"></span><Pill
-                  size="md"
-                  label={left > 0 ? `0:${String(left).padStart(2, '0')}` : tr('ui.walletSwap.expired')}
-                  tone={left > 10 ? 'neutral' : left > 0 ? 'warning' : 'danger'}
-                />
-              </div>
-              <div class="quote-figures">
-                <span class="pair">{n > 0 ? fmt(n, f.dp) : '0'} {f.symbol} → {n > 0 ? fmt(out, t.dp) : '0'} {t.symbol}</span>
-                <span class="rate">1 {f.symbol} ≈ {fmt(n > 0 ? out / n : 0, t.dp)} {t.symbol}</span>
-              </div>
-              <div class="rows">
-                <DetailRow label={tr('ui.walletSwap.row.maxSlippage')} value="{slip}%" rule="bottom" />
-                {#each rows as r}<DetailRow label={r.k} value={r.v} valueColor={r.ink} rule={r.rule} />{/each}
-              </div>
-              <span class="spacer"></span>
-              {#if left > 0}
+              {#if live}
                 <span class="cta" onclick={swap} tabindex="0" role="button">{tr('ui.walletSwap.swapCta')}</span>
               {:else}
-                <span class="cta requote" onclick={getQuote} tabindex="0" role="button"><span class="requote-icon"></span>{tr('ui.walletSwap.requote')}</span>
+                <span class="cta" onclick={getQuote} tabindex="0" role="button"><span class="cta-icon"></span>{tr('ui.walletSwap.getNewQuote')}</span>
               {/if}
             {:else}
-              <ListSectionLabel label={tr(done ? 'ui.walletSwap.completeLabel' : 'ui.walletSwap.swappingLabel')} />
-              <div class="progress-head">
-                <span class="progress-title">{done ? tr('ui.walletSwap.swapped', { amountIn: amtIn, amountOut: amtOut }) : `${amtIn} → ${amtOut}`}</span>
-                <span class="progress-note"
-                  >{done ? tr('ui.walletSwap.inWallet') : tr('ui.walletSwap.stepOf', { step: Math.min(prog + 1, STEPS), total: STEPS, label: subSteps[Math.min(prog, STEPS - 1)] })}</span
-                >
-              </div>
-              <ProgressTimeline {phases} density="compact" collapseDone={true} />
-              <span class="spacer"></span>
-              {#if done}
-                <span class="cta" onclick={finish} role="button" tabindex="0">{tr('ui.common.done')}</span>
-              {:else}
-                <span class="leave-note">{tr('ui.walletSwap.leaveNote')}</span>
-              {/if}
+              <span class="cta" class:disabled={!ok || quoting} onclick={getQuote} tabindex="0" role="button" aria-disabled={!ok || quoting} aria-busy={quoting || undefined}
+                >{#if quoting}<Spinner size={16} tone="ink" label="ui.walletSwap.gettingQuote" />{/if}{ctaText}</span
+              >
             {/if}
-          </SideCard>
-        </div>
+          </div>
+        {:else}
+          <div class="progress">
+            <div class="kicker" class:done><span>{tr(done ? 'ui.walletSwap.completeLabel' : 'ui.walletSwap.swappingLabel')}</span><span class="kicker-rule"></span></div>
+            <div class="legs">
+              {#each [{ label: 'ui.walletSwap.youPay', amount: amtIn, value: usd(usdIn), tk: f }, { label: 'ui.walletSwap.youGet', amount: amtOut, value: usd(out * t.price), tk: t }] as leg}
+                <div class="leg">
+                  <TokenAvatar mark={leg.tk.mark} gradient={leg.tk.grad} size={40} />
+                  <div class="leg-text"><span class="leg-label">{tr(leg.label)}</span><span class="leg-amount">{leg.amount}</span></div>
+                  <span class="leg-usd">{leg.value}</span>
+                </div>
+              {/each}
+              <div class="leg-rows">
+                {#each quoteRows as r}<DetailRow label={r.k} value={r.v} valueColor={r.ink} size="sm" rule={r.rule} />{/each}
+              </div>
+            </div>
+            <ProgressTimeline steps={timeline} {funds} {elapsed} />
+            {#if done}
+              <div class="done-actions">
+                <span class="cta secondary" onclick={again} role="button" tabindex="0">{tr('ui.walletSwap.swapAgain')}</span>
+                <span class="cta" onclick={finish} role="button" tabindex="0">{tr('ui.common.done')}</span>
+              </div>
+            {:else}
+              <span class="progress-note">{tr('ui.walletSwap.progressNote')}</span>
+            {/if}
+          </div>
+        {/if}
       </div>
     </div>
     {#if pick}
@@ -437,18 +479,16 @@
     overflow-y: auto;
   }
 
-  .layout {
-    box-sizing: border-box;
-    max-width: 1024px;
+  .column {
+    box-sizing: content-box;
+    max-width: 700px;
     margin: 0 auto;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 340px;
-    gap: 28px;
+    display: flex;
+    flex-direction: column;
     padding: 28px 32px;
   }
 
-  .layout.narrow {
-    grid-template-columns: minmax(0, 1fr);
+  .column.narrow {
     padding: 24px 22px 28px;
   }
 
@@ -459,11 +499,7 @@
     min-width: 0;
   }
 
-  .form.busy {
-    opacity: 0.45;
-  }
-
-  .form.locked {
+  .form.quoting {
     pointer-events: none;
   }
 
@@ -472,7 +508,7 @@
     flex-direction: column;
   }
 
-  .flip-row {
+  .arrow-row {
     height: 8px;
     display: flex;
     align-items: center;
@@ -480,27 +516,21 @@
     z-index: 1;
   }
 
-  .flip {
-    width: 40px;
-    height: 40px;
+  .arrow {
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     background: var(--surface-1, #0e0e12);
-    box-shadow: inset 0 0 0 1px var(--line-2);
-    cursor: pointer;
   }
 
-  .flip:hover {
-    box-shadow: inset 0 0 0 1px var(--line-3);
-  }
-
-  .flip-icon {
-    width: 16px;
-    height: 16px;
-    background: var(--ink-2, #c9c9d4);
-    mask: var(--icon-swap) center/contain no-repeat;
+  .arrow-icon {
+    width: 14px;
+    height: 14px;
+    background: var(--ink-3, #9a9aa8);
+    mask: var(--icon-arrow-down) center/contain no-repeat;
   }
 
   .slippage {
@@ -517,79 +547,42 @@
   }
 
   .slippage-note {
-    font: 400 12.5px/1.5 'Plus Jakarta Sans', sans-serif;
+    font: 400 12.5px/1.5 var(--font-sans);
     color: var(--ink-3, #9a9aa8);
     text-wrap: pretty;
-  }
-
-  .side {
-    min-width: 0;
-    align-self: start;
-    position: sticky;
-    top: 0;
-  }
-
-  .placeholder,
-  .finding {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 14px;
   }
 
   .swap-error {
     font: 500 13px/1.4 var(--font-sans);
     color: var(--status-danger, #f5493d);
-    text-align: center;
-  }
-
-  .placeholder {
-    text-align: center;
-    padding: 28px 8px;
-  }
-
-  .finding {
-    padding: 28px 0;
-  }
-
-  .placeholder-badge {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--overlay-2);
-  }
-
-  .placeholder-icon {
-    width: 20px;
-    height: 20px;
-    background: var(--ink-3, #9a9aa8);
-    mask: var(--icon-swap) center/contain no-repeat;
-  }
-
-  .placeholder-title {
-    font: 600 15px/1.3 'Plus Jakarta Sans', sans-serif;
-    color: var(--ink, #ececf1);
-  }
-
-  .placeholder-body {
-    font: 400 13px/1.5 'Plus Jakarta Sans', sans-serif;
-    color: var(--ink-4, #8a8a99);
     text-wrap: pretty;
   }
 
-  .finding-title {
-    font: 600 14px/1.3 'Plus Jakarta Sans', sans-serif;
-    color: var(--ink, #ececf1);
+  .quote {
+    border-radius: 14px;
+    background: var(--overlay-1, rgba(255, 255, 255, 0.04));
   }
 
-  .finding-note {
-    font: 400 12.5px/1.5 'Plus Jakarta Sans', sans-serif;
-    color: var(--ink-4, #8a8a99);
+  .quote-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+  }
+
+  .rate {
+    flex: 1;
+    min-width: 0;
+    font: 600 13px/1.3 var(--font-mono);
+    color: var(--ink, #ececf1);
+    overflow-wrap: anywhere;
+  }
+
+  .quote-rows {
+    display: flex;
+    flex-direction: column;
+    padding: 0 16px 6px;
+    border-top: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
   }
 
   .cta {
@@ -597,91 +590,127 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    height: 46px;
+    gap: 10px;
+    height: 52px;
     border-radius: 12px;
     background: var(--accent, #ff5672);
-    font: 700 14px/1 'Plus Jakarta Sans', sans-serif;
+    font: 700 14.5px/1 var(--font-sans);
     color: var(--on-accent, #2e0512);
     cursor: pointer;
     user-select: none;
   }
 
+  .cta:hover {
+    filter: brightness(1.08);
+  }
+
   .cta.disabled {
-    background: var(--overlay-2);
-    color: #7c7c8c;
+    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+    color: var(--ink-4, #8a8a99);
     cursor: default;
+    filter: none;
   }
 
-  .cta.requote {
-    background: var(--overlay-2);
+  .cta.secondary {
+    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+    font-weight: 600;
+    font-size: 14px;
     color: var(--ink, #ececf1);
+    filter: none;
   }
 
-  .requote-icon {
-    width: 14px;
-    height: 14px;
-    background: var(--ink, #ececf1);
+  .cta.secondary:hover {
+    background: var(--btn-hover, rgba(255, 255, 255, 0.14));
+  }
+
+  .cta-icon {
+    width: 15px;
+    height: 15px;
+    background: currentColor;
     mask: var(--icon-refresh) center/contain no-repeat;
   }
 
-  .quote-head {
-    display: flex;
-    align-items: center;
-  }
-
-  .grow {
-    flex: 1;
-  }
-
-  .quote-figures,
-  .progress-head {
+  .progress {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    padding: 20px 0 22px;
+    gap: 24px;
+    min-width: 0;
   }
 
-  .pair {
-    font: 700 24px/1.15 'Plus Jakarta Sans', sans-serif;
+  .kicker {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font: 500 10px/1 var(--font-mono);
+    letter-spacing: 0.09em;
+    color: var(--accent-bright, #ff8298);
+  }
+
+  .kicker.done {
+    color: var(--status-online, #2ee6a8);
+  }
+
+  .kicker-rule {
+    flex: 1;
+    height: 1px;
+    background: var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .legs {
+    border-radius: 16px;
+    background: var(--overlay-1, rgba(255, 255, 255, 0.04));
+    overflow: hidden;
+  }
+
+  .leg {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .leg-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .leg-label {
+    font: 500 10px/1 var(--font-mono);
+    letter-spacing: 0.09em;
+    color: var(--ink-4, #8a8a99);
+  }
+
+  .leg-amount {
+    font: 700 18px/1.15 var(--font-sans);
     color: var(--ink, #ececf1);
     overflow-wrap: anywhere;
   }
 
-  .rate {
-    font: 500 13px/1 'JetBrains Mono', monospace;
+  .leg-usd {
+    flex: none;
+    font: 500 12.5px/1 var(--font-mono);
     color: var(--ink-3, #9a9aa8);
   }
 
-  .rows {
+  .leg-rows {
     display: flex;
     flex-direction: column;
-    border-top: 1px solid var(--line-1);
+    padding: 2px 16px 6px;
   }
 
-  .spacer {
-    flex: 1;
-    min-height: 20px;
+  .done-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
   }
 
-  .progress-title {
-    font: 700 22px/1.2 var(--font-sans);
-    letter-spacing: -0.01em;
-    color: var(--ink, #ececf1);
-    overflow-wrap: anywhere;
-    text-wrap: pretty;
-  }
-
-  .progress-note,
-  .leave-note {
+  .progress-note {
     font: 400 12.5px/1.5 var(--font-sans);
     color: var(--ink-4, #8a8a99);
     text-wrap: pretty;
-  }
-
-  .leave-note {
-    flex: none;
-    font-size: 12px;
-    text-align: center;
   }
 </style>

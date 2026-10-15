@@ -1,7 +1,7 @@
 {
   "package": "@openchat/ui",
-  "exportedAt": "2026-10-13",
-  "pass": 2,
+  "exportedAt": "2026-10-15",
+  "pass": 3,
   "scope": "library + app components + docs",
   "source": "OpenChat design prototype",
   "tokens": {
@@ -266,8 +266,8 @@
     },
     "ProgressTimeline": {
       "source": "lib/ProgressTimeline.dc.html",
-      "sourceHash": "90f18732",
-      "exportedAt": "2026-10-07",
+      "sourceHash": "d566367a",
+      "exportedAt": "2026-10-15",
       "files": [
         "src/lib/components/ProgressTimeline.svelte"
       ],
@@ -302,8 +302,8 @@
     },
     "SideCard": {
       "source": "lib/SideCard.dc.html",
-      "sourceHash": "2385dab3",
-      "exportedAt": "2026-10-07",
+      "sourceHash": "fe2f5a08",
+      "exportedAt": "2026-10-15",
       "files": [
         "src/lib/components/SideCard.svelte"
       ],
@@ -1094,8 +1094,8 @@
     },
     "WalletMain": {
       "source": "lib/WalletMain.dc.html",
-      "sourceHash": "abda06dc",
-      "exportedAt": "2026-10-13",
+      "sourceHash": "c74f96f3",
+      "exportedAt": "2026-10-15",
       "group": "features",
       "files": [
         "src/features/components/WalletMain.svelte"
@@ -1112,8 +1112,8 @@
     },
     "WalletReceive": {
       "source": "lib/WalletReceive.dc.html",
-      "sourceHash": "2b04c83d",
-      "exportedAt": "2026-10-13",
+      "sourceHash": "27cf3447",
+      "exportedAt": "2026-10-15",
       "group": "features",
       "files": [
         "src/features/components/WalletReceive.svelte"
@@ -1130,8 +1130,8 @@
     },
     "WalletSend": {
       "source": "lib/WalletSend.dc.html",
-      "sourceHash": "7681cb15",
-      "exportedAt": "2026-10-13",
+      "sourceHash": "a9dbde40",
+      "exportedAt": "2026-10-15",
       "group": "features",
       "files": [
         "src/features/components/WalletSend.svelte"
@@ -1148,8 +1148,8 @@
     },
     "WalletSwap": {
       "source": "lib/WalletSwap.dc.html",
-      "sourceHash": "9e10abdb",
-      "exportedAt": "2026-10-13",
+      "sourceHash": "5e438702",
+      "exportedAt": "2026-10-15",
       "group": "features",
       "files": [
         "src/features/components/WalletSwap.svelte"

@@ -636,13 +636,13 @@
 <Section {...sec(general, 'progress-timeline')}>
   <div class="trio">
     <Frame cols="minmax(0, 1fr)" label="Running">
-      <ProgressTimeline phases={timelineRunning} />
+      <ProgressTimeline {...timelineRunning} />
     </Frame>
-    <Frame cols="minmax(0, 1fr)" label="Done · collapsed">
-      <ProgressTimeline phases={timelineDone} collapseDone />
+    <Frame cols="minmax(0, 1fr)" label="Done">
+      <ProgressTimeline {...timelineDone} />
     </Frame>
-    <Frame cols="minmax(0, 1fr)" label="Failed">
-      <ProgressTimeline phases={timelineFailed} density="compact" />
+    <Frame cols="minmax(0, 1fr)" label="Failed · compact, no bar">
+      <ProgressTimeline {...timelineFailed} density="compact" showBar={false} />
       <Banner tone="warning" text="docs.general.timeline.fundsSafe" actionLabel="docs.general.timeline.withdraw" actionHandler={() => {}} />
     </Frame>
   </div>
