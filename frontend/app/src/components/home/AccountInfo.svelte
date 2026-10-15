@@ -12,6 +12,8 @@
         LEDGER_CANISTER_CKSOL,
         type OneSecTransferFees,
         OpenChat,
+        FIRST_SOL_DEPOSIT_FEE,
+        SOL_DEPOSIT_FEE,
         SOL_SYMBOL,
         userWalletAccount,
     } from "@client";
@@ -113,6 +115,12 @@
     const btcDepositFeePromise = new Lazy(() => client.getCkbtcMinterDepositInfo()
         .then((depositInfo) => `~${client.formatTokens(depositInfo.depositFee, 8)}`));
 
+    let solDepositFees = $derived({
+        first: client.formatTokens(FIRST_SOL_DEPOSIT_FEE, tokenDetails.decimals),
+        subsequent: client.formatTokens(SOL_DEPOSIT_FEE, tokenDetails.decimals),
+        token: tokenDetails.symbol,
+    });
+
     // SOL sent to the deposit address is only credited once the address holds the minter's minimum
     const solMinimumDepositPromise = new Lazy(() => client.getCksolMinterDepositInfo()
         .then((depositInfo) => client.formatTokens(depositInfo.minimumDepositAmount, tokenDetails.decimals)));
@@ -183,6 +191,7 @@
         {:catch}
             <!-- The minimum is only informational, so a failure to fetch it shows nothing -->
         {/await}
+        <span class="label">{$_("cryptoAccount.solDepositFee", { values: solDepositFees })}</span>
     {:else if isOneSecNetwork}
         {#await oneSecFeesPromise.get()}
             <span class="label">{$_("cryptoAccount.fetchingDepositFee")}</span>

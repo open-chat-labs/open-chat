@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Generate Solana deposit addresses through the ckSOL minter, and have it credit SOL sent to them as ckSOL ([#9984](https://github.com/open-chat-labs/open-chat/pull/9984))
+- Have SOL deposits minted to the canister, which forwards them to the user's wallet less a fee of 0.002 SOL for their first and 0.001 SOL after, and tells them via the OpenChat bot ([#9987](https://github.com/open-chat-labs/open-chat/pull/9987))
 
 ### Changed
 

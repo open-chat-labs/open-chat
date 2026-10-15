@@ -13,6 +13,8 @@
         LEDGER_CANISTER_CKSOL,
         OpenChat,
         type OneSecTransferFees,
+        FIRST_SOL_DEPOSIT_FEE,
+        SOL_DEPOSIT_FEE,
         SOL_SYMBOL,
         userWalletAccount,
     } from "@client";
@@ -239,6 +241,18 @@
         {:catch}
             <!-- The minimum is only informational, so a failure to fetch it shows nothing -->
         {/await}
+        <Row {background} padding={["lg", "xl"]} crossAxisAlignment="center">
+            <Subtitle colour={"validationWarning"}>
+                {$_("cryptoAccount.solDepositFee", {
+                    values: {
+                        first: client.formatTokens(FIRST_SOL_DEPOSIT_FEE, tokenDetails.decimals),
+                        subsequent: client.formatTokens(SOL_DEPOSIT_FEE, tokenDetails.decimals),
+                        token: tokenDetails.symbol,
+                    },
+                })}
+            </Subtitle>
+            <AlertCircleOutline color={ColourVars.validationWarning} size="1.25rem" />
+        </Row>
     {:else if isOneSecNetwork}
         <Row {background} padding={["lg", "xl"]} crossAxisAlignment="center">
             {#await oneSecFeesPromise.get()}

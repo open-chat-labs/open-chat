@@ -679,6 +679,7 @@
         "shortBalanceLabel": "sự cân bằng",
         "shortRemainingBalanceLabel": "số dư còn lại",
         "showZeroBalance": "Cho xem nhiều hơn",
+        "solDepositFee": "Phí nạp: {first} {token} cho lần nạp đầu tiên, sau đó {subsequent} {token}",
         "swap": "Tráo đổi",
         "token": "mã thông báo",
         "tokens": "Mã thông báo",

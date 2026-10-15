@@ -679,6 +679,7 @@
         "shortBalanceLabel": "余额",
         "shortRemainingBalanceLabel": "保持余额",
         "showZeroBalance": "展示更多",
+        "solDepositFee": "存款费用：首次存款 {first} {token}，之后每次 {subsequent} {token}",
         "swap": "兑换",
         "token": "代币",
         "tokens": "代币",
