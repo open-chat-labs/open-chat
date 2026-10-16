@@ -92,6 +92,7 @@
         | ConfirmLeaveEvent
         | ConfirmLeaveCommunityEvent
         | ConfirmDeleteDirectChatEvent
+        | ConfirmDeleteEvent
         | ConfirmDeleteCommunityEvent;
 
     type ConfirmLeaveCommunityEvent = {
@@ -109,6 +110,14 @@
         kind: "leave";
         chatId: MultiUserChatIdentifier;
         level: Level;
+    };
+
+    type ConfirmDeleteEvent = {
+        kind: "delete";
+        chatId: MultiUserChatIdentifier;
+        level: Level;
+        doubleCheck: { challenge: ResourceKey; response: ResourceKey };
+        after?: () => void;
     };
 
     type ConfirmDeleteCommunityEvent = {
@@ -141,6 +150,7 @@
             subscribe("leaveCommunity", onTriggerConfirm),
             subscribe("makeProposal", showMakeProposalModal),
             subscribe("leaveGroup", onTriggerConfirm),
+            subscribe("deleteGroup", onTriggerConfirm),
             subscribe("unarchiveChat", unarchiveChat),
             subscribe("joinGroup", (group) => groupPreviewState.joinGroup(client, group)),
             subscribe("toggleMuteNotifications", toggleMuteNotifications),
@@ -265,6 +275,8 @@
                 return i18nKey("communities.leaveMessage");
             case "delete_community":
                 return i18nKey("communities.deleteMessage");
+            case "delete":
+                return i18nKey("irreversible", undefined, confirmActionEvent.level, true);
         }
     }
 
@@ -290,6 +302,10 @@
                 return leaveCommunity(confirmActionEvent.communityId);
             case "delete_community":
                 return deleteCommunity(confirmActionEvent.communityId);
+            case "delete":
+                return deleteGroup(confirmActionEvent.chatId, confirmActionEvent.level).then(() =>
+                    confirmActionEvent.after?.(),
+                );
             default:
                 return Promise.reject();
         }
@@ -306,6 +322,25 @@
         return client.deleteDirectChat(chatId, blockUser).then((success) => {
             if (!success) {
                 toastStore.showFailureToast(i18nKey("deleteDirectChatFailure"));
+                if (viewingThisChat) {
+                    navigate(routeForChatIdentifier($chatListScopeStore.kind, chatId));
+                }
+            }
+        });
+    }
+
+    function deleteGroup(chatId: MultiUserChatIdentifier, level: Level): Promise<void> {
+        // Only redirect when deleting the chat we're viewing: other channels can be deleted
+        // from the community's channel list without opening them.
+        const viewingThisChat = chatIdentifiersEqual($selectedChatIdStore, chatId);
+        if (viewingThisChat) {
+            navigate(routeForScope($chatListScopeStore));
+        }
+        return client.deleteGroup(chatId).then((success) => {
+            if (success) {
+                toastStore.showSuccessToast(i18nKey("deleteGroupSuccess", undefined, level));
+            } else {
+                toastStore.showFailureToast(i18nKey("deleteGroupFailure", undefined, level, true));
                 if (viewingThisChat) {
                     navigate(routeForChatIdentifier($chatListScopeStore.kind, chatId));
                 }
@@ -572,7 +607,8 @@
 
 {#if confirmActionEvent !== undefined}
     <AreYouSure
-        doubleCheck={confirmActionEvent.kind === "delete_community"
+        doubleCheck={confirmActionEvent.kind === "delete" ||
+        confirmActionEvent.kind === "delete_community"
             ? confirmActionEvent.doubleCheck
             : undefined}
         message={confirmMessage}
