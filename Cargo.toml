@@ -119,6 +119,7 @@ members = [
     "backend/libraries/chat_events",
     "backend/libraries/chat_rooms",
     "backend/libraries/constants",
+    "backend/libraries/crypto_address",
     "backend/libraries/cycles_dispenser_client",
     "backend/libraries/deep_message_links",
     "backend/libraries/direct_chat",
@@ -200,6 +201,7 @@ aws-sign-v4 = "0.3"
 aws-types = "1"
 base64 = "0.23"
 bitflags = { version = "2", features = ["serde"] }
+bs58 = "0.5"
 candid = "0.10.34"
 canbench-rs = "0.6"
 clap = "4"
