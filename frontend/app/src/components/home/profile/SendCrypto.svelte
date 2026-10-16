@@ -50,6 +50,8 @@
     // would reset the amount being typed. The balance is read live from the balance store.
     const tokenState = new TokenState(untrack(() => $enhancedCryptoLookup.get(ledger)));
     const form = new WithdrawForm(client, tokenState);
+    // Only the saved addresses the send could reach are offered
+    let fittingAccounts = $derived(accounts.filter((a) => form.acceptsAddress(a.account)));
     let symbol = $derived(tokenState.symbol);
     let valid = $derived(capturingAccount ? validAccountName : form.canSend);
     let title = $derived(i18nKey("cryptoAccount.sendToken", { symbol }));
@@ -187,11 +189,13 @@
                             resourceKey={i18nKey("cryptoAccount.sendToUserId")} /></ErrorMessage>
                 {/if}
 
-                {#if accounts.length > 0 || form.networkFeeFormatted !== undefined}
+                {#if fittingAccounts.length > 0 || form.networkFeeFormatted !== undefined}
                     <div class="lower-container">
-                        {#if accounts.length > 0}
+                        {#if fittingAccounts.length > 0}
                             <div class="accounts">
-                                <AccountSelector bind:targetAccount={form.targetAccount} {accounts} />
+                                <AccountSelector
+                                    bind:targetAccount={form.targetAccount}
+                                    accounts={fittingAccounts} />
                             </div>
                         {/if}
 
