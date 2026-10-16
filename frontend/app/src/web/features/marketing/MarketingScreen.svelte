@@ -9,19 +9,17 @@
         type OpenChat,
         type RouteParams,
     } from "@client";
-    import AuthDialog, {
-        type AuthPerson,
-    } from "@openchat/ui/src/features/components/AuthDialog.svelte";
+    import AuthDialog from "@openchat/ui/src/features/components/AuthDialog.svelte";
     import Landing from "@openchat/ui/src/pages/Landing.svelte";
     import Learn from "@openchat/ui/src/pages/Learn.svelte";
     import { placeholderLearnContent, type LearnPage } from "@openchat/ui/src/pages/learnContent";
     import type { PageMode } from "@openchat/ui/src/pages/types";
     import { currentThemeMode, themeType } from "@theme/themes";
     import { navigate } from "@src/utils/navigation";
-    import { getContext, onDestroy, onMount, tick, untrack } from "svelte";
+    import { getContext, onDestroy, tick, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import Placeholder from "../app/Placeholder.svelte";
-    import { authOptions } from "../auth/auth.adapter";
+    import { AuthDialogProps, pageSignIns } from "../auth/authDialog.svelte";
     import { createAuth } from "../auth/signIn";
     import { learnPageFor, learnPath } from "./marketing";
 
@@ -36,27 +34,18 @@
     const auth = createAuth(client, { translate: (key) => $_(key), onEmailSignedIn: enterApp });
     onDestroy(auth.stopEmail);
 
-    let referrer = $state<AuthPerson | undefined>(undefined);
-    onMount(() => {
-        auth.loadReferrer().then((person) => (referrer = person));
-    });
+    const dialog = new AuthDialogProps(auth);
 
-    const pageAuth = $derived({
-        methods: authOptions(
-            $querystringStore.getAll("auth"),
-            "PublicKeyCredential" in window,
-            $selectedAuthProviderStore,
-        ),
-        email: auth.lastEmail(),
-        referrer,
-        wallets: auth.wallets,
-        termsUrl: auth.termsUrl,
-        checkUsername: auth.checkUsername,
-        searchReferrers: auth.searchReferrers,
-        onMethod: auth.onMethod,
-        onRequestEmailLink: auth.onRequestEmailLink,
-        onCancelEmailLink: auth.onCancelEmailLink,
-        onSignup: auth.onSignup,
+    // the page's own sign-ins are tracked, so "/" keeps Landing until they're through
+    const pageAuth = $derived.by(() => {
+        const props = dialog.props($querystringStore.getAll("auth"), $selectedAuthProviderStore);
+        return {
+            ...props,
+            onMethod: (...args: Parameters<typeof auth.onMethod>) =>
+                pageSignIns.track(auth.onMethod(...args)),
+            onSignup: (details: Parameters<typeof auth.onSignup>[0]) =>
+                pageSignIns.track(auth.onSignup(details)),
+        };
     });
 
     const signedIn = $derived($identityStateStore.kind === "logged_in");

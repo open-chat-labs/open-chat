@@ -151,13 +151,6 @@
     return !!to && !e.currentTarget.contains(to);
   };
 
-  // signed in: the header (and the closing call to action) open the app instead of offering sign-in
-  function enterApp(e: MouseEvent) {
-    if (!onEnterApp || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-    e.preventDefault();
-    onEnterApp();
-  }
-
   function openAuth(kind: 'login' | 'signup') {
     learnOpen = accentOpen = false;
     authState.open(kind);
@@ -290,7 +283,7 @@
       </div>
       <div class="auth">
         {#if signedIn}
-          <a class="create" href={appHref} onclick={enterApp}>{t('ui.landing.openApp')}</a>
+          <a class="create" href={appHref} onclick={authState.openApp}>{t('ui.landing.openApp')}</a>
         {:else}
           <button class="sign-in" onclick={() => openAuth('login')}>{t('ui.landing.signIn')}</button>
           <button class="create" onclick={() => openAuth('signup')}>{t('ui.landing.createAccount')}</button>
@@ -513,7 +506,7 @@
       <p class="lede">{t('ui.landing.cta.body')}</p>
       <div class="final-actions">
         {#if signedIn}
-          <a class="cta primary big" href={appHref} onclick={enterApp}>{t('ui.landing.openApp')}<Icon icon="arrow" flip /></a>
+          <a class="cta primary big" href={appHref} onclick={authState.openApp}>{t('ui.landing.openApp')}<Icon icon="arrow" flip /></a>
         {:else}
           <button class="cta primary big" onclick={() => openAuth('signup')}>{t('ui.landing.cta.create')}<Icon icon="arrow" flip /></button>
         {/if}

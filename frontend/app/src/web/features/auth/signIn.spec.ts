@@ -150,6 +150,11 @@ describe("the sign-in callbacks", () => {
         expect(client.setReferralCode).not.toHaveBeenCalled();
     });
 
+    test("a referrer that can't be looked up is no referrer", async () => {
+        client.getReferringUser.mockRejectedValueOnce(new Error("offline"));
+        await expect(auth.loadReferrer()).resolves.toBeUndefined();
+    });
+
     test("with no referrer offered, a code the dialog never showed is left alone", async () => {
         set({ kind: "registering" });
         await auth.onSignup({ username: "newperson" });

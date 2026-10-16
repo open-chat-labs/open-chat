@@ -310,6 +310,19 @@ describe('Landing', () => {
       expect(onMethod).toHaveBeenCalledWith('eth', 'login', 'metaMask');
     });
 
+    test('a sign-up keeps its form while the host passes new auth props', async () => {
+      const props = reactiveProps<Record<string, unknown>>({ auth: { onSignup: () => new Promise(() => {}), methods: ['passkey'] }, onEnterApp: vi.fn() });
+      app = mount(Landing, { target, props });
+      flushSync();
+      click(q('.sign-in'));
+      click(document.querySelector('[role=dialog] .switch-cta'));
+      expect(document.querySelector('[role=dialog] form.form')).not.toBeNull();
+      // e.g. the provider the host lists first changes as the sign-up starts
+      props.auth = { ...(props.auth as object), methods: ['passkey', 'ii'] };
+      flushSync();
+      expect(document.querySelector('[role=dialog] form.form')).not.toBeNull();
+    });
+
     test('a failed sign-in keeps the dialog open and does not enter', async () => {
       const onMethod = vi.fn(() => Promise.reject(new Error('cancelled')));
       const onEnterApp = vi.fn();

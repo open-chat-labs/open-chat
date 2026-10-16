@@ -155,13 +155,6 @@
     window.scrollTo?.(0, 0);
   }
 
-  // signed in: the header (and the closing call to action) open the app instead of offering sign-in
-  function enterApp(e: MouseEvent) {
-    if (!onEnterApp || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-    e.preventDefault();
-    onEnterApp();
-  }
-
   function toggleFaq(key: string) {
     if (faqSearch) faqClosedInSearch = { ...faqClosedInSearch, [key]: !faqClosedInSearch[key] };
     else faqOpen[key] = !faqOpen[key];
@@ -215,7 +208,7 @@
       </nav>
       <div class="auth">
         {#if signedIn}
-          <a class="create" href={appHref} onclick={enterApp}>{t('ui.landing.openApp')}</a>
+          <a class="create" href={appHref} onclick={authState.openApp}>{t('ui.landing.openApp')}</a>
         {:else}
           <button class="sign-in" onclick={() => authState.open('login')}>{t('ui.landing.signIn')}</button>
           <button class="create" onclick={() => authState.open('signup')}>{t('ui.landing.createAccount')}</button>

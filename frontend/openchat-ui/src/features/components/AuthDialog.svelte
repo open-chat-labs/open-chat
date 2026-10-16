@@ -138,8 +138,8 @@
   }: Props = $props();
   const t = useT();
 
-  // switching between sign-in and sign-up sticks until the host changes `kind`
-  let mode = $derived(kind);
+  // switching between sign-in and sign-up sticks until the host changes `kind` (below)
+  let mode = $state(untrack(() => kind));
   let step = $state<'methods' | 'wallets' | 'sent'>('methods');
   // the method whose wallets are listed
   let walletsFor = $state<'eth' | 'sol' | null>(null);
@@ -158,6 +158,22 @@
   let failed = $state<Method | 'email' | 'signup' | 'code' | null>(null);
   // why it failed, when the host said (AuthFailure)
   let failReason = $state<string | undefined>(undefined);
+
+  // the host changing `kind` (someone signed in without an account goes on to sign-up) starts that
+  // mode from the top, whichever step the old one was on. Only a new value counts: a host that
+  // spreads its props reads `kind` again whenever any of them changes.
+  let shownKind = untrack(() => kind);
+  $effect.pre(() => {
+    const next = kind;
+    untrack(() => {
+      if (next === shownKind) return;
+      shownKind = next;
+      mode = next;
+      step = 'methods';
+      walletsFor = null;
+      failed = null;
+    });
+  });
   // kind 'link': the typed code, and what the host made of it
   let linkCode = $state('');
   let linkResult = $state<EmailLinkResult | null>(null);
@@ -166,10 +182,19 @@
   let searchRun = 0;
   let refQuery = $state('');
   let referrer = $state<Person | null>(null);
+  // once the person has picked or removed a referrer, one the host passes late doesn't undo it
+  let referrerEdited = false;
   $effect(() => {
     const given = initialReferrer;
-    untrack(() => (referrer = given ?? null));
+    untrack(() => {
+      if (!referrerEdited) referrer = given ?? null;
+    });
   });
+
+  function pickReferrer(person: Person | null) {
+    referrerEdited = true;
+    referrer = person;
+  }
 
   let checkTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -337,6 +362,7 @@
 
   function switchMode() {
     if (flow.busy) return;
+    if (step === 'sent') onCancelEmailLink?.();
     mode = signup ? 'login' : 'signup';
     step = 'methods';
     walletsFor = null;
@@ -506,7 +532,7 @@
               <span class="field picked">
                 <span class="face" style:background={referrer.grad}></span>
                 <span class="who">{referrer.name}<span class="field-note">@{referrer.handle}</span></span>
-                <button class="clear" type="button" onclick={() => (referrer = null)} aria-label={t('ui.authDialog.removeReferrer')}><span class="head-icon close small"></span></button>
+                <button class="clear" type="button" onclick={() => pickReferrer(null)} aria-label={t('ui.authDialog.removeReferrer')}><span class="head-icon close small"></span></button>
               </span>
             {:else}
               <span class="field">
@@ -521,7 +547,7 @@
                     class="result"
                     type="button"
                     onclick={() => {
-                      referrer = person;
+                      pickReferrer(person);
                       refQuery = '';
                     }}
                     role="option"
