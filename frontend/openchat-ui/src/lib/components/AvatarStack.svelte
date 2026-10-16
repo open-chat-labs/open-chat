@@ -2,6 +2,7 @@
      people: [{ grad|color|src, initial?, name? }] or plain CSS background strings. -->
 <script lang="ts">
   import { useT } from '../i18n';
+  import { cssUrl } from '../cssUrl';
   type Person = string | { grad?: string; color?: string; src?: string; initial?: string; name?: string };
 
   interface Props {
@@ -20,7 +21,7 @@
       typeof x === 'string'
         ? { bg: x, initial: '' }
         : {
-            bg: x.src ? `center/cover url(${JSON.stringify(x.src)})` : x.grad || x.color || 'var(--surface-3,#24242e)',
+            bg: x.src ? `center/cover ${cssUrl(x.src)}` : x.grad || x.color || 'var(--surface-3,#24242e)',
             initial: initials ? x.initial || '' : '',
           },
     ),

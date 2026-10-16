@@ -41,6 +41,7 @@
   import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
   import { useT } from '../../lib/i18n';
   import Translate from '../../lib/components/Translate.svelte';
+  import { cssUrl } from '../../lib/cssUrl';
 
   // resource-key prefix; constants below hold keys, resolved with t() at render time
   const CG = 'ui.createGroupDialog.';
@@ -717,7 +718,7 @@
       {#if current === 'Group'}
         <div class="details">
           {#if !isChan}
-            <div class="cover" style:height={isComm ? '150px' : '112px'} style:background={coverUrl ? `url(${coverUrl}) center/cover no-repeat` : `var(--cover-${COVERS.includes(cover) ? cover : 'plum'})`}>
+            <div class="cover" style:height={isComm ? '150px' : '112px'} style:background={coverUrl ? `${cssUrl(coverUrl)} center/cover no-repeat` : `var(--cover-${COVERS.includes(cover) ? cover : 'plum'})`}>
               <div class="cover-tools">
                 <div class="cover-tools-inner">
                   <input
@@ -758,7 +759,7 @@
               <div class="photo-row">
                 <div class="photo" class:lifted={!isChan}>
                   <div class="photo-frame" class:round={isChan} style:background={GRADIENTS[color] ?? GRADIENTS.teal}>
-                    <div class="photo-image" style:background={avatarUrl ? `url(${avatarUrl}) center/cover no-repeat` : 'none'}></div>
+                    <div class="photo-image" style:background={avatarUrl ? `${cssUrl(avatarUrl)} center/cover no-repeat` : 'none'}></div>
                   </div>
                   <input
                     class="hidden-input"

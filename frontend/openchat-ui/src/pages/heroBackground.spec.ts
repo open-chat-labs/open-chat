@@ -1,0 +1,180 @@
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { HeroBackground, type HeroStyle } from './heroBackground';
+
+describe('HeroBackground', () => {
+  let frames: FrameRequestCallback[];
+  let now: number;
+  let ctx: Record<string, unknown>;
+  let canvas: HTMLCanvasElement;
+  let motion: EventTarget & { matches: boolean; media: string };
+  let resolutions: (EventTarget & { matches: boolean; media: string })[];
+
+  beforeEach(() => {
+    frames = [];
+    now = 10_000;
+    vi.spyOn(performance, 'now').mockImplementation(() => now);
+    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => frames.push(cb));
+    vi.stubGlobal('cancelAnimationFrame', () => {});
+    motion = Object.assign(new EventTarget(), { matches: false, media: '(prefers-reduced-motion: reduce)' });
+    resolutions = [];
+    vi.stubGlobal('matchMedia', (query: string) => {
+      if (!query.startsWith('(resolution')) return motion;
+      const q = Object.assign(new EventTarget(), { matches: true, media: query });
+      resolutions.push(q);
+      return q;
+    });
+    ctx = new Proxy({} as Record<string, unknown>, {
+      get: (o, k) => (k in o ? o[k as string] : () => {}),
+      set: (o, k, v) => ((o[k as string] = v), true),
+    });
+    ctx.clearRect = vi.fn();
+    canvas = document.createElement('canvas');
+    vi.spyOn(canvas, 'getContext').mockReturnValue(ctx as unknown as CanvasRenderingContext2D);
+    vi.spyOn(canvas, 'getBoundingClientRect').mockReturnValue({ width: 1440, height: 720 } as DOMRect);
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  /** Runs the queued animation frame, `dt` seconds on. */
+  const frame = (dt = 0.016) => {
+    now += dt * 1000;
+    const next = frames.shift();
+    next?.(now);
+    return next !== undefined;
+  };
+
+  test("'off' draws one cleared frame and doesn't animate; switching to a style starts the loop", () => {
+    let style: HeroStyle = 'off';
+    const bg = HeroBackground.create(canvas, () => ({ style, light: false }))!;
+    expect(frames).toHaveLength(0);
+    expect(ctx.clearRect).toHaveBeenCalledTimes(1);
+    style = 'pulse';
+    bg.resize();
+    expect(frames).toHaveLength(1);
+    bg.destroy();
+  });
+
+  test("switching to 'off' mid-run clears the canvas and stops the loop", () => {
+    let style: HeroStyle = 'aurora';
+    const bg = HeroBackground.create(canvas, () => ({ style, light: false }))!;
+    expect(frame()).toBe(true);
+    expect(frames).toHaveLength(1);
+    style = 'off';
+    vi.mocked(ctx.clearRect as () => void).mockClear();
+    frame();
+    expect(ctx.clearRect).toHaveBeenCalledTimes(1);
+    expect(frames).toHaveLength(0);
+    bg.destroy();
+  });
+
+  test('the first ripples are timed from when the backdrop starts, not from page load', () => {
+    // long after page load: the centre ripple still waits its 3s, while a random one starts straight away
+    now = 600_000;
+    const bg = HeroBackground.create(canvas, () => ({ style: 'pulse', light: false }))!;
+    const ripples = () => (bg as unknown as { ripples: { speed: number }[] }).ripples;
+    frame();
+    expect(ripples()).toHaveLength(1);
+    expect(ripples()[0].speed).toBeLessThan(150);
+    for (let i = 0; i < 200 && !ripples().some((r) => r.speed === 150); i++) frame();
+    expect(now).toBeGreaterThan(603_000);
+    expect(ripples().some((r) => r.speed === 150)).toBe(true);
+    bg.destroy();
+  });
+
+  test('visibility follows the latest IntersectionObserver entry', () => {
+    let report: (entries: Partial<IntersectionObserverEntry>[]) => void = () => {};
+    vi.stubGlobal(
+      'IntersectionObserver',
+      class {
+        constructor(cb: typeof report) {
+          report = cb;
+        }
+        observe() {}
+        disconnect() {}
+      },
+    );
+    const bg = HeroBackground.create(canvas, () => ({ style: 'aurora', light: false }))!;
+    // scrolled out then back in within one batch: still visible, so the loop keeps going
+    report([{ isIntersecting: false }, { isIntersecting: true }]);
+    expect(frame()).toBe(true);
+    expect(frames).toHaveLength(1);
+    // in then out: hidden, so the next frame stops the loop
+    report([{ isIntersecting: true }, { isIntersecting: false }]);
+    frame();
+    expect(frames).toHaveLength(0);
+    bg.destroy();
+  });
+
+  test('follows a reduced-motion change while showing: stops on one still frame, and animates again when it is lifted', () => {
+    const bg = HeroBackground.create(canvas, () => ({ style: 'aurora', light: false }))!;
+    expect(frame()).toBe(true);
+    const clear = vi.mocked(ctx.clearRect as () => void);
+    clear.mockClear();
+    const change = (matches: boolean) => {
+      motion.matches = matches;
+      motion.dispatchEvent(Object.assign(new Event('change'), { matches }));
+    };
+    change(true);
+    // drawn at once, and the frame already queued is the last
+    expect(clear).toHaveBeenCalledTimes(1);
+    frame();
+    expect(frames).toHaveLength(0);
+    change(false);
+    expect(frames).toHaveLength(1);
+    const off = vi.spyOn(motion, 'removeEventListener');
+    bg.destroy();
+    expect(off).toHaveBeenCalledWith('change', expect.any(Function));
+  });
+
+  test('retheme re-reads the colours and redraws without re-measuring', () => {
+    let style: HeroStyle = 'off';
+    const bg = HeroBackground.create(canvas, () => ({ style, light: false }))!;
+    const cells = (bg as unknown as { cells: unknown[] }).cells;
+    const measure = vi.mocked(canvas.getBoundingClientRect);
+    measure.mockClear();
+    vi.spyOn(window, 'getComputedStyle').mockReturnValue({ color: 'rgb(4, 5, 6)', getPropertyValue: () => ' rgb(1, 2, 3)' } as unknown as CSSStyleDeclaration);
+    style = 'pulse';
+    bg.retheme();
+    expect([(bg as unknown as { accent: string }).accent, (bg as unknown as { ink: string }).ink]).toEqual(['rgb(1, 2, 3)', 'rgb(4, 5, 6)']);
+    expect(frames).toHaveLength(1);
+    expect(measure).not.toHaveBeenCalled();
+    expect((bg as unknown as { cells: unknown[] }).cells).toBe(cells);
+    bg.destroy();
+  });
+
+  test('a devicePixelRatio change (another monitor, zoom) resizes the backing store, and the watch moves to the new ratio', () => {
+    vi.stubGlobal('devicePixelRatio', 1);
+    const bg = HeroBackground.create(canvas, () => ({ style: 'off', light: false }))!;
+    expect([canvas.width, resolutions.map((r) => r.media)]).toEqual([1440, ['(resolution: 1dppx)']]);
+    vi.stubGlobal('devicePixelRatio', 2);
+    resolutions[0].dispatchEvent(new Event('change'));
+    expect([canvas.width, resolutions.map((r) => r.media)]).toEqual([2880, ['(resolution: 1dppx)', '(resolution: 2dppx)']]);
+    // the old query no longer drives it
+    vi.stubGlobal('devicePixelRatio', 1.5);
+    resolutions[0].dispatchEvent(new Event('change'));
+    expect(canvas.width).toBe(2880);
+    const off = vi.spyOn(resolutions[1], 'removeEventListener');
+    bg.destroy();
+    expect(off).toHaveBeenCalledWith('change', expect.any(Function));
+  });
+
+  test('pulse frames only work out the glow for cells near a ripple front, and spawn without rescanning the cells', () => {
+    const bg = HeroBackground.create(canvas, () => ({ style: 'pulse', light: false }))!;
+    const cells = (bg as unknown as { cells: unknown[] }).cells.length;
+    // run until both ripple kinds are live (a random one and the centre one at t > 3s)
+    for (let i = 0; i < 300; i++) frame();
+    const live = (bg as unknown as { ripples: unknown[] }).ripples.length;
+    expect(live).toBeGreaterThanOrEqual(2);
+    const exp = vi.spyOn(Math, 'exp');
+    const filter = vi.spyOn(Array.prototype, 'filter');
+    // a frame that spawns a ripple
+    (bg as unknown as { nextRipple: number }).nextRipple = 0;
+    frame();
+    expect(exp.mock.calls.length).toBeLessThan((cells * live) / 2);
+    // only the expired-ripple sweep filters; the spawn pool comes from resize()
+    expect(filter).toHaveBeenCalledTimes(1);
+    bg.destroy();
+  });
+});

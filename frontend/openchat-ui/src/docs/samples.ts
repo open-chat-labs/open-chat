@@ -1221,3 +1221,29 @@ Object.assign(samples, {
 
 // review-groups: GroupPanel names its gate assets
 Object.assign(samples.GroupPanel, { gateTokens, gateSystems });
+
+// Pages: the docs stand in for the app's routes ('#' placeholders; the page frames in Features.svelte stop every link,
+// these and the pages' own #section links, from navigating), its featured communities and its auth (AuthDialog's demo
+// handlers; entering the app is a no-op here). Learn's routing props (page, post, learnPageHref, onNavigate) are set
+// where it's rendered.
+const pageLinks = { homeHref: '#', exploreHref: '#' };
+Object.assign(samples, {
+  Landing: {
+    ...pageLinks,
+    learnPageHref: () => '#',
+    communities: [
+      { name: 'OpenChat', about: 'News, feature requests and support from the team building it.', members: 62504, color: 'amber' },
+      { name: 'Gamers Lounge', about: 'LFG, tournaments and weekly game nights.', members: 44310, color: 'blue' },
+      { name: 'DAO Builders Guild', about: 'Governance design, treasury tooling and proposal reviews.', members: 21480, color: 'violet' },
+      { name: 'Arte Digital', about: 'Ilustración, 3D y NFTs en el Internet Computer.', members: 5210, color: 'plum' },
+    ],
+    playStoreHref: '#',
+    apkHref: '#',
+    proposalsHref: '#',
+    termsHref: '#',
+    privacyHref: '#',
+    auth: samples.AuthDialog,
+    onEnterApp: () => {},
+  },
+  Learn: { ...pageLinks, auth: samples.AuthDialog, onEnterApp: () => {} },
+});

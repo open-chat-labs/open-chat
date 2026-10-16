@@ -42,7 +42,7 @@ const componentHits: Hit[] = (meta as Meta[]).map((c) => {
   return {
     kind: 'component' as const,
     title: c.name,
-    sub: c.description.split('\n')[0] || (c.group === 'features' ? 'Feature component' : 'Library component'),
+    sub: c.description.split('\n')[0] || (c.group === 'pages' ? 'Page' : c.group === 'features' ? 'Feature component' : 'Library component'),
     target: links[0] ?? { group: 'api', id: '' },
     links,
     haystack: (c.description + ' ' + c.props.map((p) => p.name).join(' ')).toLowerCase(),

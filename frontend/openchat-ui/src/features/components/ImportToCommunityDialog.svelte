@@ -20,6 +20,7 @@
   import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
   import { segments, useT } from '../../lib/i18n';
   import Translate from '../../lib/components/Translate.svelte';
+  import { cssUrl } from '../../lib/cssUrl';
 
   const GRADIENTS = ['linear-gradient(140deg,#ff8a5f,#b3407a)', 'linear-gradient(140deg,#5fa8ff,#8c6bff)', 'linear-gradient(140deg,#2ee6a8,#1fb6ff)'];
 
@@ -53,7 +54,7 @@
     if (result.ok) flow.leave(onCancel);
   }
 
-  const avatarOf = (c: Community, i: number) => (c.avatarUrl ? `url(${JSON.stringify(c.avatarUrl)}) center/cover no-repeat` : GRADIENTS[i % GRADIENTS.length]);
+  const avatarOf = (c: Community, i: number) => (c.avatarUrl ? `${cssUrl(c.avatarUrl)} center/cover no-repeat` : GRADIENTS[i % GRADIENTS.length]);
 </script>
 
 <div class="layer" class:closing={flow.closing} role="dialog" aria-modal="true" use:modal={flow.escape(onCancel)}>

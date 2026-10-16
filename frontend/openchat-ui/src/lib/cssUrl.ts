@@ -1,0 +1,6 @@
+// An image URL (avatar, cover, photo …) as a CSS url("…") value, for inline backgrounds. The URL is used as it is, so
+// an already percent-encoded one stays valid; only what would end the string early or break it is escaped.
+
+export function cssUrl(url: string): string {
+  return `url("${url.replace(/["\\]/g, '\\$&').replace(/\r\n|[\n\r\f]/g, '\\a ')}")`;
+}

@@ -11322,6 +11322,41 @@
     "group": "library"
   },
   {
+    "name": "Logo",
+    "source": "frontend/app/public/assets/DMs & Groups/OC Logo.svg",
+    "hash": "",
+    "description": "The OpenChat logo, drawn inline: there is no asset for the host to serve, so it shows on any route and under any base path. Decorative unless `label` names it.",
+    "preview": {
+      "width": 80,
+      "height": 80
+    },
+    "props": [
+      {
+        "name": "size",
+        "type": "number",
+        "default": 32,
+        "editor": "int",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "32",
+        "doc": ""
+      },
+      {
+        "name": "label",
+        "type": "string",
+        "default": "",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Accessible name: resource key (or literal text). Without it the logo is decorative."
+      }
+    ],
+    "group": "library"
+  },
+  {
     "name": "MediaMessage",
     "source": "lib/MediaMessage.dc.html",
     "hash": "67e8474e",
@@ -17391,5 +17426,397 @@
       }
     ],
     "group": "features"
+  },
+  {
+    "name": "Landing",
+    "source": "OpenChat Landing.dc.html",
+    "hash": "e700433f",
+    "description": "Signed-out landing page, mounted directly on its route (outside the app shell).",
+    "preview": null,
+    "props": [
+      {
+        "name": "mode",
+        "type": "PageMode ('dark' | 'light')",
+        "default": "dark",
+        "editor": "enum",
+        "options": [
+          "dark",
+          "light"
+        ],
+        "section": null,
+        "required": false,
+        "componentDefault": "'dark'",
+        "doc": "Theme mode; the page is its own theme root."
+      },
+      {
+        "name": "accent",
+        "type": "PageAccent ('pink' | 'orange' | 'blue' | 'green')",
+        "default": "pink",
+        "editor": "enum",
+        "options": [
+          "pink",
+          "orange",
+          "blue",
+          "green"
+        ],
+        "section": null,
+        "required": false,
+        "componentDefault": "'pink'",
+        "doc": ""
+      },
+      {
+        "name": "heroBg",
+        "type": "HeroStyle ('pulse' | 'aurora' | 'off')",
+        "default": "pulse",
+        "editor": "enum",
+        "options": [
+          "pulse",
+          "aurora",
+          "off"
+        ],
+        "section": null,
+        "required": false,
+        "componentDefault": "'pulse'",
+        "doc": "Hero backdrop: ripples, a drifting band, or none. Reduced motion always gets one still frame."
+      },
+      {
+        "name": "homeHref",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'/'",
+        "doc": "The logo link."
+      },
+      {
+        "name": "appHref",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'/home'",
+        "doc": "Where a successful sign-in goes when there is no onEnterApp."
+      },
+      {
+        "name": "exploreHref",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'/communities'",
+        "doc": ""
+      },
+      {
+        "name": "learnHref",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'/learn'",
+        "doc": ""
+      },
+      {
+        "name": "learnPageHref",
+        "type": "(page: LearnPage) => string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Link to a Learn sub-page; defaults to learnHref + '#page'. Map your own paths (/roadmap, /faq …) here."
+      },
+      {
+        "name": "learnPages",
+        "type": "LearnPage[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "LEARN_PAGES",
+        "doc": "The Learn sub-pages to link in the menu and footer; pass learnPagesOf(content) when the host's Learn content leaves a doc out."
+      },
+      {
+        "name": "communities",
+        "type": "LandingCommunity[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "[]",
+        "doc": "Featured communities for the Communities section; without any, only its heading and Browse link show."
+      },
+      {
+        "name": "playStoreHref",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Android Play Store build; without it that choice isn't a link."
+      },
+      {
+        "name": "apkHref",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Android full (APK) build; without it that choice isn't a link."
+      },
+      {
+        "name": "proposalsHref",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "\"See open proposals\"; hidden without it."
+      },
+      {
+        "name": "termsHref",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'/terms'",
+        "doc": ""
+      },
+      {
+        "name": "privacyHref",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'/privacy'",
+        "doc": ""
+      },
+      {
+        "name": "auth",
+        "type": "PageAuth",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "AuthDialog's host callbacks (onMethod, onSignup, onRequestEmailLink, checkUsername …). onMethod and onSignup return a promise; when it resolves the page enters the app, even if the dialog was closed meanwhile (once per sign-in)."
+      },
+      {
+        "name": "onEnterApp",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Called after a successful sign-in instead of navigating to appHref."
+      },
+      {
+        "name": "onModeChange",
+        "type": "(mode: PageMode) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      },
+      {
+        "name": "onAccentChange",
+        "type": "(accent: PageAccent) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": ""
+      }
+    ],
+    "group": "pages"
+  },
+  {
+    "name": "Learn",
+    "source": "OpenChat Learn.dc.html",
+    "hash": "15db4213",
+    "description": "Learn page (roadmap, whitepaper, architecture, blog, FAQs), mounted directly on its route (outside the app shell).",
+    "preview": null,
+    "props": [
+      {
+        "name": "mode",
+        "type": "PageMode ('dark' | 'light')",
+        "default": "dark",
+        "editor": "enum",
+        "options": [
+          "dark",
+          "light"
+        ],
+        "section": null,
+        "required": false,
+        "componentDefault": "'dark'",
+        "doc": "Theme mode; the page is its own theme root."
+      },
+      {
+        "name": "accent",
+        "type": "PageAccent ('pink' | 'orange' | 'blue' | 'green')",
+        "default": "pink",
+        "editor": "enum",
+        "options": [
+          "pink",
+          "orange",
+          "blue",
+          "green"
+        ],
+        "section": null,
+        "required": false,
+        "componentDefault": "'pink'",
+        "doc": ""
+      },
+      {
+        "name": "homeHref",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'/'",
+        "doc": "The logo link."
+      },
+      {
+        "name": "appHref",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'/home'",
+        "doc": "Where a successful sign-in goes when there is no onEnterApp."
+      },
+      {
+        "name": "exploreHref",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'/communities'",
+        "doc": ""
+      },
+      {
+        "name": "learnHref",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "'/learn'",
+        "doc": ""
+      },
+      {
+        "name": "page",
+        "type": "LearnPage ('roadmap' | 'whitepaper' | 'architecture' | 'blog' | 'faq')",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The sub-page to show, when the host routes its own paths (learnPageHref is then required). Without it the URL hash picks the sub-page."
+      },
+      {
+        "name": "post",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "With page 'blog': the open post's slug."
+      },
+      {
+        "name": "learnPageHref",
+        "type": "(page: LearnPage, post?: string) => string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Required with `page`: the host's path for a sub-page (or a blog post). Without `page` it is ignored and the links are learnHref + '#page' ('#blog/<slug>')."
+      },
+      {
+        "name": "onNavigate",
+        "type": "(page: LearnPage, post?: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Called on every sub-page or post change: a click, and in hash mode Back / Forward or an edited hash too (not the sub-page it opens on). When the host sets `page`, it handles the click (no link navigation)."
+      },
+      {
+        "name": "content",
+        "type": "LearnContent",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "placeholderLearnContent",
+        "doc": "Docs, posts, roadmap and FAQs; placeholder copy by default (learnContent.ts)."
+      },
+      {
+        "name": "auth",
+        "type": "PageAuth",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "AuthDialog's host callbacks (onMethod, onSignup, onRequestEmailLink, checkUsername …). onMethod and onSignup return a promise; when it resolves the page enters the app, even if the dialog was closed meanwhile (once per sign-in)."
+      },
+      {
+        "name": "onEnterApp",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Called after a successful sign-in instead of navigating to appHref."
+      }
+    ],
+    "group": "pages"
   }
 ]
