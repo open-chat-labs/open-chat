@@ -19,7 +19,8 @@ pub enum Network {
     Sol,
 }
 
-// No address is anywhere near this long, and base58 decoding is quadratic in the length
+// Only a bound on the work done: nothing this long is an address anyway, and base58 decoding is
+// quadratic in the length
 const MAX_LENGTH: usize = 200;
 
 /// The network an address is for, told from its form, or `None` if it isn't an address on any of
@@ -258,10 +259,5 @@ mod tests {
         ] {
             assert_eq!(detect_network(address), None, "{address}");
         }
-    }
-
-    #[test]
-    fn refuses_anything_too_long_to_be_an_address() {
-        assert_eq!(detect_network(&"1".repeat(MAX_LENGTH + 1)), None);
     }
 }

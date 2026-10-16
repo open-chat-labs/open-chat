@@ -95,7 +95,7 @@
                 <Input
                     bind:value={address}
                     countdown={false}
-                    maxlength={100}
+                    maxlength={200}
                     error={invalidAddress}
                     placeholder={interpolate($_, i18nKey("cryptoAccount.sendTarget"))}>
                     {#snippet icon()}
