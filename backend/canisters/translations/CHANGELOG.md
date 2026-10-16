@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove the one-off which rewrote migrated users' old ids to their latest, now that it has run ([#10002](https://github.com/open-chat-labs/open-chat/pull/10002))
+
 ## [[2.0.2146](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2146-translations)] - 2026-10-16
 
 ### Changed
