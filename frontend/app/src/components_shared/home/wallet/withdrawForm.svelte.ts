@@ -1,11 +1,14 @@
 import {
     BTC_SYMBOL,
     CKBTC_SYMBOL,
+    CKSOL_SYMBOL,
     currentUserIdStore,
     currentUserStore,
     ICP_SYMBOL,
     Lazy,
+    SOL_SYMBOL,
     type CkbtcMinterWithdrawalInfo,
+    type CksolMinterWithdrawalInfo,
     type EvmChain,
     type OneSecTransferFees,
     type OpenChat,
@@ -19,6 +22,7 @@ import {
     userWalletAccount,
 } from "@shared";
 import { CkbtcWithdrawalInfoRequests } from "@src/utils/ckbtcWithdrawalInfo";
+import { isSolanaAddressValid } from "@src/utils/solanaAddress";
 import type { TokenState } from "./walletState.svelte";
 
 /**
@@ -33,8 +37,10 @@ export class WithdrawForm {
     #ownAccount: string;
     #chosenNetwork = $state<string>();
     #ckbtcInfo = $state<CkbtcMinterWithdrawalInfo>();
+    #cksolInfo = $state<CksolMinterWithdrawalInfo>();
     #oneSecFees = $state<OneSecTransferFees[]>();
     #ckbtcInfoRequests: CkbtcWithdrawalInfoRequests;
+    #cksolInfoPromise: Lazy<Promise<CksolMinterWithdrawalInfo>>;
     #oneSecFeesPromise: Lazy<Promise<OneSecTransferFees[]>>;
 
     targetAccount = $state("");
@@ -42,6 +48,7 @@ export class WithdrawForm {
     validAmount = $state(false);
 
     #isBtc = $derived.by(() => this.#tokenState.symbol === BTC_SYMBOL);
+    #isSol = $derived.by(() => this.#tokenState.symbol === SOL_SYMBOL);
     #oneSecEnabled = $derived.by(
         () =>
             this.#tokenState.token.oneSecEnabled &&
@@ -49,6 +56,7 @@ export class WithdrawForm {
     );
     #networks = $derived.by(() => {
         if (this.#isBtc) return [BTC_SYMBOL, CKBTC_SYMBOL];
+        if (this.#isSol) return [SOL_SYMBOL, CKSOL_SYMBOL];
         if (this.#oneSecEnabled) return this.#client.oneSecGetNetworks(this.#tokenState.symbol);
         return [];
     });
@@ -59,6 +67,7 @@ export class WithdrawForm {
             : this.#networks[0],
     );
     #isBtcNetwork = $derived.by(() => this.#selectedNetwork === BTC_SYMBOL);
+    #isSolNetwork = $derived.by(() => this.#selectedNetwork === SOL_SYMBOL);
     #isOneSecNetwork = $derived.by(
         () => this.#oneSecEnabled && this.#selectedNetwork !== ICP_SYMBOL,
     );
@@ -72,6 +81,7 @@ export class WithdrawForm {
         // Checked before the network, since BTC sent over the ckBTC network goes to an IC account
         if (this.#targetIsUserIdAccount) return false;
         if (this.#isBtc) return target.length >= 14;
+        if (this.#isSolNetwork) return isSolanaAddressValid(target);
         if (this.#isOneSecNetwork) return target.length === 42;
         if (isICRCAddressValid(target)) return true;
         return this.#tokenState.symbol === ICP_SYMBOL && isAccountIdentifierValid(target);
@@ -88,6 +98,9 @@ export class WithdrawForm {
         if (this.#isBtcNetwork && this.#ckbtcInfo !== undefined) {
             return this.#ckbtcInfo.minWithdrawalAmount;
         }
+        if (this.#isSolNetwork && this.#cksolInfo !== undefined) {
+            return this.#cksolInfo.minWithdrawalAmount;
+        }
         if (this.#isOneSecNetwork && this.#oneSecFeesForToken !== undefined) {
             return this.#oneSecFeesForToken.minAmount;
         }
@@ -96,6 +109,10 @@ export class WithdrawForm {
     #networkFee = $derived.by(() => {
         if (this.#isBtcNetwork && this.#ckbtcInfo !== undefined) {
             return this.#ckbtcInfo.feeEstimate;
+        }
+        // Not an estimate: the ckSOL minter takes exactly this from what it burns
+        if (this.#isSolNetwork && this.#cksolInfo !== undefined) {
+            return this.#cksolInfo.withdrawalFee;
         }
         if (this.#isOneSecNetwork && this.#oneSecFeesForToken !== undefined) {
             const fees = this.#oneSecFeesForToken;
@@ -106,12 +123,13 @@ export class WithdrawForm {
         }
         return undefined;
     });
-    // On the BTC network the minimum amount isn't known until the ckBTC minter has answered
+    // On the BTC and SOL networks the minimum amount isn't known until the minter has answered
     #canSend = $derived.by(
         () =>
             this.validAmount &&
             this.#targetAccountValid &&
-            (!this.#isBtcNetwork || this.#ckbtcInfo !== undefined),
+            (!this.#isBtcNetwork || this.#ckbtcInfo !== undefined) &&
+            (!this.#isSolNetwork || this.#cksolInfo !== undefined),
     );
 
     constructor(client: OpenChat, tokenState: TokenState) {
@@ -127,6 +145,8 @@ export class WithdrawForm {
             (amount) => client.getCkbtcMinterWithdrawalInfo(amount),
             (info) => (this.#ckbtcInfo = info),
         );
+        // The minimum and fee don't depend on the amount, so are fetched once
+        this.#cksolInfoPromise = new Lazy(() => client.getCksolMinterWithdrawalInfo());
         // Filtered to where the source token is the destination token, since these are cross-chain
         // withdrawals
         this.#oneSecFeesPromise = new Lazy(() =>
@@ -146,6 +166,8 @@ export class WithdrawForm {
         $effect(() => {
             if (this.#isBtcNetwork) {
                 this.#ckbtcInfoRequests.debounced(this.#tokenState.draftAmount);
+            } else if (this.#isSolNetwork) {
+                this.#cksolInfoPromise.get().then((info) => (this.#cksolInfo = info));
             } else if (this.#isOneSecNetwork) {
                 this.#oneSecFeesPromise.get().then((fees) => (this.#oneSecFees = fees));
             }
@@ -185,7 +207,7 @@ export class WithdrawForm {
     get networkFeeFormatted(): string | undefined {
         return this.#networkFee === undefined
             ? undefined
-            : `~${this.#client.formatTokens(this.#networkFee, this.#tokenState.decimals)}`;
+            : `${this.#isSolNetwork ? "" : "~"}${this.#client.formatTokens(this.#networkFee, this.#tokenState.decimals)}`;
     }
 
     get canSend(): boolean {
@@ -205,6 +227,7 @@ export class WithdrawForm {
 
     get route(): WithdrawalRoute {
         if (this.#isBtcNetwork) return { kind: "btc" };
+        if (this.#isSolNetwork) return { kind: "sol" };
         if (this.#isOneSecNetwork) {
             return { kind: "one_sec", chain: this.#selectedNetwork as EvmChain };
         }

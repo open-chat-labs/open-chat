@@ -31,11 +31,13 @@ export type Chain = EvmChain | typeof ICP_SYMBOL;
 
 /**
  * Where a withdrawal from the user's wallet goes: to an account on the token's own ledger, out to
- * Bitcoin through the ckBTC minter, or out to an EVM chain through OneSec
+ * Bitcoin through the ckBTC minter, out to Solana through the ckSOL minter, or out to an EVM chain
+ * through OneSec
  */
 export type WithdrawalRoute =
     | { kind: "ledger" }
     | { kind: "btc" }
+    | { kind: "sol" }
     | { kind: "one_sec"; chain: EvmChain };
 
 export type Withdrawal = {

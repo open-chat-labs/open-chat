@@ -141,7 +141,7 @@
     maxAmount={tokenState.maxAmount}
     bind:amount={tokenState.draftAmount}>
     {#snippet subtext()}
-        {`Minimum amount ${form.minAmount} ${tokenState.symbol}`}
+        {`Minimum amount ${tokenState.formatTokens(form.minAmount)} ${tokenState.symbol}`}
     {/snippet}
 </TokenInput>
 

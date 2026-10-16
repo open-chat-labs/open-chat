@@ -1008,6 +1008,8 @@ const handlers: Handlers = {
     updateSolBalance: (_payload, agent) => agent.updateSolBalance(),
     withdrawBtc: (payload, agent) =>
         agent.withdrawBtc(payload.address, payload.amount, payload.pin),
+    withdrawSol: (payload, agent) =>
+        agent.withdrawSol(payload.address, payload.amount, payload.pin),
     withdrawViaOneSec: (payload, agent) =>
         agent.withdrawViaOneSec(
             payload.ledger,
@@ -1021,6 +1023,7 @@ const handlers: Handlers = {
     ckbtcMinterWithdrawalInfo: (payload, agent) =>
         agent.getCkbtcMinterWithdrawalInfo(payload.amount),
     cksolMinterDepositInfo: (_payload, agent) => agent.getCksolMinterDepositInfo(),
+    cksolMinterWithdrawalInfo: (_payload, agent) => agent.getCksolMinterWithdrawalInfo(),
     currentUserWebAuthnKey: (_payload) => {
         // TODO add type for the `res`
         return (

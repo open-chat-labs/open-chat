@@ -3,6 +3,7 @@ import {
     type WithdrawBtcResponse,
     type WithdrawCryptocurrencyResponse,
     type WithdrawOutcome,
+    type WithdrawSolResponse,
 } from "@shared";
 
 export function withdrawFailed(symbol: string): WithdrawOutcome {
@@ -10,7 +11,7 @@ export function withdrawFailed(symbol: string): WithdrawOutcome {
 }
 
 export function withdrawResult(
-    resp: WithdrawCryptocurrencyResponse | WithdrawBtcResponse,
+    resp: WithdrawCryptocurrencyResponse | WithdrawBtcResponse | WithdrawSolResponse,
     symbol: string,
 ): WithdrawOutcome {
     switch (resp.kind) {
