@@ -3,6 +3,7 @@ use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_delete_group::*;
+use multi_user_canister::GroupIndexEvent;
 use tracing::info;
 use types::{ChatId, CommunityImportedInto, DeletedGroupInfoInternal, UserId};
 use utils::cycles::accept_cycles;
@@ -59,19 +60,25 @@ pub(crate) fn delete_group(
     }
 
     state.data.local_index_map.mark_group_deleted(&group_id);
-    state.data.deleted_groups.insert(
-        DeletedGroupInfoInternal {
-            id: group_id,
-            timestamp: state.env.now(),
-            deleted_by,
-            group_name: group_name.clone(),
-            name: group_name,
-            public,
-            community_imported_into,
-        },
-        members,
-    );
-    crate::jobs::push_group_deleted_notifications::start_job_if_required(state);
+
+    let now = state.env.now();
+    let deleted_group = DeletedGroupInfoInternal {
+        id: group_id,
+        timestamp: now,
+        deleted_by,
+        group_name: group_name.clone(),
+        name: group_name,
+        public,
+        community_imported_into,
+    };
+    if state.data.deleted_groups.insert(deleted_group.clone()) {
+        // Each member other than the deleter is told, via their canister
+        state.push_event_to_users(
+            members.into_iter().filter(|u| *u != deleted_by),
+            GroupIndexEvent::GroupDeleted(Box::new(deleted_group)),
+            now,
+        );
+    }
 
     Response::Success
 }
