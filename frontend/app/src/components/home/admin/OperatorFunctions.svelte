@@ -58,6 +58,7 @@
     let tokenLedger = $state("");
     let tokenEnabled = $state(true);
     let openAiApiKey = $state("");
+    let alchemyApiKey = $state("");
     let moderationCommunityId = $state("");
     let moderationChannelId = $state("");
     // sexual/minors always takes the CSAM auto-sanction path so is not offered here.
@@ -154,6 +155,34 @@
                 busy.delete(20);
                 refreshCallPush();
             });
+    }
+
+    // Sets the key on the user index, which passes it on to every MultiUser canister. Unsetting it has
+    // its own button, so that a second click on Set can't unset it.
+    function setAlchemyApiKey(apiKey: string | undefined): Promise<void> {
+        busy.add(21);
+        return client
+            .setAlchemyApiKey(apiKey)
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    toastStore.showSuccessToast(
+                        i18nKey(
+                            apiKey === undefined ? "Alchemy API key unset" : "Alchemy API key set",
+                        ),
+                    );
+                    alchemyApiKey = "";
+                } else {
+                    toastStore.showFailureToast(
+                        i18nKey(
+                            `Failed to set the Alchemy API key: ${resp.message ?? `code ${resp.code}`}`,
+                        ),
+                    );
+                }
+            })
+            .catch((err) =>
+                toastStore.showFailureToast(i18nKey("Failed to set the Alchemy API key"), err),
+            )
+            .finally(() => busy.delete(21));
     }
 
     onMount(() => {
@@ -1003,6 +1032,24 @@
         <Button tiny loading={busy.has(20)} disabled={busy.has(20)} onClick={applyCallPush}>
             Apply
         </Button>
+    </section>
+
+    <section class="operator-function">
+        <div class="title">Alchemy API key (Solana RPC)</div>
+        <Input bind:value={alchemyApiKey} placeholder={i18nKey("New key")} />
+        <ButtonGroup align="fill">
+            <Button
+                tiny
+                loading={busy.has(21)}
+                disabled={busy.has(21) || alchemyApiKey.trim() === ""}
+                onClick={() => setAlchemyApiKey(alchemyApiKey.trim())}>Set</Button>
+            <Button
+                tiny
+                secondary
+                loading={busy.has(21)}
+                disabled={busy.has(21)}
+                onClick={() => setAlchemyApiKey(undefined)}>Unset</Button>
+        </ButtonGroup>
     </section>
 
     <section class="operator-function">

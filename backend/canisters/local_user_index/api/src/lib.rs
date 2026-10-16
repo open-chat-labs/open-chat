@@ -60,6 +60,7 @@ pub enum UserIndexEvent {
     SetCallPushEnabled(bool),
     SetDailyPuzzleCanisterId(CanisterId),
     UserIdMigrated(UserIdMigrated),
+    SetAlchemyApiKey(SetAlchemyApiKey),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -464,6 +465,20 @@ pub struct UpdateBlockedUsernamePatterns {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct SetOpenAIApiKey {
     pub api_key: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct SetAlchemyApiKey {
+    pub api_key: Option<String>,
+}
+
+// Written by hand so that `#[trace]` doesn't record the key
+impl std::fmt::Debug for SetAlchemyApiKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SetAlchemyApiKey")
+            .field("api_key_set", &self.api_key.is_some())
+            .finish()
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

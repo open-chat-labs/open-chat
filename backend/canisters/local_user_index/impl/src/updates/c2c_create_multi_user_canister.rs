@@ -1,5 +1,5 @@
 use crate::guards::caller_is_user_index;
-use crate::{RuntimeState, UserIndexEvent, child_initial_cycles_balance, mutate_state, read_state};
+use crate::{RuntimeState, UserEvent, UserIndexEvent, child_initial_cycles_balance, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::{CREATE_CANISTER_CYCLES_FEE, min_cycles_balance};
@@ -37,7 +37,8 @@ pub(crate) async fn create_multi_user_canister() -> Result<(CanisterId, BuildVer
     .await
     {
         Ok(canister_id) => {
-            mutate_state(|state| commit(canister_id, wasm_version, state));
+            let alchemy_api_key = prepare_ok.init_canister_args.alchemy_api_key;
+            mutate_state(|state| commit(canister_id, wasm_version, alchemy_api_key, state));
             info!(%canister_id, "MultiUser canister created");
             Ok((canister_id, wasm_version))
         }
@@ -87,6 +88,7 @@ fn prepare(state: &mut RuntimeState) -> OCResult<PrepareOk> {
         identity_canister_id: state.data.identity_canister_id,
         escrow_canister_id: state.data.escrow_canister_id,
         video_call_operators: state.data.video_call_operators.clone(),
+        alchemy_api_key: state.data.alchemy_api_key.clone(),
         wasm_version: canister_wasm.version,
         rng_seed: state.env.rng().random(),
         test_mode: state.data.test_mode,
@@ -102,9 +104,20 @@ fn prepare(state: &mut RuntimeState) -> OCResult<PrepareOk> {
     })
 }
 
-fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut RuntimeState) {
+fn commit(canister_id: CanisterId, wasm_version: BuildVersion, alchemy_api_key: Option<String>, state: &mut RuntimeState) {
     let now = state.env.now();
     state.data.local_multi_user_canisters.add(canister_id, wasm_version, now);
+    // The key may have been set while the canister was being installed, in which case it was left
+    // out when the key was passed on to this LocalUserIndex's MultiUser canisters
+    if state.data.alchemy_api_key != alchemy_api_key {
+        state.push_event_to_multi_user_canister(
+            canister_id,
+            UserEvent::SetAlchemyApiKey(multi_user_canister::SetAlchemyApiKey {
+                api_key: state.data.alchemy_api_key.clone(),
+            }),
+            now,
+        );
+    }
     // The UserIndex doesn't send this LocalUserIndex the registrations of its own users, so its
     // MultiUser canisters are added to the global set here
     state.data.global_users.add_multi_user_canister(canister_id);

@@ -551,6 +551,7 @@ export type WorkerRequest = Cloneable<
     | DailyPuzzleRegenerateToday
     | CallPushEnabled
     | SetCallPushEnabled
+    | SetAlchemyApiKey
     | SetPremiumItemCost
     | OneSecEnableForwarding
     | OneSecGetTransferFees
@@ -680,6 +681,11 @@ type CallPushEnabled = {
 type SetCallPushEnabled = {
     kind: "setCallPushEnabled";
     enabled: boolean;
+};
+// Platform operators only
+type SetAlchemyApiKey = {
+    kind: "setAlchemyApiKey";
+    apiKey: string | undefined;
 };
 type DailyPuzzleRegenerateToday = {
     kind: "dailyPuzzleRegenerateToday";
@@ -2837,6 +2843,7 @@ export type WorkerResults = ResultsByKind<{
     dailyPuzzleRegenerateToday: Success | OCError;
     callPushEnabled: boolean;
     setCallPushEnabled: Success | OCError;
+    setAlchemyApiKey: Success | OCError;
     setPremiumItemCost: void;
     createAccountLinkingCode: AccountLinkingCode | undefined;
     getSignInProof: string | undefined;

@@ -329,6 +329,7 @@ impl RuntimeState {
             protected_action_metrics: self.data.protected_actions.metrics(),
             vault_reviewers: self.data.vault_reviewers.len() as u32,
             openai_api_key_set: self.data.openai_api_key.is_some(),
+            alchemy_api_key_set: self.data.alchemy_api_key.is_some(),
             internal_moderation_channel_set: self.data.internal_moderation_channel.is_some(),
             // Presence and size only: the metrics endpoint is public and the per-category
             // thresholds must not be readable by people tuning content to sit under them.
@@ -505,6 +506,11 @@ struct Data {
     // LocalUserIndexes, including any added later
     #[serde(default)]
     pub migrated_user_ids: MigratedUserIds,
+    // The key the MultiUser canisters use to call Alchemy's Solana RPC. Set by a platform operator and
+    // fanned out to the LocalUserIndexes, including any added later, which pass it on to their
+    // MultiUser canisters
+    #[serde(default)]
+    pub alchemy_api_key: Option<String>,
 }
 
 impl Data {
@@ -610,6 +616,7 @@ impl Data {
             call_push_enabled: false,
             daily_puzzle_canister_id: None,
             migrated_user_ids: MigratedUserIds::default(),
+            alchemy_api_key: None,
         };
 
         // Register the ProposalsBot
@@ -723,6 +730,7 @@ impl Default for Data {
             call_push_enabled: false,
             daily_puzzle_canister_id: None,
             migrated_user_ids: MigratedUserIds::default(),
+            alchemy_api_key: None,
         }
     }
 }
@@ -766,6 +774,7 @@ pub struct Metrics {
     pub vault_reviewers: u32,
     pub protected_action_metrics: ProtectedActionMetrics,
     pub openai_api_key_set: bool,
+    pub alchemy_api_key_set: bool,
     pub internal_moderation_channel_set: bool,
     pub moderation_referral_config_set: bool,
     pub moderation_referral_categories: u32,
