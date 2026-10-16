@@ -187,6 +187,7 @@
         | { kind: "registering" }
         | { kind: "logging_in" }
         | { kind: "not_found" }
+        | { kind: "restricted_content" }
         | { kind: "claim_daily_chit" }
         | { kind: "daily_puzzle"; gameId?: string }
         | { kind: "challenge" }
@@ -260,6 +261,7 @@
             subscribe("notification", (n) => client.notificationReceived(n)),
             subscribe("noAccess", () => (modal = { kind: "no_access" })),
             subscribe("notFound", () => (modal = { kind: "not_found" })),
+            subscribe("restrictedContent", () => (modal = { kind: "restricted_content" })),
             subscribe("copyUrl", copyUrl),
             subscribe("suspendUser", suspendUser),
             subscribe("closeModalStack", () => {
@@ -1000,6 +1002,12 @@
             <NoAccess onClose={closeNoAccess} />
         {:else if modal.kind === "not_found"}
             <NotFound onClose={closeNoAccess} />
+        {:else if modal.kind === "restricted_content"}
+            <NoAccess
+                onClose={closeNoAccess}
+                titleKey={"appStore.notAvailableTitle"}
+                textKey={"appStore.notAvailable"}
+            />
         {:else if modal.kind === "gate_check_failed"}
             <GateCheckFailed onClose={closeModal} gates={modal.gates} />
         {:else if modal.kind === "evaluating_access_gates"}

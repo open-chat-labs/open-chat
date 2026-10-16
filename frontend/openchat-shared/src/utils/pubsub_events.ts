@@ -1,4 +1,3 @@
-import type { Readable } from "svelte/store";
 import type {
     ChannelIdentifier,
     ChatIdentifier,
@@ -131,7 +130,6 @@ export type PubSubEvents = {
     registerWebhook: MultiUserChat;
     updateWebhook: { chat: MultiUserChat; hook: FullWebhookDetails };
     regenerateWebhook: { chat: MultiUserChat; hook: FullWebhookDetails };
-    deleteWebhook: undefined;
     // Published before a message window load applies any of its events, so the
     // list can position on the target in the same flush the events render
     loadingMessageWindow: {
@@ -174,11 +172,6 @@ export type PubSubEvents = {
     noAccess: undefined;
     restrictedContent: undefined;
     notFound: undefined;
-    showFailureToast: {
-        resourceKey: ResourceKey | Readable<ResourceKey | undefined>;
-        err?: unknown;
-    };
-    showSuccessToast: ResourceKey;
     ephemeralMessage: EphemeralMessageEvent;
     copyUrl: undefined;
     suspendUser: string;
@@ -215,7 +208,6 @@ export type PubSubEvents = {
     updateChitGate: { data: unknown; gate: ChitEarnedGate };
     updateTokenBalanceGate: { data: unknown; gate: TokenBalanceGate };
     updateCommunity: undefined;
-    updateCommunityRules: undefined;
     updateCommunityChannels: undefined;
     newMessage: undefined;
     directChatDetails: DirectChatSummary;

@@ -7,16 +7,18 @@
 
     interface Props {
         onClose: () => void;
+        titleKey?: string;
+        textKey?: string;
     }
 
-    let { onClose }: Props = $props();
+    let { onClose, titleKey = "noAccess", textKey = "noAccessText" }: Props = $props();
 </script>
 
 <ModalContent {onClose}>
     {#snippet header()}
-        <Translatable resourceKey={i18nKey("noAccess")} />
+        <Translatable resourceKey={i18nKey(titleKey)} />
     {/snippet}
     {#snippet body()}
-        <Markdown text={$_("noAccessText")} />
+        <Markdown text={$_(textKey)} />
     {/snippet}
 </ModalContent>
