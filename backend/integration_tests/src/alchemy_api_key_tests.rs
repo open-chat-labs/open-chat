@@ -1,8 +1,10 @@
 use crate::env::ENV;
-use crate::utils::{metrics, try_metrics};
-use crate::{CanisterIds, TestEnv, client};
+use crate::utils::{metrics, tick_many, try_metrics};
+use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
+use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
+use pocket_ic::common::rest::CanisterHttpRequest;
 use std::ops::Deref;
 use types::{CanisterId, UnitResult};
 
@@ -40,6 +42,62 @@ fn alchemy_api_key_reaches_every_multi_user_canister() {
     // canister is named explicitly, since the UserIndex may not yet have been told of it.
     set_alchemy_api_key(env, *platform_operator, canister_ids.user_index, None);
     wait_for_key_everywhere(env, canister_ids, &[canister_id], false);
+}
+
+// A user without a SOL address can't have deposited anything, so `update_sol_balance` turns them away
+// without asking the minter, nor, once the key is set, Alchemy. The test env has no ckSOL minter, so
+// no address can be generated, and the path with one can't be tested here.
+#[test]
+fn update_sol_balance_turns_away_a_user_without_an_address() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        platform_operator,
+        ..
+    } = wrapper.env();
+
+    let user = client::register_user(env, canister_ids);
+
+    let response = update_sol_balance(env, &user);
+    assert!(
+        matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::NoChange)),
+        "{response:?}"
+    );
+
+    set_alchemy_api_key(env, *platform_operator, canister_ids.user_index, Some("key"));
+    wait_for_key_everywhere(env, canister_ids, &[user.canister()], true);
+
+    let response = update_sol_balance(env, &user);
+    assert!(
+        matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::NoChange)),
+        "{response:?}"
+    );
+
+    // Test envs are pooled, so the key is unset again
+    set_alchemy_api_key(env, *platform_operator, canister_ids.user_index, None);
+    wait_for_key_everywhere(env, canister_ids, &[user.canister()], false);
+}
+
+// Fails if the call makes an outcall to Alchemy, rather than leaving it pending, which would leave
+// the call waiting forever
+fn update_sol_balance(env: &mut PocketIc, user: &User) -> UnitResult {
+    let message_id = env
+        .submit_call(
+            user.canister(),
+            user.principal,
+            "update_sol_balance_msgpack",
+            msgpack::serialize_then_unwrap(multi_user_canister::update_sol_balance::Args { user_id: user.user_id }),
+        )
+        .unwrap();
+    tick_many(env, 5);
+    let outcalls: Vec<CanisterHttpRequest> = env
+        .get_canister_http()
+        .into_iter()
+        .filter(|request| request.url.contains("alchemy.com"))
+        .collect();
+    assert!(outcalls.is_empty(), "Unexpected outcalls to Alchemy: {outcalls:?}");
+    msgpack::deserialize_then_unwrap(&env.await_call(message_id).unwrap())
 }
 
 fn set_alchemy_api_key(env: &mut PocketIc, platform_operator: Principal, user_index: CanisterId, api_key: Option<&str>) {
