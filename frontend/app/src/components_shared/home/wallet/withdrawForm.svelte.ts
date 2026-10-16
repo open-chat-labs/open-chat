@@ -16,15 +16,9 @@ import {
     type WithdrawalRoute,
     type WithdrawOutcome,
 } from "@client";
-import {
-    encodeIcrcAccount,
-    isAccountIdentifierValid,
-    isICRCAddressValid,
-    userWalletAccount,
-} from "@shared";
+import { encodeIcrcAccount, userWalletAccount } from "@shared";
 import { CkbtcWithdrawalInfoRequests } from "@src/utils/ckbtcWithdrawalInfo";
-import { isBitcoinAddressValid, isEvmAddressValid } from "@src/utils/cryptoAddress";
-import { isSolanaAddressValid } from "@src/utils/solanaAddress";
+import { addressNetwork, type AddressNetwork } from "@src/utils/cryptoAddress";
 import type { TokenState } from "./walletState.svelte";
 
 /**
@@ -78,16 +72,20 @@ export class WithdrawForm {
     #targetIsUserIdAccount = $derived.by(() =>
         this.#client.isAccountOfMultiUserCanisterUserId(this.targetAccount),
     );
+    // The networks an address must be on for the send to reach it. An ICP account identifier is
+    // only an account on the ICP ledger.
+    #acceptedNetworks = $derived.by((): AddressNetwork[] => {
+        if (this.#isBtcNetwork) return ["btc"];
+        if (this.#isSolNetwork) return ["sol"];
+        if (this.#isOneSecNetwork) return ["eth"];
+        return this.#tokenState.symbol === ICP_SYMBOL ? ["icrc", "icp"] : ["icrc"];
+    });
     #targetAccountValid = $derived.by(() => {
         const target = this.targetAccount;
         if (target.length === 0 || target === this.#ownAccount) return false;
         // Checked before the network, since BTC sent over the ckBTC network goes to an IC account
         if (this.#targetIsUserIdAccount) return false;
-        if (this.#isBtcNetwork) return isBitcoinAddressValid(target);
-        if (this.#isSolNetwork) return isSolanaAddressValid(target);
-        if (this.#isOneSecNetwork) return isEvmAddressValid(target);
-        if (isICRCAddressValid(target)) return true;
-        return this.#tokenState.symbol === ICP_SYMBOL && isAccountIdentifierValid(target);
+        return this.acceptsAddress(target);
     });
     #oneSecFeesForToken = $derived.by(() => {
         if (!this.#isOneSecNetwork || this.#oneSecFees === undefined) return undefined;
@@ -206,6 +204,13 @@ export class WithdrawForm {
 
     get targetAccountValid(): boolean {
         return this.#targetAccountValid;
+    }
+
+    // Whether the send could reach this address, so that a saved one on another network can be
+    // left out of the address book's choices
+    acceptsAddress(address: string): boolean {
+        const network = addressNetwork(address);
+        return network !== undefined && this.#acceptedNetworks.includes(network);
     }
 
     get minAmount(): bigint {
