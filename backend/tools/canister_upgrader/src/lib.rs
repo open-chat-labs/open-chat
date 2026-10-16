@@ -207,25 +207,6 @@ pub async fn upgrade_registry_canister(
     println!("Registry canister upgraded");
 }
 
-pub async fn upgrade_market_maker_canister(
-    identity: Box<dyn Identity>,
-    url: String,
-    market_maker_canister_id: CanisterId,
-    version: BuildVersion,
-) {
-    upgrade_top_level_canister(
-        identity,
-        url,
-        market_maker_canister_id,
-        version,
-        market_maker_canister::post_upgrade::Args { wasm_version: version },
-        CanisterName::MarketMaker,
-    )
-    .await;
-
-    println!("Market maker canister upgraded");
-}
-
 pub async fn upgrade_neuron_controller_canister(
     identity: Box<dyn Identity>,
     url: String,

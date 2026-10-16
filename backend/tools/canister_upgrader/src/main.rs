@@ -28,7 +28,6 @@ async fn main() {
             upgrade_group_index_canister(identity, opts.url, opts.openchat_installer, opts.version).await
         }
         CanisterName::Identity => upgrade_identity_canister(identity, opts.url, opts.openchat_installer, opts.version).await,
-        CanisterName::MarketMaker => upgrade_market_maker_canister(identity, opts.url, opts.market_maker, opts.version).await,
         CanisterName::NeuronController => {
             upgrade_neuron_controller_canister(identity, opts.url, opts.neuron_controller, opts.version).await
         }
@@ -106,9 +105,6 @@ struct Opts {
 
     #[arg(long)]
     translations: CanisterId,
-
-    #[arg(long)]
-    market_maker: CanisterId,
 
     #[arg(long)]
     neuron_controller: CanisterId,

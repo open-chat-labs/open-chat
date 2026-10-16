@@ -48,7 +48,6 @@ STORAGE_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id storage_index)
 CYCLES_DISPENSER_CANISTER_ID=$(dfx canister --network $NETWORK id cycles_dispenser)
 DAILY_PUZZLE_CANISTER_ID=$(dfx canister --network $NETWORK id daily_puzzle)
 REGISTRY_CANISTER_ID=$(dfx canister --network $NETWORK id registry)
-MARKET_MAKER_CANISTER_ID=$(dfx canister --network $NETWORK id market_maker)
 NEURON_CONTROLLER_CANISTER_ID=$(dfx canister --network $NETWORK id neuron_controller)
 ESCROW_CANISTER_ID=$(dfx canister --network $NETWORK id escrow)
 TRANSLATIONS_CANISTER_ID=$(dfx canister --network $NETWORK id translations)
@@ -81,7 +80,6 @@ cargo run \
   --cycles-dispenser $CYCLES_DISPENSER_CANISTER_ID \
   --daily-puzzle "$DAILY_PUZZLE_CANISTER_ID" \
   --registry $REGISTRY_CANISTER_ID \
-  --market-maker $MARKET_MAKER_CANISTER_ID \
   --neuron-controller $NEURON_CONTROLLER_CANISTER_ID \
   --escrow $ESCROW_CANISTER_ID \
   --translations $TRANSLATIONS_CANISTER_ID \

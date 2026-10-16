@@ -23,7 +23,6 @@ interface ImportMetaEnv {
     readonly OC_II_DERIVATION_ORIGIN: string;
     readonly OC_INTERNET_IDENTITY_CANISTER_ID: string;
     readonly OC_INTERNET_IDENTITY_URL: string;
-    readonly OC_MARKET_MAKER_CANISTER: string;
     readonly OC_METERED_APIKEY: string;
     // Base URL of the off-chain NCA reporting service; empty disables automated filing
     readonly OC_NCA_REPORTER_URL: string;
