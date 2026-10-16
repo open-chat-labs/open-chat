@@ -33,4 +33,5 @@ permissions = [
     "allow-set-call-speaker",
     "allow-set-call-ringback",
     "allow-set-call-end-token",
+    "allow-get-store-update",
 ]

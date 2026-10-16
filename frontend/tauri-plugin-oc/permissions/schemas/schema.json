@@ -475,6 +475,18 @@
           "markdownDescription": "Denies the get_shell_version command without any pre-configured scope."
         },
         {
+          "description": "Enables the get_store_update command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-get-store-update",
+          "markdownDescription": "Enables the get_store_update command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the get_store_update command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-get-store-update",
+          "markdownDescription": "Denies the get_store_update command without any pre-configured scope."
+        },
+        {
           "description": "Enables the load_recent_media command without any pre-configured scope.",
           "type": "string",
           "const": "allow-load-recent-media",
@@ -679,10 +691,10 @@
           "markdownDescription": "Denies the update_chat_shortcuts command without any pre-configured scope."
         },
         {
-          "description": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-open-url`\n- `allow-sign-in`\n- `allow-sign-up`\n- `allow-registerListener`\n- `allow-removeListener`\n- `allow-get-fcm-token`\n- `allow-show-notification`\n- `allow-svelte-ready`\n- `allow-release-notifications`\n- `allow-minimize-app`\n- `allow-get-server-version`\n- `allow-get-shell-version`\n- `allow-download-update`\n- `allow-restart-app`\n- `allow-load-recent-media`\n- `allow-enable-viewport-resize`\n- `allow-disable-viewport-resize`\n- `allow-save-media`\n- `allow-export-media`\n- `allow-update-chat-shortcuts`\n- `allow-get-pending-deep-link`\n- `allow-get-pending-notification-tap`\n- `allow-clear-all-notifications`\n- `allow-delete-fcm-token`\n- `allow-get-pending-call-action`\n- `allow-call-ring-handled`\n- `allow-set-call-config`\n- `allow-call-active`\n- `allow-call-ended`\n- `allow-set-call-speaker`\n- `allow-set-call-ringback`\n- `allow-set-call-end-token`",
+          "description": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-open-url`\n- `allow-sign-in`\n- `allow-sign-up`\n- `allow-registerListener`\n- `allow-removeListener`\n- `allow-get-fcm-token`\n- `allow-show-notification`\n- `allow-svelte-ready`\n- `allow-release-notifications`\n- `allow-minimize-app`\n- `allow-get-server-version`\n- `allow-get-shell-version`\n- `allow-download-update`\n- `allow-restart-app`\n- `allow-load-recent-media`\n- `allow-enable-viewport-resize`\n- `allow-disable-viewport-resize`\n- `allow-save-media`\n- `allow-export-media`\n- `allow-update-chat-shortcuts`\n- `allow-get-pending-deep-link`\n- `allow-get-pending-notification-tap`\n- `allow-clear-all-notifications`\n- `allow-delete-fcm-token`\n- `allow-get-pending-call-action`\n- `allow-call-ring-handled`\n- `allow-set-call-config`\n- `allow-call-active`\n- `allow-call-ended`\n- `allow-set-call-speaker`\n- `allow-set-call-ringback`\n- `allow-set-call-end-token`\n- `allow-get-store-update`",
           "type": "string",
           "const": "default",
-          "markdownDescription": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-open-url`\n- `allow-sign-in`\n- `allow-sign-up`\n- `allow-registerListener`\n- `allow-removeListener`\n- `allow-get-fcm-token`\n- `allow-show-notification`\n- `allow-svelte-ready`\n- `allow-release-notifications`\n- `allow-minimize-app`\n- `allow-get-server-version`\n- `allow-get-shell-version`\n- `allow-download-update`\n- `allow-restart-app`\n- `allow-load-recent-media`\n- `allow-enable-viewport-resize`\n- `allow-disable-viewport-resize`\n- `allow-save-media`\n- `allow-export-media`\n- `allow-update-chat-shortcuts`\n- `allow-get-pending-deep-link`\n- `allow-get-pending-notification-tap`\n- `allow-clear-all-notifications`\n- `allow-delete-fcm-token`\n- `allow-get-pending-call-action`\n- `allow-call-ring-handled`\n- `allow-set-call-config`\n- `allow-call-active`\n- `allow-call-ended`\n- `allow-set-call-speaker`\n- `allow-set-call-ringback`\n- `allow-set-call-end-token`"
+          "markdownDescription": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `allow-open-url`\n- `allow-sign-in`\n- `allow-sign-up`\n- `allow-registerListener`\n- `allow-removeListener`\n- `allow-get-fcm-token`\n- `allow-show-notification`\n- `allow-svelte-ready`\n- `allow-release-notifications`\n- `allow-minimize-app`\n- `allow-get-server-version`\n- `allow-get-shell-version`\n- `allow-download-update`\n- `allow-restart-app`\n- `allow-load-recent-media`\n- `allow-enable-viewport-resize`\n- `allow-disable-viewport-resize`\n- `allow-save-media`\n- `allow-export-media`\n- `allow-update-chat-shortcuts`\n- `allow-get-pending-deep-link`\n- `allow-get-pending-notification-tap`\n- `allow-clear-all-notifications`\n- `allow-delete-fcm-token`\n- `allow-get-pending-call-action`\n- `allow-call-ring-handled`\n- `allow-set-call-config`\n- `allow-call-active`\n- `allow-call-ended`\n- `allow-set-call-speaker`\n- `allow-set-call-ringback`\n- `allow-set-call-end-token`\n- `allow-get-store-update`"
         }
       ]
     }

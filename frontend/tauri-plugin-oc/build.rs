@@ -31,6 +31,7 @@ const COMMANDS: &[&str] = &[
     "set_call_speaker",
     "set_call_ringback",
     "set_call_end_token",
+    "get_store_update",
 ];
 
 fn main() {

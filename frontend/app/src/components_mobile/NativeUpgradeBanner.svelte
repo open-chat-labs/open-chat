@@ -1,9 +1,18 @@
 <script lang="ts">
+    import type { Version } from "@client";
+    import { isAndroidTauriApp } from "@shared";
+    import {
+        fetchRelease,
+        getStoreOffer,
+        noticeVersion,
+        releasePath,
+        shellUpdateFrom,
+    } from "@src/utils/shellUpdate";
     import { VersionChecker } from "@src/utils/version.svelte";
     import { appStoreBuild } from "@utils/features";
     import { BodySmall, Button, ColourVars, Column, Overview, Sheet } from "component-lib";
-    import { onDestroy } from "svelte";
-    import { openUrl } from "tauri-plugin-oc-api";
+    import { onDestroy, onMount } from "svelte";
+    import { getShellVersion, openUrl } from "tauri-plugin-oc-api";
     import { i18nKey } from "../i18n/i18n";
     import Progress from "./Progress.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
@@ -43,6 +52,29 @@
 
     onDestroy(() => checker.stop());
 
+    // What Play offers this store build, asked once per launch.
+    let storeOffer = $state<Version | undefined>(undefined);
+
+    // A release with different native code from the installed shell. The
+    // bundle check cannot see this: a shell-only release leaves the website
+    // version inside the OTA strategy, so the bundle updates silently and
+    // nothing says a new APK exists.
+    let newerShell = $state<string | undefined>(undefined);
+
+    onMount(async () => {
+        if (!isAndroidTauriApp()) return;
+        if (appStoreBuild) storeOffer = await getStoreOffer();
+        const path = releasePath(appStoreBuild, storeOffer);
+        if (path === undefined) return;
+        // A pre-rename shell has no get_shell_version and rejects;
+        // LegacyInstallBanner owns that case.
+        const shellVersion = await getShellVersion().catch(() => undefined);
+        newerShell = shellUpdateFrom(shellVersion, await fetchRelease(path))?.toText();
+    });
+
+    // One dismissible sheet for both reasons a newer version may be waiting.
+    let available = $derived(noticeVersion(checker.versionState, storeOffer, newerShell));
+
     // A store build can only be updated through the store it came from; a
     // sideloaded build has to fetch a new APK itself.
     let upgradeUrl = $derived(appStoreBuild ? PLAY_STORE_URL : DIRECT_DOWNLOAD_URL);
@@ -78,14 +110,14 @@
 {/if}
 
 <!--
-    A minor bump on a store build. The app works perfectly well on what it has;
-    the new version is simply waiting on review, and the store listing may show
-    nothing at all for days. Passing onDismiss is what makes SheetWrapper honour
-    the drag handle, backdrop and Escape.
+    A minor bump that Play now offers to this store build, or a release with
+    native changes this shell lacks. The app works perfectly well on what it
+    has, so this is dismissible. Passing onDismiss is what makes SheetWrapper
+    honour the drag handle, backdrop and Escape.
 -->
-{#if checker.versionState.kind === "store_update_available" && checker.versionState.available.toText() !== dismissedVersion}
-    {@const available = checker.versionState.available.toText()}
-    <Sheet onDismiss={() => dismiss(available)}>
+{#if available !== undefined && available !== dismissedVersion}
+    {@const version = available}
+    <Sheet onDismiss={() => dismiss(version)}>
         <Column gap={"xl"} padding={"xxl"}>
             <Overview colour={"primary"}>
                 <Translatable resourceKey={i18nKey("nativeUpdate.availableTitle")} />
@@ -93,7 +125,7 @@
             <BodySmall width={"hug"} fontWeight={"bold"}>
                 <Translatable
                     resourceKey={i18nKey("nativeUpdate.availableMessage", {
-                        version: available,
+                        version,
                     })} />
             </BodySmall>
 
