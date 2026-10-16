@@ -13,16 +13,27 @@ function stored(): boolean {
 // Whether the right column (details, members, thread …) shows. Docked, it's a preference that
 // lasts across visits (brief §4), open unless the user closed it. As a modal, below the docking
 // width, it only opens when asked to and isn't remembered, so a page never loads behind a modal.
+// Create it while a component initialises: it follows the layout's mode from then on.
 export class RightColumnState {
+    #mode: () => ShellLayout["right"];
     #docked = $state(stored());
     #modal = $state(false);
 
-    isOpen(mode: ShellLayout["right"]): boolean {
-        return mode === "dock" ? this.#docked : this.#modal;
+    constructor(mode: () => ShellLayout["right"]) {
+        this.#mode = mode;
+        // a modal left open when the window widened past the docking width doesn't come back by
+        // itself once it narrows again
+        $effect(() => {
+            if (mode() === "dock") this.#modal = false;
+        });
     }
 
-    setOpen(mode: ShellLayout["right"], open: boolean): void {
-        if (mode === "modal") {
+    get open(): boolean {
+        return this.#mode() === "dock" ? this.#docked : this.#modal;
+    }
+
+    set open(open: boolean) {
+        if (this.#mode() === "modal") {
             this.#modal = open;
             return;
         }
@@ -34,7 +45,7 @@ export class RightColumnState {
         }
     }
 
-    toggle(mode: ShellLayout["right"]): void {
-        this.setOpen(mode, !this.isOpen(mode));
+    toggle(): void {
+        this.open = !this.open;
     }
 }

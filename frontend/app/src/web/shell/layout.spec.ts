@@ -1,4 +1,6 @@
-import { shellLayout } from "./layout";
+import { crossedAt, shellLayout as layoutFor } from "./layout";
+
+const shellLayout = (width: number) => layoutFor(crossedAt(width));
 
 describe("the shell's breakpoints", () => {
     test("one column below 768px", () => {

@@ -17,9 +17,9 @@ design export needs. Each entry says where it came up.
 - **Right column widths**: the brief says 375 / 425 / 500px "as width grows" without the widths
   where it grows. `shell/layout.ts` uses 425px from 1876px and 500px from 2500px; confirm against
   the prototype.
-- **Nav rail width**: `NavRail` is 60px collapsed and 283px expanded, while the tokens say
-  `--rail-collapsed: 76px` and `--rail-expanded: 282px`. The shell's rail slot uses the
-  component's 60px.
+- **Nav rail width**: the tokens said `--rail-collapsed: 76px` / `--rail-expanded: 282px`, while
+  `NavRail` drew 60px / 283px. The tokens now match what the rail draws and `NavRail` reads them,
+  as does the shell's rail slot. Confirm 60px against the prototype.
 - **Messages have no ids**: `GroupMessage`, `ChatBubble` and `MessageGroup`'s callbacks are
   index-based, and `ThreadList` threads carry closures. Adapters keep an index → event map per
   render. A `key`/`id` on messages would be simpler (also for keyed `{#each}`).

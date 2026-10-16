@@ -1,26 +1,21 @@
 // The shell's breakpoints (architecture brief §3, from the prototype: keep them exact). They are
-// read in script rather than in media queries so that the numbers live in one place, and so the
-// right column can switch between a docked column and a modal, which are different markup.
+// read in script rather than in media queries in CSS so that the numbers live in one place, and so
+// the right column can switch between a docked column and a modal, which are different markup.
+// Each is a minimum width: the viewport is past it from that many pixels.
+export const BREAKPOINTS = {
+    // below this the app is one column at a time (list or conversation)
+    wide: 768,
+    // the chat list is 30% of the app's width (clamped 350–550px) rather than 350px
+    fluidList: 1200,
+    // the right column docks; below it, it opens as a modal
+    dockRight: 1476,
+    // the nav rail pushes the layout when expanded; below it, it floats over it
+    pushRail: 1876,
+    // the library's widest breakpoint (--bp-3xl), where the docked right column is widest
+    widest: 2500,
+} as const;
 
-// Below this the app is one column at a time (list or conversation)
-export const NARROW_MAX = 768;
-// From here the chat list is 30% of the app's width (clamped 350–550px) rather than 350px
-export const FLUID_LIST_MIN = 1200;
-// From here the right column docks; below it, it opens as a modal
-export const DOCK_RIGHT_MIN = 1476;
-// From here the nav rail pushes the layout when expanded; below it, it floats over it
-export const PUSH_RAIL_MIN = 1876;
-
-// The docked right column is 375 / 425 / 500px "as width grows". The brief doesn't say where it
-// grows, so these steps are ours (GAPS.md): 425 once the rail pushes, 500 from the library's
-// widest breakpoint (--bp-3xl).
-const RIGHT_WIDTHS: [minWidth: number, width: number][] = [
-    [2500, 500],
-    [PUSH_RAIL_MIN, 425],
-    [DOCK_RIGHT_MIN, 375],
-];
-// The modal right column, below DOCK_RIGHT_MIN
-const RIGHT_MODAL_WIDTH = 375;
+export type Crossed = Record<keyof typeof BREAKPOINTS, boolean>;
 
 export type ShellLayout = {
     narrow: boolean;
@@ -30,16 +25,22 @@ export type ShellLayout = {
     rightWidth: number;
 };
 
-export function shellLayout(width: number): ShellLayout {
-    const right = width >= DOCK_RIGHT_MIN ? "dock" : "modal";
+export function crossedAt(width: number): Crossed {
+    const crossed = {} as Crossed;
+    for (const [name, min] of Object.entries(BREAKPOINTS)) {
+        crossed[name as keyof Crossed] = width >= min;
+    }
+    return crossed;
+}
+
+export function shellLayout(crossed: Crossed): ShellLayout {
     return {
-        narrow: width < NARROW_MAX,
-        rail: width >= PUSH_RAIL_MIN ? "push" : "float",
-        list: width >= FLUID_LIST_MIN ? "fluid" : "fixed",
-        right,
-        rightWidth:
-            right === "dock"
-                ? (RIGHT_WIDTHS.find(([min]) => width >= min)?.[1] ?? RIGHT_MODAL_WIDTH)
-                : RIGHT_MODAL_WIDTH,
+        narrow: !crossed.wide,
+        rail: crossed.pushRail ? "push" : "float",
+        list: crossed.fluidList ? "fluid" : "fixed",
+        right: crossed.dockRight ? "dock" : "modal",
+        // 375 / 425 / 500px "as width grows" (the modal is 375px). The brief doesn't say where it
+        // grows, so these steps are ours (GAPS.md).
+        rightWidth: crossed.widest ? 500 : crossed.pushRail ? 425 : 375,
     };
 }

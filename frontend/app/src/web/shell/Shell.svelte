@@ -3,30 +3,33 @@
      through snippets; the shell only places them. -->
 <script lang="ts">
     import { modal } from "@openchat/ui/src/lib/behaviours/modal";
+    import { useT } from "@openchat/ui/src/lib/i18n";
     import type { Snippet } from "svelte";
     import { currentShellLayout } from "./viewport.svelte";
 
-    interface Props {
+    type Props = {
         rail: Snippet;
         left?: Snippet;
         middle: Snippet;
-        right?: Snippet;
-        // Whether the right column shows: docked, or as a modal below the docking width
-        rightOpen?: boolean;
-        onCloseRight?: () => void;
         // Which column a narrow viewport shows
         narrowView?: "left" | "middle";
-    }
+    } & (
+        | { right?: undefined }
+        | {
+              right: Snippet;
+              // Whether the right column shows: docked, or as a modal below the docking width
+              rightOpen: boolean;
+              // A modal right column always needs a way out (its backdrop, Esc)
+              onCloseRight: () => void;
+              // The modal's accessible name: resource key (or literal text)
+              rightLabel: string;
+          }
+    );
 
-    let {
-        rail,
-        left,
-        middle,
-        right,
-        rightOpen = false,
-        onCloseRight,
-        narrowView = "left",
-    }: Props = $props();
+    let props: Props = $props();
+    const { rail, left, middle } = $derived(props);
+    const narrowView = $derived(props.narrowView ?? "left");
+    const t = useT();
 
     const layout = $derived(currentShellLayout());
     // a narrow screen without a left column shows the middle
@@ -39,8 +42,8 @@
     data-list={layout.list}
     data-narrow={narrow}
     style:--shell-right-width="{layout.rightWidth}px">
-    <!-- below PUSH_RAIL_MIN the slot keeps the collapsed rail's width, so the expanded rail
-         floats over the columns (NavRail's own contract) -->
+    <!-- below the pushRail breakpoint the slot keeps the collapsed rail's width, so the expanded
+         rail floats over the columns (NavRail's own contract) -->
     <div class="rail" data-rail-slot>
         {@render rail()}
     </div>
@@ -52,18 +55,18 @@
     <main class="middle">
         {@render middle()}
     </main>
-    {#if right && rightOpen}
+    {#if props.right && props.rightOpen}
         {#if layout.right === "dock"}
             <aside class="right">
-                {@render right()}
+                {@render props.right()}
             </aside>
         {:else}
-            <div class="right-modal" use:modal={onCloseRight}>
+            <div class="right-modal" use:modal={props.onCloseRight}>
                 <!-- the keyboard closes it with Esc (use:modal) -->
                 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-                <div class="scrim" onclick={onCloseRight} aria-hidden="true"></div>
-                <div class="sheet" role="dialog" aria-modal="true">
-                    {@render right()}
+                <div class="scrim" onclick={props.onCloseRight} aria-hidden="true"></div>
+                <div class="sheet" role="dialog" aria-modal="true" aria-label={t(props.rightLabel)}>
+                    {@render props.right()}
                 </div>
             </div>
         {/if}
@@ -86,9 +89,8 @@
         background: var(--surface-0);
     }
 
-    /* NavRail's collapsed width */
     .shell[data-rail="float"] .rail {
-        width: 60px;
+        width: var(--rail-collapsed);
     }
 
     .shell[data-rail="float"] .rail :global([data-rail-expanded="true"]) {

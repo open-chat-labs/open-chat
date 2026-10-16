@@ -306,12 +306,12 @@
     flex-direction: column;
     padding: var(--space-6) var(--space-8) var(--space-2);
     gap: var(--space-6);
-    width: 60px;
+    width: var(--rail-collapsed);
     transition: width var(--duration-slow) var(--ease-out);
   }
 
   .rail.open {
-    width: 283px;
+    width: var(--rail-expanded);
   }
 
   .bar {

@@ -1,14 +1,12 @@
 import { createRawSnippet, flushSync, mount, unmount } from "svelte";
+import { installMatchMedia, setViewportWidth } from "../testing/viewport";
 import Shell from "./Shell.svelte";
 
 const region = (name: string) =>
     createRawSnippet(() => ({ render: () => `<div data-region="${name}">${name}</div>` }));
 
-function setWidth(width: number) {
-    Object.defineProperty(window, "innerWidth", { value: width, configurable: true });
-    window.dispatchEvent(new Event("resize"));
-    flushSync();
-}
+installMatchMedia();
+const setWidth = setViewportWidth;
 
 describe("the shell", () => {
     let target: HTMLElement;
@@ -33,6 +31,9 @@ describe("the shell", () => {
                 left: region("left"),
                 middle: region("middle"),
                 right: region("right"),
+                rightOpen: false,
+                onCloseRight: () => {},
+                rightLabel: "Details",
                 ...props,
             },
         });
@@ -68,6 +69,18 @@ describe("the shell", () => {
         setWidth(1475);
         expect(target.querySelector(".right")).toBeNull();
         expect(target.querySelector("[role=dialog] [data-region=right]")).not.toBeNull();
+    });
+
+    test("the modal has an accessible name", () => {
+        show(1200, { rightOpen: true, rightLabel: "Group details" });
+        expect(target.querySelector("[role=dialog]")!.getAttribute("aria-label")).toBe(
+            "Group details",
+        );
+    });
+
+    test("leaves the right column out when the screen has none", () => {
+        show(1200, { right: undefined, rightOpen: true });
+        expect(target.querySelector("[role=dialog]")).toBeNull();
     });
 
     test("the modal closes from its backdrop and from Esc", () => {
