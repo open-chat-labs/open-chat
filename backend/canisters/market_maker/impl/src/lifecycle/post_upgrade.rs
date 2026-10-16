@@ -1,12 +1,11 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::{Data, exchanges};
+use crate::{Data, jobs};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
 use market_maker_canister::post_upgrade::Args;
 use stable_memory::get_reader;
-use std::time::Duration;
 use tracing::info;
 use utils::cycles::init_cycles_dispenser_client;
 
@@ -28,5 +27,7 @@ fn post_upgrade(args: Args) {
     let total_instructions = ic_cdk::api::call_context_instruction_counter();
     info!(version = %args.wasm_version, total_instructions, "Post-upgrade complete");
 
-    ic_cdk_timers::set_timer(Duration::ZERO, exchanges::icdex::deposit_funds());
+    // Inter-canister calls can't be made from `post_upgrade` itself, so the one-off recovery of
+    // the funds held on ICDex starts from a timer
+    jobs::recover_icdex_funds::start_job();
 }

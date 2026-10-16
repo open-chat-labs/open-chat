@@ -1,6 +1,7 @@
 use crate::RuntimeState;
 
 pub mod calculate_balances;
+pub mod recover_icdex_funds;
 pub mod run_market_maker;
 
 pub(crate) fn start(_state: &RuntimeState) {

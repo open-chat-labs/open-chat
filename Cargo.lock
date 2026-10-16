@@ -7038,7 +7038,6 @@ dependencies = [
  "constants",
  "futures",
  "git_commit_id",
- "hex",
  "http_request",
  "ic-cdk 0.20.3",
  "ic-cdk-timers",
