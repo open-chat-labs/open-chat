@@ -125,6 +125,8 @@
   // the accent bar slides to whichever row is active
   async function syncBar() {
     await tick();
+    // the rail may have been unmounted while it waited
+    if (!root) return;
     const row = root.querySelector('[data-active-row]');
     barTop = row ? Math.round(row.getBoundingClientRect().top - root.getBoundingClientRect().top) + 7 : null;
   }

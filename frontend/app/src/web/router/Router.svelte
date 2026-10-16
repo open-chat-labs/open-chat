@@ -194,6 +194,11 @@
                 return;
             }
             if (client.setChatListScopeAndRedirect(route)) return;
+            if (route.kind === "profile_summary_route") {
+                // mobile's profile path: the profile is a dialog over the page here (?profile)
+                navigate(`${routeForScope(client.getDefaultScope())}?profile`, "auto");
+                return;
+            }
             if (client.isHomeRoute(route)) {
                 client.filterRightPanelHistory((panel) => panel.kind === "user_profile");
             } else if (client.isShareRoute(route)) {

@@ -76,6 +76,15 @@ describe("what a route shows", () => {
         }
     });
 
+    test("mobile's profile path has no page of its own (the router redirects it)", () => {
+        expect(
+            regionsFor(route({ kind: "profile_summary_route", scope: none }), false),
+        ).toMatchObject({
+            left: { kind: "chats" },
+            middle: { kind: "empty" },
+        });
+    });
+
     test("not found is its own page", () => {
         expect(regionsFor(route({ kind: "not_found_route", scope: none }), false)).toEqual({
             area: "not_found",

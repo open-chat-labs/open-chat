@@ -5,14 +5,17 @@
         anonUserStore,
         currentUserStore,
         OpenChat,
+        querystringStore,
         routeForScope,
         routeStore,
         sortedCommunitiesStore,
         type CommunitySummary,
     } from "@client";
     import NavRail from "@openchat/ui/src/features/components/NavRail.svelte";
+    import DialogShell from "@openchat/ui/src/lib/components/DialogShell.svelte";
     import IconButton from "@openchat/ui/src/lib/components/IconButton.svelte";
     import { navigate } from "@src/utils/navigation";
+    import { addQueryStringParam, removeQueryStringParam } from "@src/utils/urls";
     import { getContext } from "svelte";
     import { RAIL_ITEMS, railSelectionFor, type Regions } from "../../router/regions";
     import { RightColumnState } from "../../shell/rightColumn.svelte";
@@ -41,6 +44,9 @@
     });
     const items = RAIL_ITEMS.map(({ icon }) => ({ icon }));
 
+    // Dialogs people link to are query params over whatever page is open (ROUTES.md)
+    const profileOpen = $derived($querystringStore.has("profile"));
+
     // the list a narrow screen goes back to from the middle
     const back = $derived(
         regions.left?.kind === "chats" || regions.left?.kind === "threads"
@@ -64,8 +70,6 @@
                 return [`Wallet: ${middle.view}`, middle.ledger ?? ""];
             case "explore":
                 return ["Explore communities", ""];
-            case "profile":
-                return ["Profile", "ProfileDialog (phase 8)"];
             case "admin":
                 return ["Platform operator console", ""];
             default:
@@ -106,7 +110,7 @@
             onSelect={(i) => navigate(RAIL_ITEMS[i].path)}
             onSelectPin={(id) => navigate(`/community/${id}`)}
             onExplore={() => navigate("/communities")}
-            onProfile={() => navigate("/profile_summary")}
+            onProfile={() => navigate(addQueryStringParam("profile", ""))}
             onSignIn={() => client.updateIdentityState({ kind: "logging_in" })} />
     {/snippet}
     {#snippet left()}
@@ -144,6 +148,13 @@
         <Placeholder title="Details" detail="GroupPanel / DmPanel / ThreadPanel (phase 4)" />
     {/snippet}
 </Shell>
+
+{#if profileOpen}
+    <!-- TODO(phase 8): ProfileDialog -->
+    <DialogShell title="Profile" onClose={() => navigate(removeQueryStringParam("profile"))}>
+        <Placeholder title="Profile" detail="ProfileDialog (phase 8)" />
+    </DialogShell>
+{/if}
 
 <style>
     .middle {

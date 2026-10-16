@@ -21,10 +21,11 @@ Agreed on 2026-10-16; the tables below follow them.
    - **Wallet:** its own route. In the new UI it's a workspace (`WalletPanel` + `WalletMain`, brief
      §8), not the modal it is on desktop today, so `/wallet` and its sub-paths (decision 3) are
      content routes like a chat. The path is mobile's existing `/wallet`.
-   - **Activity and profile** are only state on desktop. They take mobile's existing paths:
-     `/notifications` for activity (so no new `/activity`), and `/profile_summary` for the profile
-     (opens `ProfileDialog`). Mobile's `/welcome` (shown when you have no communities) maps to
-     Explore.
+   - **Activity** is only state on desktop. It takes mobile's existing `/notifications` (so no new
+     `/activity`). Mobile's `/welcome` (shown when you have no communities) maps to Explore.
+   - **Profile** is a dialog, so it opens over whatever page is showing, as `?profile` (decision 6),
+     not as a page of its own. Mobile's `/profile_summary` stays registered for its links and
+     redirects to the default chat list with `?profile`.
    - **Threads list, per scope:** `/chats/threads`, `/favourite/threads` and
      `/community/:cid/threads`. The list belongs to a scope: `threadsByChatStore` is built from
      that scope's chats. **Opening a thread is unchanged**: it stays the chat's own
@@ -66,8 +67,9 @@ Agreed on 2026-10-16; the tables below follow them.
      out, upgrading on the page opens `AuthDialog` first.
 6. **Dialog URLs.**
    - The existing query params stay: `?diamond`, `?hof`, `?faq=`, `?everyone` and `?usergroup=`.
-   - Profile is linkable through `/profile_summary` (decision 2).
-   - CHIT has no URL today: add `?chit`, in the style of `?diamond` and `?hof`.
+   - Dialogs people link to are query params over the current page, so the page stays behind them
+     and Back closes them: `?profile` (new, opened from the rail) and `?chit` (new), in the style
+     of `?diamond` and `?hof`.
    - Every other dialog stays local state.
 
 ## Regions
@@ -102,7 +104,7 @@ Once the narrow design lands, `selectLayout` stops falling back and every browse
 | `/community/:cid/channel/:chid/…` | `selected_channel_route` (community) | channel list | conversation (channel) | `GroupPanel` (channel) on demand; thread → `ThreadPanel` | conversation | preview |
 | `/chats/threads` · `/favourite/threads` · `/community/:cid/threads` **(new)** | `threads_route` (that scope) | `ThreadList` (All / Unread) | last opened thread's chat, else `EmptyState` | `ThreadPanel` once a thread is open | list | sign in |
 | `/notifications` **(mobile's path, new on desktop)** | `notifications_route` | `ActivityPanel` | selected item's chat | – | list | sign in |
-| `/profile_summary` **(mobile's path, new on desktop)** | `profile_summary_route` | as the default scope | as the default scope | `ProfileDialog` | profile | sign in |
+| `/profile_summary` **(mobile's path, new on desktop)** | `profile_summary_route` | redirects to the default chat list with `?profile` | | | | sign in |
 | `/welcome` **(mobile's path, new on desktop)** | `welcome_route` | – | `ExploreCommunities` (as `/communities`) | – | full | yes |
 | `/communities` | `communities_route` | – (full width) | `ExploreCommunities` (search query in the URL, see below) | `JoinGateDialog` on join | full | yes |
 | `/wallet` **(mobile's path, new on desktop)** | `wallet_route` {view: all} | `WalletPanel` | `WalletMain` All activity | – (`WalletSettingsDialog` is a dialog) | panel, then main | sign in |
@@ -143,6 +145,7 @@ until there's a setting (`GAPS.md`). Signed-in users on `/` go to the app as tod
 | `?ref=` | referral; captured, then dropped from the URL |
 | `?autojoin` | join after preview |
 | `?explore` | no auto-select of a default chat |
+| `?profile` **(new)** | `ProfileDialog`, over the current page |
 | `?diamond` | `DiamondDialog` |
 | `?chit` **(new)** | `ChitDialog` |
 | `?hof` | `LeaderboardDialog` |
@@ -180,8 +183,8 @@ are placeholders until their screens are built. Still to come:
 - **Guests**: guest-only behaviour comes in the guest pass (phase 10). That covers the "sign in"
   routes in the Guest column and the composer's sign-in prompt. A guest on `/favourite` already
   gets the existing sign-in, then `/chats`.
-- **Dialog params**: `?diamond`, `?hof` and `?chit` are left in the URL until their dialogs exist
-  (phase 8).
+- **Dialog params**: `?profile` opens a placeholder dialog over the page. `?diamond`, `?hof` and
+  `?chit` are left in the URL until their dialogs exist (phase 8).
 - **Share**: `/share` goes to the default scope as today, but picking the chat (`ChatPicker`)
   comes in phase 5.
 - **Marketing pages**: they render a placeholder until Landing and Learn are mounted (phase 9).

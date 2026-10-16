@@ -17,7 +17,6 @@ export type Regions =
               | { kind: "conversation"; route: Extract<RouteParams, { chatId: unknown }> }
               | { kind: "explore" }
               | { kind: "wallet"; view: WalletView; ledger?: string }
-              | { kind: "profile" }
               | { kind: "admin" };
           // the column a narrow screen shows
           narrowView: "left" | "middle";
@@ -79,8 +78,6 @@ export function regionsFor(route: RouteParams, signedOut: boolean): Regions {
                 // the wallet's own panel is its home on a narrow screen
                 narrowView: route.view === "all" ? "left" : "middle",
             };
-        case "profile_summary_route":
-            return { area: "app", middle: { kind: "profile" }, narrowView: "middle" };
         case "admin_route":
             return { area: "app", middle: { kind: "admin" }, narrowView: "middle" };
         default:
@@ -115,7 +112,6 @@ export function railSelectionFor(route: RouteParams): RailSelection {
             return { item: 3 };
         case "communities_route":
         case "welcome_route":
-        case "profile_summary_route":
         case "admin_route":
             return { item: -1 };
     }

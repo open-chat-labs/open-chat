@@ -105,6 +105,15 @@ describe("the web UI's router", () => {
         expect(routeStore.value).toMatchObject({ kind: "wallet_route", view: "all" });
     });
 
+    test("opens mobile's profile path as the profile dialog over the default chat list", async () => {
+        await open("/profile_summary");
+        await vi.waitFor(() => expect(location.pathname + location.search).toBe("/chats?profile"));
+        expect(routeStore.value).toMatchObject({
+            kind: "chat_list_route",
+            scope: { kind: "chats" },
+        });
+    });
+
     test("marks a path nothing matches as not found", async () => {
         await open("/a/b/c/d");
         expect(notFoundStore.value).toBe(true);

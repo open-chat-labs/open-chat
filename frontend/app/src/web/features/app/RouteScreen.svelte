@@ -10,7 +10,7 @@
     import Placeholder from "./Placeholder.svelte";
 
     // development only, until the marketing pages are mounted
-    const DEV_LINKS = ["/chats", "/favourite", "/chats/threads", "/notifications", "/communities", "/wallet", "/wallet/send", "/profile_summary"];
+    const DEV_LINKS = ["/chats", "/favourite", "/chats/threads", "/notifications", "/communities", "/wallet", "/wallet/send", "/chats?profile"];
 
     const signedOut = $derived($identityStateStore.kind === "anon" && $anonUserStore);
     const regions = $derived(regionsFor($routeStore, signedOut));
