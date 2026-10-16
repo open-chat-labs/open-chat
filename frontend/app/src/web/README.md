@@ -23,6 +23,9 @@ getting the existing apps until the narrow layouts are designed.
 web/
   App.svelte     root: styles, behaviours, i18n bridge, theme on <html>, the client
   i18n.ts        @openchat/ui's copy merged into svelte-i18n, and the translator it is given
+  ROUTES.md      every URL and what each column shows for it
+  DATA.md        where each screen's data and actions come from in the app
+  GAPS.md        what the app or the library is missing
   shell/         nav rail, the three columns and the breakpoints, overlays
   features/      one folder per screen/feature (chats, conversation, wallet, …):
     XScreen.svelte   reads stores / the client, renders @openchat/ui components, calls the client
