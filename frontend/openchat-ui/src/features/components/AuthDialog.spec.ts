@@ -117,3 +117,88 @@ describe('AuthDialog: one host call at a time', () => {
     expect(onMethod).toHaveBeenCalledOnce();
   });
 });
+
+describe('AuthDialog: what the host offers', () => {
+  let target: HTMLElement;
+  let app: object;
+  beforeEach(() => {
+    vi.useFakeTimers();
+    target = document.body.appendChild(document.createElement('div'));
+  });
+  afterEach(() => {
+    unmount(app);
+    target.remove();
+    vi.useRealTimers();
+  });
+
+  function open(props: Record<string, unknown>) {
+    app = mount(AuthDialog, { target, props: { inline: true, ...props } });
+    flushSync();
+  }
+  const q = <T extends Element = HTMLElement>(sel: string) => target.querySelector<T & HTMLElement>(sel);
+  const typeInto = (input: HTMLInputElement | null, value: string) => {
+    input!.value = value;
+    input!.dispatchEvent(new Event('input', { bubbles: true }));
+    flushSync();
+  };
+  const labels = (sel: string) => [...target.querySelectorAll(sel)].map((el) => el.textContent!.trim());
+
+  test('offers only the methods it is given', () => {
+    open({ kind: 'login', methods: ['email', 'ii'], onMethod: vi.fn() });
+    expect(q('.passkey')).toBeNull();
+    expect(q('.or')).toBeNull();
+    expect(q('form.email')).not.toBeNull();
+    expect(labels('.tile-label')).toEqual(['Internet ID']);
+  });
+
+  test('asks which wallet, then passes it on', async () => {
+    const onMethod = vi.fn(() => Promise.resolve());
+    open({ kind: 'login', onMethod, wallets: { eth: [{ id: 'metaMask', name: 'MetaMask' }, { id: 'walletConnect', name: 'WalletConnect' }] } });
+    q('.tile[title="Sign in with Ethereum"]')!.click();
+    flushSync();
+    expect(onMethod).not.toHaveBeenCalled();
+    expect(labels('.option .method-label')).toEqual(['MetaMask', 'WalletConnect']);
+    [...target.querySelectorAll<HTMLButtonElement>('.option')][1].click();
+    await settle();
+    expect(onMethod).toHaveBeenCalledWith('eth', 'login', 'walletConnect');
+  });
+
+  test('a method without a wallet list starts straight away', async () => {
+    const onMethod = vi.fn(() => Promise.resolve());
+    open({ kind: 'login', onMethod, wallets: { eth: [{ id: 'metaMask', name: 'MetaMask' }] } });
+    q('.tile[title="Sign in with Solana"]')!.click();
+    await settle();
+    expect(onMethod).toHaveBeenCalledWith('sol', 'login');
+  });
+
+  test('shows the code the sent link goes with', async () => {
+    open({ kind: 'login', onRequestEmailLink: () => Promise.resolve({ code: '123' }) });
+    typeInto(q<HTMLInputElement>('form.email input'), 'me@example.com');
+    q<HTMLFormElement>('form.email')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    await settle();
+    expect(q('.sent .code')!.textContent).toBe('123');
+  });
+
+  test("a link's page sends the code once three digits are in, and says what came of it", async () => {
+    const onLinkCode = vi.fn().mockResolvedValueOnce('expired').mockResolvedValueOnce('elsewhere');
+    open({ kind: 'link', onLinkCode });
+    expect(q('.switch')).toBeNull();
+    typeInto(q<HTMLInputElement>('.code-input'), '12');
+    expect(onLinkCode).not.toHaveBeenCalled();
+    typeInto(q<HTMLInputElement>('.code-input'), '123');
+    await settle();
+    expect(onLinkCode).toHaveBeenCalledWith('123');
+    expect(q('[role=alert]')!.textContent).toContain('expired');
+    typeInto(q<HTMLInputElement>('.code-input'), '456');
+    await settle();
+    expect(q('.sent-title')!.textContent).toBe('You’re signed in');
+    expect(target.textContent).toContain('Close this page');
+  });
+
+  test("a link's code the host rejects reads as invalid", async () => {
+    open({ kind: 'link', onLinkCode: () => Promise.reject(new Error('network')) });
+    typeInto(q<HTMLInputElement>('.code-input'), '123');
+    await settle();
+    expect(q('[role=alert]')!.textContent).toContain('Check the code');
+  });
+});
