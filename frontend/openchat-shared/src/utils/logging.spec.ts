@@ -1,6 +1,7 @@
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import {
     evalRefusedInInjectedCode,
+    inititaliseLogger,
     normaliseSourceMapUrls,
     thrownByDocumentScript,
     uncaughtReason,
@@ -199,5 +200,28 @@ describe("evalRefusedInInjectedCode", () => {
     test("only applies to EvalError", () => {
         expect(evalRefusedInInjectedCode(payload("TypeError", ":234"))).toBe(false);
         expect(evalRefusedInInjectedCode(payload("EvalError"))).toBe(false);
+    });
+});
+
+// With no body the app isn't on screen, so there's no user to report it for (#9932)
+describe("an error raised once the document has no body", () => {
+    const body = document.body;
+
+    afterEach(() => {
+        document.documentElement.appendChild(body);
+        vi.restoreAllMocks();
+    });
+
+    test("is not reported", () => {
+        const reported = vi.spyOn(console, "error").mockImplementation(() => undefined);
+        vi.spyOn(console, "debug").mockImplementation(() => undefined);
+        const logger = inititaliseLogger("", "test", "test");
+
+        logger.error("Top level boundary error: ", new TypeError("boom"));
+        expect(reported).toHaveBeenCalledOnce();
+
+        body.remove();
+        logger.error("Top level boundary error: ", new TypeError("boom"));
+        expect(reported).toHaveBeenCalledOnce();
     });
 });
