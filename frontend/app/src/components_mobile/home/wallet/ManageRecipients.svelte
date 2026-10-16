@@ -20,7 +20,9 @@
     import Plus from "svelte-material-icons/Plus.svelte";
     import Edit from "svelte-material-icons/TextBoxEditOutline.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
+    import AddressNetworkIcon from "@shared_components/home/wallet/AddressNetworkIcon.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
+    import { addressNetwork } from "@src/utils/cryptoAddress";
 
     const client = getContext<OpenChat>("client");
 
@@ -61,6 +63,7 @@
         {#if $namedAccountsStore.length > 0}
             <Container closeMenuOnScroll height={"fill"} gap={"md"} direction={"vertical"}>
                 {#each $namedAccountsStore as account}
+                    {@const network = addressNetwork(account.account)}
                     <MenuTrigger maskUI fill position={"bottom"} align={"end"} withBgEffect={true}>
                         <Container
                             supplementalClass={"account_list_item"}
@@ -80,8 +83,13 @@
 
                             <Container direction={"vertical"} gap="xs">
                                 <Label fontWeight={"bold"}>{account.name}</Label>
-                                <Body ellipsisTruncate colour={"textSecondary"}
-                                    >{account.account}</Body>
+                                <Container gap="xs" crossAxisAlignment="center">
+                                    {#if network !== undefined}
+                                        <AddressNetworkIcon {network} size={"1rem"} />
+                                    {/if}
+                                    <Body ellipsisTruncate colour={"textSecondary"}
+                                        >{account.account}</Body>
+                                </Container>
                             </Container>
 
                             <IconButton size={"md"}>
