@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Pass avatar changes from the MultiUser canisters on to the UserIndex, and drop the unused fire-and-forget handler ([#10011](https://github.com/open-chat-labs/open-chat/pull/10011))
+- Pass avatar changes from the MultiUser canisters on to the UserIndex ([#10011](https://github.com/open-chat-labs/open-chat/pull/10011))
 
 ## [[2.0.2152](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2152-local_user_index)] - 2026-10-16
 
