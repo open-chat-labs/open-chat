@@ -305,11 +305,9 @@ You can change your username at any time by clicking \"Profile settings\" from t
         byte_limit: 100 * ONE_MB,
     });
 
-    state.data.identity_canister_user_sync_queue.push_back(UserIdentity {
+    state.data.identity_user_sync_queue.push(UserIdentity {
         principal,
         user_id: Some(user_id),
         email,
     });
-
-    crate::jobs::sync_users_to_identity_canister::try_run_now(state);
 }
