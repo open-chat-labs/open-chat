@@ -9,6 +9,9 @@
     import AppScreen from "./AppScreen.svelte";
     import Placeholder from "./Placeholder.svelte";
 
+    // development only, until the marketing pages are mounted
+    const DEV_LINKS = ["/chats", "/favourite", "/chats/threads", "/notifications", "/communities", "/wallet", "/wallet/send", "/profile_summary"];
+
     const signedOut = $derived($identityStateStore.kind === "anon" && $anonUserStore);
     const regions = $derived(regionsFor($routeStore, signedOut));
 
@@ -23,8 +26,15 @@
 
 {#if regions.area === "marketing"}
     <div class="page">
-        <!-- TODO(phase 9): Landing and Learn -->
-        <Placeholder title="Marketing page" detail={regions.route.kind} />
+        <!-- TODO(phase 9): Landing and Learn. Until then, links into the app. -->
+        <div class="marketing">
+            <Placeholder title="Marketing page" detail={regions.route.kind} />
+            <nav class="links">
+                {#each DEV_LINKS as href}
+                    <a {href}>{href}</a>
+                {/each}
+            </nav>
+        </div>
     </div>
 {:else if regions.area === "not_found"}
     <div class="page">
@@ -45,6 +55,25 @@
 {/if}
 
 <style>
+    .marketing {
+        display: grid;
+        gap: var(--space-16);
+        justify-items: center;
+    }
+
+    .links {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: var(--space-12);
+        font-family: var(--font-mono);
+        font-size: var(--text-sm);
+    }
+
+    .links a {
+        color: var(--accent);
+    }
+
     .page {
         display: grid;
         place-items: center;
