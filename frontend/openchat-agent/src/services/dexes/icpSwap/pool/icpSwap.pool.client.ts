@@ -20,7 +20,12 @@ export class IcpSwapPoolClient
         super(identity, agent, canisterId, idlFactory, "IcpSwapPool");
     }
 
-    quote(inputToken: string, outputToken: string, amountIn: bigint): Promise<bigint | undefined> {
+    quote(
+        inputToken: string,
+        outputToken: string,
+        amountIn: bigint,
+        outputTokenFee: bigint,
+    ): Promise<bigint | undefined> {
         const zeroForOne = this.zeroForOne(inputToken, outputToken);
         const args = {
             amountIn: amountIn.toString(),
@@ -28,12 +33,17 @@ export class IcpSwapPoolClient
             zeroForOne,
         };
 
-        return this.handleQueryResponse(() => this.service.quoteForAll(args), quoteResponse, args);
+        return this.handleQueryResponse(
+            () => this.service.quoteForAll(args),
+            (resp) => quoteResponse(resp, outputTokenFee),
+            args,
+        );
     }
 
     // Swaps straight from the caller's wallet in a single call. The pool pulls `amountIn` from the
     // wallet via ICRC2, so the caller must first approve the pool for `amountIn + inputTokenFee`.
-    // `minAmountOut` is on the same basis as `quote`, ie. before the output token's fee is taken.
+    // `minAmountOut` is what must reach the wallet, as for `quote`, so the pool, which checks its
+    // output before taking the output token's fee, is given it plus that fee.
     // The pool queues the transfer of the output back to the wallet, so it lands shortly after this
     // returns. Any input the swap didn't use, which is all of it if the swap fails, is refunded the
     // same way, less another `inputTokenFee`. The fees must match the pool's cached ledger fees,
@@ -48,7 +58,7 @@ export class IcpSwapPoolClient
     ): Promise<DexSwapResult> {
         const args = {
             amountIn: amountIn.toString(),
-            amountOutMinimum: minAmountOut.toString(),
+            amountOutMinimum: (minAmountOut + outputTokenFee).toString(),
             zeroForOne: this.zeroForOne(inputToken, outputToken),
             tokenInFee: inputTokenFee,
             tokenOutFee: outputTokenFee,

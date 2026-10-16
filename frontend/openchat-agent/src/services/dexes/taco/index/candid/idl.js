@@ -10,6 +10,8 @@ export const idlFactory = ({ IDL }) => {
   });
   return IDL.Service({
     'getAllAMMPools' : IDL.Func([], [IDL.Vec(AMMPool)], ['query']),
+    'getV2AllowedTokens' : IDL.Func([], [IDL.Vec(IDL.Text)], ['query']),
+    'getV2Enabled' : IDL.Func([], [IDL.Bool], ['query']),
   });
 };
 export const init = ({ IDL }) => { return []; };

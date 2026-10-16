@@ -945,6 +945,7 @@ type GetTokenSwapQuotes = {
     inputTokenLedger: string;
     outputTokenLedger: string;
     amountIn: bigint;
+    outputTokenFee: bigint;
 };
 
 type SwapTokens = {

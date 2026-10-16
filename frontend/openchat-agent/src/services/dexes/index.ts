@@ -5,10 +5,14 @@ import { TacoIndexClient } from "./taco/index/taco.index.client";
 
 const TEN_MINUTES = 10 * 60 * 1000;
 
+// A DEX's pools, along with the tokens it will swap straight from the wallet, which is any of them
+// if `walletInputTokens` is undefined
+type DexPools = { pools: TokenSwapPool[]; walletInputTokens: Set<string> | undefined };
+
 export class DexesAgent {
     private _identity: Identity;
     private _swapIndexClients: Record<DexId, SwapIndexClient>;
-    private _poolsCache: Record<string, [TokenSwapPool[], number]> = {};
+    private _poolsCache: Record<string, [DexPools, number]> = {};
 
     constructor(private agent: HttpAgent) {
         this._identity = new AnonymousIdentity();
@@ -18,6 +22,7 @@ export class DexesAgent {
         };
     }
 
+    // The pools which will swap `inputToken` straight from the wallet for any of `outputTokens`
     async getSwapPools(
         inputToken: string,
         outputTokens: Set<string>,
@@ -25,22 +30,32 @@ export class DexesAgent {
     ): Promise<TokenSwapPool[]> {
         const allPools = await this.getAllSwapPools(swapProviders);
 
-        return allPools.filter(
-            (p) =>
-                (p.token0 === inputToken && outputTokens.has(p.token1)) ||
-                (p.token1 === inputToken && outputTokens.has(p.token0)),
+        return allPools.flatMap((dexPools) =>
+            swapsFromWallet(dexPools, inputToken)
+                ? dexPools.pools.filter(
+                      (p) =>
+                          (p.token0 === inputToken && outputTokens.has(p.token1)) ||
+                          (p.token1 === inputToken && outputTokens.has(p.token0)),
+                  )
+                : [],
         );
     }
 
+    // Which of `tokens` can be swapped straight from the wallet for another of them
     async canSwap(tokens: Set<string>, swapProviders: DexId[]): Promise<Set<string>> {
         const allPools = await this.getAllSwapPools(swapProviders);
 
         const available = new Set<string>();
 
-        for (const p of allPools) {
-            if (tokens.has(p.token0) && tokens.has(p.token1)) {
-                available.add(p.token0);
-                available.add(p.token1);
+        for (const dexPools of allPools) {
+            for (const p of dexPools.pools) {
+                if (tokens.has(p.token0) && tokens.has(p.token1)) {
+                    for (const token of [p.token0, p.token1]) {
+                        if (swapsFromWallet(dexPools, token)) {
+                            available.add(token);
+                        }
+                    }
+                }
             }
         }
 
@@ -51,6 +66,7 @@ export class DexesAgent {
         inputToken: string,
         outputToken: string,
         amountIn: bigint,
+        outputTokenFee: bigint,
         swapProviders: DexId[],
     ): Promise<[DexId, bigint][]> {
         const pools = await this.getSwapPools(inputToken, new Set([outputToken]), swapProviders);
@@ -61,8 +77,9 @@ export class DexesAgent {
         // to the caller. Promise.all here failed the whole request on any one pool's rejection.
         const quotes = await Promise.allSettled(
             pools.map((p) =>
-                this.quoteSingle(p, inputToken, outputToken, amountIn).then((quote) =>
-                    quote === undefined ? undefined : ([p.dex, quote] as [DexId, bigint]),
+                this.quoteSingle(p, inputToken, outputToken, amountIn, outputTokenFee).then(
+                    (quote) =>
+                        quote === undefined ? undefined : ([p.dex, quote] as [DexId, bigint]),
                 ),
             ),
         );
@@ -82,14 +99,17 @@ export class DexesAgent {
         // Not worth failing the swap over; worth knowing about.
         quotes.forEach((q, i) => {
             if (q.status === "rejected") {
-                console.warn(`quoteSwap: ${pools[i].dex} pool failed, quoting without it`, q.reason);
+                console.warn(
+                    `quoteSwap: ${pools[i].dex} pool failed, quoting without it`,
+                    q.reason,
+                );
             }
         });
         return succeeded;
     }
 
-    private getAllSwapPools(swapProviders: DexId[]): Promise<TokenSwapPool[]> {
-        const promises: Promise<TokenSwapPool[]>[] = [];
+    private getAllSwapPools(swapProviders: DexId[]): Promise<DexPools[]> {
+        const promises: Promise<DexPools>[] = [];
         for (const swapProvider of swapProviders) {
             const cached = this.tryGetAllSwapPoolsFromCache(swapProvider);
             if (cached !== undefined) {
@@ -101,14 +121,17 @@ export class DexesAgent {
                 continue;
             }
             promises.push(
-                client.getPools().then((pools) => {
-                    this._poolsCache[swapProvider] = [pools, Date.now()];
-                    return pools;
-                }),
+                Promise.all([client.getPools(), client.walletInputTokens()]).then(
+                    ([pools, walletInputTokens]) => {
+                        const dexPools = { pools, walletInputTokens };
+                        this._poolsCache[swapProvider] = [dexPools, Date.now()];
+                        return dexPools;
+                    },
+                ),
             );
         }
         return Promise.allSettled(promises).then((result) =>
-            result.flatMap((r) => (r.status === "fulfilled" ? r.value : [])),
+            result.flatMap((r) => (r.status === "fulfilled" ? [r.value] : [])),
         );
     }
 
@@ -117,16 +140,17 @@ export class DexesAgent {
         inputToken: string,
         outputToken: string,
         amountIn: bigint,
+        outputTokenFee: bigint,
     ): Promise<bigint | undefined> {
         const indexClient = this._swapIndexClients[pool.dex];
         if (indexClient === undefined) {
             return Promise.resolve(BigInt(0));
         }
         const poolClient = indexClient.getPoolClient(pool.canisterId, pool.token0, pool.token1);
-        return poolClient.quote(inputToken, outputToken, amountIn);
+        return poolClient.quote(inputToken, outputToken, amountIn, outputTokenFee);
     }
 
-    private tryGetAllSwapPoolsFromCache(dex: DexId): TokenSwapPool[] | undefined {
+    private tryGetAllSwapPoolsFromCache(dex: DexId): DexPools | undefined {
         const cached = this._poolsCache[dex];
         if (cached === undefined) {
             return undefined;
@@ -137,13 +161,26 @@ export class DexesAgent {
     }
 }
 
+function swapsFromWallet({ walletInputTokens }: DexPools, inputToken: string): boolean {
+    return walletInputTokens?.has(inputToken) ?? true;
+}
+
 export interface SwapIndexClient {
     getPoolClient(canisterId: string, token0: string, token1: string): SwapPoolClient;
     getPools(): Promise<TokenSwapPool[]>;
+    // The tokens the DEX will swap straight from the wallet, or undefined if any
+    walletInputTokens(): Promise<Set<string> | undefined>;
 }
 
 export interface SwapPoolClient {
-    // undefined when the pool declines to quote (amount too small, no liquidity); reject only
-    // for a failure to ask
-    quote(inputToken: string, outputToken: string, amountIn: bigint): Promise<bigint | undefined>;
+    // What reaches the wallet from swapping `amountIn`, which is what the DEX pulls from the wallet,
+    // after every fee, including `outputTokenFee` for sending the output to the wallet. undefined
+    // when the pool declines to quote (amount too small, no liquidity); reject only for a failure to
+    // ask
+    quote(
+        inputToken: string,
+        outputToken: string,
+        amountIn: bigint,
+        outputTokenFee: bigint,
+    ): Promise<bigint | undefined>;
 }

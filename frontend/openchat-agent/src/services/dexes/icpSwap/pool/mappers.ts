@@ -7,9 +7,12 @@ import type { Error as ApiQuoteError } from "./candid/types";
 // decline indistinguishable from a transport failure: executeQuery retried it seven times with
 // backoff (roughly twelve seconds for a dust amount), quoteSwap could not tell "every pool
 // declined" from "every pool is down", and the error tracker filled with non-events.
-export function quoteResponse(candid: ApiNatResult): bigint | undefined {
+//
+// The pool quotes its output before taking the output token's fee to send it to the wallet, so the
+// fee is deducted here to give what reaches the wallet, as for a swap.
+export function quoteResponse(candid: ApiNatResult, outputTokenFee: bigint): bigint | undefined {
     if ("ok" in candid) {
-        return candid.ok;
+        return afterFee(candid.ok, outputTokenFee);
     }
     if (isDecline(candid.err)) {
         console.debug("ICPSwap declined to quote: ", candid.err);
@@ -36,15 +39,16 @@ function isDecline(err: ApiQuoteError): boolean {
 }
 
 // The pool reports the output before taking the output token's fee to send it to the wallet, so the
-// fee is deducted here to give what reaches the wallet, as the backend's swaps do
+// fee is deducted here to give what reaches the wallet, as the backend's swaps do. The pool refuses
+// a swap whose output would fall short of the minimum with a slippage error, which is down to the
+// rate having moved since the quote. Any other error (eg. the pool's cached fees being out of date)
+// is no better for quoting again.
 export function swapResponse(candid: ApiNatResult, outputTokenFee: bigint): DexSwapResult {
     if ("ok" in candid) {
-        return {
-            kind: "success",
-            amountOut: candid.ok > outputTokenFee ? candid.ok - outputTokenFee : 0n,
-        };
+        return { kind: "success", amountOut: afterFee(candid.ok, outputTokenFee) };
     }
-    return { kind: "error", error: JSON.stringify(candid.err) };
+    const error = JSON.stringify(candid.err);
+    return { kind: "error", error, rateChanged: error.includes("Slippage check failed") };
 }
 
 export function unusedBalancesResponse(
@@ -67,4 +71,8 @@ export function withdrawResponse(candid: ApiNatResult): boolean {
     }
     console.warn("Failed to withdraw from ICPSwap", candid.err);
     return false;
+}
+
+function afterFee(amount: bigint, fee: bigint): bigint {
+    return amount > fee ? amount - fee : 0n;
 }

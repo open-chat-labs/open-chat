@@ -9685,12 +9685,14 @@ export class OpenChat {
         const tokenIn = cryptoLookup.value.get(ledgerIn)!;
         const tokenOut = cryptoLookup.value.get(ledgerOut)!;
         try {
-            // What reaches the DEX is less the fees for approving the pool and for its pull
+            // What the DEX pulls is less the fees for approving it and for its pull, and each quote is
+            // what reaches the wallet, after the fee for sending it there
             const quotes = await this.#worker.send({
                 kind: "getTokenSwapQuotes",
                 inputTokenLedger: ledgerIn,
                 outputTokenLedger: ledgerOut,
                 amountIn: amountIn - 2n * tokenIn.transferFee,
+                outputTokenFee: tokenOut.transferFee,
             });
             const rates = exchangeRatesLookupStore.value;
             return swapQuoteResult(
@@ -9772,7 +9774,7 @@ export class OpenChat {
         return outcome;
     }
 
-    // ICPSwap pays the output of a swap out of a queue, so it can reach the wallet a few seconds after
+    // Each DEX pays the output of a swap out of a queue, so it can reach the wallet a few seconds after
     // the swap is reported done. Given the balance before a successful swap, this keeps refreshing
     // until the balance has gone up, so the user doesn't see their input gone and no output.
     async #refreshSwapOutput(ledger: string, balanceBefore: bigint | undefined): Promise<void> {
