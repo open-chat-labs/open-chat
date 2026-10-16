@@ -1,9 +1,15 @@
 # OpenChat canister map
 
-An interactive map of every canister type OpenChat runs: open [index.html](index.html) in a browser
-(it is a single self-contained file, so it can be served from anywhere, or opened straight from
-disk). Each canister is a node; click one to zoom in on its endpoints, state, background jobs,
-metrics, and the calls it makes and receives. Search finds canisters, endpoints and state fields.
+An interactive map of every canister type OpenChat runs, served from the website canister at
+[oc.app/canisters](https://oc.app/canisters). Each canister is a node; click one to zoom in on its
+endpoints, state, background jobs, metrics, and the calls it makes and receives. Search finds
+canisters, endpoints and state fields.
+
+The page is a single self-contained file which the website build regenerates from the backend
+source on every deploy (`frontend/app/rollup.config.mjs` runs `extract.py --out
+build/canisters/index.html`), so it always describes the code of the release it ships with. To
+look at it locally, run `extract.py` as below and open the `index.html` it writes beside it; that
+copy is not committed.
 
 Everything on the map except the one-paragraph descriptions is read from the source code by
 [extract.py](extract.py):
@@ -23,9 +29,12 @@ Everything on the map except the one-paragraph descriptions is read from the sou
 From the repo root:
 
 ```
-python3 architecture/canister_map/extract.py          # rebuilds index.html
+python3 architecture/canister_map/extract.py          # writes architecture/canister_map/index.html
 python3 architecture/canister_map/extract.py --live   # also refreshes the prod counts in live.json from /metrics
 ```
+
+`live.json` holds the prod counts shown on the overview tab (users, groups, files, ...) for a
+build without `--live`; the prod and prod test website builds fetch them afresh.
 
 `index.html` is `template.html` with the extracted data spliced in, so edit the template for changes to
 the page and `extract.py` (the `DESCRIPTIONS` table) for the canister descriptions. A canister

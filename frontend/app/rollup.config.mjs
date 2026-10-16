@@ -443,6 +443,18 @@ export default {
             ],
             hook: "buildStart",
         }),
+        // The interactive canister map (architecture/canister_map) is served from the website
+        // canister at /canisters and regenerated from the backend source on every build, so it
+        // always describes the code it was built with. Prod and prod test builds also fetch the
+        // headline counts (users, groups, files) from the prod canisters' /metrics.
+        execute({
+            commands: [
+                `python3 ../../architecture/canister_map/extract.py --out build/canisters/index.html${
+                    ["production", "prod_test"].includes(process.env.OC_BUILD_ENV) ? " --live" : ""
+                }`,
+            ],
+            hook: "writeBundle",
+        }),
         androidBundlePlugin({ version, csp: () => otaCsp }),
     ],
     watch: {

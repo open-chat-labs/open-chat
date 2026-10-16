@@ -14,8 +14,11 @@ Run from the repo root:
 
     python3 architecture/canister_map/extract.py            # writes canister_map/index.html
     python3 architecture/canister_map/extract.py --live     # also refreshes live.json from prod metrics
+    python3 architecture/canister_map/extract.py --out frontend/app/build/canisters/index.html --live
 
-index.html is produced by splicing the data into template.html, so the page stays a single file.
+index.html is produced by splicing the data into template.html, so the page stays a single file. The
+website build runs the last form (see frontend/app/rollup.config.mjs) so the map is served from the
+website canister at /canisters and regenerated on every deploy; with --out, live.json is left alone.
 """
 
 import json
@@ -887,7 +890,7 @@ def build():
 
     return {
         "generated": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
-        "commit": os.popen("git rev-parse --short HEAD").read().strip(),
+        "commit": os.popen(f"git -C {ROOT} rev-parse --short HEAD").read().strip(),
         "zones": ZONES,
         "externals": {k: {"title": v[0], "detail": v[1]} for k, v in EXTERNALS.items()},
         "offchain": {v[0]: v[1] for v in OFFCHAIN.values()},
@@ -896,14 +899,21 @@ def build():
 
 
 def main():
+    args = sys.argv[1:]
+    out = OUT_DIR / "index.html"
+    if "--out" in args:
+        out = Path(args[args.index("--out") + 1]).resolve()
+        out.parent.mkdir(parents=True, exist_ok=True)
     data = build()
 
-    # The prod counts are kept in live.json between runs, so a plain run doesn't touch the network
+    # The prod counts are kept in live.json between runs, so a plain run doesn't touch the network;
+    # a build into another location (--out) uses what it fetches without touching the file
     live_file = OUT_DIR / "live.json"
-    if "--live" in sys.argv:
+    if "--live" in args:
         print("fetching prod metrics…", file=sys.stderr)
         counts = {"live": live_counts(canister_ids()), "live_as_of": datetime.now(timezone.utc).strftime("%Y-%m-%d")}
-        live_file.write_text(json.dumps(counts, indent=1) + "\n", encoding="utf-8")
+        if out == OUT_DIR / "index.html":
+            live_file.write_text(json.dumps(counts, indent=1) + "\n", encoding="utf-8")
     else:
         counts = json.loads(read(live_file) or "{}")
     data["live"] = counts.get("live", {})
@@ -920,8 +930,8 @@ def main():
         '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
         + head + '</head>\n<body>\n<div id="app">' + body + '\n</body>\n</html>\n'
     )
-    (OUT_DIR / "index.html").write_text(html, encoding="utf-8")
-    print(f"wrote index.html ({len(html) // 1024} KB)", file=sys.stderr)
+    out.write_text(html, encoding="utf-8")
+    print(f"wrote {out} ({len(html) // 1024} KB)", file=sys.stderr)
 
     total = sum(len(c["endpoints"]) for c in data["canisters"].values())
     print(f"{len(data['canisters'])} canisters, {total} endpoints", file=sys.stderr)

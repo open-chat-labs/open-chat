@@ -82,7 +82,15 @@ function registerStaticResourceCache() {
     });
 }
 
-const matchCallback = ({ request }: { request: Request }) => request.mode === "navigate";
+// Every navigation but the standalone pages the website canister serves beside the app (the
+// canister map at /canisters), which must not replace the cached app document below
+const STANDALONE_PAGES = ["/canisters"];
+const matchCallback = ({ request }: { request: Request }) =>
+    request.mode === "navigate" &&
+    !STANDALONE_PAGES.some((p) => {
+        const path = new URL(request.url).pathname;
+        return path === p || path.startsWith(p + "/");
+    });
 const DOCUMENT_CACHE_NAME = "openchat_network_first";
 
 if (!isDevServer) {

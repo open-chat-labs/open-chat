@@ -1,7 +1,7 @@
 <title>OpenChat Canister Map</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
 /* Layout: a full-viewport map of canisters grouped into zones, with a detail panel that a
    selected canister expands into (right on desktop, bottom sheet on phones). */
@@ -33,8 +33,8 @@
   --zone-governance: #e7dff8;
   --zone-platform: #e3e3ec;
   --ext: #f3f2f9;
-  --font-ui: "Manrope", "Avenir Next", "Segoe UI", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+  --font-ui: "Plus Jakarta Sans", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", Menlo, Monaco, "Courier New", monospace;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -81,7 +81,7 @@ header {
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
   border-bottom: 1px solid var(--line); background: var(--surface); z-index: 5;
 }
-header h1 { font-size: 16px; font-weight: 800; letter-spacing: -.01em; margin: 0; white-space: nowrap; }
+header h1 { font-size: 16px; font-weight: 700; letter-spacing: -.01em; margin: 0; white-space: nowrap; }
 header h1 small { display: block; font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; }
 .search { position: relative; flex: 1 1 220px; max-width: 460px; min-width: 0; }
 .search input {
@@ -134,7 +134,7 @@ main { position: relative; flex: 1 1 auto; min-height: 0; display: flex; }
 
 .zone { cursor: zoom-in; }
 .zone rect { fill: var(--zone-fill); stroke: none; rx: 18; }
-.zone text { fill: var(--muted); font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.zone text { fill: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
 
 .node { cursor: pointer; }
 .node .stack { fill: var(--surface); stroke: var(--line-strong); stroke-width: 1.2; rx: 14; opacity: .7; }
@@ -142,7 +142,7 @@ main { position: relative; flex: 1 1 auto; min-height: 0; display: flex; }
 .node.ephemeral .card { stroke-dasharray: 5 4; }
 .node:hover .card, .node.focus .card { stroke: var(--accent); stroke-width: 2.2; }
 .node.selected .card { stroke: var(--accent); stroke-width: 2.6; }
-.node .title { font-size: 17px; font-weight: 800; fill: var(--fg); letter-spacing: -.01em; }
+.node .title { font-size: 17px; font-weight: 700; fill: var(--fg); letter-spacing: -.01em; }
 .node .tag { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; fill: var(--muted); }
 .node .summary { font-size: 11.5px; fill: var(--muted); font-weight: 500; }
 .node .counts { font-size: 10.5px; fill: var(--muted); font-weight: 600; }
@@ -161,7 +161,7 @@ main { position: relative; flex: 1 1 auto; min-height: 0; display: flex; }
 .ext.webapp text { fill: var(--accent); }
 .ext:hover rect, .ext.focus rect { stroke: var(--accent); }
 .ext.dim { opacity: .18; }
-.col-label { font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; fill: var(--muted); }
+.col-label { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; fill: var(--muted); }
 
 .edge { fill: none; stroke: var(--edge); stroke-width: 1.3; opacity: .5; marker-end: url(#arrow); pointer-events: none; transition: opacity .15s; }
 .edge.ext-edge { stroke-dasharray: 4 4; opacity: .35; }
@@ -205,8 +205,8 @@ main { position: relative; flex: 1 1 auto; min-height: 0; display: flex; }
 #panel.closing { opacity: 0; }
 .panel-head { padding: 16px 18px 0; border-bottom: 1px solid var(--line); }
 .panel-head .row { display: flex; gap: 10px; align-items: flex-start; }
-.panel-head h2 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -.02em; line-height: 1.15; flex: 1 1 auto; min-width: 0; }
-.panel-head .zone-pill { display: inline-block; font-size: 10.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.panel-head h2 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -.02em; line-height: 1.15; flex: 1 1 auto; min-width: 0; }
+.panel-head .zone-pill { display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
 .panel-head .zone-pill i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; background: var(--zone-fill); border: 1px solid var(--line-strong); }
 .panel-head p { margin: 8px 0 12px; color: var(--muted); }
 .tabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; margin: 0 -18px; padding: 0 12px; }
@@ -218,12 +218,12 @@ main { position: relative; flex: 1 1 auto; min-height: 0; display: flex; }
 .tabs button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
 .tabs button span { font-weight: 600; color: var(--muted); margin-left: 4px; font-size: 11.5px; }
 .panel-body { flex: 1 1 auto; overflow: auto; padding: 16px 18px 28px; min-height: 0; }
-.panel-body h3 { font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 22px 0 8px; font-weight: 800; }
+.panel-body h3 { font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 22px 0 8px; font-weight: 700; }
 .panel-body h3:first-child { margin-top: 0; }
 .panel-body p { margin: 0 0 10px; }
 .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
 .fact { background: var(--surface-2); border-radius: 10px; padding: 9px 11px; min-width: 0; }
-.fact .v { font-size: 20px; font-weight: 800; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.fact .v { font-size: 20px; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
 .fact .v.small { font-size: 13px; font-family: var(--font-mono); word-break: break-all; }
 .fact .k { font-size: 11px; color: var(--muted); font-weight: 600; }
 .badges { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -244,7 +244,7 @@ main { position: relative; flex: 1 1 auto; min-height: 0; display: flex; }
   padding: 8px 4px; border: 0; background: transparent; min-width: 0;
 }
 .ep > button:hover { background: var(--surface-2); }
-.ep .k { width: 20px; height: 20px; border-radius: 6px; display: grid; place-items: center; font-size: 10.5px; font-weight: 800; }
+.ep .k { width: 20px; height: 20px; border-radius: 6px; display: grid; place-items: center; font-size: 10.5px; font-weight: 700; }
 .ep .k.q { background: var(--query-soft); color: var(--query); }
 .ep .k.u { background: var(--update-soft); color: var(--update); }
 .ep .n { font-family: var(--font-mono); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
@@ -280,7 +280,7 @@ pre.code .cm { color: var(--muted); font-style: italic; }
 .calls { display: grid; gap: 10px; }
 .call { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
 .call .to { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
-.call .to button { font-weight: 800; font-size: 14px; }
+.call .to button { font-weight: 700; font-size: 14px; }
 .call .via { font-size: 11px; color: var(--muted); }
 .methods { display: flex; flex-wrap: wrap; gap: 4px; }
 .methods span { font-family: var(--font-mono); font-size: 11px; padding: 2px 7px; border-radius: 6px; background: var(--surface-2); }
