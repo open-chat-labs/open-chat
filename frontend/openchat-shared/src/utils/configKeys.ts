@@ -61,4 +61,5 @@ export const configKeys = {
     softDisabled: "openchat_softdisabled",
     hideBlocked: "openchat_hideblocked",
     minLogLevel: "openchat_min_log_level",
+    webRightColumnOpen: "openchat_web_right_column_open",
 };
