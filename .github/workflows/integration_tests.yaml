@@ -12,10 +12,14 @@ on:
       # The tiny canisters written in wat, whose committed wasms are checked against them
       - "**.wat"
       - "**.wasm"
+      # How the wasms the master runs test are built (by the Push canister wasms workflow)
+      - "Dockerfile"
+      - "scripts/docker-build-all-wasms.sh"
       - "scripts/run-integration-tests.sh"
       - "scripts/generate-all-canister-wasms.sh"
       - "scripts/generate-test-wasms.sh"
       - "scripts/cached-download.sh"
+      - "scripts/download-all-canister-wasms.sh"
       - "scripts/download-canister-wasm.sh"
       - "scripts/download-canister-wasm-dfx.sh"
       - "scripts/download-nns-canister-wasm.sh"
@@ -32,8 +36,41 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # The Push canister wasms workflow builds the wasms at every commit to master and uploads them to
+  # S3, so the master runs test those (the wasms which would be released) rather than building
+  # them again. Its run is triggered by the same push, so it may not have been created yet.
+  wait_for_wasms:
+    name: Wait for wasms to be built
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      actions: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Wait for the Push canister wasms run at this commit
+        run: |
+          while true
+          do
+            # A failed request is retried, like a run which hasn't been created yet
+            RUN=$(gh run list --workflow push_canister_wasms.yaml --commit "${GITHUB_SHA}" --event push --limit 1 --json databaseId,status,conclusion --jq '.[0] // empty | "\(.databaseId) \(.status) \(.conclusion)"') || RUN=""
+            read -r ID STATUS CONCLUSION <<< "${RUN}"
+            if [ "${STATUS}" == "completed" ]
+            then
+              echo "Push canister wasms run ${ID} completed: ${CONCLUSION}"
+              [ "${CONCLUSION}" == "success" ] && exit 0 || exit 1
+            fi
+            echo "Push canister wasms run ${ID:-not found}${STATUS:+ is ${STATUS}}, checking again in 30 seconds"
+            sleep 30
+          done
+
   integration_tests:
     name: run integration tests
+    needs: wait_for_wasms
+    # Manual runs skip the wait, so this runs unless it failed
+    if: ${{ !cancelled() && !failure() }}
     runs-on:
       - runs-on
       - cpu=16
@@ -45,21 +82,22 @@ jobs:
         run: |
           curl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused -fsSL "https://sh.rustup.rs" | sh -s -- --default-toolchain none -y
       - uses: actions/checkout@v4
-      # The master runs write the cache which every run restores. It's only saved when its key (the
-      # manifests, lockfile and toolchain) has changed, so after a key change the first master run
-      # to finish saves it (runs which started before then try too, and fail harmlessly). Runs whose
-      # tests fail save it as well: they nearly always fail after the build has finished, and
-      # saving only on success would leave runs building from an older cache (or from nothing,
-      # after a toolchain change) until one passed
+      # The master runs write the cache which every run restores. Those runs don't build the wasms,
+      # so it only holds the build of the tests, and manual runs build the wasms from scratch. It's
+      # only saved when its key (the manifests, lockfile and toolchain) has changed, so after a key
+      # change the first master run to finish saves it (runs which started before then try too, and
+      # fail harmlessly). Runs whose tests fail save it as well: they nearly always fail after the
+      # build has finished, and saving only on success would leave runs building from an older
+      # cache (or from nothing, after a toolchain change) until one passed
       - uses: ./.github/workflows/setup-rust
         with:
           cache: ${{ github.event_name == 'push' && 'write' || 'read' }}
           cache-on-failure: 'true'
-          shared-key: build-wasm
+          shared-key: integration-tests
       - uses: arduino/setup-protoc@v1
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-      # Builds the wasms natively (incrementally, from the cache) rather than from scratch in
-      # docker. Reproducible builds only matter for releases, which still go through docker.
-      - name: Build canister wasms and run integration tests
-        run: ./scripts/run-integration-tests.sh build
+      # On master the wasms are downloaded from S3 at this commit. Manual runs build them natively
+      # rather than in docker, since reproducible builds only matter for releases.
+      - name: Run integration tests
+        run: ./scripts/run-integration-tests.sh ${{ github.event_name == 'push' && github.sha || 'build' }}

@@ -9,8 +9,9 @@
 # `--dry-run` first, it only reports which canisters would be copied from the cache or built.
 #
 # The wasms are built with TEST_BUILD=1 (see generate-all-canister-wasms.sh), so they aren't the
-# wasms which would be released. On CI, where there is no cache to share and the build is warmed by
-# the cache the integration tests write on master, this builds everything the release way instead.
+# wasms which would be released. On CI (only manual runs of the integration tests, since on master
+# they download the wasms the Push canister wasms workflow built), where there is no cache to share,
+# this builds everything the release way instead.
 
 SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
