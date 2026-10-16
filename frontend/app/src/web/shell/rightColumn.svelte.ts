@@ -1,14 +1,6 @@
+import { LocalStorageBoolStore } from "@client";
+import { configKeys } from "@shared";
 import type { ShellLayout } from "./layout";
-
-const STORAGE_KEY = "openchat_web_right_column_open";
-
-function stored(): boolean {
-    try {
-        return localStorage.getItem(STORAGE_KEY) !== "false";
-    } catch {
-        return true;
-    }
-}
 
 // Whether the right column (details, members, thread …) shows. Docked, it's a preference that
 // lasts across visits (brief §4), open unless the user closed it. As a modal, below the docking
@@ -16,7 +8,8 @@ function stored(): boolean {
 // Create it while a component initialises: it follows the layout's mode from then on.
 export class RightColumnState {
     #mode: () => ShellLayout["right"];
-    #docked = $state(stored());
+    #stored = new LocalStorageBoolStore(configKeys.webRightColumnOpen, true);
+    #docked = $state(this.#stored.value);
     #modal = $state(false);
 
     constructor(mode: () => ShellLayout["right"]) {
@@ -38,11 +31,7 @@ export class RightColumnState {
             return;
         }
         this.#docked = open;
-        try {
-            localStorage.setItem(STORAGE_KEY, String(open));
-        } catch {
-            // the preference just isn't remembered
-        }
+        this.#stored.set(open);
     }
 
     toggle(): void {

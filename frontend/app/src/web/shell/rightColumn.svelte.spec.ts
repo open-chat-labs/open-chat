@@ -24,7 +24,6 @@ describe("the right column's open state", () => {
         cleanup();
         mode = "dock";
         localStorage.clear();
-        vi.restoreAllMocks();
     });
 
     test("docked, it starts open", () => {
@@ -66,19 +65,6 @@ describe("the right column's open state", () => {
         state.open = true;
         setMode("dock");
         setMode("modal");
-        expect(state.open).toBe(false);
-    });
-
-    test("works without localStorage", () => {
-        vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
-            throw new Error("denied");
-        });
-        vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
-            throw new Error("denied");
-        });
-        const state = create();
-        expect(state.open).toBe(true);
-        state.open = false;
         expect(state.open).toBe(false);
     });
 });

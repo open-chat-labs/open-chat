@@ -6,7 +6,6 @@ const region = (name: string) =>
     createRawSnippet(() => ({ render: () => `<div data-region="${name}">${name}</div>` }));
 
 installMatchMedia();
-const setWidth = setViewportWidth;
 
 describe("the shell", () => {
     let target: HTMLElement;
@@ -23,7 +22,7 @@ describe("the shell", () => {
     });
 
     function show(width: number, props: Record<string, unknown> = {}) {
-        setWidth(width);
+        setViewportWidth(width);
         app = mount(Shell, {
             target,
             props: {
@@ -57,7 +56,7 @@ describe("the shell", () => {
     test("follows the breakpoints as the window resizes", () => {
         show(1900);
         expect([shell().dataset.rail, shell().dataset.list]).toEqual(["push", "fluid"]);
-        setWidth(1100);
+        setViewportWidth(1100);
         expect([shell().dataset.rail, shell().dataset.list]).toEqual(["float", "fixed"]);
         expect(shell().style.getPropertyValue("--shell-right-width")).toBe("375px");
     });
@@ -66,7 +65,7 @@ describe("the shell", () => {
         show(1476, { rightOpen: true });
         expect(target.querySelector(".right")).not.toBeNull();
         expect(target.querySelector("[role=dialog]")).toBeNull();
-        setWidth(1475);
+        setViewportWidth(1475);
         expect(target.querySelector(".right")).toBeNull();
         expect(target.querySelector("[role=dialog] [data-region=right]")).not.toBeNull();
     });
@@ -83,6 +82,26 @@ describe("the shell", () => {
         expect(target.querySelector("[role=dialog]")).toBeNull();
     });
 
+    test("the rail starts collapsed again when it switches between pushing and floating", () => {
+        let mounts = 0;
+        const rail = createRawSnippet(() => ({
+            render: () => `<div data-region="rail">rail</div>`,
+            setup: () => {
+                mounts++;
+            },
+        }));
+        show(1900, { rail });
+        expect(mounts).toBe(1);
+        setViewportWidth(1500);
+        expect(mounts).toBe(2);
+        // crossings that leave the rail pushing or floating keep it as it is
+        setViewportWidth(1300);
+        setViewportWidth(1000);
+        expect(mounts).toBe(2);
+        setViewportWidth(1876);
+        expect(mounts).toBe(3);
+    });
+
     test("the modal closes from its backdrop and from Esc", () => {
         const onCloseRight = vi.fn();
         show(1200, { rightOpen: true, onCloseRight });
@@ -97,7 +116,7 @@ describe("the shell", () => {
         unmount(app!);
         show(767, { narrowView: "middle" });
         expect(shell().dataset.narrow).toBe("middle");
-        setWidth(768);
+        setViewportWidth(768);
         expect(shell().dataset.narrow).toBeUndefined();
     });
 

@@ -9,8 +9,9 @@
     import Shell from "../../shell/Shell.svelte";
     import { currentShellLayout } from "../../shell/viewport.svelte";
 
-    const layout = $derived(currentShellLayout());
-    const rightColumn = new RightColumnState(() => layout.right);
+    const rightMode = $derived(currentShellLayout().right);
+    const narrow = $derived(currentShellLayout().narrow);
+    const rightColumn = new RightColumnState(() => rightMode);
     // TODO(phase 2): the router picks the column a narrow screen shows
     let narrowView = $state<"left" | "middle">("left");
 
@@ -40,7 +41,7 @@
         <div class="placeholder">
             <!-- TODO(phase 3): ConversationHeader's back button and panel toggle -->
             <div class="toolbar">
-                {#if layout.narrow}
+                {#if narrow}
                     <IconButton
                         icon="back"
                         variant="ghost"

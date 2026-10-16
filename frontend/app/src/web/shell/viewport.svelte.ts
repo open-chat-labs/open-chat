@@ -18,12 +18,8 @@ function breakpoints(): Record<keyof Crossed, MediaQuery> {
 // The shell's layout for the current viewport, kept up to date when read in a reactive context
 // ($derived, $effect, markup)
 export function currentShellLayout(): ShellLayout {
-    const q = breakpoints();
-    return shellLayout({
-        wide: q.wide.current,
-        fluidList: q.fluidList.current,
-        dockRight: q.dockRight.current,
-        pushRail: q.pushRail.current,
-        widest: q.widest.current,
-    });
+    const crossed = Object.fromEntries(
+        Object.entries(breakpoints()).map(([name, query]) => [name, query.current]),
+    ) as Crossed;
+    return shellLayout(crossed);
 }

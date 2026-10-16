@@ -1,11 +1,17 @@
 import { flushSync } from "svelte";
 
 // jsdom has no matchMedia. This one answers the shell's (min-width: Npx) queries from innerWidth
-// and fires "change" only when a resize crosses the width, as browsers do.
+// and fires "change" only when a resize crosses the width, as browsers do. Any other query
+// (prefers-reduced-motion …) doesn't match.
 export function installMatchMedia(): void {
     window.matchMedia = (query: string) => {
-        const min = Number(/min-width:\s*(\d+)px/.exec(query)![1]);
         const list = new EventTarget();
+        const width = /min-width:\s*(\d+)px/.exec(query);
+        if (width === null) {
+            Object.defineProperty(list, "matches", { value: false });
+            return list as MediaQueryList;
+        }
+        const min = Number(width[1]);
         let matched = window.innerWidth >= min;
         window.addEventListener("resize", () => {
             if (window.innerWidth >= min !== matched) {

@@ -31,21 +31,33 @@
     const narrowView = $derived(props.narrowView ?? "left");
     const t = useT();
 
-    const layout = $derived(currentShellLayout());
+    // each field on its own, so a crossing only re-runs what depends on the field it changed
+    const railMode = $derived(currentShellLayout().rail);
+    const listMode = $derived(currentShellLayout().list);
+    const rightMode = $derived(currentShellLayout().right);
+    const rightWidth = $derived(currentShellLayout().rightWidth);
     // a narrow screen without a left column shows the middle
-    const narrow = $derived(layout.narrow ? (left ? narrowView : "middle") : undefined);
+    const narrow = $derived(
+        currentShellLayout().narrow ? (left ? narrowView : "middle") : undefined,
+    );
 </script>
 
 <div
     class="shell"
-    data-rail={layout.rail}
-    data-list={layout.list}
+    data-rail={railMode}
+    data-list={listMode}
     data-narrow={narrow}
-    style:--shell-right-width="{layout.rightWidth}px">
+    style:--shell-right-width="{rightWidth}px">
     <!-- below the pushRail breakpoint the slot keeps the collapsed rail's width, so the expanded
-         rail floats over the columns (NavRail's own contract) -->
+         rail floats over the columns (NavRail's own contract). The rail scrolls on short windows. -->
     <div class="rail" data-rail-slot>
-        {@render rail()}
+        <div class="rail-scroll">
+            <!-- a rail expanded while it pushed the columns would cover them once it floats, so it
+                 starts collapsed again whenever it switches between the two -->
+            {#key railMode}
+                {@render rail()}
+            {/key}
+        </div>
     </div>
     {#if left}
         <div class="left">
@@ -56,7 +68,7 @@
         {@render middle()}
     </main>
     {#if props.right && props.rightOpen}
-        {#if layout.right === "dock"}
+        {#if rightMode === "dock"}
             <aside class="right">
                 {@render props.right()}
             </aside>
@@ -76,6 +88,7 @@
 <style>
     .shell {
         display: flex;
+        height: 100vh;
         height: 100dvh;
         overflow: hidden;
         background: var(--surface-0);
@@ -89,8 +102,22 @@
         background: var(--surface-0);
     }
 
+    .rail-scroll {
+        height: 100%;
+        overflow-x: hidden;
+        overflow-y: auto;
+        scrollbar-width: thin;
+    }
+
     .shell[data-rail="float"] .rail {
         width: var(--rail-collapsed);
+    }
+
+    /* out of flow, so the expanded rail can be wider than its slot */
+    .shell[data-rail="float"] .rail-scroll {
+        position: absolute;
+        inset-block: 0;
+        inset-inline-start: 0;
     }
 
     .shell[data-rail="float"] .rail :global([data-rail-expanded="true"]) {
