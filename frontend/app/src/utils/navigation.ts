@@ -97,6 +97,11 @@ function walletDepth(view: string): number {
     return view === "all" ? 0 : view === "token" ? 1 : 2;
 }
 
+// The community whose thread list a path is, if it is one
+function communityThreadsOf(path: string): string | undefined {
+    return path.split(/[?#]/)[0].match(/^\/community\/([^/]+)\/threads$/)?.[1];
+}
+
 export function pathToRouteKind(path: string): RouteParams["kind"] {
     const pathname = path.split(/[?#]/)[0];
     for (const { regexp, kind } of ROUTE_MATCHERS) {
@@ -241,6 +246,26 @@ export function navigationMode(
     if (intent === "dismiss") return "pop";
 
     const toKind = pathToRouteKind(to);
+    // A community's thread list sits under the community (parentRoute), so it's a level deeper
+    // than the community and its channels, not a tab beside them
+    const toThreadsOf = communityThreadsOf(to);
+    if (
+        toThreadsOf !== undefined &&
+        (from.kind === "selected_community_route" || from.kind === "selected_channel_route") &&
+        from.communityId.communityId === toThreadsOf
+    ) {
+        return "push";
+    }
+    if (
+        from.kind === "threads_route" &&
+        from.scope.kind === "community" &&
+        toKind === "selected_community_route" &&
+        to.split(/[?#]/)[0] === `/community/${from.scope.id.communityId}`
+    ) {
+        return "pop";
+    }
+    // The wallet's depth only, so going back pops to the nearest shallower wallet entry, whichever
+    // token it was on. Fine while Send / Receive / Swap only lead back to the token they came from.
     if (from.kind === "wallet_route" && toKind === "wallet_route") {
         const fromDepth = walletDepth(from.view);
         const toDepth = walletDepth(walletViewOf(to));

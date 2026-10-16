@@ -375,6 +375,18 @@ describe("the web UI's thread lists", () => {
         expect(navigationMode(P.groupThread, chatsThreads)).toBe("push");
     });
 
+    it("push from a community (or its channel) to its threads, and pop back", () => {
+        const communityThreads: RouteParams = {
+            kind: "threads_route",
+            scope: { kind: "community", id: communityId },
+        };
+        expect(navigationMode("/community/comm_1/threads", community)).toBe("push");
+        expect(navigationMode("/community/comm_1/threads", channel)).toBe("push");
+        expect(navigationMode(P.community, communityThreads)).toBe("pop");
+        // another community's threads are a sideways move
+        expect(navigationMode("/community/comm_2/threads", community)).toBe("replace");
+    });
+
     it("go back up to their scope's list", () => {
         expect(parentRoute(chatsThreads)).toBe("/chats");
         expect(parentRoute({ kind: "threads_route", scope: { kind: "favourite" } })).toBe(
