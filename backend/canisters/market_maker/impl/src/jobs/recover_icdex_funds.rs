@@ -286,15 +286,18 @@ fn on_attempt_complete(result: Result<Outcome, String>, state: &mut RuntimeState
             recovery.completed = Some(now);
             recovery.consecutive_failures = 0;
             recovery.last_error = None;
+            recovery.waiting_for = None;
             info!(?recovery, "ICDex funds recovered");
         }
         Ok(Outcome::Waiting(reason)) => {
             recovery.last_error = None;
+            recovery.waiting_for = Some(reason.clone());
             let delay = schedule_retry(recovery, now);
             info!(reason, delay, "ICDex funds recovery waiting, will retry");
         }
         Err(error) => {
             recovery.last_error = Some(error.clone());
+            recovery.waiting_for = None;
             let delay = schedule_retry(recovery, now);
             error!(
                 error,

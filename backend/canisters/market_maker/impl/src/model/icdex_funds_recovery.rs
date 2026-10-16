@@ -13,6 +13,8 @@ pub struct IcdexFundsRecovery {
     pub consecutive_failures: u32,
     pub next_attempt_due: Option<TimestampMillis>,
     pub last_error: Option<String>,
+    // Why the last attempt stopped short without failing, e.g. ICDex has yet to land a transfer
+    pub waiting_for: Option<String>,
     pub open_orders_cancelled: Option<TimestampMillis>,
     pub icdex_balances_before_withdrawal: Option<IcdexBalances>,
     pub withdrawn_from_icdex: Option<IcdexWithdrawal>,
@@ -81,13 +83,12 @@ impl IcdexFundsRecovery {
         balances.icp_e8s = balances.icp_e8s.max(icp_e8s);
     }
 
-    // A withdrawal which finds nothing left on ICDex (because an earlier one took it all) adds
-    // nothing, so a repeated withdrawal never overstates what is due to land on the ledgers
     pub fn record_withdrawal(&mut self, chat_e8s: u128, icp_e8s: u128, now: TimestampMillis) {
-        let withdrawal = self.withdrawn_from_icdex.get_or_insert_default();
-        withdrawal.timestamp = now;
-        withdrawal.chat_e8s = withdrawal.chat_e8s.saturating_add(chat_e8s);
-        withdrawal.icp_e8s = withdrawal.icp_e8s.saturating_add(icp_e8s);
+        self.withdrawn_from_icdex = Some(IcdexWithdrawal {
+            timestamp: now,
+            chat_e8s,
+            icp_e8s,
+        });
     }
 
     // The amounts of CHAT and ICP due to land on this canister's ledger accounts: the larger of
@@ -178,29 +179,6 @@ mod tests {
 
         recovery.completed = Some(4);
         assert_eq!(recovery.next_step(), NextStep::Done);
-    }
-
-    #[test]
-    fn withdrawal_with_nothing_left_on_icdex_keeps_the_amounts_already_recorded() {
-        let mut recovery = IcdexFundsRecovery::default();
-        recovery.record_withdrawal(7_150_000_000, 38_522, 1);
-        recovery.record_withdrawal(0, 0, 2);
-
-        let withdrawal = recovery.withdrawn_from_icdex.unwrap();
-        assert_eq!(withdrawal.chat_e8s, 7_150_000_000);
-        assert_eq!(withdrawal.icp_e8s, 38_522);
-        assert_eq!(withdrawal.timestamp, 2);
-    }
-
-    #[test]
-    fn a_withdrawal_which_found_more_adds_to_the_amounts_recorded() {
-        let mut recovery = IcdexFundsRecovery::default();
-        recovery.record_withdrawal(100, 0, 1);
-        recovery.record_withdrawal(50, 20, 2);
-
-        let withdrawal = recovery.withdrawn_from_icdex.unwrap();
-        assert_eq!(withdrawal.chat_e8s, 150);
-        assert_eq!(withdrawal.icp_e8s, 20);
     }
 
     #[test]
