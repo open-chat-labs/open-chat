@@ -36,6 +36,7 @@ Default permissions for the plugin
 - `allow-set-call-speaker`
 - `allow-set-call-ringback`
 - `allow-set-call-end-token`
+- `allow-get-store-update`
 
 ## Permission Table
 
@@ -432,6 +433,32 @@ Enables the get_shell_version command without any pre-configured scope.
 <td>
 
 Denies the get_shell_version command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-get-store-update`
+
+</td>
+<td>
+
+Enables the get_store_update command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-get-store-update`
+
+</td>
+<td>
+
+Denies the get_store_update command without any pre-configured scope.
 
 </td>
 </tr>

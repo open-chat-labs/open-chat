@@ -17,6 +17,9 @@ jobs:
 
         steps:
             - uses: actions/checkout@v4
+              with:
+                  # android_native_version.sh diffs against earlier android tags.
+                  fetch-depth: 0
 
             - name: Extract Version
               id: extract_version
@@ -299,6 +302,21 @@ jobs:
               with:
                   files: |
                       frontend/openchat_${{ env.VERSION }}_full.apk
+
+            # Written after the APK is attached, so a client never reads a
+            # marker for a release it cannot download yet. Replaces any marker
+            # a previous run of this workflow left.
+            - name: Record Native Version
+              if: github.event_name == 'release'
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: |
+                  NATIVE_VERSION=$(bash app/android_native_version.sh "$VERSION")
+                  echo "Native code unchanged since: $NATIVE_VERSION"
+                  gh release view "$GITHUB_REF_NAME" --json body --jq .body \
+                    | sed '/<!-- native-version: .* -->/d' > release_notes.md
+                  printf '\n<!-- native-version: %s -->\n' "$NATIVE_VERSION" >> release_notes.md
+                  gh release edit "$GITHUB_REF_NAME" --notes-file release_notes.md
 
             - name: Notify Release
               if: github.event_name == 'release'

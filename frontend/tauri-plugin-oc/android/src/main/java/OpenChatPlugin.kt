@@ -13,6 +13,8 @@ import app.tauri.plugin.Invoke
 import app.tauri.plugin.JSArray
 import app.tauri.plugin.JSObject
 import app.tauri.plugin.Plugin
+import com.google.android.play.core.appupdate.AppUpdateManagerFactory
+import com.google.android.play.core.install.model.UpdateAvailability
 import com.google.firebase.messaging.FirebaseMessaging
 import com.ocplugin.app.calls.CallChat
 import com.ocplugin.app.calls.CallConfig
@@ -72,6 +74,25 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
     @Command
     fun getFcmToken(invoke: Invoke) {
         invoke.resolve(JSObject().put("fcmToken", OCPluginCompanion.fcmToken))
+    }
+
+    // What Play offers this install, so a store build announces an update only
+    // once it can be installed. Resolves without a versionCode when Play offers
+    // nothing or cannot be asked; the caller treats both as no update.
+    @Command
+    fun getStoreUpdate(invoke: Invoke) {
+        AppUpdateManagerFactory.create(activity).appUpdateInfo
+            .addOnSuccessListener { info ->
+                if (info.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE) {
+                    invoke.resolve(JSObject().put("versionCode", info.availableVersionCode()))
+                } else {
+                    invoke.resolve(JSObject())
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.w(LOG_TAG, "Play update check failed", e)
+                invoke.resolve(JSObject())
+            }
     }
 
     @Command
