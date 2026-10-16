@@ -157,10 +157,9 @@
             });
     }
 
-    // Sets the key on the user index, which passes it on to every MultiUser canister. A blank value
-    // unsets it.
-    function setAlchemyApiKey(): Promise<void> {
-        const apiKey = alchemyApiKey === "" ? undefined : alchemyApiKey;
+    // Sets the key on the user index, which passes it on to every MultiUser canister. Unsetting it has
+    // its own button, so that a second click on Set can't unset it.
+    function setAlchemyApiKey(apiKey: string | undefined): Promise<void> {
         busy.add(21);
         return client
             .setAlchemyApiKey(apiKey)
@@ -1037,10 +1036,20 @@
 
     <section class="operator-function">
         <div class="title">Alchemy API key (Solana RPC)</div>
-        <Input bind:value={alchemyApiKey} placeholder={i18nKey("New key (blank to unset)")} />
-        <Button tiny loading={busy.has(21)} disabled={busy.has(21)} onClick={setAlchemyApiKey}>
-            Set
-        </Button>
+        <Input bind:value={alchemyApiKey} placeholder={i18nKey("New key")} />
+        <ButtonGroup align="fill">
+            <Button
+                tiny
+                loading={busy.has(21)}
+                disabled={busy.has(21) || alchemyApiKey.trim() === ""}
+                onClick={() => setAlchemyApiKey(alchemyApiKey.trim())}>Set</Button>
+            <Button
+                tiny
+                secondary
+                loading={busy.has(21)}
+                disabled={busy.has(21)}
+                onClick={() => setAlchemyApiKey(undefined)}>Unset</Button>
+        </ButtonGroup>
     </section>
 
     <section class="operator-function">

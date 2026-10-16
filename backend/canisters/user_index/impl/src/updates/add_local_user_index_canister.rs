@@ -4,7 +4,7 @@ use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use ic_cdk_management_canister::{CanisterInfoArgs, CanisterInstallMode};
-use local_user_index_canister::{SetPremiumItemCost, UserDetailsFull, UserIdMigrated, UserIndexEvent};
+use local_user_index_canister::{SetAlchemyApiKey, SetPremiumItemCost, UserDetailsFull, UserIdMigrated, UserIndexEvent};
 use rand::RngExt;
 use tracing::info;
 use types::{BuildVersion, CanisterId, CanisterWasm, Hash};
@@ -171,6 +171,13 @@ fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut Runti
                 UserIndexEvent::SetDailyPuzzleCanisterId(daily_puzzle_canister_id),
             );
         }
+        // In case the key was changed while the LocalUserIndex was being installed with the previous one
+        state.data.user_index_event_sync_queue.push(
+            canister_id,
+            UserIndexEvent::SetAlchemyApiKey(SetAlchemyApiKey {
+                api_key: state.data.alchemy_api_key.clone(),
+            }),
+        );
         for (old_user_id, new_user_id) in state.data.migrated_user_ids.iter() {
             state.data.user_index_event_sync_queue.push(
                 canister_id,

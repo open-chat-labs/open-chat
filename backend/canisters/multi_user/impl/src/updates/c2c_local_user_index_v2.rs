@@ -24,8 +24,8 @@ fn c2c_local_user_index_v2_impl(args: Args, state: &mut RuntimeState) -> Respons
             continue;
         }
         let (user_id, event) = event.value;
-        if let LocalUserIndexEvent::SetAlchemyApiKey(api_key) = event {
-            state.data.alchemy_api_key = api_key;
+        if let LocalUserIndexEvent::SetAlchemyApiKey(ev) = event {
+            state.data.alchemy_api_key = ev.api_key;
             continue;
         }
         // Events for a user who isn't in this canister can never be applied, so are dropped rather

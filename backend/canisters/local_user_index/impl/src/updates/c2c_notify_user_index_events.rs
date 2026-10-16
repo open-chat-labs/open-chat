@@ -332,7 +332,13 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             state.data.alchemy_api_key = ev.api_key.clone();
             let canister_ids: Vec<_> = state.data.local_multi_user_canisters.iter().map(|(c, _)| *c).collect();
             for canister_id in canister_ids {
-                state.push_event_to_multi_user_canister(canister_id, UserEvent::SetAlchemyApiKey(ev.api_key.clone()), **now);
+                state.push_event_to_multi_user_canister(
+                    canister_id,
+                    UserEvent::SetAlchemyApiKey(multi_user_canister::SetAlchemyApiKey {
+                        api_key: ev.api_key.clone(),
+                    }),
+                    **now,
+                );
             }
         }
     }
