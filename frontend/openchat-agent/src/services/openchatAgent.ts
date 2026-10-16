@@ -6049,6 +6049,10 @@ export class OpenChatAgent extends EventTarget {
     setCallPushEnabled(enabled: boolean): Promise<Success | OCError> {
         return this._userIndexClient.setCallPushEnabled(enabled);
     }
+
+    setAlchemyApiKey(apiKey: string | undefined): Promise<Success | OCError> {
+        return this._userIndexClient.setAlchemyApiKey(apiKey);
+    }
     dailyPuzzleRegenerateToday(gameId: string | undefined): Promise<Success | OCError> {
         return this._dailyPuzzleClient.get().regenerateToday(gameId);
     }

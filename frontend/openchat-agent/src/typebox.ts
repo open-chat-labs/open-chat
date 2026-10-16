@@ -2386,6 +2386,11 @@ export const UserIndexUnsuspendUserResponse = /* @__PURE__ */ Type.Union([
     }),
 ]);
 
+export type UserIndexSetAlchemyApiKeyArgs = Static<typeof UserIndexSetAlchemyApiKeyArgs>;
+export const UserIndexSetAlchemyApiKeyArgs = /* @__PURE__ */ Type.Object({
+    api_key: Type.Optional(Type.String()),
+});
+
 export type UserIndexProposeProtectedActionSuccessResult = Static<
     typeof UserIndexProposeProtectedActionSuccessResult
 >;

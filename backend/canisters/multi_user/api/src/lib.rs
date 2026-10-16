@@ -108,6 +108,22 @@ pub enum LocalUserIndexEvent {
     ReinstateMissedDailyClaims(Vec<u16>),
     BotUpdated(Box<BotDefinitionUpdate>),
     BotRemoved(UserId),
+    // For the canister rather than one of its users, so sent under the canister's own id
+    SetAlchemyApiKey(SetAlchemyApiKey),
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct SetAlchemyApiKey {
+    pub api_key: Option<String>,
+}
+
+// Written by hand so that `#[trace]` doesn't record the key
+impl std::fmt::Debug for SetAlchemyApiKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SetAlchemyApiKey")
+            .field("api_key_set", &self.api_key.is_some())
+            .finish()
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

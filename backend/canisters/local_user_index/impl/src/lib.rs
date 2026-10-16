@@ -362,6 +362,19 @@ impl RuntimeState {
         }
     }
 
+    // Queues an event for a MultiUser canister itself rather than for one of its users. The queue pairs
+    // each event with a user, so it is sent under the canister's own id.
+    pub fn push_event_to_multi_user_canister(&mut self, canister_id: CanisterId, event: UserEvent, now: TimestampMillis) {
+        self.data.user_events_queue.push(
+            canister_id,
+            IdempotentEnvelope {
+                created_at: now,
+                idempotency_id: self.env.rng().next_u64(),
+                value: (canister_id.into(), event),
+            },
+        );
+    }
+
     // Events for a group this LocalUserIndex doesn't hold, eg. one which has been deleted, are
     // dropped, since they could never be delivered
     pub fn push_event_to_group(&mut self, canister_id: CanisterId, event: GroupEvent, now: TimestampMillis) {
@@ -790,6 +803,7 @@ impl RuntimeState {
             blocked_user_pairs: self.data.blocked_users.len() as u64,
             oc_secret_key_initialized: self.data.oc_key_pair.is_initialised(),
             openai_api_key_set: self.data.openai_api_key.is_some(),
+            alchemy_api_key_set: self.data.alchemy_api_key.is_some(),
             moderation_referral_config: self.data.moderation_referral_config.clone(),
             message_moderation_queue_len: self.data.message_moderation_queue.len() as u32,
             media_scanning_enabled: self.data.media_scan_config.enabled,
@@ -924,6 +938,10 @@ struct Data {
     // The ledgers from which migrated users' funds can be moved, refreshed from the Registry daily
     #[serde(default)]
     pub registry_tokens: RegistryTokens,
+    // The key the MultiUser canisters use to call Alchemy's Solana RPC, synced from the UserIndex and
+    // passed on to the MultiUser canisters, including any created later
+    #[serde(default)]
+    pub alchemy_api_key: Option<String>,
     // Rebuilt every 5 minutes (and on start) from the child canisters' top ups, so not persisted
     #[serde(skip)]
     pub top_up_leaderboards: TopUpLeaderboards,
@@ -977,6 +995,7 @@ impl Data {
         moderation_referral_config: Option<ModerationReferralConfig>,
         media_scan_config: MediaScanConfig,
         call_push_enabled: bool,
+        alchemy_api_key: Option<String>,
         test_mode: bool,
     ) -> Self {
         Data {
@@ -1047,6 +1066,7 @@ impl Data {
             game_chit_credit_retry_queue: new_retry_queue(),
             migrated_user_ids: MigratedUserIds::default(),
             registry_tokens: RegistryTokens::default(),
+            alchemy_api_key,
             top_up_leaderboards: TopUpLeaderboards::default(),
         }
     }
@@ -1124,6 +1144,7 @@ pub struct Metrics {
     pub blocked_user_pairs: u64,
     pub oc_secret_key_initialized: bool,
     pub openai_api_key_set: bool,
+    pub alchemy_api_key_set: bool,
     pub moderation_referral_config: Option<ModerationReferralConfig>,
     pub message_moderation_queue_len: u32,
     pub media_scanning_enabled: bool,
@@ -1214,6 +1235,7 @@ mod tests {
             None,
             MediaScanConfig::default(),
             false,
+            None,
             true,
         );
         RuntimeState::new(Box::new(TestEnv::default()), data)

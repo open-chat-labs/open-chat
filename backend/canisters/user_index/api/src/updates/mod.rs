@@ -34,6 +34,7 @@ pub mod remove_platform_moderator;
 pub mod remove_platform_operator;
 pub mod remove_sms_messages;
 pub mod resolve_moderation_report;
+pub mod set_alchemy_api_key;
 pub mod set_authority_reporter;
 pub mod set_call_push_enabled;
 pub mod set_daily_puzzle_canister_id;

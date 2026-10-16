@@ -1155,6 +1155,7 @@ const handlers: Handlers = {
     dailyPuzzleSetEnabled: (payload, agent) => agent.dailyPuzzleSetEnabled(payload.enabled),
     callPushEnabled: (_payload, agent) => agent.callPushEnabled(),
     setCallPushEnabled: (payload, agent) => agent.setCallPushEnabled(payload.enabled),
+    setAlchemyApiKey: (payload, agent) => agent.setAlchemyApiKey(payload.apiKey),
     dailyPuzzleRegenerateToday: (payload, agent) =>
         agent.dailyPuzzleRegenerateToday(payload.gameId),
     setPremiumItemCost: (payload, agent) =>

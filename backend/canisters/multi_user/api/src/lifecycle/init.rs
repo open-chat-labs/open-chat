@@ -10,6 +10,8 @@ pub struct Args {
     pub identity_canister_id: CanisterId,
     pub escrow_canister_id: CanisterId,
     pub video_call_operators: Vec<Principal>,
+    #[serde(default)]
+    pub alchemy_api_key: Option<String>,
     pub wasm_version: BuildVersion,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,

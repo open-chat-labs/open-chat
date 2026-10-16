@@ -28,5 +28,7 @@ pub struct Args {
     pub media_scan_config: MediaScanConfig,
     #[serde(default)]
     pub call_push_enabled: bool,
+    #[serde(default)]
+    pub alchemy_api_key: Option<String>,
     pub test_mode: bool,
 }

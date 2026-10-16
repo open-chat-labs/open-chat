@@ -8,6 +8,7 @@ use std::fmt::{Debug, Formatter};
 use types::{CanisterId, Cycles, SignedDelegation, UserId};
 
 mod account_linking_tests;
+mod alchemy_api_key_tests;
 mod batched_summary_and_event_tests;
 mod bot_tests;
 mod call_push_tests;

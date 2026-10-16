@@ -84,6 +84,7 @@ import {
     UserIndexCreateMultiUserCanisterResponse,
     UserIndexModerationConfigResponse,
     UserIndexCallPushEnabledResponse,
+    UserIndexSetAlchemyApiKeyArgs,
     UserIndexSetCallPushEnabledArgs,
     UserIndexRecordAuthorityReportFiledArgs,
     UserIndexSetModerationReferralConfigArgs,
@@ -438,6 +439,17 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             (resp) => resp.Success,
             Empty,
             UserIndexCallPushEnabledResponse,
+        );
+    }
+
+    // A platform operator only. The user index passes the key on to every MultiUser canister.
+    setAlchemyApiKey(apiKey: string | undefined): Promise<Success | OCError> {
+        return this.update(
+            "set_alchemy_api_key",
+            { api_key: apiKey },
+            unitResult,
+            UserIndexSetAlchemyApiKeyArgs,
+            UnitResult,
         );
     }
 
