@@ -56,6 +56,15 @@ export class PageAuthState {
     this.kind = null;
   };
 
+  /** Open app's click, signed in: onEnterApp when the host gives one, else the link to appHref does it. A modified or
+   *  non-primary click (new tab …) is the browser's. */
+  openApp = (e: MouseEvent) => {
+    const { onEnterApp } = this.props();
+    if (!onEnterApp || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    e.preventDefault();
+    onEnterApp();
+  };
+
   private enter(generation: number) {
     // an earlier sign-in's late result leaves the current dialog alone
     if (generation !== this.generation) return;

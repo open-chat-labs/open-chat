@@ -186,7 +186,8 @@ the regions above, and the in-app regions are placeholders until their screens a
 paths. `features/auth` wires `AuthDialog` to the existing sign-in flows: on the pages through
 their own dialog, and in the app (`AuthScreen`) whenever the client asks for a sign-in or a
 signed-in identity has no account yet. `/home?auth&m=…` (the emailed sign-in link) asks for the
-link's code over Landing.
+link's code over Landing. While a sign-in or sign-up started in Landing's own dialog is going,
+`/` keeps showing Landing, so that dialog sees it through (`pageSignIns`, `showsSignedOut`).
 
 Still to come:
 

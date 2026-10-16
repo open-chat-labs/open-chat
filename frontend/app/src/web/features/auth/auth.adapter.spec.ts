@@ -1,5 +1,5 @@
 import { AuthProvider } from "@client";
-import { authOptions, nextAuthKind, registerFailureKey } from "./auth.adapter";
+import { authOptions, nextAuthKind, registerFailureKey, showsSignedOut } from "./auth.adapter";
 
 describe("the sign-in options", () => {
     test("are all of them by default, and only passkey and email without WebAuthn", () => {
@@ -11,6 +11,29 @@ describe("the sign-in options", () => {
         expect(authOptions(["II", "EMAIL"], true)).toEqual(["email", "ii"]);
         expect(authOptions([AuthProvider.ETH], true)).toEqual(["eth"]);
         expect(authOptions(["SOL"], false)).toEqual([]);
+    });
+});
+
+describe("the sign-in options on a link's page", () => {
+    test("a bare ?auth (the emailed link's URL) narrows nothing", () => {
+        expect(authOptions([""], true)).toEqual(authOptions([], true));
+        expect(authOptions(["", "II"], true)).toEqual(["ii"]);
+    });
+});
+
+describe("whether / shows Landing", () => {
+    test("for someone signed out, and through a sign-in started on Landing itself", () => {
+        expect(showsSignedOut({ kind: "anon" }, true, false)).toBe(true);
+        expect(showsSignedOut({ kind: "logging_in" }, true, true)).toBe(true);
+        expect(showsSignedOut({ kind: "registering" }, true, true)).toBe(true);
+    });
+
+    test("not for a sign-in started anywhere else, nor once there's a user", () => {
+        expect(showsSignedOut({ kind: "logging_in" }, true, false)).toBe(false);
+        expect(showsSignedOut({ kind: "loading_user", registering: false }, true, false)).toBe(
+            false,
+        );
+        expect(showsSignedOut({ kind: "logged_in" }, false, true)).toBe(false);
     });
 });
 

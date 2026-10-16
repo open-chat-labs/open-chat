@@ -8,22 +8,17 @@
         selectedAuthProviderStore,
         type OpenChat,
     } from "@client";
-    import AuthDialog, {
-        type AuthPerson,
-    } from "@openchat/ui/src/features/components/AuthDialog.svelte";
-    import { getContext, onDestroy, onMount, untrack } from "svelte";
+    import AuthDialog from "@openchat/ui/src/features/components/AuthDialog.svelte";
+    import { getContext, onDestroy, untrack } from "svelte";
     import { _ } from "svelte-i18n";
-    import { authOptions, nextAuthKind, type AuthDialogKind } from "./auth.adapter";
+    import { nextAuthKind, type AuthDialogKind } from "./auth.adapter";
+    import { AuthDialogProps } from "./authDialog.svelte";
     import { createAuth } from "./signIn";
 
     const client = getContext<OpenChat>("client");
     const auth = createAuth(client, { translate: (key) => $_(key) });
     onDestroy(auth.stopEmail);
-
-    let referrer = $state<AuthPerson | undefined>(undefined);
-    onMount(() => {
-        auth.loadReferrer().then((person) => (referrer = person));
-    });
+    const dialog = new AuthDialogProps(auth);
 
     let kind = $state<AuthDialogKind | null>(null);
     $effect(() => {
@@ -31,12 +26,8 @@
         untrack(() => (kind = nextAuthKind(kind, state)));
     });
 
-    const methods = $derived(
-        authOptions(
-            $querystringStore.getAll("auth"),
-            "PublicKeyCredential" in window,
-            $selectedAuthProviderStore,
-        ),
+    const dialogProps = $derived(
+        dialog.props($querystringStore.getAll("auth"), $selectedAuthProviderStore),
     );
 
     function close() {
@@ -54,18 +45,5 @@
 </script>
 
 {#if kind !== null}
-    <AuthDialog
-        {kind}
-        {methods}
-        email={auth.lastEmail()}
-        {referrer}
-        wallets={auth.wallets}
-        termsUrl={auth.termsUrl}
-        checkUsername={auth.checkUsername}
-        searchReferrers={auth.searchReferrers}
-        onMethod={auth.onMethod}
-        onRequestEmailLink={auth.onRequestEmailLink}
-        onCancelEmailLink={auth.onCancelEmailLink}
-        onSignup={auth.onSignup}
-        onClose={close} />
+    <AuthDialog {kind} {...dialogProps} onClose={close} />
 {/if}

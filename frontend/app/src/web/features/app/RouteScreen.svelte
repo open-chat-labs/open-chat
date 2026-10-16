@@ -6,11 +6,15 @@
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
     import { navigate } from "@src/utils/navigation";
     import { regionsFor } from "../../router/regions";
+    import { showsSignedOut } from "../auth/auth.adapter";
     import AuthScreen from "../auth/AuthScreen.svelte";
+    import { pageSignIns } from "../auth/authDialog.svelte";
     import MarketingScreen from "../marketing/MarketingScreen.svelte";
     import AppScreen from "./AppScreen.svelte";
 
-    const signedOut = $derived($identityStateStore.kind === "anon" && $anonUserStore);
+    const signedOut = $derived(
+        showsSignedOut($identityStateStore, $anonUserStore, pageSignIns.pending > 0),
+    );
     const regions = $derived(regionsFor($routeStore, signedOut));
 
     const registering = $derived(

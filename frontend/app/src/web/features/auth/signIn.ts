@@ -162,7 +162,8 @@ export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: Aut
         lastEmail: () => localStorage.getItem(configKeys.selectedAuthEmail) ?? "",
 
         async loadReferrer() {
-            const user = await client.getReferringUser();
+            // without a referrer (none stored, or the lookup failed) sign-up offers none
+            const user = await client.getReferringUser().catch(() => undefined);
             offeredReferrer = user?.userId;
             return user === undefined ? undefined : person(user);
         },

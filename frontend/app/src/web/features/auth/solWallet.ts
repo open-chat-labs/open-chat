@@ -11,7 +11,8 @@ import base58 from "bs58";
 
 let initialised: Promise<void> | undefined;
 
-// walletStore's value now
+// walletStore's value now (a svelte/store store: the app's lint rule keeps new code off
+// svelte/store's own `get`)
 function current<T>(store: { subscribe: (run: (value: T) => void) => () => void }): T {
     let value!: T;
     store.subscribe((v) => (value = v))();
@@ -19,6 +20,7 @@ function current<T>(store: { subscribe: (run: (value: T) => void) => () => void 
 }
 
 function initialiseWallets(): Promise<void> {
+    // a failed start isn't kept, so the next sign-in tries again
     initialised ??= initialize({
         wallets: [
             new PhantomWalletAdapter(),
@@ -31,6 +33,9 @@ function initialiseWallets(): Promise<void> {
         autoConnect: true,
         localStorageKey: "walletAdapter",
         onError: (error) => console.error("WalletError: ", error),
+    }).catch((err) => {
+        initialised = undefined;
+        throw err;
     });
     return initialised;
 }

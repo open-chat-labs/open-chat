@@ -49,10 +49,12 @@ export function authOptions(
     const supported = hasWebAuthn
         ? ALL_OPTIONS
         : ALL_OPTIONS.filter((o) => o === "passkey" || o === "email");
+    // the email link's own URL has a bare `?auth`, which narrows nothing
+    const names = restrictTo.filter((name) => name !== "");
     const offered =
-        restrictTo.length === 0
+        names.length === 0
             ? supported
-            : supported.filter((o) => QUERY_NAMES[o].some((name) => restrictTo.includes(name)));
+            : supported.filter((o) => QUERY_NAMES[o].some((name) => names.includes(name)));
     const lastOption = offered.find((o) => QUERY_NAMES[o].includes(last ?? ""));
     return lastOption === undefined
         ? offered
@@ -178,6 +180,18 @@ export function emailLinkResult(kind: HandleMagicLinkResponse["kind"]): EmailLin
         default:
             return "invalid";
     }
+}
+
+/**
+ * Whether "/" shows Landing: for someone signed out, and for a sign-in or sign-up still going on
+ * in Landing's own dialog, whose outcome decides (the app, or Landing again with the reason).
+ */
+export function showsSignedOut(
+    state: IdentityState,
+    anonUser: boolean,
+    signingInOnPage: boolean,
+): boolean {
+    return anonUser && (state.kind === "anon" || signingInOnPage);
 }
 
 export type AuthDialogKind = "login" | "signup";

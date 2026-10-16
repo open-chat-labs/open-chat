@@ -1,6 +1,7 @@
 import { identityStateStore, pathContextStore, type OpenChat, type RouteParams } from "@client";
 import { navigate } from "@src/utils/navigation";
 import { flushSync, mount, tick, unmount } from "svelte";
+import { pageSignIns } from "../auth/authDialog.svelte";
 import MarketingScreen from "./MarketingScreen.svelte";
 
 vi.mock("@src/utils/navigation", () => ({ navigate: vi.fn() }));
@@ -20,6 +21,8 @@ describe("the marketing pages", () => {
     const client = {
         handleMagicLink: vi.fn(async () => ({ kind: "success" })),
         getReferringUser: vi.fn(async () => undefined),
+        gaTrack: vi.fn(),
+        signInWithWebAuthn: vi.fn(),
     };
 
     beforeEach(() => {
@@ -97,6 +100,22 @@ describe("the marketing pages", () => {
         await vi.waitFor(() => expect(navigate).toHaveBeenCalledWith("/"));
         flushSync();
         expect(q("#oc-auth-title")).toBeNull();
+    });
+
+    test("a sign-in in Landing's own dialog counts as going on until it settles", async () => {
+        let finish!: () => void;
+        client.signInWithWebAuthn.mockReturnValueOnce(
+            new Promise<void>((resolve) => (finish = resolve)),
+        );
+        show(route("home_route"));
+        q("header .sign-in")!.click();
+        flushSync();
+        q("[role=dialog] button.passkey")!.click();
+        await tick();
+        expect(pageSignIns.pending).toBe(1);
+        // the passkey is declined: the identity is still anonymous, so it fails
+        finish();
+        await vi.waitFor(() => expect(pageSignIns.pending).toBe(0));
     });
 
     test("?auth on its own (narrowing the sign-in options) isn't a link's page", async () => {

@@ -1,6 +1,7 @@
 import { flushSync, mount, unmount } from 'svelte';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import AuthDialog from './AuthDialog.svelte';
+import { reactiveProps } from '../../lib/testing/reactiveProps.svelte';
 
 const deferred = () => {
   let resolve!: () => void, reject!: (e: unknown) => void;
@@ -266,6 +267,70 @@ describe('AuthDialog: what the host offers', () => {
     open({ kind: 'login', onCancelEmailLink, onClose: vi.fn() });
     q('.head-button[aria-label="Close"]')!.click();
     expect(onCancelEmailLink).not.toHaveBeenCalled();
+  });
+
+  test('when the host turns it into sign-up, it shows the form, whichever step it was on', async () => {
+    const props = reactiveProps<Record<string, unknown>>({
+      inline: true,
+      kind: 'login',
+      onMethod: () => Promise.resolve(),
+      onRequestEmailLink: () => Promise.resolve(),
+      wallets: { eth: [{ id: 'metaMask', name: 'MetaMask' }] },
+    });
+    app = mount(AuthDialog, { target, props });
+    flushSync();
+    q('.tile[title="Sign in with Ethereum"]')!.click();
+    flushSync();
+    expect(q('.wallets-title')).not.toBeNull();
+    props.kind = 'signup';
+    flushSync();
+    expect(q('form.form')).not.toBeNull();
+    expect(q('.wallets-title')).toBeNull();
+
+    props.kind = 'login';
+    flushSync();
+    typeInto(q<HTMLInputElement>('form.email input'), 'me@example.com');
+    q<HTMLFormElement>('form.email')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    await settle();
+    expect(q('.sent')).not.toBeNull();
+    props.kind = 'signup';
+    flushSync();
+    expect(q('form.form')).not.toBeNull();
+    expect(q('.sent')).toBeNull();
+  });
+
+  test('switching to sign-up from "Check your inbox" stops waiting for the link', async () => {
+    const onCancelEmailLink = vi.fn();
+    open({ kind: 'login', onRequestEmailLink: () => Promise.resolve(), onCancelEmailLink });
+    typeInto(q<HTMLInputElement>('form.email input'), 'me@example.com');
+    q<HTMLFormElement>('form.email')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    await settle();
+    q('.switch-cta')!.click();
+    flushSync();
+    expect(onCancelEmailLink).toHaveBeenCalledOnce();
+  });
+
+  test("a referrer the host passes late doesn't undo the person's own choice", () => {
+    const hamish = { userId: 'r1', name: 'Hamish', handle: 'hamish', grad: 'red' };
+    const props = reactiveProps<Record<string, unknown>>({ inline: true, kind: 'signup', referrers: [{ userId: 'r2', name: 'Ana', handle: 'ana_r', grad: 'blue' }] });
+    app = mount(AuthDialog, { target, props });
+    flushSync();
+    typeInto(q<HTMLInputElement>('input[aria-label=Referrer]'), 'ana');
+    q('.result')!.click();
+    flushSync();
+    props.referrer = hamish;
+    flushSync();
+    expect(q('.field.picked .who')!.textContent).toContain('Ana');
+  });
+
+  test('a referrer the host passes before any choice is shown', () => {
+    const props = reactiveProps<Record<string, unknown>>({ inline: true, kind: 'signup' });
+    app = mount(AuthDialog, { target, props });
+    flushSync();
+    expect(q('.field.picked')).toBeNull();
+    props.referrer = { userId: 'r1', name: 'Hamish', handle: 'hamish', grad: 'red' };
+    flushSync();
+    expect(q('.field.picked .who')!.textContent).toContain('Hamish');
   });
 
   test("a link's code the host rejects reads as invalid", async () => {
