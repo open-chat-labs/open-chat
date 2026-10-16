@@ -95,5 +95,6 @@ STORAGE_INDEX_CANISTER_ID=$(dfx canister id storage_index)
 dfx --identity $IDENTITY canister call storage_index add_bucket_canister '(record { })'
 
 ./scripts/deploy-test-chat-ledger.sh $IDENTITY
-./scripts/get-test-icp.sh "xsfk2-nx777-77774-qaala-cai" $IDENTITY
-./scripts/get-test-chat-tokens.sh "xsfk2-nx777-77774-qaala-cai" $IDENTITY
+# The first user canister gets the next id on the app subnet after the 21 canisters created above
+./scripts/get-test-icp.sh "x3gbg-37777-77774-qaakq-cai" $IDENTITY
+./scripts/get-test-chat-tokens.sh "x3gbg-37777-77774-qaakq-cai" $IDENTITY
