@@ -108,6 +108,8 @@ pub enum LocalUserIndexEvent {
     ReinstateMissedDailyClaims(Vec<u16>),
     BotUpdated(Box<BotDefinitionUpdate>),
     BotRemoved(UserId),
+    // For the canister rather than one of its users, so sent under the canister's own id
+    SetAlchemyApiKey(Option<String>),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

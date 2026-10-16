@@ -663,7 +663,7 @@ struct Data {
     // The certified transfers users have sent messages with, so that none is used twice
     pub certified_transfers: CertifiedTransfers,
     // The key for calling Alchemy's Solana RPC, set by a platform operator on the UserIndex and passed
-    // on by the LocalUserIndex
+    // on by the LocalUserIndex, in this canister's init args or as an event
     #[serde(default)]
     pub alchemy_api_key: Option<String>,
     pub rng_seed: [u8; 32],

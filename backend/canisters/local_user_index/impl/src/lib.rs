@@ -362,6 +362,19 @@ impl RuntimeState {
         }
     }
 
+    // Queues an event for a MultiUser canister itself rather than for one of its users. The queue pairs
+    // each event with a user, so it is sent under the canister's own id.
+    pub fn push_event_to_multi_user_canister(&mut self, canister_id: CanisterId, event: UserEvent, now: TimestampMillis) {
+        self.data.user_events_queue.push(
+            canister_id,
+            IdempotentEnvelope {
+                created_at: now,
+                idempotency_id: self.env.rng().next_u64(),
+                value: (canister_id.into(), event),
+            },
+        );
+    }
+
     // Events for a group this LocalUserIndex doesn't hold, eg. one which has been deleted, are
     // dropped, since they could never be delivered
     pub fn push_event_to_group(&mut self, canister_id: CanisterId, event: GroupEvent, now: TimestampMillis) {

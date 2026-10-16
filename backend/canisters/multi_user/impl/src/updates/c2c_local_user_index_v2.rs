@@ -11,7 +11,7 @@ fn c2c_local_user_index_v2(args: Args) -> Response {
     execute_update(|state| c2c_local_user_index_v2_impl(args, state))
 }
 
-// Applies the events to the users they are for, in order
+// Applies the events to the users they are for, in order, apart from those for the canister itself
 fn c2c_local_user_index_v2_impl(args: Args, state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
 
@@ -24,6 +24,10 @@ fn c2c_local_user_index_v2_impl(args: Args, state: &mut RuntimeState) -> Respons
             continue;
         }
         let (user_id, event) = event.value;
+        if let LocalUserIndexEvent::SetAlchemyApiKey(api_key) = event {
+            state.data.alchemy_api_key = api_key;
+            continue;
+        }
         // Events for a user who isn't in this canister can never be applied, so are dropped rather
         // than failing the batch, which the LocalUserIndex would otherwise retry
         if let Some(user_index) = state.index_of_local_user(user_id) {

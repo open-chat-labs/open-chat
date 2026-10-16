@@ -163,6 +163,8 @@ pub fn apply(user: &mut User, event: LocalUserIndexEvent, now: TimestampMillis) 
         LocalUserIndexEvent::BotUpdated(ev) => {
             user.handle_bot_definition_updated(*ev, now);
         }
+        // Applied to the canister, so never passed on to a user
+        LocalUserIndexEvent::SetAlchemyApiKey(_) => {}
     }
 
     effects
