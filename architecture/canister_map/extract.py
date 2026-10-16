@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Builds the data behind architecture/canister_map/index.html from the backend source.
+"""Builds architecture/canister_map/index.html from the backend source.
 
 For every canister crate under backend/canisters it reads:
-  - the endpoints: every #[query(...)] / #[update(...)] in impl/src, with its guard and which
-    encodings (candid / msgpack / json) it accepts, plus the Args / Response types from api/src
+  - the endpoints: every #[query(...)] / #[update(...)] / #[proposal(...)] in impl/src, with its guard
+    and which encodings (candid / msgpack / json) it accepts, plus the Args / Response types from api/src
   - the state: the fields of the `Data` struct in impl/src/lib.rs, with their comments
   - the Metrics struct, the timer job types, the background jobs and the stable memory regions
-  - who it calls: every `<x>_canister_c2c_client::<method>` in impl/src, plus those made by the
-    shared libraries it depends on (attributed "via <library>")
+  - who it calls: the `<x>_canister_c2c_client::<method>` uses, fire-and-forget sends and locally
+    generated c2c calls in impl/src, plus the calls made by the modules of the shared libraries it uses
   - its init args, lifecycle hooks, latest released version and prod canister id
 
 Run from the repo root:
@@ -150,7 +150,7 @@ DESCRIPTIONS = {
     },
     "registry": {
         "title": "Registry",
-        "zone": "tokens",
+        "zone": "platform",
         "cardinality": "single",
         "summary": "The list of tokens, nervous systems and subnets OpenChat knows about.",
         "detail": "Any user can propose adding a token; the Registry validates it against the ledger, "
@@ -233,14 +233,6 @@ DESCRIPTIONS = {
         "detail": "Holds the threshold-ECDSA key that controls OpenChat's NNS neurons, votes them, "
         "refreshes and spawns their maturity, and moves the ICP rewards to the treasury.",
     },
-    "market_maker": {
-        "title": "MarketMaker",
-        "zone": "governance",
-        "cardinality": "single",
-        "summary": "Keeps CHAT markets liquid on ICDex.",
-        "detail": "Places and cancels bid and ask orders around the mid price on configured exchanges "
-        "within the limits set by proposal.",
-    },
     "call_relay": {
         "title": "CallRelay",
         "zone": "platform",
@@ -260,6 +252,9 @@ DESCRIPTIONS = {
         "CyclesDispenser and is then uninstalled.",
     },
 }
+
+# Canisters still in the tree but no longer part of the system
+DEPRECATED = {"market_maker"}
 
 ZONES = {
     "identity": "Identity",
@@ -287,10 +282,9 @@ EXTERNALS = {
     "ckbtc_minter": ("ckBTC minter", "Bitcoin in and out"),
     "cksol_minter": ("ckSOL minter", "Solana in and out"),
     "one_sec_minter": ("OneSec minter", "Bridged ERC-20 tokens"),
-    "icdex": ("ICDex", "Order book exchange"),
     "icpswap_swap_pool": ("ICPSwap", "Swap pools"),
     "taco_exchange": ("TACO", "Swap aggregator"),
-    "management": ("IC management canister", "create_canister, install_code, ECDSA signing, HTTPS outcalls"),
+    "management": ("IC management canister", "create_canister, install_code, deposit_cycles, raw_rand, ECDSA signing, HTTPS outcalls"),
     "event_store": ("Event store", "Anonymised product analytics"),
 }
 
@@ -303,9 +297,32 @@ OFFCHAIN = {
     "authority_reporter": ("Authority reporter", "Off-chain service filing legally required reports"),
 }
 
+# utils::canister helpers that wrap a management canister call, and what they call
+UTILS_CANISTER_CALLS = {
+    "create": "create_canister",
+    "install": "install_code",
+    "install_basic": "install_code",
+    "uninstall": "uninstall_code",
+    "start": "start_canister",
+    "stop": "stop_canister",
+    "deposit_cycles": "deposit_cycles",
+    "canister_status": "canister_status",
+    "set_controllers": "update_settings",
+    "set_freezing_threshold": "update_settings",
+    "get_random_seed": "raw_rand",
+    "try_get_random_seed": "raw_rand",
+    "upload_wasm_in_chunks": "upload_chunk",
+    "clear_chunk_store": "clear_chunk_store",
+    "delete": "delete_canister",
+    "upgrade": "install_code",
+}
+
 ATTR_RE = re.compile(r"^\s*#\[(query|update|proposal)\s*(?:\(([^)]*)\))?\]\s*$")
 FN_RE = re.compile(r"^\s*(?:pub(?:\([^)]*\))?\s+)?(?:async\s+)?fn\s+([a-zA-Z0-9_]+)")
 C2C_RE = re.compile(r"\b([a-z_0-9]+)_canister_c2c_client::([a-z_0-9]+)\b")
+C2C_BRACE_RE = re.compile(r"\buse ([a-z_0-9]+)_canister_c2c_client::\{([^}]*)\}", re.S)
+FAF_RE = re.compile(r"fire_and_forget_handler\s*\.send\(\s*([^,]+?),\s*\"([a-z_0-9]+)\"", re.S)
+LOCAL_C2C_RE = re.compile(r"generate_[a-z_]*c2c_call[a-z_]*!\(\s*([a-z_0-9]+)\s*\)")
 VERSION_RE = re.compile(r"^## \[\[(\d+\.\d+\.\d+)\]\(([^)]+)\)\] - (\d{4}-\d{2}-\d{2})", re.M)
 
 
@@ -357,6 +374,23 @@ def leading_comment(lines, index):
     return " ".join(out).strip()
 
 
+def endpoint(name, kind, flags, comment, rel, proposal=False):
+    return {
+        "name": name,
+        "kind": kind,
+        "guard": flags["guard"],
+        "candid": flags["candid"],
+        "msgpack": flags["msgpack"],
+        "json": flags["json"],
+        "composite": flags["composite"],
+        "hidden": flags["hidden"],
+        "c2c": name.startswith("c2c_") or name.endswith("_c2c"),
+        "proposal": proposal,
+        "comment": comment,
+        "file": rel,
+    }
+
+
 def extract_endpoints(impl_src):
     endpoints = []
     for path in rust_files(impl_src):
@@ -367,6 +401,9 @@ def extract_endpoints(impl_src):
                 continue
             kind, args = m.group(1), m.group(2)
             flags = parse_attr_args(args)
+            if not (flags["candid"] or flags["msgpack"] or flags["json"]):
+                # ic_cdk's own #[query] / #[update], or no encoding named: candid only
+                flags["candid"] = True
             name = None
             for j in range(i + 1, min(i + 8, len(lines))):
                 fm = FN_RE.match(lines[j])
@@ -380,55 +417,59 @@ def extract_endpoints(impl_src):
             if kind == "proposal":
                 # The proposal macro emits a candid update plus a `<name>_validate` query the SNS
                 # calls to render the proposal for voters
-                endpoints.append(dict(name=name, kind="update", guard=flags["guard"], candid=True, msgpack=False, json=False, composite=False, hidden=False, c2c=False, proposal=True, comment=comment, file=rel))
-                endpoints.append(dict(name=name + "_validate", kind="query", guard=flags["guard"], candid=True, msgpack=False, json=False, composite=False, hidden=False, c2c=False, proposal=True, comment="Renders the proposal payload for voters; generated by #[proposal]", file=rel))
-                continue
-            endpoints.append(
-                {
-                    "name": name,
-                    "kind": kind,
-                    "guard": flags["guard"],
-                    "candid": flags["candid"],
-                    "msgpack": flags["msgpack"],
-                    "json": flags["json"],
-                    "composite": flags["composite"],
-                    "hidden": flags["hidden"],
-                    "c2c": name.startswith("c2c_"),
-                    "proposal": False,
-                    "comment": comment,
-                    "file": rel,
-                }
-            )
-    endpoints.sort(key=lambda e: (e["kind"] != "query", e["name"]))
+                flags.update(candid=True, msgpack=False, json=False)
+                endpoints.append(endpoint(name, "update", flags, comment, rel, proposal=True))
+                endpoints.append(endpoint(name + "_validate", "query", flags, "Renders the proposal payload for voters; generated by #[proposal]", rel, proposal=True))
+            else:
+                endpoints.append(endpoint(name, kind, flags, comment, rel))
+    endpoints.sort(key=lambda e: (e["kind"] != "query", e["name"], not e["proposal"]))
     return endpoints
+
+
+def wire_names(e):
+    """The method names the endpoint is exported under (canister_api_macros adds a suffix per encoding)."""
+    names = []
+    if e["candid"] or e["proposal"]:
+        names.append(e["name"])
+    if e["msgpack"]:
+        names.append(e["name"] + "_msgpack")
+    if e["json"]:
+        names.append(e["name"] + "_json")
+    return names or [e["name"]]
 
 
 def strip_api_source(text):
     """Keeps the Args / Response definitions of an api module, dropping imports and derives."""
     kept = []
+    in_use = False
     for line in text.splitlines():
         s = line.strip()
-        if s.startswith("use ") or s.startswith("#[derive") or s.startswith("#[ts_export") or s.startswith("#[serde(") and False:
+        if in_use:
+            if s.endswith(";"):
+                in_use = False
+            continue
+        if s.startswith("use "):
+            in_use = not s.endswith(";")
+            continue
+        if s.startswith("#[derive") or s.startswith("#[ts_export"):
             continue
         if s.startswith("#[cfg(") or s.startswith("mod tests") or s.startswith("#[test]"):
             break
         kept.append(line.rstrip())
     out = "\n".join(kept).strip("\n")
-    out = re.sub(r"\n{3,}", "\n\n", out)
-    return out
+    return re.sub(r"\n{3,}", "\n\n", out)
 
 
 def extract_api_types(api_src):
-    """Maps endpoint name -> trimmed source of its Args / Response module."""
+    """Maps api module name -> trimmed source of its Args / Response."""
     types = {}
     for sub in ("queries", "updates"):
         d = api_src / sub
         if not d.exists():
             continue
         for path in sorted(d.glob("*.rs")):
-            if path.name == "mod.rs":
-                continue
-            types[path.stem] = strip_api_source(read(path))
+            if path.name != "mod.rs":
+                types[path.stem] = strip_api_source(read(path))
     return types
 
 
@@ -478,9 +519,8 @@ def extract_enum_variants(text, name):
         return []
     variants = []
     depth = 0
-    lines = text[m.start():].splitlines()
     comment = []
-    for idx, line in enumerate(lines):
+    for idx, line in enumerate(text[m.start():].splitlines()):
         depth += line.count("{") - line.count("}")
         if idx == 0:
             continue
@@ -499,64 +539,48 @@ def extract_enum_variants(text, name):
 
 def extract_jobs(impl_src):
     jobs = []
-    for sub in ("jobs",):
-        d = impl_src / sub
-        if not d.exists():
-            continue
+    d = impl_src / "jobs"
+    if d.exists():
         for path in sorted(d.glob("*.rs")):
             if path.name == "mod.rs":
                 continue
-            text = read(path)
-            lines = text.splitlines()
             comment = []
-            for line in lines:
+            for line in read(path).splitlines():
                 s = line.strip()
                 if s.startswith("//"):
                     comment.append(s.lstrip("/").strip())
                 elif s.startswith("use ") or s == "":
                     if comment:
                         break
-                    continue
                 else:
                     break
-            interval = None
-            im = re.search(r"(?:Duration::from_(?:secs|millis)\(([^)]+)\)|\b([A-Z_]+_IN_MS)\b)", text)
-            if im:
-                interval = im.group(1) or im.group(2)
-            jobs.append(
-                {
-                    "name": path.stem,
-                    "comment": " ".join(comment),
-                    "interval_hint": interval,
-                    "file": str(path.relative_to(ROOT)),
-                }
-            )
+            jobs.append({"name": path.stem, "comment": " ".join(comment), "file": str(path.relative_to(ROOT))})
     regular = impl_src / "regular_jobs.rs"
     if regular.exists():
-        for m in re.finditer(r"RegularJob::new\(\s*\"([^\"]+)\"\s*,\s*([a-z_0-9:]+)\s*,\s*([^)]+)\)", read(regular)):
-            jobs.append({"name": m.group(1), "comment": "Regular job run on activity: " + m.group(2), "interval_hint": m.group(3).strip(), "file": str(regular.relative_to(ROOT))})
+        for m in re.finditer(r"RegularJob::new\(\s*\"([^\"]+)\"\s*,\s*([a-z_0-9:]+)", read(regular)):
+            jobs.append({"name": m.group(1), "comment": "Regular job run on activity: " + m.group(2), "file": str(regular.relative_to(ROOT))})
     return jobs
 
 
 def extract_memory(impl_src):
     text = read(impl_src / "memory.rs")
-    regions = []
-    for m in re.finditer(r"const ([A-Z_0-9]+): MemoryId = MemoryId::new\((\d+)\);", text):
-        regions.append({"name": m.group(1), "id": int(m.group(2))})
-    return regions
+    return [{"name": m.group(1), "id": int(m.group(2))} for m in re.finditer(r"const ([A-Z_0-9]+): MemoryId = MemoryId::new\((\d+)\);", text)]
 
 
 def extract_guards(impl_src):
+    """guard fn name -> who passes it, from the error message it returns."""
     text = read(impl_src / "guards.rs")
     guards = {}
     for m in re.finditer(r"pub fn ([a-z_0-9]+)\(\)[^{]*\{(.*?)\n\}", text, re.S):
-        body = m.group(2)
+        name, body = m.group(1), m.group(2)
         em = re.search(r"Err\(\"([^\"]+)\"", body)
         label = None
         if em:
-            label = em.group(1)
-            label = re.sub(r"^Caller is not (the |a |an |one of )?", "", label).rstrip(".")
-        guards[m.group(1)] = label or m.group(1)
+            msg = em.group(1)
+            stripped = re.sub(r"^Caller (?:is not|not recognised as) ", "", msg)
+            if stripped != msg:
+                label = stripped.rstrip(".")
+        guards[name] = label or name.replace("caller_is_", "").replace("_", " ")
     return guards
 
 
@@ -572,46 +596,67 @@ def extract_init_args(api_src):
 
 def extract_lifecycle(impl_src):
     d = impl_src / "lifecycle"
-    hooks = []
-    if d.exists():
-        for path in sorted(d.glob("*.rs")):
-            if path.name != "mod.rs":
-                hooks.append(path.stem)
-    if (impl_src / "lifecycle" / "inspect_message.rs").exists() and "inspect_message" not in hooks:
-        hooks.append("inspect_message")
-    return hooks
+    return [p.stem for p in sorted(d.glob("*.rs")) if p.name != "mod.rs"] if d.exists() else []
 
 
 def extract_version(canister_dir):
-    text = read(canister_dir / "CHANGELOG.md")
-    m = VERSION_RE.search(text)
-    if not m:
-        return None
-    return {"version": m.group(1), "url": m.group(2), "date": m.group(3)}
+    m = VERSION_RE.search(read(canister_dir / "CHANGELOG.md"))
+    return {"version": m.group(1), "url": m.group(2), "date": m.group(3)} if m else None
 
 
-def extract_c2c_calls(src_dir):
+def add_call(calls, target, method, via=None):
+    entry = calls.setdefault(target, {"methods": set(), "via": set()})
+    entry["methods"].add(method)
+    if via:
+        entry["via"].add(via)
+
+
+def c2c_client_calls(text):
+    """target -> methods called through a `<target>_canister_c2c_client` in this source text."""
     calls = {}
-    for path in rust_files(src_dir):
-        for m in C2C_RE.finditer(read(path)):
-            target, method = m.group(1), m.group(2)
-            if method[0].isupper() or method in ("Args", "Response"):
-                continue
+    for m in C2C_RE.finditer(text):
+        target, method = m.group(1), m.group(2)
+        if not method[0].isupper() and method not in ("Args", "Response"):
             calls.setdefault(target, set()).add(method)
+    for m in C2C_BRACE_RE.finditer(text):
+        for item in m.group(2).split(","):
+            ident = item.strip().split("::")[0].strip()
+            if ident and ident != "self" and not ident[0].isupper():
+                calls.setdefault(m.group(1), set()).add(ident)
     return calls
 
 
+def module_of(path, src):
+    """The top-level module a library source file belongs to ('lib' for lib.rs)."""
+    rel = path.relative_to(src)
+    return "lib" if rel.name == "lib.rs" else rel.parts[0].replace(".rs", "")
+
+
+def library_calls():
+    """library crate -> module -> (target -> methods), for the shared libraries that make c2c calls."""
+    out = {}
+    for lib in sorted(LIBRARIES.iterdir()):
+        src = lib / "src"
+        if not src.exists():
+            continue
+        for path in rust_files(src):
+            calls = c2c_client_calls(read(path))
+            if calls:
+                mod = out.setdefault(lib.name, {}).setdefault(module_of(path, src), {})
+                for t, ms in calls.items():
+                    mod.setdefault(t, set()).update(ms)
+    return out
+
+
 def cargo_deps(cargo_toml):
-    text = read(cargo_toml)
     deps = set()
     in_deps = False
-    for line in text.splitlines():
+    for line in read(cargo_toml).splitlines():
         s = line.strip()
         if s.startswith("["):
-            in_deps = s in ("[dependencies]",)
-            continue
-        if in_deps:
-            m = re.match(r"([A-Za-z0-9_\-]+)\s*=", s)
+            in_deps = s == "[dependencies]"
+        elif in_deps:
+            m = re.match(r"([A-Za-z0-9_\-]+)(?:\.workspace)?\s*=", s)
             if m:
                 deps.add(m.group(1))
     return deps
@@ -641,24 +686,15 @@ def live_counts(ids):
         counts["multi_user"] = [("canisters on prod", len(m.get("multi_user_canisters", [])))]
     m = fetch_metrics(ids["group_index"])
     if m:
-        counts["group"] = [
-            ("public groups", m.get("public_groups")),
-            ("private groups", m.get("private_groups")),
-        ]
-        counts["community"] = [
-            ("public communities", m.get("public_communities")),
-            ("private communities", m.get("private_communities")),
-        ]
+        counts["group"] = [("public groups", m.get("public_groups")), ("private groups", m.get("private_groups"))]
+        counts["community"] = [("public communities", m.get("public_communities")), ("private communities", m.get("private_communities"))]
     m = fetch_metrics(ids["storage_index"])
     if m:
-        counts["storage_index"] = [
-            ("files", m.get("file_count")),
-            ("GB stored", round((m.get("total_file_bytes") or 0) / 1e9)),
-        ]
-        counts["storage_bucket"] = [("active buckets", len([b for b in m.get("active_buckets", [])]))]
+        counts["storage_index"] = [("files", m.get("file_count")), ("GB stored", round((m.get("total_file_bytes") or 0) / 1e9))]
+        counts["storage_bucket"] = [("active buckets", len(m.get("active_buckets", [])))]
     m = fetch_metrics(ids["notifications_index"])
     if m:
-        counts["notifications_index"] = [("users with subscriptions", m.get("users")), ("subscriptions", m.get("subscriptions"))]
+        counts["notifications_index"] = [("web push subscriptions", m.get("subscriptions"))]
     m = fetch_metrics(ids["identity"])
     if m:
         counts["identity"] = [("identities", m.get("user_principals")), ("auth principals", m.get("auth_principals"))]
@@ -668,26 +704,32 @@ def live_counts(ids):
     return {k: [[label, v] for (label, v) in pairs if v is not None] for k, pairs in counts.items()}
 
 
-def library_calls():
-    """c2c calls made by shared libraries, keyed by library crate name."""
-    out = {}
-    for lib in sorted(LIBRARIES.iterdir()):
-        src = lib / "src"
-        if not src.exists():
-            continue
-        calls = extract_c2c_calls(src)
-        if calls:
-            out[lib.name] = calls
-    return out
+def wat_canister(name, d):
+    readme = read(d / "README.md")
+    if name == "call_relay":
+        flags = parse_attr_args("")
+        flags["guard"] = "controller"
+        eps = [endpoint("relay", "update", flags, "Raw args: callee | method | payload. Calls the method as this canister and relays the reply.", "backend/canisters/call_relay/call_relay.wat")]
+        externals = {"icrc_ledger": {"methods": ["icrc1_transfer (relayed)"], "via": []}}
+        calls = {}
+    else:
+        flags = parse_attr_args("candid = true")
+        eps = [endpoint("refund", "update", flags, "Sends all spare cycles to the CyclesDispenser and returns how many were sent.", "backend/canisters/cycles_refunder/cycles_refunder.wat")]
+        externals = {"management": {"methods": ["deposit_cycles"], "via": []}}
+        calls = {"cycles_dispenser": {"methods": ["deposit_cycles (a management canister call that credits the CyclesDispenser)"], "via": []}}
+    return eps, calls, externals, readme, len(read(d / f"{name}.wat").splitlines())
 
 
 def build():
     ids = canister_ids()
     lib_calls = library_calls()
     canisters = {}
+    sources = {}
 
     for d in sorted(CANISTERS.iterdir()):
         name = d.name
+        if name in DEPRECATED:
+            continue
         if name not in DESCRIPTIONS:
             print(f"  skipping {name}: no description", file=sys.stderr)
             continue
@@ -715,7 +757,7 @@ def build():
             "lifecycle": [],
             "calls": {},
             "externals": {},
-            "offchain": [],
+            "offchain": {},
             "libraries": [],
             "loc": 0,
             "path": str(d.relative_to(ROOT)),
@@ -725,7 +767,8 @@ def build():
             lib_text = read(impl_src / "lib.rs")
             entry["endpoints"] = extract_endpoints(impl_src)
             for pm in re.finditer(r"proposal_validation!\(\s*([a-z_0-9]+)\s*,\s*([a-z_0-9]+)", lib_text):
-                entry["endpoints"].append(dict(name=f"{pm.group(1)}_{pm.group(2)}_validate", kind="query", guard=None, candid=True, msgpack=False, json=False, composite=False, hidden=False, c2c=False, proposal=True, comment=f"Renders a {pm.group(1)} {pm.group(2)} proposal payload as text for voters", file=str((impl_src / "lib.rs").relative_to(ROOT))))
+                flags = parse_attr_args("candid = true")
+                entry["endpoints"].append(endpoint(f"{pm.group(1)}_{pm.group(2)}_validate", "query", flags, f"Renders a {pm.group(1)} {pm.group(2)} proposal payload as text for voters", str((impl_src / "lib.rs").relative_to(ROOT)), proposal=True))
             entry["api_types"] = extract_api_types(api_src)
             entry["state"] = extract_struct(lib_text, "Data") or extract_struct(read(impl_src / "state.rs"), "State") or []
             entry["metrics"] = extract_struct(lib_text, "Metrics") or []
@@ -736,78 +779,111 @@ def build():
             entry["init_args"] = extract_init_args(api_src)
             entry["lifecycle"] = extract_lifecycle(impl_src)
             entry["loc"] = sum(len(read(p).splitlines()) for p in rust_files(impl_src))
+            sources[name] = {str(p): read(p) for p in rust_files(impl_src)}
+            entry["deps"] = cargo_deps(d / "impl" / "Cargo.toml")
 
-            deps = cargo_deps(d / "impl" / "Cargo.toml")
-            calls = {t: {"methods": sorted(ms), "via": None} for t, ms in extract_c2c_calls(impl_src).items()}
-            for lib, lcalls in lib_calls.items():
-                if lib in deps:
-                    entry["libraries"].append(lib)
-                    for t, ms in lcalls.items():
-                        if t in calls:
-                            existing = set(calls[t]["methods"])
-                            new = sorted(ms - existing)
-                            if new:
-                                calls[t]["methods"] = sorted(existing | ms)
-                                calls[t]["via"] = (calls[t]["via"] or [])
-                                if isinstance(calls[t]["via"], list):
-                                    calls[t]["via"].append(lib)
-                        else:
-                            calls[t] = {"methods": sorted(ms), "via": [lib]}
-            if "ic-cdk-management-canister" in deps:
-                calls["management"] = {"methods": ["create_canister", "install_code", "canister_status", "…"], "via": None}
-            if "event_store_producer" in deps and name != "event_relay":
-                calls.setdefault("event_relay", {"methods": ["push_events"], "via": ["event_store_producer"]})
-            if name == "event_relay":
-                calls["event_store"] = {"methods": ["push_events"], "via": None}
-            if name == "sign_in_with_email":
-                calls["management"] = {"methods": ["http_request (email provider)", "sign_with_ecdsa"], "via": None}
-
-            internal = {t: c for t, c in calls.items() if t in DESCRIPTIONS}
-            external = {t: c for t, c in calls.items() if t in EXTERNALS}
-            unknown = [t for t in calls if t not in DESCRIPTIONS and t not in EXTERNALS]
-            if unknown:
-                print(f"  {name}: unclassified call targets {unknown}", file=sys.stderr)
-            entry["calls"] = internal
-            entry["externals"] = external
-
-            actors = set()
             for e in entry["endpoints"]:
                 g = e["guard"] or ""
                 for frag, (label, _) in OFFCHAIN.items():
                     if frag in g:
-                        actors.add(label)
-            entry["offchain"] = sorted(actors)
+                        entry["offchain"].setdefault(label, []).append(e["name"])
         else:
-            # The two wat canisters
-            readme = read(d / "README.md")
-            if name == "call_relay":
-                entry["endpoints"] = [{"name": "relay", "kind": "update", "guard": "controller", "candid": False, "msgpack": False, "json": False, "composite": False, "hidden": False, "c2c": True, "comment": "Raw args: callee | method | payload. Calls the method as this canister and relays the reply.", "file": "backend/canisters/call_relay/call_relay.wat"}]
-                entry["externals"] = {"icrc_ledger": {"methods": ["icrc1_transfer (relayed)"], "via": None}}
-            if name == "cycles_refunder":
-                entry["endpoints"] = [{"name": "refund", "kind": "update", "guard": None, "candid": True, "msgpack": False, "json": False, "composite": False, "hidden": False, "c2c": False, "comment": "Sends all spare cycles to the CyclesDispenser and returns how many were sent.", "file": "backend/canisters/cycles_refunder/cycles_refunder.wat"}]
-                entry["calls"] = {"cycles_dispenser": {"methods": ["deposit_cycles"], "via": None}}
-            entry["readme"] = readme
-            entry["loc"] = len(read(d / f"{name}.wat").splitlines())
+            eps, calls, externals, readme, loc = wat_canister(name, d)
+            entry.update(endpoints=eps, calls=calls, externals=externals, readme=readme, loc=loc)
 
         # Which endpoints the web app calls directly (ts_export in api/src/main.rs)
         main_rs = read(api_src / "main.rs")
         ts = set(re.findall(r"generate_ts_method!\(\s*[a-z_]+\s*,\s*([a-z_0-9]+)", main_rs))
         candid = set(re.findall(r"generate_candid_method!\(\s*[a-z_]+\s*,\s*([a-z_0-9]+)", main_rs))
         for e in entry["endpoints"]:
-            base = re.sub(r"_(v2|v3|msgpack|c2c|validate)$", "", e["name"])
-            e["frontend"] = e["name"] in ts or base in ts
+            base = re.sub(r"_(v2|v3)$", "", e["name"])
+            e["frontend"] = not e["proposal"] and not e["c2c"] and (e["name"] in ts or base in ts)
             e["in_did"] = e["candid"] or e["name"] in candid or base in candid
-            e["api"] = e["name"] if e["name"] in entry["api_types"] else (base if base in entry["api_types"] else None)
+            e["wire"] = wire_names(e)
+            stem = Path(e["file"]).stem
+            e["api"] = next((k for k in (e["name"], base, re.sub(r"_(c2c|validate)$", "", e["name"]), stem) if k in entry["api_types"]), None)
 
         canisters[name] = entry
 
-    # Incoming calls, derived from everyone's outgoing ones
+    # Second pass: the calls each canister makes, which needs every canister's endpoints to resolve
+    # the targets of calls that don't name their target crate
+    def canisters_with_endpoint(method):
+        base = re.sub(r"_(msgpack|json)$", "", method)
+        return [n for n, c in canisters.items() if any(e["name"] == base for e in c["endpoints"])]
+
     for name, entry in canisters.items():
+        if name not in sources:
+            continue
+        calls = {}
+        all_text = "\n".join(sources[name].values())
+        for target, methods in c2c_client_calls(all_text).items():
+            for m in methods:
+                add_call(calls, target, m)
+        for text in sources[name].values():
+            for m in FAF_RE.finditer(text):
+                expr, method = m.group(1), m.group(2)
+                tm = re.search(r"\b([a-z_0-9]+?)_canister(?:_id)?\b", expr)
+                targets = [tm.group(1)] if tm and tm.group(1) in canisters else [t for t in canisters_with_endpoint(method) if t != name]
+                for t in targets:
+                    add_call(calls, t, method)
+            for m in LOCAL_C2C_RE.finditer(text):
+                method = m.group(1)
+                um = re.search(r"\buse ([a-z_0-9]+)_canister::(?:\{[^}]*\b)?" + re.escape(method) + r"\b", text)
+                targets = [um.group(1)] if um and um.group(1) in canisters else [t for t in canisters_with_endpoint(method) if t != name]
+                for t in targets:
+                    add_call(calls, t, method)
+        if "init_cycles_dispenser_client" in all_text:
+            add_call(calls, "cycles_dispenser", "c2c_request_cycles", "utils")
+        for lib, modules in lib_calls.items():
+            if lib not in entry["deps"]:
+                continue
+            referenced = set(re.findall(r"\b" + re.escape(lib) + r"::([a-z_0-9]+)", all_text))
+            for bm in re.finditer(r"\buse " + re.escape(lib) + r"::\{([^}]*)\}", all_text, re.S):
+                referenced.update(i.strip().split("::")[0].strip() for i in bm.group(1).split(","))
+            used = False
+            for module, targets in modules.items():
+                if (module == "lib" and referenced) or module in referenced:
+                    used = True
+                    for t, ms in targets.items():
+                        for m in ms:
+                            add_call(calls, t, m, lib)
+            if used:
+                entry["libraries"].append(lib)
+        mgmt = set()
+        helpers = set(re.findall(r"\butils::canister::([a-z_0-9]+)", all_text))
+        for bm in re.finditer(r"\buse utils::canister::\{([^}]*)\}", all_text, re.S):
+            helpers.update(i.strip() for i in bm.group(1).split(","))
+        mgmt.update(UTILS_CANISTER_CALLS[h] for h in helpers if h in UTILS_CANISTER_CALLS)
+        mgmt.update(m for m in re.findall(r"management_canister::([a-z][a-z_0-9]*)\b", all_text) if m != "self")
+        if "HttpRequestArgs" in all_text or "http_request_with_closure" in all_text:
+            mgmt.add("http_request (HTTPS outcall)")
+        if name == "sign_in_with_email":
+            mgmt.update(["http_request (HTTPS outcall to the email provider)", "sign_with_ecdsa"])
+        if mgmt:
+            calls["management"] = {"methods": mgmt, "via": set()}
+        if "event_store_producer" in entry["deps"] and name != "event_relay":
+            add_call(calls, "event_relay", "push_events", "event_store_producer")
+        if name == "event_relay":
+            add_call(calls, "event_store", "push_events")
+
+        internal, external = {}, {}
+        for t, c in calls.items():
+            packed = {"methods": sorted(c["methods"]), "via": sorted(c["via"])}
+            if t in canisters:
+                internal[t] = packed
+            elif t in EXTERNALS:
+                external[t] = packed
+            else:
+                print(f"  {name}: unclassified call target {t}", file=sys.stderr)
+        entry["calls"] = internal
+        entry["externals"] = external
+        del entry["deps"]
+
+    for entry in canisters.values():
         entry["called_by"] = {}
     for name, entry in canisters.items():
         for target, c in entry["calls"].items():
-            if target in canisters:
-                canisters[target]["called_by"][name] = c
+            canisters[target]["called_by"][name] = c
 
     return {
         "generated": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
@@ -820,11 +896,11 @@ def build():
 
 
 def main():
-    live = "--live" in sys.argv
     data = build()
+
     # The prod counts are kept in live.json between runs, so a plain run doesn't touch the network
     live_file = OUT_DIR / "live.json"
-    if live:
+    if "--live" in sys.argv:
         print("fetching prod metrics…", file=sys.stderr)
         counts = {"live": live_counts(canister_ids()), "live_as_of": datetime.now(timezone.utc).strftime("%Y-%m-%d")}
         live_file.write_text(json.dumps(counts, indent=1) + "\n", encoding="utf-8")
@@ -834,19 +910,18 @@ def main():
     data["live_as_of"] = counts.get("live_as_of")
 
     template = read(OUT_DIR / "template.html")
-    if template:
-        payload = json.dumps(data, ensure_ascii=False).replace("</", "<\\/")
-        page = template.replace("/*__DATA__*/null", payload)
-        # template.html is a page fragment (head elements, then the app markup); index.html wraps it
-        # in a full document so it can be served from anywhere
-        head, body = page.split('<div id="app">', 1)
-        html = (
-            '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
-            '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
-            + head + '</head>\n<body>\n<div id="app">' + body + '\n</body>\n</html>\n'
-        )
-        (OUT_DIR / "index.html").write_text(html, encoding="utf-8")
-        print(f"wrote index.html ({len(html) // 1024} KB)", file=sys.stderr)
+    payload = json.dumps(data, ensure_ascii=False).replace("</", "<\\/")
+    page = template.replace("/*__DATA__*/null", payload)
+    # template.html is a page fragment (head elements, then the app markup); index.html wraps it
+    # in a full document so it can be served from anywhere
+    head, body = page.split('<div id="app">', 1)
+    html = (
+        '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
+        '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
+        + head + '</head>\n<body>\n<div id="app">' + body + '\n</body>\n</html>\n'
+    )
+    (OUT_DIR / "index.html").write_text(html, encoding="utf-8")
+    print(f"wrote index.html ({len(html) // 1024} KB)", file=sys.stderr)
 
     total = sum(len(c["endpoints"]) for c in data["canisters"].values())
     print(f"{len(data['canisters'])} canisters, {total} endpoints", file=sys.stderr)

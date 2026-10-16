@@ -414,14 +414,14 @@ const NODE_POS = {
   user_index: [60 + 500, 130], local_user_index: [280 + 500, 130], multi_user: [280 + 500, 246],
   group_index: [1060, 130], group: [1280, 130], community: [1280, 246],
   notifications_index: [60, 450],
-  proposals_bot: [560, 450], proposal_validation: [780, 450], neuron_controller: [560, 566], market_maker: [780, 566],
+  proposals_bot: [560, 450], proposal_validation: [780, 450], neuron_controller: [560, 566],
   storage_index: [1060, 450], storage_bucket: [1280, 450],
-  registry: [60, 660], escrow: [280, 660],
-  cycles_dispenser: [560, 770], openchat_installer: [780, 770], event_relay: [1000, 770], translations: [1220, 770],
-  daily_puzzle: [560, 886], call_relay: [780, 886], cycles_refunder: [1000, 886],
+  escrow: [60, 660],
+  registry: [560, 770], cycles_dispenser: [780, 770], openchat_installer: [1000, 770], event_relay: [1220, 770],
+  translations: [560, 886], daily_puzzle: [780, 886], call_relay: [1000, 886], cycles_refunder: [1220, 886],
 };
 const EXT_W = 190, EXT_H = 40;
-const EXT_ORDER = ["management", "cycles_minting", "nns_governance", "sns_wasm", "sns_governance", "sns_root", "sns_swap", "sns_ledger", "sns_archive", "icp_ledger", "icrc_ledger", "ckbtc_minter", "cksol_minter", "one_sec_minter", "icdex", "icpswap_swap_pool", "taco_exchange", "event_store"];
+const EXT_ORDER = ["management", "cycles_minting", "nns_governance", "sns_wasm", "sns_governance", "sns_root", "sns_swap", "sns_ledger", "sns_archive", "icp_ledger", "icrc_ledger", "ckbtc_minter", "cksol_minter", "one_sec_minter", "icpswap_swap_pool", "taco_exchange", "event_store"];
 const CARD_LABEL = { single: "one canister", "per-subnet": "one per subnet", many: "many canisters", ephemeral: "installed briefly" };
 
 const canisters = DATA.canisters;
@@ -471,7 +471,7 @@ function prettyGuard(c, e) {
   let label = (c.guards && c.guards[e.guard]) || e.guard.replace(/^caller_is_/, "").replace(/_/g, " ");
   for (const id of ids) label = label.replace(new RegExp("\\b" + id + "\\b( canister)?", "g"), canisters[id].title);
   label = label.replace(/\bcanister\b\s*$/i, "").trim();
-  return label.charAt(0).toLowerCase() + label.slice(1);
+  return /^[A-Z][a-z]/.test(label) && !ids.some(id => label.startsWith(canisters[id].title)) ? label.charAt(0).toLowerCase() + label.slice(1) : label;
 }
 function humanJob(name) { return name.replace(/_/g, " ").replace(/^\w/, c => c.toUpperCase()); }
 function highlightRust(src) {
@@ -530,7 +530,7 @@ const extX = 1560, extY0 = 100;
     extEls["ext:" + k] = g;
   });
 }
-const actors = Object.keys(DATA.offchain).filter(a => ids.some(id => canisters[id].offchain.includes(a)));
+const actors = Object.keys(DATA.offchain).filter(a => ids.some(id => a in canisters[id].offchain));
 const actX = -230, actY0 = 100;
 {
   const lbl = el("text", { class: "col-label", x: actX, y: actY0 - 16 }, gExts); lbl.textContent = "Callers";
@@ -562,27 +562,27 @@ function edgePath(a, b, bend) {
   const off = Math.min(60, len * 0.18) * bend;
   return `M${p1.x} ${p1.y} Q${mx + nx * off} ${my + ny * off} ${p2.x} ${p2.y}`;
 }
+function loopPath(r) {
+  const x = r.x + r.w - 36, y = r.y;
+  return `M${x} ${y} C${x - 10} ${y - 34} ${x + 46} ${y - 34} ${x + 30} ${y}`;
+}
 function addEdge(from, to, methods, kind, via) {
   if (!rects[from] || !rects[to]) return;
-  const reverse = edgeEls.some(e => e.from === to && e.to === from);
-  const d = edgePath(rects[from], rects[to], reverse ? -1 : 1);
+  const d = from === to ? loopPath(rects[from]) : edgePath(rects[from], rects[to], 1);
   const path = el("path", { class: "edge" + (kind !== "internal" ? " ext-edge" : ""), d, "data-kind": kind }, gEdges);
   const hit = el("path", { class: "edge-hit", d }, gEdges);
   const edge = { from, to, methods, kind, via, path, hit };
   hit.addEventListener("pointerenter", ev => showEdgeTip(edge, ev));
   hit.addEventListener("pointermove", ev => positionTip(ev));
   hit.addEventListener("pointerleave", hideTip);
-  hit.addEventListener("click", ev => { ev.stopPropagation(); select(from, "calls"); });
+  hit.edge = edge;
   edgeEls.push(edge);
 }
 for (const id of ids) {
   const c = canisters[id];
   for (const [t, call] of Object.entries(c.calls)) addEdge(id, t, call.methods, "internal", call.via);
   for (const [t, call] of Object.entries(c.externals)) addEdge(id, "ext:" + t, call.methods, "external", call.via);
-  for (const a of c.offchain) {
-    const eps = c.endpoints.filter(e => e.guard && Object.entries({ "Notification pusher": /pusher|push_service/, "Media scanner": /scanner/, "Video bridge": /video/, "Authority reporter": /authority_reporter/ }).some(([k, re]) => k === a && re.test(e.guard))).map(e => e.name);
-    addEdge("actor:" + a, id, eps, "actor");
-  }
+  for (const [a, eps] of Object.entries(c.offchain)) addEdge("actor:" + a, id, eps, "actor");
   const fe = c.endpoints.filter(e => e.frontend).map(e => e.name);
   if (fe.length) addEdge("web", id, fe, "web");
 }
@@ -607,7 +607,7 @@ function viewport() {
   // the part of the canvas not covered by the panel
   const r = canvas.getBoundingClientRect();
   let w = r.width, hgt = r.height, x0 = 0, y0 = 0;
-  if (!panel.hidden) {
+  if (!panel.hidden && !closing) {
     // offsetWidth / offsetHeight are the layout size, unaffected by the open/close transform
     if (window.innerWidth > 760) w = Math.max(200, r.width - panel.offsetWidth); else hgt = Math.max(160, r.height - panel.offsetHeight);
   }
@@ -701,10 +701,12 @@ function handleClick(target) {
   const node = target.closest && target.closest(".node");
   const ext = target.closest && target.closest(".ext");
   const zone = target.closest && target.closest(".zone");
+  const hit = target.closest && target.closest(".edge-hit");
   if (node) select(node.dataset.id);
   else if (ext) focusExt(ext.dataset.ext);
-  else if (zone) { deselect(); fitTo(ZONE_BOXES[zone.dataset.zone], 24); }
-  else if (!(target.closest && target.closest(".edge-hit"))) deselect();
+  else if (hit && hit.edge) { const e = hit.edge; select(canisters[e.from] ? e.from : e.to, "calls"); }
+  else if (zone) { deselect(false); fitTo(ZONE_BOXES[zone.dataset.zone], 24); }
+  else deselect();
 }
 canvas.addEventListener("keydown", ev => {
   if (ev.key === "Enter" || ev.key === " ") {
@@ -715,7 +717,7 @@ canvas.addEventListener("keydown", ev => {
 });
 $("#zin").onclick = () => { const vp = viewport(); zoomAt(1.4, vp.x + vp.w / 2, vp.y + vp.h / 2); };
 $("#zout").onclick = () => { const vp = viewport(); zoomAt(1 / 1.4, vp.x + vp.w / 2, vp.y + vp.h / 2); };
-$("#zfit").onclick = () => { deselect(); fitAll(); };
+$("#zfit").onclick = () => { deselect(false); fitAll(); };
 
 // hover highlights
 gNodes.addEventListener("pointerover", ev => { const n = ev.target.closest(".node"); if (n && !selected) highlight(n.dataset.id); });
@@ -793,8 +795,11 @@ function select(id, tab, epFilter) {
   const wasOpen = !panel.hidden && !closing;
   if (closing) { clearTimeout(closing); closing = null; panel.classList.remove("closing"); }
   const from = nodeScreenRect(id);
+  const previous = selected;
   selected = id;
   currentTab = tab || (wasOpen ? currentTab : "overview");
+  if (!TABS.some(([key, , count]) => key === currentTab && count(canisters[id]) !== null && count(canisters[id]) !== 0) && currentTab !== "overview") currentTab = "overview";
+  if (previous !== id) epState = { filter: "", scope: "all" };
   for (const [nid, g] of Object.entries(nodeEls)) g.classList.toggle("selected", nid === id);
   highlight(id);
   renderPanel(id, epFilter);
@@ -816,7 +821,7 @@ function select(id, tab, epFilter) {
   });
   if (location.hash !== "#" + id) history.replaceState(null, "", "#" + id);
 }
-function deselect() {
+function deselect(refit = true) {
   if (!selected) return;
   const id = selected; selected = null;
   nodeEls[id].classList.remove("selected");
@@ -828,10 +833,10 @@ function deselect() {
     closing = setTimeout(() => { panel.hidden = true; panel.classList.remove("closing"); panel.style.transform = ""; closing = null; }, 300);
   } else panel.hidden = true;
   history.replaceState(null, "", location.pathname + location.search);
-  setTimeout(() => fitAll(), 20);
+  if (refit) fitAll();
 }
 function focusExt(key) {
-  deselect();
+  deselect(false);
   highlight(key);
   const r = rects[key], vp = viewport();
   const k = Math.max(view.k, 0.9);
@@ -846,7 +851,7 @@ function focusExt(key) {
 }
 $("#closebtn").onclick = deselect;
 document.addEventListener("keydown", ev => {
-  if (ev.key === "Escape") { if (!$("#results").hidden) { $("#results").hidden = true; return; } if (!$("#about").hidden) { $("#about").hidden = true; return; } deselect(); }
+  if (ev.key === "Escape") { if (!$("#results").hidden) { closeResults(); return; } if (!$("#about").hidden) { $("#about").hidden = true; return; } deselect(); }
   if (ev.key === "/" && document.activeElement !== $("#search")) { ev.preventDefault(); $("#search").focus(); }
 });
 
@@ -906,7 +911,8 @@ function renderOverview(c, body) {
   if (prop) who.append(h("li", {}, h("b", {}, `${prop} endpoints only the SNS can call`), h("span", {}, "changed by governance proposal")));
   const callers = Object.keys(c.called_by);
   if (callers.length) who.append(h("li", {}, h("b", {}, "Called by " + callers.map(k => canisters[k].title).join(", ")), h("span", {}, "see the Calls tab for the methods")));
-  if (c.offchain.length) who.append(h("li", {}, h("b", {}, "Off-chain: " + c.offchain.join(", ")), h("span", {}, c.offchain.map(a => DATA.offchain[a]).join(" · "))));
+  const actorsIn = Object.keys(c.offchain);
+  if (actorsIn.length) who.append(h("li", {}, h("b", {}, "Off-chain: " + actorsIn.join(", ")), h("span", {}, actorsIn.map(a => DATA.offchain[a]).join(" · "))));
   if (!who.children.length) who.append(h("li", {}, h("span", {}, "Only its controllers.")));
   body.append(who);
 
@@ -946,12 +952,15 @@ function renderEndpoints(c, body, epFilter) {
   input.addEventListener("input", () => { epState.filter = input.value; draw(); });
   filters.append(input);
   const scopes = [["all", "All"], ["web", "Web app"], ["c2c", "c2c"], ["query", "Queries"], ["update", "Updates"], ["proposal", "Proposals"]];
+  const chips = [];
   for (const [k, label] of scopes) {
     if (k === "proposal" && !c.endpoints.some(e => e.proposal)) continue;
     if (k === "web" && !c.endpoints.some(e => e.frontend)) continue;
-    const b = h("button", { class: "chip", "aria-pressed": String(epState.scope === k), onclick: () => { epState.scope = k; renderEndpoints(c, body); } }, label);
+    const b = h("button", { class: "chip", "aria-pressed": String(epState.scope === k), onclick: () => { epState.scope = k; chips.forEach(([kk, bb]) => bb.setAttribute("aria-pressed", String(kk === k))); draw(); } }, label);
+    chips.push([k, b]);
     filters.append(b);
   }
+  if (!chips.some(([k]) => k === epState.scope)) epState.scope = "all";
   body.append(filters);
   const list = h("div", { id: "ep-list" }); body.append(list);
   function draw() {
@@ -994,8 +1003,9 @@ function endpointRow(c, e, open) {
     detail);
   function fillDetail() {
     if (e.comment) detail.append(h("div", { class: "comment" }, e.comment));
+    detail.append(h("div", { class: "who" }, h("b", {}, "Callable by "), prettyGuard(c, e)));
     const enc = [e.candid || e.in_did ? "candid" : null, e.msgpack ? "msgpack" : null, e.json ? "json" : null].filter(Boolean);
-    detail.append(h("div", { class: "who" }, h("b", {}, "Callable by "), prettyGuard(c, e), enc.length ? [" · ", h("span", { class: "badge mono" }, enc.join(" + "))] : null));
+    detail.append(h("div", { class: "who" }, h("b", {}, "On the wire "), h("span", { class: "badges", style: "display:inline-flex" }, e.wire.map(w => h("span", { class: "badge mono" }, w))), enc.length ? " · " + enc.join(" + ") : ""));
     const src = e.api && c.api_types[e.api];
     if (src) { const pre = h("pre", { class: "code" }); pre.innerHTML = highlightRust(src); detail.append(pre); }
     else if (e.name.startsWith("http_request")) detail.append(h("p", { class: "comment" }, "Serves the canister's HTTP interface: /metrics, /logs, /traces and /errors, plus avatars where it holds them."));
@@ -1069,9 +1079,10 @@ function renderCalls(c, body) {
     body.append(h("h3", {}, "Outside OpenChat"));
     body.append(h("div", { class: "calls" }, ext.map(([t, call]) => callCard(DATA.externals[t].title, null, call.methods, call.via, DATA.externals[t].detail))));
   }
-  if (c.offchain.length) {
+  const actorsIn = Object.entries(c.offchain);
+  if (actorsIn.length) {
     body.append(h("h3", {}, "Off-chain services calling in"));
-    body.append(h("ul", { class: "list" }, c.offchain.map(a => h("li", {}, h("b", {}, a), h("span", {}, DATA.offchain[a])))));
+    body.append(h("div", { class: "calls" }, actorsIn.map(([a, eps]) => callCard(a, null, eps, [], DATA.offchain[a]))));
   }
 }
 function renderMetrics(c, body) {
@@ -1108,7 +1119,7 @@ function runSearch() {
   results.hidden = false;
 }
 function pick(x) {
-  results.hidden = true; search.value = ""; search.blur();
+  closeResults(); search.value = ""; search.blur();
   if (x.ep) select(x.id, "endpoints", x.ep); else if (x.kind === "state") select(x.id, "state"); else select(x.id, "overview");
 }
 search.addEventListener("input", runSearch);
@@ -1122,7 +1133,8 @@ search.addEventListener("keydown", ev => {
     items[activeResult] && items[activeResult].scrollIntoView({ block: "nearest" });
   } else if (ev.key === "Enter" && items.length) { ev.preventDefault(); items[Math.max(0, activeResult)].click(); }
 });
-document.addEventListener("click", ev => { if (!ev.target.closest(".search")) results.hidden = true; });
+function closeResults() { results.hidden = true; highlight(selected); }
+document.addEventListener("click", ev => { if (!ev.target.closest(".search")) closeResults(); });
 
 // ---------- about ----------
 $("#aboutbtn").onclick = () => { $("#about").hidden = !$("#about").hidden; };

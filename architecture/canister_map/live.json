@@ -41,7 +41,7 @@
   "storage_index": [
    [
     "files",
-    776267
+    776271
    ],
    [
     "GB stored",
@@ -56,28 +56,24 @@
   ],
   "notifications_index": [
    [
-    "users with subscriptions",
-    46715
-   ],
-   [
-    "subscriptions",
-    1470
+    "web push subscriptions",
+    1473
    ]
   ],
   "identity": [
    [
     "identities",
-    267504
+    267505
    ],
    [
     "auth principals",
-    270900
+    270902
    ]
   ],
   "online_users": [
    [
     "mark_as_online calls",
-    88201393
+    88201953
    ]
   ]
  },
