@@ -21,9 +21,10 @@ website build runs the last form (see frontend/app/rollup.config.mjs) so the map
 website canister at /canisters and regenerated on every deploy; with --out, live.json is left alone.
 """
 
+import argparse
 import json
-import os
 import re
+import subprocess
 import sys
 import urllib.request
 from datetime import datetime, timezone
@@ -723,6 +724,14 @@ def wat_canister(name, d):
     return eps, calls, externals, readme, len(read(d / f"{name}.wat").splitlines())
 
 
+def git_commit():
+    try:
+        return subprocess.run(["git", "-C", str(ROOT), "rev-parse", "--short", "HEAD"], capture_output=True, text=True, check=True).stdout.strip()
+    except (OSError, subprocess.CalledProcessError):
+        # eg. a Docker build, which copies the tree without .git
+        return ""
+
+
 def build():
     ids = canister_ids()
     lib_calls = library_calls()
@@ -890,7 +899,7 @@ def build():
 
     return {
         "generated": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
-        "commit": os.popen(f"git -C {ROOT} rev-parse --short HEAD").read().strip(),
+        "commit": git_commit(),
         "zones": ZONES,
         "externals": {k: {"title": v[0], "detail": v[1]} for k, v in EXTERNALS.items()},
         "offchain": {v[0]: v[1] for v in OFFCHAIN.values()},
@@ -899,23 +908,28 @@ def build():
 
 
 def main():
-    args = sys.argv[1:]
-    out = OUT_DIR / "index.html"
-    if "--out" in args:
-        out = Path(args[args.index("--out") + 1]).resolve()
-        out.parent.mkdir(parents=True, exist_ok=True)
+    parser = argparse.ArgumentParser(description="Builds the canister map page from the backend source")
+    parser.add_argument("--out", type=Path, default=OUT_DIR / "index.html", help="where to write the page (default: beside this script)")
+    parser.add_argument("--live", action="store_true", help="fetch the headline counts from the prod canisters' /metrics")
+    args = parser.parse_args()
+    out = args.out.resolve()
+    out.parent.mkdir(parents=True, exist_ok=True)
     data = build()
 
-    # The prod counts are kept in live.json between runs, so a plain run doesn't touch the network;
-    # a build into another location (--out) uses what it fetches without touching the file
+    # The prod counts are kept in live.json between runs, so a plain run doesn't touch the network.
+    # --live fetches them afresh, canister by canister, keeping the file's figure for any canister
+    # whose metrics can't be read; the file itself is only rewritten when the page is built in place.
     live_file = OUT_DIR / "live.json"
-    if "--live" in args:
+    counts = json.loads(read(live_file) or "{}")
+    if args.live:
         print("fetching prod metrics…", file=sys.stderr)
-        counts = {"live": live_counts(canister_ids()), "live_as_of": datetime.now(timezone.utc).strftime("%Y-%m-%d")}
-        if out == OUT_DIR / "index.html":
-            live_file.write_text(json.dumps(counts, indent=1) + "\n", encoding="utf-8")
-    else:
-        counts = json.loads(read(live_file) or "{}")
+        fetched = live_counts(canister_ids())
+        if fetched:
+            counts = {"live": {**counts.get("live", {}), **fetched}, "live_as_of": datetime.now(timezone.utc).strftime("%Y-%m-%d")}
+            if out == (OUT_DIR / "index.html").resolve():
+                live_file.write_text(json.dumps(counts, indent=1) + "\n", encoding="utf-8")
+        else:
+            print("no prod metrics reachable; keeping the counts in live.json", file=sys.stderr)
     data["live"] = counts.get("live", {})
     data["live_as_of"] = counts.get("live_as_of")
 

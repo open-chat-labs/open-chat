@@ -34,7 +34,10 @@ python3 architecture/canister_map/extract.py --live   # also refreshes the prod 
 ```
 
 `live.json` holds the prod counts shown on the overview tab (users, groups, files, ...) for a
-build without `--live`; the prod and prod test website builds fetch them afresh.
+build without `--live`; the prod and prod test website builds fetch them afresh (not in CI), falling
+back to the file for any canister whose metrics can't be read. The native app builds skip the page:
+the shells open oc.app/canisters in a browser. A CI job (`.github/workflows/canister_map.yaml`)
+runs the generator on backend changes so a change that breaks it is caught before a release.
 
 `index.html` is `template.html` with the extracted data spliced in, so edit the template for changes to
 the page and `extract.py` (the `DESCRIPTIONS` table) for the canister descriptions. A canister

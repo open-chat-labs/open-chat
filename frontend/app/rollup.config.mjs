@@ -8,6 +8,7 @@ import replace from "@rollup/plugin-replace";
 import terser from "@rollup/plugin-terser";
 import typescript from "@rollup/plugin-typescript";
 import autoprefixer from "autoprefixer";
+import { execFileSync } from "node:child_process";
 import fs from "fs-extra";
 import path from "path";
 import { rimrafSync } from "rimraf";
@@ -72,6 +73,33 @@ function clean() {
 }
 
 const { version, production } = initEnv();
+
+// The interactive canister map (architecture/canister_map) is served from the website canister
+// at /canisters and regenerated from the backend source on every build, so it always describes
+// the code it was built with. Prod and prod test builds also fetch the headline counts (users,
+// groups, files) from the prod canisters' /metrics, except in CI. The native shells open the map
+// in a browser (see openchat-shared's standalonePages), so their builds don't carry it.
+function canisterMap() {
+    return {
+        name: "canister-map",
+        // closeBundle runs once every writeBundle has finished, so the OTA zips that
+        // androidBundlePlugin cuts from build/ in its writeBundle never pick the page up
+        closeBundle() {
+            if (process.env.OC_APP_TYPE === "android" || process.env.OC_APP_TYPE === "ios") return;
+            const args = [
+                "../../architecture/canister_map/extract.py",
+                "--out",
+                "build/canisters/index.html",
+            ];
+            if (["production", "prod_test"].includes(process.env.OC_BUILD_ENV) && !process.env.CI) {
+                args.push("--live");
+            }
+            // Synchronous and checked: a missing python3 or a generator error fails the build
+            // rather than shipping a release without the page
+            execFileSync("python3", args, { stdio: "inherit" });
+        },
+    };
+}
 
 const override = (key, val) => `(window.OC_CONFIG?.${key} ?? ${val})`;
 
@@ -443,18 +471,7 @@ export default {
             ],
             hook: "buildStart",
         }),
-        // The interactive canister map (architecture/canister_map) is served from the website
-        // canister at /canisters and regenerated from the backend source on every build, so it
-        // always describes the code it was built with. Prod and prod test builds also fetch the
-        // headline counts (users, groups, files) from the prod canisters' /metrics.
-        execute({
-            commands: [
-                `python3 ../../architecture/canister_map/extract.py --out build/canisters/index.html${
-                    ["production", "prod_test"].includes(process.env.OC_BUILD_ENV) ? " --live" : ""
-                }`,
-            ],
-            hook: "writeBundle",
-        }),
+        canisterMap(),
         androidBundlePlugin({ version, csp: () => otaCsp }),
     ],
     watch: {

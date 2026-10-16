@@ -1,6 +1,7 @@
 // https://stackoverflow.com/questions/10687099/how-to-test-if-a-url-string-is-absolute-or-relative
 
 import { OpenChat, routeStore, type RouteParams, type RouteType } from "@client";
+import { isStandalonePagePath } from "@shared";
 import { openUrl } from "tauri-plugin-oc-api";
 
 const regex = new RegExp("^(?:[a-z]+:)?//", "i");
@@ -256,8 +257,14 @@ export function handleLinkClick(
 
         // oc.app links to marketing / landing pages were rewritten to relative
         // urls by the markdown renderer. In the native app open these in an
-        // external browser tab rather than navigating inside the app.
-        if (client.isNativeApp() && isLandingPagePath(url.pathname)) {
+        // external browser tab rather than navigating inside the app. The same
+        // goes for the standalone pages served beside the app (the canister map),
+        // which on the web are whole documents of their own, so the browser
+        // navigates to them rather than the app's router (which would read
+        // "canisters" as a chat id).
+        const standalone = isStandalonePagePath(url.pathname);
+        if (standalone && !client.isNativeApp()) return;
+        if (client.isNativeApp() && (standalone || isLandingPagePath(url.pathname))) {
             e.preventDefault();
             void openExternalUrl(
                 client,
