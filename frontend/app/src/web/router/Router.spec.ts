@@ -2,6 +2,7 @@ import {
     chatsInitialisedStore,
     notFoundStore,
     pathContextStore,
+    rightPanelHistory,
     routeStore,
     type OpenChat,
     type RouteParams,
@@ -40,6 +41,7 @@ describe("the web UI's router", () => {
 
     beforeEach(() => {
         vi.stubGlobal("gtag", vi.fn());
+        window.scrollTo = vi.fn();
         target = document.body.appendChild(document.createElement("div"));
         client = fakeClient();
         chatsInitialisedStore.set(true);
@@ -54,8 +56,9 @@ describe("the web UI's router", () => {
     });
 
     // Opens the app on `url`, as page.js reads the location when it starts
-    async function open(url: string) {
+    async function open(url: string, beforeMount = () => {}) {
         history.replaceState(null, "", url);
+        beforeMount();
         app = mount(Router, {
             target,
             props: { children: createRawSnippet(() => ({ render: () => "<div></div>" })) },
@@ -114,8 +117,56 @@ describe("the web UI's router", () => {
         });
     });
 
-    test("marks a path nothing matches as not found", async () => {
+    test("marks a path nothing matches as not found, without a page view", async () => {
         await open("/a/b/c/d");
         expect(notFoundStore.value).toBe(true);
+        expect(gtag).not.toHaveBeenCalled();
+    });
+
+    test("counts a page view and scrolls to the top for a route", async () => {
+        await open("/chats");
+        expect(gtag).toHaveBeenCalledWith("event", "page_view", { page_location: "/chats" });
+        expect(window.scrollTo).toHaveBeenCalledWith({ behavior: "auto", top: 0 });
+    });
+
+    test("leaves a previewed community's thread list where it is", async () => {
+        client.setSelectedCommunity.mockResolvedValue(true);
+        await open("/community/c1/threads");
+        await tick();
+        expect(client.selectDefaultChat).not.toHaveBeenCalled();
+    });
+
+    // History writes from mounting on `url` until the query string settles on `settled`
+    async function historyWrites(url: string, settled: string) {
+        let writes = 0;
+        await open(url, () => {
+            for (const method of ["pushState", "replaceState"] as const) {
+                const original = history[method].bind(history);
+                vi.spyOn(history, method).mockImplementation((...args) => {
+                    writes++;
+                    original(...args);
+                });
+            }
+        });
+        await vi.waitFor(() => expect(location.search).toBe(settled));
+        await tick();
+        return writes;
+    }
+
+    test("handles each action param in a URL, then tidies it in one go", async () => {
+        const plain = await historyWrites("/chats?keep=1", "?keep=1");
+        unmount(app!);
+        app = undefined;
+        vi.restoreAllMocks();
+        const withActions = await historyWrites("/chats?everyone&usergroup=3&keep=1", "?keep=1");
+        expect(withActions).toBe(plain + 1);
+        expect(rightPanelHistory.value).toEqual([
+            { kind: "show_community_members", userGroupId: 3 },
+        ]);
+    });
+
+    test("passes an FAQ topic on encoded", async () => {
+        await open("/chats?faq=a%26b");
+        await vi.waitFor(() => expect(location.pathname + location.search).toBe("/faq?q=a%26b"));
     });
 });

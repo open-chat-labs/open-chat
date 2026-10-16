@@ -45,6 +45,22 @@ export function removeQueryStringParam(name: string): string {
     return [...qs.keys()].length > 0 ? `${path}?${qs}` : path;
 }
 
+export function withoutQueryStringParams(names: string[]): string {
+    const path = window.location.pathname;
+    const qs = new URLSearchParams(window.location.search);
+    names.forEach((name) => qs.delete(name));
+    return [...qs.keys()].length > 0 ? `${path}?${qs}` : path;
+}
+
+// The current URL with a valueless param added (?profile rather than ?profile=)
+export function withQueryStringFlag(name: string): string {
+    const path = window.location.pathname;
+    const qs = new URLSearchParams(window.location.search);
+    qs.delete(name);
+    const rest = qs.toString();
+    return `${path}?${rest === "" ? "" : `${rest}&`}${encodeURIComponent(name)}`;
+}
+
 const nomenuRoutes: RouteType[] = [];
 const scrollingRoutes: RouteType[] = [
     "features_route",

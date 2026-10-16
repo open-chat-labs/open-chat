@@ -33,7 +33,11 @@
         initNavigationHistoryTracking,
         navigate,
     } from "@src/utils/navigation";
-    import { handleLinkClick, removeQueryStringParam } from "@src/utils/urls";
+    import {
+        handleLinkClick,
+        removeQueryStringParam,
+        withoutQueryStringParams,
+    } from "@src/utils/urls";
     import page from "page";
     import { getContext, onMount, untrack, type Snippet } from "svelte";
     import { routeTable } from "./routeTable";
@@ -45,6 +49,7 @@
     function parsePathParams(fn: (ctx: PageJS.Context) => RouteParams) {
         return (ctx: PageJS.Context, next: () => void) => {
             client.setRouteParams(ctx, fn(ctx));
+            window.scrollTo({ behavior: "auto", top: 0 });
             next();
         };
     }
@@ -59,7 +64,9 @@
         document.addEventListener("click", onLinkClick, { capture: true });
 
         for (const { path, parse } of routeTable) {
-            page(path, parsePathParams(parse), track, () => {
+            // not found isn't a page view, as in the existing router
+            const tracking = path === "*" ? [] : [track];
+            page(path, parsePathParams(parse), ...tracking, () => {
                 notFoundStore.set(path === "*");
             });
         }
@@ -102,8 +109,13 @@
             const id = $selectedCommunityIdStore;
             untrack(() => {
                 client.setSelectedCommunity(id).then((preview) => {
-                    // a previewed community's first channel has to be selected by hand
-                    if (preview && $selectedChatIdStore === undefined) {
+                    // a previewed community's first channel has to be selected by hand, unless
+                    // its thread list is what's open
+                    if (
+                        preview &&
+                        $selectedChatIdStore === undefined &&
+                        $routeKindStore !== "threads_route"
+                    ) {
                         client.selectDefaultChat();
                     }
                 });
@@ -208,24 +220,33 @@
         });
     });
 
-    // The query params that open something (ROUTES.md), handled once the chats are in
+    // The query params that open something (ROUTES.md), handled once the chats are in, each on its
+    // own as Home.svelte does, then the URL is tidied with a single navigation
     $effect(() => {
         if (!$chatsInitialisedStore) return;
-        const qs = $querystringStore;
+        void $querystringStore;
         untrack(() => {
+            // from the URL itself: querystringStore is built from page.js's decoded query string,
+            // where an encoded value (?faq=a%26b) has already been split apart
+            const qs = new URLSearchParams(window.location.search);
+            const handled: string[] = [];
+            if (qs.get("everyone") !== null) {
+                setRightPanelHistory([{ kind: "show_group_members" }]);
+                handled.push("everyone");
+            }
+            const usergroup = qs.get("usergroup");
+            if (usergroup !== null) {
+                setRightPanelHistory([{ kind: "show_community_members", userGroupId: Number(usergroup) }]);
+                handled.push("usergroup");
+            }
             const faq = qs.get("faq");
             if (faq !== null) {
-                navigate(`/faq?q=${faq}`);
+                navigate(`/faq?q=${encodeURIComponent(faq)}`);
             } else if (qs.get("wallet") !== null) {
                 // the wallet is a route of its own here, not a modal
                 navigate("/wallet");
-            } else if (qs.get("everyone") !== null) {
-                setRightPanelHistory([{ kind: "show_group_members" }]);
-                navigate(removeQueryStringParam("everyone"));
-            } else if (qs.get("usergroup") !== null) {
-                const userGroupId = Number(qs.get("usergroup"));
-                setRightPanelHistory([{ kind: "show_community_members", userGroupId }]);
-                navigate(removeQueryStringParam("usergroup"));
+            } else if (handled.length > 0) {
+                navigate(withoutQueryStringParams(handled));
             }
             // TODO(phase 8): ?diamond, ?hof and ?chit open their dialogs
         });

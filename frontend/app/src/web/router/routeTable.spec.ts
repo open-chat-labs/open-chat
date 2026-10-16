@@ -1,5 +1,6 @@
 import type { RouteParams } from "@client";
 import page from "page";
+import { pathToRouteKind } from "@src/utils/navigation";
 import { routeTable } from "./routeTable";
 
 // What Route needs of its page.js instance, which page.js doesn't expose: decoding the URL's parts
@@ -154,5 +155,41 @@ describe("the web UI's route table", () => {
 
     test("ends with not found for anything else", () => {
         expect(kind("/a/b/c/d")).toBe("not_found_route");
+    });
+
+    // navigation.ts decides push / pop / replace from its own list of the app's paths (shared with
+    // the existing trees, which read some of them differently), so a path added here must be added
+    // there too
+    test("every app path is one navigation knows", () => {
+        // the existing trees read these differently: "/" and /favourite as chat lists
+        const readDifferently = ["/", "/favourite"];
+        const outsideTheApp = ["*", "/:chatId/:messageIndex?/:threadMessageIndex?"];
+        for (const { path } of routeTable) {
+            if (readDifferently.includes(path) || outsideTheApp.includes(path)) continue;
+            const url = path.replace(/\/:\w+\?/g, "").replace(/:\w+/g, "1");
+            const kind = resolve(url).kind;
+            if (kind.endsWith("_route") && pathToRouteKind(url) === "not_found_route") {
+                // marketing pages aren't in navigation's list, and don't need to be
+                const marketing = [
+                    "home_landing_route",
+                    "features_route",
+                    "roadmap_route",
+                    "blog_route",
+                    "whitepaper_route",
+                    "guidelines_route",
+                    "terms_route",
+                    "privacy_route",
+                    "faq_route",
+                    "diamond_route",
+                    "architecture_route",
+                    "csea_reporting_route",
+                ];
+                expect(marketing, `${path} is missing from navigation's ROUTE_MATCHERS`).toContain(
+                    kind,
+                );
+                continue;
+            }
+            expect(pathToRouteKind(url), path).toBe(kind);
+        }
     });
 });

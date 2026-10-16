@@ -9,8 +9,21 @@
     import AppScreen from "./AppScreen.svelte";
     import Placeholder from "./Placeholder.svelte";
 
-    // development only, until the marketing pages are mounted
-    const DEV_LINKS = ["/chats", "/favourite", "/chats/threads", "/notifications", "/communities", "/wallet", "/wallet/send", "/chats?profile"];
+    // Links into the app from the marketing placeholder, in development builds only, until the
+    // marketing pages are mounted
+    const DEV_LINKS =
+        import.meta.env.OC_BUILD_ENV === "development"
+            ? [
+                  "/chats",
+                  "/favourite",
+                  "/chats/threads",
+                  "/notifications",
+                  "/communities",
+                  "/wallet",
+                  "/wallet/send",
+                  "/chats?profile",
+              ]
+            : [];
 
     const signedOut = $derived($identityStateStore.kind === "anon" && $anonUserStore);
     const regions = $derived(regionsFor($routeStore, signedOut));

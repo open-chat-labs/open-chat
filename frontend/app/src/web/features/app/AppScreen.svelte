@@ -15,7 +15,7 @@
     import DialogShell from "@openchat/ui/src/lib/components/DialogShell.svelte";
     import IconButton from "@openchat/ui/src/lib/components/IconButton.svelte";
     import { navigate } from "@src/utils/navigation";
-    import { addQueryStringParam, removeQueryStringParam } from "@src/utils/urls";
+    import { removeQueryStringParam, withQueryStringFlag } from "@src/utils/urls";
     import { getContext } from "svelte";
     import { RAIL_ITEMS, railSelectionFor, type Regions } from "../../router/regions";
     import { RightColumnState } from "../../shell/rightColumn.svelte";
@@ -110,7 +110,7 @@
             onSelect={(i) => navigate(RAIL_ITEMS[i].path)}
             onSelectPin={(id) => navigate(`/community/${id}`)}
             onExplore={() => navigate("/communities")}
-            onProfile={() => navigate(addQueryStringParam("profile", ""))}
+            onProfile={() => navigate(withQueryStringFlag("profile"), "overlay")}
             onSignIn={() => client.updateIdentityState({ kind: "logging_in" })} />
     {/snippet}
     {#snippet left()}
@@ -151,7 +151,9 @@
 
 {#if profileOpen}
     <!-- TODO(phase 8): ProfileDialog -->
-    <DialogShell title="Profile" onClose={() => navigate(removeQueryStringParam("profile"))}>
+    <DialogShell
+        title="Profile"
+        onClose={() => navigate(removeQueryStringParam("profile"), "dismiss")}>
         <Placeholder title="Profile" detail="ProfileDialog (phase 8)" />
     </DialogShell>
 {/if}
