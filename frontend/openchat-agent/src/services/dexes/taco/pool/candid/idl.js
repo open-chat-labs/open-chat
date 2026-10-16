@@ -49,15 +49,11 @@ export const idlFactory = ({ IDL }) => {
     'minLegOut' : IDL.Nat,
   });
   return IDL.Service({
-    'getExpectedReceiveAmountBatchMultiOptimal' : IDL.Func(
+    'getExpectedReceiveAmountBatchMultiOptimalV2' : IDL.Func(
         [IDL.Text, IDL.Text, IDL.Nat],
         [OptimalSwapPlan],
         ['query'],
       ),
-    'getV2AllowedTokens' : IDL.Func([], [IDL.Vec(IDL.Text)], ['query']),
-    'getV2Enabled' : IDL.Func([], [IDL.Bool], ['query']),
-    'netToGrossV2' : IDL.Func([IDL.Text, IDL.Nat], [IDL.Nat], ['query']),
-    'requiredAllowanceV2' : IDL.Func([IDL.Text, IDL.Nat], [IDL.Nat], ['query']),
     'swapMultiHopV2' : IDL.Func(
         [IDL.Text, IDL.Text, IDL.Nat, IDL.Vec(SwapHop), IDL.Nat],
         [SwapResult],

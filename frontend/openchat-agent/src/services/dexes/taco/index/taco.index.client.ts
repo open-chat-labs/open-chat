@@ -5,6 +5,7 @@ import type { TokenSwapPool } from "@shared";
 import { getAllAMMPoolsResponse, TACO_EXCHANGE_CANISTER_ID } from "./mappers";
 import type { SwapIndexClient, SwapPoolClient } from "../../index";
 import { TacoPoolClient } from "../pool/taco.pool.client";
+import { identity } from "../../../../utils/mapping";
 
 export class TacoIndexClient
     extends CandidCanisterAgent<TacoExchangeIndexService>
@@ -22,5 +23,15 @@ export class TacoIndexClient
 
     getPools(): Promise<TokenSwapPool[]> {
         return this.handleQueryResponse(this.service.getAllAMMPools, getAllAMMPoolsResponse);
+    }
+
+    // TACO enables swaps straight from the wallet token by token, and can switch them off
+    // altogether
+    async walletInputTokens(): Promise<Set<string>> {
+        const [enabled, allowedTokens] = await Promise.all([
+            this.handleQueryResponse(this.service.getV2Enabled, identity),
+            this.handleQueryResponse(this.service.getV2AllowedTokens, identity),
+        ]);
+        return new Set(enabled ? allowedTokens : []);
     }
 }

@@ -51,14 +51,10 @@ export interface SwapOk {
 export type SwapResult = { 'Ok' : SwapOk } |
   { 'Err' : ExchangeError };
 export interface _SERVICE {
-  'getExpectedReceiveAmountBatchMultiOptimal' : ActorMethod<
+  'getExpectedReceiveAmountBatchMultiOptimalV2' : ActorMethod<
     [string, string, bigint],
     OptimalSwapPlan
   >,
-  'getV2AllowedTokens' : ActorMethod<[], Array<string>>,
-  'getV2Enabled' : ActorMethod<[], boolean>,
-  'netToGrossV2' : ActorMethod<[string, bigint], bigint>,
-  'requiredAllowanceV2' : ActorMethod<[string, bigint], bigint>,
   'swapMultiHopV2' : ActorMethod<
     [string, string, bigint, Array<SwapHop>, bigint],
     SwapResult

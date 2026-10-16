@@ -51,6 +51,12 @@ describe("ICPSwap swapResponse", () => {
         expect(swapResponse({ err: { InternalError: "Slippage check failed" } }, 10n)).toEqual({
             kind: "error",
             error: '{"InternalError":"Slippage check failed"}',
+            rateChanged: true,
+        });
+        expect(swapResponse({ err: { InternalError: "Wrong fee cache" } }, 10n)).toEqual({
+            kind: "error",
+            error: '{"InternalError":"Wrong fee cache"}',
+            rateChanged: false,
         });
     });
 });

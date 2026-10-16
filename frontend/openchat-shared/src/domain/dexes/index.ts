@@ -30,10 +30,13 @@ export type UnfinishedTokenSwap = {
 
 // The outcome of a swap made straight from the user's wallet, where the DEX pulls the input via
 // ICRC2 and sends the output back to the wallet. `amountOut` is what the DEX sends to the wallet.
-// An error means nothing was swapped; each DEX's client says what becomes of the input.
+// An error means nothing was swapped, `rateChanged` being whether the DEX refused the swap since
+// the rate had moved too far since the quote; each DEX's client says what becomes of the input.
+// After an `unconfirmed` error the swap may or may not have gone ahead.
 export type DexSwapResult =
     | { kind: "success"; amountOut: bigint }
-    | { kind: "error"; error: string };
+    | { kind: "error"; error: string; rateChanged: boolean }
+    | { kind: "unconfirmed"; error: string };
 
 /**
  * The best quote for swapping `amountIn` of one token in the user's wallet for another. `amountIn` is

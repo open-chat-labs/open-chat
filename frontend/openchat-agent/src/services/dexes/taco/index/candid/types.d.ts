@@ -13,6 +13,8 @@ export interface AMMPool {
 export type GetAllAMMPoolsResponse = Array<AMMPool>;
 export interface _SERVICE {
   'getAllAMMPools' : ActorMethod<[], GetAllAMMPoolsResponse>,
+  'getV2AllowedTokens' : ActorMethod<[], Array<string>>,
+  'getV2Enabled' : ActorMethod<[], boolean>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

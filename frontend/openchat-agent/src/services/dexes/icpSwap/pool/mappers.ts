@@ -36,7 +36,10 @@ function isDecline(err: ApiQuoteError): boolean {
 }
 
 // The pool reports the output before taking the output token's fee to send it to the wallet, so the
-// fee is deducted here to give what reaches the wallet, as the backend's swaps do
+// fee is deducted here to give what reaches the wallet, as the backend's swaps do. The pool refuses
+// a swap whose output would fall short of the minimum with a slippage error, which is down to the
+// rate having moved since the quote. Any other error (eg. the pool's cached fees being out of date)
+// is no better for quoting again.
 export function swapResponse(candid: ApiNatResult, outputTokenFee: bigint): DexSwapResult {
     if ("ok" in candid) {
         return {
@@ -44,7 +47,8 @@ export function swapResponse(candid: ApiNatResult, outputTokenFee: bigint): DexS
             amountOut: candid.ok > outputTokenFee ? candid.ok - outputTokenFee : 0n,
         };
     }
-    return { kind: "error", error: JSON.stringify(candid.err) };
+    const error = JSON.stringify(candid.err);
+    return { kind: "error", error, rateChanged: error.includes("Slippage check failed") };
 }
 
 export function unusedBalancesResponse(

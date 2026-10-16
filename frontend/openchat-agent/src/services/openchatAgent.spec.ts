@@ -1602,6 +1602,7 @@ describe("OpenChatAgent listing the transactions of each of the user's wallets",
 // and ends
 describe("OpenChatAgent swapping tokens", () => {
     const POOL = "ne2vj-6yaaa-aaaag-qb3ia-cai";
+    const TACO_EXCHANGE = "qioex-5iaaa-aaaan-q52ba-cai";
     const ICP_DETAILS = {
         ledger: ICP_LEDGER,
         symbol: "ICP",
@@ -1652,6 +1653,12 @@ describe("OpenChatAgent swapping tokens", () => {
                             token0: ICP_LEDGER,
                             token1: LEDGER_CANISTER_CHAT,
                         },
+                        {
+                            dex: "taco",
+                            canisterId: TACO_EXCHANGE,
+                            token0: LEDGER_CANISTER_CHAT,
+                            token1: ICP_LEDGER,
+                        },
                     ]),
             }),
         };
@@ -1683,6 +1690,12 @@ describe("OpenChatAgent swapping tokens", () => {
                 return Promise.resolve(withdrawSucceeds);
             },
         });
+        agent.tacoPoolClient = () => ({
+            swapFromWallet: (...args: unknown[]) => {
+                calls.push(["tacoSwap", ...args]);
+                return swapResult();
+            },
+        });
     }
 
     beforeEach(() => {
@@ -1696,24 +1709,22 @@ describe("OpenChatAgent swapping tokens", () => {
     });
 
     // Swaps, giving how the swap ended along with the steps it reported along the way
-    const swapWith = (amountIn: bigint, pin?: string) =>
+    const swapWith = (amountIn: bigint, pin?: string, dex = "icpswap") =>
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         new Promise<{ response: any; steps: string[] }>((resolve, reject) => {
             const steps: string[] = [];
-            agent
-                .swapTokens(123n, ICP_DETAILS, CHAT_DETAILS, amountIn, 500n, "icpswap", pin)
-                .subscribe({
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    onResult: (value: any, final: boolean) => {
-                        if (final) {
-                            resolve({ response: value, steps });
-                        } else {
-                            steps.push(value.step);
-                            withdrawStep = value.step === "withdraw" ? value : withdrawStep;
-                        }
-                    },
-                    onError: reject,
-                });
+            agent.swapTokens(123n, ICP_DETAILS, CHAT_DETAILS, amountIn, 500n, dex, pin).subscribe({
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                onResult: (value: any, final: boolean) => {
+                    if (final) {
+                        resolve({ response: value, steps });
+                    } else {
+                        steps.push(value.step);
+                        withdrawStep = value.step === "withdraw" ? value : withdrawStep;
+                    }
+                },
+                onError: reject,
+            });
         });
     const swap = (pin?: string) => swapWith(1_000n, pin);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1760,7 +1771,7 @@ describe("OpenChatAgent swapping tokens", () => {
     test("a swap the DEX refuses as the rate has moved is recorded as failed", async () => {
         const error =
             '{"InternalError":"Slippage check failed: minimum amount requirement not met"}';
-        swapResult = () => Promise.resolve({ kind: "error", error });
+        swapResult = () => Promise.resolve({ kind: "error", error, rateChanged: true });
 
         const { response } = await swap();
         expect(response).toEqual({ kind: "error", code: ErrorCode.SwapFailed, message: error });
@@ -1769,7 +1780,7 @@ describe("OpenChatAgent swapping tokens", () => {
 
     test("a swap the DEX refuses for any other reason is recorded as failed", async () => {
         const error = '{"InternalError":"Wrong fee cache (expected: 20, received: 10)"}';
-        swapResult = () => Promise.resolve({ kind: "error", error });
+        swapResult = () => Promise.resolve({ kind: "error", error, rateChanged: false });
 
         expect((await swap()).response).toEqual({ kind: "internal_error", error });
         expect(calls.at(-1)).toEqual(["completed", 123n, { kind: "failed", reason: error }]);
@@ -1867,8 +1878,53 @@ describe("OpenChatAgent swapping tokens", () => {
         expect(calls.filter((c) => c[0] === "unusedBalances")).toHaveLength(1);
     });
 
-    test("only ICPSwap is offered", () => {
-        expect(agent.swapProviders()).toEqual(["icpswap"]);
+    // A DEX which may have gone ahead with a swap it reports as failed, as TACO may with one whose
+    // output fell short of the minimum, reports it as unconfirmed
+    test("a swap the DEX can't confirm is recorded as failed, telling the user to check", async () => {
+        const error = 'SlippageExceeded: {"expected":"500","got":"450"}';
+        swapResult = () => Promise.resolve({ kind: "unconfirmed", error });
+
+        const { response } = await swap();
+        expect(response).toEqual({ kind: "error", code: ErrorCode.Unknown, message: error });
+        expect(calls.at(-1)).toEqual(["completed", 123n, { kind: "failed", reason: error }]);
+    });
+
+    test("swaps via TACO, approving its exchange, which pays out the output itself", async () => {
+        const { response, steps } = await swapWith(1_000n, "1234", "taco");
+
+        expect(response).toEqual({ kind: "success", amountOut: 400n });
+        expect(steps).toEqual(["approve", "swap", "withdraw"]);
+        // TACO pulls 980 for the swap, out of which it takes its own fees, as quoted
+        expect(calls).toEqual([
+            [
+                "started",
+                123n,
+                ICP_DETAILS,
+                CHAT_DETAILS,
+                1_000n,
+                500n,
+                {
+                    dex: "taco",
+                    swapCanisterId: TACO_EXCHANGE,
+                    treasuryCanisterId: "qbnpl-laaaa-aaaan-q52aq-cai",
+                },
+                "1234",
+            ],
+            [
+                "approve",
+                ICP_LEDGER,
+                { owner: Principal.fromText(TACO_EXCHANGE) },
+                990n,
+                FEE,
+                APPROVAL_VALIDITY_MS,
+            ],
+            ["tacoSwap", ICP_LEDGER, LEDGER_CANISTER_CHAT, 980n, 500n],
+            ["completed", 123n, { kind: "swapped", amountOut: 400n }],
+        ]);
+    });
+
+    test("every DEX the Registry lists is offered", () => {
+        expect(agent.swapProviders()).toEqual(["icpswap", "taco"]);
     });
 
     describe("recovering unfinished swaps", () => {

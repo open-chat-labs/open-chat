@@ -322,6 +322,7 @@ import { DataClient } from "./data/data.client";
 import { DexesAgent } from "./dexes";
 import { TACO_TREASURY_CANISTER_ID } from "./dexes/taco/index/mappers";
 import { IcpSwapPoolClient } from "./dexes/icpSwap/pool/icpSwap.pool.client";
+import { TacoPoolClient } from "./dexes/taco/pool/taco.pool.client";
 import { callBotCommandEndpoint } from "./externalBot/externalBot";
 import { GroupClient } from "./group/group.client";
 import { GroupIndexClient } from "./groupIndex/groupIndex.client";
@@ -4766,14 +4767,15 @@ export class OpenChatAgent extends EventTarget {
         });
     }
 
-    // Swaps straight from the user's wallet, via ICPSwap, which pulls the input from the wallet and
-    // pays the output back to it. The input swapped is `amountIn` less the fees for approving the
-    // pool and for its pull, so the swap takes `amountIn` from the wallet in all. The swap is
+    // Swaps straight from the user's wallet, via ICPSwap or TACO, either of which pulls the input
+    // from the wallet and pays the output back to it. What the DEX pulls is `amountIn` less the fees
+    // for approving it and for its pull, so the swap takes `amountIn` from the wallet in all. TACO
+    // takes its trading fee and a transfer fee out of what it pulls, as it quotes. The swap is
     // recorded in the user's canister as it starts, which checks the user's PIN before anything is
     // approved, and as it ends, so that one which doesn't finish, eg. because the user leaves part
     // way through, is found again (see `recoverUnfinishedTokenSwaps`), and they get the achievement
     // for swapping once it has. Each step after the swap is recorded is reported to `onStep` as it
-    // starts, the last being ICPSwap paying the output to the wallet.
+    // starts, the last being the DEX paying the output to the wallet.
     private async swapTokensFromWallet(
         swapId: bigint,
         inputTokenDetails: CryptocurrencyDetails,
@@ -4785,10 +4787,6 @@ export class OpenChatAgent extends EventTarget {
         pin: string | undefined,
         onStep: (step: SwapFromWalletStep) => void,
     ): Promise<SwapTokensResponse> {
-        if (exchangeArgs.dex !== "icpswap") {
-            return { kind: "error", code: ErrorCode.InvalidRequest, message: "Unsupported DEX" };
-        }
-
         const fee = inputTokenDetails.transferFee;
         const amountToSwap = amountIn - 2n * fee;
         if (amountToSwap <= fee) {
@@ -4809,7 +4807,8 @@ export class OpenChatAgent extends EventTarget {
         }
 
         onStep({ step: "approve" });
-        // The pool pulls as its own default account. The PIN was checked as the swap started.
+        // An ICPSwap pool pulls as its own default account, as does TACO's exchange canister, which
+        // is the canister of each of its pools. The PIN was checked as the swap started.
         const approvalError = await this.approveToPull(
             { owner: Principal.fromText(pool.canisterId) },
             inputTokenDetails.ledger,
@@ -4826,17 +4825,28 @@ export class OpenChatAgent extends EventTarget {
         }
 
         onStep({ step: "swap" });
-        const poolClient = this.icpSwapPoolClient(pool.canisterId, pool.token0, pool.token1);
+        const icpSwapPool =
+            pool.dex === "icpswap"
+                ? this.icpSwapPoolClient(pool.canisterId, pool.token0, pool.token1)
+                : undefined;
         let result: DexSwapResult;
         try {
-            result = await poolClient.swapFromWallet(
-                inputTokenDetails.ledger,
-                outputTokenDetails.ledger,
-                amountToSwap,
-                minAmountOut,
-                fee,
-                outputTokenDetails.transferFee,
-            );
+            result =
+                icpSwapPool !== undefined
+                    ? await icpSwapPool.swapFromWallet(
+                          inputTokenDetails.ledger,
+                          outputTokenDetails.ledger,
+                          amountToSwap,
+                          minAmountOut,
+                          fee,
+                          outputTokenDetails.transferFee,
+                      )
+                    : await this.tacoPoolClient(pool).swapFromWallet(
+                          inputTokenDetails.ledger,
+                          outputTokenDetails.ledger,
+                          amountToSwap,
+                          minAmountOut,
+                      );
         } catch (err) {
             // The swap may or may not have gone ahead, so it is left unfinished, to be finished off
             // once it can no longer be in progress
@@ -4851,22 +4861,28 @@ export class OpenChatAgent extends EventTarget {
                 : { kind: "failed", reason: result.error },
         );
 
-        if (result.kind === "success") {
-            onStep({ step: "withdraw", amountOut: result.amountOut });
-            await this.waitForPoolToPayOut(
-                poolClient,
-                outputTokenDetails.ledger,
-                outputTokenDetails.transferFee,
-            );
-            return { kind: "success", amountOut: result.amountOut };
+        switch (result.kind) {
+            case "success":
+                onStep({ step: "withdraw", amountOut: result.amountOut });
+                // TACO queues its payout too, but holds nothing for the user meanwhile to check
+                if (icpSwapPool !== undefined) {
+                    await this.waitForPoolToPayOut(
+                        icpSwapPool,
+                        outputTokenDetails.ledger,
+                        outputTokenDetails.transferFee,
+                    );
+                }
+                return { kind: "success", amountOut: result.amountOut };
+            // Quoting again is only any better if the rate has changed. A refused swap's input is
+            // refunded to the wallet straight away.
+            case "error":
+                return result.rateChanged
+                    ? { kind: "error", code: ErrorCode.SwapFailed, message: result.error }
+                    : { kind: "internal_error", error: result.error };
+            // The swap may have gone ahead, so the user is told to check their balance
+            case "unconfirmed":
+                return { kind: "error", code: ErrorCode.Unknown, message: result.error };
         }
-        // ICPSwap refuses a swap whose output would fall short of the minimum with a slippage
-        // error, which is down to the rate having moved since the quote. Any other error (eg. the
-        // pool's cached fees being out of date) is no better for quoting again. A refused swap's
-        // input is refunded to the wallet straight away.
-        return result.error.includes("Slippage check failed")
-            ? { kind: "error", code: ErrorCode.SwapFailed, message: result.error }
-            : { kind: "internal_error", error: result.error };
     }
 
     // ICPSwap pays the output of a swap made from the wallet out of a queue, normally within a round
@@ -4982,11 +4998,14 @@ export class OpenChatAgent extends EventTarget {
         return new IcpSwapPoolClient(this.identity, this._agent, canisterId, token0, token1);
     }
 
+    // TACO's exchange, which the user calls as themselves, so as the owner of their wallet
+    private tacoPoolClient(pool: TokenSwapPool): TacoPoolClient {
+        return new TacoPoolClient(this.identity, this._agent, pool.token0, pool.token1);
+    }
+
+    // The DEXes the user can swap with, straight from their wallet (see `swapTokensFromWallet`)
     private swapProviders(): DexId[] {
-        const swapProviders = this._registryValue?.swapProviders ?? [];
-        // The user swaps straight from their wallet (see `swapTokensFromWallet`), which is only
-        // supported via ICPSwap so far
-        return swapProviders.filter((p) => p === "icpswap");
+        return this._registryValue?.swapProviders ?? [];
     }
 
     // Approves `spender`, a canister such as the ProposalsBot which spends as its own default
