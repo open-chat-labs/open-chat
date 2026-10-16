@@ -120,7 +120,8 @@
         inset-inline-start: 0;
     }
 
-    .shell[data-rail="float"] .rail :global([data-rail-expanded="true"]) {
+    /* on the scroller, which would clip a shadow on the rail inside it */
+    .shell[data-rail="float"] .rail-scroll:has(:global([data-rail-expanded="true"])) {
         background: var(--surface-1);
         box-shadow: var(--shadow-panel);
     }
