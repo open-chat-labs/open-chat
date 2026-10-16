@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2148](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2148-notifications_index)] - 2026-10-16
+
 ### Removed
 
 - Remove the one-offs which recomputed the `subscriptions` metric and moved the subscriptions of the users migrated so far, now that they have run ([#9871](https://github.com/open-chat-labs/open-chat/pull/9871))
