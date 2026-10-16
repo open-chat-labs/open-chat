@@ -20,6 +20,10 @@ pub const RENT_EXEMPTION_THRESHOLD: u64 = 890_880;
 // Each deposit's share of its sweep's transaction fee, which the minter mints it less: a sweep carries
 // one signature, at 5,000 lamports, per deposit it sweeps
 pub const SWEEP_FEE_PER_DEPOSIT: u64 = 5_000;
+// The minimum deposit, as `get_minter_info` reported on 16 Oct 2026. The minter refuses less, but still
+// charges up to 10B cycles to read the balance, so the balance is first checked against this through
+// Alchemy. If the minter changes its minimum, this must follow.
+pub const MINIMUM_DEPOSIT_AMOUNT: u64 = 20_000_000;
 
 #[test]
 fn cksol_minter_canister_id() {

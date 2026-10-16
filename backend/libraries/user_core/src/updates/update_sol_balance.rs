@@ -1,6 +1,8 @@
 use candid::Principal;
 use cksol_minter_canister::deposit_sol::{DepositSolError, InsufficientCyclesError};
-use cksol_minter_canister::{CKSOL_MINTER_CANISTER_ID, DEPOSIT_SOL_REQUIRED_CYCLES, MAX_DEPOSIT_SOL_CYCLES};
+use cksol_minter_canister::{
+    CKSOL_MINTER_CANISTER_ID, DEPOSIT_SOL_REQUIRED_CYCLES, MAX_DEPOSIT_SOL_CYCLES, MINIMUM_DEPOSIT_AMOUNT,
+};
 use ic_cdk_management_canister::{HttpMethod, HttpRequest};
 use ledger_utils::convert_to_subaccount;
 use oc_error_codes::OCErrorCode;
@@ -16,13 +18,9 @@ use types::{CanisterId, OCResult, icrc1};
 pub const FIRST_SOL_DEPOSIT_FEE: u64 = 2_000_000;
 pub const SOL_DEPOSIT_FEE: u64 = 1_000_000;
 
-// The ckSOL minter's minimum deposit, in lamports, as its `get_minter_info` reported on 16 Oct 2026.
-// The minter refuses less, but still charges up to 10B cycles to read the balance, so the balance is
-// first checked against this through Alchemy. If the minter changes its minimum, this must follow.
-pub const CKSOL_MINIMUM_DEPOSIT: u64 = 20_000_000;
-
-// Far more than a `getBalance` response needs
-const ALCHEMY_MAX_RESPONSE_BYTES: u64 = 2 * 1024;
+// Headers included. Under pay-as-you-go pricing this only sizes the cycles held during the call, the
+// rest being refunded, whereas a response over it would fail the check, so it is generous.
+const ALCHEMY_MAX_RESPONSE_BYTES: u64 = 16 * 1024;
 
 // The account of the canister holding the user which their SOL deposits are minted to as ckSOL,
 // from which the canister forwards them to the user's wallet, less the deposit fee. Its
@@ -58,7 +56,15 @@ pub async fn update_sol_balance(deposit_account: icrc1::Account) -> OCResult<u64
 
     match response {
         Ok(deposit_id) => Ok(deposit_id),
-        Err(DepositSolError::ValueTooSmall { .. } | DepositSolError::AlreadyProcessing) => Err(OCErrorCode::NoChange.into()),
+        Err(DepositSolError::ValueTooSmall {
+            minimum_deposit_amount, ..
+        }) => {
+            if minimum_deposit_amount != MINIMUM_DEPOSIT_AMOUNT {
+                error!(minimum_deposit_amount, "The ckSOL minter's minimum deposit has changed");
+            }
+            Err(OCErrorCode::NoChange.into())
+        }
+        Err(DepositSolError::AlreadyProcessing) => Err(OCErrorCode::NoChange.into()),
         Err(error) => {
             error!(?error, "Failed to update SOL balance");
             Err(OCErrorCode::Unknown.with_json(&error))

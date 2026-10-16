@@ -44,12 +44,11 @@ fn alchemy_api_key_reaches_every_multi_user_canister() {
     wait_for_key_everywhere(env, canister_ids, &[canister_id], false);
 }
 
-// Once the key is set, `update_sol_balance` checks the user's deposit address through Alchemy before
-// paying the minter to. A user without an address can't have deposited anything, so is turned away
-// without either. The test env has no ckSOL minter, so no address can be generated, and asking the
-// minter fails.
+// A user without a SOL address can't have deposited anything, so `update_sol_balance` turns them away
+// without asking the minter, nor, once the key is set, Alchemy. The test env has no ckSOL minter, so
+// no address can be generated, and the path with one can't be tested here.
 #[test]
-fn update_sol_balance_needs_an_address_once_the_alchemy_key_is_set() {
+fn update_sol_balance_turns_away_a_user_without_an_address() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -60,15 +59,14 @@ fn update_sol_balance_needs_an_address_once_the_alchemy_key_is_set() {
 
     let user = client::register_user(env, canister_ids);
 
-    // Without the key the minter is asked, as before
     let response = update_sol_balance(env, &user);
     assert!(
-        matches!(&response, UnitResult::Error(e) if !e.matches_code(OCErrorCode::NoChange)),
+        matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::NoChange)),
         "{response:?}"
     );
 
     set_alchemy_api_key(env, *platform_operator, canister_ids.user_index, Some("key"));
-    wait_for_key_everywhere(env, canister_ids, &[], true);
+    wait_for_key_everywhere(env, canister_ids, &[user.canister()], true);
 
     let response = update_sol_balance(env, &user);
     assert!(
@@ -78,7 +76,7 @@ fn update_sol_balance_needs_an_address_once_the_alchemy_key_is_set() {
 
     // Test envs are pooled, so the key is unset again
     set_alchemy_api_key(env, *platform_operator, canister_ids.user_index, None);
-    wait_for_key_everywhere(env, canister_ids, &[], false);
+    wait_for_key_everywhere(env, canister_ids, &[user.canister()], false);
 }
 
 // Fails if the call makes an outcall to Alchemy, rather than leaving it pending, which would leave
