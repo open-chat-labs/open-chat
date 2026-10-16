@@ -140,6 +140,13 @@ Error: {error:?}",
     )
 }
 
+pub fn sol_deposit_received_text(formatted_amount: &str, formatted_fee: &str) -> String {
+    format!(
+        "SOL deposit received!
+Your account has been credited with {formatted_amount} SOL, after a deposit fee of {formatted_fee} SOL."
+    )
+}
+
 fn visibility(public: bool) -> &'static str {
     if public { "public" } else { "private" }
 }

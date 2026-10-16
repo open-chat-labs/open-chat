@@ -617,6 +617,12 @@ impl RuntimeState {
             queued_local_user_index_events: self.data.local_user_index_event_sync_queue.len() as u32,
             queued_user_canister_events: self.data.user_canister_events_queue.len() as u32,
             known_multi_user_canisters: self.data.known_multi_user_canisters.len() as u32,
+            sol_deposits_being_forwarded: self
+                .data
+                .timer_jobs
+                .iter()
+                .filter(|(_, job)| matches!(job.borrow().as_ref(), Some(TimerJob::ForwardSolDeposit(_))))
+                .count() as u32,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
@@ -738,6 +744,7 @@ pub struct Metrics {
     pub queued_local_user_index_events: u32,
     pub queued_user_canister_events: u32,
     pub known_multi_user_canisters: u32,
+    pub sol_deposits_being_forwarded: u32,
     pub canister_ids: CanisterIds,
 }
 

@@ -679,6 +679,7 @@
         "shortBalanceLabel": "остаток средств",
         "shortRemainingBalanceLabel": "остаток средств",
         "showZeroBalance": "показать больше",
+        "solDepositFee": "Комиссия за депозит: {first} {token} за первый депозит, затем {subsequent} {token}",
         "swap": "Менять",
         "token": "Токены",
         "tokens": "Токены",

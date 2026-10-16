@@ -679,6 +679,7 @@
         "shortBalanceLabel": "equilibrio",
         "shortRemainingBalanceLabel": "balance restante",
         "showZeroBalance": "mostrar más",
+        "solDepositFee": "Comisión de depósito: {first} {token} en tu primer depósito, después {subsequent} {token}",
         "swap": "Intercambio",
         "token": "Token",
         "tokens": "Fichas",
