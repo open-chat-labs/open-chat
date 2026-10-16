@@ -1,20 +1,9 @@
 import { svelte } from "@sveltejs/vite-plugin-svelte";
 import { fileURLToPath } from "node:url";
+import { ocPackageAliases } from "./app/oc-package-aliases.mjs";
 import { defineConfig } from "vitest/config";
 
-// Resolve the former sub-packages from TypeScript source (bare import -> source
-// entry point, subpath -> package src/). Mirrors the aliases used by the dev
-// server and the production build.
 const src = (p: string) => fileURLToPath(new URL(p, import.meta.url));
-const pkgAliases = [
-    ["@shared", "openchat-shared", "src/index.ts"],
-    ["@client", "openchat-client", "src/index.ts"],
-    ["@agent", "openchat-agent", "src/index.ts"],
-    ["@worker", "openchat-worker", "src/worker.ts"],
-].flatMap(([alias, dir, entry]) => [
-    { find: new RegExp(`^${alias}/(.*)$`), replacement: src(`./${dir}/src/$1`) },
-    { find: new RegExp(`^${alias}$`), replacement: src(`./${dir}/${entry}`) },
-]);
 
 export default defineConfig({
     // Use the app's svelte config so .svelte specs get the scss preprocessor.
@@ -23,7 +12,8 @@ export default defineConfig({
         alias: [
             { find: "@dfinity/agent", replacement: "@icp-sdk/core/agent" },
             { find: "@dfinity/auth-client", replacement: "@icp-sdk/auth/client" },
-            ...pkgAliases,
+            // The former sub-packages, resolved from TypeScript source like the app's builds
+            ...ocPackageAliases,
             // The Tauri plugin's guest JS is resolved from source (guest-js/)
             // rather than its built dist-js output, like the sub-packages above.
             { find: /^tauri-plugin-oc-api\/(.*)$/, replacement: src("./tauri-plugin-oc/guest-js/$1") },

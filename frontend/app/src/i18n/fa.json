@@ -679,6 +679,7 @@
         "shortBalanceLabel": "تعادل",
         "shortRemainingBalanceLabel": "موجودی باقی مانده",
         "showZeroBalance": "بیشتر نشان بده، اطلاعات بیشتر",
+        "solDepositFee": "کارمزد واریز: {first} {token} برای اولین واریز، سپس {subsequent} {token}",
         "swap": "تعویض کنید",
         "token": "رمز",
         "tokens": "توکن ها",

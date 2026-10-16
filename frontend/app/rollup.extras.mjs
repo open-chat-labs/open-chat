@@ -170,6 +170,10 @@ const lazyModuleCache = new Map();
 // "only dynamically reachable" and the vendor chunk would dissolve into the app chunks.
 const DESKTOP_APP_ROOT = "/src/components/App.svelte";
 const MOBILE_APP_ROOT = "/src/components_mobile/App.svelte";
+// The new web UI (OC_WEB_LAYOUT=v3) is left out of APP_ROOTS on purpose: until it
+// replaces the desktop tree, its dependencies should not grow the vendor chunk that
+// every user of the existing trees downloads.
+const WEB_APP_ROOT = "/src/web/App.svelte";
 const APP_ROOTS = [DESKTOP_APP_ROOT, MOBILE_APP_ROOT];
 function isAppRoot(id) {
     return APP_ROOTS.some((root) => id.endsWith(root));
@@ -253,6 +257,36 @@ function staticImports(chunk, chunksByFileName, found = new Set()) {
     return found;
 }
 
+// Whether the page is in one of the native apps (isTauriApp in openchat-shared's utils/tauri.ts),
+// which take the web build over the air and don't get the new web UI
+const IS_NATIVE_APP = `("__TAURI_INTERNALS__" in window || location.protocol === "tauri:")`;
+
+// Whether a build with the new web UI mounts it (`selectLayout` in utils/layout.ts). Only a guess:
+// the width can change before main.ts reads it, and an Android webview may not have its Tauri
+// globals yet. A wrong guess costs a wasted download, since main.ts goes by its own reading.
+const MOUNTS_WEB_LAYOUT = `(window.innerWidth >= 768 && !${IS_NATIVE_APP})`;
+
+// The fonts of the existing App trees and of the new web UI (src/web). Built in as
+// import.meta.env.OC_APP_FONTS_URL / OC_WEB_FONTS_URL for main.ts.
+export const APP_FONTS_URL =
+    "https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Bebas+Neue&family=Manrope:wght@400;500;700&family=Roboto:wght@200;300;400;700&display=swap";
+export const WEB_FONTS_URL =
+    "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap";
+
+// index.html's font stylesheet. A build with the new web UI (`webLayout`) only knows in the browser
+// which App tree it gets, so the startup script asks for the likely one and main.ts makes sure of
+// the one it mounts (utils/fonts.ts).
+export function fontsLink(webLayout) {
+    return webLayout ? "" : `<link href="${APP_FONTS_URL}" rel="stylesheet" />`;
+}
+
+// OC_WEB_LAYOUT as the build sees it. Native builds leave the new web UI out whatever it says: the
+// new UI doesn't handle the native apps' events yet (it never signals `svelteReady`).
+export function webLayoutFlag() {
+    const nativeBuild = process.env.OC_APP_TYPE === "android" || process.env.OC_APP_TYPE === "ios";
+    return nativeBuild ? "" : (process.env.OC_WEB_LAYOUT ?? "");
+}
+
 // What index.html paints behind a dark theme until the app's own styles arrive: the background of
 // the default dark theme (theme/defaultDark.ts), which is near enough to every dark theme's.
 export const STARTUP_DARK_BACKGROUND = "#1b1c21";
@@ -271,7 +305,9 @@ export const STARTUP_DARK_BACKGROUND = "#1b1c21";
 // is only known in the browser. Both choices mirror what the app goes on to do (`selectLayout` in
 // utils/layout.ts and `getStoredLocale` in i18n/i18n.ts); if they ever disagree the cost is a
 // wasted download, not a broken page.
-export function generateStartupScript({ chunks, version, mobileLayout }) {
+// `webLayout` is whether the build has the new web UI (OC_WEB_LAYOUT=v3); without it there is no
+// web chunk to preload.
+export function generateStartupScript({ chunks, version, mobileLayout, webLayout = false }) {
     const chunksByFileName = new Map(chunks.map((c) => [c.fileName, c]));
     const entry = chunks.find((c) => c.isEntry);
     // The entry's own imports are preloaded by <link> tags, which the preload scanner can see
@@ -299,8 +335,17 @@ export function generateStartupScript({ chunks, version, mobileLayout }) {
         throw new Error("No chunk found for the en locale, so it cannot be preloaded");
     }
 
+    // A head <link> for the fonts of the tree the build is likely to mount, so they're asked for as
+    // early as the static link of a build without the new UI. main.ts links the right ones anyway.
+    const fontsHint = `var fonts = document.createElement("link");
+    fonts.rel = "stylesheet";
+    fonts.href = web ? ${JSON.stringify(WEB_FONTS_URL)} : ${JSON.stringify(APP_FONTS_URL)};
+    document.head.appendChild(fonts);`;
+
     return `(function () {
-    var mobile = ${mobileLayout} === "v2" && window.innerWidth < 768;
+    var narrow = window.innerWidth < 768;
+    var mobile = ${mobileLayout} === "v2" && narrow;
+    var web = ${webLayout ? MOUNTS_WEB_LAYOUT : "false"};
     var mode;
     try {
         mode = localStorage.getItem("openchat_startup_theme_mode");
@@ -314,7 +359,7 @@ export function generateStartupScript({ chunks, version, mobileLayout }) {
         link.href = "/" + file;
         document.head.appendChild(link);
     }
-    (mobile ? ${JSON.stringify(appChunks(MOBILE_APP_ROOT))} : ${JSON.stringify(appChunks(DESKTOP_APP_ROOT))}).forEach(preload);
+    (mobile ? ${JSON.stringify(appChunks(MOBILE_APP_ROOT))} : web ? ${JSON.stringify(webLayout ? appChunks(WEB_APP_ROOT) : [])} : ${JSON.stringify(appChunks(DESKTOP_APP_ROOT))}).forEach(preload);
     var locales = ${JSON.stringify(locales)};
     var locale;
     try {
@@ -323,6 +368,7 @@ export function generateStartupScript({ chunks, version, mobileLayout }) {
     locale = (locale || navigator.language || "en").split("-")[0];
     preload(locales.en);
     if (locale !== "en" && locales[locale]) preload(locales[locale]);
+    ${webLayout ? fontsHint : ""}
     try {
         window.OC_PRESTARTED_WORKER = new Worker(${JSON.stringify(`/worker.js?v=${version}`)}, { type: "module" });
     } catch (e) {}

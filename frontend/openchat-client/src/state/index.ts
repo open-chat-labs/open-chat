@@ -5,6 +5,10 @@ export { localUpdates } from "./localUpdates";
 export * from "./path/stores";
 export {
     expiredServerEventRanges,
+    filteredProposalsStore,
+    selectedChatExpandedDeletedMessageStore,
+    selectedChatUserIdsStore,
+    selectedServerChatStore,
     serverEventsStore,
     serverThreadEventsStore,
 } from "./selectedChat";

@@ -5,7 +5,13 @@ import { selectLayout } from "./layout";
 // rollup.extras.mjs to a polyfill without fileURLToPath.
 vi.mock("url", () => import("node:url"));
 
-import { generateStartupScript } from "../../rollup.extras.mjs";
+import {
+    APP_FONTS_URL,
+    fontsLink,
+    generateStartupScript,
+    WEB_FONTS_URL,
+    webLayoutFlag,
+} from "../../rollup.extras.mjs";
 
 // jsdom has no matchMedia, which the startup script reads as it runs
 const osPrefersDark = { dark: false };
@@ -27,6 +33,7 @@ const chunks: Chunk[] = [
     chunk("vendor.js", []),
     chunk("desktop.js", [`${root}/src/components/App.svelte`], ["vendor.js", "shared.js"]),
     chunk("mobile.js", [`${root}/src/components_mobile/App.svelte`], ["main.js", "shared.js"]),
+    chunk("web.js", [`${root}/src/web/App.svelte`], ["vendor.js", "deep.js"]),
     chunk("shared.js", [`${root}/src/utils/urls.ts`], ["vendor.js", "deep.js"]),
     chunk("deep.js", [`${root}/src/utils/share.ts`]),
     chunk("lazy.js", [`${root}/src/components/Admin.svelte`], ["desktop.js"]),
@@ -45,17 +52,26 @@ class FakeWorker {
     ) {}
 }
 
-function run(script = generateStartupScript({ chunks, version: "1.2.3", mobileLayout })): string[] {
+// `webLayout`: whether the build has the new web UI (OC_WEB_LAYOUT=v3, a build-time flag)
+function run(
+    script = generateStartupScript({ chunks, version: "1.2.3", mobileLayout, webLayout: false }),
+): string[] {
     new Function(script)();
     return [...document.head.querySelectorAll("link[rel=modulepreload]")].map(
         (l) => l.getAttribute("href")!,
     );
 }
 
-function configure(flag: string | undefined, width: number) {
+function configure(flag: string | undefined, width: number, native = false) {
     vi.stubGlobal("OC_CONFIG", flag === undefined ? undefined : { OC_MOBILE_LAYOUT: flag });
     vi.stubGlobal("innerWidth", width);
+    // What isTauriApp looks for
+    if (native) vi.stubGlobal("__TAURI_INTERNALS__", {});
+    else delete (window as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__;
 }
+
+const withWebLayout = () =>
+    generateStartupScript({ chunks, version: "1.2.3", mobileLayout, webLayout: true });
 
 describe("the startup script in index.html", () => {
     beforeEach(() => {
@@ -110,13 +126,38 @@ describe("the startup script in index.html", () => {
         expect(run()).toEqual(["/mobile.js", "/shared.js", "/deep.js", "/en.js"]);
     });
 
+    test("preloads the new web App chunk in a v3 build on a wide viewport", () => {
+        expect(run(withWebLayout())).toEqual(["/web.js", "/deep.js", "/en.js"]);
+    });
+
     test("preloads the App tree which selectLayout goes on to pick", () => {
-        for (const width of [767, 768]) {
-            document.head.innerHTML = "";
-            configure("v2", width);
-            const app = selectLayout("v2", width < 768) === "v2" ? "mobile" : "desktop";
-            expect(run()[0], `v2 at ${width}px`).toBe(`/${app}.js`);
+        const trees = { v1: "desktop", v2: "mobile", v3: "web" };
+        for (const web of [false, true]) {
+            for (const flag of ["v2", undefined]) {
+                for (const width of [767, 768]) {
+                    for (const native of [false, true]) {
+                        document.head.innerHTML = "";
+                        configure(flag, width, native);
+                        const app = trees[selectLayout(flag, web ? "v3" : "", width < 768, native)];
+                        const script = web ? withWebLayout() : undefined;
+                        expect(
+                            run(script)[0],
+                            `${flag}, web ${web}, ${width}px, native ${native}`,
+                        ).toBe(`/${app}.js`);
+                    }
+                }
+            }
         }
+    });
+
+    test("doesn't need a web App chunk in a build without the new web UI", () => {
+        const withoutWeb = chunks.filter((c) => c.fileName !== "web.js");
+        const script = generateStartupScript({
+            chunks: withoutWeb,
+            version: "1.2.3",
+            mobileLayout,
+        });
+        expect(run(script)).toEqual(["/desktop.js", "/shared.js", "/deep.js", "/en.js"]);
     });
 
     test("preloads the stored locale as well as the English fallback", () => {
@@ -154,9 +195,70 @@ describe("the startup script in index.html", () => {
             chunks: chunks.filter((c) => c.fileName !== fileName),
             version: "1.2.3",
             mobileLayout,
+            webLayout: true,
         });
         expect(() => generateStartupScript(without("desktop.js"))).toThrow(/App\.svelte/);
         expect(() => generateStartupScript(without("mobile.js"))).toThrow(/App\.svelte/);
+        expect(() => generateStartupScript(without("web.js"))).toThrow(/App\.svelte/);
         expect(() => generateStartupScript(without("en.js"))).toThrow(/en locale/);
+    });
+});
+
+describe("the font stylesheet in index.html", () => {
+    beforeEach(() => {
+        vi.stubGlobal("Worker", FakeWorker);
+    });
+
+    afterEach(() => {
+        vi.unstubAllGlobals();
+        document.head.innerHTML = "";
+    });
+
+    function stylesheets(script: string): string[] {
+        new Function(script)();
+        return [...document.head.querySelectorAll("link[rel=stylesheet]")].map(
+            (l) => l.getAttribute("href")!,
+        );
+    }
+
+    test("is linked from the html in a build without the new web UI", () => {
+        expect(fontsLink(false)).toContain(APP_FONTS_URL);
+        expect(
+            stylesheets(generateStartupScript({ chunks, version: "1.2.3", mobileLayout })),
+        ).toEqual([]);
+    });
+
+    test("is asked for by the startup script in a build with the new web UI", () => {
+        expect(fontsLink(true)).toBe("");
+        for (const width of [767, 768]) {
+            for (const native of [false, true]) {
+                document.head.innerHTML = "";
+                configure(undefined, width, native);
+                const web = selectLayout(undefined, "v3", width < 768, native) === "v3";
+                expect(stylesheets(withWebLayout()), `${width}px, native ${native}`).toEqual([
+                    web ? WEB_FONTS_URL : APP_FONTS_URL,
+                ]);
+            }
+        }
+    });
+});
+
+describe("the OC_WEB_LAYOUT a build sees", () => {
+    afterEach(() => {
+        vi.unstubAllEnvs();
+    });
+
+    test("is the flag in a web build", () => {
+        vi.stubEnv("OC_APP_TYPE", "");
+        vi.stubEnv("OC_WEB_LAYOUT", "v3");
+        expect(webLayoutFlag()).toBe("v3");
+    });
+
+    test("leaves the new web UI out of a native build whatever the flag says", () => {
+        vi.stubEnv("OC_WEB_LAYOUT", "v3");
+        for (const appType of ["android", "ios"]) {
+            vi.stubEnv("OC_APP_TYPE", appType);
+            expect(webLayoutFlag(), appType).toBe("");
+        }
     });
 });

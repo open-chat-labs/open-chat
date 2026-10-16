@@ -679,6 +679,7 @@
         "shortBalanceLabel": "توازن",
         "shortRemainingBalanceLabel": "الرصيد المتبقي",
         "showZeroBalance": "اظهر المزيد",
+        "solDepositFee": "رسوم الإيداع: {first} {token} لإيداعك الأول، ثم {subsequent} {token}",
         "swap": "تبديل",
         "token": "الرمز المميز",
         "tokens": "الرموز",

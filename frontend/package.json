@@ -5,6 +5,7 @@
     "type": "module",
     "scripts": {
         "dev": "cd app && sh ./build_dev.sh",
+        "dev:web": "cd app && OC_WEB_LAYOUT=v3 sh ./build_dev.sh",
         "dev:mobile": "cd app && sh ./build_mobile.sh",
         "dev:mobile:ios": "cd app && OC_APP_TYPE=ios OC_DEV_PORT=5002 sh ./build_mobile.sh",
         "build": "cd app && sh ./build_prod.sh",
@@ -72,6 +73,7 @@
         "i18next": "^23.11.4",
         "idb": "^7.1.1",
         "identicon.js": "^2.3.3",
+        "intl-messageformat": "9.13.0",
         "js-sha3": "^0.8.0",
         "jsqr-es6": "^1.4.0-1",
         "lowlight": "^3.3.0",

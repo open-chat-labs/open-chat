@@ -679,6 +679,7 @@
         "shortBalanceLabel": "残高",
         "shortRemainingBalanceLabel": "保たれているバランス",
         "showZeroBalance": "もっと見る",
+        "solDepositFee": "入金手数料: 初回は {first} {token}、以降は {subsequent} {token}",
         "swap": "スワップ",
         "token": "トークン",
         "tokens": "トークン",
