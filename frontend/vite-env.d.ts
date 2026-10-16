@@ -7,6 +7,11 @@ interface ImportMetaEnv {
     readonly OC_APP_STORE: string;
     readonly OC_APP_TYPE: "android" | "ios" | "web" | undefined;
     readonly OC_MOBILE_LAYOUT: "v1" | "v2";
+    // "v3" builds in the new web UI (src/web); anything else leaves it out. A build-time constant.
+    readonly OC_WEB_LAYOUT: string;
+    // The font stylesheets of the existing App trees and of the new web UI (rollup.extras.mjs)
+    readonly OC_APP_FONTS_URL: string;
+    readonly OC_WEB_FONTS_URL: string;
     readonly OC_BITCOIN_MAINNET_ENABLED: string;
     readonly OC_BLOB_URL_PATTERN: string;
     readonly OC_BUILD_ENV: string;

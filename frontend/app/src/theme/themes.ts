@@ -93,6 +93,17 @@ export function writeNativeCssVariables() {
     neon.writeCssVariables();
 }
 
+// The new web UI (src/web) takes its colours and type from @openchat/ui's tokens, and only
+// uses component-lib's layout primitives (Container, Row, Column). Those only need the sizing
+// variables, so the colour variables, whose names overlap the new tokens, are left out.
+export function writeLayoutCssVariables() {
+    [
+        ...neon.spacings.cssVariables(),
+        ...neon.borderRadius.cssVariables(),
+        ...neon.borderWidth.cssVariables(),
+    ].forEach((v) => v.write());
+}
+
 export function setNativeTheme() {
     initThemeV2();
     // Keep the v1-derived css variables (still used in places by the v2
@@ -208,4 +219,13 @@ export const currentTheme = derived(currentThemeName, (name) => {
     writeCssVars("--", theme);
     rememberThemeMode(theme.mode);
     return theme;
+});
+
+// Only the current theme's mode, for the new web UI (src/web). It takes its colours from
+// @openchat/ui's tokens, so unlike `currentTheme` this doesn't write the v1 theme's variables
+// onto <html>, where their names (--accent, --bg…) would override the tokens.
+export const currentThemeMode = derived(currentThemeName, (name): Theme["mode"] => {
+    const mode = themes[name]?.mode ?? "dark";
+    rememberThemeMode(mode);
+    return mode;
 });

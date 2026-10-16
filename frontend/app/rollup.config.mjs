@@ -20,15 +20,20 @@ import styles from "rollup-styles";
 import { sveltePreprocess } from "svelte-preprocess";
 import { sourcemapNewline } from "../sourcemapNewline.mjs";
 import { androidBundlePlugin } from "./rollup-plugin-android-bundle.mjs";
+import { ocPackageAliases } from "./oc-package-aliases.mjs";
 import {
     __dirname,
+    APP_FONTS_URL,
     copyFile,
+    fontsLink,
     generateCspForScripts,
     generateStartupScript,
     initEnv,
     manualChunks,
     maybeStringify,
     resetManualChunksCache,
+    WEB_FONTS_URL,
+    webLayoutFlag,
 } from "./rollup.extras.mjs";
 
 // this is a bit ridiculous but there we are ...
@@ -105,20 +110,9 @@ export default {
 
         alias({
             entries: [
-                // Resolve the former sub-packages from TypeScript source (bare
-                // import -> source entry point, subpath -> package src/).
-                ...[
-                    ["@shared", "openchat-shared", "src/index.ts"],
-                    ["@client", "openchat-client", "src/index.ts"],
-                    ["@agent", "openchat-agent", "src/index.ts"],
-                    ["@worker", "openchat-worker", "src/worker.ts"],
-                ].flatMap(([alias, dir, entry]) => {
-                    const root = path.resolve(__dirname, "..", dir);
-                    return [
-                        { find: new RegExp(`^${alias}/(.*)$`), replacement: `${root}/src/$1` },
-                        { find: new RegExp(`^${alias}$`), replacement: path.resolve(root, entry) },
-                    ];
-                }),
+                // Resolve the former sub-packages from TypeScript source (see
+                // ./oc-package-aliases.mjs).
+                ...ocPackageAliases,
                 // The Tauri plugin's guest JS is likewise resolved from source
                 // (guest-js/) rather than its built dist-js output.
                 {
@@ -164,6 +158,7 @@ export default {
                 "../openchat-agent/src/**/*",
                 "../openchat-worker/src/**/*",
                 "../tauri-plugin-oc/guest-js/**/*",
+                "../openchat-ui/src/**/*",
             ],
         }),
         inject({
@@ -182,6 +177,11 @@ export default {
                 "OC_MOBILE_LAYOUT",
                 JSON.stringify(process.env.OC_MOBILE_LAYOUT),
             ),
+            // A build-time constant, not overridable at runtime: a build without the flag (or a
+            // native build) leaves the new web UI (src/web, @openchat/ui) out of the bundle.
+            "import.meta.env.OC_WEB_LAYOUT": JSON.stringify(webLayoutFlag()),
+            "import.meta.env.OC_APP_FONTS_URL": JSON.stringify(APP_FONTS_URL),
+            "import.meta.env.OC_WEB_FONTS_URL": JSON.stringify(WEB_FONTS_URL),
             "import.meta.env.OC_OTA_UPDATES": override(
                 "OC_OTA_UPDATES",
                 JSON.stringify(process.env.OC_OTA_UPDATES),
@@ -335,6 +335,7 @@ export default {
                 // Goes ahead of the font stylesheet in the <head>, as a script placed after a
                 // stylesheet does not run until that stylesheet has loaded, but behind the
                 // entry's preloads, so that what has to run first is asked for first.
+                const webLayout = webLayoutFlag() === "v3";
                 const startupScript = generateStartupScript({
                     chunks: files.js.filter((f) => f.type === "chunk"),
                     version,
@@ -342,6 +343,7 @@ export default {
                         "OC_MOBILE_LAYOUT",
                         JSON.stringify(process.env.OC_MOBILE_LAYOUT),
                     ),
+                    webLayout,
                 });
                 const inlineScripts = [
                     `window.OC_WEBSITE_VERSION = "${version}";`,
@@ -388,10 +390,7 @@ export default {
                                 <script>${startupScript}</script>
                                 <link rel="preconnect" href="https://fonts.googleapis.com" />
                                 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-                                <link
-                                    href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Bebas+Neue&family=Manrope:wght@400;500;700&family=Roboto:wght@200;300;400;700&display=swap"
-                                    rel="stylesheet"
-                                />
+                                ${fontsLink(webLayout)}
                                 <script type="module" defer src="/${jsEntryFile}"></script>
                                 ${inlineScripts.map((s) => `<script>${s}</script>`).join("")}
                             </head>
