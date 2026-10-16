@@ -160,6 +160,7 @@
             symbol={tokenState.symbol}
             tokenDecimals={tokenState.decimals}
             networkFee={form.networkFee}
+            networkFeeIsEstimate={form.networkFeeIsEstimate}
             transferFees={tokenState.transferFees} />
     </Container>
 

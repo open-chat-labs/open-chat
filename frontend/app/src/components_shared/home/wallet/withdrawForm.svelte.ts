@@ -6,6 +6,7 @@ import {
     currentUserStore,
     ICP_SYMBOL,
     Lazy,
+    LEDGER_CANISTER_CKSOL,
     SOL_SYMBOL,
     type CkbtcMinterWithdrawalInfo,
     type CksolMinterWithdrawalInfo,
@@ -48,7 +49,8 @@ export class WithdrawForm {
     validAmount = $state(false);
 
     #isBtc = $derived.by(() => this.#tokenState.symbol === BTC_SYMBOL);
-    #isSol = $derived.by(() => this.#tokenState.symbol === SOL_SYMBOL);
+    // By ledger, since a SOL withdrawal burns ckSOL whatever token the form is for
+    #isSol = $derived.by(() => this.#tokenState.ledger === LEDGER_CANISTER_CKSOL);
     #oneSecEnabled = $derived.by(
         () =>
             this.#tokenState.token.oneSecEnabled &&
@@ -167,7 +169,16 @@ export class WithdrawForm {
             if (this.#isBtcNetwork) {
                 this.#ckbtcInfoRequests.debounced(this.#tokenState.draftAmount);
             } else if (this.#isSolNetwork) {
-                this.#cksolInfoPromise.get().then((info) => (this.#cksolInfo = info));
+                this.#cksolInfoPromise
+                    .get()
+                    .then((info) => (this.#cksolInfo = info))
+                    .catch((err) => {
+                        client.logError("Unable to get the ckSOL minter's withdrawal info", err);
+                        // So that choosing the SOL network again tries again
+                        this.#cksolInfoPromise = new Lazy(() =>
+                            client.getCksolMinterWithdrawalInfo(),
+                        );
+                    });
             } else if (this.#isOneSecNetwork) {
                 this.#oneSecFeesPromise.get().then((fees) => (this.#oneSecFees = fees));
             }
@@ -207,7 +218,12 @@ export class WithdrawForm {
     get networkFeeFormatted(): string | undefined {
         return this.#networkFee === undefined
             ? undefined
-            : `${this.#isSolNetwork ? "" : "~"}${this.#client.formatTokens(this.#networkFee, this.#tokenState.decimals)}`;
+            : `${this.networkFeeIsEstimate ? "~" : ""}${this.#client.formatTokens(this.#networkFee, this.#tokenState.decimals)}`;
+    }
+
+    // The BTC and OneSec fees are estimates, but the ckSOL minter takes exactly its fee
+    get networkFeeIsEstimate(): boolean {
+        return !this.#isSolNetwork;
     }
 
     get canSend(): boolean {

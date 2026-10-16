@@ -39,7 +39,7 @@ const sol: EnhancedTokenDetails = {
     urlFormat: "",
 };
 
-const SOLANA_ADDRESS = "GXVewvv6HehcLFYCmwpqh5CrMjqN9zJ8rqzGq3HEt9Ax";
+const SOLANA_ADDRESS = "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM";
 const IC_ACCOUNT = "ryjl3-tyaaa-aaaaa-aaaba-cai";
 const MINTER_INFO: CksolMinterWithdrawalInfo = {
     minWithdrawalAmount: 2_000_000n,
@@ -97,6 +97,20 @@ describe("withdrawing SOL", () => {
         expect(form.route).toEqual({ kind: "ledger" });
     });
 
+    test("isn't offered for another token whose symbol is SOL", () => {
+        let form!: WithdrawForm;
+        dispose = $effect.root(() => {
+            form = new WithdrawForm(
+                client,
+                new TokenState({ ...sol, ledger: "mxzaz-hqaaa-aaaar-qaada-cai" }),
+            );
+        });
+        flushSync();
+
+        expect(form.networks).toEqual([]);
+        expect(form.route).toEqual({ kind: "ledger" });
+    });
+
     test("needs a Solana address on the SOL network, and an IC account on the ckSOL network", () => {
         const form = newForm();
 
@@ -121,6 +135,7 @@ describe("withdrawing SOL", () => {
 
         expect(form.minAmount).toBe(MINTER_INFO.minWithdrawalAmount);
         expect(form.networkFee).toBe(MINTER_INFO.withdrawalFee);
+        expect(form.networkFeeIsEstimate).toBe(false);
         expect(form.networkFeeFormatted).toBe("1000000");
     });
 

@@ -865,7 +865,7 @@ describe("OpenChatAgent withdrawing from the user's wallet", () => {
     });
 });
 
-// BTC and OneSec withdrawals, which the user makes from their wallet by approving the minter to
+// BTC, SOL and OneSec withdrawals, which the user makes from their wallet by approving the minter to
 // take the amount, then having it send that much on
 describe("OpenChatAgent withdrawing BTC, SOL and via OneSec", () => {
     const CKBTC_MINTER = Principal.fromText("mqygn-kiaaa-aaaar-qaadq-cai");
