@@ -287,6 +287,29 @@ describe('Landing', () => {
       expect(dialog()).toBeNull();
     });
 
+    test('signed in, Open app replaces sign-in in the header and the closing call to action', () => {
+      const onEnterApp = vi.fn();
+      show({ signedIn: true, onEnterApp, appHref: '/app' });
+      expect(q('.sign-in')).toBeNull();
+      const opens = all('a.create, a.cta.big');
+      expect(opens.map((a) => [a.textContent!.trim(), a.getAttribute('href')])).toEqual([
+        ['Open OpenChat', '/app'],
+        ['Open OpenChat', '/app'],
+      ]);
+      click(opens[0]);
+      expect(onEnterApp).toHaveBeenCalledOnce();
+    });
+
+    test('Ethereum with a wallet list passes the picked wallet to the host', async () => {
+      const onMethod = vi.fn(() => Promise.resolve());
+      show({ auth: { onMethod, wallets: { eth: [{ id: 'metaMask', name: 'MetaMask' }] } }, onEnterApp: vi.fn() });
+      click(q('.sign-in'));
+      click(document.querySelector('[role=dialog] .tile[title="Sign in with Ethereum"]'));
+      click(document.querySelector('[role=dialog] .option'));
+      await settle();
+      expect(onMethod).toHaveBeenCalledWith('eth', 'login', 'metaMask');
+    });
+
     test('a failed sign-in keeps the dialog open and does not enter', async () => {
       const onMethod = vi.fn(() => Promise.reject(new Error('cancelled')));
       const onEnterApp = vi.fn();

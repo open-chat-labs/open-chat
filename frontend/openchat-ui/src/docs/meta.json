@@ -5579,17 +5579,18 @@
     "props": [
       {
         "name": "kind",
-        "type": "'login' | 'signup'",
+        "type": "'login' | 'signup' | 'link'",
         "default": "login",
         "editor": "enum",
         "options": [
           "login",
-          "signup"
+          "signup",
+          "link"
         ],
         "section": null,
         "required": false,
         "componentDefault": "'login'",
-        "doc": ""
+        "doc": "'link' is the page an email sign-in link opens: it asks for the link's code."
       },
       {
         "name": "variant",
@@ -5662,6 +5663,28 @@
         "doc": "Terms and conditions page; without it the words aren’t a link."
       },
       {
+        "name": "methods",
+        "type": "AuthOption[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The ways to sign in on offer; all of them without it. Sign-up’s form is the same either way."
+      },
+      {
+        "name": "wallets",
+        "type": "Partial<Record<'eth' | 'sol', AuthWallet[]>>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Wallets to pick from for Ethereum / Solana. With a list, the method asks which wallet and passes its id to onMethod."
+      },
+      {
         "name": "checkUsername",
         "type": "(username: string) => boolean | Promise<boolean>",
         "default": null,
@@ -5685,7 +5708,7 @@
       },
       {
         "name": "onMethod",
-        "type": "(method: AuthMethod, kind: 'login' | 'signup') => Promise<unknown> | void",
+        "type": "(method: AuthMethod, kind: 'login' | 'signup', wallet?: string) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
@@ -5696,14 +5719,25 @@
       },
       {
         "name": "onRequestEmailLink",
-        "type": "(email: string) => Promise<unknown> | void",
+        "type": "(email: string) => Promise<EmailLinkSent | void> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Send a sign-in link to this address. The dialog shows \"Check your inbox\" once it resolves; also used to resend."
+        "doc": "Send a sign-in link to this address. The dialog shows \"Check your inbox\" once it resolves (with the code, when it resolves with one); also used to resend."
+      },
+      {
+        "name": "onLinkCode",
+        "type": "(code: string) => Promise<EmailLinkResult>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "kind 'link': check the code typed on the link’s page. 'signed_in' leaves closing to the host; reject reads as 'invalid'."
       },
       {
         "name": "onSignup",
@@ -17631,7 +17665,18 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Called after a successful sign-in instead of navigating to appHref."
+        "doc": "Called after a successful sign-in instead of navigating to appHref, and by Open app when signed in."
+      },
+      {
+        "name": "signedIn",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Someone is signed in: Open app (to appHref, or onEnterApp) replaces Sign in and Create account."
       },
       {
         "name": "onModeChange",
@@ -17814,7 +17859,18 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Called after a successful sign-in instead of navigating to appHref."
+        "doc": "Called after a successful sign-in instead of navigating to appHref, and by Open app when signed in."
+      },
+      {
+        "name": "signedIn",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Someone is signed in: Open app (to appHref, or onEnterApp) replaces Sign in and Create account."
       }
     ],
     "group": "pages"

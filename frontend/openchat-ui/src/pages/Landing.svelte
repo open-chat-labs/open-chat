@@ -47,8 +47,10 @@
     privacyHref?: string;
     /** AuthDialog's host callbacks (onMethod, onSignup, onRequestEmailLink, checkUsername …). onMethod and onSignup return a promise; when it resolves the page enters the app, even if the dialog was closed meanwhile (once per sign-in). */
     auth?: PageAuth;
-    /** Called after a successful sign-in instead of navigating to appHref. */
+    /** Called after a successful sign-in instead of navigating to appHref, and by Open app when signed in. */
     onEnterApp?: () => void;
+    /** Someone is signed in: Open app (to appHref, or onEnterApp) replaces Sign in and Create account. */
+    signedIn?: boolean;
     onModeChange?: (mode: PageMode) => void;
     onAccentChange?: (accent: PageAccent) => void;
   }
@@ -71,6 +73,7 @@
     privacyHref = '/privacy',
     auth,
     onEnterApp,
+    signedIn = false,
     onModeChange,
     onAccentChange,
   }: Props = $props();
@@ -147,6 +150,13 @@
     // no relatedTarget: focus went nowhere in particular (e.g. a click Safari doesn't focus); the press-outside rule covers that
     return !!to && !e.currentTarget.contains(to);
   };
+
+  // signed in: the header (and the closing call to action) open the app instead of offering sign-in
+  function enterApp(e: MouseEvent) {
+    if (!onEnterApp || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    e.preventDefault();
+    onEnterApp();
+  }
 
   function openAuth(kind: 'login' | 'signup') {
     learnOpen = accentOpen = false;
@@ -279,8 +289,12 @@
         >
       </div>
       <div class="auth">
-        <button class="sign-in" onclick={() => openAuth('login')}>{t('ui.landing.signIn')}</button>
-        <button class="create" onclick={() => openAuth('signup')}>{t('ui.landing.createAccount')}</button>
+        {#if signedIn}
+          <a class="create" href={appHref} onclick={enterApp}>{t('ui.landing.openApp')}</a>
+        {:else}
+          <button class="sign-in" onclick={() => openAuth('login')}>{t('ui.landing.signIn')}</button>
+          <button class="create" onclick={() => openAuth('signup')}>{t('ui.landing.createAccount')}</button>
+        {/if}
       </div>
     </div>
   </header>
@@ -498,7 +512,11 @@
       <h2 class="final-title">{t('ui.landing.cta.title')}</h2>
       <p class="lede">{t('ui.landing.cta.body')}</p>
       <div class="final-actions">
-        <button class="cta primary big" onclick={() => openAuth('signup')}>{t('ui.landing.cta.create')}<Icon icon="arrow" flip /></button>
+        {#if signedIn}
+          <a class="cta primary big" href={appHref} onclick={enterApp}>{t('ui.landing.openApp')}<Icon icon="arrow" flip /></a>
+        {:else}
+          <button class="cta primary big" onclick={() => openAuth('signup')}>{t('ui.landing.cta.create')}<Icon icon="arrow" flip /></button>
+        {/if}
         <a class="final-explore" href={exploreHref}>{t('ui.landing.cta.explore')}</a>
       </div>
     </div>
