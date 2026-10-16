@@ -2,10 +2,11 @@ use crate::guards::caller_is_hosted_user;
 use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use local_user_index_canister::UserEvent as LocalUserIndexEvent;
 use multi_user_canister::set_avatar::*;
 use oc_error_codes::OCErrorCode;
 use stable_memory_map::ProfileDocumentType;
-use types::{Achievement, CanisterId, OCResult, UserId};
+use types::{Achievement, OCResult};
 use utils::document::validate_avatar;
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
@@ -28,17 +29,7 @@ fn set_avatar_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     })?;
 
     state.award_achievement_and_notify(my_index, Achievement::SetAvatar, now);
-
-    ic_cdk::futures::spawn_migratory(update_index_canister(
-        state.data.user_index_canister_id,
-        state.user_id(my_index),
-        id,
-    ));
+    state.push_local_user_index_canister_event(my_index, LocalUserIndexEvent::UserSetAvatar(id), now);
 
     Ok(())
-}
-
-async fn update_index_canister(user_index_canister_id: CanisterId, user_id: UserId, avatar_id: Option<u128>) {
-    let args = user_index_canister::c2c_set_avatar::Args { avatar_id, user_id };
-    let _ = user_index_canister_c2c_client::c2c_set_avatar(user_index_canister_id, &args).await;
 }

@@ -108,6 +108,9 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 **now,
             );
         }
+        UserEvent::UserSetAvatar(avatar_id) => {
+            state.push_event_to_user_index(UserIndexEvent::UserSetAvatar(Box::new((user_id, avatar_id))), **now);
+        }
         UserEvent::SetMaxStreak(max_streak) => {
             state.push_event_to_user_index(UserIndexEvent::SetMaxStreak(user_id, max_streak), **now);
         }

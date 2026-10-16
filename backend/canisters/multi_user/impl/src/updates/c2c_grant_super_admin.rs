@@ -1,26 +1,12 @@
 use crate::guards::caller_is_user_index;
-use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use multi_user_canister::c2c_grant_super_admin::*;
-use types::UserId;
 
+// No longer called, since nothing read the flag it set, but still served until every UserIndex is
+// on a version which doesn't call it, after which this is removed
 #[update(guard = "caller_is_user_index", msgpack = true)]
 #[trace]
-fn c2c_grant_super_admin(args: Args) -> Response {
-    execute_update(|state| set_platform_moderator(args.user_id, true, state))
-}
-
-// Traps for a user who isn't in this canister, rather than letting the UserIndex go on to record
-// a change which was never applied
-pub(crate) fn set_platform_moderator(user_id: UserId, is_platform_moderator: bool, state: &mut RuntimeState) -> Response {
-    let user_index = state
-        .index_of_local_user(user_id)
-        .unwrap_or_else(|| ic_cdk::trap("User not found"));
-    state
-        .data
-        .users
-        .with_user_mut(user_index, |user| user.is_platform_moderator = is_platform_moderator)
-        .unwrap_or_else(|| ic_cdk::trap("User not found"));
+fn c2c_grant_super_admin(_args: Args) -> Response {
     Response::Success
 }

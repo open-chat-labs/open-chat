@@ -752,6 +752,13 @@ fn initial_state_and_updates_track_a_users_profile_blocked_users_favourites_and_
     assert_eq!(initial_state(env, a_principal, canister_id).avatar_id, Some(avatar.id));
     assert!(updates(env, b_principal, canister_id, start).is_none());
 
+    // The UserIndex learns of the avatar via the LocalUserIndex
+    tick_many(env, 5);
+    assert_eq!(
+        client::user_index::happy_path::user(env, canister_ids.user_index, a).avatar_id,
+        Some(avatar.id)
+    );
+
     // An oversized avatar is rejected, and removing the avatar is reported too
     env.advance_time(Duration::from_secs(1));
     let response = client::user::set_avatar(
@@ -771,6 +778,11 @@ fn initial_state_and_updates_track_a_users_profile_blocked_users_favourites_and_
     let a_updates = updates(env, a_principal, canister_id, after_profile).unwrap();
     let after_avatar_removed = a_updates.timestamp;
     assert_eq!(a_updates.avatar_id, OptionUpdate::SetToNone);
+    tick_many(env, 5);
+    assert_eq!(
+        client::user_index::happy_path::user(env, canister_ids.user_index, a).avatar_id,
+        None
+    );
 
     // Blocking B stops A messaging B, and is reported to A alone. A message from B goes into B's
     // copy of the chat but is dropped rather than delivered to A.

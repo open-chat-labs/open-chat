@@ -6887,7 +6887,6 @@ dependencies = [
  "event_store_producer",
  "event_store_producer_cdk_runtime",
  "event_store_utils",
- "fire_and_forget_handler",
  "futures",
  "git_commit_id",
  "group_canister",

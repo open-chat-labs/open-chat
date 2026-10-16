@@ -21,6 +21,7 @@ pub enum LocalUserIndexEvent {
     UserJoinedCommunityOrChannel(Box<UserJoinedCommunityOrChannel>),
     OpenChatBotMessageV2(Box<OpenChatBotMessageV2>),
     UserSetProfileBackground(Box<(UserId, Option<u128>)>),
+    UserSetAvatar(Box<(UserId, Option<u128>)>),
     NotifyUniquePersonProof(Box<(UserId, UniquePersonProof)>),
     NotifyChit(Box<(UserId, NotifyChit)>),
     NotifyPremiumItemPurchased(Box<(UserId, PremiumItemPurchase)>),
