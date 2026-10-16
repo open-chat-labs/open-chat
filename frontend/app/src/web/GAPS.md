@@ -12,5 +12,9 @@ design export needs. Each entry says where it came up.
 
 ## App
 
+- **Native apps**: this tree doesn't register the native event listeners or signal `svelteReady`,
+  so native builds leave it out whatever `OC_WEB_LAYOUT` says (`vite.config.ts`).
+- **Viewport height**: the existing trees keep `--vh` in step with the visual viewport
+  (`calculateHeight`) for mobile browsers. Not needed until the narrow layouts come in.
 - **Platform operator / moderator console hooks** (`window.platformOperator`,
   `window.platformModerator`) are only installed by the existing App trees.

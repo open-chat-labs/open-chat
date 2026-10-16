@@ -9,14 +9,15 @@ import { createHtmlPlugin } from "vite-plugin-html";
 import dfxJson from "../../dfx.json";
 import {
     __dirname,
+    fontsLink,
     generateCspForScripts,
+    generateFontsScript,
     initEnv,
     sassModulesAndMixins,
 } from "./rollup.extras.mjs";
 import { ocPackageAliases } from "./oc-package-aliases.mjs";
 
 const version = `1000.0.${Date.now()}`;
-const inlineScripts = [`window.OC_WEBSITE_VERSION = "${version}";`];
 process.env.OC_WEBSITE_VERSION = version;
 
 initEnv();
@@ -24,6 +25,16 @@ initEnv();
 const isNativeIos = process.env.OC_APP_TYPE === "ios";
 const isNativeAndroid = process.env.OC_APP_TYPE === "android";
 const isNativeApp = isNativeIos || isNativeAndroid;
+
+// The new web UI doesn't handle the native apps' events yet (it never signals `svelteReady`, so
+// the native side would hold push and deep link events back for good), so native builds leave it
+// out whatever OC_WEB_LAYOUT says.
+const webLayoutFlag = isNativeApp ? "" : (process.env.OC_WEB_LAYOUT ?? "");
+const webLayout = webLayoutFlag === "v3";
+const inlineScripts = [
+    `window.OC_WEBSITE_VERSION = "${version}";`,
+    ...(webLayout ? [generateFontsScript()] : []),
+];
 // Dev server port — shared by web and native (Android/iOS) dev. Overridable
 // (OC_DEV_PORT) so e.g. the iOS dev flow can run alongside another dev server;
 // the hmr websocket below must follow it, not just the --port CLI flag.
@@ -145,9 +156,8 @@ export default defineConfig({
         ),
         "import.meta.env.OC_WEBSITE_VERSION": JSON.stringify(version),
         "import.meta.env.OC_SERVICE_WORKER_PATH": JSON.stringify(serviceWorkerPath),
-        // A build-time constant (see rollup.config.mjs): native builds, which go through vite,
-        // leave the new web UI out unless they set it.
-        "import.meta.env.OC_WEB_LAYOUT": JSON.stringify(process.env.OC_WEB_LAYOUT ?? ""),
+        // A build-time constant (see rollup.config.mjs)
+        "import.meta.env.OC_WEB_LAYOUT": JSON.stringify(webLayoutFlag),
     },
     server: {
         allowedHosts: ["host.docker.internal"],
@@ -196,6 +206,7 @@ export default defineConfig({
             entry: "./src/main.ts",
             inject: {
                 data: {
+                    fonts: fontsLink(webLayout),
                     injectScript: inlineScripts.map((s) => `<script>${s}</script>`).join(""),
                     csp: `<meta http-equiv="Content-Security-Policy" content="${generateCspForScripts(
                         inlineScripts,
@@ -221,7 +232,10 @@ export default defineConfig({
             // rather than its built dist-js output, like the sub-packages above.
             {
                 find: /^tauri-plugin-oc-api\/(.*)$/,
-                replacement: path.join(path.resolve(__dirname, "../tauri-plugin-oc/guest-js"), "$1"),
+                replacement: path.join(
+                    path.resolve(__dirname, "../tauri-plugin-oc/guest-js"),
+                    "$1",
+                ),
             },
             {
                 find: /^tauri-plugin-oc-api$/,

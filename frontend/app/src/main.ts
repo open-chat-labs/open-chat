@@ -8,7 +8,7 @@ import "./web-components/customEmoji";
 import "./web-components/profileLink";
 import "./web-components/spoiler";
 
-import { mobileWidth } from "@client";
+import { isTauriApp, mobileWidth } from "@client";
 import "svelte";
 import { mount } from "svelte";
 import {
@@ -28,7 +28,7 @@ import { selectLayout } from "./utils/layout";
 // and intentionally does not implement that native cold-start routing.
 //
 // A build with OC_WEB_LAYOUT=v3 mounts the new web UI (src/web) instead of the
-// v1 App on >=768px viewports. It is opt-in per build while it is being built:
+// v1 App on >=768px viewports, outside the native apps. It is opt-in per build while it is being built:
 // the flag is a build-time constant, so without it the condition below is
 // constant-false and the bundler leaves the web tree out of the build.
 //
@@ -40,6 +40,7 @@ const layout = selectLayout(
     import.meta.env.OC_MOBILE_LAYOUT,
     import.meta.env.OC_WEB_LAYOUT,
     mobileWidth.value,
+    isTauriApp(),
 );
 
 if (layout === "v2") {

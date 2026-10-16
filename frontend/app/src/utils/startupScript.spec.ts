@@ -5,7 +5,7 @@ import { selectLayout } from "./layout";
 // rollup.extras.mjs to a polyfill without fileURLToPath.
 vi.mock("url", () => import("node:url"));
 
-import { generateStartupScript } from "../../rollup.extras.mjs";
+import { fontsLink, generateFontsScript, generateStartupScript } from "../../rollup.extras.mjs";
 
 // jsdom has no matchMedia, which the startup script reads as it runs
 const osPrefersDark = { dark: false };
@@ -56,9 +56,12 @@ function run(
     );
 }
 
-function configure(flag: string | undefined, width: number) {
+function configure(flag: string | undefined, width: number, native = false) {
     vi.stubGlobal("OC_CONFIG", flag === undefined ? undefined : { OC_MOBILE_LAYOUT: flag });
     vi.stubGlobal("innerWidth", width);
+    // What isTauriApp looks for
+    if (native) vi.stubGlobal("__TAURI_INTERNALS__", {});
+    else delete (window as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__;
 }
 
 const withWebLayout = () =>
@@ -126,11 +129,16 @@ describe("the startup script in index.html", () => {
         for (const web of [false, true]) {
             for (const flag of ["v2", undefined]) {
                 for (const width of [767, 768]) {
-                    document.head.innerHTML = "";
-                    configure(flag, width);
-                    const app = trees[selectLayout(flag, web ? "v3" : "", width < 768)];
-                    const script = web ? withWebLayout() : undefined;
-                    expect(run(script)[0], `${flag}, web ${web}, ${width}px`).toBe(`/${app}.js`);
+                    for (const native of [false, true]) {
+                        document.head.innerHTML = "";
+                        configure(flag, width, native);
+                        const app = trees[selectLayout(flag, web ? "v3" : "", width < 768, native)];
+                        const script = web ? withWebLayout() : undefined;
+                        expect(
+                            run(script)[0],
+                            `${flag}, web ${web}, ${width}px, native ${native}`,
+                        ).toBe(`/${app}.js`);
+                    }
                 }
             }
         }
@@ -138,7 +146,11 @@ describe("the startup script in index.html", () => {
 
     test("doesn't need a web App chunk in a build without the new web UI", () => {
         const withoutWeb = chunks.filter((c) => c.fileName !== "web.js");
-        const script = generateStartupScript({ chunks: withoutWeb, version: "1.2.3", mobileLayout });
+        const script = generateStartupScript({
+            chunks: withoutWeb,
+            version: "1.2.3",
+            mobileLayout,
+        });
         expect(run(script)).toEqual(["/desktop.js", "/shared.js", "/deep.js", "/en.js"]);
     });
 
@@ -183,5 +195,38 @@ describe("the startup script in index.html", () => {
         expect(() => generateStartupScript(without("mobile.js"))).toThrow(/App\.svelte/);
         expect(() => generateStartupScript(without("web.js"))).toThrow(/App\.svelte/);
         expect(() => generateStartupScript(without("en.js"))).toThrow(/en locale/);
+    });
+});
+
+describe("the font stylesheet in index.html", () => {
+    afterEach(() => {
+        vi.unstubAllGlobals();
+        document.head.innerHTML = "";
+    });
+
+    function linkedFonts(width: number, native: boolean): string {
+        configure(undefined, width, native);
+        new Function(generateFontsScript())();
+        return document.head.querySelector("link[rel=stylesheet]")!.getAttribute("href")!;
+    }
+
+    test("is linked from the html in a build without the new web UI", () => {
+        expect(fontsLink(false)).toContain("family=Manrope");
+    });
+
+    test("is left to the script in a build with the new web UI", () => {
+        expect(fontsLink(true)).toBe("");
+    });
+
+    test("is the one for the App tree which selectLayout goes on to pick", () => {
+        for (const width of [767, 768]) {
+            for (const native of [false, true]) {
+                document.head.innerHTML = "";
+                const web = selectLayout(undefined, "v3", width < 768, native) === "v3";
+                expect(linkedFonts(width, native), `${width}px, native ${native}`).toContain(
+                    web ? "family=Plus+Jakarta+Sans" : "family=Manrope",
+                );
+            }
+        }
     });
 });

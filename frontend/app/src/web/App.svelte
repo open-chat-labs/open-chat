@@ -1,12 +1,12 @@
 <script lang="ts">
-    import "@openchat/ui/lib/styles/tokens.css";
-    import "@openchat/ui/lib/styles/global.css";
+    import "@openchat/ui/src/lib/styles/tokens.css";
+    import "@openchat/ui/src/lib/styles/global.css";
 
     import "@i18n/i18n";
     import { localeLoadFailed, reviewingTranslations } from "@i18n/i18n";
-    import { installBehaviours } from "@openchat/ui/lib/behaviours";
-    import EmptyState from "@openchat/ui/lib/components/EmptyState.svelte";
-    import { setI18n } from "@openchat/ui/lib/i18n";
+    import { installBehaviours } from "@openchat/ui/src/lib/behaviours";
+    import EmptyState from "@openchat/ui/src/lib/components/EmptyState.svelte";
+    import { setI18n } from "@openchat/ui/src/lib/i18n";
     import { currentThemeMode } from "@theme/themes";
     import {
         boundaryErrorHandler,
@@ -16,9 +16,9 @@
     } from "@utils/appRoot.svelte";
     import { createOpenChatClient } from "@utils/openchatClient";
     import { handleUnhandledError } from "@utils/unhandledError";
-    import { OpenChat } from "@client";
+    import { botState, OpenChat } from "@client";
     import { onMount, setContext } from "svelte";
-    import { _, isLoading, json, locale } from "svelte-i18n";
+    import { _, getMessageFormatter, isLoading, json, locale } from "svelte-i18n";
     import { addUiMessages, uiTranslate } from "./i18n";
     import Shell from "./shell/Shell.svelte";
 
@@ -31,7 +31,7 @@
     setContext<OpenChat>("client", client);
 
     setI18n({
-        t: (key, params) => uiTranslate($_, $json, key, params, $locale ?? "en"),
+        t: (key, params) => uiTranslate(getMessageFormatter, $json, key, params, $locale ?? "en"),
         get locale() {
             return $locale ?? "en";
         },
@@ -43,6 +43,10 @@
     $effect(() => {
         document.documentElement.dataset.mode = $currentThemeMode;
         document.documentElement.dataset.accent = "pink";
+    });
+
+    $effect(() => {
+        botState.messageFormatter = $_;
     });
 
     followDocumentDirection();
@@ -62,12 +66,6 @@
 
     const boundaryError = boundaryErrorHandler(logger);
 </script>
-
-<svelte:head>
-    <link
-        rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
-</svelte:head>
 
 <svelte:window onerror={unhandledError} />
 

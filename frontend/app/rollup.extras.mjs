@@ -257,6 +257,36 @@ function staticImports(chunk, chunksByFileName, found = new Set()) {
     return found;
 }
 
+// Whether the page is in one of the native apps (isTauriApp in openchat-shared's utils/tauri.ts),
+// which take the web build over the air and don't get the new web UI
+const IS_NATIVE_APP = `("__TAURI_INTERNALS__" in window || location.protocol === "tauri:")`;
+
+// Whether a build with the new web UI mounts it (`selectLayout` in utils/layout.ts)
+const MOUNTS_WEB_LAYOUT = `(window.innerWidth >= 768 && !${IS_NATIVE_APP})`;
+
+// The fonts of the existing App trees and of the new web UI (src/web)
+const APP_FONTS_URL =
+    "https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Bebas+Neue&family=Manrope:wght@400;500;700&family=Roboto:wght@200;300;400;700&display=swap";
+const WEB_FONTS_URL =
+    "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap";
+
+// index.html's font stylesheet. A build with the new web UI (`webLayout`) only knows in the browser
+// which App tree it gets, so it leaves the stylesheet to `generateFontsScript` instead.
+export function fontsLink(webLayout) {
+    return webLayout ? "" : `<link href="${APP_FONTS_URL}" rel="stylesheet" />`;
+}
+
+// Links the fonts of the App tree `selectLayout` (utils/layout.ts) goes on to pick in a build with
+// the new web UI.
+export function generateFontsScript() {
+    return `(function () {
+    var link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = ${MOUNTS_WEB_LAYOUT} ? ${JSON.stringify(WEB_FONTS_URL)} : ${JSON.stringify(APP_FONTS_URL)};
+    document.head.appendChild(link);
+})();`;
+}
+
 // What index.html paints behind a dark theme until the app's own styles arrive: the background of
 // the default dark theme (theme/defaultDark.ts), which is near enough to every dark theme's.
 export const STARTUP_DARK_BACKGROUND = "#1b1c21";
@@ -308,7 +338,7 @@ export function generateStartupScript({ chunks, version, mobileLayout, webLayout
     return `(function () {
     var narrow = window.innerWidth < 768;
     var mobile = ${mobileLayout} === "v2" && narrow;
-    var web = ${webLayout ? "!narrow" : "false"};
+    var web = ${webLayout ? MOUNTS_WEB_LAYOUT : "false"};
     var mode;
     try {
         mode = localStorage.getItem("openchat_startup_theme_mode");

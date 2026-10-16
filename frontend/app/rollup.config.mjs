@@ -20,10 +20,13 @@ import styles from "rollup-styles";
 import { sveltePreprocess } from "svelte-preprocess";
 import { sourcemapNewline } from "../sourcemapNewline.mjs";
 import { androidBundlePlugin } from "./rollup-plugin-android-bundle.mjs";
+import { ocPackageAliases } from "./oc-package-aliases.mjs";
 import {
     __dirname,
     copyFile,
+    fontsLink,
     generateCspForScripts,
+    generateFontsScript,
     generateStartupScript,
     initEnv,
     manualChunks,
@@ -105,21 +108,9 @@ export default {
 
         alias({
             entries: [
-                // Resolve the former sub-packages from TypeScript source (bare
-                // import -> source entry point, subpath -> package src/).
-                ...[
-                    ["@shared", "openchat-shared", "src/index.ts"],
-                    ["@client", "openchat-client", "src/index.ts"],
-                    ["@agent", "openchat-agent", "src/index.ts"],
-                    ["@worker", "openchat-worker", "src/worker.ts"],
-                    ["@openchat/ui", "openchat-ui", "src/lib/index.ts"],
-                ].flatMap(([alias, dir, entry]) => {
-                    const root = path.resolve(__dirname, "..", dir);
-                    return [
-                        { find: new RegExp(`^${alias}/(.*)$`), replacement: `${root}/src/$1` },
-                        { find: new RegExp(`^${alias}$`), replacement: path.resolve(root, entry) },
-                    ];
-                }),
+                // Resolve the former sub-packages from TypeScript source (see
+                // ./oc-package-aliases.mjs).
+                ...ocPackageAliases,
                 // The Tauri plugin's guest JS is likewise resolved from source
                 // (guest-js/) rather than its built dist-js output.
                 {
@@ -340,6 +331,7 @@ export default {
                 // Goes ahead of the font stylesheet in the <head>, as a script placed after a
                 // stylesheet does not run until that stylesheet has loaded, but behind the
                 // entry's preloads, so that what has to run first is asked for first.
+                const webLayout = process.env.OC_WEB_LAYOUT === "v3";
                 const startupScript = generateStartupScript({
                     chunks: files.js.filter((f) => f.type === "chunk"),
                     version,
@@ -347,12 +339,13 @@ export default {
                         "OC_MOBILE_LAYOUT",
                         JSON.stringify(process.env.OC_MOBILE_LAYOUT),
                     ),
-                    webLayout: process.env.OC_WEB_LAYOUT === "v3",
+                    webLayout,
                 });
                 const inlineScripts = [
                     `window.OC_WEBSITE_VERSION = "${version}";`,
                     `var parcelRequire;`,
                     analyticsBody,
+                    ...(webLayout ? [generateFontsScript()] : []),
                 ];
                 const csp = generateCspForScripts([startupScript, ...inlineScripts]);
                 otaCsp = generateCspForScripts([startupScript, ...inlineScripts], false, true);
@@ -394,10 +387,7 @@ export default {
                                 <script>${startupScript}</script>
                                 <link rel="preconnect" href="https://fonts.googleapis.com" />
                                 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-                                <link
-                                    href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Bebas+Neue&family=Manrope:wght@400;500;700&family=Roboto:wght@200;300;400;700&display=swap"
-                                    rel="stylesheet"
-                                />
+                                ${fontsLink(webLayout)}
                                 <script type="module" defer src="/${jsEntryFile}"></script>
                                 ${inlineScripts.map((s) => `<script>${s}</script>`).join("")}
                             </head>

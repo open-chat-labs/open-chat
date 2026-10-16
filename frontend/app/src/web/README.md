@@ -10,7 +10,9 @@ It is opt-in per build with `OC_WEB_LAYOUT=v3`. That's a build-time flag: a buil
 this tree and `@openchat/ui` out of the bundle altogether.
 
 - dev: `npm run dev:web` (from `frontend/`)
-- build: `OC_WEB_LAYOUT=v3 npm run build:prod_test` (or any other build script)
+- build: `OC_WEB_LAYOUT=v3 npm run build:prod_test` (or any other web build script)
+
+Native builds leave it out for now (see `GAPS.md`).
 
 `selectLayout` (`utils/layout.ts`) mounts it on viewports of 768px and up. Narrower viewports keep
 getting the existing apps until the narrow layouts are designed.
@@ -31,7 +33,7 @@ web/
 
 - Only `XScreen` components touch the client or the stores. `@openchat/ui` components get data
   through props and report actions through callbacks.
-- Import library components by file (`@openchat/ui/lib/components/Button.svelte`), not from the
+- Import library components by file (`@openchat/ui/src/lib/components/Button.svelte`), not from the
   package entry, so a build only pulls in what it uses.
 - Don't edit `@openchat/ui` to fit the app.
   A change the library needs goes back to the design export; note it in `GAPS.md`.
