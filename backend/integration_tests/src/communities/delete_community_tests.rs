@@ -1,7 +1,7 @@
 use crate::client::{start_canister, stop_canister};
 use crate::communities::join_community_tests::wait_for_community_membership;
 use crate::env::ENV;
-use crate::utils::{tick_many, wait_for_deleted_canister_to_be_uninstalled};
+use crate::utils::{tick_many, tick_until, wait_for_deleted_canister_to_be_uninstalled};
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use pocket_ic::PocketIc;
@@ -9,7 +9,7 @@ use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
 use testing::rng::random_string;
-use types::{CanisterId, CommunityId, HttpRequest};
+use types::{CanisterId, CommunityId};
 
 #[test]
 fn delete_community_succeeds() {
@@ -41,6 +41,8 @@ fn delete_community_succeeds() {
     wait_for_deleted_canister_to_be_uninstalled(env, community_id.into());
 }
 
+// Members whose canisters are stopped when the community is deleted are told once they are running
+// again
 #[test]
 fn user_canister_notified_of_community_deleted() {
     let mut wrapper = ENV.deref().get();
@@ -78,55 +80,16 @@ fn user_canister_notified_of_community_deleted() {
 
     env.tick();
 
-    let initial_state1 = client::user::happy_path::initial_state(env, &user1);
-    assert!(
-        !initial_state1
-            .communities
-            .summaries
-            .iter()
-            .any(|c| c.community_id == community_id)
-    );
+    // The deleter's canister removed the community itself
+    assert!(!holds_community(env, &user1, community_id));
 
-    env.advance_time(Duration::from_secs(9 * 60));
-
-    // The 9-minute retry to user2's stopped canister is rejected; user2 is then started and the
-    // next attempt (still inside the 10 minute window) is delivered.
-    tick_many(env, 3);
-
-    start_canister(env, user2.local_user_index, user2.user_id.canister_id());
-
-    // Wait for the notification to actually reach user2's canister rather than assuming a single
-    // tick is enough. This matters beyond user2: the rejection of an attempt made while user2 was
-    // stopped can be processed arbitrarily late, and the retry-or-drop decision uses the time at
-    // which it is processed - if that happened after the cutoff below, it would bump the failed
-    // count and release the wait while user3's entry was still queued. Each user has a single
-    // entry, so delivery to user2 proves the rejection was already processed (the delivering
-    // attempt could only be dequeued after the rejected one was re-queued), leaving user3's entry
-    // as the only one which can still fail.
+    // The events for the stopped canisters are rejected and retried after a delay, so each member
+    // is told once their canister is running again
+    start_canister(env, user2.local_user_index, user2.canister());
     wait_for_community_deleted_notification(env, &user2, community_id);
 
-    // Inside the 10 minute window nothing can have been dropped yet, so this is a clean baseline
-    let failed_before = community_deleted_notifications_failed(env, canister_ids.group_index);
-
-    env.advance_time(Duration::from_secs(2 * 60));
-    // Now past the 10 minute cutoff, so the remaining attempt to notify user3's stopped canister
-    // must resolve (rejected) and be dropped before user3 is started - otherwise an in-flight
-    // call would be delivered to the running canister and succeed. The pending count alone
-    // cannot show this (it reads zero while the attempt is in flight), so wait for the drop
-    // itself: group_index's failed count rising is the deterministic endpoint.
-    wait_for_community_deleted_notification_dropped(env, canister_ids.group_index, failed_before);
-    start_canister(env, user3.local_user_index, user3.user_id.canister_id());
-    env.tick();
-
-    // Only retry for 10 minutes so the notification shouldn't have made it to user3's canister
-    let initial_state3 = client::user::happy_path::initial_state(env, &user3);
-    assert!(
-        initial_state3
-            .communities
-            .summaries
-            .iter()
-            .any(|c| c.community_id == community_id)
-    );
+    start_canister(env, user3.local_user_index, user3.canister());
+    wait_for_community_deleted_notification(env, &user3, community_id);
 }
 
 #[test_case(true; "public")]
@@ -247,47 +210,18 @@ struct TestData {
     community_id: CommunityId,
 }
 
-fn community_deleted_notifications_failed(env: &mut PocketIc, group_index: Principal) -> u64 {
-    let request = HttpRequest {
-        method: "GET".to_string(),
-        url: "/metrics".to_string(),
-        headers: Vec::new(),
-        body: Vec::new(),
-    };
-    let response = client::http_request(env, Principal::anonymous(), group_index, &request);
-    let metrics: serde_json::Value = serde_json::from_slice(&response.body).unwrap();
-    metrics["community_deleted_notifications_failed"].as_u64().unwrap()
-}
-
-// Ticks until the user's canister has processed the community-deleted notification. Ticks don't
-// advance time, so this stays inside the retry window in which delivery is guaranteed.
+// Ticks, moving time on so that the GroupIndex retries sending the event, until the user's canister
+// no longer lists the community
 fn wait_for_community_deleted_notification(env: &mut PocketIc, user: &User, community_id: CommunityId) {
-    for _ in 0..10 {
-        env.tick();
-        let initial_state = client::user::happy_path::initial_state(env, user);
-        if !initial_state
-            .communities
-            .summaries
-            .iter()
-            .any(|c| c.community_id == community_id)
-        {
-            return;
-        }
-    }
-    panic!("Community deleted notification was not delivered");
+    tick_until(env, |env| !holds_community(env, user, community_id));
 }
 
-// Ticks until group_index has dropped a community-deleted notification (an attempt which failed
-// past the 10 minute retry window). Each user has a single entry which is either queued, in
-// flight, or dropped, so once the failed count rises nothing for that user remains in flight.
-fn wait_for_community_deleted_notification_dropped(env: &mut PocketIc, group_index: Principal, failed_before: u64) {
-    for _ in 0..200 {
-        env.tick();
-        if community_deleted_notifications_failed(env, group_index) > failed_before {
-            return;
-        }
-    }
-    panic!("Community deleted notification was not dropped");
+fn holds_community(env: &PocketIc, user: &User, community_id: CommunityId) -> bool {
+    client::user::happy_path::initial_state(env, user)
+        .communities
+        .summaries
+        .iter()
+        .any(|c| c.community_id == community_id)
 }
 
 // Whether searching the GroupIndex's public communities for `name` finds the community

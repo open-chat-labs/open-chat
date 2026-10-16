@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Have SOL deposits minted to the canister, which forwards them to the user's wallet less a fee of 0.002 SOL for their first and 0.001 SOL after, and tells them via the OpenChat bot ([#9987](https://github.com/open-chat-labs/open-chat/pull/9987))
 - Hold the Alchemy API key set by a platform operator, for checking Solana balances ([#9995](https://github.com/open-chat-labs/open-chat/pull/9995))
 - Check a user's SOL deposit address through Alchemy before paying the ckSOL minter to check it ([#9996](https://github.com/open-chat-labs/open-chat/pull/9996))
+- Take the GroupIndex's group and community deleted events for every user in the canister in one call ([#10010](https://github.com/open-chat-labs/open-chat/pull/10010))
 
 ### Changed
 

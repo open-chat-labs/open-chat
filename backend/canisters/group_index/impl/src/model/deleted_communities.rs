@@ -6,8 +6,11 @@ use types::{CommunityId, DeletedCommunityInfo, UserId};
 #[derive(Serialize, Deserialize, Default)]
 pub struct DeletedCommunities {
     communities: HashMap<CommunityId, DeletedCommunityInfo>,
+    // The members still to be told of each deletion by the job which the user canister events
+    // queue replaced, moved onto the queue in post_upgrade
+    // TODO: remove once released
+    #[serde(default)]
     pending_community_deleted_notifications: VecDeque<(CommunityId, UserId)>,
-    failed_notifications: Vec<(CommunityId, UserId)>,
 }
 
 impl DeletedCommunities {
@@ -15,44 +18,25 @@ impl DeletedCommunities {
         self.communities.get(community_id)
     }
 
-    pub fn insert(&mut self, deleted_community: DeletedCommunityInfo, members: Vec<UserId>) -> bool {
-        let community_id = deleted_community.id;
-
-        match self.communities.entry(community_id) {
+    // Records the community as deleted, unless it already is
+    pub fn insert(&mut self, deleted_community: DeletedCommunityInfo) -> bool {
+        match self.communities.entry(deleted_community.id) {
             Occupied(_) => false,
             Vacant(e) => {
-                let deleted_by = deleted_community.deleted_by;
-                for user_id in members.into_iter().filter(|u| *u != deleted_by) {
-                    self.pending_community_deleted_notifications
-                        .push_back((community_id, user_id));
-                }
                 e.insert(deleted_community);
                 true
             }
         }
     }
 
-    pub fn dequeue_community_deleted_notification(&mut self) -> Option<(UserId, DeletedCommunityInfo)> {
-        self.pending_community_deleted_notifications
-            .pop_front()
-            .and_then(|(community_id, user_id)| self.communities.get(&community_id).map(|d| (user_id, d.clone())))
-    }
-
-    pub fn mark_notification_failed(&mut self, community_id: CommunityId, user_id: UserId, retry: bool) {
-        if retry {
-            self.pending_community_deleted_notifications
-                .push_back((community_id, user_id));
-        } else {
-            self.failed_notifications.push((community_id, user_id));
-        }
-    }
-
-    pub fn notifications_pending(&self) -> usize {
-        self.pending_community_deleted_notifications.len()
-    }
-
-    pub fn notifications_failed(&self) -> usize {
-        self.failed_notifications.len()
+    // One-off: the notifications still pending when the user canister events queue replaced the
+    // job which sent them, each with the deleted community it is of
+    // TODO: remove once released
+    pub fn take_pending_notifications(&mut self) -> Vec<(UserId, DeletedCommunityInfo)> {
+        std::mem::take(&mut self.pending_community_deleted_notifications)
+            .into_iter()
+            .filter_map(|(community_id, user_id)| self.communities.get(&community_id).map(|d| (user_id, d.clone())))
+            .collect()
     }
 
     pub fn metrics(&self) -> Metrics {
