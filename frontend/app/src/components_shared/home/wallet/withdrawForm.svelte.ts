@@ -80,13 +80,9 @@ export class WithdrawForm {
         if (this.#isOneSecNetwork) return ["eth"];
         return this.#tokenState.symbol === ICP_SYMBOL ? ["icrc", "icp"] : ["icrc"];
     });
-    #targetAccountValid = $derived.by(() => {
-        const target = this.targetAccount;
-        if (target.length === 0 || target === this.#ownAccount) return false;
-        // Checked before the network, since BTC sent over the ckBTC network goes to an IC account
-        if (this.#targetIsUserIdAccount) return false;
-        return this.acceptsAddress(target);
-    });
+    #targetAccountValid = $derived.by(
+        () => this.targetAccount.length > 0 && this.acceptsAddress(this.targetAccount),
+    );
     #oneSecFeesForToken = $derived.by(() => {
         if (!this.#isOneSecNetwork || this.#oneSecFees === undefined) return undefined;
         return this.#oneSecFees.find(
@@ -206,9 +202,13 @@ export class WithdrawForm {
         return this.#targetAccountValid;
     }
 
-    // Whether the send could reach this address, so that a saved one on another network can be
-    // left out of the address book's choices
+    // Whether the send could reach this address, so that a saved one it couldn't can be left out
+    // of the address book's choices
     acceptsAddress(address: string): boolean {
+        if (address === this.#ownAccount) return false;
+        // Refused whichever network is chosen, since anything sent to a user id would be lost, and
+        // BTC sent over the ckBTC network goes to an IC account
+        if (this.#client.isAccountOfMultiUserCanisterUserId(address)) return false;
         const network = addressNetwork(address);
         return network !== undefined && this.#acceptedNetworks.includes(network);
     }
