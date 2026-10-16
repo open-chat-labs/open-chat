@@ -48,8 +48,9 @@ design export needs. Each entry says where it came up.
 - **Sign-in, added by hand** (to go back to the design export): `AuthDialog` got `methods` (for
   `?auth=` and browsers without WebAuthn), a wallet step for Ethereum / Solana (`wallets`; the old
   UI asks which wallet), the emailed link's code on "Check your inbox", and `kind: 'link'`, the
-  page the link opens, which asks for that code. Landing and Learn got `signedIn` (Open app in
-  place of Sign in / Create account). None of these were designed.
+  page the link opens, which asks for that code. Also `email` and `referrer` (prefilled),
+  `onCancelEmailLink`, and a failure `reason` a host call can reject with. Landing and Learn got
+  `signedIn` (Open app in place of Sign in / Create account). None of these were designed.
 - **Swatches**: the design's colour/cover swatches for groups, communities and avatars have no
   OpenChat equivalent (it has uploaded avatars and banners). Adapters pass images and pick a
   swatch from the id.
@@ -81,9 +82,14 @@ design export needs. Each entry says where it came up.
 - **Presence**: a polled last-online time, with no status for yourself.
 - **Community stats**: counters only; there's no 12-week series for `GroupStats`.
 - **Sign-in**: no promise that settles on sign-in, so `features/auth/signIn.ts` watches
-  `identityStateStore`. A refused sign-up (`registerUser`: username taken, user limit, bad
-  referral code …) shows `AuthDialog`'s one "couldn't create your account" line, where the old
-  UI named the reason.
+  `identityStateStore`. Not carried over from the old sign-in yet:
+  - the guidelines shown in a popup at sign-up (`AuthDialog` links to `/terms`, a placeholder
+    until the legal pages exist);
+  - the onboarding dialog's language picker and Logout link (closing sign-up logs out instead);
+  - wallets the browser announces (EIP-6963 extensions) in the Ethereum list, and the Solana
+    adapters' own icons (Phantom has none here);
+  - joining the group or community a guest picked once they've signed in (`postLoginJoin` in
+    `Home.svelte`), for the guest pass (phase 10).
 - **Learn content**: the existing pages' content (roadmap, blog, whitepaper, architecture, FAQ)
   has to move into Learn's content shape (markdown docs, JSON roadmap and FAQ). The FAQ answers
   are HTML (links, tables), which Learn renders as plain text.

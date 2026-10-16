@@ -1,5 +1,5 @@
 import { AuthProvider } from "@client";
-import { authOptions, nextAuthKind } from "./auth.adapter";
+import { authOptions, nextAuthKind, registerFailureKey } from "./auth.adapter";
 
 describe("the sign-in options", () => {
     test("are all of them by default, and only passkey and email without WebAuthn", () => {
@@ -11,6 +11,36 @@ describe("the sign-in options", () => {
         expect(authOptions(["II", "EMAIL"], true)).toEqual(["email", "ii"]);
         expect(authOptions([AuthProvider.ETH], true)).toEqual(["eth"]);
         expect(authOptions(["SOL"], false)).toEqual([]);
+    });
+});
+
+describe("the sign-in options' order", () => {
+    test("puts the method last signed in with first", () => {
+        expect(authOptions([], true, AuthProvider.SOL)).toEqual([
+            "sol",
+            "passkey",
+            "email",
+            "ii",
+            "eth",
+            "nfid",
+        ]);
+        expect(authOptions(["II", "ETH"], true, AuthProvider.ETH)).toEqual(["eth", "ii"]);
+    });
+
+    test("a last method that isn't on offer changes nothing", () => {
+        expect(authOptions(["II"], true, AuthProvider.SOL)).toEqual(["ii"]);
+    });
+});
+
+describe("a refused registration's message", () => {
+    test("is the old sign-up's, with the referral code cases on the one key there is", () => {
+        expect(registerFailureKey("username_taken")).toBe("register.usernameTaken");
+        expect(registerFailureKey("user_limit_reached")).toBe("register.userLimitReached");
+        expect(registerFailureKey("referral_code_expired")).toBe("register.referralCodeInvalid");
+        expect(registerFailureKey("referral_code_already_claimed")).toBe(
+            "register.referralCodeInvalid",
+        );
+        expect(registerFailureKey("internal_error")).toBe("unexpectedError");
     });
 });
 

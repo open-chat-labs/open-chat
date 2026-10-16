@@ -1,4 +1,5 @@
 import { identityStateStore, type IdentityState, type OpenChat } from "@client";
+import { configKeys } from "@shared";
 import { flushSync, mount, unmount } from "svelte";
 import AuthScreen from "./AuthScreen.svelte";
 
@@ -8,10 +9,17 @@ describe("the in-app sign-in", () => {
     const client = {
         updateIdentityState: vi.fn((state: IdentityState) => identityStateStore.set(state)),
         logout: vi.fn(),
+        getReferringUser: vi.fn(async () => undefined as unknown),
     };
 
     beforeEach(() => {
         identityStateStore.set({ kind: "anon" });
+        localStorage.setItem(configKeys.selectedAuthEmail, "me@example.com");
+        client.getReferringUser.mockResolvedValueOnce({
+            userId: "r1",
+            username: "hamish",
+            displayName: "Hamish",
+        });
         target = document.body.appendChild(document.createElement("div"));
         app = mount(AuthScreen, {
             target,
@@ -52,6 +60,17 @@ describe("the in-app sign-in", () => {
         set({ kind: "logging_in" });
         set({ kind: "registering" });
         expect(title()).toBe("Create your account");
+    });
+
+    test("prefills the last email for sign-in, and the referral link's referrer for sign-up", async () => {
+        set({ kind: "logging_in" });
+        expect(document.querySelector<HTMLInputElement>("form.email input")!.value).toBe(
+            "me@example.com",
+        );
+        set({ kind: "registering" });
+        await vi.waitFor(() =>
+            expect(document.querySelector(".field.picked .who")?.textContent).toContain("Hamish"),
+        );
     });
 
     test("closing a sign-in goes back to anonymous", () => {

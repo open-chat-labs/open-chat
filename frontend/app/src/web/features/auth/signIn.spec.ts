@@ -5,6 +5,7 @@ import {
     type IdentityState,
     type OpenChat,
 } from "@client";
+import { configKeys } from "@shared";
 import { createAuth, untilSignedIn } from "./signIn";
 
 const emailHandlers: {
@@ -38,6 +39,8 @@ function fakeClient() {
         })),
         onRegisteredUser: vi.fn(),
         setReferralCode: vi.fn(),
+        clearReferralCode: vi.fn(),
+        getReferringUser: vi.fn(async () => undefined as unknown),
         checkUsername: vi.fn(async () => "success"),
         searchUsers: vi.fn(async () => []),
         handleMagicLink: vi.fn(async () => ({ kind: "success" })),
@@ -79,7 +82,10 @@ describe("the sign-in callbacks", () => {
     beforeEach(() => {
         emailHandlers.length = 0;
         client = fakeClient();
-        auth = createAuth(client as unknown as OpenChat, onEmailSignedIn);
+        auth = createAuth(client as unknown as OpenChat, {
+            translate: (key) => `translated:${key}`,
+            onEmailSignedIn,
+        });
         set({ kind: "anon" });
     });
     afterEach(() => {
@@ -119,10 +125,35 @@ describe("the sign-in callbacks", () => {
         expect(client.registerUser).toHaveBeenCalledWith("newperson", undefined);
     });
 
-    test("a refused account keeps the form, with no user", async () => {
+    test("a refused account keeps the form, says why in the app's words, and has no user", async () => {
         client.registerUser.mockResolvedValueOnce({ kind: "username_taken" } as never);
-        await expect(auth.onSignup({ username: "taken1" })).rejects.toThrow("username_taken");
+        await expect(auth.onSignup({ username: "taken1" })).rejects.toEqual({
+            reason: "translated:register.usernameTaken",
+        });
         expect(client.onRegisteredUser).not.toHaveBeenCalled();
+    });
+
+    test("the referrer from a referral link is offered, and removing it drops the code", async () => {
+        client.getReferringUser.mockResolvedValueOnce({
+            userId: "r1",
+            username: "hamish",
+            displayName: "Hamish",
+        });
+        await expect(auth.loadReferrer()).resolves.toMatchObject({
+            userId: "r1",
+            name: "Hamish",
+            handle: "hamish",
+        });
+        set({ kind: "registering" });
+        await auth.onSignup({ username: "newperson" });
+        expect(client.clearReferralCode).toHaveBeenCalled();
+        expect(client.setReferralCode).not.toHaveBeenCalled();
+    });
+
+    test("with no referrer offered, a code the dialog never showed is left alone", async () => {
+        set({ kind: "registering" });
+        await auth.onSignup({ username: "newperson" });
+        expect(client.clearReferralCode).not.toHaveBeenCalled();
     });
 
     test("a username is free only when the check says so, and offline is a failed check", async () => {
@@ -134,7 +165,10 @@ describe("the sign-in callbacks", () => {
     });
 
     test("an emailed link gives its code, and enters once it's followed", async () => {
+        localStorage.removeItem(configKeys.selectedAuthEmail);
         await expect(auth.onRequestEmailLink!("me@example.com")).resolves.toEqual({ code: "123" });
+        // the address is remembered for next time
+        expect(auth.lastEmail()).toBe("me@example.com");
         expect(emailHandlers[0].generateMagicLink).toHaveBeenCalledWith("me@example.com");
         set({ kind: "loading_user", registering: false });
         expect(onEmailSignedIn).not.toHaveBeenCalled();
@@ -144,7 +178,8 @@ describe("the sign-in callbacks", () => {
 
     test("a link given up on doesn't enter", async () => {
         await auth.onRequestEmailLink!("me@example.com");
-        auth.stopEmail();
+        auth.onCancelEmailLink!();
+        expect(client.gaTrack).toHaveBeenCalledWith("email_signin_cancelled", "registration");
         expect(emailHandlers[0].stopPolling).toHaveBeenCalled();
         set({ kind: "logged_in" });
         expect(onEmailSignedIn).not.toHaveBeenCalled();
@@ -152,7 +187,9 @@ describe("the sign-in callbacks", () => {
 
     test("a link that couldn't be sent fails", async () => {
         emailHandlers[0].generateMagicLink.mockResolvedValueOnce({ kind: "email_invalid" });
-        await expect(auth.onRequestEmailLink!("bad")).rejects.toThrow("email_invalid");
+        await expect(auth.onRequestEmailLink!("bad")).rejects.toEqual({
+            reason: "translated:loginDialog.invalidEmail",
+        });
     });
 
     test("the link page's code goes with the link's query, and the answer is named", async () => {

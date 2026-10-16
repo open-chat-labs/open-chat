@@ -195,6 +195,79 @@ describe('AuthDialog: what the host offers', () => {
     expect(target.textContent).toContain('Close this page');
   });
 
+  test('lists the other methods in the order given', () => {
+    open({ kind: 'login', methods: ['passkey', 'email', 'sol', 'ii'], onMethod: vi.fn() });
+    expect(labels('.tile-label')).toEqual(['Solana', 'Internet ID']);
+  });
+
+  test('prefills the sign-in email, and keeps sign-up’s recovery email apart', async () => {
+    const onSignup = vi.fn(() => Promise.resolve());
+    open({ kind: 'login', email: 'me@example.com', onSignup });
+    expect(q<HTMLInputElement>('form.email input')!.value).toBe('me@example.com');
+    q('.switch-cta')!.click();
+    flushSync();
+    expect(q<HTMLInputElement>('input[autocomplete=email]')!.value).toBe('');
+    typeInto(q<HTMLInputElement>('input[autocomplete=username]'), 'newperson1');
+    q<HTMLFormElement>('form.form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    await settle();
+    expect(onSignup).toHaveBeenCalledWith(expect.objectContaining({ email: undefined }));
+  });
+
+  test('prefills the referrer, who can be removed before signing up', async () => {
+    const onSignup = vi.fn(() => Promise.resolve());
+    open({ kind: 'signup', referrer: { userId: 'r1', name: 'Hamish', handle: 'hamish', grad: 'red' }, onSignup });
+    expect(q('.field.picked .who')!.textContent).toContain('Hamish');
+    q('.field.picked .clear')!.click();
+    flushSync();
+    expect(q('.field.picked')).toBeNull();
+    typeInto(q<HTMLInputElement>('input[autocomplete=username]'), 'newperson1');
+    q<HTMLFormElement>('form.form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    await settle();
+    expect(onSignup).toHaveBeenCalledWith(expect.objectContaining({ referrerId: undefined }));
+  });
+
+  test('says why a sign-up failed when the host does', async () => {
+    open({ kind: 'signup', onSignup: () => Promise.reject({ reason: 'That username is already taken' }) });
+    typeInto(q<HTMLInputElement>('input[autocomplete=username]'), 'newperson1');
+    q<HTMLFormElement>('form.form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    await settle();
+    expect(q('.signup-error')!.textContent).toBe('That username is already taken');
+  });
+
+  test('a failure without a reason gets the generic line', async () => {
+    open({ kind: 'signup', onSignup: () => Promise.reject(new Error('boom')) });
+    typeInto(q<HTMLInputElement>('input[autocomplete=username]'), 'newperson1');
+    q<HTMLFormElement>('form.form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    await settle();
+    expect(q('.signup-error')!.textContent).toBe('Couldn’t create your account. Try again.');
+  });
+
+  test('leaving "Check your inbox" tells the host, by Back or by closing', async () => {
+    const onCancelEmailLink = vi.fn();
+    const onClose = vi.fn();
+    open({ kind: 'login', onRequestEmailLink: () => Promise.resolve(), onCancelEmailLink, onClose });
+    const send = async () => {
+      typeInto(q<HTMLInputElement>('form.email input'), 'me@example.com');
+      q<HTMLFormElement>('form.email')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      await settle();
+    };
+    await send();
+    q('.head-button[aria-label="Back"]')!.click();
+    flushSync();
+    expect(onCancelEmailLink).toHaveBeenCalledOnce();
+    await send();
+    q('.head-button[aria-label="Close"]')!.click();
+    expect(onCancelEmailLink).toHaveBeenCalledTimes(2);
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  test('closing from the methods has no link to cancel', () => {
+    const onCancelEmailLink = vi.fn();
+    open({ kind: 'login', onCancelEmailLink, onClose: vi.fn() });
+    q('.head-button[aria-label="Close"]')!.click();
+    expect(onCancelEmailLink).not.toHaveBeenCalled();
+  });
+
   test("a link's code the host rejects reads as invalid", async () => {
     open({ kind: 'link', onLinkCode: () => Promise.reject(new Error('network')) });
     typeInto(q<HTMLInputElement>('.code-input'), '123');

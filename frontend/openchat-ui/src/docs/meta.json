@@ -5671,7 +5671,29 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "The ways to sign in on offer; all of them without it. Sign-up’s form is the same either way."
+        "doc": "The ways to sign in on offer, all of them without it; the other methods are listed in this order. Sign-up’s form is the same either way."
+      },
+      {
+        "name": "email",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Prefills the sign-in email field (e.g. the address last used)."
+      },
+      {
+        "name": "referrer",
+        "type": "AuthPerson",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Prefills sign-up’s referrer (e.g. from a referral link); applied again whenever the host passes a new one."
       },
       {
         "name": "wallets",
@@ -5727,6 +5749,17 @@
         "required": false,
         "componentDefault": null,
         "doc": "Send a sign-in link to this address. The dialog shows \"Check your inbox\" once it resolves (with the code, when it resolves with one); also used to resend."
+      },
+      {
+        "name": "onCancelEmailLink",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The person left “Check your inbox” (Back or close): stop waiting for that link."
       },
       {
         "name": "onLinkCode",

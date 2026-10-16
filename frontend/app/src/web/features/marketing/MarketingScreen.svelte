@@ -5,17 +5,21 @@
     import {
         identityStateStore,
         querystringStore,
+        selectedAuthProviderStore,
         type OpenChat,
         type RouteParams,
     } from "@client";
-    import AuthDialog from "@openchat/ui/src/features/components/AuthDialog.svelte";
+    import AuthDialog, {
+        type AuthPerson,
+    } from "@openchat/ui/src/features/components/AuthDialog.svelte";
     import Landing from "@openchat/ui/src/pages/Landing.svelte";
     import Learn from "@openchat/ui/src/pages/Learn.svelte";
     import { placeholderLearnContent, type LearnPage } from "@openchat/ui/src/pages/learnContent";
     import type { PageMode } from "@openchat/ui/src/pages/types";
     import { currentThemeMode, themeType } from "@theme/themes";
     import { navigate } from "@src/utils/navigation";
-    import { getContext, onDestroy, tick, untrack } from "svelte";
+    import { getContext, onDestroy, onMount, tick, untrack } from "svelte";
+    import { _ } from "svelte-i18n";
     import Placeholder from "../app/Placeholder.svelte";
     import { authOptions } from "../auth/auth.adapter";
     import { createAuth } from "../auth/signIn";
@@ -29,17 +33,29 @@
     const enterApp = () => navigate("/");
 
     // an emailed link followed elsewhere signs this page in too, so it enters the app
-    const auth = createAuth(client, enterApp);
+    const auth = createAuth(client, { translate: (key) => $_(key), onEmailSignedIn: enterApp });
     onDestroy(auth.stopEmail);
 
+    let referrer = $state<AuthPerson | undefined>(undefined);
+    onMount(() => {
+        auth.loadReferrer().then((person) => (referrer = person));
+    });
+
     const pageAuth = $derived({
-        methods: authOptions($querystringStore.getAll("auth"), "PublicKeyCredential" in window),
+        methods: authOptions(
+            $querystringStore.getAll("auth"),
+            "PublicKeyCredential" in window,
+            $selectedAuthProviderStore,
+        ),
+        email: auth.lastEmail(),
+        referrer,
         wallets: auth.wallets,
         termsUrl: auth.termsUrl,
         checkUsername: auth.checkUsername,
         searchReferrers: auth.searchReferrers,
         onMethod: auth.onMethod,
         onRequestEmailLink: auth.onRequestEmailLink,
+        onCancelEmailLink: auth.onCancelEmailLink,
         onSignup: auth.onSignup,
     });
 
