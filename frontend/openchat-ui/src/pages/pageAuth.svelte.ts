@@ -15,7 +15,17 @@ type AuthDialogProps = ComponentProps<typeof AuthDialog>;
 /** What the host passes through to the pages' AuthDialog. */
 export type PageAuth = Pick<
   AuthDialogProps,
-  'variant' | 'referrers' | 'searchReferrers' | 'checkUsername' | 'termsUrl' | 'onRequestEmailLink' | 'methods' | 'wallets'
+  | 'variant'
+  | 'referrers'
+  | 'searchReferrers'
+  | 'checkUsername'
+  | 'termsUrl'
+  | 'onRequestEmailLink'
+  | 'onCancelEmailLink'
+  | 'methods'
+  | 'wallets'
+  | 'email'
+  | 'referrer'
 > & {
   /** Sign in / up with a method (and the wallet picked, for Ethereum / Solana with `wallets`); resolve once the person is
    *  signed in (the page then enters the app), reject to go back. */

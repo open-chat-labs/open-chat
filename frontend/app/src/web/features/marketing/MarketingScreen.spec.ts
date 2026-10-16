@@ -17,7 +17,10 @@ const route = (kind: string, more: object = {}) =>
 describe("the marketing pages", () => {
     let target: HTMLElement;
     let app: object | undefined;
-    const client = { handleMagicLink: vi.fn(async () => ({ kind: "success" })) };
+    const client = {
+        handleMagicLink: vi.fn(async () => ({ kind: "success" })),
+        getReferringUser: vi.fn(async () => undefined),
+    };
 
     beforeEach(() => {
         // jsdom has no 2D canvas; Landing's hero backdrop then doesn't draw

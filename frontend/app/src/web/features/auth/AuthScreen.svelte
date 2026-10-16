@@ -2,15 +2,28 @@
      goes to "logging_in": the rail's Sign in, a guest action), and turns into sign-up once someone
      is signed in without an account. Landing and Learn host their own dialog. -->
 <script lang="ts">
-    import { identityStateStore, querystringStore, type OpenChat } from "@client";
-    import AuthDialog from "@openchat/ui/src/features/components/AuthDialog.svelte";
-    import { getContext, onDestroy, untrack } from "svelte";
+    import {
+        identityStateStore,
+        querystringStore,
+        selectedAuthProviderStore,
+        type OpenChat,
+    } from "@client";
+    import AuthDialog, {
+        type AuthPerson,
+    } from "@openchat/ui/src/features/components/AuthDialog.svelte";
+    import { getContext, onDestroy, onMount, untrack } from "svelte";
+    import { _ } from "svelte-i18n";
     import { authOptions, nextAuthKind, type AuthDialogKind } from "./auth.adapter";
     import { createAuth } from "./signIn";
 
     const client = getContext<OpenChat>("client");
-    const auth = createAuth(client);
+    const auth = createAuth(client, { translate: (key) => $_(key) });
     onDestroy(auth.stopEmail);
+
+    let referrer = $state<AuthPerson | undefined>(undefined);
+    onMount(() => {
+        auth.loadReferrer().then((person) => (referrer = person));
+    });
 
     let kind = $state<AuthDialogKind | null>(null);
     $effect(() => {
@@ -19,7 +32,11 @@
     });
 
     const methods = $derived(
-        authOptions($querystringStore.getAll("auth"), "PublicKeyCredential" in window),
+        authOptions(
+            $querystringStore.getAll("auth"),
+            "PublicKeyCredential" in window,
+            $selectedAuthProviderStore,
+        ),
     );
 
     function close() {
@@ -40,12 +57,15 @@
     <AuthDialog
         {kind}
         {methods}
+        email={auth.lastEmail()}
+        {referrer}
         wallets={auth.wallets}
         termsUrl={auth.termsUrl}
         checkUsername={auth.checkUsername}
         searchReferrers={auth.searchReferrers}
         onMethod={auth.onMethod}
         onRequestEmailLink={auth.onRequestEmailLink}
+        onCancelEmailLink={auth.onCancelEmailLink}
         onSignup={auth.onSignup}
         onClose={close} />
 {/if}

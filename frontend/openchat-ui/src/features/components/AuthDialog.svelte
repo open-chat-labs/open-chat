@@ -24,6 +24,12 @@
   /** What became of a sign-in link's code: signed in here, signed in on the page that asked for the link, or not. */
   export type EmailLinkResult = 'signed_in' | 'elsewhere' | 'expired' | 'invalid';
 
+  /** What a host call can reject with to say why it failed, shown in place of the generic failure line. */
+  export interface AuthFailure {
+    /** Resource key or literal text. */
+    reason: string;
+  }
+
   /** What onRequestEmailLink can resolve with. */
   export interface EmailLinkSent {
     /** Code the person enters on the page the link opens; shown with "Check your inbox". */
@@ -86,8 +92,13 @@
     checkUsername?: (username: string) => boolean | Promise<boolean>;
     /** Terms and conditions page; without it the words aren't a link. */
     termsUrl?: string;
-    /** The ways to sign in on offer; all of them without it. Sign-up's form is the same either way. */
+    /** The ways to sign in on offer, all of them without it; the other methods are listed in this order. Sign-up's
+     *  form is the same either way. */
     methods?: AuthOption[];
+    /** Prefills the sign-in email field (e.g. the address last used). */
+    email?: string;
+    /** Prefills sign-up's referrer (e.g. from a referral link); applied again whenever the host passes a new one. */
+    referrer?: AuthPerson;
     /** Wallets to pick from for Ethereum / Solana. With a list, the method asks which wallet and passes its id to onMethod. */
     wallets?: Partial<Record<'eth' | 'sol', AuthWallet[]>>;
     onClose?: () => void;
@@ -96,6 +107,8 @@
     /** Send a sign-in link to this address. The dialog shows "Check your inbox" once it resolves (with the code, when it
      *  resolves with one); also used to resend. */
     onRequestEmailLink?: (email: string) => Promise<EmailLinkSent | void> | void;
+    /** The person left "Check your inbox" (Back or close): stop waiting for that link. */
+    onCancelEmailLink?: () => void;
     /** kind 'link': check the code typed on the link's page. 'signed_in' leaves closing to the host; reject reads as
      *  'invalid'. */
     onLinkCode?: (code: string) => Promise<EmailLinkResult>;
@@ -113,10 +126,13 @@
     checkUsername,
     termsUrl,
     methods,
+    email: initialEmail = '',
+    referrer: initialReferrer,
     wallets,
     onClose,
     onMethod,
     onRequestEmailLink,
+    onCancelEmailLink,
     onLinkCode,
     onSignup,
   }: Props = $props();
@@ -132,12 +148,16 @@
   let waiting = $state<Method | 'email' | 'signup' | 'code' | null>(null);
   // a newer action (or Back / switching mode) makes an older pending one stale
   let run = 0;
-  let email = $state('');
+  let email = $state(untrack(() => initialEmail));
+  // sign-up's optional recovery email
+  let recovery = $state('');
   let username = $state('');
   // free: available; taken; error: the check itself failed
   let checked = $state<{ name: string; state: 'free' | 'taken' | 'error' } | null>(null);
   // the last host action that failed (shown under the form / methods)
   let failed = $state<Method | 'email' | 'signup' | 'code' | null>(null);
+  // why it failed, when the host said (AuthFailure)
+  let failReason = $state<string | undefined>(undefined);
   // kind 'link': the typed code, and what the host made of it
   let linkCode = $state('');
   let linkResult = $state<EmailLinkResult | null>(null);
@@ -146,6 +166,10 @@
   let searchRun = 0;
   let refQuery = $state('');
   let referrer = $state<Person | null>(null);
+  $effect(() => {
+    const given = initialReferrer;
+    untrack(() => (referrer = given ?? null));
+  });
 
   let checkTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -164,9 +188,10 @@
   const free = $derived(checkUsername ? known?.state === 'free' : wellFormed);
   const badChars = $derived(!!username && /[^A-Za-z0-9_]/.test(username));
   const userMsg = $derived(badChars ? t('ui.authDialog.onlyLetters') : username && username.length < 5 ? t('ui.authDialog.atLeast5') : '');
-  const emailOk = $derived(/^\S+@\S+\.\S+$/.test(email));
+  const isEmail = (value: string) => /^\S+@\S+\.\S+$/.test(value);
+  const emailOk = $derived(isEmail(email));
   // sign-up's recovery email is optional, but a malformed one blocks Continue instead of being dropped
-  const recoveryBad = $derived(!!email.trim() && !emailOk);
+  const recoveryBad = $derived(!!recovery.trim() && !isEmail(recovery));
   const results = $derived.by(() => {
     const q = refQuery.trim().toLowerCase();
     if (!q) return [];
@@ -199,11 +224,14 @@
       : t(waiting === 'passkey' ? (signup ? 'ui.authDialog.waitPasskeyCreate' : 'ui.authDialog.waitPasskeyChoose') : OTHERS.find((o) => o.key === waiting)!.wait),
   );
   const offered = (o: AuthOption) => !methods || methods.includes(o);
-  const others = $derived(OTHERS.filter((o) => !(signup && o.loginOnly) && offered(o.key)));
+  const others = $derived(
+    (methods ? methods.flatMap((m) => OTHERS.filter((o) => o.key === m)) : OTHERS).filter((o) => !(signup && o.loginOnly)),
+  );
   const walletList = $derived(walletsFor ? (wallets?.[walletsFor] ?? []) : []);
 
   function close() {
     run++;
+    if (step === 'sent') onCancelEmailLink?.();
     onClose?.();
   }
 
@@ -217,12 +245,25 @@
     const mine = ++run;
     waiting = what;
     failed = null;
-    const result = await flow.run(action);
+    failReason = undefined;
+    let reason: string | undefined;
+    const result = await flow.run(async () => {
+      try {
+        return await action();
+      } catch (e) {
+        const given = (e as Partial<AuthFailure> | null)?.reason;
+        reason = typeof given === 'string' && given ? given : undefined;
+        throw e;
+      }
+    });
     // nothing else can have started meanwhile, so the waiting state always ends here
     waiting = null;
     // closed (or unmounted) meanwhile: the result is stale
     if (mine !== run) return { ok: false };
-    if (!result.ok) failed = what;
+    if (!result.ok) {
+      failed = what;
+      failReason = reason;
+    }
     return result;
   }
 
@@ -254,7 +295,9 @@
 
   function submitSignup() {
     if (!free || recoveryBad || !onSignup) return;
-    attempt('signup', () => onSignup({ username, email: emailOk ? email.trim() : undefined, referrer: referrer?.handle, referrerId: referrer?.userId }));
+    attempt('signup', () =>
+      onSignup({ username, email: isEmail(recovery) ? recovery.trim() : undefined, referrer: referrer?.handle, referrerId: referrer?.userId }),
+    );
   }
 
   async function submitCode() {
@@ -302,6 +345,7 @@
 
   function backToMethods() {
     if (flow.busy) return;
+    if (step === 'sent') onCancelEmailLink?.();
     step = 'methods';
     walletsFor = null;
     failed = null;
@@ -391,7 +435,7 @@
           {#if waiting}
             <span class="wait" role="status">{waitText}…</span>
           {:else if failed && failed !== 'signup'}
-            <span class="wait failed" role="alert">{t(failed === 'email' ? 'ui.authDialog.linkFailed' : 'ui.authDialog.methodFailed')}</span>
+            <span class="wait failed" role="alert">{t(failReason ?? (failed === 'email' ? 'ui.authDialog.linkFailed' : 'ui.authDialog.methodFailed'))}</span>
           {/if}
         </div>
       {/if}
@@ -409,7 +453,7 @@
           {#if waiting}
             <span class="wait" role="status">{waitText}…</span>
           {:else if failed}
-            <span class="wait failed" role="alert">{t('ui.authDialog.methodFailed')}</span>
+            <span class="wait failed" role="alert">{t(failReason ?? 'ui.authDialog.methodFailed')}</span>
           {/if}
         </div>
       {/if}
@@ -453,7 +497,7 @@
           </label>
           <label class="field-group spaced">
             <span class="field-label"><span>{t('ui.authDialog.email')}</span><span class="field-note">{t('ui.authDialog.emailNote')}</span></span>
-            <span class="field" class:bad={recoveryBad}><input data-auth-input="" type="email" bind:value={email} placeholder={t('ui.authDialog.emailExample')} autocomplete="email" /></span>
+            <span class="field" class:bad={recoveryBad}><input data-auth-input="" type="email" bind:value={recovery} placeholder={t('ui.authDialog.emailExample')} autocomplete="email" /></span>
             {#if recoveryBad}<span class="user-msg bad">{t('ui.authDialog.emailInvalid')}</span>{/if}
           </label>
           <div class="referral">
@@ -491,7 +535,7 @@
             <span class="terms"
               ><Translate key="ui.authDialog.terms"
                 >{#snippet link()}{#if termsUrl}<a href={termsUrl} target="_blank" rel="noopener">{t('ui.authDialog.termsLink')}</a>{:else}{t('ui.authDialog.termsLink')}{/if}{/snippet}</Translate
-              >{#if failed === 'signup'}<span class="signup-error" role="alert">{t('ui.authDialog.signupFailed')}</span>{/if}</span
+              >{#if failed === 'signup'}<span class="signup-error" role="alert">{t(failReason ?? 'ui.authDialog.signupFailed')}</span>{/if}</span
             >
             <button class="continue" class:ready={free && !recoveryBad && !waiting} type="submit" disabled={!free || recoveryBad || !!waiting}>{t(waiting === 'signup' ? 'ui.authDialog.creating' : 'ui.common.continue')}</button>
           </div>

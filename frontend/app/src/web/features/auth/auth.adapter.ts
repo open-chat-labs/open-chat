@@ -37,13 +37,65 @@ const QUERY_NAMES: Record<AuthOption, string[]> = {
     nfid: ["NFID", AuthProvider.NFID],
 };
 
-/** The sign-in options on offer: `?auth=` narrows them, and without WebAuthn only passkey and email are left (as today). */
-export function authOptions(restrictTo: string[], hasWebAuthn: boolean): AuthOption[] {
+/**
+ * The sign-in options on offer: `?auth=` narrows them, and without WebAuthn only passkey and email
+ * are left. The method last signed in with comes first (as the old UI's ChooseSignInOption).
+ */
+export function authOptions(
+    restrictTo: string[],
+    hasWebAuthn: boolean,
+    last?: AuthProvider,
+): AuthOption[] {
     const supported = hasWebAuthn
         ? ALL_OPTIONS
         : ALL_OPTIONS.filter((o) => o === "passkey" || o === "email");
-    if (restrictTo.length === 0) return supported;
-    return supported.filter((o) => QUERY_NAMES[o].some((name) => restrictTo.includes(name)));
+    const offered =
+        restrictTo.length === 0
+            ? supported
+            : supported.filter((o) => QUERY_NAMES[o].some((name) => restrictTo.includes(name)));
+    const lastOption = offered.find((o) => QUERY_NAMES[o].includes(last ?? ""));
+    return lastOption === undefined
+        ? offered
+        : [lastOption, ...offered.filter((o) => o !== lastOption)];
+}
+
+/** The app's message (as the old sign-up showed it) for a refused registration, if it has one. */
+export function registerFailureKey(kind: RegisterUserResponse["kind"]): string | undefined {
+    switch (kind) {
+        case "username_taken":
+            return "register.usernameTaken";
+        case "username_too_short":
+            return "register.usernameTooShort";
+        case "username_too_long":
+            return "register.usernameTooLong";
+        case "username_invalid":
+            return "register.usernameInvalid";
+        case "email_invalid":
+            return "register.emailInvalid";
+        case "user_limit_reached":
+            return "register.userLimitReached";
+        // the old UI had keys for the other two that were never written; this one covers them
+        case "referral_code_invalid":
+        case "referral_code_already_claimed":
+        case "referral_code_expired":
+            return "register.referralCodeInvalid";
+        case "internal_error":
+            return "unexpectedError";
+        default:
+            return undefined;
+    }
+}
+
+/** The app's message (as the old sign-in showed it) for a sign-in link that couldn't be sent. */
+export function emailLinkFailureKey(kind: string): string {
+    switch (kind) {
+        case "email_invalid":
+            return "loginDialog.invalidEmail";
+        case "failed_to_send_email":
+            return "loginDialog.failedToSendEmail";
+        default:
+            return "loginDialog.unexpectedError";
+    }
 }
 
 export const WALLETS: Record<"eth" | "sol", AuthWallet[]> = {
