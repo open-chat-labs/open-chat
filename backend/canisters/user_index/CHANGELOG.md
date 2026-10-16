@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Take avatar changes from the LocalUserIndexes' event queues rather than from the MultiUser canisters directly, and add and remove platform moderators without calling their canisters ([#10008](https://github.com/open-chat-labs/open-chat/pull/10008))
+- Take avatar changes from the LocalUserIndexes' event queues rather than from the MultiUser canisters directly, and add and remove platform moderators without calling their canisters ([#10011](https://github.com/open-chat-labs/open-chat/pull/10011))
 
 ## [[2.0.2154](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2154-user_index)] - 2026-10-16
 
