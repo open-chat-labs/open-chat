@@ -41,7 +41,17 @@ import {
     routeStore,
     selectedCommunityIdStore,
 } from "../path/stores";
-import { selectedChatFor, serverEventsStore, startChatVisit } from "../selectedChat";
+import { FilteredProposals } from "../filteredProposals.svelte";
+import {
+    currentChatVisit,
+    expandDeletedMessages,
+    filteredProposalsStore,
+    selectedChatExpandedDeletedMessageStore,
+    selectedChatFor,
+    selectedServerChatStore,
+    serverEventsStore,
+    startChatVisit,
+} from "../selectedChat";
 import { suspendedUsersStore } from "../users/stores";
 import { addToWritableMap } from "../utils";
 import {
@@ -59,15 +69,12 @@ import {
     getConvertedBalances,
     messageFiltersStore,
     pinnedChatsStore,
-    selectedChatExpandedDeletedMessageStore,
     selectedChatIdStore,
     selectedChatBlockedOrSuspendedUsersStore,
     selectedChatMembersStore,
     selectedChatRulesStore,
-    selectedChatUserIdsStore,
     selectedCommunityBlockedUsersStore,
     selectedCommunityMembersStore,
-    selectedServerChatStore,
     selectedServerCommunityStore,
     serverCommunitiesStore,
     serverGroupChatsStore,
@@ -95,8 +102,6 @@ const mockContext: PageJS.Context = {
 // A new visit to the selected chat, which starts with no events
 function setSelectedChat() {
     startChatVisit(selectedChatIdStore.value);
-    selectedChatUserIdsStore.set(new Set());
-    selectedChatExpandedDeletedMessageStore.set(new Set());
 }
 
 function setRouteParams(ctx: PageJS.Context, p: RouteParams) {
@@ -171,7 +176,7 @@ describe("app state", () => {
 
         function setChatDetails(chatId: ChatIdentifier) {
             setSelectedChat();
-            selectedServerChatStore.set(
+            currentChatVisit()?.setDetails(
                 new ChatDetailsState(
                     chatId,
                     BigInt(0),
@@ -214,10 +219,13 @@ describe("app state", () => {
             });
 
             test("make sure that all state is overwritten if the chatId *does* change", () => {
-                selectedChatExpandedDeletedMessageStore.set(new Set([1, 2, 3]));
+                expandDeletedMessages(new Set([1, 2, 3]));
+                currentChatVisit()?.setFilteredProposals(new FilteredProposals("aaaaa-aa"));
                 expect(selectedChatExpandedDeletedMessageStore.value.has(3)).toBe(true);
+                expect(filteredProposalsStore.value).toBeDefined();
                 setChatDetails({ ...chatId, channelId: 654321 }); // reset the server state for a different chatId
                 expect(selectedChatExpandedDeletedMessageStore.value.has(3)).toBe(false);
+                expect(filteredProposalsStore.value).toBeUndefined();
             });
 
             test("the details are cleared when a different chat is selected", () => {

@@ -41,6 +41,8 @@ import {
     serverEventsStore,
     serverGroupChatsStore,
     expiredServerEventRanges,
+    selectedChatExpandedDeletedMessageStore,
+    selectedChatUserIdsStore,
     serverThreadEventsStore,
 } from "./state";
 import { eventsVisitFor, startChatVisit, startThreadVisit } from "./state/selectedChat";
@@ -87,7 +89,7 @@ function groupChat(chatId: GroupChatIdentifier): GroupChatSummary {
     } as unknown as GroupChatSummary;
 }
 
-function messageEvent(messageIndex: number, index: number) {
+function messageEvent(messageIndex: number, index: number, sender = "user1") {
     return {
         index,
         timestamp: BigInt(1000 + index),
@@ -96,7 +98,7 @@ function messageEvent(messageIndex: number, index: number) {
             kind: "message",
             messageIndex,
             messageId: BigInt(100 + messageIndex),
-            sender: "user1",
+            sender,
             content: { kind: "text_content", text: `m${messageIndex}` },
             reactions: [],
             tips: {},
@@ -130,9 +132,12 @@ function select(chatId: GroupChatIdentifier) {
 function eventWindow(
     firstMessageIndex: number,
     expiredEventRanges: { start: number; end: number }[] = [],
+    sender = "user1",
 ): EventsResponse<ChatEvent> {
     return {
-        events: [0, 1, 2].map((i) => messageEvent(firstMessageIndex + i, firstMessageIndex + i)),
+        events: [0, 1, 2].map((i) =>
+            messageEvent(firstMessageIndex + i, firstMessageIndex + i, sender),
+        ),
         expiredEventRanges,
         latestEventIndex: 40,
     } as unknown as EventsResponse<ChatEvent>;
@@ -303,5 +308,66 @@ describe("the selected chat's events", () => {
         startThreadVisit({ chatId: chatA, threadRootMessageIndex: 1 });
 
         expect(eventsVisitFor(chatA, 1)?.current).toBe(true);
+    });
+
+    // The selected chat's user ids decide who is sent the user's typing and reactions
+    test("the users in a chat the user has left are not taken to be in the chat they moved to", async () => {
+        select(chatA);
+        responses.push({ resp: eventWindow(1, [], "user-in-a"), held: true });
+        client.loadEventWindow(chatA, 2, undefined, false);
+        await settle();
+
+        select(chatB);
+        responses.push({ resp: eventWindow(10, [], "user-in-b"), held: false });
+        client.loadEventWindow(chatB, 11, undefined, false);
+        await settle();
+
+        pending.forEach((send) => send());
+        await settle();
+
+        expect([...selectedChatUserIdsStore.value]).toEqual(["user-in-b"]);
+    });
+
+    // Mobile's threads list opens a thread with no chat selected
+    test("in a thread opened with no chat selected, deleted messages expand", () => {
+        routeStore.set({ kind: "chat_list_route", scope: { kind: "chats" } });
+        startThreadVisit({ chatId: chatA, threadRootMessageIndex: 1 });
+
+        client.expandDeletedMessages(new Set([3]));
+
+        expect(selectedChatExpandedDeletedMessageStore.value.has(3)).toBe(true);
+    });
+
+    // The users in the thread are who the user's typing and reactions are sent to
+    test("the users in a thread opened with no chat selected are taken to be in it", async () => {
+        routeStore.set({ kind: "chat_list_route", scope: { kind: "chats" } });
+        const root = messageEvent(1, 1) as unknown as EventWrapper<Message>;
+        client.openThread(chatA, root, true);
+        responses.push({ resp: eventWindow(10, [], "user-in-thread"), held: false });
+        client.loadThreadMessages(chatA, [0, 40], 10, true, 1);
+        await settle();
+
+        expect([...selectedChatUserIdsStore.value]).toEqual(["user-in-thread"]);
+    });
+
+    test("the users in a thread open in another chat are not taken to be in the selected one", async () => {
+        select(chatB);
+        const root = messageEvent(1, 1) as unknown as EventWrapper<Message>;
+        client.openThread(chatA, root, true);
+        responses.push({ resp: eventWindow(10, [], "user-in-thread"), held: false });
+        client.loadThreadMessages(chatA, [0, 40], 10, true, 1);
+        await settle();
+
+        expect([...selectedChatUserIdsStore.value]).toEqual([]);
+    });
+
+    test("the users in the messages a thread's replies quote are taken to be in it", async () => {
+        routeStore.set({ kind: "chat_list_route", scope: { kind: "chats" } });
+        const root = messageEvent(1, 1) as unknown as EventWrapper<Message>;
+        client.openThread(chatA, root, true);
+        responses.push({ resp: eventWindow(5, [], "user-quoted"), held: false });
+        await client.getMessagesByMessageIndex(chatA, 1, [5]);
+
+        expect([...selectedChatUserIdsStore.value]).toEqual(["user-quoted"]);
     });
 });
