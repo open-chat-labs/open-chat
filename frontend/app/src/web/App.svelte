@@ -20,7 +20,8 @@
     import { onMount, setContext } from "svelte";
     import { _, isLoading, json, locale } from "svelte-i18n";
     import { addUiMessages, uiTranslate } from "./i18n";
-    import HomeScreen from "./features/home/HomeScreen.svelte";
+    import RouteScreen from "./features/app/RouteScreen.svelte";
+    import Router from "./router/Router.svelte";
 
     addUiMessages();
     installBehaviours();
@@ -80,7 +81,9 @@
             actionLabel="Reload"
             actionHandler={() => window.location.reload()} />
     {:else if ($locale && !$isLoading) || $reviewingTranslations}
-        <HomeScreen />
+        <Router>
+            <RouteScreen />
+        </Router>
     {/if}
 
     {#snippet failed(_error, reset)}

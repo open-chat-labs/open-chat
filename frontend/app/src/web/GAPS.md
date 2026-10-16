@@ -20,6 +20,8 @@ design export needs. Each entry says where it came up.
 - **Nav rail width**: the tokens said `--rail-collapsed: 76px` / `--rail-expanded: 282px`, while
   `NavRail` drew 60px / 283px. The tokens now match what the rail draws and `NavRail` reads them,
   as does the shell's rail slot. Confirm 60px against the prototype.
+- **Not found page**: the design has none. `RouteScreen` shows an `EmptyState` with the existing
+  page's copy ("Page not found", untranslated as it is today) and a Home button.
 - **Messages have no ids**: `GroupMessage`, `ChatBubble` and `MessageGroup`'s callbacks are
   index-based, and `ThreadList` threads carry closures. Adapters keep an index → event map per
   render. A `key`/`id` on messages would be simpler (also for keyed `{#each}`).

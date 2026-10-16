@@ -1,11 +1,6 @@
-import type {
-    ChannelIdentifier,
-    ChatIdentifier,
-    CommunityIdentifier,
-    RouteParams,
-} from "@shared";
+import type { ChannelIdentifier, ChatIdentifier, CommunityIdentifier, RouteParams } from "@shared";
 import { describe, expect, it } from "vitest";
-import { navigationMode } from "./navigation";
+import { navigationMode, parentRoute } from "./navigation";
 
 // ---------------------------------------------------------------------------
 // Route fixtures — only `kind` (and required discriminated-union fields) matter
@@ -332,5 +327,81 @@ describe("navigationMode", () => {
             expect(navigationMode(P.group, notFound)).toBe("replace");
             expect(navigationMode(P.notifications, notFound)).toBe("replace");
         });
+    });
+});
+
+// ---------------------------------------------------------------------------
+// The new web UI's routes (src/web)
+// ---------------------------------------------------------------------------
+
+const wallet = (view: "all" | "token" | "send", ledger?: string): RouteParams => ({
+    kind: "wallet_route",
+    view,
+    ledger,
+    scope: { kind: "none" },
+});
+const chatsThreads: RouteParams = { kind: "threads_route", scope: { kind: "chats" } };
+
+describe("the web UI's wallet views", () => {
+    it("pushes going deeper: wallet → token page → send", () => {
+        expect(navigationMode("/wallet/ledger_1", wallet("all"))).toBe("push");
+        expect(navigationMode("/wallet/send?token=ledger_1", wallet("token", "ledger_1"))).toBe(
+            "push",
+        );
+        expect(navigationMode("/wallet/send", wallet("all"))).toBe("push");
+    });
+
+    it("pops coming back out", () => {
+        expect(navigationMode("/wallet/ledger_1", wallet("send", "ledger_1"))).toBe("pop");
+        expect(navigationMode("/wallet", wallet("token", "ledger_1"))).toBe("pop");
+    });
+
+    it("replaces moving sideways", () => {
+        expect(navigationMode("/wallet/ledger_2", wallet("token", "ledger_1"))).toBe("replace");
+        expect(navigationMode("/wallet/receive", wallet("send"))).toBe("replace");
+    });
+
+    it("goes back up to /wallet from a view or token page", () => {
+        expect(parentRoute(wallet("send"))).toBe("/wallet");
+        expect(parentRoute(wallet("token", "ledger_1"))).toBe("/wallet");
+        expect(parentRoute(wallet("all"))).toBe("/chats");
+    });
+});
+
+describe("the web UI's thread lists", () => {
+    it("are a tab: pushed from the chats, popped back to them", () => {
+        expect(navigationMode("/chats/threads", chats)).toBe("push");
+        expect(navigationMode("/chats", chatsThreads)).toBe("pop");
+        expect(navigationMode(P.groupThread, chatsThreads)).toBe("push");
+    });
+
+    it("push from a community (or its channel) to its threads, and pop back", () => {
+        const communityThreads: RouteParams = {
+            kind: "threads_route",
+            scope: { kind: "community", id: communityId },
+        };
+        expect(navigationMode("/community/comm_1/threads", community)).toBe("push");
+        expect(navigationMode("/community/comm_1/threads", channel)).toBe("push");
+        expect(navigationMode(P.community, communityThreads)).toBe("pop");
+        // another community's threads are a sideways move
+        expect(navigationMode("/community/comm_2/threads", community)).toBe("replace");
+    });
+
+    it("go back up to their scope's list", () => {
+        expect(parentRoute(chatsThreads)).toBe("/chats");
+        expect(parentRoute({ kind: "threads_route", scope: { kind: "favourite" } })).toBe(
+            "/favourite",
+        );
+        expect(
+            parentRoute({ kind: "threads_route", scope: { kind: "community", id: communityId } }),
+        ).toBe("/community/comm_1");
+    });
+});
+
+describe("overlays linked by a query param", () => {
+    it("push when opened and pop when dismissed, wherever they open", () => {
+        expect(navigationMode("/chats?profile", chats, "overlay")).toBe("push");
+        expect(navigationMode(`${P.group}?profile`, chat, "overlay")).toBe("push");
+        expect(navigationMode("/chats", chats, "dismiss")).toBe("pop");
     });
 });

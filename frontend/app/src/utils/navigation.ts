@@ -1,10 +1,13 @@
-import { publish, routeStore, routerReadyStore, subscribe } from "@client";
+import { publish, routeForScope, routeStore, routerReadyStore, subscribe } from "@client";
 import type { RouteParams } from "@shared";
 import page from "page";
 import { get } from "svelte/store";
 import { getHistoryStateAction, onPopstate, syncCurrentHistoryState } from "./history";
 
-export type NavigationIntent = "in-app" | "notification" | "auto";
+// "overlay" opens something that sits over the current page and is linked to by a query param (the
+// new web UI's ?profile): it gets its own history entry, so Back closes it. "dismiss" closes one,
+// going back to the entry it was opened from when there is one.
+export type NavigationIntent = "in-app" | "notification" | "auto" | "overlay" | "dismiss";
 export type NavigationMode = "push" | "pop" | "replace";
 
 type PendingNavigation = {
@@ -18,6 +21,7 @@ const TAB_ROUTES: RouteParams["kind"][] = [
     "notifications_route",
     "wallet_route",
     "profile_summary_route",
+    "threads_route",
 ];
 
 const ROOT_TAB: RouteParams["kind"] = "chat_list_route";
@@ -30,12 +34,15 @@ const ROUTE_MATCHERS: Array<{ regexp: RegExp; kind: RouteParams["kind"] }> = (
         { path: "/share", kind: "share_route" },
         { path: "/admin", kind: "admin_route" },
         { path: "/welcome", kind: "welcome_route" },
-        { path: "/wallet", kind: "wallet_route" },
+        { path: "/wallet/:segment?", kind: "wallet_route" },
         { path: "/communities", kind: "communities_route" },
         { path: "/chats", kind: "chat_list_route" },
         { path: "/notifications", kind: "notifications_route" },
         { path: "/favourite", kind: "favourites_route" },
         { path: "/profile_summary", kind: "profile_summary_route" },
+        { path: "/chats/threads", kind: "threads_route" },
+        { path: "/favourite/threads", kind: "threads_route" },
+        { path: "/community/:communityId/threads", kind: "threads_route" },
         { path: "/community/:communityId", kind: "selected_community_route" },
         {
             path: "/community/:communityId/channel/:channelId/:messageIndex?/:threadMessageIndex?",
@@ -76,7 +83,26 @@ const ROUTE_MATCHERS: Array<{ regexp: RegExp; kind: RouteParams["kind"] }> = (
     kind,
 }));
 
-function pathToRouteKind(path: string): RouteParams["kind"] {
+// The new web UI's wallet: /wallet (all activity), a token page under it, and the send / receive /
+// swap / recipients views under either
+const WALLET_VIEWS = ["send", "receive", "swap", "recipients"];
+
+function walletViewOf(path: string): string {
+    const segment = path.split(/[?#]/)[0].split("/").filter(Boolean)[1];
+    if (segment === undefined) return "all";
+    return WALLET_VIEWS.includes(segment) ? segment : "token";
+}
+
+function walletDepth(view: string): number {
+    return view === "all" ? 0 : view === "token" ? 1 : 2;
+}
+
+// The community whose thread list a path is, if it is one
+function communityThreadsOf(path: string): string | undefined {
+    return path.split(/[?#]/)[0].match(/^\/community\/([^/]+)\/threads$/)?.[1];
+}
+
+export function pathToRouteKind(path: string): RouteParams["kind"] {
     const pathname = path.split(/[?#]/)[0];
     for (const { regexp, kind } of ROUTE_MATCHERS) {
         if (regexp.test(pathname)) return kind;
@@ -152,11 +178,15 @@ export function parentRoute(from: RouteParams): string | null {
     switch (from.kind) {
         case "selected_channel_route":
             return `/community/${from.communityId.communityId}`;
+        case "threads_route":
+            return routeForScope(from.scope);
+        case "wallet_route":
+            // the new web UI's wallet views and token pages sit under /wallet
+            return from.view !== "all" ? "/wallet" : "/chats";
         case "selected_community_route":
         case "global_chat_selected_route":
         case "notifications_route":
         case "profile_summary_route":
-        case "wallet_route":
         case "communities_route":
         case "admin_route":
         case "share_route":
@@ -212,8 +242,37 @@ export function navigationMode(
     intent: NavigationIntent = "in-app",
 ): NavigationMode {
     if (intent === "notification" || intent === "auto") return "replace";
+    if (intent === "overlay") return "push";
+    if (intent === "dismiss") return "pop";
 
     const toKind = pathToRouteKind(to);
+    // A community's thread list sits under the community (parentRoute), so it's a level deeper
+    // than the community and its channels, not a tab beside them
+    const toThreadsOf = communityThreadsOf(to);
+    if (
+        toThreadsOf !== undefined &&
+        (from.kind === "selected_community_route" || from.kind === "selected_channel_route") &&
+        from.communityId.communityId === toThreadsOf
+    ) {
+        return "push";
+    }
+    if (
+        from.kind === "threads_route" &&
+        from.scope.kind === "community" &&
+        toKind === "selected_community_route" &&
+        to.split(/[?#]/)[0] === `/community/${from.scope.id.communityId}`
+    ) {
+        return "pop";
+    }
+    // The wallet's depth only, so going back pops to the nearest shallower wallet entry, whichever
+    // token it was on. Fine while Send / Receive / Swap only lead back to the token they came from.
+    if (from.kind === "wallet_route" && toKind === "wallet_route") {
+        const fromDepth = walletDepth(from.view);
+        const toDepth = walletDepth(walletViewOf(to));
+        if (toDepth > fromDepth) return "push";
+        if (toDepth < fromDepth) return "pop";
+        return "replace";
+    }
     const fromIsRootTab = from.kind === ROOT_TAB;
     const fromIsNonRootTab = TAB_ROUTES.includes(from.kind) && !fromIsRootTab;
     const fromIsChat = ["global_chat_selected_route", "selected_channel_route"].includes(from.kind);

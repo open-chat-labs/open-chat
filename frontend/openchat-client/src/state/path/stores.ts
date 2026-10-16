@@ -57,6 +57,8 @@ export const selectedCommunityIdStore = derived(
             case "selected_community_route":
             case "selected_channel_route":
                 return route.communityId;
+            case "threads_route":
+                return route.scope.kind === "community" ? route.scope.id : undefined;
             case "favourites_route":
                 if (route.chatId?.kind === "channel") {
                     return {
