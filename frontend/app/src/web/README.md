@@ -41,7 +41,9 @@ web/
 - Import library components by file (`@openchat/ui/src/lib/components/Button.svelte`), not from the
   package entry, so a build only pulls in what it uses.
 - Don't edit `@openchat/ui` to fit the app.
-  A change the library needs goes back to the design export; note it in `GAPS.md`.
+  A change the library needs goes back to the design export; note it in `GAPS.md`. When the app
+  can't wait for it, make the change by hand in the library (with its spec and `EXPORT-LOG.md`
+  entry) and list it in `GAPS.md` under the changes to take back.
 - From the existing app, only `Container`, `Row`, `Column` (component-lib) and `VirtualList`
   (`components_shared`) are reused, for layout. Nothing else from `src/components`.
 - Colours and font sizes come from the library's tokens only. No hex.

@@ -45,6 +45,11 @@ design export needs. Each entry says where it came up.
   `ChatSettings`, `SigninMethod` and others. Deep imports work meanwhile.
 - **Address validation**: `WalletSettingsDialog` has its own ICP address regex, which differs
   from `lib/networks.ts`.
+- **Sign-in, added by hand** (to go back to the design export): `AuthDialog` got `methods` (for
+  `?auth=` and browsers without WebAuthn), a wallet step for Ethereum / Solana (`wallets`; the old
+  UI asks which wallet), the emailed link's code on "Check your inbox", and `kind: 'link'`, the
+  page the link opens, which asks for that code. Landing and Learn got `signedIn` (Open app in
+  place of Sign in / Create account). None of these were designed.
 - **Swatches**: the design's colour/cover swatches for groups, communities and avatars have no
   OpenChat equivalent (it has uploaded avatars and banners). Adapters pass images and pick a
   swatch from the id.
@@ -75,12 +80,18 @@ design export needs. Each entry says where it came up.
   - the unread marker is implicit (the window anchor).
 - **Presence**: a polled last-online time, with no status for yourself.
 - **Community stats**: counters only; there's no 12-week series for `GroupStats`.
-- **Sign-in**: no promise that settles on sign-in, so adapters watch `identityStateStore`. The
-  ETH/SOL wallet connection UI lives in the old components.
+- **Sign-in**: no promise that settles on sign-in, so `features/auth/signIn.ts` watches
+  `identityStateStore`. A refused sign-up (`registerUser`: username taken, user limit, bad
+  referral code …) shows `AuthDialog`'s one "couldn't create your account" line, where the old
+  UI named the reason.
 - **Learn content**: the existing pages' content (roadmap, blog, whitepaper, FAQ) has to move
-  into Learn's content shape (markdown docs, JSON roadmap and FAQ). The architecture page is no
-  longer a doc: it frames the interactive canister map served beside the app
-  (`CanisterMapFrame.svelte`), with `?section=<canister>` selecting a canister.
+  into Learn's content shape (markdown docs, JSON roadmap and FAQ). The FAQ answers are HTML
+  (links, tables), which Learn renders as plain text. The architecture page is no longer a doc:
+  it frames the interactive canister map served beside the app (`CanisterMapFrame.svelte`), with
+  `?section=<canister>` selecting a canister.
+- **Landing's featured communities**: none are passed yet, so the section shows only its heading
+  and Browse link. The old landing page had no such list; explore's hot communities could feed it.
+- **Android APK link**: Landing's `apkHref` has no URL in the app, so that choice isn't a link.
 
 ### Wiring
 
