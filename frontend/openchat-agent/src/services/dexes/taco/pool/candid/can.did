@@ -1,13 +1,15 @@
 // Trimmed candid for the TACO exchange — only the slice OpenChat uses. Full canister exposed at:
 // https://dashboard.internetcomputer.org/canister/qioex-5iaaa-aaaan-q52ba-cai
 //
-// OC uses getExpectedReceiveAmountBatchMultiOptimal — TACO runs the 10-fraction
+// OC uses getExpectedReceiveAmountBatchMultiOptimalV2 — TACO runs the 10-fraction
 // probe grid AND the 2/3-leg split-route optimizer internally and returns the
-// chosen plan. One source of truth on the canister side.
+// chosen plan. One source of truth on the canister side. The V2 quote takes the
+// gross amount, ie. all that TACO pulls from the wallet, and quotes for what is
+// left of it to swap once TACO's trading fee and a transfer fee are taken.
 //
-// The V2 methods are for swapping straight from the user's wallet: TACO pulls the input from the
-// caller via ICRC2, so the caller must first have approved the exchange, and sends the output back
-// to the caller.
+// The V2 swap methods are for swapping straight from the user's wallet: TACO pulls the gross amount
+// from the caller via ICRC2, so the caller must first have approved the exchange, and sends the
+// output back to the caller.
 
 type SwapHop = record { tokenIn : text; tokenOut : text };
 
@@ -69,11 +71,7 @@ type SwapResult = variant {
 };
 
 service : {
-  getExpectedReceiveAmountBatchMultiOptimal: (text, text, nat) -> (OptimalSwapPlan) query;
-  getV2AllowedTokens: () -> (vec text) query;
-  getV2Enabled: () -> (bool) query;
-  netToGrossV2: (text, nat) -> (nat) query;
-  requiredAllowanceV2: (text, nat) -> (nat) query;
+  getExpectedReceiveAmountBatchMultiOptimalV2: (text, text, nat) -> (OptimalSwapPlan) query;
   swapMultiHopV2: (text, text, nat, vec SwapHop, nat) -> (SwapResult);
   swapSplitRoutesV2: (text, text, vec SplitLeg, nat) -> (SwapResult);
 }

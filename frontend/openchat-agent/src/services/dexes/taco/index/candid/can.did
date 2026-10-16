@@ -1,5 +1,6 @@
 // Trimmed candid for the TACO exchange — only the slice OpenChat queries to
-// list pools. Full canister exposed at:
+// list pools, and which tokens it will swap straight from a wallet. Full
+// canister exposed at:
 // https://dashboard.internetcomputer.org/canister/qioex-5iaaa-aaaan-q52ba-cai
 
 type AMMPool = record {
@@ -14,4 +15,6 @@ type AMMPool = record {
 
 service : {
   getAllAMMPools: () -> (vec AMMPool) query;
+  getV2AllowedTokens: () -> (vec text) query;
+  getV2Enabled: () -> (bool) query;
 }

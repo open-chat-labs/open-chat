@@ -35,7 +35,7 @@ import {
 } from "@shared";
 import type { OpenChatConfig } from "./config";
 import { OpenChat } from "./openchat";
-import { currentUserStore } from "./state";
+import { cryptoLookup, currentUserStore } from "./state";
 import { swapQuoteResult, swapResult } from "./utils/swap";
 import { WorkerAgent } from "./workerAgent";
 
@@ -178,6 +178,41 @@ describe("swapping from the wallet", () => {
         vi.useRealTimers();
 
         expect(outRefreshes).toBe(4);
+    });
+
+    // Invariant: each DEX is quoted on what it will pull, ie. the amount less the fees for approving
+    // it and for its pull, and quotes what reaches the wallet, after the fee for sending it there
+    test("a quote is asked for less the input fees, and after the output fee", async () => {
+        cryptoLookup.set(
+            new Map([
+                [icp.ledger, icp],
+                [chat.ledger, { ...chat, transferFee: 100_000n }],
+            ]),
+        );
+        vi.mocked(WorkerAgent.prototype.send).mockImplementation(((req: WorkerRequest) => {
+            sent.push(req);
+            return Promise.resolve([["icpswap", 4_000_000_000n]]);
+        }) as never);
+
+        try {
+            const outcome = await client.getSwapQuote(icp.ledger, chat.ledger, 100_000_000n);
+
+            expect(sent).toEqual([
+                {
+                    kind: "getTokenSwapQuotes",
+                    inputTokenLedger: icp.ledger,
+                    outputTokenLedger: chat.ledger,
+                    amountIn: 99_980_000n,
+                    outputTokenFee: 100_000n,
+                },
+            ]);
+            expect(outcome).toMatchObject({
+                kind: "quoted",
+                quote: { amountIn: 100_000_000n, amountOut: 4_000_000_000n },
+            });
+        } finally {
+            cryptoLookup.set(new Map());
+        }
     });
 
     // Invariant: a swap that throws part way may have gone ahead, so the user is never told nothing

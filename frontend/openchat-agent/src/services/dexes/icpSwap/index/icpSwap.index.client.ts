@@ -23,4 +23,9 @@ export class IcpSwapIndexClient
     getPools(): Promise<TokenSwapPool[]> {
         return this.handleQueryResponse(this.service.getPools, getPoolsResponse);
     }
+
+    // ICPSwap's pools swap any of their tokens straight from the wallet
+    walletInputTokens(): Promise<undefined> {
+        return Promise.resolve(undefined);
+    }
 }
