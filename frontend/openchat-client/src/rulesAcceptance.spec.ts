@@ -56,7 +56,7 @@ import {
 import { ChatDetailsState } from "./state/chat/serverDetails";
 import { CommunityDetailsState } from "./state/community/server";
 import { captureRulesAcceptanceStore } from "./stores/rules";
-import { startChatVisit } from "./state/selectedChat";
+import { currentChatVisit, startChatVisit } from "./state/selectedChat";
 import { WorkerAgent } from "./workerAgent";
 
 // Sending a message to a chat or community whose rules the user hasn't accepted first asks them
@@ -255,7 +255,7 @@ describe("accepting the rules before sending a message", () => {
         vi.restoreAllMocks();
         currentUserStore.set(anonymousUser());
         captureRulesAcceptanceStore.set(undefined);
-        selectedServerChatStore.set(undefined);
+        currentChatVisit()?.setDetails(undefined);
         selectedServerCommunityStore.set(undefined);
         serverCommunitiesStore.set(new CommunityMap());
         // a new visit to whatever is selected, which starts with no events
@@ -275,7 +275,7 @@ describe("accepting the rules before sending a message", () => {
 
         // The channel the message is forwarded from has rules, which the user has accepted
         select(from);
-        selectedServerChatStore.set(chatDetails(from, rules("the rules of the channel")));
+        currentChatVisit()?.setDetails(chatDetails(from, rules("the rules of the channel")));
         selectedServerCommunityStore.set(communityDetails(here, rules("the rules here")));
     }
 
@@ -400,7 +400,7 @@ describe("accepting the rules before sending a message", () => {
 
         // The user goes back before the details of the channel forwarded to have loaded
         select(from);
-        selectedServerChatStore.set(chatDetails(from, rules("the rules of the channel")));
+        currentChatVisit()?.setDetails(chatDetails(from, rules("the rules of the channel")));
         await vi.waitFor(() => expect(sent).toHaveLength(1));
 
         expect(rulesPrompt()).toBeUndefined();

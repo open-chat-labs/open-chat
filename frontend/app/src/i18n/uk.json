@@ -679,6 +679,7 @@
         "shortBalanceLabel": "Баланс",
         "shortRemainingBalanceLabel": "залишковий баланс",
         "showZeroBalance": "показати більше",
+        "solDepositFee": "Комісія за депозит: {first} {token} за перший депозит, далі {subsequent} {token}",
         "swap": "Обмін",
         "token": "Токен",
         "tokens": "Жетони",

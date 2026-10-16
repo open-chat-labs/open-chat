@@ -679,6 +679,7 @@
         "shortBalanceLabel": "איזון",
         "shortRemainingBalanceLabel": "יתרת יתר",
         "showZeroBalance": "להראות יותר",
+        "solDepositFee": "עמלת הפקדה: {first} {token} בהפקדה הראשונה, ולאחר מכן {subsequent} {token}",
         "swap": "לְהַחלִיף",
         "token": "אֲסִימוֹן",
         "tokens": "אסימונים",

@@ -679,6 +679,7 @@
         "shortBalanceLabel": "équilibre",
         "shortRemainingBalanceLabel": "solde restant",
         "showZeroBalance": "montre plus",
+        "solDepositFee": "Frais de dépôt : {first} {token} pour votre premier dépôt, puis {subsequent} {token}",
         "swap": "Échanger",
         "token": "jeton",
         "tokens": "Jetons",
