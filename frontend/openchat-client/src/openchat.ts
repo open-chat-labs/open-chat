@@ -335,8 +335,6 @@ import {
     type UpdateCommunityResponse,
     type UpdateGroupOutcome,
     type UpdateGroupResponse,
-    type UpdateMarketMakerConfigArgs,
-    type UpdateMarketMakerConfigResponse,
     type UpdateUserGroupResponse,
     type UpdatedEvent,
     type UpdatesResult,
@@ -9100,12 +9098,6 @@ export class OpenChat {
                 return res.kind === "success";
             })
             .catch(() => false);
-    }
-
-    updateMarketMakerConfig(
-        config: UpdateMarketMakerConfigArgs,
-    ): Promise<UpdateMarketMakerConfigResponse> {
-        return this.#worker.send({ kind: "updateMarketMakerConfig", ...config });
     }
 
     displayName(user?: UserSummary): string {

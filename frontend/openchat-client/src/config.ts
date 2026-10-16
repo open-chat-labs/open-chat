@@ -24,7 +24,6 @@ export type OpenChatConfig = {
     blobUrlPattern: string;
     canisterUrlPath: string;
     proposalBotCanister: string;
-    marketMakerCanister: string;
     signInWithEmailCanister: string;
     signInWithEthereumCanister: string;
     signInWithSolanaCanister: string;
