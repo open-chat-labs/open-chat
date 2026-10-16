@@ -32,9 +32,9 @@ describe("DexesAgent swapping straight from the wallet", () => {
             getPools: () => Promise.resolve(pools),
             walletInputTokens: () => Promise.resolve(walletInputTokens),
             getPoolClient: () => ({
-                quote: (_inputToken, _outputToken, amountIn) => {
+                quote: (_inputToken, _outputToken, amountIn, outputTokenFee) => {
                     quoted.push(dex);
-                    return Promise.resolve(amountIn);
+                    return Promise.resolve(amountIn - outputTokenFee);
                 },
             }),
         };
@@ -67,7 +67,7 @@ describe("DexesAgent swapping straight from the wallet", () => {
     });
 
     test("a DEX which won't swap the input token from the wallet isn't asked for a quote", async () => {
-        expect(await agent.quoteSwap(CHAT, ICP, 100n, BOTH)).toEqual([["icpswap", 100n]]);
+        expect(await agent.quoteSwap(CHAT, ICP, 100n, 5n, BOTH)).toEqual([["icpswap", 95n]]);
         expect(quoted).toEqual(["icpswap"]);
     });
 });

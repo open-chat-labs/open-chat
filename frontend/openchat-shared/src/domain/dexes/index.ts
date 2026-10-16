@@ -40,9 +40,10 @@ export type DexSwapResult =
 
 /**
  * The best quote for swapping `amountIn` of one token in the user's wallet for another. `amountIn` is
- * what leaves the wallet, fees included. `valueWarning` is set when the quote is worth less than 90%
- * of what goes in, or when either token's dollar price is unknown, and the user has to confirm it
- * before swapping. `values` fill in the messages that describe the quote.
+ * what leaves the wallet, fees included, and `amountOut` what reaches it, after every fee.
+ * `valueWarning` is set when the quote is worth less than 90% of what goes in, or when either token's
+ * dollar price is unknown, and the user has to confirm it before swapping. `values` fill in the
+ * messages that describe the quote.
  */
 export type SwapQuote = {
     ledgerIn: string;

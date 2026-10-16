@@ -66,6 +66,7 @@ export class DexesAgent {
         inputToken: string,
         outputToken: string,
         amountIn: bigint,
+        outputTokenFee: bigint,
         swapProviders: DexId[],
     ): Promise<[DexId, bigint][]> {
         const pools = await this.getSwapPools(inputToken, new Set([outputToken]), swapProviders);
@@ -76,8 +77,9 @@ export class DexesAgent {
         // to the caller. Promise.all here failed the whole request on any one pool's rejection.
         const quotes = await Promise.allSettled(
             pools.map((p) =>
-                this.quoteSingle(p, inputToken, outputToken, amountIn).then((quote) =>
-                    quote === undefined ? undefined : ([p.dex, quote] as [DexId, bigint]),
+                this.quoteSingle(p, inputToken, outputToken, amountIn, outputTokenFee).then(
+                    (quote) =>
+                        quote === undefined ? undefined : ([p.dex, quote] as [DexId, bigint]),
                 ),
             ),
         );
@@ -138,13 +140,14 @@ export class DexesAgent {
         inputToken: string,
         outputToken: string,
         amountIn: bigint,
+        outputTokenFee: bigint,
     ): Promise<bigint | undefined> {
         const indexClient = this._swapIndexClients[pool.dex];
         if (indexClient === undefined) {
             return Promise.resolve(BigInt(0));
         }
         const poolClient = indexClient.getPoolClient(pool.canisterId, pool.token0, pool.token1);
-        return poolClient.quote(inputToken, outputToken, amountIn);
+        return poolClient.quote(inputToken, outputToken, amountIn, outputTokenFee);
     }
 
     private tryGetAllSwapPoolsFromCache(dex: DexId): DexPools | undefined {
@@ -170,7 +173,14 @@ export interface SwapIndexClient {
 }
 
 export interface SwapPoolClient {
-    // `amountIn` is what the DEX pulls from the wallet. undefined when the pool declines to quote
-    // (amount too small, no liquidity); reject only for a failure to ask
-    quote(inputToken: string, outputToken: string, amountIn: bigint): Promise<bigint | undefined>;
+    // What reaches the wallet from swapping `amountIn`, which is what the DEX pulls from the wallet,
+    // after every fee, including `outputTokenFee` for sending the output to the wallet. undefined
+    // when the pool declines to quote (amount too small, no liquidity); reject only for a failure to
+    // ask
+    quote(
+        inputToken: string,
+        outputToken: string,
+        amountIn: bigint,
+        outputTokenFee: bigint,
+    ): Promise<bigint | undefined>;
 }

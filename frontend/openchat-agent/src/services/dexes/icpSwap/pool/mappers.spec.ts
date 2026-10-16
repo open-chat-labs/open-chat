@@ -5,39 +5,48 @@ import { quoteResponse, swapResponse, unusedBalancesResponse, withdrawResponse }
 // executeQuery seven times with backoff and, if every pool throws, reaches the error tracker.
 // Which ICPSwap variants land on which side is therefore load-bearing.
 describe("ICPSwap quoteResponse", () => {
-    test("a quote is returned as is", () => {
-        expect(quoteResponse({ ok: 123n })).toBe(123n);
+    test("a quote is what reaches the wallet, after the output token's fee", () => {
+        expect(quoteResponse({ ok: 123n }, 10n)).toBe(113n);
+        expect(quoteResponse({ ok: 10n }, 10n)).toBe(0n);
     });
 
     test("InsufficientFunds and UnsupportedToken are declines", () => {
-        expect(quoteResponse({ err: { InsufficientFunds: null } })).toBeUndefined();
-        expect(quoteResponse({ err: { UnsupportedToken: "x" } })).toBeUndefined();
+        expect(quoteResponse({ err: { InsufficientFunds: null } }, 10n)).toBeUndefined();
+        expect(quoteResponse({ err: { UnsupportedToken: "x" } }, 10n)).toBeUndefined();
     });
 
     test("the dust-amount InternalError is a decline (the payload behind Rollbar #31881)", () => {
         expect(
-            quoteResponse({
-                err: { InternalError: "The amount of input token is too small." },
-            }),
+            quoteResponse(
+                {
+                    err: { InternalError: "The amount of input token is too small." },
+                },
+                10n,
+            ),
         ).toBeUndefined();
     });
 
     test("a pool that cannot fill the swap (price at range edge, or input over its maximum) is a decline (the payloads behind Rollbar #31905)", () => {
         expect(
-            quoteResponse({ err: { InternalError: 'preswap "price limit out of bound"' } }),
+            quoteResponse({ err: { InternalError: 'preswap "price limit out of bound"' } }, 10n),
         ).toBeUndefined();
         expect(
-            quoteResponse({
-                err: { InternalError: "The maximum amount of input tokens is 38_248_330" },
-            }),
+            quoteResponse(
+                {
+                    err: { InternalError: "The maximum amount of input tokens is 38_248_330" },
+                },
+                10n,
+            ),
         ).toBeUndefined();
     });
 
     test("any other InternalError, and CommonError, still throw so they are retried", () => {
-        expect(() => quoteResponse({ err: { InternalError: "pool is paused" } })).toThrow(
+        expect(() => quoteResponse({ err: { InternalError: "pool is paused" } }, 10n)).toThrow(
             /Unable to get quote/,
         );
-        expect(() => quoteResponse({ err: { CommonError: null } })).toThrow(/Unable to get quote/);
+        expect(() => quoteResponse({ err: { CommonError: null } }, 10n)).toThrow(
+            /Unable to get quote/,
+        );
     });
 });
 

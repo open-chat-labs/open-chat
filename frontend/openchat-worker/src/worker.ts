@@ -940,6 +940,7 @@ const handlers: Handlers = {
             payload.inputTokenLedger,
             payload.outputTokenLedger,
             payload.amountIn,
+            payload.outputTokenFee,
         ),
     swapTokens: (payload, agent) =>
         agent.swapTokens(

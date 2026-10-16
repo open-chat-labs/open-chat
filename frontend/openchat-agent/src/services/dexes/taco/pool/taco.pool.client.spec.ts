@@ -66,15 +66,16 @@ describe("TacoPoolClient", () => {
         };
     });
 
-    test("quotes the plan's expected output for the gross amount", async () => {
-        expect(await client.quote(ICP, CHAT, 1_001n)).toBe(2_000n);
+    // TACO pays the output token's fee for sending the output to the wallet
+    test("quotes the plan's expected output for the gross amount, as it reaches the wallet", async () => {
+        expect(await client.quote(ICP, CHAT, 1_001n, 10n)).toBe(2_000n);
         expect(calls).toEqual([["plan", ICP, CHAT, 1_001n]]);
     });
 
     test("declines to quote a plan which can't fill the swap, or nothing at all", async () => {
         nextPlan = plan([]);
-        expect(await client.quote(ICP, CHAT, 1_001n)).toBeUndefined();
-        expect(await client.quote(ICP, CHAT, 0n)).toBeUndefined();
+        expect(await client.quote(ICP, CHAT, 1_001n, 10n)).toBeUndefined();
+        expect(await client.quote(ICP, CHAT, 0n, 10n)).toBeUndefined();
         expect(calls).toHaveLength(1);
     });
 

@@ -19,11 +19,13 @@ export class TacoPoolClient
     }
 
     // Quotes swapping `grossAmountIn`, ie. all that TACO pulls from the wallet, of which what is
-    // swapped is what is left once TACO's trading fee and the input token's transfer fee are taken
+    // swapped is what is left once TACO's trading fee and the input token's transfer fee are taken.
+    // TACO pays the output token's fee for sending the output to the wallet itself.
     quote(
         inputToken: string,
         outputToken: string,
         grossAmountIn: bigint,
+        _outputTokenFee: bigint,
     ): Promise<bigint | undefined> {
         // Single canister call: TACO runs the BatchMulti probe grid AND the
         // split-route optimizer internally and returns just the optimal output.

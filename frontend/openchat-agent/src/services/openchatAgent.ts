@@ -4679,14 +4679,23 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
+    // The quote of each DEX for swapping `amountIn`, which is what it pulls from the wallet, giving
+    // what reaches the wallet, after every fee, including `outputTokenFee` for sending it there
     getTokenSwapQuotes(
         inputTokenLedger: string,
         outputTokenLedger: string,
         amountIn: bigint,
+        outputTokenFee: bigint,
     ): Promise<[DexId, bigint][]> {
         return this._dexesAgent
             .get()
-            .quoteSwap(inputTokenLedger, outputTokenLedger, amountIn, this.swapProviders())
+            .quoteSwap(
+                inputTokenLedger,
+                outputTokenLedger,
+                amountIn,
+                outputTokenFee,
+                this.swapProviders(),
+            )
             .then((quotes) => {
                 // Sort the quotes by amount descending so the first quote is the best
                 quotes.sort(compare);

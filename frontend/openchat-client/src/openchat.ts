@@ -9685,12 +9685,14 @@ export class OpenChat {
         const tokenIn = cryptoLookup.value.get(ledgerIn)!;
         const tokenOut = cryptoLookup.value.get(ledgerOut)!;
         try {
-            // What the DEX pulls is less the fees for approving it and for its pull
+            // What the DEX pulls is less the fees for approving it and for its pull, and each quote is
+            // what reaches the wallet, after the fee for sending it there
             const quotes = await this.#worker.send({
                 kind: "getTokenSwapQuotes",
                 inputTokenLedger: ledgerIn,
                 outputTokenLedger: ledgerOut,
                 amountIn: amountIn - 2n * tokenIn.transferFee,
+                outputTokenFee: tokenOut.transferFee,
             });
             const rates = exchangeRatesLookupStore.value;
             return swapQuoteResult(
