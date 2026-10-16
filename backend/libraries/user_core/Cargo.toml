@@ -18,6 +18,7 @@ escrow_canister = { path = "../../canisters/escrow/api" }
 escrow_canister_c2c_client = { path = "../../canisters/escrow/c2c_client" }
 group_index_canister = { path = "../../canisters/group_index/api" }
 ic-cdk = { workspace = true }
+ic-cdk-management-canister = { workspace = true }
 icrc_ledger_canister_c2c_client = { path = "../../external_canisters/icrc_ledger/c2c_client" }
 icrc-ledger-types = { workspace = true }
 ledger_utils = { path = "../ledger_utils" }
@@ -34,6 +35,7 @@ oc_error_codes = { path = "../error_codes" }
 one_sec_minter_canister = { path = "../../external_canisters/one_sec_minter/api" }
 one_sec_minter_canister_c2c_client = { path = "../../external_canisters/one_sec_minter/c2c_client" }
 serde = { workspace = true }
+serde_json = { workspace = true }
 stable_memory_map = { path = "../stable_memory_map" }
 tracing = { workspace = true }
 types = { path = "../types" }
