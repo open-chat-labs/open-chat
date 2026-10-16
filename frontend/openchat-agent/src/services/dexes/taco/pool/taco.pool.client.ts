@@ -55,12 +55,13 @@ export class TacoPoolClient
             planArgs,
         );
 
-        // The swap was quoted, so TACO could fill it then, and can't now since the market has moved.
-        // Nothing has been pulled.
-        if (!fillsSwap(plan)) {
+        // The swap was quoted, so TACO could fill it then for at least the minimum, and can't now
+        // since the market has moved. TACO would refuse the swap too, but keep its fees, so it's
+        // refused here instead, with nothing pulled.
+        if (!fillsSwap(plan) || plan.expectedBuyAmount < minAmountOut) {
             return {
                 kind: "error",
-                error: `No route can fill the swap (${plan.routeDescription})`,
+                error: `The rate has moved: TACO expects ${plan.expectedBuyAmount} out (${plan.routeDescription})`,
                 rateChanged: true,
             };
         }

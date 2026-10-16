@@ -73,6 +73,11 @@ describe("TACO swapResponse", () => {
             error: 'RouteFailed: {"hop":"1","reason":"No output"}',
         });
         expect(swapResponse({ Err: { SystemError: "outcome UNKNOWN" } }).kind).toBe("unconfirmed");
+        // A pull which reached the exchange, but which another of TACO's processes claimed first
+        expect(
+            swapResponse({ Err: { InvalidInput: "Deposit already claimed by a concurrent pull" } })
+                .kind,
+        ).toBe("unconfirmed");
     });
 });
 

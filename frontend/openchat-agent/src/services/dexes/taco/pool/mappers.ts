@@ -6,7 +6,10 @@ import type { OptimalSwapLeg } from "./candid/types";
 // estimated output falls short of the minimum, but one whose actual output falls short has been made
 // already, so is delivered anyway, with the same error. A route failing part way along leaves the
 // user with the token it had got to. A transfer TACO couldn't confirm is tracked by TACO, for an
-// admin to resolve. Every other error is TACO refusing the swap before pulling anything.
+// admin to resolve. So is a pull which reached the exchange but another of TACO's processes claimed
+// first, which TACO reports as invalid input (see `CLAIMED_ALREADY`). Every other error is TACO
+// refusing the swap before pulling anything.
+const CLAIMED_ALREADY = "already claimed by a concurrent";
 const UNCONFIRMED_ERRORS = new Set([
     "RouteFailed",
     "SlippageExceeded",
@@ -37,9 +40,11 @@ export function swapResponse(candid: ApiSwapResult): DexSwapResult {
         details === null
             ? kind
             : `${kind}: ${JSON.stringify(details, (_, v) => (typeof v === "bigint" ? v.toString() : v))}`;
+    const claimedAlready =
+        "InvalidInput" in candid.Err && candid.Err.InvalidInput.includes(CLAIMED_ALREADY);
     // TACO's refusal to swap at the rate it estimates can't be told apart from a swap it made at a
     // worse one, so neither is taken to be down to the rate having changed
-    return UNCONFIRMED_ERRORS.has(kind)
+    return UNCONFIRMED_ERRORS.has(kind) || claimedAlready
         ? { kind: "unconfirmed", error }
         : { kind: "error", error, rateChanged: false };
 }
