@@ -148,6 +148,7 @@ export default {
         }),
         commonjs(),
         typescript({
+            tsconfig: "./tsconfig.build.json",
             include: [
                 "./src/**/*",
                 "../vite-env.d.ts",

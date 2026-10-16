@@ -20,7 +20,7 @@
     import { onMount, setContext } from "svelte";
     import { _, isLoading, json, locale } from "svelte-i18n";
     import { addUiMessages, uiTranslate } from "./i18n";
-    import Shell from "./shell/Shell.svelte";
+    import HomeScreen from "./features/home/HomeScreen.svelte";
 
     addUiMessages();
     installBehaviours();
@@ -80,7 +80,7 @@
             actionLabel="Reload"
             actionHandler={() => window.location.reload()} />
     {:else if ($locale && !$isLoading) || $reviewingTranslations}
-        <Shell />
+        <HomeScreen />
     {/if}
 
     {#snippet failed(_error, reset)}

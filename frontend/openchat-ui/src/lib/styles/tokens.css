@@ -74,7 +74,7 @@
   --panel-list-xs:325px; --panel-list-sm:350px; --panel-list-lg:400px; --panel-list-xl:475px; --panel-list-3xl:550px;
   --panel-info-md:325px; --panel-info-lg:350px; --panel-info-xl:400px; --panel-info-3xl:450px;
   --panel-chat-min:400px; --island-min:825px; --modal-max:600px; --root-min:900px;
-  --rail-collapsed:76px; --rail-expanded:282px;
+  --rail-collapsed:60px; --rail-expanded:283px;
 
   --z-base:1; --z-sticky:10; --z-backdrop:55; --z-modal:60;
 
