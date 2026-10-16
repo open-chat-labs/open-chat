@@ -60,6 +60,44 @@ describe('HeroBackground', () => {
     bg.destroy();
   });
 
+  test('the first ripples are timed from when the backdrop starts, not from page load', () => {
+    // long after page load: the centre ripple still waits its 3s, while a random one starts straight away
+    now = 600_000;
+    const bg = HeroBackground.create(canvas, () => ({ style: 'pulse', light: false }))!;
+    const ripples = () => (bg as unknown as { ripples: { speed: number }[] }).ripples;
+    frame();
+    expect(ripples()).toHaveLength(1);
+    expect(ripples()[0].speed).toBeLessThan(150);
+    for (let i = 0; i < 200 && !ripples().some((r) => r.speed === 150); i++) frame();
+    expect(now).toBeGreaterThan(603_000);
+    expect(ripples().some((r) => r.speed === 150)).toBe(true);
+    bg.destroy();
+  });
+
+  test('visibility follows the latest IntersectionObserver entry', () => {
+    let report: (entries: Partial<IntersectionObserverEntry>[]) => void = () => {};
+    vi.stubGlobal(
+      'IntersectionObserver',
+      class {
+        constructor(cb: typeof report) {
+          report = cb;
+        }
+        observe() {}
+        disconnect() {}
+      },
+    );
+    const bg = HeroBackground.create(canvas, () => ({ style: 'aurora', light: false }))!;
+    // scrolled out then back in within one batch: still visible, so the loop keeps going
+    report([{ isIntersecting: false }, { isIntersecting: true }]);
+    expect(frame()).toBe(true);
+    expect(frames).toHaveLength(1);
+    // in then out: hidden, so the next frame stops the loop
+    report([{ isIntersecting: true }, { isIntersecting: false }]);
+    frame();
+    expect(frames).toHaveLength(0);
+    bg.destroy();
+  });
+
   test('pulse frames only work out the glow for cells near a ripple front, and spawn without rescanning the cells', () => {
     const bg = HeroBackground.create(canvas, () => ({ style: 'pulse', light: false }))!;
     const cells = (bg as unknown as { cells: unknown[] }).cells.length;

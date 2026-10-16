@@ -3,6 +3,9 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import Landing from './Landing.svelte';
 import source from './Landing.svelte?raw';
 import { reactiveProps } from '../lib/testing/reactiveProps.svelte';
+import WithI18n from '../lib/testing/WithI18n.svelte';
+import { HeroBackground } from './heroBackground';
+import { dictionaryTranslator, messages } from '../lib/i18n';
 
 const deferred = () => {
   let resolve!: () => void, reject!: (e: unknown) => void;
@@ -81,9 +84,25 @@ describe('Landing', () => {
     expect(q('.browse')).not.toBeNull();
   });
 
-  test('member counts round before choosing the unit', () => {
+  test('a cover URL is used as given, so an already percent-encoded one is not encoded again', () => {
+    // jsdom drops a background shorthand it can't parse, so read what the page sets
+    const set = vi.spyOn(CSSStyleDeclaration.prototype, 'setProperty');
+    show({ communities: [{ ...community('A', 1), coverUrl: 'https://cdn.example/a%20b.png' }] });
+    expect(set).toHaveBeenCalledWith('background', 'center/cover url("https://cdn.example/a%20b.png")', '');
+  });
+
+  test('member counts are compact, rounding up into the next unit', () => {
     show({ communities: [community('A', 950_000), community('B', 999_950), community('C', 999_950_000), community('D', 999)] });
     expect(all('.community-members').map((m) => m.textContent)).toEqual(['950K members', '1M members', '1B members', '999 members']);
+  });
+
+  test("member counts follow the host translator's locale", () => {
+    app = mount(WithI18n, {
+      target,
+      props: { i18n: dictionaryTranslator(messages.en, 'de'), component: Landing, props: { communities: [community('A', 1_234_567)] } },
+    });
+    flushSync();
+    expect(q('.community-members')!.textContent).toBe('1,2\u00a0Mio. members');
   });
 
   test('the Learn menu and footer link only the sub-pages the host has', () => {
@@ -130,6 +149,15 @@ describe('Landing', () => {
     props.mode = 'dark';
     flushSync();
     expect(root().dataset.mode).toBe('dark');
+  });
+
+  test('icons are the library Icon: arrows mirror in RTL, the rest keep their direction', () => {
+    show({ playStoreHref: '/play' });
+    const flips = (sel: string) => all(`${sel} [style*="--icon-"]`).map((i) => i.hasAttribute('data-oc-flip'));
+    expect(flips('.cta.primary')).toEqual([true, true]);
+    expect(flips('.build.link')).toEqual([true]);
+    expect(flips('.learn-button')).toEqual([false]);
+    expect(all('[style*="--icon-"]').every((i) => i.getAttribute('aria-hidden') === 'true')).toBe(true);
   });
 
   test('menus close on Esc and on a press outside, not on a press inside', () => {
@@ -212,6 +240,31 @@ describe('Landing', () => {
       expect(dialog()).toBeNull();
     });
 
+    test('a host callback that returns no promise has not signed anyone in', async () => {
+      const onMethod = vi.fn(() => undefined);
+      const onSignup = vi.fn(() => undefined);
+      const onEnterApp = vi.fn();
+      show({ auth: { onMethod, onSignup }, onEnterApp });
+      click(q('.sign-in'));
+      click(passkey());
+      await settle();
+      expect(onMethod).toHaveBeenCalledOnce();
+      expect(onEnterApp).not.toHaveBeenCalled();
+      expect(dialog()).not.toBeNull();
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      flushSync();
+      click(q('.create'));
+      const input = document.querySelector<HTMLInputElement>('[role=dialog] input[autocomplete=username]')!;
+      input.value = 'newperson1';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      flushSync();
+      document.querySelector('[role=dialog] form.form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      await settle();
+      expect(onSignup).toHaveBeenCalledOnce();
+      expect(onEnterApp).not.toHaveBeenCalled();
+      expect(dialog()).not.toBeNull();
+    });
+
     test('without host callbacks nothing pretends to sign in', async () => {
       const onEnterApp = vi.fn();
       show({ onEnterApp });
@@ -260,6 +313,27 @@ describe('Landing', () => {
       show();
       expect(raf).not.toHaveBeenCalled();
       expect(clear).toHaveBeenCalled();
+    });
+
+    test('a mode, accent or style change re-reads the backdrop rather than rebuilding it', async () => {
+      fakeCanvas();
+      vi.stubGlobal('requestAnimationFrame', vi.fn(() => 1));
+      prefersReduced(false);
+      const create = vi.spyOn(HeroBackground, 'create');
+      const resize = vi.spyOn(HeroBackground.prototype, 'resize');
+      const props = reactiveProps<Record<string, unknown>>({ heroBg: 'pulse' });
+      app = mount(Landing, { target, props });
+      await settle();
+      expect(create).toHaveBeenCalledOnce();
+      resize.mockClear();
+      click(q('.mode-button'));
+      await settle();
+      expect(resize).toHaveBeenCalled();
+      resize.mockClear();
+      props.heroBg = 'aurora';
+      await settle();
+      expect(resize).toHaveBeenCalled();
+      expect(create).toHaveBeenCalledOnce();
     });
 
     test('the entrance animation and menu chevrons are switched off for reduced motion', () => {

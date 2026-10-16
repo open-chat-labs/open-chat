@@ -3,20 +3,22 @@
      Blog (list, then an article) and FAQs (searchable accordion). Content comes from `content` (placeholder copy by
      default; see learnContent.ts for the shapes a host loads from markdown / JSON).
      Which sub-page shows: the host decides through `page` (and `post`) when it routes its own paths (/roadmap,
-     /blog/:slug …); without `page` the URL hash does (#faq, #blog/<slug>), so deep links work either way. Links use
-     learnPageHref in host-routed mode (hash links otherwise); there onNavigate takes the click instead of the link when
-     given. A doc sub-page the content doesn't have shows the roadmap.
+     /blog/:slug …); without `page` the URL hash does (#faq, #blog/<slug>), so deep links work either way. A host that
+     sets `page` also gives learnPageHref, its paths for the links (hash links otherwise); there onNavigate takes the
+     click instead of the link when given. A doc sub-page the content doesn't have shows the roadmap.
      Sign in / Create account open AuthDialog with the host's `auth` callbacks, as on Landing. -->
 <script lang="ts">
   import { onMount } from 'svelte';
   import { useT } from '../lib/i18n';
+  import Icon from '../lib/components/Icon.svelte';
   import AuthDialog from '../features/components/AuthDialog.svelte';
   import { PageAuthState, type PageAuth } from './pageAuth.svelte';
+  import { cssUrl } from './cssUrl';
   import { prefersReducedMotion } from './heroBackground';
   import { learnFromHash, learnHashHref, learnPagesOf, placeholderLearnContent, type LearnContent, type LearnPage, type RoadmapItem } from './learnContent';
   import type { PageAccent, PageMode } from './types';
 
-  interface Props {
+  interface CommonProps {
     mode?: PageMode;
     accent?: PageAccent;
     /** The logo and "Back to home" link. */
@@ -25,12 +27,6 @@
     appHref?: string;
     exploreHref?: string;
     learnHref?: string;
-    /** The sub-page to show, when the host routes its own paths. Without it the URL hash picks the sub-page. */
-    page?: LearnPage;
-    /** With page 'blog': the open post's slug. */
-    post?: string;
-    /** With `page`: link to a sub-page (or a blog post). Without `page` the links are learnHref + '#page' ('#blog/<slug>'). */
-    learnPageHref?: (page: LearnPage, post?: string) => string;
     /** Called on every sub-page or post change. When the host sets `page`, it handles the click (no link navigation). */
     onNavigate?: (page: LearnPage, post?: string) => void;
     content?: LearnContent;
@@ -39,6 +35,27 @@
     /** Called after a successful sign-in instead of navigating to appHref. */
     onEnterApp?: () => void;
   }
+
+  /** The URL hash picks the sub-page; links are learnHref + '#page' ('#blog/<slug>'). */
+  interface HashRouted {
+    page?: undefined;
+    post?: undefined;
+    /** Ignored: hash links work without the host's routes. */
+    learnPageHref?: (page: LearnPage, post?: string) => string;
+  }
+
+  /** The host routes its own paths and says which sub-page shows. */
+  interface HostRouted {
+    /** The sub-page to show. */
+    page: LearnPage;
+    /** With page 'blog': the open post's slug. */
+    post?: string;
+    /** The host's path for a sub-page (or a blog post). Required: a hash link would land on a route that ignores the hash. */
+    learnPageHref: (page: LearnPage, post?: string) => string;
+  }
+
+  type Routing = HashRouted | HostRouted;
+  type Props = CommonProps & Routing;
 
   let {
     mode = 'dark',
@@ -71,6 +88,7 @@
   const openSlug = $derived(page !== undefined ? post : fromHash.post);
 
   let faqQuery = $state('');
+  // FAQ open state, keyed by group and question (the same question can sit in two groups)
   const faqOpen = $state<Record<string, boolean>>({});
   const roadOpen = $state<Record<string, boolean>>({});
 
@@ -102,7 +120,10 @@
   });
   const faqGroups = $derived(
     content.faq
-      .map((g) => ({ title: g.title, items: g.items.filter((it) => !faqSearch || `${it.q} ${it.a}`.toLowerCase().includes(faqSearch)) }))
+      .map((g) => ({
+        title: g.title,
+        items: g.items.filter((it) => !faqSearch || `${it.q} ${it.a}`.toLowerCase().includes(faqSearch)).map((it) => ({ ...it, key: JSON.stringify([g.title, it.q]) })),
+      }))
       .filter((g) => g.items.length),
   );
 
@@ -110,6 +131,8 @@
   const linkFor = (p: LearnPage, slug?: string) => (page !== undefined && learnPageHref ? learnPageHref(p, slug) : learnHashHref(learnHref, p, slug));
 
   function go(e: MouseEvent, p: LearnPage, slug?: string) {
+    // a modified or non-primary click (new tab, new window …) is the browser's, on the link's own href
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     if (page !== undefined) {
       // host-routed: the host navigates (and scrolls, as its router does) when it takes the click, otherwise the link does
       if (!onNavigate) return;
@@ -125,9 +148,9 @@
     window.scrollTo?.(0, 0);
   }
 
-  function toggleFaq(question: string) {
-    if (faqSearch) faqClosedInSearch = { ...faqClosedInSearch, [question]: !faqClosedInSearch[question] };
-    else faqOpen[question] = !faqOpen[question];
+  function toggleFaq(key: string) {
+    if (faqSearch) faqClosedInSearch = { ...faqClosedInSearch, [key]: !faqClosedInSearch[key] };
+    else faqOpen[key] = !faqOpen[key];
   }
 
   function jumpTo(id: string) {
@@ -151,8 +174,6 @@
     };
   });
 </script>
-
-{#snippet glyph(name: string, cls = '')}<span class="glyph {cls}" style:mask="var(--icon-{name}) center/contain no-repeat" aria-hidden="true"></span>{/snippet}
 
 <div class="page" data-oc-page="learn" data-mode={mode} data-accent={accent}>
   <header class="top">
@@ -233,13 +254,13 @@
       </div>
     {:else if current === 'blog' && openPost !== undefined}
       <article class="article">
-        <a class="back" href={linkFor('blog')} onclick={(e) => go(e, 'blog')}>{@render glyph('back', 'back-glyph')}{t('ui.learn.blog.allPosts')}</a>
+        <a class="back" href={linkFor('blog')} onclick={(e) => go(e, 'blog')}><Icon icon="back" flip />{t('ui.learn.blog.allPosts')}</a>
         {#if openPost}
           <h1 class="h1 article-title">{openPost.title}</h1>
           <span class="byline"><span class="author">{openPost.author ?? t('ui.learn.blog.team')}</span><span class="sep"></span>{openPost.date ?? t('ui.learn.blog.recent')}</span>
           <div
             class="article-cover"
-            style:background={openPost.cover ? `center/cover url("${encodeURI(openPost.cover)}")` : COVERS[content.posts.indexOf(openPost) % COVERS.length]}
+            style:background={openPost.cover ? `center/cover ${cssUrl(openPost.cover)}` : COVERS[content.posts.indexOf(openPost) % COVERS.length]}
           ></div>
           {#each openPost.body as b}<p class="article-para">{b}</p>{/each}
         {:else}
@@ -256,7 +277,7 @@
         <div class="posts">
           {#each content.posts as p, i}
             <a class="post" href={linkFor('blog', p.slug)} onclick={(e) => go(e, 'blog', p.slug)}>
-              <span class="post-cover" style:background={p.cover ? `center/cover url("${encodeURI(p.cover)}")` : COVERS[i % COVERS.length]}></span>
+              <span class="post-cover" style:background={p.cover ? `center/cover ${cssUrl(p.cover)}` : COVERS[i % COVERS.length]}></span>
               <span class="post-text">
                 <span class="post-title">{p.title}</span>
                 <span class="post-excerpt">{p.excerpt}</span>
@@ -298,7 +319,7 @@
                     <button class="item-button" class:expandable={!!it.detail} disabled={!it.detail} aria-expanded={it.detail ? open : undefined} onclick={() => (roadOpen[key] = !roadOpen[key])}>
                       <span class="item-when">{it.when}</span>
                       <span class="item-title" class:milestone={it.milestone}>{it.title}</span>
-                      {#if it.detail}{@render glyph('chevron-down', open ? 'item-chev open' : 'item-chev')}{/if}
+                      {#if it.detail}<span class="item-chev" class:open><Icon icon="chevron-down" size={18} /></span>{/if}
                     </button>
                     {#if open && it.detail}
                       <div class="item-detail">
@@ -308,7 +329,7 @@
                             {#each it.detail.points as pt}
                               <li>
                                 <span class="bullet"></span>
-                                {#if pt.href}<a class="point-link" href={pt.href} target="_blank" rel="noopener">{pt.label}{@render glyph('external', 'ext-glyph')}</a>{:else}<span class="point-text">{pt.label}</span>{/if}
+                                {#if pt.href}<a class="point-link" href={pt.href} target="_blank" rel="noopener">{pt.label}<span class="ext-glyph"><Icon icon="external" size={12} /></span></a>{:else}<span class="point-text">{pt.label}</span>{/if}
                               </li>
                             {/each}
                           </ul>
@@ -329,7 +350,7 @@
           <h1 class="h1">{t('ui.learn.faq.title')}</h1>
         </div>
         <label class="search">
-          {@render glyph('search', 'search-glyph')}
+          <Icon icon="search" size={18} color="var(--ink-3)" />
           <input class="search-input" type="search" bind:value={faqQuery} placeholder={t('ui.learn.faq.search')} aria-label={t('ui.learn.faq.search')} />
         </label>
         {#if faqSearch && !faqGroups.length}
@@ -339,10 +360,10 @@
           <section class="faq-group">
             <h2 class="faq-heading">{g.title}</h2>
             {#each g.items as q}
-              {@const open = faqSearch ? !faqClosedInSearch[q.q] : !!faqOpen[q.q]}
+              {@const open = faqSearch ? !faqClosedInSearch[q.key] : !!faqOpen[q.key]}
               <div class="question">
-                <button class="question-button" aria-expanded={open} onclick={() => toggleFaq(q.q)}
-                  ><span class="question-text">{q.q}</span>{@render glyph('chevron-down', open ? 'item-chev open' : 'item-chev')}</button
+                <button class="question-button" aria-expanded={open} onclick={() => toggleFaq(q.key)}
+                  ><span class="question-text">{q.q}</span><span class="item-chev" class:open><Icon icon="chevron-down" size={18} /></span></button
                 >
                 {#if open}<p class="answer">{q.a}</p>{/if}
               </div>
@@ -383,14 +404,6 @@
 
   button {
     font: inherit;
-  }
-
-  .glyph {
-    flex: none;
-    display: inline-block;
-    width: 16px;
-    height: 16px;
-    background: currentColor;
   }
 
   .link {
@@ -596,8 +609,8 @@
   }
 
   .item-chev {
-    width: 18px;
-    height: 18px;
+    flex: none;
+    display: flex;
     color: var(--ink-3);
     transition: transform 160ms var(--ease-standard);
   }
@@ -1155,8 +1168,8 @@
   }
 
   .ext-glyph {
-    width: 12px;
-    height: 12px;
+    flex: none;
+    display: flex;
     transform: translateY(1px);
   }
 
@@ -1177,12 +1190,6 @@
     border-radius: var(--radius-lg);
     background: var(--field);
     box-shadow: inset 0 0 0 1px var(--line-2);
-  }
-
-  .search-glyph {
-    width: 18px;
-    height: 18px;
-    color: var(--ink-3);
   }
 
   .search-input {

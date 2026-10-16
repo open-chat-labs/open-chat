@@ -27,8 +27,9 @@ export class HeroBackground {
   private spawnPool: Cell[] = [];
   private ripples: Ripple[] = [];
   private fronts: Front[] = [];
-  private nextRipple = 0;
-  private nextCentre = 3;
+  // spawn times are on the draw clock (performance.now() in seconds), so they start from when the backdrop does
+  private nextRipple = performance.now() / 1000;
+  private nextCentre = this.nextRipple + 3;
   private w = 0;
   private h = 0;
   private visible = true;
@@ -58,7 +59,8 @@ export class HeroBackground {
     }
     if (typeof IntersectionObserver === 'function') {
       this.io = new IntersectionObserver((es) => {
-        this.visible = es[0].isIntersecting;
+        // entries come oldest first; the last is the current state
+        this.visible = es[es.length - 1].isIntersecting;
         if (this.visible) this.kick();
       });
       this.io.observe(cv);

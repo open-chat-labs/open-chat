@@ -6,13 +6,15 @@
      Sign in / Create account open AuthDialog with the host's `auth` callbacks; a successful sign-in calls onEnterApp
      (or goes to appHref). -->
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { useT } from '../lib/i18n';
+  import { onMount, untrack } from 'svelte';
+  import { getI18n, useT } from '../lib/i18n';
   import Translate from '../lib/components/Translate.svelte';
   import Avatar from '../lib/components/Avatar.svelte';
+  import Icon from '../lib/components/Icon.svelte';
   import AuthDialog from '../features/components/AuthDialog.svelte';
   import { HeroBackground, type HeroStyle } from './heroBackground';
   import { PageAuthState, type PageAuth } from './pageAuth.svelte';
+  import { cssUrl } from './cssUrl';
   import { LEARN_PAGES, learnHashHref, type LearnPage } from './learnContent';
   import { PAGE_ACCENTS, type LandingCommunity, type PageAccent, type PageMode } from './types';
 
@@ -70,6 +72,7 @@
     onModeChange,
     onAccentChange,
   }: Props = $props();
+  const i18n = getI18n();
   const t = useT();
 
   const FEATURES = [
@@ -110,17 +113,8 @@
   const authState = new PageAuthState(() => ({ auth, onEnterApp, appHref }));
 
   const learnLink = (page: LearnPage) => (learnPageHref ? learnPageHref(page) : learnHashHref(learnHref, page));
-  // 62504 → '62.5K'; the unit is chosen after rounding, so 999950 is '1M', not '1000K'
-  const fmt = (n: number) => {
-    if (n < 1e3) return String(n);
-    let v = n;
-    for (const unit of ['K', 'M', 'B']) {
-      v /= 1e3;
-      const rounded = +v.toFixed(1);
-      if (rounded < 1e3 || unit === 'B') return `${rounded}${unit}`;
-    }
-    return String(n);
-  };
+  // member counts in the reader's locale, compact (62504 → '62.5K' in English)
+  const compact = $derived(new Intl.NumberFormat(i18n.locale ?? 'en', { notation: 'compact', maximumFractionDigits: 1 }));
 
   function toggleMode() {
     const next: PageMode = shownMode === 'dark' ? 'light' : 'dark';
@@ -158,9 +152,12 @@
   });
 
   let backdrop: HeroBackground | null = null;
+  // one backdrop per canvas: its first draw reads heroBg and the mode, which mustn't rebuild it (the effect below
+  // applies their changes)
   $effect(() => {
     if (!canvas) return;
-    backdrop = HeroBackground.create(canvas, () => ({ style: heroBg, light: shownMode === 'light' }));
+    const cv = canvas;
+    backdrop = untrack(() => HeroBackground.create(cv, () => ({ style: heroBg, light: shownMode === 'light' })));
     return () => {
       backdrop?.destroy();
       backdrop = null;
@@ -175,8 +172,6 @@
     return () => clearTimeout(timer);
   });
 </script>
-
-{#snippet glyph(name: string, cls = '')}<span class="glyph {cls}" style:mask="var(--icon-{name}) center/contain no-repeat" aria-hidden="true"></span>{/snippet}
 
 <div class="page" data-oc-page="landing" data-mode={shownMode} data-accent={shownAccent}>
   <header class="top">
@@ -198,7 +193,7 @@
             onclick={() => {
               learnOpen = !learnOpen;
               accentOpen = false;
-            }}>{t('ui.landing.nav.learn')}{@render glyph('chevron-down', 'chev')}</button
+            }}>{t('ui.landing.nav.learn')}<span class="chev"><Icon icon="chevron-down" size={12} /></span></button
           >
           {#if learnOpen}
             <div class="menu learn-menu" role="menu">
@@ -223,7 +218,7 @@
             onclick={() => {
               accentOpen = !accentOpen;
               learnOpen = false;
-            }}><span class="accent-dot"></span>{@render glyph('chevron-down', 'chev')}</button
+            }}><span class="accent-dot"></span><span class="chev"><Icon icon="chevron-down" size={12} /></span></button
           >
           {#if accentOpen}
             <div class="menu accent-menu" role="menu">
@@ -232,7 +227,7 @@
                 <button class="accent-item" role="menuitemradio" aria-checked={a === shownAccent} onclick={() => pickAccent(a)}>
                   <span class="swatch" data-mode={shownMode} data-accent={a}></span>
                   <span class="accent-name">{t(`ui.landing.theme.${a}`)}</span>
-                  {@render glyph('check', a === shownAccent ? 'check on' : 'check')}
+                  <span class="check" class:on={a === shownAccent}><Icon icon="check" size={14} /></span>
                 </button>
               {/each}
             </div>
@@ -243,7 +238,7 @@
           class="theme-button mode-button"
           aria-label={t(shownMode === 'dark' ? 'ui.landing.theme.toLight' : 'ui.landing.theme.toDark')}
           title={t(shownMode === 'dark' ? 'ui.landing.theme.toLight' : 'ui.landing.theme.toDark')}
-          onclick={toggleMode}>{@render glyph(shownMode === 'dark' ? 'sun' : 'moon', 'mode-glyph')}</button
+          onclick={toggleMode}><Icon icon={shownMode === 'dark' ? 'sun' : 'moon'} size={17} /></button
         >
       </div>
       <div class="auth">
@@ -263,8 +258,8 @@
     </h1>
     <p class="hero-sub rise">{t('ui.landing.hero.sub')}</p>
     <div class="hero-actions rise">
-      <a class="cta primary" href={exploreHref}>{t('ui.landing.hero.explore')}{@render glyph('arrow', 'cta-glyph')}</a>
-      <a class="cta ghost" href="#download">{@render glyph('smartphone', 'cta-glyph')}{t('ui.landing.hero.nativeApp')}</a>
+      <a class="cta primary" href={exploreHref}>{t('ui.landing.hero.explore')}<Icon icon="arrow" flip /></a>
+      <a class="cta ghost" href="#download"><Icon icon="smartphone" />{t('ui.landing.hero.nativeApp')}</a>
     </div>
     <div class="shot-wrap rise late" role="img" aria-label={t('ui.landing.shot.label')}>
       <div class="shot" aria-hidden="true">
@@ -280,11 +275,11 @@
               <Avatar size={36} shape="squircle" color="amber" />
               <div class="shot-text">
                 <span class="shot-name">{t('ui.landing.shot.community')}</span>
-                <span class="shot-meta">{@render glyph('globe', 'shot-meta-glyph')}{t('ui.landing.shot.communityMeta')}</span>
+                <span class="shot-meta"><Icon icon="globe" size={10} />{t('ui.landing.shot.communityMeta')}</span>
               </div>
-              {@render glyph('kebab', 'shot-icon')}
+              <Icon icon="kebab" size={15} color="var(--ink-3)" />
             </div>
-            <div class="shot-search">{@render glyph('search', 'shot-search-glyph')}<span>{t('ui.landing.shot.search')}</span></div>
+            <div class="shot-search"><Icon icon="search" size={13} /><span>{t('ui.landing.shot.search')}</span></div>
             <span class="shot-heading">{t('ui.landing.shot.channels')}</span>
             {#each SHOT_CHANNELS as c}
               <div class="shot-channel" class:on={c.on}>
@@ -303,7 +298,7 @@
                 <span class="shot-name small">{t('ui.landing.shot.proposals')}</span>
                 <span class="shot-meta">{t('ui.landing.shot.channelMeta')}</span>
               </div>
-              {#each ['search', 'pin', 'users', 'kebab'] as icon}<span class="shot-tool">{@render glyph(icon, 'shot-icon')}</span>{/each}
+              {#each ['search', 'pin', 'users', 'kebab'] as icon}<span class="shot-tool"><Icon {icon} size={15} color="var(--ink-3)" /></span>{/each}
             </div>
             <div class="shot-messages">
               <span class="shot-day">{t('ui.landing.shot.today')}</span>
@@ -331,7 +326,7 @@
               </div>
               <div class="shot-reply">
                 <span>{t('ui.landing.shot.reply')}</span>
-                <span class="shot-reply-time">10:44{@render glyph('check-double', 'ticks')}</span>
+                <span class="shot-reply-time">10:44<Icon icon="check-double" size={13} color="var(--bubble-tick)" /></span>
               </div>
             </div>
           </div>
@@ -351,7 +346,7 @@
       <div class="apps">
         <div class="app-card android">
           <div class="app-head">
-            <span class="app-icon">{@render glyph('smartphone', 'app-glyph')}</span>
+            <span class="app-icon"><Icon icon="smartphone" size={20} /></span>
             <span class="app-name">{t('ui.landing.apps.android')}</span>
             <span class="app-pill">{t('ui.landing.apps.betaOpen')}</span>
           </div>
@@ -362,7 +357,7 @@
           <div class="builds">
             {#each [{ href: playStoreHref, key: 'playStore' }, { href: apkHref, key: 'full' }] as b}
               <svelte:element this={b.href ? 'a' : 'div'} class="build" class:link={!!b.href} href={b.href}>
-                <span class="build-title">{t(`ui.landing.apps.${b.key}`)}{#if b.href}{@render glyph('arrow', 'build-glyph')}{/if}</span>
+                <span class="build-title">{t(`ui.landing.apps.${b.key}`)}{#if b.href}<Icon icon="arrow" size={15} color="var(--tone)" flip />{/if}</span>
                 <span class="build-body">{t(`ui.landing.apps.${b.key}Body`)}</span>
               </svelte:element>
             {/each}
@@ -370,7 +365,7 @@
         </div>
         <div class="app-card ios">
           <div class="app-head">
-            <span class="app-icon">{@render glyph('smartphone', 'app-glyph')}</span>
+            <span class="app-icon"><Icon icon="smartphone" size={20} /></span>
             <span class="app-name">{t('ui.landing.apps.iphone')}</span>
             <span class="app-pill">{t('ui.landing.apps.comingSoon')}</span>
           </div>
@@ -396,10 +391,10 @@
       <div class="features">
         {#each FEATURES as f}
           <div class="feature">
-            <span class="feature-icon">{@render glyph(f.icon, 'feature-glyph')}</span>
+            <span class="feature-icon"><Icon icon={f.icon} size={21} /></span>
             <div class="feature-head">
               <span class="feature-title">{t(`ui.landing.features.${f.key}Title`)}</span>
-              {#if f.diamond}<span class="feature-tag">{@render glyph('gem', 'tag-glyph')}{t('ui.landing.features.diamond')}</span>{/if}
+              {#if f.diamond}<span class="feature-tag"><Icon icon="gem" size={11} />{t('ui.landing.features.diamond')}</span>{/if}
             </div>
             <span class="feature-body">{t(`ui.landing.features.${f.key}Body`)}</span>
           </div>
@@ -415,21 +410,21 @@
           <span class="kicker">{t('ui.landing.communities.kicker')}</span>
           <h2 class="h2">{t('ui.landing.communities.title')}</h2>
         </div>
-        <a class="browse" href={exploreHref}>{t('ui.landing.communities.browse')}{@render glyph('arrow', 'cta-glyph')}</a>
+        <a class="browse" href={exploreHref}>{t('ui.landing.communities.browse')}<Icon icon="arrow" flip /></a>
       </div>
       {#if communities.length}
         <div class="community-wrap">
           <div class="community-grid">
             {#each communities as c, i}
               <svelte:element this={c.href ? 'a' : 'div'} class="community" class:link={!!c.href} href={c.href}>
-                <span class="community-cover" style:background={c.coverUrl ? `center/cover url("${encodeURI(c.coverUrl)}")` : COVERS[i % COVERS.length]}></span>
+                <span class="community-cover" style:background={c.coverUrl ? `center/cover ${cssUrl(c.coverUrl)}` : COVERS[i % COVERS.length]}></span>
                 <div class="community-body">
                   <span class="community-avatar">
                     {#if c.avatarUrl}<img src={c.avatarUrl} alt="" width="48" height="48" />{:else}<Avatar size={48} shape="squircle" color={c.color ?? 'amber'} />{/if}
                   </span>
                   <span class="community-name">{c.name}</span>
                   <span class="community-about">{c.about}</span>
-                  <span class="community-members">{@render glyph('users', 'members-glyph')}{t('ui.landing.communities.members', { count: c.members, members: fmt(c.members) })}</span>
+                  <span class="community-members"><Icon icon="users" size={14} color="var(--ink-3)" />{t('ui.landing.communities.members', { count: c.members, members: compact.format(c.members) })}</span>
                 </div>
               </svelte:element>
             {/each}
@@ -445,7 +440,7 @@
         <span class="kicker">{t('ui.landing.governance.kicker')}</span>
         <h2 class="h2">{t('ui.landing.governance.title')}</h2>
         <p class="governance-body">{t('ui.landing.governance.body')}</p>
-        {#if proposalsHref}<a class="proposals" href={proposalsHref}>{t('ui.landing.governance.proposals')}{@render glyph('arrow', 'cta-glyph')}</a>{/if}
+        {#if proposalsHref}<a class="proposals" href={proposalsHref}>{t('ui.landing.governance.proposals')}<Icon icon="arrow" flip /></a>{/if}
       </div>
       <ol class="steps">
         {#each STEPS as s, i}
@@ -466,7 +461,7 @@
       <h2 class="final-title">{t('ui.landing.cta.title')}</h2>
       <p class="lede">{t('ui.landing.cta.body')}</p>
       <div class="final-actions">
-        <button class="cta primary big" onclick={() => openAuth('signup')}>{t('ui.landing.cta.create')}{@render glyph('arrow', 'cta-glyph')}</button>
+        <button class="cta primary big" onclick={() => openAuth('signup')}>{t('ui.landing.cta.create')}<Icon icon="arrow" flip /></button>
         <a class="final-explore" href={exploreHref}>{t('ui.landing.cta.explore')}</a>
       </div>
     </div>
@@ -517,14 +512,6 @@
 
   button {
     font: inherit;
-  }
-
-  .glyph {
-    flex: none;
-    display: inline-block;
-    width: 16px;
-    height: 16px;
-    background: currentColor;
   }
 
   /* ── header ── */
@@ -603,8 +590,8 @@
   }
 
   .chev {
-    width: 12px;
-    height: 12px;
+    flex: none;
+    display: flex;
     transition: transform var(--duration-fast) var(--ease-standard);
   }
 
@@ -703,11 +690,6 @@
     background: var(--accent);
   }
 
-  .mode-glyph {
-    width: 17px;
-    height: 17px;
-  }
-
   .theme-rule {
     width: 1px;
     height: 18px;
@@ -761,8 +743,8 @@
   }
 
   .check {
-    width: 14px;
-    height: 14px;
+    flex: none;
+    display: flex;
     color: var(--ink-2);
     opacity: 0;
   }
@@ -960,11 +942,6 @@
     padding: 0 var(--space-26);
   }
 
-  .cta-glyph {
-    width: 16px;
-    height: 16px;
-  }
-
   .hero-fade {
     position: absolute;
     inset-inline: 0;
@@ -1073,17 +1050,6 @@
     color: var(--ink-4);
   }
 
-  .shot-meta-glyph {
-    width: 10px;
-    height: 10px;
-  }
-
-  .shot-icon {
-    width: 15px;
-    height: 15px;
-    color: var(--ink-3);
-  }
-
   .shot-search {
     display: flex;
     align-items: center;
@@ -1096,11 +1062,6 @@
     box-shadow: inset 0 0 0 1px var(--line-1);
     font: var(--weight-regular) var(--text-sm) / 1 var(--font-sans);
     color: var(--ink-4);
-  }
-
-  .shot-search-glyph {
-    width: 13px;
-    height: 13px;
   }
 
   .shot-heading {
@@ -1326,12 +1287,6 @@
     color: var(--bubble-text-soft);
   }
 
-  .ticks {
-    width: 13px;
-    height: 13px;
-    color: var(--bubble-tick);
-  }
-
   /* ── bands ── */
   .band {
     display: flex;
@@ -1444,11 +1399,6 @@
     color: var(--tone);
   }
 
-  .app-glyph {
-    width: 20px;
-    height: 20px;
-  }
-
   .app-name {
     flex: 1;
     font: var(--weight-bold) var(--text-xl) / 1.2 var(--font-sans);
@@ -1515,12 +1465,6 @@
     font: var(--weight-bold) var(--text-base) / 1.3 var(--font-sans);
   }
 
-  .build-glyph {
-    width: 15px;
-    height: 15px;
-    color: var(--tone);
-  }
-
   .build-body {
     font: var(--weight-regular) var(--text-md) / 1.5 var(--font-sans);
     color: var(--ink-3);
@@ -1555,11 +1499,6 @@
     color: var(--accent);
   }
 
-  .feature-glyph {
-    width: 21px;
-    height: 21px;
-  }
-
   .feature-head {
     display: flex;
     flex-wrap: wrap;
@@ -1582,11 +1521,6 @@
     background: color-mix(in oklch, var(--status-verified) 14%, transparent);
     font: var(--weight-semibold) var(--text-xs) / 1 var(--font-sans);
     color: var(--status-verified);
-  }
-
-  .tag-glyph {
-    width: 11px;
-    height: 11px;
   }
 
   .feature-body {
@@ -1704,12 +1638,6 @@
     gap: var(--space-6);
     font: var(--weight-medium) var(--text-sm) / 1 var(--font-sans);
     color: var(--ink-2);
-  }
-
-  .members-glyph {
-    width: 14px;
-    height: 14px;
-    color: var(--ink-3);
   }
 
   /* ── governance ── */

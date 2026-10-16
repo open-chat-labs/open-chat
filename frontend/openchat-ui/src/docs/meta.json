@@ -17713,7 +17713,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "The sub-page to show, when the host routes its own paths. Without it the URL hash picks the sub-page."
+        "doc": "The sub-page to show, when the host routes its own paths (learnPageHref is then required). Without it the URL hash picks the sub-page."
       },
       {
         "name": "post",
@@ -17735,7 +17735,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "With `page`: link to a sub-page (or a blog post). Without `page` the links are learnHref + '#page' ('#blog/<slug>')."
+        "doc": "Required with `page`: the host's path for a sub-page (or a blog post). Without `page` it is ignored and the links are learnHref + '#page' ('#blog/<slug>')."
       },
       {
         "name": "onNavigate",

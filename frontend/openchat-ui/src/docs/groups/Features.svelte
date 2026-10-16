@@ -614,6 +614,7 @@
           {accent}
           page={learnPage}
           post={learnPost}
+          learnPageHref={() => '#'}
           onNavigate={(p: LearnPage, post?: string) => {
             learnPage = p;
             learnPost = post;

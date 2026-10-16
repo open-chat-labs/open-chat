@@ -1,4 +1,4 @@
-import { flushSync, mount, unmount } from 'svelte';
+import { flushSync, mount, unmount, type ComponentProps } from 'svelte';
 import { afterEach, beforeEach, describe, expect, onTestFinished, test, vi } from 'vitest';
 import Learn from './Learn.svelte';
 import { LEARN_PAGES, placeholderLearnContent, type LearnContent } from './learnContent';
@@ -34,6 +34,19 @@ describe('Learn', () => {
     (el as HTMLElement).dispatchEvent(e);
     flushSync();
     return e;
+  };
+  /** Clicks with modifiers; true when the link's own navigation would go ahead (stopped after Learn's handler: jsdom can't navigate). */
+  const clickThrough = (el: Element, init: MouseEventInit) => {
+    let navigates: boolean | undefined;
+    const stop = (e: Event) => {
+      navigates = !e.defaultPrevented;
+      e.preventDefault();
+    };
+    document.addEventListener('click', stop);
+    el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, ...init }));
+    document.removeEventListener('click', stop);
+    flushSync();
+    return navigates;
   };
 
   test.each(LEARN_PAGES)('#%s: every piece of copy resolves (no raw resource keys)', (page) => {
@@ -76,6 +89,15 @@ describe('Learn', () => {
       expect([location.hash, h1()]).toEqual(['#blog', 'News from the DAO']);
     });
 
+    test.each([{ metaKey: true }, { ctrlKey: true }, { shiftKey: true }, { altKey: true }, { button: 1 }])('a modified or non-primary click (%o) is left to the browser', (init) => {
+      const onNavigate = vi.fn();
+      history.replaceState(null, '', '/learn');
+      show({ onNavigate });
+      expect(clickThrough(tab('FAQs'), init)).toBe(true);
+      expect([current(), location.hash]).toEqual(['Roadmap', '']);
+      expect(onNavigate).not.toHaveBeenCalled();
+    });
+
     test('back / forward and an edited hash follow the URL', () => {
       show();
       history.replaceState(null, '', '/learn#architecture');
@@ -114,6 +136,13 @@ describe('Learn', () => {
   });
 
   describe('with `page`, the host routes', () => {
+    test('a host that sets `page` has to give learnPageHref too (checked by the type checker)', () => {
+      const routed: ComponentProps<typeof Learn> = { page: 'faq', learnPageHref: (p) => `/${p}` };
+      // @ts-expect-error without learnPageHref the links would be hash links, which a host-routed Learn ignores
+      const unlinked: ComponentProps<typeof Learn> = { page: 'faq' };
+      expect([routed, unlinked]).toHaveLength(2);
+    });
+
     test('the host picks the sub-page and post; the hash is ignored', () => {
       history.replaceState(null, '', '/learn#faq');
       const props = reactiveProps<Record<string, unknown>>({ page: 'architecture' });
@@ -154,6 +183,31 @@ describe('Learn', () => {
       expect(navigates).toBe(true);
     });
 
+    test('post covers are used as given, so an already percent-encoded URL is not encoded again', () => {
+      const cover = 'https://cdn.example/a%20b.png';
+      const content: LearnContent = { ...placeholderLearnContent, posts: placeholderLearnContent.posts.map((p) => ({ ...p, cover })) };
+      // jsdom drops a background shorthand it can't parse, so read what the page sets
+      const set = vi.spyOn(CSSStyleDeclaration.prototype, 'setProperty');
+      show({ page: 'blog', content });
+      expect(set).toHaveBeenCalledWith('background', `center/cover url("${cover}")`, '');
+      unmount(app!);
+      set.mockClear();
+      show({ page: 'blog', post: content.posts[0].slug, content });
+      expect(set).toHaveBeenCalledWith('background', `center/cover url("${cover}")`, '');
+    });
+
+    test('a modified click is left to the browser, not taken by onNavigate', () => {
+      const onNavigate = vi.fn();
+      show({ page: 'roadmap', onNavigate, learnPageHref: (p: string) => `/${p}` });
+      expect(clickThrough(tab('FAQs'), { metaKey: true })).toBe(true);
+      expect(onNavigate).not.toHaveBeenCalled();
+    });
+
+    test("the way back to all posts is an Icon arrow that mirrors in RTL", () => {
+      show({ page: 'blog', post: 'gone' });
+      expect(q('.back [style*="--icon-back"]')!.hasAttribute('data-oc-flip')).toBe(true);
+    });
+
     test('an unknown post says so, with the way back to all posts', () => {
       show({ page: 'blog', post: 'gone' });
       expect(q('.article')!.textContent).toContain('That post isn’t here any more.');
@@ -189,6 +243,18 @@ describe('Learn', () => {
     flushSync();
     expect(all('.question')).toHaveLength(0);
     expect(q('.faq-empty')!.textContent).toBe('No questions match “zebra”.');
+  });
+
+  test('the same question in two groups opens on its own', () => {
+    const faq = [
+      { title: 'Basics', items: [{ q: 'Is it free?', a: 'Yes.' }] },
+      { title: 'Diamond', items: [{ q: 'Is it free?', a: 'No.' }] },
+    ];
+    show({ page: 'faq', content: { ...placeholderLearnContent, faq } });
+    const [first, second] = all('.question-button');
+    click(first);
+    expect([first.getAttribute('aria-expanded'), second.getAttribute('aria-expanded')]).toEqual(['true', 'false']);
+    expect(all('.answer').map((a) => a.textContent)).toEqual(['Yes.']);
   });
 
   test('while searching, a match can be closed and reopened; clearing the search restores the questions as they were', () => {
