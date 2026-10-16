@@ -261,30 +261,30 @@ function staticImports(chunk, chunksByFileName, found = new Set()) {
 // which take the web build over the air and don't get the new web UI
 const IS_NATIVE_APP = `("__TAURI_INTERNALS__" in window || location.protocol === "tauri:")`;
 
-// Whether a build with the new web UI mounts it (`selectLayout` in utils/layout.ts)
+// Whether a build with the new web UI mounts it (`selectLayout` in utils/layout.ts). Only a guess:
+// the width can change before main.ts reads it, and an Android webview may not have its Tauri
+// globals yet. A wrong guess costs a wasted download, since main.ts goes by its own reading.
 const MOUNTS_WEB_LAYOUT = `(window.innerWidth >= 768 && !${IS_NATIVE_APP})`;
 
-// The fonts of the existing App trees and of the new web UI (src/web)
-const APP_FONTS_URL =
+// The fonts of the existing App trees and of the new web UI (src/web). Built in as
+// import.meta.env.OC_APP_FONTS_URL / OC_WEB_FONTS_URL for main.ts.
+export const APP_FONTS_URL =
     "https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Bebas+Neue&family=Manrope:wght@400;500;700&family=Roboto:wght@200;300;400;700&display=swap";
-const WEB_FONTS_URL =
+export const WEB_FONTS_URL =
     "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap";
 
 // index.html's font stylesheet. A build with the new web UI (`webLayout`) only knows in the browser
-// which App tree it gets, so it leaves the stylesheet to `generateFontsScript` instead.
+// which App tree it gets, so the startup script asks for the likely one and main.ts makes sure of
+// the one it mounts (utils/fonts.ts).
 export function fontsLink(webLayout) {
     return webLayout ? "" : `<link href="${APP_FONTS_URL}" rel="stylesheet" />`;
 }
 
-// Links the fonts of the App tree `selectLayout` (utils/layout.ts) goes on to pick in a build with
-// the new web UI.
-export function generateFontsScript() {
-    return `(function () {
-    var link = document.createElement("link");
-    link.rel = "stylesheet";
-    link.href = ${MOUNTS_WEB_LAYOUT} ? ${JSON.stringify(WEB_FONTS_URL)} : ${JSON.stringify(APP_FONTS_URL)};
-    document.head.appendChild(link);
-})();`;
+// OC_WEB_LAYOUT as the build sees it. Native builds leave the new web UI out whatever it says: the
+// new UI doesn't handle the native apps' events yet (it never signals `svelteReady`).
+export function webLayoutFlag() {
+    const nativeBuild = process.env.OC_APP_TYPE === "android" || process.env.OC_APP_TYPE === "ios";
+    return nativeBuild ? "" : (process.env.OC_WEB_LAYOUT ?? "");
 }
 
 // What index.html paints behind a dark theme until the app's own styles arrive: the background of
@@ -335,6 +335,13 @@ export function generateStartupScript({ chunks, version, mobileLayout, webLayout
         throw new Error("No chunk found for the en locale, so it cannot be preloaded");
     }
 
+    // A head <link> for the fonts of the tree the build is likely to mount, so they're asked for as
+    // early as the static link of a build without the new UI. main.ts links the right ones anyway.
+    const fontsHint = `var fonts = document.createElement("link");
+    fonts.rel = "stylesheet";
+    fonts.href = web ? ${JSON.stringify(WEB_FONTS_URL)} : ${JSON.stringify(APP_FONTS_URL)};
+    document.head.appendChild(fonts);`;
+
     return `(function () {
     var narrow = window.innerWidth < 768;
     var mobile = ${mobileLayout} === "v2" && narrow;
@@ -361,6 +368,7 @@ export function generateStartupScript({ chunks, version, mobileLayout, webLayout
     locale = (locale || navigator.language || "en").split("-")[0];
     preload(locales.en);
     if (locale !== "en" && locales[locale]) preload(locales[locale]);
+    ${webLayout ? fontsHint : ""}
     try {
         window.OC_PRESTARTED_WORKER = new Worker(${JSON.stringify(`/worker.js?v=${version}`)}, { type: "module" });
     } catch (e) {}

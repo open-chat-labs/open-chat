@@ -5,7 +5,13 @@ import { selectLayout } from "./layout";
 // rollup.extras.mjs to a polyfill without fileURLToPath.
 vi.mock("url", () => import("node:url"));
 
-import { fontsLink, generateFontsScript, generateStartupScript } from "../../rollup.extras.mjs";
+import {
+    APP_FONTS_URL,
+    fontsLink,
+    generateStartupScript,
+    WEB_FONTS_URL,
+    webLayoutFlag,
+} from "../../rollup.extras.mjs";
 
 // jsdom has no matchMedia, which the startup script reads as it runs
 const osPrefersDark = { dark: false };
@@ -199,34 +205,60 @@ describe("the startup script in index.html", () => {
 });
 
 describe("the font stylesheet in index.html", () => {
+    beforeEach(() => {
+        vi.stubGlobal("Worker", FakeWorker);
+    });
+
     afterEach(() => {
         vi.unstubAllGlobals();
         document.head.innerHTML = "";
     });
 
-    function linkedFonts(width: number, native: boolean): string {
-        configure(undefined, width, native);
-        new Function(generateFontsScript())();
-        return document.head.querySelector("link[rel=stylesheet]")!.getAttribute("href")!;
+    function stylesheets(script: string): string[] {
+        new Function(script)();
+        return [...document.head.querySelectorAll("link[rel=stylesheet]")].map(
+            (l) => l.getAttribute("href")!,
+        );
     }
 
     test("is linked from the html in a build without the new web UI", () => {
-        expect(fontsLink(false)).toContain("family=Manrope");
+        expect(fontsLink(false)).toContain(APP_FONTS_URL);
+        expect(
+            stylesheets(generateStartupScript({ chunks, version: "1.2.3", mobileLayout })),
+        ).toEqual([]);
     });
 
-    test("is left to the script in a build with the new web UI", () => {
+    test("is asked for by the startup script in a build with the new web UI", () => {
         expect(fontsLink(true)).toBe("");
-    });
-
-    test("is the one for the App tree which selectLayout goes on to pick", () => {
         for (const width of [767, 768]) {
             for (const native of [false, true]) {
                 document.head.innerHTML = "";
+                configure(undefined, width, native);
                 const web = selectLayout(undefined, "v3", width < 768, native) === "v3";
-                expect(linkedFonts(width, native), `${width}px, native ${native}`).toContain(
-                    web ? "family=Plus+Jakarta+Sans" : "family=Manrope",
-                );
+                expect(stylesheets(withWebLayout()), `${width}px, native ${native}`).toEqual([
+                    web ? WEB_FONTS_URL : APP_FONTS_URL,
+                ]);
             }
+        }
+    });
+});
+
+describe("the OC_WEB_LAYOUT a build sees", () => {
+    afterEach(() => {
+        vi.unstubAllEnvs();
+    });
+
+    test("is the flag in a web build", () => {
+        vi.stubEnv("OC_APP_TYPE", "");
+        vi.stubEnv("OC_WEB_LAYOUT", "v3");
+        expect(webLayoutFlag()).toBe("v3");
+    });
+
+    test("leaves the new web UI out of a native build whatever the flag says", () => {
+        vi.stubEnv("OC_WEB_LAYOUT", "v3");
+        for (const appType of ["android", "ios"]) {
+            vi.stubEnv("OC_APP_TYPE", appType);
+            expect(webLayoutFlag(), appType).toBe("");
         }
     });
 });

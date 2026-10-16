@@ -23,15 +23,17 @@ import { androidBundlePlugin } from "./rollup-plugin-android-bundle.mjs";
 import { ocPackageAliases } from "./oc-package-aliases.mjs";
 import {
     __dirname,
+    APP_FONTS_URL,
     copyFile,
     fontsLink,
     generateCspForScripts,
-    generateFontsScript,
     generateStartupScript,
     initEnv,
     manualChunks,
     maybeStringify,
     resetManualChunksCache,
+    WEB_FONTS_URL,
+    webLayoutFlag,
 } from "./rollup.extras.mjs";
 
 // this is a bit ridiculous but there we are ...
@@ -175,9 +177,11 @@ export default {
                 "OC_MOBILE_LAYOUT",
                 JSON.stringify(process.env.OC_MOBILE_LAYOUT),
             ),
-            // A build-time constant, not overridable at runtime: a build without the flag
-            // leaves the new web UI (src/web, @openchat/ui) out of the bundle altogether.
-            "import.meta.env.OC_WEB_LAYOUT": JSON.stringify(process.env.OC_WEB_LAYOUT ?? ""),
+            // A build-time constant, not overridable at runtime: a build without the flag (or a
+            // native build) leaves the new web UI (src/web, @openchat/ui) out of the bundle.
+            "import.meta.env.OC_WEB_LAYOUT": JSON.stringify(webLayoutFlag()),
+            "import.meta.env.OC_APP_FONTS_URL": JSON.stringify(APP_FONTS_URL),
+            "import.meta.env.OC_WEB_FONTS_URL": JSON.stringify(WEB_FONTS_URL),
             "import.meta.env.OC_OTA_UPDATES": override(
                 "OC_OTA_UPDATES",
                 JSON.stringify(process.env.OC_OTA_UPDATES),
@@ -331,7 +335,7 @@ export default {
                 // Goes ahead of the font stylesheet in the <head>, as a script placed after a
                 // stylesheet does not run until that stylesheet has loaded, but behind the
                 // entry's preloads, so that what has to run first is asked for first.
-                const webLayout = process.env.OC_WEB_LAYOUT === "v3";
+                const webLayout = webLayoutFlag() === "v3";
                 const startupScript = generateStartupScript({
                     chunks: files.js.filter((f) => f.type === "chunk"),
                     version,
@@ -345,7 +349,6 @@ export default {
                     `window.OC_WEBSITE_VERSION = "${version}";`,
                     `var parcelRequire;`,
                     analyticsBody,
-                    ...(webLayout ? [generateFontsScript()] : []),
                 ];
                 const csp = generateCspForScripts([startupScript, ...inlineScripts]);
                 otaCsp = generateCspForScripts([startupScript, ...inlineScripts], false, true);

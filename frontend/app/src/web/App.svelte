@@ -18,7 +18,7 @@
     import { handleUnhandledError } from "@utils/unhandledError";
     import { botState, OpenChat } from "@client";
     import { onMount, setContext } from "svelte";
-    import { _, getMessageFormatter, isLoading, json, locale } from "svelte-i18n";
+    import { _, isLoading, json, locale } from "svelte-i18n";
     import { addUiMessages, uiTranslate } from "./i18n";
     import Shell from "./shell/Shell.svelte";
 
@@ -31,7 +31,7 @@
     setContext<OpenChat>("client", client);
 
     setI18n({
-        t: (key, params) => uiTranslate(getMessageFormatter, $json, key, params, $locale ?? "en"),
+        t: (key, params) => uiTranslate($json, key, params, $locale ?? "en"),
         get locale() {
             return $locale ?? "en";
         },

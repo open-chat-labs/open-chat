@@ -9,32 +9,27 @@ import { createHtmlPlugin } from "vite-plugin-html";
 import dfxJson from "../../dfx.json";
 import {
     __dirname,
+    APP_FONTS_URL,
     fontsLink,
     generateCspForScripts,
-    generateFontsScript,
     initEnv,
     sassModulesAndMixins,
+    WEB_FONTS_URL,
+    webLayoutFlag,
 } from "./rollup.extras.mjs";
 import { ocPackageAliases } from "./oc-package-aliases.mjs";
 
 const version = `1000.0.${Date.now()}`;
+const inlineScripts = [`window.OC_WEBSITE_VERSION = "${version}";`];
 process.env.OC_WEBSITE_VERSION = version;
 
 initEnv();
 
+const webLayout = webLayoutFlag() === "v3";
+
 const isNativeIos = process.env.OC_APP_TYPE === "ios";
 const isNativeAndroid = process.env.OC_APP_TYPE === "android";
 const isNativeApp = isNativeIos || isNativeAndroid;
-
-// The new web UI doesn't handle the native apps' events yet (it never signals `svelteReady`, so
-// the native side would hold push and deep link events back for good), so native builds leave it
-// out whatever OC_WEB_LAYOUT says.
-const webLayoutFlag = isNativeApp ? "" : (process.env.OC_WEB_LAYOUT ?? "");
-const webLayout = webLayoutFlag === "v3";
-const inlineScripts = [
-    `window.OC_WEBSITE_VERSION = "${version}";`,
-    ...(webLayout ? [generateFontsScript()] : []),
-];
 // Dev server port — shared by web and native (Android/iOS) dev. Overridable
 // (OC_DEV_PORT) so e.g. the iOS dev flow can run alongside another dev server;
 // the hmr websocket below must follow it, not just the --port CLI flag.
@@ -157,7 +152,9 @@ export default defineConfig({
         "import.meta.env.OC_WEBSITE_VERSION": JSON.stringify(version),
         "import.meta.env.OC_SERVICE_WORKER_PATH": JSON.stringify(serviceWorkerPath),
         // A build-time constant (see rollup.config.mjs)
-        "import.meta.env.OC_WEB_LAYOUT": JSON.stringify(webLayoutFlag),
+        "import.meta.env.OC_WEB_LAYOUT": JSON.stringify(webLayoutFlag()),
+        "import.meta.env.OC_APP_FONTS_URL": JSON.stringify(APP_FONTS_URL),
+        "import.meta.env.OC_WEB_FONTS_URL": JSON.stringify(WEB_FONTS_URL),
     },
     server: {
         allowedHosts: ["host.docker.internal"],

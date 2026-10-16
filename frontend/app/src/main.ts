@@ -17,6 +17,7 @@ import {
     writeLayoutCssVariables,
     writeNativeCssVariables,
 } from "./theme/themes";
+import { linkFonts } from "./utils/fonts";
 import { selectLayout } from "./utils/layout";
 
 // Picks the app variant once at startup. The native Android build ships
@@ -28,9 +29,10 @@ import { selectLayout } from "./utils/layout";
 // and intentionally does not implement that native cold-start routing.
 //
 // A build with OC_WEB_LAYOUT=v3 mounts the new web UI (src/web) instead of the
-// v1 App on >=768px viewports, outside the native apps. It is opt-in per build while it is being built:
-// the flag is a build-time constant, so without it the condition below is
-// constant-false and the bundler leaves the web tree out of the build.
+// v1 App on >=768px viewports, outside the native apps. It is opt-in per build
+// while it is being built: the flag is a build-time constant, so without it the
+// condition below is constant-false and the bundler leaves the web tree out of
+// the build.
 //
 // The two trees are loaded with dynamic import() so that only the selected one
 // is downloaded and parsed. The decision is made synchronously before either
@@ -42,6 +44,8 @@ const layout = selectLayout(
     mobileWidth.value,
     isTauriApp(),
 );
+
+linkFonts(layout === "v3" ? import.meta.env.OC_WEB_FONTS_URL : import.meta.env.OC_APP_FONTS_URL);
 
 if (layout === "v2") {
     setNativeTheme();
