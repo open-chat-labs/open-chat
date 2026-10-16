@@ -14,7 +14,9 @@ on:
       - "**.wasm"
       # How the wasms the master runs test are built (by the Push canister wasms workflow)
       - "Dockerfile"
+      - ".dockerignore"
       - "scripts/docker-build-all-wasms.sh"
+      - ".github/workflows/push_canister_wasms.yaml"
       - "scripts/run-integration-tests.sh"
       - "scripts/generate-all-canister-wasms.sh"
       - "scripts/generate-test-wasms.sh"
@@ -69,8 +71,9 @@ jobs:
   integration_tests:
     name: run integration tests
     needs: wait_for_wasms
-    # Manual runs skip the wait, so this runs unless it failed
-    if: ${{ !cancelled() && !failure() }}
+    # Manual runs skip the wait. A wait which times out is cancelled rather than failed, so the
+    # result is checked rather than `!failure()`
+    if: ${{ !cancelled() && contains(fromJSON('["success", "skipped"]'), needs.wait_for_wasms.result) }}
     runs-on:
       - runs-on
       - cpu=16
