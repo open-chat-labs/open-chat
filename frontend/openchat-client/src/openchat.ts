@@ -151,6 +151,7 @@ import {
     type CkbtcMinterDepositInfo,
     type CkbtcMinterWithdrawalInfo,
     type CksolMinterDepositInfo,
+    type CksolMinterWithdrawalInfo,
     type ClaimDailyChitResponse,
     type DailyPuzzleConfig,
     type DailyPuzzleHintResponse,
@@ -362,6 +363,7 @@ import {
     type WebhookDetails,
     type WhitepaperRoute,
     type WithdrawBtcResponse,
+    type WithdrawSolResponse,
     type WithdrawCryptocurrencyResponse,
     type OCError,
     type ProposedProtectedAction,
@@ -7569,7 +7571,9 @@ export class OpenChat {
         to,
         amount,
         fee,
-    }: Withdrawal): Promise<WithdrawCryptocurrencyResponse | WithdrawBtcResponse> {
+    }: Withdrawal): Promise<
+        WithdrawCryptocurrencyResponse | WithdrawBtcResponse | WithdrawSolResponse
+    > {
         switch (route.kind) {
             case "ledger":
                 return this.#withdrawCryptocurrency({
@@ -7583,6 +7587,8 @@ export class OpenChat {
                 });
             case "btc":
                 return this.#withdrawBtc(to, amount);
+            case "sol":
+                return this.#withdrawSol(to, amount);
             case "one_sec":
                 return this.#withdrawViaOneSec(ledger, symbol, route.chain, to, amount);
         }
@@ -10478,6 +10484,29 @@ export class OpenChat {
         return response;
     }
 
+    async #withdrawSol(address: string, amount: bigint): Promise<WithdrawSolResponse> {
+        let pin: string | undefined = undefined;
+
+        if (pinNumberRequiredStore.value) {
+            pin = await this.#promptForCurrentPin("pinNumber.enterPinInfo");
+        }
+
+        const response = await this.#worker.send({
+            kind: "withdrawSol",
+            address,
+            amount,
+            pin,
+        });
+
+        if (response.kind === "error") {
+            const pinNumberFailure = pinNumberFailureFromError(response);
+            if (pinNumberFailure !== undefined) {
+                pinNumberFailureStore.set(pinNumberFailure);
+            }
+        }
+        return response;
+    }
+
     async #withdrawViaOneSec(
         ledger: string,
         tokenSymbol: string,
@@ -10545,6 +10574,10 @@ export class OpenChat {
         return this.#worker.send({
             kind: "cksolMinterDepositInfo",
         });
+    }
+
+    getCksolMinterWithdrawalInfo(): Promise<CksolMinterWithdrawalInfo> {
+        return this.#worker.send({ kind: "cksolMinterWithdrawalInfo" });
     }
 
     getCkbtcMinterWithdrawalInfo(amount: bigint): Promise<CkbtcMinterWithdrawalInfo> {

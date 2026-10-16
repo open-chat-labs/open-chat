@@ -7,7 +7,11 @@ import type {
     CkbtcMinterWithdrawalInfo,
     WithdrawBtcResponse,
 } from "./bitcoin";
-import type { CksolMinterDepositInfo } from "./solana";
+import type {
+    CksolMinterDepositInfo,
+    CksolMinterWithdrawalInfo,
+    WithdrawSolResponse,
+} from "./solana";
 import type {
     BotCommandResponse,
     BotDefinition,
@@ -484,10 +488,12 @@ export type WorkerRequest = Cloneable<
     | UpdateBtcBalance
     | UpdateSolBalance
     | WithdrawBtc
+    | WithdrawSol
     | WithdrawViaOneSec
     | GetCkbtcMinterDepositInfo
     | GetCkbtcMinterWithdrawalInfo
     | GetCksolMinterDepositInfo
+    | GetCksolMinterWithdrawalInfo
     | CurrentUserWebAuthnKey
     | LookupWebAuthnPubKey
     | SetCachedWebAuthnKey
@@ -1965,6 +1971,13 @@ type WithdrawBtc = {
     kind: "withdrawBtc";
 };
 
+type WithdrawSol = {
+    address: string;
+    amount: bigint;
+    pin: string | undefined;
+    kind: "withdrawSol";
+};
+
 type WithdrawViaOneSec = {
     kind: "withdrawViaOneSec";
     ledger: string;
@@ -1986,6 +1999,10 @@ type GetCkbtcMinterWithdrawalInfo = {
 
 type GetCksolMinterDepositInfo = {
     kind: "cksolMinterDepositInfo";
+};
+
+type GetCksolMinterWithdrawalInfo = {
+    kind: "cksolMinterWithdrawalInfo";
 };
 
 type CurrentUserWebAuthnKey = {
@@ -2788,10 +2805,12 @@ export type WorkerResults = ResultsByKind<{
     updateBtcBalance: boolean;
     updateSolBalance: boolean;
     withdrawBtc: WithdrawBtcResponse;
+    withdrawSol: WithdrawSolResponse;
     withdrawViaOneSec: WithdrawViaOneSecResponse;
     ckbtcMinterDepositInfo: CkbtcMinterDepositInfo;
     ckbtcMinterWithdrawalInfo: CkbtcMinterWithdrawalInfo;
     cksolMinterDepositInfo: CksolMinterDepositInfo;
+    cksolMinterWithdrawalInfo: CksolMinterWithdrawalInfo;
     currentUserWebAuthnKey: WebAuthnKeyFull | undefined;
     lookupWebAuthnPubKey: Uint8Array | undefined;
     setCachedWebAuthnKey: void;

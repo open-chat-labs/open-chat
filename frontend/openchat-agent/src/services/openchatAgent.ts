@@ -39,6 +39,7 @@ import type {
     CkbtcMinterDepositInfo,
     CkbtcMinterWithdrawalInfo,
     CksolMinterDepositInfo,
+    CksolMinterWithdrawalInfo,
     ClaimDailyChitResponse,
     ClaimPrizeResponse,
     CommunityCanisterCommunitySummaryUpdates,
@@ -217,6 +218,7 @@ import type {
     WaitAllResult,
     WalletConfig,
     WithdrawBtcResponse,
+    WithdrawSolResponse,
     WithdrawViaOneSecResponse,
     WithdrawCryptocurrencyResponse,
     VaultFileChunkResponse,
@@ -5446,6 +5448,29 @@ export class OpenChatAgent extends EventTarget {
         return minter.retrieveBtcWithApproval(address, amount);
     }
 
+    // Withdraws SOL straight from the user's wallet, as the user, since their canister can't spend
+    // from it. The ckSOL minter is approved to burn `amount` of ckSOL from the wallet, then sends
+    // that much SOL, less its withdrawal fee, to `address`. `pin` is checked before the approval (see
+    // `approveToPull`).
+    async withdrawSol(
+        address: string,
+        amount: bigint,
+        pin: string | undefined,
+    ): Promise<WithdrawSolResponse> {
+        const minter = this._cksolMinterClient.get();
+        const error = await this.approveToPull(
+            { owner: Principal.fromText(minter.canisterId) },
+            minter.ledger,
+            amount,
+            this.ledgerFee(minter.ledger),
+            pin,
+        );
+        if (error !== undefined) {
+            return error;
+        }
+        return minter.withdrawSol(address, amount);
+    }
+
     // Withdraws a token to an EVM chain via OneSec straight from the user's wallet, as the user, since
     // their canister can't spend from it. OneSec is approved to take `amount` of the token from the
     // wallet, then sends that much, less its fees, to `address` on `chain`. `pin` is checked before
@@ -5483,6 +5508,10 @@ export class OpenChatAgent extends EventTarget {
 
     getCksolMinterDepositInfo(): Promise<CksolMinterDepositInfo> {
         return this._cksolMinterClient.get().getDepositInfo();
+    }
+
+    getCksolMinterWithdrawalInfo(): Promise<CksolMinterWithdrawalInfo> {
+        return this._cksolMinterClient.get().getWithdrawalInfo();
     }
 
     getCkbtcMinterWithdrawalInfo(amount: bigint): Promise<CkbtcMinterWithdrawalInfo> {

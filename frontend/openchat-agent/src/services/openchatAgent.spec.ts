@@ -6,6 +6,7 @@ import {
     indexedUserId,
     LEDGER_CANISTER_CHAT,
     LEDGER_CANISTER_CKBTC,
+    LEDGER_CANISTER_CKSOL,
     Lazy,
     spenderSubaccount,
     Stream,
@@ -24,6 +25,7 @@ import {
 } from "@shared";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { CkbtcMinterClient } from "./ckbtcMinter/ckbtcMinter.client";
+import { CksolMinterClient } from "./cksolMinter/cksolMinter.client";
 import { OneSecMinterClient } from "./oneSecMinter/oneSecMinter.client";
 import { OpenChatAgent } from "./openchatAgent";
 
@@ -863,10 +865,12 @@ describe("OpenChatAgent withdrawing from the user's wallet", () => {
     });
 });
 
-// BTC and OneSec withdrawals, which the user makes from their wallet by approving the minter to
+// BTC, SOL and OneSec withdrawals, which the user makes from their wallet by approving the minter to
 // take the amount, then having it send that much on
-describe("OpenChatAgent withdrawing BTC and via OneSec", () => {
+describe("OpenChatAgent withdrawing BTC, SOL and via OneSec", () => {
     const CKBTC_MINTER = Principal.fromText("mqygn-kiaaa-aaaar-qaadq-cai");
+    const CKSOL_MINTER = Principal.fromText("lh22c-kyaaa-aaaar-qb5nq-cai");
+    const CKSOL_FEE = 500n;
     const ONE_SEC_MINTER = Principal.fromText("5okwm-giaaa-aaaar-qbn6a-cai");
     const USDC_LEDGER = "53nhb-haaaa-aaaar-qbn5q-cai";
     const USDC_FEE = 10_000n;
@@ -903,6 +907,7 @@ describe("OpenChatAgent withdrawing BTC and via OneSec", () => {
         agent._registryValue = {
             tokenDetails: [
                 { ledger: LEDGER_CANISTER_CKBTC, transferFee: FEE },
+                { ledger: LEDGER_CANISTER_CKSOL, transferFee: CKSOL_FEE },
                 { ledger: USDC_LEDGER, transferFee: USDC_FEE },
             ],
         };
@@ -924,6 +929,11 @@ describe("OpenChatAgent withdrawing BTC and via OneSec", () => {
             "retrieve_btc_with_approval",
             { Ok: { block_index: 1n } },
         );
+        agent._cksolMinterClient = minterClient(
+            new CksolMinterClient(new AnonymousIdentity(), httpAgent),
+            "withdraw_sol",
+            { Ok: { block_index: 1n } },
+        );
         agent._oneSecMinterClient = minterClient(
             new OneSecMinterClient(new AnonymousIdentity(), httpAgent, ONE_SEC_MINTER.toText()),
             "transfer_icp_to_evm",
@@ -932,6 +942,7 @@ describe("OpenChatAgent withdrawing BTC and via OneSec", () => {
     });
 
     const withdrawBtc = () => agent.withdrawBtc("bc1qaddress", 60_000n, PIN);
+    const withdrawSol = () => agent.withdrawSol("solanaaddress", 20_000_000n, PIN);
     const withdrawUsdc = (symbol = "USDC") =>
         agent.withdrawViaOneSec(USDC_LEDGER, symbol, "Base", "0xabc", 5_000_000n, PIN);
 
@@ -943,6 +954,23 @@ describe("OpenChatAgent withdrawing BTC and via OneSec", () => {
         ]);
         expect(minterCalls).toEqual([
             { address: "bc1qaddress", amount: 60_000n, from_subaccount: [] },
+        ]);
+    });
+
+    test("SOL is withdrawn by approving the ckSOL minter to burn the amount, once the PIN is checked", async () => {
+        expect(await withdrawSol()).toEqual({ kind: "success" });
+        expect(pinChecks).toEqual([PIN]);
+        expect(approvals).toEqual([
+            [
+                LEDGER_CANISTER_CKSOL,
+                { owner: CKSOL_MINTER },
+                20_000_000n,
+                CKSOL_FEE,
+                APPROVAL_VALIDITY_MS,
+            ],
+        ]);
+        expect(minterCalls).toEqual([
+            { address: "solanaaddress", amount: 20_000_000n, from_subaccount: [] },
         ]);
     });
 
@@ -966,6 +994,7 @@ describe("OpenChatAgent withdrawing BTC and via OneSec", () => {
 
     test.each([
         ["BTC", withdrawBtc],
+        ["SOL", withdrawSol],
         ["USDC", () => withdrawUsdc()],
     ])("%s isn't withdrawn with the wrong PIN", async (_, withdraw) => {
         pinCheckResponse = PIN_INCORRECT;
@@ -977,6 +1006,7 @@ describe("OpenChatAgent withdrawing BTC and via OneSec", () => {
 
     test.each([
         ["BTC", withdrawBtc],
+        ["SOL", withdrawSol],
         ["USDC", () => withdrawUsdc()],
     ])("%s isn't withdrawn if the wallet can't cover it", async (_, withdraw) => {
         approvalResponse = "insufficient_funds";

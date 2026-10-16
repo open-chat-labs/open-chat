@@ -1,16 +1,70 @@
 // Copied from https://github.com/dfinity/cksol/blob/main/minter/cksol_minter.did, keeping only the
 // fields read here, so that a change to any other field can't break decoding
 
+// A Solana address, base58-encoded
+type Address = text;
+
 // Smallest denomination of SOL, the native token on Solana,
 // i.e. 1_000_000_000 Lamports is 1 SOL
 type Lamport = nat64;
 
+// The index of the ckSOL ledger's burn transaction for a withdrawal
+type LedgerBurnIndex = nat64;
+
 // Information about the ckSOL minter canister.
 type MinterInfo = record {
     minimum_deposit_amount : Lamport;
+    minimum_withdrawal_amount : Lamport;
+    withdrawal_fee : Lamport;
 };
+
+type WithdrawSolArgs = record {
+    // The subaccount to burn ckSOL from.
+    from_subaccount : opt blob;
+    // The amount of ckSOL in Lamports that the client wants to withdraw.
+    amount : Lamport;
+    // The address to which the ckSOL minter should deposit Solana tokens.
+    address : Address;
+};
+
+type WithdrawSolOk = record {
+    // Returns the burn transaction index corresponding to the withdrawal.
+    // You can use this index to query the withdrawal status.
+    block_index : LedgerBurnIndex
+};
+
+type WithdrawSolError = variant {
+    // The minter is already processing another retrieval request for the same
+    // principal.
+    AlreadyProcessing;
+    // The withdrawal amount is too low.
+    ValueTooSmall : record {
+        // The minimum withdrawal amount.
+        minimum_withdrawal_amount : Lamport;
+        // The requested withdrawal amount.
+        withdrawal_amount : Lamport;
+    };
+    // The minter failed to parse the destination address.
+    MalformedAddress : Address;
+    // The destination address is not a valid withdrawal destination.
+    // The payload contains a human-readable message explaining why the destination was rejected.
+    InvalidDestination : text;
+    // The ckSOL balance of the withdrawal account is too low.
+    InsufficientFunds : record { balance : Lamport };
+    // The minter is not approved to transfer the requested amount.
+    InsufficientAllowance : record { allowance : Lamport };
+    // The minter is overloaded, retry the request.
+    // The payload contains a human-readable message explaining what caused the unavailability.
+    TemporarilyUnavailable : text;
+};
+
+// The result of a call to the `withdraw_sol` endpoint.
+type WithdrawSolResult = variant { Ok : WithdrawSolOk; Err : WithdrawSolError };
 
 service : {
     // Returns information about the ckSOL minter canister.
     get_minter_info: () -> (MinterInfo) query;
+
+    // Submits a request to convert ckSOL to Solana.
+    withdraw_sol : (WithdrawSolArgs) -> (WithdrawSolResult);
 };
