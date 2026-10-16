@@ -14,6 +14,7 @@
   import AuthDialog from '../features/components/AuthDialog.svelte';
   import { HeroBackground, type HeroStyle } from './heroBackground';
   import { PageAuthState, type PageAuth } from './pageAuth.svelte';
+  import { rove } from '../lib/behaviours/rove';
   import { cssUrl } from '../lib/cssUrl';
   import { LEARN_PAGES, learnHashHref, type LearnPage } from './learnContent';
   import { PAGE_ACCENTS, type LandingCommunity, type PageAccent, type PageMode } from './types';
@@ -108,6 +109,8 @@
   let accentOpen = $state(false);
   let learnMenu: HTMLElement | undefined = $state();
   let accentMenu: HTMLElement | undefined = $state();
+  let learnButton: HTMLButtonElement | undefined = $state();
+  let accentButton: HTMLButtonElement | undefined = $state();
   let canvas: HTMLCanvasElement | undefined = $state();
   let header: HTMLElement | undefined = $state();
   let headerHeight = $state(0);
@@ -127,8 +130,21 @@
   function pickAccent(next: PageAccent) {
     accentOverride = next;
     accentOpen = false;
+    accentButton?.focus();
     onAccentChange?.(next);
   }
+
+  // the menus work as menu buttons: an opened menu takes focus (the picked accent, else the first item), the arrows,
+  // Home and End move through it, Esc closes it back onto its button, and tabbing away closes it
+  const takeFocus = (menu: HTMLElement) => {
+    (menu.querySelector<HTMLElement>('[aria-checked="true"]') ?? menu.querySelector<HTMLElement>('[role^="menuitem"]'))?.focus();
+  };
+  const roveMenu = (e: KeyboardEvent & { currentTarget: HTMLElement }) => rove(e, '[role^="menuitem"]', 'v');
+  const leaving = (e: FocusEvent & { currentTarget: HTMLElement }) => {
+    const to = e.relatedTarget as Node | null;
+    // no relatedTarget: focus went nowhere in particular (e.g. a click Safari doesn't focus); the press-outside rule covers that
+    return !!to && !e.currentTarget.contains(to);
+  };
 
   function openAuth(kind: 'login' | 'signup') {
     learnOpen = accentOpen = false;
@@ -143,7 +159,11 @@
       if (accentOpen && !accentMenu?.contains(target)) accentOpen = false;
     };
     const esc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && (learnOpen || accentOpen)) learnOpen = accentOpen = false;
+      if (e.key !== 'Escape' || !(learnOpen || accentOpen)) return;
+      const button = learnOpen ? learnButton : accentButton;
+      const inside = (learnOpen ? learnMenu : accentMenu)?.contains(document.activeElement);
+      learnOpen = accentOpen = false;
+      if (inside) button?.focus();
     };
     document.addEventListener('pointerdown', away, true);
     document.addEventListener('keydown', esc);
@@ -197,8 +217,9 @@
         {#each SECTIONS as s}
           <a class="nav-link section-link" href="#{s}">{t(`ui.landing.nav.${s}`)}</a>
         {/each}
-        <div class="menu-anchor" bind:this={learnMenu}>
+        <div class="menu-anchor" bind:this={learnMenu} onfocusout={(e) => leaving(e) && (learnOpen = false)}>
           <button
+            bind:this={learnButton}
             class="nav-link learn-button"
             class:open={learnOpen}
             aria-haspopup="menu"
@@ -209,7 +230,7 @@
             }}>{t('ui.landing.nav.learn')}<span class="chev"><Icon icon="chevron-down" size={12} /></span></button
           >
           {#if learnOpen}
-            <div class="menu learn-menu" role="menu">
+            <div class="menu learn-menu" role="menu" tabindex="-1" use:takeFocus onkeydown={roveMenu}>
               {#each learnPages as p}
                 <a class="learn-item" href={learnLink(p)} role="menuitem" onclick={() => (learnOpen = false)}>
                   <span class="learn-label">{t(`ui.learn.tabs.${p}`)}</span>
@@ -221,8 +242,9 @@
         </div>
       </nav>
       <div class="theme">
-        <div class="menu-anchor" bind:this={accentMenu}>
+        <div class="menu-anchor" bind:this={accentMenu} onfocusout={(e) => leaving(e) && (accentOpen = false)}>
           <button
+            bind:this={accentButton}
             class="theme-button accent-button"
             class:open={accentOpen}
             aria-haspopup="menu"
@@ -234,7 +256,7 @@
             }}><span class="accent-dot"></span><span class="chev"><Icon icon="chevron-down" size={12} /></span></button
           >
           {#if accentOpen}
-            <div class="menu accent-menu" role="menu">
+            <div class="menu accent-menu" role="menu" tabindex="-1" use:takeFocus onkeydown={roveMenu}>
               <span class="menu-heading">{t('ui.landing.theme.accentHeading')}</span>
               {#each PAGE_ACCENTS as a}
                 <button class="accent-item" role="menuitemradio" aria-checked={a === shownAccent} onclick={() => pickAccent(a)}>

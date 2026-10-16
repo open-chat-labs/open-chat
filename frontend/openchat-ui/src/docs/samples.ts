@@ -1222,12 +1222,15 @@ Object.assign(samples, {
 // review-groups: GroupPanel names its gate assets
 Object.assign(samples.GroupPanel, { gateTokens, gateSystems });
 
-// Pages: the docs stand in for the app's routes (in-page anchors, so nothing navigates away), its featured
-// communities and its auth (AuthDialog's demo handlers; entering the app is a no-op here)
-const pageLinks = { homeHref: '#', exploreHref: '#', learnPageHref: () => '#' };
+// Pages: the docs stand in for the app's routes ('#' placeholders; the page frames in Features.svelte stop every link,
+// these and the pages' own #section links, from navigating), its featured communities and its auth (AuthDialog's demo
+// handlers; entering the app is a no-op here). Learn's routing props (page, post, learnPageHref, onNavigate) are set
+// where it's rendered.
+const pageLinks = { homeHref: '#', exploreHref: '#' };
 Object.assign(samples, {
   Landing: {
     ...pageLinks,
+    learnPageHref: () => '#',
     communities: [
       { name: 'OpenChat', about: 'News, feature requests and support from the team building it.', members: 62504, color: 'amber' },
       { name: 'Gamers Lounge', about: 'LFG, tournaments and weekly game nights.', members: 44310, color: 'blue' },

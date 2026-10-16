@@ -2,8 +2,9 @@
 // real work through the same callbacks AuthDialog takes, except that onMethod and onSignup must return a promise: when
 // it resolves, the dialog closes and the page enters the app (onEnterApp() when the host gives one, else appHref). A
 // callback that returns nothing never counts as signed in.
-// An email link only sends the link; entering happens when the person follows it. A result that arrives after the
-// dialog was closed (or reopened) is stale and does nothing.
+// An email link only sends the link; entering happens when the person follows it. A sign-in that resolves after the
+// dialog was closed still enters (the person is signed in either way), but the page enters at most once, however many
+// attempts across reopened dialogs resolve.
 import type { ComponentProps } from 'svelte';
 import type AuthDialog from '../features/components/AuthDialog.svelte';
 import type { AuthMethod, SignupDetails } from '../features/components/AuthDialog.svelte';
@@ -22,23 +23,21 @@ const isPromise = (v: unknown): v is Promise<unknown> => typeof (v as Promise<un
 
 export class PageAuthState {
   kind = $state<'login' | 'signup' | null>(null);
-  // bumped on every open and close, so a host call that settles later knows whether its dialog is still the one showing
-  private session = 0;
+  private entered = false;
 
   constructor(private props: () => { auth?: PageAuth; onEnterApp?: () => void; appHref: string }) {}
 
   open = (kind: 'login' | 'signup') => {
-    this.session++;
     this.kind = kind;
   };
 
   close = () => {
-    this.session++;
     this.kind = null;
   };
 
-  private enter(session: number) {
-    if (session !== this.session) return;
+  private enter() {
+    if (this.entered) return;
+    this.entered = true;
     this.close();
     const { onEnterApp, appHref } = this.props();
     if (onEnterApp) onEnterApp();
@@ -55,21 +54,19 @@ export class PageAuthState {
       onClose: this.close,
       onMethod: onMethod
         ? async (method, kind) => {
-            const session = this.session;
             const pending = onMethod(method, kind);
             // a plain JS host can still return nothing; that has signed no one in
             if (!isPromise(pending)) return;
             await pending;
-            this.enter(session);
+            this.enter();
           }
         : undefined,
       onSignup: onSignup
         ? async (details) => {
-            const session = this.session;
             const pending = onSignup(details);
             if (!isPromise(pending)) return;
             await pending;
-            this.enter(session);
+            this.enter();
           }
         : undefined,
     };

@@ -10,7 +10,7 @@ export type LearnDocPage = Extract<LearnPage, 'whitepaper' | 'architecture'>;
 export const LEARN_PAGES: LearnPage[] = ['roadmap', 'whitepaper', 'architecture', 'blog', 'faq'];
 
 export interface LearnDocSection {
-  /** Anchor id, unique within the doc. */
+  /** Unique within the doc. Rendered as id="learn-<id>" (prefixed, so it can't clash with the host page's ids). */
   id: string;
   title: string;
   paras: string[];

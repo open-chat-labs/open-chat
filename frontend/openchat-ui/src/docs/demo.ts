@@ -20,3 +20,12 @@ export function previewSize(name: string): { width: string; height: string } {
   const p = byName.get(name)?.preview;
   return { width: px(p?.width, '100%'), height: px(p?.height, 'auto') };
 }
+
+/**
+ * For a click handler on the frame around a whole page (Landing, Learn): its links stand in for the host's routes, so
+ * none may move the docs window or add a history entry. Runs as the click bubbles out of the page, after the page's
+ * own handlers (Learn's onNavigate still sees the click).
+ */
+export function keepLinksInFrame(e: MouseEvent) {
+  if ((e.target as Element | null)?.closest?.('a[href]')) e.preventDefault();
+}

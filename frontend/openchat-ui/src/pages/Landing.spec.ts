@@ -191,6 +191,54 @@ describe('Landing', () => {
     expect(source).toMatch(/\.band\[id\] \{\s*scroll-margin-top: var\(--header-h, 69px\);/);
   });
 
+  test('the menus work from the keyboard: an opened menu takes focus, the arrows move through it, Esc returns to its button', () => {
+    show();
+    const key = (k: string) => {
+      document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true }));
+      flushSync();
+    };
+    const focused = () => document.activeElement?.textContent;
+    click(q('.learn-button'));
+    const items = all('.learn-item').map((i) => i.textContent);
+    expect(focused()).toBe(items[0]);
+    key('ArrowDown');
+    expect(focused()).toBe(items[1]);
+    key('End');
+    expect(focused()).toBe(items[items.length - 1]);
+    key('ArrowDown');
+    expect(focused()).toBe(items[0]);
+    key('ArrowUp');
+    expect(focused()).toBe(items[items.length - 1]);
+    key('Home');
+    expect(focused()).toBe(items[0]);
+    key('Escape');
+    expect(q('.learn-menu')).toBeNull();
+    expect(document.activeElement).toBe(q('.learn-button'));
+    // the accent menu opens on the picked accent; picking one returns to the button
+    click(q('.accent-button'));
+    expect(document.activeElement?.getAttribute('aria-checked')).toBe('true');
+    expect(focused()).toContain('Pink');
+    key('ArrowDown');
+    expect(focused()).toContain('Orange');
+    click(document.activeElement);
+    expect(root().dataset.accent).toBe('orange');
+    expect(document.activeElement).toBe(q('.accent-button'));
+  });
+
+  test('tabbing out of an open menu closes it', () => {
+    show();
+    click(q('.learn-button'));
+    q('.learn-item')!.dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: q('.accent-button') }));
+    flushSync();
+    expect(q('.learn-menu')).toBeNull();
+    click(q('.learn-button'));
+    // moving within the menu keeps it open
+    const [first, second] = all('.learn-item');
+    first.dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: second }));
+    flushSync();
+    expect(q('.learn-menu')).not.toBeNull();
+  });
+
   test('menus close on Esc and on a press outside, not on a press inside', () => {
     show();
     click(q('.learn-button'));
@@ -240,18 +288,28 @@ describe('Landing', () => {
       expect(dialog()).not.toBeNull();
     });
 
-    test('a sign-in that finishes after the dialog was closed is stale', async () => {
-      const d = deferred();
+    test('a sign-in that finishes after the dialog was closed still enters the app, and only once across reopened dialogs', async () => {
+      const first = deferred();
+      const second = deferred();
+      const onMethod = vi.fn().mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise);
       const onEnterApp = vi.fn();
-      show({ auth: { onMethod: () => d.promise }, onEnterApp });
+      show({ auth: { onMethod }, onEnterApp });
       click(q('.sign-in'));
       click(passkey());
       document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
       flushSync();
       expect(dialog()).toBeNull();
-      d.resolve();
+      // reopened, and a second attempt started while the first is still out
+      click(q('.sign-in'));
+      click(passkey());
+      expect(onMethod).toHaveBeenCalledTimes(2);
+      first.resolve();
       await settle();
-      expect(onEnterApp).not.toHaveBeenCalled();
+      expect(onEnterApp).toHaveBeenCalledOnce();
+      expect(dialog()).toBeNull();
+      second.resolve();
+      await settle();
+      expect(onEnterApp).toHaveBeenCalledOnce();
     });
 
     test('Create account opens the sign-up form; a created account enters the app', async () => {

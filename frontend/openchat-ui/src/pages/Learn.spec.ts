@@ -98,11 +98,28 @@ describe('Learn', () => {
       expect(onNavigate).not.toHaveBeenCalled();
     });
 
-    test("a tab click keeps the host router's history state on the new entry", () => {
+    test("a tab click makes its own entry, as the link would, and leaves the host router's state on the one it was on", async () => {
+      const onNavigate = vi.fn();
       history.replaceState({ router: 7 }, '', '/learn');
-      show();
+      show({ onNavigate });
+      const entries = history.length;
+      // let hashchanges still queued from earlier tests' clicks fire first
+      await new Promise((r) => setTimeout(r, 0));
+      const hashchange = vi.fn();
+      window.addEventListener('hashchange', hashchange);
+      onTestFinished(() => window.removeEventListener('hashchange', hashchange));
       click(tab('FAQs'));
-      expect([location.hash, history.state]).toEqual(['#faq', { router: 7 }]);
+      // a fresh entry has no state (null; undefined in jsdom)
+      expect([location.hash, history.state ?? null, history.length]).toEqual(['#faq', null, entries + 1]);
+      // a host router sees the hashchange; Learn's own read of it finds FAQs already showing, so nothing runs twice
+      await new Promise((r) => setTimeout(r, 0));
+      flushSync();
+      expect([hashchange.mock.calls.length, current(), onNavigate.mock.calls.length]).toEqual([1, 'FAQs', 1]);
+      const back = new Promise((r) => window.addEventListener('popstate', r, { once: true }));
+      history.back();
+      await back;
+      flushSync();
+      expect([history.state, current()]).toEqual([{ router: 7 }, 'Roadmap']);
     });
 
     test('back / forward and an edited hash follow the URL', () => {
@@ -387,9 +404,13 @@ describe('Learn', () => {
       if (had) Object.defineProperty(Element.prototype, 'scrollIntoView', had);
       else delete (Element.prototype as Partial<Element>).scrollIntoView;
     });
+    // the host page has its own element with a content section's id
+    const hosts = document.body.insertBefore(Object.assign(document.createElement('div'), { id: 'tokenomics' }), document.body.firstChild);
+    onTestFinished(() => hosts.remove());
     show({ page: 'whitepaper' });
     click(all('.toc-item')[3]);
     expect(scrolled).toHaveBeenCalledWith({ behavior, block: 'start' });
-    expect(scrolled.mock.contexts[0]).toBe(document.getElementById('tokenomics'));
+    expect(scrolled.mock.contexts[0]).toBe(q('.doc-section#learn-tokenomics'));
+    expect(document.querySelectorAll('[id="tokenomics"]')).toHaveLength(1);
   });
 });

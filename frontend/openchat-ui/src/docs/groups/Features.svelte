@@ -22,7 +22,7 @@
   } from '../../features/index';
   import * as F from '../../features/index';
   import { Landing, Learn, type LearnPage, type PageAccent, type PageMode } from '../../pages/index';
-  import { demoProps, previewSize } from '../demo';
+  import { demoProps, keepLinksInFrame, previewSize } from '../demo';
   import type { GroupMessage } from '../../lib/types';
 
   interface Props {
@@ -595,7 +595,9 @@
 
 <Section {...sec(features, 'pages-landing')}>
   <Frame label="Landing · scrolls inside the frame; sign in / create account open the real dialog" style="justify-content: center">
-    <div class="screen page-frame">
+    <!-- only stops the page's link clicks, which keep their own keyboard handling -->
+    <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+    <div class="screen page-frame" onclick={keepLinksInFrame}>
       <svelte:boundary>
         <Landing {...demoProps('Landing')} {mode} {accent} />
         {#snippet failed(e)}<pre class="demo-error">{String((e as Error)?.message ?? e)}</pre>{/snippet}
@@ -606,7 +608,9 @@
 
 <Section {...sec(features, 'pages-learn')}>
   <Frame label="Learn · routed by the host (page / post / onNavigate)" style="justify-content: center">
-    <div class="screen page-frame">
+    <!-- only stops the page's link clicks, which keep their own keyboard handling -->
+    <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+    <div class="screen page-frame" onclick={keepLinksInFrame}>
       <svelte:boundary>
         <Learn
           {...demoProps('Learn')}

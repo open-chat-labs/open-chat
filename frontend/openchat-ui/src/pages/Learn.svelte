@@ -142,8 +142,9 @@
     e.preventDefault();
     fromHash = { page: p, post: slug };
     const hash = learnHashHref('', p, slug);
-    // keeps the entry's state: a host router may have put its own there
-    if (location.hash !== hash) history.pushState(history.state, '', hash);
+    // a fragment navigation, as the link itself would make: the browser adds the entry (the current one keeps its state)
+    // and a host router sees the hashchange. Learn's own hashchange read then finds the sub-page already showing.
+    if (location.hash !== hash) location.hash = hash;
     onNavigate?.(p, slug);
     window.scrollTo?.(0, 0);
   }
@@ -153,8 +154,12 @@
     else faqOpen[key] = !faqOpen[key];
   }
 
-  function jumpTo(id: string) {
-    document.getElementById(id)?.scrollIntoView?.({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
+  // the open doc's sections, for the index: looked up here rather than by id in the document, where the host's own
+  // ids could match the content's
+  const sectionEls: HTMLElement[] = $state([]);
+
+  function jumpTo(i: number) {
+    sectionEls[i]?.scrollIntoView?.({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
   }
 
   // the hash routes only while the host doesn't set `page`, which it may start or stop doing after mount
@@ -199,7 +204,7 @@
         <aside class="toc">
           <span class="toc-heading">{t('ui.learn.onThisPage')}</span>
           {#each doc.sections as s, i}
-            <button class="toc-item" onclick={() => jumpTo(s.id)}><span class="num">{String(i + 1).padStart(2, '0')}</span>{s.title}</button>
+            <button class="toc-item" onclick={() => jumpTo(i)}><span class="num">{String(i + 1).padStart(2, '0')}</span>{s.title}</button>
           {/each}
         </aside>
         <article class="doc-body">
@@ -216,7 +221,7 @@
             </div>
           {/if}
           {#each doc.sections as sec, i}
-            <section class="doc-section" id={sec.id}>
+            <section class="doc-section" id="learn-{sec.id}" bind:this={sectionEls[i]}>
               <h2 class="h2"><span class="h2-num">{String(i + 1).padStart(2, '0')}</span>{sec.title}</h2>
               {#each sec.paras as p}<p class="para">{p}</p>{/each}
               {#if sec.figure === 'allocation' && doc.allocation?.length}
