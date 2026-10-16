@@ -21,8 +21,21 @@
     ThreadPanel, VideoTile,
   } from '../../features/index';
   import * as F from '../../features/index';
-  import { demoProps, previewSize } from '../demo';
+  import { Landing, Learn, type LearnPage, type PageAccent, type PageMode } from '../../pages/index';
+  import { demoProps, keepLinksInFrame, previewSize } from '../demo';
   import type { GroupMessage } from '../../lib/types';
+
+  interface Props {
+    /** The docs' theme, passed to the pages (each page is its own theme root). */
+    mode: PageMode;
+    accent: PageAccent;
+  }
+
+  let { mode, accent }: Props = $props();
+
+  // Learn shows how a host routes it: the sub-page lives here, as it would in the app's router
+  let learnPage = $state<LearnPage>('roadmap');
+  let learnPost = $state<string | undefined>();
 
   let selectedRow = $state(2);
   let picked = $state<string[]>(['🔥']);
@@ -580,6 +593,43 @@
   {@render openers(['AchievementsDialog', 'ChitDialog', 'StreakInsuranceDialog', 'LeaderboardDialog', 'MemeFighterDialog'])}
 </Section>
 
+<Section {...sec(features, 'pages-landing')}>
+  <Frame label="Landing · scrolls inside the frame; sign in / create account open the real dialog" style="justify-content: center">
+    <!-- only stops the page's link clicks, which keep their own keyboard handling -->
+    <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+    <div class="screen page-frame" onclick={keepLinksInFrame}>
+      <svelte:boundary>
+        <Landing {...demoProps('Landing')} {mode} {accent} />
+        {#snippet failed(e)}<pre class="demo-error">{String((e as Error)?.message ?? e)}</pre>{/snippet}
+      </svelte:boundary>
+    </div>
+  </Frame>
+</Section>
+
+<Section {...sec(features, 'pages-learn')}>
+  <Frame label="Learn · routed by the host (page / post / onNavigate)" style="justify-content: center">
+    <!-- only stops the page's link clicks, which keep their own keyboard handling -->
+    <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+    <div class="screen page-frame" onclick={keepLinksInFrame}>
+      <svelte:boundary>
+        <Learn
+          {...demoProps('Learn')}
+          {mode}
+          {accent}
+          page={learnPage}
+          post={learnPost}
+          learnPageHref={() => '#'}
+          onNavigate={(p: LearnPage, post?: string) => {
+            learnPage = p;
+            learnPost = post;
+          }}
+        />
+        {#snippet failed(e)}<pre class="demo-error">{String((e as Error)?.message ?? e)}</pre>{/snippet}
+      </svelte:boundary>
+    </div>
+  </Frame>
+</Section>
+
 {#if openDialog}
   {@const D = featureComponents[openDialog]}
   <svelte:boundary>
@@ -621,6 +671,8 @@
   .screen.contain { transform: translateZ(0); }
   .toast-stage { width: 100%; height: 96px; }
   .screen.wide { width: 100%; height: 800px; }
+  /* the pages are full-height screens: they scroll inside the frame, so their sticky headers stick to it */
+  .page-frame { display: block; width: 100%; height: 760px; overflow: auto; border-radius: var(--radius-lg); box-shadow: inset 0 0 0 1px var(--line-1); }
   .demo-error { margin: 0; padding: 12px 14px; border-radius: 10px; background: var(--status-danger-soft); color: var(--status-danger); font: 500 12px/1.5 var(--font-mono); white-space: pre-wrap; }
   .dialog-error { position: fixed; inset-block-end: 24px; inset-inline-start: 50%; z-index: var(--z-modal); }
 </style>

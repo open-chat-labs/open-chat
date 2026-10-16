@@ -13,6 +13,7 @@
   import SegmentedTabs from './SegmentedTabs.svelte';
   import TokenAvatar from './TokenAvatar.svelte';
   import { useT } from '../i18n';
+  import { cssUrl } from '../cssUrl';
 
   type AttachKind = 'media' | 'file' | 'poll' | 'prize' | 'crypto' | 'swap' | 'memeFighter';
 
@@ -645,7 +646,7 @@
     {#if att?.type === 'media'}
       <div class="tray">
         {#each att.items as item, i}
-          <div class="thumb" style:background={item.src && item.kind === 'image' ? `center/cover no-repeat url(${item.src})` : item.bg || 'var(--surface-2,#15151b)'}>
+          <div class="thumb" style:background={item.src && item.kind === 'image' ? `center/cover no-repeat ${cssUrl(item.src)}` : item.bg || 'var(--surface-2,#15151b)'}>
             {#if item.kind === 'video' && item.src}<video src={item.src} muted playsinline preload="metadata"></video>{/if}
             {#if item.kind === 'video'}<span class="duration"><span class="duration-icon"></span>{item.dur || t('ui.messageComposer.video')}</span>{/if}
             <span class="thumb-remove" onclick={() => onRemoveMediaItem?.(i)} role="button" tabindex="0" aria-label={t(item.kind === 'video' ? 'ui.messageComposer.removeVideo' : 'ui.messageComposer.removePhoto', { n: i + 1 })} title={t('ui.common.remove')}

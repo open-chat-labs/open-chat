@@ -251,7 +251,7 @@
       {:else if group === 'general'}
         <General />
       {:else if group === 'features'}
-        <Features />
+        <Features {mode} {accent} />
       {:else}
         <Api />
       {/if}
@@ -268,8 +268,10 @@
   :global(::-webkit-scrollbar-thumb) { border-radius: 99px; background: rgba(128, 128, 140, 0.35); }
 
   .root { box-sizing: border-box; min-height: 100vh; padding: 16px 32px 88px; padding-inline-start: 284px; background: var(--bg); color: var(--ink); font-family: var(--font-sans); }
-  .root :global(a) { color: var(--accent); }
-  .root :global(a:hover) { color: var(--accent-hover); }
+  /* a fallback link colour, so as weak as a bare `a` (:where): a component's own link colour always wins. Not inside
+     the pages (Landing, Learn): they colour their own links */
+  :where(.root) :global(a:where(:not([data-oc-page] a))) { color: var(--accent); }
+  :where(.root) :global(a:where(:not([data-oc-page] a)):hover) { color: var(--accent-hover); }
 
   nav { position: fixed; inset-inline-start: 0; top: 0; bottom: 0; z-index: var(--z-sticky); box-sizing: border-box; width: 252px; padding: 26px 16px 0; overflow: hidden; display: flex; flex-direction: column; gap: var(--space-4); background: var(--surface-0); box-shadow: inset -1px 0 0 var(--line-1); }
   .root[dir='rtl'] nav { box-shadow: inset 1px 0 0 var(--line-1); }

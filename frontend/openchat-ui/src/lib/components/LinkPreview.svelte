@@ -1,6 +1,7 @@
 <!-- Message with a link preview. Text (with the URL) first, the preview card below it — the card explains the link.
      size: large (image on top, domain, title, 2-line description) or compact (thumbnail row, for repos/profiles without a hero image). -->
 <script lang="ts">
+  import { cssUrl } from '../cssUrl';
   interface Props {
     /** Message text; URLs inside it render as bold, underlined links. */
     text: string;
@@ -46,7 +47,7 @@
   // the card links only to http(s): the URL comes from message content, and a javascript: or data: link would run in the app
   const safeUrl = $derived(/^https?:\/\//i.test(url.trim()) ? url.trim() : undefined);
 
-  const art = $derived(image ? `center/cover no-repeat url(${JSON.stringify(image)})` : imageBg || 'linear-gradient(170deg,#2b1055,#7597de 55%,#ffb36b)');
+  const art = $derived(image ? `center/cover no-repeat ${cssUrl(image)}` : imageBg || 'linear-gradient(170deg,#2b1055,#7597de 55%,#ffb36b)');
 </script>
 
 <div class="shell" class:sent={side === 'sent'} class:last={lastInGroup}>

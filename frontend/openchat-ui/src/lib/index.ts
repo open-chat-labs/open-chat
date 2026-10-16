@@ -37,6 +37,7 @@ export { default as FileMessage } from './components/FileMessage.svelte';
 export { default as Icon } from './components/Icon.svelte';
 export { default as IconButton } from './components/IconButton.svelte';
 export { default as LinkPreview } from './components/LinkPreview.svelte';
+export { default as Logo } from './components/Logo.svelte';
 export { default as ListSectionLabel } from './components/ListSectionLabel.svelte';
 export { default as MediaMessage } from './components/MediaMessage.svelte';
 export { default as MemberRow } from './components/MemberRow.svelte';
@@ -87,6 +88,7 @@ export { default as VoiceMessage } from './components/VoiceMessage.svelte';
 export { default as Waveform } from './components/Waveform.svelte';
 export { ICONS, iconSvg, iconMask } from './icons.js';
 export { copyText } from './clipboard';
+export { cssUrl } from './cssUrl';
 export { cleanAmount, parseAmount } from './amount';
 
 export type * from './types';

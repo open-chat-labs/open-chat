@@ -3,6 +3,7 @@
 <script lang="ts">
   import AvatarStack from './AvatarStack.svelte';
   import { useT } from '../i18n';
+  import { cssUrl } from '../cssUrl';
 
   type Media = 'video' | 'voice';
 
@@ -84,7 +85,7 @@
   const sub = $derived(
     live ? t('ui.callEvent.live', { elapsed, inCall: inCall ? 'yes' : 'no' }) : missed ? (one.time ?? time) : `${one.duration ?? duration} · ${one.time ?? time}`,
   );
-  const people = $derived(faces.map((x) => (/^(https?:|data:|\/|\.)/.test(x) ? `center/cover no-repeat url(${JSON.stringify(x)})` : x)));
+  const people = $derived(faces.map((x) => (/^(https?:|data:|\/|\.)/.test(x) ? `center/cover no-repeat ${cssUrl(x)}` : x)));
 </script>
 
 <div class="row">

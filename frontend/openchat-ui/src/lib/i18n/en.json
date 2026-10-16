@@ -1727,12 +1727,179 @@
       "treasuryShare": "OpenChat treasury · {pct}%",
       "youHave": "You have {amount} {symbol}"
     },
+    "landing": {
+      "nav": {
+        "features": "Features",
+        "communities": "Communities",
+        "governance": "Governance",
+        "learn": "Learn",
+        "label": "Main"
+      },
+      "learnHints": {
+        "roadmap": "What’s shipped and what’s next",
+        "whitepaper": "The vision, tokenomics and roadmap",
+        "architecture": "How OpenChat runs on the Internet Computer",
+        "blog": "Releases, deep dives and DAO news",
+        "faq": "Answers to common questions"
+      },
+      "theme": {
+        "accent": "Accent colour",
+        "accentHeading": "Accent",
+        "pink": "Pink",
+        "orange": "Orange",
+        "blue": "Blue",
+        "green": "Green",
+        "toLight": "Switch to light theme",
+        "toDark": "Switch to dark theme"
+      },
+      "signIn": "Sign in",
+      "createAccount": "Create account",
+      "hero": {
+        "badge": "Decentralised · owned by its users",
+        "title": "Fully featured. {highlight}",
+        "highlight": "Fully yours.",
+        "sub": "A decentralised messenger owned by the people who use it. Every upgrade is a proposal. Every member has a vote.",
+        "explore": "Explore communities",
+        "nativeApp": "Try the native app"
+      },
+      "shot": {
+        "label": "A community open in OpenChat",
+        "community": "OpenChat",
+        "communityMeta": "Public · 62,504",
+        "search": "Search channels",
+        "channels": "Channels",
+        "proposals": "#proposals",
+        "proposalsPreview": "Vote closes in 2 days",
+        "announcements": "#announcements",
+        "announcementsPreview": "2.4 is rolling out",
+        "general": "#general",
+        "generalPreview": "Shipping notes at 4",
+        "channelMeta": "Public · 62,504 members",
+        "today": "Today",
+        "sender": "Hamish",
+        "proposalKicker": "Proposal #1284",
+        "proposalOpen": "Open · 2 days left",
+        "proposalTitle": "Add scheduled messages to every chat",
+        "adopt": "Adopt",
+        "reject": "Reject",
+        "reply": "Adopted ✓ — ships with the next upgrade"
+      },
+      "apps": {
+        "kicker": "On your phone",
+        "title": "Try the OpenChat native app",
+        "sub": "The Android app is in beta. Pick the build you want below — the iOS app is on its way.",
+        "android": "Android",
+        "betaOpen": "Beta open",
+        "whichBuild": "There are two builds of the app. Which would you like?",
+        "pickOne": "Pick one and stick with it — the two builds can’t be installed together.",
+        "playStore": "Play Store version",
+        "playStoreBody": "Installs and updates through Google Play. A couple of features are trimmed to meet store rules.",
+        "full": "Full version",
+        "fullBody": "Everything, including the wallet and token features. You install the APK yourself and it keeps itself up to date.",
+        "iphone": "iPhone",
+        "comingSoon": "Coming soon",
+        "iosBuilding": "The iOS app is being built now and will go out through TestFlight when it’s ready.",
+        "safari": "In the meantime OpenChat runs nicely in Safari — open {site} and add it to your home screen from the share menu."
+      },
+      "features": {
+        "kicker": "Everything in one place",
+        "title": "A full messenger — with crypto built in, not bolted on.",
+        "diamond": "Diamond",
+        "communitiesTitle": "Communities and channels",
+        "communitiesBody": "Bring a whole project together: public and private channels, user groups, roles and permissions in one place.",
+        "cryptoTitle": "Send crypto in any chat",
+        "cryptoBody": "Tip, pay or split with CHAT, ICP, ckBTC and more — as easily as sending a message. Swaps happen right in the app.",
+        "noPhoneTitle": "No phone number needed",
+        "noPhoneBody": "Sign in with a passkey or Internet Identity. Your account isn’t tied to a SIM card, an email or a big tech login.",
+        "gatesTitle": "Access gates",
+        "gatesBody": "Let in only token holders, verified people or members who pay — checked automatically, re-checked on your schedule.",
+        "callsTitle": "Video calls",
+        "callsBody": "Diamond members can jump from a chat into a video call with the whole group, then back into the conversation.",
+        "botsTitle": "Bots and integrations",
+        "botsBody": "Add bots for reminders, prompts and moderation, or connect your own tools with webhooks."
+      },
+      "communities": {
+        "kicker": "Communities",
+        "title": "Find your people. Or start the place they gather.",
+        "browse": "Browse all communities",
+        "members": "{count, plural, one {{members} member} other {{members} members}}"
+      },
+      "governance": {
+        "kicker": "Owned by its users",
+        "title": "No company decides what OpenChat becomes. Its users do.",
+        "body": "OpenChat is governed by the OpenChat DAO. Every upgrade, feature and treasury decision is a public proposal that CHAT holders vote on — and the code only changes once it passes.",
+        "proposals": "See open proposals",
+        "proposeTitle": "Anyone proposes",
+        "proposeBody": "A change to the app, a feature, or how the treasury is spent.",
+        "voteTitle": "CHAT holders vote",
+        "voteBody": "Staked CHAT gives voting power; votes are public and on-chain.",
+        "shipTitle": "Adopted proposals ship",
+        "shipBody": "The DAO upgrades OpenChat’s canisters itself — no one can skip the vote."
+      },
+      "cta": {
+        "title": "Your first chat is one passkey away.",
+        "body": "No phone number, no email required. Free to use, with Diamond for more storage and bigger groups.",
+        "create": "Create your account",
+        "explore": "or explore communities first"
+      },
+      "footer": {
+        "tagline": "Fully featured. Fully yours. A decentralised messenger, owned by its users.",
+        "product": "Product",
+        "learn": "Learn",
+        "legal": "Legal",
+        "nativeApps": "Native apps",
+        "terms": "Terms",
+        "privacy": "Privacy",
+        "governed": "Governed by the OpenChat DAO · runs on the Internet Computer"
+      }
+    },
     "leaderboardDialog": {
       "backToChit": "Back to CHIT",
       "playSoon": "Play (coming soon)",
       "title": "HIGH SCORES",
       "username": "USERNAME",
       "you": "YOU — {handle}"
+    },
+    "learn": {
+      "tabs": {
+        "roadmap": "Roadmap",
+        "whitepaper": "Whitepaper",
+        "architecture": "Architecture",
+        "blog": "Blog",
+        "faq": "FAQs"
+      },
+      "navLabel": "Learn",
+      "onThisPage": "On this page",
+      "blog": {
+        "kicker": "Blog",
+        "title": "News from the DAO",
+        "sub": "Releases, deep dives and governance updates.",
+        "allPosts": "All posts",
+        "team": "OpenChat team",
+        "recent": "Recent",
+        "notFound": "That post isn’t here any more."
+      },
+      "roadmap": {
+        "kicker": "Roadmap",
+        "title": "Where we’ve been, where we’re going",
+        "sub": "A summary of OpenChat’s past, present and future. We don’t keep a fixed roadmap, so what comes next can change at any point, and the DAO has the final say.",
+        "upNext": "Up next",
+        "future": "Future",
+        "planned": "Planned"
+      },
+      "faq": {
+        "kicker": "FAQs",
+        "title": "Questions, answered",
+        "search": "Search questions",
+        "empty": "No questions match “{query}”."
+      },
+      "canisters": "OpenChat canisters · all on the Internet Computer",
+      "allocation": "Token allocation",
+      "footer": {
+        "governed": "OpenChat · governed by the OpenChat SNS",
+        "home": "Back to home",
+        "explore": "Explore communities"
+      }
     },
     "leaveGroupDialog": {
       "body": "{noun, select, community {You will leave every channel in this community, and it disappears from your nav rail. You can rejoin later if it is public, or by invite.} channel {You will stop receiving messages from this channel, and it disappears from your chat list. Anyone in the channel can invite you back later.} other {You will stop receiving messages from this group, and it disappears from your chat list. Anyone in the group can invite you back later.}}",

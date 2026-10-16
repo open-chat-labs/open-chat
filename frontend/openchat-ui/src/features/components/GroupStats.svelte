@@ -3,6 +3,7 @@
 <script lang="ts">
   import { getI18n, useT } from '../../lib/i18n';
   import Translate from '../../lib/components/Translate.svelte';
+  import { cssUrl } from '../../lib/cssUrl';
 
   const MIX_COLORS = ['#5B8CFF', '#B06BFF', '#FFB03D', '#2EE6A8', '#6E6E7C'];
 
@@ -104,7 +105,7 @@
     <div class="people">
       {#each people as p}
         <div class="person">
-          <span class="initials" style:background={p.avatarUrl ? `url(${JSON.stringify(p.avatarUrl)}) center/cover no-repeat` : p.gradient || 'linear-gradient(145deg,#C9B4FF,#8A6BE0)'}
+          <span class="initials" style:background={p.avatarUrl ? `${cssUrl(p.avatarUrl)} center/cover no-repeat` : p.gradient || 'linear-gradient(145deg,#C9B4FF,#8A6BE0)'}
             >{p.avatarUrl ? '' : initials(p.name)}</span
           >
           <div class="person-body">

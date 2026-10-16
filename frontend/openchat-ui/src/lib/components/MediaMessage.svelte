@@ -3,6 +3,7 @@
      items: [{ src?, bg?, w?, h? }] — src is an image URL; bg a CSS background fallback (placeholders). -->
 <script lang="ts">
   import { useT } from '../i18n';
+  import { cssUrl } from '../cssUrl';
   type Status = 'sending' | 'sent' | 'delivered' | 'read';
 
   interface Props {
@@ -66,7 +67,7 @@
   });
 
   const tileBg = (it: { src?: string; bg?: string }) =>
-    it.src ? `center/cover no-repeat url(${JSON.stringify(it.src)})` : it.bg || 'linear-gradient(170deg,#2b1055,#7597de 55%,#ffb36b)';
+    it.src ? `center/cover no-repeat ${cssUrl(it.src)}` : it.bg || 'linear-gradient(170deg,#2b1055,#7597de 55%,#ffb36b)';
 </script>
 
 {#snippet stamp()}{time}{#if side === 'sent' && tick}<span class="tick" class:double={tick === 'read' || tick === 'delivered'}></span>{/if}{/snippet}
