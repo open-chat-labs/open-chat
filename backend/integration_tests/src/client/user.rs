@@ -33,6 +33,7 @@ generate_msgpack_update_call!(c2c_charge_user_account);
 generate_msgpack_update_call!(c2c_community_canister_v2);
 generate_msgpack_update_call!(c2c_game_chit);
 generate_msgpack_update_call!(c2c_group_canister_v2);
+generate_msgpack_update_call!(c2c_group_index);
 generate_msgpack_update_call!(c2c_install_bot);
 generate_msgpack_update_call!(c2c_local_user_index_v2);
 generate_msgpack_update_call!(c2c_notify_community_deleted);

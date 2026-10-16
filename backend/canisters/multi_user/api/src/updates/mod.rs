@@ -15,6 +15,7 @@ pub mod c2c_game_chit;
 pub mod c2c_grant_super_admin;
 pub mod c2c_group_canister;
 pub mod c2c_group_canister_v2;
+pub mod c2c_group_index;
 pub mod c2c_install_bot;
 pub mod c2c_local_user_index;
 pub mod c2c_local_user_index_v2;

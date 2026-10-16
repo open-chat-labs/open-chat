@@ -16,6 +16,7 @@ generate_c2c_call!(c2c_community_canister_v2, 300);
 generate_c2c_call!(c2c_game_chit);
 generate_c2c_call!(c2c_grant_super_admin);
 generate_c2c_call!(c2c_group_canister_v2, 300);
+generate_c2c_call!(c2c_group_index, 300);
 generate_c2c_call!(c2c_install_bot);
 generate_c2c_call!(c2c_notify_community_deleted);
 generate_c2c_call!(c2c_local_user_index_v2, 300);

@@ -11,6 +11,7 @@ mod c2c_delete_user;
 mod c2c_game_chit;
 mod c2c_grant_super_admin;
 mod c2c_group_canister_v2;
+pub(crate) mod c2c_group_index;
 mod c2c_install_bot;
 mod c2c_local_user_index_v2;
 mod c2c_notify_community_deleted;

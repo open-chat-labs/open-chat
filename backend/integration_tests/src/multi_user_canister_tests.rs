@@ -12,8 +12,8 @@ use constants::{
 };
 use multi_user_canister::set_pin_number::PinNumberVerification;
 use multi_user_canister::{
-    ChatInList, LocalUserIndexEvent, MessageActivity, UserCanisterEvent, UserJoinedCommunityOrChannel, UserJoinedGroup,
-    WalletConfig,
+    ChatInList, GroupIndexEvent, LocalUserIndexEvent, MessageActivity, UserCanisterEvent, UserJoinedCommunityOrChannel,
+    UserJoinedGroup, WalletConfig,
 };
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
@@ -2947,19 +2947,16 @@ fn deleted_groups_and_communities_are_removed_from_multi_user_canister_users() {
     manage_favourite_chats(env, bob, canister_id, vec![Chat::Group(imported_group)], Vec::new());
 
     let now = now_millis(env);
-    let group_deleted_args = |chat_id: ChatId, community_imported_into: Option<CommunityImportedInto>| {
-        multi_user_canister::c2c_notify_group_deleted::Args {
-            user_id: bob_id,
-            deleted_group: DeletedGroupInfoInternal {
-                id: chat_id,
-                timestamp: now,
-                deleted_by,
-                group_name: "Group".to_string(),
-                name: "Group".to_string(),
-                public: false,
-                community_imported_into,
-            },
-        }
+    let group_deleted_event = |chat_id: ChatId, community_imported_into: Option<CommunityImportedInto>| {
+        GroupIndexEvent::GroupDeleted(Box::new(DeletedGroupInfoInternal {
+            id: chat_id,
+            timestamp: now,
+            deleted_by,
+            group_name: "Group".to_string(),
+            name: "Group".to_string(),
+            public: false,
+            community_imported_into,
+        }))
     };
 
     // Only the GroupIndex can say a group has been deleted
@@ -2967,15 +2964,16 @@ fn deleted_groups_and_communities_are_removed_from_multi_user_canister_users() {
         env,
         random_principal(),
         canister_id,
-        "c2c_notify_group_deleted",
-        &group_deleted_args(deleted_group, None)
+        "c2c_group_index",
+        &group_index_event_args(env, bob_id, group_deleted_event(deleted_group, None))
     ));
 
-    client::user::c2c_notify_group_deleted(
+    send_group_index_event(
         env,
         canister_ids.group_index,
         canister_id,
-        &group_deleted_args(deleted_group, None),
+        bob_id,
+        group_deleted_event(deleted_group, None),
     );
     assert_eq!(group_ids(&initial_state(env, bob, canister_id)), vec![imported_group]);
     assert_eq!(
@@ -2986,11 +2984,12 @@ fn deleted_groups_and_communities_are_removed_from_multi_user_canister_users() {
     // A group imported into a community is replaced by its channel, which takes its place in the
     // user's favourites
     let channel_id: ChannelId = 7u32.into();
-    client::user::c2c_notify_group_deleted(
+    send_group_index_event(
         env,
         canister_ids.group_index,
         canister_id,
-        &group_deleted_args(
+        bob_id,
+        group_deleted_event(
             imported_group,
             Some(CommunityImportedInto {
                 community_name: "Community".to_string(),
@@ -3017,20 +3016,18 @@ fn deleted_groups_and_communities_are_removed_from_multi_user_canister_users() {
     assert!(last_bot_message(env, bob, canister_id, bob_id).contains("was deleted because it was imported into"));
 
     // Then the community is deleted
-    client::user::c2c_notify_community_deleted(
+    send_group_index_event(
         env,
         canister_ids.group_index,
         canister_id,
-        &multi_user_canister::c2c_notify_community_deleted::Args {
-            user_id: bob_id,
-            deleted_community: DeletedCommunityInfo {
-                id: community,
-                timestamp: now_millis(env),
-                deleted_by,
-                name: "Community".to_string(),
-                public: true,
-            },
-        },
+        bob_id,
+        GroupIndexEvent::CommunityDeleted(Box::new(DeletedCommunityInfo {
+            id: community,
+            timestamp: now_millis(env),
+            deleted_by,
+            name: "Community".to_string(),
+            public: true,
+        })),
     );
     let bobs_state = initial_state(env, bob, canister_id);
     assert!(community_ids(&bobs_state).is_empty());
@@ -3802,6 +3799,34 @@ fn send_local_user_index_events(
             events: events.into_iter().map(|event| paired(user_id, event)).collect(),
         },
     );
+    assert!(matches!(response, types::SuccessOnly::Success));
+}
+
+// A single event from the GroupIndex for the user, as the GroupIndex sends it
+fn group_index_event_args(
+    env: &PocketIc,
+    user_id: UserId,
+    event: GroupIndexEvent,
+) -> multi_user_canister::c2c_group_index::Args {
+    multi_user_canister::c2c_group_index::Args {
+        events: vec![IdempotentEnvelope {
+            created_at: now_millis(env),
+            idempotency_id: rand::random(),
+            value: (user_id, event),
+        }],
+    }
+}
+
+// Sends the event for the user to the canister, as the GroupIndex
+fn send_group_index_event(
+    env: &mut PocketIc,
+    group_index: CanisterId,
+    canister_id: CanisterId,
+    user_id: UserId,
+    event: GroupIndexEvent,
+) {
+    let args = group_index_event_args(env, user_id, event);
+    let response = client::user::c2c_group_index(env, group_index, canister_id, &args);
     assert!(matches!(response, types::SuccessOnly::Success));
 }
 
@@ -6250,31 +6275,29 @@ fn private_replies_to_a_group_follow_it_into_a_community() {
 
     let now = now_millis(env);
     for user_id in [a, b] {
-        client::user::c2c_notify_group_deleted(
+        send_group_index_event(
             env,
             canister_ids.group_index,
             canister_id,
-            &multi_user_canister::c2c_notify_group_deleted::Args {
-                user_id,
-                deleted_group: DeletedGroupInfoInternal {
-                    id: group,
-                    timestamp: now,
-                    deleted_by: random_principal().into(),
-                    group_name: "Group".to_string(),
-                    name: "Group".to_string(),
-                    public: false,
-                    community_imported_into: Some(CommunityImportedInto {
-                        community_name: "Community".to_string(),
-                        community_id: community,
-                        local_user_index_canister_id: local_user_index,
-                        channel: ChannelLatestMessageIndex {
-                            channel_id,
-                            latest_message_index: None,
-                        },
-                        other_default_channels: Vec::new(),
-                    }),
-                },
-            },
+            user_id,
+            GroupIndexEvent::GroupDeleted(Box::new(DeletedGroupInfoInternal {
+                id: group,
+                timestamp: now,
+                deleted_by: random_principal().into(),
+                group_name: "Group".to_string(),
+                name: "Group".to_string(),
+                public: false,
+                community_imported_into: Some(CommunityImportedInto {
+                    community_name: "Community".to_string(),
+                    community_id: community,
+                    local_user_index_canister_id: local_user_index,
+                    channel: ChannelLatestMessageIndex {
+                        channel_id,
+                        latest_message_index: None,
+                    },
+                    other_default_channels: Vec::new(),
+                }),
+            })),
         );
     }
 

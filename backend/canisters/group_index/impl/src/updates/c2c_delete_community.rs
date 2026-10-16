@@ -2,6 +2,7 @@ use crate::{RuntimeState, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_delete_community::{Response::*, *};
+use multi_user_canister::GroupIndexEvent;
 use tracing::info;
 use types::{C2CError, CanisterId, CommunityId, DeletedCommunityInfo, UserId};
 use utils::cycles::accept_cycles;
@@ -100,17 +101,22 @@ pub(crate) fn commit(
     };
 
     state.data.local_index_map.mark_community_deleted(&community_id);
-    state.data.deleted_communities.insert(
-        DeletedCommunityInfo {
-            id: community_id,
-            timestamp: now,
-            deleted_by,
-            name,
-            public,
-        },
-        members,
-    );
-    crate::jobs::push_community_deleted_notifications::start_job_if_required(state);
+
+    let deleted_community = DeletedCommunityInfo {
+        id: community_id,
+        timestamp: now,
+        deleted_by,
+        name,
+        public,
+    };
+    if state.data.deleted_communities.insert(deleted_community.clone()) {
+        // Each member other than the deleter is told, via their canister
+        state.push_event_to_users(
+            members.into_iter().filter(|u| *u != deleted_by),
+            GroupIndexEvent::CommunityDeleted(Box::new(deleted_community)),
+            now,
+        );
+    }
 }
 
 // The files sent in the community name it as their only accessor, as do those sent in each group

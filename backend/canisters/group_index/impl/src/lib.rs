@@ -17,6 +17,8 @@ use local_user_index_canister::{GroupIndexEvent as LocalIndexEvent, ModerationFl
 use model::local_index_event_batch::LocalIndexEventBatch;
 use model::local_index_map::LocalIndexMap;
 use model::storage_index_accessors_to_remove_batch::StorageIndexAccessorsToRemoveBatch;
+use model::user_canister_event_batch::UserCanisterEventBatch;
+use multi_user_canister::GroupIndexEvent;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
@@ -112,6 +114,30 @@ impl RuntimeState {
                 value: event,
             },
         )
+    }
+
+    // Queues `event` for each of the users, grouped by canister so that the users a MultiUser
+    // canister holds have theirs sent to it together
+    pub fn push_event_to_users(
+        &mut self,
+        user_ids: impl IntoIterator<Item = UserId>,
+        event: GroupIndexEvent,
+        now: TimestampMillis,
+    ) {
+        let mut events_per_canister: BTreeMap<CanisterId, Vec<_>> = BTreeMap::new();
+        for user_id in user_ids {
+            events_per_canister
+                .entry(user_id.canister_id())
+                .or_default()
+                .push(IdempotentEnvelope {
+                    created_at: now,
+                    idempotency_id: self.env.rng().next_u64(),
+                    value: (user_id, event.clone()),
+                });
+        }
+        for (canister_id, events) in events_per_canister {
+            self.data.user_canister_events_queue.push_many(canister_id, events);
+        }
     }
 
     pub fn set_verified_community(&mut self, community_id: CommunityId, verified: bool) -> bool {
@@ -264,9 +290,7 @@ impl RuntimeState {
             active_private_communities: self.data.cached_metrics.active_private_communities,
             deleted_public_communities: self.data.cached_metrics.deleted_public_communities,
             deleted_private_communities: self.data.cached_metrics.deleted_private_communities,
-            group_deleted_notifications_pending: self.data.deleted_groups.notifications_pending() as u64,
-            community_deleted_notifications_pending: self.data.deleted_communities.notifications_pending() as u64,
-            community_deleted_notifications_failed: self.data.deleted_communities.notifications_failed() as u64,
+            user_canister_events_pending: self.data.user_canister_events_queue.len() as u64,
             frozen_groups: self.data.cached_metrics.frozen_groups.clone(),
             frozen_communities: self.data.cached_metrics.frozen_communities.clone(),
             public_group_gates: self.data.cached_metrics.public_group_gates.clone(),
@@ -335,6 +359,13 @@ struct Data {
     // The ids of deleted groups and communities, which the files sent in them name as their only
     // accessor, to be removed from those files by the StorageIndex, which removes the files
     pub storage_index_accessors_to_remove_queue: BatchedTimerJobQueue<StorageIndexAccessorsToRemoveBatch>,
+    // Events for users, each sent to the MultiUser canister holding the user
+    #[serde(default = "new_user_canister_events_queue")]
+    pub user_canister_events_queue: GroupedTimerJobQueue<UserCanisterEventBatch>,
+}
+
+fn new_user_canister_events_queue() -> GroupedTimerJobQueue<UserCanisterEventBatch> {
+    GroupedTimerJobQueue::new(5, true)
 }
 
 impl Data {
@@ -383,6 +414,7 @@ impl Data {
             idempotency_checker: IdempotencyChecker::default(),
             local_index_event_sync_queue: GroupedTimerJobQueue::new(10, false),
             storage_index_accessors_to_remove_queue: BatchedTimerJobQueue::new(storage_index_canister_id, false),
+            user_canister_events_queue: new_user_canister_events_queue(),
         }
     }
 
@@ -493,6 +525,7 @@ impl Default for Data {
             idempotency_checker: IdempotencyChecker::default(),
             local_index_event_sync_queue: GroupedTimerJobQueue::new(10, false),
             storage_index_accessors_to_remove_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
+            user_canister_events_queue: new_user_canister_events_queue(),
         }
     }
 }
@@ -520,9 +553,7 @@ pub struct Metrics {
     pub active_private_communities: u64,
     pub deleted_public_communities: u64,
     pub deleted_private_communities: u64,
-    pub group_deleted_notifications_pending: u64,
-    pub community_deleted_notifications_pending: u64,
-    pub community_deleted_notifications_failed: u64,
+    pub user_canister_events_pending: u64,
     pub frozen_groups: Vec<ChatId>,
     pub frozen_communities: Vec<CommunityId>,
     pub public_group_gates: AccessGateMetrics,
