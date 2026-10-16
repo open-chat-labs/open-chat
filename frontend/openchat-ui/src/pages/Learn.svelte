@@ -8,8 +8,10 @@
      click instead of the link when given. A doc sub-page the content doesn't have shows the roadmap.
      Sign in / Create account open AuthDialog with the host's `auth` callbacks, as on Landing. -->
 <script lang="ts">
+  import { untrack } from 'svelte';
   import { useT } from '../lib/i18n';
   import Icon from '../lib/components/Icon.svelte';
+  import Logo from '../lib/components/Logo.svelte';
   import AuthDialog from '../features/components/AuthDialog.svelte';
   import { PageAuthState, type PageAuth } from './pageAuth.svelte';
   import { cssUrl } from '../lib/cssUrl';
@@ -26,10 +28,10 @@
     appHref?: string;
     exploreHref?: string;
     learnHref?: string;
-    /** Called on every sub-page or post change. When the host sets `page`, it handles the click (no link navigation). */
+    /** Called on every sub-page or post change: a click, and in hash mode Back / Forward or an edited hash too (not the sub-page it opens on). When the host sets `page`, it handles the click (no link navigation). */
     onNavigate?: (page: LearnPage, post?: string) => void;
     content?: LearnContent;
-    /** AuthDialog's host callbacks (onMethod, onSignup, onRequestEmailLink, checkUsername …). */
+    /** AuthDialog's host callbacks (onMethod, onSignup, onRequestEmailLink, checkUsername …). onMethod and onSignup return a promise; when it resolves the page enters the app, even if the dialog was closed meanwhile (once per sign-in). */
     auth?: PageAuth;
     /** Called after a successful sign-in instead of navigating to appHref. */
     onEnterApp?: () => void;
@@ -166,18 +168,22 @@
   const hashRouted = $derived(page === undefined);
   $effect(() => {
     if (!hashRouted) return;
-    // no hash (back to the entry the page opened on) is the roadmap; an unknown one leaves the sub-page as it is
-    const read = () => {
-      const r = learnFromHash(location.hash);
-      if (r) fromHash = r;
-      else if (!location.hash.replace(/^#/, '')) fromHash = { page: 'roadmap' };
+    // no hash (back to the entry the page opened on) is the roadmap; an unknown one leaves the sub-page as it is.
+    // A change tells the host (Back / Forward, an edited hash); the sub-page the page opens on doesn't, and a click's
+    // own hashchange finds its sub-page already showing (go() told the host).
+    const read = (notify: boolean) => {
+      const next = learnFromHash(location.hash) ?? (location.hash.replace(/^#/, '') ? null : { page: 'roadmap' as const });
+      if (!next || (next.page === fromHash.page && next.post === fromHash.post)) return;
+      fromHash = next;
+      if (notify) onNavigate?.(next.page, next.post);
     };
-    read();
-    window.addEventListener('hashchange', read);
-    window.addEventListener('popstate', read);
+    const follow = () => read(true);
+    untrack(() => read(false));
+    window.addEventListener('hashchange', follow);
+    window.addEventListener('popstate', follow);
     return () => {
-      window.removeEventListener('hashchange', read);
-      window.removeEventListener('popstate', read);
+      window.removeEventListener('hashchange', follow);
+      window.removeEventListener('popstate', follow);
     };
   });
 </script>
@@ -185,7 +191,7 @@
 <div class="page" data-oc-page="learn" data-mode={mode} data-accent={accent}>
   <header class="top">
     <div class="top-inner">
-      <a class="brand" href={homeHref}><img class="logo" src="/assets/openchat-logo.svg" alt="" width="30" height="30" /><span class="brand-name">OpenChat</span></a>
+      <a class="brand" href={homeHref}><Logo size={30} /><span class="brand-name">OpenChat</span></a>
       <nav class="tabs" aria-label={t('ui.learn.navLabel')}>
         {#each tabs as p}
           <a class="tab" class:on={p === current} href={linkFor(p)} aria-current={p === current ? 'page' : undefined} onclick={(e) => go(e, p)}>{t(`ui.learn.tabs.${p}`)}</a>
@@ -383,7 +389,7 @@
 
   <footer class="footer">
     <div class="footer-inner">
-      <span class="footer-brand"><img class="logo small" src="/assets/openchat-logo.svg" alt="" width="18" height="18" />{t('ui.learn.footer.governed')}</span>
+      <span class="footer-brand"><Logo size={18} />{t('ui.learn.footer.governed')}</span>
       <span class="footer-links">
         <a class="link" href={exploreHref}>{t('ui.learn.footer.explore')}</a>
         <a class="link" href={homeHref}>{t('ui.learn.footer.home')}</a>
@@ -449,16 +455,7 @@
     color: var(--ink);
   }
 
-  .logo {
-    display: block;
-    width: 30px;
-    height: 30px;
-  }
 
-  .logo.small {
-    width: 18px;
-    height: 18px;
-  }
 
   .brand-name {
     font: var(--weight-bold) var(--text-2xl) / 1 var(--font-sans);

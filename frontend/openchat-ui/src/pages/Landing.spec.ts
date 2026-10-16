@@ -72,9 +72,20 @@ describe('Landing', () => {
     expect(all('.learn-item').map((a) => a.getAttribute('href'))).toEqual(['/roadmap', '/whitepaper', '/architecture', '/blog', '/faq']);
   });
 
-  test('logos are root-relative, so the page works on a nested route', () => {
+  test('the logos are drawn inline: nothing for the host to serve, whatever the route or base path', () => {
     show();
-    expect(all('img.logo').map((i) => i.getAttribute('src'))).toEqual(['/assets/openchat-logo.svg', '/assets/openchat-logo.svg']);
+    expect(all('img').filter((i) => i.getAttribute('src')?.includes('logo'))).toEqual([]);
+    expect(all('svg.logo').map((l) => l.getAttribute('width'))).toEqual(['30', '22']);
+  });
+
+  test("in-page links go to the page's own sections, whose ids are prefixed so the host's can't clash", () => {
+    show();
+    const hrefs = all('a[href^="#"]').map((a) => a.getAttribute('href')!);
+    expect(hrefs.length).toBeGreaterThanOrEqual(8);
+    for (const href of hrefs) {
+      expect(href).toMatch(/^#landing-/);
+      expect(q(`section${href}`), href).not.toBeNull();
+    }
   });
 
   test('community cards come from the host; without any, only the heading and Browse link show', () => {
@@ -187,7 +198,7 @@ describe('Landing', () => {
     measured();
     flushSync();
     expect(root().style.getPropertyValue('--header-h')).toBe('105px');
-    expect(all('section[id]').map((s) => s.id)).toEqual(['download', 'features', 'communities', 'governance']);
+    expect(all('section[id]').map((s) => s.id)).toEqual(['landing-download', 'landing-features', 'landing-communities', 'landing-governance']);
     expect(source).toMatch(/\.band\[id\] \{\s*scroll-margin-top: var\(--header-h, 69px\);/);
   });
 

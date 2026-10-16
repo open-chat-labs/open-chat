@@ -34,7 +34,7 @@ const click = (el: Element) => {
 
 test('links inside the page demos never navigate the docs window', () => {
   const landing = frame('landing');
-  for (const sel of ['a.section-link[href="#features"]', 'a.cta.ghost[href="#download"]', 'a.brand[href="#"]']) {
+  for (const sel of ['a.section-link[href="#landing-features"]', 'a.cta.ghost[href="#landing-download"]', 'a.brand[href="#"]']) {
     expect(click(landing.querySelector(sel)!).defaultPrevented, sel).toBe(true);
   }
   // Learn's own handler still gets the click first: the demo's routing follows it

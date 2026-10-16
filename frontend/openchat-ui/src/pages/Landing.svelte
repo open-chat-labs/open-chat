@@ -11,6 +11,7 @@
   import Translate from '../lib/components/Translate.svelte';
   import Avatar from '../lib/components/Avatar.svelte';
   import Icon from '../lib/components/Icon.svelte';
+  import Logo from '../lib/components/Logo.svelte';
   import AuthDialog from '../features/components/AuthDialog.svelte';
   import { HeroBackground, type HeroStyle } from './heroBackground';
   import { PageAuthState, type PageAuth } from './pageAuth.svelte';
@@ -44,7 +45,7 @@
     proposalsHref?: string;
     termsHref?: string;
     privacyHref?: string;
-    /** AuthDialog's host callbacks (onMethod, onSignup, onRequestEmailLink, checkUsername …). */
+    /** AuthDialog's host callbacks (onMethod, onSignup, onRequestEmailLink, checkUsername …). onMethod and onSignup return a promise; when it resolves the page enters the app, even if the dialog was closed meanwhile (once per sign-in). */
     auth?: PageAuth;
     /** Called after a successful sign-in instead of navigating to appHref. */
     onEnterApp?: () => void;
@@ -85,6 +86,7 @@
     { key: 'bots', icon: 'bot' },
   ];
   const STEPS = ['propose', 'vote', 'ship'];
+  // in-page sections; their ids are landing-<key>, so they can't clash with the host page's ids
   const SECTIONS = ['features', 'communities', 'governance'];
   const COVERS = ['var(--cover-amber)', 'var(--cover-teal)', 'var(--cover-violet)', 'var(--cover-plum)'];
   const SHOT_CHANNELS = [
@@ -210,12 +212,12 @@
   <header class="top" bind:this={header}>
     <div class="top-inner">
       <a class="brand" href={homeHref}>
-        <img class="logo" src="/assets/openchat-logo.svg" alt="" width="30" height="30" />
+        <Logo size={30} />
         <span class="brand-name">OpenChat</span>
       </a>
       <nav class="nav" aria-label={t('ui.landing.nav.label')}>
         {#each SECTIONS as s}
-          <a class="nav-link section-link" href="#{s}">{t(`ui.landing.nav.${s}`)}</a>
+          <a class="nav-link section-link" href="#landing-{s}">{t(`ui.landing.nav.${s}`)}</a>
         {/each}
         <div class="menu-anchor" bind:this={learnMenu} onfocusout={(e) => leaving(e) && (learnOpen = false)}>
           <button
@@ -294,7 +296,7 @@
     <p class="hero-sub rise">{t('ui.landing.hero.sub')}</p>
     <div class="hero-actions rise">
       <a class="cta primary" href={exploreHref}>{t('ui.landing.hero.explore')}<Icon icon="arrow" flip /></a>
-      <a class="cta ghost" href="#download"><Icon icon="smartphone" />{t('ui.landing.hero.nativeApp')}</a>
+      <a class="cta ghost" href="#landing-download"><Icon icon="smartphone" />{t('ui.landing.hero.nativeApp')}</a>
     </div>
     <div class="shot-wrap rise late" role="img" aria-label={t('ui.landing.shot.label')}>
       <div class="shot" aria-hidden="true">
@@ -371,7 +373,7 @@
     <div class="hero-fade" aria-hidden="true"></div>
   </section>
 
-  <section class="band" id="download">
+  <section class="band download-band" id="landing-download">
     <div class="inner stack-32">
       <div class="intro">
         <span class="kicker">{t('ui.landing.apps.kicker')}</span>
@@ -417,7 +419,7 @@
     </div>
   </section>
 
-  <section class="band features-band" id="features">
+  <section class="band features-band" id="landing-features">
     <div class="inner stack-40">
       <div class="intro narrow">
         <span class="kicker">{t('ui.landing.features.kicker')}</span>
@@ -438,7 +440,7 @@
     </div>
   </section>
 
-  <section class="band communities-band" id="communities">
+  <section class="band communities-band" id="landing-communities">
     <div class="inner stack-32">
       <div class="communities-head">
         <div class="intro grow">
@@ -469,7 +471,7 @@
     </div>
   </section>
 
-  <section class="band governance-band" id="governance">
+  <section class="band governance-band" id="landing-governance">
     <div class="governance">
       <div class="governance-copy">
         <span class="kicker">{t('ui.landing.governance.kicker')}</span>
@@ -506,13 +508,13 @@
     <div class="inner stack-36">
       <div class="footer-top">
         <div class="footer-brand">
-          <span class="footer-name"><img class="logo small" src="/assets/openchat-logo.svg" alt="" width="22" height="22" />OpenChat</span>
+          <span class="footer-name"><Logo size={22} />OpenChat</span>
           <span class="footer-tagline">{t('ui.landing.footer.tagline')}</span>
         </div>
         <div class="footer-group">
           <span class="footer-heading">{t('ui.landing.footer.product')}</span>
-          {#each SECTIONS as s}<a class="footer-link" href="#{s}">{t(`ui.landing.nav.${s}`)}</a>{/each}
-          <a class="footer-link" href="#download">{t('ui.landing.footer.nativeApps')}</a>
+          {#each SECTIONS as s}<a class="footer-link" href="#landing-{s}">{t(`ui.landing.nav.${s}`)}</a>{/each}
+          <a class="footer-link" href="#landing-download">{t('ui.landing.footer.nativeApps')}</a>
         </div>
         <div class="footer-group">
           <span class="footer-heading">{t('ui.landing.footer.learn')}</span>
@@ -579,16 +581,7 @@
     color: var(--ink);
   }
 
-  .logo {
-    display: block;
-    width: 30px;
-    height: 30px;
-  }
 
-  .logo.small {
-    width: 22px;
-    height: 22px;
-  }
 
   .brand-name {
     font: var(--weight-bold) var(--text-2xl) / 1 var(--font-sans);
@@ -1334,7 +1327,7 @@
     scroll-margin-top: var(--header-h, 69px);
   }
 
-  #download {
+  .download-band {
     padding-bottom: var(--space-24);
   }
 

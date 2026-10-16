@@ -37,6 +37,7 @@ export { default as FileMessage } from './components/FileMessage.svelte';
 export { default as Icon } from './components/Icon.svelte';
 export { default as IconButton } from './components/IconButton.svelte';
 export { default as LinkPreview } from './components/LinkPreview.svelte';
+export { default as Logo } from './components/Logo.svelte';
 export { default as ListSectionLabel } from './components/ListSectionLabel.svelte';
 export { default as MediaMessage } from './components/MediaMessage.svelte';
 export { default as MemberRow } from './components/MemberRow.svelte';

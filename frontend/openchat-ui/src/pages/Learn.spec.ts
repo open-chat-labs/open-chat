@@ -134,6 +134,33 @@ describe('Learn', () => {
       expect(current()).toBe('FAQs');
     });
 
+    test('Back / Forward and an edited hash tell the host too, once per change; the sub-page it opens on does not', () => {
+      const onNavigate = vi.fn();
+      const listen = vi.spyOn(window, 'addEventListener');
+      history.replaceState(null, '', '/learn#faq');
+      show({ onNavigate });
+      expect(onNavigate).not.toHaveBeenCalled();
+      history.replaceState(null, '', '/learn#blog/android-beta');
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+      // some browsers fire both for one change
+      window.dispatchEvent(new PopStateEvent('popstate'));
+      flushSync();
+      expect(onNavigate.mock.calls).toEqual([['blog', 'android-beta']]);
+      history.replaceState(null, '', '/learn');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+      // an unknown hash changes nothing, so says nothing
+      history.replaceState(null, '', '/learn#vision');
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+      flushSync();
+      expect(onNavigate.mock.calls).toEqual([
+        ['blog', 'android-beta'],
+        ['roadmap', undefined],
+      ]);
+      expect(current()).toBe('Roadmap');
+      // the listeners were set up once, not again on every change
+      expect(listen.mock.calls.filter(([type]) => type === 'hashchange')).toHaveLength(1);
+    });
+
     test('back to the entry without a hash shows the roadmap again; an unknown hash leaves the sub-page alone', () => {
       history.replaceState(null, '', '/learn');
       show();
@@ -372,12 +399,16 @@ describe('Learn', () => {
     expect(item.hasAttribute('aria-expanded')).toBe(false);
   });
 
-  test('logos are root-relative, so a nested host route (/blog/:slug) still finds them, in the sign-in dialog too', () => {
+  test('the logos are drawn inline, in the sign-in dialog too, each with its own gradients', () => {
     show({ page: 'blog', post: 'android-beta', learnPageHref: (p: string, post?: string) => `/${p}/${post ?? ''}` });
     click(q('.sign-in'));
-    const logos = [...document.querySelectorAll('img')].map((i) => i.getAttribute('src')).filter((src) => src?.includes('openchat-logo'));
+    expect([...document.querySelectorAll('img')].filter((i) => i.getAttribute('src')?.includes('logo'))).toEqual([]);
+    const logos = [...document.querySelectorAll('svg.logo')];
     expect(logos.length).toBeGreaterThanOrEqual(3);
-    expect(new Set(logos)).toEqual(new Set(['/assets/openchat-logo.svg']));
+    // two logos sharing gradient ids would both paint from the first (and lose their fill if it's hidden)
+    const ids = logos.flatMap((l) => [...l.querySelectorAll('linearGradient')].map((g) => g.id));
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const l of logos) for (const path of l.querySelectorAll('path')) expect(l.querySelector(path.getAttribute('fill')!.replace(/^url\((#.+)\)$/, '$1'))).not.toBeNull();
   });
 
   test('sign in opens AuthDialog and a successful sign-in enters the app', async () => {

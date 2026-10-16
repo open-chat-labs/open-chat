@@ -7,6 +7,7 @@ describe('HeroBackground', () => {
   let ctx: Record<string, unknown>;
   let canvas: HTMLCanvasElement;
   let motion: EventTarget & { matches: boolean; media: string };
+  let resolutions: (EventTarget & { matches: boolean; media: string })[];
 
   beforeEach(() => {
     frames = [];
@@ -15,7 +16,13 @@ describe('HeroBackground', () => {
     vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => frames.push(cb));
     vi.stubGlobal('cancelAnimationFrame', () => {});
     motion = Object.assign(new EventTarget(), { matches: false, media: '(prefers-reduced-motion: reduce)' });
-    vi.stubGlobal('matchMedia', () => motion);
+    resolutions = [];
+    vi.stubGlobal('matchMedia', (query: string) => {
+      if (!query.startsWith('(resolution')) return motion;
+      const q = Object.assign(new EventTarget(), { matches: true, media: query });
+      resolutions.push(q);
+      return q;
+    });
     ctx = new Proxy({} as Record<string, unknown>, {
       get: (o, k) => (k in o ? o[k as string] : () => {}),
       set: (o, k, v) => ((o[k as string] = v), true),
@@ -135,6 +142,22 @@ describe('HeroBackground', () => {
     expect(measure).not.toHaveBeenCalled();
     expect((bg as unknown as { cells: unknown[] }).cells).toBe(cells);
     bg.destroy();
+  });
+
+  test('a devicePixelRatio change (another monitor, zoom) resizes the backing store, and the watch moves to the new ratio', () => {
+    vi.stubGlobal('devicePixelRatio', 1);
+    const bg = HeroBackground.create(canvas, () => ({ style: 'off', light: false }))!;
+    expect([canvas.width, resolutions.map((r) => r.media)]).toEqual([1440, ['(resolution: 1dppx)']]);
+    vi.stubGlobal('devicePixelRatio', 2);
+    resolutions[0].dispatchEvent(new Event('change'));
+    expect([canvas.width, resolutions.map((r) => r.media)]).toEqual([2880, ['(resolution: 1dppx)', '(resolution: 2dppx)']]);
+    // the old query no longer drives it
+    vi.stubGlobal('devicePixelRatio', 1.5);
+    resolutions[0].dispatchEvent(new Event('change'));
+    expect(canvas.width).toBe(2880);
+    const off = vi.spyOn(resolutions[1], 'removeEventListener');
+    bg.destroy();
+    expect(off).toHaveBeenCalledWith('change', expect.any(Function));
   });
 
   test('pulse frames only work out the glow for cells near a ripple front, and spawn without rescanning the cells', () => {

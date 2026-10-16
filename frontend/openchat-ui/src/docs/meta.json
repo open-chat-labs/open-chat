@@ -11322,6 +11322,41 @@
     "group": "library"
   },
   {
+    "name": "Logo",
+    "source": "frontend/app/public/assets/DMs & Groups/OC Logo.svg",
+    "hash": "",
+    "description": "The OpenChat logo, drawn inline: there is no asset for the host to serve, so it shows on any route and under any base path. Decorative unless `label` names it.",
+    "preview": {
+      "width": 80,
+      "height": 80
+    },
+    "props": [
+      {
+        "name": "size",
+        "type": "number",
+        "default": 32,
+        "editor": "int",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "32",
+        "doc": ""
+      },
+      {
+        "name": "label",
+        "type": "string",
+        "default": "",
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Accessible name: resource key (or literal text). Without it the logo is decorative."
+      }
+    ],
+    "group": "library"
+  },
+  {
     "name": "MediaMessage",
     "source": "lib/MediaMessage.dc.html",
     "hash": "67e8474e",
@@ -17585,7 +17620,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "AuthDialog's host callbacks (onMethod, onSignup, onRequestEmailLink, checkUsername …)."
+        "doc": "AuthDialog's host callbacks (onMethod, onSignup, onRequestEmailLink, checkUsername …). onMethod and onSignup return a promise; when it resolves the page enters the app, even if the dialog was closed meanwhile (once per sign-in)."
       },
       {
         "name": "onEnterApp",
@@ -17746,7 +17781,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Called on every sub-page or post change. When the host sets `page`, it handles the click (no link navigation)."
+        "doc": "Called on every sub-page or post change: a click, and in hash mode Back / Forward or an edited hash too (not the sub-page it opens on). When the host sets `page`, it handles the click (no link navigation)."
       },
       {
         "name": "content",
@@ -17768,7 +17803,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "AuthDialog's host callbacks (onMethod, onSignup, onRequestEmailLink, checkUsername …)."
+        "doc": "AuthDialog's host callbacks (onMethod, onSignup, onRequestEmailLink, checkUsername …). onMethod and onSignup return a promise; when it resolves the page enters the app, even if the dialog was closed meanwhile (once per sign-in)."
       },
       {
         "name": "onEnterApp",

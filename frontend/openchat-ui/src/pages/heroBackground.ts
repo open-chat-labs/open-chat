@@ -44,6 +44,8 @@ export class HeroBackground {
   private io?: IntersectionObserver;
   private motion = typeof matchMedia === 'function' ? matchMedia(REDUCED_MOTION) : undefined;
   private reduced = !!this.motion?.matches;
+  /** Matches the current devicePixelRatio; changes when it does (another monitor, zoom). */
+  private dpr?: MediaQueryList;
 
   /** Null when the browser can't draw on a canvas (nothing to clean up then). */
   static create(canvas: HTMLCanvasElement, opts: () => { style: HeroStyle; light: boolean }): HeroBackground | null {
@@ -70,8 +72,22 @@ export class HeroBackground {
       this.io.observe(cv);
     }
     this.motion?.addEventListener('change', this.motionChanged);
+    this.watchDpr();
     this.resize();
   }
+
+  // a resolution query only matches one ratio, so each change re-registers for the new one
+  private watchDpr() {
+    this.dpr?.removeEventListener('change', this.dprChanged);
+    if (typeof matchMedia !== 'function') return;
+    this.dpr = matchMedia(`(resolution: ${devicePixelRatio || 1}dppx)`);
+    this.dpr.addEventListener('change', this.dprChanged);
+  }
+
+  private dprChanged = () => {
+    this.watchDpr();
+    this.resize();
+  };
 
   private motionChanged = (e: MediaQueryListEvent) => {
     this.reduced = e.matches;
@@ -123,6 +139,7 @@ export class HeroBackground {
     this.ro?.disconnect();
     this.io?.disconnect();
     this.motion?.removeEventListener('change', this.motionChanged);
+    this.dpr?.removeEventListener('change', this.dprChanged);
   }
 
   private still() {

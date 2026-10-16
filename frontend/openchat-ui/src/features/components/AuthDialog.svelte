@@ -31,6 +31,7 @@
   import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
   import { useT } from '../../lib/i18n';
   import Translate from '../../lib/components/Translate.svelte';
+  import Logo from '../../lib/components/Logo.svelte';
   import { onMount, untrack } from 'svelte';
 
   type Method = AuthMethod;
@@ -225,7 +226,7 @@
   <div class="card {variant}" class:signup role="dialog" aria-modal={inline ? undefined : 'true'} aria-labelledby="oc-auth-title" use:modal={inline ? undefined : close}>
     {#if variant === 'split'}
       <div class="brand">
-        <img class="brand-logo" src="/assets/openchat-logo.svg" alt="" width="56" height="56" />
+        <Logo size={56} />
         <div class="brand-copy">
           <span class="brand-title">{t('ui.authDialog.brandTitle')}</span>
           <span class="brand-sub">{t('ui.authDialog.brandSub')}</span>
@@ -234,7 +235,7 @@
     {/if}
     <div class="column">
       <div class="head">
-        {#if variant !== 'split'}<img class="logo" src="/assets/openchat-logo.svg" alt="" width="48" height="48" />{/if}
+        {#if variant !== 'split'}<Logo size={48} />{/if}
         <div class="head-text">
           <h2 id="oc-auth-title">{t(signup ? 'ui.authDialog.createAccountTitle' : 'ui.authDialog.signInTitle')}</h2>
           <span class="sub">{t(reason || 'ui.authDialog.defaultReason')}</span>
@@ -455,11 +456,6 @@
     box-shadow: inset -1px 0 0 var(--line-1, rgba(255, 255, 255, 0.07));
   }
 
-  .brand-logo {
-    display: block;
-    width: 56px;
-    height: 56px;
-  }
 
   .brand-copy {
     display: flex;
@@ -498,12 +494,6 @@
     gap: 14px;
   }
 
-  .logo {
-    flex: none;
-    display: block;
-    width: 48px;
-    height: 48px;
-  }
 
   .head-text {
     flex: 1;

@@ -20,6 +20,7 @@
   import { onMount, untrack } from 'svelte';
   import { useT } from '../../lib/i18n';
   import Translate from '../../lib/components/Translate.svelte';
+  import Logo from '../../lib/components/Logo.svelte';
 
   type Swatch = 'sunset' | 'amber' | 'blue' | 'teal' | 'plum' | 'violet' | 'rose';
 
@@ -487,7 +488,7 @@
   {#if guest}
     <div class="guest-wrap">
       <div class="guest" data-screen-label="Guest banner">
-        <img class="guest-logo" src="/assets/openchat-logo.svg" alt="" width="40" height="40" />
+        <Logo size={40} />
         <div class="guest-text">
           <span class="guest-title">{t('ui.exploreCommunities.guestTitle')}</span>
           <span class="guest-body">{t('ui.exploreCommunities.guestBody')}</span>
@@ -1449,12 +1450,6 @@
     animation: ex-rise 420ms 200ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
   }
 
-  .guest-logo {
-    flex: none;
-    display: block;
-    width: 40px;
-    height: 40px;
-  }
 
   .guest-text {
     flex: 1 1 260px;
