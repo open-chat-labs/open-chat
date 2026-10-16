@@ -79,7 +79,8 @@
   const SHARE_COLOURS = ['var(--accent)', 'var(--category-c)', 'var(--category-a)', 'var(--ink-4)'];
 
   // the hash route, used when the host doesn't set `page`
-  let fromHash = $state<{ page: LearnPage; post?: string }>({ page: 'roadmap' });
+  type LearnRoute = { page: LearnPage; post?: string };
+  let fromHash = $state<LearnRoute>({ page: 'roadmap' });
   const tabs = $derived(learnPagesOf(content));
   // a doc the content doesn't have (a deep link, or a stale link from Landing) falls back to the roadmap
   const current = $derived.by(() => {
@@ -169,13 +170,18 @@
   $effect(() => {
     if (!hashRouted) return;
     // no hash (back to the entry the page opened on) is the roadmap; an unknown one leaves the sub-page as it is.
-    // A change tells the host (Back / Forward, an edited hash); the sub-page the page opens on doesn't, and a click's
-    // own hashchange finds its sub-page already showing (go() told the host).
+    // A change tells the host (Back / Forward, an edited hash) what is now showing, so a doc the content lacks is
+    // reported as the roadmap it falls back to. The sub-page the page opens on doesn't, and a click's own hashchange finds
+    // its sub-page already showing (go() told the host).
+    const same = (a: LearnRoute, b: LearnRoute) => a.page === b.page && a.post === b.post;
+    const shown = (r: LearnRoute): LearnRoute => (tabs.includes(r.page) ? r : { page: 'roadmap' });
     const read = (notify: boolean) => {
       const next = learnFromHash(location.hash) ?? (location.hash.replace(/^#/, '') ? null : { page: 'roadmap' as const });
-      if (!next || (next.page === fromHash.page && next.post === fromHash.post)) return;
+      if (!next || same(next, fromHash)) return;
+      const before = shown(fromHash);
       fromHash = next;
-      if (notify) onNavigate?.(next.page, next.post);
+      const after = shown(next);
+      if (notify && !same(before, after)) onNavigate?.(after.page, after.post);
     };
     const follow = () => read(true);
     untrack(() => read(false));

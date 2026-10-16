@@ -161,6 +161,23 @@ describe('Learn', () => {
       expect(listen.mock.calls.filter(([type]) => type === 'hashchange')).toHaveLength(1);
     });
 
+    test('tells the host the sub-page it shows: a doc the content lacks is the roadmap it falls back to', () => {
+      const onNavigate = vi.fn();
+      const content: LearnContent = { ...placeholderLearnContent, docs: {} };
+      history.replaceState(null, '', '/learn#faq');
+      show({ onNavigate, content });
+      history.replaceState(null, '', '/learn#whitepaper');
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+      flushSync();
+      expect(current()).toBe('Roadmap');
+      expect(onNavigate.mock.calls).toEqual([['roadmap', undefined]]);
+      // from there, the roadmap itself is no change
+      history.replaceState(null, '', '/learn');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+      flushSync();
+      expect(onNavigate.mock.calls).toEqual([['roadmap', undefined]]);
+    });
+
     test('back to the entry without a hash shows the roadmap again; an unknown hash leaves the sub-page alone', () => {
       history.replaceState(null, '', '/learn');
       show();
