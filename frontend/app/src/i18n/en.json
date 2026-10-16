@@ -158,9 +158,17 @@
         "delete": "Delete",
         "deleteFailed": "Sorry, we were unable to delete this address",
         "empty": "You haven't saved any addresses yet. Addresses you save can be chosen when sending tokens from your wallet.",
+        "invalidAddress": "This isn't an ICRC-1, ICP, Bitcoin, Ethereum or Solana address",
         "name": "Name",
         "namePlaceholder": "Enter a name for this address",
         "nameTaken": "You already have an address saved with this name",
+        "network": {
+            "btc": "Bitcoin address",
+            "eth": "Ethereum address",
+            "icp": "ICP account identifier",
+            "icrc": "ICRC-1 account",
+            "sol": "Solana address"
+        },
         "rename": "Rename",
         "saveFailed": "Sorry, we were unable to save this address",
         "title": "Address book"

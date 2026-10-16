@@ -23,6 +23,7 @@ import {
     userWalletAccount,
 } from "@shared";
 import { CkbtcWithdrawalInfoRequests } from "@src/utils/ckbtcWithdrawalInfo";
+import { isBitcoinAddressValid, isEvmAddressValid } from "@src/utils/cryptoAddress";
 import { isSolanaAddressValid } from "@src/utils/solanaAddress";
 import type { TokenState } from "./walletState.svelte";
 
@@ -82,9 +83,9 @@ export class WithdrawForm {
         if (target.length === 0 || target === this.#ownAccount) return false;
         // Checked before the network, since BTC sent over the ckBTC network goes to an IC account
         if (this.#targetIsUserIdAccount) return false;
-        if (this.#isBtc) return target.length >= 14;
+        if (this.#isBtcNetwork) return isBitcoinAddressValid(target);
         if (this.#isSolNetwork) return isSolanaAddressValid(target);
-        if (this.#isOneSecNetwork) return target.length === 42;
+        if (this.#isOneSecNetwork) return isEvmAddressValid(target);
         if (isICRCAddressValid(target)) return true;
         return this.#tokenState.symbol === ICP_SYMBOL && isAccountIdentifierValid(target);
     });
