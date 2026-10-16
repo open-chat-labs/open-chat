@@ -17,7 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Look up the latest id of a P2P swap's offerer named by their old id in the LocalUserIndex ([#9970](https://github.com/open-chat-labs/open-chat/pull/9970))
 - Stop tracking the async work in progress, since nothing reads it any more ([#9972](https://github.com/open-chat-labs/open-chat/pull/9972))
-- Send avatar changes to the UserIndex via the LocalUserIndex's event queue, which retries them, and drop the platform moderator flag which nothing read ([#10011](https://github.com/open-chat-labs/open-chat/pull/10011))
+- Send avatar changes to the UserIndex via the LocalUserIndex, and remove `c2c_grant_super_admin` and `c2c_revoke_super_admin`, which set a flag nothing read ([#10011](https://github.com/open-chat-labs/open-chat/pull/10011))
 
 ### Removed
 
