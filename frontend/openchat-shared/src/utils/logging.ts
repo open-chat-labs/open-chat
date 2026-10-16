@@ -180,7 +180,6 @@ export function inititaliseLogger(apikey: string, version: string, env: string):
             checkIgnore: (isUncaught, args, payload) => {
                 if (!isUncaught) return false;
                 if (
-                    documentHasNoBody() ||
                     thrownByExtension(payload) ||
                     thrownByDocumentScript(payload) ||
                     evalRefusedInInjectedCode(payload)

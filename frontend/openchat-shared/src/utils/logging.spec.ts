@@ -208,6 +208,7 @@ describe("an error raised once the document has no body", () => {
     const body = document.body;
 
     afterEach(() => {
+        vi.unstubAllGlobals();
         document.documentElement.appendChild(body);
         vi.restoreAllMocks();
     });
@@ -222,6 +223,14 @@ describe("an error raised once the document has no body", () => {
 
         body.remove();
         logger.error("Top level boundary error: ", new TypeError("boom"));
+        expect(reported).toHaveBeenCalledOnce();
+    });
+
+    // A worker has no document at all, and its errors go through the same logger
+    test("is still reported from a worker, which has no document", () => {
+        vi.stubGlobal("document", undefined);
+        const reported = vi.spyOn(console, "error").mockImplementation(() => undefined);
+        inititaliseLogger("", "test", "test").error("Worker error: ", new TypeError("boom"));
         expect(reported).toHaveBeenCalledOnce();
     });
 });
