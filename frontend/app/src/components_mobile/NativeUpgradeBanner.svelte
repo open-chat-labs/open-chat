@@ -4,9 +4,9 @@
     import {
         fetchRelease,
         getStoreOffer,
+        noticeVersion,
         releasePath,
         shellUpdateFrom,
-        storeOfferReaches,
     } from "@src/utils/shellUpdate";
     import { VersionChecker } from "@src/utils/version.svelte";
     import { appStoreBuild } from "@utils/features";
@@ -73,23 +73,7 @@
     });
 
     // One dismissible sheet for both reasons a newer version may be waiting.
-    // The shell notice waits for the bundle check to settle, so it never
-    // appears and is then replaced by the blocking or downloading sheet.
-    let available = $derived.by(() => {
-        switch (checker.versionState.kind) {
-            case "store_update_available":
-                // Only once Play offers a build that gets there: before that
-                // the store listing has nothing to install.
-                return storeOfferReaches(storeOffer, checker.versionState.available)
-                    ? checker.versionState.available.toText()
-                    : newerShell;
-            case "up_to_date":
-            case "failed_update":
-                return newerShell;
-            default:
-                return undefined;
-        }
-    });
+    let available = $derived(noticeVersion(checker.versionState, storeOffer, newerShell));
 
     // A store build can only be updated through the store it came from; a
     // sideloaded build has to fetch a new APK itself.

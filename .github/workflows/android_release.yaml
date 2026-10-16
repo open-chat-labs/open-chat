@@ -311,11 +311,8 @@ jobs:
               env:
                   GH_TOKEN: ${{ github.token }}
               run: |
-                  NATIVE_VERSION=$(bash app/android_native_version.sh "$VERSION")
-                  echo "Native code unchanged since: $NATIVE_VERSION"
                   gh release view "$GITHUB_REF_NAME" --json body --jq .body \
-                    | sed '/<!-- native-version: .* -->/d' > release_notes.md
-                  printf '\n<!-- native-version: %s -->\n' "$NATIVE_VERSION" >> release_notes.md
+                    | bash app/android_native_version.sh "$VERSION" > release_notes.md
                   gh release edit "$GITHUB_REF_NAME" --notes-file release_notes.md
 
             - name: Notify Release

@@ -11,7 +11,7 @@ import { isAndroidTauriApp } from "@shared";
 
 const VERSION_INTERVAL = 60 * 1000;
 
-type VersionState =
+export type VersionState =
     | { kind: "unknown" }
     | { kind: "up_to_date" }
     | { kind: "failed_update"; available: Version; error: unknown }

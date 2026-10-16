@@ -3,6 +3,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { NATIVE_MARKER } from "./src/utils/shellUpdate";
 
 const SCRIPT = join(__dirname, "android_native_version.sh");
 
@@ -22,8 +23,14 @@ function release(tag: string, files: Record<string, string>) {
     git("tag", tag);
 }
 
-function nativeVersion(version: string): string {
-    return execFileSync("bash", [SCRIPT, version], { cwd: repo, encoding: "utf8" }).trim();
+function releaseBody(version: string, body = "Release notes"): string {
+    return execFileSync("bash", [SCRIPT, version], { cwd: repo, encoding: "utf8", input: body });
+}
+
+// Read back the way the app reads it, so CI and client cannot disagree on the
+// marker's format.
+function nativeVersion(version: string): string | undefined {
+    return NATIVE_MARKER.exec(releaseBody(version))?.[1];
 }
 
 describe("android_native_version.sh", () => {
@@ -63,5 +70,13 @@ describe("android_native_version.sh", () => {
         git("tag", "v2.0.200-android", "HEAD");
         release("v2.0.101-android", { "frontend/app/src/main.ts": "b" });
         expect(nativeVersion("2.0.101")).toBe("2.0.100");
+    });
+
+    it("replaces a marker left by an earlier run and keeps the notes", () => {
+        const body = releaseBody("2.0.100", "Notes\n<!-- native-version: 2.0.1 -->\n");
+        expect(body).toContain("Notes");
+        expect(body.match(new RegExp(NATIVE_MARKER, "g"))).toEqual([
+            "<!-- native-version: 2.0.100 -->",
+        ]);
     });
 });

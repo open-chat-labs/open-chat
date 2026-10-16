@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
-# Prints the version of the oldest Android release whose native code is
-# identical to HEAD's, or the given version if the previous release differs.
-# The release workflow writes the result into the GitHub release body, and the
-# app announces a new APK only when its own shell is older than that: a release
-# that only refreshed the web bundle changes nothing for a user taking OTA
-# updates.
+# Finds the version of the oldest Android release whose native code is
+# identical to HEAD's, or the given version if the previous release differs,
+# and records it in the GitHub release body. The app announces a new APK only
+# when its own shell is older than that: a release that only refreshed the web
+# bundle changes nothing for a user taking OTA updates.
 #
-# Usage: android_native_version.sh <version being released, e.g. 2.0.2125>
+# Reads the release body on stdin and prints it with the marker replaced. The
+# marker's format is NATIVE_MARKER in app/src/utils/shellUpdate.ts, and
+# android_native_version.spec.ts reads this output with it.
+#
+# Usage: android_native_version.sh <version being released, e.g. 2.0.2125> < body
 #
 # Needs the android tags, so the checkout must not be shallow.
 #
@@ -46,4 +49,6 @@ for tag in $(git tag -l 'v*-android' --sort=-v:refname); do
     NATIVE_VERSION=$v
 done
 
-echo "$NATIVE_VERSION"
+echo "Native code unchanged since: $NATIVE_VERSION" >&2
+sed '/<!-- native-version: .* -->/d'
+printf '\n<!-- native-version: %s -->\n' "$NATIVE_VERSION"

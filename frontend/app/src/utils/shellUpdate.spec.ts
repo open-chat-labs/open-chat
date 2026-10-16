@@ -1,6 +1,12 @@
 import { Version } from "@client";
 import { describe, expect, it } from "vitest";
-import { releasePath, shellUpdateFrom, storeOfferReaches, versionFromCode } from "./shellUpdate";
+import {
+    noticeVersion,
+    releasePath,
+    shellUpdateFrom,
+    storeOfferReaches,
+    versionFromCode,
+} from "./shellUpdate";
 
 function release(tag: string, nativeVersion?: string) {
     const marker = nativeVersion === undefined ? "" : `\n<!-- native-version: ${nativeVersion} -->`;
@@ -74,5 +80,32 @@ describe("storeOfferReaches", () => {
     it("is true when what Play offers can patch its way to the target", () => {
         expect(storeOfferReaches(Version.parse("2.1.0"), target)).toBe(true);
         expect(storeOfferReaches(Version.parse("2.1.7"), target)).toBe(true);
+    });
+});
+
+describe("noticeVersion", () => {
+    const website = Version.parse("2.1.5");
+    const storeUpdate = { kind: "store_update_available", available: website } as const;
+
+    it("hides the minor sheet until Play offers a build that reaches it", () => {
+        expect(noticeVersion(storeUpdate, Version.parse("2.0.2130"), undefined)).toBeUndefined();
+        expect(noticeVersion(storeUpdate, Version.parse("2.1.0"), undefined)).toBe("2.1.5");
+    });
+
+    it("announces a native update while the bundle is up to date", () => {
+        expect(noticeVersion({ kind: "up_to_date" }, undefined, "2.0.2130")).toBe("2.0.2130");
+    });
+
+    it("never announces over the blocking or downloading sheets, or before the bundle check settles", () => {
+        const downloading = {
+            kind: "out_of_date",
+            available: website,
+            downloadProgress: 0,
+        } as const;
+        expect(noticeVersion(downloading, undefined, "2.0.2130")).toBeUndefined();
+        expect(
+            noticeVersion({ kind: "incompatible", available: website }, undefined, "2.0.2130"),
+        ).toBeUndefined();
+        expect(noticeVersion({ kind: "unknown" }, undefined, "2.0.2130")).toBeUndefined();
     });
 });
