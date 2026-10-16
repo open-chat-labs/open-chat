@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Recover the funds held on ICDex: send the ICP to the SNS treasury and burn the CHAT ([#10010](https://github.com/open-chat-labs/open-chat/pull/10010))
+- Recover the funds held on ICDex: send the ICP to the SNS treasury and burn the CHAT ([#10018](https://github.com/open-chat-labs/open-chat/pull/10018))
 
 ### Changed
 
