@@ -6,6 +6,7 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte';
   import { useT } from '../../lib/i18n';
+  import { cssUrl } from '../../lib/cssUrl';
 
   // nav item keys → canonical names in lib/icons.js
   const ICONS = { messages: 'messages', bell: 'bell', wallet: 'wallet', chit: 'zap', heart: 'heart' };
@@ -221,7 +222,7 @@
             class="pin"
             class:selected
             class:preview={selected && pin.preview}
-            style:background={pin.avatarUrl ? `center/cover no-repeat url(${JSON.stringify(pin.avatarUrl)})` : (GRADIENTS[pin.color] ?? GRADIENTS.blue)}
+            style:background={pin.avatarUrl ? `center/cover no-repeat ${cssUrl(pin.avatarUrl)}` : (GRADIENTS[pin.color] ?? GRADIENTS.blue)}
           >
             {#if selected && pin.preview}
               <span class="pin-veil"></span>
@@ -278,7 +279,7 @@
   {:else}
     <div class="row profile" onclick={() => onProfile?.()} role="button" tabindex="0">
       <span class="slot tall">
-        <span class="me" style:background={profileAvatarUrl ? `center/cover no-repeat url(${JSON.stringify(profileAvatarUrl)})` : undefined}
+        <span class="me" style:background={profileAvatarUrl ? `center/cover no-repeat ${cssUrl(profileAvatarUrl)}` : undefined}
           >{#if profileOnline}<span class="me-online"></span>{/if}</span
         >
       </span>

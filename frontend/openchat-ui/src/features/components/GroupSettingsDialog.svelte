@@ -32,6 +32,7 @@
   import Toggle from '../../lib/components/Toggle.svelte';
   import UpgradeBanner from './UpgradeBanner.svelte';
   import { modal } from '../../lib/behaviours/modal';
+  import { cssUrl } from '../../lib/cssUrl';
 
   type Section = 'group' | 'gates' | 'rules' | 'permissions';
   type Scope = 'general' | 'messages' | 'threads';
@@ -614,7 +615,7 @@
       <div class="body-inner" inert={statusOnly ? true : undefined}>
         {#if tabIdx === 0 && !viewOnly}
           <div class="group-page">
-            <div class="cover" style:height={isCommunity ? '150px' : '112px'} style:background={coverShown ? `url(${JSON.stringify(coverShown)}) center/cover no-repeat` : `var(--cover-${COVERS[coverKey] ? coverKey : 'plum'})`}>
+            <div class="cover" style:height={isCommunity ? '150px' : '112px'} style:background={coverShown ? `${cssUrl(coverShown)} center/cover no-repeat` : `var(--cover-${COVERS[coverKey] ? coverKey : 'plum'})`}>
               <div class="cover-tools">
                 <div class="cover-tools-inner">
                   {#if isCommunity}
@@ -659,7 +660,7 @@
                 <div class="photo-row">
                   <div class="photo">
                     <div class="photo-frame" style:background={(GRADIENTS[color] ?? GRADIENTS.teal).value}>
-                      <div class="photo-image" style:background={avatarShown ? `url(${JSON.stringify(avatarShown)}) center/cover no-repeat` : 'none'}></div>
+                      <div class="photo-image" style:background={avatarShown ? `${cssUrl(avatarShown)} center/cover no-repeat` : 'none'}></div>
                     </div>
                     <input
                       class="hidden-input"
@@ -779,10 +780,10 @@
 
         {#if isAbout}
           <div class="about">
-            <div class="about-cover" style:height={isCommunity ? '150px' : '112px'} style:background={coverShown ? `url(${JSON.stringify(coverShown)}) center/cover no-repeat` : `var(--cover-${COVERS[coverKey] ? coverKey : 'plum'})`}></div>
+            <div class="about-cover" style:height={isCommunity ? '150px' : '112px'} style:background={coverShown ? `${cssUrl(coverShown)} center/cover no-repeat` : `var(--cover-${COVERS[coverKey] ? coverKey : 'plum'})`}></div>
             <div class="about-body">
               <div class="photo-frame about-photo" style:background={(GRADIENTS[color] ?? GRADIENTS.teal).value}>
-                <div class="photo-image" style:background={avatarShown ? `url(${JSON.stringify(avatarShown)}) center/cover no-repeat` : 'none'}></div>
+                <div class="photo-image" style:background={avatarShown ? `${cssUrl(avatarShown)} center/cover no-repeat` : 'none'}></div>
               </div>
               <div class="about-names">
                 <span class="about-name">{name}</span>

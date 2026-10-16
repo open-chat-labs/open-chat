@@ -27,6 +27,7 @@
   import SegmentedTabs from '../../lib/components/SegmentedTabs.svelte';
   import Skeleton from '../../lib/components/Skeleton.svelte';
   import TileButtons from '../../lib/components/TileButtons.svelte';
+  import { cssUrl } from '../../lib/cssUrl';
 
   type MemberColor = ComponentProps<typeof MemberRow>['color'];
   type View = 'main' | 'usergroups' | 'usergroup' | 'members' | 'bots' | 'permissions' | 'gates' | 'rules' | 'stats' | 'pinned';
@@ -748,7 +749,7 @@
 
   // ── main view bits ──
   const coverCss = $derived(
-    coverUrl ? `url(${JSON.stringify(coverUrl)}) center/cover no-repeat` : coverKey ? `var(--cover-${COVER_KEYS.includes(coverKey) ? coverKey : 'plum'})` : cover || 'var(--cover-plum)',
+    coverUrl ? `${cssUrl(coverUrl)} center/cover no-repeat` : coverKey ? `var(--cover-${COVER_KEYS.includes(coverKey) ? coverKey : 'plum'})` : cover || 'var(--cover-plum)',
   );
   // role split reads at a glance; the raw total lives in "View all"
   const roleSummary = $derived.by(() => {
@@ -993,7 +994,7 @@
       <div class="cover"><PanelCover cover={coverCss} actions={['close']} trailActions={quick ? [manageIcon, 'more'] : canInvite ? ['invite', 'share', 'more'] : ['more']} handlers={coverHandlersAll} /></div>
 
       <div class="identity" class:quick>
-        <div class="avatar" class:round={scope === 'channel'} style:background={avatar ? `url(${JSON.stringify(avatar)}) center/cover no-repeat` : grad(color)}></div>
+        <div class="avatar" class:round={scope === 'channel'} style:background={avatar ? `${cssUrl(avatar)} center/cover no-repeat` : grad(color)}></div>
         <div class="names">
           <div class="title-line">
             <span class="title">{scope === 'channel' ? '#' : ''}{title}</span>

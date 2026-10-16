@@ -225,7 +225,7 @@
   <div class="card {variant}" class:signup role="dialog" aria-modal={inline ? undefined : 'true'} aria-labelledby="oc-auth-title" use:modal={inline ? undefined : close}>
     {#if variant === 'split'}
       <div class="brand">
-        <img class="brand-logo" src="assets/openchat-logo.svg" alt="" width="56" height="56" />
+        <img class="brand-logo" src="/assets/openchat-logo.svg" alt="" width="56" height="56" />
         <div class="brand-copy">
           <span class="brand-title">{t('ui.authDialog.brandTitle')}</span>
           <span class="brand-sub">{t('ui.authDialog.brandSub')}</span>
@@ -234,7 +234,7 @@
     {/if}
     <div class="column">
       <div class="head">
-        {#if variant !== 'split'}<img class="logo" src="assets/openchat-logo.svg" alt="" width="48" height="48" />{/if}
+        {#if variant !== 'split'}<img class="logo" src="/assets/openchat-logo.svg" alt="" width="48" height="48" />{/if}
         <div class="head-text">
           <h2 id="oc-auth-title">{t(signup ? 'ui.authDialog.createAccountTitle' : 'ui.authDialog.signInTitle')}</h2>
           <span class="sub">{t(reason || 'ui.authDialog.defaultReason')}</span>

@@ -3,6 +3,7 @@
      icon "toggle" is a round add/check picker and tints the whole row while selected. -->
 <script lang="ts">
   import { useT } from '../i18n';
+  import { cssUrl } from '../cssUrl';
 
   const ICONS = {
     check: 'check',
@@ -116,7 +117,7 @@
   {:else}
     <span class="avatar" class:square={variant === 'bot' || variant === 'webhook'} class:muted style:background={GRADIENTS[color] ?? GRADIENTS.violet}>
       {#if image}
-        <span class="photo" style:background="url({image}) center/cover no-repeat"></span>
+        <span class="photo" style:background="{cssUrl(image)} center/cover no-repeat"></span>
       {/if}
       {#if online}
         <span class="online" style:box-shadow="0 0 0 2px {ringColor}"></span>

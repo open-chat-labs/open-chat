@@ -207,7 +207,7 @@ No `.logic.js` and no `useLogic`: state in runes, view values in `$derived`, sty
   - **Your own presence** in `NavRail` is a boolean `profileOnline` (default `false`). Users may later choose a status (away, busy …); that would replace the flag with a status prop.
 - `Countdown` isn't used by the message bubbles yet (they take pre-formatted strings).
 
-- Pages: the logo is `assets/openchat-logo.svg` (relative, as in AuthDialog); the host serves it. Learn's docs, blog, roadmap and FAQs are placeholder copy; the host passes real `content`.
+- Pages: the logo is `/assets/openchat-logo.svg` (root-relative, as in AuthDialog and ExploreCommunities, so nested routes such as /blog/:slug find it); the host serves it. Learn's docs, blog, roadmap and FAQs are placeholder copy; the host passes real `content`.
 
 ## Keeping in sync with the prototype
 Every component was hand-converted after export, so **do not re-export**: regenerating a component would overwrite the conversion. Each file's source hash (in `export-manifest.json` and the tables below) records which prototype version it was converted from; when the prototype changes, compare against that hash and port the change by hand.

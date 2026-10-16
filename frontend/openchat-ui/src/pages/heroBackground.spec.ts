@@ -6,6 +6,7 @@ describe('HeroBackground', () => {
   let now: number;
   let ctx: Record<string, unknown>;
   let canvas: HTMLCanvasElement;
+  let motion: EventTarget & { matches: boolean; media: string };
 
   beforeEach(() => {
     frames = [];
@@ -13,7 +14,8 @@ describe('HeroBackground', () => {
     vi.spyOn(performance, 'now').mockImplementation(() => now);
     vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => frames.push(cb));
     vi.stubGlobal('cancelAnimationFrame', () => {});
-    vi.stubGlobal('matchMedia', (query: string) => ({ matches: false, media: query }));
+    motion = Object.assign(new EventTarget(), { matches: false, media: '(prefers-reduced-motion: reduce)' });
+    vi.stubGlobal('matchMedia', () => motion);
     ctx = new Proxy({} as Record<string, unknown>, {
       get: (o, k) => (k in o ? o[k as string] : () => {}),
       set: (o, k, v) => ((o[k as string] = v), true),
@@ -95,6 +97,43 @@ describe('HeroBackground', () => {
     report([{ isIntersecting: true }, { isIntersecting: false }]);
     frame();
     expect(frames).toHaveLength(0);
+    bg.destroy();
+  });
+
+  test('follows a reduced-motion change while showing: stops on one still frame, and animates again when it is lifted', () => {
+    const bg = HeroBackground.create(canvas, () => ({ style: 'aurora', light: false }))!;
+    expect(frame()).toBe(true);
+    const clear = vi.mocked(ctx.clearRect as () => void);
+    clear.mockClear();
+    const change = (matches: boolean) => {
+      motion.matches = matches;
+      motion.dispatchEvent(Object.assign(new Event('change'), { matches }));
+    };
+    change(true);
+    // drawn at once, and the frame already queued is the last
+    expect(clear).toHaveBeenCalledTimes(1);
+    frame();
+    expect(frames).toHaveLength(0);
+    change(false);
+    expect(frames).toHaveLength(1);
+    const off = vi.spyOn(motion, 'removeEventListener');
+    bg.destroy();
+    expect(off).toHaveBeenCalledWith('change', expect.any(Function));
+  });
+
+  test('retheme re-reads the colours and redraws without re-measuring', () => {
+    let style: HeroStyle = 'off';
+    const bg = HeroBackground.create(canvas, () => ({ style, light: false }))!;
+    const cells = (bg as unknown as { cells: unknown[] }).cells;
+    const measure = vi.mocked(canvas.getBoundingClientRect);
+    measure.mockClear();
+    vi.spyOn(window, 'getComputedStyle').mockReturnValue({ color: 'rgb(4, 5, 6)', getPropertyValue: () => ' rgb(1, 2, 3)' } as unknown as CSSStyleDeclaration);
+    style = 'pulse';
+    bg.retheme();
+    expect([(bg as unknown as { accent: string }).accent, (bg as unknown as { ink: string }).ink]).toEqual(['rgb(1, 2, 3)', 'rgb(4, 5, 6)']);
+    expect(frames).toHaveLength(1);
+    expect(measure).not.toHaveBeenCalled();
+    expect((bg as unknown as { cells: unknown[] }).cells).toBe(cells);
     bg.destroy();
   });
 

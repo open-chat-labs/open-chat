@@ -1,5 +1,5 @@
 import { flushSync, mount, unmount } from 'svelte';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, onTestFinished, test, vi } from 'vitest';
 import Landing from './Landing.svelte';
 import source from './Landing.svelte?raw';
 import { reactiveProps } from '../lib/testing/reactiveProps.svelte';
@@ -70,6 +70,11 @@ describe('Landing', () => {
     show({ learnPageHref: (p: string) => `/${p}` });
     click(q('.learn-button'));
     expect(all('.learn-item').map((a) => a.getAttribute('href'))).toEqual(['/roadmap', '/whitepaper', '/architecture', '/blog', '/faq']);
+  });
+
+  test('logos are root-relative, so the page works on a nested route', () => {
+    show();
+    expect(all('img.logo').map((i) => i.getAttribute('src'))).toEqual(['/assets/openchat-logo.svg', '/assets/openchat-logo.svg']);
   });
 
   test('community cards come from the host; without any, only the heading and Browse link show', () => {
@@ -158,6 +163,32 @@ describe('Landing', () => {
     expect(flips('.build.link')).toEqual([true]);
     expect(flips('.learn-button')).toEqual([false]);
     expect(all('[style*="--icon-"]').every((i) => i.getAttribute('aria-hidden') === 'true')).toBe(true);
+  });
+
+  test("the sections a link jumps to keep clear of the sticky header, at the header's measured height", () => {
+    let measured = () => {};
+    onTestFinished(() => {
+      vi.unstubAllGlobals();
+    });
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(cb: () => void) {
+          measured = cb;
+        }
+        observe() {}
+        disconnect() {}
+      },
+    );
+    show();
+    expect(root().style.getPropertyValue('--header-h')).toBe('');
+    // wrapped onto two rows
+    Object.defineProperty(q('header.top')!, 'offsetHeight', { value: 105 });
+    measured();
+    flushSync();
+    expect(root().style.getPropertyValue('--header-h')).toBe('105px');
+    expect(all('section[id]').map((s) => s.id)).toEqual(['download', 'features', 'communities', 'governance']);
+    expect(source).toMatch(/\.band\[id\] \{\s*scroll-margin-top: var\(--header-h, 69px\);/);
   });
 
   test('menus close on Esc and on a press outside, not on a press inside', () => {
@@ -315,25 +346,30 @@ describe('Landing', () => {
       expect(clear).toHaveBeenCalled();
     });
 
-    test('a mode, accent or style change re-reads the backdrop rather than rebuilding it', async () => {
+    test('a mode, accent or style change rethemes the backdrop, with the new theme already applied; nothing rebuilds or re-measures it', () => {
       fakeCanvas();
       vi.stubGlobal('requestAnimationFrame', vi.fn(() => 1));
       prefersReduced(false);
       const create = vi.spyOn(HeroBackground, 'create');
       const resize = vi.spyOn(HeroBackground.prototype, 'resize');
+      // the theme root's mode at each retheme
+      const themes: (string | undefined)[] = [];
+      const retheme = HeroBackground.prototype.retheme;
+      vi.spyOn(HeroBackground.prototype, 'retheme').mockImplementation(function (this: HeroBackground) {
+        themes.push(root().dataset.mode);
+        retheme.call(this);
+      });
       const props = reactiveProps<Record<string, unknown>>({ heroBg: 'pulse' });
       app = mount(Landing, { target, props });
-      await settle();
-      expect(create).toHaveBeenCalledOnce();
-      resize.mockClear();
+      flushSync();
+      // creating it measured and themed it once; the theme effect's first run adds nothing
+      expect([create.mock.calls.length, resize.mock.calls.length, themes]).toEqual([1, 1, ['dark']]);
       click(q('.mode-button'));
-      await settle();
-      expect(resize).toHaveBeenCalled();
-      resize.mockClear();
+      expect(themes).toEqual(['dark', 'light']);
       props.heroBg = 'aurora';
-      await settle();
-      expect(resize).toHaveBeenCalled();
-      expect(create).toHaveBeenCalledOnce();
+      flushSync();
+      expect(themes).toEqual(['dark', 'light', 'light']);
+      expect([create.mock.calls.length, resize.mock.calls.length]).toEqual([1, 1]);
     });
 
     test('the entrance animation and menu chevrons are switched off for reduced motion', () => {

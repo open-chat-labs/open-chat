@@ -1,7 +1,8 @@
 // Landing hero backdrop: a field of hexagons, faded out towards the edges, that light up in the accent colour, either as
 // ripples spreading from random cells ('pulse') or a slow drifting band ('aurora'). Colours come from the canvas's
 // computed style (`--accent`, and `color` for the hexagon outlines), so they follow the theme root it sits under.
-// With reduced motion, or style 'off', it draws one frame and doesn't animate. Pauses while scrolled out of view.
+// With reduced motion (followed live), or style 'off', it draws one frame and doesn't animate. Pauses while scrolled
+// out of view.
 
 export type HeroStyle = 'pulse' | 'aurora' | 'off';
 
@@ -16,8 +17,10 @@ type Ripple = { x: number; y: number; t0: number; speed: number; life: number; a
 /** A ripple at one moment: where its front is and how strong. */
 type Front = { x: number; y: number; front: number; strength: number };
 
+const REDUCED_MOTION = '(prefers-reduced-motion: reduce)';
+
 export function prefersReducedMotion(): boolean {
-  return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  return typeof matchMedia === 'function' && matchMedia(REDUCED_MOTION).matches;
 }
 
 export class HeroBackground {
@@ -39,7 +42,8 @@ export class HeroBackground {
   private ink = '';
   private ro?: ResizeObserver;
   private io?: IntersectionObserver;
-  readonly reduced = prefersReducedMotion();
+  private motion = typeof matchMedia === 'function' ? matchMedia(REDUCED_MOTION) : undefined;
+  private reduced = !!this.motion?.matches;
 
   /** Null when the browser can't draw on a canvas (nothing to clean up then). */
   static create(canvas: HTMLCanvasElement, opts: () => { style: HeroStyle; light: boolean }): HeroBackground | null {
@@ -65,10 +69,16 @@ export class HeroBackground {
       });
       this.io.observe(cv);
     }
+    this.motion?.addEventListener('change', this.motionChanged);
     this.resize();
   }
 
-  /** Re-measure and re-read the theme colours (call after the mode or accent changes). */
+  private motionChanged = (e: MediaQueryListEvent) => {
+    this.reduced = e.matches;
+    this.retheme();
+  };
+
+  /** Re-measure (the canvas changed size), then retheme(). */
   resize() {
     if (this.dead) return;
     const r = this.cv.getBoundingClientRect();
@@ -93,6 +103,12 @@ export class HeroBackground {
     }
     this.cells = cells;
     this.spawnPool = cells.filter((c) => c.mask > 0.3);
+    this.retheme();
+  }
+
+  /** Re-read the theme colours and redraw (call after the mode, accent or style changes). */
+  retheme() {
+    if (this.dead) return;
     const cs = getComputedStyle(this.cv);
     this.accent = cs.getPropertyValue('--accent').trim();
     this.ink = cs.color;
@@ -106,6 +122,7 @@ export class HeroBackground {
     cancelAnimationFrame(this.raf);
     this.ro?.disconnect();
     this.io?.disconnect();
+    this.motion?.removeEventListener('change', this.motionChanged);
   }
 
   private still() {
@@ -118,7 +135,7 @@ export class HeroBackground {
       this.raf = 0;
       if (!this.visible || this.dead) return;
       this.draw(performance.now() / 1000);
-      // switched to 'off' mid-run: that frame cleared the canvas, and nothing else needs drawing
+      // switched to 'off' (that frame cleared the canvas) or to reduced motion mid-run: nothing else needs drawing
       if (this.still()) return;
       this.raf = requestAnimationFrame(loop);
     };

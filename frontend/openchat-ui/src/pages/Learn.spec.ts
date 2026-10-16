@@ -98,6 +98,13 @@ describe('Learn', () => {
       expect(onNavigate).not.toHaveBeenCalled();
     });
 
+    test("a tab click keeps the host router's history state on the new entry", () => {
+      history.replaceState({ router: 7 }, '', '/learn');
+      show();
+      click(tab('FAQs'));
+      expect([location.hash, history.state]).toEqual(['#faq', { router: 7 }]);
+    });
+
     test('back / forward and an edited hash follow the URL', () => {
       show();
       history.replaceState(null, '', '/learn#architecture');
@@ -156,6 +163,31 @@ describe('Learn', () => {
       window.dispatchEvent(new HashChangeEvent('hashchange'));
       flushSync();
       expect(current()).toBe('Blog');
+    });
+
+    test('the hash routes again once the host stops setting `page`, and not while it sets it', () => {
+      history.replaceState(null, '', '/learn#faq');
+      const props = reactiveProps<Record<string, unknown>>({ page: 'architecture', learnPageHref: (p: string) => `/${p}` });
+      app = mount(Learn, { target, props });
+      flushSync();
+      expect(current()).toBe('Architecture');
+      props.page = undefined;
+      flushSync();
+      expect(current()).toBe('FAQs');
+      history.replaceState(null, '', '/learn#blog');
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+      flushSync();
+      expect(current()).toBe('Blog');
+      props.page = 'roadmap';
+      flushSync();
+      history.replaceState(null, '', '/learn#faq');
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+      flushSync();
+      expect(current()).toBe('Roadmap');
+      // the hash it ignored while host-routed is read afresh when hash routing resumes
+      props.page = undefined;
+      flushSync();
+      expect(current()).toBe('FAQs');
     });
 
     test('with onNavigate the host takes the click; without it the link navigates', () => {
@@ -321,6 +353,14 @@ describe('Learn', () => {
     const item = q<HTMLButtonElement>('.item-button')!;
     expect(item.disabled).toBe(true);
     expect(item.hasAttribute('aria-expanded')).toBe(false);
+  });
+
+  test('logos are root-relative, so a nested host route (/blog/:slug) still finds them, in the sign-in dialog too', () => {
+    show({ page: 'blog', post: 'android-beta', learnPageHref: (p: string, post?: string) => `/${p}/${post ?? ''}` });
+    click(q('.sign-in'));
+    const logos = [...document.querySelectorAll('img')].map((i) => i.getAttribute('src')).filter((src) => src?.includes('openchat-logo'));
+    expect(logos.length).toBeGreaterThanOrEqual(3);
+    expect(new Set(logos)).toEqual(new Set(['/assets/openchat-logo.svg']));
   });
 
   test('sign in opens AuthDialog and a successful sign-in enters the app', async () => {

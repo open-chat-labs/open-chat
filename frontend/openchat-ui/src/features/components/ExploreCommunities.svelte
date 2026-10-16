@@ -487,7 +487,7 @@
   {#if guest}
     <div class="guest-wrap">
       <div class="guest" data-screen-label="Guest banner">
-        <img class="guest-logo" src="assets/openchat-logo.svg" alt="" width="40" height="40" />
+        <img class="guest-logo" src="/assets/openchat-logo.svg" alt="" width="40" height="40" />
         <div class="guest-text">
           <span class="guest-title">{t('ui.exploreCommunities.guestTitle')}</span>
           <span class="guest-body">{t('ui.exploreCommunities.guestBody')}</span>

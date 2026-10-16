@@ -1197,6 +1197,7 @@
       "files": [
         "src/pages/Learn.svelte",
         "src/pages/learnContent.ts",
+        "src/pages/heroBackground.ts",
         "src/pages/pageAuth.svelte.ts",
         "src/pages/types.ts"
       ]

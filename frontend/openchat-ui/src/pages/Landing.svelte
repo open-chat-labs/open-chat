@@ -14,7 +14,7 @@
   import AuthDialog from '../features/components/AuthDialog.svelte';
   import { HeroBackground, type HeroStyle } from './heroBackground';
   import { PageAuthState, type PageAuth } from './pageAuth.svelte';
-  import { cssUrl } from './cssUrl';
+  import { cssUrl } from '../lib/cssUrl';
   import { LEARN_PAGES, learnHashHref, type LearnPage } from './learnContent';
   import { PAGE_ACCENTS, type LandingCommunity, type PageAccent, type PageMode } from './types';
 
@@ -109,6 +109,8 @@
   let learnMenu: HTMLElement | undefined = $state();
   let accentMenu: HTMLElement | undefined = $state();
   let canvas: HTMLCanvasElement | undefined = $state();
+  let header: HTMLElement | undefined = $state();
+  let headerHeight = $state(0);
 
   const authState = new PageAuthState(() => ({ auth, onEnterApp, appHref }));
 
@@ -151,6 +153,15 @@
     };
   });
 
+  // the sticky header's height (two rows on narrow screens), so a section a link jumps to starts just below it
+  $effect(() => {
+    if (!header || typeof ResizeObserver !== 'function') return;
+    const el = header;
+    const ro = new ResizeObserver(() => (headerHeight = el.offsetHeight));
+    ro.observe(el);
+    return () => ro.disconnect();
+  });
+
   let backdrop: HeroBackground | null = null;
   // one backdrop per canvas: its first draw reads heroBg and the mode, which mustn't rebuild it (the effect below
   // applies their changes)
@@ -163,21 +174,23 @@
       backdrop = null;
     };
   });
-  // the backdrop reads its colours from the theme root, so it re-reads them once a new mode or accent has applied
+  // the backdrop reads its colours from the theme root (already updated when effects run), so it re-reads them when a
+  // new mode, accent or style applies; creating it read the first ones
+  let themed = false;
   $effect(() => {
     void shownMode;
     void shownAccent;
     void heroBg;
-    const timer = setTimeout(() => backdrop?.resize(), 0);
-    return () => clearTimeout(timer);
+    if (themed) backdrop?.retheme();
+    themed = true;
   });
 </script>
 
-<div class="page" data-oc-page="landing" data-mode={shownMode} data-accent={shownAccent}>
-  <header class="top">
+<div class="page" data-oc-page="landing" data-mode={shownMode} data-accent={shownAccent} style:--header-h={headerHeight ? `${headerHeight}px` : undefined}>
+  <header class="top" bind:this={header}>
     <div class="top-inner">
       <a class="brand" href={homeHref}>
-        <img class="logo" src="assets/openchat-logo.svg" alt="" width="30" height="30" />
+        <img class="logo" src="/assets/openchat-logo.svg" alt="" width="30" height="30" />
         <span class="brand-name">OpenChat</span>
       </a>
       <nav class="nav" aria-label={t('ui.landing.nav.label')}>
@@ -471,7 +484,7 @@
     <div class="inner stack-36">
       <div class="footer-top">
         <div class="footer-brand">
-          <span class="footer-name"><img class="logo small" src="assets/openchat-logo.svg" alt="" width="22" height="22" />OpenChat</span>
+          <span class="footer-name"><img class="logo small" src="/assets/openchat-logo.svg" alt="" width="22" height="22" />OpenChat</span>
           <span class="footer-tagline">{t('ui.landing.footer.tagline')}</span>
         </div>
         <div class="footer-group">
@@ -1292,6 +1305,11 @@
     display: flex;
     justify-content: center;
     padding: 72px var(--space-24);
+  }
+
+  /* section links land below the sticky header (measured; 68px + its border until then) */
+  .band[id] {
+    scroll-margin-top: var(--header-h, 69px);
   }
 
   #download {

@@ -24,6 +24,7 @@
   import { onDestroy } from 'svelte';
   import { modal } from '../../lib/behaviours/modal';
   import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
+  import { cssUrl } from '../../lib/cssUrl';
 
   const GRADIENTS = {
     slate: 'linear-gradient(140deg,#8E9BB3,#5A6478)',
@@ -150,7 +151,7 @@
         <span class="head-tile warn"><span class="head-glyph" style:mask="var(--icon-refresh) center/contain no-repeat"></span></span>
       {:else if isEdit}
         <span class="head-avatar" style:background={GRADIENTS[colour] ?? GRADIENTS.slate}>
-          <span class="photo" style:background={photo ? `url(${JSON.stringify(photo)}) center/cover no-repeat` : 'none'}></span>
+          <span class="photo" style:background={photo ? `${cssUrl(photo)} center/cover no-repeat` : 'none'}></span>
           <span class="hook-badge"><span class="hook-badge-icon"></span></span>
         </span>
       {:else}
@@ -169,7 +170,7 @@
           <div class="avatar-row">
             <div class="avatar-wrap">
               <div class="avatar" style:background={GRADIENTS[colour] ?? GRADIENTS.slate}>
-                <div class="avatar-photo" style:background={photo ? `url(${JSON.stringify(photo)}) center/cover no-repeat` : 'none'}></div>
+                <div class="avatar-photo" style:background={photo ? `${cssUrl(photo)} center/cover no-repeat` : 'none'}></div>
               </div>
               <input class="file" bind:this={avatarInput} type="file" accept="image/*" oninput={pickedFile} />
               <div class="upload" onclick={() => avatarInput.click()} role="button" tabindex="0" aria-label={t('ui.webhookDialog.uploadImage')} title={t('ui.webhookDialog.uploadImage')}><span class="upload-icon"></span></div>

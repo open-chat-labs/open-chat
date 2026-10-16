@@ -8,12 +8,11 @@
      click instead of the link when given. A doc sub-page the content doesn't have shows the roadmap.
      Sign in / Create account open AuthDialog with the host's `auth` callbacks, as on Landing. -->
 <script lang="ts">
-  import { onMount } from 'svelte';
   import { useT } from '../lib/i18n';
   import Icon from '../lib/components/Icon.svelte';
   import AuthDialog from '../features/components/AuthDialog.svelte';
   import { PageAuthState, type PageAuth } from './pageAuth.svelte';
-  import { cssUrl } from './cssUrl';
+  import { cssUrl } from '../lib/cssUrl';
   import { prefersReducedMotion } from './heroBackground';
   import { learnFromHash, learnHashHref, learnPagesOf, placeholderLearnContent, type LearnContent, type LearnPage, type RoadmapItem } from './learnContent';
   import type { PageAccent, PageMode } from './types';
@@ -143,7 +142,8 @@
     e.preventDefault();
     fromHash = { page: p, post: slug };
     const hash = learnHashHref('', p, slug);
-    if (location.hash !== hash) history.pushState(null, '', hash);
+    // keeps the entry's state: a host router may have put its own there
+    if (location.hash !== hash) history.pushState(history.state, '', hash);
     onNavigate?.(p, slug);
     window.scrollTo?.(0, 0);
   }
@@ -157,8 +157,10 @@
     document.getElementById(id)?.scrollIntoView?.({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
   }
 
-  onMount(() => {
-    if (page !== undefined) return;
+  // the hash routes only while the host doesn't set `page`, which it may start or stop doing after mount
+  const hashRouted = $derived(page === undefined);
+  $effect(() => {
+    if (!hashRouted) return;
     // no hash (back to the entry the page opened on) is the roadmap; an unknown one leaves the sub-page as it is
     const read = () => {
       const r = learnFromHash(location.hash);
@@ -178,7 +180,7 @@
 <div class="page" data-oc-page="learn" data-mode={mode} data-accent={accent}>
   <header class="top">
     <div class="top-inner">
-      <a class="brand" href={homeHref}><img class="logo" src="assets/openchat-logo.svg" alt="" width="30" height="30" /><span class="brand-name">OpenChat</span></a>
+      <a class="brand" href={homeHref}><img class="logo" src="/assets/openchat-logo.svg" alt="" width="30" height="30" /><span class="brand-name">OpenChat</span></a>
       <nav class="tabs" aria-label={t('ui.learn.navLabel')}>
         {#each tabs as p}
           <a class="tab" class:on={p === current} href={linkFor(p)} aria-current={p === current ? 'page' : undefined} onclick={(e) => go(e, p)}>{t(`ui.learn.tabs.${p}`)}</a>
@@ -376,7 +378,7 @@
 
   <footer class="footer">
     <div class="footer-inner">
-      <span class="footer-brand"><img class="logo small" src="assets/openchat-logo.svg" alt="" width="18" height="18" />{t('ui.learn.footer.governed')}</span>
+      <span class="footer-brand"><img class="logo small" src="/assets/openchat-logo.svg" alt="" width="18" height="18" />{t('ui.learn.footer.governed')}</span>
       <span class="footer-links">
         <a class="link" href={exploreHref}>{t('ui.learn.footer.explore')}</a>
         <a class="link" href={homeHref}>{t('ui.learn.footer.home')}</a>
