@@ -4702,7 +4702,6 @@ dependencies = [
  "http_request",
  "human_readable",
  "ic-cdk 0.20.3",
- "ic-cdk-timers",
  "ic-stable-structures",
  "local_user_index_canister",
  "local_user_index_canister_c2c_client",
