@@ -34,6 +34,7 @@ fn init(args: Args) {
         args.moderation_referral_config,
         args.media_scan_config,
         args.call_push_enabled,
+        args.alchemy_api_key,
         args.test_mode,
     );
 

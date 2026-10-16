@@ -21,6 +21,7 @@ fn init(args: Args) {
         args.identity_canister_id,
         args.escrow_canister_id,
         args.video_call_operators,
+        args.alchemy_api_key,
         args.rng_seed,
         args.test_mode,
     );

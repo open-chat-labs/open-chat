@@ -12608,6 +12608,10 @@ export class OpenChat {
     setCallPushEnabled(enabled: boolean): Promise<Success | OCError> {
         return this.#worker.send({ kind: "setCallPushEnabled", enabled });
     }
+
+    setAlchemyApiKey(apiKey: string | undefined): Promise<Success | OCError> {
+        return this.#worker.send({ kind: "setAlchemyApiKey", apiKey });
+    }
     dailyPuzzleRegenerateToday(gameId: string | undefined): Promise<Success | OCError> {
         return this.#worker.send({ kind: "dailyPuzzleRegenerateToday", gameId });
     }

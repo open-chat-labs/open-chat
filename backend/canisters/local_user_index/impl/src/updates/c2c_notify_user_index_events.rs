@@ -327,6 +327,20 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         UserIndexEvent::UserIdMigrated(ev) => {
             state.data.migrated_user_ids.insert(ev.old_user_id, ev.new_user_id);
         }
+        // A MultiUser canister created later is given the key in its init args
+        UserIndexEvent::SetAlchemyApiKey(ev) => {
+            state.data.alchemy_api_key = ev.api_key.clone();
+            let canister_ids: Vec<_> = state.data.local_multi_user_canisters.iter().map(|(c, _)| *c).collect();
+            for canister_id in canister_ids {
+                state.data.fire_and_forget_handler.send(
+                    canister_id,
+                    "c2c_set_alchemy_api_key_msgpack".to_string(),
+                    msgpack::serialize_then_unwrap(multi_user_canister::c2c_set_alchemy_api_key::Args {
+                        api_key: ev.api_key.clone(),
+                    }),
+                );
+            }
+        }
     }
 }
 

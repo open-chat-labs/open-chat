@@ -60,6 +60,7 @@ pub enum UserIndexEvent {
     SetCallPushEnabled(bool),
     SetDailyPuzzleCanisterId(CanisterId),
     UserIdMigrated(UserIdMigrated),
+    SetAlchemyApiKey(SetAlchemyApiKey),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -463,6 +464,11 @@ pub struct UpdateBlockedUsernamePatterns {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct SetOpenAIApiKey {
+    pub api_key: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct SetAlchemyApiKey {
     pub api_key: Option<String>,
 }
 

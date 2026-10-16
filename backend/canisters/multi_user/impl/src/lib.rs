@@ -623,6 +623,7 @@ impl RuntimeState {
                 .iter()
                 .filter(|(_, job)| matches!(job.borrow().as_ref(), Some(TimerJob::ForwardSolDeposit(_))))
                 .count() as u32,
+            alchemy_api_key_set: self.data.alchemy_api_key.is_some(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
@@ -661,6 +662,10 @@ struct Data {
     pub timer_jobs: TimerJobs<TimerJob>,
     // The certified transfers users have sent messages with, so that none is used twice
     pub certified_transfers: CertifiedTransfers,
+    // The key for calling Alchemy's Solana RPC, set by a platform operator on the UserIndex and passed
+    // on by the LocalUserIndex
+    #[serde(default)]
+    pub alchemy_api_key: Option<String>,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
@@ -680,6 +685,7 @@ impl Data {
         identity_canister_id: CanisterId,
         escrow_canister_id: CanisterId,
         video_call_operators: Vec<Principal>,
+        alchemy_api_key: Option<String>,
         rng_seed: [u8; 32],
         test_mode: bool,
     ) -> Data {
@@ -699,6 +705,7 @@ impl Data {
             known_multi_user_canisters: HashSet::new(),
             timer_jobs: TimerJobs::default(),
             certified_transfers: CertifiedTransfers::default(),
+            alchemy_api_key,
             rng_seed,
             test_mode,
         }
@@ -745,6 +752,7 @@ pub struct Metrics {
     pub queued_user_canister_events: u32,
     pub known_multi_user_canisters: u32,
     pub sol_deposits_being_forwarded: u32,
+    pub alchemy_api_key_set: bool,
     pub canister_ids: CanisterIds,
 }
 

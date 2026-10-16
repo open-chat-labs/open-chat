@@ -87,6 +87,7 @@ fn prepare(state: &mut RuntimeState) -> OCResult<PrepareOk> {
         identity_canister_id: state.data.identity_canister_id,
         escrow_canister_id: state.data.escrow_canister_id,
         video_call_operators: state.data.video_call_operators.clone(),
+        alchemy_api_key: state.data.alchemy_api_key.clone(),
         wasm_version: canister_wasm.version,
         rng_seed: state.env.rng().random(),
         test_mode: state.data.test_mode,
