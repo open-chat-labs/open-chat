@@ -4,7 +4,9 @@
 <script lang="ts">
     import { modal } from "@openchat/ui/src/lib/behaviours/modal";
     import { useT } from "@openchat/ui/src/lib/i18n";
-    import type { Snippet } from "svelte";
+    import { untrack, type Snippet } from "svelte";
+    import { cubicOut } from "svelte/easing";
+    import { MediaQuery } from "svelte/reactivity";
     import { currentShellLayout } from "./viewport.svelte";
 
     type Props = {
@@ -40,6 +42,56 @@
     const narrow = $derived(
         currentShellLayout().narrow ? (left ? narrowView : "middle") : undefined,
     );
+
+    // The right column opens and closes with motion: docked, it grows from the inline end and
+    // pushes the middle over; as a modal, the sheet slides in over a fading scrim. A window
+    // crossing the docking width swaps one for the other without it, and so does reduced motion.
+    const reducedMotion = new MediaQuery("prefers-reduced-motion: reduce");
+    let crossing = false;
+    let previousRightMode = untrack(() => rightMode);
+    $effect.pre(() => {
+        const mode = rightMode;
+        untrack(() => {
+            if (mode === previousRightMode) return;
+            previousRightMode = mode;
+            // the swap happens in this update (its intro starts in a microtask); anything after
+            // it is an open or a close again
+            crossing = true;
+            setTimeout(() => (crossing = false));
+        });
+    });
+
+    function duration(): number {
+        if (crossing || reducedMotion.current) return 0;
+        const token = getComputedStyle(document.documentElement).getPropertyValue(
+            "--duration-slow",
+        );
+        return Number.parseFloat(token) || 280;
+    }
+
+    // the column's width, from nothing; its content keeps the full width meanwhile
+    function grow(_node: HTMLElement) {
+        const width = rightWidth;
+        return {
+            duration: duration(),
+            easing: cubicOut,
+            css: (t: number) => `width: ${t * width}px`,
+        };
+    }
+
+    // in from the inline end (the left in a right-to-left page)
+    function slide(node: HTMLElement) {
+        const sign = getComputedStyle(node).direction === "rtl" ? -1 : 1;
+        return {
+            duration: duration(),
+            easing: cubicOut,
+            css: (_t: number, u: number) => `transform: translateX(${sign * u * 100}%)`,
+        };
+    }
+
+    function fade(_node: HTMLElement) {
+        return { duration: duration(), easing: cubicOut, css: (t: number) => `opacity: ${t}` };
+    }
 </script>
 
 <div
@@ -67,17 +119,32 @@
     <main class="middle">
         {@render middle()}
     </main>
-    {#if props.right && props.rightOpen}
+    <!-- open / closed is the innermost block, so its transitions play on opening and closing -->
+    {#if props.right}
         {#if rightMode === "dock"}
-            <aside class="right">
-                {@render props.right()}
-            </aside>
-        {:else}
+            {#if props.rightOpen}
+                <aside class="right" transition:grow>
+                    <div class="right-content">
+                        {@render props.right()}
+                    </div>
+                </aside>
+            {/if}
+        {:else if props.rightOpen}
             <div class="right-modal" use:modal={props.onCloseRight}>
                 <!-- the keyboard closes it with Esc (use:modal) -->
                 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-                <div class="scrim" onclick={props.onCloseRight} aria-hidden="true"></div>
-                <div class="sheet" role="dialog" aria-modal="true" aria-label={t(props.rightLabel)}>
+                <div
+                    class="scrim"
+                    onclick={props.onCloseRight}
+                    aria-hidden="true"
+                    transition:fade>
+                </div>
+                <div
+                    class="sheet"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label={t(props.rightLabel)}
+                    transition:slide>
                     {@render props.right()}
                 </div>
             </div>
@@ -154,6 +221,12 @@
         width: var(--shell-right-width);
         border-inline-start: var(--border-hairline) solid var(--line-1);
         overflow: hidden;
+    }
+
+    /* the full width while the column grows or shrinks, so the content doesn't reflow */
+    .right-content {
+        width: var(--shell-right-width);
+        height: 100%;
     }
 
     .right-modal {
