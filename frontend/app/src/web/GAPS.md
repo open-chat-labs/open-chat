@@ -9,6 +9,17 @@ design export needs. Each entry says where it came up.
   `App.svelte` uses the default (pink).
 - **Font size setting**: the app's font size setting (`fontSize` store) isn't mapped onto the
   library's `--text-*` tokens yet.
+- **Shell breakpoints vs layout tokens**: the brief's shell breakpoints (§3: 768 / 1200 / 1476 /
+  1876px, right column 375 / 425 / 500px) don't match the library's layout tokens (`--bp-*`
+  1280–2500px, `--panel-info-*` 325–450px, `--panel-list-*`). The shell follows the brief
+  (`shell/layout.ts`), which the build brief makes the acceptance check. The tokens should be
+  brought in line, or the brief corrected.
+- **Right column widths**: the brief says 375 / 425 / 500px "as width grows" without the widths
+  where it grows. `shell/layout.ts` uses 425px from 1876px and 500px from 2500px; confirm against
+  the prototype.
+- **Nav rail width**: `NavRail` is 60px collapsed and 283px expanded, while the tokens say
+  `--rail-collapsed: 76px` and `--rail-expanded: 282px`. The shell's rail slot uses the
+  component's 60px.
 - **Messages have no ids**: `GroupMessage`, `ChatBubble` and `MessageGroup`'s callbacks are
   index-based, and `ThreadList` threads carry closures. Adapters keep an index → event map per
   render. A `key`/`id` on messages would be simpler (also for keyed `{#each}`).
