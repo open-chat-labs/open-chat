@@ -1,3 +1,5 @@
+# Runs on every push to master, with no path filter: the integration tests on master wait for this
+# run at their commit and test the wasms it uploads, as do the pre-release tests
 on:
   workflow_call:
   push:
