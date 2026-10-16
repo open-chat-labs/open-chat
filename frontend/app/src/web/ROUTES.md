@@ -171,6 +171,21 @@ Not a URL, wired as today:
   the modal stack to close. The new shell has to handle `closeModalStack` the way `Home.svelte`
   does, or navigations sit pending.
 
+## Built so far (phase 2)
+
+`router/routeTable.ts` registers every path above in this order, and `router/Router.svelte` runs the
+existing route effects. `router/regions.ts` maps each route onto the regions above, and the regions
+are placeholders until their screens are built. Still to come:
+
+- **Guests**: guest-only behaviour comes in the guest pass (phase 10). That covers the "sign in"
+  routes in the Guest column and the composer's sign-in prompt. A guest on `/favourite` already
+  gets the existing sign-in, then `/chats`.
+- **Dialog params**: `?diamond`, `?hof` and `?chit` are left in the URL until their dialogs exist
+  (phase 8).
+- **Share**: `/share` goes to the default scope as today, but picking the chat (`ChatPicker`)
+  comes in phase 5.
+- **Marketing pages**: they render a placeholder until Landing and Learn are mounted (phase 9).
+
 ## Known router issues (not fixed here)
 
 - The legacy `/:chatId` route catches unregistered 1–3 segment paths and treats them as a group id

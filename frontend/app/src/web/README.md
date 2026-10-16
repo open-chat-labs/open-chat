@@ -26,6 +26,8 @@ web/
   ROUTES.md      every URL and what each column shows for it
   DATA.md        where each screen's data and actions come from in the app
   GAPS.md        what the app or the library is missing
+  router/        the route table (every path, in page.js order), the router and its route effects,
+                 and what each route shows (regions.ts)
   shell/         nav rail, the three columns and the breakpoints, overlays
   features/      one folder per screen/feature (chats, conversation, wallet, …):
     XScreen.svelte   reads stores / the client, renders @openchat/ui components, calls the client
