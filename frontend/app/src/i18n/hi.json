@@ -679,6 +679,7 @@
         "shortBalanceLabel": "शेष",
         "shortRemainingBalanceLabel": "शेष राशि",
         "showZeroBalance": "और दिखाएँ",
+        "solDepositFee": "जमा शुल्क: पहली जमा के लिए {first} {token}, उसके बाद {subsequent} {token}",
         "swap": "बदलना",
         "token": "टोकन",
         "tokens": "टोकन",

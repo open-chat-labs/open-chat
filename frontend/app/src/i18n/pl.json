@@ -679,6 +679,7 @@
         "shortBalanceLabel": "Balansować",
         "shortRemainingBalanceLabel": "Pozostałe saldo",
         "showZeroBalance": "Pokaż więcej",
+        "solDepositFee": "Opłata za wpłatę: {first} {token} przy pierwszej wpłacie, potem {subsequent} {token}",
         "swap": "Zamieniać",
         "token": "Znak",
         "tokens": "Żetony",

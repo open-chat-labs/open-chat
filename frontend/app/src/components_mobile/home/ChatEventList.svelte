@@ -159,8 +159,14 @@
 </SharedChatEventList>
 
 <style lang="scss">
+    // Before the list was virtualised it was a component-lib Container, whose defaults filled the
+    // parent's width and hid the scrollbar. The viewport is a plain element shared with desktop,
+    // so those are restated here: without the stretch, a thread (whose parent is a vertical
+    // Container aligning its children to the start) is only as wide as its widest message.
     :global(.vcl-viewport.mobile-event-list) {
         flex: 1 1 0;
+        align-self: stretch;
+        scrollbar-width: none;
         position: relative;
         padding: var(--sp-md) var(--sp-lg) 0 var(--sp-lg);
         gap: var(--sp-xs);
