@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `c2c_local_user_index` for the LocalUserIndex's events ([#10019](https://github.com/open-chat-labs/open-chat/pull/10019))
+
 ### Changed
 
 - Look up a member's previous user ids in the LocalUserIndex when checking their gate again ([#9970](https://github.com/open-chat-labs/open-chat/pull/9970))

@@ -11,6 +11,7 @@ mod account_linking_tests;
 mod alchemy_api_key_tests;
 mod batched_summary_and_event_tests;
 mod bot_tests;
+mod c2c_event_endpoint_tests;
 mod call_push_tests;
 mod call_relay_tests;
 mod canister_pool_tests;

@@ -13,20 +13,23 @@ fn add_or_update_users(args: Args) -> Response {
 
 fn add_or_update_users_impl(args: Args, state: &mut RuntimeState) -> Response {
     for user_config in args.users {
-        if let Some(user) = state.data.users.get_mut(&user_config.user_id) {
-            user.byte_limit = user_config.byte_limit;
-        } else {
-            state.data.users.insert(
-                user_config.user_id,
-                UserRecordInternal {
-                    byte_limit: user_config.byte_limit,
-                    bytes_used: 0,
-                    delete_oldest_if_limit_exceeded: true,
-                },
-            );
-            state.push_event_to_buckets(EventToSync::UserAdded(user_config.user_id));
-        }
+        add_or_update_user(user_config, state);
     }
-
     Response::Success
+}
+
+pub(crate) fn add_or_update_user(user_config: UserConfig, state: &mut RuntimeState) {
+    if let Some(user) = state.data.users.get_mut(&user_config.user_id) {
+        user.byte_limit = user_config.byte_limit;
+    } else {
+        state.data.users.insert(
+            user_config.user_id,
+            UserRecordInternal {
+                byte_limit: user_config.byte_limit,
+                bytes_used: 0,
+                delete_oldest_if_limit_exceeded: true,
+            },
+        );
+        state.push_event_to_buckets(EventToSync::UserAdded(user_config.user_id));
+    }
 }
