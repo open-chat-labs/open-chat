@@ -131,6 +131,12 @@ impl Data {
         self.index_event_sync_queue
             .push((event_to_sync, self.files.total_file_bytes()));
     }
+
+    pub fn push_events_to_index(&mut self, events: Vec<EventToSync>) {
+        let total_file_bytes = self.files.total_file_bytes();
+        self.index_event_sync_queue
+            .push_many(events.into_iter().map(|e| (e, total_file_bytes)).collect());
+    }
 }
 
 #[derive(CandidType, Serialize, Debug)]

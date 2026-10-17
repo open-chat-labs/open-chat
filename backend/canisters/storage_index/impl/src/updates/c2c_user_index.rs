@@ -7,6 +7,9 @@ use canister_tracing_macros::trace;
 use storage_index_canister::UserIndexEvent;
 use storage_index_canister::c2c_user_index::*;
 
+// Must be fed by a single queue on the UserIndex: the idempotency check keeps one high-water mark
+// per sender, so a batch retried from a second queue after a later batch from the first had landed
+// would be dropped as already seen
 #[update(guard = "caller_is_user_controller", msgpack = true)]
 #[trace]
 fn c2c_user_index(args: Args) -> Response {

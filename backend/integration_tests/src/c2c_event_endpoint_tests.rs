@@ -4,7 +4,7 @@
 //! canisters refuse every `c2c_` call made by ingress, so theirs are covered once their callers
 //! switch over.
 use crate::env::ENV;
-use crate::utils::now_millis;
+use crate::utils::{now_millis, tick_until};
 use crate::{TestEnv, client};
 use candid::Principal;
 use rand::random;
@@ -167,7 +167,7 @@ fn storage_index_takes_group_index_events() {
     );
     assert!(matches!(response, SuccessOnly::Success));
 
-    wait_until(env, "the file to be removed", |env| {
+    tick_until(env, |env| {
         !client::storage_bucket::happy_path::file_exists(env, user_id, file.canister_id, file.blob_id)
     });
 }
@@ -179,7 +179,7 @@ fn storage_bucket_takes_storage_index_events() {
 
     let user_id = add_uploader(env, canister_ids);
     let file = client::storage_index::happy_path::upload_file(env, user_id, canister_ids.storage_index, 500, Vec::new());
-    wait_until(env, "the index to count the file", |env| {
+    tick_until(env, |env| {
         client::storage_index::happy_path::user(env, user_id, canister_ids.storage_index).bytes_used == 500
     });
 
@@ -203,7 +203,7 @@ fn storage_bucket_takes_storage_index_events() {
     ));
 
     // The bucket tells the index of the removal through its own events rather than in the response
-    wait_until(env, "the index to drop the file", |env| {
+    tick_until(env, |env| {
         client::storage_index::happy_path::user(env, user_id, canister_ids.storage_index).bytes_used == 0
     });
 }
@@ -230,14 +230,4 @@ fn add_uploader(env: &mut pocket_ic::PocketIc, canister_ids: &crate::CanisterIds
         }],
     );
     user_id
-}
-
-fn wait_until(env: &mut pocket_ic::PocketIc, what: &str, mut condition: impl FnMut(&mut pocket_ic::PocketIc) -> bool) {
-    for _ in 0..50 {
-        if condition(env) {
-            return;
-        }
-        env.tick();
-    }
-    panic!("Timed out waiting for {what}");
 }
