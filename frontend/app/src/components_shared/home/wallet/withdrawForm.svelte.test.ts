@@ -1,5 +1,7 @@
 import {
     anonymousUser,
+    BTC_SYMBOL,
+    CKBTC_SYMBOL,
     CKSOL_SYMBOL,
     currentUserStore,
     LEDGER_CANISTER_CKSOL,
@@ -39,7 +41,17 @@ const sol: EnhancedTokenDetails = {
     urlFormat: "",
 };
 
+// ckBTC
+const btc: EnhancedTokenDetails = {
+    ...sol,
+    name: "Bitcoin",
+    symbol: BTC_SYMBOL,
+    ledger: "mxzaz-hqaaa-aaaar-qaada-cai",
+    decimals: 8,
+};
+
 const SOLANA_ADDRESS = "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM";
+const BITCOIN_ADDRESS = "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq";
 const IC_ACCOUNT = "ryjl3-tyaaa-aaaaa-aaaba-cai";
 const MINTER_INFO: CksolMinterWithdrawalInfo = {
     minWithdrawalAmount: 2_000_000n,
@@ -52,6 +64,8 @@ const client = {
     getCksolMinterWithdrawalInfo: vi.fn(
         () => new Promise<CksolMinterWithdrawalInfo>((resolve) => (resolveMinterInfo = resolve)),
     ),
+    // Never answers: these tests don't need the ckBTC minter's info
+    getCkbtcMinterWithdrawalInfo: vi.fn(() => new Promise(() => {})),
     isAccountOfMultiUserCanisterUserId: vi.fn(() => false),
     formatTokens: (amount: bigint) => amount.toString(),
     OcIdentityPrincipal: "2vxsx-fae",
@@ -149,5 +163,39 @@ describe("withdrawing SOL", () => {
         await minterAnswers();
 
         expect(form.canSend).toBe(true);
+    });
+});
+
+describe("withdrawing BTC", () => {
+    beforeEach(() => {
+        currentUserStore.set({ ...anonymousUser(), userId: "rdmx6-jaaaa-aaaaa-aaadq-cai" });
+    });
+
+    afterEach(() => {
+        dispose();
+        currentUserStore.set(anonymousUser());
+        vi.clearAllMocks();
+    });
+
+    test("needs a Bitcoin address on the BTC network, and an IC account on the ckBTC network", () => {
+        let form!: WithdrawForm;
+        dispose = $effect.root(() => {
+            form = new WithdrawForm(client, new TokenState(btc));
+        });
+        flushSync();
+        expect(form.networks).toEqual([BTC_SYMBOL, CKBTC_SYMBOL]);
+
+        form.targetAccount = BITCOIN_ADDRESS;
+        expect(form.targetAccountValid).toBe(true);
+        // Saved addresses on other networks can be picked from the address book
+        form.targetAccount = SOLANA_ADDRESS;
+        expect(form.targetAccountValid).toBe(false);
+        form.targetAccount = IC_ACCOUNT;
+        expect(form.targetAccountValid).toBe(false);
+
+        form.selectedNetwork = CKBTC_SYMBOL;
+        expect(form.targetAccountValid).toBe(true);
+        form.targetAccount = BITCOIN_ADDRESS;
+        expect(form.targetAccountValid).toBe(false);
     });
 });

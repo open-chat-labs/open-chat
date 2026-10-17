@@ -2482,6 +2482,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "crypto_address"
+version = "0.1.0"
+dependencies = [
+ "bs58",
+ "candid",
+ "ic-ledger-types",
+ "icrc-ledger-types",
+ "sha256",
+ "sha3 0.12.0",
+]
+
+[[package]]
 name = "cssparser"
 version = "0.36.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6887,7 +6899,6 @@ dependencies = [
  "event_store_producer",
  "event_store_producer_cdk_runtime",
  "event_store_utils",
- "fire_and_forget_handler",
  "futures",
  "git_commit_id",
  "group_canister",
@@ -12865,6 +12876,7 @@ dependencies = [
  "cksol_minter_canister",
  "cksol_minter_canister_c2c_client",
  "constants",
+ "crypto_address",
  "direct_chat",
  "escrow_canister",
  "escrow_canister_c2c_client",

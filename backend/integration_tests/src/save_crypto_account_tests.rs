@@ -1,5 +1,6 @@
 use crate::env::ENV;
 use crate::{TestEnv, client};
+use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT};
 use multi_user_canister::NamedAccount;
 use oc_error_codes::OCErrorCode;
 use std::ops::Deref;
@@ -29,6 +30,36 @@ fn save_and_delete_crypto_account_succeeds() {
     client::user::happy_path::delete_saved_crypto_account(env, &user, name);
 
     assert!(client::user::happy_path::saved_crypto_accounts(env, &user).is_empty());
+}
+
+#[test]
+fn save_crypto_account_accepts_an_address_on_each_network() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let user = client::register_user(env, canister_ids);
+    let accounts: Vec<_> = [
+        ("icrc", random_principal().to_string()),
+        (
+            "icp",
+            AccountIdentifier::new(&random_principal(), &DEFAULT_SUBACCOUNT).to_hex(),
+        ),
+        ("btc", "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq".to_string()),
+        ("eth", "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed".to_string()),
+        ("sol", "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM".to_string()),
+    ]
+    .into_iter()
+    .map(|(name, account)| NamedAccount {
+        name: name.to_string(),
+        account,
+    })
+    .collect();
+
+    for account in &accounts {
+        client::user::happy_path::save_crypto_account(env, &user, &account.name, &account.account);
+    }
+
+    assert_eq!(client::user::happy_path::saved_crypto_accounts(env, &user), accounts);
 }
 
 #[test]
