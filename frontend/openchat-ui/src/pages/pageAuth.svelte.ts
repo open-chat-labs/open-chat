@@ -13,9 +13,23 @@ import type { AuthMethod, SignupDetails } from '../features/components/AuthDialo
 type AuthDialogProps = ComponentProps<typeof AuthDialog>;
 
 /** What the host passes through to the pages' AuthDialog. */
-export type PageAuth = Pick<AuthDialogProps, 'variant' | 'referrers' | 'searchReferrers' | 'checkUsername' | 'termsUrl' | 'onRequestEmailLink'> & {
-  /** Sign in / up with a method; resolve once the person is signed in (the page then enters the app), reject to go back. */
-  onMethod?: (method: AuthMethod, kind: 'login' | 'signup') => Promise<unknown>;
+export type PageAuth = Pick<
+  AuthDialogProps,
+  | 'variant'
+  | 'referrers'
+  | 'searchReferrers'
+  | 'checkUsername'
+  | 'termsUrl'
+  | 'onRequestEmailLink'
+  | 'onCancelEmailLink'
+  | 'methods'
+  | 'wallets'
+  | 'email'
+  | 'referrer'
+> & {
+  /** Sign in / up with a method (and the wallet picked, for Ethereum / Solana with `wallets`); resolve once the person is
+   *  signed in (the page then enters the app), reject to go back. */
+  onMethod?: (method: AuthMethod, kind: 'login' | 'signup', wallet?: string) => Promise<unknown>;
   /** Create the account; resolve once it exists and is signed in (the page then enters the app), reject to stay on the form. */
   onSignup?: (details: SignupDetails) => Promise<unknown>;
 };
@@ -42,6 +56,15 @@ export class PageAuthState {
     this.kind = null;
   };
 
+  /** Open app's click, signed in: onEnterApp when the host gives one, else the link to appHref does it. A modified or
+   *  non-primary click (new tab …) is the browser's. */
+  openApp = (e: MouseEvent) => {
+    const { onEnterApp } = this.props();
+    if (!onEnterApp || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    e.preventDefault();
+    onEnterApp();
+  };
+
   private enter(generation: number) {
     // an earlier sign-in's late result leaves the current dialog alone
     if (generation !== this.generation) return;
@@ -54,9 +77,10 @@ export class PageAuthState {
   }
 
   // built once, so AuthDialog gets the same callbacks on every read; they read the host's current ones when called
-  private onMethod = async (method: AuthMethod, kind: 'login' | 'signup') => {
+  // the wallet only when AuthDialog passes one, so the host sees the call AuthDialog made
+  private onMethod = async (method: AuthMethod, kind: 'login' | 'signup', ...wallet: [wallet?: string]) => {
     const generation = this.generation;
-    const pending = this.props().auth?.onMethod?.(method, kind);
+    const pending = this.props().auth?.onMethod?.(method, kind, ...wallet);
     // a plain JS host can still return nothing; that has signed no one in
     if (!isPromise(pending)) return;
     await pending;

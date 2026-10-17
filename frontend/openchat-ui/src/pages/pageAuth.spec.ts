@@ -59,4 +59,17 @@ describe('PageAuthState', () => {
     await stale;
     expect([onEnterApp.mock.calls.length, state.kind]).toEqual([2, 'login']);
   });
+  test("Open app enters through the host on a plain click, and leaves a modified one to the link", () => {
+    const { state, onEnterApp } = setup({});
+    const click = (init: MouseEventInit = {}) => {
+      const e = new MouseEvent('click', { cancelable: true, button: 0, ...init });
+      state.openApp(e);
+      return e.defaultPrevented;
+    };
+    expect(click({ metaKey: true })).toBe(false);
+    expect(click({ button: 1 })).toBe(false);
+    expect(onEnterApp).not.toHaveBeenCalled();
+    expect(click()).toBe(true);
+    expect(onEnterApp).toHaveBeenCalledOnce();
+  });
 });
