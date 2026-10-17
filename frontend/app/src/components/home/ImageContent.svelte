@@ -126,14 +126,12 @@
     onorientationchange={recalculateZoomedDimensions} />
 
 {#if normalised.url !== undefined}
-    <div class="img-wrapper">
+    <div class="img-wrapper" class:masked={hidden && !reply && !draft}>
         {#if hidden}
             <div class="mask">
                 {#if !reply && !draft}
-                    <div class="reveal">
-                        <Button onClick={() => (hidden = false)}
-                            ><Translatable resourceKey={i18nKey(normalised.loadMsg)} /></Button>
-                    </div>
+                    <Button onClick={() => (hidden = false)}
+                        ><Translatable resourceKey={i18nKey(normalised.loadMsg)} /></Button>
                 {/if}
             </div>
         {/if}
@@ -203,6 +201,16 @@
 
     .img-wrapper {
         position: relative;
+
+        // While the mask and its reveal button are showing, keep the wrapper
+        // (and so the mask) at least as tall as the button. A short landscape
+        // image (a thin strip) would otherwise leave the button spilling over
+        // the sender row above and the caption below.
+        &.masked {
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+        }
     }
 
     .mask {
@@ -211,16 +219,12 @@
         left: 0;
         height: 100%;
         width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
         background: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.5));
-    }
-
-    .reveal {
-        position: absolute;
-        top: calc(50% - 20px);
-        width: 100%;
-        text-align: center;
     }
 
     .body {
