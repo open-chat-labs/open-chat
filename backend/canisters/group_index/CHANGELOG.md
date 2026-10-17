@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Stop tracking the async work in progress, since nothing reads it any more ([#9972](https://github.com/open-chat-labs/open-chat/pull/9972))
+- Tell the members of a deleted group or community through events batched per MultiUser canister, rather than a call per member ([#10010](https://github.com/open-chat-labs/open-chat/pull/10010))
 
 ### Removed
 

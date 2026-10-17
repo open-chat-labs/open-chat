@@ -2,6 +2,8 @@
     import { iconSize, mobileWidth, type NamedAccount } from "@client";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import { addressNetwork } from "../../../utils/cryptoAddress";
+    import AddressNetworkIcon from "@shared_components/home/wallet/AddressNetworkIcon.svelte";
     import Menu from "../../Menu.svelte";
     import MenuIcon from "../../MenuIcon.svelte";
     import MenuItem from "../../MenuItem.svelte";
@@ -52,14 +54,20 @@
             {#snippet menuItems()}
                 <Menu>
                     {#each accounts as namedAccount}
+                        {@const network = addressNetwork(namedAccount.account)}
                         <MenuItem unpadded onclick={() => selectAccount(namedAccount)}>
                             {#snippet text()}
                                 <div class="named-account">
-                                    <div class="name">
-                                        {namedAccount.name}
-                                    </div>
-                                    <div class="account">
-                                        {collapseAccount(namedAccount.account)}
+                                    {#if network !== undefined}
+                                        <AddressNetworkIcon {network} size={"1.5rem"} />
+                                    {/if}
+                                    <div class="text">
+                                        <div class="name">
+                                            {namedAccount.name}
+                                        </div>
+                                        <div class="account">
+                                            {collapseAccount(namedAccount.account)}
+                                        </div>
                                     </div>
                                 </div>
                             {/snippet}
@@ -92,9 +100,15 @@
     .named-account {
         padding: $sp3;
         display: flex;
-        flex-direction: column;
+        align-items: center;
+        gap: $sp3;
         @include font(book, normal, fs-80);
         font-family: var(--font);
+
+        .text {
+            display: flex;
+            flex-direction: column;
+        }
 
         .name {
             color: var(--primary);

@@ -96,9 +96,7 @@
             case "sent":
                 tokenState.draftAmount = 0n;
                 toastStore.showSuccessToast(i18nKey("cryptoAccount.sendSucceeded", { symbol }));
-                // Only an account on the token's own ledger can be saved, not eg. a BTC or Solana
-                // address, as on mobile
-                if (form.route.kind === "ledger" && unknownAccount(form.targetAccount)) {
+                if (unknownAccount(form.targetAccount)) {
                     capturingAccount = true;
                 } else {
                     onClose();

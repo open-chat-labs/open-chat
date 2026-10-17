@@ -144,7 +144,7 @@ fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut Runti
     if state.data.local_index_map.add_index(canister_id, wasm_version) {
         // We need to initialize the new local user index with all the existing users
         for user in state.data.users.iter() {
-            state.data.user_index_event_sync_queue.push(
+            state.data.local_user_index_event_sync_queue.push(
                 canister_id,
                 UserIndexEvent::SyncExistingUser(UserDetailsFull {
                     user_id: user.user_id,
@@ -160,26 +160,26 @@ fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut Runti
             )
         }
         for (item_id, chit_cost) in state.data.premium_items.chit_costs() {
-            state.data.user_index_event_sync_queue.push(
+            state.data.local_user_index_event_sync_queue.push(
                 canister_id,
                 UserIndexEvent::SetPremiumItemCost(SetPremiumItemCost { item_id, chit_cost }),
             )
         }
         if let Some(daily_puzzle_canister_id) = state.data.daily_puzzle_canister_id {
-            state.data.user_index_event_sync_queue.push(
+            state.data.local_user_index_event_sync_queue.push(
                 canister_id,
                 UserIndexEvent::SetDailyPuzzleCanisterId(daily_puzzle_canister_id),
             );
         }
         // In case the key was changed while the LocalUserIndex was being installed with the previous one
-        state.data.user_index_event_sync_queue.push(
+        state.data.local_user_index_event_sync_queue.push(
             canister_id,
             UserIndexEvent::SetAlchemyApiKey(SetAlchemyApiKey {
                 api_key: state.data.alchemy_api_key.clone(),
             }),
         );
         for (old_user_id, new_user_id) in state.data.migrated_user_ids.iter() {
-            state.data.user_index_event_sync_queue.push(
+            state.data.local_user_index_event_sync_queue.push(
                 canister_id,
                 UserIndexEvent::UserIdMigrated(UserIdMigrated {
                     old_user_id,
@@ -187,7 +187,6 @@ fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut Runti
                 }),
             );
         }
-        crate::jobs::sync_events_to_local_user_index_canisters::try_run_now(state);
         Success
     } else {
         AlreadyAdded

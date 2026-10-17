@@ -12,17 +12,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Have SOL deposits minted to the canister, which forwards them to the user's wallet less a fee of 0.002 SOL for their first and 0.001 SOL after, and tells them via the OpenChat bot ([#9987](https://github.com/open-chat-labs/open-chat/pull/9987))
 - Hold the Alchemy API key set by a platform operator, for checking Solana balances ([#9995](https://github.com/open-chat-labs/open-chat/pull/9995))
 - Check a user's SOL deposit address through Alchemy before paying the ckSOL minter to check it ([#9996](https://github.com/open-chat-labs/open-chat/pull/9996))
+- Take the GroupIndex's group and community deleted events for every user in the canister in one call ([#10010](https://github.com/open-chat-labs/open-chat/pull/10010))
 
 ### Changed
 
 - Look up the latest id of a P2P swap's offerer named by their old id in the LocalUserIndex ([#9970](https://github.com/open-chat-labs/open-chat/pull/9970))
 - Stop tracking the async work in progress, since nothing reads it any more ([#9972](https://github.com/open-chat-labs/open-chat/pull/9972))
+- Accept Bitcoin, Ethereum and Solana addresses in the address book, as well as ICRC-1 accounts and ICP account identifiers ([#10008](https://github.com/open-chat-labs/open-chat/pull/10008))
+- Send avatar changes to the UserIndex via the LocalUserIndex ([#10011](https://github.com/open-chat-labs/open-chat/pull/10011))
 
 ### Removed
 
 - Remove the job which rewrote every direct chat into the new format ([#9968](https://github.com/open-chat-labs/open-chat/pull/9968))
 - Remove the code which read event data from the heap now that it has all moved into stable memory ([#9968](https://github.com/open-chat-labs/open-chat/pull/9968))
 - Remove the jobs which replaced users' old ids, and the mapping of old ids to new, now that every id held is the latest ([#9970](https://github.com/open-chat-labs/open-chat/pull/9970))
+- Remove the endpoints to add/remove platform operators ([#10011](https://github.com/open-chat-labs/open-chat/pull/10011))
 
 ## [[2.0.2143](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2143-multi_user)] - 2026-10-14
 

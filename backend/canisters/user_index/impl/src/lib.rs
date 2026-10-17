@@ -1,4 +1,6 @@
 use crate::model::group_index_event_batch::GroupIndexEventBatch;
+use crate::model::identity_user_sync_batch::IdentityUserSyncBatch;
+use crate::model::local_user_index_event_batch::LocalUserIndexEventBatch;
 use crate::model::local_user_index_map::LocalUserIndex;
 use crate::model::online_users_event_batch::OnlineUsersEventBatch;
 use crate::model::premium_items::{PremiumItemMetrics, PremiumItems};
@@ -34,7 +36,7 @@ use stable_memory_map::UserIdsKeyPrefix;
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::time::Duration;
-use timer_job_queues::BatchedTimerJobQueue;
+use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     BotInstallationLocation, BuildVersion, CanisterId, ChannelId, ChatId, ChildCanisterWasms, CommunityId, Cycles,
     DiamondMembershipFees, IdempotentEnvelope, MediaScanConfig, Milliseconds, ModerationReferralConfig, TimestampMillis,
@@ -153,8 +155,7 @@ impl RuntimeState {
     // Sends the event to the LocalUserIndex holding the user
     pub fn push_event_to_local_user_index(&mut self, user_id: UserId, event: LocalUserIndexEvent) {
         if let Some(canister_id) = self.local_user_index_of_user(user_id) {
-            self.data.user_index_event_sync_queue.push(canister_id, event);
-            jobs::sync_events_to_local_user_index_canisters::try_run_now(self);
+            self.data.local_user_index_event_sync_queue.push(canister_id, event);
         }
     }
 
@@ -183,10 +184,9 @@ impl RuntimeState {
     pub fn push_event_to_all_local_user_indexes(&mut self, event: LocalUserIndexEvent, except: Option<CanisterId>) {
         for canister_id in self.data.local_index_map.canisters() {
             if except != Some(*canister_id) {
-                self.data.user_index_event_sync_queue.push(*canister_id, event.clone());
+                self.data.local_user_index_event_sync_queue.push(*canister_id, event.clone());
             }
         }
-        jobs::sync_events_to_local_user_index_canisters::try_run_now(self);
     }
 
     pub fn push_event_to_online_users(&mut self, event: OnlineUsersEvent) {
@@ -306,7 +306,7 @@ impl RuntimeState {
             max_concurrent_canister_upgrades: self.data.max_concurrent_canister_upgrades,
             platform_moderators: self.data.platform_moderators.len() as u8,
             platform_operators: self.data.platform_operators.len() as u8,
-            user_index_events_queue_length: self.data.user_index_event_sync_queue.len(),
+            user_index_events_queue_length: self.data.local_user_index_event_sync_queue.len(),
             local_user_indexes: self.data.local_index_map.iter().map(|(c, i)| (*c, i.clone())).collect(),
             multi_user_canisters: self.data.multi_user_canisters.iter().map(|(c, m)| (*c, m.clone())).collect(),
             migrated_user_ids: self.data.migrated_user_ids.len(),
@@ -432,7 +432,10 @@ struct Data {
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub storage_index_user_sync_queue: BatchedTimerJobQueue<StorageIndexUserConfigBatch>,
     pub storage_index_users_to_remove_queue: BatchedTimerJobQueue<StorageIndexUsersToRemoveBatch>,
+    // Drained into `local_user_index_event_sync_queue` by the post_upgrade one-off, and removed with it
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
+    #[serde(default = "new_local_user_index_event_sync_queue")]
+    pub local_user_index_event_sync_queue: GroupedTimerJobQueue<LocalUserIndexEventBatch>,
     pub group_index_event_sync_queue: BatchedTimerJobQueue<GroupIndexEventBatch>,
     pub online_users_event_sync_queue: BatchedTimerJobQueue<OnlineUsersEventBatch>,
     pub pending_payments_queue: PendingPaymentsQueue,
@@ -468,8 +471,11 @@ struct Data {
     pub empty_users: HashSet<UserId>,
     pub chit_leaderboard: ChitLeaderboard,
     pub deleted_users: Vec<DeletedUser>,
+    // Drained into `identity_user_sync_queue` by the post_upgrade one-off, and removed with it
     #[serde(alias = "identity_canister_user_sync_queue_2")]
     pub identity_canister_user_sync_queue: VecDeque<UserIdentity>,
+    #[serde(default = "new_identity_user_sync_queue")]
+    pub identity_user_sync_queue: BatchedTimerJobQueue<IdentityUserSyncBatch>,
     pub survey_messages_sent: usize,
     pub external_achievements: ExternalAchievements,
     pub upload_wasm_chunks_whitelist: Vec<Principal>,
@@ -569,6 +575,7 @@ impl Data {
             storage_index_user_sync_queue: BatchedTimerJobQueue::new(storage_index_canister_id, false),
             storage_index_users_to_remove_queue: BatchedTimerJobQueue::new(storage_index_canister_id, false),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
+            local_user_index_event_sync_queue: new_local_user_index_event_sync_queue(),
             group_index_event_sync_queue: BatchedTimerJobQueue::new(group_index_canister_id, false),
             online_users_event_sync_queue: BatchedTimerJobQueue::new(online_users_canister_id, false),
             pending_payments_queue: PendingPaymentsQueue::default(),
@@ -599,6 +606,7 @@ impl Data {
             chit_leaderboard: ChitLeaderboard::new(now),
             deleted_users: Vec::new(),
             identity_canister_user_sync_queue: VecDeque::new(),
+            identity_user_sync_queue: BatchedTimerJobQueue::new(identity_canister_id, false),
             survey_messages_sent: 0,
             external_achievements: ExternalAchievements::default(),
             upload_wasm_chunks_whitelist: Vec::new(),
@@ -683,6 +691,7 @@ impl Default for Data {
             storage_index_user_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             storage_index_users_to_remove_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
+            local_user_index_event_sync_queue: new_local_user_index_event_sync_queue(),
             group_index_event_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             online_users_event_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             pending_payments_queue: PendingPaymentsQueue::default(),
@@ -713,6 +722,7 @@ impl Default for Data {
             chit_leaderboard: ChitLeaderboard::new(0),
             deleted_users: Vec::new(),
             identity_canister_user_sync_queue: VecDeque::new(),
+            identity_user_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             survey_messages_sent: 0,
             external_achievements: ExternalAchievements::default(),
             upload_wasm_chunks_whitelist: Vec::new(),
@@ -889,4 +899,14 @@ pub struct CanisterIds {
     pub internet_identity: CanisterId,
     pub website: CanisterId,
     pub daily_puzzle: Option<CanisterId>,
+}
+
+fn new_local_user_index_event_sync_queue() -> GroupedTimerJobQueue<LocalUserIndexEventBatch> {
+    GroupedTimerJobQueue::new(10, false)
+}
+
+// Only reached when deserializing state from before the queue existed, which the post_upgrade
+// one-off then points at the Identity canister. Removed with that one-off.
+fn new_identity_user_sync_queue() -> BatchedTimerJobQueue<IdentityUserSyncBatch> {
+    BatchedTimerJobQueue::new(Principal::anonymous(), false)
 }

@@ -329,6 +329,7 @@ pub enum UserEvent<T = UserNotificationPayload> {
     UserBlocked(UserId),
     UserUnblocked(UserId),
     UserSetProfileBackground(Option<u128>),
+    UserSetAvatar(Option<u128>),
     SetMaxStreak(u16),
     EventStoreEvent(Event),
     Notification(Box<Notification<T>>),
