@@ -1,4 +1,4 @@
-use crate::{generate_query_call, generate_update_call};
+use crate::{generate_msgpack_update_call, generate_query_call, generate_update_call};
 use storage_bucket_canister::*;
 
 // Queries
@@ -7,6 +7,7 @@ generate_query_call!(file_status);
 generate_query_call!(vault_log);
 
 // Updates
+generate_msgpack_update_call!(c2c_storage_index);
 generate_update_call!(delete_file);
 generate_update_call!(delete_files);
 generate_update_call!(forward_file);

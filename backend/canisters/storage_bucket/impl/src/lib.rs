@@ -11,6 +11,7 @@ use std::collections::BTreeMap;
 use timer_job_queues::BatchedTimerJobQueue;
 use types::{BuildVersion, CanisterId, Cycles, FileId, TimestampMillis, Timestamped};
 use utils::env::Environment;
+use utils::idempotency_checker::IdempotencyChecker;
 
 mod guards;
 mod jobs;
@@ -94,6 +95,8 @@ struct Data {
     #[serde(default)]
     vault: Vault,
     index_event_sync_queue: BatchedTimerJobQueue<IndexEventBatch>,
+    #[serde(default)]
+    idempotency_checker: IdempotencyChecker,
     created: TimestampMillis,
     rng_seed: [u8; 32],
     test_mode: bool,
@@ -107,6 +110,7 @@ impl Data {
             files: Files::default(),
             vault: Vault::default(),
             index_event_sync_queue: BatchedTimerJobQueue::new(storage_index_canister_id, false),
+            idempotency_checker: IdempotencyChecker::default(),
             created: now,
             rng_seed: [0; 32],
             test_mode,

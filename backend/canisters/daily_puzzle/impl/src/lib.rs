@@ -14,6 +14,7 @@ use types::{
     PuzzleNumber, TimestampMillis, Timestamped, UserId,
 };
 use utils::env::Environment;
+use utils::idempotency_checker::IdempotencyChecker;
 
 mod guards;
 mod jobs;
@@ -196,6 +197,8 @@ struct Data {
     pub results: BTreeMap<(PuzzleNumber, GameId, UserId), DailyPuzzleResult>,
     pub local_user_indexes: HashSet<CanisterId>,
     pub pending_pushes: HashSet<CanisterId>,
+    #[serde(default)]
+    pub idempotency_checker: IdempotencyChecker,
     pub last_registry_refresh: TimestampMillis,
     pub test_mode: bool,
 }
@@ -222,6 +225,7 @@ impl Data {
             results: BTreeMap::new(),
             local_user_indexes: HashSet::new(),
             pending_pushes: HashSet::new(),
+            idempotency_checker: IdempotencyChecker::default(),
             last_registry_refresh: 0,
             test_mode,
         }

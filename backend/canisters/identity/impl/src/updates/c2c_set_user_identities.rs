@@ -2,6 +2,7 @@ use crate::guards::caller_is_user_index_canister;
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use identity_canister::UserIdentity;
 use identity_canister::c2c_set_user_identities::*;
 use tracing::error;
 use types::CanisterId;
@@ -17,22 +18,23 @@ fn c2c_set_user_identities(args: Args) -> Response {
 }
 
 fn c2c_set_user_identities_impl(args: Args, state: &mut RuntimeState) -> Response {
-    let sign_in_with_email_canister_id = state.data.sign_in_with_email_canister_id;
-
     for user in args.users {
-        if state.data.user_principals.set_user_id(user.principal, user.user_id)
-            && let Some(email) = user.email
-            && let Some(index) = state.data.user_principals.user_principal_index(&user.principal)
-        {
-            ic_cdk::futures::spawn_migratory(link_email_auth_principal_to_user_identity(
-                sign_in_with_email_canister_id,
-                email,
-                index,
-            ));
-        }
+        set_user_identity(user, state);
     }
-
     Response::Success
+}
+
+pub(crate) fn set_user_identity(user: UserIdentity, state: &mut RuntimeState) {
+    if state.data.user_principals.set_user_id(user.principal, user.user_id)
+        && let Some(email) = user.email
+        && let Some(index) = state.data.user_principals.user_principal_index(&user.principal)
+    {
+        ic_cdk::futures::spawn_migratory(link_email_auth_principal_to_user_identity(
+            state.data.sign_in_with_email_canister_id,
+            email,
+            index,
+        ));
+    }
 }
 
 async fn link_email_auth_principal_to_user_identity(

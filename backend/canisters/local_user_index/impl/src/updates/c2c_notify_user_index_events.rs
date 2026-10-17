@@ -32,7 +32,7 @@ fn c2c_notify_user_index_events_impl(args: Args, state: &mut RuntimeState) -> Re
     Response::Success
 }
 
-fn handle_event<F: FnOnce() -> TimestampMillis>(
+pub(crate) fn handle_event<F: FnOnce() -> TimestampMillis>(
     event: UserIndexEvent,
     now: &LazyCell<TimestampMillis, F>,
     state: &mut RuntimeState,

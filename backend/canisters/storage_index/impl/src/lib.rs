@@ -18,6 +18,7 @@ use types::{
 };
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::env::Environment;
+use utils::idempotency_checker::IdempotencyChecker;
 
 mod guards;
 mod jobs;
@@ -138,6 +139,8 @@ struct Data {
     pub user_index_canister_id: Option<CanisterId>,
     #[serde(default)]
     pub fire_and_forget_handler: FireAndForgetHandler,
+    #[serde(default)]
+    pub idempotency_checker: IdempotencyChecker,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub total_cycles_spent_on_canisters: Cycles,
     pub cycles_dispenser_config: CyclesDispenserConfig,
@@ -186,6 +189,7 @@ impl Data {
             derived_csam_hashes: BTreeMap::new(),
             user_index_canister_id: None,
             fire_and_forget_handler: FireAndForgetHandler::default(),
+            idempotency_checker: IdempotencyChecker::default(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             total_cycles_spent_on_canisters: 0,
             cycles_dispenser_config,

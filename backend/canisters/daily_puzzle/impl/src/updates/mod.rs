@@ -1,3 +1,4 @@
+mod c2c_local_user_index;
 mod c2c_pull_puzzles;
 mod c2c_report_results;
 mod candidates;

@@ -18,7 +18,7 @@ fn c2c_local_index(args: Args) -> Response {
     execute_update_even_if_frozen(|state| c2c_local_index_impl(args, state))
 }
 
-fn c2c_local_index_impl(args: Args, state: &mut RuntimeState) -> Response {
+pub(crate) fn c2c_local_index_impl(args: Args, state: &mut RuntimeState) -> Response {
     let now = LazyCell::new(now_millis);
     for event in args.events {
         if state.data.idempotency_checker.check(

@@ -15,7 +15,7 @@ fn c2c_sync_index(args: Args) -> Response {
     mutate_state(|state| c2c_sync_index_impl(args, state))
 }
 
-fn c2c_sync_index_impl(args: Args, state: &mut RuntimeState) -> Response {
+pub(crate) fn c2c_sync_index_impl(args: Args, state: &mut RuntimeState) -> Response {
     for user_id in args.users_added {
         state.data.users.add(user_id);
     }
