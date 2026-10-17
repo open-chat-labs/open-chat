@@ -11,6 +11,8 @@ generate_candid_c2c_call_tuple_args!(stats);
 
 // Updates
 generate_candid_c2c_call_tuple_args!(accountConfig);
+generate_candid_c2c_call_tuple_args!(cancelAll);
 generate_candid_c2c_call_tuple_args!(cancelByTxid);
 generate_candid_c2c_call_tuple_args!(deposit);
 generate_candid_c2c_call_tuple_args!(trade);
+generate_candid_c2c_call_tuple_args!(withdraw);

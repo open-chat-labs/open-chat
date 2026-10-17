@@ -4,6 +4,7 @@ fn main() {
     generate_candid_method_no_args!(icrc_ledger, icrc1_decimals, query);
     generate_candid_method_no_args!(icrc_ledger, icrc1_fee, query);
     generate_candid_method_no_args!(icrc_ledger, icrc1_metadata, query);
+    generate_candid_method_no_args!(icrc_ledger, icrc1_minting_account, query);
     generate_candid_method_no_args!(icrc_ledger, icrc1_name, query);
     generate_candid_method_no_args!(icrc_ledger, icrc1_supported_standards, query);
     generate_candid_method_no_args!(icrc_ledger, icrc1_symbol, query);

@@ -1,4 +1,5 @@
 use crate::exchanges::Exchange;
+use crate::model::icdex_funds_recovery::IcdexFundsRecovery;
 use crate::model::orders_log::OrdersLog;
 use canister_state_macros::canister_state;
 use constants::{CHAT_SYMBOL, ICP_SYMBOL};
@@ -64,6 +65,7 @@ impl RuntimeState {
             latest_orders_taken: self.data.latest_orders_taken.clone(),
             my_open_orders: self.data.my_open_orders.clone(),
             market_makers_in_progress: self.data.market_makers_in_progress.clone(),
+            icdex_funds_recovery: self.data.icdex_funds_recovery.clone(),
             stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
@@ -109,6 +111,8 @@ struct Data {
     pub my_open_orders: HashMap<ExchangeId, AggregatedOrders>,
     pub market_makers_in_progress: HashMap<ExchangeId, TimestampMillis>,
     pub balance_history: VecDeque<CanisterBalances>,
+    #[serde(default)]
+    pub icdex_funds_recovery: IcdexFundsRecovery,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
@@ -132,6 +136,7 @@ impl Data {
             my_open_orders: HashMap::new(),
             market_makers_in_progress: HashMap::new(),
             balance_history: VecDeque::new(),
+            icdex_funds_recovery: IcdexFundsRecovery::default(),
             rng_seed: [0; 32],
             test_mode,
         }
@@ -151,6 +156,7 @@ pub struct Metrics {
     pub latest_orders_taken: HashMap<ExchangeId, (Option<u64>, Option<u64>)>,
     pub my_open_orders: HashMap<ExchangeId, AggregatedOrders>,
     pub market_makers_in_progress: HashMap<ExchangeId, TimestampMillis>,
+    pub icdex_funds_recovery: IcdexFundsRecovery,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub canister_ids: CanisterIds,
 }
