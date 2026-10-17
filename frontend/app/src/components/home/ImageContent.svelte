@@ -126,7 +126,7 @@
     onorientationchange={recalculateZoomedDimensions} />
 
 {#if normalised.url !== undefined}
-    <div class="img-wrapper" class:masked={hidden && !reply && !draft}>
+    <div class="img-wrapper" class:masked={hidden && !reply && !draft} class:fill>
         {#if hidden}
             <div class="mask">
                 {#if !reply && !draft}
@@ -208,8 +208,13 @@
         // the sender row above and the caption below.
         &.masked {
             min-height: 60px;
-            display: flex;
-            align-items: center;
+
+            // A fill message paints the sender pill over the top of the image
+            // and the time pill over the bottom, so leave room for the button
+            // between them.
+            &.fill {
+                min-height: 110px;
+            }
         }
     }
 

@@ -309,8 +309,6 @@
                 // the button spilling over the sender row and the caption.
                 &.masked {
                     min-height: 4rem;
-                    display: flex;
-                    align-items: center;
                 }
 
                 &.narrow {
