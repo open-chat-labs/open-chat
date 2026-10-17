@@ -2,7 +2,7 @@
 
 ## Overview {#1}
 
-> For an up-to-date, interactive view of the canisters, their endpoints and state, see the [canister map](canister_map/README.md).
+> For an up-to-date, interactive view of the canisters, their endpoints and state, see the [canister map](https://oc.app/canisters) (source and generator in [canister_map](canister_map/README.md)).
 
 OpenChat is a system composed of canister smart contracts running on the Internet Computer which provides chat functionality. The canisters provide an API and serve the assets for the OpenChat web app, and going forwards, will allow 3rd-party services to integrate chat.
 
