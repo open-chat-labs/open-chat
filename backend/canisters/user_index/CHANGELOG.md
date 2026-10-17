@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Take avatar changes from the LocalUserIndexes rather than the MultiUser canisters ([#10011](https://github.com/open-chat-labs/open-chat/pull/10011))
+- Add/remove platform moderators without calling into their MultiUser canisters ([#10011](https://github.com/open-chat-labs/open-chat/pull/10011))
+
 ## [[2.0.2154](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2154-user_index)] - 2026-10-16
 
 ### Added
