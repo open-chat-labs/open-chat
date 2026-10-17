@@ -23,7 +23,6 @@ use ct_codecs::{Base64UrlSafeNoPadding, Encoder};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use event_store_utils::EventDeduper;
-use fire_and_forget_handler::FireAndForgetHandler;
 use group_canister::LocalIndexEvent as GroupEvent;
 use jwt::{Claims, sign_and_encode_token, sign_bytes, verify_and_decode};
 use local_user_index_canister::{ChildCanisterType, GlobalUser};
@@ -900,7 +899,6 @@ struct Data {
     #[serde(default)]
     pub cycles_topped_up_for_refunds: Cycles,
     pub cycles_balance_check_queue: VecDeque<CanisterId>,
-    pub fire_and_forget_handler: FireAndForgetHandler,
     pub idempotency_checker: IdempotencyChecker,
     pub notification_pushers: HashSet<Principal>,
     pub web_push_subscriptions: WebPushSubscriptions,
@@ -1046,7 +1044,6 @@ impl Data {
             cycles_topped_up_for_refunds: 0,
             cycles_balance_check_queue: VecDeque::new(),
             bots: BotsMap::default(),
-            fire_and_forget_handler: FireAndForgetHandler::default(),
             idempotency_checker: IdempotencyChecker::default(),
             web_push_subscriptions: WebPushSubscriptions::default(),
             notifications: EventStream::default(),

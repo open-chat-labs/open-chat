@@ -76,8 +76,6 @@ pub struct User {
     #[serde(default)]
     pub referrals: Referrals,
     #[serde(default)]
-    pub is_platform_moderator: bool,
-    #[serde(default)]
     pub token_swaps: TokenSwaps,
     #[serde(default)]
     pub p2p_swaps: P2PSwaps,
@@ -136,7 +134,6 @@ impl User {
             unique_person_proof: None,
             external_achievements: HashSet::new(),
             referrals: Referrals::default(),
-            is_platform_moderator: false,
             token_swaps: TokenSwaps::default(),
             p2p_swaps: P2PSwaps::default(),
             btc_address: None,

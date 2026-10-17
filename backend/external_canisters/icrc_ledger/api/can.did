@@ -99,6 +99,7 @@ type GetIndexPrincipalError = variant {
 
 service : {
     icrc1_metadata : () -> (vec record { text; Value }) query;
+    icrc1_minting_account : () -> (opt Account) query;
     icrc1_name : () -> (text) query;
     icrc1_symbol : () -> (text) query;
     icrc1_decimals : () -> (nat8) query;

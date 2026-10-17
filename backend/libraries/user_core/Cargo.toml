@@ -13,6 +13,7 @@ chat_events = { path = "../chat_events" }
 cksol_minter_canister = { path = "../../external_canisters/cksol_minter/api" }
 cksol_minter_canister_c2c_client = { path = "../../external_canisters/cksol_minter/c2c_client" }
 constants = { path = "../constants" }
+crypto_address = { path = "../crypto_address" }
 direct_chat = { path = "../direct_chat" }
 escrow_canister = { path = "../../canisters/escrow/api" }
 escrow_canister_c2c_client = { path = "../../canisters/escrow/c2c_client" }

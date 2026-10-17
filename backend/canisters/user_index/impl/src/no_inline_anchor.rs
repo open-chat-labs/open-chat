@@ -57,7 +57,7 @@ pub fn anchor() {
         let s = bytes.as_slice();
 
         // Anchor for UserIndexEvent::visit_enum itself (first call site is in post_upgrade
-        // via Data.user_index_event_sync_queue deserialization).
+        // via Data.local_user_index_event_sync_queue deserialization).
         assert!(msgpack::deserialize::<UserIndexEvent, _>(s).is_err());
 
         // Anchors for large variant-payload structs whose visit_map is otherwise unique to
