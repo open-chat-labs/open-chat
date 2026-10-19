@@ -77,8 +77,10 @@ design export needs. Each entry says where it came up.
 - **Community stats**: counters only; there's no 12-week series for `GroupStats`.
 - **Sign-in**: no promise that settles on sign-in, so adapters watch `identityStateStore`. The
   ETH/SOL wallet connection UI lives in the old components.
-- **Learn content**: the existing pages' content (roadmap, blog, whitepaper, architecture, FAQ)
-  has to move into Learn's content shape (markdown docs, JSON roadmap and FAQ).
+- **Learn content**: the existing pages' content (roadmap, blog, whitepaper, FAQ) has to move
+  into Learn's content shape (markdown docs, JSON roadmap and FAQ). The architecture page is no
+  longer a doc: it frames the interactive canister map served beside the app
+  (`CanisterMapFrame.svelte`), with `?section=<canister>` selecting a canister.
 
 ### Wiring
 

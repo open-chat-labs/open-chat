@@ -90,7 +90,16 @@
     }
 </script>
 
+<!-- a route without a left column has none (ROUTES.md, Regions), and a narrow screen shows its middle -->
+{#snippet leftColumn()}
+    {#if regions.left}
+        {@const [title, detail] = describeLeft(regions.left)}
+        <Placeholder {title} {detail} />
+    {/if}
+{/snippet}
+
 <Shell
+    left={regions.left ? leftColumn : undefined}
     narrowView={regions.narrowView}
     rightOpen={rightColumn.open}
     onCloseRight={() => (rightColumn.open = false)}
@@ -112,12 +121,6 @@
             onExplore={() => navigate("/communities")}
             onProfile={() => navigate(withQueryStringFlag("profile"), "overlay")}
             onSignIn={() => client.updateIdentityState({ kind: "logging_in" })} />
-    {/snippet}
-    {#snippet left()}
-        {#if regions.left}
-            {@const [title, detail] = describeLeft(regions.left)}
-            <Placeholder {title} {detail} />
-        {/if}
     {/snippet}
     {#snippet middle()}
         {@const [title, detail] = describe(regions.middle)}

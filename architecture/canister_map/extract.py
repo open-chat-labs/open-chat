@@ -14,11 +14,12 @@ Run from the repo root:
 
     python3 architecture/canister_map/extract.py            # writes canister_map/index.html
     python3 architecture/canister_map/extract.py --live     # also refreshes live.json from prod metrics
-    python3 architecture/canister_map/extract.py --out frontend/app/build/canisters/index.html --live
+    python3 architecture/canister_map/extract.py --out frontend/app/build/canister-map-<version>.html --live
 
 index.html is produced by splicing the data into template.html, so the page stays a single file. The
 website build runs the last form (see frontend/app/rollup.config.mjs) so the map is served from the
-website canister at /canisters and regenerated on every deploy; with --out, live.json is left alone.
+website canister, framed by its Architecture page, and regenerated on every deploy; with --out,
+live.json is left alone.
 """
 
 import argparse
