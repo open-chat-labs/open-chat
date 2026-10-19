@@ -32,16 +32,21 @@ import {
 // the callbacks settle on identityStateStore instead (DATA.md, Auth).
 
 /**
- * Calls `settle` once with the first outcome that isn't "pending" (from the current identity on),
- * skipping "failed" when `anonFails` is off. Returns a stop function.
+ * Calls `settle` once with the first outcome that isn't "pending", skipping "failed" when
+ * `anonFails` is off. That's from the current identity on, or with `fromNow` from the first
+ * identity that differs from it. Returns a stop function.
  */
 function watchSignIn(
     settle: (outcome: SignedIn | "failed") => void,
-    anonFails: boolean,
+    { anonFails, fromNow = false }: { anonFails: boolean; fromNow?: boolean },
 ): () => void {
     let done = false;
     let unsubscribe: (() => void) | undefined = undefined;
+    const startedAt = identityStateStore.value.kind;
+    let changed = !fromNow;
     unsubscribe = identityStateStore.subscribe((state) => {
+        changed ||= state.kind !== startedAt;
+        if (!changed) return;
         const outcome = signInOutcome(state);
         if (done || outcome === "pending" || (outcome === "failed" && !anonFails)) return;
         done = true;
@@ -60,10 +65,13 @@ function watchSignIn(
 export async function untilSignedIn(start: () => Promise<unknown> | void): Promise<SignedIn> {
     await start();
     return new Promise((resolve, reject) => {
-        watchSignIn((outcome) => {
-            if (outcome === "failed") reject(new Error("Sign-in didn't complete"));
-            else resolve(outcome);
-        }, true);
+        watchSignIn(
+            (outcome) => {
+                if (outcome === "failed") reject(new Error("Sign-in didn't complete"));
+                else resolve(outcome);
+            },
+            { anonFails: true },
+        );
     });
 }
 
@@ -88,6 +96,8 @@ export type Auth = Required<
     lastEmail: () => string;
     /** Whoever the referral link this browser came in on names, if anyone. */
     loadReferrer: () => Promise<AuthPerson | undefined>;
+    /** Stops a sign-up in flight from going on to make the account. */
+    cancelSignup: () => void;
 };
 
 export type AuthOptions = {
@@ -104,8 +114,8 @@ export type AuthOptions = {
 export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: AuthOptions): Auth {
     const email = new EmailSigninHandler(client, "registration", true);
     let stopEmailWatch = () => {};
-    // the referrer the dialog was given: if sign-up comes back without one, it was removed
-    let offeredReferrer: string | undefined = undefined;
+    // each sign-up's number: cancelling moves it on, so the one in flight stops after its passkey
+    let signups = 0;
 
     const failure = (key: string): AuthFailure => ({ reason: translate(key) });
 
@@ -147,10 +157,14 @@ export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: Aut
             const resp = await email.generateMagicLink(address);
             if (resp.kind !== "success") throw failure(emailLinkFailureKey(resp.kind));
             // the person follows the link on another page, and this one signs in when the poller
-            // hears of it. Until then the identity can sit at anonymous.
-            stopEmailWatch = watchSignIn((outcome) => {
-                if (outcome !== "failed") onEmailSignedIn?.(outcome);
-            }, false);
+            // hears of it. Until then the identity can sit at anonymous, or at an identity
+            // without an account from an earlier try, which isn't the link's
+            stopEmailWatch = watchSignIn(
+                (outcome) => {
+                    if (outcome !== "failed") onEmailSignedIn?.(outcome);
+                },
+                { anonFails: false, fromNow: true },
+            );
             return { code: resp.code };
         },
 
@@ -164,16 +178,17 @@ export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: Aut
         async loadReferrer() {
             // without a referrer (none stored, or the lookup failed) sign-up offers none
             const user = await client.getReferringUser().catch(() => undefined);
-            offeredReferrer = user?.userId;
             return user === undefined ? undefined : person(user);
         },
 
         async onSignup({ username, email: recoveryEmail, referrerId }: SignupDetails) {
+            // the stored code is whoever the form has, so a removed referrer, or a referral link's
+            // code that names no one, isn't sent
+            const signup = ++signups;
             if (referrerId !== undefined) {
                 client.setReferralCode(referrerId);
-            } else if (offeredReferrer !== undefined) {
+            } else {
                 client.clearReferralCode();
-                offeredReferrer = undefined;
             }
             selectedAuthProviderStore.set(AuthProvider.PASSKEY);
             // an identity without an account (signed in some other way, or a passkey made on an
@@ -181,6 +196,7 @@ export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: Aut
             if (identityStateStore.value.kind !== "registering") {
                 await client.signUpWithWebAuthn(true, username);
             }
+            if (signup !== signups) throw new Error("Sign-up cancelled");
             const resp = await client.registerUser(username, recoveryEmail);
             if (resp.kind !== "success") {
                 const key = registerFailureKey(resp.kind);
@@ -207,6 +223,10 @@ export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: Aut
         },
 
         stopEmail,
+
+        cancelSignup() {
+            signups++;
+        },
     };
 
     function stopEmail() {

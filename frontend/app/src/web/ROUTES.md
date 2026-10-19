@@ -187,7 +187,8 @@ paths. `features/auth` wires `AuthDialog` to the existing sign-in flows: on the 
 their own dialog, and in the app (`AuthScreen`) whenever the client asks for a sign-in or a
 signed-in identity has no account yet. `/home?auth&m=…` (the emailed sign-in link) asks for the
 link's code over Landing. While a sign-in or sign-up started in Landing's own dialog is going,
-`/` keeps showing Landing, so that dialog sees it through (`pageSignIns`, `showsSignedOut`).
+`/` keeps showing Landing, so that dialog sees it through, and after a sign-up there fails, so it
+says why (`pageSignIns`, `showsSignedOut`). Leaving the app mid sign-in gives the sign-in up.
 
 Still to come:
 

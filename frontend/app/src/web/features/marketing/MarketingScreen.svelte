@@ -34,17 +34,17 @@
     const auth = createAuth(client, { translate: (key) => $_(key), onEmailSignedIn: enterApp });
     onDestroy(auth.stopEmail);
 
-    const dialog = new AuthDialogProps(auth);
+    const dialog = new AuthDialogProps(auth, selectedAuthProviderStore.value);
 
     // the page's own sign-ins are tracked, so "/" keeps Landing until they're through
     const pageAuth = $derived.by(() => {
-        const props = dialog.props($querystringStore.getAll("auth"), $selectedAuthProviderStore);
+        const props = dialog.props($querystringStore.getAll("auth"));
         return {
             ...props,
             onMethod: (...args: Parameters<typeof auth.onMethod>) =>
                 pageSignIns.track(auth.onMethod(...args)),
             onSignup: (details: Parameters<typeof auth.onSignup>[0]) =>
-                pageSignIns.track(auth.onSignup(details)),
+                pageSignIns.track(auth.onSignup(details), { signup: true }),
         };
     });
 

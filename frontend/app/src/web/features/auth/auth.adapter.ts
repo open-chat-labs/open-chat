@@ -38,17 +38,15 @@ const QUERY_NAMES: Record<AuthOption, string[]> = {
 };
 
 /**
- * The sign-in options on offer: `?auth=` narrows them, and without WebAuthn only passkey and email
- * are left. The method last signed in with comes first (as the old UI's ChooseSignInOption).
+ * The sign-in options on offer: `?auth=` narrows them, and without WebAuthn only email is left
+ * (a passkey is WebAuthn; the old UI also left the others out). The method last signed in with comes first (as the old UI's ChooseSignInOption).
  */
 export function authOptions(
     restrictTo: string[],
     hasWebAuthn: boolean,
     last?: AuthProvider,
 ): AuthOption[] {
-    const supported = hasWebAuthn
-        ? ALL_OPTIONS
-        : ALL_OPTIONS.filter((o) => o === "passkey" || o === "email");
+    const supported = hasWebAuthn ? ALL_OPTIONS : ALL_OPTIONS.filter((o) => o === "email");
     // the email link's own URL has a bare `?auth`, which narrows nothing
     const names = restrictTo.filter((name) => name !== "");
     const offered =
@@ -182,16 +180,26 @@ export function emailLinkResult(kind: HandleMagicLinkResponse["kind"]): EmailLin
     }
 }
 
+/** Whether the identity is signed in without an account, or loading on the way to sign-up. */
+function withoutAccount(state: IdentityState): boolean {
+    return state.kind === "registering" || (state.kind === "loading_user" && state.registering);
+}
+
 /**
- * Whether "/" shows Landing: for someone signed out, and for a sign-in or sign-up still going on
- * in Landing's own dialog, whose outcome decides (the app, or Landing again with the reason).
+ * Whether "/" shows Landing: for someone signed out, for a sign-in or sign-up still going on in
+ * Landing's own dialog, whose outcome decides (the app, or Landing again with the reason), and
+ * for a sign-up that failed there, which the dialog shows the reason for and lets them try again.
  */
 export function showsSignedOut(
     state: IdentityState,
     anonUser: boolean,
     signingInOnPage: boolean,
+    signupFailedOnPage: boolean,
 ): boolean {
-    return anonUser && (state.kind === "anon" || signingInOnPage);
+    return (
+        anonUser &&
+        (state.kind === "anon" || signingInOnPage || (signupFailedOnPage && withoutAccount(state)))
+    );
 }
 
 export type AuthDialogKind = "login" | "signup";
@@ -220,15 +228,44 @@ export function nextAuthKind(
 
 /**
  * What closing the in-app AuthDialog leaves behind, as the old onboarding modal: a sign-in given
- * up on goes back to anonymous, and an identity that never got an account is signed out.
+ * up on goes back to anonymous, and an identity that never got an account is signed out (once its
+ * user has loaded, when it's loading).
  */
-export function onAuthClosed(state: IdentityState): "anon" | "sign_out" | undefined {
+export function onAuthClosed(
+    state: IdentityState,
+): "anon" | "sign_out" | "sign_out_once_loaded" | undefined {
     switch (state.kind) {
         case "logging_in":
             return "anon";
         case "registering":
             return "sign_out";
+        case "loading_user":
+            return state.registering ? "sign_out_once_loaded" : undefined;
         default:
             return undefined;
     }
+}
+
+/**
+ * After a sign-up closed while its user loaded: wait for the load, then sign out an identity that
+ * has no account, rather than open the sign-up again.
+ */
+export function afterClosedSignup(state: IdentityState): "wait" | "sign_out" | "done" {
+    switch (state.kind) {
+        case "loading_user":
+            return "wait";
+        case "registering":
+            return "sign_out";
+        default:
+            return "done";
+    }
+}
+
+/**
+ * What leaving the app (to a marketing page) does to a sign-in its dialog had going: with the
+ * dialog gone it's given up, so "/" shows Landing again. An identity without an account keeps it,
+ * for the sign-up form when the app is back.
+ */
+export function onAuthLeft(state: IdentityState): "anon" | undefined {
+    return state.kind === "logging_in" ? "anon" : undefined;
 }

@@ -3,7 +3,7 @@ import { WalletAdapterNetwork, type WalletName } from "@solana/wallet-adapter-ba
 import { CoinbaseWalletAdapter } from "@solana/wallet-adapter-coinbase";
 import { PhantomWalletAdapter } from "@solana/wallet-adapter-phantom";
 import { WalletConnectWalletAdapter } from "@solana/wallet-adapter-walletconnect";
-import { currentWallet, initialize } from "@src/stores/solana/walletStore";
+import { initialize, settledWallet } from "@src/stores/solana/walletStore";
 import base58 from "bs58";
 
 // Sign in with a Solana wallet, as the old UI's SigninWithSol.svelte does: connect, sign the SIWS
@@ -52,10 +52,12 @@ export function buildSignInRequest(siwsMessage: SiwsMessage): string {
 /** Resolves once the client has the wallet's identity; rejects if any step fails or is declined. */
 export async function signInWithSolana(client: OpenChat, walletName: string): Promise<void> {
     await initialiseWallets();
-    const { select, connect } = currentWallet();
+    // a returning user's wallet auto-connects as the adapters start, and connect() returns
+    // straight away while that's in flight; so is picking a wallet that auto-connects
+    const { select, connect } = await settledWallet();
     await select(walletName as WalletName);
     await connect();
-    const { publicKey, wallet, signMessage } = currentWallet();
+    const { publicKey, wallet, signMessage } = await settledWallet();
     if (!publicKey || !wallet || !signMessage) throw new Error("The wallet didn't connect");
     const account = publicKey.toBase58();
     const prepared = await client.siwsPrepareLogin(account);

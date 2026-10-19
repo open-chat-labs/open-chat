@@ -13,7 +13,12 @@
     import AppScreen from "./AppScreen.svelte";
 
     const signedOut = $derived(
-        showsSignedOut($identityStateStore, $anonUserStore, pageSignIns.pending > 0),
+        showsSignedOut(
+            $identityStateStore,
+            $anonUserStore,
+            pageSignIns.pending > 0,
+            pageSignIns.signupFailed,
+        ),
     );
     const regions = $derived(regionsFor($routeStore, signedOut));
 

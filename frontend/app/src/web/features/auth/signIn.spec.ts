@@ -155,10 +155,27 @@ describe("the sign-in callbacks", () => {
         await expect(auth.loadReferrer()).resolves.toBeUndefined();
     });
 
-    test("with no referrer offered, a code the dialog never showed is left alone", async () => {
+    test("without a referrer, no stored code goes with the sign-up", async () => {
+        // e.g. a referrer picked on a failed try and then removed, or a ?ref= naming no one
         set({ kind: "registering" });
         await auth.onSignup({ username: "newperson" });
-        expect(client.clearReferralCode).not.toHaveBeenCalled();
+        expect(client.clearReferralCode).toHaveBeenCalled();
+        expect(client.clearReferralCode.mock.invocationCallOrder[0]).toBeLessThan(
+            client.registerUser.mock.invocationCallOrder[0],
+        );
+    });
+
+    test("a sign-up cancelled while its passkey is made goes no further", async () => {
+        let passkeyMade!: () => void;
+        client.signUpWithWebAuthn.mockImplementationOnce(
+            () => new Promise<void>((resolve) => (passkeyMade = resolve)),
+        );
+        const signup = auth.onSignup({ username: "newperson" });
+        await Promise.resolve();
+        auth.cancelSignup();
+        passkeyMade();
+        await expect(signup).rejects.toThrow("Sign-up cancelled");
+        expect(client.registerUser).not.toHaveBeenCalled();
     });
 
     test("a username is free only when the check says so, and offline is a failed check", async () => {
@@ -177,6 +194,15 @@ describe("the sign-in callbacks", () => {
         expect(emailHandlers[0].generateMagicLink).toHaveBeenCalledWith("me@example.com");
         set({ kind: "loading_user", registering: false });
         expect(onEmailSignedIn).not.toHaveBeenCalled();
+        set({ kind: "logged_in" });
+        expect(onEmailSignedIn).toHaveBeenCalledWith("logged_in");
+    });
+
+    test("a link asked for by an identity without an account waits for the link", async () => {
+        set({ kind: "registering" });
+        await auth.onRequestEmailLink!("me@example.com");
+        expect(onEmailSignedIn).not.toHaveBeenCalled();
+        set({ kind: "loading_user", registering: false });
         set({ kind: "logged_in" });
         expect(onEmailSignedIn).toHaveBeenCalledWith("logged_in");
     });

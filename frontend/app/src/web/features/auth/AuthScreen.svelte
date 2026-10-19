@@ -11,27 +11,53 @@
     import AuthDialog from "@openchat/ui/src/features/components/AuthDialog.svelte";
     import { getContext, onDestroy, untrack } from "svelte";
     import { _ } from "svelte-i18n";
-    import { nextAuthKind, onAuthClosed, type AuthDialogKind } from "./auth.adapter";
+    import {
+        afterClosedSignup,
+        nextAuthKind,
+        onAuthClosed,
+        onAuthLeft,
+        type AuthDialogKind,
+    } from "./auth.adapter";
     import { AuthDialogProps } from "./authDialog.svelte";
-    import { createAuth } from "./signIn";
+    import { createAuth, type Auth } from "./signIn";
 
     const client = getContext<OpenChat>("client");
-    const auth = createAuth(client, { translate: (key) => $_(key) });
-    onDestroy(auth.stopEmail);
-    const dialog = new AuthDialogProps(auth);
+
+    // made when the dialog first opens: most sessions are signed in and never need them
+    let auth: Auth | undefined = undefined;
+    let dialog = $state<AuthDialogProps | undefined>(undefined);
 
     let kind = $state<AuthDialogKind | null>(null);
+    // a sign-up closed while its user loaded, to sign out once it has (afterClosedSignup)
+    let signOutOnceLoaded = false;
     $effect(() => {
         const state = $identityStateStore;
-        untrack(() => (kind = nextAuthKind(kind, state)));
+        untrack(() => {
+            if (signOutOnceLoaded) {
+                const next = afterClosedSignup(state);
+                if (next === "wait") return;
+                signOutOnceLoaded = false;
+                if (next === "sign_out") {
+                    client.logout();
+                    return;
+                }
+            }
+            const opening = kind === null;
+            kind = nextAuthKind(kind, state);
+            if (opening && kind !== null) open();
+        });
     });
 
-    const dialogProps = $derived(
-        dialog.props($querystringStore.getAll("auth"), $selectedAuthProviderStore),
-    );
+    function open() {
+        auth ??= createAuth(client, { translate: (key) => $_(key) });
+        dialog = new AuthDialogProps(auth, selectedAuthProviderStore.value);
+    }
+
+    const dialogProps = $derived(dialog?.props($querystringStore.getAll("auth")));
 
     function close() {
-        auth.stopEmail();
+        auth?.stopEmail();
+        auth?.cancelSignup();
         kind = null;
         switch (onAuthClosed(identityStateStore.value)) {
             case "anon":
@@ -40,10 +66,20 @@
             case "sign_out":
                 client.logout();
                 break;
+            case "sign_out_once_loaded":
+                signOutOnceLoaded = true;
+                break;
         }
     }
+
+    onDestroy(() => {
+        auth?.stopEmail();
+        if (onAuthLeft(identityStateStore.value) === "anon") {
+            client.updateIdentityState({ kind: "anon" });
+        }
+    });
 </script>
 
-{#if kind !== null}
+{#if kind !== null && dialogProps !== undefined}
     <AuthDialog {kind} {...dialogProps} onClose={close} />
 {/if}
