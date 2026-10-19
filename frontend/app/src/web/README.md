@@ -32,10 +32,14 @@ web/
   features/      one folder per screen/feature (chats, conversation, wallet, …):
     XScreen.svelte   reads stores / the client, renders @openchat/ui components, calls the client
     x.adapter.ts     pure mapping from client data to component props, with a spec
+    app/screens.ts   which screen shows in each region kind; a new screen sets its entry there
 ```
 
 ## Rules
 
+- A region's screen is plugged in by setting its entry in `features/app/screens.ts`
+  (`() => import("../x/XScreen.svelte")`); it gets `{ region, context }`. `AppScreen` doesn't
+  change for it.
 - Only `XScreen` components touch the client or the stores. `@openchat/ui` components get data
   through props and report actions through callbacks.
 - Import library components by file (`@openchat/ui/src/lib/components/Button.svelte`), not from the
