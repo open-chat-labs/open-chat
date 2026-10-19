@@ -24,7 +24,7 @@
     import { pinsFor } from "../rail/rail.adapter";
     import Placeholder from "./Placeholder.svelte";
     import RegionScreen from "./RegionScreen.svelte";
-    import { leftScreens, middleScreens, regionSummary } from "./screens";
+    import { leftScreens, middleScreens, type ScreenContext } from "./screens";
 
     let { regions }: { regions: Extract<Regions, { area: "app" }> } = $props();
 
@@ -58,13 +58,23 @@
               : undefined,
     );
 
-    const context = $derived({ rightColumn, narrow, back });
+    // built once, each field read as it's used: a crossing of the narrow breakpoint doesn't touch a
+    // screen that only reads the right column
+    const context: ScreenContext = {
+        rightColumn,
+        get narrow() {
+            return narrow;
+        },
+        get back() {
+            return back;
+        },
+    };
 </script>
 
 <!-- a route without a left column has none (ROUTES.md, Regions), and a narrow screen shows its middle -->
 {#snippet leftColumn()}
     {#if regions.left}
-        <RegionScreen region={regions.left} screens={leftScreens} {context} />
+        <RegionScreen region={regions.left} screens={leftScreens} {context} column="left" />
     {/if}
 {/snippet}
 
@@ -99,39 +109,36 @@
             onSignIn={() => client.updateIdentityState({ kind: "logging_in" })} />
     {/snippet}
     {#snippet middle()}
-        <RegionScreen region={regions.middle} screens={middleScreens} {context}>
-            {#snippet placeholder(region)}
-                {@render middlePlaceholder(region)}
-            {/snippet}
-        </RegionScreen>
+        <RegionScreen
+            region={regions.middle}
+            screens={middleScreens}
+            {context}
+            column="middle"
+            toolbar={middleToolbar} />
     {/snippet}
 </Shell>
 
-<!-- until a middle's screen is built: its region, with the back and panel buttons a screen has -->
-{#snippet middlePlaceholder(region: typeof regions.middle)}
-    <div class="middle">
-        <!-- a screen has its own (ConversationHeader's back button and panel toggle) -->
-        <div class="toolbar">
-            {#if narrow && back !== undefined}
-                <IconButton
-                    icon="back"
-                    variant="ghost"
-                    label="ui.common.back"
-                    onClick={() => navigate(back)} />
-            {/if}
-            <span class="gap"></span>
-            {#if regions.rightColumn !== false}
-                <IconButton
-                    icon="panel"
-                    variant="ghost"
-                    pressed={rightColumn.open}
-                    label={rightColumn.open
-                        ? "ui.conversationHeader.hidePanel"
-                        : "ui.conversationHeader.showPanel"}
-                    onClick={() => rightColumn.toggle()} />
-            {/if}
-        </div>
-        <Placeholder title={region.kind} detail={regionSummary(region)} />
+<!-- over a middle placeholder: the back and panel buttons its screen will have (ConversationHeader's) -->
+{#snippet middleToolbar()}
+    <div class="toolbar">
+        {#if narrow && back !== undefined}
+            <IconButton
+                icon="back"
+                variant="ghost"
+                label="ui.common.back"
+                onClick={() => navigate(back)} />
+        {/if}
+        <span class="gap"></span>
+        {#if regions.rightColumn !== false}
+            <IconButton
+                icon="panel"
+                variant="ghost"
+                pressed={rightColumn.open}
+                label={rightColumn.open
+                    ? "ui.conversationHeader.hidePanel"
+                    : "ui.conversationHeader.showPanel"}
+                onClick={() => rightColumn.toggle()} />
+        {/if}
     </div>
 {/snippet}
 
@@ -145,11 +152,6 @@
 {/if}
 
 <style>
-    .middle {
-        position: relative;
-        height: 100%;
-    }
-
     .toolbar {
         position: absolute;
         inset-block-start: var(--space-12);

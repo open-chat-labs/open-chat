@@ -1,4 +1,5 @@
-// A module loaded the first time it's wanted (Learn's content, kept out of Landing's download).
+// A module loaded the first time it's wanted (Learn's content, kept out of Landing's download; a
+// region's screen).
 // A load that fails (a flaky network, a chunk gone after a deploy) is remembered, so the page can
 // say so, and wanting it again tries again.
 export class LazyModule<M> {

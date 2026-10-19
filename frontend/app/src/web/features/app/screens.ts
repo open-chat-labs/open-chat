@@ -1,4 +1,5 @@
 import type { Component } from "svelte";
+import { LazyModule } from "../../lazyModule.svelte";
 import type { Regions } from "../../router/regions";
 import type { RightColumnState } from "../../shell/rightColumn.svelte";
 
@@ -62,11 +63,38 @@ export const middleScreens: Screens<MiddleRegion> = {
     admin: undefined,
 };
 
-/** A placeholder's account of a region: its parameters, for development. */
+type AnyScreen = { default: Component<never> };
+
+// one loader per screen, kept for the session: a screen loaded once shows at once when its region
+// comes back (a remount), and a failed load is retried for that screen alone
+const loaders = new WeakMap<() => Promise<AnyScreen>, LazyModule<AnyScreen>>();
+
+/** The loader for a screen, shared by every region that shows it. */
+export function screenLoader<M extends AnyScreen>(load: () => Promise<M>): LazyModule<M> {
+    let loader = loaders.get(load);
+    if (loader === undefined) {
+        loader = new LazyModule<AnyScreen>(load);
+        loaders.set(load, loader);
+    }
+    return loader as unknown as LazyModule<M>;
+}
+
+/**
+ * A placeholder's account of a region, for development: its values on one line ("userId: abc ·
+ * messageIndex: 12"), nested ones included, without the kinds and scopes that only repeat it.
+ */
 export function regionSummary(region: { kind: string }): string {
-    const { kind: _kind, ...params } = region;
-    if (Object.keys(params).length === 0) return "";
-    return JSON.stringify(params, (_key, value) =>
-        typeof value === "bigint" ? value.toString() : value,
-    );
+    const parts: string[] = [];
+    const walk = (value: unknown, key?: string) => {
+        if (value === undefined || value === null) return;
+        if (typeof value === "object") {
+            for (const [k, v] of Object.entries(value)) {
+                if (k !== "kind" && k !== "scope") walk(v, k);
+            }
+        } else if (key !== undefined) {
+            parts.push(`${key}: ${String(value)}`);
+        }
+    };
+    walk(region);
+    return parts.join(" · ");
 }

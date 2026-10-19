@@ -24,7 +24,7 @@
     import { AuthDialogProps, pageSignIns } from "../auth/authDialog.svelte";
     import { createAuth } from "../auth/signIn";
     import { accentStore } from "../../accent";
-    import { LazyModule } from "./lazyModule.svelte";
+    import { LazyModule } from "../../lazyModule.svelte";
     import { isEmailLinkPage, learnPageFor, learnPath } from "./marketing";
 
     let { route }: { route: RouteParams } = $props();
