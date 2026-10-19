@@ -41,6 +41,7 @@
     import page from "page";
     import { getContext, onMount, untrack, type Snippet } from "svelte";
     import { routeTable } from "./routeTable";
+    import { samePageFragment } from "./links";
 
     let { children }: { children: Snippet } = $props();
 
@@ -60,7 +61,13 @@
     }
 
     onMount(() => {
-        const onLinkClick = handleLinkClick(client, navigate);
+        const routeLink = handleLinkClick(client, navigate);
+        // a link to a fragment of the page it's on is the browser's: it scrolls there
+        const onLinkClick = (e: MouseEvent) => {
+            const anchor = e.target instanceof Element ? e.target.closest("a") : null;
+            if (anchor?.href && samePageFragment(anchor.href, window.location)) return;
+            routeLink(e);
+        };
         document.addEventListener("click", onLinkClick, { capture: true });
 
         for (const { path, parse } of routeTable) {
