@@ -7,6 +7,8 @@
     import { untrack, type Snippet } from "svelte";
     import { cubicOut } from "svelte/easing";
     import { MediaQuery } from "svelte/reactivity";
+    import { narrowColumn } from "./layout";
+    import { fadeCss, growCss, motionDuration, slideCss } from "./motion";
     import { currentShellLayout } from "./viewport.svelte";
 
     type Props = {
@@ -38,10 +40,7 @@
     const listMode = $derived(currentShellLayout().list);
     const rightMode = $derived(currentShellLayout().right);
     const rightWidth = $derived(currentShellLayout().rightWidth);
-    // a narrow screen without a left column shows the middle
-    const narrow = $derived(
-        currentShellLayout().narrow ? (left ? narrowView : "middle") : undefined,
-    );
+    const narrow = $derived(narrowColumn(currentShellLayout(), left !== undefined, narrowView));
 
     // The right column opens and closes with motion: docked, it grows from the inline end and
     // pushes the middle over; as a modal, the sheet slides in over a fading scrim. A window
@@ -62,35 +61,23 @@
     });
 
     function duration(): number {
-        if (crossing || reducedMotion.current) return 0;
         const token = getComputedStyle(document.documentElement).getPropertyValue(
             "--duration-slow",
         );
-        return Number.parseFloat(token) || 280;
+        return motionDuration(crossing || reducedMotion.current, token);
     }
 
-    // the column's width, from nothing; its content keeps the full width meanwhile
     function grow(_node: HTMLElement) {
-        const width = rightWidth;
-        return {
-            duration: duration(),
-            easing: cubicOut,
-            css: (t: number) => `width: ${t * width}px`,
-        };
+        return { duration: duration(), easing: cubicOut, css: growCss(rightWidth) };
     }
 
-    // in from the inline end (the left in a right-to-left page)
     function slide(node: HTMLElement) {
-        const sign = getComputedStyle(node).direction === "rtl" ? -1 : 1;
-        return {
-            duration: duration(),
-            easing: cubicOut,
-            css: (_t: number, u: number) => `transform: translateX(${sign * u * 100}%)`,
-        };
+        const rtl = getComputedStyle(node).direction === "rtl";
+        return { duration: duration(), easing: cubicOut, css: slideCss(rtl) };
     }
 
     function fade(_node: HTMLElement) {
-        return { duration: duration(), easing: cubicOut, css: (t: number) => `opacity: ${t}` };
+        return { duration: duration(), easing: cubicOut, css: fadeCss };
     }
 </script>
 
