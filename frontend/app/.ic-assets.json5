@@ -58,12 +58,13 @@
         },
     },
     {
-        // The canister map, regenerated on every build (see rollup.config.mjs). It changes only
-        // with a release, so it may be cached for a while, and it is one big document, so it is
-        // served compressed (see the css/js rule for why br alone).
+        // The canister map, regenerated on every build (see rollup.config.mjs). It changes with
+        // each release, so browsers revalidate it on every load (a 304 when its ETag still
+        // matches) rather than keep a copy that outlives a deploy, and it is one big document,
+        // so it is served compressed (see the css/js rule for why br alone).
         match: "canisters/index.html",
         headers: {
-            "Cache-Control": "public, max-age=3600",
+            "Cache-Control": "no-cache",
         },
         encodings: ["identity", "br"],
     },
