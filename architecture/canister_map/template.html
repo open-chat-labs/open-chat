@@ -726,13 +726,26 @@ $("#zin").onclick = () => { const vp = viewport(); zoomAt(1.4, vp.x + vp.w / 2, 
 $("#zout").onclick = () => { const vp = viewport(); zoomAt(1 / 1.4, vp.x + vp.w / 2, vp.y + vp.h / 2); };
 $("#zfit").onclick = () => { deselect(false); fitAll(); };
 
-// hover highlights
-gNodes.addEventListener("pointerover", ev => { const n = ev.target.closest(".node"); if (n && !selected) highlight(n.dataset.id); });
-gNodes.addEventListener("pointerout", ev => { const n = ev.target.closest(".node"); if (n && !selected) highlight(null); });
-gExts.addEventListener("pointerover", ev => { const n = ev.target.closest(".ext"); if (n && !selected) highlight(n.dataset.ext); });
-gExts.addEventListener("pointerout", ev => { const n = ev.target.closest(".ext"); if (n && !selected) highlight(null); });
+// hover highlights: pointerover / pointerout bubble from every part of a card (its rects and
+// texts), so a move within one card is ignored, and only entering or leaving the card as a whole
+// changes the highlight
+function hoverHandlers(group, selector, idOf) {
+  group.addEventListener("pointerover", ev => {
+    const n = ev.target.closest(selector);
+    if (n && !selected && !(ev.relatedTarget && n.contains(ev.relatedTarget))) highlight(idOf(n));
+  });
+  group.addEventListener("pointerout", ev => {
+    const n = ev.target.closest(selector);
+    if (n && !selected && !(ev.relatedTarget && n.contains(ev.relatedTarget))) highlight(null);
+  });
+}
+hoverHandlers(gNodes, ".node", n => n.dataset.id);
+hoverHandlers(gExts, ".ext", n => n.dataset.ext);
 
-function highlight(id) {
+let highlighted = null;
+function highlight(id, force = false) {
+  if (id === highlighted && !force) return;
+  highlighted = id;
   const related = new Set();
   if (id) {
     related.add(id);
@@ -1126,7 +1139,7 @@ search.addEventListener("keydown", ev => {
     items[activeResult] && items[activeResult].scrollIntoView({ block: "nearest" });
   } else if (ev.key === "Enter" && items.length) { ev.preventDefault(); items[Math.max(0, activeResult)].click(); }
 });
-function closeResults() { results.hidden = true; highlight(selected); }
+function closeResults() { results.hidden = true; highlight(selected, true); }
 document.addEventListener("click", ev => { if (!ev.target.closest(".search")) closeResults(); });
 
 // ---------- about ----------
