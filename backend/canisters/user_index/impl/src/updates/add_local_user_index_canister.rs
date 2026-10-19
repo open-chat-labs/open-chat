@@ -163,7 +163,7 @@ fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut Runti
         let mut pusher = LocalUserIndexEventPusher {
             now,
             rng: state.env.rng(),
-            queue: &mut state.data.local_user_index_event_sync_queue,
+            queue: &mut state.data.local_user_index_event_sync_queue_v2,
         };
         // We need to initialize the new local user index with all the existing users
         for user in state.data.users.iter() {
