@@ -314,7 +314,12 @@
         >
       {/if}
     </div>
-    {#if open}{@render tocEntries(e.children)}{/if}
+    {#if e.children.length}
+      <!-- always there, so opening and closing can animate; out of reach (visibility) while closed -->
+      <div class="toc-children" class:open>
+        <div class="toc-children-inner">{@render tocEntries(e.children)}</div>
+      </div>
+    {/if}
   {/each}
 {/snippet}
 
@@ -817,7 +822,6 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: var(--space-4);
     /* a long list scrolls on its own, so every entry can be reached wherever the page is */
     max-height: calc(100vh - 120px);
     overflow-y: auto;
@@ -827,9 +831,11 @@
     scrollbar-width: thin;
   }
 
+  /* the space between entries is each entry's own, so a closed (empty) sub-list adds none */
   .toc-entry {
     display: flex;
     align-items: flex-start;
+    padding-block-start: var(--space-4);
     padding-inline-start: var(--toc-indent);
   }
 
@@ -865,6 +871,31 @@
 
   .toc-toggle.open {
     transform: rotate(180deg);
+  }
+
+  /* a section's sub-sections grow open and shrink closed; hidden once closed, so they leave the tab order */
+  .toc-children {
+    display: grid;
+    grid-template-rows: 0fr;
+    visibility: hidden;
+    transition:
+      grid-template-rows var(--duration-base) var(--ease-out),
+      visibility 0s linear var(--duration-base);
+  }
+
+  .toc-children.open {
+    grid-template-rows: 1fr;
+    visibility: visible;
+    transition:
+      grid-template-rows var(--duration-base) var(--ease-out),
+      visibility 0s;
+  }
+
+  .toc-children-inner {
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
 
   .toc-heading {
