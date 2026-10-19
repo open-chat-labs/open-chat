@@ -44,15 +44,16 @@
         {#if loader.module}
             <loader.module.default {region} {context} />
         {:else if loader.failed}
-            <!-- the chunk didn't load (a flaky network, or a deploy since the page loaded); a
-                 retry loads this screen alone -->
+            <!-- the chunk didn't load (a flaky network, or a deploy since the page loaded). The
+                 browser keeps a failed import failed for the page's lifetime (importing it again
+                 doesn't fetch it), so the retry reloads the page -->
             <div class="state">
                 <EmptyState
                     preset="error"
                     title={$_("unexpectedError")}
                     body={$_("regionLoadFailed")}
                     actionLabel="ui.common.retry"
-                    actionHandler={() => loader.want()} />
+                    actionHandler={() => location.reload()} />
             </div>
         {:else}
             <div class="state"><Spinner /></div>
