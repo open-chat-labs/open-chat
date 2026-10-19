@@ -792,7 +792,12 @@ function labelOf(id) {
   if (id.startsWith("actor:")) return id.slice(6);
   return id;
 }
+// The tooltip a card click shows (focusExt) goes away by itself after a moment; the timer is
+// kept so that a later tooltip, from another click or from resting on an arrow, isn't hidden
+// when the earlier one's time is up
+let hideTimer = null;
 function showEdgeTip(edge, ev) {
+  clearTimeout(hideTimer);
   const list = edge.methods.slice(0, 12).join(", ") + (edge.methods.length > 12 ? ` … +${edge.methods.length - 12} more` : "");
   tip.innerHTML = `<b>${esc(labelOf(edge.from))} → ${esc(labelOf(edge.to))}</b><code>${esc(list)}</code>` + (edge.via && edge.via.length ? `<br><code>some made by the shared ${esc(edge.via.join(", "))} code</code>` : "");
   tip.hidden = false; positionTip(ev);
@@ -874,7 +879,8 @@ function focusExt(key) {
   tip.innerHTML = `<b>${esc(title)}</b>${esc(detail)}<br><code>${esc(callers.map(labelOf).join(", "))}</code>`;
   const sr = { x: vp.x + vp.w / 2, y: vp.y + vp.h / 2 - r.h * k / 2 - 10 };
   tip.hidden = false; tip.style.left = Math.max(8, sr.x - 160) + "px"; tip.style.top = Math.max(8, sr.y - 110) + "px";
-  setTimeout(hideTip, 6000);
+  clearTimeout(hideTimer);
+  hideTimer = setTimeout(hideTip, 6000);
 }
 $("#closebtn").onclick = deselect;
 document.addEventListener("keydown", ev => {
