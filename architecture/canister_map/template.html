@@ -784,11 +784,12 @@ $("#zfit").onclick = () => { deselect(false); fitAll(); };
 // texts), so a move within one card is ignored, and only entering or leaving the card as a whole
 // counts. The highlight follows the cursor only once it has rested on a card for a moment, and
 // lets go a moment after it leaves, so that passing over cards on the way somewhere else, or
-// crossing the gap between two cards, doesn't flash the whole map dim and bright.
+// crossing the gap between two cards, doesn't flash the whole map dim and bright. Leaving a card
+// goes back to the highlight of the side card last clicked (focusExt), if any.
 let hoverTimer = null;
 function hoverHighlight(id, delay) {
   clearTimeout(hoverTimer);
-  hoverTimer = setTimeout(() => { hoverTimer = null; if (!selected) highlight(id); }, delay);
+  hoverTimer = setTimeout(() => { hoverTimer = null; if (!selected) highlight(id || focusedExt); }, delay);
 }
 function hoverHandlers(group, selector, idOf) {
   group.addEventListener("pointerover", ev => {
@@ -858,7 +859,10 @@ function dropCardTip() { if (!tipEdge) hideTip(); }
 
 // ---------- selection & panel ----------
 const panel = $("#panel");
-let selected = null, currentTab = "overview", closing = null;
+// focusedExt is the side card (an external canister or a caller) a click or Enter put the
+// highlight on; it stays until a canister is selected or deselect runs (Escape, a click on the
+// canvas, a zone or the fit button)
+let selected = null, focusedExt = null, currentTab = "overview", closing = null;
 
 function nodeScreenRect(id) {
   const r = rects[id], cr = canvas.getBoundingClientRect(), mr = $("main").getBoundingClientRect();
@@ -869,6 +873,7 @@ function select(id, tab, epFilter) {
   const wasOpen = !panel.hidden && !closing;
   clearTimeout(hoverTimer); hoverTimer = null;
   hideTip();
+  focusedExt = null;
   if (closing) { clearTimeout(closing); closing = null; panel.classList.remove("closing"); }
   const from = nodeScreenRect(id);
   const previous = selected;
@@ -899,7 +904,10 @@ function select(id, tab, epFilter) {
   announce("#" + id);
 }
 function deselect(refit = true) {
-  hideTip(); // with nothing selected too: Escape or a click on the canvas drops a card's tooltip
+  // With nothing selected too: Escape or a click on the canvas drops a card's tooltip, and the
+  // highlight a card click left
+  hideTip();
+  if (focusedExt) { focusedExt = null; highlight(null); }
   if (!selected) return;
   const id = selected; selected = null;
   nodeEls[id].classList.remove("selected");
@@ -916,6 +924,7 @@ function deselect(refit = true) {
 }
 function focusExt(key) {
   deselect(false);
+  focusedExt = key;
   highlight(key);
   const r = rects[key], vp = viewport();
   const k = Math.max(view.k, 0.9);
@@ -1177,7 +1186,7 @@ let activeResult = -1;
 function runSearch() {
   const q = search.value.trim().toLowerCase();
   results.innerHTML = ""; activeResult = -1;
-  if (!q) { results.hidden = true; highlight(selected); return; }
+  if (!q) { closeResults(); return; }
   const hits = [];
   for (const id of ids) {
     const c = canisters[id];
@@ -1213,7 +1222,9 @@ search.addEventListener("keydown", ev => {
     items[activeResult] && items[activeResult].scrollIntoView({ block: "nearest" });
   } else if (ev.key === "Enter" && items.length) { ev.preventDefault(); items[Math.max(0, activeResult)].click(); }
 });
-function closeResults() { results.hidden = true; highlight(selected, true); }
+// Closing the results undoes the dimming the search applied (forced, since highlight() doesn't
+// know about it); a click while they are closed (on a card, say) leaves the highlight alone
+function closeResults() { if (results.hidden) return; results.hidden = true; highlight(selected || focusedExt, true); }
 document.addEventListener("click", ev => { if (!ev.target.closest(".search")) closeResults(); });
 
 // ---------- about ----------
