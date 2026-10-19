@@ -59,7 +59,7 @@
     /** An FAQ question to open and scroll to (its `id`), e.g. from the host's `?q=`. */
     question?: string;
     /** The Architecture tab's content, in place of the architecture doc (the tab shows whenever this is given). It fills
-     *  the page below the header, inset only for its rounded corners, with no footer: an interactive map and the like. */
+     *  the screen between the header and the footer, inset only for its rounded corners: an interactive map and the like. */
     architecture?: Snippet;
   }
 
@@ -127,7 +127,7 @@
   const authState = new PageAuthState(() => ({ auth, onEnterApp, appHref }));
 
   const doc = $derived(current === 'whitepaper' || (current === 'architecture' && !architecture) ? content.docs[current] : undefined);
-  // the host's Architecture content takes the whole page below the header
+  // the host's Architecture content takes the whole screen between the header and the footer
   const fullBleed = $derived(current === 'architecture' && !!architecture);
   const openPost = $derived(current === 'blog' && openSlug ? (content.posts.find((p) => p.slug === openSlug) ?? null) : undefined);
 
@@ -540,17 +540,15 @@
     {/if}
   </main>
 
-  {#if !fullBleed}
-    <footer class="footer">
-      <div class="footer-inner">
-        <span class="footer-brand"><Logo size={18} />{t('ui.learn.footer.governed')}</span>
-        <span class="footer-links">
-          <a class="link" href={exploreHref}>{t('ui.learn.footer.explore')}</a>
-          <a class="link" href={homeHref}>{t('ui.learn.footer.home')}</a>
-        </span>
-      </div>
-    </footer>
-  {/if}
+  <footer class="footer">
+    <div class="footer-inner">
+      <span class="footer-brand"><Logo size={18} />{t('ui.learn.footer.governed')}</span>
+      <span class="footer-links">
+        <a class="link" href={exploreHref}>{t('ui.learn.footer.explore')}</a>
+        <a class="link" href={homeHref}>{t('ui.learn.footer.home')}</a>
+      </span>
+    </div>
+  </footer>
 
   {#if authState.kind}<AuthDialog {...authState.dialog} />{/if}
 </div>
@@ -598,8 +596,8 @@
     color: var(--ink);
   }
 
-  /* the host's own Architecture content (a framed canister map …): the whole page below the header, inset only for its
-     rounded corners */
+  /* the host's own Architecture content (a framed canister map …): the whole screen between the header and the footer,
+     inset only for its rounded corners. The footer stays on screen, as the map takes scrolling for itself */
   .page.full-bleed {
     height: 100vh;
     height: 100dvh;
