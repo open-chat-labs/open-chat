@@ -25,6 +25,7 @@ import type {
 } from "../components/home/dailypuzzle/games/types";
 import UnrulyBoard from "../components/home/dailypuzzle/games/unruly/Board.svelte";
 import unrulyDemo from "../components/home/dailypuzzle/games/unruly/demo";
+import UnrulyPalette from "../components/home/dailypuzzle/games/unruly/Palette.svelte";
 import UnrulyPictogram from "../components/home/dailypuzzle/games/unruly/Pictogram.svelte";
 import { bindBoard, type PuzzleBoard } from "./puzzleBoard.svelte";
 
@@ -38,6 +39,8 @@ export type DailyPuzzleGameDef = {
     i18nPrefix: string;
     /** "How to play", shown in place of the inert board before the player starts. */
     demo?: DemoSpec;
+    /** Per-device display options, shown beside the time, hints and streak. */
+    Settings?: Component;
     /** A board on `description`, with `filled` already marked. Throws on bad bytes. */
     newBoard(description: Uint8Array, filled?: [number, number][]): PuzzleBoard;
 };
@@ -49,11 +52,13 @@ function defineGame<M, S>(def: {
     Board: Component<BoardProps<M, S>>;
     Pictogram: Component<PictogramProps<M>>;
     demo?: DemoSpec;
+    Settings?: Component;
 }): DailyPuzzleGameDef {
     return {
         id: def.game.id,
         i18nPrefix: gameI18nPrefix(def.game.id),
         demo: def.demo,
+        Settings: def.Settings,
         newBoard: (description, filled) =>
             bindBoard(def.game, def.Board, def.Pictogram, description, filled),
     };
@@ -99,6 +104,7 @@ export const dailyPuzzleGames: Record<string, DailyPuzzleGameDef> = {
         Board: UnrulyBoard,
         Pictogram: UnrulyPictogram,
         demo: unrulyDemo,
+        Settings: UnrulyPalette,
     }),
     [chatRooms.id]: defineGame({
         game: chatRooms,

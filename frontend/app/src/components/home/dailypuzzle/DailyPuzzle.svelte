@@ -116,6 +116,9 @@
                         <Fire size={"1.2em"} color={"var(--icon-txt)"} />
                         <Translatable resourceKey={i18nKey("dailyPuzzle.streakDays", { streak: game.streak })} />
                     </div>
+                    {#if def?.Settings !== undefined}
+                        <def.Settings />
+                    {/if}
                 </div>
 
                 {#if game.showsRules}

@@ -945,6 +945,7 @@
                 }
             },
             "unruly": {
+                "changeColours": "Đổi màu",
                 "name": "Unruly",
                 "rules": "Tô mọi ô bằng một trong hai màu. Không bao giờ có ba ô cùng màu liên tiếp trong một hàng hay cột, và mỗi hàng, mỗi cột cuối cùng có mỗi màu một nửa.",
                 "technique": {
@@ -955,10 +956,10 @@
                     "5": "Hàng hoặc cột này cần đúng thêm một ô của một màu, và đặt nó ngoài ba ô này sẽ để lại ba ô màu kia liên tiếp ở đây, nên mọi ô trống khác trong hàng hoặc cột này nhận màu kia."
                 },
                 "demo": {
-                    "1": "Tô mọi ô màu cam hoặc tím. Các ô có vòng tròn là cho sẵn, nên bạn không thể đổi.",
-                    "2": "Không bao giờ ba ô cùng màu liên tiếp, theo hàng ngang hay dọc. Ở đây thừa một ô cam.",
-                    "3": "Mỗi hàng và cột cuối cùng có ba ô mỗi màu. Hàng này có bốn ô tím.",
-                    "4": "Hai ô cam cách nhau một ô. Cam ở giữa sẽ thành ba, nên phải là tím.",
+                    "1": "Tô mọi ô màu sáng hoặc tối. Một số ô đã được tô sẵn, và bạn không thể đổi chúng.",
+                    "2": "Không bao giờ ba ô cùng màu liên tiếp, theo hàng ngang hay dọc. Ở đây thừa một ô sáng.",
+                    "3": "Mỗi hàng và cột cuối cùng có ba ô mỗi màu. Hàng này có bốn ô tối.",
+                    "4": "Hai ô sáng cách nhau một ô. Sáng ở giữa sẽ thành ba, nên phải là tối.",
                     "5": "Mọi ô đều được tô, không có ba ô liên tiếp cùng màu, và mỗi hàng, mỗi cột có ba ô mỗi màu."
                 },
                 "hint": {
@@ -984,8 +985,8 @@
                     }
                 },
                 "colour": {
-                    "1": "cam",
-                    "2": "tím"
+                    "1": "sáng",
+                    "2": "tối"
                 }
             },
             "chat_rooms": {

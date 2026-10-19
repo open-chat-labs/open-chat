@@ -945,6 +945,7 @@
                 }
             },
             "unruly": {
+                "changeColours": "Cambia colori",
                 "name": "Unruly",
                 "rules": "Riempi ogni cella con uno di due colori. Mai tre dello stesso colore di fila in una riga o colonna, e ogni riga e colonna finisce con metà di ciascuno.",
                 "technique": {
@@ -955,10 +956,10 @@
                     "5": "A questa linea manca esattamente una cella di un colore, e metterla fuori da queste tre celle lascerebbe qui tre dell'altro colore di fila, quindi ogni cella vuota altrove nella linea prende l'altro colore."
                 },
                 "demo": {
-                    "1": "Riempi ogni cella di arancione o viola. Quelle cerchiate sono date, quindi non puoi cambiarle.",
-                    "2": "Mai tre dello stesso colore di fila, in orizzontale o in verticale. Qui c'è un arancione di troppo.",
-                    "3": "Ogni riga e colonna finisce con tre di ogni colore. Questa riga ha quattro viola.",
-                    "4": "Due arancioni con uno spazio. Arancione in mezzo ne farebbe tre, quindi deve essere viola.",
+                    "1": "Riempi ogni cella di chiaro o scuro. Alcune sono già riempite, e quelle non puoi cambiarle.",
+                    "2": "Mai tre dello stesso colore di fila, in orizzontale o in verticale. Qui c'è un chiaro di troppo.",
+                    "3": "Ogni riga e colonna finisce con tre di ogni colore. Questa riga ha quattro scuri.",
+                    "4": "Due chiari con uno spazio. Chiaro in mezzo ne farebbe tre, quindi deve essere scuro.",
                     "5": "Ogni cella piena, nessuna serie di tre e tre di ogni colore in ogni riga e colonna."
                 },
                 "hint": {
@@ -984,8 +985,8 @@
                     }
                 },
                 "colour": {
-                    "1": "arancione",
-                    "2": "viola"
+                    "1": "chiaro",
+                    "2": "scuro"
                 }
             },
             "chat_rooms": {
