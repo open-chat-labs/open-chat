@@ -4,6 +4,7 @@ use crate::model::daily_puzzle_event_batch::DailyPuzzleEventBatch;
 use crate::model::daily_puzzle_result_batch::DailyPuzzleResultBatch;
 use crate::model::game_chit_credit::{GameChitCreditRetryQueue, new_retry_queue};
 use crate::model::group_event_batch::GroupEventBatch;
+use crate::model::group_index_event_batch::GroupIndexEventBatch;
 use crate::model::local_community_map::LocalCommunityMap;
 use crate::model::local_group_map::LocalGroupMap;
 use crate::model::local_multi_user_canister_map::LocalMultiUserCanisterMap;
@@ -26,6 +27,7 @@ use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStore
 use event_store_producer_cdk_runtime::CdkRuntime;
 use event_store_utils::EventDeduper;
 use group_canister::LocalIndexEvent as GroupEvent;
+use group_index_canister::LocalIndexEvent as GroupIndexEvent;
 use jwt::{Claims, sign_and_encode_token, sign_bytes, verify_and_decode};
 use local_user_index_canister::{ChildCanisterType, GlobalUser};
 use model::bots_map::BotsMap;
@@ -321,6 +323,19 @@ impl RuntimeState {
             idempotency_id: self.env.rng().next_u64(),
             value: event,
         });
+    }
+
+    pub fn push_event_to_group_index(&mut self, event: GroupIndexEvent, now: TimestampMillis) {
+        let idempotency_id = self.env.rng().next_u64();
+        let group_index_canister_id = self.data.group_index_canister_id;
+        self.data
+            .group_index_event_sync_queue
+            .get_or_insert_with(|| BatchedTimerJobQueue::new(group_index_canister_id, true))
+            .push(IdempotentEnvelope {
+                created_at: now,
+                idempotency_id,
+                value: event,
+            });
     }
 
     // Whether this LocalUserIndex holds the user by their latest id, which, if they've been migrated to
@@ -792,6 +807,7 @@ impl RuntimeState {
             user_events_queue_in_progress: self.data.user_events_queue.in_progress(),
             group_events_queue_length: self.data.group_event_sync_queue.len(),
             community_events_queue_length: self.data.community_event_sync_queue.len(),
+            group_index_events_queue_length: self.data.group_index_event_sync_queue.as_ref().map_or(0, |q| q.len()),
             users_to_delete_queue_length: self.data.users_to_delete_queue.len(),
             chunk_store: crate::jobs::refresh_chunk_store::metrics(),
             cycles_refund_queue_length: self.data.cycles_refund_queue.len(),
@@ -885,6 +901,9 @@ struct Data {
     pub user_events_queue: GroupedTimerJobQueue<UserEventBatch>,
     pub group_event_sync_queue: GroupedTimerJobQueue<GroupEventBatch>,
     pub community_event_sync_queue: GroupedTimerJobQueue<CommunityEventBatch>,
+    // Created on the first push, since the queue needs a target
+    #[serde(default)]
+    pub group_index_event_sync_queue: Option<BatchedTimerJobQueue<GroupIndexEventBatch>>,
     pub test_mode: bool,
     pub max_concurrent_group_upgrades: u32,
     pub group_upgrade_concurrency: u32,
@@ -1032,6 +1051,7 @@ impl Data {
             user_events_queue: new_user_events_queue(),
             group_event_sync_queue: GroupedTimerJobQueue::new(10, false),
             community_event_sync_queue: GroupedTimerJobQueue::new(10, false),
+            group_index_event_sync_queue: None,
             user_index_event_sync_queue: BatchedTimerJobQueue::new(user_index_canister_id, true),
             test_mode,
             max_concurrent_group_upgrades: 10,
@@ -1126,6 +1146,7 @@ pub struct Metrics {
     pub user_events_queue_in_progress: usize,
     pub group_events_queue_length: usize,
     pub community_events_queue_length: usize,
+    pub group_index_events_queue_length: usize,
     pub users_to_delete_queue_length: usize,
     pub chunk_store: crate::jobs::refresh_chunk_store::ChunkStoreMetrics,
     pub cycles_refund_queue_length: usize,

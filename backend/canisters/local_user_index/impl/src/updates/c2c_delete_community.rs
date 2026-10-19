@@ -5,7 +5,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_user_index_canister::c2c_delete_community::*;
 use oc_error_codes::OCErrorCode;
-use types::OCResult;
+use types::{CommunityId, OCResult};
 
 #[update(guard = "caller_is_group_index", msgpack = true)]
 #[trace]
@@ -14,8 +14,12 @@ fn c2c_delete_community(args: Args) -> Response {
 }
 
 fn c2c_delete_community_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    if state.data.local_communities.delete(&args.community_id) {
-        let canister_id = args.community_id.into();
+    delete_community(args.community_id, state)
+}
+
+pub(crate) fn delete_community(community_id: CommunityId, state: &mut RuntimeState) -> OCResult {
+    if state.data.local_communities.delete(&community_id) {
+        let canister_id = community_id.into();
         // The community is gone, so there is no point sending it the events still queued for it
         state.data.community_event_sync_queue.take(&canister_id);
         spawn_uninstall_then_refund_canister(canister_id);

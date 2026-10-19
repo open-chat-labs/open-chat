@@ -1,5 +1,6 @@
 use crate::guards::caller_is_user_controller;
 use crate::updates::add_or_update_users::add_or_update_user;
+use crate::updates::c2c_vault_ops::apply_vault_op;
 use crate::updates::remove_users::remove_user;
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
@@ -27,6 +28,12 @@ fn c2c_user_index_impl(args: Args, state: &mut RuntimeState) -> Response {
             match event.value {
                 UserIndexEvent::AddOrUpdateUser(user_config) => add_or_update_user(user_config, state),
                 UserIndexEvent::RemoveUser(user_id) => remove_user(user_id, state),
+                UserIndexEvent::VaultOp(op) => {
+                    // The vault is only ever driven by the UserIndex; its id is kept so that
+                    // bucket-detected CSAM re-uploads can be reported back to it
+                    state.data.user_index_canister_id = Some(caller);
+                    apply_vault_op(op, state)
+                }
             }
         }
     }

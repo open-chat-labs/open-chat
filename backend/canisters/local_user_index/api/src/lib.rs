@@ -6,10 +6,11 @@ use std::cmp::max;
 use std::collections::HashMap;
 use types::nns::CryptoAmount;
 use types::{
-    AutonomousConfig, BotCommandDefinition, BotDataEncoding, BotDefinition, BotDefinitionUpdate, BotInstallationLocation,
-    BotSubscriptions, BuildVersion, CanisterId, ChannelLatestMessageIndex, ChannelUserNotificationPayload, ChatId,
-    ClassifyMessageRequest, CommunityId, CyclesTopUp, DiamondMembershipPlanDuration, GroupChatUserNotificationPayload,
-    MessageContentInitial, MessageId, MessageIndex, Notification, NotifyChit, PhoneNumber, ReferralType, SuspensionDuration,
+    AutonomousConfig, BlobReference, BotCommandDefinition, BotDataEncoding, BotDefinition, BotDefinitionUpdate,
+    BotInstallationLocation, BotSubscriptions, BuildVersion, CanisterId, ChannelId, ChannelLatestMessageIndex,
+    ChannelUserNotificationPayload, ChatId, ClassifyMessageRequest, CommunityId, CyclesTopUp, DiamondMembershipPlanDuration,
+    GroupChatUserNotificationPayload, MediaScanMatch, MessageContentInitial, MessageId, MessageIndex, Milliseconds,
+    Notification, NotifyChit, PhoneNumber, PublicCommunityActivity, PublicGroupActivity, ReferralType, SuspensionDuration,
     TimestampMillis, UniquePersonProof, User, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId,
     UserNotificationPayload, UserType, is_default,
 };
@@ -72,6 +73,8 @@ pub enum GroupIndexEvent {
     CommunityModerationFlagsChanged(ModerationFlagsChanged),
     GroupModerationFlagsChanged(ModerationFlagsChanged),
     NotifyOfUserDeleted(CanisterId, UserId),
+    DeleteGroup(ChatId),
+    DeleteCommunity(CommunityId),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -86,10 +89,75 @@ pub enum GroupOrCommunityEvent<T = UserNotificationPayload> {
     // Whether the canister has finished replacing the ids users had before being migrated to
     // MultiUser canisters with their latest ids, sent each time that changes
     UserIdMigrationComplete(bool),
+    // Relayed to the GroupIndex with the sender's id
+    GroupActive(GroupActive),
+    CommunityActive(CommunityActive),
+    GroupImportComplete(Box<GroupImportComplete>),
+    // Relayed to the UserIndex with the sender's id
+    CsamDetected(Box<CsamDetected>),
+    ModerationReferral(Box<ModerationReferral>),
+    // The sender is queued to be upgraded to the latest wasm
+    TriggerUpgrade,
 }
 
 pub type GroupEvent = GroupOrCommunityEvent<GroupChatUserNotificationPayload>;
 pub type CommunityEvent = GroupOrCommunityEvent<ChannelUserNotificationPayload>;
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct GroupActive {
+    pub duration: Milliseconds,
+    pub public_group_activity: Option<PublicGroupActivity>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct CommunityActive {
+    pub duration: Milliseconds,
+    pub public_community_activity: Option<PublicCommunityActivity>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct GroupImportComplete {
+    pub community_name: String,
+    pub channel: ChannelLatestMessageIndex,
+    pub group_id: ChatId,
+    pub group_name: String,
+    pub members: Vec<UserId>,
+    pub other_public_channels: Vec<ChannelLatestMessageIndex>,
+    pub mark_active_duration: Milliseconds,
+    pub public_community_activity: Option<PublicCommunityActivity>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct CsamDetected {
+    // Set by a community canister, identifying the channel within it
+    pub channel_id: Option<ChannelId>,
+    pub thread_root_message_index: Option<MessageIndex>,
+    pub message_index: MessageIndex,
+    pub message_id: MessageId,
+    pub sender: UserId,
+    pub flags: u32,
+    pub content_excerpt: Option<String>,
+    // The message's media attachments, so the evidence vault can quarantine them
+    pub blob_references: Vec<BlobReference>,
+    // Present when the detection was a media hash match rather than the text classifier
+    pub media_matches: Vec<MediaScanMatch>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ModerationReferral {
+    // Set by a community canister, identifying the channel within it
+    pub channel_id: Option<ChannelId>,
+    pub thread_root_message_index: Option<MessageIndex>,
+    pub message_index: MessageIndex,
+    pub message_id: MessageId,
+    pub sender: UserId,
+    // The categories which scored above the referral threshold
+    pub flags: u32,
+    pub content_excerpt: Option<String>,
+    // The message's media attachments, retained on the report in case the human verdict is
+    // UpheldAsCsam (which quarantines them)
+    pub blob_references: Vec<BlobReference>,
+}
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct NameChanged {

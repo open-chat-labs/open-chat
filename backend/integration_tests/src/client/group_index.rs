@@ -9,6 +9,7 @@ generate_msgpack_query_call!(search);
 
 // Updates
 generate_update_call!(notify_local_index_added);
+generate_msgpack_update_call!(c2c_local_index);
 generate_msgpack_update_call!(delete_frozen_group);
 generate_msgpack_update_call!(freeze_community);
 generate_msgpack_update_call!(freeze_group);

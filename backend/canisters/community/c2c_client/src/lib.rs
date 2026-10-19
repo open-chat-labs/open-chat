@@ -42,6 +42,7 @@ generate_c2c_call!(c2c_set_user_suspended);
 generate_c2c_call!(c2c_unfreeze_community);
 generate_c2c_call!(c2c_uninstall_bot);
 generate_c2c_call!(c2c_update_proposals);
+generate_c2c_call!(c2c_user_index, 300);
 generate_c2c_call!(change_channel_role);
 generate_c2c_call!(delete_channel);
 generate_c2c_call!(delete_messages);

@@ -41,7 +41,9 @@ web/
 - Import library components by file (`@openchat/ui/src/lib/components/Button.svelte`), not from the
   package entry, so a build only pulls in what it uses.
 - Don't edit `@openchat/ui` to fit the app.
-  A change the library needs goes back to the design export; note it in `GAPS.md`.
+  A change the library needs goes back to the design export; note it in `GAPS.md`. When the app
+  can't wait for it, make the change by hand in the library (with its `EXPORT-LOG.md` entry) and
+  list it in `GAPS.md` under the changes to take back.
 - From the existing app, only `Container`, `Row`, `Column` (component-lib) and `VirtualList`
   (`components_shared`) are reused, for layout. Nothing else from `src/components`.
 - Colours and font sizes come from the library's tokens only. No hex.
@@ -49,3 +51,7 @@ web/
   the wallet view and token, and the explore query. Everything else is local UI state.
 - Where the design has nothing yet, keep the existing app's behaviour and leave a
   `TODO(design)` comment.
+- Specs test logic only: adapters, the client calls (`signIn.ts`), and any other decision a screen
+  makes, pulled out into a function to test it. No specs that mount a component and query its
+  DOM, here or for hand changes in the library: markup changes break them. To settle a doubt about
+  how a screen behaves (a review comment, say), write one, run it, and don't commit it.

@@ -4,7 +4,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_user_index_canister::c2c_delete_group::*;
 use oc_error_codes::OCErrorCode;
-use types::{CanisterId, OCResult};
+use types::{CanisterId, ChatId, OCResult};
 use utils::canister::{start, stop, uninstall};
 
 #[update(guard = "caller_is_group_index", msgpack = true)]
@@ -14,8 +14,12 @@ fn c2c_delete_group(args: Args) -> Response {
 }
 
 fn c2c_delete_group_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    if state.data.local_groups.delete(&args.chat_id) {
-        let canister_id = args.chat_id.into();
+    delete_group(args.chat_id, state)
+}
+
+pub(crate) fn delete_group(chat_id: ChatId, state: &mut RuntimeState) -> OCResult {
+    if state.data.local_groups.delete(&chat_id) {
+        let canister_id = chat_id.into();
         // The group is gone, so there is no point sending it the events still queued for it
         state.data.group_event_sync_queue.take(&canister_id);
         spawn_uninstall_then_refund_canister(canister_id);

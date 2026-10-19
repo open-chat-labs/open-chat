@@ -5,6 +5,7 @@ use group_index_canister::*;
 generate_c2c_call!(c2c_active_groups);
 
 // Updates
+generate_c2c_call!(c2c_local_index, 300);
 generate_c2c_call!(notify_local_index_added);
 generate_c2c_call!(c2c_convert_group_into_community);
 generate_c2c_call!(c2c_create_community);

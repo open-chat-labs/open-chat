@@ -178,6 +178,9 @@ const ENVIRONMENT_NOISE_PATTERNS: RegExp[] = [
     // A request reaching the worker before its agent exists or after it has gone, around login
     // and logout. The worker leaves it unreported, but the caller sees it as a rejection (#9757)
     /worker has no agent to handle request/i,
+    // The ledger refusing an external wallet's approval because the account the user picked
+    // doesn't hold enough (#32090). The payment form shows the failure; any other refusal reports.
+    /^approval failed: insufficientfunds\b/i,
 ];
 
 function errorName(error: unknown): string {

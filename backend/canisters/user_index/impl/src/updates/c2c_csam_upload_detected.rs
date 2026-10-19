@@ -32,7 +32,7 @@ fn c2c_csam_upload_detected(args: Args) -> Response {
     Response::Success
 }
 
-fn c2c_csam_upload_detected_impl(args: Args, state: &mut RuntimeState) {
+pub(crate) fn c2c_csam_upload_detected_impl(args: Args, state: &mut RuntimeState) {
     let now = state.env.now();
 
     for m in args.matches {

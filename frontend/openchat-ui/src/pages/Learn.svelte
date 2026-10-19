@@ -31,10 +31,12 @@
     /** Called on every sub-page or post change: a click, and in hash mode Back / Forward or an edited hash too (not the sub-page it opens on). When the host sets `page`, it handles the click (no link navigation). */
     onNavigate?: (page: LearnPage, post?: string) => void;
     content?: LearnContent;
-    /** AuthDialog's host callbacks (onMethod, onSignup, onRequestEmailLink, checkUsername …). onMethod and onSignup return a promise; when it resolves the page enters the app, even if the dialog was closed meanwhile (once per sign-in). */
+    /** AuthDialog's host callbacks (onMethod, onSignup, onRequestEmailLink, checkUsername …). onMethod and onSignup return a promise; when it resolves the page enters the app, even if the dialog was closed meanwhile (once per sign-in). onOpen hears it opening, and onClose the person closing it, so the host can read what it shows then and stop what it had going. */
     auth?: PageAuth;
-    /** Called after a successful sign-in instead of navigating to appHref. */
+    /** Called after a successful sign-in instead of navigating to appHref, and by Open app when signed in. */
     onEnterApp?: () => void;
+    /** Someone is signed in: Open app (to appHref, or onEnterApp) replaces Sign in and Create account. */
+    signedIn?: boolean;
   }
 
   /** The URL hash picks the sub-page; links are learnHref + '#page' ('#blog/<slug>'). */
@@ -72,6 +74,7 @@
     content = placeholderLearnContent,
     auth,
     onEnterApp,
+    signedIn = false,
   }: Props = $props();
   const t = useT();
 
@@ -204,8 +207,12 @@
         {/each}
       </nav>
       <div class="auth">
-        <button class="sign-in" onclick={() => authState.open('login')}>{t('ui.landing.signIn')}</button>
-        <button class="create" onclick={() => authState.open('signup')}>{t('ui.landing.createAccount')}</button>
+        {#if signedIn}
+          <a class="create" href={appHref} onclick={authState.openApp}>{t('ui.landing.openApp')}</a>
+        {:else}
+          <button class="sign-in" onclick={() => authState.open('login')}>{t('ui.landing.signIn')}</button>
+          <button class="create" onclick={() => authState.open('signup')}>{t('ui.landing.createAccount')}</button>
+        {/if}
       </div>
     </div>
   </header>
@@ -506,6 +513,8 @@
 
   .sign-in,
   .create {
+    display: flex;
+    align-items: center;
     height: 40px;
     padding: 0 var(--space-14);
     border: 0;

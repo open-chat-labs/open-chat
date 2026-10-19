@@ -9,6 +9,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Add `c2c_user_index` for the UserIndex's events ([#10019](https://github.com/open-chat-labs/open-chat/pull/10019))
+- Take groups' and communities' activity, completed imports, CSAM detections, moderation referrals and upgrade requests as events, relaying them to the GroupIndex and UserIndex ([#10029](https://github.com/open-chat-labs/open-chat/pull/10029))
+- Take group and community deletions as events from the GroupIndex ([#10029](https://github.com/open-chat-labs/open-chat/pull/10029))
 
 ### Changed
 

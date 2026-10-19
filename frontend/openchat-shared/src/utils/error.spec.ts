@@ -295,6 +295,19 @@ describe("shouldReportError", () => {
         }
     });
 
+    test("silences an external wallet approval the account can't fund (#32090)", () => {
+        expect(
+            shouldReportError(new Error('Approval failed: InsufficientFunds {"balance":"0"}')),
+        ).toBe(false);
+    });
+
+    test("still reports any other refused external wallet approval (#32090)", () => {
+        expect(
+            shouldReportError(new Error('Approval failed: BadFee {"expected_fee":"10000"}')),
+        ).toBe(true);
+        expect(shouldReportError(new Error("Approval failed: TemporarilyUnavailable"))).toBe(true);
+    });
+
     // Rollbar files it under the message after "because of: ", so both forms
     test("silences Chrome's IndexedDB closing as site data is cleared (#29538)", () => {
         const message = "Connection is closing because of: Force close delete origin";

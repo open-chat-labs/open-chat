@@ -3,7 +3,7 @@
   "user_index": [
    [
     "users",
-    229081
+    229110
    ]
   ],
   "local_user_index": [
@@ -25,7 +25,7 @@
    ],
    [
     "private groups",
-    5625
+    5627
    ]
   ],
   "community": [
@@ -41,7 +41,7 @@
   "storage_index": [
    [
     "files",
-    776271
+    776200
    ],
    [
     "GB stored",
@@ -57,25 +57,25 @@
   "notifications_index": [
    [
     "web push subscriptions",
-    1473
+    1503
    ]
   ],
   "identity": [
    [
     "identities",
-    267505
+    267539
    ],
    [
     "auth principals",
-    270902
+    270947
    ]
   ],
   "online_users": [
    [
     "mark_as_online calls",
-    88201953
+    88258788
    ]
   ]
  },
- "live_as_of": "2026-10-16"
+ "live_as_of": "2026-10-19"
 }

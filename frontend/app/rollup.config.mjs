@@ -74,22 +74,27 @@ function clean() {
 
 const { version, production } = initEnv();
 
-// The interactive canister map (architecture/canister_map) is served from the website canister
-// at /canisters and regenerated from the backend source on every build, so it always describes
-// the code it was built with. Prod and prod test builds also fetch the headline counts (users,
-// groups, files) from the prod canisters' /metrics, except in CI. The native shells open the map
-// in a browser (see openchat-shared's standalonePages), so their builds don't carry it.
+// The interactive canister map (architecture/canister_map) is regenerated from the backend
+// source on every build, so it always describes the code it was built with, and served from
+// the website canister under a name carrying the website version, so that it can be cached as
+// immutable (see .ic-assets.json5) and still change with each release. The Architecture page
+// frames it (CanisterMapFrame.svelte) at the path the app is told here. Prod and prod test
+// builds also fetch the headline counts (users, groups, files) from the prod canisters'
+// /metrics, except in CI. The native shells open the page in a browser, so their builds don't
+// carry it.
+const isNativeBuild = process.env.OC_APP_TYPE === "android" || process.env.OC_APP_TYPE === "ios";
+const canisterMapFileName = `canister-map-${version}.html`;
 function canisterMap() {
     return {
         name: "canister-map",
         // closeBundle runs once every writeBundle has finished, so the OTA zips that
         // androidBundlePlugin cuts from build/ in its writeBundle never pick the page up
         closeBundle() {
-            if (process.env.OC_APP_TYPE === "android" || process.env.OC_APP_TYPE === "ios") return;
+            if (isNativeBuild) return;
             const args = [
                 "../../architecture/canister_map/extract.py",
                 "--out",
-                "build/canisters/index.html",
+                `build/${canisterMapFileName}`,
             ];
             if (["production", "prod_test"].includes(process.env.OC_BUILD_ENV) && !process.env.CI) {
                 args.push("--live");
@@ -209,6 +214,7 @@ export default {
             // A build-time constant, not overridable at runtime: a build without the flag (or a
             // native build) leaves the new web UI (src/web, @openchat/ui) out of the bundle.
             "import.meta.env.OC_WEB_LAYOUT": JSON.stringify(webLayoutFlag()),
+            "import.meta.env.OC_CANISTER_MAP_PATH": JSON.stringify(`/${canisterMapFileName}`),
             "import.meta.env.OC_APP_FONTS_URL": JSON.stringify(APP_FONTS_URL),
             "import.meta.env.OC_WEB_FONTS_URL": JSON.stringify(WEB_FONTS_URL),
             "import.meta.env.OC_OTA_UPDATES": override(

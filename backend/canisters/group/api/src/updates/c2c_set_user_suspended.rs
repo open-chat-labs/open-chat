@@ -1,10 +1,5 @@
-use serde::{Deserialize, Serialize};
-use types::{UnitResult, UserId};
+use types::UnitResult;
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Args {
-    pub user_id: UserId,
-    pub suspended: bool,
-}
+pub type Args = crate::SetUserSuspended;
 
 pub type Response = UnitResult;

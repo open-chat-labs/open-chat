@@ -6,7 +6,7 @@ use constants::OPENCHAT_BOT_USER_ID;
 use group_index_canister::c2c_notify_community_uninstalled::*;
 use oc_error_codes::OCErrorCode;
 use tracing::info;
-use types::OCResult;
+use types::{CanisterId, CommunityId, OCResult};
 
 // Called by a LocalUserIndex on finding that one of its communities' canisters has been
 // uninstalled (eg. by the IC once it ran out of cycles). The community's state went with its
@@ -26,15 +26,20 @@ fn c2c_notify_community_uninstalled(args: Args) -> Response {
 }
 
 fn c2c_notify_community_uninstalled_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    let community_id = args.community_id;
+    let caller = state.env.caller();
+    community_uninstalled(args.community_id, caller, state)
+}
 
+// Deletes a community whose canister `caller`, which must be the LocalUserIndex controlling it, has
+// found uninstalled
+pub(crate) fn community_uninstalled(community_id: CommunityId, caller: CanisterId, state: &mut RuntimeState) -> OCResult {
     let Some(local_user_index_canister_id) = state.data.local_index_map.get_index_canister_for_community(&community_id) else {
         return Err(OCErrorCode::CommunityNotFound.into());
     };
 
     // Only the LocalUserIndex which controls the community's canister can tell that it has been
     // uninstalled
-    if state.env.caller() != local_user_index_canister_id {
+    if caller != local_user_index_canister_id {
         return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
