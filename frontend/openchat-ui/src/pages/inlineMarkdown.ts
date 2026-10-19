@@ -55,3 +55,13 @@ export function imageOf(paragraph: string): { alt: string; src: string } | null 
   if (!m || !(safeHref(m[2]) || /^[\w.-]+\//.test(m[2]))) return null;
   return { alt: m[1], src: m[2] };
 }
+
+/** What a reader can search for in a text: its words without the markup, and nothing of its image paragraphs. */
+export function searchText(source: string): string {
+  return source
+    .split(/\n{2,}/)
+    .filter((paragraph) => imageOf(paragraph) === null)
+    .map(plainText)
+    .join('\n\n');
+}
+

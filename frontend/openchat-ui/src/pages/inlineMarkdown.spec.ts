@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { imageOf, inlineMarkdown, plainText, safeHref } from './inlineMarkdown';
+import { imageOf, inlineMarkdown, plainText, safeHref, searchText } from './inlineMarkdown';
 
 describe('inline markdown', () => {
   test('splits a line into text, links, bold and code, in order', () => {
@@ -52,3 +52,11 @@ describe('an image paragraph', () => {
     expect(imageOf('![a](javascript:x)')).toBeNull();
   });
 });
+
+describe('the searchable text', () => {
+  test('is the words without markup, leaving out image paragraphs (their alt text and source)', () => {
+    const answer = 'Use **Suggest** in the [menu](/faq).\n\n![Correcting a translation](/assets/screenshots/translation_correction.png)';
+    expect(searchText(answer)).toBe('Use Suggest in the menu.');
+  });
+});
+

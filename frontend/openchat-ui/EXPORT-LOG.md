@@ -66,6 +66,6 @@
 ## 2026-10-19 — Learn review fixes, by hand
 - A link in Learn's content to the page exactly as it shows (the same `?section=` or `?q=` again, after reading on) follows its deep link again (`sameLocation`): the host's props don't change, so nothing else would scroll.
 - The contents list opens sections by itself only beside the doc; below 860px, where it sits above the doc, only the reader opens it, and it has no scroll box of its own. A section the reader closed opens again when they come to it (`TocOpen`), and an unchanged reading path updates nothing.
-- FAQ answers take an image paragraph (`![alt](src)`) as posts do.
+- FAQ answers take an image paragraph (`![alt](src)`) as posts do. FAQ search leaves image paragraphs out (`searchText`).
 - Deep links scroll with `behavior: 'instant'`.
 

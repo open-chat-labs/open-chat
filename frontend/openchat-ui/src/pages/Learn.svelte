@@ -19,7 +19,7 @@
   import { PageAuthState, type PageAuth } from './pageAuth.svelte';
   import { cssUrl } from '../lib/cssUrl';
   import { prefersReducedMotion } from './heroBackground';
-  import { imageOf, inlineMarkdown, plainText } from './inlineMarkdown';
+  import { imageOf, inlineMarkdown, plainText, searchText } from './inlineMarkdown';
   import {
     docOutline,
     learnFromHash,
@@ -158,7 +158,7 @@
       .map((g) => ({
         title: g.title,
         items: g.items
-          .filter((it) => !faqSearch || `${plainText(it.q)} ${plainText(it.a)}`.toLowerCase().includes(faqSearch))
+          .filter((it) => !faqSearch || `${plainText(it.q)} ${searchText(it.a)}`.toLowerCase().includes(faqSearch))
           .map((it) => ({ ...it, key: JSON.stringify([g.title, it.q]) })),
       }))
       .filter((g) => g.items.length),
