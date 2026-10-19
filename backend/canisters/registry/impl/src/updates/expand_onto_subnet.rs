@@ -38,15 +38,12 @@ fn expand_onto_subnet_impl(args: Args, state: &mut RuntimeState) -> Result<Expan
 
         Ok(ExpandOntoSubnetJob {
             subnet_id: args.subnet_id,
-            this_canister_id: state.env.canister_id(),
             user_index: state.data.user_index_canister_id,
             group_index: state.data.group_index_canister_id,
             notifications_index: state.data.notifications_index_canister_id,
             event_relay: state.data.event_relay_canister_id,
             cycles_dispenser: state.data.cycles_dispenser_canister_id,
-            ledger: state.data.icp_ledger_canister_id,
             cmc: state.data.cycles_minting_canister_id,
-            create_canister_block_index: None,
         })
     }
 }

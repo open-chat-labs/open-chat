@@ -2,16 +2,14 @@ use crate::model::subnets::ExpandOntoSubnetStep;
 use crate::{mutate_state, read_state};
 use candid::Principal;
 use canister_timer_jobs::Job;
-use constants::{MINUTE_IN_MS, NANOS_PER_MILLISECOND};
+use constants::{MINUTE_IN_MS, T, min_cycles_balance};
 use cycles_minting_canister::notify_create_canister::{Subnet, SubnetSelection};
 use ic_cdk::call::RejectCode;
-use ic_ledger_types::{AccountIdentifier, DEFAULT_FEE, Memo, Subaccount, Timestamp, Tokens, TransferArgs};
 use serde::{Deserialize, Serialize};
 use tracing::error;
-use types::{C2CError, CanisterId, TimestampMillis};
+use types::{C2CError, CanisterId, Cycles, TimestampMillis};
 use utils::canister::set_controllers;
-
-const MEMO_CREATE_CANISTER: Memo = Memo(0x41455243); // == 'CREA'
+use utils::cycles::can_spend_cycles;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
@@ -21,15 +19,12 @@ pub enum TimerJob {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ExpandOntoSubnetJob {
     pub subnet_id: Principal,
-    pub this_canister_id: CanisterId,
     pub user_index: CanisterId,
     pub group_index: CanisterId,
     pub notifications_index: CanisterId,
     pub event_relay: CanisterId,
     pub cycles_dispenser: CanisterId,
-    pub ledger: CanisterId,
     pub cmc: CanisterId,
-    pub create_canister_block_index: Option<u64>,
 }
 
 impl Job for TimerJob {
@@ -78,15 +73,7 @@ impl ExpandOntoSubnetJob {
     ) -> Result<Option<bool>, C2CError> {
         let complete = match next_step {
             ExpandOntoSubnetStep::CreateLocalIndex => {
-                let canister_id = create_canister(
-                    self.ledger,
-                    self.cmc,
-                    self.subnet_id,
-                    self.this_canister_id,
-                    self.create_canister_block_index,
-                    now,
-                )
-                .await?;
+                let canister_id = create_canister(self.cmc, self.subnet_id).await?;
 
                 mutate_state(|state| {
                     state
@@ -210,79 +197,30 @@ impl ExpandOntoSubnetJob {
     }
 }
 
-async fn create_canister(
-    ledger: CanisterId,
-    cmc: CanisterId,
-    subnet: Principal,
-    this_canister_id: Principal,
-    create_canister_block_index: Option<u64>,
-    now: TimestampMillis,
-) -> Result<CanisterId, C2CError> {
-    let block_index = match create_canister_block_index {
-        Some(index) => index,
-        None => {
-            match icp_ledger_canister_c2c_client::transfer(
-                ledger,
-                &TransferArgs {
-                    memo: MEMO_CREATE_CANISTER,
-                    amount: Tokens::from_e8s(100_000_000), // 1 ICP
-                    fee: DEFAULT_FEE,
-                    from_subaccount: None,
-                    to: AccountIdentifier::new(&cmc, &Subaccount::from(this_canister_id)),
-                    created_at_time: Some(Timestamp {
-                        timestamp_nanos: now * NANOS_PER_MILLISECOND,
-                    }),
-                },
-            )
-            .await?
-            {
-                Ok(index) => {
-                    mutate_state(|state| {
-                        state
-                            .data
-                            .subnets
-                            .update_in_progress(|s| s.create_canister_block_index = Some(index), now)
-                    });
-                    index
-                }
-                Err(error) => {
-                    return Err(C2CError::new(
-                        ledger,
-                        "transfer",
-                        RejectCode::CanisterError,
-                        format!("{error:?}"),
-                    ));
-                }
-            }
-        }
-    };
+// A new LocalUserIndex starts with enough cycles to be installed and get going; the CyclesDispenser
+// keeps it topped up once told of it, a later step
+const LOCAL_INDEX_CREATION_CYCLES: Cycles = 10 * T;
 
-    match cycles_minting_canister_c2c_client::notify_create_canister(
+// Only the CMC can create a canister on another subnet: it is paid with the cycles attached to the
+// call, and makes this canister the controller
+async fn create_canister(cmc: CanisterId, subnet: Principal) -> Result<CanisterId, C2CError> {
+    let test_mode = read_state(|state| state.data.test_mode);
+    if !can_spend_cycles(LOCAL_INDEX_CREATION_CYCLES, min_cycles_balance(test_mode)) {
+        return Err(C2CError::new(
+            cmc,
+            "create_canister",
+            RejectCode::CanisterError,
+            "Cycles balance too low to create the canister".to_string(),
+        ));
+    }
+
+    cycles_minting_canister_c2c_client::create_canister(
         cmc,
-        &cycles_minting_canister::notify_create_canister::Args {
-            block_index,
-            controller: this_canister_id,
+        &cycles_minting_canister::create_canister::Args {
             subnet_selection: Some(SubnetSelection::Subnet(Subnet { subnet })),
         },
+        LOCAL_INDEX_CREATION_CYCLES,
     )
     .await?
-    {
-        Ok(canister_id) => {
-            if create_canister_block_index.is_some() {
-                mutate_state(|state| {
-                    state
-                        .data
-                        .subnets
-                        .update_in_progress(|s| s.create_canister_block_index = None, now)
-                });
-            }
-            Ok(canister_id)
-        }
-        Err(error) => Err(C2CError::new(
-            cmc,
-            "notify_create_canister",
-            RejectCode::CanisterError,
-            format!("{error:?}"),
-        )),
-    }
+    .map_err(|e| C2CError::new(cmc, "create_canister", RejectCode::CanisterError, format!("{e:?}")))
 }

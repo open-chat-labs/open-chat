@@ -51,7 +51,6 @@ pub struct SubnetInProgress {
     pub notifications_index_notified: bool,
     pub user_index_notified: bool,
     pub group_index_notified: bool,
-    pub create_canister_block_index: Option<u64>,
     last_updated: TimestampMillis,
 }
 
@@ -67,7 +66,6 @@ impl SubnetInProgress {
             notifications_index_notified: false,
             user_index_notified: false,
             group_index_notified: false,
-            create_canister_block_index: None,
         }
     }
 

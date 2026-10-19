@@ -335,7 +335,6 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
             canister_id: cycles_dispenser_canister_id,
             min_cycles_balance: 200 * T,
         },
-        icp_ledger_canister_id: nns_ledger_canister_id,
         cmc_canister_id: cycles_minting_canister_id,
         wasm_version,
         test_mode,
@@ -497,19 +496,15 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
 
     let icp_ledger_init_args = NnsLedgerCanisterInitPayload {
         minting_account: minting_account.to_string(),
-        initial_values: [
-            (cycles_dispenser_canister_id, 10_000),
-            (registry_canister_id, 10),
-            (storage_index_canister_id, 10),
-        ]
-        .into_iter()
-        .map(|(p, t)| {
-            (
-                AccountIdentifier::new(&p, &DEFAULT_SUBACCOUNT).to_string(),
-                Tokens::from_e8s(t * Tokens::SUBDIVIDABLE_BY),
-            )
-        })
-        .collect(),
+        initial_values: [(cycles_dispenser_canister_id, 10_000)]
+            .into_iter()
+            .map(|(p, t)| {
+                (
+                    AccountIdentifier::new(&p, &DEFAULT_SUBACCOUNT).to_string(),
+                    Tokens::from_e8s(t * Tokens::SUBDIVIDABLE_BY),
+                )
+            })
+            .collect(),
         send_whitelist: HashSet::new(),
         transfer_fee: Some(Tokens::from_e8s(10_000)),
     };
