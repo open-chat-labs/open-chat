@@ -3,21 +3,13 @@ import { WalletAdapterNetwork, type WalletName } from "@solana/wallet-adapter-ba
 import { CoinbaseWalletAdapter } from "@solana/wallet-adapter-coinbase";
 import { PhantomWalletAdapter } from "@solana/wallet-adapter-phantom";
 import { WalletConnectWalletAdapter } from "@solana/wallet-adapter-walletconnect";
-import { initialize, walletStore } from "@src/stores/solana/walletStore";
+import { currentWallet, initialize } from "@src/stores/solana/walletStore";
 import base58 from "bs58";
 
 // Sign in with a Solana wallet, as the old UI's SigninWithSol.svelte does: connect, sign the SIWS
 // message the backend prepares, then sign in with the signature. Loaded on demand.
 
 let initialised: Promise<void> | undefined;
-
-// walletStore's value now (a svelte/store store: the app's lint rule keeps new code off
-// svelte/store's own `get`)
-function current<T>(store: { subscribe: (run: (value: T) => void) => () => void }): T {
-    let value!: T;
-    store.subscribe((v) => (value = v))();
-    return value;
-}
 
 function initialiseWallets(): Promise<void> {
     // a failed start isn't kept, so the next sign-in tries again
@@ -60,10 +52,10 @@ export function buildSignInRequest(siwsMessage: SiwsMessage): string {
 /** Resolves once the client has the wallet's identity; rejects if any step fails or is declined. */
 export async function signInWithSolana(client: OpenChat, walletName: string): Promise<void> {
     await initialiseWallets();
-    const { select, connect } = current(walletStore);
+    const { select, connect } = currentWallet();
     await select(walletName as WalletName);
     await connect();
-    const { publicKey, wallet, signMessage } = current(walletStore);
+    const { publicKey, wallet, signMessage } = currentWallet();
     if (!publicKey || !wallet || !signMessage) throw new Error("The wallet didn't connect");
     const account = publicKey.toBase58();
     const prepared = await client.siwsPrepareLogin(account);

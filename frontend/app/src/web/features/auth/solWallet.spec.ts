@@ -7,12 +7,7 @@ const store = vi.hoisted(() => ({
 
 vi.mock("@src/stores/solana/walletStore", () => ({
     initialize: store.initialize,
-    walletStore: {
-        subscribe: (run: (value: unknown) => void) => {
-            run(store.state);
-            return () => {};
-        },
-    },
+    currentWallet: () => store.state,
 }));
 vi.mock("@solana/wallet-adapter-coinbase", () => ({ CoinbaseWalletAdapter: class {} }));
 vi.mock("@solana/wallet-adapter-phantom", () => ({ PhantomWalletAdapter: class {} }));

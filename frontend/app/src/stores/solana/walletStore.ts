@@ -74,6 +74,11 @@ export interface WalletStore {
 
 export const walletStore = createWalletStore();
 
+/** The wallet store's value now, for code outside a component. */
+export function currentWallet(): WalletStore {
+    return get(walletStore);
+}
+
 function addAdapterEventListeners(adapter: Adapter) {
     const { onError, wallets } = get(walletStore);
 
