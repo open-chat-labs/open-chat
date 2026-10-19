@@ -8,6 +8,7 @@
         chatIdentifiersEqual,
         chatListScopeStore,
         chatsInitialisedStore,
+        chatSummariesListStore,
         communityIdentifiersEqual,
         exploringStore,
         messageIndexStore,
@@ -41,6 +42,8 @@
     } from "@src/utils/urls";
     import page from "page";
     import { getContext, onMount, untrack, type Snippet } from "svelte";
+    import { currentShellLayout } from "../shell/viewport.svelte";
+    import { firstChatRoute } from "./firstChat";
     import { routeTable } from "./routeTable";
     import { leftToBrowser } from "./links";
 
@@ -128,7 +131,7 @@
                         $selectedChatIdStore === undefined &&
                         $routeKindStore !== "threads_route"
                     ) {
-                        client.selectDefaultChat();
+                        selectFirstChat();
                     }
                 });
             });
@@ -166,17 +169,28 @@
         }
     });
 
-    // A chat list with nothing selected goes to its last (or first) chat. A thread list stays.
+    // A chat list with nothing selected goes to its first chat (ROUTES.md, decision 7), once
+    // there is one. A thread list stays.
     $effect(() => {
+        void $chatSummariesListStore;
         if (
             $selectedChatIdStore === undefined &&
             $chatListScopeStore.kind !== "none" &&
             $routeKindStore !== "threads_route" &&
             !$exploringStore
         ) {
-            client.selectDefaultChat();
+            untrack(selectFirstChat);
         }
     });
+
+    function selectFirstChat() {
+        const route = firstChatRoute(
+            chatListScopeStore.value.kind,
+            chatSummariesListStore.value,
+            currentShellLayout().narrow,
+        );
+        if (route !== undefined) navigate(route, "auto");
+    }
 
     // Select the chat the route names
     $effect(() => {

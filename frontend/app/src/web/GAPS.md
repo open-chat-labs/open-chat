@@ -134,6 +134,13 @@ design export needs. Each entry says where it came up.
 
 ### Wiring
 
+- **Chat list, first cut** (`features/chats`, phase 3a): not yet carried over from the old row:
+  avatars (swatches stand in: Swatches), the typing line, online presence, unread mentions,
+  disappearing-message notices, translations and restricted content in the preview, webhook
+  senders, the thread count, archive / delete in the row menu, and server-side search (users and
+  groups outside the list). The community header's menu only marks all read; its other items open
+  dialogs later phases build.
+
 - **Native apps**: this tree doesn't register the native event listeners or signal `svelteReady`,
   so native builds leave it out whatever `OC_WEB_LAYOUT` says (`webLayoutFlag` in
   `rollup.extras.mjs`, read by both the rollup and the vite builds). The Android app also takes the
