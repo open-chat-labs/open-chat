@@ -178,6 +178,14 @@ fn daily_puzzle_canister_serves_todays_puzzle_and_guards_operator_calls() {
     );
     assert!(result.is_err(), "c2c_pull_puzzles should not be reachable as ingress");
 
+    let result = env.update_call(
+        canister_ids.daily_puzzle,
+        stranger,
+        "c2c_local_index_msgpack",
+        msgpack::serialize_then_unwrap(&daily_puzzle_canister::c2c_local_index::Args { events: Vec::new() }),
+    );
+    assert!(result.is_err(), "c2c_local_index should not be reachable as ingress");
+
     // This test flipped `enabled`, so don't hand the env back to the pool
     wrapper.discard();
 }

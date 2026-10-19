@@ -34,3 +34,8 @@ pub struct UserIdentity {
     pub user_id: Option<UserId>,
     pub email: Option<String>,
 }
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum UserIndexEvent {
+    SetUserIdentity(UserIdentity),
+}

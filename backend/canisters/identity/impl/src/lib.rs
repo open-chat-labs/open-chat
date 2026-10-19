@@ -20,6 +20,7 @@ use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use types::{BuildVersion, CanisterId, Cycles, Milliseconds, OCResult, TimestampMillis, Timestamped, UserId};
 use utils::env::Environment;
+use utils::idempotency_checker::IdempotencyChecker;
 use x509_parser::prelude::{FromDer, SubjectPublicKeyInfo};
 
 mod guards;
@@ -220,6 +221,8 @@ struct Data {
     rng_seed: [u8; 32],
     test_mode: bool,
     account_linking_codes: AccountLinkingCodes,
+    #[serde(default)]
+    idempotency_checker: IdempotencyChecker,
 }
 
 impl Data {
@@ -251,6 +254,7 @@ impl Data {
             rng_seed: [0; 32],
             test_mode,
             account_linking_codes: AccountLinkingCodes::default(),
+            idempotency_checker: IdempotencyChecker::default(),
         }
     }
 
