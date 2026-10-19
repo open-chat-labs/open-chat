@@ -28,6 +28,8 @@ export type PageAuth = Pick<
   | 'referrer'
   | 'passkeySignup'
 > & {
+  /** The page's dialog is opening (Sign in, Create account): the host reads what it shows then. */
+  onOpen?: () => void;
   /** The page's dialog was closed (Esc, the scrim, the close button): stop whatever the host had going for it. */
   onClose?: () => void;
   /** Sign in / up with a method (and the wallet picked, for Ethereum / Solana with `wallets`); resolve once the person is
@@ -53,6 +55,8 @@ export class PageAuthState {
       this.entered = false;
     }
     // without passkey sign-up, Create account is sign-in: someone new signs in, then the host has the form
+    // before it shows, so it shows what the host read
+    this.props().auth?.onOpen?.();
     this.kind = kind === 'signup' && this.props().auth?.passkeySignup === false ? 'login' : kind;
   };
 

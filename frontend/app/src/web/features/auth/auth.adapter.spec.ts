@@ -2,9 +2,9 @@ import { AuthProvider } from "@client";
 import {
     afterAbandoned,
     authOptions,
+    referralCode,
     nextAuthKind,
     onAuthClosed,
-    registerFailureKey,
     showsSignedOut,
     uniqueWallets,
     withoutAccount,
@@ -77,18 +77,6 @@ describe("the sign-in options' order", () => {
     });
 });
 
-describe("a refused registration's message", () => {
-    test("is the old sign-up's, with the referral code cases on the one key there is", () => {
-        expect(registerFailureKey("username_taken")).toBe("register.usernameTaken");
-        expect(registerFailureKey("user_limit_reached")).toBe("register.userLimitReached");
-        expect(registerFailureKey("referral_code_expired")).toBe("register.referralCodeInvalid");
-        expect(registerFailureKey("referral_code_already_claimed")).toBe(
-            "register.referralCodeInvalid",
-        );
-        expect(registerFailureKey("internal_error")).toBe("unexpectedError");
-    });
-});
-
 describe("the in-app dialog's kind", () => {
     test("opens for a sign-in, turns into sign-up without an account, and closes with a user", () => {
         expect(nextAuthKind(null, { kind: "anon" })).toBeNull();
@@ -157,5 +145,22 @@ describe("an identity without an account", () => {
         expect(withoutAccount({ kind: "loading_user", registering: true })).toBe(true);
         expect(withoutAccount({ kind: "loading_user", registering: false })).toBe(false);
         expect(withoutAccount({ kind: "logged_in" })).toBe(false);
+    });
+});
+
+describe("the referral code a sign-up sends", () => {
+    test("is the referrer the form names", () => {
+        expect(referralCode("r1", "failed", false)).toBe("set");
+    });
+
+    test("is none once someone removed the referrer they saw or picked, or the link names no one", () => {
+        expect(referralCode(undefined, "found", false)).toBe("clear");
+        expect(referralCode(undefined, "failed", true)).toBe("clear");
+        expect(referralCode(undefined, "none", false)).toBe("clear");
+    });
+
+    test("is the link's still when its lookup failed or hasn't finished", () => {
+        expect(referralCode(undefined, "failed", false)).toBe("keep");
+        expect(referralCode(undefined, "pending", false)).toBe("keep");
     });
 });

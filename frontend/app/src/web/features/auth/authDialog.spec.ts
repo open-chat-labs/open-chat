@@ -15,14 +15,21 @@ function fakeAuth(referrer: Promise<{ userId: string; name: string }>) {
 }
 
 describe("the dialog's props", () => {
-    test("prefill the last email, and the referral link's referrer once it has loaded", async () => {
+    test("look the referral link's referrer up as the dialog first opens, not before", async () => {
         const referrer = Promise.resolve({ userId: "r1", name: "Rita" });
-        const dialog = new AuthDialogProps(fakeAuth(referrer));
-        expect(dialog.props([], AuthProvider.PASSKEY).email).toBe("me@example.com");
+        const loadReferrer = vi.fn(() => referrer);
+        const dialog = new AuthDialogProps({
+            ...fakeAuth(referrer),
+            loadReferrer,
+        } as unknown as Auth);
+        expect(loadReferrer).not.toHaveBeenCalled();
+        dialog.opening();
         expect(dialog.props([], AuthProvider.PASSKEY).referrer).toBeUndefined();
         await referrer;
         flushSync();
         expect(dialog.props([], AuthProvider.PASSKEY).referrer?.userId).toBe("r1");
+        dialog.opening();
+        expect(loadReferrer).toHaveBeenCalledOnce();
     });
 
     test("put the method the host says was last used first", () => {
@@ -38,11 +45,12 @@ describe("the dialog's props", () => {
 
 describe("the prefilled email", () => {
     test("is the last address a link went to, read again when the dialog opens", () => {
-        lastEmail = "first@example.com";
         const dialog = new AuthDialogProps(fakeAuth(new Promise(() => {})));
+        lastEmail = "first@example.com";
+        dialog.opening();
         lastEmail = "second@example.com";
         expect(dialog.props([], AuthProvider.PASSKEY).email).toBe("first@example.com");
-        dialog.refresh();
+        dialog.opening();
         expect(dialog.props([], AuthProvider.PASSKEY).email).toBe("second@example.com");
     });
 });
@@ -74,22 +82,24 @@ describe("a marketing page's own sign-ins", () => {
         expect(pageSignIns.signupFailed).toBe(false);
     });
 
-    test("forget a failed sign-up when the dialog closes, and one that fails after it", async () => {
+    test("keep a failed sign-up through the close (until its sign-out), but not one after it", async () => {
         await expect(
             pageSignIns.track(Promise.reject(new Error("taken")), { signup: true }),
         ).rejects.toThrow();
         pageSignIns.closed();
-        expect(pageSignIns.signupFailed).toBe(false);
+        expect(pageSignIns.signupFailed).toBe(true);
 
         let fail!: (e: Error) => void;
+        // a new attempt clears it
         const late = pageSignIns.track(new Promise<void>((_, r) => (fail = r)), { signup: true });
+        expect(pageSignIns.signupFailed).toBe(false);
         pageSignIns.closed();
         fail(new Error("Sign-up cancelled"));
         await expect(late).rejects.toThrow();
         expect(pageSignIns.signupFailed).toBe(false);
     });
 
-    test("leaving the page says whether it left something going, and forgets it", async () => {
+    test("leaving the page says whether it left something going", async () => {
         expect(pageSignIns.left()).toBe(false);
         let settle!: () => void;
         const going = pageSignIns.track(new Promise<void>((r) => (settle = r)));
@@ -102,6 +112,5 @@ describe("a marketing page's own sign-ins", () => {
         ).rejects.toThrow();
         expect(pageSignIns.signupFailed).toBe(true);
         expect(pageSignIns.left()).toBe(true);
-        expect(pageSignIns.signupFailed).toBe(false);
     });
 });

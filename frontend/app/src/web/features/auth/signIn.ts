@@ -15,14 +15,15 @@ import type {
 import { configKeys } from "@shared";
 import type { PageAuth } from "@openchat/ui/src/pages/pageAuth.svelte";
 import { EmailSigninHandler } from "@src/utils/signin";
+import { createdUser, registerFailureKey } from "@src/utils/signup";
 import {
     afterAbandoned,
-    createdUser,
+    referralCode,
+    type ReferralLookup,
     emailLinkFailureKey,
     emailLinkResult,
     onAuthClosed,
     person,
-    registerFailureKey,
     PROVIDERS,
     signInOutcome,
     WALLETS,
@@ -108,6 +109,9 @@ export function untilSignedIn(
 // an identity without an account it leaves behind is signed out, and until then the in-app dialog
 // doesn't open for it (signInAbandoned). A new sign-in, or a user, ends it (afterAbandoned).
 let stopAbandoned: (() => void) | undefined = undefined;
+// an account being made: walking away lets it finish (it can't be taken back), and signs out only
+// an identity it left without one
+let registration: Promise<unknown> | undefined = undefined;
 
 /** Whether a sign-in someone walked away from is still being seen through. */
 export function signInAbandoned(): boolean {
@@ -132,7 +136,13 @@ function abandonSignIn(client: OpenChat): void {
         // still abandoned until signed out, so the in-app dialog doesn't open meanwhile
         done = true;
         unsubscribe?.();
-        Promise.resolve(client.logout()).finally(stop);
+        Promise.resolve(registration)
+            .catch(() => undefined)
+            .then(() => {
+                // the account it was making may have made it
+                if (afterAbandoned(identityStateStore.value) !== "sign_out") return stop();
+                return Promise.resolve(client.logout()).finally(stop);
+            });
     });
     // the store calls back during subscribe, before `unsubscribe` was set
     if (done) unsubscribe();
@@ -198,6 +208,9 @@ export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: Aut
     // the sign-ins the dialog is waiting on; cancelling gives them up
     let attempts = new AbortController();
     let referrer: Promise<AuthPerson | undefined> | undefined = undefined;
+    // what the referral link's lookup came to, and whether a sign-up here stored a code
+    let referralLookup: ReferralLookup = "pending";
+    let codeFromForm = false;
 
     const failure = (key: string): AuthFailure => ({ reason: translate(key) });
 
@@ -283,22 +296,30 @@ export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: Aut
 
         loadReferrer() {
             // without a referrer (none stored, or the lookup failed) sign-up offers none
-            referrer ??= client
-                .getReferringUser()
-                .catch(() => undefined)
-                .then((user) => (user === undefined ? undefined : person(user)));
+            referrer ??= client.getReferringUser().then(
+                (user) => {
+                    referralLookup = user === undefined ? "none" : "found";
+                    return user === undefined ? undefined : person(user);
+                },
+                () => {
+                    referralLookup = "failed";
+                    return undefined;
+                },
+            );
             return referrer;
         },
 
         async onSignup({ username, email: recoveryEmail, referrerId }: SignupDetails) {
-            // the stored code is whoever the form has, so a removed referrer, or a referral link's
-            // code that names no one, isn't sent
             resumeSignIn();
             const signup = ++signups;
-            if (referrerId !== undefined) {
-                client.setReferralCode(referrerId);
-            } else {
-                client.clearReferralCode();
+            switch (referralCode(referrerId, referralLookup, codeFromForm)) {
+                case "set":
+                    client.setReferralCode(referrerId!);
+                    codeFromForm = true;
+                    break;
+                case "clear":
+                    client.clearReferralCode();
+                    break;
             }
             selectedAuthProviderStore.set(AuthProvider.PASSKEY);
             // an identity without an account (signed in some other way, or a passkey made on an
@@ -307,14 +328,21 @@ export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: Aut
                 await client.signUpWithWebAuthn(true, username);
             }
             if (signup !== signups) throw new Error("Sign-up cancelled");
-            const resp = await client.registerUser(username, recoveryEmail);
+            // from here the account is made even if the dialog closes: a walk-away waits for it
+            const registering = client.registerUser(username, recoveryEmail).then((resp) => {
+                if (resp.kind === "success") client.onRegisteredUser(createdUser(username, resp));
+                return resp;
+            });
+            registration = registering;
+            const resp = await registering.finally(() => {
+                if (registration === registering) registration = undefined;
+            });
             if (resp.kind !== "success") {
                 const key = registerFailureKey(resp.kind);
                 throw key === undefined
                     ? new Error(`Couldn't register: ${resp.kind}`)
                     : failure(key);
             }
-            client.onRegisteredUser(createdUser(username, resp));
         },
 
         async checkUsername(username) {

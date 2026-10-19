@@ -33,8 +33,8 @@
     // an emailed link followed elsewhere signs this page in too, so it enters the app
     const auth = createAuth(client, { translate: (key) => $_(key), onEmailSignedIn: enterApp });
     const dialog = new AuthDialogProps(auth);
-    // the method last used, read when the dialog is closed (and so before it opens again), not
-    // live: starting one doesn't move the tiles
+    // the method last used, read as the dialog opens rather than live: starting one doesn't move
+    // the tiles
     let last = $state(selectedAuthProviderStore.value);
 
     // the page's own sign-ins are tracked, so "/" keeps Landing until they're through
@@ -47,11 +47,14 @@
     const onClose = () => {
         pageSignIns.closed();
         auth.cancel();
+    };
+    const onOpen = () => {
         last = selectedAuthProviderStore.value;
-        dialog.refresh();
+        dialog.opening();
     };
     const pageAuth = $derived({
         ...dialog.props($querystringStore.getAll("auth"), last),
+        onOpen,
         onMethod,
         onSignup,
         onClose,

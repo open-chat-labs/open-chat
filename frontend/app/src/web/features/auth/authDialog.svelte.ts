@@ -6,22 +6,26 @@ import type { Auth } from "./signIn";
 
 /**
  * AuthDialog's props for one host, all but `kind` and `onClose`: the same for the app's
- * AuthScreen and for Landing and Learn (their PageAuth), so the two can't drift apart. It reads
- * the referral link's referrer once, when it's made.
+ * AuthScreen and for Landing and Learn (their PageAuth), so the two can't drift apart. Hosts
+ * call `opening` as the dialog opens.
  */
 export class AuthDialogProps {
     #referrer = $state<AuthPerson | undefined>(undefined);
-    // read when the dialog is made and again as it opens (refresh): AuthDialog only reads it then
+    #referrerAsked = false;
+    // AuthDialog only reads it as it mounts, so it's read as the dialog opens
     #email = $state("");
 
-    constructor(private readonly auth: Auth) {
-        this.#email = auth.lastEmail();
-        auth.loadReferrer().then((person) => (this.#referrer = person));
-    }
+    constructor(private readonly auth: Auth) {}
 
-    /** Reads what may have changed since the dialog last opened: the address a link went to. */
-    refresh(): void {
+    /**
+     * The dialog is opening: reads the address a link last went to, and looks up the referral
+     * link's referrer the first time (not on every visit to a page that never opens it).
+     */
+    opening(): void {
         this.#email = this.auth.lastEmail();
+        if (this.#referrerAsked) return;
+        this.#referrerAsked = true;
+        this.auth.loadReferrer().then((person) => (this.#referrer = person));
     }
 
     /**
@@ -75,15 +79,19 @@ class PageSignIns {
             .finally(() => this.pending--);
     }
 
-    /** The dialog was closed: a failed sign-up no longer keeps Landing. */
+    /**
+     * The dialog was closed: what its attempts come to from now on isn't a failure of the page's.
+     * A failed sign-up still keeps Landing up: closing signs that identity out (and the page
+     * reloads), and until then "/" mustn't show the app for an identity without an account. The
+     * next attempt clears it.
+     */
     closed(): void {
         this.#dialog++;
-        this.signupFailed = false;
     }
 
     /**
-     * The page is going: whether it leaves a sign-in going or a failed sign-up behind, which it
-     * then forgets, as on a close.
+     * The page is going: whether it leaves a sign-in going or a failed sign-up behind (which the
+     * host then walks away from, as on a close).
      */
     left(): boolean {
         const leftBehind = this.pending > 0 || this.signupFailed;

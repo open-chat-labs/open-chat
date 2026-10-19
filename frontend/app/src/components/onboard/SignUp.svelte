@@ -10,6 +10,11 @@
         selectedAuthProviderStore,
     } from "@client";
     import { getContext, onMount } from "svelte";
+    import {
+        createdUser as createdUserFrom,
+        referralCodeRefused,
+        registerFailureKey,
+    } from "@src/utils/signup";
     import AlertBox from "../AlertBox.svelte";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
@@ -96,59 +101,17 @@
 
     async function registerUser(username: string, email: string | undefined) {
         await client.registerUser(username, email).then((resp) => {
-            badCode = false;
-            if (resp.kind === "username_taken") {
-                error = "register.usernameTaken";
-            } else if (resp.kind === "username_too_short") {
-                error = "register.usernameTooShort";
-            } else if (resp.kind === "username_too_long") {
-                error = "register.usernameTooLong";
-            } else if (resp.kind === "username_invalid") {
-                error = "register.usernameInvalid";
-            } else if (resp.kind === "email_invalid") {
-                error = "register.emailInvalid";
-            } else if (resp.kind === "user_limit_reached") {
-                error = "register.userLimitReached";
-            } else if (resp.kind === "internal_error") {
-                error = "unexpectedError";
-            } else if (resp.kind === "referral_code_invalid") {
-                error = "register.referralCodeInvalid";
-                badCode = true;
-            } else if (resp.kind === "referral_code_already_claimed") {
-                error = "register.referralCodeAlreadyClaimed";
-                badCode = true;
-            } else if (resp.kind === "referral_code_expired") {
-                error = "register.referralCodeExpired";
-                badCode = true;
-            } else if (resp.kind === "success") {
+            badCode = referralCodeRefused(resp.kind);
+            if (resp.kind === "success") {
                 error = undefined;
-                createdUser = {
-                    kind: "created_user",
-                    username,
-                    dateCreated: BigInt(Date.now()),
-                    displayName: undefined,
-                    cryptoAccount: resp.icpAccount,
-                    userId: resp.userId,
-                    isPlatformModerator: false,
-                    isPlatformOperator: false,
-                    suspensionDetails: undefined,
-                    isSuspectedBot: false,
-                    diamondStatus: { kind: "inactive" },
-                    moderationFlagsEnabled: 0,
-                    updated: 0n,
-                    isBot: false,
-                    isUniquePerson: false,
-                    totalChitEarned: 0,
-                    chitBalance: 0,
-                    streak: 0,
-                    maxStreak: 0,
-                    hideOnlineStatus: false,
-                };
+                createdUser = createdUserFrom(username, resp);
                 onCreatedUser(createdUser);
                 busy = false;
                 usernameStore.set("");
             } else {
-                error = `Unexpected register user response: ${resp.kind}`;
+                error =
+                    registerFailureKey(resp.kind) ??
+                    `Unexpected register user response: ${resp.kind}`;
             }
         });
     }

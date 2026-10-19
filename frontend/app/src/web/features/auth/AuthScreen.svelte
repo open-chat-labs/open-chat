@@ -15,6 +15,7 @@
         afterAbandoned,
         nextAuthKind,
         onAuthClosed,
+        withoutAccount,
         type AuthDialogKind,
     } from "./auth.adapter";
     import { AuthDialogProps } from "./authDialog.svelte";
@@ -45,7 +46,7 @@
     function open() {
         auth ??= createAuth(client, { translate: (key) => $_(key) });
         dialog ??= new AuthDialogProps(auth);
-        dialog.refresh();
+        dialog.opening();
         last = selectedAuthProviderStore.value;
     }
 
@@ -56,11 +57,16 @@
         auth?.cancel();
     }
 
+    // leaving the app with the dialog open walks away from its sign-in, as closing it does; an
+    // identity without an account keeps it, for the sign-up form when the app is back
     onDestroy(() => {
-        auth?.dispose();
-        if (onAuthClosed(identityStateStore.value) === "anon") {
+        const state = identityStateStore.value;
+        if (kind !== null && !withoutAccount(state)) {
+            auth?.cancel();
+        } else if (onAuthClosed(state) === "anon") {
             client.updateIdentityState({ kind: "anon" });
         }
+        auth?.dispose();
     });
 </script>
 

@@ -192,14 +192,68 @@ describe("the sign-in callbacks", () => {
         expect(client.getReferringUser).toHaveBeenCalledOnce();
     });
 
-    test("without a referrer, no stored code goes with the sign-up", async () => {
-        // e.g. a referrer picked on a failed try and then removed, or a ?ref= naming no one
+    test("a referral link naming no one sends no code", async () => {
+        client.getReferringUser.mockResolvedValueOnce(undefined);
+        await auth.loadReferrer();
         set({ kind: "registering" });
         await auth.onSignup({ username: "newperson" });
         expect(client.clearReferralCode).toHaveBeenCalled();
         expect(client.clearReferralCode.mock.invocationCallOrder[0]).toBeLessThan(
             client.registerUser.mock.invocationCallOrder[0],
         );
+    });
+
+    test("a referral link whose lookup failed, or hasn't finished, keeps its code", async () => {
+        set({ kind: "registering" });
+        await auth.onSignup({ username: "early" });
+        client.getReferringUser.mockRejectedValueOnce(new Error("offline"));
+        await auth.loadReferrer();
+        await auth.onSignup({ username: "offline" });
+        expect(client.clearReferralCode).not.toHaveBeenCalled();
+    });
+
+    test("a referrer picked on a failed try, then removed, isn't sent", async () => {
+        client.getReferringUser.mockRejectedValueOnce(new Error("offline"));
+        await auth.loadReferrer();
+        client.registerUser.mockResolvedValueOnce({ kind: "username_taken" } as never);
+        set({ kind: "registering" });
+        await expect(auth.onSignup({ username: "taken1", referrerId: "r9" })).rejects.toBeDefined();
+        await auth.onSignup({ username: "newperson" });
+        expect(client.clearReferralCode).toHaveBeenCalled();
+    });
+
+    test("closing while the account is being made lets it finish, and signs no one out", async () => {
+        let registered!: (resp: unknown) => void;
+        client.registerUser.mockImplementationOnce(
+            () => new Promise((resolve) => (registered = resolve)) as never,
+        );
+        client.onRegisteredUser.mockImplementationOnce(() => set({ kind: "logged_in" }));
+        set({ kind: "registering" });
+        const signup = auth.onSignup({ username: "newperson" });
+        await flush();
+        auth.cancel();
+        registered({ kind: "success", userId: "u1", icpAccount: "acc" });
+        await expect(signup).resolves.toBeUndefined();
+        await flush();
+        expect(client.onRegisteredUser).toHaveBeenCalled();
+        expect(client.logout).not.toHaveBeenCalled();
+    });
+
+    test("closing while an account that fails is being made signs out once it has failed", async () => {
+        let registered!: (resp: unknown) => void;
+        client.registerUser.mockImplementationOnce(
+            () => new Promise((resolve) => (registered = resolve)) as never,
+        );
+        set({ kind: "registering" });
+        const signup = auth.onSignup({ username: "taken1" }).catch(() => {});
+        await flush();
+        auth.cancel();
+        await flush();
+        expect(client.logout).not.toHaveBeenCalled();
+        registered({ kind: "username_taken" });
+        await signup;
+        await flush();
+        expect(client.logout).toHaveBeenCalledOnce();
     });
 
     test("a sign-up cancelled while its passkey is made goes no further", async () => {
@@ -215,6 +269,7 @@ describe("the sign-in callbacks", () => {
         set({ kind: "registering" });
         passkeyMade();
         await expect(signup).rejects.toThrow("Sign-up cancelled");
+        await flush();
         expect(client.registerUser).not.toHaveBeenCalled();
         // the identity it made, without an account, is signed out
         expect(client.logout).toHaveBeenCalledOnce();
@@ -225,6 +280,7 @@ describe("the sign-in callbacks", () => {
         await expect(auth.onSignup({ username: "taken1" })).rejects.toBeDefined();
         expect(identityStateStore.value.kind).toBe("registering");
         auth.cancel();
+        await flush();
         expect(client.logout).toHaveBeenCalledOnce();
     });
 
@@ -360,6 +416,7 @@ describe("a sign-in walked away from", () => {
         set({ kind: "loading_user", registering: true });
         expect(signInAbandoned()).toBe(true);
         set({ kind: "registering" });
+        await flush();
         expect(client.logout).toHaveBeenCalledOnce();
         await flush();
         expect(signInAbandoned()).toBe(false);

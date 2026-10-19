@@ -1,9 +1,7 @@
 import {
     AuthProvider,
-    type CreatedUser,
     type HandleMagicLinkResponse,
     type IdentityState,
-    type RegisterUserResponse,
     type UserSummary,
 } from "@client";
 import type {
@@ -13,6 +11,7 @@ import type {
     AuthWallet,
     EmailLinkResult,
 } from "@openchat/ui/src/features/components/AuthDialog.svelte";
+import { ETH_WALLET_ICONS, ethWalletIcon, uniqueByName } from "@src/utils/ethWallets";
 
 // Mapping between the client's sign-in (identity states, providers, responses) and AuthDialog's
 // props. The calls themselves are in signIn.ts.
@@ -59,33 +58,6 @@ export function authOptions(
         : [lastOption, ...offered.filter((o) => o !== lastOption)];
 }
 
-/** The app's message (as the old sign-up showed it) for a refused registration, if it has one. */
-export function registerFailureKey(kind: RegisterUserResponse["kind"]): string | undefined {
-    switch (kind) {
-        case "username_taken":
-            return "register.usernameTaken";
-        case "username_too_short":
-            return "register.usernameTooShort";
-        case "username_too_long":
-            return "register.usernameTooLong";
-        case "username_invalid":
-            return "register.usernameInvalid";
-        case "email_invalid":
-            return "register.emailInvalid";
-        case "user_limit_reached":
-            return "register.userLimitReached";
-        // the old UI had keys for the other two that were never written; this one covers them
-        case "referral_code_invalid":
-        case "referral_code_already_claimed":
-        case "referral_code_expired":
-            return "register.referralCodeInvalid";
-        case "internal_error":
-            return "unexpectedError";
-        default:
-            return undefined;
-    }
-}
-
 /** The app's message (as the old sign-in showed it) for a sign-in link that couldn't be sent. */
 export function emailLinkFailureKey(kind: string): string {
     switch (kind) {
@@ -106,21 +78,23 @@ export function emailLinkFailureKey(kind: string): string {
 export function uniqueWallets(
     connectors: readonly { id: string; name: string; icon?: string }[],
 ): AuthWallet[] {
-    const icons = new Map(WALLETS.eth.map((w) => [w.id, w.icon]));
-    const names = new Set<string>();
-    return connectors.flatMap((c) => {
-        if (names.has(c.name)) return [];
-        names.add(c.name);
-        return [{ id: c.id, name: c.name, icon: icons.get(c.id) ?? c.icon }];
-    });
+    return uniqueByName(connectors).map((c) => ({
+        id: c.id,
+        name: c.name,
+        icon: ethWalletIcon(c),
+    }));
 }
 
 export const WALLETS: Record<"eth" | "sol", AuthWallet[]> = {
     // wagmi connector ids
     eth: [
-        { id: "metaMaskSDK", name: "MetaMask", icon: "/assets/metamask.svg" },
-        { id: "coinbaseWalletSDK", name: "Coinbase Wallet", icon: "/assets/coinbase.svg" },
-        { id: "walletConnect", name: "WalletConnect", icon: "/assets/walletconnect.svg" },
+        { id: "metaMaskSDK", name: "MetaMask", icon: ETH_WALLET_ICONS.metaMaskSDK },
+        {
+            id: "coinbaseWalletSDK",
+            name: "Coinbase Wallet",
+            icon: ETH_WALLET_ICONS.coinbaseWalletSDK,
+        },
+        { id: "walletConnect", name: "WalletConnect", icon: ETH_WALLET_ICONS.walletConnect },
     ],
     // Solana wallet adapter names
     sol: [
@@ -144,34 +118,6 @@ export function signInOutcome(state: IdentityState): SignedIn | "pending" | "fai
         default:
             return "pending";
     }
-}
-
-export function createdUser(
-    username: string,
-    resp: Extract<RegisterUserResponse, { kind: "success" }>,
-): CreatedUser {
-    return {
-        kind: "created_user",
-        username,
-        dateCreated: BigInt(Date.now()),
-        displayName: undefined,
-        cryptoAccount: resp.icpAccount,
-        userId: resp.userId,
-        isPlatformModerator: false,
-        isPlatformOperator: false,
-        suspensionDetails: undefined,
-        isSuspectedBot: false,
-        diamondStatus: { kind: "inactive" },
-        moderationFlagsEnabled: 0,
-        updated: 0n,
-        isBot: false,
-        isUniquePerson: false,
-        totalChitEarned: 0,
-        chitBalance: 0,
-        streak: 0,
-        maxStreak: 0,
-        hideOnlineStatus: false,
-    };
 }
 
 export function person(user: UserSummary): AuthPerson {
@@ -267,4 +213,23 @@ export function afterAbandoned(state: IdentityState): "end" | "sign_out" | "wait
         default:
             return "wait";
     }
+}
+
+/** What the referral link's referrer lookup came to: someone, no one, an error, or not yet. */
+export type ReferralLookup = "found" | "none" | "failed" | "pending";
+
+/**
+ * What a sign-up does with the stored referral code: sets the referrer the form names; without
+ * one, clears a code that a referrer the person removed came from (one they picked here, or the
+ * link's, shown to them) or that names no one, and keeps the link's code when its lookup failed
+ * or hadn't finished, as nobody removed it.
+ */
+export function referralCode(
+    referrerId: string | undefined,
+    lookup: ReferralLookup,
+    codeFromForm: boolean,
+): "set" | "clear" | "keep" {
+    if (referrerId !== undefined) return "set";
+    if (codeFromForm || lookup === "found" || lookup === "none") return "clear";
+    return "keep";
 }

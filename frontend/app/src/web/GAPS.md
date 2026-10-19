@@ -51,7 +51,7 @@ design export needs. Each entry says where it came up.
   page the link opens, which asks for that code. Also `email` and `referrer` (prefilled),
   `onCancelEmailLink`, a failure `reason` a host call can reject with, and a failed resend shown on
   "Check your inbox". Landing and Learn got `signedIn` (Open app in place of Sign in / Create
-  account), and their `PageAuth` an `onClose` for the person closing the dialog. Also
+  account), and their `PageAuth` an `onOpen` and an `onClose` for the dialog opening and the person closing it. Also
   `passkeySignup` (Create account off without a passkey on offer) and `wallets` loaded when their
   method is picked. None of these were designed.
 - **Swatches**: the design's colour/cover swatches for groups, communities and avatars have no

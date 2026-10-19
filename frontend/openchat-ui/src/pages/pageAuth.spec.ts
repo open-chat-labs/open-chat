@@ -59,6 +59,13 @@ describe('PageAuthState', () => {
     await stale;
     expect([onEnterApp.mock.calls.length, state.kind]).toEqual([2, 'login']);
   });
+  test('the host hears the dialog opening before it shows', () => {
+    const seen: (string | null)[] = [];
+    const { state } = setup({ onOpen: () => seen.push(state.kind) });
+    state.open('login');
+    expect([seen, state.kind]).toEqual([[null], 'login']);
+  });
+
   test('without passkey sign-up, Create account opens sign-in', () => {
     const { state } = setup({ passkeySignup: false });
     state.open('signup');

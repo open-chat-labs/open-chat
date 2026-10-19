@@ -1,6 +1,7 @@
 <script lang="ts">
     import { signMessage, type Connector } from "@wagmi/core";
     import { ethWagmiConfig } from "@src/utils/wagmi";
+    import { ethWalletIcon, uniqueByName } from "@src/utils/ethWallets";
     import { OpenChat } from "@client";
     import { getContext } from "svelte";
     import Button from "../Button.svelte";
@@ -23,12 +24,7 @@
 
     const wagmiConfig = ethWagmiConfig();
 
-    const connectorNames = new Set<string>();
-    const uniqueConnectors = wagmiConfig.connectors.filter((c) => {
-        if (connectorNames.has(c.name)) return false;
-        connectorNames.add(c.name);
-        return true;
-    });
+    const uniqueConnectors = uniqueByName(wagmiConfig.connectors);
 
     async function connectWith(connector: Connector) {
         try {
@@ -60,19 +56,13 @@
             connecting = undefined;
         }
     }
-
-    const icons: Record<string, string> = {
-        walletConnect: "/assets/walletconnect.svg",
-        coinbaseWalletSDK: "/assets/coinbase.svg",
-        metaMaskSDK: "/assets/metamask.svg",
-    };
 </script>
 
 {#each uniqueConnectors as connector}
     <div class="auth-option">
         <div class={`icon center ${connecting?.id === connector.id ? "connecting" : ""}`}>
-            {#if icons[connector.id] ?? connector.icon}
-                <img alt={connector.name} src={icons[connector.id] ?? connector.icon} />
+            {#if ethWalletIcon(connector)}
+                <img alt={connector.name} src={ethWalletIcon(connector)} />
             {/if}
         </div>
         <Button fill onClick={() => connectWith(connector)}>
