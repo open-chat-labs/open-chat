@@ -72,6 +72,15 @@ Agreed on 2026-10-16; the tables below follow them.
      and Back closes them: `?profile` (new, opened from the rail) and `?chit` (new), in the style
      of `?diamond` and `?hof`.
    - Every other dialog stays local state.
+7. **The rail's list panels keep the open conversation.** DMs, favourites and notifications
+   change only the left column: the conversation in the middle and its right column stay. The
+   URL keeps the open chat, and the panel goes in the query (`?panel=favourites`, e.g.
+   `/chats/group/:id?panel=favourites`), so a reload or a shared link keeps both; with no chat
+   open, the panel's own path (`/favourite`, `/notifications`) still opens it. The wallet is
+   different: it takes the whole content area (its panel on the left, its page in the middle)
+   and has no right column. To be built with the chat list and conversation (phase 3), which
+   rework selection and the default chat anyway; until then these routes behave as in the
+   table below.
 
 ## Regions
 
@@ -199,6 +208,8 @@ and `/whitepaper?section=` scrolls to that section; `/architecture` frames the c
 
 Still to come:
 
+- **Rail panels** (decision 7): DMs, favourites and notifications keeping the open conversation,
+  with the panel in `?panel=`, come with phase 3.
 - **Legal pages and `/diamond`**: placeholders until Learn's doc pages and `DiamondContent` exist
   (decision 5).
 - **Guests**: guest-only behaviour comes in the guest pass (phase 10). That covers the "sign in"
