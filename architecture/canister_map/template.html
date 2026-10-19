@@ -144,7 +144,7 @@ main { position: relative; flex: 1 1 auto; min-height: 0; display: flex; }
 .node .title { font-size: min(17px, var(--title-max, 17px)); font-weight: 700; fill: var(--fg); letter-spacing: -.01em; }
 .node .tag { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; fill: var(--muted); }
 .node .summary { font-size: 11.5px; fill: var(--muted); font-weight: 500; }
-.node .counts { font-size: 10.5px; fill: var(--muted); font-weight: 600; }
+.node .counts { font-size: min(10px, var(--counts-max, 10px)); fill: var(--muted); font-weight: 600; }
 .node .counts .q { fill: var(--query); }
 .node .counts .u { fill: var(--update); }
 .node .accent { fill: var(--accent); rx: 2; }
@@ -450,15 +450,7 @@ function h(tag, attrs = {}, ...children) {
 }
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const fmt = n => n === null || n === undefined ? "–" : Number(n).toLocaleString("en-GB");
-function wrap(text, max) {
-  const words = text.split(" "), lines = [];
-  let cur = "";
-  for (const w of words) {
-    if ((cur + " " + w).trim().length > max && cur) { lines.push(cur); cur = w; } else cur = (cur + " " + w).trim();
-  }
-  if (cur) lines.push(cur);
-  return lines;
-}
+function plural(n, one, many) { return n + " " + (n === 1 ? one : many); }
 function prettyGuard(c, e) {
   if (e.proposal) return "the OpenChat SNS, by proposal";
   if (!e.guard) {
@@ -502,32 +494,77 @@ for (const id of ids) {
   el("rect", { class: "accent", x: x + 14, y: y + 14, width: 4, height: 18 }, g);
   const title = el("text", { class: "title", x: x + 26, y: y + 29 }, g); title.textContent = c.title;
   const tag = el("text", { class: "tag", x: x + 14, y: y + 48 }, g); tag.textContent = CARD_LABEL[c.cardinality] || c.cardinality;
-  const lines = wrap(c.summary, 34).slice(0, 2);
-  lines.forEach((ln, i) => { const t = el("text", { class: "summary", x: x + 14, y: y + 63 + i * 13 }, g); t.textContent = ln; });
   const q = c.endpoints.filter(e => e.kind === "query").length, u = c.endpoints.length - q;
   const counts = el("text", { class: "counts", x: x + 14, y: y + NODE_H - 8 }, g);
-  const tq = el("tspan", { class: "q" }, counts); tq.textContent = q + " queries";
-  const sep = el("tspan", {}, counts); sep.textContent = "  ·  ";
-  const tu = el("tspan", { class: "u" }, counts); tu.textContent = u + " updates";
-  if (c.state.length) { const s2 = el("tspan", {}, counts); s2.textContent = "  ·  " + c.state.length + " state fields"; }
+  const tq = el("tspan", { class: "q" }, counts); tq.textContent = plural(q, "query", "queries");
+  const sep = el("tspan", {}, counts); sep.textContent = " · ";
+  const tu = el("tspan", { class: "u" }, counts); tu.textContent = plural(u, "update", "updates");
+  if (c.state.length) { const s2 = el("tspan", {}, counts); s2.textContent = " · " + plural(c.state.length, "state field", "state fields"); }
   nodeEls[id] = g;
 }
 
-// A long name is shrunk to fit its card rather than spilling out of it: each title is measured
-// (again once the font is in) and its size capped at the one that would just fill the card.
-// Width grows with the size in effect, whichever zoom level that comes from, so the cap holds
-// at either level.
-function fitTitles() {
-  const TITLE_W = NODE_W - 26 - 12;
+// The text on a card is fitted to it by measurement (again once the font is in), since an SVG
+// text neither wraps nor clips by itself. A long title, or the counts line, is shrunk to the
+// size that would just fill the card: the cap is a size, and width grows with the size in
+// effect, whichever zoom level that comes from, so it holds at either level. The summary is
+// wrapped into at most two lines; one that needs more at its normal size is set smaller, down
+// to a limit, and cut with an ellipsis after that.
+const TEXT_W = NODE_W - 28;
+function fitText(cls, width, prop) {
   for (const g of Object.values(nodeEls)) {
-    const t = g.querySelector(".title");
-    g.style.removeProperty("--title-max");
+    const t = g.querySelector("." + cls);
+    g.style.removeProperty(prop);
     const w = t.getComputedTextLength(), size = parseFloat(getComputedStyle(t).fontSize);
-    if (w > 0 && size > 0) g.style.setProperty("--title-max", (size * TITLE_W / w).toFixed(2) + "px");
+    if (w > 0 && size > 0) g.style.setProperty(prop, (size * width / w).toFixed(2) + "px");
   }
 }
-fitTitles();
-if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitTitles);
+function wrapMeasured(t, text, width) {
+  // greedy, by words; `t` is given the whole text so that one layout serves every measurement
+  // (with its spaces normalised, since the offsets below count them and SVG collapses runs)
+  text = text.replace(/\s+/g, " ").trim();
+  t.textContent = text;
+  const lines = [];
+  let lineStart = 0, pos = 0;
+  for (const word of text.split(" ")) {
+    const end = pos + word.length;
+    if (pos > lineStart && t.getSubStringLength(lineStart, end - lineStart) > width) { lines.push(text.slice(lineStart, pos - 1)); lineStart = pos; }
+    pos = end + 1;
+  }
+  lines.push(text.slice(lineStart));
+  return lines;
+}
+function layoutSummaries() {
+  for (const [id, g] of Object.entries(nodeEls)) {
+    const { x, y } = rects[id];
+    for (const old of g.querySelectorAll(".summary")) old.remove();
+    const t = el("text", { class: "summary", x: x + 14, y: y + 63 }, g);
+    let lines;
+    for (const size of [11.5, 11, 10.5, 10]) {
+      t.style.fontSize = size + "px";
+      lines = wrapMeasured(t, canisters[id].summary, TEXT_W);
+      if (lines.length <= 2) break;
+    }
+    if (lines.length > 2) {
+      const words = lines[1].split(" ");
+      t.textContent = words.join(" ") + "…";
+      while (words.length > 1 && t.getComputedTextLength() > TEXT_W) { words.pop(); t.textContent = words.join(" ") + "…"; }
+      lines = [lines[0], t.textContent];
+    }
+    t.textContent = lines[0];
+    if (lines[1]) { const t2 = el("text", { class: "summary", x: x + 14, y: y + 76 }, g); t2.style.fontSize = t.style.fontSize; t2.textContent = lines[1]; }
+  }
+}
+function fitCards() {
+  // zoomed far out the summary and counts are hidden, and a hidden text measures as nothing
+  const cv = $("#canvas"), far = cv.classList.contains("z-far");
+  cv.classList.remove("z-far");
+  fitText("title", NODE_W - 26 - 12, "--title-max");
+  fitText("counts", TEXT_W, "--counts-max");
+  layoutSummaries();
+  cv.classList.toggle("z-far", far);
+}
+fitCards();
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitCards);
 
 // external canisters (right column) and off-chain actors + web app (left column)
 const usedExt = EXT_ORDER.filter(k => ids.some(id => canisters[id].externals[k]));
