@@ -579,7 +579,9 @@ function loopPath(r) {
   const x = r.x + r.w - 36, y = r.y;
   return `M${x} ${y} C${x - 10} ${y - 34} ${x + 46} ${y - 34} ${x + 30} ${y}`;
 }
-let tipTimer = null;
+// tipEdge is the arrow whose tooltip is showing, if an arrow's: the arrow handlers leave a
+// tooltip a card click put up (focusExt) alone
+let tipTimer = null, tipEdge = null;
 function addEdge(from, to, methods, kind, via) {
   if (!rects[from] || !rects[to]) return;
   const d = from === to ? loopPath(rects[from]) : edgePath(rects[from], rects[to], 1);
@@ -593,8 +595,8 @@ function addEdge(from, to, methods, kind, via) {
     const at = { clientX: ev.clientX, clientY: ev.clientY };
     tipTimer = setTimeout(() => showEdgeTip(edge, at), 220);
   });
-  hit.addEventListener("pointermove", ev => { if (!tip.hidden) positionTip(ev); });
-  hit.addEventListener("pointerleave", () => { clearTimeout(tipTimer); hideTip(); });
+  hit.addEventListener("pointermove", ev => { if (tipEdge === edge) positionTip(ev); });
+  hit.addEventListener("pointerleave", () => { clearTimeout(tipTimer); if (tipEdge === edge) hideTip(); });
   hit.edge = edge;
   edgeEls.push(edge);
 }
@@ -635,6 +637,7 @@ function viewport() {
 }
 let anim = null;
 function animateTo(target, ms = 480) {
+  dropCardTip();
   if (anim) cancelAnimationFrame(anim);
   if (reduced || ms === 0) { view = target; applyView(); return; }
   const start = { ...view }, t0 = performance.now();
@@ -656,6 +659,7 @@ function fitTo(b, pad = 40, ms) {
 }
 function fitAll(ms) { fitTo(worldBounds(), 30, ms); }
 function zoomAt(factor, px, py) {
+  dropCardTip();
   const k = Math.max(0.12, Math.min(4, view.k * factor));
   const wx = (px - view.x) / view.k, wy = (py - view.y) / view.k;
   view = { k, x: px - wx * k, y: py - wy * k };
@@ -686,13 +690,13 @@ canvas.addEventListener("pointermove", ev => {
     const cx = (a.x + b.x) / 2 - r.left, cy = (a.y + b.y) / 2 - r.top;
     const k = Math.max(0.12, Math.min(4, pinch.k * d / pinch.d));
     const wx = (cx - view.x) / view.k, wy = (cy - view.y) / view.k;
-    view = { k, x: cx - wx * k, y: cy - wy * k }; applyView();
+    view = { k, x: cx - wx * k, y: cy - wy * k }; applyView(); dropCardTip();
     return;
   }
   if (drag) {
     const dx = ev.clientX - drag.x, dy = ev.clientY - drag.y;
     if (Math.hypot(dx, dy) > 4) { drag.moved = true; canvas.classList.add("dragging"); }
-    if (drag.moved) { if (anim) { cancelAnimationFrame(anim); anim = null; } view.x = drag.vx + dx; view.y = drag.vy + dy; applyView(); }
+    if (drag.moved) { if (anim) { cancelAnimationFrame(anim); anim = null; } view.x = drag.vx + dx; view.y = drag.vy + dy; applyView(); dropCardTip(); }
   }
 });
 function endPointer(ev) {
@@ -798,6 +802,7 @@ function labelOf(id) {
 let hideTimer = null;
 function showEdgeTip(edge, ev) {
   clearTimeout(hideTimer);
+  tipEdge = edge;
   const list = edge.methods.slice(0, 12).join(", ") + (edge.methods.length > 12 ? ` … +${edge.methods.length - 12} more` : "");
   tip.innerHTML = `<b>${esc(labelOf(edge.from))} → ${esc(labelOf(edge.to))}</b><code>${esc(list)}</code>` + (edge.via && edge.via.length ? `<br><code>some made by the shared ${esc(edge.via.join(", "))} code</code>` : "");
   tip.hidden = false; positionTip(ev);
@@ -809,7 +814,10 @@ function positionTip(ev) {
   if (y + 120 > r.height) y = ev.clientY - r.top - 100;
   tip.style.left = x + "px"; tip.style.top = y + "px";
 }
-function hideTip() { tip.hidden = true; }
+function hideTip() { tipEdge = null; tip.hidden = true; }
+// The tooltip a card click shows is placed in screen coordinates, so it is dropped when the camera
+// moves on (above). An arrow's follows the cursor, and is left to the arrow's own pointerleave.
+function dropCardTip() { if (!tipEdge) hideTip(); }
 
 // ---------- selection & panel ----------
 const panel = $("#panel");
@@ -823,6 +831,7 @@ function select(id, tab, epFilter) {
   if (!canisters[id]) return;
   const wasOpen = !panel.hidden && !closing;
   clearTimeout(hoverTimer); hoverTimer = null;
+  hideTip();
   if (closing) { clearTimeout(closing); closing = null; panel.classList.remove("closing"); }
   const from = nodeScreenRect(id);
   const previous = selected;
@@ -853,6 +862,7 @@ function select(id, tab, epFilter) {
   announce("#" + id);
 }
 function deselect(refit = true) {
+  hideTip(); // with nothing selected too: Escape or a click on the canvas drops a card's tooltip
   if (!selected) return;
   const id = selected; selected = null;
   nodeEls[id].classList.remove("selected");
