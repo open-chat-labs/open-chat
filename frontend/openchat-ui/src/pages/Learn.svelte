@@ -58,7 +58,8 @@
     section?: string;
     /** An FAQ question to open and scroll to (its `id`), e.g. from the host's `?q=`. */
     question?: string;
-    /** The Architecture tab's content, in place of the architecture doc (the tab shows whenever this is given). */
+    /** The Architecture tab's content, in place of the architecture doc (the tab shows whenever this is given). It fills
+     *  the page below the header, edge to edge, with no footer: an interactive map and the like. */
     architecture?: Snippet;
   }
 
@@ -126,6 +127,8 @@
   const authState = new PageAuthState(() => ({ auth, onEnterApp, appHref }));
 
   const doc = $derived(current === 'whitepaper' || (current === 'architecture' && !architecture) ? content.docs[current] : undefined);
+  // the host's Architecture content takes the whole page below the header
+  const fullBleed = $derived(current === 'architecture' && !!architecture);
   const openPost = $derived(current === 'blog' && openSlug ? (content.posts.find((p) => p.slug === openSlug) ?? null) : undefined);
 
   const roadNext = $derived(content.roadmap.filter((r) => r.status === 'next'));
@@ -323,7 +326,7 @@
   {/each}
 {/snippet}
 
-<div class="page" data-oc-page="learn" data-mode={mode} data-accent={accent}>
+<div class="page" class:full-bleed={fullBleed} data-oc-page="learn" data-mode={mode} data-accent={accent}>
   <header class="top">
     <div class="top-inner">
       <a class="brand" href={homeHref}><Logo size={30} /><span class="brand-name">OpenChat</span></a>
@@ -343,7 +346,7 @@
     </div>
   </header>
 
-  <main class="main">
+  <main class="main" class:full={fullBleed}>
     {#if current === 'architecture' && architecture}
       <div class="hosted">{@render architecture()}</div>
     {:else if doc}
@@ -537,15 +540,17 @@
     {/if}
   </main>
 
-  <footer class="footer">
-    <div class="footer-inner">
-      <span class="footer-brand"><Logo size={18} />{t('ui.learn.footer.governed')}</span>
-      <span class="footer-links">
-        <a class="link" href={exploreHref}>{t('ui.learn.footer.explore')}</a>
-        <a class="link" href={homeHref}>{t('ui.learn.footer.home')}</a>
-      </span>
-    </div>
-  </footer>
+  {#if !fullBleed}
+    <footer class="footer">
+      <div class="footer-inner">
+        <span class="footer-brand"><Logo size={18} />{t('ui.learn.footer.governed')}</span>
+        <span class="footer-links">
+          <a class="link" href={exploreHref}>{t('ui.learn.footer.explore')}</a>
+          <a class="link" href={homeHref}>{t('ui.learn.footer.home')}</a>
+        </span>
+      </div>
+    </footer>
+  {/if}
 
   {#if authState.kind}<AuthDialog {...authState.dialog} />{/if}
 </div>
@@ -593,10 +598,20 @@
     color: var(--ink);
   }
 
-  /* the host's own Architecture content (a framed canister map …) */
+  /* the host's own Architecture content (a framed canister map …): the whole page below the header, edge to edge */
+  .page.full-bleed {
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
+  }
+
+  .main.full {
+    min-height: 0;
+    padding: 0;
+  }
+
   .hosted {
     width: 100%;
-    max-width: 1200px;
   }
 
   /* ── header ── */
