@@ -105,7 +105,6 @@ header h1 small { display: block; font-size: 11px; font-weight: 600; color: var(
 .results .kind { margin-left: auto; font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); white-space: nowrap; }
 .results .empty { padding: 10px; color: var(--muted); }
 
-.toggles { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
 .chip {
   display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 999px; font-size: 12px; font-weight: 600;
   border: 1px solid var(--line); background: var(--surface); color: var(--muted);
@@ -142,7 +141,7 @@ main { position: relative; flex: 1 1 auto; min-height: 0; display: flex; }
 .node.ephemeral .card { stroke-dasharray: 5 4; }
 .node:hover .card, .node.focus .card { stroke: var(--accent); stroke-width: 2.2; }
 .node.selected .card { stroke: var(--accent); stroke-width: 2.6; }
-.node .title { font-size: 17px; font-weight: 700; fill: var(--fg); letter-spacing: -.01em; }
+.node .title { font-size: min(17px, var(--title-max, 17px)); font-weight: 700; fill: var(--fg); letter-spacing: -.01em; }
 .node .tag { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; fill: var(--muted); }
 .node .summary { font-size: 11.5px; fill: var(--muted); font-weight: 500; }
 .node .counts { font-size: 10.5px; fill: var(--muted); font-weight: 600; }
@@ -173,9 +172,7 @@ main { position: relative; flex: 1 1 auto; min-height: 0; display: flex; }
 
 /* semantic zoom */
 #canvas.z-far .node .summary, #canvas.z-far .node .counts, #canvas.z-far .node .tag { display: none; }
-#canvas.z-far .node .title { font-size: 25px; }
-#canvas.z-far .node.long .title { font-size: 19px; }
-.node.long .title { font-size: 15.5px; }
+#canvas.z-far .node .title { font-size: min(25px, var(--title-max, 25px)); }
 #canvas.z-far .zone text { font-size: 18px; }
 #canvas.z-far .ext text { font-size: 16px; }
 
@@ -310,7 +307,6 @@ pre.code .cm { color: var(--muted); font-style: italic; }
   header h1 { font-size: 15px; flex: 1 1 auto; }
   header h1 small { display: none; }
   .search { flex-basis: 100%; max-width: none; order: 3; }
-  .toggles { order: 4; flex-basis: 100%; }
   .chip { font-size: 11px; padding: 4px 8px; }
   .spacer { display: none; }
   #aboutbtn { order: 2; }
@@ -335,11 +331,6 @@ pre.code .cm { color: var(--muted); font-style: italic; }
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       <input id="search" type="search" placeholder="Search canisters and endpoints…" autocomplete="off" aria-label="Search canisters and endpoints">
       <div id="results" class="results" hidden></div>
-    </div>
-    <div class="toggles" role="group" aria-label="Layers">
-      <button class="chip" id="t-ext" aria-pressed="true">External canisters</button>
-      <button class="chip" id="t-actors" aria-pressed="true">Off-chain services</button>
-      <button class="chip" id="t-web" aria-pressed="false">Web app calls</button>
     </div>
     <span class="spacer"></span>
     <span class="meta" id="meta"></span>
@@ -498,7 +489,7 @@ for (const [zid, box] of Object.entries(ZONE_BOXES)) {
 for (const id of ids) {
   const c = canisters[id], [x, y] = NODE_POS[id] || [0, 0];
   rects[id] = { x, y, w: NODE_W, h: NODE_H, cx: x + NODE_W / 2, cy: y + NODE_H / 2 };
-  const g = el("g", { class: "node" + (c.cardinality === "ephemeral" ? " ephemeral" : "") + (c.title.length > 14 ? " long" : ""), "data-id": id, tabindex: 0, role: "button", "aria-label": c.title }, gNodes);
+  const g = el("g", { class: "node" + (c.cardinality === "ephemeral" ? " ephemeral" : ""), "data-id": id, tabindex: 0, role: "button", "aria-label": c.title }, gNodes);
   const stacks = c.cardinality === "many" ? 2 : c.cardinality === "per-subnet" ? 1 : 0;
   for (let i = stacks; i >= 1; i--) el("rect", { class: "stack", x: x + i * 6, y: y + i * 6, width: NODE_W, height: NODE_H }, g);
   el("rect", { class: "card", x, y, width: NODE_W, height: NODE_H }, g);
@@ -515,6 +506,22 @@ for (const id of ids) {
   if (c.state.length) { const s2 = el("tspan", {}, counts); s2.textContent = "  ·  " + c.state.length + " state fields"; }
   nodeEls[id] = g;
 }
+
+// A long name is shrunk to fit its card rather than spilling out of it: each title is measured
+// (again once the font is in) and its size capped at the one that would just fill the card.
+// Width grows with the size in effect, whichever zoom level that comes from, so the cap holds
+// at either level.
+function fitTitles() {
+  const TITLE_W = NODE_W - 26 - 12;
+  for (const g of Object.values(nodeEls)) {
+    const t = g.querySelector(".title");
+    g.style.removeProperty("--title-max");
+    const w = t.getComputedTextLength(), size = parseFloat(getComputedStyle(t).fontSize);
+    if (w > 0 && size > 0) g.style.setProperty("--title-max", (size * TITLE_W / w).toFixed(2) + "px");
+  }
+}
+fitTitles();
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitTitles);
 
 // external canisters (right column) and off-chain actors + web app (left column)
 const usedExt = EXT_ORDER.filter(k => ids.some(id => canisters[id].externals[k]));
@@ -730,7 +737,7 @@ function highlight(id) {
   if (id) {
     related.add(id);
     for (const e of edgeEls) {
-      const on = (e.from === id || e.to === id) && edgeVisible(e);
+      const on = e.from === id || e.to === id;
       e.path.classList.toggle("hi", on);
       e.path.classList.toggle("dim", !on);
       if (on) { related.add(e.from); related.add(e.to); }
@@ -742,22 +749,6 @@ function highlight(id) {
   for (const [eid, g] of Object.entries(extEls)) g.classList.toggle("dim", !!id && !related.has(eid));
   for (const z of gZones.children) z.classList.toggle("dim", !!id && !ids.some(nid => related.has(nid) && canisters[nid].zone === z.dataset.zone));
 }
-
-// layer toggles
-const layers = { external: true, actor: true, web: false };
-function edgeVisible(e) { return e.kind === "internal" || layers[e.kind]; }
-function applyLayers() {
-  for (const e of edgeEls) { const on = edgeVisible(e); e.path.style.display = on ? "" : "none"; e.hit.style.display = on ? "" : "none"; }
-  for (const [k, g] of Object.entries(extEls)) {
-    const on = k === "web" ? layers.web : k.startsWith("actor:") ? layers.actor : layers.external;
-    g.style.display = on ? "" : "none";
-  }
-  if (selected) highlight(selected);
-}
-function bindToggle(btn, key) {
-  btn.addEventListener("click", () => { layers[key] = !layers[key]; btn.setAttribute("aria-pressed", layers[key]); applyLayers(); });
-}
-bindToggle($("#t-ext"), "external"); bindToggle($("#t-actors"), "actor"); bindToggle($("#t-web"), "web");
 
 // edge tooltip
 const tip = $("#tip");
@@ -845,7 +836,7 @@ function focusExt(key) {
   animateTo({ k, x: vp.x + vp.w / 2 - r.cx * k, y: vp.y + vp.h / 2 - r.cy * k });
   const title = labelOf(key);
   const detail = key === "web" ? "The OpenChat web app (and the Android and iOS shells around it) calls these canisters directly, signed by the user's principal." : key.startsWith("ext:") ? DATA.externals[key.slice(4)].detail : DATA.offchain[key.slice(6)];
-  const callers = edgeEls.filter(e => (e.from === key || e.to === key) && edgeVisible(e)).map(e => e.from === key ? e.to : e.from);
+  const callers = edgeEls.filter(e => e.from === key || e.to === key).map(e => e.from === key ? e.to : e.from);
   tip.innerHTML = `<b>${esc(title)}</b>${esc(detail)}<br><code>${esc(callers.map(labelOf).join(", "))}</code>`;
   const sr = { x: vp.x + vp.w / 2, y: vp.y + vp.h / 2 - r.h * k / 2 - 10 };
   tip.hidden = false; tip.style.left = Math.max(8, sr.x - 160) + "px"; tip.style.top = Math.max(8, sr.y - 110) + "px";
@@ -1153,14 +1144,13 @@ const framed = window.parent !== window;
 function applyTheme(theme) { if (theme === "dark" || theme === "light") document.documentElement.dataset.theme = theme; }
 applyTheme(new URLSearchParams(location.search).get("theme"));
 if (framed) window.addEventListener("message", ev => {
-  if (ev.origin !== location.origin || !ev.data) return;
+  if (ev.source !== window.parent || !ev.data) return;
   if (ev.data.type === "oc-canister-map-theme") applyTheme(ev.data.theme);
   if (ev.data.type === "oc-canister-map-select") { const id = String(ev.data.hash || "").replace("#", ""); if (canisters[id]) { if (id !== selected) select(id, "overview"); } else deselect(); }
 });
-function announce(hash) { if (framed) window.parent.postMessage({ type: "oc-canister-map", hash }, location.origin); }
+function announce(hash) { if (framed) window.parent.postMessage({ type: "oc-canister-map", hash }, "*"); }
 
 // ---------- boot ----------
-applyLayers();
 applyView();
 new ResizeObserver(() => { if (!selected) fitAll(0); }).observe(canvas);
 fitAll(0);

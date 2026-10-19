@@ -2,6 +2,7 @@ import replace from "@rollup/plugin-replace";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
 import chokidar from "chokidar";
 import fs from "fs";
+import { execFileSync } from "node:child_process";
 import path from "path";
 import execute from "rollup-plugin-shell";
 import { build, defineConfig, type Plugin, type PluginOption } from "vite";
@@ -97,15 +98,43 @@ function ocWorkerPlugin(): Plugin {
             server.middlewares.use((req, res, next) => {
                 const fileName = path.basename((req.url ?? "").split("?")[0]);
                 const filePath = path.join(workerBuildDir, fileName);
-                if (
-                    (fileName.replace(/\.map$/, "") in workerEntries) &&
-                    fs.existsSync(filePath)
-                ) {
+                if (fileName.replace(/\.map$/, "") in workerEntries && fs.existsSync(filePath)) {
                     res.setHeader(
                         "Content-Type",
                         fileName.endsWith(".map") ? "application/json" : "text/javascript",
                     );
                     fs.createReadStream(filePath).pipe(res);
+                    return;
+                }
+                next();
+            });
+
+            // The canister map (architecture/canister_map), which the production build writes
+            // to build/canisters/index.html and the Architecture page frames at /canisters.
+            // Generated once at start; without it the SPA fallback would serve the app itself
+            // inside the frame.
+            const mapPath = path.join(workerBuildDir, "canisters.html");
+            try {
+                execFileSync(
+                    "python3",
+                    [
+                        path.resolve(__dirname, "../../architecture/canister_map/extract.py"),
+                        "--out",
+                        mapPath,
+                    ],
+                    { stdio: "inherit" },
+                );
+            } catch (err) {
+                server.config.logger.error(`[oc-canister-map] generation failed: ${err}`);
+            }
+            server.middlewares.use((req, res, next) => {
+                const pathname = (req.url ?? "").split("?")[0];
+                if (
+                    (pathname === "/canisters" || pathname === "/canisters/") &&
+                    fs.existsSync(mapPath)
+                ) {
+                    res.setHeader("Content-Type", "text/html; charset=utf-8");
+                    fs.createReadStream(mapPath).pipe(res);
                     return;
                 }
                 next();

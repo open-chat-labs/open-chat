@@ -1,5 +1,5 @@
 <script lang="ts">
-    import CanisterMapFrame from "./CanisterMapFrame.svelte";
+    import CanisterMapFrame from "@shared_components/CanisterMapFrame.svelte";
 </script>
 
 <div class="architecture">
