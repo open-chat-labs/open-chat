@@ -545,6 +545,13 @@
 </div>
 
 <style>
+  /* the header's section links (#landing-features …) glide to their section, unless motion is reduced */
+  @media (prefers-reduced-motion: no-preference) {
+    :global(html:has([data-oc-page='landing'])) {
+      scroll-behavior: smooth;
+    }
+  }
+
   .page {
     min-height: 100vh;
     background: var(--surface-0);
