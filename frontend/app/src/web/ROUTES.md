@@ -73,12 +73,15 @@ Agreed on 2026-10-16; the tables below follow them.
      of `?diamond` and `?hof`.
    - Every other dialog stays local state.
 7. **Switching the left column.**
-   - **Notifications** (activity) change only the left column: the middle keeps the last
-     selected chat, with its right column. The URL keeps that chat and notes the panel in the
-     query (`/chats/group/:id?panel=activity`), so a reload or a shared link keeps both. From the
-     wallet, which had replaced the middle, it's the chat selected before the wallet opened.
-     With no chat selected before (none yet, or the session started in the wallet),
-     `/notifications` opens the panel over an empty middle.
+   - **Notifications** (activity) change only the left column: the middle keeps whatever it
+     shows, a chat (with its right column) or a wallet page (without one). The URL stays on that
+     page and notes the panel in the query (`/chats/group/:id?panel=activity`,
+     `/wallet/ICP?panel=activity`), so a reload or a shared link keeps both. `ActivityPanel`
+     gets a back button beside its title, which drops `?panel=activity`, so the left column goes
+     back to the middle's own panel (that chat's list, the wallet's tokens); it doesn't depend
+     on history, so it works from a shared link too. With nothing in the middle,
+     `/notifications` opens the panel over an empty middle, without the back button. Picking an
+     item opens its chat in the middle.
    - **DMs and groups, favourites, a community**: switching to one selects its first chat (the
      first favourite, the community's first channel) for the middle, and switching back to DMs
      and groups selects the first chat in that list.
@@ -118,7 +121,7 @@ Once the narrow design lands, `selectLayout` stops falling back and every browse
 | `/community/:cid` | `selected_community_route` | `ChatListPanel` community mode (channels) | selects the community's first channel (decision 7) | `GroupPanel` (community) on demand | list | preview |
 | `/community/:cid/channel/:chid/…` | `selected_channel_route` (community) | channel list | conversation (channel) | `GroupPanel` (channel) on demand; thread → `ThreadPanel` | conversation | preview |
 | `/chats/threads` · `/favourite/threads` · `/community/:cid/threads` **(new)** | `threads_route` (that scope) | `ThreadList` (All / Unread) | last opened thread's chat, else `EmptyState` | `ThreadPanel` once a thread is open | list | sign in |
-| `/notifications` **(mobile's path, new on desktop)** | `notifications_route`; over a chat, `?panel=activity` on that chat's path (decision 7) | `ActivityPanel` | the last selected chat stays; an item opens its chat | that chat's details, on demand | list | sign in |
+| `/notifications` **(mobile's path, new on desktop)** | `notifications_route`; over a chat or wallet page, `?panel=activity` on its path (decision 7) | `ActivityPanel`, with Back to the middle's own panel | what it showed stays (a chat or wallet page); an item opens its chat | a chat's details, on demand | list | sign in |
 | `/profile_summary` **(mobile's path, new on desktop)** | `profile_summary_route` | redirects to the default chat list with `?profile` | | | | sign in |
 | `/welcome` **(mobile's path, new on desktop)** | `welcome_route` | – | `ExploreCommunities` (as `/communities`) | – | full | yes |
 | `/communities` | `communities_route` | – (full width) | `ExploreCommunities` (search query in the URL, see below) | `JoinGateDialog` on join | full | yes |
@@ -213,8 +216,9 @@ and `/whitepaper?section=` scrolls to that section; `/architecture` frames the c
 
 Still to come:
 
-- **Switching the left column** (decision 7): notifications keeping the last selected chat (with
-  `?panel=activity`), and the other lists selecting their first chat, come with phase 3.
+- **Switching the left column** (decision 7): notifications keeping the middle (with
+  `?panel=activity`, and a back button in `ActivityPanel`), and the other lists selecting their
+  first chat, come with phase 3.
 - **Legal pages and `/diamond`**: placeholders until Learn's doc pages and `DiamondContent` exist
   (decision 5).
 - **Guests**: guest-only behaviour comes in the guest pass (phase 10). That covers the "sign in"

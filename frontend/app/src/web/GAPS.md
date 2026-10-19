@@ -61,6 +61,9 @@ design export needs. Each entry says where it came up.
   (`depth`), numbered 01, 2.1, 3.4.1, with a contents list whose sub-sections open as the reader
   reaches them, or by hand, and which scrolls on its own. `section` and `question` deep link
   into a doc and the FAQs, and `architecture` puts the host's own content on that tab, filling the screen between the header and the footer (the canister map, full width and height). Landing's section links scroll smoothly.
+- **`ActivityPanel` back button**: opened over a chat or a wallet page (`?panel=activity`,
+  ROUTES.md decision 7), the panel needs a back button beside its title (`onBack`) that returns
+  the left column to the middle's own panel. The design has none yet.
 - **Swatches**: the design's colour/cover swatches for groups, communities and avatars have no
   OpenChat equivalent (it has uploaded avatars and banners). Adapters pass images and pick a
   swatch from the id.
