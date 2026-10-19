@@ -12,10 +12,9 @@
     import { getContext, onDestroy, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import {
-        afterClosedSignup,
+        endsDismissal,
         nextAuthKind,
         onAuthClosed,
-        onAuthLeft,
         type AuthDialogKind,
     } from "./auth.adapter";
     import { AuthDialogProps } from "./authDialog.svelte";
@@ -28,19 +27,14 @@
     let dialog = $state<AuthDialogProps | undefined>(undefined);
 
     let kind = $state<AuthDialogKind | null>(null);
-    // a sign-up closed while its user loaded, to sign out once it has (afterClosedSignup)
-    let signOutOnceLoaded = false;
+    // closed by the person: stays closed until the client asks for a sign-in again (endsDismissal)
+    let dismissed = false;
     $effect(() => {
         const state = $identityStateStore;
         untrack(() => {
-            if (signOutOnceLoaded) {
-                const next = afterClosedSignup(state);
-                if (next === "wait") return;
-                signOutOnceLoaded = false;
-                if (next === "sign_out") {
-                    client.logout();
-                    return;
-                }
+            if (dismissed) {
+                if (!endsDismissal(state)) return;
+                dismissed = false;
             }
             const opening = kind === null;
             kind = nextAuthKind(kind, state);
@@ -48,33 +42,26 @@
         });
     });
 
+    // the method last used, read as it opens: starting one doesn't move the tiles
+    let last = $state(selectedAuthProviderStore.value);
+
     function open() {
         auth ??= createAuth(client, { translate: (key) => $_(key) });
-        dialog = new AuthDialogProps(auth, selectedAuthProviderStore.value);
+        dialog ??= new AuthDialogProps(auth);
+        last = selectedAuthProviderStore.value;
     }
 
-    const dialogProps = $derived(dialog?.props($querystringStore.getAll("auth")));
+    const dialogProps = $derived(dialog?.props($querystringStore.getAll("auth"), last));
 
     function close() {
-        auth?.stopEmail();
-        auth?.cancelSignup();
         kind = null;
-        switch (onAuthClosed(identityStateStore.value)) {
-            case "anon":
-                client.updateIdentityState({ kind: "anon" });
-                break;
-            case "sign_out":
-                client.logout();
-                break;
-            case "sign_out_once_loaded":
-                signOutOnceLoaded = true;
-                break;
-        }
+        dismissed = true;
+        auth?.cancel();
     }
 
     onDestroy(() => {
-        auth?.stopEmail();
-        if (onAuthLeft(identityStateStore.value) === "anon") {
+        auth?.dispose();
+        if (onAuthClosed(identityStateStore.value) === "anon") {
             client.updateIdentityState({ kind: "anon" });
         }
     });

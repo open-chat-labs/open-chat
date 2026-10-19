@@ -32,4 +32,16 @@ describe("signing in with a Solana wallet", () => {
         await expect(signInWithSolana(client, "Phantom")).rejects.toThrow("declined");
         expect(store.initialize).toHaveBeenCalledTimes(2);
     });
+
+    test("a wallet that won't connect by itself (auto-connect) fails with its own error", async () => {
+        const { onError } = store.initialize.mock.calls[1][0] as { onError: (e: Error) => void };
+        const locked = new Error("WalletConnectionError: locked");
+        // picking the wallet starts its auto-connect, which reports the error and swallows it
+        store.state = {
+            select: vi.fn(() => onError(locked)),
+            connect: vi.fn(async () => {}),
+            publicKey: null,
+        };
+        await expect(signInWithSolana({} as OpenChat, "Phantom")).rejects.toBe(locked);
+    });
 });

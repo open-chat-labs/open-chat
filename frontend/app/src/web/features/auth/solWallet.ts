@@ -10,6 +10,8 @@ import base58 from "bs58";
 // message the backend prepares, then sign in with the signature. Loaded on demand.
 
 let initialised: Promise<void> | undefined;
+// the wallet's own error: a connect the store starts by itself (auto-connect) swallows it
+let lastError: Error | undefined;
 
 function initialiseWallets(): Promise<void> {
     // a failed start isn't kept, so the next sign-in tries again
@@ -24,7 +26,10 @@ function initialiseWallets(): Promise<void> {
         ],
         autoConnect: true,
         localStorageKey: "walletAdapter",
-        onError: (error) => console.error("WalletError: ", error),
+        onError: (error) => {
+            lastError = error;
+            console.error("WalletError: ", error);
+        },
     }).catch((err) => {
         initialised = undefined;
         throw err;
@@ -55,10 +60,13 @@ export async function signInWithSolana(client: OpenChat, walletName: string): Pr
     // a returning user's wallet auto-connects as the adapters start, and connect() returns
     // straight away while that's in flight; so is picking a wallet that auto-connects
     const { select, connect } = await settledWallet();
+    lastError = undefined;
     await select(walletName as WalletName);
     await connect();
     const { publicKey, wallet, signMessage } = await settledWallet();
-    if (!publicKey || !wallet || !signMessage) throw new Error("The wallet didn't connect");
+    if (!publicKey || !wallet || !signMessage) {
+        throw lastError ?? new Error("The wallet didn't connect");
+    }
     const account = publicKey.toBase58();
     const prepared = await client.siwsPrepareLogin(account);
     if (prepared.kind !== "success") throw new Error("Couldn't prepare the Solana sign-in");

@@ -19,6 +19,7 @@ import {
     createdUser,
     emailLinkFailureKey,
     emailLinkResult,
+    onAuthClosed,
     person,
     registerFailureKey,
     PROVIDERS,
@@ -61,16 +62,42 @@ function watchSignIn(
     };
 }
 
-/** Runs `start`, then settles once the identity is signed in, or rejects when it falls back to anonymous. */
-export async function untilSignedIn(start: () => Promise<unknown> | void): Promise<SignedIn> {
-    await start();
+/**
+ * Runs `start`, then settles once the identity is signed in, or rejects when it falls back to
+ * anonymous. `signal` gives it up, whether `start` has settled or not (a wallet's window the
+ * person walked away from), and stops the watch.
+ */
+export function untilSignedIn(
+    start: () => Promise<unknown> | void,
+    signal?: AbortSignal,
+): Promise<SignedIn> {
     return new Promise((resolve, reject) => {
-        watchSignIn(
-            (outcome) => {
-                if (outcome === "failed") reject(new Error("Sign-in didn't complete"));
-                else resolve(outcome);
+        let stopWatch = () => {};
+        const abandoned = () => {
+            stopWatch();
+            reject(new Error("Sign-in given up"));
+        };
+        if (signal?.aborted) return abandoned();
+        signal?.addEventListener("abort", abandoned, { once: true });
+        const settle = (outcome: SignedIn | "failed") => {
+            signal?.removeEventListener("abort", abandoned);
+            if (outcome === "failed") reject(new Error("Sign-in didn't complete"));
+            else resolve(outcome);
+        };
+        let started: Promise<unknown>;
+        try {
+            started = Promise.resolve(start());
+        } catch (err) {
+            return reject(err);
+        }
+        started.then(
+            () => {
+                if (!signal?.aborted) stopWatch = watchSignIn(settle, { anonFails: true });
             },
-            { anonFails: true },
+            (err) => {
+                signal?.removeEventListener("abort", abandoned);
+                reject(err);
+            },
         );
     });
 }
@@ -94,10 +121,18 @@ export type Auth = Required<
     stopEmail: () => void;
     /** The address a sign-in link was last sent to, to prefill the field with. */
     lastEmail: () => string;
-    /** Whoever the referral link this browser came in on names, if anyone. */
+    /** Whoever the referral link this browser came in on names, if anyone (looked up once). */
     loadReferrer: () => Promise<AuthPerson | undefined>;
-    /** Stops a sign-up in flight from going on to make the account. */
-    cancelSignup: () => void;
+    /**
+     * The dialog was closed: gives up the sign-ins it was waiting on (back to anonymous, for one
+     * the client is still logging in), stops a sign-up in flight from going on to make the
+     * account, and stops the email link (one still being sent too).
+     * An identity without an account left behind is signed out, now or once it gets there,
+     * until the next sign-in starts.
+     */
+    cancel: () => void;
+    /** The host is going: stops the email link and anything `cancel` left watching. */
+    dispose: () => void;
 };
 
 export type AuthOptions = {
@@ -112,32 +147,43 @@ export type AuthOptions = {
  * `onEmailSignedIn` is the only thing that hears of it here.
  */
 export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: AuthOptions): Auth {
-    const email = new EmailSigninHandler(client, "registration", true);
+    // the link being waited on: each request has its own handler, so a resend that fails leaves
+    // the earlier link working, and one that's sent replaces it
+    let emailLink: EmailSigninHandler | undefined = undefined;
     let stopEmailWatch = () => {};
+    // each link request's number: stopping moves it on, so a link still being sent is dropped
+    let emailRequests = 0;
     // each sign-up's number: cancelling moves it on, so the one in flight stops after its passkey
     let signups = 0;
+    // the sign-ins the dialog is waiting on; cancelling gives them up
+    let attempts = new AbortController();
+    let referrer: Promise<AuthPerson | undefined> | undefined = undefined;
+    // after a cancel, signs out an identity without an account that turns up
+    let stopLeftBehind = () => {};
 
     const failure = (key: string): AuthFailure => ({ reason: translate(key) });
 
     function signIn(method: AuthMethod, wallet: string | undefined): Promise<SignedIn> {
+        stopLeftBehind();
+        const signal = attempts.signal;
         client.gaTrack("initiated_signin", "registration", PROVIDERS[method]);
         selectedAuthProviderStore.set(PROVIDERS[method]);
         switch (method) {
             case "passkey":
-                return untilSignedIn(() => client.signInWithWebAuthn());
+                return untilSignedIn(() => client.signInWithWebAuthn(), signal);
             case "eth":
                 return untilSignedIn(async () => {
                     const { signInWithEthereum } = await import("./ethWallet");
                     await signInWithEthereum(client, wallet ?? WALLETS.eth[0].id);
-                });
+                }, signal);
             case "sol":
                 return untilSignedIn(async () => {
                     const { signInWithSolana } = await import("./solWallet");
                     await signInWithSolana(client, wallet ?? WALLETS.sol[0].id);
-                });
+                }, signal);
             default:
                 // Internet Identity and NFID open the auth client's window
-                return untilSignedIn(() => client.login());
+                return untilSignedIn(() => client.login(), signal);
         }
     }
 
@@ -150,15 +196,26 @@ export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: Aut
         onMethod: (method, _kind, wallet) => signIn(method, wallet),
 
         async onRequestEmailLink(address): Promise<EmailLinkSent> {
-            stopEmail();
+            stopLeftBehind();
+            const request = ++emailRequests;
             client.gaTrack("initiated_signin", "registration", AuthProvider.EMAIL);
             localStorage.setItem(configKeys.selectedAuthEmail, address);
             selectedAuthProviderStore.set(AuthProvider.EMAIL);
-            const resp = await email.generateMagicLink(address);
+            const handler = new EmailSigninHandler(client, "registration", true);
+            const resp = await handler.generateMagicLink(address);
+            if (request !== emailRequests) {
+                // stopped while it was being sent (the dialog closed)
+                handler.stopPolling();
+                throw new Error("Email link given up");
+            }
+            // a link that couldn't be sent leaves an earlier one working
             if (resp.kind !== "success") throw failure(emailLinkFailureKey(resp.kind));
+            emailLink?.stopPolling();
+            emailLink = handler;
             // the person follows the link on another page, and this one signs in when the poller
             // hears of it. Until then the identity can sit at anonymous, or at an identity
             // without an account from an earlier try, which isn't the link's
+            stopEmailWatch();
             stopEmailWatch = watchSignIn(
                 (outcome) => {
                     if (outcome !== "failed") onEmailSignedIn?.(outcome);
@@ -175,15 +232,19 @@ export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: Aut
 
         lastEmail: () => localStorage.getItem(configKeys.selectedAuthEmail) ?? "",
 
-        async loadReferrer() {
+        loadReferrer() {
             // without a referrer (none stored, or the lookup failed) sign-up offers none
-            const user = await client.getReferringUser().catch(() => undefined);
-            return user === undefined ? undefined : person(user);
+            referrer ??= client
+                .getReferringUser()
+                .catch(() => undefined)
+                .then((user) => (user === undefined ? undefined : person(user)));
+            return referrer;
         },
 
         async onSignup({ username, email: recoveryEmail, referrerId }: SignupDetails) {
             // the stored code is whoever the form has, so a removed referrer, or a referral link's
             // code that names no one, isn't sent
+            stopLeftBehind();
             const signup = ++signups;
             if (referrerId !== undefined) {
                 client.setReferralCode(referrerId);
@@ -224,13 +285,33 @@ export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: Aut
 
         stopEmail,
 
-        cancelSignup() {
+        cancel() {
+            stopEmail();
             signups++;
+            attempts.abort();
+            attempts = new AbortController();
+            if (onAuthClosed(identityStateStore.value) === "anon") {
+                client.updateIdentityState({ kind: "anon" });
+            }
+            stopLeftBehind();
+            stopLeftBehind = watchSignIn(
+                (outcome) => {
+                    if (outcome === "registering") client.logout();
+                },
+                { anonFails: false },
+            );
+        },
+
+        dispose() {
+            stopEmail();
+            stopLeftBehind();
         },
     };
 
     function stopEmail() {
+        emailRequests++;
         stopEmailWatch();
-        email.stopPolling();
+        emailLink?.stopPolling();
+        emailLink = undefined;
     }
 }

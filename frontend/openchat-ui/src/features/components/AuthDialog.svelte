@@ -107,7 +107,8 @@
     /** Send a sign-in link to this address. The dialog shows "Check your inbox" once it resolves (with the code, when it
      *  resolves with one); also used to resend. */
     onRequestEmailLink?: (email: string) => Promise<EmailLinkSent | void> | void;
-    /** The person left "Check your inbox" (Back or close): stop waiting for that link. */
+    /** The person left "Check your inbox" (Back, close, switching mode), or the host closed or turned the dialog
+     *  meanwhile: stop waiting for that link. */
     onCancelEmailLink?: () => void;
     /** kind 'link': check the code typed on the link's page. 'signed_in' leaves closing to the host; reject reads as
      *  'invalid'. */
@@ -168,6 +169,7 @@
     untrack(() => {
       if (next === shownKind) return;
       shownKind = next;
+      if (step === 'sent') onCancelEmailLink?.();
       mode = next;
       step = 'methods';
       walletsFor = null;
@@ -379,6 +381,8 @@
 
   onMount(() => {
     return () => {
+      // unmounted on "Check your inbox" (the host closed it): stop waiting for that link
+      if (step === 'sent') onCancelEmailLink?.();
       run++;
       searchRun++;
       flow.destroy();
@@ -493,6 +497,10 @@
             <span class="sent-code"><span class="code" aria-label={t('ui.authDialog.code')}>{sentCode}</span><CopyButton value={sentCode} /></span>
           {/if}
           <button class="link" onclick={requestLink} disabled={!!waiting}>{t(waiting === 'email' ? 'ui.authDialog.sending' : 'ui.authDialog.resendLink')}</button>
+          {#if failed === 'email'}
+            <!-- a resend that failed: the link sent before still works -->
+            <span class="wait failed" role="alert">{t(failReason ?? 'ui.authDialog.linkFailed')}</span>
+          {/if}
         </div>
       {/if}
 

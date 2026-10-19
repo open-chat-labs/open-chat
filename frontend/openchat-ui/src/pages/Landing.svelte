@@ -45,7 +45,7 @@
     proposalsHref?: string;
     termsHref?: string;
     privacyHref?: string;
-    /** AuthDialog's host callbacks (onMethod, onSignup, onRequestEmailLink, checkUsername …). onMethod and onSignup return a promise; when it resolves the page enters the app, even if the dialog was closed meanwhile (once per sign-in). */
+    /** AuthDialog's host callbacks (onMethod, onSignup, onRequestEmailLink, checkUsername …). onMethod and onSignup return a promise; when it resolves the page enters the app, even if the dialog was closed meanwhile (once per sign-in). onClose hears the person closing the dialog, so the host can stop what it had going. */
     auth?: PageAuth;
     /** Called after a successful sign-in instead of navigating to appHref, and by Open app when signed in. */
     onEnterApp?: () => void;

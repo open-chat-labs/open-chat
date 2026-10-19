@@ -27,6 +27,8 @@ export type PageAuth = Pick<
   | 'email'
   | 'referrer'
 > & {
+  /** The page's dialog was closed (Esc, the scrim, the close button): stop whatever the host had going for it. */
+  onClose?: () => void;
   /** Sign in / up with a method (and the wallet picked, for Ethereum / Solana with `wallets`); resolve once the person is
    *  signed in (the page then enters the app), reject to go back. */
   onMethod?: (method: AuthMethod, kind: 'login' | 'signup', wallet?: string) => Promise<unknown>;
@@ -52,8 +54,10 @@ export class PageAuthState {
     this.kind = kind;
   };
 
+  // the person closed it: the host stops what it had going
   close = () => {
     this.kind = null;
+    this.props().auth?.onClose?.();
   };
 
   /** Open app's click, signed in: onEnterApp when the host gives one, else the link to appHref does it. A modified or
@@ -68,7 +72,8 @@ export class PageAuthState {
   private enter(generation: number) {
     // an earlier sign-in's late result leaves the current dialog alone
     if (generation !== this.generation) return;
-    this.close();
+    // signed in: closed without telling the host to stop
+    this.kind = null;
     if (this.entered) return;
     this.entered = true;
     const { onEnterApp, appHref } = this.props();

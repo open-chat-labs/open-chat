@@ -15,19 +15,18 @@ function fakeAuth(referrer: Promise<{ userId: string; name: string }>) {
 describe("the dialog's props", () => {
     test("prefill the last email, and the referral link's referrer once it has loaded", async () => {
         const referrer = Promise.resolve({ userId: "r1", name: "Rita" });
-        const dialog = new AuthDialogProps(fakeAuth(referrer), AuthProvider.PASSKEY);
-        expect(dialog.props([]).email).toBe("me@example.com");
-        expect(dialog.props([]).referrer).toBeUndefined();
+        const dialog = new AuthDialogProps(fakeAuth(referrer));
+        expect(dialog.props([], AuthProvider.PASSKEY).email).toBe("me@example.com");
+        expect(dialog.props([], AuthProvider.PASSKEY).referrer).toBeUndefined();
         await referrer;
         flushSync();
-        expect(dialog.props([]).referrer?.userId).toBe("r1");
+        expect(dialog.props([], AuthProvider.PASSKEY).referrer?.userId).toBe("r1");
     });
 
-    test("keep the methods in the order they had when the dialog was made", () => {
+    test("put the method the host says was last used first", () => {
         vi.stubGlobal("PublicKeyCredential", class {});
-        const dialog = new AuthDialogProps(fakeAuth(new Promise(() => {})), AuthProvider.ETH);
-        // the last method used is read once: starting another doesn't move the tiles
-        expect(dialog.props(["II", "ETH"]).methods).toEqual(["eth", "ii"]);
+        const dialog = new AuthDialogProps(fakeAuth(new Promise(() => {})));
+        expect(dialog.props(["II", "ETH"], AuthProvider.ETH).methods).toEqual(["eth", "ii"]);
         vi.unstubAllGlobals();
     });
 });
@@ -56,6 +55,21 @@ describe("a marketing page's own sign-ins", () => {
         expect(pageSignIns.signupFailed).toBe(false);
         // a failed sign-in isn't a failed sign-up
         await expect(pageSignIns.track(Promise.reject(new Error("declined")))).rejects.toThrow();
+        expect(pageSignIns.signupFailed).toBe(false);
+    });
+
+    test("forget a failed sign-up when the dialog closes, and one that fails after it", async () => {
+        await expect(
+            pageSignIns.track(Promise.reject(new Error("taken")), { signup: true }),
+        ).rejects.toThrow();
+        pageSignIns.closed();
+        expect(pageSignIns.signupFailed).toBe(false);
+
+        let fail!: (e: Error) => void;
+        const late = pageSignIns.track(new Promise<void>((_, r) => (fail = r)), { signup: true });
+        pageSignIns.closed();
+        fail(new Error("Sign-up cancelled"));
+        await expect(late).rejects.toThrow();
         expect(pageSignIns.signupFailed).toBe(false);
     });
 });

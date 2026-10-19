@@ -8,13 +8,15 @@ import {
 import { configKeys } from "@shared";
 import { createAuth, untilSignedIn } from "./signIn";
 
+// each link request has its own handler; magicLink answers them all
+const magicLink = vi.fn();
 const emailHandlers: {
     generateMagicLink: ReturnType<typeof vi.fn>;
     stopPolling: ReturnType<typeof vi.fn>;
 }[] = [];
 vi.mock("@src/utils/signin", () => ({
     EmailSigninHandler: class {
-        generateMagicLink = vi.fn(async () => ({ kind: "success", code: "123" }));
+        generateMagicLink = vi.fn((address: string) => magicLink(address));
         stopPolling = vi.fn();
         constructor() {
             emailHandlers.push(this);
@@ -44,6 +46,8 @@ function fakeClient() {
         checkUsername: vi.fn(async () => "success"),
         searchUsers: vi.fn(async () => []),
         handleMagicLink: vi.fn(async () => ({ kind: "success" })),
+        logout: vi.fn(async () => set({ kind: "anon" })),
+        updateIdentityState: vi.fn((state: IdentityState) => set(state)),
     };
 }
 
@@ -72,6 +76,21 @@ describe("waiting for a sign-in", () => {
             "declined",
         );
     });
+
+    test("is given up by its signal, whether its start has settled or not", async () => {
+        const walkedAway = new AbortController();
+        const neverStarts = untilSignedIn(() => new Promise(() => {}), walkedAway.signal);
+        walkedAway.abort();
+        await expect(neverStarts).rejects.toThrow("given up");
+
+        const closed = new AbortController();
+        const waiting = untilSignedIn(() => set({ kind: "logging_in" }), closed.signal);
+        await flush();
+        closed.abort();
+        await expect(waiting).rejects.toThrow("given up");
+        // and stops watching: a later sign-in isn't this one's
+        set({ kind: "logged_in" });
+    });
 });
 
 describe("the sign-in callbacks", () => {
@@ -81,6 +100,8 @@ describe("the sign-in callbacks", () => {
 
     beforeEach(() => {
         emailHandlers.length = 0;
+        magicLink.mockReset();
+        magicLink.mockImplementation(async () => ({ kind: "success", code: "123" }));
         client = fakeClient();
         auth = createAuth(client as unknown as OpenChat, {
             translate: (key) => `translated:${key}`,
@@ -89,7 +110,7 @@ describe("the sign-in callbacks", () => {
         set({ kind: "anon" });
     });
     afterEach(() => {
-        auth.stopEmail();
+        auth.dispose();
         set({ kind: "anon" });
         onEmailSignedIn.mockReset();
     });
@@ -155,6 +176,12 @@ describe("the sign-in callbacks", () => {
         await expect(auth.loadReferrer()).resolves.toBeUndefined();
     });
 
+    test("the referrer is looked up once, however often the dialog opens", async () => {
+        await auth.loadReferrer();
+        await auth.loadReferrer();
+        expect(client.getReferringUser).toHaveBeenCalledOnce();
+    });
+
     test("without a referrer, no stored code goes with the sign-up", async () => {
         // e.g. a referrer picked on a failed try and then removed, or a ?ref= naming no one
         set({ kind: "registering" });
@@ -172,10 +199,38 @@ describe("the sign-in callbacks", () => {
         );
         const signup = auth.onSignup({ username: "newperson" });
         await Promise.resolve();
-        auth.cancelSignup();
+        auth.cancel();
+        set({ kind: "loading_user", registering: true });
+        expect(client.logout).not.toHaveBeenCalled();
+        set({ kind: "registering" });
         passkeyMade();
         await expect(signup).rejects.toThrow("Sign-up cancelled");
         expect(client.registerUser).not.toHaveBeenCalled();
+        // the identity it made, without an account, is signed out
+        expect(client.logout).toHaveBeenCalledOnce();
+    });
+
+    test("closing after a refused account signs the identity out", async () => {
+        client.registerUser.mockResolvedValueOnce({ kind: "username_taken" } as never);
+        await expect(auth.onSignup({ username: "taken1" })).rejects.toBeDefined();
+        expect(identityStateStore.value.kind).toBe("registering");
+        auth.cancel();
+        expect(client.logout).toHaveBeenCalledOnce();
+    });
+
+    test("closing gives up the sign-in it was waiting on, and a new one ends the watch", async () => {
+        const waiting = auth.onMethod("ii", "login");
+        await flush();
+        auth.cancel();
+        await expect(waiting).rejects.toThrow("given up");
+        // the client's login is given up too, so "/" shows Landing
+        expect(client.updateIdentityState).toHaveBeenCalledWith({ kind: "anon" });
+        // a new attempt is the person's own: whatever it comes to isn't signed out
+        const again = auth.onMethod("ii", "login");
+        await flush();
+        set({ kind: "registering" });
+        await expect(again).resolves.toBe("registering");
+        expect(client.logout).not.toHaveBeenCalled();
     });
 
     test("a username is free only when the check says so, and offline is a failed check", async () => {
@@ -191,7 +246,7 @@ describe("the sign-in callbacks", () => {
         await expect(auth.onRequestEmailLink!("me@example.com")).resolves.toEqual({ code: "123" });
         // the address is remembered for next time
         expect(auth.lastEmail()).toBe("me@example.com");
-        expect(emailHandlers[0].generateMagicLink).toHaveBeenCalledWith("me@example.com");
+        expect(magicLink).toHaveBeenCalledWith("me@example.com");
         set({ kind: "loading_user", registering: false });
         expect(onEmailSignedIn).not.toHaveBeenCalled();
         set({ kind: "logged_in" });
@@ -217,10 +272,40 @@ describe("the sign-in callbacks", () => {
     });
 
     test("a link that couldn't be sent fails", async () => {
-        emailHandlers[0].generateMagicLink.mockResolvedValueOnce({ kind: "email_invalid" });
+        magicLink.mockResolvedValueOnce({ kind: "email_invalid" });
         await expect(auth.onRequestEmailLink!("bad")).rejects.toEqual({
             reason: "translated:loginDialog.invalidEmail",
         });
+    });
+
+    test("a resend that fails leaves the link sent before working", async () => {
+        await auth.onRequestEmailLink!("me@example.com");
+        magicLink.mockResolvedValueOnce({ kind: "failed_to_send_email" });
+        await expect(auth.onRequestEmailLink!("me@example.com")).rejects.toBeDefined();
+        expect(emailHandlers[0].stopPolling).not.toHaveBeenCalled();
+        set({ kind: "loading_user", registering: false });
+        set({ kind: "logged_in" });
+        expect(onEmailSignedIn).toHaveBeenCalledWith("logged_in");
+    });
+
+    test("a resend that's sent replaces the link before", async () => {
+        await auth.onRequestEmailLink!("me@example.com");
+        await auth.onRequestEmailLink!("me@example.com");
+        expect(emailHandlers[0].stopPolling).toHaveBeenCalled();
+        expect(emailHandlers[1].stopPolling).not.toHaveBeenCalled();
+    });
+
+    test("closing while the link is being sent drops it once it is", async () => {
+        let sent!: (resp: unknown) => void;
+        magicLink.mockImplementationOnce(() => new Promise((resolve) => (sent = resolve)));
+        const request = auth.onRequestEmailLink!("me@example.com");
+        auth.cancel();
+        sent({ kind: "success", code: "123" });
+        await expect(request).rejects.toThrow("given up");
+        expect(emailHandlers[0].stopPolling).toHaveBeenCalled();
+        set({ kind: "loading_user", registering: false });
+        set({ kind: "logged_in" });
+        expect(onEmailSignedIn).not.toHaveBeenCalled();
     });
 
     test("the link page's code goes with the link's query, and the answer is named", async () => {

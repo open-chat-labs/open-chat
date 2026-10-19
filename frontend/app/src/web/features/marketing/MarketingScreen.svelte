@@ -32,19 +32,27 @@
 
     // an emailed link followed elsewhere signs this page in too, so it enters the app
     const auth = createAuth(client, { translate: (key) => $_(key), onEmailSignedIn: enterApp });
-    onDestroy(auth.stopEmail);
+    onDestroy(auth.dispose);
 
-    const dialog = new AuthDialogProps(auth, selectedAuthProviderStore.value);
+    const dialog = new AuthDialogProps(auth);
+    // the method last used, read once: starting one doesn't move the tiles
+    const last = selectedAuthProviderStore.value;
 
     // the page's own sign-ins are tracked, so "/" keeps Landing until they're through
     const pageAuth = $derived.by(() => {
-        const props = dialog.props($querystringStore.getAll("auth"));
+        const props = dialog.props($querystringStore.getAll("auth"), last);
         return {
             ...props,
             onMethod: (...args: Parameters<typeof auth.onMethod>) =>
                 pageSignIns.track(auth.onMethod(...args)),
             onSignup: (details: Parameters<typeof auth.onSignup>[0]) =>
                 pageSignIns.track(auth.onSignup(details), { signup: true }),
+            // closing gives up what the dialog had going, and signs out an identity without an
+            // account it leaves behind (a sign-up that failed)
+            onClose: () => {
+                pageSignIns.closed();
+                auth.cancel();
+            },
         };
     });
 

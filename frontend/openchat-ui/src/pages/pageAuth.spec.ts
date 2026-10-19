@@ -59,6 +59,17 @@ describe('PageAuthState', () => {
     await stale;
     expect([onEnterApp.mock.calls.length, state.kind]).toEqual([2, 'login']);
   });
+  test("the person closing the dialog tells the host; the close after a sign-in doesn't", async () => {
+    const onClose = vi.fn();
+    const { state, method } = setup({ onMethod: () => Promise.resolve(), onClose });
+    state.open('login');
+    state.dialog.onClose!();
+    expect([state.kind, onClose.mock.calls.length]).toEqual([null, 1]);
+    state.open('login');
+    await method();
+    expect([state.kind, onClose.mock.calls.length]).toEqual([null, 1]);
+  });
+
   test("Open app enters through the host on a plain click, and leaves a modified one to the link", () => {
     const { state, onEnterApp } = setup({});
     const click = (init: MouseEventInit = {}) => {

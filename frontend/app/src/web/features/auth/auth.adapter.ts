@@ -181,7 +181,7 @@ export function emailLinkResult(kind: HandleMagicLinkResponse["kind"]): EmailLin
 }
 
 /** Whether the identity is signed in without an account, or loading on the way to sign-up. */
-function withoutAccount(state: IdentityState): boolean {
+export function withoutAccount(state: IdentityState): boolean {
     return state.kind === "registering" || (state.kind === "loading_user" && state.registering);
 }
 
@@ -227,45 +227,19 @@ export function nextAuthKind(
 }
 
 /**
- * What closing the in-app AuthDialog leaves behind, as the old onboarding modal: a sign-in given
- * up on goes back to anonymous, and an identity that never got an account is signed out (once its
- * user has loaded, when it's loading).
+ * What closing an AuthDialog, or leaving the app with its dialog open, does to the identity: a
+ * sign-in the client is still logging in is given up, so "/" shows Landing. (An identity without
+ * an account the dialog leaves behind is signed out by `Auth.cancel`.)
  */
-export function onAuthClosed(
-    state: IdentityState,
-): "anon" | "sign_out" | "sign_out_once_loaded" | undefined {
-    switch (state.kind) {
-        case "logging_in":
-            return "anon";
-        case "registering":
-            return "sign_out";
-        case "loading_user":
-            return state.registering ? "sign_out_once_loaded" : undefined;
-        default:
-            return undefined;
-    }
-}
-
-/**
- * After a sign-up closed while its user loaded: wait for the load, then sign out an identity that
- * has no account, rather than open the sign-up again.
- */
-export function afterClosedSignup(state: IdentityState): "wait" | "sign_out" | "done" {
-    switch (state.kind) {
-        case "loading_user":
-            return "wait";
-        case "registering":
-            return "sign_out";
-        default:
-            return "done";
-    }
-}
-
-/**
- * What leaving the app (to a marketing page) does to a sign-in its dialog had going: with the
- * dialog gone it's given up, so "/" shows Landing again. An identity without an account keeps it,
- * for the sign-up form when the app is back.
- */
-export function onAuthLeft(state: IdentityState): "anon" | undefined {
+export function onAuthClosed(state: IdentityState): "anon" | undefined {
     return state.kind === "logging_in" ? "anon" : undefined;
+}
+
+/**
+ * Whether the in-app dialog, closed, may open again for this identity: only for a new sign-in
+ * (the client asking again) or once there's a user. An identity that turns up without an account
+ * after the close (a passkey or window that completed anyway) doesn't bring it back.
+ */
+export function endsDismissal(state: IdentityState): boolean {
+    return state.kind === "logging_in" || state.kind === "logged_in";
 }

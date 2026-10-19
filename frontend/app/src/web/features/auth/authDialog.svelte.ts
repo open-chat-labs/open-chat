@@ -7,24 +7,24 @@ import type { Auth } from "./signIn";
 /**
  * AuthDialog's props for one host, all but `kind` and `onClose`: the same for the app's
  * AuthScreen and for Landing and Learn (their PageAuth), so the two can't drift apart. It reads
- * the referral link's referrer, and the method last used, once, when it's made: a method that's
- * started becomes the last one used, and the tiles mustn't move under the cursor.
+ * the referral link's referrer once, when it's made.
  */
 export class AuthDialogProps {
     #referrer = $state<AuthPerson | undefined>(undefined);
 
-    constructor(
-        private readonly auth: Auth,
-        private readonly last: AuthProvider,
-    ) {
+    constructor(private readonly auth: Auth) {
         auth.loadReferrer().then((person) => (this.#referrer = person));
     }
 
-    /** The methods `?auth=` (`restrictTo`) and the browser allow, the one last used first. */
-    props(restrictTo: string[]): PageAuth {
+    /**
+     * The methods `?auth=` (`restrictTo`) and the browser allow, `last` first. Hosts read `last`
+     * as the dialog opens rather than live: starting a method makes it the last one used, and the
+     * tiles mustn't move under the cursor.
+     */
+    props(restrictTo: string[], last: AuthProvider): PageAuth {
         const auth = this.auth;
         return {
-            methods: authOptions(restrictTo, "PublicKeyCredential" in window, this.last),
+            methods: authOptions(restrictTo, "PublicKeyCredential" in window, last),
             email: auth.lastEmail(),
             referrer: this.#referrer,
             wallets: auth.wallets,
@@ -48,16 +48,25 @@ export class AuthDialogProps {
 class PageSignIns {
     pending = $state(0);
     signupFailed = $state(false);
+    // closing the dialog moves it on: what an attempt from before then comes to isn't a failure
+    #dialog = 0;
 
     track<T>(call: Promise<T>, { signup = false } = {}): Promise<T> {
+        const dialog = this.#dialog;
         this.pending++;
         this.signupFailed = false;
         return call
             .catch((err) => {
-                this.signupFailed = signup;
+                if (dialog === this.#dialog) this.signupFailed = signup;
                 throw err;
             })
             .finally(() => this.pending--);
+    }
+
+    /** The dialog was closed: a failed sign-up no longer keeps Landing. */
+    closed(): void {
+        this.#dialog++;
+        this.signupFailed = false;
     }
 }
 

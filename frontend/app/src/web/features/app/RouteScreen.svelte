@@ -6,7 +6,7 @@
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
     import { navigate } from "@src/utils/navigation";
     import { regionsFor } from "../../router/regions";
-    import { showsSignedOut } from "../auth/auth.adapter";
+    import { showsSignedOut, withoutAccount } from "../auth/auth.adapter";
     import AuthScreen from "../auth/AuthScreen.svelte";
     import { pageSignIns } from "../auth/authDialog.svelte";
     import MarketingScreen from "../marketing/MarketingScreen.svelte";
@@ -22,10 +22,7 @@
     );
     const regions = $derived(regionsFor($routeStore, signedOut));
 
-    const registering = $derived(
-        $identityStateStore.kind === "registering" ||
-            ($identityStateStore.kind === "loading_user" && $identityStateStore.registering),
-    );
+    const registering = $derived(withoutAccount($identityStateStore));
     const loading = $derived(
         !registering && (!$chatsInitialisedStore || $identityStateStore.kind === "loading_user"),
     );

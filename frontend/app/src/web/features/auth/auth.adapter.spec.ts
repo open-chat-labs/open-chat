@@ -1,12 +1,12 @@
 import { AuthProvider } from "@client";
 import {
-    afterClosedSignup,
     authOptions,
+    endsDismissal,
     nextAuthKind,
     onAuthClosed,
-    onAuthLeft,
     registerFailureKey,
     showsSignedOut,
+    withoutAccount,
 } from "./auth.adapter";
 
 describe("the sign-in options", () => {
@@ -107,36 +107,31 @@ describe("the in-app dialog's kind", () => {
     });
 });
 
-describe("closing the in-app dialog", () => {
-    test("gives up a sign-in, and signs out an identity without an account", () => {
+describe("closing the in-app dialog, or leaving the app with it open", () => {
+    test("gives up a sign-in still going", () => {
         expect(onAuthClosed({ kind: "logging_in" })).toBe("anon");
-        expect(onAuthClosed({ kind: "registering" })).toBe("sign_out");
     });
 
-    test("leaves a signed-in or anonymous identity as it is", () => {
+    test("leaves any other identity to the sign-in callbacks", () => {
+        expect(onAuthClosed({ kind: "registering" })).toBeUndefined();
         expect(onAuthClosed({ kind: "anon" })).toBeUndefined();
         expect(onAuthClosed({ kind: "logged_in" })).toBeUndefined();
-        expect(onAuthClosed({ kind: "loading_user", registering: false })).toBeUndefined();
     });
 
-    test("mid sign-up, while the user loads, signs out once it has instead of opening again", () => {
-        expect(onAuthClosed({ kind: "loading_user", registering: true })).toBe(
-            "sign_out_once_loaded",
-        );
-        expect(afterClosedSignup({ kind: "loading_user", registering: true })).toBe("wait");
-        expect(afterClosedSignup({ kind: "registering" })).toBe("sign_out");
-        expect(afterClosedSignup({ kind: "logged_in" })).toBe("done");
-        expect(afterClosedSignup({ kind: "anon" })).toBe("done");
+    test("keeps it closed until the client asks for a sign-in again, or there's a user", () => {
+        expect(endsDismissal({ kind: "loading_user", registering: true })).toBe(false);
+        expect(endsDismissal({ kind: "registering" })).toBe(false);
+        expect(endsDismissal({ kind: "anon" })).toBe(false);
+        expect(endsDismissal({ kind: "logging_in" })).toBe(true);
+        expect(endsDismissal({ kind: "logged_in" })).toBe(true);
     });
 });
 
-describe("leaving the app with its dialog open", () => {
-    test("gives up a sign-in, so / shows Landing again", () => {
-        expect(onAuthLeft({ kind: "logging_in" })).toBe("anon");
-    });
-
-    test("keeps an identity without an account for the sign-up form", () => {
-        expect(onAuthLeft({ kind: "registering" })).toBeUndefined();
-        expect(onAuthLeft({ kind: "logged_in" })).toBeUndefined();
+describe("an identity without an account", () => {
+    test("is one signed in without a user, or loading on the way to sign-up", () => {
+        expect(withoutAccount({ kind: "registering" })).toBe(true);
+        expect(withoutAccount({ kind: "loading_user", registering: true })).toBe(true);
+        expect(withoutAccount({ kind: "loading_user", registering: false })).toBe(false);
+        expect(withoutAccount({ kind: "logged_in" })).toBe(false);
     });
 });

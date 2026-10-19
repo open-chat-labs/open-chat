@@ -5759,7 +5759,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "The person left “Check your inbox” (Back or close): stop waiting for that link."
+        "doc": "The person left “Check your inbox” (Back, close, switching mode), or the host closed or turned the dialog meanwhile: stop waiting for that link."
       },
       {
         "name": "onLinkCode",
@@ -17687,7 +17687,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "AuthDialog's host callbacks (onMethod, onSignup, onRequestEmailLink, checkUsername …). onMethod and onSignup return a promise; when it resolves the page enters the app, even if the dialog was closed meanwhile (once per sign-in)."
+        "doc": "AuthDialog's host callbacks (onMethod, onSignup, onRequestEmailLink, checkUsername …). onMethod and onSignup return a promise; when it resolves the page enters the app, even if the dialog was closed meanwhile (once per sign-in). onClose hears the person closing the dialog, so the host can stop what it had going."
       },
       {
         "name": "onEnterApp",
@@ -17881,7 +17881,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "AuthDialog's host callbacks (onMethod, onSignup, onRequestEmailLink, checkUsername …). onMethod and onSignup return a promise; when it resolves the page enters the app, even if the dialog was closed meanwhile (once per sign-in)."
+        "doc": "AuthDialog's host callbacks (onMethod, onSignup, onRequestEmailLink, checkUsername …). onMethod and onSignup return a promise; when it resolves the page enters the app, even if the dialog was closed meanwhile (once per sign-in). onClose hears the person closing the dialog, so the host can stop what it had going."
       },
       {
         "name": "onEnterApp",

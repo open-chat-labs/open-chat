@@ -49,8 +49,10 @@ design export needs. Each entry says where it came up.
   `?auth=` and browsers without WebAuthn), a wallet step for Ethereum / Solana (`wallets`; the old
   UI asks which wallet), the emailed link's code on "Check your inbox", and `kind: 'link'`, the
   page the link opens, which asks for that code. Also `email` and `referrer` (prefilled),
-  `onCancelEmailLink`, and a failure `reason` a host call can reject with. Landing and Learn got
-  `signedIn` (Open app in place of Sign in / Create account). None of these were designed.
+  `onCancelEmailLink`, a failure `reason` a host call can reject with, and a failed resend shown on
+  "Check your inbox". Landing and Learn got `signedIn` (Open app in place of Sign in / Create
+  account), and their `PageAuth` an `onClose` for the person closing the dialog. None of these
+  were designed.
 - **Swatches**: the design's colour/cover swatches for groups, communities and avatars have no
   OpenChat equivalent (it has uploaded avatars and banners). Adapters pass images and pick a
   swatch from the id.
