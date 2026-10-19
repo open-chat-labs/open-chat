@@ -821,6 +821,8 @@
     /* a long list scrolls on its own, so every entry can be reached wherever the page is */
     max-height: calc(100vh - 120px);
     overflow-y: auto;
+    /* a chevron turning as its section opens or closes is briefly wider than its box */
+    overflow-x: hidden;
     overscroll-behavior: contain;
     scrollbar-width: thin;
   }
