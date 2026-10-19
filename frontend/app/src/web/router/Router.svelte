@@ -35,6 +35,7 @@
     } from "@src/utils/navigation";
     import {
         handleLinkClick,
+        inEditor,
         removeQueryStringParam,
         withoutQueryStringParams,
     } from "@src/utils/urls";
@@ -64,12 +65,12 @@
     onMount(() => {
         const routeLink = handleLinkClick(client, navigate);
         // a link to a fragment of the page it's on is the browser's: it scrolls there (not one in
-        // an editor, which the shared handler stops; isContentEditable, unlike a
-        // [contenteditable] match, is false under contenteditable="false")
+        // an editor, a non-editable chip in one included, which the shared handler holds)
         const onLinkClick = (e: MouseEvent) => {
             const anchor = e.target instanceof Element ? e.target.closest("a") : null;
-            const inEditor = !!anchor?.isContentEditable;
-            if (anchor?.href && leftToBrowser(anchor.href, inEditor, window.location)) return;
+            if (anchor?.href && leftToBrowser(anchor.href, inEditor(anchor), window.location)) {
+                return;
+            }
             routeLink(e);
         };
         document.addEventListener("click", onLinkClick, { capture: true });
