@@ -5,7 +5,6 @@ mod lifecycle;
 mod queries;
 mod updates;
 
-use candid::CandidType;
 pub use lifecycle::*;
 use oc_error_codes::OCError;
 pub use queries::*;
@@ -76,13 +75,13 @@ pub struct DeleteMessages {
     pub message_ids: Vec<MessageId>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ModerationUndelete {
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ModerationHardDelete {
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,

@@ -14,6 +14,9 @@ use community_canister::UserIndexEvent;
 use community_canister::c2c_user_index::*;
 use types::UnitResult;
 
+// Must be fed by a single queue on the UserIndex, keyed by this canister (a community's channels
+// share it): the idempotency check keeps one high-water mark per sender, so a batch retried from a
+// second queue after a later batch from the first had landed would be dropped as already seen
 #[update(guard = "caller_is_user_index", msgpack = true)]
 #[trace]
 fn c2c_user_index(args: Args) -> Response {
@@ -30,6 +33,8 @@ fn c2c_user_index_impl(args: Args, state: &mut RuntimeState) -> Response {
             // Applied as the endpoint each replaces applied it, whose reply the UserIndex never read
             let _: UnitResult = match event.value {
                 UserIndexEvent::FlagMessage(ev) => c2c_flag_message_impl(ev, state).into(),
+                // Applied in a frozen chat too, as a flag-and-delete takedown is, where `delete_messages`
+                // itself refuses one
                 UserIndexEvent::DeleteMessages(ev) => delete_messages_as_platform_moderator(ev, state).into(),
                 UserIndexEvent::ModerationUndelete(ev) => c2c_moderation_undelete_impl(ev, state),
                 UserIndexEvent::ModerationHardDelete(ev) => c2c_moderation_hard_delete_impl(ev, state),

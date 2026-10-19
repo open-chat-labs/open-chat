@@ -1088,8 +1088,9 @@ impl GroupChatCore {
                     .message_internal(message_id.into())
                     .map(|m| m.message_index)
                 {
-                    // If the message being deleted is pinned, unpin it
-                    if self.remove_pinned_message(message_index, now) {
+                    // If the message being deleted is pinned, unpin it. A frozen chat takes no events,
+                    // though a moderator can still delete messages in it, so the pin goes without one.
+                    if self.remove_pinned_message(message_index, now) && !self.events.is_frozen() {
                         self.events.push_main_event(
                             ChatEventInternal::MessageUnpinned(Box::new(MessageUnpinned {
                                 message_index,
@@ -2409,6 +2410,29 @@ mod tests {
             .selected_group_updates(30, chat.details_last_updated(), Some(owner))
             .unwrap();
         assert_eq!(updates.pinned_messages_removed, vec![MessageIndex::default()]);
+    }
+
+    #[test]
+    fn deleting_a_pinned_message_in_a_frozen_chat_removes_the_pin_without_an_event() {
+        let (mut chat, owner, _) = setup();
+        send_bot_message(&mut chat, "hello", false);
+        chat.pin_message(owner, MessageIndex::default(), 30).unwrap();
+        chat.events.freeze(owner, None, 35);
+        let event_count = chat.events.main_events_list().latest_event_index();
+
+        let results = chat
+            .delete_messages(
+                Caller::User(UserIdAndPrincipal::new(owner, Principal::from_slice(&[1]))),
+                None,
+                vec![1u64.into()],
+                true,
+                40,
+            )
+            .unwrap();
+        assert!(results.iter().all(|(_, result)| result.is_ok()));
+
+        assert!(chat.pinned_messages(MessageIndex::default()).is_empty());
+        assert_eq!(chat.events.main_events_list().latest_event_index(), event_count);
     }
 
     #[test]
