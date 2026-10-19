@@ -79,9 +79,20 @@ describe("what a route shows", () => {
         }
     });
 
-    test("a chat has the right column", () => {
+    test("the wallet has no right column, on its home or a token's page", () => {
+        for (const view of ["all", "token"]) {
+            expect(
+                regionsFor(route({ kind: "wallet_route", scope: none, view, ledger: "x" }), false),
+            ).toMatchObject({ rightColumn: false });
+        }
+    });
+
+    test("a chat and the notifications have the right column", () => {
         expect(
             regionsFor(route({ kind: "chat_list_route", scope: { kind: "chats" } }), false),
+        ).not.toHaveProperty("rightColumn");
+        expect(
+            regionsFor(route({ kind: "notifications_route", scope: none }), false),
         ).not.toHaveProperty("rightColumn");
     });
 

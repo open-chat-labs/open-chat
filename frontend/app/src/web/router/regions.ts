@@ -85,6 +85,8 @@ export function regionsFor(route: RouteParams, signedOut: boolean): Regions {
                 middle: { kind: "wallet", view: route.view, ledger: route.ledger },
                 // the wallet's own panel is its home on a narrow screen
                 narrowView: route.view === "all" ? "left" : "middle",
+                // its settings are a dialog
+                rightColumn: false,
             };
         case "admin_route":
             return { area: "app", middle: { kind: "admin" }, narrowView: "middle" };

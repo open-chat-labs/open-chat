@@ -104,7 +104,7 @@ Once the narrow design lands, `selectLayout` stops falling back and every browse
 | `/community/:cid` | `selected_community_route` | `ChatListPanel` community mode (channels) | redirects to the default channel | `GroupPanel` (community) on demand | list | preview |
 | `/community/:cid/channel/:chid/…` | `selected_channel_route` (community) | channel list | conversation (channel) | `GroupPanel` (channel) on demand; thread → `ThreadPanel` | conversation | preview |
 | `/chats/threads` · `/favourite/threads` · `/community/:cid/threads` **(new)** | `threads_route` (that scope) | `ThreadList` (All / Unread) | last opened thread's chat, else `EmptyState` | `ThreadPanel` once a thread is open | list | sign in |
-| `/notifications` **(mobile's path, new on desktop)** | `notifications_route` | `ActivityPanel` | selected item's chat | – | list | sign in |
+| `/notifications` **(mobile's path, new on desktop)** | `notifications_route` | `ActivityPanel` | selected item's chat | the selected item's chat details, on demand | list | sign in |
 | `/profile_summary` **(mobile's path, new on desktop)** | `profile_summary_route` | redirects to the default chat list with `?profile` | | | | sign in |
 | `/welcome` **(mobile's path, new on desktop)** | `welcome_route` | – | `ExploreCommunities` (as `/communities`) | – | full | yes |
 | `/communities` | `communities_route` | – (full width) | `ExploreCommunities` (search query in the URL, see below) | `JoinGateDialog` on join | full | yes |
