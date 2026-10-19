@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Stop tracking the async work in progress, since nothing reads it any more ([#9972](https://github.com/open-chat-labs/open-chat/pull/9972))
 - Tell the members of a deleted group or community through events batched per MultiUser canister, rather than a call per member ([#10010](https://github.com/open-chat-labs/open-chat/pull/10010))
 - Send accessor removals to the StorageIndex at its `c2c_group_index` endpoint ([#10023](https://github.com/open-chat-labs/open-chat/pull/10023))
+- Tell the LocalUserIndexes to delete groups through their event queue ([#10033](https://github.com/open-chat-labs/open-chat/pull/10033))
 
 ### Removed
 
