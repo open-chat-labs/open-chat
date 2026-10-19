@@ -89,8 +89,7 @@ design export needs. Each entry says where it came up.
   - the guidelines shown in a popup at sign-up (`AuthDialog` links to `/terms`, a placeholder
     until the legal pages exist);
   - the onboarding dialog's language picker and Logout link (closing sign-up logs out instead);
-  - wallets the browser announces (EIP-6963 extensions) in the Ethereum list, and the Solana
-    adapters' own icons (Phantom has none here);
+  - the Solana adapters' own icons (Phantom has none here);
   - joining the group or community a guest picked once they've signed in (`postLoginJoin` in
     `Home.svelte`), for the guest pass (phase 10).
 - **Learn content**: the existing pages' content (roadmap, blog, whitepaper, FAQ) has to move

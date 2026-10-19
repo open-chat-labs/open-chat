@@ -50,7 +50,7 @@
         pageSignIns.track(auth.onSignup(details), { signup: true });
     // and so is an email link it asks for, until the link signs in or is given up
     const onRequestEmailLink = (address: string) =>
-        pageSignIns.trackEmail(auth.onRequestEmailLink(address));
+        pageSignIns.trackEmail(Promise.resolve(auth.onRequestEmailLink(address)));
     const onCancelEmailLink = () => {
         pageSignIns.emailDone();
         auth.onCancelEmailLink();
