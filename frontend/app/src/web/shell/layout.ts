@@ -44,3 +44,13 @@ export function shellLayout(crossed: Crossed): ShellLayout {
         rightWidth: crossed.widest ? 500 : crossed.pushRail ? 425 : 375,
     };
 }
+
+/** The one column a narrow viewport shows, if it's narrow: the middle when there's no left one. */
+export function narrowColumn(
+    layout: ShellLayout,
+    hasLeft: boolean,
+    view: "left" | "middle",
+): "left" | "middle" | undefined {
+    if (!layout.narrow) return undefined;
+    return hasLeft ? view : "middle";
+}
