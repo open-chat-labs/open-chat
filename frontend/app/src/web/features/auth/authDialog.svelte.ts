@@ -1,7 +1,7 @@
-import type { AuthProvider } from "@client";
+import { identityStateStore, type AuthProvider } from "@client";
 import type { AuthPerson } from "@openchat/ui/src/features/components/AuthDialog.svelte";
 import type { PageAuth } from "@openchat/ui/src/pages/pageAuth.svelte";
-import { authOptions } from "./auth.adapter";
+import { authOptions, withoutAccount } from "./auth.adapter";
 import type { Auth } from "./signIn";
 
 /**
@@ -58,8 +58,8 @@ export class AuthDialogProps {
 /**
  * Sign-ins and sign-ups going on in a marketing page's own dialog. While one is, "/" keeps
  * showing Landing (RouteScreen), so that dialog sees it through: otherwise the identity leaving
- * "anon" would swap the page for the app mid-flow. So does a sign-up that failed there, whose
- * dialog says why (showsSignedOut).
+ * "anon" would swap the page for the app mid-flow. So does a sign-up that failed there leaving an
+ * identity without an account, whose dialog says why (showsSignedOut).
  */
 class PageSignIns {
     pending = $state(0);
@@ -70,23 +70,31 @@ class PageSignIns {
     track<T>(call: Promise<T>, { signup = false } = {}): Promise<T> {
         const dialog = this.#dialog;
         this.pending++;
-        this.signupFailed = false;
+        this.started();
         return call
             .catch((err) => {
-                if (dialog === this.#dialog) this.signupFailed = signup;
+                // a sign-up that failed before its passkey left nothing behind to keep Landing for
+                if (dialog === this.#dialog) {
+                    this.signupFailed = signup && withoutAccount(identityStateStore.value);
+                }
                 throw err;
             })
             .finally(() => this.pending--);
     }
 
+    /** A new attempt on the page (one tracked, or an email link asked for): any failure is past. */
+    started(): void {
+        this.signupFailed = false;
+    }
+
     /**
      * The dialog was closed: what its attempts come to from now on isn't a failure of the page's.
-     * A failed sign-up still keeps Landing up: closing signs that identity out (and the page
-     * reloads), and until then "/" mustn't show the app for an identity without an account. The
-     * next attempt clears it.
+     * A failed sign-up whose identity has no account still keeps Landing up: closing signs it out
+     * (and the page reloads), and until then "/" mustn't show the app for it.
      */
     closed(): void {
         this.#dialog++;
+        if (!withoutAccount(identityStateStore.value)) this.signupFailed = false;
     }
 
     /**

@@ -42,6 +42,11 @@
         pageSignIns.track(auth.onMethod(...args));
     const onSignup = (details: Parameters<typeof auth.onSignup>[0]) =>
         pageSignIns.track(auth.onSignup(details), { signup: true });
+    // an email link is a new attempt too, though the page doesn't wait on it
+    const onRequestEmailLink = (address: string) => {
+        pageSignIns.started();
+        return auth.onRequestEmailLink(address);
+    };
     // closing gives up what the dialog had going, and signs out an identity without an account it
     // leaves behind (a sign-up that failed)
     const onClose = () => {
@@ -55,6 +60,7 @@
     const pageAuth = $derived({
         ...dialog.props($querystringStore.getAll("auth"), last),
         onOpen,
+        onRequestEmailLink,
         onMethod,
         onSignup,
         onClose,

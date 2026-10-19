@@ -1,4 +1,4 @@
-import { AuthProvider } from "@client";
+import { AuthProvider, identityStateStore } from "@client";
 import { flushSync } from "svelte";
 import { AuthDialogProps, pageSignIns } from "./authDialog.svelte";
 import type { Auth } from "./signIn";
@@ -56,6 +56,13 @@ describe("the prefilled email", () => {
 });
 
 describe("a marketing page's own sign-ins", () => {
+    // a sign-up that fails at registerUser leaves an identity without an account
+    beforeEach(() => identityStateStore.set({ kind: "registering" }));
+    afterEach(() => {
+        identityStateStore.set({ kind: "anon" });
+        pageSignIns.started();
+    });
+
     test("count as going on until each settles, whether it signs in or fails", async () => {
         let succeed!: () => void;
         let fail!: (e: Error) => void;
@@ -112,5 +119,30 @@ describe("a marketing page's own sign-ins", () => {
         ).rejects.toThrow();
         expect(pageSignIns.signupFailed).toBe(true);
         expect(pageSignIns.left()).toBe(true);
+    });
+
+    test("don't count a sign-up that failed before its passkey, with nothing left behind", async () => {
+        identityStateStore.set({ kind: "anon" });
+        await expect(
+            pageSignIns.track(Promise.reject(new Error("NotAllowedError")), { signup: true }),
+        ).rejects.toThrow();
+        expect(pageSignIns.signupFailed).toBe(false);
+    });
+
+    test("forget a failed sign-up on a close once its identity is gone", async () => {
+        await expect(
+            pageSignIns.track(Promise.reject(new Error("taken")), { signup: true }),
+        ).rejects.toThrow();
+        identityStateStore.set({ kind: "anon" });
+        pageSignIns.closed();
+        expect(pageSignIns.signupFailed).toBe(false);
+    });
+
+    test("forget a failed sign-up when an email link is asked for", async () => {
+        await expect(
+            pageSignIns.track(Promise.reject(new Error("taken")), { signup: true }),
+        ).rejects.toThrow();
+        pageSignIns.started();
+        expect(pageSignIns.signupFailed).toBe(false);
     });
 });
