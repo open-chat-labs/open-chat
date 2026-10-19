@@ -1,4 +1,4 @@
-pub mod c2c_local_user_index;
+pub mod c2c_local_index;
 pub mod c2c_pull_puzzles;
 pub mod c2c_report_results;
 pub mod candidates;

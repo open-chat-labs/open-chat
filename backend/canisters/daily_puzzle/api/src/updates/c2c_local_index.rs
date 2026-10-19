@@ -1,10 +1,10 @@
-use crate::LocalUserIndexEvent;
+use crate::LocalIndexEvent;
 use serde::{Deserialize, Serialize};
 use types::{IdempotentEnvelope, UnitResult};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub events: Vec<IdempotentEnvelope<LocalUserIndexEvent>>,
+    pub events: Vec<IdempotentEnvelope<LocalIndexEvent>>,
 }
 
 pub type Response = UnitResult;

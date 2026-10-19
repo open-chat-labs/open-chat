@@ -19,7 +19,6 @@ pub mod c2c_invite_users;
 pub mod c2c_join_group;
 pub mod c2c_leave_group;
 pub mod c2c_local_index;
-pub mod c2c_local_user_index;
 pub mod c2c_moderation_hard_delete;
 pub mod c2c_moderation_undelete;
 pub mod c2c_send_message;

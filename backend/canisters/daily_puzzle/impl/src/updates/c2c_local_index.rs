@@ -3,13 +3,13 @@ use crate::{RuntimeState, mutate_state, read_state};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use daily_puzzle_canister::LocalUserIndexEvent;
-use daily_puzzle_canister::c2c_local_user_index::*;
+use daily_puzzle_canister::LocalIndexEvent;
+use daily_puzzle_canister::c2c_local_index::*;
 use types::{IdempotentEnvelope, UnitResult};
 
 #[update(msgpack = true)]
 #[trace]
-async fn c2c_local_user_index(args: Args) -> Response {
+async fn c2c_local_index(args: Args) -> Response {
     let caller = read_state(|state| state.env.caller());
     if let Err(error) = verify_caller_is_local_user_index(caller).await {
         return UnitResult::Error(error);
@@ -18,7 +18,7 @@ async fn c2c_local_user_index(args: Args) -> Response {
     UnitResult::Success
 }
 
-fn apply(caller: Principal, events: Vec<IdempotentEnvelope<LocalUserIndexEvent>>, state: &mut RuntimeState) {
+fn apply(caller: Principal, events: Vec<IdempotentEnvelope<LocalIndexEvent>>, state: &mut RuntimeState) {
     let now = state.env.now();
     let results = events
         .into_iter()
@@ -29,7 +29,7 @@ fn apply(caller: Principal, events: Vec<IdempotentEnvelope<LocalUserIndexEvent>>
                 .check(caller, event.created_at, event.idempotency_id)
         })
         .map(|event| match event.value {
-            LocalUserIndexEvent::ReportResult(result) => result,
+            LocalIndexEvent::ReportResult(result) => result,
         })
         .collect();
     state.data.upsert_results(results, now);
@@ -63,7 +63,7 @@ mod tests {
         let event = |created_at, user| IdempotentEnvelope {
             created_at,
             idempotency_id: user as u64,
-            value: LocalUserIndexEvent::ReportResult(result(user)),
+            value: LocalIndexEvent::ReportResult(result(user)),
         };
 
         apply(caller, vec![event(now, 1)], &mut state);

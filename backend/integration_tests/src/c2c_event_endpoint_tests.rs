@@ -1,8 +1,7 @@
 //! Every canister takes another canister's events at an endpoint named `c2c_<caller>`. These check
 //! the endpoints added under that name ahead of their callers switching over to them, each by
-//! sending one event as the caller and reading its effect back. The Group, Community and DailyPuzzle
-//! canisters refuse every `c2c_` call made by ingress, so theirs are covered once their callers
-//! switch over.
+//! sending one event as the caller and reading its effect back. The DailyPuzzle canister refuses
+//! every `c2c_` call made by ingress, so its endpoint is covered once its caller switches over.
 use crate::env::ENV;
 use crate::utils::{now_millis, tick_until};
 use crate::{TestEnv, client};

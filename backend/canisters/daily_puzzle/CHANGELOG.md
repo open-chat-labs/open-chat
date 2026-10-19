@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Add `c2c_local_user_index` for the LocalUserIndexes' events ([#10019](https://github.com/open-chat-labs/open-chat/pull/10019))
+- Add `c2c_local_index` for the LocalUserIndexes' events ([#10019](https://github.com/open-chat-labs/open-chat/pull/10019))
 
 ### Changed
 

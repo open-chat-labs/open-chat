@@ -40,6 +40,6 @@ fn default_game_id() -> GameId {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub enum LocalUserIndexEvent {
+pub enum LocalIndexEvent {
     ReportResult(DailyPuzzleResult),
 }
