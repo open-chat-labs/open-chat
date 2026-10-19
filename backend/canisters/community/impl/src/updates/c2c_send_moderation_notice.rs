@@ -15,7 +15,7 @@ fn c2c_send_moderation_notice(args: Args) -> Response {
     execute_update_even_if_frozen(|state| c2c_send_moderation_notice_impl(args, state)).into()
 }
 
-fn c2c_send_moderation_notice_impl(args: Args, state: &mut RuntimeState) -> OCResult {
+pub(crate) fn c2c_send_moderation_notice_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let now = state.env.now();
 
     let channel = state

@@ -20,6 +20,7 @@ pub mod c2c_start_import_into_community;
 pub mod c2c_unfreeze_group;
 pub mod c2c_uninstall_bot;
 pub mod c2c_update_proposals;
+pub mod c2c_user_index;
 pub mod cancel_invites;
 pub mod cancel_p2p_swap;
 pub mod change_role;

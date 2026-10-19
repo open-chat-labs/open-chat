@@ -13,7 +13,7 @@ fn c2c_moderation_undelete(args: Args) -> Response {
     execute_update_even_if_frozen(|state| c2c_moderation_undelete_impl(args, state))
 }
 
-fn c2c_moderation_undelete_impl(args: Args, state: &mut RuntimeState) -> UnitResult {
+pub(crate) fn c2c_moderation_undelete_impl(args: Args, state: &mut RuntimeState) -> UnitResult {
     let now = state.env.now();
     state
         .data

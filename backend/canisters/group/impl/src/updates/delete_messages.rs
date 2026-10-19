@@ -5,6 +5,7 @@ use crate::{RuntimeState, TimerJob, execute_update, execute_update_async, mutate
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::MINUTE_IN_MS;
+use group_canister::DeleteMessages;
 use group_canister::{c2c_bot_delete_messages, delete_messages::*};
 use ic_principal::Principal;
 use oc_error_codes::OCErrorCode;
@@ -77,6 +78,17 @@ fn prepare(state: &RuntimeState) -> OCResult<PrepareResult> {
         caller: state.env.caller(),
         user_index_canister_id: state.data.user_index_canister_id,
     })
+}
+
+// Deletes the messages as the UserIndex does, as the platform moderator
+pub(crate) fn delete_messages_as_platform_moderator(args: DeleteMessages, state: &mut RuntimeState) -> OCResult {
+    let args = Args {
+        thread_root_message_index: args.thread_root_message_index,
+        message_ids: args.message_ids,
+        as_platform_moderator: Some(true),
+        new_achievement: false,
+    };
+    commit(None, args, state)
 }
 
 fn commit(ext_caller: Option<Caller>, args: Args, state: &mut RuntimeState) -> OCResult {
