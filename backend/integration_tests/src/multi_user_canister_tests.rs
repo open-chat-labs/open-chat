@@ -3036,6 +3036,80 @@ fn deleted_groups_and_communities_are_removed_from_multi_user_canister_users() {
     );
 }
 
+// One call carries the events for every user in the canister. An event for a user in another
+// canister is dropped without failing the rest, and an envelope sent twice is only applied once.
+#[test]
+fn group_index_events_are_applied_per_user_in_a_multi_user_canister() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        platform_operator,
+        ..
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *platform_operator, canister_ids, local_user_index);
+    let (alice, alice_id) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (bob, bob_id) = create_user(env, canister_ids, local_user_index, canister_id);
+    let group: ChatId = random_principal().into();
+    let deleted_by: UserId = random_principal().into();
+
+    for user_id in [alice_id, bob_id] {
+        let joined = local_user_index_event(
+            env,
+            rand::random(),
+            LocalUserIndexEvent::UserJoinedGroup(Box::new(UserJoinedGroup {
+                chat_id: group,
+                local_user_index_canister_id: local_user_index,
+                latest_message_index: None,
+                group_canister_timestamp: now_millis(env),
+            })),
+        );
+        send_local_user_index_events(env, local_user_index, canister_id, user_id, vec![joined]);
+    }
+
+    let deleted_group = DeletedGroupInfoInternal {
+        id: group,
+        timestamp: now_millis(env),
+        deleted_by,
+        group_name: "Group".to_string(),
+        name: "Group".to_string(),
+        public: false,
+        community_imported_into: None,
+    };
+    let group_deleted = |user_id: UserId| IdempotentEnvelope {
+        created_at: now_millis(env),
+        idempotency_id: rand::random(),
+        value: (user_id, GroupIndexEvent::GroupDeleted(Box::new(deleted_group.clone()))),
+    };
+    let alices_event = group_deleted(alice_id);
+    let response = client::user::c2c_group_index(
+        env,
+        canister_ids.group_index,
+        canister_id,
+        &multi_user_canister::c2c_group_index::Args {
+            events: vec![
+                alices_event.clone(),
+                group_deleted(random_principal().into()),
+                group_deleted(bob_id),
+                alices_event,
+            ],
+        },
+    );
+    assert!(matches!(response, types::SuccessOnly::Success));
+
+    for (principal, user_id) in [(alice, alice_id), (bob, bob_id)] {
+        assert!(group_ids(&initial_state(env, principal, canister_id)).is_empty());
+        let deleted_messages = bot_messages(env, principal, canister_id, user_id)
+            .into_iter()
+            .filter(|m| matches!(&m.content, MessageContent::Text(text) if text.text.contains("was deleted by")))
+            .count();
+        assert_eq!(deleted_messages, 1);
+    }
+}
+
 #[test]
 fn creating_a_community_requires_diamond_membership_in_a_multi_user_canister() {
     let mut wrapper = ENV.deref().get();

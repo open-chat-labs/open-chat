@@ -188,10 +188,10 @@ fn init_test_data(
 
     // The user canisters learn of the membership asynchronously (community -> local user index ->
     // user canister), and `user_canister_notified_of_community_deleted` stops user2 and user3
-    // right after this returns. A join event which reaches a stopped canister is rejected and
-    // only retried after a 10 second delay, which never elapses while the clock stands still, so
-    // a user stopped before its join landed would never hold the community and the final
-    // assertion (that user3 still has it) would fail. Wait for the memberships to land first.
+    // right after this returns. A join event which reaches a stopped canister is retried, like the
+    // deletion event, once the canister is running again, in no fixed order. A join which landed
+    // after the deletion would leave the user holding the community, so the wait for the deletion
+    // to be applied would never end. Wait for the memberships to land first.
     wait_for_community_membership(env, &user2, community_id);
     wait_for_community_membership(env, &user3, community_id);
 
