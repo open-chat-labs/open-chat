@@ -52,6 +52,10 @@
     let namedAccount = $derived(
         $namedAccountsStore.find((a) => a.account === form.targetAccount),
     );
+    // Only the saved addresses the send could reach are offered
+    let fittingAccounts = $derived(
+        $namedAccountsStore.filter((a) => form.acceptsAddress(a.account)),
+    );
     let errorMessage = $derived(error !== undefined ? error : $pinNumberErrorMessageStore);
 
     function scan() {
@@ -108,7 +112,7 @@
     {#snippet iconButtons(color)}
         <!-- The target can't change mid-send, since the success sheet shows it as the recipient -->
         {#if !busy}
-            {#if $namedAccountsStore.length > 0}
+            {#if fittingAccounts.length > 0}
                 <InputIconButton onClick={() => (showAddressBook = true)}>
                     <Account {color} />
                 </InputIconButton>
@@ -146,7 +150,10 @@
 </TokenInput>
 
 {#if showAddressBook}
-    <AccountSelector onDismiss={() => (showAddressBook = false)} bind:targetAccount={form.targetAccount} />
+    <AccountSelector
+        accounts={fittingAccounts}
+        onDismiss={() => (showAddressBook = false)}
+        bind:targetAccount={form.targetAccount} />
 {/if}
 
 {#if errorMessage !== undefined}
