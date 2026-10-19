@@ -55,3 +55,11 @@ pub fn caller_can_upload_wasm_chunks() -> Result<(), String> {
         Err("Caller is not permitted to upload wasm chunks".to_string())
     }
 }
+
+pub fn caller_is_local_user_index() -> Result<(), String> {
+    if read_state(|state| state.is_caller_local_user_index()) {
+        Ok(())
+    } else {
+        Err("Caller is not a local user index".to_string())
+    }
+}

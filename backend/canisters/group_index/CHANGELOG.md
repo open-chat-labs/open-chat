@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `c2c_local_index` for the LocalUserIndexes' events: groups' and communities' activity, completed imports and uninstalled communities ([#10029](https://github.com/open-chat-labs/open-chat/pull/10029))
+
 ### Changed
 
 - Stop tracking the async work in progress, since nothing reads it any more ([#9972](https://github.com/open-chat-labs/open-chat/pull/9972))

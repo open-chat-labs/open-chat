@@ -13,6 +13,7 @@ use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use types::{AirdropConfig, BuildVersion, CanisterId, Cycles, EvmContractAddress, ExchangeId, TimestampMillis, Timestamped};
 use utils::env::Environment;
+use utils::idempotency_checker::IdempotencyChecker;
 
 mod guards;
 mod jobs;
@@ -110,6 +111,8 @@ struct Data {
     evm_contract_addresses: HashMap<CanisterId, Vec<EvmContractAddress>>,
     rng_seed: [u8; 32],
     test_mode: bool,
+    #[serde(default)]
+    idempotency_checker: IdempotencyChecker,
 }
 
 impl Data {
@@ -153,6 +156,7 @@ impl Data {
             evm_contract_addresses: HashMap::new(),
             rng_seed: [0; 32],
             test_mode,
+            idempotency_checker: IdempotencyChecker::default(),
         }
     }
 

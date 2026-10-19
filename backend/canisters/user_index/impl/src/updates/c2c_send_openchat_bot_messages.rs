@@ -11,7 +11,7 @@ fn c2c_send_openchat_bot_messages(args: Args) -> Response {
     mutate_state(|state| c2c_send_openchat_bot_messages_impl(args, state))
 }
 
-fn c2c_send_openchat_bot_messages_impl(args: Args, state: &mut RuntimeState) -> Response {
+pub(crate) fn c2c_send_openchat_bot_messages_impl(args: Args, state: &mut RuntimeState) -> Response {
     for message in args.messages {
         state.push_event_to_local_user_index(
             message.recipient,

@@ -1,3 +1,4 @@
+use crate::GroupIndexEvent;
 use crate::guards::{caller_is_local_community_canister, caller_is_local_group_canister};
 use crate::{CommunityEvent, GroupEvent, RuntimeState, mutate_state};
 use candid::Principal;
@@ -8,6 +9,7 @@ use local_user_index_canister::GroupOrCommunityEvent;
 use local_user_index_canister::c2c_group_canister::*;
 use std::cell::LazyCell;
 use types::{BotEvent, BotLifecycleEvent, MessageClassified, Notification, TimestampMillis};
+use types::{ChannelId, Chat};
 use user_index_canister::BotInstalled;
 
 #[update(guard = "caller_is_local_group_canister", msgpack = true)]
@@ -71,6 +73,93 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         // No longer sent, but still read until every group and community is on a version which
         // doesn't send it
         GroupOrCommunityEvent::UserIdMigrationComplete(_) => {}
+        GroupOrCommunityEvent::GroupActive(ev) => {
+            if is_group {
+                state.push_event_to_group_index(
+                    GroupIndexEvent::GroupActive(group_index_canister::GroupActive {
+                        chat_id: caller.into(),
+                        duration: ev.duration,
+                        public_group_activity: ev.public_group_activity,
+                    }),
+                    **now,
+                );
+            }
+        }
+        GroupOrCommunityEvent::CommunityActive(ev) => {
+            if !is_group {
+                state.push_event_to_group_index(
+                    GroupIndexEvent::CommunityActive(group_index_canister::CommunityActive {
+                        community_id: caller.into(),
+                        duration: ev.duration,
+                        public_community_activity: ev.public_community_activity,
+                    }),
+                    **now,
+                );
+            }
+        }
+        GroupOrCommunityEvent::GroupImportComplete(ev) => {
+            if !is_group {
+                let ev = *ev;
+                state.push_event_to_group_index(
+                    GroupIndexEvent::GroupImportComplete(Box::new(group_index_canister::GroupImportComplete {
+                        community_id: caller.into(),
+                        community_name: ev.community_name,
+                        channel: ev.channel,
+                        group_id: ev.group_id,
+                        group_name: ev.group_name,
+                        members: ev.members,
+                        other_public_channels: ev.other_public_channels,
+                        mark_active_duration: ev.mark_active_duration,
+                        public_community_activity: ev.public_community_activity,
+                    })),
+                    **now,
+                );
+            }
+        }
+        GroupOrCommunityEvent::CsamDetected(ev) => {
+            if let Some(chat_id) = chat(caller, is_group, ev.channel_id) {
+                let ev = *ev;
+                state.push_event_to_user_index(
+                    crate::UserIndexEvent::CsamDetected(Box::new(user_index_canister::CsamDetected {
+                        chat_id,
+                        thread_root_message_index: ev.thread_root_message_index,
+                        message_index: ev.message_index,
+                        message_id: ev.message_id,
+                        sender: ev.sender,
+                        flags: ev.flags,
+                        content_excerpt: ev.content_excerpt,
+                        blob_references: ev.blob_references,
+                        media_matches: ev.media_matches,
+                    })),
+                    **now,
+                );
+            }
+        }
+        GroupOrCommunityEvent::ModerationReferral(ev) => {
+            if let Some(chat_id) = chat(caller, is_group, ev.channel_id) {
+                let ev = *ev;
+                state.push_event_to_user_index(
+                    crate::UserIndexEvent::ModerationReferral(Box::new(user_index_canister::ModerationReferral {
+                        chat_id,
+                        thread_root_message_index: ev.thread_root_message_index,
+                        message_index: ev.message_index,
+                        message_id: ev.message_id,
+                        sender: ev.sender,
+                        flags: ev.flags,
+                        content_excerpt: ev.content_excerpt,
+                        blob_references: ev.blob_references,
+                    })),
+                    **now,
+                );
+            }
+        }
+        GroupOrCommunityEvent::TriggerUpgrade => {
+            if is_group {
+                state.data.groups_requiring_upgrade.enqueue(caller, true);
+            } else {
+                state.data.communities_requiring_upgrade.enqueue(caller, true);
+            }
+        }
         GroupOrCommunityEvent::MessageClassifyRequest(request) => {
             if request.input.is_empty() {
                 // Nothing classifiable (eg. an edit removed the text): dequeue any stale queued
@@ -139,5 +228,14 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
 
             state.handle_notification(*notification, state.env.canister_id(), **now)
         }
+    }
+}
+
+// The chat an event from `caller` is about: the group itself, or the channel named within the community
+fn chat(caller: Principal, is_group: bool, channel_id: Option<ChannelId>) -> Option<Chat> {
+    if is_group {
+        Some(Chat::Group(caller.into()))
+    } else {
+        channel_id.map(|channel_id| Chat::Channel(caller.into(), channel_id))
     }
 }

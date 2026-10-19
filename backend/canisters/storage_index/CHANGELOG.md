@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Add `c2c_user_index` and `c2c_group_index` for the UserIndex's and GroupIndex's events ([#10019](https://github.com/open-chat-labs/open-chat/pull/10019))
+- Take vault ops as events from the UserIndex ([#10029](https://github.com/open-chat-labs/open-chat/pull/10029))
 
 ## [[2.0.2150](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2150-storage_index)] - 2026-10-16
 

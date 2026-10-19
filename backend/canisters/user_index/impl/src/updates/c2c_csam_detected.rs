@@ -15,7 +15,7 @@ fn c2c_csam_detected(args: Args) -> Response {
     Response::Success
 }
 
-fn c2c_csam_detected_impl(mut args: Args, state: &mut RuntimeState) {
+pub(crate) fn c2c_csam_detected_impl(mut args: Args, state: &mut RuntimeState) {
     // Until the job replacing the ids users had before being migrated to a MultiUser canister (#9929)
     // has completed everywhere, a chat can still name the sender by an old id. Remove along with the
     // rest of the mapping of old ids to new once it has.
