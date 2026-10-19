@@ -1,4 +1,4 @@
-import { crossedAt, shellLayout as layoutFor } from "./layout";
+import { crossedAt, narrowColumn, shellLayout as layoutFor } from "./layout";
 
 const shellLayout = (width: number) => layoutFor(crossedAt(width));
 
@@ -33,5 +33,17 @@ describe("the shell's breakpoints", () => {
 
     test("the modal right column is 375px wide", () => {
         expect(shellLayout(1000).rightWidth).toBe(375);
+    });
+});
+
+describe("a narrow viewport's column", () => {
+    test("is the one asked for, or the middle when there's no left column", () => {
+        expect(narrowColumn(shellLayout(767), true, "left")).toBe("left");
+        expect(narrowColumn(shellLayout(767), true, "middle")).toBe("middle");
+        expect(narrowColumn(shellLayout(767), false, "left")).toBe("middle");
+    });
+
+    test("is none from 768px, where every column shows", () => {
+        expect(narrowColumn(shellLayout(768), true, "left")).toBeUndefined();
     });
 });
