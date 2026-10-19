@@ -1,21 +1,19 @@
-import { fadeCss, growCss, motionDuration, SLOW, slideCss } from "./motion";
+import { fadeCss, SLOW, slideCss, tokenDuration } from "./motion";
 
 describe("the right column's motion", () => {
-    test("runs for the --duration-slow token, or its fallback without one", () => {
-        expect(motionDuration(false, " 320ms")).toBe(320);
-        expect(motionDuration(false, "")).toBe(SLOW);
+    test("runs for the --duration-slow token, in ms or s", () => {
+        expect(tokenDuration(" 320ms")).toBe(320);
+        expect(tokenDuration(" 0.28s ")).toBe(280);
+        expect(tokenDuration("200")).toBe(200);
     });
 
-    test("doesn't run across the docking width or with reduced motion", () => {
-        expect(motionDuration(true, "320ms")).toBe(0);
+    test("doesn't run for a token of 0, and falls back without a readable one", () => {
+        expect(tokenDuration("0ms")).toBe(0);
+        expect(tokenDuration("")).toBe(SLOW);
+        expect(tokenDuration("fast")).toBe(SLOW);
     });
 
-    test("docked, the column grows to its width", () => {
-        const css = growCss(425);
-        expect([css(0), css(0.5), css(1)]).toEqual(["width: 0px", "width: 212.5px", "width: 425px"]);
-    });
-
-    test("as a modal, the sheet comes in from the inline end over a fading scrim", () => {
+    test("slides in from the inline end, over a fading scrim as a modal", () => {
         expect([slideCss(false)(0, 1), slideCss(false)(1, 0)]).toEqual([
             "transform: translateX(100%)",
             "transform: translateX(0%)",

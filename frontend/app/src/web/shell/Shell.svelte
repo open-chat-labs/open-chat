@@ -4,11 +4,11 @@
 <script lang="ts">
     import { modal } from "@openchat/ui/src/lib/behaviours/modal";
     import { useT } from "@openchat/ui/src/lib/i18n";
-    import { untrack, type Snippet } from "svelte";
+    import { type Snippet } from "svelte";
     import { cubicOut } from "svelte/easing";
     import { MediaQuery } from "svelte/reactivity";
     import { narrowColumn } from "./layout";
-    import { fadeCss, growCss, motionDuration, slideCss } from "./motion";
+    import { fadeCss, slideCss, tokenDuration } from "./motion";
     import { currentShellLayout } from "./viewport.svelte";
 
     type Props = {
@@ -42,38 +42,30 @@
     const rightWidth = $derived(currentShellLayout().rightWidth);
     const narrow = $derived(narrowColumn(currentShellLayout(), left !== undefined, narrowView));
 
-    // The right column opens and closes with motion: docked, it grows from the inline end and
-    // pushes the middle over; as a modal, the sheet slides in over a fading scrim. A window
-    // crossing the docking width swaps one for the other without it, and so does reduced motion.
+    // The right column opens and closes with motion: docked, it slides in from the inline end
+    // into the room the middle makes for it (once, so the middle doesn't lay out every frame);
+    // as a modal, the sheet slides in over a fading scrim. Each open / closed block is nested in
+    // its dock / modal branch, so its transitions are local: a window crossing the docking width
+    // swaps one for the other without motion. Reduced motion has none either.
     const reducedMotion = new MediaQuery("prefers-reduced-motion: reduce");
-    let crossing = false;
-    let previousRightMode = untrack(() => rightMode);
-    $effect.pre(() => {
-        const mode = rightMode;
-        untrack(() => {
-            if (mode === previousRightMode) return;
-            previousRightMode = mode;
-            // the swap happens in this update (its intro starts in a microtask); anything after
-            // it is an open or a close again
-            crossing = true;
-            setTimeout(() => (crossing = false));
-        });
-    });
+    // read the first time the column moves, rather than forcing a style recalc each time
+    let slow: number | undefined = undefined;
 
     function duration(): number {
-        const token = getComputedStyle(document.documentElement).getPropertyValue(
-            "--duration-slow",
+        if (reducedMotion.current) return 0;
+        slow ??= tokenDuration(
+            getComputedStyle(document.documentElement).getPropertyValue("--duration-slow"),
         );
-        return motionDuration(crossing || reducedMotion.current, token);
+        return slow;
     }
 
-    function grow(_node: HTMLElement) {
-        return { duration: duration(), easing: cubicOut, css: growCss(rightWidth) };
-    }
-
-    function slide(node: HTMLElement) {
-        const rtl = getComputedStyle(node).direction === "rtl";
-        return { duration: duration(), easing: cubicOut, css: slideCss(rtl) };
+    // the app sets the page's direction on the document (utils/appRoot)
+    function slide(_node: HTMLElement) {
+        return {
+            duration: duration(),
+            easing: cubicOut,
+            css: slideCss(document.dir === "rtl"),
+        };
     }
 
     function fade(_node: HTMLElement) {
@@ -110,30 +102,34 @@
     {#if props.right}
         {#if rightMode === "dock"}
             {#if props.rightOpen}
-                <aside class="right" transition:grow>
-                    <div class="right-content">
-                        {@render props.right()}
-                    </div>
+                <aside class="right" transition:slide>
+                    {@render props.right()}
                 </aside>
             {/if}
-        {:else if props.rightOpen}
-            <div class="right-modal" use:modal={props.onCloseRight}>
-                <!-- the keyboard closes it with Esc (use:modal) -->
-                <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-                <div
-                    class="scrim"
-                    onclick={props.onCloseRight}
-                    aria-hidden="true"
-                    transition:fade>
-                </div>
-                <div
-                    class="sheet"
-                    role="dialog"
-                    aria-modal="true"
-                    aria-label={t(props.rightLabel)}
-                    transition:slide>
-                    {@render props.right()}
-                </div>
+        {:else}
+            <!-- the wrapper stays while the modal closes, but leaves the dialog stack (Esc, the
+                 focus trap) at once and lets clicks through; the scrim and sheet play out inert -->
+            <div
+                class="right-modal"
+                use:modal={props.rightOpen ? props.onCloseRight : undefined}>
+                {#if props.rightOpen}
+                    <!-- the keyboard closes it with Esc (use:modal) -->
+                    <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+                    <div
+                        class="scrim"
+                        onclick={props.onCloseRight}
+                        aria-hidden="true"
+                        transition:fade>
+                    </div>
+                    <div
+                        class="sheet"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-label={t(props.rightLabel)}
+                        transition:slide>
+                        {@render props.right()}
+                    </div>
+                {/if}
             </div>
         {/if}
     {/if}
@@ -210,16 +206,16 @@
         overflow: hidden;
     }
 
-    /* the full width while the column grows or shrinks, so the content doesn't reflow */
-    .right-content {
-        width: var(--shell-right-width);
-        height: 100%;
-    }
-
     .right-modal {
         position: fixed;
         inset: 0;
         z-index: var(--z-modal);
+        pointer-events: none;
+    }
+
+    .scrim,
+    .sheet {
+        pointer-events: auto;
     }
 
     .scrim {

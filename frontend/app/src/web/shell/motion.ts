@@ -1,24 +1,21 @@
-// The right column's motion (Shell.svelte): docked, it grows from the inline end and pushes the
-// middle over; as a modal, the sheet slides in over a fading scrim.
+// The right column's motion (Shell.svelte): docked, or as a modal sheet over a fading scrim, it
+// slides in from the inline end.
 
 /** --duration-slow's fallback, in ms. */
 export const SLOW = 280;
 
 /**
- * How long the column's motion runs, in ms: none for a window crossing the docking width (one
- * form swaps for the other) or with reduced motion, else the `--duration-slow` token.
+ * A duration token's value in ms (`280ms`, `0.28s`, or a bare number of ms), and SLOW for one
+ * that's missing or unreadable. 0 stays 0: a theme can turn the motion off.
  */
-export function motionDuration(still: boolean, token: string): number {
-    if (still) return 0;
-    return Number.parseFloat(token) || SLOW;
+export function tokenDuration(token: string): number {
+    const value = token.trim();
+    const n = Number.parseFloat(value);
+    if (Number.isNaN(n)) return SLOW;
+    return value.endsWith("s") && !value.endsWith("ms") ? n * 1000 : n;
 }
 
-/** The docked column's width, from nothing (its content keeps the full width meanwhile). */
-export function growCss(width: number): (t: number) => string {
-    return (t) => `width: ${t * width}px`;
-}
-
-/** The sheet, in from the inline end: the left in a right-to-left page. */
+/** The docked column or the sheet, in from the inline end: the left in a right-to-left page. */
 export function slideCss(rtl: boolean): (t: number, u: number) => string {
     const sign = rtl ? -1 : 1;
     return (_t, u) => `transform: translateX(${sign * u * 100}%)`;
