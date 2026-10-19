@@ -820,6 +820,7 @@ function select(id, tab, epFilter) {
     animateTo({ k, x: vp.x + vp.w / 2 - r.cx * k, y: vp.y + vp.h / 2 - r.cy * k });
   });
   if (location.hash !== "#" + id) history.replaceState(null, "", "#" + id);
+  announce("#" + id);
 }
 function deselect(refit = true) {
   if (!selected) return;
@@ -833,6 +834,7 @@ function deselect(refit = true) {
     closing = setTimeout(() => { panel.hidden = true; panel.classList.remove("closing"); panel.style.transform = ""; closing = null; }, 300);
   } else panel.hidden = true;
   history.replaceState(null, "", location.pathname + location.search);
+  announce("");
   if (refit) fitAll();
 }
 function focusExt(key) {
@@ -1142,6 +1144,20 @@ $("#aboutclose").onclick = () => { $("#about").hidden = true; };
 const totalEp = ids.reduce((n, id) => n + canisters[id].endpoints.length, 0);
 $("#meta").innerHTML = `${ids.length} canister types · ${fmt(totalEp)} endpoints · <a href="https://github.com/open-chat-labs/open-chat/commit/${esc(DATA.commit || "")}" target="_blank" rel="noopener">${esc(DATA.commit || "")}</a> · ${esc(DATA.generated)}`;
 $("#about-meta").textContent = `Generated from commit ${DATA.commit} on ${DATA.generated}` + (DATA.live_as_of ? `; production counts fetched ${DATA.live_as_of}.` : ".");
+
+// ---------- framed by the website ----------
+// oc.app's Architecture page shows this page in a frame (CanisterMapFrame.svelte): it passes
+// the site's theme as ?theme= and by message, and is told which canister is selected so that it
+// can mirror it in its own url
+const framed = window.parent !== window;
+function applyTheme(theme) { if (theme === "dark" || theme === "light") document.documentElement.dataset.theme = theme; }
+applyTheme(new URLSearchParams(location.search).get("theme"));
+if (framed) window.addEventListener("message", ev => {
+  if (ev.origin !== location.origin || !ev.data) return;
+  if (ev.data.type === "oc-canister-map-theme") applyTheme(ev.data.theme);
+  if (ev.data.type === "oc-canister-map-select") { const id = String(ev.data.hash || "").replace("#", ""); if (canisters[id]) { if (id !== selected) select(id, "overview"); } else deselect(); }
+});
+function announce(hash) { if (framed) window.parent.postMessage({ type: "oc-canister-map", hash }, location.origin); }
 
 // ---------- boot ----------
 applyLayers();
