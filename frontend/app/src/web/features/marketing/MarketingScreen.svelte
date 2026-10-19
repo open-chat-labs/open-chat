@@ -12,6 +12,7 @@
     import AuthDialog from "@openchat/ui/src/features/components/AuthDialog.svelte";
     import Landing from "@openchat/ui/src/pages/Landing.svelte";
     import Learn from "@openchat/ui/src/pages/Learn.svelte";
+    import EmptyState from "@openchat/ui/src/lib/components/EmptyState.svelte";
     import type { LearnPage } from "@openchat/ui/src/pages/learnContent";
     import CanisterMapFrame from "@shared_components/CanisterMapFrame.svelte";
     import type { PageMode } from "@openchat/ui/src/pages/types";
@@ -23,6 +24,7 @@
     import { AuthDialogProps, pageSignIns } from "../auth/authDialog.svelte";
     import { createAuth } from "../auth/signIn";
     import { accentStore } from "../../accent";
+    import { LazyModule } from "./lazyModule.svelte";
     import { isEmailLinkPage, learnPageFor, learnPath } from "./marketing";
 
     let { route }: { route: RouteParams } = $props();
@@ -90,14 +92,13 @@
 
     const learn = $derived(learnPageFor(route));
 
-    // Learn's content is loaded the first time a Learn page shows, so Landing doesn't carry it
-    let learnModule = $state<typeof import("./learn") | undefined>(undefined);
+    // Learn's content is loaded the first time a Learn page shows, so Landing doesn't carry it; a
+    // failed load says so with a retry, and the next Learn page tries again too
+    const learnLoader = new LazyModule(() => import("./learn"));
     $effect(() => {
-        if (learn !== undefined && learnModule === undefined) {
-            import("./learn").then((m) => (learnModule = m));
-        }
+        if (learn !== undefined) untrack(() => learnLoader.want());
     });
-    const learnContent = $derived(learnModule?.learnContent((key) => $_(key)));
+    const learnContent = $derived(learnLoader.module?.learnContent((key) => $_(key)));
     const landing = $derived(
         route.kind === "home_route" ||
             route.kind === "home_landing_route" ||
@@ -128,7 +129,10 @@
     // /features is Landing at its features section
     $effect(() => {
         if (route.kind === "features_route") {
-            tick().then(() => document.getElementById("landing-features")?.scrollIntoView());
+            // instant: Landing makes the page's own scrolling smooth, for its section links
+            tick().then(() =>
+                document.getElementById("landing-features")?.scrollIntoView({ behavior: "instant" }),
+            );
         }
     });
 </script>
@@ -174,6 +178,15 @@
             <CanisterMapFrame syncUrl />
         {/snippet}
     </Learn>
+{:else if learn !== undefined && learnLoader.failed}
+    <div class="page">
+        <EmptyState
+            preset="error"
+            title={$_("unexpectedError")}
+            body=" "
+            actionLabel="ui.common.retry"
+            actionHandler={() => learnLoader.want()} />
+    </div>
 {:else if learn !== undefined}
     <!-- Learn's content is loading -->
     <div class="page"></div>

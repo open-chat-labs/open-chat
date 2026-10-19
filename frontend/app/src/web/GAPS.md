@@ -113,7 +113,8 @@ design export needs. Each entry says where it came up.
     subheadings and its lists are kept apart (Learn's paragraphs, then points), and nested lists
     are flattened.
   - **FAQs**: one untitled group in the old order; the answers' HTML is converted when they're
-    read (links kept, lists and table rows as lines, italics dropped).
+    read (links kept, lists and table rows as lines, italics dropped), and the translation
+    answer keeps its screenshot.
   - **Blog**: screenshots keep their desktop version (the mobile ones are dropped) and stack where
     the old posts set two side by side; the access gate expiry post's YouTube explainer and the
     video calls post's sequence diagram are gone, though their text still mentions them.

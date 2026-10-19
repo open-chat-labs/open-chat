@@ -39,4 +39,14 @@ describe("a doc's contents list", () => {
     toc.reading([2]);
     expect(toc.isOpen(2)).toBe(true);
   });
+
+  test('opens an entry the reader closed earlier, elsewhere, once they come to its section', () => {
+    const toc = new TocOpen();
+    toc.reading([5]);
+    toc.toggle(2);
+    toc.toggle(2);
+    expect(toc.isOpen(2)).toBe(false);
+    toc.reading([2]);
+    expect(toc.isOpen(2)).toBe(true);
+  });
 });

@@ -19,3 +19,12 @@ export function samePageFragment(href: string, current: { href: string }): boole
         to.search === from.search
     );
 }
+
+/**
+ * Whether the browser, rather than the router, takes a click on a link: one to a fragment of the
+ * page it's on, unless it sits in an editor (the shared handler keeps links there from navigating).
+ */
+export function leftToBrowser(href: string, inEditor: boolean, current: { href: string }): boolean {
+    return !inEditor && samePageFragment(href, current);
+}
+

@@ -69,7 +69,8 @@ export interface RoadmapItem {
 
 export interface FaqGroup {
   title: string;
-  /** `id` makes a question a deep link target (Learn's `question`), unique across the groups. */
+  /** `id` makes a question a deep link target (Learn's `question`), unique across the groups. An answer's blank lines
+   *  separate paragraphs, and a paragraph that is only `![alt](src)` is an image. */
   items: { id?: string; q: string; a: string }[];
 }
 
@@ -637,6 +638,18 @@ export function outlinePath(outline: OutlineEntry[], index: number): OutlineEntr
     if (below.length) return [entry, ...below];
   }
   return [];
+}
+
+/** Whether a link goes to the page exactly as it shows (the same path and query; a fragment aside): following it changes
+ *  nothing for the host, so the page itself applies its deep link (a doc section, a question) again. */
+export function sameLocation(href: string, here: string): boolean {
+  try {
+    const to = new URL(href, here);
+    const from = new URL(here);
+    return to.origin === from.origin && to.pathname === from.pathname && to.search === from.search;
+  } catch {
+    return false;
+  }
 }
 
 /** The section being read: the last one whose top has reached `line` (from the top of the viewport), else the first. */

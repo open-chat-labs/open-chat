@@ -1,5 +1,6 @@
 // The small markdown subset Learn's content text may use: links `[text](href)`, bold `**text**` and inline code
-// `` `text` `` inside a paragraph, list item or answer, and a post paragraph that is just an image `![alt](src)`. Learn
+// `` `text` `` inside a paragraph, list item or answer, and a post or FAQ answer paragraph that is just an image
+// `![alt](src)`. Learn
 // renders these as elements, never as HTML, so the content can't inject markup; anything else is plain text.
 
 export type InlinePart =

@@ -28,6 +28,7 @@
     outlinePath,
     placeholderLearnContent,
     readingSection,
+    sameLocation,
     type LearnContent,
     type LearnPage,
     type OutlineEntry,
@@ -217,6 +218,15 @@
     return new TocOpen();
   });
   let reading = $state(0);
+  // below this the contents list sits above the doc rather than beside it (the CSS below); hosts without matchMedia
+  // (and tests) are wide
+  const narrowQuery = typeof matchMedia === 'function' ? matchMedia('(max-width: 860px)') : undefined;
+  let narrowDoc = $state(narrowQuery?.matches ?? false);
+  $effect(() => {
+    const follow = () => (narrowDoc = narrowQuery?.matches ?? false);
+    narrowQuery?.addEventListener?.('change', follow);
+    return () => narrowQuery?.removeEventListener?.('change', follow);
+  });
 
   // the section being read follows the scroll: the one whose heading has passed below the sticky header (where a jump
   // to a section puts it, its scroll margin)
@@ -224,13 +234,15 @@
     if (!doc) return;
     const shown = outline;
     const open = toc;
+    // above the doc, the list opening and closing would move the page under the reader: there only the reader opens it
+    const following = !narrowDoc;
     let frame = 0;
     const follow = () => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
         const tops = sectionEls.map((el) => el?.getBoundingClientRect().top ?? Infinity);
         reading = readingSection(tops, 120);
-        open.reading(outlinePath(shown, reading).map((e) => e.index));
+        open.reading(following ? outlinePath(shown, reading).map((e) => e.index) : []);
       });
     };
     untrack(follow);
@@ -243,23 +255,32 @@
 
   // a deep link into a doc section or an FAQ question: scrolled to (the question opened) once it shows, and again when
   // the host passes a new one
+  const deepLink = () => (current === 'faq' ? question : doc ? section : undefined);
+  function followDeepLink(target: string) {
+    if (current === 'faq') {
+      const group = content.faq.find((g) => g.items.some((it) => it.id === target));
+      const item = group?.items.find((it) => it.id === target);
+      if (!group || !item) return;
+      faqOpen[JSON.stringify([group.title, item.q])] = true;
+      tick().then(() => document.getElementById(`learn-faq-${target}`)?.scrollIntoView?.({ block: 'start', behavior: 'instant' }));
+    } else {
+      const i = doc?.sections.findIndex((s) => s.id === target) ?? -1;
+      if (i >= 0) tick().then(() => jumpTo(i, 'instant'));
+    }
+  }
   $effect(() => {
-    const showing = current;
-    const target = showing === 'faq' ? question : doc ? section : undefined;
-    if (!target) return;
-    untrack(() => {
-      if (showing === 'faq') {
-        const group = content.faq.find((g) => g.items.some((it) => it.id === target));
-        const item = group?.items.find((it) => it.id === target);
-        if (!group || !item) return;
-        faqOpen[JSON.stringify([group.title, item.q])] = true;
-        tick().then(() => document.getElementById(`learn-faq-${target}`)?.scrollIntoView?.({ block: 'start' }));
-      } else {
-        const i = doc?.sections.findIndex((s) => s.id === target) ?? -1;
-        if (i >= 0) tick().then(() => jumpTo(i, 'auto'));
-      }
-    });
+    const target = deepLink();
+    if (target) untrack(() => followDeepLink(target));
   });
+
+  // a link in the content to the page as it shows (the same section or question again, after reading on) changes
+  // nothing for the host, so the deep link is followed again here
+  function onContentLink(e: MouseEvent, href: string) {
+    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || !sameLocation(href, location.href)) return;
+    e.preventDefault();
+    const target = deepLink();
+    if (target) tick().then(() => followDeepLink(target));
+  }
 
   // the hash routes only while the host doesn't set `page`, which it may start or stop doing after mount
   const hashRouted = $derived(page === undefined);
@@ -295,7 +316,8 @@
         class="inline-link"
         href={part.href}
         target={/^https?:/i.test(part.href) ? '_blank' : undefined}
-        rel={/^https?:/i.test(part.href) ? 'noopener' : undefined}>{part.text}</a
+        rel={/^https?:/i.test(part.href) ? 'noopener' : undefined}
+        onclick={(e) => onContentLink(e, part.href)}>{part.text}</a
       >{:else if part.kind === 'bold'}<strong>{part.text}</strong>{:else if part.kind === 'code'}<code class="inline-code">{part.text}</code>{:else}{part.text}{/if}{/each}{/snippet}
 
 <!-- a doc's contents list: a section, and its sub-sections while it's open -->
@@ -529,7 +551,10 @@
                 {#if open}
                   <!-- a blank line starts a paragraph, a line break a new line -->
                   <div class="answer">
-                    {#each q.a.split(/\n{2,}/) as para}<p class="answer-para">{@render rich(para)}</p>{/each}
+                    {#each q.a.split(/\n{2,}/) as para}
+                      {@const image = imageOf(para)}
+                      {#if image}<img class="answer-image" src={image.src} alt={image.alt} loading="lazy" />{:else}<p class="answer-para">{@render rich(para)}</p>{/if}
+                    {/each}
                   </div>
                 {/if}
               </div>
@@ -1562,6 +1587,14 @@
     white-space: pre-line;
   }
 
+  .answer-image {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius-md);
+    box-shadow: inset 0 0 0 1px var(--line-1);
+  }
+
   /* ── footer ── */
   .footer {
     display: flex;
@@ -1598,8 +1631,12 @@
       grid-template-columns: minmax(0, 1fr);
     }
 
+    /* above the doc it's part of the page: no scroll box of its own to trap a touch scroll */
     .toc {
       position: static;
+      max-height: none;
+      overflow: visible;
+      overscroll-behavior: auto;
     }
   }
 

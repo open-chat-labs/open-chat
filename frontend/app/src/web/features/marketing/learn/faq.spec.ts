@@ -54,4 +54,14 @@ describe("the FAQs", () => {
             a: "faq.wallet_a",
         });
     });
+
+    test("keep the screenshot the old page showed under an answer", () => {
+        const [group] = faqGroups((key) => key);
+        const translation = group.items.find((it) => it.id === "translation")!;
+        expect(translation.a.split("\n\n").at(-1)).toBe(
+            "![Correcting a translation](/assets/screenshots/translation_correction.png)",
+        );
+        expect(group.items.find((it) => it.id === "wallet")!.a).toBe("faq.wallet_a");
+    });
 });
+

@@ -56,6 +56,11 @@ function tidy(text: string): string {
         .trim();
 }
 
+// screenshots the old page put under an answer, as Learn's image paragraphs
+const ANSWER_IMAGES: Partial<Record<(typeof allQuestions)[number], string>> = {
+    translation: "![Correcting a translation](/assets/screenshots/translation_correction.png)",
+};
+
 /** The FAQs in the old page's order, each question's id its key (`?q=<id>`). */
 export function faqGroups(translate: (key: string) => string): FaqGroup[] {
     return [
@@ -65,7 +70,9 @@ export function faqGroups(translate: (key: string) => string): FaqGroup[] {
             items: allQuestions.map((id) => ({
                 id,
                 q: translate(`faq.${id}_q`),
-                a: answerText(translate(`faq.${id}_a`)),
+                a: [answerText(translate(`faq.${id}_a`)), ANSWER_IMAGES[id]]
+                    .filter((part) => part !== undefined)
+                    .join("\n\n"),
             })),
         },
     ];

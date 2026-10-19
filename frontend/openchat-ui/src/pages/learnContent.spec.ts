@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { LEARN_PAGES, docOutline, learnFromHash, learnHashHref, learnPagesOf, outlinePath, placeholderLearnContent, readingSection } from './learnContent';
+import { LEARN_PAGES, docOutline, learnFromHash, learnHashHref, learnPagesOf, outlinePath, placeholderLearnContent, readingSection, sameLocation } from './learnContent';
 
 describe('learnFromHash', () => {
   test.each(LEARN_PAGES)('#%s names that sub-page', (page) => expect(learnFromHash('#' + page)).toEqual({ page }));
@@ -84,6 +84,19 @@ describe('the section being read', () => {
     expect(readingSection([-900, -400], 120)).toBe(1);
     // a heading right at the line (where a jump to it leaves it) is being read
     expect(readingSection([-300, 120], 120)).toBe(1);
+  });
+});
+
+describe('a link to the page as it shows', () => {
+  const here = 'https://oc.app/whitepaper?section=5-2';
+  test('is one to the same path and query, a fragment aside', () => {
+    expect(sameLocation('/whitepaper?section=5-2', here)).toBe(true);
+    expect(sameLocation('https://oc.app/whitepaper?section=5-2#x', here)).toBe(true);
+  });
+  test("isn't one to another section, page or site", () => {
+    expect(sameLocation('/whitepaper?section=4-2', here)).toBe(false);
+    expect(sameLocation('/faq?section=5-2', here)).toBe(false);
+    expect(sameLocation('https://example.com/whitepaper?section=5-2', here)).toBe(false);
   });
 });
 
