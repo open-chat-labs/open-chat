@@ -14,7 +14,7 @@ fn c2c_flag_message(args: Args) -> Response {
     execute_update_even_if_frozen(|state| c2c_flag_message_impl(args, state)).into()
 }
 
-fn c2c_flag_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
+pub(crate) fn c2c_flag_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let categories = ModerationCategories::from_bits(args.flags).ok_or(OCErrorCode::InvalidRequest)?;
     let now = state.env.now();
 

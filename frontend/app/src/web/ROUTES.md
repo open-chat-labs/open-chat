@@ -54,7 +54,8 @@ Agreed on 2026-10-16; the tables below follow them.
    - The Learn sub-pages are host-routed on their existing paths: `/roadmap`, `/whitepaper`,
      `/architecture`, `/blog`, `/blog/:slug` and `/faq` (with `?q=` opening that question).
    - Landing's `learnPageHref` points at the same paths, so there's no `/learn`. `?section=`
-     deep links into the whitepaper and architecture docs keep working.
+     deep links into the whitepaper doc keep working; on `/architecture` it names the canister
+     to open in the framed canister map (`CanisterMapFrame.svelte`).
 5. **Pages with no new design** (`/terms`, `/privacy`, `/guidelines`, `/csea-reporting`,
    `/diamond`) **use Learn's page design.** Two library changes are needed, as their own PR before
    phase 9:
@@ -130,7 +131,7 @@ until there's a setting (`GAPS.md`). Signed-in users on `/` go to the app as tod
 |---|---|---|
 | `/` (signed out), `/home` | `Landing` | `?auth` opens the magic-link sign-in (existing). `?ref=` is captured (existing). |
 | `/features` | `Landing`, scrolled to `#landing-features` | The old `#hash` redirect (`?section=`) keeps working. |
-| `/roadmap` · `/whitepaper` · `/architecture` · `/blog` · `/blog/:slug` · `/faq` | `Learn`, host-routed (`page`, `post`, `learnPageHref`) | `?q=` opens that FAQ question; `?section=` scrolls to that doc section. Content: `GAPS.md` (Learn content). |
+| `/roadmap` · `/whitepaper` · `/architecture` · `/blog` · `/blog/:slug` · `/faq` | `Learn`, host-routed (`page`, `post`, `learnPageHref`) | `?q=` opens that FAQ question; `?section=` scrolls to that doc section, except on `/architecture`, which frames the canister map and where it names the canister to open. Content: `GAPS.md` (Learn content). |
 | `/terms` · `/privacy` · `/guidelines` · `/csea-reporting` | `Learn` doc pages, not tabs (decision 5) | `?section=` scrolls to a section; `/csea-reporting` keeps `?report=` / `?urgent=`. |
 | `/diamond` | Learn-style page with `DiamondContent` (decision 5) | Upgrading while signed out opens `AuthDialog` first. |
 

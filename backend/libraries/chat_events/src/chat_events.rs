@@ -2255,6 +2255,10 @@ impl ChatEvents {
         }
     }
 
+    pub fn is_frozen(&self) -> bool {
+        self.frozen
+    }
+
     pub fn freeze(&mut self, user_id: UserId, reason: Option<String>, now: TimestampMillis) -> PushEventResultInternal {
         let push_event_result = self.push_event(
             None,
