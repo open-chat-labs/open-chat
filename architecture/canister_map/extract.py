@@ -64,7 +64,7 @@ DESCRIPTIONS = {
         "title": "MultiUser",
         "zone": "users",
         "cardinality": "many",
-        "summary": "A few thousand users each: their chats and wallets.",
+        "summary": "A few thousand users each: their direct chats and wallets.",
         "detail": "Replaces the one-canister-per-user design. Each MultiUser canister hosts a few thousand "
         "users: their direct chats and messages, the list of groups and communities they belong to, "
         "their settings, achievements, and the token accounts they send and receive from. Every endpoint "
@@ -167,7 +167,7 @@ DESCRIPTIONS = {
         "title": "Escrow",
         "zone": "tokens",
         "cardinality": "single",
-        "summary": "Holds both sides of a token swap until it completes.",
+        "summary": "Holds both sides of a P2P swap until it completes.",
         "detail": "A P2P swap message in a chat creates a swap here. Each party deposits into a swap "
         "subaccount; once both have, the Escrow sends each party the other's tokens, or refunds "
         "them when the swap is cancelled or expires.",

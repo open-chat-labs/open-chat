@@ -450,7 +450,7 @@ function h(tag, attrs = {}, ...children) {
 }
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const fmt = n => n === null || n === undefined ? "–" : Number(n).toLocaleString("en-GB");
-function count(n, one, many) { return n + " " + (n === 1 ? one : many); }
+function plural(n, one, many) { return n + " " + (n === 1 ? one : many); }
 function prettyGuard(c, e) {
   if (e.proposal) return "the OpenChat SNS, by proposal";
   if (!e.guard) {
@@ -496,10 +496,10 @@ for (const id of ids) {
   const tag = el("text", { class: "tag", x: x + 14, y: y + 48 }, g); tag.textContent = CARD_LABEL[c.cardinality] || c.cardinality;
   const q = c.endpoints.filter(e => e.kind === "query").length, u = c.endpoints.length - q;
   const counts = el("text", { class: "counts", x: x + 14, y: y + NODE_H - 8 }, g);
-  const tq = el("tspan", { class: "q" }, counts); tq.textContent = count(q, "query", "queries");
+  const tq = el("tspan", { class: "q" }, counts); tq.textContent = plural(q, "query", "queries");
   const sep = el("tspan", {}, counts); sep.textContent = " · ";
-  const tu = el("tspan", { class: "u" }, counts); tu.textContent = count(u, "update", "updates");
-  if (c.state.length) { const s2 = el("tspan", {}, counts); s2.textContent = " · " + count(c.state.length, "state field", "state fields"); }
+  const tu = el("tspan", { class: "u" }, counts); tu.textContent = plural(u, "update", "updates");
+  if (c.state.length) { const s2 = el("tspan", {}, counts); s2.textContent = " · " + plural(c.state.length, "state field", "state fields"); }
   nodeEls[id] = g;
 }
 
@@ -520,6 +520,8 @@ function fitText(cls, width, prop) {
 }
 function wrapMeasured(t, text, width) {
   // greedy, by words; `t` is given the whole text so that one layout serves every measurement
+  // (with its spaces normalised, since the offsets below count them and SVG collapses runs)
+  text = text.replace(/\s+/g, " ").trim();
   t.textContent = text;
   const lines = [];
   let lineStart = 0, pos = 0;
