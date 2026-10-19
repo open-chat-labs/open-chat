@@ -557,7 +557,9 @@
     background: var(--surface-0);
     color: var(--ink);
     font-family: var(--font-sans);
-    overflow-x: hidden;
+    /* clip, not hidden: hidden makes this its own scroll container, which the sticky header would stick to instead of
+       the window, so it scrolled away */
+    overflow-x: clip;
   }
 
   a {
