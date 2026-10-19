@@ -17,6 +17,14 @@ export function learnPageFor(route: RouteParams): { page: LearnPage; post?: stri
     return route.kind === "blog_route" && route.slug ? { page, post: route.slug } : { page };
 }
 
+/**
+ * Whether the URL is the page an email sign-in link opens (?auth&m=…&s1=…&s2=…). `?auth` on its
+ * own only narrows the sign-in options.
+ */
+export function isEmailLinkPage(query: URLSearchParams): boolean {
+    return query.has("auth") && query.has("m");
+}
+
 /** A Learn sub-page's path: /roadmap, /faq … and /blog/<slug> for a post. */
 export function learnPath(page: LearnPage, post?: string): string {
     return page === "blog" && post ? `/blog/${encodeURIComponent(post)}` : `/${page}`;

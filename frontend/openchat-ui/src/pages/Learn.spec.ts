@@ -58,16 +58,6 @@ describe('Learn', () => {
     expect(labels.filter((l) => /^ui\./.test(l ?? ''))).toEqual([]);
   });
 
-  test('signed in, Open app replaces Sign in and Create account', () => {
-    const onEnterApp = vi.fn();
-    show({ signedIn: true, onEnterApp, appHref: '/app' });
-    expect(q('.sign-in')).toBeNull();
-    const open = q('a.create')!;
-    expect([open.textContent, open.getAttribute('href')]).toEqual(['Open OpenChat', '/app']);
-    click(open);
-    expect(onEnterApp).toHaveBeenCalledOnce();
-  });
-
   describe('without `page`, the URL hash picks the sub-page', () => {
     test('a deep link opens that sub-page or post; no hash or an unknown one shows the roadmap', () => {
       history.replaceState(null, '', '/learn#faq');

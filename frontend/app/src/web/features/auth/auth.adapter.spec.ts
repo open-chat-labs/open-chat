@@ -1,5 +1,11 @@
 import { AuthProvider } from "@client";
-import { authOptions, nextAuthKind, registerFailureKey, showsSignedOut } from "./auth.adapter";
+import {
+    authOptions,
+    nextAuthKind,
+    onAuthClosed,
+    registerFailureKey,
+    showsSignedOut,
+} from "./auth.adapter";
 
 describe("the sign-in options", () => {
     test("are all of them by default, and only passkey and email without WebAuthn", () => {
@@ -83,5 +89,17 @@ describe("the in-app dialog's kind", () => {
 
     test("keeps sign-up while the client asks for sign-in again", () => {
         expect(nextAuthKind("signup", { kind: "logging_in" })).toBe("signup");
+    });
+});
+
+describe("closing the in-app dialog", () => {
+    test("gives up a sign-in, and signs out an identity without an account", () => {
+        expect(onAuthClosed({ kind: "logging_in" })).toBe("anon");
+        expect(onAuthClosed({ kind: "registering" })).toBe("sign_out");
+    });
+
+    test("leaves a signed-in or anonymous identity as it is", () => {
+        expect(onAuthClosed({ kind: "anon" })).toBeUndefined();
+        expect(onAuthClosed({ kind: "logged_in" })).toBeUndefined();
     });
 });

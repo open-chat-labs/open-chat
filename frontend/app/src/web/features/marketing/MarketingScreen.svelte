@@ -21,7 +21,7 @@
     import Placeholder from "../app/Placeholder.svelte";
     import { AuthDialogProps, pageSignIns } from "../auth/authDialog.svelte";
     import { createAuth } from "../auth/signIn";
-    import { learnPageFor, learnPath } from "./marketing";
+    import { isEmailLinkPage, learnPageFor, learnPath } from "./marketing";
 
     let { route }: { route: RouteParams } = $props();
 
@@ -63,7 +63,7 @@
     // code, and taken out of the URL straight away, as the old UI does
     let linkQuery = $state<string | undefined>(undefined);
     $effect(() => {
-        if (landing && $querystringStore.has("auth") && $querystringStore.has("m")) {
+        if (landing && isEmailLinkPage($querystringStore)) {
             untrack(() => {
                 linkQuery = window.location.search;
                 navigate("/home", "auto");

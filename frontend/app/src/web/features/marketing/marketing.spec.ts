@@ -1,5 +1,5 @@
 import type { RouteParams } from "@client";
-import { learnPageFor, learnPath } from "./marketing";
+import { isEmailLinkPage, learnPageFor, learnPath } from "./marketing";
 
 const route = (r: object) => ({ scope: { kind: "none" }, ...r }) as RouteParams;
 
@@ -24,5 +24,16 @@ describe("Learn on the marketing paths", () => {
         expect(learnPath("blog")).toBe("/blog");
         expect(learnPath("blog", "a/b")).toBe("/blog/a%2Fb");
         expect(learnPageFor(route({ kind: "blog_route", slug: "a/b" }))?.post).toBe("a/b");
+    });
+});
+
+describe("the email sign-in link's page", () => {
+    test("is a URL with ?auth and the link's ?m", () => {
+        expect(isEmailLinkPage(new URLSearchParams("auth&m=1&s1=2&s2=3"))).toBe(true);
+    });
+
+    test("isn't ?auth on its own, which narrows the sign-in options", () => {
+        expect(isEmailLinkPage(new URLSearchParams("auth"))).toBe(false);
+        expect(isEmailLinkPage(new URLSearchParams("auth=II"))).toBe(false);
     });
 });

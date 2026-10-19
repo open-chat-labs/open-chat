@@ -11,7 +11,7 @@
     import AuthDialog from "@openchat/ui/src/features/components/AuthDialog.svelte";
     import { getContext, onDestroy, untrack } from "svelte";
     import { _ } from "svelte-i18n";
-    import { nextAuthKind, type AuthDialogKind } from "./auth.adapter";
+    import { nextAuthKind, onAuthClosed, type AuthDialogKind } from "./auth.adapter";
     import { AuthDialogProps } from "./authDialog.svelte";
     import { createAuth } from "./signIn";
 
@@ -33,13 +33,13 @@
     function close() {
         auth.stopEmail();
         kind = null;
-        // as the old onboarding modal: a sign-in given up on goes back to anonymous, and so does
-        // an identity that never got an account
-        const state = identityStateStore.value;
-        if (state.kind === "logging_in") {
-            client.updateIdentityState({ kind: "anon" });
-        } else if (state.kind === "registering") {
-            client.logout();
+        switch (onAuthClosed(identityStateStore.value)) {
+            case "anon":
+                client.updateIdentityState({ kind: "anon" });
+                break;
+            case "sign_out":
+                client.logout();
+                break;
         }
     }
 </script>

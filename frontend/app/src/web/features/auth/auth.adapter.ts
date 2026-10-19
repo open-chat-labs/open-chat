@@ -217,3 +217,18 @@ export function nextAuthKind(
             return null;
     }
 }
+
+/**
+ * What closing the in-app AuthDialog leaves behind, as the old onboarding modal: a sign-in given
+ * up on goes back to anonymous, and an identity that never got an account is signed out.
+ */
+export function onAuthClosed(state: IdentityState): "anon" | "sign_out" | undefined {
+    switch (state.kind) {
+        case "logging_in":
+            return "anon";
+        case "registering":
+            return "sign_out";
+        default:
+            return undefined;
+    }
+}
