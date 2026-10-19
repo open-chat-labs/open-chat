@@ -148,6 +148,7 @@ main { position: relative; flex: 1 1 auto; min-height: 0; display: flex; }
 .node .counts .q { fill: var(--query); }
 .node .counts .u { fill: var(--update); }
 .node .accent { fill: var(--accent); rx: 2; }
+.node, .zone, .ext { transition: opacity .18s; }
 .node.dim { opacity: .18; }
 .node.dim .card { stroke: var(--line); }
 .zone.dim { opacity: .35; }
@@ -166,7 +167,7 @@ main { position: relative; flex: 1 1 auto; min-height: 0; display: flex; }
 .edge.ext-edge { stroke-dasharray: 4 4; opacity: .35; }
 .edge.hi { stroke: var(--edge-hi); stroke-width: 2.2; opacity: 1; marker-end: url(#arrow-hi); }
 .edge.dim { opacity: .06; }
-.edge-hit { fill: none; stroke: transparent; stroke-width: 14; pointer-events: stroke; cursor: pointer; }
+.edge-hit { fill: none; stroke: transparent; stroke-width: 8; pointer-events: stroke; cursor: pointer; }
 #arrow path { fill: var(--edge); }
 #arrow-hi path { fill: var(--edge-hi); }
 
@@ -573,15 +574,22 @@ function loopPath(r) {
   const x = r.x + r.w - 36, y = r.y;
   return `M${x} ${y} C${x - 10} ${y - 34} ${x + 46} ${y - 34} ${x + 30} ${y}`;
 }
+let tipTimer = null;
 function addEdge(from, to, methods, kind, via) {
   if (!rects[from] || !rects[to]) return;
   const d = from === to ? loopPath(rects[from]) : edgePath(rects[from], rects[to], 1);
   const path = el("path", { class: "edge" + (kind !== "internal" ? " ext-edge" : ""), d, "data-kind": kind }, gEdges);
   const hit = el("path", { class: "edge-hit", d }, gEdges);
   const edge = { from, to, methods, kind, via, path, hit };
-  hit.addEventListener("pointerenter", ev => showEdgeTip(edge, ev));
-  hit.addEventListener("pointermove", ev => positionTip(ev));
-  hit.addEventListener("pointerleave", hideTip);
+  // The tooltip waits for the cursor to rest on the arrow: the arrows are dense, so crossing
+  // them on the way somewhere else would otherwise flash it on and off
+  hit.addEventListener("pointerenter", ev => {
+    clearTimeout(tipTimer);
+    const at = { clientX: ev.clientX, clientY: ev.clientY };
+    tipTimer = setTimeout(() => showEdgeTip(edge, at), 220);
+  });
+  hit.addEventListener("pointermove", ev => { if (!tip.hidden) positionTip(ev); });
+  hit.addEventListener("pointerleave", () => { clearTimeout(tipTimer); hideTip(); });
   hit.edge = edge;
   edgeEls.push(edge);
 }
@@ -728,15 +736,22 @@ $("#zfit").onclick = () => { deselect(false); fitAll(); };
 
 // hover highlights: pointerover / pointerout bubble from every part of a card (its rects and
 // texts), so a move within one card is ignored, and only entering or leaving the card as a whole
-// changes the highlight
+// counts. The highlight follows the cursor only once it has rested on a card for a moment, and
+// lets go a moment after it leaves, so that passing over cards on the way somewhere else, or
+// crossing the gap between two cards, doesn't flash the whole map dim and bright.
+let hoverTimer = null;
+function hoverHighlight(id, delay) {
+  clearTimeout(hoverTimer);
+  hoverTimer = setTimeout(() => { hoverTimer = null; if (!selected) highlight(id); }, delay);
+}
 function hoverHandlers(group, selector, idOf) {
   group.addEventListener("pointerover", ev => {
     const n = ev.target.closest(selector);
-    if (n && !selected && !(ev.relatedTarget && n.contains(ev.relatedTarget))) highlight(idOf(n));
+    if (n && !selected && !(ev.relatedTarget && n.contains(ev.relatedTarget))) hoverHighlight(idOf(n), 90);
   });
   group.addEventListener("pointerout", ev => {
     const n = ev.target.closest(selector);
-    if (n && !selected && !(ev.relatedTarget && n.contains(ev.relatedTarget))) highlight(null);
+    if (n && !selected && !(ev.relatedTarget && n.contains(ev.relatedTarget))) hoverHighlight(null, 160);
   });
 }
 hoverHandlers(gNodes, ".node", n => n.dataset.id);
@@ -797,6 +812,7 @@ function nodeScreenRect(id) {
 function select(id, tab, epFilter) {
   if (!canisters[id]) return;
   const wasOpen = !panel.hidden && !closing;
+  clearTimeout(hoverTimer); hoverTimer = null;
   if (closing) { clearTimeout(closing); closing = null; panel.classList.remove("closing"); }
   const from = nodeScreenRect(id);
   const previous = selected;
