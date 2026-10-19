@@ -129,5 +129,5 @@ fn push(state: &mut RuntimeState, bucket: types::CanisterId, op: bucket_vault::V
     let now = state.env.now();
     state
         .data
-        .push_event_to_bucket(bucket, StorageIndexEvent::VaultOp(op), now, state.env.rng());
+        .push_event_to_bucket(bucket, StorageIndexEvent::VaultOp(Box::new(op)), now, state.env.rng());
 }

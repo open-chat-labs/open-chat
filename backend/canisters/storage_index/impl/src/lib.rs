@@ -300,9 +300,12 @@ impl Data {
     }
 
     pub fn add_bucket(&mut self, bucket: BucketRecord, now: TimestampMillis, rng: &mut StdRng) {
-        let mut events: Vec<_> = self.users.keys().map(|p| StorageIndexEvent::UserAdded(*p)).collect();
+        // The vault ops go first, the CSAM denylist among them, so that the first batch carries
+        // them: a user can upload as soon as their `UserAdded` has landed, and there is one of
+        // those per user, sent 1000 at a time
+        let mut events = Vec::new();
         if !self.vault_reviewers.is_empty() {
-            events.push(StorageIndexEvent::VaultOp(
+            events.push(StorageIndexEvent::VaultOp(Box::new(
                 storage_bucket_canister::c2c_vault_sync::VaultOp::SetReviewers(
                     self.vault_reviewers
                         .iter()
@@ -312,24 +315,24 @@ impl Data {
                         })
                         .collect(),
                 ),
-            ));
+            )));
         }
         if let Some(op) = &self.authority_reporter {
-            events.push(StorageIndexEvent::VaultOp(
+            events.push(StorageIndexEvent::VaultOp(Box::new(
                 storage_bucket_canister::c2c_vault_sync::VaultOp::SetAuthorityReporter(
                     storage_bucket_canister::c2c_vault_sync::SetAuthorityReporterOp {
                         principal: op.principal,
                         oc_public_key_pem: op.oc_public_key_pem.clone(),
                     },
                 ),
-            ));
+            )));
         }
         // A new bucket starts with the full CSAM denylist, otherwise upheld content could be
         // uploaded to it and served
         let verified = self.csam_hashes.iter().map(|(h, r)| (*h, *r, false));
         let derived = self.derived_csam_hashes.iter().map(|(h, r)| (*h, *r, true));
         for (hash, report_index, derived) in verified.chain(derived) {
-            events.push(StorageIndexEvent::VaultOp(
+            events.push(StorageIndexEvent::VaultOp(Box::new(
                 storage_bucket_canister::c2c_vault_sync::VaultOp::DenylistHash(
                     storage_bucket_canister::c2c_vault_sync::DenylistHashOp {
                         hash,
@@ -337,8 +340,9 @@ impl Data {
                         derived: Some(derived),
                     },
                 ),
-            ));
+            )));
         }
+        events.extend(self.users.keys().map(|p| StorageIndexEvent::UserAdded(*p)));
         self.push_events_to_bucket(bucket.canister_id, events, now, rng);
         self.buckets.add_bucket(bucket);
     }
@@ -392,13 +396,13 @@ impl Data {
     ) {
         self.push_event_to_bucket(
             bucket,
-            StorageIndexEvent::VaultOp(storage_bucket_canister::c2c_vault_sync::VaultOp::DenylistHash(
+            StorageIndexEvent::VaultOp(Box::new(storage_bucket_canister::c2c_vault_sync::VaultOp::DenylistHash(
                 storage_bucket_canister::c2c_vault_sync::DenylistHashOp {
                     hash,
                     report_index,
                     derived: Some(derived),
                 },
-            )),
+            ))),
             now,
             rng,
         );

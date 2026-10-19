@@ -59,7 +59,7 @@ fn apply_run(run: Vec<StorageIndexEvent>, state: &mut RuntimeState) {
             StorageIndexEvent::UserRemoved(user_id) => sync_args.users_removed.push(user_id),
             StorageIndexEvent::AccessorRemoved(accessor_id) => sync_args.accessors_removed.push(accessor_id),
             StorageIndexEvent::FileToRemove(file_id) => sync_args.files_to_remove.push(file_id),
-            StorageIndexEvent::VaultOp(op) => ops.push(op),
+            StorageIndexEvent::VaultOp(op) => ops.push(*op),
         }
     }
     if ops.is_empty() {

@@ -39,12 +39,18 @@ fn post_upgrade(args: Args) {
 }
 
 // One-off: whatever the two queues replaced in this release still hold for each bucket goes onto
-// their replacement, the sync events then the vault ops, which had no ordering between them before.
+// their replacement, the vault ops then the sync events, which had no ordering between them before.
 // Sending is deferred while they're pushed, since a call can't be made from within post_upgrade.
 // Removed, with the old queues, once this has run.
 fn migrate_bucket_queues(state: &mut RuntimeState) {
     let now = state.env.now();
     let mut per_bucket: BTreeMap<CanisterId, Vec<StorageIndexEvent>> = BTreeMap::new();
+    for (bucket, ops) in state.data.vault_event_sync_queue.take_all() {
+        per_bucket
+            .entry(bucket)
+            .or_default()
+            .extend(ops.into_iter().map(|op| StorageIndexEvent::VaultOp(Box::new(op))));
+    }
     for (bucket, events) in state.data.bucket_event_sync_queue.take_all() {
         per_bucket
             .entry(bucket)
@@ -55,12 +61,6 @@ fn migrate_bucket_queues(state: &mut RuntimeState) {
                 EventToSync::AccessorRemoved(accessor_id) => StorageIndexEvent::AccessorRemoved(accessor_id),
                 EventToSync::FileToRemove(file_id) => StorageIndexEvent::FileToRemove(file_id),
             }));
-    }
-    for (bucket, ops) in state.data.vault_event_sync_queue.take_all() {
-        per_bucket
-            .entry(bucket)
-            .or_default()
-            .extend(ops.into_iter().map(StorageIndexEvent::VaultOp));
     }
     let count: usize = per_bucket.values().map(|e| e.len()).sum();
     state.data.storage_bucket_event_sync_queue.set_defer_processing(true);
