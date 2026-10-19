@@ -19,7 +19,9 @@ export class ColumnMotion {
 
     /**
      * The column's state now. Opening and closing play their motion; a window crossing the docking
-     * width (a new `mode`) swaps one form for the other at once, open or not.
+     * width (a new `mode`) swaps one form for the other at once, open or not. So does a change
+     * while the motion is still playing (a double tap on the toggle): a CSS animation can't turn
+     * back from where it is, and starting the other one over would jump to its far end first.
      */
     update(open: boolean, mode: string): void {
         if (mode !== this.#mode) {
@@ -29,9 +31,10 @@ export class ColumnMotion {
             return;
         }
         if (open === this.#open) return;
+        const interrupted = this.entering || this.closing;
         this.#open = open;
-        this.entering = open;
-        this.closing = !open;
+        this.entering = open && !interrupted;
+        this.closing = !open && !interrupted;
     }
 
     /** Its animation ended: an opened column stays, a closed one goes. */

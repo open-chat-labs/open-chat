@@ -34,6 +34,20 @@ describe("the right column's motion", () => {
         expect([motion.shown, motion.entering, motion.closing]).toEqual([true, false, false]);
     });
 
+    test("reopened while it closes, it's open at once rather than growing again from nothing", () => {
+        const motion = new ColumnMotion(true, "dock");
+        motion.update(false, "dock");
+        motion.update(true, "dock");
+        expect([motion.shown, motion.entering, motion.closing]).toEqual([true, false, false]);
+    });
+
+    test("closed while it opens, it's gone at once rather than shrinking from its full width", () => {
+        const motion = new ColumnMotion(false, "modal");
+        motion.update(true, "modal");
+        motion.update(false, "modal");
+        expect([motion.shown, motion.entering, motion.closing]).toEqual([false, false, false]);
+    });
+
     test("an unchanged state plays nothing", () => {
         const motion = new ColumnMotion(true, "dock");
         motion.update(true, "dock");
