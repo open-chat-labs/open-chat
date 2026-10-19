@@ -136,7 +136,7 @@ main { position: relative; flex: 1 1 auto; min-height: 0; display: flex; }
 .zone text { fill: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
 
 .node { cursor: pointer; }
-.node .stack { fill: var(--surface); stroke: var(--line-strong); stroke-width: 1.2; rx: 14; opacity: .7; }
+.node .stack { fill: var(--surface); stroke: var(--line-strong); stroke-width: 1.2; rx: 14; fill-opacity: .7; stroke-opacity: .7; }
 .node .card { fill: var(--surface); stroke: var(--line-strong); stroke-width: 1.4; rx: 14; transition: stroke .15s, stroke-width .15s; }
 .node.ephemeral .card { stroke-dasharray: 5 4; }
 .node:hover .card, .node.focus .card { stroke: var(--accent); stroke-width: 2.2; }
@@ -148,10 +148,13 @@ main { position: relative; flex: 1 1 auto; min-height: 0; display: flex; }
 .node .counts .q { fill: var(--query); }
 .node .counts .u { fill: var(--update); }
 .node .accent { fill: var(--accent); rx: 2; }
-.node, .zone, .ext { transition: opacity .18s; }
-.node.dim { opacity: .18; }
+/* Dimming uses fill-opacity / stroke-opacity, never opacity: opacity on a group turns it into
+   its own compositing layer when it starts to change, and a frame can be painted before the
+   layer is rasterised, which blanked every card for a frame on each hover. */
+.node rect, .node text, .zone rect, .zone text, .ext rect, .ext text { transition: fill-opacity .18s, stroke-opacity .18s; }
+.node.dim rect, .node.dim text { fill-opacity: .18; stroke-opacity: .18; }
 .node.dim .card { stroke: var(--line); }
-.zone.dim { opacity: .35; }
+.zone.dim rect, .zone.dim text { fill-opacity: .35; }
 
 .ext { cursor: pointer; }
 .ext rect { fill: var(--ext); stroke: var(--line); stroke-width: 1.2; rx: 20; stroke-dasharray: 3 3; }
@@ -160,16 +163,17 @@ main { position: relative; flex: 1 1 auto; min-height: 0; display: flex; }
 .ext.webapp rect { fill: var(--accent-soft); stroke: transparent; }
 .ext.webapp text { fill: var(--accent); }
 .ext:hover rect, .ext.focus rect { stroke: var(--accent); }
-.ext.dim { opacity: .18; }
+.ext.dim rect, .ext.dim text { fill-opacity: .18; stroke-opacity: .18; }
 .col-label { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; fill: var(--muted); }
 
-.edge { fill: none; stroke: var(--edge); stroke-width: 1.3; opacity: .5; marker-end: url(#arrow); pointer-events: none; transition: opacity .15s; }
-.edge.ext-edge { stroke-dasharray: 4 4; opacity: .35; }
-.edge.hi { stroke: var(--edge-hi); stroke-width: 2.2; opacity: 1; marker-end: url(#arrow-hi); }
-.edge.dim { opacity: .06; }
+.edge { fill: none; stroke: var(--edge); stroke-width: 1.3; stroke-opacity: .5; marker-end: url(#arrow); pointer-events: none; transition: stroke-opacity .15s; }
+.edge.ext-edge { stroke-dasharray: 4 4; stroke-opacity: .35; }
+.edge.hi { stroke: var(--edge-hi); stroke-width: 2.2; stroke-opacity: 1; marker-end: url(#arrow-hi); }
+.edge.dim { stroke-opacity: .06; marker-end: url(#arrow-dim); }
 .edge-hit { fill: none; stroke: transparent; stroke-width: 8; pointer-events: stroke; cursor: pointer; }
-#arrow path { fill: var(--edge); }
+#arrow path { fill: var(--edge); fill-opacity: .5; }
 #arrow-hi path { fill: var(--edge-hi); }
+#arrow-dim path { fill: var(--edge); fill-opacity: .06; }
 
 /* semantic zoom */
 #canvas.z-far .node .summary, #canvas.z-far .node .counts, #canvas.z-far .node .tag { display: none; }
@@ -343,6 +347,7 @@ pre.code .cm { color: var(--muted); font-style: italic; }
       <defs>
         <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z"/></marker>
         <marker id="arrow-hi" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z"/></marker>
+        <marker id="arrow-dim" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z"/></marker>
       </defs>
       <g id="world">
         <g id="zones"></g>
