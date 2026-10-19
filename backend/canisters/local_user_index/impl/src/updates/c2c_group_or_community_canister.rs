@@ -104,7 +104,6 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                     GroupIndexEvent::GroupImportComplete(Box::new(group_index_canister::GroupImportComplete {
                         community_id: caller.into(),
                         community_name: ev.community_name,
-                        local_user_index_canister_id: state.env.canister_id(),
                         channel: ev.channel,
                         group_id: ev.group_id,
                         group_name: ev.group_name,

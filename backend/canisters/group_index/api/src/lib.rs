@@ -51,7 +51,6 @@ pub struct CommunityActive {
 pub struct GroupImportComplete {
     pub community_id: CommunityId,
     pub community_name: String,
-    pub local_user_index_canister_id: CanisterId,
     pub channel: ChannelLatestMessageIndex,
     pub group_id: ChatId,
     pub group_name: String,

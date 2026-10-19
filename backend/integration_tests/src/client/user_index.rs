@@ -22,6 +22,7 @@ generate_msgpack_query_call!(explore_bots);
 
 // Updates
 generate_update_call!(add_local_user_index_canister);
+generate_msgpack_update_call!(c2c_translations);
 generate_update_call!(add_platform_moderator);
 generate_update_call!(add_platform_operator);
 generate_update_call!(assign_platform_moderators_group);

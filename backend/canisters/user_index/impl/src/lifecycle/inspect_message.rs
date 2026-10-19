@@ -66,8 +66,7 @@ fn accept_if_valid(state: &RuntimeState) {
         | "suspected_bots" => state.is_caller_governance_principal(),
         "award_external_achievement" => true,
         "remove_bot" => state.is_caller_governance_principal() || state.is_caller_openchat_user(),
-        // Canister callers bypass inspect_message; these only matter for tests that impersonate the canisters
-        "c2c_storage_index" => state.is_caller_storage_index_canister(),
+        // Canister callers bypass inspect_message; this only matters for tests that impersonate the canister
         "c2c_translations" => state.is_caller_translations_canister(),
         _ => false,
     };

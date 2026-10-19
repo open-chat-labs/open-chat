@@ -7,7 +7,7 @@ use canister_tracing_macros::trace;
 use constants::OPENCHAT_BOT_USER_ID;
 use group_index_canister::GroupImportComplete;
 use group_index_canister::c2c_mark_group_import_complete::*;
-use types::{CommunityId, CommunityImportedInto};
+use types::{CanisterId, CommunityId, CommunityImportedInto};
 
 #[update(guard = "caller_is_community_canister", msgpack = true)]
 #[trace]
@@ -18,7 +18,6 @@ fn c2c_mark_group_import_complete(args: Args) -> Response {
             GroupImportComplete {
                 community_id,
                 community_name: args.community_name,
-                local_user_index_canister_id: args.local_user_index_canister_id,
                 channel: args.channel,
                 group_id: args.group_id,
                 group_name: args.group_name,
@@ -27,12 +26,19 @@ fn c2c_mark_group_import_complete(args: Args) -> Response {
                 mark_active_duration: args.mark_active_duration,
                 public_community_activity: args.public_community_activity,
             },
+            args.local_user_index_canister_id,
             state,
         )
     })
 }
 
-pub(crate) fn mark_group_import_complete(ev: GroupImportComplete, state: &mut RuntimeState) -> Response {
+// `local_user_index_canister_id` is the LocalUserIndex holding the community, at which the group's
+// members now reach the channel the group became
+pub(crate) fn mark_group_import_complete(
+    ev: GroupImportComplete,
+    local_user_index_canister_id: CanisterId,
+    state: &mut RuntimeState,
+) -> Response {
     mark_community_active(ev.community_id, ev.mark_active_duration, ev.public_community_activity, state);
 
     delete_group(
@@ -43,7 +49,7 @@ pub(crate) fn mark_group_import_complete(ev: GroupImportComplete, state: &mut Ru
         Some(CommunityImportedInto {
             community_name: ev.community_name,
             community_id: ev.community_id,
-            local_user_index_canister_id: ev.local_user_index_canister_id,
+            local_user_index_canister_id,
             channel: ev.channel,
             other_default_channels: ev.other_public_channels,
         }),
