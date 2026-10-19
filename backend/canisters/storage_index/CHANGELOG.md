@@ -15,7 +15,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Create bucket canisters with cycles via the CMC rather than ICP ([#10039](https://github.com/open-chat-labs/open-chat/pull/10039))
 
-
 ## [[2.0.2150](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2150-storage_index)] - 2026-10-16
 
 ### Changed

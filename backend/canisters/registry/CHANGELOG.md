@@ -12,9 +12,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Create a new subnet's LocalUserIndex with cycles via the CMC rather than ICP ([#10039](https://github.com/open-chat-labs/open-chat/pull/10039))
 - Await work inside timers rather than spawning a task from them ([#9971](https://github.com/open-chat-labs/open-chat/pull/9971))
 - Stop tracking the async work in progress, since nothing reads it any more ([#9972](https://github.com/open-chat-labs/open-chat/pull/9972))
+- Create a new subnet's LocalUserIndex with cycles via the CMC rather than ICP ([#10039](https://github.com/open-chat-labs/open-chat/pull/10039))
 
 ## [[2.0.2138](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2138-registry)] - 2026-10-14
 

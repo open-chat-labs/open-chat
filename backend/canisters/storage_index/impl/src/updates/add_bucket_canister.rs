@@ -4,7 +4,7 @@ use crate::{BUCKET_CANISTER_TOP_UP_AMOUNT, MIN_CYCLES_BALANCE, RuntimeState, mut
 use candid::Principal;
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
-use cycles_minting_canister::notify_create_canister::{Subnet, SubnetSelection};
+use cycles_minting_canister::create_canister::{Subnet, SubnetSelection};
 use ic_cdk::call::RejectCode;
 use oc_error_codes::OCErrorCode;
 use storage_index_canister::add_bucket_canister::*;

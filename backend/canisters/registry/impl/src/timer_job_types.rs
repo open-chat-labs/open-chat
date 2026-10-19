@@ -3,7 +3,7 @@ use crate::{mutate_state, read_state};
 use candid::Principal;
 use canister_timer_jobs::Job;
 use constants::{MINUTE_IN_MS, T, min_cycles_balance};
-use cycles_minting_canister::notify_create_canister::{Subnet, SubnetSelection};
+use cycles_minting_canister::create_canister::{Subnet, SubnetSelection};
 use ic_cdk::call::RejectCode;
 use serde::{Deserialize, Serialize};
 use tracing::error;
@@ -197,9 +197,12 @@ impl ExpandOntoSubnetJob {
     }
 }
 
-// A new LocalUserIndex starts with enough cycles to be installed and get going; the CyclesDispenser
-// keeps it topped up once told of it, a later step
-const LOCAL_INDEX_CREATION_CYCLES: Cycles = 10 * T;
+// About what the 1 ICP this used to cost bought: enough for a new LocalUserIndex to be installed and
+// get going, since the CyclesDispenser keeps it topped up once told of it (a later step) and the
+// UserIndex's install deposits more if it has to. Small enough, too, that in test mode, where the
+// Registry's floor is 5T and it asks for a top-up below twice that, there is no balance at which it
+// can neither create the canister nor be refilled.
+const LOCAL_INDEX_CREATION_CYCLES: Cycles = 5 * T;
 
 // Only the CMC can create a canister on another subnet: it is paid with the cycles attached to the
 // call, and makes this canister the controller
@@ -210,7 +213,7 @@ async fn create_canister(cmc: CanisterId, subnet: Principal) -> Result<CanisterI
             cmc,
             "create_canister",
             RejectCode::CanisterError,
-            "Cycles balance too low to create the canister".to_string(),
+            "The Registry's cycles balance is too low to create the canister".to_string(),
         ));
     }
 
