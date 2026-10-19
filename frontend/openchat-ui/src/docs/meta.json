@@ -17947,7 +17947,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "The Architecture tab's content, in place of the architecture doc (the tab shows whenever this is given). It fills the page below the header, edge to edge, with no footer: an interactive map and the like."
+        "doc": "The Architecture tab's content, in place of the architecture doc (the tab shows whenever this is given). It fills the page below the header, inset only for its rounded corners, with no footer: an interactive map and the like."
       }
     ],
     "group": "pages"

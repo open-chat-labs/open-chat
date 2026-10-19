@@ -59,7 +59,7 @@
     /** An FAQ question to open and scroll to (its `id`), e.g. from the host's `?q=`. */
     question?: string;
     /** The Architecture tab's content, in place of the architecture doc (the tab shows whenever this is given). It fills
-     *  the page below the header, edge to edge, with no footer: an interactive map and the like. */
+     *  the page below the header, inset only for its rounded corners, with no footer: an interactive map and the like. */
     architecture?: Snippet;
   }
 
@@ -598,7 +598,8 @@
     color: var(--ink);
   }
 
-  /* the host's own Architecture content (a framed canister map …): the whole page below the header, edge to edge */
+  /* the host's own Architecture content (a framed canister map …): the whole page below the header, inset only for its
+     rounded corners */
   .page.full-bleed {
     height: 100vh;
     height: 100dvh;
@@ -607,11 +608,18 @@
 
   .main.full {
     min-height: 0;
-    padding: 0;
+    padding: var(--space-12);
   }
 
   .hosted {
     width: 100%;
+  }
+
+  /* inset just enough for its corners to round */
+  .main.full .hosted {
+    overflow: hidden;
+    border-radius: var(--radius-xl);
+    box-shadow: 0 0 0 1px var(--line-1);
   }
 
   /* ── header ── */
