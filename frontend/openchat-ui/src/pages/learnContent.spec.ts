@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { LEARN_PAGES, learnFromHash, learnHashHref, placeholderLearnContent } from './learnContent';
+import { LEARN_PAGES, learnFromHash, learnHashHref, learnPagesOf, placeholderLearnContent } from './learnContent';
 
 describe('learnFromHash', () => {
   test.each(LEARN_PAGES)('#%s names that sub-page', (page) => expect(learnFromHash('#' + page)).toEqual({ page }));
@@ -25,5 +25,14 @@ describe('placeholder content', () => {
       const ids = doc!.sections.map((s) => s.id);
       expect(new Set(ids).size).toBe(ids.length);
     }
+  });
+});
+
+describe('learnPagesOf', () => {
+  const noDocs = { ...placeholderLearnContent, docs: {} };
+  test('a doc page shows only with its doc, or when the host gives its content', () => {
+    expect(learnPagesOf(noDocs)).toEqual(['roadmap', 'blog', 'faq']);
+    expect(learnPagesOf(noDocs, ['architecture'])).toEqual(['roadmap', 'architecture', 'blog', 'faq']);
+    expect(learnPagesOf(placeholderLearnContent)).toEqual(LEARN_PAGES);
   });
 });

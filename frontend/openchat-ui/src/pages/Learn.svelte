@@ -6,9 +6,12 @@
      /blog/:slug …); without `page` the URL hash does (#faq, #blog/<slug>), so deep links work either way. A host that
      sets `page` also gives learnPageHref, its paths for the links (hash links otherwise); there onNavigate takes the
      click instead of the link when given. A doc sub-page the content doesn't have shows the roadmap.
-     Sign in / Create account open AuthDialog with the host's `auth` callbacks, as on Landing. -->
+     Sign in / Create account open AuthDialog with the host's `auth` callbacks, as on Landing.
+     Content text may use a small markdown subset (inlineMarkdown.ts): links, bold and code inline, and a post paragraph
+     that is only an image. `section` and `question` are deep links into a doc and the FAQs; `architecture` puts the
+     host's own content (an interactive canister map …) on the Architecture tab in place of a doc. -->
 <script lang="ts">
-  import { untrack } from 'svelte';
+  import { tick, untrack, type Snippet } from 'svelte';
   import { useT } from '../lib/i18n';
   import Icon from '../lib/components/Icon.svelte';
   import Logo from '../lib/components/Logo.svelte';
@@ -16,6 +19,7 @@
   import { PageAuthState, type PageAuth } from './pageAuth.svelte';
   import { cssUrl } from '../lib/cssUrl';
   import { prefersReducedMotion } from './heroBackground';
+  import { imageOf, inlineMarkdown, plainText } from './inlineMarkdown';
   import { learnFromHash, learnHashHref, learnPagesOf, placeholderLearnContent, type LearnContent, type LearnPage, type RoadmapItem } from './learnContent';
   import type { PageAccent, PageMode } from './types';
 
@@ -37,6 +41,12 @@
     onEnterApp?: () => void;
     /** Someone is signed in: Open app (to appHref, or onEnterApp) replaces Sign in and Create account. */
     signedIn?: boolean;
+    /** A doc section to scroll to (its `id`), e.g. from the host's `?section=`. */
+    section?: string;
+    /** An FAQ question to open and scroll to (its `id`), e.g. from the host's `?q=`. */
+    question?: string;
+    /** The Architecture tab's content, in place of the architecture doc (the tab shows whenever this is given). */
+    architecture?: Snippet;
   }
 
   /** The URL hash picks the sub-page; links are learnHref + '#page' ('#blog/<slug>'). */
@@ -75,6 +85,9 @@
     auth,
     onEnterApp,
     signedIn = false,
+    section,
+    question,
+    architecture,
   }: Props = $props();
   const t = useT();
 
@@ -84,7 +97,7 @@
   // the hash route, used when the host doesn't set `page`
   type LearnRoute = { page: LearnPage; post?: string };
   let fromHash = $state<LearnRoute>({ page: 'roadmap' });
-  const tabs = $derived(learnPagesOf(content));
+  const tabs = $derived(learnPagesOf(content, architecture ? ['architecture'] : []));
   // a doc the content doesn't have (a deep link, or a stale link from Landing) falls back to the roadmap
   const current = $derived.by(() => {
     const p = page ?? fromHash.page;
@@ -99,7 +112,7 @@
 
   const authState = new PageAuthState(() => ({ auth, onEnterApp, appHref }));
 
-  const doc = $derived(current === 'whitepaper' || current === 'architecture' ? content.docs[current] : undefined);
+  const doc = $derived(current === 'whitepaper' || (current === 'architecture' && !architecture) ? content.docs[current] : undefined);
   const openPost = $derived(current === 'blog' && openSlug ? (content.posts.find((p) => p.slug === openSlug) ?? null) : undefined);
 
   const roadNext = $derived(content.roadmap.filter((r) => r.status === 'next'));
@@ -127,7 +140,9 @@
     content.faq
       .map((g) => ({
         title: g.title,
-        items: g.items.filter((it) => !faqSearch || `${it.q} ${it.a}`.toLowerCase().includes(faqSearch)).map((it) => ({ ...it, key: JSON.stringify([g.title, it.q]) })),
+        items: g.items
+          .filter((it) => !faqSearch || `${plainText(it.q)} ${plainText(it.a)}`.toLowerCase().includes(faqSearch))
+          .map((it) => ({ ...it, key: JSON.stringify([g.title, it.q]) })),
       }))
       .filter((g) => g.items.length),
   );
@@ -164,9 +179,29 @@
   // ids could match the content's
   const sectionEls: HTMLElement[] = $state([]);
 
-  function jumpTo(i: number) {
-    sectionEls[i]?.scrollIntoView?.({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
+  function jumpTo(i: number, behavior: ScrollBehavior = prefersReducedMotion() ? 'auto' : 'smooth') {
+    sectionEls[i]?.scrollIntoView?.({ behavior, block: 'start' });
   }
+
+  // a deep link into a doc section or an FAQ question: scrolled to (the question opened) once it shows, and again when
+  // the host passes a new one
+  $effect(() => {
+    const showing = current;
+    const target = showing === 'faq' ? question : doc ? section : undefined;
+    if (!target) return;
+    untrack(() => {
+      if (showing === 'faq') {
+        const group = content.faq.find((g) => g.items.some((it) => it.id === target));
+        const item = group?.items.find((it) => it.id === target);
+        if (!group || !item) return;
+        faqOpen[JSON.stringify([group.title, item.q])] = true;
+        tick().then(() => document.getElementById(`learn-faq-${target}`)?.scrollIntoView?.({ block: 'start' }));
+      } else {
+        const i = doc?.sections.findIndex((s) => s.id === target) ?? -1;
+        if (i >= 0) tick().then(() => jumpTo(i, 'auto'));
+      }
+    });
+  });
 
   // the hash routes only while the host doesn't set `page`, which it may start or stop doing after mount
   const hashRouted = $derived(page === undefined);
@@ -197,6 +232,14 @@
   });
 </script>
 
+<!-- content text, with the markdown subset as elements (never HTML) -->
+{#snippet rich(text: string)}{#each inlineMarkdown(text) as part}{#if part.kind === 'link'}<a
+        class="inline-link"
+        href={part.href}
+        target={/^https?:/i.test(part.href) ? '_blank' : undefined}
+        rel={/^https?:/i.test(part.href) ? 'noopener' : undefined}>{part.text}</a
+      >{:else if part.kind === 'bold'}<strong>{part.text}</strong>{:else if part.kind === 'code'}<code class="inline-code">{part.text}</code>{:else}{part.text}{/if}{/each}{/snippet}
+
 <div class="page" data-oc-page="learn" data-mode={mode} data-accent={accent}>
   <header class="top">
     <div class="top-inner">
@@ -218,7 +261,9 @@
   </header>
 
   <main class="main">
-    {#if doc}
+    {#if current === 'architecture' && architecture}
+      <div class="hosted">{@render architecture()}</div>
+    {:else if doc}
       <div class="doc">
         <aside class="toc">
           <span class="toc-heading">{t('ui.learn.onThisPage')}</span>
@@ -230,7 +275,7 @@
           <div class="doc-head">
             <span class="kicker">{doc.kicker}</span>
             <h1 class="h1">{doc.title}</h1>
-            <p class="doc-lede">{doc.lede}</p>
+            <p class="doc-lede">{@render rich(doc.lede)}</p>
           </div>
           {#if doc.stats?.length}
             <div class="stats">
@@ -242,7 +287,7 @@
           {#each doc.sections as sec, i}
             <section class="doc-section" id="learn-{sec.id}" bind:this={sectionEls[i]}>
               <h2 class="h2"><span class="h2-num">{String(i + 1).padStart(2, '0')}</span>{sec.title}</h2>
-              {#each sec.paras as p}<p class="para">{p}</p>{/each}
+              {#each sec.paras as p}<p class="para">{@render rich(p)}</p>{/each}
               {#if sec.figure === 'allocation' && doc.allocation?.length}
                 <figure class="figure" aria-label={t('ui.learn.allocation')}>
                   <div class="share-bar">
@@ -269,7 +314,7 @@
               {/if}
               {#if sec.list?.length}
                 <ul class="bullets">
-                  {#each sec.list as li}<li><span class="bullet"></span><span>{li}</span></li>{/each}
+                  {#each sec.list as li}<li><span class="bullet"></span><span>{@render rich(li)}</span></li>{/each}
                 </ul>
               {/if}
               {#if sec.code}<pre class="code">{sec.code}</pre>{/if}
@@ -288,7 +333,10 @@
             class="article-cover"
             style:background={openPost.cover ? `center/cover ${cssUrl(openPost.cover)}` : COVERS[content.posts.indexOf(openPost) % COVERS.length]}
           ></div>
-          {#each openPost.body as b}<p class="article-para">{b}</p>{/each}
+          {#each openPost.body as b}
+            {@const image = imageOf(b)}
+            {#if image}<figure class="article-figure"><img class="article-image" src={image.src} alt={image.alt} loading="lazy" /></figure>{:else}<p class="article-para">{@render rich(b)}</p>{/if}
+          {/each}
         {:else}
           <p class="article-para">{t('ui.learn.blog.notFound')}</p>
         {/if}
@@ -306,7 +354,7 @@
               <span class="post-cover" style:background={p.cover ? `center/cover ${cssUrl(p.cover)}` : COVERS[i % COVERS.length]}></span>
               <span class="post-text">
                 <span class="post-title">{p.title}</span>
-                <span class="post-excerpt">{p.excerpt}</span>
+                <span class="post-excerpt">{plainText(p.excerpt)}</span>
                 <span class="byline small"><span class="author">{p.author ?? t('ui.learn.blog.team')}</span><span class="sep"></span>{p.date ?? t('ui.learn.blog.recent')}</span>
               </span>
             </a>
@@ -349,13 +397,13 @@
                     </button>
                     {#if open && it.detail}
                       <div class="item-detail">
-                        {#each it.detail.paras ?? [] as pp}<p class="para">{pp}</p>{/each}
+                        {#each it.detail.paras ?? [] as pp}<p class="para">{@render rich(pp)}</p>{/each}
                         {#if it.detail.points?.length}
                           <ul class="points">
                             {#each it.detail.points as pt}
                               <li>
                                 <span class="bullet"></span>
-                                {#if pt.href}<a class="point-link" href={pt.href} target="_blank" rel="noopener">{pt.label}<span class="ext-glyph"><Icon icon="external" size={12} /></span></a>{:else}<span class="point-text">{pt.label}</span>{/if}
+                                {#if pt.href}<a class="point-link" href={pt.href} target="_blank" rel="noopener">{pt.label}<span class="ext-glyph"><Icon icon="external" size={12} /></span></a>{:else}<span class="point-text">{@render rich(pt.label)}</span>{/if}
                               </li>
                             {/each}
                           </ul>
@@ -384,14 +432,19 @@
         {/if}
         {#each faqGroups as g}
           <section class="faq-group">
-            <h2 class="faq-heading">{g.title}</h2>
+            {#if g.title}<h2 class="faq-heading">{g.title}</h2>{/if}
             {#each g.items as q}
               {@const open = faqSearch ? !faqClosedInSearch[q.key] : !!faqOpen[q.key]}
-              <div class="question">
+              <div class="question" id={q.id ? `learn-faq-${q.id}` : undefined}>
                 <button class="question-button" aria-expanded={open} onclick={() => toggleFaq(q.key)}
                   ><span class="question-text">{q.q}</span><span class="item-chev" class:open><Icon icon="chevron-down" size={18} /></span></button
                 >
-                {#if open}<p class="answer">{q.a}</p>{/if}
+                {#if open}
+                  <!-- a blank line starts a paragraph, a line break a new line -->
+                  <div class="answer">
+                    {#each q.a.split(/\n{2,}/) as para}<p class="answer-para">{@render rich(para)}</p>{/each}
+                  </div>
+                {/if}
               </div>
             {/each}
           </section>
@@ -435,6 +488,31 @@
   .link {
     font-weight: var(--weight-semibold);
     color: var(--accent);
+  }
+
+  /* content text's markdown subset */
+  .inline-link {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .inline-code {
+    padding: 1px var(--space-4);
+    border-radius: var(--radius-xs);
+    background: var(--surface-1);
+    font: var(--weight-medium) 0.9em var(--font-mono);
+  }
+
+  strong {
+    font-weight: var(--weight-semibold);
+    color: var(--ink);
+  }
+
+  /* the host's own Architecture content (a framed canister map …) */
+  .hosted {
+    width: 100%;
+    max-width: 1200px;
   }
 
   /* ── header ── */
@@ -983,6 +1061,18 @@
     text-wrap: pretty;
   }
 
+  .article-figure {
+    margin: 0;
+  }
+
+  .article-image {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius-lg);
+    box-shadow: inset 0 0 0 1px var(--line-1);
+  }
+
   /* ── roadmap ── */
   .roadmap {
     width: 100%;
@@ -1249,6 +1339,8 @@
     border-radius: var(--radius-lg);
     background: var(--surface-1);
     box-shadow: inset 0 0 0 1px var(--line-1);
+    /* clear of the sticky header when a deep link scrolls to it */
+    scroll-margin-top: 96px;
   }
 
   .question-button {
@@ -1272,11 +1364,18 @@
   }
 
   .answer {
-    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-10);
     padding: 0 var(--space-18) var(--space-18);
     font: var(--weight-regular) var(--text-base) / 1.7 var(--font-sans);
     color: var(--ink-2);
     text-wrap: pretty;
+  }
+
+  .answer-para {
+    margin: 0;
+    white-space: pre-line;
   }
 
   /* ── footer ── */

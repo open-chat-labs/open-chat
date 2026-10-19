@@ -12,7 +12,8 @@
     import AuthDialog from "@openchat/ui/src/features/components/AuthDialog.svelte";
     import Landing from "@openchat/ui/src/pages/Landing.svelte";
     import Learn from "@openchat/ui/src/pages/Learn.svelte";
-    import { placeholderLearnContent, type LearnPage } from "@openchat/ui/src/pages/learnContent";
+    import type { LearnPage } from "@openchat/ui/src/pages/learnContent";
+    import CanisterMapFrame from "@shared_components/CanisterMapFrame.svelte";
     import type { PageMode } from "@openchat/ui/src/pages/types";
     import { currentThemeMode, themeType } from "@theme/themes";
     import { navigate } from "@src/utils/navigation";
@@ -87,6 +88,15 @@
     const setMode = (next: PageMode) => themeType.set(next);
 
     const learn = $derived(learnPageFor(route));
+
+    // Learn's content is loaded the first time a Learn page shows, so Landing doesn't carry it
+    let learnModule = $state<typeof import("./learn") | undefined>(undefined);
+    $effect(() => {
+        if (learn !== undefined && learnModule === undefined) {
+            import("./learn").then((m) => (learnModule = m));
+        }
+    });
+    const learnContent = $derived(learnModule?.learnContent((key) => $_(key)));
     const landing = $derived(
         route.kind === "home_route" ||
             route.kind === "home_landing_route" ||
@@ -139,8 +149,7 @@
     {#if linkQuery !== undefined}
         <AuthDialog kind="link" {onLinkCode} onClose={() => (linkQuery = undefined)} />
     {/if}
-{:else if learn !== undefined}
-    <!-- TODO(Learn content): the existing roadmap, docs, blog and FAQ, converted to LearnContent -->
+{:else if learn !== undefined && learnContent !== undefined}
     <Learn
         {mode}
         homeHref="/home"
@@ -150,10 +159,20 @@
         post={learn.post}
         learnPageHref={learnPath}
         onNavigate={(page, post) => navigate(learnPath(page, post))}
-        content={placeholderLearnContent}
+        content={learnContent}
+        section={$querystringStore.get("section") ?? undefined}
+        question={$querystringStore.get("q") ?? undefined}
         auth={pageAuth}
         onEnterApp={enterApp}
-        {signedIn} />
+        {signedIn}>
+        {#snippet architecture()}
+            <!-- the interactive canister map, which keeps ?section= as the canister it shows -->
+            <CanisterMapFrame syncUrl />
+        {/snippet}
+    </Learn>
+{:else if learn !== undefined}
+    <!-- Learn's content is loading -->
+    <div class="page"></div>
 {:else}
     <!-- TODO(Learn doc pages): the legal pages and /diamond in Learn's page design (ROUTES.md, decision 5) -->
     <div class="page">

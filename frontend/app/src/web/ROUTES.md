@@ -190,10 +190,15 @@ link's code over Landing. While a sign-in or sign-up started in Landing's own di
 `/` keeps showing Landing, so that dialog sees it through, and after a sign-up there fails, so it
 says why (`pageSignIns`, `showsSignedOut`). Leaving the app mid sign-in gives the sign-in up.
 
+**Learn content.** Learn shows the existing roadmap, whitepaper, blog posts and FAQs, converted to
+its content shapes in `features/marketing/learn` and loaded the first time a Learn page shows. The
+FAQs come from the translations, so they follow the app's language. `/faq?q=` opens that question
+and `/whitepaper?section=` scrolls to that section; `/architecture` frames the canister map
+(`CanisterMapFrame`), which keeps `?section=` itself. What the conversion couldn't keep is in
+`GAPS.md` (Learn content).
+
 Still to come:
 
-- **Learn content**: Learn shows the library's placeholder content until the existing roadmap,
-  docs, blog and FAQ are converted (`GAPS.md`). `/faq?q=` and `?section=` wait for that too.
 - **Legal pages and `/diamond`**: placeholders until Learn's doc pages and `DiamondContent` exist
   (decision 5).
 - **Guests**: guest-only behaviour comes in the guest pass (phase 10). That covers the "sign in"

@@ -17915,6 +17915,39 @@
         "required": false,
         "componentDefault": "false",
         "doc": "Someone is signed in: Open app (to appHref, or onEnterApp) replaces Sign in and Create account."
+      },
+      {
+        "name": "section",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "A doc section to scroll to (its `id`), e.g. from the host's `?section=`."
+      },
+      {
+        "name": "question",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "An FAQ question to open and scroll to (its `id`), e.g. from the host's `?q=`."
+      },
+      {
+        "name": "architecture",
+        "type": "Snippet",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The Architecture tab's content, in place of the architecture doc (the tab shows whenever this is given)."
       }
     ],
     "group": "pages"

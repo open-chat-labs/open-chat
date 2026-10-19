@@ -1,7 +1,7 @@
 // Learn page content: the docs (whitepaper, architecture), blog posts, roadmap and FAQs. This is placeholder copy carried
 // over from the prototype. The host is expected to load the real content (markdown for docs and posts, JSON for the
 // roadmap and FAQs) and pass it to <Learn content={…}>; the shapes below are that contract. Content is data, not UI
-// copy, so it isn't translated through the i18n keys.
+// copy, so it isn't translated through the i18n keys. Its text may use the markdown subset in inlineMarkdown.ts.
 
 export type LearnPage = 'roadmap' | 'whitepaper' | 'architecture' | 'blog' | 'faq';
 export type LearnDocPage = Extract<LearnPage, 'whitepaper' | 'architecture'>;
@@ -67,7 +67,8 @@ export interface RoadmapItem {
 
 export interface FaqGroup {
   title: string;
-  items: { q: string; a: string }[];
+  /** `id` makes a question a deep link target (Learn's `question`), unique across the groups. */
+  items: { id?: string; q: string; a: string }[];
 }
 
 export interface LearnContent {
@@ -569,9 +570,10 @@ export const placeholderLearnContent: LearnContent = {
   ],
 };
 
-/** The sub-pages the content has: a doc page (whitepaper, architecture) only when the content includes that doc. */
-export function learnPagesOf(content: LearnContent): LearnPage[] {
-  return LEARN_PAGES.filter((p) => (p === 'whitepaper' || p === 'architecture' ? !!content.docs[p] : true));
+/** The sub-pages the content has: a doc page (whitepaper, architecture) only when the content includes that doc, or
+ *  the host gives that page's content itself (`hosted`). */
+export function learnPagesOf(content: LearnContent, hosted: LearnDocPage[] = []): LearnPage[] {
+  return LEARN_PAGES.filter((p) => (p === 'whitepaper' || p === 'architecture' ? !!content.docs[p] || hosted.includes(p) : true));
 }
 
 /** The sub-page (and blog post) a location hash names: '#faq', '#blog/<slug>'. Null for no hash or an unknown page. */
