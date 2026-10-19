@@ -13,7 +13,7 @@ fn c2c_update_moderation_report_status(args: Args) -> Response {
     execute_update_even_if_frozen(|state| c2c_update_moderation_report_status_impl(args, state)).into()
 }
 
-fn c2c_update_moderation_report_status_impl(args: Args, state: &mut RuntimeState) -> OCResult {
+pub(crate) fn c2c_update_moderation_report_status_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let channel = state
         .data
         .channels
