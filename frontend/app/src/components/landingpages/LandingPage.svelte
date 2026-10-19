@@ -4,6 +4,7 @@
 
 <script lang="ts">
     import Loading from "@shared_components/Loading.svelte";
+    import ArchitecturePage from "./ArchitecturePage.svelte";
     import { flushPendingNavigation } from "@src/utils/navigation";
     import { portalState } from "component-lib";
     import { routeStore, runningInIframe, subscribe, type OpenChat } from "@client";
@@ -40,6 +41,8 @@
     <main class="main">
         {#if $routeStore.kind === "features_route"}
             <FeaturesPage />
+        {:else if client.isArchitectureRoute($routeStore)}
+            <ArchitecturePage />
         {:else}
             <Content>
                 {#if client.isBlogRoute($routeStore)}
@@ -69,14 +72,6 @@
                         </div>
                     {:then { default: WhitepaperPage }}
                         <WhitepaperPage />
-                    {/await}
-                {:else if client.isArchitectureRoute($routeStore)}
-                    {#await import("./ArchitecturePage.svelte")}
-                        <div class="loading">
-                            <Loading />
-                        </div>
-                    {:then { default: ArchitecturePage }}
-                        <ArchitecturePage />
                     {/await}
                 {:else if client.isGuidelinesRoute($routeStore)}
                     {#await import("./GuidelinesPage.svelte")}
