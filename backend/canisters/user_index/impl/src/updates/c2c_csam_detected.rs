@@ -72,7 +72,7 @@ pub(crate) fn c2c_csam_detected_impl(mut args: Args, state: &mut RuntimeState) {
         args.message_id,
         categories.bits(),
         false,
-        &mut state.data.fire_and_forget_handler,
+        state,
     );
     moderation::suspend_sender(args.sender, Some(report_index), now, state);
 

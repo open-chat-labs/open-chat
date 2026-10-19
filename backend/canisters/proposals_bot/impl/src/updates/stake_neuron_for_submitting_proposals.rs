@@ -45,14 +45,12 @@ async fn stake_neuron_for_submitting_proposals(args: Args) -> Response {
                     dissolve_delay_seconds as u64 * 1000,
                 );
 
-                state.data.fire_and_forget_handler.send(
-                    state.data.registry_canister_id,
-                    "c2c_set_submitting_proposals_enabled_msgpack".to_string(),
-                    msgpack::serialize_then_unwrap(registry_canister::c2c_set_submitting_proposals_enabled::Args {
+                state.push_event_to_registry(registry_canister::ProposalsBotEvent::SetSubmittingProposalsEnabled(
+                    registry_canister::SetSubmittingProposalsEnabled {
                         governance_canister_id: args.governance_canister_id,
                         enabled: true,
-                    }),
-                );
+                    },
+                ));
             });
             Success(neuron_id)
         }

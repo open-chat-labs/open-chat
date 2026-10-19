@@ -56,33 +56,22 @@ fn c2c_sync_bucket_impl(args: Args, state: &mut RuntimeState) -> Response {
         );
     }
 
-    if !args.csam_matches.is_empty() {
-        if let Some(user_index) = state.data.user_index_canister_id {
-            let forward = user_index_canister::c2c_csam_upload_detected::Args {
-                matches: args
-                    .csam_matches
-                    .into_iter()
-                    .map(|m| ui_csam::CsamUploadMatch {
-                        uploader: m.uploader,
-                        bucket,
-                        file_id: m.file_id,
-                        hash: m.hash,
-                        csam_report_index: m.csam_report_index,
-                        kind: match m.kind {
-                            CsamMatchKind::UploadAttempt => ui_csam::CsamMatchKind::UploadAttempt,
-                            CsamMatchKind::ForwardAttempt => ui_csam::CsamMatchKind::ForwardAttempt,
-                            CsamMatchKind::PendingQuarantineAttempt => ui_csam::CsamMatchKind::PendingQuarantineAttempt,
-                            CsamMatchKind::ExistingCopy => ui_csam::CsamMatchKind::ExistingCopy,
-                        },
-                    })
-                    .collect(),
-            };
-            state.data.fire_and_forget_handler.send(
-                user_index,
-                "c2c_csam_upload_detected_msgpack".to_string(),
-                msgpack::serialize_then_unwrap(&forward),
-            );
-        } else {
+    // One event per match, each reported to the UserIndex
+    for m in args.csam_matches {
+        let csam_match = ui_csam::CsamUploadMatch {
+            uploader: m.uploader,
+            bucket,
+            file_id: m.file_id,
+            hash: m.hash,
+            csam_report_index: m.csam_report_index,
+            kind: match m.kind {
+                CsamMatchKind::UploadAttempt => ui_csam::CsamMatchKind::UploadAttempt,
+                CsamMatchKind::ForwardAttempt => ui_csam::CsamMatchKind::ForwardAttempt,
+                CsamMatchKind::PendingQuarantineAttempt => ui_csam::CsamMatchKind::PendingQuarantineAttempt,
+                CsamMatchKind::ExistingCopy => ui_csam::CsamMatchKind::ExistingCopy,
+            },
+        };
+        if !state.push_event_to_user_index(user_index_canister::StorageIndexEvent::CsamUploadDetected(csam_match)) {
             // Can only happen before the user_index has ever driven a vault op; loud because
             // a dropped match means a re-upload of known CSAM content goes unreported
             tracing::error!("CSAM upload match dropped: user_index canister id not yet known");

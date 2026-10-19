@@ -1,3 +1,5 @@
+use crate::model::community_event_batch::CommunityEventBatch;
+use crate::model::group_event_batch::GroupEventBatch;
 use crate::model::group_index_event_batch::GroupIndexEventBatch;
 use crate::model::identity_event_batch::IdentityEventBatch;
 use crate::model::local_user_index_event_batch::LocalUserIndexEventBatch;
@@ -179,6 +181,16 @@ impl RuntimeState {
     pub fn push_event_to_identity(&mut self, event: IdentityEvent) {
         let event = self.envelope(event);
         self.data.identity_event_sync_queue.push(event);
+    }
+
+    pub fn push_event_to_group(&mut self, group_id: ChatId, event: group_canister::UserIndexEvent) {
+        let event = self.envelope(event);
+        self.data.group_event_sync_queue.push(group_id.into(), event);
+    }
+
+    pub fn push_event_to_community(&mut self, community_id: CommunityId, event: community_canister::UserIndexEvent) {
+        let event = self.envelope(event);
+        self.data.community_event_sync_queue.push(community_id.into(), event);
     }
 
     pub fn push_event_to_storage_index(&mut self, event: StorageIndexEvent) {
@@ -463,6 +475,10 @@ struct Data {
     pub storage_index_users_to_remove_queue: BatchedTimerJobQueue<StorageIndexUsersToRemoveBatch>,
     #[serde(default = "new_storage_index_event_sync_queue")]
     pub storage_index_event_sync_queue: BatchedTimerJobQueue<StorageIndexEventBatch>,
+    #[serde(default = "new_chat_event_sync_queue")]
+    pub group_event_sync_queue: GroupedTimerJobQueue<GroupEventBatch>,
+    #[serde(default = "new_chat_event_sync_queue")]
+    pub community_event_sync_queue: GroupedTimerJobQueue<CommunityEventBatch>,
     // Drained into `local_user_index_event_sync_queue` by the post_upgrade one-off, and removed with it
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
     #[serde(default = "new_local_user_index_event_sync_queue")]
@@ -493,6 +509,8 @@ struct Data {
     pub authority_reporter: Option<Principal>,
     #[serde(default)]
     pub protected_actions: ProtectedActions,
+    // Nothing is sent through this any more. Kept for a release so that calls queued for a retry
+    // before the switch to events are still made, then removed.
     pub fire_and_forget_handler: FireAndForgetHandler,
     pub nns_8_year_neuron: Option<NnsNeuron>,
     pub rng_seed: [u8; 32],
@@ -606,6 +624,8 @@ impl Data {
             storage_index_user_sync_queue: BatchedTimerJobQueue::new(storage_index_canister_id, false),
             storage_index_users_to_remove_queue: BatchedTimerJobQueue::new(storage_index_canister_id, false),
             storage_index_event_sync_queue: BatchedTimerJobQueue::new(storage_index_canister_id, false),
+            group_event_sync_queue: new_chat_event_sync_queue(),
+            community_event_sync_queue: new_chat_event_sync_queue(),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             local_user_index_event_sync_queue: new_local_user_index_event_sync_queue(),
             group_index_event_sync_queue: BatchedTimerJobQueue::new(group_index_canister_id, false),
@@ -723,6 +743,8 @@ impl Default for Data {
             storage_index_user_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             storage_index_users_to_remove_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             storage_index_event_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
+            group_event_sync_queue: new_chat_event_sync_queue(),
+            community_event_sync_queue: new_chat_event_sync_queue(),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             local_user_index_event_sync_queue: new_local_user_index_event_sync_queue(),
             group_index_event_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
@@ -946,6 +968,13 @@ fn new_identity_event_sync_queue() -> BatchedTimerJobQueue<IdentityEventBatch> {
 
 fn new_storage_index_event_sync_queue() -> BatchedTimerJobQueue<StorageIndexEventBatch> {
     BatchedTimerJobQueue::new(Principal::anonymous(), false)
+}
+
+fn new_chat_event_sync_queue<T: timer_job_queues::TimerJobItemGroup>() -> GroupedTimerJobQueue<T>
+where
+    T::SharedState: Default,
+{
+    GroupedTimerJobQueue::new(10, false)
 }
 
 // Pushes events to a LocalUserIndex while the rest of the state is borrowed

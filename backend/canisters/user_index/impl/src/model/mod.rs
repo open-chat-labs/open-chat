@@ -1,8 +1,10 @@
 pub mod account_billing;
 pub mod authority_reports;
 pub mod chit_leaderboard;
+pub mod community_event_batch;
 pub mod diamond_membership_details;
 pub mod external_achievements;
+pub mod group_event_batch;
 pub mod group_index_event_batch;
 pub mod identity_event_batch;
 pub mod local_user_index_event_batch;

@@ -1,5 +1,5 @@
-use crate::StorageIndexEvent;
 use crate::guards::caller_is_group_canister;
+use crate::{LocalIndexEvent, StorageIndexEvent};
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -32,12 +32,9 @@ pub(crate) fn delete_group(
     community_imported_into: Option<CommunityImportedInto>,
     state: &mut RuntimeState,
 ) -> Response {
+    let now = state.env.now();
     if let Some(local_user_index_canister) = state.data.local_index_map.get_index_canister_for_group(&group_id) {
-        state.data.fire_and_forget_handler.send(
-            local_user_index_canister,
-            "c2c_delete_group_msgpack".to_string(),
-            msgpack::serialize_then_unwrap(local_user_index_canister::c2c_delete_group::Args { chat_id: group_id }),
-        );
+        state.push_event_to_local_index(local_user_index_canister, LocalIndexEvent::DeleteGroup(group_id), now);
     }
 
     let public = if let Some(group) = state.data.public_groups.delete(&group_id) {
@@ -62,7 +59,6 @@ pub(crate) fn delete_group(
 
     state.data.local_index_map.mark_group_deleted(&group_id);
 
-    let now = state.env.now();
     let deleted_group = DeletedGroupInfoInternal {
         id: group_id,
         timestamp: now,

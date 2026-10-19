@@ -1,14 +1,11 @@
 use crate::{Data, RuntimeState};
 use chat_events::{ChatEventInternal, Reader};
 use constants::{DAY_IN_MS, HOUR_IN_MS};
-use fire_and_forget_handler::FireAndForgetHandler;
-use group_index_canister::c2c_mark_community_active;
-use msgpack::serialize_then_unwrap;
 use rand::Rng;
 use std::collections::HashSet;
-use types::{CanisterId, IdempotentEnvelope, Milliseconds, PublicCommunityActivity, TimestampMillis};
+use types::{IdempotentEnvelope, PublicCommunityActivity, TimestampMillis};
 
-// If needed, notify the group index canister that there has been activity in this community
+// If needed, notify the GroupIndex (via the LocalUserIndex) that there has been activity in this community
 pub(crate) fn handle_activity_notification(state: &mut RuntimeState) {
     let now = state.env.now();
 
@@ -21,30 +18,13 @@ pub(crate) fn handle_activity_notification(state: &mut RuntimeState) {
     if let Some(mark_active_duration) = state.data.activity_notification_state.notify_if_required(now) {
         let public_community_activity = state.data.is_public.then(|| extract_activity(now, &state.data));
 
-        call_group_index_canister(
-            state.data.group_index_canister_id,
-            mark_active_duration,
-            public_community_activity,
-            &mut state.data.fire_and_forget_handler,
-        );
-    }
-
-    fn call_group_index_canister(
-        canister_id: CanisterId,
-        duration: Milliseconds,
-        public_community_activity: Option<PublicCommunityActivity>,
-        fire_and_forget_handler: &mut FireAndForgetHandler,
-    ) {
-        let args = c2c_mark_community_active::Args {
-            duration,
-            public_community_activity,
-        };
-
-        fire_and_forget_handler.send(
-            canister_id,
-            "c2c_mark_community_active_msgpack".to_string(),
-            serialize_then_unwrap(args),
-        );
+        // Relayed by the LocalUserIndex to the GroupIndex
+        state.push_event_to_local_user_index(local_user_index_canister::CommunityEvent::CommunityActive(
+            local_user_index_canister::CommunityActive {
+                duration: mark_active_duration,
+                public_community_activity,
+            },
+        ));
     }
 }
 

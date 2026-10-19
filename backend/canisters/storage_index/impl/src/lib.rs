@@ -2,6 +2,7 @@ use crate::model::bucket_event_batch::BucketEventBatch;
 use crate::model::buckets::{BucketRecord, Buckets};
 use crate::model::files::Files;
 use crate::model::storage_bucket_event_batch::StorageBucketEventBatch;
+use crate::model::user_index_event_batch::UserIndexEventBatch;
 use crate::model::vault_event_batch::VaultEventBatch;
 use candid::{CandidType, Principal};
 use canister_state_macros::canister_state;
@@ -14,7 +15,7 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 use storage_bucket_canister::StorageIndexEvent;
 use storage_index_canister::c2c_vault_ops::VaultReviewer;
 use storage_index_canister::init::CyclesDispenserConfig;
-use timer_job_queues::GroupedTimerJobQueue;
+use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     BuildVersion, CanisterId, CanisterWasm, Cycles, FileAdded, FileRejected, FileRejectedReason, FileRemoved, Hash,
     IdempotentEnvelope, TimestampMillis, Timestamped,
@@ -64,6 +65,19 @@ impl RuntimeState {
     pub fn is_caller_bucket(&self) -> bool {
         let caller = self.env.caller();
         self.data.buckets.get(&caller).is_some()
+    }
+
+    // Dropped (loudly) until the UserIndex is known, which it is once it has sent an event
+    pub fn push_event_to_user_index(&mut self, event: user_index_canister::StorageIndexEvent) -> bool {
+        let Some(user_index_canister_id) = self.data.user_index_canister_id else {
+            return false;
+        };
+        let event = envelope(self.env.now(), self.env.rng(), event);
+        self.data
+            .user_index_event_sync_queue
+            .get_or_insert_with(|| BatchedTimerJobQueue::new(user_index_canister_id, false))
+            .push(event);
+        true
     }
 
     pub fn push_event_to_buckets(&mut self, event: StorageIndexEvent) {
@@ -145,6 +159,11 @@ struct Data {
     // bucket-detected CSAM re-uploads back to it
     #[serde(default)]
     pub user_index_canister_id: Option<CanisterId>,
+    // Created once the UserIndex is known
+    #[serde(default)]
+    pub user_index_event_sync_queue: Option<BatchedTimerJobQueue<UserIndexEventBatch>>,
+    // Nothing is sent through this any more. Kept for a release so that calls queued for a retry
+    // before the switch to events are still made, then removed.
     #[serde(default)]
     pub fire_and_forget_handler: FireAndForgetHandler,
     #[serde(default)]
@@ -209,6 +228,7 @@ impl Data {
             csam_hashes: BTreeMap::new(),
             derived_csam_hashes: BTreeMap::new(),
             user_index_canister_id: None,
+            user_index_event_sync_queue: None,
             fire_and_forget_handler: FireAndForgetHandler::default(),
             idempotency_checker: IdempotencyChecker::default(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
