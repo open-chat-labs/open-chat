@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `c2c_storage_index` and `c2c_translations` for the StorageIndex's and Translations canister's events ([#10029](https://github.com/open-chat-labs/open-chat/pull/10029))
+- Take CSAM detections and moderation referrals as events from the LocalUserIndexes ([#10029](https://github.com/open-chat-labs/open-chat/pull/10029))
+
 ### Changed
 
 - Take avatar changes from the LocalUserIndexes rather than the MultiUser canisters ([#10011](https://github.com/open-chat-labs/open-chat/pull/10011))

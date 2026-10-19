@@ -24,6 +24,7 @@ pub struct ProjectedAllowance {
 pub enum UserIndexEvent {
     AddOrUpdateUser(add_or_update_users::UserConfig),
     RemoveUser(Principal),
+    VaultOp(c2c_vault_ops::VaultOp),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

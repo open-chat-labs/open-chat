@@ -9,7 +9,7 @@ use candid::Principal;
 use rand::random;
 use std::ops::Deref;
 use storage_index_canister::add_or_update_users::UserConfig;
-use testing::rng::{random_from_principal, random_internet_identity_principal, random_principal};
+use testing::rng::{random_from_principal, random_internet_identity_principal, random_principal, random_string};
 use types::{Empty, IdempotentEnvelope, SuccessOnly, UserId};
 
 #[test]
@@ -46,6 +46,42 @@ fn local_user_index_takes_user_index_events() {
         },
     );
     assert_eq!(migrated.get(&old_user_id), Some(&new_user_id));
+}
+
+#[test]
+fn group_index_takes_local_index_events() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let user = client::register_diamond_user(env, canister_ids, *controller);
+    let name = random_string();
+    let community_id = client::user::happy_path::create_community(env, &user, &name, true, vec![random_string()]);
+    assert!(
+        !client::group_index::happy_path::explore_communities(env, user.principal, canister_ids.group_index, &name).is_empty()
+    );
+
+    // Reported uninstalled by the LocalUserIndex holding it, the community is removed from the index
+    let local_user_index = canister_ids.local_user_index(env, types::CanisterId::from(community_id));
+    let response = client::group_index::c2c_local_index(
+        env,
+        local_user_index,
+        canister_ids.group_index,
+        &group_index_canister::c2c_local_index::Args {
+            events: vec![envelope(
+                env,
+                group_index_canister::LocalIndexEvent::CommunityUninstalled(community_id),
+            )],
+        },
+    );
+    assert!(matches!(response, SuccessOnly::Success));
+    assert!(
+        client::group_index::happy_path::explore_communities(env, user.principal, canister_ids.group_index, &name).is_empty()
+    );
 }
 
 #[test]

@@ -1,4 +1,6 @@
 use crate::guards::caller_is_local_user_index_canister;
+use crate::updates::c2c_csam_detected::c2c_csam_detected_impl;
+use crate::updates::c2c_moderation_referral::c2c_moderation_referral_impl;
 use crate::{RuntimeState, UserIdentity, UserRegisteredEventPayload, mutate_state};
 use candid::Principal;
 use canister_api_macros::update;
@@ -50,6 +52,8 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
     state: &mut RuntimeState,
 ) {
     match event {
+        LocalUserIndexEvent::CsamDetected(ev) => c2c_csam_detected_impl(*ev, state),
+        LocalUserIndexEvent::ModerationReferral(ev) => c2c_moderation_referral_impl(*ev, state),
         LocalUserIndexEvent::UserRegistered(ev) => {
             process_new_user(ev.principal, ev.username, ev.email, ev.user_id, ev.referred_by, caller, state)
         }

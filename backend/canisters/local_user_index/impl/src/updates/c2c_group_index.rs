@@ -1,4 +1,6 @@
 use crate::guards::caller_is_group_index;
+use crate::updates::c2c_delete_community::delete_community;
+use crate::updates::c2c_delete_group::delete_group;
 use crate::{CommunityEvent, GroupEvent};
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
@@ -82,6 +84,13 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 CommunityEvent::ModerationFlagsChanged(CommunityModerationFlagsChanged { flags: ev.flags }),
                 **now,
             );
+        }
+        GroupIndexEvent::DeleteGroup(chat_id) => {
+            // Already gone if the group deleted itself first
+            let _ = delete_group(chat_id, state);
+        }
+        GroupIndexEvent::DeleteCommunity(community_id) => {
+            let _ = delete_community(community_id, state);
         }
         GroupIndexEvent::NotifyOfUserDeleted(canister_id, user_id) => {
             if state.data.local_groups.get(&canister_id.into()).is_some() {

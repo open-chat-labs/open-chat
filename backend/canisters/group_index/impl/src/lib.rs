@@ -73,6 +73,10 @@ impl RuntimeState {
         self.env.caller() == self.data.registry_canister_id
     }
 
+    pub fn is_caller_local_user_index(&self) -> bool {
+        self.data.local_index_map.contains_key(&self.env.caller())
+    }
+
     pub fn is_caller_group_canister(&self) -> bool {
         let caller: ChatId = self.env.caller().into();
         self.data.public_groups.get(&caller).is_some() || self.data.private_groups.get(&caller).is_some()

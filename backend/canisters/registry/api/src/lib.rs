@@ -115,3 +115,15 @@ pub struct MessageFilterSummary {
     pub id: u64,
     pub regex: String,
 }
+
+// The ProposalsBot's events
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum ProposalsBotEvent {
+    SetSubmittingProposalsEnabled(SetSubmittingProposalsEnabled),
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct SetSubmittingProposalsEnabled {
+    pub governance_canister_id: CanisterId,
+    pub enabled: bool,
+}

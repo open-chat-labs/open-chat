@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `c2c_proposals_bot` for the ProposalsBot's events ([#10029](https://github.com/open-chat-labs/open-chat/pull/10029))
+
 ### Changed
 
 - Await work inside timers rather than spawning a task from them ([#9971](https://github.com/open-chat-labs/open-chat/pull/9971))

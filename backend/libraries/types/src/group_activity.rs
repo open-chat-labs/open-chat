@@ -1,7 +1,7 @@
 use crate::TimestampMillis;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug, Default)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct PublicCommunityActivity {
     pub timestamp: TimestampMillis,
     pub member_count: u32,
@@ -10,7 +10,7 @@ pub struct PublicCommunityActivity {
     pub last_day: Activity,
 }
 
-#[derive(Serialize, Deserialize, Debug, Default)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct PublicGroupActivity {
     pub timestamp: TimestampMillis,
     pub member_count: u32,
@@ -18,7 +18,7 @@ pub struct PublicGroupActivity {
     pub last_day: Activity,
 }
 
-#[derive(Serialize, Deserialize, Debug, Default)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct Activity {
     pub messages: u32,
     pub message_unique_users: u32,
