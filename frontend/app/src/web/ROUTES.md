@@ -72,15 +72,18 @@ Agreed on 2026-10-16; the tables below follow them.
      and Back closes them: `?profile` (new, opened from the rail) and `?chit` (new), in the style
      of `?diamond` and `?hof`.
    - Every other dialog stays local state.
-7. **The rail's list panels keep the open conversation.** DMs, favourites and notifications
-   change only the left column: the conversation in the middle and its right column stay. The
-   URL keeps the open chat, and the panel goes in the query (`?panel=favourites`, e.g.
-   `/chats/group/:id?panel=favourites`), so a reload or a shared link keeps both; with no chat
-   open, the panel's own path (`/favourite`, `/notifications`) still opens it. The wallet is
-   different: it takes the whole content area (its panel on the left, its page in the middle)
-   and has no right column. To be built with the chat list and conversation (phase 3), which
-   rework selection and the default chat anyway; until then these routes behave as in the
-   table below.
+7. **Switching the left column.**
+   - **Notifications** (activity) change only the left column: the middle keeps the last
+     selected chat, with its right column. The URL keeps that chat and notes the panel in the
+     query (`/chats/group/:id?panel=activity`), so a reload or a shared link keeps both; with no
+     chat selected, `/notifications` opens the panel over an empty middle.
+   - **DMs and groups, favourites, a community**: switching to one selects its first chat (the
+     first favourite, the community's first channel) for the middle, and switching back to DMs
+     and groups selects the first chat in that list.
+   - **The wallet** takes the whole content area (its panel on the left, its page in the middle),
+     without a right column.
+   - To be built with the chat list and conversation (phase 3), which rework selection and the
+     default chat anyway; until then these routes behave as in the table below.
 
 ## Regions
 
@@ -105,15 +108,15 @@ Once the narrow design lands, `selectLayout` stops falling back and every browse
 | Path | Route kind (scope) | Left | Middle | Right | Narrow | Guest |
 |---|---|---|---|---|---|---|
 | `/` (signed in) | `home_route` | – | – | – | – | redirects to `/favourite` if the user has favourites, else `/chats` |
-| `/chats` | `chat_list_route` (chats) | `ChatListPanel` | `EmptyState`; auto-selects the last or first chat (existing behaviour) | – | list | yes |
+| `/chats` | `chat_list_route` (chats) | `ChatListPanel` | selects the first chat in the list (decision 7); `EmptyState` without one | – | list | yes |
 | `/chats/user/:id/:mi?/:tmi?` · `/user/:id/…` | `global_chat_selected_route` direct (chats) | `ChatListPanel` | conversation (DM) | `DmPanel` docked, `ProfileDialog` "This chat" below 1476px; thread → `ThreadPanel` | conversation | no |
 | `/chats/group/:id/…` · `/group/:id/…` · legacy `/:id/…` | `global_chat_selected_route` group (chats) | `ChatListPanel` | conversation (group) | `GroupPanel` on demand; thread → `ThreadPanel` | conversation | preview (read-only) |
-| `/favourite` | `chat_list_route` (favourite) | `ChatListPanel` favourites | `EmptyState` / auto-select | – | list | sign in, then `/chats` |
+| `/favourite` | `chat_list_route` (favourite) | `ChatListPanel` favourites | selects the first favourite (decision 7); `EmptyState` without one | – | list | sign in, then `/chats` |
 | `/favourite/user/:id/…` · `/favourite/group/:id/…` · `/favourite/community/:cid/channel/:chid/…` | as above, favourite scope | `ChatListPanel` favourites | conversation | as above | conversation | – (redirects to the non-favourite URL if not a favourite) |
-| `/community/:cid` | `selected_community_route` | `ChatListPanel` community mode (channels) | redirects to the default channel | `GroupPanel` (community) on demand | list | preview |
+| `/community/:cid` | `selected_community_route` | `ChatListPanel` community mode (channels) | selects the community's first channel (decision 7) | `GroupPanel` (community) on demand | list | preview |
 | `/community/:cid/channel/:chid/…` | `selected_channel_route` (community) | channel list | conversation (channel) | `GroupPanel` (channel) on demand; thread → `ThreadPanel` | conversation | preview |
 | `/chats/threads` · `/favourite/threads` · `/community/:cid/threads` **(new)** | `threads_route` (that scope) | `ThreadList` (All / Unread) | last opened thread's chat, else `EmptyState` | `ThreadPanel` once a thread is open | list | sign in |
-| `/notifications` **(mobile's path, new on desktop)** | `notifications_route` | `ActivityPanel` | selected item's chat | the selected item's chat details, on demand | list | sign in |
+| `/notifications` **(mobile's path, new on desktop)** | `notifications_route`; over a chat, `?panel=activity` on that chat's path (decision 7) | `ActivityPanel` | the last selected chat stays; an item opens its chat | that chat's details, on demand | list | sign in |
 | `/profile_summary` **(mobile's path, new on desktop)** | `profile_summary_route` | redirects to the default chat list with `?profile` | | | | sign in |
 | `/welcome` **(mobile's path, new on desktop)** | `welcome_route` | – | `ExploreCommunities` (as `/communities`) | – | full | yes |
 | `/communities` | `communities_route` | – (full width) | `ExploreCommunities` (search query in the URL, see below) | `JoinGateDialog` on join | full | yes |
@@ -208,8 +211,8 @@ and `/whitepaper?section=` scrolls to that section; `/architecture` frames the c
 
 Still to come:
 
-- **Rail panels** (decision 7): DMs, favourites and notifications keeping the open conversation,
-  with the panel in `?panel=`, come with phase 3.
+- **Switching the left column** (decision 7): notifications keeping the last selected chat (with
+  `?panel=activity`), and the other lists selecting their first chat, come with phase 3.
 - **Legal pages and `/diamond`**: placeholders until Learn's doc pages and `DiamondContent` exist
   (decision 5).
 - **Guests**: guest-only behaviour comes in the guest pass (phase 10). That covers the "sign in"
