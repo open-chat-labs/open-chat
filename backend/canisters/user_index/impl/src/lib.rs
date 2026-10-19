@@ -1,5 +1,7 @@
 use crate::model::group_index_event_batch::GroupIndexEventBatch;
 use crate::model::identity_event_batch::IdentityEventBatch;
+use crate::model::identity_user_sync_batch::IdentityUserSyncBatch;
+use crate::model::legacy_local_user_index_event_batch::LegacyLocalUserIndexEventBatch;
 use crate::model::local_user_index_event_batch::LocalUserIndexEventBatch;
 use crate::model::local_user_index_map::LocalUserIndex;
 use crate::model::online_users_event_batch::OnlineUsersEventBatch;
@@ -173,7 +175,7 @@ impl RuntimeState {
 
     pub fn push_event_to_local_user_index_canister(&mut self, canister_id: CanisterId, event: LocalUserIndexEvent) {
         let event = self.envelope(event);
-        self.data.local_user_index_event_sync_queue.push(canister_id, event);
+        self.data.local_user_index_event_sync_queue_v2.push(canister_id, event);
     }
 
     pub fn push_event_to_identity(&mut self, event: IdentityEvent) {
@@ -334,7 +336,7 @@ impl RuntimeState {
             max_concurrent_canister_upgrades: self.data.max_concurrent_canister_upgrades,
             platform_moderators: self.data.platform_moderators.len() as u8,
             platform_operators: self.data.platform_operators.len() as u8,
-            user_index_events_queue_length: self.data.local_user_index_event_sync_queue.len(),
+            user_index_events_queue_length: self.data.local_user_index_event_sync_queue_v2.len(),
             local_user_indexes: self.data.local_index_map.iter().map(|(c, i)| (*c, i.clone())).collect(),
             multi_user_canisters: self.data.multi_user_canisters.iter().map(|(c, m)| (*c, m.clone())).collect(),
             migrated_user_ids: self.data.migrated_user_ids.len(),
@@ -463,10 +465,14 @@ struct Data {
     pub storage_index_users_to_remove_queue: BatchedTimerJobQueue<StorageIndexUsersToRemoveBatch>,
     #[serde(default = "new_storage_index_event_sync_queue")]
     pub storage_index_event_sync_queue: BatchedTimerJobQueue<StorageIndexEventBatch>,
-    // Drained into `local_user_index_event_sync_queue` by the post_upgrade one-off, and removed with it
+    // This and `local_user_index_event_sync_queue` are drained into `local_user_index_event_sync_queue_v2`
+    // by the post_upgrade one-off, and removed with it
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
+    // Live in 2.0.2155 with unwrapped events, so it keeps its name and type until it has been drained
+    #[serde(default = "new_legacy_local_user_index_event_sync_queue")]
+    pub local_user_index_event_sync_queue: GroupedTimerJobQueue<LegacyLocalUserIndexEventBatch>,
     #[serde(default = "new_local_user_index_event_sync_queue")]
-    pub local_user_index_event_sync_queue: GroupedTimerJobQueue<LocalUserIndexEventBatch>,
+    pub local_user_index_event_sync_queue_v2: GroupedTimerJobQueue<LocalUserIndexEventBatch>,
     pub group_index_event_sync_queue: BatchedTimerJobQueue<GroupIndexEventBatch>,
     pub online_users_event_sync_queue: BatchedTimerJobQueue<OnlineUsersEventBatch>,
     pub pending_payments_queue: PendingPaymentsQueue,
@@ -502,9 +508,13 @@ struct Data {
     pub empty_users: HashSet<UserId>,
     pub chit_leaderboard: ChitLeaderboard,
     pub deleted_users: Vec<DeletedUser>,
-    // Drained into `identity_user_sync_queue` by the post_upgrade one-off, and removed with it
+    // This and `identity_user_sync_queue` are drained into `identity_event_sync_queue` by the
+    // post_upgrade one-off, and removed with it
     #[serde(alias = "identity_canister_user_sync_queue_2")]
     pub identity_canister_user_sync_queue: VecDeque<UserIdentity>,
+    // Live in 2.0.2155, so it keeps its name and type until it has been drained
+    #[serde(default = "new_identity_user_sync_queue")]
+    pub identity_user_sync_queue: BatchedTimerJobQueue<IdentityUserSyncBatch>,
     #[serde(default = "new_identity_event_sync_queue")]
     pub identity_event_sync_queue: BatchedTimerJobQueue<IdentityEventBatch>,
     pub survey_messages_sent: usize,
@@ -607,7 +617,8 @@ impl Data {
             storage_index_users_to_remove_queue: BatchedTimerJobQueue::new(storage_index_canister_id, false),
             storage_index_event_sync_queue: BatchedTimerJobQueue::new(storage_index_canister_id, false),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
-            local_user_index_event_sync_queue: new_local_user_index_event_sync_queue(),
+            local_user_index_event_sync_queue: new_legacy_local_user_index_event_sync_queue(),
+            local_user_index_event_sync_queue_v2: new_local_user_index_event_sync_queue(),
             group_index_event_sync_queue: BatchedTimerJobQueue::new(group_index_canister_id, false),
             online_users_event_sync_queue: BatchedTimerJobQueue::new(online_users_canister_id, false),
             pending_payments_queue: PendingPaymentsQueue::default(),
@@ -638,6 +649,7 @@ impl Data {
             chit_leaderboard: ChitLeaderboard::new(now),
             deleted_users: Vec::new(),
             identity_canister_user_sync_queue: VecDeque::new(),
+            identity_user_sync_queue: new_identity_user_sync_queue(),
             identity_event_sync_queue: BatchedTimerJobQueue::new(identity_canister_id, false),
             survey_messages_sent: 0,
             external_achievements: ExternalAchievements::default(),
@@ -724,7 +736,8 @@ impl Default for Data {
             storage_index_users_to_remove_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             storage_index_event_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
-            local_user_index_event_sync_queue: new_local_user_index_event_sync_queue(),
+            local_user_index_event_sync_queue: new_legacy_local_user_index_event_sync_queue(),
+            local_user_index_event_sync_queue_v2: new_local_user_index_event_sync_queue(),
             group_index_event_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             online_users_event_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             pending_payments_queue: PendingPaymentsQueue::default(),
@@ -755,6 +768,7 @@ impl Default for Data {
             chit_leaderboard: ChitLeaderboard::new(0),
             deleted_users: Vec::new(),
             identity_canister_user_sync_queue: VecDeque::new(),
+            identity_user_sync_queue: new_identity_user_sync_queue(),
             identity_event_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             survey_messages_sent: 0,
             external_achievements: ExternalAchievements::default(),
@@ -936,6 +950,15 @@ pub struct CanisterIds {
 
 fn new_local_user_index_event_sync_queue() -> GroupedTimerJobQueue<LocalUserIndexEventBatch> {
     GroupedTimerJobQueue::new(10, false)
+}
+
+// The two queues 2.0.2155 holds, which the post_upgrade one-off drains. Removed with that one-off.
+fn new_legacy_local_user_index_event_sync_queue() -> GroupedTimerJobQueue<LegacyLocalUserIndexEventBatch> {
+    GroupedTimerJobQueue::new(10, false)
+}
+
+fn new_identity_user_sync_queue() -> BatchedTimerJobQueue<IdentityUserSyncBatch> {
+    BatchedTimerJobQueue::new(Principal::anonymous(), false)
 }
 
 // Only reached when deserializing state from before the queues existed, which the post_upgrade

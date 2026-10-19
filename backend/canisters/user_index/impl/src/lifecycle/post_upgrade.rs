@@ -35,10 +35,12 @@ fn post_upgrade(args: Args) {
     info!(version = %args.wasm_version, total_instructions, "Post-upgrade complete");
 }
 
-// One-off: moves whatever the queues replaced since the last release still hold onto their
-// replacements, ahead of anything queued since the upgrade. A push normally sends at once, which a
-// call made from within post_upgrade can't, so sending is deferred while the items are pushed, and
-// the queues' timers send them next round. Removed, with the old queues, once this has run.
+// One-off: moves whatever the replaced queues still hold onto their replacements, ahead of anything
+// queued since the upgrade. That covers those from before 2.0.2155 and the two 2.0.2155 added,
+// `local_user_index_event_sync_queue` (whose events weren't yet wrapped) and
+// `identity_user_sync_queue`. A push normally sends at once, which a call made from within
+// post_upgrade can't, so sending is deferred while the items are pushed, and the queues' timers send
+// them next round. Removed, with the old queues, once this has run.
 fn migrate_sync_queues(state: &mut RuntimeState) {
     let now = state.env.now();
     let data = &mut state.data;
@@ -47,9 +49,14 @@ fn migrate_sync_queues(state: &mut RuntimeState) {
     data.identity_event_sync_queue.set_state(data.identity_canister_id);
     data.storage_index_event_sync_queue.set_state(data.storage_index_canister_id);
 
-    let queue = &mut data.local_user_index_event_sync_queue;
+    // Oldest first: what's left from before 2.0.2155, then what 2.0.2155 queued
+    let queue = &mut data.local_user_index_event_sync_queue_v2;
     queue.set_defer_processing(true);
-    for (canister_id, events) in std::mem::take(&mut data.user_index_event_sync_queue).take_all() {
+    for (canister_id, events) in std::mem::take(&mut data.user_index_event_sync_queue)
+        .take_all()
+        .into_iter()
+        .chain(data.local_user_index_event_sync_queue.take_all())
+    {
         queue.push_many(canister_id, events.into_iter().map(|e| envelope(now, rng, e)).collect());
     }
     queue.set_defer_processing(false);
@@ -60,6 +67,7 @@ fn migrate_sync_queues(state: &mut RuntimeState) {
     queue.push_many(
         identities
             .into_iter()
+            .chain(data.identity_user_sync_queue.take_all())
             .map(|user| envelope(now, rng, IdentityEvent::SetUserIdentity(user)))
             .collect(),
     );

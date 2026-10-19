@@ -5,6 +5,8 @@ pub mod diamond_membership_details;
 pub mod external_achievements;
 pub mod group_index_event_batch;
 pub mod identity_event_batch;
+pub mod identity_user_sync_batch;
+pub mod legacy_local_user_index_event_batch;
 pub mod local_user_index_event_batch;
 pub mod local_user_index_map;
 pub mod moderation;
