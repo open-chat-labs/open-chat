@@ -1,19 +1,14 @@
 use crate::{Data, RuntimeState};
 use chat_events::{ChatEventInternal, Reader};
 use constants::{DAY_IN_MS, HOUR_IN_MS};
-use rand::Rng;
 use std::collections::HashSet;
-use types::{IdempotentEnvelope, PublicGroupActivity, TimestampMillis};
+use types::{PublicGroupActivity, TimestampMillis};
 
 // If needed, notify the GroupIndex (via the LocalUserIndex) that there has been activity in this group
 pub(crate) fn handle_activity_notification(state: &mut RuntimeState) {
     let now = state.env.now();
 
-    state.data.local_user_index_event_sync_queue.push(IdempotentEnvelope {
-        created_at: now,
-        idempotency_id: state.env.rng().next_u64(),
-        value: local_user_index_canister::GroupEvent::MarkActivity(now),
-    });
+    state.push_event_to_local_user_index(local_user_index_canister::GroupEvent::MarkActivity(now));
 
     if let Some(mark_active_duration) = state.data.activity_notification_state.notify_if_required(now) {
         let public_group_activity = state.data.chat.is_public.then(|| extract_activity(now, &state.data));

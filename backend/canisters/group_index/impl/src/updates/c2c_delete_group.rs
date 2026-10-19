@@ -33,9 +33,7 @@ pub(crate) fn delete_group(
     state: &mut RuntimeState,
 ) -> Response {
     let now = state.env.now();
-    if let Some(local_user_index_canister) = state.data.local_index_map.get_index_canister_for_group(&group_id) {
-        state.push_event_to_local_index(local_user_index_canister, LocalIndexEvent::DeleteGroup(group_id), now);
-    }
+    state.push_group_event_to_local_index(group_id, LocalIndexEvent::DeleteGroup(group_id), now);
 
     let public = if let Some(group) = state.data.public_groups.delete(&group_id) {
         // This won't remove the name if the group was converted into a community because the name
