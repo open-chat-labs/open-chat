@@ -537,7 +537,7 @@ const extX = 1560, extY0 = 100;
   usedExt.forEach((k, i) => {
     const y = extY0 + i * 52, x = extX;
     rects["ext:" + k] = { x, y, w: EXT_W, h: EXT_H, cx: x + EXT_W / 2, cy: y + EXT_H / 2 };
-    const g = el("g", { class: "ext", "data-ext": k, tabindex: 0 }, gExts);
+    const g = el("g", { class: "ext", "data-ext": "ext:" + k, tabindex: 0 }, gExts);
     el("rect", { x, y, width: EXT_W, height: EXT_H }, g);
     const t = el("text", { x: x + 14, y: y + 25 }, g); t.textContent = DATA.externals[k].title;
     extEls["ext:" + k] = g;
