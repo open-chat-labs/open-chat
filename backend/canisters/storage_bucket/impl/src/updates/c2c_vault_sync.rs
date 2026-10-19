@@ -14,7 +14,7 @@ fn c2c_vault_sync(args: Args) -> Response {
     mutate_state(|state| c2c_vault_sync_impl(args, state))
 }
 
-fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
+pub(crate) fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
     let mut quarantine_failures = Vec::new();
 
