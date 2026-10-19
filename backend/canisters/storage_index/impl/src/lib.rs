@@ -4,7 +4,6 @@ use crate::model::files::Files;
 use crate::model::vault_event_batch::VaultEventBatch;
 use candid::{CandidType, Principal};
 use canister_state_macros::canister_state;
-use constants::ICP_LEDGER_CANISTER_ID;
 use fire_and_forget_handler::FireAndForgetHandler;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
@@ -100,7 +99,6 @@ impl RuntimeState {
             stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
                 cycles_dispenser: self.data.cycles_dispenser_config.canister_id,
-                icp_ledger: self.data.icp_ledger_canister_id,
                 cmc: self.data.cycles_minting_canister_id,
             },
         }
@@ -144,8 +142,6 @@ struct Data {
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub total_cycles_spent_on_canisters: Cycles,
     pub cycles_dispenser_config: CyclesDispenserConfig,
-    #[serde(default = "icp_ledger_canister_id")]
-    pub icp_ledger_canister_id: CanisterId,
     #[serde(default = "cycles_minting_canister_id")]
     pub cycles_minting_canister_id: CanisterId,
     pub rng_seed: [u8; 32],
@@ -154,10 +150,6 @@ struct Data {
 
 fn default_vault_event_sync_queue() -> GroupedTimerJobQueue<VaultEventBatch> {
     GroupedTimerJobQueue::new(5, false)
-}
-
-fn icp_ledger_canister_id() -> CanisterId {
-    ICP_LEDGER_CANISTER_ID
 }
 
 fn cycles_minting_canister_id() -> CanisterId {
@@ -170,7 +162,6 @@ impl Data {
         governance_principals: Vec<Principal>,
         bucket_canister_wasm: CanisterWasm,
         cycles_dispenser_config: CyclesDispenserConfig,
-        icp_ledger_canister_id: CanisterId,
         cycles_minting_canister_id: CanisterId,
         test_mode: bool,
     ) -> Data {
@@ -193,7 +184,6 @@ impl Data {
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             total_cycles_spent_on_canisters: 0,
             cycles_dispenser_config,
-            icp_ledger_canister_id,
             cycles_minting_canister_id,
             rng_seed: [0; 32],
             test_mode,
@@ -396,6 +386,5 @@ pub struct BucketMetrics {
 #[derive(CandidType, Serialize, Debug)]
 pub struct CanisterIds {
     cycles_dispenser: CanisterId,
-    icp_ledger: CanisterId,
     cmc: CanisterId,
 }

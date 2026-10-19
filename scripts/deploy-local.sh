@@ -91,8 +91,6 @@ echo "Canisters created"
     $NNS_INDEX_CANISTER_ID \
     true \
 
-STORAGE_INDEX_CANISTER_ID=$(dfx canister id storage_index)
-./scripts/get-test-icp.sh $STORAGE_INDEX_CANISTER_ID $IDENTITY
 dfx --identity $IDENTITY canister call storage_index add_bucket_canister '(record { })'
 
 ./scripts/deploy-test-chat-ledger.sh $IDENTITY
