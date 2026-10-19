@@ -75,8 +75,10 @@ Agreed on 2026-10-16; the tables below follow them.
 7. **Switching the left column.**
    - **Notifications** (activity) change only the left column: the middle keeps the last
      selected chat, with its right column. The URL keeps that chat and notes the panel in the
-     query (`/chats/group/:id?panel=activity`), so a reload or a shared link keeps both; with no
-     chat selected, `/notifications` opens the panel over an empty middle.
+     query (`/chats/group/:id?panel=activity`), so a reload or a shared link keeps both. From the
+     wallet, which had replaced the middle, it's the chat selected before the wallet opened.
+     With no chat selected before (none yet, or the session started in the wallet),
+     `/notifications` opens the panel over an empty middle.
    - **DMs and groups, favourites, a community**: switching to one selects its first chat (the
      first favourite, the community's first channel) for the middle, and switching back to DMs
      and groups selects the first chat in that list.
