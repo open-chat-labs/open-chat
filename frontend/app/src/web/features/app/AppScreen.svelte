@@ -98,8 +98,14 @@
     {/if}
 {/snippet}
 
+<!-- TODO(phase 4): GroupPanel / DmPanel / ThreadPanel -->
+{#snippet detailsColumn()}
+    <Placeholder title="Details" detail="GroupPanel / DmPanel / ThreadPanel (phase 4)" />
+{/snippet}
+
 <Shell
     left={regions.left ? leftColumn : undefined}
+    right={regions.rightColumn === false ? undefined : detailsColumn}
     narrowView={regions.narrowView}
     rightOpen={rightColumn.open}
     onCloseRight={() => (rightColumn.open = false)}
@@ -135,20 +141,19 @@
                         onClick={() => navigate(back)} />
                 {/if}
                 <span class="gap"></span>
-                <IconButton
-                    icon="panel"
-                    variant="ghost"
-                    pressed={rightColumn.open}
-                    label={rightColumn.open
-                        ? "ui.conversationHeader.hidePanel"
-                        : "ui.conversationHeader.showPanel"}
-                    onClick={() => rightColumn.toggle()} />
+                {#if regions.rightColumn !== false}
+                    <IconButton
+                        icon="panel"
+                        variant="ghost"
+                        pressed={rightColumn.open}
+                        label={rightColumn.open
+                            ? "ui.conversationHeader.hidePanel"
+                            : "ui.conversationHeader.showPanel"}
+                        onClick={() => rightColumn.toggle()} />
+                {/if}
             </div>
             <Placeholder {title} {detail} />
         </div>
-    {/snippet}
-    {#snippet right()}
-        <Placeholder title="Details" detail="GroupPanel / DmPanel / ThreadPanel (phase 4)" />
     {/snippet}
 </Shell>
 

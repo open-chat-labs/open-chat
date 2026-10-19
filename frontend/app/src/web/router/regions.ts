@@ -20,6 +20,8 @@ export type Regions =
               | { kind: "admin" };
           // the column a narrow screen shows
           narrowView: "left" | "middle";
+          // a route with no right column (details) says so; the others have one (ROUTES.md)
+          rightColumn?: false;
       };
 
 const MARKETING_KINDS: RouteParams["kind"][] = [
@@ -69,7 +71,13 @@ export function regionsFor(route: RouteParams, signedOut: boolean): Regions {
             };
         case "communities_route":
         case "welcome_route":
-            return { area: "app", middle: { kind: "explore" }, narrowView: "middle" };
+            // full width, without the details column (joining is a dialog)
+            return {
+                area: "app",
+                middle: { kind: "explore" },
+                narrowView: "middle",
+                rightColumn: false,
+            };
         case "wallet_route":
             return {
                 area: "app",
