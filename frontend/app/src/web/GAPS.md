@@ -54,6 +54,16 @@ design export needs. Each entry says where it came up.
   account), and their `PageAuth` an `onOpen` and an `onClose` for the dialog opening and the person closing it. Also
   `passkeySignup` (Create account off without a passkey on offer) and `wallets` loaded when their
   method is picked. None of these were designed.
+- **Learn, added by hand** (to go back to the design export): content text may use a markdown
+  subset (links, bold, inline code, an image paragraph in a post: `inlineMarkdown.ts`), rendered
+  as elements; FAQ answers split into paragraphs on blank lines and keep line breaks, an untitled
+  FAQ group has no heading, and questions can carry an `id`. A doc's sections can be nested
+  (`depth`), numbered 01, 2.1, 3.4.1, with a contents list whose sub-sections open as the reader
+  reaches them, or by hand, and which scrolls on its own. `section` and `question` deep link
+  into a doc and the FAQs, and `architecture` puts the host's own content on that tab, filling the screen between the header and the footer (the canister map, full width and height). Landing's section links scroll smoothly.
+- **`ActivityPanel` back button**: opened over a chat or a wallet page (`?panel=activity`,
+  ROUTES.md decision 7), the panel needs a back button beside its title (`onBack`) that returns
+  the left column to the middle's own panel. The design has none yet.
 - **Swatches**: the design's colour/cover swatches for groups, communities and avatars have no
   OpenChat equivalent (it has uploaded avatars and banners). Adapters pass images and pick a
   swatch from the id.
@@ -92,11 +102,24 @@ design export needs. Each entry says where it came up.
   - the Solana adapters' own icons (Phantom has none here);
   - joining the group or community a guest picked once they've signed in (`postLoginJoin` in
     `Home.svelte`), for the guest pass (phase 10).
-- **Learn content**: the existing pages' content (roadmap, blog, whitepaper, FAQ) has to move
-  into Learn's content shape (markdown docs, JSON roadmap and FAQ). The FAQ answers are HTML
-  (links, tables), which Learn renders as plain text. The architecture page is no longer a doc:
-  it frames the interactive canister map served beside the app (`CanisterMapFrame.svelte`), with
-  `?section=<canister>` selecting a canister.
+- **Learn content** (`features/marketing/learn`): converted from the existing pages, verbatim
+  (their typos included), with what Learn's shapes can't hold dropped or flattened:
+  - **Whitepaper**: the old page's outline (2.1, 3.4.1 …) comes from its section ids, which
+    `?section=` links keep using. Only the token allocation chart has a figure (its data from the old
+    page's embedded Google Sheets chart); the voting power, attack scenario and supply charts
+    are gone, and the text around them still refers to them. The two configuration tables are
+    lists of "label: value". A list followed by more text is "•" paragraphs, to keep the order.
+  - **Roadmap**: newest first (the old page ran oldest first, then "Future"); a detail's
+    subheadings and its lists are kept apart (Learn's paragraphs, then points), and nested lists
+    are flattened.
+  - **FAQs**: one untitled group in the old order; the answers' HTML is converted when they're
+    read (links kept, lists and table rows as lines, italics dropped), and the translation
+    answer keeps its screenshot.
+  - **Blog**: screenshots keep their desktop version (the mobile ones are dropped) and stack where
+    the old posts set two side by side; the access gate expiry post's YouTube explainer and the
+    video calls post's sequence diagram are gone, though their text still mentions them.
+    Subheadings are bold paragraphs, list items "•" paragraphs, and italics plain. The
+    translations post shows "2 Mar 2024", as the old blog did (its date is written as 31 Feb).
 - **Landing's featured communities**: none are passed yet, so the section shows only its heading
   and Browse link. The old landing page had no such list; explore's hot communities could feed it.
 - **Android APK link**: Landing's `apkHref` has no URL in the app, so that choice isn't a link.

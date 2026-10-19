@@ -197,6 +197,20 @@ export async function openExternalUrl(client: OpenChat, url: string): Promise<vo
     window.open(href, "_blank", "noopener,noreferrer");
 }
 
+// An editing host: contenteditable with an editable state. "false", "inherit" and invalid values
+// aren't, so they don't count (the spec's states; attribute values are case-insensitive)
+const EDITING_HOST =
+    '[contenteditable=""], [contenteditable="true" i], [contenteditable="plaintext-only" i]';
+
+/**
+ * Whether an element sits in an editor: inside any editing host, a contenteditable="false" island
+ * in one (a mention or link chip in a rich-text composer) included. A region marked
+ * contenteditable="false" outside any editor isn't, which a plain [contenteditable] match counted.
+ */
+export function inEditor(element: Element): boolean {
+    return element.closest(EDITING_HOST) !== null;
+}
+
 export function handleLinkClick(
     client: OpenChat,
     onInternal: (url: string) => void,
@@ -216,7 +230,7 @@ export function handleLinkClick(
         if (anchor.getAttribute("role") === "button") return;
 
         // Don't navigate when clicking links inside a contenteditable editor
-        if (anchor.closest("[contenteditable]")) {
+        if (inEditor(anchor)) {
             e.preventDefault();
             return;
         }

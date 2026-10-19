@@ -1882,6 +1882,8 @@
       },
       "navLabel": "Learn",
       "onThisPage": "On this page",
+      "showSections": "Show the sections in {title}",
+      "hideSections": "Hide the sections in {title}",
       "blog": {
         "kicker": "Blog",
         "title": "News from the DAO",

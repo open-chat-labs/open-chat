@@ -126,7 +126,7 @@ describe("the web UI's router", () => {
     test("counts a page view and scrolls to the top for a route", async () => {
         await open("/chats");
         expect(gtag).toHaveBeenCalledWith("event", "page_view", { page_location: "/chats" });
-        expect(window.scrollTo).toHaveBeenCalledWith({ behavior: "auto", top: 0 });
+        expect(window.scrollTo).toHaveBeenCalledWith({ behavior: "instant", top: 0 });
     });
 
     test("leaves a previewed community's thread list where it is", async () => {

@@ -1,7 +1,7 @@
 // Learn page content: the docs (whitepaper, architecture), blog posts, roadmap and FAQs. This is placeholder copy carried
 // over from the prototype. The host is expected to load the real content (markdown for docs and posts, JSON for the
 // roadmap and FAQs) and pass it to <Learn content={…}>; the shapes below are that contract. Content is data, not UI
-// copy, so it isn't translated through the i18n keys.
+// copy, so it isn't translated through the i18n keys. Its text may use the markdown subset in inlineMarkdown.ts.
 
 export type LearnPage = 'roadmap' | 'whitepaper' | 'architecture' | 'blog' | 'faq';
 export type LearnDocPage = Extract<LearnPage, 'whitepaper' | 'architecture'>;
@@ -12,6 +12,8 @@ export const LEARN_PAGES: LearnPage[] = ['roadmap', 'whitepaper', 'architecture'
 export interface LearnDocSection {
   /** Unique within the doc. Rendered as id="learn-<id>" (prefixed, so it can't clash with the host page's ids). */
   id: string;
+  /** 1 (the default) for a top-level section; a deeper one belongs to the nearest shallower section before it. */
+  depth?: number;
   title: string;
   paras: string[];
   list?: string[];
@@ -67,7 +69,9 @@ export interface RoadmapItem {
 
 export interface FaqGroup {
   title: string;
-  items: { q: string; a: string }[];
+  /** `id` makes a question a deep link target (Learn's `question`), unique across the groups. An answer's blank lines
+   *  separate paragraphs, and a paragraph that is only `![alt](src)` is an image. */
+  items: { id?: string; q: string; a: string }[];
 }
 
 export interface LearnContent {
@@ -569,9 +573,10 @@ export const placeholderLearnContent: LearnContent = {
   ],
 };
 
-/** The sub-pages the content has: a doc page (whitepaper, architecture) only when the content includes that doc. */
-export function learnPagesOf(content: LearnContent): LearnPage[] {
-  return LEARN_PAGES.filter((p) => (p === 'whitepaper' || p === 'architecture' ? !!content.docs[p] : true));
+/** The sub-pages the content has: a doc page (whitepaper, architecture) only when the content includes that doc, or
+ *  the host gives that page's content itself (`hosted`). */
+export function learnPagesOf(content: LearnContent, hosted: LearnDocPage[] = []): LearnPage[] {
+  return LEARN_PAGES.filter((p) => (p === 'whitepaper' || p === 'architecture' ? !!content.docs[p] || hosted.includes(p) : true));
 }
 
 /** The sub-page (and blog post) a location hash names: '#faq', '#blog/<slug>'. Null for no hash or an unknown page. */
@@ -594,3 +599,65 @@ export function learnFromHash(hash: string): { page: LearnPage; post?: string } 
 export function learnHashHref(learnHref: string, page: LearnPage, post?: string): string {
   return `${learnHref}#${page}${page === 'blog' && post ? '/' + encodeURIComponent(post) : ''}`;
 }
+
+/** A doc section in its doc's outline: its number (01, 02 … at the top, 2.1, 3.4.1 below) and its sub-sections. */
+export interface OutlineEntry {
+  /** The section's index in the doc's sections. */
+  index: number;
+  number: string;
+  depth: number;
+  children: OutlineEntry[];
+}
+
+/** The doc's sections as a tree: each section under the nearest shallower one before it (a depth that skips a level
+ *  sits one level down). Numbers count within each parent. */
+export function docOutline(sections: LearnDocSection[]): OutlineEntry[] {
+  const top: OutlineEntry[] = [];
+  // the open entries, one per level, with the plain path their children's numbers build on
+  const open: { entry: OutlineEntry; path: string }[] = [];
+  sections.forEach((s, index) => {
+    const depth = Math.max(1, Math.min(s.depth ?? 1, open.length + 1));
+    open.length = depth - 1;
+    const parent = open[depth - 2];
+    const siblings = parent ? parent.entry.children : top;
+    const n = siblings.length + 1;
+    const path = parent ? `${parent.path}.${n}` : String(n);
+    const entry: OutlineEntry = { index, number: parent ? path : String(n).padStart(2, '0'), depth, children: [] };
+    siblings.push(entry);
+    open.push({ entry, path });
+  });
+  return top;
+}
+
+/** The outline entries from the top down to the section at `index` (the section's own entry last); none for an index
+ *  the outline doesn't have. */
+export function outlinePath(outline: OutlineEntry[], index: number): OutlineEntry[] {
+  for (const entry of outline) {
+    if (entry.index === index) return [entry];
+    const below = outlinePath(entry.children, index);
+    if (below.length) return [entry, ...below];
+  }
+  return [];
+}
+
+/** Whether a link goes to the page exactly as it shows (the same path and query; a fragment aside): following it changes
+ *  nothing for the host, so the page itself applies its deep link (a doc section, a question) again. */
+export function sameLocation(href: string, here: string): boolean {
+  try {
+    const to = new URL(href, here);
+    const from = new URL(here);
+    return to.origin === from.origin && to.pathname === from.pathname && to.search === from.search;
+  } catch {
+    return false;
+  }
+}
+
+/** The section being read: the last one whose top has reached `line` (from the top of the viewport), else the first. */
+export function readingSection(tops: number[], line: number): number {
+  let reading = 0;
+  tops.forEach((top, i) => {
+    if (top <= line) reading = i;
+  });
+  return reading;
+}
+

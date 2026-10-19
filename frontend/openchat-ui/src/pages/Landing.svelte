@@ -545,12 +545,21 @@
 </div>
 
 <style>
+  /* the header's section links (#landing-features …) glide to their section, unless motion is reduced */
+  @media (prefers-reduced-motion: no-preference) {
+    :global(html:has([data-oc-page='landing'])) {
+      scroll-behavior: smooth;
+    }
+  }
+
   .page {
     min-height: 100vh;
     background: var(--surface-0);
     color: var(--ink);
     font-family: var(--font-sans);
-    overflow-x: hidden;
+    /* clip, not hidden: hidden makes this its own scroll container, which the sticky header would stick to instead of
+       the window, so it scrolled away */
+    overflow-x: clip;
   }
 
   a {
@@ -1587,6 +1596,8 @@
 
   .browse {
     flex: none;
+    /* at the row's far end, and there too when it wraps under the heading */
+    margin-inline-start: auto;
     display: flex;
     align-items: center;
     gap: var(--space-8);
