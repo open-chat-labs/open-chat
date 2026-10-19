@@ -7,11 +7,12 @@
     } from "@solana/wallet-adapter-base";
     import { Connection, clusterApiUrl } from "@solana/web3.js";
     import { getContext, onMount } from "svelte";
+    import { buildSiwsMessage } from "@src/utils/siws";
     import { CoinbaseWalletAdapter } from "@solana/wallet-adapter-coinbase";
     import { PhantomWalletAdapter } from "@solana/wallet-adapter-phantom";
     import { WalletConnectWalletAdapter } from "@solana/wallet-adapter-walletconnect";
     import Button from "../Button.svelte";
-    import type { OpenChat, SiwsMessage } from "@client";
+    import type { OpenChat } from "@client";
     import base58 from "bs58";
     import type { DelegationChain, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
 
@@ -47,7 +48,7 @@
                 const prepareResponse = await client.siwsPrepareLogin(account);
 
                 if (prepareResponse.kind === "success") {
-                    const request = buildSignInRequest(prepareResponse.siwsMessage);
+                    const request = buildSiwsMessage(prepareResponse.siwsMessage);
                     const data = new TextEncoder().encode(request);
                     const signResponse = await signMessage(data);
                     const signature = base58.encode(signResponse);
@@ -88,22 +89,6 @@
             onError: walletError,
         });
     });
-
-    function buildSignInRequest(siwsMessage: SiwsMessage): string {
-        // expiration_time and issued_at are in nanoseconds, convert to milliseconds.
-        const expMilliseconds = Number(siwsMessage.expirationTime / BigInt(1000000));
-        const issuedAtMilliseconds = Number(siwsMessage.issuedAt / BigInt(1000000));
-
-        let request = `${siwsMessage.domain} wants you to sign in with your Solana account:\n${siwsMessage.address}\n\n`;
-        request += `${siwsMessage.statement}\n\n`;
-        request += `URI: ${siwsMessage.uri}\n`;
-        request += `Version: ${siwsMessage.version}\n`;
-        request += `Chain ID: ${siwsMessage.chainId}\n`;
-        request += `Nonce: ${siwsMessage.nonce}\n`;
-        request += `Issued At: ${new Date(issuedAtMilliseconds).toISOString()}\n`;
-        request += `Expiration Time: ${new Date(expMilliseconds).toISOString()}`;
-        return request;
-    }
 </script>
 
 {#each $walletStore.wallets as { adapter: { name, icon } }}

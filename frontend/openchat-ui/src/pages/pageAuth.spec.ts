@@ -59,6 +59,15 @@ describe('PageAuthState', () => {
     await stale;
     expect([onEnterApp.mock.calls.length, state.kind]).toEqual([2, 'login']);
   });
+  test('without passkey sign-up, Create account opens sign-in', () => {
+    const { state } = setup({ passkeySignup: false });
+    state.open('signup');
+    expect(state.kind).toBe('login');
+    const other = setup({});
+    other.state.open('signup');
+    expect(other.state.kind).toBe('signup');
+  });
+
   test("the person closing the dialog tells the host; the close after a sign-in doesn't", async () => {
     const onClose = vi.fn();
     const { state, method } = setup({ onMethod: () => Promise.resolve(), onClose });

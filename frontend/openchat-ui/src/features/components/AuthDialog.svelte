@@ -99,8 +99,12 @@
     email?: string;
     /** Prefills sign-up's referrer (e.g. from a referral link); applied again whenever the host passes a new one. */
     referrer?: AuthPerson;
-    /** Wallets to pick from for Ethereum / Solana. With a list, the method asks which wallet and passes its id to onMethod. */
-    wallets?: Partial<Record<'eth' | 'sol', AuthWallet[]>>;
+    /** Wallets to pick from for Ethereum / Solana. With a list, the method asks which wallet and passes its id to onMethod.
+     *  A function loads the list when the method is picked (waiting meanwhile; reject to go back). */
+    wallets?: Partial<Record<'eth' | 'sol', AuthWallet[] | (() => Promise<AuthWallet[]>)>>;
+    /** Whether "Create an account" is on offer from sign-in: sign-up's form makes a passkey, so a host without one on
+     *  offer turns it off (someone new signs in another way, and the host then opens the form with `kind`). */
+    passkeySignup?: boolean;
     onClose?: () => void;
     /** Start sign-in / sign-up with a method (passkey prompt, wallet, II window). Waits until it settles; reject to go back. */
     onMethod?: (method: AuthMethod, kind: 'login' | 'signup', wallet?: string) => Promise<unknown> | void;
@@ -130,6 +134,7 @@
     email: initialEmail = '',
     referrer: initialReferrer,
     wallets,
+    passkeySignup = true,
     onClose,
     onMethod,
     onRequestEmailLink,
@@ -254,11 +259,21 @@
   const others = $derived(
     (methods ? methods.flatMap((m) => OTHERS.filter((o) => o.key === m)) : OTHERS).filter((o) => !(signup && o.loginOnly)),
   );
-  const walletList = $derived(walletsFor ? (wallets?.[walletsFor] ?? []) : []);
+  // a list the host loads when its method is picked
+  let loadedWallets = $state<AuthWallet[]>([]);
+  const walletList = $derived.by(() => {
+    if (!walletsFor) return [];
+    const given = wallets?.[walletsFor];
+    return Array.isArray(given) ? given : loadedWallets;
+  });
 
   function close() {
     run++;
-    if (step === 'sent') onCancelEmailLink?.();
+    if (step === 'sent') {
+      onCancelEmailLink?.();
+      // so unmounting doesn't stop the same link again
+      step = 'methods';
+    }
     onClose?.();
   }
 
@@ -294,10 +309,20 @@
     return result;
   }
 
-  function pick(m: Method) {
+  async function pick(m: Method) {
     if (flow.busy || !onMethod) return;
-    if ((m === 'eth' || m === 'sol') && wallets?.[m]?.length) {
-      walletsFor = m;
+    const given = m === 'eth' || m === 'sol' ? wallets?.[m] : undefined;
+    if (typeof given === 'function') {
+      const loaded = await attempt(m, given);
+      if (!loaded.ok) return;
+      if (loaded.value.length) {
+        loadedWallets = loaded.value;
+        walletsFor = m as 'eth' | 'sol';
+        step = 'wallets';
+        return;
+      }
+    } else if (given?.length) {
+      walletsFor = m as 'eth' | 'sol';
       step = 'wallets';
       failed = null;
       return;
@@ -614,7 +639,7 @@
           {#if linkResult === 'elsewhere'}<span class="sent-text">{t('ui.authDialog.linkedElsewhere')}</span>{/if}
         </div>
       {/if}
-      {#if !link}
+      {#if !link && (signup || passkeySignup)}
         <div class="switch">{t(signup ? 'ui.authDialog.haveAccount' : 'ui.authDialog.newToOpenChat')}<button class="switch-cta" onclick={switchMode} disabled={flow.busy}>{t(signup ? 'ui.authDialog.signIn' : 'ui.authDialog.createAnAccount')}</button></div>
       {/if}
     </div>

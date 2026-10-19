@@ -32,28 +32,36 @@
 
     // an emailed link followed elsewhere signs this page in too, so it enters the app
     const auth = createAuth(client, { translate: (key) => $_(key), onEmailSignedIn: enterApp });
-    onDestroy(auth.dispose);
-
     const dialog = new AuthDialogProps(auth);
-    // the method last used, read once: starting one doesn't move the tiles
-    const last = selectedAuthProviderStore.value;
+    // the method last used, read when the dialog is closed (and so before it opens again), not
+    // live: starting one doesn't move the tiles
+    let last = $state(selectedAuthProviderStore.value);
 
     // the page's own sign-ins are tracked, so "/" keeps Landing until they're through
-    const pageAuth = $derived.by(() => {
-        const props = dialog.props($querystringStore.getAll("auth"), last);
-        return {
-            ...props,
-            onMethod: (...args: Parameters<typeof auth.onMethod>) =>
-                pageSignIns.track(auth.onMethod(...args)),
-            onSignup: (details: Parameters<typeof auth.onSignup>[0]) =>
-                pageSignIns.track(auth.onSignup(details), { signup: true }),
-            // closing gives up what the dialog had going, and signs out an identity without an
-            // account it leaves behind (a sign-up that failed)
-            onClose: () => {
-                pageSignIns.closed();
-                auth.cancel();
-            },
-        };
+    const onMethod = (...args: Parameters<typeof auth.onMethod>) =>
+        pageSignIns.track(auth.onMethod(...args));
+    const onSignup = (details: Parameters<typeof auth.onSignup>[0]) =>
+        pageSignIns.track(auth.onSignup(details), { signup: true });
+    // closing gives up what the dialog had going, and signs out an identity without an account it
+    // leaves behind (a sign-up that failed)
+    const onClose = () => {
+        pageSignIns.closed();
+        auth.cancel();
+        last = selectedAuthProviderStore.value;
+        dialog.refresh();
+    };
+    const pageAuth = $derived({
+        ...dialog.props($querystringStore.getAll("auth"), last),
+        onMethod,
+        onSignup,
+        onClose,
+    });
+
+    // leaving the page mid sign-in (Back, a link) walks away from it, as closing its dialog does;
+    // a page left because its sign-in went through has nothing going
+    onDestroy(() => {
+        if (pageSignIns.left()) auth.cancel();
+        auth.dispose();
     });
 
     const signedIn = $derived($identityStateStore.kind === "logged_in");

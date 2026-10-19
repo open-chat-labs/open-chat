@@ -44,4 +44,26 @@ describe("signing in with a Solana wallet", () => {
         };
         await expect(signInWithSolana({} as OpenChat, "Phantom")).rejects.toBe(locked);
     });
+
+    test("given up while the wallet store settles, it doesn't pick the wallet", async () => {
+        const closed = new AbortController();
+        closed.abort();
+        store.state = { select: vi.fn(), connect: vi.fn() };
+        await expect(signInWithSolana({} as OpenChat, "Phantom", closed.signal)).rejects.toThrow();
+        expect(store.state.select).not.toHaveBeenCalled();
+    });
+
+    test("given up while the wallet connects, it goes no further when the wallet answers", async () => {
+        const closed = new AbortController();
+        const client = { siwsPrepareLogin: vi.fn() } as unknown as OpenChat;
+        store.state = {
+            select: vi.fn(),
+            connect: vi.fn(async () => closed.abort()),
+            publicKey: { toBase58: () => "addr" },
+            wallet: {},
+            signMessage: vi.fn(),
+        };
+        await expect(signInWithSolana(client, "Phantom", closed.signal)).rejects.toThrow();
+        expect(client.siwsPrepareLogin).not.toHaveBeenCalled();
+    });
 });

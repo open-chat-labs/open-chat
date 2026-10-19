@@ -1,7 +1,6 @@
 <script lang="ts">
-    import { createConfig, http, signMessage, type Connector } from "@wagmi/core";
-    import { coinbaseWallet, walletConnect, metaMask } from "@wagmi/connectors";
-    import { mainnet } from "@wagmi/core/chains";
+    import { signMessage, type Connector } from "@wagmi/core";
+    import { ethWagmiConfig } from "@src/utils/wagmi";
     import { OpenChat } from "@client";
     import { getContext } from "svelte";
     import Button from "../Button.svelte";
@@ -22,17 +21,7 @@
 
     let connecting: Connector | undefined = $state();
 
-    const wagmiConfig = createConfig({
-        chains: [mainnet],
-        connectors: [
-            metaMask(),
-            coinbaseWallet({ appName: "OpenChat" }),
-            walletConnect({ projectId: import.meta.env.OC_WALLET_CONNECT_PROJECT_ID! }),
-        ],
-        transports: {
-            [mainnet.id]: http(),
-        },
-    });
+    const wagmiConfig = ethWagmiConfig();
 
     const connectorNames = new Set<string>();
     const uniqueConnectors = wagmiConfig.connectors.filter((c) => {

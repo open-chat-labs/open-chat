@@ -6,7 +6,15 @@ import {
     type OpenChat,
 } from "@client";
 import { configKeys } from "@shared";
-import { createAuth, untilSignedIn } from "./signIn";
+import { createAuth, signInAbandoned, untilSignedIn } from "./signIn";
+
+const eth = vi.hoisted(() => ({ signals: [] as (AbortSignal | undefined)[] }));
+vi.mock("./ethWallet", () => ({
+    ethWallets: () => [{ id: "io.rabby", name: "Rabby Wallet" }],
+    signInWithEthereum: async (_client: unknown, _id: string, signal?: AbortSignal) => {
+        eth.signals.push(signal);
+    },
+}));
 
 // each link request has its own handler; magicLink answers them all
 const magicLink = vi.fn();
@@ -111,6 +119,8 @@ describe("the sign-in callbacks", () => {
     });
     afterEach(() => {
         auth.dispose();
+        // a user ends anything a test walked away from (it outlives a host)
+        set({ kind: "logged_in" });
         set({ kind: "anon" });
         onEmailSignedIn.mockReset();
     });
@@ -262,13 +272,24 @@ describe("the sign-in callbacks", () => {
         expect(onEmailSignedIn).toHaveBeenCalledWith("logged_in");
     });
 
-    test("a link given up on doesn't enter", async () => {
+    test("a link given up on doesn't enter, and counts as cancelled once", async () => {
         await auth.onRequestEmailLink!("me@example.com");
         auth.onCancelEmailLink!();
-        expect(client.gaTrack).toHaveBeenCalledWith("email_signin_cancelled", "registration");
+        // the dialog unmounting stops it again
+        auth.onCancelEmailLink!();
+        const cancels = client.gaTrack.mock.calls.filter(([e]) => e === "email_signin_cancelled");
+        expect(cancels).toEqual([["email_signin_cancelled", "registration"]]);
         expect(emailHandlers[0].stopPolling).toHaveBeenCalled();
         set({ kind: "logged_in" });
         expect(onEmailSignedIn).not.toHaveBeenCalled();
+    });
+
+    test("a link that signed in isn't counted as cancelled when its dialog goes", async () => {
+        await auth.onRequestEmailLink!("me@example.com");
+        set({ kind: "loading_user", registering: false });
+        set({ kind: "logged_in" });
+        auth.onCancelEmailLink!();
+        expect(client.gaTrack).not.toHaveBeenCalledWith("email_signin_cancelled", "registration");
     });
 
     test("a link that couldn't be sent fails", async () => {
@@ -317,5 +338,76 @@ describe("the sign-in callbacks", () => {
         await expect(auth.onLinkCode("?auth&m=1", "123")).resolves.toBe("expired");
         client.handleMagicLink.mockResolvedValueOnce({ kind: "link_invalid" } as never);
         await expect(auth.onLinkCode("?auth&m=1", "123")).resolves.toBe("invalid");
+    });
+});
+
+describe("a sign-in walked away from", () => {
+    const host = (client: ReturnType<typeof fakeClient>) =>
+        createAuth(client as unknown as OpenChat, { translate: (key) => key });
+
+    afterEach(() => {
+        set({ kind: "logged_in" });
+        set({ kind: "anon" });
+    });
+
+    test("is seen through after its host has gone, whichever host is mounted then", async () => {
+        const client = fakeClient();
+        const landing = host(client);
+        set({ kind: "logging_in" });
+        landing.cancel();
+        landing.dispose();
+        // the II window completes anyway, for a principal without an account
+        set({ kind: "loading_user", registering: true });
+        expect(signInAbandoned()).toBe(true);
+        set({ kind: "registering" });
+        expect(client.logout).toHaveBeenCalledOnce();
+        await flush();
+        expect(signInAbandoned()).toBe(false);
+    });
+
+    test("stays abandoned until the sign-out is through", async () => {
+        const client = fakeClient();
+        let signedOut!: () => void;
+        client.logout.mockImplementationOnce(() => new Promise<void>((r) => (signedOut = r)));
+        host(client).cancel();
+        set({ kind: "registering" });
+        await flush();
+        expect(signInAbandoned()).toBe(true);
+        signedOut();
+        await flush();
+        expect(signInAbandoned()).toBe(false);
+    });
+
+    test("ends with a new sign-in from any host, which is then the person's own", async () => {
+        const client = fakeClient();
+        host(client).cancel();
+        // a passkey doesn't go through "logging_in": starting it is what ends the walk-away
+        const signedIn = host(client).onMethod("passkey", "login");
+        expect(signInAbandoned()).toBe(false);
+        set({ kind: "registering" });
+        await expect(signedIn).resolves.toBe("registering");
+        expect(client.logout).not.toHaveBeenCalled();
+    });
+});
+
+describe("the wallet sign-ins", () => {
+    afterEach(() => {
+        set({ kind: "logged_in" });
+        set({ kind: "anon" });
+    });
+
+    test("list Ethereum's wallets when it's picked, from wagmi's connectors", async () => {
+        const auth = createAuth(fakeClient() as unknown as OpenChat, { translate: (k) => k });
+        const eth = auth.wallets.eth as () => Promise<unknown>;
+        await expect(eth()).resolves.toEqual([{ id: "io.rabby", name: "Rabby Wallet" }]);
+    });
+
+    test("are given up when the dialog closes, so a wallet answering late signs no one in", async () => {
+        const auth = createAuth(fakeClient() as unknown as OpenChat, { translate: (k) => k });
+        const attempt = auth.onMethod("eth", "login", "io.rabby").catch(() => {});
+        await flush();
+        auth.cancel();
+        await attempt;
+        expect(eth.signals.at(-1)?.aborted).toBe(true);
     });
 });

@@ -16,6 +16,7 @@ import { configKeys } from "@shared";
 import type { PageAuth } from "@openchat/ui/src/pages/pageAuth.svelte";
 import { EmailSigninHandler } from "@src/utils/signin";
 import {
+    afterAbandoned,
     createdUser,
     emailLinkFailureKey,
     emailLinkResult,
@@ -102,6 +103,45 @@ export function untilSignedIn(
     });
 }
 
+// A sign-in someone walked away from (closed its dialog, or left its page). It's kept here rather
+// than in a host, so whichever host is mounted when it comes to something, it's handled the same:
+// an identity without an account it leaves behind is signed out, and until then the in-app dialog
+// doesn't open for it (signInAbandoned). A new sign-in, or a user, ends it (afterAbandoned).
+let stopAbandoned: (() => void) | undefined = undefined;
+
+/** Whether a sign-in someone walked away from is still being seen through. */
+export function signInAbandoned(): boolean {
+    return stopAbandoned !== undefined;
+}
+
+function abandonSignIn(client: OpenChat): void {
+    stopAbandoned?.();
+    let done = false;
+    let unsubscribe: (() => void) | undefined = undefined;
+    const stop = () => {
+        done = true;
+        unsubscribe?.();
+        if (stopAbandoned === stop) stopAbandoned = undefined;
+    };
+    stopAbandoned = stop;
+    unsubscribe = identityStateStore.subscribe((state) => {
+        if (done) return;
+        const next = afterAbandoned(state);
+        if (next === "wait") return;
+        if (next === "end") return stop();
+        // still abandoned until signed out, so the in-app dialog doesn't open meanwhile
+        done = true;
+        unsubscribe?.();
+        Promise.resolve(client.logout()).finally(stop);
+    });
+    // the store calls back during subscribe, before `unsubscribe` was set
+    if (done) unsubscribe();
+}
+
+function resumeSignIn(): void {
+    stopAbandoned?.();
+}
+
 export type Auth = Required<
     Pick<
         PageAuth,
@@ -113,7 +153,7 @@ export type Auth = Required<
         | "searchReferrers"
     >
 > & {
-    wallets: typeof WALLETS;
+    wallets: NonNullable<PageAuth["wallets"]>;
     termsUrl: string;
     /** The email link page's code: completes the sign-in the link belongs to. */
     onLinkCode: (querystring: string, code: string) => Promise<EmailLinkResult>;
@@ -128,10 +168,10 @@ export type Auth = Required<
      * the client is still logging in), stops a sign-up in flight from going on to make the
      * account, and stops the email link (one still being sent too).
      * An identity without an account left behind is signed out, now or once it gets there,
-     * until the next sign-in starts.
+     * until the next sign-in starts, whichever host is mounted by then (signInAbandoned).
      */
     cancel: () => void;
-    /** The host is going: stops the email link and anything `cancel` left watching. */
+    /** The host is going: stops the email link. */
     dispose: () => void;
 };
 
@@ -158,13 +198,11 @@ export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: Aut
     // the sign-ins the dialog is waiting on; cancelling gives them up
     let attempts = new AbortController();
     let referrer: Promise<AuthPerson | undefined> | undefined = undefined;
-    // after a cancel, signs out an identity without an account that turns up
-    let stopLeftBehind = () => {};
 
     const failure = (key: string): AuthFailure => ({ reason: translate(key) });
 
     function signIn(method: AuthMethod, wallet: string | undefined): Promise<SignedIn> {
-        stopLeftBehind();
+        resumeSignIn();
         const signal = attempts.signal;
         client.gaTrack("initiated_signin", "registration", PROVIDERS[method]);
         selectedAuthProviderStore.set(PROVIDERS[method]);
@@ -174,12 +212,12 @@ export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: Aut
             case "eth":
                 return untilSignedIn(async () => {
                     const { signInWithEthereum } = await import("./ethWallet");
-                    await signInWithEthereum(client, wallet ?? WALLETS.eth[0].id);
+                    await signInWithEthereum(client, wallet ?? WALLETS.eth[0].id, signal);
                 }, signal);
             case "sol":
                 return untilSignedIn(async () => {
                     const { signInWithSolana } = await import("./solWallet");
-                    await signInWithSolana(client, wallet ?? WALLETS.sol[0].id);
+                    await signInWithSolana(client, wallet ?? WALLETS.sol[0].id, signal);
                 }, signal);
             default:
                 // Internet Identity and NFID open the auth client's window
@@ -188,7 +226,12 @@ export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: Aut
     }
 
     return {
-        wallets: WALLETS,
+        wallets: {
+            // the configured wallets and those the browser announces (EIP-6963), as the old UI
+            // lists them; wagmi is loaded when Ethereum is picked
+            eth: async () => (await import("./ethWallet")).ethWallets(),
+            sol: WALLETS.sol,
+        },
         termsUrl: "/terms",
 
         // sign-up is the form (onSignup); every method signs in, and an identity without an
@@ -196,7 +239,7 @@ export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: Aut
         onMethod: (method, _kind, wallet) => signIn(method, wallet),
 
         async onRequestEmailLink(address): Promise<EmailLinkSent> {
-            stopLeftBehind();
+            resumeSignIn();
             const request = ++emailRequests;
             client.gaTrack("initiated_signin", "registration", AuthProvider.EMAIL);
             localStorage.setItem(configKeys.selectedAuthEmail, address);
@@ -218,7 +261,11 @@ export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: Aut
             stopEmailWatch();
             stopEmailWatch = watchSignIn(
                 (outcome) => {
-                    if (outcome !== "failed") onEmailSignedIn?.(outcome);
+                    if (outcome === "failed") return;
+                    // signed in: nothing left to wait for, or to call cancelled
+                    emailLink?.stopPolling();
+                    emailLink = undefined;
+                    onEmailSignedIn?.(outcome);
                 },
                 { anonFails: false, fromNow: true },
             );
@@ -226,7 +273,9 @@ export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: Aut
         },
 
         onCancelEmailLink() {
-            client.gaTrack("email_signin_cancelled", "registration");
+            // only a link still waited on is a cancel: not one that has signed in, nor a second
+            // stop for the same link
+            if (emailLink !== undefined) client.gaTrack("email_signin_cancelled", "registration");
             stopEmail();
         },
 
@@ -244,7 +293,7 @@ export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: Aut
         async onSignup({ username, email: recoveryEmail, referrerId }: SignupDetails) {
             // the stored code is whoever the form has, so a removed referrer, or a referral link's
             // code that names no one, isn't sent
-            stopLeftBehind();
+            resumeSignIn();
             const signup = ++signups;
             if (referrerId !== undefined) {
                 client.setReferralCode(referrerId);
@@ -293,19 +342,10 @@ export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: Aut
             if (onAuthClosed(identityStateStore.value) === "anon") {
                 client.updateIdentityState({ kind: "anon" });
             }
-            stopLeftBehind();
-            stopLeftBehind = watchSignIn(
-                (outcome) => {
-                    if (outcome === "registering") client.logout();
-                },
-                { anonFails: false },
-            );
+            abandonSignIn(client);
         },
 
-        dispose() {
-            stopEmail();
-            stopLeftBehind();
-        },
+        dispose: stopEmail,
     };
 
     function stopEmail() {

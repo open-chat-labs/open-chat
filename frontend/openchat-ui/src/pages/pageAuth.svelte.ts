@@ -26,6 +26,7 @@ export type PageAuth = Pick<
   | 'wallets'
   | 'email'
   | 'referrer'
+  | 'passkeySignup'
 > & {
   /** The page's dialog was closed (Esc, the scrim, the close button): stop whatever the host had going for it. */
   onClose?: () => void;
@@ -51,7 +52,8 @@ export class PageAuthState {
       this.generation++;
       this.entered = false;
     }
-    this.kind = kind;
+    // without passkey sign-up, Create account is sign-in: someone new signs in, then the host has the form
+    this.kind = kind === 'signup' && this.props().auth?.passkeySignup === false ? 'login' : kind;
   };
 
   // the person closed it: the host stops what it had going

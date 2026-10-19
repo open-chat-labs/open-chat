@@ -11,9 +11,17 @@ import type { Auth } from "./signIn";
  */
 export class AuthDialogProps {
     #referrer = $state<AuthPerson | undefined>(undefined);
+    // read when the dialog is made and again as it opens (refresh): AuthDialog only reads it then
+    #email = $state("");
 
     constructor(private readonly auth: Auth) {
+        this.#email = auth.lastEmail();
         auth.loadReferrer().then((person) => (this.#referrer = person));
+    }
+
+    /** Reads what may have changed since the dialog last opened: the address a link went to. */
+    refresh(): void {
+        this.#email = this.auth.lastEmail();
     }
 
     /**
@@ -23,9 +31,13 @@ export class AuthDialogProps {
      */
     props(restrictTo: string[], last: AuthProvider): PageAuth {
         const auth = this.auth;
+        const methods = authOptions(restrictTo, "PublicKeyCredential" in window, last);
         return {
-            methods: authOptions(restrictTo, "PublicKeyCredential" in window, last),
-            email: auth.lastEmail(),
+            methods,
+            // sign-up's form makes a passkey: without one on offer, a new person signs in another
+            // way and gets the form from there
+            passkeySignup: methods.includes("passkey"),
+            email: this.#email,
             referrer: this.#referrer,
             wallets: auth.wallets,
             termsUrl: auth.termsUrl,
@@ -67,6 +79,16 @@ class PageSignIns {
     closed(): void {
         this.#dialog++;
         this.signupFailed = false;
+    }
+
+    /**
+     * The page is going: whether it leaves a sign-in going or a failed sign-up behind, which it
+     * then forgets, as on a close.
+     */
+    left(): boolean {
+        const leftBehind = this.pending > 0 || this.signupFailed;
+        this.closed();
+        return leftBehind;
     }
 }
 

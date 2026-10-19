@@ -1,11 +1,12 @@
 import { AuthProvider } from "@client";
 import {
+    afterAbandoned,
     authOptions,
-    endsDismissal,
     nextAuthKind,
     onAuthClosed,
     registerFailureKey,
     showsSignedOut,
+    uniqueWallets,
     withoutAccount,
 } from "./auth.adapter";
 
@@ -117,13 +118,36 @@ describe("closing the in-app dialog, or leaving the app with it open", () => {
         expect(onAuthClosed({ kind: "anon" })).toBeUndefined();
         expect(onAuthClosed({ kind: "logged_in" })).toBeUndefined();
     });
+});
 
-    test("keeps it closed until the client asks for a sign-in again, or there's a user", () => {
-        expect(endsDismissal({ kind: "loading_user", registering: true })).toBe(false);
-        expect(endsDismissal({ kind: "registering" })).toBe(false);
-        expect(endsDismissal({ kind: "anon" })).toBe(false);
-        expect(endsDismissal({ kind: "logging_in" })).toBe(true);
-        expect(endsDismissal({ kind: "logged_in" })).toBe(true);
+describe("a sign-in someone walked away from", () => {
+    test("ends with a new sign-in, or a user", () => {
+        expect(afterAbandoned({ kind: "logging_in" })).toBe("end");
+        expect(afterAbandoned({ kind: "logged_in" })).toBe("end");
+    });
+
+    test("signs out an identity without an account it leaves behind, and waits for the rest", () => {
+        expect(afterAbandoned({ kind: "registering" })).toBe("sign_out");
+        expect(afterAbandoned({ kind: "loading_user", registering: true })).toBe("wait");
+        expect(afterAbandoned({ kind: "anon" })).toBe("wait");
+    });
+});
+
+describe("the Ethereum wallets", () => {
+    test("are wagmi's connectors, one per name, with our icons for the configured ones", () => {
+        expect(
+            uniqueWallets([
+                { id: "metaMaskSDK", name: "MetaMask" },
+                { id: "walletConnect", name: "WalletConnect", icon: "data:wc" },
+                // announced by the browser (EIP-6963)
+                { id: "io.metamask", name: "MetaMask", icon: "data:mm" },
+                { id: "io.rabby", name: "Rabby Wallet", icon: "data:rabby" },
+            ]),
+        ).toEqual([
+            { id: "metaMaskSDK", name: "MetaMask", icon: "/assets/metamask.svg" },
+            { id: "walletConnect", name: "WalletConnect", icon: "/assets/walletconnect.svg" },
+            { id: "io.rabby", name: "Rabby Wallet", icon: "data:rabby" },
+        ]);
     });
 });
 

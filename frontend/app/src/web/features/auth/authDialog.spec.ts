@@ -3,11 +3,13 @@ import { flushSync } from "svelte";
 import { AuthDialogProps, pageSignIns } from "./authDialog.svelte";
 import type { Auth } from "./signIn";
 
+let lastEmail = "me@example.com";
+
 function fakeAuth(referrer: Promise<{ userId: string; name: string }>) {
     return {
         wallets: { eth: [], sol: [] },
         termsUrl: "/terms",
-        lastEmail: () => "me@example.com",
+        lastEmail: () => lastEmail,
         loadReferrer: () => referrer,
     } as unknown as Auth;
 }
@@ -27,7 +29,21 @@ describe("the dialog's props", () => {
         vi.stubGlobal("PublicKeyCredential", class {});
         const dialog = new AuthDialogProps(fakeAuth(new Promise(() => {})));
         expect(dialog.props(["II", "ETH"], AuthProvider.ETH).methods).toEqual(["eth", "ii"]);
+        // without a passkey on offer, Create account (a passkey) isn't either
+        expect(dialog.props(["II", "ETH"], AuthProvider.ETH).passkeySignup).toBe(false);
+        expect(dialog.props([], AuthProvider.ETH).passkeySignup).toBe(true);
         vi.unstubAllGlobals();
+    });
+});
+
+describe("the prefilled email", () => {
+    test("is the last address a link went to, read again when the dialog opens", () => {
+        lastEmail = "first@example.com";
+        const dialog = new AuthDialogProps(fakeAuth(new Promise(() => {})));
+        lastEmail = "second@example.com";
+        expect(dialog.props([], AuthProvider.PASSKEY).email).toBe("first@example.com");
+        dialog.refresh();
+        expect(dialog.props([], AuthProvider.PASSKEY).email).toBe("second@example.com");
     });
 });
 
@@ -70,6 +86,22 @@ describe("a marketing page's own sign-ins", () => {
         pageSignIns.closed();
         fail(new Error("Sign-up cancelled"));
         await expect(late).rejects.toThrow();
+        expect(pageSignIns.signupFailed).toBe(false);
+    });
+
+    test("leaving the page says whether it left something going, and forgets it", async () => {
+        expect(pageSignIns.left()).toBe(false);
+        let settle!: () => void;
+        const going = pageSignIns.track(new Promise<void>((r) => (settle = r)));
+        expect(pageSignIns.left()).toBe(true);
+        settle();
+        await going;
+        // a failed sign-up, with nothing going
+        await expect(
+            pageSignIns.track(Promise.reject(new Error("taken")), { signup: true }),
+        ).rejects.toThrow();
+        expect(pageSignIns.signupFailed).toBe(true);
+        expect(pageSignIns.left()).toBe(true);
         expect(pageSignIns.signupFailed).toBe(false);
     });
 });

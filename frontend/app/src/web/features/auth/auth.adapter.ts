@@ -98,6 +98,23 @@ export function emailLinkFailureKey(kind: string): string {
     }
 }
 
+/**
+ * The Ethereum wallets to pick from, as the old UI's SigninWithEth lists wagmi's connectors: the
+ * configured ones first, then any the browser announces (EIP-6963), one per name, with our icon
+ * for the configured ones and the wallet's own for the rest.
+ */
+export function uniqueWallets(
+    connectors: readonly { id: string; name: string; icon?: string }[],
+): AuthWallet[] {
+    const icons = new Map(WALLETS.eth.map((w) => [w.id, w.icon]));
+    const names = new Set<string>();
+    return connectors.flatMap((c) => {
+        if (names.has(c.name)) return [];
+        names.add(c.name);
+        return [{ id: c.id, name: c.name, icon: icons.get(c.id) ?? c.icon }];
+    });
+}
+
 export const WALLETS: Record<"eth" | "sol", AuthWallet[]> = {
     // wagmi connector ids
     eth: [
@@ -236,10 +253,18 @@ export function onAuthClosed(state: IdentityState): "anon" | undefined {
 }
 
 /**
- * Whether the in-app dialog, closed, may open again for this identity: only for a new sign-in
- * (the client asking again) or once there's a user. An identity that turns up without an account
- * after the close (a passkey or window that completed anyway) doesn't bring it back.
+ * Where a sign-in someone walked away from (closed its dialog, left its page) has got to: a new
+ * sign-in (the client asking again) or a user ends it; an identity that turns up without an
+ * account (a passkey or window completed anyway) is signed out; anything else waits.
  */
-export function endsDismissal(state: IdentityState): boolean {
-    return state.kind === "logging_in" || state.kind === "logged_in";
+export function afterAbandoned(state: IdentityState): "end" | "sign_out" | "wait" {
+    switch (state.kind) {
+        case "logging_in":
+        case "logged_in":
+            return "end";
+        case "registering":
+            return "sign_out";
+        default:
+            return "wait";
+    }
 }

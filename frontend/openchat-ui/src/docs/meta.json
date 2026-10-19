@@ -5697,14 +5697,25 @@
       },
       {
         "name": "wallets",
-        "type": "Partial<Record<'eth' | 'sol', AuthWallet[]>>",
+        "type": "Partial<Record<'eth' | 'sol', AuthWallet[] | (() => Promise<AuthWallet[]>)>>",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Wallets to pick from for Ethereum / Solana. With a list, the method asks which wallet and passes its id to onMethod."
+        "doc": "Wallets to pick from for Ethereum / Solana. With a list, the method asks which wallet and passes its id to onMethod. A function loads the list when the method is picked (waiting meanwhile; reject to go back)."
+      },
+      {
+        "name": "passkeySignup",
+        "type": "boolean",
+        "default": true,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "true",
+        "doc": "Whether “Create an account” is on offer from sign-in: sign-up's form makes a passkey, so a host without one on offer turns it off (someone new signs in another way, and the host then opens the form with `kind`)."
       },
       {
         "name": "checkUsername",
