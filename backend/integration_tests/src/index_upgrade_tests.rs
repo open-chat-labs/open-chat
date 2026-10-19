@@ -69,10 +69,12 @@ fn the_user_index_and_group_index_can_be_upgraded() {
     wrapper.discard();
 }
 
-// Events the UserIndex in production has queued for a LocalUserIndex and for the Identity canister,
-// which it couldn't send because they were stopped, are sent once the UserIndex has been upgraded.
-// Its queues' fields and types change between releases, so this checks the post_upgrade one-off
-// carries what the production wasm left in them across.
+// Events UserIndex 2.0.2155 has queued for a LocalUserIndex and for the Identity canister, which it
+// couldn't send because they were stopped, are sent once the UserIndex has been upgraded: the
+// post_upgrade one-off moves them out of 2.0.2155's queues, which never send anything themselves.
+// The env is set up on the current wasm and moved onto the prod one, which needs the prod wasm to
+// read the current wasm's state, so this goes with the one-off in the tidy, which removes fields
+// the prod wasm requires.
 #[test]
 fn events_queued_by_the_prod_user_index_are_sent_after_the_upgrade() {
     // A new env, since upgrading the UserIndex in one shared with other tests can disrupt them
