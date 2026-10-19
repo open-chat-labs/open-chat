@@ -31,7 +31,13 @@
     const enterApp = () => navigate("/");
 
     // an emailed link followed elsewhere signs this page in too, so it enters the app
-    const auth = createAuth(client, { translate: (key) => $_(key), onEmailSignedIn: enterApp });
+    const auth = createAuth(client, {
+        translate: (key) => $_(key),
+        onEmailSignedIn: () => {
+            pageSignIns.emailDone();
+            enterApp();
+        },
+    });
     const dialog = new AuthDialogProps(auth);
     // the method last used, read as the dialog opens rather than live: starting one doesn't move
     // the tiles
@@ -42,10 +48,12 @@
         pageSignIns.track(auth.onMethod(...args));
     const onSignup = (details: Parameters<typeof auth.onSignup>[0]) =>
         pageSignIns.track(auth.onSignup(details), { signup: true });
-    // an email link is a new attempt too, though the page doesn't wait on it
-    const onRequestEmailLink = (address: string) => {
-        pageSignIns.started();
-        return auth.onRequestEmailLink(address);
+    // and so is an email link it asks for, until the link signs in or is given up
+    const onRequestEmailLink = (address: string) =>
+        pageSignIns.trackEmail(auth.onRequestEmailLink(address));
+    const onCancelEmailLink = () => {
+        pageSignIns.emailDone();
+        auth.onCancelEmailLink();
     };
     // closing gives up what the dialog had going, and signs out an identity without an account it
     // leaves behind (a sign-up that failed)
@@ -61,6 +69,7 @@
         ...dialog.props($querystringStore.getAll("auth"), last),
         onOpen,
         onRequestEmailLink,
+        onCancelEmailLink,
         onMethod,
         onSignup,
         onClose,

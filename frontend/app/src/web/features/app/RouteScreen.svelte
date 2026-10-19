@@ -16,7 +16,7 @@
         showsSignedOut(
             $identityStateStore,
             $anonUserStore,
-            pageSignIns.pending > 0,
+            pageSignIns.signingIn,
             pageSignIns.signupFailed,
         ),
     );

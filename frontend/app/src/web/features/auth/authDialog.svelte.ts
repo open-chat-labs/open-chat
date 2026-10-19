@@ -64,6 +64,9 @@ export class AuthDialogProps {
 class PageSignIns {
     pending = $state(0);
     signupFailed = $state(false);
+    // an email link the page asked for and waits on: from the request until it signs in, is
+    // given up, or the dialog closes
+    awaitingEmail = $state(false);
     // closing the dialog moves it on: what an attempt from before then comes to isn't a failure
     #dialog = 0;
 
@@ -82,9 +85,35 @@ class PageSignIns {
             .finally(() => this.pending--);
     }
 
-    /** A new attempt on the page (one tracked, or an email link asked for): any failure is past. */
+    /** Whether the page is seeing a sign-in through: one it waits on, or an email link. */
+    get signingIn(): boolean {
+        return this.pending > 0 || this.awaitingEmail;
+    }
+
+    /** A new attempt on the page: any failure is past. */
     started(): void {
         this.signupFailed = false;
+    }
+
+    /**
+     * An email link asked for: a new attempt, which the page waits on from the request (an
+     * identity left by a failed sign-up mustn't swap Landing for the app meanwhile). A request
+     * that fails leaves the page waiting on the link before it, if there was one.
+     */
+    trackEmail<T>(request: Promise<T>): Promise<T> {
+        const dialog = this.#dialog;
+        const before = this.awaitingEmail;
+        this.started();
+        this.awaitingEmail = true;
+        return request.catch((err) => {
+            if (dialog === this.#dialog) this.awaitingEmail = before;
+            throw err;
+        });
+    }
+
+    /** The email link signed in, or was given up: the page no longer waits on it. */
+    emailDone(): void {
+        this.awaitingEmail = false;
     }
 
     /**
@@ -94,6 +123,7 @@ class PageSignIns {
      */
     closed(): void {
         this.#dialog++;
+        this.awaitingEmail = false;
         if (!withoutAccount(identityStateStore.value)) this.signupFailed = false;
     }
 
@@ -102,7 +132,7 @@ class PageSignIns {
      * host then walks away from, as on a close).
      */
     left(): boolean {
-        const leftBehind = this.pending > 0 || this.signupFailed;
+        const leftBehind = this.signingIn || this.signupFailed;
         this.closed();
         return leftBehind;
     }

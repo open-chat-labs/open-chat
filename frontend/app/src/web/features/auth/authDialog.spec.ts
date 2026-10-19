@@ -61,6 +61,7 @@ describe("a marketing page's own sign-ins", () => {
     afterEach(() => {
         identityStateStore.set({ kind: "anon" });
         pageSignIns.started();
+        pageSignIns.emailDone();
     });
 
     test("count as going on until each settles, whether it signs in or fails", async () => {
@@ -138,11 +139,32 @@ describe("a marketing page's own sign-ins", () => {
         expect(pageSignIns.signupFailed).toBe(false);
     });
 
-    test("forget a failed sign-up when an email link is asked for", async () => {
+    test("trade a failed sign-up for the email link asked for after it, keeping Landing", async () => {
         await expect(
             pageSignIns.track(Promise.reject(new Error("taken")), { signup: true }),
         ).rejects.toThrow();
-        pageSignIns.started();
-        expect(pageSignIns.signupFailed).toBe(false);
+        let sent!: () => void;
+        const request = pageSignIns.trackEmail(new Promise<void>((r) => (sent = r)));
+        // still seeing a sign-in through, from the request on: Landing stays
+        expect([pageSignIns.signupFailed, pageSignIns.signingIn]).toEqual([false, true]);
+        sent();
+        await request;
+        expect(pageSignIns.signingIn).toBe(true);
+        pageSignIns.emailDone();
+        expect(pageSignIns.signingIn).toBe(false);
+    });
+
+    test("stop waiting on an email link when the dialog closes", async () => {
+        await pageSignIns.trackEmail(Promise.resolve());
+        pageSignIns.closed();
+        expect(pageSignIns.signingIn).toBe(false);
+    });
+
+    test("keep waiting on the link before a resend that fails, and not on none", async () => {
+        await expect(pageSignIns.trackEmail(Promise.reject(new Error("bad")))).rejects.toThrow();
+        expect(pageSignIns.signingIn).toBe(false);
+        await pageSignIns.trackEmail(Promise.resolve());
+        await expect(pageSignIns.trackEmail(Promise.reject(new Error("bad")))).rejects.toThrow();
+        expect(pageSignIns.signingIn).toBe(true);
     });
 });
