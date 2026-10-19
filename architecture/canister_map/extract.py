@@ -64,7 +64,7 @@ DESCRIPTIONS = {
         "title": "MultiUser",
         "zone": "users",
         "cardinality": "many",
-        "summary": "Holds a few thousand users each: their direct chats, chat list and wallet.",
+        "summary": "A few thousand users each: their direct chats and wallets.",
         "detail": "Replaces the one-canister-per-user design. Each MultiUser canister hosts a few thousand "
         "users: their direct chats and messages, the list of groups and communities they belong to, "
         "their settings, achievements, and the token accounts they send and receive from. Every endpoint "
@@ -85,7 +85,7 @@ DESCRIPTIONS = {
         "title": "Group",
         "zone": "chats",
         "cardinality": "many",
-        "summary": "One canister per group chat: members, messages and events.",
+        "summary": "A group chat: its members, messages and events.",
         "detail": "Stores the group's members and roles, every message and event, threads, polls, prize "
         "and P2P swap messages, rules, permissions, pinned messages and access gates. Events are kept in "
         "stable memory and served through the events queries; new activity is reported to the "
@@ -130,7 +130,7 @@ DESCRIPTIONS = {
         "title": "NotificationsIndex",
         "zone": "notifications",
         "cardinality": "single",
-        "summary": "Push subscriptions, and the notification pushers' entry point.",
+        "summary": "Push subscriptions; the entry point for the pushers.",
         "detail": "Holds each user's web push subscriptions and the principals of the off-chain notification "
         "pushers, and tells every LocalUserIndex about them so the pushers can read the notification "
         "queue held on each subnet.",
@@ -139,7 +139,7 @@ DESCRIPTIONS = {
         "title": "StorageIndex",
         "zone": "storage",
         "cardinality": "single",
-        "summary": "File storage index: per-user byte allowances and which bucket holds what.",
+        "summary": "Per-user byte allowances, and which bucket holds each file.",
         "detail": "Tracks every user's storage allowance and usage, the content-addressed blobs and which "
         "StorageBucket holds each, creates a new bucket when the active ones fill, and holds the "
         "CSAM hash denylist the buckets check uploads against.",
@@ -157,7 +157,7 @@ DESCRIPTIONS = {
         "title": "Registry",
         "zone": "platform",
         "cardinality": "single",
-        "summary": "The list of tokens, nervous systems and subnets OpenChat knows about.",
+        "summary": "The tokens, SNSes and subnets OpenChat knows about.",
         "detail": "Any user can propose adding a token; the Registry validates it against the ledger, "
         "charges the fee and lists it. It also tracks SNS nervous systems for the ProposalsBot, "
         "message filters, swap providers, and expands OpenChat onto a new subnet by creating that "
@@ -167,7 +167,7 @@ DESCRIPTIONS = {
         "title": "Escrow",
         "zone": "tokens",
         "cardinality": "single",
-        "summary": "Holds both sides of a peer-to-peer token swap until it completes.",
+        "summary": "Holds both sides of a P2P swap until it completes.",
         "detail": "A P2P swap message in a chat creates a swap here. Each party deposits into a swap "
         "subaccount; once both have, the Escrow sends each party the other's tokens, or refunds "
         "them when the swap is cancelled or expires.",
@@ -193,7 +193,7 @@ DESCRIPTIONS = {
         "title": "EventRelay",
         "zone": "platform",
         "cardinality": "single",
-        "summary": "Collects analytics events and forwards them to the event store.",
+        "summary": "Collects analytics events for the event store.",
         "detail": "Canisters push anonymised product events here; the relay batches them to the external "
         "event store canister. It also reads the CHAT ledger to record token burns.",
     },
@@ -242,7 +242,7 @@ DESCRIPTIONS = {
         "title": "CallRelay",
         "zone": "platform",
         "cardinality": "ephemeral",
-        "summary": "A tiny wasm installed on an old user canister to move its funds out.",
+        "summary": "A tiny wasm that moves an old user canister's funds out.",
         "detail": "Written directly in WebAssembly text. When a migrated user's old canister still holds "
         "tokens, the LocalUserIndex installs this on it, relays ledger transfers as the canister, then "
         "uninstalls it.",
@@ -251,7 +251,7 @@ DESCRIPTIONS = {
         "title": "CyclesRefunder",
         "zone": "platform",
         "cardinality": "ephemeral",
-        "summary": "A tiny wasm installed on an uninstalled canister to recover its cycles.",
+        "summary": "Takes back the cycles left in an uninstalled canister.",
         "detail": "Written directly in WebAssembly text. The LocalUserIndex installs it on the uninstalled "
         "canisters of deleted users, groups and communities; it sends their spare cycles to the "
         "CyclesDispenser and is then uninstalled.",

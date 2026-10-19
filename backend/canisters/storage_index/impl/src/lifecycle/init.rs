@@ -20,7 +20,6 @@ fn init(args: Args) {
         args.governance_principals,
         args.bucket_canister_wasm,
         args.cycles_dispenser_config,
-        args.icp_ledger_canister_id,
         args.cmc_canister_id,
         args.test_mode,
     );

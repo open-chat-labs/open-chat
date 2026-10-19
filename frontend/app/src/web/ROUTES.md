@@ -72,6 +72,23 @@ Agreed on 2026-10-16; the tables below follow them.
      and Back closes them: `?profile` (new, opened from the rail) and `?chit` (new), in the style
      of `?diamond` and `?hof`.
    - Every other dialog stays local state.
+7. **Switching the left column.**
+   - **Notifications** (activity) change only the left column: the middle keeps whatever it
+     shows, a chat (with its right column) or a wallet page (without one). The URL stays on that
+     page and notes the panel in the query (`/chats/group/:id?panel=activity`,
+     `/wallet/ICP?panel=activity`), so a reload or a shared link keeps both. `ActivityPanel`
+     gets a back button beside its title, which drops `?panel=activity`, so the left column goes
+     back to the middle's own panel (that chat's list, the wallet's tokens); it doesn't depend
+     on history, so it works from a shared link too. With nothing in the middle,
+     `/notifications` opens the panel over an empty middle, without the back button. Picking an
+     item opens its chat in the middle.
+   - **DMs and groups, favourites, a community**: switching to one selects its first chat (the
+     first favourite, the community's first channel) for the middle, and switching back to DMs
+     and groups selects the first chat in that list.
+   - **The wallet** takes the whole content area (its panel on the left, its page in the middle),
+     without a right column.
+   - To be built with the chat list and conversation (phase 3), which rework selection and the
+     default chat anyway; until then these routes behave as in the table below.
 
 ## Regions
 
@@ -96,15 +113,15 @@ Once the narrow design lands, `selectLayout` stops falling back and every browse
 | Path | Route kind (scope) | Left | Middle | Right | Narrow | Guest |
 |---|---|---|---|---|---|---|
 | `/` (signed in) | `home_route` | – | – | – | – | redirects to `/favourite` if the user has favourites, else `/chats` |
-| `/chats` | `chat_list_route` (chats) | `ChatListPanel` | `EmptyState`; auto-selects the last or first chat (existing behaviour) | – | list | yes |
+| `/chats` | `chat_list_route` (chats) | `ChatListPanel` | selects the first chat in the list (decision 7); `EmptyState` without one | – | list | yes |
 | `/chats/user/:id/:mi?/:tmi?` · `/user/:id/…` | `global_chat_selected_route` direct (chats) | `ChatListPanel` | conversation (DM) | `DmPanel` docked, `ProfileDialog` "This chat" below 1476px; thread → `ThreadPanel` | conversation | no |
 | `/chats/group/:id/…` · `/group/:id/…` · legacy `/:id/…` | `global_chat_selected_route` group (chats) | `ChatListPanel` | conversation (group) | `GroupPanel` on demand; thread → `ThreadPanel` | conversation | preview (read-only) |
-| `/favourite` | `chat_list_route` (favourite) | `ChatListPanel` favourites | `EmptyState` / auto-select | – | list | sign in, then `/chats` |
+| `/favourite` | `chat_list_route` (favourite) | `ChatListPanel` favourites | selects the first favourite (decision 7); `EmptyState` without one | – | list | sign in, then `/chats` |
 | `/favourite/user/:id/…` · `/favourite/group/:id/…` · `/favourite/community/:cid/channel/:chid/…` | as above, favourite scope | `ChatListPanel` favourites | conversation | as above | conversation | – (redirects to the non-favourite URL if not a favourite) |
-| `/community/:cid` | `selected_community_route` | `ChatListPanel` community mode (channels) | redirects to the default channel | `GroupPanel` (community) on demand | list | preview |
+| `/community/:cid` | `selected_community_route` | `ChatListPanel` community mode (channels) | selects the community's first channel (decision 7) | `GroupPanel` (community) on demand | list | preview |
 | `/community/:cid/channel/:chid/…` | `selected_channel_route` (community) | channel list | conversation (channel) | `GroupPanel` (channel) on demand; thread → `ThreadPanel` | conversation | preview |
 | `/chats/threads` · `/favourite/threads` · `/community/:cid/threads` **(new)** | `threads_route` (that scope) | `ThreadList` (All / Unread) | last opened thread's chat, else `EmptyState` | `ThreadPanel` once a thread is open | list | sign in |
-| `/notifications` **(mobile's path, new on desktop)** | `notifications_route` | `ActivityPanel` | selected item's chat | – | list | sign in |
+| `/notifications` **(mobile's path, new on desktop)** | `notifications_route`; over a chat or wallet page, `?panel=activity` on its path (decision 7) | `ActivityPanel`, with Back to the middle's own panel | what it showed stays (a chat or wallet page); an item opens its chat | a chat's details, on demand | list | sign in |
 | `/profile_summary` **(mobile's path, new on desktop)** | `profile_summary_route` | redirects to the default chat list with `?profile` | | | | sign in |
 | `/welcome` **(mobile's path, new on desktop)** | `welcome_route` | – | `ExploreCommunities` (as `/communities`) | – | full | yes |
 | `/communities` | `communities_route` | – (full width) | `ExploreCommunities` (search query in the URL, see below) | `JoinGateDialog` on join | full | yes |
@@ -190,10 +207,18 @@ link's code over Landing. While a sign-in or sign-up started in Landing's own di
 `/` keeps showing Landing, so that dialog sees it through, and after a sign-up there fails, so it
 says why (`pageSignIns`, `showsSignedOut`). Leaving the app mid sign-in gives the sign-in up.
 
+**Learn content.** Learn shows the existing roadmap, whitepaper, blog posts and FAQs, converted to
+its content shapes in `features/marketing/learn` and loaded the first time a Learn page shows. The
+FAQs come from the translations, so they follow the app's language. `/faq?q=` opens that question
+and `/whitepaper?section=` scrolls to that section; `/architecture` frames the canister map
+(`CanisterMapFrame`), which keeps `?section=` itself. What the conversion couldn't keep is in
+`GAPS.md` (Learn content).
+
 Still to come:
 
-- **Learn content**: Learn shows the library's placeholder content until the existing roadmap,
-  docs, blog and FAQ are converted (`GAPS.md`). `/faq?q=` and `?section=` wait for that too.
+- **Switching the left column** (decision 7): notifications keeping the middle (with
+  `?panel=activity`, and a back button in `ActivityPanel`), and the other lists selecting their
+  first chat, come with phase 3.
 - **Legal pages and `/diamond`**: placeholders until Learn's doc pages and `DiamondContent` exist
   (decision 5).
 - **Guests**: guest-only behaviour comes in the guest pass (phase 10). That covers the "sign in"

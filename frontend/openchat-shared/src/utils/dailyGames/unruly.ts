@@ -205,7 +205,7 @@ function lineOf(desc: UnrulyDescription, keys: number[]): Line | undefined {
     return undefined;
 }
 
-/** The colour's name, for the sentence: "orange". */
+/** The colour's name, for the sentence: "light". */
 function colourName(value: number): HintCaptionParam {
     return { key: `colour.${value}` };
 }

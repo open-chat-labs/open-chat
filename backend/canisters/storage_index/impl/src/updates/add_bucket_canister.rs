@@ -1,36 +1,33 @@
 use crate::guards::caller_is_governance_principal;
 use crate::model::buckets::BucketRecord;
-use crate::read_state;
-use crate::{RuntimeState, mutate_state};
+use crate::{BUCKET_CANISTER_TOP_UP_AMOUNT, MIN_CYCLES_BALANCE, RuntimeState, mutate_state, read_state};
 use candid::Principal;
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
-use constants::NANOS_PER_MILLISECOND;
-use cycles_minting_canister::notify_create_canister::{Subnet, SubnetSelection};
+use cycles_minting_canister::create_canister::{Subnet, SubnetSelection};
 use ic_cdk::call::RejectCode;
-use ic_ledger_types::{AccountIdentifier, DEFAULT_FEE, Memo, Subaccount, Timestamp, Tokens, TransferArgs};
+use oc_error_codes::OCErrorCode;
 use storage_index_canister::add_bucket_canister::*;
-use types::{C2CError, CanisterId, CanisterWasm, TimestampMillis};
+use types::{C2CError, CanisterId, CanisterWasm, Cycles};
 use utils::canister::install_basic;
+use utils::cycles::can_spend_cycles;
 
-const MEMO_CREATE_CANISTER: Memo = Memo(0x41455243); // == 'CREA'
+// A new bucket starts with a top-up's worth of cycles, and asks for more as it fills
+const BUCKET_CREATION_CYCLES: Cycles = BUCKET_CANISTER_TOP_UP_AMOUNT;
 
 #[proposal(guard = "caller_is_governance_principal")]
 #[trace]
 async fn add_bucket_canister(args: Args) -> Response {
-    let PrepareResult {
-        this_canister_id,
-        ledger,
-        cmc,
-        wasm,
-        init_args,
-        now,
-    } = read_state(prepare);
+    let PrepareResult { cmc, wasm, init_args } = match read_state(prepare) {
+        Ok(ok) => ok,
+        Err(response) => return response,
+    };
 
-    let canister_id = match create_canister(ledger, cmc, args.subnet_id, this_canister_id, now).await {
+    let canister_id = match create_canister(cmc, args.subnet_id, BUCKET_CREATION_CYCLES).await {
         Ok(id) => id,
         Err(error) => return Response::Error(error.into()),
     };
+    mutate_state(|state| state.data.total_cycles_spent_on_canisters += BUCKET_CREATION_CYCLES);
 
     let wasm_version = wasm.version;
     if let Err(error) = install_basic(canister_id, wasm, init_args).await {
@@ -46,60 +43,35 @@ async fn add_bucket_canister(args: Args) -> Response {
 }
 
 struct PrepareResult {
-    this_canister_id: CanisterId,
-    ledger: CanisterId,
     cmc: CanisterId,
     wasm: CanisterWasm,
     init_args: storage_bucket_canister::init::Args,
-    now: TimestampMillis,
 }
 
-fn prepare(state: &RuntimeState) -> PrepareResult {
-    PrepareResult {
-        this_canister_id: state.env.canister_id(),
-        ledger: state.data.icp_ledger_canister_id,
+fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
+    if !can_spend_cycles(BUCKET_CREATION_CYCLES, MIN_CYCLES_BALANCE) {
+        return Err(OCErrorCode::CyclesBalanceTooLow.into());
+    }
+    Ok(PrepareResult {
         cmc: state.data.cycles_minting_canister_id,
         wasm: state.data.bucket_canister_wasm.clone(),
         init_args: storage_bucket_canister::init::Args {
             wasm_version: state.data.bucket_canister_wasm.version,
             test_mode: state.data.test_mode,
         },
-        now: state.env.now(),
-    }
+    })
 }
 
-// Attempts to create a canister by sending 1 ICP to the CMC
-async fn create_canister(
-    ledger: CanisterId,
-    cmc: CanisterId,
-    subnet: Option<Principal>,
-    this_canister_id: Principal,
-    now: TimestampMillis,
-) -> Result<CanisterId, C2CError> {
-    let block_index = icp_ledger_canister_c2c_client::transfer(
-        ledger,
-        &TransferArgs {
-            memo: MEMO_CREATE_CANISTER,
-            amount: Tokens::from_e8s(100_000_000), // 1 ICP
-            fee: DEFAULT_FEE,
-            from_subaccount: None,
-            to: AccountIdentifier::new(&cmc, &Subaccount::from(this_canister_id)),
-            created_at_time: Some(Timestamp {
-                timestamp_nanos: now * NANOS_PER_MILLISECOND,
-            }),
-        },
-    )
-    .await?
-    .map_err(|e| C2CError::new(ledger, "transfer", RejectCode::CanisterError, format!("{e:?}")))?;
-
-    cycles_minting_canister_c2c_client::notify_create_canister(
+// Only the CMC can create a canister on another subnet: it is paid with the cycles attached to the
+// call, and makes this canister the controller
+async fn create_canister(cmc: CanisterId, subnet: Option<Principal>, cycles: Cycles) -> Result<CanisterId, C2CError> {
+    cycles_minting_canister_c2c_client::create_canister(
         cmc,
-        &cycles_minting_canister::notify_create_canister::Args {
-            block_index,
-            controller: this_canister_id,
+        &cycles_minting_canister::create_canister::Args {
             subnet_selection: subnet.map(|s| SubnetSelection::Subnet(Subnet { subnet: s })),
         },
+        cycles,
     )
     .await?
-    .map_err(|e| C2CError::new(cmc, "notify_create_canister", RejectCode::CanisterError, format!("{e:?}")))
+    .map_err(|e| C2CError::new(cmc, "create_canister", RejectCode::CanisterError, format!("{e:?}")))
 }

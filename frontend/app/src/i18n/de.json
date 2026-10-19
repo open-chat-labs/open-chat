@@ -945,6 +945,7 @@
                 }
             },
             "unruly": {
+                "changeColours": "Farben ändern",
                 "name": "Unruly",
                 "rules": "Füllen Sie jede Zelle mit einer von zwei Farben. Nie drei gleiche Farben hintereinander in einer Zeile oder Spalte, und jede Zeile und Spalte enthält am Ende von jeder Farbe die Hälfte.",
                 "technique": {
@@ -955,10 +956,10 @@
                     "5": "Diese Linie braucht genau noch eine Zelle der einen Farbe, und sie außerhalb dieser drei Zellen zu setzen würde hier drei der anderen Farbe hintereinander lassen. Also bekommt jede leere Zelle an anderer Stelle der Linie die andere Farbe."
                 },
                 "demo": {
-                    "1": "Füllen Sie jede Zelle orange oder violett. Die umrandeten sind vorgegeben, die können Sie nicht ändern.",
-                    "2": "Nie drei gleiche Farben hintereinander, waagerecht oder senkrecht. Das ist ein Orange zu viel.",
-                    "3": "Jede Zeile und Spalte enthält am Ende drei von jeder Farbe. Diese Zeile hat vier violette.",
-                    "4": "Zwei Orange mit einer Lücke. Orange dazwischen ergäbe drei, also muss es Violett sein.",
+                    "1": "Füllen Sie jede Zelle hell oder dunkel. Einige sind schon vorgegeben, die können Sie nicht ändern.",
+                    "2": "Nie drei gleiche Farben hintereinander, waagerecht oder senkrecht. Das ist eine helle zu viel.",
+                    "3": "Jede Zeile und Spalte enthält am Ende drei von jeder Farbe. Diese Zeile hat vier dunkle.",
+                    "4": "Zwei helle mit einer Lücke. Hell dazwischen ergäbe drei, also muss es dunkel sein.",
                     "5": "Jede Zelle ausgefüllt, keine Dreierreihe, und drei von jeder Farbe in jeder Zeile und Spalte."
                 },
                 "hint": {
@@ -984,8 +985,8 @@
                     }
                 },
                 "colour": {
-                    "1": "orange",
-                    "2": "violett"
+                    "1": "hell",
+                    "2": "dunkel"
                 }
             },
             "chat_rooms": {

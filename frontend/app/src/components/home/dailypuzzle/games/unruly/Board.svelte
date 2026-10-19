@@ -3,6 +3,8 @@
     import GridSvg from "../GridSvg.svelte";
     import HintOutline from "../HintOutline.svelte";
     import { CELL, elementCentre, elementRect, keysOf } from "../gridSvg";
+    import { discPairIndex, discPairs } from "./colours";
+    import { ringedKeys } from "./violations";
     import type { BoardProps } from "../types";
 
     let {
@@ -17,25 +19,21 @@
     let model = $derived(board.model);
     let marks = $derived(board.marks);
 
-    // The two values are flat discs. Orange is much the lighter of the two, so they stay apart
-    // in greyscale and for anyone who reads the hues differently, and neither is near the
-    // violation red or the hint blue.
-    const ORANGE = "#f08c00";
-    const PURPLE = "#6b21a8";
+    // The two values are flat discs in the player's chosen pair (colours.ts).
+    let pair = $derived(discPairs[$discPairIndex]);
     const RED = "#e5484d";
     const DISC = 3.4;
 
     let elements = $derived(unruly.elements(model));
     // The three cells of a run that repeats: those discs go red.
     let runs = $derived(keysOf(violations, "run"));
-    // Every cell of the value a row or column has too many of: those cells get a red ring.
-    let overfull = $derived(keysOf(violations, "row_count", "column_count"));
+    let ringed = $derived(ringedKeys(violations));
     let mistakes = $derived(keysOf(violations, "mistake"));
 
     function discFill(key: number, mark: string): string {
         if (runs.has(key)) return RED;
         if (greyed) return mark === "given_b" || mark === "b" ? "#9a9a9a" : "#c4c4c4";
-        return mark === "given_b" || mark === "b" ? PURPLE : ORANGE;
+        return mark === "given_b" || mark === "b" ? pair.b : pair.a;
     }
 
     function tap(key: number) {
@@ -61,17 +59,17 @@
         {@const c = elementCentre(el)}
         {@const mark = marks.get(el.key)}
         {#if mark !== undefined}
-            <!-- a given is ringed, so it is obvious which cells the player may still change -->
+            <!-- givens and the player's discs look the same; a given just ignores taps -->
             <circle
                 cx={c.cx}
                 cy={c.cy}
                 r={DISC}
                 fill={discFill(el.key, mark)}
-                stroke={mark.startsWith("given") ? "#1f1f1f" : "none"}
-                stroke-width="0.8"
+                stroke="#1f1f1f"
+                stroke-width="0.4"
                 pointer-events="none" />
         {/if}
-        {#if overfull.has(el.key)}
+        {#if ringed.has(el.key)}
             <rect
                 x={r.x + 0.5}
                 y={r.y + 0.5}

@@ -62,4 +62,6 @@ export const configKeys = {
     hideBlocked: "openchat_hideblocked",
     minLogLevel: "openchat_min_log_level",
     webRightColumnOpen: "openchat_web_right_column_open",
+    unrulyColours: "openchat_unruly_colours",
+    webAccent: "openchat_web_accent",
 };

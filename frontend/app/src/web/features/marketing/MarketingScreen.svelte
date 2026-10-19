@@ -12,7 +12,9 @@
     import AuthDialog from "@openchat/ui/src/features/components/AuthDialog.svelte";
     import Landing from "@openchat/ui/src/pages/Landing.svelte";
     import Learn from "@openchat/ui/src/pages/Learn.svelte";
-    import { placeholderLearnContent, type LearnPage } from "@openchat/ui/src/pages/learnContent";
+    import EmptyState from "@openchat/ui/src/lib/components/EmptyState.svelte";
+    import type { LearnPage } from "@openchat/ui/src/pages/learnContent";
+    import CanisterMapFrame from "@shared_components/CanisterMapFrame.svelte";
     import type { PageMode } from "@openchat/ui/src/pages/types";
     import { currentThemeMode, themeType } from "@theme/themes";
     import { navigate } from "@src/utils/navigation";
@@ -21,6 +23,8 @@
     import Placeholder from "../app/Placeholder.svelte";
     import { AuthDialogProps, pageSignIns } from "../auth/authDialog.svelte";
     import { createAuth } from "../auth/signIn";
+    import { accentStore } from "../../accent";
+    import { LazyModule } from "./lazyModule.svelte";
     import { isEmailLinkPage, learnPageFor, learnPath } from "./marketing";
 
     let { route }: { route: RouteParams } = $props();
@@ -87,6 +91,14 @@
     const setMode = (next: PageMode) => themeType.set(next);
 
     const learn = $derived(learnPageFor(route));
+
+    // Learn's content is loaded the first time a Learn page shows, so Landing doesn't carry it; a
+    // failed load says so with a retry, and the next Learn page tries again too
+    const learnLoader = new LazyModule(() => import("./learn"));
+    $effect(() => {
+        if (learn !== undefined) untrack(() => learnLoader.want());
+    });
+    const learnContent = $derived(learnLoader.module?.learnContent((key) => $_(key)));
     const landing = $derived(
         route.kind === "home_route" ||
             route.kind === "home_landing_route" ||
@@ -117,7 +129,10 @@
     // /features is Landing at its features section
     $effect(() => {
         if (route.kind === "features_route") {
-            tick().then(() => document.getElementById("landing-features")?.scrollIntoView());
+            // instant: Landing makes the page's own scrolling smooth, for its section links
+            tick().then(() =>
+                document.getElementById("landing-features")?.scrollIntoView({ behavior: "instant" }),
+            );
         }
     });
 </script>
@@ -126,6 +141,8 @@
     <Landing
         {mode}
         onModeChange={setMode}
+        accent={$accentStore}
+        onAccentChange={(next) => accentStore.set(next)}
         homeHref="/home"
         appHref="/"
         exploreHref="/communities"
@@ -139,10 +156,10 @@
     {#if linkQuery !== undefined}
         <AuthDialog kind="link" {onLinkCode} onClose={() => (linkQuery = undefined)} />
     {/if}
-{:else if learn !== undefined}
-    <!-- TODO(Learn content): the existing roadmap, docs, blog and FAQ, converted to LearnContent -->
+{:else if learn !== undefined && learnContent !== undefined}
     <Learn
         {mode}
+        accent={$accentStore}
         homeHref="/home"
         appHref="/"
         exploreHref="/communities"
@@ -150,10 +167,29 @@
         post={learn.post}
         learnPageHref={learnPath}
         onNavigate={(page, post) => navigate(learnPath(page, post))}
-        content={placeholderLearnContent}
+        content={learnContent}
+        section={$querystringStore.get("section") ?? undefined}
+        question={$querystringStore.get("q") ?? undefined}
         auth={pageAuth}
         onEnterApp={enterApp}
-        {signedIn} />
+        {signedIn}>
+        {#snippet architecture()}
+            <!-- the interactive canister map, which keeps ?section= as the canister it shows -->
+            <CanisterMapFrame syncUrl />
+        {/snippet}
+    </Learn>
+{:else if learn !== undefined && learnLoader.failed}
+    <div class="page">
+        <EmptyState
+            preset="error"
+            title={$_("unexpectedError")}
+            body=" "
+            actionLabel="ui.common.retry"
+            actionHandler={() => learnLoader.want()} />
+    </div>
+{:else if learn !== undefined}
+    <!-- Learn's content is loading -->
+    <div class="page"></div>
 {:else}
     <!-- TODO(Learn doc pages): the legal pages and /diamond in Learn's page design (ROUTES.md, decision 5) -->
     <div class="page">

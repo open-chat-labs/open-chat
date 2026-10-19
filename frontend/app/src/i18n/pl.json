@@ -945,6 +945,7 @@
                 }
             },
             "unruly": {
+                "changeColours": "Zmień kolory",
                 "name": "Unruly",
                 "rules": "Wypełnij każde pole jednym z dwóch kolorów. Nigdy trzy tego samego koloru pod rząd w wierszu lub kolumnie, a w każdym wierszu i kolumnie ma być po połowie każdego koloru.",
                 "technique": {
@@ -955,10 +956,10 @@
                     "5": "Ta linia potrzebuje dokładnie jeszcze jednego pola jednego koloru, a postawienie go poza tymi trzema polami zostawiłoby tutaj trzy drugiego koloru pod rząd, więc każde inne puste pole w linii dostaje drugi kolor."
                 },
                 "demo": {
-                    "1": "Wypełnij każde pole na pomarańczowo lub fioletowo. Pola w obwódce są dane z góry, więc tych nie możesz zmienić.",
-                    "2": "Nigdy trzy tego samego koloru pod rząd, w poziomie ani w pionie. Tu jest o jedno pomarańczowe za dużo.",
-                    "3": "W każdym wierszu i kolumnie ma być po trzy każdego koloru. Ten wiersz ma cztery fioletowe.",
-                    "4": "Dwa pomarańczowe z przerwą. Pomarańczowe pomiędzy dałoby trzy, więc musi być fioletowe.",
+                    "1": "Wypełnij każde pole na jasno lub ciemno. Niektóre pola są wypełnione z góry i tych nie możesz zmienić.",
+                    "2": "Nigdy trzy tego samego koloru pod rząd, w poziomie ani w pionie. Tu jest o jedno jasne za dużo.",
+                    "3": "W każdym wierszu i kolumnie ma być po trzy każdego koloru. Ten wiersz ma cztery ciemne.",
+                    "4": "Dwa jasne z przerwą. Jasne pomiędzy dałoby trzy, więc musi być ciemne.",
                     "5": "Każde pole wypełnione, żadnej trójki pod rząd i po trzy każdego koloru w każdym wierszu i kolumnie."
                 },
                 "hint": {
@@ -984,8 +985,8 @@
                     }
                 },
                 "colour": {
-                    "1": "pomarańczowe",
-                    "2": "fioletowe"
+                    "1": "jasne",
+                    "2": "ciemne"
                 }
             },
             "chat_rooms": {

@@ -28,4 +28,6 @@ particular game. Each game plugs in through `DailyGame<M, S>`
    leaves a rules, technique or demo sentence in English. Nothing goes in the game's folder.
 5. A `defineGame({...})` entry in `utils/dailyPuzzleGames.ts`.
 
-Puzzle colours are fixed (not theme tokens) so a board reads the same in every theme.
+Puzzle colours are fixed (not theme tokens) so a board reads the same in every theme. A game may
+add a `Settings` component to its registry entry for per-device display options, shown beside the
+time, hints and streak (Unruly's disc colour pairs, stored in localStorage).

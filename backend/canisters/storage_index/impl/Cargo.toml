@@ -27,11 +27,10 @@ human_readable = { path = "../../../libraries/human_readable" }
 ic-cdk = { workspace = true }
 ic-cdk-management-canister = { workspace = true }
 ic-cdk-timers = { workspace = true }
-ic-ledger-types = { workspace = true }
 ic-stable-structures = { workspace = true }
-icp_ledger_canister_c2c_client = { path = "../../../external_canisters/icp_ledger/c2c_client" }
 json = { path = "../../../libraries/json" }
 msgpack = { path = "../../../libraries/msgpack" }
+oc_error_codes = { path = "../../../libraries/error_codes" }
 per_round_timer = { path = "../../../libraries/per_round_timer" }
 rand = { workspace = true }
 serde = { workspace = true }
