@@ -63,7 +63,11 @@
     let imageWidth = $state(0);
     let landscape = $derived(content.height < content.width);
     let normalised = $derived(normaliseContent(content));
-    let hidden = $state(false);
+    // Derived from the setting (and overridable: revealing an image assigns to
+    // it) rather than synced to it by an effect after mount: WebKit starts
+    // loading an <img> as soon as its src is set, so a first render with the
+    // full-size URL fetched the image even in low bandwidth mode.
+    let hidden = $derived($lowBandwidth && !draft);
     let zoomable = $derived(!draft && !reply && !pinned);
     let textContent = $derived<TextContentType | undefined>(
         normalised ? { kind: "text_content", text: normalised.caption ?? "" } : undefined,
@@ -75,9 +79,6 @@
 
     $effect(() => {
         contentWidth = maxTextContentWidth;
-    });
-    $effect(() => {
-        hidden = $lowBandwidth && !draft;
     });
 
     function normaliseContent(content: ImageContent | MemeFighterContent) {
