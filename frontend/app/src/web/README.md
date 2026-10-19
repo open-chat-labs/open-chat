@@ -45,7 +45,9 @@ web/
   can't wait for it, make the change by hand in the library (with its `EXPORT-LOG.md` entry) and
   list it in `GAPS.md` under the changes to take back.
 - From the existing app, only `Container`, `Row`, `Column` (component-lib) and `VirtualList`
-  (`components_shared`) are reused, for layout. Nothing else from `src/components`.
+  (`components_shared`) are reused, for layout, and `CanisterMapFrame` (`components_shared`),
+  the interactive canister map Learn's Architecture page frames. Nothing else from
+  `src/components`.
 - Colours and font sizes come from the library's tokens only. No hex.
 - The URL holds the selected chat / community / channel, the message deep link, the open thread,
   the wallet view and token, and the explore query. Everything else is local UI state.

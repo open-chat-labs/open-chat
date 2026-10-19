@@ -60,6 +60,44 @@ const serviceWorkerPath = "/service_worker.js";
 // Where the dev server serves the canister map (the production build names it by version)
 const canisterMapPath = "/canister-map-dev.html";
 
+// The canister map (architecture/canister_map), which the production build writes under the
+// website version's name and the Architecture page frames at the path in OC_CANISTER_MAP_PATH.
+// Generated once at start. Its own "pre" plugin, listed before vite-plugin-html, whose history
+// fallback (also "pre") would otherwise answer the frame's HTML request with the app itself.
+function ocCanisterMapPlugin(): Plugin {
+    return {
+        name: "oc-canister-map",
+        enforce: "pre",
+        configureServer(server) {
+            const mapPath = path.join(workerBuildDir, "canister-map.html");
+            // this runs before the workers are first built there
+            fs.mkdirSync(workerBuildDir, { recursive: true });
+            try {
+                execFileSync(
+                    "python3",
+                    [
+                        path.resolve(__dirname, "../../architecture/canister_map/extract.py"),
+                        "--out",
+                        mapPath,
+                    ],
+                    { stdio: "inherit" },
+                );
+            } catch (err) {
+                server.config.logger.error(`[oc-canister-map] generation failed: ${err}`);
+            }
+            server.middlewares.use((req, res, next) => {
+                const pathname = (req.url ?? "").split("?")[0];
+                if (pathname === canisterMapPath && fs.existsSync(mapPath)) {
+                    res.setHeader("Content-Type", "text/html; charset=utf-8");
+                    fs.createReadStream(mapPath).pipe(res);
+                    return;
+                }
+                next();
+            });
+        },
+    };
+}
+
 // Builds the workers from TypeScript source — reusing the sub-package
 // aliases so they pull agent/shared from source too — and serves them at
 // /worker.js etc, rebuilding and triggering a full reload when worker/agent/shared
@@ -106,34 +144,6 @@ function ocWorkerPlugin(): Plugin {
                         fileName.endsWith(".map") ? "application/json" : "text/javascript",
                     );
                     fs.createReadStream(filePath).pipe(res);
-                    return;
-                }
-                next();
-            });
-
-            // The canister map (architecture/canister_map), which the production build writes
-            // under the website version's name and the Architecture page frames at the path in
-            // OC_CANISTER_MAP_PATH. Generated once at start; without it the SPA fallback would
-            // serve the app itself inside the frame.
-            const mapPath = path.join(workerBuildDir, "canister-map.html");
-            try {
-                execFileSync(
-                    "python3",
-                    [
-                        path.resolve(__dirname, "../../architecture/canister_map/extract.py"),
-                        "--out",
-                        mapPath,
-                    ],
-                    { stdio: "inherit" },
-                );
-            } catch (err) {
-                server.config.logger.error(`[oc-canister-map] generation failed: ${err}`);
-            }
-            server.middlewares.use((req, res, next) => {
-                const pathname = (req.url ?? "").split("?")[0];
-                if (pathname === canisterMapPath && fs.existsSync(mapPath)) {
-                    res.setHeader("Content-Type", "text/html; charset=utf-8");
-                    fs.createReadStream(mapPath).pipe(res);
                     return;
                 }
                 next();
@@ -227,6 +237,7 @@ export default defineConfig({
             preventAssignment: true,
         }) as PluginOption,
         ocWorkerPlugin(),
+        ocCanisterMapPlugin(),
         createHtmlPlugin({
             minify: true,
             entry: "./src/main.ts",

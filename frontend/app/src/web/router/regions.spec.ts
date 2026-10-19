@@ -66,14 +66,34 @@ describe("what a route shows", () => {
         });
     });
 
-    test("explore is full width", () => {
+    test("explore is full width, without the right column, signed in or out", () => {
         for (const kind of ["communities_route", "welcome_route"]) {
-            expect(regionsFor(route({ kind, scope: none }), false)).toEqual({
-                area: "app",
-                middle: { kind: "explore" },
-                narrowView: "middle",
-            });
+            for (const signedOut of [false, true]) {
+                expect(regionsFor(route({ kind, scope: none }), signedOut)).toEqual({
+                    area: "app",
+                    middle: { kind: "explore" },
+                    narrowView: "middle",
+                    rightColumn: false,
+                });
+            }
         }
+    });
+
+    test("the wallet has no right column, on its home or a token's page", () => {
+        for (const view of ["all", "token"]) {
+            expect(
+                regionsFor(route({ kind: "wallet_route", scope: none, view, ledger: "x" }), false),
+            ).toMatchObject({ rightColumn: false });
+        }
+    });
+
+    test("a chat and the notifications have the right column", () => {
+        expect(
+            regionsFor(route({ kind: "chat_list_route", scope: { kind: "chats" } }), false),
+        ).not.toHaveProperty("rightColumn");
+        expect(
+            regionsFor(route({ kind: "notifications_route", scope: none }), false),
+        ).not.toHaveProperty("rightColumn");
     });
 
     test("mobile's profile path has no page of its own (the router redirects it)", () => {

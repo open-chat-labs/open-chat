@@ -35,12 +35,14 @@
     } from "@src/utils/navigation";
     import {
         handleLinkClick,
+        inEditor,
         removeQueryStringParam,
         withoutQueryStringParams,
     } from "@src/utils/urls";
     import page from "page";
     import { getContext, onMount, untrack, type Snippet } from "svelte";
     import { routeTable } from "./routeTable";
+    import { leftToBrowser } from "./links";
 
     let { children }: { children: Snippet } = $props();
 
@@ -49,7 +51,8 @@
     function parsePathParams(fn: (ctx: PageJS.Context) => RouteParams) {
         return (ctx: PageJS.Context, next: () => void) => {
             client.setRouteParams(ctx, fn(ctx));
-            window.scrollTo({ behavior: "auto", top: 0 });
+            // instant: "auto" would follow a page's own smooth scrolling (Landing's)
+            window.scrollTo({ behavior: "instant", top: 0 });
             next();
         };
     }
@@ -60,7 +63,16 @@
     }
 
     onMount(() => {
-        const onLinkClick = handleLinkClick(client, navigate);
+        const routeLink = handleLinkClick(client, navigate);
+        // a link to a fragment of the page it's on is the browser's: it scrolls there (not one in
+        // an editor, a non-editable chip in one included, which the shared handler holds)
+        const onLinkClick = (e: MouseEvent) => {
+            const anchor = e.target instanceof Element ? e.target.closest("a") : null;
+            if (anchor?.href && leftToBrowser(anchor.href, inEditor(anchor), window.location)) {
+                return;
+            }
+            routeLink(e);
+        };
         document.addEventListener("click", onLinkClick, { capture: true });
 
         for (const { path, parse } of routeTable) {
