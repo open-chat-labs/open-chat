@@ -1,0 +1,31 @@
+# The canister map (architecture/canister_map) is generated from the backend source by every
+# website build. Its generator reads the Rust source with patterns, so a backend change can break it
+# without any frontend change; this builds the page on such changes so that is caught here rather
+# than by a failed website build at release time. Not a required check.
+on:
+  pull_request:
+    branches:
+      - master
+    paths:
+      - "backend/canisters/**"
+      - "backend/libraries/**"
+      - "architecture/canister_map/**"
+      - "canister_ids.json"
+      - ".github/workflows/canister_map.yaml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+name: Build the canister map
+
+jobs:
+  build:
+    name: generate the page
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate
+        run: python3 architecture/canister_map/extract.py --out "$RUNNER_TEMP/canisters/index.html"
+      - name: Check it was written
+        run: test -s "$RUNNER_TEMP/canisters/index.html"

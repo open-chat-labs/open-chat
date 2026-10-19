@@ -1,0 +1,81 @@
+{
+ "live": {
+  "user_index": [
+   [
+    "users",
+    229081
+   ]
+  ],
+  "local_user_index": [
+   [
+    "canisters on prod",
+    3
+   ]
+  ],
+  "multi_user": [
+   [
+    "canisters on prod",
+    100
+   ]
+  ],
+  "group": [
+   [
+    "public groups",
+    1278
+   ],
+   [
+    "private groups",
+    5625
+   ]
+  ],
+  "community": [
+   [
+    "public communities",
+    1339
+   ],
+   [
+    "private communities",
+    374
+   ]
+  ],
+  "storage_index": [
+   [
+    "files",
+    776271
+   ],
+   [
+    "GB stored",
+    418
+   ]
+  ],
+  "storage_bucket": [
+   [
+    "active buckets",
+    2
+   ]
+  ],
+  "notifications_index": [
+   [
+    "web push subscriptions",
+    1473
+   ]
+  ],
+  "identity": [
+   [
+    "identities",
+    267505
+   ],
+   [
+    "auth principals",
+    270902
+   ]
+  ],
+  "online_users": [
+   [
+    "mark_as_online calls",
+    88201953
+   ]
+  ]
+ },
+ "live_as_of": "2026-10-16"
+}
