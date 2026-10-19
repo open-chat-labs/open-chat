@@ -28,13 +28,14 @@ describe("unruly disc colours", () => {
         }
     });
 
-    /** Invariant: the two colours of every pair differ in lightness (contrast ratio of at
-     * least 3), so they stay apart under every common kind of colour blindness. */
-    it("keeps every pair apart in lightness", async () => {
+    /** Invariant: in every pair the first colour is the lighter by a contrast ratio of at least
+     * 3. The difference keeps them apart under every common kind of colour blindness, and the
+     * order matters because every locale calls value 1 "light" and value 2 "dark". */
+    it("makes the first colour of every pair the lighter, by a clear margin", async () => {
         const { discPairs } = await load();
         for (const { a, b } of discPairs) {
-            const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
-            expect((hi + 0.05) / (lo + 0.05), `${a} / ${b}`).toBeGreaterThanOrEqual(3);
+            const ratio = (luminance(a) + 0.05) / (luminance(b) + 0.05);
+            expect(ratio, `${a} / ${b}`).toBeGreaterThanOrEqual(3);
         }
     });
 });

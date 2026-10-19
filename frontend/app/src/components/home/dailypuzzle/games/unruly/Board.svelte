@@ -4,6 +4,7 @@
     import HintOutline from "../HintOutline.svelte";
     import { CELL, elementCentre, elementRect, keysOf } from "../gridSvg";
     import { discPairIndex, discPairs } from "./colours";
+    import { ringedKeys } from "./violations";
     import type { BoardProps } from "../types";
 
     let {
@@ -24,11 +25,9 @@
     const DISC = 3.4;
 
     let elements = $derived(unruly.elements(model));
-    // The three cells of a run that repeats: those discs go red and get the red ring too, so
-    // the mistake shows for players who can't tell the red from the disc colour.
+    // The three cells of a run that repeats: those discs go red.
     let runs = $derived(keysOf(violations, "run"));
-    // Every cell of the value a row or column has too many of: those cells get a red ring.
-    let overfull = $derived(keysOf(violations, "row_count", "column_count"));
+    let ringed = $derived(ringedKeys(violations));
     let mistakes = $derived(keysOf(violations, "mistake"));
 
     function discFill(key: number, mark: string): string {
@@ -70,7 +69,7 @@
                 stroke-width="0.4"
                 pointer-events="none" />
         {/if}
-        {#if overfull.has(el.key) || runs.has(el.key)}
+        {#if ringed.has(el.key)}
             <rect
                 x={r.x + 0.5}
                 y={r.y + 0.5}
