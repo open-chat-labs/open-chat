@@ -10,11 +10,14 @@
 
     let { network, size = "1.25rem" }: Props = $props();
 
+    // Each on a circle, so that they sit alike beside an address. There is no ICRC logo as such,
+    // so an ICRC-1 account gets the Internet Computer logo on a dark circle and an ICP account
+    // identifier the ICP token logo, which is the same on a light one.
     const logos: Record<AddressNetwork, string> = {
-        icrc: "/assets/dfinity_logo.svg",
+        icrc: "/assets/icrc_logo.svg",
         icp: "/assets/icp_token.svg",
         btc: "/assets/btc_logo.svg",
-        eth: "/assets/ethereum.svg",
+        eth: "/assets/eth_logo.svg",
         sol: "/assets/sol_logo.svg",
     };
 
