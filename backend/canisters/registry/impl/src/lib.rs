@@ -78,7 +78,6 @@ impl RuntimeState {
                 sns_wasm: self.data.sns_wasm_canister_id,
                 escrow: self.data.escrow_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
-                icp_ledger: self.data.icp_ledger_canister_id,
                 cmc: self.data.cycles_minting_canister_id,
             },
         }
@@ -96,7 +95,6 @@ struct Data {
     sns_wasm_canister_id: CanisterId,
     escrow_canister_id: CanisterId,
     cycles_dispenser_canister_id: CanisterId,
-    icp_ledger_canister_id: CanisterId,
     cycles_minting_canister_id: CanisterId,
     tokens: Tokens,
     nervous_systems: NervousSystems,
@@ -127,7 +125,6 @@ impl Data {
         sns_wasm_canister_id: CanisterId,
         escrow_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
-        icp_ledger_canister_id: CanisterId,
         cycles_minting_canister_id: CanisterId,
         test_mode: bool,
     ) -> Data {
@@ -141,7 +138,6 @@ impl Data {
             sns_wasm_canister_id,
             escrow_canister_id,
             cycles_dispenser_canister_id,
-            icp_ledger_canister_id,
             cycles_minting_canister_id,
             tokens: Tokens::default(),
             nervous_systems: NervousSystems::default(),
@@ -239,6 +235,5 @@ pub struct CanisterIds {
     pub sns_wasm: CanisterId,
     pub escrow: CanisterId,
     pub cycles_dispenser: CanisterId,
-    pub icp_ledger: CanisterId,
     pub cmc: CanisterId,
 }

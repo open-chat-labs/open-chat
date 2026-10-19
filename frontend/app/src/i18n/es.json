@@ -945,6 +945,7 @@
                 }
             },
             "unruly": {
+                "changeColours": "Cambiar colores",
                 "name": "Unruly",
                 "rules": "Rellena cada casilla con uno de dos colores. Nunca tres del mismo color seguidas en una fila o columna, y cada fila y columna acaba con la mitad de cada uno.",
                 "technique": {
@@ -955,10 +956,10 @@
                     "5": "A esta línea le falta exactamente una de un color, y ponerla fuera de estas tres casillas dejaría aquí tres del otro color seguidas, así que todas las casillas vacías en el resto de la línea llevan el otro color."
                 },
                 "demo": {
-                    "1": "Rellena cada casilla de naranja o morado. Las rodeadas con un círculo vienen dadas, así que esas no puedes cambiarlas.",
-                    "2": "Nunca tres del mismo color seguidas, en horizontal o vertical. Ahí sobra un naranja.",
-                    "3": "Cada fila y columna acaba con tres de cada color. Esta fila tiene cuatro morados.",
-                    "4": "Dos naranjas con un hueco. Naranja en medio haría tres, así que tiene que ser morado.",
+                    "1": "Rellena cada casilla de claro u oscuro. Algunas vienen ya rellenas, y esas no puedes cambiarlas.",
+                    "2": "Nunca tres del mismo color seguidas, en horizontal o vertical. Ahí sobra un claro.",
+                    "3": "Cada fila y columna acaba con tres de cada color. Esta fila tiene cuatro oscuros.",
+                    "4": "Dos claros con un hueco. Claro en medio haría tres, así que tiene que ser oscuro.",
                     "5": "Todas las casillas rellenas, ninguna serie de tres y tres de cada color en cada fila y columna."
                 },
                 "hint": {
@@ -984,8 +985,8 @@
                     }
                 },
                 "colour": {
-                    "1": "naranja",
-                    "2": "morado"
+                    "1": "claro",
+                    "2": "oscuro"
                 }
             },
             "chat_rooms": {

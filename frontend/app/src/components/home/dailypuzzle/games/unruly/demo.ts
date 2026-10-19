@@ -10,7 +10,7 @@ import type { DemoSpec } from "../types";
 //     2 1 1 2 1 2
 //
 // Description: [version, width, height, 36 given bytes row-major], 0 = blank, 1 = the first
-// value (orange), 2 = the second (purple). Cell key is y*6+x, and a mark's value is 1 or 2:
+// value (light), 2 = the second (dark). Cell key is y*6+x, and a mark's value is 1 or 2:
 // there is no "empty" conclusion in this game.
 //
 // `apply` ignores givens, so every frame below places its marks on empty cells only; the givens
@@ -33,7 +33,7 @@ const demo: DemoSpec = {
             caption: "demo.1",
         },
         {
-            // Two oranges placed to the left of the given orange at cell 2: three across the top
+            // Two lights placed to the left of the given light at cell 2: three across the top
             // row, which the checker paints red on its own.
             marks: [
                 [0, 1],
@@ -43,7 +43,7 @@ const demo: DemoSpec = {
             target: [0, 1, 2],
         },
         {
-            // Row 3 already holds a given purple at 18. Three more purples take it to four, one
+            // Row 3 already holds a given dark at 18. Three more darks take it to four, one
             // over the three a six-wide row is allowed, and none of them sit three in a row: the
             // red is the count, not a run.
             marks: [
@@ -55,8 +55,8 @@ const demo: DemoSpec = {
             target: [18, 19, 22, 23],
         },
         {
-            // The deduction the mistake above teaches. Row 1 has given oranges at 9 and 11 with
-            // one gap between them, so cell 10 can only be purple.
+            // The deduction the mistake above teaches. Row 1 has given lights at 9 and 11 with
+            // one gap between them, so cell 10 can only be dark.
             marks: [[10, 2]],
             caption: "demo.4",
             target: [9, 10, 11],

@@ -933,6 +933,7 @@
                 }
             },
             "unruly": {
+                "changeColours": "Change colours",
                 "name": "Unruly",
                 "rules": "Fill every cell with one of two colours. Never three of the same colour in a row or column, and every row and column ends up half of each.",
                 "technique": {
@@ -943,10 +944,10 @@
                     "5": "This line needs exactly one more of one colour, and putting it outside these three cells would leave three of the other colour in a row here, so every empty cell elsewhere in the line takes the other colour."
                 },
                 "demo": {
-                    "1": "Fill every cell orange or purple. The ringed ones are given, so those you cannot change.",
-                    "2": "Never three of the same colour in a row, across or down. That is one orange too many.",
-                    "3": "Every row and column ends up three of each colour. This row has four purples.",
-                    "4": "Two oranges with a gap. Orange in between would make three, so it has to be purple.",
+                    "1": "Fill every cell light or dark. Some start filled in, and those you cannot change.",
+                    "2": "Never three of the same colour in a row, across or down. That is one light too many.",
+                    "3": "Every row and column ends up three of each colour. This row has four darks.",
+                    "4": "Two lights with a gap. Light in between would make three, so it has to be dark.",
                     "5": "Every cell filled, no run of three, and three of each colour in every row and column."
                 },
                 "hint": {
@@ -972,8 +973,8 @@
                     }
                 },
                 "colour": {
-                    "1": "orange",
-                    "2": "purple"
+                    "1": "light",
+                    "2": "dark"
                 }
             },
             "chat_rooms": {

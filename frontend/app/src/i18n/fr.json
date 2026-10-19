@@ -945,6 +945,7 @@
                 }
             },
             "unruly": {
+                "changeColours": "Changer les couleurs",
                 "name": "Unruly",
                 "rules": "Remplissez chaque case avec l'une de deux couleurs. Jamais trois de la même couleur à la suite dans une ligne ou une colonne, et chaque ligne et colonne finit avec moitié de chaque.",
                 "technique": {
@@ -955,10 +956,10 @@
                     "5": "Il manque à cette ligne ou colonne exactement une case d'une couleur, et la mettre hors de ces trois cases laisserait ici trois de l'autre couleur à la suite, donc chaque case vide ailleurs prend l'autre couleur."
                 },
                 "demo": {
-                    "1": "Remplissez chaque case en orange ou en violet. Les cases entourées sont données, vous ne pouvez pas les changer.",
-                    "2": "Jamais trois de la même couleur à la suite, en ligne ou en colonne. Ça fait un orange de trop.",
-                    "3": "Chaque ligne et colonne finit avec trois de chaque couleur. Cette ligne a quatre violets.",
-                    "4": "Deux oranges avec un trou. Orange au milieu en ferait trois, donc ce doit être violet.",
+                    "1": "Remplissez chaque case en clair ou en foncé. Certaines cases sont déjà remplies, vous ne pouvez pas les changer.",
+                    "2": "Jamais trois de la même couleur à la suite, en ligne ou en colonne. Ça fait un clair de trop.",
+                    "3": "Chaque ligne et colonne finit avec trois de chaque couleur. Cette ligne a quatre foncés.",
+                    "4": "Deux clairs avec un trou. Clair au milieu en ferait trois, donc ce doit être foncé.",
                     "5": "Chaque case remplie, aucune série de trois, et trois de chaque couleur dans chaque ligne et colonne."
                 },
                 "hint": {
@@ -984,8 +985,8 @@
                     }
                 },
                 "colour": {
-                    "1": "orange",
-                    "2": "violet"
+                    "1": "clair",
+                    "2": "foncé"
                 }
             },
             "chat_rooms": {
