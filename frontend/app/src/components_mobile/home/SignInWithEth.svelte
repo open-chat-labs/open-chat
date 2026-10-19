@@ -1,8 +1,8 @@
 <script lang="ts">
     import type { DelegationChain, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
-    import { mainnet } from "@wagmi/core/chains";
-    import { coinbaseWallet, metaMask, walletConnect } from "@wagmi/connectors";
-    import { createConfig, http, signMessage, type Connector } from "@wagmi/core";
+    import { signMessage, type Connector } from "@wagmi/core";
+    import { ethWagmiConfig } from "@src/utils/wagmi";
+    import { ethWalletIcon, uniqueByName } from "@src/utils/ethWallets";
     import { Button } from "component-lib";
     import { OpenChat } from "@client";
     import { getContext } from "svelte";
@@ -22,24 +22,9 @@
 
     let connecting: Connector | undefined = $state();
 
-    const wagmiConfig = createConfig({
-        chains: [mainnet],
-        connectors: [
-            metaMask(),
-            coinbaseWallet({ appName: "OpenChat" }),
-            walletConnect({ projectId: import.meta.env.OC_WALLET_CONNECT_PROJECT_ID! }),
-        ],
-        transports: {
-            [mainnet.id]: http(),
-        },
-    });
+    const wagmiConfig = ethWagmiConfig();
 
-    const connectorNames = new Set<string>();
-    const uniqueConnectors = wagmiConfig.connectors.filter((c) => {
-        if (connectorNames.has(c.name)) return false;
-        connectorNames.add(c.name);
-        return true;
-    });
+    const uniqueConnectors = uniqueByName(wagmiConfig.connectors);
 
     async function connectWith(connector: Connector) {
         try {
@@ -71,19 +56,13 @@
             connecting = undefined;
         }
     }
-
-    const icons: Record<string, string> = {
-        walletConnect: "/assets/walletconnect.svg",
-        coinbaseWalletSDK: "/assets/coinbase.svg",
-        metaMaskSDK: "/assets/metamask.svg",
-    };
 </script>
 
 {#each uniqueConnectors as connector}
     <div class="auth-option">
         <div class={`icon center ${connecting?.id === connector.id ? "connecting" : ""}`}>
-            {#if icons[connector.id] ?? connector.icon}
-                <img alt={connector.name} src={icons[connector.id] ?? connector.icon} />
+            {#if ethWalletIcon(connector)}
+                <img alt={connector.name} src={ethWalletIcon(connector)} />
             {/if}
         </div>
         <Button onClick={() => connectWith(connector)}>

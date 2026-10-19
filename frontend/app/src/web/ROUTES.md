@@ -129,7 +129,7 @@ until there's a setting (`GAPS.md`). Signed-in users on `/` go to the app as tod
 
 | Path | Renders | Notes |
 |---|---|---|
-| `/` (signed out), `/home` | `Landing` | `?auth` opens the magic-link sign-in (existing). `?ref=` is captured (existing). |
+| `/` (signed out), `/home` | `Landing` | `?auth&m=…` (an emailed sign-in link) asks for the link's code (existing). `?ref=` is captured (existing). |
 | `/features` | `Landing`, scrolled to `#landing-features` | The old `#hash` redirect (`?section=`) keeps working. |
 | `/roadmap` · `/whitepaper` · `/architecture` · `/blog` · `/blog/:slug` · `/faq` | `Learn`, host-routed (`page`, `post`, `learnPageHref`) | `?q=` opens that FAQ question; `?section=` scrolls to that doc section, except on `/architecture`, which frames the canister map and where it names the canister to open. Content: `GAPS.md` (Learn content). |
 | `/terms` · `/privacy` · `/guidelines` · `/csea-reporting` | `Learn` doc pages, not tabs (decision 5) | `?section=` scrolls to a section; `/csea-reporting` keeps `?report=` / `?urgent=`. |
@@ -175,20 +175,34 @@ Not a URL, wired as today:
   the modal stack to close. The new shell has to handle `closeModalStack` the way `Home.svelte`
   does, or navigations sit pending.
 
-## Built so far (phase 2)
+## Built so far
 
-`router/routeTable.ts` registers every path above in this order, and `router/Router.svelte` runs the
-existing route effects. `router/regions.ts` maps each route onto the regions above, and the regions
-are placeholders until their screens are built. Still to come:
+**Router (phase 2).** `router/routeTable.ts` registers every path above in this order, and
+`router/Router.svelte` runs the existing route effects. `router/regions.ts` maps each route onto
+the regions above, and the in-app regions are placeholders until their screens are built.
 
+**Landing, Learn and sign-in (brought forward from phase 9).** `features/marketing` renders
+`Landing` on `/` (signed out), `/home` and `/features`, and `Learn` host-routed on its sub-pages'
+paths. `features/auth` wires `AuthDialog` to the existing sign-in flows: on the pages through
+their own dialog, and in the app (`AuthScreen`) whenever the client asks for a sign-in or a
+signed-in identity has no account yet. `/home?auth&m=…` (the emailed sign-in link) asks for the
+link's code over Landing. While a sign-in or sign-up started in Landing's own dialog is going,
+`/` keeps showing Landing, so that dialog sees it through, and after a sign-up there fails, so it
+says why (`pageSignIns`, `showsSignedOut`). Leaving the app mid sign-in gives the sign-in up.
+
+Still to come:
+
+- **Learn content**: Learn shows the library's placeholder content until the existing roadmap,
+  docs, blog and FAQ are converted (`GAPS.md`). `/faq?q=` and `?section=` wait for that too.
+- **Legal pages and `/diamond`**: placeholders until Learn's doc pages and `DiamondContent` exist
+  (decision 5).
 - **Guests**: guest-only behaviour comes in the guest pass (phase 10). That covers the "sign in"
   routes in the Guest column and the composer's sign-in prompt. A guest on `/favourite` already
-  gets the existing sign-in, then `/chats`.
+  gets the sign-in, then `/chats`.
 - **Dialog params**: `?profile` opens a placeholder dialog over the page. `?diamond`, `?hof` and
   `?chit` are left in the URL until their dialogs exist (phase 8).
 - **Share**: `/share` goes to the default scope as today, but picking the chat (`ChatPicker`)
   comes in phase 5.
-- **Marketing pages**: they render a placeholder until Landing and Learn are mounted (phase 9).
 
 ## Known router issues (not fixed here)
 

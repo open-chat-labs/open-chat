@@ -6,49 +6,30 @@
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
     import { navigate } from "@src/utils/navigation";
     import { regionsFor } from "../../router/regions";
+    import { showsSignedOut, withoutAccount } from "../auth/auth.adapter";
+    import AuthScreen from "../auth/AuthScreen.svelte";
+    import { pageSignIns } from "../auth/authDialog.svelte";
+    import MarketingScreen from "../marketing/MarketingScreen.svelte";
     import AppScreen from "./AppScreen.svelte";
-    import Placeholder from "./Placeholder.svelte";
 
-    // Links into the app from the marketing placeholder, in development builds only, until the
-    // marketing pages are mounted
-    const DEV_LINKS =
-        import.meta.env.OC_BUILD_ENV === "development"
-            ? [
-                  "/chats",
-                  "/favourite",
-                  "/chats/threads",
-                  "/notifications",
-                  "/communities",
-                  "/wallet",
-                  "/wallet/send",
-                  "/chats?profile",
-              ]
-            : [];
-
-    const signedOut = $derived($identityStateStore.kind === "anon" && $anonUserStore);
+    const signedOut = $derived(
+        showsSignedOut(
+            $identityStateStore,
+            $anonUserStore,
+            pageSignIns.signingIn,
+            pageSignIns.signupFailed,
+        ),
+    );
     const regions = $derived(regionsFor($routeStore, signedOut));
 
-    const registering = $derived(
-        $identityStateStore.kind === "registering" ||
-            ($identityStateStore.kind === "loading_user" && $identityStateStore.registering),
-    );
+    const registering = $derived(withoutAccount($identityStateStore));
     const loading = $derived(
         !registering && (!$chatsInitialisedStore || $identityStateStore.kind === "loading_user"),
     );
 </script>
 
 {#if regions.area === "marketing"}
-    <div class="page">
-        <!-- TODO(phase 9): Landing and Learn. Until then, links into the app. -->
-        <div class="marketing">
-            <Placeholder title="Marketing page" detail={regions.route.kind} />
-            <nav class="links">
-                {#each DEV_LINKS as href}
-                    <a {href}>{href}</a>
-                {/each}
-            </nav>
-        </div>
-    </div>
+    <MarketingScreen route={regions.route} />
 {:else if regions.area === "not_found"}
     <div class="page">
         <!-- TODO(design): no not-found page in the design; this is the existing page's copy -->
@@ -67,26 +48,12 @@
     <AppScreen {regions} />
 {/if}
 
+{#if regions.area !== "marketing"}
+    <!-- outside the branches above, so a sign-in survives the spinner while the user loads -->
+    <AuthScreen />
+{/if}
+
 <style>
-    .marketing {
-        display: grid;
-        gap: var(--space-16);
-        justify-items: center;
-    }
-
-    .links {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: var(--space-12);
-        font-family: var(--font-mono);
-        font-size: var(--text-sm);
-    }
-
-    .links a {
-        color: var(--accent);
-    }
-
     .page {
         display: grid;
         place-items: center;
