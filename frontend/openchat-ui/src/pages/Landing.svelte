@@ -1596,6 +1596,8 @@
 
   .browse {
     flex: none;
+    /* at the row's far end, and there too when it wraps under the heading */
+    margin-inline-start: auto;
     display: flex;
     align-items: center;
     gap: var(--space-8);
