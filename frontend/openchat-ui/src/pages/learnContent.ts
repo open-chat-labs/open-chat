@@ -12,6 +12,8 @@ export const LEARN_PAGES: LearnPage[] = ['roadmap', 'whitepaper', 'architecture'
 export interface LearnDocSection {
   /** Unique within the doc. Rendered as id="learn-<id>" (prefixed, so it can't clash with the host page's ids). */
   id: string;
+  /** 1 (the default) for a top-level section; a deeper one belongs to the nearest shallower section before it. */
+  depth?: number;
   title: string;
   paras: string[];
   list?: string[];
@@ -596,3 +598,53 @@ export function learnFromHash(hash: string): { page: LearnPage; post?: string } 
 export function learnHashHref(learnHref: string, page: LearnPage, post?: string): string {
   return `${learnHref}#${page}${page === 'blog' && post ? '/' + encodeURIComponent(post) : ''}`;
 }
+
+/** A doc section in its doc's outline: its number (01, 02 … at the top, 2.1, 3.4.1 below) and its sub-sections. */
+export interface OutlineEntry {
+  /** The section's index in the doc's sections. */
+  index: number;
+  number: string;
+  depth: number;
+  children: OutlineEntry[];
+}
+
+/** The doc's sections as a tree: each section under the nearest shallower one before it (a depth that skips a level
+ *  sits one level down). Numbers count within each parent. */
+export function docOutline(sections: LearnDocSection[]): OutlineEntry[] {
+  const top: OutlineEntry[] = [];
+  // the open entries, one per level, with the plain path their children's numbers build on
+  const open: { entry: OutlineEntry; path: string }[] = [];
+  sections.forEach((s, index) => {
+    const depth = Math.max(1, Math.min(s.depth ?? 1, open.length + 1));
+    open.length = depth - 1;
+    const parent = open[depth - 2];
+    const siblings = parent ? parent.entry.children : top;
+    const n = siblings.length + 1;
+    const path = parent ? `${parent.path}.${n}` : String(n);
+    const entry: OutlineEntry = { index, number: parent ? path : String(n).padStart(2, '0'), depth, children: [] };
+    siblings.push(entry);
+    open.push({ entry, path });
+  });
+  return top;
+}
+
+/** The outline entries from the top down to the section at `index` (the section's own entry last); none for an index
+ *  the outline doesn't have. */
+export function outlinePath(outline: OutlineEntry[], index: number): OutlineEntry[] {
+  for (const entry of outline) {
+    if (entry.index === index) return [entry];
+    const below = outlinePath(entry.children, index);
+    if (below.length) return [entry, ...below];
+  }
+  return [];
+}
+
+/** The section being read: the last one whose top has reached `line` (from the top of the viewport), else the first. */
+export function readingSection(tops: number[], line: number): number {
+  let reading = 0;
+  tops.forEach((top, i) => {
+    if (top <= line) reading = i;
+  });
+  return reading;
+}
+

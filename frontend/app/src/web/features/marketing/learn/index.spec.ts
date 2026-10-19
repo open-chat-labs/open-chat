@@ -1,4 +1,5 @@
 import { inlineMarkdown, imageOf } from "@openchat/ui/src/pages/inlineMarkdown";
+import { docOutline } from "@openchat/ui/src/pages/learnContent";
 import { postsBySlug } from "@src/components/landingpages/blog/posts";
 import { learnContent } from "./index";
 
@@ -22,6 +23,19 @@ describe("Learn's converted content", () => {
     test("has unique whitepaper section ids, the targets of ?section=", () => {
         const ids = content.docs.whitepaper!.sections.map((s) => s.id);
         expect(new Set(ids).size).toBe(ids.length);
+    });
+
+    test("nests the whitepaper as the old page did: 7 sections, 3.4.1 under 3.4 under 3", () => {
+        const outline = docOutline(content.docs.whitepaper!.sections);
+        expect(outline.map((e) => e.number)).toEqual(["01", "02", "03", "04", "05", "06", "07"]);
+        const ids = (i: number) => content.docs.whitepaper!.sections[i].id;
+        const three = outline[2];
+        expect(three.children.map((c) => [ids(c.index), c.number])).toContainEqual(["3-4", "3.4"]);
+        const threeFour = three.children.find((c) => ids(c.index) === "3-4")!;
+        expect(threeFour.children.map((c) => [ids(c.index), c.number])).toEqual([
+            ["3-4-1", "3.4.1"],
+            ["3-4-2", "3.4.2"],
+        ]);
     });
 
     test("writes every link so it's kept as a link (none fall back to its text)", () => {

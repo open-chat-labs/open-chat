@@ -20,7 +20,20 @@
   import { cssUrl } from '../lib/cssUrl';
   import { prefersReducedMotion } from './heroBackground';
   import { imageOf, inlineMarkdown, plainText } from './inlineMarkdown';
-  import { learnFromHash, learnHashHref, learnPagesOf, placeholderLearnContent, type LearnContent, type LearnPage, type RoadmapItem } from './learnContent';
+  import {
+    docOutline,
+    learnFromHash,
+    learnHashHref,
+    learnPagesOf,
+    outlinePath,
+    placeholderLearnContent,
+    readingSection,
+    type LearnContent,
+    type LearnPage,
+    type OutlineEntry,
+    type RoadmapItem,
+  } from './learnContent';
+  import { TocOpen } from './tocOpen.svelte';
   import type { PageAccent, PageMode } from './types';
 
   interface CommonProps {
@@ -183,6 +196,48 @@
     sectionEls[i]?.scrollIntoView?.({ behavior, block: 'start' });
   }
 
+  // the contents list is the doc's outline: sub-sections sit under their section, shown while it's open (TocOpen)
+  const outline = $derived(doc ? docOutline(doc.sections) : []);
+  const numbers = $derived.by(() => {
+    const all: Record<number, OutlineEntry> = {};
+    const walk = (entries: OutlineEntry[]) =>
+      entries.forEach((e) => {
+        all[e.index] = e;
+        walk(e.children);
+      });
+    walk(outline);
+    return all;
+  });
+  // a new doc starts with nothing opened by hand
+  const toc = $derived.by(() => {
+    void doc;
+    return new TocOpen();
+  });
+  let reading = $state(0);
+
+  // the section being read follows the scroll: the one whose heading has passed below the sticky header (where a jump
+  // to a section puts it, its scroll margin)
+  $effect(() => {
+    if (!doc) return;
+    const shown = outline;
+    const open = toc;
+    let frame = 0;
+    const follow = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const tops = sectionEls.map((el) => el?.getBoundingClientRect().top ?? Infinity);
+        reading = readingSection(tops, 120);
+        open.reading(outlinePath(shown, reading).map((e) => e.index));
+      });
+    };
+    untrack(follow);
+    window.addEventListener('scroll', follow, { passive: true });
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', follow);
+    };
+  });
+
   // a deep link into a doc section or an FAQ question: scrolled to (the question opened) once it shows, and again when
   // the host passes a new one
   $effect(() => {
@@ -240,6 +295,29 @@
         rel={/^https?:/i.test(part.href) ? 'noopener' : undefined}>{part.text}</a
       >{:else if part.kind === 'bold'}<strong>{part.text}</strong>{:else if part.kind === 'code'}<code class="inline-code">{part.text}</code>{:else}{part.text}{/if}{/each}{/snippet}
 
+<!-- a doc's contents list: a section, and its sub-sections while it's open -->
+{#snippet tocEntries(entries: OutlineEntry[])}
+  {#each entries as e (e.index)}
+    {@const title = doc?.sections[e.index]?.title ?? ''}
+    {@const open = e.children.length > 0 && toc.isOpen(e.index)}
+    <div class="toc-entry" style:--toc-indent="{(e.depth - 1) * 14}px">
+      <button class="toc-item" class:reading={reading === e.index} aria-current={reading === e.index ? 'location' : undefined} onclick={() => jumpTo(e.index)}
+        ><span class="num">{e.number}</span>{title}</button
+      >
+      {#if e.children.length}
+        <button
+          class="toc-toggle"
+          class:open
+          aria-expanded={open}
+          aria-label={t(open ? 'ui.learn.hideSections' : 'ui.learn.showSections', { title })}
+          onclick={() => toc.toggle(e.index)}><Icon icon="chevron-down" size={16} /></button
+        >
+      {/if}
+    </div>
+    {#if open}{@render tocEntries(e.children)}{/if}
+  {/each}
+{/snippet}
+
 <div class="page" data-oc-page="learn" data-mode={mode} data-accent={accent}>
   <header class="top">
     <div class="top-inner">
@@ -267,9 +345,7 @@
       <div class="doc">
         <aside class="toc">
           <span class="toc-heading">{t('ui.learn.onThisPage')}</span>
-          {#each doc.sections as s, i}
-            <button class="toc-item" onclick={() => jumpTo(i)}><span class="num">{String(i + 1).padStart(2, '0')}</span>{s.title}</button>
-          {/each}
+          {@render tocEntries(outline)}
         </aside>
         <article class="doc-body">
           <div class="doc-head">
@@ -285,8 +361,11 @@
             </div>
           {/if}
           {#each doc.sections as sec, i}
+            {@const entry = numbers[i]}
             <section class="doc-section" id="learn-{sec.id}" bind:this={sectionEls[i]}>
-              <h2 class="h2"><span class="h2-num">{String(i + 1).padStart(2, '0')}</span>{sec.title}</h2>
+              <svelte:element this={entry && entry.depth > 1 ? 'h3' : 'h2'} class="h2" class:sub={entry && entry.depth > 1}
+                ><span class="h2-num">{entry?.number}</span>{sec.title}</svelte:element
+              >
               {#each sec.paras as p}<p class="para">{@render rich(p)}</p>{/each}
               {#if sec.figure === 'allocation' && doc.allocation?.length}
                 <figure class="figure" aria-label={t('ui.learn.allocation')}>
@@ -739,6 +818,51 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-4);
+    /* a long list scrolls on its own, so every entry can be reached wherever the page is */
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+
+  .toc-entry {
+    display: flex;
+    align-items: flex-start;
+    padding-inline-start: var(--toc-indent);
+  }
+
+  .toc-entry .toc-item {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .toc-item.reading {
+    color: var(--ink);
+    background: var(--overlay-1);
+  }
+
+  .toc-toggle {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    margin-top: 2px;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--ink-4);
+    cursor: pointer;
+    transition: transform var(--duration-base) var(--ease-out);
+  }
+
+  .toc-toggle:hover {
+    background: var(--overlay-1);
+    color: var(--ink);
+  }
+
+  .toc-toggle.open {
+    transform: rotate(180deg);
   }
 
   .toc-heading {
@@ -833,6 +957,12 @@
   .h2-num {
     font: var(--weight-medium) var(--text-md) / 1 var(--font-mono);
     color: var(--accent);
+  }
+
+  /* a sub-section's heading */
+  .h2.sub {
+    font-size: clamp(19px, 2vw, 22px);
+    letter-spacing: -0.01em;
   }
 
   .figure {

@@ -57,7 +57,9 @@ design export needs. Each entry says where it came up.
 - **Learn, added by hand** (to go back to the design export): content text may use a markdown
   subset (links, bold, inline code, an image paragraph in a post: `inlineMarkdown.ts`), rendered
   as elements; FAQ answers split into paragraphs on blank lines and keep line breaks, an untitled
-  FAQ group has no heading, and questions can carry an `id`. `section` and `question` deep link
+  FAQ group has no heading, and questions can carry an `id`. A doc's sections can be nested
+  (`depth`), numbered 01, 2.1, 3.4.1, with a contents list whose sub-sections open as the reader
+  reaches them, or by hand, and which scrolls on its own. `section` and `question` deep link
   into a doc and the FAQs, and `architecture` puts the host's own content on that tab.
 - **Swatches**: the design's colour/cover swatches for groups, communities and avatars have no
   OpenChat equivalent (it has uploaded avatars and banners). Adapters pass images and pick a
@@ -99,9 +101,8 @@ design export needs. Each entry says where it came up.
     `Home.svelte`), for the guest pass (phase 10).
 - **Learn content** (`features/marketing/learn`): converted from the existing pages, verbatim
   (their typos included), with what Learn's shapes can't hold dropped or flattened:
-  - **Whitepaper**: subsections are sections of their own, so the contents list numbers them
-    01–41 where the old page nested them (2.1, 3.4.1 …); their ids, and so `?section=` links,
-    are the old ones. Only the token allocation chart has a figure (its data from the old
+  - **Whitepaper**: the old page's outline (2.1, 3.4.1 …) comes from its section ids, which
+    `?section=` links keep using. Only the token allocation chart has a figure (its data from the old
     page's embedded Google Sheets chart); the voting power, attack scenario and supply charts
     are gone, and the text around them still refers to them. The two configuration tables are
     lists of "label: value". A list followed by more text is "•" paragraphs, to keep the order.

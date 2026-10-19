@@ -8,7 +8,13 @@ import { whitepaper } from "./whitepaper";
 // shapes. Loaded with the Learn pages (MarketingScreen), not with Landing. The Architecture page
 // is the canister map, not a doc (MarketingScreen).
 
+// the whitepaper's section ids are the old page's outline: 3-4-1 sits under 3-4, under 3
+const outlinedWhitepaper = {
+    ...whitepaper,
+    sections: whitepaper.sections.map((s) => ({ ...s, depth: s.id.split("-").length })),
+};
+
 /** The content, with the FAQs in the app's current language. */
 export function learnContent(translate: (key: string) => string): LearnContent {
-    return { docs: { whitepaper }, posts, roadmap, faq: faqGroups(translate) };
+    return { docs: { whitepaper: outlinedWhitepaper }, posts, roadmap, faq: faqGroups(translate) };
 }
