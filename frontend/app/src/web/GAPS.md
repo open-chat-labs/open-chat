@@ -79,7 +79,7 @@ design export needs. Each entry says where it came up.
   ETH/SOL wallet connection UI lives in the old components.
 - **Learn content**: the existing pages' content (roadmap, blog, whitepaper, FAQ) has to move
   into Learn's content shape (markdown docs, JSON roadmap and FAQ). The architecture page is no
-  longer a doc: it frames the interactive canister map served at `/canisters`
+  longer a doc: it frames the interactive canister map served beside the app
   (`CanisterMapFrame.svelte`), with `?section=<canister>` selecting a canister.
 
 ### Wiring

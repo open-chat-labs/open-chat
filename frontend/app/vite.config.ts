@@ -57,6 +57,8 @@ const workerEntries: Record<string, string> = {
 };
 // Registered from the site root, so the worker's scope covers the whole app
 const serviceWorkerPath = "/service_worker.js";
+// Where the dev server serves the canister map (the production build names it by version)
+const canisterMapPath = "/canister-map-dev.html";
 
 // Builds the workers from TypeScript source — reusing the sub-package
 // aliases so they pull agent/shared from source too — and serves them at
@@ -110,10 +112,10 @@ function ocWorkerPlugin(): Plugin {
             });
 
             // The canister map (architecture/canister_map), which the production build writes
-            // to build/canisters/index.html and the Architecture page frames at /canisters.
-            // Generated once at start; without it the SPA fallback would serve the app itself
-            // inside the frame.
-            const mapPath = path.join(workerBuildDir, "canisters.html");
+            // under the website version's name and the Architecture page frames at the path in
+            // OC_CANISTER_MAP_PATH. Generated once at start; without it the SPA fallback would
+            // serve the app itself inside the frame.
+            const mapPath = path.join(workerBuildDir, "canister-map.html");
             try {
                 execFileSync(
                     "python3",
@@ -129,10 +131,7 @@ function ocWorkerPlugin(): Plugin {
             }
             server.middlewares.use((req, res, next) => {
                 const pathname = (req.url ?? "").split("?")[0];
-                if (
-                    (pathname === "/canisters" || pathname === "/canisters/") &&
-                    fs.existsSync(mapPath)
-                ) {
+                if (pathname === canisterMapPath && fs.existsSync(mapPath)) {
                     res.setHeader("Content-Type", "text/html; charset=utf-8");
                     fs.createReadStream(mapPath).pipe(res);
                     return;
@@ -184,6 +183,7 @@ export default defineConfig({
         "import.meta.env.OC_WEB_LAYOUT": JSON.stringify(webLayoutFlag()),
         "import.meta.env.OC_APP_FONTS_URL": JSON.stringify(APP_FONTS_URL),
         "import.meta.env.OC_WEB_FONTS_URL": JSON.stringify(WEB_FONTS_URL),
+        "import.meta.env.OC_CANISTER_MAP_PATH": JSON.stringify(canisterMapPath),
     },
     server: {
         allowedHosts: ["host.docker.internal"],

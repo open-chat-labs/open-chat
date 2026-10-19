@@ -1,15 +1,16 @@
 # OpenChat canister map
 
 An interactive map of every canister type OpenChat runs, shown on the website's Architecture page
-([oc.app/architecture](https://oc.app/architecture)), which frames the page itself served at
-[oc.app/canisters](https://oc.app/canisters). Each canister is a node; click one to zoom in on its
+([oc.app/architecture](https://oc.app/architecture)), which frames the page itself (served beside
+the app as `/canister-map-<website version>.html`). Each canister is a node; click one to zoom in on its
 endpoints, state, background jobs, metrics, and the calls it makes and receives. Search finds
 canisters, endpoints and state fields. When framed, the page takes the site's theme from the frame
 and reports the selected canister back so the Architecture page's url can be shared.
 
 The page is a single self-contained file which the website build regenerates from the backend
 source on every deploy (`frontend/app/rollup.config.mjs` runs `extract.py --out
-build/canisters/index.html`), so it always describes the code of the release it ships with. To
+build/canister-map-<version>.html`, and tells the app the path), so it always describes the code
+of the release it ships with and can be cached as immutable. To
 look at it locally, run `extract.py` as below and open the `index.html` it writes beside it; that
 copy is not committed.
 

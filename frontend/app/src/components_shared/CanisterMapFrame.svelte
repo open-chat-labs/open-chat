@@ -6,10 +6,11 @@
     import { openChatFriendlyUrl, openExternalUrl } from "../utils/urls";
 
     // The interactive canister map (architecture/canister_map) is a page of its own which the
-    // website build writes to /canisters, so the architecture pages show it in a frame. The
-    // frame follows the site's theme, and (where `syncUrl` is set) the canister selected in the
-    // map is mirrored in this page's url as ?section=<canister>, the landing pages' convention
-    // for linking to a section, so that it can be shared.
+    // website build writes under a name carrying the website version (rollup.config.mjs, which
+    // tells the app the path), so the architecture pages show it in a frame. The frame follows
+    // the site's theme, and (where `syncUrl` is set) the canister selected in the map is
+    // mirrored in this page's url as ?section=<canister>, the landing pages' convention for
+    // linking to a section, so that it can be shared.
     interface Props {
         syncUrl?: boolean;
     }
@@ -17,11 +18,12 @@
     let { syncUrl = false }: Props = $props();
 
     const client = getContext<OpenChat>("client");
-    const mapUrl = `${openChatFriendlyUrl}/canisters`;
+    const mapPath: string = import.meta.env.OC_CANISTER_MAP_PATH;
 
     // The native shells don't carry the page, and iOS cancels an iframe's navigation to another
-    // origin, so they offer the one on the website instead of framing it
+    // origin, so they offer the website's Architecture page instead of framing it
     const native = client.isNativeApp();
+    const websitePage = `${openChatFriendlyUrl}/architecture`;
 
     function sectionInUrl(): string | null {
         return new URLSearchParams(window.location.search).get("section");
@@ -30,13 +32,13 @@
     // Captured once: the url is a load-time input, the theme and section are kept in sync by
     // message after
     const initialSection = syncUrl ? sectionInUrl() : null;
-    const src = `/canisters?theme=${$currentThemeMode}${initialSection ? `#${initialSection}` : ""}`;
+    const src = `${mapPath}?theme=${$currentThemeMode}${initialSection ? `#${initialSection}` : ""}`;
 
     let frame: HTMLIFrameElement | undefined = $state(undefined);
     let shownSection: string | null = initialSection;
 
     function openMap() {
-        openExternalUrl(client, mapUrl).catch((error) => {
+        openExternalUrl(client, websitePage).catch((error) => {
             console.error("Failed to open the canister map", error);
         });
     }
