@@ -22,6 +22,7 @@
     import Placeholder from "../app/Placeholder.svelte";
     import { AuthDialogProps, pageSignIns } from "../auth/authDialog.svelte";
     import { createAuth } from "../auth/signIn";
+    import { accentStore } from "../../accent";
     import { isEmailLinkPage, learnPageFor, learnPath } from "./marketing";
 
     let { route }: { route: RouteParams } = $props();
@@ -136,6 +137,8 @@
     <Landing
         {mode}
         onModeChange={setMode}
+        accent={$accentStore}
+        onAccentChange={(next) => accentStore.set(next)}
         homeHref="/home"
         appHref="/"
         exploreHref="/communities"
@@ -152,6 +155,7 @@
 {:else if learn !== undefined && learnContent !== undefined}
     <Learn
         {mode}
+        accent={$accentStore}
         homeHref="/home"
         appHref="/"
         exploreHref="/communities"
