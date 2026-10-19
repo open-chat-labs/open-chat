@@ -2,15 +2,15 @@
     import { unruly, type UnrulyDescription } from "@client";
     import GridSvg from "../GridSvg.svelte";
     import { elementCentre, elementRect } from "../gridSvg";
+    import { discPairIndex, discPairs } from "./colours";
     import type { PictogramProps } from "../types";
 
     // Givens only, for the result card.
     let { board }: PictogramProps<UnrulyDescription> = $props();
     let model = $derived(board.model);
 
-    const ORANGE = "#f08c00";
-    const PURPLE = "#6b21a8";
     const DISC = 3.4;
+    let pair = $derived(discPairs[$discPairIndex]);
 
     let elements = $derived(unruly.elements(model));
 </script>
@@ -27,9 +27,9 @@
                 cx={c.cx}
                 cy={c.cy}
                 r={DISC}
-                fill={given === 2 ? PURPLE : ORANGE}
+                fill={given === 2 ? pair.b : pair.a}
                 stroke="#1f1f1f"
-                stroke-width="0.8" />
+                stroke-width="0.4" />
         {/if}
     {/each}
 </GridSvg>

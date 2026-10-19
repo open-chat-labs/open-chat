@@ -127,6 +127,9 @@
                         <Translatable resourceKey={i18nKey("dailyPuzzle.streakDays", { streak: game.streak })} />
                     </BodySmall>
                 </div>
+                {#if def?.Settings !== undefined}
+                    <def.Settings />
+                {/if}
             </Container>
 
             {#if game.showsRules}
