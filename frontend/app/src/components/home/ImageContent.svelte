@@ -108,7 +108,11 @@
         zoomedHeight = imageHeight;
     }
     let normalised = $derived(normaliseContent(content));
-    let hidden = $state(false);
+    // Initialised from the setting rather than synced to it only after mount:
+    // WebKit starts loading an <img> as soon as its src is set, so a first
+    // render with the full-size URL fetches the image even in low bandwidth
+    // mode. The effect keeps it in step if the setting changes.
+    let hidden = $state($lowBandwidth && !draft);
     $effect(() => {
         hidden = $lowBandwidth && !draft;
     });
