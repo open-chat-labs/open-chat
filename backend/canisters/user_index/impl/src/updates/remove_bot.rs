@@ -56,12 +56,18 @@ fn remove_bot_impl(args: Args, deleted_by: Option<UserId>, state: &mut RuntimeSt
         None,
     );
 
-    for (location, details) in bot.installations.iter() {
-        let local_user_index = state.local_user_index_of_bot_installation(*location, details.local_user_index);
-        state
-            .data
-            .local_user_index_event_sync_queue
-            .push(local_user_index, UserIndexEvent::BotUninstall(*location, args.bot_id));
+    let installations: Vec<_> = bot
+        .installations
+        .iter()
+        .map(|(location, details)| {
+            (
+                *location,
+                state.local_user_index_of_bot_installation(*location, details.local_user_index),
+            )
+        })
+        .collect();
+    for (location, local_user_index) in installations {
+        state.push_event_to_local_user_index_canister(local_user_index, UserIndexEvent::BotUninstall(location, args.bot_id));
     }
 
     Success

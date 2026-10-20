@@ -17,6 +17,7 @@ fn c2c_sync_bucket(args: Args) -> Response {
 
 fn c2c_sync_bucket_impl(args: Args, state: &mut RuntimeState) -> Response {
     let bucket = state.env.caller();
+    let now = state.env.now();
 
     for file in &args.files_added {
         repush_denylist_if_hash_known(bucket, file, state);
@@ -25,7 +26,7 @@ fn c2c_sync_bucket_impl(args: Args, state: &mut RuntimeState) -> Response {
     let files_rejected = args
         .files_added
         .into_iter()
-        .filter_map(|file| state.data.add_file_reference(bucket, file).err())
+        .filter_map(|file| state.data.add_file_reference(bucket, file, now, state.env.rng()).err())
         .collect();
 
     for file in args.files_removed {
@@ -38,6 +39,8 @@ fn c2c_sync_bucket_impl(args: Args, state: &mut RuntimeState) -> Response {
             denylisted.hash,
             denylisted.report_index,
             denylisted.derived.unwrap_or(false),
+            now,
+            state.env.rng(),
         );
     }
 
@@ -64,9 +67,10 @@ pub(crate) fn repush_denylist_if_hash_known(bucket: CanisterId, file: &FileAdded
     let derived = state.data.derived_csam_hashes.get(&file.hash).map(|r| (*r, true));
     if let Some((report_index, derived)) = verified.or(derived) {
         tracing::error!(%bucket, report_index, derived, "File uploaded with a denylisted hash; re-pushing the denylist");
+        let now = state.env.now();
         state
             .data
-            .push_denylisted_hash_to_bucket(bucket, file.hash, report_index, derived);
+            .push_denylisted_hash_to_bucket(bucket, file.hash, report_index, derived, now, state.env.rng());
     }
 }
 

@@ -11,6 +11,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add `c2c_group`, `c2c_community` and `c2c_user` for its Group, Community and MultiUser canisters' events, to replace the `_canister` and `_v2` names ([#10047](https://github.com/open-chat-labs/open-chat/pull/10047))
 - Add `c2c_daily_puzzle` for the DailyPuzzle canister's puzzles, in idempotent envelopes ([#10047](https://github.com/open-chat-labs/open-chat/pull/10047))
 
+### Changed
+
+- Send daily puzzle results to the DailyPuzzle canister at its `c2c_local_index` endpoint ([#10023](https://github.com/open-chat-labs/open-chat/pull/10023))
+
 ## [[2.0.2156](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2156-local_user_index)] - 2026-10-19
 
 ### Added

@@ -2,6 +2,7 @@ use crate::guards::caller_is_user_controller;
 use crate::{RuntimeState, mutate_state};
 use canister_tracing_macros::trace;
 use ic_cdk::update;
+use storage_bucket_canister::StorageIndexEvent;
 use storage_bucket_canister::c2c_vault_sync as bucket_vault;
 use storage_index_canister::c2c_vault_ops::{Response::*, *};
 use types::BlobReference;
@@ -130,5 +131,8 @@ fn push(state: &mut RuntimeState, bucket: types::CanisterId, op: bucket_vault::V
         tracing::error!(%bucket, "Vault op dropped: unknown bucket canister");
         return;
     }
-    state.data.vault_event_sync_queue.push(bucket, op);
+    let now = state.env.now();
+    state
+        .data
+        .push_event_to_bucket(bucket, StorageIndexEvent::VaultOp(Box::new(op)), now, state.env.rng());
 }

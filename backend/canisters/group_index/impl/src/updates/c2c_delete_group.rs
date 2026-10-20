@@ -1,3 +1,4 @@
+use crate::StorageIndexEvent;
 use crate::guards::caller_is_group_canister;
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
@@ -56,7 +57,7 @@ pub(crate) fn delete_group(
     // imported into a community lives on as one of its channels, so its files are kept until the
     // community is deleted.
     if community_imported_into.is_none() {
-        state.data.storage_index_accessors_to_remove_queue.push(group_id.into());
+        state.push_event_to_storage_index(StorageIndexEvent::RemoveAccessor(group_id.into()), state.env.now());
     }
 
     state.data.local_index_map.mark_group_deleted(&group_id);

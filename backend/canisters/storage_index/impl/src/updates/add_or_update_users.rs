@@ -1,8 +1,8 @@
 use crate::guards::caller_is_user_controller;
-use crate::model::bucket_event_batch::EventToSync;
 use crate::{RuntimeState, UserRecordInternal, mutate_state};
 use canister_tracing_macros::trace;
 use ic_cdk::update;
+use storage_bucket_canister::StorageIndexEvent;
 use storage_index_canister::add_or_update_users::*;
 
 #[update(guard = "caller_is_user_controller")]
@@ -30,6 +30,6 @@ pub(crate) fn add_or_update_user(user_config: UserConfig, state: &mut RuntimeSta
                 delete_oldest_if_limit_exceeded: true,
             },
         );
-        state.push_event_to_buckets(EventToSync::UserAdded(user_config.user_id));
+        state.push_event_to_buckets(StorageIndexEvent::UserAdded(user_config.user_id));
     }
 }
