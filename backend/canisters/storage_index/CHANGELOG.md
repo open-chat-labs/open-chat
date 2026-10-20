@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Send sync events and vault ops to the buckets at their `c2c_storage_index` endpoint, from one queue per bucket ([#10023](https://github.com/open-chat-labs/open-chat/pull/10023))
 - Report CSAM upload matches to the UserIndex as events ([#10033](https://github.com/open-chat-labs/open-chat/pull/10033))
 - Create bucket canisters with cycles via the CMC rather than ICP ([#10039](https://github.com/open-chat-labs/open-chat/pull/10039))
+- Call the buckets' and the UserIndex's event endpoints best-effort ([#10050](https://github.com/open-chat-labs/open-chat/pull/10050))
 
 ## [[2.0.2150](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2150-storage_index)] - 2026-10-16
 
