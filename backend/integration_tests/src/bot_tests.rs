@@ -18,10 +18,10 @@ use test_case::test_case;
 use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
     AutonomousConfig, BotActionChatDetails, BotActionScope, BotChatContext, BotCommandArg, BotCommandArgValue,
-    BotCommandDefinition, BotCommandParam, BotCommandParamType, BotDataEncoding, BotDefinition, BotInstallationLocation, BotMessageContent,
-    BotPermissions, BotSubscriptions, CanisterId, ChannelId, Chat, ChatEvent, ChatEventType, ChatPermission, ChatType, CommunityEventType,
-    CommunityPermission, EventIndex, MessageContent, MessageId, MessagePermission, NotificationEnvelope, OptionUpdate, Rules,
-    StringParam, TextContent, UpdatedRules, UserId,
+    BotCommandDefinition, BotCommandParam, BotCommandParamType, BotDataEncoding, BotDefinition, BotInstallationLocation,
+    BotMessageContent, BotPermissions, BotSubscriptions, CanisterId, ChannelId, Chat, ChatEvent, ChatEventType, ChatPermission,
+    ChatType, CommunityEventType, CommunityPermission, EventIndex, MessageContent, MessageId, MessagePermission,
+    NotificationEnvelope, OptionUpdate, Rules, StringParam, TextContent, UpdatedRules, UserId,
 };
 
 #[test]
@@ -1253,15 +1253,30 @@ fn changing_channel_visibility_should_affect_subscriptions() {
     send_message_and_check_bot_notified(env, true);
 
     // Setting an already public channel to public leaves the bot subscribed
-    client::community::happy_path::update_channel(env, owner.principal, community_id, &set_channel_public_args(channel_id, true));
+    client::community::happy_path::update_channel(
+        env,
+        owner.principal,
+        community_id,
+        &set_channel_public_args(channel_id, true),
+    );
     send_message_and_check_bot_notified(env, true);
 
     // Change channel to private and confirm no notification is sent to the bot
-    client::community::happy_path::update_channel(env, owner.principal, community_id, &set_channel_public_args(channel_id, false));
+    client::community::happy_path::update_channel(
+        env,
+        owner.principal,
+        community_id,
+        &set_channel_public_args(channel_id, false),
+    );
     send_message_and_check_bot_notified(env, false);
 
     // Change channel back to public and confirm a notification is sent to the bot
-    client::community::happy_path::update_channel(env, owner.principal, community_id, &set_channel_public_args(channel_id, true));
+    client::community::happy_path::update_channel(
+        env,
+        owner.principal,
+        community_id,
+        &set_channel_public_args(channel_id, true),
+    );
     send_message_and_check_bot_notified(env, true);
 }
 
