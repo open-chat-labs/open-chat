@@ -64,13 +64,11 @@
                     : "tokenSwap.requote",
         ),
     );
+    // Once quoted, the title names the amount being swapped
     let title = $derived(
-        form.stage === "quote" || tokenOut === undefined
+        form.stage === "quote" || form.quote === undefined
             ? i18nKey("tokenSwap.swapToken", { tokenIn: tokenIn.symbol })
-            : i18nKey("tokenSwap.swapTokenTo", {
-                  tokenIn: tokenIn.symbol,
-                  tokenOut: tokenOut.symbol,
-              }),
+            : i18nKey("tokenSwap.swapTokenTo", form.quote.values),
     );
     let errorMessage = $derived($pinNumberErrorMessageStore ?? form.error ?? balanceError);
 

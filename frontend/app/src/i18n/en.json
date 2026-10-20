@@ -2454,7 +2454,7 @@
         "swap": "Swap",
         "swapNotAvailable": "Currently it is not possible to swap {tokenIn} to any other token",
         "swapToken": "Swap {tokenIn}",
-        "swapTokenTo": "Swap {tokenIn} to {tokenOut}",
+        "swapTokenTo": "Swap {amountIn} {tokenIn} to {tokenOut}",
         "warningValueDropped": "Due to low liquidity, the value of {tokenOut} you will receive is < 90% of the value of {tokenIn} you will swap (based on the quoted USD value of these tokens).",
         "warningValueUnknown": "The current dollar price for one of more of these tokens is not available so it is not possible to determine whether this swap represents good value.",
         "youWillReceive": "You will receive **{amountOut}** {tokenOut} (${usdOut}) for **{amountIn}** {tokenIn} (${usdIn})."

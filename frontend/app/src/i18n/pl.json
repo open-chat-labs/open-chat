@@ -2419,7 +2419,7 @@
         "swap": "Zamieniać",
         "swapNotAvailable": "Obecnie nie ma możliwości zamiany {tokenIn} na żaden inny token",
         "swapToken": "Zamień {tokenIn}",
-        "swapTokenTo": "Zamień {tokenIn} na {tokenOut}",
+        "swapTokenTo": "Zamień {amountIn} {tokenIn} na {tokenOut}",
         "warningValueDropped": "Ze względu na niską płynność wartość {tokenOut}, którą otrzymasz, jest mniejsza niż 90% wartości {tokenIn}, którą wymienisz (w oparciu o notowaną wartość tych tokenów w USD).",
         "warningValueUnknown": "Aktualna cena dolarowa jednego lub większej liczby tych tokenów nie jest dostępna, dlatego nie można określić, czy ta zamiana jest opłacalna.",
         "youWillReceive": "Otrzymasz **{amountOut}** {tokenOut} (${usdOut}) za **{amountIn}** {tokenIn} (${usdIn})."
