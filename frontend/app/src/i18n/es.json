@@ -2408,12 +2408,18 @@
         },
         "quote": "Cita",
         "quoteError": "Error al obtener cotizaciones para intercambiar {tokenIn}",
+        "quotes": {
+            "best": "Mejor tipo",
+            "declined": "No se puede intercambiar esta cantidad",
+            "failed": "No se pudo obtener una cotización",
+            "unsupported": "Intercambio no admitido"
+        },
         "quoteTooLow": "La mejor tarifa cotizada es {rate} {tokenOut} por {tokenIn} de {dex}. Esto da {amountOut} {tokenOut} para {amountIn} {tokenIn}. Solo puede intercambiar si el monto cotizado excede {minAmountOut}.",
         "requote": "Volver a cotizar",
         "swap": "Intercambio",
         "swapNotAvailable": "Actualmente no es posible intercambiar {tokenIn} por ningún otro token",
         "swapToken": "Intercambiar {tokenIn}",
-        "swapTokenTo": "Intercambiar {tokenIn} por {tokenOut}",
+        "swapTokenTo": "Intercambiar {amountIn} {tokenIn} por {tokenOut}",
         "warningValueDropped": "Debido a la baja liquidez, el valor de {tokenOut} que recibirá es < 90% del valor de {tokenIn} que intercambiará (según el valor cotizado en USD de estos tokens).",
         "warningValueUnknown": "El precio actual en dólares de uno o más de estos tokens no está disponible, por lo que no es posible determinar si este intercambio representa un buen valor.",
         "youWillReceive": "Recibirás **{amountOut}** {tokenOut} (${usdOut}) por **{amountIn}** {tokenIn} (${usdIn})."

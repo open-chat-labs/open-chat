@@ -188,6 +188,7 @@ import {
     type DataContent,
     type DeleteCryptoAccountResponse,
     type DexId,
+    type DexQuote,
     type DiamondMembershipDuration,
     type DiamondMembershipFees,
     type DiamondMembershipStatus,
@@ -482,6 +483,7 @@ import {
     storageStore,
     suspendedUserStore,
     swappableTokensStore,
+    swapProvidersStore,
     threadEventIndexesLoadedStore,
     threadEventsStore,
     translationsStore,
@@ -9464,6 +9466,7 @@ export class OpenChat {
                             this.#evmContractAddresses = registry.tokenDetails.flatMap(
                                 (t) => t.evmContractAddresses,
                             );
+                            swapProvidersStore.set(registry.swapProviders);
                         }
 
                         // make sure we only resolve once so that we don't end up waiting for the downstream fetch
@@ -9682,39 +9685,56 @@ export class OpenChat {
         });
     }
 
-    // The best quote for swapping `amountIn` from the user's wallet, fees included
-    async getSwapQuote(
+    /**
+     * Quotes swapping `amountIn` from the user's wallet, fees included, on each DEX the wallet swaps
+     * with. `onQuotes` is told of every DEX's quote as each comes in, starting with all of them being
+     * asked. Resolves with the best quote once they're all in.
+     */
+    async getSwapQuotes(
         ledgerIn: string,
         ledgerOut: string,
         amountIn: bigint,
+        onQuotes?: (quotes: [DexId, DexQuote][]) => void,
     ): Promise<SwapQuoteOutcome> {
         const tokenIn = cryptoLookup.value.get(ledgerIn)!;
         const tokenOut = cryptoLookup.value.get(ledgerOut)!;
-        try {
-            // What the DEX pulls is less the fees for approving it and for its pull, and each quote is
-            // what reaches the wallet, after the fee for sending it there
-            const quotes = await this.#worker.send({
-                kind: "getTokenSwapQuotes",
-                inputTokenLedger: ledgerIn,
-                outputTokenLedger: ledgerOut,
-                amountIn: amountIn - 2n * tokenIn.transferFee,
-                outputTokenFee: tokenOut.transferFee,
-            });
-            const rates = exchangeRatesLookupStore.value;
-            return swapQuoteResult(
-                tokenIn,
-                tokenOut,
-                amountIn,
-                quotes,
-                (ledger) => rates.get(ledger)?.toUSD,
-            );
-        } catch (err) {
-            this.logError(`Error getting swap quotes for token: ${tokenIn.symbol}`, err);
-            return {
-                kind: "failed",
-                message: i18nKey("tokenSwap.quoteError", { tokenIn: tokenIn.symbol }),
-            };
-        }
+        const quotes: [DexId, DexQuote][] = swapProvidersStore.value.map((dex) => [
+            dex,
+            { kind: "quoting" },
+        ]);
+        onQuotes?.([...quotes]);
+
+        await Promise.all(
+            quotes.map(async ([dex], i) => {
+                let quote: DexQuote;
+                try {
+                    // What the DEX pulls is less the fees for approving it and for its pull, and its
+                    // quote is what reaches the wallet, after the fee for sending it there
+                    quote = await this.#worker.send({
+                        kind: "getTokenSwapQuote",
+                        dex,
+                        inputTokenLedger: ledgerIn,
+                        outputTokenLedger: ledgerOut,
+                        amountIn: amountIn - 2n * tokenIn.transferFee,
+                        outputTokenFee: tokenOut.transferFee,
+                    });
+                } catch (err) {
+                    this.logError(`Error getting a ${dex} quote to swap ${tokenIn.symbol}`, err);
+                    quote = { kind: "failed" };
+                }
+                quotes[i] = [dex, quote];
+                onQuotes?.([...quotes]);
+            }),
+        );
+
+        const rates = exchangeRatesLookupStore.value;
+        return swapQuoteResult(
+            tokenIn,
+            tokenOut,
+            amountIn,
+            quotes,
+            (ledger) => rates.get(ledger)?.toUSD,
+        );
     }
 
     /**

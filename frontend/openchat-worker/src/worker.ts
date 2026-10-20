@@ -935,8 +935,9 @@ const handlers: Handlers = {
     canSwap: (payload, agent) => agent.canSwap(payload.tokenLedgers),
     getTokenSwaps: (payload, agent) =>
         agent.getTokenSwaps(payload.inputTokenLedger, payload.outputTokenLedgers),
-    getTokenSwapQuotes: (payload, agent) =>
-        agent.getTokenSwapQuotes(
+    getTokenSwapQuote: (payload, agent) =>
+        agent.getTokenSwapQuote(
+            payload.dex,
             payload.inputTokenLedger,
             payload.outputTokenLedger,
             payload.amountIn,

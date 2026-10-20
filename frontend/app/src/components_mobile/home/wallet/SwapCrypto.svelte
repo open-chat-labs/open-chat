@@ -30,6 +30,7 @@
     import SlidingPageContent from "../SlidingPageContent.svelte";
     import TokenInput from "../TokenInput.svelte";
     import SwapProgress from "./SwapProgress.svelte";
+    import SwapQuotes from "./SwapQuotes.svelte";
     import TokenCard from "./TokenCard.svelte";
     import TokenSelector from "./TokenSelector.svelte";
     import type { TokenState } from "@shared_components/home/wallet/walletState.svelte";
@@ -176,6 +177,17 @@
     </Container>
 {/snippet}
 
+{#snippet quotesView()}
+    {#if form.quotes.length > 0 && form.outToken !== undefined}
+        <SwapQuotes
+            quotes={form.quotes}
+            symbolOut={form.outToken.symbol}
+            decimalsOut={form.outToken.decimals}
+            best={form.quote?.dex}
+        />
+    {/if}
+{/snippet}
+
 {#snippet swapView()}
     {#if form.outToken !== undefined && form.quote !== undefined}
         {@const swapMessageValues = form.quote.values}
@@ -240,6 +252,8 @@
                 </Body>
             </Container>
         </Container>
+
+        {@render quotesView()}
 
         {#if form.quote.valueWarning !== undefined}
             <Container
@@ -323,6 +337,7 @@
             {#if form.loaded}
                 {#if form.stage === "quote"}
                     {@render quoteView()}
+                    {@render quotesView()}
                 {:else}
                     {@render swapView()}
                 {/if}
