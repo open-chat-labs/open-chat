@@ -4,6 +4,7 @@
      another page's middle the feed has Back to that page's own panel (ROUTES.md, decision 7). -->
 <script lang="ts">
     import {
+        allChatsStore,
         allUsersStore,
         communitiesStore,
         currentUserIdStore,
@@ -13,6 +14,7 @@
         type OpenChat,
     } from "@client";
     import ActivityPanel from "@openchat/ui/src/features/components/ActivityPanel.svelte";
+    import EmptyState from "@openchat/ui/src/lib/components/EmptyState.svelte";
     import { activityFeedState } from "@src/runes/activity.svelte";
     import { navigate } from "@src/utils/navigation";
     import { removeQueryStringParam } from "@src/utils/urls";
@@ -27,7 +29,8 @@
         type ActivityContext,
     } from "./activity.adapter";
 
-    let { region }: ScreenProps<Extract<LeftRegion, { kind: "activity" }>> = $props();
+    let { region, context: screen }: ScreenProps<Extract<LeftRegion, { kind: "activity" }>> =
+        $props();
 
     const client = getContext<OpenChat>("client");
 
@@ -37,14 +40,20 @@
         activityFeedState.initialised &&
             $messageActivitySummaryStore.latestTimestamp <= activityFeedState.latestTimestamp,
     );
+    // a feed that didn't load says so, with Retry, rather than loading for ever
+    let failed = $state(false);
     $effect(() => {
-        if (upToDate) return;
-        untrack(() =>
-            client.subscribeToMessageActivityFeed((response) => {
-                activityFeedState.activityEvents = response.events;
-            }),
-        );
+        if (upToDate || failed) return;
+        untrack(load);
     });
+
+    function load() {
+        failed = false;
+        client.subscribeToMessageActivityFeed(
+            (response) => (activityFeedState.activityEvents = response.events),
+            () => (failed = true),
+        );
+    }
 
     // as the old feed named a chat: the person, the group, or "Community > channel", and
     // "Thread" for a message in a thread
@@ -75,6 +84,8 @@
 
     const ctx = $derived.by((): ActivityContext => {
         const users = $allUsersStore;
+        // read so the chats' names follow their summaries, which can come in after the feed
+        void $allChatsStore;
         return {
             me: $currentUserIdStore,
             you: $_("you"),
@@ -98,20 +109,48 @@
         return events.filter((event) => wanted.has(activityId(event)));
     }
 
-    function markRead(upTo: bigint | undefined) {
-        if (upTo !== undefined && upTo > $messageActivitySummaryStore.readUpToTimestamp) {
-            return client.markActivityFeedRead(upTo);
+    // the client undoes a mark that failed (and resolves anyway), so a mark that didn't stick is
+    // rejected here, for the panel to roll its own back and say so
+    async function markRead(upTo: bigint | undefined) {
+        if (upTo === undefined || upTo <= $messageActivitySummaryStore.readUpToTimestamp) return;
+        await client.markActivityFeedRead(upTo);
+        if (messageActivitySummaryStore.value.readUpToTimestamp < upTo) {
+            throw new Error("markActivityFeedRead");
         }
     }
 </script>
 
-<ActivityPanel
-    {items}
-    loading={!activityFeedState.initialised}
-    onOpen={(item) => {
-        const event = eventsFor([item.id])[0];
-        if (event !== undefined) navigate(activityLink(event));
-    }}
-    onMarkRead={(ids) => markRead(readUpTo(eventsFor(ids)))}
-    onMarkAllRead={() => markRead(activityFeedState.latestTimestamp)}
-    onBack={region.over ? () => navigate(removeQueryStringParam("panel"), "dismiss") : undefined} />
+{#if failed}
+    <div class="failed">
+        <EmptyState
+            preset="error"
+            title={$_("unexpectedError")}
+            body={$_("regionLoadFailed")}
+            actionLabel="ui.common.retry"
+            actionHandler={load} />
+    </div>
+{:else}
+    <ActivityPanel
+        {items}
+        loading={!activityFeedState.initialised}
+        onOpen={(item) => {
+            const event = eventsFor([item.id])[0];
+            // a narrow screen shows the message alone
+            if (event !== undefined) navigate(activityLink(event, !screen.narrow));
+        }}
+        onMarkRead={(ids) => markRead(readUpTo(eventsFor(ids)))}
+        onMarkAllRead={() => markRead(activityFeedState.latestTimestamp)}
+        onBack={region.over
+            ? // the page with the feed closed, replacing this one: Back doesn't depend on history
+              // (decision 7), and a pop could land on an entry that still has the feed
+              () => navigate(removeQueryStringParam("panel"), "auto")
+            : undefined} />
+{/if}
+
+<style>
+    .failed {
+        display: grid;
+        place-items: center;
+        height: 100%;
+    }
+</style>

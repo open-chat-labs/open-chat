@@ -138,6 +138,10 @@ describe("opening an activity", () => {
         expect(activityLink(event())).toBe("/chats/group/g1/3?panel=activity");
     });
 
+    test("on a narrow screen, goes to the message alone", () => {
+        expect(activityLink(event(), false)).toBe("/chats/group/g1/3");
+    });
+
     test("keeps a thread open", () => {
         const inThread = event({
             messageContext: {

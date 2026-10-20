@@ -86,14 +86,17 @@ export function activityItem(event: MessageActivityEvent, ctx: ActivityContext):
     };
 }
 
-/** Where opening an event goes: its message, with the feed still open beside it. */
-export function activityLink(event: MessageActivityEvent): string {
+/**
+ * Where opening an event goes: its message, with the feed still open beside it, unless the screen
+ * is narrow, where only one column shows and the message is what was asked for.
+ */
+export function activityLink(event: MessageActivityEvent, keepFeed = true): string {
     const route = routeForMessage(
         messageContextToChatListScope(event.messageContext).kind,
         event.messageContext,
         event.messageIndex,
     );
-    return `${route}${route.includes("?") ? "&" : "?"}panel=activity`;
+    return keepFeed ? `${route}${route.includes("?") ? "&" : "?"}panel=activity` : route;
 }
 
 function name(userId: string, ctx: ActivityContext): string {

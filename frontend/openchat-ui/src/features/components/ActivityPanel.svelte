@@ -59,7 +59,10 @@
 
   const isUnread = (it: ActivityItem) => !!it.unread && !read.includes(it.id);
   const shown = $derived(items.filter((it) => tab === 0 || (tab === 1 && it.type === 'mention') || (tab === 2 && it.type === 'payment')));
-  const counts = $derived([items.length, items.filter((i) => i.type === 'mention').length, items.filter((i) => i.type === 'payment').length]);
+  // each tab's new (unread) activity; none, no badge
+  const counts = $derived(
+    [items, items.filter((i) => i.type === 'mention'), items.filter((i) => i.type === 'payment')].map((tabItems) => tabItems.filter(isUnread).length || null),
+  );
   const hasUnread = $derived(items.some(isUnread));
 
   async function markRead(ids: string[], call: () => Promise<unknown> | void) {
@@ -125,7 +128,7 @@
         </div>
       {/each}
     {/if}
-    {#if shown.length === 0}
+    {#if !loading && shown.length === 0}
       <div class="empty">
         <EmptyState
           preset="no-results"
