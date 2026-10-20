@@ -1,5 +1,5 @@
 import type { RouteParams } from "@client";
-import { railSelectionFor, regionsFor } from "./regions";
+import { railItems, railSelectionFor, regionsFor } from "./regions";
 
 const none = { kind: "none" } as const;
 const chats = { kind: "chats" } as const;
@@ -114,32 +114,44 @@ describe("what a route shows", () => {
 
 describe("the rail's selection", () => {
     test("follows the route's destination", () => {
-        expect(railSelectionFor(groupChat)).toEqual({ item: 0 });
+        expect(railSelectionFor(groupChat)).toEqual({ item: "chats" });
         expect(
             railSelectionFor(route({ kind: "chat_list_route", scope: { kind: "favourite" } })),
-        ).toEqual({
-            item: 1,
-        });
+        ).toEqual({ item: "favourites" });
         expect(railSelectionFor(route({ kind: "notifications_route", scope: none }))).toEqual({
-            item: 2,
+            item: "notifications",
         });
         expect(railSelectionFor(route({ kind: "wallet_route", scope: none, view: "all" }))).toEqual(
-            {
-                item: 3,
-            },
+            { item: "wallet" },
         );
     });
 
     test("selects a community's pin for its channels and threads", () => {
         expect(railSelectionFor(route({ kind: "threads_route", scope: community }))).toEqual({
-            item: -1,
             communityId: "c1",
         });
     });
 
     test("selects nothing for explore", () => {
-        expect(railSelectionFor(route({ kind: "communities_route", scope: none }))).toEqual({
-            item: -1,
-        });
+        expect(railSelectionFor(route({ kind: "communities_route", scope: none }))).toEqual({});
+    });
+});
+
+describe("the rail's destinations", () => {
+    const ids = (hasFavourites: boolean, selection = {}) =>
+        railItems(hasFavourites, selection).map((item) => item.id);
+
+    test("are chats, notifications, favourites and the wallet, in that order", () => {
+        expect(ids(true)).toEqual(["chats", "notifications", "favourites", "wallet"]);
+    });
+
+    test("leave favourites out until something is a favourite, unless it's open", () => {
+        expect(ids(false)).toEqual(["chats", "notifications", "wallet"]);
+        expect(ids(false, { item: "favourites" })).toEqual([
+            "chats",
+            "notifications",
+            "favourites",
+            "wallet",
+        ]);
     });
 });

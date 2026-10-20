@@ -18,6 +18,9 @@ design export needs. Each entry says where it came up.
   up to a 1255px shell, but at 900px the island has only 806px (900 − 2 × 12 padding − 60 rail −
   10 gap). The shell's minimum is 919px instead, so the two agree; a smaller window scrolls the
   shell (both ways, below 919 × 720px) rather than the page. Confirm against the prototype.
+- **Nav rail's local pick** (by hand): `NavRail` keeps the item a click picked until the host's
+  `activeIndex` changes; it now also lets it go when `items` change, as the app shows Favourites
+  only with favourites, which moves the items after it.
 - **Nav rail width**: the tokens said `--rail-collapsed: 76px` / `--rail-expanded: 282px`, while
   `NavRail` drew 60px / 283px. The tokens now match what the rail draws and `NavRail` reads them,
   as does the shell's rail slot. Confirm 60px against the prototype. Floating over the island
