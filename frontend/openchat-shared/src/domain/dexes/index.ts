@@ -39,6 +39,20 @@ export type DexSwapResult =
     | { kind: "unconfirmed"; error: string };
 
 /**
+ * One DEX's answer when asked to quote a swap from the wallet. `amountOut` is what would reach the
+ * wallet, after every fee. `unsupported` means the DEX won't make the swap at all, having no pool for
+ * the pair or not swapping the input token from the wallet, and `declined` that it won't quote this
+ * amount, eg. one too small for its fees or too big for its liquidity.
+ */
+export type DexQuoteResult =
+    | { kind: "quoted"; amountOut: bigint }
+    | { kind: "unsupported" }
+    | { kind: "declined" };
+
+// A DEX's quote as the user waits for it, `failed` being the DEX not answering
+export type DexQuote = { kind: "quoting" } | DexQuoteResult | { kind: "failed" };
+
+/**
  * The best quote for swapping `amountIn` of one token in the user's wallet for another. `amountIn` is
  * what leaves the wallet, fees included, and `amountOut` what reaches it, after every fee.
  * `valueWarning` is set when the quote is worth less than 90% of what goes in, or when either token's
