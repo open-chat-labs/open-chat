@@ -10,7 +10,8 @@ export type Regions =
           left?:
               | { kind: "chats"; scope: ChatListScope }
               | { kind: "threads"; scope: ChatListScope }
-              | { kind: "activity" }
+              // `over`: opened over another page's middle (?panel=activity), with Back to its own
+              | { kind: "activity"; over?: true }
               | { kind: "wallet" };
           middle:
               | { kind: "empty" }
@@ -41,18 +42,30 @@ const MARKETING_KINDS: RouteParams["kind"][] = [
 
 /**
  * The regions a route shows. `signedOut`: an anonymous user without an account, who gets Landing
- * on "/" (as today). `threads` (the URL's `?threads`): the left column shows the chat list's
- * threads in place of the list, over whatever the middle shows (ROUTES.md).
+ * on "/" (as today). The URL's query can change the left column only, over whatever the middle
+ * shows (ROUTES.md): `?panel=activity` (decision 7) puts the activity feed over a chat list's or
+ * the wallet's page, and `?threads` a chat list's threads in place of the list.
  */
-export function regionsFor(route: RouteParams, signedOut: boolean, threads = false): Regions {
+export function regionsFor(
+    route: RouteParams,
+    signedOut: boolean,
+    query: URLSearchParams = new URLSearchParams(),
+): Regions {
     const regions = routeRegions(route, signedOut);
-    if (!threads || regions.area !== "app" || regions.left?.kind !== "chats") return regions;
-    // a narrow screen still shows a conversation (a thread opened from the list) over the list
-    return {
-        ...regions,
-        left: { kind: "threads", scope: regions.left.scope },
-        narrowView: regions.middle.kind === "empty" ? "left" : regions.narrowView,
-    };
+    if (regions.area !== "app") return regions;
+    const left = regions.left;
+    if (query.get("panel") === "activity" && (left?.kind === "chats" || left?.kind === "wallet")) {
+        return { ...regions, left: { kind: "activity", over: true }, narrowView: "left" };
+    }
+    if (query.has("threads") && left?.kind === "chats") {
+        // a narrow screen still shows a conversation (a thread opened from the list) over the list
+        return {
+            ...regions,
+            left: { kind: "threads", scope: left.scope },
+            narrowView: regions.middle.kind === "empty" ? "left" : regions.narrowView,
+        };
+    }
+    return regions;
 }
 
 function routeRegions(route: RouteParams, signedOut: boolean): Regions {
@@ -174,4 +187,20 @@ export function narrowBack(regions: Regions): string | undefined {
         default:
             return undefined;
     }
+}
+
+/**
+ * Whether Notifications opens the activity feed over the page that's showing (?panel=activity,
+ * decision 7): over a chat or a wallet page it does, so the middle stays; otherwise it goes to
+ * /notifications.
+ */
+export function activityOverPage(regions: Regions): boolean {
+    return (
+        regions.area === "app" &&
+        regions.middle.kind !== "empty" &&
+        (regions.left?.kind === "chats" ||
+            regions.left?.kind === "threads" ||
+            regions.left?.kind === "wallet" ||
+            (regions.left?.kind === "activity" && regions.left.over === true))
+    );
 }

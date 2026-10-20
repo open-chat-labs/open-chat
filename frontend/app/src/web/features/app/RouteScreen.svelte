@@ -26,7 +26,7 @@
             pageSignIns.signupFailed,
         ),
     );
-    const regions = $derived(regionsFor($routeStore, signedOut, $querystringStore.has("threads")));
+    const regions = $derived(regionsFor($routeStore, signedOut, $querystringStore));
 
     const registering = $derived(withoutAccount($identityStateStore));
     const loading = $derived(

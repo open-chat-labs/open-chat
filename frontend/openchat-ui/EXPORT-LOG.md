@@ -85,6 +85,7 @@
 
 ## 2026-10-20 — ActivityPanel's back button, by hand
 - `ActivityPanel` takes `onBack`: a back button beside its title, for a host that opens the panel over another page (the app's `?panel=activity`, ROUTES.md decision 7). Hidden without it.
+- `ActivityPanel`'s All tab, empty, said "No payments" (the Payments tab's words). It has its own now: `ui.activityPanel.noActivity` / `noActivityBody`.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
 
 ## 2026-10-20 — the composer's draft, by hand

@@ -40,7 +40,7 @@ export const leftScreens: Screens<LeftRegion> = {
     threads: undefined,
 
     // notifications (phase 3d, ROUTES.md decision 7)
-    activity: undefined,
+    activity: () => import("../activity/ActivityScreen.svelte"),
 
     // the wallet's tokens
     wallet: undefined,

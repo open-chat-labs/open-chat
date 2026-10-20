@@ -47,6 +47,12 @@
   const t = useT();
 
   let tab = $state(0);
+  // what an empty tab says: All has its own, rather than Payments'
+  const EMPTY = [
+    { title: 'ui.activityPanel.noActivity', body: 'ui.activityPanel.noActivityBody' },
+    { title: 'ui.activityPanel.noMentions', body: 'ui.activityPanel.noMentionsBody' },
+    { title: 'ui.activityPanel.noPayments', body: 'ui.activityPanel.noPaymentsBody' },
+  ];
   // ids marked read here, until the host's items catch up
   let read = $state<string[]>([]);
   let failed = $state(false);
@@ -123,8 +129,8 @@
       <div class="empty">
         <EmptyState
           preset="no-results"
-          title={t(tab === 1 ? 'ui.activityPanel.noMentions' : 'ui.activityPanel.noPayments')}
-          body={t(tab === 1 ? 'ui.activityPanel.noMentionsBody' : 'ui.activityPanel.noPaymentsBody')}
+          title={t(EMPTY[tab].title)}
+          body={t(EMPTY[tab].body)}
         />
       </div>
     {/if}
