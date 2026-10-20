@@ -741,7 +741,8 @@ function groupingEquivalent(
     if (
         am.messageId !== bm.messageId ||
         am.messageIndex !== bm.messageIndex ||
-        am.sender !== bm.sender
+        am.sender !== bm.sender ||
+        discordAuthor(am.senderContext)?.id !== discordAuthor(bm.senderContext)?.id
     ) {
         return false;
     }

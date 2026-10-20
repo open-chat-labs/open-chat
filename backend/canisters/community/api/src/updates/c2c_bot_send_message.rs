@@ -31,7 +31,8 @@ impl From<Args> for send_message::Args {
             message_id: value.message_id,
             content: value.content.into(),
             sender_name: value.bot_name,
-            sender_display_name: None,
+            // So that notifications of a message relayed from Discord show its Discord author
+            sender_display_name: value.discord.map(|d| d.author.into_display_name()),
             replies_to: value.replies_to.map(|r| GroupReplyContext { event_index: r }),
             mentioned: vec![],
             forwarding: false,

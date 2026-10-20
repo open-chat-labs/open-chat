@@ -997,7 +997,7 @@ export type DiscordUser = {
     id: string;
     username: string;
     displayName?: string;
-    // The hash Discord builds the avatar's CDN url from
+    // The hash of the user's global avatar, not their server one, which the CDN url is built from
     avatar?: string;
 };
 

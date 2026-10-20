@@ -414,7 +414,11 @@
             ? reservedMediaWidth(mediaDimensions.width, mediaDimensions.height)
             : undefined,
     );
-    let canTip = $derived(canTipMessages && !me && confirmed && !inert && !failed);
+    let discordUser = $derived(discordAuthor(senderContext));
+    // A tip would go to the Discord bot, not the Discord author shown
+    let canTip = $derived(
+        canTipMessages && !me && confirmed && !inert && !failed && discordUser === undefined,
+    );
     let inThread = $derived(threadRootMessage !== undefined);
     let threadRootMessageIndex = $derived(
         threadRootMessage?.messageId === msg.messageId
@@ -452,7 +456,6 @@
         (!inert || canRevealDeleted || canRevealBlocked) && !readonly && !ephemeral,
     );
     let canUndelete = $derived(msg.deleted && msg.content.kind !== "deleted_content");
-    let discordUser = $derived(discordAuthor(senderContext));
     let senderDisplayName = $derived(
         discordUser !== undefined
             ? discordDisplayName(discordUser)

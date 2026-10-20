@@ -365,7 +365,11 @@
             msg.content.kind === "restricted_content" ||
             collapsed,
     );
-    let canTip = $derived(canTipMessages && !me && confirmed && !inert && !failed);
+    let discordUser = $derived(discordAuthor(senderContext));
+    // A tip would go to the Discord bot, not the Discord author shown
+    let canTip = $derived(
+        canTipMessages && !me && confirmed && !inert && !failed && discordUser === undefined,
+    );
     let inThread = $derived(threadRootMessage !== undefined);
     let scrollingId = $derived(
         inThread ? "scrollable-list-thread-messages" : "scrollable-list-chat-messages",
@@ -406,7 +410,6 @@
         (!inert || canRevealDeleted || canRevealBlocked) && !readonly && !ephemeral,
     );
     let canUndelete = $derived(msg.deleted && msg.content.kind !== "deleted_content");
-    let discordUser = $derived(discordAuthor(senderContext));
     let tips = $derived(msg.tips ? Object.entries(msg.tips) : []);
     let canBlockUser = $derived(canBlockUsers && !$selectedChatBlockedUsersStore.has(msg.sender));
     let edited = $derived(

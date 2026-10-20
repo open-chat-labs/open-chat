@@ -15,15 +15,17 @@ pub struct DiscordMessageContext {
 pub struct DiscordUser {
     // The user's Discord snowflake id
     pub id: u64,
+    // The webhook's name if a webhook posted the message
     pub username: String,
     // The user's nickname in the server, else their global display name
     pub display_name: Option<String>,
-    // The hash Discord builds the avatar's CDN url from, eg. "a_" followed by 32 hex chars if animated
+    // The hash of the user's global avatar, not their server one, which the CDN url is built from.
+    // "a_" followed by 32 hex chars if animated
     pub avatar: Option<String>,
 }
 
-// Discord's own limits
-const MAX_NAME_LENGTH: usize = 32;
+// Discord's own limits. Users' names are at most 32 characters, webhooks' at most 80
+const MAX_NAME_LENGTH: usize = 80;
 const AVATAR_HASH_LENGTH: usize = 32;
 
 impl DiscordMessageContext {
@@ -33,6 +35,10 @@ impl DiscordMessageContext {
 }
 
 impl DiscordUser {
+    pub fn into_display_name(self) -> String {
+        self.display_name.unwrap_or(self.username)
+    }
+
     pub fn validate(&self) -> Result<(), String> {
         if self.username.is_empty() || self.username.chars().count() > MAX_NAME_LENGTH {
             return Err(format!("Discord username must be 1 to {MAX_NAME_LENGTH} characters"));
@@ -99,7 +105,7 @@ mod tests {
         );
         assert!(
             DiscordUser {
-                username: "a".repeat(33),
+                username: "a".repeat(81),
                 ..user()
             }
             .validate()
