@@ -17,11 +17,11 @@ use std::time::Duration;
 use test_case::test_case;
 use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
-    AutonomousConfig, BotActionChatDetails, BotActionScope, BotChatContext, BotCommandArg, BotCommandArgValue,
-    BotCommandDefinition, BotCommandParam, BotCommandParamType, BotDataEncoding, BotDefinition, BotInstallationLocation,
-    BotMessageContent, BotPermissions, BotSubscriptions, CanisterId, ChannelId, Chat, ChatEvent, ChatEventType, ChatPermission,
-    ChatType, CommunityEventType, CommunityPermission, EventIndex, MessageContent, MessageId, MessagePermission,
-    NotificationEnvelope, OptionUpdate, Rules, StringParam, TextContent, UpdatedRules, UserId,
+    AutonomousConfig, BotActionChatDetails, BotActionScope, BotChatContext, BotChatEvent, BotCommandArg, BotCommandArgValue,
+    BotCommandDefinition, BotCommandParam, BotCommandParamType, BotDataEncoding, BotDefinition, BotEvent, BotEventWrapper,
+    BotInstallationLocation, BotMessageContent, BotPermissions, BotSubscriptions, CanisterId, ChannelId, Chat, ChatEvent,
+    ChatEventType, ChatPermission, ChatType, CommunityEventType, CommunityPermission, EventIndex, MessageContent, MessageId,
+    MessagePermission, NotificationEnvelope, OptionUpdate, Rules, StringParam, TextContent, UpdatedRules, UserId,
 };
 
 #[test]
@@ -1238,46 +1238,43 @@ fn changing_channel_visibility_should_affect_subscriptions() {
     env.advance_time(Duration::from_millis(1000));
     env.tick();
 
-    let send_message_and_check_bot_notified = |env: &mut PocketIc, expect_notified: bool| {
-        let latest_notification_index =
-            client::local_user_index::happy_path::latest_notification_index(env, *controller, local_user_index);
-
-        client::community::happy_path::send_text_message(env, &owner, community_id, channel_id, None, random_string(), None);
-        tick_many(env, 5);
-
-        let encodings = bot_notification_encodings(env, *controller, local_user_index, latest_notification_index + 1, bot_id);
-        assert_eq!(!encodings.is_empty(), expect_notified);
+    let latest_notification_index =
+        |env: &PocketIc| client::local_user_index::happy_path::latest_notification_index(env, *controller, local_user_index);
+    let send_message = |env: &mut PocketIc| {
+        let text = random_string();
+        client::community::happy_path::send_text_message(env, &owner, community_id, channel_id, None, &text, None);
+        text
+    };
+    let set_public = |env: &mut PocketIc, public: bool| {
+        client::community::happy_path::update_channel(
+            env,
+            owner.principal,
+            community_id,
+            &set_channel_public_args(channel_id, public),
+        );
     };
 
-    // Confirm a notification is sent to the bot
-    send_message_and_check_bot_notified(env, true);
+    // Confirm the bot is notified of a message
+    let from_index = latest_notification_index(env) + 1;
+    let text = send_message(env);
+    wait_for_bot_message_notification(env, *controller, local_user_index, from_index, bot_id, &text);
 
     // Setting an already public channel to public leaves the bot subscribed
-    client::community::happy_path::update_channel(
-        env,
-        owner.principal,
-        community_id,
-        &set_channel_public_args(channel_id, true),
-    );
-    send_message_and_check_bot_notified(env, true);
+    set_public(env, true);
+    let from_index = latest_notification_index(env) + 1;
+    let text = send_message(env);
+    wait_for_bot_message_notification(env, *controller, local_user_index, from_index, bot_id, &text);
 
-    // Change channel to private and confirm no notification is sent to the bot
-    client::community::happy_path::update_channel(
-        env,
-        owner.principal,
-        community_id,
-        &set_channel_public_args(channel_id, false),
-    );
-    send_message_and_check_bot_notified(env, false);
-
-    // Change channel back to public and confirm a notification is sent to the bot
-    client::community::happy_path::update_channel(
-        env,
-        owner.principal,
-        community_id,
-        &set_channel_public_args(channel_id, true),
-    );
-    send_message_and_check_bot_notified(env, true);
+    // Make the channel private and send a message, then make it public again and send another. The
+    // bot is only notified of the second, and notifications are queued in order, so a notification
+    // of the first would have arrived by then.
+    set_public(env, false);
+    let from_index = latest_notification_index(env) + 1;
+    let private_text = send_message(env);
+    set_public(env, true);
+    let public_text = send_message(env);
+    let notified = wait_for_bot_message_notification(env, *controller, local_user_index, from_index, bot_id, &public_text);
+    assert!(!notified.iter().any(|(_, text)| *text == private_text));
 }
 
 #[test_case(ChatType::Group)]
@@ -1449,6 +1446,8 @@ fn updating_bot_should_not_subscribe_it_to_private_channels(update_definition: b
 
     if update_definition {
         // Removing the bot's commands changes its command permissions, which updates its installations
+        let mut definition = default_bot_definition(random_string());
+        definition.commands.clear();
         client::user_index::happy_path::update_bot(
             env,
             canister_ids.user_index,
@@ -1457,19 +1456,7 @@ fn updating_bot_should_not_subscribe_it_to_private_channels(update_definition: b
             None,
             None,
             None,
-            Some(BotDefinition {
-                description: "Updated description".to_string(),
-                commands: vec![],
-                autonomous_config: Some(AutonomousConfig {
-                    permissions: permissions.clone(),
-                }),
-                default_subscriptions: Some(BotSubscriptions {
-                    community: HashSet::new(),
-                    chat: HashSet::from_iter([ChatEventType::Message]),
-                }),
-                data_encoding: None,
-                restricted_locations: None,
-            }),
+            Some(definition),
         );
     } else {
         let response = client::community::update_bot(
@@ -1488,20 +1475,79 @@ fn updating_bot_should_not_subscribe_it_to_private_channels(update_definition: b
     env.advance_time(Duration::from_millis(1000));
     tick_many(env, 5);
 
-    let send_message_and_check_bot_notified = |env: &mut PocketIc, channel_id: ChannelId, expect_notified: bool| {
-        let latest_notification_index =
-            client::local_user_index::happy_path::latest_notification_index(env, *controller, local_user_index);
+    // Send a message in the private channel, then one in the public channel. The bot is only notified
+    // of the second, and notifications are queued in order, so a notification of the first would have
+    // arrived by then.
+    let from_index = client::local_user_index::happy_path::latest_notification_index(env, *controller, local_user_index) + 1;
+    let private_text = random_string();
+    client::community::happy_path::send_text_message(env, &owner, community_id, private_channel_id, None, &private_text, None);
+    let public_text = random_string();
+    client::community::happy_path::send_text_message(env, &owner, community_id, public_channel_id, None, &public_text, None);
 
-        client::community::happy_path::send_text_message(env, &owner, community_id, channel_id, None, random_string(), None);
-        tick_many(env, 5);
+    let notified = wait_for_bot_message_notification(env, *controller, local_user_index, from_index, bot_id, &public_text);
+    assert!(!notified.iter().any(|(_, text)| *text == private_text));
+}
 
-        let encodings = bot_notification_encodings(env, *controller, local_user_index, latest_notification_index + 1, bot_id);
-        assert_eq!(!encodings.is_empty(), expect_notified);
-    };
+#[test]
+fn importing_group_subscribes_communitys_bots_rather_than_groups() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
 
-    // The bot is still subscribed to the public channel but not to the private one
-    send_message_and_check_bot_notified(env, private_channel_id, false);
-    send_message_and_check_bot_notified(env, public_channel_id, true);
+    env.advance_time(Duration::from_millis(1));
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let group_id = client::user::happy_path::create_group(env, &owner, &random_string(), true, true);
+    let community_id =
+        client::user::happy_path::create_community(env, &owner, &random_string(), true, vec!["General".to_string()]);
+
+    let permissions = BotPermissions::default()
+        .with_message(&HashSet::from_iter([MessagePermission::Text]))
+        .with_chat(&HashSet::from_iter([ChatPermission::ReadMessages]));
+
+    // Install one bot in the group and another in the community
+    let (group_bot_id, _) = register_bot(env, &owner, canister_ids.user_index, random_string(), random_string());
+    client::local_user_index::happy_path::install_bot(
+        env,
+        owner.principal,
+        canister_ids.local_user_index(env, group_id),
+        BotInstallationLocation::Group(group_id),
+        group_bot_id,
+        permissions.clone(),
+        Some(permissions.clone()),
+    );
+
+    let (community_bot_id, _) = register_bot(env, &owner, canister_ids.user_index, random_string(), random_string());
+    client::local_user_index::happy_path::install_bot(
+        env,
+        owner.principal,
+        canister_ids.local_user_index(env, community_id),
+        BotInstallationLocation::Community(community_id),
+        community_bot_id,
+        permissions.clone(),
+        Some(permissions),
+    );
+
+    env.advance_time(Duration::from_millis(1000));
+    env.tick();
+
+    // Import the (public) group into the community
+    let channel_id = client::community::happy_path::import_group(env, owner.principal, community_id, group_id).channel_id;
+    tick_many(env, 20);
+
+    // The community's bot is notified of messages in the channel, but the group's bot, which isn't
+    // installed in the community, isn't. Notifications are queued in order, so a notification for the
+    // group's bot would have arrived with the community bot's.
+    let local_user_index = canister_ids.local_user_index(env, community_id);
+    let from_index = client::local_user_index::happy_path::latest_notification_index(env, *controller, local_user_index) + 1;
+    let text = random_string();
+    client::community::happy_path::send_text_message(env, &owner, community_id, channel_id, None, &text, None);
+
+    wait_for_bot_message_notification(env, *controller, local_user_index, from_index, community_bot_id, &text);
+    assert!(bot_message_notifications(env, *controller, local_user_index, from_index, group_bot_id).is_empty());
 }
 
 #[test]
@@ -1515,7 +1561,7 @@ fn new_local_user_index_learns_of_existing_bots() {
     } = wrapper.env();
 
     let owner = client::register_diamond_user(env, canister_ids, *controller);
-    let (bot_id, _) = register_bot(env, &owner, canister_ids.user_index, random_string(), random_string());
+    let (bot_id, old_principal) = register_bot(env, &owner, canister_ids.user_index, random_string(), random_string());
     client::user_index::happy_path::publish_bot(env, *controller, canister_ids.user_index, bot_id);
 
     // Expand onto a subnet the Registry hasn't expanded onto yet. In test mode the Registry takes
@@ -1546,6 +1592,45 @@ fn new_local_user_index_learns_of_existing_bots() {
         env.tick();
     }
     assert!(knows_bot(env));
+
+    // The bot was told of its registration when it registered, so the new LocalUserIndex doesn't tell it again
+    assert!(bot_notification_encodings(env, *controller, local_user_index, 0, bot_id).is_empty());
+
+    // The new LocalUserIndex also has the bot among its users, by its principal
+    let lookup_user = |env: &PocketIc, principal: Principal| match client::local_user_index::c2c_lookup_user(
+        env,
+        Principal::anonymous(),
+        local_user_index,
+        &local_user_index_canister::c2c_lookup_user::Args {
+            user_id_or_principal: principal,
+        },
+    ) {
+        local_user_index_canister::c2c_lookup_user::Response::Success(user) => Some(user.user_id),
+        local_user_index_canister::c2c_lookup_user::Response::UserNotFound => None,
+    };
+    assert_eq!(lookup_user(env, old_principal), Some(bot_id));
+
+    // Rotate the bot's principal, which updates the new LocalUserIndex's users too
+    let new_principal = random_principal();
+    client::user_index::happy_path::update_bot(
+        env,
+        canister_ids.user_index,
+        owner.principal,
+        bot_id,
+        Some(new_principal),
+        None,
+        None,
+        None,
+    );
+
+    for _ in 0..30 {
+        if lookup_user(env, new_principal).is_some() {
+            break;
+        }
+        env.tick();
+    }
+    assert_eq!(lookup_user(env, new_principal), Some(bot_id));
+    assert_eq!(lookup_user(env, old_principal), None);
 
     // The env now has a LocalUserIndex on a subnet its `canister_ids` don't know of
     wrapper.discard();
@@ -1633,6 +1718,34 @@ fn updating_bot_principal_and_data_encoding_reaches_local_user_indexes() {
         "'bot_send_message' expected BotNotAuthenticated: {response:?}"
     );
 
+    // The bot can upload files as its new principal
+    let allocated_bucket = |env: &PocketIc| {
+        client::storage_index::allocated_bucket_v2(
+            env,
+            new_principal,
+            canister_ids.storage_index,
+            &storage_index_canister::allocated_bucket_v2::Args {
+                file_hash: [1; 32],
+                file_size: 1000,
+                file_id_seed: None,
+            },
+        )
+    };
+    for _ in 0..20 {
+        if matches!(
+            allocated_bucket(env),
+            storage_index_canister::allocated_bucket_v2::Response::Success(_)
+        ) {
+            break;
+        }
+        env.tick();
+    }
+    let response = allocated_bucket(env);
+    assert!(
+        matches!(response, storage_index_canister::allocated_bucket_v2::Response::Success(_)),
+        "'allocated_bucket_v2' error: {response:?}"
+    );
+
     // Switch the bot's data encoding to Candid
     let mut definition = default_bot_definition(random_string());
     definition.data_encoding = Some(BotDataEncoding::Candid);
@@ -1650,15 +1763,13 @@ fn updating_bot_principal_and_data_encoding_reaches_local_user_indexes() {
     env.advance_time(Duration::from_millis(1000));
     tick_many(env, 5);
 
-    let latest_notification_index =
-        client::local_user_index::happy_path::latest_notification_index(env, *controller, local_user_index);
-
-    client::community::happy_path::send_text_message(env, &owner, community_id, channel_id, None, random_string(), None);
-    tick_many(env, 5);
+    let from_index = client::local_user_index::happy_path::latest_notification_index(env, *controller, local_user_index) + 1;
+    let text = random_string();
+    client::community::happy_path::send_text_message(env, &owner, community_id, channel_id, None, &text, None);
 
     assert_eq!(
-        bot_notification_encodings(env, *controller, local_user_index, latest_notification_index + 1, bot_id),
-        vec![BotDataEncoding::Candid]
+        wait_for_bot_message_notification(env, *controller, local_user_index, from_index, bot_id, &text),
+        vec![(BotDataEncoding::Candid, text)]
     );
 }
 
@@ -1746,6 +1857,61 @@ fn bot_notification_encodings(
         .filter_map(|n| match n.value {
             NotificationEnvelope::Bot(n) => n.recipients.get(&bot_id).copied(),
             NotificationEnvelope::User(_) => None,
+        })
+        .collect()
+}
+
+// Ticks until the bot has been notified of the text message given, then returns the data encoding and
+// text of every text message the bot has been notified of from `from_index` onwards
+fn wait_for_bot_message_notification(
+    env: &mut PocketIc,
+    controller: Principal,
+    local_user_index: CanisterId,
+    from_index: u64,
+    bot_id: UserId,
+    text: &str,
+) -> Vec<(BotDataEncoding, String)> {
+    for _ in 0..20 {
+        let notified = bot_message_notifications(env, controller, local_user_index, from_index, bot_id);
+        if notified.iter().any(|(_, t)| t == text) {
+            return notified;
+        }
+        env.tick();
+    }
+    panic!("The bot wasn't notified of the message '{text}'");
+}
+
+fn bot_message_notifications(
+    env: &PocketIc,
+    controller: Principal,
+    local_user_index: CanisterId,
+    from_index: u64,
+    bot_id: UserId,
+) -> Vec<(BotDataEncoding, String)> {
+    client::local_user_index::happy_path::notifications(env, controller, local_user_index, from_index)
+        .notifications
+        .into_iter()
+        .filter_map(|n| {
+            let NotificationEnvelope::Bot(n) = n.value else {
+                return None;
+            };
+            let encoding = *n.recipients.get(&bot_id)?;
+            let payload = &n.event_map.get(&encoding)?.data;
+            let wrapper: BotEventWrapper = match encoding {
+                BotDataEncoding::Candid => candid::decode_one(payload).unwrap(),
+                _ => msgpack::deserialize_then_unwrap(payload),
+            };
+            let BotEvent::Chat(BotChatEvent {
+                event: ChatEvent::Message(message),
+                ..
+            }) = wrapper.event
+            else {
+                return None;
+            };
+            let MessageContent::Text(content) = message.content else {
+                return None;
+            };
+            Some((encoding, content.text))
         })
         .collect()
 }

@@ -1,6 +1,7 @@
 use crate::jobs::import_groups::finalize_group_import;
 use crate::lifecycle::init_state;
 use crate::memory::{get_stable_memory_map_memory, get_stable_memory_map_small_entries_memory, get_upgrades_memory};
+use crate::updates::create_channel::subscribe_bots_to_events;
 use crate::{Data, mutate_state, read_state};
 use canister_api_macros::post_upgrade;
 use canister_logger::LogEntry;
@@ -36,12 +37,14 @@ fn post_upgrade(args: Args) {
         finalize_group_import(group_id);
     }
 
-    // One-off: remove the private channel subscriptions which updating a bot used to add
+    // One-off: reset the channels' bot subscriptions, since updating a bot used to subscribe it to
+    // private channels, and imported groups kept the subscriptions of the bots installed in them
     mutate_state(|state| {
         let data = &mut state.data;
-        for channel in data.channels.iter_mut().filter(|c| !c.chat.is_public.value) {
-            for bot_id in data.bots.user_ids() {
-                channel.chat.events.unsubscribe_bot_from_events(*bot_id);
+        for channel in data.channels.iter_mut() {
+            channel.chat.events.clear_bot_subscriptions();
+            if channel.chat.is_public.value {
+                subscribe_bots_to_events(&data.bots, &mut channel.chat);
             }
         }
     });

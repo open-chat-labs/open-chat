@@ -6,8 +6,10 @@ use crate::{
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use constants::ONE_GB;
 use local_user_index_canister::{BotUpdated, UserIndexEvent};
 use oc_error_codes::OCErrorCode;
+use storage_index_canister::add_or_update_users::UserConfig;
 use types::{BotDataEncoding, BotDefinitionUpdate, OptionUpdate};
 use url::Url;
 use user_index_canister::update_bot::{Response::*, *};
@@ -79,6 +81,15 @@ fn update_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
         UpdateBotResult::UserNotFound => return BotNotFound,
         UpdateBotResult::PrincipalTaken => return PrincipalAlreadyUsed,
     };
+
+    // The bot uploads files as its own principal, so the StorageIndex needs to know the new one.
+    // The previous one is left in place since removing it would delete the bot's files.
+    if let Some(principal) = args.principal {
+        state.data.storage_index_user_sync_queue.push(UserConfig {
+            user_id: principal,
+            byte_limit: ONE_GB,
+        });
+    }
 
     if update_local_user_indexes {
         let principal = state.data.users.get_by_user_id(&args.bot_id).unwrap().principal;
