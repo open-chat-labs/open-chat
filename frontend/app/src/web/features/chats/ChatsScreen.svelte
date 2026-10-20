@@ -94,7 +94,7 @@
             .unarchiveChat(chatId)
             .catch(() => false)
             .then((success) => {
-                autoUnarchive.settled(id);
+                autoUnarchive.settled(id, success);
                 if (!success) toastStore.showFailureToast(i18nKey("unarchiveChatFailed"));
             });
     }

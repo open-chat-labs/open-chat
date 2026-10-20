@@ -16,14 +16,23 @@ describe("unarchiving chats with unread messages", () => {
         // the client unarchives the chat before the request settles, then undoes it
         expect(auto.next([chat(false, 1)])).toEqual([]);
         expect(auto.next([chat(true, 1)])).toEqual([]);
-        auto.settled("a");
+        auto.settled("a", false);
         expect(auto.next([chat(true, 1)])).toEqual([]);
     });
 
     test("asks again for a chat archived again after it came out", () => {
         const auto = new AutoUnarchive();
         auto.next([chat(true, 1)]);
-        auto.settled("a");
+        // only seen out of the archive while the request was on its way
+        expect(auto.next([chat(false, 0)])).toEqual([]);
+        auto.settled("a", true);
+        expect(auto.next([chat(true, 1)])).toEqual(["a"]);
+    });
+
+    test("asks again for a chat seen out of the archive once nothing was on its way", () => {
+        const auto = new AutoUnarchive();
+        auto.next([chat(true, 1)]);
+        auto.settled("a", false);
         expect(auto.next([chat(false, 0)])).toEqual([]);
         expect(auto.next([chat(true, 1)])).toEqual(["a"]);
     });
