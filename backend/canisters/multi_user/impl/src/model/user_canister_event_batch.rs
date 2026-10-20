@@ -1,5 +1,5 @@
 use crate::{can_borrow_state, mutate_state, read_state, run_regular_jobs};
-use multi_user_canister::c2c_user_canister_v2::Event;
+use multi_user_canister::c2c_user::Event;
 use timer_job_queues::{TimerJobItem, grouped_timer_job_batch};
 use tracing::info;
 use types::{C2CError, CanisterId, IdempotentEnvelope, Milliseconds, UserId};
@@ -20,16 +20,16 @@ impl TimerJobItem for UserCanisterEventBatch {
             run_regular_jobs();
         }
 
-        let response = multi_user_canister_c2c_client::c2c_user_canister_v2(
+        let response = multi_user_canister_c2c_client::c2c_user(
             self.key,
-            &multi_user_canister::c2c_user_canister_v2::Args {
+            &multi_user_canister::c2c_user::Args {
                 events: self.items.clone(),
             },
         )
         .await;
 
         match response {
-            Ok(multi_user_canister::c2c_user_canister_v2::Response::Success) => Ok(()),
+            Ok(multi_user_canister::c2c_user::Response::Success) => Ok(()),
             Err(error) => {
                 // If the user has been migrated to a MultiUser canister, their events are sent on
                 // to them there instead. Only a user's old id, which was a User canister's id, can be one

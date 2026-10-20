@@ -24,9 +24,9 @@ impl TimerJobItem for UserEventBatch {
 
         let canister_id = self.key;
 
-        let response = multi_user_canister_c2c_client::c2c_community_canister_v2(
+        let response = multi_user_canister_c2c_client::c2c_community(
             canister_id,
-            &multi_user_canister::c2c_community_canister_v2::Args::new(self.items.clone()),
+            &multi_user_canister::c2c_community::Args::new(self.items.clone()),
         )
         .await;
 
