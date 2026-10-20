@@ -15,6 +15,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Send its events to its LocalUserIndex and other MultiUser canisters at `c2c_user` ([#10050](https://github.com/open-chat-labs/open-chat/pull/10050))
 
+### Fixed
+
+- Stop retrying events for a user whose old User canister was uninstalled after running out of cycles, once they're found to be gone ([#10063](https://github.com/open-chat-labs/open-chat/pull/10063))
+
 ## [[2.0.2157](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2157-multi_user)] - 2026-10-19
 
 ### Added
