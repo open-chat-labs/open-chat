@@ -7,9 +7,7 @@ use chat_events::EditMessageArgs;
 use group_canister::c2c_bot_edit_message;
 use group_canister::edit_message_v2::*;
 use oc_error_codes::OCErrorCode;
-use types::{
-    Achievement, BotPermissions, EventIndex, MessageContentInitial, MessageId, MessageIndex, OCResult, OgPreview, UserId,
-};
+use types::{Achievement, BotPermissions, EventIndex, MessageContentInitial, OCResult, UserId};
 
 #[update(msgpack = true)]
 #[trace]
@@ -19,26 +17,11 @@ fn edit_message_v2(args: Args) -> Response {
 
 fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let member = state.get_calling_member(None, true)?;
-    let now = state.env.now();
     let sender = member.user_id();
     let is_bot = member.user_type().is_bot();
+    let min_visible_event_index = member.min_visible_event_index();
 
-    commit(
-        sender,
-        member.min_visible_event_index(),
-        args.thread_root_message_index,
-        args.message_id,
-        args.content,
-        args.block_level_markdown,
-        args.og_previews,
-        state,
-    )?;
-
-    if args.new_achievement && !is_bot {
-        state.notify_user_of_achievement(sender, Achievement::EditedMessage, now);
-    }
-
-    Ok(())
+    commit(sender, is_bot, min_visible_event_index, args, state)
 }
 
 // For now only bridge bots can do this, which the LocalUserIndex checks, to relay the edits made on
@@ -60,41 +43,41 @@ fn c2c_bot_edit_message_impl(args: c2c_bot_edit_message::Args, state: &mut Runti
         return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
+    state
+        .data
+        .chat
+        .events
+        .check_relayed_edit(args.thread, args.message_id, &content, state.env.now())?;
+
     // The bot isn't a member, and sees the whole chat. It can only edit its own messages, since the
     // edit is made as it.
     commit(
         args.bot_id,
+        true,
         EventIndex::default(),
-        args.thread,
-        args.message_id,
-        content,
-        Some(args.block_level_markdown),
-        args.og_previews,
+        Args {
+            thread_root_message_index: args.thread,
+            message_id: args.message_id,
+            content,
+            block_level_markdown: Some(args.block_level_markdown),
+            new_achievement: false,
+            og_previews: args.og_previews,
+        },
         state,
     )
 }
 
-#[expect(clippy::too_many_arguments)]
-fn commit(
-    sender: UserId,
-    min_visible_event_index: EventIndex,
-    thread_root_message_index: Option<MessageIndex>,
-    message_id: MessageId,
-    content: MessageContentInitial,
-    block_level_markdown: Option<bool>,
-    og_previews: Vec<OgPreview>,
-    state: &mut RuntimeState,
-) -> OCResult {
+fn commit(sender: UserId, is_bot: bool, min_visible_event_index: EventIndex, args: Args, state: &mut RuntimeState) -> OCResult {
     let now = state.env.now();
 
     let edit_message_args = EditMessageArgs {
         sender,
         min_visible_event_index,
-        thread_root_message_index,
-        message_id,
-        content: content.into(),
-        block_level_markdown,
-        og_previews,
+        thread_root_message_index: args.thread_root_message_index,
+        message_id: args.message_id,
+        content: args.content.into(),
+        block_level_markdown: args.block_level_markdown,
+        og_previews: args.og_previews,
         finalise_bot_message: false,
         now,
     };
@@ -108,14 +91,17 @@ fn commit(
         }),
     )?;
 
+    if args.new_achievement && !is_bot {
+        state.notify_user_of_achievement(sender, Achievement::EditedMessage, now);
+    }
+
     // Re-classify the edited content
     if state.data.chat.is_public.value
-        && let Some((message, _)) =
-            state
-                .data
-                .chat
-                .events
-                .message_internal(EventIndex::default(), thread_root_message_index, message_id.into())
+        && let Some((message, _)) = state.data.chat.events.message_internal(
+            EventIndex::default(),
+            args.thread_root_message_index,
+            args.message_id.into(),
+        )
         && message.deleted_by.is_none()
     {
         // Sent even when there is nothing classifiable: an empty request makes the local index
@@ -126,9 +112,9 @@ fn commit(
         // ever act on a match, and a match escalates regardless of later edits (the matched
         // content was posted publicly; editing it away does not void the report)
         let blobs = message.content.scannable_blobs();
-        state.queue_message_for_moderation(thread_root_message_index, message_id, input);
+        state.queue_message_for_moderation(args.thread_root_message_index, args.message_id, input);
         if !blobs.is_empty() {
-            state.queue_media_for_scanning(thread_root_message_index, message_id, blobs);
+            state.queue_media_for_scanning(args.thread_root_message_index, args.message_id, blobs);
         }
     }
 
