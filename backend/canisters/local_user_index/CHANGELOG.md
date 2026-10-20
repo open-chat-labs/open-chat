@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- Update bot record when principal or data encoding changes ([#10055](https://github.com/open-chat-labs/open-chat/pull/10055))
 - Count bot notifications' payloads towards the `notifications` response's size limit ([#10065](https://github.com/open-chat-labs/open-chat/pull/10065))
 - Wait out a failed batch's retry delay, rather than retrying it whenever anything else is queued ([#10069](https://github.com/open-chat-labs/open-chat/pull/10069))
 

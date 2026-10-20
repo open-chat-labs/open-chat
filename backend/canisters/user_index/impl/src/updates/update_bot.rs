@@ -1,13 +1,16 @@
 use crate::{
-    RuntimeState,
-    model::{MAX_AVATAR_SIZE, MAX_COMMANDS, MAX_DESCRIPTION_LEN, user_map::UpdateBotResult},
+    RuntimeState, StorageIndexEvent,
+    model::{JSON_DATA_ENCODING_NOT_SUPPORTED, MAX_AVATAR_SIZE, MAX_COMMANDS, MAX_DESCRIPTION_LEN, user_map::UpdateBotResult},
     mutate_state,
 };
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use constants::ONE_GB;
 use local_user_index_canister::{BotUpdated, UserIndexEvent};
-use types::{BotDefinitionUpdate, OptionUpdate};
+use oc_error_codes::OCErrorCode;
+use storage_index_canister::add_or_update_users::UserConfig;
+use types::{BotDataEncoding, BotDefinitionUpdate, OptionUpdate};
 use url::Url;
 use user_index_canister::update_bot::{Response::*, *};
 use utils::document::try_parse_data_url;
@@ -61,6 +64,10 @@ fn update_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
         );
     }
 
+    // The LocalUserIndexes hold each bot's owner, principal, endpoint and definition
+    let update_local_user_indexes =
+        args.owner.is_some() || args.principal.is_some() || args.endpoint.is_some() || args.definition.is_some();
+
     match state.data.users.update_bot(
         args.bot_id,
         args.owner,
@@ -75,7 +82,17 @@ fn update_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
         UpdateBotResult::PrincipalTaken => return PrincipalAlreadyUsed,
     };
 
-    if let Some(definition) = args.definition {
+    // The bot uploads files as its own principal, so the StorageIndex needs to know the new one.
+    // The previous one is left in place since removing it would delete the bot's files.
+    if let Some(principal) = args.principal {
+        state.push_event_to_storage_index(StorageIndexEvent::AddOrUpdateUser(UserConfig {
+            user_id: principal,
+            byte_limit: ONE_GB,
+        }));
+    }
+
+    if update_local_user_indexes {
+        let principal = state.data.users.get_by_user_id(&args.bot_id).unwrap().principal;
         let bot = state.data.users.get_bot(&args.bot_id).unwrap();
 
         state.push_event_to_all_local_user_indexes(
@@ -83,30 +100,31 @@ fn update_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
                 bot_id: args.bot_id,
                 owner_id: bot.owner,
                 endpoint: bot.endpoint.clone(),
-                definition,
+                definition: bot.definition.clone(),
+                principal: Some(principal),
             }),
             None,
         );
+    }
 
-        if installation_update.has_updates() {
-            let bot = state.data.users.get_bot(&args.bot_id).unwrap();
-            let installations: Vec<_> = bot
-                .installations
-                .iter()
-                .map(|(location, details)| {
-                    (
-                        *location,
-                        state.local_user_index_of_bot_installation(*location, details.local_user_index),
-                    )
-                })
-                .collect();
+    if installation_update.has_updates() {
+        let bot = state.data.users.get_bot(&args.bot_id).unwrap();
+        let installations: Vec<_> = bot
+            .installations
+            .iter()
+            .map(|(location, details)| {
+                (
+                    *location,
+                    state.local_user_index_of_bot_installation(*location, details.local_user_index),
+                )
+            })
+            .collect();
 
-            for (location, local_user_index) in installations {
-                state.push_event_to_local_user_index_canister(
-                    local_user_index,
-                    UserIndexEvent::BotUpdateInstallation(location, installation_update.clone()),
-                );
-            }
+        for (location, local_user_index) in installations {
+            state.push_event_to_local_user_index_canister(
+                local_user_index,
+                UserIndexEvent::BotUpdateInstallation(location, installation_update.clone()),
+            );
         }
     }
 
@@ -180,6 +198,12 @@ fn validate(args: &Args, state: &RuntimeState) -> Result<(), Response> {
 
         if definition.commands.len() > MAX_COMMANDS {
             return Err(TooManyCommands);
+        }
+
+        if definition.data_encoding == Some(BotDataEncoding::Json) {
+            return Err(Error(
+                OCErrorCode::InvalidRequest.with_message(JSON_DATA_ENCODING_NOT_SUPPORTED),
+            ));
         }
     }
 
