@@ -101,8 +101,8 @@ the thread, which comes from the URL.
 The **narrow** column is the layout below 768px: one column at a time, with Back going to the
 left column. The app tree is chosen by viewport width at page load (`mobileWidth`, any device),
 and a v3 build still falls back to v1 below 768px until the narrow pass (brief step 11). The shell
-gets a basic single column from phase 1 anyway, so a desktop window shrunk after load stays usable.
-Once the narrow design lands, `selectLayout` stops falling back and every browser width gets
+has a basic single column, but its minimum width (919px, from Fix Brief - App Shell Layout) keeps
+it from showing: a desktop window shrunk after load scrolls the shell sideways instead. Once the narrow design lands, `selectLayout` stops falling back and every browser width gets
 `src/web`.
 
 ## In-app routes
@@ -213,6 +213,13 @@ FAQs come from the translations, so they follow the app's language. `/faq?q=` op
 and `/whitepaper?section=` scrolls to that section; `/architecture` frames the canister map
 (`CanisterMapFrame`), which keeps `?section=` itself. What the conversion couldn't keep is in
 `GAPS.md` (Learn content).
+
+**Chat list (phase 3a).** The left column's chat list is real (`features/chats`): DMs and groups,
+favourites or a community's channels, as the route's scope says, with the latest message, time,
+unread count, pinned, muted and live call, and a row menu (favourite, pin, mute, mark read).
+Picking a chat routes to it. A list with nothing selected goes to its first chat, not the last
+one selected (decision 7, `firstChatRoute`), except on a narrow screen. The middle is still a
+placeholder until phase 3b.
 
 Still to come:
 

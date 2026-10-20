@@ -9,6 +9,7 @@ generate_candid_c2c_call!(user);
 generate_candid_c2c_call!(add_or_update_users);
 generate_c2c_call!(c2c_group_index);
 generate_candid_c2c_call!(c2c_notify_low_balance);
+generate_c2c_call!(c2c_storage_bucket, 300);
 generate_candid_c2c_call!(c2c_sync_bucket);
 generate_c2c_call!(c2c_user_index);
 generate_candid_c2c_call!(remove_accessors);

@@ -32,6 +32,7 @@ import {
     type ChatSummary,
     type ChitState,
     type DailyPuzzleState,
+    type DexId,
     type CombinedUnreadCounts,
     type CommunityIdentifier,
     type CommunitySummary,
@@ -310,6 +311,8 @@ export const walletTokensSorted = derived(
 );
 
 export const swappableTokensStore = writable<ReadonlySet<string>>(new Set(), undefined, notEq);
+// The DEXes the wallet swaps with
+export const swapProvidersStore = writable<readonly DexId[]>([], undefined, notEq);
 
 function compareTokens(a: EnhancedTokenDetails, b: EnhancedTokenDetails): number {
     // Sort by non-zero balances first
