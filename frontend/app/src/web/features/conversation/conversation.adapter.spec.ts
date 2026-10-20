@@ -2,6 +2,7 @@ import type { ChatEvent, EventWrapper, Message } from "@client";
 import {
     eventLines,
     messageRow,
+    MessageRows,
     messageStatus,
     senderColor,
     type ConversationContext,
@@ -181,5 +182,33 @@ describe("an event's lines", () => {
 
     test("are none for the kinds left out so far", () => {
         expect(lines({ kind: "chat_frozen" } as never)).toEqual([]);
+    });
+});
+
+describe("the rows kept per event", () => {
+    test("are the same row while the event, its status and its names are", () => {
+        const rows = new MessageRows();
+        const evt = message();
+        const first = rows.row("k", evt, "sent", ctx);
+        expect(rows.row("k", evt, "sent", { ...ctx })).toBe(first);
+    });
+
+    test("are made again for a new event, status or name", () => {
+        const rows = new MessageRows();
+        const evt = message();
+        const first = rows.row("k", evt, "sent", ctx);
+        expect(rows.row("k", message(), "sent", ctx)).not.toBe(first);
+        const second = rows.row("k", evt, "sent", ctx);
+        expect(rows.row("k", evt, "delivered", ctx)).not.toBe(second);
+        const renamed = { ...ctx, userName: () => "Alicia" };
+        expect(rows.row("k", evt, "delivered", renamed).senderName).toBe("Alicia");
+    });
+
+    test("are made again once cleared", () => {
+        const rows = new MessageRows();
+        const evt = message();
+        const first = rows.row("k", evt, "sent", ctx);
+        rows.clear();
+        expect(rows.row("k", evt, "sent", ctx)).not.toBe(first);
     });
 });

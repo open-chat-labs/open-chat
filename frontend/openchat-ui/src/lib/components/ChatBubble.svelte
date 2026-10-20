@@ -155,7 +155,7 @@
           <pre class="code">{code}</pre>
         {/if}
         {#if body}
-          <div class="text" style:font-size={scale.size} style:line-height={scale.leading}>{@render body()}<span class="stamp spacer" aria-hidden="true">{@render stamp()}</span><span class="stamp corner">{@render stamp()}</span></div>
+          <div class="text body" style:font-size={scale.size} style:line-height={scale.leading}>{@render body()}<span class="stamp spacer" aria-hidden="true">{@render stamp()}</span><span class="stamp corner">{@render stamp()}</span></div>
         {:else}
           <p class="text" style:font-size={scale.size} style:line-height={scale.leading}>{text}<span class="stamp spacer" aria-hidden="true">{@render stamp()}</span><span class="stamp corner">{@render stamp()}</span></p>
         {/if}
@@ -400,6 +400,14 @@
     color: var(--msg-ink);
     text-wrap: pretty;
     overflow-wrap: anywhere;
+  }
+
+  /* a host's body flows inline where it ends (its root, and a paragraph closing it), so the
+     stamp's spacer stays on its last line rather than opening a line of its own (specific enough
+     to win over a host's own block display) */
+  .bubble .text.body > :global(:first-child),
+  .bubble .text.body > :global(:first-child > p:last-child) {
+    display: inline;
   }
 
   .stamp {

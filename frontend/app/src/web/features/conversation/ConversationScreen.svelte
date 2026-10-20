@@ -20,6 +20,7 @@
         selectedChatIdStore,
         selectedChatSummaryStore,
         selectedCommunitySummaryStore,
+        stripSuspendedGate,
         threadOpenStore,
         TimelineGrouper,
         unconfirmedReadByThem,
@@ -39,17 +40,21 @@
     import ChatEventList, { type ChatEventListArgs } from "@shared_components/ChatEventList.svelte";
     import { TimelineFlattener, type FlatChatItem } from "@shared_components/flatChatItems";
     import Markdown from "@shared_components/Markdown.svelte";
+    import { i18nKey } from "@i18n/i18n";
+    import type { GroupMessage } from "@openchat/ui/src/lib/types";
+    import { toastStore } from "@src/stores/toast";
     import { isSingleEmoji } from "@src/utils/emojis";
-    import { getContext, untrack } from "svelte";
+    import { getContext, untrack, type Snippet } from "svelte";
     import { _ } from "svelte-i18n";
     import type { MiddleRegion, ScreenProps } from "../app/screens";
     import {
         eventLines,
-        messageRow,
+        MessageRows,
         messageStatus,
         senderColor,
         type ConversationContext,
         type EventContext,
+        type MessageRow,
     } from "./conversation.adapter";
 
     let { context: screen }: ScreenProps<Extract<MiddleRegion, { kind: "conversation" }>> =
@@ -132,9 +137,18 @@
                 client.toggleMuteNotifications(chat.id, undefined, id === "muteEveryone");
                 break;
             case "copyUrl":
-                navigator.clipboard?.writeText(location.origin + location.pathname);
+                copyUrl();
                 break;
         }
+    }
+
+    // as the old UI's Home: the whole URL, and a toast either way
+    function copyUrl() {
+        const url = location.href;
+        (navigator.clipboard?.writeText(url) ?? Promise.reject()).then(
+            () => toastStore.showSuccessToast(i18nKey("urlCopiedToClipboard")),
+            () => toastStore.showFailureToast(i18nKey("failedToCopyUrlToClipboard", { url })),
+        );
     }
 
     // ── what can be shown ──
@@ -146,7 +160,7 @@
         const privateCommunity =
             community !== undefined &&
             (community.membership.role === ROLE_NONE || community.membership.lapsed) &&
-            (!community.public || community.gateConfig.gate.kind !== "no_gate");
+            (!community.public || stripSuspendedGate(community.gateConfig.gate).kind !== "no_gate");
         return privateCommunity || client.maskChatMessages(chat);
     });
     const readonly = $derived(chat !== undefined && client.isChatReadOnly(chat.id));
@@ -169,25 +183,25 @@
     });
 
     // The first unread message when the chat was opened: the unread divider stays above it while
-    // the chat is open, as messages are read
-    let firstUnread = $state<{ chatId: ChatIdentifier; index: number | undefined }>();
-    $effect(() => {
+    // the chat is open, as messages are read. Worked out with the chat, so a new chat never shows
+    // the last one's
+    let firstUnreadFor: { key: string; index: number | undefined } | undefined;
+    const firstUnread = $derived.by(() => {
         const current = chat;
-        if (current === undefined) return;
-        untrack(() => {
-            if (
-                firstUnread === undefined ||
-                !chatIdentifiersEqual(firstUnread.chatId, current.id)
-            ) {
-                firstUnread = {
-                    chatId: current.id,
-                    index: messagesRead.getFirstUnreadMessageIndex(
+        if (current === undefined) return undefined;
+        const key = chatIdentifierToString(current.id);
+        if (firstUnreadFor?.key !== key) {
+            firstUnreadFor = {
+                key,
+                index: untrack(() =>
+                    messagesRead.getFirstUnreadMessageIndex(
                         current.id,
                         current.latestMessage?.event.messageIndex,
                     ),
-                };
-            }
-        });
+                ),
+            };
+        }
+        return firstUnreadFor.index;
     });
 
     // Go to the route's message (a deep link), as the old list does: when it changes, and when the
@@ -211,6 +225,9 @@
         void $threadOpenStore;
         const idx = $messageIndexStore;
         const chatId = $selectedChatIdStore;
+        // until the list is there (the chat loading, a private preview), the link waits for it
+        const current = list;
+        if (current === undefined) return;
         const sameChat = chatIdentifiersEqual(chatId, previousChatId);
         if (
             $chatsInitialisedStore &&
@@ -218,16 +235,16 @@
             idx !== undefined &&
             (!sameChat || idx !== previousMessageIndex)
         ) {
-            untrack(() => list?.scrollToMessageIndex({ chatId }, idx, false));
+            untrack(() => current.scrollToMessageIndex({ chatId }, idx, false));
         }
         previousChatId = chatId;
         previousMessageIndex = idx;
     });
 
-    function status(evt: EventWrapper<Message>, args: ChatEventListArgs) {
+    function status(evt: EventWrapper<Message>, args: ChatEventListArgs, failed: boolean) {
         const msg = evt.event;
         return messageStatus({
-            failed: args.isFailed($failedMessagesStore, evt),
+            failed,
             confirmed: args.isConfirmed($unconfirmedStore, evt),
             accepted: args.isAccepted($unconfirmedStore, evt),
             readByThem:
@@ -235,6 +252,31 @@
                 (client.messageIsReadByThem(chat.id, msg.messageIndex) ||
                     $unconfirmedReadByThem.has(msg.messageId)),
         });
+    }
+
+    // rows kept per event (MessageRows), and their messages with them, so user and other chat
+    // updates don't redo every bubble; started again for a new chat or wording
+    const rows = new MessageRows();
+    const groupMessages = new WeakMap<MessageRow, GroupMessage[]>();
+    $effect.pre(() => {
+        void chatKey;
+        void $_;
+        rows.clear();
+    });
+
+    function messagesFor(row: MessageRow, body: Snippet, withBody: boolean): GroupMessage[] {
+        let messages = groupMessages.get(row);
+        if (messages === undefined) {
+            messages = [withBody ? { ...row.message, body } : row.message];
+            groupMessages.set(row, messages);
+        }
+        return messages;
+    }
+
+    // a lone native emoji shows as the bubble's own, large; anything else (a custom emoji too)
+    // goes through the markdown
+    function withMarkdown(text: string): boolean {
+        return !isSingleEmoji(text) || /^!emoji\(/.test(text);
     }
 
     // a row the reader hasn't read is watched until it has been on screen long enough (the list's
@@ -271,7 +313,9 @@
                 : chat.kind === "group_chat"
                   ? "group"
                   : "channel"}
-            color={senderColor(chat.kind === "direct_chat" ? chat.them.userId : title)}
+            color={senderColor(
+                chat.kind === "direct_chat" ? chat.them.userId : chatIdentifierToString(chat.id),
+            )}
             verified={chat.kind === "group_chat" && chat.verified}
             presence={typingText ?? ""}
             visibility={chat.kind === "direct_chat"
@@ -327,8 +371,13 @@
                             {@const evt = item.event}
                             {#if isMessage(evt)}
                                 {@const msg = evt.event}
-                                {@const row = messageRow(evt, status(evt, args), ctx)}
                                 {@const failed = args.isFailed($failedMessagesStore, evt)}
+                                {@const row = rows.row(
+                                    item.key,
+                                    evt,
+                                    status(evt, args, failed),
+                                    ctx,
+                                )}
                                 {@const content = msg.content}
                                 <!-- a text message's text as the old UI renders it: markdown, mentions,
                                      links, custom emoji (a lone emoji is the bubble's own, large) -->
@@ -348,7 +397,7 @@
                                         observer: args.messageObserver,
                                         read: args.isReadByMe($messagesRead, evt),
                                     }}>
-                                    {#if firstUnread?.index === msg.messageIndex && msg.sender !== me}
+                                    {#if firstUnread === msg.messageIndex && msg.sender !== me}
                                         <div class="unread"><UnreadDivider /></div>
                                     {/if}
                                     <MessageGroup
@@ -361,13 +410,15 @@
                                             chat.kind !== "direct_chat"}
                                         avatarSpace
                                         endsRun={item.last}
-                                        marked={args.focusIndex === msg.messageIndex ? 0 : -1}
-                                        messages={[
+                                        marked={args.focusIndex === msg.messageIndex && !failed
+                                            ? 0
+                                            : -1}
+                                        messages={messagesFor(
+                                            row,
+                                            body,
                                             content.kind === "text_content" &&
-                                            !isSingleEmoji(content.text)
-                                                ? { ...row.message, body }
-                                                : row.message,
-                                        ]} />
+                                                withMarkdown(content.text),
+                                        )} />
                                 </div>
                             {:else}
                                 {@const lines = eventLines(evt.event, eventCtx)}

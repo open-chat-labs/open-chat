@@ -190,3 +190,38 @@ export function eventLines(event: ChatEvent, ctx: EventContext): string[] {
             return [];
     }
 }
+
+/**
+ * `messageRow`, kept per row while nothing it shows changes (the event, its status and the names
+ * in it), so a row stays the same object, and its bubble isn't redone, as users and other chat
+ * state update. Clear it when the wording or the chat changes.
+ */
+export class MessageRows {
+    #rows = new Map<
+        string,
+        { evt: EventWrapper<Message>; status: MessageStatus; names: string; row: MessageRow }
+    >();
+
+    row(
+        key: string,
+        evt: EventWrapper<Message>,
+        status: MessageStatus,
+        ctx: ConversationContext,
+    ): MessageRow {
+        const msg = evt.event;
+        const reply = msg.repliesTo;
+        const name = (userId: string) => (userId === ctx.me ? ctx.you : ctx.userName(userId));
+        const names = `${name(msg.sender)}\n${reply?.kind === "rehydrated_reply_context" ? name(reply.senderId) : ""}`;
+        const cached = this.#rows.get(key);
+        if (cached?.evt === evt && cached.status === status && cached.names === names) {
+            return cached.row;
+        }
+        const row = messageRow(evt, status, ctx);
+        this.#rows.set(key, { evt, status, names, row });
+        return row;
+    }
+
+    clear(): void {
+        this.#rows.clear();
+    }
+}
