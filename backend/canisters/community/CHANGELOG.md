@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Only subscribe bots to public channels when they're updated, and keep them subscribed when a channel is set to the visibility it already has ([#10055](https://github.com/open-chat-labs/open-chat/pull/10055))
 - Replace an imported group's bot subscriptions with the community's ([#10055](https://github.com/open-chat-labs/open-chat/pull/10055))
+- Wait out a failed batch's retry delay, rather than retrying it whenever anything else is queued ([#10069](https://github.com/open-chat-labs/open-chat/pull/10069))
 
 ## [[2.0.2170](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2170-community)] - 2026-10-20
 
