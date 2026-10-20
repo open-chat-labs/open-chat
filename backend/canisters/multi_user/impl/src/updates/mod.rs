@@ -8,6 +8,7 @@ mod c2c_charge_user_account;
 mod c2c_community_canister_v2;
 mod c2c_create_user;
 mod c2c_delete_user;
+mod c2c_escrow;
 mod c2c_game_chit;
 mod c2c_group_canister_v2;
 pub(crate) mod c2c_group_index;

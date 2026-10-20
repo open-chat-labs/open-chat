@@ -22,6 +22,7 @@
     import Markdown from "@shared_components/Markdown.svelte";
     import TokenInput from "../TokenInput.svelte";
     import SwapProgress from "./SwapProgress.svelte";
+    import SwapQuotes from "./SwapQuotes.svelte";
     import { TokenState } from "@shared_components/home/wallet/walletState.svelte";
     import { SwapForm } from "@shared_components/home/wallet/swapForm.svelte";
 
@@ -63,13 +64,11 @@
                     : "tokenSwap.requote",
         ),
     );
+    // Once quoted, the title names the amount being swapped
     let title = $derived(
-        form.stage === "quote" || tokenOut === undefined
+        form.stage === "quote" || form.quote === undefined
             ? i18nKey("tokenSwap.swapToken", { tokenIn: tokenIn.symbol })
-            : i18nKey("tokenSwap.swapTokenTo", {
-                  tokenIn: tokenIn.symbol,
-                  tokenOut: tokenOut.symbol,
-              }),
+            : i18nKey("tokenSwap.swapTokenTo", form.quote.values),
     );
     let errorMessage = $derived($pinNumberErrorMessageStore ?? form.error ?? balanceError);
 
@@ -147,6 +146,14 @@
                             </div>
                         </div>
                     </div>
+                {/if}
+
+                {#if (form.stage === "quote" || form.stage === "confirm") && form.quotes.length > 0 && tokenOut !== undefined}
+                    <SwapQuotes
+                        quotes={form.quotes}
+                        symbolOut={tokenOut.symbol}
+                        decimalsOut={tokenOut.decimals}
+                        best={form.quote?.dex} />
                 {/if}
 
                 {#if (form.stage === "swapping" || form.stage === "done") && form.quote !== undefined && tokenOut !== undefined}

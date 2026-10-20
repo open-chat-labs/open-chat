@@ -11,6 +11,13 @@ fn c2c_community_canister_v2(args: Args) -> Response {
     execute_update(|state| c2c_community_canister_v2_impl(args, state))
 }
 
+// The name for a Community canister's events, which senders switch to; the old one is served until they have
+#[update(msgpack = true)]
+#[trace]
+fn c2c_community(args: Args) -> Response {
+    execute_update(|state| c2c_community_canister_v2_impl(args, state))
+}
+
 // Handles the events a community sends this canister's users, in order. Only a community the user
 // is in may send them. Events which can't be applied (the user is not here, or has left the
 // community) are dropped rather than rejected with a trap, which the community would keep retrying.

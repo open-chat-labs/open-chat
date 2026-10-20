@@ -13,7 +13,7 @@ fn c2c_notify_p2p_swap_status_change(args: Args) {
     execute_c2c_update(|state| c2c_notify_p2p_swap_status_change_impl(args, state))
 }
 
-fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) {
+pub(crate) fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) {
     let P2PSwapLocation::Message(m) = args.location else {
         return;
     };

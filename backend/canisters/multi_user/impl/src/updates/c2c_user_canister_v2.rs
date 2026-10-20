@@ -24,6 +24,13 @@ async fn c2c_user_canister_v2(args: Args) -> Response {
     execute_update_async(|| c2c_user_canister_v2_impl(args)).await
 }
 
+// The name for a MultiUser canister's events, which senders switch to; the old one is served until they have
+#[update(msgpack = true)]
+#[trace]
+async fn c2c_user(args: Args) -> Response {
+    execute_update_async(|| c2c_user_canister_v2_impl(args)).await
+}
+
 async fn c2c_user_canister_v2_impl(args: Args) -> Response {
     // The caller must be a MultiUser canister, and each event is only applied if it is from one of
     // its users

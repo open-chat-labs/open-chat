@@ -15,8 +15,8 @@ use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::{Duration, SystemTime};
 use types::{
-    CanisterId, ChitEventType, DAILY_PUZZLE_CHIT_GAME_ID, DailyPuzzleConfig, DailyPuzzleUserState, GameConfig,
-    LIGHT_UP_GAME_ID, PublicDailyPuzzle, PuzzleHint, PuzzleNumber, UnitResult,
+    CanisterId, ChitEventType, DAILY_PUZZLE_CHIT_GAME_ID, DailyPuzzle, DailyPuzzleConfig, DailyPuzzleUserState, GameConfig,
+    LIGHT_UP_GAME_ID, PublicDailyPuzzle, PuzzleHint, PuzzleNumber, TimestampMillis, UnitResult,
 };
 
 const DAY_ZERO: u64 = 1704067200000; // Mon Jan 01 2024 00:00:00 GMT+0000
@@ -264,8 +264,7 @@ fn daily_puzzle_end_to_end() {
     assert_eq!(state.solved.as_ref().unwrap().reward, expected_reward);
     assert_eq!(state.streak, 1);
 
-    // A push from anyone but the daily canister is rejected by the guard. Accepted, this empty set
-    // would clear the day's puzzles.
+    // A push from anyone but the daily canister is rejected by the guard
     let result = env.update_call(
         local_user_index,
         user.principal,
@@ -274,6 +273,70 @@ fn daily_puzzle_end_to_end() {
     );
     assert!(result.is_err(), "push from a user should be rejected");
     assert!(puzzle_of(&fetch(env, &user, local_user_index), game_id).is_some());
+
+    // And the same at the event endpoint which replaces it
+    let result = env.update_call(
+        local_user_index,
+        user.principal,
+        "c2c_daily_puzzle_msgpack",
+        msgpack::serialize_then_unwrap(&local_user_index_canister::c2c_daily_puzzle::Args {
+            events: vec![types::IdempotentEnvelope {
+                created_at: now_millis(env),
+                idempotency_id: 1,
+                value: local_user_index_canister::DailyPuzzleEvent::Puzzles(Vec::new()),
+            }],
+        }),
+    );
+    assert!(result.is_err(), "events from a user should be rejected");
+    assert!(puzzle_of(&fetch(env, &user, local_user_index), game_id).is_some());
+
+    // From the daily canister, the event endpoint applies a set. Two new versions of today's puzzle, as
+    // `regenerate_today` makes, are sent with the later one first. The earlier one, made before the
+    // latest set the endpoint applied, is dropped; the engine would take it, as it has the same number.
+    let send_as_daily_canister = |env: &mut PocketIc, created_at: TimestampMillis, idempotency_id: u64, puzzle: DailyPuzzle| {
+        let response: local_user_index_canister::c2c_daily_puzzle::Response = client::unwrap_msgpack_response(env.update_call(
+            local_user_index,
+            canister_ids.daily_puzzle,
+            "c2c_daily_puzzle_msgpack",
+            msgpack::serialize_then_unwrap(&local_user_index_canister::c2c_daily_puzzle::Args {
+                events: vec![types::IdempotentEnvelope {
+                    created_at,
+                    idempotency_id,
+                    value: local_user_index_canister::DailyPuzzleEvent::Puzzles(vec![puzzle]),
+                }],
+            }),
+        ));
+        assert!(matches!(response, types::SuccessOnly::Success));
+    };
+    env.advance_time(Duration::from_millis(1));
+    let later = now_millis(env);
+    let regenerated = |description: u8| DailyPuzzle {
+        game_id: game_id.to_string(),
+        number,
+        tier: 0,
+        description: vec![description],
+        solution: Vec::new(),
+        solution_pairs: Vec::new(),
+        hints: Vec::new(),
+        hint_settles: Vec::new(),
+        starts_at: puzzle.starts_at,
+        expires_at: puzzle.expires_at,
+        config: DailyPuzzleConfig {
+            enabled: true,
+            ..DailyPuzzleConfig::default()
+        },
+        game_config: GameConfig::default(),
+    };
+    let description_held = |env: &PocketIc| {
+        let fetched = fetch(env, &user, local_user_index);
+        puzzle_of(&fetched, game_id).map(|p| (p.number, p.description.clone()))
+    };
+
+    send_as_daily_canister(env, later, 1, regenerated(2));
+    assert_eq!(description_held(env), Some((number, vec![2])));
+
+    send_as_daily_canister(env, later - 1, 2, regenerated(1));
+    assert_eq!(description_held(env), Some((number, vec![2])));
 
     // The flag was flipped and the clock moved
     wrapper.discard();

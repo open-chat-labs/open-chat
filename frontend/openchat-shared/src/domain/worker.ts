@@ -163,7 +163,7 @@ import type {
     BlobReference,
     StorageStatus,
 } from "./data/data";
-import type { DexId } from "./dexes";
+import type { DexId, DexQuoteResult } from "./dexes";
 import type { GenerateMagicLinkResponse } from "./email";
 import type {
     ApproveResponse,
@@ -462,7 +462,7 @@ export type WorkerRequest = Cloneable<
     | TipMessage
     | CanSwap
     | GetTokenSwaps
-    | GetTokenSwapQuotes
+    | GetTokenSwapQuote
     | SwapTokens
     | RecoverUnfinishedTokenSwaps
     | ApproveTransfer
@@ -946,8 +946,9 @@ type GetTokenSwaps = {
     outputTokenLedgers: string[];
 };
 
-type GetTokenSwapQuotes = {
-    kind: "getTokenSwapQuotes";
+type GetTokenSwapQuote = {
+    kind: "getTokenSwapQuote";
+    dex: DexId;
     inputTokenLedger: string;
     outputTokenLedger: string;
     amountIn: bigint;
@@ -2249,7 +2250,7 @@ export type WorkerResponseInner =
     | Record<string, bigint>
     | Record<string, DexId[]>
     | Set<string>
-    | [DexId, bigint][]
+    | DexQuoteResult
     | SwapTokensResponse
     | SwapTokensStep
     | DiamondMembershipFees[]
@@ -2779,7 +2780,7 @@ export type WorkerResults = ResultsByKind<{
     followThread: FollowThreadResponse;
     getTokenSwaps: Record<string, DexId[]>;
     canSwap: Set<string>;
-    getTokenSwapQuotes: [DexId, bigint][];
+    getTokenSwapQuote: DexQuoteResult;
     swapTokens: SwapTokensResponse | SwapTokensStep;
     recoverUnfinishedTokenSwaps: void;
     deleteDirectChat: boolean;
