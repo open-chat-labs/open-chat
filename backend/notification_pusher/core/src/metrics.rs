@@ -1,6 +1,6 @@
 use prometheus::core::Collector;
 use prometheus::proto::MetricFamily;
-use prometheus::{HistogramOpts, HistogramVec, IntGaugeVec, Opts, Registry};
+use prometheus::{HistogramOpts, HistogramVec, IntCounter, IntCounterVec, IntGaugeVec, Opts, Registry};
 use std::sync::OnceLock;
 use types::{CanisterId, Milliseconds};
 
@@ -18,6 +18,8 @@ pub struct Metrics {
     processing_duration_ms: HistogramVec,
     http_post_notification_duration_ms: HistogramVec,
     notification_payload_sizes: HistogramVec,
+    bot_notifications_dropped: IntCounterVec,
+    bot_notification_retries: IntCounter,
 }
 
 static METRICS: OnceLock<Metrics> = OnceLock::new();
@@ -32,6 +34,12 @@ pub fn collect_metrics() -> Vec<MetricFamily> {
 
 pub fn register_metric<C: Collector + 'static>(collector: C) {
     METRICS.get().unwrap().registry.register(Box::new(collector)).unwrap();
+}
+
+// Tests run in parallel, so initialise the metrics once for all of them
+#[cfg(test)]
+pub fn init_for_tests() {
+    METRICS.get_or_init(Metrics::new);
 }
 
 impl Metrics {
@@ -107,6 +115,17 @@ impl Metrics {
             .unwrap();
         registry.register(Box::new(notification_payload_sizes.clone())).unwrap();
 
+        let bot_notifications_dropped = IntCounterVec::new(
+            Opts::new("bot_notifications_dropped", "Bot notifications not delivered, by reason"),
+            &["reason"],
+        )
+        .unwrap();
+        registry.register(Box::new(bot_notifications_dropped.clone())).unwrap();
+
+        let bot_notification_retries =
+            IntCounter::new("bot_notification_retries", "Bot notification attempts retried").unwrap();
+        registry.register(Box::new(bot_notification_retries.clone())).unwrap();
+
         Metrics {
             registry,
             latest_notification_index_read,
@@ -117,6 +136,8 @@ impl Metrics {
             processing_duration_ms,
             http_post_notification_duration_ms,
             notification_payload_sizes,
+            bot_notifications_dropped,
+            bot_notification_retries,
         }
     }
 
@@ -136,10 +157,14 @@ impl Metrics {
             .set(index as i64);
     }
 
+    // Pushes finish out of order, eg. while a bot's notification is retried, so this only moves forward
     pub fn set_latest_notification_index_pushed(&self, index: u64, canister_id: CanisterId) {
-        self.latest_notification_index_pushed
-            .with_label_values(&[&canister_id.to_string()])
-            .set(index as i64);
+        let gauge = self
+            .latest_notification_index_pushed
+            .with_label_values(&[&canister_id.to_string()]);
+        if index as i64 > gauge.get() {
+            gauge.set(index as i64);
+        }
     }
 
     pub fn observe_end_to_end_latency(&self, latency: Milliseconds, user_notification: bool, canister_id: CanisterId) {
@@ -164,6 +189,14 @@ impl Metrics {
         self.http_post_notification_duration_ms
             .with_label_values(&[type_label(user_notification), &success.to_string()])
             .observe(latency as f64);
+    }
+
+    pub fn incr_bot_notifications_dropped(&self, reason: &str) {
+        self.bot_notifications_dropped.with_label_values(&[reason]).inc();
+    }
+
+    pub fn incr_bot_notification_retries(&self) {
+        self.bot_notification_retries.inc();
     }
 
     pub fn observe_notification_payload_size(&self, size: u64, user_notification: bool) {

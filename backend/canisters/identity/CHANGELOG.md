@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2162](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2162-identity)] - 2026-10-20
+
 ### Added
 
 - Add `c2c_user_index` for the UserIndex's events ([#10019](https://github.com/open-chat-labs/open-chat/pull/10019))

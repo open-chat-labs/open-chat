@@ -8,6 +8,7 @@ use crate::timer_job_types::{
     FinalizeGroupImportJob, JoinMembersToPublicChannelJob, MarkGroupImportCompleteJob, ProcessGroupImportChannelMembersJob,
     TimerJob,
 };
+use crate::updates::create_channel::subscribe_bots_to_events;
 use crate::{Data, RuntimeState, mutate_state, read_state, run_regular_jobs};
 use chat_events::{ChatEvents, ChatEventsExport};
 use constants::{OPENCHAT_BOT_USER_ID, SECOND_IN_MS};
@@ -208,6 +209,12 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
 
             chat.events.set_chat(Chat::Channel(community_id, channel_id));
             chat.members.set_chat(MultiUserChat::Channel(community_id, channel_id));
+            // The group's subscriptions are for the bots installed in the group, so replace them with
+            // the community's
+            chat.events.clear_bot_subscriptions();
+            if chat.is_public.value {
+                subscribe_bots_to_events(&state.data.bots, &mut chat);
+            }
             // The message ids, expiring events and search index were written to stable memory as the
             // events were imported, and the users' metrics and message event indexes, which the group
             // exported alongside its chat, are written under the channel's prefixes now

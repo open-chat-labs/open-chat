@@ -185,6 +185,9 @@ fn messages_arrive_in_order_even_if_some_fail_originally() {
 
     client::user::happy_path::send_text_message(env, &user1, user2.user_id, "3", None);
 
+    // The failed messages are retried once the short delay after a callee is found stopped has
+    // passed, and "3", queued behind them, goes with them
+    env.advance_time(Duration::from_secs(10));
     tick_many(env, 10);
 
     let events_response = client::user::happy_path::events(env, &user2, user1.user_id, EventIndex::default(), true, 100, 100);
