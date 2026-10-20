@@ -7584,6 +7584,7 @@ dependencies = [
  "reqwest 0.13.4",
  "rustls 0.23.45",
  "serde",
+ "serde_bytes",
  "serde_json",
  "tokio",
  "tracing",
