@@ -26,12 +26,11 @@ describe("bridge", () => {
         updated: 0n,
     });
 
-    test("names the author from their profile, else after the platform", () => {
-        expect(bridgedAuthorName(discordId, discord())).toEqual("nelly");
-        expect(bridgedAuthorName(discordId, discord({ displayName: "Nelly" }))).toEqual("Nelly");
-        expect(bridgedAuthorName(telegramId, telegram())).toEqual("Nelly Smith");
-        expect(bridgedAuthorName(discordId, undefined)).toEqual("Discord user");
-        expect(bridgedAuthorName(telegramId, undefined)).toEqual("Telegram user");
+    test("names the author from their profile, once it's fetched", () => {
+        expect(bridgedAuthorName(discord())).toEqual("nelly");
+        expect(bridgedAuthorName(discord({ displayName: "Nelly" }))).toEqual("Nelly");
+        expect(bridgedAuthorName(telegram())).toEqual("Nelly Smith");
+        expect(bridgedAuthorName(undefined)).toBeUndefined();
     });
 
     test("keys accounts by platform as well as id", () => {

@@ -42,20 +42,16 @@ export function bridgedUserIdsFromEvents(events: EventWrapper<ChatEvent>[]): Bri
     return [...ids.values()];
 }
 
-// Until the profile has been fetched the author is named after the platform
-export function bridgedAuthorName(
-    id: BridgedUserId,
-    summary: BridgedUserSummary | undefined,
-): string {
-    if (summary === undefined) {
-        return `${BRIDGE_PLATFORM_NAMES[id.kind]} user`;
-    }
-    const user = summary.user;
-    switch (user.kind) {
+// Undefined until the profile has been fetched
+export function bridgedAuthorName(summary: BridgedUserSummary | undefined): string | undefined {
+    const user = summary?.user;
+    switch (user?.kind) {
         case "discord":
             return user.profile.displayName ?? user.profile.username;
         case "telegram":
             return user.profile.displayName;
+        case undefined:
+            return undefined;
     }
 }
 

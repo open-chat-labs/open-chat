@@ -199,7 +199,7 @@ fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut Runti
             );
         }
         for (&platform, &bot_id) in state.data.bridge_bots.iter() {
-            state.data.local_user_index_event_sync_queue.push(
+            pusher.push(
                 canister_id,
                 UserIndexEvent::SetBridgeBot(SetBridgeBot {
                     platform,

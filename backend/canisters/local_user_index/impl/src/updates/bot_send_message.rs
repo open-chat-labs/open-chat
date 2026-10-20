@@ -12,6 +12,7 @@ use types::{
     BotActionScope, BotInitiator, BotMessageContent, BridgedUser, CanisterId, ChannelId, Chat, ChatId, CommunityId, EventIndex,
     MessageId, MessageIndex, OCResult, OgPreview, UserId,
 };
+use user_index_canister::LocalUserIndexEvent as UserIndexEvent;
 
 #[update(candid = true, json = true, msgpack = true)]
 async fn bot_send_message(args: Args) -> Response {
@@ -19,8 +20,10 @@ async fn bot_send_message(args: Args) -> Response {
         let context = extract_access_context_from_chat_context(args.chat_context, state)?;
         if let Some(bridged_from) = &args.bridged_from {
             check_can_relay(bridged_from, &context, state)?;
+            // Sent with every message, since the registry is shared by every LocalUserIndex, and
+            // the UserIndex ignores a profile which hasn't changed
             let now = state.env.now();
-            state.push_bridged_user(bridged_from, now);
+            state.push_event_to_user_index(UserIndexEvent::BridgedUserUpdated(Box::new(bridged_from.clone())), now);
         }
         Ok(context)
     }) {

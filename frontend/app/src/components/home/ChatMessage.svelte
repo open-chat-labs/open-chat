@@ -4,7 +4,7 @@
     import Typing from "@shared_components/Typing.svelte";
     import { trackedEffect } from "@src/utils/effects.svelte";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
-    import { AvatarSize, type ChatIdentifier, chatIdentifiersEqual, chatListScopeStore, type ChatType, bridgedAuthorName, bridgedFrom, bridgedUserKey, bridgedUsersStore, currentUserIdStore, currentUserStore, type EnhancedReplyContext, iconSize, localUpdates, type Member, type Message, type MessageReminderCreatedContent, mobileWidth, OpenChat, publish, routeForMessage, routeStore, screenWidth, ScreenWidth, selectedChatBlockedUsersStore, selectedChatMembersStore, selectedChatWebhooksStore, selectedCommunityMembersStore, type SelectedEmoji, selectedServerChatStore, type SenderContext, translationsStore, unconfirmedReadByThem, undeletingMessagesStore, type UserSummary } from "@client";
+    import { AvatarSize, type ChatIdentifier, chatIdentifiersEqual, chatListScopeStore, type ChatType, BRIDGE_PLATFORM_NAMES, bridgedAuthorName, bridgedFrom, bridgedUserKey, bridgedUsersStore, currentUserIdStore, currentUserStore, type EnhancedReplyContext, iconSize, localUpdates, type Member, type Message, type MessageReminderCreatedContent, mobileWidth, OpenChat, publish, routeForMessage, routeStore, screenWidth, ScreenWidth, selectedChatBlockedUsersStore, selectedChatMembersStore, selectedChatWebhooksStore, selectedCommunityMembersStore, type SelectedEmoji, selectedServerChatStore, type SenderContext, translationsStore, unconfirmedReadByThem, undeletingMessagesStore, type UserSummary } from "@client";
     import { getContext, onDestroy, onMount, tick } from "svelte";
     import { _, locale } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
@@ -461,7 +461,8 @@
     let canUndelete = $derived(msg.deleted && msg.content.kind !== "deleted_content");
     let senderDisplayName = $derived(
         bridged !== undefined
-            ? bridgedAuthorName(bridged, bridgedUser)
+            ? (bridgedAuthorName(bridgedUser) ??
+              $_("bridgedUserUnknown", { values: { platform: BRIDGE_PLATFORM_NAMES[bridged.kind] } }))
             : client.getDisplayName(
                   msg.sender,
                   $selectedCommunityMembersStore,

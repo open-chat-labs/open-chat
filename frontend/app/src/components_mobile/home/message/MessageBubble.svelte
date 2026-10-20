@@ -3,6 +3,7 @@
         chatIdentifiersEqual,
         chatListScopeStore,
         currentUserIdStore,
+        BRIDGE_PLATFORM_NAMES,
         bridgedAuthorName,
         bridgedFrom,
         bridgedUserKey,
@@ -32,6 +33,7 @@
         type SizeMode,
     } from "component-lib";
     import { getContext, type Snippet } from "svelte";
+    import { _ } from "svelte-i18n";
     import Badges from "../profile/Badges.svelte";
     import BotBadge from "../profile/BotBadge.svelte";
     import RoleIcon from "../profile/RoleIcon.svelte";
@@ -108,7 +110,8 @@
     );
     let senderDisplayName = $derived(
         bridged !== undefined
-            ? bridgedAuthorName(bridged, bridgedUser)
+            ? (bridgedAuthorName(bridgedUser) ??
+              $_("bridgedUserUnknown", { values: { platform: BRIDGE_PLATFORM_NAMES[bridged.kind] } }))
             : client.getDisplayName(
                   msg.sender,
                   $selectedCommunityMembersStore,

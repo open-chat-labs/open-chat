@@ -311,3 +311,27 @@ impl BotMessageContext {
         }
     }
 }
+
+#[cfg(test)]
+mod bot_message_context_tests {
+    use super::*;
+
+    // It's stored with every bot message, so a message which wasn't bridged mustn't store the field
+    #[test]
+    fn bridged_from_is_only_stored_when_set() {
+        let context = BotMessageContext {
+            command: None,
+            finalised: true,
+            bridged_from: None,
+        };
+        let bytes = msgpack::serialize_then_unwrap(&context);
+        assert!(!bytes.windows(12).any(|w| w == b"bridged_from"));
+
+        let bridged = BotMessageContext {
+            bridged_from: Some(BridgedUserId::Discord(1)),
+            ..context
+        };
+        let bytes = msgpack::serialize_then_unwrap(&bridged);
+        assert!(bytes.windows(12).any(|w| w == b"bridged_from"));
+    }
+}

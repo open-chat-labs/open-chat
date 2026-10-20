@@ -754,6 +754,7 @@ const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE_MILLIS;
 const BOT_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
 // A bridged account's profile is fetched again once it's this old, as messages are loaded
 const BRIDGED_USER_MAX_AGE = 10 * ONE_MINUTE_MILLIS;
+const BRIDGED_USER_RETRY_DELAY = 5_000;
 const BOT_UPDATE_IDLE_INTERVAL = 5 * ONE_MINUTE_MILLIS;
 const USER_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
 // The daily puzzle changes at rollover and when an operator regenerates or enables it; an
@@ -805,6 +806,7 @@ const SWAP_OUTPUT_CHECKS = 10;
 export class OpenChat {
     // When each bridged account's profile was last fetched, keyed by `bridgedUserKey`
     #bridgedUsersFetchedAt = new Map<string, number>();
+    #bridgedUsersInFlight = new Set<string>();
     #mobileLayout: "v1" | "v2";
     #worker: WorkerAgent;
     #authIdentityStorage: IdentityStorage;
@@ -7333,25 +7335,48 @@ export class OpenChat {
             .catch(() => []);
     }
 
-    // Fetches the profiles of the bridged accounts which haven't been fetched, or not recently
-    async getBridgedUsers(ids: BridgedUserId[]): Promise<void> {
+    // Fetches the profiles of the bridged accounts which haven't been fetched, or not recently.
+    // One the UserIndex doesn't have yet, eg. as the message reached the chat first, or which
+    // couldn't be fetched, is tried again shortly.
+    async getBridgedUsers(ids: BridgedUserId[], retry = true): Promise<void> {
         const now = Date.now();
         const toFetch = ids.filter((id) => {
-            const fetchedAt = this.#bridgedUsersFetchedAt.get(bridgedUserKey(id)!);
-            return fetchedAt === undefined || now - fetchedAt > BRIDGED_USER_MAX_AGE;
+            const key = bridgedUserKey(id)!;
+            const fetchedAt = this.#bridgedUsersFetchedAt.get(key);
+            return (
+                !this.#bridgedUsersInFlight.has(key) &&
+                (fetchedAt === undefined || now - fetchedAt > BRIDGED_USER_MAX_AGE)
+            );
         });
         if (toFetch.length === 0) return;
 
-        toFetch.forEach((id) => this.#bridgedUsersFetchedAt.set(bridgedUserKey(id)!, now));
+        const keys = toFetch.map((id) => bridgedUserKey(id)!);
+        keys.forEach((key) => this.#bridgedUsersInFlight.add(key));
         const users = await this.#worker
             .send({ kind: "getBridgedUsers", ids: toFetch })
-            .catch(() => [] as BridgedUserSummary[]);
-        if (users.length === 0) return;
+            .catch(() => [] as BridgedUserSummary[])
+            .finally(() => keys.forEach((key) => this.#bridgedUsersInFlight.delete(key)));
 
-        bridgedUsersStore.update((map) => {
-            users.forEach((u) => map.set(bridgedUserKey(bridgedUserId(u.user))!, u));
-            return map;
-        });
+        const fetched = new Set<string>();
+        if (users.length > 0) {
+            bridgedUsersStore.update((map) => {
+                for (const u of users) {
+                    const key = bridgedUserKey(bridgedUserId(u.user))!;
+                    map.set(key, u);
+                    fetched.add(key);
+                    this.#bridgedUsersFetchedAt.set(key, now);
+                }
+                return map;
+            });
+        }
+
+        const missing = toFetch.filter((id) => !fetched.has(bridgedUserKey(id)!));
+        if (retry && missing.length > 0) {
+            window.setTimeout(
+                () => void this.getBridgedUsers(missing, false),
+                BRIDGED_USER_RETRY_DELAY,
+            );
+        }
     }
 
     getMissingUsers(userIds: Iterable<string>): Promise<UsersResponse> {
