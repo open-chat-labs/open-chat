@@ -1,5 +1,6 @@
 import type {
     DexId,
+    DexQuote,
     EnhancedTokenDetails,
     OpenChat,
     ResourceKey,
@@ -26,6 +27,10 @@ export class SwapForm {
     #stage = $state<Stage>("quote");
     #quoting = $state(false);
     #error = $state<ResourceKey>();
+    // Each DEX's quote for the user's latest request for one, which `#quote` is the best of
+    #quotes = $state<[DexId, DexQuote][]>([]);
+    // Counts requests for quotes, so a request the user has moved on from is dropped
+    #quoteRequest = 0;
     #quote = $state<SwapQuote>();
     #step = $state<SwapFromWalletStep>();
     #outcome = $state<Exclude<SwapOutcome, { kind: "cancelled" }>>();
@@ -85,6 +90,10 @@ export class SwapForm {
         return this.#error;
     }
 
+    get quotes(): [DexId, DexQuote][] {
+        return this.#quotes;
+    }
+
     get quote(): SwapQuote | undefined {
         return this.#quote;
     }
@@ -107,27 +116,35 @@ export class SwapForm {
 
     selectIn(token: EnhancedTokenDetails) {
         this.#inToken = new TokenState(token, "usd");
+        this.#clearQuotes();
         this.#loadSwaps();
     }
 
     selectOut(token: EnhancedTokenDetails) {
         this.#outToken = new TokenState(token, "usd");
+        this.#clearQuotes();
     }
 
     async getQuote() {
         if (!this.#canQuote) return;
 
+        const request = ++this.#quoteRequest;
         this.#quoting = true;
         this.#error = undefined;
+        this.#quotes = [];
         this.#quote = undefined;
         this.#outcome = undefined;
         this.warningConfirmed = false;
 
-        const outcome = await this.#client.getSwapQuote(
+        const outcome = await this.#client.getSwapQuotes(
             this.#inToken.ledger,
             this.#outToken!.ledger,
             this.#inToken.draftAmount,
+            (quotes) => {
+                if (request === this.#quoteRequest) this.#quotes = quotes;
+            },
         );
+        if (request !== this.#quoteRequest) return;
         this.#quoting = false;
 
         if (outcome.kind === "quoted") {
@@ -162,8 +179,16 @@ export class SwapForm {
 
     backToQuote() {
         this.#stage = "quote";
-        this.#quote = undefined;
+        this.#clearQuotes();
         this.#outcome = undefined;
+    }
+
+    // Drops the quotes, along with any request for them still being answered
+    #clearQuotes() {
+        this.#quoteRequest++;
+        this.#quoting = false;
+        this.#quotes = [];
+        this.#quote = undefined;
     }
 
     async #loadSwaps() {

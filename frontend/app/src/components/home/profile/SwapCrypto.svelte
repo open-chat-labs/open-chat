@@ -22,6 +22,7 @@
     import Markdown from "@shared_components/Markdown.svelte";
     import TokenInput from "../TokenInput.svelte";
     import SwapProgress from "./SwapProgress.svelte";
+    import SwapQuotes from "./SwapQuotes.svelte";
     import { TokenState } from "@shared_components/home/wallet/walletState.svelte";
     import { SwapForm } from "@shared_components/home/wallet/swapForm.svelte";
 
@@ -147,6 +148,14 @@
                             </div>
                         </div>
                     </div>
+                {/if}
+
+                {#if (form.stage === "quote" || form.stage === "confirm") && form.quotes.length > 0 && tokenOut !== undefined}
+                    <SwapQuotes
+                        quotes={form.quotes}
+                        symbolOut={tokenOut.symbol}
+                        decimalsOut={tokenOut.decimals}
+                        best={form.quote?.dex} />
                 {/if}
 
                 {#if (form.stage === "swapping" || form.stage === "done") && form.quote !== undefined && tokenOut !== undefined}

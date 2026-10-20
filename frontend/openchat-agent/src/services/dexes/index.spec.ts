@@ -20,6 +20,8 @@ describe("DexesAgent swapping straight from the wallet", () => {
     ];
 
     let quoted: string[];
+    // What each DEX's pools answer when asked for a quote, given the amount they're asked to quote
+    let quote: Record<DexId, (amountIn: bigint) => Promise<bigint | undefined>>;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let agent: any;
 
@@ -34,7 +36,7 @@ describe("DexesAgent swapping straight from the wallet", () => {
             getPoolClient: () => ({
                 quote: (_inputToken, _outputToken, amountIn, outputTokenFee) => {
                     quoted.push(dex);
-                    return Promise.resolve(amountIn - outputTokenFee);
+                    return quote[dex](amountIn - outputTokenFee);
                 },
             }),
         };
@@ -42,6 +44,8 @@ describe("DexesAgent swapping straight from the wallet", () => {
 
     beforeEach(() => {
         quoted = [];
+        const quoteIt = (amount: bigint) => Promise.resolve(amount);
+        quote = { icpswap: quoteIt, taco: quoteIt };
         agent = Object.create(DexesAgent.prototype);
         agent._poolsCache = {};
         // ICPSwap swaps any of its tokens from the wallet, TACO only ICP
@@ -67,7 +71,35 @@ describe("DexesAgent swapping straight from the wallet", () => {
     });
 
     test("a DEX which won't swap the input token from the wallet isn't asked for a quote", async () => {
-        expect(await agent.quoteSwap(CHAT, ICP, 100n, 5n, BOTH)).toEqual([["icpswap", 95n]]);
+        expect(await agent.quoteSwap("taco", CHAT, ICP, 100n, 5n)).toEqual({ kind: "unsupported" });
+        expect(await agent.quoteSwap("icpswap", CHAT, ICP, 100n, 5n)).toEqual({
+            kind: "quoted",
+            amountOut: 95n,
+        });
         expect(quoted).toEqual(["icpswap"]);
+    });
+
+    test("a DEX with no pool for the pair doesn't support the swap", async () => {
+        expect(await agent.quoteSwap("icpswap", ICP, BTC, 100n, 5n)).toEqual({
+            kind: "unsupported",
+        });
+        expect(quoted).toEqual([]);
+    });
+
+    // A decline is the DEX's answer, while a failure is the DEX not answering
+    test("a DEX declining to quote is told apart from one failing to", async () => {
+        quote.taco = () => Promise.resolve(undefined);
+        expect(await agent.quoteSwap("taco", ICP, CHAT, 100n, 5n)).toEqual({ kind: "declined" });
+
+        quote.taco = () => Promise.reject(new Error("down"));
+        await expect(agent.quoteSwap("taco", ICP, CHAT, 100n, 5n)).rejects.toThrow("down");
+    });
+
+    test("a DEX which fails to list its pools fails to quote, rather than not supporting the swap", async () => {
+        agent._swapIndexClients.taco.getPools = () => Promise.reject(new Error("down"));
+
+        await expect(agent.quoteSwap("taco", ICP, CHAT, 100n, 5n)).rejects.toThrow("down");
+        // The pools of the other DEXes are still offered
+        expect(await agent.getSwapPools(ICP, new Set([CHAT]), BOTH)).toEqual([icpSwapPool]);
     });
 });

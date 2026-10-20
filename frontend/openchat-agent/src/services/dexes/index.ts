@@ -1,5 +1,5 @@
 import { AnonymousIdentity, type HttpAgent, type Identity } from "@icp-sdk/core/agent";
-import type { DexId, TokenSwapPool } from "@shared";
+import type { DexId, DexQuoteResult, TokenSwapPool } from "@shared";
 import { IcpSwapIndexClient } from "./icpSwap/index/icpSwap.index.client";
 import { TacoIndexClient } from "./taco/index/taco.index.client";
 
@@ -30,15 +30,7 @@ export class DexesAgent {
     ): Promise<TokenSwapPool[]> {
         const allPools = await this.getAllSwapPools(swapProviders);
 
-        return allPools.flatMap((dexPools) =>
-            swapsFromWallet(dexPools, inputToken)
-                ? dexPools.pools.filter(
-                      (p) =>
-                          (p.token0 === inputToken && outputTokens.has(p.token1)) ||
-                          (p.token1 === inputToken && outputTokens.has(p.token0)),
-                  )
-                : [],
-        );
+        return allPools.flatMap((dexPools) => walletSwapPools(dexPools, inputToken, outputTokens));
     }
 
     // Which of `tokens` can be swapped straight from the wallet for another of them
@@ -62,77 +54,78 @@ export class DexesAgent {
         return available;
     }
 
+    // What `dex` quotes for swapping `amountIn` of `inputToken` straight from the wallet for
+    // `outputToken`. Rejects when the DEX fails to answer.
     async quoteSwap(
+        dex: DexId,
         inputToken: string,
         outputToken: string,
         amountIn: bigint,
         outputTokenFee: bigint,
-        swapProviders: DexId[],
-    ): Promise<[DexId, bigint][]> {
-        const pools = await this.getSwapPools(inputToken, new Set([outputToken]), swapProviders);
+    ): Promise<DexQuoteResult> {
+        const pools = walletSwapPools(
+            await this.getDexPools(dex),
+            inputToken,
+            new Set([outputToken]),
+        );
+        if (pools.length === 0) {
+            return { kind: "unsupported" };
+        }
 
         // A pool that cannot quote is a normal answer, not a failure: the commonest case is an
-        // amount too small for that pool's fee, and pools also go dry or get retired. Dropping it
-        // lets the remaining pools still be quoted, and an empty result already means "no quotes"
-        // to the caller. Promise.all here failed the whole request on any one pool's rejection.
+        // amount too small for that pool's fee, and pools also go dry or get retired. A pool that
+        // declines resolves to undefined, while one that fails rejects. With no quote in hand, a
+        // failure is what stopped the user getting one, so it surfaces rather than reading as a
+        // decline.
         const quotes = await Promise.allSettled(
             pools.map((p) =>
-                this.quoteSingle(p, inputToken, outputToken, amountIn, outputTokenFee).then(
-                    (quote) =>
-                        quote === undefined ? undefined : ([p.dex, quote] as [DexId, bigint]),
-                ),
+                this.quoteSingle(p, inputToken, outputToken, amountIn, outputTokenFee),
             ),
         );
-        // A pool that declines resolves to undefined and is dropped; a pool that fails rejects.
-        // The two mean different things: with no quote in hand, a failure anywhere is what stopped
-        // the user getting one, and must surface rather than read as "no quotes". (Requiring every
-        // pool to have rejected let one decline plus one failure through as silence.)
-        const succeeded = quotes.flatMap((q) =>
-            q.status === "fulfilled" && q.value !== undefined ? [q.value] : [],
+        const best = quotes.reduce<bigint | undefined>(
+            (best, q) =>
+                q.status === "fulfilled" &&
+                q.value !== undefined &&
+                (best === undefined || q.value > best)
+                    ? q.value
+                    : best,
+            undefined,
         );
         const failed = quotes.find((q): q is PromiseRejectedResult => q.status === "rejected");
-        if (succeeded.length === 0 && failed !== undefined) {
-            throw failed.reason;
+        if (best === undefined) {
+            if (failed !== undefined) throw failed.reason;
+            return { kind: "declined" };
         }
-        // Some pool quoted, so the user gets a price - but a pool that failed after its retries
-        // while another answered is a DEX that is down, and the "best" quote shown may not be.
-        // Not worth failing the swap over; worth knowing about.
-        quotes.forEach((q, i) => {
-            if (q.status === "rejected") {
-                console.warn(
-                    `quoteSwap: ${pools[i].dex} pool failed, quoting without it`,
-                    q.reason,
-                );
-            }
-        });
-        return succeeded;
+        if (failed !== undefined) {
+            console.warn(`quoteSwap: a ${dex} pool failed, quoting without it`, failed.reason);
+        }
+        return { kind: "quoted", amountOut: best };
     }
 
+    // The pools of each of `swapProviders`, leaving out any DEX which fails to list them
     private getAllSwapPools(swapProviders: DexId[]): Promise<DexPools[]> {
-        const promises: Promise<DexPools>[] = [];
-        for (const swapProvider of swapProviders) {
-            const cached = this.tryGetAllSwapPoolsFromCache(swapProvider);
-            if (cached !== undefined) {
-                promises.push(Promise.resolve(cached));
-                continue;
-            }
-            const client = this._swapIndexClients[swapProvider];
-            if (client === undefined) {
-                continue;
-            }
-            promises.push(
-                Promise.all([client.getPools(), client.walletInputTokens()]).then(
-                    ([pools, walletInputTokens]) => {
-                        const dexPools = { pools, walletInputTokens };
-                        this._poolsCache[swapProvider] = [dexPools, Date.now()];
-                        return dexPools;
-                    },
-                ),
-            );
-        }
-        return Promise.allSettled(promises).then((result) =>
-            result.flatMap((r) => (r.status === "fulfilled" ? [r.value] : [])),
+        return Promise.allSettled(swapProviders.map((dex) => this.getDexPools(dex))).then(
+            (result) => result.flatMap((r) => (r.status === "fulfilled" ? [r.value] : [])),
         );
+    }
+
+    // `dex`'s pools, cached for ten minutes
+    private async getDexPools(dex: DexId): Promise<DexPools> {
+        const cached = this.tryGetAllSwapPoolsFromCache(dex);
+        if (cached !== undefined) {
+            return cached;
+        }
+        const client = this._swapIndexClients[dex];
+        if (client === undefined) {
+            return { pools: [], walletInputTokens: undefined };
+        }
+        const [pools, walletInputTokens] = await Promise.all([
+            client.getPools(),
+            client.walletInputTokens(),
+        ]);
+        const dexPools = { pools, walletInputTokens };
+        this._poolsCache[dex] = [dexPools, Date.now()];
+        return dexPools;
     }
 
     private quoteSingle(
@@ -163,6 +156,20 @@ export class DexesAgent {
 
 function swapsFromWallet({ walletInputTokens }: DexPools, inputToken: string): boolean {
     return walletInputTokens?.has(inputToken) ?? true;
+}
+
+// A DEX's pools which will swap `inputToken` straight from the wallet for any of `outputTokens`
+function walletSwapPools(
+    dexPools: DexPools,
+    inputToken: string,
+    outputTokens: Set<string>,
+): TokenSwapPool[] {
+    if (!swapsFromWallet(dexPools, inputToken)) return [];
+    return dexPools.pools.filter(
+        (p) =>
+            (p.token0 === inputToken && outputTokens.has(p.token1)) ||
+            (p.token1 === inputToken && outputTokens.has(p.token0)),
+    );
 }
 
 export interface SwapIndexClient {

@@ -2443,6 +2443,12 @@
         },
         "quote": "Quote",
         "quoteError": "Error getting quotes to swap {tokenIn}",
+        "quotes": {
+            "best": "Best rate",
+            "declined": "Can't swap this amount",
+            "failed": "Couldn't get a quote",
+            "unsupported": "Swap not supported"
+        },
         "quoteTooLow": "The best rate quoted is {rate} {tokenOut} per {tokenIn} from {dex}. This gives {amountOut} {tokenOut} for {amountIn} {tokenIn}. You can only swap if the quoted amount out exceeds {minAmountOut}.",
         "requote": "Re-quote",
         "swap": "Swap",
