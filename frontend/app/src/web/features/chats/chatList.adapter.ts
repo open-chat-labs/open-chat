@@ -89,8 +89,3 @@ export function listed(chat: ChatSummary, title: string, query: string): boolean
     const q = query.trim().toLowerCase();
     return q === "" ? !chat.membership.archived : title.toLowerCase().includes(q);
 }
-
-/** An archived chat with unread messages comes back out of the archive (as the old row). */
-export function unarchives(chat: ChatSummary, unread: number): boolean {
-    return chat.membership.archived && unread > 0;
-}

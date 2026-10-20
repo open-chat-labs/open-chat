@@ -28,11 +28,11 @@
     import {
         chatRow,
         listed,
-        unarchives,
         unreadCount,
         type ChatListRow,
         type RowContext,
     } from "./chatList.adapter";
+    import { AutoUnarchive } from "./autoUnarchive";
 
     let { region }: ScreenProps<Extract<LeftRegion, { kind: "chats" }>> = $props();
 
@@ -72,30 +72,31 @@
         listedRows.map(({ chat, row }): ChatListRow => ({ ...row, menu: menuFor(chat, row) })),
     );
 
-    // An archived chat with unread messages comes out of the archive (as the old row did): asked
-    // once while it's archived, and again if it's archived again or the request fails (with the
-    // old UI's failure toast)
-    const unarchiving = new Set<string>();
+    // An archived chat with unread messages comes out of the archive (as the old row did), with
+    // the old UI's toast if it can't (AutoUnarchive: not repeated by itself)
+    const autoUnarchive = new AutoUnarchive();
     $effect(() => {
         const ctx = context;
-        for (const chat of chats) {
-            const id = chatIdentifierToString(chat.id);
-            if (!chat.membership.archived) {
-                unarchiving.delete(id);
-            } else if (!unarchiving.has(id) && unarchives(chat, unreadCount(chat, ctx))) {
-                unarchiving.add(id);
-                untrack(() => unarchive(chat.id, id));
-            }
+        const states = chats.map((chat) => ({
+            id: chatIdentifierToString(chat.id),
+            archived: chat.membership.archived,
+            unread: chat.membership.archived ? unreadCount(chat, ctx) : 0,
+            chat,
+        }));
+        for (const id of untrack(() => autoUnarchive.next(states))) {
+            const state = states.find((s) => s.id === id);
+            if (state !== undefined) untrack(() => unarchive(state.chat.id, id));
         }
     });
 
     function unarchive(chatId: ChatSummary["id"], id: string) {
-        client.unarchiveChat(chatId).then((success) => {
-            if (!success) {
-                unarchiving.delete(id);
-                toastStore.showFailureToast(i18nKey("unarchiveChatFailed"));
-            }
-        });
+        client
+            .unarchiveChat(chatId)
+            .catch(() => false)
+            .then((success) => {
+                autoUnarchive.settled(id);
+                if (!success) toastStore.showFailureToast(i18nKey("unarchiveChatFailed"));
+            });
     }
 
     // the row menu, in the app's words (the old row's menu)

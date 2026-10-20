@@ -1,5 +1,5 @@
 import type { ChatSummary } from "@client";
-import { chatRow, listed, swatchFor, unarchives, type RowContext } from "./chatList.adapter";
+import { chatRow, listed, swatchFor, type RowContext } from "./chatList.adapter";
 
 const membership = { notificationsMuted: false, archived: false, joined: 0n };
 
@@ -148,11 +148,5 @@ describe("whether a chat is in the list", () => {
     test("searching, takes the chats whose title has the text, in any case", () => {
         expect(listed(group("g2", "Open"), "Open", " OP ")).toBe(true);
         expect(listed(group("g2", "Open"), "Open", "closed")).toBe(false);
-    });
-
-    test("brings an archived chat with unread messages back out", () => {
-        expect(unarchives(archived, 1)).toBe(true);
-        expect(unarchives(archived, 0)).toBe(false);
-        expect(unarchives(group("g2", "Open"), 4)).toBe(false);
     });
 });
