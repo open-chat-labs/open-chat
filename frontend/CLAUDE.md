@@ -4,6 +4,14 @@ These rules exist to keep the frontend's architecture intact as many people and 
 
 Rules marked (lint) fail `npm run lint`. The rest are checked in review.
 
+## Scope
+
+The UI is moving to a single component tree under `app/src/web`, built from `@openchat/ui`. The migration plan is in TODO(link once committed). Most of this file describes the existing trees (`components/`, `components_mobile/`, `components_shared/`), not the way forward.
+
+- Packages and layering, The client, State, Types and Code hygiene apply everywhere, `src/web` included. The exception is State's rule that a flow module goes in `components_shared/`: in `src/web`, follow its README.
+- Components describes the existing trees only. `src/web` follows `app/src/web/README.md` and the migration plan instead.
+- Where this file and the `src/web` docs disagree, stop and ask. Don't pick one.
+
 ## Packages and layering
 
 The packages are `app` (Svelte website), `openchat-client` (`@client`), `openchat-worker` (`@worker`), `openchat-agent` (`@agent`), `openchat-shared` (`@shared`) and `component-lib`. They resolve through path aliases from one root `package.json`.
