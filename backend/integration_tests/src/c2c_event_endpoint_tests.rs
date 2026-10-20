@@ -117,11 +117,11 @@ fn local_user_index_relays_group_activity_to_the_group_index() {
 
     // Sent by the group, which its LocalUserIndex relays to the GroupIndex naming the group
     let local_user_index = canister_ids.local_user_index(env, group_id);
-    let response = client::local_user_index::c2c_group_canister(
+    let response = client::local_user_index::c2c_group(
         env,
         group_id.into(),
         local_user_index,
-        &local_user_index_canister::c2c_group_canister::Args {
+        &local_user_index_canister::c2c_group::Args {
             events: vec![envelope(
                 env,
                 local_user_index_canister::GroupOrCommunityEvent::GroupActive(local_user_index_canister::GroupActive {
@@ -159,11 +159,11 @@ fn local_user_index_relays_a_completed_group_import_to_the_group_index() {
     // Sent by the community once the group lives on as one of its channels, on which the
     // GroupIndex deletes the group
     let local_user_index = canister_ids.local_user_index(env, community_id);
-    let response = client::local_user_index::c2c_community_canister(
+    let response = client::local_user_index::c2c_community(
         env,
         community_id.into(),
         local_user_index,
-        &local_user_index_canister::c2c_community_canister::Args {
+        &local_user_index_canister::c2c_community::Args {
             events: vec![envelope(
                 env,
                 local_user_index_canister::GroupOrCommunityEvent::GroupImportComplete(Box::new(

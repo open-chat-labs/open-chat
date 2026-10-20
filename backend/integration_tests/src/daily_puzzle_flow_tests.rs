@@ -275,6 +275,22 @@ fn daily_puzzle_end_to_end() {
     assert!(result.is_err(), "push from a user should be rejected");
     assert!(puzzle_of(&fetch(env, &user, local_user_index), game_id).is_some());
 
+    // And the same at the event endpoint which replaces it
+    let result = env.update_call(
+        local_user_index,
+        user.principal,
+        "c2c_daily_puzzle_msgpack",
+        msgpack::serialize_then_unwrap(&local_user_index_canister::c2c_daily_puzzle::Args {
+            events: vec![types::IdempotentEnvelope {
+                created_at: now_millis(env),
+                idempotency_id: 1,
+                value: local_user_index_canister::DailyPuzzleEvent::Puzzles(Vec::new()),
+            }],
+        }),
+    );
+    assert!(result.is_err(), "events from a user should be rejected");
+    assert!(puzzle_of(&fetch(env, &user, local_user_index), game_id).is_some());
+
     // The flag was flipped and the clock moved
     wrapper.discard();
 }
