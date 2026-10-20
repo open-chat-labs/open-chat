@@ -1,7 +1,7 @@
 use crate::jobs::import_groups::finalize_group_import;
 use crate::lifecycle::init_state;
 use crate::memory::{get_stable_memory_map_memory, get_stable_memory_map_small_entries_memory, get_upgrades_memory};
-use crate::{Data, read_state};
+use crate::{Data, mutate_state, read_state};
 use canister_api_macros::post_upgrade;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
@@ -35,6 +35,16 @@ fn post_upgrade(args: Args) {
     for group_id in completed_imports {
         finalize_group_import(group_id);
     }
+
+    // One-off: remove the private channel subscriptions which updating a bot used to add
+    mutate_state(|state| {
+        let data = &mut state.data;
+        for channel in data.channels.iter_mut().filter(|c| !c.chat.is_public.value) {
+            for bot_id in data.bots.user_ids() {
+                channel.chat.events.unsubscribe_bot_from_events(*bot_id);
+            }
+        }
+    });
 
     let total_instructions = ic_cdk::api::call_context_instruction_counter();
     info!(version = %args.wasm_version, total_instructions, "Post-upgrade complete");

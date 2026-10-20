@@ -10,6 +10,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Add `c2c_local_index` for the LocalUserIndexes' events, to replace `c2c_local_user_index` ([#10047](https://github.com/open-chat-labs/open-chat/pull/10047))
 
+### Changed
+
+- Reject bots which use the JSON data encoding ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+
+### Fixed
+
+- Tell new LocalUserIndexes of the existing bots, and the LocalUserIndexes of bots' principal changes ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+
 ## [[2.0.2155](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2155-user_index)] - 2026-10-19
 
 ### Added

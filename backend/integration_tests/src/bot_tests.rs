@@ -1,5 +1,6 @@
+use crate::client::INIT_CYCLES_BALANCE;
 use crate::env::ENV;
-use crate::utils::{now_millis, tick_many};
+use crate::utils::{metrics, now_millis, tick_many};
 use crate::{TestEnv, User, client};
 use candid::Principal;
 use community_canister::c2c_bot_community_events::{
@@ -14,11 +15,11 @@ use std::collections::HashSet;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
-use testing::rng::{random_from_u128, random_string};
+use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
     AutonomousConfig, BotActionChatDetails, BotActionScope, BotChatContext, BotCommandArg, BotCommandArgValue,
-    BotCommandDefinition, BotCommandParam, BotCommandParamType, BotDefinition, BotInstallationLocation, BotMessageContent,
-    BotPermissions, BotSubscriptions, CanisterId, Chat, ChatEvent, ChatEventType, ChatPermission, ChatType, CommunityEventType,
+    BotCommandDefinition, BotCommandParam, BotCommandParamType, BotDataEncoding, BotDefinition, BotInstallationLocation, BotMessageContent,
+    BotPermissions, BotSubscriptions, CanisterId, ChannelId, Chat, ChatEvent, ChatEventType, ChatPermission, ChatType, CommunityEventType,
     CommunityPermission, EventIndex, MessageContent, MessageId, MessagePermission, NotificationEnvelope, OptionUpdate, Rules,
     StringParam, TextContent, UpdatedRules, UserId,
 };
@@ -1237,104 +1238,31 @@ fn changing_channel_visibility_should_affect_subscriptions() {
     env.advance_time(Duration::from_millis(1000));
     env.tick();
 
-    // Send a message in the channel first looking up the latest notification index
-    let latest_notification_index_at_start =
-        client::local_user_index::happy_path::latest_notification_index(env, *controller, local_user_index);
+    let send_message_and_check_bot_notified = |env: &mut PocketIc, expect_notified: bool| {
+        let latest_notification_index =
+            client::local_user_index::happy_path::latest_notification_index(env, *controller, local_user_index);
 
-    client::community::happy_path::send_text_message(env, &owner, community_id, channel_id, None, random_string(), None);
+        client::community::happy_path::send_text_message(env, &owner, community_id, channel_id, None, random_string(), None);
+        tick_many(env, 5);
 
-    // Confirm a notification was sent to the bot
-    tick_many(env, 5);
+        let encodings = bot_notification_encodings(env, *controller, local_user_index, latest_notification_index + 1, bot_id);
+        assert_eq!(!encodings.is_empty(), expect_notified);
+    };
 
-    let notifications = client::local_user_index::happy_path::notifications(
-        env,
-        *controller,
-        local_user_index,
-        latest_notification_index_at_start + 1,
-    );
+    // Confirm a notification is sent to the bot
+    send_message_and_check_bot_notified(env, true);
 
-    assert!(notifications.bot_endpoints.contains_key(&bot_id));
-    assert!(
-        notifications
-            .notifications
-            .iter()
-            .any(|n| matches!(&n.value, NotificationEnvelope::Bot(n) if n.recipients.contains_key(&bot_id)))
-    );
+    // Setting an already public channel to public leaves the bot subscribed
+    client::community::happy_path::update_channel(env, owner.principal, community_id, &set_channel_public_args(channel_id, true));
+    send_message_and_check_bot_notified(env, true);
 
-    // Change channel to private
-    client::community::happy_path::update_channel(
-        env,
-        owner.principal,
-        community_id,
-        &community_canister::update_channel::Args {
-            channel_id,
-            public: Some(false),
-            name: None,
-            description: None,
-            rules: None,
-            avatar: OptionUpdate::NoChange,
-            messages_visible_to_non_members: None,
-            permissions_v2: None,
-            events_ttl: OptionUpdate::NoChange,
-            gate_config: OptionUpdate::NoChange,
-            external_url: OptionUpdate::NoChange,
-        },
-    );
+    // Change channel to private and confirm no notification is sent to the bot
+    client::community::happy_path::update_channel(env, owner.principal, community_id, &set_channel_public_args(channel_id, false));
+    send_message_and_check_bot_notified(env, false);
 
-    // Send another message in the channel
-    client::community::happy_path::send_text_message(env, &owner, community_id, channel_id, None, random_string(), None);
-
-    // Confirm no notification was sent to the bot
-    tick_many(env, 5);
-
-    let notifications = client::local_user_index::happy_path::notifications(
-        env,
-        *controller,
-        local_user_index,
-        latest_notification_index_at_start + 2,
-    );
-
-    assert!(notifications.notifications.is_empty());
-
-    // Change channel back to public
-    client::community::happy_path::update_channel(
-        env,
-        owner.principal,
-        community_id,
-        &community_canister::update_channel::Args {
-            channel_id,
-            public: Some(true),
-            name: None,
-            description: None,
-            rules: None,
-            avatar: OptionUpdate::NoChange,
-            messages_visible_to_non_members: None,
-            permissions_v2: None,
-            events_ttl: OptionUpdate::NoChange,
-            gate_config: OptionUpdate::NoChange,
-            external_url: OptionUpdate::NoChange,
-        },
-    );
-
-    client::community::happy_path::send_text_message(env, &owner, community_id, channel_id, None, random_string(), None);
-
-    // Confirm a notification was sent to the bot
-    tick_many(env, 5);
-
-    let notifications = client::local_user_index::happy_path::notifications(
-        env,
-        *controller,
-        local_user_index,
-        latest_notification_index_at_start + 2,
-    );
-
-    assert!(notifications.bot_endpoints.contains_key(&bot_id));
-    assert!(
-        notifications
-            .notifications
-            .iter()
-            .any(|n| matches!(&n.value, NotificationEnvelope::Bot(n) if n.recipients.contains_key(&bot_id)))
-    );
+    // Change channel back to public and confirm a notification is sent to the bot
+    client::community::happy_path::update_channel(env, owner.principal, community_id, &set_channel_public_args(channel_id, true));
+    send_message_and_check_bot_notified(env, true);
 }
 
 #[test_case(ChatType::Group)]
@@ -1462,6 +1390,351 @@ fn updating_autonomous_permissions_should_propogate_to_installations(chat_type: 
     assert!(notifications.notifications.is_empty());
 }
 
+#[test_case(false; "owner_updates_permissions")]
+#[test_case(true; "bot_definition_updated")]
+fn updating_bot_should_not_subscribe_it_to_private_channels(update_definition: bool) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    env.advance_time(Duration::from_millis(1));
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let community_id =
+        client::user::happy_path::create_community(env, &owner, &random_string(), true, vec!["General".to_string()]);
+    let public_channel_id =
+        client::community::happy_path::create_channel(env, owner.principal, community_id, true, random_string());
+    let private_channel_id =
+        client::community::happy_path::create_channel(env, owner.principal, community_id, false, random_string());
+    let local_user_index = canister_ids.local_user_index(env, community_id);
+
+    // Register a bot
+    let (bot_id, _) = register_bot(env, &owner, canister_ids.user_index, random_string(), random_string());
+
+    // Install the bot
+    let permissions = BotPermissions::default()
+        .with_message(&HashSet::from_iter([MessagePermission::Text]))
+        .with_chat(&HashSet::from_iter([ChatPermission::ReadMessages]));
+
+    client::local_user_index::happy_path::install_bot(
+        env,
+        owner.principal,
+        local_user_index,
+        BotInstallationLocation::Community(community_id),
+        bot_id,
+        permissions.clone(),
+        Some(permissions.clone()),
+    );
+
+    env.advance_time(Duration::from_millis(1000));
+    env.tick();
+
+    if update_definition {
+        // Removing the bot's commands changes its command permissions, which updates its installations
+        client::user_index::happy_path::update_bot(
+            env,
+            canister_ids.user_index,
+            owner.principal,
+            bot_id,
+            None,
+            None,
+            None,
+            Some(BotDefinition {
+                description: "Updated description".to_string(),
+                commands: vec![],
+                autonomous_config: Some(AutonomousConfig {
+                    permissions: permissions.clone(),
+                }),
+                default_subscriptions: Some(BotSubscriptions {
+                    community: HashSet::new(),
+                    chat: HashSet::from_iter([ChatEventType::Message]),
+                }),
+                data_encoding: None,
+                restricted_locations: None,
+            }),
+        );
+    } else {
+        let response = client::community::update_bot(
+            env,
+            owner.principal,
+            community_id.into(),
+            &community_canister::update_bot::Args {
+                bot_id,
+                granted_permissions: BotPermissions::text_only(),
+                granted_autonomous_permissions: Some(permissions),
+            },
+        );
+        assert!(matches!(response, community_canister::update_bot::Response::Success));
+    }
+
+    env.advance_time(Duration::from_millis(1000));
+    tick_many(env, 5);
+
+    let send_message_and_check_bot_notified = |env: &mut PocketIc, channel_id: ChannelId, expect_notified: bool| {
+        let latest_notification_index =
+            client::local_user_index::happy_path::latest_notification_index(env, *controller, local_user_index);
+
+        client::community::happy_path::send_text_message(env, &owner, community_id, channel_id, None, random_string(), None);
+        tick_many(env, 5);
+
+        let encodings = bot_notification_encodings(env, *controller, local_user_index, latest_notification_index + 1, bot_id);
+        assert_eq!(!encodings.is_empty(), expect_notified);
+    };
+
+    // The bot is still subscribed to the public channel but not to the private one
+    send_message_and_check_bot_notified(env, private_channel_id, false);
+    send_message_and_check_bot_notified(env, public_channel_id, true);
+}
+
+#[test]
+fn new_local_user_index_learns_of_existing_bots() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let (bot_id, _) = register_bot(env, &owner, canister_ids.user_index, random_string(), random_string());
+    client::user_index::happy_path::publish_bot(env, *controller, canister_ids.user_index, bot_id);
+
+    // Expand onto a subnet the Registry hasn't expanded onto yet. In test mode the Registry takes
+    // a LocalUserIndex created up front, then installs it and tells the other canisters of it
+    let subnet_id = env.topology().get_sns().unwrap();
+    let local_user_index = env.create_canister_on_subnet(Some(canister_ids.registry), None, subnet_id);
+    env.add_cycles(local_user_index, INIT_CYCLES_BALANCE);
+    client::registry::happy_path::expand_onto_subnet(
+        env,
+        *controller,
+        canister_ids.registry,
+        subnet_id,
+        Some(local_user_index),
+    );
+
+    let knows_bot = |env: &PocketIc| {
+        metrics(env, local_user_index)["bots"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|b| b["user_id"] == bot_id.to_string())
+    };
+
+    for _ in 0..30 {
+        if knows_bot(env) {
+            break;
+        }
+        env.tick();
+    }
+    assert!(knows_bot(env));
+
+    // The env now has a LocalUserIndex on a subnet its `canister_ids` don't know of
+    wrapper.discard();
+}
+
+#[test]
+fn updating_bot_principal_and_data_encoding_reaches_local_user_indexes() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    env.advance_time(Duration::from_millis(1));
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let community_id =
+        client::user::happy_path::create_community(env, &owner, &random_string(), true, vec!["General".to_string()]);
+    let channel_id = client::community::happy_path::create_channel(env, owner.principal, community_id, true, random_string());
+    let chat = Chat::Channel(community_id, channel_id);
+    let local_user_index = canister_ids.local_user_index(env, community_id);
+
+    // Register and install a bot
+    let (bot_id, old_principal) = register_bot(env, &owner, canister_ids.user_index, random_string(), random_string());
+
+    let permissions = BotPermissions::default()
+        .with_message(&HashSet::from_iter([MessagePermission::Text]))
+        .with_chat(&HashSet::from_iter([ChatPermission::ReadMessages]));
+
+    client::local_user_index::happy_path::install_bot(
+        env,
+        owner.principal,
+        local_user_index,
+        BotInstallationLocation::Community(community_id),
+        bot_id,
+        permissions.clone(),
+        Some(permissions),
+    );
+
+    // Rotate the bot's principal
+    let new_principal = random_principal();
+    client::user_index::happy_path::update_bot(
+        env,
+        canister_ids.user_index,
+        owner.principal,
+        bot_id,
+        Some(new_principal),
+        None,
+        None,
+        None,
+    );
+
+    env.advance_time(Duration::from_millis(1000));
+    tick_many(env, 5);
+
+    let send_message = |env: &mut PocketIc, principal: Principal| {
+        client::local_user_index::bot_send_message(
+            env,
+            principal,
+            local_user_index,
+            &local_user_index_canister::bot_send_message::Args {
+                chat_context: BotChatContext::Autonomous(chat),
+                thread: None,
+                message_id: None,
+                replies_to: None,
+                content: BotMessageContent::Text(TextContent { text: random_string() }),
+                block_level_markdown: false,
+                finalised: true,
+                og_previews: None,
+            },
+        )
+    };
+
+    // The bot is authenticated by its new principal but no longer by its old one
+    let response = send_message(env, new_principal);
+    assert!(
+        matches!(response, local_user_index_canister::bot_send_message::Response::Success(_)),
+        "'bot_send_message' error: {response:?}"
+    );
+
+    let response = send_message(env, old_principal);
+    assert!(
+        matches!(&response, local_user_index_canister::bot_send_message::Response::Error(e) if e.matches_code(OCErrorCode::BotNotAuthenticated)),
+        "'bot_send_message' expected BotNotAuthenticated: {response:?}"
+    );
+
+    // Switch the bot's data encoding to Candid
+    let mut definition = default_bot_definition(random_string());
+    definition.data_encoding = Some(BotDataEncoding::Candid);
+    client::user_index::happy_path::update_bot(
+        env,
+        canister_ids.user_index,
+        owner.principal,
+        bot_id,
+        None,
+        None,
+        None,
+        Some(definition),
+    );
+
+    env.advance_time(Duration::from_millis(1000));
+    tick_many(env, 5);
+
+    let latest_notification_index =
+        client::local_user_index::happy_path::latest_notification_index(env, *controller, local_user_index);
+
+    client::community::happy_path::send_text_message(env, &owner, community_id, channel_id, None, random_string(), None);
+    tick_many(env, 5);
+
+    assert_eq!(
+        bot_notification_encodings(env, *controller, local_user_index, latest_notification_index + 1, bot_id),
+        vec![BotDataEncoding::Candid]
+    );
+}
+
+#[test]
+fn json_data_encoding_rejected() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+
+    let mut definition = default_bot_definition(random_string());
+    definition.data_encoding = Some(BotDataEncoding::Json);
+
+    let response = client::user_index::register_bot(
+        env,
+        owner.principal,
+        canister_ids.user_index,
+        &user_index_canister::register_bot::Args {
+            principal: random_principal(),
+            name: random_string(),
+            avatar: None,
+            endpoint: "https://my.bot.xyz/".to_string(),
+            definition: definition.clone(),
+            permitted_install_location: None,
+        },
+    );
+    assert!(
+        matches!(response, user_index_canister::register_bot::Response::InvalidRequest(_)),
+        "'register_bot' expected InvalidRequest: {response:?}"
+    );
+
+    let (bot_id, _) = register_bot(env, &owner, canister_ids.user_index, random_string(), random_string());
+
+    let response = client::user_index::update_bot(
+        env,
+        owner.principal,
+        canister_ids.user_index,
+        &user_index_canister::update_bot::Args {
+            bot_id,
+            owner: None,
+            principal: None,
+            avatar: OptionUpdate::NoChange,
+            endpoint: None,
+            definition: Some(definition),
+        },
+    );
+    assert!(
+        matches!(&response, user_index_canister::update_bot::Response::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
+        "'update_bot' expected InvalidRequest: {response:?}"
+    );
+}
+
+fn set_channel_public_args(channel_id: ChannelId, public: bool) -> community_canister::update_channel::Args {
+    community_canister::update_channel::Args {
+        channel_id,
+        public: Some(public),
+        name: None,
+        description: None,
+        rules: None,
+        avatar: OptionUpdate::NoChange,
+        messages_visible_to_non_members: None,
+        permissions_v2: None,
+        events_ttl: OptionUpdate::NoChange,
+        gate_config: OptionUpdate::NoChange,
+        external_url: OptionUpdate::NoChange,
+    }
+}
+
+// The data encoding of each notification for the bot from `from_index` onwards
+fn bot_notification_encodings(
+    env: &PocketIc,
+    controller: Principal,
+    local_user_index: CanisterId,
+    from_index: u64,
+    bot_id: UserId,
+) -> Vec<BotDataEncoding> {
+    client::local_user_index::happy_path::notifications(env, controller, local_user_index, from_index)
+        .notifications
+        .into_iter()
+        .filter_map(|n| match n.value {
+            NotificationEnvelope::Bot(n) => n.recipients.get(&bot_id).copied(),
+            NotificationEnvelope::User(_) => None,
+        })
+        .collect()
+}
+
 pub(crate) fn register_bot(
     env: &mut PocketIc,
     owner: &User,
@@ -1469,10 +1742,17 @@ pub(crate) fn register_bot(
     bot_name: String,
     command_name: String,
 ) -> (UserId, Principal) {
-    // Register a bot
-    let endpoint = "https://my.bot.xyz/".to_string();
-    let description = "greet".to_string();
+    client::user_index::happy_path::register_bot(
+        env,
+        owner.principal,
+        user_index_canister_id,
+        bot_name,
+        "https://my.bot.xyz/".to_string(),
+        default_bot_definition(command_name),
+    )
+}
 
+fn default_bot_definition(command_name: String) -> BotDefinition {
     let commands = vec![BotCommandDefinition {
         name: command_name,
         description: Some("Hello {user}".to_string()),
@@ -1483,26 +1763,19 @@ pub(crate) fn register_bot(
         direct_messages: None,
     }];
 
-    client::user_index::happy_path::register_bot(
-        env,
-        owner.principal,
-        user_index_canister_id,
-        bot_name.clone(),
-        endpoint.clone(),
-        BotDefinition {
-            description: description.clone(),
-            commands: commands.clone(),
-            autonomous_config: Some(AutonomousConfig {
-                permissions: BotPermissions::default()
-                    .with_message(&HashSet::from_iter([MessagePermission::Text]))
-                    .with_chat(&HashSet::from_iter([ChatPermission::ReadMessages])),
-            }),
-            default_subscriptions: Some(BotSubscriptions {
-                community: HashSet::new(),
-                chat: HashSet::from_iter([ChatEventType::Message]),
-            }),
-            data_encoding: None,
-            restricted_locations: None,
-        },
-    )
+    BotDefinition {
+        description: "greet".to_string(),
+        commands,
+        autonomous_config: Some(AutonomousConfig {
+            permissions: BotPermissions::default()
+                .with_message(&HashSet::from_iter([MessagePermission::Text]))
+                .with_chat(&HashSet::from_iter([ChatPermission::ReadMessages])),
+        }),
+        default_subscriptions: Some(BotSubscriptions {
+            community: HashSet::new(),
+            chat: HashSet::from_iter([ChatEventType::Message]),
+        }),
+        data_encoding: None,
+        restricted_locations: None,
+    }
 }

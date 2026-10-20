@@ -1280,12 +1280,17 @@ impl Data {
         self.events
             .subscribe_bot_to_events(bot_id, subscriptions.community.clone(), &permitted_community_categories);
 
-        // Update chat event subscriptions for all channels
+        // Update chat event subscriptions. As at install time, on channel creation and on visibility
+        // changes, bots are only subscribed to public channels so private channel events never reach them.
         for channel in self.channels.iter_mut() {
-            channel
-                .chat
-                .events
-                .subscribe_bot_to_events(bot_id, subscriptions.chat.clone(), &permitted_chat_categories);
+            if channel.chat.is_public.value {
+                channel
+                    .chat
+                    .events
+                    .subscribe_bot_to_events(bot_id, subscriptions.chat.clone(), &permitted_chat_categories);
+            } else {
+                channel.chat.events.unsubscribe_bot_from_events(bot_id);
+            }
         }
     }
 
