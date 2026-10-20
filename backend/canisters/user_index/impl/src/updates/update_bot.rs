@@ -90,12 +90,21 @@ fn update_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
 
         if installation_update.has_updates() {
             let bot = state.data.users.get_bot(&args.bot_id).unwrap();
+            let installations: Vec<_> = bot
+                .installations
+                .iter()
+                .map(|(location, details)| {
+                    (
+                        *location,
+                        state.local_user_index_of_bot_installation(*location, details.local_user_index),
+                    )
+                })
+                .collect();
 
-            for (location, details) in bot.installations.iter() {
-                let local_user_index = state.local_user_index_of_bot_installation(*location, details.local_user_index);
-                state.data.local_user_index_event_sync_queue.push(
+            for (location, local_user_index) in installations {
+                state.push_event_to_local_user_index_canister(
                     local_user_index,
-                    UserIndexEvent::BotUpdateInstallation(*location, installation_update.clone()),
+                    UserIndexEvent::BotUpdateInstallation(location, installation_update.clone()),
                 );
             }
         }

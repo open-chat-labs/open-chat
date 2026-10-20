@@ -1,12 +1,12 @@
 use crate::guards::caller_is_known_user;
 use crate::model::files::{PutChunkArgs, PutChunkResult};
-use crate::model::index_event_batch::EventToSync;
 use crate::model::users::{FileStatusInternal, IndexSyncComplete};
 use crate::{RuntimeState, check_cycles_balance, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use storage_bucket_canister::upload_chunk_v2::{Response::*, *};
-use storage_index_canister::c2c_sync_bucket::{CsamMatch, CsamMatchKind};
+use storage_index_canister::StorageBucketEvent;
+use storage_index_canister::{CsamMatch, CsamMatchKind};
 use tracing::info;
 use types::{FileRemoved, RejectedReason};
 use utils::file_id::validate_file_id;
@@ -58,7 +58,7 @@ fn upload_chunk_impl(args: Args, state: &mut RuntimeState) -> Response {
             // Report once per file id: chunks upload in parallel and each is refused here, and a
             // retry of the same attempt reuses the file id - only the first sighting is reported
             if state.data.vault.record_blocked_attempt(user_id, file_id, declared) {
-                state.data.push_event_to_index(EventToSync::CsamMatch(CsamMatch {
+                state.push_event_to_index(StorageBucketEvent::CsamMatch(CsamMatch {
                     uploader: user_id,
                     file_id,
                     hash: declared,
@@ -73,7 +73,7 @@ fn upload_chunk_impl(args: Args, state: &mut RuntimeState) -> Response {
             if let Some(report_index) = state.data.vault.pinned_report_index(&declared)
                 && state.data.vault.record_blocked_attempt(user_id, file_id, declared)
             {
-                state.data.push_event_to_index(EventToSync::CsamMatch(CsamMatch {
+                state.push_event_to_index(StorageBucketEvent::CsamMatch(CsamMatch {
                     uploader: user_id,
                     file_id,
                     hash: declared,
@@ -120,7 +120,7 @@ fn upload_chunk_impl(args: Args, state: &mut RuntimeState) -> Response {
                 status = Some(FileStatusInternal::Complete(index_sync_complete));
             }
             if let Some(file_added) = r.file_added {
-                state.data.push_event_to_index(EventToSync::FileAdded(file_added));
+                state.push_event_to_index(StorageBucketEvent::FileAdded(file_added));
                 crate::jobs::remove_expired_files::start_job_if_required(state);
             }
             Success
@@ -129,7 +129,7 @@ fn upload_chunk_impl(args: Args, state: &mut RuntimeState) -> Response {
         PutChunkResult::FileTooBig(_) => FileTooBig,
         PutChunkResult::FileExpired(file_removed) => {
             if let Some(file_removed) = file_removed {
-                state.data.push_event_to_index(EventToSync::FileRemoved(file_removed));
+                state.push_event_to_index(StorageBucketEvent::FileRemoved(file_removed));
             }
             status = Some(FileStatusInternal::Rejected(RejectedReason::FileExpired));
             FileExpired
@@ -148,7 +148,7 @@ fn upload_chunk_impl(args: Args, state: &mut RuntimeState) -> Response {
             // this match statement will never have been reached so the file reference will not have
             // been added to the index canister.
             if hm.chunk_count > 1 {
-                state.data.push_event_to_index(EventToSync::FileRemoved(FileRemoved {
+                state.push_event_to_index(StorageBucketEvent::FileRemoved(FileRemoved {
                     file_id,
                     meta_data: hm.meta_data,
                 }));

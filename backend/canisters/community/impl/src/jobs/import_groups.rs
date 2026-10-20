@@ -21,8 +21,8 @@ use std::ops::{Bound, Deref};
 use std::time::Duration;
 use tracing::{error, info, trace};
 use types::{
-    C2CError, Caller, CanisterId, ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityUsersBlocked, Empty,
-    Milliseconds, MultiUserChat, UserId, UserType,
+    C2CError, Caller, CanisterId, ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityUsersBlocked, Milliseconds,
+    MultiUserChat, UserId, UserType,
 };
 
 const PAGE_SIZE: u32 = 19 * 102 * 1024; // Roughly 1.9MB (1.9 * 1024 * 1024)
@@ -484,34 +484,33 @@ pub(crate) fn mark_import_complete(group_id: ChatId, channel_id: ChannelId) {
         let channel = state.data.channels.get(&channel_id).unwrap();
         let public_community_activity = state.data.is_public.then(|| extract_activity(now, &state.data));
 
-        state.data.fire_and_forget_handler.send(
-            state.data.group_index_canister_id,
-            "c2c_mark_group_import_complete_msgpack".to_string(),
-            msgpack::serialize_then_unwrap(group_index_canister::c2c_mark_group_import_complete::Args {
-                community_name: state.data.name.value.clone(),
-                local_user_index_canister_id: state.data.local_user_index_canister_id,
-                channel: ChannelLatestMessageIndex {
-                    channel_id,
-                    latest_message_index: channel.chat.events.main_events_list().latest_message_index(),
-                },
-                group_id,
-                group_name: channel.chat.name.value.clone(),
-                members: channel.chat.members.member_ids().iter().copied().collect(),
-                other_public_channels: state
-                    .data
-                    .channels
-                    .public_channels()
-                    .iter()
-                    .filter(|c| c.id != channel_id)
-                    .map(|c| ChannelLatestMessageIndex {
-                        channel_id: c.id,
-                        latest_message_index: c.chat.events.main_events_list().latest_message_index(),
-                    })
-                    .collect(),
-                mark_active_duration: state.data.activity_notification_state.notify(now),
-                public_community_activity,
-            }),
-        )
+        // Relayed by the LocalUserIndex to the GroupIndex, which deletes the group
+        let event = local_user_index_canister::GroupImportComplete {
+            community_name: state.data.name.value.clone(),
+            channel: ChannelLatestMessageIndex {
+                channel_id,
+                latest_message_index: channel.chat.events.main_events_list().latest_message_index(),
+            },
+            group_id,
+            group_name: channel.chat.name.value.clone(),
+            members: channel.chat.members.member_ids().iter().copied().collect(),
+            other_public_channels: state
+                .data
+                .channels
+                .public_channels()
+                .iter()
+                .filter(|c| c.id != channel_id)
+                .map(|c| ChannelLatestMessageIndex {
+                    channel_id: c.id,
+                    latest_message_index: c.chat.events.main_events_list().latest_message_index(),
+                })
+                .collect(),
+            mark_active_duration: state.data.activity_notification_state.notify(now),
+            public_community_activity,
+        };
+        state.push_event_to_local_user_index(local_user_index_canister::CommunityEvent::GroupImportComplete(Box::new(
+            event,
+        )));
     });
 
     info!(%group_id, "'mark_import_complete' completed");
@@ -550,11 +549,7 @@ fn is_unrecoverable(error: &C2CError) -> bool {
 fn trigger_upgrade_to_finalize_import(group_id: ChatId) {
     mutate_state(|state| {
         if state.data.groups_being_imported.contains(&group_id) {
-            state.data.fire_and_forget_handler.send(
-                state.data.local_user_index_canister_id,
-                "c2c_trigger_upgrade_msgpack".to_string(),
-                msgpack::serialize_then_unwrap(Empty {}),
-            );
+            state.push_event_to_local_user_index(local_user_index_canister::CommunityEvent::TriggerUpgrade);
         }
     });
 }

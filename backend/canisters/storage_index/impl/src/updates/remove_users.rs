@@ -1,9 +1,9 @@
 use crate::guards::caller_is_user_controller;
-use crate::model::bucket_event_batch::EventToSync;
 use crate::{RuntimeState, mutate_state};
 use candid::Principal;
 use canister_tracing_macros::trace;
 use ic_cdk::update;
+use storage_bucket_canister::StorageIndexEvent;
 use storage_index_canister::remove_users::*;
 
 #[update(guard = "caller_is_user_controller")]
@@ -21,5 +21,5 @@ fn remove_users_impl(args: Args, state: &mut RuntimeState) -> Response {
 
 pub(crate) fn remove_user(user_id: Principal, state: &mut RuntimeState) {
     state.data.users.remove(&user_id);
-    state.push_event_to_buckets(EventToSync::UserRemoved(user_id));
+    state.push_event_to_buckets(StorageIndexEvent::UserRemoved(user_id));
 }
