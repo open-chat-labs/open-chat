@@ -7,7 +7,6 @@
         favouritesStore,
         OpenChat,
         querystringStore,
-        routeForScope,
         routeStore,
         sortedCommunitiesStore,
         type CommunitySummary,
@@ -19,7 +18,7 @@
     import { removeQueryStringParam, withQueryStringFlag } from "@src/utils/urls";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
-    import { railItems, railSelectionFor, type Regions } from "../../router/regions";
+    import { narrowBack, railItems, railSelectionFor, type Regions } from "../../router/regions";
     import { RightColumnState } from "../../shell/rightColumn.svelte";
     import Shell from "../../shell/Shell.svelte";
     import { currentShellLayout } from "../../shell/viewport.svelte";
@@ -55,13 +54,7 @@
     const profileOpen = $derived($querystringStore.has("profile"));
 
     // the list a narrow screen goes back to from the middle
-    const back = $derived(
-        regions.left?.kind === "chats" || regions.left?.kind === "threads"
-            ? routeForScope(regions.left.scope)
-            : regions.left?.kind === "wallet"
-              ? "/wallet"
-              : undefined,
-    );
+    const back = $derived(narrowBack(regions));
 
     // built once, each field read as it's used: a crossing of the narrow breakpoint doesn't touch a
     // screen that only reads the right column

@@ -1,5 +1,5 @@
 import type { RouteParams } from "@client";
-import { railItems, railSelectionFor, regionsFor } from "./regions";
+import { narrowBack, railItems, railSelectionFor, regionsFor } from "./regions";
 
 const none = { kind: "none" } as const;
 const chats = { kind: "chats" } as const;
@@ -38,12 +38,26 @@ describe("what a route shows", () => {
         });
     });
 
-    test("threads, activity and the wallet bring their own left column", () => {
-        expect(regionsFor(route({ kind: "threads_route", scope: community }), false)).toMatchObject(
-            {
-                left: { kind: "threads", scope: community },
-            },
-        );
+    test("?threads shows the list's threads on the left, over whatever the middle shows", () => {
+        expect(
+            regionsFor(route({ kind: "chat_list_route", scope: community }), false, true),
+        ).toMatchObject({
+            left: { kind: "threads", scope: community },
+            middle: { kind: "empty" },
+        });
+        expect(regionsFor(groupChat, false, true)).toMatchObject({
+            left: { kind: "threads", scope: groupChat.scope },
+            middle: { kind: "conversation", route: groupChat },
+            // a narrow screen shows the conversation (a thread opened from the list)
+            narrowView: "middle",
+        });
+        // only over a chat list
+        expect(
+            regionsFor(route({ kind: "notifications_route", scope: none }), false, true),
+        ).toMatchObject({ left: { kind: "activity" } });
+    });
+
+    test("activity and the wallet bring their own left column", () => {
         expect(
             regionsFor(route({ kind: "notifications_route", scope: none }), false),
         ).toMatchObject({
@@ -127,7 +141,7 @@ describe("the rail's selection", () => {
     });
 
     test("selects a community's pin for its channels and threads", () => {
-        expect(railSelectionFor(route({ kind: "threads_route", scope: community }))).toEqual({
+        expect(railSelectionFor(route({ kind: "chat_list_route", scope: community }))).toEqual({
             communityId: "c1",
         });
     });
@@ -153,5 +167,34 @@ describe("the rail's destinations", () => {
             "favourites",
             "wallet",
         ]);
+    });
+});
+
+describe("a narrow screen's Back from the middle", () => {
+    test("goes to the list the conversation was opened from", () => {
+        expect(narrowBack(regionsFor(groupChat, false))).toBe("/chats");
+    });
+
+    test("keeps the thread list a thread was opened from", () => {
+        expect(narrowBack(regionsFor(groupChat, false, true))).toBe("/chats?threads");
+        expect(
+            narrowBack(
+                regionsFor(route({ kind: "chat_list_route", scope: community }), false, true),
+            ),
+        ).toBe("/community/c1?threads");
+    });
+
+    test("goes to the wallet's tokens from a wallet page, and nowhere from the others", () => {
+        expect(
+            narrowBack(
+                regionsFor(
+                    route({ kind: "wallet_route", scope: none, view: "token", ledger: "l1" }),
+                    false,
+                ),
+            ),
+        ).toBe("/wallet");
+        expect(
+            narrowBack(regionsFor(route({ kind: "notifications_route", scope: none }), false)),
+        ).toBeUndefined();
     });
 });

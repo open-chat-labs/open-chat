@@ -26,14 +26,18 @@ Agreed on 2026-10-16; the tables below follow them.
    - **Profile** is a dialog, so it opens over whatever page is showing, as `?profile` (decision 6),
      not as a page of its own. Mobile's `/profile_summary` stays registered for its links and
      redirects to the default chat list with `?profile`.
-   - **Threads list, per scope:** `/chats/threads`, `/favourite/threads` and
-     `/community/:cid/threads`. The list belongs to a scope: `threadsByChatStore` is built from
-     that scope's chats. **Opening a thread is unchanged**: it stays the chat's own
-     `/…/:rootIndex?open=true` (and `/:rootIndex/:threadIndex`), which notifications and shared
-     links already use. Coming to a thread from the list keeps the list in the left column as
-     local state (brief §4).
+   - **Threads list, per scope:** `?threads` on a chat list's path (`/chats`, `/favourite`,
+     `/community/:cid`, and a chat or channel open in one). It's a view in the left column, in
+     place of the chat list, not a page: the middle keeps showing what the path says, so it
+     doesn't replace the open conversation. It's opened from the list's "Thread replies" with its
+     own history entry, so Back closes it (as `?profile`). The list belongs to the path's scope:
+     `threadsByChatStore` is built from that scope's chats. **Opening a thread is unchanged**: it
+     stays the chat's own `/…/:rootIndex?open=true` (and `/:rootIndex/:threadIndex`), which
+     notifications and shared links already use, with `?threads` kept so the list stays.
+     The paths it had before (`/chats/threads`, `/favourite/threads`, `/community/:cid/threads`)
+     redirect to `?threads` on their list's path.
    - **Route kinds:** mobile's `wallet_route` (gaining `{ view, ledger? }`),
-     `notifications_route` and `profile_summary_route`, plus a new `threads_route` with a scope.
+     `notifications_route` and `profile_summary_route`.
    - **Registration order:** these paths have to be registered ahead of the legacy
      `/:chatId/...` route, which otherwise takes any 1–3 segment path as a group id. On the
      desktop router today, `/wallet` opens the "group not found" modal.
@@ -120,7 +124,6 @@ it from showing: a desktop window shrunk after load scrolls the shell sideways i
 | `/favourite/user/:id/…` · `/favourite/group/:id/…` · `/favourite/community/:cid/channel/:chid/…` | as above, favourite scope | `ChatListPanel` favourites | conversation | as above | conversation | – (redirects to the non-favourite URL if not a favourite) |
 | `/community/:cid` | `selected_community_route` | `ChatListPanel` community mode (channels) | selects the community's first channel (decision 7) | `GroupPanel` (community) on demand | list | preview |
 | `/community/:cid/channel/:chid/…` | `selected_channel_route` (community) | channel list | conversation (channel) | `GroupPanel` (channel) on demand; thread → `ThreadPanel` | conversation | preview |
-| `/chats/threads` · `/favourite/threads` · `/community/:cid/threads` **(new)** | `threads_route` (that scope) | `ThreadList` (All / Unread) | last opened thread's chat, else `EmptyState` | `ThreadPanel` once a thread is open | list | sign in |
 | `/notifications` **(mobile's path, new on desktop)** | `notifications_route`; over a chat or wallet page, `?panel=activity` on its path (decision 7) | `ActivityPanel`, with Back to the middle's own panel | what it showed stays (a chat or wallet page); an item opens its chat | a chat's details, on demand | list | sign in |
 | `/profile_summary` **(mobile's path, new on desktop)** | `profile_summary_route` | redirects to the default chat list with `?profile` | | | | sign in |
 | `/welcome` **(mobile's path, new on desktop)** | `welcome_route` | – | `ExploreCommunities` (as `/communities`) | – | full | yes |
@@ -163,6 +166,7 @@ until there's a setting (`GAPS.md`). Signed-in users on `/` go to the app as tod
 | `?ref=` | referral; captured, then dropped from the URL |
 | `?autojoin` | join after preview |
 | `?explore` | no auto-select of a default chat |
+| `?threads` **(new)** | `ThreadList` (All / Unread) in the left column, in place of the chat list; the middle is unchanged (the list's first chat when nothing is selected, decision 7) |
 | `?profile` **(new)** | `ProfileDialog`, over the current page |
 | `?diamond` | `DiamondDialog` |
 | `?chit` **(new)** | `ChitDialog` |

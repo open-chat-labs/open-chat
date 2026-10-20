@@ -1,4 +1,4 @@
-import type { ChatListScope, RouteParams, WalletView } from "@client";
+import { routeForScope, type ChatListScope, type RouteParams, type WalletView } from "@client";
 
 // What a route shows (ROUTES.md). The screens behind each region come in later phases; until then
 // each one is a placeholder that says what it will be.
@@ -39,8 +39,23 @@ const MARKETING_KINDS: RouteParams["kind"][] = [
     "csea_reporting_route",
 ];
 
-// `signedOut`: an anonymous user without an account, who gets Landing on "/" (as today)
-export function regionsFor(route: RouteParams, signedOut: boolean): Regions {
+/**
+ * The regions a route shows. `signedOut`: an anonymous user without an account, who gets Landing
+ * on "/" (as today). `threads` (the URL's `?threads`): the left column shows the chat list's
+ * threads in place of the list, over whatever the middle shows (ROUTES.md).
+ */
+export function regionsFor(route: RouteParams, signedOut: boolean, threads = false): Regions {
+    const regions = routeRegions(route, signedOut);
+    if (!threads || regions.area !== "app" || regions.left?.kind !== "chats") return regions;
+    // a narrow screen still shows a conversation (a thread opened from the list) over the list
+    return {
+        ...regions,
+        left: { kind: "threads", scope: regions.left.scope },
+        narrowView: regions.middle.kind === "empty" ? "left" : regions.narrowView,
+    };
+}
+
+function routeRegions(route: RouteParams, signedOut: boolean): Regions {
     if (MARKETING_KINDS.includes(route.kind) || (route.kind === "home_route" && signedOut)) {
         return { area: "marketing", route };
     }
@@ -54,13 +69,6 @@ export function regionsFor(route: RouteParams, signedOut: boolean): Regions {
                 left: { kind: "chats", scope: route.scope },
                 middle: { kind: "conversation", route },
                 narrowView: "middle",
-            };
-        case "threads_route":
-            return {
-                area: "app",
-                left: { kind: "threads", scope: route.scope },
-                middle: { kind: "empty" },
-                narrowView: "left",
             };
         case "notifications_route":
             return {
@@ -146,5 +154,24 @@ export function railSelectionFor(route: RouteParams): RailSelection {
             return { communityId: route.scope.id.communityId };
         default:
             return { item: "chats" };
+    }
+}
+
+/**
+ * Where a narrow screen's Back goes from the middle: the list it came from (the thread list
+ * keeping its ?threads), or the wallet's tokens; nowhere for the others.
+ */
+export function narrowBack(regions: Regions): string | undefined {
+    if (regions.area !== "app") return undefined;
+    const left = regions.left;
+    switch (left?.kind) {
+        case "chats":
+            return routeForScope(left.scope);
+        case "threads":
+            return `${routeForScope(left.scope)}?threads`;
+        case "wallet":
+            return "/wallet";
+        default:
+            return undefined;
     }
 }

@@ -1,4 +1,4 @@
-import { publish, routeForScope, routeStore, routerReadyStore, subscribe } from "@client";
+import { publish, routeStore, routerReadyStore, subscribe } from "@client";
 import type { RouteParams } from "@shared";
 import page from "page";
 import { get } from "svelte/store";
@@ -21,7 +21,6 @@ const TAB_ROUTES: RouteParams["kind"][] = [
     "notifications_route",
     "wallet_route",
     "profile_summary_route",
-    "threads_route",
 ];
 
 const ROOT_TAB: RouteParams["kind"] = "chat_list_route";
@@ -40,9 +39,6 @@ const ROUTE_MATCHERS: Array<{ regexp: RegExp; kind: RouteParams["kind"] }> = (
         { path: "/notifications", kind: "notifications_route" },
         { path: "/favourite", kind: "favourites_route" },
         { path: "/profile_summary", kind: "profile_summary_route" },
-        { path: "/chats/threads", kind: "threads_route" },
-        { path: "/favourite/threads", kind: "threads_route" },
-        { path: "/community/:communityId/threads", kind: "threads_route" },
         { path: "/community/:communityId", kind: "selected_community_route" },
         {
             path: "/community/:communityId/channel/:channelId/:messageIndex?/:threadMessageIndex?",
@@ -95,11 +91,6 @@ function walletViewOf(path: string): string {
 
 function walletDepth(view: string): number {
     return view === "all" ? 0 : view === "token" ? 1 : 2;
-}
-
-// The community whose thread list a path is, if it is one
-function communityThreadsOf(path: string): string | undefined {
-    return path.split(/[?#]/)[0].match(/^\/community\/([^/]+)\/threads$/)?.[1];
 }
 
 export function pathToRouteKind(path: string): RouteParams["kind"] {
@@ -178,8 +169,6 @@ export function parentRoute(from: RouteParams): string | null {
     switch (from.kind) {
         case "selected_channel_route":
             return `/community/${from.communityId.communityId}`;
-        case "threads_route":
-            return routeForScope(from.scope);
         case "wallet_route":
             // the new web UI's wallet views and token pages sit under /wallet
             return from.view !== "all" ? "/wallet" : "/chats";
@@ -246,24 +235,6 @@ export function navigationMode(
     if (intent === "dismiss") return "pop";
 
     const toKind = pathToRouteKind(to);
-    // A community's thread list sits under the community (parentRoute), so it's a level deeper
-    // than the community and its channels, not a tab beside them
-    const toThreadsOf = communityThreadsOf(to);
-    if (
-        toThreadsOf !== undefined &&
-        (from.kind === "selected_community_route" || from.kind === "selected_channel_route") &&
-        from.communityId.communityId === toThreadsOf
-    ) {
-        return "push";
-    }
-    if (
-        from.kind === "threads_route" &&
-        from.scope.kind === "community" &&
-        toKind === "selected_community_route" &&
-        to.split(/[?#]/)[0] === `/community/${from.scope.id.communityId}`
-    ) {
-        return "pop";
-    }
     // The wallet's depth only, so going back pops to the nearest shallower wallet entry, whichever
     // token it was on. Fine while Send / Receive / Swap only lead back to the token they came from.
     if (from.kind === "wallet_route" && toKind === "wallet_route") {
