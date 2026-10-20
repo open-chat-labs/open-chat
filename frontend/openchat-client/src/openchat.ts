@@ -12667,6 +12667,10 @@ export class OpenChat {
     setAlchemyApiKey(apiKey: string | undefined): Promise<Success | OCError> {
         return this.#worker.send({ kind: "setAlchemyApiKey", apiKey });
     }
+
+    setDiscordBot(botId: string | undefined): Promise<Success | OCError> {
+        return this.#worker.send({ kind: "setDiscordBot", botId });
+    }
     dailyPuzzleRegenerateToday(gameId: string | undefined): Promise<Success | OCError> {
         return this.#worker.send({ kind: "dailyPuzzleRegenerateToday", gameId });
     }

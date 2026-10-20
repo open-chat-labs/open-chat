@@ -34,6 +34,7 @@ fn c2c_bot_invite_users(args: c2c_bot_invite_users::Args) -> Response {
             Caller::BotV2(BotCaller {
                 bot: args.bot_id,
                 initiator: args.initiator.clone(),
+                discord: None,
             }),
             state,
         )

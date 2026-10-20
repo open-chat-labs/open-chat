@@ -3,6 +3,8 @@
         chatIdentifiersEqual,
         chatListScopeStore,
         currentUserIdStore,
+        discordAuthor,
+        discordDisplayName,
         OpenChat,
         routeForChatIdentifier,
         selectedChatMembersStore,
@@ -98,12 +100,15 @@
     let multiUserChat = $derived(chatType === "group_chat" || chatType === "channel");
     let streak = $derived(sender?.streak ?? 0);
     let chitEarned = $derived(sender?.totalChitEarned ?? 0);
+    let discordUser = $derived(discordAuthor(senderContext));
     let senderDisplayName = $derived(
-        client.getDisplayName(
-            msg.sender,
-            $selectedCommunityMembersStore,
-            $selectedChatWebhooksStore,
-        ),
+        discordUser !== undefined
+            ? discordDisplayName(discordUser)
+            : client.getDisplayName(
+                  msg.sender,
+                  $selectedCommunityMembersStore,
+                  $selectedChatWebhooksStore,
+              ),
     );
     // The details held can be for another chat, when a thread preview shows a message from a chat
     // other than the one selected
@@ -232,7 +237,8 @@
                 {chitEarned} />
             <BotBadge
                 bot={senderContext?.kind === "bot"}
-                webhook={senderContext?.kind === "webhook"} />
+                webhook={senderContext?.kind === "webhook"}
+                discord={discordUser !== undefined} />
             {#if sender !== undefined && multiUserChat}
                 <WithRole
                     userId={sender.userId}

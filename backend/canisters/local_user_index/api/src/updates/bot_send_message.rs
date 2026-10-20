@@ -2,7 +2,9 @@ use candid::CandidType;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{BotChatContext, BotMessageContent, EventIndex, MessageId, MessageIndex, OgPreview, TimestampMillis};
+use types::{
+    BotChatContext, BotMessageContent, DiscordMessageContext, EventIndex, MessageId, MessageIndex, OgPreview, TimestampMillis,
+};
 
 #[ts_export(local_user_index, bot_send_message)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -15,6 +17,8 @@ pub struct Args {
     pub block_level_markdown: bool,
     pub finalised: bool,
     pub og_previews: Option<Vec<OgPreview>>,
+    // Only the Discord bridge bot can set this, on the messages it relays from Discord
+    pub discord: Option<DiscordMessageContext>,
 }
 
 #[ts_export(local_user_index, bot_send_message)]

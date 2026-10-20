@@ -36,6 +36,7 @@ async fn c2c_bot_remove_user(args: group_canister::c2c_bot_remove_user::Args) ->
             Some(Caller::BotV2(BotCaller {
                 bot: args.bot_id,
                 initiator: args.initiator.clone(),
+                discord: None,
             })),
         )
     })

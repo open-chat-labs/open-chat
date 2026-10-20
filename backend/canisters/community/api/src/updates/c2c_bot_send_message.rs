@@ -1,7 +1,8 @@
 use crate::send_message;
 use serde::{Deserialize, Serialize};
 use types::{
-    BotInitiator, BotMessageContent, ChannelId, EventIndex, GroupReplyContext, MessageId, MessageIndex, OgPreview, UserId,
+    BotInitiator, BotMessageContent, ChannelId, DiscordMessageContext, EventIndex, GroupReplyContext, MessageId, MessageIndex,
+    OgPreview, UserId,
 };
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -18,6 +19,8 @@ pub struct Args {
     pub finalised: bool,
     #[serde(default)]
     pub og_previews: Vec<OgPreview>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub discord: Option<DiscordMessageContext>,
 }
 
 impl From<Args> for send_message::Args {

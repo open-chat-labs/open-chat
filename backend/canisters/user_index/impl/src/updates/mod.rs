@@ -40,6 +40,7 @@ pub(crate) mod set_authority_reporter;
 pub mod set_call_push_enabled;
 pub mod set_daily_puzzle_canister_id;
 pub mod set_diamond_membership_fees;
+pub mod set_discord_bot;
 pub mod set_display_name;
 pub mod set_hide_online_status;
 pub(crate) mod set_internal_moderation_channel;

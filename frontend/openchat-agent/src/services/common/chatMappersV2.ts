@@ -647,6 +647,12 @@ export function botMessageContext(value: TBotMessageContext): BotMessageContext 
             args: command.args.map(botCommandArg),
             initiator: principalBytesToString(command.initiator),
         })),
+        discordAuthor: mapOptional(value.discord, ({ author }) => ({
+            id: author.id.toString(),
+            username: author.username,
+            displayName: author.display_name,
+            avatar: author.avatar,
+        })),
     };
 }
 

@@ -508,6 +508,10 @@ struct Data {
     // Set by proposal and fanned out to the LocalUserIndexes, including any added later
     #[serde(default)]
     pub daily_puzzle_canister_id: Option<CanisterId>,
+    // The bot that bridges Discord servers. Set by a platform operator and fanned out to the
+    // LocalUserIndexes, including any added later
+    #[serde(default)]
+    pub discord_bot_id: Option<UserId>,
     // The old id -> the new id of each user migrated to a MultiUser canister. Fanned out to the
     // LocalUserIndexes, including any added later
     #[serde(default)]
@@ -623,6 +627,7 @@ impl Data {
             multi_user_canisters: MultiUserCanisterMap::default(),
             call_push_enabled: false,
             daily_puzzle_canister_id: None,
+            discord_bot_id: None,
             migrated_user_ids: MigratedUserIds::default(),
             alchemy_api_key: None,
         };
@@ -739,6 +744,7 @@ impl Default for Data {
             multi_user_canisters: MultiUserCanisterMap::default(),
             call_push_enabled: false,
             daily_puzzle_canister_id: None,
+            discord_bot_id: None,
             migrated_user_ids: MigratedUserIds::default(),
             alchemy_api_key: None,
         }

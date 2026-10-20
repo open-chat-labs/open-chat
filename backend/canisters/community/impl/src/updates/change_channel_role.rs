@@ -21,6 +21,7 @@ fn c2c_bot_change_channel_role(args: c2c_bot_change_channel_role::Args) -> c2c_b
     let bot_caller = BotCaller {
         bot: args.bot_id,
         initiator: args.initiator.clone(),
+        discord: None,
     };
 
     change_channel_role_impl(args.into(), Some(Caller::BotV2(bot_caller)))

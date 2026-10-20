@@ -697,6 +697,14 @@ export const OptionUpdateU64 = /* @__PURE__ */ Type.Union(
     { default: "NoChange" },
 );
 
+export type DiscordUser = Static<typeof DiscordUser>;
+export const DiscordUser = /* @__PURE__ */ Type.Object({
+    id: Type.BigInt(),
+    username: Type.String(),
+    display_name: Type.Optional(Type.String()),
+    avatar: Type.Optional(Type.String()),
+});
+
 export type DailyPuzzleConfig = Static<typeof DailyPuzzleConfig>;
 export const DailyPuzzleConfig = /* @__PURE__ */ Type.Object({
     enabled: Type.Boolean(),
@@ -2162,6 +2170,11 @@ export const UserIndexPlatformOperatorsSuccessResult = /* @__PURE__ */ Type.Obje
 export type UserIndexPlatformOperatorsResponse = Static<typeof UserIndexPlatformOperatorsResponse>;
 export const UserIndexPlatformOperatorsResponse = /* @__PURE__ */ Type.Object({
     Success: UserIndexPlatformOperatorsSuccessResult,
+});
+
+export type UserIndexSetDiscordBotArgs = Static<typeof UserIndexSetDiscordBotArgs>;
+export const UserIndexSetDiscordBotArgs = /* @__PURE__ */ Type.Object({
+    bot_id: Type.Optional(UserId),
 });
 
 export type UserIndexPlatformModeratorsSuccessResult = Static<
@@ -5602,6 +5615,11 @@ export const StringParam = /* @__PURE__ */ Type.Object({
     multi_line: Type.Boolean(),
 });
 
+export type DiscordMessageContext = Static<typeof DiscordMessageContext>;
+export const DiscordMessageContext = /* @__PURE__ */ Type.Object({
+    author: DiscordUser,
+});
+
 export type MembersResult = Static<typeof MembersResult>;
 export const MembersResult = /* @__PURE__ */ Type.Object({
     members_map: Type.Record(MemberType, Type.Array(UserId)),
@@ -8880,6 +8898,7 @@ export type BotMessageContext = Static<typeof BotMessageContext>;
 export const BotMessageContext = /* @__PURE__ */ Type.Object({
     command: Type.Optional(BotCommand),
     finalised: Type.Boolean(),
+    discord: Type.Optional(DiscordMessageContext),
 });
 
 export type BotMessageContent = Static<typeof BotMessageContent>;
@@ -9114,6 +9133,7 @@ export const LocalUserIndexBotSendMessageArgs = /* @__PURE__ */ Type.Object({
     block_level_markdown: Type.Boolean(),
     finalised: Type.Boolean(),
     og_previews: Type.Optional(Type.Array(OgPreview)),
+    discord: Type.Optional(DiscordMessageContext),
 });
 
 export type ProposalsBotSubmitProposalArgs = Static<typeof ProposalsBotSubmitProposalArgs>;

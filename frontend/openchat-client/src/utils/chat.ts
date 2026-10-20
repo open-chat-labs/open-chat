@@ -62,6 +62,7 @@ import {
     defaultChatPermissions,
     defaultOptionalChatPermissions,
     defaultOptionalMessagePermissions,
+    discordAuthor,
     emptyChatMetrics,
     getContentAsFormattedText,
     getContentAsText,
@@ -547,6 +548,8 @@ export function sameUser(a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>)
     if (a.event.kind === "message" && b.event.kind === "message") {
         return (
             a.event.sender === b.event.sender &&
+            // The Discord bot sends every message it relays, so they're grouped by Discord author
+            discordAuthor(a.event.senderContext)?.id === discordAuthor(b.event.senderContext)?.id &&
             Math.abs(Number(b.timestamp - a.timestamp)) <
                 MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS
         );

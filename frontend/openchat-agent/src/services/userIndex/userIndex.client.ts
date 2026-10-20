@@ -86,6 +86,7 @@ import {
     UserIndexCallPushEnabledResponse,
     UserIndexSetAlchemyApiKeyArgs,
     UserIndexSetCallPushEnabledArgs,
+    UserIndexSetDiscordBotArgs,
     UserIndexRecordAuthorityReportFiledArgs,
     UserIndexSetModerationReferralConfigArgs,
     UserIndexProposeProtectedActionArgs,
@@ -449,6 +450,16 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             { api_key: apiKey },
             unitResult,
             UserIndexSetAlchemyApiKeyArgs,
+            UnitResult,
+        );
+    }
+
+    setDiscordBot(botId: string | undefined): Promise<Success | OCError> {
+        return this.update(
+            "set_discord_bot",
+            { bot_id: mapOptional(botId, principalStringToBytes) },
+            unitResult,
+            UserIndexSetDiscordBotArgs,
             UnitResult,
         );
     }

@@ -1,4 +1,6 @@
-use crate::{BotCommand, BotInitiator, ChatEventCategory, EventIndex, UserId, UserIdAndPrincipal, UserType};
+use crate::{
+    BotCommand, BotInitiator, ChatEventCategory, DiscordMessageContext, EventIndex, UserId, UserIdAndPrincipal, UserType,
+};
 use std::collections::HashSet;
 
 #[derive(Clone)]
@@ -15,6 +17,8 @@ pub enum Caller {
 pub struct BotCaller {
     pub bot: UserId,
     pub initiator: BotInitiator,
+    // Set when the Discord bot relays a message from Discord
+    pub discord: Option<Box<DiscordMessageContext>>,
 }
 
 impl Caller {

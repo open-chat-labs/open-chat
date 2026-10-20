@@ -19,6 +19,8 @@
         type ChatType,
         currentUserIdStore,
         currentUserStore,
+        discordAuthor,
+        discordAvatarUrl,
         type EnhancedReplyContext,
         localUpdates,
         type Message,
@@ -404,6 +406,7 @@
         (!inert || canRevealDeleted || canRevealBlocked) && !readonly && !ephemeral,
     );
     let canUndelete = $derived(msg.deleted && msg.content.kind !== "deleted_content");
+    let discordUser = $derived(discordAuthor(senderContext));
     let tips = $derived(msg.tips ? Object.entries(msg.tips) : []);
     let canBlockUser = $derived(canBlockUsers && !$selectedChatBlockedUsersStore.has(msg.sender));
     let edited = $derived(
@@ -619,7 +622,9 @@
                     <div class:first class="avatar">
                         <Avatar
                             onClick={openUserProfile}
-                            url={client.userAvatarUrl(sender)}
+                            url={discordUser !== undefined
+                                ? discordAvatarUrl(discordUser)
+                                : client.userAvatarUrl(sender)}
                             size={"sm"}></Avatar>
                     </div>
                 {/if}

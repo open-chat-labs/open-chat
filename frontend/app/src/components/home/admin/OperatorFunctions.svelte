@@ -59,6 +59,7 @@
     let tokenEnabled = $state(true);
     let openAiApiKey = $state("");
     let alchemyApiKey = $state("");
+    let discordBotId = $state("");
     let moderationCommunityId = $state("");
     let moderationChannelId = $state("");
     // sexual/minors always takes the CSAM auto-sanction path so is not offered here.
@@ -183,6 +184,32 @@
                 toastStore.showFailureToast(i18nKey("Failed to set the Alchemy API key"), err),
             )
             .finally(() => busy.delete(21));
+    }
+
+    // Sets the bot that bridges Discord servers on the user index, which passes it on to every
+    // LocalUserIndex. Only that bot can relay a message as its Discord author
+    function setDiscordBot(botId: string | undefined): Promise<void> {
+        busy.add(22);
+        return client
+            .setDiscordBot(botId)
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    toastStore.showSuccessToast(
+                        i18nKey(botId === undefined ? "Discord bot unset" : "Discord bot set"),
+                    );
+                    discordBotId = "";
+                } else {
+                    toastStore.showFailureToast(
+                        i18nKey(
+                            `Failed to set the Discord bot: ${resp.message ?? `code ${resp.code}`}`,
+                        ),
+                    );
+                }
+            })
+            .catch((err) =>
+                toastStore.showFailureToast(i18nKey("Failed to set the Discord bot"), err),
+            )
+            .finally(() => busy.delete(22));
     }
 
     onMount(() => {
@@ -1049,6 +1076,24 @@
                 loading={busy.has(21)}
                 disabled={busy.has(21)}
                 onClick={() => setAlchemyApiKey(undefined)}>Unset</Button>
+        </ButtonGroup>
+    </section>
+
+    <section class="operator-function">
+        <div class="title">Discord bot</div>
+        <Input bind:value={discordBotId} placeholder={i18nKey("Bot id")} />
+        <ButtonGroup align="fill">
+            <Button
+                tiny
+                loading={busy.has(22)}
+                disabled={busy.has(22) || discordBotId.trim() === ""}
+                onClick={() => setDiscordBot(discordBotId.trim())}>Set</Button>
+            <Button
+                tiny
+                secondary
+                loading={busy.has(22)}
+                disabled={busy.has(22)}
+                onClick={() => setDiscordBot(undefined)}>Unset</Button>
         </ButtonGroup>
     </section>
 

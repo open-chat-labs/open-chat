@@ -6088,6 +6088,10 @@ export class OpenChatAgent extends EventTarget {
     setAlchemyApiKey(apiKey: string | undefined): Promise<Success | OCError> {
         return this._userIndexClient.setAlchemyApiKey(apiKey);
     }
+
+    setDiscordBot(botId: string | undefined): Promise<Success | OCError> {
+        return this._userIndexClient.setDiscordBot(botId);
+    }
     dailyPuzzleRegenerateToday(gameId: string | undefined): Promise<Success | OCError> {
         return this._dailyPuzzleClient.get().regenerateToday(gameId);
     }

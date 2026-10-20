@@ -60,6 +60,7 @@ pub enum UserIndexEvent {
     SetMediaScanConfig(types::MediaScanConfig),
     SetCallPushEnabled(bool),
     SetDailyPuzzleCanisterId(CanisterId),
+    SetDiscordBot(Option<UserId>),
     UserIdMigrated(UserIdMigrated),
     SetAlchemyApiKey(SetAlchemyApiKey),
 }

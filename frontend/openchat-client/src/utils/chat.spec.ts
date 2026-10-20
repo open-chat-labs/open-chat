@@ -18,6 +18,7 @@ import {
     getMembersString,
     mergeChatMetrics,
     mergeUnconfirmedThreadsIntoSummary,
+    sameUser,
     sortByTimestampThenEventIndex,
 } from "./chat";
 
@@ -395,5 +396,37 @@ describe("sortByTimestampThenEventIndex", () => {
             ev(2, 20n),
             ev(3, 30n),
         ]);
+    });
+});
+
+describe("sameUser", () => {
+    const message = (sender: string, timestamp: bigint, discordId?: string) =>
+        ({
+            index: 0,
+            timestamp,
+            event: {
+                kind: "message",
+                sender,
+                senderContext:
+                    discordId === undefined
+                        ? undefined
+                        : {
+                              kind: "bot",
+                              finalised: true,
+                              discordAuthor: { id: discordId, username: `user${discordId}` },
+                          },
+            },
+        }) as unknown as EventWrapper<ChatEvent>;
+
+    test("groups messages from the same sender", () => {
+        expect(sameUser(message("a", 0n), message("a", 1000n))).toBe(true);
+        expect(sameUser(message("a", 0n), message("b", 1000n))).toBe(false);
+    });
+
+    // The Discord bot sends every message it relays from Discord
+    test("groups the Discord bot's messages by their Discord authors", () => {
+        expect(sameUser(message("bot", 0n, "1"), message("bot", 1000n, "1"))).toBe(true);
+        expect(sameUser(message("bot", 0n, "1"), message("bot", 1000n, "2"))).toBe(false);
+        expect(sameUser(message("bot", 0n), message("bot", 1000n, "1"))).toBe(false);
     });
 });

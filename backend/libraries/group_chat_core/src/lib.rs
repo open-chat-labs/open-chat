@@ -2543,6 +2543,7 @@ mod tests {
         let caller = Caller::BotV2(BotCaller {
             bot: bot_id(),
             initiator: BotInitiator::Autonomous,
+            discord: None,
         });
         let message_id: MessageId = 1u64.into();
 

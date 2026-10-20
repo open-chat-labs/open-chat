@@ -558,6 +558,7 @@ export type WorkerRequest = Cloneable<
     | CallPushEnabled
     | SetCallPushEnabled
     | SetAlchemyApiKey
+    | SetDiscordBot
     | SetPremiumItemCost
     | OneSecEnableForwarding
     | OneSecGetTransferFees
@@ -692,6 +693,11 @@ type SetCallPushEnabled = {
 type SetAlchemyApiKey = {
     kind: "setAlchemyApiKey";
     apiKey: string | undefined;
+};
+// Platform operators only
+type SetDiscordBot = {
+    kind: "setDiscordBot";
+    botId: string | undefined;
 };
 type DailyPuzzleRegenerateToday = {
     kind: "dailyPuzzleRegenerateToday";
@@ -2865,6 +2871,7 @@ export type WorkerResults = ResultsByKind<{
     callPushEnabled: boolean;
     setCallPushEnabled: Success | OCError;
     setAlchemyApiKey: Success | OCError;
+    setDiscordBot: Success | OCError;
     setPremiumItemCost: void;
     createAccountLinkingCode: AccountLinkingCode | undefined;
     getSignInProof: string | undefined;

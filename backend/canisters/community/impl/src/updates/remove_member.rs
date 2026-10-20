@@ -37,6 +37,7 @@ async fn c2c_bot_remove_user_impl(args: community_canister::c2c_bot_remove_user:
     let bot_caller = BotCaller {
         bot: args.bot_id,
         initiator: args.initiator.clone(),
+        discord: None,
     };
 
     if !read_state(|state| {

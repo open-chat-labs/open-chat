@@ -34,6 +34,7 @@ mod details_last_updated_tests;
 mod diamond_membership_tests;
 mod direct_transfer_tests;
 mod disappearing_message_tests;
+mod discord_bot_tests;
 mod edit_message_tests;
 mod env;
 mod escrow_tests;

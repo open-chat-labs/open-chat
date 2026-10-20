@@ -171,6 +171,12 @@ fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut Runti
                 UserIndexEvent::SetDailyPuzzleCanisterId(daily_puzzle_canister_id),
             );
         }
+        if let Some(discord_bot_id) = state.data.discord_bot_id {
+            state
+                .data
+                .local_user_index_event_sync_queue
+                .push(canister_id, UserIndexEvent::SetDiscordBot(Some(discord_bot_id)));
+        }
         // In case the key was changed while the LocalUserIndex was being installed with the previous one
         state.data.local_user_index_event_sync_queue.push(
             canister_id,

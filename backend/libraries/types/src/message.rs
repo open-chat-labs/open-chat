@@ -1,6 +1,6 @@
 use crate::{
-    Achievement, BotCaller, BotCommand, CanisterId, Chat, EventIndex, MessageContent, MessageId, MessageIndex, OgPreview,
-    Reaction, ThreadSummary, UserId, is_default,
+    Achievement, BotCaller, BotCommand, CanisterId, Chat, DiscordMessageContext, EventIndex, MessageContent, MessageId,
+    MessageIndex, OgPreview, Reaction, ThreadSummary, UserId, is_default,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -296,6 +296,9 @@ impl SenderContext {
 pub struct BotMessageContext {
     pub command: Option<BotCommand>,
     pub finalised: bool,
+    // Only set on the messages the Discord bot relays from Discord. Boxed to keep `SenderContext` small
+    #[serde(default)]
+    pub discord: Option<Box<DiscordMessageContext>>,
 }
 
 impl BotMessageContext {
@@ -303,6 +306,7 @@ impl BotMessageContext {
         BotMessageContext {
             command: caller.initiator.command().cloned(),
             finalised,
+            discord: caller.discord.clone(),
         }
     }
 }

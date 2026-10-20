@@ -4,7 +4,7 @@
     import Typing from "@shared_components/Typing.svelte";
     import { trackedEffect } from "@src/utils/effects.svelte";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
-    import { AvatarSize, type ChatIdentifier, chatIdentifiersEqual, chatListScopeStore, type ChatType, currentUserIdStore, currentUserStore, type EnhancedReplyContext, iconSize, localUpdates, type Member, type Message, type MessageReminderCreatedContent, mobileWidth, OpenChat, publish, routeForMessage, routeStore, screenWidth, ScreenWidth, selectedChatBlockedUsersStore, selectedChatMembersStore, selectedChatWebhooksStore, selectedCommunityMembersStore, type SelectedEmoji, selectedServerChatStore, type SenderContext, translationsStore, unconfirmedReadByThem, undeletingMessagesStore, type UserSummary } from "@client";
+    import { AvatarSize, type ChatIdentifier, chatIdentifiersEqual, chatListScopeStore, type ChatType, currentUserIdStore, currentUserStore, discordAuthor, discordAvatarUrl, discordDisplayName, type EnhancedReplyContext, iconSize, localUpdates, type Member, type Message, type MessageReminderCreatedContent, mobileWidth, OpenChat, publish, routeForMessage, routeStore, screenWidth, ScreenWidth, selectedChatBlockedUsersStore, selectedChatMembersStore, selectedChatWebhooksStore, selectedCommunityMembersStore, type SelectedEmoji, selectedServerChatStore, type SenderContext, translationsStore, unconfirmedReadByThem, undeletingMessagesStore, type UserSummary } from "@client";
     import { getContext, onDestroy, onMount, tick } from "svelte";
     import { _, locale } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
@@ -452,12 +452,15 @@
         (!inert || canRevealDeleted || canRevealBlocked) && !readonly && !ephemeral,
     );
     let canUndelete = $derived(msg.deleted && msg.content.kind !== "deleted_content");
+    let discordUser = $derived(discordAuthor(senderContext));
     let senderDisplayName = $derived(
-        client.getDisplayName(
-            msg.sender,
-            $selectedCommunityMembersStore,
-            $selectedChatWebhooksStore,
-        ),
+        discordUser !== undefined
+            ? discordDisplayName(discordUser)
+            : client.getDisplayName(
+                  msg.sender,
+                  $selectedCommunityMembersStore,
+                  $selectedChatWebhooksStore,
+              ),
     );
     // The details held can be for another chat, when a thread preview shows a message from a chat
     // other than the one selected
@@ -554,7 +557,9 @@
                                 <div class="avatar" onclick={openUserProfile}>
                                     <Avatar
                                         maxStreak={hasAchievedMaxStreak}
-                                        url={client.userAvatarUrl(sender)}
+                                        url={discordUser !== undefined
+                                            ? discordAvatarUrl(discordUser)
+                                            : client.userAvatarUrl(sender)}
                                         userId={msg.sender}
                                         size={$mobileWidth
                                             ? AvatarSize.Small
@@ -604,7 +609,8 @@
                                             {chitEarned} />
                                         <BotBadge
                                             bot={senderContext?.kind === "bot"}
-                                            webhook={senderContext?.kind === "webhook"} />
+                                            webhook={senderContext?.kind === "webhook"}
+                                            discord={discordUser !== undefined} />
                                         {#if sender !== undefined && multiUserChat}
                                             <WithRole
                                                 userId={sender.userId}

@@ -44,6 +44,7 @@ generate_msgpack_update_call!(set_moderation_referral_config);
 generate_update_call!(remove_platform_moderator);
 generate_msgpack_update_call!(set_alchemy_api_key);
 generate_msgpack_update_call!(set_call_push_enabled);
+generate_msgpack_update_call!(set_discord_bot);
 generate_msgpack_update_call!(set_display_name);
 generate_msgpack_update_call!(set_premium_item_cost);
 generate_msgpack_update_call!(set_username);

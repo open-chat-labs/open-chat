@@ -5,6 +5,7 @@ export * from "./blobs";
 export * from "./chat";
 export * from "./configKeys";
 export * from "./dailyGames";
+export * from "./discord";
 export * from "./emailSignInSessionStorage";
 export * from "./error";
 export * from "./i18n";

@@ -988,6 +988,17 @@ export type BotMessageContext = {
     kind: "bot";
     command?: BotContextCommand;
     finalised: boolean;
+    // Set on the messages the Discord bot relays from Discord
+    discordAuthor?: DiscordUser;
+};
+
+export type DiscordUser = {
+    // The user's Discord snowflake id
+    id: string;
+    username: string;
+    displayName?: string;
+    // The hash Discord builds the avatar's CDN url from
+    avatar?: string;
 };
 
 export type WebhookContext = {
