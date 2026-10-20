@@ -1,7 +1,7 @@
 use crate::bot_tests::register_bot;
 use crate::env::ENV;
-use crate::utils::tick_many;
-use crate::{TestEnv, client};
+use crate::utils::{tick_many, try_metrics};
+use crate::{CanisterIds, TestEnv, client};
 use candid::Principal;
 use local_user_index_canister::bot_send_message::Response as SendResponse;
 use oc_error_codes::OCErrorCode;
@@ -95,8 +95,8 @@ fn bridge_bots_relay_messages_as_their_authors() {
     ] {
         let response = set_bridge_bot(env, operator.principal, canister_ids.user_index, platform, Some(bot_id));
         assert!(matches!(response, UnitResult::Success), "{response:?}");
+        wait_for_bridge_bot_everywhere(env, canister_ids, platform, Some(bot_id));
     }
-    tick_many(env, 3);
 
     let discord_author = DiscordUser {
         id: 80351110224678912,
@@ -209,14 +209,43 @@ fn bridge_bots_relay_messages_as_their_authors() {
     for platform in [BridgePlatform::Discord, BridgePlatform::Telegram] {
         let response = set_bridge_bot(env, operator.principal, canister_ids.user_index, platform, None);
         assert!(matches!(response, UnitResult::Success), "{response:?}");
+        wait_for_bridge_bot_everywhere(env, canister_ids, platform, None);
     }
-    tick_many(env, 3);
 
     let response = send(env, discord_bot_principal, community_local_user_index, channel, from_discord);
     assert!(
         matches!(&response, SendResponse::Error(e) if e.matches_code(OCErrorCode::InitiatorNotAuthorized)),
         "{response:?}"
     );
+}
+
+// The UserIndex fans the bridge bots out to every LocalUserIndex, which can take a while under load
+fn wait_for_bridge_bot_everywhere(
+    env: &mut PocketIc,
+    canister_ids: &CanisterIds,
+    platform: BridgePlatform,
+    bot_id: Option<UserId>,
+) {
+    let expected = bot_id.map(|b| b.to_string());
+    let local_user_indexes: Vec<_> = canister_ids.subnets.iter().map(|s| s.local_user_index).collect();
+    let bridge_bot = |env: &PocketIc, canister_id: CanisterId| {
+        try_metrics(env, canister_id)?["bridge_bots"][platform.to_string()]
+            .as_str()
+            .map(|b| b.to_string())
+    };
+
+    for _ in 0..50 {
+        if local_user_indexes.iter().all(|c| bridge_bot(env, *c) == expected) {
+            return;
+        }
+        env.tick();
+    }
+
+    let lagging: Vec<_> = local_user_indexes
+        .into_iter()
+        .filter(|c| bridge_bot(env, *c) != expected)
+        .collect();
+    panic!("LocalUserIndexes without the {platform} bridge bot {expected:?}: {lagging:?}");
 }
 
 fn set_bridge_bot(

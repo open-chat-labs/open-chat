@@ -29,7 +29,7 @@ impl From<Args> for send_message_v2::Args {
             content: value.content.into(),
             sender_name: value.bot_name,
             // So that notifications of a message relayed from another platform show its author there
-            sender_display_name: value.bridged_from.map(|b| b.into_author_display_name()),
+            sender_display_name: value.bridged_from.map(|b| b.into_notification_display_name()),
             replies_to: value.replies_to.map(|r| GroupReplyContext { event_index: r }),
             mentioned: vec![],
             forwarding: false,

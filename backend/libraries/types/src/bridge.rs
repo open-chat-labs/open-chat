@@ -83,6 +83,13 @@ impl BridgedFrom {
         }
     }
 
+    // The author's name followed by the platform, eg. "Nelly (Discord)". Notifications don't show
+    // the platform's badge, so this stops an author passing as an OpenChat user there
+    pub fn into_notification_display_name(self) -> String {
+        let platform = self.platform();
+        format!("{} ({platform})", self.into_author_display_name())
+    }
+
     pub fn validate(&self) -> Result<(), String> {
         match self {
             BridgedFrom::Discord(d) => d.author.validate(),
@@ -277,5 +284,6 @@ mod tests {
             BridgedFrom::Telegram(TelegramMessageContext { author: telegram_user() }).into_author_display_name(),
             "Nelly Smith"
         );
+        assert_eq!(discord(Some("Nelly")).into_notification_display_name(), "Nelly (Discord)");
     }
 }

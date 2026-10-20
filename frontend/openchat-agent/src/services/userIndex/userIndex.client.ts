@@ -88,6 +88,7 @@ import {
     UserIndexSetAlchemyApiKeyArgs,
     UserIndexSetBridgeBotArgs,
     UserIndexSetCallPushEnabledArgs,
+    BridgePlatform as ApiBridgePlatform,
     UserIndexRecordAuthorityReportFiledArgs,
     UserIndexSetModerationReferralConfigArgs,
     UserIndexProposeProtectedActionArgs,
@@ -147,6 +148,11 @@ import {
     usersApiResponse,
     userSearchResponse,
 } from "./mappers";
+
+const API_BRIDGE_PLATFORMS: Record<BridgePlatform, ApiBridgePlatform> = {
+    discord: "Discord",
+    telegram: "Telegram",
+};
 
 export class UserIndexClient extends SingleCanisterMsgpackAgent {
     constructor(
@@ -459,7 +465,7 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
         return this.update(
             "set_bridge_bot",
             {
-                platform: platform === "discord" ? "Discord" : "Telegram",
+                platform: API_BRIDGE_PLATFORMS[platform],
                 bot_id: mapOptional(botId, principalStringToBytes),
             },
             unitResult,

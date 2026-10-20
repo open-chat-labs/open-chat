@@ -1084,7 +1084,7 @@
         </ButtonGroup>
     </section>
 
-    {#each ["discord", "telegram"] as const as platform}
+    {#each Object.keys(BRIDGE_PLATFORM_NAMES) as BridgePlatform[] as platform}
         <section class="operator-function">
             <div class="title">{BRIDGE_PLATFORM_NAMES[platform]} bridge bot</div>
             <Input bind:value={bridgeBotIds[platform]} placeholder={i18nKey("Bot id")} />
