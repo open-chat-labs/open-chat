@@ -164,6 +164,8 @@ impl<S: Clone, K: Clone + Ord, I> GroupedTimerJobQueueInner<S, K, I> {
             return false;
         }
         if retry_delay.is_some_and(|delay| delay > 0) {
+            // Items pushed for it while the batch was being processed may have queued it again
+            self.queue.retain(|k| k != key);
             true
         } else {
             self.queue.push_back(key.clone());
@@ -182,10 +184,11 @@ impl<S: Clone, K: Clone + Ord, I> GroupedTimerJobQueueInner<S, K, I> {
     // Re-adds the keys which were waiting out a retry delay, since their timers don't survive an
     // upgrade
     fn end_all_waits(&mut self) {
+        let queued: BTreeSet<_> = self.queue.iter().collect();
         let waiting: Vec<_> = self
             .items_map
             .keys()
-            .filter(|key| !self.in_progress.contains(*key) && !self.queue.contains(*key))
+            .filter(|key| !self.in_progress.contains(*key) && !queued.contains(key))
             .cloned()
             .collect();
         self.queue.extend(waiting);
@@ -308,11 +311,18 @@ where
         self.set_timer_if_required(0);
     }
 
+    // Holds only a weak reference to the queue, so that a queue which is dropped meanwhile isn't
+    // processed
     fn end_wait_after(&self, key: T::Key, delay: Milliseconds) {
-        let clone = self.clone();
+        let weak = Rc::downgrade(&self.inner);
         ic_cdk_timers::set_timer(Duration::from_millis(delay), async move {
-            clone.within_lock(|i| i.end_wait(key));
-            clone.set_timer_if_required(0);
+            let Some(inner) = weak.upgrade() else { return };
+            let queue = GroupedTimerJobQueue::<T> {
+                inner,
+                phantom: PhantomData,
+            };
+            queue.within_lock(|i| i.end_wait(key));
+            queue.set_timer_if_required(0);
         });
     }
 }
@@ -451,6 +461,18 @@ mod tests {
         inner.end_wait(KEY);
         inner.end_wait(KEY);
         assert_eq!(inner.queue, VecDeque::from([OTHER_KEY, KEY]));
+    }
+
+    // As when every slot was busy when items were pushed for the key, so `flush` left it queued
+    #[test]
+    fn a_batch_retried_after_a_delay_waits_even_if_queued_again_while_in_progress() {
+        let mut inner = queue_with_batch_in_progress(vec![3]);
+        inner.queue.push_back(KEY);
+
+        assert!(inner.finish_batch(&KEY, Some(vec![1, 2]), Some(300_000)));
+
+        assert_eq!(items(&inner, KEY), vec![1, 2, 3]);
+        assert!(inner.queue.is_empty());
     }
 
     #[test]
