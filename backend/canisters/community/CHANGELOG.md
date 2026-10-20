@@ -29,6 +29,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Remove the code which read event data from the heap now that it has all moved into stable memory ([#9968](https://github.com/open-chat-labs/open-chat/pull/9968))
 - Remove the jobs which replaced users' old ids, and the mapping of old ids to new, now that every id held is the latest ([#9970](https://github.com/open-chat-labs/open-chat/pull/9970))
 
+### Fixed
+
+- Remove a member found, on being sent an event, to have deleted their account, and stop retrying their events ([#10063](https://github.com/open-chat-labs/open-chat/pull/10063))
+
 ## [[2.0.2142](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2142-community)] - 2026-10-14
 
 ### Changed

@@ -190,10 +190,7 @@ fn process_event<F: FnOnce() -> TimestampMillis>(
             state.data.moderation_flags = Timestamped::new(ev.flags, **now);
         }
         LocalIndexEvent::UserDeleted(user_id) => {
-            for channel in state.data.channels.iter_mut() {
-                channel.chat.members.remove(user_id, **now);
-            }
-            state.data.members.remove(user_id, None, **now);
+            state.data.remove_deleted_user(user_id, **now);
         }
         LocalIndexEvent::BotRemoved(bot_id) => {
             state.data.uninstall_bot(bot_id, **now);

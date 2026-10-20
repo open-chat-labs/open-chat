@@ -976,6 +976,24 @@ impl Data {
         false
     }
 
+    // Removes a user who has deleted their account, returning whether they were a member
+    pub fn remove_deleted_user(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
+        let removed = self.chat.members.remove(user_id, now).is_some();
+        self.remove_user(user_id, None);
+        removed
+    }
+
+    // Removes a user found to have deleted their account, unless they're a bot, returning whether they
+    // were a member
+    // Nor while the group is being imported into a community, since its members are being exported
+    // then; the community removes them instead.
+    pub fn remove_deleted_user_unless_bot(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
+        if self.chat.members.bots().contains_key(&user_id) || self.is_being_imported_into_community() {
+            return false;
+        }
+        self.remove_deleted_user(user_id, now)
+    }
+
     pub fn remove_user(&mut self, user_id: UserId, principal: Option<Principal>) {
         if let Some(principal) = principal {
             let user_id_removed = self.principal_to_user_id_map.remove(&principal).map(|v| v.into_value());
@@ -1320,4 +1338,45 @@ pub enum CallerResult {
 
 fn new_user_events_queue() -> GroupedTimerJobQueue<UserEventBatch> {
     GroupedTimerJobQueue::new(5, true)
+}
+
+#[cfg(test)]
+mod deleted_user_tests {
+    use super::*;
+
+    fn canister_id(i: u8) -> CanisterId {
+        CanisterId::from_slice(&[0, 0, 0, 0, 0, 0, 0, i, 1, 1])
+    }
+
+    fn add_member(data: &mut Data, user_id: UserId, user_type: UserType) {
+        data.chat.members.add(
+            user_id,
+            None,
+            0,
+            EventIndex::default(),
+            MessageIndex::default(),
+            false,
+            user_type,
+        );
+    }
+
+    #[test]
+    fn a_deleted_user_is_removed_unless_they_are_a_bot() {
+        let owner = UserId::new_indexed(canister_id(1), 1);
+        let mut data = Data::new_for_tests(owner, Principal::from_slice(&[1]), String::new());
+        // A user's old id, which was their User canister's id, and a bot's
+        let deleted: UserId = canister_id(102).into();
+        let bot: UserId = canister_id(50).into();
+        add_member(&mut data, deleted, UserType::User);
+        add_member(&mut data, bot, UserType::Bot);
+
+        assert!(data.remove_deleted_user_unless_bot(deleted, 1));
+        assert!(data.chat.members.get(&deleted).is_none());
+        // No longer a member, so there's nothing to remove
+        assert!(!data.remove_deleted_user_unless_bot(deleted, 2));
+
+        assert!(!data.remove_deleted_user_unless_bot(bot, 3));
+        assert!(data.chat.members.get(&bot).is_some());
+        assert!(data.chat.members.get(&owner).is_some());
+    }
 }

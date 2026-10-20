@@ -3,6 +3,10 @@ use canister_client::generate_c2c_call;
 use types::{C2CError, CanisterId, UserDetails, UserId};
 use user_index_canister::*;
 
+mod event_recipient;
+
+pub use event_recipient::*;
+
 // Queries
 generate_c2c_call!(c2c_lookup_user);
 generate_c2c_call!(migrated_user_ids);
