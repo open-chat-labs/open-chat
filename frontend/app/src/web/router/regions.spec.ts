@@ -48,7 +48,8 @@ describe("what a route shows", () => {
         expect(regionsFor(groupChat, false, true)).toMatchObject({
             left: { kind: "threads", scope: groupChat.scope },
             middle: { kind: "conversation", route: groupChat },
-            narrowView: "left",
+            // a narrow screen shows the conversation (a thread opened from the list)
+            narrowView: "middle",
         });
         // only over a chat list
         expect(

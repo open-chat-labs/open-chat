@@ -367,6 +367,23 @@ describe("the web UI's wallet views", () => {
     });
 });
 
+describe("the thread list (?threads)", () => {
+    it("gets its own entry when opened, so Back closes it", () => {
+        expect(navigationMode(`${P.group}?threads`, chat, "overlay")).toBe("push");
+        expect(navigationMode(P.group, chat, "dismiss")).toBe("pop");
+    });
+
+    it("is replaced, not stacked, when the list goes to its first chat", () => {
+        expect(navigationMode(`${P.group}?threads`, chats, "auto")).toBe("replace");
+    });
+
+    it("doesn't change how a thread opened from it is stacked", () => {
+        expect(navigationMode(`${P.groupMsgOpen}&threads`, chat)).toBe(
+            navigationMode(P.groupMsgOpen, chat),
+        );
+    });
+});
+
 describe("overlays linked by a query param", () => {
     it("push when opened and pop when dismissed, wherever they open", () => {
         expect(navigationMode("/chats?profile", chats, "overlay")).toBe("push");

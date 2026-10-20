@@ -34,6 +34,8 @@ Agreed on 2026-10-16; the tables below follow them.
      `threadsByChatStore` is built from that scope's chats. **Opening a thread is unchanged**: it
      stays the chat's own `/…/:rootIndex?open=true` (and `/:rootIndex/:threadIndex`), which
      notifications and shared links already use, with `?threads` kept so the list stays.
+     The paths it had before (`/chats/threads`, `/favourite/threads`, `/community/:cid/threads`)
+     redirect to `?threads` on their list's path.
    - **Route kinds:** mobile's `wallet_route` (gaining `{ view, ledger? }`),
      `notifications_route` and `profile_summary_route`.
    - **Registration order:** these paths have to be registered ahead of the legacy

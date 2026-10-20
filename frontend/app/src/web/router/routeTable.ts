@@ -20,6 +20,17 @@ export type RouteEntry = {
     parse: (ctx: PageJS.Context) => RouteParams;
 };
 
+// The thread lists' paths from before they were a view (?threads), sent on to it. They come
+// ahead of the routes, as the legacy /:chatId/... route would take /chats/threads as a group.
+export const redirectTable: { path: string; to: (params: Record<string, string>) => string }[] = [
+    { path: "/chats/threads", to: () => "/chats?threads" },
+    { path: "/favourite/threads", to: () => "/favourite?threads" },
+    {
+        path: "/community/:communityId/threads",
+        to: ({ communityId }) => `/community/${encodeURIComponent(communityId)}?threads`,
+    },
+];
+
 const page = (kind: Extract<RouteParams, { scope: { kind: "none" } }>["kind"]) => () =>
     ({ kind, scope: { kind: "none" } }) as RouteParams;
 

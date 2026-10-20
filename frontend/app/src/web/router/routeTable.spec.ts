@@ -1,7 +1,7 @@
 import type { RouteParams } from "@client";
 import page from "page";
 import { pathToRouteKind } from "@src/utils/navigation";
-import { routeTable } from "./routeTable";
+import { redirectTable, routeTable } from "./routeTable";
 
 // What Route needs of its page.js instance, which page.js doesn't expose: decoding the URL's parts
 // as page.js does by default
@@ -29,6 +29,22 @@ function resolve(url: string): RouteParams {
 }
 
 const kind = (url: string) => resolve(url).kind;
+
+// Where a redirect sends a path, if one does
+function redirect(pathname: string): string | undefined {
+    for (const entry of redirectTable) {
+        const params: Record<string, string> = {};
+        const Route = page.Route as unknown as new (
+            path: string,
+            options: undefined,
+            page: PageJS.Static,
+        ) => PageJS.Route;
+        if (new Route(entry.path, undefined, decoder).match(pathname, params)) {
+            return entry.to(params);
+        }
+    }
+    return undefined;
+}
 
 describe("the web UI's route table", () => {
     test("keeps every path of the existing desktop router", () => {
@@ -176,5 +192,12 @@ describe("the web UI's route table", () => {
             }
             expect(pathToRouteKind(url), path).toBe(kind);
         }
+    });
+
+    test("sends the thread lists' old paths on to ?threads", () => {
+        expect(redirect("/chats/threads")).toBe("/chats?threads");
+        expect(redirect("/favourite/threads")).toBe("/favourite?threads");
+        expect(redirect("/community/c1/threads")).toBe("/community/c1?threads");
+        expect(redirect("/chats")).toBeUndefined();
     });
 });

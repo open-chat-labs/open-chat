@@ -43,8 +43,8 @@
     import page from "page";
     import { getContext, onMount, untrack, type Snippet } from "svelte";
     import { currentShellLayout } from "../shell/viewport.svelte";
-    import { firstChatRoute } from "./firstChat";
-    import { routeTable } from "./routeTable";
+    import { firstChatRoute, firstChatUrl } from "./firstChat";
+    import { redirectTable, routeTable } from "./routeTable";
     import { leftToBrowser } from "./links";
 
     let { children }: { children: Snippet } = $props();
@@ -78,6 +78,9 @@
         };
         document.addEventListener("click", onLinkClick, { capture: true });
 
+        for (const { path, to } of redirectTable) {
+            page(path, (ctx) => page.redirect(to(ctx.params)));
+        }
         for (const { path, parse } of routeTable) {
             // not found isn't a page view, as in the existing router
             const tracking = path === "*" ? [] : [track];
@@ -188,7 +191,7 @@
 
     function selectFirstChat() {
         if (firstChat !== undefined) {
-            navigate(firstChat + location.search, "auto");
+            navigate(firstChatUrl(firstChat, location.search), "auto");
         }
     }
 

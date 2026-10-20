@@ -46,9 +46,13 @@ const MARKETING_KINDS: RouteParams["kind"][] = [
  */
 export function regionsFor(route: RouteParams, signedOut: boolean, threads = false): Regions {
     const regions = routeRegions(route, signedOut);
-    return threads && regions.area === "app" && regions.left?.kind === "chats"
-        ? { ...regions, left: { kind: "threads", scope: regions.left.scope }, narrowView: "left" }
-        : regions;
+    if (!threads || regions.area !== "app" || regions.left?.kind !== "chats") return regions;
+    // a narrow screen still shows a conversation (a thread opened from the list) over the list
+    return {
+        ...regions,
+        left: { kind: "threads", scope: regions.left.scope },
+        narrowView: regions.middle.kind === "empty" ? "left" : regions.narrowView,
+    };
 }
 
 function routeRegions(route: RouteParams, signedOut: boolean): Regions {

@@ -1,5 +1,5 @@
 import type { ChatSummary } from "@client";
-import { firstChatRoute } from "./firstChat";
+import { firstChatRoute, firstChatUrl } from "./firstChat";
 
 const chat = (userId: string, archived = false) =>
     ({
@@ -20,5 +20,15 @@ describe("where a chat list with nothing selected goes", () => {
         expect(firstChatRoute("chats", [chat("b")], true)).toBeUndefined();
         expect(firstChatRoute("chats", [chat("a", true)], false)).toBeUndefined();
         expect(firstChatRoute("chats", [], false)).toBeUndefined();
+    });
+});
+
+describe("going to the first chat", () => {
+    test("keeps the list's thread list, or an overlay, open over it", () => {
+        expect(firstChatUrl("/chats/group/g1", "?threads")).toBe("/chats/group/g1?threads");
+        expect(firstChatUrl("/chats/group/g1", "?profile&threads")).toBe(
+            "/chats/group/g1?profile&threads",
+        );
+        expect(firstChatUrl("/chats/group/g1", "")).toBe("/chats/group/g1");
     });
 });
