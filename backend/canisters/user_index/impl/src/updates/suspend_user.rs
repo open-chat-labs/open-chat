@@ -1,6 +1,6 @@
 use crate::guards::caller_is_platform_moderator;
 use crate::model::moderation;
-use crate::timer_job_types::{SetUserSuspendedInCommunity, SetUserSuspendedInGroup, TimerJob, UnsuspendUser};
+use crate::timer_job_types::{TimerJob, UnsuspendUser};
 use crate::{RuntimeState, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -116,28 +116,22 @@ fn commit(
     }
 
     for group in groups {
-        state.data.timer_jobs.enqueue_job(
-            TimerJob::SetUserSuspendedInGroup(SetUserSuspendedInGroup {
+        state.push_event_to_group(
+            group,
+            group_canister::UserIndexEvent::SetUserSuspended(group_canister::SetUserSuspended {
                 user_id,
-                group,
                 suspended: true,
-                attempt: 0,
             }),
-            now,
-            now,
         );
     }
 
     for community in communities {
-        state.data.timer_jobs.enqueue_job(
-            TimerJob::SetUserSuspendedInCommunity(SetUserSuspendedInCommunity {
+        state.push_event_to_community(
+            community,
+            community_canister::UserIndexEvent::SetUserSuspended(community_canister::SetUserSuspended {
                 user_id,
-                community,
                 suspended: true,
-                attempt: 0,
             }),
-            now,
-            now,
         );
     }
 

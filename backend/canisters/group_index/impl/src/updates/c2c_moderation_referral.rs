@@ -23,6 +23,8 @@ fn c2c_moderation_referral_impl(args: Args, state: &RuntimeState) -> Response {
         Chat::Group(caller.into())
     };
 
+    // Only called by groups and communities on versions from before they sent these to their
+    // LocalUserIndex instead, so removed (with the handler) once every one has been upgraded
     state.data.fire_and_forget_handler.send(
         state.data.user_index_canister_id,
         "c2c_moderation_referral_msgpack".to_string(),

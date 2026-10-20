@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Send OpenChat bot messages to the UserIndex as events ([#10033](https://github.com/open-chat-labs/open-chat/pull/10033))
+
 ### Removed
 
 - Remove the one-off which rewrote migrated users' old ids to their latest, now that it has run ([#10002](https://github.com/open-chat-labs/open-chat/pull/10002))

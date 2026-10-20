@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Look up a member's previous user ids in the LocalUserIndex when checking their gate again ([#9970](https://github.com/open-chat-labs/open-chat/pull/9970))
 - Await work inside timers rather than spawning a task from them ([#9971](https://github.com/open-chat-labs/open-chat/pull/9971))
 - Stop tracking the async work in progress, since nothing reads it any more ([#9972](https://github.com/open-chat-labs/open-chat/pull/9972))
+- Send activity, completed group imports, CSAM detections, moderation referrals and upgrade requests to the LocalUserIndex as events ([#10033](https://github.com/open-chat-labs/open-chat/pull/10033))
 
 ### Removed
 

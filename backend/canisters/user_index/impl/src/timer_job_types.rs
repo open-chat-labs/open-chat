@@ -22,6 +22,8 @@ use types::{
 pub enum TimerJob {
     RecurringDiamondMembershipPayment(RecurringDiamondMembershipPayment),
     SetUserSuspended(SetUserSuspended),
+    // No longer queued (suspensions reach the chats as events), but still run for the jobs queued
+    // before that changed. Removed after the next release.
     SetUserSuspendedInGroup(SetUserSuspendedInGroup),
     SetUserSuspendedInCommunity(SetUserSuspendedInCommunity),
     UnsuspendUser(UnsuspendUser),
