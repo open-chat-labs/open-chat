@@ -44,6 +44,17 @@ impl GlobalUserMap {
         }
     }
 
+    // Leaves users this LocalUserIndex doesn't know of untouched
+    pub fn update_principal(&mut self, user_id: UserId, principal: Principal) {
+        if let Some(previous) = self.user_id_to_principal.get_mut(&user_id)
+            && *previous != principal
+        {
+            self.principal_to_user_id.remove_if(previous, |u| *u == user_id);
+            self.principal_to_user_id.insert(principal, user_id);
+            *previous = principal;
+        }
+    }
+
     pub fn add_multi_user_canister(&mut self, canister_id: CanisterId) {
         self.multi_user_canisters.insert(canister_id);
     }

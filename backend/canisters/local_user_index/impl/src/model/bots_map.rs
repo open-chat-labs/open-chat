@@ -75,14 +75,32 @@ impl BotsMap {
         });
     }
 
-    pub fn update(&mut self, bot_id: UserId, owner_id: UserId, endpoint: String, definition: BotDefinition) {
-        self.bots.entry(bot_id).and_modify(|bot| {
-            bot.owner_id = owner_id;
-            bot.commands = definition.commands;
-            bot.endpoint = endpoint;
-            bot.autonomous_config = definition.autonomous_config;
-            bot.default_subscriptions = definition.default_subscriptions;
-        });
+    pub fn update(
+        &mut self,
+        bot_id: UserId,
+        owner_id: UserId,
+        endpoint: String,
+        definition: BotDefinition,
+        principal: Option<Principal>,
+    ) {
+        let Some(bot) = self.bots.get_mut(&bot_id) else {
+            return;
+        };
+
+        bot.owner_id = owner_id;
+        bot.commands = definition.commands;
+        bot.endpoint = endpoint;
+        bot.autonomous_config = definition.autonomous_config;
+        bot.default_subscriptions = definition.default_subscriptions;
+        bot.data_encoding = definition.data_encoding.unwrap_or_default();
+
+        if let Some(principal) = principal
+            && principal != bot.principal
+        {
+            self.principal_to_user_id.remove(&bot.principal);
+            self.principal_to_user_id.insert(principal, bot_id);
+            bot.principal = principal;
+        }
     }
 
     pub fn remove(&mut self, bot_id: &UserId) -> Option<Bot> {
