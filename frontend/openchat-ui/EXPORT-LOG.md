@@ -79,3 +79,7 @@
 - `ChatBubble` takes a `body` snippet, shown in place of `text`: the host renders the text itself (the app's markdown, mentions, links, custom emoji). `text` still sizes emoji-only messages. The body's root, and a paragraph that closes it, flow inline so the time stamp stays on the last line (a body ending in a list keeps the stamp's measured room at the end of its last item instead; one ending in a code block still puts it on a line of its own, as the block's text ends in a line break).
 - `MessageGroup` takes `avatarSpace` (with `showAvatar` off, keeps the avatar's space) and `endsRun` (off: the last message isn't the end of the sender's run, so it doesn't get the last-in-group shape), for a host that renders a sender's run as several groups (the app's list renders one message per row).
 - Not in the design export: to go back to it (the app's `GAPS.md` lists them).
+
+## 2026-10-20 — the rail's chats label, by hand
+- New string `ui.navRail.dmsAndGroupChats` ("DMs & Group Chats"), the label of the app's rail entry for DMs and group chats. The app now passes labels for its rail items (DMs & Group Chats, Notifications, Favourites, Wallet, in that order).
+- Not in the design export: to go back to it.

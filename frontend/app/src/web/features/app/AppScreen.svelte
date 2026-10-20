@@ -4,6 +4,7 @@
     import {
         anonUserStore,
         currentUserStore,
+        favouritesStore,
         OpenChat,
         querystringStore,
         routeForScope,
@@ -17,7 +18,7 @@
     import { navigate } from "@src/utils/navigation";
     import { removeQueryStringParam, withQueryStringFlag } from "@src/utils/urls";
     import { getContext } from "svelte";
-    import { RAIL_ITEMS, railSelectionFor, type Regions } from "../../router/regions";
+    import { railItems, railSelectionFor, type Regions } from "../../router/regions";
     import { RightColumnState } from "../../shell/rightColumn.svelte";
     import Shell from "../../shell/Shell.svelte";
     import { currentShellLayout } from "../../shell/viewport.svelte";
@@ -44,7 +45,9 @@
         const index = pins.findIndex((p) => p.id === selection.communityId);
         return index < 0 ? null : index;
     });
-    const items = RAIL_ITEMS.map(({ icon }) => ({ icon }));
+    const railShown = $derived(railItems($favouritesStore.size > 0, selection));
+    const items = $derived(railShown.map(({ icon, label }) => ({ icon, label })));
+    const activeItem = $derived(railShown.findIndex((item) => item.id === selection.item));
 
     // Dialogs people link to are query params over whatever page is open (ROUTES.md)
     const profileOpen = $derived($querystringStore.has("profile"));
@@ -94,7 +97,7 @@
         <NavRail
             {items}
             {pins}
-            activeIndex={selection.item}
+            activeIndex={activeItem}
             {activePin}
             exploreActive={$routeStore.kind === "communities_route" ||
                 $routeStore.kind === "welcome_route"}
@@ -102,7 +105,7 @@
             homeHref="/"
             profileLabel={$currentUserStore.displayName ?? $currentUserStore.username}
             profileHandle={`@${$currentUserStore.username}`}
-            onSelect={(i) => navigate(RAIL_ITEMS[i].path)}
+            onSelect={(i) => navigate(railShown[i].path)}
             onSelectPin={(id) => navigate(`/community/${id}`)}
             onExplore={() => navigate("/communities")}
             onProfile={() => navigate(withQueryStringFlag("profile"), "overlay")}

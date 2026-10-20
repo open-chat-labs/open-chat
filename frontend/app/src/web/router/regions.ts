@@ -101,36 +101,54 @@ export function regionsFor(route: RouteParams, signedOut: boolean): Regions {
     }
 }
 
-// The rail's destinations, in the order NavRail shows them
+// The rail's destinations, in the order NavRail shows them, with their labels (resource keys)
 export const RAIL_ITEMS = [
-    { icon: "messages", path: "/chats" },
-    { icon: "heart", path: "/favourite" },
-    { icon: "bell", path: "/notifications" },
-    { icon: "wallet", path: "/wallet" },
+    { id: "chats", icon: "messages", label: "ui.navRail.dmsAndGroupChats", path: "/chats" },
+    {
+        id: "notifications",
+        icon: "bell",
+        label: "ui.navRail.notifications",
+        path: "/notifications",
+    },
+    { id: "favourites", icon: "heart", label: "ui.navRail.favourites", path: "/favourite" },
+    { id: "wallet", icon: "wallet", label: "ui.navRail.wallet", path: "/wallet" },
 ] as const;
 
-export type RailSelection =
-    | { item: number; communityId?: undefined }
-    | { item: -1; communityId?: string };
+export type RailItem = (typeof RAIL_ITEMS)[number];
+export type RailItemId = RailItem["id"];
 
-// Which rail destination a route belongs to: one of RAIL_ITEMS, or a community pin
+export type RailSelection =
+    | { item: RailItemId; communityId?: undefined }
+    | { item?: undefined; communityId?: string };
+
+/**
+ * The rail's destinations to show: Favourites only once something is a favourite (as the old
+ * UI's left nav), or while it's the page open.
+ */
+export function railItems(hasFavourites: boolean, selection: RailSelection): RailItem[] {
+    return RAIL_ITEMS.filter(
+        (item) => item.id !== "favourites" || hasFavourites || selection.item === "favourites",
+    );
+}
+
+// Which rail destination a route belongs to: one of RAIL_ITEMS, a community pin, or neither
 export function railSelectionFor(route: RouteParams): RailSelection {
     switch (route.kind) {
         case "notifications_route":
-            return { item: 2 };
+            return { item: "notifications" };
         case "wallet_route":
-            return { item: 3 };
+            return { item: "wallet" };
         case "communities_route":
         case "welcome_route":
         case "admin_route":
-            return { item: -1 };
+            return {};
     }
     switch (route.scope.kind) {
         case "favourite":
-            return { item: 1 };
+            return { item: "favourites" };
         case "community":
-            return { item: -1, communityId: route.scope.id.communityId };
+            return { communityId: route.scope.id.communityId };
         default:
-            return { item: 0 };
+            return { item: "chats" };
     }
 }
