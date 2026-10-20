@@ -101,8 +101,8 @@ the thread, which comes from the URL.
 The **narrow** column is the layout below 768px: one column at a time, with Back going to the
 left column. The app tree is chosen by viewport width at page load (`mobileWidth`, any device),
 and a v3 build still falls back to v1 below 768px until the narrow pass (brief step 11). The shell
-has a basic single column, but its 900px minimum width (Fix Brief - App Shell Layout) keeps it from
-showing: a desktop window shrunk after load scrolls sideways instead. Once the narrow design lands, `selectLayout` stops falling back and every browser width gets
+has a basic single column, but its minimum width (919px, from Fix Brief - App Shell Layout) keeps
+it from showing: a desktop window shrunk after load scrolls the shell sideways instead. Once the narrow design lands, `selectLayout` stops falling back and every browser width gets
 `src/web`.
 
 ## In-app routes

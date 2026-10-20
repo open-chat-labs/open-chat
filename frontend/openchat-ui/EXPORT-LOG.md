@@ -69,3 +69,7 @@
 - FAQ answers take an image paragraph (`![alt](src)`) as posts do. FAQ search leaves image paragraphs out (`searchText`).
 - Deep links scroll with `behavior: 'instant'`.
 
+
+## 2026-10-20 — the floating rail's width, by hand
+- Tokens: `--rail-floating: 320px`, the expanded nav rail's width while it floats over the app's island (below 1876px, Fix Brief - App Shell Layout). Pushing the layout, it is `--rail-expanded` (283px) as before. The app's shell sets `--rail-expanded` to it while the rail floats, as NavRail reads `--rail-expanded`.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

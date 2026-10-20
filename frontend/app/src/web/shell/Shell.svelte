@@ -9,7 +9,7 @@
     import { untrack, type Snippet } from "svelte";
     import { ColumnMotion } from "./columnMotion.svelte";
     import { narrowColumn } from "./layout";
-    import { currentShellLayout, setShellWidth } from "./viewport.svelte";
+    import { clearShellWidth, currentShellLayout, setShellWidth } from "./viewport.svelte";
 
     type Props = {
         rail: Snippet;
@@ -46,7 +46,10 @@
             setShellWidth(entry.contentBoxSize?.[0]?.inlineSize ?? entry.contentRect.width),
         );
         observer.observe(shell);
-        return () => observer.disconnect();
+        return () => {
+            observer.disconnect();
+            clearShellWidth();
+        };
     });
     const narrow = $derived(narrowColumn(currentShellLayout(), left !== undefined, narrowView));
 
@@ -74,77 +77,80 @@
     }
 </script>
 
-<div class="shell" bind:this={shell} data-rail={railMode} data-narrow={narrow}>
-    <!-- below the pushRail breakpoint the slot keeps the collapsed rail's width, so the expanded
+<!-- the window: it scrolls the shell when the window is smaller than the shell's minimum, so the
+     page itself never does -->
+<div class="frame">
+    <div class="shell" bind:this={shell} data-rail={railMode} data-narrow={narrow}>
+        <!-- below the pushRail breakpoint the slot keeps the collapsed rail's width, so the expanded
          rail floats over the island (NavRail's own contract). The rail scrolls on short windows. -->
-    <div class="rail" data-rail-slot>
-        <div class="rail-scroll">
-            <!-- a rail expanded while it pushed the columns would cover them once it floats, so it
+        <div class="rail" data-rail-slot>
+            <div class="rail-scroll">
+                <!-- a rail expanded while it pushed the columns would cover them once it floats, so it
                  starts collapsed again whenever it switches between the two -->
-            {#key railMode}
-                {@render rail()}
-            {/key}
+                {#key railMode}
+                    {@render rail()}
+                {/key}
+            </div>
         </div>
-    </div>
-    <div class="shell-row">
-        <!-- the left column and the middle share one panel, the left's border the only divider -->
-        <div class="island">
-            {#if left}
-                <div class="left">
-                    {@render left()}
-                </div>
-            {/if}
-            <main class="middle">
-                {@render middle()}
-            </main>
-        </div>
-        <!-- open / closed is the innermost block, so its motion plays on opening and closing -->
-        {#if props.right}
-            {#if rightMode === "dock"}
-                {#if motion.shown}
-                    <aside
-                        class="right"
+        <div class="shell-row">
+            <!-- the left column and the middle share one panel, the left's border the only divider -->
+            <div class="island">
+                {#if left}
+                    <div class="left">
+                        {@render left()}
+                    </div>
+                {/if}
+                <main class="middle">
+                    {@render middle()}
+                </main>
+            </div>
+            <!-- open / closed is the innermost block, so its motion plays on opening and closing -->
+            {#if props.right}
+                {#if rightMode === "dock"}
+                    {#if motion.shown}
+                        <aside
+                            class="right"
+                            class:entering={motion.entering}
+                            class:closing={motion.closing}
+                            inert={motion.closing}
+                            onanimationend={onAnimationEnd}>
+                            <div class="right-content">
+                                {@render props.right()}
+                            </div>
+                        </aside>
+                    {/if}
+                {:else if motion.shown}
+                    <!-- closing, it leaves the dialog stack (Esc, the focus trap) at once and lets
+                     clicks through (inert) while it plays out -->
+                    <div
+                        class="right-modal"
                         class:entering={motion.entering}
                         class:closing={motion.closing}
                         inert={motion.closing}
-                        onanimationend={onAnimationEnd}>
-                        <div class="right-content">
+                        use:modal={props.rightOpen ? props.onCloseRight : undefined}>
+                        <!-- the keyboard closes it with Esc (use:modal) -->
+                        <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+                        <div class="scrim" onclick={props.onCloseRight} aria-hidden="true"></div>
+                        <div
+                            class="sheet"
+                            role="dialog"
+                            aria-modal="true"
+                            aria-label={t(props.rightLabel)}
+                            onanimationend={onAnimationEnd}>
                             {@render props.right()}
                         </div>
-                    </aside>
-                {/if}
-            {:else if motion.shown}
-                <!-- closing, it leaves the dialog stack (Esc, the focus trap) at once and lets
-                     clicks through (inert) while it plays out -->
-                <div
-                    class="right-modal"
-                    class:entering={motion.entering}
-                    class:closing={motion.closing}
-                    inert={motion.closing}
-                    use:modal={props.rightOpen ? props.onCloseRight : undefined}>
-                    <!-- the keyboard closes it with Esc (use:modal) -->
-                    <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-                    <div class="scrim" onclick={props.onCloseRight} aria-hidden="true"></div>
-                    <div
-                        class="sheet"
-                        role="dialog"
-                        aria-modal="true"
-                        aria-label={t(props.rightLabel)}
-                        onanimationend={onAnimationEnd}>
-                        {@render props.right()}
                     </div>
-                </div>
+                {/if}
             {/if}
-        {/if}
+        </div>
     </div>
 </div>
 
 <style>
-    :global(html),
-    :global(body) {
-        margin: 0;
-        padding: 0;
-        height: 100%;
+    .frame {
+        position: fixed;
+        inset: 0;
+        overflow: auto;
     }
 
     /* the page: 12px of it around everything, the panels 10px apart on it */
@@ -153,9 +159,9 @@
         display: flex;
         gap: var(--space-10);
         width: 100%;
-        min-width: 900px;
-        height: 100vh;
-        height: 100dvh;
+        /* the island's minimum, the rail and the gap between them, and the padding (919px) */
+        min-width: calc(825px + var(--rail-collapsed) + var(--space-10) + 2 * var(--space-12));
+        height: 100%;
         min-height: 720px;
         padding: var(--space-12);
         overflow: hidden;
@@ -181,14 +187,15 @@
     /* expanded, the rail is a surface of its own at the page's colour, rounded on its outer side */
     .rail-scroll:has(:global([data-rail-expanded="true"])) {
         background: var(--bg);
-        border-radius: var(--radius-2xl) 0 0 var(--radius-2xl);
+        border-start-start-radius: var(--radius-2xl);
+        border-end-start-radius: var(--radius-2xl);
     }
 
     /* floating, the slot keeps the collapsed rail's width and the expanded rail goes over the
        island, wider and with a shadow; it's out of flow, so it can be wider than its slot */
     .shell[data-rail="float"] .rail {
         width: var(--rail-collapsed);
-        --rail-expanded: 320px;
+        --rail-expanded: var(--rail-floating);
     }
 
     .shell[data-rail="float"] .rail-scroll {
@@ -199,7 +206,7 @@
 
     /* on the scroller, which would clip a shadow on the rail inside it */
     .shell[data-rail="float"] .rail-scroll:has(:global([data-rail-expanded="true"])) {
-        box-shadow: 24px 0 48px rgba(0, 0, 0, 0.45);
+        box-shadow: var(--shadow-panel);
     }
 
     .shell-row {
@@ -223,7 +230,7 @@
     :global(:root[data-mode="light"]) .island,
     :global(:root[data-mode="light"]) .right,
     :global(:root[data-mode="light"]) .sheet {
-        box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.07);
+        box-shadow: 0 0 0 var(--border-hairline) var(--line-1);
     }
 
     .island {
@@ -341,7 +348,7 @@
     .scrim {
         position: absolute;
         inset: 0;
-        background: rgba(0, 0, 0, 0.55);
+        background: var(--scrim);
         backdrop-filter: blur(4px);
         -webkit-backdrop-filter: blur(4px);
     }
