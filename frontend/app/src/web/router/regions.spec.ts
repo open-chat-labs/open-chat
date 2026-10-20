@@ -1,5 +1,5 @@
 import type { RouteParams } from "@client";
-import { railItems, railSelectionFor, regionsFor } from "./regions";
+import { narrowBack, railItems, railSelectionFor, regionsFor } from "./regions";
 
 const none = { kind: "none" } as const;
 const chats = { kind: "chats" } as const;
@@ -167,5 +167,34 @@ describe("the rail's destinations", () => {
             "favourites",
             "wallet",
         ]);
+    });
+});
+
+describe("a narrow screen's Back from the middle", () => {
+    test("goes to the list the conversation was opened from", () => {
+        expect(narrowBack(regionsFor(groupChat, false))).toBe("/chats");
+    });
+
+    test("keeps the thread list a thread was opened from", () => {
+        expect(narrowBack(regionsFor(groupChat, false, true))).toBe("/chats?threads");
+        expect(
+            narrowBack(
+                regionsFor(route({ kind: "chat_list_route", scope: community }), false, true),
+            ),
+        ).toBe("/community/c1?threads");
+    });
+
+    test("goes to the wallet's tokens from a wallet page, and nowhere from the others", () => {
+        expect(
+            narrowBack(
+                regionsFor(
+                    route({ kind: "wallet_route", scope: none, view: "token", ledger: "l1" }),
+                    false,
+                ),
+            ),
+        ).toBe("/wallet");
+        expect(
+            narrowBack(regionsFor(route({ kind: "notifications_route", scope: none }), false)),
+        ).toBeUndefined();
     });
 });

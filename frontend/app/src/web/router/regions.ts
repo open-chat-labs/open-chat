@@ -1,4 +1,4 @@
-import type { ChatListScope, RouteParams, WalletView } from "@client";
+import { routeForScope, type ChatListScope, type RouteParams, type WalletView } from "@client";
 
 // What a route shows (ROUTES.md). The screens behind each region come in later phases; until then
 // each one is a placeholder that says what it will be.
@@ -154,5 +154,24 @@ export function railSelectionFor(route: RouteParams): RailSelection {
             return { communityId: route.scope.id.communityId };
         default:
             return { item: "chats" };
+    }
+}
+
+/**
+ * Where a narrow screen's Back goes from the middle: the list it came from (the thread list
+ * keeping its ?threads), or the wallet's tokens; nowhere for the others.
+ */
+export function narrowBack(regions: Regions): string | undefined {
+    if (regions.area !== "app") return undefined;
+    const left = regions.left;
+    switch (left?.kind) {
+        case "chats":
+            return routeForScope(left.scope);
+        case "threads":
+            return `${routeForScope(left.scope)}?threads`;
+        case "wallet":
+            return "/wallet";
+        default:
+            return undefined;
     }
 }
