@@ -1,19 +1,20 @@
 <script lang="ts">
+    import { BRIDGE_PLATFORM_NAMES, type BridgePlatform } from "@client";
     import Robot from "svelte-material-icons/Robot.svelte";
     import Webhook from "svelte-material-icons/Webhook.svelte";
 
     interface Props {
         bot?: boolean;
         webhook?: boolean;
-        // A message the Discord bot relayed from Discord, shown in place of the bot badge
-        discord?: boolean;
+        // The platform a bridge bot relayed the message from, shown in place of the bot badge
+        bridge?: BridgePlatform;
     }
 
-    let { bot = false, webhook = false, discord = false }: Props = $props();
+    let { bot = false, webhook = false, bridge }: Props = $props();
 </script>
 
-{#if discord}
-    <div class="discord">Discord</div>
+{#if bridge !== undefined}
+    <div class={`bridge ${bridge}`}>{BRIDGE_PLATFORM_NAMES[bridge]}</div>
 {:else if bot}
     <div class="robot">
         <Robot viewBox={"0 2 24 24"} size={"0.8em"} color={"rgba(255,255,255,0.9)"} />
@@ -35,13 +36,20 @@
         align-items: center;
     }
 
-    .discord {
+    .bridge {
         border-radius: toRem(4);
-        // Discord's own blurple
-        background-color: #5865f2;
         color: #ffffff;
         padding: 0 toRem(4);
         font-size: toRem(10);
         line-height: toRem(16);
+
+        // Each platform's own brand colour
+        &.discord {
+            background-color: #5865f2;
+        }
+
+        &.telegram {
+            background-color: #229ed9;
+        }
     }
 </style>

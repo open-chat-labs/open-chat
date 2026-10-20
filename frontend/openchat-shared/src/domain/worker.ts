@@ -28,6 +28,7 @@ import type {
     AddHotGroupExclusionResponse,
     AddRemoveReactionResponse,
     BlockUserResponse,
+    BridgePlatform,
     CancelP2PSwapResponse,
     CandidateGroupChat,
     ChangeRoleResponse,
@@ -558,7 +559,7 @@ export type WorkerRequest = Cloneable<
     | CallPushEnabled
     | SetCallPushEnabled
     | SetAlchemyApiKey
-    | SetDiscordBot
+    | SetBridgeBot
     | SetPremiumItemCost
     | OneSecEnableForwarding
     | OneSecGetTransferFees
@@ -695,8 +696,9 @@ type SetAlchemyApiKey = {
     apiKey: string | undefined;
 };
 // Platform operators only
-type SetDiscordBot = {
-    kind: "setDiscordBot";
+type SetBridgeBot = {
+    kind: "setBridgeBot";
+    platform: BridgePlatform;
     botId: string | undefined;
 };
 type DailyPuzzleRegenerateToday = {
@@ -2871,7 +2873,7 @@ export type WorkerResults = ResultsByKind<{
     callPushEnabled: boolean;
     setCallPushEnabled: Success | OCError;
     setAlchemyApiKey: Success | OCError;
-    setDiscordBot: Success | OCError;
+    setBridgeBot: Success | OCError;
     setPremiumItemCost: void;
     createAccountLinkingCode: AccountLinkingCode | undefined;
     getSignInProof: string | undefined;

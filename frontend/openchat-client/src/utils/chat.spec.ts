@@ -400,7 +400,7 @@ describe("sortByTimestampThenEventIndex", () => {
 });
 
 describe("sameUser", () => {
-    const message = (sender: string, timestamp: bigint, discordId?: string) =>
+    const message = (sender: string, timestamp: bigint, discordId?: string, telegramId?: string) =>
         ({
             index: 0,
             timestamp,
@@ -408,13 +408,25 @@ describe("sameUser", () => {
                 kind: "message",
                 sender,
                 senderContext:
-                    discordId === undefined
-                        ? undefined
-                        : {
+                    discordId !== undefined
+                        ? {
                               kind: "bot",
                               finalised: true,
-                              discordAuthor: { id: discordId, username: `user${discordId}` },
-                          },
+                              bridgedFrom: {
+                                  kind: "discord",
+                                  author: { id: discordId, username: `user${discordId}` },
+                              },
+                          }
+                        : telegramId !== undefined
+                          ? {
+                                kind: "bot",
+                                finalised: true,
+                                bridgedFrom: {
+                                    kind: "telegram",
+                                    author: { id: telegramId, displayName: `User ${telegramId}` },
+                                },
+                            }
+                          : undefined,
             },
         }) as unknown as EventWrapper<ChatEvent>;
 
@@ -423,10 +435,17 @@ describe("sameUser", () => {
         expect(sameUser(message("a", 0n), message("b", 1000n))).toBe(false);
     });
 
-    // The Discord bot sends every message it relays from Discord
-    test("groups the Discord bot's messages by their Discord authors", () => {
+    // A bridge bot sends every message it relays from another platform
+    test("groups a bridge bot's messages by their authors", () => {
         expect(sameUser(message("bot", 0n, "1"), message("bot", 1000n, "1"))).toBe(true);
         expect(sameUser(message("bot", 0n, "1"), message("bot", 1000n, "2"))).toBe(false);
         expect(sameUser(message("bot", 0n), message("bot", 1000n, "1"))).toBe(false);
+        expect(
+            sameUser(message("bot", 0n, undefined, "1"), message("bot", 1000n, undefined, "1")),
+        ).toBe(true);
+        // The same id on different platforms is a different author
+        expect(sameUser(message("bot", 0n, "1"), message("bot", 1000n, undefined, "1"))).toBe(
+            false,
+        );
     });
 });

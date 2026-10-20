@@ -988,9 +988,16 @@ export type BotMessageContext = {
     kind: "bot";
     command?: BotContextCommand;
     finalised: boolean;
-    // Set on the messages the Discord bot relays from Discord
-    discordAuthor?: DiscordUser;
+    // Set on the messages a bridge bot relays from another platform, eg. Discord
+    bridgedFrom?: BridgedFrom;
 };
+
+// Where a bridge bot relayed a message from, and the message's author there
+export type BridgedFrom =
+    | { kind: "discord"; author: DiscordUser }
+    | { kind: "telegram"; author: TelegramUser };
+
+export type BridgePlatform = BridgedFrom["kind"];
 
 export type DiscordUser = {
     // The user's Discord snowflake id
@@ -999,6 +1006,15 @@ export type DiscordUser = {
     displayName?: string;
     // The hash of the user's global avatar, not their server one, which the CDN url is built from
     avatar?: string;
+};
+
+export type TelegramUser = {
+    // The sender's Telegram id, negative if a chat sent the message
+    id: string;
+    username?: string;
+    displayName: string;
+    // A copy in OpenChat's storage, since the urls of Telegram's own copies contain the bot's token
+    avatar?: BlobReference;
 };
 
 export type WebhookContext = {

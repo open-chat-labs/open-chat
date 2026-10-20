@@ -4,7 +4,7 @@
     import Typing from "@shared_components/Typing.svelte";
     import { trackedEffect } from "@src/utils/effects.svelte";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
-    import { AvatarSize, type ChatIdentifier, chatIdentifiersEqual, chatListScopeStore, type ChatType, currentUserIdStore, currentUserStore, discordAuthor, discordAvatarUrl, discordDisplayName, type EnhancedReplyContext, iconSize, localUpdates, type Member, type Message, type MessageReminderCreatedContent, mobileWidth, OpenChat, publish, routeForMessage, routeStore, screenWidth, ScreenWidth, selectedChatBlockedUsersStore, selectedChatMembersStore, selectedChatWebhooksStore, selectedCommunityMembersStore, type SelectedEmoji, selectedServerChatStore, type SenderContext, translationsStore, unconfirmedReadByThem, undeletingMessagesStore, type UserSummary } from "@client";
+    import { AvatarSize, type ChatIdentifier, chatIdentifiersEqual, chatListScopeStore, type ChatType, bridgedAuthorName, bridgedFrom, currentUserIdStore, currentUserStore, type EnhancedReplyContext, iconSize, localUpdates, type Member, type Message, type MessageReminderCreatedContent, mobileWidth, OpenChat, publish, routeForMessage, routeStore, screenWidth, ScreenWidth, selectedChatBlockedUsersStore, selectedChatMembersStore, selectedChatWebhooksStore, selectedCommunityMembersStore, type SelectedEmoji, selectedServerChatStore, type SenderContext, translationsStore, unconfirmedReadByThem, undeletingMessagesStore, type UserSummary } from "@client";
     import { getContext, onDestroy, onMount, tick } from "svelte";
     import { _, locale } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
@@ -414,10 +414,10 @@
             ? reservedMediaWidth(mediaDimensions.width, mediaDimensions.height)
             : undefined,
     );
-    let discordUser = $derived(discordAuthor(senderContext));
-    // A tip would go to the Discord bot, not the Discord author shown
+    let bridged = $derived(bridgedFrom(senderContext));
+    // A tip would go to the bridge bot, not the author shown
     let canTip = $derived(
-        canTipMessages && !me && confirmed && !inert && !failed && discordUser === undefined,
+        canTipMessages && !me && confirmed && !inert && !failed && bridged === undefined,
     );
     let inThread = $derived(threadRootMessage !== undefined);
     let threadRootMessageIndex = $derived(
@@ -457,8 +457,8 @@
     );
     let canUndelete = $derived(msg.deleted && msg.content.kind !== "deleted_content");
     let senderDisplayName = $derived(
-        discordUser !== undefined
-            ? discordDisplayName(discordUser)
+        bridged !== undefined
+            ? bridgedAuthorName(bridged)
             : client.getDisplayName(
                   msg.sender,
                   $selectedCommunityMembersStore,
@@ -560,8 +560,8 @@
                                 <div class="avatar" onclick={openUserProfile}>
                                     <Avatar
                                         maxStreak={hasAchievedMaxStreak}
-                                        url={discordUser !== undefined
-                                            ? discordAvatarUrl(discordUser)
+                                        url={bridged !== undefined
+                                            ? client.bridgedAvatarUrl(bridged)
                                             : client.userAvatarUrl(sender)}
                                         userId={msg.sender}
                                         size={$mobileWidth
@@ -613,7 +613,7 @@
                                         <BotBadge
                                             bot={senderContext?.kind === "bot"}
                                             webhook={senderContext?.kind === "webhook"}
-                                            discord={discordUser !== undefined} />
+                                            bridge={bridged?.kind} />
                                         {#if sender !== undefined && multiUserChat}
                                             <WithRole
                                                 userId={sender.userId}

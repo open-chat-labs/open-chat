@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use types::nns::CryptoAmount;
 use types::{
     AutonomousConfig, BlobReference, BotCommandDefinition, BotDataEncoding, BotDefinition, BotDefinitionUpdate,
-    BotInstallationLocation, BotSubscriptions, BuildVersion, CanisterId, ChannelId, ChannelLatestMessageIndex,
+    BotInstallationLocation, BotSubscriptions, BridgePlatform, BuildVersion, CanisterId, ChannelId, ChannelLatestMessageIndex,
     ChannelUserNotificationPayload, ChatId, ClassifyMessageRequest, CommunityId, CyclesTopUp, DiamondMembershipPlanDuration,
     GroupChatUserNotificationPayload, MediaScanMatch, MessageContentInitial, MessageId, MessageIndex, Milliseconds,
     Notification, NotifyChit, PhoneNumber, PublicCommunityActivity, PublicGroupActivity, ReferralType, SuspensionDuration,
@@ -60,7 +60,7 @@ pub enum UserIndexEvent {
     SetMediaScanConfig(types::MediaScanConfig),
     SetCallPushEnabled(bool),
     SetDailyPuzzleCanisterId(CanisterId),
-    SetDiscordBot(Option<UserId>),
+    SetBridgeBot(SetBridgeBot),
     UserIdMigrated(UserIdMigrated),
     SetAlchemyApiKey(SetAlchemyApiKey),
 }
@@ -241,6 +241,12 @@ pub struct BotUpdated {
     pub owner_id: UserId,
     pub endpoint: String,
     pub definition: BotDefinition,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct SetBridgeBot {
+    pub platform: BridgePlatform,
+    pub bot_id: Option<UserId>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

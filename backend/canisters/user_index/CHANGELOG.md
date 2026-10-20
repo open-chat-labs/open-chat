@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Add `c2c_local_index` for the LocalUserIndexes' events, to replace `c2c_local_user_index` ([#10047](https://github.com/open-chat-labs/open-chat/pull/10047))
-- Add `set_discord_bot` for a platform operator to set the bot that bridges Discord servers ([#10052](https://github.com/open-chat-labs/open-chat/pull/10052))
+- Add `set_bridge_bot` for a platform operator to set the bot that bridges Discord or Telegram ([#10052](https://github.com/open-chat-labs/open-chat/pull/10052))
 
 ## [[2.0.2155](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2155-user_index)] - 2026-10-19
 

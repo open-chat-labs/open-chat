@@ -148,7 +148,7 @@ fn e2e_command_bot_test() {
             block_level_markdown: false,
             finalised: false,
             og_previews: None,
-            discord: None,
+            bridged_from: None,
         },
     );
 
@@ -187,7 +187,7 @@ fn e2e_command_bot_test() {
             block_level_markdown: false,
             finalised: true,
             og_previews: None,
-            discord: None,
+            bridged_from: None,
         },
     );
 
@@ -413,7 +413,7 @@ fn e2e_autonomous_bot_test() {
             block_level_markdown: false,
             finalised: true,
             og_previews: None,
-            discord: None,
+            bridged_from: None,
         },
     );
 
@@ -524,7 +524,7 @@ fn create_channel_autonomously() {
             block_level_markdown: false,
             finalised: true,
             og_previews: None,
-            discord: None,
+            bridged_from: None,
         },
     );
 
@@ -837,7 +837,7 @@ fn send_direct_message() {
             block_level_markdown: false,
             finalised: true,
             og_previews: None,
-            discord: None,
+            bridged_from: None,
         },
     );
 
@@ -970,7 +970,7 @@ fn send_multiple_updates_to_same_message(chat_type: ChatType) {
             block_level_markdown: false,
             finalised: false,
             og_previews: None,
-            discord: None,
+            bridged_from: None,
         },
     );
 
@@ -993,7 +993,7 @@ fn send_multiple_updates_to_same_message(chat_type: ChatType) {
             block_level_markdown: false,
             finalised: false,
             og_previews: None,
-            discord: None,
+            bridged_from: None,
         },
     );
 
@@ -1016,7 +1016,7 @@ fn send_multiple_updates_to_same_message(chat_type: ChatType) {
             block_level_markdown: false,
             finalised: true,
             og_previews: None,
-            discord: None,
+            bridged_from: None,
         },
     );
 
@@ -1061,7 +1061,7 @@ fn send_multiple_updates_to_same_message(chat_type: ChatType) {
             block_level_markdown: false,
             finalised: true,
             og_previews: None,
-            discord: None,
+            bridged_from: None,
         },
     );
 

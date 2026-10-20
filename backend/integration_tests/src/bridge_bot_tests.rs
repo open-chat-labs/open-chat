@@ -11,12 +11,13 @@ use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::random_string;
 use types::{
-    BotChatContext, BotInstallationLocation, BotMessageContent, BotPermissions, CanisterId, Chat, ChatEvent,
-    DiscordMessageContext, DiscordUser, EventsResponse, MessagePermission, SenderContext, TextContent, UnitResult, UserId,
+    BlobReference, BotChatContext, BotInstallationLocation, BotMessageContent, BotPermissions, BridgePlatform, BridgedFrom,
+    CanisterId, Chat, ChatEvent, DiscordMessageContext, DiscordUser, EventsResponse, MessagePermission, SenderContext,
+    TelegramMessageContext, TelegramUser, TextContent, UnitResult, UserId,
 };
 
 #[test]
-fn discord_bot_relays_messages_as_their_discord_authors() {
+fn bridge_bots_relay_messages_as_their_authors() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -38,7 +39,7 @@ fn discord_bot_relays_messages_as_their_discord_authors() {
 
     let (discord_bot_id, discord_bot_principal) =
         register_bot(env, &owner, canister_ids.user_index, random_string(), random_string());
-    let (other_bot_id, other_bot_principal) =
+    let (telegram_bot_id, telegram_bot_principal) =
         register_bot(env, &owner, canister_ids.user_index, random_string(), random_string());
 
     let permissions = BotPermissions::default().with_message(&HashSet::from_iter([MessagePermission::Text]));
@@ -51,7 +52,7 @@ fn discord_bot_relays_messages_as_their_discord_authors() {
         (
             community_local_user_index,
             BotInstallationLocation::Community(community_id),
-            other_bot_id,
+            telegram_bot_id,
         ),
         (
             group_local_user_index,
@@ -70,109 +71,166 @@ fn discord_bot_relays_messages_as_their_discord_authors() {
         );
     }
 
-    // Set the Discord bot the way the admin page sets it: on the UserIndex, which fans it out to
+    // Set the bridge bots the way the admin page sets them: on the UserIndex, which fans them out to
     // every LocalUserIndex
     let operator = client::register_user(env, canister_ids);
     client::user_index::happy_path::add_platform_operator(env, *controller, canister_ids.user_index, operator.user_id);
     tick_many(env, 3);
 
-    let response = set_discord_bot(env, operator.principal, canister_ids.user_index, Some(owner.user_id));
+    let response = set_bridge_bot(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        BridgePlatform::Discord,
+        Some(owner.user_id),
+    );
     assert!(
         matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::BotNotFound)),
         "{response:?}"
     );
 
-    let response = set_discord_bot(env, operator.principal, canister_ids.user_index, Some(discord_bot_id));
-    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    for (platform, bot_id) in [
+        (BridgePlatform::Discord, discord_bot_id),
+        (BridgePlatform::Telegram, telegram_bot_id),
+    ] {
+        let response = set_bridge_bot(env, operator.principal, canister_ids.user_index, platform, Some(bot_id));
+        assert!(matches!(response, UnitResult::Success), "{response:?}");
+    }
     tick_many(env, 3);
 
-    let discord = DiscordMessageContext {
-        author: DiscordUser {
-            id: 80351110224678912,
-            username: "nelly".to_string(),
-            display_name: Some("Nelly".to_string()),
-            avatar: Some("8342729096ea3675442027381ff50dfe".to_string()),
-        },
+    let discord_author = DiscordUser {
+        id: 80351110224678912,
+        username: "nelly".to_string(),
+        display_name: Some("Nelly".to_string()),
+        avatar: Some("8342729096ea3675442027381ff50dfe".to_string()),
     };
+    let from_discord = BridgedFrom::Discord(DiscordMessageContext {
+        author: discord_author.clone(),
+    });
+    let from_telegram = BridgedFrom::Telegram(TelegramMessageContext {
+        author: TelegramUser {
+            id: 123456789,
+            username: Some("nelly".to_string()),
+            display_name: "Nelly Smith".to_string(),
+            avatar: Some(BlobReference {
+                canister_id: canister_ids.user_index,
+                blob_id: 1,
+            }),
+        },
+    });
 
-    // Relayed into a channel and into a group, each message keeps its Discord author
+    // Relayed into a channel and into a group, each message keeps its author on the other platform
     let response = send(
         env,
         discord_bot_principal,
         community_local_user_index,
         channel,
-        discord.clone(),
+        from_discord.clone(),
     );
     let SendResponse::Success(result) = response else {
         panic!("'bot_send_message' error: {response:?}");
     };
     let events =
         client::community::happy_path::events_by_index(env, &owner, community_id, channel_id, vec![result.event_index]);
-    assert_relayed_from(&events, discord_bot_id, &discord);
+    assert_relayed_from(&events, discord_bot_id, &from_discord);
 
-    let response = send(env, discord_bot_principal, group_local_user_index, group, discord.clone());
+    let response = send(
+        env,
+        discord_bot_principal,
+        group_local_user_index,
+        group,
+        from_discord.clone(),
+    );
     let SendResponse::Success(result) = response else {
         panic!("'bot_send_message' error: {response:?}");
     };
     let events = client::group::happy_path::events_by_index(env, &owner, group_id, vec![result.event_index]);
-    assert_relayed_from(&events, discord_bot_id, &discord);
+    assert_relayed_from(&events, discord_bot_id, &from_discord);
 
-    // An author Discord itself wouldn't send is rejected
+    let response = send(
+        env,
+        telegram_bot_principal,
+        community_local_user_index,
+        channel,
+        from_telegram.clone(),
+    );
+    let SendResponse::Success(result) = response else {
+        panic!("'bot_send_message' error: {response:?}");
+    };
+    let events =
+        client::community::happy_path::events_by_index(env, &owner, community_id, channel_id, vec![result.event_index]);
+    assert_relayed_from(&events, telegram_bot_id, &from_telegram);
+
+    // Each bridge bot can only relay messages from its own platform
+    for (bot_principal, bridged_from) in [
+        (discord_bot_principal, from_telegram.clone()),
+        (telegram_bot_principal, from_discord.clone()),
+    ] {
+        let response = send(env, bot_principal, community_local_user_index, channel, bridged_from);
+        assert!(
+            matches!(&response, SendResponse::Error(e) if e.matches_code(OCErrorCode::InitiatorNotAuthorized)),
+            "{response:?}"
+        );
+    }
+
+    // An author the platform itself wouldn't send is rejected
     let response = send(
         env,
         discord_bot_principal,
         community_local_user_index,
         channel,
-        DiscordMessageContext {
+        BridgedFrom::Discord(DiscordMessageContext {
             author: DiscordUser {
                 avatar: Some("https://example.com/avatar.png".to_string()),
-                ..discord.author.clone()
+                ..discord_author
             },
-        },
+        }),
     );
     assert!(
         matches!(&response, SendResponse::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
         "{response:?}"
     );
 
-    // Messages from Discord only go to groups and channels
+    // Bridged messages only go to groups and channels
     let response = send(
         env,
         discord_bot_principal,
         community_local_user_index,
         Chat::Direct(owner.user_id.into()),
-        discord.clone(),
+        from_discord.clone(),
     );
     assert!(
         matches!(&response, SendResponse::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
         "{response:?}"
     );
 
-    // Any other bot is refused
-    let response = send(env, other_bot_principal, community_local_user_index, channel, discord.clone());
-    assert!(
-        matches!(&response, SendResponse::Error(e) if e.matches_code(OCErrorCode::InitiatorNotAuthorized)),
-        "{response:?}"
-    );
-
-    // As is the Discord bot once it's unset, which also leaves the pooled env as it was
-    let response = set_discord_bot(env, operator.principal, canister_ids.user_index, None);
-    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    // A bridge bot is refused once it's unset. Both are unset, which also leaves the pooled env as
+    // it was
+    for platform in [BridgePlatform::Discord, BridgePlatform::Telegram] {
+        let response = set_bridge_bot(env, operator.principal, canister_ids.user_index, platform, None);
+        assert!(matches!(response, UnitResult::Success), "{response:?}");
+    }
     tick_many(env, 3);
 
-    let response = send(env, discord_bot_principal, community_local_user_index, channel, discord);
+    let response = send(env, discord_bot_principal, community_local_user_index, channel, from_discord);
     assert!(
         matches!(&response, SendResponse::Error(e) if e.matches_code(OCErrorCode::InitiatorNotAuthorized)),
         "{response:?}"
     );
 }
 
-fn set_discord_bot(env: &mut PocketIc, operator: Principal, user_index: CanisterId, bot_id: Option<UserId>) -> UnitResult {
-    client::user_index::set_discord_bot(
+fn set_bridge_bot(
+    env: &mut PocketIc,
+    operator: Principal,
+    user_index: CanisterId,
+    platform: BridgePlatform,
+    bot_id: Option<UserId>,
+) -> UnitResult {
+    client::user_index::set_bridge_bot(
         env,
         operator,
         user_index,
-        &user_index_canister::set_discord_bot::Args { bot_id },
+        &user_index_canister::set_bridge_bot::Args { platform, bot_id },
     )
 }
 
@@ -181,7 +239,7 @@ fn send(
     bot_principal: Principal,
     local_user_index: CanisterId,
     chat: Chat,
-    discord: DiscordMessageContext,
+    bridged_from: BridgedFrom,
 ) -> SendResponse {
     client::local_user_index::bot_send_message(
         env,
@@ -193,23 +251,23 @@ fn send(
             message_id: None,
             replies_to: None,
             content: BotMessageContent::Text(TextContent {
-                text: "Hello from Discord".to_string(),
+                text: "Hello from the other side".to_string(),
             }),
             block_level_markdown: false,
             finalised: true,
             og_previews: None,
-            discord: Some(discord),
+            bridged_from: Some(bridged_from),
         },
     )
 }
 
-fn assert_relayed_from(events: &EventsResponse, discord_bot_id: UserId, discord: &DiscordMessageContext) {
+fn assert_relayed_from(events: &EventsResponse, bot_id: UserId, bridged_from: &BridgedFrom) {
     let ChatEvent::Message(message) = &events.events[0].event else {
         panic!("Expected a message: {:?}", events.events[0].event);
     };
-    assert_eq!(message.sender, discord_bot_id);
+    assert_eq!(message.sender, bot_id);
     let Some(SenderContext::Bot(bot_context)) = &message.sender_context else {
         panic!("Expected a bot sender context: {:?}", message.sender_context);
     };
-    assert_eq!(bot_context.discord.as_deref(), Some(discord));
+    assert_eq!(bot_context.bridged_from.as_deref(), Some(bridged_from));
 }

@@ -674,6 +674,12 @@ export const UnitResult = /* @__PURE__ */ Type.Union([
     }),
 ]);
 
+export type BridgePlatform = Static<typeof BridgePlatform>;
+export const BridgePlatform = /* @__PURE__ */ Type.Union([
+    Type.Literal("Discord"),
+    Type.Literal("Telegram"),
+]);
+
 export type AcceptSwapSuccess = Static<typeof AcceptSwapSuccess>;
 export const AcceptSwapSuccess = /* @__PURE__ */ Type.Object({
     token1_txn_in: Type.BigInt(),
@@ -2172,11 +2178,6 @@ export const UserIndexPlatformOperatorsResponse = /* @__PURE__ */ Type.Object({
     Success: UserIndexPlatformOperatorsSuccessResult,
 });
 
-export type UserIndexSetDiscordBotArgs = Static<typeof UserIndexSetDiscordBotArgs>;
-export const UserIndexSetDiscordBotArgs = /* @__PURE__ */ Type.Object({
-    bot_id: Type.Optional(UserId),
-});
-
 export type UserIndexPlatformModeratorsSuccessResult = Static<
     typeof UserIndexPlatformModeratorsSuccessResult
 >;
@@ -2398,6 +2399,12 @@ export const UserIndexUnsuspendUserResponse = /* @__PURE__ */ Type.Union([
         Error: OCError,
     }),
 ]);
+
+export type UserIndexSetBridgeBotArgs = Static<typeof UserIndexSetBridgeBotArgs>;
+export const UserIndexSetBridgeBotArgs = /* @__PURE__ */ Type.Object({
+    platform: BridgePlatform,
+    bot_id: Type.Optional(UserId),
+});
 
 export type UserIndexSetAlchemyApiKeyArgs = Static<typeof UserIndexSetAlchemyApiKeyArgs>;
 export const UserIndexSetAlchemyApiKeyArgs = /* @__PURE__ */ Type.Object({
@@ -6207,6 +6214,14 @@ export const GroupVisibilityChanged = /* @__PURE__ */ Type.Object({
     changed_by: UserId,
 });
 
+export type TelegramUser = Static<typeof TelegramUser>;
+export const TelegramUser = /* @__PURE__ */ Type.Object({
+    id: Type.BigInt(),
+    username: Type.Optional(Type.String()),
+    display_name: Type.String(),
+    avatar: Type.Optional(BlobReference),
+});
+
 export type MarkVideoCallAsEndedArgs = Static<typeof MarkVideoCallAsEndedArgs>;
 export const MarkVideoCallAsEndedArgs = /* @__PURE__ */ Type.Object({
     chat: Chat,
@@ -6254,6 +6269,11 @@ export const BotInstallationLocation = /* @__PURE__ */ Type.Union([
         User: ChatId,
     }),
 ]);
+
+export type TelegramMessageContext = Static<typeof TelegramMessageContext>;
+export const TelegramMessageContext = /* @__PURE__ */ Type.Object({
+    author: TelegramUser,
+});
 
 export type CompletedCryptoTransactionICRC1 = Static<typeof CompletedCryptoTransactionICRC1>;
 export const CompletedCryptoTransactionICRC1 = /* @__PURE__ */ Type.Object({
@@ -6322,6 +6342,16 @@ export const DirectCallDismissedNotification = /* @__PURE__ */ Type.Object({
     id: MessageId,
     k: CallDismissalKind,
 });
+
+export type BridgedFrom = Static<typeof BridgedFrom>;
+export const BridgedFrom = /* @__PURE__ */ Type.Union([
+    Type.Object({
+        Discord: DiscordMessageContext,
+    }),
+    Type.Object({
+        Telegram: TelegramMessageContext,
+    }),
+]);
 
 export type EncryptedContent = Static<typeof EncryptedContent>;
 export const EncryptedContent = /* @__PURE__ */ Type.Object({
@@ -8898,7 +8928,7 @@ export type BotMessageContext = Static<typeof BotMessageContext>;
 export const BotMessageContext = /* @__PURE__ */ Type.Object({
     command: Type.Optional(BotCommand),
     finalised: Type.Boolean(),
-    discord: Type.Optional(DiscordMessageContext),
+    bridged_from: Type.Optional(BridgedFrom),
 });
 
 export type BotMessageContent = Static<typeof BotMessageContent>;
@@ -9133,7 +9163,7 @@ export const LocalUserIndexBotSendMessageArgs = /* @__PURE__ */ Type.Object({
     block_level_markdown: Type.Boolean(),
     finalised: Type.Boolean(),
     og_previews: Type.Optional(Type.Array(OgPreview)),
-    discord: Type.Optional(DiscordMessageContext),
+    bridged_from: Type.Optional(BridgedFrom),
 });
 
 export type ProposalsBotSubmitProposalArgs = Static<typeof ProposalsBotSubmitProposalArgs>;

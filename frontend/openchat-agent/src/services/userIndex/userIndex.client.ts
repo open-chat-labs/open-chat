@@ -3,6 +3,7 @@ import type {
     ModerationConfig,
     ProposedProtectedAction,
     BotDefinition,
+    BridgePlatform,
     BotInstallationLocation,
     BotsResponse,
     CheckUsernameResponse,
@@ -85,8 +86,8 @@ import {
     UserIndexModerationConfigResponse,
     UserIndexCallPushEnabledResponse,
     UserIndexSetAlchemyApiKeyArgs,
+    UserIndexSetBridgeBotArgs,
     UserIndexSetCallPushEnabledArgs,
-    UserIndexSetDiscordBotArgs,
     UserIndexRecordAuthorityReportFiledArgs,
     UserIndexSetModerationReferralConfigArgs,
     UserIndexProposeProtectedActionArgs,
@@ -454,12 +455,15 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
         );
     }
 
-    setDiscordBot(botId: string | undefined): Promise<Success | OCError> {
+    setBridgeBot(platform: BridgePlatform, botId: string | undefined): Promise<Success | OCError> {
         return this.update(
-            "set_discord_bot",
-            { bot_id: mapOptional(botId, principalStringToBytes) },
+            "set_bridge_bot",
+            {
+                platform: platform === "discord" ? "Discord" : "Telegram",
+                bot_id: mapOptional(botId, principalStringToBytes),
+            },
             unitResult,
-            UserIndexSetDiscordBotArgs,
+            UserIndexSetBridgeBotArgs,
             UnitResult,
         );
     }

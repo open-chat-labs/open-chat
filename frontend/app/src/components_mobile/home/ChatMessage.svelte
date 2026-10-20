@@ -19,8 +19,7 @@
         type ChatType,
         currentUserIdStore,
         currentUserStore,
-        discordAuthor,
-        discordAvatarUrl,
+        bridgedFrom,
         type EnhancedReplyContext,
         localUpdates,
         type Message,
@@ -365,10 +364,10 @@
             msg.content.kind === "restricted_content" ||
             collapsed,
     );
-    let discordUser = $derived(discordAuthor(senderContext));
-    // A tip would go to the Discord bot, not the Discord author shown
+    let bridged = $derived(bridgedFrom(senderContext));
+    // A tip would go to the bridge bot, not the author shown
     let canTip = $derived(
-        canTipMessages && !me && confirmed && !inert && !failed && discordUser === undefined,
+        canTipMessages && !me && confirmed && !inert && !failed && bridged === undefined,
     );
     let inThread = $derived(threadRootMessage !== undefined);
     let scrollingId = $derived(
@@ -625,8 +624,8 @@
                     <div class:first class="avatar">
                         <Avatar
                             onClick={openUserProfile}
-                            url={discordUser !== undefined
-                                ? discordAvatarUrl(discordUser)
+                            url={bridged !== undefined
+                                ? client.bridgedAvatarUrl(bridged)
                                 : client.userAvatarUrl(sender)}
                             size={"sm"}></Avatar>
                     </div>

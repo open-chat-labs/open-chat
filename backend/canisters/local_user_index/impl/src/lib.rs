@@ -45,7 +45,7 @@ use std::time::Duration;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use tracing::{error, info};
 use types::{
-    BotDataEncoding, BotEventPayload, BotEventWrapper, BotNotification, BotNotificationEnvelope, BuildVersion,
+    BotDataEncoding, BotEventPayload, BotEventWrapper, BotNotification, BotNotificationEnvelope, BridgePlatform, BuildVersion,
     CLAIM_TYPE_DECLINE_VIDEO_CALL, CLAIM_TYPE_DIAMOND_MEMBERSHIP, CallDismissalKind, CanisterId, ChannelLatestMessageIndex,
     Chat, ChatId, ChildCanisterWasms, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles,
     CyclesTopUp, DailyPuzzleResult, DeclineVideoCallClaims, DiamondMembershipDetails, DirectCallDismissedNotification, FcmData,
@@ -771,7 +771,7 @@ impl RuntimeState {
             multi_user_wasm_version: self.data.child_canister_wasms.get(ChildCanisterType::MultiUser).wasm.version,
             migrated_user_ids: self.data.migrated_user_ids.len(),
             call_push_enabled: self.data.call_push_enabled,
-            discord_bot_id: self.data.discord_bot_id,
+            bridge_bots: self.data.bridge_bots.clone(),
             group_versions: self
                 .data
                 .local_groups
@@ -939,9 +939,9 @@ struct Data {
     // The native call push kill switch (#9456). Off until the Android shell can ring.
     #[serde(default)]
     pub call_push_enabled: bool,
-    // The bot that bridges Discord servers, the only bot that can relay a message as its Discord author
+    // The bot that bridges each platform, eg. Discord, the only bot that can relay messages from it
     #[serde(default)]
-    pub discord_bot_id: Option<UserId>,
+    pub bridge_bots: BTreeMap<BridgePlatform, UserId>,
     #[serde(default)]
     pub daily_puzzle_canister_id: Option<CanisterId>,
     #[serde(default)]
@@ -1081,7 +1081,7 @@ impl Data {
             media_scan_config,
             media_scan_job_log: MediaScanJobLog::default(),
             call_push_enabled,
-            discord_bot_id: None,
+            bridge_bots: BTreeMap::new(),
             daily_puzzle_canister_id: None,
             daily_puzzle_engine: DailyPuzzleEngine::default(),
             daily_puzzle_results_queue: None,
@@ -1133,7 +1133,7 @@ pub struct Metrics {
     pub multi_user_wasm_version: BuildVersion,
     pub migrated_user_ids: usize,
     pub call_push_enabled: bool,
-    pub discord_bot_id: Option<UserId>,
+    pub bridge_bots: BTreeMap<BridgePlatform, UserId>,
     pub user_events_queue_length: usize,
     // Batches currently mid-flight: len() alone cannot distinguish an idle queue from one
     // whose last batch is still awaiting its reply

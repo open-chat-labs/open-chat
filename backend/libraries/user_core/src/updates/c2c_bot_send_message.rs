@@ -33,7 +33,7 @@ pub fn prepare(user: &User, args: Args, now: TimestampMillis) -> OCResult<BotMes
     let bot_caller = BotCaller {
         bot: args.bot_id,
         initiator: args.initiator.clone(),
-        discord: None,
+        bridged_from: None,
     };
     let bot_name = args.bot_name.clone();
     let user_message_id = args.user_message_id;

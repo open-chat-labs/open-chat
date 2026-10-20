@@ -61,7 +61,7 @@ fn c2c_bot_send_message_impl(args: c2c_bot_send_message::Args, state: &mut Runti
     let bot_caller = BotCaller {
         bot: args.bot_id,
         initiator: args.initiator.clone(),
-        discord: args.discord.clone().map(Box::new),
+        bridged_from: args.bridged_from.clone().map(Box::new),
     };
     let args: Args = args.into();
 

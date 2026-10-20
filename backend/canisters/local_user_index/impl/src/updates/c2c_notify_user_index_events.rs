@@ -323,8 +323,12 @@ pub(crate) fn handle_event<F: FnOnce() -> TimestampMillis>(
         UserIndexEvent::SetDailyPuzzleCanisterId(canister_id) => {
             state.set_daily_puzzle_canister_id(canister_id);
         }
-        UserIndexEvent::SetDiscordBot(bot_id) => {
-            state.data.discord_bot_id = bot_id;
+        UserIndexEvent::SetBridgeBot(ev) => {
+            if let Some(bot_id) = ev.bot_id {
+                state.data.bridge_bots.insert(ev.platform, bot_id);
+            } else {
+                state.data.bridge_bots.remove(&ev.platform);
+            }
         }
         // Seeds a LocalUserIndex added after users were migrated with their old ids
         UserIndexEvent::UserIdMigrated(ev) => {

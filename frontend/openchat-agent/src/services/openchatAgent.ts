@@ -18,6 +18,7 @@ import type {
     BlockUserResponse,
     BotCommandResponse,
     BotDefinition,
+    BridgePlatform,
     BotInstallationLocation,
     BotsResponse,
     CancelP2PSwapResponse,
@@ -6089,8 +6090,8 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.setAlchemyApiKey(apiKey);
     }
 
-    setDiscordBot(botId: string | undefined): Promise<Success | OCError> {
-        return this._userIndexClient.setDiscordBot(botId);
+    setBridgeBot(platform: BridgePlatform, botId: string | undefined): Promise<Success | OCError> {
+        return this._userIndexClient.setBridgeBot(platform, botId);
     }
     dailyPuzzleRegenerateToday(gameId: string | undefined): Promise<Success | OCError> {
         return this._dailyPuzzleClient.get().regenerateToday(gameId);

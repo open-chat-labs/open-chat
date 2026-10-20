@@ -368,6 +368,9 @@ import {
     type WithdrawCryptocurrencyResponse,
     type OCError,
     type ProposedProtectedAction,
+    type BridgedFrom,
+    type BridgePlatform,
+    bridgedAuthorAvatarUrl,
     buildBlobUrl,
     isAndroidTauriApp,
     isIosTauriApp,
@@ -2521,6 +2524,11 @@ export class OpenChat {
      */
     showTrace = showTrace;
     userAvatarUrl = userAvatarUrl;
+
+    // The avatar of the author of a message a bridge bot relayed from another platform
+    bridgedAvatarUrl(bridged: BridgedFrom): string {
+        return bridgedAuthorAvatarUrl(bridged, this.config.blobUrlPattern) ?? userAvatarUrl();
+    }
     formatTokens = formatTokens;
     validateTokenInput = validateTokenInput;
     isAccountOfMultiUserCanisterUserId = isAccountOfMultiUserCanisterUserId;
@@ -12668,8 +12676,8 @@ export class OpenChat {
         return this.#worker.send({ kind: "setAlchemyApiKey", apiKey });
     }
 
-    setDiscordBot(botId: string | undefined): Promise<Success | OCError> {
-        return this.#worker.send({ kind: "setDiscordBot", botId });
+    setBridgeBot(platform: BridgePlatform, botId: string | undefined): Promise<Success | OCError> {
+        return this.#worker.send({ kind: "setBridgeBot", platform, botId });
     }
     dailyPuzzleRegenerateToday(gameId: string | undefined): Promise<Success | OCError> {
         return this.#worker.send({ kind: "dailyPuzzleRegenerateToday", gameId });

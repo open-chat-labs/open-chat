@@ -8,6 +8,7 @@ import type {
     BotDefinition,
     BotInstallationLocationType,
     BotMessageContext,
+    BridgedFrom,
     ChangeRoleResponse,
     ChannelIdentifier,
     ChannelSummary,
@@ -186,6 +187,7 @@ import type {
     AudioContent as TAudioContent,
     BlobReference as TBlobReference,
     BotMessageContext as TBotMessageContext,
+    BridgedFrom as TBridgedFrom,
     CallParticipant as TCallParticipant,
     Chat as TChat,
     ModerationReportContent as TModerationReportContent,
@@ -647,13 +649,36 @@ export function botMessageContext(value: TBotMessageContext): BotMessageContext 
             args: command.args.map(botCommandArg),
             initiator: principalBytesToString(command.initiator),
         })),
-        discordAuthor: mapOptional(value.discord, ({ author }) => ({
-            id: author.id.toString(),
-            username: author.username,
-            displayName: author.display_name,
-            avatar: author.avatar,
-        })),
+        bridgedFrom: mapOptional(value.bridged_from, bridgedFrom),
     };
+}
+
+export function bridgedFrom(value: TBridgedFrom): BridgedFrom {
+    if ("Discord" in value) {
+        const { author } = value.Discord;
+        return {
+            kind: "discord",
+            author: {
+                id: author.id.toString(),
+                username: author.username,
+                displayName: author.display_name,
+                avatar: author.avatar,
+            },
+        };
+    }
+    if ("Telegram" in value) {
+        const { author } = value.Telegram;
+        return {
+            kind: "telegram",
+            author: {
+                id: author.id.toString(),
+                username: author.username,
+                displayName: author.display_name,
+                avatar: mapOptional(author.avatar, blobReference),
+            },
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiBridgedFrom type received", value);
 }
 
 export function botCommandArg(api: BotCommandArg): CommandArg {

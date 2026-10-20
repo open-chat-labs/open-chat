@@ -3,8 +3,8 @@
         chatIdentifiersEqual,
         chatListScopeStore,
         currentUserIdStore,
-        discordAuthor,
-        discordDisplayName,
+        bridgedAuthorName,
+        bridgedFrom,
         OpenChat,
         routeForChatIdentifier,
         selectedChatMembersStore,
@@ -100,10 +100,10 @@
     let multiUserChat = $derived(chatType === "group_chat" || chatType === "channel");
     let streak = $derived(sender?.streak ?? 0);
     let chitEarned = $derived(sender?.totalChitEarned ?? 0);
-    let discordUser = $derived(discordAuthor(senderContext));
+    let bridged = $derived(bridgedFrom(senderContext));
     let senderDisplayName = $derived(
-        discordUser !== undefined
-            ? discordDisplayName(discordUser)
+        bridged !== undefined
+            ? bridgedAuthorName(bridged)
             : client.getDisplayName(
                   msg.sender,
                   $selectedCommunityMembersStore,
@@ -238,7 +238,7 @@
             <BotBadge
                 bot={senderContext?.kind === "bot"}
                 webhook={senderContext?.kind === "webhook"}
-                discord={discordUser !== undefined} />
+                bridge={bridged?.kind} />
             {#if sender !== undefined && multiUserChat}
                 <WithRole
                     userId={sender.userId}

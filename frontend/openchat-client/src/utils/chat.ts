@@ -62,7 +62,8 @@ import {
     defaultChatPermissions,
     defaultOptionalChatPermissions,
     defaultOptionalMessagePermissions,
-    discordAuthor,
+    bridgedAuthorKey,
+    bridgedFrom,
     emptyChatMetrics,
     getContentAsFormattedText,
     getContentAsText,
@@ -548,8 +549,9 @@ export function sameUser(a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>)
     if (a.event.kind === "message" && b.event.kind === "message") {
         return (
             a.event.sender === b.event.sender &&
-            // The Discord bot sends every message it relays, so they're grouped by Discord author
-            discordAuthor(a.event.senderContext)?.id === discordAuthor(b.event.senderContext)?.id &&
+            // A bridge bot sends every message it relays, so they're grouped by their authors
+            bridgedAuthorKey(bridgedFrom(a.event.senderContext)) ===
+                bridgedAuthorKey(bridgedFrom(b.event.senderContext)) &&
             Math.abs(Number(b.timestamp - a.timestamp)) <
                 MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS
         );
@@ -742,7 +744,8 @@ function groupingEquivalent(
         am.messageId !== bm.messageId ||
         am.messageIndex !== bm.messageIndex ||
         am.sender !== bm.sender ||
-        discordAuthor(am.senderContext)?.id !== discordAuthor(bm.senderContext)?.id
+        bridgedAuthorKey(bridgedFrom(am.senderContext)) !==
+            bridgedAuthorKey(bridgedFrom(bm.senderContext))
     ) {
         return false;
     }
