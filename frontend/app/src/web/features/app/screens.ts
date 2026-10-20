@@ -51,7 +51,7 @@ export const middleScreens: Screens<MiddleRegion> = {
     empty: undefined,
 
     // the selected conversation (phase 3b)
-    conversation: undefined,
+    conversation: () => import("../conversation/ConversationScreen.svelte"),
 
     // explore communities
     explore: undefined,

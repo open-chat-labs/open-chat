@@ -574,6 +574,17 @@
         "doc": ""
       },
       {
+        "name": "body",
+        "type": "Snippet",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The text as the host renders it (markdown, mentions, links), shown in its place. `text` still sizes emoji-only messages."
+      },
+      {
         "name": "time",
         "type": "string",
         "default": "10:32",
@@ -2748,6 +2759,28 @@
         "required": false,
         "componentDefault": "true",
         "doc": ""
+      },
+      {
+        "name": "avatarSpace",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "With showAvatar off, keeps the avatar's space, so a sender's run split over several groups lines up."
+      },
+      {
+        "name": "endsRun",
+        "type": "boolean",
+        "default": true,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "true",
+        "doc": "Whether the last message ends the sender's run (the bubble's last-in-group shape); off when the run carries on in the next group."
       },
       {
         "name": "messages",
