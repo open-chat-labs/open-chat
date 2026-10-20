@@ -1,5 +1,5 @@
 import type { RouteParams } from "@client";
-import { railSelectionFor, regionsFor } from "./regions";
+import { activityOverPage, narrowBack, railItems, railSelectionFor, regionsFor } from "./regions";
 
 const none = { kind: "none" } as const;
 const chats = { kind: "chats" } as const;
@@ -38,12 +38,57 @@ describe("what a route shows", () => {
         });
     });
 
-    test("threads, activity and the wallet bring their own left column", () => {
-        expect(regionsFor(route({ kind: "threads_route", scope: community }), false)).toMatchObject(
-            {
-                left: { kind: "threads", scope: community },
-            },
-        );
+    test("?threads shows the list's threads on the left, over whatever the middle shows", () => {
+        const threads = new URLSearchParams("threads");
+        expect(
+            regionsFor(route({ kind: "chat_list_route", scope: community }), false, threads),
+        ).toMatchObject({
+            left: { kind: "threads", scope: community },
+            middle: { kind: "empty" },
+        });
+        expect(regionsFor(groupChat, false, threads)).toMatchObject({
+            left: { kind: "threads", scope: groupChat.scope },
+            middle: { kind: "conversation", route: groupChat },
+            // a narrow screen shows the conversation (a thread opened from the list)
+            narrowView: "middle",
+        });
+        // only over a chat list
+        expect(
+            regionsFor(route({ kind: "notifications_route", scope: none }), false, threads),
+        ).toMatchObject({ left: { kind: "activity" } });
+    });
+
+    test("?panel=activity puts the activity feed over a chat or wallet page, with Back", () => {
+        const activity = new URLSearchParams("panel=activity");
+        expect(regionsFor(groupChat, false, activity)).toMatchObject({
+            left: { kind: "activity", over: true },
+            middle: { kind: "conversation", route: groupChat },
+            narrowView: "left",
+        });
+        expect(
+            regionsFor(
+                route({ kind: "wallet_route", scope: none, view: "token", ledger: "l1" }),
+                false,
+                activity,
+            ),
+        ).toMatchObject({
+            left: { kind: "activity", over: true },
+            middle: { kind: "wallet", view: "token", ledger: "l1" },
+        });
+        // wins over ?threads
+        expect(
+            regionsFor(groupChat, false, new URLSearchParams("threads&panel=activity")),
+        ).toMatchObject({ left: { kind: "activity", over: true } });
+        // /notifications is the feed itself, without Back
+        expect(
+            regionsFor(route({ kind: "notifications_route", scope: none }), false, activity),
+        ).toMatchObject({ left: { kind: "activity" } });
+        expect(
+            regionsFor(route({ kind: "notifications_route", scope: none }), false, activity),
+        ).not.toMatchObject({ left: { over: true } });
+    });
+
+    test("activity and the wallet bring their own left column", () => {
         expect(
             regionsFor(route({ kind: "notifications_route", scope: none }), false),
         ).toMatchObject({
@@ -114,32 +159,106 @@ describe("what a route shows", () => {
 
 describe("the rail's selection", () => {
     test("follows the route's destination", () => {
-        expect(railSelectionFor(groupChat)).toEqual({ item: 0 });
+        expect(railSelectionFor(groupChat)).toEqual({ item: "chats" });
         expect(
             railSelectionFor(route({ kind: "chat_list_route", scope: { kind: "favourite" } })),
-        ).toEqual({
-            item: 1,
-        });
+        ).toEqual({ item: "favourites" });
         expect(railSelectionFor(route({ kind: "notifications_route", scope: none }))).toEqual({
-            item: 2,
+            item: "notifications",
         });
         expect(railSelectionFor(route({ kind: "wallet_route", scope: none, view: "all" }))).toEqual(
-            {
-                item: 3,
-            },
+            { item: "wallet" },
         );
     });
 
     test("selects a community's pin for its channels and threads", () => {
-        expect(railSelectionFor(route({ kind: "threads_route", scope: community }))).toEqual({
-            item: -1,
+        expect(railSelectionFor(route({ kind: "chat_list_route", scope: community }))).toEqual({
             communityId: "c1",
         });
     });
 
     test("selects nothing for explore", () => {
-        expect(railSelectionFor(route({ kind: "communities_route", scope: none }))).toEqual({
-            item: -1,
-        });
+        expect(railSelectionFor(route({ kind: "communities_route", scope: none }))).toEqual({});
+    });
+});
+
+describe("the rail's destinations", () => {
+    const ids = (hasFavourites: boolean, selection = {}) =>
+        railItems(hasFavourites, selection).map((item) => item.id);
+
+    test("are chats, notifications, favourites and the wallet, in that order", () => {
+        expect(ids(true)).toEqual(["chats", "notifications", "favourites", "wallet"]);
+    });
+
+    test("leave favourites out until something is a favourite, unless it's open", () => {
+        expect(ids(false)).toEqual(["chats", "notifications", "wallet"]);
+        expect(ids(false, { item: "favourites" })).toEqual([
+            "chats",
+            "notifications",
+            "favourites",
+            "wallet",
+        ]);
+    });
+});
+
+describe("a narrow screen's Back from the middle", () => {
+    test("goes to the list the conversation was opened from", () => {
+        expect(narrowBack(regionsFor(groupChat, false))).toBe("/chats");
+    });
+
+    test("keeps the thread list a thread was opened from", () => {
+        expect(narrowBack(regionsFor(groupChat, false, new URLSearchParams("threads")))).toBe(
+            "/chats?threads",
+        );
+        expect(
+            narrowBack(
+                regionsFor(
+                    route({ kind: "chat_list_route", scope: community }),
+                    false,
+                    new URLSearchParams("threads"),
+                ),
+            ),
+        ).toBe("/community/c1?threads");
+    });
+
+    test("goes to the wallet's tokens from a wallet page, and nowhere from the others", () => {
+        expect(
+            narrowBack(
+                regionsFor(
+                    route({ kind: "wallet_route", scope: none, view: "token", ledger: "l1" }),
+                    false,
+                ),
+            ),
+        ).toBe("/wallet");
+        expect(
+            narrowBack(regionsFor(route({ kind: "notifications_route", scope: none }), false)),
+        ).toBeUndefined();
+    });
+});
+
+describe("Notifications from the rail", () => {
+    test("opens the feed over a chat or a wallet page", () => {
+        expect(activityOverPage(regionsFor(groupChat, false))).toBe(true);
+        expect(
+            activityOverPage(
+                regionsFor(route({ kind: "wallet_route", scope: none, view: "all" }), false),
+            ),
+        ).toBe(true);
+        expect(
+            activityOverPage(regionsFor(groupChat, false, new URLSearchParams("panel=activity"))),
+        ).toBe(true);
+    });
+
+    test("goes to /notifications with nothing in the middle", () => {
+        expect(
+            activityOverPage(
+                regionsFor(route({ kind: "chat_list_route", scope: { kind: "chats" } }), false),
+            ),
+        ).toBe(false);
+        expect(
+            activityOverPage(
+                regionsFor(route({ kind: "notifications_route", scope: none }), false),
+            ),
+        ).toBe(false);
     });
 });

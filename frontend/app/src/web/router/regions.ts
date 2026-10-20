@@ -1,4 +1,4 @@
-import type { ChatListScope, RouteParams, WalletView } from "@client";
+import { routeForScope, type ChatListScope, type RouteParams, type WalletView } from "@client";
 
 // What a route shows (ROUTES.md). The screens behind each region come in later phases; until then
 // each one is a placeholder that says what it will be.
@@ -10,7 +10,8 @@ export type Regions =
           left?:
               | { kind: "chats"; scope: ChatListScope }
               | { kind: "threads"; scope: ChatListScope }
-              | { kind: "activity" }
+              // `over`: opened over another page's middle (?panel=activity), with Back to its own
+              | { kind: "activity"; over?: true }
               | { kind: "wallet" };
           middle:
               | { kind: "empty" }
@@ -39,8 +40,35 @@ const MARKETING_KINDS: RouteParams["kind"][] = [
     "csea_reporting_route",
 ];
 
-// `signedOut`: an anonymous user without an account, who gets Landing on "/" (as today)
-export function regionsFor(route: RouteParams, signedOut: boolean): Regions {
+/**
+ * The regions a route shows. `signedOut`: an anonymous user without an account, who gets Landing
+ * on "/" (as today). The URL's query can change the left column only, over whatever the middle
+ * shows (ROUTES.md): `?panel=activity` (decision 7) puts the activity feed over a chat list's or
+ * the wallet's page, and `?threads` a chat list's threads in place of the list.
+ */
+export function regionsFor(
+    route: RouteParams,
+    signedOut: boolean,
+    query: URLSearchParams = new URLSearchParams(),
+): Regions {
+    const regions = routeRegions(route, signedOut);
+    if (regions.area !== "app") return regions;
+    const left = regions.left;
+    if (query.get("panel") === "activity" && (left?.kind === "chats" || left?.kind === "wallet")) {
+        return { ...regions, left: { kind: "activity", over: true }, narrowView: "left" };
+    }
+    if (query.has("threads") && left?.kind === "chats") {
+        // a narrow screen still shows a conversation (a thread opened from the list) over the list
+        return {
+            ...regions,
+            left: { kind: "threads", scope: left.scope },
+            narrowView: regions.middle.kind === "empty" ? "left" : regions.narrowView,
+        };
+    }
+    return regions;
+}
+
+function routeRegions(route: RouteParams, signedOut: boolean): Regions {
     if (MARKETING_KINDS.includes(route.kind) || (route.kind === "home_route" && signedOut)) {
         return { area: "marketing", route };
     }
@@ -54,13 +82,6 @@ export function regionsFor(route: RouteParams, signedOut: boolean): Regions {
                 left: { kind: "chats", scope: route.scope },
                 middle: { kind: "conversation", route },
                 narrowView: "middle",
-            };
-        case "threads_route":
-            return {
-                area: "app",
-                left: { kind: "threads", scope: route.scope },
-                middle: { kind: "empty" },
-                narrowView: "left",
             };
         case "notifications_route":
             return {
@@ -101,36 +122,85 @@ export function regionsFor(route: RouteParams, signedOut: boolean): Regions {
     }
 }
 
-// The rail's destinations, in the order NavRail shows them
+// The rail's destinations, in the order NavRail shows them, with their labels: the app's own
+// strings, which are translated (the library's are English only so far)
 export const RAIL_ITEMS = [
-    { icon: "messages", path: "/chats" },
-    { icon: "heart", path: "/favourite" },
-    { icon: "bell", path: "/notifications" },
-    { icon: "wallet", path: "/wallet" },
+    { id: "chats", icon: "messages", label: "communities.dmsAndGroupChats", path: "/chats" },
+    { id: "notifications", icon: "bell", label: "upgrade.notifications", path: "/notifications" },
+    { id: "favourites", icon: "heart", label: "communities.favourites", path: "/favourite" },
+    { id: "wallet", icon: "wallet", label: "wallet", path: "/wallet" },
 ] as const;
 
-export type RailSelection =
-    | { item: number; communityId?: undefined }
-    | { item: -1; communityId?: string };
+export type RailItem = (typeof RAIL_ITEMS)[number];
+export type RailItemId = RailItem["id"];
 
-// Which rail destination a route belongs to: one of RAIL_ITEMS, or a community pin
+export type RailSelection =
+    | { item: RailItemId; communityId?: undefined }
+    | { item?: undefined; communityId?: string };
+
+/**
+ * The rail's destinations to show: Favourites only once something is a favourite (as the old
+ * UI's left nav), or while it's the page open.
+ */
+export function railItems(hasFavourites: boolean, selection: RailSelection): RailItem[] {
+    return RAIL_ITEMS.filter(
+        (item) => item.id !== "favourites" || hasFavourites || selection.item === "favourites",
+    );
+}
+
+// Which rail destination a route belongs to: one of RAIL_ITEMS, a community pin, or neither
 export function railSelectionFor(route: RouteParams): RailSelection {
     switch (route.kind) {
         case "notifications_route":
-            return { item: 2 };
+            return { item: "notifications" };
         case "wallet_route":
-            return { item: 3 };
+            return { item: "wallet" };
         case "communities_route":
         case "welcome_route":
         case "admin_route":
-            return { item: -1 };
+            return {};
     }
     switch (route.scope.kind) {
         case "favourite":
-            return { item: 1 };
+            return { item: "favourites" };
         case "community":
-            return { item: -1, communityId: route.scope.id.communityId };
+            return { communityId: route.scope.id.communityId };
         default:
-            return { item: 0 };
+            return { item: "chats" };
     }
+}
+
+/**
+ * Where a narrow screen's Back goes from the middle: the list it came from (the thread list
+ * keeping its ?threads), or the wallet's tokens; nowhere for the others.
+ */
+export function narrowBack(regions: Regions): string | undefined {
+    if (regions.area !== "app") return undefined;
+    const left = regions.left;
+    switch (left?.kind) {
+        case "chats":
+            return routeForScope(left.scope);
+        case "threads":
+            return `${routeForScope(left.scope)}?threads`;
+        case "wallet":
+            return "/wallet";
+        default:
+            return undefined;
+    }
+}
+
+/**
+ * Whether Notifications opens the activity feed over the page that's showing (?panel=activity,
+ * decision 7): over a chat or a wallet page it does, so the middle stays; otherwise it goes to
+ * /notifications.
+ */
+export function activityOverPage(regions: Regions): boolean {
+    return (
+        regions.area === "app" &&
+        regions.middle.kind !== "empty" &&
+        (regions.left?.kind === "chats" ||
+            regions.left?.kind === "threads" ||
+            regions.left?.kind === "wallet" ||
+            (regions.left?.kind === "activity" && regions.left.over === true))
+    );
 }

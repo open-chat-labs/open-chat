@@ -340,7 +340,6 @@ const wallet = (view: "all" | "token" | "send", ledger?: string): RouteParams =>
     ledger,
     scope: { kind: "none" },
 });
-const chatsThreads: RouteParams = { kind: "threads_route", scope: { kind: "chats" } };
 
 describe("the web UI's wallet views", () => {
     it("pushes going deeper: wallet → token page → send", () => {
@@ -368,33 +367,20 @@ describe("the web UI's wallet views", () => {
     });
 });
 
-describe("the web UI's thread lists", () => {
-    it("are a tab: pushed from the chats, popped back to them", () => {
-        expect(navigationMode("/chats/threads", chats)).toBe("push");
-        expect(navigationMode("/chats", chatsThreads)).toBe("pop");
-        expect(navigationMode(P.groupThread, chatsThreads)).toBe("push");
+describe("the thread list (?threads)", () => {
+    it("gets its own entry when opened, so Back closes it", () => {
+        expect(navigationMode(`${P.group}?threads`, chat, "overlay")).toBe("push");
+        expect(navigationMode(P.group, chat, "dismiss")).toBe("pop");
     });
 
-    it("push from a community (or its channel) to its threads, and pop back", () => {
-        const communityThreads: RouteParams = {
-            kind: "threads_route",
-            scope: { kind: "community", id: communityId },
-        };
-        expect(navigationMode("/community/comm_1/threads", community)).toBe("push");
-        expect(navigationMode("/community/comm_1/threads", channel)).toBe("push");
-        expect(navigationMode(P.community, communityThreads)).toBe("pop");
-        // another community's threads are a sideways move
-        expect(navigationMode("/community/comm_2/threads", community)).toBe("replace");
+    it("is replaced, not stacked, when the list goes to its first chat", () => {
+        expect(navigationMode(`${P.group}?threads`, chats, "auto")).toBe("replace");
     });
 
-    it("go back up to their scope's list", () => {
-        expect(parentRoute(chatsThreads)).toBe("/chats");
-        expect(parentRoute({ kind: "threads_route", scope: { kind: "favourite" } })).toBe(
-            "/favourite",
+    it("doesn't change how a thread opened from it is stacked", () => {
+        expect(navigationMode(`${P.groupMsgOpen}&threads`, chat)).toBe(
+            navigationMode(P.groupMsgOpen, chat),
         );
-        expect(
-            parentRoute({ kind: "threads_route", scope: { kind: "community", id: communityId } }),
-        ).toBe("/community/comm_1");
     });
 });
 

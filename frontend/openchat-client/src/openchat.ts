@@ -2125,6 +2125,7 @@ export class OpenChat {
 
     subscribeToMessageActivityFeed(
         subscribeFn: (value: MessageActivityFeedResponse, final: boolean) => void,
+        onError?: (err: unknown) => void,
     ) {
         this.#worker
             .stream({
@@ -2142,6 +2143,7 @@ export class OpenChat {
                     this.getMissingUsers(userIds);
                     subscribeFn(response, final);
                 },
+                onError,
             });
     }
 

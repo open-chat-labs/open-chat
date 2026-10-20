@@ -108,6 +108,8 @@
   let open = $derived(expanded);
   let localActive = $derived.by<number | null>(() => {
     void activeIndex;
+    // a host that changes which items it shows changes their indexes too
+    void items;
     return null;
   });
   let localPin = $derived.by<number | null | undefined>(() => {

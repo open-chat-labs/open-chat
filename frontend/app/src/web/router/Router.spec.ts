@@ -89,13 +89,14 @@ describe("the web UI's router", () => {
         expect(location.pathname).toBe("/chats");
     });
 
-    test("leaves a thread list where it is", async () => {
-        await open("/chats/threads");
-        expect(routeStore.value.kind).toBe("threads_route");
+    test("keeps the thread list (?threads) open over the chat list", async () => {
+        await open("/chats?threads");
+        expect(routeStore.value).toMatchObject({ kind: "chat_list_route" });
+        expect(location.pathname + location.search).toBe("/chats?threads");
     });
 
     test("loads the community whose threads are listed", async () => {
-        await open("/community/c1/threads");
+        await open("/community/c1?threads");
         expect(client.setSelectedCommunity).toHaveBeenCalledWith({
             kind: "community",
             communityId: "c1",
@@ -127,13 +128,6 @@ describe("the web UI's router", () => {
         await open("/chats");
         expect(gtag).toHaveBeenCalledWith("event", "page_view", { page_location: "/chats" });
         expect(window.scrollTo).toHaveBeenCalledWith({ behavior: "instant", top: 0 });
-    });
-
-    test("leaves a previewed community's thread list where it is", async () => {
-        client.setSelectedCommunity.mockResolvedValue(true);
-        await open("/community/c1/threads");
-        await tick();
-        expect(location.pathname).toBe("/community/c1/threads");
     });
 
     // History writes from mounting on `url` until the query string settles on `settled`
