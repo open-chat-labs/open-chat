@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Accept Bitcoin, Ethereum and Solana addresses in the address book, as well as ICRC-1 accounts and ICP account identifiers ([#10008](https://github.com/open-chat-labs/open-chat/pull/10008))
 - Send avatar changes to the UserIndex via the LocalUserIndex ([#10011](https://github.com/open-chat-labs/open-chat/pull/10011))
+- Send its events to its LocalUserIndex and other MultiUser canisters at `c2c_user` ([#10050](https://github.com/open-chat-labs/open-chat/pull/10050))
 
 ### Removed
 
