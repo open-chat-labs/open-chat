@@ -12022,6 +12022,7 @@ version = "0.1.0"
 dependencies = [
  "futures",
  "ic-cdk 0.20.3",
+ "ic-cdk-timers",
  "per_round_timer",
  "serde",
  "types",
