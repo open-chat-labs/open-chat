@@ -231,6 +231,14 @@ impl RuntimeState {
         }
     }
 
+    pub fn push_event_to_local_user_index(&mut self, event: local_user_index_canister::CommunityEvent) {
+        self.data.local_user_index_event_sync_queue.push(IdempotentEnvelope {
+            created_at: self.env.now(),
+            idempotency_id: self.env.rng().next_u64(),
+            value: event,
+        });
+    }
+
     pub fn push_bot_notifications(&mut self, notifications: Vec<Option<BotNotification>>) {
         for notification in notifications {
             self.push_bot_notification(notification);
@@ -682,6 +690,8 @@ struct Data {
     invite_code_enabled: Timestamped<bool>,
     frozen: Timestamped<Option<FrozenGroupInfo>>,
     timer_jobs: TimerJobs<TimerJob>,
+    // Nothing is sent through this any more. Kept for a release so that calls queued for a retry
+    // before the switch to events are still made, then removed.
     fire_and_forget_handler: FireAndForgetHandler,
     activity_notification_state: ActivityNotificationState,
     groups_being_imported: GroupsBeingImported,

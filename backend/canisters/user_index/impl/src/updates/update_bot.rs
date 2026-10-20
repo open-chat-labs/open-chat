@@ -1,5 +1,5 @@
 use crate::{
-    RuntimeState,
+    RuntimeState, StorageIndexEvent,
     model::{JSON_DATA_ENCODING_NOT_SUPPORTED, MAX_AVATAR_SIZE, MAX_COMMANDS, MAX_DESCRIPTION_LEN, user_map::UpdateBotResult},
     mutate_state,
 };
@@ -85,10 +85,10 @@ fn update_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
     // The bot uploads files as its own principal, so the StorageIndex needs to know the new one.
     // The previous one is left in place since removing it would delete the bot's files.
     if let Some(principal) = args.principal {
-        state.data.storage_index_user_sync_queue.push(UserConfig {
+        state.push_event_to_storage_index(StorageIndexEvent::AddOrUpdateUser(UserConfig {
             user_id: principal,
             byte_limit: ONE_GB,
-        });
+        }));
     }
 
     if update_local_user_indexes {
@@ -109,12 +109,21 @@ fn update_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     if installation_update.has_updates() {
         let bot = state.data.users.get_bot(&args.bot_id).unwrap();
+        let installations: Vec<_> = bot
+            .installations
+            .iter()
+            .map(|(location, details)| {
+                (
+                    *location,
+                    state.local_user_index_of_bot_installation(*location, details.local_user_index),
+                )
+            })
+            .collect();
 
-        for (location, details) in bot.installations.iter() {
-            let local_user_index = state.local_user_index_of_bot_installation(*location, details.local_user_index);
-            state.data.local_user_index_event_sync_queue.push(
+        for (location, local_user_index) in installations {
+            state.push_event_to_local_user_index_canister(
                 local_user_index,
-                UserIndexEvent::BotUpdateInstallation(*location, installation_update.clone()),
+                UserIndexEvent::BotUpdateInstallation(location, installation_update.clone()),
             );
         }
     }

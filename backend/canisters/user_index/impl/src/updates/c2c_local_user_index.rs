@@ -1,6 +1,7 @@
 use crate::guards::caller_is_local_user_index_canister;
 use crate::updates::c2c_csam_detected::c2c_csam_detected_impl;
 use crate::updates::c2c_moderation_referral::c2c_moderation_referral_impl;
+use crate::{IdentityEvent, StorageIndexEvent};
 use crate::{RuntimeState, UserIdentity, UserRegisteredEventPayload, mutate_state};
 use candid::Principal;
 use canister_api_macros::update;
@@ -315,16 +316,16 @@ You can change your username at any time by clicking \"Profile settings\" from t
         );
     }
 
-    state.data.storage_index_user_sync_queue.push(UserConfig {
+    state.push_event_to_storage_index(StorageIndexEvent::AddOrUpdateUser(UserConfig {
         user_id: principal,
         byte_limit: 100 * ONE_MB,
-    });
+    }));
 
-    state.data.identity_user_sync_queue.push(UserIdentity {
+    state.push_event_to_identity(IdentityEvent::SetUserIdentity(UserIdentity {
         principal,
         user_id: Some(user_id),
         email,
-    });
+    }));
 }
 
 #[cfg(test)]

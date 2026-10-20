@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Send events to the LocalUserIndexes, the Identity canister and the StorageIndex at their `c2c_user_index` endpoints, the StorageIndex's from one queue ([#10023](https://github.com/open-chat-labs/open-chat/pull/10023))
+- Send moderation actions and suspensions to groups and communities, and vault ops to the StorageIndex, as events ([#10033](https://github.com/open-chat-labs/open-chat/pull/10033))
 - Reject bots which use the JSON data encoding ([#10055](https://github.com/open-chat-labs/open-chat/pull/10055))
 
 ### Fixed

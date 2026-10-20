@@ -9009,6 +9009,7 @@ dependencies = [
  "sns_governance_canister",
  "sns_governance_canister_c2c_client",
  "stable_memory",
+ "timer_job_queues",
  "tracing",
  "types",
  "user_index_canister_c2c_client",
@@ -11068,6 +11069,7 @@ dependencies = [
  "tracing",
  "types",
  "user_index_canister",
+ "user_index_canister_c2c_client",
  "utils",
 ]
 
@@ -12581,6 +12583,7 @@ dependencies = [
  "rand 0.10.2",
  "serde",
  "stable_memory",
+ "timer_job_queues",
  "tracing",
  "translations_canister",
  "types",

@@ -1,3 +1,4 @@
+use crate::StorageIndexEvent;
 use crate::{RuntimeState, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -126,5 +127,8 @@ pub(crate) fn remove_files(community_id: CommunityId, state: &mut RuntimeState) 
     let accessor_ids: Vec<_> = std::iter::once(community_id.into())
         .chain(state.data.deleted_groups.imported_into(community_id).map(CanisterId::from))
         .collect();
-    state.data.storage_index_accessors_to_remove_queue.push_many(accessor_ids);
+    let now = state.env.now();
+    for accessor_id in accessor_ids {
+        state.push_event_to_storage_index(StorageIndexEvent::RemoveAccessor(accessor_id), now);
+    }
 }
