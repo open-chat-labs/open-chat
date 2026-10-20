@@ -230,7 +230,12 @@ one selected (decision 7, `firstChatRoute`), except on a narrow screen.
 goes to the route's message (`/:mi`, highlighted), keeps its place and marks what's been seen
 read. Each message is a `MessageGroup`; dates are `UnreadDivider` pills, and an "Unread messages"
 divider stays above the first message that was unread when the chat was opened. A private chat
-that isn't joined shows no messages, as before. Reading only: the composer is phase 3c.
+that isn't joined shows no messages, as before.
+
+**Composer (phase 3c).** Under the messages, `ComposerBar` sends text with its mentions and
+markdown as the old composer did, keeps a draft per chat and says who's typing. Where the reader
+can't send (frozen, blocked, a preview, lapsed, signed out, no permission) the old footer's reason
+shows instead.
 
 Still to come:
 

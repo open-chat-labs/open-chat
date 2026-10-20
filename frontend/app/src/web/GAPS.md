@@ -165,6 +165,18 @@ design export needs. Each entry says where it came up.
   favourite, mute and copy link only: the rest open dialogs (phase 5), and calls are phase 8. The
   old list's go-to-mention button and sticky date aren't carried over; it keeps go-to-latest.
   Own messages show no name (the design's "You" would be the lower-case app string).
+- **Composer, first cut** (`features/conversation/Composer.svelte`, phase 3c): text only.
+  Attachments, GIFs, voice, replies, edits and the "+" menu are phase 6 (`MessageComposer` hides
+  "+" and the GIF tab without their handlers). There's no @mention picker (typed @usernames are
+  still sent as mentions), no rich-text editor (the old one showed markdown as it was typed), no
+  bot commands and no link-count warning. A chat's rules are asked for in a plain dialog
+  (`RulesDialog`, the old modal's words; no design for it), and the throttle countdown shows as the
+  composer's banner. Enter follows the app's Enter-to-send setting (`enterSends`). A preview
+  shows "This chat is read-only" where the old footer had Join and Leave (the join gate is
+  phase 9).
+- **Composer draft and input** (by hand, phase 3c): `MessageComposer` kept its draft to itself.
+  It now takes `text` (the draft to start from) and `onInput` (the draft as it changes), so the
+  app keeps a draft per chat and tells the others someone is typing.
 
 - **Native apps**: this tree doesn't register the native event listeners or signal `svelteReady`,
   so native builds leave it out whatever `OC_WEB_LAYOUT` says (`webLayoutFlag` in

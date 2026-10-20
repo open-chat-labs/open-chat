@@ -5,7 +5,6 @@
 <script lang="ts">
     import {
         allUsersStore,
-        byContext as typersByContext,
         chatIdentifiersEqual,
         chatIdentifierToString,
         chatsInitialisedStore,
@@ -47,6 +46,7 @@
     import { getContext, untrack, type Snippet } from "svelte";
     import { _ } from "svelte-i18n";
     import type { MiddleRegion, ScreenProps } from "../app/screens";
+    import Composer from "./Composer.svelte";
     import {
         eventLines,
         MessageRows,
@@ -124,9 +124,6 @@
             : chat.kind === "direct_chat"
               ? client.displayName($allUsersStore.get(chat.them.userId))
               : chat.name,
-    );
-    const typingText = $derived(
-        chat && client.getTypingString($_, $allUsersStore, { chatId: chat.id }, $typersByContext),
     );
     const favourite = $derived(chat !== undefined && $favouritesStore.has(chat.id));
 
@@ -337,7 +334,6 @@
                 chat.kind === "direct_chat" ? chat.them.userId : chatIdentifierToString(chat.id),
             )}
             verified={chat.kind === "group_chat" && chat.verified}
-            presence={typingText ?? ""}
             visibility={chat.kind === "direct_chat"
                 ? undefined
                 : chat.public
@@ -474,6 +470,11 @@
                 </ChatEventList>
             </div>
         {/if}
+
+        <!-- one composer per chat: it starts from that chat's draft -->
+        {#key chatIdentifierToString(chat.id)}
+            <Composer {chat} />
+        {/key}
     </div>
 {/if}
 

@@ -9,11 +9,14 @@
         querystringStore,
         routeStore,
         sortedCommunitiesStore,
+        subscribe,
         type CommunitySummary,
     } from "@client";
     import NavRail from "@openchat/ui/src/features/components/NavRail.svelte";
     import DialogShell from "@openchat/ui/src/lib/components/DialogShell.svelte";
     import IconButton from "@openchat/ui/src/lib/components/IconButton.svelte";
+    import { i18nKey } from "@i18n/i18n";
+    import { toastStore } from "@src/stores/toast";
     import { navigate } from "@src/utils/navigation";
     import { removeQueryStringParam, withQueryStringFlag } from "@src/utils/urls";
     import { getContext } from "svelte";
@@ -22,6 +25,7 @@
     import { RightColumnState } from "../../shell/rightColumn.svelte";
     import Shell from "../../shell/Shell.svelte";
     import { currentShellLayout } from "../../shell/viewport.svelte";
+    import RulesDialog from "../conversation/RulesDialog.svelte";
     import { pinsFor } from "../rail/rail.adapter";
     import Placeholder from "./Placeholder.svelte";
     import RegionScreen from "./RegionScreen.svelte";
@@ -49,6 +53,14 @@
     // the labels are the app's own strings, translated here (the rail shows other text as it is)
     const items = $derived(railShown.map((item) => ({ icon: item.icon, label: $_(item.label) })));
     const activeItem = $derived(railShown.findIndex((item) => item.id === selection.item));
+
+    // a message that couldn't be sent and can't be retried says so (as the old UI's Home); one that
+    // can shows as failed, with Retry
+    $effect(() =>
+        subscribe("sendMessageFailed", (alert) => {
+            if (alert) toastStore.showFailureToast(i18nKey("errorSendingMessage"));
+        }),
+    );
 
     // Dialogs people link to are query params over whatever page is open (ROUTES.md)
     const profileOpen = $derived($querystringStore.has("profile"));
@@ -140,6 +152,9 @@
         {/if}
     </div>
 {/snippet}
+
+<!-- sending in a chat whose rules the reader hasn't accepted asks for them first -->
+<RulesDialog />
 
 {#if profileOpen}
     <!-- TODO(phase 8): ProfileDialog -->
