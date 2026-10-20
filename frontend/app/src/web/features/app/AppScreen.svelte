@@ -1,5 +1,5 @@
 <!-- The signed-in (and guest) app: the shell with the regions the route asks for (router/regions.ts),
-     the rail wired to the routes. The regions are placeholders until their screens are built. -->
+     each showing its screen (screens.ts), and the rail wired to the routes. -->
 <script lang="ts">
     import {
         anonUserStore,
@@ -23,6 +23,8 @@
     import { currentShellLayout } from "../../shell/viewport.svelte";
     import { pinsFor } from "../rail/rail.adapter";
     import Placeholder from "./Placeholder.svelte";
+    import RegionScreen from "./RegionScreen.svelte";
+    import { leftScreens, middleScreens, type ScreenContext } from "./screens";
 
     let { regions }: { regions: Extract<Regions, { area: "app" }> } = $props();
 
@@ -56,45 +58,23 @@
               : undefined,
     );
 
-    function describe(middle: typeof regions.middle): [string, string] {
-        switch (middle.kind) {
-            case "conversation": {
-                const r = middle.route;
-                const parts = [JSON.stringify(r.chatId)];
-                if (r.messageIndex !== undefined) parts.push(`message ${r.messageIndex}`);
-                if (r.threadMessageIndex !== undefined) parts.push(`thread message ${r.threadMessageIndex}`);
-                if (r.open) parts.push("thread open");
-                return ["Conversation", parts.join(" · ")];
-            }
-            case "wallet":
-                return [`Wallet: ${middle.view}`, middle.ledger ?? ""];
-            case "explore":
-                return ["Explore communities", ""];
-            case "admin":
-                return ["Platform operator console", ""];
-            default:
-                return ["Nothing selected", ""];
-        }
-    }
-
-    function describeLeft(left: NonNullable<typeof regions.left>): [string, string] {
-        switch (left.kind) {
-            case "chats":
-            case "threads":
-                return [left.kind === "chats" ? "Chat list" : "Threads", JSON.stringify(left.scope)];
-            case "activity":
-                return ["Activity", ""];
-            case "wallet":
-                return ["Wallet panel", ""];
-        }
-    }
+    // built once, each field read as it's used: a crossing of the narrow breakpoint doesn't touch a
+    // screen that only reads the right column
+    const context: ScreenContext = {
+        rightColumn,
+        get narrow() {
+            return narrow;
+        },
+        get back() {
+            return back;
+        },
+    };
 </script>
 
 <!-- a route without a left column has none (ROUTES.md, Regions), and a narrow screen shows its middle -->
 {#snippet leftColumn()}
     {#if regions.left}
-        {@const [title, detail] = describeLeft(regions.left)}
-        <Placeholder {title} {detail} />
+        <RegionScreen region={regions.left} screens={leftScreens} {context} column="left" />
     {/if}
 {/snippet}
 
@@ -129,33 +109,39 @@
             onSignIn={() => client.updateIdentityState({ kind: "logging_in" })} />
     {/snippet}
     {#snippet middle()}
-        {@const [title, detail] = describe(regions.middle)}
-        <div class="middle">
-            <!-- TODO(phase 3): ConversationHeader's back button and panel toggle -->
-            <div class="toolbar">
-                {#if narrow && back !== undefined}
-                    <IconButton
-                        icon="back"
-                        variant="ghost"
-                        label="ui.common.back"
-                        onClick={() => navigate(back)} />
-                {/if}
-                <span class="gap"></span>
-                {#if regions.rightColumn !== false}
-                    <IconButton
-                        icon="panel"
-                        variant="ghost"
-                        pressed={rightColumn.open}
-                        label={rightColumn.open
-                            ? "ui.conversationHeader.hidePanel"
-                            : "ui.conversationHeader.showPanel"}
-                        onClick={() => rightColumn.toggle()} />
-                {/if}
-            </div>
-            <Placeholder {title} {detail} />
-        </div>
+        <RegionScreen
+            region={regions.middle}
+            screens={middleScreens}
+            {context}
+            column="middle"
+            toolbar={middleToolbar} />
     {/snippet}
 </Shell>
+
+<!-- over a middle placeholder, or a screen still loading or that failed to: the back and panel
+     buttons its screen will have (ConversationHeader's) -->
+{#snippet middleToolbar()}
+    <div class="toolbar">
+        {#if narrow && back !== undefined}
+            <IconButton
+                icon="back"
+                variant="ghost"
+                label="ui.common.back"
+                onClick={() => navigate(back)} />
+        {/if}
+        <span class="gap"></span>
+        {#if regions.rightColumn !== false}
+            <IconButton
+                icon="panel"
+                variant="ghost"
+                pressed={rightColumn.open}
+                label={rightColumn.open
+                    ? "ui.conversationHeader.hidePanel"
+                    : "ui.conversationHeader.showPanel"}
+                onClick={() => rightColumn.toggle()} />
+        {/if}
+    </div>
+{/snippet}
 
 {#if profileOpen}
     <!-- TODO(phase 8): ProfileDialog -->
@@ -167,11 +153,6 @@
 {/if}
 
 <style>
-    .middle {
-        position: relative;
-        height: 100%;
-    }
-
     .toolbar {
         position: absolute;
         inset-block-start: var(--space-12);

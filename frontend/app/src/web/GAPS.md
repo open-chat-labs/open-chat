@@ -9,17 +9,25 @@ design export needs. Each entry says where it came up.
   `App.svelte` uses the default (pink).
 - **Font size setting**: the app's font size setting (`fontSize` store) isn't mapped onto the
   library's `--text-*` tokens yet.
-- **Shell breakpoints vs layout tokens**: the brief's shell breakpoints (§3: 768 / 1200 / 1476 /
-  1876px, right column 375 / 425 / 500px) don't match the library's layout tokens (`--bp-*`
-  1280–2500px, `--panel-info-*` 325–450px, `--panel-list-*`). The shell follows the brief
-  (`shell/layout.ts`), which the build brief makes the acceptance check. The tokens should be
-  brought in line, or the brief corrected.
-- **Right column widths**: the brief says 375 / 425 / 500px "as width grows" without the widths
-  where it grows. `shell/layout.ts` uses 425px from 1876px and 500px from 2500px; confirm against
-  the prototype.
+- **Shell breakpoints vs layout tokens**: the shell's breakpoints and widths (Fix Brief - App
+  Shell Layout: 768 / 1200 / 1476 / 1876 / 2476px, chat list `clamp(350px, 30cqw, 550px)`, right
+  column 375 / 425 / 500px) don't match the library's layout tokens (`--bp-*` 1280–2500px,
+  `--panel-info-*` 325–450px, `--panel-list-*`). The shell follows the brief (`shell/layout.ts`
+  and Shell's container queries). The tokens should be brought in line, or the brief corrected.
+- **Shell minimum width**: the brief gives the shell a 900px minimum and the island an 825px one
+  up to a 1255px shell, but at 900px the island has only 806px (900 − 2 × 12 padding − 60 rail −
+  10 gap). The shell's minimum is 919px instead, so the two agree; a smaller window scrolls the
+  shell (both ways, below 919 × 720px) rather than the page. Confirm against the prototype.
 - **Nav rail width**: the tokens said `--rail-collapsed: 76px` / `--rail-expanded: 282px`, while
   `NavRail` drew 60px / 283px. The tokens now match what the rail draws and `NavRail` reads them,
-  as does the shell's rail slot. Confirm 60px against the prototype.
+  as does the shell's rail slot. Confirm 60px against the prototype. Floating over the island
+  (below 1876px) the brief has the expanded rail at 320px: a new token, `--rail-floating`, which
+  the shell gives NavRail as `--rail-expanded` while it floats.
+- **Shell's backdrop and floating rail shadow**: the brief gives the right column modal's backdrop
+  as `rgba(0,0,0,.55)` and the floating rail's shadow as `24px 0 48px rgba(0,0,0,.45)`, one
+  value for both modes. The shell uses the theme's `--scrim` (`rgba(5,5,8,.62)` dark,
+  `rgba(24,20,30,.36)` light) and `--shadow-panel` (`0 8px 24px`, .28 dark, .1 light), so the
+  theme stays in one place. If the prototype has the brief's values, the tokens should change.
 - **Not found page**: the design has none. `RouteScreen` shows an `EmptyState` with the existing
   page's copy ("Page not found", untranslated as it is today) and a Home button.
 - **Messages have no ids**: `GroupMessage`, `ChatBubble` and `MessageGroup`'s callbacks are
@@ -125,6 +133,16 @@ design export needs. Each entry says where it came up.
 - **Android APK link**: Landing's `apkHref` has no URL in the app, so that choice isn't a link.
 
 ### Wiring
+
+- **Toasts**: the app's toast (`toastStore`, e.g. "Failed to un-archive chat") shows as the
+  library's `UndoToast` without its action (`shell/Toasts.svelte`). The design has no failure tone
+  for a toast, so a failure looks like any other message.
+- **Chat list, first cut** (`features/chats`, phase 3a): not yet carried over from the old row:
+  avatars (swatches stand in: Swatches), the typing line, online presence, unread mentions,
+  disappearing-message notices, translations and restricted content in the preview, webhook
+  senders, the thread count, archive / delete in the row menu, and server-side search (users and
+  groups outside the list). The community header's menu only marks all read; its other items open
+  dialogs later phases build.
 
 - **Native apps**: this tree doesn't register the native event listeners or signal `svelteReady`,
   so native builds leave it out whatever `OC_WEB_LAYOUT` says (`webLayoutFlag` in

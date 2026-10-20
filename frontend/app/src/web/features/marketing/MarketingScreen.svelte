@@ -24,7 +24,7 @@
     import { AuthDialogProps, pageSignIns } from "../auth/authDialog.svelte";
     import { createAuth } from "../auth/signIn";
     import { accentStore } from "../../accent";
-    import { LazyModule } from "./lazyModule.svelte";
+    import { LazyModule } from "../../lazyModule.svelte";
     import { isEmailLinkPage, learnPageFor, learnPath } from "./marketing";
 
     let { route }: { route: RouteParams } = $props();
@@ -93,7 +93,7 @@
     const learn = $derived(learnPageFor(route));
 
     // Learn's content is loaded the first time a Learn page shows, so Landing doesn't carry it; a
-    // failed load says so with a retry, and the next Learn page tries again too
+    // failed load says so, with a retry that reloads the page (a failed import stays failed)
     const learnLoader = new LazyModule(() => import("./learn"));
     $effect(() => {
         if (learn !== undefined) untrack(() => learnLoader.want());
@@ -185,7 +185,7 @@
             title={$_("unexpectedError")}
             body=" "
             actionLabel="ui.common.retry"
-            actionHandler={() => learnLoader.want()} />
+            actionHandler={() => location.reload()} />
     </div>
 {:else if learn !== undefined}
     <!-- Learn's content is loading -->
