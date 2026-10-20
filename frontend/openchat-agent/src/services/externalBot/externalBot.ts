@@ -40,21 +40,29 @@ const ApiBotResponse = Type.Union([
 type ApiBotResponse = Static<typeof ApiBotResponse>;
 
 export function getBotDefinition(endpoint: string): Promise<BotDefinitionResponse> {
-    return fetch(`${endpoint}/bot_definition`)
-        .then((res) => {
-            if (res.ok) {
-                return res.json();
-            } else {
-                const msg = `Failed to load external bot schema: ${res.status}, ${
-                    res.statusText
-                }, ${JSON.stringify(endpoint)}`;
-                return {
-                    kind: "bot_definition_failure",
-                    error: msg,
-                };
-            }
-        })
-        .then(validateBotDefinition);
+    return fetch(`${endpoint}/bot_definition`).then(async (res): Promise<BotDefinitionResponse> => {
+        if (!res.ok) {
+            const msg = `Failed to load external bot schema: ${res.status}, ${
+                res.statusText
+            }, ${JSON.stringify(endpoint)}`;
+            return {
+                kind: "bot_definition_failure",
+                error: msg,
+            };
+        }
+        // The endpoint is supplied by the bot's developer and may answer 200 with a body which
+        // isn't JSON (e.g. an HTML page), which is a bad definition rather than our failure
+        let json: unknown;
+        try {
+            json = await res.json();
+        } catch (err) {
+            return {
+                kind: "bot_definition_failure",
+                error: `External bot schema is not valid JSON: ${JSON.stringify(endpoint)}, ${err}`,
+            };
+        }
+        return validateBotDefinition(json);
+    });
 }
 
 function validateBotDefinition(json: unknown): BotDefinitionResponse {
