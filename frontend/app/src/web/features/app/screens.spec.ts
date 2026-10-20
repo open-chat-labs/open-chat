@@ -7,7 +7,7 @@ describe("a placeholder's account of a region", () => {
         );
     });
 
-    test("takes nested values too, leaving out kinds and scopes, and writes big numbers out", () => {
+    test("takes nested values too, with their kinds, and writes big numbers out", () => {
         const conversation = {
             kind: "conversation",
             route: {
@@ -19,7 +19,22 @@ describe("a placeholder's account of a region", () => {
                 threadMessageIndex: undefined,
             },
         };
-        expect(regionSummary(conversation)).toBe("userId: abc · messageIndex: 12 · open: true");
+        expect(regionSummary(conversation)).toBe(
+            "route: global_chat_selected_route · scope: chats · chatId: direct_chat · userId: abc · messageIndex: 12 · open: true",
+        );
+    });
+
+    test("tells chat lists apart by their scope", () => {
+        const community = (communityId: string) => ({
+            kind: "chats",
+            scope: { kind: "community", id: { kind: "community", communityId } },
+        });
+        expect(regionSummary(community("A"))).toBe("scope: community · communityId: A");
+        expect(regionSummary(community("B"))).not.toBe(regionSummary(community("A")));
+        const direct = { kind: "chats", scope: { kind: "direct_chat" } };
+        expect(regionSummary(direct)).toBe("scope: direct_chat");
+        const groupThreads = { kind: "threads", scope: { kind: "group_chat" } };
+        expect(regionSummary(groupThreads)).toBe("scope: group_chat");
     });
 
     test("is empty for a region with nothing else", () => {

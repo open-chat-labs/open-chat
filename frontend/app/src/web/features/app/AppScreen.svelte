@@ -118,7 +118,8 @@
     {/snippet}
 </Shell>
 
-<!-- over a middle placeholder: the back and panel buttons its screen will have (ConversationHeader's) -->
+<!-- over a middle placeholder, or a screen still loading or that failed to: the back and panel
+     buttons its screen will have (ConversationHeader's) -->
 {#snippet middleToolbar()}
     <div class="toolbar">
         {#if narrow && back !== undefined}

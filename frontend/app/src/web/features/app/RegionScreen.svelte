@@ -20,16 +20,17 @@
         context: ScreenContext;
         /** Which column, so placeholders can be told apart (both can be "wallet"). */
         column: "left" | "middle";
-        /** Shown over a placeholder: the buttons its screen will have (Back, the panel toggle). */
+        /**
+         * Shown over a placeholder, and over a screen loading or that failed to load: the buttons
+         * the screen will have (Back, the panel toggle), so there's a way out meanwhile.
+         */
         toolbar?: Snippet;
     };
 
     let { region, screens, context, column, toolbar }: Props = $props();
 
     type Loaded = { default: Component<ScreenProps<R>> };
-    const load = $derived(
-        screens[region.kind as R["kind"]] as (() => Promise<Loaded>) | undefined,
-    );
+    const load = $derived(screens[region.kind as R["kind"]] as (() => Promise<Loaded>) | undefined);
     const loader = $derived(load && screenLoader(load));
 
     $effect(() => {
@@ -40,41 +41,41 @@
 
 <!-- a new kind is a new screen: the old one goes before the new region reaches it -->
 {#key region.kind}
-    {#if loader}
-        {#if loader.module}
-            <loader.module.default {region} {context} />
-        {:else if loader.failed}
-            <!-- the chunk didn't load (a flaky network, or a deploy since the page loaded). The
-                 browser keeps a failed import failed for the page's lifetime (importing it again
-                 doesn't fetch it), so the retry reloads the page -->
-            <div class="state">
-                <EmptyState
-                    preset="error"
-                    title={$_("unexpectedError")}
-                    body={$_("regionLoadFailed")}
-                    actionLabel="ui.common.retry"
-                    actionHandler={() => location.reload()} />
-            </div>
-        {:else}
-            <div class="state"><Spinner /></div>
-        {/if}
+    {#if loader?.module}
+        <loader.module.default {region} {context} />
     {:else}
-        <div class="placeholder">
+        <div class="state">
             {@render toolbar?.()}
-            <Placeholder title="{column}: {region.kind}" detail={regionSummary(region)} />
+            {#if !loader}
+                <Placeholder title="{column}: {region.kind}" detail={regionSummary(region)} />
+            {:else if loader.failed}
+                <!-- the chunk didn't load (a flaky network, or a deploy since the page loaded). The
+                     browser keeps a failed import failed for the page's lifetime (importing it
+                     again doesn't fetch it), so the retry reloads the page -->
+                <div class="centred">
+                    <EmptyState
+                        preset="error"
+                        title={$_("unexpectedError")}
+                        body={$_("regionLoadFailed")}
+                        actionLabel="ui.common.retry"
+                        actionHandler={() => location.reload()} />
+                </div>
+            {:else}
+                <div class="centred"><Spinner /></div>
+            {/if}
         </div>
     {/if}
 {/key}
 
 <style>
     .state {
-        display: grid;
-        place-items: center;
+        position: relative;
         height: 100%;
     }
 
-    .placeholder {
-        position: relative;
+    .centred {
+        display: grid;
+        place-items: center;
         height: 100%;
     }
 </style>

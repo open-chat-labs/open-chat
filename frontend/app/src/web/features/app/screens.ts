@@ -81,15 +81,20 @@ export function screenLoader<M extends AnyScreen>(load: () => Promise<M>): LazyM
 
 /**
  * A placeholder's account of a region, for development: its values on one line ("userId: abc ·
- * messageIndex: 12"), nested ones included, without the kinds and scopes that only repeat it.
+ * messageIndex: 12"), nested ones included. A nested object's kind is told under its own key
+ * ("scope: community"), unless it only repeats the kind around it; the region's own is the title.
  */
 export function regionSummary(region: { kind: string }): string {
     const parts: string[] = [];
-    const walk = (value: unknown, key?: string) => {
+    const walk = (value: unknown, key?: string, outerKind?: string) => {
         if (value === undefined || value === null) return;
         if (typeof value === "object") {
+            const kind = "kind" in value ? String(value.kind) : undefined;
+            if (key !== undefined && kind !== undefined && kind !== outerKind) {
+                parts.push(`${key}: ${kind}`);
+            }
             for (const [k, v] of Object.entries(value)) {
-                if (k !== "kind" && k !== "scope") walk(v, k);
+                if (k !== "kind") walk(v, k, kind);
             }
         } else if (key !== undefined) {
             parts.push(`${key}: ${String(value)}`);
