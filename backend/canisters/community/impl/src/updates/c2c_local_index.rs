@@ -8,7 +8,6 @@ use canister_tracing_macros::trace;
 use community_canister::LocalIndexEvent;
 use community_canister::c2c_local_index::*;
 use constants::OPENCHAT_BOT_USER_ID;
-use msgpack::serialize_then_unwrap;
 use std::cell::LazyCell;
 use types::{EventIndex, GroupNameChanged, ModerationCategories, TimestampMillis, Timestamped};
 
@@ -91,10 +90,10 @@ fn process_event<F: FnOnce() -> TimestampMillis>(
                     )
                 {
                     if is_csam {
-                        // Notify the user_index (via the group_index) which applies the CSAM
+                        // Notify the user_index (via the local_user_index) which applies the CSAM
                         // auto-sanction: delete the message, suspend the sender, and post an
                         // alert to the internal moderation channel
-                        let args = group_index_canister::c2c_csam_detected::Args {
+                        let args = local_user_index_canister::CsamDetected {
                             channel_id: Some(channel_id),
                             thread_root_message_index: ev.thread_root_message_index,
                             message_index: message.message_index,
@@ -105,16 +104,14 @@ fn process_event<F: FnOnce() -> TimestampMillis>(
                             blob_references: message.content.blob_references(),
                             media_matches: Vec::new(),
                         };
-                        state.data.fire_and_forget_handler.send(
-                            state.data.group_index_canister_id,
-                            "c2c_csam_detected_msgpack".to_string(),
-                            serialize_then_unwrap(&args),
-                        );
+                        state.push_event_to_local_user_index(local_user_index_canister::CommunityEvent::CsamDetected(
+                            Box::new(args),
+                        ));
                     } else {
                         // Refer for human review as a suspected ToS violation: the user_index
                         // creates a resolvable report and a moderator decides; no automatic
                         // action is taken against the message or the sender
-                        let args = group_index_canister::c2c_moderation_referral::Args {
+                        let args = local_user_index_canister::ModerationReferral {
                             channel_id: Some(channel_id),
                             thread_root_message_index: ev.thread_root_message_index,
                             message_index: message.message_index,
@@ -124,19 +121,17 @@ fn process_event<F: FnOnce() -> TimestampMillis>(
                             content_excerpt: message.content.moderation_input().text,
                             blob_references: message.content.blob_references(),
                         };
-                        state.data.fire_and_forget_handler.send(
-                            state.data.group_index_canister_id,
-                            "c2c_moderation_referral_msgpack".to_string(),
-                            serialize_then_unwrap(&args),
-                        );
+                        state.push_event_to_local_user_index(local_user_index_canister::CommunityEvent::ModerationReferral(
+                            Box::new(args),
+                        ));
                     }
                 }
             }
         }
         LocalIndexEvent::MediaScanMatched(ev) => {
             // The same escalation as classifier-detected CSAM: flag the message (which locks
-            // the content behind the read/undelete gate) and notify the user_index via the
-            // group_index, which quarantines the blobs, deletes the message, suspends the
+            // the content behind the read/undelete gate) and notify the user_index (via the
+            // local_user_index), which quarantines the blobs, deletes the message, suspends the
             // sender and posts an alert to the internal moderation channel.
             // The escalation stands even if an edit inside the scan window replaced the
             // matched media: the content was posted publicly and hash-matched a known-CSAM
@@ -177,7 +172,7 @@ fn process_event<F: FnOnce() -> TimestampMillis>(
                         blob_references.push(matched.clone());
                     }
                 }
-                let args = group_index_canister::c2c_csam_detected::Args {
+                let args = local_user_index_canister::CsamDetected {
                     channel_id: Some(channel_id),
                     thread_root_message_index: ev.thread_root_message_index,
                     message_index,
@@ -188,11 +183,7 @@ fn process_event<F: FnOnce() -> TimestampMillis>(
                     blob_references,
                     media_matches: ev.matches,
                 };
-                state.data.fire_and_forget_handler.send(
-                    state.data.group_index_canister_id,
-                    "c2c_csam_detected_msgpack".to_string(),
-                    serialize_then_unwrap(&args),
-                );
+                state.push_event_to_local_user_index(local_user_index_canister::CommunityEvent::CsamDetected(Box::new(args)));
             }
         }
         LocalIndexEvent::ModerationFlagsChanged(ev) => {

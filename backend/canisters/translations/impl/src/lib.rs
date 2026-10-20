@@ -2,12 +2,15 @@ use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
 use fire_and_forget_handler::FireAndForgetHandler;
+use model::user_index_event_batch::UserIndexEventBatch;
 use model::{pending_payments_queue::PendingPaymentsQueue, translations::Translations};
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::BTreeMap;
+use timer_job_queues::BatchedTimerJobQueue;
 use timer_job_types::TimerJob;
-use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
+use types::{BuildVersion, CanisterId, Cycles, IdempotentEnvelope, TimestampMillis, Timestamped};
 use utils::env::Environment;
 
 mod guards;
@@ -33,6 +36,19 @@ struct RuntimeState {
 impl RuntimeState {
     pub fn new(env: Box<dyn Environment>, data: Data) -> RuntimeState {
         RuntimeState { env, data }
+    }
+
+    pub fn push_event_to_user_index(&mut self, event: user_index_canister::TranslationsEvent) {
+        let user_index_canister_id = self.data.user_index_canister_id;
+        let event = IdempotentEnvelope {
+            created_at: self.env.now(),
+            idempotency_id: self.env.rng().next_u64(),
+            value: event,
+        };
+        self.data
+            .user_index_event_sync_queue
+            .get_or_insert_with(|| BatchedTimerJobQueue::new(user_index_canister_id, false))
+            .push(event);
     }
 
     pub fn is_caller_deployment_operator(&self) -> bool {
@@ -76,7 +92,12 @@ struct Data {
     pub pending_payments_queue: PendingPaymentsQueue,
     #[serde(default)]
     pub timer_jobs: TimerJobs<TimerJob>,
+    // Nothing is sent through this any more. Kept for a release so that calls queued for a retry
+    // before the switch to events are still made, then removed.
     pub fire_and_forget_handler: FireAndForgetHandler,
+    // Created on its first event
+    #[serde(default)]
+    pub user_index_event_sync_queue: Option<BatchedTimerJobQueue<UserIndexEventBatch>>,
     pub user_notifications_last_sent: TimestampMillis,
     pub test_mode: bool,
 }
@@ -97,6 +118,7 @@ impl Data {
             pending_payments_queue: PendingPaymentsQueue::default(),
             timer_jobs: TimerJobs::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
+            user_index_event_sync_queue: None,
             user_notifications_last_sent: 0,
             test_mode,
         }

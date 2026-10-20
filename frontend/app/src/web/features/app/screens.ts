@@ -34,7 +34,7 @@ export type Screens<R extends { kind: string }> = {
 
 export const leftScreens: Screens<LeftRegion> = {
     // the chat list: DMs and groups, favourites, a community's channels (phase 3a)
-    chats: undefined,
+    chats: () => import("../chats/ChatsScreen.svelte"),
 
     // the threads followed (phase 3)
     threads: undefined,

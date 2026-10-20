@@ -1,3 +1,4 @@
+use crate::StorageIndexEvent;
 use crate::guards::caller_is_openchat_user;
 use crate::model::user_map::Bot;
 use crate::model::{MAX_AVATAR_SIZE, MAX_COMMANDS, MAX_DESCRIPTION_LEN};
@@ -98,10 +99,10 @@ fn register_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
         None,
     );
 
-    state.data.storage_index_user_sync_queue.push(UserConfig {
+    state.push_event_to_storage_index(StorageIndexEvent::AddOrUpdateUser(UserConfig {
         user_id: args.principal,
         byte_limit: ONE_GB,
-    });
+    }));
 
     state.data.event_store_client.push(
         EventBuilder::new("user_registered", now)

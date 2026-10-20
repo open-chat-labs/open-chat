@@ -2,17 +2,16 @@ use crate::RuntimeState;
 use crate::model::reported_messages::ReportedMessage;
 use crate::timer_job_types::{SetUserSuspended, TimerJob, UnsuspendUser};
 use constants::{DAY_IN_MS, OPENCHAT_BOT_USER_ID};
-use fire_and_forget_handler::FireAndForgetHandler;
 use local_user_index_canister::{OpenChatBotMessageV2, UserIndexEvent};
 use rand::RngExt;
 use storage_bucket_canister::c2c_vault_sync::VaultCaptureMetadata;
 use storage_index_canister::c2c_vault_ops::{
-    ApplyVerdictOp, Args as VaultOpsArgs, DestroyOp, QuarantineOp, SetLegalHoldOp, UnquarantineOp, VaultOp, VaultReviewer,
+    ApplyVerdictOp, DestroyOp, QuarantineOp, SetLegalHoldOp, UnquarantineOp, VaultOp, VaultReviewer,
 };
 use tracing::error;
 use types::{BlobReference, Milliseconds};
 use types::{
-    CanisterId, ChannelId, Chat, MessageContentInitial, MessageId, MessageIndex, ModerationCategories, ModerationReportContent,
+    Chat, MessageContentInitial, MessageId, MessageIndex, ModerationCategories, ModerationReportContent,
     ModerationReportStatus, SuspensionDuration, TextContent, TimestampMillis, UserId,
 };
 
@@ -92,11 +91,7 @@ pub fn post_moderation_alert(alert: ModerationAlert, state: &mut RuntimeState) {
         message_id: channel_message_id,
         report,
     };
-    state.data.fire_and_forget_handler.send(
-        community_id.into(),
-        "c2c_send_moderation_report_msgpack".to_string(),
-        msgpack::serialize_then_unwrap(&args),
-    );
+    state.push_event_to_community(community_id, community_canister::UserIndexEvent::SendModerationReport(args));
 }
 
 // Posts a plain-text OC-bot notice into the internal moderation channel: for alarms which
@@ -206,11 +201,7 @@ pub fn post_moderation_notice(text: String, state: &mut RuntimeState) {
         message_id,
         text,
     };
-    state.data.fire_and_forget_handler.send(
-        community_id.into(),
-        "c2c_send_moderation_notice_msgpack".to_string(),
-        msgpack::serialize_then_unwrap(&args),
-    );
+    state.push_event_to_community(community_id, community_canister::UserIndexEvent::SendModerationNotice(args));
 }
 
 // Updates the status shown on the alert message in the internal moderation channel
@@ -234,10 +225,9 @@ pub fn update_moderation_alert_status(
         auto_sanctioned: None,
         reporters: None,
     };
-    state.data.fire_and_forget_handler.send(
-        community_id.into(),
-        "c2c_update_moderation_report_status_msgpack".to_string(),
-        msgpack::serialize_then_unwrap(&args),
+    state.push_event_to_community(
+        community_id,
+        community_canister::UserIndexEvent::UpdateModerationReportStatus(args),
     );
 }
 
@@ -269,10 +259,9 @@ pub fn update_moderation_alert_authority_report(
         auto_sanctioned: None,
         reporters: None,
     };
-    state.data.fire_and_forget_handler.send(
-        community_id.into(),
-        "c2c_update_moderation_report_status_msgpack".to_string(),
-        msgpack::serialize_then_unwrap(&args),
+    state.push_event_to_community(
+        community_id,
+        community_canister::UserIndexEvent::UpdateModerationReportStatus(args),
     );
 }
 
@@ -298,10 +287,9 @@ pub fn update_moderation_alert_quarantined(reported_message: &ReportedMessage, s
         auto_sanctioned: Some(true),
         reporters: Some(reported_message.reports.keys().copied().collect()),
     };
-    state.data.fire_and_forget_handler.send(
-        community_id.into(),
-        "c2c_update_moderation_report_status_msgpack".to_string(),
-        msgpack::serialize_then_unwrap(&args),
+    state.push_event_to_community(
+        community_id,
+        community_canister::UserIndexEvent::UpdateModerationReportStatus(args),
     );
 }
 
@@ -309,21 +297,23 @@ pub fn delete_message(
     chat_id: Chat,
     thread_root_message_index: Option<MessageIndex>,
     message_id: MessageId,
-    fire_and_forget_handler: &mut FireAndForgetHandler,
+    state: &mut RuntimeState,
 ) {
     match chat_id {
-        Chat::Group(group_id) => delete_group_message(
-            group_id.into(),
-            thread_root_message_index,
-            message_id,
-            fire_and_forget_handler,
+        Chat::Group(group_id) => state.push_event_to_group(
+            group_id,
+            group_canister::UserIndexEvent::DeleteMessages(group_canister::DeleteMessages {
+                thread_root_message_index,
+                message_ids: vec![message_id],
+            }),
         ),
-        Chat::Channel(community_id, channel_id) => delete_channel_message(
-            community_id.into(),
-            channel_id,
-            thread_root_message_index,
-            message_id,
-            fire_and_forget_handler,
+        Chat::Channel(community_id, channel_id) => state.push_event_to_community(
+            community_id,
+            community_canister::UserIndexEvent::DeleteMessages(community_canister::DeleteMessages {
+                channel_id,
+                thread_root_message_index,
+                message_ids: vec![message_id],
+            }),
         ),
         // Don't delete messages from direct chats - the reporter can delete it themselves
         Chat::Direct(_) => (),
@@ -340,16 +330,9 @@ pub fn delete_and_flag_message(
     message_id: MessageId,
     flags: u32,
     already_deleted: bool,
-    fire_and_forget_handler: &mut FireAndForgetHandler,
+    state: &mut RuntimeState,
 ) {
-    set_flags_and_maybe_delete(
-        chat_id,
-        thread_root_message_index,
-        message_id,
-        flags,
-        !already_deleted,
-        fire_and_forget_handler,
-    );
+    set_flags_and_maybe_delete(chat_id, thread_root_message_index, message_id, flags, !already_deleted, state);
 }
 
 pub fn set_message_moderation_flags(
@@ -357,16 +340,9 @@ pub fn set_message_moderation_flags(
     thread_root_message_index: Option<MessageIndex>,
     message_id: MessageId,
     flags: u32,
-    fire_and_forget_handler: &mut FireAndForgetHandler,
+    state: &mut RuntimeState,
 ) {
-    set_flags_and_maybe_delete(
-        chat_id,
-        thread_root_message_index,
-        message_id,
-        flags,
-        false,
-        fire_and_forget_handler,
-    );
+    set_flags_and_maybe_delete(chat_id, thread_root_message_index, message_id, flags, false, state);
 }
 
 fn set_flags_and_maybe_delete(
@@ -375,7 +351,7 @@ fn set_flags_and_maybe_delete(
     message_id: MessageId,
     flags: u32,
     delete: bool,
-    fire_and_forget_handler: &mut FireAndForgetHandler,
+    state: &mut RuntimeState,
 ) {
     match chat_id {
         Chat::Group(group_id) => {
@@ -385,11 +361,7 @@ fn set_flags_and_maybe_delete(
                 flags,
                 delete,
             };
-            fire_and_forget_handler.send(
-                group_id.into(),
-                "c2c_flag_message_msgpack".to_string(),
-                msgpack::serialize_then_unwrap(&args),
-            );
+            state.push_event_to_group(group_id, group_canister::UserIndexEvent::FlagMessage(args));
         }
         Chat::Channel(community_id, channel_id) => {
             let args = community_canister::c2c_flag_message::Args {
@@ -399,54 +371,10 @@ fn set_flags_and_maybe_delete(
                 flags,
                 delete,
             };
-            fire_and_forget_handler.send(
-                community_id.into(),
-                "c2c_flag_message_msgpack".to_string(),
-                msgpack::serialize_then_unwrap(&args),
-            );
+            state.push_event_to_community(community_id, community_canister::UserIndexEvent::FlagMessage(args));
         }
         Chat::Direct(_) => {}
     }
-}
-
-fn delete_channel_message(
-    canister_id: CanisterId,
-    channel_id: ChannelId,
-    thread_root_message_index: Option<MessageIndex>,
-    message_id: MessageId,
-    fire_and_forget_handler: &mut FireAndForgetHandler,
-) {
-    let args = community_canister::delete_messages::Args {
-        channel_id,
-        thread_root_message_index,
-        message_ids: vec![message_id],
-        as_platform_moderator: Some(true),
-        new_achievement: false,
-    };
-    fire_and_forget_handler.send(
-        canister_id,
-        "delete_messages_msgpack".to_string(),
-        msgpack::serialize_then_unwrap(&args),
-    );
-}
-
-fn delete_group_message(
-    canister_id: CanisterId,
-    thread_root_message_index: Option<MessageIndex>,
-    message_id: MessageId,
-    fire_and_forget_handler: &mut FireAndForgetHandler,
-) {
-    let args = group_canister::delete_messages::Args {
-        thread_root_message_index,
-        message_ids: vec![message_id],
-        as_platform_moderator: Some(true),
-        new_achievement: false,
-    };
-    fire_and_forget_handler.send(
-        canister_id,
-        "delete_messages_msgpack".to_string(),
-        msgpack::serialize_then_unwrap(&args),
-    );
 }
 
 // Suspends the sender of CSAM indefinitely. `caused_by_report` = the report whose DETECTION
@@ -563,7 +491,7 @@ pub fn undelete_message(
     chat_id: Chat,
     thread_root_message_index: Option<MessageIndex>,
     message_id: MessageId,
-    fire_and_forget_handler: &mut FireAndForgetHandler,
+    state: &mut RuntimeState,
 ) {
     match chat_id {
         Chat::Group(group_id) => {
@@ -571,11 +499,7 @@ pub fn undelete_message(
                 thread_root_message_index,
                 message_id,
             };
-            fire_and_forget_handler.send(
-                group_id.into(),
-                "c2c_moderation_undelete_msgpack".to_string(),
-                msgpack::serialize_then_unwrap(&args),
-            );
+            state.push_event_to_group(group_id, group_canister::UserIndexEvent::ModerationUndelete(args));
         }
         Chat::Channel(community_id, channel_id) => {
             let args = community_canister::c2c_moderation_undelete::Args {
@@ -583,11 +507,7 @@ pub fn undelete_message(
                 thread_root_message_index,
                 message_id,
             };
-            fire_and_forget_handler.send(
-                community_id.into(),
-                "c2c_moderation_undelete_msgpack".to_string(),
-                msgpack::serialize_then_unwrap(&args),
-            );
+            state.push_event_to_community(community_id, community_canister::UserIndexEvent::ModerationUndelete(args));
         }
         Chat::Direct(_) => (),
     }
@@ -599,7 +519,7 @@ pub fn hard_delete_message(
     chat_id: Chat,
     thread_root_message_index: Option<MessageIndex>,
     message_id: MessageId,
-    fire_and_forget_handler: &mut FireAndForgetHandler,
+    state: &mut RuntimeState,
 ) {
     match chat_id {
         Chat::Group(group_id) => {
@@ -607,11 +527,7 @@ pub fn hard_delete_message(
                 thread_root_message_index,
                 message_id,
             };
-            fire_and_forget_handler.send(
-                group_id.into(),
-                "c2c_moderation_hard_delete_msgpack".to_string(),
-                msgpack::serialize_then_unwrap(&args),
-            );
+            state.push_event_to_group(group_id, group_canister::UserIndexEvent::ModerationHardDelete(args));
         }
         Chat::Channel(community_id, channel_id) => {
             let args = community_canister::c2c_moderation_hard_delete::Args {
@@ -619,11 +535,7 @@ pub fn hard_delete_message(
                 thread_root_message_index,
                 message_id,
             };
-            fire_and_forget_handler.send(
-                community_id.into(),
-                "c2c_moderation_hard_delete_msgpack".to_string(),
-                msgpack::serialize_then_unwrap(&args),
-            );
+            state.push_event_to_community(community_id, community_canister::UserIndexEvent::ModerationHardDelete(args));
         }
         Chat::Direct(_) => (),
     }
@@ -635,16 +547,12 @@ pub fn hard_delete_message(
 // the verdict, so the verdict-time clock alone would expire early by the filing lag
 const VAULT_RETENTION_MS: Milliseconds = 365 * DAY_IN_MS;
 
+// Each op is its own event, sent in order on the one queue to the StorageIndex, so the ops a
+// change needs are still applied in the order given
 fn send_vault_ops(ops: Vec<VaultOp>, state: &mut RuntimeState) {
-    if ops.is_empty() {
-        return;
+    for op in ops {
+        state.push_event_to_storage_index(crate::StorageIndexEvent::VaultOp(op));
     }
-    let args = VaultOpsArgs { ops };
-    state.data.fire_and_forget_handler.send(
-        state.data.storage_index_canister_id,
-        "c2c_vault_ops".to_string(),
-        candid::encode_one(&args).unwrap(),
-    );
 }
 
 // Quarantines the report's media in the evidence vault: blocks public serving, pins the blobs

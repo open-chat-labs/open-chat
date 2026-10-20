@@ -42,4 +42,5 @@ timer_job_queues = { path = "../../../libraries/timer_job_queues" }
 user_index_canister = { path = "../../user_index/api" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
+user_index_canister_c2c_client = { path = "../../user_index/c2c_client" }
 utils = { path = "../../../libraries/utils" }

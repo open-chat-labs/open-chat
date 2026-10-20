@@ -1,12 +1,11 @@
 use crate::updates::c2c_notify_low_balance::{top_up_amount, top_up_child_canister};
-use crate::{CanisterToRefund, RuntimeState, child_min_cycles_balance, jobs, mutate_state, read_state};
+use crate::{CanisterToRefund, GroupIndexEvent, RuntimeState, child_min_cycles_balance, jobs, mutate_state, read_state};
 use constants::{DAY_IN_MS, min_cycles_balance};
-use oc_error_codes::OCErrorCode;
 use per_round_timer::PerRoundTimer;
 use std::cell::RefCell;
 use std::time::Duration;
 use tracing::{error, info};
-use types::{CanisterId, CommunityId, Cycles, Milliseconds, NotifyLowBalanceResponse, UnitResult};
+use types::{CanisterId, CommunityId, Cycles, Milliseconds, NotifyLowBalanceResponse};
 use utils::canister_timers::run_now_then_interval;
 use utils::cycles::can_spend_cycles;
 
@@ -89,7 +88,7 @@ async fn run_async(canister_id: CanisterId) {
             // the community is removed instead.
             if status.module_hash.is_none() {
                 if read_state(|state| state.data.local_communities.contains(&canister_id.into())) {
-                    notify_community_uninstalled(canister_id.into()).await;
+                    notify_community_uninstalled(canister_id.into());
                 } else {
                     // Topping up a canister with no code would only strand the cycles in it
                     info!(%canister_id, "Not topping up a canister which has no code");
@@ -135,22 +134,12 @@ fn child_canister_min_cycles_balance(canister_id: CanisterId, state: &RuntimeSta
 // Tells the GroupIndex, which stops listing the community, then stops tracking it here. The
 // canister itself is kept, empty and still controlled by this canister, since it may hold tokens
 // (eg. unclaimed prizes) which deleting it would put beyond reach for good.
-async fn notify_community_uninstalled(community_id: CommunityId) {
-    let group_index_canister_id = read_state(|state| state.data.group_index_canister_id);
-
-    let args = group_index_canister::c2c_notify_community_uninstalled::Args { community_id };
-    match group_index_canister_c2c_client::c2c_notify_community_uninstalled(group_index_canister_id, &args).await {
-        Ok(UnitResult::Success) => {}
-        // The GroupIndex removed the community on an earlier notification
-        Ok(UnitResult::Error(error)) if error.matches_code(OCErrorCode::CommunityNotFound) => {}
-        response => {
-            error!(%community_id, ?response, "Failed to notify the GroupIndex of an uninstalled community");
-            return;
-        }
-    }
-
+fn notify_community_uninstalled(community_id: CommunityId) {
     mutate_state(|state| {
         if state.data.local_communities.delete(&community_id) {
+            let now = state.env.now();
+            state.push_event_to_group_index(GroupIndexEvent::CommunityUninstalled(community_id), now);
+
             let canister_id = community_id.into();
             state.data.communities_requiring_upgrade.remove_failed(&canister_id);
             state.data.community_event_sync_queue.take(&canister_id);

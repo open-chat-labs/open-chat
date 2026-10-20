@@ -23,7 +23,6 @@ function fakeClient() {
         removeCommunityIfPreviewing: vi.fn(),
         openThreadFromMessageIndex: vi.fn(),
         filterRightPanelHistory: vi.fn(),
-        selectDefaultChat: vi.fn(),
         setSelectedChat: vi.fn(),
         updateIdentityState: vi.fn(),
         isChatListRoute: (r: RouteParams) => r.kind === "chat_list_route",
@@ -83,15 +82,16 @@ describe("the web UI's router", () => {
         );
     });
 
-    test("takes a chat list with nothing selected to its default chat", async () => {
-        await open("/favourite");
-        expect(client.selectDefaultChat).toHaveBeenCalled();
+    test("leaves a chat list with no chats to go to where it is", async () => {
+        // which chat a list goes to is firstChatRoute's (firstChat.spec.ts)
+        await open("/chats");
+        expect(routeStore.value).toMatchObject({ kind: "chat_list_route" });
+        expect(location.pathname).toBe("/chats");
     });
 
     test("leaves a thread list where it is", async () => {
         await open("/chats/threads");
         expect(routeStore.value.kind).toBe("threads_route");
-        expect(client.selectDefaultChat).not.toHaveBeenCalled();
     });
 
     test("loads the community whose threads are listed", async () => {
@@ -133,7 +133,7 @@ describe("the web UI's router", () => {
         client.setSelectedCommunity.mockResolvedValue(true);
         await open("/community/c1/threads");
         await tick();
-        expect(client.selectDefaultChat).not.toHaveBeenCalled();
+        expect(location.pathname).toBe("/community/c1/threads");
     });
 
     // History writes from mounting on `url` until the query string settles on `settled`

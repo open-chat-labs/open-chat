@@ -115,7 +115,7 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
                     reported_message.chat_id,
                     reported_message.thread_root_message_index,
                     reported_message.message_id,
-                    &mut state.data.fire_and_forget_handler,
+                    state,
                 );
                 state
                     .data
@@ -148,7 +148,7 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
                     reported_message.message_id,
                     ModerationCategories::SEXUAL_MINORS.bits(),
                     reported_message.already_deleted,
-                    &mut state.data.fire_and_forget_handler,
+                    state,
                 );
                 moderation::suspend_sender(reported_message.sender, None, now, state);
                 state
@@ -174,7 +174,7 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
                     reported_message.chat_id,
                     reported_message.thread_root_message_index,
                     reported_message.message_id,
-                    &mut state.data.fire_and_forget_handler,
+                    state,
                 );
                 moderation::unquarantine_blobs(&reported_message.blob_references, moderator, args.report_index, state);
                 let _ = moderation::downgrade_suspension_to_upheld_violation(
@@ -189,7 +189,7 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
                         reported_message.chat_id,
                         reported_message.thread_root_message_index,
                         reported_message.message_id,
-                        &mut state.data.fire_and_forget_handler,
+                        state,
                     );
                 }
                 // An escalated report can have been protectively quarantined by a CSAM
@@ -203,7 +203,7 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
                         reported_message.thread_root_message_index,
                         reported_message.message_id,
                         0,
-                        &mut state.data.fire_and_forget_handler,
+                        state,
                     );
                 }
                 moderation::suspend_sender_for_upheld_violation(reported_message.sender, now, state);
@@ -247,7 +247,7 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
                     reported_message.chat_id,
                     reported_message.thread_root_message_index,
                     reported_message.message_id,
-                    &mut state.data.fire_and_forget_handler,
+                    state,
                 );
                 moderation::unquarantine_blobs(&reported_message.blob_references, moderator, args.report_index, state);
                 if !unsuspended {
@@ -265,7 +265,7 @@ fn resolve_moderation_report_impl(args: Args, state: &mut RuntimeState) -> OCRes
                 reported_message.thread_root_message_index,
                 reported_message.message_id,
                 0,
-                &mut state.data.fire_and_forget_handler,
+                state,
             );
         }
     }
