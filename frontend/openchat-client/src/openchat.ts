@@ -7377,6 +7377,9 @@ export class OpenChat {
                 BRIDGED_USER_RETRY_DELAY,
             );
         }
+
+        // A linked account's messages are shown as its OpenChat user's
+        await this.getMissingUsers(users.flatMap((u) => u.linkedUserId ?? []));
     }
 
     getMissingUsers(userIds: Iterable<string>): Promise<UsersResponse> {

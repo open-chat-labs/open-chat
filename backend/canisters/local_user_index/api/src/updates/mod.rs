@@ -7,6 +7,7 @@ pub mod bot_edit_message;
 pub mod bot_invite_users;
 pub mod bot_remove_user;
 pub mod bot_send_message;
+pub mod bot_set_bridged_user_link;
 pub mod c2c_community;
 pub mod c2c_community_canister;
 pub mod c2c_create_community;

@@ -5,6 +5,7 @@
         currentUserIdStore,
         BRIDGE_PLATFORM_NAMES,
         bridgedAuthorName,
+        allUsersStore,
         bridgedFrom,
         bridgedUserKey,
         bridgedUsersStore,
@@ -108,12 +109,18 @@
     let bridgedUser = $derived(
         bridged !== undefined ? $bridgedUsersStore.get(bridgedUserKey(bridged)!) : undefined,
     );
+    // The OpenChat user who linked the account the message was relayed from, shown as its author
+    let linkedUser = $derived(
+        bridgedUser?.linkedUserId !== undefined
+            ? $allUsersStore.get(bridgedUser.linkedUserId)
+            : undefined,
+    );
     let senderDisplayName = $derived(
-        bridged !== undefined
+        bridged !== undefined && linkedUser === undefined
             ? (bridgedAuthorName(bridgedUser) ??
               $_("bridgedUserUnknown", { values: { platform: BRIDGE_PLATFORM_NAMES[bridged.kind] } }))
             : client.getDisplayName(
-                  msg.sender,
+                  linkedUser?.userId ?? msg.sender,
                   $selectedCommunityMembersStore,
                   $selectedChatWebhooksStore,
               ),

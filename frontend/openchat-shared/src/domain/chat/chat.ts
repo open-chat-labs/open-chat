@@ -1008,7 +1008,9 @@ export type BridgedUser =
 
 export type BridgedUserSummary = {
     user: BridgedUser;
-    // When the profile last changed
+    // The OpenChat user who has linked the account to themself, if any, so its messages show as theirs
+    linkedUserId?: string;
+    // When the profile or the link last changed
     updated: bigint;
 };
 

@@ -1,4 +1,4 @@
-use crate::{BlobReference, TimestampMillis};
+use crate::{BlobReference, TimestampMillis, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
@@ -28,7 +28,10 @@ pub enum BridgedUser {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct BridgedUserSummary {
     pub user: BridgedUser,
-    // When the profile last changed
+    // The OpenChat user who has linked the account to themself, if any, so clients can show the
+    // account's messages as theirs
+    pub linked_user_id: Option<UserId>,
+    // When the profile or the link last changed
     pub updated: TimestampMillis,
 }
 

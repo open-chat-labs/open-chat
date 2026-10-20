@@ -19,6 +19,7 @@
         type ChatType,
         currentUserIdStore,
         currentUserStore,
+        allUsersStore,
         bridgedFrom,
         bridgedUserKey,
         bridgedUsersStore,
@@ -313,7 +314,7 @@
 
 
     function openUserProfile(ev?: Event) {
-        if (sender?.kind === "bot") {
+        if (sender?.kind === "bot" && linkedUser === undefined) {
             botProfile = {
                 botId: sender.userId,
                 chatId,
@@ -323,7 +324,7 @@
             ev?.target?.dispatchEvent(
                 new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
                     detail: {
-                        userId: msg.sender,
+                        userId: linkedUser?.userId ?? msg.sender,
                         chatButton: multiUserChat,
                         inGlobalContext: false,
                     },
@@ -369,6 +370,12 @@
     let bridged = $derived(bridgedFrom(senderContext));
     let bridgedUser = $derived(
         bridged !== undefined ? $bridgedUsersStore.get(bridgedUserKey(bridged)!) : undefined,
+    );
+    // The OpenChat user who linked the account the message was relayed from, shown as its author
+    let linkedUser = $derived(
+        bridgedUser?.linkedUserId !== undefined
+            ? $allUsersStore.get(bridgedUser.linkedUserId)
+            : undefined,
     );
     // A tip would go to the bridge bot, not the author shown
     let canTip = $derived(
@@ -633,9 +640,11 @@
                     <div class:first class="avatar">
                         <Avatar
                             onClick={openUserProfile}
-                            url={bridged !== undefined
-                                ? client.bridgedAvatarUrl(bridged, bridgedUser)
-                                : client.userAvatarUrl(sender)}
+                            url={linkedUser !== undefined
+                                ? client.userAvatarUrl(linkedUser)
+                                : bridged !== undefined
+                                  ? client.bridgedAvatarUrl(bridged, bridgedUser)
+                                  : client.userAvatarUrl(sender)}
                             size={"sm"}></Avatar>
                     </div>
                 {/if}

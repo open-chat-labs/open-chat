@@ -65,6 +65,9 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         LocalUserIndexEvent::BridgedUserUpdated(user) => {
             state.data.bridged_users.update(*user, **now);
         }
+        LocalUserIndexEvent::BridgedUserLinked(ev) => {
+            state.data.bridged_users.set_link(ev.user, ev.user_id, ev.linked, **now);
+        }
         LocalUserIndexEvent::UserRegistered(ev) => {
             process_new_user(ev.principal, ev.username, ev.email, ev.user_id, ev.referred_by, caller, state)
         }

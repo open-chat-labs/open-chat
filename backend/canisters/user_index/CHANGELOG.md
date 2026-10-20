@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Add `set_bridge_bot` for a platform operator to set the bot that bridges Discord or Telegram ([#10052](https://github.com/open-chat-labs/open-chat/pull/10052))
 - Keep the latest profile of each account a bridge bot relays messages from, with `bridged_users` to look them up ([#10052](https://github.com/open-chat-labs/open-chat/pull/10052))
+- Record the OpenChat user each bridged account is linked to, returned by `bridged_users` ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
 
 ### Changed
 

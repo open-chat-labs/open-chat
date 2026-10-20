@@ -40,6 +40,16 @@ pub enum LocalUserIndexEvent {
     ModerationReferral(Box<ModerationReferral>),
     // The profile a bridge bot relayed a message with, for the registry of bridged accounts
     BridgedUserUpdated(Box<BridgedUser>),
+    BridgedUserLinked(Box<BridgedUserLinked>),
+}
+
+// An OpenChat user linked an account on another platform to themself, or unlinked it, through its
+// bridge bot. The LocalUserIndex has checked a command they ran says so.
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct BridgedUserLinked {
+    pub user: BridgedUser,
+    pub user_id: UserId,
+    pub linked: bool,
 }
 
 // A message a chat's classifier or media scan found to be CSAM: the auto-sanction is applied

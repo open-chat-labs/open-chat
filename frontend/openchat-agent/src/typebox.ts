@@ -8542,6 +8542,15 @@ export const LocalUserIndexActiveProposalTalliesResponse = /* @__PURE__ */ Type.
     Success: LocalUserIndexActiveProposalTalliesSuccessResult,
 });
 
+export type LocalUserIndexBotSetBridgedUserLinkArgs = Static<
+    typeof LocalUserIndexBotSetBridgedUserLinkArgs
+>;
+export const LocalUserIndexBotSetBridgedUserLinkArgs = /* @__PURE__ */ Type.Object({
+    chat_context: BotChatContext,
+    bridged_user: BridgedUser,
+    linked: Type.Boolean(),
+});
+
 export type LocalUserIndexBotRemoveUserArgs = Static<typeof LocalUserIndexBotRemoveUserArgs>;
 export const LocalUserIndexBotRemoveUserArgs = /* @__PURE__ */ Type.Object({
     community_or_group_context: BotCommunityOrGroupContext,
@@ -8902,6 +8911,7 @@ export const BotCommandInitial = /* @__PURE__ */ Type.Object({
 export type BridgedUserSummary = Static<typeof BridgedUserSummary>;
 export const BridgedUserSummary = /* @__PURE__ */ Type.Object({
     user: BridgedUser,
+    linked_user_id: Type.Optional(UserId),
     updated: Type.BigInt(),
 });
 

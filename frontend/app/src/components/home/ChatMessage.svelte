@@ -4,7 +4,7 @@
     import Typing from "@shared_components/Typing.svelte";
     import { trackedEffect } from "@src/utils/effects.svelte";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
-    import { AvatarSize, type ChatIdentifier, chatIdentifiersEqual, chatListScopeStore, type ChatType, BRIDGE_PLATFORM_NAMES, bridgedAuthorName, bridgedFrom, bridgedUserKey, bridgedUsersStore, currentUserIdStore, currentUserStore, type EnhancedReplyContext, iconSize, localUpdates, type Member, type Message, type MessageReminderCreatedContent, mobileWidth, OpenChat, publish, routeForMessage, routeStore, screenWidth, ScreenWidth, selectedChatBlockedUsersStore, selectedChatMembersStore, selectedChatWebhooksStore, selectedCommunityMembersStore, type SelectedEmoji, selectedServerChatStore, type SenderContext, translationsStore, unconfirmedReadByThem, undeletingMessagesStore, type UserSummary } from "@client";
+    import { allUsersStore, AvatarSize, type ChatIdentifier, chatIdentifiersEqual, chatListScopeStore, type ChatType, BRIDGE_PLATFORM_NAMES, bridgedAuthorName, bridgedFrom, bridgedUserKey, bridgedUsersStore, currentUserIdStore, currentUserStore, type EnhancedReplyContext, iconSize, localUpdates, type Member, type Message, type MessageReminderCreatedContent, mobileWidth, OpenChat, publish, routeForMessage, routeStore, screenWidth, ScreenWidth, selectedChatBlockedUsersStore, selectedChatMembersStore, selectedChatWebhooksStore, selectedCommunityMembersStore, type SelectedEmoji, selectedServerChatStore, type SenderContext, translationsStore, unconfirmedReadByThem, undeletingMessagesStore, type UserSummary } from "@client";
     import { getContext, onDestroy, onMount, tick } from "svelte";
     import { _, locale } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
@@ -361,7 +361,7 @@
     }
 
     function openUserProfile(ev: Event) {
-        if (sender?.kind === "bot") {
+        if (sender?.kind === "bot" && linkedUser === undefined) {
             botProfile = {
                 botId: sender.userId,
                 chatId,
@@ -371,7 +371,7 @@
             ev.target?.dispatchEvent(
                 new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
                     detail: {
-                        userId: msg.sender,
+                        userId: linkedUser?.userId ?? msg.sender,
                         chatButton: multiUserChat,
                         inGlobalContext: false,
                     },
@@ -418,6 +418,12 @@
     let bridgedUser = $derived(
         bridged !== undefined ? $bridgedUsersStore.get(bridgedUserKey(bridged)!) : undefined,
     );
+    // The OpenChat user who linked the account the message was relayed from, shown as its author
+    let linkedUser = $derived(
+        bridgedUser?.linkedUserId !== undefined
+            ? $allUsersStore.get(bridgedUser.linkedUserId)
+            : undefined,
+    );
     // A tip would go to the bridge bot, not the author shown
     let canTip = $derived(
         canTipMessages && !me && confirmed && !inert && !failed && bridged === undefined,
@@ -460,11 +466,11 @@
     );
     let canUndelete = $derived(msg.deleted && msg.content.kind !== "deleted_content");
     let senderDisplayName = $derived(
-        bridged !== undefined
+        bridged !== undefined && linkedUser === undefined
             ? (bridgedAuthorName(bridgedUser) ??
               $_("bridgedUserUnknown", { values: { platform: BRIDGE_PLATFORM_NAMES[bridged.kind] } }))
             : client.getDisplayName(
-                  msg.sender,
+                  linkedUser?.userId ?? msg.sender,
                   $selectedCommunityMembersStore,
                   $selectedChatWebhooksStore,
               ),
@@ -568,9 +574,11 @@
                                 <div class="avatar" onclick={openUserProfile}>
                                     <Avatar
                                         maxStreak={hasAchievedMaxStreak}
-                                        url={bridged !== undefined
-                                            ? client.bridgedAvatarUrl(bridged, bridgedUser)
-                                            : client.userAvatarUrl(sender)}
+                                        url={linkedUser !== undefined
+                                            ? client.userAvatarUrl(linkedUser)
+                                            : bridged !== undefined
+                                              ? client.bridgedAvatarUrl(bridged, bridgedUser)
+                                              : client.userAvatarUrl(sender)}
                                         userId={msg.sender}
                                         size={$mobileWidth
                                             ? AvatarSize.Small

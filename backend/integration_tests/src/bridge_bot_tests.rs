@@ -1,19 +1,20 @@
 use crate::bot_tests::register_bot;
 use crate::env::ENV;
 use crate::utils::{tick_many, try_metrics};
-use crate::{CanisterIds, TestEnv, client};
+use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
+use local_user_index_canister::access_token_v2::{self, BotActionByCommandArgs, BotCommandInitial};
 use local_user_index_canister::bot_send_message::Response as SendResponse;
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::collections::HashSet;
 use std::ops::Deref;
 use std::time::Duration;
-use testing::rng::random_string;
+use testing::rng::{random_from_u128, random_string};
 use types::{
-    BlobReference, BotChatContext, BotInstallationLocation, BotMessageContent, BotPermissions, BridgePlatform, BridgedUser,
-    CanisterId, Chat, ChatEvent, DiscordUser, EventsResponse, MessageContent, MessageId, MessageIndex, MessagePermission,
-    SenderContext, TelegramUser, TextContent, UnitResult, UserId,
+    BlobReference, BotActionChatDetails, BotActionScope, BotChatContext, BotInstallationLocation, BotMessageContent,
+    BotPermissions, BridgePlatform, BridgedUser, CanisterId, Chat, ChatEvent, DiscordUser, EventsResponse, MessageContent,
+    MessageId, MessageIndex, MessagePermission, SenderContext, TelegramUser, TextContent, UnitResult, UserId,
 };
 
 #[test]
@@ -37,8 +38,14 @@ fn bridge_bots_relay_messages_as_their_authors() {
     let group = Chat::Group(group_id);
     let group_local_user_index = canister_ids.local_user_index(env, group_id);
 
-    let (discord_bot_id, discord_bot_principal) =
-        register_bot(env, &owner, canister_ids.user_index, random_string(), random_string());
+    let discord_bot_command = random_string();
+    let (discord_bot_id, discord_bot_principal) = register_bot(
+        env,
+        &owner,
+        canister_ids.user_index,
+        random_string(),
+        discord_bot_command.clone(),
+    );
     let (telegram_bot_id, telegram_bot_principal) =
         register_bot(env, &owner, canister_ids.user_index, random_string(), random_string());
 
@@ -356,6 +363,71 @@ fn bridge_bots_relay_messages_as_their_authors() {
     assert!(matches!(response, SendResponse::Success(_)), "{response:?}");
     wait_for_bridged_user(env, canister_ids.user_index, &renamed);
 
+    // An OpenChat user links their Discord account by running one of the bridge bot's commands, eg.
+    // `/link`. The bot passes on the command's access token, which proves who the user is.
+    let command = |env: &mut PocketIc| {
+        BotChatContext::Command(command_access_token(
+            env,
+            &owner,
+            community_local_user_index,
+            discord_bot_id,
+            &discord_bot_command,
+            channel,
+        ))
+    };
+    let chat_context = command(env);
+    let response = set_link(
+        env,
+        discord_bot_principal,
+        community_local_user_index,
+        chat_context,
+        renamed.clone(),
+        true,
+    );
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    wait_for_link(env, canister_ids.user_index, &renamed, Some(owner.user_id));
+
+    // Only a user's command can link an account
+    let response = set_link(
+        env,
+        discord_bot_principal,
+        community_local_user_index,
+        BotChatContext::Autonomous(channel),
+        renamed.clone(),
+        true,
+    );
+    assert!(
+        matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
+        "{response:?}"
+    );
+
+    // And a bridge bot can only link accounts on its own platform
+    let chat_context = command(env);
+    let response = set_link(
+        env,
+        discord_bot_principal,
+        community_local_user_index,
+        chat_context,
+        from_telegram.clone(),
+        true,
+    );
+    assert!(
+        matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::InitiatorNotAuthorized)),
+        "{response:?}"
+    );
+
+    let chat_context = command(env);
+    let response = set_link(
+        env,
+        discord_bot_principal,
+        community_local_user_index,
+        chat_context,
+        renamed.clone(),
+        false,
+    );
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    wait_for_link(env, canister_ids.user_index, &renamed, None);
+
     // A bridge bot is refused once it's unset. Both are unset, which also leaves the pooled env as
     // it was
     for platform in [BridgePlatform::Discord, BridgePlatform::Telegram] {
@@ -522,6 +594,76 @@ fn assert_relayed_from(events: &EventsResponse, bot_id: UserId, bridged_from: &B
         panic!("Expected a bot sender context: {:?}", message.sender_context);
     };
     assert_eq!(bot_context.bridged_from, Some(bridged_from.id()));
+}
+
+fn command_access_token(
+    env: &mut PocketIc,
+    user: &User,
+    local_user_index: CanisterId,
+    bot_id: UserId,
+    command_name: &str,
+    chat: Chat,
+) -> String {
+    let response = client::local_user_index::access_token_v2(
+        env,
+        user.principal,
+        local_user_index,
+        &access_token_v2::Args::BotActionByCommand(BotActionByCommandArgs {
+            bot_id,
+            command: BotCommandInitial {
+                name: command_name.to_string(),
+                args: Vec::new(),
+                meta: None,
+            },
+            scope: BotActionScope::Chat(BotActionChatDetails {
+                chat,
+                thread: None,
+                message_id: random_from_u128(),
+                user_message_id: None,
+            }),
+        }),
+    );
+    match response {
+        access_token_v2::Response::Success(token) => token,
+        response => panic!("'access_token_v2' error: {response:?}"),
+    }
+}
+
+fn set_link(
+    env: &mut PocketIc,
+    bot_principal: Principal,
+    local_user_index: CanisterId,
+    chat_context: BotChatContext,
+    bridged_user: BridgedUser,
+    linked: bool,
+) -> UnitResult {
+    client::local_user_index::bot_set_bridged_user_link(
+        env,
+        bot_principal,
+        local_user_index,
+        &local_user_index_canister::bot_set_bridged_user_link::Args {
+            chat_context,
+            bridged_user,
+            linked,
+        },
+    )
+}
+
+// The LocalUserIndex passes the link on to the UserIndex over its event queue
+fn wait_for_link(env: &mut PocketIc, user_index: CanisterId, user: &BridgedUser, linked_user_id: Option<UserId>) {
+    for _ in 0..50 {
+        let user_index_canister::bridged_users::Response::Success(users) = client::user_index::bridged_users(
+            env,
+            Principal::anonymous(),
+            user_index,
+            &user_index_canister::bridged_users::Args { users: vec![user.id()] },
+        );
+        if users.first().is_some_and(|u| u.linked_user_id == linked_user_id) {
+            return;
+        }
+        env.tick();
+    }
+    panic!("The UserIndex doesn't have {user:?} linked to {linked_user_id:?}");
 }
 
 // The LocalUserIndex passes the profile on to the UserIndex over its event queue
