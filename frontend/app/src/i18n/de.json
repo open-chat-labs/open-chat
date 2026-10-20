@@ -2408,6 +2408,12 @@
         },
         "quote": "Quotierung",
         "quoteError": "Fehler beim Abrufen der Angebote für den Tausch von {tokenIn}",
+        "quotes": {
+            "best": "Bester Kurs",
+            "declined": "Dieser Betrag kann nicht getauscht werden",
+            "failed": "Kein Angebot erhalten",
+            "unsupported": "Tausch nicht unterstützt"
+        },
         "quoteTooLow": "Der beste angegebene Tarif ist {rate} {tokenOut} pro {tokenIn} ab {dex}. Dies ergibt {amountOut} {tokenOut} für {amountIn} {tokenIn}. Sie können nur tauschen, wenn der angegebene Betrag {minAmountOut} überschreitet.",
         "requote": "Nochmals zitieren",
         "swap": "Tauschen",

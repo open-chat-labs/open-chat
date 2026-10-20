@@ -2408,6 +2408,12 @@
         },
         "quote": "引用",
         "quoteError": "{tokenIn} を交換するための引用符の取得中にエラーが発生しました",
+        "quotes": {
+            "best": "最良レート",
+            "declined": "この金額はスワップできません",
+            "failed": "見積もりを取得できませんでした",
+            "unsupported": "このスワップには対応していません"
+        },
         "quoteTooLow": "見積もられた最良レートは、{rate} からの {tokenOut} あたり {tokenIn} {dex} です。これにより、{amountOut} {tokenOut} の {amountIn} {tokenIn} が得られます。見積金額が {minAmountOut} を超える場合にのみ交換できます。",
         "requote": "再引用",
         "swap": "スワップ",

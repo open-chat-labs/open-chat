@@ -65,6 +65,7 @@ let answer: (outcome: SwapQuoteOutcome) => void;
 const client = {
     getTokenSwaps: vi.fn(() => Promise.resolve({ [chat.ledger]: ["icpswap", "taco"] })),
     refreshSwappableTokens: vi.fn(),
+    swapTokens: vi.fn(),
     getSwapQuotes: vi.fn(
         (
             _ledgerIn: string,
@@ -141,6 +142,34 @@ describe("quoting a swap from the wallet", () => {
         expect(form.stage).toBe("quote");
         expect(form.error).toEqual(message);
         expect(form.quotes).toHaveLength(2);
+
+        // The error was about the tokens chosen before
+        form.selectOut({ ...chat, symbol: "OTHER", ledger: "other" });
+        expect(form.error).toBeUndefined();
+        expect(form.quotes).toEqual([]);
+    });
+
+    test("a re-quote after a swap the rate moved under shows the quotes coming in", async () => {
+        const form = await newForm();
+        let quoting = form.getQuote();
+        answer(tacoQuote);
+        await quoting;
+        vi.mocked(client.swapTokens).mockResolvedValueOnce({
+            kind: "rate_changed",
+            message: i18nKey("tokenSwap.progress.failed"),
+        });
+        await form.swap();
+        expect(form.stage).toBe("done");
+
+        quoting = form.getQuote();
+        onQuotes([["taco", { kind: "quoting" }]]);
+
+        // The desktop form shows the quotes in these stages, and the progress only for a quote
+        expect(form.stage).toBe("quote");
+        expect(form.quotes).toEqual([["taco", { kind: "quoting" }]]);
+        answer(tacoQuote);
+        await quoting;
+        expect(form.stage).toBe("confirm");
     });
 
     // Invariant: the quotes shown are always for the tokens chosen

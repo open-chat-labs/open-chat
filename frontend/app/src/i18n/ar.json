@@ -2408,6 +2408,12 @@
         },
         "quote": "يقتبس",
         "quoteError": "حدث خطأ أثناء الحصول على عروض الأسعار للتبادل {tokenIn}",
+        "quotes": {
+            "best": "أفضل سعر",
+            "declined": "لا يمكن تبديل هذا المبلغ",
+            "failed": "تعذّر الحصول على عرض سعر",
+            "unsupported": "التبديل غير مدعوم"
+        },
         "quoteTooLow": "أفضل سعر معروض هو {rate} {tokenOut} لكل {tokenIn} من {dex}. وهذا يعطي {amountOut} {tokenOut} مقابل {amountIn} {tokenIn}. لا يمكنك التبديل إلا إذا تجاوز المبلغ المعروض {minAmountOut}.",
         "requote": "إعادة الاقتباس",
         "swap": "تبديل",

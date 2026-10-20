@@ -2408,6 +2408,12 @@
         },
         "quote": "ציטוט",
         "quoteError": "שגיאה בקבלת ציטוטים להחלפה של {tokenIn}",
+        "quotes": {
+            "best": "השער הטוב ביותר",
+            "declined": "לא ניתן להחליף סכום זה",
+            "failed": "לא ניתן היה לקבל הצעת מחיר",
+            "unsupported": "ההחלפה אינה נתמכת"
+        },
         "quoteTooLow": "התעריף הטוב ביותר שצוטט הוא {rate} {tokenOut} לכל {tokenIn} מ-{dex}. זה נותן {amountOut} {tokenOut} עבור {amountIn} {tokenIn}. אתה יכול להחליף רק אם הסכום הנקוב עולה על {minAmountOut}.",
         "requote": "ציטוט מחדש",
         "swap": "לְהַחלִיף",

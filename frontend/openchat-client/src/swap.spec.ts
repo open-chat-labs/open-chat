@@ -227,13 +227,10 @@ describe("swapping from the wallet", () => {
             ]),
         );
         swapProvidersStore.set(["icpswap", "taco"]);
-        const answers: Record<string, (answer: DexQuoteResult | Error) => void> = {};
+        const answers: Record<string, (answer: DexQuoteResult) => void> = {};
         vi.mocked(WorkerAgent.prototype.send).mockImplementation(((req: WorkerRequest) => {
             if (req.kind !== "getTokenSwapQuote") return new Promise(() => {});
-            return new Promise((resolve, reject) => {
-                answers[req.dex] = (answer) =>
-                    answer instanceof Error ? reject(answer) : resolve(answer);
-            });
+            return new Promise((resolve) => (answers[req.dex] = resolve));
         }) as never);
         const reported: [DexId, DexQuote][][] = [];
 
@@ -263,6 +260,38 @@ describe("swapping from the wallet", () => {
             expect(reported[2]).toEqual([
                 ["icpswap", { kind: "quoted", amountOut: 5_000_000_000n }],
                 ["taco", { kind: "quoted", amountOut: 4_000_000_000n }],
+            ]);
+        } finally {
+            cryptoLookup.set(new Map());
+            swapProvidersStore.set([]);
+        }
+    });
+
+    // Invariant: a DEX that doesn't answer is shown as failed, and doesn't stop the user getting
+    // another DEX's quote
+    test("a DEX failing to answer is reported as failed while another's quote still wins", async () => {
+        cryptoLookup.set(
+            new Map([
+                [icp.ledger, icp],
+                [chat.ledger, chat],
+            ]),
+        );
+        swapProvidersStore.set(["icpswap", "taco"]);
+        vi.mocked(WorkerAgent.prototype.send).mockImplementation(((req: WorkerRequest) =>
+            req.kind === "getTokenSwapQuote" && req.dex === "taco"
+                ? Promise.reject(new Error("down"))
+                : Promise.resolve({ kind: "quoted", amountOut: 5_000_000_000n })) as never);
+        const reported: [DexId, DexQuote][][] = [];
+
+        try {
+            const outcome = await client.getSwapQuotes(icp.ledger, chat.ledger, 100_000_000n, (q) =>
+                reported.push(q),
+            );
+
+            expect(outcome).toMatchObject({ kind: "quoted", quote: { dex: "icpswap" } });
+            expect(reported.at(-1)).toEqual([
+                ["icpswap", { kind: "quoted", amountOut: 5_000_000_000n }],
+                ["taco", { kind: "failed" }],
             ]);
         } finally {
             cryptoLookup.set(new Map());

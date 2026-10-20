@@ -129,6 +129,8 @@ export class SwapForm {
         if (!this.#canQuote) return;
 
         const request = ++this.#quoteRequest;
+        // A re-quote after a swap shows the quotes coming in as a first quote does
+        this.#stage = "quote";
         this.#quoting = true;
         this.#error = undefined;
         this.#quotes = [];
@@ -183,10 +185,12 @@ export class SwapForm {
         this.#outcome = undefined;
     }
 
-    // Drops the quotes, along with any request for them still being answered
+    // Drops the quotes, along with any request for them still being answered and why the last
+    // request gave no quote
     #clearQuotes() {
         this.#quoteRequest++;
         this.#quoting = false;
+        this.#error = undefined;
         this.#quotes = [];
         this.#quote = undefined;
     }

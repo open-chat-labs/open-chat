@@ -2408,6 +2408,12 @@
         },
         "quote": "Citation",
         "quoteError": "Erreur lors de l'échange des devis {tokenIn}",
+        "quotes": {
+            "best": "Meilleur taux",
+            "declined": "Impossible d'échanger ce montant",
+            "failed": "Impossible d'obtenir un devis",
+            "unsupported": "Échange non pris en charge"
+        },
         "quoteTooLow": "Le meilleur tarif indiqué est de {rate} {tokenOut} pour {tokenIn} à partir de {dex}. Cela donne {amountOut} {tokenOut} pour {amountIn} {tokenIn}. Vous ne pouvez échanger que si le montant indiqué dépasse {minAmountOut}.",
         "requote": "Re-citer",
         "swap": "Échanger",

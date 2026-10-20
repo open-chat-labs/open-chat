@@ -2408,6 +2408,12 @@
         },
         "quote": "Cytat",
         "quoteError": "Błąd podczas pobierania ofert do zamiany {tokenIn}",
+        "quotes": {
+            "best": "Najlepszy kurs",
+            "declined": "Nie można wymienić tej kwoty",
+            "failed": "Nie udało się uzyskać oferty",
+            "unsupported": "Wymiana nieobsługiwana"
+        },
         "quoteTooLow": "Najlepsza podana stawka to {rate} {tokenOut} za {tokenIn} z {dex}. Daje to {amountOut} {tokenOut} dla {amountIn} {tokenIn}. Możesz dokonać zamiany tylko wtedy, gdy podana kwota przekracza {minAmountOut}.",
         "requote": "Zacytuj ponownie",
         "swap": "Zamieniać",

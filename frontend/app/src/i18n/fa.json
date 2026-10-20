@@ -2408,6 +2408,12 @@
         },
         "quote": "نقل قول",
         "quoteError": "خطا در دریافت نقل قول برای تعویض {tokenIn}",
+        "quotes": {
+            "best": "بهترین نرخ",
+            "declined": "این مقدار قابل تعویض نیست",
+            "failed": "دریافت قیمت ممکن نشد",
+            "unsupported": "تعویض پشتیبانی نمی‌شود"
+        },
         "quoteTooLow": "بهترین نرخ نقل شده {rate} {tokenOut} به ازای هر {tokenIn} از {dex} است. این به {amountOut} {tokenOut} برای {amountIn} {tokenIn} می‌دهد. فقط در صورتی می‌توانید مبادله کنید که مبلغ نقل‌شده از {minAmountOut} بیشتر باشد.",
         "requote": "نقل قول مجدد",
         "swap": "تعویض کنید",
