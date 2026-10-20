@@ -19,6 +19,8 @@
     } from "@client";
     import ChatListPanel from "@openchat/ui/src/features/components/ChatListPanel.svelte";
     import type { MenuItem } from "@openchat/ui/src/lib/types";
+    import { i18nKey } from "@i18n/i18n";
+    import { toastStore } from "@src/stores/toast";
     import { navigate } from "@src/utils/navigation";
     import { getContext, untrack } from "svelte";
     import { _ } from "svelte-i18n";
@@ -70,20 +72,31 @@
         listedRows.map(({ chat, row }): ChatListRow => ({ ...row, menu: menuFor(chat, row) })),
     );
 
-    // An archived chat with unread messages comes out of the archive (as the old row did), asked
-    // once per chat
+    // An archived chat with unread messages comes out of the archive (as the old row did): asked
+    // once while it's archived, and again if it's archived again or the request fails (with the
+    // old UI's failure toast)
     const unarchiving = new Set<string>();
     $effect(() => {
         const ctx = context;
         for (const chat of chats) {
-            if (!chat.membership.archived) continue;
             const id = chatIdentifierToString(chat.id);
-            if (!unarchiving.has(id) && unarchives(chat, unreadCount(chat, ctx))) {
+            if (!chat.membership.archived) {
+                unarchiving.delete(id);
+            } else if (!unarchiving.has(id) && unarchives(chat, unreadCount(chat, ctx))) {
                 unarchiving.add(id);
-                untrack(() => client.unarchiveChat(chat.id));
+                untrack(() => unarchive(chat.id, id));
             }
         }
     });
+
+    function unarchive(chatId: ChatSummary["id"], id: string) {
+        client.unarchiveChat(chatId).then((success) => {
+            if (!success) {
+                unarchiving.delete(id);
+                toastStore.showFailureToast(i18nKey("unarchiveChatFailed"));
+            }
+        });
+    }
 
     // the row menu, in the app's words (the old row's menu)
     function menuFor(chat: ChatSummary, row: ChatListRow): MenuItem[] {

@@ -134,6 +134,9 @@ design export needs. Each entry says where it came up.
 
 ### Wiring
 
+- **Toasts**: the app's toast (`toastStore`, e.g. "Failed to un-archive chat") shows as the
+  library's `UndoToast` without its action (`shell/Toasts.svelte`). The design has no failure tone
+  for a toast, so a failure looks like any other message.
 - **Chat list, first cut** (`features/chats`, phase 3a): not yet carried over from the old row:
   avatars (swatches stand in: Swatches), the typing line, online presence, unread mentions,
   disappearing-message notices, translations and restricted content in the preview, webhook
