@@ -28,6 +28,13 @@ fn c2c_local_user_index(args: Args) -> Response {
     mutate_state(|state| c2c_local_user_index_impl(args, state))
 }
 
+// The name for the LocalUserIndex's events, which senders switch to; the old one is served until they have
+#[update(guard = "caller_is_local_user_index_canister", msgpack = true)]
+#[trace]
+fn c2c_local_index(args: Args) -> Response {
+    mutate_state(|state| c2c_local_user_index_impl(args, state))
+}
+
 fn c2c_local_user_index_impl(args: Args, state: &mut RuntimeState) -> Response {
     let caller: CanisterId = state.env.caller();
     let now = LazyCell::new(now_millis);

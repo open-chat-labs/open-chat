@@ -9,6 +9,7 @@ pub mod bot_send_message;
 pub mod c2c_create_community;
 pub mod c2c_create_group;
 pub mod c2c_create_multi_user_canister;
+pub mod c2c_daily_puzzle;
 pub mod c2c_daily_puzzle_push;
 pub mod c2c_delete_community;
 pub mod c2c_delete_group;
