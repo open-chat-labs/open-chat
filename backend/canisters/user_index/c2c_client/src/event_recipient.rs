@@ -34,8 +34,8 @@ pub async fn lookup_event_recipient(
         return Ok(if user.user_type.is_bot() { EventRecipient::Gone } else { EventRecipient::User });
     }
 
-    let user = user_index_canister_c2c_client::lookup_user(user_id.as_principal(), user_index_canister_id).await?;
-    if let Some(new_user_id) = user_index_canister_c2c_client::lookup_migrated_user_id(user_id, user_index_canister_id).await? {
+    let user = crate::lookup_user(user_id.as_principal(), user_index_canister_id).await?;
+    if let Some(new_user_id) = crate::lookup_migrated_user_id(user_id, user_index_canister_id).await? {
         return Ok(EventRecipient::Migrated(new_user_id));
     }
     Ok(match user {
