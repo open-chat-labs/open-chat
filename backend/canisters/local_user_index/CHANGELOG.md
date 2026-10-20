@@ -13,7 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- Apply bots' principal and data encoding changes ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+- Apply bots' principal and data encoding changes ([#10055](https://github.com/open-chat-labs/open-chat/pull/10055))
 
 ## [[2.0.2156](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2156-local_user_index)] - 2026-10-19
 

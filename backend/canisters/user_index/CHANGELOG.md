@@ -12,11 +12,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Reject bots which use the JSON data encoding ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+- Reject bots which use the JSON data encoding ([#10055](https://github.com/open-chat-labs/open-chat/pull/10055))
 
 ### Fixed
 
-- Tell new LocalUserIndexes of the existing bots, and the LocalUserIndexes of bots' principal changes ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+- Tell new LocalUserIndexes of the existing bots, and the LocalUserIndexes of bots' principal changes ([#10055](https://github.com/open-chat-labs/open-chat/pull/10055))
 
 ## [[2.0.2155](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2155-user_index)] - 2026-10-19
 
