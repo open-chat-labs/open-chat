@@ -91,6 +91,10 @@ describe("DexesAgent swapping straight from the wallet", () => {
         quote.taco = () => Promise.resolve(undefined);
         expect(await agent.quoteSwap("taco", ICP, CHAT, 100n, 5n)).toEqual({ kind: "declined" });
 
+        // Nothing would reach the wallet, eg. the output being no more than the fee to send it
+        quote.taco = () => Promise.resolve(0n);
+        expect(await agent.quoteSwap("taco", ICP, CHAT, 100n, 5n)).toEqual({ kind: "declined" });
+
         quote.taco = () => Promise.reject(new Error("down"));
         await expect(agent.quoteSwap("taco", ICP, CHAT, 100n, 5n)).rejects.toThrow("down");
     });

@@ -82,11 +82,11 @@ export class DexesAgent {
                 this.quoteSingle(p, inputToken, outputToken, amountIn, outputTokenFee),
             ),
         );
+        // A quote of nothing, eg. when the output is no more than the fee for sending it to the
+        // wallet, is as good as a decline
         const best = quotes.reduce<bigint | undefined>(
             (best, q) =>
-                q.status === "fulfilled" &&
-                q.value !== undefined &&
-                (best === undefined || q.value > best)
+                q.status === "fulfilled" && q.value !== undefined && q.value > (best ?? 0n)
                     ? q.value
                     : best,
             undefined,
