@@ -18,10 +18,21 @@
     import { i18nKey } from "@i18n/i18n";
     import { toastStore } from "@src/stores/toast";
     import { navigate } from "@src/utils/navigation";
-    import { removeQueryStringParam, withQueryStringFlag } from "@src/utils/urls";
+    import {
+        addQueryStringParam,
+        removeQueryStringParam,
+        withQueryStringFlag,
+    } from "@src/utils/urls";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
-    import { narrowBack, railItems, railSelectionFor, type Regions } from "../../router/regions";
+    import {
+        activityOverPage,
+        narrowBack,
+        railItems,
+        railSelectionFor,
+        type RailSelection,
+        type Regions,
+    } from "../../router/regions";
     import { RightColumnState } from "../../shell/rightColumn.svelte";
     import Shell from "../../shell/Shell.svelte";
     import { currentShellLayout } from "../../shell/viewport.svelte";
@@ -39,7 +50,12 @@
     const narrow = $derived(currentShellLayout().narrow);
     const rightColumn = new RightColumnState(() => rightMode);
 
-    const selection = $derived(railSelectionFor($routeStore));
+    // the activity feed opened over a page is Notifications' too
+    const selection = $derived<RailSelection>(
+        regions.left?.kind === "activity"
+            ? { item: "notifications" }
+            : railSelectionFor($routeStore),
+    );
     const pins = $derived(
         pinsFor($sortedCommunitiesStore, (c: CommunitySummary) =>
             client.communityAvatarUrl(c.id.communityId, c.avatar),
@@ -61,6 +77,19 @@
             if (alert) toastStore.showFailureToast(i18nKey("errorSendingMessage"));
         }),
     );
+
+    // Notifications over a chat or a wallet page opens the feed over it (decision 7), with its
+    // own history entry; the other destinations are their paths
+    function selectRail(i: number) {
+        const item = railShown[i];
+        if (item.id === "notifications" && activityOverPage(regions)) {
+            if (regions.left?.kind !== "activity") {
+                navigate(addQueryStringParam("panel", "activity"), "overlay");
+            }
+        } else {
+            navigate(item.path);
+        }
+    }
 
     // Dialogs people link to are query params over whatever page is open (ROUTES.md)
     const profileOpen = $derived($querystringStore.has("profile"));
@@ -112,7 +141,7 @@
             homeHref="/"
             profileLabel={$currentUserStore.displayName ?? $currentUserStore.username}
             profileHandle={`@${$currentUserStore.username}`}
-            onSelect={(i) => navigate(railShown[i].path)}
+            onSelect={(i) => selectRail(i)}
             onSelectPin={(id) => navigate(`/community/${id}`)}
             onExplore={() => navigate("/communities")}
             onProfile={() => navigate(withQueryStringFlag("profile"), "overlay")}

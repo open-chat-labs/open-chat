@@ -237,11 +237,13 @@ markdown as the old composer did, keeps a draft per chat and says who's typing. 
 can't send (frozen, blocked, a preview, lapsed, signed out, no permission) the old footer's reason
 shows instead.
 
+**Activity (phase 3d).** Notifications shows the activity feed (`features/activity`). Over a
+chat or a wallet page it opens as `?panel=activity` on that page's path, from the rail, leaving
+the middle as it is, with Back to the middle's own panel (decision 7); with nothing in the
+middle it's `/notifications`. Opening an item goes to its message with the feed still open.
+
 Still to come:
 
-- **Switching the left column** (decision 7): notifications keeping the middle (with
-  `?panel=activity`, and a back button in `ActivityPanel`), and the other lists selecting their
-  first chat, come with phase 3.
 - **Legal pages and `/diamond`**: placeholders until Learn's doc pages and `DiamondContent` exist
   (decision 5).
 - **Guests**: guest-only behaviour comes in the guest pass (phase 10). That covers the "sign in"
