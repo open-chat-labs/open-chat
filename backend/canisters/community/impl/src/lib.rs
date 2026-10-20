@@ -1305,6 +1305,10 @@ impl Data {
         for channel in self.channels.iter_mut() {
             channel.chat.members.remove(user_id, now);
         }
+        self.expiring_members.remove_member(user_id, None);
+        self.expiring_member_actions.remove_member(user_id, None);
+        self.achievements.remove_user(&user_id);
+        self.user_cache.delete(user_id);
         self.members.remove(user_id, None, now).is_some()
     }
 

@@ -985,8 +985,10 @@ impl Data {
 
     // Removes a user found to have deleted their account, unless they're a bot, returning whether they
     // were a member
+    // Nor while the group is being imported into a community, since its members are being exported
+    // then; the community removes them instead.
     pub fn remove_deleted_user_unless_bot(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
-        if self.chat.members.bots().contains_key(&user_id) {
+        if self.chat.members.bots().contains_key(&user_id) || self.is_being_imported_into_community() {
             return false;
         }
         self.remove_deleted_user(user_id, now)
