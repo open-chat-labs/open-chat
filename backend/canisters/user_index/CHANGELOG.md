@@ -12,6 +12,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Send moderation actions and suspensions to groups and communities, and vault ops to the StorageIndex, as events ([#10033](https://github.com/open-chat-labs/open-chat/pull/10033))
 - Call the Identity canister's and StorageIndex's event endpoints best-effort ([#10050](https://github.com/open-chat-labs/open-chat/pull/10050))
 
+### Fixed
+
+- Wait out a failed batch's retry delay, rather than retrying it whenever anything else is queued ([#10069](https://github.com/open-chat-labs/open-chat/pull/10069))
+
 ## [[2.0.2165](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2165-user_index)] - 2026-10-20
 
 ### Added
