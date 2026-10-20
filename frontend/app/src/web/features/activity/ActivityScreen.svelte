@@ -40,18 +40,23 @@
         activityFeedState.initialised &&
             $messageActivitySummaryStore.latestTimestamp <= activityFeedState.latestTimestamp,
     );
-    // a feed that didn't load says so, with Retry, rather than loading for ever
+    // a feed that didn't load says so, with Retry, rather than loading for ever. Retry only clears
+    // the failure and this effect loads again, so one load runs at a time; a load that's been
+    // superseded can't mark a later one failed
     let failed = $state(false);
+    let attempt = 0;
     $effect(() => {
         if (upToDate || failed) return;
         untrack(load);
     });
 
     function load() {
-        failed = false;
+        const mine = ++attempt;
         client.subscribeToMessageActivityFeed(
             (response) => (activityFeedState.activityEvents = response.events),
-            () => (failed = true),
+            () => {
+                if (mine === attempt) failed = true;
+            },
         );
     }
 
@@ -127,7 +132,7 @@
             title={$_("unexpectedError")}
             body={$_("regionLoadFailed")}
             actionLabel="ui.common.retry"
-            actionHandler={load} />
+            actionHandler={() => (failed = false)} />
     </div>
 {:else}
     <ActivityPanel
