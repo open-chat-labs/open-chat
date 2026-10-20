@@ -3,7 +3,7 @@ use multi_user_canister::c2c_user::Event;
 use timer_job_queues::{TimerJobItem, grouped_timer_job_batch};
 use tracing::info;
 use types::{C2CError, CanisterId, IdempotentEnvelope, Milliseconds, UserId};
-use user_core::event_recipient::{EventRecipient, lookup_event_recipient};
+use user_index_canister_c2c_client::{EventRecipient, lookup_event_recipient};
 use utils::canister::{delay_if_should_retry_failed_c2c_call_to_new_method, is_user_canister_possibly_migrated};
 
 // The direct chat events from this canister's users for users in other canisters, batched per

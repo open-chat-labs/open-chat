@@ -192,8 +192,7 @@ fn process_event<F: FnOnce() -> TimestampMillis>(
             state.data.moderation_flags = Timestamped::new(ev.flags, **now);
         }
         LocalIndexEvent::UserDeleted(user_id) => {
-            state.data.chat.members.remove(user_id, **now);
-            state.data.remove_user(user_id, None);
+            state.data.remove_deleted_user(user_id, **now);
         }
         LocalIndexEvent::BotRemoved(bot_id) => {
             state.data.uninstall_bot(OPENCHAT_BOT_USER_ID, bot_id, **now);

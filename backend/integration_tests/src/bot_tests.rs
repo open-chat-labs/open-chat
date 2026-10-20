@@ -17,10 +17,10 @@ use test_case::test_case;
 use testing::rng::{random_from_u128, random_string};
 use types::{
     AutonomousConfig, BotActionChatDetails, BotActionScope, BotChatContext, BotCommandArg, BotCommandArgValue,
-    BotCommandDefinition, BotCommandParam, BotCommandParamType, BotDefinition, BotInstallationLocation, BotMessageContent,
-    BotPermissions, BotSubscriptions, CanisterId, Chat, ChatEvent, ChatEventType, ChatPermission, ChatType, CommunityEventType,
-    CommunityPermission, EventIndex, MessageContent, MessageId, MessagePermission, NotificationEnvelope, OptionUpdate, Rules,
-    StringParam, TextContent, UpdatedRules, UserId,
+    BotCommandDefinition, BotCommandParam, BotCommandParamType, BotDataEncoding, BotDefinition, BotEventWrapper,
+    BotInstallationLocation, BotMessageContent, BotPermissions, BotSubscriptions, CanisterId, Chat, ChatEvent, ChatEventType,
+    ChatPermission, ChatType, CommunityEventType, CommunityPermission, EventIndex, MessageContent, MessageId,
+    MessagePermission, NotificationEnvelope, OptionUpdate, Rules, StringParam, TextContent, UpdatedRules, UserId,
 };
 
 #[test]
@@ -432,12 +432,18 @@ fn e2e_autonomous_bot_test() {
     );
 
     assert!(notifications.bot_endpoints.contains_key(&bot_id));
-    assert!(
-        notifications
-            .notifications
-            .iter()
-            .any(|n| matches!(&n.value, NotificationEnvelope::Bot(n) if n.recipients.contains_key(&bot_id)))
-    );
+    let (index, envelope) = notifications
+        .notifications
+        .iter()
+        .find_map(|n| match &n.value {
+            NotificationEnvelope::Bot(b) if b.recipients.contains_key(&bot_id) => Some((n.index, b)),
+            _ => None,
+        })
+        .expect("No notification for the bot");
+
+    // The signed payload carries the notification's index, so a bot can drop one sent again
+    let event_wrapper: BotEventWrapper = msgpack::deserialize_then_unwrap(&envelope.event_map[&BotDataEncoding::MsgPack].data);
+    assert_eq!(event_wrapper.notification_index, index);
 }
 
 #[test]

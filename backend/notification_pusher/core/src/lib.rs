@@ -1,3 +1,4 @@
+use crate::bot_notifications::delivery_tracker::PendingDelivery;
 use crate::bot_notifications::start_bot_notifications_processor;
 use crate::config::Config;
 use crate::metrics::{Metrics, collect_metrics};
@@ -117,6 +118,8 @@ pub struct BotNotification {
     payload: BotEventPayload,
     mime_type: String,
     first_read_at: Instant,
+    // Finishes the delivery, letting the reader record it as processed, once this is dropped
+    _pending_delivery: PendingDelivery,
 }
 
 fn timestamp() -> TimestampMillis {

@@ -10791,4 +10791,5 @@ export const BotEventWrapper = /* @__PURE__ */ Type.Object({
     api_gateway: TSPrincipal,
     event: BotEvent,
     timestamp: Type.BigInt(),
+    notification_index: Type.BigInt(),
 });
