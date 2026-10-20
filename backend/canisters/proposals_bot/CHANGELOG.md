@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Tell the Registry that submitting proposals is enabled through an event ([#10033](https://github.com/open-chat-labs/open-chat/pull/10033))
+- Call the Registry's event endpoints best-effort ([#10050](https://github.com/open-chat-labs/open-chat/pull/10050))
 
 ## [[2.0.2147](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2147-proposals_bot)] - 2026-10-16
 

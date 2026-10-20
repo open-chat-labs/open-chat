@@ -41,6 +41,7 @@ stable_memory = { path = "../../../libraries/stable_memory" }
 tents = { path = "../../../libraries/tents" }
 tracing = { workspace = true }
 unruly = { path = "../../../libraries/unruly" }
+timer_job_queues = { path = "../../../libraries/timer_job_queues" }
 types = { path = "../../../libraries/types" }
 user_index_canister_c2c_client = { path = "../../user_index/c2c_client" }
 utils = { path = "../../../libraries/utils" }
