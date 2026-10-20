@@ -2154,6 +2154,7 @@
     "recordAudioMessage": "Record audio message",
     "referralHeader": "Invite friends/family",
     "refresh": "Refresh",
+    "regionLoadFailed": "This part of OpenChat couldn't load. Check your connection, then try again.",
     "register": {
         "agree": "Agree",
         "bioTooLong": "Your bio is too long",
