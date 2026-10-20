@@ -38,12 +38,25 @@ describe("what a route shows", () => {
         });
     });
 
-    test("threads, activity and the wallet bring their own left column", () => {
-        expect(regionsFor(route({ kind: "threads_route", scope: community }), false)).toMatchObject(
-            {
-                left: { kind: "threads", scope: community },
-            },
-        );
+    test("?threads shows the list's threads on the left, over whatever the middle shows", () => {
+        expect(
+            regionsFor(route({ kind: "chat_list_route", scope: community }), false, true),
+        ).toMatchObject({
+            left: { kind: "threads", scope: community },
+            middle: { kind: "empty" },
+        });
+        expect(regionsFor(groupChat, false, true)).toMatchObject({
+            left: { kind: "threads", scope: groupChat.scope },
+            middle: { kind: "conversation", route: groupChat },
+            narrowView: "left",
+        });
+        // only over a chat list
+        expect(
+            regionsFor(route({ kind: "notifications_route", scope: none }), false, true),
+        ).toMatchObject({ left: { kind: "activity" } });
+    });
+
+    test("activity and the wallet bring their own left column", () => {
         expect(
             regionsFor(route({ kind: "notifications_route", scope: none }), false),
         ).toMatchObject({
@@ -127,7 +140,7 @@ describe("the rail's selection", () => {
     });
 
     test("selects a community's pin for its channels and threads", () => {
-        expect(railSelectionFor(route({ kind: "threads_route", scope: community }))).toEqual({
+        expect(railSelectionFor(route({ kind: "chat_list_route", scope: community }))).toEqual({
             communityId: "c1",
         });
     });

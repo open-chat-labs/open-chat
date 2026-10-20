@@ -3,7 +3,6 @@ import {
     blogRoute,
     chatListRoute,
     communitesRoute,
-    communityThreadsRoute,
     globalDirectChatSelectedRoute,
     globalGroupChatSelectedRoute,
     notificationsRoute,
@@ -11,7 +10,6 @@ import {
     selectedChannelRoute,
     selectedCommunityRoute,
     shareRoute,
-    threadsRoute,
     walletRoute,
     welcomeRoute,
     type RouteParams,
@@ -52,9 +50,6 @@ export const routeTable: RouteEntry[] = [
     { path: "/wallet/:segment?", parse: walletRoute },
     { path: "/notifications", parse: notificationsRoute },
     { path: "/profile_summary", parse: profileSummaryRoute },
-    { path: "/chats/threads", parse: threadsRoute({ kind: "chats" }) },
-    { path: "/favourite/threads", parse: threadsRoute({ kind: "favourite" }) },
-    { path: "/community/:communityId/threads", parse: communityThreadsRoute },
 
     // chats
     {

@@ -121,21 +121,6 @@ describe("the web UI's route table", () => {
         });
     });
 
-    test("routes each scope's threads", () => {
-        expect(resolve("/chats/threads")).toEqual({
-            kind: "threads_route",
-            scope: { kind: "chats" },
-        });
-        expect(resolve("/favourite/threads")).toEqual({
-            kind: "threads_route",
-            scope: { kind: "favourite" },
-        });
-        expect(resolve("/community/c1/threads")).toEqual({
-            kind: "threads_route",
-            scope: { kind: "community", id: { kind: "community", communityId: "c1" } },
-        });
-    });
-
     test("routes mobile's paths, which the legacy route used to take as group ids", () => {
         expect(["/notifications", "/profile_summary", "/welcome", "/wallet"].map(kind)).toEqual([
             "notifications_route",

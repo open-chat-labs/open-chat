@@ -39,8 +39,19 @@ const MARKETING_KINDS: RouteParams["kind"][] = [
     "csea_reporting_route",
 ];
 
-// `signedOut`: an anonymous user without an account, who gets Landing on "/" (as today)
-export function regionsFor(route: RouteParams, signedOut: boolean): Regions {
+/**
+ * The regions a route shows. `signedOut`: an anonymous user without an account, who gets Landing
+ * on "/" (as today). `threads` (the URL's `?threads`): the left column shows the chat list's
+ * threads in place of the list, over whatever the middle shows (ROUTES.md).
+ */
+export function regionsFor(route: RouteParams, signedOut: boolean, threads = false): Regions {
+    const regions = routeRegions(route, signedOut);
+    return threads && regions.area === "app" && regions.left?.kind === "chats"
+        ? { ...regions, left: { kind: "threads", scope: regions.left.scope }, narrowView: "left" }
+        : regions;
+}
+
+function routeRegions(route: RouteParams, signedOut: boolean): Regions {
     if (MARKETING_KINDS.includes(route.kind) || (route.kind === "home_route" && signedOut)) {
         return { area: "marketing", route };
     }
@@ -54,13 +65,6 @@ export function regionsFor(route: RouteParams, signedOut: boolean): Regions {
                 left: { kind: "chats", scope: route.scope },
                 middle: { kind: "conversation", route },
                 narrowView: "middle",
-            };
-        case "threads_route":
-            return {
-                area: "app",
-                left: { kind: "threads", scope: route.scope },
-                middle: { kind: "empty" },
-                narrowView: "left",
             };
         case "notifications_route":
             return {
