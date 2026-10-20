@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Send its events to its LocalUserIndex and other MultiUser canisters at `c2c_user` ([#10050](https://github.com/open-chat-labs/open-chat/pull/10050))
+
 ## [[2.0.2167](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2167-multi_user)] - 2026-10-20
 
 ### Added

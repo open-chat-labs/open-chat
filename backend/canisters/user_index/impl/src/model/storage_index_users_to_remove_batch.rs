@@ -1,26 +1,15 @@
 use candid::Principal;
+use constants::DAY_IN_MS;
 use timer_job_queues::{TimerJobItem, timer_job_batch};
 use types::{CanisterId, Milliseconds};
-use utils::canister::delay_if_should_retry_failed_c2c_call;
 
+// Replaced by an event queue, and drained into it by the post_upgrade one-off. It never sends anything
+// itself, so nothing leaves except through the drain, and nothing goes to an endpoint the tidy removes.
+// Removed with the one-off.
 timer_job_batch!(StorageIndexUsersToRemoveBatch, CanisterId, Principal, 1000);
 
 impl TimerJobItem for StorageIndexUsersToRemoveBatch {
     async fn process(&self) -> Result<(), Option<Milliseconds>> {
-        let response = storage_index_canister_c2c_client::remove_users(
-            self.state,
-            &storage_index_canister::remove_users::Args {
-                user_ids: self.items.clone(),
-            },
-        )
-        .await;
-
-        match response {
-            Ok(_) => Ok(()),
-            Err(error) => {
-                let delay_if_should_retry = delay_if_should_retry_failed_c2c_call(&error);
-                Err(delay_if_should_retry)
-            }
-        }
+        Err(Some(DAY_IN_MS))
     }
 }

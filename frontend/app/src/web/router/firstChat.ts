@@ -14,3 +14,11 @@ export function firstChatRoute(
     const first = chats.find((chat) => !chat.membership.archived);
     return first && routeForChatIdentifier(scope, first.id);
 }
+
+/**
+ * Where going to the first chat lands: its route with the URL's query kept, so what the list was
+ * opened with (an overlay, the thread list's ?threads) stays open over it.
+ */
+export function firstChatUrl(route: string, search: string): string {
+    return `${route}${search}`;
+}

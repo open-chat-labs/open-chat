@@ -18,9 +18,10 @@ generate_c2c_call!(c2c_csam_detected);
 generate_c2c_call!(c2c_report_message);
 generate_c2c_call!(c2c_send_openchat_bot_messages);
 generate_c2c_call!(c2c_set_avatar);
-generate_c2c_call!(c2c_storage_index);
+generate_c2c_call!(c2c_storage_index, 300);
 generate_c2c_call!(c2c_suspend_users);
-generate_c2c_call!(c2c_translations);
+generate_c2c_call!(c2c_translations, 300);
+generate_c2c_call!(c2c_local_index, 300);
 
 pub async fn lookup_user(
     user_id_or_principal: Principal,

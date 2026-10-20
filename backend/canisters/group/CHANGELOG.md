@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Send activity, CSAM detections and moderation referrals to the LocalUserIndex as events ([#10033](https://github.com/open-chat-labs/open-chat/pull/10033))
+- Send its events to its LocalUserIndex and the MultiUser canisters at `c2c_group` ([#10050](https://github.com/open-chat-labs/open-chat/pull/10050))
 
 ## [[2.0.2169](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2169-group)] - 2026-10-20
 

@@ -39,8 +39,7 @@ export type RouteParams =
     | ProfileSummaryRoute
     | WelcomeRoute
     | WalletRoute
-    | NotificationsRoute
-    | ThreadsRoute;
+    | NotificationsRoute;
 
 export type MessageIndexRoute = GlobalSelectedChatRoute | FavouritesRoute | SelectedChannelRoute;
 
@@ -129,11 +128,6 @@ export type WalletRoute = NoScope & {
     // The ledger canister id: the token page's token, or the token a send / receive / swap starts
     // with (?token=)
     ledger?: string;
-};
-
-// The threads in a chat list scope (/chats/threads, /favourite/threads, /community/:id/threads)
-export type ThreadsRoute = Scoped & {
-    kind: "threads_route";
 };
 
 export type NotificationsRoute = NoScope & {

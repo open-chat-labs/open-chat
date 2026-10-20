@@ -1,7 +1,13 @@
 <!-- What the current route renders (router/regions.ts): a marketing page, not found, or the app,
      which waits for the user's chats as the existing trees do. -->
 <script lang="ts">
-    import { anonUserStore, chatsInitialisedStore, identityStateStore, routeStore } from "@client";
+    import {
+        anonUserStore,
+        chatsInitialisedStore,
+        identityStateStore,
+        querystringStore,
+        routeStore,
+    } from "@client";
     import EmptyState from "@openchat/ui/src/lib/components/EmptyState.svelte";
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
     import { navigate } from "@src/utils/navigation";
@@ -20,7 +26,7 @@
             pageSignIns.signupFailed,
         ),
     );
-    const regions = $derived(regionsFor($routeStore, signedOut));
+    const regions = $derived(regionsFor($routeStore, signedOut, $querystringStore));
 
     const registering = $derived(withoutAccount($identityStateStore));
     const loading = $derived(

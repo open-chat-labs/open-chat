@@ -1,13 +1,17 @@
+use crate::model::local_index_event_batch::LocalIndexEventBatch;
 use crate::model::schedule::{PUZZLES_TO_KEEP, RESULTS_RETENTION_DAYS, forced_params, schedule, scheduled};
 use crate::model::seed::candidate_seed;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use constants::{DAY_IN_MS, MINUTE_IN_MS};
 use daily_puzzle_canister::{CandidateView, PuzzleParams};
+use local_user_index_canister::DailyPuzzleEvent;
 use puzzle_core::{GenerateError, Puzzle};
+use rand::Rng;
 use serde::{Deserialize, Deserializer, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashSet};
+use timer_job_queues::GroupedTimerJobQueue;
 use tracing::error;
 use types::{
     BuildVersion, CanisterId, Cycles, DailyPuzzle, DailyPuzzleConfig, DailyPuzzleResult, GameConfig, GameId, PuzzleHint,
@@ -58,6 +62,15 @@ struct RuntimeState {
 }
 
 impl RuntimeState {
+    pub fn push_event_to_local_index(&mut self, canister_id: CanisterId, event: DailyPuzzleEvent) {
+        let event = types::IdempotentEnvelope {
+            created_at: self.env.now(),
+            idempotency_id: self.env.rng().next_u64(),
+            value: event,
+        };
+        self.data.local_index_event_sync_queue.push(canister_id, event);
+    }
+
     pub fn new(env: Box<dyn Environment>, data: Data) -> RuntimeState {
         RuntimeState { env, data }
     }
@@ -118,6 +131,7 @@ impl RuntimeState {
             results_by_game,
             local_user_indexes: self.data.local_user_indexes.iter().copied().collect(),
             pending_pushes: self.data.pending_pushes.iter().copied().collect(),
+            local_index_events_queue_length: self.data.local_index_event_sync_queue.len() as u32,
             last_registry_refresh: self.data.last_registry_refresh,
             master_seed_set: self.data.master_seed != 0,
             regeneration: self.data.regeneration.clone(),
@@ -196,7 +210,11 @@ struct Data {
     pub generation_started: Option<(PuzzleNumber, TimestampMillis)>,
     pub results: BTreeMap<(PuzzleNumber, GameId, UserId), DailyPuzzleResult>,
     pub local_user_indexes: HashSet<CanisterId>,
+    // Only non-empty in state from before `local_index_event_sync_queue`, and cleared by the next push.
+    // Removed in the tidy.
     pub pending_pushes: HashSet<CanisterId>,
+    #[serde(default = "new_local_index_event_sync_queue")]
+    pub local_index_event_sync_queue: GroupedTimerJobQueue<LocalIndexEventBatch>,
     #[serde(default)]
     pub idempotency_checker: IdempotencyChecker,
     pub last_registry_refresh: TimestampMillis,
@@ -225,6 +243,7 @@ impl Data {
             results: BTreeMap::new(),
             local_user_indexes: HashSet::new(),
             pending_pushes: HashSet::new(),
+            local_index_event_sync_queue: new_local_index_event_sync_queue(),
             idempotency_checker: IdempotencyChecker::default(),
             last_registry_refresh: 0,
             test_mode,
@@ -746,6 +765,7 @@ pub struct Metrics {
     pub results_by_game: BTreeMap<GameId, u32>,
     pub local_user_indexes: Vec<CanisterId>,
     pub pending_pushes: Vec<CanisterId>,
+    pub local_index_events_queue_length: u32,
     pub last_registry_refresh: TimestampMillis,
     pub master_seed_set: bool,
     pub regeneration: Option<Regeneration>,
@@ -778,6 +798,10 @@ pub struct CanisterIds {
     pub registry: CanisterId,
     pub user_index: CanisterId,
     pub cycles_dispenser: CanisterId,
+}
+
+fn new_local_index_event_sync_queue() -> GroupedTimerJobQueue<LocalIndexEventBatch> {
+    GroupedTimerJobQueue::new(10, false)
 }
 
 #[cfg(test)]
