@@ -1,6 +1,6 @@
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
-use types::AccessorId;
+use types::{AccessorId, FileAdded, FileRemoved};
 
 mod lifecycle;
 mod queries;
@@ -30,4 +30,15 @@ pub enum UserIndexEvent {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum GroupIndexEvent {
     RemoveAccessor(AccessorId),
+}
+
+// What a bucket tells the StorageIndex, at `c2c_storage_bucket`. New variants go at the end: an
+// older StorageIndex then fails to decode the batch, and the bucket retries it, rather than
+// misreading a variant as another.
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum StorageBucketEvent {
+    FileAdded(FileAdded),
+    FileRemoved(FileRemoved),
+    CsamMatch(c2c_sync_bucket::CsamMatch),
+    CsamHashDenylisted(c2c_sync_bucket::CsamHashDenylisted),
 }
