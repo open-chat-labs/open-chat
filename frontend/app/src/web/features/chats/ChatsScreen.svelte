@@ -11,7 +11,6 @@
         messagesRead,
         pinnedChatsStore,
         routeForChatIdentifier,
-        routeForScope,
         selectedChatIdStore,
         selectedCommunitySummaryStore,
         type ChatSummary,
@@ -22,6 +21,7 @@
     import { i18nKey } from "@i18n/i18n";
     import { toastStore } from "@src/stores/toast";
     import { navigate } from "@src/utils/navigation";
+    import { withQueryStringFlag } from "@src/utils/urls";
     import { getContext, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import type { LeftRegion, ScreenProps } from "../app/screens";
@@ -155,5 +155,5 @@
     {onHeaderMenu}
     searchable
     onSearch={(q) => (query = q)}
-    threadsAction={() => navigate(`${routeForScope(scope)}/threads`)}
+    threadsAction={() => navigate(withQueryStringFlag("threads"), "overlay")}
     loading={!$chatsInitialisedStore} />

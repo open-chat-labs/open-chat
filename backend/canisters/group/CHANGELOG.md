@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Send activity, CSAM detections and moderation referrals to the LocalUserIndex as events ([#10033](https://github.com/open-chat-labs/open-chat/pull/10033))
+- Send its events to its LocalUserIndex and the MultiUser canisters at `c2c_group` ([#10050](https://github.com/open-chat-labs/open-chat/pull/10050))
+
+## [[2.0.2169](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2169-group)] - 2026-10-20
+
 ### Added
 
 - Add `c2c_user_index` for the UserIndex's events ([#10028](https://github.com/open-chat-labs/open-chat/pull/10028))
@@ -14,12 +21,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Deleting a pinned message in a frozen group no longer traps ([#10028](https://github.com/open-chat-labs/open-chat/pull/10028))
+- Remove a member found, on being sent an event, to have deleted their account, and stop retrying their events ([#10063](https://github.com/open-chat-labs/open-chat/pull/10063))
 
 ### Changed
 
 - Look up a member's previous user ids in the LocalUserIndex when checking their gate again ([#9970](https://github.com/open-chat-labs/open-chat/pull/9970))
 - Stop tracking the async work in progress, since nothing reads it any more ([#9972](https://github.com/open-chat-labs/open-chat/pull/9972))
-- Send activity, CSAM detections and moderation referrals to the LocalUserIndex as events ([#10033](https://github.com/open-chat-labs/open-chat/pull/10033))
 
 ### Removed
 

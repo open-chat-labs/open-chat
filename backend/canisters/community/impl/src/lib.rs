@@ -1304,6 +1304,28 @@ impl Data {
         }
     }
 
+    // Removes a user who has deleted their account from the community and its channels, returning
+    // whether they were a member
+    pub fn remove_deleted_user(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
+        for channel in self.channels.iter_mut() {
+            channel.chat.members.remove(user_id, now);
+        }
+        self.expiring_members.remove_member(user_id, None);
+        self.expiring_member_actions.remove_member(user_id, None);
+        self.achievements.remove_user(&user_id);
+        self.user_cache.delete(user_id);
+        self.members.remove(user_id, None, now).is_some()
+    }
+
+    // Removes a user found to have deleted their account, unless they're a bot, returning whether they
+    // were a member
+    pub fn remove_deleted_user_unless_bot(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
+        if self.members.bots().contains_key(&user_id) {
+            return false;
+        }
+        self.remove_deleted_user(user_id, now)
+    }
+
     pub fn uninstall_bot(&mut self, bot_id: UserId, now: TimestampMillis) -> bool {
         if !self.bots.remove(bot_id, now) {
             return false;
@@ -1561,6 +1583,27 @@ mod tests {
 
     fn new_user_id(i: u8) -> UserId {
         UserId::new_indexed(canister_id(1), i as u16)
+    }
+
+    #[test]
+    fn a_deleted_user_is_removed_unless_they_are_a_bot() {
+        let owner = new_user_id(1);
+        let mut data = Data::new_for_tests(owner, Principal::from_slice(&[1]), String::new(), Vec::new());
+        // A user's old id, which was their User canister's id, and a bot's
+        let deleted: UserId = canister_id(102).into();
+        let bot: UserId = canister_id(50).into();
+        data.members
+            .add(deleted, Principal::from_slice(&[2]), UserType::User, None, 0);
+        data.members.add(bot, bot.as_principal(), UserType::Bot, None, 0);
+
+        assert!(data.remove_deleted_user_unless_bot(deleted, 1));
+        assert!(!data.members.contains(&deleted));
+        // No longer a member, so there's nothing to remove
+        assert!(!data.remove_deleted_user_unless_bot(deleted, 2));
+
+        assert!(!data.remove_deleted_user_unless_bot(bot, 3));
+        assert!(data.members.contains(&bot));
+        assert!(data.members.contains(&owner));
     }
 
     #[test]

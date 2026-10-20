@@ -433,12 +433,18 @@ fn e2e_autonomous_bot_test() {
     );
 
     assert!(notifications.bot_endpoints.contains_key(&bot_id));
-    assert!(
-        notifications
-            .notifications
-            .iter()
-            .any(|n| matches!(&n.value, NotificationEnvelope::Bot(n) if n.recipients.contains_key(&bot_id)))
-    );
+    let (index, envelope) = notifications
+        .notifications
+        .iter()
+        .find_map(|n| match &n.value {
+            NotificationEnvelope::Bot(b) if b.recipients.contains_key(&bot_id) => Some((n.index, b)),
+            _ => None,
+        })
+        .expect("No notification for the bot");
+
+    // The signed payload carries the notification's index, so a bot can drop one sent again
+    let event_wrapper: BotEventWrapper = msgpack::deserialize_then_unwrap(&envelope.event_map[&BotDataEncoding::MsgPack].data);
+    assert_eq!(event_wrapper.notification_index, index);
 }
 
 #[test]
