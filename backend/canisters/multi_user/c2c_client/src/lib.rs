@@ -13,7 +13,7 @@ generate_c2c_call!(c2c_bot_send_message);
 generate_c2c_call!(c2c_accept_p2p_swap);
 generate_c2c_call!(c2c_charge_user_account);
 generate_c2c_call!(c2c_community_canister_v2, 300);
-generate_c2c_call!(c2c_game_chit, 300);
+generate_c2c_call!(c2c_game_chit);
 generate_c2c_call!(c2c_group_canister_v2, 300);
 generate_c2c_call!(c2c_group_index, 300);
 generate_c2c_call!(c2c_install_bot);

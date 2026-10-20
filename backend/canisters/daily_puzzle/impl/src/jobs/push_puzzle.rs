@@ -2,8 +2,8 @@
 //! queue to each index, which calls its `c2c_daily_puzzle` (see `LocalIndexEventBatch`). A refresh
 //! re-reads the indexes from the registry first. The queue retries a failed send in order, and drops one
 //! an hour old: every index pulls for itself every 15 minutes while it holds no puzzle for the day, so a
-//! push is only ever the fast path. An index which missed a set receives it ahead of any later one, and
-//! its idempotency check drops a set sent again after a later one landed.
+//! push is only ever the fast path. Each push replaces any set still queued for an index, and the
+//! index's idempotency check drops a set sent again after a later one landed.
 
 use crate::{RuntimeState, mutate_state, read_state, registry};
 use ic_cdk_timers::TimerId;
@@ -66,6 +66,10 @@ async fn push(refresh: bool) {
 
         let indexes: Vec<_> = state.data.local_user_indexes.iter().copied().collect();
         for canister_id in &indexes {
+            // Each set replaces the last, so one still queued for the index is dropped rather than
+            // sent ahead of this one, where its age could have this one dropped with it. A set already
+            // being sent is left alone.
+            state.data.local_index_event_sync_queue.take(canister_id);
             state.push_event_to_local_index(*canister_id, DailyPuzzleEvent::Puzzles(puzzles.clone()));
         }
         info!(
