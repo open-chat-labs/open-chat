@@ -1,25 +1,29 @@
-import { MediaQuery } from "svelte/reactivity";
-import { BREAKPOINTS, shellLayout, type Crossed, type ShellLayout } from "./layout";
+import { crossedAt, shellLayout, type Crossed, type ShellLayout } from "./layout";
 
-// One media query per breakpoint, which only reports a change when the viewport crosses it, so the
-// layout's readers don't re-run on every resize event. Made on first use, in the browser.
-let queries: Record<keyof Crossed, MediaQuery> | undefined;
+// The shell's layout, from the shell's own width: its content box, the width its CSS container
+// queries see (Fix Brief - App Shell Layout), so the code and the CSS change at the same place.
+// Shell reports it (setShellWidth) as it resizes; before a shell has, the window's width less the
+// shell's padding stands in.
+const SHELL_PADDING = 24;
 
-function breakpoints(): Record<keyof Crossed, MediaQuery> {
-    if (queries === undefined) {
-        queries = {} as Record<keyof Crossed, MediaQuery>;
-        for (const [name, min] of Object.entries(BREAKPOINTS)) {
-            queries[name as keyof Crossed] = new MediaQuery(`(min-width: ${min}px)`);
-        }
-    }
-    return queries;
+// changed only when the width crosses a breakpoint, so the layout's readers don't re-run on every
+// resize
+let crossed = $state<Crossed | undefined>(undefined);
+
+function same(a: Crossed, b: Crossed): boolean {
+    return (Object.keys(a) as (keyof Crossed)[]).every((name) => a[name] === b[name]);
 }
 
-// The shell's layout for the current viewport, kept up to date when read in a reactive context
+/** The shell's content width, as it resizes (Shell). */
+export function setShellWidth(width: number): void {
+    const next = crossedAt(width);
+    if (crossed === undefined || !same(crossed, next)) crossed = next;
+}
+
+// The shell's layout for its current width, kept up to date when read in a reactive context
 // ($derived, $effect, markup)
 export function currentShellLayout(): ShellLayout {
-    const crossed = Object.fromEntries(
-        Object.entries(breakpoints()).map(([name, query]) => [name, query.current]),
-    ) as Crossed;
-    return shellLayout(crossed);
+    if (crossed !== undefined) return shellLayout(crossed);
+    const width = typeof window === "undefined" ? 0 : window.innerWidth - SHELL_PADDING;
+    return shellLayout(crossedAt(width));
 }

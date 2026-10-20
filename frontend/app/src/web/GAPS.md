@@ -9,14 +9,15 @@ design export needs. Each entry says where it came up.
   `App.svelte` uses the default (pink).
 - **Font size setting**: the app's font size setting (`fontSize` store) isn't mapped onto the
   library's `--text-*` tokens yet.
-- **Shell breakpoints vs layout tokens**: the brief's shell breakpoints (§3: 768 / 1200 / 1476 /
-  1876px, right column 375 / 425 / 500px) don't match the library's layout tokens (`--bp-*`
-  1280–2500px, `--panel-info-*` 325–450px, `--panel-list-*`). The shell follows the brief
-  (`shell/layout.ts`), which the build brief makes the acceptance check. The tokens should be
-  brought in line, or the brief corrected.
-- **Right column widths**: the brief says 375 / 425 / 500px "as width grows" without the widths
-  where it grows. `shell/layout.ts` uses 425px from 1876px and 500px from 2500px; confirm against
-  the prototype.
+- **Shell breakpoints vs layout tokens**: the shell's breakpoints and widths (Fix Brief - App
+  Shell Layout: 768 / 1200 / 1476 / 1876 / 2476px, chat list `clamp(350px, 30cqw, 550px)`, right
+  column 375 / 425 / 500px) don't match the library's layout tokens (`--bp-*` 1280–2500px,
+  `--panel-info-*` 325–450px, `--panel-list-*`). The shell follows the brief (`shell/layout.ts`
+  and Shell's container queries). The tokens should be brought in line, or the brief corrected.
+- **Shell minimum width**: the brief gives the shell a 900px minimum and the island an 825px one
+  up to a 1255px shell. At the shell's minimum the island has only 806px (900 − 2 × 12 padding −
+  60 rail − 10 gap), so between 900 and 918px windows its inline-end edge goes under the page's
+  padding and is clipped. Below 900px the page scrolls sideways. Confirm against the prototype.
 - **Nav rail width**: the tokens said `--rail-collapsed: 76px` / `--rail-expanded: 282px`, while
   `NavRail` drew 60px / 283px. The tokens now match what the rail draws and `NavRail` reads them,
   as does the shell's rail slot. Confirm 60px against the prototype.

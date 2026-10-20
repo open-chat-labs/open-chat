@@ -1,8 +1,5 @@
 import { flushSync } from "svelte";
-import { installMatchMedia, setViewportWidth } from "../testing/viewport";
-import { currentShellLayout } from "./viewport.svelte";
-
-installMatchMedia();
+import { currentShellLayout, setShellWidth } from "./viewport.svelte";
 
 describe("the current shell layout", () => {
     let cleanup = () => {};
@@ -21,20 +18,25 @@ describe("the current shell layout", () => {
         return seen;
     }
 
-    test("follows the window across a breakpoint", () => {
-        setViewportWidth(1800);
+    const resize = (width: number) => {
+        setShellWidth(width);
+        flushSync();
+    };
+
+    test("follows the shell's width across a breakpoint", () => {
+        resize(1800);
         const seen = watch();
         expect(seen.rail).toBe("float");
-        setViewportWidth(1900);
+        resize(1900);
         expect(seen.rail).toBe("push");
     });
 
     test("doesn't re-run its readers on resizes between breakpoints", () => {
-        setViewportWidth(1300);
+        resize(1300);
         const seen = watch();
-        for (const width of [1310, 1350, 1400, 1450, 1475]) setViewportWidth(width);
+        for (const width of [1310, 1350, 1400, 1450, 1475]) resize(width);
         expect(seen.runs).toBe(1);
-        setViewportWidth(1476);
+        resize(1476);
         expect(seen.runs).toBe(2);
     });
 });
