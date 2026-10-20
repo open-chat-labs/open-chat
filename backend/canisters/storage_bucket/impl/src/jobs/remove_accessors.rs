@@ -1,8 +1,8 @@
-use crate::model::index_event_batch::EventToSync;
 use crate::{RuntimeState, mutate_state};
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
+use storage_index_canister::StorageBucketEvent;
 use tracing::info;
 
 const MAX_INSTRUCTIONS_PER_RUN: u64 = 5_000_000_000;
@@ -34,7 +34,7 @@ fn run() {
         while let Some(removed) = state.data.files.remove_next_queued_accessor(MAX_FILES_PER_STEP) {
             files_removed += removed.len();
             for file in removed {
-                state.data.push_event_to_index(EventToSync::FileRemoved(file));
+                state.push_event_to_index(StorageBucketEvent::FileRemoved(file));
             }
             if ic_cdk::api::instruction_counter() > MAX_INSTRUCTIONS_PER_RUN {
                 break;

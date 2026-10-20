@@ -1,7 +1,7 @@
-use crate::model::index_event_batch::EventToSync;
 use crate::mutate_state;
 use constants::DAY_IN_MS;
 use std::time::Duration;
+use storage_index_canister::StorageBucketEvent;
 use tracing::info;
 use utils::canister_timers::run_now_then_interval;
 
@@ -15,7 +15,7 @@ fn run() {
         let files_removed = state.data.files.remove_old_pending_files(cutoff);
         let count = files_removed.len();
         for file_removed in files_removed {
-            state.data.push_event_to_index(EventToSync::FileRemoved(file_removed));
+            state.push_event_to_index(StorageBucketEvent::FileRemoved(file_removed));
         }
         info!(count, "Removed old pending files");
     });
