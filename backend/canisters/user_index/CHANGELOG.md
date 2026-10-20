@@ -8,9 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Add `c2c_local_index` for the LocalUserIndexes' events, to replace `c2c_local_user_index` ([#10047](https://github.com/open-chat-labs/open-chat/pull/10047))
+
+## [[2.0.2155](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2155-user_index)] - 2026-10-19
+
+### Added
+
 - Add `c2c_storage_index` and `c2c_translations` for the StorageIndex's and Translations canister's events ([#10029](https://github.com/open-chat-labs/open-chat/pull/10029))
 - Take CSAM detections and moderation referrals as events from the LocalUserIndexes ([#10029](https://github.com/open-chat-labs/open-chat/pull/10029))
-- Add `c2c_local_index` for the LocalUserIndexes' events, to replace `c2c_local_user_index` ([#10047](https://github.com/open-chat-labs/open-chat/pull/10047))
 
 ### Changed
 
