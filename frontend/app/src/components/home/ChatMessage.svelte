@@ -478,8 +478,12 @@
     );
     let tips = $derived(msg.tips ? Object.entries(msg.tips) : []);
     let canBlockUser = $derived(canBlockUsers && !$selectedChatBlockedUsersStore.has(msg.sender));
+    // A bot finalises a message it streams by editing it, so that isn't shown as an edit. A bridge
+    // bot sends its messages finalised, and only edits them to relay an edit made on the other
+    // platform.
     let edited = $derived(
-        msg.edited && (senderContext?.kind !== "bot" || !senderContext.finalised),
+        msg.edited &&
+            (senderContext?.kind !== "bot" || !senderContext.finalised || bridged !== undefined),
     );
     let canShare = $derived(canShareMessage(msg.content));
     let canForward = $derived(client.canForward(msg.content));

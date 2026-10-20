@@ -3,6 +3,7 @@ pub mod bot_change_role;
 pub mod bot_create_channel;
 pub mod bot_delete_channel;
 pub mod bot_delete_messages;
+pub mod bot_edit_message;
 pub mod bot_invite_users;
 pub mod bot_remove_user;
 pub mod bot_send_message;

@@ -12,8 +12,8 @@ use std::time::Duration;
 use testing::rng::random_string;
 use types::{
     BlobReference, BotChatContext, BotInstallationLocation, BotMessageContent, BotPermissions, BridgePlatform, BridgedUser,
-    CanisterId, Chat, ChatEvent, DiscordUser, EventsResponse, MessagePermission, SenderContext, TelegramUser, TextContent,
-    UnitResult, UserId,
+    CanisterId, Chat, ChatEvent, DiscordUser, EventsResponse, MessageContent, MessageId, MessagePermission, SenderContext,
+    TelegramUser, TextContent, UnitResult, UserId,
 };
 
 #[test]
@@ -123,11 +123,16 @@ fn bridge_bots_relay_messages_as_their_authors() {
         channel,
         from_discord.clone(),
     );
-    let SendResponse::Success(result) = response else {
+    let SendResponse::Success(channel_message) = response else {
         panic!("'bot_send_message' error: {response:?}");
     };
-    let events =
-        client::community::happy_path::events_by_index(env, &owner, community_id, channel_id, vec![result.event_index]);
+    let events = client::community::happy_path::events_by_index(
+        env,
+        &owner,
+        community_id,
+        channel_id,
+        vec![channel_message.event_index],
+    );
     assert_relayed_from(&events, discord_bot_id, &from_discord);
     // The message holds only the author's id. Their profile goes to the UserIndex's registry
     wait_for_bridged_user(env, canister_ids.user_index, &from_discord);
@@ -139,10 +144,10 @@ fn bridge_bots_relay_messages_as_their_authors() {
         group,
         from_discord.clone(),
     );
-    let SendResponse::Success(result) = response else {
+    let SendResponse::Success(group_message) = response else {
         panic!("'bot_send_message' error: {response:?}");
     };
-    let events = client::group::happy_path::events_by_index(env, &owner, group_id, vec![result.event_index]);
+    let events = client::group::happy_path::events_by_index(env, &owner, group_id, vec![group_message.event_index]);
     assert_relayed_from(&events, discord_bot_id, &from_discord);
 
     let response = send(
@@ -159,6 +164,52 @@ fn bridge_bots_relay_messages_as_their_authors() {
         client::community::happy_path::events_by_index(env, &owner, community_id, channel_id, vec![result.event_index]);
     assert_relayed_from(&events, telegram_bot_id, &from_telegram);
     wait_for_bridged_user(env, canister_ids.user_index, &from_telegram);
+
+    // A bridge bot relays the edits made on the other platform to the messages it relayed
+    let response = edit(
+        env,
+        discord_bot_principal,
+        community_local_user_index,
+        channel,
+        channel_message.message_id,
+        "Edited on Discord",
+    );
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    let events = client::community::happy_path::events_by_index(
+        env,
+        &owner,
+        community_id,
+        channel_id,
+        vec![channel_message.event_index],
+    );
+    assert_edited_to(&events, "Edited on Discord");
+    assert_relayed_from(&events, discord_bot_id, &from_discord);
+
+    let response = edit(
+        env,
+        discord_bot_principal,
+        group_local_user_index,
+        group,
+        group_message.message_id,
+        "Edited on Discord",
+    );
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    let events = client::group::happy_path::events_by_index(env, &owner, group_id, vec![group_message.event_index]);
+    assert_edited_to(&events, "Edited on Discord");
+
+    // But not a message another bot sent
+    let response = edit(
+        env,
+        telegram_bot_principal,
+        community_local_user_index,
+        channel,
+        channel_message.message_id,
+        "Edited on Telegram",
+    );
+    assert!(
+        matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::InitiatorNotAuthorized)),
+        "{response:?}"
+    );
 
     // Each bridge bot can only relay messages from its own platform
     for (bot_principal, bridged_from) in [
@@ -229,6 +280,54 @@ fn bridge_bots_relay_messages_as_their_authors() {
         matches!(&response, SendResponse::Error(e) if e.matches_code(OCErrorCode::InitiatorNotAuthorized)),
         "{response:?}"
     );
+
+    let response = edit(
+        env,
+        discord_bot_principal,
+        community_local_user_index,
+        channel,
+        channel_message.message_id,
+        "Edited again",
+    );
+    assert!(
+        matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::InitiatorNotAuthorized)),
+        "{response:?}"
+    );
+}
+
+fn edit(
+    env: &mut PocketIc,
+    bot_principal: Principal,
+    local_user_index: CanisterId,
+    chat: Chat,
+    message_id: MessageId,
+    text: &str,
+) -> UnitResult {
+    client::local_user_index::bot_edit_message(
+        env,
+        bot_principal,
+        local_user_index,
+        &local_user_index_canister::bot_edit_message::Args {
+            chat_context: BotChatContext::Autonomous(chat),
+            thread: None,
+            message_id,
+            content: BotMessageContent::Text(TextContent { text: text.to_string() }),
+            block_level_markdown: false,
+            og_previews: None,
+        },
+    )
+}
+
+fn assert_edited_to(events: &EventsResponse, text: &str) {
+    let ChatEvent::Message(message) = &events.events[0].event else {
+        panic!("Expected a message: {:?}", events.events[0].event);
+    };
+    assert!(
+        matches!(&message.content, MessageContent::Text(t) if t.text == text),
+        "{:?}",
+        message.content
+    );
+    assert!(message.edited);
 }
 
 // The UserIndex fans the bridge bots out to every LocalUserIndex, which can take a while under load

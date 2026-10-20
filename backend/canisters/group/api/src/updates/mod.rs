@@ -4,6 +4,7 @@ pub mod block_user;
 pub mod c2c_bot_add_reaction;
 pub mod c2c_bot_change_role;
 pub mod c2c_bot_delete_messages;
+pub mod c2c_bot_edit_message;
 pub mod c2c_bot_invite_users;
 pub mod c2c_bot_remove_user;
 pub mod c2c_bot_send_message;

@@ -1,7 +1,7 @@
 use crate::updates::c2c_notify_low_balance::top_up_and_retry_if_out_of_cycles;
 use crate::{
     RuntimeState,
-    bots::{BotAccessContext, extract_access_context_from_chat_context},
+    bots::{BotAccessContext, check_is_relaying_into_group_or_channel, extract_access_context_from_chat_context},
     mutate_state,
 };
 use canister_api_macros::update;
@@ -54,14 +54,7 @@ fn check_can_relay(bridged_from: &BridgedUser, context: &BotAccessContext, state
         return Err(OCErrorCode::InitiatorNotAuthorized
             .with_message(format!("Only the {platform} bridge bot can relay messages from {platform}")));
     }
-    if !matches!(context.initiator, BotInitiator::Autonomous) {
-        return Err(OCErrorCode::InvalidRequest.with_message("Bridged messages must be relayed autonomously"));
-    }
-    if let BotActionScope::Chat(details) = &context.scope
-        && matches!(details.chat, Chat::Direct(_))
-    {
-        return Err(OCErrorCode::InvalidRequest.with_message("Bridged messages can't be relayed into direct chats"));
-    }
+    check_is_relaying_into_group_or_channel(context)?;
     bridged_from
         .validate()
         .map_err(|error| OCErrorCode::InvalidRequest.with_message(error))
