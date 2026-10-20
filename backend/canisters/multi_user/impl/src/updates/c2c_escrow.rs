@@ -1,5 +1,5 @@
 use crate::guards::caller_is_escrow_canister;
-use crate::updates::c2c_notify_p2p_swap_status_change::c2c_notify_p2p_swap_status_change_impl;
+use crate::updates::c2c_notify_p2p_swap_status_change::{apply, resolve};
 use crate::{execute_update_async, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -16,26 +16,26 @@ async fn c2c_escrow(args: Args) -> Response {
     execute_update_async(|| c2c_escrow_impl(args)).await
 }
 
-// The events are checked together before any is applied, since applying one can await a lookup in
-// the LocalUserIndex, during which a copy of this batch sent again must find them already seen
+// Each event is resolved first, which can await a lookup in the LocalUserIndex, and only then checked
+// and applied, together in one synchronous step. The lookup traps on a failure worth retrying, so
+// that the escrow canister sends the batch again: had the event been checked first, it would be left
+// marked as seen but never applied. A copy of the batch sent meanwhile can't apply anything twice, as
+// each event is checked and applied together.
 async fn c2c_escrow_impl(args: Args) -> Response {
-    let events: Vec<_> = mutate_state(|state| {
-        let caller = state.env.caller();
-        args.events
-            .into_iter()
-            .filter(|event| {
-                state
-                    .data
-                    .idempotency_checker
-                    .check(caller, event.created_at, event.idempotency_id)
-            })
-            .map(|event| event.value)
-            .collect()
-    });
-
-    for event in events {
-        match event {
-            EscrowEvent::SwapStatusChanged(change) => c2c_notify_p2p_swap_status_change_impl(change).await,
+    for event in args.events {
+        let (created_at, idempotency_id) = (event.created_at, event.idempotency_id);
+        match event.value {
+            EscrowEvent::SwapStatusChanged(change) => {
+                let resolved = resolve(&change).await;
+                mutate_state(|state| {
+                    let caller = state.env.caller();
+                    if state.data.idempotency_checker.check(caller, created_at, idempotency_id)
+                        && let Some((recipient_index, other)) = resolved
+                    {
+                        apply(change, recipient_index, other, state);
+                    }
+                });
+            }
         }
     }
     SuccessOnly::Success
