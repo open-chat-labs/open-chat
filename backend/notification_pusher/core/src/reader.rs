@@ -23,6 +23,7 @@ pub struct Reader<I: IndexStore> {
 
 // How far the reader has got through the notifications canister's notifications. The user and bot
 // positions are stored, the read position is only held in memory.
+#[derive(Debug, Eq, PartialEq)]
 struct Positions {
     read_up_to: u64,
     // User notifications are recorded as processed once queued to be pushed
@@ -30,6 +31,47 @@ struct Positions {
     // Bot notifications are recorded as processed only once delivered or given up on. After a
     // restart those which weren't are read and sent again.
     bot_up_to: u64,
+}
+
+impl Positions {
+    // Until bot notifications have been tracked separately they're as far along as the users'. The
+    // reader goes back to the earlier of the two, to send again what wasn't processed.
+    fn new(user_up_to: u64, bot_up_to: Option<u64>) -> Self {
+        let bot_up_to = bot_up_to.unwrap_or(user_up_to);
+        Positions {
+            read_up_to: min(user_up_to, bot_up_to),
+            user_up_to,
+            bot_up_to,
+        }
+    }
+
+    // Whether a notification read again after a restart was processed before it
+    fn already_processed(&self, index: u64, is_bot: bool) -> bool {
+        index <= if is_bot { self.bot_up_to } else { self.user_up_to }
+    }
+
+    // Records reading up to `index`, returning the user position to store if it moved
+    fn read(&mut self, index: u64) -> Option<u64> {
+        self.read_up_to = index;
+        (index > self.user_up_to).then(|| {
+            self.user_up_to = index;
+            index
+        })
+    }
+
+    // Records the bot notifications being finished up to `index`, returning the bot position to
+    // store if it moved
+    fn bots_finished(&mut self, index: u64) -> Option<u64> {
+        (index > self.bot_up_to).then(|| {
+            self.bot_up_to = index;
+            index
+        })
+    }
+
+    // Notifications are kept until both have been processed
+    fn prune_up_to(&self) -> u64 {
+        min(self.user_up_to, self.bot_up_to)
+    }
 }
 
 impl<I: IndexStore> Reader<I> {
@@ -97,9 +139,9 @@ impl<I: IndexStore> Reader<I> {
         for indexed_notification in ic_response.notifications {
             match indexed_notification.value {
                 // Pushed before the pusher restarted
-                NotificationEnvelope::User(_) if indexed_notification.index <= positions.user_up_to => {}
+                NotificationEnvelope::User(_) if positions.already_processed(indexed_notification.index, false) => {}
                 // Delivered or given up on before the pusher restarted
-                NotificationEnvelope::Bot(_) if indexed_notification.index <= positions.bot_up_to => {}
+                NotificationEnvelope::Bot(_) if positions.already_processed(indexed_notification.index, true) => {}
                 NotificationEnvelope::User(notification) => {
                     let available_capacity = self
                         .user_notification_sender
@@ -195,19 +237,14 @@ impl<I: IndexStore> Reader<I> {
 
         if let Some(latest_index) = latest_index_processed {
             write_metrics(|m| m.set_latest_notification_index_read(latest_index, self.notifications_canister_id));
-            positions.read_up_to = latest_index;
-
-            if latest_index > positions.user_up_to {
-                self.index_store.set(&self.user_key(), latest_index).await?;
-                positions.user_up_to = latest_index;
+            if let Some(user_up_to) = positions.read(latest_index) {
+                self.index_store.set(&self.user_key(), user_up_to).await?;
             }
         }
 
         // Updated even when nothing new was read, since deliveries finish in the meantime
-        let bot_up_to = self.bot_deliveries.finished_up_to(positions.read_up_to);
-        if bot_up_to > positions.bot_up_to {
+        if let Some(bot_up_to) = positions.bots_finished(self.bot_deliveries.finished_up_to(positions.read_up_to)) {
             self.index_store.set(&self.bot_key(), bot_up_to).await?;
-            positions.bot_up_to = bot_up_to;
         }
 
         Ok(())
@@ -226,23 +263,15 @@ impl<I: IndexStore> Reader<I> {
             index
         };
 
-        // Until bot notifications have been tracked separately, they're as far along as the users'
-        let bot_up_to = self.index_store.get(&self.bot_key()).await?.unwrap_or(user_up_to);
+        let bot_up_to = self.index_store.get(&self.bot_key()).await?;
 
-        Ok(Positions {
-            read_up_to: min(user_up_to, bot_up_to),
-            user_up_to,
-            bot_up_to,
-        })
+        Ok(Positions::new(user_up_to, bot_up_to))
     }
 
     // Keep the notifications which are yet to be processed, so they can be read again after a restart
     async fn prune_notifications(&self, positions: &Positions) -> Result<(), Error> {
         self.ic_agent
-            .remove_notifications(
-                &self.notifications_canister_id,
-                min(positions.user_up_to, positions.bot_up_to),
-            )
+            .remove_notifications(&self.notifications_canister_id, positions.prune_up_to())
             .await
     }
 
@@ -265,6 +294,57 @@ fn subscription_wanted(fcm_only: bool, subscription: &types::NotificationSubscri
 mod tests {
     use super::*;
     use types::{FcmToken, NotificationSubscription, SubscriptionInfo, SubscriptionKeys};
+
+    #[test]
+    fn first_start_with_bots_tracked_separately_replays_nothing() {
+        let positions = Positions::new(100, None);
+        assert_eq!(
+            positions,
+            Positions {
+                read_up_to: 100,
+                user_up_to: 100,
+                bot_up_to: 100
+            }
+        );
+    }
+
+    #[test]
+    fn a_restart_replays_only_the_unfinished_bot_notifications() {
+        // The pusher stopped while bot notifications after 90 were still being delivered
+        let mut positions = Positions::new(100, Some(90));
+        assert_eq!(positions.read_up_to, 90);
+
+        // Read again: the user notifications aren't pushed twice, the bot notifications are sent again
+        assert!(positions.already_processed(95, false));
+        assert!(!positions.already_processed(95, true));
+        assert!(positions.already_processed(90, true));
+
+        // Reading up to where the users were doesn't store the user position again
+        assert_eq!(positions.read(100), None);
+        // Past it, both kinds are new
+        assert_eq!(positions.read(105), Some(105));
+        assert!(!positions.already_processed(106, false));
+        assert!(!positions.already_processed(106, true));
+    }
+
+    #[test]
+    fn the_bot_position_only_moves_forward() {
+        let mut positions = Positions::new(100, Some(90));
+        assert_eq!(positions.bots_finished(90), None);
+        assert_eq!(positions.bots_finished(95), Some(95));
+        assert_eq!(positions.bots_finished(93), None);
+        assert_eq!(positions.bot_up_to, 95);
+    }
+
+    #[test]
+    fn notifications_are_kept_until_both_kinds_are_processed() {
+        let mut positions = Positions::new(100, Some(90));
+        assert_eq!(positions.prune_up_to(), 90);
+
+        positions.bots_finished(100);
+        positions.read(110);
+        assert_eq!(positions.prune_up_to(), 100);
+    }
 
     // #9456 invariant 6: a dismissal kind is never sent to a web push subscription
     #[test]

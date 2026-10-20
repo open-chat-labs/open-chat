@@ -157,10 +157,14 @@ impl Metrics {
             .set(index as i64);
     }
 
+    // Pushes finish out of order, eg. while a bot's notification is retried, so this only moves forward
     pub fn set_latest_notification_index_pushed(&self, index: u64, canister_id: CanisterId) {
-        self.latest_notification_index_pushed
-            .with_label_values(&[&canister_id.to_string()])
-            .set(index as i64);
+        let gauge = self
+            .latest_notification_index_pushed
+            .with_label_values(&[&canister_id.to_string()]);
+        if index as i64 > gauge.get() {
+            gauge.set(index as i64);
+        }
     }
 
     pub fn observe_end_to_end_latency(&self, latency: Milliseconds, user_notification: bool, canister_id: CanisterId) {
