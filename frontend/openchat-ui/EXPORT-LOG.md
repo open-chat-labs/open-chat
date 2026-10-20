@@ -80,6 +80,6 @@
 - `MessageGroup` takes `avatarSpace` (with `showAvatar` off, keeps the avatar's space) and `endsRun` (off: the last message isn't the end of the sender's run, so it doesn't get the last-in-group shape), for a host that renders a sender's run as several groups (the app's list renders one message per row).
 - Not in the design export: to go back to it (the app's `GAPS.md` lists them).
 
-## 2026-10-20 — the rail's chats label, by hand
-- New string `ui.navRail.dmsAndGroupChats` ("DMs & Group Chats"), the label of the app's rail entry for DMs and group chats. The app now passes labels for its rail items (DMs & Group Chats, Notifications, Favourites, Wallet, in that order).
-- Not in the design export: to go back to it.
+## 2026-10-20 — the rail's local pick, by hand
+- `NavRail` drops the item a click picked when the host's `items` change, not only when `activeIndex` does: a host that shows a different set of items (the app hides Favourites without favourites) moves their indexes, and the old pick could point past the end, leaving no item active.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

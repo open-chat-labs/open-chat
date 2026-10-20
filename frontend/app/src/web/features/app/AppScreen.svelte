@@ -18,6 +18,7 @@
     import { navigate } from "@src/utils/navigation";
     import { removeQueryStringParam, withQueryStringFlag } from "@src/utils/urls";
     import { getContext } from "svelte";
+    import { _ } from "svelte-i18n";
     import { railItems, railSelectionFor, type Regions } from "../../router/regions";
     import { RightColumnState } from "../../shell/rightColumn.svelte";
     import Shell from "../../shell/Shell.svelte";
@@ -46,7 +47,8 @@
         return index < 0 ? null : index;
     });
     const railShown = $derived(railItems($favouritesStore.size > 0, selection));
-    const items = $derived(railShown.map(({ icon, label }) => ({ icon, label })));
+    // the labels are the app's own strings, translated here (the rail shows other text as it is)
+    const items = $derived(railShown.map((item) => ({ icon: item.icon, label: $_(item.label) })));
     const activeItem = $derived(railShown.findIndex((item) => item.id === selection.item));
 
     // Dialogs people link to are query params over whatever page is open (ROUTES.md)

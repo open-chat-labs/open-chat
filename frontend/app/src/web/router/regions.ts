@@ -101,17 +101,13 @@ export function regionsFor(route: RouteParams, signedOut: boolean): Regions {
     }
 }
 
-// The rail's destinations, in the order NavRail shows them, with their labels (resource keys)
+// The rail's destinations, in the order NavRail shows them, with their labels: the app's own
+// strings, which are translated (the library's are English only so far)
 export const RAIL_ITEMS = [
-    { id: "chats", icon: "messages", label: "ui.navRail.dmsAndGroupChats", path: "/chats" },
-    {
-        id: "notifications",
-        icon: "bell",
-        label: "ui.navRail.notifications",
-        path: "/notifications",
-    },
-    { id: "favourites", icon: "heart", label: "ui.navRail.favourites", path: "/favourite" },
-    { id: "wallet", icon: "wallet", label: "ui.navRail.wallet", path: "/wallet" },
+    { id: "chats", icon: "messages", label: "communities.dmsAndGroupChats", path: "/chats" },
+    { id: "notifications", icon: "bell", label: "upgrade.notifications", path: "/notifications" },
+    { id: "favourites", icon: "heart", label: "communities.favourites", path: "/favourite" },
+    { id: "wallet", icon: "wallet", label: "wallet", path: "/wallet" },
 ] as const;
 
 export type RailItem = (typeof RAIL_ITEMS)[number];
