@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Store the author's id on messages a bridge bot relays from Discord or Telegram ([#10052](https://github.com/open-chat-labs/open-chat/pull/10052))
+- Add `c2c_bot_edit_message` for bridge bots to relay edits made on the other platform to the messages they relayed ([#10066](https://github.com/open-chat-labs/open-chat/pull/10066))
 
 ### Changed
 
