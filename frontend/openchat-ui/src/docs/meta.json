@@ -1029,6 +1029,28 @@
         "doc": ""
       },
       {
+        "name": "text",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The draft to start from, read when the composer mounts (key the composer to start another)."
+      },
+      {
+        "name": "onInput",
+        "type": "(text: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The draft as it changes while it's being written (typed, an emoji picked, cleared on send); not while editing."
+      },
+      {
         "name": "typingNames",
         "type": "string[]",
         "default": [
@@ -11936,6 +11958,28 @@
         "required": false,
         "componentDefault": "'Message'",
         "doc": ""
+      },
+      {
+        "name": "text",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "The draft to start from, read when the composer mounts (key the composer to start another)."
+      },
+      {
+        "name": "onInput",
+        "type": "(text: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The draft as it changes while it's being written (typed, an emoji picked, cleared on send); not while editing."
       },
       {
         "name": "onSend",

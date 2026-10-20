@@ -83,3 +83,8 @@
 ## 2026-10-20 — the rail's local pick, by hand
 - `NavRail` drops the item a click picked when the host's `items` change, not only when `activeIndex` does: a host that shows a different set of items (the app hides Favourites without favourites) moves their indexes, and the old pick could point past the end, leaving no item active.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-20 — the composer's draft, by hand
+- `MessageComposer` takes `text`, the draft to start from (read when it mounts; a host keys it to start another), and `onInput`, the draft as it changes while it's being written (typed, an emoji picked, cleared on send; not while editing). `ComposerBar` passes both through.
+- `MessageComposer` shows "+" only with `onAttach`, and the GIF tab only with `onGif` (as the mic only shows with `onVoice`), so a host that doesn't take them has no dead controls. The docs' demo states still show them.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists them).

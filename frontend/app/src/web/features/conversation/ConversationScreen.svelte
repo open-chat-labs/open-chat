@@ -47,6 +47,7 @@
     import { getContext, untrack, type Snippet } from "svelte";
     import { _ } from "svelte-i18n";
     import type { MiddleRegion, ScreenProps } from "../app/screens";
+    import Composer from "./Composer.svelte";
     import {
         eventLines,
         MessageRows,
@@ -474,6 +475,11 @@
                 </ChatEventList>
             </div>
         {/if}
+
+        <!-- one composer per chat: it starts from that chat's draft -->
+        {#key chatIdentifierToString(chat.id)}
+            <Composer {chat} />
+        {/key}
     </div>
 {/if}
 
