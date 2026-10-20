@@ -4,7 +4,7 @@ use aws_sdk_dynamodb::types::AttributeValue;
 use aws_types::sdk_config::SdkConfig;
 use index_store::IndexStore;
 use std::str::FromStr;
-use types::{CanisterId, Error};
+use types::Error;
 
 #[derive(Clone)]
 pub struct DynamoDbIndexStore {
@@ -22,12 +22,13 @@ impl DynamoDbIndexStore {
 
 #[async_trait]
 impl IndexStore for DynamoDbIndexStore {
-    async fn get(&self, canister_id: CanisterId) -> Result<Option<u64>, Error> {
+    // The key attribute is named `canister_id` since that's what the keys were before there were others
+    async fn get(&self, key: &str) -> Result<Option<u64>, Error> {
         let response = self
             .client
             .get_item()
             .table_name(&self.table_name)
-            .key("canister_id", AttributeValue::S(canister_id.to_string()))
+            .key("canister_id", AttributeValue::S(key.to_string()))
             .send()
             .await?;
 
@@ -39,11 +40,11 @@ impl IndexStore for DynamoDbIndexStore {
         }
     }
 
-    async fn set(&self, canister_id: CanisterId, index: u64) -> Result<(), Error> {
+    async fn set(&self, key: &str, index: u64) -> Result<(), Error> {
         self.client
             .put_item()
             .table_name(&self.table_name)
-            .item("canister_id", AttributeValue::S(canister_id.to_string()))
+            .item("canister_id", AttributeValue::S(key.to_string()))
             .item("index", AttributeValue::N(index.to_string()))
             .send()
             .await?;
