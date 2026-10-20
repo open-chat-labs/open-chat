@@ -10,7 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Add `c2c_user_index` for the UserIndex's events ([#10028](https://github.com/open-chat-labs/open-chat/pull/10028))
 - Add `c2c_escrow` for the Escrow canister's swap status changes, in idempotent envelopes ([#10047](https://github.com/open-chat-labs/open-chat/pull/10047))
-- Store the Discord author on messages the Discord bot relays from Discord ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+- Store the Discord author on messages the Discord bot relays from Discord ([#10052](https://github.com/open-chat-labs/open-chat/pull/10052))
 
 ### Fixed
 
