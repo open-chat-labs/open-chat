@@ -8,6 +8,7 @@
         chatIdentifiersEqual,
         chatListScopeStore,
         chatsInitialisedStore,
+        chatSummariesListStore,
         communityIdentifiersEqual,
         exploringStore,
         messageIndexStore,
@@ -41,6 +42,8 @@
     } from "@src/utils/urls";
     import page from "page";
     import { getContext, onMount, untrack, type Snippet } from "svelte";
+    import { currentShellLayout } from "../shell/viewport.svelte";
+    import { firstChatRoute } from "./firstChat";
     import { routeTable } from "./routeTable";
     import { leftToBrowser } from "./links";
 
@@ -128,7 +131,7 @@
                         $selectedChatIdStore === undefined &&
                         $routeKindStore !== "threads_route"
                     ) {
-                        client.selectDefaultChat();
+                        selectFirstChat();
                     }
                 });
             });
@@ -166,17 +169,34 @@
         }
     });
 
-    // A chat list with nothing selected goes to its last (or first) chat. A thread list stays.
+    // A chat list with nothing selected goes to its first chat (ROUTES.md, decision 7), once
+    // there is one. A thread list stays. Only the first chat's route is tracked (and whether the
+    // screen is narrow, where there's none), so other summary changes don't re-run it. The URL's
+    // query (an open overlay) is kept.
+    const firstChat = $derived(
+        firstChatRoute(
+            $chatListScopeStore.kind,
+            $chatSummariesListStore,
+            currentShellLayout().narrow,
+        ),
+    );
     $effect(() => {
         if (
+            firstChat !== undefined &&
             $selectedChatIdStore === undefined &&
             $chatListScopeStore.kind !== "none" &&
             $routeKindStore !== "threads_route" &&
             !$exploringStore
         ) {
-            client.selectDefaultChat();
+            untrack(selectFirstChat);
         }
     });
+
+    function selectFirstChat() {
+        if (firstChat !== undefined) {
+            navigate(firstChat + location.search, "auto");
+        }
+    }
 
     // Select the chat the route names
     $effect(() => {
