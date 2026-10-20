@@ -15,8 +15,8 @@ timer_job_batch!(IndexEventBatch, CanisterId, (EventToSync, u64), 1000);
 pub enum EventToSync {
     FileAdded(FileAdded),
     FileRemoved(FileRemoved),
-    CsamMatch(storage_index_canister::c2c_sync_bucket::CsamMatch),
-    CsamHashDenylisted(storage_index_canister::c2c_sync_bucket::CsamHashDenylisted),
+    CsamMatch(storage_index_canister::CsamMatch),
+    CsamHashDenylisted(storage_index_canister::CsamHashDenylisted),
 }
 
 impl TimerJobItem for IndexEventBatch {

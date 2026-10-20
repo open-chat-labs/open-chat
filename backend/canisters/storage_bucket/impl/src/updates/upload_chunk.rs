@@ -6,7 +6,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use storage_bucket_canister::upload_chunk_v2::{Response::*, *};
 use storage_index_canister::StorageBucketEvent;
-use storage_index_canister::c2c_sync_bucket::{CsamMatch, CsamMatchKind};
+use storage_index_canister::{CsamMatch, CsamMatchKind};
 use tracing::info;
 use types::{FileRemoved, RejectedReason};
 use utils::file_id::validate_file_id;

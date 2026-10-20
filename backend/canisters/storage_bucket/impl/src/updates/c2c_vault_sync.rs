@@ -4,8 +4,8 @@ use crate::{RuntimeState, mutate_state};
 use canister_tracing_macros::trace;
 use ic_cdk::update;
 use storage_bucket_canister::c2c_vault_sync::{Response::*, *};
+use storage_index_canister::CsamHashDenylisted;
 use storage_index_canister::StorageBucketEvent;
-use storage_index_canister::c2c_sync_bucket::CsamHashDenylisted;
 use tracing::{error, info, warn};
 
 #[update(guard = "caller_is_storage_index_canister")]

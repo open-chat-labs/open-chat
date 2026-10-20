@@ -152,11 +152,14 @@ impl Data {
         }
     }
 
-    // Removes a file the index refused, recording why against its owner. The index never counted it,
-    // so nothing is reported back.
-    pub fn reject_file(&mut self, rejected: FileRejected) {
+    // Removes a file the index refused, recording why against its owner, unless the file now held
+    // under that id is a newer one: an id can be used again once an upload is abandoned, so a reply
+    // can arrive after the id's next upload has begun. The index never counted the rejected file, so
+    // nothing is reported back.
+    pub fn reject_file(&mut self, rejected: FileRejected, created: TimestampMillis) {
         let file_id = rejected.file_id;
-        if let Some(user_id) = self.files.owner(&file_id)
+        if let Some((user_id, held_created)) = self.files.owner_and_created(&file_id)
+            && held_created == created
             && let Some(old_status) =
                 self.users
                     .update_file_status(user_id, file_id, FileStatusInternal::Rejected(rejected.reason.into()))

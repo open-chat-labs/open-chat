@@ -7,7 +7,7 @@ use canister_tracing_macros::trace;
 use rand::RngExt;
 use storage_bucket_canister::forward_file::{Response::*, *};
 use storage_index_canister::StorageBucketEvent;
-use storage_index_canister::c2c_sync_bucket::{CsamMatch, CsamMatchKind};
+use storage_index_canister::{CsamMatch, CsamMatchKind};
 use tracing::info;
 
 #[update(guard = "caller_is_known_user", candid = true, json = true, msgpack = true)]

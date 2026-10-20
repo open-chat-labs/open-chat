@@ -1,4 +1,5 @@
 use crate::{mutate_state, read_state};
+use std::collections::BTreeMap;
 use storage_index_canister::StorageBucketEvent;
 use timer_job_queues::{TimerJobItem, timer_job_batch};
 use types::{CanisterId, IdempotentEnvelope, Milliseconds};
@@ -31,10 +32,21 @@ impl TimerJobItem for StorageIndexEventBatch {
 
         match response {
             Ok(storage_index_canister::c2c_storage_bucket::Response::Success(result)) => {
-                // The same however many times the batch was sent, so applying it again is harmless
+                // When each id was added in this batch (by its latest addition, as the index judges
+                // it), so that only the file this batch reported is removed
+                let added: BTreeMap<_, _> = self
+                    .items
+                    .iter()
+                    .filter_map(|e| match &e.value {
+                        StorageBucketEvent::FileAdded(file) => Some((file.file_id, file.meta_data.created)),
+                        _ => None,
+                    })
+                    .collect();
                 mutate_state(|state| {
                     for file in result.files_rejected {
-                        state.data.reject_file(file);
+                        if let Some(created) = added.get(&file.file_id) {
+                            state.data.reject_file(file, *created);
+                        }
                     }
                 });
                 Ok(())
