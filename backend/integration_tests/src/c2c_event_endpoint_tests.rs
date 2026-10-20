@@ -415,7 +415,8 @@ fn storage_index_takes_storage_bucket_events() {
         total_file_bytes: 0,
     };
 
-    // Sent twice, as a bucket does when a reply is lost: applied once, with the same reply both times
+    // Sent twice, as a bucket does when a reply is lost. The second time every event is dropped as
+    // seen before, and the reply, worked out from what the index holds, is the same.
     for _ in 0..2 {
         let storage_index_canister::c2c_storage_bucket::Response::Success(result) =
             client::storage_index::c2c_storage_bucket(env, file.canister_id, canister_ids.storage_index, &args);
