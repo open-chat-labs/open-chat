@@ -7584,6 +7584,7 @@ dependencies = [
  "reqwest 0.13.4",
  "rustls 0.23.45",
  "serde",
+ "serde_bytes",
  "serde_json",
  "tokio",
  "tracing",
@@ -12021,6 +12022,7 @@ version = "0.1.0"
 dependencies = [
  "futures",
  "ic-cdk 0.20.3",
+ "ic-cdk-timers",
  "per_round_timer",
  "serde",
  "types",

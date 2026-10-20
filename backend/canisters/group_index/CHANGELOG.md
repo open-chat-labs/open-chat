@@ -16,6 +16,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Remove the one-off which moved the pending deleted group and community notifications onto the user canister events queue, now that it has run ([#10056](https://github.com/open-chat-labs/open-chat/pull/10056))
 
+### Fixed
+
+- Wait out a failed batch's retry delay, rather than retrying it whenever anything else is queued ([#10069](https://github.com/open-chat-labs/open-chat/pull/10069))
+
 ## [[2.0.2168](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2168-group_index)] - 2026-10-20
 
 ### Added

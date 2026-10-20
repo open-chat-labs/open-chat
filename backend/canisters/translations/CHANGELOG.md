@@ -15,6 +15,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Remove the one-off which rewrote migrated users' old ids to their latest, now that it has run ([#10002](https://github.com/open-chat-labs/open-chat/pull/10002))
 
+### Fixed
+
+- Wait out a failed batch's retry delay, rather than retrying it whenever anything else is queued ([#10069](https://github.com/open-chat-labs/open-chat/pull/10069))
+
 ## [[2.0.2146](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2146-translations)] - 2026-10-16
 
 ### Changed

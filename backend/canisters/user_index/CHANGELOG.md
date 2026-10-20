@@ -6,19 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `set_bridge_bot` for a platform operator to set the bot that bridges Discord or Telegram ([#10052](https://github.com/open-chat-labs/open-chat/pull/10052))
+- Keep the latest profile of each account a bridge bot relays messages from, with `bridged_users` to look them up ([#10052](https://github.com/open-chat-labs/open-chat/pull/10052))
+
 ### Changed
 
 - Send events to the LocalUserIndexes, the Identity canister and the StorageIndex at their `c2c_user_index` endpoints, the StorageIndex's from one queue ([#10023](https://github.com/open-chat-labs/open-chat/pull/10023))
 - Send moderation actions and suspensions to groups and communities, and vault ops to the StorageIndex, as events ([#10033](https://github.com/open-chat-labs/open-chat/pull/10033))
 - Call the Identity canister's and StorageIndex's event endpoints best-effort ([#10050](https://github.com/open-chat-labs/open-chat/pull/10050))
+- Reject bots which use the JSON data encoding ([#10055](https://github.com/open-chat-labs/open-chat/pull/10055))
+
+### Fixed
+
+- Tell new LocalUserIndexes of the existing bots, and the LocalUserIndexes and StorageIndex of bots' principal changes ([#10055](https://github.com/open-chat-labs/open-chat/pull/10055))
+
+### Fixed
+
+- Wait out a failed batch's retry delay, rather than retrying it whenever anything else is queued ([#10069](https://github.com/open-chat-labs/open-chat/pull/10069))
 
 ## [[2.0.2165](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2165-user_index)] - 2026-10-20
 
 ### Added
 
 - Add `c2c_local_index` for the LocalUserIndexes' events, to replace `c2c_local_user_index` ([#10047](https://github.com/open-chat-labs/open-chat/pull/10047))
-- Add `set_bridge_bot` for a platform operator to set the bot that bridges Discord or Telegram ([#10052](https://github.com/open-chat-labs/open-chat/pull/10052))
-- Keep the latest profile of each account a bridge bot relays messages from, with `bridged_users` to look them up ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
 
 ## [[2.0.2155](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2155-user_index)] - 2026-10-19
 

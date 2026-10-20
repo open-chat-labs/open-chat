@@ -6,10 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Store the author's id on messages a bridge bot relays from Discord or Telegram ([#10052](https://github.com/open-chat-labs/open-chat/pull/10052))
+
 ### Changed
 
 - Send activity, CSAM detections and moderation referrals to the LocalUserIndex as events ([#10033](https://github.com/open-chat-labs/open-chat/pull/10033))
 - Send its events to its LocalUserIndex and the MultiUser canisters at `c2c_group` ([#10050](https://github.com/open-chat-labs/open-chat/pull/10050))
+
+### Fixed
+
+- Wait out a failed batch's retry delay, rather than retrying it whenever anything else is queued ([#10069](https://github.com/open-chat-labs/open-chat/pull/10069))
 
 ## [[2.0.2169](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2169-group)] - 2026-10-20
 
@@ -17,7 +25,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Add `c2c_user_index` for the UserIndex's events ([#10028](https://github.com/open-chat-labs/open-chat/pull/10028))
 - Add `c2c_escrow` for the Escrow canister's swap status changes, in idempotent envelopes ([#10047](https://github.com/open-chat-labs/open-chat/pull/10047))
-- Store the author on messages a bridge bot relays from Discord or Telegram ([#10052](https://github.com/open-chat-labs/open-chat/pull/10052))
 
 ### Fixed
 
@@ -28,7 +35,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Look up a member's previous user ids in the LocalUserIndex when checking their gate again ([#9970](https://github.com/open-chat-labs/open-chat/pull/9970))
 - Stop tracking the async work in progress, since nothing reads it any more ([#9972](https://github.com/open-chat-labs/open-chat/pull/9972))
-- Store only the author's id on bridged messages, since their profile is in the UserIndex ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
 
 ### Removed
 

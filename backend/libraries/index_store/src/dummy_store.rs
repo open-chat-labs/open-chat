@@ -3,15 +3,15 @@ use async_trait::async_trait;
 use futures::lock::Mutex;
 use std::collections::HashMap;
 use std::sync::Arc;
-use types::{CanisterId, Error};
+use types::Error;
 
 #[derive(Clone, Default)]
 pub struct DummyStore {
-    indexes_processed_up_to: Arc<Mutex<HashMap<CanisterId, u64>>>,
+    indexes_processed_up_to: Arc<Mutex<HashMap<String, u64>>>,
 }
 
 impl DummyStore {
-    pub fn new(indexes: HashMap<CanisterId, u64>) -> DummyStore {
+    pub fn new(indexes: HashMap<String, u64>) -> DummyStore {
         DummyStore {
             indexes_processed_up_to: Arc::new(Mutex::new(indexes)),
         }
@@ -20,15 +20,15 @@ impl DummyStore {
 
 #[async_trait]
 impl IndexStore for DummyStore {
-    async fn get(&self, canister_id: CanisterId) -> Result<Option<u64>, Error> {
-        Ok(self.indexes_processed_up_to.lock().await.get(&canister_id).copied())
+    async fn get(&self, key: &str) -> Result<Option<u64>, Error> {
+        Ok(self.indexes_processed_up_to.lock().await.get(key).copied())
     }
 
-    async fn set(&self, canister_id: CanisterId, notification_index: u64) -> Result<(), Error> {
+    async fn set(&self, key: &str, notification_index: u64) -> Result<(), Error> {
         self.indexes_processed_up_to
             .lock()
             .await
-            .insert(canister_id, notification_index);
+            .insert(key.to_string(), notification_index);
         Ok(())
     }
 }

@@ -124,7 +124,13 @@ pub(crate) fn handle_event<F: FnOnce() -> TimestampMillis>(
             state.data.bots.publish(ev.bot_id);
         }
         UserIndexEvent::BotUpdated(ev) => {
-            state.data.bots.update(ev.bot_id, ev.owner_id, ev.endpoint, ev.definition);
+            if let Some(principal) = ev.principal {
+                state.data.global_users.update_principal(ev.bot_id, principal);
+            }
+            state
+                .data
+                .bots
+                .update(ev.bot_id, ev.owner_id, ev.endpoint, ev.definition, ev.principal);
         }
         UserIndexEvent::PlatformOperatorStatusChanged(ev) => {
             state

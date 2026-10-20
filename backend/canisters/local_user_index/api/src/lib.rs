@@ -241,6 +241,8 @@ pub struct BotUpdated {
     pub owner_id: UserId,
     pub endpoint: String,
     pub definition: BotDefinition,
+    #[serde(default)]
+    pub principal: Option<Principal>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

@@ -703,10 +703,14 @@ impl RuntimeState {
 
         let encodings: HashSet<BotDataEncoding> = recipients.values().cloned().collect();
 
+        // Included in the payload, so it must be the index the notification is about to be added at
+        let notification_index = self.data.notifications.next_event_index();
+
         let event_wrapper = BotEventWrapper {
             api_gateway: this_canister_id,
             event: bot_notification.event,
             timestamp: bot_notification.timestamp,
+            notification_index,
         };
 
         let event_map: HashMap<_, _> = encodings
