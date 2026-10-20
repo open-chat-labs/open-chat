@@ -1,4 +1,5 @@
-use types::{C2CError, CanisterId, UserId};
+use types::{C2CError, C2CRetryPolicy, CanisterId, UserId};
+use user_index_canister::c2c_lookup_user;
 
 // What has become of a recipient whose id carries no index (a user's old id, which was a User
 // canister's id, or a bot's) when calling it failed as `is_user_canister_possibly_migrated` describes
@@ -34,8 +35,25 @@ pub async fn lookup_event_recipient(
         return Ok(if user.user_type.is_bot() { EventRecipient::Gone } else { EventRecipient::User });
     }
 
-    let user = user_index_canister_c2c_client::lookup_user(user_id.as_principal(), user_index_canister_id).await?;
-    if let Some(new_user_id) = user_index_canister_c2c_client::lookup_migrated_user_id(user_id, user_index_canister_id).await? {
+    // Only the UserIndex saying it has no such user counts as their being gone. Any other error is
+    // retried, since it would otherwise lead to the user being removed from their chats.
+    let args = c2c_lookup_user::Args {
+        user_id_or_principal: user_id.as_principal(),
+    };
+    let user = match crate::c2c_lookup_user(user_index_canister_id, &args).await? {
+        c2c_lookup_user::Response::Success(user) => Some(user),
+        c2c_lookup_user::Response::UserNotFound => None,
+        c2c_lookup_user::Response::Error(error) => {
+            return Err(C2CError::new_with_retry_policy(
+                user_index_canister_id,
+                "c2c_lookup_user",
+                ic_cdk::call::RejectCode::CanisterError,
+                format!("{error:?}"),
+                C2CRetryPolicy::RetryAfterDelay,
+            ));
+        }
+    };
+    if let Some(new_user_id) = crate::lookup_migrated_user_id(user_id, user_index_canister_id).await? {
         return Ok(EventRecipient::Migrated(new_user_id));
     }
     Ok(match user {

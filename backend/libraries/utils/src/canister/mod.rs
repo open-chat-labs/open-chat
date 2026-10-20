@@ -88,10 +88,14 @@ pub fn is_target_canister_uninstalled_or_deleted(reject_code: RejectCode, messag
 // Whether a call to a user's old id, which was a User canister's id, failed in a way it does once
 // they have been migrated to a MultiUser canister: the old canister is uninstalled, then briefly
 // installed with the cycles refunder, or the call relay if the user moves their funds out of it,
-// neither of which has any of the User canister's methods, and then uninstalled again. A caller
-// finding this checks whether the user has been migrated, so that it can send the call on to them.
+// neither of which has any of the User canister's methods, and then uninstalled again. A User
+// canister uninstalled after running out of cycles, as a deleted user's may be, fails the call as
+// being out of cycles instead. A caller finding any of these checks whether the user has been
+// migrated, so that it can send the call on to them, or is no longer a user at all.
 pub fn is_user_canister_possibly_migrated(error: &C2CError) -> bool {
-    is_target_canister_uninstalled_or_deleted(error.reject_code(), error.message()) || error.is_method_not_found()
+    is_target_canister_uninstalled_or_deleted(error.reject_code(), error.message())
+        || is_out_of_cycles_error(error.reject_code(), error.message())
+        || error.is_method_not_found()
 }
 
 // Rejects an update call made while the canister is frozen. It traps rather than returning an
@@ -186,7 +190,7 @@ mod tests {
     }
 
     #[test]
-    fn a_user_canister_may_have_been_migrated_if_uninstalled_deleted_or_missing_the_method() {
+    fn a_user_canister_may_have_been_migrated_if_uninstalled_deleted_out_of_cycles_or_missing_the_method() {
         let error =
             |reject_code, message: &str| C2CError::new(CanisterId::anonymous(), "method", reject_code, message.to_string());
 
@@ -203,6 +207,15 @@ mod tests {
         assert!(!is_user_canister_possibly_migrated(&error(
             RejectCode::CanisterError,
             "trapped explicitly: something went wrong"
+        )));
+        // As when the User canister was uninstalled after running out of cycles
+        assert!(is_user_canister_possibly_migrated(&error(
+            RejectCode::SysTransient,
+            "IC0207: Canister x is out of cycles"
+        )));
+        assert!(!is_user_canister_possibly_migrated(&error(
+            RejectCode::SysTransient,
+            "Canister x is busy"
         )));
         assert!(!is_user_canister_possibly_migrated(&error(RejectCode::CanisterReject, "")));
     }

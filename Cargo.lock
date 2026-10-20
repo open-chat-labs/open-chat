@@ -12906,7 +12906,6 @@ dependencies = [
  "tracing",
  "types",
  "user_index_canister",
- "user_index_canister_c2c_client",
  "utils",
 ]
 
@@ -12945,6 +12944,7 @@ dependencies = [
  "candid",
  "canister_client",
  "ic-cdk 0.20.3",
+ "local_user_index_canister_c2c_client",
  "msgpack",
  "tracing",
  "types",
