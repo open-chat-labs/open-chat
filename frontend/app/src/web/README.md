@@ -26,7 +26,7 @@ web/
   ROUTES.md      every URL and what each column shows for it
   DATA.md        where each screen's data and actions come from in the app
   GAPS.md        what the app or the library is missing
-  PLAN.md        the work left, by phase, split into workstreams two people can take
+  PLAN.md        the work left: what has to come first, and a pool of workstreams to claim
   router/        the route table (every path, in page.js order), the router and its route effects,
                  and what each route shows (regions.ts)
   shell/         nav rail, the three columns and the breakpoints, overlays
