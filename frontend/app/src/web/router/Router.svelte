@@ -31,6 +31,7 @@
     } from "@client";
     import {
         flushPendingNavigation,
+        hasPendingNavigation,
         initNavigationHistoryTracking,
         navigate,
     } from "@src/utils/navigation";
@@ -170,10 +171,19 @@
     });
 
     // A chat list with nothing selected goes to its first chat (ROUTES.md, decision 7), once
-    // there is one. A thread list stays.
+    // there is one. A thread list stays. Only the first chat's route is tracked (and whether the
+    // screen is narrow, where there's none), so other summary changes don't re-run it; a
+    // navigation already on its way wins, and the URL's query (an open overlay) is kept.
+    const firstChat = $derived(
+        firstChatRoute(
+            $chatListScopeStore.kind,
+            $chatSummariesListStore,
+            currentShellLayout().narrow,
+        ),
+    );
     $effect(() => {
-        void $chatSummariesListStore;
         if (
+            firstChat !== undefined &&
             $selectedChatIdStore === undefined &&
             $chatListScopeStore.kind !== "none" &&
             $routeKindStore !== "threads_route" &&
@@ -184,12 +194,9 @@
     });
 
     function selectFirstChat() {
-        const route = firstChatRoute(
-            chatListScopeStore.value.kind,
-            chatSummariesListStore.value,
-            currentShellLayout().narrow,
-        );
-        if (route !== undefined) navigate(route, "auto");
+        if (firstChat !== undefined && !hasPendingNavigation()) {
+            navigate(firstChat + location.search, "auto");
+        }
     }
 
     // Select the chat the route names

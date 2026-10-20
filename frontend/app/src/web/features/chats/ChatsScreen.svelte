@@ -4,7 +4,6 @@
     import {
         allUsersStore,
         chatIdentifierToString,
-        chatListScopeStore,
         chatsInitialisedStore,
         chatSummariesListStore,
         currentUserIdStore,
@@ -21,10 +20,17 @@
     import ChatListPanel from "@openchat/ui/src/features/components/ChatListPanel.svelte";
     import type { MenuItem } from "@openchat/ui/src/lib/types";
     import { navigate } from "@src/utils/navigation";
-    import { getContext } from "svelte";
+    import { getContext, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import type { LeftRegion, ScreenProps } from "../app/screens";
-    import { chatRow, type ChatListRow, type RowContext } from "./chatList.adapter";
+    import {
+        chatRow,
+        listed,
+        unarchives,
+        unreadCount,
+        type ChatListRow,
+        type RowContext,
+    } from "./chatList.adapter";
 
     let { region }: ScreenProps<Extract<LeftRegion, { kind: "chats" }>> = $props();
 
@@ -32,7 +38,9 @@
 
     const scope = $derived(region.scope);
     const chats = $derived($chatSummariesListStore);
-    const byId = $derived(new Map(chats.map((chat) => [chatIdentifierToString(chat.id), chat])));
+    // the panel's search text: the list searches itself (onSearch), so archived chats can show
+    // while it's on
+    let query = $state("");
 
     const context = $derived.by((): RowContext => {
         // read so unread counts follow messages being read
@@ -52,14 +60,34 @@
         };
     });
 
+    const listedRows = $derived(
+        chats.flatMap((chat) => {
+            const row = chatRow(chat, context);
+            return listed(chat, row.title, query) ? [{ chat, row }] : [];
+        }),
+    );
     const rows = $derived(
-        chats.map((chat): ChatListRow => ({ ...chatRow(chat, context), menu: menuFor(chat) })),
+        listedRows.map(({ chat, row }): ChatListRow => ({ ...row, menu: menuFor(chat, row) })),
     );
 
+    // An archived chat with unread messages comes out of the archive (as the old row did), asked
+    // once per chat
+    const unarchiving = new Set<string>();
+    $effect(() => {
+        const ctx = context;
+        for (const chat of chats) {
+            if (!chat.membership.archived) continue;
+            const id = chatIdentifierToString(chat.id);
+            if (!unarchiving.has(id) && unarchives(chat, unreadCount(chat, ctx))) {
+                unarchiving.add(id);
+                untrack(() => client.unarchiveChat(chat.id));
+            }
+        }
+    });
+
     // the row menu, in the app's words (the old row's menu)
-    function menuFor(chat: ChatSummary): MenuItem[] {
-        const id = chatIdentifierToString(chat.id);
-        const pinned = context.pinned.has(id);
+    function menuFor(chat: ChatSummary, row: ChatListRow): MenuItem[] {
+        const pinned = row.pinned;
         const favourite = $favouritesStore.has(chat.id);
         const muted = chat.membership.notificationsMuted;
         const items: MenuItem[] = [
@@ -80,18 +108,20 @@
                 onSelect: () => client.toggleMuteNotifications(chat.id, !muted, undefined),
             },
         ];
-        if (context.unread(chat) > 0) {
+        if ((row.unreadCount ?? 0) > 0) {
             items.push({ label: $_("markAllRead"), onSelect: () => client.markAllRead(chat) });
         }
         return items;
     }
 
     function select(id: string) {
-        const chat = byId.get(id);
-        if (chat !== undefined) navigate(routeForChatIdentifier($chatListScopeStore.kind, chat.id));
+        const chat = chats.find((c) => chatIdentifierToString(c.id) === id);
+        if (chat !== undefined) navigate(routeForChatIdentifier(scope.kind, chat.id));
     }
 
-    const community = $derived(scope.kind === "community" ? $selectedCommunitySummaryStore : undefined);
+    const community = $derived(
+        scope.kind === "community" ? $selectedCommunitySummaryStore : undefined,
+    );
 
     // TODO(phase 3): the thread count, and the community header's other menu items (they open
     // dialogs that later phases build)
@@ -104,10 +134,12 @@
     {rows}
     onSelect={select}
     headerKind={community ? "community" : "dms"}
-    headerTitle={community?.name ?? (scope.kind === "favourite" ? $_("communities.favourites") : undefined)}
+    headerTitle={community?.name ??
+        (scope.kind === "favourite" ? $_("communities.favourites") : undefined)}
     headerVisibility={community?.public === false ? "Private" : "Public"}
     headerMembers={community?.memberCount ?? 0}
     {onHeaderMenu}
     searchable
+    onSearch={(q) => (query = q)}
     threadsAction={() => navigate(`${routeForScope(scope)}/threads`)}
     loading={!$chatsInitialisedStore} />

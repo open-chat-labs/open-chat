@@ -1,5 +1,5 @@
 import type { ChatSummary } from "@client";
-import { chatRow, swatchFor, type RowContext } from "./chatList.adapter";
+import { chatRow, listed, swatchFor, unarchives, type RowContext } from "./chatList.adapter";
 
 const membership = { notificationsMuted: false, archived: false, joined: 0n };
 
@@ -108,5 +108,51 @@ describe("a chat list row", () => {
     test("gets the same swatch for the same chat, from the design's", () => {
         expect(swatchFor("alice")).toBe(swatchFor("alice"));
         expect(["violet", "blue", "teal", "amber", "plum"]).toContain(swatchFor("bob"));
+    });
+});
+
+describe("a chat whose latest message has disappeared", () => {
+    const expiring = (expiresAt: number) => {
+        const chat = dm("alice", { sender: "alice", text: "secret", at: 7n });
+        return { ...chat, latestMessage: { ...chat.latestMessage!, expiresAt } } as ChatSummary;
+    };
+    const unread = { ...ctx, unread: () => 3 };
+
+    test("shows no preview and no unread count", () => {
+        expect(chatRow(expiring(1_000), unread, 2_000)).toMatchObject({
+            preview: "",
+            unreadCount: 0,
+        });
+    });
+
+    test("shows them until it goes", () => {
+        expect(chatRow(expiring(3_000), unread, 2_000)).toMatchObject({
+            preview: "secret",
+            unreadCount: 3,
+        });
+    });
+});
+
+describe("whether a chat is in the list", () => {
+    const archived = {
+        ...group("g1", "Archive"),
+        membership: { ...membership, archived: true },
+    } as ChatSummary;
+
+    test("leaves archived chats out until there's a search", () => {
+        expect(listed(group("g2", "Open"), "Open", "")).toBe(true);
+        expect(listed(archived, "Archive", "  ")).toBe(false);
+        expect(listed(archived, "Archive", "arch")).toBe(true);
+    });
+
+    test("searching, takes the chats whose title has the text, in any case", () => {
+        expect(listed(group("g2", "Open"), "Open", " OP ")).toBe(true);
+        expect(listed(group("g2", "Open"), "Open", "closed")).toBe(false);
+    });
+
+    test("brings an archived chat with unread messages back out", () => {
+        expect(unarchives(archived, 1)).toBe(true);
+        expect(unarchives(archived, 0)).toBe(false);
+        expect(unarchives(group("g2", "Open"), 4)).toBe(false);
     });
 });
