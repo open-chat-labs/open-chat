@@ -7,6 +7,7 @@
         bridgedAuthorName,
         allUsersStore,
         bridgedFrom,
+        isDeletedUser,
         bridgedUserKey,
         bridgedUsersStore,
         OpenChat,
@@ -103,18 +104,23 @@
     }: Props = $props();
 
     let multiUserChat = $derived(chatType === "group_chat" || chatType === "channel");
-    let streak = $derived(sender?.streak ?? 0);
-    let chitEarned = $derived(sender?.totalChitEarned ?? 0);
     let bridged = $derived(bridgedFrom(senderContext));
     let bridgedUser = $derived(
         bridged !== undefined ? $bridgedUsersStore.get(bridgedUserKey(bridged)!) : undefined,
     );
-    // The OpenChat user who linked the account the message was relayed from, shown as its author
-    let linkedUser = $derived(
-        bridgedUser?.linkedUserId !== undefined
-            ? $allUsersStore.get(bridgedUser.linkedUserId)
-            : undefined,
-    );
+    // The OpenChat user who linked the account the message was relayed from, shown as its author. If
+    // they've deleted their account, the account's own profile is shown again.
+    let linkedUser = $derived.by(() => {
+        const user =
+            bridgedUser?.linkedUserId !== undefined
+                ? $allUsersStore.get(bridgedUser.linkedUserId)
+                : undefined;
+        return user !== undefined && !isDeletedUser(user) ? user : undefined;
+    });
+    // A linked account's messages carry its OpenChat user's badges, not the bridge bot's
+    let author = $derived(linkedUser ?? sender);
+    let streak = $derived(author?.streak ?? 0);
+    let chitEarned = $derived(author?.totalChitEarned ?? 0);
     let senderDisplayName = $derived(
         bridged !== undefined && linkedUser === undefined
             ? (bridgedAuthorName(bridgedUser) ??
@@ -246,8 +252,8 @@
                 {senderDisplayName}
             </Body>
             <Badges
-                uniquePerson={sender?.isUniquePerson}
-                diamondStatus={sender?.diamondStatus}
+                uniquePerson={author?.isUniquePerson}
+                diamondStatus={author?.diamondStatus}
                 {streak}
                 {chitEarned} />
             <BotBadge

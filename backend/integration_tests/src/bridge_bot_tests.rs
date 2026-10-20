@@ -428,6 +428,72 @@ fn bridge_bots_relay_messages_as_their_authors() {
     assert!(matches!(response, UnitResult::Success), "{response:?}");
     wait_for_link(env, canister_ids.user_index, &renamed, None);
 
+    // The account's owner can unlink it on the other platform too, which the bridge bot relays
+    // autonomously, from whoever it's linked to
+    let chat_context = command(env);
+    let response = set_link(
+        env,
+        discord_bot_principal,
+        community_local_user_index,
+        chat_context,
+        renamed.clone(),
+        true,
+    );
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    wait_for_link(env, canister_ids.user_index, &renamed, Some(owner.user_id));
+    let response = set_link(
+        env,
+        discord_bot_principal,
+        community_local_user_index,
+        BotChatContext::Autonomous(channel),
+        renamed.clone(),
+        false,
+    );
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    wait_for_link(env, canister_ids.user_index, &renamed, None);
+
+    // Most users will run the command in their direct chat with the bridge bot
+    let user_local_user_index = canister_ids.local_user_index(env, owner.user_id.canister_id());
+    client::local_user_index::happy_path::install_bot(
+        env,
+        owner.principal,
+        user_local_user_index,
+        BotInstallationLocation::User(owner.user_id.into()),
+        discord_bot_id,
+        BotPermissions::text_only(),
+        None,
+    );
+    let token = command_access_token(
+        env,
+        &owner,
+        user_local_user_index,
+        discord_bot_id,
+        &discord_bot_command,
+        Chat::Direct(owner.user_id.into()),
+    );
+    let response = set_link(
+        env,
+        discord_bot_principal,
+        user_local_user_index,
+        BotChatContext::Command(token),
+        renamed.clone(),
+        true,
+    );
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    wait_for_link(env, canister_ids.user_index, &renamed, Some(owner.user_id));
+
+    // Unlinked again, leaving the pooled env as it was
+    let response = set_link(
+        env,
+        discord_bot_principal,
+        community_local_user_index,
+        BotChatContext::Autonomous(channel),
+        renamed.clone(),
+        false,
+    );
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    wait_for_link(env, canister_ids.user_index, &renamed, None);
+
     // A bridge bot is refused once it's unset. Both are unset, which also leaves the pooled env as
     // it was
     for platform in [BridgePlatform::Discord, BridgePlatform::Telegram] {

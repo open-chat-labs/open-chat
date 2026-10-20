@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{BridgedUser, BridgedUserId, BridgedUserSummary, TimestampMillis, UserId};
+use user_index_canister::BridgedUserLinkChange;
 
 // The latest profile of each account on another platform, eg. Discord, which a bridge bot has relayed
 // a message from, and the OpenChat user who has linked it, if any. Relayed messages hold only the
@@ -44,26 +45,37 @@ impl BridgedUsers {
         }
     }
 
-    // Links the account to `user_id`, replacing any earlier link, or unlinks it if it's linked to
-    // them. Returns whether anything changed.
-    pub fn set_link(&mut self, user: BridgedUser, user_id: UserId, linked: bool, now: TimestampMillis) -> bool {
-        let id = user.id();
-        let mut changed = self.update(user, now);
-        if let Some(record) = self.users.get_mut(&id) {
-            let link = if linked {
-                Some(user_id)
-            } else if record.linked_user_id == Some(user_id) {
-                None
-            } else {
-                record.linked_user_id
+    // A link replaces any earlier one. Only an account which is new to the registry has its profile
+    // stored here: a known one's is left to the messages it relays, which carry the latest. Returns
+    // whether anything changed.
+    pub fn set_link(&mut self, user: BridgedUser, change: BridgedUserLinkChange, now: TimestampMillis) -> bool {
+        let Some(record) = self.users.get_mut(&user.id()) else {
+            let BridgedUserLinkChange::Linked(user_id) = change else {
+                return false;
             };
-            if record.linked_user_id != link {
-                record.linked_user_id = link;
-                record.updated = now;
-                changed = true;
-            }
+            self.users.insert(
+                user.id(),
+                BridgedUserRecord {
+                    user,
+                    linked_user_id: Some(user_id),
+                    updated: now,
+                },
+            );
+            return true;
+        };
+
+        let link = match change {
+            BridgedUserLinkChange::Linked(user_id) => Some(user_id),
+            BridgedUserLinkChange::Unlinked(user_id) if record.linked_user_id == Some(user_id) => None,
+            BridgedUserLinkChange::Unlinked(_) => record.linked_user_id,
+            BridgedUserLinkChange::UnlinkedByAccount => None,
+        };
+        if record.linked_user_id == link {
+            return false;
         }
-        changed
+        record.linked_user_id = link;
+        record.updated = now;
+        true
     }
 
     pub fn get(&self, id: &BridgedUserId) -> Option<BridgedUserSummary> {
@@ -121,24 +133,47 @@ mod tests {
         let id = BridgedUserId::Discord(80351110224678912);
         let alice: UserId = Principal::from_slice(&[1]).into();
         let bob: UserId = Principal::from_slice(&[2]).into();
+        let linked_user_id = |users: &BridgedUsers| users.get(&id).unwrap().linked_user_id;
 
-        // Linking an account which hasn't relayed a message yet adds its profile too
-        assert!(users.set_link(discord_user("Nelly"), alice, true, 1));
-        assert_eq!(users.get(&id).unwrap().linked_user_id, Some(alice));
-        assert!(!users.set_link(discord_user("Nelly"), alice, true, 2));
+        // Unlinking an account which hasn't relayed a message changes nothing, but linking it adds
+        // its profile too
+        assert!(!users.set_link(discord_user("Nelly"), BridgedUserLinkChange::Unlinked(alice), 1));
+        assert!(users.get(&id).is_none());
+        assert!(users.set_link(discord_user("Nelly"), BridgedUserLinkChange::Linked(alice), 1));
+        assert_eq!(linked_user_id(&users), Some(alice));
+        assert!(!users.set_link(discord_user("Nelly"), BridgedUserLinkChange::Linked(alice), 2));
         assert_eq!(users.get(&id).unwrap().updated, 1);
 
         // Someone else unlinking it changes nothing
-        assert!(!users.set_link(discord_user("Nelly"), bob, false, 3));
-        assert_eq!(users.get(&id).unwrap().linked_user_id, Some(alice));
+        assert!(!users.set_link(discord_user("Nelly"), BridgedUserLinkChange::Unlinked(bob), 3));
+        assert_eq!(linked_user_id(&users), Some(alice));
 
         // A new link replaces the old one
-        assert!(users.set_link(discord_user("Nelly"), bob, true, 4));
-        assert_eq!(users.get(&id).unwrap().linked_user_id, Some(bob));
+        assert!(users.set_link(discord_user("Nelly"), BridgedUserLinkChange::Linked(bob), 4));
+        assert_eq!(linked_user_id(&users), Some(bob));
 
-        assert!(users.set_link(discord_user("Nelly"), bob, false, 5));
-        assert_eq!(users.get(&id).unwrap().linked_user_id, None);
+        assert!(users.set_link(discord_user("Nelly"), BridgedUserLinkChange::Unlinked(bob), 5));
+        assert_eq!(linked_user_id(&users), None);
         assert_eq!(users.get(&id).unwrap().updated, 5);
+
+        // The account's owner can unlink it from whoever it's linked to
+        users.set_link(discord_user("Nelly"), BridgedUserLinkChange::Linked(alice), 6);
+        assert!(users.set_link(discord_user("Nelly"), BridgedUserLinkChange::UnlinkedByAccount, 7));
+        assert_eq!(linked_user_id(&users), None);
+    }
+
+    // The profile is left to the messages the account relays, which carry the latest
+    #[test]
+    fn linking_leaves_a_known_accounts_profile() {
+        let mut users = BridgedUsers::default();
+        let alice: UserId = Principal::from_slice(&[1]).into();
+        users.update(discord_user("Nelly Smith"), 1);
+
+        users.set_link(discord_user("Nelly"), BridgedUserLinkChange::Linked(alice), 2);
+
+        let summary = users.get(&BridgedUserId::Discord(80351110224678912)).unwrap();
+        assert_eq!(summary.user, discord_user("Nelly Smith"));
+        assert_eq!(summary.linked_user_id, Some(alice));
     }
 
     // It's kept in the canister's state, which is msgpack, with the accounts' ids as map keys

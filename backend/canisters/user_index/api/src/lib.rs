@@ -43,13 +43,22 @@ pub enum LocalUserIndexEvent {
     BridgedUserLinked(Box<BridgedUserLinked>),
 }
 
-// An OpenChat user linked an account on another platform to themself, or unlinked it, through its
-// bridge bot. The LocalUserIndex has checked a command they ran says so.
+// An account on another platform was linked to an OpenChat user, or unlinked, through its bridge bot
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct BridgedUserLinked {
     pub user: BridgedUser,
-    pub user_id: UserId,
-    pub linked: bool,
+    pub change: BridgedUserLinkChange,
+}
+
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum BridgedUserLinkChange {
+    // An OpenChat user linked the account to themself, by a command the LocalUserIndex checked they ran
+    Linked(UserId),
+    // An OpenChat user unlinked the account from themself, likewise
+    Unlinked(UserId),
+    // The account's owner unlinked it on the other platform, from whoever it was linked to. The bridge
+    // bot vouches for the account, as it does for the messages it relays.
+    UnlinkedByAccount,
 }
 
 // A message a chat's classifier or media scan found to be CSAM: the auto-sanction is applied
