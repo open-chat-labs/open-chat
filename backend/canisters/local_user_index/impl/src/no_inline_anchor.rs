@@ -32,7 +32,7 @@ pub fn anchor() {
         assert!(msgpack::deserialize::<BotRegistered, _>(s).is_err()); // 11 fields
         assert!(msgpack::deserialize::<DiamondMembershipPaymentReceived, _>(s).is_err()); // 10 fields
         assert!(msgpack::deserialize::<UserDetailsFull, _>(s).is_err()); // 10 serde-renamed fields
-        assert!(msgpack::deserialize::<BotUpdated, _>(s).is_err()); // 4 fields incl. BotDefinition
+        assert!(msgpack::deserialize::<BotUpdated, _>(s).is_err()); // 5 fields incl. BotDefinition
         assert!(msgpack::deserialize::<OpenChatBotMessageV2, _>(s).is_err()); // 4 fields incl. MessageContentInitial
         assert!(msgpack::deserialize::<UserJoinedCommunityOrChannel, _>(s).is_err()); // 5 fields
         assert!(msgpack::deserialize::<UserJoinedGroup, _>(s).is_err()); // 5 fields

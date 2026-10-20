@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Stop retrying events for a user whose old User canister was uninstalled after running out of cycles, once they're found to be gone ([#10063](https://github.com/open-chat-labs/open-chat/pull/10063))
+- Wait out a failed batch's retry delay, rather than retrying it whenever anything else is queued ([#10069](https://github.com/open-chat-labs/open-chat/pull/10069))
 
 ## [[2.0.2167](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2167-multi_user)] - 2026-10-20
 

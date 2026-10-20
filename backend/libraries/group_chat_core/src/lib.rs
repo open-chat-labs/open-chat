@@ -1603,6 +1603,7 @@ impl GroupChatCore {
     ) -> UpdateSuccessResult {
         let mut result = UpdateSuccessResult {
             newly_public: false,
+            newly_private: false,
             gate_config_update: OptionUpdate::NoChange,
             rules_version: None,
             bot_notifications: Vec::new(),
@@ -1768,10 +1769,14 @@ impl GroupChatCore {
             );
             result.bot_notifications.push(push_result.bot_notification);
 
-            if public_changed && self.is_public.value {
-                self.min_visible_indexes_for_new_members =
-                    Some((push_result.index, events.main_events_list().next_message_index()));
-                result.newly_public = true;
+            if public_changed {
+                if self.is_public.value {
+                    self.min_visible_indexes_for_new_members =
+                        Some((push_result.index, events.main_events_list().next_message_index()));
+                    result.newly_public = true;
+                } else {
+                    result.newly_private = true;
+                }
             }
         }
 
@@ -2174,6 +2179,7 @@ pub struct SendMessageSuccess {
 
 pub struct UpdateSuccessResult {
     pub newly_public: bool,
+    pub newly_private: bool,
     pub gate_config_update: OptionUpdate<AccessGateConfigInternal>,
     pub rules_version: Option<Version>,
     pub bot_notifications: Vec<Option<BotNotification>>,

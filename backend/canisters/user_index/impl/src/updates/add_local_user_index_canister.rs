@@ -5,11 +5,13 @@ use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use ic_cdk_management_canister::{CanisterInfoArgs, CanisterInstallMode};
-use local_user_index_canister::{SetAlchemyApiKey, SetPremiumItemCost, UserDetailsFull, UserIdMigrated, UserIndexEvent};
+use local_user_index_canister::{
+    BotPublished, BotRegistered, SetAlchemyApiKey, SetPremiumItemCost, UserDetailsFull, UserIdMigrated, UserIndexEvent,
+};
 use rand::RngExt;
 use std::collections::HashSet;
 use tracing::info;
-use types::{BuildVersion, CanisterId, CanisterWasm, Hash};
+use types::{BotRegistrationStatus, BuildVersion, CanisterId, CanisterWasm, Hash};
 use user_index_canister::ChildCanisterType;
 use user_index_canister::add_local_user_index_canister::{Response::*, *};
 use utils::canister::{
@@ -145,6 +147,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Respo
 fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut RuntimeState) -> Response {
     if state.data.local_index_map.add_index(canister_id, wasm_version) {
         let now = state.env.now();
+        let this_canister_id = state.env.canister_id();
         // Suspended moderators and operators aren't active ones
         let platform_moderators: HashSet<_> = state
             .data
@@ -201,6 +204,36 @@ fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut Runti
                 api_key: state.data.alchemy_api_key.clone(),
             }),
         );
+        // And with all the existing bots. The UserIndex is named as the canister to notify each bot
+        // of its registration, since the bots were notified when they registered.
+        for (bot_id, bot) in state.data.users.iter_bots() {
+            let Some(user) = state.data.users.get_by_user_id(bot_id) else {
+                continue;
+            };
+            let permitted_install_location = match &bot.registration_status {
+                BotRegistrationStatus::Public => None,
+                BotRegistrationStatus::Private(location) => *location,
+            };
+            pusher.push(
+                canister_id,
+                UserIndexEvent::BotRegistered(BotRegistered {
+                    bot_id: *bot_id,
+                    owner_id: bot.owner,
+                    user_principal: user.principal,
+                    name: bot.name.clone(),
+                    commands: bot.definition.commands.clone(),
+                    endpoint: bot.endpoint.clone(),
+                    autonomous_config: bot.definition.autonomous_config.clone(),
+                    permitted_install_location,
+                    default_subscriptions: bot.definition.default_subscriptions.clone(),
+                    data_encoding: bot.definition.data_encoding.unwrap_or_default(),
+                    notification_canister: this_canister_id,
+                }),
+            );
+            if matches!(bot.registration_status, BotRegistrationStatus::Public) {
+                pusher.push(canister_id, UserIndexEvent::BotPublished(BotPublished { bot_id: *bot_id }));
+            }
+        }
         for (old_user_id, new_user_id) in state.data.migrated_user_ids.iter() {
             pusher.push(
                 canister_id,
