@@ -8,12 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Push each bot's notifications from its own queue, with timeouts and retries for up to 5 minutes, so a slow or unreachable bot only delays its own ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+- Push each bot's notifications from its own queue, with timeouts and retries for up to 5 minutes, so a slow or unreachable bot only delays its own ([#10065](https://github.com/open-chat-labs/open-chat/pull/10065))
 
 ### Fixed
 
-- Keep the bot notifications not yet delivered, to send again after a restart ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
-- Post bot notifications to `{endpoint}/notify` without dropping the endpoint's path ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+- Keep the bot notifications not yet delivered, to send again after a restart ([#10065](https://github.com/open-chat-labs/open-chat/pull/10065))
+- Post bot notifications to `{endpoint}/notify` without dropping the endpoint's path ([#10065](https://github.com/open-chat-labs/open-chat/pull/10065))
 
 ## [[2.0.2092](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2092-notification_pusher)] - 2026-10-02
 

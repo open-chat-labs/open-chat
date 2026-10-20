@@ -10,7 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Add `c2c_group`, `c2c_community` and `c2c_user` for its Group, Community and MultiUser canisters' events, to replace the `_canister` and `_v2` names ([#10047](https://github.com/open-chat-labs/open-chat/pull/10047))
 - Add `c2c_daily_puzzle` for the DailyPuzzle canister's puzzles, in idempotent envelopes ([#10047](https://github.com/open-chat-labs/open-chat/pull/10047))
-- Include each bot notification's index in its signed payload, so a bot can drop one sent again ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+- Include each bot notification's index in its signed payload, so a bot can drop one sent again ([#10065](https://github.com/open-chat-labs/open-chat/pull/10065))
 
 ### Changed
 
@@ -20,7 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- Count bot notifications' payloads towards the `notifications` response's size limit ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+- Count bot notifications' payloads towards the `notifications` response's size limit ([#10065](https://github.com/open-chat-labs/open-chat/pull/10065))
 
 ## [[2.0.2156](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2156-local_user_index)] - 2026-10-19
 
