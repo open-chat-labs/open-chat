@@ -25,6 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Only subscribe bots to public channels when they're updated, and keep them subscribed when a channel is set to the visibility it already has ([#10055](https://github.com/open-chat-labs/open-chat/pull/10055))
+- Replace an imported group's bot subscriptions with the community's ([#10055](https://github.com/open-chat-labs/open-chat/pull/10055))
 
 ## [[2.0.2142](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2142-community)] - 2026-10-14
 
