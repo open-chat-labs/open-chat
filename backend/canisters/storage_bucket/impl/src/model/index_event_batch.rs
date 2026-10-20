@@ -1,11 +1,14 @@
-use crate::model::users::FileStatusInternal;
-use crate::mutate_state;
 use candid::Deserialize;
+use constants::DAY_IN_MS;
 use serde::Serialize;
+use storage_index_canister::StorageBucketEvent;
 use timer_job_queues::{TimerJobItem, timer_job_batch};
 use types::{CanisterId, FileAdded, FileRemoved, Milliseconds};
-use utils::canister::delay_if_should_retry_failed_c2c_call;
 
+// The queue to `c2c_sync_bucket` which buckets sent through before `storage_index_event_sync_queue`. Only
+// deserialized from their state, which the post_upgrade one-off drains at once. It never sends anything
+// itself, so nothing leaves except through the drain, and nothing goes to an endpoint the tidy removes.
+// Removed with the one-off.
 timer_job_batch!(IndexEventBatch, CanisterId, (EventToSync, u64), 1000);
 
 #[derive(Serialize, Deserialize)]
@@ -18,60 +21,17 @@ pub enum EventToSync {
 
 impl TimerJobItem for IndexEventBatch {
     async fn process(&self) -> Result<(), Option<Milliseconds>> {
-        let mut args = storage_index_canister::c2c_sync_bucket::Args {
-            heap_memory_used: utils::memory::heap(),
-            stable_memory_used: utils::memory::stable(),
-            ..Default::default()
-        };
+        Err(Some(DAY_IN_MS))
+    }
+}
 
-        for (event, total_file_bytes) in &self.items {
-            match event {
-                EventToSync::FileAdded(file) => {
-                    args.files_added.push(file.clone());
-                }
-                EventToSync::FileRemoved(file) => {
-                    args.files_removed.push(file.clone());
-                }
-                EventToSync::CsamMatch(csam_match) => {
-                    args.csam_matches.push(csam_match.clone());
-                }
-                EventToSync::CsamHashDenylisted(denylisted) => {
-                    args.csam_hashes_denylisted.push(denylisted.clone());
-                }
-            }
-            args.total_file_bytes = *total_file_bytes;
-        }
-
-        let response = storage_index_canister_c2c_client::c2c_sync_bucket(self.state, &args).await;
-
-        match response {
-            Ok(storage_index_canister::c2c_sync_bucket::Response::Success(result)) => {
-                mutate_state(|state| {
-                    for file in result.files_rejected {
-                        let file_id = file.file_id;
-                        let reason = file.reason.into();
-
-                        if let Some(user_id) = state.data.files.owner(&file.file_id)
-                            && let Some(old_status) =
-                                state
-                                    .data
-                                    .users
-                                    .update_file_status(user_id, file_id, FileStatusInternal::Rejected(reason))
-                        {
-                            if let Some(FileStatusInternal::Uploading(_)) = old_status {
-                                state.data.files.remove_pending_file(&file_id);
-                            } else {
-                                state.data.files.remove(user_id, file_id);
-                            }
-                        }
-                    }
-                });
-                Ok(())
-            }
-            Err(error) => {
-                let delay_if_should_retry = delay_if_should_retry_failed_c2c_call(&error);
-                Err(delay_if_should_retry)
-            }
+impl From<EventToSync> for StorageBucketEvent {
+    fn from(event: EventToSync) -> Self {
+        match event {
+            EventToSync::FileAdded(file) => StorageBucketEvent::FileAdded(file),
+            EventToSync::FileRemoved(file) => StorageBucketEvent::FileRemoved(file),
+            EventToSync::CsamMatch(csam_match) => StorageBucketEvent::CsamMatch(csam_match),
+            EventToSync::CsamHashDenylisted(denylisted) => StorageBucketEvent::CsamHashDenylisted(denylisted),
         }
     }
 }
