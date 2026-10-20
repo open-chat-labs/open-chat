@@ -3,6 +3,8 @@ import type {
     ModerationConfig,
     ProposedProtectedAction,
     BotDefinition,
+    BridgedUserId,
+    BridgedUserSummary,
     BridgePlatform,
     BotInstallationLocation,
     BotsResponse,
@@ -86,6 +88,8 @@ import {
     UserIndexModerationConfigResponse,
     UserIndexCallPushEnabledResponse,
     UserIndexSetAlchemyApiKeyArgs,
+    UserIndexBridgedUsersArgs,
+    UserIndexBridgedUsersResponse,
     UserIndexSetBridgeBotArgs,
     UserIndexSetCallPushEnabledArgs,
     BridgePlatform as ApiBridgePlatform,
@@ -114,7 +118,12 @@ import {
     UserIndexUsersResponse,
 } from "../../typebox";
 import type { UserIndexProposeProtectedActionProtectedAction } from "../../typebox";
-import { addressToIcrcAccount, unitResult } from "../common/chatMappersV2";
+import {
+    addressToIcrcAccount,
+    apiBridgedUserId,
+    bridgedUserSummary,
+    unitResult,
+} from "../common/chatMappersV2";
 import type { ChatsDb } from "../../utils/chatsDb";
 import { groupBy } from "../../utils/list";
 import {
@@ -148,6 +157,8 @@ import {
     usersApiResponse,
     userSearchResponse,
 } from "./mappers";
+
+const MAX_BRIDGED_USERS_PER_QUERY = 100;
 
 const API_BRIDGE_PLATFORMS: Record<BridgePlatform, ApiBridgePlatform> = {
     discord: "Discord",
@@ -459,6 +470,23 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             UserIndexSetAlchemyApiKeyArgs,
             UnitResult,
         );
+    }
+
+    // The profiles of the given bridged accounts, in batches as the query takes at most 100
+    async bridgedUsers(ids: BridgedUserId[]): Promise<BridgedUserSummary[]> {
+        const summaries: BridgedUserSummary[] = [];
+        for (let i = 0; i < ids.length; i += MAX_BRIDGED_USERS_PER_QUERY) {
+            const batch = ids.slice(i, i + MAX_BRIDGED_USERS_PER_QUERY);
+            const batchSummaries = await this.query(
+                "bridged_users",
+                { users: batch.map(apiBridgedUserId) },
+                (resp) => resp.Success.map(bridgedUserSummary),
+                UserIndexBridgedUsersArgs,
+                UserIndexBridgedUsersResponse,
+            );
+            summaries.push(...batchSummaries);
+        }
+        return summaries;
     }
 
     setBridgeBot(platform: BridgePlatform, botId: string | undefined): Promise<Success | OCError> {

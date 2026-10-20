@@ -44,6 +44,7 @@ fn main() {
     generate_ts_method!(user_index, diamond_membership_fees);
     generate_ts_method!(user_index, explore_bots);
     generate_ts_method!(user_index, external_achievements);
+    generate_ts_method!(user_index, bridged_users);
     generate_ts_method!(user_index, migrated_user_ids);
     generate_ts_method!(user_index, platform_moderators);
     generate_ts_method!(user_index, platform_moderators_group);

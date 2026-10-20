@@ -47,13 +47,14 @@ use std::time::Duration;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use tracing::{error, info};
 use types::{
-    BotDataEncoding, BotEventPayload, BotEventWrapper, BotNotification, BotNotificationEnvelope, BridgePlatform, BuildVersion,
-    CLAIM_TYPE_DECLINE_VIDEO_CALL, CLAIM_TYPE_DIAMOND_MEMBERSHIP, CallDismissalKind, CanisterId, ChannelLatestMessageIndex,
-    Chat, ChatId, ChildCanisterWasms, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles,
-    CyclesTopUp, DailyPuzzleResult, DeclineVideoCallClaims, DiamondMembershipDetails, DirectCallDismissedNotification, FcmData,
-    GroupCallDismissedNotification, IdempotentEnvelope, MediaScanConfig, MessageContentInitial, MessageId, Milliseconds,
-    ModerationReferralConfig, Notification, NotificationEnvelope, OCResult, ReferralType, TimestampMillis, Timestamped, UserId,
-    UserNotificationEnvelope, UserNotificationPayload, VerifiedCredentialGateArgs,
+    BotDataEncoding, BotEventPayload, BotEventWrapper, BotNotification, BotNotificationEnvelope, BridgePlatform, BridgedUser,
+    BridgedUserId, BuildVersion, CLAIM_TYPE_DECLINE_VIDEO_CALL, CLAIM_TYPE_DIAMOND_MEMBERSHIP, CallDismissalKind, CanisterId,
+    ChannelLatestMessageIndex, Chat, ChatId, ChildCanisterWasms, CommunityCanisterChannelSummary,
+    CommunityCanisterCommunitySummary, CommunityId, Cycles, CyclesTopUp, DailyPuzzleResult, DeclineVideoCallClaims,
+    DiamondMembershipDetails, DirectCallDismissedNotification, FcmData, GroupCallDismissedNotification, IdempotentEnvelope,
+    MediaScanConfig, MessageContentInitial, MessageId, Milliseconds, ModerationReferralConfig, Notification,
+    NotificationEnvelope, OCResult, ReferralType, TimestampMillis, Timestamped, UserId, UserNotificationEnvelope,
+    UserNotificationPayload, VerifiedCredentialGateArgs,
 };
 use user_ids_set::UserIdsSet;
 use user_index_canister::LocalUserIndexEvent as UserIndexEvent;
@@ -81,6 +82,7 @@ mod queries;
 mod updates;
 
 const MARK_ACTIVE_DURATION: Milliseconds = 10 * 60 * 1000; // 10 minutes
+const MAX_BRIDGED_USERS_SENT: usize = 10_000;
 const MULTI_USER_UPGRADE_CONCURRENCY: usize = 1;
 
 // The cycles above its freezing threshold each type of child canister keeps. A child is created with
@@ -315,6 +317,20 @@ impl RuntimeState {
                 })
             },
         }
+    }
+
+    // Sends the UserIndex the profile a bridge bot relayed a message with, for its registry, unless
+    // it's the profile last sent for that account
+    pub fn push_bridged_user(&mut self, user: &BridgedUser, now: TimestampMillis) {
+        let id = user.id();
+        if self.data.bridged_users_sent.get(&id) == Some(user) {
+            return;
+        }
+        if self.data.bridged_users_sent.len() >= MAX_BRIDGED_USERS_SENT {
+            self.data.bridged_users_sent.clear();
+        }
+        self.data.bridged_users_sent.insert(id, user.clone());
+        self.push_event_to_user_index(UserIndexEvent::BridgedUserUpdated(Box::new(user.clone())), now);
     }
 
     pub fn push_event_to_user_index(&mut self, event: UserIndexEvent, now: TimestampMillis) {
@@ -950,6 +966,11 @@ struct Data {
     // The bot that bridges each platform, eg. Discord, the only bot that can relay messages from it
     #[serde(default)]
     pub bridge_bots: BTreeMap<BridgePlatform, UserId>,
+    // The profiles last sent to the UserIndex for the accounts bridged here, so an unchanged one
+    // isn't sent with every message. Bounded, and not kept across upgrades: at worst a profile is
+    // sent again.
+    #[serde(skip)]
+    pub bridged_users_sent: HashMap<BridgedUserId, BridgedUser>,
     #[serde(default)]
     pub daily_puzzle_canister_id: Option<CanisterId>,
     #[serde(default)]
@@ -1093,6 +1114,7 @@ impl Data {
             media_scan_job_log: MediaScanJobLog::default(),
             call_push_enabled,
             bridge_bots: BTreeMap::new(),
+            bridged_users_sent: HashMap::new(),
             daily_puzzle_canister_id: None,
             daily_puzzle_engine: DailyPuzzleEngine::default(),
             daily_puzzle_results_queue: None,

@@ -1,4 +1,13 @@
-import type { BridgedFrom, BridgePlatform, DiscordUser, SenderContext } from "../domain";
+import type {
+    BridgedUser,
+    BridgedUserId,
+    BridgedUserSummary,
+    BridgePlatform,
+    ChatEvent,
+    DiscordUser,
+    EventWrapper,
+    SenderContext,
+} from "../domain";
 import { buildBlobUrl } from "./blobs";
 
 export const BRIDGE_PLATFORM_NAMES: Record<BridgePlatform, string> = {
@@ -6,47 +15,71 @@ export const BRIDGE_PLATFORM_NAMES: Record<BridgePlatform, string> = {
     telegram: "Telegram",
 };
 
-// Where a message was relayed from, if a bridge bot relayed it from another platform
-export function bridgedFrom(senderContext: SenderContext | undefined): BridgedFrom | undefined {
+// The account a message was relayed from, if a bridge bot relayed it from another platform
+export function bridgedFrom(senderContext: SenderContext | undefined): BridgedUserId | undefined {
     return senderContext?.kind === "bot" ? senderContext.bridgedFrom : undefined;
 }
 
-// Identifies the author across platforms, since a bridge bot sends every message it relays
-export function bridgedAuthorKey(bridged: BridgedFrom | undefined): string | undefined {
-    return bridged === undefined ? undefined : `${bridged.kind}:${bridged.author.id}`;
+// Identifies an account across platforms, eg. to key the registry's profiles, and to group the
+// messages a bridge bot sends by their authors
+export function bridgedUserKey(id: BridgedUserId | undefined): string | undefined {
+    return id === undefined ? undefined : `${id.kind}:${id.id}`;
 }
 
-export function bridgedAuthorName(bridged: BridgedFrom): string {
-    switch (bridged.kind) {
+export function bridgedUserId(user: BridgedUser): BridgedUserId {
+    return { kind: user.kind, id: user.profile.id };
+}
+
+// The accounts the messages in `events` were relayed from
+export function bridgedUserIdsFromEvents(events: EventWrapper<ChatEvent>[]): BridgedUserId[] {
+    const ids = new Map<string, BridgedUserId>();
+    for (const e of events) {
+        const id = e.event.kind === "message" ? bridgedFrom(e.event.senderContext) : undefined;
+        if (id !== undefined) {
+            ids.set(bridgedUserKey(id)!, id);
+        }
+    }
+    return [...ids.values()];
+}
+
+// Until the profile has been fetched the author is named after the platform
+export function bridgedAuthorName(
+    id: BridgedUserId,
+    summary: BridgedUserSummary | undefined,
+): string {
+    if (summary === undefined) {
+        return `${BRIDGE_PLATFORM_NAMES[id.kind]} user`;
+    }
+    const user = summary.user;
+    switch (user.kind) {
         case "discord":
-            return bridged.author.displayName ?? bridged.author.username;
+            return user.profile.displayName ?? user.profile.username;
         case "telegram":
-            return bridged.author.displayName;
+            return user.profile.displayName;
     }
 }
 
 // The url of the author's avatar, if they have one
 export function bridgedAuthorAvatarUrl(
-    bridged: BridgedFrom,
+    id: BridgedUserId,
+    summary: BridgedUserSummary | undefined,
     blobUrlPattern: string,
 ): string | undefined {
-    switch (bridged.kind) {
-        case "discord":
-            return discordAvatarUrl(bridged.author);
-        case "telegram": {
-            const avatar = bridged.author.avatar;
-            return avatar === undefined
-                ? undefined
-                : buildBlobUrl(blobUrlPattern, avatar.canisterId, avatar.blobId, "blobs");
-        }
+    const user = summary?.user;
+    if (id.kind === "discord") {
+        return discordAvatarUrl(id.id, user?.kind === "discord" ? user.profile : undefined);
     }
+    const avatar = user?.kind === "telegram" ? user.profile.avatar : undefined;
+    return avatar === undefined
+        ? undefined
+        : buildBlobUrl(blobUrlPattern, avatar.canisterId, avatar.blobId, "blobs");
 }
 
-function discordAvatarUrl(user: DiscordUser): string {
-    if (user.avatar !== undefined) {
-        return `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=128`;
+function discordAvatarUrl(id: string, profile: DiscordUser | undefined): string {
+    if (profile?.avatar !== undefined) {
+        return `https://cdn.discordapp.com/avatars/${id}/${profile.avatar}.png?size=128`;
     }
     // Discord's own default avatars, picked from the user's id
-    const index = (BigInt(user.id) >> 22n) % 6n;
+    const index = (BigInt(id) >> 22n) % 6n;
     return `https://cdn.discordapp.com/embed/avatars/${index}.png`;
 }

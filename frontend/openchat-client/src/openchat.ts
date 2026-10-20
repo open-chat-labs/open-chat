@@ -368,9 +368,13 @@ import {
     type WithdrawCryptocurrencyResponse,
     type OCError,
     type ProposedProtectedAction,
-    type BridgedFrom,
+    type BridgedUserId,
+    type BridgedUserSummary,
     type BridgePlatform,
     bridgedAuthorAvatarUrl,
+    bridgedUserId,
+    bridgedUserIdsFromEvents,
+    bridgedUserKey,
     buildBlobUrl,
     isAndroidTauriApp,
     isIosTauriApp,
@@ -392,6 +396,7 @@ import {
     anonUserStore,
     askForNotificationPermission,
     bitcoinAddress,
+    bridgedUsersStore,
     chatListScopeStore,
     chatSummariesListStore,
     chatSummariesStore,
@@ -747,6 +752,8 @@ const MAX_TIMEOUT_MS = Math.pow(2, 31) - 1;
 const CHAT_UPDATE_INTERVAL = 5000;
 const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE_MILLIS;
 const BOT_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
+// A bridged account's profile is fetched again once it's this old, as messages are loaded
+const BRIDGED_USER_MAX_AGE = 10 * ONE_MINUTE_MILLIS;
 const BOT_UPDATE_IDLE_INTERVAL = 5 * ONE_MINUTE_MILLIS;
 const USER_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
 // The daily puzzle changes at rollover and when an operator regenerates or enables it; an
@@ -796,6 +803,8 @@ const SWAP_OUTPUT_CHECK_INTERVAL_MS = 2000;
 const SWAP_OUTPUT_CHECKS = 10;
 
 export class OpenChat {
+    // When each bridged account's profile was last fetched, keyed by `bridgedUserKey`
+    #bridgedUsersFetchedAt = new Map<string, number>();
     #mobileLayout: "v1" | "v2";
     #worker: WorkerAgent;
     #authIdentityStorage: IdentityStorage;
@@ -2528,8 +2537,8 @@ export class OpenChat {
     userAvatarUrl = userAvatarUrl;
 
     // The avatar of the author of a message a bridge bot relayed from another platform
-    bridgedAvatarUrl(bridged: BridgedFrom): string {
-        return bridgedAuthorAvatarUrl(bridged, this.config.blobUrlPattern) ?? userAvatarUrl();
+    bridgedAvatarUrl(id: BridgedUserId, summary: BridgedUserSummary | undefined): string {
+        return bridgedAuthorAvatarUrl(id, summary, this.config.blobUrlPattern) ?? userAvatarUrl();
     }
     formatTokens = formatTokens;
     validateTokenInput = validateTokenInput;
@@ -3789,6 +3798,7 @@ export class OpenChat {
         }
         this.#noteUsersSeenInChat(chatId, userIds);
         userStore.addWebhookIds([...webhooks]);
+        void this.getBridgedUsers(bridgedUserIdsFromEvents(events));
         const newChatUserIds = [...allUserIds].filter(
             (u) => u !== userId && !selectedChatUserIdsStore.value.has(u),
         );
@@ -7317,9 +7327,31 @@ export class OpenChat {
                 const { userIds, webhooks } = this.userIdsFromEvents(events);
                 this.getMissingUsers(userIds);
                 userStore.addWebhookIds([...webhooks]);
+                void this.getBridgedUsers(bridgedUserIdsFromEvents(events));
                 return threads;
             })
             .catch(() => []);
+    }
+
+    // Fetches the profiles of the bridged accounts which haven't been fetched, or not recently
+    async getBridgedUsers(ids: BridgedUserId[]): Promise<void> {
+        const now = Date.now();
+        const toFetch = ids.filter((id) => {
+            const fetchedAt = this.#bridgedUsersFetchedAt.get(bridgedUserKey(id)!);
+            return fetchedAt === undefined || now - fetchedAt > BRIDGED_USER_MAX_AGE;
+        });
+        if (toFetch.length === 0) return;
+
+        toFetch.forEach((id) => this.#bridgedUsersFetchedAt.set(bridgedUserKey(id)!, now));
+        const users = await this.#worker
+            .send({ kind: "getBridgedUsers", ids: toFetch })
+            .catch(() => [] as BridgedUserSummary[]);
+        if (users.length === 0) return;
+
+        bridgedUsersStore.update((map) => {
+            users.forEach((u) => map.set(bridgedUserKey(bridgedUserId(u.user))!, u));
+            return map;
+        });
     }
 
     getMissingUsers(userIds: Iterable<string>): Promise<UsersResponse> {

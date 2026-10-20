@@ -20,6 +20,8 @@
         currentUserIdStore,
         currentUserStore,
         bridgedFrom,
+        bridgedUserKey,
+        bridgedUsersStore,
         type EnhancedReplyContext,
         localUpdates,
         type Message,
@@ -365,6 +367,9 @@
             collapsed,
     );
     let bridged = $derived(bridgedFrom(senderContext));
+    let bridgedUser = $derived(
+        bridged !== undefined ? $bridgedUsersStore.get(bridgedUserKey(bridged)!) : undefined,
+    );
     // A tip would go to the bridge bot, not the author shown
     let canTip = $derived(
         canTipMessages && !me && confirmed && !inert && !failed && bridged === undefined,
@@ -625,7 +630,7 @@
                         <Avatar
                             onClick={openUserProfile}
                             url={bridged !== undefined
-                                ? client.bridgedAvatarUrl(bridged)
+                                ? client.bridgedAvatarUrl(bridged, bridgedUser)
                                 : client.userAvatarUrl(sender)}
                             size={"sm"}></Avatar>
                     </div>

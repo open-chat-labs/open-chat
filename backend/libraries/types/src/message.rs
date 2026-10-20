@@ -1,5 +1,5 @@
 use crate::{
-    Achievement, BotCaller, BotCommand, BridgedFrom, CanisterId, Chat, EventIndex, MessageContent, MessageId, MessageIndex,
+    Achievement, BotCaller, BotCommand, BridgedUserId, CanisterId, Chat, EventIndex, MessageContent, MessageId, MessageIndex,
     OgPreview, Reaction, ThreadSummary, UserId, is_default,
 };
 use candid::CandidType;
@@ -296,10 +296,10 @@ impl SenderContext {
 pub struct BotMessageContext {
     pub command: Option<BotCommand>,
     pub finalised: bool,
-    // Set on the messages a bridge bot relays from another platform, eg. Discord. Boxed to keep
-    // `SenderContext` small
+    // Set on the messages a bridge bot relays from another platform, eg. Discord: the author's account
+    // there, whose profile is in the UserIndex's registry
     #[serde(default)]
-    pub bridged_from: Option<Box<BridgedFrom>>,
+    pub bridged_from: Option<BridgedUserId>,
 }
 
 impl BotMessageContext {
@@ -307,7 +307,7 @@ impl BotMessageContext {
         BotMessageContext {
             command: caller.initiator.command().cloned(),
             finalised,
-            bridged_from: caller.bridged_from.clone(),
+            bridged_from: caller.bridged_from,
         }
     }
 }

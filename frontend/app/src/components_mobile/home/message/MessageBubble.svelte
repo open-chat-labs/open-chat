@@ -5,6 +5,8 @@
         currentUserIdStore,
         bridgedAuthorName,
         bridgedFrom,
+        bridgedUserKey,
+        bridgedUsersStore,
         OpenChat,
         routeForChatIdentifier,
         selectedChatMembersStore,
@@ -101,9 +103,12 @@
     let streak = $derived(sender?.streak ?? 0);
     let chitEarned = $derived(sender?.totalChitEarned ?? 0);
     let bridged = $derived(bridgedFrom(senderContext));
+    let bridgedUser = $derived(
+        bridged !== undefined ? $bridgedUsersStore.get(bridgedUserKey(bridged)!) : undefined,
+    );
     let senderDisplayName = $derived(
         bridged !== undefined
-            ? bridgedAuthorName(bridged)
+            ? bridgedAuthorName(bridged, bridgedUser)
             : client.getDisplayName(
                   msg.sender,
                   $selectedCommunityMembersStore,

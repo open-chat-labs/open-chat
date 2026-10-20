@@ -1,4 +1,4 @@
-use crate::{BotCommand, BotInitiator, BridgedFrom, ChatEventCategory, EventIndex, UserId, UserIdAndPrincipal, UserType};
+use crate::{BotCommand, BotInitiator, BridgedUserId, ChatEventCategory, EventIndex, UserId, UserIdAndPrincipal, UserType};
 use std::collections::HashSet;
 
 #[derive(Clone)]
@@ -16,7 +16,7 @@ pub struct BotCaller {
     pub bot: UserId,
     pub initiator: BotInitiator,
     // Set when a bridge bot relays a message from another platform, eg. Discord
-    pub bridged_from: Option<Box<BridgedFrom>>,
+    pub bridged_from: Option<BridgedUserId>,
 }
 
 impl Caller {

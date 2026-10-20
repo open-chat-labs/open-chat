@@ -62,6 +62,9 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
     match event {
         LocalUserIndexEvent::CsamDetected(ev) => c2c_csam_detected_impl(*ev, state),
         LocalUserIndexEvent::ModerationReferral(ev) => c2c_moderation_referral_impl(*ev, state),
+        LocalUserIndexEvent::BridgedUserUpdated(user) => {
+            state.data.bridged_users.update(*user, **now);
+        }
         LocalUserIndexEvent::UserRegistered(ev) => {
             process_new_user(ev.principal, ev.username, ev.email, ev.user_id, ev.referred_by, caller, state)
         }

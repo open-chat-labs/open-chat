@@ -18,6 +18,8 @@ import type {
     BlockUserResponse,
     BotCommandResponse,
     BotDefinition,
+    BridgedUserId,
+    BridgedUserSummary,
     BridgePlatform,
     BotInstallationLocation,
     BotsResponse,
@@ -6092,6 +6094,10 @@ export class OpenChatAgent extends EventTarget {
 
     setBridgeBot(platform: BridgePlatform, botId: string | undefined): Promise<Success | OCError> {
         return this._userIndexClient.setBridgeBot(platform, botId);
+    }
+
+    getBridgedUsers(ids: BridgedUserId[]): Promise<BridgedUserSummary[]> {
+        return this._userIndexClient.bridgedUsers(ids);
     }
     dailyPuzzleRegenerateToday(gameId: string | undefined): Promise<Success | OCError> {
         return this._dailyPuzzleClient.get().regenerateToday(gameId);

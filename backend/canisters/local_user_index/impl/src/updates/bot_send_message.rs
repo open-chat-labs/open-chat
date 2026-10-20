@@ -9,7 +9,7 @@ use local_user_index_canister::bot_send_message::*;
 use oc_error_codes::{OCError, OCErrorCode};
 use rand::RngExt;
 use types::{
-    BotActionScope, BotInitiator, BotMessageContent, BridgedFrom, CanisterId, ChannelId, Chat, ChatId, CommunityId, EventIndex,
+    BotActionScope, BotInitiator, BotMessageContent, BridgedUser, CanisterId, ChannelId, Chat, ChatId, CommunityId, EventIndex,
     MessageId, MessageIndex, OCResult, OgPreview, UserId,
 };
 
@@ -19,6 +19,8 @@ async fn bot_send_message(args: Args) -> Response {
         let context = extract_access_context_from_chat_context(args.chat_context, state)?;
         if let Some(bridged_from) = &args.bridged_from {
             check_can_relay(bridged_from, &context, state)?;
+            let now = state.env.now();
+            state.push_bridged_user(bridged_from, now);
         }
         Ok(context)
     }) {
@@ -43,7 +45,7 @@ async fn bot_send_message(args: Args) -> Response {
 
 // Only the bridge bot for the platform a message was relayed from can relay it, and only
 // autonomously, into a group or channel
-fn check_can_relay(bridged_from: &BridgedFrom, context: &BotAccessContext, state: &RuntimeState) -> OCResult {
+fn check_can_relay(bridged_from: &BridgedUser, context: &BotAccessContext, state: &RuntimeState) -> OCResult {
     let platform = bridged_from.platform();
     if state.data.bridge_bots.get(&platform) != Some(&context.bot_id) {
         return Err(OCErrorCode::InitiatorNotAuthorized
@@ -83,7 +85,7 @@ async fn bot_send_message_impl(
     block_level_markdown: bool,
     finalised: bool,
     og_previews: Vec<OgPreview>,
-    bridged_from: Option<BridgedFrom>,
+    bridged_from: Option<BridgedUser>,
 ) -> Response {
     let context = match mutate_state(|state| extract_message_access_context(context, channel_id, thread, message_id, state)) {
         Ok(context) => context,
@@ -201,7 +203,7 @@ async fn send_message_to_channel(
     block_level_markdown: bool,
     finalised: bool,
     og_previews: Vec<OgPreview>,
-    bridged_from: Option<BridgedFrom>,
+    bridged_from: Option<BridgedUser>,
 ) -> Response {
     use Response::*;
 
@@ -253,7 +255,7 @@ async fn send_message_to_group(
     block_level_markdown: bool,
     finalised: bool,
     og_previews: Vec<OgPreview>,
-    bridged_from: Option<BridgedFrom>,
+    bridged_from: Option<BridgedUser>,
 ) -> Response {
     use Response::*;
 

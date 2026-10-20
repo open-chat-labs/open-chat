@@ -62,8 +62,8 @@ import {
     defaultChatPermissions,
     defaultOptionalChatPermissions,
     defaultOptionalMessagePermissions,
-    bridgedAuthorKey,
     bridgedFrom,
+    bridgedUserKey,
     emptyChatMetrics,
     getContentAsFormattedText,
     getContentAsText,
@@ -550,8 +550,8 @@ export function sameUser(a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>)
         return (
             a.event.sender === b.event.sender &&
             // A bridge bot sends every message it relays, so they're grouped by their authors
-            bridgedAuthorKey(bridgedFrom(a.event.senderContext)) ===
-                bridgedAuthorKey(bridgedFrom(b.event.senderContext)) &&
+            bridgedUserKey(bridgedFrom(a.event.senderContext)) ===
+                bridgedUserKey(bridgedFrom(b.event.senderContext)) &&
             Math.abs(Number(b.timestamp - a.timestamp)) <
                 MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS
         );
@@ -744,8 +744,8 @@ function groupingEquivalent(
         am.messageId !== bm.messageId ||
         am.messageIndex !== bm.messageIndex ||
         am.sender !== bm.sender ||
-        bridgedAuthorKey(bridgedFrom(am.senderContext)) !==
-            bridgedAuthorKey(bridgedFrom(bm.senderContext))
+        bridgedUserKey(bridgedFrom(am.senderContext)) !==
+            bridgedUserKey(bridgedFrom(bm.senderContext))
     ) {
         return false;
     }

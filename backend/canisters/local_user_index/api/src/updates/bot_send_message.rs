@@ -2,7 +2,7 @@ use candid::CandidType;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{BotChatContext, BotMessageContent, BridgedFrom, EventIndex, MessageId, MessageIndex, OgPreview, TimestampMillis};
+use types::{BotChatContext, BotMessageContent, BridgedUser, EventIndex, MessageId, MessageIndex, OgPreview, TimestampMillis};
 
 #[ts_export(local_user_index, bot_send_message)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -15,8 +15,10 @@ pub struct Args {
     pub block_level_markdown: bool,
     pub finalised: bool,
     pub og_previews: Option<Vec<OgPreview>>,
-    // Only the bridge bot for its platform can set this, on the messages it relays from there
-    pub bridged_from: Option<BridgedFrom>,
+    // Only the bridge bot for its platform can set this, on the messages it relays from there: the
+    // author's profile on that platform. The message holds only the author's id, and the UserIndex
+    // keeps the latest profile.
+    pub bridged_from: Option<BridgedUser>,
 }
 
 #[ts_export(local_user_index, bot_send_message)]

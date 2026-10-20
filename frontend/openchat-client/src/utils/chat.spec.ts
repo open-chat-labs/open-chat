@@ -412,19 +412,13 @@ describe("sameUser", () => {
                         ? {
                               kind: "bot",
                               finalised: true,
-                              bridgedFrom: {
-                                  kind: "discord",
-                                  author: { id: discordId, username: `user${discordId}` },
-                              },
+                              bridgedFrom: { kind: "discord", id: discordId },
                           }
                         : telegramId !== undefined
                           ? {
                                 kind: "bot",
                                 finalised: true,
-                                bridgedFrom: {
-                                    kind: "telegram",
-                                    author: { id: telegramId, displayName: `User ${telegramId}` },
-                                },
+                                bridgedFrom: { kind: "telegram", id: telegramId },
                             }
                           : undefined,
             },

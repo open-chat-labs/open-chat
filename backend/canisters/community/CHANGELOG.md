@@ -24,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Look up a member's previous user ids in the LocalUserIndex when checking their gate again ([#9970](https://github.com/open-chat-labs/open-chat/pull/9970))
 - Await work inside timers rather than spawning a task from them ([#9971](https://github.com/open-chat-labs/open-chat/pull/9971))
 - Stop tracking the async work in progress, since nothing reads it any more ([#9972](https://github.com/open-chat-labs/open-chat/pull/9972))
+- Store only the author's id on bridged messages, since their profile is in the UserIndex ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
 
 ### Removed
 

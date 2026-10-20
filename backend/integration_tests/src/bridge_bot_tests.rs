@@ -11,9 +11,9 @@ use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::random_string;
 use types::{
-    BlobReference, BotChatContext, BotInstallationLocation, BotMessageContent, BotPermissions, BridgePlatform, BridgedFrom,
-    CanisterId, Chat, ChatEvent, DiscordMessageContext, DiscordUser, EventsResponse, MessagePermission, SenderContext,
-    TelegramMessageContext, TelegramUser, TextContent, UnitResult, UserId,
+    BlobReference, BotChatContext, BotInstallationLocation, BotMessageContent, BotPermissions, BridgePlatform, BridgedUser,
+    CanisterId, Chat, ChatEvent, DiscordUser, EventsResponse, MessagePermission, SenderContext, TelegramUser, TextContent,
+    UnitResult, UserId,
 };
 
 #[test]
@@ -104,19 +104,15 @@ fn bridge_bots_relay_messages_as_their_authors() {
         display_name: Some("Nelly".to_string()),
         avatar: Some("8342729096ea3675442027381ff50dfe".to_string()),
     };
-    let from_discord = BridgedFrom::Discord(DiscordMessageContext {
-        author: discord_author.clone(),
-    });
-    let from_telegram = BridgedFrom::Telegram(TelegramMessageContext {
-        author: TelegramUser {
-            id: 123456789,
-            username: Some("nelly".to_string()),
-            display_name: "Nelly Smith".to_string(),
-            avatar: Some(BlobReference {
-                canister_id: canister_ids.user_index,
-                blob_id: 1,
-            }),
-        },
+    let from_discord = BridgedUser::Discord(discord_author.clone());
+    let from_telegram = BridgedUser::Telegram(TelegramUser {
+        id: 123456789,
+        username: Some("nelly".to_string()),
+        display_name: "Nelly Smith".to_string(),
+        avatar: Some(BlobReference {
+            canister_id: canister_ids.user_index,
+            blob_id: 1,
+        }),
     });
 
     // Relayed into a channel and into a group, each message keeps its author on the other platform
@@ -133,6 +129,8 @@ fn bridge_bots_relay_messages_as_their_authors() {
     let events =
         client::community::happy_path::events_by_index(env, &owner, community_id, channel_id, vec![result.event_index]);
     assert_relayed_from(&events, discord_bot_id, &from_discord);
+    // The message holds only the author's id. Their profile goes to the UserIndex's registry
+    wait_for_bridged_user(env, canister_ids.user_index, &from_discord);
 
     let response = send(
         env,
@@ -160,6 +158,7 @@ fn bridge_bots_relay_messages_as_their_authors() {
     let events =
         client::community::happy_path::events_by_index(env, &owner, community_id, channel_id, vec![result.event_index]);
     assert_relayed_from(&events, telegram_bot_id, &from_telegram);
+    wait_for_bridged_user(env, canister_ids.user_index, &from_telegram);
 
     // Each bridge bot can only relay messages from its own platform
     for (bot_principal, bridged_from) in [
@@ -179,11 +178,9 @@ fn bridge_bots_relay_messages_as_their_authors() {
         discord_bot_principal,
         community_local_user_index,
         channel,
-        BridgedFrom::Discord(DiscordMessageContext {
-            author: DiscordUser {
-                avatar: Some("https://example.com/avatar.png".to_string()),
-                ..discord_author
-            },
+        BridgedUser::Discord(DiscordUser {
+            avatar: Some("https://example.com/avatar.png".to_string()),
+            ..discord_author.clone()
         }),
     );
     assert!(
@@ -203,6 +200,21 @@ fn bridge_bots_relay_messages_as_their_authors() {
         matches!(&response, SendResponse::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
         "{response:?}"
     );
+
+    // A changed profile replaces the one in the registry
+    let renamed = BridgedUser::Discord(DiscordUser {
+        display_name: Some("Nelly Smith".to_string()),
+        ..discord_author
+    });
+    let response = send(
+        env,
+        discord_bot_principal,
+        community_local_user_index,
+        channel,
+        renamed.clone(),
+    );
+    assert!(matches!(response, SendResponse::Success(_)), "{response:?}");
+    wait_for_bridged_user(env, canister_ids.user_index, &renamed);
 
     // A bridge bot is refused once it's unset. Both are unset, which also leaves the pooled env as
     // it was
@@ -268,7 +280,7 @@ fn send(
     bot_principal: Principal,
     local_user_index: CanisterId,
     chat: Chat,
-    bridged_from: BridgedFrom,
+    bridged_from: BridgedUser,
 ) -> SendResponse {
     client::local_user_index::bot_send_message(
         env,
@@ -290,7 +302,7 @@ fn send(
     )
 }
 
-fn assert_relayed_from(events: &EventsResponse, bot_id: UserId, bridged_from: &BridgedFrom) {
+fn assert_relayed_from(events: &EventsResponse, bot_id: UserId, bridged_from: &BridgedUser) {
     let ChatEvent::Message(message) = &events.events[0].event else {
         panic!("Expected a message: {:?}", events.events[0].event);
     };
@@ -298,5 +310,22 @@ fn assert_relayed_from(events: &EventsResponse, bot_id: UserId, bridged_from: &B
     let Some(SenderContext::Bot(bot_context)) = &message.sender_context else {
         panic!("Expected a bot sender context: {:?}", message.sender_context);
     };
-    assert_eq!(bot_context.bridged_from.as_deref(), Some(bridged_from));
+    assert_eq!(bot_context.bridged_from, Some(bridged_from.id()));
+}
+
+// The LocalUserIndex passes the profile on to the UserIndex over its event queue
+fn wait_for_bridged_user(env: &mut PocketIc, user_index: CanisterId, user: &BridgedUser) {
+    for _ in 0..50 {
+        let user_index_canister::bridged_users::Response::Success(users) = client::user_index::bridged_users(
+            env,
+            Principal::anonymous(),
+            user_index,
+            &user_index_canister::bridged_users::Args { users: vec![user.id()] },
+        );
+        if users.first().map(|u| &u.user) == Some(user) {
+            return;
+        }
+        env.tick();
+    }
+    panic!("The UserIndex doesn't have the profile {user:?}");
 }

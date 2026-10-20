@@ -1,38 +1,51 @@
 import { describe, expect, test } from "vitest";
-import type { BridgedFrom } from "../domain";
-import { bridgedAuthorAvatarUrl, bridgedAuthorKey, bridgedAuthorName } from "./bridge";
+import type { BridgedUserId, BridgedUserSummary, ChatEvent, EventWrapper } from "../domain";
+import {
+    bridgedAuthorAvatarUrl,
+    bridgedAuthorName,
+    bridgedUserIdsFromEvents,
+    bridgedUserKey,
+} from "./bridge";
 
 const PATTERN = "https://{canisterId}.raw.icp0.io/{blobType}";
 
 describe("bridge", () => {
-    const discord = (author: Partial<Extract<BridgedFrom, { kind: "discord" }>["author"]> = {}) =>
-        ({
-            kind: "discord",
-            author: { id: "80351110224678912", username: "nelly", ...author },
-        }) as BridgedFrom;
-    const telegram = (author: Partial<Extract<BridgedFrom, { kind: "telegram" }>["author"]> = {}) =>
-        ({
+    const discordId: BridgedUserId = { kind: "discord", id: "80351110224678912" };
+    const telegramId: BridgedUserId = { kind: "telegram", id: "123456789" };
+    const discord = (
+        profile: { displayName?: string; avatar?: string } = {},
+    ): BridgedUserSummary => ({
+        user: { kind: "discord", profile: { id: discordId.id, username: "nelly", ...profile } },
+        updated: 0n,
+    });
+    const telegram = (avatar?: { canisterId: string; blobId: bigint }): BridgedUserSummary => ({
+        user: {
             kind: "telegram",
-            author: { id: "123456789", displayName: "Nelly Smith", ...author },
-        }) as BridgedFrom;
-
-    test("names the author by their display name if they have one", () => {
-        expect(bridgedAuthorName(discord())).toEqual("nelly");
-        expect(bridgedAuthorName(discord({ displayName: "Nelly" }))).toEqual("Nelly");
-        expect(bridgedAuthorName(telegram())).toEqual("Nelly Smith");
+            profile: { id: telegramId.id, displayName: "Nelly Smith", avatar },
+        },
+        updated: 0n,
     });
 
-    test("keys authors by platform as well as id", () => {
-        expect(bridgedAuthorKey(discord())).toEqual("discord:80351110224678912");
-        expect(bridgedAuthorKey(telegram({ id: "80351110224678912" }))).toEqual(
+    test("names the author from their profile, else after the platform", () => {
+        expect(bridgedAuthorName(discordId, discord())).toEqual("nelly");
+        expect(bridgedAuthorName(discordId, discord({ displayName: "Nelly" }))).toEqual("Nelly");
+        expect(bridgedAuthorName(telegramId, telegram())).toEqual("Nelly Smith");
+        expect(bridgedAuthorName(discordId, undefined)).toEqual("Discord user");
+        expect(bridgedAuthorName(telegramId, undefined)).toEqual("Telegram user");
+    });
+
+    test("keys accounts by platform as well as id", () => {
+        expect(bridgedUserKey(discordId)).toEqual("discord:80351110224678912");
+        expect(bridgedUserKey({ kind: "telegram", id: discordId.id })).toEqual(
             "telegram:80351110224678912",
         );
-        expect(bridgedAuthorKey(undefined)).toBeUndefined();
+        expect(bridgedUserKey(undefined)).toBeUndefined();
     });
 
     test("builds a Discord avatar url from the avatar hash", () => {
         expect(
             bridgedAuthorAvatarUrl(
+                discordId,
                 discord({ avatar: "8342729096ea3675442027381ff50dfe" }),
                 PATTERN,
             ),
@@ -43,18 +56,41 @@ describe("bridge", () => {
 
     test("falls back to Discord's default avatar picked from the id", () => {
         // (80351110224678912 >> 22) % 6 = 5
-        expect(bridgedAuthorAvatarUrl(discord(), PATTERN)).toEqual(
-            "https://cdn.discordapp.com/embed/avatars/5.png",
-        );
+        const expected = "https://cdn.discordapp.com/embed/avatars/5.png";
+        expect(bridgedAuthorAvatarUrl(discordId, discord(), PATTERN)).toEqual(expected);
+        expect(bridgedAuthorAvatarUrl(discordId, undefined, PATTERN)).toEqual(expected);
     });
 
     test("serves a Telegram avatar from OpenChat's storage", () => {
         expect(
             bridgedAuthorAvatarUrl(
-                telegram({ avatar: { canisterId: "rturd-qaaaa-aaaaf-aabaq-cai", blobId: 7n } }),
+                telegramId,
+                telegram({ canisterId: "rturd-qaaaa-aaaaf-aabaq-cai", blobId: 7n }),
                 PATTERN,
             ),
         ).toEqual("https://rturd-qaaaa-aaaaf-aabaq-cai.raw.icp0.io/blobs/7");
-        expect(bridgedAuthorAvatarUrl(telegram(), PATTERN)).toBeUndefined();
+        expect(bridgedAuthorAvatarUrl(telegramId, telegram(), PATTERN)).toBeUndefined();
+    });
+
+    test("collects each account a message was relayed from once", () => {
+        const message = (bridged?: BridgedUserId) =>
+            ({
+                event: {
+                    kind: "message",
+                    senderContext:
+                        bridged === undefined
+                            ? undefined
+                            : { kind: "bot", finalised: true, bridgedFrom: bridged },
+                },
+            }) as unknown as EventWrapper<ChatEvent>;
+
+        expect(
+            bridgedUserIdsFromEvents([
+                message(discordId),
+                message(),
+                message(telegramId),
+                message(discordId),
+            ]),
+        ).toEqual([discordId, telegramId]);
     });
 });

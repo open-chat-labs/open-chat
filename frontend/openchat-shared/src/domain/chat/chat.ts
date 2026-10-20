@@ -988,23 +988,37 @@ export type BotMessageContext = {
     kind: "bot";
     command?: BotContextCommand;
     finalised: boolean;
-    // Set on the messages a bridge bot relays from another platform, eg. Discord
-    bridgedFrom?: BridgedFrom;
+    // Set on the messages a bridge bot relays from another platform, eg. Discord: the author's account
+    // there, whose profile comes from the UserIndex's registry
+    bridgedFrom?: BridgedUserId;
 };
 
-// Where a bridge bot relayed a message from, and the message's author there
-export type BridgedFrom =
-    | { kind: "discord"; author: DiscordUser }
-    | { kind: "telegram"; author: TelegramUser };
+export type BridgePlatform = "discord" | "telegram";
 
-export type BridgePlatform = BridgedFrom["kind"];
+// An account on another platform, eg. Discord, whose messages a bridge bot relays into OpenChat
+export type BridgedUserId = {
+    kind: BridgePlatform;
+    id: string;
+};
+
+// The latest profile of a bridged account, from the UserIndex's registry
+export type BridgedUser =
+    | { kind: "discord"; profile: DiscordUser }
+    | { kind: "telegram"; profile: TelegramUser };
+
+export type BridgedUserSummary = {
+    user: BridgedUser;
+    // When the profile last changed
+    updated: bigint;
+};
 
 export type DiscordUser = {
     // The user's Discord snowflake id
     id: string;
     username: string;
+    // Their global display name
     displayName?: string;
-    // The hash of the user's global avatar, not their server one, which the CDN url is built from
+    // The hash of the user's global avatar, which the CDN url is built from
     avatar?: string;
 };
 

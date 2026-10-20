@@ -1162,6 +1162,7 @@ const handlers: Handlers = {
     setCallPushEnabled: (payload, agent) => agent.setCallPushEnabled(payload.enabled),
     setAlchemyApiKey: (payload, agent) => agent.setAlchemyApiKey(payload.apiKey),
     setBridgeBot: (payload, agent) => agent.setBridgeBot(payload.platform, payload.botId),
+    getBridgedUsers: (payload, agent) => agent.getBridgedUsers(payload.ids),
     dailyPuzzleRegenerateToday: (payload, agent) =>
         agent.dailyPuzzleRegenerateToday(payload.gameId),
     setPremiumItemCost: (payload, agent) =>

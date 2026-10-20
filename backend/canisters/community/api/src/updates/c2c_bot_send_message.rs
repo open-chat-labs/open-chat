@@ -1,7 +1,7 @@
 use crate::send_message;
 use serde::{Deserialize, Serialize};
 use types::{
-    BotInitiator, BotMessageContent, BridgedFrom, ChannelId, EventIndex, GroupReplyContext, MessageId, MessageIndex, OgPreview,
+    BotInitiator, BotMessageContent, BridgedUser, ChannelId, EventIndex, GroupReplyContext, MessageId, MessageIndex, OgPreview,
     UserId,
 };
 
@@ -20,7 +20,7 @@ pub struct Args {
     #[serde(default)]
     pub og_previews: Vec<OgPreview>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub bridged_from: Option<BridgedFrom>,
+    pub bridged_from: Option<BridgedUser>,
 }
 
 impl From<Args> for send_message::Args {

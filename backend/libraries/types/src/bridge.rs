@@ -1,16 +1,35 @@
-use crate::BlobReference;
+use crate::{BlobReference, TimestampMillis};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use ts_export::ts_export;
 
-// Where a bridge bot relayed a message from: the platform, and the message's author there. Only
-// the bridge bot for that platform can set it; the LocalUserIndex rejects any other bot
+// An account on another platform, eg. Discord, whose messages a bridge bot relays into OpenChat.
+// A relayed message holds only this. The account's profile is in the UserIndex's registry.
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum BridgedUserId {
+    Discord(u64),
+    Telegram(i64),
+}
+
+// The profile of an account on another platform. The bridge bot sends its author's with each message
+// it relays, and the UserIndex keeps the latest. Only the bridge bot for the platform can send them;
+// the LocalUserIndex rejects any other bot.
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
-pub enum BridgedFrom {
-    Discord(DiscordMessageContext),
-    Telegram(TelegramMessageContext),
+pub enum BridgedUser {
+    Discord(DiscordUser),
+    Telegram(TelegramUser),
+}
+
+// A bridged account's latest profile, from the UserIndex's registry
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct BridgedUserSummary {
+    pub user: BridgedUser,
+    // When the profile last changed
+    pub updated: TimestampMillis,
 }
 
 // The platforms bridged into OpenChat, each by its own bridge bot
@@ -23,28 +42,17 @@ pub enum BridgePlatform {
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct DiscordMessageContext {
-    pub author: DiscordUser,
-}
-
-#[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct DiscordUser {
     // The user's Discord snowflake id
     pub id: u64,
     // The webhook's name if a webhook posted the message
     pub username: String,
-    // The user's nickname in the server, else their global display name
+    // The user's global display name. Not their nickname in a server, since this profile is shown
+    // wherever they're bridged
     pub display_name: Option<String>,
     // The hash of the user's global avatar, not their server one, which the CDN url is built from.
     // "a_" followed by 32 hex chars if animated
     pub avatar: Option<String>,
-}
-
-#[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct TelegramMessageContext {
-    pub author: TelegramUser,
 }
 
 #[ts_export]
@@ -68,18 +76,31 @@ const DISCORD_AVATAR_HASH_LENGTH: usize = 32;
 const MAX_TELEGRAM_USERNAME_LENGTH: usize = 32;
 const MAX_TELEGRAM_DISPLAY_NAME_LENGTH: usize = 129;
 
-impl BridgedFrom {
+impl BridgedUserId {
     pub fn platform(&self) -> BridgePlatform {
         match self {
-            BridgedFrom::Discord(_) => BridgePlatform::Discord,
-            BridgedFrom::Telegram(_) => BridgePlatform::Telegram,
+            BridgedUserId::Discord(_) => BridgePlatform::Discord,
+            BridgedUserId::Telegram(_) => BridgePlatform::Telegram,
+        }
+    }
+}
+
+impl BridgedUser {
+    pub fn id(&self) -> BridgedUserId {
+        match self {
+            BridgedUser::Discord(u) => BridgedUserId::Discord(u.id),
+            BridgedUser::Telegram(u) => BridgedUserId::Telegram(u.id),
         }
     }
 
-    pub fn into_author_display_name(self) -> String {
+    pub fn platform(&self) -> BridgePlatform {
+        self.id().platform()
+    }
+
+    pub fn into_display_name(self) -> String {
         match self {
-            BridgedFrom::Discord(d) => d.author.display_name.unwrap_or(d.author.username),
-            BridgedFrom::Telegram(t) => t.author.display_name,
+            BridgedUser::Discord(u) => u.display_name.unwrap_or(u.username),
+            BridgedUser::Telegram(u) => u.display_name,
         }
     }
 
@@ -87,13 +108,13 @@ impl BridgedFrom {
     // the platform's badge, so this stops an author passing as an OpenChat user there
     pub fn into_notification_display_name(self) -> String {
         let platform = self.platform();
-        format!("{} ({platform})", self.into_author_display_name())
+        format!("{} ({platform})", self.into_display_name())
     }
 
     pub fn validate(&self) -> Result<(), String> {
         match self {
-            BridgedFrom::Discord(d) => d.author.validate(),
-            BridgedFrom::Telegram(t) => t.author.validate(),
+            BridgedUser::Discord(u) => u.validate(),
+            BridgedUser::Telegram(u) => u.validate(),
         }
     }
 }
@@ -269,21 +290,29 @@ mod tests {
     }
 
     #[test]
-    fn author_display_names() {
+    fn display_names() {
         let discord = |display_name: Option<&str>| {
-            BridgedFrom::Discord(DiscordMessageContext {
-                author: DiscordUser {
-                    display_name: display_name.map(|n| n.to_string()),
-                    ..discord_user()
-                },
+            BridgedUser::Discord(DiscordUser {
+                display_name: display_name.map(|n| n.to_string()),
+                ..discord_user()
             })
         };
-        assert_eq!(discord(Some("Nelly")).into_author_display_name(), "Nelly");
-        assert_eq!(discord(None).into_author_display_name(), "nelly");
-        assert_eq!(
-            BridgedFrom::Telegram(TelegramMessageContext { author: telegram_user() }).into_author_display_name(),
-            "Nelly Smith"
-        );
+        assert_eq!(discord(Some("Nelly")).into_display_name(), "Nelly");
+        assert_eq!(discord(None).into_display_name(), "nelly");
+        assert_eq!(BridgedUser::Telegram(telegram_user()).into_display_name(), "Nelly Smith");
         assert_eq!(discord(Some("Nelly")).into_notification_display_name(), "Nelly (Discord)");
+    }
+
+    #[test]
+    fn ids() {
+        assert_eq!(
+            BridgedUser::Discord(discord_user()).id(),
+            BridgedUserId::Discord(80351110224678912)
+        );
+        assert_eq!(
+            BridgedUser::Telegram(telegram_user()).id(),
+            BridgedUserId::Telegram(123456789)
+        );
+        assert_eq!(BridgedUserId::Telegram(-1).platform(), BridgePlatform::Telegram);
     }
 }

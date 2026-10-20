@@ -2044,34 +2044,12 @@ type WebhookDetails = record {
 type BotMessageContext = record {
     command : opt BotCommand;
     finalised : bool;
-    bridged_from : opt BridgedFrom;
+    bridged_from : opt BridgedUserId;
 };
 
-type BridgedFrom = variant {
-    Discord : DiscordMessageContext;
-    Telegram : TelegramMessageContext;
-};
-
-type DiscordMessageContext = record {
-    author : DiscordUser;
-};
-
-type DiscordUser = record {
-    id : nat64;
-    username : text;
-    display_name : opt text;
-    avatar : opt text;
-};
-
-type TelegramMessageContext = record {
-    author : TelegramUser;
-};
-
-type TelegramUser = record {
-    id : int64;
-    username : opt text;
-    display_name : text;
-    avatar : opt BlobReference;
+type BridgedUserId = variant {
+    Discord : nat64;
+    Telegram : int64;
 };
 
 type SenderContext = variant {

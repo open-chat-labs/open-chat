@@ -783,6 +783,16 @@ export const OptionUpdatePinNumberSettings = /* @__PURE__ */ Type.Union(
     { default: "NoChange" },
 );
 
+export type BridgedUserId = Static<typeof BridgedUserId>;
+export const BridgedUserId = /* @__PURE__ */ Type.Union([
+    Type.Object({
+        Discord: Type.BigInt(),
+    }),
+    Type.Object({
+        Telegram: Type.BigInt(),
+    }),
+]);
+
 export type CommunityPermissions = Static<typeof CommunityPermissions>;
 export const CommunityPermissions = /* @__PURE__ */ Type.Object({
     change_roles: CommunityPermissionRole,
@@ -2380,6 +2390,11 @@ export const UserIndexRemoveBotResponse = /* @__PURE__ */ Type.Union([
 export type UserIndexSetHideOnlineStatusArgs = Static<typeof UserIndexSetHideOnlineStatusArgs>;
 export const UserIndexSetHideOnlineStatusArgs = /* @__PURE__ */ Type.Object({
     hide_online_status: Type.Boolean(),
+});
+
+export type UserIndexBridgedUsersArgs = Static<typeof UserIndexBridgedUsersArgs>;
+export const UserIndexBridgedUsersArgs = /* @__PURE__ */ Type.Object({
+    users: Type.Array(BridgedUserId),
 });
 
 export type UserIndexUnsuspendUserArgs = Static<typeof UserIndexUnsuspendUserArgs>;
@@ -5622,11 +5637,6 @@ export const StringParam = /* @__PURE__ */ Type.Object({
     multi_line: Type.Boolean(),
 });
 
-export type DiscordMessageContext = Static<typeof DiscordMessageContext>;
-export const DiscordMessageContext = /* @__PURE__ */ Type.Object({
-    author: DiscordUser,
-});
-
 export type MembersResult = Static<typeof MembersResult>;
 export const MembersResult = /* @__PURE__ */ Type.Object({
     members_map: Type.Record(MemberType, Type.Array(UserId)),
@@ -6270,11 +6280,6 @@ export const BotInstallationLocation = /* @__PURE__ */ Type.Union([
     }),
 ]);
 
-export type TelegramMessageContext = Static<typeof TelegramMessageContext>;
-export const TelegramMessageContext = /* @__PURE__ */ Type.Object({
-    author: TelegramUser,
-});
-
 export type CompletedCryptoTransactionICRC1 = Static<typeof CompletedCryptoTransactionICRC1>;
 export const CompletedCryptoTransactionICRC1 = /* @__PURE__ */ Type.Object({
     ledger: TSPrincipal,
@@ -6342,16 +6347,6 @@ export const DirectCallDismissedNotification = /* @__PURE__ */ Type.Object({
     id: MessageId,
     k: CallDismissalKind,
 });
-
-export type BridgedFrom = Static<typeof BridgedFrom>;
-export const BridgedFrom = /* @__PURE__ */ Type.Union([
-    Type.Object({
-        Discord: DiscordMessageContext,
-    }),
-    Type.Object({
-        Telegram: TelegramMessageContext,
-    }),
-]);
 
 export type EncryptedContent = Static<typeof EncryptedContent>;
 export const EncryptedContent = /* @__PURE__ */ Type.Object({
@@ -7957,6 +7952,16 @@ export const SignedDelegation = /* @__PURE__ */ Type.Object({
     signature: TSBytes,
 });
 
+export type BridgedUser = Static<typeof BridgedUser>;
+export const BridgedUser = /* @__PURE__ */ Type.Union([
+    Type.Object({
+        Discord: DiscordUser,
+    }),
+    Type.Object({
+        Telegram: TelegramUser,
+    }),
+]);
+
 export type FailedCryptoTransaction = Static<typeof FailedCryptoTransaction>;
 export const FailedCryptoTransaction = /* @__PURE__ */ Type.Union([
     Type.Object({
@@ -8894,6 +8899,12 @@ export const BotCommandInitial = /* @__PURE__ */ Type.Object({
     meta: Type.Optional(BotCommandMeta),
 });
 
+export type BridgedUserSummary = Static<typeof BridgedUserSummary>;
+export const BridgedUserSummary = /* @__PURE__ */ Type.Object({
+    user: BridgedUser,
+    updated: Type.BigInt(),
+});
+
 export type BotCommandDefinition = Static<typeof BotCommandDefinition>;
 export const BotCommandDefinition = /* @__PURE__ */ Type.Object({
     name: Type.String(),
@@ -8928,7 +8939,7 @@ export type BotMessageContext = Static<typeof BotMessageContext>;
 export const BotMessageContext = /* @__PURE__ */ Type.Object({
     command: Type.Optional(BotCommand),
     finalised: Type.Boolean(),
-    bridged_from: Type.Optional(BridgedFrom),
+    bridged_from: Type.Optional(BridgedUserId),
 });
 
 export type BotMessageContent = Static<typeof BotMessageContent>;
@@ -9060,6 +9071,11 @@ export const UserIndexBotUpdatesBotDetails = /* @__PURE__ */ Type.Object({
     restricted_locations: Type.Optional(Type.Array(BotInstallationLocationType)),
 });
 
+export type UserIndexBridgedUsersResponse = Static<typeof UserIndexBridgedUsersResponse>;
+export const UserIndexBridgedUsersResponse = /* @__PURE__ */ Type.Object({
+    Success: Type.Array(BridgedUserSummary),
+});
+
 export type UserIndexUsersResult = Static<typeof UserIndexUsersResult>;
 export const UserIndexUsersResult = /* @__PURE__ */ Type.Object({
     users: Type.Optional(Type.Array(UserSummaryV2)),
@@ -9163,7 +9179,7 @@ export const LocalUserIndexBotSendMessageArgs = /* @__PURE__ */ Type.Object({
     block_level_markdown: Type.Boolean(),
     finalised: Type.Boolean(),
     og_previews: Type.Optional(Type.Array(OgPreview)),
-    bridged_from: Type.Optional(BridgedFrom),
+    bridged_from: Type.Optional(BridgedUser),
 });
 
 export type ProposalsBotSubmitProposalArgs = Static<typeof ProposalsBotSubmitProposalArgs>;

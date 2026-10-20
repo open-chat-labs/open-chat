@@ -2,6 +2,7 @@ use crate::{generate_msgpack_query_call, generate_msgpack_update_call, generate_
 use user_index_canister::*;
 
 // Queries
+generate_msgpack_query_call!(bridged_users);
 generate_msgpack_query_call!(check_username);
 generate_msgpack_query_call!(call_push_enabled);
 generate_msgpack_query_call!(moderation_config);
