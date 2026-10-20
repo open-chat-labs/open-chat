@@ -29,6 +29,8 @@ export function expandMentions(
 }
 
 export type SendState = {
+    /** The reader's account is suspended (the old UI hid the composer). */
+    suspended: boolean;
     /** The chat, or its community, is frozen. */
     frozen: boolean;
     /** A DM with someone the reader has blocked. */
@@ -38,7 +40,7 @@ export type SendState = {
     lapsed: boolean;
     /** Signed out. */
     anonymous: boolean;
-    /** The reader's role lets them send messages here. */
+    /** The reader's role lets them send text here (the only kind this composer sends). */
     canSend: boolean;
 };
 
@@ -46,6 +48,7 @@ export type Blocked = { key: string; tone: "info" | "warning" };
 
 /** Why the reader can't send a message here, in the old footer's words; none when they can. */
 export function sendBlocked(state: SendState): Blocked | undefined {
+    if (state.suspended) return { key: "accountSuspended", tone: "warning" };
     if (state.frozen) return { key: "chatFrozen", tone: "warning" };
     if (state.blocked) return { key: "userIsBlocked", tone: "info" };
     if (state.lapsed) return { key: "access.lapsed.label", tone: "info" };
@@ -87,7 +90,15 @@ export class TypingNotifier {
         this.#stopTimer = setTimeout(() => this.stopped(), STOP_AFTER_MS);
     }
 
-    /** Sent, left, or emptied: stopped, if they were typing. */
+    /** Left: forgotten, without telling the others (they're another chat's by now; their own
+     * "typing" runs out by itself). */
+    cancel(): void {
+        clearTimeout(this.#stopTimer);
+        this.#stopTimer = undefined;
+        this.#typing = false;
+    }
+
+    /** Sent, or emptied: stopped, if they were typing. */
     stopped(): void {
         clearTimeout(this.#stopTimer);
         this.#stopTimer = undefined;
@@ -96,4 +107,21 @@ export class TypingNotifier {
             this.stop();
         }
     }
+}
+
+/**
+ * A send as the composer waits for it: done once the message is posted (it shows in the chat,
+ * sending), or refused before that, so the draft is kept: throttled (too many messages a minute),
+ * or turned down (the chat's rules not accepted). A send failing once posted shows on its message.
+ */
+export function untilPosted(
+    result: Promise<{ kind: string }>,
+    posted: Promise<void>,
+): Promise<void> {
+    const refused = result.then((response) => {
+        if (response.kind === "message_throttled" || response.kind === "failure") {
+            throw new Error(response.kind);
+        }
+    });
+    return Promise.race([posted, refused]);
 }

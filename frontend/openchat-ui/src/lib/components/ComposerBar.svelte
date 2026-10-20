@@ -13,6 +13,7 @@
     /** The draft to start from, passed to the composer. */
     text?: ComposerProps['text'];
     onInput?: ComposerProps['onInput'];
+    enterSends?: ComposerProps['enterSends'];
     typingNames?: string[];
     ringColor?: string;
     /** Resource key (or literal text). */

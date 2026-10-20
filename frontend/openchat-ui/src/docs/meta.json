@@ -1051,6 +1051,17 @@
         "doc": "The draft as it changes while it's being written (typed, an emoji picked, cleared on send); not while editing."
       },
       {
+        "name": "enterSends",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Whether Enter sends (Shift+Enter a new line); off, Enter is a new line and Ctrl/⌘+Enter sends."
+      },
+      {
         "name": "typingNames",
         "type": "string[]",
         "default": [
@@ -11980,6 +11991,17 @@
         "required": false,
         "componentDefault": null,
         "doc": "The draft as it changes while it's being written (typed, an emoji picked, cleared on send); not while editing."
+      },
+      {
+        "name": "enterSends",
+        "type": "boolean",
+        "default": true,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "true",
+        "doc": "Whether Enter sends (Shift+Enter a new line); off, Enter is a new line and Ctrl/⌘+Enter sends."
       },
       {
         "name": "onSend",

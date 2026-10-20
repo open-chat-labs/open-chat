@@ -50,6 +50,8 @@
     text?: string;
     /** The draft as it changes while it's being written (typed, an emoji picked, cleared on send); not while editing. */
     onInput?: (text: string) => void;
+    /** Whether Enter sends (Shift+Enter a new line); off, Enter is a new line and Ctrl/⌘+Enter sends. */
+    enterSends?: boolean;
     /** Send the text. Return a promise to keep the draft until it resolves (kept with an error if it rejects). */
     onSend?: (text: string) => Promise<unknown> | void;
     onAttach?: (kind: AttachKind) => void;
@@ -72,6 +74,7 @@
     placeholder = 'ui.messageComposer.placeholder',
     text = '',
     onInput,
+    enterSends = true,
     onSend,
     onAttach,
     onGif,
@@ -556,6 +559,8 @@
       if (menu && !root.contains(e.target as Node)) menu = null;
     };
     document.addEventListener('mousedown', down);
+    // a draft the composer starts from takes the height it needs
+    if (draft) tick().then(grow);
     // bar count follows the available width: one 3px bar per ~5px, so spacing stays tight at any size
     const fit = () => (barCount = Math.max(16, Math.min(120, Math.floor((root.getBoundingClientRect().width - 170) / 5))));
     const ro = new ResizeObserver(fit);
@@ -742,7 +747,7 @@
             grow();
           }}
           onkeydown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+            if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && (enterSends || e.ctrlKey || e.metaKey)) {
               e.preventDefault();
               send();
             }

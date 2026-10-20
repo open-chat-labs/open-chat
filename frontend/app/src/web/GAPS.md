@@ -169,8 +169,11 @@ design export needs. Each entry says where it came up.
   Attachments, GIFs, voice, replies, edits and the "+" menu are phase 6 (`MessageComposer` hides
   "+" and the GIF tab without their handlers). There's no @mention picker (typed @usernames are
   still sent as mentions), no rich-text editor (the old one showed markdown as it was typed), no
-  bot commands, no throttle countdown and no link-count warning. A preview shows "This chat is
-  read-only" where the old footer had Join and Leave (the join gate is phase 9).
+  bot commands and no link-count warning. A chat's rules are asked for in a plain dialog
+  (`RulesDialog`, the old modal's words; no design for it), and the throttle countdown shows as the
+  composer's banner. Enter follows the app's Enter-to-send setting (`enterSends`). A preview
+  shows "This chat is read-only" where the old footer had Join and Leave (the join gate is
+  phase 9).
 - **Composer draft and input** (by hand, phase 3c): `MessageComposer` kept its draft to itself.
   It now takes `text` (the draft to start from) and `onInput` (the draft as it changes), so the
   app keeps a draft per chat and tells the others someone is typing.

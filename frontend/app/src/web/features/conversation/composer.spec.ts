@@ -1,5 +1,11 @@
 import type { UserOrUserGroup } from "@client";
-import { expandMentions, sendBlocked, TypingNotifier, type SendState } from "./composer";
+import {
+    expandMentions,
+    sendBlocked,
+    TypingNotifier,
+    untilPosted,
+    type SendState,
+} from "./composer";
 
 describe("a message's mentions", () => {
     const known: Record<string, UserOrUserGroup> = {
@@ -26,6 +32,7 @@ describe("a message's mentions", () => {
 
 describe("why a message can't be sent", () => {
     const can: SendState = {
+        suspended: false,
         frozen: false,
         blocked: false,
         previewing: false,
@@ -36,6 +43,12 @@ describe("why a message can't be sent", () => {
 
     test("is nothing when it can", () => {
         expect(sendBlocked(can)).toBeUndefined();
+    });
+
+    test("is a suspended account before anything else", () => {
+        expect(sendBlocked({ ...can, suspended: true, frozen: true })?.key).toBe(
+            "accountSuspended",
+        );
     });
 
     test("is the old footer's reason, a frozen chat first", () => {
@@ -98,11 +111,44 @@ describe("telling others someone is typing", () => {
         expect(stops).toBe(1);
     });
 
+    test("leaving forgets they were typing without telling anyone", () => {
+        typing.input("h");
+        typing.cancel();
+        vi.advanceTimersByTime(6000);
+        expect(stops).toBe(0);
+        now = 100;
+        typing.input("h");
+        expect(starts).toBe(2);
+    });
+
     test("starts again at once after stopping", () => {
         typing.input("h");
         typing.stopped();
         now = 100;
         typing.input("h");
         expect(starts).toBe(2);
+    });
+});
+
+describe("waiting for a send", () => {
+    const never = new Promise<never>(() => {});
+
+    test("is done once the message is posted", async () => {
+        await expect(untilPosted(never, Promise.resolve())).resolves.toBeUndefined();
+    });
+
+    test("is refused when throttled or turned down before posting, so the draft stays", async () => {
+        await expect(
+            untilPosted(Promise.resolve({ kind: "message_throttled" }), never),
+        ).rejects.toThrow("message_throttled");
+        await expect(untilPosted(Promise.resolve({ kind: "failure" }), never)).rejects.toThrow(
+            "failure",
+        );
+    });
+
+    test("isn't refused by a result after posting", async () => {
+        await expect(
+            untilPosted(Promise.resolve({ kind: "success" }), never),
+        ).resolves.toBeUndefined();
     });
 });
