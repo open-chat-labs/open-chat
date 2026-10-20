@@ -5,6 +5,7 @@ import {
     MessageRows,
     messageStatus,
     senderColor,
+    untilNextDay,
     type ConversationContext,
     type EventContext,
 } from "./conversation.adapter";
@@ -210,5 +211,12 @@ describe("the rows kept per event", () => {
         const first = rows.row("k", evt, "sent", ctx);
         rows.clear();
         expect(rows.row("k", evt, "sent", ctx)).not.toBe(first);
+    });
+});
+
+describe("the time until the next day", () => {
+    test("runs to the coming local midnight", () => {
+        expect(untilNextDay(new Date(2026, 9, 20, 23, 59, 30))).toBe(30_000);
+        expect(untilNextDay(new Date(2026, 9, 20, 0, 0, 0))).toBe(24 * 60 * 60 * 1000);
     });
 });

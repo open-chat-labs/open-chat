@@ -92,6 +92,8 @@
   let expanded = $state(false);
   let chips = $state<HTMLDivElement>();
   let bubble = $state<HTMLDivElement>();
+  // the stamp's width, for a body ending in a list to keep its room (below)
+  let stampWidth = $state(0);
 
   const shown = $derived(fit === null || expanded ? reactions : reactions.slice(0, fit));
   const hidden = $derived(reactions.length - shown.length);
@@ -155,7 +157,7 @@
           <pre class="code">{code}</pre>
         {/if}
         {#if body}
-          <div class="text body" style:font-size={scale.size} style:line-height={scale.leading}>{@render body()}<span class="stamp spacer" aria-hidden="true">{@render stamp()}</span><span class="stamp corner">{@render stamp()}</span></div>
+          <div class="text body" style:font-size={scale.size} style:line-height={scale.leading} style:--oc-stamp-room="{stampWidth + 9}px">{@render body()}<span class="stamp spacer" aria-hidden="true">{@render stamp()}</span><span class="stamp corner" bind:offsetWidth={stampWidth}>{@render stamp()}</span></div>
         {:else}
           <p class="text" style:font-size={scale.size} style:line-height={scale.leading}>{text}<span class="stamp spacer" aria-hidden="true">{@render stamp()}</span><span class="stamp corner">{@render stamp()}</span></p>
         {/if}
@@ -408,6 +410,19 @@
   .bubble .text.body > :global(:first-child),
   .bubble .text.body > :global(:first-child > p:last-child) {
     display: inline;
+  }
+
+  /* a body ending in a list can't flow inline: its last item keeps the stamp's room at its end
+     instead, where the corner stamp sits, and the spacer isn't needed (a code block at the end
+     still takes a line of its own: its text ends in a line break) */
+  .bubble .text.body:has(> :global(:first-child > :is(ul, ol):last-child)) > .spacer {
+    display: none;
+  }
+
+  .bubble .text.body > :global(:first-child > :is(ul, ol):last-child > li:last-child::after) {
+    content: '';
+    display: inline-block;
+    width: var(--oc-stamp-room, 0);
   }
 
   .stamp {

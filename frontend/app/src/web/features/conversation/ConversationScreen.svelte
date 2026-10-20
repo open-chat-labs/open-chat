@@ -52,6 +52,7 @@
         MessageRows,
         messageStatus,
         senderColor,
+        untilNextDay,
         type ConversationContext,
         type EventContext,
         type MessageRow,
@@ -66,7 +67,19 @@
     const chat = $derived($selectedChatSummaryStore);
     const me = $derived($currentUserIdStore);
 
+    // the day, which changes at midnight, so "Today" and "Yesterday" are worked out again then
+    let day = $state(new Date().toDateString());
+    $effect(() => {
+        void day;
+        const timer = setTimeout(
+            () => (day = new Date().toDateString()),
+            untilNextDay(new Date()) + 1000,
+        );
+        return () => clearTimeout(timer);
+    });
+
     const ctx = $derived.by((): ConversationContext => {
+        void day;
         const users = $allUsersStore;
         return {
             me,
@@ -255,14 +268,21 @@
     }
 
     // rows kept per event (MessageRows), and their messages with them, so user and other chat
-    // updates don't redo every bubble; started again for a new chat or wording
+    // updates don't redo every bubble; started again for a new chat, wording or day
     const rows = new MessageRows();
     const groupMessages = new WeakMap<MessageRow, GroupMessage[]>();
     $effect.pre(() => {
         void chatKey;
         void $_;
+        void day;
         rows.clear();
     });
+
+    // a date pill's label, worked out again when the day changes
+    function dateLabel(timestamp: bigint): string {
+        void day;
+        return client.formatMessageDate(timestamp, $_("today"), $_("yesterday"));
+    }
 
     function messagesFor(row: MessageRow, body: Snippet, withBody: boolean): GroupMessage[] {
         let messages = groupMessages.get(row);
@@ -359,13 +379,7 @@
                     {#snippet row(item, args)}
                         {#if item.kind === "timeline_date"}
                             <div class="date">
-                                <UnreadDivider
-                                    tone="neutral"
-                                    label={client.formatMessageDate(
-                                        item.timestamp,
-                                        $_("today"),
-                                        $_("yesterday"),
-                                    )} />
+                                <UnreadDivider tone="neutral" label={dateLabel(item.timestamp)} />
                             </div>
                         {:else if item.kind === "event"}
                             {@const evt = item.event}

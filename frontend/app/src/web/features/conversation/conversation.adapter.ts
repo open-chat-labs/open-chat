@@ -225,3 +225,9 @@ export class MessageRows {
         this.#rows.clear();
     }
 }
+
+/** How long until the next local day starts, so labels like "Today" can be redone then. */
+export function untilNextDay(now: Date): number {
+    const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    return next.getTime() - now.getTime();
+}
