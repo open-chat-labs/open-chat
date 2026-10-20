@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2161](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2161-storage_bucket)] - 2026-10-20
+
 ### Added
 
 - Add `c2c_storage_index` for the StorageIndex's events ([#10019](https://github.com/open-chat-labs/open-chat/pull/10019))

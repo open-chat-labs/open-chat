@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2167](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2167-multi_user)] - 2026-10-20
+
 ### Added
 
 - Add `c2c_local_index`, `c2c_group`, `c2c_community` and `c2c_user` for the LocalUserIndex's, Group, Community and other MultiUser canisters' events, to replace the `_canister` and `_v2` names ([#10047](https://github.com/open-chat-labs/open-chat/pull/10047))
