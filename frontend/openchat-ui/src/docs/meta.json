@@ -5629,6 +5629,17 @@
         "required": false,
         "componentDefault": "false",
         "doc": ""
+      },
+      {
+        "name": "onBack",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "A back button beside the title (the panel opened over another page); hidden without it."
       }
     ],
     "group": "features"

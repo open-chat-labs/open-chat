@@ -82,6 +82,9 @@
 
 ## 2026-10-20 — the rail's local pick, by hand
 - `NavRail` drops the item a click picked when the host's `items` change, not only when `activeIndex` does: a host that shows a different set of items (the app hides Favourites without favourites) moves their indexes, and the old pick could point past the end, leaving no item active.
+
+## 2026-10-20 — ActivityPanel's back button, by hand
+- `ActivityPanel` takes `onBack`: a back button beside its title, for a host that opens the panel over another page (the app's `?panel=activity`, ROUTES.md decision 7). Hidden without it.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
 
 ## 2026-10-20 — the composer's draft, by hand

@@ -27,6 +27,7 @@
   import { useT } from '../../lib/i18n';
   import ActivityRow from '../../lib/components/ActivityRow.svelte';
   import EmptyState from '../../lib/components/EmptyState.svelte';
+  import IconButton from '../../lib/components/IconButton.svelte';
   import SegmentedTabs from '../../lib/components/SegmentedTabs.svelte';
   import Skeleton from '../../lib/components/Skeleton.svelte';
 
@@ -38,9 +39,11 @@
     /** "Mark all read"; hidden without it (or onMarkRead). Rolls back if it rejects. */
     onMarkAllRead?: () => Promise<unknown> | void;
     loading?: boolean;
+    /** A back button beside the title (the panel opened over another page); hidden without it. */
+    onBack?: () => void;
   }
 
-  let { items, onOpen, onMarkRead, onMarkAllRead, loading = false }: Props = $props();
+  let { items, onOpen, onMarkRead, onMarkAllRead, loading = false, onBack }: Props = $props();
   const t = useT();
 
   let tab = $state(0);
@@ -80,7 +83,10 @@
 
 <div class="panel" data-screen-label="Activity">
   <div class="top">
-    <div class="title-row">
+    <div class="title-row" class:with-back={!!onBack}>
+      {#if onBack}
+        <IconButton label="ui.common.back" variant="ghost" icon="back" onClick={onBack} />
+      {/if}
       <span class="title">{t('ui.activityPanel.title')}</span>
       {#if hasUnread && (onMarkAllRead || onMarkRead)}
         <span class="mark-all" onclick={markAll} role="button" tabindex="0">{t('ui.activityPanel.markAllRead')}</span>
@@ -152,6 +158,12 @@
     min-width: 0;
     min-height: var(--control-md, 34px);
     padding: var(--space-10) 0 var(--space-10) var(--space-10);
+  }
+
+  /* the back button sits where the title's inset was */
+  .title-row.with-back {
+    gap: var(--space-6);
+    padding-inline-start: 0;
   }
 
   .title {
