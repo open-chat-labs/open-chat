@@ -3,7 +3,7 @@
      Reaction chips are limited to maxReactionRows; the rest fold into a "+N" chip that expands them. -->
 <script lang="ts">
   import { useT } from '../i18n';
-  import { untrack } from 'svelte';
+  import { untrack, type Snippet } from 'svelte';
 
   // count grapheme clusters so flags, skin tones and ZWJ families read as one emoji
   const SEG = typeof Intl !== 'undefined' && Intl.Segmenter ? new Intl.Segmenter(undefined, { granularity: 'grapheme' }) : null;
@@ -28,6 +28,8 @@
 
   interface Props {
     text: string;
+    /** The text as the host renders it (markdown, mentions, links), shown in its place. `text` still sizes emoji-only messages. */
+    body?: Snippet;
     time: string;
     side?: 'sent' | 'received';
     lastInGroup?: boolean;
@@ -55,6 +57,7 @@
 
   let {
     text,
+    body,
     time,
     side = 'sent',
     lastInGroup = true,
@@ -151,7 +154,11 @@
         {#if code}
           <pre class="code">{code}</pre>
         {/if}
-        <p class="text" style:font-size={scale.size} style:line-height={scale.leading}>{text}<span class="stamp spacer" aria-hidden="true">{@render stamp()}</span><span class="stamp corner">{@render stamp()}</span></p>
+        {#if body}
+          <div class="text" style:font-size={scale.size} style:line-height={scale.leading}>{@render body()}<span class="stamp spacer" aria-hidden="true">{@render stamp()}</span><span class="stamp corner">{@render stamp()}</span></div>
+        {:else}
+          <p class="text" style:font-size={scale.size} style:line-height={scale.leading}>{text}<span class="stamp spacer" aria-hidden="true">{@render stamp()}</span><span class="stamp corner">{@render stamp()}</span></p>
+        {/if}
       </div>
       {#if status === 'failed'}
         <div class="failed">

@@ -31,8 +31,16 @@ design export needs. Each entry says where it came up.
 - **Not found page**: the design has none. `RouteScreen` shows an `EmptyState` with the existing
   page's copy ("Page not found", untranslated as it is today) and a Home button.
 - **Messages have no ids**: `GroupMessage`, `ChatBubble` and `MessageGroup`'s callbacks are
-  index-based, and `ThreadList` threads carry closures. Adapters keep an index → event map per
-  render. A `key`/`id` on messages would be simpler (also for keyed `{#each}`).
+  index-based, and `ThreadList` threads carry closures. `GroupMessage` now takes an optional `id`
+  (by hand, phase 3b): `MessageGroup` keys its rows by it and writes it to `data-msg`. The
+  callbacks are still by index.
+- **Message text** (by hand, phase 3b): `ChatBubble` shows its `text` as plain text, so markdown,
+  links, mentions, custom emoji and spoilers were lost. It now takes a `body` snippet shown in its
+  place; the app renders the old UI's `Markdown` there. A lone emoji stays the bubble's own (large).
+- **One message per group** (by hand, phase 3b): the conversation uses the old UI's list, which
+  renders one row per event, so each message is a `MessageGroup` of its own. `avatarSpace` keeps
+  the avatar's space under a run's first message and `endsRun` gives only the run's last message
+  the last-in-group shape. The design composes whole runs in one group.
 - **Voice messages**: `VoiceMessage` draws a fixed waveform and has no `levels` prop, though every
   OpenChat voice note has one.
 - **GIFs**: `MessageComposer` shows placeholder GIF tiles (`GIF_WORDS`) and has no results prop;
@@ -143,6 +151,17 @@ design export needs. Each entry says where it came up.
   senders, the thread count, archive / delete in the row menu, and server-side search (users and
   groups outside the list). The community header's menu only marks all read; its other items open
   dialogs later phases build.
+- **Conversation, first cut** (`features/conversation`, phase 3b): reading only (the composer is
+  3c). Every message kind shows as a text bubble with its text (the rich kinds are phase 6), and
+  link previews, translations, tips, the message menu, reactions and swipes (phase 6) aren't
+  wired. Events other than messages show as a centred line in the old UI's words (no design for
+  them: `TODO(design)`) for group creation, chat start, members added / invited / removed /
+  blocked / unblocked, name / description / avatar changes, joins, role changes and deleted
+  messages; the rest show nothing yet. The header has no back button (`ConversationHeader` has
+  none; narrow layouts don't show the shell yet), no last-seen line for a DM, and its menu does
+  favourite, mute and copy link only: the rest open dialogs (phase 5), and calls are phase 8. The
+  old list's go-to-mention button and sticky date aren't carried over; it keeps go-to-latest.
+  Own messages show no name (the design's "You" would be the lower-case app string).
 
 - **Native apps**: this tree doesn't register the native event listeners or signal `svelteReady`,
   so native builds leave it out whatever `OC_WEB_LAYOUT` says (`webLayoutFlag` in

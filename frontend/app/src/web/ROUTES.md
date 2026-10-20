@@ -218,8 +218,15 @@ and `/whitepaper?section=` scrolls to that section; `/architecture` frames the c
 favourites or a community's channels, as the route's scope says, with the latest message, time,
 unread count, pinned, muted and live call, and a row menu (favourite, pin, mute, mark read).
 Picking a chat routes to it. A list with nothing selected goes to its first chat, not the last
-one selected (decision 7, `firstChatRoute`), except on a narrow screen. The middle is still a
-placeholder until phase 3b.
+one selected (decision 7, `firstChatRoute`), except on a narrow screen.
+
+**Conversation (phase 3b).** The middle column shows the selected chat (`features/conversation`):
+`ConversationHeader` with the panel toggle, and the messages through the old UI's list
+(`components_shared/ChatEventList`), which loads older and newer messages as the reader scrolls,
+goes to the route's message (`/:mi`, highlighted), keeps its place and marks what's been seen
+read. Each message is a `MessageGroup`; dates are `UnreadDivider` pills, and an "Unread messages"
+divider stays above the first message that was unread when the chat was opened. A private chat
+that isn't joined shows no messages, as before. Reading only: the composer is phase 3c.
 
 Still to come:
 
