@@ -14,8 +14,8 @@ what's missing or differs from the design. This file only says who does what, an
   - phases 0–2: the library, the shell, routes onto regions;
   - Landing, Learn and sign-in;
   - phase 3 (the brief's step 4): the chat list, reading a conversation, the text composer.
-  - The rail labels, `?threads` and `?panel=activity` are merged too.
-- **In review:** #10059, phase 3d (`?panel=activity`, the activity feed).
+  - Phase 3d: the activity feed over the open page (`?panel=activity`).
+  - The rail labels and `?threads`.
 - **Still to check on a real environment** (the local replica can't show them): live incoming
   messages, read ticks turning double, the typing indicator, a preview's read-only banner.
 
