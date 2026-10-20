@@ -1,8 +1,8 @@
 use crate::guards::caller_is_user_controller;
-use crate::model::bucket_event_batch::EventToSync;
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use storage_bucket_canister::StorageIndexEvent;
 use storage_index_canister::GroupIndexEvent;
 use storage_index_canister::c2c_group_index::*;
 
@@ -23,7 +23,7 @@ fn c2c_group_index_impl(args: Args, state: &mut RuntimeState) -> Response {
         {
             match event.value {
                 GroupIndexEvent::RemoveAccessor(accessor_id) => {
-                    state.push_event_to_buckets(EventToSync::AccessorRemoved(accessor_id))
+                    state.push_event_to_buckets(StorageIndexEvent::AccessorRemoved(accessor_id))
                 }
             }
         }

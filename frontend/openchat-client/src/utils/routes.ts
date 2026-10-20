@@ -55,17 +55,6 @@ export function walletRoute(ctx: PageJS.Context): RouteParams {
     return { kind: "wallet_route", scope: noScope, view: "token", ledger: segment };
 }
 
-export function threadsRoute(scope: ChatListScope) {
-    return (_ctx: PageJS.Context): RouteParams => ({ kind: "threads_route", scope });
-}
-
-export function communityThreadsRoute(ctx: PageJS.Context): RouteParams {
-    return {
-        kind: "threads_route",
-        scope: { kind: "community", id: createCommunityIdentifier(ctx.params["communityId"]) },
-    };
-}
-
 export function notificationsRoute(_ctx: PageJS.Context): RouteParams {
     return {
         kind: "notifications_route",

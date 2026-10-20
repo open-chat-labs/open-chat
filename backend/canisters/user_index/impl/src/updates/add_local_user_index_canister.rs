@@ -1,3 +1,4 @@
+use crate::LocalUserIndexEventPusher;
 use crate::guards::caller_is_registry_canister;
 use crate::updates::upgrade_multi_user_canister_wasm::upgrade_multi_user_wasm_in_local_user_index;
 use crate::{RuntimeState, mutate_state};
@@ -8,6 +9,7 @@ use local_user_index_canister::{
     SetAlchemyApiKey, SetBridgeBot, SetPremiumItemCost, UserDetailsFull, UserIdMigrated, UserIndexEvent,
 };
 use rand::RngExt;
+use std::collections::HashSet;
 use tracing::info;
 use types::{BuildVersion, CanisterId, CanisterWasm, Hash};
 use user_index_canister::ChildCanisterType;
@@ -144,9 +146,30 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Respo
 
 fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut RuntimeState) -> Response {
     if state.data.local_index_map.add_index(canister_id, wasm_version) {
+        let now = state.env.now();
+        // Suspended moderators and operators aren't active ones
+        let platform_moderators: HashSet<_> = state
+            .data
+            .platform_moderators
+            .iter()
+            .filter(|u| state.data.is_platform_moderator_active(u))
+            .copied()
+            .collect();
+        let platform_operators: HashSet<_> = state
+            .data
+            .platform_operators
+            .iter()
+            .filter(|u| state.data.is_platform_operator_active(u))
+            .copied()
+            .collect();
+        let mut pusher = LocalUserIndexEventPusher {
+            now,
+            rng: state.env.rng(),
+            queue: &mut state.data.local_user_index_event_sync_queue_v2,
+        };
         // We need to initialize the new local user index with all the existing users
         for user in state.data.users.iter() {
-            state.data.local_user_index_event_sync_queue.push(
+            pusher.push(
                 canister_id,
                 UserIndexEvent::SyncExistingUser(UserDetailsFull {
                     user_id: user.user_id,
@@ -154,21 +177,21 @@ fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut Runti
                     username: user.username.clone(),
                     user_type: user.user_type,
                     referred_by: user.referred_by,
-                    is_platform_moderator: state.data.is_platform_moderator_active(&user.user_id),
-                    is_platform_operator: state.data.is_platform_operator_active(&user.user_id),
+                    is_platform_moderator: platform_moderators.contains(&user.user_id),
+                    is_platform_operator: platform_operators.contains(&user.user_id),
                     diamond_membership_expires_at: user.diamond_membership_details.expires_at(),
                     unique_person_proof: user.unique_person_proof.clone(),
                 }),
             )
         }
         for (item_id, chit_cost) in state.data.premium_items.chit_costs() {
-            state.data.local_user_index_event_sync_queue.push(
+            pusher.push(
                 canister_id,
                 UserIndexEvent::SetPremiumItemCost(SetPremiumItemCost { item_id, chit_cost }),
             )
         }
         if let Some(daily_puzzle_canister_id) = state.data.daily_puzzle_canister_id {
-            state.data.local_user_index_event_sync_queue.push(
+            pusher.push(
                 canister_id,
                 UserIndexEvent::SetDailyPuzzleCanisterId(daily_puzzle_canister_id),
             );
@@ -183,14 +206,14 @@ fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut Runti
             );
         }
         // In case the key was changed while the LocalUserIndex was being installed with the previous one
-        state.data.local_user_index_event_sync_queue.push(
+        pusher.push(
             canister_id,
             UserIndexEvent::SetAlchemyApiKey(SetAlchemyApiKey {
                 api_key: state.data.alchemy_api_key.clone(),
             }),
         );
         for (old_user_id, new_user_id) in state.data.migrated_user_ids.iter() {
-            state.data.local_user_index_event_sync_queue.push(
+            pusher.push(
                 canister_id,
                 UserIndexEvent::UserIdMigrated(UserIdMigrated {
                     old_user_id,

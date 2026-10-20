@@ -574,6 +574,17 @@
         "doc": ""
       },
       {
+        "name": "body",
+        "type": "Snippet",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The text as the host renders it (markdown, mentions, links), shown in its place. `text` still sizes emoji-only messages."
+      },
+      {
         "name": "time",
         "type": "string",
         "default": "10:32",
@@ -1016,6 +1027,39 @@
         "required": false,
         "componentDefault": null,
         "doc": ""
+      },
+      {
+        "name": "text",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The draft to start from, read when the composer mounts (key the composer to start another)."
+      },
+      {
+        "name": "onInput",
+        "type": "(text: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The draft as it changes while it's being written (typed, an emoji picked, cleared on send); not while editing."
+      },
+      {
+        "name": "enterSends",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Whether Enter sends (Shift+Enter a new line); off, Enter is a new line and Ctrl/⌘+Enter sends."
       },
       {
         "name": "typingNames",
@@ -2748,6 +2792,28 @@
         "required": false,
         "componentDefault": "true",
         "doc": ""
+      },
+      {
+        "name": "avatarSpace",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "With showAvatar off, keeps the avatar's space, so a sender's run split over several groups lines up."
+      },
+      {
+        "name": "endsRun",
+        "type": "boolean",
+        "default": true,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "true",
+        "doc": "Whether the last message ends the sender's run (the bubble's last-in-group shape); off when the run carries on in the next group."
       },
       {
         "name": "messages",
@@ -5563,6 +5629,17 @@
         "required": false,
         "componentDefault": "false",
         "doc": ""
+      },
+      {
+        "name": "onBack",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "A back button beside the title (the panel opened over another page); hidden without it."
       }
     ],
     "group": "features"
@@ -11903,6 +11980,39 @@
         "required": false,
         "componentDefault": "'Message'",
         "doc": ""
+      },
+      {
+        "name": "text",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "The draft to start from, read when the composer mounts (key the composer to start another)."
+      },
+      {
+        "name": "onInput",
+        "type": "(text: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The draft as it changes while it's being written (typed, an emoji picked, cleared on send); not while editing."
+      },
+      {
+        "name": "enterSends",
+        "type": "boolean",
+        "default": true,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "true",
+        "doc": "Whether Enter sends (Shift+Enter a new line); off, Enter is a new line and Ctrl/⌘+Enter sends."
       },
       {
         "name": "onSend",

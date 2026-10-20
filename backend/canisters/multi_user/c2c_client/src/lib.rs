@@ -29,3 +29,7 @@ generate_c2c_call!(c2c_user_canister_v2, 300);
 generate_c2c_call!(events);
 generate_c2c_call!(events_by_index);
 generate_c2c_call!(events_window);
+generate_c2c_call!(c2c_local_index, 300);
+generate_c2c_call!(c2c_group, 300);
+generate_c2c_call!(c2c_community, 300);
+generate_c2c_call!(c2c_user, 300);

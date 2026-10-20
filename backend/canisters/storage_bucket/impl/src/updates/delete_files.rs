@@ -19,7 +19,7 @@ fn delete_files_impl(args: Args, state: &mut RuntimeState) -> Response {
     let mut failures = Vec::new();
 
     for file_id in args.file_ids {
-        match state.data.remove_file(caller, file_id) {
+        match state.remove_file(caller, file_id) {
             RemoveFileResult::Success(_) => success.push(file_id),
             RemoveFileResult::NotAuthorized => {
                 failures.push(DeleteFileFailure {

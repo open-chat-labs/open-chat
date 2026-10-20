@@ -38,6 +38,10 @@
     color?: 'violet' | 'amber' | 'teal' | 'blue';
     showAvatar?: boolean;
     showName?: boolean;
+    /** With showAvatar off, keeps the avatar's space, so a sender's run split over several groups lines up. */
+    avatarSpace?: boolean;
+    /** Whether the last message ends the sender's run (the bubble's last-in-group shape); off when the run carries on in the next group. */
+    endsRun?: boolean;
     messages: GroupMessage[];
     onMessageMenu?: (index: number, pos: MessageMenuPos) => void;
     /** Index whose menu is open: hides its hover bar and marks ⋯ as expanded. */
@@ -60,6 +64,8 @@
     color = 'violet',
     showAvatar = true,
     showName = true,
+    avatarSpace = false,
+    endsRun = true,
     messages,
     onMessageMenu,
     activeMenu = -1,
@@ -364,13 +370,15 @@
 <div class="group">
   {#if showAvatar}
     <span class="avatar"><Avatar size={34} {color} online={false} /></span>
+  {:else if avatarSpace}
+    <span class="avatar-space" aria-hidden="true"></span>
   {/if}
   <div class="column">
     {#if showName}
       <span class="name">{senderName}</span>
     {/if}
-    {#each messages as m, i}
-      {@const last = i === messages.length - 1}
+    {#each messages as m, i (m.id ?? i)}
+      {@const last = i === messages.length - 1 && endsRun}
       {@const map = swipeMap(m)}
       {@const mine = (m.reactions ?? []).filter((r) => r.mine).map((r) => r.emoji)}
       {@const canEdit = side === 'sent' && isText(m) && !!onEdit}
@@ -378,7 +386,7 @@
         class="message"
         class:marked={marked === i}
         bind:this={rows[i]}
-        data-msg=""
+        data-msg={m.id ?? ''}
         onmousemove={(e) => mouseMove(e, i, m)}
         onmouseleave={() => leave(i)}
         onfocusin={() => menuable(m) && !touch && hover !== i && showBar(i)}
@@ -502,6 +510,11 @@
     overflow: visible;
     border-radius: 50%;
     box-shadow: 0 0 0 4px var(--surface-1, #0e0e12);
+  }
+
+  .avatar-space {
+    flex: none;
+    width: 34px;
   }
 
   .column {

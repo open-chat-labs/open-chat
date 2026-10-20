@@ -1,8 +1,8 @@
-use crate::model::index_event_batch::EventToSync;
 use crate::{RuntimeState, mutate_state};
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
+use storage_index_canister::StorageBucketEvent;
 use types::TimestampMillis;
 
 thread_local! {
@@ -32,7 +32,7 @@ fn run() {
     mutate_state(|state| {
         let now = state.env.now();
         for file in state.data.files.remove_expired_files(now, 10) {
-            state.data.push_event_to_index(EventToSync::FileRemoved(file));
+            state.push_event_to_index(StorageBucketEvent::FileRemoved(file));
         }
         start_job_if_required(state);
     });

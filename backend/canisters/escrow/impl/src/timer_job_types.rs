@@ -58,9 +58,16 @@ impl Job for ExpireSwapJob {
     }
 }
 
+// Only scheduled by versions before the event queue: a retry left over from one sends the swap's latest
+// status through the queue. Removed in the tidy, along with the variant.
 impl Job for NotifyStatusChangeJob {
     fn execute(self) {
-        crate::jobs::notify_status_change::retry(self.swap_id, self.failures);
+        tracing::trace!(
+            swap_id = self.swap_id,
+            failures = self.failures,
+            "Retrying a swap status change notification"
+        );
+        mutate_state(|state| state.notify_status_change(self.swap_id));
     }
 }
 

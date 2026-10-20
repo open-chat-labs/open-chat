@@ -19,6 +19,7 @@ fn c2c_storage_bucket(args: Args) -> Response {
 
 fn c2c_storage_bucket_impl(args: Args, state: &mut RuntimeState) -> Response {
     let bucket = state.env.caller();
+    let now = state.env.now();
     // The latest addition of each file id in the batch, or None once the batch has removed it.
     // Tracked for events seen before as well as new ones, so that the reply depends only on the batch
     // and on what the index holds. A file id can be used again once its upload is abandoned, so a
@@ -37,7 +38,7 @@ fn c2c_storage_bucket_impl(args: Args, state: &mut RuntimeState) -> Response {
                 if is_new {
                     repush_denylist_if_hash_known(bucket, &file, state);
                     // Whether it was rejected is worked out below, for new and repeated files alike
-                    let _ = state.data.add_file_reference(bucket, file.clone());
+                    let _ = state.data.add_file_reference(bucket, file.clone(), now, state.env.rng());
                 }
                 files_added.insert(file.file_id, Some(file));
             }
@@ -65,6 +66,8 @@ fn c2c_storage_bucket_impl(args: Args, state: &mut RuntimeState) -> Response {
                         denylisted.hash,
                         denylisted.report_index,
                         denylisted.derived.unwrap_or(false),
+                        now,
+                        state.env.rng(),
                     );
                 }
             }

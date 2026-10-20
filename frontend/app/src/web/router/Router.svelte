@@ -8,6 +8,7 @@
         chatIdentifiersEqual,
         chatListScopeStore,
         chatsInitialisedStore,
+        chatSummariesListStore,
         communityIdentifiersEqual,
         exploringStore,
         messageIndexStore,
@@ -41,7 +42,9 @@
     } from "@src/utils/urls";
     import page from "page";
     import { getContext, onMount, untrack, type Snippet } from "svelte";
-    import { routeTable } from "./routeTable";
+    import { currentShellLayout } from "../shell/viewport.svelte";
+    import { firstChatRoute, firstChatUrl } from "./firstChat";
+    import { redirectTable, routeTable } from "./routeTable";
     import { leftToBrowser } from "./links";
 
     let { children }: { children: Snippet } = $props();
@@ -75,6 +78,9 @@
         };
         document.addEventListener("click", onLinkClick, { capture: true });
 
+        for (const { path, to } of redirectTable) {
+            page(path, (ctx) => page.redirect(to(ctx.params)));
+        }
         for (const { path, parse } of routeTable) {
             // not found isn't a page view, as in the existing router
             const tracking = path === "*" ? [] : [track];
@@ -121,14 +127,9 @@
             const id = $selectedCommunityIdStore;
             untrack(() => {
                 client.setSelectedCommunity(id).then((preview) => {
-                    // a previewed community's first channel has to be selected by hand, unless
-                    // its thread list is what's open
-                    if (
-                        preview &&
-                        $selectedChatIdStore === undefined &&
-                        $routeKindStore !== "threads_route"
-                    ) {
-                        client.selectDefaultChat();
+                    // a previewed community's first channel has to be selected by hand
+                    if (preview && $selectedChatIdStore === undefined) {
+                        selectFirstChat();
                     }
                 });
             });
@@ -166,17 +167,33 @@
         }
     });
 
-    // A chat list with nothing selected goes to its last (or first) chat. A thread list stays.
+    // A chat list with nothing selected goes to its first chat (ROUTES.md, decision 7), once
+    // there is one, with its thread list (?threads) open too. Only the first chat's route is
+    // tracked (and whether the screen is narrow, where there's none), so other summary changes
+    // don't re-run it. The URL's query (an open overlay, the thread list) is kept.
+    const firstChat = $derived(
+        firstChatRoute(
+            $chatListScopeStore.kind,
+            $chatSummariesListStore,
+            currentShellLayout().narrow,
+        ),
+    );
     $effect(() => {
         if (
+            firstChat !== undefined &&
             $selectedChatIdStore === undefined &&
             $chatListScopeStore.kind !== "none" &&
-            $routeKindStore !== "threads_route" &&
             !$exploringStore
         ) {
-            client.selectDefaultChat();
+            untrack(selectFirstChat);
         }
     });
+
+    function selectFirstChat() {
+        if (firstChat !== undefined) {
+            navigate(firstChatUrl(firstChat, location.search), "auto");
+        }
+    }
 
     // Select the chat the route names
     $effect(() => {

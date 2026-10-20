@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Send daily puzzle results to the DailyPuzzle canister at its `c2c_local_index` endpoint ([#10023](https://github.com/open-chat-labs/open-chat/pull/10023))
+- Tell the GroupIndex of uninstalled communities through its event queue ([#10033](https://github.com/open-chat-labs/open-chat/pull/10033))
+- Send its events to the UserIndex and its MultiUser canisters at `c2c_local_index`, and call the DailyPuzzle canister's event endpoint best-effort ([#10050](https://github.com/open-chat-labs/open-chat/pull/10050))
+
+## [[2.0.2166](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2166-local_user_index)] - 2026-10-20
+
 ### Added
 
 - Add `c2c_group`, `c2c_community` and `c2c_user` for its Group, Community and MultiUser canisters' events, to replace the `_canister` and `_v2` names ([#10047](https://github.com/open-chat-labs/open-chat/pull/10047))

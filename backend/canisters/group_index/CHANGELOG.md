@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Send accessor removals to the StorageIndex at its `c2c_group_index` endpoint ([#10023](https://github.com/open-chat-labs/open-chat/pull/10023))
+- Tell the LocalUserIndexes to delete groups through their event queue ([#10033](https://github.com/open-chat-labs/open-chat/pull/10033))
+- Call the StorageIndex's event endpoints best-effort ([#10050](https://github.com/open-chat-labs/open-chat/pull/10050))
+
+### Removed
+
+- Remove the one-off which moved the pending deleted group and community notifications onto the user canister events queue, now that it has run ([#10056](https://github.com/open-chat-labs/open-chat/pull/10056))
+
+## [[2.0.2168](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2168-group_index)] - 2026-10-20
+
 ### Added
 
 - Add `c2c_local_index` for the LocalUserIndexes' events: groups' and communities' activity, completed imports and uninstalled communities ([#10029](https://github.com/open-chat-labs/open-chat/pull/10029))

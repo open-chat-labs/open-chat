@@ -84,7 +84,6 @@ impl Files {
     }
 
     // The owner and created time of the file, if it's held, either complete or still being uploaded
-    #[cfg(test)]
     pub fn owner_and_created(&self, file_id: &FileId) -> Option<(Principal, TimestampMillis)> {
         self.get(file_id)
             .map(|f| (f.owner, f.created))
@@ -98,12 +97,6 @@ impl Files {
     // Bytes in the range [start, end), reading only the stable memory chunks which overlap it
     pub fn blob_range(&self, hash: &Hash, start: usize, end: usize) -> Vec<u8> {
         self.blobs.get_range(hash, start, end)
-    }
-
-    pub fn owner(&self, file_id: &FileId) -> Option<Principal> {
-        self.get(file_id)
-            .map(|f| f.owner)
-            .or_else(|| self.pending_files.get(file_id).map(|f| f.owner))
     }
 
     pub fn put_chunk(&mut self, args: PutChunkArgs) -> PutChunkResult {

@@ -231,6 +231,14 @@ impl RuntimeState {
         }
     }
 
+    pub fn push_event_to_local_user_index(&mut self, event: local_user_index_canister::CommunityEvent) {
+        self.data.local_user_index_event_sync_queue.push(IdempotentEnvelope {
+            created_at: self.env.now(),
+            idempotency_id: self.env.rng().next_u64(),
+            value: event,
+        });
+    }
+
     pub fn push_bot_notifications(&mut self, notifications: Vec<Option<BotNotification>>) {
         for notification in notifications {
             self.push_bot_notification(notification);
@@ -682,6 +690,8 @@ struct Data {
     invite_code_enabled: Timestamped<bool>,
     frozen: Timestamped<Option<FrozenGroupInfo>>,
     timer_jobs: TimerJobs<TimerJob>,
+    // Nothing is sent through this any more. Kept for a release so that calls queued for a retry
+    // before the switch to events are still made, then removed.
     fire_and_forget_handler: FireAndForgetHandler,
     activity_notification_state: ActivityNotificationState,
     groups_being_imported: GroupsBeingImported,
@@ -1289,6 +1299,28 @@ impl Data {
         }
     }
 
+    // Removes a user who has deleted their account from the community and its channels, returning
+    // whether they were a member
+    pub fn remove_deleted_user(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
+        for channel in self.channels.iter_mut() {
+            channel.chat.members.remove(user_id, now);
+        }
+        self.expiring_members.remove_member(user_id, None);
+        self.expiring_member_actions.remove_member(user_id, None);
+        self.achievements.remove_user(&user_id);
+        self.user_cache.delete(user_id);
+        self.members.remove(user_id, None, now).is_some()
+    }
+
+    // Removes a user found to have deleted their account, unless they're a bot, returning whether they
+    // were a member
+    pub fn remove_deleted_user_unless_bot(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
+        if self.members.bots().contains_key(&user_id) {
+            return false;
+        }
+        self.remove_deleted_user(user_id, now)
+    }
+
     pub fn uninstall_bot(&mut self, bot_id: UserId, now: TimestampMillis) -> bool {
         if !self.bots.remove(bot_id, now) {
             return false;
@@ -1546,6 +1578,27 @@ mod tests {
 
     fn new_user_id(i: u8) -> UserId {
         UserId::new_indexed(canister_id(1), i as u16)
+    }
+
+    #[test]
+    fn a_deleted_user_is_removed_unless_they_are_a_bot() {
+        let owner = new_user_id(1);
+        let mut data = Data::new_for_tests(owner, Principal::from_slice(&[1]), String::new(), Vec::new());
+        // A user's old id, which was their User canister's id, and a bot's
+        let deleted: UserId = canister_id(102).into();
+        let bot: UserId = canister_id(50).into();
+        data.members
+            .add(deleted, Principal::from_slice(&[2]), UserType::User, None, 0);
+        data.members.add(bot, bot.as_principal(), UserType::Bot, None, 0);
+
+        assert!(data.remove_deleted_user_unless_bot(deleted, 1));
+        assert!(!data.members.contains(&deleted));
+        // No longer a member, so there's nothing to remove
+        assert!(!data.remove_deleted_user_unless_bot(deleted, 2));
+
+        assert!(!data.remove_deleted_user_unless_bot(bot, 3));
+        assert!(data.members.contains(&bot));
+        assert!(data.members.contains(&owner));
     }
 
     #[test]

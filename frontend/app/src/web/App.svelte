@@ -22,6 +22,7 @@
     import { _, isLoading, json, locale } from "svelte-i18n";
     import { addUiMessages, uiTranslate } from "./i18n";
     import RouteScreen from "./features/app/RouteScreen.svelte";
+    import Toasts from "./shell/Toasts.svelte";
     import Router from "./router/Router.svelte";
 
     addUiMessages();
@@ -85,6 +86,7 @@
         <Router>
             <RouteScreen />
         </Router>
+        <Toasts />
     {/if}
 
     {#snippet failed(_error, reset)}

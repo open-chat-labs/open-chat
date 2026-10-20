@@ -34,13 +34,13 @@ export type Screens<R extends { kind: string }> = {
 
 export const leftScreens: Screens<LeftRegion> = {
     // the chat list: DMs and groups, favourites, a community's channels (phase 3a)
-    chats: undefined,
+    chats: () => import("../chats/ChatsScreen.svelte"),
 
     // the threads followed (phase 3)
     threads: undefined,
 
     // notifications (phase 3d, ROUTES.md decision 7)
-    activity: undefined,
+    activity: () => import("../activity/ActivityScreen.svelte"),
 
     // the wallet's tokens
     wallet: undefined,
@@ -51,7 +51,7 @@ export const middleScreens: Screens<MiddleRegion> = {
     empty: undefined,
 
     // the selected conversation (phase 3b)
-    conversation: undefined,
+    conversation: () => import("../conversation/ConversationScreen.svelte"),
 
     // explore communities
     explore: undefined,

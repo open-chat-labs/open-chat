@@ -1,19 +1,23 @@
-use crate::model::bucket_event_batch::{BucketEventBatch, EventToSync};
+use crate::model::bucket_event_batch::BucketEventBatch;
 use crate::model::buckets::{BucketRecord, Buckets};
 use crate::model::files::Files;
+use crate::model::storage_bucket_event_batch::StorageBucketEventBatch;
+use crate::model::user_index_event_batch::UserIndexEventBatch;
 use crate::model::vault_event_batch::VaultEventBatch;
 use candid::{CandidType, Principal};
 use canister_state_macros::canister_state;
 use fire_and_forget_handler::FireAndForgetHandler;
+use rand::{Rng, prelude::StdRng};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet};
+use storage_bucket_canister::StorageIndexEvent;
 use storage_index_canister::c2c_vault_ops::VaultReviewer;
 use storage_index_canister::init::CyclesDispenserConfig;
-use timer_job_queues::GroupedTimerJobQueue;
+use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     BuildVersion, CanisterId, CanisterWasm, Cycles, FileAdded, FileRejected, FileRejectedReason, FileRemoved, Hash,
-    TimestampMillis, Timestamped,
+    IdempotentEnvelope, TimestampMillis, Timestamped,
 };
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::env::Environment;
@@ -62,9 +66,24 @@ impl RuntimeState {
         self.data.buckets.get(&caller).is_some()
     }
 
-    pub fn push_event_to_buckets(&mut self, event: EventToSync) {
-        for bucket in self.data.buckets.iter().map(|b| b.canister_id) {
-            self.data.bucket_event_sync_queue.push(bucket, event.clone());
+    // Dropped (loudly) until the UserIndex is known, which it is once it has sent an event
+    pub fn push_event_to_user_index(&mut self, event: user_index_canister::StorageIndexEvent) -> bool {
+        let Some(user_index_canister_id) = self.data.user_index_canister_id else {
+            return false;
+        };
+        let event = envelope(self.env.now(), self.env.rng(), event);
+        self.data
+            .user_index_event_sync_queue
+            .get_or_insert_with(|| BatchedTimerJobQueue::new(user_index_canister_id, false))
+            .push(event);
+        true
+    }
+
+    pub fn push_event_to_buckets(&mut self, event: StorageIndexEvent) {
+        let now = self.env.now();
+        let buckets: Vec<_> = self.data.buckets.iter().map(|b| b.canister_id).collect();
+        for bucket in buckets {
+            self.data.push_event_to_bucket(bucket, event.clone(), now, self.env.rng());
         }
     }
 
@@ -113,9 +132,12 @@ struct Data {
     pub users: HashMap<Principal, UserRecordInternal>,
     pub files: Files,
     pub buckets: Buckets,
+    // Drained into `storage_bucket_event_sync_queue` by the post_upgrade one-off, and removed with it
     pub bucket_event_sync_queue: GroupedTimerJobQueue<BucketEventBatch>,
     #[serde(default = "default_vault_event_sync_queue")]
     pub vault_event_sync_queue: GroupedTimerJobQueue<VaultEventBatch>,
+    #[serde(default = "new_storage_bucket_event_sync_queue")]
+    pub storage_bucket_event_sync_queue: GroupedTimerJobQueue<StorageBucketEventBatch>,
     #[serde(default)]
     pub vault_reviewers: Vec<VaultReviewer>,
     // The NCA reporting service's principal + the OC public key, held so each new bucket is
@@ -135,6 +157,11 @@ struct Data {
     // bucket-detected CSAM re-uploads back to it
     #[serde(default)]
     pub user_index_canister_id: Option<CanisterId>,
+    // Created once the UserIndex is known
+    #[serde(default)]
+    pub user_index_event_sync_queue: Option<BatchedTimerJobQueue<UserIndexEventBatch>>,
+    // Nothing is sent through this any more. Kept for a release so that calls queued for a retry
+    // before the switch to events are still made, then removed.
     #[serde(default)]
     pub fire_and_forget_handler: FireAndForgetHandler,
     #[serde(default)]
@@ -150,6 +177,18 @@ struct Data {
 
 fn default_vault_event_sync_queue() -> GroupedTimerJobQueue<VaultEventBatch> {
     GroupedTimerJobQueue::new(5, false)
+}
+
+fn new_storage_bucket_event_sync_queue() -> GroupedTimerJobQueue<StorageBucketEventBatch> {
+    GroupedTimerJobQueue::new(5, false)
+}
+
+fn envelope<T>(now: TimestampMillis, rng: &mut StdRng, value: T) -> IdempotentEnvelope<T> {
+    IdempotentEnvelope {
+        created_at: now,
+        idempotency_id: rng.next_u64(),
+        value,
+    }
 }
 
 fn cycles_minting_canister_id() -> CanisterId {
@@ -174,11 +213,13 @@ impl Data {
             buckets: Buckets::default(),
             bucket_event_sync_queue: GroupedTimerJobQueue::new(5, false),
             vault_event_sync_queue: default_vault_event_sync_queue(),
+            storage_bucket_event_sync_queue: new_storage_bucket_event_sync_queue(),
             vault_reviewers: Vec::new(),
             authority_reporter: None,
             csam_hashes: BTreeMap::new(),
             derived_csam_hashes: BTreeMap::new(),
             user_index_canister_id: None,
+            user_index_event_sync_queue: None,
             fire_and_forget_handler: FireAndForgetHandler::default(),
             idempotency_checker: IdempotencyChecker::default(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
@@ -190,7 +231,34 @@ impl Data {
         }
     }
 
-    pub fn add_file_reference(&mut self, bucket: CanisterId, file: FileAdded) -> Result<(), FileRejected> {
+    pub fn push_event_to_bucket(
+        &mut self,
+        bucket: CanisterId,
+        event: StorageIndexEvent,
+        now: TimestampMillis,
+        rng: &mut StdRng,
+    ) {
+        self.storage_bucket_event_sync_queue.push(bucket, envelope(now, rng, event));
+    }
+
+    pub fn push_events_to_bucket(
+        &mut self,
+        bucket: CanisterId,
+        events: Vec<StorageIndexEvent>,
+        now: TimestampMillis,
+        rng: &mut StdRng,
+    ) {
+        self.storage_bucket_event_sync_queue
+            .push_many(bucket, events.into_iter().map(|e| envelope(now, rng, e)).collect());
+    }
+
+    pub fn add_file_reference(
+        &mut self,
+        bucket: CanisterId,
+        file: FileAdded,
+        now: TimestampMillis,
+        rng: &mut StdRng,
+    ) -> Result<(), FileRejected> {
         let user_id = file.meta_data.owner;
         if let Some(user) = self.users.get_mut(&user_id) {
             if !self.files.user_owns_blob(user_id, file.hash) {
@@ -205,8 +273,10 @@ impl Data {
                         let files_to_delete = self.files.oldest_user_files_totalling(user_id, allowance_exceeded_by);
 
                         for file_to_delete in files_to_delete {
-                            self.bucket_event_sync_queue
-                                .push(file_to_delete.bucket, EventToSync::FileToRemove(file_to_delete.file_id));
+                            self.storage_bucket_event_sync_queue.push(
+                                file_to_delete.bucket,
+                                envelope(now, rng, StorageIndexEvent::FileToRemove(file_to_delete.file_id)),
+                            );
                         }
                     } else {
                         return Err(FileRejected {
@@ -239,14 +309,13 @@ impl Data {
         }
     }
 
-    pub fn add_bucket(&mut self, bucket: BucketRecord) {
-        self.bucket_event_sync_queue.push_many(
-            bucket.canister_id,
-            self.users.keys().map(|p| EventToSync::UserAdded(*p)).collect(),
-        );
+    pub fn add_bucket(&mut self, bucket: BucketRecord, now: TimestampMillis, rng: &mut StdRng) {
+        // The vault ops go first, the CSAM denylist among them, so that the first batch carries
+        // them: a user can upload as soon as their `UserAdded` has landed, and there is one of
+        // those per user, sent 1000 at a time
+        let mut events = Vec::new();
         if !self.vault_reviewers.is_empty() {
-            self.vault_event_sync_queue.push(
-                bucket.canister_id,
+            events.push(StorageIndexEvent::VaultOp(Box::new(
                 storage_bucket_canister::c2c_vault_sync::VaultOp::SetReviewers(
                     self.vault_reviewers
                         .iter()
@@ -256,26 +325,24 @@ impl Data {
                         })
                         .collect(),
                 ),
-            );
+            )));
         }
         if let Some(op) = &self.authority_reporter {
-            self.vault_event_sync_queue.push(
-                bucket.canister_id,
+            events.push(StorageIndexEvent::VaultOp(Box::new(
                 storage_bucket_canister::c2c_vault_sync::VaultOp::SetAuthorityReporter(
                     storage_bucket_canister::c2c_vault_sync::SetAuthorityReporterOp {
                         principal: op.principal,
                         oc_public_key_pem: op.oc_public_key_pem.clone(),
                     },
                 ),
-            );
+            )));
         }
         // A new bucket starts with the full CSAM denylist, otherwise upheld content could be
         // uploaded to it and served
         let verified = self.csam_hashes.iter().map(|(h, r)| (*h, *r, false));
         let derived = self.derived_csam_hashes.iter().map(|(h, r)| (*h, *r, true));
         for (hash, report_index, derived) in verified.chain(derived) {
-            self.vault_event_sync_queue.push(
-                bucket.canister_id,
+            events.push(StorageIndexEvent::VaultOp(Box::new(
                 storage_bucket_canister::c2c_vault_sync::VaultOp::DenylistHash(
                     storage_bucket_canister::c2c_vault_sync::DenylistHashOp {
                         hash,
@@ -283,8 +350,10 @@ impl Data {
                         derived: Some(derived),
                     },
                 ),
-            );
+            )));
         }
+        events.extend(self.users.keys().map(|p| StorageIndexEvent::UserAdded(*p)));
+        self.push_events_to_bucket(bucket.canister_id, events, now, rng);
         self.buckets.add_bucket(bucket);
     }
 
@@ -294,7 +363,15 @@ impl Data {
     // re-upload to any other bucket is stored and served publicly.
     // A verified entry replaces a derived one for the same hash; a derived one never downgrades
     // a verified one (mirrors storage_bucket Vault::denylist_hash).
-    pub fn denylist_csam_hash(&mut self, source_bucket: CanisterId, hash: Hash, report_index: u64, derived: bool) {
+    pub fn denylist_csam_hash(
+        &mut self,
+        source_bucket: CanisterId,
+        hash: Hash,
+        report_index: u64,
+        derived: bool,
+        now: TimestampMillis,
+        rng: &mut StdRng,
+    ) {
         if derived {
             if self.csam_hashes.contains_key(&hash) || self.derived_csam_hashes.contains_key(&hash) {
                 return;
@@ -314,20 +391,30 @@ impl Data {
             .filter(|c| *c != source_bucket)
             .collect();
         for bucket in buckets {
-            self.push_denylisted_hash_to_bucket(bucket, hash, report_index, derived);
+            self.push_denylisted_hash_to_bucket(bucket, hash, report_index, derived, now, rng);
         }
     }
 
-    pub fn push_denylisted_hash_to_bucket(&mut self, bucket: CanisterId, hash: Hash, report_index: u64, derived: bool) {
-        self.vault_event_sync_queue.push(
+    pub fn push_denylisted_hash_to_bucket(
+        &mut self,
+        bucket: CanisterId,
+        hash: Hash,
+        report_index: u64,
+        derived: bool,
+        now: TimestampMillis,
+        rng: &mut StdRng,
+    ) {
+        self.push_event_to_bucket(
             bucket,
-            storage_bucket_canister::c2c_vault_sync::VaultOp::DenylistHash(
+            StorageIndexEvent::VaultOp(Box::new(storage_bucket_canister::c2c_vault_sync::VaultOp::DenylistHash(
                 storage_bucket_canister::c2c_vault_sync::DenylistHashOp {
                     hash,
                     report_index,
                     derived: Some(derived),
                 },
-            ),
+            ))),
+            now,
+            rng,
         );
     }
 }
