@@ -157,6 +157,10 @@ design export needs. Each entry says where it came up.
 
 ### Wiring
 
+- **App events** (`features/app/AppEventDialogs.svelte`): the not-found, no-access and
+  not-available dialogs are a `DialogShell` with the old UI's words (no design: `TODO(design)`);
+  "Page not found" was never translated. Suspending a user (`suspendUser`, platform moderators
+  only) opens nothing yet.
 - **Toasts**: the app's toast (`toastStore`, e.g. "Failed to un-archive chat") shows as the
   library's `UndoToast` without its action (`shell/Toasts.svelte`). The design has no failure tone
   for a toast, so a failure looks like any other message.

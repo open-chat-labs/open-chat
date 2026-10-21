@@ -6,6 +6,7 @@
         currentUserStore,
         favouritesStore,
         OpenChat,
+        publish,
         querystringStore,
         routeStore,
         sortedCommunitiesStore,
@@ -38,6 +39,12 @@
     import Shell from "../../shell/Shell.svelte";
     import { currentShellLayout } from "../../shell/viewport.svelte";
     import RulesDialog from "../conversation/RulesDialog.svelte";
+    import AppEventDialog from "./AppEventDialogs.svelte";
+    import {
+        dismissedRoute,
+        subscribeAppEvents,
+        type AppEventDialog as AppEventDialogKind,
+    } from "@src/logic/appEvents/appEvents";
     import { pinsFor } from "../rail/rail.adapter";
     import Placeholder from "./Placeholder.svelte";
     import RegionScreen from "./RegionScreen.svelte";
@@ -81,6 +88,24 @@
             if (alert) toastStore.showFailureToast(i18nKey("errorSendingMessage"));
         }),
     );
+
+    // the client's app-wide events, as every tree handles them (app/src/logic/appEvents)
+    let appDialog = $state<AppEventDialogKind | undefined>();
+    $effect(() =>
+        subscribeAppEvents(client, (outcome) => {
+            if (outcome.kind === "show") {
+                appDialog = outcome.dialog;
+            } else {
+                if (outcome.closeDialogs) publish("closeModalStack");
+                navigate(outcome.path);
+            }
+        }),
+    );
+
+    function closeAppDialog() {
+        appDialog = undefined;
+        navigate(dismissedRoute(client));
+    }
 
     // Notifications over a chat or a wallet page opens the feed over it (decision 7), with its
     // own history entry; the other destinations are their paths
@@ -191,6 +216,11 @@
 
 <!-- sending in a chat whose rules the reader hasn't accepted asks for them first -->
 <RulesDialog />
+
+<!-- TODO(phase 4): suspending a user (platform moderators) has no dialog yet; GAPS.md -->
+{#if appDialog !== undefined && appDialog.kind !== "suspending"}
+    <AppEventDialog dialog={appDialog} onClose={closeAppDialog} />
+{/if}
 
 {#if profileOpen}
     <!-- TODO(phase 8): ProfileDialog -->

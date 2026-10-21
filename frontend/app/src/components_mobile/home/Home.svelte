@@ -1,6 +1,5 @@
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
-    import { invoke } from "@tauri-apps/api/core";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
     import { Container, Sheet } from "component-lib";
     import type {
@@ -28,7 +27,6 @@
         chatIdentifiersEqual,
         chatListScopeStore,
         chatsInitialisedStore,
-        chatSummariesListStore,
         identityStateStore,
         localUpdates,
         offlineStore,
@@ -52,7 +50,7 @@
     import { i18nKey } from "../../i18n/i18n";
     import { chitPopup, disableChit } from "../../stores/settings";
     import { toastStore } from "../../stores/toast";
-    import { ringForRemoteCall, stopRingingForRemoteCall } from "../../stores/video";
+    import { dismissedRoute, subscribeAppEvents } from "@src/logic/appEvents/appEvents";
     import { removeQueryStringParam } from "../../utils/urls";
     import AreYouSure from "../AreYouSure.svelte";
     import LegacyInstallBanner from "../LegacyInstallBanner.svelte";
@@ -142,7 +140,14 @@
 
     onMount(() => {
         const unsubEvents = [
-            subscribe("chatWith", chatWith),
+            subscribeAppEvents(client, (outcome) => {
+                if (outcome.kind === "show") {
+                    modal = outcome.dialog;
+                } else {
+                    if (outcome.closeDialogs) publish("closeModalStack");
+                    navigate(outcome.path);
+                }
+            }),
             subscribe("replyPrivatelyTo", replyPrivatelyTo),
             subscribe("verifyHumanity", verifyHumanity),
             subscribe("deleteDirectChat", onTriggerConfirm),
@@ -156,17 +161,8 @@
             subscribe("toggleMuteNotifications", toggleMuteNotifications),
             subscribe("successfulImport", successfulImport),
             subscribe("clearSelection", () => navigate(routeForScope($chatListScopeStore))),
-            subscribe("userSuspensionChanged", reload),
-            subscribe("selectedChatInvalid", selectedChatInvalid),
             subscribe("sendMessageFailed", sendMessageFailed),
-            subscribe("remoteVideoCallStarted", (ev) => ringForRemoteCall(ev)),
-            subscribe("remoteVideoCallEnded", stopRingingForRemoteCall),
-            subscribe("notification", (n) => client.notificationReceived(n)),
-            subscribe("noAccess", () => (modal = { kind: "no_access" })),
-            subscribe("restrictedContent", () => (modal = { kind: "restricted_content" })),
-            subscribe("notFound", () => (modal = { kind: "not_found" })),
             subscribe("copyUrl", copyUrl),
-            subscribe("suspendUser", suspendUser),
         ];
         client.initialiseNotifications();
         document.body.addEventListener("profile-clicked", profileClicked);
@@ -181,24 +177,8 @@
         };
     });
 
-    function reload() {
-        if (client.isNativeApp()) {
-            invoke("plugin:oc|restart_app");
-        } else {
-            window.location.reload();
-        }
-    }
-
-    function suspendUser(userId: string) {
-        modal = { kind: "suspending", userId };
-    }
-
     function profileClicked(event: Event) {
         profileLinkClicked(event as CustomEvent<ProfileLinkClickedEvent>);
-    }
-
-    function selectedChatInvalid() {
-        navigate(routeForScope(client.getDefaultScope()));
     }
 
     function sendMessageFailed(alert: boolean) {
@@ -250,7 +230,7 @@
 
     function closeNoAccess() {
         closeModal();
-        navigate(routeForScope(client.getDefaultScope()));
+        navigate(dismissedRoute(client));
     }
 
     function unarchiveChat(chatId: ChatIdentifier) {
@@ -395,15 +375,6 @@
         return Promise.resolve();
     }
 
-    function chatWith(chatId: DirectChatIdentifier) {
-        publish("closeModalStack");
-        const chat = $chatSummariesListStore.find((c) => {
-            return c.kind === "direct_chat" && c.them === chatId;
-        });
-
-        navigate(routeForChatIdentifier(chat ? $chatListScopeStore.kind : "chats", chatId));
-    }
-
     function replyPrivatelyTo(context: EnhancedReplyContext) {
         if (context.sender === undefined) return;
 
@@ -484,7 +455,7 @@
 
     function chatWithFromProfileCard() {
         if (showProfileCard === undefined) return;
-        chatWith({ kind: "direct_chat", userId: showProfileCard.userId });
+        publish("chatWith", { kind: "direct_chat", userId: showProfileCard.userId });
         showProfileCard = undefined;
     }
 
