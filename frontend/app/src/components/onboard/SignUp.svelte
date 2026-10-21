@@ -200,15 +200,22 @@
                     onSelectUser={selectUser} />
             {/if}
         </div>
-        <!-- svelte-ignore a11y_click_events_have_key_events -->
-        <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div onclick={onShowGuidelines} class="smallprint">
-            <Translatable resourceKey={i18nKey("register.disclaimer")} />
+        <div class="terms">
+            <Checkbox id="sign-up-terms" label={undefined} bind:checked={termsAccepted}>
+                <!-- the words open the terms; the box ticks -->
+                <!-- svelte-ignore a11y_click_events_have_key_events -->
+                <!-- svelte-ignore a11y_no_static_element_interactions -->
+                <span
+                    class="smallprint"
+                    onclick={(e) => {
+                        e.preventDefault();
+                        onShowGuidelines();
+                    }}>
+                    <Translatable
+                        resourceKey={i18nKey("I agree to the OpenChat terms & conditions")} />
+                </span>
+            </Checkbox>
         </div>
-        <Checkbox
-            id="sign-up-terms"
-            label={i18nKey("I agree to the OpenChat terms & conditions")}
-            bind:checked={termsAccepted} />
         {#if error !== undefined}
             <div class="error">
                 <ErrorMessage><Translatable resourceKey={i18nKey(error)} /></ErrorMessage>
@@ -246,8 +253,11 @@
         width: 100%;
     }
 
-    .smallprint {
+    .terms {
         margin-top: $sp4;
+    }
+
+    .smallprint {
         align-self: flex-start;
         @include font(light, normal, fs-60);
         color: var(--primary);
