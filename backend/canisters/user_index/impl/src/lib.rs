@@ -1,3 +1,4 @@
+use crate::model::bridged_users::BridgedUsers;
 use crate::model::community_event_batch::CommunityEventBatch;
 use crate::model::group_event_batch::GroupEventBatch;
 use crate::model::group_index_event_batch::GroupIndexEventBatch;
@@ -46,9 +47,9 @@ use std::time::Duration;
 use storage_index_canister::UserIndexEvent as StorageIndexEvent;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
-    BotInstallationLocation, BuildVersion, CanisterId, ChannelId, ChatId, ChildCanisterWasms, CommunityId, Cycles,
-    DiamondMembershipFees, IdempotentEnvelope, MediaScanConfig, Milliseconds, ModerationReferralConfig, TimestampMillis,
-    Timestamped, UserId, UserType,
+    BotInstallationLocation, BridgePlatform, BuildVersion, CanisterId, ChannelId, ChatId, ChildCanisterWasms, CommunityId,
+    Cycles, DiamondMembershipFees, IdempotentEnvelope, MediaScanConfig, Milliseconds, ModerationReferralConfig,
+    TimestampMillis, Timestamped, UserId, UserType,
 };
 use user_ids_set::UserIdsSet;
 use user_index_canister::ChildCanisterType;
@@ -353,6 +354,7 @@ impl RuntimeState {
             multi_user_canisters: self.data.multi_user_canisters.iter().map(|(c, m)| (*c, m.clone())).collect(),
             migrated_user_ids: self.data.migrated_user_ids.len(),
             call_push_enabled: self.data.call_push_enabled,
+            bridged_users: self.data.bridged_users.len(),
             platform_moderators_group: self.data.platform_moderators_group,
             nns_8_year_neuron: self.data.nns_8_year_neuron.clone(),
             event_store_client_info,
@@ -569,6 +571,13 @@ struct Data {
     // Set by proposal and fanned out to the LocalUserIndexes, including any added later
     #[serde(default)]
     pub daily_puzzle_canister_id: Option<CanisterId>,
+    // The bot that bridges each platform, eg. Discord. Set by a platform operator and fanned out to
+    // the LocalUserIndexes, including any added later
+    #[serde(default)]
+    pub bridge_bots: BTreeMap<BridgePlatform, UserId>,
+    // The latest profile of each account a bridge bot has relayed a message from
+    #[serde(default)]
+    pub bridged_users: BridgedUsers,
     // The old id -> the new id of each user migrated to a MultiUser canister. Fanned out to the
     // LocalUserIndexes, including any added later
     #[serde(default)]
@@ -689,6 +698,8 @@ impl Data {
             multi_user_canisters: MultiUserCanisterMap::default(),
             call_push_enabled: false,
             daily_puzzle_canister_id: None,
+            bridge_bots: BTreeMap::new(),
+            bridged_users: BridgedUsers::default(),
             migrated_user_ids: MigratedUserIds::default(),
             alchemy_api_key: None,
         };
@@ -810,6 +821,8 @@ impl Default for Data {
             multi_user_canisters: MultiUserCanisterMap::default(),
             call_push_enabled: false,
             daily_puzzle_canister_id: None,
+            bridge_bots: BTreeMap::new(),
+            bridged_users: BridgedUsers::default(),
             migrated_user_ids: MigratedUserIds::default(),
             alchemy_api_key: None,
         }
@@ -843,6 +856,7 @@ pub struct Metrics {
     pub multi_user_canisters: Vec<(CanisterId, MultiUserCanister)>,
     pub migrated_user_ids: usize,
     pub call_push_enabled: bool,
+    pub bridged_users: usize,
     pub platform_moderators_group: Option<ChatId>,
     pub nns_8_year_neuron: Option<NnsNeuron>,
     pub event_store_client_info: EventStoreClientInfo,

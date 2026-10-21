@@ -190,6 +190,7 @@
         "translateFrom": "ترجمة من {language}",
         "translatedFrom": "تُرجمت على الجهاز من {language}"
     },
+    "bridgedUserUnknown": "مستخدم {platform}",
     "nativeUpdate": {
         "downloadingTitle": "لحظة واحدة! جارٍ التحديث ...",
         "downloadingMessage": "نقوم بتنزيل تحديث سريع وستتمكن من المتابعة بعد قليل ...",

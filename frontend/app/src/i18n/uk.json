@@ -190,6 +190,7 @@
         "translateFrom": "Перекласти з мови: {language}",
         "translatedFrom": "Перекладено на пристрої з мови: {language}"
     },
+    "bridgedUserUnknown": "Користувач {platform}",
     "nativeUpdate": {
         "downloadingTitle": "Секунду! Оновлення ...",
         "downloadingMessage": "Ми завантажуємо невелике оновлення, і ви зможете продовжити ...",

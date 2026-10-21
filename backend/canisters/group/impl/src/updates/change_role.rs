@@ -22,6 +22,7 @@ fn c2c_bot_change_role(args: c2c_bot_change_role::Args) -> c2c_bot_change_role::
     let bot_caller = BotCaller {
         bot: args.bot_id,
         initiator: args.initiator.clone(),
+        bridged_from: None,
     };
 
     change_role_impl(args.into(), Some(Caller::BotV2(bot_caller)))

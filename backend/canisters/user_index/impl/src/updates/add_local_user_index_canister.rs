@@ -6,7 +6,8 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use ic_cdk_management_canister::{CanisterInfoArgs, CanisterInstallMode};
 use local_user_index_canister::{
-    BotPublished, BotRegistered, SetAlchemyApiKey, SetPremiumItemCost, UserDetailsFull, UserIdMigrated, UserIndexEvent,
+    BotPublished, BotRegistered, SetAlchemyApiKey, SetBridgeBot, SetPremiumItemCost, UserDetailsFull, UserIdMigrated,
+    UserIndexEvent,
 };
 use rand::RngExt;
 use std::collections::HashSet;
@@ -195,6 +196,15 @@ fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut Runti
             pusher.push(
                 canister_id,
                 UserIndexEvent::SetDailyPuzzleCanisterId(daily_puzzle_canister_id),
+            );
+        }
+        for (&platform, &bot_id) in state.data.bridge_bots.iter() {
+            pusher.push(
+                canister_id,
+                UserIndexEvent::SetBridgeBot(SetBridgeBot {
+                    platform,
+                    bot_id: Some(bot_id),
+                }),
             );
         }
         // In case the key was changed while the LocalUserIndex was being installed with the previous one

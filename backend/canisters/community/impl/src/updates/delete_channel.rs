@@ -29,6 +29,7 @@ fn c2c_bot_delete_channel_impl(args: c2c_bot_delete_channel::Args, state: &mut R
     let bot_caller = BotCaller {
         bot: args.bot_id,
         initiator: args.initiator.clone(),
+        bridged_from: None,
     };
 
     delete_channel_impl(args.channel_id, Some(Caller::BotV2(bot_caller)), state)

@@ -457,6 +457,7 @@
             "desc": "Summon the witch"
         }
     },
+    "bridgedUserUnknown": "{platform} user",
     "cancel": "Cancel",
     "cancelInvite": "Cancel invite",
     "cancelInviteFailed": "Error cancelling invite",

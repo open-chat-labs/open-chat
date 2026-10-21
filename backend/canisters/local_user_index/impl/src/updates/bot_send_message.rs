@@ -9,13 +9,24 @@ use local_user_index_canister::bot_send_message::*;
 use oc_error_codes::{OCError, OCErrorCode};
 use rand::RngExt;
 use types::{
-    BotActionScope, BotInitiator, BotMessageContent, CanisterId, ChannelId, Chat, ChatId, CommunityId, EventIndex, MessageId,
-    MessageIndex, OgPreview, UserId,
+    BotActionScope, BotInitiator, BotMessageContent, BridgedUser, CanisterId, ChannelId, Chat, ChatId, CommunityId, EventIndex,
+    MessageId, MessageIndex, OCResult, OgPreview, UserId,
 };
+use user_index_canister::LocalUserIndexEvent as UserIndexEvent;
 
 #[update(candid = true, json = true, msgpack = true)]
 async fn bot_send_message(args: Args) -> Response {
-    let context = match mutate_state(|state| extract_access_context_from_chat_context(args.chat_context, state)) {
+    let context = match mutate_state(|state| {
+        let context = extract_access_context_from_chat_context(args.chat_context, state)?;
+        if let Some(bridged_from) = &args.bridged_from {
+            check_can_relay(bridged_from, &context, state)?;
+            // Sent with every message, since the registry is shared by every LocalUserIndex, and
+            // the UserIndex ignores a profile which hasn't changed
+            let now = state.env.now();
+            state.push_event_to_user_index(UserIndexEvent::BridgedUserUpdated(Box::new(bridged_from.clone())), now);
+        }
+        Ok(context)
+    }) {
         Ok(context) => context,
         Err(error) => return Response::Error(error),
     };
@@ -30,8 +41,30 @@ async fn bot_send_message(args: Args) -> Response {
         args.block_level_markdown,
         args.finalised,
         args.og_previews.unwrap_or_default(),
+        args.bridged_from,
     )
     .await
+}
+
+// Only the bridge bot for the platform a message was relayed from can relay it, and only
+// autonomously, into a group or channel
+fn check_can_relay(bridged_from: &BridgedUser, context: &BotAccessContext, state: &RuntimeState) -> OCResult {
+    let platform = bridged_from.platform();
+    if state.data.bridge_bots.get(&platform) != Some(&context.bot_id) {
+        return Err(OCErrorCode::InitiatorNotAuthorized
+            .with_message(format!("Only the {platform} bridge bot can relay messages from {platform}")));
+    }
+    if !matches!(context.initiator, BotInitiator::Autonomous) {
+        return Err(OCErrorCode::InvalidRequest.with_message("Bridged messages must be relayed autonomously"));
+    }
+    if let BotActionScope::Chat(details) = &context.scope
+        && matches!(details.chat, Chat::Direct(_))
+    {
+        return Err(OCErrorCode::InvalidRequest.with_message("Bridged messages can't be relayed into direct chats"));
+    }
+    bridged_from
+        .validate()
+        .map_err(|error| OCErrorCode::InvalidRequest.with_message(error))
 }
 
 struct MessageAccessContext {
@@ -55,6 +88,7 @@ async fn bot_send_message_impl(
     block_level_markdown: bool,
     finalised: bool,
     og_previews: Vec<OgPreview>,
+    bridged_from: Option<BridgedUser>,
 ) -> Response {
     let context = match mutate_state(|state| extract_message_access_context(context, channel_id, thread, message_id, state)) {
         Ok(context) => context,
@@ -92,6 +126,7 @@ async fn bot_send_message_impl(
                 block_level_markdown,
                 finalised,
                 og_previews,
+                bridged_from,
             )
             .await
         }
@@ -109,6 +144,7 @@ async fn bot_send_message_impl(
                 block_level_markdown,
                 finalised,
                 og_previews,
+                bridged_from,
             )
             .await
         }
@@ -170,6 +206,7 @@ async fn send_message_to_channel(
     block_level_markdown: bool,
     finalised: bool,
     og_previews: Vec<OgPreview>,
+    bridged_from: Option<BridgedUser>,
 ) -> Response {
     use Response::*;
 
@@ -186,6 +223,7 @@ async fn send_message_to_channel(
         block_level_markdown,
         finalised,
         og_previews,
+        bridged_from,
     };
     let response = top_up_and_retry_if_out_of_cycles(canister_id, || {
         community_canister_c2c_client::c2c_bot_send_message(canister_id, &c2c_args)
@@ -220,6 +258,7 @@ async fn send_message_to_group(
     block_level_markdown: bool,
     finalised: bool,
     og_previews: Vec<OgPreview>,
+    bridged_from: Option<BridgedUser>,
 ) -> Response {
     use Response::*;
 
@@ -235,6 +274,7 @@ async fn send_message_to_group(
         block_level_markdown,
         finalised,
         og_previews,
+        bridged_from,
     };
     let response = top_up_and_retry_if_out_of_cycles(canister_id, || {
         group_canister_c2c_client::c2c_bot_send_message(canister_id, &c2c_args)
