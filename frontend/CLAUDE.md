@@ -19,6 +19,7 @@ The existing trees stay live for months (mobile and native until the narrow pass
 - A bug fix goes into the shared layer (client, `@client` functions, `app/src/logic`, `app/src/core`) when it can, so every tree gets it. A fix that can only live in a legacy view gets the matching change in `src/web`, or a `GAPS.md` entry if that screen isn't built yet.
 - New features are built in `src/web` only, unless mobile or native needs them before the narrow pass.
 - Don't refactor legacy views, except to extract logic as described under "Reuse before writing".
+- The legacy landing pages' roadmap, whitepaper and blog are frozen. Content changes go to Learn's data in `app/src/web/features/marketing/learn` only.
 
 ## Reuse before writing
 
