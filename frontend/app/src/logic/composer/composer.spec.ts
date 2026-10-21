@@ -1,10 +1,5 @@
 import type { UserOrUserGroup } from "@client";
-import {
-    expandMentions,
-    sendBlocked,
-    TypingNotifier,
-    type SendState,
-} from "./composer";
+import { expandMentions, entryBlock, TypingNotifier, type EntryState } from "./composer";
 
 describe("a message's mentions", () => {
     const known: Record<string, UserOrUserGroup> = {
@@ -29,38 +24,57 @@ describe("a message's mentions", () => {
     });
 });
 
+/** Invariant: every tree's entry blocks sending for the same reasons, in the old footers' order. */
 describe("why a message can't be sent", () => {
-    const can: SendState = {
+    const can: EntryState = {
         suspended: false,
         frozen: false,
         blocked: false,
         previewing: false,
         lapsed: false,
+        direct: false,
+        externalContent: false,
         anonymous: false,
         canSend: true,
+        thread: false,
     };
 
     test("is nothing when it can", () => {
-        expect(sendBlocked(can)).toBeUndefined();
+        expect(entryBlock(can)).toBeUndefined();
     });
 
-    test("is a suspended account before anything else", () => {
-        expect(sendBlocked({ ...can, suspended: true, frozen: true })?.key).toBe(
-            "accountSuspended",
+    test("is the old footers' reason, in their order", () => {
+        expect(entryBlock({ ...can, suspended: true, frozen: true })?.kind).toBe("suspended");
+        expect(entryBlock({ ...can, frozen: true, blocked: true })?.kind).toBe("frozen");
+        expect(entryBlock({ ...can, blocked: true, previewing: true })?.kind).toBe("blocked");
+        // a preview offers Join, even signed out
+        expect(entryBlock({ ...can, previewing: true, anonymous: true, canSend: false })).toEqual({
+            kind: "preview",
+            lapsed: false,
+        });
+        expect(entryBlock({ ...can, lapsed: true })).toEqual({ kind: "preview", lapsed: true });
+        expect(entryBlock({ ...can, externalContent: true, canSend: false })?.kind).toBe(
+            "external",
         );
     });
 
-    test("is the old footer's reason, a frozen chat first", () => {
-        expect(sendBlocked({ ...can, frozen: true, blocked: true })?.key).toBe("chatFrozen");
-        expect(sendBlocked({ ...can, blocked: true })?.key).toBe("userIsBlocked");
-        expect(sendBlocked({ ...can, lapsed: true, previewing: true })?.key).toBe(
-            "access.lapsed.label",
-        );
-        expect(sendBlocked({ ...can, anonymous: true, canSend: false })?.key).toBe(
-            "sendMessageDisabledAnon",
-        );
-        expect(sendBlocked({ ...can, previewing: true })?.key).toBe("readOnlyChat");
-        expect(sendBlocked({ ...can, canSend: false })?.key).toBe("readOnlyChat");
+    test("signed out, or not allowed, is read only, a thread's in a thread", () => {
+        expect(entryBlock({ ...can, anonymous: true, canSend: false })).toEqual({
+            kind: "read_only",
+            key: "sendMessageDisabledAnon",
+        });
+        expect(entryBlock({ ...can, canSend: false })).toEqual({
+            kind: "read_only",
+            key: "readOnlyChat",
+        });
+        expect(entryBlock({ ...can, canSend: false, thread: true })).toEqual({
+            kind: "read_only",
+            key: "readOnlyThread",
+        });
+    });
+
+    test("a DM is never a preview", () => {
+        expect(entryBlock({ ...can, direct: true, previewing: true })).toBeUndefined();
     });
 });
 
@@ -128,4 +142,3 @@ describe("telling others someone is typing", () => {
         expect(starts).toBe(2);
     });
 });
-

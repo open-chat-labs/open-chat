@@ -24,7 +24,12 @@
     import { detectMarkdown } from "@src/utils/detectMarkdown";
     import { getContext, untrack } from "svelte";
     import { _ } from "svelte-i18n";
-    import { expandMentions, sendBlocked, TypingNotifier } from "./composer";
+    import {
+        entryBlock,
+        expandMentions,
+        TypingNotifier,
+        type EntryBlock,
+    } from "@src/logic/composer/composer";
 
     let { chat }: { chat: ChatSummary } = $props();
 
@@ -33,16 +38,44 @@
     const me = $derived($currentUserIdStore);
 
     const blocked = $derived(
-        sendBlocked({
-            suspended: $suspendedUserStore,
-            frozen: client.isChatOrCommunityFrozen(chat, $selectedCommunitySummaryStore),
-            blocked: chat.kind === "direct_chat" && $blockedUsersStore.has(chat.them.userId),
-            previewing: chat.kind !== "direct_chat" && client.isPreviewing(chat.id),
-            lapsed: client.isLapsed(chat.id),
-            anonymous: $anonUserStore,
-            canSend: client.canSendMessage(chat.id, "message", "text"),
-        }),
+        banner(
+            entryBlock({
+                suspended: $suspendedUserStore,
+                frozen: client.isChatOrCommunityFrozen(chat, $selectedCommunitySummaryStore),
+                blocked: chat.kind === "direct_chat" && $blockedUsersStore.has(chat.them.userId),
+                previewing: chat.kind !== "direct_chat" && client.isPreviewing(chat.id),
+                lapsed: client.isLapsed(chat.id),
+                direct: chat.kind === "direct_chat",
+                externalContent: chat.kind === "channel" && chat.externalUrl !== undefined,
+                anonymous: $anonUserStore,
+                canSend: client.canSendMessage(chat.id, "message", "text"),
+                thread: false,
+            }),
+        ),
     );
+
+    // what stands in for the composer, as a banner in the old footer's words
+    function banner(
+        block: EntryBlock | undefined,
+    ): { key: string; tone: "info" | "warning" } | undefined {
+        switch (block?.kind) {
+            case undefined:
+                return undefined;
+            case "suspended":
+                return { key: "accountSuspended", tone: "warning" };
+            case "frozen":
+                return { key: "chatFrozen", tone: "warning" };
+            case "blocked":
+                return { key: "userIsBlocked", tone: "info" };
+            // TODO(phase 9): a preview's Join (and its access gates), as the old PreviewFooter
+            case "preview":
+                return { key: block.lapsed ? "access.lapsed.label" : "readOnlyChat", tone: "info" };
+            case "external":
+                return { key: "externalContent.disclaimer", tone: "warning" };
+            case "read_only":
+                return { key: block.key, tone: "info" };
+        }
+    }
 
     // the others in this chat who are typing
     const typingNames = $derived(
