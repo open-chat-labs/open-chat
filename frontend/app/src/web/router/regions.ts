@@ -1,4 +1,5 @@
 import { routeForScope, type ChatListScope, type RouteParams, type WalletView } from "@client";
+import { isLandingPageRoute } from "@src/utils/urls";
 
 // What a route shows (ROUTES.md). The screens behind each region come in later phases; until then
 // each one is a placeholder that says what it will be.
@@ -24,21 +25,6 @@ export type Regions =
           // a route with no right column (details) says so; the others have one (ROUTES.md)
           rightColumn?: false;
       };
-
-const MARKETING_KINDS: RouteParams["kind"][] = [
-    "home_landing_route",
-    "features_route",
-    "roadmap_route",
-    "blog_route",
-    "whitepaper_route",
-    "guidelines_route",
-    "terms_route",
-    "privacy_route",
-    "faq_route",
-    "diamond_route",
-    "architecture_route",
-    "csea_reporting_route",
-];
 
 /**
  * The regions a route shows. `signedOut`: an anonymous user without an account, who gets Landing
@@ -69,7 +55,7 @@ export function regionsFor(
 }
 
 function routeRegions(route: RouteParams, signedOut: boolean): Regions {
-    if (MARKETING_KINDS.includes(route.kind) || (route.kind === "home_route" && signedOut)) {
+    if (isLandingPageRoute(route) || (route.kind === "home_route" && signedOut)) {
         return { area: "marketing", route };
     }
     switch (route.kind) {

@@ -3,6 +3,8 @@
 import { OpenChat, routeStore, type RouteParams, type RouteType } from "@client";
 import { isStandalonePagePath } from "@shared";
 import { openUrl } from "tauri-plugin-oc-api";
+import { i18nKey } from "../i18n/i18n";
+import { toastStore } from "../stores/toast";
 
 const regex = new RegExp("^(?:[a-z]+:)?//", "i");
 
@@ -108,12 +110,26 @@ function getRedirectPath(path: string, hash: string): string {
 }
 
 export function copyToClipboard(txt: string): Promise<boolean> {
-    return new Promise((resolve) => {
-        navigator.clipboard.writeText(txt).then(
-            () => resolve(true),
-            () => resolve(false),
-        );
-    });
+    // no clipboard at all (an insecure context, an old browser) is a copy that failed
+    if (navigator.clipboard === undefined) return Promise.resolve(false);
+    return navigator.clipboard.writeText(txt).then(
+        () => true,
+        () => false,
+    );
+}
+
+/**
+ * Copies the page's address on the site's own origin (the native app's pages are served from
+ * another, which isn't a link anyone else can follow), and says whether it could.
+ */
+export async function copyPageUrl(client: OpenChat): Promise<void> {
+    const { pathname, search, hash } = window.location;
+    const url = new URL(`${pathname}${search}${hash}`, client.canonicalOrigin()).toString();
+    if (await copyToClipboard(url)) {
+        toastStore.showSuccessToast(i18nKey("urlCopiedToClipboard"));
+    } else {
+        toastStore.showFailureToast(i18nKey("failedToCopyUrlToClipboard", { url }));
+    }
 }
 
 export function scrollToSection(section: string): number | undefined {

@@ -51,7 +51,7 @@
     import { chitPopup, disableChit } from "../../stores/settings";
     import { toastStore } from "../../stores/toast";
     import { dismissedRoute, subscribeAppEvents } from "@src/logic/appEvents/appEvents";
-    import { removeQueryStringParam } from "../../utils/urls";
+    import { copyPageUrl, removeQueryStringParam } from "../../utils/urls";
     import AreYouSure from "../AreYouSure.svelte";
     import LegacyInstallBanner from "../LegacyInstallBanner.svelte";
     import NativeUpgradeBanner from "../NativeUpgradeBanner.svelte";
@@ -162,7 +162,7 @@
             subscribe("successfulImport", successfulImport),
             subscribe("clearSelection", () => navigate(routeForScope($chatListScopeStore))),
             subscribe("sendMessageFailed", sendMessageFailed),
-            subscribe("copyUrl", copyUrl),
+            subscribe("copyUrl", () => copyPageUrl(client)),
         ];
         client.initialiseNotifications();
         document.body.addEventListener("profile-clicked", profileClicked);
@@ -415,19 +415,6 @@
             });
     }
 
-    async function copyUrl() {
-        try {
-            const url = new URL(
-                `${window.location.pathname}${window.location.search}${window.location.hash}`,
-                client.canonicalOrigin(),
-            );
-            await navigator.clipboard.writeText(url.toString());
-            toastStore.showSuccessToast(i18nKey("urlCopiedToClipboard"));
-        } catch (err) {
-            console.error("Failed to copy url to clipboard", err);
-            toastStore.showFailureToast(i18nKey("failedToCopyUrlToClipboard"));
-        }
-    }
 
     async function createDirectChat(chatId: DirectChatIdentifier): Promise<boolean> {
         const directChatId = await client.createDirectChat(chatId);
