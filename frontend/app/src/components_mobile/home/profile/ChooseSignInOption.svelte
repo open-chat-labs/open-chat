@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Body, Container, Form, Input } from "component-lib";
-    import { AuthProvider, selectedAuthProviderStore, type OpenChat } from "@client";
+    import { AuthProvider, selectedAuthProviderStore, signInOptions, type OpenChat } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import SendIcon from "svelte-material-icons/Send.svelte";
@@ -30,54 +30,6 @@
         onLogin,
     }: Props = $props();
 
-    function buildOptions(
-        selected: AuthProvider | undefined,
-        mode: "signin" | "signup",
-        restrictTo: Set<string>,
-    ): AuthProvider[] {
-        let options = [];
-        const supportsII = "PublicKeyCredential" in window;
-
-        options.push(AuthProvider.EMAIL);
-        options.push(AuthProvider.PASSKEY);
-
-        if (supportsII) {
-            options.push(AuthProvider.II);
-            options.push(AuthProvider.ETH);
-            options.push(AuthProvider.SOL);
-
-            if (mode === "signin") {
-                options.push(AuthProvider.NFID);
-            }
-        } else if (client.isNativeApp()) {
-            options.push(AuthProvider.II);
-        }
-
-        if (restrictTo.size > 0) {
-            options = options.filter((o) => {
-                return (
-                    restrictTo.has(o) ||
-                    (o === AuthProvider.II && restrictTo.has("II")) ||
-                    (o === AuthProvider.EMAIL && restrictTo.has("EMAIL")) ||
-                    (o === AuthProvider.PASSKEY && restrictTo.has("PASSKEY")) ||
-                    (o === AuthProvider.ETH && restrictTo.has("ETH")) ||
-                    (o === AuthProvider.SOL && restrictTo.has("SOL")) ||
-                    (o === AuthProvider.NFID && restrictTo.has("NFID"))
-                );
-            });
-        }
-
-        if (selected !== undefined) {
-            const i = options.findIndex((p) => p === selected);
-
-            if (i >= 0) {
-                options.splice(i, 1);
-                options.splice(0, 0, selected);
-            }
-        }
-        return options;
-    }
-
     function providerName(provider: AuthProvider): string {
         return provider === AuthProvider.NFID ? "NFID (Legacy)" : provider;
     }
@@ -87,7 +39,11 @@
     }
 
     let options = $derived(
-        buildOptions(currentProvider ?? $selectedAuthProviderStore, mode, restrictTo),
+        signInOptions(
+            restrictTo,
+            { webAuthn: "PublicKeyCredential" in window, native: client.isNativeApp() },
+            currentProvider ?? $selectedAuthProviderStore,
+        ),
     );
     let showAllOptions = $derived(
         (currentProvider ?? $selectedAuthProviderStore) === undefined ||

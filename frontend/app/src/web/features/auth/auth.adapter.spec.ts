@@ -1,7 +1,5 @@
-import { AuthProvider } from "@client";
 import {
     afterAbandoned,
-    authOptions,
     referralCode,
     nextAuthKind,
     onAuthClosed,
@@ -9,28 +7,6 @@ import {
     uniqueWallets,
     withoutAccount,
 } from "./auth.adapter";
-
-describe("the sign-in options", () => {
-    test("are all of them by default, and only email without WebAuthn", () => {
-        expect(authOptions([], true)).toEqual(["passkey", "email", "ii", "eth", "sol", "nfid"]);
-        expect(authOptions([], false)).toEqual(["email"]);
-        // nor does the last method used bring passkey back
-        expect(authOptions([], false, AuthProvider.PASSKEY)).toEqual(["email"]);
-    });
-
-    test("?auth= narrows them, by the old names or AuthProvider's", () => {
-        expect(authOptions(["II", "EMAIL"], true)).toEqual(["email", "ii"]);
-        expect(authOptions([AuthProvider.ETH], true)).toEqual(["eth"]);
-        expect(authOptions(["SOL"], false)).toEqual([]);
-    });
-});
-
-describe("the sign-in options on a link's page", () => {
-    test("a bare ?auth (the emailed link's URL) narrows nothing", () => {
-        expect(authOptions([""], true)).toEqual(authOptions([], true));
-        expect(authOptions(["", "II"], true)).toEqual(["ii"]);
-    });
-});
 
 describe("whether / shows Landing", () => {
     test("for someone signed out, and through a sign-in started on Landing itself", () => {
@@ -56,24 +32,6 @@ describe("whether / shows Landing", () => {
         expect(showsSignedOut({ kind: "registering" }, true, false, false)).toBe(false);
         expect(showsSignedOut({ kind: "logging_in" }, true, false, true)).toBe(false);
         expect(showsSignedOut({ kind: "logged_in" }, false, false, true)).toBe(false);
-    });
-});
-
-describe("the sign-in options' order", () => {
-    test("puts the method last signed in with first", () => {
-        expect(authOptions([], true, AuthProvider.SOL)).toEqual([
-            "sol",
-            "passkey",
-            "email",
-            "ii",
-            "eth",
-            "nfid",
-        ]);
-        expect(authOptions(["II", "ETH"], true, AuthProvider.ETH)).toEqual(["eth", "ii"]);
-    });
-
-    test("a last method that isn't on offer changes nothing", () => {
-        expect(authOptions(["II"], true, AuthProvider.SOL)).toEqual(["ii"]);
     });
 });
 

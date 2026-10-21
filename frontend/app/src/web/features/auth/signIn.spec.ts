@@ -119,6 +119,7 @@ function fakeClient() {
             return settled(signal);
         }),
         gaTrack: vi.fn(),
+        isNativeApp: () => false,
         login: vi.fn(() => set({ kind: "logging_in" })),
         signInWithWebAuthn: vi.fn(async () => {}),
         signUpWithWebAuthn: vi.fn(async (_assumeIdentity: boolean, _username: string) => {

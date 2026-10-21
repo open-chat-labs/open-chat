@@ -45,3 +45,45 @@ export function signInOutcome(state: IdentityState): SignInOutcome {
             return { kind: "failed", reason: i18nKey("loginDialog.unexpectedError") };
     }
 }
+
+// ?auth=II&auth=EMAIL … narrows the sign-in options, by these names or AuthProvider's values
+const QUERY_NAMES: Record<AuthProvider, string> = {
+    [AuthProvider.EMAIL]: "EMAIL",
+    [AuthProvider.PASSKEY]: "PASSKEY",
+    [AuthProvider.II]: "II",
+    [AuthProvider.ETH]: "ETH",
+    [AuthProvider.SOL]: "SOL",
+    [AuthProvider.NFID]: "NFID",
+};
+
+/**
+ * The sign-in options on offer. Without WebAuthn only email is left, plus a passkey (the OS's)
+ * and Internet Identity in the native app. `restrictTo` (`?auth=`) narrows them, ignoring the
+ * bare `?auth` of the emailed link's URL, and the method `last` signed in with comes first.
+ */
+export function signInOptions(
+    restrictTo: Iterable<string>,
+    { webAuthn, native }: { webAuthn: boolean; native: boolean },
+    last?: AuthProvider,
+): AuthProvider[] {
+    const supported = webAuthn
+        ? [
+              AuthProvider.EMAIL,
+              AuthProvider.PASSKEY,
+              AuthProvider.II,
+              AuthProvider.ETH,
+              AuthProvider.SOL,
+              AuthProvider.NFID,
+          ]
+        : native
+          ? [AuthProvider.EMAIL, AuthProvider.PASSKEY, AuthProvider.II]
+          : [AuthProvider.EMAIL];
+    const names = new Set([...restrictTo].filter((name) => name !== ""));
+    const offered =
+        names.size === 0
+            ? supported
+            : supported.filter((o) => names.has(o) || names.has(QUERY_NAMES[o]));
+    return last !== undefined && offered.includes(last)
+        ? [last, ...offered.filter((o) => o !== last)]
+        : offered;
+}

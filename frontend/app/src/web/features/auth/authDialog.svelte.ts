@@ -1,7 +1,7 @@
-import { identityStateStore, type AuthProvider } from "@client";
+import { identityStateStore, signInOptions, type AuthProvider } from "@client";
 import type { AuthPerson } from "@openchat/ui/src/features/components/AuthDialog.svelte";
 import type { PageAuth } from "@openchat/ui/src/pages/pageAuth.svelte";
-import { authOptions, withoutAccount } from "./auth.adapter";
+import { OPTIONS, withoutAccount } from "./auth.adapter";
 import type { Auth } from "./signIn";
 
 /**
@@ -35,7 +35,11 @@ export class AuthDialogProps {
      */
     props(restrictTo: string[], last: AuthProvider): PageAuth {
         const auth = this.auth;
-        const methods = authOptions(restrictTo, "PublicKeyCredential" in window, last);
+        const methods = signInOptions(
+            restrictTo,
+            { webAuthn: "PublicKeyCredential" in window, native: auth.native },
+            last,
+        ).map((o) => OPTIONS[o]);
         return {
             methods,
             // sign-up's form makes a passkey: without one on offer, a new person signs in another
