@@ -1,13 +1,11 @@
-import type { ChatEvent, EventWrapper, Message } from "@client";
+import type { EventWrapper, Message } from "@client";
 import {
-    eventLines,
     messageRow,
     MessageRows,
     messageStatus,
     senderColor,
     untilNextDay,
     type ConversationContext,
-    type EventContext,
 } from "./conversation.adapter";
 
 const ctx: ConversationContext = {
@@ -129,60 +127,6 @@ describe("a message row", () => {
             messageRow(message({ edited: true, senderContext }), "sent", ctx).message.edited;
         expect(edited()).toBe(true);
         expect(edited({ kind: "bot", finalised: true } as Message["senderContext"])).toBe(false);
-    });
-});
-
-describe("an event's lines", () => {
-    const events: EventContext = {
-        me: "me",
-        you: "you",
-        userName: ctx.userName,
-        members: (ids) => ids.map(ctx.userName).join(", "),
-        t: (key, values) => `${key}${values ? JSON.stringify(values) : ""}`,
-        level: "group",
-    };
-    const lines = (event: Partial<ChatEvent>) => eventLines(event as ChatEvent, events);
-
-    test("say who created the group", () => {
-        expect(lines({ kind: "group_chat_created", created_by: "me" } as never)).toEqual([
-            'groupCreatedBy{"username":"you","level":"group"}',
-        ]);
-    });
-
-    test("say who was added, and by whom", () => {
-        expect(
-            lines({ kind: "members_added", userIds: ["alice", "bob"], addedBy: "me" } as never),
-        ).toEqual(['addedBy{"changed":"Alice, Bob","changedBy":"you","level":"group"}']);
-    });
-
-    test("fold joins and deletions into a line each", () => {
-        const aggregate = {
-            kind: "aggregate_common_events",
-            usersJoined: new Set(["alice"]),
-            usersLeft: new Set(),
-            rolesChanged: new Map(),
-            messagesDeleted: [4, 5],
-        };
-        expect(lines(aggregate as never)).toEqual([
-            'userJoined{"username":"Alice","level":"group"}',
-            'nMessagesDeleted{"number":2}',
-        ]);
-    });
-
-    test("count joins past ten", () => {
-        const many = new Set(Array.from({ length: 11 }, (_, i) => `u${i}`));
-        const aggregate = {
-            kind: "aggregate_common_events",
-            usersJoined: many,
-            usersLeft: new Set(),
-            rolesChanged: new Map(),
-            messagesDeleted: [],
-        };
-        expect(lines(aggregate as never)).toEqual(['nUsersJoined{"number":11,"level":"group"}']);
-    });
-
-    test("are none for the kinds left out so far", () => {
-        expect(lines({ kind: "chat_frozen" } as never)).toEqual([]);
     });
 });
 

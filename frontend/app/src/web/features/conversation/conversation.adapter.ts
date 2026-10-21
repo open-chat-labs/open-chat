@@ -1,16 +1,10 @@
-import {
-    roleAsText,
-    type ChatEvent,
-    type EventWrapper,
-    type Message,
-    type MessageContent,
-} from "@client";
+import type { EventWrapper, Message, MessageContent } from "@client";
 import type { GroupMessage } from "@openchat/ui/src/lib/types";
 import { pickById } from "../../pickById";
 
-// A conversation's events to MessageGroup's messages and the timeline's event lines (DATA.md,
-// Conversation). The client's lookups (names, text, dates, wording) come in through
-// ConversationContext, so this stays pure.
+// A conversation's messages to MessageGroup's messages (DATA.md, Conversation). The timeline's
+// other events are worded by logic/conversation/timelineEventText, as in the old trees. The
+// client's lookups (names, text, dates) come in through ConversationContext, so this stays pure.
 
 export type SenderColor = "violet" | "amber" | "teal" | "blue";
 
@@ -114,81 +108,6 @@ export function messageRow(
             threadLastAt: thread === undefined ? undefined : ctx.date(thread.latestEventTimestamp),
         },
     };
-}
-
-export type EventContext = {
-    me: string;
-    you: string;
-    userName: (userId: string) => string;
-    /** Users listed as the app lists them ("you, Alice and 2 others"). */
-    members: (userIds: string[]) => string;
-    /** The app's wording for a key, with its values. */
-    t: (key: string, values?: Record<string, string | number>) => string;
-    /** "group" or "channel", in the app's language, lower case. */
-    level: string;
-};
-
-/**
- * The lines an event other than a message shows in the timeline, in the old UI's words; none for
- * the kinds this first cut leaves out (GAPS.md).
- */
-export function eventLines(event: ChatEvent, ctx: EventContext): string[] {
-    const who = (userId: string) => (userId === ctx.me ? ctx.you : ctx.userName(userId));
-    const level = ctx.level;
-    const changedBy = (key: string, userIds: string[], by: string) =>
-        ctx.t(key, { changed: ctx.members(userIds), changedBy: who(by), level });
-    const groupChanged = (property: string, by: string) =>
-        ctx.t("groupChangedBy", { changed: ctx.t(property, { level }), changedBy: who(by) });
-    switch (event.kind) {
-        case "group_chat_created":
-            return [ctx.t("groupCreatedBy", { username: who(event.created_by), level })];
-        case "direct_chat_created":
-            return [ctx.t("directChatCreatedAt")];
-        case "members_added":
-            return [changedBy("addedBy", event.userIds, event.addedBy)];
-        case "users_invited":
-            return [changedBy("invitedBy", event.userIds, event.invitedBy)];
-        case "members_removed":
-            return [changedBy("removedBy", event.userIds, event.removedBy)];
-        case "users_blocked":
-            return [changedBy("blockedBy", event.userIds, event.blockedBy)];
-        case "users_unblocked":
-            return [changedBy("unblockedBy", event.userIds, event.unblockedBy)];
-        case "name_changed":
-            return [groupChanged("groupName", event.changedBy)];
-        case "desc_changed":
-            return [groupChanged("groupDesc", event.changedBy)];
-        case "avatar_changed":
-            return [groupChanged("groupAvatar", event.changedBy)];
-        case "aggregate_common_events": {
-            const lines: string[] = [];
-            const joined = [...event.usersJoined];
-            if (joined.length > 10) {
-                lines.push(ctx.t("nUsersJoined", { number: joined.length, level }));
-            } else if (joined.length > 0) {
-                lines.push(ctx.t("userJoined", { username: ctx.members(joined), level }));
-            }
-            for (const [by, roles] of event.rolesChanged) {
-                for (const [role, userIds] of roles) {
-                    const ids = [...userIds];
-                    const mine = ids.length === 1 && ids[0] === ctx.me;
-                    lines.push(
-                        ctx.t(mine ? "yourRoleChanged" : "roleChanged", {
-                            changed: ctx.members(ids),
-                            changedBy: who(by),
-                            newRole: ctx.t(roleAsText(role)),
-                        }),
-                    );
-                }
-            }
-            const deleted = event.messagesDeleted.length;
-            if (deleted === 1) lines.push(ctx.t("oneMessageDeleted"));
-            if (deleted > 1) lines.push(ctx.t("nMessagesDeleted", { number: deleted }));
-            return lines;
-        }
-        default:
-            return [];
-    }
 }
 
 /**
