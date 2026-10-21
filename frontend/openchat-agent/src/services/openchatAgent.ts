@@ -3933,10 +3933,10 @@ export class OpenChatAgent extends EventTarget {
         return this.userClient.archiveChat(chatId);
     }
 
-    unarchiveChat(chatId: ChatIdentifier): Promise<ArchiveChatResponse> {
+    unarchiveChats(chatIds: ChatIdentifier[]): Promise<ArchiveChatResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
-        return this.userClient.unarchiveChat(chatId);
+        return this.userClient.unarchiveChats(chatIds);
     }
 
     async registerProposalVote(

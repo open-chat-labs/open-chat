@@ -475,7 +475,7 @@ const handlers: Handlers = {
     toggleMuteNotifications: (payload, agent) =>
         agent.toggleMuteNotifications(payload.id, payload.mute, payload.muteAtEveryone),
     archiveChat: (payload, agent) => agent.archiveChat(payload.chatId),
-    unarchiveChat: (payload, agent) => agent.unarchiveChat(payload.chatId),
+    unarchiveChats: (payload, agent) => agent.unarchiveChats(payload.chatIds),
     pinChat: (payload, agent) => agent.pinChat(payload.chatId, payload.favourite),
     unpinChat: (payload, agent) => agent.unpinChat(payload.chatId, payload.favourite),
     blockUserFromDirectChat: (payload, agent) => agent.blockUserFromDirectChat(payload.userId),

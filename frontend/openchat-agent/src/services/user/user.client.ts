@@ -1040,12 +1040,12 @@ export class UserClient
         );
     }
 
-    unarchiveChat(chatId: ChatIdentifier): Promise<ArchiveChatResponse> {
+    unarchiveChats(chatIds: ChatIdentifier[]): Promise<ArchiveChatResponse> {
         return this.update(
             "archive_unarchive_chats",
             {
                 to_archive: [],
-                to_unarchive: [apiChatIdentifier(chatId)],
+                to_unarchive: chatIds.map(apiChatIdentifier),
             },
             archiveChatResponse,
             UserArchiveUnarchiveChatsArgs,

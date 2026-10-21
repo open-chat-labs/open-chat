@@ -1988,10 +1988,14 @@ export class OpenChat {
             });
     }
 
-    unarchiveChat(chatId: ChatIdentifier): Promise<boolean> {
-        const undo = localUpdates.updateArchived(chatId, false);
+    // One request for all of them, shown unarchived at once and put back together if it fails
+    unarchiveChats(chatIds: ChatIdentifier[]): Promise<boolean> {
+        const undos = withPausedStores(() =>
+            chatIds.map((chatId) => localUpdates.updateArchived(chatId, false)),
+        );
+        const undo = () => withPausedStores(() => undos.forEach((undo) => undo()));
         return this.#worker
-            .send({ kind: "unarchiveChat", chatId })
+            .send({ kind: "unarchiveChats", chatIds })
             .then((resp) => {
                 if (resp.kind !== "success") {
                     undo();
@@ -4181,7 +4185,7 @@ export class OpenChat {
         if (chat !== undefined) {
             // If an archived chat has been explicitly selected (for example by searching for it) then un-archive it
             if (chat.membership.archived) {
-                this.unarchiveChat(chat.id);
+                this.unarchiveChats([chat.id]);
             }
 
             // if it's a known chat let's select it
@@ -8624,14 +8628,12 @@ export class OpenChat {
             );
         });
 
-        // An archived chat that has unread messages comes out of the archive. Only the chats in
-        // this answer can have gained any; each is read as merged, so a local unarchive counts
+        // An archived chat that has unread messages comes out of the archive, whatever the scope.
+        // Only the chats in this answer can have gained any
         unarchiveChatsWithUnread(
-            chatsAddedUpdated.flatMap((chat) => chatSummariesStore.value.get(chat.id) ?? []),
-            (chat) => messagesRead.unreadMessagesInChat(chat),
+            chatsAddedUpdated.map((chat) => chat.id),
             this.#autoUnarchiving,
-            (chatId) => this.unarchiveChat(chatId),
-            () => publish("unarchiveChatFailed"),
+            (chatIds) => this.unarchiveChats(chatIds),
         );
 
         const selectedChatId = selectedChatIdStore.value;

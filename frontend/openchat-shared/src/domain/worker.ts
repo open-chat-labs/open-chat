@@ -319,7 +319,7 @@ export type WorkerRequest = Cloneable<
     | BlockUserFromDirectChat
     | UnpinChat
     | PinChat
-    | UnArchiveChat
+    | UnArchiveChats
     | ArchiveChat
     | ToggleMuteNotifications
     | GetPublicGroupSummary
@@ -1643,9 +1643,9 @@ type PinChat = {
     kind: "pinChat";
 };
 
-type UnArchiveChat = {
-    chatId: ChatIdentifier;
-    kind: "unarchiveChat";
+type UnArchiveChats = {
+    chatIds: ChatIdentifier[];
+    kind: "unarchiveChats";
 };
 
 type ArchiveChat = {
@@ -2662,7 +2662,7 @@ export type WorkerResults = ResultsByKind<{
     getPublicGroupSummary: PublicGroupSummaryResponse;
     toggleMuteNotifications: ToggleMuteNotificationResponse;
     archiveChat: ArchiveChatResponse;
-    unarchiveChat: ArchiveChatResponse;
+    unarchiveChats: ArchiveChatResponse;
     pinChat: PinChatResponse;
     unpinChat: UnpinChatResponse;
     blockUserFromDirectChat: BlockUserResponse;

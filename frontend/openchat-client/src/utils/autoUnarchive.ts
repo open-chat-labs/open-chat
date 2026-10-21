@@ -1,29 +1,29 @@
-import type { ChatIdentifier, ChatSet, ChatSummary } from "@shared";
+import { publish, type ChatIdentifier, type ChatSet } from "@shared";
+import { allChatsStore } from "../state";
+import { messagesRead } from "../state/unread/markRead";
 
 /**
- * Brings each archived chat with unread messages out of the archive. A chat already on its way
- * out (in `inFlight`) isn't asked again until that request settles; `failed` runs once for each
- * request that fails.
+ * Brings each of a sync answer's chats that is archived and has unread messages out of the
+ * archive, in one request. Chats are read with local updates merged and in every scope, not
+ * just the open one. A chat already on its way out (in `inFlight`) isn't asked again until its
+ * request settles. A failed request publishes `unarchiveChatFailed` once.
  */
-export function unarchiveChatsWithUnread(
-    chats: Iterable<ChatSummary>,
-    unread: (chat: ChatSummary) => number,
+export async function unarchiveChatsWithUnread(
+    answerChatIds: Iterable<ChatIdentifier>,
     inFlight: ChatSet,
-    unarchive: (chatId: ChatIdentifier) => Promise<boolean>,
-    failed: () => void,
-): Promise<void>[] {
-    const requests: Promise<void>[] = [];
-    for (const chat of chats) {
-        if (!chat.membership.archived || inFlight.has(chat.id) || unread(chat) === 0) continue;
+    unarchive: (chatIds: ChatIdentifier[]) => Promise<boolean>,
+): Promise<void> {
+    const allChats = allChatsStore.value;
+    const chatIds: ChatIdentifier[] = [];
+    for (const id of answerChatIds) {
+        const chat = allChats.get(id);
+        if (chat === undefined || !chat.membership.archived || inFlight.has(chat.id)) continue;
+        if (messagesRead.unreadMessagesInChat(chat) === 0) continue;
         inFlight.add(chat.id);
-        requests.push(
-            unarchive(chat.id)
-                .catch(() => false)
-                .then((success) => {
-                    inFlight.delete(chat.id);
-                    if (!success) failed();
-                }),
-        );
+        chatIds.push(chat.id);
     }
-    return requests;
+    if (chatIds.length === 0) return;
+    const success = await unarchive(chatIds).catch(() => false);
+    chatIds.forEach((id) => inFlight.delete(id));
+    if (!success) publish("unarchiveChatFailed");
 }
