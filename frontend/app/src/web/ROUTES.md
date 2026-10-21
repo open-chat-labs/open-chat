@@ -189,8 +189,9 @@ Not a URL, wired as today:
   selected or first chat in that scope (`selectDefaultChat`). Not yet: `src/web` picks the first
   chat (`firstChat.ts`); PLAN.md F2.
 - **`setSelectedChat` redirects:** a non-favourite on a `/favourite` URL, a group that has moved
-  to a community, a migrated DM, and the not-found and restricted modals. The modals aren't yet:
-  nothing in `src/web` handles `notFound` / `restrictedContent`; PLAN.md F2.
+  to a community, a migrated DM, and the not-found, no-access and restricted dialogs. Every tree
+  handles those events through `app/src/logic/appEvents`; closing a dialog goes to the default
+  scope.
 - **Threads.** Closing a thread strips `/:tmi` and `?open`. `/:mi/:tmi` opens the thread on a cold
   load even without `?open`.
 - **Previews.** Navigating away from a previewed community drops the preview.
