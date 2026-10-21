@@ -33,6 +33,7 @@
         type RailSelection,
         type Regions,
     } from "../../router/regions";
+    import { RailState } from "../../shell/railState.svelte";
     import { RightColumnState } from "../../shell/rightColumn.svelte";
     import Shell from "../../shell/Shell.svelte";
     import { currentShellLayout } from "../../shell/viewport.svelte";
@@ -49,6 +50,9 @@
     const rightMode = $derived(currentShellLayout().right);
     const narrow = $derived(currentShellLayout().narrow);
     const rightColumn = new RightColumnState(() => rightMode);
+    // the rail's expanded state, remembered where it pushes the layout
+    const railMode = $derived(currentShellLayout().rail);
+    const railState = new RailState(() => railMode);
 
     // the activity feed opened over a page is Notifications' too
     const selection = $derived<RailSelection>(
@@ -131,6 +135,8 @@
     rightLabel="ui.panelCover.info">
     {#snippet rail()}
         <NavRail
+            expanded={railState.expanded}
+            onExpandedChange={(expanded) => (railState.expanded = expanded)}
             {items}
             {pins}
             activeIndex={activeItem}

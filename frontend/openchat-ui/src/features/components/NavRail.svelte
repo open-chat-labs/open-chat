@@ -48,6 +48,8 @@
     items: Item[];
     pins: Pin[];
     expanded?: boolean;
+    /** The user expanded or collapsed the rail (its toggle), for a host that remembers it. Not called when a floating rail closes itself. */
+    onExpandedChange?: (expanded: boolean) => void;
     activeIndex?: number;
     /** Selected pin; set it to control pin selection from outside. */
     activePin?: number | null;
@@ -81,6 +83,7 @@
     items,
     pins,
     expanded = false,
+    onExpandedChange,
     activeIndex = 0,
     activePin,
     profileLabel,
@@ -294,7 +297,15 @@
     </div>
   {/if}
 
-  <div class="row collapse" onclick={() => (open = !open)} role="button" tabindex="0">
+  <div
+    class="row collapse"
+    onclick={() => {
+      open = !open;
+      onExpandedChange?.(open);
+    }}
+    role="button"
+    tabindex="0"
+  >
     <span class="collapse-icon"></span>
     <span class="label collapse-label">{t('ui.navRail.collapse')}</span>
   </div>

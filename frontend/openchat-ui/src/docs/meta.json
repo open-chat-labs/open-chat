@@ -12383,6 +12383,17 @@
         "doc": ""
       },
       {
+        "name": "onExpandedChange",
+        "type": "(expanded: boolean) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The user expanded or collapsed the rail (its toggle), for a host that remembers it. Not called when a floating rail closes itself."
+      },
+      {
         "name": "activeIndex",
         "type": "number",
         "default": 0,
