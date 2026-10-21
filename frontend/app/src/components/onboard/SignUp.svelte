@@ -8,6 +8,7 @@
     import AlertBox from "../AlertBox.svelte";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
+    import Checkbox from "../Checkbox.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import { Spinner } from "component-lib";
     import FindUser from "../FindUser.svelte";
@@ -38,6 +39,7 @@
     let emailValid = $derived(email.length === 0 || EmailValidator.validate(email));
     let busy = $state(false);
     let badCode = $state(false);
+    let termsAccepted = $state(false);
     let referringUser: UserSummary | undefined = $state(undefined);
 
     let TermsContent: typeof import("../landingpages/TermsContent.svelte").default | undefined =
@@ -60,13 +62,17 @@
 
     async function register(e: Event) {
         e.preventDefault();
-        if (!usernameValid || !emailValid || busy) return;
+        if (!usernameValid || !emailValid || !termsAccepted || busy) return;
         usernameStore.set(username);
         busy = true;
         let outcome: SignUpOutcome;
         try {
             // a refused referral code isn't sent again, so "proceed" signs up without it
-            outcome = await client.signUp(username, email.length > 0 ? email : undefined);
+            outcome = await client.signUp(
+                username,
+                email.length > 0 ? email : undefined,
+                termsAccepted,
+            );
         } finally {
             busy = false;
         }
@@ -194,10 +200,21 @@
                     onSelectUser={selectUser} />
             {/if}
         </div>
-        <!-- svelte-ignore a11y_click_events_have_key_events -->
-        <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div onclick={onShowGuidelines} class="smallprint">
-            <Translatable resourceKey={i18nKey("register.disclaimer")} />
+        <div class="terms">
+            <Checkbox id="sign-up-terms" label={undefined} bind:checked={termsAccepted}>
+                <!-- the words open the terms; the box ticks -->
+                <!-- svelte-ignore a11y_click_events_have_key_events -->
+                <!-- svelte-ignore a11y_no_static_element_interactions -->
+                <span
+                    class="smallprint"
+                    onclick={(e) => {
+                        e.preventDefault();
+                        onShowGuidelines();
+                    }}>
+                    <Translatable
+                        resourceKey={i18nKey("I agree to the OpenChat terms & conditions")} />
+                </span>
+            </Checkbox>
         </div>
         {#if error !== undefined}
             <div class="error">
@@ -215,7 +232,7 @@
         {/if}
         <Button
             loading={checkingUsername || busy}
-            disabled={!usernameValid || !emailValid || busy}
+            disabled={!usernameValid || !emailValid || !termsAccepted || busy}
             onClick={register}>
             <Translatable resourceKey={i18nKey("register.proceed")} />
         </Button>
@@ -236,10 +253,18 @@
         width: 100%;
     }
 
-    .smallprint {
+    // the small print's size for the whole row, so the box (sized in em) matches its words and
+    // the two sit on one centre line
+    .terms {
         margin-top: $sp4;
-        align-self: flex-start;
-        @include font(light, normal, fs-60);
+        @include font(light, normal, fs-80);
+
+        :global(.checkbox) {
+            gap: $sp3;
+        }
+    }
+
+    .smallprint {
         color: var(--primary);
         cursor: pointer;
         text-decoration: none;
