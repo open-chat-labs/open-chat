@@ -196,6 +196,17 @@ export type SignInOutcome =
     | { kind: "cancelled" }
     | { kind: "failed"; reason: ResourceKey };
 
+/**
+ * Asking for an emailed sign-in link. Sent: the code the email shows (so the person can tell it's
+ * this request's link), and `signedIn`, which settles once the link is followed and this browser
+ * has the identity, or `cancelled` when the request is given up. Given up while it was being sent,
+ * it's `cancelled` and no link is waited for.
+ */
+export type EmailSignInRequest =
+    | { kind: "sent"; code: string; signedIn: Promise<SignInOutcome> }
+    | { kind: "failed"; reason: ResourceKey }
+    | { kind: "cancelled" };
+
 export type UserLookup = ReadonlyMap<string, UserSummary>;
 
 export type User = {

@@ -125,8 +125,8 @@ design export needs. Each entry says where it came up.
   - the unread marker is implicit (the window anchor).
 - **Presence**: a polled last-online time, with no status for yourself.
 - **Community stats**: counters only; there's no 12-week series for `GroupStats`.
-- **Sign-in**: an emailed link and sign-up don't settle on sign-in yet, so `features/auth/signIn.ts`
-  watches `identityStateStore` for them (PLAN.md F2). Not carried over from the old sign-in yet:
+- **Sign-in**: sign-up doesn't settle with an outcome yet, so `features/auth/signIn.ts` reads
+  `identityStateStore` for it (PLAN.md F2). Not carried over from the old sign-in yet:
   - the guidelines shown in a popup at sign-up (`AuthDialog` links to `/terms`, a placeholder
     until the legal pages exist);
   - the onboarding dialog's language picker and Logout link (closing sign-up logs out instead);

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import { configKeys } from "@shared";
-    import { EmailSigninHandler } from "@src/utils/signin";
+    import { copyEmailCode } from "@src/utils/signin";
     import {
         AuthProvider,
         identityStateStore,
@@ -32,7 +32,9 @@
     let emailInvalid = $state(false);
     let email = $state(localStorage.getItem(configKeys.selectedAuthEmail) ?? "");
     let verificationCode: string | undefined = $state(undefined);
-    const emailSigninHandler = new EmailSigninHandler(client, "registration", true);
+    // the emailed link being waited on (still waited on after this closes, as before)
+    let emailLink: AbortController | undefined = undefined;
+    let polling = $state(false);
     let restrictTo = $derived(new Set($querystringStore.getAll("auth")));
     let loggingInWithEmail = $derived(
         loginState === "logging-in" && $selectedAuthProviderStore === AuthProvider.EMAIL,
@@ -75,16 +77,19 @@
 
         if (provider === AuthProvider.EMAIL) {
             verificationCode = undefined;
-            emailSigninHandler.generateMagicLink(email).then((resp) => {
-                if (resp.kind === "success") {
+            emailLink?.abort();
+            const link = new AbortController();
+            emailLink = link;
+            // signed in by the link, the identity store closes this
+            client.requestEmailSignIn(email, link.signal).then((resp) => {
+                if (resp.kind === "sent") {
                     verificationCode = resp.code;
-                } else if (resp.kind === "email_invalid") {
-                    error = "loginDialog.invalidEmail";
-                } else if (resp.kind === "failed_to_send_email") {
-                    console.debug("generateMagicLink failed_to_send_email", resp.error);
-                    error = "loginDialog.failedToSendEmail";
-                } else {
-                    error = "loginDialog.unexpectedError";
+                    polling = true;
+                    resp.signedIn.then(() => {
+                        if (emailLink === link) polling = false;
+                    });
+                } else if (resp.kind === "failed") {
+                    error = resp.reason.key;
                 }
             });
         } else if (provider === AuthProvider.PASSKEY) {
@@ -106,7 +111,9 @@
 
     function cancelLink() {
         client.gaTrack("email_signin_cancelled", "registration");
-        emailSigninHandler.stopPolling();
+        emailLink?.abort();
+        emailLink = undefined;
+        polling = false;
         loginState = "options";
     }
 </script>
@@ -116,8 +123,8 @@
 {:else if loggingInWithEmail}
     <EmailSigninFeedback
         code={verificationCode}
-        polling={$emailSigninHandler}
-        onCopy={(code) => emailSigninHandler.copyCode(code)} />
+        {polling}
+        onCopy={copyEmailCode} />
     {#if error !== undefined}
         <ErrorMessage><Translatable resourceKey={i18nKey(error)} /></ErrorMessage>
     {/if}
