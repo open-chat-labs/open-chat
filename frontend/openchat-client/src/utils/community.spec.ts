@@ -1,10 +1,10 @@
-import { ROLE_MEMBER, ROLE_NONE, type AccessGate } from "@shared";
+import { ROLE_MEMBER, ROLE_NONE, type AccessGate, type MemberRole } from "@shared";
 import { describe, expect, test } from "vitest";
 import { isPrivateCommunityPreview } from "./community";
 
 function community(joined: boolean, isPublic: boolean, gate: AccessGate, lapsed = false) {
     return {
-        membership: { role: joined ? ROLE_MEMBER : ROLE_NONE, lapsed },
+        membership: { role: (joined ? ROLE_MEMBER : ROLE_NONE) as MemberRole, lapsed },
         public: isPublic,
         gateConfig: { gate, expiry: undefined },
     };
@@ -35,5 +35,10 @@ describe("isPrivateCommunityPreview", () => {
             false,
         );
         expect(isPrivateCommunityPreview(undefined)).toBe(false);
+    });
+
+    test("a suspended unique person gate counts as no gate", () => {
+        const gate = { kind: "unique_person_gate" } as AccessGate;
+        expect(isPrivateCommunityPreview(community(false, true, gate))).toBe(false);
     });
 });
