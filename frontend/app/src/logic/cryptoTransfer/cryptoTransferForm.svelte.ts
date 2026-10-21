@@ -13,7 +13,7 @@ import {
     type PendingCryptocurrencyTransfer,
     type UserSummary,
 } from "@client";
-import { TransferForm } from "../wallet/transferForm.svelte";
+import { TransferForm, type TransferFormOptions } from "../wallet/transferForm.svelte";
 
 // Who the tokens go to unless the user picks someone else: the other user in a direct chat, or
 // the user being replied to, but never the user themselves
@@ -44,7 +44,7 @@ export class CryptoTransferForm extends TransferForm {
         chat: ChatSummary,
         defaultReceiver: string | undefined,
         amount: bigint,
-        options: { refreshBalance?: boolean } = {},
+        options: TransferFormOptions = {},
     ) {
         super(client, ledger, options);
         this.#chat = chat;

@@ -126,16 +126,17 @@
     $effect(() => {
         if ($chatsInitialisedStore && $selectedCommunityIdStore !== undefined) {
             const id = $selectedCommunityIdStore;
-            untrack(() => {
-                client.setSelectedCommunity(id).then((preview) => {
-                    // a previewed community's first channel has to be selected by hand
-                    if (preview && $selectedChatIdStore === undefined) {
-                        selectDefaultChat();
-                    }
-                });
-            });
+            untrack(() => loadCommunity(id));
         }
     });
+
+    async function loadCommunity(id: CommunityIdentifier) {
+        const preview = await client.setSelectedCommunity(id);
+        // a previewed community's first channel has to be selected by hand
+        if (preview && $selectedChatIdStore === undefined) {
+            selectDefaultChat();
+        }
+    }
 
     $effect(() => {
         if (client.captureReferralCode()) {

@@ -6,6 +6,7 @@
     import Close from "svelte-material-icons/Close.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
+    import { toastStore } from "../../stores/toast";
     import ErrorMessage from "../ErrorMessage.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
     import { CryptoTransferForm } from "@src/logic/cryptoTransfer/cryptoTransferForm.svelte";
@@ -29,7 +30,10 @@
     let { ledger, draftAmount, chat, defaultReceiver, messageContext, onClose }: Props = $props();
 
     const form = untrack(
-        () => new CryptoTransferForm(client, ledger, chat, defaultReceiver, draftAmount),
+        () =>
+            new CryptoTransferForm(client, ledger, chat, defaultReceiver, draftAmount, {
+                onRefreshFailed: (failure) => toastStore.showFailureToast(failure),
+            }),
     );
     let tokenState = $derived(form.tokenState);
 

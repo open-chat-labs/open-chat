@@ -1,10 +1,8 @@
 import type { OpenChat } from "@client";
-import { WalletAdapterNetwork, type WalletName } from "@solana/wallet-adapter-base";
-import { CoinbaseWalletAdapter } from "@solana/wallet-adapter-coinbase";
-import { PhantomWalletAdapter } from "@solana/wallet-adapter-phantom";
-import { WalletConnectWalletAdapter } from "@solana/wallet-adapter-walletconnect";
+import type { WalletName } from "@solana/wallet-adapter-base";
 import { initialize, settledWallet } from "@src/stores/solana/walletStore";
 import { buildSiwsMessage } from "@src/utils/siws";
+import { solanaWallets } from "@src/utils/solanaWallets";
 import base58 from "bs58";
 
 // Sign in with a Solana wallet, as the old UI's SigninWithSol.svelte does: connect, and sign the
@@ -17,14 +15,7 @@ let lastError: Error | undefined;
 function initialiseWallets(): Promise<void> {
     // a failed start isn't kept, so the next sign-in tries again
     initialised ??= initialize({
-        wallets: [
-            new PhantomWalletAdapter(),
-            new CoinbaseWalletAdapter(),
-            new WalletConnectWalletAdapter({
-                network: WalletAdapterNetwork.Mainnet,
-                options: { projectId: import.meta.env.OC_WALLET_CONNECT_PROJECT_ID! },
-            }),
-        ],
+        wallets: solanaWallets(),
         autoConnect: true,
         localStorageKey: "walletAdapter",
         onError: (error) => {

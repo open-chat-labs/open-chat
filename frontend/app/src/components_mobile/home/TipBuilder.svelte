@@ -40,6 +40,7 @@
     const form = new TipForm(
         client,
         untrack(() => ledger),
+        { onRefreshFailed: (failure) => toastStore.showFailureToast(failure) },
     );
     let tokenState = $derived(form.tokenState);
     let dollar = $state<HTMLElement | undefined>();

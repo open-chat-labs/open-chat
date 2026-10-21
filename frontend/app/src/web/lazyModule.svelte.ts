@@ -15,14 +15,17 @@ export class LazyModule<M> {
         if (this.module !== undefined || this.#loading) return;
         this.#loading = true;
         this.failed = false;
-        this.load()
-            .then(
-                (module) => (this.module = module),
-                (err) => {
-                    console.error("Couldn't load a page's content", err);
-                    this.failed = true;
-                },
-            )
-            .finally(() => (this.#loading = false));
+        this.#fetch();
+    }
+
+    async #fetch(): Promise<void> {
+        try {
+            this.module = await this.load();
+        } catch (err) {
+            console.error("Couldn't load a page's content", err);
+            this.failed = true;
+        } finally {
+            this.#loading = false;
+        }
     }
 }

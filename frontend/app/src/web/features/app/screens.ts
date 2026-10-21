@@ -76,7 +76,8 @@ export function screenLoader<M extends AnyScreen>(load: () => Promise<M>): LazyM
         loader = new LazyModule<AnyScreen>(load);
         loaders.set(load, loader);
     }
-    return loader as unknown as LazyModule<M>;
+    // the entry for `load` was made from `load`, so it loads an M
+    return loader as LazyModule<M>;
 }
 
 /**

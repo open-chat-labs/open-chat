@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { refreshBalanceOrToast } from "@src/utils/balanceRefresh";
     import MulticolourText from "@src/components_mobile/MulticolourText.svelte";
     import type { GateEvaluation } from "@src/logic/access/gateEvaluation.svelte";
     import {
@@ -242,7 +243,7 @@
         width={"fill"}
         mode={"active"}
         size={"small_text"}
-        onClick={() => tokenState.refreshBalance(client)}>
+        onClick={() => refreshBalanceOrToast(tokenState, client)}>
         {#snippet icon(color, size)}
             <Refresh {color} {size} />
         {/snippet}
