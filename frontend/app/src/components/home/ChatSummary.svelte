@@ -139,10 +139,6 @@
                       chatSummary.latestMessage?.event.messageIndex,
                   );
             unreadMentions = getUnreadMentionCount(chatSummary);
-
-            if (chatSummary.membership.archived && unreadMessages > 0) {
-                unarchiveChat();
-            }
         });
     }
 
@@ -304,10 +300,6 @@
 
     function removeFromFavourites() {
         client.removeFromFavourites(chatSummary.id);
-    }
-
-    function unarchiveChat() {
-        publish("unarchiveChat", chatSummary.id);
     }
 
     function leaveGroup() {

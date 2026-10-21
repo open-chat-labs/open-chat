@@ -157,7 +157,7 @@
             subscribe("makeProposal", showMakeProposalModal),
             subscribe("leaveGroup", onTriggerConfirm),
             subscribe("deleteGroup", onTriggerConfirm),
-            subscribe("unarchiveChat", unarchiveChat),
+            subscribe("unarchiveChatFailed", unarchiveChatFailed),
             subscribe("joinGroup", (group) => groupPreviewState.joinGroup(client, group)),
             subscribe("toggleMuteNotifications", toggleMuteNotifications),
             subscribe("successfulImport", successfulImport),
@@ -234,12 +234,8 @@
         navigate(dismissedRoute(client));
     }
 
-    function unarchiveChat(chatId: ChatIdentifier) {
-        client.unarchiveChat(chatId).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast(i18nKey("unarchiveChatFailed"));
-            }
-        });
+    function unarchiveChatFailed() {
+        toastStore.showFailureToast(i18nKey("unarchiveChatFailed"));
     }
 
     function getConfirmMessage(

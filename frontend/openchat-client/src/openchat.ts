@@ -396,6 +396,7 @@ import { get, type Unsubscriber } from "svelte/store";
 import { AndroidWebAuthnErrorCode } from "tauri-plugin-oc-api";
 import type { OpenChatConfig } from "./config";
 import { approveFromExternalWallet, type SignerWallet, type WalletAccount } from "./utils/signer";
+import { unarchiveChatsWithUnread } from "./utils/autoUnarchive";
 import {
     FilteredProposals,
     achievementsStore,
@@ -902,6 +903,8 @@ export class OpenChat {
     #inflightBalanceRefreshPromises: Map<string, Promise<bigint>> = new Map();
     #videoCallsInProgress: Set<bigint> = new Set();
     #serverVideoCallsInProgress: ChatMap<bigint> = new ChatMap();
+    // Archived chats this client is bringing out of the archive, until each request settles
+    #autoUnarchiving = new ChatSet();
     #locale!: string;
     #vapidPublicKey: string;
     #getBtcAddressPromise: Promise<string> | undefined = undefined;
@@ -1984,10 +1987,14 @@ export class OpenChat {
             });
     }
 
-    unarchiveChat(chatId: ChatIdentifier): Promise<boolean> {
-        const undo = localUpdates.updateArchived(chatId, false);
+    // One request for all of them, shown unarchived at once and put back together if it fails
+    unarchiveChats(chatIds: ChatIdentifier[]): Promise<boolean> {
+        const undos = withPausedStores(() =>
+            chatIds.map((chatId) => localUpdates.updateArchived(chatId, false)),
+        );
+        const undo = () => withPausedStores(() => undos.forEach((undo) => undo()));
         return this.#worker
-            .send({ kind: "unarchiveChat", chatId })
+            .send({ kind: "unarchiveChats", chatIds })
             .then((resp) => {
                 if (resp.kind !== "success") {
                     undo();
@@ -4174,7 +4181,7 @@ export class OpenChat {
         if (chat !== undefined) {
             // If an archived chat has been explicitly selected (for example by searching for it) then un-archive it
             if (chat.membership.archived) {
-                this.unarchiveChat(chat.id);
+                this.unarchiveChats([chat.id]);
             }
 
             // if it's a known chat let's select it
@@ -8616,6 +8623,14 @@ export class OpenChat {
                 chatsResponse.premiumItems,
             );
         });
+
+        // An archived chat that has unread messages comes out of the archive, whatever the scope.
+        // Only the chats in this answer can have gained any
+        unarchiveChatsWithUnread(
+            chatsAddedUpdated.map((chat) => chat.id),
+            this.#autoUnarchiving,
+            (chatIds) => this.unarchiveChats(chatIds),
+        );
 
         const selectedChatId = selectedChatIdStore.value;
         if (selectedChatId !== undefined) {

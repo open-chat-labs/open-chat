@@ -246,7 +246,7 @@
             }),
             subscribe("joinGroup", (group) => joinGroup(group)),
             subscribe("createCommunity", createCommunity),
-            subscribe("unarchiveChat", unarchiveChat),
+            subscribe("unarchiveChatFailed", unarchiveChatFailed),
             subscribe("forward", forwardMessage),
             subscribe("toggleMuteNotifications", toggleMuteNotifications),
             subscribe("newChannel", newChannel),
@@ -391,12 +391,8 @@
         navigate(dismissedRoute(client));
     }
 
-    function unarchiveChat(chatId: ChatIdentifier) {
-        client.unarchiveChat(chatId).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast(i18nKey("unarchiveChatFailed"));
-            }
-        });
+    function unarchiveChatFailed() {
+        toastStore.showFailureToast(i18nKey("unarchiveChatFailed"));
     }
 
     function getConfirmMessage(
