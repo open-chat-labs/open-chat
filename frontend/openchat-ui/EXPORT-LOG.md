@@ -94,3 +94,8 @@
 - `MessageComposer` takes `enterSends` (default on): off, Enter adds a line and Ctrl/⌘+Enter sends, for a host with an Enter-to-send setting. `ComposerBar` passes it through. A draft the composer starts from (`text`) takes its height on mount, as typed text does.
 - `MessageComposer` shows "+" only with `onAttach`, and the GIF tab only with `onGif` (as the mic only shows with `onVoice`), so a host that doesn't take them has no dead controls. The docs' demo states still show them.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists them).
+
+## 2026-10-21 — the rail tells the host it was toggled, by hand
+- `NavRail` takes `onExpandedChange`, called when the user expands or collapses it with its toggle (not when a floating rail closes itself on a pick or a click elsewhere), so a host can remember the choice. The app keeps it across visits where the rail pushes the layout.
+- `NavRail` takes `floating`, the host saying whether the expanded rail floats. Without it the rail measures its slot, which reads as floating for the moment a pushing rail is still widening, so a click then closed it (and a remembered "expanded" no longer matched). Its collapse toggle now works with Enter and Space too.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

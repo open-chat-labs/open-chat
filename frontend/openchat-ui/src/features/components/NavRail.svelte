@@ -1,7 +1,7 @@
 <!-- App navigation rail: destinations (chats, notifications, wallet …), pinned communities, create / explore,
      the CHIT streak button, profile and a collapse toggle. Collapsed it is an icon column; expanded it shows labels.
-     When the host gives the rail a fixed slot ([data-rail-slot] narrower than 200px) the expanded rail floats over the
-     content, so it closes again on an outside press or a pick. Guests get Home and Sign in instead of their own items.
+     When the host says so (`floating`), or gives the rail a fixed slot ([data-rail-slot] narrower than 200px), the
+     expanded rail floats over the content, so it closes again on an outside press or a pick. Guests get Home and Sign in instead of their own items.
      Pins (communities) are identified by `id`; onSelectPin reports it. Pin and profile images come from avatarUrl. -->
 <script lang="ts">
   import { onMount, tick } from 'svelte';
@@ -48,6 +48,11 @@
     items: Item[];
     pins: Pin[];
     expanded?: boolean;
+    /** The user expanded or collapsed the rail (its toggle), for a host that remembers it. Not called when a floating rail closes itself. */
+    onExpandedChange?: (expanded: boolean) => void;
+    /** Whether the expanded rail floats over the content (and closes itself on a pick or a click elsewhere). Without it,
+     *  the rail measures its slot, which reads as floating while a pushing rail is still widening. */
+    floating?: boolean;
     activeIndex?: number;
     /** Selected pin; set it to control pin selection from outside. */
     activePin?: number | null;
@@ -81,6 +86,8 @@
     items,
     pins,
     expanded = false,
+    onExpandedChange,
+    floating,
     activeIndex = 0,
     activePin,
     profileLabel,
@@ -145,8 +152,16 @@
   });
 
   function overlaying() {
+    if (!open) return false;
+    if (floating !== undefined) return floating;
     const slot = root.closest('[data-rail-slot]');
-    return !!(open && slot && slot.getBoundingClientRect().width < 200);
+    return !!(slot && slot.getBoundingClientRect().width < 200);
+  }
+
+  // the user's own expand or collapse (the toggle, by pointer or keyboard)
+  function toggle() {
+    open = !open;
+    onExpandedChange?.(open);
   }
 
   function picked() {
@@ -294,7 +309,18 @@
     </div>
   {/if}
 
-  <div class="row collapse" onclick={() => (open = !open)} role="button" tabindex="0">
+  <div
+    class="row collapse"
+    onclick={toggle}
+    onkeydown={(e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggle();
+      }
+    }}
+    role="button"
+    tabindex="0"
+  >
     <span class="collapse-icon"></span>
     <span class="label collapse-label">{t('ui.navRail.collapse')}</span>
   </div>
