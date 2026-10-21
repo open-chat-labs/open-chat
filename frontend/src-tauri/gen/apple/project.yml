@@ -66,14 +66,17 @@ targets:
         NSPhotoLibraryAddUsageDescription: OpenChat saves photos and videos you download to your photo library.
         NSFaceIDUsageDescription: OpenChat uses Face ID to sign in with your passkey.
         CFBundleURLTypes:
-          - CFBundleURLName: com.oclabs.openchat
+          - CFBundleURLName: openchat
             CFBundleURLSchemes: [openchat]
         # Dev only: the app loads the vite dev server and talks to a local dfx
         # replica over plain http on the LAN. Tighten before any release build.
         NSAppTransportSecurity:
           NSAllowsArbitraryLoads: true
     entitlements:
-      path: open-chat_iOS/open-chat_iOS.entitlements
+      # Not open-chat_iOS.entitlements: tauri-plugin-deep-link's build script rewrites
+      # that file's associated domains from the deep-link config, dropping
+      # webcredentials (see src-tauri/tests/iosDeepLinkPlugin.spec.ts).
+      path: open-chat_iOS/OpenChat.entitlements
       properties:
         # Native passkeys (RP id oc.app). oc.app serves an
         # apple-app-site-association file listing this app id. The

@@ -17,6 +17,12 @@ Notes:
 - If the tauri CLI prompts to update brew deps (cocoapods/xcodegen), answer "n"
   (this machine's brew has unrelated tap-trust errors).
 - After editing `gen/apple/project.yml`, run `xcodegen generate` in `gen/apple`.
+- Entitlements live in `open-chat_iOS/OpenChat.entitlements`, not the
+  `open-chat_iOS.entitlements` the template creates: on a clean build
+  `tauri-plugin-deep-link` rewrites that file's associated domains from the
+  deep-link config, which would drop `webcredentials:oc.app`. The plugin also
+  writes `CFBundleURLTypes` in Info.plist from the iOS deep-link config in
+  `tauri.ios.conf.json`.
 - First load after a cold vite start takes ~1 min (dev transform of the full
   module graph) — the webview is white until then.
 - Verified 2026-08-24: builds, installs and renders the onboarding screen on the
