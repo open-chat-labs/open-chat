@@ -1,13 +1,10 @@
-import type { ChatEvent, EventWrapper, Message } from "@client";
+import type { EventWrapper, Message } from "@client";
 import {
-    eventLines,
     messageRow,
-    MessageRows,
     messageStatus,
     senderColor,
     untilNextDay,
     type ConversationContext,
-    type EventContext,
 } from "./conversation.adapter";
 
 const ctx: ConversationContext = {
@@ -43,14 +40,13 @@ function message(fields: Partial<Message> = {}): EventWrapper<Message> {
 }
 
 describe("a message's status", () => {
-    const state = { failed: false, confirmed: true, accepted: true, readByThem: false };
+    const state = { failed: false, accepted: true, readByThem: false };
 
     test("is failed before anything else", () => {
-        expect(messageStatus({ ...state, failed: true, confirmed: false })).toBe("failed");
+        expect(messageStatus({ ...state, failed: true, accepted: false })).toBe("failed");
     });
 
-    test("is sending until it's confirmed and accepted", () => {
-        expect(messageStatus({ ...state, confirmed: false })).toBe("sending");
+    test("is sending until it's accepted, as the old ticks", () => {
         expect(messageStatus({ ...state, accepted: false })).toBe("sending");
     });
 
@@ -129,88 +125,6 @@ describe("a message row", () => {
             messageRow(message({ edited: true, senderContext }), "sent", ctx).message.edited;
         expect(edited()).toBe(true);
         expect(edited({ kind: "bot", finalised: true } as Message["senderContext"])).toBe(false);
-    });
-});
-
-describe("an event's lines", () => {
-    const events: EventContext = {
-        me: "me",
-        you: "you",
-        userName: ctx.userName,
-        members: (ids) => ids.map(ctx.userName).join(", "),
-        t: (key, values) => `${key}${values ? JSON.stringify(values) : ""}`,
-        level: "group",
-    };
-    const lines = (event: Partial<ChatEvent>) => eventLines(event as ChatEvent, events);
-
-    test("say who created the group", () => {
-        expect(lines({ kind: "group_chat_created", created_by: "me" } as never)).toEqual([
-            'groupCreatedBy{"username":"you","level":"group"}',
-        ]);
-    });
-
-    test("say who was added, and by whom", () => {
-        expect(
-            lines({ kind: "members_added", userIds: ["alice", "bob"], addedBy: "me" } as never),
-        ).toEqual(['addedBy{"changed":"Alice, Bob","changedBy":"you","level":"group"}']);
-    });
-
-    test("fold joins and deletions into a line each", () => {
-        const aggregate = {
-            kind: "aggregate_common_events",
-            usersJoined: new Set(["alice"]),
-            usersLeft: new Set(),
-            rolesChanged: new Map(),
-            messagesDeleted: [4, 5],
-        };
-        expect(lines(aggregate as never)).toEqual([
-            'userJoined{"username":"Alice","level":"group"}',
-            'nMessagesDeleted{"number":2}',
-        ]);
-    });
-
-    test("count joins past ten", () => {
-        const many = new Set(Array.from({ length: 11 }, (_, i) => `u${i}`));
-        const aggregate = {
-            kind: "aggregate_common_events",
-            usersJoined: many,
-            usersLeft: new Set(),
-            rolesChanged: new Map(),
-            messagesDeleted: [],
-        };
-        expect(lines(aggregate as never)).toEqual(['nUsersJoined{"number":11,"level":"group"}']);
-    });
-
-    test("are none for the kinds left out so far", () => {
-        expect(lines({ kind: "chat_frozen" } as never)).toEqual([]);
-    });
-});
-
-describe("the rows kept per event", () => {
-    test("are the same row while the event, its status and its names are", () => {
-        const rows = new MessageRows();
-        const evt = message();
-        const first = rows.row("k", evt, "sent", ctx);
-        expect(rows.row("k", evt, "sent", { ...ctx })).toBe(first);
-    });
-
-    test("are made again for a new event, status or name", () => {
-        const rows = new MessageRows();
-        const evt = message();
-        const first = rows.row("k", evt, "sent", ctx);
-        expect(rows.row("k", message(), "sent", ctx)).not.toBe(first);
-        const second = rows.row("k", evt, "sent", ctx);
-        expect(rows.row("k", evt, "delivered", ctx)).not.toBe(second);
-        const renamed = { ...ctx, userName: () => "Alicia" };
-        expect(rows.row("k", evt, "delivered", renamed).senderName).toBe("Alicia");
-    });
-
-    test("are made again once cleared", () => {
-        const rows = new MessageRows();
-        const evt = message();
-        const first = rows.row("k", evt, "sent", ctx);
-        rows.clear();
-        expect(rows.row("k", evt, "sent", ctx)).not.toBe(first);
     });
 });
 

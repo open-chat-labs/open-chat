@@ -596,7 +596,6 @@ import {
     doesMessageFailFilter,
     eventIndexesLoaded,
     findMessageById,
-    getMembersString,
     getMessageText,
     getTypingString,
     groupBySender,
@@ -747,8 +746,6 @@ import { addQueryStringParam } from "./utils/url";
 import {
     buildReducedProfileDataList,
     buildUsernameList,
-    compareIsNotYouThenUsername,
-    compareUsername,
     formatLastOnlineDate,
     missingUserIds,
     shouldRestartForNewUserId,
@@ -3917,9 +3914,6 @@ export class OpenChat {
     communityMessageRegex = communityMessageRegex;
     groupMessageRegex = groupMessageRegex;
     metricsEqual = metricsEqual;
-    getMembersString = getMembersString;
-    compareIsNotYouThenUsername = compareIsNotYouThenUsername;
-    compareUsername = compareUsername;
 
     #blockUserLocally(chatId: ChatIdentifier, userId: string): UndoLocalUpdate {
         const undos = [

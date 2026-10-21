@@ -12,7 +12,7 @@
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
     import { navigate } from "@src/utils/navigation";
     import { regionsFor } from "../../router/regions";
-    import { showsSignedOut, withoutAccount } from "../auth/auth.adapter";
+    import { showsSignedOut, withoutAccount } from "../auth/authFlow";
     import AuthScreen from "../auth/AuthScreen.svelte";
     import { pageSignIns } from "../auth/authDialog.svelte";
     import MarketingScreen from "../marketing/MarketingScreen.svelte";

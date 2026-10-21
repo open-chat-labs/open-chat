@@ -17,7 +17,7 @@
         onAuthClosed,
         withoutAccount,
         type AuthDialogKind,
-    } from "./auth.adapter";
+    } from "./authFlow";
     import { AuthDialogProps } from "./authDialog.svelte";
     import { createAuth, signInAbandoned, type Auth } from "./signIn";
 

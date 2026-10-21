@@ -362,15 +362,27 @@ describe("get members string for group chat", () => {
     const user = lookup.get("z") as UserSummary;
 
     test("up to five members get listed", () => {
-        const members = getMembersString(user, lookup, withFewerThanSix, "Unknown User", "You");
+        const members = getMembersString(
+            user.userId,
+            lookup,
+            withFewerThanSix,
+            "Unknown User",
+            "You",
+        );
         expect(members).toEqual("**Mr A**, **Mr B**, **Mr C**, **Mr D** and **You**");
     });
     test("with unknown users", () => {
-        const members = getMembersString(user, lookup, withUnknown, "Unknown User", "You");
+        const members = getMembersString(user.userId, lookup, withUnknown, "Unknown User", "You");
         expect(members).toEqual("**Mr A**, **Mr B**, **Mr D**, **You** and **Unknown User**");
     });
     test("with more than 5 members", () => {
-        const members = getMembersString(user, lookup, withMoreThanSix, "Unknown User", "You");
+        const members = getMembersString(
+            user.userId,
+            lookup,
+            withMoreThanSix,
+            "Unknown User",
+            "You",
+        );
         expect(members).toEqual("8 members");
     });
 });
