@@ -190,6 +190,14 @@
         "translateFrom": "Traducir desde: {language}",
         "translatedFrom": "Traducido en el dispositivo desde: {language}"
     },
+    "bridgedAccounts": {
+        "info": "Vincula tus cuentas de otras plataformas para que los mensajes que envíen a OpenChat a través de nuestros puentes aparezcan como tuyos.",
+        "link": "Vincular {platform}",
+        "linkFailed": "No se pudo empezar a vincular tu cuenta de {platform}",
+        "section": "Cuentas vinculadas",
+        "unlink": "Desvincular",
+        "unlinkFailed": "No se pudo desvincular la cuenta"
+    },
     "bridgedUserUnknown": "Usuario de {platform}",
     "nativeUpdate": {
         "downloadingTitle": "¡Un momento! Actualizando ...",

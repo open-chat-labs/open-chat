@@ -1008,8 +1008,18 @@ export type BridgedUser =
 
 export type BridgedUserSummary = {
     user: BridgedUser;
-    // When the profile last changed
+    // The OpenChat user who has linked the account to themself, if any, so its messages show as theirs
+    linkedUserId?: string;
+    // When the profile or the link last changed
     updated: bigint;
+};
+
+// A one-time code for a user to pass to a platform's bridge bot, to link their account there to
+// their OpenChat account
+export type BridgedUserLinkCode = {
+    kind: "success";
+    code: string;
+    expires: bigint;
 };
 
 export type DiscordUser = {

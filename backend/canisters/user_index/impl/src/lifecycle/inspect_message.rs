@@ -17,6 +17,8 @@ fn accept_if_valid(state: &RuntimeState) {
         | "claim_daily_chit"
         | "create_canister"
         | "delete_user"
+        // A bridge bot is an OpenChat user too. The endpoint checks it's the platform's bridge bot.
+        | "link_bridged_user"
         | "mark_as_online"
         | "mark_suspected_bot"
         | "pay_for_diamond_membership"
@@ -26,7 +28,9 @@ fn accept_if_valid(state: &RuntimeState) {
         | "set_hide_online_status"
         | "set_moderation_flags"
         | "set_username"
+        | "start_bridged_user_link"
         | "submit_proof_of_unique_personhood"
+        | "unlink_bridged_user"
         | "update_bot"
         | "update_diamond_membership_subscription" => state.is_caller_openchat_user(),
         "resolve_moderation_report" | "suspend_user" | "unsuspend_user" => state.is_caller_platform_moderator(),

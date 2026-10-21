@@ -369,6 +369,7 @@ import {
     type OCError,
     type ProposedProtectedAction,
     type BridgedUserId,
+    type BridgedUserLinkCode,
     type BridgedUserSummary,
     type BridgePlatform,
     bridgedAuthorAvatarUrl,
@@ -7377,6 +7378,45 @@ export class OpenChat {
                 BRIDGED_USER_RETRY_DELAY,
             );
         }
+
+        // A linked account's messages are shown as its OpenChat user's
+        await this.getMissingUsers(users.flatMap((u) => u.linkedUserId ?? []));
+    }
+
+    // A one-time code for the user to pass to the platform's bridge bot, to link their account there
+    startBridgedUserLink(platform: BridgePlatform): Promise<BridgedUserLinkCode | OCError> {
+        return this.#worker.send({ kind: "startBridgedUserLink", platform });
+    }
+
+    async unlinkBridgedUser(id: BridgedUserId): Promise<Success | OCError> {
+        const resp = await this.#worker.send({ kind: "unlinkBridgedUser", id });
+        if (resp.kind === "success") {
+            const key = bridgedUserKey(id)!;
+            bridgedUsersStore.update((map) => {
+                const summary = map.get(key);
+                if (summary !== undefined) {
+                    map.set(key, { ...summary, linkedUserId: undefined });
+                }
+                return map;
+            });
+        }
+        return resp;
+    }
+
+    // The accounts the user has linked to themself. They go in the store too, so the user's messages
+    // from a newly linked account show as theirs straight away.
+    async getLinkedBridgedUsers(): Promise<BridgedUserSummary[]> {
+        const users = await this.#worker.send({ kind: "getLinkedBridgedUsers" });
+        const now = Date.now();
+        bridgedUsersStore.update((map) => {
+            for (const u of users) {
+                const key = bridgedUserKey(bridgedUserId(u.user))!;
+                map.set(key, u);
+                this.#bridgedUsersFetchedAt.set(key, now);
+            }
+            return map;
+        });
+        return users;
     }
 
     getMissingUsers(userIds: Iterable<string>): Promise<UsersResponse> {

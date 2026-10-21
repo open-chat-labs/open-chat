@@ -190,6 +190,14 @@
         "translateFrom": "Przetłumacz z języka: {language}",
         "translatedFrom": "Przetłumaczono na urządzeniu z języka: {language}"
     },
+    "bridgedAccounts": {
+        "info": "Połącz swoje konta na innych platformach, aby wiadomości, które wysyłają do OpenChat przez nasze mosty, były wyświetlane jako Twoje.",
+        "link": "Połącz {platform}",
+        "linkFailed": "Nie udało się rozpocząć łączenia konta {platform}",
+        "section": "Połączone konta",
+        "unlink": "Rozłącz",
+        "unlinkFailed": "Nie udało się rozłączyć konta"
+    },
     "bridgedUserUnknown": "Użytkownik {platform}",
     "nativeUpdate": {
         "downloadingTitle": "Chwileczkę! Aktualizowanie ...",

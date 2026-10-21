@@ -29,6 +29,7 @@ import type {
     AddRemoveReactionResponse,
     BlockUserResponse,
     BridgedUserId,
+    BridgedUserLinkCode,
     BridgedUserSummary,
     BridgePlatform,
     CancelP2PSwapResponse,
@@ -563,6 +564,9 @@ export type WorkerRequest = Cloneable<
     | SetAlchemyApiKey
     | SetBridgeBot
     | GetBridgedUsers
+    | StartBridgedUserLink
+    | UnlinkBridgedUser
+    | GetLinkedBridgedUsers
     | SetPremiumItemCost
     | OneSecEnableForwarding
     | OneSecGetTransferFees
@@ -707,6 +711,17 @@ type SetBridgeBot = {
 type GetBridgedUsers = {
     kind: "getBridgedUsers";
     ids: BridgedUserId[];
+};
+type StartBridgedUserLink = {
+    kind: "startBridgedUserLink";
+    platform: BridgePlatform;
+};
+type UnlinkBridgedUser = {
+    kind: "unlinkBridgedUser";
+    id: BridgedUserId;
+};
+type GetLinkedBridgedUsers = {
+    kind: "getLinkedBridgedUsers";
 };
 type DailyPuzzleRegenerateToday = {
     kind: "dailyPuzzleRegenerateToday";
@@ -2882,6 +2897,9 @@ export type WorkerResults = ResultsByKind<{
     setAlchemyApiKey: Success | OCError;
     setBridgeBot: Success | OCError;
     getBridgedUsers: BridgedUserSummary[];
+    startBridgedUserLink: BridgedUserLinkCode | OCError;
+    unlinkBridgedUser: Success | OCError;
+    getLinkedBridgedUsers: BridgedUserSummary[];
     setPremiumItemCost: void;
     createAccountLinkingCode: AccountLinkingCode | undefined;
     getSignInProof: string | undefined;

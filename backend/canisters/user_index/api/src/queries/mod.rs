@@ -10,6 +10,7 @@ pub mod current_user;
 pub mod diamond_membership_fees;
 pub mod explore_bots;
 pub mod external_achievements;
+pub mod linked_bridged_users;
 pub mod migrated_user_ids;
 pub mod moderation_config;
 pub mod platform_moderators;

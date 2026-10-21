@@ -4,6 +4,7 @@ import type {
     ProposedProtectedAction,
     BotDefinition,
     BridgedUserId,
+    BridgedUserLinkCode,
     BridgedUserSummary,
     BridgePlatform,
     BotInstallationLocation,
@@ -90,7 +91,11 @@ import {
     UserIndexSetAlchemyApiKeyArgs,
     UserIndexBridgedUsersArgs,
     UserIndexBridgedUsersResponse,
+    UserIndexLinkedBridgedUsersResponse,
     UserIndexSetBridgeBotArgs,
+    UserIndexStartBridgedUserLinkArgs,
+    UserIndexStartBridgedUserLinkResponse,
+    UserIndexUnlinkBridgedUserArgs,
     UserIndexSetCallPushEnabledArgs,
     BridgePlatform as ApiBridgePlatform,
     UserIndexRecordAuthorityReportFiledArgs,
@@ -122,6 +127,7 @@ import {
     addressToIcrcAccount,
     apiBridgedUserId,
     bridgedUserSummary,
+    ocError,
     unitResult,
 } from "../common/chatMappersV2";
 import type { ChatsDb } from "../../utils/chatsDb";
@@ -499,6 +505,40 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             unitResult,
             UserIndexSetBridgeBotArgs,
             UnitResult,
+        );
+    }
+
+    startBridgedUserLink(platform: BridgePlatform): Promise<BridgedUserLinkCode | OCError> {
+        return this.update(
+            "start_bridged_user_link",
+            { platform: API_BRIDGE_PLATFORMS[platform] },
+            (resp): BridgedUserLinkCode | OCError =>
+                "Success" in resp
+                    ? { kind: "success", code: resp.Success.code, expires: resp.Success.expires }
+                    : ocError(resp.Error),
+            UserIndexStartBridgedUserLinkArgs,
+            UserIndexStartBridgedUserLinkResponse,
+        );
+    }
+
+    unlinkBridgedUser(id: BridgedUserId): Promise<Success | OCError> {
+        return this.update(
+            "unlink_bridged_user",
+            { user: apiBridgedUserId(id) },
+            unitResult,
+            UserIndexUnlinkBridgedUserArgs,
+            UnitResult,
+        );
+    }
+
+    // The accounts on other platforms which the user has linked to themself
+    linkedBridgedUsers(): Promise<BridgedUserSummary[]> {
+        return this.query(
+            "linked_bridged_users",
+            {},
+            (resp) => resp.Success.map(bridgedUserSummary),
+            Empty,
+            UserIndexLinkedBridgedUsersResponse,
         );
     }
 

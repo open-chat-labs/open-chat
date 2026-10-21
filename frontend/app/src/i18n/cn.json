@@ -190,6 +190,14 @@
         "translateFrom": "从{language}翻译",
         "translatedFrom": "已在设备上从{language}翻译"
     },
+    "bridgedAccounts": {
+        "info": "关联你在其他平台上的账号后，这些账号通过我们的桥接发送到 OpenChat 的消息将显示为你发送的。",
+        "link": "关联 {platform}",
+        "linkFailed": "无法开始关联你的 {platform} 账号",
+        "section": "已关联账号",
+        "unlink": "取消关联",
+        "unlinkFailed": "无法取消关联该账号"
+    },
     "bridgedUserUnknown": "{platform} 用户",
     "nativeUpdate": {
         "downloadingTitle": "稍等！正在更新 ...",

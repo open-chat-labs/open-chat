@@ -190,6 +190,14 @@
         "translateFrom": "תרגם מ{language}",
         "translatedFrom": "תורגם במכשיר מ{language}"
     },
+    "bridgedAccounts": {
+        "info": "קשרו את החשבונות שלכם בפלטפורמות אחרות, כדי שההודעות שהם שולחים ל-OpenChat דרך הגשרים שלנו יוצגו כשלכם.",
+        "link": "קישור {platform}",
+        "linkFailed": "לא ניתן להתחיל לקשר את חשבון ה-{platform} שלכם",
+        "section": "חשבונות מקושרים",
+        "unlink": "ביטול קישור",
+        "unlinkFailed": "לא ניתן לבטל את קישור החשבון"
+    },
     "bridgedUserUnknown": "משתמש {platform}",
     "nativeUpdate": {
         "downloadingTitle": "רגע אחד! מתעדכן ...",

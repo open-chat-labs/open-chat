@@ -677,7 +677,11 @@ export function apiBridgedUserId(id: BridgedUserId): TBridgedUserId {
 }
 
 export function bridgedUserSummary(value: TBridgedUserSummary): BridgedUserSummary {
-    return { user: bridgedUser(value.user), updated: value.updated };
+    return {
+        user: bridgedUser(value.user),
+        linkedUserId: mapOptional(value.linked_user_id, principalBytesToString),
+        updated: value.updated,
+    };
 }
 
 function bridgedUser(value: TBridgedUser): BridgedUser {

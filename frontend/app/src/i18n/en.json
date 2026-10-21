@@ -457,6 +457,14 @@
             "desc": "Summon the witch"
         }
     },
+    "bridgedAccounts": {
+        "info": "Link your accounts on other platforms, and the messages they send into OpenChat through our bridges will show as yours.",
+        "link": "Link {platform}",
+        "linkFailed": "Couldn't start linking your {platform} account",
+        "section": "Linked accounts",
+        "unlink": "Unlink",
+        "unlinkFailed": "Couldn't unlink the account"
+    },
     "bridgedUserUnknown": "{platform} user",
     "cancel": "Cancel",
     "cancelInvite": "Cancel invite",

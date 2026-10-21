@@ -19,7 +19,9 @@
         type ChatType,
         currentUserIdStore,
         currentUserStore,
+        allUsersStore,
         bridgedFrom,
+        isDeletedUser,
         bridgedUserKey,
         bridgedUsersStore,
         type EnhancedReplyContext,
@@ -313,7 +315,7 @@
 
 
     function openUserProfile(ev?: Event) {
-        if (sender?.kind === "bot") {
+        if (sender?.kind === "bot" && linkedUser === undefined) {
             botProfile = {
                 botId: sender.userId,
                 chatId,
@@ -323,7 +325,7 @@
             ev?.target?.dispatchEvent(
                 new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
                     detail: {
-                        userId: msg.sender,
+                        userId: linkedUser?.userId ?? msg.sender,
                         chatButton: multiUserChat,
                         inGlobalContext: false,
                     },
@@ -370,6 +372,15 @@
     let bridgedUser = $derived(
         bridged !== undefined ? $bridgedUsersStore.get(bridgedUserKey(bridged)!) : undefined,
     );
+    // The OpenChat user who linked the account the message was relayed from, shown as its author. If
+    // they've deleted their account, the account's own profile is shown again.
+    let linkedUser = $derived.by(() => {
+        const user =
+            bridgedUser?.linkedUserId !== undefined
+                ? $allUsersStore.get(bridgedUser.linkedUserId)
+                : undefined;
+        return user !== undefined && !isDeletedUser(user) ? user : undefined;
+    });
     // A tip would go to the bridge bot, not the author shown
     let canTip = $derived(
         canTipMessages && !me && confirmed && !inert && !failed && bridged === undefined,
@@ -633,9 +644,11 @@
                     <div class:first class="avatar">
                         <Avatar
                             onClick={openUserProfile}
-                            url={bridged !== undefined
-                                ? client.bridgedAvatarUrl(bridged, bridgedUser)
-                                : client.userAvatarUrl(sender)}
+                            url={linkedUser !== undefined
+                                ? client.userAvatarUrl(linkedUser)
+                                : bridged !== undefined
+                                  ? client.bridgedAvatarUrl(bridged, bridgedUser)
+                                  : client.userAvatarUrl(sender)}
                             size={"sm"}></Avatar>
                     </div>
                 {/if}

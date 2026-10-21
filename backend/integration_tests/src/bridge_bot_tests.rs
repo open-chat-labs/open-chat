@@ -12,9 +12,11 @@ use std::time::Duration;
 use testing::rng::random_string;
 use types::{
     BlobReference, BotChatContext, BotInstallationLocation, BotMessageContent, BotPermissions, BridgePlatform, BridgedUser,
-    CanisterId, Chat, ChatEvent, DiscordUser, EventsResponse, MessageContent, MessageId, MessageIndex, MessagePermission,
-    SenderContext, TelegramUser, TextContent, UnitResult, UserId,
+    CanisterId, Chat, ChatEvent, DiscordUser, Empty, EventsResponse, MessageContent, MessageId, MessageIndex,
+    MessagePermission, SenderContext, TelegramUser, TextContent, UnitResult, UserId,
 };
+use user_index_canister::link_bridged_user::Response as LinkResponse;
+use user_index_canister::start_bridged_user_link::Response as StartLinkResponse;
 
 #[test]
 fn bridge_bots_relay_messages_as_their_authors() {
@@ -356,6 +358,67 @@ fn bridge_bots_relay_messages_as_their_authors() {
     assert!(matches!(response, SendResponse::Success(_)), "{response:?}");
     wait_for_bridged_user(env, canister_ids.user_index, &renamed);
 
+    // An OpenChat user links their Discord account from their profile. OpenChat gives them a code,
+    // which the bridge bot redeems once it knows whose account it is, eg. through Discord's OAuth.
+    let user_index = canister_ids.user_index;
+    let code = start_link(env, owner.principal, user_index, BridgePlatform::Discord);
+
+    // Only the platform's bridge bot can redeem it
+    for (principal, user) in [
+        (discord_bot_principal, from_telegram.clone()),
+        (owner.principal, renamed.clone()),
+    ] {
+        let response = link(env, principal, user_index, user, &code);
+        assert!(
+            matches!(&response, LinkResponse::Error(e) if e.matches_code(OCErrorCode::InitiatorNotAuthorized)),
+            "{response:?}"
+        );
+    }
+
+    // And only for an account on that platform, without using it up
+    let response = link(env, telegram_bot_principal, user_index, from_telegram.clone(), &code);
+    assert!(
+        matches!(&response, LinkResponse::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
+        "{response:?}"
+    );
+
+    let response = link(env, discord_bot_principal, user_index, renamed.clone(), &code);
+    assert!(
+        matches!(&response, LinkResponse::Success(r) if r.user_id == owner.user_id && !r.username.is_empty()),
+        "{response:?}"
+    );
+    assert_eq!(linked_user_id(env, user_index, &renamed), Some(owner.user_id));
+    let user_index_canister::linked_bridged_users::Response::Success(linked) =
+        client::user_index::linked_bridged_users(env, owner.principal, user_index, &Empty {});
+    assert_eq!(linked.iter().map(|u| &u.user).collect::<Vec<_>>(), vec![&renamed]);
+
+    // The code can only be used once
+    let response = link(env, discord_bot_principal, user_index, renamed.clone(), &code);
+    assert!(
+        matches!(&response, LinkResponse::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
+        "{response:?}"
+    );
+
+    // The user can unlink it from their profile
+    let response = unlink(env, owner.principal, user_index, &renamed);
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    assert_eq!(linked_user_id(env, user_index, &renamed), None);
+
+    // So can the account's owner on the other platform, which the bridge bot relays, from whoever
+    // it's linked to. Only the platform's bridge bot can.
+    let code = start_link(env, owner.principal, user_index, BridgePlatform::Discord);
+    let response = link(env, discord_bot_principal, user_index, renamed.clone(), &code);
+    assert!(matches!(response, LinkResponse::Success(_)), "{response:?}");
+    let response = unlink(env, telegram_bot_principal, user_index, &renamed);
+    assert!(
+        matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::InitiatorNotAuthorized)),
+        "{response:?}"
+    );
+    assert_eq!(linked_user_id(env, user_index, &renamed), Some(owner.user_id));
+    let response = unlink(env, discord_bot_principal, user_index, &renamed);
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    assert_eq!(linked_user_id(env, user_index, &renamed), None);
+
     // A bridge bot is refused once it's unset. Both are unset, which also leaves the pooled env as
     // it was
     for platform in [BridgePlatform::Discord, BridgePlatform::Telegram] {
@@ -367,6 +430,20 @@ fn bridge_bots_relay_messages_as_their_authors() {
     let response = send(env, discord_bot_principal, community_local_user_index, channel, from_discord);
     assert!(
         matches!(&response, SendResponse::Error(e) if e.matches_code(OCErrorCode::InitiatorNotAuthorized)),
+        "{response:?}"
+    );
+
+    // Nor can a user start linking an account on a platform with no bridge bot
+    let response = client::user_index::start_bridged_user_link(
+        env,
+        owner.principal,
+        user_index,
+        &user_index_canister::start_bridged_user_link::Args {
+            platform: BridgePlatform::Discord,
+        },
+    );
+    assert!(
+        matches!(&response, StartLinkResponse::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
         "{response:?}"
     );
 
@@ -522,6 +599,49 @@ fn assert_relayed_from(events: &EventsResponse, bot_id: UserId, bridged_from: &B
         panic!("Expected a bot sender context: {:?}", message.sender_context);
     };
     assert_eq!(bot_context.bridged_from, Some(bridged_from.id()));
+}
+
+fn start_link(env: &mut PocketIc, user: Principal, user_index: CanisterId, platform: BridgePlatform) -> String {
+    match client::user_index::start_bridged_user_link(
+        env,
+        user,
+        user_index,
+        &user_index_canister::start_bridged_user_link::Args { platform },
+    ) {
+        StartLinkResponse::Success(result) => result.code,
+        response => panic!("'start_bridged_user_link' error: {response:?}"),
+    }
+}
+
+fn link(env: &mut PocketIc, caller: Principal, user_index: CanisterId, user: BridgedUser, code: &str) -> LinkResponse {
+    client::user_index::link_bridged_user(
+        env,
+        caller,
+        user_index,
+        &user_index_canister::link_bridged_user::Args {
+            user,
+            code: code.to_string(),
+        },
+    )
+}
+
+fn unlink(env: &mut PocketIc, caller: Principal, user_index: CanisterId, user: &BridgedUser) -> UnitResult {
+    client::user_index::unlink_bridged_user(
+        env,
+        caller,
+        user_index,
+        &user_index_canister::unlink_bridged_user::Args { user: user.id() },
+    )
+}
+
+fn linked_user_id(env: &PocketIc, user_index: CanisterId, user: &BridgedUser) -> Option<UserId> {
+    let user_index_canister::bridged_users::Response::Success(users) = client::user_index::bridged_users(
+        env,
+        Principal::anonymous(),
+        user_index,
+        &user_index_canister::bridged_users::Args { users: vec![user.id()] },
+    );
+    users.first().and_then(|u| u.linked_user_id)
 }
 
 // The LocalUserIndex passes the profile on to the UserIndex over its event queue
