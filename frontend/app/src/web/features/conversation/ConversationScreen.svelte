@@ -56,14 +56,13 @@
     import type { MiddleRegion, ScreenProps } from "../app/screens";
     import Composer from "./Composer.svelte";
     import {
-        messageRow,
         messageStatus,
         senderColor,
         untilNextDay,
         type ConversationContext,
         type MessageRow,
-        type MessageStatus,
     } from "./conversation.adapter";
+    import { RowCache } from "./rowCache";
 
     let { context: screen }: ScreenProps<Extract<MiddleRegion, { kind: "conversation" }>> =
         $props();
@@ -261,13 +260,9 @@
         });
     }
 
-    // rows kept per event, and their messages with them, so user and other chat updates don't
-    // redo every bubble: a row is made again when its event, its status or the names in it
-    // change, and every row is for a new chat, wording or day
-    const rows = new Map<
-        string,
-        { evt: EventWrapper<Message>; status: MessageStatus; names: string; row: MessageRow }
-    >();
+    // rows kept per event (RowCache), and their messages with them, so user and other chat
+    // updates don't redo every bubble; started again for a new chat, wording or day
+    const rows = new RowCache();
     const groupMessages = new WeakMap<MessageRow, GroupMessage[]>();
     $effect.pre(() => {
         void chatKey;
@@ -275,20 +270,6 @@
         void day;
         rows.clear();
     });
-
-    function rowFor(key: string, evt: EventWrapper<Message>, status: MessageStatus): MessageRow {
-        const msg = evt.event;
-        const reply = msg.repliesTo;
-        const name = (userId: string) => (userId === ctx.me ? ctx.you : ctx.userName(userId));
-        const names = `${name(msg.sender)}\n${reply?.kind === "rehydrated_reply_context" ? name(reply.senderId) : ""}`;
-        const kept = rows.get(key);
-        if (kept?.evt === evt && kept.status === status && kept.names === names) {
-            return kept.row;
-        }
-        const row = messageRow(evt, status, ctx);
-        rows.set(key, { evt, status, names, row });
-        return row;
-    }
 
     // a date pill's label, worked out again when the day changes
     function dateLabel(timestamp: bigint): string {
@@ -397,7 +378,12 @@
                             {#if isMessage(evt)}
                                 {@const msg = evt.event}
                                 {@const failed = args.isFailed($failedMessagesStore, evt)}
-                                {@const row = rowFor(item.key, evt, status(evt, args, failed))}
+                                {@const row = rows.row(
+                                    item.key,
+                                    evt,
+                                    status(evt, args, failed),
+                                    ctx,
+                                )}
                                 {@const content = msg.content}
                                 <!-- a text message's text as the old UI renders it: markdown, mentions,
                                      links, custom emoji (a lone emoji is the bubble's own, large) -->

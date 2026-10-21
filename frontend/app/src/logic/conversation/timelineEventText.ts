@@ -175,6 +175,8 @@ export function timelineEventText(event: TextEvent, ctx: EventTextContext): stri
             return bot("bots.events.remove", event.userId, event.removedBy);
         case "bot_updated":
             return bot("bots.events.update", event.userId, event.updatedBy);
+        default:
+            return event satisfies never;
     }
 }
 
