@@ -286,6 +286,21 @@ describe("signing in", () => {
             expect(register).not.toHaveBeenCalled();
         });
 
+        /** Invariant 8: a passkey made whose identity then failed to load isn't made again; the
+         * next try goes on to the account with the identity it has. */
+        test("a passkey made but not loaded isn't made again", async () => {
+            vi.spyOn(client, "logError").mockImplementation(() => {});
+            passkey.mockImplementation(async () => {
+                set({ kind: "loading_user", registering: true });
+                throw new Error("worker gone");
+            });
+            expect((await client.signUp("newperson", undefined)).kind).toBe("failed");
+            expect(register).not.toHaveBeenCalled();
+            expect(await client.signUp("newperson", undefined)).toEqual({ kind: "success" });
+            expect(passkey).toHaveBeenCalledOnce();
+            expect(register).toHaveBeenCalledOnce();
+        });
+
         test("a dismissed passkey prompt is cancelled, and the next try asks again", async () => {
             passkey.mockRejectedValueOnce(new Error("NotAllowedError"));
             expect(await client.signUp("newperson", undefined)).toEqual({ kind: "cancelled" });
@@ -313,7 +328,11 @@ describe("signing in", () => {
             set({ kind: "registering" });
             const clear = vi.spyOn(client, "clearReferralCode");
             client.setReferralCode("r1");
-            register.mockResolvedValueOnce({ kind: "referral_code_invalid" });
+            // as registerUser does, the refused code is cleared once it's turned down
+            register.mockImplementationOnce(async () => {
+                client.clearReferralCode();
+                return { kind: "referral_code_invalid" };
+            });
             const refused = await client.signUp("newperson", undefined);
             expect(refused.kind === "referral_refused" && refused.reason.key).toBe(
                 "register.referralCodeInvalid",

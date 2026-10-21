@@ -2,7 +2,7 @@
     import { i18nKey } from "@src/i18n/i18n";
     import { createLocalStorageStore } from "@src/utils/store";
     import EmailValidator from "email-validator";
-    import type { OpenChat, UserOrUserGroup, UserSummary } from "@client";
+    import type { OpenChat, SignUpOutcome, UserOrUserGroup, UserSummary } from "@client";
     import { mobileWidth } from "@client";
     import { getContext, onMount } from "svelte";
     import AlertBox from "../AlertBox.svelte";
@@ -63,9 +63,13 @@
         if (!usernameValid || !emailValid || busy) return;
         usernameStore.set(username);
         busy = true;
-        // a refused referral code isn't sent again, so "proceed" signs up without it
-        const outcome = await client.signUp(username, email.length > 0 ? email : undefined);
-        busy = false;
+        let outcome: SignUpOutcome;
+        try {
+            // a refused referral code isn't sent again, so "proceed" signs up without it
+            outcome = await client.signUp(username, email.length > 0 ? email : undefined);
+        } finally {
+            busy = false;
+        }
         badCode = outcome.kind === "referral_refused";
         switch (outcome.kind) {
             case "success":

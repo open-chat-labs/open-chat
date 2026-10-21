@@ -6750,10 +6750,8 @@ export class OpenChat {
         signal?: AbortSignal,
     ): Promise<SignUpOutcome> {
         selectedAuthProviderStore.set(AuthProvider.PASSKEY);
-        if (identityStateStore.value.kind !== "registering") {
-            if (this.#passkeyMadeForSignUp) {
-                return { kind: "failed", reason: i18nKey("unexpectedError") };
-            }
+        // a passkey already made for this sign-up isn't made again
+        if (identityStateStore.value.kind !== "registering" && !this.#passkeyMadeForSignUp) {
             try {
                 await (this.isNativeApp()
                     ? this.signUpWithAndroidWebAuthn(true, username)
@@ -6771,8 +6769,11 @@ export class OpenChat {
             }
         }
         if (signal?.aborted) return { kind: "cancelled" };
-        // no OpenChat identity for the passkey, so it's being signed out
-        if (identityStateStore.value.kind !== "registering") {
+        // the passkey's identity has no account (registering), or it's still loading the user,
+        // after a failed load, which registerUser can still make the account for; signed out
+        // instead (anonymous: no OpenChat identity for the passkey), there's nothing to make it for
+        const state = identityStateStore.value.kind;
+        if (state !== "registering" && !(this.#passkeyMadeForSignUp && state === "loading_user")) {
             return { kind: "failed", reason: i18nKey("unexpectedError") };
         }
         // a code turned down before is never sent again
