@@ -10,7 +10,7 @@
     } from "@client";
     import Button from "@openchat/ui/src/lib/components/Button.svelte";
     import DialogShell from "@openchat/ui/src/lib/components/DialogShell.svelte";
-    import Markdown from "@shared_components/Markdown.svelte";
+    import Markdown from "@src/core/Markdown.svelte";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
 

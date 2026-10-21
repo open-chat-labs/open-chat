@@ -1,5 +1,5 @@
 <script lang="ts">
-    import VirtualList from "@shared_components/VirtualList.svelte";
+    import VirtualList from "@openchat/ui/src/lib/virtual/VirtualList.svelte";
     import { mobileWidth, type EmojiSummary, type SelectedEmoji } from "@client";
     import { untrack } from "svelte";
     import { searchAllEmojis, summaryToSelectedEmoji } from "../../utils/emojis";

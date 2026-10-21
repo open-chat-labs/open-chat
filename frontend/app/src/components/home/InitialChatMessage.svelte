@@ -21,7 +21,7 @@
     import ProposalBot from "@shared_components/ProposalBot.svelte";
     import Robot from "@shared_components/Robot.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
-    import Markdown from "@shared_components/Markdown.svelte";
+    import Markdown from "@src/core/Markdown.svelte";
 
     const client = getContext<OpenChat>("client");
 

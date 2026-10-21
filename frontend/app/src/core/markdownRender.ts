@@ -1,6 +1,6 @@
 import { userGroupMentionRegex, userIdMentionRegex } from "@client";
 import { marked } from "marked";
-import { DOMPurifyDefault, sanitizeOneLine } from "../utils/domPurify";
+import { DOMPurifyDefault, sanitizeOneLine } from "@src/utils/domPurify";
 
 export type MentionedUser = { id: string; userId: string; username: string };
 export type MentionedUserGroup = { id: number; groupId: number; name: string };

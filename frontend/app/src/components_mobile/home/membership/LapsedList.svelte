@@ -6,7 +6,7 @@
     import AccountAlert from "svelte-material-icons/AccountAlertOutline.svelte";
     import Account from "svelte-material-icons/AccountGroupOutline.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
-    import VirtualList from "@shared_components/VirtualList.svelte";
+    import VirtualList from "@openchat/ui/src/lib/virtual/VirtualList.svelte";
     import NothingToSee from "../NothingToSee.svelte";
     import LapsedUser from "./LapsedUser.svelte";
     import type { MemberManagement } from "./membersState.svelte";

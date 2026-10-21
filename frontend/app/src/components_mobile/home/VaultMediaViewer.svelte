@@ -3,7 +3,7 @@
     import {
         VaultMediaReview,
         type ReviewOutcome,
-    } from "@shared_components/vaultMediaReview.svelte";
+    } from "@src/logic/moderation/vaultMediaReview.svelte";
     import { Body, Button, Column, Sheet, Subtitle } from "component-lib";
     import { getContext, onDestroy } from "svelte";
     import { i18nKey } from "../../i18n/i18n";

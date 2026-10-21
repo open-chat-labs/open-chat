@@ -13,7 +13,7 @@
     import Overlay from "../Overlay.svelte";
     import TextArea from "../TextArea.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
-    import { CryptoTransferForm } from "@shared_components/home/cryptoTransfer/cryptoTransferForm.svelte";
+    import { CryptoTransferForm } from "@src/logic/cryptoTransfer/cryptoTransferForm.svelte";
     import AccountInfo from "./AccountInfo.svelte";
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
     import CryptoSelector from "./CryptoSelector.svelte";

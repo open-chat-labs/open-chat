@@ -36,9 +36,9 @@
     import MessageGroup from "@openchat/ui/src/lib/components/MessageGroup.svelte";
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
     import UnreadDivider from "@openchat/ui/src/lib/components/UnreadDivider.svelte";
-    import ChatEventList, { type ChatEventListArgs } from "@shared_components/ChatEventList.svelte";
-    import { TimelineFlattener, type FlatChatItem } from "@shared_components/flatChatItems";
-    import Markdown from "@shared_components/Markdown.svelte";
+    import ChatEventList, { type ChatEventListArgs } from "@src/core/ChatEventList.svelte";
+    import { TimelineFlattener, type FlatChatItem } from "@src/core/flatChatItems";
+    import Markdown from "@src/core/Markdown.svelte";
     import { i18nKey } from "@i18n/i18n";
     import type { GroupMessage } from "@openchat/ui/src/lib/types";
     import { toastStore } from "@src/stores/toast";

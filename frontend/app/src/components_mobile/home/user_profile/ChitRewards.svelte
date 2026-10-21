@@ -7,7 +7,7 @@
     import { getContext } from "svelte";
     import FlashOutline from "svelte-material-icons/FlashOutline.svelte";
     import Calendar from "../../calendar/Calendar.svelte";
-    import { calendarState, type DateRange } from "@shared_components/calendar/calendarState.svelte";
+    import { calendarState, type DateRange } from "@src/logic/calendar/calendarState.svelte";
     import Setting from "../../Setting.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
     import ChitEventsForDay from "../profile/ChitEventsForDay.svelte";

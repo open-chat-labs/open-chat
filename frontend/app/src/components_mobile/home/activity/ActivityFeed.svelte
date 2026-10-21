@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activityFeedState } from "@src/runes/activity.svelte";
+    import { activityFeedState } from "@src/logic/activity/activity.svelte";
     import { trackedEffect } from "@src/utils/effects.svelte";
     import { Body, Container, Logo, SectionHeader } from "component-lib";
     import {
@@ -15,7 +15,7 @@
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "@shared_components/Translatable.svelte";
-    import VirtualList from "@shared_components/VirtualList.svelte";
+    import VirtualList from "@openchat/ui/src/lib/virtual/VirtualList.svelte";
     import FancyLoader from "../../icons/FancyLoader.svelte";
     import NothingToSee from "../NothingToSee.svelte";
     import ActivityEvent from "./ActivityEvent.svelte";

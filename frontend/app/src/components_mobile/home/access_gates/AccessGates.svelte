@@ -18,9 +18,9 @@
     import Setting from "../../Setting.svelte";
     import SparkleBox from "../../SparkleBox.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
-    import { UpdateGroupState } from "@shared_components/home/createOrUpdateGroup/group.svelte";
+    import { UpdateGroupState } from "@src/logic/groupOrCommunity/group.svelte";
     import GroupCard from "../createOrUpdateGroup/GroupCard.svelte";
-    import type { UpdateGroupOrCommunityState } from "@shared_components/home/groupOrCommunity.svelte";
+    import type { UpdateGroupOrCommunityState } from "@src/logic/groupOrCommunity/groupOrCommunity.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
 
     interface Props {

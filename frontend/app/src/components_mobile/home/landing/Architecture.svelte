@@ -1,5 +1,5 @@
 <script lang="ts">
-    import CanisterMapFrame from "@shared_components/CanisterMapFrame.svelte";
+    import CanisterMapFrame from "@src/core/CanisterMapFrame.svelte";
     import { i18nKey } from "@src/i18n/i18n";
     import SlidingPageContent from "../SlidingPageContent.svelte";
 </script>

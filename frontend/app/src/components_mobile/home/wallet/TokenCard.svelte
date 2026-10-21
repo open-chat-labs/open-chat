@@ -9,7 +9,7 @@
         Container,
         Subtitle,
     } from "component-lib";
-    import type { TokenState } from "@shared_components/home/wallet/walletState.svelte";
+    import type { TokenState } from "@src/logic/wallet/walletState.svelte";
 
     interface Props {
         tokenState: TokenState;

@@ -21,7 +21,7 @@
     import Edit from "svelte-material-icons/TextBoxEditOutline.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
-    import type { UpdateGroupOrCommunityState } from "@shared_components/home/groupOrCommunity.svelte";
+    import type { UpdateGroupOrCommunityState } from "@src/logic/groupOrCommunity/groupOrCommunity.svelte";
 
     const client = getContext<OpenChat>("client");
 

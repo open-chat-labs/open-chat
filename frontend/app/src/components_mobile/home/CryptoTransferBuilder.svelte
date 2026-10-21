@@ -8,7 +8,7 @@
     import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
     import ErrorMessage from "../ErrorMessage.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
-    import { CryptoTransferForm } from "@shared_components/home/cryptoTransfer/cryptoTransferForm.svelte";
+    import { CryptoTransferForm } from "@src/logic/cryptoTransfer/cryptoTransferForm.svelte";
     import CryptoSelector from "./CryptoSelector.svelte";
     import SingleUserSelector from "./SingleUserSelector.svelte";
     import SourceWalletSelector from "./SourceWalletSelector.svelte";

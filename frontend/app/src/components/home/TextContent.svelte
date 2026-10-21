@@ -1,5 +1,5 @@
 <script lang="ts">
-    import Markdown from "@shared_components/Markdown.svelte";
+    import Markdown from "@src/core/Markdown.svelte";
     import type { OgPreview, RehydratedMessagePreview, TextContent } from "@client";
     import { _ } from "svelte-i18n";
     import IntersectionObserver from "./IntersectionObserver.svelte";

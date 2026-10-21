@@ -40,9 +40,8 @@ web/
 ```
 
 Outside this folder, and shared with the legacy trees while they live (`frontend/CLAUDE.md`, "Where
-code goes"): `app/src/logic` (flow state), `app/src/core` (components with behaviour but no look,
-such as `ChatEventList` and `Markdown`) and `app/src/content` (Learn's roadmap, posts and
-whitepaper).
+code goes"): `app/src/logic` (flow state) and `app/src/core` (components with behaviour but no look,
+such as `ChatEventList` and `Markdown`).
 
 ## Rules
 

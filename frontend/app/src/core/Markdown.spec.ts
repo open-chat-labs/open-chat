@@ -2,7 +2,7 @@ import { allUsersStore, userGroupSummariesStore } from "@client";
 import { marked } from "marked";
 import { flushSync, mount, unmount } from "svelte";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { DOMPurifyDefault } from "../utils/domPurify";
+import { DOMPurifyDefault } from "@src/utils/domPurify";
 import Markdown from "./Markdown.svelte";
 
 const client = {

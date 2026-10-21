@@ -9,7 +9,7 @@ import {
     type OpenChat,
 } from "@client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { TipForm } from "./tipForm.svelte";
+import { TipForm } from "@src/logic/tip/tipForm.svelte";
 
 const icp = {
     name: "Internet Computer",

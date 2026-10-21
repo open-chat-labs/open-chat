@@ -13,7 +13,7 @@
         TIP_INCREMENTS,
         TipForm,
         type TipIncrement,
-    } from "@shared_components/home/tip/tipForm.svelte";
+    } from "@src/logic/tip/tipForm.svelte";
     import AccountInfo from "./AccountInfo.svelte";
     import CryptoSelector from "./CryptoSelector.svelte";
     import ExternalWalletApproval from "./ExternalWalletApproval.svelte";

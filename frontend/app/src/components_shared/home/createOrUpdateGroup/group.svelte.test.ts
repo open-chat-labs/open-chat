@@ -11,7 +11,7 @@ import {
     type UpdateGroupOutcome,
 } from "@client";
 import { describe, expect, test, vi } from "vitest";
-import { UpdateGroupState } from "./group.svelte";
+import { UpdateGroupState } from "@src/logic/groupOrCommunity/group.svelte";
 
 const group: CandidateGroupChat = {
     id: { kind: "group_chat", groupId: "rrkah-fqaaa-aaaaa-aaaaq-cai" },

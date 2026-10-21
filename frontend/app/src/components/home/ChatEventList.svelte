@@ -13,8 +13,8 @@
     import ArrowUp from "svelte-material-icons/ArrowUp.svelte";
     import SharedChatEventList, {
         type ChatEventListArgs,
-    } from "@shared_components/ChatEventList.svelte";
-    import type { FlatChatItem } from "@shared_components/flatChatItems";
+    } from "@src/core/ChatEventList.svelte";
+    import type { FlatChatItem } from "@src/core/flatChatItems";
     import { rtlStore } from "../../stores/rtl";
     import { pop } from "../../utils/transition";
     import Fab from "../Fab.svelte";

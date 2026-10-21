@@ -19,12 +19,12 @@
     import Translatable from "@shared_components/Translatable.svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import CryptoSelector from "../CryptoSelector.svelte";
-    import Markdown from "@shared_components/Markdown.svelte";
+    import Markdown from "@src/core/Markdown.svelte";
     import TokenInput from "../TokenInput.svelte";
     import SwapProgress from "./SwapProgress.svelte";
     import SwapQuotes from "./SwapQuotes.svelte";
-    import { TokenState } from "@shared_components/home/wallet/walletState.svelte";
-    import { SwapForm } from "@shared_components/home/wallet/swapForm.svelte";
+    import { TokenState } from "@src/logic/wallet/walletState.svelte";
+    import { SwapForm } from "@src/logic/wallet/swapForm.svelte";
 
     interface Props {
         ledgerIn: string;

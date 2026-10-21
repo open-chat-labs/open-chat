@@ -49,7 +49,7 @@
         MAX_NAME_LENGTH,
         MIN_NAME_LENGTH,
         updateGroupState,
-    } from "@shared_components/home/createOrUpdateGroup/group.svelte";
+    } from "@src/logic/groupOrCommunity/group.svelte";
 
     const MIN_LENGTH = 3;
     const MAX_URL_LENGTH = 500;

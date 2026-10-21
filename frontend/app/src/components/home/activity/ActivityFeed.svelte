@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activityFeedState } from "@src/runes/activity.svelte";
+    import { activityFeedState } from "@src/logic/activity/activity.svelte";
     import { menuCloser } from "component-lib";
     import {
         activityFeedShowing,
@@ -19,7 +19,7 @@
     import HoverIcon from "../../HoverIcon.svelte";
     import SectionHeader from "../../SectionHeader.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
-    import VirtualList from "@shared_components/VirtualList.svelte";
+    import VirtualList from "@openchat/ui/src/lib/virtual/VirtualList.svelte";
     import ActivityEvent from "./ActivityEvent.svelte";
 
     const client = getContext<OpenChat>("client");

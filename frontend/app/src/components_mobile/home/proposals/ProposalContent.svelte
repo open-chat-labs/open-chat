@@ -37,7 +37,7 @@
     import { round2 } from "../../../utils/math";
     import { copyToClipboard } from "../../../utils/urls";
     import Translatable from "@shared_components/Translatable.svelte";
-    import Markdown from "@shared_components/Markdown.svelte";
+    import Markdown from "@src/core/Markdown.svelte";
     import ProposalVoteButton from "./ProposalVoteButton.svelte";
     import ProposalVotingProgress from "./ProposalVotingProgress.svelte";
     import ProposalStatusLabel from "./ProposalStatusLabel.svelte";

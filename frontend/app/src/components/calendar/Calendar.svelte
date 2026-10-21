@@ -6,7 +6,7 @@
     import NextIcon from "svelte-material-icons/ChevronRight.svelte";
     import { translationCodes } from "../../i18n/i18n";
     import HoverIcon from "../HoverIcon.svelte";
-    import { calendarState, type DateRange } from "@shared_components/calendar/calendarState.svelte";
+    import { calendarState, type DateRange } from "@src/logic/calendar/calendarState.svelte";
     import { getMonthCalendar, getTitleText, isSameDay } from "@shared_components/calendar/utils";
     import { weekDays } from "@shared_components/calendar/weekdays";
 

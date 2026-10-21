@@ -25,8 +25,8 @@
     import AccountSelector from "./AccountSelector.svelte";
     import SaveAccount from "./SaveAccount.svelte";
     import Scanner from "./Scanner.svelte";
-    import { TokenState } from "@shared_components/home/wallet/walletState.svelte";
-    import { WithdrawForm } from "@shared_components/home/wallet/withdrawForm.svelte";
+    import { TokenState } from "@src/logic/wallet/walletState.svelte";
+    import { WithdrawForm } from "@src/logic/wallet/withdrawForm.svelte";
 
     interface Props {
         ledger: string;

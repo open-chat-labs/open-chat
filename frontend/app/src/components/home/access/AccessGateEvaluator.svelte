@@ -13,7 +13,7 @@
     import {
         GateEvaluation,
         type EvaluatedLeafGate,
-    } from "@shared_components/home/access/gateEvaluation.svelte";
+    } from "@src/logic/access/gateEvaluation.svelte";
     import { getContext } from "svelte";
     import CheckCircle from "svelte-material-icons/CheckCircle.svelte";
     import VectorCombine from "svelte-material-icons/VectorCombine.svelte";

@@ -5,7 +5,7 @@
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "@shared_components/Translatable.svelte";
-    import Markdown from "@shared_components/Markdown.svelte";
+    import Markdown from "@src/core/Markdown.svelte";
 
     const client = getContext<OpenChat>("client");
 

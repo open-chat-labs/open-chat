@@ -19,7 +19,7 @@
     import Button from "../../Button.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
-    import { UpdateGroupState } from "@shared_components/home/createOrUpdateGroup/group.svelte";
+    import { UpdateGroupState } from "@src/logic/groupOrCommunity/group.svelte";
     import ChooseMembers from "../ChooseMembers.svelte";
     import GroupPermissionsEditor from "../GroupPermissionsEditor.svelte";
     import GroupPermissionsViewer from "../GroupPermissionsViewer.svelte";

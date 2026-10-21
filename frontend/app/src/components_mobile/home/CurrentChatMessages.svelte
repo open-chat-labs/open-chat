@@ -46,7 +46,7 @@
         chatStartItem,
         TimelineFlattener,
         type FlatChatItem,
-    } from "@shared_components/flatChatItems";
+    } from "@src/core/flatChatItems";
     import ChatEvent from "./ChatEvent.svelte";
     import ChatEventList from "./ChatEventList.svelte";
     import InitialChatMessage from "./InitialChatMessage.svelte";

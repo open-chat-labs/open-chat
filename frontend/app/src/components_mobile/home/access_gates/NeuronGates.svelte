@@ -2,7 +2,7 @@
     import { ColourVars } from "component-lib";
     import { OpenChat, publish, type NeuronGate } from "@client";
     import { getContext } from "svelte";
-    import type { UpdateGroupOrCommunityState } from "@shared_components/home/groupOrCommunity.svelte";
+    import type { UpdateGroupOrCommunityState } from "@src/logic/groupOrCommunity/groupOrCommunity.svelte";
     import AboutNeuronGate from "./AboutNeuronGate.svelte";
     import AccessGateList from "./AccessGateList.svelte";
 

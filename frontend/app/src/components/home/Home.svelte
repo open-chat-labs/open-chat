@@ -63,7 +63,7 @@
     import { getContext, onMount, tick, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
-    import { newCommunity } from "@shared_components/home/communities/createOrUpdate/community.svelte";
+    import { newCommunity } from "@src/logic/groupOrCommunity/community.svelte";
     import { messageToForwardStore } from "../../stores/messageToForward";
     import { chitPopup, disableChit } from "../../stores/settings";
     import { toastStore } from "../../stores/toast";

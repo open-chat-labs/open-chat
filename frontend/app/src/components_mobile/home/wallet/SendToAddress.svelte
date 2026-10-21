@@ -28,8 +28,8 @@
     import AccountSelector from "./AccountSelector.svelte";
     import Scanner from "./Scanner.svelte";
     import SuccessIcon from "./SuccessIcon.svelte";
-    import type { TokenState } from "@shared_components/home/wallet/walletState.svelte";
-    import { WithdrawForm } from "@shared_components/home/wallet/withdrawForm.svelte";
+    import type { TokenState } from "@src/logic/wallet/walletState.svelte";
+    import { WithdrawForm } from "@src/logic/wallet/withdrawForm.svelte";
 
     interface Props {
         tokenState: TokenState;

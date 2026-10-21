@@ -13,7 +13,7 @@
     import {
         PinNumberForm,
         type PinSaveOutcome,
-    } from "@shared_components/home/pin/pinNumberForm.svelte";
+    } from "@src/logic/pin/pinNumberForm.svelte";
     import { toastStore } from "../../../stores/toast";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import Pincode from "../../pincode/Pincode.svelte";

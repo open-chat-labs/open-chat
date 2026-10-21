@@ -49,8 +49,8 @@
     import Translatable from "@shared_components/Translatable.svelte";
     import AccessGateSummary from "../AccessGateSummary.svelte";
     import ImportToCommunity from "../communities/Import.svelte";
-    import { updateGroupState } from "@shared_components/home/createOrUpdateGroup/group.svelte";
-    import Markdown from "@shared_components/Markdown.svelte";
+    import { updateGroupState } from "@src/logic/groupOrCommunity/group.svelte";
+    import Markdown from "@src/core/Markdown.svelte";
     import BotsSummary from "../membership/BotsSummary.svelte";
     import MembersSummary from "../membership/MembersSummary.svelte";
     import Separator from "../Separator.svelte";

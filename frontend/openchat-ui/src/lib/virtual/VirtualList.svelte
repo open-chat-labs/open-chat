@@ -1,5 +1,4 @@
 <script lang="ts" generics="T">
-    import { trackedEffect } from "@src/utils/effects.svelte";
     import { onMount, tick, untrack, type Snippet } from "svelte";
 
     type KeyFn = (item: T) => string;
@@ -152,7 +151,7 @@
     });
 
     // whenever `items` changes, invalidate the current heightmap
-    trackedEffect("virtual-list", () => {
+    $effect(() => {
         if (mounted) {
             refresh(items, viewport_height, itemHeight);
         }
@@ -175,7 +174,7 @@
     </svelte-virtual-list-contents>
 </svelte-virtual-list-viewport>
 
-<style lang="scss">
+<style>
     svelte-virtual-list-viewport {
         position: relative;
         overflow-y: auto;
@@ -187,8 +186,4 @@
     svelte-virtual-list-row {
         display: block;
     }
-
-    // svelte-virtual-list-row {
-    //     overflow: hidden;
-    // }
 </style>

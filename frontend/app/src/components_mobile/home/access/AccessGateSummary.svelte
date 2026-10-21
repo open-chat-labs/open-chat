@@ -2,7 +2,7 @@
     import type { IconComponent } from "@src/utils/iconComponent";
     import { i18nKey } from "@src/i18n/i18n";
     import { disableCryptoPaymentsFeature } from "@src/utils/features";
-    import type { GateEvaluation } from "@shared_components/home/access/gateEvaluation.svelte";
+    import type { GateEvaluation } from "@src/logic/access/gateEvaluation.svelte";
     import {
         Avatar,
         Body,
@@ -28,7 +28,7 @@
     import Lifetime from "svelte-material-icons/DiamondStone.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
     import AccessGateText from "../access_gates/AccessGateText.svelte";
-    import { TokenState } from "@shared_components/home/wallet/walletState.svelte";
+    import { TokenState } from "@src/logic/wallet/walletState.svelte";
     import AccessGateBox from "./AccessGateBox.svelte";
 
     const client = getContext<OpenChat>("client");

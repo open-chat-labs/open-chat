@@ -42,9 +42,10 @@
     } from "@client";
     import { getContext, onMount, tick, untrack, type Snippet } from "svelte";
     import { isSafari, mobileOperatingSystem } from "@utils/devices";
+    import { recordError } from "@utils/errorPostmortem";
     import type { FlatChatItem } from "./flatChatItems";
-    import { vclDebug } from "./vclDebug";
-    import VirtualChatList from "./VirtualChatList.svelte";
+    import { vclDebug } from "@openchat/ui/src/lib/virtual/vclDebug";
+    import VirtualChatList from "@openchat/ui/src/lib/virtual/VirtualChatList.svelte";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_READ_THRESHOLD = 500;
@@ -1333,6 +1334,8 @@
     {timestampFor}
     {stickyDateElTop}
     bind:stickyDateTimestamp
+    iOS={mobileOperatingSystem === "iOS"}
+    onRowError={(e) => recordError("chat-row", e)}
     row={renderRow} />
 
 {#snippet renderRow(item: FlatChatItem, _absIdx: number)}

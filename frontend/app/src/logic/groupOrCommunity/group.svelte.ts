@@ -10,7 +10,7 @@ import {
     type CreateGroupOutcome,
     type UpdateGroupOutcome,
 } from "@client";
-import { UpdateGroupOrCommunityState } from "../groupOrCommunity.svelte";
+import { UpdateGroupOrCommunityState } from "./groupOrCommunity.svelte";
 
 /**
  * How saving went. `declined` means the user declined to confirm a change, and `invalid` that the

@@ -3,7 +3,7 @@
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../i18n/i18n";
-    import Markdown from "@shared_components/Markdown.svelte";
+    import Markdown from "@src/core/Markdown.svelte";
     import Button from "./Button.svelte";
     import ModalContent from "./ModalContent.svelte";
     import Translatable from "@shared_components/Translatable.svelte";

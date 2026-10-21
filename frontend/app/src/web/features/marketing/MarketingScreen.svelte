@@ -14,7 +14,7 @@
     import Learn from "@openchat/ui/src/pages/Learn.svelte";
     import EmptyState from "@openchat/ui/src/lib/components/EmptyState.svelte";
     import type { LearnPage } from "@openchat/ui/src/pages/learnContent";
-    import CanisterMapFrame from "@shared_components/CanisterMapFrame.svelte";
+    import CanisterMapFrame from "@src/core/CanisterMapFrame.svelte";
     import type { PageMode } from "@openchat/ui/src/pages/types";
     import { currentThemeMode, themeType } from "@theme/themes";
     import { navigate } from "@src/utils/navigation";

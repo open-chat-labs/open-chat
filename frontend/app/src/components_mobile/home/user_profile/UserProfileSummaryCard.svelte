@@ -28,7 +28,7 @@
     import { getContext, onMount, type Snippet } from "svelte";
     import { _ } from "svelte-i18n";
     import { toastStore } from "@src/stores/toast";
-    import Markdown from "@shared_components/Markdown.svelte";
+    import Markdown from "@src/core/Markdown.svelte";
     import Badges from "../profile/Badges.svelte";
     import ChitSummary from "./ChitSummary.svelte";
     import Translatable from "@shared_components/Translatable.svelte";

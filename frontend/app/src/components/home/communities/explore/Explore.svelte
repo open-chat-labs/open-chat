@@ -19,7 +19,7 @@
     import Tune from "svelte-material-icons/Tune.svelte";
     import { i18nKey } from "../../../../i18n/i18n";
     import { communitySearchState } from "../../../../stores/search.svelte";
-    import { startCommunityCreation } from "@shared_components/home/communities/createOrUpdate/community.svelte";
+    import { startCommunityCreation } from "@src/logic/groupOrCommunity/community.svelte";
     import Search from "../../..//Search.svelte";
     import Button from "../../../Button.svelte";
     import Fab from "../../../Fab.svelte";
