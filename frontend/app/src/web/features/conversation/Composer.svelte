@@ -21,12 +21,14 @@
     import Banner from "@openchat/ui/src/lib/components/Banner.svelte";
     import ComposerBar from "@openchat/ui/src/lib/components/ComposerBar.svelte";
     import { enterSend } from "@src/stores/settings";
+    import { now500 } from "@src/stores/time";
     import { detectMarkdown } from "@src/utils/detectMarkdown";
     import { getContext, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import {
         entryBlock,
         expandMentions,
+        throttleCountdown,
         TypingNotifier,
         type EntryBlock,
     } from "@src/logic/composer/composer";
@@ -101,21 +103,14 @@
         typing.input(text);
     }
 
-    // too many messages a minute: a countdown until sending resumes (the old ThrottleCountdown)
-    let now = $state(Date.now());
-    $effect(() => {
-        if ($throttleDeadline <= 0) return;
-        const timer = setInterval(() => {
-            now = Date.now();
-            if ($throttleDeadline <= now) throttleDeadline.set(0);
-        }, 500);
-        return () => clearInterval(timer);
-    });
+    // too many messages a minute: a countdown until sending resumes (the old ThrottleCountdown);
+    // the clock only ticks once there's a deadline
+    const countdown = $derived(
+        $throttleDeadline > 0 ? throttleCountdown($throttleDeadline, $now500) : undefined,
+    );
     const throttled = $derived(
-        $throttleDeadline > now
-            ? $_("throttleMessage", {
-                  values: { time: Math.ceil(($throttleDeadline - now) / 1000) },
-              })
+        countdown !== undefined
+            ? $_("throttleMessage", { values: { time: countdown.seconds } })
             : "",
     );
 
