@@ -47,6 +47,7 @@
         userIdMentionRegex,
         videoProcessingProgress,
         type CreatedUser,
+        type SendMessageOutcome,
     } from "@client";
     import { getContext, onMount, tick, untrack } from "svelte";
     import { _ } from "svelte-i18n";
@@ -58,6 +59,7 @@
     import PlusCircle from "svelte-material-icons/PlusCircleOutline.svelte";
     import StickerEmoji from "svelte-material-icons/StickerEmoji.svelte";
     import { i18nKey, interpolate } from "../../i18n/i18n";
+    import { clearsEntry } from "@src/utils/sendFromEntry";
     import { enterSend } from "../../stores/settings";
     import { snowing } from "../../stores/snow";
     import AlertBoxModal from "../AlertBoxModal.svelte";
@@ -101,7 +103,10 @@
         onStartTyping: () => void;
         onStopTyping: () => void;
         onCancelEdit: () => void;
-        onSendMessage: (args: [string | undefined, User[], boolean]) => void;
+        // a send returns its outcome, which the entry waits for; an edit returns nothing
+        onSendMessage: (
+            args: [string | undefined, User[], boolean],
+        ) => Promise<SendMessageOutcome> | undefined;
         onClearAttachment: () => void;
         onTokenTransfer: (args: { ledger?: string; amount?: bigint }) => void;
         onCreatePrizeMessage?: () => void;
@@ -615,8 +620,11 @@
     let walletApproval = $state<ExternalWalletApproval | undefined>();
     let approvingTransfer = $state(false);
 
+    // set while a send waits for its message to show in the chat (the rules or a PIN asked for)
+    let sending = $state(false);
+
     function sendMessage() {
-        if (showCommandSelector || messageIsEmpty || approvingTransfer) return;
+        if (showCommandSelector || messageIsEmpty || approvingTransfer || sending) return;
 
         const draft = externalWalletDraft;
         if (draft !== undefined) {
@@ -647,7 +655,7 @@
         }
     }
 
-    function completeSend() {
+    async function completeSend() {
         const txt = editor?.getMarkdown() ?? "";
 
         if (!parseCommands(txt)) {
@@ -661,7 +669,9 @@
                     mentioned.push(user);
                 }
             }
-            onSendMessage([text, mentioned, blockLevelMarkdown]);
+            const result = onSendMessage([text, mentioned, blockLevelMarkdown]);
+            // refused before it was sent (rules turned down, PIN dismissed, throttled): the text stays
+            if (!(await clearsEntry(result, (busy) => (sending = busy)))) return;
         }
 
         afterSendMessage();

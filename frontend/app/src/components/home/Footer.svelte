@@ -18,6 +18,7 @@
         type OpenChat,
         type SelectedEmoji,
         type User,
+        type SendMessageOutcome,
     } from "@client";
     import { getContext, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
@@ -56,7 +57,10 @@
         onStartTyping: () => void;
         onStopTyping: () => void;
         onCancelEdit: () => void;
-        onSendMessage: (args: [string | undefined, User[], boolean]) => void;
+        // a send returns its outcome, which the entry waits for; an edit returns nothing
+        onSendMessage: (
+            args: [string | undefined, User[], boolean],
+        ) => Promise<SendMessageOutcome> | undefined;
         onClearAttachment: () => void;
         onTokenTransfer: (args: { ledger?: string; amount?: bigint }) => void;
         onCreatePrizeMessage?: () => void;

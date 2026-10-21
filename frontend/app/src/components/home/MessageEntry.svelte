@@ -40,6 +40,7 @@
         throttleDeadline,
         userGroupMentionRegex,
         userIdMentionRegex,
+        type SendMessageOutcome,
     } from "@client";
     import { getContext, tick, untrack } from "svelte";
     import { _ } from "svelte-i18n";
@@ -48,6 +49,7 @@
     import ContentSaveEditOutline from "svelte-material-icons/ContentSaveMoveOutline.svelte";
     import Send from "svelte-material-icons/Send.svelte";
     import { i18nKey, interpolate } from "../../i18n/i18n";
+    import { clearsEntry } from "@src/utils/sendFromEntry";
     import { enterSend } from "../../stores/settings";
     import { snowing } from "../../stores/snow";
     import AlertBoxModal from "../AlertBoxModal.svelte";
@@ -85,7 +87,10 @@
         onStartTyping: () => void;
         onStopTyping: () => void;
         onCancelEdit: () => void;
-        onSendMessage: (args: [string | undefined, User[], boolean]) => void;
+        // a send returns its outcome, which the entry waits for; an edit returns nothing
+        onSendMessage: (
+            args: [string | undefined, User[], boolean],
+        ) => Promise<SendMessageOutcome> | undefined;
         onClearAttachment: () => void;
         onTokenTransfer: (args: { ledger?: string; amount?: bigint }) => void;
         onCreatePrizeMessage?: () => void;
@@ -344,8 +349,11 @@
         return false;
     }
 
-    function sendMessage() {
-        if (showCommandSelector || messageIsEmpty) return;
+    // set while a send waits for its message to show in the chat (the rules or a PIN asked for)
+    let sending = $state(false);
+
+    async function sendMessage() {
+        if (showCommandSelector || messageIsEmpty || sending) return;
 
         const txt = editor?.getMarkdown() ?? "";
 
@@ -360,7 +368,9 @@
                     mentioned.push(user);
                 }
             }
-            onSendMessage([text, mentioned, blockLevelMarkdown]);
+            const result = onSendMessage([text, mentioned, blockLevelMarkdown]);
+            // refused before it was sent (rules turned down, PIN dismissed, throttled): the text stays
+            if (!(await clearsEntry(result, (busy) => (sending = busy)))) return;
         }
 
         afterSendMessage();

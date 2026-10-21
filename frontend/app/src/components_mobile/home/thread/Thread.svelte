@@ -32,6 +32,7 @@
         threadsFollowedByMeStore,
         TimelineGrouper,
         unconfirmedStore,
+        type SendMessageOutcome,
     } from "@client";
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -142,7 +143,9 @@
         send(0);
     }
 
-    function onSendMessage(detail: [string | undefined, User[], boolean]) {
+    function onSendMessage(
+        detail: [string | undefined, User[], boolean],
+    ): Promise<SendMessageOutcome> | undefined {
         if (!canSendAny) return;
         const [text, mentioned, blockLevelMarkdown] = detail;
         if (editingEvent !== undefined) {
@@ -160,7 +163,14 @@
                     }
                 });
         } else {
-            sendMessageWithAttachment(text, blockLevelMarkdown, attachment, mentioned);
+            // the entry keeps the text until the message shows in the thread, or keeps it if refused
+            return client.sendMessage(
+                messageContext,
+                text,
+                blockLevelMarkdown,
+                attachment,
+                mentioned,
+            );
         }
     }
 
