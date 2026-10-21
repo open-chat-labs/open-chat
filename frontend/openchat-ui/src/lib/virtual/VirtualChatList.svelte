@@ -45,9 +45,9 @@
         viewport?: HTMLDivElement;
         viewportHeight?: number;
         // the host's platform check; iOS gets touch tracking and its own momentum handling
-        iOS?: boolean;
+        iOS: boolean;
         // a row threw while rendering; the row is replaced by an empty placeholder
-        onRowError?: (error: unknown) => void;
+        onRowError: (error: unknown) => void;
     }
 </script>
 
@@ -147,7 +147,7 @@
         viewportClass,
         viewport = $bindable(undefined),
         viewportHeight = $bindable(0),
-        iOS = false,
+        iOS,
         onRowError,
     }: Props<T> = $props();
 
@@ -1820,7 +1820,7 @@
                  with the window state -->
             <svelte:boundary
                 onerror={(e) => {
-                    onRowError?.(e);
+                    onRowError(e);
                     vclDebug.log("!row-render-error", {
                         key: item.key,
                         err: String(e).slice(0, 200),

@@ -102,6 +102,6 @@
 
 ## 2026-10-21 — the app's virtual lists move in, by hand
 - `VirtualList` and `VirtualChatList` (with `virtualListUtils` and the `vclDebug` scroll diagnostics) moved here from the app's `components_shared`, unchanged apart from what tied them to the app. They live in `src/lib/virtual`, not `components`: they have no look and no docs demo.
-- `VirtualChatList` takes `iOS` (the host's platform check, which turns on touch tracking and its own momentum handling) and `onRowError` (a row threw while rendering). The app passed neither before; it read them from its own modules.
+- `VirtualChatList` requires `iOS` (the host's platform check, which turns on touch tracking and its own momentum handling) and `onRowError` (a row threw while rendering). The app passed neither before; it read them from its own modules.
 - `VirtualList` uses `$effect` where the app used its development-only `trackedEffect` loop warning.
 - Not in the design export.

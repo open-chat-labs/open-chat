@@ -143,6 +143,10 @@ describe("@openchat/ui stays app-agnostic", () => {
         expect(
             await importErrors('import { x } from "../../../../app/src/utils/devices";', file),
         ).toEqual(["no-restricted-imports"]);
+        const component = '<script lang="ts">\n    import { x } from "@client";\n</script>\n';
+        expect(await importErrors(component, "openchat-ui/src/lib/virtual/Example.svelte")).toEqual(
+            ["no-restricted-imports"],
+        );
     });
 
     it("accepts svelte and the library's own modules", async () => {
