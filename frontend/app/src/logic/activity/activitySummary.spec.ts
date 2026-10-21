@@ -61,5 +61,14 @@ describe("an activity's summary", () => {
             key: "activity.pollVoteN",
             params: { username: "Alice", number: 2 },
         });
+        // the only voter: no "and others"
+        const alone: PollContent = {
+            ...content,
+            votes: { ...content.votes, total: { kind: "anonymous_poll_votes", votes: { 0: 1 } } },
+        };
+        expect(summary("poll_vote", { content: alone })).toEqual({
+            key: "activity.pollVote",
+            params: { username: "Alice" },
+        });
     });
 });

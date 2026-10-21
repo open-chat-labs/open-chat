@@ -50,6 +50,12 @@ describe("an activity item", () => {
         });
     });
 
+    test("names an anonymous user", () => {
+        expect(activityItem(event({ userId: undefined }), ctx).title).toBe(
+            'activity.mention{"username":"An anonymous user"}',
+        );
+    });
+
     test("is unread after the feed's read-up-to time", () => {
         expect(activityItem(event({ timestamp: 9n }), ctx).unread).toBe(true);
         expect(activityItem(event({ timestamp: 5n }), ctx).unread).toBe(false);
