@@ -3,12 +3,13 @@ import {
     messageContextToChatListScope,
     messageContextToString,
     routeForMessage,
-    type Message,
     type MessageActivityEvent,
     type MessageContent,
     type MessageContext,
+    type ResourceKey,
 } from "@client";
 import type { ActivityItem } from "@openchat/ui/src/features/components/ActivityPanel.svelte";
+import { activitySummary } from "@src/logic/activity/activitySummary";
 import { pickById } from "../../pickById";
 
 // The activity feed's events to ActivityPanel's items (DATA.md, ActivityPanel), in the old feed's
@@ -28,8 +29,8 @@ export type ActivityContext = {
     /** The chat an event happened in, as the old feed named it ("Community > channel"). */
     chatName: (context: MessageContext) => string | undefined;
     contentText: (content: MessageContent) => string;
-    /** The app's wording for a key, with its values. */
-    t: (key: string, values?: Record<string, string | number>) => string;
+    /** A key in the app's language. */
+    text: (key: ResourceKey) => string;
     /** A day heading ("Today", "Yesterday", a date) and a time, as the app formats them. */
     day: (timestamp: bigint) => string;
     time: (timestamp: bigint) => string;
@@ -68,7 +69,13 @@ export function activityItem(event: MessageActivityEvent, ctx: ActivityContext):
     return {
         id,
         day: ctx.day(event.timestamp),
-        title: activitySummary(event, ctx),
+        title: ctx.text(
+            activitySummary(event, event.message, {
+                me: ctx.me,
+                username: event.userId === undefined ? ctx.anon : name(event.userId, ctx),
+                displayName: (userId) => name(userId, ctx),
+            }),
+        ),
         context: ctx.chatName(event.messageContext) ?? "",
         preview:
             message === undefined
@@ -101,76 +108,6 @@ export function activityLink(event: MessageActivityEvent, keepFeed = true): stri
 
 function name(userId: string, ctx: ActivityContext): string {
     return userId === ctx.me ? ctx.you : ctx.userName(userId);
-}
-
-/** What happened, in the old feed's words: who did it, and how many others did too. */
-export function activitySummary(event: MessageActivityEvent, ctx: ActivityContext): string {
-    const username = event.userId === undefined ? ctx.anon : name(event.userId, ctx);
-    switch (event.activity) {
-        case "reaction":
-            return withOthers("reaction", username, otherReactors(event, ctx.me), ctx);
-        case "tip":
-            return withOthers("tip", username, otherTippers(event), ctx);
-        case "mention":
-            return ctx.t("activity.mention", { username });
-        case "quote_reply":
-            return ctx.t("activity.quoteReply", { username });
-        case "crypto":
-            return ctx.t("activity.crypto", { username });
-        case "p2p_swap_accepted":
-            return ctx.t("activity.p2pSwapAccepted", { username });
-        case "poll_vote": {
-            const voters = pollVoters(event.message);
-            return voters > 1
-                ? ctx.t("activity.pollVoteN", { username, number: voters - 1 })
-                : ctx.t("activity.pollVote", { username });
-        }
-    }
-}
-
-function withOthers(
-    root: "tip" | "reaction",
-    username: string,
-    others: Set<string>,
-    ctx: ActivityContext,
-): string {
-    switch (others.size) {
-        case 0:
-            return ctx.t(`activity.${root}One`, { username });
-        case 1:
-            return ctx.t(`activity.${root}Two`, { username, other: name([...others][0], ctx) });
-        default:
-            return ctx.t(`activity.${root}N`, { username, n: others.size });
-    }
-}
-
-function otherReactors(event: MessageActivityEvent, me: string): Set<string> {
-    return new Set(
-        (event.message?.reactions ?? []).flatMap((r) =>
-            [...r.userIds].filter((u) => u !== event.userId && u !== me),
-        ),
-    );
-}
-
-function otherTippers(event: MessageActivityEvent): Set<string> {
-    return new Set(
-        Object.values(event.message?.tips ?? {}).flatMap((tips) =>
-            Object.keys(tips).filter((u) => u !== event.userId),
-        ),
-    );
-}
-
-function pollVoters(message: Message | undefined): number {
-    if (message?.content.kind !== "poll_content") return 1;
-    const total = message.content.votes.total;
-    switch (total.kind) {
-        case "anonymous_poll_votes":
-            return Object.values(total.votes).reduce((sum, n) => sum + n, 0);
-        case "hidden_poll_votes":
-            return total.votes;
-        case "visible_poll_votes":
-            return Object.values(total.votes).reduce((sum, voters) => sum + voters.length, 0);
-    }
 }
 
 /** The newest of these events' times: marking them read marks everything up to it. */
