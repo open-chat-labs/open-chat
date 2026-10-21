@@ -304,6 +304,7 @@ import {
     type SearchGroupChatResponse,
     type SelectedChannelRoute,
     type SelectedCommunityRoute,
+    type SendMessageOutcome,
     type SendMessageResponse,
     type SendMessageSuccess,
     type SetDisplayNameResponse,
@@ -380,6 +381,7 @@ import {
     isAndroidTauriApp,
     isIosTauriApp,
     isPrincipalValid,
+    messageContextToString,
     paymentSpenderAccount,
 } from "@shared";
 import { tick } from "svelte";
@@ -779,6 +781,12 @@ function describeError(err: unknown): string {
         return String(err);
     }
 }
+
+// What #sendMessageCommon tells a caller that waits only until its message shows in the chat
+type SendHooks = {
+    posted(): void;
+    rulesDeclined(): void;
+};
 
 // The users who are known not to be members of the chat or community with this key, and the lookups
 // in flight of those who may be, so that nobody is looked up twice
@@ -5274,6 +5282,7 @@ export class OpenChat {
         mentioned: User[] = [],
         retrying: boolean,
         ogPreviewsPromise?: Promise<OgPreview[]>,
+        hooks?: SendHooks,
     ): Promise<SendMessageResponse> {
         const { chatId, threadRootMessageIndex } = messageContext;
 
@@ -5288,6 +5297,7 @@ export class OpenChat {
         if (this.#rulesNeedAccepting(chatId)) {
             acceptedRules = await this.#promptForRuleAcceptance();
             if (acceptedRules === undefined) {
+                hooks?.rulesDeclined();
                 return CommonResponses.failure();
             }
         }
@@ -5306,6 +5316,7 @@ export class OpenChat {
 
         if (!retrying) {
             this.#postSendMessage(chat, messageEvent, threadRootMessageIndex);
+            hooks?.posted();
         } else {
             // remove the *original* event from the failed store
             await this.deleteFailedMessage(chatId, message.messageId, threadRootMessageIndex);
@@ -5639,6 +5650,7 @@ export class OpenChat {
         forwarded: boolean = false,
         messageIdIfRetrying?: bigint,
         ogPreviewsPromise?: Promise<OgPreview[]>,
+        hooks?: SendHooks,
     ): Promise<SendMessageResponse> {
         const { chatId, threadRootMessageIndex } = messageContext;
         const chat = allChatsStore.value.get(chatId);
@@ -5670,7 +5682,68 @@ export class OpenChat {
             mentioned,
             messageIdIfRetrying !== undefined,
             ogPreviewsPromise,
+            hooks,
         );
+    }
+
+    // the chats and threads with a send from the composer not yet posted or refused
+    #sendsBeingPosted = new Set<string>();
+
+    /**
+     * Sends what the composer holds (its text, and an attachment it captions) and settles as soon as
+     * the message shows in the chat, or is refused before that: the rules turned down, the PIN
+     * prompt dismissed, the user throttled. A second send from the same chat or thread while one is
+     * on its way is `busy`. Never rejects.
+     */
+    async sendMessage(
+        messageContext: MessageContext,
+        textContent: string | undefined,
+        blockLevelMarkdown: boolean,
+        attachment: AttachmentContent | undefined,
+        mentioned: User[] = [],
+    ): Promise<SendMessageOutcome> {
+        const key = messageContextToString(messageContext);
+        if (this.#sendsBeingPosted.has(key)) return { kind: "busy" };
+        this.#sendsBeingPosted.add(key);
+        try {
+            return await new Promise<SendMessageOutcome>((settle) => {
+                let rulesDeclined = false;
+                this.sendMessageWithContent(
+                    messageContext,
+                    this.#getMessageContent(textContent, attachment),
+                    blockLevelMarkdown,
+                    mentioned,
+                    false,
+                    undefined,
+                    fetchOgPreviews(
+                        extractEnabledLinks(textContent),
+                        import.meta.env.OC_PREVIEW_PROXY_URL,
+                    ),
+                    {
+                        posted: () => settle({ kind: "posted" }),
+                        rulesDeclined: () => (rulesDeclined = true),
+                    },
+                ).then(
+                    // settled already if it was posted; otherwise it was refused before posting
+                    (resp) =>
+                        settle(
+                            resp.kind === "message_throttled"
+                                ? { kind: "throttled" }
+                                : rulesDeclined
+                                  ? { kind: "rules_declined" }
+                                  : { kind: "failed" },
+                        ),
+                    (err) => {
+                        // the user dismissed the PIN prompt
+                        if (err === "cancelled") return settle({ kind: "pin_cancelled" });
+                        this.logError("Unable to send a message", err);
+                        settle({ kind: "failed" });
+                    },
+                );
+            });
+        } finally {
+            this.#sendsBeingPosted.delete(key);
+        }
     }
 
     #throttleSendMessage(): boolean {

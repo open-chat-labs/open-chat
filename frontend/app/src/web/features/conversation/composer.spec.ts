@@ -3,7 +3,6 @@ import {
     expandMentions,
     sendBlocked,
     TypingNotifier,
-    untilPosted,
     type SendState,
 } from "./composer";
 
@@ -130,25 +129,3 @@ describe("telling others someone is typing", () => {
     });
 });
 
-describe("waiting for a send", () => {
-    const never = new Promise<never>(() => {});
-
-    test("is done once the message is posted", async () => {
-        await expect(untilPosted(never, Promise.resolve())).resolves.toBeUndefined();
-    });
-
-    test("is refused when throttled or turned down before posting, so the draft stays", async () => {
-        await expect(
-            untilPosted(Promise.resolve({ kind: "message_throttled" }), never),
-        ).rejects.toThrow("message_throttled");
-        await expect(untilPosted(Promise.resolve({ kind: "failure" }), never)).rejects.toThrow(
-            "failure",
-        );
-    });
-
-    test("isn't refused by a result after posting", async () => {
-        await expect(
-            untilPosted(Promise.resolve({ kind: "success" }), never),
-        ).resolves.toBeUndefined();
-    });
-});

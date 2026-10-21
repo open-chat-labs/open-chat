@@ -2686,6 +2686,20 @@ export type CryptoTransferOutcome =
     | { kind: "pin_failed" }
     | { kind: "failed"; message: ResourceKey };
 
+/**
+ * How a message sent from the composer went, up to the moment it shows in the chat. `posted`: it
+ * shows (a failure after that shows on the message, which can be retried). Anything else: nothing
+ * was sent, and the draft is the user's to keep. `busy`: a send from the same chat or thread is
+ * still on its way to the chat, so this one wasn't started.
+ */
+export type SendMessageOutcome =
+    | { kind: "posted" }
+    | { kind: "rules_declined" }
+    | { kind: "pin_cancelled" }
+    | { kind: "throttled" }
+    | { kind: "busy" }
+    | { kind: "failed" };
+
 // What the app needs to enter a call's room
 export type VideoCallRoom = {
     token: string;
