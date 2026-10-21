@@ -9,6 +9,7 @@
         chatListScopeStore,
         chatsInitialisedStore,
         chatSummariesListStore,
+        lastSelectedChatByScopeStore,
         communityIdentifiersEqual,
         exploringStore,
         messageIndexStore,
@@ -43,7 +44,7 @@
     import page from "page";
     import { getContext, onMount, untrack, type Snippet } from "svelte";
     import { currentShellLayout } from "../shell/viewport.svelte";
-    import { firstChatRoute, firstChatUrl } from "./firstChat";
+    import { defaultChatRoute, defaultChatUrl } from "./defaultChat";
     import { redirectTable, routeTable } from "./routeTable";
     import { leftToBrowser } from "./links";
 
@@ -129,7 +130,7 @@
                 client.setSelectedCommunity(id).then((preview) => {
                     // a previewed community's first channel has to be selected by hand
                     if (preview && $selectedChatIdStore === undefined) {
-                        selectFirstChat();
+                        selectDefaultChat();
                     }
                 });
             });
@@ -167,31 +168,33 @@
         }
     });
 
-    // A chat list with nothing selected goes to its first chat (ROUTES.md, decision 7), once
-    // there is one, with its thread list (?threads) open too. Only the first chat's route is
-    // tracked (and whether the screen is narrow, where there's none), so other summary changes
-    // don't re-run it. The URL's query (an open overlay, the thread list) is kept.
-    const firstChat = $derived(
-        firstChatRoute(
+    // A chat list with nothing selected goes to its default chat (ROUTES.md, decision 7): the one
+    // last opened in its scope, else its first, once there is one, with its thread list
+    // (?threads) open too. Only that chat's route is tracked (and whether the screen is narrow,
+    // where there's none), so other summary changes don't re-run it. The URL's query (an open
+    // overlay, the thread list) is kept.
+    const defaultChatPath = $derived(
+        defaultChatRoute(
             $chatListScopeStore.kind,
             $chatSummariesListStore,
+            $lastSelectedChatByScopeStore.get($chatListScopeStore),
             currentShellLayout().narrow,
         ),
     );
     $effect(() => {
         if (
-            firstChat !== undefined &&
+            defaultChatPath !== undefined &&
             $selectedChatIdStore === undefined &&
             $chatListScopeStore.kind !== "none" &&
             !$exploringStore
         ) {
-            untrack(selectFirstChat);
+            untrack(selectDefaultChat);
         }
     });
 
-    function selectFirstChat() {
-        if (firstChat !== undefined) {
-            navigate(firstChatUrl(firstChat, location.search), "auto");
+    function selectDefaultChat() {
+        if (defaultChatPath !== undefined) {
+            navigate(defaultChatUrl(defaultChatPath, location.search), "auto");
         }
     }
 
