@@ -51,19 +51,14 @@
         };
     });
 
-    function signIn() {
-        (client.isNativeApp()
-            ? client.signInWithAndroidWebAuthn()
-            : client.signInWithWebAuthn()
-        ).catch(async (e) => {
-            if ("AUTH_FAILED" === e) {
-                error = "native.auth.error";
-                console.error("Auth error: ", e);
-            } else {
-                // Passkey either not found, or user cancelled auth request
-                step = "one-time-password";
-            }
-        });
+    async function signIn() {
+        const outcome = await client.signIn({ kind: "passkey" });
+        if (outcome.kind === "failed") {
+            error = outcome.reason.key;
+        } else if (outcome.kind === "cancelled") {
+            // Passkey either not found, or user cancelled auth request
+            step = "one-time-password";
+        }
     }
 
     function signUp() {

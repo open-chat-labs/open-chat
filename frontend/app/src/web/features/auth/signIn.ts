@@ -3,6 +3,7 @@ import {
     identityStateStore,
     selectedAuthProviderStore,
     type OpenChat,
+    type SignInMethod,
 } from "@client";
 import type {
     AuthFailure,
@@ -30,9 +31,9 @@ import {
     type SignedIn,
 } from "./auth.adapter";
 
-// AuthDialog's host callbacks, on the client's existing sign-in flows (onboard/SignIn.svelte and
-// SignUp.svelte in the old UI). None of those flows returns a promise that settles on sign-in, so
-// the callbacks settle on identityStateStore instead (DATA.md, Auth).
+// AuthDialog's host callbacks, on the client's sign-in flows. A sign-in settles with client.signIn's
+// outcome; an emailed link, followed on another page, and sign-up still settle on
+// identityStateStore (DATA.md, Auth).
 
 /**
  * Calls `settle` once with the first outcome that isn't "pending", skipping "failed" when
@@ -62,46 +63,6 @@ function watchSignIn(
         done = true;
         unsubscribe?.();
     };
-}
-
-/**
- * Runs `start`, then settles once the identity is signed in, or rejects when it falls back to
- * anonymous. `signal` gives it up, whether `start` has settled or not (a wallet's window the
- * person walked away from), and stops the watch.
- */
-export function untilSignedIn(
-    start: () => Promise<unknown> | void,
-    signal?: AbortSignal,
-): Promise<SignedIn> {
-    return new Promise((resolve, reject) => {
-        let stopWatch = () => {};
-        const abandoned = () => {
-            stopWatch();
-            reject(new Error("Sign-in given up"));
-        };
-        if (signal?.aborted) return abandoned();
-        signal?.addEventListener("abort", abandoned, { once: true });
-        const settle = (outcome: SignedIn | "failed") => {
-            signal?.removeEventListener("abort", abandoned);
-            if (outcome === "failed") reject(new Error("Sign-in didn't complete"));
-            else resolve(outcome);
-        };
-        let started: Promise<unknown>;
-        try {
-            started = Promise.resolve(start());
-        } catch (err) {
-            return reject(err);
-        }
-        started.then(
-            () => {
-                if (!signal?.aborted) stopWatch = watchSignIn(settle, { anonFails: true });
-            },
-            (err) => {
-                signal?.removeEventListener("abort", abandoned);
-                reject(err);
-            },
-        );
-    });
 }
 
 // A sign-in someone walked away from (closed its dialog, or left its page). It's kept here rather
@@ -214,27 +175,45 @@ export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: Aut
 
     const failure = (key: string): AuthFailure => ({ reason: translate(key) });
 
-    function signIn(method: AuthMethod, wallet: string | undefined): Promise<SignedIn> {
+    async function signIn(method: AuthMethod, wallet: string | undefined): Promise<SignedIn> {
         resumeSignIn();
         const signal = attempts.signal;
         client.gaTrack("initiated_signin", "registration", PROVIDERS[method]);
-        selectedAuthProviderStore.set(PROVIDERS[method]);
+        const outcome = await client.signIn(await signInMethod(method, wallet, signal), signal);
+        switch (outcome.kind) {
+            case "logged_in":
+                return "logged_in";
+            case "needs_account":
+                return "registering";
+            case "cancelled":
+                throw new Error("Sign-in given up");
+            case "failed":
+                throw failure(outcome.reason.key);
+        }
+    }
+
+    // a wallet signs the backend's sign-in message here first; the rest is the client's
+    async function signInMethod(
+        method: AuthMethod,
+        wallet: string | undefined,
+        signal: AbortSignal,
+    ): Promise<SignInMethod> {
         switch (method) {
             case "passkey":
-                return untilSignedIn(() => client.signInWithWebAuthn(), signal);
-            case "eth":
-                return untilSignedIn(async () => {
-                    const { signInWithEthereum } = await import("./ethWallet");
-                    await signInWithEthereum(client, wallet ?? WALLETS.eth[0].id, signal);
-                }, signal);
-            case "sol":
-                return untilSignedIn(async () => {
-                    const { signInWithSolana } = await import("./solWallet");
-                    await signInWithSolana(client, wallet ?? WALLETS.sol[0].id, signal);
-                }, signal);
+                return { kind: "passkey" };
+            case "eth": {
+                const { signWithEthereum } = await import("./ethWallet");
+                const signed = await signWithEthereum(client, wallet ?? WALLETS.eth[0].id, signal);
+                return { kind: "wallet", token: "eth", ...signed };
+            }
+            case "sol": {
+                const { signWithSolana } = await import("./solWallet");
+                const signed = await signWithSolana(client, wallet ?? WALLETS.sol[0].id, signal);
+                return { kind: "wallet", token: "sol", ...signed };
+            }
             default:
                 // Internet Identity and NFID open the auth client's window
-                return untilSignedIn(() => client.login(), signal);
+                return { kind: "auth_client", provider: method };
         }
     }
 

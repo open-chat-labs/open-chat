@@ -1,18 +1,19 @@
 import {
-    AuthProvider,
     identityStateStore,
-    selectedAuthProviderStore,
     type IdentityState,
     type OpenChat,
+    type SignInMethod,
+    type SignInOutcome,
 } from "@client";
 import { configKeys } from "@shared";
-import { createAuth, signInAbandoned, untilSignedIn } from "./signIn";
+import { createAuth, signInAbandoned } from "./signIn";
 
 const eth = vi.hoisted(() => ({ signals: [] as (AbortSignal | undefined)[] }));
 vi.mock("./ethWallet", () => ({
     ethWallets: () => [{ id: "io.rabby", name: "Rabby Wallet" }],
-    signInWithEthereum: async (_client: unknown, _id: string, signal?: AbortSignal) => {
+    signWithEthereum: async (_client: unknown, _id: string, signal?: AbortSignal) => {
         eth.signals.push(signal);
+        return { address: "0xabc", signature: "0xsig" };
     },
 }));
 
@@ -34,8 +35,45 @@ vi.mock("@src/utils/signin", () => ({
 
 const set = (state: IdentityState) => identityStateStore.set(state);
 
+// Settles as the client's signIn does: once the identity has loaded (signed in, with or without an
+// account, or back to anonymous), or cancelled when given up
+function settled(signal?: AbortSignal): Promise<SignInOutcome> {
+    return new Promise((resolve) => {
+        signal?.addEventListener("abort", () => resolve({ kind: "cancelled" }), { once: true });
+        const unsubscribe = identityStateStore.subscribe((state) => {
+            const outcome: SignInOutcome | undefined =
+                state.kind === "logged_in"
+                    ? { kind: "logged_in" }
+                    : state.kind === "registering"
+                      ? { kind: "needs_account" }
+                      : state.kind === "anon"
+                        ? {
+                              kind: "failed",
+                              reason: { kind: "resource_key", key: "failed" } as never,
+                          }
+                        : undefined;
+            if (outcome === undefined) return;
+            queueMicrotask(() => unsubscribe());
+            resolve(outcome);
+        });
+    });
+}
+
 function fakeClient() {
-    return {
+    const client = {
+        signIn: vi.fn(async (method: SignInMethod, signal?: AbortSignal) => {
+            if (signal?.aborted) return { kind: "cancelled" } as SignInOutcome;
+            try {
+                if (method.kind === "passkey") await client.signInWithWebAuthn();
+                if (method.kind === "auth_client") client.login();
+            } catch {
+                return { kind: "cancelled" } as SignInOutcome;
+            }
+            // a passkey's identity loads without passing "logging_in"; skip the anonymous it starts at
+            if (identityStateStore.value.kind === "anon")
+                set({ kind: "loading_user", registering: false });
+            return settled(signal);
+        }),
         gaTrack: vi.fn(),
         login: vi.fn(() => set({ kind: "logging_in" })),
         signInWithWebAuthn: vi.fn(async () => {}),
@@ -57,49 +95,10 @@ function fakeClient() {
         logout: vi.fn(async () => set({ kind: "anon" })),
         updateIdentityState: vi.fn((state: IdentityState) => set(state)),
     };
+    return client;
 }
 
 const flush = () => new Promise((r) => setTimeout(r, 0));
-
-describe("waiting for a sign-in", () => {
-    afterEach(() => set({ kind: "anon" }));
-
-    test("settles on a user, or on an identity without one", async () => {
-        const signedIn = untilSignedIn(() => set({ kind: "logging_in" }));
-        set({ kind: "loading_user", registering: false });
-        set({ kind: "logged_in" });
-        await expect(signedIn).resolves.toBe("logged_in");
-
-        set({ kind: "logging_in" });
-        const registering = untilSignedIn(() => {});
-        set({ kind: "registering" });
-        await expect(registering).resolves.toBe("registering");
-    });
-
-    test("fails when the identity falls back to anonymous, or the start fails", async () => {
-        const cancelled = untilSignedIn(() => set({ kind: "logging_in" }));
-        set({ kind: "anon" });
-        await expect(cancelled).rejects.toThrow();
-        await expect(untilSignedIn(() => Promise.reject(new Error("declined")))).rejects.toThrow(
-            "declined",
-        );
-    });
-
-    test("is given up by its signal, whether its start has settled or not", async () => {
-        const walkedAway = new AbortController();
-        const neverStarts = untilSignedIn(() => new Promise(() => {}), walkedAway.signal);
-        walkedAway.abort();
-        await expect(neverStarts).rejects.toThrow("given up");
-
-        const closed = new AbortController();
-        const waiting = untilSignedIn(() => set({ kind: "logging_in" }), closed.signal);
-        await flush();
-        closed.abort();
-        await expect(waiting).rejects.toThrow("given up");
-        // and stops watching: a later sign-in isn't this one's
-        set({ kind: "logged_in" });
-    });
-});
 
 describe("the sign-in callbacks", () => {
     let client: ReturnType<typeof fakeClient>;
@@ -128,7 +127,10 @@ describe("the sign-in callbacks", () => {
     test("Internet Identity opens the auth client's window and settles on the user", async () => {
         const signedIn = auth.onMethod("ii", "login");
         await flush();
-        expect(selectedAuthProviderStore.value).toBe(AuthProvider.II);
+        expect(client.signIn).toHaveBeenCalledWith(
+            { kind: "auth_client", provider: "ii" },
+            expect.any(AbortSignal),
+        );
         expect(client.login).toHaveBeenCalled();
         set({ kind: "logged_in" });
         await expect(signedIn).resolves.toBe("logged_in");
@@ -136,7 +138,7 @@ describe("the sign-in callbacks", () => {
 
     test("a declined passkey goes back to the choices", async () => {
         client.signInWithWebAuthn.mockRejectedValueOnce(new Error("NotAllowedError"));
-        await expect(auth.onMethod("passkey", "login")).rejects.toThrow("NotAllowedError");
+        await expect(auth.onMethod("passkey", "login")).rejects.toThrow("given up");
     });
 
     test("sign-up makes a passkey, then the account, and hands the user to the client", async () => {

@@ -13,13 +13,13 @@ vi.mock("@solana/wallet-adapter-coinbase", () => ({ CoinbaseWalletAdapter: class
 vi.mock("@solana/wallet-adapter-phantom", () => ({ PhantomWalletAdapter: class {} }));
 vi.mock("@solana/wallet-adapter-walletconnect", () => ({ WalletConnectWalletAdapter: class {} }));
 
-const { signInWithSolana } = await import("./solWallet");
+const { signWithSolana } = await import("./solWallet");
 
 describe("signing in with a Solana wallet", () => {
     test("a failed start of the wallet adapters is tried again on the next sign-in", async () => {
         store.initialize.mockRejectedValueOnce(new Error("no localStorage"));
         const client = {} as OpenChat;
-        await expect(signInWithSolana(client, "Phantom")).rejects.toThrow("no localStorage");
+        await expect(signWithSolana(client, "Phantom")).rejects.toThrow("no localStorage");
 
         // the second try starts the adapters again and gets as far as connecting
         store.initialize.mockResolvedValueOnce(undefined);
@@ -29,7 +29,7 @@ describe("signing in with a Solana wallet", () => {
                 throw new Error("declined");
             }),
         };
-        await expect(signInWithSolana(client, "Phantom")).rejects.toThrow("declined");
+        await expect(signWithSolana(client, "Phantom")).rejects.toThrow("declined");
         expect(store.initialize).toHaveBeenCalledTimes(2);
     });
 
@@ -42,14 +42,14 @@ describe("signing in with a Solana wallet", () => {
             connect: vi.fn(async () => {}),
             publicKey: null,
         };
-        await expect(signInWithSolana({} as OpenChat, "Phantom")).rejects.toBe(locked);
+        await expect(signWithSolana({} as OpenChat, "Phantom")).rejects.toBe(locked);
     });
 
     test("given up while the wallet store settles, it doesn't pick the wallet", async () => {
         const closed = new AbortController();
         closed.abort();
         store.state = { select: vi.fn(), connect: vi.fn() };
-        await expect(signInWithSolana({} as OpenChat, "Phantom", closed.signal)).rejects.toThrow();
+        await expect(signWithSolana({} as OpenChat, "Phantom", closed.signal)).rejects.toThrow();
         expect(store.state.select).not.toHaveBeenCalled();
     });
 
@@ -63,7 +63,7 @@ describe("signing in with a Solana wallet", () => {
             wallet: {},
             signMessage: vi.fn(),
         };
-        await expect(signInWithSolana(client, "Phantom", closed.signal)).rejects.toThrow();
+        await expect(signWithSolana(client, "Phantom", closed.signal)).rejects.toThrow();
         expect(client.siwsPrepareLogin).not.toHaveBeenCalled();
     });
 });
