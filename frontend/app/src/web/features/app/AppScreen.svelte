@@ -92,6 +92,13 @@
         }),
     );
 
+    // the client couldn't bring an archived chat with unread messages out of the archive
+    $effect(() =>
+        subscribe("unarchiveChatFailed", () =>
+            toastStore.showFailureToast(i18nKey("unarchiveChatFailed")),
+        ),
+    );
+
     // the client's app-wide events, as every tree handles them (app/src/logic/appEvents)
     let appDialog = $state<AppEventDialogKind | undefined>();
     $effect(() =>

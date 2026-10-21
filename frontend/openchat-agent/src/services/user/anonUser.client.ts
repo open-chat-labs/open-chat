@@ -352,7 +352,7 @@ export class AnonUserClient implements IChatEventsReader<DirectChatIdentifier> {
         throw new AnonymousOperationError();
     }
 
-    unarchiveChat(_chatId: ChatIdentifier): Promise<ArchiveChatResponse> {
+    unarchiveChats(_chatIds: ChatIdentifier[]): Promise<ArchiveChatResponse> {
         throw new AnonymousOperationError();
     }
 

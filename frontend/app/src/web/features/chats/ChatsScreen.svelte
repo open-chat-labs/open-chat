@@ -21,21 +21,13 @@
     } from "@client";
     import ChatListPanel from "@openchat/ui/src/features/components/ChatListPanel.svelte";
     import type { MenuItem } from "@openchat/ui/src/lib/types";
-    import { i18nKey } from "@i18n/i18n";
     import { toastStore } from "@src/stores/toast";
     import { navigate } from "@src/utils/navigation";
     import { withQueryStringFlag } from "@src/utils/urls";
-    import { getContext, untrack } from "svelte";
+    import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import type { LeftRegion, ScreenProps } from "../app/screens";
-    import {
-        chatRow,
-        listed,
-        unreadCount,
-        type ChatListRow,
-        type RowContext,
-    } from "./chatList.adapter";
-    import { AutoUnarchive } from "./autoUnarchive";
+    import { chatRow, listed, type ChatListRow, type RowContext } from "./chatList.adapter";
     import { latestMessagePreview } from "@src/logic/chats/latestMessagePreview";
     import { buildDisplayName } from "@src/utils/user";
 
@@ -81,33 +73,6 @@
     const rows = $derived(
         listedRows.map(({ chat, row }): ChatListRow => ({ ...row, menu: menuFor(chat, row) })),
     );
-
-    // An archived chat with unread messages comes out of the archive (as the old row did), with
-    // the old UI's toast if it can't (AutoUnarchive: not repeated by itself)
-    const autoUnarchive = new AutoUnarchive();
-    $effect(() => {
-        const ctx = context;
-        const states = chats.map((chat) => ({
-            id: chatIdentifierToString(chat.id),
-            archived: chat.membership.archived,
-            unread: chat.membership.archived ? unreadCount(chat, ctx) : 0,
-            chat,
-        }));
-        for (const id of untrack(() => autoUnarchive.next(states))) {
-            const state = states.find((s) => s.id === id);
-            if (state !== undefined) untrack(() => unarchive(state.chat.id, id));
-        }
-    });
-
-    function unarchive(chatId: ChatSummary["id"], id: string) {
-        client
-            .unarchiveChat(chatId)
-            .catch(() => false)
-            .then((success) => {
-                autoUnarchive.settled(id, success);
-                if (!success) toastStore.showFailureToast(i18nKey("unarchiveChatFailed"));
-            });
-    }
 
     async function setPinned(chatId: ChatSummary["id"], pin: boolean) {
         const success = await (pin ? client.pinChat(chatId) : client.unpinChat(chatId));
