@@ -37,10 +37,10 @@ function group(
 }
 
 const ctx: RowContext = {
-    me: "me",
-    you: "You",
     userName: (id) => ({ alice: "Alice", bob: "Bob" })[id] ?? id,
-    contentText: (content) => (content as { text: string }).text,
+    // the preview line itself is latestMessagePreview's (app/src/logic/chats)
+    preview: (chat) =>
+        (chat.latestMessage?.event.content as { text: string } | undefined)?.text ?? "",
     date: (timestamp) => `t${timestamp}`,
     unread: () => 0,
     pinned: new Set<string>(),
@@ -57,16 +57,9 @@ describe("a chat list row", () => {
         });
     });
 
-    test("for a group puts the sender before its latest message, the reader as You", () => {
-        expect(chatRow(group("g1", "Hikers", { sender: "bob", text: "trail?" }), ctx).preview).toBe(
-            "Bob: trail?",
-        );
-        expect(chatRow(group("g1", "Hikers", { sender: "me", text: "yes" }), ctx).preview).toBe(
-            "You: yes",
-        );
+    test("for a group is its name and kind", () => {
         expect(chatRow(group("g1", "Hikers"), ctx)).toMatchObject({
             title: "Hikers",
-            preview: "",
             kind: "group",
         });
     });
@@ -118,18 +111,9 @@ describe("a chat whose latest message has disappeared", () => {
     };
     const unread = { ...ctx, unread: () => 3 };
 
-    test("shows no preview and no unread count", () => {
-        expect(chatRow(expiring(1_000), unread, 2_000)).toMatchObject({
-            preview: "",
-            unreadCount: 0,
-        });
-    });
-
-    test("shows them until it goes", () => {
-        expect(chatRow(expiring(3_000), unread, 2_000)).toMatchObject({
-            preview: "secret",
-            unreadCount: 3,
-        });
+    test("shows no unread count once it has gone", () => {
+        expect(chatRow(expiring(1_000), unread, 2_000).unreadCount).toBe(0);
+        expect(chatRow(expiring(3_000), unread, 2_000).unreadCount).toBe(3);
     });
 });
 
@@ -138,15 +122,22 @@ describe("whether a chat is in the list", () => {
         ...group("g1", "Archive"),
         membership: { ...membership, archived: true },
     } as ChatSummary;
+    const users = new Map([
+        ["alice", { userId: "alice", username: "alice_w", displayName: "Wanda" }],
+    ]) as never;
+    const withDescription = { ...group("g2", "Open"), description: "weekend walks" } as ChatSummary;
 
     test("leaves archived chats out until there's a search", () => {
-        expect(listed(group("g2", "Open"), "Open", "")).toBe(true);
-        expect(listed(archived, "Archive", "  ")).toBe(false);
-        expect(listed(archived, "Archive", "arch")).toBe(true);
+        expect(listed(withDescription, "", users)).toBe(true);
+        expect(listed(archived, "  ", users)).toBe(false);
+        expect(listed({ ...archived, description: "" } as ChatSummary, "arch", users)).toBe(true);
     });
 
-    test("searching, takes the chats whose title has the text, in any case", () => {
-        expect(listed(group("g2", "Open"), "Open", " OP ")).toBe(true);
-        expect(listed(group("g2", "Open"), "Open", "closed")).toBe(false);
+    /** Invariant: the new list searches as the old one does (chatMatchesSearch). */
+    test("searching, matches a group's description and a DM's username or display name", () => {
+        expect(listed(withDescription, " WALKS ", users)).toBe(true);
+        expect(listed(dm("alice"), "alice_", users)).toBe(true);
+        expect(listed(dm("alice"), "wan", users)).toBe(true);
+        expect(listed(withDescription, "closed", users)).toBe(false);
     });
 });

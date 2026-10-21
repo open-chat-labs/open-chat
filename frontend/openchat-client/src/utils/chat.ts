@@ -2471,3 +2471,23 @@ function latestEventAndMessageIndexesFromEvents(
 
     return [eventIndex, messageIndex];
 }
+
+/**
+ * Whether a chat matches a chat-list search (lower case): a group or channel by its name or
+ * description, a direct chat by the other person's username or display name.
+ */
+export function chatMatchesSearch(search: string, chat: ChatSummary, users: UserLookup): boolean {
+    if (chat.kind === "group_chat" || chat.kind === "channel") {
+        return (
+            chat.name.toLowerCase().indexOf(search) >= 0 ||
+            chat.description.toLowerCase().indexOf(search) >= 0
+        );
+    }
+    const user = users.get(chat.them.userId);
+    return (
+        user !== undefined &&
+        (user.username.toLowerCase().indexOf(search) >= 0 ||
+            (user.displayName !== undefined &&
+                user.displayName.toLowerCase().indexOf(search) >= 0))
+    );
+}
