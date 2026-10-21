@@ -1,5 +1,11 @@
 import type { ChatSummary, MessageContent } from "@client";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
+
+// messages are restricted only in the app store build; here any moderation flag restricts
+vi.mock("@client", async (importOriginal) => ({
+    ...(await importOriginal<object>()),
+    messageFlagsRestricted: (flags: number | undefined) => (flags ?? 0) !== 0,
+}));
 import { latestMessagePreview, type PreviewText } from "./latestMessagePreview";
 
 const membership = { role: 1, archived: false, notificationsMuted: false };
@@ -62,6 +68,15 @@ describe("a chat's latest message preview", () => {
                 untranslated,
             ),
         ).toBe("Webhook: hi");
+    });
+
+    test("shows restricted content as such, not its text", () => {
+        expect(
+            latestMessagePreview(
+                chat("direct_chat", { sender: "alice", text: "hi", flags: 1 }),
+                untranslated,
+            ),
+        ).toBe("restricted_content");
     });
 
     test("shows the reader's translation", () => {

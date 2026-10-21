@@ -123,7 +123,7 @@ describe("whether a chat is in the list", () => {
         membership: { ...membership, archived: true },
     } as ChatSummary;
     const users = new Map([
-        ["alice", { userId: "alice", username: "alice_w", displayName: "Alice" }],
+        ["alice", { userId: "alice", username: "alice_w", displayName: "Wanda" }],
     ]) as never;
     const withDescription = { ...group("g2", "Open"), description: "weekend walks" } as ChatSummary;
 
@@ -137,7 +137,7 @@ describe("whether a chat is in the list", () => {
     test("searching, matches a group's description and a DM's username or display name", () => {
         expect(listed(withDescription, " WALKS ", users)).toBe(true);
         expect(listed(dm("alice"), "alice_", users)).toBe(true);
-        expect(listed(dm("alice"), "ali", users)).toBe(true);
+        expect(listed(dm("alice"), "wan", users)).toBe(true);
         expect(listed(withDescription, "closed", users)).toBe(false);
     });
 });
