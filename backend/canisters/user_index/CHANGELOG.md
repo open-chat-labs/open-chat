@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `set_bridge_bot` for a platform operator to set the bot that bridges Discord or Telegram ([#10052](https://github.com/open-chat-labs/open-chat/pull/10052))
+- Keep the latest profile of each account a bridge bot relays messages from, with `bridged_users` to look them up ([#10052](https://github.com/open-chat-labs/open-chat/pull/10052))
+
 ### Changed
 
 - Send events to the LocalUserIndexes, the Identity canister and the StorageIndex at their `c2c_user_index` endpoints, the StorageIndex's from one queue ([#10023](https://github.com/open-chat-labs/open-chat/pull/10023))

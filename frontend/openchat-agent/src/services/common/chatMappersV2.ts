@@ -8,6 +8,9 @@ import type {
     BotDefinition,
     BotInstallationLocationType,
     BotMessageContext,
+    BridgedUser,
+    BridgedUserId,
+    BridgedUserSummary,
     ChangeRoleResponse,
     ChannelIdentifier,
     ChannelSummary,
@@ -186,6 +189,9 @@ import type {
     AudioContent as TAudioContent,
     BlobReference as TBlobReference,
     BotMessageContext as TBotMessageContext,
+    BridgedUser as TBridgedUser,
+    BridgedUserId as TBridgedUserId,
+    BridgedUserSummary as TBridgedUserSummary,
     CallParticipant as TCallParticipant,
     Chat as TChat,
     ModerationReportContent as TModerationReportContent,
@@ -647,7 +653,59 @@ export function botMessageContext(value: TBotMessageContext): BotMessageContext 
             args: command.args.map(botCommandArg),
             initiator: principalBytesToString(command.initiator),
         })),
+        bridgedFrom: mapOptional(value.bridged_from, bridgedUserId),
     };
+}
+
+export function bridgedUserId(value: TBridgedUserId): BridgedUserId {
+    if ("Discord" in value) {
+        return { kind: "discord", id: value.Discord.toString() };
+    }
+    if ("Telegram" in value) {
+        return { kind: "telegram", id: value.Telegram.toString() };
+    }
+    throw new UnsupportedValueError("Unexpected ApiBridgedUserId type received", value);
+}
+
+export function apiBridgedUserId(id: BridgedUserId): TBridgedUserId {
+    switch (id.kind) {
+        case "discord":
+            return { Discord: BigInt(id.id) };
+        case "telegram":
+            return { Telegram: BigInt(id.id) };
+    }
+}
+
+export function bridgedUserSummary(value: TBridgedUserSummary): BridgedUserSummary {
+    return { user: bridgedUser(value.user), updated: value.updated };
+}
+
+function bridgedUser(value: TBridgedUser): BridgedUser {
+    if ("Discord" in value) {
+        const u = value.Discord;
+        return {
+            kind: "discord",
+            profile: {
+                id: u.id.toString(),
+                username: u.username,
+                displayName: u.display_name,
+                avatar: u.avatar,
+            },
+        };
+    }
+    if ("Telegram" in value) {
+        const u = value.Telegram;
+        return {
+            kind: "telegram",
+            profile: {
+                id: u.id.toString(),
+                username: u.username,
+                displayName: u.display_name,
+                avatar: mapOptional(u.avatar, blobReference),
+            },
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiBridgedUser type received", value);
 }
 
 export function botCommandArg(api: BotCommandArg): CommandArg {

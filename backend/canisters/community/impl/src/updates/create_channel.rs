@@ -40,6 +40,7 @@ fn c2c_bot_create_channel_impl(
     let bot_caller = BotCaller {
         bot: args.bot_id,
         initiator: args.initiator.clone(),
+        bridged_from: None,
     };
 
     match create_channel_impl(args.into(), false, Some(Caller::BotV2(bot_caller)), state) {

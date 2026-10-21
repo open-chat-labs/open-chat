@@ -190,6 +190,7 @@
         "translateFrom": "{language}から翻訳",
         "translatedFrom": "端末で{language}から翻訳"
     },
+    "bridgedUserUnknown": "{platform} ユーザー",
     "nativeUpdate": {
         "downloadingTitle": "少々お待ちください！更新中 ...",
         "downloadingMessage": "簡単な更新をダウンロードしています。まもなく続行できます ...",

@@ -4,7 +4,7 @@
     import Typing from "@shared_components/Typing.svelte";
     import { trackedEffect } from "@src/utils/effects.svelte";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
-    import { AvatarSize, type ChatIdentifier, chatIdentifiersEqual, chatListScopeStore, type ChatType, currentUserIdStore, currentUserStore, type EnhancedReplyContext, iconSize, localUpdates, type Member, type Message, type MessageReminderCreatedContent, mobileWidth, OpenChat, publish, routeForMessage, routeStore, screenWidth, ScreenWidth, selectedChatBlockedUsersStore, selectedChatMembersStore, selectedChatWebhooksStore, selectedCommunityMembersStore, type SelectedEmoji, selectedServerChatStore, type SenderContext, translationsStore, unconfirmedReadByThem, undeletingMessagesStore, type UserSummary } from "@client";
+    import { AvatarSize, type ChatIdentifier, chatIdentifiersEqual, chatListScopeStore, type ChatType, BRIDGE_PLATFORM_NAMES, bridgedAuthorName, bridgedFrom, bridgedUserKey, bridgedUsersStore, currentUserIdStore, currentUserStore, type EnhancedReplyContext, iconSize, localUpdates, type Member, type Message, type MessageReminderCreatedContent, mobileWidth, OpenChat, publish, routeForMessage, routeStore, screenWidth, ScreenWidth, selectedChatBlockedUsersStore, selectedChatMembersStore, selectedChatWebhooksStore, selectedCommunityMembersStore, type SelectedEmoji, selectedServerChatStore, type SenderContext, translationsStore, unconfirmedReadByThem, undeletingMessagesStore, type UserSummary } from "@client";
     import { getContext, onDestroy, onMount, tick } from "svelte";
     import { _, locale } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
@@ -414,7 +414,14 @@
             ? reservedMediaWidth(mediaDimensions.width, mediaDimensions.height)
             : undefined,
     );
-    let canTip = $derived(canTipMessages && !me && confirmed && !inert && !failed);
+    let bridged = $derived(bridgedFrom(senderContext));
+    let bridgedUser = $derived(
+        bridged !== undefined ? $bridgedUsersStore.get(bridgedUserKey(bridged)!) : undefined,
+    );
+    // A tip would go to the bridge bot, not the author shown
+    let canTip = $derived(
+        canTipMessages && !me && confirmed && !inert && !failed && bridged === undefined,
+    );
     let inThread = $derived(threadRootMessage !== undefined);
     let threadRootMessageIndex = $derived(
         threadRootMessage?.messageId === msg.messageId
@@ -453,11 +460,14 @@
     );
     let canUndelete = $derived(msg.deleted && msg.content.kind !== "deleted_content");
     let senderDisplayName = $derived(
-        client.getDisplayName(
-            msg.sender,
-            $selectedCommunityMembersStore,
-            $selectedChatWebhooksStore,
-        ),
+        bridged !== undefined
+            ? (bridgedAuthorName(bridgedUser) ??
+              $_("bridgedUserUnknown", { values: { platform: BRIDGE_PLATFORM_NAMES[bridged.kind] } }))
+            : client.getDisplayName(
+                  msg.sender,
+                  $selectedCommunityMembersStore,
+                  $selectedChatWebhooksStore,
+              ),
     );
     // The details held can be for another chat, when a thread preview shows a message from a chat
     // other than the one selected
@@ -554,7 +564,9 @@
                                 <div class="avatar" onclick={openUserProfile}>
                                     <Avatar
                                         maxStreak={hasAchievedMaxStreak}
-                                        url={client.userAvatarUrl(sender)}
+                                        url={bridged !== undefined
+                                            ? client.bridgedAvatarUrl(bridged, bridgedUser)
+                                            : client.userAvatarUrl(sender)}
                                         userId={msg.sender}
                                         size={$mobileWidth
                                             ? AvatarSize.Small
@@ -604,7 +616,8 @@
                                             {chitEarned} />
                                         <BotBadge
                                             bot={senderContext?.kind === "bot"}
-                                            webhook={senderContext?.kind === "webhook"} />
+                                            webhook={senderContext?.kind === "webhook"}
+                                            bridge={bridged?.kind} />
                                         {#if sender !== undefined && multiUserChat}
                                             <WithRole
                                                 userId={sender.userId}

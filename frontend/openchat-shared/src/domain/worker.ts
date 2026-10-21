@@ -28,6 +28,9 @@ import type {
     AddHotGroupExclusionResponse,
     AddRemoveReactionResponse,
     BlockUserResponse,
+    BridgedUserId,
+    BridgedUserSummary,
+    BridgePlatform,
     CancelP2PSwapResponse,
     CandidateGroupChat,
     ChangeRoleResponse,
@@ -558,6 +561,8 @@ export type WorkerRequest = Cloneable<
     | CallPushEnabled
     | SetCallPushEnabled
     | SetAlchemyApiKey
+    | SetBridgeBot
+    | GetBridgedUsers
     | SetPremiumItemCost
     | OneSecEnableForwarding
     | OneSecGetTransferFees
@@ -692,6 +697,16 @@ type SetCallPushEnabled = {
 type SetAlchemyApiKey = {
     kind: "setAlchemyApiKey";
     apiKey: string | undefined;
+};
+// Platform operators only
+type SetBridgeBot = {
+    kind: "setBridgeBot";
+    platform: BridgePlatform;
+    botId: string | undefined;
+};
+type GetBridgedUsers = {
+    kind: "getBridgedUsers";
+    ids: BridgedUserId[];
 };
 type DailyPuzzleRegenerateToday = {
     kind: "dailyPuzzleRegenerateToday";
@@ -2865,6 +2880,8 @@ export type WorkerResults = ResultsByKind<{
     callPushEnabled: boolean;
     setCallPushEnabled: Success | OCError;
     setAlchemyApiKey: Success | OCError;
+    setBridgeBot: Success | OCError;
+    getBridgedUsers: BridgedUserSummary[];
     setPremiumItemCost: void;
     createAccountLinkingCode: AccountLinkingCode | undefined;
     getSignInProof: string | undefined;

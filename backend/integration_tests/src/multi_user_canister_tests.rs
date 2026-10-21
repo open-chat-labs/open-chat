@@ -3637,6 +3637,7 @@ fn a_bot_can_send_a_direct_message_to_a_user_in_a_multi_user_canister() {
                 block_level_markdown: false,
                 finalised,
                 og_previews: None,
+                bridged_from: None,
             },
         )
     };

@@ -19,9 +19,9 @@ use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
     AutonomousConfig, BotActionChatDetails, BotActionScope, BotChatContext, BotChatEvent, BotCommandArg, BotCommandArgValue,
     BotCommandDefinition, BotCommandParam, BotCommandParamType, BotDataEncoding, BotDefinition, BotEvent, BotEventWrapper,
-    BotInstallationLocation, BotMessageContent, BotPermissions, BotSubscriptions, CanisterId, ChannelId, Chat, ChatEvent,
-    ChatEventType, ChatPermission, ChatType, CommunityEventType, CommunityPermission, EventIndex, MessageContent, MessageId,
-    MessagePermission, NotificationEnvelope, OptionUpdate, Rules, StringParam, TextContent, UpdatedRules, UserId,
+    BotInstallationLocation, BotMessageContent, BotPermissions, BotSubscriptions, BridgePlatform, CanisterId, ChannelId, Chat,
+    ChatEvent, ChatEventType, ChatPermission, ChatType, CommunityEventType, CommunityPermission, EventIndex, MessageContent,
+    MessageId, MessagePermission, NotificationEnvelope, OptionUpdate, Rules, StringParam, TextContent, UpdatedRules, UserId,
 };
 
 #[test]
@@ -149,6 +149,7 @@ fn e2e_command_bot_test() {
             block_level_markdown: false,
             finalised: false,
             og_previews: None,
+            bridged_from: None,
         },
     );
 
@@ -187,6 +188,7 @@ fn e2e_command_bot_test() {
             block_level_markdown: false,
             finalised: true,
             og_previews: None,
+            bridged_from: None,
         },
     );
 
@@ -412,6 +414,7 @@ fn e2e_autonomous_bot_test() {
             block_level_markdown: false,
             finalised: true,
             og_previews: None,
+            bridged_from: None,
         },
     );
 
@@ -528,6 +531,7 @@ fn create_channel_autonomously() {
             block_level_markdown: false,
             finalised: true,
             og_previews: None,
+            bridged_from: None,
         },
     );
 
@@ -840,6 +844,7 @@ fn send_direct_message() {
             block_level_markdown: false,
             finalised: true,
             og_previews: None,
+            bridged_from: None,
         },
     );
 
@@ -972,6 +977,7 @@ fn send_multiple_updates_to_same_message(chat_type: ChatType) {
             block_level_markdown: false,
             finalised: false,
             og_previews: None,
+            bridged_from: None,
         },
     );
 
@@ -994,6 +1000,7 @@ fn send_multiple_updates_to_same_message(chat_type: ChatType) {
             block_level_markdown: false,
             finalised: false,
             og_previews: None,
+            bridged_from: None,
         },
     );
 
@@ -1016,6 +1023,7 @@ fn send_multiple_updates_to_same_message(chat_type: ChatType) {
             block_level_markdown: false,
             finalised: true,
             og_previews: None,
+            bridged_from: None,
         },
     );
 
@@ -1060,6 +1068,7 @@ fn send_multiple_updates_to_same_message(chat_type: ChatType) {
             block_level_markdown: false,
             finalised: true,
             og_previews: None,
+            bridged_from: None,
         },
     );
 
@@ -1570,6 +1579,21 @@ fn new_local_user_index_learns_of_existing_bots() {
     let (bot_id, old_principal) = register_bot(env, &owner, canister_ids.user_index, random_string(), random_string());
     client::user_index::happy_path::publish_bot(env, *controller, canister_ids.user_index, bot_id);
 
+    // It's the Discord bridge bot too, which a LocalUserIndex must know of to relay its messages
+    let operator = client::register_user(env, canister_ids);
+    client::user_index::happy_path::add_platform_operator(env, *controller, canister_ids.user_index, operator.user_id);
+    tick_many(env, 3);
+    let response = client::user_index::set_bridge_bot(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        &user_index_canister::set_bridge_bot::Args {
+            platform: BridgePlatform::Discord,
+            bot_id: Some(bot_id),
+        },
+    );
+    assert!(matches!(response, types::UnitResult::Success), "{response:?}");
+
     // Expand onto a subnet the Registry hasn't expanded onto yet. In test mode the Registry takes
     // a LocalUserIndex created up front, then installs it and tells the other canisters of it
     let subnet_id = env.topology().get_sns().unwrap();
@@ -1598,6 +1622,19 @@ fn new_local_user_index_learns_of_existing_bots() {
         env.tick();
     }
     assert!(knows_bot(env));
+
+    let bridge_bot = |env: &PocketIc| {
+        metrics(env, local_user_index)["bridge_bots"]["Discord"]
+            .as_str()
+            .map(|b| b.to_string())
+    };
+    for _ in 0..30 {
+        if bridge_bot(env).is_some() {
+            break;
+        }
+        env.tick();
+    }
+    assert_eq!(bridge_bot(env), Some(bot_id.to_string()));
 
     // The bot was told of its registration when it registered, so the new LocalUserIndex doesn't tell it again
     assert!(bot_notification_encodings(env, *controller, local_user_index, 0, bot_id).is_empty());
@@ -1707,6 +1744,7 @@ fn updating_bot_principal_and_data_encoding_reaches_local_user_indexes() {
                 block_level_markdown: false,
                 finalised: true,
                 og_previews: None,
+                bridged_from: None,
             },
         )
     };

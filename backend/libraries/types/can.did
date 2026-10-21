@@ -2044,6 +2044,12 @@ type WebhookDetails = record {
 type BotMessageContext = record {
     command : opt BotCommand;
     finalised : bool;
+    bridged_from : opt BridgedUserId;
+};
+
+type BridgedUserId = variant {
+    Discord : nat64;
+    Telegram : int64;
 };
 
 type SenderContext = variant {

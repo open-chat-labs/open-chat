@@ -3,6 +3,11 @@
         chatIdentifiersEqual,
         chatListScopeStore,
         currentUserIdStore,
+        BRIDGE_PLATFORM_NAMES,
+        bridgedAuthorName,
+        bridgedFrom,
+        bridgedUserKey,
+        bridgedUsersStore,
         OpenChat,
         routeForChatIdentifier,
         selectedChatMembersStore,
@@ -28,6 +33,7 @@
         type SizeMode,
     } from "component-lib";
     import { getContext, type Snippet } from "svelte";
+    import { _ } from "svelte-i18n";
     import Badges from "../profile/Badges.svelte";
     import BotBadge from "../profile/BotBadge.svelte";
     import RoleIcon from "../profile/RoleIcon.svelte";
@@ -98,12 +104,19 @@
     let multiUserChat = $derived(chatType === "group_chat" || chatType === "channel");
     let streak = $derived(sender?.streak ?? 0);
     let chitEarned = $derived(sender?.totalChitEarned ?? 0);
+    let bridged = $derived(bridgedFrom(senderContext));
+    let bridgedUser = $derived(
+        bridged !== undefined ? $bridgedUsersStore.get(bridgedUserKey(bridged)!) : undefined,
+    );
     let senderDisplayName = $derived(
-        client.getDisplayName(
-            msg.sender,
-            $selectedCommunityMembersStore,
-            $selectedChatWebhooksStore,
-        ),
+        bridged !== undefined
+            ? (bridgedAuthorName(bridgedUser) ??
+              $_("bridgedUserUnknown", { values: { platform: BRIDGE_PLATFORM_NAMES[bridged.kind] } }))
+            : client.getDisplayName(
+                  msg.sender,
+                  $selectedCommunityMembersStore,
+                  $selectedChatWebhooksStore,
+              ),
     );
     // The details held can be for another chat, when a thread preview shows a message from a chat
     // other than the one selected
@@ -232,7 +245,8 @@
                 {chitEarned} />
             <BotBadge
                 bot={senderContext?.kind === "bot"}
-                webhook={senderContext?.kind === "webhook"} />
+                webhook={senderContext?.kind === "webhook"}
+                bridge={bridged?.kind} />
             {#if sender !== undefined && multiUserChat}
                 <WithRole
                     userId={sender.userId}
