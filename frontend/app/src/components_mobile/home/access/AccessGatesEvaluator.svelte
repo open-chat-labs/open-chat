@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { GateEvaluation } from "@shared_components/home/access/gateEvaluation.svelte";
+    import { GateEvaluation } from "@src/logic/access/gateEvaluation.svelte";
     import { OpenChat, type EnhancedAccessGate, type GateCheckSucceeded } from "@client";
     import { getContext } from "svelte";
     import AccessGateEvaluator from "./AccessGateEvaluator.svelte";

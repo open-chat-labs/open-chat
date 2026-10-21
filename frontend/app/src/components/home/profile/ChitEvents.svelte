@@ -7,7 +7,7 @@
     import { chitPopup, disableChit, hideChitIcon, utcMode } from "../../../stores/settings";
     import { now500 } from "../../../stores/time";
     import Calendar from "../../calendar/Calendar.svelte";
-    import { calendarState, type DateRange } from "@shared_components/calendar/calendarState.svelte";
+    import { calendarState, type DateRange } from "@src/logic/calendar/calendarState.svelte";
     import { isSameDay } from "@shared_components/calendar/utils";
     import Toggle from "../../Toggle.svelte";
     import Translatable from "@shared_components/Translatable.svelte";

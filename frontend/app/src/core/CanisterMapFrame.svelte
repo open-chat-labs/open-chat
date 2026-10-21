@@ -2,8 +2,8 @@
     import { querystringStore, type OpenChat } from "@client";
     import { Body, Column, CommonButton } from "component-lib";
     import { getContext, onMount } from "svelte";
-    import { currentThemeMode } from "../theme/themes";
-    import { openChatFriendlyUrl, openExternalUrl } from "../utils/urls";
+    import { currentThemeMode } from "@src/theme/themes";
+    import { openChatFriendlyUrl, openExternalUrl } from "@src/utils/urls";
 
     // The interactive canister map (architecture/canister_map) is a page of its own which the
     // website build writes under a name carrying the website version (rollup.config.mjs, which

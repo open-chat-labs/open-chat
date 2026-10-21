@@ -44,7 +44,7 @@
     import { isSafari, mobileOperatingSystem } from "@utils/devices";
     import type { FlatChatItem } from "./flatChatItems";
     import { vclDebug } from "./vclDebug";
-    import VirtualChatList from "./VirtualChatList.svelte";
+    import VirtualChatList from "@src/components_shared/VirtualChatList.svelte";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_READ_THRESHOLD = 500;

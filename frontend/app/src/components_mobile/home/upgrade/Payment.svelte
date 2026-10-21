@@ -51,7 +51,7 @@
     import CryptoSelector from "../CryptoSelector.svelte";
     import ExternalWalletApproval from "../ExternalWalletApproval.svelte";
     import SourceWalletSelector from "../SourceWalletSelector.svelte";
-    import { TokenState } from "@shared_components/home/wallet/walletState.svelte";
+    import { TokenState } from "@src/logic/wallet/walletState.svelte";
     import SelectMembershipHeader from "./SelectMembershipHeader.svelte";
 
     type Step = "choose" | "confirm";

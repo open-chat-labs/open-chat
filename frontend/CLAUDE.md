@@ -34,12 +34,10 @@ Where code goes:
 |---|---|
 | An operation that calls the backend | A method on `OpenChat` that returns an outcome union (see "The client") |
 | Pure domain logic: formatting, permissions, sorting, failure → message | An exported `@client` function. Text comes back as a `ResourceKey`, not a translated string |
-| UI flow state: multi-step forms, dirty flags, validation, call state | A rune class in `app/src/logic/<feature>/x.svelte.ts`. It never imports a `.svelte` file or calls `navigate`, `toastStore` or `publish`: it returns outcomes and the view reacts |
+| UI flow state: multi-step forms, dirty flags, validation, call state | A rune class in `app/src/logic/<feature>/x.svelte.ts`. It never imports a `.svelte` file or calls `navigate`, `toastStore` or `publish`: it returns outcomes and the view reacts (lint) |
 | App-global state | A custom store (see "State") |
 | A component with behaviour but no look of its own that needs the client (`ChatEventList`, `Markdown`) | `app/src/core/`, reused by every tree |
 | A component with no client dependency (`VirtualList`, `VirtualChatList`) | `@openchat/ui`, which stays app-agnostic: no `@client` imports |
-
-`app/src/logic` and `app/src/core` are created by item F1 in `PLAN.md`. Until it lands, the flow modules are in `components_shared/`.
 
 Never rewrite a component like `ChatEventList` or `VirtualChatList`. They carry years of scroll, loading and read-marking fixes.
 
@@ -88,7 +86,7 @@ The desktop tree is `app/src/components/`, the mobile tree is `app/src/component
 - Always write Svelte 5 syntax: runes (`$state`, `$derived`, `$props`), `onclick` not `on:click`, snippets not `<slot>`. Svelte picks the mode per component, so a component with no runes silently compiles as Svelte 4, where a plain `let` is reactive and `x = x` forces a re-render. Never rely on that.
 - Where state lives depends on its lifespan. App-global state, including anything that must outlive the component that set it, is a custom store. Transient UI state is runes. Operations are client methods: they keep nothing on the `OpenChat` instance, but may write global stores, the way `voteOnProposal` writes `proposalVotesStore` and `registerPollVote` writes `localUpdates`. Don't put a global-lifespan rune class in `app/src/logic/` to hold state a client operation writes.
 - Component-local state uses runes.
-- State scoped to a screen or feature, shared between that feature's components, goes in a rune class in a `.svelte.ts` file. Example: `components_mobile/home/wallet/walletState.svelte.ts`.
+- State scoped to a screen or feature, shared between that feature's components, goes in a rune class in a `.svelte.ts` file. Example: `app/src/logic/wallet/walletState.svelte.ts`.
 - A user flow with multi-step UI state (gate approvals, dirty flags, form validation, call state) gets one such module in `app/src/logic/`, used by every tree. It never calls `navigate`, `toastStore` or `publish`: it returns outcomes and the component reacts. Never implement a flow inside a component or copy it per tree.
 - App-global or performance-sensitive state uses the custom stores in `openchat-client/src/utils/stores.ts`. Runes can be slow at that scale.
 - A custom store's `.value` is a snapshot of its current value, deliberately not reactive. Code that needs to react subscribes: `$store` in a component, `createSubscriber` (`svelte/reactivity`) in a rune class, as `TokenState` and `GateEvaluation` do. Reading `.value` inside `$derived` computes once and never updates. The same goes for a client method that reads `.value` itself: `client.isChatReadOnly`, `canSendMessage` and `messageIsReadByThem` do, so a `$derived` that calls them won't update. Read the stores they depend on in the `$derived`, or pass them in.

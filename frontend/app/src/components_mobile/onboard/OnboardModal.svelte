@@ -22,7 +22,7 @@
     import { _ } from "svelte-i18n";
     import ChevronLeft from "svelte-material-icons/ChevronLeft.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
-    import Markdown from "@shared_components/Markdown.svelte";
+    import Markdown from "@src/core/Markdown.svelte";
     import Progress from "../Progress.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
     import SignUp from "./SignUp.svelte";

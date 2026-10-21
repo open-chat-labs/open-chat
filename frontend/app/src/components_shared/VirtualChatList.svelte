@@ -118,7 +118,7 @@
     import { mobileOperatingSystem } from "@utils/devices";
     import { recordError } from "@utils/errorPostmortem";
     import { flushSync, onMount, tick, untrack } from "svelte";
-    import { vclDebug } from "./vclDebug";
+    import { vclDebug } from "@src/core/vclDebug";
     import {
         computeSpacers as _computeSpacers,
         computeWindow as _computeWindow,

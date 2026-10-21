@@ -33,8 +33,8 @@
     import SwapQuotes from "./SwapQuotes.svelte";
     import TokenCard from "./TokenCard.svelte";
     import TokenSelector from "./TokenSelector.svelte";
-    import type { TokenState } from "@shared_components/home/wallet/walletState.svelte";
-    import { SwapForm } from "@shared_components/home/wallet/swapForm.svelte";
+    import type { TokenState } from "@src/logic/wallet/walletState.svelte";
+    import { SwapForm } from "@src/logic/wallet/swapForm.svelte";
 
     interface Props {
         inToken: TokenState;

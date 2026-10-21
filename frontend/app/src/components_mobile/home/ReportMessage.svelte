@@ -18,7 +18,7 @@
     import { toastStore } from "../../stores/toast";
     import Setting from "../Setting.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
-    import Markdown from "@shared_components/Markdown.svelte";
+    import Markdown from "@src/core/Markdown.svelte";
 
     interface Props {
         chatId: ChatIdentifier;

@@ -29,11 +29,11 @@
     import Save from "svelte-material-icons/ContentSaveOutline.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
-    import Markdown from "@shared_components/Markdown.svelte";
+    import Markdown from "@src/core/Markdown.svelte";
     import SlidingPageContent from "../../home/SlidingPageContent.svelte";
     import MulticolourText from "../../MulticolourText.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
-    import { BotInstall } from "@shared_components/bots/install/botInstall.svelte";
+    import { BotInstall } from "@src/logic/bots/botInstall.svelte";
     import BotAvatar from "../BotAvatar.svelte";
     import BotCommands from "../BotCommands.svelte";
     import BotsPermissionInfo from "../BotsPermissionInfo.svelte";

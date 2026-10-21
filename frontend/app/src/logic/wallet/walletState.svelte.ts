@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-restricted-imports -- refreshBalance toasts its own failure until PLAN.md F2 makes it an outcome
 import { toastStore } from "@src/stores/toast";
 import {
     conversionLedgers,

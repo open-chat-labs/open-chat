@@ -8,7 +8,7 @@ import {
 } from "@client";
 import { createCandidateCommunity } from "@src/stores/community";
 import { describe, expect, test, vi } from "vitest";
-import { UpdateCommunityState } from "./community.svelte";
+import { UpdateCommunityState } from "@src/logic/groupOrCommunity/community.svelte";
 
 const community: CommunitySummary = {
     ...createCandidateCommunity("rrkah-fqaaa-aaaaa-aaaaq-cai", 1),

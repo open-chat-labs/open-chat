@@ -15,7 +15,7 @@
     } from "@client";
     import ActivityPanel from "@openchat/ui/src/features/components/ActivityPanel.svelte";
     import EmptyState from "@openchat/ui/src/lib/components/EmptyState.svelte";
-    import { activityFeedState } from "@src/runes/activity.svelte";
+    import { activityFeedState } from "@src/logic/activity/activity.svelte";
     import { navigate } from "@src/utils/navigation";
     import { removeQueryStringParam } from "@src/utils/urls";
     import { getContext, untrack } from "svelte";

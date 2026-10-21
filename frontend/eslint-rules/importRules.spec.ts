@@ -97,3 +97,35 @@ describe("svelte/store", () => {
         ).toEqual([]);
     });
 });
+
+/** Invariant: app/src/logic imports no component or view tree and never navigates, toasts or publishes. */
+describe("app/src/logic stays view-agnostic", () => {
+    const file = "app/src/logic/example/example.svelte.ts";
+
+    it("rejects a component, a view tree and the side effects", async () => {
+        expect(await importErrors('import X from "./Example.svelte";', file)).toEqual([
+            "no-restricted-imports",
+        ]);
+        expect(
+            await importErrors('import { y } from "@src/components_shared/home/thing";', file),
+        ).toEqual(["no-restricted-imports"]);
+        expect(await importErrors('import { toastStore } from "@src/stores/toast";', file)).toEqual(
+            ["no-restricted-imports"],
+        );
+        expect(
+            await importErrors('import { navigate } from "@src/utils/navigation";', file),
+        ).toEqual(["no-restricted-imports"]);
+        expect(await importErrors('import { publish } from "@client";', file)).toEqual([
+            "no-restricted-imports",
+        ]);
+    });
+
+    it("accepts another rune module and the client", async () => {
+        expect(
+            await importErrors(
+                'import { TokenState } from "../wallet/walletState.svelte";\nimport { type OpenChat } from "@client";',
+                file,
+            ),
+        ).toEqual([]);
+    });
+});

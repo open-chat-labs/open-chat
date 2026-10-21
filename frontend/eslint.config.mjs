@@ -37,6 +37,20 @@ function restrictAppImports(...patterns) {
     };
 }
 
+// app/src/logic holds view-agnostic flow state shared by every tree (see frontend/CLAUDE.md).
+// Components are PascalCase .svelte files; the rune modules are imported as "x.svelte".
+const logicMessage =
+    "app/src/logic is view-agnostic: return an outcome and let the view navigate, toast or publish.";
+const logicViews = {
+    regex: "(^|/)[A-Z][^/]*\\.svelte$|^@shared_components/|(^|/)(components|components_mobile|components_shared|web)/",
+    message: "app/src/logic must not import components or the view trees.",
+};
+const logicSideEffects = [
+    { regex: "(^|/)stores/toast$", message: logicMessage },
+    { regex: "(^|/)utils/navigation$", importNames: ["navigate"], message: logicMessage },
+    { regex: "^@(client|shared)$", importNames: ["publish"], message: logicMessage },
+];
+
 const svelteStoreMessage =
     "Use runes or the custom stores in openchat-client/src/utils/stores.ts (see frontend/CLAUDE.md).";
 
@@ -98,6 +112,28 @@ export default defineConfig([
     {
         files: ["app/src/**/*.spec.ts", "app/src/**/*.test.ts"],
         rules: restrictAppImports(agentOrWorker),
+    },
+    // app/src/logic stays view-agnostic. Its specs may reach inside the client like the others.
+    {
+        files: ["app/src/logic/**/*.ts"],
+        ignores: ["app/src/logic/**/*.spec.ts", "app/src/logic/**/*.test.ts"],
+        rules: {
+            "no-restricted-imports": [
+                "error",
+                {
+                    patterns: [
+                        agentOrWorker,
+                        insideClient,
+                        { ...logicViews, caseSensitive: true },
+                        ...logicSideEffects,
+                    ],
+                },
+            ],
+            "local/no-restricted-dynamic-imports": [
+                "error",
+                { patterns: [agentOrWorker, insideClient, logicViews, logicSideEffects[0]] },
+            ],
+        },
     },
     // Files that used svelte/store before the rule. Move each to runes or the custom stores when you touch it,
     // then take it off this list. Never add to it.

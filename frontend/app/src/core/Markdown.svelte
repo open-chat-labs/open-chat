@@ -3,7 +3,7 @@
     import type { OpenChat } from "@client";
     import { allUsersStore, userGroupSummariesStore } from "@client";
     import { getContext } from "svelte";
-    import { isSingleEmoji } from "../utils/emojis";
+    import { isSingleEmoji } from "@src/utils/emojis";
     import {
         extractMentionedUserGroupIds,
         extractMentionedUserIds,

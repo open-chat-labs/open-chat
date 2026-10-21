@@ -17,7 +17,7 @@
     import CollapsibleCard from "../../../CollapsibleCard.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
     import InviteUsersWithLink from "../../InviteUsersWithLink.svelte";
-    import Markdown from "@shared_components/Markdown.svelte";
+    import Markdown from "@src/core/Markdown.svelte";
     import Stats from "../../Stats.svelte";
     import AccessGateExpiry from "@shared_components/home/access/AccessGateExpiry.svelte";
     import AccessGateSummary from "../../access/AccessGateSummary.svelte";

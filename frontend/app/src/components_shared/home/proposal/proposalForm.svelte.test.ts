@@ -8,7 +8,7 @@ import {
     type OpenChat,
 } from "@client";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { ProposalForm, type ProposalSubForm } from "./proposalForm.svelte";
+import { ProposalForm, type ProposalSubForm } from "@src/logic/proposal/proposalForm.svelte";
 
 const nervousSystem = {
     governanceCanisterId: "governance",

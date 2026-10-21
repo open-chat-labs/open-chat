@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activityFeedState } from "@src/runes/activity.svelte";
+    import { activityFeedState } from "@src/logic/activity/activity.svelte";
     import { trackedEffect } from "@src/utils/effects.svelte";
     import { Body, Container, Logo, SectionHeader } from "component-lib";
     import {

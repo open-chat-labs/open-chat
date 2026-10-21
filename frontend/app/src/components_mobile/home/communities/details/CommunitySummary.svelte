@@ -38,13 +38,13 @@
     import Edit from "svelte-material-icons/SquareEditOutline.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
     import AccessGateSummary from "../../AccessGateSummary.svelte";
-    import { updateGroupState } from "@shared_components/home/createOrUpdateGroup/group.svelte";
-    import Markdown from "@shared_components/Markdown.svelte";
+    import { updateGroupState } from "@src/logic/groupOrCommunity/group.svelte";
+    import Markdown from "@src/core/Markdown.svelte";
     import BotsSummary from "../../membership/BotsSummary.svelte";
     import MembersSummary from "../../membership/MembersSummary.svelte";
     import Separator from "../../Separator.svelte";
     import Stats from "../../Stats.svelte";
-    import { updateCommunityState } from "@shared_components/home/communities/createOrUpdate/community.svelte";
+    import { updateCommunityState } from "@src/logic/groupOrCommunity/community.svelte";
     import { CommunityState } from "./communityState.svelte";
     import PermissionsSummary from "./PermissionsSummary.svelte";
     import UserGroupSummary from "./UserGroupSummary.svelte";

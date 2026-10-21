@@ -9,7 +9,7 @@
         type ModerationVerdict,
         type OpenChat,
     } from "@client";
-    import Markdown from "@src/components_shared/Markdown.svelte";
+    import Markdown from "@src/core/Markdown.svelte";
     import { Body, BodySmall, Button, Column, Row, Subtitle, Switch } from "component-lib";
     import { getContext } from "svelte";
         import { copyToClipboard } from "../../utils/urls";

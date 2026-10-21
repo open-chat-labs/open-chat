@@ -79,7 +79,7 @@
     import Converted from "./groupdetails/Converted.svelte";
     import DirectChatDetails from "./groupdetails/DirectChatDetails.svelte";
     import GroupDetails from "./groupdetails/GroupDetails.svelte";
-    import { UpdateGroupOrCommunityState } from "@shared_components/home/groupOrCommunity.svelte";
+    import { UpdateGroupOrCommunityState } from "@src/logic/groupOrCommunity/groupOrCommunity.svelte";
     import InviteAndShare from "./membership/InviteAndShare.svelte";
     import MemberManagement from "./membership/MemberManagement.svelte";
     import NewMessage from "./NewMessage.svelte";
@@ -95,7 +95,7 @@
     import ThreadPreviews from "./thread/ThreadPreviews.svelte";
     import UserInformation from "./user_profile/UserInformation.svelte";
     import ActiveCallParticipants from "./video/ActiveCallParticipants.svelte";
-    import type { TokenState } from "@shared_components/home/wallet/walletState.svelte";
+    import type { TokenState } from "@src/logic/wallet/walletState.svelte";
     /**
      * It is tempting to think that this can completely replace the right panel on mobile but it's not quite so simple.
      * It can replace everything _that is not represented by it's own route_. That is because at the moment

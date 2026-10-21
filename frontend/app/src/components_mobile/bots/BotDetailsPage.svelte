@@ -45,7 +45,7 @@
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
     import ThumbUp from "svelte-material-icons/ThumbUpOutline.svelte";
-    import Markdown from "@shared_components/Markdown.svelte";
+    import Markdown from "@src/core/Markdown.svelte";
     import Bitcoin from "@shared_components/icons/Bitcoin.svelte";
     import MulticolourText from "../MulticolourText.svelte";
     import Translatable from "@shared_components/Translatable.svelte";

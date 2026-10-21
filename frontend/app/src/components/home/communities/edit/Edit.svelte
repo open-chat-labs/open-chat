@@ -18,7 +18,7 @@
     import Button from "../../../Button.svelte";
     import ModalContent from "../../../ModalContent.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
-    import { UpdateCommunityState } from "@shared_components/home/communities/createOrUpdate/community.svelte";
+    import { UpdateCommunityState } from "@src/logic/groupOrCommunity/community.svelte";
     import ChooseMembers from "../../ChooseMembers.svelte";
     import RulesEditor from "../../RulesEditor.svelte";
     import StageHeader from "../../StageHeader.svelte";

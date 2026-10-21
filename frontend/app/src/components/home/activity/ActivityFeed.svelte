@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activityFeedState } from "@src/runes/activity.svelte";
+    import { activityFeedState } from "@src/logic/activity/activity.svelte";
     import { menuCloser } from "component-lib";
     import {
         activityFeedShowing,

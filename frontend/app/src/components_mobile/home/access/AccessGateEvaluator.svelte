@@ -16,7 +16,7 @@
     import type {
         EvaluatedLeafGate,
         GateEvaluation,
-    } from "@shared_components/home/access/gateEvaluation.svelte";
+    } from "@src/logic/access/gateEvaluation.svelte";
     import {
         Body,
         BodySmall,

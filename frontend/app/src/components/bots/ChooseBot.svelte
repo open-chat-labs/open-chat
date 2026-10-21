@@ -4,7 +4,7 @@
     import AlertBox from "../AlertBox.svelte";
     import Avatar from "../Avatar.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
-    import Markdown from "@shared_components/Markdown.svelte";
+    import Markdown from "@src/core/Markdown.svelte";
 
     interface Props {
         onSelect: (bot: ExternalBot) => void;

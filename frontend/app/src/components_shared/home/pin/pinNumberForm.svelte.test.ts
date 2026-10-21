@@ -1,6 +1,6 @@
 import type { OpenChat } from "@client";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { PinNumberForm } from "./pinNumberForm.svelte";
+import { PinNumberForm } from "@src/logic/pin/pinNumberForm.svelte";
 
 const client = {
     setPinNumber: vi.fn(async () => ({ kind: "success" })),

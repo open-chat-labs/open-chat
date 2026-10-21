@@ -14,7 +14,7 @@
     import ModalContent from "../ModalContent.svelte";
     import Overlay from "../Overlay.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
-    import { BotInstall } from "@shared_components/bots/install/botInstall.svelte";
+    import { BotInstall } from "@src/logic/bots/botInstall.svelte";
     import BotProperties from "./install/BotProperties.svelte";
     import ChoosePermissions from "./install/ChoosePermissions.svelte";
 
