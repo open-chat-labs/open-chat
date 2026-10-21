@@ -27,41 +27,29 @@ proper Apple Developer account exists.
 
 ## Signing / accounts
 
-- Dev builds currently use the **Computism Ltd** team (`A468T66XSK`). This is a
-  stop-gap for local development ONLY — it is the wrong company long term and
-  must never be used for a release. Before any distribution:
-  - [ ] Create the OpenChat Apple Developer account
-  - [ ] Move `developmentTeam` in `tauri.conf.json` / Xcode signing to the new team
-  - [ ] Re-provision entitlements under the new team
-
-## Bundle id (IMPORTANT for the production account)
-
-- **`com.oc.app` is currently registered to some other Apple developer team**
-  — discovered 2026-08-25 when automatic provisioning failed with Apple's
-  "cannot be registered to your development team because it is not available"
-  error (App ID registrations are globally unique). Who holds it is unknown:
-  could be a squatter, or an OpenChat-associated account from the past.
-  Before the production account is set up, INVESTIGATE: ask the team whether
-  any OpenChat/DFINITY-era Apple developer account ever existed and check old
-  credentials. If a stranger holds it there is no Apple reclaim process for
-  bundle ids (only for app names). This is now moot for parity: Android moved
-  off `com.oc.app` to `com.oclabs.openchat` on 2026-09-04 for the Play Store
-  submission, so the production iOS id can match Android. Either way, do NOT
-  register the intended final id under the interim team (that would burn it
-  too).
-- Interim dev builds use **`com.oclabs.openchat.dev`** (set in
-  `tauri.ios.conf.json` + `gen/apple/project.yml`); the oc.app AASA lists only
-  that app id (#9242 — the `A468T66XSK.com.oc.app` entry was dropped as it can
-  never correspond to a real app).
+- Builds are signed by the **OC Labs** Apple Developer team (`N59KSS69AU`),
+  bundle id **`com.oclabs.openchat`** (same as Android). Set in
+  `tauri.conf.json` (`developmentTeam`) and `gen/apple/project.yml`; the iOS
+  config no longer overrides the identifier.
+- Before 2026-10-21 dev builds used the Computism Ltd team (`A468T66XSK`) with
+  the interim id `com.oclabs.openchat.dev`, because `com.oc.app` is registered
+  to an unknown other Apple team and the final id must not be registered under
+  the interim team. Nothing should be signed with the Computism team any more.
+- [x] Create the OpenChat Apple Developer account
+- [x] Move `developmentTeam` to the new team
+- [ ] Register App ID `com.oclabs.openchat` under `N59KSS69AU` (Associated
+      Domains + Push Notifications) and re-provision on a device
 
 ## Blocked on the real Apple Developer account / oc.app changes
 
-- [x] **apple-app-site-association**: LIVE on oc.app since 2026-08-25
+- [ ] **apple-app-site-association**: LIVE on oc.app since 2026-08-25
       (v2.0.2041 + follow-up release; #9241, #9242), listing
-      `A468T66XSK.com.oclabs.openchat.dev`. Passkeys verified end-to-end on a
-      physical iPhone against production. When the real Apple account exists:
-      replace the entry with the new team's app id (user passkeys are bound to
-      the domain, not the team — they survive the swap). Two gotchas learned
+      `A468T66XSK.com.oclabs.openchat.dev`. The file now also lists
+      `N59KSS69AU.com.oclabs.openchat`; that is live only after the next
+      website release. Drop the Computism entry once a new-team build has
+      signed in with a passkey on a device. Passkeys verified end-to-end on a
+      physical iPhone against production. User passkeys are bound to the
+      domain, not the team, so they survive the swap. Two gotchas learned
       the hard way: the AASA is fetched even in `?mode=developer` (it only
       relaxes CDN/TLS), and an SPA fallback answering the well-known path with
       200 + HTML breaks the parser (`SWCErrorDomain 104` →
