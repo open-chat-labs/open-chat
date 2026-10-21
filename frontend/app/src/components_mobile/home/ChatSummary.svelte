@@ -28,6 +28,7 @@
         messagesRead,
         notificationsSupported,
         OpenChat,
+        pinChatFailureMessage,
         pinnedChatsStore,
         publish,
         routeForScope,
@@ -248,7 +249,7 @@
     function pinChat() {
         client.pinChat(chatSummary.id).then((success) => {
             if (!success) {
-                toastStore.showFailureToast(i18nKey("pinChat.failed"));
+                toastStore.showFailureToast(pinChatFailureMessage(true));
             }
         });
     }
@@ -256,7 +257,7 @@
     function unpinChat() {
         client.unpinChat(chatSummary.id).then((success) => {
             if (!success) {
-                toastStore.showFailureToast(i18nKey("pinChat.unpinFailed"));
+                toastStore.showFailureToast(pinChatFailureMessage(false));
             }
         });
     }
