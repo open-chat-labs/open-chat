@@ -191,7 +191,7 @@
         "translatedFrom": "Đã dịch trên thiết bị từ {language}"
     },
     "bridgedAccounts": {
-        "info": "Liên kết tài khoản Discord hoặc Telegram của bạn để các tin nhắn mà tài khoản đó gửi vào OpenChat qua cầu nối của chúng tôi hiển thị là của bạn.",
+        "info": "Liên kết tài khoản của bạn trên các nền tảng khác để các tin nhắn mà chúng gửi vào OpenChat qua cầu nối của chúng tôi hiển thị là của bạn.",
         "link": "Liên kết {platform}",
         "linkFailed": "Không thể bắt đầu liên kết tài khoản {platform} của bạn",
         "section": "Tài khoản đã liên kết",

@@ -191,7 +191,7 @@
         "translatedFrom": "تُرجمت على الجهاز من {language}"
     },
     "bridgedAccounts": {
-        "info": "اربط حسابك على Discord أو Telegram، لتظهر الرسائل التي يرسلها إلى OpenChat عبر جسورنا باسمك.",
+        "info": "اربط حساباتك على المنصات الأخرى، لتظهر الرسائل التي ترسلها إلى OpenChat عبر جسورنا باسمك.",
         "link": "ربط {platform}",
         "linkFailed": "تعذّر بدء ربط حسابك على {platform}",
         "section": "الحسابات المرتبطة",

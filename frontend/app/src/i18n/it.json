@@ -191,7 +191,7 @@
         "translatedFrom": "Tradotto sul dispositivo da: {language}"
     },
     "bridgedAccounts": {
-        "info": "Collega il tuo account Discord o Telegram, così i messaggi che invia su OpenChat tramite i nostri bridge appariranno come tuoi.",
+        "info": "Collega i tuoi account su altre piattaforme, così i messaggi che inviano su OpenChat tramite i nostri bridge appariranno come tuoi.",
         "link": "Collega {platform}",
         "linkFailed": "Impossibile avviare il collegamento del tuo account {platform}",
         "section": "Account collegati",

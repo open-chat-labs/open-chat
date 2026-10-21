@@ -191,7 +191,7 @@
         "translatedFrom": "已在设备上从{language}翻译"
     },
     "bridgedAccounts": {
-        "info": "关联你的 Discord 或 Telegram 账号后，该账号通过我们的桥接发送到 OpenChat 的消息将显示为你发送的。",
+        "info": "关联你在其他平台上的账号后，这些账号通过我们的桥接发送到 OpenChat 的消息将显示为你发送的。",
         "link": "关联 {platform}",
         "linkFailed": "无法开始关联你的 {platform} 账号",
         "section": "已关联账号",

@@ -273,6 +273,7 @@ impl RuntimeState {
             self.data.local_index_map.remove_user(&user_id);
             self.data.multi_user_canisters.on_user_removed(&user_id);
             self.data.empty_users.remove(&user_id);
+            self.data.bridged_users.remove_user(user_id, now);
 
             #[derive(Serialize)]
             struct EventPayload {

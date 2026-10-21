@@ -132,6 +132,19 @@ impl BridgedUsers {
         true
     }
 
+    // For when the user is deleted: their accounts are unlinked, and their codes stop working
+    pub fn remove_user(&mut self, user_id: UserId, now: TimestampMillis) {
+        self.pending_links.retain(|_, link| link.user_id != user_id);
+        for record in self
+            .users
+            .values_mut()
+            .filter(|record| record.linked_user_id == Some(user_id))
+        {
+            record.linked_user_id = None;
+            record.updated = now;
+        }
+    }
+
     pub fn get(&self, id: &BridgedUserId) -> Option<BridgedUserSummary> {
         self.users.get(id).map(|record| record.summary())
     }
@@ -299,6 +312,27 @@ mod tests {
         users.link(discord_user("Nelly"), "alice", 6);
         assert!(users.unlink(&id, None, 7));
         assert_eq!(linked_user_id(&users), None);
+    }
+
+    #[test]
+    fn removing_a_user_unlinks_their_accounts_and_drops_their_codes() {
+        let mut users = BridgedUsers::default();
+        let id = BridgedUserId::Discord(80351110224678912);
+        let alice: UserId = Principal::from_slice(&[1]).into();
+        let bob: UserId = Principal::from_slice(&[2]).into();
+
+        users.start_link(alice, BridgePlatform::Discord, "discord".to_string(), 1);
+        users.link(discord_user("Nelly"), "discord", 1);
+        users.start_link(alice, BridgePlatform::Telegram, "telegram".to_string(), 1);
+        users.start_link(bob, BridgePlatform::Telegram, "bob".to_string(), 1);
+
+        users.remove_user(alice, 2);
+
+        let summary = users.get(&id).unwrap();
+        assert_eq!(summary.linked_user_id, None);
+        assert_eq!(summary.updated, 2);
+        assert_eq!(users.link(telegram_user(), "telegram", 3), None);
+        assert_eq!(users.link(telegram_user(), "bob", 3), Some(bob));
     }
 
     // The profile is left to the messages the account relays, which carry the latest

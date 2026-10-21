@@ -191,7 +191,7 @@
         "translatedFrom": "Traduit sur l'appareil depuis : {language}"
     },
     "bridgedAccounts": {
-        "info": "Associez votre compte Discord ou Telegram pour que les messages qu'il envoie sur OpenChat via nos passerelles apparaissent comme les vôtres.",
+        "info": "Associez vos comptes sur d'autres plateformes pour que les messages qu'ils envoient sur OpenChat via nos passerelles apparaissent comme les vôtres.",
         "link": "Associer {platform}",
         "linkFailed": "Impossible de commencer l'association de votre compte {platform}",
         "section": "Comptes associés",

@@ -458,7 +458,7 @@
         }
     },
     "bridgedAccounts": {
-        "info": "Link your Discord or Telegram account, and the messages it sends into OpenChat through our bridges will show as yours.",
+        "info": "Link your accounts on other platforms, and the messages they send into OpenChat through our bridges will show as yours.",
         "link": "Link {platform}",
         "linkFailed": "Couldn't start linking your {platform} account",
         "section": "Linked accounts",

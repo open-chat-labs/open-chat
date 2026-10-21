@@ -191,7 +191,7 @@
         "translatedFrom": "Przetłumaczono na urządzeniu z języka: {language}"
     },
     "bridgedAccounts": {
-        "info": "Połącz swoje konto Discord lub Telegram, aby wiadomości, które wysyła do OpenChat przez nasze mosty, były wyświetlane jako Twoje.",
+        "info": "Połącz swoje konta na innych platformach, aby wiadomości, które wysyłają do OpenChat przez nasze mosty, były wyświetlane jako Twoje.",
         "link": "Połącz {platform}",
         "linkFailed": "Nie udało się rozpocząć łączenia konta {platform}",
         "section": "Połączone konta",

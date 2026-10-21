@@ -27,8 +27,6 @@ fn link_bridged_user_impl(args: Args, state: &mut RuntimeState) -> OCResult<Succ
         .link(args.user, &args.code, now)
         .ok_or_else(|| OCErrorCode::InvalidRequest.with_message("The code is unknown or has expired"))?;
 
-    // The user may have been deleted since they were given the code. The account is linked anyway,
-    // and clients show it unlinked, as they do once a linked user is deleted.
     let username = state
         .data
         .users
