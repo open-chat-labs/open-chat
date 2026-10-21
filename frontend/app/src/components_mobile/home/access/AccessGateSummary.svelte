@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { refreshBalanceOrToast } from "@src/utils/balanceRefresh";
     import type { IconComponent } from "@src/utils/iconComponent";
     import { i18nKey } from "@src/i18n/i18n";
     import { disableCryptoPaymentsFeature } from "@src/utils/features";
@@ -193,7 +194,7 @@
             tokenState.formatTokens(gate.amount),
             tokenState.formatTokens(balance),
             tokenState.unknown ? undefined : () => onClick(gate),
-            tokenState.unknown ? undefined : () => tokenState.refreshBalance(client),
+            tokenState.unknown ? undefined : () => refreshBalanceOrToast(tokenState, client),
         )}
     {:else if gate.kind === "token_balance_gate" && tokenState}
         {@const balance = evaluation.balanceAfterCurrentCommitments(
@@ -209,7 +210,7 @@
             tokenState.formatTokens(gate.minBalance),
             tokenState.formatTokens(balance),
             tokenState.unknown ? undefined : () => onClick(gate),
-            tokenState.unknown ? undefined : () => tokenState.refreshBalance(client),
+            tokenState.unknown ? undefined : () => refreshBalanceOrToast(tokenState, client),
         )}
     {:else if gate.kind === "neuron_gate" && token}
         {@render neuronGate(gate, token)}

@@ -1,4 +1,10 @@
-import { routeForScope, type ChatListScope, type RouteParams, type WalletView } from "@client";
+import {
+    routeForScope,
+    type ChatListScope,
+    type RouteParams,
+    type WalletPage,
+    type WalletRoute,
+} from "@client";
 import { isLandingPageRoute } from "@src/utils/urls";
 
 // What a route shows (ROUTES.md). The screens behind each region come in later phases; until then
@@ -18,7 +24,7 @@ export type Regions =
               | { kind: "empty" }
               | { kind: "conversation"; route: Extract<RouteParams, { chatId: unknown }> }
               | { kind: "explore" }
-              | { kind: "wallet"; view: WalletView; ledger?: string }
+              | ({ kind: "wallet" } & WalletPage)
               | { kind: "admin" };
           // the column a narrow screen shows
           narrowView: "left" | "middle";
@@ -52,6 +58,18 @@ export function regionsFor(
         };
     }
     return regions;
+}
+
+function walletPage(route: WalletRoute): WalletPage {
+    switch (route.view) {
+        case "all":
+        case "recipients":
+            return { view: route.view };
+        case "token":
+            return { view: route.view, ledger: route.ledger };
+        default:
+            return { view: route.view, ledger: route.ledger };
+    }
 }
 
 function routeRegions(route: RouteParams, signedOut: boolean): Regions {
@@ -89,7 +107,7 @@ function routeRegions(route: RouteParams, signedOut: boolean): Regions {
             return {
                 area: "app",
                 left: { kind: "wallet" },
-                middle: { kind: "wallet", view: route.view, ledger: route.ledger },
+                middle: { kind: "wallet", ...walletPage(route) },
                 // the wallet's own panel is its home on a narrow screen
                 narrowView: route.view === "all" ? "left" : "middle",
                 // its settings are a dialog

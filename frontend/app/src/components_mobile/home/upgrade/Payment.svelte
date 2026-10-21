@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { refreshBalanceOrToast } from "@src/utils/balanceRefresh";
     import MulticolourText from "@src/components_mobile/MulticolourText.svelte";
     import { now500 } from "@src/stores/time";
     import {
@@ -186,7 +187,7 @@
             )
             .then((resp) => {
                 if (resp.kind === "success") {
-                    tokenState.refreshBalance(client);
+                    refreshBalanceOrToast(tokenState, client);
                     onSuccess?.(resp.proof);
                 } else if (resp.kind === "error" && pinNumberFailureFromError(resp) !== undefined) {
                     toastStore.showFailureToast(pinNumberErrorMessageStore);
@@ -502,7 +503,7 @@
         width={"fill"}
         mode={"active"}
         size={"small_text"}
-        onClick={() => tokenState.refreshBalance(client)}>
+        onClick={() => refreshBalanceOrToast(tokenState, client)}>
         {#snippet icon(color, size)}
             <Refresh {color} {size} />
         {/snippet}
@@ -557,7 +558,7 @@
 {#if topup}
     <Sheet
         onDismiss={() => {
-            tokenState.refreshBalance(client);
+            refreshBalanceOrToast(tokenState, client);
             topup = false;
         }}>
         <Column gap={"xs"} padding={"xl"}>

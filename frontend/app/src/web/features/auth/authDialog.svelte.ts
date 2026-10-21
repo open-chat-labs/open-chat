@@ -1,7 +1,8 @@
 import { identityStateStore, signInOptions, type AuthProvider } from "@client";
 import type { AuthPerson } from "@openchat/ui/src/features/components/AuthDialog.svelte";
 import type { PageAuth } from "@openchat/ui/src/pages/pageAuth.svelte";
-import { OPTIONS, withoutAccount } from "./auth.adapter";
+import { OPTIONS } from "./auth.adapter";
+import { withoutAccount } from "./authFlow";
 import type { Auth } from "./signIn";
 
 /**

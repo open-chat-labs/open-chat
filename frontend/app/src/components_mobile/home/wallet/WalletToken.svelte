@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { refreshBalanceOrToast } from "@src/utils/balanceRefresh";
     import { i18nKey } from "@src/i18n/i18n";
     import { hideTokenBalances } from "@src/stores/settings";
     import {
@@ -93,7 +94,7 @@
         align={"end"}
         withBgEffect={true}>
         {#snippet menuItems()}
-            <MenuItem onclick={() => tokenState.refreshBalance(client)}>
+            <MenuItem onclick={() => refreshBalanceOrToast(tokenState, client)}>
                 {#snippet icon(color)}
                     <Reload {color} />
                 {/snippet}

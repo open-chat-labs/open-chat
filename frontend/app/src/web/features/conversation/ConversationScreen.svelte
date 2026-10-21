@@ -7,6 +7,7 @@
         allUsersStore,
         anonUserStore,
         blockedUsersStore,
+        botState,
         byContext as typersByContext,
         chatIdentifiersEqual,
         chatIdentifierToString,
@@ -59,20 +60,25 @@
     import { detectMarkdown } from "@src/utils/detectMarkdown";
     import { copyPageUrl } from "@src/utils/urls";
     import { isSingleEmoji } from "@src/utils/emojis";
+    import { buildDisplayName } from "@src/utils/user";
+    import {
+        aggregateEventText,
+        isTextEvent,
+        timelineEventText,
+        type EventTextContext,
+    } from "@src/logic/conversation/timelineEventText";
     import { getContext, untrack, type Snippet } from "svelte";
     import { _ } from "svelte-i18n";
     import type { MiddleRegion, ScreenProps } from "../app/screens";
     import Composer from "./Composer.svelte";
     import {
-        eventLines,
-        MessageRows,
         messageStatus,
         senderColor,
         untilNextDay,
         type ConversationContext,
-        type EventContext,
         type MessageRow,
     } from "./conversation.adapter";
+    import { RowCache } from "./rowCache";
 
     let { context: screen }: ScreenProps<Extract<MiddleRegion, { kind: "conversation" }>> =
         $props();
@@ -108,27 +114,17 @@
         };
     });
 
-    const eventCtx = $derived.by((): EventContext => {
+    const level = $derived(chat?.kind === "channel" ? "channel" : "group");
+    const eventCtx = $derived.by((): EventTextContext => {
         const users = $allUsersStore;
-        const user = users.get(me);
         return {
+            formatter: $_,
             me,
-            you: $_("you"),
-            userName: ctx.userName,
-            members: (userIds) =>
-                user === undefined
-                    ? userIds.map(ctx.userName).join(", ")
-                    : client.getMembersString(
-                          user,
-                          users,
-                          userIds,
-                          $_("unknownUser"),
-                          $_("you"),
-                          client.compareIsNotYouThenUsername(me),
-                          false,
-                      ),
-            t: (key, values) => $_(key, { values }),
-            level: $_(`level.${chat?.kind === "channel" ? "channel" : "group"}`).toLowerCase(),
+            users,
+            displayName: (userId, kind) => buildDisplayName(users, userId, kind),
+            level,
+            canInvite: chat !== undefined && client.canInviteUsers(chat.id),
+            botName: (botId) => botState.externalBots.get(botId)?.name,
         };
     });
 
@@ -254,6 +250,7 @@
         );
     });
     const readonly = $derived(chat !== undefined && client.isChatReadOnly(chat.id));
+    const levelText = $derived($_(`level.${level}`).toLowerCase());
 
     // ── the timeline ──
 
@@ -335,7 +332,6 @@
         const msg = evt.event;
         return messageStatus({
             failed,
-            confirmed: args.isConfirmed($unconfirmedStore, evt),
             accepted: args.isAccepted($unconfirmedStore, evt),
             readByThem:
                 chat?.kind === "direct_chat" &&
@@ -344,9 +340,9 @@
         });
     }
 
-    // rows kept per event (MessageRows), and their messages with them, so user and other chat
+    // rows kept per event (RowCache), and their messages with them, so user and other chat
     // updates don't redo every bubble; started again for a new chat, wording or day
-    const rows = new MessageRows();
+    const rows = new RowCache();
     const groupMessages = new WeakMap<MessageRow, GroupMessage[]>();
     $effect.pre(() => {
         void chatKey;
@@ -435,8 +431,8 @@
             <div class="state">
                 <EmptyState
                     preset="no-conversations"
-                    title={$_("group.privateGroup", { values: { level: eventCtx.level } })}
-                    body={$_("group.privateGroupInfo", { values: { level: eventCtx.level } })}
+                    title={$_("group.privateGroup", { values: { level: levelText } })}
+                    body={$_("group.privateGroupInfo", { values: { level: levelText } })}
                     actionLabel="" />
             </div>
         {:else}
@@ -510,28 +506,57 @@
                                                 withMarkdown(content.text),
                                         )} />
                                 </div>
-                            {:else}
-                                {@const lines = eventLines(evt.event, eventCtx)}
-                                {#if lines.length > 0}
+                            {:else if evt.event.kind === "aggregate_common_events"}
+                                {@const text = aggregateEventText(evt.event, eventCtx)}
+                                {@const deleted = evt.event.messagesDeleted}
+                                {#if text.joined !== undefined || text.deleted !== undefined || text.rolesChanged.length > 0}
+                                    <!-- TODO(design): no event line in the design; the old UI's -->
                                     <div
                                         class="event"
-                                        data-index={evt.event.kind === "aggregate_common_events" &&
-                                        evt.event.messagesDeleted.length > 0
-                                            ? evt.event.messagesDeleted.join(" ")
+                                        data-index={deleted.length > 0
+                                            ? deleted.join(" ")
                                             : undefined}
                                         use:observeRead={{
                                             observer: args.messageObserver,
                                             read:
-                                                evt.event.kind !== "aggregate_common_events" ||
-                                                evt.event.messagesDeleted.length === 0 ||
+                                                deleted.length === 0 ||
                                                 args.isReadByMe($messagesRead, evt),
                                         }}>
-                                        <!-- TODO(design): no event line in the design; the old UI's wording -->
-                                        {#each lines as line}
+                                        {#if text.joined !== undefined}
                                             <p class="event-line">
-                                                <Markdown oneLine suppressLinks text={line} />
+                                                <Markdown
+                                                    oneLine
+                                                    suppressLinks
+                                                    text={text.joined} />
+                                            </p>
+                                        {/if}
+                                        {#if text.deleted !== undefined}
+                                            <p class="event-line">
+                                                <button
+                                                    class="expand"
+                                                    title={$_("expandDeletedMessages")}
+                                                    onclick={() =>
+                                                        client.expandDeletedMessages(
+                                                            new Set(deleted),
+                                                        )}>
+                                                    {text.deleted}
+                                                </button>
+                                            </p>
+                                        {/if}
+                                        {#each text.rolesChanged as line}
+                                            <p class="event-line">
+                                                <Markdown suppressLinks text={line} />
                                             </p>
                                         {/each}
+                                    </div>
+                                {/if}
+                            {:else if isTextEvent(evt.event)}
+                                {@const text = timelineEventText(evt.event, eventCtx)}
+                                {#if text !== undefined}
+                                    <div class="event">
+                                        <p class="event-line">
+                                            <Markdown suppressLinks {text} />
+                                        </p>
                                     </div>
                                 {/if}
                             {/if}
@@ -631,6 +656,16 @@
         text-align: center;
         font: var(--weight-regular) var(--text-sm) / 1.5 var(--font-sans);
         color: var(--ink-3);
+    }
+
+    /* the deleted messages' line, which shows them */
+    .expand {
+        all: unset;
+        cursor: pointer;
+    }
+
+    .expand:hover {
+        text-decoration: underline;
     }
 
     .to-bottom {
