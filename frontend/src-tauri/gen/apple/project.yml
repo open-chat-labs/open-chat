@@ -1,10 +1,6 @@
 name: open-chat
 options:
-  # Interim dev bundle id: com.oc.app is registered to another Apple team and
-  # cannot be used; this id is registered to the interim development team and
-  # must be replaced when the production Apple Developer account exists
-  # (see IOS_PORT_STATUS.md).
-  bundleIdPrefix: com.oclabs.openchat.dev
+  bundleIdPrefix: com.oclabs.openchat
   deploymentTarget:
     iOS: 16.0
 fileGroups: [../../src]
@@ -15,7 +11,7 @@ settingGroups:
   app:
     base:
       PRODUCT_NAME: OpenChat
-      PRODUCT_BUNDLE_IDENTIFIER: com.oclabs.openchat.dev
+      PRODUCT_BUNDLE_IDENTIFIER: com.oclabs.openchat
 targetTemplates:
   app:
     type: application
@@ -70,7 +66,7 @@ targets:
         NSPhotoLibraryAddUsageDescription: OpenChat saves photos and videos you download to your photo library.
         NSFaceIDUsageDescription: OpenChat uses Face ID to sign in with your passkey.
         CFBundleURLTypes:
-          - CFBundleURLName: com.oclabs.openchat.dev
+          - CFBundleURLName: com.oclabs.openchat
             CFBundleURLSchemes: [openchat]
         # Dev only: the app loads the vite dev server and talks to a local dfx
         # replica over plain http on the LAN. Tighten before any release build.
@@ -93,7 +89,7 @@ targets:
     settings:
       base:
         ENABLE_BITCODE: false
-        DEVELOPMENT_TEAM: A468T66XSK
+        DEVELOPMENT_TEAM: N59KSS69AU
         CODE_SIGN_STYLE: Automatic
         ARCHS: [arm64]
         VALID_ARCHS: arm64 
