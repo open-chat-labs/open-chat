@@ -38,6 +38,7 @@ export { inviteLinkUrl } from "./utils/inviteLink";
 export { postLoginJoin } from "./utils/join";
 export { muteNotificationsFailureMessage, pinChatFailureMessage } from "./utils/pinAndMute";
 export { profileChanges } from "./utils/profile";
+export { signInOptions } from "./utils/signIn";
 export type { TrackingCategory } from "./utils/ga";
 export { toRecord } from "./utils/list";
 export { quantiseWaveform, type Dimensions } from "./utils/media";

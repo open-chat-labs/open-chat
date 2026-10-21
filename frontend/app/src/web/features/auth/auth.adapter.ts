@@ -24,39 +24,15 @@ export const PROVIDERS: Record<AuthMethod, AuthProvider> = {
     sol: AuthProvider.SOL,
 };
 
-const ALL_OPTIONS: AuthOption[] = ["passkey", "email", "ii", "eth", "sol", "nfid"];
-
-// ?auth=II&auth=EMAIL … narrows the sign-in options (by the old names, or AuthProvider's values)
-const QUERY_NAMES: Record<AuthOption, string[]> = {
-    passkey: ["PASSKEY", AuthProvider.PASSKEY],
-    email: ["EMAIL", AuthProvider.EMAIL],
-    ii: ["II", AuthProvider.II],
-    eth: ["ETH", AuthProvider.ETH],
-    sol: ["SOL", AuthProvider.SOL],
-    nfid: ["NFID", AuthProvider.NFID],
+/** A sign-in option (signInOptions) as AuthDialog names it. */
+export const OPTIONS: Record<AuthProvider, AuthOption> = {
+    [AuthProvider.PASSKEY]: "passkey",
+    [AuthProvider.EMAIL]: "email",
+    [AuthProvider.II]: "ii",
+    [AuthProvider.ETH]: "eth",
+    [AuthProvider.SOL]: "sol",
+    [AuthProvider.NFID]: "nfid",
 };
-
-/**
- * The sign-in options on offer: `?auth=` narrows them, and without WebAuthn only email is left
- * (a passkey is WebAuthn; the old UI also left the others out). The method last signed in with comes first (as the old UI's ChooseSignInOption).
- */
-export function authOptions(
-    restrictTo: string[],
-    hasWebAuthn: boolean,
-    last?: AuthProvider,
-): AuthOption[] {
-    const supported = hasWebAuthn ? ALL_OPTIONS : ALL_OPTIONS.filter((o) => o === "email");
-    // the email link's own URL has a bare `?auth`, which narrows nothing
-    const names = restrictTo.filter((name) => name !== "");
-    const offered =
-        names.length === 0
-            ? supported
-            : supported.filter((o) => QUERY_NAMES[o].some((name) => names.includes(name)));
-    const lastOption = offered.find((o) => QUERY_NAMES[o].includes(last ?? ""));
-    return lastOption === undefined
-        ? offered
-        : [lastOption, ...offered.filter((o) => o !== lastOption)];
-}
 
 /**
  * The Ethereum wallets to pick from, as the old UI's SigninWithEth lists wagmi's connectors: the

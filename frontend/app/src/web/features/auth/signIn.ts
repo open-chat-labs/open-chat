@@ -91,6 +91,8 @@ export type Auth = Required<
 > & {
     wallets: NonNullable<PageAuth["wallets"]>;
     termsUrl: string;
+    /** Whether this is the native app (its passkeys don't need the browser's WebAuthn). */
+    native: boolean;
     /** The email link page's code: completes the sign-in the link belongs to. */
     onLinkCode: (querystring: string, code: string) => Promise<EmailLinkResult>;
     /** Stops waiting for an emailed link to be followed. */
@@ -190,6 +192,7 @@ export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: Aut
             sol: WALLETS.sol,
         },
         termsUrl: "/terms",
+        native: client.isNativeApp(),
 
         // sign-up is the form (onSignup); every method signs in, and an identity without an
         // account goes on to the form from there (identityStateStore "registering")
