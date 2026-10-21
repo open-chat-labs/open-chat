@@ -31,6 +31,7 @@
         subscribe,
         suspendedUserStore,
         type User,
+        type SendMessageOutcome,
     } from "@client";
     import { getContext, onMount, tick } from "svelte";
     import { releaseNotifications } from "tauri-plugin-oc-api";
@@ -195,8 +196,10 @@
         send(0);
     }
 
-    function onSendMessage(detail: [string | undefined, User[], boolean]) {
-        if (!canSendAny) return;
+    function onSendMessage(
+        detail: [string | undefined, User[], boolean],
+    ): Promise<SendMessageOutcome> | "nothing_sent" {
+        if (!canSendAny) return "nothing_sent";
         const [text, mentioned, blockLevelMarkdown] = detail;
         if ($selectedChatDraftMessageStore?.editingEvent !== undefined) {
             client
@@ -212,8 +215,11 @@
                         toastStore.showFailureToast(i18nKey("errorEditingMessage"));
                     }
                 });
+            return "nothing_sent";
         } else {
-            sendMessageWithAttachment(
+            // the entry keeps the text until the message shows in the chat, or keeps it if refused
+            return client.sendMessage(
+                messageContext,
                 text,
                 blockLevelMarkdown,
                 $selectedChatDraftMessageStore?.attachment,
