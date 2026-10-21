@@ -103,10 +103,10 @@
         onStartTyping: () => void;
         onStopTyping: () => void;
         onCancelEdit: () => void;
-        // a send returns its outcome, which the entry waits for; an edit returns nothing
+        // a send returns its outcome, which the entry waits for; an edit doesn't wait
         onSendMessage: (
             args: [string | undefined, User[], boolean],
-        ) => Promise<SendMessageOutcome> | undefined;
+        ) => Promise<SendMessageOutcome> | "nothing_sent";
         onClearAttachment: () => void;
         onTokenTransfer: (args: { ledger?: string; amount?: bigint }) => void;
         onCreatePrizeMessage?: () => void;

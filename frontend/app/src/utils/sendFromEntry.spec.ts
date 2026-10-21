@@ -27,7 +27,7 @@ describe("a message entry waiting for its send", () => {
 
     test("an edit, with nothing to wait for, clears at once", async () => {
         const sending = vi.fn();
-        expect(await clearsEntry(undefined, sending)).toBe(true);
+        expect(await clearsEntry("nothing_sent", sending)).toBe(true);
         expect(sending).not.toHaveBeenCalled();
     });
 

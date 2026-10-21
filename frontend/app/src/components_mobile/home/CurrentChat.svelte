@@ -198,8 +198,8 @@
 
     function onSendMessage(
         detail: [string | undefined, User[], boolean],
-    ): Promise<SendMessageOutcome> | undefined {
-        if (!canSendAny) return;
+    ): Promise<SendMessageOutcome> | "nothing_sent" {
+        if (!canSendAny) return "nothing_sent";
         const [text, mentioned, blockLevelMarkdown] = detail;
         if ($selectedChatDraftMessageStore?.editingEvent !== undefined) {
             client
@@ -215,6 +215,7 @@
                         toastStore.showFailureToast(i18nKey("errorEditingMessage"));
                     }
                 });
+            return "nothing_sent";
         } else {
             // the entry keeps the text until the message shows in the chat, or keeps it if refused
             return client.sendMessage(

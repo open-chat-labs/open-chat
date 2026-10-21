@@ -9,10 +9,10 @@ import { toastStore } from "@src/stores/toast";
  * already on its way), the text stays; a failure says so.
  */
 export async function clearsEntry(
-    result: Promise<SendMessageOutcome> | undefined,
+    result: Promise<SendMessageOutcome> | "nothing_sent",
     sending: (busy: boolean) => void,
 ): Promise<boolean> {
-    if (result === undefined) return true;
+    if (result === "nothing_sent") return true;
     sending(true);
     try {
         const outcome = await result;
