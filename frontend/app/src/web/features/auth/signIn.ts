@@ -1,9 +1,4 @@
-import {
-    AuthProvider,
-    identityStateStore,
-    type OpenChat,
-    type SignInMethod,
-} from "@client";
+import { AuthProvider, identityStateStore, type OpenChat, type SignInMethod } from "@client";
 import type {
     AuthFailure,
     AuthMethod,
@@ -14,17 +9,14 @@ import type {
 } from "@openchat/ui/src/features/components/AuthDialog.svelte";
 import { configKeys } from "@shared";
 import type { PageAuth } from "@openchat/ui/src/pages/pageAuth.svelte";
+import { emailLinkResult, person, PROVIDERS, WALLETS } from "./auth.adapter";
 import {
     afterAbandoned,
+    onAuthClosed,
     referralCode,
     type ReferralLookup,
-    emailLinkResult,
-    onAuthClosed,
-    person,
-    PROVIDERS,
-    WALLETS,
     type SignedIn,
-} from "./auth.adapter";
+} from "./authFlow";
 
 // AuthDialog's host callbacks, on the client's operations: a sign-in settles with client.signIn's
 // outcome, an emailed link with client.requestEmailSignIn's, a sign-up with client.signUp's
