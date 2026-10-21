@@ -1,8 +1,7 @@
 @import "./icons.css";
 /* OpenChat design tokens. Theme is set once, on the app root ([data-mode][data-accent]);
    :where(:root) supplies dark + pink so a component previewed on its own still paints.
-   OpenChat design tokens. Every component reads these via var(--x, <literal fallback>),
-   so components still paint correctly when opened standalone. */
+   Components read them as plain var(--x), with no literal fallback: both hosts load this file. */
 
 :where(:root),[data-mode="dark"]{
   --skeleton-base:rgba(255,255,255,.06); --skeleton-sheen:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.06) 50%,transparent 100%);
