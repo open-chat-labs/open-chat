@@ -186,9 +186,11 @@ Not a URL, wired as today:
 ## Things the existing router does that the new one keeps
 
 - **Auto-select.** `/chats`, `/favourite` and `/community/:cid` redirect (replace) to the last
-  selected or first chat in that scope (`selectDefaultChat`).
+  selected or first chat in that scope (`selectDefaultChat`). Not yet: `src/web` picks the first
+  chat (`firstChat.ts`); PLAN.md F2.
 - **`setSelectedChat` redirects:** a non-favourite on a `/favourite` URL, a group that has moved
-  to a community, a migrated DM, and the not-found and restricted modals.
+  to a community, a migrated DM, and the not-found and restricted modals. The modals aren't yet:
+  nothing in `src/web` handles `notFound` / `restrictedContent`; PLAN.md F2.
 - **Threads.** Closing a thread strips `/:tmi` and `?open`. `/:mi/:tmi` opens the thread on a cold
   load even without `?open`.
 - **Previews.** Navigating away from a previewed community drops the preview.
