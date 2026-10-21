@@ -36,6 +36,7 @@ export { communityChanges, isPrivateCommunityPreview } from "./utils/community";
 export { executionPaymentAmount, proposalFundsRequired } from "./utils/proposal";
 export { inviteLinkUrl } from "./utils/inviteLink";
 export { postLoginJoin } from "./utils/join";
+export { muteNotificationsFailureMessage, pinChatFailureMessage } from "./utils/pinAndMute";
 export { profileChanges } from "./utils/profile";
 export type { TrackingCategory } from "./utils/ga";
 export { toRecord } from "./utils/list";
