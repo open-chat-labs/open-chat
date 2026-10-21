@@ -357,11 +357,11 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    border-radius: var(--radius-xl, 22px);
-    background: var(--surface-1, #0e0e12);
-    color: var(--ink, #ececf1);
+    border-radius: var(--radius-xl);
+    background: var(--surface-1);
+    color: var(--ink);
     box-shadow:
-      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1)),
+      inset 0 0 0 1px var(--line-2),
       0 24px 64px rgba(0, 0, 0, 0.45);
   }
 
@@ -378,7 +378,7 @@
     height: 60px;
     box-sizing: border-box;
     padding: 0 12px 0 22px;
-    border-bottom: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+    border-bottom: 1px solid var(--line-1);
   }
 
   .wide .head {
@@ -413,7 +413,7 @@
     flex-direction: column;
     gap: 14px;
     padding: 16px;
-    border-right: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+    border-right: 1px solid var(--line-1);
   }
 
   .search {
@@ -424,8 +424,8 @@
     height: 40px;
     padding: 0 12px;
     border-radius: 11px;
-    background: var(--field, #14141a);
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1));
+    background: var(--field);
+    box-shadow: inset 0 0 0 1px var(--line-2);
   }
 
   .search.narrow {
@@ -438,7 +438,7 @@
     width: 15px;
     height: 15px;
     flex: none;
-    background: var(--ink-3, #9a9aa8);
+    background: var(--ink-3);
     -webkit-mask: var(--icon-search) center/contain no-repeat;
     mask: var(--icon-search) center/contain no-repeat;
   }
@@ -455,7 +455,7 @@
     outline: none;
     background: transparent;
     font: 500 13.5px/1 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .search.narrow input {
@@ -485,9 +485,9 @@
     padding: 0 10px 0 8px;
     border: 0;
     border-radius: 999px;
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    background: var(--overlay-1);
     box-shadow: inset 0 0 0 1px transparent;
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
     font: 600 12px/1 var(--font-sans);
     cursor: pointer;
   }
@@ -501,9 +501,9 @@
   }
 
   .vibe.on {
-    background: color-mix(in oklch, var(--accent, #ff5672) 16%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent, #ff5672) 55%, transparent);
-    color: var(--accent-bright, #ff8298);
+    background: color-mix(in oklch, var(--accent) 16%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent) 55%, transparent);
+    color: var(--accent-bright);
   }
 
   .vibe-emoji {
@@ -544,7 +544,7 @@
     border-radius: 10px;
     overflow: hidden;
     background: #111;
-    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+    box-shadow: inset 0 0 0 1px var(--line-1);
   }
 
   .narrow .art {
@@ -553,12 +553,12 @@
 
   .art.sel,
   .art.hoverable:hover {
-    box-shadow: 0 0 0 2px var(--accent, #ff5672);
+    box-shadow: 0 0 0 2px var(--accent);
   }
 
   .thumb-name {
     font: 600 12px/1.2 var(--font-sans);
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
   }
 
   .narrow .thumb-name {
@@ -566,14 +566,14 @@
   }
 
   .thumb-name.sel {
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .none {
     padding: 20px 0;
     text-align: center;
     font: 400 13px/1.4 var(--font-sans);
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
   }
 
   .main {
@@ -644,7 +644,7 @@
   }
 
   .box.focused {
-    outline: 2px solid var(--accent, #ff5672);
+    outline: 2px solid var(--accent);
   }
 
   .meme-text {
@@ -672,9 +672,9 @@
     align-items: center;
     justify-content: center;
     border-radius: 6px 0 6px 0;
-    background: var(--accent, #ff5672);
+    background: var(--accent);
     font: 700 11px/1 var(--font-mono);
-    color: var(--on-accent, #2e0512);
+    color: var(--on-accent);
   }
 
   .narrow .box-n {
@@ -698,8 +698,8 @@
     height: 46px;
     padding: 0 6px 0 8px;
     border-radius: 12px;
-    background: var(--field, #14141a);
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1));
+    background: var(--field);
+    box-shadow: inset 0 0 0 1px var(--line-2);
   }
 
   .narrow-scroll .field {
@@ -714,9 +714,9 @@
     align-items: center;
     justify-content: center;
     border-radius: 7px;
-    background: var(--accent, #ff5672);
+    background: var(--accent);
     font: 700 12px/1 var(--font-mono);
-    color: var(--on-accent, #2e0512);
+    color: var(--on-accent);
   }
 
   .field input {
@@ -726,7 +726,7 @@
     outline: none;
     background: transparent;
     font: 500 14px/1 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .narrow-scroll .field input {
@@ -739,7 +739,7 @@
     align-items: center;
     gap: 10px;
     padding: 14px 20px;
-    border-top: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+    border-top: 1px solid var(--line-1);
   }
 
   .foot.narrow {
@@ -760,6 +760,6 @@
 
   .attach-error {
     font: var(--weight-medium) var(--text-sm) / 1.3 var(--font-sans);
-    color: var(--status-danger, #f5493d);
+    color: var(--status-danger);
   }
 </style>

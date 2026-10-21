@@ -81,29 +81,29 @@
     width: 56px;
     height: 56px;
     border-radius: var(--radius-xl);
-    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    background: var(--overlay-2);
   }
 
   .icon {
     width: 24px;
     height: 24px;
-    background: var(--ink-3, #8a8a99);
+    background: var(--ink-3);
   }
 
   .warning {
-    background: var(--status-chit-soft, rgba(255, 159, 69, 0.14));
+    background: var(--status-chit-soft);
   }
 
   .warning .icon {
-    background: var(--status-chit, #ff9f45);
+    background: var(--status-chit);
   }
 
   .danger {
-    background: var(--btn-danger-bg, rgba(240, 68, 56, 0.08));
+    background: var(--btn-danger-bg);
   }
 
   .danger .icon {
-    background: var(--status-danger, #f5493d);
+    background: var(--status-danger);
   }
 
   .copy {
@@ -115,13 +115,13 @@
 
   .title {
     font: var(--weight-bold) var(--text-lg) / 1.3 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     text-wrap: pretty;
   }
 
   .body {
     font: var(--weight-regular) var(--text-md) / 1.5 var(--font-sans);
-    color: var(--ink-3, #8a8a99);
+    color: var(--ink-3);
     text-wrap: pretty;
   }
 
@@ -133,15 +133,15 @@
     padding: 0 var(--space-16);
     box-sizing: border-box;
     border-radius: var(--radius-md);
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1));
+    background: var(--overlay-1);
+    box-shadow: inset 0 0 0 1px var(--line-2);
     font: var(--weight-semibold) var(--text-md) / 1 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     cursor: pointer;
     user-select: none;
   }
 
   .action:hover {
-    background: var(--btn-hover, rgba(255, 255, 255, 0.1));
+    background: var(--btn-hover);
   }
 </style>

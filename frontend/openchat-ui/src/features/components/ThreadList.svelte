@@ -110,12 +110,12 @@
 
   .title {
     font: var(--weight-bold) var(--text-lg) / 1 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .scope {
     font: var(--weight-regular) var(--text-sm) / 1 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -164,7 +164,7 @@
     font: var(--weight-semibold) var(--text-xs) / 1 var(--font-mono);
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -173,7 +173,7 @@
   .group-count {
     flex: none;
     font: var(--weight-medium) var(--text-xs) / 1 var(--font-mono);
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
   }
 
   .thread {
@@ -186,11 +186,11 @@
   }
 
   .thread.selected {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+    background: var(--overlay-2);
   }
 
   .thread:hover {
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    background: var(--overlay-1);
   }
 
   .face {
@@ -218,7 +218,7 @@
     flex: 1;
     min-width: 0;
     font: var(--weight-semibold) var(--text-md) / 1.2 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -227,12 +227,12 @@
   .time {
     flex: none;
     font: var(--weight-regular) var(--text-xs) / 1 var(--font-sans);
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
   }
 
   .text {
     font: var(--weight-regular) var(--text-sm) / 1.45 var(--font-sans);
-    color: var(--ink-2, #b9b9c6);
+    color: var(--ink-2);
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -244,7 +244,7 @@
     align-items: center;
     gap: var(--space-8);
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
-    color: var(--accent-bright, #ff8298);
+    color: var(--accent-bright);
   }
 
   .new {
@@ -252,25 +252,25 @@
     align-items: center;
     gap: 5px;
     font-weight: var(--weight-medium);
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
   }
 
   .dot {
     width: 6px;
     height: 6px;
     border-radius: var(--radius-pill);
-    background: var(--accent, #ff5672);
+    background: var(--accent);
   }
 
   .following {
     font-weight: var(--weight-medium);
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
   }
 
   .empty {
     padding: var(--space-24) var(--space-12);
     font: var(--weight-regular) var(--text-md) / 1.5 var(--font-sans);
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
     text-align: center;
   }
 </style>

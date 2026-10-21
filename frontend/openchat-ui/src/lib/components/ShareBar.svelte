@@ -8,7 +8,7 @@
     veiled?: boolean;
   }
 
-  let { share, gradient = 'var(--accent,#FF5672)', thickness = 2, veiled = false }: Props = $props();
+  let { share, gradient = 'var(--accent)', thickness = 2, veiled = false }: Props = $props();
 
   const clamped = $derived(Math.max(0, Math.min(100, Number(share))));
   const h = $derived(`${thickness}px`);
@@ -36,7 +36,7 @@
   .track {
     display: block;
     width: 100%;
-    background: var(--overlay-1, rgba(255, 255, 255, 0.06));
+    background: var(--overlay-1);
   }
 
   .fill {

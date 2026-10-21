@@ -172,7 +172,7 @@
   }
 
   .row:hover {
-    background: var(--overlay-1, rgba(255, 255, 255, 0.03));
+    background: var(--overlay-1);
   }
 
   .row.readonly {
@@ -188,7 +188,7 @@
     flex: none;
     width: 17px;
     height: 17px;
-    background: var(--ink-3, #9a9aa8);
+    background: var(--ink-3);
   }
 
   .text {
@@ -206,7 +206,7 @@
 
   .label {
     font: var(--weight-semibold) var(--text-md) / 1.2 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .regular .label,
@@ -219,12 +219,12 @@
     align-items: center;
     gap: var(--space-4);
     font: var(--weight-regular) var(--text-sm) / 1.45 var(--font-sans);
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
     text-wrap: pretty;
   }
 
   .sub.on {
-    color: var(--accent-bright, #ff8298);
+    color: var(--accent-bright);
   }
 
   .caret {
@@ -246,13 +246,13 @@
     width: 42px;
     height: 24px;
     border-radius: var(--radius-pill);
-    background: var(--overlay-2, rgba(255, 255, 255, 0.14));
+    background: var(--overlay-2);
     cursor: pointer;
     transition: background 0.15s;
   }
 
   .switch.on {
-    background: var(--accent, #ff5672);
+    background: var(--accent);
   }
 
   .knob {
@@ -262,23 +262,23 @@
     width: 18px;
     height: 18px;
     border-radius: var(--radius-pill);
-    background: var(--ink-4, #6e6e7c);
+    background: var(--ink-4);
     transform: translateX(0);
     transition: transform 0.15s;
   }
 
   .on .knob {
     background: #fff;
-    transform: translateX(calc(var(--oc-dir, 1) * 18px));
+    transform: translateX(calc(var(--oc-dir) * 18px));
   }
 
   .status {
     flex: none;
     padding: 5px 10px;
     border-radius: var(--radius-pill);
-    background: var(--overlay-2, rgba(255, 255, 255, 0.07));
+    background: var(--overlay-2);
     font: var(--weight-semibold) var(--text-xs) / 1 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .choices {
@@ -287,7 +287,7 @@
     gap: var(--space-6);
     margin-top: 2px;
     padding: var(--space-10) var(--pad-x) var(--space-18) var(--pad-x);
-    border-top: 1px dashed var(--line-1, rgba(255, 255, 255, 0.07));
+    border-top: 1px dashed var(--line-1);
   }
 
   .has-icon .choices {
@@ -301,21 +301,21 @@
     height: 34px;
     padding: 0 var(--space-6);
     border-radius: var(--radius-sm);
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    background: var(--overlay-1);
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
     white-space: nowrap;
     cursor: pointer;
     user-select: none;
   }
 
   .choice.selected {
-    background: var(--accent-soft, rgba(255, 86, 114, 0.1));
-    box-shadow: inset 0 0 0 1px var(--accent, #ff5672);
-    color: var(--accent-bright, #ff8298);
+    background: var(--accent-soft);
+    box-shadow: inset 0 0 0 1px var(--accent);
+    color: var(--accent-bright);
   }
 
   .choice:hover {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.1));
+    background: var(--overlay-2);
   }
 </style>

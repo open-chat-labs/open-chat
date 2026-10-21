@@ -3,15 +3,15 @@
 <script lang="ts">
   import { useT } from '../i18n';
   const TYPE: Record<string, string> = {
-    pdf: 'var(--status-danger,#FF4D4D)',
-    doc: 'var(--status-verified,#3D9BFF)',
-    docx: 'var(--status-verified,#3D9BFF)',
-    xls: 'var(--status-online,#2EE6A8)',
-    xlsx: 'var(--status-online,#2EE6A8)',
-    csv: 'var(--status-online,#2EE6A8)',
-    zip: 'var(--status-warning,#FFB03D)',
-    ppt: 'var(--status-chit,#FF9F45)',
-    pptx: 'var(--status-chit,#FF9F45)',
+    pdf: 'var(--status-danger)',
+    doc: 'var(--status-verified)',
+    docx: 'var(--status-verified)',
+    xls: 'var(--status-online)',
+    xlsx: 'var(--status-online)',
+    csv: 'var(--status-online)',
+    zip: 'var(--status-warning)',
+    ppt: 'var(--status-chit)',
+    pptx: 'var(--status-chit)',
   };
 
   interface Props {
@@ -50,7 +50,7 @@
   });
   // keep the extension plus four characters before it; the rest ellipsises
   const tailLen = $derived(Math.min(fileName.length, (ext ? ext.length + 1 : 0) + 4));
-  const hue = $derived(TYPE[ext] || 'var(--ink-2,#C9C9D4)');
+  const hue = $derived(TYPE[ext] || 'var(--ink-2)');
   const uploading = $derived(upload?.state === 'uploading');
   const failed = $derived(upload?.state === 'failed');
   const pct = $derived(Math.round((upload?.progress || 0) * 100));
@@ -98,13 +98,13 @@
 
 <style>
   .file {
-    --msg-bg: var(--bubble-recv-bg, #191921);
-    --msg-ink: var(--bubble-recv-text, #e4e4ec);
-    --msg-soft: var(--ink-4, #8a8a99);
-    --msg-tick: var(--ink-4, #8a8a99);
-    --msg-seg: var(--overlay-1, rgba(255, 255, 255, 0.04));
-    --msg-btn: var(--overlay-2, rgba(255, 255, 255, 0.08));
-    --msg-track: var(--overlay-2, rgba(255, 255, 255, 0.1));
+    --msg-bg: var(--bubble-recv-bg);
+    --msg-ink: var(--bubble-recv-text);
+    --msg-soft: var(--ink-4);
+    --msg-tick: var(--ink-4);
+    --msg-seg: var(--overlay-1);
+    --msg-btn: var(--overlay-2);
+    --msg-track: var(--overlay-2);
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -113,10 +113,10 @@
   }
 
   .file.sent {
-    --msg-bg: var(--bubble-send-bg, #b83e52);
-    --msg-ink: var(--bubble-text, #fff);
-    --msg-soft: var(--bubble-text-soft, rgba(255, 255, 255, 0.82));
-    --msg-tick: var(--bubble-tick, #fff);
+    --msg-bg: var(--bubble-send-bg);
+    --msg-ink: var(--bubble-text);
+    --msg-soft: var(--bubble-text-soft);
+    --msg-tick: var(--bubble-tick);
     --msg-seg: rgba(0, 0, 0, 0.18);
     --msg-btn: rgba(0, 0, 0, 0.2);
     --msg-track: rgba(255, 255, 255, 0.22);
@@ -127,9 +127,9 @@
     max-width: 100%;
     padding: 4px;
     box-sizing: border-box;
-    border-radius: var(--radius-xs, 4px) 22px 22px var(--radius-xs, 4px);
+    border-radius: var(--radius-xs) 22px 22px var(--radius-xs);
     background: var(--msg-bg);
-    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+    box-shadow: inset 0 0 0 1px var(--line-1);
   }
 
   .shell.last {
@@ -295,7 +295,7 @@
     align-items: center;
     gap: 6px;
     font: 500 12.5px/1 var(--font-sans);
-    color: var(--status-danger, #ff4d4d);
+    color: var(--status-danger);
   }
 
   .failed-icon {

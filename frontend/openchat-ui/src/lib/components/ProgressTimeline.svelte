@@ -151,31 +151,31 @@
     justify-content: space-between;
     gap: 12px;
     font: 500 11.5px/1 var(--font-mono);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .bar {
     height: 4px;
     border-radius: 2px;
-    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+    background: var(--overlay-2);
     overflow: hidden;
   }
 
   .bar-fill {
     height: 100%;
     border-radius: 2px;
-    background: var(--accent, #ff5672);
+    background: var(--accent);
     transition:
-      width 0.4s var(--ease-out, ease-out),
+      width 0.4s var(--ease-out),
       background 0.2s;
   }
 
   .bar-fill.done {
-    background: var(--status-online, #2ee6a8);
+    background: var(--status-online);
   }
 
   .bar-fill.failed {
-    background: var(--status-danger, #f5493d);
+    background: var(--status-danger);
   }
 
   .funds {
@@ -184,7 +184,7 @@
     gap: 10px;
     padding: 11px 12px;
     border-radius: 12px;
-    background: var(--overlay-1, rgba(255, 255, 255, 0.04));
+    background: var(--overlay-1);
   }
 
   .funds-badge {
@@ -195,13 +195,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--accent-soft, rgba(255, 86, 114, 0.14));
+    background: var(--accent-soft);
   }
 
   .funds-icon {
     width: 14px;
     height: 14px;
-    background: var(--accent-bright, #ff8298);
+    background: var(--accent-bright);
   }
 
   .funds.done .funds-badge {
@@ -209,7 +209,7 @@
   }
 
   .funds.done .funds-icon {
-    background: var(--status-online, #2ee6a8);
+    background: var(--status-online);
   }
 
   .funds.warn .funds-badge {
@@ -217,14 +217,14 @@
   }
 
   .funds.warn .funds-icon {
-    background: var(--status-warning, #ffb03d);
+    background: var(--status-warning);
   }
 
   .funds-text {
     flex: 1;
     min-width: 0;
     font: 600 13px/1.35 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .steps {
@@ -255,8 +255,8 @@
     align-items: center;
     justify-content: center;
     font: 600 11px/1 var(--font-mono);
-    color: var(--ink-4, #8a8a99);
-    box-shadow: inset 0 0 0 1.5px var(--line-2, rgba(255, 255, 255, 0.12));
+    color: var(--ink-4);
+    box-shadow: inset 0 0 0 1.5px var(--line-2);
   }
 
   .done .dot {
@@ -270,21 +270,21 @@
   }
 
   .active .dot {
-    background: var(--accent-soft, rgba(255, 86, 114, 0.14));
-    box-shadow: inset 0 0 0 1.5px var(--accent, #ff5672);
+    background: var(--accent-soft);
+    box-shadow: inset 0 0 0 1.5px var(--accent);
   }
 
   .mark.check {
     width: 12px;
     height: 12px;
-    background: var(--status-online, #2ee6a8);
+    background: var(--status-online);
     mask: var(--icon-check) center/contain no-repeat;
   }
 
   .mark.cross {
     width: 11px;
     height: 11px;
-    background: var(--status-danger, #f5493d);
+    background: var(--status-danger);
     mask: var(--icon-close) center/contain no-repeat;
   }
 
@@ -294,11 +294,11 @@
     min-height: 10px;
     margin: 3px 0;
     border-radius: 1px;
-    background: var(--line-2, rgba(255, 255, 255, 0.12));
+    background: var(--line-2);
   }
 
   .done .line {
-    background: var(--status-online, #2ee6a8);
+    background: var(--status-online);
   }
 
   .line.last {
@@ -324,26 +324,26 @@
     flex: 1;
     min-width: 0;
     font: 600 13.5px/1.35 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .todo .label {
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
   }
 
   .meta {
     flex: none;
     font: 500 11.5px/1 var(--font-mono);
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
   }
 
   .note {
     font: 400 12px/1.45 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
     text-wrap: pretty;
   }
 
   .failed .note {
-    color: var(--status-danger, #f5493d);
+    color: var(--status-danger);
   }
 </style>

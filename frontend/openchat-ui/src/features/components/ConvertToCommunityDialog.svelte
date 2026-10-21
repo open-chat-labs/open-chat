@@ -51,8 +51,8 @@
 
 {#snippet sentence(segs: Segment[])}{#each segs as seg}{#if 'slot' in seg}<span class="accent">{groupName}</span>{:else}{#each seg.text.split('\n') as part, i}{#if i}<br />{/if}{part}{/each}{/if}{/each}{/snippet}
 
-<div class="layer" class:closing={flow.closing} role="dialog" aria-modal="true" use:modal={flow.escape(onCancel)}>
-  <div class="veil" onclick={() => dismiss(onCancel)} aria-hidden="true"></div>
+<div class="layer oc-dialog-layer" class:closing={flow.closing} role="dialog" aria-modal="true" use:modal={flow.escape(onCancel)}>
+  <div class="oc-veil" onclick={() => dismiss(onCancel)} aria-hidden="true"></div>
   <div class="card">
     <div class="head">
       <span class="badge"><span class="badge-icon community"></span></span>
@@ -131,7 +131,7 @@
 <style>
   .error {
     font: var(--weight-medium) var(--text-sm) / 1.4 var(--font-sans);
-    color: var(--status-danger, #f5493d);
+    color: var(--status-danger);
   }
 
   .primary.busy {
@@ -140,22 +140,7 @@
   }
 
   .layer {
-    position: fixed;
-    inset: 0;
     z-index: 70;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: var(--space-22);
-  }
-
-  .veil {
-    position: absolute;
-    inset: 0;
-    background: var(--oc-veil, rgba(3, 3, 6, 0.72));
-    backdrop-filter: var(--oc-veil-blur, blur(4px));
-    -webkit-backdrop-filter: var(--oc-veil-blur, blur(4px));
-    animation: oc-veil-in var(--duration-base, 200ms) var(--ease-out) both;
   }
 
   .card {
@@ -166,20 +151,12 @@
     display: flex;
     flex-direction: column;
     border-radius: var(--radius-xl);
-    background: var(--surface-1, #0e0e12);
+    background: var(--surface-1);
     box-shadow:
-      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1)),
-      var(--shadow-modal, 0 30px 70px rgba(0, 0, 0, 0.45));
+      inset 0 0 0 1px var(--line-2),
+      var(--shadow-modal);
     overflow: hidden;
-    animation: oc-dlg-in var(--duration-slow, 280ms) var(--ease-out) both;
-  }
-
-  .layer.closing {
-    pointer-events: none;
-  }
-
-  .closing .veil {
-    animation: oc-veil-out 170ms var(--ease-standard) both;
+    animation: oc-dlg-in var(--duration-slow) var(--ease-out) both;
   }
 
   .closing .card {
@@ -192,7 +169,7 @@
     align-items: center;
     gap: var(--space-12);
     padding: var(--space-16) var(--space-18);
-    border-block-end: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+    border-block-end: 1px solid var(--line-1);
   }
 
   .badge {
@@ -203,14 +180,14 @@
     width: 38px;
     height: 38px;
     border-radius: var(--radius-md);
-    background: var(--accent-soft, rgba(255, 86, 114, 0.12));
-    box-shadow: inset 0 0 0 1px var(--accent-dim, rgba(255, 86, 114, 0.35));
+    background: var(--accent-soft);
+    box-shadow: inset 0 0 0 1px var(--accent-dim);
   }
 
   .badge-icon {
     width: 19px;
     height: 19px;
-    background: var(--accent, #ff5672);
+    background: var(--accent);
   }
 
   .titles {
@@ -223,13 +200,13 @@
 
   .title {
     font: var(--weight-bold) var(--text-lg) / 1.25 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     text-wrap: pretty;
   }
 
   .subtitle {
     font: var(--weight-regular) var(--text-sm) / 1.3 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -247,13 +224,13 @@
   }
 
   .icon-button:hover {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    background: var(--overlay-2);
   }
 
   .close-icon {
     width: 15px;
     height: 15px;
-    background: var(--ink-3, #9a9aa8);
+    background: var(--ink-3);
     mask: var(--icon-close) center/contain no-repeat;
   }
 
@@ -285,18 +262,18 @@
   .headline {
     font: var(--weight-bold) var(--text-2xl) / 1.3 var(--font-sans);
     letter-spacing: var(--tracking-tight);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     text-wrap: pretty;
   }
 
   .lead {
     font: var(--weight-regular) var(--text-base) / 1.55 var(--font-sans);
-    color: var(--ink-2, #b9b9c6);
+    color: var(--ink-2);
     text-wrap: pretty;
   }
 
   .accent {
-    color: var(--accent-bright, #ff8298);
+    color: var(--accent-bright);
   }
 
   .notice {
@@ -308,8 +285,8 @@
   }
 
   .notice.warn {
-    background: var(--status-chit-soft, rgba(255, 159, 69, 0.14));
-    box-shadow: inset 0 0 0 1px var(--status-chit, #ff9f45);
+    background: var(--status-chit-soft);
+    box-shadow: inset 0 0 0 1px var(--status-chit);
   }
 
   .notice-head {
@@ -326,7 +303,7 @@
   }
 
   .warn .notice-icon {
-    background: var(--status-chit, #ff9f45);
+    background: var(--status-chit);
     mask: var(--icon-warning) center/contain no-repeat;
   }
 
@@ -334,12 +311,12 @@
     flex: 1;
     min-width: 0;
     font: var(--weight-semibold) var(--text-base) / 1.25 var(--font-sans);
-    color: var(--ink, #e4e4ec);
+    color: var(--ink);
   }
 
   .notice-text {
     font: var(--weight-regular) var(--text-md) / 1.5 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
     text-wrap: pretty;
   }
 
@@ -349,7 +326,7 @@
     align-items: center;
     gap: var(--space-8);
     padding: var(--space-16) var(--space-18);
-    border-block-start: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+    border-block-start: 1px solid var(--line-1);
   }
 
   .text-button {
@@ -357,13 +334,13 @@
     padding: var(--space-10) var(--space-14);
     border-radius: var(--radius-md);
     font: var(--weight-semibold) var(--text-base) / 1 var(--font-sans);
-    color: var(--accent, #ff5672);
+    color: var(--accent);
     cursor: pointer;
     user-select: none;
   }
 
   .text-button:hover {
-    background: var(--accent-soft, rgba(255, 86, 114, 0.1));
+    background: var(--accent-soft);
   }
 
   .grow {
@@ -376,24 +353,24 @@
     align-items: center;
     gap: var(--space-8);
     padding: 0 var(--space-18);
-    height: var(--control-lg, 40px);
+    height: var(--control-lg);
     box-sizing: border-box;
     border-radius: var(--radius-md);
-    background: var(--accent, #ff5672);
+    background: var(--accent);
     font: var(--weight-semibold) var(--text-base) / 1 var(--font-sans);
-    color: var(--on-accent, #2e0512);
+    color: var(--on-accent);
     cursor: pointer;
     user-select: none;
   }
 
   .primary:hover {
-    background: var(--accent-hover, #ff6d85);
+    background: var(--accent-hover);
   }
 
   .primary-icon {
     width: 16px;
     height: 16px;
-    background: var(--on-accent, #2e0512);
+    background: var(--on-accent);
   }
 
   .card {
@@ -421,14 +398,14 @@
     gap: var(--space-14);
     padding: var(--space-18) var(--space-16);
     border-radius: var(--radius-lg);
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.08));
+    background: var(--overlay-1);
+    box-shadow: inset 0 0 0 1px var(--line-2);
   }
 
   .steps-label {
     font: var(--weight-medium) var(--text-xs) / 1 var(--font-mono);
     letter-spacing: var(--tracking-wide);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .step-list {
@@ -449,7 +426,7 @@
     width: 15px;
     height: 15px;
     margin-top: 2px;
-    background: var(--accent, #ff5672);
+    background: var(--accent);
     mask: var(--icon-check) center/contain no-repeat;
   }
 
@@ -457,24 +434,24 @@
     flex: 1;
     min-width: 0;
     font: var(--weight-regular) var(--text-md) / 1.45 var(--font-sans);
-    color: var(--ink-2, #b9b9c6);
+    color: var(--ink-2);
     text-wrap: pretty;
   }
 
   .patience {
     font: var(--weight-regular) var(--text-sm) / 1.5 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
     text-align: center;
     text-wrap: pretty;
   }
 
   .notice.tip {
-    background: var(--accent-soft, rgba(255, 86, 114, 0.1));
-    box-shadow: inset 0 0 0 1px var(--accent-dim, rgba(255, 86, 114, 0.35));
+    background: var(--accent-soft);
+    box-shadow: inset 0 0 0 1px var(--accent-dim);
   }
 
   .tip .notice-icon {
-    background: var(--accent-bright, #ff8298);
+    background: var(--accent-bright);
     mask: var(--icon-info) center/contain no-repeat;
   }
 </style>

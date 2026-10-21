@@ -126,9 +126,9 @@
     max-width: 100%;
     padding: 4px;
     box-sizing: border-box;
-    border-radius: var(--radius-xs, 4px) 22px 22px var(--radius-xs, 4px);
-    background: var(--bubble-recv-bg, #191921);
-    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+    border-radius: var(--radius-xs) 22px 22px var(--radius-xs);
+    background: var(--bubble-recv-bg);
+    box-shadow: inset 0 0 0 1px var(--line-1);
   }
 
   .shell.last {
@@ -150,7 +150,7 @@
     display: flex;
     flex-direction: column;
     padding: 14px;
-    background: var(--overlay-1, rgba(255, 255, 255, 0.045));
+    background: var(--overlay-1);
   }
 
   .head {
@@ -186,29 +186,29 @@
   }
 
   .good {
-    background: color-mix(in oklch, var(--status-online, #2ee6a8) 14%, transparent);
-    color: var(--status-online, #2ee6a8);
+    background: color-mix(in oklch, var(--status-online) 14%, transparent);
+    color: var(--status-online);
   }
 
   .bad {
-    background: var(--status-danger-soft, rgba(255, 77, 77, 0.12));
-    color: var(--status-danger, #ff4d4d);
+    background: var(--status-danger-soft);
+    color: var(--status-danger);
   }
 
   .info {
-    background: color-mix(in oklch, var(--status-verified, #3d9bff) 15%, transparent);
-    color: var(--status-verified, #3d9bff);
+    background: color-mix(in oklch, var(--status-verified) 15%, transparent);
+    color: var(--status-verified);
   }
 
   .muted {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
-    color: var(--ink-3, #9a9aa8);
+    background: var(--overlay-2);
+    color: var(--ink-3);
   }
 
   .critical {
-    background: var(--status-danger-soft, rgba(255, 77, 77, 0.12));
+    background: var(--status-danger-soft);
     font-weight: 600;
-    color: var(--status-danger, #ff4d4d);
+    color: var(--status-danger);
   }
 
   .shield {
@@ -220,17 +220,17 @@
 
   .title {
     font: 700 15.5px/1.3 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     text-wrap: pretty;
   }
 
   .byline {
     font: 400 12px/1.4 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .proposer {
-    color: var(--accent-bright, #ff8298);
+    color: var(--accent-bright);
     font-weight: 600;
   }
 
@@ -246,16 +246,16 @@
   }
 
   .yes {
-    color: var(--status-online, #2ee6a8);
+    color: var(--status-online);
   }
 
   .no {
-    color: var(--status-danger, #ff4d4d);
+    color: var(--status-danger);
   }
 
   .figure-label {
     font: 500 11.5px/1 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .after {
@@ -271,7 +271,7 @@
     flex-wrap: wrap;
     gap: 6px 14px;
     font: 500 11.5px/1.3 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .key {
@@ -285,8 +285,8 @@
     height: 7px;
     margin: -3px 1px 0;
     box-sizing: border-box;
-    border-right: 2px solid var(--ink-2, #c9c9d4);
-    border-bottom: 2px solid var(--ink-2, #c9c9d4);
+    border-right: 2px solid var(--ink-2);
+    border-bottom: 2px solid var(--ink-2);
     transform: rotate(45deg);
   }
 
@@ -295,7 +295,7 @@
     height: 0;
     border-left: 4.5px solid transparent;
     border-right: 4.5px solid transparent;
-    border-top: 6px solid var(--ink, #ececf1);
+    border-top: 6px solid var(--ink);
   }
 
   .when {
@@ -303,11 +303,11 @@
     align-items: center;
     gap: 6px;
     font: 500 12px/1 var(--font-sans);
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
   }
 
   .when.open {
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
   }
 
   .clock {
@@ -335,21 +335,21 @@
   }
 
   .vote.adopt {
-    background: color-mix(in oklch, var(--status-online, #2ee6a8) 16%, transparent);
-    color: var(--status-online, #2ee6a8);
+    background: color-mix(in oklch, var(--status-online) 16%, transparent);
+    color: var(--status-online);
   }
 
   .vote.adopt:hover {
-    background: color-mix(in oklch, var(--status-online, #2ee6a8) 24%, transparent);
+    background: color-mix(in oklch, var(--status-online) 24%, transparent);
   }
 
   .vote.reject {
-    background: var(--status-danger-soft, rgba(255, 77, 77, 0.12));
-    color: var(--status-danger, #ff4d4d);
+    background: var(--status-danger-soft);
+    color: var(--status-danger);
   }
 
   .vote.reject:hover {
-    background: color-mix(in oklch, var(--status-danger, #ff4d4d) 20%, transparent);
+    background: color-mix(in oklch, var(--status-danger) 20%, transparent);
   }
 
   .vote-icon {
@@ -373,9 +373,9 @@
     height: 40px;
     padding: 0 14px;
     border-radius: 6px;
-    background: var(--overlay-1, rgba(255, 255, 255, 0.045));
+    background: var(--overlay-1);
     font: 600 12.5px/1 var(--font-sans);
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
     cursor: pointer;
   }
 
@@ -391,6 +391,6 @@
     justify-content: flex-end;
     padding: 6px 10px 4px;
     font: 400 11px/1 var(--font-mono);
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
   }
 </style>

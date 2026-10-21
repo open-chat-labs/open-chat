@@ -37,7 +37,7 @@
     font: var(--weight-semibold) 11.5px/1 var(--font-mono);
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -46,6 +46,6 @@
   .meta {
     flex: none;
     font: var(--weight-medium) 12px/1 var(--font-mono);
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
   }
 </style>

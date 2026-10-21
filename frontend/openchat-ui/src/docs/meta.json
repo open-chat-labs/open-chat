@@ -1083,7 +1083,7 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "'var(--surface-1,#0e0e12)'",
+        "componentDefault": "'var(--surface-1)'",
         "doc": ""
       },
       {
@@ -2389,7 +2389,7 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "'var(--card,#0e0e12)'",
+        "componentDefault": "'var(--card)'",
         "doc": "Ring around the online dot; match the surface behind."
       },
       {
@@ -3461,7 +3461,7 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "'var(--accent,#FF5672)'",
+        "componentDefault": "'var(--accent)'",
         "doc": ""
       },
       {
@@ -4589,7 +4589,7 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "'var(--card,#0e0e12)'",
+        "componentDefault": "'var(--card)'",
         "doc": "Ring around each face; match the surface behind."
       },
       {
@@ -5938,12 +5938,12 @@
       {
         "name": "ring",
         "type": "string",
-        "default": "var(--surface-2,#191921)",
+        "default": "var(--surface-2)",
         "editor": "text",
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "'var(--surface-2,#191921)'",
+        "componentDefault": "'var(--surface-2)'",
         "doc": ""
       }
     ],
@@ -15491,7 +15491,7 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "'var(--status-online,#2EE6A8)'",
+        "componentDefault": "'var(--status-online)'",
         "doc": ""
       },
       {
@@ -15502,7 +15502,7 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "'var(--status-danger,#FF4D4D)'",
+        "componentDefault": "'var(--status-danger)'",
         "doc": ""
       },
       {
@@ -17494,7 +17494,7 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "'var(--accent,#FF5672)'",
+        "componentDefault": "'var(--accent)'",
         "doc": ""
       },
       {
@@ -17505,7 +17505,7 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "'var(--bubble-wave-off,#4A4A56)'",
+        "componentDefault": "'var(--bubble-wave-off)'",
         "doc": ""
       },
       {
@@ -17516,7 +17516,7 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "'var(--bubble-recv-bg,#191921)'",
+        "componentDefault": "'var(--bubble-recv-bg)'",
         "doc": "Ring around the handle; match the surface behind."
       },
       {

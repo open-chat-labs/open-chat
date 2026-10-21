@@ -31,8 +31,8 @@
     max-width: 240px;
     padding: 6px 9px;
     border-radius: 7px;
-    background: var(--ink, #ececf1);
-    color: var(--surface-1, #0e0e12);
+    background: var(--ink);
+    color: var(--surface-1);
     font: 600 12px/1.3 var(--font-sans);
     text-wrap: balance;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);

@@ -38,7 +38,7 @@
 
   let {
     typingNames = [],
-    ringColor = 'var(--surface-1,#0e0e12)',
+    ringColor = 'var(--surface-1)',
     bannerText = '',
     bannerTone = 'offline',
     bannerAction = '',
@@ -66,7 +66,7 @@
     flex-direction: column;
     gap: var(--space-10);
     padding: var(--space-12) var(--space-14);
-    background: var(--surface-1, #0e0e12);
+    background: var(--surface-1);
   }
 
   .typing {

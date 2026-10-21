@@ -61,14 +61,14 @@
   }
 
   .copy:hover {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+    background: var(--overlay-2);
   }
 
   .icon {
     flex: none;
     width: 13px;
     height: 13px;
-    background: var(--ink-3, #9a9aa8);
+    background: var(--ink-3);
     mask: var(--icon-copy) center/contain no-repeat;
   }
 
@@ -90,15 +90,15 @@
   }
 
   .outline {
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1));
+    box-shadow: inset 0 0 0 1px var(--line-2);
   }
 
   .outline .icon {
-    background: var(--ink-2, #b9b9c6);
+    background: var(--ink-2);
   }
 
   .soft {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.07));
+    background: var(--overlay-2);
   }
 
   .soft:hover {
@@ -106,20 +106,20 @@
   }
 
   .soft .icon {
-    background: var(--ink, #ececf1);
+    background: var(--ink);
   }
 
   .filled {
-    background: var(--accent, #ff5672);
+    background: var(--accent);
   }
 
   .filled:hover {
-    background: var(--accent, #ff5672);
+    background: var(--accent);
     filter: brightness(1.08);
   }
 
   .filled .icon {
-    background: var(--on-accent, #2e0512);
+    background: var(--on-accent);
   }
 
   .soft.done,
@@ -133,17 +133,17 @@
     height: 32px;
     gap: 7px;
     padding: 0 12px;
-    border-radius: var(--radius-sm, 8px);
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12));
-    font: var(--weight-semibold, 600) var(--text-sm, 13px) / 1 var(--font-sans);
-    color: var(--ink, #ececf1);
+    border-radius: var(--radius-sm);
+    box-shadow: inset 0 0 0 1px var(--line-2);
+    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
+    color: var(--ink);
     white-space: nowrap;
   }
 
   .text .icon {
     width: 14px;
     height: 14px;
-    background: var(--ink-2, #b9b9c6);
+    background: var(--ink-2);
   }
 
   .primary {
@@ -151,13 +151,13 @@
     padding: 0 14px;
     border-radius: 10px;
     box-shadow: none;
-    background: var(--accent, #ff5672);
+    background: var(--accent);
     font: 600 13px/1 var(--font-sans);
-    color: var(--on-accent, #2e0512);
+    color: var(--on-accent);
   }
 
   .primary:hover {
-    background: var(--accent, #ff5672);
+    background: var(--accent);
     filter: brightness(1.08);
   }
 
@@ -168,11 +168,11 @@
   .primary.done {
     background: rgba(46, 230, 168, 0.14);
     filter: none;
-    color: var(--status-online, #2ee6a8);
+    color: var(--status-online);
   }
 
   .done .icon {
-    background: var(--status-online, #2ee6a8);
+    background: var(--status-online);
     mask: var(--icon-check) center/contain no-repeat;
   }
 </style>

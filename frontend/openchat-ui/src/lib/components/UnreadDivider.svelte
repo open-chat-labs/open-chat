@@ -38,15 +38,15 @@
     padding: 0 var(--space-12);
     box-sizing: border-box;
     border-radius: var(--radius-pill);
-    background: var(--field, #14141a);
+    background: var(--field);
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
   }
 
   .rule {
     flex: 1;
     height: 1px;
-    background: var(--accent-dim, rgba(255, 86, 114, 0.35));
+    background: var(--accent-dim);
   }
 
   .label {
@@ -54,6 +54,6 @@
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-mono);
     letter-spacing: var(--tracking-wide);
     text-transform: uppercase;
-    color: var(--accent, #ff5672);
+    color: var(--accent);
   }
 </style>

@@ -61,19 +61,19 @@
     display: flex;
     align-items: center;
     gap: var(--space-8);
-    height: var(--control-xl, 44px);
+    height: var(--control-xl);
     box-sizing: border-box;
     padding: 0 var(--space-12);
     border-radius: var(--radius-md);
-    background: var(--overlay-1, rgba(255, 255, 255, 0.045));
-    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.05));
+    background: var(--overlay-1);
+    box-shadow: inset 0 0 0 1px var(--line-1);
   }
 
   .search-icon {
     width: 15px;
     height: 15px;
     flex: none;
-    background: var(--ink-4, #6e6e7c);
+    background: var(--ink-4);
     mask: var(--icon-search) center/contain no-repeat;
   }
 
@@ -81,7 +81,7 @@
     flex: 1;
     min-width: 0;
     font: var(--weight-regular) var(--text-base) / 1 var(--font-sans);
-    color: var(--ink-4, #63636f);
+    color: var(--ink-4);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -94,7 +94,7 @@
     border: 0;
     outline: none;
     font: var(--weight-regular) var(--text-base) / 1.3 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .clear {
@@ -105,26 +105,26 @@
     width: 22px;
     height: 22px;
     border-radius: var(--radius-pill);
-    background: var(--overlay-2, rgba(255, 255, 255, 0.07));
+    background: var(--overlay-2);
     cursor: pointer;
   }
 
   .clear:hover {
-    background: var(--btn-hover, rgba(255, 255, 255, 0.1));
+    background: var(--btn-hover);
   }
 
   .clear-icon {
     width: 11px;
     height: 11px;
-    background: var(--ink-3, #9a9aa8);
+    background: var(--ink-3);
     mask: var(--icon-close) center/contain no-repeat;
   }
 
   .shortcut {
     flex: none;
     font: var(--weight-medium) var(--text-xs) / 1 var(--font-mono);
-    color: var(--ink-4, #63636f);
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1));
+    color: var(--ink-4);
+    box-shadow: inset 0 0 0 1px var(--line-2);
     border-radius: var(--radius-xs);
     padding: var(--space-4) var(--space-4);
   }
@@ -144,7 +144,7 @@
     flex: 1;
     min-width: 0;
     font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-sans);
-    color: var(--ink-3, #8a8a99);
+    color: var(--ink-3);
     text-wrap: pretty;
   }
 </style>

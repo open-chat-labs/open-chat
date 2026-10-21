@@ -185,7 +185,7 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    background: var(--surface-1, #0e0e12);
+    background: var(--surface-1);
   }
 
   /* side panel: back to the details, like pinned messages; modal (narrow): close only */
@@ -197,7 +197,7 @@
     align-items: center;
     gap: var(--space-6);
     padding: 0 var(--space-12) 0 var(--space-8);
-    border-bottom: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+    border-bottom: 1px solid var(--line-1);
   }
 
   .header.modal {
@@ -219,12 +219,12 @@
 
   .title {
     font: var(--weight-bold) var(--text-lg) / 1 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .chat {
     font: var(--weight-regular) var(--text-sm) / 1 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -236,7 +236,7 @@
     flex-direction: column;
     gap: var(--space-12);
     padding: var(--space-14) var(--space-14) var(--space-12);
-    border-bottom: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+    border-bottom: 1px solid var(--line-1);
   }
 
   .root {
@@ -246,7 +246,7 @@
     gap: var(--space-8);
     padding: var(--space-12) var(--space-14);
     border-radius: var(--radius-lg);
-    background: var(--overlay-1, rgba(255, 255, 255, 0.04));
+    background: var(--overlay-1);
   }
 
   .root-line {
@@ -267,18 +267,18 @@
     flex: 1;
     min-width: 0;
     font: var(--weight-semibold) var(--text-md) / 1 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .root-time {
     flex: none;
     font: var(--weight-regular) var(--text-xs) / 1 var(--font-sans);
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
   }
 
   .root-text {
     font: var(--weight-regular) var(--text-md) / 1.5 var(--font-sans);
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
     text-wrap: pretty;
     display: -webkit-box;
     -webkit-box-orient: vertical;
@@ -294,13 +294,13 @@
   .jump,
   .more {
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
-    color: var(--accent-bright, #ff8298);
+    color: var(--accent-bright);
     cursor: pointer;
     user-select: none;
   }
 
   .more {
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .people {
@@ -320,7 +320,7 @@
     height: 22px;
     margin-inline-end: -6px;
     border-radius: var(--radius-pill);
-    box-shadow: 0 0 0 2px var(--surface-1, #0e0e12);
+    box-shadow: 0 0 0 2px var(--surface-1);
   }
 
   .people-line {
@@ -328,7 +328,7 @@
     min-width: 0;
     margin-inline-start: var(--space-6);
     font: var(--weight-medium) var(--text-sm) / 1 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .follow {
@@ -341,21 +341,21 @@
     box-sizing: border-box;
     border-radius: var(--radius-pill);
     background: transparent;
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12));
+    box-shadow: inset 0 0 0 1px var(--line-2);
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
     cursor: pointer;
     user-select: none;
   }
 
   .follow.on {
-    background: var(--accent-soft, rgba(255, 86, 114, 0.1));
-    box-shadow: inset 0 0 0 1px var(--accent, #ff5672);
-    color: var(--accent-bright, #ff8298);
+    background: var(--accent-soft);
+    box-shadow: inset 0 0 0 1px var(--accent);
+    color: var(--accent-bright);
   }
 
   .follow:hover {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    background: var(--overlay-2);
   }
 
   .bell {
@@ -380,7 +380,7 @@
     margin: auto 0;
     padding: var(--space-24) var(--space-12);
     font: var(--weight-regular) var(--text-md) / 1.5 var(--font-sans);
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
     text-align: center;
   }
 

@@ -92,7 +92,7 @@
   }
 
   .ring.speaking {
-    box-shadow: inset 0 0 0 2px var(--accent, #ff5672);
+    box-shadow: inset 0 0 0 2px var(--accent);
   }
 
   .feed {
@@ -159,7 +159,7 @@
   }
 
   .mic.muted {
-    background: var(--status-danger, #f5493d);
+    background: var(--status-danger);
   }
 
   .label {

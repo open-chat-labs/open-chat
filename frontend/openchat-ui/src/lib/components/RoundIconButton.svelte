@@ -44,8 +44,8 @@
   .round-button {
     --px: 34px;
     --icon-px: 14px;
-    --button-bg: var(--overlay-2, rgba(255, 255, 255, 0.1));
-    --button-ink: var(--ink, #ececf1);
+    --button-bg: var(--overlay-2);
+    --button-ink: var(--ink);
     flex: none;
     width: var(--px);
     height: var(--px);
@@ -65,7 +65,7 @@
   }
 
   .round-button:focus {
-    outline: 2px solid var(--accent, #ff5672);
+    outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
 
@@ -80,18 +80,18 @@
   }
 
   .on {
-    --button-bg: var(--accent, #ff5672);
-    --button-ink: var(--on-accent, #2e0512);
+    --button-bg: var(--accent);
+    --button-ink: var(--on-accent);
   }
 
   /* inverted: ink-coloured disc with a surface-coloured glyph, in either mode */
   .off {
-    --button-bg: var(--ink, #ececf1);
-    --button-ink: var(--surface-1, #0e0e12);
+    --button-bg: var(--ink);
+    --button-ink: var(--surface-1);
   }
 
   .danger {
-    --button-bg: var(--status-danger, #f5493d);
+    --button-bg: var(--status-danger);
     --button-ink: #fff;
   }
 

@@ -121,9 +121,9 @@
     gap: var(--space-14);
     padding: var(--space-14);
     box-sizing: border-box;
-    border-radius: var(--radius-lg, 14px);
-    background: var(--overlay-1, rgba(255, 255, 255, 0.045));
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12));
+    border-radius: var(--radius-lg);
+    background: var(--overlay-1);
+    box-shadow: inset 0 0 0 1px var(--line-2);
   }
 
   .head {
@@ -137,7 +137,7 @@
     min-width: 0;
     font: var(--weight-semibold) var(--text-xs) / 1 var(--font-mono);
     letter-spacing: var(--tracking-wide);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .head-button {
@@ -152,13 +152,13 @@
   }
 
   .head-button:hover {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    background: var(--overlay-2);
   }
 
   .head-icon {
     width: 15px;
     height: 15px;
-    background: var(--ink-4, #7c7c8c);
+    background: var(--ink-4);
   }
 
   .refresh {
@@ -179,7 +179,7 @@
   .amount,
   .fiat {
     filter: none;
-    transition: filter var(--duration-base, 200ms) var(--ease-out);
+    transition: filter var(--duration-base) var(--ease-out);
   }
 
   .amount.veiled,
@@ -190,15 +190,15 @@
   .amount {
     flex: 1;
     min-width: 0;
-    font: var(--weight-bold) var(--text-3xl, 30px) / 1.1 var(--font-sans);
+    font: var(--weight-bold) var(--text-3xl) / 1.1 var(--font-sans);
     letter-spacing: var(--tracking-tight);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .fiat {
     flex: none;
     font: var(--weight-semibold) var(--text-lg) / 1.3 var(--font-mono);
-    color: var(--accent, #ff5672);
+    color: var(--accent);
   }
 
   .bar {
@@ -213,8 +213,8 @@
     min-width: 6px;
     border-radius: var(--radius-pill);
     transition:
-      flex var(--duration-slow, 280ms) var(--ease-out),
-      filter var(--duration-fast, 120ms) var(--ease-out);
+      flex var(--duration-slow) var(--ease-out),
+      filter var(--duration-fast) var(--ease-out);
   }
 
   .segment:hover {
@@ -232,9 +232,9 @@
     gap: 3px;
     padding: 6px var(--space-10);
     border-radius: var(--radius-sm);
-    background: var(--surface-2, #1b1b22);
+    background: var(--surface-2);
     box-shadow:
-      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12)),
+      inset 0 0 0 1px var(--line-2),
       0 10px 24px rgba(0, 0, 0, 0.5);
     pointer-events: none;
     animation: oc-tip-in 90ms var(--ease-out) both;
@@ -258,7 +258,7 @@
     flex: 1;
     min-width: 0;
     font: var(--weight-semibold) var(--text-sm) / 1.2 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -266,7 +266,7 @@
 
   .tip-value {
     font: var(--weight-medium) var(--text-sm) / 1.2 var(--font-mono);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
     white-space: nowrap;
   }
 
@@ -286,12 +286,12 @@
     border-radius: var(--radius-md);
     cursor: pointer;
     user-select: none;
-    --action-ink: var(--ink-2, #c9c9d4);
+    --action-ink: var(--ink-2);
   }
 
   .action.send {
-    background: var(--accent, #ff5672);
-    --action-ink: var(--on-accent, #2e0512);
+    background: var(--accent);
+    --action-ink: var(--on-accent);
   }
 
   .action.send:hover {
@@ -299,11 +299,11 @@
   }
 
   .action.outline {
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12));
+    box-shadow: inset 0 0 0 1px var(--line-2);
   }
 
   .action.outline:hover {
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    background: var(--overlay-1);
   }
 
   .action.square {

@@ -190,9 +190,9 @@
           duration: 420,
           easing: 'ease-out',
         });
-      h.style.background = past && on ? 'var(--accent,#FF5672)' : 'var(--overlay-2,rgba(255,255,255,.1))';
+      h.style.background = past && on ? 'var(--accent)' : 'var(--overlay-2)';
       const icon = h.firstElementChild as HTMLElement | null;
-      if (icon) icon.style.background = past && on ? 'var(--on-accent,#2E0512)' : 'var(--ink,#ECECF1)';
+      if (icon) icon.style.background = past && on ? 'var(--on-accent)' : 'var(--ink)';
     };
     paint(el.querySelector('[data-swipe-hint]'), d > 0, Math.max(0, d));
     paint(el.querySelector('[data-swipe-hint-end]'), d < 0, Math.max(0, -d));
@@ -509,7 +509,7 @@
     place-items: center;
     overflow: visible;
     border-radius: 50%;
-    box-shadow: 0 0 0 4px var(--surface-1, #0e0e12);
+    box-shadow: 0 0 0 4px var(--surface-1);
   }
 
   .avatar-space {
@@ -530,14 +530,14 @@
   .name {
     padding: 0 var(--space-4);
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
-    color: var(--ink-3, #8a8a99);
+    color: var(--ink-3);
   }
 
   .message {
     position: relative;
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    border-radius: var(--radius-lg, 14px);
+    border-radius: var(--radius-lg);
     -webkit-touch-callout: none;
     touch-action: pan-y;
     z-index: auto;
@@ -556,7 +556,7 @@
     inset-inline-end: -24px;
     z-index: -1;
     border-radius: 0;
-    background: color-mix(in oklch, var(--ink, #ececf1) 2.5%, transparent);
+    background: color-mix(in oklch, var(--ink) 2.5%, transparent);
     opacity: 0;
     transition: opacity 0.2s ease-out;
     pointer-events: none;
@@ -577,7 +577,7 @@
     height: 26px;
     margin-top: -13px;
     border-radius: 50%;
-    background: var(--overlay-2, rgba(255, 255, 255, 0.1));
+    background: var(--overlay-2);
     display: none;
     align-items: center;
     justify-content: center;
@@ -596,7 +596,7 @@
   .hint-icon {
     width: 14px;
     height: 14px;
-    background: var(--ink, #ececf1);
+    background: var(--ink);
   }
 
   .bar {
@@ -612,7 +612,7 @@
     border-radius: 17px;
     background: var(--surface-3, #24242e);
     box-shadow:
-      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12)),
+      inset 0 0 0 1px var(--line-2),
       0 8px 20px rgba(0, 0, 0, 0.4);
   }
 
@@ -636,26 +636,26 @@
   }
 
   .quick.on {
-    background: var(--accent-soft, rgba(255, 86, 114, 0.16));
+    background: var(--accent-soft);
   }
 
   .quick:hover {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+    background: var(--overlay-2);
     transform: scale(1.14);
   }
 
   .tool {
     background: transparent;
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
   }
 
   .tool.active {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+    background: var(--overlay-2);
   }
 
   .tool:hover {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
-    color: var(--ink, #ececf1);
+    background: var(--overlay-2);
+    color: var(--ink);
   }
 
   .quick:focus-visible,
@@ -674,6 +674,6 @@
     width: 1px;
     height: 16px;
     margin: 0 3px;
-    background: var(--line-2, rgba(255, 255, 255, 0.12));
+    background: var(--line-2);
   }
 </style>

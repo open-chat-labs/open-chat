@@ -49,10 +49,10 @@
     padding: var(--space-6);
     box-sizing: border-box;
     border-radius: var(--radius-lg);
-    background: var(--surface-2, #191921);
+    background: var(--surface-2);
     box-shadow:
-      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1)),
-      var(--shadow-panel, 0 8px 24px rgba(0, 0, 0, 0.28));
+      inset 0 0 0 1px var(--line-2),
+      var(--shadow-panel);
     display: flex;
     flex-direction: column;
     gap: var(--space-4);
@@ -62,6 +62,6 @@
     padding: var(--space-6) var(--space-10) var(--space-4);
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-mono);
     letter-spacing: var(--tracking-wide);
-    color: var(--ink-4, #6e6e7c);
+    color: var(--ink-4);
   }
 </style>

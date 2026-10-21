@@ -97,7 +97,7 @@
   .pressable,
   .fresh {
     padding: 0 var(--space-10);
-    border-radius: var(--radius-md, 12px);
+    border-radius: var(--radius-md);
   }
 
   .fresh {
@@ -105,11 +105,11 @@
   }
 
   .divider {
-    border-top: 1px solid var(--line-1, rgba(255, 255, 255, 0.06));
+    border-top: 1px solid var(--line-1);
   }
 
   .pressable:hover {
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    background: var(--overlay-1);
   }
 
   .kind {
@@ -120,13 +120,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--overlay-2, rgba(255, 255, 255, 0.06));
+    background: var(--overlay-2);
   }
 
   .kind-icon {
     width: 15px;
     height: 15px;
-    background: var(--ink-2, #c9c9d4);
+    background: var(--ink-2);
   }
 
   .main {
@@ -139,7 +139,7 @@
 
   .title {
     font: var(--weight-semibold) var(--text-md) / 1.2 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -151,7 +151,7 @@
     gap: var(--space-8);
     min-width: 0;
     font: var(--weight-regular) var(--text-xs) / 1 var(--font-sans);
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
   }
 
   .sub-text {
@@ -171,15 +171,15 @@
 
   .amount {
     font: var(--weight-semibold) var(--text-md) / 1 var(--font-mono);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .amount.positive {
-    color: var(--status-online, #2ee6a8);
+    color: var(--status-online);
   }
 
   .fiat {
     font: var(--weight-regular) var(--text-xs) / 1 var(--font-mono);
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
   }
 </style>

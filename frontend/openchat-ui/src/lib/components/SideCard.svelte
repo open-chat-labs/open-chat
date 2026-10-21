@@ -24,8 +24,8 @@
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    border-radius: var(--radius-lg, 14px);
-    background: var(--overlay-1, rgba(255, 255, 255, 0.04));
+    border-radius: var(--radius-lg);
+    background: var(--overlay-1);
   }
 
   .fill {

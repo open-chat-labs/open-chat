@@ -58,7 +58,7 @@
   }
 
   .focus {
-    --ring: 0 0 0 3px var(--accent-dim, rgba(255, 86, 114, 0.35));
+    --ring: 0 0 0 3px var(--accent-dim);
   }
 
   .active {
@@ -70,11 +70,11 @@
     flex: none;
     width: 17px;
     height: 17px;
-    background: var(--ink-2, #b9b9c6);
+    background: var(--ink-2);
   }
 
   .surface {
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    background: var(--overlay-1);
   }
 
   .ghost {
@@ -83,7 +83,7 @@
 
   .ghost.hover .icon,
   .ghost.pressed .icon {
-    background: var(--ink, #ececf1);
+    background: var(--ink);
   }
 
   .surface:hover,
@@ -91,22 +91,22 @@
   .ghost:hover,
   .ghost.hover,
   .ghost.pressed {
-    background: var(--btn-hover, rgba(255, 255, 255, 0.1));
+    background: var(--btn-hover);
   }
 
   .button.accent {
     width: 36px;
     height: 36px;
-    background: var(--accent, #ff5672);
+    background: var(--accent);
   }
 
   .button.accent .icon {
-    background: var(--on-accent, #2e0512);
+    background: var(--on-accent);
   }
 
   .button.accent:hover,
   .button.accent.hover {
-    background: var(--accent-hover, #ff6d85);
+    background: var(--accent-hover);
   }
 
   .overlay {
@@ -114,24 +114,24 @@
     width: 30px;
     height: 30px;
     border-radius: var(--radius-sm);
-    background: var(--card-2, #191921);
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12)), var(--ring);
+    background: var(--card-2);
+    box-shadow: inset 0 0 0 1px var(--line-2), var(--ring);
   }
 
   .overlay.default,
   .overlay.hover {
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12));
+    box-shadow: inset 0 0 0 1px var(--line-2);
   }
 
   .overlay:hover,
   .overlay.hover {
-    background: var(--btn-hover, rgba(255, 255, 255, 0.1));
+    background: var(--btn-hover);
   }
 
   .overlay .icon {
     flex: initial;
     width: 16px;
     height: 16px;
-    background: var(--ink-3, #8a8a99);
+    background: var(--ink-3);
   }
 </style>

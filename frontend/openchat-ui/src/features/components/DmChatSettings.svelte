@@ -101,14 +101,14 @@
   .error {
     padding: 0 var(--space-16) var(--space-12);
     font: var(--weight-medium) var(--text-sm) / 1.4 var(--font-sans);
-    color: var(--status-danger, #f5493d);
+    color: var(--status-danger);
   }
 
   .settings {
     display: flex;
     flex-direction: column;
     border-radius: var(--radius-lg);
-    background: var(--overlay-1, rgba(255, 255, 255, 0.04));
+    background: var(--overlay-1);
   }
 
   .timed {
@@ -123,14 +123,14 @@
     min-height: 64px;
     padding: var(--space-12) var(--space-16);
     box-sizing: border-box;
-    border-top: 1px solid var(--line-1, rgba(255, 255, 255, 0.06));
+    border-top: 1px solid var(--line-1);
   }
 
   .eye {
     flex: none;
     width: 17px;
     height: 17px;
-    background: var(--ink-3, #9a9aa8);
+    background: var(--ink-3);
     mask: var(--icon-eye) center/contain no-repeat;
   }
 
@@ -144,12 +144,12 @@
 
   .label {
     font: var(--weight-semibold) var(--text-md) / 1.2 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .hint {
     font: var(--weight-regular) var(--text-sm) / 1.3 var(--font-sans);
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
   }
 
   .switch {
@@ -158,13 +158,13 @@
     width: 42px;
     height: 24px;
     border-radius: var(--radius-pill);
-    background: var(--overlay-2, rgba(255, 255, 255, 0.14));
+    background: var(--overlay-2);
     cursor: pointer;
     transition: background 0.15s;
   }
 
   .switch.on {
-    background: var(--accent, #ff5672);
+    background: var(--accent);
   }
 
   .knob {
@@ -174,13 +174,13 @@
     width: 18px;
     height: 18px;
     border-radius: var(--radius-pill);
-    background: var(--ink-4, #6e6e7c);
+    background: var(--ink-4);
     transform: translateX(0);
     transition: transform 0.15s;
   }
 
   .on .knob {
     background: #fff;
-    transform: translateX(calc(var(--oc-dir, 1) * 18px));
+    transform: translateX(calc(var(--oc-dir) * 18px));
   }
 </style>

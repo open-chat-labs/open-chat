@@ -41,7 +41,7 @@ describe('ProfileDialog', () => {
     flushSync();
   };
   const tryEveryClose = () => {
-    press(target.querySelector('.veil'));
+    press(target.querySelector('.oc-veil'));
     press(target.querySelector('.head-close'));
     esc();
     flushSync();

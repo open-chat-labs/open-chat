@@ -27,7 +27,7 @@
     box-sizing: border-box;
     padding: var(--space-14) var(--space-16);
     border-radius: var(--radius-lg);
-    background: var(--overlay-1, rgba(255, 255, 255, 0.04));
+    background: var(--overlay-1);
     display: flex;
     flex-direction: column;
     gap: var(--space-8);
@@ -37,15 +37,15 @@
     font: var(--weight-medium) var(--text-2xs) / 1 var(--font-mono);
     letter-spacing: 0.05em;
     text-transform: uppercase;
-    color: var(--ink-4, #6e6e7c);
+    color: var(--ink-4);
   }
 
   .value {
     font: var(--weight-semibold) var(--text-base) / 1 var(--font-sans);
-    color: var(--ink, #e4e4ec);
+    color: var(--ink);
   }
 
   .emphasis {
-    color: var(--accent-bright, #ff8298);
+    color: var(--accent-bright);
   }
 </style>

@@ -79,29 +79,29 @@
     padding: var(--space-10) var(--space-12);
     box-sizing: border-box;
     border-radius: var(--radius-md);
-    background: var(--surface-2, #191921);
+    background: var(--surface-2);
     box-shadow:
-      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12)),
+      inset 0 0 0 1px var(--line-2),
       0 14px 34px rgba(0, 0, 0, 0.45);
     animation: oc-toast-in 160ms var(--ease-out) both;
   }
 
   .toast.out {
     pointer-events: none;
-    animation: oc-toast-out 190ms var(--ease-standard, ease) both;
+    animation: oc-toast-out 190ms var(--ease-standard) both;
   }
 
   .lg {
     gap: var(--space-12);
     min-height: 60px;
     padding: var(--space-10) var(--space-10) var(--space-10) var(--space-12);
-    border-radius: var(--radius-lg, 14px);
+    border-radius: var(--radius-lg);
   }
 
   .success {
     background:
       linear-gradient(0deg, rgba(46, 230, 168, 0.1), rgba(46, 230, 168, 0.1)),
-      var(--surface-2, #191921);
+      var(--surface-2);
     box-shadow:
       inset 0 0 0 1px rgba(46, 230, 168, 0.38),
       0 18px 44px rgba(0, 0, 0, 0.5);
@@ -121,7 +121,7 @@
   .icon {
     width: 15px;
     height: 15px;
-    background: var(--ink-4, #7c7c8c);
+    background: var(--ink-4);
   }
 
   .success .badge {
@@ -133,7 +133,7 @@
   .success .icon {
     width: 13px;
     height: 13px;
-    background: var(--status-online, #2ee6a8);
+    background: var(--status-online);
   }
 
   .success.lg .badge {
@@ -150,7 +150,7 @@
     flex: 1;
     min-width: 0;
     font: var(--weight-medium) var(--text-sm) / 1.35 var(--font-sans);
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
     text-wrap: pretty;
   }
 
@@ -160,7 +160,7 @@
 
   .success .message,
   .lg .message {
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .action {
@@ -173,21 +173,21 @@
     border-radius: var(--radius-sm);
     background: transparent;
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
-    color: var(--accent, #ff5672);
+    color: var(--accent);
     cursor: pointer;
     user-select: none;
   }
 
   .action:hover {
-    background: var(--accent-soft, rgba(255, 86, 114, 0.12));
+    background: var(--accent-soft);
   }
 
   .lg .action {
     height: 36px;
     padding: 0 var(--space-14);
-    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+    background: var(--overlay-2);
     font: var(--weight-bold) var(--text-md) / 1 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .lg .action:hover {
@@ -211,13 +211,13 @@
   }
 
   .close:hover {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    background: var(--overlay-2);
   }
 
   .close-icon {
     width: 11px;
     height: 11px;
-    background: var(--ink-4, #7c7c8c);
+    background: var(--ink-4);
     mask: var(--icon-close) center/contain no-repeat;
   }
 

@@ -150,7 +150,7 @@
     gap: var(--space-10);
     padding: var(--space-10);
     overflow: hidden;
-    background: var(--surface-1, #0e0e12);
+    background: var(--surface-1);
   }
 
   .top {
@@ -165,7 +165,7 @@
     align-items: center;
     gap: var(--space-12);
     min-width: 0;
-    min-height: var(--control-md, 34px);
+    min-height: var(--control-md);
     padding: var(--space-10) 0 var(--space-10) var(--space-10);
   }
 
@@ -180,30 +180,30 @@
     min-width: 0;
     font: var(--weight-bold) var(--text-xl) / 1.2 var(--font-sans);
     letter-spacing: var(--tracking-tight);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .failed {
     padding: 0 var(--space-10);
     font: var(--weight-medium) var(--text-sm) / 1.4 var(--font-sans);
-    color: var(--status-danger, #f5493d);
+    color: var(--status-danger);
   }
 
   .mark-all {
     flex: none;
     display: inline-flex;
     align-items: center;
-    height: var(--control-md, 34px);
+    height: var(--control-md);
     padding: 0 var(--space-8);
     border-radius: var(--radius-sm);
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
-    color: var(--accent, #ff5672);
+    color: var(--accent);
     cursor: pointer;
     user-select: none;
   }
 
   .mark-all:hover {
-    background: var(--accent-soft, rgba(255, 86, 114, 0.1));
+    background: var(--accent-soft);
   }
 
   .tabs,
@@ -227,7 +227,7 @@
     padding: var(--space-26) var(--space-8) var(--space-6);
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-mono);
     letter-spacing: var(--tracking-wide);
-    color: var(--ink-3, #8a8a99);
+    color: var(--ink-3);
   }
 
   .day.first {

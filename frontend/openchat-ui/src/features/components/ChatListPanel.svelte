@@ -232,7 +232,7 @@
     flex-direction: column;
     gap: var(--space-10);
     padding: var(--space-10);
-    background: var(--surface-1, #0e0e12);
+    background: var(--surface-1);
   }
 
   .cell {
@@ -244,7 +244,7 @@
     display: flex;
     align-items: center;
     gap: var(--space-12);
-    height: var(--control-xl, 44px);
+    height: var(--control-xl);
     box-sizing: border-box;
     padding: 0 var(--space-12);
     border-radius: var(--radius-lg);
@@ -252,7 +252,7 @@
   }
 
   .threads:hover {
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    background: var(--overlay-1);
   }
 
   .threads-slot {
@@ -266,7 +266,7 @@
   .threads-icon {
     width: 19px;
     height: 19px;
-    background: var(--ink-3, #8a8a99);
+    background: var(--ink-3);
     mask: var(--icon-threads) center/contain no-repeat;
   }
 
@@ -274,7 +274,7 @@
     flex: 1;
     min-width: 0;
     font: var(--weight-semibold) var(--text-md) / 1 var(--font-sans);
-    color: var(--ink-3, #8a8a99);
+    color: var(--ink-3);
   }
 
   .threads-badge {
@@ -307,11 +307,11 @@
     padding: 0 var(--space-8) var(--space-6);
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-mono);
     letter-spacing: var(--tracking-wide);
-    color: var(--ink-3, #8a8a99);
+    color: var(--ink-3);
   }
 
   .section-count {
-    color: var(--ink-4, #6e6e7c);
+    color: var(--ink-4);
   }
 
   .empty {

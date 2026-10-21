@@ -45,18 +45,18 @@
   }
 
   .met {
-    background: color-mix(in oklch, var(--status-online, #2ee6a8) 13%, transparent);
-    color: var(--status-online, #2ee6a8);
+    background: color-mix(in oklch, var(--status-online) 13%, transparent);
+    color: var(--status-online);
   }
 
   .unmet {
-    background: color-mix(in oklch, var(--status-warning, #ffb03d) 14%, transparent);
-    color: var(--status-warning, #ffb03d);
+    background: color-mix(in oklch, var(--status-warning) 14%, transparent);
+    color: var(--status-warning);
   }
 
   .neutral {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
-    color: var(--ink-2, #b9b9c6);
+    background: var(--overlay-2);
+    color: var(--ink-2);
   }
 
   .glyph {

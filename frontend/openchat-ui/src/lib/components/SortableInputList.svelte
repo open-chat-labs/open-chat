@@ -160,9 +160,9 @@
     height: 46px;
     padding: 0 6px 0 4px;
     border-radius: 12px;
-    background: var(--field, #14141a);
-    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
-    transition: transform 180ms var(--ease-out, ease-out);
+    background: var(--field);
+    box-shadow: inset 0 0 0 1px var(--line-1);
+    transition: transform 180ms var(--ease-out);
     position: relative;
     z-index: auto;
   }
@@ -170,13 +170,13 @@
   .row.dragging {
     box-shadow:
       0 8px 24px rgba(0, 0, 0, 0.4),
-      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12));
+      inset 0 0 0 1px var(--line-2);
     transition: none;
     z-index: 2;
   }
 
   .row.dup {
-    box-shadow: inset 0 0 0 1px var(--status-warning, #ffb03d);
+    box-shadow: inset 0 0 0 1px var(--status-warning);
   }
 
   .handle {
@@ -203,7 +203,7 @@
   .grip {
     width: 12px;
     height: 14px;
-    background: radial-gradient(circle, var(--ink-4, #8a8a99) 1.3px, transparent 1.6px) 0 0/6px 5px;
+    background: radial-gradient(circle, var(--ink-4) 1.3px, transparent 1.6px) 0 0/6px 5px;
   }
 
   input {
@@ -215,17 +215,17 @@
     background: transparent;
     padding: 0;
     font: 500 14px/1 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .dup-label {
     font: 500 11.5px/1 var(--font-sans);
-    color: var(--status-warning, #ffb03d);
+    color: var(--status-warning);
   }
 
   .left {
     font: 500 11.5px/1 var(--font-mono);
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
   }
 
   .remove {
@@ -240,13 +240,13 @@
   }
 
   .remove:hover {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+    background: var(--overlay-2);
   }
 
   .remove-icon {
     width: 12px;
     height: 12px;
-    background: var(--ink-3, #9a9aa8);
+    background: var(--ink-3);
     mask: var(--icon-close) center/contain no-repeat;
   }
 </style>

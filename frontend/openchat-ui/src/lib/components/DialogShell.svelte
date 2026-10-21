@@ -130,10 +130,10 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    border-radius: var(--radius-xl, 22px);
-    background: var(--surface-1, #0e0e12);
+    border-radius: var(--radius-xl);
+    background: var(--surface-1);
     box-shadow:
-      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1)),
+      inset 0 0 0 1px var(--line-2),
       0 24px 64px rgba(0, 0, 0, 0.55);
     outline: none;
   }
@@ -145,15 +145,15 @@
     gap: var(--space-12);
     height: var(--header-h, 66px);
     box-sizing: border-box;
-    padding: 0 var(--space-12) 0 var(--space-22, 22px);
-    border-bottom: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+    padding: 0 var(--space-12) 0 var(--space-22);
+    border-bottom: 1px solid var(--line-1);
   }
 
   .title {
     flex: 1;
     min-width: 0;
     font: var(--weight-bold) var(--text-lg) / 1 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

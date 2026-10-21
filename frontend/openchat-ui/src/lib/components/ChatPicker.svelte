@@ -69,7 +69,7 @@
     class="item-tile"
     class:graded={!!item?.grad}
     style:border-radius={item?.round === false ? '10px' : 'var(--radius-pill)'}
-    style:background={item?.grad || 'var(--overlay-2,rgba(255,255,255,.08))'}
+    style:background={item?.grad || 'var(--overlay-2)'}
   >
     {#if item?.icon}<span class="item-icon" style:mask="var(--icon-{item.icon}) center/contain no-repeat"></span>{:else}{item?.mark ?? ''}{/if}
   </span>
@@ -140,8 +140,8 @@
   .item,
   .preview {
     padding: var(--space-12) var(--space-14);
-    border-radius: var(--radius-md, 12px);
-    background: var(--overlay-1, rgba(255, 255, 255, 0.04));
+    border-radius: var(--radius-md);
+    background: var(--overlay-1);
   }
 
   .item,
@@ -159,7 +159,7 @@
     align-items: center;
     justify-content: center;
     font: 700 14px/1 var(--font-sans);
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
   }
 
   .item-tile.graded {
@@ -184,12 +184,12 @@
 
   .item-title {
     font: var(--weight-semibold) 13.5px/1.2 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .item-sub {
     font: var(--weight-regular) 12px/1.2 var(--font-mono);
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
   }
 
   .clip {
@@ -217,7 +217,7 @@
     padding: 10px 8px 8px;
     font: var(--weight-semibold) 11.5px/1 var(--font-mono);
     letter-spacing: 0.08em;
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
   }
 
   .chat {
@@ -226,12 +226,12 @@
     gap: var(--space-12);
     min-height: 56px;
     padding: 0 var(--space-10);
-    border-radius: var(--radius-md, 12px);
+    border-radius: var(--radius-md);
     cursor: pointer;
   }
 
   .chat:hover {
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    background: var(--overlay-1);
   }
 
   .face {
@@ -242,7 +242,7 @@
 
   .chat-name {
     font: var(--weight-semibold) var(--text-md) / 1.1 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -251,14 +251,14 @@
   .chat-kind,
   .sending-to {
     font: var(--weight-regular) 12px/1 var(--font-sans);
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
   }
 
   .chevron {
     flex: none;
     width: 16px;
     height: 16px;
-    background: var(--ink-4, #8a8a99);
+    background: var(--ink-4);
     mask: var(--icon-chevron-right) center/contain no-repeat;
   }
 
@@ -266,7 +266,7 @@
     padding: 24px 12px;
     text-align: center;
     font: var(--weight-regular) var(--text-md) / 1.5 var(--font-sans);
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
   }
 
   .confirm {
@@ -294,7 +294,7 @@
   .preview-label {
     font: var(--weight-semibold) 11px/1 var(--font-mono);
     letter-spacing: 0.08em;
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
   }
 
   .actions {
@@ -303,6 +303,6 @@
     justify-content: flex-end;
     gap: var(--space-8);
     padding: var(--space-12) var(--space-16) var(--space-16);
-    border-top: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+    border-top: 1px solid var(--line-1);
   }
 </style>
