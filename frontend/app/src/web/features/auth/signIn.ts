@@ -12,7 +12,7 @@ import type {
     EmailLinkSent,
     SignupDetails,
 } from "@openchat/ui/src/features/components/AuthDialog.svelte";
-import { configKeys } from "@shared";
+import { configKeys, type SignInOutcome, type UserSummary } from "@shared";
 import type { PageAuth } from "@openchat/ui/src/pages/pageAuth.svelte";
 import {
     afterAbandoned,
@@ -62,16 +62,29 @@ function abandonSignIn(client: OpenChat): void {
         // still abandoned until signed out, so the in-app dialog doesn't open meanwhile
         done = true;
         unsubscribe?.();
-        Promise.resolve(registration)
-            .catch(() => undefined)
-            .then(() => {
-                // the account it was making may have made it
-                if (afterAbandoned(identityStateStore.value) !== "sign_out") return stop();
-                return Promise.resolve(client.logout()).finally(stop);
-            });
+        signOutIfLeftWithoutAccount(client, registration, stop);
     });
     // the store calls back during subscribe, before `unsubscribe` was set
     if (done) unsubscribe();
+}
+
+async function signOutIfLeftWithoutAccount(
+    client: OpenChat,
+    making: Promise<unknown> | undefined,
+    stop: () => void,
+): Promise<void> {
+    try {
+        await making;
+    } catch {
+        // a failed sign-up leaves the identity without an account, which the check below sees
+    }
+    // the account it was making may have made it
+    if (afterAbandoned(identityStateStore.value) !== "sign_out") return stop();
+    try {
+        await client.logout();
+    } finally {
+        stop();
+    }
 }
 
 function resumeSignIn(): void {
@@ -215,12 +228,7 @@ export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: Aut
             emailLink = request;
             // the person follows the link on another page, and this one signs in when the client
             // hears of it
-            resp.signedIn.then((outcome) => {
-                // signed in: nothing left to wait for, or to call cancelled
-                if (emailLink === request) emailLink = undefined;
-                if (outcome.kind === "logged_in") onEmailSignedIn?.("logged_in");
-                if (outcome.kind === "needs_account") onEmailSignedIn?.("registering");
-            });
+            awaitEmailLink(resp.signedIn, request);
             return { code: resp.code };
         },
 
@@ -235,16 +243,7 @@ export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: Aut
 
         loadReferrer() {
             // without a referrer (none stored, or the lookup failed) sign-up offers none
-            referrer ??= client.getReferringUser().then(
-                (user) => {
-                    referralLookup = user === undefined ? "none" : "found";
-                    return user === undefined ? undefined : person(user);
-                },
-                () => {
-                    referralLookup = "failed";
-                    return undefined;
-                },
-            );
+            referrer ??= lookUpReferrer();
             return referrer;
         },
 
@@ -315,6 +314,29 @@ export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: Aut
 
         dispose: stopEmail,
     };
+
+    async function lookUpReferrer(): Promise<AuthPerson | undefined> {
+        let user: UserSummary | undefined;
+        try {
+            user = await client.getReferringUser();
+        } catch {
+            referralLookup = "failed";
+            return undefined;
+        }
+        referralLookup = user === undefined ? "none" : "found";
+        return user === undefined ? undefined : person(user);
+    }
+
+    async function awaitEmailLink(
+        signedIn: Promise<SignInOutcome>,
+        request: AbortController,
+    ): Promise<void> {
+        const outcome = await signedIn;
+        // signed in: nothing left to wait for, or to call cancelled
+        if (emailLink === request) emailLink = undefined;
+        if (outcome.kind === "logged_in") onEmailSignedIn?.("logged_in");
+        if (outcome.kind === "needs_account") onEmailSignedIn?.("registering");
+    }
 
     function stopEmail() {
         emailRequest?.abort();
