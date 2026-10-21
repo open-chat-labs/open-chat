@@ -141,7 +141,7 @@
     align-items: center;
     gap: var(--space-12);
     padding: var(--space-10) 0 var(--space-10) var(--space-10);
-    background: var(--surface-1, #0e0e12);
+    background: var(--surface-1);
   }
 
   .title {
@@ -149,7 +149,7 @@
     min-width: 0;
     font: var(--weight-bold) var(--text-xl) / 1.2 var(--font-sans);
     letter-spacing: var(--tracking-tight);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .community {
@@ -165,7 +165,7 @@
   }
 
   .community:hover {
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    background: var(--overlay-1);
   }
 
   .avatar {
@@ -183,7 +183,7 @@
 
   .name {
     font: var(--weight-bold) var(--text-base) / 1.2 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -200,18 +200,18 @@
     flex: none;
     width: 13px;
     height: 13px;
-    background: var(--status-online, #2ee6a8);
+    background: var(--status-online);
     mask: var(--icon-lock-open) center/contain no-repeat;
   }
 
   .lock.private {
-    background: var(--status-danger, #f5493d);
+    background: var(--status-danger);
     mask: var(--icon-lock) center/contain no-repeat;
   }
 
   .meta {
     font: var(--weight-regular) var(--text-sm) / 1.2 var(--font-sans);
-    color: var(--ink-3, #8a8a99);
+    color: var(--ink-3);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -232,6 +232,6 @@
     position: absolute;
     top: calc(100% + 6px);
     inset-inline-end: 0;
-    z-index: var(--z-modal, 60);
+    z-index: var(--z-modal);
   }
 </style>

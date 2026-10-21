@@ -686,10 +686,10 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     box-sizing: border-box;
-    border-radius: var(--radius-xl, 20px);
-    background: var(--surface-1, #0e0e12);
+    border-radius: var(--radius-xl);
+    background: var(--surface-1);
     box-shadow:
-      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1)),
+      inset 0 0 0 1px var(--line-2),
       0 24px 64px rgba(0, 0, 0, 0.45);
     text-align: left;
     animation: auth-rise 240ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
@@ -713,12 +713,12 @@
     gap: 32px;
     padding: 32px;
     overflow: hidden;
-    border-radius: var(--radius-xl, 20px) 0 0 var(--radius-xl, 20px);
+    border-radius: var(--radius-xl) 0 0 var(--radius-xl);
     background:
-      radial-gradient(ellipse 90% 70% at 20% 0%, color-mix(in oklch, var(--accent, #ff5672) 26%, transparent), transparent 70%),
+      radial-gradient(ellipse 90% 70% at 20% 0%, color-mix(in oklch, var(--accent) 26%, transparent), transparent 70%),
       radial-gradient(ellipse 70% 60% at 100% 100%, rgba(106, 43, 255, 0.22), transparent 70%),
-      var(--surface-0, #07070a);
-    box-shadow: inset -1px 0 0 var(--line-1, rgba(255, 255, 255, 0.07));
+      var(--surface-0);
+    box-shadow: inset -1px 0 0 var(--line-1);
   }
 
 
@@ -731,13 +731,13 @@
   .brand-title {
     font: 800 30px/1.08 var(--font-sans);
     letter-spacing: -0.035em;
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     text-wrap: balance;
   }
 
   .brand-sub {
-    font: var(--weight-regular, 400) var(--text-md, 14px) / 1.5 var(--font-sans);
-    color: var(--ink-2, #c9c9d4);
+    font: var(--weight-regular) var(--text-md) / 1.5 var(--font-sans);
+    color: var(--ink-2);
     text-wrap: pretty;
   }
 
@@ -770,14 +770,14 @@
 
   h2 {
     margin: 0;
-    font: var(--weight-bold, 700) var(--text-xl, 20px) / 1.2 var(--font-sans);
+    font: var(--weight-bold) var(--text-xl) / 1.2 var(--font-sans);
     letter-spacing: -0.015em;
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .sub {
-    font: var(--weight-regular, 400) var(--text-md, 14px) / 1.4 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    font: var(--weight-regular) var(--text-md) / 1.4 var(--font-sans);
+    color: var(--ink-3);
     text-wrap: pretty;
   }
 
@@ -796,15 +796,15 @@
     justify-content: center;
     width: 34px;
     height: 34px;
-    border-radius: var(--radius-md, 10px);
+    border-radius: var(--radius-md);
     background: transparent;
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .head-button:hover,
   .clear:hover {
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
-    color: var(--ink, #ececf1);
+    background: var(--overlay-1);
+    color: var(--ink);
   }
 
   .head-icon {
@@ -849,12 +849,12 @@
     gap: 12px;
     height: 52px;
     padding: 0 16px;
-    border-radius: var(--radius-lg, 14px);
+    border-radius: var(--radius-lg);
   }
 
   .passkey {
-    background: var(--accent, #ff5672);
-    color: var(--on-accent, #2e0512);
+    background: var(--accent);
+    color: var(--on-accent);
   }
 
   .grid:not(.signup) .passkey {
@@ -867,14 +867,14 @@
 
   .option,
   .tile {
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1));
-    color: var(--ink, #ececf1);
+    background: var(--overlay-1);
+    box-shadow: inset 0 0 0 1px var(--line-2);
+    color: var(--ink);
   }
 
   .option:hover,
   .tile:hover {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+    background: var(--overlay-2);
   }
 
   .method-icon {
@@ -894,15 +894,15 @@
   .wallets-title {
     margin-bottom: 4px;
     text-align: center;
-    font: var(--weight-medium, 500) var(--text-md, 14px) / 1.4 var(--font-sans);
-    color: var(--ink-2, #c4c4cf);
+    font: var(--weight-medium) var(--text-md) / 1.4 var(--font-sans);
+    color: var(--ink-2);
   }
 
   .method-label {
     flex: 1;
     text-align: center;
     margin-inline-end: 32px;
-    font: var(--weight-semibold, 600) var(--text-base, 15px) / 1.2 var(--font-sans);
+    font: var(--weight-semibold) var(--text-base) / 1.2 var(--font-sans);
   }
 
   .or {
@@ -910,15 +910,15 @@
     align-items: center;
     gap: 12px;
     margin: 8px 0;
-    font: var(--weight-semibold, 600) var(--text-xs, 11px) / 1 var(--font-mono);
+    font: var(--weight-semibold) var(--text-xs) / 1 var(--font-mono);
     letter-spacing: 0.08em;
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .rule {
     flex: 1;
     height: 1px;
-    background: var(--line-1, rgba(255, 255, 255, 0.07));
+    background: var(--line-1);
   }
 
   .email {
@@ -929,16 +929,16 @@
     margin: 0;
     padding: 0 6px 0 16px;
     box-sizing: border-box;
-    border-radius: var(--radius-lg, 14px);
-    background: var(--field, rgba(255, 255, 255, 0.05));
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1));
+    border-radius: var(--radius-lg);
+    background: var(--field);
+    box-shadow: inset 0 0 0 1px var(--line-2);
   }
 
   .email-icon {
     flex: none;
     width: 20px;
     height: 20px;
-    background: var(--ink-3, #9a9aa8);
+    background: var(--ink-3);
     mask: var(--icon-mail) center/contain no-repeat;
   }
 
@@ -950,8 +950,8 @@
     border: 0;
     outline: 0;
     background: transparent;
-    font: var(--weight-regular, 400) var(--text-base, 15px) / 1 var(--font-sans);
-    color: var(--ink, #ececf1);
+    font: var(--weight-regular) var(--text-base) / 1 var(--font-sans);
+    color: var(--ink);
   }
 
   .send {
@@ -962,13 +962,13 @@
     width: 40px;
     height: 40px;
     border-radius: 10px;
-    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
-    color: var(--ink-4, #7c7c8c);
+    background: var(--overlay-2);
+    color: var(--ink-4);
   }
 
   .send.ready {
-    background: var(--accent, #ff5672);
-    color: var(--on-accent, #2e0512);
+    background: var(--accent);
+    color: var(--on-accent);
   }
 
   .send-icon {
@@ -981,9 +981,9 @@
   .more {
     margin-top: 16px;
     text-align: center;
-    font: var(--weight-semibold, 600) var(--text-xs, 11px) / 1 var(--font-mono);
+    font: var(--weight-semibold) var(--text-xs) / 1 var(--font-mono);
     letter-spacing: 0.08em;
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .tiles {
@@ -1000,7 +1000,7 @@
     gap: 8px;
     height: 76px;
     padding: 0 6px;
-    border-radius: var(--radius-lg, 14px);
+    border-radius: var(--radius-lg);
   }
 
   .tile-icon {
@@ -1010,14 +1010,14 @@
   }
 
   .tile-label {
-    font: var(--weight-medium, 500) var(--text-sm, 13px) / 1.15 var(--font-sans);
+    font: var(--weight-medium) var(--text-sm) / 1.15 var(--font-sans);
     text-align: center;
   }
 
   .wait {
     text-align: center;
-    font: var(--weight-regular, 400) var(--text-sm, 13px) / 1.4 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-sans);
+    color: var(--ink-3);
   }
 
   .sent {
@@ -1036,13 +1036,13 @@
     width: 52px;
     height: 52px;
     border-radius: 16px;
-    background: var(--accent-soft, rgba(255, 86, 114, 0.1));
+    background: var(--accent-soft);
   }
 
   .sent-icon {
     width: 24px;
     height: 24px;
-    background: var(--accent, #ff5672);
+    background: var(--accent);
     mask: var(--icon-mail) center/contain no-repeat;
   }
 
@@ -1056,20 +1056,20 @@
   }
 
   .sent-title {
-    font: var(--weight-semibold, 600) var(--text-lg, 17px) / 1.3 var(--font-sans);
-    color: var(--ink, #ececf1);
+    font: var(--weight-semibold) var(--text-lg) / 1.3 var(--font-sans);
+    color: var(--ink);
   }
 
   .sent-text {
     max-width: 320px;
-    font: var(--weight-regular, 400) var(--text-md, 14px) / 1.5 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    font: var(--weight-regular) var(--text-md) / 1.5 var(--font-sans);
+    color: var(--ink-3);
     text-wrap: pretty;
   }
 
   .sent-email {
     font-weight: 600;
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .sent-code {
@@ -1079,16 +1079,16 @@
   }
 
   .code {
-    font: var(--weight-semibold, 600) var(--text-2xl, 19px) / 1.2 var(--font-mono);
+    font: var(--weight-semibold) var(--text-2xl) / 1.2 var(--font-mono);
     letter-spacing: 0.12em;
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .link {
     margin-top: 6px;
     background: transparent;
-    font: var(--weight-semibold, 600) var(--text-md, 14px) / 1.4 var(--font-sans);
-    color: var(--accent, #ff5672);
+    font: var(--weight-semibold) var(--text-md) / 1.4 var(--font-sans);
+    color: var(--accent);
   }
 
   .form {
@@ -1114,13 +1114,13 @@
     align-items: baseline;
     gap: 2px 8px;
     padding-left: 2px;
-    font: var(--weight-semibold, 600) var(--text-md, 14px) / 1.3 var(--font-sans);
-    color: var(--ink, #ececf1);
+    font: var(--weight-semibold) var(--text-md) / 1.3 var(--font-sans);
+    color: var(--ink);
   }
 
   .field-note {
     font-weight: 400;
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .field {
@@ -1130,13 +1130,13 @@
     height: 48px;
     padding: 0 14px;
     box-sizing: border-box;
-    border-radius: var(--radius-md, 10px);
-    background: var(--field, rgba(255, 255, 255, 0.05));
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1));
+    border-radius: var(--radius-md);
+    background: var(--field);
+    box-shadow: inset 0 0 0 1px var(--line-2);
   }
 
   .field.good {
-    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--status-online, #2ee6a8) 60%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--status-online) 60%, transparent);
   }
 
   .field.bad {
@@ -1154,10 +1154,10 @@
     gap: 5px;
     height: 24px;
     padding: 0 9px;
-    border-radius: var(--radius-pill, 99px);
-    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
-    font: var(--weight-semibold, 600) var(--text-xs, 11px) / 1 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    border-radius: var(--radius-pill);
+    background: var(--overlay-2);
+    font: var(--weight-semibold) var(--text-xs) / 1 var(--font-sans);
+    color: var(--ink-3);
   }
 
   .chip.taken {
@@ -1166,8 +1166,8 @@
   }
 
   .chip.free {
-    background: color-mix(in oklch, var(--status-online, #2ee6a8) 16%, transparent);
-    color: var(--status-online, #2ee6a8);
+    background: color-mix(in oklch, var(--status-online) 16%, transparent);
+    color: var(--status-online);
   }
 
   .chip-icon {
@@ -1180,13 +1180,13 @@
     flex: none;
     min-width: 18px;
     text-align: right;
-    font: var(--weight-medium, 500) var(--text-sm, 13px) / 1 var(--font-mono);
-    color: var(--ink-4, #7c7c8c);
+    font: var(--weight-medium) var(--text-sm) / 1 var(--font-mono);
+    color: var(--ink-4);
   }
 
   .user-msg {
-    font: var(--weight-regular, 400) var(--text-sm, 13px) / 1.3 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    font: var(--weight-regular) var(--text-sm) / 1.3 var(--font-sans);
+    color: var(--ink-4);
   }
 
   .user-msg.bad {
@@ -1213,8 +1213,8 @@
     display: flex;
     align-items: baseline;
     gap: 6px;
-    font: var(--weight-semibold, 600) var(--text-md, 14px) / 1.2 var(--font-sans);
-    color: var(--ink, #ececf1);
+    font: var(--weight-semibold) var(--text-md) / 1.2 var(--font-sans);
+    color: var(--ink);
   }
 
   .clear {
@@ -1228,7 +1228,7 @@
     flex: none;
     width: 17px;
     height: 17px;
-    background: var(--ink-3, #9a9aa8);
+    background: var(--ink-3);
     mask: var(--icon-search) center/contain no-repeat;
   }
 
@@ -1241,10 +1241,10 @@
     flex-direction: column;
     gap: 2px;
     padding: 6px;
-    border-radius: var(--radius-lg, 14px);
-    background: var(--surface-2, #191921);
+    border-radius: var(--radius-lg);
+    background: var(--surface-2);
     box-shadow:
-      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1)),
+      inset 0 0 0 1px var(--line-2),
       0 16px 40px rgba(0, 0, 0, 0.4);
   }
 
@@ -1254,13 +1254,13 @@
     gap: 10px;
     height: 44px;
     padding: 0 10px;
-    border-radius: var(--radius-md, 10px);
+    border-radius: var(--radius-md);
     background: transparent;
     text-align: left;
   }
 
   .result:hover {
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    background: var(--overlay-1);
   }
 
   .result .who {
@@ -1278,7 +1278,7 @@
 
   .wait.failed,
   .signup-error {
-    color: var(--status-danger, #f5493d);
+    color: var(--status-danger);
   }
 
   .signup-error {
@@ -1288,13 +1288,13 @@
 
   .terms {
     flex: 1 1 200px;
-    font: var(--weight-regular, 400) var(--text-sm, 13px) / 1.5 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    font: var(--weight-regular) var(--text-sm) / 1.5 var(--font-sans);
+    color: var(--ink-4);
     text-wrap: pretty;
   }
 
   .terms a {
-    color: var(--accent, #ff5672);
+    color: var(--accent);
   }
 
   .continue {
@@ -1303,17 +1303,17 @@
     align-items: center;
     height: 46px;
     padding: 0 24px;
-    border-radius: var(--radius-md, 10px);
-    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+    border-radius: var(--radius-md);
+    background: var(--overlay-2);
     cursor: not-allowed;
-    font: var(--weight-semibold, 600) var(--text-base, 15px) / 1 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    font: var(--weight-semibold) var(--text-base) / 1 var(--font-sans);
+    color: var(--ink-4);
   }
 
   .continue.ready {
-    background: var(--accent, #ff5672);
+    background: var(--accent);
     cursor: pointer;
-    color: var(--on-accent, #2e0512);
+    color: var(--on-accent);
   }
 
   .switch {
@@ -1323,15 +1323,15 @@
     gap: 8px;
     margin-top: auto;
     padding-top: 20px;
-    border-top: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
-    font: var(--weight-regular, 400) var(--text-base, 15px) / 1.4 var(--font-sans);
-    color: var(--ink-2, #c9c9d4);
+    border-top: 1px solid var(--line-1);
+    font: var(--weight-regular) var(--text-base) / 1.4 var(--font-sans);
+    color: var(--ink-2);
   }
 
   .switch-cta {
     background: transparent;
-    font: var(--weight-bold, 700) var(--text-base, 15px) / 1.4 var(--font-sans);
-    color: var(--accent, #ff5672);
+    font: var(--weight-bold) var(--text-base) / 1.4 var(--font-sans);
+    color: var(--accent);
     text-underline-offset: 3px;
   }
 

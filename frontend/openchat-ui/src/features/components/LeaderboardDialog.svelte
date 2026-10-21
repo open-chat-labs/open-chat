@@ -105,7 +105,7 @@
     background: var(--oc-veil, rgba(3, 3, 6, 0.72));
     backdrop-filter: var(--oc-veil-blur, blur(4px));
     -webkit-backdrop-filter: var(--oc-veil-blur, blur(4px));
-    animation: oc-veil-in var(--duration-base, 200ms) var(--ease-out) both;
+    animation: oc-veil-in var(--duration-base) var(--ease-out) both;
   }
 
   .card {
@@ -118,12 +118,12 @@
     max-height: 100%;
     box-sizing: border-box;
     border-radius: var(--radius-xl);
-    background: var(--surface-1, #0e0e12);
+    background: var(--surface-1);
     box-shadow:
-      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1)),
-      var(--shadow-modal, 0 30px 70px rgba(0, 0, 0, 0.45));
+      inset 0 0 0 1px var(--line-2),
+      var(--shadow-modal);
     overflow: hidden;
-    animation: oc-dlg-in var(--duration-slow, 280ms) var(--ease-out) both;
+    animation: oc-dlg-in var(--duration-slow) var(--ease-out) both;
   }
 
   .head {
@@ -152,27 +152,27 @@
   }
 
   .icon-button:hover {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    background: var(--overlay-2);
   }
 
   .back-icon {
     width: 16px;
     height: 16px;
-    background: var(--ink-2, #c9c9d4);
+    background: var(--ink-2);
     mask: var(--icon-back) center/contain no-repeat;
   }
 
   .joystick {
     width: 17px;
     height: 17px;
-    background: var(--status-chit, #ff9f45);
+    background: var(--status-chit);
     mask: var(--icon-joystick) center/contain no-repeat;
   }
 
   .close-icon {
     width: 15px;
     height: 15px;
-    background: var(--ink-3, #9a9aa8);
+    background: var(--ink-3);
     mask: var(--icon-close) center/contain no-repeat;
   }
 
@@ -182,7 +182,7 @@
     text-align: center;
     font: 700 22px/1 'JetBrains Mono', monospace;
     letter-spacing: 0.14em;
-    color: var(--status-chit, #ff9f45);
+    color: var(--status-chit);
   }
 
   .periods {
@@ -196,7 +196,7 @@
   .period {
     font: 500 12.5px/1 'JetBrains Mono', monospace;
     letter-spacing: 0.1em;
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
     padding-block-end: 5px;
     border-block-end: 2px solid transparent;
     cursor: pointer;
@@ -204,12 +204,12 @@
   }
 
   .period.on {
-    color: var(--ink, #ececf1);
-    border-block-end-color: var(--status-chit, #ff9f45);
+    color: var(--ink);
+    border-block-end-color: var(--status-chit);
   }
 
   .period:hover {
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .columns {
@@ -222,10 +222,10 @@
     align-items: baseline;
     gap: 14px;
     padding-block-end: var(--space-10);
-    border-block-end: 2px solid var(--accent, #ff5672);
+    border-block-end: 2px solid var(--accent);
     font: 500 11px/1 'JetBrains Mono', monospace;
     letter-spacing: 0.1em;
-    color: var(--status-online, #2ee6a8);
+    color: var(--status-online);
   }
 
   .rank-col {
@@ -258,11 +258,11 @@
     min-height: 30px;
     padding: 4px 0;
     font: 700 15px/1 'JetBrains Mono', monospace;
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .row.podium {
-    color: var(--status-online, #2ee6a8);
+    color: var(--status-online);
   }
 
   .rank {
@@ -288,7 +288,7 @@
     min-height: 0;
     padding: var(--space-16) var(--space-32) var(--space-24);
     margin-block-start: var(--space-10);
-    border-block-start: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
-    color: var(--accent, #ff5672);
+    border-block-start: 1px solid var(--line-1);
+    color: var(--accent);
   }
 </style>

@@ -384,12 +384,12 @@
 
   .upsell-title {
     font: var(--weight-bold) var(--text-lg) / 1.25 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .upsell-text {
     font: var(--weight-regular) var(--text-sm) / 1.45 var(--font-sans);
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
     text-wrap: pretty;
   }
 
@@ -397,12 +397,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    height: var(--control-lg, 40px);
+    height: var(--control-lg);
     box-sizing: border-box;
     border-radius: var(--radius-md);
-    background: var(--accent, #ff5672);
+    background: var(--accent);
     font: var(--weight-semibold) var(--text-base) / 1 var(--font-sans);
-    color: var(--on-accent, #2e0512);
+    color: var(--on-accent);
     cursor: pointer;
     user-select: none;
   }
@@ -426,12 +426,12 @@
   .head-title {
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-mono);
     letter-spacing: var(--tracking-wide);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .head-hint {
     font: var(--weight-regular) var(--text-sm) / 1.45 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
     text-wrap: pretty;
   }
 
@@ -450,9 +450,9 @@
   }
 
   .card {
-    --card-line: var(--line-2, rgba(255, 255, 255, 0.08));
-    --card-tile: color-mix(in srgb, var(--status-verified, #3d9bff) 16%, transparent);
-    --card-ink: var(--status-verified, #3d9bff);
+    --card-line: var(--line-2);
+    --card-tile: color-mix(in srgb, var(--status-verified) 16%, transparent);
+    --card-ink: var(--status-verified);
     display: flex;
     flex-direction: column;
     gap: var(--space-12);
@@ -460,14 +460,14 @@
     padding: var(--space-16);
     box-sizing: border-box;
     border-radius: var(--radius-lg);
-    background: var(--overlay-1, rgba(255, 255, 255, 0.04));
+    background: var(--overlay-1);
     box-shadow: inset 0 0 0 1px var(--card-line);
   }
 
   .card.incomplete {
-    --card-line: color-mix(in srgb, var(--status-warning, #ffb03d) 45%, transparent);
-    --card-tile: var(--overlay-2, rgba(255, 255, 255, 0.07));
-    --card-ink: var(--status-warning, #ffb03d);
+    --card-line: color-mix(in srgb, var(--status-warning) 45%, transparent);
+    --card-tile: var(--overlay-2);
+    --card-ink: var(--status-warning);
   }
 
   .card-head {
@@ -486,7 +486,7 @@
     height: 38px;
     border-radius: var(--radius-md);
     background: var(--card-tile);
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1));
+    box-shadow: inset 0 0 0 1px var(--line-2);
   }
 
   .tile-icon {
@@ -505,13 +505,13 @@
 
   .card-title {
     font: var(--weight-semibold) var(--text-base) / 1.25 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     text-wrap: pretty;
   }
 
   .card-desc {
     font: var(--weight-regular) var(--text-sm) / 1.45 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
     text-wrap: pretty;
   }
 
@@ -540,13 +540,13 @@
 
   .tool:hover,
   .picker-close:hover {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    background: var(--overlay-2);
   }
 
   .tool-icon {
     width: 15px;
     height: 15px;
-    background: var(--ink-3, #9a9aa8);
+    background: var(--ink-3);
   }
 
   .chips,
@@ -567,8 +567,8 @@
     gap: var(--space-6);
     padding: var(--space-6) var(--space-10);
     border-radius: var(--radius-sm);
-    background: var(--overlay-2, rgba(255, 255, 255, 0.07));
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.08));
+    background: var(--overlay-2);
+    box-shadow: inset 0 0 0 1px var(--line-2);
   }
 
   .chip-dot {
@@ -580,7 +580,7 @@
 
   .chip-label {
     font: var(--weight-medium) var(--text-sm) / 1.2 var(--font-mono);
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
   }
 
   .editor {
@@ -604,10 +604,10 @@
     box-sizing: border-box;
     border: 0;
     border-radius: var(--radius-pill);
-    background: var(--field, #14141a);
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.08));
+    background: var(--field);
+    box-shadow: inset 0 0 0 1px var(--line-2);
     font: var(--weight-medium) var(--text-sm) / 1 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     outline: none;
   }
 
@@ -621,22 +621,22 @@
     gap: var(--space-6);
     padding: var(--space-6) var(--space-10);
     border-radius: var(--radius-pill);
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1));
+    background: var(--overlay-1);
+    box-shadow: inset 0 0 0 1px var(--line-2);
     font: var(--weight-semibold) var(--text-sm) / 1.2 var(--font-sans);
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
     cursor: pointer;
     user-select: none;
   }
 
   .asset.selected {
-    background: color-mix(in srgb, var(--accent, #ff5672) 12%, transparent);
-    box-shadow: inset 0 0 0 1px var(--accent, #ff5672);
-    color: var(--accent-bright, #ff8298);
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    box-shadow: inset 0 0 0 1px var(--accent);
+    color: var(--accent-bright);
   }
 
   .asset.unavailable {
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
     cursor: not-allowed;
   }
 
@@ -657,12 +657,12 @@
     height: 42px;
     box-sizing: border-box;
     border-radius: var(--radius-md);
-    background: var(--field, #14141a);
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.08));
+    background: var(--field);
+    box-shadow: inset 0 0 0 1px var(--line-2);
   }
 
   .field.missing {
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--status-warning, #ffb03d) 50%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--status-warning) 50%, transparent);
   }
 
   .field input {
@@ -672,13 +672,13 @@
     border: 0;
     outline: none;
     font: var(--weight-medium) var(--text-md) / 1.2 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .unit {
     flex: none;
     font: var(--weight-medium) var(--text-sm) / 1 var(--font-mono);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .done-row {
@@ -695,16 +695,16 @@
     height: 34px;
     box-sizing: border-box;
     border-radius: var(--radius-md);
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    background: var(--overlay-1);
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
     cursor: not-allowed;
     user-select: none;
   }
 
   .done.ready {
-    background: var(--accent, #ff5672);
-    color: var(--on-accent, #2e0512);
+    background: var(--accent);
+    color: var(--on-accent);
     cursor: pointer;
   }
 
@@ -716,19 +716,19 @@
     padding: var(--space-26) var(--space-18);
     box-sizing: border-box;
     border-radius: var(--radius-lg);
-    border: 1px dashed var(--line-2, rgba(255, 255, 255, 0.14));
+    border: 1px dashed var(--line-2);
   }
 
   .empty-title {
     font: var(--weight-semibold) var(--text-base) / 1.3 var(--font-sans);
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
   }
 
   .empty-hint {
     max-width: 320px;
     text-align: center;
     font: var(--weight-regular) var(--text-sm) / 1.45 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
     text-wrap: pretty;
   }
 
@@ -740,27 +740,27 @@
     height: 44px;
     box-sizing: border-box;
     border-radius: var(--radius-lg);
-    border: 1px dashed var(--line-2, rgba(255, 255, 255, 0.18));
+    border: 1px dashed var(--line-2);
     font: var(--weight-semibold) var(--text-md) / 1 var(--font-sans);
-    color: var(--accent, #ff5672);
+    color: var(--accent);
     cursor: pointer;
     user-select: none;
   }
 
   .add:hover {
-    background: var(--accent-soft, rgba(255, 86, 114, 0.1));
+    background: var(--accent-soft);
   }
 
   .add-icon {
     width: 15px;
     height: 15px;
-    background: var(--accent, #ff5672);
+    background: var(--accent);
     mask: var(--icon-plus) center/contain no-repeat;
   }
 
   .rule {
     height: 1px;
-    background: var(--line-1, rgba(255, 255, 255, 0.07));
+    background: var(--line-1);
   }
 
   .recheck {
@@ -801,9 +801,9 @@
     flex-direction: column;
     box-sizing: border-box;
     border-radius: var(--radius-xl);
-    background: var(--surface-1, #0e0e12);
+    background: var(--surface-1);
     box-shadow:
-      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1)),
+      inset 0 0 0 1px var(--line-2),
       0 30px 70px rgba(0, 0, 0, 0.45);
     overflow: hidden;
   }
@@ -814,14 +814,14 @@
     align-items: center;
     gap: var(--space-12);
     padding: var(--space-16) var(--space-18);
-    border-block-end: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+    border-block-end: 1px solid var(--line-1);
   }
 
   .picker-title {
     flex: 1;
     min-width: 0;
     font: var(--weight-bold) var(--text-lg) / 1.2 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .catalogue {
@@ -835,7 +835,7 @@
   }
 
   .option {
-    --option-ink: var(--ink, #ececf1);
+    --option-ink: var(--ink);
     display: flex;
     align-items: flex-start;
     gap: var(--space-12);
@@ -846,12 +846,12 @@
   }
 
   .option.unavailable {
-    --option-ink: var(--ink-4, #7c7c8c);
+    --option-ink: var(--ink-4);
     cursor: not-allowed;
   }
 
   .option:hover {
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    background: var(--overlay-1);
   }
 
   .option-tile {
@@ -862,7 +862,7 @@
     width: 32px;
     height: 32px;
     border-radius: var(--radius-sm);
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    background: var(--overlay-1);
   }
 
   .option-icon {
@@ -895,14 +895,14 @@
     flex: none;
     padding: 1px var(--space-6);
     border-radius: var(--radius-pill);
-    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    background: var(--overlay-2);
     font: var(--weight-semibold) var(--text-2xs) / 1.4 var(--font-mono);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .option-desc {
     font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
     text-wrap: pretty;
   }
 </style>

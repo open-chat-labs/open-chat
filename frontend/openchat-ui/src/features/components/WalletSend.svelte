@@ -181,10 +181,10 @@
 
   // the summary under the form: network, fee, what they receive, total
   const rows = $derived([
-    { k: t('ui.walletSend.network'), v: mode === 'user' ? 'OpenChat' : multi ? t(NETS[net].label) : det && det !== 'unknown' ? NET_NAME[det] : '—', ink: 'var(--ink,#ECECF1)' },
-    { k: t('ui.walletSend.networkFee'), v: `${fmt(fee, tk?.dp ?? 0)} ${tk?.symbol}`, ink: 'var(--ink,#ECECF1)' },
-    { k: mode === 'user' && person ? t('ui.walletSend.nameReceives', { name: first }) : t('ui.walletSend.theyReceive'), v: `${fmt(n, inDp)} ${tk?.symbol}`, ink: n > 0 ? 'var(--ink,#ECECF1)' : 'var(--ink-5,#6E6E7C)' },
-    { k: t('ui.walletSend.total'), v: `${fmt(n + fee, tk?.dp ?? 0)} ${tk?.symbol}`, ink: over ? 'var(--status-danger,#F5493D)' : 'var(--ink,#ECECF1)' },
+    { k: t('ui.walletSend.network'), v: mode === 'user' ? 'OpenChat' : multi ? t(NETS[net].label) : det && det !== 'unknown' ? NET_NAME[det] : '—', ink: 'var(--ink)' },
+    { k: t('ui.walletSend.networkFee'), v: `${fmt(fee, tk?.dp ?? 0)} ${tk?.symbol}`, ink: 'var(--ink)' },
+    { k: mode === 'user' && person ? t('ui.walletSend.nameReceives', { name: first }) : t('ui.walletSend.theyReceive'), v: `${fmt(n, inDp)} ${tk?.symbol}`, ink: n > 0 ? 'var(--ink)' : 'var(--ink-5,#6E6E7C)' },
+    { k: t('ui.walletSend.total'), v: `${fmt(n + fee, tk?.dp ?? 0)} ${tk?.symbol}`, ink: over ? 'var(--status-danger)' : 'var(--ink)' },
   ]);
   const network = $derived(mode === 'user' ? 'openchat' : multi ? NETS[net].id : det && det !== 'unknown' ? CHAIN_NET[det] : '');
 
@@ -659,7 +659,7 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    background: var(--surface-1, #0e0e12);
+    background: var(--surface-1);
     --sans: 'Plus Jakarta Sans', sans-serif;
     --mono: 'JetBrains Mono', monospace;
   }
@@ -687,7 +687,7 @@
   }
 
   .mode {
-    --mode-ink: var(--ink-3, #9a9aa8);
+    --mode-ink: var(--ink-3);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -701,7 +701,7 @@
   }
 
   .mode.on {
-    --mode-ink: var(--ink, #ececf1);
+    --mode-ink: var(--ink);
     background: var(--btn-hover);
   }
 
@@ -715,7 +715,7 @@
     margin-top: 22px;
     font: 600 11.5px/1 var(--mono);
     letter-spacing: 0.08em;
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
   }
 
   .kicker.plain {
@@ -735,7 +735,7 @@
   .person {
     gap: 12px;
     padding: 0 10px 0 14px;
-    box-shadow: inset 0 0 0 1px var(--accent, #ff5672);
+    box-shadow: inset 0 0 0 1px var(--accent);
   }
 
   .person-avatar {
@@ -753,12 +753,12 @@
 
   .person-name {
     font: 600 14px/1 var(--sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .person-handle {
     font: 400 12px/1 var(--mono);
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
   }
 
   .icon-button {
@@ -774,7 +774,7 @@
   .icon-button-icon {
     width: 14px;
     height: 14px;
-    background: var(--ink-3, #9a9aa8);
+    background: var(--ink-3);
   }
 
   .search {
@@ -786,7 +786,7 @@
   .search-icon {
     width: 15px;
     height: 15px;
-    background: var(--ink-4, #8a8a99);
+    background: var(--ink-4);
     mask: var(--icon-search) center/contain no-repeat;
   }
 
@@ -799,7 +799,7 @@
     background: transparent;
     padding: 0;
     font: 500 14px/1 var(--sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .results {
@@ -819,13 +819,13 @@
   }
 
   .result:hover {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.07));
+    background: var(--overlay-2);
   }
 
   .no-results {
     padding: 8px 10px;
     font: 400 13px/1.4 var(--sans);
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
   }
 
   .quick {
@@ -847,7 +847,7 @@
 
   .quick-person.on {
     background: rgba(255, 86, 114, 0.1);
-    box-shadow: inset 0 0 0 1px var(--accent, #ff5672);
+    box-shadow: inset 0 0 0 1px var(--accent);
   }
 
   .quick-avatar {
@@ -858,7 +858,7 @@
 
   .quick-name {
     font: 600 12.5px/1 var(--sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .address-box {
@@ -874,11 +874,11 @@
   }
 
   .address-box.good {
-    box-shadow: inset 0 0 0 1px var(--accent, #ff5672);
+    box-shadow: inset 0 0 0 1px var(--accent);
   }
 
   .address-box.bad {
-    box-shadow: inset 0 0 0 1px var(--status-danger, #f5493d);
+    box-shadow: inset 0 0 0 1px var(--status-danger);
   }
 
   .address-input {
@@ -888,7 +888,7 @@
     outline: 0;
     background: transparent;
     font: 500 13.5px/1.5 var(--mono);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .detect {
@@ -907,7 +907,7 @@
   }
 
   .detect.bad {
-    --detect-ink: var(--status-danger, #f5493d);
+    --detect-ink: var(--status-danger);
     background: rgba(245, 73, 61, 0.12);
   }
 
@@ -931,14 +931,14 @@
     border-radius: 10px;
     background: var(--overlay-1);
     font: 600 12.5px/1 var(--sans);
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
     cursor: pointer;
   }
 
   .tool-icon {
     width: 14px;
     height: 14px;
-    background: var(--ink-2, #c9c9d4);
+    background: var(--ink-2);
   }
 
   .icon-button:hover,
@@ -967,28 +967,28 @@
   }
 
   .net-select.open {
-    box-shadow: inset 0 0 0 1px var(--accent, #ff5672);
+    box-shadow: inset 0 0 0 1px var(--accent);
   }
 
   .net-label {
     flex: 1;
     min-width: 0;
     font: 600 14px/1 var(--sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .net-meta,
   .net-fee {
     flex: none;
     font: 500 12.5px/1 var(--mono);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .caret {
     flex: none;
     width: 13px;
     height: 13px;
-    background: var(--ink-3, #9a9aa8);
+    background: var(--ink-3);
     mask: var(--icon-chevron-down) center/contain no-repeat;
   }
 
@@ -1012,7 +1012,7 @@
     flex-direction: column;
     padding: 6px;
     border-radius: 12px;
-    background: var(--surface-2, #1b1b22);
+    background: var(--surface-2);
     box-shadow:
       inset 0 0 0 1px var(--line-2),
       0 18px 40px rgba(0, 0, 0, 0.5);
@@ -1038,7 +1038,7 @@
 
   .net-short {
     font: 400 12px/1.3 var(--sans);
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
   }
 
   .net-time {
@@ -1046,7 +1046,7 @@
     width: 80px;
     text-align: end;
     font: 600 12.5px/1 var(--mono);
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
   }
 
   .net-fee {
@@ -1063,7 +1063,7 @@
   }
 
   .net-tick.on {
-    background: var(--accent, #ff5672);
+    background: var(--accent);
   }
 
   .amount-head {
@@ -1073,7 +1073,7 @@
 
   .available {
     font: 500 12px/1 var(--mono);
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
   }
 
   .amount-box {
@@ -1092,7 +1092,7 @@
   }
 
   .amount-box.over {
-    box-shadow: inset 0 0 0 1px var(--status-danger, #f5493d);
+    box-shadow: inset 0 0 0 1px var(--status-danger);
   }
 
   .amount-main {
@@ -1111,7 +1111,7 @@
 
   .dollar {
     font: 700 34px/1 var(--sans);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .amount-input {
@@ -1123,17 +1123,17 @@
     background: transparent;
     font: 700 34px/1 var(--sans);
     letter-spacing: -0.02em;
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     font-variant-numeric: tabular-nums;
   }
 
   .amount-note {
     font: 500 13px/1 var(--mono);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .amount-note.over {
-    color: var(--status-danger, #f5493d);
+    color: var(--status-danger);
   }
 
   .unit {
@@ -1146,7 +1146,7 @@
     border-radius: 10px;
     background: var(--overlay-2);
     font: 700 14px/1 var(--sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     cursor: pointer;
     user-select: none;
   }
@@ -1158,7 +1158,7 @@
   .unit-icon {
     width: 13px;
     height: 13px;
-    background: var(--ink-3, #9a9aa8);
+    background: var(--ink-3);
     mask: var(--icon-swap) center/contain no-repeat;
   }
 
@@ -1172,7 +1172,7 @@
     margin-top: -8px;
     border-radius: 10px;
     font: 600 13.5px/1 var(--sans);
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
     cursor: pointer;
     user-select: none;
   }
@@ -1184,7 +1184,7 @@
   .add-icon {
     width: 16px;
     height: 16px;
-    background: var(--ink-2, #c9c9d4);
+    background: var(--ink-2);
     mask: var(--icon-plus) center/contain no-repeat;
   }
 
@@ -1209,7 +1209,7 @@
     border-radius: 12px;
     background: var(--overlay-1);
     font: 400 14px/1.5 var(--sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .pin {
@@ -1222,7 +1222,7 @@
 
   .pin-sub {
     font: 400 14px/1.5 var(--sans);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
     text-align: center;
     text-wrap: pretty;
   }
@@ -1251,21 +1251,21 @@
 
   .pin-dots:focus-within .pin-box.current {
     box-shadow:
-      inset 0 0 0 1px var(--accent, #ff5672),
-      0 0 0 3px color-mix(in srgb, var(--accent, #ff5672) 25%, transparent);
+      inset 0 0 0 1px var(--accent),
+      0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
   }
 
   .pin-error {
     margin-block-start: -10px;
     font: 500 13px/1.4 var(--sans);
-    color: var(--status-danger, #f5493d);
+    color: var(--status-danger);
   }
 
   .pin-box {
     width: 44px;
     height: 52px;
     border-radius: 12px;
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    background: var(--overlay-1);
     box-shadow: inset 0 0 0 1px var(--btn-hover);
     display: flex;
     align-items: center;
@@ -1273,7 +1273,7 @@
   }
 
   .pin-box.current {
-    box-shadow: inset 0 0 0 1px var(--accent, #ff5672);
+    box-shadow: inset 0 0 0 1px var(--accent);
   }
 
   .pin-dot {
@@ -1284,7 +1284,7 @@
   }
 
   .pin-dot.filled {
-    background: var(--ink, #ececf1);
+    background: var(--ink);
   }
 
   .pin-cta {
@@ -1321,7 +1321,7 @@
   .summary-rows {
     padding: 4px 16px;
     border-radius: 14px;
-    background: var(--overlay-1, rgba(255, 255, 255, 0.04));
+    background: var(--overlay-1);
   }
 
   .cta {
@@ -1332,9 +1332,9 @@
     height: 52px;
     padding: 0 16px;
     border-radius: 12px;
-    background: var(--accent, #ff5672);
+    background: var(--accent);
     font: 700 14.5px/1 var(--sans);
-    color: var(--on-accent, #2e0512);
+    color: var(--on-accent);
     text-align: center;
     cursor: pointer;
     user-select: none;
@@ -1352,7 +1352,7 @@
 
   .cta-hint {
     font: 400 12.5px/1.5 var(--sans);
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
     text-align: center;
     text-wrap: pretty;
   }
@@ -1370,22 +1370,22 @@
   .tag {
     font: 500 10px/1 var(--mono);
     letter-spacing: 0.09em;
-    color: var(--accent-bright, #ff8298);
+    color: var(--accent-bright);
   }
 
   .tag.done {
-    color: var(--status-online, #2ee6a8);
+    color: var(--status-online);
   }
 
   .tag-rule {
     flex: 1;
     height: 1px;
-    background: var(--line-1, rgba(255, 255, 255, 0.07));
+    background: var(--line-1);
   }
 
   .rc-card {
     border-radius: 16px;
-    background: var(--overlay-1, rgba(255, 255, 255, 0.04));
+    background: var(--overlay-1);
     overflow: hidden;
   }
 
@@ -1394,7 +1394,7 @@
     align-items: center;
     gap: 12px;
     padding: 14px 16px;
-    border-bottom: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+    border-bottom: 1px solid var(--line-1);
   }
 
   .rc-text {
@@ -1408,19 +1408,19 @@
   .rc-kicker {
     font: 500 10px/1 var(--mono);
     letter-spacing: 0.09em;
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
   }
 
   .rc-amount {
     font: 700 18px/1.15 var(--sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     overflow-wrap: anywhere;
   }
 
   .rc-fiat {
     flex: none;
     font: 500 12.5px/1 var(--mono);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .rc-avatar {
@@ -1434,26 +1434,26 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+    background: var(--overlay-2);
   }
 
   .rc-wallet-icon {
     width: 16px;
     height: 16px;
-    background: var(--ink-3, #9a9aa8);
+    background: var(--ink-3);
     mask: var(--icon-wallet) center/contain no-repeat;
   }
 
   .rc-to {
     font: 700 16px/1.2 var(--sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     overflow-wrap: anywhere;
   }
 
   .rc-to-sub {
     margin-inline-start: 6px;
     font: 400 12.5px/1 var(--mono);
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
   }
 
   .rc-rows {
@@ -1468,7 +1468,7 @@
     gap: 12px;
     padding: 12px 14px;
     border-radius: 12px;
-    background: var(--overlay-1, rgba(255, 255, 255, 0.04));
+    background: var(--overlay-1);
   }
 
   .status-dot {
@@ -1479,7 +1479,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--accent-soft, rgba(255, 86, 114, 0.14));
+    background: var(--accent-soft);
   }
 
   .status.done .status-dot {
@@ -1489,7 +1489,7 @@
   .status-check {
     width: 13px;
     height: 13px;
-    background: var(--status-online, #2ee6a8);
+    background: var(--status-online);
     mask: var(--icon-check) center/contain no-repeat;
   }
 
@@ -1497,12 +1497,12 @@
     flex: 1;
     min-width: 0;
     font: 600 13px/1.35 var(--sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .status-time {
     font: 500 11.5px/1 var(--mono);
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
   }
 
   .done-actions {
@@ -1521,21 +1521,21 @@
     justify-content: center;
     height: 52px;
     border-radius: 12px;
-    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+    background: var(--overlay-2);
     font: 600 14px/1 var(--sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     cursor: pointer;
     user-select: none;
   }
 
   .done-button:hover {
-    background: var(--btn-hover, rgba(255, 255, 255, 0.14));
+    background: var(--btn-hover);
   }
 
   .done-button.primary {
-    background: var(--accent, #ff5672);
+    background: var(--accent);
     font: 700 14.5px/1 var(--sans);
-    color: var(--on-accent, #2e0512);
+    color: var(--on-accent);
   }
 
   .done-button.primary:hover {
@@ -1544,6 +1544,6 @@
 
   .sending-note {
     font: 400 12.5px/1.5 var(--sans);
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
   }
 </style>

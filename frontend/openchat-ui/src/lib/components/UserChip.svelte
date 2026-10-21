@@ -51,7 +51,7 @@
 
 <style>
   .chip {
-    --chip-tint: var(--accent, #ff5672);
+    --chip-tint: var(--accent);
     display: inline-flex;
     align-items: center;
     gap: var(--space-8);
@@ -60,8 +60,8 @@
     box-sizing: border-box;
     padding: 4px var(--space-8) 4px 4px;
     border-radius: var(--radius-pill);
-    background: var(--overlay-1, rgba(255, 255, 255, 0.06));
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1));
+    background: var(--overlay-1);
+    box-shadow: inset 0 0 0 1px var(--line-2);
     cursor: default;
     user-select: none;
   }
@@ -79,7 +79,7 @@
   }
 
   .danger {
-    --chip-tint: var(--status-danger, #f5493d);
+    --chip-tint: var(--status-danger);
   }
 
   .accent,
@@ -93,7 +93,7 @@
   }
 
   .pressable:hover {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.1));
+    background: var(--overlay-2);
   }
 
   .avatar {
@@ -121,20 +121,20 @@
     width: 8px;
     height: 8px;
     border-radius: var(--radius-pill);
-    background: var(--status-online, #2ee6a8);
-    box-shadow: 0 0 0 2px var(--surface-2, #17171d);
+    background: var(--status-online);
+    box-shadow: 0 0 0 2px var(--surface-2);
   }
 
   .accent .dot,
   .danger .dot {
-    box-shadow: 0 0 0 2px var(--surface-1, #0e0e12);
+    box-shadow: 0 0 0 2px var(--surface-1);
   }
 
   .label {
     flex: 1;
     min-width: 0;
     font: var(--weight-semibold) var(--text-md) / 1.2 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -149,21 +149,21 @@
   }
 
   .accent .label {
-    color: var(--accent-bright, #ff8298);
+    color: var(--accent-bright);
   }
 
   .danger .label {
-    color: var(--status-danger, #f5493d);
+    color: var(--status-danger);
   }
 
   .tag {
     flex: none;
     padding: 2px var(--space-6);
     border-radius: var(--radius-pill);
-    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    background: var(--overlay-2);
     font: var(--weight-semibold) var(--text-2xs) / 1.3 var(--font-mono);
     letter-spacing: var(--tracking-wide);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .remove {
@@ -188,13 +188,13 @@
   }
 
   .remove:hover {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.12));
+    background: var(--overlay-2);
   }
 
   .remove-icon {
     width: 11px;
     height: 11px;
-    background: var(--ink-3, #9a9aa8);
+    background: var(--ink-3);
     mask: var(--icon-close) center/contain no-repeat;
   }
 
@@ -209,10 +209,10 @@
   }
 
   .accent .remove-icon {
-    background: var(--accent-bright, #ff8298);
+    background: var(--accent-bright);
   }
 
   .danger .remove-icon {
-    background: var(--status-danger, #f5493d);
+    background: var(--status-danger);
   }
 </style>

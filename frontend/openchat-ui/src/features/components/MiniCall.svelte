@@ -112,10 +112,10 @@
     box-sizing: border-box;
     padding: 12px;
     border-radius: 20px;
-    background: var(--surface-2, #191921);
+    background: var(--surface-2);
     box-shadow:
       0 16px 40px rgba(0, 0, 0, 0.5),
-      inset 0 0 0 1px color-mix(in oklch, var(--status-online, #2ee6a8) 40%, transparent);
+      inset 0 0 0 1px color-mix(in oklch, var(--status-online) 40%, transparent);
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -138,7 +138,7 @@
     width: 56px;
     height: 56px;
     border-radius: 50%;
-    box-shadow: 0 0 0 3px var(--accent, #ff5672);
+    box-shadow: 0 0 0 3px var(--accent);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -168,7 +168,7 @@
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    background: color-mix(in oklch, var(--status-online, #2ee6a8) 22%, transparent);
+    background: color-mix(in oklch, var(--status-online) 22%, transparent);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -178,7 +178,7 @@
   .phone {
     width: 13px;
     height: 13px;
-    background: var(--status-online, #2ee6a8);
+    background: var(--status-online);
     mask: var(--icon-phone) center/contain no-repeat;
   }
 
@@ -199,7 +199,7 @@
 
   .meta {
     font: 500 11.5px/1 var(--font-mono);
-    color: var(--status-online, #2ee6a8);
+    color: var(--status-online);
   }
 
   .controls {

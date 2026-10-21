@@ -90,7 +90,7 @@
             <span class="mark" class:multiple><span class="mark-tick"></span></span>
             <span class="label">{option.label}</span>
             {#if show && publicVotes && option.voters?.length}
-              <span class="voters"><AvatarStack people={option.voters.slice(0, 3)} size={20} max={4} ring={sent ? 'var(--bubble-send-bg,#B83E52)' : 'var(--bubble-recv-bg,#191921)'} /></span>
+              <span class="voters"><AvatarStack people={option.voters.slice(0, 3)} size={20} max={4} ring={sent ? 'var(--bubble-send-bg)' : 'var(--bubble-recv-bg)'} /></span>
             {/if}
             {#if show}<span class="pct">{pct}%</span>{/if}
           </div>
@@ -108,24 +108,24 @@
 
 <style>
   .shell {
-    --msg-bg: var(--bubble-recv-bg, #191921);
-    --msg-ink: var(--bubble-recv-text, #e4e4ec);
-    --msg-soft: var(--ink-4, #8a8a99);
-    --msg-seg: var(--overlay-1, rgba(255, 255, 255, 0.045));
-    --msg-chip: var(--overlay-2, rgba(255, 255, 255, 0.07));
-    --msg-track: var(--overlay-2, rgba(255, 255, 255, 0.08));
-    --msg-link: var(--accent-bright, #ff8298);
-    --msg-on-mark: var(--on-accent, #2e0512);
-    --msg-fill: var(--accent, #ff5672);
-    --msg-idle: var(--ink-4, #8a8a99);
-    --msg-ring: var(--line-3, rgba(255, 255, 255, 0.3));
+    --msg-bg: var(--bubble-recv-bg);
+    --msg-ink: var(--bubble-recv-text);
+    --msg-soft: var(--ink-4);
+    --msg-seg: var(--overlay-1);
+    --msg-chip: var(--overlay-2);
+    --msg-track: var(--overlay-2);
+    --msg-link: var(--accent-bright);
+    --msg-on-mark: var(--on-accent);
+    --msg-fill: var(--accent);
+    --msg-idle: var(--ink-4);
+    --msg-ring: var(--line-3);
     width: 330px;
     max-width: 100%;
     padding: 4px;
     box-sizing: border-box;
-    border-radius: var(--radius-xs, 4px) 22px 22px var(--radius-xs, 4px);
+    border-radius: var(--radius-xs) 22px 22px var(--radius-xs);
     background: var(--msg-bg);
-    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+    box-shadow: inset 0 0 0 1px var(--line-1);
   }
 
   .shell.last {
@@ -133,14 +133,14 @@
   }
 
   .shell.sent {
-    --msg-bg: var(--bubble-send-bg, #b83e52);
-    --msg-ink: var(--bubble-text, #fff);
-    --msg-soft: var(--bubble-text-soft, rgba(255, 255, 255, 0.82));
+    --msg-bg: var(--bubble-send-bg);
+    --msg-ink: var(--bubble-text);
+    --msg-soft: var(--bubble-text-soft);
     --msg-seg: rgba(0, 0, 0, 0.18);
     --msg-chip: rgba(0, 0, 0, 0.2);
     --msg-track: rgba(0, 0, 0, 0.25);
-    --msg-link: var(--bubble-text, #fff);
-    --msg-on-mark: var(--bubble-send-bg, #b83e52);
+    --msg-link: var(--bubble-text);
+    --msg-on-mark: var(--bubble-send-bg);
     --msg-fill: #fff;
     --msg-idle: rgba(255, 255, 255, 0.45);
     --msg-ring: rgba(255, 255, 255, 0.6);

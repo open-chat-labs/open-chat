@@ -34,15 +34,15 @@
     display: flex;
     align-items: center;
     border-radius: 8px;
-    background: var(--overlay-1, rgba(255, 255, 255, 0.06));
+    background: var(--overlay-1);
     font: 600 12px/1 var(--font-sans);
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
     cursor: pointer;
     user-select: none;
   }
 
   .chip:hover {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.1));
+    background: var(--overlay-2);
   }
 
   .md {

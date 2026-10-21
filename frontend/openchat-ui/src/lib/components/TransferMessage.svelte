@@ -52,16 +52,16 @@
 
 <style>
   .shell {
-    --msg-ink: var(--bubble-recv-text, #e4e4ec);
-    --msg-soft: var(--ink-4, #8a8a99);
-    --msg-line: var(--line-1, rgba(255, 255, 255, 0.07));
+    --msg-ink: var(--bubble-recv-text);
+    --msg-soft: var(--ink-4);
+    --msg-line: var(--line-1);
     width: 280px;
     max-width: 100%;
     padding: 4px;
     box-sizing: border-box;
-    border-radius: var(--radius-xs, 4px) 22px 22px var(--radius-xs, 4px);
-    background: var(--bubble-recv-bg, #191921);
-    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+    border-radius: var(--radius-xs) 22px 22px var(--radius-xs);
+    background: var(--bubble-recv-bg);
+    box-shadow: inset 0 0 0 1px var(--line-1);
   }
 
   .shell.last {
@@ -69,10 +69,10 @@
   }
 
   .shell.sent {
-    --msg-ink: var(--bubble-text, #fff);
-    --msg-soft: var(--bubble-text-soft, rgba(255, 255, 255, 0.82));
+    --msg-ink: var(--bubble-text);
+    --msg-soft: var(--bubble-text-soft);
     --msg-line: rgba(255, 255, 255, 0.14);
-    background: var(--bubble-send-bg, #b83e52);
+    background: var(--bubble-send-bg);
     box-shadow: none;
   }
 
@@ -80,7 +80,7 @@
     display: flex;
     flex-direction: column;
     border-radius: 2px 18px 6px 6px;
-    background: var(--overlay-1, rgba(255, 255, 255, 0.04));
+    background: var(--overlay-1);
     overflow: hidden;
   }
 
@@ -107,11 +107,11 @@
   .amount {
     font: 700 19px/1 var(--font-sans);
     letter-spacing: -0.01em;
-    color: var(--status-online, #2ee6a8);
+    color: var(--status-online);
   }
 
   .sent .amount {
-    color: var(--bubble-text, #fff);
+    color: var(--bubble-text);
   }
 
   .usd {

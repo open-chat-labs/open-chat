@@ -29,9 +29,9 @@
     seekable,
     handle = true,
     height = 22,
-    playedColor = 'var(--accent,#FF5672)',
-    restColor = 'var(--bubble-wave-off,#4A4A56)',
-    ring = 'var(--bubble-recv-bg,#191921)',
+    playedColor = 'var(--accent)',
+    restColor = 'var(--bubble-wave-off)',
+    ring = 'var(--bubble-recv-bg)',
     label = 'ui.waveform.label',
     onSeek,
   }: Props = $props();

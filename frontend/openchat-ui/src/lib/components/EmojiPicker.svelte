@@ -113,32 +113,32 @@
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    gap: var(--space-10, 10px);
-    padding: var(--space-10, 10px);
+    gap: var(--space-10);
+    padding: var(--space-10);
   }
 
   .top {
     flex: none;
     display: flex;
     align-items: center;
-    gap: var(--space-6, 6px);
+    gap: var(--space-6);
   }
 
   .back {
     flex: none;
     width: 38px;
     height: 38px;
-    border-radius: var(--radius-md, 10px);
+    border-radius: var(--radius-md);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
   }
 
   .back:hover {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
-    color: var(--ink, #ececf1);
+    background: var(--overlay-2);
+    color: var(--ink);
   }
 
   .back:focus-visible,
@@ -159,19 +159,19 @@
     min-width: 0;
     display: flex;
     align-items: center;
-    gap: var(--space-8, 8px);
+    gap: var(--space-8);
     height: 38px;
-    padding: 0 var(--space-12, 12px);
-    border-radius: var(--radius-md, 10px);
-    background: var(--field, #14141a);
-    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+    padding: 0 var(--space-12);
+    border-radius: var(--radius-md);
+    background: var(--field);
+    box-shadow: inset 0 0 0 1px var(--line-1);
   }
 
   .search-icon {
     flex: none;
     width: 15px;
     height: 15px;
-    background: var(--ink-4, #8a8a99);
+    background: var(--ink-4);
     mask: var(--icon-search) center/contain no-repeat;
   }
 
@@ -183,8 +183,8 @@
     border: 0;
     outline: none;
     background: transparent;
-    font: var(--weight-regular) var(--text-sm, 13px) / 1 var(--font-sans);
-    color: var(--ink, #ececf1);
+    font: var(--weight-regular) var(--text-sm) / 1 var(--font-sans);
+    color: var(--ink);
   }
 
   .scroll {
@@ -193,21 +193,21 @@
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: var(--space-12, 12px);
-    padding: 0 var(--space-2, 2px);
+    gap: var(--space-12);
+    padding: 0 var(--space-2);
   }
 
   .group {
     display: flex;
     flex-direction: column;
-    gap: var(--space-6, 6px);
+    gap: var(--space-6);
   }
 
   .label {
-    padding: 0 var(--space-4, 4px);
-    font: var(--weight-semibold) var(--text-xs, 11px) / 1 var(--font-mono);
-    letter-spacing: var(--tracking-wide, 0.06em);
-    color: var(--ink-4, #8a8a99);
+    padding: 0 var(--space-4);
+    font: var(--weight-semibold) var(--text-xs) / 1 var(--font-mono);
+    letter-spacing: var(--tracking-wide);
+    color: var(--ink-4);
   }
 
   .grid {
@@ -221,7 +221,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: var(--radius-sm, 8px);
+    border-radius: var(--radius-sm);
     background: transparent;
     font-size: 22px;
     line-height: 1;
@@ -230,18 +230,18 @@
   }
 
   .cell.on {
-    background: var(--accent-soft, rgba(255, 86, 114, 0.16));
-    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent, #ff5672) 50%, transparent);
+    background: var(--accent-soft);
+    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent) 50%, transparent);
   }
 
   .cell:hover {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+    background: var(--overlay-2);
   }
 
   .none {
-    padding: var(--space-24, 24px) 0;
+    padding: var(--space-24) 0;
     text-align: center;
-    font: var(--weight-regular) var(--text-sm, 13px) / 1.4 var(--font-sans);
-    color: var(--ink-4, #8a8a99);
+    font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-sans);
+    color: var(--ink-4);
   }
 </style>

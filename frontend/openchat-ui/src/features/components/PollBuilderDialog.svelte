@@ -328,10 +328,10 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    border-radius: var(--radius-xl, 22px);
-    background: var(--surface-1, #0e0e12);
+    border-radius: var(--radius-xl);
+    background: var(--surface-1);
     box-shadow:
-      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1)),
+      inset 0 0 0 1px var(--line-2),
       0 24px 64px rgba(0, 0, 0, 0.45);
   }
 
@@ -347,13 +347,13 @@
     height: var(--header-h, 66px);
     box-sizing: border-box;
     padding: 0 12px 0 22px;
-    border-bottom: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+    border-bottom: 1px solid var(--line-1);
   }
 
   .heading {
     flex: 1;
     font: 700 17px/1 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .content {
@@ -388,7 +388,7 @@
 
   .label {
     font: 600 13px/1 var(--font-sans);
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
   }
 
   .label-row {
@@ -399,7 +399,7 @@
 
   .hint {
     font: 400 12px/1 var(--font-sans);
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
   }
 
   .question {
@@ -408,8 +408,8 @@
     gap: 8px;
     padding: 12px 14px;
     border-radius: 12px;
-    background: var(--field, #14141a);
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1));
+    background: var(--field);
+    box-shadow: inset 0 0 0 1px var(--line-2);
   }
 
   textarea {
@@ -423,12 +423,12 @@
     background: transparent;
     padding: 0;
     font: 600 15px/1.45 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .left {
     font: 500 11.5px/1 var(--font-mono);
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
   }
 
   .answers {
@@ -452,27 +452,27 @@
     white-space: nowrap;
     overflow: hidden;
     border-radius: 17px;
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
-    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+    background: var(--overlay-1);
+    box-shadow: inset 0 0 0 1px var(--line-1);
     font: 600 12.5px/1 var(--font-sans);
     letter-spacing: -0.01em;
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
     cursor: pointer;
     user-select: none;
   }
 
   .duration.on {
-    background: var(--accent-soft, rgba(255, 86, 114, 0.14));
-    box-shadow: inset 0 0 0 1.5px var(--accent, #ff5672);
-    color: var(--accent-bright, #ff8298);
+    background: var(--accent-soft);
+    box-shadow: inset 0 0 0 1.5px var(--accent);
+    color: var(--accent-bright);
   }
 
   .settings {
     display: flex;
     flex-direction: column;
     border-radius: 12px;
-    background: var(--overlay-1, rgba(255, 255, 255, 0.04));
-    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+    background: var(--overlay-1);
+    box-shadow: inset 0 0 0 1px var(--line-1);
   }
 
   .settings-row {
@@ -487,7 +487,7 @@
   .gear {
     width: 16px;
     height: 16px;
-    background: var(--ink-3, #9a9aa8);
+    background: var(--ink-3);
     mask: var(--icon-gear) center/contain no-repeat;
   }
 
@@ -502,20 +502,20 @@
 
   .settings-title {
     font: 600 13.5px/1.2 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .settings-summary {
     font: 400 12px/1.35 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .chevron {
     width: 12px;
     height: 12px;
-    background: var(--ink-3, #9a9aa8);
+    background: var(--ink-3);
     mask: var(--icon-chevron-down) center/contain no-repeat;
-    transition: transform var(--duration-base, 0.2s);
+    transition: transform var(--duration-base);
   }
 
   .chevron.open {
@@ -526,7 +526,7 @@
     display: flex;
     flex-direction: column;
     padding: 0 14px 6px;
-    border-top: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+    border-top: 1px solid var(--line-1);
   }
 
   .setting {
@@ -538,12 +538,12 @@
 
   .setting-label {
     font: 600 13.5px/1.3 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .setting-help {
     font: 400 12.5px/1.45 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
     text-wrap: pretty;
   }
 
@@ -552,14 +552,14 @@
     flex-direction: column;
     gap: 12px;
     padding: 20px 22px;
-    border-left: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
-    background: var(--surface-0, #07070a);
+    border-left: 1px solid var(--line-1);
+    background: var(--surface-0);
   }
 
   .preview-label {
     font: 600 10.5px/1 var(--font-mono);
     letter-spacing: 0.08em;
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
   }
 
   .footer {
@@ -567,23 +567,23 @@
     align-items: center;
     gap: 14px;
     padding: 14px 22px;
-    border-top: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+    border-top: 1px solid var(--line-1);
   }
 
   .reason {
     flex: 1;
     min-width: 0;
     font: 500 12.5px/1.4 var(--font-sans);
-    color: var(--status-warning, #ffb03d);
+    color: var(--status-warning);
     text-wrap: pretty;
   }
 
   .reason.failed {
-    color: var(--status-danger, #f5493d);
+    color: var(--status-danger);
   }
 
   .reason.ok {
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .publish {
@@ -593,16 +593,16 @@
     gap: 8px;
     height: 42px;
     padding: 0 18px;
-    border-radius: var(--radius-md, 10px);
-    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+    border-radius: var(--radius-md);
+    background: var(--overlay-2);
     font: 600 14px/1 var(--font-sans);
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
     cursor: not-allowed;
   }
 
   .publish.ok {
-    background: var(--accent, #ff5672);
-    color: var(--on-accent, #2e0512);
+    background: var(--accent);
+    color: var(--on-accent);
     cursor: pointer;
   }
 
@@ -621,7 +621,7 @@
     align-items: center;
     justify-content: center;
     padding: 24px;
-    background: var(--scrim, rgba(3, 3, 6, 0.6));
+    background: var(--scrim);
     backdrop-filter: blur(4px);
   }
 
@@ -632,20 +632,20 @@
     gap: 14px;
     padding: 20px;
     border-radius: 18px;
-    background: var(--surface-2, #191921);
+    background: var(--surface-2);
     box-shadow:
-      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1)),
+      inset 0 0 0 1px var(--line-2),
       0 18px 48px rgba(0, 0, 0, 0.5);
   }
 
   .confirm-title {
     font: 700 16px/1.2 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .confirm-text {
     font: 400 13px/1.5 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .confirm-actions {

@@ -1,6 +1,6 @@
 /* Keyframes and global rules collected from component <helmet> blocks. */
 html,body{margin:0}
-body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--surface-0,#07070a)}
+body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--surface-0)}
 @keyframes ocTypingDot{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-2px)}}
 @keyframes oc-spin{to{transform:rotate(360deg)}}
 @keyframes oc-typing{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
@@ -9,19 +9,19 @@ body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--surfa
 
 /* 2026-10-13 — pass 2: rules from new/changed component helmets */
 [data-oc-header]{container-type:inline-size}
-@container (max-width:520px){[data-oc-call-label]{display:none}[data-oc-call]{width:var(--control-md,34px);padding:0}}
-a{color:var(--accent,#FF5672)}
-a:hover{color:var(--accent-bright,#FF8298)}
+@container (max-width:520px){[data-oc-call-label]{display:none}[data-oc-call]{width:var(--control-md);padding:0}}
+a{color:var(--accent)}
+a:hover{color:var(--accent-bright)}
 [role="button"]:focus{outline:none}
-[role="button"]:focus-visible{outline:2px solid var(--accent,#FF5672);outline-offset:2px}
+[role="button"]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 @keyframes oc-dlg-in{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
 @keyframes oc-veil-in{from{opacity:0}to{opacity:1}}
 @keyframes oc-dlg-out{from{opacity:1;transform:none}to{opacity:0;transform:translateY(8px) scale(.98)}}
 @keyframes oc-veil-out{from{opacity:1}to{opacity:0}}
 @keyframes oc-step-in{from{opacity:0;transform:translateX(10px)}to{opacity:1;transform:none}}
-@keyframes ocCallPulse{0%{box-shadow:0 0 0 0 color-mix(in oklch,var(--status-online,#2EE6A8) 55%,transparent)}70%{box-shadow:0 0 0 10px transparent}100%{box-shadow:0 0 0 0 transparent}}
+@keyframes ocCallPulse{0%{box-shadow:0 0 0 0 color-mix(in oklch,var(--status-online) 55%,transparent)}70%{box-shadow:0 0 0 10px transparent}100%{box-shadow:0 0 0 0 transparent}}
 @keyframes auth-rise{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
-[data-auth-input]::placeholder{color:var(--ink-4,#7C7C8C)}
+[data-auth-input]::placeholder{color:var(--ink-4)}
 @keyframes oc-chit-pop{0%{transform:scale(1)}40%{transform:scale(1.06)}100%{transform:scale(1)}}
 @keyframes oc-tip-in{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
 @keyframes oc-pz-pop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.08);opacity:1}100%{transform:scale(1)}}
@@ -42,6 +42,6 @@ body:has([data-mode="light"]){background:#E7E5E0}
 @container (max-width:640px){[data-ex-row]{grid-template-columns:minmax(0,1fr) 72px 100px !important}[data-ex-col]{display:none !important}}
 @container (max-width:420px){[data-ex-row]{grid-template-columns:minmax(0,1fr) 92px !important}[data-ex-row] > :nth-child(2){display:none !important}}
 @keyframes ex-hero-in{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:none}}
-input::placeholder{color:var(--ink-4,#8A8A99)}
+input::placeholder{color:var(--ink-4)}
 @keyframes oc-sheet-in{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion: reduce){[data-oc-motion]{animation:none!important}}

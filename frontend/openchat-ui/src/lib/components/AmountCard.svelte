@@ -82,7 +82,7 @@
     padding: 18px;
     box-sizing: border-box;
     border-radius: 12px;
-    background: var(--overlay-1, rgba(255, 255, 255, 0.04));
+    background: var(--overlay-1);
   }
 
   .top {
@@ -103,7 +103,7 @@
     flex: 1;
     min-width: 0;
     font: 700 32px/1 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   input.amount {
@@ -124,7 +124,7 @@
   }
 
   .amount.danger {
-    color: var(--status-danger, #f5493d);
+    color: var(--status-danger);
   }
 
   .token {
@@ -135,7 +135,7 @@
     height: 40px;
     padding: 0 10px 0 6px;
     border-radius: var(--radius-pill);
-    background: var(--overlay-2, rgba(255, 255, 255, 0.07));
+    background: var(--overlay-2);
     cursor: pointer;
     user-select: none;
   }
@@ -146,13 +146,13 @@
 
   .symbol {
     font: 700 14px/1 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .caret {
     width: 12px;
     height: 12px;
-    background: var(--ink-3, #9a9aa8);
+    background: var(--ink-3);
     mask: var(--icon-chevron-down) center/contain no-repeat;
   }
 
@@ -167,10 +167,10 @@
     flex: 1;
     min-width: 120px;
     font: 500 12.5px/1 var(--font-mono);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .note.danger {
-    color: var(--status-danger, #f5493d);
+    color: var(--status-danger);
   }
 </style>

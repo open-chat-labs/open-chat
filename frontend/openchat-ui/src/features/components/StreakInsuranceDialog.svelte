@@ -151,7 +151,7 @@
     background: var(--oc-veil, rgba(3, 3, 6, 0.72));
     backdrop-filter: var(--oc-veil-blur, blur(4px));
     -webkit-backdrop-filter: var(--oc-veil-blur, blur(4px));
-    animation: oc-veil-in var(--duration-base, 200ms) var(--ease-out) both;
+    animation: oc-veil-in var(--duration-base) var(--ease-out) both;
   }
 
   .card {
@@ -163,12 +163,12 @@
     max-height: 100%;
     box-sizing: border-box;
     border-radius: var(--radius-xl);
-    background: var(--surface-1, #0e0e12);
+    background: var(--surface-1);
     box-shadow:
-      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1)),
-      var(--shadow-modal, 0 30px 70px rgba(0, 0, 0, 0.45));
+      inset 0 0 0 1px var(--line-2),
+      var(--shadow-modal);
     overflow: hidden;
-    animation: oc-dlg-in var(--duration-slow, 280ms) var(--ease-out) both;
+    animation: oc-dlg-in var(--duration-slow) var(--ease-out) both;
   }
 
   .layer.closing {
@@ -189,7 +189,7 @@
     align-items: center;
     gap: var(--space-12);
     padding: var(--space-24) var(--space-32);
-    border-block-end: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+    border-block-end: 1px solid var(--line-1);
   }
 
   .icon-button {
@@ -202,7 +202,7 @@
   }
 
   .icon-button:hover {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    background: var(--overlay-2);
   }
 
   .back {
@@ -214,7 +214,7 @@
   .back-icon {
     width: 16px;
     height: 16px;
-    background: var(--ink-2, #c9c9d4);
+    background: var(--ink-2);
     mask: var(--icon-back) center/contain no-repeat;
   }
 
@@ -226,7 +226,7 @@
   .close-icon {
     width: 15px;
     height: 15px;
-    background: var(--ink-3, #9a9aa8);
+    background: var(--ink-3);
     mask: var(--icon-close) center/contain no-repeat;
   }
 
@@ -238,13 +238,13 @@
     width: 34px;
     height: 34px;
     border-radius: var(--radius-md);
-    background: var(--accent-soft, rgba(255, 86, 114, 0.12));
+    background: var(--accent-soft);
   }
 
   .badge-icon {
     width: 18px;
     height: 18px;
-    background: var(--accent, #ff5672);
+    background: var(--accent);
     mask: var(--icon-shield) center/contain no-repeat;
   }
 
@@ -258,12 +258,12 @@
 
   .title {
     font: var(--weight-bold) var(--text-lg) / 1.25 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .subtitle {
     font: var(--weight-regular) var(--text-sm) / 1.3 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .body {
@@ -290,7 +290,7 @@
   }
 
   .cell {
-    --cell-ink: var(--ink-4, #7c7c8c);
+    --cell-ink: var(--ink-4);
     flex: 1;
     min-width: 0;
     display: flex;
@@ -300,7 +300,7 @@
     padding: 14px 0 12px;
     border-radius: var(--radius-md);
     background: transparent;
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12));
+    box-shadow: inset 0 0 0 1px var(--line-2);
     cursor: pointer;
     user-select: none;
   }
@@ -310,15 +310,15 @@
   }
 
   .cell.adding {
-    --cell-ink: var(--status-chit, #ff9f45);
-    background: color-mix(in srgb, var(--status-chit, #ff9f45) 14%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--status-chit, #ff9f45) 45%, transparent);
+    --cell-ink: var(--status-chit);
+    background: color-mix(in srgb, var(--status-chit) 14%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--status-chit) 45%, transparent);
   }
 
   .cell.owned {
-    --cell-ink: var(--accent, #ff5672);
-    background: var(--accent-soft, rgba(255, 86, 114, 0.12));
-    box-shadow: inset 0 0 0 1px var(--accent-dim, rgba(255, 86, 114, 0.35));
+    --cell-ink: var(--accent);
+    background: var(--accent-soft);
+    box-shadow: inset 0 0 0 1px var(--accent-dim);
     cursor: default;
   }
 
@@ -352,7 +352,7 @@
     align-items: center;
     gap: var(--space-6);
     font: var(--weight-regular) var(--text-sm) / 1 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .swatch {
@@ -362,15 +362,15 @@
   }
 
   .swatch.owned {
-    background: var(--accent, #ff5672);
+    background: var(--accent);
   }
 
   .swatch.adding {
-    background: var(--status-chit, #ff9f45);
+    background: var(--status-chit);
   }
 
   .swatch.open {
-    box-shadow: inset 0 0 0 1px var(--line-3, rgba(255, 255, 255, 0.24));
+    box-shadow: inset 0 0 0 1px var(--line-3);
   }
 
   .summary {
@@ -380,8 +380,8 @@
     gap: var(--space-12);
     padding: var(--space-18);
     border-radius: var(--radius-lg);
-    background: var(--overlay-1, rgba(255, 255, 255, 0.045));
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12));
+    background: var(--overlay-1);
+    box-shadow: inset 0 0 0 1px var(--line-2);
   }
 
   .summary-text {
@@ -394,18 +394,18 @@
 
   .summary-title {
     font: var(--weight-semibold) var(--text-md) / 1.25 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .summary-hint {
     font: var(--weight-regular) var(--text-sm) / 1.3 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .total {
     flex: none;
     font: var(--weight-bold) var(--text-lg) / 1.2 var(--font-mono);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .foot {
@@ -414,19 +414,19 @@
     align-items: center;
     gap: var(--space-10);
     padding: var(--space-18) var(--space-32);
-    border-block-start: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+    border-block-start: 1px solid var(--line-1);
   }
 
   .balance {
     flex: 1;
     min-width: 0;
     font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
     text-wrap: pretty;
   }
 
   .balance.short {
-    color: var(--status-danger, #f5493d);
+    color: var(--status-danger);
   }
 
   .pay {
@@ -437,19 +437,19 @@
     padding: 0 var(--space-18);
     box-sizing: border-box;
     border-radius: var(--radius-md);
-    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    background: var(--overlay-2);
     opacity: 0.7;
     font: var(--weight-semibold) var(--text-base) / 1 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
     white-space: nowrap;
     cursor: not-allowed;
     user-select: none;
   }
 
   .pay.ready {
-    background: var(--accent, #ff5672);
+    background: var(--accent);
     opacity: 1;
-    color: var(--on-accent, #2e0512);
+    color: var(--on-accent);
     cursor: pointer;
   }
 

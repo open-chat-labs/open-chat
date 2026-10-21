@@ -58,11 +58,11 @@
   }
 
   .row.unread {
-    background: var(--overlay-1, rgba(255, 255, 255, 0.035));
+    background: var(--overlay-1);
   }
 
   .row:hover {
-    background: var(--overlay-1, rgba(255, 255, 255, 0.06));
+    background: var(--overlay-1);
   }
 
   .avatar {
@@ -80,7 +80,7 @@
 
   .title {
     font: var(--weight-semibold) var(--text-md) / 1.3 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -96,12 +96,12 @@
 
   .context {
     font: var(--weight-medium) var(--text-sm) / 1.3 var(--font-sans);
-    color: var(--accent, #ff5672);
+    color: var(--accent);
   }
 
   .preview {
     font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-sans);
-    color: var(--ink-3, #8a8a99);
+    color: var(--ink-3);
   }
 
   .reactions {
@@ -119,9 +119,9 @@
     padding: 0 var(--space-6);
     box-sizing: border-box;
     border-radius: var(--radius-pill);
-    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    background: var(--overlay-2);
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
   }
 
   .side {
@@ -134,7 +134,7 @@
 
   .time {
     font: var(--weight-regular) var(--text-xs) / 1 var(--font-mono);
-    color: var(--ink-4, #6e6e7c);
+    color: var(--ink-4);
     white-space: nowrap;
   }
 
@@ -142,6 +142,6 @@
     width: 8px;
     height: 8px;
     border-radius: var(--radius-pill);
-    background: var(--accent, #ff5672);
+    background: var(--accent);
   }
 </style>

@@ -350,7 +350,7 @@
     width: 3px;
     height: 28px;
     border-radius: var(--radius-pill);
-    background: var(--accent, #ff5672);
+    background: var(--accent);
     z-index: 2;
     pointer-events: none;
     transition:
@@ -374,35 +374,35 @@
   }
 
   .row:hover {
-    background: var(--overlay-1, rgba(255, 255, 255, 0.06));
+    background: var(--overlay-1);
   }
 
   .row.active,
   .row.active:hover,
   .explore.on {
-    background: var(--accent-soft, rgba(255, 86, 114, 0.07));
+    background: var(--accent-soft);
   }
 
   .explore.on:hover {
-    background: var(--overlay-1, rgba(255, 255, 255, 0.06));
+    background: var(--overlay-1);
   }
 
   .item-icon {
     flex: none;
     width: 20px;
     height: 20px;
-    background: var(--ink-3, #7c7c8c);
+    background: var(--ink-3);
   }
 
   .active .item-icon {
-    background: var(--accent-bright, #ff8298);
+    background: var(--accent-bright);
   }
 
   .label {
     flex: 1;
     min-width: 0;
     font: var(--weight-medium) var(--text-base) / 1 var(--font-sans);
-    color: var(--ink-2, #b9b9c6);
+    color: var(--ink-2);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -427,11 +427,11 @@
 
   .active .label {
     font-weight: var(--weight-semibold);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .label.muted {
-    color: var(--ink-3, #8a8a99);
+    color: var(--ink-3);
   }
 
   .badge-slot {
@@ -455,8 +455,8 @@
     padding: 0 var(--space-4);
     box-sizing: border-box;
     border-radius: var(--radius-pill);
-    background: var(--accent, #ff5672);
-    color: var(--on-accent, #2e0512);
+    background: var(--accent);
+    color: var(--on-accent);
     font: var(--weight-bold) var(--text-xs) / 1 var(--font-sans);
   }
 
@@ -467,8 +467,8 @@
     width: 8px;
     height: 8px;
     border-radius: var(--radius-pill);
-    background: var(--accent, #ff5672);
-    box-shadow: 0 0 0 2.5px var(--bg, #07070a);
+    background: var(--accent);
+    box-shadow: 0 0 0 2.5px var(--bg);
     opacity: 1;
     transition: opacity var(--duration-base) ease;
   }
@@ -503,7 +503,7 @@
   .home-icon {
     width: 21px;
     height: 21px;
-    background: var(--ink-3, #7c7c8c);
+    background: var(--ink-3);
     mask: var(--icon-home) center/contain no-repeat;
   }
 
@@ -528,7 +528,7 @@
     white-space: nowrap;
     font: var(--weight-medium) var(--text-2xs) / 1 var(--font-mono);
     letter-spacing: 0.06em;
-    color: var(--ink-4, #6e6e7c);
+    color: var(--ink-4);
     opacity: 0;
     transition:
       max-width var(--duration-slow) var(--ease-out),
@@ -546,7 +546,7 @@
     margin-inline-start: -7px;
     height: 3px;
     border-radius: var(--radius-pill);
-    background: var(--line-2, rgba(255, 255, 255, 0.12));
+    background: var(--line-2);
     transition: margin-inline-start var(--duration-slow) var(--ease-out);
   }
 
@@ -574,7 +574,7 @@
     top: 0;
     inset-inline-start: 50%;
     /* --oc-dir is -1 under dir="rtl", where inset-inline-start measures from the right */
-    transform: translateX(calc(-50% * var(--oc-dir, 1)));
+    transform: translateX(calc(-50% * var(--oc-dir)));
     width: 34px;
     height: 34px;
     border-radius: var(--radius-md);
@@ -582,21 +582,21 @@
 
   .pin:not(.selected):hover {
     box-shadow:
-      0 0 0 2px var(--bg, #07070a),
-      0 0 0 4px var(--line-2, rgba(255, 255, 255, 0.18));
+      0 0 0 2px var(--bg),
+      0 0 0 4px var(--line-2);
   }
 
   .pin.selected {
     box-shadow:
-      0 0 0 2px var(--bg, #07070a),
-      0 0 0 4px var(--accent, #ff5672);
+      0 0 0 2px var(--bg),
+      0 0 0 4px var(--accent);
     outline: none;
     outline-offset: 3px;
   }
 
   .pin.preview {
     box-shadow: none;
-    outline: 1.5px dashed var(--accent, #ff5672);
+    outline: 1.5px dashed var(--accent);
   }
 
   .pin-veil {
@@ -616,14 +616,14 @@
     width: 18px;
     height: 18px;
     border-radius: var(--radius-pill);
-    background: var(--surface-2, #191921);
-    box-shadow: 0 0 0 2px var(--bg, #07070a);
+    background: var(--surface-2);
+    box-shadow: 0 0 0 2px var(--bg);
   }
 
   .pin-eye-icon {
     width: 11px;
     height: 11px;
-    background: var(--ink, #ececf1);
+    background: var(--ink);
     mask: var(--icon-eye) center/contain no-repeat;
   }
 
@@ -634,18 +634,18 @@
     width: 8px;
     height: 8px;
     border-radius: var(--radius-pill);
-    background: var(--accent, #ff5672);
-    border: 4px solid var(--bg, #07070a);
+    background: var(--accent);
+    border: 4px solid var(--bg);
   }
 
   .preview-tag {
     font-weight: var(--weight-medium);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .create {
     box-sizing: border-box;
-    border: 1.5px dashed var(--line-3, rgba(255, 255, 255, 0.24));
+    border: 1.5px dashed var(--line-3);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -654,27 +654,27 @@
   .create-icon {
     width: 16px;
     height: 16px;
-    background: var(--ink-3, #8a8a99);
+    background: var(--ink-3);
     mask: var(--icon-plus) center/contain no-repeat;
   }
 
   .explore-icon {
     width: 22px;
     height: 22px;
-    background: var(--ink-3, #7c7c8c);
+    background: var(--ink-3);
     mask: var(--icon-compass) center/contain no-repeat;
   }
 
   .explore.on .explore-icon {
-    background: var(--accent, #ff5672);
+    background: var(--accent);
   }
 
   .explore-label {
-    color: var(--ink-3, #8a8a99);
+    color: var(--ink-3);
   }
 
   .explore.on .explore-label {
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .grow {
@@ -699,12 +699,12 @@
   .chit-icon {
     width: 19px;
     height: 19px;
-    background: var(--ink-3, #7c7c8c);
+    background: var(--ink-3);
     mask: var(--icon-zap) center/contain no-repeat;
   }
 
   .claimable .chit-icon {
-    background: var(--status-chit, #ff9f45);
+    background: var(--status-chit);
   }
 
   .chit-dot {
@@ -714,8 +714,8 @@
     width: 7px;
     height: 7px;
     border-radius: var(--radius-pill);
-    background: var(--accent, #ff5672);
-    box-shadow: 0 0 0 2.5px var(--bg, #07070a);
+    background: var(--accent);
+    box-shadow: 0 0 0 2.5px var(--bg);
   }
 
   .chit .label.fold {
@@ -730,26 +730,26 @@
     height: 20px;
     box-sizing: border-box;
     border-radius: var(--radius-pill);
-    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    background: var(--overlay-2);
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-mono);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
     white-space: nowrap;
   }
 
   .claimable .streak {
-    background: var(--status-chit-soft, rgba(255, 159, 69, 0.16));
-    color: var(--status-chit, #ff9f45);
+    background: var(--status-chit-soft);
+    color: var(--status-chit);
   }
 
   .sign-in {
     height: 46px;
     margin-block-end: var(--space-4);
-    background: var(--accent, #ff5672);
+    background: var(--accent);
     overflow: hidden;
   }
 
   .sign-in:hover {
-    background: var(--accent, #ff5672);
+    background: var(--accent);
     filter: brightness(1.08);
   }
 
@@ -765,13 +765,13 @@
   .key-icon {
     width: 18px;
     height: 18px;
-    background: var(--on-accent, #2e0512);
+    background: var(--on-accent);
     mask: var(--icon-key) center/contain no-repeat;
   }
 
   .sign-in-label {
     font-weight: var(--weight-semibold);
-    color: var(--on-accent, #2e0512);
+    color: var(--on-accent);
     overflow: visible;
   }
 
@@ -784,7 +784,7 @@
     height: 38px;
     border-radius: var(--radius-pill);
     background: linear-gradient(140deg, #ff5f9e, #6a2bff);
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.14));
+    box-shadow: inset 0 0 0 1px var(--line-2);
   }
 
   .me-online {
@@ -794,8 +794,8 @@
     width: 11px;
     height: 11px;
     border-radius: var(--radius-pill);
-    background: var(--status-online, #2ee6a8);
-    border: 2.5px solid var(--bg, #07070a);
+    background: var(--status-online);
+    border: 2.5px solid var(--bg);
   }
 
   .profile-text {
@@ -822,12 +822,12 @@
 
   .profile-name {
     font: var(--weight-bold) var(--text-base) / 1 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .profile-handle {
     font: var(--weight-regular) var(--text-sm) / 1 var(--font-mono);
-    color: var(--ink-4, #6e6e7c);
+    color: var(--ink-4);
   }
 
   .collapse {
@@ -841,18 +841,18 @@
     flex: none;
     width: 20px;
     height: 20px;
-    background: var(--ink-4, #5f5f6c);
+    background: var(--ink-4);
     mask: var(--icon-chevrons-right) center/contain no-repeat;
-    transform: scaleX(var(--oc-dir, 1));
+    transform: scaleX(var(--oc-dir));
     transition: transform var(--duration-slow) var(--ease-out);
   }
 
   .open .collapse-icon {
-    transform: scaleX(var(--oc-dir, 1)) rotate(180deg);
+    transform: scaleX(var(--oc-dir)) rotate(180deg);
   }
 
   .collapse-label {
     font-size: var(--text-md);
-    color: var(--ink-4, #6e6e7c);
+    color: var(--ink-4);
   }
 </style>

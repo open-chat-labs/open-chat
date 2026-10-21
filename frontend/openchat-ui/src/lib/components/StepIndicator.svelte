@@ -37,12 +37,12 @@
     align-items: center;
     gap: 6px;
     font: var(--weight-semibold) 12px/1 var(--font-sans);
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
     white-space: nowrap;
   }
 
   .step.current {
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .num {
@@ -52,19 +52,19 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+    background: var(--overlay-2);
     font: 700 11px/1 var(--font-mono);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .num.on {
-    background: var(--accent, #ff5672);
-    color: var(--on-accent, #2e0512);
+    background: var(--accent);
+    color: var(--on-accent);
   }
 
   .sep {
     width: 14px;
     height: 1px;
-    background: var(--line-2, rgba(255, 255, 255, 0.14));
+    background: var(--line-2);
   }
 </style>

@@ -227,7 +227,7 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    background: var(--surface-1, #0e0e12);
+    background: var(--surface-1);
     border-radius: var(--radius-2xl);
   }
 
@@ -250,7 +250,7 @@
     width: 72px;
     height: 72px;
     border-radius: var(--radius-pill);
-    box-shadow: 0 0 0 4px var(--surface-1, #0e0e12);
+    box-shadow: 0 0 0 4px var(--surface-1);
   }
 
   .avatar.squircle {
@@ -264,8 +264,8 @@
     width: 14px;
     height: 14px;
     border-radius: var(--radius-pill);
-    background: var(--status-online, #2ee6a8);
-    border: 3px solid var(--surface-1, #0e0e12);
+    background: var(--status-online);
+    border: 3px solid var(--surface-1);
   }
 
   .names {
@@ -286,7 +286,7 @@
   .title {
     font: var(--weight-bold) var(--text-xl) / 1.2 var(--font-sans);
     letter-spacing: var(--tracking-tight);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -300,22 +300,22 @@
 
   .handle {
     font: var(--weight-medium) var(--text-md) / 1 var(--font-mono);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .byline {
     font: var(--weight-regular) var(--text-md) / 1 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .byline-name {
-    color: var(--accent, #ff5672);
+    color: var(--accent);
     cursor: pointer;
   }
 
   .error {
     font: var(--weight-medium) var(--text-sm) / 1.4 var(--font-sans);
-    color: var(--status-danger, #f5493d);
+    color: var(--status-danger);
   }
 
   .tiles {
@@ -370,7 +370,7 @@
     padding-inline-start: var(--space-16);
     font: var(--weight-semibold) var(--text-xs) / 1 var(--font-mono);
     letter-spacing: var(--tracking-wide);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .settings-list {
@@ -400,12 +400,12 @@
 
   .setting-title {
     font: var(--weight-semibold) var(--text-base) / 1 var(--font-sans);
-    color: var(--ink, #e4e4ec);
+    color: var(--ink);
   }
 
   .setting-hint {
     font: var(--weight-regular) var(--text-sm) / 1.45 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
     text-wrap: pretty;
   }
 

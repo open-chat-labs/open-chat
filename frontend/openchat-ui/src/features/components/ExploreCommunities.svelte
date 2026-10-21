@@ -253,7 +253,7 @@
       <div class="big-identity">
         <span class="big-avatar" style:background={avatarOf(c)}></span>
         <div class="big-names">
-          <div class="name-line"><span class="big-name">{c.name}</span>{#if c.verified}{@render icon('verified', 16, 'var(--status-verified,#3D9BFF)')}{/if}</div>
+          <div class="name-line"><span class="big-name">{c.name}</span>{#if c.verified}{@render icon('verified', 16, 'var(--status-verified)')}{/if}</div>
           <span class="big-meta">{t('ui.exploreCommunities.bigMeta', { count: c.members, members: fmt(c.members), channels: channelCount(c), language: t(langOf(c)) })}</span>
         </div>
       </div>
@@ -267,7 +267,7 @@
       >
       <div class="big-actions">
         {#if joined || !isPrivate(c)}
-          <span class="preview-cta">{@render icon('eye', 15, 'var(--on-accent,#2E0512)')}{t(joined ? 'ui.exploreCommunities.openCommunity' : 'ui.exploreCommunities.previewCommunity')}</span>
+          <span class="preview-cta">{@render icon('eye', 15, 'var(--on-accent)')}{t(joined ? 'ui.exploreCommunities.openCommunity' : 'ui.exploreCommunities.previewCommunity')}</span>
           <span class="cta-hint"
             >{joined
               ? t('ui.exploreCommunities.youreAMember')
@@ -276,7 +276,7 @@
                 : t('ui.exploreCommunities.publicHint')}</span
           >
         {:else}
-          <span class="invite-only">{@render icon('lock', 12, 'var(--ink-3,#9A9AA8)')}{t('ui.exploreCommunities.inviteOnlyHint')}</span>
+          <span class="invite-only">{@render icon('lock', 12, 'var(--ink-3)')}{t('ui.exploreCommunities.inviteOnlyHint')}</span>
         {/if}
       </div>
     </div>
@@ -297,11 +297,11 @@
           >
         {/if}
       </div>
-      <div class="name-line"><span class="card-name">{c.name}</span>{#if c.verified}{@render icon('verified', 15, 'var(--status-verified,#3D9BFF)')}{/if}</div>
+      <div class="name-line"><span class="card-name">{c.name}</span>{#if c.verified}{@render icon('verified', 15, 'var(--status-verified)')}{/if}</div>
       <span class="card-about">{c.about || t('ui.exploreCommunities.noDescription')}</span>
       <div class="card-foot">
-        <span class="stat" title={t('ui.exploreCommunities.membersTitle', { count: c.members, members: fmt(c.members) })}>{@render icon('users', 14, 'var(--ink-3,#9A9AA8)')}{fmt(c.members)}</span><span class="stat" title={t('ui.exploreCommunities.channelsTitle', { count: channelCount(c) })}
-          >{@render icon('hash', 14, 'var(--ink-3,#9A9AA8)')}{channelCount(c)}</span
+        <span class="stat" title={t('ui.exploreCommunities.membersTitle', { count: c.members, members: fmt(c.members) })}>{@render icon('users', 14, 'var(--ink-3)')}{fmt(c.members)}</span><span class="stat" title={t('ui.exploreCommunities.channelsTitle', { count: channelCount(c) })}
+          >{@render icon('hash', 14, 'var(--ink-3)')}{channelCount(c)}</span
         ><span class="grow"></span>
         <span class="card-cta" class:muted={priv && !joined}>{t(joined ? 'ui.exploreCommunities.openArrow' : priv ? 'ui.exploreCommunities.inviteOnly' : 'ui.exploreCommunities.previewArrow')}</span>
       </div>
@@ -313,12 +313,12 @@
   {#if q}
     <div class="search-bar">
       <div class="search-row">
-        <span class="back" onclick={() => (query = '')} role="button" tabindex="0">{@render icon('back', 15, 'var(--ink-3,#9A9AA8)')}{t('ui.exploreCommunities.explore')}</span>
+        <span class="back" onclick={() => (query = '')} role="button" tabindex="0">{@render icon('back', 15, 'var(--ink-3)')}{t('ui.exploreCommunities.explore')}</span>
         <div class="search small" class:focused>
-          {@render icon('search', 16, 'var(--ink-3,#9A9AA8)')}
+          {@render icon('search', 16, 'var(--ink-3)')}
           <!-- svelte-ignore a11y_autofocus -->
           <input bind:value={query} onfocus={() => (focused = true)} onblur={() => (focused = false)} autofocus placeholder={t('ui.exploreCommunities.searchPlaceholder')} />
-          <span class="clear" onclick={() => (query = '')} aria-label={t('ui.exploreCommunities.clear')} role="button" tabindex="0" title={t('ui.exploreCommunities.clear')}>{@render icon('close', 12, 'var(--ink-3,#9A9AA8)')}</span>
+          <span class="clear" onclick={() => (query = '')} aria-label={t('ui.exploreCommunities.clear')} role="button" tabindex="0" title={t('ui.exploreCommunities.clear')}>{@render icon('close', 12, 'var(--ink-3)')}</span>
         </div>
       </div>
       <div class="results-row">
@@ -349,13 +349,13 @@
           <div class="empty">
             <span class="empty-title">{emptyTitle}</span>
             <span class="empty-body">{t('ui.exploreCommunities.emptyBody')}</span>
-            <span class="create" onclick={onCreate} role="button" tabindex="0">{@render icon('plus', 15, 'var(--on-accent,#2E0512)')}{t('ui.exploreCommunities.createCommunity')}</span>
+            <span class="create" onclick={onCreate} role="button" tabindex="0">{@render icon('plus', 15, 'var(--on-accent)')}{t('ui.exploreCommunities.createCommunity')}</span>
           </div>
         {/if}
         {#if remote && hasMore && found.length > 0}
           <div class="more">
             <span class="load-more" onclick={loadMore} role="button" tabindex="0" aria-busy={loading}
-              >{loading ? t('ui.exploreCommunities.loading') : t('ui.exploreCommunities.loadMore', { count: Math.min(PAGE, totalCount - found.length) })}{@render icon('chevron-down', 13, 'var(--ink,#ECECF1)')}</span
+              >{loading ? t('ui.exploreCommunities.loading') : t('ui.exploreCommunities.loadMore', { count: Math.min(PAGE, totalCount - found.length) })}{@render icon('chevron-down', 13, 'var(--ink)')}</span
             >
             <span class="shown">{t('ui.exploreCommunities.showing', { shown: found.length, total: totalCount })}</span>
           </div>
@@ -370,10 +370,10 @@
         <span class="hero-sub">{t('ui.exploreCommunities.heroSub', { count: remote ? totalCount : communities.length })}</span>
       </div>
       <div class="search large" class:focused>
-        {@render icon('search', 18, 'var(--ink-3,#9A9AA8)')}
+        {@render icon('search', 18, 'var(--ink-3)')}
         <input bind:value={query} onfocus={() => (focused = true)} onblur={() => (focused = false)} placeholder={t('ui.exploreCommunities.searchPlaceholder')} />
         {#if query}
-          <span class="clear large" onclick={() => (query = '')} aria-label={t('ui.exploreCommunities.clear')} role="button" tabindex="0" title={t('ui.exploreCommunities.clear')}>{@render icon('close', 13, 'var(--ink-3,#9A9AA8)')}</span>
+          <span class="clear large" onclick={() => (query = '')} aria-label={t('ui.exploreCommunities.clear')} role="button" tabindex="0" title={t('ui.exploreCommunities.clear')}>{@render icon('close', 13, 'var(--ink-3)')}</span>
         {/if}
       </div>
       <div class="hero-filters">
@@ -435,8 +435,8 @@
               <div class="entry-text">
                 <div class="name-line">
                   <span class="entry-title">{c.name}</span>
-                  {#if c.verified}<span class="glyph-wrap" title={t('ui.exploreCommunities.verified')}>{@render icon('verified', 14, 'var(--status-verified,#3D9BFF)')}</span>{/if}
-                  {#if priv}<span class="glyph-wrap" title={t('ui.exploreCommunities.private')}>{@render icon('lock', 12, 'var(--ink-3,#9A9AA8)')}</span>{/if}
+                  {#if c.verified}<span class="glyph-wrap" title={t('ui.exploreCommunities.verified')}>{@render icon('verified', 14, 'var(--status-verified)')}</span>{/if}
+                  {#if priv}<span class="glyph-wrap" title={t('ui.exploreCommunities.private')}>{@render icon('lock', 12, 'var(--ink-3)')}</span>{/if}
                 </div>
                 <span class="entry-about">{c.about || t('ui.exploreCommunities.noDescription')}</span>
               </div>
@@ -446,9 +446,9 @@
             <span class="entry-lang" data-ex-col="">{t(langOf(c))}</span>
             <div class="entry-action">
               {#if joined}
-                <span class="pill joined">{@render icon('check', 12, 'var(--status-online,#2EE6A8)')}{t('ui.exploreCommunities.joined')}</span>
+                <span class="pill joined">{@render icon('check', 12, 'var(--status-online)')}{t('ui.exploreCommunities.joined')}</span>
               {:else if priv}
-                <span class="pill">{@render icon('lock', 11, 'var(--ink-3,#9A9AA8)')}{t('ui.exploreCommunities.inviteOnly')}</span>
+                <span class="pill">{@render icon('lock', 11, 'var(--ink-3)')}{t('ui.exploreCommunities.inviteOnly')}</span>
               {:else}
                 <span
                   class="preview"
@@ -466,7 +466,7 @@
         {#if hasMore && !homeStale}
           <div class="more">
             <span class="load-more" onclick={loadMore} role="button" tabindex="0" aria-busy={loading}
-              >{loading ? t('ui.exploreCommunities.loading') : t('ui.exploreCommunities.loadMore', { count: Math.min(PAGE, totalCount - rows.length) })}{@render icon('chevron-down', 13, 'var(--ink,#ECECF1)')}</span
+              >{loading ? t('ui.exploreCommunities.loading') : t('ui.exploreCommunities.loadMore', { count: Math.min(PAGE, totalCount - rows.length) })}{@render icon('chevron-down', 13, 'var(--ink)')}</span
             >
             <span class="shown">{t('ui.exploreCommunities.showing', { shown: rows.length, total: totalCount })}</span>
           </div>
@@ -534,8 +534,8 @@
     flex-direction: column;
     gap: var(--space-12);
     padding: var(--space-18) var(--space-32) var(--space-14);
-    background: var(--surface-1, #0e0e12);
-    border-block-end: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+    background: var(--surface-1);
+    border-block-end: 1px solid var(--line-1);
     animation: ex-bar-in 320ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
   }
 
@@ -554,26 +554,26 @@
     padding: 0 var(--space-10);
     border-radius: var(--radius-md);
     font: var(--weight-semibold) var(--text-md) / 1 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
     cursor: pointer;
     user-select: none;
   }
 
   .back:hover,
   .clear:hover {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    background: var(--overlay-2);
   }
 
   .search {
-    --search-ring: var(--line-2, rgba(255, 255, 255, 0.14));
+    --search-ring: var(--line-2);
     display: flex;
     align-items: center;
     box-sizing: border-box;
-    background: var(--overlay-1, rgba(255, 255, 255, 0.06));
+    background: var(--overlay-1);
   }
 
   .search.focused {
-    --search-ring: var(--accent, #ff5672);
+    --search-ring: var(--accent);
   }
 
   .search.small {
@@ -606,7 +606,7 @@
     outline: none;
     background: transparent;
     font: var(--weight-medium) var(--text-base) / 1 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .search.large input {
@@ -640,7 +640,7 @@
     flex: 1 1 auto;
     padding-inline-start: calc(var(--space-10) + 21px);
     font: var(--weight-semibold) var(--text-md) / 1 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   /* language filter */
@@ -650,7 +650,7 @@
   }
 
   .lang-button {
-    --lang-ink: var(--ink-2, #c9c9d4);
+    --lang-ink: var(--ink-2);
     display: flex;
     align-items: center;
     gap: var(--space-6);
@@ -659,7 +659,7 @@
     box-sizing: border-box;
     border-radius: var(--radius-md);
     background: transparent;
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1));
+    box-shadow: inset 0 0 0 1px var(--line-2);
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
     color: var(--lang-ink);
     cursor: pointer;
@@ -673,9 +673,9 @@
   }
 
   .lang-button.active {
-    --lang-ink: var(--accent-bright, #ff8298);
-    background: color-mix(in srgb, var(--accent, #ff5672) 12%, transparent);
-    box-shadow: inset 0 0 0 1px var(--accent, #ff5672);
+    --lang-ink: var(--accent-bright);
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    box-shadow: inset 0 0 0 1px var(--accent);
   }
 
   .lang-scrim {
@@ -696,10 +696,10 @@
     padding: var(--space-6);
     box-sizing: border-box;
     border-radius: var(--radius-lg);
-    background: var(--surface-2, #191921);
+    background: var(--surface-2);
     box-shadow:
-      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1)),
-      var(--shadow-panel, 0 8px 24px rgba(0, 0, 0, 0.35));
+      inset 0 0 0 1px var(--line-2),
+      var(--shadow-panel);
   }
 
   .lang-menu.centered {
@@ -720,7 +720,7 @@
   }
 
   .lang-option:hover {
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    background: var(--overlay-1);
   }
 
   .lang-box {
@@ -733,18 +733,18 @@
     box-sizing: border-box;
     border-radius: 5px;
     background: transparent;
-    box-shadow: inset 0 0 0 1.5px var(--line-3, rgba(255, 255, 255, 0.22));
+    box-shadow: inset 0 0 0 1.5px var(--line-3);
   }
 
   .lang-box.on {
-    background: var(--accent, #ff5672);
-    box-shadow: inset 0 0 0 1.5px var(--accent, #ff5672);
+    background: var(--accent);
+    box-shadow: inset 0 0 0 1.5px var(--accent);
   }
 
   .lang-check {
     width: 11px;
     height: 11px;
-    background: var(--on-accent, #2e0512);
+    background: var(--on-accent);
     mask: var(--icon-check) center/contain no-repeat;
     opacity: 0;
   }
@@ -757,13 +757,13 @@
     flex: 1;
     min-width: 0;
     font: var(--weight-medium) var(--text-md) / 1 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .lang-count {
     flex: none;
     font: var(--weight-medium) var(--text-xs) / 1 var(--font-mono);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   /* results */
@@ -786,7 +786,7 @@
     padding-inline: var(--space-4);
     font: var(--weight-semibold) var(--text-xs) / 1 var(--font-mono);
     letter-spacing: var(--tracking-wide);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .card-grid {
@@ -806,13 +806,13 @@
 
   .empty-title {
     font: var(--weight-semibold) var(--text-lg) / 1.3 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .empty-body {
     max-width: 380px;
     font: var(--weight-regular) var(--text-md) / 1.5 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
     text-wrap: pretty;
   }
 
@@ -824,9 +824,9 @@
     margin-top: var(--space-6);
     padding: 0 var(--space-16);
     border-radius: var(--radius-md);
-    background: var(--accent, #ff5672);
+    background: var(--accent);
     font: var(--weight-semibold) var(--text-md) / 1 var(--font-sans);
-    color: var(--on-accent, #2e0512);
+    color: var(--on-accent);
     cursor: pointer;
     user-select: none;
   }
@@ -842,15 +842,15 @@
     min-height: 240px;
     box-sizing: border-box;
     border-radius: var(--radius-xl);
-    background: var(--surface-2, #141419);
-    border: 1px solid var(--line-2, rgba(255, 255, 255, 0.09));
+    background: var(--surface-2);
+    border: 1px solid var(--line-2);
     overflow: hidden;
     cursor: pointer;
   }
 
   .big-card:hover,
   .card:hover {
-    border-color: var(--line-3, rgba(255, 255, 255, 0.2));
+    border-color: var(--line-3);
   }
 
   .big-card.locked,
@@ -870,7 +870,7 @@
   .kicker {
     font: var(--weight-semibold) var(--text-xs) / 1 var(--font-mono);
     letter-spacing: var(--tracking-wide);
-    color: var(--status-chit, #ffb03d);
+    color: var(--status-chit);
   }
 
   .big-identity {
@@ -906,7 +906,7 @@
   .card-name,
   .entry-title {
     min-width: 0;
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -918,12 +918,12 @@
 
   .big-meta {
     font: var(--weight-regular) var(--text-sm) / 1.3 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .big-about {
     font: var(--weight-regular) var(--text-base) / 1.55 var(--font-sans);
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
     text-wrap: pretty;
     display: -webkit-box;
     -webkit-box-orient: vertical;
@@ -933,7 +933,7 @@
 
   .big-channels {
     font: var(--weight-medium) var(--text-sm) / 1.5 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .big-actions {
@@ -951,14 +951,14 @@
     height: 38px;
     padding: 0 var(--space-16);
     border-radius: var(--radius-md);
-    background: var(--accent, #ff5672);
+    background: var(--accent);
     font: var(--weight-semibold) var(--text-md) / 1 var(--font-sans);
-    color: var(--on-accent, #2e0512);
+    color: var(--on-accent);
   }
 
   .cta-hint {
     font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .invite-only {
@@ -968,9 +968,9 @@
     height: 32px;
     padding: 0 var(--space-12);
     border-radius: var(--radius-pill);
-    background: var(--overlay-2, rgba(255, 255, 255, 0.07));
+    background: var(--overlay-2);
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   /* small card */
@@ -979,9 +979,9 @@
     flex-direction: column;
     min-width: 0;
     border-radius: var(--radius-lg);
-    background: var(--surface-2, #141419);
+    background: var(--surface-2);
     box-sizing: border-box;
-    border: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+    border: 1px solid var(--line-1);
     overflow: hidden;
     cursor: pointer;
   }
@@ -1013,7 +1013,7 @@
     box-sizing: border-box;
     margin-top: -30px;
     border-radius: 20px;
-    border: 4px solid var(--surface-2, #141419);
+    border: 4px solid var(--surface-2);
   }
 
   .tag {
@@ -1024,14 +1024,14 @@
     height: 24px;
     padding: 0 var(--space-10);
     border-radius: var(--radius-pill);
-    background: var(--overlay-2, rgba(255, 255, 255, 0.07));
+    background: var(--overlay-2);
     font: var(--weight-semibold) var(--text-xs) / 1 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .tag.joined {
-    background: color-mix(in oklch, var(--status-online, #2ee6a8) 14%, transparent);
-    color: var(--status-online, #2ee6a8);
+    background: color-mix(in oklch, var(--status-online) 14%, transparent);
+    color: var(--status-online);
   }
 
   .card-name {
@@ -1040,7 +1040,7 @@
 
   .card-about {
     font: var(--weight-regular) var(--text-md) / 1.5 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
@@ -1058,10 +1058,10 @@
     margin: auto calc(var(--space-16) * -1) calc(var(--space-16) * -1);
     padding: 0 var(--space-16);
     box-sizing: border-box;
-    border-top: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
-    background: var(--overlay-1, rgba(255, 255, 255, 0.02));
+    border-top: 1px solid var(--line-1);
+    background: var(--overlay-1);
     font: var(--weight-medium) var(--text-sm) / 1 var(--font-sans);
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
   }
 
   .stat {
@@ -1072,11 +1072,11 @@
 
   .card-cta {
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
-    color: var(--accent, #ff5672);
+    color: var(--accent);
   }
 
   .card-cta.muted {
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   /* home: hero */
@@ -1089,7 +1089,7 @@
     align-items: center;
     gap: var(--space-24);
     padding: 56px var(--space-32) var(--space-26);
-    background: radial-gradient(ellipse 70% 100% at 50% 0%, color-mix(in oklch, var(--accent, #ff5672) 10%, transparent), transparent 70%);
+    background: radial-gradient(ellipse 70% 100% at 50% 0%, color-mix(in oklch, var(--accent) 10%, transparent), transparent 70%);
   }
 
   .hero-text {
@@ -1103,13 +1103,13 @@
   .hero-title {
     font: var(--weight-bold) 34px/1.15 var(--font-sans);
     letter-spacing: -0.02em;
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     text-wrap: balance;
   }
 
   .hero-sub {
     font: var(--weight-regular) var(--text-base) / 1.5 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .hero-filters {
@@ -1122,18 +1122,18 @@
 
   .hero-note {
     font: var(--weight-medium) var(--text-md) / 1 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .hero-divider {
     width: 1px;
     height: 16px;
-    background: var(--line-2, rgba(255, 255, 255, 0.12));
+    background: var(--line-2);
   }
 
   .create-link {
     font-weight: var(--weight-semibold);
-    color: var(--accent, #ff5672);
+    color: var(--accent);
     cursor: pointer;
   }
 
@@ -1164,13 +1164,13 @@
     flex: 1;
     min-width: 0;
     font: var(--weight-bold) var(--text-lg) / 1.25 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .popular-sub {
     flex: none;
     font: var(--weight-regular) var(--text-sm) / 1 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .popular-container {
@@ -1198,7 +1198,7 @@
     display: flex;
     flex-direction: column;
     border-radius: var(--radius-lg);
-    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+    box-shadow: inset 0 0 0 1px var(--line-1);
     overflow: hidden;
   }
 
@@ -1208,25 +1208,25 @@
     gap: var(--space-12);
     flex-wrap: wrap;
     padding: var(--space-14) var(--space-18);
-    border-block-end: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+    border-block-end: 1px solid var(--line-1);
   }
 
   .table-title {
     flex: 1 1 200px;
     min-width: 0;
     font: var(--weight-semibold) var(--text-base) / 1.3 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .table-count {
     font-weight: var(--weight-regular);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .clear-filters {
     flex: none;
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
-    color: var(--accent, #ff5672);
+    color: var(--accent);
     cursor: pointer;
     user-select: none;
   }
@@ -1237,8 +1237,8 @@
     gap: 2px;
     padding: 3px;
     border-radius: var(--radius-md);
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
-    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+    background: var(--overlay-1);
+    box-shadow: inset 0 0 0 1px var(--line-1);
   }
 
   .sort {
@@ -1249,15 +1249,15 @@
     border-radius: var(--radius-sm);
     background: transparent;
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
-    color: var(--ink-3, #8a8a99);
+    color: var(--ink-3);
     cursor: pointer;
     user-select: none;
     white-space: nowrap;
   }
 
   .sort.on {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.1));
-    color: var(--ink, #ececf1);
+    background: var(--overlay-2);
+    color: var(--ink);
   }
 
   .row {
@@ -1270,7 +1270,7 @@
     padding: var(--space-10) var(--space-18);
     font: var(--weight-semibold) var(--text-xs) / 1 var(--font-mono);
     letter-spacing: var(--tracking-wide);
-    color: var(--ink-4, #6e6e7c);
+    color: var(--ink-4);
   }
 
   .entry {
@@ -1278,12 +1278,12 @@
     min-height: 80px;
     padding: var(--space-14) var(--space-18);
     box-sizing: border-box;
-    border-block-start: 1px solid var(--line-1, rgba(255, 255, 255, 0.05));
+    border-block-start: 1px solid var(--line-1);
     cursor: pointer;
   }
 
   .entry:hover {
-    background: var(--overlay-1, rgba(255, 255, 255, 0.035));
+    background: var(--overlay-1);
   }
 
   .entry-name {
@@ -1314,7 +1314,7 @@
 
   .entry-about {
     font: var(--weight-regular) var(--text-sm) / 1.35 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1323,7 +1323,7 @@
   .mono,
   .entry-lang {
     font: var(--weight-medium) var(--text-md) / 1 var(--font-mono);
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
   }
 
   .entry-lang {
@@ -1342,14 +1342,14 @@
     height: 30px;
     padding: 0 var(--space-10);
     border-radius: var(--radius-pill);
-    background: var(--overlay-2, rgba(255, 255, 255, 0.07));
+    background: var(--overlay-2);
     font: var(--weight-semibold) var(--text-xs) / 1 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .pill.joined {
-    background: color-mix(in oklch, var(--status-online, #2ee6a8) 14%, transparent);
-    color: var(--status-online, #2ee6a8);
+    background: color-mix(in oklch, var(--status-online) 14%, transparent);
+    color: var(--status-online);
   }
 
   .preview,
@@ -1357,10 +1357,10 @@
     display: flex;
     align-items: center;
     border-radius: var(--radius-md);
-    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1));
+    background: var(--overlay-2);
+    box-shadow: inset 0 0 0 1px var(--line-2);
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     cursor: pointer;
     user-select: none;
   }
@@ -1380,7 +1380,7 @@
     align-items: center;
     gap: var(--space-8);
     padding: var(--space-18) var(--space-18) var(--space-22);
-    border-block-start: 1px solid var(--line-1, rgba(255, 255, 255, 0.05));
+    border-block-start: 1px solid var(--line-1);
   }
 
   .load-more {
@@ -1396,7 +1396,7 @@
 
   .shown {
     font: var(--weight-regular) var(--text-sm) / 1 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .table-empty {
@@ -1406,18 +1406,18 @@
     gap: var(--space-10);
     padding: var(--space-32) var(--space-18);
     text-align: center;
-    border-block-start: 1px solid var(--line-1, rgba(255, 255, 255, 0.05));
+    border-block-start: 1px solid var(--line-1);
   }
 
   .table-empty-title {
     font: var(--weight-semibold) var(--text-base) / 1.3 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .table-empty-body {
     max-width: 360px;
     font: var(--weight-regular) var(--text-md) / 1.5 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
     text-wrap: pretty;
   }
 
@@ -1443,9 +1443,9 @@
     padding: 20px 20px 20px 24px;
     box-sizing: border-box;
     border-radius: var(--radius-xl);
-    background: color-mix(in oklch, var(--accent, #ff5672) 10%, var(--surface-2, #191921));
+    background: color-mix(in oklch, var(--accent) 10%, var(--surface-2));
     box-shadow:
-      inset 0 0 0 1px color-mix(in oklch, var(--accent, #ff5672) 30%, transparent),
+      inset 0 0 0 1px color-mix(in oklch, var(--accent) 30%, transparent),
       0 18px 44px rgba(0, 0, 0, 0.5);
     animation: ex-rise 420ms 200ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
   }
@@ -1461,12 +1461,12 @@
 
   .guest-title {
     font: var(--weight-semibold) var(--text-base) / 1.3 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .guest-body {
     font: var(--weight-regular) var(--text-sm) / 1.45 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
     text-wrap: pretty;
   }
 
@@ -1484,19 +1484,19 @@
     padding: 0 var(--space-16);
     border-radius: var(--radius-md);
     font: var(--weight-semibold) var(--text-md) / 1 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     cursor: pointer;
     user-select: none;
   }
 
   .sign-in:hover {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    background: var(--overlay-2);
   }
 
   .create-account {
     padding: 0 var(--space-18);
-    background: var(--accent, #ff5672);
-    color: var(--on-accent, #2e0512);
+    background: var(--accent);
+    color: var(--on-accent);
   }
 
   .create-account:hover {

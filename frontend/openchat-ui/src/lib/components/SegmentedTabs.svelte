@@ -59,11 +59,11 @@
   .tabs {
     display: flex;
     gap: var(--space-4);
-    height: var(--control-xl, 44px);
+    height: var(--control-xl);
     box-sizing: border-box;
     padding: var(--space-4);
-    background: var(--overlay-1, rgba(255, 255, 255, 0.045));
-    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.05));
+    background: var(--overlay-1);
+    box-shadow: inset 0 0 0 1px var(--line-1);
     border-radius: var(--radius-md);
   }
 
@@ -79,27 +79,27 @@
   }
 
   .tab:hover {
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    background: var(--overlay-1);
   }
 
   .plate {
     position: absolute;
     inset: 0;
     border-radius: var(--radius-sm);
-    background: var(--card, #0e0e12);
+    background: var(--card);
     box-shadow:
       0 1px 2px rgba(0, 0, 0, 0.16),
-      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12));
+      inset 0 0 0 1px var(--line-2);
   }
 
   .label {
     position: relative;
     font: var(--weight-semibold) var(--text-md) / 1 var(--font-sans);
-    color: var(--ink-3, #8a8a99);
+    color: var(--ink-3);
   }
 
   .selected .label {
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .count {
@@ -109,14 +109,14 @@
     padding: 2px 5px;
     text-align: center;
     border-radius: var(--radius-pill);
-    background: var(--overlay-2, rgba(255, 255, 255, 0.1));
+    background: var(--overlay-2);
     font: var(--weight-semibold) var(--text-2xs) / 1.35 var(--font-mono);
-    color: var(--ink-3, #8a8a99);
+    color: var(--ink-3);
   }
 
   .selected .count {
-    background: var(--accent, #ff5672);
-    color: var(--on-accent, #2e0512);
+    background: var(--accent);
+    color: var(--on-accent);
   }
 
   .dot {
@@ -124,6 +124,6 @@
     width: 5px;
     height: 5px;
     border-radius: var(--radius-pill);
-    background: var(--accent, #ff5672);
+    background: var(--accent);
   }
 </style>

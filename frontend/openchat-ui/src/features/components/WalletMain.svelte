@@ -626,7 +626,7 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    background: var(--surface-1, #0e0e12);
+    background: var(--surface-1);
   }
 
   .scroll {
@@ -636,7 +636,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: var(--space-32, 32px) var(--space-24);
+    padding: var(--space-32) var(--space-24);
   }
 
   .column {
@@ -644,7 +644,7 @@
     max-width: 700px;
     display: flex;
     flex-direction: column;
-    gap: var(--space-24, 24px);
+    gap: var(--space-24);
   }
 
   .tabs {
@@ -670,10 +670,10 @@
   }
 
   .none {
-    padding: var(--space-32, 32px) 0;
+    padding: var(--space-32) 0;
     text-align: center;
     font: var(--weight-regular) var(--text-md) / 1.5 var(--font-sans);
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
   }
 
   .token-page {
@@ -684,7 +684,7 @@
 
   .summary {
     border-radius: 18px;
-    background: var(--overlay-1, rgba(255, 255, 255, 0.04));
+    background: var(--overlay-1);
     overflow: hidden;
   }
 
@@ -698,7 +698,7 @@
   .hero {
     display: flex;
     align-items: center;
-    gap: var(--space-16, 16px);
+    gap: var(--space-16);
   }
 
   .hero-text {
@@ -712,17 +712,17 @@
   .held {
     font: 700 30px/1.1 var(--font-sans);
     letter-spacing: -0.02em;
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     overflow-wrap: anywhere;
   }
 
   .held-symbol {
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
   }
 
   .veilable {
     filter: none;
-    transition: filter var(--duration-base, 200ms) var(--ease-out);
+    transition: filter var(--duration-base) var(--ease-out);
     user-select: auto;
   }
 
@@ -737,7 +737,7 @@
     align-items: center;
     gap: var(--space-10);
     font: var(--weight-medium) 13.5px / 1 var(--font-mono);
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
   }
 
   .actions {
@@ -747,7 +747,7 @@
   }
 
   .action {
-    --action-ink: var(--ink, #ececf1);
+    --action-ink: var(--ink);
     min-width: 0;
     display: flex;
     align-items: center;
@@ -755,9 +755,9 @@
     gap: var(--space-8);
     height: 46px;
     padding: 0 10px;
-    border-radius: var(--radius-md, 12px);
-    background: var(--overlay-2, rgba(255, 255, 255, 0.06));
-    font: var(--weight-bold, 700) 13.5px / 1 var(--font-sans);
+    border-radius: var(--radius-md);
+    background: var(--overlay-2);
+    font: var(--weight-bold) 13.5px / 1 var(--font-sans);
     color: var(--action-ink);
     white-space: nowrap;
     cursor: pointer;
@@ -769,8 +769,8 @@
   }
 
   .action.primary {
-    --action-ink: var(--on-accent, #2e0512);
-    background: var(--accent, #ff5672);
+    --action-ink: var(--on-accent);
+    background: var(--accent);
   }
 
   .action-icon {
@@ -788,7 +788,7 @@
   .facts {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-    border-top: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+    border-top: 1px solid var(--line-1);
   }
 
   .fact {
@@ -796,14 +796,14 @@
     flex-direction: column;
     gap: 7px;
     padding: 14px 18px;
-    box-shadow: inset 1px 0 0 var(--line-1, rgba(255, 255, 255, 0.07));
+    box-shadow: inset 1px 0 0 var(--line-1);
   }
 
   .fact-label {
     font: var(--weight-medium) 10px/1 var(--font-mono);
     letter-spacing: 0.09em;
     text-transform: uppercase;
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
   }
 
   .fact-value {
@@ -811,7 +811,7 @@
     align-items: center;
     gap: 6px;
     font: 600 13.5px/1.2 var(--font-mono);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     white-space: nowrap;
   }
 
@@ -823,15 +823,15 @@
   .share {
     display: flex;
     align-items: center;
-    gap: var(--space-12, 12px);
+    gap: var(--space-12);
     padding: 12px 18px 14px;
-    border-top: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+    border-top: 1px solid var(--line-1);
   }
 
   .share-label {
     flex: none;
     font: var(--weight-medium) 12.5px/1 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .share-bar {
@@ -842,7 +842,7 @@
   .share-value {
     flex: none;
     font: 600 12.5px/1 var(--font-mono);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .activity {
@@ -856,7 +856,7 @@
     position: absolute;
     left: 0;
     right: 0;
-    bottom: var(--space-24, 24px);
+    bottom: var(--space-24);
     z-index: 30;
     display: flex;
     justify-content: center;

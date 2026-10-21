@@ -71,7 +71,7 @@
     color = 'violet',
     image = '',
     online = false,
-    ringColor = 'var(--card,#0e0e12)',
+    ringColor = 'var(--card)',
     activity = '',
     icon = '',
     selected = false,
@@ -172,7 +172,7 @@
 
 <style>
   .member {
-    --row-hover: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    --row-hover: var(--overlay-1);
     width: 100%;
     box-sizing: border-box;
     display: flex;
@@ -185,8 +185,8 @@
   }
 
   .member.picked {
-    --row-hover: color-mix(in srgb, var(--accent, #ff5672) 12%, transparent);
-    background: color-mix(in srgb, var(--accent, #ff5672) 8%, transparent);
+    --row-hover: color-mix(in srgb, var(--accent) 12%, transparent);
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
   }
 
   .member.disabled {
@@ -207,13 +207,13 @@
     width: 38px;
     height: 38px;
     border-radius: var(--radius-md);
-    background: var(--accent-soft, rgba(255, 86, 114, 0.12));
-    box-shadow: inset 0 0 0 1px var(--accent-dim, rgba(255, 86, 114, 0.35));
+    background: var(--accent-soft);
+    box-shadow: inset 0 0 0 1px var(--accent-dim);
   }
 
   .invite-icon,
   .action-icon {
-    background: var(--accent, #ff5672);
+    background: var(--accent);
     mask: var(--icon-invite) center/contain no-repeat;
   }
 
@@ -251,7 +251,7 @@
     width: 11px;
     height: 11px;
     border-radius: var(--radius-pill);
-    background: var(--status-online, #2ee6a8);
+    background: var(--status-online);
   }
 
   .hook {
@@ -264,14 +264,14 @@
     width: 18px;
     height: 18px;
     border-radius: var(--radius-pill);
-    background: var(--card, #0e0e12);
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12));
+    background: var(--card);
+    box-shadow: inset 0 0 0 1px var(--line-2);
   }
 
   .hook-icon {
     width: 11px;
     height: 11px;
-    background: var(--accent, #ff5672);
+    background: var(--accent);
     mask: var(--icon-hook) center/contain no-repeat;
   }
 
@@ -292,39 +292,39 @@
 
   .name {
     font: var(--weight-semibold) var(--text-base) / 1.25 var(--font-sans);
-    color: var(--ink, #e4e4ec);
+    color: var(--ink);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
   .name.muted {
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
   }
 
   .name.invite {
-    color: var(--accent, #ff5672);
+    color: var(--accent);
   }
 
   .chip {
     flex: none;
     padding: 2px var(--space-6);
     border-radius: var(--radius-pill);
-    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    background: var(--overlay-2);
     font: var(--weight-semibold) var(--text-2xs) / 1.3 var(--font-mono);
     letter-spacing: var(--tracking-wide);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .chip.you {
-    background: var(--accent-soft, rgba(255, 86, 114, 0.12));
-    color: var(--accent-bright, #ff8298);
+    background: var(--accent-soft);
+    color: var(--accent-bright);
   }
 
   /* members show a handle in mono; bots describe themselves in prose */
   .subtitle {
     font: var(--weight-regular) var(--text-xs) / 1.4 var(--font-mono);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -350,7 +350,7 @@
   }
 
   .action:hover {
-    background: var(--accent-soft, rgba(255, 86, 114, 0.12));
+    background: var(--accent-soft);
   }
 
   .action-icon {
@@ -360,7 +360,7 @@
 
   .action-label {
     font: var(--weight-semibold) var(--text-md) / 1 var(--font-sans);
-    color: var(--accent, #ff5672);
+    color: var(--accent);
     white-space: nowrap;
   }
 
@@ -380,29 +380,29 @@
     width: 4px;
     height: 4px;
     border-radius: 50%;
-    background: var(--accent-bright, #ff8298);
+    background: var(--accent-bright);
     animation: ocTypingDot 1.2s infinite ease-in-out;
   }
 
   .activity {
     flex: none;
     font: var(--weight-medium) var(--text-sm) / 1 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .activity.now {
     font-weight: var(--weight-semibold);
-    color: var(--status-online, #2ee6a8);
+    color: var(--status-online);
   }
 
   .badge {
     flex: none;
     padding: 2px var(--space-8);
     border-radius: var(--radius-pill);
-    background: var(--overlay-2, rgba(255, 255, 255, 0.07));
+    background: var(--overlay-2);
     font: var(--weight-semibold) var(--text-2xs) / 1.4 var(--font-mono);
     letter-spacing: var(--tracking-wide);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .toggle {
@@ -413,24 +413,24 @@
     width: 26px;
     height: 26px;
     border-radius: var(--radius-pill);
-    background: var(--overlay-2, rgba(255, 255, 255, 0.07));
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12));
+    background: var(--overlay-2);
+    box-shadow: inset 0 0 0 1px var(--line-2);
   }
 
   .toggle.selected {
-    background: var(--accent, #ff5672);
-    box-shadow: inset 0 0 0 1px var(--accent, #ff5672);
+    background: var(--accent);
+    box-shadow: inset 0 0 0 1px var(--accent);
   }
 
   .toggle-icon {
     width: 14px;
     height: 14px;
-    background: var(--ink-2, #b9b9c6);
+    background: var(--ink-2);
     mask: var(--icon-plus) center/contain no-repeat;
   }
 
   .toggle.selected .toggle-icon {
-    background: var(--on-accent, #2e0512);
+    background: var(--on-accent);
     mask: var(--icon-check) center/contain no-repeat;
   }
 
@@ -447,21 +447,21 @@
   }
 
   .icon-button.selected {
-    background: var(--accent, #ff5672);
+    background: var(--accent);
   }
 
   .icon-button:hover {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    background: var(--overlay-2);
   }
 
   .icon {
     width: 16px;
     height: 16px;
-    background: var(--ink-3, #9a9aa8);
+    background: var(--ink-3);
   }
 
   .icon-button.selected .icon {
-    background: var(--on-accent, #2e0512);
+    background: var(--on-accent);
   }
 
   .kebab {
@@ -475,13 +475,13 @@
   }
 
   .kebab:hover {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    background: var(--overlay-2);
   }
 
   .kebab-icon {
     width: 15px;
     height: 15px;
-    background: var(--ink-3, #9a9aa8);
+    background: var(--ink-3);
     mask: var(--icon-kebab) center/contain no-repeat;
   }
 </style>

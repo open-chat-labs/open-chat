@@ -41,13 +41,13 @@
   }
 
   .neutral {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.06));
-    color: var(--ink-2, #c9c9d4);
+    background: var(--overlay-2);
+    color: var(--ink-2);
   }
 
   .success {
     background: rgba(46, 230, 168, 0.12);
-    color: var(--status-online, #2ee6a8);
+    color: var(--status-online);
   }
 
   .warning {
@@ -57,12 +57,12 @@
 
   .danger {
     background: rgba(245, 73, 61, 0.12);
-    color: var(--status-danger, #f5493d);
+    color: var(--status-danger);
   }
 
   .accent {
-    background: var(--accent-soft, rgba(255, 86, 114, 0.14));
-    color: var(--accent-bright, #ff8298);
+    background: var(--accent-soft);
+    color: var(--accent-bright);
   }
 
   .dot {

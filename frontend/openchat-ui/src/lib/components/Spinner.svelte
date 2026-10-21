@@ -20,12 +20,12 @@
 
 <div class="spinner" role="status" aria-label={t(label)}>
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <circle cx="12" cy="12" {r} stroke="var(--overlay-2,rgba(255,255,255,.1))" stroke-width={stroke} />
+    <circle cx="12" cy="12" {r} stroke="var(--overlay-2)" stroke-width={stroke} />
     <circle
       cx="12"
       cy="12"
       {r}
-      stroke={tone === 'ink' ? 'var(--ink,#ECECF1)' : 'var(--accent,#FF5672)'}
+      stroke={tone === 'ink' ? 'var(--ink)' : 'var(--accent)'}
       stroke-width={stroke}
       stroke-linecap="round"
       stroke-dasharray={dash}

@@ -90,8 +90,8 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-12);
-    background: var(--bubble-recv-bg, #191921);
-    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+    background: var(--bubble-recv-bg);
+    box-shadow: inset 0 0 0 1px var(--line-1);
     border-start-start-radius: var(--radius-xs);
     border-start-end-radius: var(--radius-xl);
     border-end-end-radius: var(--radius-xl);
@@ -118,7 +118,7 @@
     width: 30px;
     height: 30px;
     border-radius: var(--radius-pill);
-    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    background: var(--overlay-2);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -126,14 +126,14 @@
   }
 
   .play:hover {
-    background: var(--btn-hover, rgba(255, 255, 255, 0.14));
+    background: var(--btn-hover);
   }
 
   .play-icon {
     width: 14px;
     height: 14px;
     margin-left: 2px;
-    background: var(--ink, #e4e4ec);
+    background: var(--ink);
     mask: var(--icon-play-filled) center/contain no-repeat;
   }
 
@@ -157,16 +157,16 @@
     padding: 0;
     box-sizing: border-box;
     border-radius: var(--radius-pill);
-    background: var(--overlay-1, rgba(255, 255, 255, 0.06));
-    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+    background: var(--overlay-1);
+    box-shadow: inset 0 0 0 1px var(--line-1);
     font: var(--weight-medium) var(--text-xs) / 1 var(--font-mono);
-    color: var(--ink-2, #b9b9c6);
+    color: var(--ink-2);
     cursor: pointer;
     user-select: none;
   }
 
   .speed:hover {
-    background: var(--btn-hover, rgba(255, 255, 255, 0.12));
+    background: var(--btn-hover);
   }
 
   .meta {
@@ -180,20 +180,20 @@
   .clock {
     flex: none;
     font: var(--weight-medium) var(--text-xs) / 1 var(--font-mono);
-    color: var(--accent, #ff5672);
+    color: var(--accent);
   }
 
   .slash {
-    color: var(--ink-3, #8a8a99);
+    color: var(--ink-3);
   }
 
   .total {
-    color: var(--ink, #e4e4ec);
+    color: var(--ink);
   }
 
   .time {
     flex: none;
     font: var(--weight-regular) var(--text-xs) / 1 var(--font-mono);
-    color: var(--meta, #9393a2);
+    color: var(--meta);
   }
 </style>

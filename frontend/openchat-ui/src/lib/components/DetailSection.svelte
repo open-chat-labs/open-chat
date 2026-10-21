@@ -42,7 +42,7 @@
   .section {
     padding: var(--space-14) var(--space-16);
     border-radius: var(--radius-lg);
-    background: var(--overlay-1, rgba(255, 255, 255, 0.04));
+    background: var(--overlay-1);
     display: flex;
     flex-direction: column;
     align-items: stretch;
@@ -53,12 +53,12 @@
     font: var(--weight-medium) var(--text-xs) / 1 var(--font-mono);
     letter-spacing: var(--tracking-wide);
     text-transform: uppercase;
-    color: var(--ink-4, #6e6e7c);
+    color: var(--ink-4);
   }
 
   .prose {
     font: var(--weight-regular) var(--text-md) / 1.5 var(--font-sans);
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
     text-wrap: pretty;
     display: -webkit-box;
     -webkit-box-orient: vertical;
@@ -68,7 +68,7 @@
   .more {
     align-self: flex-start;
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
-    color: var(--accent-bright, #ff8298);
+    color: var(--accent-bright);
     cursor: pointer;
     user-select: none;
   }
@@ -78,11 +78,11 @@
     align-items: center;
     gap: 7px;
     font: var(--weight-semibold) var(--text-base) / 1 var(--font-sans);
-    color: var(--ink, #e4e4ec);
+    color: var(--ink);
   }
 
   .value.highlight {
-    color: var(--accent-bright, #ff8298);
+    color: var(--accent-bright);
   }
 
   .dot {
@@ -90,6 +90,6 @@
     width: 7px;
     height: 7px;
     border-radius: var(--radius-pill);
-    background: var(--status-online, #2ee6a8);
+    background: var(--status-online);
   }
 </style>

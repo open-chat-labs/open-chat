@@ -246,7 +246,7 @@
   }
 
   .chat-row.focus-visible {
-    box-shadow: 0 0 0 2px var(--accent, #ff5672);
+    box-shadow: 0 0 0 2px var(--accent);
   }
 
   .row {
@@ -262,15 +262,15 @@
 
   .row:hover,
   .row.menu-open {
-    background: var(--overlay-1, rgba(255, 255, 255, 0.045));
+    background: var(--overlay-1);
   }
 
   .selected {
     position: absolute;
     inset: 0;
     border-radius: var(--radius-lg);
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
-    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+    background: var(--overlay-1);
+    box-shadow: inset 0 0 0 1px var(--line-1);
   }
 
   .avatar {
@@ -299,7 +299,7 @@
 
   .title {
     font: var(--weight-bold) var(--text-base) / 1.2 var(--font-sans);
-    color: var(--ink, #fff);
+    color: var(--ink);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -309,7 +309,7 @@
     flex: none;
     width: 16px;
     height: 16px;
-    background: var(--status-verified, #3d9bff);
+    background: var(--status-verified);
     mask: var(--icon-verified) center/contain no-repeat;
   }
 
@@ -321,7 +321,7 @@
     flex: none;
     width: 12px;
     height: 12px;
-    background: var(--ink-4, #6e6e7c);
+    background: var(--ink-4);
   }
 
   .pin {
@@ -335,7 +335,7 @@
   .time {
     flex: none;
     font: var(--weight-regular) var(--text-xs) / 1 var(--font-mono);
-    color: var(--ink-4, #6e6e7c);
+    color: var(--ink-4);
   }
 
   .typing {
@@ -348,15 +348,15 @@
     width: 5px;
     height: 5px;
     border-radius: var(--radius-pill);
-    background: var(--accent, #ff5672);
+    background: var(--accent);
   }
 
   .dot.mid {
-    background: var(--accent-mid, rgba(255, 86, 114, 0.6));
+    background: var(--accent-mid);
   }
 
   .dot.dim {
-    background: var(--accent-dim, rgba(255, 86, 114, 0.35));
+    background: var(--accent-dim);
   }
 
   .call,
@@ -373,7 +373,7 @@
     align-items: center;
     gap: 6px;
     font-weight: 600;
-    color: var(--status-online, #2ee6a8);
+    color: var(--status-online);
   }
 
   .call-icon {
@@ -390,7 +390,7 @@
   }
 
   .preview {
-    color: var(--ink-3, #8a8a99);
+    color: var(--ink-3);
     text-overflow: ellipsis;
   }
 
@@ -408,8 +408,8 @@
     padding: 0 var(--space-4);
     box-sizing: border-box;
     border-radius: var(--radius-pill);
-    background: var(--accent, #ff5672);
-    color: var(--on-accent, #2e0512);
+    background: var(--accent);
+    color: var(--on-accent);
     font: var(--weight-bold) var(--text-xs) / 1 var(--font-sans);
   }
 
@@ -452,13 +452,13 @@
 
   .menu-open .kebab,
   .kebab:hover {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.1));
+    background: var(--overlay-2);
   }
 
   .kebab-icon {
     width: 14px;
     height: 14px;
-    background: var(--ink-3, #9a9aa8);
+    background: var(--ink-3);
     mask: var(--icon-kebab) center/contain no-repeat;
   }
 </style>

@@ -92,7 +92,7 @@
               aria-label={tk.title ? t(tk.title) : undefined}
               title={tk.title ? t(tk.title) : undefined}
             >
-              <span class="mark" style:background={tk.gradient ?? 'var(--overlay-2,rgba(255,255,255,.09))'}>{tk.mark ?? ''}</span>
+              <span class="mark" style:background={tk.gradient ?? 'var(--overlay-2)'}>{tk.mark ?? ''}</span>
               <div class="names">
                 <span class="symbol">{tk.symbol}</span>
                 <span class="name">{tk.note ? t(tk.note) : (tk.name ?? '')}</span>
@@ -138,8 +138,8 @@
     padding: 0 var(--space-14);
     box-sizing: border-box;
     border-radius: var(--radius-md);
-    background: var(--field, #14141a);
-    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+    background: var(--field);
+    box-shadow: inset 0 0 0 1px var(--line-1);
   }
 
   input {
@@ -149,12 +149,12 @@
     outline: none;
     background: transparent;
     font: var(--weight-medium) var(--text-md) / 1.3 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .icon {
     flex: none;
-    background: var(--ink-4, #7c7c8c);
+    background: var(--ink-4);
   }
 
   .search-icon {
@@ -187,7 +187,7 @@
   }
 
   .clear:hover {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    background: var(--overlay-2);
   }
 
   .list {
@@ -212,7 +212,7 @@
     padding: 0 var(--space-12);
     font: var(--weight-semibold) var(--text-xs) / 1 var(--font-mono);
     letter-spacing: var(--tracking-wide);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .rows {
@@ -237,7 +237,7 @@
 
   .row:hover,
   .row.current {
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    background: var(--overlay-1);
   }
 
   .row.disabled {
@@ -267,12 +267,12 @@
 
   .symbol {
     font: var(--weight-bold) var(--text-md) / 1.2 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .name {
     font: var(--weight-regular) var(--text-sm) / 1.2 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -281,7 +281,7 @@
   .held {
     flex: none;
     font: var(--weight-medium) var(--text-md) / 1.2 var(--font-mono);
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
   }
 
   .empty {
@@ -294,12 +294,12 @@
 
   .empty-title {
     font: var(--weight-semibold) var(--text-md) / 1.3 var(--font-sans);
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
   }
 
   .empty-hint {
     font: var(--weight-regular) var(--text-sm) / 1.45 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
     text-wrap: pretty;
   }
 </style>

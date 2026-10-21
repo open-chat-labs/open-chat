@@ -303,13 +303,13 @@
 {#snippet sheetHeader(title: string, sub: string, mono: boolean, onClose: () => void, onBack?: () => void)}
   <div class="sheet-head">
     {#if onBack}
-      <span class="square back" onclick={onBack} role="button" tabindex="0">{@render glyph('back', 15, 'var(--ink-2,#C9C9D4)')}</span>
+      <span class="square back" onclick={onBack} role="button" tabindex="0">{@render glyph('back', 15, 'var(--ink-2)')}</span>
     {/if}
     <div class="sheet-titles">
       <span class="sheet-title">{title}</span>
       <span class="sheet-sub" class:mono>{sub}</span>
     </div>
-    <span class="square small" onclick={onClose} role="button" tabindex="0">{@render glyph('close', 14, 'var(--ink-3,#9A9AA8)')}</span>
+    <span class="square small" onclick={onClose} role="button" tabindex="0">{@render glyph('close', 14, 'var(--ink-3)')}</span>
   </div>
 {/snippet}
 
@@ -322,7 +322,7 @@
         <span class="header-title">{t('ui.walletSettingsDialog.title')}</span>
         <span class="header-sub">{t('ui.walletSettingsDialog.subtitle')}</span>
       </div>
-      <span class="square" onclick={close} role="button" tabindex="0">{@render glyph('close', 15, 'var(--ink-3,#9A9AA8)')}</span>
+      <span class="square" onclick={close} role="button" tabindex="0">{@render glyph('close', 15, 'var(--ink-3)')}</span>
     </div>
 
     <div class="main">
@@ -382,7 +382,7 @@
                   >{t(autoOn ? 'ui.walletSettingsDialog.shownByMinimum' : 'ui.walletSettingsDialog.shownByYou', { shown: autoOn ? shown.length : picked.length, total: held.length })}</span
                 >
               </div>
-              {@render glyph('chevron-right', 14, 'var(--ink-4,#7C7C8C)')}
+              {@render glyph('chevron-right', 14, 'var(--ink-4)')}
             </div>
             <div class="chips">
               {#each shown.slice(0, CHIP_CAP) as c}
@@ -424,7 +424,7 @@
           {#if settings.pinOn && onChangePin}
             <span class="change-pin" onclick={() => startPin('change')} role="button" tabindex="0">
               <span class="change-pin-label">{t('ui.walletSettingsDialog.changePin')}</span>
-              {@render glyph('lock', 14, 'var(--accent,#FF5672)')}
+              {@render glyph('lock', 14, 'var(--accent)')}
             </span>
           {/if}
         {/if}
@@ -437,7 +437,7 @@
               <span class="currency" class:on onclick={() => apply({ currency: c })} role="button" tabindex="0">
                 <span class="currency-code">{c}</span>
                 <span class="currency-note">{c === 'USD' ? t('ui.walletSettingsDialog.currencyDefault') : t('ui.walletSettingsDialog.pricedFrom', { currency: c })}</span>
-                {@render glyph('check', 16, on ? 'var(--accent,#FF5672)' : 'transparent')}
+                {@render glyph('check', 16, on ? 'var(--accent)' : 'transparent')}
               </span>
             {/each}
           </div>
@@ -457,13 +457,13 @@
                   confirmId = null;
                 }}
                 role="button"
-                tabindex="0">{@render glyph('plus', 13, 'var(--on-accent,#2E0512)')}<span class="add-label">{t('ui.common.add')}</span></span
+                tabindex="0">{@render glyph('plus', 13, 'var(--on-accent)')}<span class="add-label">{t('ui.common.add')}</span></span
               >
             </div>
 
             {#if saved.length > 5}
               <div class="search">
-                {@render glyph('search', 14, 'var(--ink-4,#7C7C8C)')}
+                {@render glyph('search', 14, 'var(--ink-4)')}
                 <input bind:value={recipQuery} placeholder={t('ui.walletSettingsDialog.searchRecipients')} />
               </div>
             {/if}
@@ -476,7 +476,7 @@
                 {@const net = detect(r.address)}
                 {@const tok = r.token ? held.find((t) => t.symbol === r.token) : undefined}
                 <div class="recipient">
-                  <span class="recipient-mark" class:token={!!tok} style:background={tok ? tok.grad : 'var(--overlay-2,rgba(255,255,255,.1))'}
+                  <span class="recipient-mark" class:token={!!tok} style:background={tok ? tok.grad : 'var(--overlay-2)'}
                     >{tok ? tok.mark : (r.name || '?').trim().charAt(0).toUpperCase()}</span
                   >
                   <div class="recipient-text">
@@ -507,10 +507,10 @@
                         role="button"
                         tabindex="0"
                         aria-label={t('ui.walletSettingsDialog.editRecipient')}
-                        title={t('ui.walletSettingsDialog.editRecipient')}>{@render glyph('edit', 15, 'var(--ink-3,#9A9AA8)')}</span
+                        title={t('ui.walletSettingsDialog.editRecipient')}>{@render glyph('edit', 15, 'var(--ink-3)')}</span
                       >
                       <span class="square" onclick={() => (confirmId = r.id)} role="button" tabindex="0" aria-label={t('ui.walletSettingsDialog.removeRecipient')} title={t('ui.walletSettingsDialog.removeRecipient')}
-                        >{@render glyph('trash', 15, 'var(--ink-3,#9A9AA8)')}</span
+                        >{@render glyph('trash', 15, 'var(--ink-3)')}</span
                       >
                     </div>
                   {/if}
@@ -519,7 +519,7 @@
 
               {#if shownRecips.length === 0}
                 <div class="recipients-empty">
-                  {@render glyph('users', 22, 'var(--ink-4,#7C7C8C)')}
+                  {@render glyph('users', 22, 'var(--ink-4)')}
                   <span class="recipients-empty-text"
                     >{saved.length === 0 ? t('ui.walletSettingsDialog.noRecipients') : t('ui.walletSettingsDialog.noRecipientMatch', { query: recipQuery.trim() })}</span
                   >
@@ -544,10 +544,10 @@
 
           <div class="list-search-wrap">
             <div class="search tall">
-              {@render glyph('search', 15, 'var(--ink-4,#7C7C8C)')}
+              {@render glyph('search', 15, 'var(--ink-4)')}
               <input bind:value={query} placeholder={t('ui.walletSettingsDialog.searchTokens')} />
               {#if query.length > 0}
-                <span class="clear" onclick={() => (query = '')} role="button" tabindex="0">{@render glyph('close', 11, 'var(--ink-3,#9A9AA8)')}</span>
+                <span class="clear" onclick={() => (query = '')} role="button" tabindex="0">{@render glyph('close', 11, 'var(--ink-3)')}</span>
               {/if}
             </div>
           </div>
@@ -579,7 +579,7 @@
                     <span class="token-symbol">{tk.symbol}</span>
                     <span class="token-value">{money(tk.value)}</span>
                   </div>
-                  {@render glyph(on ? 'check' : 'circle', 18, on ? 'var(--accent,#FF5672)' : 'var(--line-2,rgba(255,255,255,.14))')}
+                  {@render glyph(on ? 'check' : 'circle', 18, on ? 'var(--accent)' : 'var(--line-2)')}
                 </div>
               {/each}
               {#if filtered.length === 0}
@@ -782,7 +782,7 @@
     background: var(--oc-veil, rgba(3, 3, 6, 0.72));
     backdrop-filter: var(--oc-veil-blur, blur(4px));
     -webkit-backdrop-filter: var(--oc-veil-blur, blur(4px));
-    animation: oc-veil-in var(--duration-base, 200ms) var(--ease-out) both;
+    animation: oc-veil-in var(--duration-base) var(--ease-out) both;
   }
 
   .layer.closing {
@@ -803,12 +803,12 @@
     max-height: 100%;
     box-sizing: border-box;
     border-radius: var(--radius-xl);
-    background: var(--surface-1, #0e0e12);
+    background: var(--surface-1);
     box-shadow:
-      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1)),
-      var(--shadow-modal, 0 30px 70px rgba(0, 0, 0, 0.45));
+      inset 0 0 0 1px var(--line-2),
+      var(--shadow-modal);
     overflow: hidden;
-    animation: oc-dlg-in var(--duration-slow, 280ms) var(--ease-out) both;
+    animation: oc-dlg-in var(--duration-slow) var(--ease-out) both;
   }
 
   .card.closing {
@@ -829,7 +829,7 @@
     align-items: center;
     gap: var(--space-12);
     padding: var(--space-16) var(--space-22);
-    border-block-end: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+    border-block-end: 1px solid var(--line-1);
   }
 
   .header-text,
@@ -843,13 +843,13 @@
 
   .header-title {
     font: var(--weight-bold) var(--text-lg) / 1.25 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .header-sub,
   .sheet-sub {
     font: var(--weight-regular) var(--text-sm) / 1.3 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .sheet-sub.mono {
@@ -879,7 +879,7 @@
 
   .square:hover,
   .clear:hover {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    background: var(--overlay-2);
   }
 
   .main {
@@ -896,11 +896,11 @@
     flex-direction: column;
     gap: 2px;
     padding: var(--space-14) var(--space-10);
-    border-inline-end: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+    border-inline-end: 1px solid var(--line-1);
   }
 
   .nav-item {
-    --nav-ink: var(--ink-3, #9a9aa8);
+    --nav-ink: var(--ink-3);
     display: flex;
     align-items: center;
     gap: var(--space-10);
@@ -913,12 +913,12 @@
   }
 
   .nav-item.on {
-    --nav-ink: var(--ink, #ececf1);
-    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    --nav-ink: var(--ink);
+    background: var(--overlay-2);
   }
 
   .nav-item:hover {
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    background: var(--overlay-1);
   }
 
   .nav-label {
@@ -959,12 +959,12 @@
 
   .setting-title {
     font: var(--weight-bold) var(--text-md) / 1.3 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .setting-desc {
     font: var(--weight-regular) var(--text-sm) / 1.5 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
     text-wrap: pretty;
   }
 
@@ -976,7 +976,7 @@
   .eyebrow {
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-mono);
     letter-spacing: var(--tracking-wide);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .eyebrow.grow {
@@ -988,7 +988,7 @@
   }
 
   .optional {
-    color: var(--ink-4, #6e6e7c);
+    color: var(--ink-4);
   }
 
   .minimum {
@@ -1008,14 +1008,14 @@
     height: 40px;
     box-sizing: border-box;
     border-radius: var(--radius-md);
-    background: var(--field, #14141a);
-    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+    background: var(--field);
+    box-shadow: inset 0 0 0 1px var(--line-1);
   }
 
   .dollar {
     flex: none;
     font: var(--weight-semibold) var(--text-md) / 1 var(--font-mono);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .money-field input {
@@ -1025,7 +1025,7 @@
     border: 0;
     outline: none;
     font: var(--weight-semibold) var(--text-md) / 1.3 var(--font-mono);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .list-card {
@@ -1035,12 +1035,12 @@
     gap: var(--space-12);
     padding: var(--space-14);
     border-radius: var(--radius-md);
-    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+    box-shadow: inset 0 0 0 1px var(--line-1);
     cursor: pointer;
   }
 
   .list-card:hover {
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    background: var(--overlay-1);
   }
 
   .list-card-head {
@@ -1060,12 +1060,12 @@
 
   .list-card-title {
     font: var(--weight-semibold) var(--text-md) / 1.2 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .list-card-sub {
     font: var(--weight-regular) var(--text-sm) / 1.3 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .chips {
@@ -1083,7 +1083,7 @@
     padding: 0 var(--space-8) 0 3px;
     box-sizing: border-box;
     border-radius: var(--radius-pill);
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    background: var(--overlay-1);
   }
 
   .chip-mark,
@@ -1101,7 +1101,7 @@
 
   .chip-symbol {
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
   }
 
   .chip-more {
@@ -1112,19 +1112,19 @@
     padding: 0 var(--space-10);
     box-sizing: border-box;
     border-radius: var(--radius-pill);
-    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+    box-shadow: inset 0 0 0 1px var(--line-1);
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .none {
     font: var(--weight-regular) var(--text-sm) / 1.6 var(--font-sans);
-    color: var(--status-danger, #f5493d);
+    color: var(--status-danger);
   }
 
   .recip-error {
     font: var(--weight-medium) var(--text-sm) / 1.4 var(--font-sans);
-    color: var(--status-danger, #f5493d);
+    color: var(--status-danger);
   }
 
   .pin-head {
@@ -1135,7 +1135,7 @@
   }
 
   .pin-badge {
-    --badge-ink: var(--ink-4, #7c7c8c);
+    --badge-ink: var(--ink-4);
     flex: none;
     display: flex;
     align-items: center;
@@ -1144,12 +1144,12 @@
     padding: 0 var(--space-8);
     box-sizing: border-box;
     border-radius: var(--radius-pill);
-    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+    background: var(--overlay-2);
   }
 
   .pin-badge.set {
-    --badge-ink: var(--status-online, #2ee6a8);
-    background: var(--category-b-soft, rgba(46, 230, 168, 0.12));
+    --badge-ink: var(--status-online);
+    background: var(--category-b-soft);
   }
 
   .pin-badge-label {
@@ -1166,19 +1166,19 @@
     gap: var(--space-8);
     height: 40px;
     border-radius: var(--radius-md);
-    box-shadow: inset 0 0 0 1px var(--accent, #ff5672);
+    box-shadow: inset 0 0 0 1px var(--accent);
     cursor: pointer;
     user-select: none;
   }
 
   .change-pin:hover,
   .take-over-button:hover {
-    background: var(--accent-soft, rgba(255, 86, 114, 0.12));
+    background: var(--accent-soft);
   }
 
   .change-pin-label {
     font: var(--weight-semibold) var(--text-base) / 1 var(--font-sans);
-    color: var(--accent, #ff5672);
+    color: var(--accent);
   }
 
   .currencies {
@@ -1202,24 +1202,24 @@
   }
 
   .currency.on {
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    background: var(--overlay-1);
   }
 
   .currency:hover {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.07));
+    background: var(--overlay-2);
   }
 
   .currency-code {
     flex: 1;
     min-width: 0;
     font: var(--weight-semibold) var(--text-md) / 1 var(--font-mono);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .currency-note {
     flex: none;
     font: var(--weight-regular) var(--text-sm) / 1 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .recipients {
@@ -1245,7 +1245,7 @@
     padding: 0 var(--space-12);
     box-sizing: border-box;
     border-radius: var(--radius-md);
-    background: var(--accent, #ff5672);
+    background: var(--accent);
     cursor: pointer;
     user-select: none;
   }
@@ -1256,7 +1256,7 @@
 
   .add-label {
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
-    color: var(--on-accent, #2e0512);
+    color: var(--on-accent);
   }
 
   .search {
@@ -1267,8 +1267,8 @@
     padding: 0 var(--space-12);
     box-sizing: border-box;
     border-radius: var(--radius-md);
-    background: var(--field, #14141a);
-    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+    background: var(--field);
+    box-shadow: inset 0 0 0 1px var(--line-1);
   }
 
   .search.tall {
@@ -1282,7 +1282,7 @@
     border: 0;
     outline: none;
     font: var(--weight-medium) var(--text-md) / 1.3 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .clear {
@@ -1310,11 +1310,11 @@
     padding: var(--space-8) var(--space-12);
     box-sizing: border-box;
     border-radius: var(--radius-md);
-    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+    box-shadow: inset 0 0 0 1px var(--line-1);
   }
 
   .recipient:hover {
-    background: var(--overlay-1, rgba(255, 255, 255, 0.04));
+    background: var(--overlay-1);
   }
 
   .recipient-mark {
@@ -1326,7 +1326,7 @@
     height: 32px;
     border-radius: var(--radius-pill);
     font: var(--weight-bold) var(--text-sm) / 1 var(--font-sans);
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
   }
 
   .recipient-mark.token {
@@ -1352,7 +1352,7 @@
     flex: none;
     max-width: 190px;
     font: var(--weight-semibold) var(--text-md) / 1.2 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1366,15 +1366,15 @@
     padding: 0 var(--space-6);
     box-sizing: border-box;
     border-radius: var(--radius-sm);
-    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+    background: var(--overlay-2);
     font: var(--weight-semibold) 10px/1 var(--font-mono);
     letter-spacing: var(--tracking-wide);
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
   }
 
   .recipient-address {
     font: var(--weight-regular) var(--text-sm) / 1.2 var(--font-mono);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1402,17 +1402,17 @@
     box-sizing: border-box;
     border-radius: var(--radius-sm);
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
     cursor: pointer;
     user-select: none;
   }
 
   .keep:hover {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    background: var(--overlay-2);
   }
 
   .remove {
-    background: var(--status-danger, #f5493d);
+    background: var(--status-danger);
     color: #2b0704;
   }
 
@@ -1427,12 +1427,12 @@
     gap: var(--space-10);
     padding: var(--space-32) var(--space-22);
     border-radius: var(--radius-lg);
-    border: 1px dashed var(--line-2, rgba(255, 255, 255, 0.14));
+    border: 1px dashed var(--line-2);
   }
 
   .recipients-empty-text {
     font: var(--weight-regular) var(--text-md) / 1.5 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
     text-align: center;
     text-wrap: pretty;
   }
@@ -1443,14 +1443,14 @@
     align-items: center;
     gap: var(--space-12);
     padding: var(--space-14) var(--space-22);
-    border-block-start: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+    border-block-start: 1px solid var(--line-1);
   }
 
   .footer-note {
     flex: 1;
     min-width: 0;
     font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .done {
@@ -1461,9 +1461,9 @@
     height: 38px;
     box-sizing: border-box;
     border-radius: var(--radius-md);
-    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    background: var(--overlay-2);
     font: var(--weight-semibold) var(--text-base) / 1 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     cursor: pointer;
     user-select: none;
   }
@@ -1515,9 +1515,9 @@
     max-height: 100%;
     box-sizing: border-box;
     border-radius: var(--radius-xl);
-    background: var(--surface-1, #15151b);
+    background: var(--surface-1);
     box-shadow:
-      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12)),
+      inset 0 0 0 1px var(--line-2),
       0 24px 60px rgba(0, 0, 0, 0.5);
     overflow: hidden;
     animation: oc-sheet-in 200ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
@@ -1542,12 +1542,12 @@
     align-items: center;
     gap: var(--space-12);
     padding: var(--space-16) var(--space-18);
-    border-block-end: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+    border-block-end: 1px solid var(--line-1);
   }
 
   .sheet-title {
     font: var(--weight-bold) var(--text-md) / 1.25 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .sheet-body {
@@ -1571,7 +1571,7 @@
     align-items: center;
     gap: var(--space-8);
     padding: var(--space-14) var(--space-18);
-    border-block-start: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+    border-block-start: 1px solid var(--line-1);
   }
 
   .list-sheet .sheet-foot {
@@ -1582,11 +1582,11 @@
     flex: 1;
     min-width: 0;
     font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .sheet-foot-note.warn {
-    color: var(--status-danger, #f5493d);
+    color: var(--status-danger);
   }
 
   .list-search-wrap {
@@ -1600,12 +1600,12 @@
     gap: var(--space-10);
     padding: var(--space-12) var(--space-14);
     border-radius: var(--radius-md);
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    background: var(--overlay-1);
   }
 
   .take-over-text {
     font: var(--weight-regular) var(--text-sm) / 1.5 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
     text-wrap: pretty;
   }
 
@@ -1615,9 +1615,9 @@
     justify-content: center;
     height: 34px;
     border-radius: var(--radius-sm);
-    box-shadow: inset 0 0 0 1px var(--accent, #ff5672);
+    box-shadow: inset 0 0 0 1px var(--accent);
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
-    color: var(--accent, #ff5672);
+    color: var(--accent);
     cursor: pointer;
     user-select: none;
   }
@@ -1643,7 +1643,7 @@
   }
 
   .token-row.on {
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    background: var(--overlay-1);
   }
 
   .token-row.locked {
@@ -1655,7 +1655,7 @@
   }
 
   .token-row:hover {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.07));
+    background: var(--overlay-2);
   }
 
   .token-mark {
@@ -1680,23 +1680,23 @@
 
   .token-symbol {
     font: var(--weight-bold) var(--text-md) / 1.2 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .token-value {
     font: var(--weight-regular) var(--text-sm) / 1.2 var(--font-mono);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .no-rows {
     padding: var(--space-14) var(--space-12);
     font: var(--weight-regular) var(--text-md) / 1.45 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .pin-blurb {
     font: var(--weight-regular) var(--text-md) / 1.55 var(--font-sans);
-    color: var(--ink-2, #b9b9c6);
+    color: var(--ink-2);
     text-wrap: pretty;
   }
 
@@ -1707,7 +1707,7 @@
     gap: var(--space-12);
     padding: var(--space-22) var(--space-14);
     border-radius: var(--radius-lg);
-    background: var(--overlay-1, rgba(255, 255, 255, 0.035));
+    background: var(--overlay-1);
     cursor: text;
   }
 
@@ -1725,18 +1725,18 @@
     height: 42px;
     box-sizing: border-box;
     padding-block-end: var(--space-6);
-    border-block-end: 2px solid var(--line-2, rgba(255, 255, 255, 0.14));
-    font: var(--weight-bold) var(--text-xl, 20px) / 1 var(--font-mono);
-    color: var(--ink, #ececf1);
+    border-block-end: 2px solid var(--line-2);
+    font: var(--weight-bold) var(--text-xl) / 1 var(--font-mono);
+    color: var(--ink);
     transition: border-color 160ms ease-out;
   }
 
   .pin-digit.filled {
-    border-block-end-color: var(--accent, #ff5672);
+    border-block-end-color: var(--accent);
   }
 
   .pin-digit.error {
-    border-block-end-color: var(--status-danger, #f5493d);
+    border-block-end-color: var(--status-danger);
   }
 
   .pin-input {
@@ -1753,11 +1753,11 @@
 
   .pin-note {
     font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .pin-note.error {
-    color: var(--status-danger, #f5493d);
+    color: var(--status-danger);
   }
 
   .cancel {
@@ -1765,17 +1765,17 @@
     padding: var(--space-8) var(--space-12);
     border-radius: var(--radius-md);
     font: var(--weight-semibold) var(--text-base) / 1 var(--font-sans);
-    color: var(--accent, #ff5672);
+    color: var(--accent);
     cursor: pointer;
     user-select: none;
   }
 
   .cancel:hover {
-    background: var(--accent-soft, rgba(255, 86, 114, 0.1));
+    background: var(--accent-soft);
   }
 
   .primary {
-    --primary-ink: var(--ink-4, #7c7c8c);
+    --primary-ink: var(--ink-4);
     flex: none;
     display: flex;
     align-items: center;
@@ -1784,7 +1784,7 @@
     height: 38px;
     box-sizing: border-box;
     border-radius: var(--radius-md);
-    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    background: var(--overlay-2);
     font: var(--weight-semibold) var(--text-base) / 1 var(--font-sans);
     color: var(--primary-ink);
     cursor: not-allowed;
@@ -1792,8 +1792,8 @@
   }
 
   .primary.ready {
-    --primary-ink: var(--on-accent, #2e0512);
-    background: var(--accent, #ff5672);
+    --primary-ink: var(--on-accent);
+    background: var(--accent);
     cursor: pointer;
   }
 
@@ -1811,35 +1811,35 @@
     border: 0;
     outline: none;
     border-radius: var(--radius-md);
-    background: var(--field, #14141a);
-    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+    background: var(--field);
+    box-shadow: inset 0 0 0 1px var(--line-1);
     font: var(--weight-medium) var(--text-md) / 1.5 var(--font-mono);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     word-break: break-all;
   }
 
   .address-input.valid {
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.14));
+    box-shadow: inset 0 0 0 1px var(--line-2);
   }
 
   .address-input.invalid {
-    box-shadow: inset 0 0 0 1px var(--status-danger, #f5493d);
+    box-shadow: inset 0 0 0 1px var(--status-danger);
   }
 
   .address-note {
-    --note-ink: var(--status-danger, #f5493d);
+    --note-ink: var(--status-danger);
     display: flex;
     align-items: center;
     gap: var(--space-8);
     min-width: 0;
     padding: var(--space-10) var(--space-12);
     border-radius: var(--radius-md);
-    background: var(--status-danger-soft, rgba(245, 73, 61, 0.12));
+    background: var(--status-danger-soft);
   }
 
   .address-note.valid {
-    --note-ink: var(--status-online, #2ee6a8);
-    background: var(--category-b-soft, rgba(46, 230, 168, 0.12));
+    --note-ink: var(--status-online);
+    background: var(--category-b-soft);
   }
 
   .address-note-text {
@@ -1858,15 +1858,15 @@
     border: 0;
     outline: none;
     border-radius: var(--radius-md);
-    background: var(--field, #14141a);
-    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+    background: var(--field);
+    box-shadow: inset 0 0 0 1px var(--line-1);
     font: var(--weight-medium) var(--text-md) / 1.3 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .field-hint {
     font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .field-hint.wrap {
@@ -1881,7 +1881,7 @@
   }
 
   .token-chip {
-    --chip-ink: var(--ink-2, #c9c9d4);
+    --chip-ink: var(--ink-2);
     flex: none;
     display: flex;
     align-items: center;
@@ -1890,7 +1890,7 @@
     padding: 0 var(--space-12);
     box-sizing: border-box;
     border-radius: var(--radius-pill);
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    background: var(--overlay-1);
     cursor: pointer;
     user-select: none;
   }
@@ -1900,9 +1900,9 @@
   }
 
   .token-chip.on {
-    --chip-ink: var(--accent, #ff5672);
-    background: var(--accent-soft, rgba(255, 86, 114, 0.14));
-    box-shadow: inset 0 0 0 1px var(--accent, #ff5672);
+    --chip-ink: var(--accent);
+    background: var(--accent-soft);
+    box-shadow: inset 0 0 0 1px var(--accent);
   }
 
   .token-chip:hover {

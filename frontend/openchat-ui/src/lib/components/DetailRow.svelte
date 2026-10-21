@@ -58,22 +58,22 @@
   }
 
   .rule-top {
-    border-top: 1px solid var(--line-1, rgba(255, 255, 255, 0.06));
+    border-top: 1px solid var(--line-1);
   }
 
   .rule-bottom {
-    border-bottom: 1px solid var(--line-1, rgba(255, 255, 255, 0.06));
+    border-bottom: 1px solid var(--line-1);
   }
 
   .label {
     flex: none;
     font: var(--weight-medium) 13.5px/1 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .strong .label {
     font: 700 14.5px/1 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .value {
@@ -81,7 +81,7 @@
     min-width: 0;
     text-align: end;
     font: 600 13px/1.3 var(--font-mono);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -92,7 +92,7 @@
   }
 
   .positive {
-    color: var(--status-online, #2ee6a8);
+    color: var(--status-online);
   }
 
   .warning {
@@ -100,11 +100,11 @@
   }
 
   .danger {
-    color: var(--status-danger, #f5493d);
+    color: var(--status-danger);
   }
 
   .muted {
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .copy {

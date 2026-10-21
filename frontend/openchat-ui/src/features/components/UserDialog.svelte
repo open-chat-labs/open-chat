@@ -296,7 +296,7 @@
     background: var(--oc-veil, rgba(3, 3, 6, 0.72));
     backdrop-filter: var(--oc-veil-blur, blur(4px));
     -webkit-backdrop-filter: var(--oc-veil-blur, blur(4px));
-    animation: oc-veil-in var(--duration-base, 200ms) var(--ease-out) both;
+    animation: oc-veil-in var(--duration-base) var(--ease-out) both;
   }
 
   .layer.closing {
@@ -316,12 +316,12 @@
     display: flex;
     flex-direction: column;
     border-radius: var(--radius-xl);
-    background: var(--surface-1, #0e0e12);
+    background: var(--surface-1);
     box-shadow:
-      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1)),
-      var(--shadow-modal, 0 30px 70px rgba(0, 0, 0, 0.45));
+      inset 0 0 0 1px var(--line-2),
+      var(--shadow-modal);
     overflow: hidden;
-    animation: oc-dlg-in var(--duration-slow, 280ms) var(--ease-out) both;
+    animation: oc-dlg-in var(--duration-slow) var(--ease-out) both;
   }
 
   .card.closing {
@@ -359,7 +359,7 @@
     width: 88px;
     height: 88px;
     border-radius: var(--radius-pill);
-    box-shadow: 0 0 0 4px var(--surface-1, #0e0e12);
+    box-shadow: 0 0 0 4px var(--surface-1);
   }
 
   .online {
@@ -369,8 +369,8 @@
     width: 16px;
     height: 16px;
     border-radius: var(--radius-pill);
-    background: var(--status-online, #2ee6a8);
-    border: 3px solid var(--surface-1, #0e0e12);
+    background: var(--status-online);
+    border: 3px solid var(--surface-1);
   }
 
   .names {
@@ -391,7 +391,7 @@
   .title {
     font: var(--weight-bold) var(--text-2xl) / 1.2 var(--font-sans);
     letter-spacing: var(--tracking-tight);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -405,7 +405,7 @@
 
   .handle {
     font: var(--weight-medium) var(--text-md) / 1 var(--font-mono);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .pills {
@@ -417,7 +417,7 @@
   }
 
   .pill {
-    --pill-ink: var(--ink-2, #c9c9d4);
+    --pill-ink: var(--ink-2);
     display: flex;
     align-items: center;
     gap: 7px;
@@ -425,7 +425,7 @@
     box-sizing: border-box;
     border-radius: var(--radius-pill);
     background: transparent;
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12));
+    box-shadow: inset 0 0 0 1px var(--line-2);
     font: var(--weight-semibold) var(--text-md) / 1 var(--font-sans);
     color: var(--pill-ink);
     cursor: pointer;
@@ -433,13 +433,13 @@
   }
 
   .pill.on {
-    --pill-ink: var(--accent-bright, #ff8298);
-    background: var(--accent-soft, rgba(255, 86, 114, 0.1));
-    box-shadow: inset 0 0 0 1px var(--accent, #ff5672);
+    --pill-ink: var(--accent-bright);
+    background: var(--accent-soft);
+    box-shadow: inset 0 0 0 1px var(--accent);
   }
 
   .pill:hover {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    background: var(--overlay-2);
   }
 
   .mute {
@@ -465,7 +465,7 @@
     width: 1px;
     height: 16px;
     margin: 0 2px 0 3px;
-    background: var(--line-2, rgba(255, 255, 255, 0.12));
+    background: var(--line-2);
   }
 
   .caret {
@@ -515,13 +515,13 @@
     align-items: center;
     gap: var(--space-8);
     padding: var(--space-16) var(--space-26);
-    border-block-start: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+    border-block-start: 1px solid var(--line-1);
   }
 
   .error {
     padding: var(--space-8) var(--space-26) 0;
     font: var(--weight-medium) var(--text-sm) / 1.4 var(--font-sans);
-    color: var(--status-danger, #f5493d);
+    color: var(--status-danger);
   }
 
   .footer.confirm {
@@ -532,14 +532,14 @@
     flex: 1;
     min-width: 0;
     font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-sans);
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
   }
 
   .cancel {
     flex: none;
     padding: var(--space-10) var(--space-12);
     font: var(--weight-semibold) var(--text-base) / 1 var(--font-sans);
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
     cursor: pointer;
   }
 
@@ -553,13 +553,13 @@
     padding: var(--space-10) var(--space-14);
     border-radius: var(--radius-md);
     font: var(--weight-semibold) var(--text-base) / 1 var(--font-sans);
-    color: var(--status-danger, #f5493d);
+    color: var(--status-danger);
     cursor: pointer;
     user-select: none;
   }
 
   .block:hover {
-    background: var(--btn-danger-bg, rgba(240, 68, 56, 0.08));
+    background: var(--btn-danger-bg);
   }
 
   .grow {
@@ -572,24 +572,24 @@
     align-items: center;
     gap: var(--space-8);
     padding: 0 var(--space-18);
-    height: var(--control-lg, 40px);
+    height: var(--control-lg);
     box-sizing: border-box;
     border-radius: var(--radius-md);
-    background: var(--accent, #ff5672);
+    background: var(--accent);
     font: var(--weight-semibold) var(--text-base) / 1 var(--font-sans);
-    color: var(--on-accent, #2e0512);
+    color: var(--on-accent);
     cursor: pointer;
     user-select: none;
   }
 
   .message:hover {
-    background: var(--accent-hover, #ff6d85);
+    background: var(--accent-hover);
   }
 
   .message-icon {
     width: 16px;
     height: 16px;
-    background: var(--on-accent, #2e0512);
+    background: var(--on-accent);
     mask: var(--icon-chat) center/contain no-repeat;
   }
 
@@ -609,16 +609,16 @@
     padding: var(--space-8);
     box-sizing: border-box;
     border-radius: var(--radius-md);
-    background: var(--surface-2, #17171d);
+    background: var(--surface-2);
     box-shadow:
-      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12)),
+      inset 0 0 0 1px var(--line-2),
       0 18px 40px rgba(0, 0, 0, 0.5);
   }
 
   .mute-title {
     padding: var(--space-6) var(--space-8) var(--space-8);
     font: var(--weight-regular) var(--text-xs) / 1.4 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .mute-option {
@@ -628,12 +628,12 @@
     padding: var(--space-8);
     border-radius: var(--radius-sm);
     font: var(--weight-medium) var(--text-md) / 1.3 var(--font-sans);
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
     cursor: pointer;
     user-select: none;
   }
 
   .mute-option:hover {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    background: var(--overlay-2);
   }
 </style>

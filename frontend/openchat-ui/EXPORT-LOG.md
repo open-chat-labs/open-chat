@@ -105,3 +105,8 @@
 - `VirtualChatList` requires `iOS` (the host's platform check, which turns on touch tracking and its own momentum handling) and `onRowError` (a row threw while rendering). The app passed neither before; it read them from its own modules.
 - `VirtualList` uses `$effect` where the app used its development-only `trackedEffect` loop warning.
 - Not in the design export.
+
+## 2026-10-21 — token fallbacks removed, by hand
+- Every `var(--token, #…)` fallback for a token `tokens.css` defines on `:root` is gone (3,813 of them). They never rendered: both hosts load `tokens.css`, and the light theme only overrides tokens. They were the export's copies of the values, already drifting. A docs pixel diff in dark/pink, light/pink and dark/blue showed no change.
+- Fallbacks on names `tokens.css` doesn't define (`--overlay-3`, `--surface-3`, `--status-error`, `--ink-5`, `--oc-veil`, …) stay: they are what renders.
+- `src/lib/styles/tokens.spec.ts` fails if a fallback for a defined token comes back.

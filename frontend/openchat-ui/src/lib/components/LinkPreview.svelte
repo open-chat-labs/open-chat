@@ -72,16 +72,16 @@
 
 <style>
   .shell {
-    --msg-ink: var(--bubble-recv-text, #e4e4ec);
-    --msg-soft: var(--ink-3, #9a9aa8);
-    --msg-link: var(--accent-bright, #ff8298);
+    --msg-ink: var(--bubble-recv-text);
+    --msg-soft: var(--ink-3);
+    --msg-link: var(--accent-bright);
     width: 320px;
     max-width: 100%;
     padding: 4px;
     box-sizing: border-box;
-    border-radius: var(--radius-xs, 4px) 22px 22px var(--radius-xs, 4px);
-    background: var(--bubble-recv-bg, #191921);
-    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+    border-radius: var(--radius-xs) 22px 22px var(--radius-xs);
+    background: var(--bubble-recv-bg);
+    box-shadow: inset 0 0 0 1px var(--line-1);
   }
 
   .shell.last {
@@ -89,10 +89,10 @@
   }
 
   .shell.sent {
-    --msg-ink: var(--bubble-text, #fff);
-    --msg-soft: var(--bubble-text-soft, rgba(255, 255, 255, 0.82));
-    --msg-link: var(--bubble-text, #fff);
-    background: var(--bubble-send-bg, #b83e52);
+    --msg-ink: var(--bubble-text);
+    --msg-soft: var(--bubble-text-soft);
+    --msg-link: var(--bubble-text);
+    background: var(--bubble-send-bg);
     box-shadow: none;
   }
 
@@ -115,11 +115,11 @@
   .card {
     text-decoration: none;
     border-radius: 6px 6px 18px 18px;
-    background: var(--overlay-1, rgba(255, 255, 255, 0.04));
+    background: var(--overlay-1);
   }
 
   .sent .card {
-    background: var(--bubble-reply, #8c2a3d);
+    background: var(--bubble-reply);
   }
 
   .large {
@@ -141,11 +141,11 @@
 
   .domain {
     font: 600 11.5px/1 var(--font-sans);
-    color: var(--accent-bright, #ff8298);
+    color: var(--accent-bright);
   }
 
   .sent .domain {
-    color: var(--bubble-text-soft, rgba(255, 255, 255, 0.82));
+    color: var(--bubble-text-soft);
   }
 
   .title {
@@ -205,7 +205,7 @@
     display: none;
     width: 13px;
     height: 13px;
-    background: var(--bubble-tick, #fff);
+    background: var(--bubble-tick);
     mask: var(--icon-check-double) center/contain no-repeat;
   }
 

@@ -65,12 +65,12 @@
     align-items: center;
     justify-content: center;
     background: var(--surface-3, #1b1b22);
-    box-shadow: 0 0 0 2px var(--surface-1, #0e0e12);
+    box-shadow: 0 0 0 2px var(--surface-1);
   }
 
   .badge-icon {
     width: var(--badge-icon);
     height: var(--badge-icon);
-    background: var(--ink-2, #c9c9d4);
+    background: var(--ink-2);
   }
 </style>

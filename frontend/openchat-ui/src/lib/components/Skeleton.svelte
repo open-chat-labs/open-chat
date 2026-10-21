@@ -61,7 +61,7 @@
     min-height: 64px;
     padding: 0 var(--space-10);
     box-sizing: border-box;
-    border-radius: var(--radius-md, 12px);
+    border-radius: var(--radius-md);
     background: transparent;
   }
 

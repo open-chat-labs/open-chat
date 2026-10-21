@@ -58,8 +58,8 @@
     top: calc(var(--oc-rise) * -1);
     width: var(--oc-stub);
     height: calc(var(--oc-rise) + var(--space-16));
-    border-inline-start: 1px solid var(--line-2, rgba(255, 255, 255, 0.14));
-    border-block-end: 1px solid var(--line-2, rgba(255, 255, 255, 0.14));
+    border-inline-start: 1px solid var(--line-2);
+    border-block-end: 1px solid var(--line-2);
     border-end-start-radius: var(--radius-sm);
     pointer-events: none;
   }
@@ -82,12 +82,12 @@
 
   .title {
     font: var(--weight-semibold) var(--text-base) / 1.2 var(--font-sans);
-    color: var(--ink, #e4e4ec);
+    color: var(--ink);
   }
 
   .hint {
     font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
     text-wrap: pretty;
   }
 
@@ -100,17 +100,17 @@
   .chip {
     padding: var(--space-8) var(--space-12);
     border-radius: var(--radius-sm);
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.08));
+    background: var(--overlay-1);
+    box-shadow: inset 0 0 0 1px var(--line-2);
     font: var(--weight-semibold) var(--text-sm) / 1.3 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
     cursor: pointer;
     user-select: none;
   }
 
   .chip.selected {
-    background: var(--accent-soft, rgba(255, 86, 114, 0.14));
-    box-shadow: inset 0 0 0 1px var(--accent-dim, rgba(255, 86, 114, 0.45));
-    color: var(--accent-bright, #ff8298);
+    background: var(--accent-soft);
+    box-shadow: inset 0 0 0 1px var(--accent-dim);
+    color: var(--accent-bright);
   }
 </style>
