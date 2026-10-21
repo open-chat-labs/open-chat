@@ -17,6 +17,10 @@ describe("where a chat list with nothing selected goes", () => {
         const chats = [chat("a"), chat("b"), chat("c")];
         expect(defaultChatRoute("chats", chats, id("c"), false)).toBe("/chats/user/c");
         expect(defaultChatRoute("chats", chats, id("gone"), false)).toBe("/chats/user/a");
+        // archived since, it's still the one opened (opening it unarchives it), as the old UI
+        expect(defaultChatRoute("chats", [chat("a"), chat("c", true)], id("c"), false)).toBe(
+            "/chats/user/c",
+        );
     });
 
     test("is otherwise its first chat that isn't archived, in the list's scope", () => {

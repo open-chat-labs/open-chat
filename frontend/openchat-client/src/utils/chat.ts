@@ -2487,7 +2487,8 @@ export function chatMatchesSearch(search: string, chat: ChatSummary, users: User
     return (
         user !== undefined &&
         (user.username.toLowerCase().indexOf(search) >= 0 ||
-            (user.displayName !== undefined && user.displayName.toLowerCase().indexOf(search) >= 0))
+            (user.displayName !== undefined &&
+                user.displayName.toLowerCase().indexOf(search) >= 0))
     );
 }
 
