@@ -35,21 +35,24 @@ export function welcomeRoute(_ctx: PageJS.Context): RouteParams {
     };
 }
 
-const WALLET_VIEWS = ["send", "receive", "swap", "recipients"] as const;
+const TOKEN_ACTIONS = ["send", "receive", "swap"] as const;
 
 // /wallet/:segment? where the segment is a view (send, receive …) or a token's ledger id
 export function walletRoute(ctx: PageJS.Context): RouteParams {
     const segment: string | undefined = ctx.params.segment;
-    const token = qs(ctx).get("token") ?? undefined;
     if (segment === undefined || segment === "") {
         return { kind: "wallet_route", scope: noScope, view: "all" };
     }
-    if ((WALLET_VIEWS as readonly string[]).includes(segment)) {
+    if (segment === "recipients") {
+        return { kind: "wallet_route", scope: noScope, view: "recipients" };
+    }
+    const action = TOKEN_ACTIONS.find((a) => a === segment);
+    if (action !== undefined) {
         return {
             kind: "wallet_route",
             scope: noScope,
-            view: segment as (typeof WALLET_VIEWS)[number],
-            ledger: token,
+            view: action,
+            ledger: qs(ctx).get("token") ?? undefined,
         };
     }
     return { kind: "wallet_route", scope: noScope, view: "token", ledger: segment };
