@@ -3,12 +3,15 @@
 <script lang="ts">
     import {
         anonUserStore,
+        captureRulesAcceptanceStore,
         currentUserStore,
         favouritesStore,
         OpenChat,
         publish,
         querystringStore,
         routeStore,
+        selectedChatRulesStore,
+        selectedCommunityRulesStore,
         sortedCommunitiesStore,
         subscribe,
         type CommunitySummary,
@@ -215,7 +218,11 @@
 {/snippet}
 
 <!-- sending in a chat whose rules the reader hasn't accepted asks for them first -->
-<RulesDialog />
+{#if $captureRulesAcceptanceStore !== undefined}
+    <RulesDialog
+        rules={client.combineRulesText($selectedChatRulesStore, $selectedCommunityRulesStore)}
+        answer={$captureRulesAcceptanceStore.resolve} />
+{/if}
 
 <!-- TODO(phase 4): suspending a user (platform moderators) has no dialog yet; GAPS.md -->
 {#if appDialog !== undefined && appDialog.kind !== "suspending"}
