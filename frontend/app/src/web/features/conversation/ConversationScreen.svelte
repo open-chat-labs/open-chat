@@ -12,15 +12,14 @@
         eventsStore,
         failedMessagesStore,
         favouritesStore,
+        isPrivateCommunityPreview,
         messageIndexStore,
         messagesRead,
         muteNotificationsFailureMessage,
-        ROLE_NONE,
         selectedChatExpandedDeletedMessageStore,
         selectedChatIdStore,
         selectedChatSummaryStore,
         selectedCommunitySummaryStore,
-        stripSuspendedGate,
         threadOpenStore,
         TimelineGrouper,
         unconfirmedReadByThem,
@@ -170,12 +169,10 @@
     // a private chat or community that isn't joined shows no messages (as the old UI)
     const privatePreview = $derived.by(() => {
         if (chat === undefined) return false;
-        const community = $selectedCommunitySummaryStore;
-        const privateCommunity =
-            community !== undefined &&
-            (community.membership.role === ROLE_NONE || community.membership.lapsed) &&
-            (!community.public || stripSuspendedGate(community.gateConfig.gate).kind !== "no_gate");
-        return privateCommunity || client.maskChatMessages(chat);
+        return (
+            isPrivateCommunityPreview($selectedCommunitySummaryStore) ||
+            client.maskChatMessages(chat)
+        );
     });
     const readonly = $derived(chat !== undefined && client.isChatReadOnly(chat.id));
 

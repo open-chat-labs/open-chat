@@ -32,7 +32,7 @@ export {
 export { formatDuration } from "./utils/time";
 export * from "./utils/cryptoFormatter";
 export { candidateGroupFromChat, groupChanges, hasAccessGateChanged } from "./utils/group.svelte";
-export { communityChanges } from "./utils/community";
+export { communityChanges, isPrivateCommunityPreview } from "./utils/community";
 export { executionPaymentAmount, proposalFundsRequired } from "./utils/proposal";
 export { inviteLinkUrl } from "./utils/inviteLink";
 export { postLoginJoin } from "./utils/join";
