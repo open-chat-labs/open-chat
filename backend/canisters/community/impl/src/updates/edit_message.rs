@@ -1,10 +1,12 @@
+use crate::guards::caller_is_local_user_index;
 use crate::{CommunityEventPusher, RuntimeState, activity_notifications::handle_activity_notification, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::EditMessageArgs;
+use community_canister::c2c_bot_edit_message;
 use community_canister::edit_message::*;
 use oc_error_codes::OCErrorCode;
-use types::{Achievement, EventIndex, OCResult};
+use types::{Achievement, BotPermissions, EventIndex, MessageContentInitial, OCResult, UserId};
 
 #[update(msgpack = true)]
 #[trace]
@@ -14,19 +16,74 @@ fn edit_message(args: Args) -> Response {
 
 fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let member = state.get_calling_member(None, true)?;
+
+    let Some(channel) = state.data.channels.get(&args.channel_id) else {
+        return Err(OCErrorCode::ChatNotFound.into());
+    };
+
+    let sender = member.user_id;
+    let min_visible_event_index = channel.chat.members.get_verified_member(sender)?.min_visible_event_index();
+
+    commit(sender, min_visible_event_index, args, state)
+}
+
+// For now only bridge bots can do this, which the LocalUserIndex checks, to relay the edits made on
+// the other platform to the messages they relayed
+#[update(guard = "caller_is_local_user_index", msgpack = true)]
+#[trace]
+fn c2c_bot_edit_message(args: c2c_bot_edit_message::Args) -> c2c_bot_edit_message::Response {
+    execute_update(|state| c2c_bot_edit_message_impl(args, state)).into()
+}
+
+fn c2c_bot_edit_message_impl(args: c2c_bot_edit_message::Args, state: &mut RuntimeState) -> OCResult {
+    let content: MessageContentInitial = args.content.into();
+
+    if !state.data.is_bot_permitted(
+        &args.bot_id,
+        Some(args.channel_id),
+        &args.initiator,
+        &BotPermissions::from_message_permission((&content).into()),
+    ) {
+        return Err(OCErrorCode::InitiatorNotAuthorized.into());
+    }
+
+    let Some(channel) = state.data.channels.get(&args.channel_id) else {
+        return Err(OCErrorCode::ChatNotFound.into());
+    };
+    channel
+        .chat
+        .events
+        .check_relayed_edit(args.thread, args.message_id, &content, state.env.now())?;
+
+    // The bot isn't a member, and sees the whole chat. It can only edit its own messages, since the
+    // edit is made as it.
+    commit(
+        args.bot_id,
+        EventIndex::default(),
+        Args {
+            channel_id: args.channel_id,
+            thread_root_message_index: args.thread,
+            message_id: args.message_id,
+            content,
+            block_level_markdown: Some(args.block_level_markdown),
+            new_achievement: false,
+            og_previews: args.og_previews,
+        },
+        state,
+    )
+}
+
+fn commit(sender: UserId, min_visible_event_index: EventIndex, args: Args, state: &mut RuntimeState) -> OCResult {
     let now = state.env.now();
 
     let Some(channel) = state.data.channels.get_mut(&args.channel_id) else {
         return Err(OCErrorCode::ChatNotFound.into());
     };
 
-    let sender = member.user_id;
-    let channel_member = channel.chat.members.get_verified_member(sender)?;
-
     let result = channel.chat.events.edit_message(
         EditMessageArgs {
             sender,
-            min_visible_event_index: channel_member.min_visible_event_index(),
+            min_visible_event_index,
             thread_root_message_index: args.thread_root_message_index,
             message_id: args.message_id,
             content: args.content.into(),
