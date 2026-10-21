@@ -56,6 +56,13 @@ describe("why a message can't be sent", () => {
         expect(entryBlock({ ...can, externalContent: true, canSend: false })?.kind).toBe(
             "external",
         );
+        // a preview of an external channel still offers Join; signed out, it's the disclaimer
+        expect(entryBlock({ ...can, previewing: true, externalContent: true })?.kind).toBe(
+            "preview",
+        );
+        expect(
+            entryBlock({ ...can, externalContent: true, anonymous: true, canSend: false })?.kind,
+        ).toBe("external");
     });
 
     test("signed out, or not allowed, is read only, a thread's in a thread", () => {

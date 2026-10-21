@@ -682,8 +682,8 @@
         permittedMessages.get("image") || permittedMessages.get("video"),
     );
     let frozen = $derived(client.isChatOrCommunityFrozen(chat, $selectedCommunitySummaryStore));
-    // what stands in for the entry when the reader can't send (shared with the other trees; a
-    // suspended account never gets this far)
+    // what stands in for the entry when the reader can't send (shared with the other trees). A
+    // chat's footer isn't shown to a suspended account; a thread's is, as it always was
     let block = $derived(
         entryBlock({
             suspended: false,
