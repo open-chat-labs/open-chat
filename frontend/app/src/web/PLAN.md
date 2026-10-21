@@ -10,7 +10,8 @@ workstreams one person can take on their own.
 
 ROUTES.md says what each route shows, DATA.md where each component's data comes from, and GAPS.md
 what's missing or differs from the design. This file only says who does what, and what has to
-wait for what.
+wait for what. How the code is put together is in `frontend/CLAUDE.md` and README.md; both apply to
+every workstream.
 
 ## Where we are
 
@@ -74,6 +75,7 @@ any time.
 
 | First | Then |
 |---|---|
+| **F1** move, then **F2** reconcile | everything else: the foundations S0–S3 and the whole pool |
 | **S2** dialog host | every dialog: Manage and the group dialogs (4b), `ChatPicker` (4d), the "+" builders (5d), the join gate (8b), Profile (8c), CHIT (8d), Diamond (8e) |
 | **S1** right column host | the details panels (4a), `ThreadPanel` (4c) |
 | **S3** PIN prompt | wallet Send (6b), the "+" builders that move tokens (5d) |
@@ -90,6 +92,18 @@ A screen that opens something not built yet, such as "Get Diamond" in `CreateGro
 join gate, waits for nothing. It opens the dialog by its query param or the dialog host, and gets a
 placeholder until that dialog lands.
 
+## Before anything else
+
+An audit of `src/web` (2026-10-21) found that the client and stores are reused well, but most of
+the view logic it needed was still inside legacy components, so it was copied into `src/web`.
+About a dozen copies already behave differently from the originals, and one gap is a live bug.
+These two items fix that before more is built on top. Nothing else starts until both have landed.
+
+| Id | What | Size | Taken by |
+|---|---|---|---|
+| F1 | **Move shared code to its new homes.** Mechanical, no behaviour change. <ul><li>`components_shared/**/*.svelte.ts` and `app/src/runes` → `app/src/logic`;</li><li>`ChatEventList`, `Markdown`, `CanisterMapFrame` (and what they import from `components_shared`, such as `flatChatItems`) → `app/src/core`;</li><li>`VirtualList` and `VirtualChatList` → `@openchat/ui/src/lib`, with `vclDebug`, `recordError` and the device checks passed in;</li><li>Learn's roadmap, posts and whitepaper → `app/src/content`, and the legacy landing pages render from it;</li><li>a lint rule that `app/src/logic` imports no `.svelte` file and doesn't call `navigate`, `toastStore` or `publish`.</li></ul> | M | |
+| F2 | **Reconcile `src/web` with the rules.** Several PRs in a row, one per group: <ul><li>**Bus events:** extract `Home.svelte`'s handlers into `app/src/logic` and use them from every tree: `notFound`, `noAccess`, `restrictedContent`, `selectedChatInvalid` (today a bad link or a restricted chat spins forever), `chatWith`, `joinGroup`, `suspendUser`, `userSuspensionChanged`, `notification`, call ringing.</li><li>**Client operations:** sign-up (bringing back the `passkeyCreated` guard and the bad referral code prompt), sign-in and send as client methods returning outcomes, used by the legacy trees too; `postLoginJoin`. The sign-in dialog state moves to `app/src/logic/auth`; auto-unarchive leaves `ChatsScreen`.</li><li>**Adapters back to shapes:** `conversation.adapter` (`eventLines`, `messageStatus`, `MessageRows`), `activity.adapter` (summaries; `totalVotes` from `utils/polls`), `auth.adapter`.</li><li>**Copies replaced by the original, extracted:** `chatPreview` (`formatLatestMessage`), `listed` (`chatMatchesSearch`), `firstChatRoute` (`selectDefaultChat`, or decide), `authOptions`, `sendBlocked`, `expandMentions`, the typing throttle, `privatePreview`, `copyUrl`, the mute and pin failure toasts, the throttle countdown (`now500`), proposal grouping, bot commands in a bot DM; and the helpers re-implemented beside an exported one: `isLandingPageRoute`, `copyToClipboard`, `displayName`, `parentRoute`.</li><li>**Reactivity:** `isChatReadOnly`, `maskChatMessages`, `canSendMessage`, `messageIsReadByThem` called inside `$derived` (may be the read-ticks item above).</li><li>**Hygiene:** `Composer` and `RulesDialog` touching stores, the specs that mount components (`Router.spec`, `NavRail.spec`), `import.meta.env` outside config, `.then` chains, `WalletRoute` as a sum type, `as unknown as` in `screens.ts`.</li></ul> | L | |
+
 ## Foundations
 
 Small, and worth doing first, since much of the pool waits on them.
@@ -105,6 +119,17 @@ Small, and worth doing first, since much of the pool waits on them.
 
 Grouped by area. "Needs" lists what has to land first (blank: start any time). Sizes are rough:
 XS, S, M, L.
+
+Each workstream's issue carries a port inventory, written when the issue is created and checked by
+whoever takes it:
+
+- the legacy desktop and mobile files it replaces;
+- the behaviours and edge cases to keep, with the fix commits behind them;
+- the client methods, stores and `app/src/logic` modules to call;
+- the logic to extract from legacy components, and where it goes;
+- where desktop and mobile differ, and which one is kept.
+
+A workstream is done when every line of its inventory is either built or listed in GAPS.md.
 
 ### Right column and group management (phase 4)
 
