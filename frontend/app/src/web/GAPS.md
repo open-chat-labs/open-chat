@@ -94,7 +94,8 @@ design export needs. Each entry says where it came up.
   its tips. The old feed marked everything read as soon as it loaded; this one follows the
   design: an item is read once it's opened, or with "Mark all read" (the feed's read-up-to time,
   so opening one marks the older ones too). Poll votes show under All only (the design's tabs are
-  mentions and payments).
+  mentions and payments). The chat's name comes from `ActivityScreen.chatName`, a copy of the old
+  `getChatName` still to extract.
 - **Swatches**: the design's colour/cover swatches for groups, communities and avatars have no
   OpenChat equivalent (it has uploaded avatars and banners). Adapters pass images and pick a
   swatch from the id.
@@ -175,10 +176,10 @@ design export needs. Each entry says where it came up.
 - **Conversation, first cut** (`features/conversation`, phase 3b): reading only (the composer is
   3c). Every message kind shows as a text bubble with its text (the rich kinds are phase 6), and
   link previews, translations, tips, the message menu, reactions and swipes (phase 6) aren't
-  wired. Events other than messages show as a centred line in the old UI's words (no design for
-  them: `TODO(design)`) for group creation, chat start, members added / invited / removed /
-  blocked / unblocked, name / description / avatar changes, joins, role changes and deleted
-  messages; the rest show nothing yet. The header has no back button (`ConversationHeader` has
+  wired. Events other than messages show as a centred line in the old UI's words, names in bold
+  (`logic/conversation/timelineEventText`, shared with the old trees; no design for them:
+  `TODO(design)`), and "N messages deleted" expands them. The old lines' date and time under each
+  event isn't shown yet (it's duplicated in both old `NonMessageEvent`s, to extract). The header has no back button (`ConversationHeader` has
   none; narrow layouts don't show the shell yet), no last-seen line for a DM, and its menu does
   favourite, mute and copy link only: the rest open dialogs (phase 5), and calls are phase 8. The
   old list's go-to-mention button and sticky date aren't carried over; it keeps go-to-latest.
@@ -186,8 +187,10 @@ design export needs. Each entry says where it came up.
 - **Composer, first cut** (`features/conversation/Composer.svelte`, phase 3c): text only.
   Attachments, GIFs, voice, replies, edits and the "+" menu are phase 6 (`MessageComposer` hides
   "+" and the GIF tab without their handlers). There's no @mention picker (typed @usernames are
-  still sent as mentions), no rich-text editor (the old one showed markdown as it was typed), no
-  bot commands and no link-count warning. A chat's rules are asked for in a plain dialog
+  still sent as mentions), no rich-text editor (the old one showed markdown as it was typed) and
+  no link-count warning. In a bot DM, what's typed goes to the bot as its direct-message command,
+  but there's no `/` command selector, and a bot that takes no direct messages gets the
+  composer's error instead of the old warning. A chat's rules are asked for in a plain dialog
   (`RulesDialog`, the old modal's words; no design for it), and the throttle countdown shows as the
   composer's banner. Enter follows the app's Enter-to-send setting (`enterSends`). A preview
   shows "This chat is read-only" where the old footer had Join and Leave (the join gate is
