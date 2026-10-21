@@ -1,10 +1,15 @@
 pub mod account_billing;
 pub mod authority_reports;
+pub mod bridged_users;
 pub mod chit_leaderboard;
+pub mod community_event_batch;
 pub mod diamond_membership_details;
 pub mod external_achievements;
+pub mod group_event_batch;
 pub mod group_index_event_batch;
+pub mod identity_event_batch;
 pub mod identity_user_sync_batch;
+pub mod legacy_local_user_index_event_batch;
 pub mod local_user_index_event_batch;
 pub mod local_user_index_map;
 pub mod moderation;
@@ -14,6 +19,7 @@ pub mod pending_payments_queue;
 pub mod premium_items;
 pub mod protected_actions;
 pub mod reported_messages;
+pub mod storage_index_event_batch;
 pub mod storage_index_user_config_batch;
 pub mod storage_index_users_to_remove_batch;
 pub mod streak_insurance_logs;
@@ -23,3 +29,6 @@ pub mod user_map;
 pub const MAX_AVATAR_SIZE: usize = 250_000;
 pub const MAX_DESCRIPTION_LEN: usize = 10_000;
 pub const MAX_COMMANDS: usize = 100;
+
+// The LocalUserIndexes no longer send bots their notifications as JSON
+pub const JSON_DATA_ENCODING_NOT_SUPPORTED: &str = "JSON data encoding is not supported, use MsgPack or Candid";

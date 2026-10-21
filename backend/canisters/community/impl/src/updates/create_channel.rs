@@ -11,6 +11,7 @@ use canister_tracing_macros::trace;
 use community_canister::create_channel::{Response::*, *};
 use community_canister::{c2c_bot_create_channel, c2c_join_community};
 use group_chat_core::GroupChatCore;
+use installed_bots::InstalledBots;
 use oc_error_codes::OCErrorCode;
 use rand::RngExt;
 use types::{BotCaller, BotPermissions, Caller, ChannelCreated, CommunityPermission, MultiUserChat, OCResult, UserType};
@@ -39,6 +40,7 @@ fn c2c_bot_create_channel_impl(
     let bot_caller = BotCaller {
         bot: args.bot_id,
         initiator: args.initiator.clone(),
+        bridged_from: None,
     };
 
     match create_channel_impl(args.into(), false, Some(Caller::BotV2(bot_caller)), state) {
@@ -193,7 +195,7 @@ fn create_channel_impl(
     );
 
     if args.is_public {
-        subscribe_bots_to_events(state, &mut chat);
+        subscribe_bots_to_events(&state.data.bots, &mut chat);
     }
 
     state.data.members.mark_member_joined_channel(caller.agent(), channel_id);
@@ -227,8 +229,9 @@ fn create_channel_impl(
     Ok(SuccessResult { channel_id })
 }
 
-fn subscribe_bots_to_events(state: &mut RuntimeState, chat: &mut GroupChatCore) {
-    for (bot_id, bot) in state.data.bots.iter() {
+// Subscribes the installed bots to a public channel's events
+pub(crate) fn subscribe_bots_to_events(bots: &InstalledBots, chat: &mut GroupChatCore) {
+    for (bot_id, bot) in bots.iter() {
         if let (Some(subscriptions), Some(permissions)) = (&bot.default_subscriptions, &bot.autonomous_permissions) {
             chat.events.subscribe_bot_to_events(
                 *bot_id,

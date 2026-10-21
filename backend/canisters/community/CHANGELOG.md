@@ -8,7 +8,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Store the author's id on messages a bridge bot relays from Discord or Telegram ([#10052](https://github.com/open-chat-labs/open-chat/pull/10052))
+
+### Changed
+
+- Send activity, completed group imports, CSAM detections, moderation referrals and upgrade requests to the LocalUserIndex as events ([#10033](https://github.com/open-chat-labs/open-chat/pull/10033))
+- Send its events to its LocalUserIndex and the MultiUser canisters at `c2c_community` ([#10050](https://github.com/open-chat-labs/open-chat/pull/10050))
+
+### Fixed
+
+- Only subscribe bots to public channels when they're updated, and keep them subscribed when a channel is set to the visibility it already has ([#10055](https://github.com/open-chat-labs/open-chat/pull/10055))
+- Replace an imported group's bot subscriptions with the community's ([#10055](https://github.com/open-chat-labs/open-chat/pull/10055))
+- Wait out a failed batch's retry delay, rather than retrying it whenever anything else is queued ([#10069](https://github.com/open-chat-labs/open-chat/pull/10069))
+
+## [[2.0.2170](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2170-community)] - 2026-10-20
+
+### Added
+
 - Add `c2c_user_index` for the UserIndex's events ([#10028](https://github.com/open-chat-labs/open-chat/pull/10028))
+- Add `c2c_escrow` for the Escrow canister's swap status changes, in idempotent envelopes ([#10047](https://github.com/open-chat-labs/open-chat/pull/10047))
 
 ### Changed
 
@@ -20,6 +38,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Remove the code which read event data from the heap now that it has all moved into stable memory ([#9968](https://github.com/open-chat-labs/open-chat/pull/9968))
 - Remove the jobs which replaced users' old ids, and the mapping of old ids to new, now that every id held is the latest ([#9970](https://github.com/open-chat-labs/open-chat/pull/9970))
+
+### Fixed
+
+- Remove a member found, on being sent an event, to have deleted their account, and stop retrying their events ([#10063](https://github.com/open-chat-labs/open-chat/pull/10063))
 
 ## [[2.0.2142](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2142-community)] - 2026-10-14
 

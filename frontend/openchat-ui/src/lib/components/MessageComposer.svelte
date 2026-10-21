@@ -46,6 +46,12 @@
     demo?: 'interactive' | 'idle' | 'typing' | 'plus' | 'emoji' | 'gif' | 'recording' | 'review';
     /** Resource key (or literal text). */
     placeholder?: string;
+    /** The draft to start from, read when the composer mounts (key the composer to start another). */
+    text?: string;
+    /** The draft as it changes while it's being written (typed, an emoji picked, cleared on send); not while editing. */
+    onInput?: (text: string) => void;
+    /** Whether Enter sends (Shift+Enter a new line); off, Enter is a new line and Ctrl/⌘+Enter sends. */
+    enterSends?: boolean;
     /** Send the text. Return a promise to keep the draft until it resolves (kept with an error if it rejects). */
     onSend?: (text: string) => Promise<unknown> | void;
     onAttach?: (kind: AttachKind) => void;
@@ -66,6 +72,9 @@
   let {
     demo = 'interactive',
     placeholder = 'ui.messageComposer.placeholder',
+    text = '',
+    onInput,
+    enterSends = true,
     onSend,
     onAttach,
     onGif,
@@ -88,7 +97,7 @@
   let wave = $state<HTMLDivElement>();
 
   // mounting straight into edit mode starts from the original text (later context changes are handled below)
-  let draft = $state(untrack(() => (context?.mode === 'edit' ? context.text ?? '' : '')));
+  let draft = $state(untrack(() => (context?.mode === 'edit' ? context.text ?? '' : text)));
   let menu = $state<'plus' | 'picker' | null>(null);
   let tab = $state(0);
   let query = $state('');
@@ -116,6 +125,15 @@
   let endSeek: (() => void) | null = null;
 
   const editing = $derived(context?.mode === 'edit');
+
+  // the host hears the draft as it changes, not the text it started from or an edit's
+  let reported = untrack(() => draft);
+  $effect(() => {
+    const current = draft;
+    if (current === reported || untrack(() => editing)) return;
+    reported = current;
+    untrack(() => onInput?.(current));
+  });
   const att = $derived(editing ? null : attachment);
   const hasContent = $derived(!!draft.trim() || !!att);
   const needle = $derived(query.trim().toLowerCase());
@@ -541,6 +559,8 @@
       if (menu && !root.contains(e.target as Node)) menu = null;
     };
     document.addEventListener('mousedown', down);
+    // a draft the composer starts from takes the height it needs
+    if (draft) tick().then(grow);
     // bar count follows the available width: one 3px bar per ~5px, so spacing stays tight at any size
     const fit = () => (barCount = Math.max(16, Math.min(120, Math.floor((root.getBoundingClientRect().width - 170) / 5))));
     const ro = new ResizeObserver(fit);
@@ -586,15 +606,18 @@
   {/if}
   {#if menu === 'picker'}
     <div class="popup picker" role="dialog" aria-label={t(tab ? 'ui.messageComposer.gifs' : 'ui.messageComposer.emoji')}>
-      <SegmentedTabs
-        labels={[t('ui.messageComposer.emoji'), t('ui.messageComposer.gif')]}
-        selectedIndex={tab}
-        dotOnLast={false}
-        onSelect={(i) => {
-          tab = i;
-          query = '';
-        }}
-      />
+      <!-- GIFs only for a host that takes them -->
+      {#if onGif || demo !== 'interactive'}
+        <SegmentedTabs
+          labels={[t('ui.messageComposer.emoji'), t('ui.messageComposer.gif')]}
+          selectedIndex={tab}
+          dotOnLast={false}
+          onSelect={(i) => {
+            tab = i;
+            query = '';
+          }}
+        />
+      {/if}
       {#if tab === 0}
         <div class="emoji-area">
           <div class="fill"><EmojiPicker onPick={insert} onClose={() => (menu = null)} autoFocus={demo === 'interactive'} /></div>
@@ -696,7 +719,8 @@
     {/if}
     {#if !voice}
       <div class="tools">
-        {#if !editing}
+        <!-- the + menu only offers attachments a host takes -->
+        {#if !editing && (onAttach || demo !== 'interactive')}
           <span
             class="tool"
             class:open={menu === 'plus'}
@@ -723,7 +747,7 @@
             grow();
           }}
           onkeydown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+            if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && (enterSends || e.ctrlKey || e.metaKey)) {
               e.preventDefault();
               send();
             }

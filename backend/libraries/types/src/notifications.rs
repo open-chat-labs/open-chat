@@ -105,6 +105,11 @@ pub struct BotEventWrapper {
     pub event: BotEvent,
     #[serde(alias = "t")]
     pub timestamp: TimestampMillis,
+    // Increases with each notification the api_gateway sends. A notification can be delivered more
+    // than once, eg. when an attempt timed out or the pusher restarted, so a bot can use this to
+    // drop one it has already had
+    #[serde(alias = "i", default)]
+    pub notification_index: u64,
 }
 
 #[ts_export]
@@ -233,7 +238,8 @@ impl UserNotificationEnvelope {
 
 impl BotNotificationEnvelope {
     pub fn approx_size(&self) -> usize {
-        125 + self.recipients.len() * CANISTER_PRINCIPAL_LEN
+        let payloads: usize = self.event_map.values().map(|p| p.data.len() + p.signature.len()).sum();
+        125 + self.recipients.len() * CANISTER_PRINCIPAL_LEN + payloads
     }
 }
 
@@ -704,6 +710,32 @@ mod split_by_recipients_tests {
             let all_recipients: Vec<_> = notifications.into_iter().flat_map(|n| n.recipients).collect();
             assert_eq!(all_recipients, recipients);
         }
+    }
+}
+
+#[cfg(test)]
+mod bot_notification_envelope_tests {
+    use super::*;
+    use serde_bytes::ByteBuf;
+
+    // The notifications query keeps its response under its size budget using this, so it must count
+    // the payloads, which hold the whole event
+    #[test]
+    fn approx_size_counts_the_payloads() {
+        let payload = |len: usize| BotEventPayload {
+            data: ByteBuf::from(vec![0; len]),
+            signature: "s".repeat(86),
+        };
+        let envelope = BotNotificationEnvelope {
+            recipients: HashMap::new(),
+            event_map: HashMap::from([
+                (BotDataEncoding::MsgPack, payload(10_000)),
+                (BotDataEncoding::Candid, payload(20_000)),
+            ]),
+            timestamp: 0,
+        };
+
+        assert!(envelope.approx_size() >= 30_000 + 2 * 86);
     }
 }
 

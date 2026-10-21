@@ -15,7 +15,7 @@ fn delete_file(args: Args) -> Response {
 fn delete_file_impl(args: Args, state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
 
-    match state.data.remove_file(caller, args.file_id) {
+    match state.remove_file(caller, args.file_id) {
         RemoveFileResult::Success(_) => {
             crate::jobs::remove_expired_files::start_job_if_required(state);
             Success

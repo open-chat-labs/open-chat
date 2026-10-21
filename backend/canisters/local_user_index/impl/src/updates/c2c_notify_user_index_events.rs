@@ -124,7 +124,13 @@ pub(crate) fn handle_event<F: FnOnce() -> TimestampMillis>(
             state.data.bots.publish(ev.bot_id);
         }
         UserIndexEvent::BotUpdated(ev) => {
-            state.data.bots.update(ev.bot_id, ev.owner_id, ev.endpoint, ev.definition);
+            if let Some(principal) = ev.principal {
+                state.data.global_users.update_principal(ev.bot_id, principal);
+            }
+            state
+                .data
+                .bots
+                .update(ev.bot_id, ev.owner_id, ev.endpoint, ev.definition, ev.principal);
         }
         UserIndexEvent::PlatformOperatorStatusChanged(ev) => {
             state
@@ -322,6 +328,13 @@ pub(crate) fn handle_event<F: FnOnce() -> TimestampMillis>(
         }
         UserIndexEvent::SetDailyPuzzleCanisterId(canister_id) => {
             state.set_daily_puzzle_canister_id(canister_id);
+        }
+        UserIndexEvent::SetBridgeBot(ev) => {
+            if let Some(bot_id) = ev.bot_id {
+                state.data.bridge_bots.insert(ev.platform, bot_id);
+            } else {
+                state.data.bridge_bots.remove(&ev.platform);
+            }
         }
         // Seeds a LocalUserIndex added after users were migrated with their old ids
         UserIndexEvent::UserIdMigrated(ev) => {

@@ -29,13 +29,16 @@ import {
     Stream,
     anonymousUser,
     type CryptocurrencyDetails,
+    type DexId,
+    type DexQuote,
+    type DexQuoteResult,
     type SwapQuote,
     type SwapTokensResponse,
     type WorkerRequest,
 } from "@shared";
 import type { OpenChatConfig } from "./config";
 import { OpenChat } from "./openchat";
-import { cryptoLookup, currentUserStore } from "./state";
+import { cryptoLookup, currentUserStore, swapProvidersStore } from "./state";
 import { swapQuoteResult, swapResult } from "./utils/swap";
 import { WorkerAgent } from "./workerAgent";
 
@@ -182,36 +185,117 @@ describe("swapping from the wallet", () => {
 
     // Invariant: each DEX is quoted on what it will pull, ie. the amount less the fees for approving
     // it and for its pull, and quotes what reaches the wallet, after the fee for sending it there
-    test("a quote is asked for less the input fees, and after the output fee", async () => {
+    test("each DEX is asked for a quote less the input fees, and after the output fee", async () => {
         cryptoLookup.set(
             new Map([
                 [icp.ledger, icp],
                 [chat.ledger, { ...chat, transferFee: 100_000n }],
             ]),
         );
+        swapProvidersStore.set(["icpswap", "taco"]);
         vi.mocked(WorkerAgent.prototype.send).mockImplementation(((req: WorkerRequest) => {
             sent.push(req);
-            return Promise.resolve([["icpswap", 4_000_000_000n]]);
+            return Promise.resolve({ kind: "quoted", amountOut: 4_000_000_000n });
         }) as never);
 
         try {
-            const outcome = await client.getSwapQuote(icp.ledger, chat.ledger, 100_000_000n);
+            await client.getSwapQuotes(icp.ledger, chat.ledger, 100_000_000n);
 
-            expect(sent).toEqual([
-                {
-                    kind: "getTokenSwapQuotes",
+            expect(sent).toEqual(
+                (["icpswap", "taco"] as const).map((dex) => ({
+                    kind: "getTokenSwapQuote",
+                    dex,
                     inputTokenLedger: icp.ledger,
                     outputTokenLedger: chat.ledger,
                     amountIn: 99_980_000n,
                     outputTokenFee: 100_000n,
-                },
-            ]);
-            expect(outcome).toMatchObject({
-                kind: "quoted",
-                quote: { amountIn: 100_000_000n, amountOut: 4_000_000_000n },
-            });
+                })),
+            );
         } finally {
             cryptoLookup.set(new Map());
+            swapProvidersStore.set([]);
+        }
+    });
+
+    // Invariant: the user sees a row for every DEX from the start, each DEX's quote as it comes in,
+    // and the best of them is the quote they swap with
+    test("each DEX's quote is reported as it comes in, and the best is chosen", async () => {
+        cryptoLookup.set(
+            new Map([
+                [icp.ledger, icp],
+                [chat.ledger, chat],
+            ]),
+        );
+        swapProvidersStore.set(["icpswap", "taco"]);
+        const answers: Record<string, (answer: DexQuoteResult) => void> = {};
+        vi.mocked(WorkerAgent.prototype.send).mockImplementation(((req: WorkerRequest) => {
+            if (req.kind !== "getTokenSwapQuote") return new Promise(() => {});
+            return new Promise((resolve) => (answers[req.dex] = resolve));
+        }) as never);
+        const reported: [DexId, DexQuote][][] = [];
+
+        try {
+            const outcome = client.getSwapQuotes(icp.ledger, chat.ledger, 100_000_000n, (q) =>
+                reported.push(q),
+            );
+            expect(reported).toEqual([
+                [
+                    ["icpswap", { kind: "quoting" }],
+                    ["taco", { kind: "quoting" }],
+                ],
+            ]);
+
+            answers.taco({ kind: "quoted", amountOut: 4_000_000_000n });
+            await vi.waitFor(() => expect(reported).toHaveLength(2));
+            expect(reported[1]).toEqual([
+                ["icpswap", { kind: "quoting" }],
+                ["taco", { kind: "quoted", amountOut: 4_000_000_000n }],
+            ]);
+
+            answers.icpswap({ kind: "quoted", amountOut: 5_000_000_000n });
+            expect(await outcome).toMatchObject({
+                kind: "quoted",
+                quote: { dex: "icpswap", amountIn: 100_000_000n, amountOut: 5_000_000_000n },
+            });
+            expect(reported[2]).toEqual([
+                ["icpswap", { kind: "quoted", amountOut: 5_000_000_000n }],
+                ["taco", { kind: "quoted", amountOut: 4_000_000_000n }],
+            ]);
+        } finally {
+            cryptoLookup.set(new Map());
+            swapProvidersStore.set([]);
+        }
+    });
+
+    // Invariant: a DEX that doesn't answer is shown as failed, and doesn't stop the user getting
+    // another DEX's quote
+    test("a DEX failing to answer is reported as failed while another's quote still wins", async () => {
+        cryptoLookup.set(
+            new Map([
+                [icp.ledger, icp],
+                [chat.ledger, chat],
+            ]),
+        );
+        swapProvidersStore.set(["icpswap", "taco"]);
+        vi.mocked(WorkerAgent.prototype.send).mockImplementation(((req: WorkerRequest) =>
+            req.kind === "getTokenSwapQuote" && req.dex === "taco"
+                ? Promise.reject(new Error("down"))
+                : Promise.resolve({ kind: "quoted", amountOut: 5_000_000_000n })) as never);
+        const reported: [DexId, DexQuote][][] = [];
+
+        try {
+            const outcome = await client.getSwapQuotes(icp.ledger, chat.ledger, 100_000_000n, (q) =>
+                reported.push(q),
+            );
+
+            expect(outcome).toMatchObject({ kind: "quoted", quote: { dex: "icpswap" } });
+            expect(reported.at(-1)).toEqual([
+                ["icpswap", { kind: "quoted", amountOut: 5_000_000_000n }],
+                ["taco", { kind: "failed" }],
+            ]);
+        } finally {
+            cryptoLookup.set(new Map());
+            swapProvidersStore.set([]);
         }
     });
 
@@ -238,7 +322,13 @@ describe("quoting a swap", () => {
     // Invariant: a quote worth less than 90% of what goes in, or of unknown worth, carries a warning
     test("a quote worth much less than the input, or of unknown worth, carries a warning", () => {
         const quoted = (rates: Record<string, number>) =>
-            swapQuoteResult(icp, chat, 100_000_000n, [["icpswap", 5_000_000_000n]], usd(rates));
+            swapQuoteResult(
+                icp,
+                chat,
+                100_000_000n,
+                [["icpswap", { kind: "quoted", amountOut: 5_000_000_000n }]],
+                usd(rates),
+            );
 
         // 1 ICP at $5 for 50 CHAT at $0.09 is $4.50, 90% of what goes in
         expect(quoted({ [icp.ledger]: 5, [chat.ledger]: 0.09 })).toMatchObject({
@@ -248,6 +338,30 @@ describe("quoting a swap", () => {
             quote: { valueWarning: "dropped" },
         });
         expect(quoted({ [icp.ledger]: 5 })).toMatchObject({ quote: { valueWarning: "unknown" } });
+    });
+
+    // Invariant: the user is only told a DEX failed when no DEX gave a quote and one didn't answer
+    test("with no quote, the user is told whether a DEX failed or none would quote", () => {
+        const outcome = (failed: DexQuote["kind"]) =>
+            swapQuoteResult(
+                icp,
+                chat,
+                100_000_000n,
+                [
+                    ["icpswap", { kind: "declined" }],
+                    ["taco", { kind: failed } as DexQuote],
+                ],
+                usd({}),
+            );
+
+        expect(outcome("unsupported")).toMatchObject({
+            kind: "failed",
+            message: { key: "tokenSwap.noQuotes" },
+        });
+        expect(outcome("failed")).toMatchObject({
+            kind: "failed",
+            message: { key: "tokenSwap.quoteError" },
+        });
     });
 });
 

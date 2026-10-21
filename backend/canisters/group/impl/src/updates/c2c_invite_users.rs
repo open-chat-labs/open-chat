@@ -31,6 +31,7 @@ fn c2c_bot_invite_users_impl(args: c2c_bot_invite_users::Args, state: &mut Runti
     let bot_caller = BotCaller {
         bot: args.bot_id,
         initiator: args.initiator.clone(),
+        bridged_from: None,
     };
 
     if !state.data.is_bot_permitted(

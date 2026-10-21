@@ -190,6 +190,7 @@
         "translateFrom": "ترجمة من {language}",
         "translatedFrom": "تُرجمت على الجهاز من {language}"
     },
+    "bridgedUserUnknown": "مستخدم {platform}",
     "nativeUpdate": {
         "downloadingTitle": "لحظة واحدة! جارٍ التحديث ...",
         "downloadingMessage": "نقوم بتنزيل تحديث سريع وستتمكن من المتابعة بعد قليل ...",
@@ -541,6 +542,7 @@
         "descriptionPlaceholder": "أخبرنا ما هو مجتمعك؟",
         "details": "تفاصيل",
         "directAndGroupChats": "الدردشات",
+        "dmsAndGroupChats": "الرسائل المباشرة والمجموعات",
         "directChats": "المحادثات المباشرة",
         "edit": "تحرير المجتمع",
         "embed": "إضافة قناة مضمنة",
@@ -2408,12 +2410,18 @@
         },
         "quote": "يقتبس",
         "quoteError": "حدث خطأ أثناء الحصول على عروض الأسعار للتبادل {tokenIn}",
+        "quotes": {
+            "best": "أفضل سعر",
+            "declined": "لا يمكن تبديل هذا المبلغ",
+            "failed": "تعذّر الحصول على عرض سعر",
+            "unsupported": "التبديل غير مدعوم"
+        },
         "quoteTooLow": "أفضل سعر معروض هو {rate} {tokenOut} لكل {tokenIn} من {dex}. وهذا يعطي {amountOut} {tokenOut} مقابل {amountIn} {tokenIn}. لا يمكنك التبديل إلا إذا تجاوز المبلغ المعروض {minAmountOut}.",
         "requote": "إعادة الاقتباس",
         "swap": "تبديل",
         "swapNotAvailable": "حاليًا، ليس من الممكن تبديل {tokenIn} إلى أي رمز آخر",
         "swapToken": "تبديل {tokenIn}",
-        "swapTokenTo": "تبديل {tokenIn} إلى {tokenOut}",
+        "swapTokenTo": "تبديل {amountIn} {tokenIn} إلى {tokenOut}",
         "warningValueDropped": "بسبب انخفاض السيولة، فإن قيمة {tokenOut} التي ستحصل عليها هي < 90% من قيمة {tokenIn} التي ستقوم بمبادلتها (بناءً على القيمة الدولارية المحددة لهذه الرموز).",
         "warningValueUnknown": "السعر الحالي بالدولار لواحد أو أكثر من هذه الرموز غير متاح، وبالتالي ليس من الممكن تحديد ما إذا كانت هذه المقايضة تمثل قيمة جيدة.",
         "youWillReceive": "سوف تتلقى **{amountOut}** {tokenOut} (${usdOut}) مقابل **{amountIn}** {tokenIn} (${usdIn})."

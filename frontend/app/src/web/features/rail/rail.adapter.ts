@@ -1,6 +1,7 @@
 import type { CommunitySummary } from "@client";
 import type NavRail from "@openchat/ui/src/features/components/NavRail.svelte";
 import type { ComponentProps } from "svelte";
+import { pickById } from "../../pickById";
 
 type Pin = ComponentProps<typeof NavRail>["pins"][number];
 
@@ -8,9 +9,7 @@ type Pin = ComponentProps<typeof NavRail>["pins"][number];
 const COLOURS: Pin["color"][] = ["sunset", "blue", "teal", "plum"];
 
 function colourFor(id: string): Pin["color"] {
-    let hash = 0;
-    for (const char of id) hash = (hash * 31 + char.charCodeAt(0)) | 0;
-    return COLOURS[Math.abs(hash) % COLOURS.length];
+    return pickById(id, COLOURS);
 }
 
 // The user's communities as the rail's pins, in the order they're sorted in (sortedCommunitiesStore)

@@ -1,6 +1,7 @@
 use crate::guards::caller_is_local_user_index_canister;
 use crate::updates::c2c_csam_detected::c2c_csam_detected_impl;
 use crate::updates::c2c_moderation_referral::c2c_moderation_referral_impl;
+use crate::{IdentityEvent, StorageIndexEvent};
 use crate::{RuntimeState, UserIdentity, UserRegisteredEventPayload, mutate_state};
 use candid::Principal;
 use canister_api_macros::update;
@@ -25,6 +26,13 @@ use user_index_canister::c2c_local_user_index::*;
 #[update(guard = "caller_is_local_user_index_canister", msgpack = true)]
 #[trace]
 fn c2c_local_user_index(args: Args) -> Response {
+    mutate_state(|state| c2c_local_user_index_impl(args, state))
+}
+
+// The name for the LocalUserIndex's events, which senders switch to; the old one is served until they have
+#[update(guard = "caller_is_local_user_index_canister", msgpack = true)]
+#[trace]
+fn c2c_local_index(args: Args) -> Response {
     mutate_state(|state| c2c_local_user_index_impl(args, state))
 }
 
@@ -54,6 +62,9 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
     match event {
         LocalUserIndexEvent::CsamDetected(ev) => c2c_csam_detected_impl(*ev, state),
         LocalUserIndexEvent::ModerationReferral(ev) => c2c_moderation_referral_impl(*ev, state),
+        LocalUserIndexEvent::BridgedUserUpdated(user) => {
+            state.data.bridged_users.update(*user, **now);
+        }
         LocalUserIndexEvent::UserRegistered(ev) => {
             process_new_user(ev.principal, ev.username, ev.email, ev.user_id, ev.referred_by, caller, state)
         }
@@ -308,16 +319,16 @@ You can change your username at any time by clicking \"Profile settings\" from t
         );
     }
 
-    state.data.storage_index_user_sync_queue.push(UserConfig {
+    state.push_event_to_storage_index(StorageIndexEvent::AddOrUpdateUser(UserConfig {
         user_id: principal,
         byte_limit: 100 * ONE_MB,
-    });
+    }));
 
-    state.data.identity_user_sync_queue.push(UserIdentity {
+    state.push_event_to_identity(IdentityEvent::SetUserIdentity(UserIdentity {
         principal,
         user_id: Some(user_id),
         email,
-    });
+    }));
 }
 
 #[cfg(test)]

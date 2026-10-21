@@ -18,6 +18,9 @@ import type {
     BlockUserResponse,
     BotCommandResponse,
     BotDefinition,
+    BridgedUserId,
+    BridgedUserSummary,
+    BridgePlatform,
     BotInstallationLocation,
     BotsResponse,
     CancelP2PSwapResponse,
@@ -62,6 +65,7 @@ import type {
     DeletedDirectMessageResponse,
     DeletedGroupMessageResponse,
     DexId,
+    DexQuoteResult,
     DexSwapResult,
     DiamondMembershipDuration,
     DiamondMembershipFees,
@@ -4681,41 +4685,18 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
-    // The quote of each DEX for swapping `amountIn`, which is what it pulls from the wallet, giving
-    // what reaches the wallet, after every fee, including `outputTokenFee` for sending it there
-    getTokenSwapQuotes(
+    // What `dex` quotes for swapping `amountIn`, which is what it pulls from the wallet, giving what
+    // reaches the wallet, after every fee, including `outputTokenFee` for sending it there
+    getTokenSwapQuote(
+        dex: DexId,
         inputTokenLedger: string,
         outputTokenLedger: string,
         amountIn: bigint,
         outputTokenFee: bigint,
-    ): Promise<[DexId, bigint][]> {
+    ): Promise<DexQuoteResult> {
         return this._dexesAgent
             .get()
-            .quoteSwap(
-                inputTokenLedger,
-                outputTokenLedger,
-                amountIn,
-                outputTokenFee,
-                this.swapProviders(),
-            )
-            .then((quotes) => {
-                // Sort the quotes by amount descending so the first quote is the best
-                quotes.sort(compare);
-                return quotes;
-            });
-
-        function compare(
-            [_dexA, amountA]: [DexId, bigint],
-            [_dexB, amountB]: [DexId, bigint],
-        ): number {
-            if (amountA > amountB) {
-                return -1;
-            }
-            if (amountA < amountB) {
-                return 1;
-            }
-            return 0;
-        }
+            .quoteSwap(dex, inputTokenLedger, outputTokenLedger, amountIn, outputTokenFee);
     }
 
     // Swaps tokens, reporting each step of a swap the user makes straight from their wallet as the
@@ -6109,6 +6090,14 @@ export class OpenChatAgent extends EventTarget {
 
     setAlchemyApiKey(apiKey: string | undefined): Promise<Success | OCError> {
         return this._userIndexClient.setAlchemyApiKey(apiKey);
+    }
+
+    setBridgeBot(platform: BridgePlatform, botId: string | undefined): Promise<Success | OCError> {
+        return this._userIndexClient.setBridgeBot(platform, botId);
+    }
+
+    getBridgedUsers(ids: BridgedUserId[]): Promise<BridgedUserSummary[]> {
+        return this._userIndexClient.bridgedUsers(ids);
     }
     dailyPuzzleRegenerateToday(gameId: string | undefined): Promise<Success | OCError> {
         return this._dailyPuzzleClient.get().regenerateToday(gameId);

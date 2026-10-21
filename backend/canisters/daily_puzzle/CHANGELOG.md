@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Send each day's puzzles to the LocalUserIndexes as events at `c2c_daily_puzzle`, from a queue per index ([#10050](https://github.com/open-chat-labs/open-chat/pull/10050))
+
+### Fixed
+
+- Wait out a failed batch's retry delay, rather than retrying it whenever anything else is queued ([#10069](https://github.com/open-chat-labs/open-chat/pull/10069))
+
+## [[2.0.2163](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2163-daily_puzzle)] - 2026-10-20
+
 ### Added
 
 - Add `c2c_local_index` for the LocalUserIndexes' events ([#10019](https://github.com/open-chat-labs/open-chat/pull/10019))

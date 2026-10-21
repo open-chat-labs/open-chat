@@ -190,6 +190,7 @@
         "translateFrom": "Перевести с языка: {language}",
         "translatedFrom": "Переведено на устройстве с языка: {language}"
     },
+    "bridgedUserUnknown": "Пользователь {platform}",
     "nativeUpdate": {
         "downloadingTitle": "Секунду! Обновление ...",
         "downloadingMessage": "Мы загружаем небольшое обновление, и вы сможете продолжить ...",
@@ -541,6 +542,7 @@
         "descriptionPlaceholder": "Расскажите нам, что представляет собой ваше сообщество",
         "details": "Подробности",
         "directAndGroupChats": "Чаты",
+        "dmsAndGroupChats": "Личные сообщения и групповые чаты",
         "directChats": "Личные чаты",
         "edit": "Изменить сообщество",
         "embed": "Добавить встроенный канал",
@@ -2408,12 +2410,18 @@
         },
         "quote": "Цитировать",
         "quoteError": "Ошибка получения котировок для обмена {tokenIn}",
+        "quotes": {
+            "best": "Лучший курс",
+            "declined": "Эту сумму нельзя обменять",
+            "failed": "Не удалось получить котировку",
+            "unsupported": "Обмен не поддерживается"
+        },
         "quoteTooLow": "Лучшая заявленная ставка составляет {rate} {tokenOut} за {tokenIn} от {dex}. Это дает {amountOut} {tokenOut} для {amountIn} {tokenIn}. Вы можете обменять только в том случае, если заявленная сумма превышает {minAmountOut}.",
         "requote": "Повторная цитация",
         "swap": "Менять",
         "swapNotAvailable": "В настоящее время невозможно обменять {tokenIn} на любой другой токен.",
         "swapToken": "Обмен {tokenIn}",
-        "swapTokenTo": "Замените {tokenIn} на {tokenOut}",
+        "swapTokenTo": "Замените {amountIn} {tokenIn} на {tokenOut}",
         "warningValueDropped": "Из-за низкой ликвидности стоимость {tokenOut}, которую вы получите, составит < 90% от стоимости {tokenIn}, которую вы обменяете (на основе котируемой стоимости этих токенов в долларах США).",
         "warningValueUnknown": "Текущая цена в долларах США для одного или нескольких из этих токенов неизвестна, поэтому невозможно определить, представляет ли этот обмен хорошую ценность.",
         "youWillReceive": "Вы получите **{amountOut}** {tokenOut} (${usdOut}) за **{amountIn}** {tokenIn} (${usdIn})."

@@ -190,6 +190,7 @@
         "translateFrom": "Перекласти з мови: {language}",
         "translatedFrom": "Перекладено на пристрої з мови: {language}"
     },
+    "bridgedUserUnknown": "Користувач {platform}",
     "nativeUpdate": {
         "downloadingTitle": "Секунду! Оновлення ...",
         "downloadingMessage": "Ми завантажуємо невелике оновлення, і ви зможете продовжити ...",
@@ -541,6 +542,7 @@
         "descriptionPlaceholder": "Розкажіть нам, що таке ваша спільнота",
         "details": "Подробиці",
         "directAndGroupChats": "Чати",
+        "dmsAndGroupChats": "Особисті повідомлення та групові чати",
         "directChats": "Прямі чати",
         "edit": "Редагувати спільноту",
         "embed": "Додати вбудований канал",
@@ -2408,12 +2410,18 @@
         },
         "quote": "Цитата",
         "quoteError": "Помилка отримання котирувань для обміну {tokenIn}",
+        "quotes": {
+            "best": "Найкращий курс",
+            "declined": "Цю суму не можна обміняти",
+            "failed": "Не вдалося отримати котирування",
+            "unsupported": "Обмін не підтримується"
+        },
         "quoteTooLow": "Найкращий тариф становить {rate} {tokenOut} за {tokenIn} від {dex}. Це дає {amountOut} {tokenOut} для {amountIn} {tokenIn}. Ви можете обміняти, лише якщо зазначена сума перевищує {minAmountOut}.",
         "requote": "Перецитувати",
         "swap": "Обмін",
         "swapNotAvailable": "Наразі неможливо замінити {tokenIn} на будь-який інший маркер",
         "swapToken": "Поміняти місцями {tokenIn}",
-        "swapTokenTo": "Замінити {tokenIn} на {tokenOut}",
+        "swapTokenTo": "Замінити {amountIn} {tokenIn} на {tokenOut}",
         "warningValueDropped": "Через низьку ліквідність вартість {tokenOut}, яку ви отримаєте, становить < 90% вартості {tokenIn}, яку ви обміняєте (на основі котированої вартості цих токенів у доларах США).",
         "warningValueUnknown": "Поточна ціна в доларах для одного чи кількох із цих токенів недоступна, тому неможливо визначити, чи цей обмін представляє хорошу вартість.",
         "youWillReceive": "Ви отримаєте **{amountOut}** {tokenOut} (${usdOut}) за **{amountIn}** {tokenIn} (${usdIn})."

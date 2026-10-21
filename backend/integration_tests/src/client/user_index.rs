@@ -2,6 +2,7 @@ use crate::{generate_msgpack_query_call, generate_msgpack_update_call, generate_
 use user_index_canister::*;
 
 // Queries
+generate_msgpack_query_call!(bridged_users);
 generate_msgpack_query_call!(check_username);
 generate_msgpack_query_call!(call_push_enabled);
 generate_msgpack_query_call!(moderation_config);
@@ -43,6 +44,7 @@ generate_msgpack_update_call!(accept_terms);
 generate_msgpack_update_call!(set_moderation_referral_config);
 generate_update_call!(remove_platform_moderator);
 generate_msgpack_update_call!(set_alchemy_api_key);
+generate_msgpack_update_call!(set_bridge_bot);
 generate_msgpack_update_call!(set_call_push_enabled);
 generate_msgpack_update_call!(set_display_name);
 generate_msgpack_update_call!(set_premium_item_cost);

@@ -457,6 +457,7 @@
             "desc": "Summon the witch"
         }
     },
+    "bridgedUserUnknown": "{platform} user",
     "cancel": "Cancel",
     "cancelInvite": "Cancel invite",
     "cancelInviteFailed": "Error cancelling invite",
@@ -527,6 +528,7 @@
         "descriptionPlaceholder": "Tell us what your community is all about",
         "details": "Details",
         "directAndGroupChats": "Chats",
+        "dmsAndGroupChats": "DMs & Group Chats",
         "directChats": "Direct chats",
         "edit": "Edit community",
         "embed": "Add embedded channel",
@@ -2154,6 +2156,7 @@
     "recordAudioMessage": "Record audio message",
     "referralHeader": "Invite friends/family",
     "refresh": "Refresh",
+    "regionLoadFailed": "This part of OpenChat couldn't load. Check your connection, then try again.",
     "register": {
         "agree": "Agree",
         "bioTooLong": "Your bio is too long",
@@ -2443,12 +2446,18 @@
         },
         "quote": "Quote",
         "quoteError": "Error getting quotes to swap {tokenIn}",
+        "quotes": {
+            "best": "Best rate",
+            "declined": "Can't swap this amount",
+            "failed": "Couldn't get a quote",
+            "unsupported": "Swap not supported"
+        },
         "quoteTooLow": "The best rate quoted is {rate} {tokenOut} per {tokenIn} from {dex}. This gives {amountOut} {tokenOut} for {amountIn} {tokenIn}. You can only swap if the quoted amount out exceeds {minAmountOut}.",
         "requote": "Re-quote",
         "swap": "Swap",
         "swapNotAvailable": "Currently it is not possible to swap {tokenIn} to any other token",
         "swapToken": "Swap {tokenIn}",
-        "swapTokenTo": "Swap {tokenIn} to {tokenOut}",
+        "swapTokenTo": "Swap {amountIn} {tokenIn} to {tokenOut}",
         "warningValueDropped": "Due to low liquidity, the value of {tokenOut} you will receive is < 90% of the value of {tokenIn} you will swap (based on the quoted USD value of these tokens).",
         "warningValueUnknown": "The current dollar price for one of more of these tokens is not available so it is not possible to determine whether this swap represents good value.",
         "youWillReceive": "You will receive **{amountOut}** {tokenOut} (${usdOut}) for **{amountIn}** {tokenIn} (${usdIn})."

@@ -26,16 +26,21 @@ web/
   ROUTES.md      every URL and what each column shows for it
   DATA.md        where each screen's data and actions come from in the app
   GAPS.md        what the app or the library is missing
+  PLAN.md        the work left: what has to come first, and a pool of workstreams to claim
   router/        the route table (every path, in page.js order), the router and its route effects,
                  and what each route shows (regions.ts)
   shell/         nav rail, the three columns and the breakpoints, overlays
   features/      one folder per screen/feature (chats, conversation, wallet, …):
     XScreen.svelte   reads stores / the client, renders @openchat/ui components, calls the client
     x.adapter.ts     pure mapping from client data to component props, with a spec
+    app/screens.ts   which screen shows in each region kind; a new screen sets its entry there
 ```
 
 ## Rules
 
+- A region's screen is plugged in by setting its entry in `features/app/screens.ts`
+  (`() => import("../x/XScreen.svelte")`); it gets `{ region, context }`. `AppScreen` doesn't
+  change for it.
 - Only `XScreen` components touch the client or the stores. `@openchat/ui` components get data
   through props and report actions through callbacks.
 - Import library components by file (`@openchat/ui/src/lib/components/Button.svelte`), not from the

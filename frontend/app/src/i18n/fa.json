@@ -190,6 +190,7 @@
         "translateFrom": "ترجمه از {language}",
         "translatedFrom": "ترجمه‌شده روی دستگاه از {language}"
     },
+    "bridgedUserUnknown": "کاربر {platform}",
     "nativeUpdate": {
         "downloadingTitle": "یک لحظه! در حال به‌روزرسانی ...",
         "downloadingMessage": "در حال دانلود یک به‌روزرسانی کوچک هستیم و به‌زودی می‌توانید ادامه دهید ...",
@@ -541,6 +542,7 @@
         "descriptionPlaceholder": "به ما بگویید جامعه شما چیست؟",
         "details": "جزئیات",
         "directAndGroupChats": "چت‌ها",
+        "dmsAndGroupChats": "پیام‌های مستقیم و گفتگوهای گروهی",
         "directChats": "چت های مستقیم",
         "edit": "انجمن را ویرایش کنید",
         "embed": "کانال تعبیه شده را اضافه کنید",
@@ -2408,12 +2410,18 @@
         },
         "quote": "نقل قول",
         "quoteError": "خطا در دریافت نقل قول برای تعویض {tokenIn}",
+        "quotes": {
+            "best": "بهترین نرخ",
+            "declined": "این مقدار قابل تعویض نیست",
+            "failed": "دریافت قیمت ممکن نشد",
+            "unsupported": "تعویض پشتیبانی نمی‌شود"
+        },
         "quoteTooLow": "بهترین نرخ نقل شده {rate} {tokenOut} به ازای هر {tokenIn} از {dex} است. این به {amountOut} {tokenOut} برای {amountIn} {tokenIn} می‌دهد. فقط در صورتی می‌توانید مبادله کنید که مبلغ نقل‌شده از {minAmountOut} بیشتر باشد.",
         "requote": "نقل قول مجدد",
         "swap": "تعویض کنید",
         "swapNotAvailable": "در حال حاضر امکان تعویض {tokenIn} با هیچ توکن دیگری وجود ندارد",
         "swapToken": "تعویض {tokenIn}",
-        "swapTokenTo": "تعویض {tokenIn} به {tokenOut}",
+        "swapTokenTo": "تعویض {amountIn} {tokenIn} به {tokenOut}",
         "warningValueDropped": "به دلیل نقدینگی کم، ارزش {tokenOut} که دریافت می‌کنید < 90 درصد ارزش {tokenIn} است که مبادله می‌کنید (بر اساس ارزش دلار نقل‌شده این توکن‌ها).",
         "warningValueUnknown": "قیمت دلار فعلی برای یکی از این توکن‌ها در دسترس نیست، بنابراین نمی‌توان تعیین کرد که آیا این مبادله ارزش خوبی دارد یا خیر.",
         "youWillReceive": "**{amountOut}** {tokenOut} (${usdOut}) را برای **{amountIn}** {tokenIn} (${usdIn}) دریافت خواهید کرد."

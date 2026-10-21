@@ -16,5 +16,6 @@ pub enum StorageIndexEvent {
     UserRemoved(Principal),
     AccessorRemoved(AccessorId),
     FileToRemove(FileId),
-    VaultOp(c2c_vault_sync::VaultOp),
+    // Boxed so that the small events, of which a new bucket is sent one per user, stay small
+    VaultOp(Box<c2c_vault_sync::VaultOp>),
 }

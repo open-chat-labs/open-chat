@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Send its events to its LocalUserIndex and other MultiUser canisters at `c2c_user` ([#10050](https://github.com/open-chat-labs/open-chat/pull/10050))
+
+### Fixed
+
+- Stop retrying events for a user whose old User canister was uninstalled after running out of cycles, once they're found to be gone ([#10063](https://github.com/open-chat-labs/open-chat/pull/10063))
+- Wait out a failed batch's retry delay, rather than retrying it whenever anything else is queued ([#10069](https://github.com/open-chat-labs/open-chat/pull/10069))
+
+## [[2.0.2167](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2167-multi_user)] - 2026-10-20
+
+### Added
+
+- Add `c2c_local_index`, `c2c_group`, `c2c_community` and `c2c_user` for the LocalUserIndex's, Group, Community and other MultiUser canisters' events, to replace the `_canister` and `_v2` names ([#10047](https://github.com/open-chat-labs/open-chat/pull/10047))
+- Add `c2c_escrow` for the Escrow canister's swap status changes, in idempotent envelopes ([#10047](https://github.com/open-chat-labs/open-chat/pull/10047))
+
+### Changed
+
+- Send its events to its LocalUserIndex and other MultiUser canisters at `c2c_user` ([#10050](https://github.com/open-chat-labs/open-chat/pull/10050))
+
+## [[2.0.2157](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2157-multi_user)] - 2026-10-19
+
 ### Added
 
 - Take the GroupIndex's group and community deleted events for every user in the canister in one call ([#10010](https://github.com/open-chat-labs/open-chat/pull/10010))

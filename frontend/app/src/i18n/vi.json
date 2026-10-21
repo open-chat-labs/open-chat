@@ -190,6 +190,7 @@
         "translateFrom": "Dịch từ {language}",
         "translatedFrom": "Đã dịch trên thiết bị từ {language}"
     },
+    "bridgedUserUnknown": "Người dùng {platform}",
     "nativeUpdate": {
         "downloadingTitle": "Chờ một chút! Đang cập nhật ...",
         "downloadingMessage": "Chúng tôi đang tải một bản cập nhật nhanh và bạn sẽ có thể tiếp tục ngay ...",
@@ -541,6 +542,7 @@
         "descriptionPlaceholder": "Hãy cho chúng tôi biết cộng đồng của bạn là gì",
         "details": "Chi tiết",
         "directAndGroupChats": "Trò chuyện",
+        "dmsAndGroupChats": "Tin nhắn trực tiếp và trò chuyện nhóm",
         "directChats": "trò chuyện trực tiếp",
         "edit": "Chỉnh sửa cộng đồng",
         "embed": "Thêm kênh nhúng",
@@ -2408,12 +2410,18 @@
         },
         "quote": "Trích dẫn",
         "quoteError": "Lỗi nhận báo giá để hoán đổi {tokenIn}",
+        "quotes": {
+            "best": "Tỷ giá tốt nhất",
+            "declined": "Không thể hoán đổi số tiền này",
+            "failed": "Không thể nhận báo giá",
+            "unsupported": "Không hỗ trợ hoán đổi này"
+        },
         "quoteTooLow": "Tỷ giá được trích dẫn tốt nhất là {rate} {tokenOut} trên {tokenIn} từ {dex}. Điều này mang lại {amountOut} {tokenOut} cho {amountIn} {tokenIn}. Bạn chỉ có thể hoán đổi nếu số tiền trích dẫn vượt quá {minAmountOut}.",
         "requote": "Báo giá lại",
         "swap": "Tráo đổi",
         "swapNotAvailable": "Hiện tại không thể hoán đổi {tokenIn} sang bất kỳ mã thông báo nào khác",
         "swapToken": "Hoán đổi {tokenIn}",
-        "swapTokenTo": "Hoán đổi {tokenIn} thành {tokenOut}",
+        "swapTokenTo": "Hoán đổi {amountIn} {tokenIn} thành {tokenOut}",
         "warningValueDropped": "Do tính thanh khoản thấp, giá trị của {tokenOut} bạn sẽ nhận được sẽ < 90% giá trị của {tokenIn} bạn sẽ hoán đổi (dựa trên giá trị USD được báo giá của các token này).",
         "warningValueUnknown": "Giá đô la hiện tại của một hoặc nhiều mã thông báo này không có sẵn nên không thể xác định liệu việc hoán đổi này có mang lại giá trị tốt hay không.",
         "youWillReceive": "Bạn sẽ nhận được **{amountOut}** {tokenOut} (${usdOut}) cho **{amountIn}** {tokenIn} (${usdIn})."

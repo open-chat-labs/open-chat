@@ -188,6 +188,7 @@ import {
     type DataContent,
     type DeleteCryptoAccountResponse,
     type DexId,
+    type DexQuote,
     type DiamondMembershipDuration,
     type DiamondMembershipFees,
     type DiamondMembershipStatus,
@@ -367,6 +368,13 @@ import {
     type WithdrawCryptocurrencyResponse,
     type OCError,
     type ProposedProtectedAction,
+    type BridgedUserId,
+    type BridgedUserSummary,
+    type BridgePlatform,
+    bridgedAuthorAvatarUrl,
+    bridgedUserId,
+    bridgedUserIdsFromEvents,
+    bridgedUserKey,
     buildBlobUrl,
     isAndroidTauriApp,
     isIosTauriApp,
@@ -388,6 +396,7 @@ import {
     anonUserStore,
     askForNotificationPermission,
     bitcoinAddress,
+    bridgedUsersStore,
     chatListScopeStore,
     chatSummariesListStore,
     chatSummariesStore,
@@ -482,6 +491,7 @@ import {
     storageStore,
     suspendedUserStore,
     swappableTokensStore,
+    swapProvidersStore,
     threadEventIndexesLoadedStore,
     threadEventsStore,
     translationsStore,
@@ -742,6 +752,9 @@ const MAX_TIMEOUT_MS = Math.pow(2, 31) - 1;
 const CHAT_UPDATE_INTERVAL = 5000;
 const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE_MILLIS;
 const BOT_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
+// A bridged account's profile is fetched again once it's this old, as messages are loaded
+const BRIDGED_USER_MAX_AGE = 10 * ONE_MINUTE_MILLIS;
+const BRIDGED_USER_RETRY_DELAY = 5_000;
 const BOT_UPDATE_IDLE_INTERVAL = 5 * ONE_MINUTE_MILLIS;
 const USER_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
 // The daily puzzle changes at rollover and when an operator regenerates or enables it; an
@@ -791,6 +804,9 @@ const SWAP_OUTPUT_CHECK_INTERVAL_MS = 2000;
 const SWAP_OUTPUT_CHECKS = 10;
 
 export class OpenChat {
+    // When each bridged account's profile was last fetched, keyed by `bridgedUserKey`
+    #bridgedUsersFetchedAt = new Map<string, number>();
+    #bridgedUsersInFlight = new Set<string>();
     #mobileLayout: "v1" | "v2";
     #worker: WorkerAgent;
     #authIdentityStorage: IdentityStorage;
@@ -2123,6 +2139,7 @@ export class OpenChat {
 
     subscribeToMessageActivityFeed(
         subscribeFn: (value: MessageActivityFeedResponse, final: boolean) => void,
+        onError?: (err: unknown) => void,
     ) {
         this.#worker
             .stream({
@@ -2140,6 +2157,7 @@ export class OpenChat {
                     this.getMissingUsers(userIds);
                     subscribeFn(response, final);
                 },
+                onError,
             });
     }
 
@@ -2519,6 +2537,11 @@ export class OpenChat {
      */
     showTrace = showTrace;
     userAvatarUrl = userAvatarUrl;
+
+    // The avatar of the author of a message a bridge bot relayed from another platform
+    bridgedAvatarUrl(id: BridgedUserId, summary: BridgedUserSummary | undefined): string {
+        return bridgedAuthorAvatarUrl(id, summary, this.config.blobUrlPattern) ?? userAvatarUrl();
+    }
     formatTokens = formatTokens;
     validateTokenInput = validateTokenInput;
     isAccountOfMultiUserCanisterUserId = isAccountOfMultiUserCanisterUserId;
@@ -3777,6 +3800,7 @@ export class OpenChat {
         }
         this.#noteUsersSeenInChat(chatId, userIds);
         userStore.addWebhookIds([...webhooks]);
+        void this.getBridgedUsers(bridgedUserIdsFromEvents(events));
         const newChatUserIds = [...allUserIds].filter(
             (u) => u !== userId && !selectedChatUserIdsStore.value.has(u),
         );
@@ -7305,9 +7329,54 @@ export class OpenChat {
                 const { userIds, webhooks } = this.userIdsFromEvents(events);
                 this.getMissingUsers(userIds);
                 userStore.addWebhookIds([...webhooks]);
+                void this.getBridgedUsers(bridgedUserIdsFromEvents(events));
                 return threads;
             })
             .catch(() => []);
+    }
+
+    // Fetches the profiles of the bridged accounts which haven't been fetched, or not recently.
+    // One the UserIndex doesn't have yet, eg. as the message reached the chat first, or which
+    // couldn't be fetched, is tried again shortly.
+    async getBridgedUsers(ids: BridgedUserId[], retry = true): Promise<void> {
+        const now = Date.now();
+        const toFetch = ids.filter((id) => {
+            const key = bridgedUserKey(id)!;
+            const fetchedAt = this.#bridgedUsersFetchedAt.get(key);
+            return (
+                !this.#bridgedUsersInFlight.has(key) &&
+                (fetchedAt === undefined || now - fetchedAt > BRIDGED_USER_MAX_AGE)
+            );
+        });
+        if (toFetch.length === 0) return;
+
+        const keys = toFetch.map((id) => bridgedUserKey(id)!);
+        keys.forEach((key) => this.#bridgedUsersInFlight.add(key));
+        const users = await this.#worker
+            .send({ kind: "getBridgedUsers", ids: toFetch })
+            .catch(() => [] as BridgedUserSummary[])
+            .finally(() => keys.forEach((key) => this.#bridgedUsersInFlight.delete(key)));
+
+        const fetched = new Set<string>();
+        if (users.length > 0) {
+            bridgedUsersStore.update((map) => {
+                for (const u of users) {
+                    const key = bridgedUserKey(bridgedUserId(u.user))!;
+                    map.set(key, u);
+                    fetched.add(key);
+                    this.#bridgedUsersFetchedAt.set(key, now);
+                }
+                return map;
+            });
+        }
+
+        const missing = toFetch.filter((id) => !fetched.has(bridgedUserKey(id)!));
+        if (retry && missing.length > 0) {
+            window.setTimeout(
+                () => void this.getBridgedUsers(missing, false),
+                BRIDGED_USER_RETRY_DELAY,
+            );
+        }
     }
 
     getMissingUsers(userIds: Iterable<string>): Promise<UsersResponse> {
@@ -9464,6 +9533,7 @@ export class OpenChat {
                             this.#evmContractAddresses = registry.tokenDetails.flatMap(
                                 (t) => t.evmContractAddresses,
                             );
+                            swapProvidersStore.set(registry.swapProviders);
                         }
 
                         // make sure we only resolve once so that we don't end up waiting for the downstream fetch
@@ -9682,39 +9752,56 @@ export class OpenChat {
         });
     }
 
-    // The best quote for swapping `amountIn` from the user's wallet, fees included
-    async getSwapQuote(
+    /**
+     * Quotes swapping `amountIn` from the user's wallet, fees included, on each DEX the wallet swaps
+     * with. `onQuotes` is told of every DEX's quote as each comes in, starting with all of them being
+     * asked. Resolves with the best quote once they're all in.
+     */
+    async getSwapQuotes(
         ledgerIn: string,
         ledgerOut: string,
         amountIn: bigint,
+        onQuotes?: (quotes: [DexId, DexQuote][]) => void,
     ): Promise<SwapQuoteOutcome> {
         const tokenIn = cryptoLookup.value.get(ledgerIn)!;
         const tokenOut = cryptoLookup.value.get(ledgerOut)!;
-        try {
-            // What the DEX pulls is less the fees for approving it and for its pull, and each quote is
-            // what reaches the wallet, after the fee for sending it there
-            const quotes = await this.#worker.send({
-                kind: "getTokenSwapQuotes",
-                inputTokenLedger: ledgerIn,
-                outputTokenLedger: ledgerOut,
-                amountIn: amountIn - 2n * tokenIn.transferFee,
-                outputTokenFee: tokenOut.transferFee,
-            });
-            const rates = exchangeRatesLookupStore.value;
-            return swapQuoteResult(
-                tokenIn,
-                tokenOut,
-                amountIn,
-                quotes,
-                (ledger) => rates.get(ledger)?.toUSD,
-            );
-        } catch (err) {
-            this.logError(`Error getting swap quotes for token: ${tokenIn.symbol}`, err);
-            return {
-                kind: "failed",
-                message: i18nKey("tokenSwap.quoteError", { tokenIn: tokenIn.symbol }),
-            };
-        }
+        const quotes: [DexId, DexQuote][] = swapProvidersStore.value.map((dex) => [
+            dex,
+            { kind: "quoting" },
+        ]);
+        onQuotes?.([...quotes]);
+
+        await Promise.all(
+            quotes.map(async ([dex], i) => {
+                let quote: DexQuote;
+                try {
+                    // What the DEX pulls is less the fees for approving it and for its pull, and its
+                    // quote is what reaches the wallet, after the fee for sending it there
+                    quote = await this.#worker.send({
+                        kind: "getTokenSwapQuote",
+                        dex,
+                        inputTokenLedger: ledgerIn,
+                        outputTokenLedger: ledgerOut,
+                        amountIn: amountIn - 2n * tokenIn.transferFee,
+                        outputTokenFee: tokenOut.transferFee,
+                    });
+                } catch (err) {
+                    this.logError(`Error getting a ${dex} quote to swap ${tokenIn.symbol}`, err);
+                    quote = { kind: "failed" };
+                }
+                quotes[i] = [dex, quote];
+                onQuotes?.([...quotes]);
+            }),
+        );
+
+        const rates = exchangeRatesLookupStore.value;
+        return swapQuoteResult(
+            tokenIn,
+            tokenOut,
+            amountIn,
+            quotes,
+            (ledger) => rates.get(ledger)?.toUSD,
+        );
     }
 
     /**
@@ -11729,7 +11816,7 @@ export class OpenChat {
                 endpoint,
             })
             .catch((err) => {
-                this.#logger.error("Failed to get the bot definition", endpoint, err);
+                this.#logger.error("Failed to get the bot definition", err, endpoint);
                 return {
                     kind: "bot_definition_failure",
                     error: err,
@@ -12646,6 +12733,10 @@ export class OpenChat {
 
     setAlchemyApiKey(apiKey: string | undefined): Promise<Success | OCError> {
         return this.#worker.send({ kind: "setAlchemyApiKey", apiKey });
+    }
+
+    setBridgeBot(platform: BridgePlatform, botId: string | undefined): Promise<Success | OCError> {
+        return this.#worker.send({ kind: "setBridgeBot", platform, botId });
     }
     dailyPuzzleRegenerateToday(gameId: string | undefined): Promise<Success | OCError> {
         return this.#worker.send({ kind: "dailyPuzzleRegenerateToday", gameId });

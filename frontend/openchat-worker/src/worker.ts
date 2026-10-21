@@ -935,8 +935,9 @@ const handlers: Handlers = {
     canSwap: (payload, agent) => agent.canSwap(payload.tokenLedgers),
     getTokenSwaps: (payload, agent) =>
         agent.getTokenSwaps(payload.inputTokenLedger, payload.outputTokenLedgers),
-    getTokenSwapQuotes: (payload, agent) =>
-        agent.getTokenSwapQuotes(
+    getTokenSwapQuote: (payload, agent) =>
+        agent.getTokenSwapQuote(
+            payload.dex,
             payload.inputTokenLedger,
             payload.outputTokenLedger,
             payload.amountIn,
@@ -1160,6 +1161,8 @@ const handlers: Handlers = {
     callPushEnabled: (_payload, agent) => agent.callPushEnabled(),
     setCallPushEnabled: (payload, agent) => agent.setCallPushEnabled(payload.enabled),
     setAlchemyApiKey: (payload, agent) => agent.setAlchemyApiKey(payload.apiKey),
+    setBridgeBot: (payload, agent) => agent.setBridgeBot(payload.platform, payload.botId),
+    getBridgedUsers: (payload, agent) => agent.getBridgedUsers(payload.ids),
     dailyPuzzleRegenerateToday: (payload, agent) =>
         agent.dailyPuzzleRegenerateToday(payload.gameId),
     setPremiumItemCost: (payload, agent) =>

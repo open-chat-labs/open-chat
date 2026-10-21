@@ -28,6 +28,9 @@ import type {
     AddHotGroupExclusionResponse,
     AddRemoveReactionResponse,
     BlockUserResponse,
+    BridgedUserId,
+    BridgedUserSummary,
+    BridgePlatform,
     CancelP2PSwapResponse,
     CandidateGroupChat,
     ChangeRoleResponse,
@@ -163,7 +166,7 @@ import type {
     BlobReference,
     StorageStatus,
 } from "./data/data";
-import type { DexId } from "./dexes";
+import type { DexId, DexQuoteResult } from "./dexes";
 import type { GenerateMagicLinkResponse } from "./email";
 import type {
     ApproveResponse,
@@ -462,7 +465,7 @@ export type WorkerRequest = Cloneable<
     | TipMessage
     | CanSwap
     | GetTokenSwaps
-    | GetTokenSwapQuotes
+    | GetTokenSwapQuote
     | SwapTokens
     | RecoverUnfinishedTokenSwaps
     | ApproveTransfer
@@ -558,6 +561,8 @@ export type WorkerRequest = Cloneable<
     | CallPushEnabled
     | SetCallPushEnabled
     | SetAlchemyApiKey
+    | SetBridgeBot
+    | GetBridgedUsers
     | SetPremiumItemCost
     | OneSecEnableForwarding
     | OneSecGetTransferFees
@@ -692,6 +697,16 @@ type SetCallPushEnabled = {
 type SetAlchemyApiKey = {
     kind: "setAlchemyApiKey";
     apiKey: string | undefined;
+};
+// Platform operators only
+type SetBridgeBot = {
+    kind: "setBridgeBot";
+    platform: BridgePlatform;
+    botId: string | undefined;
+};
+type GetBridgedUsers = {
+    kind: "getBridgedUsers";
+    ids: BridgedUserId[];
 };
 type DailyPuzzleRegenerateToday = {
     kind: "dailyPuzzleRegenerateToday";
@@ -946,8 +961,9 @@ type GetTokenSwaps = {
     outputTokenLedgers: string[];
 };
 
-type GetTokenSwapQuotes = {
-    kind: "getTokenSwapQuotes";
+type GetTokenSwapQuote = {
+    kind: "getTokenSwapQuote";
+    dex: DexId;
     inputTokenLedger: string;
     outputTokenLedger: string;
     amountIn: bigint;
@@ -2249,7 +2265,7 @@ export type WorkerResponseInner =
     | Record<string, bigint>
     | Record<string, DexId[]>
     | Set<string>
-    | [DexId, bigint][]
+    | DexQuoteResult
     | SwapTokensResponse
     | SwapTokensStep
     | DiamondMembershipFees[]
@@ -2779,7 +2795,7 @@ export type WorkerResults = ResultsByKind<{
     followThread: FollowThreadResponse;
     getTokenSwaps: Record<string, DexId[]>;
     canSwap: Set<string>;
-    getTokenSwapQuotes: [DexId, bigint][];
+    getTokenSwapQuote: DexQuoteResult;
     swapTokens: SwapTokensResponse | SwapTokensStep;
     recoverUnfinishedTokenSwaps: void;
     deleteDirectChat: boolean;
@@ -2864,6 +2880,8 @@ export type WorkerResults = ResultsByKind<{
     callPushEnabled: boolean;
     setCallPushEnabled: Success | OCError;
     setAlchemyApiKey: Success | OCError;
+    setBridgeBot: Success | OCError;
+    getBridgedUsers: BridgedUserSummary[];
     setPremiumItemCost: void;
     createAccountLinkingCode: AccountLinkingCode | undefined;
     getSignInProof: string | undefined;

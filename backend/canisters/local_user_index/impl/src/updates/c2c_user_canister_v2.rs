@@ -19,6 +19,13 @@ fn c2c_user_canister_v2(args: ArgsInternal) -> Response {
     mutate_state(|state| c2c_user_canister_v2_impl(args, state))
 }
 
+// The name for a MultiUser canister's events, which senders switch to; the old one is served until they have
+#[update(guard = "caller_is_local_multi_user_canister", msgpack = true)]
+#[trace]
+fn c2c_user(args: ArgsInternal) -> Response {
+    mutate_state(|state| c2c_user_canister_v2_impl(args, state))
+}
+
 fn c2c_user_canister_v2_impl(args: ArgsInternal, state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
     let now = LazyCell::new(now_millis);

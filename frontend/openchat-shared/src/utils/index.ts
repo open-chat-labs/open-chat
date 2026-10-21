@@ -2,6 +2,7 @@ export * from "./array";
 export * from "./bandwidthMonitor";
 export * from "./bigint";
 export * from "./blobs";
+export * from "./bridge";
 export * from "./chat";
 export * from "./configKeys";
 export * from "./dailyGames";

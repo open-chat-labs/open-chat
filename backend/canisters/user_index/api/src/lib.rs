@@ -1,8 +1,8 @@
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::{
-    BlobReference, BotInstallationLocation, BotPermissions, CanisterId, ChannelLatestMessageIndex, Chat, ChatId, CommunityId,
-    FileId, Hash, MediaScanMatch, MessageContentInitial, MessageId, MessageIndex, Milliseconds, NotifyChit,
+    BlobReference, BotInstallationLocation, BotPermissions, BridgedUser, CanisterId, ChannelLatestMessageIndex, Chat, ChatId,
+    CommunityId, FileId, Hash, MediaScanMatch, MessageContentInitial, MessageId, MessageIndex, Milliseconds, NotifyChit,
     PremiumItemPurchase, StreakInsuranceClaim, StreakInsurancePayment, TimestampMillis, UniquePersonProof, User, UserId,
 };
 
@@ -38,6 +38,8 @@ pub enum LocalUserIndexEvent {
     MultiUserCanisterCreated(CanisterId),
     CsamDetected(Box<CsamDetected>),
     ModerationReferral(Box<ModerationReferral>),
+    // The profile a bridge bot relayed a message with, for the registry of bridged accounts
+    BridgedUserUpdated(Box<BridgedUser>),
 }
 
 // A message a chat's classifier or media scan found to be CSAM: the auto-sanction is applied

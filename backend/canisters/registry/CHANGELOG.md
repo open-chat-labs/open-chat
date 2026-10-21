@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2164](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2164-registry)] - 2026-10-20
+
 ### Added
 
 - Add `c2c_proposals_bot` for the ProposalsBot's events ([#10029](https://github.com/open-chat-labs/open-chat/pull/10029))

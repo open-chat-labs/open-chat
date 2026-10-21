@@ -252,6 +252,8 @@
     "activityPanel": {
       "markAllRead": "Mark all read",
       "markFailed": "Couldn't update that. Try again.",
+      "noActivity": "No activity yet",
+      "noActivityBody": "Reactions, mentions, replies and tips on your messages show up here.",
       "noMentions": "No mentions",
       "noMentionsBody": "When someone @mentions you, it shows up here.",
       "noPayments": "No payments",

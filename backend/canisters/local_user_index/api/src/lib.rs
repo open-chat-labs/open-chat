@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use types::nns::CryptoAmount;
 use types::{
     AutonomousConfig, BlobReference, BotCommandDefinition, BotDataEncoding, BotDefinition, BotDefinitionUpdate,
-    BotInstallationLocation, BotSubscriptions, BuildVersion, CanisterId, ChannelId, ChannelLatestMessageIndex,
+    BotInstallationLocation, BotSubscriptions, BridgePlatform, BuildVersion, CanisterId, ChannelId, ChannelLatestMessageIndex,
     ChannelUserNotificationPayload, ChatId, ClassifyMessageRequest, CommunityId, CyclesTopUp, DiamondMembershipPlanDuration,
     GroupChatUserNotificationPayload, MediaScanMatch, MessageContentInitial, MessageId, MessageIndex, Milliseconds,
     Notification, NotifyChit, PhoneNumber, PublicCommunityActivity, PublicGroupActivity, ReferralType, SuspensionDuration,
@@ -60,6 +60,7 @@ pub enum UserIndexEvent {
     SetMediaScanConfig(types::MediaScanConfig),
     SetCallPushEnabled(bool),
     SetDailyPuzzleCanisterId(CanisterId),
+    SetBridgeBot(SetBridgeBot),
     UserIdMigrated(UserIdMigrated),
     SetAlchemyApiKey(SetAlchemyApiKey),
 }
@@ -240,6 +241,14 @@ pub struct BotUpdated {
     pub owner_id: UserId,
     pub endpoint: String,
     pub definition: BotDefinition,
+    #[serde(default)]
+    pub principal: Option<Principal>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct SetBridgeBot {
+    pub platform: BridgePlatform,
+    pub bot_id: Option<UserId>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -553,4 +562,12 @@ impl std::fmt::Debug for SetAlchemyApiKey {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct SetModerationReferralConfig {
     pub config: Option<types::ModerationReferralConfig>,
+}
+
+// What the DailyPuzzle canister tells a LocalUserIndex, at `c2c_daily_puzzle`. New variants go at
+// the end.
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum DailyPuzzleEvent {
+    // The full set for the current day, one per game, replacing whatever is held
+    Puzzles(Vec<types::DailyPuzzle>),
 }

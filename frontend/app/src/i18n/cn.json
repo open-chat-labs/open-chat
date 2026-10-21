@@ -190,6 +190,7 @@
         "translateFrom": "从{language}翻译",
         "translatedFrom": "已在设备上从{language}翻译"
     },
+    "bridgedUserUnknown": "{platform} 用户",
     "nativeUpdate": {
         "downloadingTitle": "稍等！正在更新 ...",
         "downloadingMessage": "我们正在下载一个快速更新，稍后即可继续 ...",
@@ -541,6 +542,7 @@
         "descriptionPlaceholder": "告诉我们您的社区是关于什么的",
         "details": "细节",
         "directAndGroupChats": "聊天",
+        "dmsAndGroupChats": "私信和群聊",
         "directChats": "直接聊天",
         "edit": "编辑社区",
         "embed": "添加内嵌频道",
@@ -2408,12 +2410,18 @@
         },
         "quote": "报价",
         "quoteError": "获取兑换 {tokenIn} 的报价时出错",
+        "quotes": {
+            "best": "最佳汇率",
+            "declined": "无法兑换此金额",
+            "failed": "无法获取报价",
+            "unsupported": "不支持此兑换"
+        },
         "quoteTooLow": "所报的最佳费率是 {rate}  {tokenOut} / {tokenIn} @{dex}。这将从 {amountIn} {tokenIn} 兑换 {amountOut} {tokenOut} 。仅当报价金额超过 {minAmountOut} 时，您才可以进行交换。",
         "requote": "重新报价",
         "swap": "兑换",
         "swapNotAvailable": "目前无法将 {tokenIn} 交换为任何其他代币",
         "swapToken": "交换{tokenIn}",
-        "swapTokenTo": "将 {tokenIn} 交换为 {tokenOut}",
+        "swapTokenTo": "将 {amountIn} {tokenIn} 交换为 {tokenOut}",
         "warningValueDropped": "由于流动性低，您将收到的{tokenOut}的价值<您将交换的{tokenIn}价值的90％（基于这些代币的报价美元价值）。",
         "warningValueUnknown": "目前这些代币的美元价格尚不可用，因此无法确定这种交换是否具有良好的价值。",
         "youWillReceive": "您将收到 **{amountOut}** {tokenOut} (${usdOut})，金额为 **{amountIn}** {tokenIn} (${usdIn})。"

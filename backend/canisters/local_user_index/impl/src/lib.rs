@@ -1,5 +1,6 @@
 use crate::model::community_event_batch::CommunityEventBatch;
 use crate::model::daily_puzzle_engine::{DailyPuzzleEngine, DailyPuzzleEngineMetrics};
+use crate::model::daily_puzzle_event_batch::DailyPuzzleEventBatch;
 use crate::model::daily_puzzle_result_batch::DailyPuzzleResultBatch;
 use crate::model::game_chit_credit::{GameChitCreditRetryQueue, new_retry_queue};
 use crate::model::group_event_batch::GroupEventBatch;
@@ -21,6 +22,7 @@ use canister_state_macros::canister_state;
 use community_canister::LocalIndexEvent as CommunityEvent;
 use constants::{MINUTE_IN_MS, MULTI_USER_CANISTER_MIN_CYCLES_BALANCE};
 use ct_codecs::{Base64UrlSafeNoPadding, Encoder};
+use daily_puzzle_canister::LocalIndexEvent as DailyPuzzleEvent;
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use event_store_utils::EventDeduper;
@@ -45,7 +47,7 @@ use std::time::Duration;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use tracing::{error, info};
 use types::{
-    BotDataEncoding, BotEventPayload, BotEventWrapper, BotNotification, BotNotificationEnvelope, BuildVersion,
+    BotDataEncoding, BotEventPayload, BotEventWrapper, BotNotification, BotNotificationEnvelope, BridgePlatform, BuildVersion,
     CLAIM_TYPE_DECLINE_VIDEO_CALL, CLAIM_TYPE_DIAMOND_MEMBERSHIP, CallDismissalKind, CanisterId, ChannelLatestMessageIndex,
     Chat, ChatId, ChildCanisterWasms, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles,
     CyclesTopUp, DailyPuzzleResult, DeclineVideoCallClaims, DiamondMembershipDetails, DirectCallDismissedNotification, FcmData,
@@ -275,17 +277,23 @@ impl RuntimeState {
 
     pub fn set_daily_puzzle_canister_id(&mut self, canister_id: CanisterId) {
         self.data.daily_puzzle_canister_id = Some(canister_id);
-        match self.data.daily_puzzle_results_queue.as_mut() {
+        match self.data.daily_puzzle_event_sync_queue.as_mut() {
             Some(queue) => queue.set_state(canister_id),
-            None => self.data.daily_puzzle_results_queue = Some(BatchedTimerJobQueue::new(canister_id, true)),
+            None => self.data.daily_puzzle_event_sync_queue = Some(BatchedTimerJobQueue::new(canister_id, true)),
         }
         info!(canister_id = %canister_id, "Daily puzzle canister id set");
         jobs::pull_daily_puzzle::pull_now();
     }
 
     pub fn push_daily_puzzle_result(&mut self, result: DailyPuzzleResult) {
-        if let Some(queue) = self.data.daily_puzzle_results_queue.as_mut() {
-            queue.push(result);
+        let now = self.env.now();
+        let idempotency_id = self.env.rng().next_u64();
+        if let Some(queue) = self.data.daily_puzzle_event_sync_queue.as_mut() {
+            queue.push(IdempotentEnvelope {
+                created_at: now,
+                idempotency_id,
+                value: DailyPuzzleEvent::ReportResult(result),
+            });
         } else {
             error!(number = result.number, user_id = %result.user_id, "Daily puzzle canister id not set, result dropped");
         }
@@ -679,10 +687,14 @@ impl RuntimeState {
 
         let encodings: HashSet<BotDataEncoding> = recipients.values().cloned().collect();
 
+        // Included in the payload, so it must be the index the notification is about to be added at
+        let notification_index = self.data.notifications.next_event_index();
+
         let event_wrapper = BotEventWrapper {
             api_gateway: this_canister_id,
             event: bot_notification.event,
             timestamp: bot_notification.timestamp,
+            notification_index,
         };
 
         let event_map: HashMap<_, _> = encodings
@@ -771,6 +783,7 @@ impl RuntimeState {
             multi_user_wasm_version: self.data.child_canister_wasms.get(ChildCanisterType::MultiUser).wasm.version,
             migrated_user_ids: self.data.migrated_user_ids.len(),
             call_push_enabled: self.data.call_push_enabled,
+            bridge_bots: self.data.bridge_bots.clone(),
             group_versions: self
                 .data
                 .local_groups
@@ -830,7 +843,7 @@ impl RuntimeState {
             daily_puzzle: DailyPuzzleMetrics {
                 canister_id: self.data.daily_puzzle_canister_id,
                 engine: self.data.daily_puzzle_engine.metrics(),
-                results_queue_len: self.data.daily_puzzle_results_queue.as_ref().map_or(0, |q| q.len()),
+                results_queue_len: self.data.daily_puzzle_event_sync_queue.as_ref().map_or(0, |q| q.len()),
                 chit_credit_retry_queue_len: self.data.game_chit_credit_retry_queue.len(),
             },
             bots: self
@@ -938,13 +951,19 @@ struct Data {
     // The native call push kill switch (#9456). Off until the Android shell can ring.
     #[serde(default)]
     pub call_push_enabled: bool,
+    // The bot that bridges each platform, eg. Discord, the only bot that can relay messages from it
+    #[serde(default)]
+    pub bridge_bots: BTreeMap<BridgePlatform, UserId>,
     #[serde(default)]
     pub daily_puzzle_canister_id: Option<CanisterId>,
     #[serde(default)]
     pub daily_puzzle_engine: DailyPuzzleEngine,
-    // Created when the daily puzzle canister id is set, since the queue needs a target
+    // Drained into `daily_puzzle_event_sync_queue` by the post_upgrade one-off, and removed with it
     #[serde(default)]
     pub daily_puzzle_results_queue: Option<BatchedTimerJobQueue<DailyPuzzleResultBatch>>,
+    // Created when the daily puzzle canister id is set, since the queue needs a target
+    #[serde(default)]
+    pub daily_puzzle_event_sync_queue: Option<BatchedTimerJobQueue<DailyPuzzleEventBatch>>,
     // Solve rewards whose credit call failed after the solve was recorded
     #[serde(default = "new_retry_queue")]
     pub game_chit_credit_retry_queue: GameChitCreditRetryQueue,
@@ -1077,9 +1096,11 @@ impl Data {
             media_scan_config,
             media_scan_job_log: MediaScanJobLog::default(),
             call_push_enabled,
+            bridge_bots: BTreeMap::new(),
             daily_puzzle_canister_id: None,
             daily_puzzle_engine: DailyPuzzleEngine::default(),
             daily_puzzle_results_queue: None,
+            daily_puzzle_event_sync_queue: None,
             game_chit_credit_retry_queue: new_retry_queue(),
             migrated_user_ids: MigratedUserIds::default(),
             registry_tokens: RegistryTokens::default(),
@@ -1128,6 +1149,7 @@ pub struct Metrics {
     pub multi_user_wasm_version: BuildVersion,
     pub migrated_user_ids: usize,
     pub call_push_enabled: bool,
+    pub bridge_bots: BTreeMap<BridgePlatform, UserId>,
     pub user_events_queue_length: usize,
     // Batches currently mid-flight: len() alone cannot distinguish an idle queue from one
     // whose last batch is still awaiting its reply

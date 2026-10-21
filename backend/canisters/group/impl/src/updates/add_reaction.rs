@@ -27,6 +27,7 @@ fn c2c_bot_add_reaction_impl(args: c2c_bot_add_reaction::Args, state: &mut Runti
     let bot_caller = BotCaller {
         bot: args.bot_id,
         initiator: args.initiator.clone(),
+        bridged_from: None,
     };
 
     let args = Args {
