@@ -3,7 +3,7 @@
      Reaction chips are limited to maxReactionRows; the rest fold into a "+N" chip that expands them. -->
 <script lang="ts">
   import { useT } from '../i18n';
-  import { untrack } from 'svelte';
+  import { untrack, type Snippet } from 'svelte';
 
   // count grapheme clusters so flags, skin tones and ZWJ families read as one emoji
   const SEG = typeof Intl !== 'undefined' && Intl.Segmenter ? new Intl.Segmenter(undefined, { granularity: 'grapheme' }) : null;
@@ -28,6 +28,8 @@
 
   interface Props {
     text: string;
+    /** The text as the host renders it (markdown, mentions, links), shown in its place. `text` still sizes emoji-only messages. */
+    body?: Snippet;
     time: string;
     side?: 'sent' | 'received';
     lastInGroup?: boolean;
@@ -55,6 +57,7 @@
 
   let {
     text,
+    body,
     time,
     side = 'sent',
     lastInGroup = true,
@@ -89,6 +92,8 @@
   let expanded = $state(false);
   let chips = $state<HTMLDivElement>();
   let bubble = $state<HTMLDivElement>();
+  // the stamp's width, for a body ending in a list to keep its room (below)
+  let stampWidth = $state(0);
 
   const shown = $derived(fit === null || expanded ? reactions : reactions.slice(0, fit));
   const hidden = $derived(reactions.length - shown.length);
@@ -151,7 +156,11 @@
         {#if code}
           <pre class="code">{code}</pre>
         {/if}
-        <p class="text" style:font-size={scale.size} style:line-height={scale.leading}>{text}<span class="stamp spacer" aria-hidden="true">{@render stamp()}</span><span class="stamp corner">{@render stamp()}</span></p>
+        {#if body}
+          <div class="text body" style:font-size={scale.size} style:line-height={scale.leading} style:--oc-stamp-room="{stampWidth + 9}px">{@render body()}<span class="stamp spacer" aria-hidden="true">{@render stamp()}</span><span class="stamp corner" bind:offsetWidth={stampWidth}>{@render stamp()}</span></div>
+        {:else}
+          <p class="text" style:font-size={scale.size} style:line-height={scale.leading}>{text}<span class="stamp spacer" aria-hidden="true">{@render stamp()}</span><span class="stamp corner">{@render stamp()}</span></p>
+        {/if}
       </div>
       {#if status === 'failed'}
         <div class="failed">
@@ -393,6 +402,27 @@
     color: var(--msg-ink);
     text-wrap: pretty;
     overflow-wrap: anywhere;
+  }
+
+  /* a host's body flows inline where it ends (its root, and a paragraph closing it), so the
+     stamp's spacer stays on its last line rather than opening a line of its own (specific enough
+     to win over a host's own block display) */
+  .bubble .text.body > :global(:first-child),
+  .bubble .text.body > :global(:first-child > p:last-child) {
+    display: inline;
+  }
+
+  /* a body ending in a list can't flow inline: its last item keeps the stamp's room at its end
+     instead, where the corner stamp sits, and the spacer isn't needed (a code block at the end
+     still takes a line of its own: its text ends in a line break) */
+  .bubble .text.body:has(> :global(:first-child > :is(ul, ol):last-child)) > .spacer {
+    display: none;
+  }
+
+  .bubble .text.body > :global(:first-child > :is(ul, ol):last-child > li:last-child::after) {
+    content: '';
+    display: inline-block;
+    width: var(--oc-stamp-room, 0);
   }
 
   .stamp {

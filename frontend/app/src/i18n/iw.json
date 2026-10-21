@@ -541,6 +541,7 @@
         "descriptionPlaceholder": "ספר לנו על מה הקהילה שלך",
         "details": "פרטים",
         "directAndGroupChats": "צ'אטים",
+        "dmsAndGroupChats": "הודעות ישירות וצ'אטים קבוצתיים",
         "directChats": "צ'אטים ישירים",
         "edit": "ערוך קהילה",
         "embed": "הוסף ערוץ מוטבע",
@@ -2408,12 +2409,18 @@
         },
         "quote": "ציטוט",
         "quoteError": "שגיאה בקבלת ציטוטים להחלפה של {tokenIn}",
+        "quotes": {
+            "best": "השער הטוב ביותר",
+            "declined": "לא ניתן להחליף סכום זה",
+            "failed": "לא ניתן היה לקבל הצעת מחיר",
+            "unsupported": "ההחלפה אינה נתמכת"
+        },
         "quoteTooLow": "התעריף הטוב ביותר שצוטט הוא {rate} {tokenOut} לכל {tokenIn} מ-{dex}. זה נותן {amountOut} {tokenOut} עבור {amountIn} {tokenIn}. אתה יכול להחליף רק אם הסכום הנקוב עולה על {minAmountOut}.",
         "requote": "ציטוט מחדש",
         "swap": "לְהַחלִיף",
         "swapNotAvailable": "נכון לעכשיו לא ניתן להחליף את {tokenIn} לשום אסימון אחר",
         "swapToken": "החלפה {tokenIn}",
-        "swapTokenTo": "החלף את {tokenIn} ל-{tokenOut}",
+        "swapTokenTo": "החלף את {amountIn} {tokenIn} ל-{tokenOut}",
         "warningValueDropped": "עקב נזילות נמוכה, הערך של {tokenOut} שתקבל הוא < 90% מהערך של {tokenIn} שתחליף (בהתבסס על הערך המצוטט בדולר ארה\"ב של אסימונים אלה).",
         "warningValueUnknown": "המחיר הנוכחי בדולר עבור אחד או יותר מהאסימונים הללו אינו זמין ולכן לא ניתן לקבוע אם החלפה זו מייצגת ערך טוב.",
         "youWillReceive": "תקבל **{amountOut}** {tokenOut} (${usdOut}) עבור **{amountIn}** {tokenIn} (${usdIn})."

@@ -48,6 +48,12 @@ impl<T: TimerJobItemBatch> BatchedTimerJobQueue<T> {
         self.0.retain(f)
     }
 
+    // Removes and returns every queued item, in order. Items in a batch which is already being
+    // processed are unaffected.
+    pub fn take_all(&mut self) -> Vec<T::Item> {
+        self.0.take_all().into_iter().flat_map(|(_, items)| items).collect()
+    }
+
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }

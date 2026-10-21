@@ -240,6 +240,8 @@ pub struct BotUpdated {
     pub owner_id: UserId,
     pub endpoint: String,
     pub definition: BotDefinition,
+    #[serde(default)]
+    pub principal: Option<Principal>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -553,4 +555,12 @@ impl std::fmt::Debug for SetAlchemyApiKey {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct SetModerationReferralConfig {
     pub config: Option<types::ModerationReferralConfig>,
+}
+
+// What the DailyPuzzle canister tells a LocalUserIndex, at `c2c_daily_puzzle`. New variants go at
+// the end.
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum DailyPuzzleEvent {
+    // The full set for the current day, one per game, replacing whatever is held
+    Puzzles(Vec<types::DailyPuzzle>),
 }

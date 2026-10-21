@@ -541,6 +541,7 @@
         "descriptionPlaceholder": "Raccontaci di cosa tratta la tua comunità",
         "details": "Dettagli",
         "directAndGroupChats": "Chat",
+        "dmsAndGroupChats": "Messaggi diretti e chat di gruppo",
         "directChats": "Chat dirette",
         "edit": "Modifica comunità",
         "embed": "Aggiungi canale incorporato",
@@ -2408,12 +2409,18 @@
         },
         "quote": "Citazione",
         "quoteError": "Errore durante il recupero delle virgolette da scambiare {tokenIn}",
+        "quotes": {
+            "best": "Tasso migliore",
+            "declined": "Impossibile scambiare questo importo",
+            "failed": "Impossibile ottenere una quotazione",
+            "unsupported": "Scambio non supportato"
+        },
         "quoteTooLow": "La migliore tariffa indicata è {rate} {tokenOut} per {tokenIn} da {dex}. Questo dà {amountOut} {tokenOut} per {amountIn} {tokenIn}. Puoi scambiare solo se l'importo indicato supera {minAmountOut}.",
         "requote": "Riquotare",
         "swap": "Scambio",
         "swapNotAvailable": "Attualmente non è possibile scambiare {tokenIn} con nessun altro token",
         "swapToken": "Scambia {tokenIn}",
-        "swapTokenTo": "Scambia {tokenIn} in {tokenOut}",
+        "swapTokenTo": "Scambia {amountIn} {tokenIn} in {tokenOut}",
         "warningValueDropped": "A causa della bassa liquidità, il valore di {tokenOut} che riceverai è < 90% del valore di {tokenIn} che scambierai (in base al valore USD quotato di questi token).",
         "warningValueUnknown": "Il prezzo attuale in dollari per uno o più di questi token non è disponibile, quindi non è possibile stabilire se questo swap rappresenti un buon valore.",
         "youWillReceive": "Riceverai **{amountOut}** {tokenOut} (${usdOut}) per **{amountIn}** {tokenIn} (${usdIn})."

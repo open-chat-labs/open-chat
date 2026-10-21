@@ -541,6 +541,7 @@
         "descriptionPlaceholder": "हमें बताएं कि आपका समुदाय किस बारे में है",
         "details": "विवरण",
         "directAndGroupChats": "चैट",
+        "dmsAndGroupChats": "डीएम और ग्रुप चैट",
         "directChats": "सीधी बातचीत",
         "edit": "समुदाय संपादित करें",
         "embed": "एम्बेडेड चैनल जोड़ें",
@@ -2408,12 +2409,18 @@
         },
         "quote": "उद्धरण",
         "quoteError": "{tokenIn} स्वैप करने के लिए उद्धरण प्राप्त करने में त्रुटि",
+        "quotes": {
+            "best": "सर्वोत्तम दर",
+            "declined": "यह राशि स्वैप नहीं की जा सकती",
+            "failed": "कोटेशन नहीं मिल सका",
+            "unsupported": "स्वैप समर्थित नहीं है"
+        },
         "quoteTooLow": "उद्धृत की गई सर्वोत्तम दर {rate} से {tokenOut} प्रति {tokenIn} है। यह {dex} {amountOut} के लिए {tokenOut} {amountIn} देता है। आप केवल तभी स्वैप कर सकते हैं यदि उद्धृत राशि {tokenIn} से अधिक हो।",
         "requote": "पुनः उद्धरण",
         "swap": "बदलना",
         "swapNotAvailable": "वर्तमान में {tokenIn} को किसी अन्य टोकन में स्वैप करना संभव नहीं है",
         "swapToken": "स्वैप {tokenIn}",
-        "swapTokenTo": "{tokenIn} को {tokenOut} में बदलें",
+        "swapTokenTo": "{amountIn} {tokenIn} को {tokenOut} में बदलें",
         "warningValueDropped": "कम तरलता के कारण, आपको प्राप्त होने वाला {tokenOut} का मूल्य आपके द्वारा स्वैप किए जाने वाले {tokenIn} के मूल्य का < 90% होगा (इन टोकन के उद्धृत USD मूल्य के आधार पर)।",
         "warningValueUnknown": "इनमें से एक या अधिक टोकनों का वर्तमान डॉलर मूल्य उपलब्ध नहीं है, इसलिए यह निर्धारित करना संभव नहीं है कि यह स्वैप अच्छा मूल्य दर्शाता है या नहीं।",
         "youWillReceive": "आपको **{amountOut}** {tokenOut} (${usdOut}) के बदले **{amountIn}** {tokenIn} (${usdIn}) प्राप्त होगा।"

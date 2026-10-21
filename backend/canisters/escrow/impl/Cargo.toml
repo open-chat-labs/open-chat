@@ -34,6 +34,7 @@ rand = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 stable_memory = { path = "../../../libraries/stable_memory" }
+timer_job_queues = { path = "../../../libraries/timer_job_queues" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 utils = { path = "../../../libraries/utils" }

@@ -541,6 +541,7 @@
         "descriptionPlaceholder": "あなたのコミュニティについて教えてください",
         "details": "詳細",
         "directAndGroupChats": "チャット",
+        "dmsAndGroupChats": "DMとグループチャット",
         "directChats": "ダイレクトチャット",
         "edit": "コミュニティを編集する",
         "embed": "埋め込みチャンネルを追加",
@@ -2408,12 +2409,18 @@
         },
         "quote": "引用",
         "quoteError": "{tokenIn} を交換するための引用符の取得中にエラーが発生しました",
+        "quotes": {
+            "best": "最良レート",
+            "declined": "この金額はスワップできません",
+            "failed": "見積もりを取得できませんでした",
+            "unsupported": "このスワップには対応していません"
+        },
         "quoteTooLow": "見積もられた最良レートは、{rate} からの {tokenOut} あたり {tokenIn} {dex} です。これにより、{amountOut} {tokenOut} の {amountIn} {tokenIn} が得られます。見積金額が {minAmountOut} を超える場合にのみ交換できます。",
         "requote": "再引用",
         "swap": "スワップ",
         "swapNotAvailable": "現在、{tokenIn} を他のトークンに交換することはできません",
         "swapToken": "{tokenIn}を交換する",
-        "swapTokenTo": "{tokenIn} を {tokenOut} に交換します",
+        "swapTokenTo": "{amountIn} {tokenIn} を {tokenOut} に交換します",
         "warningValueDropped": "流動性が低いため、受け取る {tokenOut} の価値は、スワップする {tokenIn} の価値の 90% 未満になります (これらのトークンの見積 USD 価値に基づきます)。",
         "warningValueUnknown": "これらのトークンの 1 つ以上の現在のドル価格は入手できないため、このスワップが適切な価値を表すかどうかを判断することはできません。",
         "youWillReceive": "**{amountOut}** {tokenOut} (${usdOut}) に対して **{amountIn}** {tokenIn} (${usdIn}) を受け取ります。"

@@ -124,8 +124,8 @@ async fn process_payment(mut pending_payment: PendingPayment, previous_failures:
                     };
 
                     if notify_status_change {
-                        state.data.notify_status_change_queue.push(swap.id);
-                        crate::jobs::notify_status_change::start_job_if_required(state);
+                        let swap_id = swap.id;
+                        state.notify_status_change(swap_id);
                     }
                 }
             }

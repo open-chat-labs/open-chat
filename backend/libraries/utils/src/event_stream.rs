@@ -65,6 +65,11 @@ impl<T: CandidType + Clone> EventStream<T> {
         self.latest_event_index
     }
 
+    // The index the next event added will be given
+    pub fn next_event_index(&self) -> u64 {
+        self.latest_event_index + 1
+    }
+
     pub fn len(&self) -> usize {
         self.events.len()
     }
@@ -158,6 +163,19 @@ mod tests {
             assert_eq!(indexed_event.index, (i + 1) as u64);
             assert_eq!(indexed_event.value, i as u32);
         }
+    }
+
+    #[test]
+    fn next_event_index_is_the_index_add_gives() {
+        let mut events_collection: EventStream<u32> = EventStream::default();
+
+        for i in 0..3 {
+            let next = events_collection.next_event_index();
+            assert_eq!(events_collection.add(i), next);
+        }
+        events_collection.remove(3);
+        let next = events_collection.next_event_index();
+        assert_eq!(events_collection.add(3), next);
     }
 
     #[test]

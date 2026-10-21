@@ -101,7 +101,7 @@ component's props. Missing data is listed in `GAPS.md`.
 | `WalletMain` token page and activity | **History:** `getAccountTransactions(index canister, fromId)` per token (`utils/transactionHistory.ts`). **Facts:** `cryptoLookup` (fee, standard, ledger). | |
 | `WalletSend` | **Contacts:** `searchUsers`, plus DMs as recent contacts. **Saved recipients:** `namedAccountsStore`. **BTC fees:** `getCkbtcMinterWithdrawalInfo`. **Networks:** `oneSecGetNetworks`. | **In chat:** `sendCryptoTransfer` to a user. **Out:** `withdraw({ledger, route, to, amount, fee})`, which prompts for the PIN via `pinNumberResolverStore`. **Existing logic:** `TransferForm` / `WithdrawForm`. |
 | `WalletReceive` | **Account:** `currentUserIdStore` (ICRC account). **Addresses:** `getBtcAddress`, `getSolAddress`, `getOneSecAddress` (`bitcoinAddress`, `solanaAddress`, `oneSecAddress`). **Deposits:** `getCkbtcMinterDepositInfo`, `getCksolMinterDepositInfo`. | Share to chat: `sendMessageWithContent` |
-| `WalletSwap` | `swappableTokensStore`, `getTokenSwaps`, `swapRestricted` | `getSwapQuote` → quote, `swapTokens(quote, …, onStep)` (existing `SwapForm`). Quotes come from several DEXes, not only ICPSwap (see `GAPS.md`). |
+| `WalletSwap` | `swappableTokensStore`, `getTokenSwaps`, `swapRestricted` | `getSwapQuotes(…, onQuotes)` → each DEX's quote as it comes in, then the best, `swapTokens(quote, …, onStep)` (existing `SwapForm`). Quotes come from several DEXes, not only ICPSwap (see `GAPS.md`). |
 | `WalletRecipients` · `WalletSettingsDialog` | `namedAccountsStore`, `walletConfigStore`, `pinNumberRequiredStore` | `saveCryptoAccount`, `deleteCryptoAccount`, `setWalletConfig`, `setPinNumber` |
 
 ## Calls

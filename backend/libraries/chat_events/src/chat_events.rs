@@ -2713,6 +2713,10 @@ impl ChatEvents {
         }
     }
 
+    pub fn clear_bot_subscriptions(&mut self) {
+        self.bot_subscriptions.clear();
+    }
+
     pub fn unsubscribe_bot_from_events(&mut self, bot_id: UserId) {
         for subscriptions in self.bot_subscriptions.values_mut() {
             subscriptions.remove(&bot_id);

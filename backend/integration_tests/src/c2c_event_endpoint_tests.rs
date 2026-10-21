@@ -16,8 +16,8 @@ use std::time::Duration;
 use storage_index_canister::add_or_update_users::UserConfig;
 use testing::rng::{random_from_principal, random_internet_identity_principal, random_principal, random_string};
 use types::{
-    ChannelLatestMessageIndex, ChatEvent, ChatId, Empty, EventIndex, IdempotentEnvelope, MessageContent, SuccessOnly,
-    TimestampMillis, UserId,
+    ChannelLatestMessageIndex, ChatEvent, ChatId, Empty, EventIndex, FileAdded, FileMetaData, FileRejectedReason,
+    IdempotentEnvelope, MessageContent, SuccessOnly, TimestampMillis, UserId,
 };
 
 #[test]
@@ -117,11 +117,11 @@ fn local_user_index_relays_group_activity_to_the_group_index() {
 
     // Sent by the group, which its LocalUserIndex relays to the GroupIndex naming the group
     let local_user_index = canister_ids.local_user_index(env, group_id);
-    let response = client::local_user_index::c2c_group_canister(
+    let response = client::local_user_index::c2c_group(
         env,
         group_id.into(),
         local_user_index,
-        &local_user_index_canister::c2c_group_canister::Args {
+        &local_user_index_canister::c2c_group::Args {
             events: vec![envelope(
                 env,
                 local_user_index_canister::GroupOrCommunityEvent::GroupActive(local_user_index_canister::GroupActive {
@@ -159,11 +159,11 @@ fn local_user_index_relays_a_completed_group_import_to_the_group_index() {
     // Sent by the community once the group lives on as one of its channels, on which the
     // GroupIndex deletes the group
     let local_user_index = canister_ids.local_user_index(env, community_id);
-    let response = client::local_user_index::c2c_community_canister(
+    let response = client::local_user_index::c2c_community(
         env,
         community_id.into(),
         local_user_index,
-        &local_user_index_canister::c2c_community_canister::Args {
+        &local_user_index_canister::c2c_community::Args {
             events: vec![envelope(
                 env,
                 local_user_index_canister::GroupOrCommunityEvent::GroupImportComplete(Box::new(
@@ -379,6 +379,55 @@ fn storage_bucket_takes_storage_index_events() {
     tick_until(env, |env| {
         client::storage_index::happy_path::user(env, user_id, canister_ids.storage_index).bytes_used == 0
     });
+}
+
+#[test]
+fn storage_index_takes_storage_bucket_events() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    // A real upload, for a bucket to send as
+    let user_id = add_uploader(env, canister_ids);
+    let file = client::storage_index::happy_path::upload_file(env, user_id, canister_ids.storage_index, 500, Vec::new());
+    tick_until(env, |env| {
+        client::storage_index::happy_path::user(env, user_id, canister_ids.storage_index).bytes_used == 500
+    });
+
+    // One file for the uploader, and one for an owner the index doesn't know. These exist only in
+    // the index, which is fine for a user no other test uses.
+    let now = now_millis(env);
+    let added = |file_id, owner| {
+        storage_index_canister::StorageBucketEvent::FileAdded(FileAdded {
+            file_id,
+            hash: random(),
+            size: 100,
+            meta_data: FileMetaData { owner, created: now },
+        })
+    };
+    let unknown_owners_file_id = random();
+    let args = storage_index_canister::c2c_storage_bucket::Args {
+        events: vec![
+            envelope(env, added(random(), user_id)),
+            envelope(env, added(unknown_owners_file_id, random_principal())),
+        ],
+        heap_memory_used: 0,
+        stable_memory_used: 0,
+        total_file_bytes: 0,
+    };
+
+    // Sent twice, as a bucket does when a reply is lost. The second time every event is dropped as
+    // seen before, and the reply, worked out from what the index holds, is the same.
+    for _ in 0..2 {
+        let storage_index_canister::c2c_storage_bucket::Response::Success(result) =
+            client::storage_index::c2c_storage_bucket(env, file.canister_id, canister_ids.storage_index, &args);
+        assert_eq!(result.files_rejected.len(), 1);
+        assert_eq!(result.files_rejected[0].file_id, unknown_owners_file_id);
+        assert!(matches!(result.files_rejected[0].reason, FileRejectedReason::UserNotFound));
+        assert_eq!(
+            client::storage_index::happy_path::user(env, user_id, canister_ids.storage_index).bytes_used,
+            600
+        );
+    }
 }
 
 fn active_groups(

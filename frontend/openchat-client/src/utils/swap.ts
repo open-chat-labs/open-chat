@@ -3,6 +3,7 @@ import {
     i18nKey,
     type CryptocurrencyDetails,
     type DexId,
+    type DexQuote,
     type SwapOutcome,
     type SwapQuoteOutcome,
     type SwapTokensResponse,
@@ -25,14 +26,18 @@ export function swapQuoteResult(
     tokenIn: CryptocurrencyDetails,
     tokenOut: CryptocurrencyDetails,
     amountIn: bigint,
-    quotes: [DexId, bigint][],
+    quotes: [DexId, DexQuote][],
     toUSD: (ledger: string) => number | undefined,
 ): SwapQuoteOutcome {
-    const best = quotes[0];
+    const best = bestQuote(quotes);
     if (best === undefined) {
+        // With no quote in hand, a DEX failing to answer may be what stopped the user getting one
+        const failed = quotes.some(([, q]) => q.kind === "failed");
         return {
             kind: "failed",
-            message: i18nKey("tokenSwap.noQuotes", { tokenIn: tokenIn.symbol }),
+            message: i18nKey(failed ? "tokenSwap.quoteError" : "tokenSwap.noQuotes", {
+                tokenIn: tokenIn.symbol,
+            }),
         };
     }
 
@@ -75,6 +80,17 @@ export function swapQuoteResult(
             values,
         },
     };
+}
+
+// The DEX which quoted the most, along with what it quoted
+function bestQuote(quotes: [DexId, DexQuote][]): [DexId, bigint] | undefined {
+    let best: [DexId, bigint] | undefined;
+    for (const [dex, quote] of quotes) {
+        if (quote.kind === "quoted" && (best === undefined || quote.amountOut > best[1])) {
+            best = [dex, quote.amountOut];
+        }
+    }
+    return best;
 }
 
 export const swapError = i18nKey("tokenSwap.progress.error");

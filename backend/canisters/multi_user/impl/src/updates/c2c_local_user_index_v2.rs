@@ -11,6 +11,13 @@ fn c2c_local_user_index_v2(args: Args) -> Response {
     execute_update(|state| c2c_local_user_index_v2_impl(args, state))
 }
 
+// The name for the LocalUserIndex's events, which senders switch to; the old one is served until they have
+#[update(guard = "caller_is_local_user_index", msgpack = true)]
+#[trace]
+fn c2c_local_index(args: Args) -> Response {
+    execute_update(|state| c2c_local_user_index_v2_impl(args, state))
+}
+
 // Applies the events to the users they are for, in order, apart from those for the canister itself
 fn c2c_local_user_index_v2_impl(args: Args, state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
