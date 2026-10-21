@@ -86,9 +86,9 @@ Agreed on 2026-10-16; the tables below follow them.
      on history, so it works from a shared link too. With nothing in the middle,
      `/notifications` opens the panel over an empty middle, without the back button. Picking an
      item opens its chat in the middle.
-   - **DMs and groups, favourites, a community**: switching to one selects its first chat (the
-     first favourite, the community's first channel) for the middle, and switching back to DMs
-     and groups selects the first chat in that list.
+   - **DMs and groups, favourites, a community**: switching to one selects the chat last opened
+     there for the middle, else its first (the first favourite, the community's first channel),
+     as the old UI does (decided 2026-10-21; this used to say "always the first").
    - **The wallet** takes the whole content area (its panel on the left, its page in the middle),
      without a right column.
    - To be built with the chat list and conversation (phase 3), which rework selection and the
@@ -117,12 +117,12 @@ it from showing: a desktop window shrunk after load scrolls the shell sideways i
 | Path | Route kind (scope) | Left | Middle | Right | Narrow | Guest |
 |---|---|---|---|---|---|---|
 | `/` (signed in) | `home_route` | – | – | – | – | redirects to `/favourite` if the user has favourites, else `/chats` |
-| `/chats` | `chat_list_route` (chats) | `ChatListPanel` | selects the first chat in the list (decision 7); `EmptyState` without one | – | list | yes |
+| `/chats` | `chat_list_route` (chats) | `ChatListPanel` | selects the chat last opened in this list, else its first (decision 7); `EmptyState` without one | – | list | yes |
 | `/chats/user/:id/:mi?/:tmi?` · `/user/:id/…` | `global_chat_selected_route` direct (chats) | `ChatListPanel` | conversation (DM) | `DmPanel` docked, `ProfileDialog` "This chat" below 1476px; thread → `ThreadPanel` | conversation | no |
 | `/chats/group/:id/…` · `/group/:id/…` · legacy `/:id/…` | `global_chat_selected_route` group (chats) | `ChatListPanel` | conversation (group) | `GroupPanel` on demand; thread → `ThreadPanel` | conversation | preview (read-only) |
-| `/favourite` | `chat_list_route` (favourite) | `ChatListPanel` favourites | selects the first favourite (decision 7); `EmptyState` without one | – | list | sign in, then `/chats` |
+| `/favourite` | `chat_list_route` (favourite) | `ChatListPanel` favourites | selects the favourite last opened, else the first (decision 7); `EmptyState` without one | – | list | sign in, then `/chats` |
 | `/favourite/user/:id/…` · `/favourite/group/:id/…` · `/favourite/community/:cid/channel/:chid/…` | as above, favourite scope | `ChatListPanel` favourites | conversation | as above | conversation | – (redirects to the non-favourite URL if not a favourite) |
-| `/community/:cid` | `selected_community_route` | `ChatListPanel` community mode (channels) | selects the community's first channel (decision 7) | `GroupPanel` (community) on demand | list | preview |
+| `/community/:cid` | `selected_community_route` | `ChatListPanel` community mode (channels) | selects the channel last opened there, else its first (decision 7) | `GroupPanel` (community) on demand | list | preview |
 | `/community/:cid/channel/:chid/…` | `selected_channel_route` (community) | channel list | conversation (channel) | `GroupPanel` (channel) on demand; thread → `ThreadPanel` | conversation | preview |
 | `/notifications` **(mobile's path, new on desktop)** | `notifications_route`; over a chat or wallet page, `?panel=activity` on its path (decision 7) | `ActivityPanel`, with Back to the middle's own panel | what it showed stays (a chat or wallet page); an item opens its chat | a chat's details, on demand | list | sign in |
 | `/profile_summary` **(mobile's path, new on desktop)** | `profile_summary_route` | redirects to the default chat list with `?profile` | | | | sign in |
@@ -166,7 +166,7 @@ until there's a setting (`GAPS.md`). Signed-in users on `/` go to the app as tod
 | `?ref=` | referral; captured, then dropped from the URL |
 | `?autojoin` | join after preview |
 | `?explore` | no auto-select of a default chat |
-| `?threads` **(new)** | `ThreadList` (All / Unread) in the left column, in place of the chat list; the middle is unchanged (the list's first chat when nothing is selected, decision 7) |
+| `?threads` **(new)** | `ThreadList` (All / Unread) in the left column, in place of the chat list; the middle is unchanged (the list's default chat when nothing is selected, decision 7) |
 | `?profile` **(new)** | `ProfileDialog`, over the current page |
 | `?diamond` | `DiamondDialog` |
 | `?chit` **(new)** | `ChitDialog` |
@@ -186,8 +186,8 @@ Not a URL, wired as today:
 ## Things the existing router does that the new one keeps
 
 - **Auto-select.** `/chats`, `/favourite` and `/community/:cid` redirect (replace) to the last
-  selected or first chat in that scope (`selectDefaultChat`). Not yet: `src/web` picks the first
-  chat (`firstChat.ts`); PLAN.md F2.
+  selected or first chat in that scope. Both trees choose it with `@client`'s `defaultChat`
+  (the old UI's `selectDefaultChat`, `src/web`'s `router/defaultChat.ts`).
 - **`setSelectedChat` redirects:** a non-favourite on a `/favourite` URL, a group that has moved
   to a community, a migrated DM, and the not-found, no-access and restricted dialogs. Every tree
   handles those events through `app/src/logic/appEvents`; closing a dialog goes to the default
@@ -224,8 +224,8 @@ and `/whitepaper?section=` scrolls to that section; `/architecture` frames the c
 **Chat list (phase 3a).** The left column's chat list is real (`features/chats`): DMs and groups,
 favourites or a community's channels, as the route's scope says, with the latest message, time,
 unread count, pinned, muted and live call, and a row menu (favourite, pin, mute, mark read).
-Picking a chat routes to it. A list with nothing selected goes to its first chat, not the last
-one selected (decision 7, `firstChatRoute`), except on a narrow screen.
+Picking a chat routes to it. A list with nothing selected goes to the chat last opened in it,
+else its first (`defaultChatRoute`, as the old UI), except on a narrow screen.
 
 **Conversation (phase 3b).** The middle column shows the selected chat (`features/conversation`):
 `ConversationHeader` with the panel toggle, and the messages through the old UI's list

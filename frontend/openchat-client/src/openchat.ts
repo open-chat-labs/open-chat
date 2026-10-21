@@ -557,6 +557,7 @@ import {
     moderationFlagsRestricted,
 } from "./utils/restrictedContent";
 import {
+    defaultChat,
     activeUserIdFromEvent,
     applyTranslation,
     buildCryptoTransferText,
@@ -11541,36 +11542,6 @@ export class OpenChat {
         return preview;
     }
 
-    #selectLastSelectedChat(): boolean {
-        const scope = chatListScopeStore.value;
-        const mostRecentId = lastSelectedChatByScopeStore.value.get(scope);
-        const mostRecentChat = mostRecentId
-            ? chatSummariesStore.value.get(mostRecentId)
-            : undefined;
-        if (mostRecentChat !== undefined) {
-            publish("navigateTo", {
-                url: routeForChatIdentifier(scope.kind, mostRecentChat.id),
-                intent: "auto",
-            });
-            return true;
-        }
-        return false;
-    }
-
-    #selectFirstChat(): boolean {
-        const first = [...chatSummariesListStore.value.values()].find(
-            (c) => !c.membership.archived,
-        );
-        if (first !== undefined) {
-            publish("navigateTo", {
-                url: routeForChatIdentifier(chatListScopeStore.value.kind, first.id),
-                intent: "auto",
-            });
-            return true;
-        }
-        return false;
-    }
-
     #selectLastSelectedCommunity(): boolean {
         const mostRecentId = lastSelectedCommunityIdStore.value;
         const mostRecentCommunity = mostRecentId
@@ -11603,8 +11574,17 @@ export class OpenChat {
 
     selectDefaultChat(desktopOnly: boolean = true): boolean {
         if (!desktopOnly || !get(mobileWidth)) {
-            if (!this.#selectLastSelectedChat()) {
-                return this.#selectFirstChat();
+            const scope = chatListScopeStore.value;
+            const chat = defaultChat(
+                chatSummariesListStore.value,
+                lastSelectedChatByScopeStore.value.get(scope),
+            );
+            if (chat !== undefined) {
+                publish("navigateTo", {
+                    url: routeForChatIdentifier(scope.kind, chat.id),
+                    intent: "auto",
+                });
+                return true;
             }
         }
         return false;

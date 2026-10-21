@@ -2491,3 +2491,18 @@ export function chatMatchesSearch(search: string, chat: ChatSummary, users: User
                 user.displayName.toLowerCase().indexOf(search) >= 0))
     );
 }
+
+/**
+ * The chat a chat list with nothing selected opens, in every tree: the one last opened in its
+ * scope while it's still in the list, else the first that isn't archived.
+ */
+export function defaultChat(
+    chats: readonly ChatSummary[],
+    lastSelected: ChatIdentifier | undefined,
+): ChatSummary | undefined {
+    const last =
+        lastSelected === undefined
+            ? undefined
+            : chats.find((c) => chatIdentifiersEqual(c.id, lastSelected));
+    return last ?? chats.find((c) => !c.membership.archived);
+}

@@ -25,6 +25,7 @@ export {
     buildCryptoTransferText,
     buildTransactionUrl,
     chatMatchesSearch,
+    defaultChat,
     subrangesCover,
     TimelineGrouper,
 } from "./utils/chat";
