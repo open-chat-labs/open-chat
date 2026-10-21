@@ -1,11 +1,25 @@
+import { flushSync } from "svelte";
 import type { ShellLayout } from "./layout";
 import { RailState } from "./railState.svelte";
 
 describe("the nav rail's expanded state", () => {
     let mode: ShellLayout["rail"] = "push";
-    const create = () => new RailState(() => mode);
+    let cleanup = () => {};
 
+    function create(): RailState {
+        cleanup();
+        let state!: RailState;
+        cleanup = $effect.root(() => {
+            state = new RailState(() => mode);
+        });
+        flushSync();
+        return state;
+    }
+
+    beforeEach(() => localStorage.clear());
     afterEach(() => {
+        cleanup();
+        cleanup = () => {};
         mode = "push";
         localStorage.clear();
     });

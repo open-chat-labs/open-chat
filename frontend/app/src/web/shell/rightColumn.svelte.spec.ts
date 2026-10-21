@@ -20,6 +20,7 @@ describe("the right column's open state", () => {
         flushSync();
     }
 
+    beforeEach(() => localStorage.clear());
     afterEach(() => {
         cleanup();
         mode = "dock";

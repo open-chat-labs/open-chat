@@ -12394,6 +12394,17 @@
         "doc": "The user expanded or collapsed the rail (its toggle), for a host that remembers it. Not called when a floating rail closes itself."
       },
       {
+        "name": "floating",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Whether the expanded rail floats over the content (and closes itself on a pick or a click elsewhere). Without it, the rail measures its slot, which reads as floating while a pushing rail is still widening."
+      },
+      {
         "name": "activeIndex",
         "type": "number",
         "default": 0,

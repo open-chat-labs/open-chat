@@ -137,6 +137,7 @@
         <NavRail
             expanded={railState.expanded}
             onExpandedChange={(expanded) => (railState.expanded = expanded)}
+            floating={railMode === "float"}
             {items}
             {pins}
             activeIndex={activeItem}

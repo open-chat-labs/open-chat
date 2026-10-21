@@ -23,7 +23,9 @@ design export needs. Each entry says where it came up.
   only with favourites, which moves the items after it.
 - **Rail remembered** (by hand): `NavRail` tells the host when the user expands or collapses it
   (`onExpandedChange`), so the app keeps that across visits where the rail pushes the layout
-  (`shell/railState.svelte.ts`); floating, it starts collapsed.
+  (`shell/railState.svelte.ts`); floating, it starts collapsed. The host also says whether the
+  rail floats (`floating`), rather than the rail measuring its animating slot, and the collapse
+  toggle works with Enter and Space.
 - **Nav rail width**: the tokens said `--rail-collapsed: 76px` / `--rail-expanded: 282px`, while
   `NavRail` drew 60px / 283px. The tokens now match what the rail draws and `NavRail` reads them,
   as does the shell's rail slot. Confirm 60px against the prototype. Floating over the island
