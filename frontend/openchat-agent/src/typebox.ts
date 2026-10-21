@@ -9149,6 +9149,16 @@ export const LocalUserIndexChatEventsArgs = /* @__PURE__ */ Type.Object({
     requests: Type.Array(LocalUserIndexChatEventsEventsArgs),
 });
 
+export type LocalUserIndexBotEditMessageArgs = Static<typeof LocalUserIndexBotEditMessageArgs>;
+export const LocalUserIndexBotEditMessageArgs = /* @__PURE__ */ Type.Object({
+    chat_context: BotChatContext,
+    thread: Type.Optional(MessageIndex),
+    message_id: MessageId,
+    content: BotMessageContent,
+    block_level_markdown: Type.Boolean(),
+    og_previews: Type.Optional(Type.Array(OgPreview)),
+});
+
 export type LocalUserIndexAccessTokenV2Args = Static<typeof LocalUserIndexAccessTokenV2Args>;
 export const LocalUserIndexAccessTokenV2Args = /* @__PURE__ */ Type.Union([
     Type.Object({

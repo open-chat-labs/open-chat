@@ -24,6 +24,7 @@ fn main() {
     generate_ts_method!(local_user_index, bot_create_channel);
     generate_ts_method!(local_user_index, bot_delete_channel);
     generate_ts_method!(local_user_index, bot_delete_messages);
+    generate_ts_method!(local_user_index, bot_edit_message);
     generate_ts_method!(local_user_index, bot_invite_users);
     generate_ts_method!(local_user_index, bot_members);
     generate_ts_method!(local_user_index, bot_send_message);

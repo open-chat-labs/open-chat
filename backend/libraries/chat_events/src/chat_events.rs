@@ -25,13 +25,13 @@ use types::{
     ChatEventCategory, ChatEventType, ChatType, CompletedCryptoTransaction, DiamondMembershipStatus, DirectChatCreated,
     EventContext, EventIndex, EventMetaData, EventWrapper, EventWrapperInternal, EventsTimeToLiveUpdated,
     GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, HydratedMention, Mention, Message,
-    MessageEditedEventPayload, MessageEventPayload, MessageId, MessageIndex, MessageMatch, MessageTippedEventPayload,
-    Milliseconds, ModerationCategories, ModerationReportStatus, MultiUserChat, OCResult, OgPreview, OptionUpdate,
-    P2PSwapAccepted, P2PSwapCompleted, P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction,
-    PollVotes, ProposalRewardStatus, ProposalUpdate, Reaction, ReactionAddedEventPayload, RegisterVoteResult,
-    ReserveP2PSwapSuccess, SenderContext, Tally, TimestampMillis, TimestampNanos, Timestamped, Tips, UserId,
-    UserIdAndPrincipal, VideoCall, VideoCallEndedEventPayload, VideoCallParticipants, VideoCallPresence, VoteOperation,
-    is_default,
+    MessageContentInitial, MessageEditedEventPayload, MessageEventPayload, MessageId, MessageIndex, MessageMatch,
+    MessageTippedEventPayload, Milliseconds, ModerationCategories, ModerationReportStatus, MultiUserChat, OCResult, OgPreview,
+    OptionUpdate, P2PSwapAccepted, P2PSwapCompleted, P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus,
+    PendingCryptoTransaction, PollVotes, ProposalRewardStatus, ProposalUpdate, Reaction, ReactionAddedEventPayload,
+    RegisterVoteResult, ReserveP2PSwapSuccess, SenderContext, Tally, TimestampMillis, TimestampNanos, Timestamped, Tips,
+    UserId, UserIdAndPrincipal, UserType, VideoCall, VideoCallEndedEventPayload, VideoCallParticipants, VideoCallPresence,
+    VoteOperation, is_default,
 };
 
 // The patchable fields of a moderation-report card; each is applied when present so that
@@ -2789,6 +2789,38 @@ impl ChatEvents {
     ) -> Option<(MessageInternal, EventIndex)> {
         self.event_wrapper_internal(min_visible_event_index, thread_root_message_index, event_key)
             .and_then(|e| e.event.into_message().map(|m| (m, e.index)))
+    }
+
+    // A bridge bot relays the edits made on the other platform, which only change a message's
+    // content within its type. So an edit must be valid content of the same type, and not a poll,
+    // whose votes an edit would lose. Nor can a deleted message be edited, since its content isn't
+    // moderated again.
+    pub fn check_relayed_edit(
+        &self,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        content: &MessageContentInitial,
+        now: TimestampMillis,
+    ) -> OCResult {
+        let Some((message, _)) = self.message_internal(EventIndex::default(), thread_root_message_index, message_id.into())
+        else {
+            return Err(OCErrorCode::MessageNotFound.into());
+        };
+        if message.deleted_by.is_some() {
+            return Err(OCErrorCode::MessageNotFound.with_message("The message has been deleted"));
+        }
+
+        let content = match MessageContentInternal::validate_new_message(content.clone(), false, UserType::BotV2, false, now) {
+            ValidateNewMessageContentResult::Success(content) => content,
+            ValidateNewMessageContentResult::Error(error) => return Err(error.into()),
+            _ => return Err(OCErrorCode::InvalidRequest.with_message("Message type not supported")),
+        };
+        if std::mem::discriminant(&content) != std::mem::discriminant(&message.content)
+            || matches!(content, MessageContentInternal::Poll(_))
+        {
+            return Err(OCErrorCode::InvalidRequest.with_message("An edit can't change the message's type, nor edit a poll"));
+        }
+        Ok(())
     }
 
     fn expiry_date(&self, event: &ChatEventInternal, is_thread_event: bool, now: TimestampMillis) -> Option<TimestampMillis> {
