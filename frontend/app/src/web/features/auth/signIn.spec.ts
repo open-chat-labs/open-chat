@@ -72,27 +72,38 @@ function fakeClient() {
     const client = {
         // as client.signUp goes: the passkey unless there's an identity without an account
         // already, then (unless given up) the account, then the user to the client
-        signUp: vi.fn(async (username: string, email: string | undefined, signal?: AbortSignal) => {
-            if (identityStateStore.value.kind !== "registering") {
-                try {
-                    await client.signUpWithWebAuthn(true, username);
-                } catch {
-                    return { kind: "cancelled" } as const;
+        signUp: vi.fn(
+            async (
+                username: string,
+                email: string | undefined,
+                _termsAccepted: boolean,
+                signal?: AbortSignal,
+            ) => {
+                if (identityStateStore.value.kind !== "registering") {
+                    try {
+                        await client.signUpWithWebAuthn(true, username);
+                    } catch {
+                        return { kind: "cancelled" } as const;
+                    }
                 }
-            }
-            if (signal?.aborted) return { kind: "cancelled" } as const;
-            const resp = (await client.registerUser(username, email)) as {
-                kind: string;
-                userId?: string;
-            };
-            if (resp.kind === "success") {
-                client.onRegisteredUser({ kind: "created_user", username, userId: resp.userId });
-                return { kind: "success" } as const;
-            }
-            const key =
-                resp.kind === "username_taken" ? "register.usernameTaken" : "unexpectedError";
-            return { kind: "failed", reason: { key } } as const;
-        }),
+                if (signal?.aborted) return { kind: "cancelled" } as const;
+                const resp = (await client.registerUser(username, email)) as {
+                    kind: string;
+                    userId?: string;
+                };
+                if (resp.kind === "success") {
+                    client.onRegisteredUser({
+                        kind: "created_user",
+                        username,
+                        userId: resp.userId,
+                    });
+                    return { kind: "success" } as const;
+                }
+                const key =
+                    resp.kind === "username_taken" ? "register.usernameTaken" : "unexpectedError";
+                return { kind: "failed", reason: { key } } as const;
+            },
+        ),
         requestEmailSignIn: vi.fn(requestEmailSignIn),
         signIn: vi.fn(async (method: SignInMethod, signal?: AbortSignal) => {
             if (signal?.aborted) return { kind: "cancelled" } as SignInOutcome;
@@ -175,7 +186,12 @@ describe("the sign-in callbacks", () => {
     });
 
     test("sign-up makes a passkey, then the account, and hands the user to the client", async () => {
-        await auth.onSignup({ username: "newperson", email: "me@example.com", referrerId: "r1" });
+        await auth.onSignup({
+            username: "newperson",
+            email: "me@example.com",
+            referrerId: "r1",
+            termsAccepted: true,
+        });
         expect(client.setReferralCode).toHaveBeenCalledWith("r1");
         expect(client.signUpWithWebAuthn).toHaveBeenCalledWith(true, "newperson");
         expect(client.registerUser).toHaveBeenCalledWith("newperson", "me@example.com");
@@ -186,14 +202,14 @@ describe("the sign-in callbacks", () => {
 
     test("an identity without an account only needs the account", async () => {
         set({ kind: "registering" });
-        await auth.onSignup({ username: "newperson" });
+        await auth.onSignup({ username: "newperson", termsAccepted: true });
         expect(client.signUpWithWebAuthn).not.toHaveBeenCalled();
         expect(client.registerUser).toHaveBeenCalledWith("newperson", undefined);
     });
 
     test("a refused account keeps the form, says why in the app's words, and has no user", async () => {
         client.registerUser.mockResolvedValueOnce({ kind: "username_taken" } as never);
-        await expect(auth.onSignup({ username: "taken1" })).rejects.toEqual({
+        await expect(auth.onSignup({ username: "taken1", termsAccepted: true })).rejects.toEqual({
             reason: "translated:register.usernameTaken",
         });
         expect(client.onRegisteredUser).not.toHaveBeenCalled();
@@ -211,7 +227,7 @@ describe("the sign-in callbacks", () => {
             handle: "hamish",
         });
         set({ kind: "registering" });
-        await auth.onSignup({ username: "newperson" });
+        await auth.onSignup({ username: "newperson", termsAccepted: true });
         expect(client.clearReferralCode).toHaveBeenCalled();
         expect(client.setReferralCode).not.toHaveBeenCalled();
     });
@@ -231,7 +247,7 @@ describe("the sign-in callbacks", () => {
         client.getReferringUser.mockResolvedValueOnce(undefined);
         await auth.loadReferrer();
         set({ kind: "registering" });
-        await auth.onSignup({ username: "newperson" });
+        await auth.onSignup({ username: "newperson", termsAccepted: true });
         expect(client.clearReferralCode).toHaveBeenCalled();
         expect(client.clearReferralCode.mock.invocationCallOrder[0]).toBeLessThan(
             client.registerUser.mock.invocationCallOrder[0],
@@ -240,10 +256,10 @@ describe("the sign-in callbacks", () => {
 
     test("a referral link whose lookup failed, or hasn't finished, keeps its code", async () => {
         set({ kind: "registering" });
-        await auth.onSignup({ username: "early" });
+        await auth.onSignup({ username: "early", termsAccepted: true });
         client.getReferringUser.mockRejectedValueOnce(new Error("offline"));
         await auth.loadReferrer();
-        await auth.onSignup({ username: "offline" });
+        await auth.onSignup({ username: "offline", termsAccepted: true });
         expect(client.clearReferralCode).not.toHaveBeenCalled();
     });
 
@@ -252,8 +268,10 @@ describe("the sign-in callbacks", () => {
         await auth.loadReferrer();
         client.registerUser.mockResolvedValueOnce({ kind: "username_taken" } as never);
         set({ kind: "registering" });
-        await expect(auth.onSignup({ username: "taken1", referrerId: "r9" })).rejects.toBeDefined();
-        await auth.onSignup({ username: "newperson" });
+        await expect(
+            auth.onSignup({ username: "taken1", referrerId: "r9", termsAccepted: true }),
+        ).rejects.toBeDefined();
+        await auth.onSignup({ username: "newperson", termsAccepted: true });
         expect(client.clearReferralCode).toHaveBeenCalled();
     });
 
@@ -264,7 +282,7 @@ describe("the sign-in callbacks", () => {
         );
         client.onRegisteredUser.mockImplementationOnce(() => set({ kind: "logged_in" }));
         set({ kind: "registering" });
-        const signup = auth.onSignup({ username: "newperson" });
+        const signup = auth.onSignup({ username: "newperson", termsAccepted: true });
         await flush();
         auth.cancel();
         registered({ kind: "success", userId: "u1", icpAccount: "acc" });
@@ -280,7 +298,7 @@ describe("the sign-in callbacks", () => {
             () => new Promise((resolve) => (registered = resolve)) as never,
         );
         set({ kind: "registering" });
-        const signup = auth.onSignup({ username: "taken1" }).catch(() => {});
+        const signup = auth.onSignup({ username: "taken1", termsAccepted: true }).catch(() => {});
         await flush();
         auth.cancel();
         await flush();
@@ -296,7 +314,7 @@ describe("the sign-in callbacks", () => {
         client.signUpWithWebAuthn.mockImplementationOnce(
             () => new Promise<void>((resolve) => (passkeyMade = resolve)),
         );
-        const signup = auth.onSignup({ username: "newperson" });
+        const signup = auth.onSignup({ username: "newperson", termsAccepted: true });
         await Promise.resolve();
         auth.cancel();
         set({ kind: "loading_user", registering: true });
@@ -312,7 +330,9 @@ describe("the sign-in callbacks", () => {
 
     test("closing after a refused account signs the identity out", async () => {
         client.registerUser.mockResolvedValueOnce({ kind: "username_taken" } as never);
-        await expect(auth.onSignup({ username: "taken1" })).rejects.toBeDefined();
+        await expect(
+            auth.onSignup({ username: "taken1", termsAccepted: true }),
+        ).rejects.toBeDefined();
         expect(identityStateStore.value.kind).toBe("registering");
         auth.cancel();
         await flush();

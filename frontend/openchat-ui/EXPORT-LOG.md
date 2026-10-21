@@ -113,3 +113,7 @@
 
 ## 2026-10-21 — one dialog veil and layer, by hand
 - The 18 hand-built dialogs that each copied the same veil (blur, `oc-veil-in`, `oc-veil-out` while closing) use `.oc-veil` from `global.css`; 17 of them use `.oc-dialog-layer` for the fixed, centred layer that stops catching clicks while closing, and keep only their `z-index`. Pixel-identical in the docs, dark and light. `GroupSettingsDialog`, `InviteDialog` and `DialogShell` have veils of their own and are unchanged.
+
+## 2026-10-21 — sign-up asks for the terms to be agreed to, by hand
+- `AuthDialog`'s sign-up has an "I agree to the terms and conditions" checkbox (`ui.authDialog.termsAgree`, the link as before), in place of "By creating an account you agree to…". Continue stays disabled until it's ticked, and `SignupDetails.termsAccepted` says it was. Every OpenChat tree now requires it, as the mobile app did.
+- Not in the design export: to go back to it.

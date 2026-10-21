@@ -6741,14 +6741,18 @@ export class OpenChat {
     /**
      * Makes the account: a passkey first, unless the identity signed in already has no account
      * (signed in some other way, or the passkey made on an earlier try), then the user. The
-     * referral code set (setReferralCode) goes with it, unless it was turned down before.
+     * referral code set (setReferralCode) goes with it, unless it was turned down before. No
+     * account is made unless the person has agreed to the terms (`termsAccepted`).
      * `signal` gives the sign-up up before the account is asked for; once asked for, it's made.
      */
     async signUp(
         username: string,
         email: string | undefined,
+        termsAccepted: boolean,
         signal?: AbortSignal,
     ): Promise<SignUpOutcome> {
+        // the forms only offer sign-up once the terms are agreed to; this is the backstop
+        if (!termsAccepted) return { kind: "failed", reason: i18nKey("unexpectedError") };
         selectedAuthProviderStore.set(AuthProvider.PASSKEY);
         // a passkey already made for this sign-up isn't made again
         if (identityStateStore.value.kind !== "registering" && !this.#passkeyMadeForSignUp) {

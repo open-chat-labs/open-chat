@@ -66,13 +66,18 @@
 
     async function register(e: Event) {
         e.preventDefault();
-        if (!usernameValid || !emailValid || busy) return;
+        // Enter submits the form too, so the switch is checked here as well as on the button
+        if (!usernameValid || !emailValid || !termsAccepted || busy) return;
         usernameStore.set(username);
         busy = true;
         let outcome: SignUpOutcome;
         try {
             // a refused referral code isn't sent again, so "proceed" signs up without it
-            outcome = await client.signUp(username, email.length > 0 ? email : undefined);
+            outcome = await client.signUp(
+                username,
+                email.length > 0 ? email : undefined,
+                termsAccepted,
+            );
         } finally {
             busy = false;
         }

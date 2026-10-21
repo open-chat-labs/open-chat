@@ -260,7 +260,9 @@ describe("signing in", () => {
         });
 
         test("makes a passkey, then the account, and hands the user to the client", async () => {
-            expect(await client.signUp("newperson", "me@example.com")).toEqual({ kind: "success" });
+            expect(await client.signUp("newperson", "me@example.com", true)).toEqual({
+                kind: "success",
+            });
             expect(passkey).toHaveBeenCalledWith(true, "newperson");
             expect(register).toHaveBeenCalledWith("newperson", "me@example.com");
             expect(handedOver).toHaveBeenCalledWith(
@@ -268,9 +270,17 @@ describe("signing in", () => {
             );
         });
 
+        /** Invariant 11: no passkey and no account unless the person agreed to the terms. */
+        test("without the terms agreed to, nothing is made", async () => {
+            set({ kind: "anon" });
+            expect((await client.signUp("newperson", undefined, false)).kind).toBe("failed");
+            expect(passkey).not.toHaveBeenCalled();
+            expect(register).not.toHaveBeenCalled();
+        });
+
         test("an identity without an account only needs the account", async () => {
             set({ kind: "registering" });
-            await client.signUp("newperson", undefined);
+            await client.signUp("newperson", undefined, true);
             expect(passkey).not.toHaveBeenCalled();
             expect(register).toHaveBeenCalledOnce();
         });
@@ -280,8 +290,8 @@ describe("signing in", () => {
         test("never makes a second passkey", async () => {
             // no OpenChat identity for the passkey, so it's signed out
             passkey.mockImplementation(async () => set({ kind: "anon" }));
-            expect((await client.signUp("newperson", undefined)).kind).toBe("failed");
-            expect((await client.signUp("newperson", undefined)).kind).toBe("failed");
+            expect((await client.signUp("newperson", undefined, true)).kind).toBe("failed");
+            expect((await client.signUp("newperson", undefined, true)).kind).toBe("failed");
             expect(passkey).toHaveBeenCalledOnce();
             expect(register).not.toHaveBeenCalled();
         });
@@ -294,18 +304,20 @@ describe("signing in", () => {
                 set({ kind: "loading_user", registering: true });
                 throw new Error("worker gone");
             });
-            expect((await client.signUp("newperson", undefined)).kind).toBe("failed");
+            expect((await client.signUp("newperson", undefined, true)).kind).toBe("failed");
             expect(register).not.toHaveBeenCalled();
-            expect(await client.signUp("newperson", undefined)).toEqual({ kind: "success" });
+            expect(await client.signUp("newperson", undefined, true)).toEqual({ kind: "success" });
             expect(passkey).toHaveBeenCalledOnce();
             expect(register).toHaveBeenCalledOnce();
         });
 
         test("a dismissed passkey prompt is cancelled, and the next try asks again", async () => {
             passkey.mockRejectedValueOnce(new Error("NotAllowedError"));
-            expect(await client.signUp("newperson", undefined)).toEqual({ kind: "cancelled" });
+            expect(await client.signUp("newperson", undefined, true)).toEqual({
+                kind: "cancelled",
+            });
             expect(register).not.toHaveBeenCalled();
-            expect(await client.signUp("newperson", undefined)).toEqual({ kind: "success" });
+            expect(await client.signUp("newperson", undefined, true)).toEqual({ kind: "success" });
             expect(passkey).toHaveBeenCalledTimes(2);
         });
 
@@ -316,7 +328,7 @@ describe("signing in", () => {
                 set({ kind: "registering" });
                 closed.abort();
             });
-            expect(await client.signUp("newperson", undefined, closed.signal)).toEqual({
+            expect(await client.signUp("newperson", undefined, true, closed.signal)).toEqual({
                 kind: "cancelled",
             });
             expect(register).not.toHaveBeenCalled();
@@ -333,14 +345,14 @@ describe("signing in", () => {
                 client.clearReferralCode();
                 return { kind: "referral_code_invalid" };
             });
-            const refused = await client.signUp("newperson", undefined);
+            const refused = await client.signUp("newperson", undefined, true);
             expect(refused.kind === "referral_refused" && refused.reason.key).toBe(
                 "register.referralCodeInvalid",
             );
             // the form still has the referrer, and sets it again
             client.setReferralCode("r1");
             clear.mockClear();
-            expect(await client.signUp("newperson", undefined)).toEqual({ kind: "success" });
+            expect(await client.signUp("newperson", undefined, true)).toEqual({ kind: "success" });
             expect(clear.mock.invocationCallOrder[0]).toBeLessThan(
                 register.mock.invocationCallOrder[1],
             );
@@ -350,7 +362,7 @@ describe("signing in", () => {
         test("a refused account says why in the app's words", async () => {
             set({ kind: "registering" });
             register.mockResolvedValueOnce({ kind: "username_taken" });
-            const outcome = await client.signUp("taken1", undefined);
+            const outcome = await client.signUp("taken1", undefined, true);
             expect(outcome.kind === "failed" && outcome.reason.key).toBe("register.usernameTaken");
             expect(handedOver).not.toHaveBeenCalled();
         });

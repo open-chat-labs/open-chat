@@ -8,6 +8,7 @@
     import AlertBox from "../AlertBox.svelte";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
+    import Checkbox from "../Checkbox.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import { Spinner } from "component-lib";
     import FindUser from "../FindUser.svelte";
@@ -38,6 +39,7 @@
     let emailValid = $derived(email.length === 0 || EmailValidator.validate(email));
     let busy = $state(false);
     let badCode = $state(false);
+    let termsAccepted = $state(false);
     let referringUser: UserSummary | undefined = $state(undefined);
 
     let TermsContent: typeof import("../landingpages/TermsContent.svelte").default | undefined =
@@ -60,13 +62,17 @@
 
     async function register(e: Event) {
         e.preventDefault();
-        if (!usernameValid || !emailValid || busy) return;
+        if (!usernameValid || !emailValid || !termsAccepted || busy) return;
         usernameStore.set(username);
         busy = true;
         let outcome: SignUpOutcome;
         try {
             // a refused referral code isn't sent again, so "proceed" signs up without it
-            outcome = await client.signUp(username, email.length > 0 ? email : undefined);
+            outcome = await client.signUp(
+                username,
+                email.length > 0 ? email : undefined,
+                termsAccepted,
+            );
         } finally {
             busy = false;
         }
@@ -199,6 +205,10 @@
         <div onclick={onShowGuidelines} class="smallprint">
             <Translatable resourceKey={i18nKey("register.disclaimer")} />
         </div>
+        <Checkbox
+            id="sign-up-terms"
+            label={i18nKey("I agree to the OpenChat terms & conditions")}
+            bind:checked={termsAccepted} />
         {#if error !== undefined}
             <div class="error">
                 <ErrorMessage><Translatable resourceKey={i18nKey(error)} /></ErrorMessage>
@@ -215,7 +225,7 @@
         {/if}
         <Button
             loading={checkingUsername || busy}
-            disabled={!usernameValid || !emailValid || busy}
+            disabled={!usernameValid || !emailValid || !termsAccepted || busy}
             onClick={register}>
             <Translatable resourceKey={i18nKey("register.proceed")} />
         </Button>

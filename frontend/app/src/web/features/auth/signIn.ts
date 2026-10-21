@@ -245,7 +245,12 @@ export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: Aut
             return referrer;
         },
 
-        async onSignup({ username, email: recoveryEmail, referrerId }: SignupDetails) {
+        async onSignup({
+            username,
+            email: recoveryEmail,
+            referrerId,
+            termsAccepted,
+        }: SignupDetails) {
             resumeSignIn();
             const { signal } = signup;
             switch (referralCode(referrerId, referralLookup, codeFromForm)) {
@@ -259,7 +264,7 @@ export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: Aut
             }
             // once the account is asked for it's made even if the dialog closes: a walk-away
             // waits for it
-            const signingUp = client.signUp(username, recoveryEmail, signal);
+            const signingUp = client.signUp(username, recoveryEmail, termsAccepted, signal);
             registration = signingUp;
             const outcome = await signingUp.finally(() => {
                 if (registration === signingUp) registration = undefined;

@@ -43,6 +43,8 @@
     referrer?: string;
     /** User id of the referrer, when the host supplied one. */
     referrerId?: string;
+    /** They ticked "I agree to the terms" (Continue needs it). */
+    termsAccepted: boolean;
   }
 
   export interface AuthPerson {
@@ -345,10 +347,13 @@
     }
   }
 
+  // sign-up needs the terms agreed to
+  let agreed = $state(false);
+
   function submitSignup() {
-    if (!free || recoveryBad || !onSignup) return;
+    if (!free || recoveryBad || !agreed || !onSignup) return;
     attempt('signup', () =>
-      onSignup({ username, email: isEmail(recovery) ? recovery.trim() : undefined, referrer: referrer?.handle, referrerId: referrer?.userId }),
+      onSignup({ username, email: isEmail(recovery) ? recovery.trim() : undefined, referrer: referrer?.handle, referrerId: referrer?.userId, termsAccepted: agreed }),
     );
   }
 
@@ -592,11 +597,13 @@
           </div>
           <div class="submit-row">
             <span class="terms"
-              ><Translate key="ui.authDialog.terms"
-                >{#snippet link()}{#if termsUrl}<a href={termsUrl} target="_blank" rel="noopener">{t('ui.authDialog.termsLink')}</a>{:else}{t('ui.authDialog.termsLink')}{/if}{/snippet}</Translate
+              ><label class="agree"
+                ><input type="checkbox" bind:checked={agreed} /><Translate key="ui.authDialog.termsAgree"
+                  >{#snippet link()}{#if termsUrl}<a href={termsUrl} target="_blank" rel="noopener">{t('ui.authDialog.termsLink')}</a>{:else}{t('ui.authDialog.termsLink')}{/if}{/snippet}</Translate
+                ></label
               >{#if failed === 'signup'}<span class="signup-error" role="alert">{t(failReason ?? 'ui.authDialog.signupFailed')}</span>{/if}</span
             >
-            <button class="continue" class:ready={free && !recoveryBad && !waiting} type="submit" disabled={!free || recoveryBad || !!waiting}>{t(waiting === 'signup' ? 'ui.authDialog.creating' : 'ui.common.continue')}</button>
+            <button class="continue" class:ready={free && !recoveryBad && agreed && !waiting} type="submit" disabled={!free || recoveryBad || !agreed || !!waiting}>{t(waiting === 'signup' ? 'ui.authDialog.creating' : 'ui.common.continue')}</button>
           </div>
         </form>
       {/if}
@@ -1295,6 +1302,19 @@
 
   .terms a {
     color: var(--accent);
+  }
+
+  .agree {
+    display: inline-flex;
+    align-items: flex-start;
+    gap: var(--space-6);
+    cursor: pointer;
+  }
+
+  .agree input {
+    margin: 2px 0 0;
+    accent-color: var(--accent);
+    flex: none;
   }
 
   .continue {
