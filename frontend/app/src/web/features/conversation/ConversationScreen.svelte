@@ -14,6 +14,7 @@
         favouritesStore,
         messageIndexStore,
         messagesRead,
+        muteNotificationsFailureMessage,
         ROLE_NONE,
         selectedChatExpandedDeletedMessageStore,
         selectedChatIdStore,
@@ -40,6 +41,7 @@
     import { TimelineFlattener, type FlatChatItem } from "@src/core/flatChatItems";
     import Markdown from "@src/core/Markdown.svelte";
     import type { GroupMessage } from "@openchat/ui/src/lib/types";
+    import { toastStore } from "@src/stores/toast";
     import { copyPageUrl } from "@src/utils/urls";
     import { isSingleEmoji } from "@src/utils/emojis";
     import { getContext, untrack, type Snippet } from "svelte";
@@ -126,6 +128,17 @@
     );
     const favourite = $derived(chat !== undefined && $favouritesStore.has(chat.id));
 
+    async function toggleMute(
+        chatId: ChatIdentifier,
+        mute: boolean | undefined,
+        muteAtEveryone: boolean | undefined,
+    ) {
+        const success = await client.toggleMuteNotifications(chatId, mute, muteAtEveryone);
+        if (!success) {
+            toastStore.showFailureToast(muteNotificationsFailureMessage(mute, muteAtEveryone, $_));
+        }
+    }
+
     // TODO(phase 5): the menu's other items (block, delete, leave, invite) open dialogs, and the
     // search action; calls are phase 8
     function onMenu(id: string) {
@@ -139,11 +152,11 @@
                 break;
             case "mute":
             case "unmute":
-                client.toggleMuteNotifications(chat.id, id === "mute", undefined);
+                toggleMute(chat.id, id === "mute", undefined);
                 break;
             case "muteEveryone":
             case "unmuteEveryone":
-                client.toggleMuteNotifications(chat.id, undefined, id === "muteEveryone");
+                toggleMute(chat.id, undefined, id === "muteEveryone");
                 break;
             case "copyUrl":
                 copyPageUrl(client);
