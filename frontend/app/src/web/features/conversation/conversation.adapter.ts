@@ -33,18 +33,17 @@ export type ConversationContext = {
 export type MessageStatus = "sending" | "sent" | "delivered" | "failed";
 
 /**
- * Where a message has got to, as the bubble's tick shows it: failed, still on its way (not yet
- * confirmed, or not yet accepted), read by the other person in a DM ("delivered", the design's
- * double tick), or sent.
+ * The old bubbles' ticks as the design's status: failed, still on its way (not yet accepted;
+ * the old trees show a sent tick once it is, confirmed or not), read by the other person in a DM
+ * ("delivered", the design's double tick), or sent.
  */
 export function messageStatus(state: {
     failed: boolean;
-    confirmed: boolean;
     accepted: boolean;
     readByThem: boolean;
 }): MessageStatus {
     if (state.failed) return "failed";
-    if (!state.confirmed || !state.accepted) return "sending";
+    if (!state.accepted) return "sending";
     return state.readByThem ? "delivered" : "sent";
 }
 
@@ -108,41 +107,6 @@ export function messageRow(
             threadLastAt: thread === undefined ? undefined : ctx.date(thread.latestEventTimestamp),
         },
     };
-}
-
-/**
- * `messageRow`, kept per row while nothing it shows changes (the event, its status and the names
- * in it), so a row stays the same object, and its bubble isn't redone, as users and other chat
- * state update. Clear it when the wording or the chat changes.
- */
-export class MessageRows {
-    #rows = new Map<
-        string,
-        { evt: EventWrapper<Message>; status: MessageStatus; names: string; row: MessageRow }
-    >();
-
-    row(
-        key: string,
-        evt: EventWrapper<Message>,
-        status: MessageStatus,
-        ctx: ConversationContext,
-    ): MessageRow {
-        const msg = evt.event;
-        const reply = msg.repliesTo;
-        const name = (userId: string) => (userId === ctx.me ? ctx.you : ctx.userName(userId));
-        const names = `${name(msg.sender)}\n${reply?.kind === "rehydrated_reply_context" ? name(reply.senderId) : ""}`;
-        const cached = this.#rows.get(key);
-        if (cached?.evt === evt && cached.status === status && cached.names === names) {
-            return cached.row;
-        }
-        const row = messageRow(evt, status, ctx);
-        this.#rows.set(key, { evt, status, names, row });
-        return row;
-    }
-
-    clear(): void {
-        this.#rows.clear();
-    }
 }
 
 /** How long until the next local day starts, so labels like "Today" can be redone then. */
