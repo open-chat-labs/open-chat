@@ -21,11 +21,14 @@ export {
     type WalletAccount,
 } from "./utils/signer";
 export {
+    applyTranslation,
     buildCryptoTransferText,
     buildTransactionUrl,
+    chatMatchesSearch,
     subrangesCover,
     TimelineGrouper,
 } from "./utils/chat";
+export { formatDuration } from "./utils/time";
 export * from "./utils/cryptoFormatter";
 export { candidateGroupFromChat, groupChanges, hasAccessGateChanged } from "./utils/group.svelte";
 export { communityChanges } from "./utils/community";

@@ -167,10 +167,10 @@ design export needs. Each entry says where it came up.
   library's `UndoToast` without its action (`shell/Toasts.svelte`). The design has no failure tone
   for a toast, so a failure looks like any other message.
 - **Chat list, first cut** (`features/chats`, phase 3a): not yet carried over from the old row:
-  avatars (swatches stand in: Swatches), the typing line, online presence, unread mentions,
-  disappearing-message notices, translations and restricted content in the preview, webhook
-  senders, the thread count, archive / delete in the row menu, and server-side search (users and
-  groups outside the list). The community header's menu only marks all read; its other items open
+  avatars (swatches stand in: Swatches), the typing line, online presence, unread mentions, the
+  thread count, archive / delete in the row menu, and server-side search (users and groups outside
+  the list). The preview line and the search are the old row's and list's
+  (`logic/chats/latestMessagePreview`, `chatMatchesSearch`). The community header's menu only marks all read; its other items open
   dialogs later phases build.
 - **Conversation, first cut** (`features/conversation`, phase 3b): reading only (the composer is
   3c). Every message kind shows as a text bubble with its text (the rich kinds are phase 6), and

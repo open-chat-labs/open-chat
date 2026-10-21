@@ -12,6 +12,7 @@
         pinnedChatsStore,
         routeForChatIdentifier,
         selectedChatIdStore,
+        translationsStore,
         selectedCommunitySummaryStore,
         type ChatSummary,
         type OpenChat,
@@ -33,6 +34,8 @@
         type RowContext,
     } from "./chatList.adapter";
     import { AutoUnarchive } from "./autoUnarchive";
+    import { latestMessagePreview } from "@src/logic/chats/latestMessagePreview";
+    import { buildDisplayName } from "@src/utils/user";
 
     let { region }: ScreenProps<Extract<LeftRegion, { kind: "chats" }>> = $props();
 
@@ -49,10 +52,15 @@
         void $messagesRead;
         const users = $allUsersStore;
         return {
-            me: $currentUserIdStore,
-            you: $_("you"),
             userName: (userId) => client.displayName(users.get(userId)),
-            contentText: (content) => client.getContentAsText($_, content),
+            preview: (chat) =>
+                latestMessagePreview(chat, {
+                    formatter: $_,
+                    me: $currentUserIdStore,
+                    displayName: (userId, kind) => buildDisplayName(users, userId, kind, false),
+                    translations: $translationsStore,
+                    contentText: (content) => client.getContentAsText($_, content),
+                }),
             date: (timestamp) =>
                 client.formatMessageDate(timestamp, $_("today"), $_("yesterday"), true, true),
             unread: (chat) =>
@@ -65,7 +73,7 @@
     const listedRows = $derived(
         chats.flatMap((chat) => {
             const row = chatRow(chat, context);
-            return listed(chat, row.title, query) ? [{ chat, row }] : [];
+            return listed(chat, query, $allUsersStore) ? [{ chat, row }] : [];
         }),
     );
     const rows = $derived(
