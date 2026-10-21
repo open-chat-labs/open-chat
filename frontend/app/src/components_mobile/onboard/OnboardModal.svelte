@@ -15,7 +15,7 @@
         Subtitle,
         Title,
     } from "component-lib";
-    import { OpenChat } from "@client";
+    import { identityStateStore, OpenChat } from "@client";
     import { ErrorCode } from "@shared";
     import { navigate } from "@utils/navigation";
     import { getContext, onMount } from "svelte";
@@ -32,7 +32,10 @@
     const client = getContext<OpenChat>("client");
 
     type Step = "choose-auth" | "new-user" | "one-time-password";
-    let step: Step = $state("choose-auth");
+    // signed in already with an identity that has no account: sign-up is what's left
+    let step: Step = $state(
+        identityStateStore.value.kind === "registering" ? "new-user" : "choose-auth",
+    );
     let accountLinkingCode = $state("");
     let alcInput: HTMLInputElement | undefined = $state(undefined);
     let alcValid = $derived(accountLinkingCode.length === 6);
@@ -55,6 +58,9 @@
         const outcome = await client.signIn({ kind: "passkey" });
         if (outcome.kind === "failed") {
             error = outcome.reason.key;
+        } else if (outcome.kind === "needs_account") {
+            // a passkey OpenChat knows, but no account for it yet
+            step = "new-user";
         } else if (outcome.kind === "cancelled") {
             // Passkey either not found, or user cancelled auth request
             step = "one-time-password";
