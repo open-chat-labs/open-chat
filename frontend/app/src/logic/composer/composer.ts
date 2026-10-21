@@ -1,7 +1,7 @@
 import type { User, UserOrUserGroup } from "@client";
 
-// The composer's decisions (phase 3c), as the old UI's MessageEntry made them: what a typed
-// message is sent as, why one can't be sent, and when the others hear someone is typing.
+// The message entry's decisions, shared by every tree: what a typed message is sent as, why one
+// can't be sent, and when the others hear someone is typing.
 
 /**
  * A message's text as it's sent: each @username the chat knows becomes the client's mention
@@ -28,7 +28,8 @@ export function expandMentions(
     return { text: expanded, mentioned: [...mentioned.values()] };
 }
 
-export type SendState = {
+/** What the message entry knows about where it is. */
+export type EntryState = {
     /** The reader's account is suspended (the old UI hid the composer). */
     suspended: boolean;
     /** The chat, or its community, is frozen. */
@@ -38,23 +39,44 @@ export type SendState = {
     /** Not a member of the group or channel (a preview), or a lapsed one. */
     previewing: boolean;
     lapsed: boolean;
+    /** A direct chat (never a preview). */
+    direct: boolean;
+    /** A channel showing external content, which can't be posted to. */
+    externalContent: boolean;
     /** Signed out. */
     anonymous: boolean;
-    /** The reader's role lets them send text here (the only kind this composer sends). */
+    /** The reader's role lets them send here. */
     canSend: boolean;
+    /** The entry is a thread's. */
+    thread: boolean;
 };
 
-export type Blocked = { key: string; tone: "info" | "warning" };
+/** What stands in place of the message entry, when the reader can't send. */
+export type EntryBlock =
+    | { kind: "suspended" }
+    | { kind: "frozen" }
+    | { kind: "blocked" }
+    // the preview's Join (or, lapsed, re-join) footer
+    | { kind: "preview"; lapsed: boolean }
+    | { kind: "external" }
+    | { kind: "read_only"; key: "sendMessageDisabledAnon" | "readOnlyThread" | "readOnlyChat" };
 
-/** Why the reader can't send a message here, in the old footer's words; none when they can. */
-export function sendBlocked(state: SendState): Blocked | undefined {
-    if (state.suspended) return { key: "accountSuspended", tone: "warning" };
-    if (state.frozen) return { key: "chatFrozen", tone: "warning" };
-    if (state.blocked) return { key: "userIsBlocked", tone: "info" };
-    if (state.lapsed) return { key: "access.lapsed.label", tone: "info" };
-    if (state.anonymous) return { key: "sendMessageDisabledAnon", tone: "info" };
-    // TODO(phase 9): a preview's Join (and its access gates), as the old PreviewFooter
-    if (state.previewing || !state.canSend) return { key: "readOnlyChat", tone: "info" };
+/**
+ * Why the reader can't send here, in the order the old footers checked; none when they can. Every
+ * tree's entry shows this, each in its own way.
+ */
+export function entryBlock(state: EntryState): EntryBlock | undefined {
+    if (state.suspended) return { kind: "suspended" };
+    if (state.frozen) return { kind: "frozen" };
+    if (state.blocked) return { kind: "blocked" };
+    if ((state.previewing || state.lapsed) && !state.direct) {
+        return { kind: "preview", lapsed: state.lapsed };
+    }
+    if (state.externalContent) return { kind: "external" };
+    if (state.anonymous) return { kind: "read_only", key: "sendMessageDisabledAnon" };
+    if (!state.canSend) {
+        return { kind: "read_only", key: state.thread ? "readOnlyThread" : "readOnlyChat" };
+    }
     return undefined;
 }
 
@@ -108,4 +130,3 @@ export class TypingNotifier {
         }
     }
 }
-
