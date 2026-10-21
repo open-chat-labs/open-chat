@@ -50,7 +50,7 @@ describe('CreateGroupDialog', () => {
     press(create());
     await settle();
     esc();
-    press(target.querySelector('.veil'));
+    press(target.querySelector('.oc-veil'));
     press(target.querySelector('[aria-label="Close"]')); // ×
     press(target.querySelector('.cancel'));
     await vi.runAllTimersAsync();

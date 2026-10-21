@@ -57,8 +57,8 @@
   const avatarOf = (c: Community, i: number) => (c.avatarUrl ? `${cssUrl(c.avatarUrl)} center/cover no-repeat` : GRADIENTS[i % GRADIENTS.length]);
 </script>
 
-<div class="layer" class:closing={flow.closing} role="dialog" aria-modal="true" use:modal={flow.escape(onCancel)}>
-  <div class="veil" onclick={dismiss} aria-hidden="true"></div>
+<div class="layer oc-dialog-layer" class:closing={flow.closing} role="dialog" aria-modal="true" use:modal={flow.escape(onCancel)}>
+  <div class="oc-veil" onclick={dismiss} aria-hidden="true"></div>
   <div class="card">
     <div class="head">
       {#if target}
@@ -163,22 +163,7 @@
   }
 
   .layer {
-    position: fixed;
-    inset: 0;
     z-index: 70;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: var(--space-22);
-  }
-
-  .veil {
-    position: absolute;
-    inset: 0;
-    background: var(--oc-veil, rgba(3, 3, 6, 0.72));
-    backdrop-filter: var(--oc-veil-blur, blur(4px));
-    -webkit-backdrop-filter: var(--oc-veil-blur, blur(4px));
-    animation: oc-veil-in var(--duration-base) var(--ease-out) both;
   }
 
   .card {
@@ -195,15 +180,6 @@
       var(--shadow-modal);
     overflow: hidden;
     animation: oc-dlg-in var(--duration-slow) var(--ease-out) both;
-  }
-
-  /* fading out: no longer catches clicks while (or after) it leaves */
-  .layer.closing {
-    pointer-events: none;
-  }
-
-  .closing .veil {
-    animation: oc-veil-out 170ms var(--ease-standard) both;
   }
 
   .closing .card {

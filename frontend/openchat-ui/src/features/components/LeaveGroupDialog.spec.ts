@@ -53,7 +53,7 @@ describe('LeaveGroupDialog', () => {
     press(button);
     await settle();
     esc();
-    press(target.querySelector('.veil'));
+    press(target.querySelector('.oc-veil'));
     press(target.querySelector('.close'));
     press(target.querySelector('.cancel'));
     await vi.runAllTimersAsync();

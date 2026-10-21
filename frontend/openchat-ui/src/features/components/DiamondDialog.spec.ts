@@ -59,7 +59,7 @@ describe('DiamondDialog pay', () => {
     pay();
     await settle();
     esc();
-    press(target.querySelector('.veil'));
+    press(target.querySelector('.oc-veil'));
     await vi.runAllTimersAsync();
     expect(upgrade).toHaveBeenCalledOnce();
     expect(((upgrade.mock.calls[0] as unknown[])[0])).toMatchObject({ plan: '1m', token: 'CHAT', amount: 2 });

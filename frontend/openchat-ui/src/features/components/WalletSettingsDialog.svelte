@@ -313,8 +313,8 @@
   </div>
 {/snippet}
 
-<div class="layer" class:closing={flow.closing} data-screen-label="Wallet settings" role="dialog" aria-modal="true" use:modal={flow.closing ? undefined : escape}>
-  <div class="veil" class:closing={flow.closing} onclick={close} aria-hidden="true"></div>
+<div class="layer oc-dialog-layer" class:closing={flow.closing} data-screen-label="Wallet settings" role="dialog" aria-modal="true" use:modal={flow.closing ? undefined : escape}>
+  <div class="oc-veil" class:closing={flow.closing} onclick={close} aria-hidden="true"></div>
 
   <div class="card" class:closing={flow.closing}>
     <div class="header">
@@ -767,30 +767,7 @@
 
 <style>
   .layer {
-    position: fixed;
-    inset: 0;
     z-index: 70;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: var(--space-22);
-  }
-
-  .veil {
-    position: absolute;
-    inset: 0;
-    background: var(--oc-veil, rgba(3, 3, 6, 0.72));
-    backdrop-filter: var(--oc-veil-blur, blur(4px));
-    -webkit-backdrop-filter: var(--oc-veil-blur, blur(4px));
-    animation: oc-veil-in var(--duration-base) var(--ease-out) both;
-  }
-
-  .layer.closing {
-    pointer-events: none;
-  }
-
-  .veil.closing {
-    animation: oc-veil-out 170ms var(--ease-standard) both;
   }
 
   .card {

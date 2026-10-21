@@ -61,7 +61,7 @@ describe('UserGroupDialog', () => {
     press(cta);
     await settle();
     esc();
-    press(target.querySelector('.veil'));
+    press(target.querySelector('.oc-veil'));
     press(target.querySelector('[aria-label="Close"]')); // ×
     press(target.querySelector('.text-button'));
     await vi.runAllTimersAsync();

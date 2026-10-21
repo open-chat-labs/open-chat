@@ -55,7 +55,7 @@ describe('ChitDialog claim', () => {
     press(target.querySelector('.claim'));
     await settle();
     esc();
-    press(target.querySelector('.veil'));
+    press(target.querySelector('.oc-veil'));
     press(target.querySelector('.row.cover'));
     await vi.runAllTimersAsync();
     expect(onClose).not.toHaveBeenCalled();
@@ -89,7 +89,7 @@ describe('ChitDialog claim', () => {
   test('a claim pressed while closing is ignored', async () => {
     const claim = vi.fn(() => Promise.resolve());
     const { onClose } = open(claim);
-    press(target.querySelector('.veil'));
+    press(target.querySelector('.oc-veil'));
     press(target.querySelector('.claim'));
     await vi.runAllTimersAsync();
     expect(claim).not.toHaveBeenCalled();

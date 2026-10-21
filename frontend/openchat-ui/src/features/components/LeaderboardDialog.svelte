@@ -42,8 +42,8 @@
   );
 </script>
 
-<div class="layer" data-screen-label="Leaderboard" role="dialog" aria-modal="true" use:modal={() => onClose?.()}>
-  <div class="veil" onclick={() => onClose?.()} aria-hidden="true"></div>
+<div class="layer oc-dialog-layer" data-screen-label="Leaderboard" role="dialog" aria-modal="true" use:modal={() => onClose?.()}>
+  <div class="oc-veil" onclick={() => onClose?.()} aria-hidden="true"></div>
 
   <div class="card">
     <div class="head">
@@ -90,22 +90,7 @@
 
 <style>
   .layer {
-    position: fixed;
-    inset: 0;
     z-index: 73;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: var(--space-22);
-  }
-
-  .veil {
-    position: absolute;
-    inset: 0;
-    background: var(--oc-veil, rgba(3, 3, 6, 0.72));
-    backdrop-filter: var(--oc-veil-blur, blur(4px));
-    -webkit-backdrop-filter: var(--oc-veil-blur, blur(4px));
-    animation: oc-veil-in var(--duration-base) var(--ease-out) both;
   }
 
   .card {

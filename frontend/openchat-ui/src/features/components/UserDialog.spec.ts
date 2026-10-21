@@ -50,7 +50,7 @@ describe('UserDialog', () => {
       const { onCancel, layer } = open({ onBlock });
       startBlock();
       esc();
-      target.querySelector<HTMLElement>('.veil')!.click();
+      target.querySelector<HTMLElement>('.oc-veil')!.click();
       target.querySelector<HTMLElement>('.footer.confirm .block')!.click(); // a second press
       await vi.advanceTimersByTimeAsync(500);
       expect(onCancel).not.toHaveBeenCalled();

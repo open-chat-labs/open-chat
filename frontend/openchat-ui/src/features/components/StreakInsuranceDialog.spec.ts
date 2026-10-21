@@ -55,7 +55,7 @@ describe('StreakInsuranceDialog', () => {
     press(pay);
     await settle();
     esc();
-    press(target.querySelector('.veil'));
+    press(target.querySelector('.oc-veil'));
     press(target.querySelector('.icon-button.close'));
     press(target.querySelector('.icon-button.back'));
     await vi.runAllTimersAsync();

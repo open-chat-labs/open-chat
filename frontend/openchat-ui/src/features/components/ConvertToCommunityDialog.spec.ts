@@ -59,7 +59,7 @@ describe('ConvertToCommunityDialog', () => {
     press(primary());
     await settle();
     esc();
-    press(target.querySelector('.veil'));
+    press(target.querySelector('.oc-veil'));
     press(target.querySelector('.icon-button'));
     press(target.querySelector('.text-button'));
     await vi.runAllTimersAsync();

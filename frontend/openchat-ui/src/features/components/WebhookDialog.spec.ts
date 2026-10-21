@@ -55,7 +55,7 @@ describe('WebhookDialog', () => {
     press(primary());
     await settle();
     esc();
-    press(target.querySelector('.veil'));
+    press(target.querySelector('.oc-veil'));
     press(target.querySelector('.secondary'));
     await vi.runAllTimersAsync();
     expect(onSave).toHaveBeenCalledOnce();

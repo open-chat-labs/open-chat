@@ -450,8 +450,8 @@
   </div>
 {/snippet}
 
-<div class="layer" bind:this={layer} class:closing={flow.closing} data-screen-label="Daily puzzle" role="dialog" aria-modal="true" aria-label={t('ui.puzzleDialog.label')}>
-  <div class="veil" onclick={close} aria-hidden="true"></div>
+<div class="layer oc-dialog-layer" bind:this={layer} class:closing={flow.closing} data-screen-label="Daily puzzle" role="dialog" aria-modal="true" aria-label={t('ui.puzzleDialog.label')}>
+  <div class="oc-veil" onclick={close} aria-hidden="true"></div>
   <div class="card" class:wide={view === 'play' && wide}>
     <div class="head">
       <span class="badge"><span class="badge-icon"></span></span>
@@ -594,22 +594,7 @@
 
 <style>
   .layer {
-    position: fixed;
-    inset: 0;
     z-index: 74;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: var(--space-22);
-  }
-
-  .veil {
-    position: absolute;
-    inset: 0;
-    background: var(--oc-veil, rgba(3, 3, 6, 0.72));
-    backdrop-filter: var(--oc-veil-blur, blur(4px));
-    -webkit-backdrop-filter: var(--oc-veil-blur, blur(4px));
-    animation: oc-veil-in var(--duration-base) var(--ease-out) both;
   }
 
   .card {
@@ -634,14 +619,6 @@
 
   .card.wide {
     max-width: 880px;
-  }
-
-  .layer.closing {
-    pointer-events: none;
-  }
-
-  .closing .veil {
-    animation: oc-veil-out 170ms var(--ease-standard) both;
   }
 
   .closing .card {

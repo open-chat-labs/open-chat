@@ -51,8 +51,8 @@
 
 {#snippet sentence(segs: Segment[])}{#each segs as seg}{#if 'slot' in seg}<span class="accent">{groupName}</span>{:else}{#each seg.text.split('\n') as part, i}{#if i}<br />{/if}{part}{/each}{/if}{/each}{/snippet}
 
-<div class="layer" class:closing={flow.closing} role="dialog" aria-modal="true" use:modal={flow.escape(onCancel)}>
-  <div class="veil" onclick={() => dismiss(onCancel)} aria-hidden="true"></div>
+<div class="layer oc-dialog-layer" class:closing={flow.closing} role="dialog" aria-modal="true" use:modal={flow.escape(onCancel)}>
+  <div class="oc-veil" onclick={() => dismiss(onCancel)} aria-hidden="true"></div>
   <div class="card">
     <div class="head">
       <span class="badge"><span class="badge-icon community"></span></span>
@@ -140,22 +140,7 @@
   }
 
   .layer {
-    position: fixed;
-    inset: 0;
     z-index: 70;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: var(--space-22);
-  }
-
-  .veil {
-    position: absolute;
-    inset: 0;
-    background: var(--oc-veil, rgba(3, 3, 6, 0.72));
-    backdrop-filter: var(--oc-veil-blur, blur(4px));
-    -webkit-backdrop-filter: var(--oc-veil-blur, blur(4px));
-    animation: oc-veil-in var(--duration-base) var(--ease-out) both;
   }
 
   .card {
@@ -172,14 +157,6 @@
       var(--shadow-modal);
     overflow: hidden;
     animation: oc-dlg-in var(--duration-slow) var(--ease-out) both;
-  }
-
-  .layer.closing {
-    pointer-events: none;
-  }
-
-  .closing .veil {
-    animation: oc-veil-out 170ms var(--ease-standard) both;
   }
 
   .closing .card {

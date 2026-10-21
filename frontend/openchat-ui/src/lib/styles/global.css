@@ -45,3 +45,8 @@ body:has([data-mode="light"]){background:#E7E5E0}
 input::placeholder{color:var(--ink-4)}
 @keyframes oc-sheet-in{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion: reduce){[data-oc-motion]{animation:none!important}}
+.oc-dialog-layer{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:var(--space-22)}
+/* fading out: no longer catches clicks while (or after) it leaves */
+.oc-dialog-layer.closing{pointer-events:none}
+.oc-veil{position:absolute;inset:0;background:var(--oc-veil,rgba(3,3,6,.72));backdrop-filter:var(--oc-veil-blur,blur(4px));-webkit-backdrop-filter:var(--oc-veil-blur,blur(4px));animation:oc-veil-in var(--duration-base) var(--ease-out) both}
+.closing .oc-veil,.oc-veil.closing{animation:oc-veil-out 170ms var(--ease-standard) both}

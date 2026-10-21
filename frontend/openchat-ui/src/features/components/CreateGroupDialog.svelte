@@ -656,7 +656,7 @@
 {/snippet}
 
 <div class="root" class:closing={flow.closing} role="dialog" aria-modal="true" use:modal={flow.escape(onCancel)}>
-  <div class="veil" onclick={dismiss} aria-hidden="true"></div>
+  <div class="oc-veil" onclick={dismiss} aria-hidden="true"></div>
   <div class="card">
     <div class="head">
       <div class="head-row">
@@ -1349,15 +1349,6 @@
     padding: var(--space-22);
   }
 
-  .veil {
-    position: absolute;
-    inset: 0;
-    background: var(--oc-veil, rgba(3, 3, 6, 0.72));
-    backdrop-filter: var(--oc-veil-blur, blur(4px));
-    -webkit-backdrop-filter: var(--oc-veil-blur, blur(4px));
-    animation: oc-veil-in var(--duration-base) var(--ease-out) both;
-  }
-
   .card {
     position: relative;
     width: 100%;
@@ -1378,10 +1369,6 @@
 
   .root.closing {
     pointer-events: none;
-  }
-
-  .closing .veil {
-    animation: oc-veil-out 170ms var(--ease-standard) both;
   }
 
   .closing .card {
