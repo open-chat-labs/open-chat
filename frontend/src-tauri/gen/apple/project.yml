@@ -75,7 +75,7 @@ targets:
     entitlements:
       # Not open-chat_iOS.entitlements: tauri-plugin-deep-link's build script rewrites
       # that file's associated domains from the deep-link config, dropping
-      # webcredentials (see src-tauri/tests/iosDeepLinkPlugin.spec.ts).
+      # webcredentials (see src-tauri/tests/deepLinkPlugin.spec.ts).
       path: open-chat_iOS/OpenChat.entitlements
       properties:
         # Native passkeys (RP id oc.app). oc.app serves an
