@@ -15,9 +15,7 @@
     import type {
         ChatSummary,
         DiamondMembershipStatus,
-        MessageContent,
         TypersByKey,
-        UserLookup,
     } from "@client";
     import {
         allUsersStore,
@@ -27,13 +25,11 @@
         currentUserIdStore,
         favouritesStore,
         latestMessageExpired,
-        messageFlagsRestricted,
         messagesRead,
         notificationsSupported,
         OpenChat,
         pinnedChatsStore,
         publish,
-        ROLE_NONE,
         routeForScope,
         selectedChatIdStore,
         selectedCommunitySummaryStore,
@@ -44,6 +40,8 @@
     import { navigate } from "@utils/navigation";
     import { getContext, untrack } from "svelte";
     import { _ } from "svelte-i18n";
+    import { latestMessagePreview } from "@src/logic/chats/latestMessagePreview";
+    import { buildDisplayName } from "@src/utils/user";
     import ArchiveIcon from "svelte-material-icons/Archive.svelte";
     import BellIcon from "svelte-material-icons/Bell.svelte";
     import MutedIcon from "svelte-material-icons/BellOff.svelte";
@@ -65,7 +63,6 @@
     import { canDeleteDirectChat, publishDeleteDirectChat } from "../../utils/directChat";
     import { rtlStore } from "../../stores/rtl";
     import { toastStore } from "../../stores/toast";
-    import { buildDisplayName } from "../../utils/user";
     import Bitcoin from "@shared_components/icons/Bitcoin.svelte";
     import HeartMinus from "@shared_components/icons/HeartMinus.svelte";
     import HeartPlus from "@shared_components/icons/HeartPlus.svelte";
@@ -97,7 +94,15 @@
     let unreadMessages = $state<number>(0);
     let unreadMentions = $state<number>(0);
     let chat = $derived(normaliseChatSummary(chatSummary, $typersByContext));
-    let lastMessage = $derived(formatLatestMessage(chatSummary, $allUsersStore));
+    let lastMessage = $derived(
+        latestMessagePreview(chatSummary, {
+            formatter: $_,
+            me: $currentUserIdStore,
+            displayName: (userId, kind) => buildDisplayName($allUsersStore, userId, kind, false),
+            translations: $translationsStore,
+            contentText: (content) => client.getContentAsText($_, content),
+        }),
+    );
     let displayDate = $derived(client.getDisplayDate(chatSummary));
     let community = $derived(
         chatSummary.kind === "channel"
@@ -239,66 +244,6 @@
         }
     }
 
-    function translateMessage(messageId: bigint, content: MessageContent): MessageContent {
-        const translation = $translationsStore.get(messageId);
-        return translation ? client.applyTranslation(content, translation) : content;
-    }
-
-    function formatLatestMessage(chatSummary: ChatSummary, users: UserLookup): string {
-        if (chatSummary.latestMessageIndex === undefined || externalContent) {
-            return "";
-        }
-
-        if (
-            (chatSummary.latestMessage !== undefined &&
-                chatSummary.eventsTtlLastUpdated > chatSummary.latestMessage.timestamp) ||
-            (chatSummary.latestMessage === undefined &&
-                chatSummary.eventsTTL !== undefined &&
-                chatSummary.membership.role !== ROLE_NONE)
-        ) {
-            return chatSummary.eventsTTL !== undefined
-                ? $_("disappearingMessages.timeUpdated", {
-                      values: {
-                          duration: client.formatDuration(Number(chatSummary.eventsTTL)),
-                      },
-                  })
-                : $_("disappearingMessages.disabled");
-        }
-
-        if (chatSummary.latestMessage === undefined || latestMessageExpired(chatSummary)) {
-            return "";
-        }
-
-        const latestMessageText = client.getContentAsText(
-            $_,
-            messageFlagsRestricted(chatSummary.latestMessage.event.moderationFlags)
-                ? { kind: "restricted_content" }
-                : translateMessage(
-                      chatSummary.latestMessage.event.messageId,
-                      chatSummary.latestMessage.event.content,
-                  ),
-        );
-
-        if (chatSummary.kind === "direct_chat") {
-            return latestMessageText;
-        }
-
-        let userType: "user" | "me" | "webhook" = "user";
-        if (chatSummary.latestMessage.event.senderContext?.kind === "webhook") {
-            userType = "webhook";
-        } else if (chatSummary.latestMessage.event.sender === $currentUserIdStore) {
-            userType = "me";
-        }
-
-        const user = buildDisplayName(
-            users,
-            chatSummary.latestMessage.event.sender,
-            userType,
-            false,
-        );
-
-        return `${user}: ${latestMessageText}`;
-    }
 
     function pinChat() {
         client.pinChat(chatSummary.id).then((success) => {
