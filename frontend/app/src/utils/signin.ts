@@ -137,15 +137,20 @@ export class EmailSigninHandler extends EventTarget {
     }
 
     copyCode(code: string | undefined) {
-        if (code === undefined) return;
-
-        navigator.clipboard.writeText(code).then(
-            () => {
-                toastStore.showSuccessToast(i18nKey("loginDialog.codeCopiedToClipboard"));
-            },
-            () => {
-                toastStore.showFailureToast(i18nKey("loginDialog.failedToCopyCodeToClipboard"));
-            },
-        );
+        copyEmailCode(code);
     }
+}
+
+/** Copies an emailed link's code, saying whether it could. */
+export function copyEmailCode(code: string | undefined) {
+    if (code === undefined) return;
+
+    navigator.clipboard.writeText(code).then(
+        () => {
+            toastStore.showSuccessToast(i18nKey("loginDialog.codeCopiedToClipboard"));
+        },
+        () => {
+            toastStore.showFailureToast(i18nKey("loginDialog.failedToCopyCodeToClipboard"));
+        },
+    );
 }

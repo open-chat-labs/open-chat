@@ -17,21 +17,10 @@ vi.mock("./ethWallet", () => ({
     },
 }));
 
-// each link request has its own handler; magicLink answers them all
+// magicLink answers each link request as the backend would; each link sent is in `links`, to be
+// followed (signing in) or seen given up
 const magicLink = vi.fn();
-const emailHandlers: {
-    generateMagicLink: ReturnType<typeof vi.fn>;
-    stopPolling: ReturnType<typeof vi.fn>;
-}[] = [];
-vi.mock("@src/utils/signin", () => ({
-    EmailSigninHandler: class {
-        generateMagicLink = vi.fn((address: string) => magicLink(address));
-        stopPolling = vi.fn();
-        constructor() {
-            emailHandlers.push(this);
-        }
-    },
-}));
+const links: { signal?: AbortSignal; follow: (outcome: SignInOutcome) => void }[] = [];
 
 const set = (state: IdentityState) => identityStateStore.set(state);
 
@@ -59,8 +48,29 @@ function settled(signal?: AbortSignal): Promise<SignInOutcome> {
     });
 }
 
+// as client.requestEmailSignIn answers: the link's code, then signed in once it's followed
+async function requestEmailSignIn(address: string, signal?: AbortSignal) {
+    const resp = await magicLink(address);
+    if (signal?.aborted) return { kind: "cancelled" } as const;
+    if (resp.kind !== "success") {
+        const key =
+            resp.kind === "email_invalid"
+                ? "loginDialog.invalidEmail"
+                : "loginDialog.failedToSendEmail";
+        return { kind: "failed", reason: { key } } as const;
+    }
+    const link = { signal, follow: (_: SignInOutcome) => {} };
+    links.push(link);
+    const signedIn = new Promise<SignInOutcome>((resolve) => {
+        link.follow = resolve;
+        signal?.addEventListener("abort", () => resolve({ kind: "cancelled" }), { once: true });
+    });
+    return { kind: "sent", code: resp.code as string, signedIn } as const;
+}
+
 function fakeClient() {
     const client = {
+        requestEmailSignIn: vi.fn(requestEmailSignIn),
         signIn: vi.fn(async (method: SignInMethod, signal?: AbortSignal) => {
             if (signal?.aborted) return { kind: "cancelled" } as SignInOutcome;
             try {
@@ -106,7 +116,7 @@ describe("the sign-in callbacks", () => {
     const onEmailSignedIn = vi.fn();
 
     beforeEach(() => {
-        emailHandlers.length = 0;
+        links.length = 0;
         magicLink.mockReset();
         magicLink.mockImplementation(async () => ({ kind: "success", code: "123" }));
         client = fakeClient();
@@ -315,19 +325,17 @@ describe("the sign-in callbacks", () => {
         // the address is remembered for next time
         expect(auth.lastEmail()).toBe("me@example.com");
         expect(magicLink).toHaveBeenCalledWith("me@example.com");
-        set({ kind: "loading_user", registering: false });
         expect(onEmailSignedIn).not.toHaveBeenCalled();
-        set({ kind: "logged_in" });
+        links[0].follow({ kind: "logged_in" });
+        await flush();
         expect(onEmailSignedIn).toHaveBeenCalledWith("logged_in");
     });
 
-    test("a link asked for by an identity without an account waits for the link", async () => {
-        set({ kind: "registering" });
+    test("a link followed by someone without an account goes on to sign-up", async () => {
         await auth.onRequestEmailLink!("me@example.com");
-        expect(onEmailSignedIn).not.toHaveBeenCalled();
-        set({ kind: "loading_user", registering: false });
-        set({ kind: "logged_in" });
-        expect(onEmailSignedIn).toHaveBeenCalledWith("logged_in");
+        links[0].follow({ kind: "needs_account" });
+        await flush();
+        expect(onEmailSignedIn).toHaveBeenCalledWith("registering");
     });
 
     test("a link given up on doesn't enter, and counts as cancelled once", async () => {
@@ -337,15 +345,15 @@ describe("the sign-in callbacks", () => {
         auth.onCancelEmailLink!();
         const cancels = client.gaTrack.mock.calls.filter(([e]) => e === "email_signin_cancelled");
         expect(cancels).toEqual([["email_signin_cancelled", "registration"]]);
-        expect(emailHandlers[0].stopPolling).toHaveBeenCalled();
-        set({ kind: "logged_in" });
+        expect(links[0].signal?.aborted).toBe(true);
+        await flush();
         expect(onEmailSignedIn).not.toHaveBeenCalled();
     });
 
     test("a link that signed in isn't counted as cancelled when its dialog goes", async () => {
         await auth.onRequestEmailLink!("me@example.com");
-        set({ kind: "loading_user", registering: false });
-        set({ kind: "logged_in" });
+        links[0].follow({ kind: "logged_in" });
+        await flush();
         auth.onCancelEmailLink!();
         expect(client.gaTrack).not.toHaveBeenCalledWith("email_signin_cancelled", "registration");
     });
@@ -361,17 +369,17 @@ describe("the sign-in callbacks", () => {
         await auth.onRequestEmailLink!("me@example.com");
         magicLink.mockResolvedValueOnce({ kind: "failed_to_send_email" });
         await expect(auth.onRequestEmailLink!("me@example.com")).rejects.toBeDefined();
-        expect(emailHandlers[0].stopPolling).not.toHaveBeenCalled();
-        set({ kind: "loading_user", registering: false });
-        set({ kind: "logged_in" });
+        expect(links[0].signal?.aborted).toBe(false);
+        links[0].follow({ kind: "logged_in" });
+        await flush();
         expect(onEmailSignedIn).toHaveBeenCalledWith("logged_in");
     });
 
     test("a resend that's sent replaces the link before", async () => {
         await auth.onRequestEmailLink!("me@example.com");
         await auth.onRequestEmailLink!("me@example.com");
-        expect(emailHandlers[0].stopPolling).toHaveBeenCalled();
-        expect(emailHandlers[1].stopPolling).not.toHaveBeenCalled();
+        expect(links[0].signal?.aborted).toBe(true);
+        expect(links[1].signal?.aborted).toBe(false);
     });
 
     test("closing while the link is being sent drops it once it is", async () => {
@@ -381,9 +389,7 @@ describe("the sign-in callbacks", () => {
         auth.cancel();
         sent({ kind: "success", code: "123" });
         await expect(request).rejects.toThrow("given up");
-        expect(emailHandlers[0].stopPolling).toHaveBeenCalled();
-        set({ kind: "loading_user", registering: false });
-        set({ kind: "logged_in" });
+        expect(links).toHaveLength(0);
         expect(onEmailSignedIn).not.toHaveBeenCalled();
     });
 

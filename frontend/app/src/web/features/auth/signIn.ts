@@ -15,55 +15,22 @@ import type {
 } from "@openchat/ui/src/features/components/AuthDialog.svelte";
 import { configKeys } from "@shared";
 import type { PageAuth } from "@openchat/ui/src/pages/pageAuth.svelte";
-import { EmailSigninHandler } from "@src/utils/signin";
 import { createdUser, registerFailureKey } from "@src/utils/signup";
 import {
     afterAbandoned,
     referralCode,
     type ReferralLookup,
-    emailLinkFailureKey,
     emailLinkResult,
     onAuthClosed,
     person,
     PROVIDERS,
-    signInOutcome,
     WALLETS,
     type SignedIn,
 } from "./auth.adapter";
 
-// AuthDialog's host callbacks, on the client's sign-in flows. A sign-in settles with client.signIn's
-// outcome; an emailed link, followed on another page, and sign-up still settle on
+// AuthDialog's host callbacks, on the client's sign-in flows: a sign-in settles with client.signIn's
+// outcome, an emailed link with client.requestEmailSignIn's, and sign-up still on
 // identityStateStore (DATA.md, Auth).
-
-/**
- * Calls `settle` once with the first outcome that isn't "pending", skipping "failed" when
- * `anonFails` is off. That's from the current identity on, or with `fromNow` from the first
- * identity that differs from it. Returns a stop function.
- */
-function watchSignIn(
-    settle: (outcome: SignedIn | "failed") => void,
-    { anonFails, fromNow = false }: { anonFails: boolean; fromNow?: boolean },
-): () => void {
-    let done = false;
-    let unsubscribe: (() => void) | undefined = undefined;
-    const startedAt = identityStateStore.value.kind;
-    let changed = !fromNow;
-    unsubscribe = identityStateStore.subscribe((state) => {
-        changed ||= state.kind !== startedAt;
-        if (!changed) return;
-        const outcome = signInOutcome(state);
-        if (done || outcome === "pending" || (outcome === "failed" && !anonFails)) return;
-        done = true;
-        unsubscribe?.();
-        settle(outcome);
-    });
-    // the store calls back during subscribe, before `unsubscribe` was set
-    if (done) unsubscribe();
-    return () => {
-        done = true;
-        unsubscribe?.();
-    };
-}
 
 // A sign-in someone walked away from (closed its dialog, or left its page). It's kept here rather
 // than in a host, so whichever host is mounted when it comes to something, it's handled the same:
@@ -158,12 +125,11 @@ export type AuthOptions = {
  * `onEmailSignedIn` is the only thing that hears of it here.
  */
 export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: AuthOptions): Auth {
-    // the link being waited on: each request has its own handler, so a resend that fails leaves
+    // the link being waited on, given up through its request's signal: a resend that fails leaves
     // the earlier link working, and one that's sent replaces it
-    let emailLink: EmailSigninHandler | undefined = undefined;
-    let stopEmailWatch = () => {};
-    // each link request's number: stopping moves it on, so a link still being sent is dropped
-    let emailRequests = 0;
+    let emailLink: AbortController | undefined = undefined;
+    // the link request still being sent: a new request, or stopping, drops it once it is
+    let emailRequest: AbortController | undefined = undefined;
     // each sign-up's number: cancelling moves it on, so the one in flight stops after its passkey
     let signups = 0;
     // the sign-ins the dialog is waiting on; cancelling gives them up
@@ -232,35 +198,27 @@ export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: Aut
 
         async onRequestEmailLink(address): Promise<EmailLinkSent> {
             resumeSignIn();
-            const request = ++emailRequests;
+            const request = new AbortController();
+            emailRequest?.abort();
+            emailRequest = request;
             client.gaTrack("initiated_signin", "registration", AuthProvider.EMAIL);
             localStorage.setItem(configKeys.selectedAuthEmail, address);
-            selectedAuthProviderStore.set(AuthProvider.EMAIL);
-            const handler = new EmailSigninHandler(client, "registration", true);
-            const resp = await handler.generateMagicLink(address);
-            if (request !== emailRequests) {
-                // stopped while it was being sent (the dialog closed)
-                handler.stopPolling();
-                throw new Error("Email link given up");
-            }
+            const resp = await client.requestEmailSignIn(address, request.signal);
+            if (emailRequest === request) emailRequest = undefined;
+            // stopped while it was being sent (the dialog closed, or a newer request)
+            if (resp.kind === "cancelled") throw new Error("Email link given up");
             // a link that couldn't be sent leaves an earlier one working
-            if (resp.kind !== "success") throw failure(emailLinkFailureKey(resp.kind));
-            emailLink?.stopPolling();
-            emailLink = handler;
-            // the person follows the link on another page, and this one signs in when the poller
-            // hears of it. Until then the identity can sit at anonymous, or at an identity
-            // without an account from an earlier try, which isn't the link's
-            stopEmailWatch();
-            stopEmailWatch = watchSignIn(
-                (outcome) => {
-                    if (outcome === "failed") return;
-                    // signed in: nothing left to wait for, or to call cancelled
-                    emailLink?.stopPolling();
-                    emailLink = undefined;
-                    onEmailSignedIn?.(outcome);
-                },
-                { anonFails: false, fromNow: true },
-            );
+            if (resp.kind === "failed") throw failure(resp.reason.key);
+            emailLink?.abort();
+            emailLink = request;
+            // the person follows the link on another page, and this one signs in when the client
+            // hears of it
+            resp.signedIn.then((outcome) => {
+                // signed in: nothing left to wait for, or to call cancelled
+                if (emailLink === request) emailLink = undefined;
+                if (outcome.kind === "logged_in") onEmailSignedIn?.("logged_in");
+                if (outcome.kind === "needs_account") onEmailSignedIn?.("registering");
+            });
             return { code: resp.code };
         },
 
@@ -356,9 +314,9 @@ export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: Aut
     };
 
     function stopEmail() {
-        emailRequests++;
-        stopEmailWatch();
-        emailLink?.stopPolling();
+        emailRequest?.abort();
+        emailRequest = undefined;
+        emailLink?.abort();
         emailLink = undefined;
     }
 }

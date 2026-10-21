@@ -172,4 +172,74 @@ describe("signing in", () => {
         expect(outcome.kind).toBe("failed");
         expect(selectedAuthProviderStore.value).toBe(AuthProvider.ETH);
     });
+
+    describe("by an emailed link", () => {
+        const sent = { kind: "success", code: "123", userKey: new Uint8Array(), expiration: 1n };
+        let polls: ReturnType<typeof vi.fn>;
+
+        beforeEach(() => {
+            vi.useFakeTimers({
+                toFake: ["setTimeout", "setInterval", "clearTimeout", "clearInterval"],
+            });
+            vi.spyOn(console, "debug").mockImplementation(() => {});
+            vi.spyOn(client, "gaTrack").mockImplementation(() => {});
+            polls = vi.fn(async () => ({ kind: "not_found" }));
+            vi.spyOn(client, "getSignInWithEmailDelegation").mockImplementation(polls as never);
+        });
+        afterEach(() => vi.useRealTimers());
+
+        /** Invariant 5: a link that couldn't be sent says why, and nothing is waited for. */
+        test("a link that couldn't be sent fails with the reason, and isn't waited for", async () => {
+            vi.spyOn(client, "generateMagicLink").mockResolvedValue({ kind: "email_invalid" });
+            const resp = await client.requestEmailSignIn("bad");
+            expect(resp.kind === "failed" && resp.reason.key).toBe("loginDialog.invalidEmail");
+            await vi.advanceTimersByTimeAsync(5000);
+            expect(polls).not.toHaveBeenCalled();
+            expect(selectedAuthProviderStore.value).toBe(AuthProvider.EMAIL);
+        });
+
+        /** Invariant 6: once the link is followed, the sign-in settles with where the identity got
+         * to, and the checking stops. */
+        test("sent, it signs in once the link is followed, and stops checking", async () => {
+            vi.spyOn(client, "generateMagicLink").mockResolvedValue(sent as never);
+            const resp = await client.requestEmailSignIn("me@example.com");
+            if (resp.kind !== "sent") throw new Error(resp.kind);
+            expect(resp.code).toBe("123");
+            await vi.advanceTimersByTimeAsync(2500);
+            expect(polls).toHaveBeenCalled();
+            polls.mockImplementation(async () => {
+                set({ kind: "registering" });
+                return { kind: "success" };
+            });
+            await vi.advanceTimersByTimeAsync(1000);
+            expect(await resp.signedIn).toEqual({ kind: "needs_account" });
+            const checks = polls.mock.calls.length;
+            await vi.advanceTimersByTimeAsync(5000);
+            expect(polls.mock.calls.length).toBe(checks);
+        });
+
+        /** Invariant 7: given up, a sent link settles cancelled and stops being checked; given up
+         * while it's being sent, it's cancelled and never checked. */
+        test("given up, the link is cancelled and no longer checked", async () => {
+            vi.spyOn(client, "generateMagicLink").mockResolvedValue(sent as never);
+            const walkedAway = new AbortController();
+            const resp = await client.requestEmailSignIn("me@example.com", walkedAway.signal);
+            if (resp.kind !== "sent") throw new Error(resp.kind);
+            walkedAway.abort();
+            expect(await resp.signedIn).toEqual({ kind: "cancelled" });
+            await vi.advanceTimersByTimeAsync(5000);
+            expect(polls).not.toHaveBeenCalled();
+
+            const closed = new AbortController();
+            vi.spyOn(client, "generateMagicLink").mockImplementation(async () => {
+                closed.abort();
+                return sent as never;
+            });
+            expect(await client.requestEmailSignIn("me@example.com", closed.signal)).toEqual({
+                kind: "cancelled",
+            });
+            await vi.advanceTimersByTimeAsync(5000);
+            expect(polls).not.toHaveBeenCalled();
+        });
+    });
 });

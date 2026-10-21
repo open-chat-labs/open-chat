@@ -58,18 +58,6 @@ export function authOptions(
         : [lastOption, ...offered.filter((o) => o !== lastOption)];
 }
 
-/** The app's message (as the old sign-in showed it) for a sign-in link that couldn't be sent. */
-export function emailLinkFailureKey(kind: string): string {
-    switch (kind) {
-        case "email_invalid":
-            return "loginDialog.invalidEmail";
-        case "failed_to_send_email":
-            return "loginDialog.failedToSendEmail";
-        default:
-            return "loginDialog.unexpectedError";
-    }
-}
-
 /**
  * The Ethereum wallets to pick from, as the old UI's SigninWithEth lists wagmi's connectors: the
  * configured ones first, then any the browser announces (EIP-6963), one per name, with our icon
@@ -105,20 +93,6 @@ export const WALLETS: Record<"eth" | "sol", AuthWallet[]> = {
 };
 
 export type SignedIn = "logged_in" | "registering";
-
-/** Where a sign-in has got to: signed in (with or without an account), still going, or back to anonymous. */
-export function signInOutcome(state: IdentityState): SignedIn | "pending" | "failed" {
-    switch (state.kind) {
-        case "logged_in":
-            return "logged_in";
-        case "registering":
-            return "registering";
-        case "anon":
-            return "failed";
-        default:
-            return "pending";
-    }
-}
 
 export function person(user: UserSummary): AuthPerson {
     return {

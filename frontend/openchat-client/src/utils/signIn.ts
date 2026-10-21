@@ -2,6 +2,7 @@ import {
     AuthProvider,
     i18nKey,
     type IdentityState,
+    type ResourceKey,
     type SignInMethod,
     type SignInOutcome,
 } from "@shared";
@@ -15,6 +16,18 @@ export function signInProvider(method: SignInMethod): AuthProvider {
             return method.provider === "ii" ? AuthProvider.II : AuthProvider.NFID;
         case "wallet":
             return method.token === "eth" ? AuthProvider.ETH : AuthProvider.SOL;
+    }
+}
+
+/** Why an emailed sign-in link couldn't be sent, in the app's words. */
+export function emailLinkFailure(kind: string): ResourceKey {
+    switch (kind) {
+        case "email_invalid":
+            return i18nKey("loginDialog.invalidEmail");
+        case "failed_to_send_email":
+            return i18nKey("loginDialog.failedToSendEmail");
+        default:
+            return i18nKey("loginDialog.unexpectedError");
     }
 }
 

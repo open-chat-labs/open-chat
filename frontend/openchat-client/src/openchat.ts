@@ -306,6 +306,7 @@ import {
     type SelectedCommunityRoute,
     type SendMessageOutcome,
     type SignInMethod,
+    type EmailSignInRequest,
     type SignInOutcome,
     type SendMessageResponse,
     type SendMessageSuccess,
@@ -639,7 +640,7 @@ import {
 import { joinGroupFailureMessage } from "./utils/join";
 import { currentTip, tipResult } from "./utils/tip";
 import { cryptoTransferResult } from "./utils/cryptoTransfer";
-import { signInOutcome, signInProvider } from "./utils/signIn";
+import { emailLinkFailure, signInOutcome, signInProvider } from "./utils/signIn";
 import {
     executionPaymentAmount,
     PROPOSAL_EXECUTION_WINDOW,
@@ -11161,6 +11162,69 @@ export class OpenChat {
         this.#worker.send({ kind: "markAchievementsSeen" }).catch((err) => {
             console.error("markAchievementsSeen", err);
         });
+    }
+
+    /**
+     * Emails a sign-in link and, once it's sent, checks every second whether it has been followed;
+     * followed (on any device), this browser takes the identity it signs in. `signal` gives the
+     * request up: before the link is sent, nothing is waited for; after, `signedIn` settles
+     * cancelled and the checking stops.
+     */
+    async requestEmailSignIn(email: string, signal?: AbortSignal): Promise<EmailSignInRequest> {
+        selectedAuthProviderStore.set(AuthProvider.EMAIL);
+        const sessionKey = await ECDSAKeyIdentity.generate();
+        let resp: GenerateMagicLinkResponse | { kind: "unexpected_error" };
+        try {
+            resp = await this.generateMagicLink(email, sessionKey);
+        } catch (err) {
+            console.warn("generateMagicLink error", err);
+            resp = { kind: "unexpected_error" };
+        }
+        if (signal?.aborted) return { kind: "cancelled" };
+        if (resp.kind !== "success") {
+            if (resp.kind === "failed_to_send_email") {
+                console.debug("generateMagicLink failed_to_send_email", resp.error);
+            }
+            return { kind: "failed", reason: emailLinkFailure(resp.kind) };
+        }
+        this.gaTrack("generated_magic_signin_link", "registration");
+        const { userKey, expiration } = resp;
+
+        const signedIn = new Promise<SignInOutcome>((resolve) => {
+            let waiting = true;
+            const done = (outcome: SignInOutcome) => {
+                if (!waiting) return;
+                waiting = false;
+                poller.stop();
+                resolve(outcome);
+            };
+            const poller = new Poller(
+                async () => {
+                    if (!waiting) return;
+                    try {
+                        const r = await this.getSignInWithEmailDelegation(
+                            email,
+                            userKey,
+                            sessionKey,
+                            expiration,
+                            true,
+                        );
+                        if (r.kind === "success") {
+                            this.gaTrack("received_email_signin_delegation", "registration");
+                            done(signInOutcome(identityStateStore.value));
+                        } else if (r.kind === "error") {
+                            console.debug("getSignInWithEmailDelegation error", r.error);
+                        }
+                    } catch (err) {
+                        console.warn("getSignInWithEmailDelegation error", err);
+                    }
+                },
+                1000,
+                1000,
+            );
+            signal?.addEventListener("abort", () => done({ kind: "cancelled" }), { once: true });
+        });
+        return { kind: "sent", code: resp.code, signedIn };
     }
 
     async handleMagicLink(qs: string): Promise<HandleMagicLinkResponse> {
