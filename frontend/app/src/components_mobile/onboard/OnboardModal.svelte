@@ -15,7 +15,7 @@
         Subtitle,
         Title,
     } from "component-lib";
-    import { OpenChat, type CreatedUser } from "@client";
+    import { OpenChat } from "@client";
     import { ErrorCode } from "@shared";
     import { navigate } from "@utils/navigation";
     import { getContext, onMount } from "svelte";
@@ -97,8 +97,7 @@
         }
     }
 
-    function onCreatedUser(user: CreatedUser) {
-        client.onRegisteredUser(user);
+    function onSignedUp() {
         navigate("/welcome");
     }
 
@@ -214,7 +213,7 @@
     </Container>
 
     <Container padding={["zero", "lg"]} direction={"vertical"}>
-        <SignUp {onCreatedUser} bind:error={signUpError} />
+        <SignUp {onSignedUp} bind:error={signUpError} />
     </Container>
 {/snippet}
 

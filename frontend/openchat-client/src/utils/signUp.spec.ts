@@ -1,4 +1,4 @@
-import { referralCodeRefused, registerFailureKey } from "./signup";
+import { referralCodeRefused, registerFailureKey } from "./signUp";
 
 describe("a refused registration's message", () => {
     test("is the old sign-up's, with the referral code cases on the one key there is", () => {

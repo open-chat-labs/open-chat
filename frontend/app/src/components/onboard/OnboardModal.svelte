@@ -1,6 +1,6 @@
 <script lang="ts">
     import { i18nKey, setLocale, supportedLanguages } from "@src/i18n/i18n";
-    import { anonUserStore, identityStateStore, OpenChat, type CreatedUser } from "@client";
+    import { anonUserStore, identityStateStore, OpenChat } from "@client";
     import { getContext } from "svelte";
     import { locale } from "svelte-i18n";
     import FancyLoader from "../icons/FancyLoader.svelte";
@@ -47,8 +47,7 @@
         }
     });
 
-    function onCreatedUser(user: CreatedUser) {
-        client.onRegisteredUser(user);
+    function onSignedUp() {
         onClose();
     }
 
@@ -82,7 +81,7 @@
             {:else if step === "sign_in"}
                 <SignIn bind:spinning bind:error {onClose} />
             {:else if step === "sign_up"}
-                <SignUp {onCreatedUser} bind:error />
+                <SignUp {onSignedUp} bind:error />
             {/if}
         </div>
     {/snippet}

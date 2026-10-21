@@ -197,6 +197,18 @@ export type SignInOutcome =
     | { kind: "failed"; reason: ResourceKey };
 
 /**
+ * How a sign-up went. `referral_refused`: the referral code was turned down, so no account was
+ * made; the code won't be sent again, so signing up again goes ahead without it. `cancelled`: the
+ * passkey prompt was dismissed, or the caller gave the sign-up up before the account was asked
+ * for.
+ */
+export type SignUpOutcome =
+    | { kind: "success" }
+    | { kind: "referral_refused"; reason: ResourceKey }
+    | { kind: "cancelled" }
+    | { kind: "failed"; reason: ResourceKey };
+
+/**
  * Asking for an emailed sign-in link. Sent: the code the email shows (so the person can tell it's
  * this request's link), and `signedIn`, which settles once the link is followed and this browser
  * has the identity, or `cancelled` when the request is given up. Given up while it was being sent,

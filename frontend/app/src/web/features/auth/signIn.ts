@@ -1,7 +1,6 @@
 import {
     AuthProvider,
     identityStateStore,
-    selectedAuthProviderStore,
     type OpenChat,
     type SignInMethod,
 } from "@client";
@@ -15,7 +14,6 @@ import type {
 } from "@openchat/ui/src/features/components/AuthDialog.svelte";
 import { configKeys } from "@shared";
 import type { PageAuth } from "@openchat/ui/src/pages/pageAuth.svelte";
-import { createdUser, registerFailureKey } from "@src/utils/signup";
 import {
     afterAbandoned,
     referralCode,
@@ -28,9 +26,9 @@ import {
     type SignedIn,
 } from "./auth.adapter";
 
-// AuthDialog's host callbacks, on the client's sign-in flows: a sign-in settles with client.signIn's
-// outcome, an emailed link with client.requestEmailSignIn's, and sign-up still on
-// identityStateStore (DATA.md, Auth).
+// AuthDialog's host callbacks, on the client's operations: a sign-in settles with client.signIn's
+// outcome, an emailed link with client.requestEmailSignIn's, a sign-up with client.signUp's
+// (DATA.md, Auth).
 
 // A sign-in someone walked away from (closed its dialog, or left its page). It's kept here rather
 // than in a host, so whichever host is mounted when it comes to something, it's handled the same:
@@ -130,8 +128,9 @@ export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: Aut
     let emailLink: AbortController | undefined = undefined;
     // the link request still being sent: a new request, or stopping, drops it once it is
     let emailRequest: AbortController | undefined = undefined;
-    // each sign-up's number: cancelling moves it on, so the one in flight stops after its passkey
-    let signups = 0;
+    // the sign-up in progress: cancelling gives it up, so one still making its passkey goes no
+    // further than that
+    let signup = new AbortController();
     // the sign-ins the dialog is waiting on; cancelling gives them up
     let attempts = new AbortController();
     let referrer: Promise<AuthPerson | undefined> | undefined = undefined;
@@ -248,7 +247,7 @@ export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: Aut
 
         async onSignup({ username, email: recoveryEmail, referrerId }: SignupDetails) {
             resumeSignIn();
-            const signup = ++signups;
+            const { signal } = signup;
             switch (referralCode(referrerId, referralLookup, codeFromForm)) {
                 case "set":
                     client.setReferralCode(referrerId!);
@@ -258,27 +257,22 @@ export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: Aut
                     client.clearReferralCode();
                     break;
             }
-            selectedAuthProviderStore.set(AuthProvider.PASSKEY);
-            // an identity without an account (signed in some other way, or a passkey made on an
-            // earlier try) only needs the account; otherwise the passkey comes first
-            if (identityStateStore.value.kind !== "registering") {
-                await client.signUpWithWebAuthn(true, username);
-            }
-            if (signup !== signups) throw new Error("Sign-up cancelled");
-            // from here the account is made even if the dialog closes: a walk-away waits for it
-            const registering = client.registerUser(username, recoveryEmail).then((resp) => {
-                if (resp.kind === "success") client.onRegisteredUser(createdUser(username, resp));
-                return resp;
+            // once the account is asked for it's made even if the dialog closes: a walk-away
+            // waits for it
+            const signingUp = client.signUp(username, recoveryEmail, signal);
+            registration = signingUp;
+            const outcome = await signingUp.finally(() => {
+                if (registration === signingUp) registration = undefined;
             });
-            registration = registering;
-            const resp = await registering.finally(() => {
-                if (registration === registering) registration = undefined;
-            });
-            if (resp.kind !== "success") {
-                const key = registerFailureKey(resp.kind);
-                throw key === undefined
-                    ? new Error(`Couldn't register: ${resp.kind}`)
-                    : failure(key);
+            switch (outcome.kind) {
+                case "success":
+                    return;
+                case "cancelled":
+                    throw new Error("Sign-up cancelled");
+                // a refused referral code isn't sent again, so the next try goes ahead without it
+                case "referral_refused":
+                case "failed":
+                    throw failure(outcome.reason.key);
             }
         },
 
@@ -301,7 +295,8 @@ export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: Aut
 
         cancel() {
             stopEmail();
-            signups++;
+            signup.abort();
+            signup = new AbortController();
             attempts.abort();
             attempts = new AbortController();
             if (onAuthClosed(identityStateStore.value) === "anon") {

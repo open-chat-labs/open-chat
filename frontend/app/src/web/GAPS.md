@@ -125,8 +125,10 @@ design export needs. Each entry says where it came up.
   - the unread marker is implicit (the window anchor).
 - **Presence**: a polled last-online time, with no status for yourself.
 - **Community stats**: counters only; there's no 12-week series for `GroupStats`.
-- **Sign-in**: sign-up doesn't settle with an outcome yet, so `features/auth/signIn.ts` reads
-  `identityStateStore` for it (PLAN.md F2). Not carried over from the old sign-in yet:
+- **Sign-in**: not carried over from the old sign-in yet:
+  - the old form's prompt when a referral code is turned down ("proceed" without it, or cancel
+    and sign out): the form says why, and signing up again goes ahead without the code (the
+    client won't send it again); closing signs out;
   - the guidelines shown in a popup at sign-up (`AuthDialog` links to `/terms`, a placeholder
     until the legal pages exist);
   - the onboarding dialog's language picker and Logout link (closing sign-up logs out instead);

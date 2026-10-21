@@ -70,6 +70,29 @@ async function requestEmailSignIn(address: string, signal?: AbortSignal) {
 
 function fakeClient() {
     const client = {
+        // as client.signUp goes: the passkey unless there's an identity without an account
+        // already, then (unless given up) the account, then the user to the client
+        signUp: vi.fn(async (username: string, email: string | undefined, signal?: AbortSignal) => {
+            if (identityStateStore.value.kind !== "registering") {
+                try {
+                    await client.signUpWithWebAuthn(true, username);
+                } catch {
+                    return { kind: "cancelled" } as const;
+                }
+            }
+            if (signal?.aborted) return { kind: "cancelled" } as const;
+            const resp = (await client.registerUser(username, email)) as {
+                kind: string;
+                userId?: string;
+            };
+            if (resp.kind === "success") {
+                client.onRegisteredUser({ kind: "created_user", username, userId: resp.userId });
+                return { kind: "success" } as const;
+            }
+            const key =
+                resp.kind === "username_taken" ? "register.usernameTaken" : "unexpectedError";
+            return { kind: "failed", reason: { key } } as const;
+        }),
         requestEmailSignIn: vi.fn(requestEmailSignIn),
         signIn: vi.fn(async (method: SignInMethod, signal?: AbortSignal) => {
             if (signal?.aborted) return { kind: "cancelled" } as SignInOutcome;
@@ -87,10 +110,10 @@ function fakeClient() {
         gaTrack: vi.fn(),
         login: vi.fn(() => set({ kind: "logging_in" })),
         signInWithWebAuthn: vi.fn(async () => {}),
-        signUpWithWebAuthn: vi.fn(async () => {
+        signUpWithWebAuthn: vi.fn(async (_assumeIdentity: boolean, _username: string) => {
             set({ kind: "registering" });
         }),
-        registerUser: vi.fn(async () => ({
+        registerUser: vi.fn(async (_username: string, _email: string | undefined) => ({
             kind: "success",
             userId: "u1",
             icpAccount: "acc",
