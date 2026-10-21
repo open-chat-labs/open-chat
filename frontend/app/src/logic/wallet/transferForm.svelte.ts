@@ -7,13 +7,20 @@ import {
     walletApprovalFee,
     type EnhancedTokenDetails,
     type OpenChat,
+    type ResourceKey,
     type SignerWallet,
 } from "@client";
 import { TokenState } from "./walletState.svelte";
 
+export type TransferFormOptions = {
+    refreshBalance?: boolean;
+    onRefreshFailed?: (failure: ResourceKey) => void;
+};
+
 export class TransferForm {
     protected client: OpenChat;
     #refreshBalance: boolean;
+    #onRefreshFailed: ((failure: ResourceKey) => void) | undefined;
     #tokenState: TokenState;
     // True from choosing a token until its balance has been checked
     #tokenChanging = $state(true);
@@ -26,11 +33,13 @@ export class TransferForm {
 
     /**
      * The form refreshes the balance whenever a token is chosen, unless `refreshBalance` is false:
-     * then whoever refreshes it calls `balanceChecked` when it has.
+     * then whoever refreshes it calls `balanceChecked` when it has. A refresh that fails is
+     * reported to `onRefreshFailed`.
      */
-    constructor(client: OpenChat, ledger: string, { refreshBalance = true } = {}) {
+    constructor(client: OpenChat, ledger: string, options: TransferFormOptions = {}) {
         this.client = client;
-        this.#refreshBalance = refreshBalance;
+        this.#refreshBalance = options.refreshBalance ?? true;
+        this.#onRefreshFailed = options.onRefreshFailed;
         this.#tokenState = new TokenState(this.#tokenFor(ledger));
         this.#chooseToken(this.#tokenFor(ledger));
     }
@@ -91,8 +100,12 @@ export class TransferForm {
         this.#tokenState.transferFees = token.transferFee + walletApprovalFee(token.transferFee);
         this.#tokenState.draftAmount = 0n;
         this.#tokenChanging = true;
-        if (this.#refreshBalance) {
-            this.#tokenState.refreshBalance(this.client).finally(() => this.balanceChecked());
-        }
+        if (this.#refreshBalance) this.#refreshChosenBalance();
+    }
+
+    async #refreshChosenBalance() {
+        const failure = await this.#tokenState.refreshBalance(this.client);
+        this.balanceChecked();
+        if (failure !== undefined) this.#onRefreshFailed?.(failure);
     }
 }

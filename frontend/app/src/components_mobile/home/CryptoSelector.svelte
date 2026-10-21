@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { refreshBalanceOrToast } from "@src/utils/balanceRefresh";
     import { i18nKey } from "@src/i18n/i18n";
     import { hideTokenBalances } from "@src/stores/settings";
     import { Avatar, Body, BodySmall, ColourVars, Column, Row, type SizeMode } from "component-lib";
@@ -87,7 +88,7 @@
         </Row>
         {#if showRefresh}
             <button
-                onclick={() => tokenState.refreshBalance(client)}
+                onclick={() => refreshBalanceOrToast(tokenState, client)}
                 class="refresh"
                 class:hidden={hideBalance}
                 class:refreshing={tokenState.refreshingBalance}>

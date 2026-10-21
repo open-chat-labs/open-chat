@@ -1,5 +1,3 @@
-// eslint-disable-next-line no-restricted-imports -- refreshBalance toasts its own failure until PLAN.md F2 makes it an outcome
-import { toastStore } from "@src/stores/toast";
 import {
     conversionLedgers,
     cryptoBalanceStore,
@@ -10,6 +8,7 @@ import {
     OpenChat,
     type ConvertedBalances,
     type EnhancedTokenDetails,
+    type ResourceKey,
 } from "@client";
 import { reactiveValue } from "@src/utils/reactiveValue";
 
@@ -306,18 +305,20 @@ export class TokenState {
         this.#selectedConversion = val;
     }
 
-    refreshBalance(client: OpenChat) {
+    /** Refreshes the balance; resolves with the failure to show if it couldn't. */
+    async refreshBalance(client: OpenChat): Promise<ResourceKey | undefined> {
         // The null token's ledger is "", and refreshing that reaches the worker as
         // Principal.fromText("") - one unhandled rejection per tap. Nothing to refresh anyway.
-        if (this.#unknown) return Promise.resolve();
+        if (this.#unknown) return undefined;
         this.#refreshingBalance = true;
-        return client
-            .refreshAccountBalance(this.ledger, false)
-            .catch((_) => {
-                toastStore.showFailureToast(
-                    i18nKey("unableToRefreshAccountBalance", { token: this.symbol }),
-                );
-            })
-            .finally(() => (this.#refreshingBalance = false));
+        try {
+            await client.refreshAccountBalance(this.ledger, false);
+            return undefined;
+        } catch (err) {
+            console.warn(`Couldn't refresh the ${this.symbol} balance`, err);
+            return i18nKey("unableToRefreshAccountBalance", { token: this.symbol });
+        } finally {
+            this.#refreshingBalance = false;
+        }
     }
 }
