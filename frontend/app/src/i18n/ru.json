@@ -190,6 +190,14 @@
         "translateFrom": "Перевести с языка: {language}",
         "translatedFrom": "Переведено на устройстве с языка: {language}"
     },
+    "bridgedAccounts": {
+        "info": "Свяжите свой аккаунт Discord или Telegram, чтобы сообщения, которые он отправляет в OpenChat через наши мосты, отображались как ваши.",
+        "link": "Связать {platform}",
+        "linkFailed": "Не удалось начать привязку аккаунта {platform}",
+        "section": "Связанные аккаунты",
+        "unlink": "Отвязать",
+        "unlinkFailed": "Не удалось отвязать аккаунт"
+    },
     "bridgedUserUnknown": "Пользователь {platform}",
     "nativeUpdate": {
         "downloadingTitle": "Секунду! Обновление ...",

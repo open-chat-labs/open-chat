@@ -20,7 +20,6 @@ generate_update_call!(bot_create_channel);
 generate_update_call!(bot_delete_channel);
 generate_update_call!(bot_edit_message);
 generate_update_call!(bot_send_message);
-generate_update_call!(bot_set_bridged_user_link);
 generate_msgpack_update_call!(c2c_community);
 generate_msgpack_update_call!(c2c_community_canister);
 generate_msgpack_update_call!(c2c_daily_puzzle_push);

@@ -190,6 +190,14 @@
         "translateFrom": "{language} से अनुवाद करें",
         "translatedFrom": "डिवाइस पर {language} से अनुवादित"
     },
+    "bridgedAccounts": {
+        "info": "अपना Discord या Telegram खाता लिंक करें, ताकि वह हमारे ब्रिज के ज़रिए OpenChat पर जो संदेश भेजे, वे आपके नाम से दिखें।",
+        "link": "{platform} लिंक करें",
+        "linkFailed": "आपके {platform} खाते को लिंक करना शुरू नहीं हो सका",
+        "section": "लिंक किए गए खाते",
+        "unlink": "अनलिंक करें",
+        "unlinkFailed": "खाते को अनलिंक नहीं किया जा सका"
+    },
     "bridgedUserUnknown": "{platform} उपयोगकर्ता",
     "nativeUpdate": {
         "downloadingTitle": "एक क्षण! अपडेट हो रहा है ...",

@@ -2166,6 +2166,31 @@ export const UserIndexCheckUsernameArgs = /* @__PURE__ */ Type.Object({
     is_bot: Type.Boolean(),
 });
 
+export type UserIndexStartBridgedUserLinkArgs = Static<typeof UserIndexStartBridgedUserLinkArgs>;
+export const UserIndexStartBridgedUserLinkArgs = /* @__PURE__ */ Type.Object({
+    platform: BridgePlatform,
+});
+
+export type UserIndexStartBridgedUserLinkSuccessResult = Static<
+    typeof UserIndexStartBridgedUserLinkSuccessResult
+>;
+export const UserIndexStartBridgedUserLinkSuccessResult = /* @__PURE__ */ Type.Object({
+    code: Type.String(),
+    expires: Type.BigInt(),
+});
+
+export type UserIndexStartBridgedUserLinkResponse = Static<
+    typeof UserIndexStartBridgedUserLinkResponse
+>;
+export const UserIndexStartBridgedUserLinkResponse = /* @__PURE__ */ Type.Union([
+    Type.Object({
+        Success: UserIndexStartBridgedUserLinkSuccessResult,
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
 export type UserIndexSetModerationFlagsArgs = Static<typeof UserIndexSetModerationFlagsArgs>;
 export const UserIndexSetModerationFlagsArgs = /* @__PURE__ */ Type.Object({
     moderation_flags_enabled: Type.Number(),
@@ -2210,6 +2235,11 @@ export const UserIndexMigratedUserIdsArgs = /* @__PURE__ */ Type.Object({
 export type UserIndexMigratedUserIdsResponse = Static<typeof UserIndexMigratedUserIdsResponse>;
 export const UserIndexMigratedUserIdsResponse = /* @__PURE__ */ Type.Object({
     Success: Type.Record(UserId, UserId),
+});
+
+export type UserIndexUnlinkBridgedUserArgs = Static<typeof UserIndexUnlinkBridgedUserArgs>;
+export const UserIndexUnlinkBridgedUserArgs = /* @__PURE__ */ Type.Object({
+    user: BridgedUserId,
 });
 
 export type UserIndexSuspectedBotsSuccessResult = Static<
@@ -8542,15 +8572,6 @@ export const LocalUserIndexActiveProposalTalliesResponse = /* @__PURE__ */ Type.
     Success: LocalUserIndexActiveProposalTalliesSuccessResult,
 });
 
-export type LocalUserIndexBotSetBridgedUserLinkArgs = Static<
-    typeof LocalUserIndexBotSetBridgedUserLinkArgs
->;
-export const LocalUserIndexBotSetBridgedUserLinkArgs = /* @__PURE__ */ Type.Object({
-    chat_context: BotChatContext,
-    bridged_user: BridgedUser,
-    linked: Type.Boolean(),
-});
-
 export type LocalUserIndexBotRemoveUserArgs = Static<typeof LocalUserIndexBotRemoveUserArgs>;
 export const LocalUserIndexBotRemoveUserArgs = /* @__PURE__ */ Type.Object({
     community_or_group_context: BotCommunityOrGroupContext,
@@ -9083,6 +9104,13 @@ export const UserIndexBotUpdatesBotDetails = /* @__PURE__ */ Type.Object({
 
 export type UserIndexBridgedUsersResponse = Static<typeof UserIndexBridgedUsersResponse>;
 export const UserIndexBridgedUsersResponse = /* @__PURE__ */ Type.Object({
+    Success: Type.Array(BridgedUserSummary),
+});
+
+export type UserIndexLinkedBridgedUsersResponse = Static<
+    typeof UserIndexLinkedBridgedUsersResponse
+>;
+export const UserIndexLinkedBridgedUsersResponse = /* @__PURE__ */ Type.Object({
     Success: Type.Array(BridgedUserSummary),
 });
 

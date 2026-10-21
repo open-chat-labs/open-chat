@@ -35,6 +35,7 @@ use model::multi_user_canister_map::{MultiUserCanister, MultiUserCanisterMap};
 use model::pending_payments_queue::{PendingPayment, PendingPaymentsQueue};
 use model::reported_messages::{ReportedMessages, ReportingMetrics};
 use model::user::SuspensionDetails;
+use oc_error_codes::OCErrorCode;
 use online_users_canister::{UserDeleted as OnlineUsersUserDeleted, UserIndexEvent as OnlineUsersEvent};
 use p256_key_pair::P256KeyPair;
 use rand::Rng;
@@ -48,7 +49,7 @@ use storage_index_canister::UserIndexEvent as StorageIndexEvent;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     BotInstallationLocation, BridgePlatform, BuildVersion, CanisterId, ChannelId, ChatId, ChildCanisterWasms, CommunityId,
-    Cycles, DiamondMembershipFees, IdempotentEnvelope, MediaScanConfig, Milliseconds, ModerationReferralConfig,
+    Cycles, DiamondMembershipFees, IdempotentEnvelope, MediaScanConfig, Milliseconds, ModerationReferralConfig, OCResult,
     TimestampMillis, Timestamped, UserId, UserType,
 };
 use user_ids_set::UserIdsSet;
@@ -154,6 +155,20 @@ impl RuntimeState {
             .users
             .get_by_principal(&caller)
             .is_some_and(|user| self.data.is_platform_operator_active(&user.user_id))
+    }
+
+    pub fn check_caller_is_bridge_bot(&self, platform: BridgePlatform) -> OCResult {
+        let caller = self.env.caller();
+        let is_bridge_bot = self
+            .data
+            .users
+            .get_by_principal(&caller)
+            .is_some_and(|user| self.data.bridge_bots.get(&platform) == Some(&user.user_id));
+        if is_bridge_bot {
+            Ok(())
+        } else {
+            Err(OCErrorCode::InitiatorNotAuthorized.with_message(format!("Only the {platform} bridge bot can do this")))
+        }
     }
 
     pub fn can_caller_upload_wasm_chunks(&self) -> bool {

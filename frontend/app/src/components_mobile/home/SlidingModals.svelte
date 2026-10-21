@@ -201,6 +201,7 @@
         | { kind: "user_profile_verify" }
         | { kind: "user_profile_community" }
         | { kind: "user_profile_bot_config" }
+        | { kind: "user_profile_linked_accounts" }
         | { kind: "user_profile_chit" }
         | { kind: "user_profile_delete_account" }
         | { kind: "user_profile_cache_management" }
@@ -545,6 +546,9 @@
                 push({ kind: "user_profile_delete_account" }),
             ),
             subscribe("userProfileBotConfig", () => push({ kind: "user_profile_bot_config" })),
+            subscribe("userProfileLinkedAccounts", () =>
+                push({ kind: "user_profile_linked_accounts" }),
+            ),
             subscribe("userProfileCacheManagement", () =>
                 push({ kind: "user_profile_cache_management" }),
             ),
@@ -657,6 +661,12 @@
         {:else if page.kind === "user_profile_bot_config"}
             {#await import("./user_profile/BotConfig.svelte") then { default: BotConfig }}
                 <BotConfig />
+            {:catch}
+                {@render loadFailed()}
+            {/await}
+        {:else if page.kind === "user_profile_linked_accounts"}
+            {#await import("./user_profile/LinkedAccounts.svelte") then { default: LinkedAccounts }}
+                <LinkedAccounts />
             {:catch}
                 {@render loadFailed()}
             {/await}

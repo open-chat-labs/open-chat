@@ -190,6 +190,14 @@
         "translateFrom": "ترجمه از {language}",
         "translatedFrom": "ترجمه‌شده روی دستگاه از {language}"
     },
+    "bridgedAccounts": {
+        "info": "حساب Discord یا Telegram خود را پیوند دهید تا پیام‌هایی که از طریق پل‌های ما به OpenChat می‌فرستد به نام شما نمایش داده شوند.",
+        "link": "پیوند {platform}",
+        "linkFailed": "شروع پیوند حساب {platform} شما ممکن نشد",
+        "section": "حساب‌های پیوندشده",
+        "unlink": "لغو پیوند",
+        "unlinkFailed": "لغو پیوند حساب ممکن نشد"
+    },
     "bridgedUserUnknown": "کاربر {platform}",
     "nativeUpdate": {
         "downloadingTitle": "یک لحظه! در حال به‌روزرسانی ...",

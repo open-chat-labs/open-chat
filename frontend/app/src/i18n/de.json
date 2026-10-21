@@ -190,6 +190,14 @@
         "translateFrom": "Übersetzen aus: {language}",
         "translatedFrom": "Auf dem Gerät übersetzt aus: {language}"
     },
+    "bridgedAccounts": {
+        "info": "Verknüpfe dein Discord- oder Telegram-Konto, damit die Nachrichten, die es über unsere Brücken an OpenChat sendet, als deine angezeigt werden.",
+        "link": "{platform} verknüpfen",
+        "linkFailed": "Die Verknüpfung deines {platform}-Kontos konnte nicht gestartet werden",
+        "section": "Verknüpfte Konten",
+        "unlink": "Verknüpfung aufheben",
+        "unlinkFailed": "Die Verknüpfung des Kontos konnte nicht aufgehoben werden"
+    },
     "bridgedUserUnknown": "{platform}-Nutzer",
     "nativeUpdate": {
         "downloadingTitle": "Einen Moment! Aktualisierung ...",

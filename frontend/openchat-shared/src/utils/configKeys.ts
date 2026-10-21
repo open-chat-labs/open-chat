@@ -23,6 +23,7 @@ export const configKeys = {
     storageSection: "openchat_storage_section",
     verificationSectionOpen: "openchat_verification_section",
     accountsSectionOpen: "openchat_accounts_section",
+    bridgedAccountsSectionOpen: "openchat_bridged_accounts_section",
     userStatsSection: "openchat_user_stats_section",
     userAdvancedSection: "openchat_user_advanced_section",
     userDeleteAccountSection: "openchat_user_delete_account_section",

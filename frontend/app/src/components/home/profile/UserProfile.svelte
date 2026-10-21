@@ -47,6 +47,7 @@
     } from "../../../i18n/i18n";
     import {
         accountsSectionOpen,
+        bridgedAccountsSectionOpen,
         advancedSectionOpen,
         appearanceSectionOpen,
         chatsSectionOpen,
@@ -94,6 +95,8 @@
     import ConfirmDeleteAccount from "./ConfirmDeleteAccount.svelte";
     import FontSize from "./FontSize.svelte";
     import LinkedAuthAccounts from "./LinkedAuthAccounts.svelte";
+    import BridgedAccounts from "./BridgedAccounts.svelte";
+    import { linkablePlatforms } from "../../../utils/bridgedAccounts";
     import ReferredUsersList from "./ReferredUsersList.svelte";
     import ReferUsers from "./ReferUsers.svelte";
     import ThemeSelector from "./ThemeSelector.svelte";
@@ -434,6 +437,16 @@
                     <LinkedAuthAccounts />
                 </CollapsibleCard>
             </div>
+            {#if linkablePlatforms.length > 0}
+                <div class="bridged-accounts">
+                    <CollapsibleCard
+                        onToggle={bridgedAccountsSectionOpen.toggle}
+                        open={$bridgedAccountsSectionOpen}
+                        headerText={i18nKey("bridgedAccounts.section")}>
+                        <BridgedAccounts />
+                    </CollapsibleCard>
+                </div>
+            {/if}
         {/if}
         <div class="appearance">
             <CollapsibleCard

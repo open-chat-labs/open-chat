@@ -1014,6 +1014,14 @@ export type BridgedUserSummary = {
     updated: bigint;
 };
 
+// A one-time code for a user to pass to a platform's bridge bot, to link their account there to
+// their OpenChat account
+export type BridgedUserLinkCode = {
+    kind: "success";
+    code: string;
+    expires: bigint;
+};
+
 export type DiscordUser = {
     // The user's Discord snowflake id
     id: string;

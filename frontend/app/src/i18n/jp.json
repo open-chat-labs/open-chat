@@ -190,6 +190,14 @@
         "translateFrom": "{language}から翻訳",
         "translatedFrom": "端末で{language}から翻訳"
     },
+    "bridgedAccounts": {
+        "info": "Discord または Telegram のアカウントを連携すると、そのアカウントがブリッジ経由で OpenChat に送ったメッセージがあなたのものとして表示されます。",
+        "link": "{platform} を連携",
+        "linkFailed": "{platform} アカウントの連携を開始できませんでした",
+        "section": "連携済みアカウント",
+        "unlink": "連携を解除",
+        "unlinkFailed": "アカウントの連携を解除できませんでした"
+    },
     "bridgedUserUnknown": "{platform} ユーザー",
     "nativeUpdate": {
         "downloadingTitle": "少々お待ちください！更新中 ...",

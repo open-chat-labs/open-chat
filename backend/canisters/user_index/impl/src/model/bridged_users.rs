@@ -1,7 +1,9 @@
+use constants::MINUTE_IN_MS;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{BridgedUser, BridgedUserId, BridgedUserSummary, TimestampMillis, UserId};
-use user_index_canister::BridgedUserLinkChange;
+use types::{BridgePlatform, BridgedUser, BridgedUserId, BridgedUserSummary, Milliseconds, TimestampMillis, UserId};
+
+pub const LINK_CODE_EXPIRY: Milliseconds = 10 * MINUTE_IN_MS;
 
 // The latest profile of each account on another platform, eg. Discord, which a bridge bot has relayed
 // a message from, and the OpenChat user who has linked it, if any. Relayed messages hold only the
@@ -9,6 +11,10 @@ use user_index_canister::BridgedUserLinkChange;
 #[derive(Serialize, Deserialize, Default)]
 pub struct BridgedUsers {
     users: HashMap<BridgedUserId, BridgedUserRecord>,
+    // The codes users have been given to link an account, which the platform's bridge bot redeems
+    // once it knows whose account it is
+    #[serde(default)]
+    pending_links: HashMap<String, PendingLink>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -19,6 +25,16 @@ struct BridgedUserRecord {
     linked_user_id: Option<UserId>,
     #[serde(rename = "t")]
     updated: TimestampMillis,
+}
+
+#[derive(Serialize, Deserialize)]
+struct PendingLink {
+    #[serde(rename = "u")]
+    user_id: UserId,
+    #[serde(rename = "p")]
+    platform: BridgePlatform,
+    #[serde(rename = "e")]
+    expires: TimestampMillis,
 }
 
 impl BridgedUsers {
@@ -45,45 +61,88 @@ impl BridgedUsers {
         }
     }
 
-    // A link replaces any earlier one. Only an account which is new to the registry has its profile
-    // stored here: a known one's is left to the messages it relays, which carry the latest. Returns
-    // whether anything changed.
-    pub fn set_link(&mut self, user: BridgedUser, change: BridgedUserLinkChange, now: TimestampMillis) -> bool {
-        let Some(record) = self.users.get_mut(&user.id()) else {
-            let BridgedUserLinkChange::Linked(user_id) = change else {
-                return false;
-            };
-            self.users.insert(
-                user.id(),
-                BridgedUserRecord {
-                    user,
-                    linked_user_id: Some(user_id),
-                    updated: now,
-                },
-            );
-            return true;
-        };
+    // Any code the user was given earlier for the platform stops working. Returns when this one
+    // expires.
+    pub fn start_link(
+        &mut self,
+        user_id: UserId,
+        platform: BridgePlatform,
+        code: String,
+        now: TimestampMillis,
+    ) -> TimestampMillis {
+        self.pending_links
+            .retain(|_, link| link.expires > now && (link.user_id != user_id || link.platform != platform));
 
-        let link = match change {
-            BridgedUserLinkChange::Linked(user_id) => Some(user_id),
-            BridgedUserLinkChange::Unlinked(user_id) if record.linked_user_id == Some(user_id) => None,
-            BridgedUserLinkChange::Unlinked(_) => record.linked_user_id,
-            BridgedUserLinkChange::UnlinkedByAccount => None,
+        let expires = now + LINK_CODE_EXPIRY;
+        self.pending_links.insert(
+            code,
+            PendingLink {
+                user_id,
+                platform,
+                expires,
+            },
+        );
+        expires
+    }
+
+    // Links the account to the user who was given the code, which can only be used once, and only
+    // for an account on the platform it was given for. A link replaces any earlier one. Only an
+    // account which is new to the registry has its profile stored here: a known one's is left to the
+    // messages it relays, which carry the latest. Returns the user, or None if the code is unknown or
+    // has expired.
+    pub fn link(&mut self, user: BridgedUser, code: &str, now: TimestampMillis) -> Option<UserId> {
+        let user_id = self
+            .pending_links
+            .get(code)
+            .filter(|link| link.platform == user.platform() && link.expires > now)?
+            .user_id;
+        self.pending_links.remove(code);
+
+        match self.users.get_mut(&user.id()) {
+            Some(record) if record.linked_user_id == Some(user_id) => {}
+            Some(record) => {
+                record.linked_user_id = Some(user_id);
+                record.updated = now;
+            }
+            None => {
+                self.users.insert(
+                    user.id(),
+                    BridgedUserRecord {
+                        user,
+                        linked_user_id: Some(user_id),
+                        updated: now,
+                    },
+                );
+            }
+        }
+        Some(user_id)
+    }
+
+    // Unlinks the account from the given user, or with None, from whoever it's linked to. Returns
+    // whether it was unlinked.
+    pub fn unlink(&mut self, id: &BridgedUserId, from: Option<UserId>, now: TimestampMillis) -> bool {
+        let Some(record) = self.users.get_mut(id) else {
+            return false;
         };
-        if record.linked_user_id == link {
+        if record.linked_user_id.is_none() || from.is_some_and(|user_id| record.linked_user_id != Some(user_id)) {
             return false;
         }
-        record.linked_user_id = link;
+        record.linked_user_id = None;
         record.updated = now;
         true
     }
 
     pub fn get(&self, id: &BridgedUserId) -> Option<BridgedUserSummary> {
-        self.users.get(id).map(|record| BridgedUserSummary {
-            user: record.user.clone(),
-            linked_user_id: record.linked_user_id,
-            updated: record.updated,
-        })
+        self.users.get(id).map(|record| record.summary())
+    }
+
+    // The registry is small enough to scan, rather than keep an index of who linked what
+    pub fn linked_to(&self, user_id: UserId) -> Vec<BridgedUserSummary> {
+        self.users
+            .values()
+            .filter(|record| record.linked_user_id == Some(user_id))
+            .map(|record| record.summary())
+            .collect()
     }
 
     pub fn len(&self) -> usize {
@@ -91,11 +150,21 @@ impl BridgedUsers {
     }
 }
 
+impl BridgedUserRecord {
+    fn summary(&self) -> BridgedUserSummary {
+        BridgedUserSummary {
+            user: self.user.clone(),
+            linked_user_id: self.linked_user_id,
+            updated: self.updated,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use candid::Principal;
-    use types::DiscordUser;
+    use types::{DiscordUser, TelegramUser};
 
     fn discord_user(display_name: &str) -> BridgedUser {
         BridgedUser::Discord(DiscordUser {
@@ -127,6 +196,73 @@ mod tests {
         assert_eq!(users.len(), 1);
     }
 
+    fn telegram_user() -> BridgedUser {
+        BridgedUser::Telegram(TelegramUser {
+            id: 123456789,
+            username: Some("nelly".to_string()),
+            display_name: "Nelly".to_string(),
+            avatar: None,
+        })
+    }
+
+    #[test]
+    fn a_code_links_the_account_once() {
+        let mut users = BridgedUsers::default();
+        let id = BridgedUserId::Discord(80351110224678912);
+        let alice: UserId = Principal::from_slice(&[1]).into();
+
+        let expires = users.start_link(alice, BridgePlatform::Discord, "code".to_string(), 1);
+        assert_eq!(expires, 1 + LINK_CODE_EXPIRY);
+
+        assert_eq!(users.link(discord_user("Nelly"), "wrong", 2), None);
+        assert_eq!(users.link(discord_user("Nelly"), "code", 2), Some(alice));
+        assert_eq!(users.get(&id).unwrap().linked_user_id, Some(alice));
+        assert_eq!(users.linked_to(alice), vec![users.get(&id).unwrap()]);
+
+        // It can't be used again
+        assert_eq!(users.link(discord_user("Nelly"), "code", 3), None);
+    }
+
+    #[test]
+    fn a_code_expires() {
+        let mut users = BridgedUsers::default();
+        let alice: UserId = Principal::from_slice(&[1]).into();
+
+        users.start_link(alice, BridgePlatform::Discord, "code".to_string(), 1);
+
+        assert_eq!(users.link(discord_user("Nelly"), "code", 1 + LINK_CODE_EXPIRY), None);
+        assert!(users.get(&BridgedUserId::Discord(80351110224678912)).is_none());
+    }
+
+    // So one bridge bot can't use up a code given for another's platform
+    #[test]
+    fn a_code_only_links_an_account_on_its_platform() {
+        let mut users = BridgedUsers::default();
+        let alice: UserId = Principal::from_slice(&[1]).into();
+
+        users.start_link(alice, BridgePlatform::Discord, "code".to_string(), 1);
+
+        assert_eq!(users.link(telegram_user(), "code", 2), None);
+        assert_eq!(users.link(discord_user("Nelly"), "code", 2), Some(alice));
+    }
+
+    #[test]
+    fn a_new_code_replaces_the_users_earlier_one_for_the_platform() {
+        let mut users = BridgedUsers::default();
+        let alice: UserId = Principal::from_slice(&[1]).into();
+        let bob: UserId = Principal::from_slice(&[2]).into();
+
+        users.start_link(alice, BridgePlatform::Discord, "first".to_string(), 1);
+        users.start_link(alice, BridgePlatform::Telegram, "telegram".to_string(), 1);
+        users.start_link(bob, BridgePlatform::Discord, "bob".to_string(), 1);
+        users.start_link(alice, BridgePlatform::Discord, "second".to_string(), 2);
+
+        assert_eq!(users.link(discord_user("Nelly"), "first", 3), None);
+        assert_eq!(users.link(discord_user("Nelly"), "second", 3), Some(alice));
+        assert_eq!(users.link(telegram_user(), "telegram", 3), Some(alice));
+        assert_eq!(users.link(discord_user("Nelly"), "bob", 3), Some(bob));
+    }
+
     #[test]
     fn linking_and_unlinking() {
         let mut users = BridgedUsers::default();
@@ -135,30 +271,33 @@ mod tests {
         let bob: UserId = Principal::from_slice(&[2]).into();
         let linked_user_id = |users: &BridgedUsers| users.get(&id).unwrap().linked_user_id;
 
-        // Unlinking an account which hasn't relayed a message changes nothing, but linking it adds
-        // its profile too
-        assert!(!users.set_link(discord_user("Nelly"), BridgedUserLinkChange::Unlinked(alice), 1));
-        assert!(users.get(&id).is_none());
-        assert!(users.set_link(discord_user("Nelly"), BridgedUserLinkChange::Linked(alice), 1));
+        // Unlinking an account which hasn't relayed a message changes nothing
+        assert!(!users.unlink(&id, Some(alice), 1));
+        assert!(!users.unlink(&id, None, 1));
+
+        users.start_link(alice, BridgePlatform::Discord, "alice".to_string(), 1);
+        users.link(discord_user("Nelly"), "alice", 1);
         assert_eq!(linked_user_id(&users), Some(alice));
-        assert!(!users.set_link(discord_user("Nelly"), BridgedUserLinkChange::Linked(alice), 2));
-        assert_eq!(users.get(&id).unwrap().updated, 1);
 
         // Someone else unlinking it changes nothing
-        assert!(!users.set_link(discord_user("Nelly"), BridgedUserLinkChange::Unlinked(bob), 3));
+        assert!(!users.unlink(&id, Some(bob), 2));
         assert_eq!(linked_user_id(&users), Some(alice));
 
         // A new link replaces the old one
-        assert!(users.set_link(discord_user("Nelly"), BridgedUserLinkChange::Linked(bob), 4));
+        users.start_link(bob, BridgePlatform::Discord, "bob".to_string(), 3);
+        users.link(discord_user("Nelly"), "bob", 3);
         assert_eq!(linked_user_id(&users), Some(bob));
+        assert!(users.linked_to(alice).is_empty());
 
-        assert!(users.set_link(discord_user("Nelly"), BridgedUserLinkChange::Unlinked(bob), 5));
+        assert!(users.unlink(&id, Some(bob), 4));
         assert_eq!(linked_user_id(&users), None);
-        assert_eq!(users.get(&id).unwrap().updated, 5);
+        assert_eq!(users.get(&id).unwrap().updated, 4);
+        assert!(!users.unlink(&id, Some(bob), 5));
 
         // The account's owner can unlink it from whoever it's linked to
-        users.set_link(discord_user("Nelly"), BridgedUserLinkChange::Linked(alice), 6);
-        assert!(users.set_link(discord_user("Nelly"), BridgedUserLinkChange::UnlinkedByAccount, 7));
+        users.start_link(alice, BridgePlatform::Discord, "alice".to_string(), 6);
+        users.link(discord_user("Nelly"), "alice", 6);
+        assert!(users.unlink(&id, None, 7));
         assert_eq!(linked_user_id(&users), None);
     }
 
@@ -169,7 +308,8 @@ mod tests {
         let alice: UserId = Principal::from_slice(&[1]).into();
         users.update(discord_user("Nelly Smith"), 1);
 
-        users.set_link(discord_user("Nelly"), BridgedUserLinkChange::Linked(alice), 2);
+        users.start_link(alice, BridgePlatform::Discord, "code".to_string(), 2);
+        users.link(discord_user("Nelly"), "code", 2);
 
         let summary = users.get(&BridgedUserId::Discord(80351110224678912)).unwrap();
         assert_eq!(summary.user, discord_user("Nelly Smith"));
@@ -180,14 +320,18 @@ mod tests {
     #[test]
     fn survives_serialization() {
         let mut users = BridgedUsers::default();
+        let alice: UserId = Principal::from_slice(&[1]).into();
         users.update(discord_user("Nelly"), 1);
+        users.start_link(alice, BridgePlatform::Discord, "nelly".to_string(), 1);
+        users.link(discord_user("Nelly"), "nelly", 1);
+        users.start_link(alice, BridgePlatform::Telegram, "pending".to_string(), 1);
 
         let bytes = msgpack::serialize_then_unwrap(&users);
-        let users: BridgedUsers = msgpack::deserialize_then_unwrap(&bytes);
+        let mut users: BridgedUsers = msgpack::deserialize_then_unwrap(&bytes);
 
-        assert_eq!(
-            users.get(&BridgedUserId::Discord(80351110224678912)).unwrap().user,
-            discord_user("Nelly")
-        );
+        let summary = users.get(&BridgedUserId::Discord(80351110224678912)).unwrap();
+        assert_eq!(summary.user, discord_user("Nelly"));
+        assert_eq!(summary.linked_user_id, Some(alice));
+        assert_eq!(users.link(telegram_user(), "pending", 2), Some(alice));
     }
 }
