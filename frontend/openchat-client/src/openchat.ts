@@ -57,6 +57,7 @@ import {
     defaultChatPermissions,
     defaultChatRules,
     deletedUser,
+    directMessageCommandInstance,
     emptyEventsResponse,
     extractEnabledLinks,
     extractUserIdsFromMentions,
@@ -304,6 +305,7 @@ import {
     type SearchGroupChatResponse,
     type SelectedChannelRoute,
     type SelectedCommunityRoute,
+    type DirectBotMessageOutcome,
     type SendMessageOutcome,
     type SignInMethod,
     type SignUpOutcome,
@@ -12616,6 +12618,44 @@ export class OpenChat {
             case "internal_bot":
                 return this.executeInternalBotCommand(scope, bot);
         }
+    }
+
+    /**
+     * Sends what the user typed in a direct chat with a bot as that bot's direct-message command:
+     * the user's message shows in the chat at once, the draft is cleared and the command runs (its
+     * reply, or its failure, arrives as for any command). `no_direct_command`: the chat isn't with a
+     * bot the client knows, or the bot takes no direct messages, so nothing was sent. Never rejects.
+     */
+    sendDirectBotMessage(
+        messageContext: MessageContext,
+        text: string,
+        blockLevelMarkdown: boolean,
+    ): DirectBotMessageOutcome {
+        const chat = allChatsStore.value.get(messageContext.chatId);
+        const botId = chat === undefined ? undefined : this.directChatWithBot(chat);
+        const bot = botId === undefined ? undefined : botState.externalBots.get(botId);
+        const command = bot === undefined ? undefined : directMessageCommandInstance(bot, text);
+        if (command === undefined) return { kind: "no_direct_command" };
+
+        const userMessageId = random64();
+        const scope: BotActionScope = {
+            kind: "chat_scope",
+            chatId: messageContext.chatId,
+            threadRootMessageIndex: messageContext.threadRootMessageIndex,
+            messageId: random64(),
+            userMessageId,
+        };
+        this.sendPlaceholderBotMessage(
+            scope,
+            undefined,
+            { kind: "text_content", text },
+            userMessageId,
+            currentUserIdStore.value,
+            blockLevelMarkdown,
+        );
+        void this.executeBotCommand(scope, command, true);
+        localUpdates.draftMessages.delete(messageContext);
+        return { kind: "sent" };
     }
 
     contentTypeSupportsEdit(contentType: MessageContent["kind"]): boolean {

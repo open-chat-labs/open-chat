@@ -2700,6 +2700,13 @@ export type SendMessageOutcome =
     | { kind: "busy" }
     | { kind: "failed" };
 
+/**
+ * How sending what the user typed in a direct chat with a bot went. `sent`: it shows in the chat
+ * and went to the bot as its direct-message command. `no_direct_command`: the bot takes no direct
+ * messages (or isn't known yet), so nothing was sent and the draft is the user's to keep.
+ */
+export type DirectBotMessageOutcome = { kind: "sent" } | { kind: "no_direct_command" };
+
 // What the app needs to enter a call's room
 export type VideoCallRoom = {
     token: string;
