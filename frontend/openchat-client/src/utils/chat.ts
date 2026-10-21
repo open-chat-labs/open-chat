@@ -268,7 +268,7 @@ export function messageIsReadByThem(chat: ChatSummary, messageIndex: number): bo
 }
 
 export function getMembersString(
-    user: UserSummary,
+    myUserId: string,
     userLookup: UserLookup,
     memberIds: string[],
     unknownUser: string,
@@ -282,7 +282,7 @@ export function getMembersString(
     const sorted = memberIds
         .map((id) => userLookup.get(id) ?? nullUser(unknownUser))
         .sort(compareUsersFn ?? compareUsername)
-        .map((p) => `**${p.userId === user.userId ? you : (p.displayName ?? p.username)}**`);
+        .map((p) => `**${p.userId === myUserId ? you : (p.displayName ?? p.username)}**`);
 
     // TODO Improve i18n, don't hardcode 'and'
     return sorted.length > 1

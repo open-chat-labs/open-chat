@@ -1,24 +1,18 @@
 <script lang="ts">
-    import type { Level, MemberRole, OpenChat, UserLookup, UserSummary } from "@client";
-    import { allUsersStore, roleAsText } from "@client";
+    import type { OpenChat } from "@client";
+    import type { AggregateEventText } from "@src/logic/conversation/timelineEventText";
     import { getContext, onDestroy, onMount } from "svelte";
     import { _ } from "svelte-i18n";
-    import { i18nKey, interpolate } from "../../i18n/i18n";
-    import { buildDisplayName } from "../../utils/user";
     import Markdown from "@src/core/Markdown.svelte";
 
     interface Props {
-        user: UserSummary | undefined;
-        joined: Set<string>;
+        text: AggregateEventText;
         messagesDeleted: number[];
-        rolesChanged: Map<string, Map<MemberRole, Set<string>>>;
         observer?: IntersectionObserver;
         readByMe: boolean;
-        level: Level;
     }
 
-    let { user, joined, messagesDeleted, rolesChanged, observer, readByMe, level }: Props =
-        $props();
+    let { text, messagesDeleted, observer, readByMe }: Props = $props();
 
     let deletedMessagesElement: HTMLElement | undefined = $state();
 
@@ -36,90 +30,12 @@
         }
     });
 
-    function buildJoinedText(userStore: UserLookup, userIds: Set<string>): string | undefined {
-        return userIds.size > 10
-            ? interpolate(
-                  $_,
-                  i18nKey(
-                      "nUsersJoined",
-                      {
-                          number: userIds.size.toString(),
-                      },
-                      level,
-                      true,
-                  ),
-              )
-            : userIds.size > 0
-              ? interpolate(
-                    $_,
-                    i18nKey(
-                        "userJoined",
-                        {
-                            username: buildUserList(userStore, Array.from(userIds)),
-                        },
-                        level,
-                        true,
-                    ),
-                )
-              : undefined;
-    }
-
-    function buildRoleChangedTextList(
-        userStore: UserLookup,
-        rolesChanged: Map<string, Map<MemberRole, Set<string>>>,
-    ): string[] {
-        return [...rolesChanged.entries()].flatMap(([changedBy, changedByMap]) => {
-            const me = changedBy === user?.userId;
-            const changedByStr = buildDisplayName(userStore, changedBy, me ? "me" : "user");
-
-            return [...changedByMap.entries()].flatMap(([newRole, userIds]) =>
-                buildRoleChangedText(userStore, changedByStr, newRole, Array.from(userIds)),
-            );
-        });
-    }
-
-    function buildRoleChangedText(
-        userStore: UserLookup,
-        changedBy: string,
-        newRole: MemberRole,
-        userIds: string[],
-    ): string {
-        const meChanged = userIds.length == 1 && userIds[0] === user?.userId;
-        const members = buildUserList(userStore, userIds);
-
-        return $_(meChanged ? "yourRoleChanged" : "roleChanged", {
-            values: {
-                changed: members,
-                changedBy,
-                newRole: $_(roleAsText(newRole)),
-            },
-        });
-    }
-
-    function buildUserList(userStore: UserLookup, userIds: string[]): string {
-        return client.getMembersString(
-            user!,
-            userStore,
-            userIds,
-            $_("unknownUser"),
-            $_("you"),
-            user ? client.compareIsNotYouThenUsername(user.userId) : client.compareUsername,
-            false,
-        );
-    }
-
     function expandDeletedMessages() {
         client.expandDeletedMessages(new Set(messagesDeleted));
     }
-    let joinedText = $derived(buildJoinedText($allUsersStore, joined));
-    let deletedText = $derived(
-        messagesDeleted.length > 0
-            ? messagesDeleted.length === 1
-                ? $_("oneMessageDeleted")
-                : $_("nMessagesDeleted", { values: { number: messagesDeleted.length } })
-            : undefined,
-    );
-    let roleChangedTextList = $derived(buildRoleChangedTextList($allUsersStore, rolesChanged));
+    let joinedText = $derived(text.joined);
+    let deletedText = $derived(text.deleted);
+    let roleChangedTextList = $derived(text.rolesChanged);
 </script>
 
 {#if joinedText !== undefined || deletedText !== undefined || roleChangedTextList?.length > 0}

@@ -1,9 +1,15 @@
 <script lang="ts">
-    import { findUser } from "@src/utils/user";
+    import {
+        aggregateEventText,
+        isTextEvent,
+        timelineEventText,
+        type EventTextContext,
+    } from "@src/logic/conversation/timelineEventText";
+    import { buildDisplayName, findUser } from "@src/utils/user";
     import {
         allUsersStore,
+        botState,
         currentUserIdStore,
-        currentUserStore,
         selectedChatWebhooksStore,
         typing,
         type ChatEvent,
@@ -14,25 +20,12 @@
         type Level,
         type Message,
         type OpenChat,
-        type UserSummary,
     } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
-    import { i18nKey, interpolate } from "../../i18n/i18n";
     import AggregateCommonEvents from "./AggregateCommonEvents.svelte";
-    import BotChangedEvent from "./BotChangedEvent.svelte";
-    import ChatFrozenEvent from "./ChatFrozenEvent.svelte";
     import ChatMessage from "./ChatMessage.svelte";
-    import ChatUnfrozenEvent from "./ChatUnfrozenEvent.svelte";
-    import DirectChatCreatedEvent from "./DirectChatCreatedEvent.svelte";
-    import DisappearingMessageTimeUpdated from "./DisappearingMessageTimeUpdated.svelte";
-    import GroupChangedEvent from "./GroupChangedEvent.svelte";
-    import GroupChatCreatedEvent from "./GroupChatCreatedEvent.svelte";
-    import GroupInviteCodeChangedEvent from "./GroupInviteCodeChangedEvent.svelte";
-    import GroupRulesChangedEvent from "./GroupRulesChangedEvent.svelte";
-    import GroupVisibilityChangedEvent from "./GroupVisibilityChangedEvent.svelte";
-    import MembersChangedEvent from "./MembersChangedEvent.svelte";
-    import PermissionsChangedEvent from "./PermissionsChangedEvent.svelte";
+    import NonMessageEvent from "./NonMessageEvent.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -109,24 +102,16 @@
         onRemovePreview,
     }: Props = $props();
 
-    let userSummary = $derived<UserSummary>({
-        kind: "user",
-        userId: $currentUserStore.userId,
-        username: $currentUserStore.username,
-        displayName: $currentUserStore.displayName,
-        updated: BigInt(0),
-        suspended: false,
-        diamondStatus: "inactive",
-        chitBalance: 0,
-        streak: 0,
-        maxStreak: 0,
-        isUniquePerson: $currentUserStore.isUniquePerson,
-        totalChitEarned: 0,
-        hideOnlineStatus: false,
-    });
-
     let levelType = $derived((chatType === "channel" ? "channel" : "group") as Level);
-    let level = $derived($_(`level.${levelType}`).toLowerCase());
+    let eventText = $derived<EventTextContext>({
+        formatter: $_,
+        me: $currentUserIdStore,
+        users: $allUsersStore,
+        displayName: (userId, kind) => buildDisplayName($allUsersStore, userId, kind),
+        level: levelType,
+        canInvite,
+        botName: (botId) => botState.externalBots.get(botId)?.name,
+    });
     let messageContext = $derived({
         chatId,
         threadRootMessageIndex: threadRootMessage?.messageIndex,
@@ -214,149 +199,17 @@
             expiresAt={event.expiresAt}
             msg={event.event} />
     {/if}
-{:else if event.event.kind === "group_chat_created"}
-    <GroupChatCreatedEvent {chatType} event={event.event} {me} timestamp={event.timestamp} />
-{:else if event.event.kind === "direct_chat_created"}
-    <DirectChatCreatedEvent timestamp={event.timestamp} />
-{:else if event.event.kind === "members_added"}
-    <MembersChangedEvent
-        level={levelType}
-        user={userSummary}
-        changed={event.event.userIds}
-        changedBy={event.event.addedBy}
-        resourceKey={"addedBy"}
-        timestamp={event.timestamp} />
-{:else if event.event.kind === "users_invited"}
-    <MembersChangedEvent
-        level={levelType}
-        user={userSummary}
-        changed={event.event.userIds}
-        changedBy={event.event.invitedBy}
-        resourceKey={"invitedBy"}
-        timestamp={event.timestamp} />
-{:else if event.event.kind === "members_removed"}
-    <MembersChangedEvent
-        level={levelType}
-        user={userSummary}
-        changed={event.event.userIds}
-        changedBy={event.event.removedBy}
-        resourceKey={"removedBy"}
-        timestamp={event.timestamp} />
 {:else if event.event.kind === "aggregate_common_events"}
     <AggregateCommonEvents
-        level={levelType}
         {observer}
         {readByMe}
-        user={userSummary}
-        joined={event.event.usersJoined}
-        messagesDeleted={event.event.messagesDeleted}
-        rolesChanged={event.event.rolesChanged} />
-{:else if event.event.kind === "users_blocked"}
-    <MembersChangedEvent
-        level={levelType}
-        user={userSummary}
-        changed={event.event.userIds}
-        changedBy={event.event.blockedBy}
-        resourceKey={"blockedBy"}
-        timestamp={event.timestamp} />
-{:else if event.event.kind === "users_unblocked"}
-    <MembersChangedEvent
-        level={levelType}
-        user={userSummary}
-        changed={event.event.userIds}
-        changedBy={event.event.unblockedBy}
-        resourceKey={"unblockedBy"}
-        timestamp={event.timestamp} />
-{:else if event.event.kind === "name_changed"}
-    <GroupChangedEvent
-        {level}
-        user={userSummary}
-        changedBy={event.event.changedBy}
-        property={interpolate($_, i18nKey("groupName", undefined, levelType, true))}
-        timestamp={event.timestamp} />
-{:else if event.event.kind === "desc_changed"}
-    <GroupChangedEvent
-        {level}
-        user={userSummary}
-        changedBy={event.event.changedBy}
-        property={interpolate($_, i18nKey("groupDesc", undefined, levelType, true))}
-        timestamp={event.timestamp} />
-{:else if event.event.kind === "rules_changed"}
-    <GroupRulesChangedEvent user={userSummary} event={event.event} timestamp={event.timestamp} />
-{:else if event.event.kind === "avatar_changed"}
-    <GroupChangedEvent
-        {level}
-        user={userSummary}
-        changedBy={event.event.changedBy}
-        property={interpolate($_, i18nKey("groupAvatar", undefined, levelType, true))}
-        timestamp={event.timestamp} />
-{:else if event.event.kind === "gate_updated"}
-    <GroupChangedEvent
-        {level}
-        user={userSummary}
-        changedBy={event.event.updatedBy}
-        property={$_("access.gate").toLowerCase()}
-        timestamp={event.timestamp} />
-{:else if event.event.kind === "external_url_updated"}
-    <GroupChangedEvent
-        {level}
-        user={userSummary}
-        changedBy={event.event.updatedBy}
-        property={$_("externalContent.name").toLowerCase()}
-        timestamp={event.timestamp} />
-{:else if event.event.kind === "group_visibility_changed"}
-    <GroupVisibilityChangedEvent
-        level={levelType}
-        user={userSummary}
-        isPublic={event.event.public}
-        messagesVisibleToNonMembers={event.event.messagesVisibleToNonMembers}
-        changedBy={event.event.changedBy}
-        timestamp={event.timestamp} />
-{:else if event.event.kind === "group_invite_code_changed"}
-    {#if canInvite}
-        <GroupInviteCodeChangedEvent
-            user={userSummary}
-            change={event.event.change}
-            changedBy={event.event.changedBy}
-            timestamp={event.timestamp} />
+        text={aggregateEventText(event.event, eventText)}
+        messagesDeleted={event.event.messagesDeleted} />
+{:else if isTextEvent(event.event)}
+    {@const text = timelineEventText(event.event, eventText)}
+    {#if text !== undefined}
+        <NonMessageEvent {text} timestamp={event.timestamp} />
     {/if}
-{:else if event.event.kind === "permissions_changed"}
-    <PermissionsChangedEvent
-        level={levelType}
-        user={userSummary}
-        event={event.event}
-        timestamp={event.timestamp} />
-{:else if event.event.kind === "events_ttl_updated"}
-    <DisappearingMessageTimeUpdated
-        user={userSummary}
-        changedBy={event.event.updatedBy}
-        newTimeToLive={event.event.newTimeToLive}
-        timestamp={event.timestamp} />
-{:else if event.event.kind === "chat_frozen"}
-    <ChatFrozenEvent user={userSummary} event={event.event} timestamp={event.timestamp} />
-{:else if event.event.kind === "chat_unfrozen"}
-    <ChatUnfrozenEvent user={userSummary} event={event.event} timestamp={event.timestamp} />
-{:else if event.event.kind === "bot_added"}
-    <BotChangedEvent
-        changedBy={event.event.addedBy}
-        resourceKey={"bots.events.add"}
-        event={event.event}
-        userId={$currentUserIdStore}
-        timestamp={event.timestamp} />
-{:else if event.event.kind === "bot_removed"}
-    <BotChangedEvent
-        changedBy={event.event.removedBy}
-        resourceKey={"bots.events.remove"}
-        event={event.event}
-        userId={$currentUserIdStore}
-        timestamp={event.timestamp} />
-{:else if event.event.kind === "bot_updated"}
-    <BotChangedEvent
-        changedBy={event.event.updatedBy}
-        resourceKey={"bots.events.update"}
-        event={event.event}
-        userId={$currentUserIdStore}
-        timestamp={event.timestamp} />
 {:else if !client.isEventKindHidden(event.event.kind, publicGroup && chatType === "channel")}
     <div>Unexpected event type: {event.event.kind}</div>
 {/if}
