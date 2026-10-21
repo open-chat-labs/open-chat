@@ -1272,9 +1272,10 @@ export class OpenChat {
         void this.#loginWithAuthClient();
     }
 
-    // Signs in through the auth client's window (Internet Identity, NFID): true once the identity
-    // has loaded, false if the window gave up (closed, or an error)
-    #loginWithAuthClient(): Promise<boolean> {
+    // Signs in through the auth client's window (Internet Identity, NFID): "loaded" once the
+    // identity has loaded, "closed" if the window gave up (closed, or its own error), "load_failed"
+    // if the identity it gave couldn't be loaded
+    #loginWithAuthClient(): Promise<"loaded" | "closed" | "load_failed"> {
         this.updateIdentityState({ kind: "logging_in" });
         const authProvider = selectedAuthProviderStore.value!;
         return new Promise((resolve) => {
@@ -1288,13 +1289,16 @@ export class OpenChat {
                                 this.#loadedAuthenticationIdentity(identity, authProvider),
                             )
                             .then(
-                                () => resolve(true),
-                                () => resolve(false),
+                                () => resolve("loaded"),
+                                (err) => {
+                                    this.logError("Unable to load the signed-in identity", err);
+                                    resolve("load_failed");
+                                },
                             ),
                     onError: (err) => {
                         this.updateIdentityState({ kind: "anon" });
                         console.warn("Login error from auth client: ", err);
-                        resolve(false);
+                        resolve("closed");
                     },
                 });
             });
@@ -1326,9 +1330,12 @@ export class OpenChat {
                         ? this.signInWithAndroidWebAuthn()
                         : this.signInWithWebAuthn());
                     break;
-                case "auth_client":
-                    if (!(await this.#loginWithAuthClient())) return { kind: "cancelled" };
+                case "auth_client": {
+                    const login = await this.#loginWithAuthClient();
+                    if (login === "closed") return { kind: "cancelled" };
+                    if (login === "load_failed") return signInOutcome(identityStateStore.value);
                     break;
+                }
                 case "wallet": {
                     const resp = await this.signInWithWallet(
                         method.token,
@@ -1346,6 +1353,11 @@ export class OpenChat {
             // the native credential manager couldn't authenticate at all
             if (err === "AUTH_FAILED") {
                 return { kind: "failed", reason: i18nKey("native.auth.errors.default") };
+            }
+            // the identity was being loaded, so it wasn't the prompt: that load failed
+            if (identityStateStore.value.kind === "loading_user") {
+                this.logError("Unable to load the signed-in identity", err);
+                return signInOutcome(identityStateStore.value);
             }
             // the passkey prompt dismissed, or a passkey OpenChat doesn't know
             return { kind: "cancelled" };

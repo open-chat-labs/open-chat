@@ -103,6 +103,18 @@ describe("signing in", () => {
         expect(outcome.kind === "failed" && outcome.reason.key).toBe("native.auth.errors.default");
     });
 
+    /** Invariant 2: an identity whose load failed (once the prompt was through) fails, rather
+     * than looking like a dismissed prompt. */
+    test("a passkey whose identity can't be loaded fails", async () => {
+        const logError = vi.spyOn(client, "logError").mockImplementation(() => {});
+        vi.spyOn(client, "signInWithWebAuthn").mockImplementation(async () => {
+            set({ kind: "loading_user", registering: false });
+            throw new Error("worker gone");
+        });
+        expect((await client.signIn({ kind: "passkey" })).kind).toBe("failed");
+        expect(logError).toHaveBeenCalledOnce();
+    });
+
     /** Invariant 3: the native app uses its own passkeys, the browser its WebAuthn. */
     test("the passkey is the native app's in the app, the browser's otherwise", async () => {
         const web = passkeyLoadsTo({ kind: "logged_in" });
