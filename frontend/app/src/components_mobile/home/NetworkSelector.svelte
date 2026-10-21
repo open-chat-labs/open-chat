@@ -42,6 +42,14 @@
             name: "Ethereum network",
             info: "Transfers USDT as an ERC-20 token on Ethereum, offering wide compatibility with wallets and exchanges but typically higher gas fees and slower confirmations.",
         },
+        sol: {
+            name: "Solana network",
+            info: "Transfers native SOL on Solana, for any Solana wallet or exchange address.",
+        },
+        cksol: {
+            name: "ckSOL network",
+            info: "Transfers ckSOL, which is backed 1:1 by SOL, on the Internet Computer, for fast, low-cost transactions between ICP accounts.",
+        },
     };
 
     let {
@@ -68,7 +76,10 @@
 
         <Container gap={"xxl"} supplementalClass={"binding_options"} direction={"vertical"}>
             {#each networks as network}
-                {@const { info, name } = networkInfo[network.toLowerCase()]}
+                {@const { info, name } = networkInfo[network.toLowerCase()] ?? {
+                    name: network,
+                    info: "",
+                }}
                 <Container
                     onClick={() => onSelect(network)}
                     gap={"sm"}
