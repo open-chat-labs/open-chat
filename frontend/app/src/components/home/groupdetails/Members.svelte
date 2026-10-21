@@ -35,7 +35,7 @@
     import { trimLeadingAtSymbol } from "../../../utils/user";
     import Search from "../../Search.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
-    import VirtualList from "@shared_components/VirtualList.svelte";
+    import VirtualList from "@openchat/ui/src/lib/virtual/VirtualList.svelte";
     import UserGroups from "../communities/details/UserGroups.svelte";
     import BlockedUser from "./BlockedUser.svelte";
     import InvitedUser from "./InvitedUser.svelte";

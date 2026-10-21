@@ -44,6 +44,10 @@
         viewportClass?: string;
         viewport?: HTMLDivElement;
         viewportHeight?: number;
+        // the host's platform check; iOS gets touch tracking and its own momentum handling
+        iOS?: boolean;
+        // a row threw while rendering; the row is replaced by an empty placeholder
+        onRowError?: (error: unknown) => void;
     }
 </script>
 
@@ -115,10 +119,8 @@
      *   new items, and calls `updateWindowFull()`. The `keyToHeight` map ensures
      *   measured heights survive the index shift (rebuilt into `heightMap`).
      */
-    import { mobileOperatingSystem } from "@utils/devices";
-    import { recordError } from "@utils/errorPostmortem";
     import { flushSync, onMount, tick, untrack } from "svelte";
-    import { vclDebug } from "@src/core/vclDebug";
+    import { vclDebug } from "./vclDebug";
     import {
         computeSpacers as _computeSpacers,
         computeWindow as _computeWindow,
@@ -145,6 +147,8 @@
         viewportClass,
         viewport = $bindable(undefined),
         viewportHeight = $bindable(0),
+        iOS = false,
+        onRowError,
     }: Props<T> = $props();
 
     // CSS flex gap between items (px). Read from computed style in onMount.
@@ -702,7 +706,7 @@
                           ? sampledVelocity
                           : 0;
                 cancelGlide();
-                if (mobileOperatingSystem === "iOS" && !isTouching && Math.abs(v) > GLIDE_MIN_START) {
+                if (iOS && !isTouching && Math.abs(v) > GLIDE_MIN_START) {
                     capturedGlideVelocity = v;
                 }
             });
@@ -1672,7 +1676,7 @@
         };
         const onScrollEnd = () => flushScrollAdjustment();
 
-        if (mobileOperatingSystem === "iOS") {
+        if (iOS) {
             el.addEventListener("touchstart", onTouchStart, { passive: true });
             el.addEventListener("touchend", onTouchEnd, { passive: true });
             el.addEventListener("touchcancel", onTouchCancel, { passive: true });
@@ -1703,7 +1707,7 @@
 
         return () => {
             el.removeEventListener("scroll", onScroll);
-            if (mobileOperatingSystem === "iOS") {
+            if (iOS) {
                 el.removeEventListener("touchstart", onTouchStart);
                 el.removeEventListener("touchend", onTouchEnd);
                 el.removeEventListener("touchcancel", onTouchCancel);
@@ -1816,7 +1820,7 @@
                  with the window state -->
             <svelte:boundary
                 onerror={(e) => {
-                    recordError("chat-row", e);
+                    onRowError?.(e);
                     vclDebug.log("!row-render-error", {
                         key: item.key,
                         err: String(e).slice(0, 200),
@@ -1834,7 +1838,7 @@
     {/if}
 </div>
 
-<style lang="scss">
+<style>
     .vcl-viewport {
         display: flex;
         flex-direction: column-reverse;
@@ -1842,14 +1846,14 @@
         overflow-x: hidden;
         overflow-anchor: none;
         overscroll-behavior: contain;
-        // sizing (flex/height) is deliberately left to the caller via
-        // viewportClass — the viewport must be constrained by its parent for
-        // virtualisation to work at all
+        /* sizing (flex/height) is deliberately left to the caller via
+           viewportClass — the viewport must be constrained by its parent for
+           virtualisation to work at all */
         box-sizing: border-box;
+    }
 
-        &.interrupt {
-            overflow-y: hidden;
-        }
+    .vcl-viewport.interrupt {
+        overflow-y: hidden;
     }
 
     .vcl-spacer {
@@ -1864,8 +1868,8 @@
     .vcl-row {
         width: 100%;
         flex-shrink: 0;
-        // A flex formatting context stops child margins collapsing out of the
-        // row, so offsetHeight (which drives all spacer math) includes them.
+        /* A flex formatting context stops child margins collapsing out of the
+           row, so offsetHeight (which drives all spacer math) includes them. */
         display: flex;
         flex-direction: column;
     }

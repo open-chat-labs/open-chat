@@ -15,7 +15,7 @@
     } from "@client";
     import { getContext } from "svelte";
     import FancyLoader from "../../icons/FancyLoader.svelte";
-    import VirtualList from "@shared_components/VirtualList.svelte";
+    import VirtualList from "@openchat/ui/src/lib/virtual/VirtualList.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
     import ThreadPreviewComponent from "./ThreadPreview.svelte";
 

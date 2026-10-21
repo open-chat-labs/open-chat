@@ -21,7 +21,7 @@
     import Legend from "../../../Legend.svelte";
     import Search from "../../../Search.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
-    import VirtualList from "@shared_components/VirtualList.svelte";
+    import VirtualList from "@openchat/ui/src/lib/virtual/VirtualList.svelte";
     import User from "../../groupdetails/User.svelte";
     import Markdown from "@src/core/Markdown.svelte";
 

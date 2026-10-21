@@ -15,7 +15,7 @@
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "@shared_components/Translatable.svelte";
-    import VirtualList from "@shared_components/VirtualList.svelte";
+    import VirtualList from "@openchat/ui/src/lib/virtual/VirtualList.svelte";
     import FancyLoader from "../../icons/FancyLoader.svelte";
     import NothingToSee from "../NothingToSee.svelte";
     import ActivityEvent from "./ActivityEvent.svelte";
