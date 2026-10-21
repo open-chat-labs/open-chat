@@ -38,7 +38,7 @@ Where code goes:
 | UI flow state: multi-step forms, dirty flags, validation, call state | A rune class in `app/src/logic/<feature>/x.svelte.ts`. It never imports a `.svelte` file or calls `navigate`, `toastStore` or `publish`: it returns outcomes and the view reacts (lint) |
 | App-global state | A custom store (see "State") |
 | A component with behaviour but no look of its own that needs the client (`ChatEventList`, `Markdown`) | `app/src/core/`, reused by every tree |
-| A component with no client dependency (`VirtualList`, `VirtualChatList`) | `@openchat/ui`, which stays app-agnostic: no `@client` imports |
+| A component with no client dependency (`VirtualList`, `VirtualChatList`) | `@openchat/ui`, which stays app-agnostic: no `@client` or app imports (lint) |
 
 Never rewrite a component like `ChatEventList` or `VirtualChatList`. They carry years of scroll, loading and read-marking fixes.
 

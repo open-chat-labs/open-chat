@@ -129,3 +129,28 @@ describe("app/src/logic stays view-agnostic", () => {
         ).toEqual([]);
     });
 });
+
+/** Invariant: the @openchat/ui library imports nothing from the app or its packages. */
+describe("@openchat/ui stays app-agnostic", () => {
+    it("rejects the client, an app alias and a relative path into the app", async () => {
+        const file = "openchat-ui/src/lib/virtual/example.ts";
+        expect(await importErrors('import { x } from "@client";', file)).toEqual([
+            "no-restricted-imports",
+        ]);
+        expect(await importErrors('import { x } from "@utils/devices";', file)).toEqual([
+            "no-restricted-imports",
+        ]);
+        expect(
+            await importErrors('import { x } from "../../../../app/src/utils/devices";', file),
+        ).toEqual(["no-restricted-imports"]);
+    });
+
+    it("accepts svelte and the library's own modules", async () => {
+        expect(
+            await importErrors(
+                'import { tick } from "svelte";\nimport { x } from "./virtualListUtils";',
+                "openchat-ui/src/lib/virtual/example.ts",
+            ),
+        ).toEqual([]);
+    });
+});

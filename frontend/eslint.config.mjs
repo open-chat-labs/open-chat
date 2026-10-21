@@ -214,6 +214,14 @@ export default defineConfig([
             "local/no-pagejs-direct": "off",
         },
     },
+    // The library is app-agnostic: the app passes in what it needs (frontend/CLAUDE.md).
+    {
+        files: ["openchat-ui/src/lib/**/*.ts", "openchat-ui/src/lib/**/*.svelte"],
+        rules: restrictAppImports({
+            regex: "^@(src|client|shared|agent|worker|utils|stores|i18n|actions|theme|styles|shared_components|webcomponents)($|[/?])|(^|/)(app|openchat-client|openchat-shared|openchat-agent|openchat-worker)/",
+            message: "@openchat/ui is app-agnostic: take what it needs as props.",
+        }),
+    },
     // openchat-ui's plain-JS behaviours (a11y.js, tooltip.js) run in the browser.
     {
         files: ["openchat-ui/src/**/*.js"],
