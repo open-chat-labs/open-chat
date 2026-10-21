@@ -241,11 +241,13 @@ describe("sending from the composer", () => {
         expect(sent).toHaveLength(0);
     });
 
-    /** Invariant 2: throttled, nothing reaches the worker. */
+    /** Invariants 1 and 2: throttled, nothing reaches the worker, and the chat isn't left busy. */
     test("throttled sends nothing", async () => {
         mostRecentStore.set(Array.from({ length: 100 }, () => Date.now()));
         expect(await settled(send())).toEqual({ kind: "throttled" });
         expect(sent).toHaveLength(0);
+        mostRecentStore.set([]);
+        expect(await settled(send())).toEqual({ kind: "posted" });
     });
 
     /** Invariant 1: a second send from the chat while one is on its way sends nothing. */
