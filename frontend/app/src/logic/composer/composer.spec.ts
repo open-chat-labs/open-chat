@@ -1,5 +1,11 @@
 import type { UserOrUserGroup } from "@client";
-import { expandMentions, entryBlock, TypingNotifier, type EntryState } from "./composer";
+import {
+    expandMentions,
+    entryBlock,
+    throttleCountdown,
+    TypingNotifier,
+    type EntryState,
+} from "./composer";
 
 describe("a message's mentions", () => {
     const known: Record<string, UserOrUserGroup> = {
@@ -147,5 +153,14 @@ describe("telling others someone is typing", () => {
         now = 100;
         typing.input("h");
         expect(starts).toBe(2);
+    });
+});
+
+describe("the throttle countdown", () => {
+    test("counts whole seconds up, never 0s while throttled, and ends at the deadline", () => {
+        expect(throttleCountdown(10_000, 0)?.seconds).toBe(10);
+        expect(throttleCountdown(10_000, 9_999)?.seconds).toBe(1);
+        expect(throttleCountdown(10_000, 10_000)).toBeUndefined();
+        expect(throttleCountdown(0, 5)).toBeUndefined();
     });
 });

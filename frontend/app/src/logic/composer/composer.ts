@@ -130,3 +130,17 @@ export class TypingNotifier {
         }
     }
 }
+
+/**
+ * Too many messages a minute: whole seconds until sending resumes (rounded up, so it never reads
+ * 0s while sends are still refused) and how much of the minute is left, or undefined once the
+ * deadline has passed (or there is none).
+ */
+export function throttleCountdown(
+    deadline: number,
+    now: number,
+): { seconds: number; percent: number } | undefined {
+    if (deadline <= now) return undefined;
+    const seconds = Math.ceil((deadline - now) / 1000);
+    return { seconds, percent: Math.floor((seconds / 60) * 100) };
+}
