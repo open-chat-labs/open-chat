@@ -109,19 +109,3 @@ export class TypingNotifier {
     }
 }
 
-/**
- * A send as the composer waits for it: done once the message is posted (it shows in the chat,
- * sending), or refused before that, so the draft is kept: throttled (too many messages a minute),
- * or turned down (the chat's rules not accepted). A send failing once posted shows on its message.
- */
-export function untilPosted(
-    result: Promise<{ kind: string }>,
-    posted: Promise<void>,
-): Promise<void> {
-    const refused = result.then((response) => {
-        if (response.kind === "message_throttled" || response.kind === "failure") {
-            throw new Error(response.kind);
-        }
-    });
-    return Promise.race([posted, refused]);
-}

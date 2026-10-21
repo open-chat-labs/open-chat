@@ -9,12 +9,10 @@
         anonUserStore,
         blockedUsersStore,
         byContext as typersByContext,
-        chatIdentifiersEqual,
         currentUserIdStore,
         localUpdates,
         selectedChatDraftMessageStore,
         selectedCommunitySummaryStore,
-        subscribe,
         suspendedUserStore,
         throttleDeadline,
         type ChatSummary,
@@ -26,7 +24,7 @@
     import { detectMarkdown } from "@src/utils/detectMarkdown";
     import { getContext, untrack } from "svelte";
     import { _ } from "svelte-i18n";
-    import { expandMentions, sendBlocked, TypingNotifier, untilPosted } from "./composer";
+    import { expandMentions, sendBlocked, TypingNotifier } from "./composer";
 
     let { chat }: { chat: ChatSummary } = $props();
 
@@ -88,32 +86,21 @@
             : "",
     );
 
-    // done once the message shows in the chat; refused (throttled, or the rules turned down), the
-    // composer keeps the draft and says it couldn't send
-    function onSend(text: string): Promise<void> {
+    // done once the message shows in the chat; refused (throttled, the rules or the PIN turned
+    // down, a send already on its way), the composer keeps the draft and says it couldn't send
+    async function onSend(text: string): Promise<void> {
         const { text: expanded, mentioned } = expandMentions(text, (username) =>
             client.lookupUserForMention(username, false),
         );
-        let unsubscribe = () => {};
-        const posted = new Promise<void>((resolve) => {
-            unsubscribe = subscribe("sendingMessage", (sending) => {
-                if (
-                    sending.threadRootMessageIndex === undefined &&
-                    chatIdentifiersEqual(sending.chatId, chat.id)
-                ) {
-                    resolve();
-                }
-            });
-        });
-        const result = client.sendMessageWithAttachment(
+        typing.stopped();
+        const outcome = await client.sendMessage(
             context,
             expanded,
             detectMarkdown(text),
             undefined,
             mentioned,
         );
-        typing.stopped();
-        return untilPosted(result, posted).finally(unsubscribe);
+        if (outcome.kind !== "posted") throw new Error(outcome.kind);
     }
 </script>
 
