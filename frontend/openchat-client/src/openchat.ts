@@ -305,6 +305,8 @@ import {
     type SelectedChannelRoute,
     type SelectedCommunityRoute,
     type SendMessageOutcome,
+    type SignInMethod,
+    type SignInOutcome,
     type SendMessageResponse,
     type SendMessageSuccess,
     type SetDisplayNameResponse,
@@ -637,6 +639,7 @@ import {
 import { joinGroupFailureMessage } from "./utils/join";
 import { currentTip, tipResult } from "./utils/tip";
 import { cryptoTransferResult } from "./utils/cryptoTransfer";
+import { signInOutcome, signInProvider } from "./utils/signIn";
 import {
     executionPaymentAmount,
     PROPOSAL_EXECUTION_WINDOW,
@@ -1266,23 +1269,100 @@ export class OpenChat {
     }
 
     login(): void {
+        void this.#loginWithAuthClient();
+    }
+
+    // Signs in through the auth client's window (Internet Identity, NFID): "loaded" once the
+    // identity has loaded, "closed" if the window gave up (closed, or its own error), "load_failed"
+    // if the identity it gave couldn't be loaded
+    #loginWithAuthClient(): Promise<"loaded" | "closed" | "load_failed"> {
         this.updateIdentityState({ kind: "logging_in" });
         const authProvider = selectedAuthProviderStore.value!;
-        this.#authClient.then((c) => {
-            c.login({
-                ...this.getAuthClientOptions(authProvider),
-                onSuccess: () =>
-                    this.#authIdentityStorage
-                        .getKeyAndChain()
-                        .then((identity) =>
-                            this.#loadedAuthenticationIdentity(identity, authProvider),
-                        ),
-                onError: (err) => {
-                    this.updateIdentityState({ kind: "anon" });
-                    console.warn("Login error from auth client: ", err);
-                },
+        return new Promise((resolve) => {
+            this.#authClient.then((c) => {
+                c.login({
+                    ...this.getAuthClientOptions(authProvider),
+                    onSuccess: () =>
+                        this.#authIdentityStorage
+                            .getKeyAndChain()
+                            .then((identity) =>
+                                this.#loadedAuthenticationIdentity(identity, authProvider),
+                            )
+                            .then(
+                                () => resolve("loaded"),
+                                (err) => {
+                                    this.logError("Unable to load the signed-in identity", err);
+                                    resolve("load_failed");
+                                },
+                            ),
+                    onError: (err) => {
+                        this.updateIdentityState({ kind: "anon" });
+                        console.warn("Login error from auth client: ", err);
+                        resolve("closed");
+                    },
+                });
             });
         });
+    }
+
+    /**
+     * Signs in and settles once the identity has loaded, with how it went. The passkey is the
+     * native app's or the browser's, whichever this is. `signal` gives the sign-in up: it settles
+     * `cancelled` then, even if the identity goes on to load.
+     */
+    async signIn(method: SignInMethod, signal?: AbortSignal): Promise<SignInOutcome> {
+        if (signal?.aborted) return { kind: "cancelled" };
+        const abandoned = new Promise<SignInOutcome>((resolve) =>
+            signal?.addEventListener("abort", () => resolve({ kind: "cancelled" }), {
+                once: true,
+            }),
+        );
+        const outcome = await Promise.race([this.#signIn(method), abandoned]);
+        return signal?.aborted ? { kind: "cancelled" } : outcome;
+    }
+
+    async #signIn(method: SignInMethod): Promise<SignInOutcome> {
+        selectedAuthProviderStore.set(signInProvider(method));
+        try {
+            switch (method.kind) {
+                case "passkey":
+                    await (this.isNativeApp()
+                        ? this.signInWithAndroidWebAuthn()
+                        : this.signInWithWebAuthn());
+                    break;
+                case "auth_client": {
+                    const login = await this.#loginWithAuthClient();
+                    if (login === "closed") return { kind: "cancelled" };
+                    if (login === "load_failed") return signInOutcome(identityStateStore.value);
+                    break;
+                }
+                case "wallet": {
+                    const resp = await this.signInWithWallet(
+                        method.token,
+                        method.address,
+                        method.signature,
+                        true,
+                    );
+                    if (resp.kind !== "success") {
+                        return { kind: "failed", reason: i18nKey("loginDialog.unexpectedError") };
+                    }
+                    break;
+                }
+            }
+        } catch (err) {
+            // the native credential manager couldn't authenticate at all
+            if (err === "AUTH_FAILED") {
+                return { kind: "failed", reason: i18nKey("native.auth.errors.default") };
+            }
+            // the identity was being loaded, so it wasn't the prompt: that load failed
+            if (identityStateStore.value.kind === "loading_user") {
+                this.logError("Unable to load the signed-in identity", err);
+                return signInOutcome(identityStateStore.value);
+            }
+            // the passkey prompt dismissed, or a passkey OpenChat doesn't know
+            return { kind: "cancelled" };
+        }
+        return signInOutcome(identityStateStore.value);
     }
 
     buildAuthProviderUrl(authProvider: AuthProvider): string | undefined {

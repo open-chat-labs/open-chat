@@ -177,6 +177,25 @@ export type IdentityState =
     | { kind: "registering"; postLogin?: PostLoginOperation }
     | { kind: "logging_in"; postLogin?: PostLoginOperation };
 
+/** How the user is signing in: the client picks the browser's or the native app's passkeys. */
+export type SignInMethod =
+    | { kind: "passkey" }
+    // Internet Identity or NFID, in the auth client's window
+    | { kind: "auth_client"; provider: "ii" | "nfid" }
+    // once the wallet has signed the message the backend prepared (siwePrepareLogin / siwsPrepareLogin)
+    | { kind: "wallet"; token: "eth" | "sol"; address: string; signature: string };
+
+/**
+ * How a sign-in went, once the identity has loaded. `needs_account`: signed in with an identity
+ * that has no OpenChat account yet, so sign-up comes next. `cancelled`: the passkey prompt or the
+ * window was dismissed (or the passkey isn't one OpenChat knows), or the caller gave it up.
+ */
+export type SignInOutcome =
+    | { kind: "logged_in" }
+    | { kind: "needs_account" }
+    | { kind: "cancelled" }
+    | { kind: "failed"; reason: ResourceKey };
+
 export type UserLookup = ReadonlyMap<string, UserSummary>;
 
 export type User = {

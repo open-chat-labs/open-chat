@@ -7,8 +7,8 @@ import { initialize, settledWallet } from "@src/stores/solana/walletStore";
 import { buildSiwsMessage } from "@src/utils/siws";
 import base58 from "bs58";
 
-// Sign in with a Solana wallet, as the old UI's SigninWithSol.svelte does: connect, sign the SIWS
-// message the backend prepares, then sign in with the signature. Loaded on demand.
+// Sign in with a Solana wallet, as the old UI's SigninWithSol.svelte does: connect, and sign the
+// SIWS message the backend prepares; the client signs in with the signature. Loaded on demand.
 
 let initialised: Promise<void> | undefined;
 // the wallet's own error: a connect the store starts by itself (auto-connect) swallows it
@@ -39,14 +39,15 @@ function initialiseWallets(): Promise<void> {
 }
 
 /**
- * Resolves once the client has the wallet's identity; rejects if any step fails or is declined,
- * or once `signal` gives the sign-in up (a wallet answered late doesn't sign in after all).
+ * Resolves with the wallet's address and its signature of the sign-in message; rejects if any step
+ * fails or is declined, or once `signal` gives the sign-in up (a wallet answered late doesn't sign
+ * in after all).
  */
-export async function signInWithSolana(
+export async function signWithSolana(
     client: OpenChat,
     walletName: string,
     signal?: AbortSignal,
-): Promise<void> {
+): Promise<{ address: string; signature: string }> {
     await initialiseWallets();
     // a returning user's wallet auto-connects as the adapters start, and connect() returns
     // straight away while that's in flight; so is picking a wallet that auto-connects
@@ -67,6 +68,5 @@ export async function signInWithSolana(
     const data = new TextEncoder().encode(buildSiwsMessage(prepared.siwsMessage));
     const signature = base58.encode(await signMessage(data));
     signal?.throwIfAborted();
-    const result = await client.signInWithWallet("sol", account, signature, true);
-    if (result.kind !== "success") throw new Error("Solana sign-in failed");
+    return { address: account, signature };
 }
