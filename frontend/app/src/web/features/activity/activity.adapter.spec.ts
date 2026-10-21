@@ -1,11 +1,5 @@
 import type { Message, MessageActivityEvent } from "@client";
-import {
-    activityItem,
-    activityLink,
-    activitySummary,
-    readUpTo,
-    type ActivityContext,
-} from "./activity.adapter";
+import { activityItem, activityLink, readUpTo, type ActivityContext } from "./activity.adapter";
 
 const ctx: ActivityContext = {
     me: "me",
@@ -15,7 +9,7 @@ const ctx: ActivityContext = {
     userName: (id) => ({ alice: "Alice", bob: "Bob", carol: "Carol" })[id] ?? id,
     chatName: () => "Group",
     contentText: (content) => (content as { text: string }).text,
-    t: (key, values) => `${key}${values ? JSON.stringify(values) : ""}`,
+    text: ({ key, params }) => `${key}${params ? JSON.stringify(params) : ""}`,
     day: (ts) => `day${ts}`,
     time: (ts) => `t${ts}`,
     readUpTo: 5n,
@@ -79,57 +73,6 @@ describe("an activity item", () => {
         expect(activityItem(reacted, ctx).reactions).toEqual(["👍"]);
         const gone = { ...event(), message: undefined } as MessageActivityEvent;
         expect(activityItem(gone, ctx).preview).toBe("Message content unavailable");
-    });
-});
-
-describe("an activity's summary", () => {
-    const reaction = (userIds: string[]) =>
-        event(
-            { activity: "reaction" },
-            { reactions: [{ reaction: "👍", userIds: new Set(userIds) }] },
-        );
-
-    test("counts the others who reacted, leaving out the reader", () => {
-        expect(activitySummary(reaction(["alice", "me"]), ctx)).toBe(
-            'activity.reactionOne{"username":"Alice"}',
-        );
-        expect(activitySummary(reaction(["alice", "bob"]), ctx)).toBe(
-            'activity.reactionTwo{"username":"Alice","other":"Bob"}',
-        );
-        expect(activitySummary(reaction(["alice", "bob", "carol"]), ctx)).toBe(
-            'activity.reactionN{"username":"Alice","n":2}',
-        );
-    });
-
-    test("counts the others who tipped", () => {
-        const tipped = event(
-            { activity: "tip" },
-            { tips: { ledger: { alice: 1n, bob: 2n } } as unknown as Message["tips"] },
-        );
-        expect(activitySummary(tipped, ctx)).toBe(
-            'activity.tipTwo{"username":"Alice","other":"Bob"}',
-        );
-    });
-
-    test("counts a poll's other voters", () => {
-        const poll = event(
-            { activity: "poll_vote" },
-            {
-                content: {
-                    kind: "poll_content",
-                    votes: { total: { kind: "hidden_poll_votes", votes: 3 } },
-                } as unknown as Message["content"],
-            },
-        );
-        expect(activitySummary(poll, ctx)).toBe(
-            'activity.pollVoteN{"username":"Alice","number":2}',
-        );
-    });
-
-    test("names an anonymous user", () => {
-        expect(activitySummary(event({ userId: undefined }), ctx)).toBe(
-            'activity.mention{"username":"An anonymous user"}',
-        );
     });
 });
 

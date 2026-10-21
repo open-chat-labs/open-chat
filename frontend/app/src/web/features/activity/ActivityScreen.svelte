@@ -15,6 +15,7 @@
     } from "@client";
     import ActivityPanel from "@openchat/ui/src/features/components/ActivityPanel.svelte";
     import EmptyState from "@openchat/ui/src/lib/components/EmptyState.svelte";
+    import { interpolate } from "@src/i18n/i18n";
     import { activityFeedState } from "@src/logic/activity/activity.svelte";
     import { navigate } from "@src/utils/navigation";
     import { removeQueryStringParam } from "@src/utils/urls";
@@ -99,7 +100,7 @@
             userName: (userId) => client.displayName(users.get(userId)),
             chatName,
             contentText: (content) => client.getContentAsText($_, content),
-            t: (key, values) => $_(key, { values }),
+            text: (key) => interpolate($_, key),
             day: (timestamp) => client.formatMessageDate(timestamp, $_("today"), $_("yesterday")),
             time: (timestamp) => client.toShortTimeString(new Date(Number(timestamp))),
             readUpTo: $messageActivitySummaryStore.readUpToTimestamp,
