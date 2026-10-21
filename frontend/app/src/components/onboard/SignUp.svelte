@@ -253,13 +253,18 @@
         width: 100%;
     }
 
+    // the small print's size for the whole row, so the box (sized in em) matches its words and
+    // the two sit on one centre line
     .terms {
         margin-top: $sp4;
+        @include font(light, normal, fs-80);
+
+        :global(.checkbox) {
+            gap: $sp3;
+        }
     }
 
     .smallprint {
-        align-self: flex-start;
-        @include font(light, normal, fs-60);
         color: var(--primary);
         cursor: pointer;
         text-decoration: none;
