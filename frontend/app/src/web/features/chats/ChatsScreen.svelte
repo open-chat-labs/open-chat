@@ -9,6 +9,8 @@
         currentUserIdStore,
         favouritesStore,
         messagesRead,
+        muteNotificationsFailureMessage,
+        pinChatFailureMessage,
         pinnedChatsStore,
         routeForChatIdentifier,
         selectedChatIdStore,
@@ -107,6 +109,18 @@
             });
     }
 
+    async function setPinned(chatId: ChatSummary["id"], pin: boolean) {
+        const success = await (pin ? client.pinChat(chatId) : client.unpinChat(chatId));
+        if (!success) toastStore.showFailureToast(pinChatFailureMessage(pin));
+    }
+
+    async function toggleMute(chatId: ChatSummary["id"], mute: boolean) {
+        const success = await client.toggleMuteNotifications(chatId, mute, undefined);
+        if (!success) {
+            toastStore.showFailureToast(muteNotificationsFailureMessage(mute, undefined, $_));
+        }
+    }
+
     // the row menu, in the app's words (the old row's menu)
     function menuFor(chat: ChatSummary, row: ChatListRow): MenuItem[] {
         const pinned = row.pinned;
@@ -123,11 +137,11 @@
                       onSelect: () => client.addToFavourites(chat.id),
                   },
             pinned
-                ? { label: $_("pinChat.unpinMenuItem"), onSelect: () => client.unpinChat(chat.id) }
-                : { label: $_("pinChat.menuItem"), onSelect: () => client.pinChat(chat.id) },
+                ? { label: $_("pinChat.unpinMenuItem"), onSelect: () => setPinned(chat.id, false) }
+                : { label: $_("pinChat.menuItem"), onSelect: () => setPinned(chat.id, true) },
             {
                 label: $_(muted ? "unmuteNotifications" : "muteNotifications"),
-                onSelect: () => client.toggleMuteNotifications(chat.id, !muted, undefined),
+                onSelect: () => toggleMute(chat.id, !muted),
             },
         ];
         if ((row.unreadCount ?? 0) > 0) {
