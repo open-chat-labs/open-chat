@@ -4,5 +4,10 @@
         "beforeDevCommand": "npm run dev:mobile:ios",
         "devUrl": "http://localhost:5002",
         "beforeBuildCommand": "echo 'BUILDING IOS APP' && npm run ios:release"
+    },
+    "plugins": {
+        "deep-link": {
+            "mobile": [{ "scheme": ["openchat"], "host": "oc.app" }]
+        }
     }
 }
