@@ -128,13 +128,14 @@
 
     // /features is Landing at its features section
     $effect(() => {
-        if (route.kind === "features_route") {
-            // instant: Landing makes the page's own scrolling smooth, for its section links
-            tick().then(() =>
-                document.getElementById("landing-features")?.scrollIntoView({ behavior: "instant" }),
-            );
-        }
+        if (route.kind === "features_route") scrollToFeatures();
     });
+
+    async function scrollToFeatures() {
+        await tick();
+        // instant: Landing makes the page's own scrolling smooth, for its section links
+        document.getElementById("landing-features")?.scrollIntoView({ behavior: "instant" });
+    }
 </script>
 
 {#if landing}

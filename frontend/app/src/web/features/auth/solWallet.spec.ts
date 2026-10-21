@@ -9,9 +9,7 @@ vi.mock("@src/stores/solana/walletStore", () => ({
     initialize: store.initialize,
     settledWallet: async () => store.state,
 }));
-vi.mock("@solana/wallet-adapter-coinbase", () => ({ CoinbaseWalletAdapter: class {} }));
-vi.mock("@solana/wallet-adapter-phantom", () => ({ PhantomWalletAdapter: class {} }));
-vi.mock("@solana/wallet-adapter-walletconnect", () => ({ WalletConnectWalletAdapter: class {} }));
+vi.mock("@src/utils/solanaWallets", () => ({ solanaWallets: () => [] }));
 
 const { signWithSolana } = await import("./solWallet");
 
