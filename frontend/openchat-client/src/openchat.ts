@@ -11816,7 +11816,7 @@ export class OpenChat {
                 endpoint,
             })
             .catch((err) => {
-                this.#logger.error("Failed to get the bot definition", endpoint, err);
+                this.#logger.error("Failed to get the bot definition", err, endpoint);
                 return {
                     kind: "bot_definition_failure",
                     error: err,
