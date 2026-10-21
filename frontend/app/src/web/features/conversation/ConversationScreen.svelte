@@ -39,9 +39,8 @@
     import ChatEventList, { type ChatEventListArgs } from "@src/core/ChatEventList.svelte";
     import { TimelineFlattener, type FlatChatItem } from "@src/core/flatChatItems";
     import Markdown from "@src/core/Markdown.svelte";
-    import { i18nKey } from "@i18n/i18n";
     import type { GroupMessage } from "@openchat/ui/src/lib/types";
-    import { toastStore } from "@src/stores/toast";
+    import { copyPageUrl } from "@src/utils/urls";
     import { isSingleEmoji } from "@src/utils/emojis";
     import { getContext, untrack, type Snippet } from "svelte";
     import { _ } from "svelte-i18n";
@@ -147,19 +146,11 @@
                 client.toggleMuteNotifications(chat.id, undefined, id === "muteEveryone");
                 break;
             case "copyUrl":
-                copyUrl();
+                copyPageUrl(client);
                 break;
         }
     }
 
-    // as the old UI's Home: the whole URL, and a toast either way
-    function copyUrl() {
-        const url = location.href;
-        (navigator.clipboard?.writeText(url) ?? Promise.reject()).then(
-            () => toastStore.showSuccessToast(i18nKey("urlCopiedToClipboard")),
-            () => toastStore.showFailureToast(i18nKey("failedToCopyUrlToClipboard", { url })),
-        );
-    }
 
     // ── what can be shown ──
 

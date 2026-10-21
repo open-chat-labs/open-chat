@@ -76,7 +76,7 @@
     } from "../../theme/themes";
     import { scream } from "../../utils/scream";
     import type { Share } from "../../utils/share";
-    import { removeQueryStringParam } from "../../utils/urls";
+    import { copyPageUrl, removeQueryStringParam } from "../../utils/urls";
     import AreYouSure from "../AreYouSure.svelte";
     import BackgroundLogo from "../BackgroundLogo.svelte";
     import BotBuilderModal from "../bots/BotBuilderModal.svelte";
@@ -261,7 +261,7 @@
             subscribe("removeBot", removeBot),
             subscribe("registerWebhook", registerWebhook),
             subscribe("updateWebhook", updateWebhook),
-            subscribe("copyUrl", copyUrl),
+            subscribe("copyUrl", () => copyPageUrl(client)),
             subscribe("closeModalStack", () => {
                 // TODO - not 100% sure that this is all we need to do here
                 portalState.close();
@@ -737,18 +737,6 @@
             });
     }
 
-    function copyUrl() {
-        const url = window.location.href;
-
-        navigator.clipboard.writeText(url).then(
-            () => {
-                toastStore.showSuccessToast(i18nKey("urlCopiedToClipboard"));
-            },
-            () => {
-                toastStore.showFailureToast(i18nKey("failedToCopyUrlToClipboard", { url }));
-            },
-        );
-    }
 
     async function createDirectChat(chatId: DirectChatIdentifier): Promise<boolean> {
         const directChatId = await client.createDirectChat(chatId);
