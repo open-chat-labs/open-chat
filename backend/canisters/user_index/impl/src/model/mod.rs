@@ -28,3 +28,6 @@ pub mod user_map;
 pub const MAX_AVATAR_SIZE: usize = 250_000;
 pub const MAX_DESCRIPTION_LEN: usize = 10_000;
 pub const MAX_COMMANDS: usize = 100;
+
+// The LocalUserIndexes no longer send bots their notifications as JSON
+pub const JSON_DATA_ENCODING_NOT_SUPPORTED: &str = "JSON data encoding is not supported, use MsgPack or Candid";

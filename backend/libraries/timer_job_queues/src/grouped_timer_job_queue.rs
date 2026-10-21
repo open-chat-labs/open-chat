@@ -63,8 +63,12 @@ impl<T: TimerJobItemGroup> GroupedTimerJobQueue<T> {
         self.within_lock(|i| i.defer_processing = value)
     }
 
+    // Removes every queued item. Items in a batch which is already being processed are unaffected.
     pub fn clear(&mut self) {
-        self.within_lock(|i| i.queue.clear())
+        self.within_lock(|i| {
+            i.queue.clear();
+            i.items_map.clear();
+        })
     }
 
     pub fn len(&self) -> usize {
@@ -108,8 +112,9 @@ impl<T: TimerJobItemGroup> GroupedTimerJobQueue<T> {
         })
     }
 
+    // Whether no items are queued, including those of keys waiting to be retried
     pub fn is_empty(&self) -> bool {
-        self.within_lock(|i| i.queue.is_empty())
+        self.within_lock(|i| i.items_map.is_empty())
     }
 
     pub fn in_progress(&self) -> usize {
@@ -130,6 +135,8 @@ impl<T: TimerJobItemGroup> GroupedTimerJobQueue<T> {
 #[derive(Serialize, Deserialize)]
 struct GroupedTimerJobQueueInner<S: Clone, K: Clone + Ord, I> {
     state: S,
+    // The keys whose items are ready to be processed. A key which failed and is to be retried after
+    // a delay is left out until the delay has passed, though its items stay in `items_map`.
     queue: VecDeque<K>,
     items_map: BTreeMap<K, VecDeque<I>>,
     in_progress: BTreeSet<K>,
@@ -137,6 +144,55 @@ struct GroupedTimerJobQueueInner<S: Clone, K: Clone + Ord, I> {
     defer_processing: bool,
     #[serde(skip)]
     timer: Option<PerRoundTimer>,
+}
+
+impl<S: Clone, K: Clone + Ord, I> GroupedTimerJobQueueInner<S, K, I> {
+    // Records that the batch for `key` has finished, putting `failed_items` back at the front of its
+    // items if it is to be retried. The key is re-added to the queue if it still has items, unless it
+    // is to be retried after a delay, which it must wait out first: otherwise the next push for any
+    // key would retry it at once. Returns whether it is waiting.
+    fn finish_batch(&mut self, key: &K, failed_items: Option<Vec<I>>, retry_delay: Option<Milliseconds>) -> bool {
+        self.in_progress.remove(key);
+        if let Some(items) = failed_items {
+            let queue = self.items_map.entry(key.clone()).or_default();
+            // Prepend the items to the front of the queue such that ordering is maintained
+            for item in items.into_iter().rev() {
+                queue.push_front(item);
+            }
+        }
+        if !self.items_map.contains_key(key) {
+            return false;
+        }
+        if retry_delay.is_some_and(|delay| delay > 0) {
+            // Items pushed for it while the batch was being processed may have queued it again
+            self.queue.retain(|k| k != key);
+            true
+        } else {
+            self.queue.push_back(key.clone());
+            false
+        }
+    }
+
+    // Re-adds a key which has waited out its retry delay, if it still has items and isn't already
+    // queued or being processed
+    fn end_wait(&mut self, key: K) {
+        if self.items_map.contains_key(&key) && !self.in_progress.contains(&key) && !self.queue.contains(&key) {
+            self.queue.push_back(key);
+        }
+    }
+
+    // Re-adds the keys which were waiting out a retry delay, since their timers don't survive an
+    // upgrade
+    fn end_all_waits(&mut self) {
+        let queued: BTreeSet<_> = self.queue.iter().collect();
+        let waiting: Vec<_> = self
+            .items_map
+            .keys()
+            .filter(|key| !self.in_progress.contains(*key) && !queued.contains(key))
+            .cloned()
+            .collect();
+        self.queue.extend(waiting);
+    }
 }
 
 impl<T: TimerJobItemGroup + 'static> GroupedTimerJobQueue<T>
@@ -244,24 +300,30 @@ where
 
     async fn process_batch(&self, batch: T) {
         let result = batch.process().await;
-        let retry = matches!(result, Err(Some(_)));
+        let retry_delay = result.err().flatten();
         let key = batch.key();
+        let failed_items = retry_delay.map(|_| batch.into_items());
 
-        self.within_lock(|i| {
-            i.in_progress.remove(&key);
-            if retry {
-                let queue = i.items_map.entry(key.clone()).or_default();
-                // Prepend the items to the front of the queue such that ordering is maintained
-                for item in batch.into_items().into_iter().rev() {
-                    queue.push_front(item);
-                }
-            }
-            // If there are still any items in the map for this key, re-add it to the queue
-            if i.items_map.contains_key(&key) {
-                i.queue.push_back(key);
-            }
+        let waiting = self.within_lock(|i| i.finish_batch(&key, failed_items, retry_delay));
+        if waiting {
+            self.end_wait_after(key, retry_delay.unwrap_or_default());
+        }
+        self.set_timer_if_required(0);
+    }
+
+    // Holds only a weak reference to the queue, so that a queue which is dropped meanwhile isn't
+    // processed
+    fn end_wait_after(&self, key: T::Key, delay: Milliseconds) {
+        let weak = Rc::downgrade(&self.inner);
+        ic_cdk_timers::set_timer(Duration::from_millis(delay), async move {
+            let Some(inner) = weak.upgrade() else { return };
+            let queue = GroupedTimerJobQueue::<T> {
+                inner,
+                phantom: PhantomData,
+            };
+            queue.within_lock(|i| i.end_wait(key));
+            queue.set_timer_if_required(0);
         });
-        self.set_timer_if_required(result.err().flatten().unwrap_or_default());
     }
 }
 
@@ -292,7 +354,8 @@ where
     <T as TimerJobItemGroup>::Item: Deserialize<'de>,
 {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        let inner = GroupedTimerJobQueueInner::deserialize(deserializer)?;
+        let mut inner = GroupedTimerJobQueueInner::deserialize(deserializer)?;
+        inner.end_all_waits();
         let value = GroupedTimerJobQueue::<T> {
             inner: Rc::new(Mutex::new(inner)),
             phantom: PhantomData,
@@ -344,4 +407,122 @@ macro_rules! grouped_timer_job_batch {
             }
         }
     };
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const KEY: u32 = 1;
+    const OTHER_KEY: u32 = 2;
+
+    // A queue whose batch for `KEY` is being processed, with `queued` pushed for it since
+    fn queue_with_batch_in_progress(queued: Vec<u32>) -> GroupedTimerJobQueueInner<(), u32, u32> {
+        let mut items_map = BTreeMap::new();
+        if !queued.is_empty() {
+            items_map.insert(KEY, VecDeque::from(queued));
+        }
+        GroupedTimerJobQueueInner {
+            state: (),
+            queue: VecDeque::new(),
+            items_map,
+            in_progress: BTreeSet::from([KEY]),
+            max_concurrency: 10,
+            defer_processing: false,
+            timer: None,
+        }
+    }
+
+    fn items(inner: &GroupedTimerJobQueueInner<(), u32, u32>, key: u32) -> Vec<u32> {
+        inner
+            .items_map
+            .get(&key)
+            .map(|items| items.iter().copied().collect())
+            .unwrap_or_default()
+    }
+
+    #[test]
+    fn a_batch_retried_after_a_delay_waits_out_the_delay() {
+        let mut inner = queue_with_batch_in_progress(vec![3]);
+
+        assert!(inner.finish_batch(&KEY, Some(vec![1, 2]), Some(300_000)));
+
+        // Its items are kept, in order, but it isn't ready to be processed
+        assert_eq!(items(&inner, KEY), vec![1, 2, 3]);
+        assert!(inner.queue.is_empty());
+        assert!(inner.in_progress.is_empty());
+
+        // Nor does another key being queued make it ready
+        inner.items_map.insert(OTHER_KEY, VecDeque::from([10]));
+        inner.queue.push_back(OTHER_KEY);
+        assert_eq!(inner.queue, VecDeque::from([OTHER_KEY]));
+
+        // Once the delay has passed it is ready again, just the once
+        inner.end_wait(KEY);
+        inner.end_wait(KEY);
+        assert_eq!(inner.queue, VecDeque::from([OTHER_KEY, KEY]));
+    }
+
+    // As when every slot was busy when items were pushed for the key, so `flush` left it queued
+    #[test]
+    fn a_batch_retried_after_a_delay_waits_even_if_queued_again_while_in_progress() {
+        let mut inner = queue_with_batch_in_progress(vec![3]);
+        inner.queue.push_back(KEY);
+
+        assert!(inner.finish_batch(&KEY, Some(vec![1, 2]), Some(300_000)));
+
+        assert_eq!(items(&inner, KEY), vec![1, 2, 3]);
+        assert!(inner.queue.is_empty());
+    }
+
+    #[test]
+    fn a_batch_retried_immediately_is_ready_at_once() {
+        let mut inner = queue_with_batch_in_progress(Vec::new());
+
+        assert!(!inner.finish_batch(&KEY, Some(vec![1, 2]), Some(0)));
+
+        assert_eq!(items(&inner, KEY), vec![1, 2]);
+        assert_eq!(inner.queue, VecDeque::from([KEY]));
+    }
+
+    #[test]
+    fn after_a_batch_succeeds_the_key_is_ready_only_if_items_were_queued_since() {
+        let mut inner = queue_with_batch_in_progress(vec![3]);
+        assert!(!inner.finish_batch(&KEY, None, None));
+        assert_eq!(inner.queue, VecDeque::from([KEY]));
+
+        let mut inner = queue_with_batch_in_progress(Vec::new());
+        assert!(!inner.finish_batch(&KEY, None, None));
+        assert!(inner.queue.is_empty());
+        assert!(inner.items_map.is_empty());
+    }
+
+    #[test]
+    fn a_waiting_key_is_not_re_added_if_its_items_have_gone_or_it_is_in_progress() {
+        let mut inner = queue_with_batch_in_progress(Vec::new());
+        inner.finish_batch(&KEY, Some(vec![1]), Some(300_000));
+
+        // Its items were taken while it waited
+        inner.items_map.remove(&KEY);
+        inner.end_wait(KEY);
+        assert!(inner.queue.is_empty());
+
+        // It was queued and taken for processing again while it waited
+        inner.items_map.insert(KEY, VecDeque::from([2]));
+        inner.in_progress.insert(KEY);
+        inner.end_wait(KEY);
+        assert!(inner.queue.is_empty());
+    }
+
+    #[test]
+    fn waiting_keys_are_ready_again_after_an_upgrade() {
+        let mut inner = queue_with_batch_in_progress(Vec::new());
+        inner.finish_batch(&KEY, Some(vec![1]), Some(300_000));
+        inner.items_map.insert(OTHER_KEY, VecDeque::from([10]));
+        inner.queue.push_back(OTHER_KEY);
+
+        inner.end_all_waits();
+
+        assert_eq!(inner.queue, VecDeque::from([OTHER_KEY, KEY]));
+    }
 }

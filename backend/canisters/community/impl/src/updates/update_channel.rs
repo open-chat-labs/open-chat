@@ -59,7 +59,9 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> OCResult<Suc
 
     if args.public.is_some() {
         state.data.public_channel_list_updated = now;
+    }
 
+    if result.newly_public || result.newly_private {
         for (bot_id, bot) in state.data.bots.iter() {
             if result.newly_public {
                 // The channel is now public so subscribe the bot to all default events
