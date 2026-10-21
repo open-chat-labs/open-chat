@@ -5,7 +5,7 @@
     import { i18nKey } from "../../i18n/i18n";
     import { now500 } from "../../stores/time";
     import { throttleDeadline } from "@client";
-    import { untrack } from "svelte";
+    import { throttleCountdown } from "@src/logic/composer/composer";
 
     interface Props {
         deadline: number;
@@ -13,22 +13,14 @@
 
     let { deadline }: Props = $props();
 
-    let seconds = $state(0);
-    let percent = $state(0);
+    let countdown = $derived(throttleCountdown(deadline, $now500));
+    let seconds = $derived(countdown?.seconds ?? 0);
+    let percent = $derived(countdown?.percent ?? 0);
 
+    // past the deadline: sending resumes, and this countdown goes
     $effect(() => {
-        calculate(deadline, $now500);
+        if (countdown === undefined) throttleDeadline.set(0);
     });
-
-    function calculate(deadline: number, now: number) {
-        untrack(() => {
-            seconds = Math.floor((deadline - now) / 1000);
-            percent = Math.floor((seconds / 60) * 100);
-            if (deadline <= $now500) {
-                throttleDeadline.set(0);
-            }
-        });
-    }
 </script>
 
 <div class="throttle">
