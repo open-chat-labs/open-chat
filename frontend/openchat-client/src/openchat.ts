@@ -306,6 +306,7 @@ import {
     type SelectedCommunityRoute,
     type SendMessageOutcome,
     type SignInMethod,
+    type SignUpOutcome,
     type EmailSignInRequest,
     type SignInOutcome,
     type SendMessageResponse,
@@ -641,6 +642,11 @@ import { joinGroupFailureMessage } from "./utils/join";
 import { currentTip, tipResult } from "./utils/tip";
 import { cryptoTransferResult } from "./utils/cryptoTransfer";
 import { emailLinkFailure, signInOutcome, signInProvider } from "./utils/signIn";
+import {
+    createdUser as createdUserFrom,
+    referralCodeRefused,
+    registerFailureKey,
+} from "./utils/signUp";
 import {
     executionPaymentAmount,
     PROPOSAL_EXECUTION_WINDOW,
@@ -6725,6 +6731,71 @@ export class OpenChat {
                 this.#logger.error("Failed to update registered bot: ", err);
                 return false;
             });
+    }
+
+    // referral codes the backend turned down: they're never sent again
+    #refusedReferralCodes = new Set<string>();
+    // a passkey was made for the sign-up in progress; another would leave the person two
+    #passkeyMadeForSignUp = false;
+
+    /**
+     * Makes the account: a passkey first, unless the identity signed in already has no account
+     * (signed in some other way, or the passkey made on an earlier try), then the user. The
+     * referral code set (setReferralCode) goes with it, unless it was turned down before.
+     * `signal` gives the sign-up up before the account is asked for; once asked for, it's made.
+     */
+    async signUp(
+        username: string,
+        email: string | undefined,
+        signal?: AbortSignal,
+    ): Promise<SignUpOutcome> {
+        selectedAuthProviderStore.set(AuthProvider.PASSKEY);
+        // a passkey already made for this sign-up isn't made again
+        if (identityStateStore.value.kind !== "registering" && !this.#passkeyMadeForSignUp) {
+            try {
+                await (this.isNativeApp()
+                    ? this.signUpWithAndroidWebAuthn(true, username)
+                    : this.signUpWithWebAuthn(true, username));
+                this.#passkeyMadeForSignUp = true;
+            } catch (err) {
+                // the passkey was made and its identity was being loaded when it failed
+                if (identityStateStore.value.kind === "loading_user") {
+                    this.#passkeyMadeForSignUp = true;
+                    this.logError("Unable to load the signed-up identity", err);
+                    return { kind: "failed", reason: i18nKey("unexpectedError") };
+                }
+                // the passkey prompt dismissed
+                return { kind: "cancelled" };
+            }
+        }
+        if (signal?.aborted) return { kind: "cancelled" };
+        // the passkey's identity has no account (registering), or it's still loading the user,
+        // after a failed load, which registerUser can still make the account for; signed out
+        // instead (anonymous: no OpenChat identity for the passkey), there's nothing to make it for
+        const state = identityStateStore.value.kind;
+        if (state !== "registering" && !(this.#passkeyMadeForSignUp && state === "loading_user")) {
+            return { kind: "failed", reason: i18nKey("unexpectedError") };
+        }
+        // a code turned down before is never sent again
+        const code = this.#referralCode;
+        if (code !== undefined && this.#refusedReferralCodes.has(code)) this.clearReferralCode();
+        const sent = this.#referralCode;
+        const resp = await this.registerUser(username, email);
+        if (sent !== undefined && referralCodeRefused(resp.kind)) {
+            this.#refusedReferralCodes.add(sent);
+        }
+        if (resp.kind === "success") {
+            this.#passkeyMadeForSignUp = false;
+            this.onRegisteredUser(createdUserFrom(username, resp));
+            return { kind: "success" };
+        }
+        if (referralCodeRefused(resp.kind)) {
+            return { kind: "referral_refused", reason: i18nKey("register.referralCodeInvalid") };
+        }
+        return {
+            kind: "failed",
+            reason: i18nKey(registerFailureKey(resp.kind) ?? "unexpectedError"),
+        };
     }
 
     registerUser(username: string, email: string | undefined): Promise<RegisterUserResponse> {

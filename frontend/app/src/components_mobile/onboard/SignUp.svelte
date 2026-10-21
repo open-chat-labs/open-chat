@@ -15,14 +15,8 @@
         Switch,
     } from "component-lib";
     import EmailValidator from "email-validator";
-    import type { CreatedUser, OpenChat, UserOrUserGroup, UserSummary } from "@client";
-    import { AuthProvider, identityStateStore, selectedAuthProviderStore } from "@client";
+    import type { OpenChat, SignUpOutcome, UserOrUserGroup, UserSummary } from "@client";
     import { getContext, onMount } from "svelte";
-    import {
-        createdUser as createdUserFrom,
-        referralCodeRefused,
-        registerFailureKey,
-    } from "@src/utils/signup";
     import { _ } from "svelte-i18n";
     import ErrorMessage from "../ErrorMessage.svelte";
     import FindUser from "../FindUser.svelte";
@@ -33,11 +27,12 @@
     const client = getContext<OpenChat>("client");
 
     interface Props {
-        onCreatedUser: (user: CreatedUser) => void;
+        // the account is made and the client has the user
+        onSignedUp: () => void;
         error: string | undefined;
     }
 
-    let { error = $bindable(), onCreatedUser }: Props = $props();
+    let { error = $bindable(), onSignedUp }: Props = $props();
 
     let showGuidelines = $state(false);
     let username = $state("");
@@ -49,8 +44,6 @@
     let busy = $state(false);
     let badCode = $state(false);
     let referringUser: UserSummary | undefined = $state(undefined);
-    let createdUser: CreatedUser | undefined = undefined;
-    let passkeyCreated = $state(false);
     let termsAccepted = $state(false);
 
     let TermsContent: typeof import("../TermsContent.svelte").default | undefined =
@@ -73,49 +66,28 @@
 
     async function register(e: Event) {
         e.preventDefault();
-        if (usernameValid && emailValid) {
-            usernameStore.set(username);
-            try {
-                busy = true;
-                selectedAuthProviderStore.set(AuthProvider.PASSKEY);
-
-                // if we are already in the registering state it means that we are somehow
-                // already signed in, but there is no user. In that case, skip the webauthn
-                // and just call registerUser
-                if ($identityStateStore.kind !== "registering") {
-                    if (!passkeyCreated) {
-                        if (client.isNativeApp()) {
-                            await client.signUpWithAndroidWebAuthn(true, username);
-                        } else {
-                            await client.signUpWithWebAuthn(true, username);
-                        }
-                    }
-                }
-                passkeyCreated = true;
-                await registerUser(username, email.length > 0 ? email : undefined);
-            } catch (err) {
-                error = `Error registering user: ${JSON.stringify(err)}`;
-            } finally {
-                busy = false;
-            }
+        if (!usernameValid || !emailValid || busy) return;
+        usernameStore.set(username);
+        busy = true;
+        let outcome: SignUpOutcome;
+        try {
+            // a refused referral code isn't sent again, so "proceed" signs up without it
+            outcome = await client.signUp(username, email.length > 0 ? email : undefined);
+        } finally {
+            busy = false;
         }
-    }
-
-    async function registerUser(username: string, email: string | undefined) {
-        await client.registerUser(username, email).then((resp) => {
-            badCode = referralCodeRefused(resp.kind);
-            if (resp.kind === "success") {
-                // error = undefined;
-                createdUser = createdUserFrom(username, resp);
-                onCreatedUser(createdUser);
-                busy = false;
+        badCode = outcome.kind === "referral_refused";
+        switch (outcome.kind) {
+            case "success":
+                error = undefined;
                 usernameStore.set("");
-            } else {
-                error =
-                    registerFailureKey(resp.kind) ??
-                    `Unexpected register user response: ${resp.kind}`;
-            }
-        });
+                onSignedUp();
+                break;
+            case "referral_refused":
+            case "failed":
+                error = outcome.reason.key;
+                break;
+        }
     }
 
     function deleteUser(_: UserOrUserGroup) {
@@ -132,10 +104,10 @@
         return client.searchUsers(searchTerm, 20).then((res) => [[], res]);
     }
 
-    // function clearCodeAndLogout() {
-    //     client.clearReferralCode();
-    //     client.logout();
-    // }
+    function clearCodeAndLogout() {
+        client.clearReferralCode();
+        client.logout();
+    }
 
     onMount(async () => {
         referringUser = await client.getReferringUser();
@@ -166,7 +138,7 @@
     {#if badCode}
         <StatusCard
             mode={"warning"}
-            title={interpolate($_, i18nKey("register.doYouWantToProceed"))}>
+            title={interpolate($_, i18nKey("register.referralCodeInvalid"))}>
             {#snippet body()}
                 <Translatable resourceKey={i18nKey("register.doYouWantToProceed")} />
             {/snippet}
@@ -221,6 +193,12 @@
             </BodySmall>
         </Switch>
     </Container>
+    {#if badCode}
+        <!-- turned the code down: give up the sign-up (sign out) rather than go on without it -->
+        <Button width={"fill"} secondary onClick={clearCodeAndLogout}>
+            <Translatable resourceKey={i18nKey("cancel")} />
+        </Button>
+    {/if}
     <Button
         width={"fill"}
         disabled={!termsAccepted || !usernameValid || !emailValid || busy}

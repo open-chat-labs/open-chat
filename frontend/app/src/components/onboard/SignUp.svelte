@@ -2,19 +2,9 @@
     import { i18nKey } from "@src/i18n/i18n";
     import { createLocalStorageStore } from "@src/utils/store";
     import EmailValidator from "email-validator";
-    import type { CreatedUser, OpenChat, UserOrUserGroup, UserSummary } from "@client";
-    import {
-        AuthProvider,
-        identityStateStore,
-        mobileWidth,
-        selectedAuthProviderStore,
-    } from "@client";
+    import type { OpenChat, SignUpOutcome, UserOrUserGroup, UserSummary } from "@client";
+    import { mobileWidth } from "@client";
     import { getContext, onMount } from "svelte";
-    import {
-        createdUser as createdUserFrom,
-        referralCodeRefused,
-        registerFailureKey,
-    } from "@src/utils/signup";
     import AlertBox from "../AlertBox.svelte";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
@@ -32,11 +22,12 @@
     const client = getContext<OpenChat>("client");
 
     interface Props {
-        onCreatedUser: (user: CreatedUser) => void;
+        // the account is made and the client has the user
+        onSignedUp: () => void;
         error: string | undefined;
     }
 
-    let { error = $bindable(), onCreatedUser }: Props = $props();
+    let { error = $bindable(), onSignedUp }: Props = $props();
 
     let showGuidelines = $state(false);
     let username = $state("");
@@ -48,8 +39,6 @@
     let busy = $state(false);
     let badCode = $state(false);
     let referringUser: UserSummary | undefined = $state(undefined);
-    let createdUser: CreatedUser | undefined = undefined;
-    let passkeyCreated = $state(false);
 
     let TermsContent: typeof import("../landingpages/TermsContent.svelte").default | undefined =
         $state(undefined);
@@ -71,49 +60,28 @@
 
     async function register(e: Event) {
         e.preventDefault();
-        if (usernameValid && emailValid) {
-            usernameStore.set(username);
-            try {
-                busy = true;
-                selectedAuthProviderStore.set(AuthProvider.PASSKEY);
-
-                // if we are already in the registering state it means that we are somehow
-                // already signed in, but there is no user. In that case, skip the webauthn
-                // and just call registerUser
-                if ($identityStateStore.kind !== "registering") {
-                    if (!passkeyCreated) {
-                        if (client.isNativeApp()) {
-                            await client.signUpWithAndroidWebAuthn(true, username);
-                        } else {
-                            await client.signUpWithWebAuthn(true, username);
-                        }
-                    }
-                }
-                passkeyCreated = true;
-                await registerUser(username, email.length > 0 ? email : undefined);
-            } catch (err) {
-                error = `Error registering user: ${err}`;
-            } finally {
-                busy = false;
-            }
+        if (!usernameValid || !emailValid || busy) return;
+        usernameStore.set(username);
+        busy = true;
+        let outcome: SignUpOutcome;
+        try {
+            // a refused referral code isn't sent again, so "proceed" signs up without it
+            outcome = await client.signUp(username, email.length > 0 ? email : undefined);
+        } finally {
+            busy = false;
         }
-    }
-
-    async function registerUser(username: string, email: string | undefined) {
-        await client.registerUser(username, email).then((resp) => {
-            badCode = referralCodeRefused(resp.kind);
-            if (resp.kind === "success") {
+        badCode = outcome.kind === "referral_refused";
+        switch (outcome.kind) {
+            case "success":
                 error = undefined;
-                createdUser = createdUserFrom(username, resp);
-                onCreatedUser(createdUser);
-                busy = false;
                 usernameStore.set("");
-            } else {
-                error =
-                    registerFailureKey(resp.kind) ??
-                    `Unexpected register user response: ${resp.kind}`;
-            }
-        });
+                onSignedUp();
+                break;
+            case "referral_refused":
+            case "failed":
+                error = outcome.reason.key;
+                break;
+        }
     }
 
     function deleteUser(_: UserOrUserGroup) {

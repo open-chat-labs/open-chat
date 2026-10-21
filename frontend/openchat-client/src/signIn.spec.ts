@@ -242,4 +242,117 @@ describe("signing in", () => {
             expect(polls).not.toHaveBeenCalled();
         });
     });
+
+    describe("signing up", () => {
+        const success = { kind: "success", userId: "u1", icpAccount: "acc" } as const;
+        let register: ReturnType<typeof vi.fn>;
+        let passkey: ReturnType<typeof vi.fn>;
+        let handedOver: ReturnType<typeof vi.fn>;
+
+        beforeEach(() => {
+            register = vi.fn(async () => success);
+            vi.spyOn(client, "registerUser").mockImplementation(register as never);
+            // a passkey whose identity has no account yet
+            passkey = vi.fn(async () => set({ kind: "registering" }));
+            vi.spyOn(client, "signUpWithWebAuthn").mockImplementation(passkey as never);
+            handedOver = vi.fn();
+            vi.spyOn(client, "onRegisteredUser").mockImplementation(handedOver as never);
+        });
+
+        test("makes a passkey, then the account, and hands the user to the client", async () => {
+            expect(await client.signUp("newperson", "me@example.com")).toEqual({ kind: "success" });
+            expect(passkey).toHaveBeenCalledWith(true, "newperson");
+            expect(register).toHaveBeenCalledWith("newperson", "me@example.com");
+            expect(handedOver).toHaveBeenCalledWith(
+                expect.objectContaining({ username: "newperson", userId: "u1" }),
+            );
+        });
+
+        test("an identity without an account only needs the account", async () => {
+            set({ kind: "registering" });
+            await client.signUp("newperson", undefined);
+            expect(passkey).not.toHaveBeenCalled();
+            expect(register).toHaveBeenCalledOnce();
+        });
+
+        /** Invariant 8: one sign-up never makes a second passkey, even when the first left no
+         * identity to make the account with. */
+        test("never makes a second passkey", async () => {
+            // no OpenChat identity for the passkey, so it's signed out
+            passkey.mockImplementation(async () => set({ kind: "anon" }));
+            expect((await client.signUp("newperson", undefined)).kind).toBe("failed");
+            expect((await client.signUp("newperson", undefined)).kind).toBe("failed");
+            expect(passkey).toHaveBeenCalledOnce();
+            expect(register).not.toHaveBeenCalled();
+        });
+
+        /** Invariant 8: a passkey made whose identity then failed to load isn't made again; the
+         * next try goes on to the account with the identity it has. */
+        test("a passkey made but not loaded isn't made again", async () => {
+            vi.spyOn(client, "logError").mockImplementation(() => {});
+            passkey.mockImplementation(async () => {
+                set({ kind: "loading_user", registering: true });
+                throw new Error("worker gone");
+            });
+            expect((await client.signUp("newperson", undefined)).kind).toBe("failed");
+            expect(register).not.toHaveBeenCalled();
+            expect(await client.signUp("newperson", undefined)).toEqual({ kind: "success" });
+            expect(passkey).toHaveBeenCalledOnce();
+            expect(register).toHaveBeenCalledOnce();
+        });
+
+        test("a dismissed passkey prompt is cancelled, and the next try asks again", async () => {
+            passkey.mockRejectedValueOnce(new Error("NotAllowedError"));
+            expect(await client.signUp("newperson", undefined)).toEqual({ kind: "cancelled" });
+            expect(register).not.toHaveBeenCalled();
+            expect(await client.signUp("newperson", undefined)).toEqual({ kind: "success" });
+            expect(passkey).toHaveBeenCalledTimes(2);
+        });
+
+        /** Invariant 9: a sign-up given up before the account is asked for makes no account. */
+        test("given up after its passkey, it makes no account", async () => {
+            const closed = new AbortController();
+            passkey.mockImplementation(async () => {
+                set({ kind: "registering" });
+                closed.abort();
+            });
+            expect(await client.signUp("newperson", undefined, closed.signal)).toEqual({
+                kind: "cancelled",
+            });
+            expect(register).not.toHaveBeenCalled();
+        });
+
+        /** Invariant 10: a referral code the backend turned down is never sent again, so the next
+         * try goes ahead without it. */
+        test("a refused referral code isn't sent again", async () => {
+            set({ kind: "registering" });
+            const clear = vi.spyOn(client, "clearReferralCode");
+            client.setReferralCode("r1");
+            // as registerUser does, the refused code is cleared once it's turned down
+            register.mockImplementationOnce(async () => {
+                client.clearReferralCode();
+                return { kind: "referral_code_invalid" };
+            });
+            const refused = await client.signUp("newperson", undefined);
+            expect(refused.kind === "referral_refused" && refused.reason.key).toBe(
+                "register.referralCodeInvalid",
+            );
+            // the form still has the referrer, and sets it again
+            client.setReferralCode("r1");
+            clear.mockClear();
+            expect(await client.signUp("newperson", undefined)).toEqual({ kind: "success" });
+            expect(clear.mock.invocationCallOrder[0]).toBeLessThan(
+                register.mock.invocationCallOrder[1],
+            );
+            expect(await client.getReferringUser()).toBeUndefined();
+        });
+
+        test("a refused account says why in the app's words", async () => {
+            set({ kind: "registering" });
+            register.mockResolvedValueOnce({ kind: "username_taken" });
+            const outcome = await client.signUp("taken1", undefined);
+            expect(outcome.kind === "failed" && outcome.reason.key).toBe("register.usernameTaken");
+            expect(handedOver).not.toHaveBeenCalled();
+        });
+    });
 });

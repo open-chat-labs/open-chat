@@ -1,4 +1,4 @@
-import type { CreatedUser, RegisterUserResponse } from "@client";
+import type { CreatedUser, RegisterUserResponse } from "@shared";
 
 // Sign-up's handling of the backend's answer, shared by every UI's sign-up form.
 
