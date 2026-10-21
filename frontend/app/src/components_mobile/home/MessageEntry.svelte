@@ -16,11 +16,9 @@
     import { BodySmall, ColourVars, Container, IconButton, Row } from "component-lib";
     import type {
         AttachmentContent,
-        BotActionScope,
         ChatSummary,
         EnhancedReplyContext,
         EventWrapper,
-        ExternalBot,
         Message,
         MessageContext,
         OpenChat,
@@ -31,11 +29,8 @@
         allUsersStore,
         anonUserStore,
         botState,
-        currentUserIdStore,
-        directMessageCommandInstance,
         localUpdates,
         messageContextsEqual,
-        random64,
         screenWidth,
         ScreenWidth,
         selectedChatMembersStore,
@@ -450,30 +445,9 @@
     }
 
 
-    function sendADirectBotMessage(bot: ExternalBot) {
+    function sendADirectBotMessage() {
         const txt = editor?.getMarkdown() ?? "";
-        const userMessageId = random64();
-        const botMessageId = random64();
-
-        const commandInstance = directMessageCommandInstance(bot, txt);
-        if (commandInstance !== undefined) {
-            const scope: BotActionScope = {
-                kind: "chat_scope",
-                chatId: messageContext.chatId,
-                threadRootMessageIndex: messageContext.threadRootMessageIndex,
-                messageId: botMessageId,
-                userMessageId,
-            };
-            client.sendPlaceholderBotMessage(
-                scope,
-                undefined,
-                { kind: "text_content", text: txt },
-                userMessageId,
-                $currentUserIdStore,
-                containsMarkdown,
-            );
-            client.executeBotCommand(scope, commandInstance, true);
-            localUpdates.draftMessages.delete(messageContext);
+        if (client.sendDirectBotMessage(messageContext, txt, containsMarkdown).kind === "sent") {
             afterSendMessage();
         } else {
             showDirectBotChatWarning = true;
@@ -484,7 +458,7 @@
         if (e.key === "Enter" && !e.shiftKey) {
             if (directBot) {
                 if (!showCommandSelector && !messageIsEmpty) {
-                    sendADirectBotMessage(directBot);
+                    sendADirectBotMessage();
                 } else if (!commandSent && botState.selectedCommand === undefined) {
                     showDirectBotChatWarning = true;
                 }

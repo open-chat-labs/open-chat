@@ -5,6 +5,9 @@
 <script lang="ts">
     import {
         allUsersStore,
+        anonUserStore,
+        blockedUsersStore,
+        byContext as typersByContext,
         chatIdentifiersEqual,
         chatIdentifierToString,
         chatsInitialisedStore,
@@ -13,19 +16,24 @@
         failedMessagesStore,
         favouritesStore,
         isPrivateCommunityPreview,
+        localUpdates,
         messageIndexStore,
         messagesRead,
         muteNotificationsFailureMessage,
+        selectedChatDraftMessageStore,
         selectedChatExpandedDeletedMessageStore,
         selectedChatIdStore,
         selectedChatSummaryStore,
         selectedCommunitySummaryStore,
+        suspendedUserStore,
         threadOpenStore,
+        throttleDeadline,
         TimelineGrouper,
         unconfirmedReadByThem,
         unconfirmedStore,
         type ChatEvent,
         type ChatIdentifier,
+        type ChatSummary,
         type EventWrapper,
         type Message,
         type OpenChat,
@@ -40,7 +48,15 @@
     import { TimelineFlattener, type FlatChatItem } from "@src/core/flatChatItems";
     import Markdown from "@src/core/Markdown.svelte";
     import type { GroupMessage } from "@openchat/ui/src/lib/types";
+    import {
+        entryBlock,
+        expandMentions,
+        throttleCountdown,
+    } from "@src/logic/composer/composer";
+    import { enterSend } from "@src/stores/settings";
+    import { now500 } from "@src/stores/time";
     import { toastStore } from "@src/stores/toast";
+    import { detectMarkdown } from "@src/utils/detectMarkdown";
     import { copyPageUrl } from "@src/utils/urls";
     import { isSingleEmoji } from "@src/utils/emojis";
     import { getContext, untrack, type Snippet } from "svelte";
@@ -163,6 +179,69 @@
         }
     }
 
+    // ── the composer ──
+
+    const block = $derived(
+        chat === undefined
+            ? undefined
+            : entryBlock({
+                  suspended: $suspendedUserStore,
+                  frozen: client.isChatOrCommunityFrozen(chat, $selectedCommunitySummaryStore),
+                  blocked: chat.kind === "direct_chat" && $blockedUsersStore.has(chat.them.userId),
+                  previewing: chat.kind !== "direct_chat" && client.isPreviewing(chat.id),
+                  lapsed: client.isLapsed(chat.id),
+                  direct: chat.kind === "direct_chat",
+                  externalContent: chat.kind === "channel" && chat.externalUrl !== undefined,
+                  anonymous: $anonUserStore,
+                  canSend: client.canSendMessage(chat.id, "message", "text"),
+                  thread: false,
+              }),
+    );
+
+    // the others in this chat who are typing
+    const typingNames = $derived(
+        chat === undefined
+            ? []
+            : [...($typersByContext.get({ chatId: chat.id }) ?? [])]
+                  .filter((userId) => userId !== me)
+                  .map((userId) => client.displayName($allUsersStore.get(userId))),
+    );
+
+    // too many messages a minute: a countdown until sending resumes (the old ThrottleCountdown);
+    // the clock only ticks once there's a deadline
+    const countdown = $derived(
+        $throttleDeadline > 0 ? throttleCountdown($throttleDeadline, $now500) : undefined,
+    );
+    const throttled = $derived(
+        countdown !== undefined
+            ? $_("throttleMessage", { values: { time: countdown.seconds } })
+            : "",
+    );
+
+    // done once the message shows in the chat; refused (throttled, the rules or the PIN turned
+    // down, a send already on its way, a bot that takes no direct messages), it rejects
+    async function send(chat: ChatSummary, text: string): Promise<void> {
+        const context = { chatId: chat.id };
+        // a direct chat with a bot sends what was typed as the bot's direct-message command
+        // TODO(design): the old UI's command selector ("/") and its warning when the bot takes no
+        // direct messages (GAPS.md)
+        if (client.directChatWithBot(chat) !== undefined) {
+            const outcome = client.sendDirectBotMessage(context, text, detectMarkdown(text));
+            if (outcome.kind !== "sent") throw new Error(outcome.kind);
+            return;
+        }
+        const { text: expanded, mentioned } = expandMentions(text, (username) =>
+            client.lookupUserForMention(username, false),
+        );
+        const outcome = await client.sendMessage(
+            context,
+            expanded,
+            detectMarkdown(text),
+            undefined,
+            mentioned,
+        );
+        if (outcome.kind !== "posted") throw new Error(outcome.kind);
+    }
 
     // ── what can be shown ──
 
@@ -474,7 +553,17 @@
 
         <!-- one composer per chat: it starts from that chat's draft -->
         {#key chatIdentifierToString(chat.id)}
-            <Composer {chat} />
+            <Composer
+                {block}
+                draft={$selectedChatDraftMessageStore?.textContent ?? ""}
+                {typingNames}
+                {throttled}
+                enterSends={$enterSend}
+                onDraft={(text) =>
+                    localUpdates.draftMessages.setTextContent({ chatId: chat.id }, text)}
+                onStartTyping={() => client.startTyping(chat.id, me)}
+                onStopTyping={() => client.stopTyping(chat.id, me)}
+                onSend={(text) => send(chat, text)} />
         {/key}
     </div>
 {/if}
