@@ -190,6 +190,7 @@
         "translateFrom": "תרגם מ{language}",
         "translatedFrom": "תורגם במכשיר מ{language}"
     },
+    "bridgedUserUnknown": "משתמש {platform}",
     "nativeUpdate": {
         "downloadingTitle": "רגע אחד! מתעדכן ...",
         "downloadingMessage": "אנחנו מורידים עדכון קצר ומיד אפשר יהיה להמשיך ...",

@@ -190,6 +190,7 @@
         "translateFrom": "{language} से अनुवाद करें",
         "translatedFrom": "डिवाइस पर {language} से अनुवादित"
     },
+    "bridgedUserUnknown": "{platform} उपयोगकर्ता",
     "nativeUpdate": {
         "downloadingTitle": "एक क्षण! अपडेट हो रहा है ...",
         "downloadingMessage": "हम एक छोटा अपडेट डाउनलोड कर रहे हैं और फिर आप आगे बढ़ सकेंगे ...",

@@ -1,7 +1,8 @@
 use crate::send_message;
 use serde::{Deserialize, Serialize};
 use types::{
-    BotInitiator, BotMessageContent, ChannelId, EventIndex, GroupReplyContext, MessageId, MessageIndex, OgPreview, UserId,
+    BotInitiator, BotMessageContent, BridgedUser, ChannelId, EventIndex, GroupReplyContext, MessageId, MessageIndex, OgPreview,
+    UserId,
 };
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -18,6 +19,8 @@ pub struct Args {
     pub finalised: bool,
     #[serde(default)]
     pub og_previews: Vec<OgPreview>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub bridged_from: Option<BridgedUser>,
 }
 
 impl From<Args> for send_message::Args {
@@ -28,7 +31,8 @@ impl From<Args> for send_message::Args {
             message_id: value.message_id,
             content: value.content.into(),
             sender_name: value.bot_name,
-            sender_display_name: None,
+            // So that notifications of a message relayed from another platform show its author there
+            sender_display_name: value.bridged_from.map(|b| b.into_notification_display_name()),
             replies_to: value.replies_to.map(|r| GroupReplyContext { event_index: r }),
             mentioned: vec![],
             forwarding: false,

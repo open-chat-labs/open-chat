@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Store the author's id on messages a bridge bot relays from Discord or Telegram ([#10052](https://github.com/open-chat-labs/open-chat/pull/10052))
+
 ### Changed
 
 - Send activity, completed group imports, CSAM detections, moderation referrals and upgrade requests to the LocalUserIndex as events ([#10033](https://github.com/open-chat-labs/open-chat/pull/10033))

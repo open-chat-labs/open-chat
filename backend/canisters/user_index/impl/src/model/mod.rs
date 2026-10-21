@@ -1,5 +1,6 @@
 pub mod account_billing;
 pub mod authority_reports;
+pub mod bridged_users;
 pub mod chit_leaderboard;
 pub mod community_event_batch;
 pub mod diamond_membership_details;

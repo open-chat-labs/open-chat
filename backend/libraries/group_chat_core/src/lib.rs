@@ -2549,6 +2549,7 @@ mod tests {
         let caller = Caller::BotV2(BotCaller {
             bot: bot_id(),
             initiator: BotInitiator::Autonomous,
+            bridged_from: None,
         });
         let message_id: MessageId = 1u64.into();
 

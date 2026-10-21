@@ -18,6 +18,7 @@ import {
     getMembersString,
     mergeChatMetrics,
     mergeUnconfirmedThreadsIntoSummary,
+    sameUser,
     sortByTimestampThenEventIndex,
 } from "./chat";
 
@@ -395,5 +396,50 @@ describe("sortByTimestampThenEventIndex", () => {
             ev(2, 20n),
             ev(3, 30n),
         ]);
+    });
+});
+
+describe("sameUser", () => {
+    const message = (sender: string, timestamp: bigint, discordId?: string, telegramId?: string) =>
+        ({
+            index: 0,
+            timestamp,
+            event: {
+                kind: "message",
+                sender,
+                senderContext:
+                    discordId !== undefined
+                        ? {
+                              kind: "bot",
+                              finalised: true,
+                              bridgedFrom: { kind: "discord", id: discordId },
+                          }
+                        : telegramId !== undefined
+                          ? {
+                                kind: "bot",
+                                finalised: true,
+                                bridgedFrom: { kind: "telegram", id: telegramId },
+                            }
+                          : undefined,
+            },
+        }) as unknown as EventWrapper<ChatEvent>;
+
+    test("groups messages from the same sender", () => {
+        expect(sameUser(message("a", 0n), message("a", 1000n))).toBe(true);
+        expect(sameUser(message("a", 0n), message("b", 1000n))).toBe(false);
+    });
+
+    // A bridge bot sends every message it relays from another platform
+    test("groups a bridge bot's messages by their authors", () => {
+        expect(sameUser(message("bot", 0n, "1"), message("bot", 1000n, "1"))).toBe(true);
+        expect(sameUser(message("bot", 0n, "1"), message("bot", 1000n, "2"))).toBe(false);
+        expect(sameUser(message("bot", 0n), message("bot", 1000n, "1"))).toBe(false);
+        expect(
+            sameUser(message("bot", 0n, undefined, "1"), message("bot", 1000n, undefined, "1")),
+        ).toBe(true);
+        // The same id on different platforms is a different author
+        expect(sameUser(message("bot", 0n, "1"), message("bot", 1000n, undefined, "1"))).toBe(
+            false,
+        );
     });
 });

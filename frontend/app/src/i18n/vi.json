@@ -190,6 +190,7 @@
         "translateFrom": "Dịch từ {language}",
         "translatedFrom": "Đã dịch trên thiết bị từ {language}"
     },
+    "bridgedUserUnknown": "Người dùng {platform}",
     "nativeUpdate": {
         "downloadingTitle": "Chờ một chút! Đang cập nhật ...",
         "downloadingMessage": "Chúng tôi đang tải một bản cập nhật nhanh và bạn sẽ có thể tiếp tục ngay ...",
