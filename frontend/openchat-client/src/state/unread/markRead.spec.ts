@@ -292,6 +292,23 @@ describe("mark messages read", () => {
         });
     });
 
+    // Auto-unarchiving and the unread badges both read this: a chat whose latest message has
+    // expired has nothing unread left
+    test("a chat whose latest message has expired has no unread messages", () => {
+        const mr = new MessagesRead();
+        mr.readUpTo = 20;
+        markRead.value.serverState.set(abcId, mr);
+        const chat = (expiresAt: bigint) =>
+            ({
+                kind: "group_chat",
+                id: abcId,
+                latestMessage: { event: { messageIndex: 50 }, expiresAt },
+            }) as unknown as ChatSummary;
+        const now = BigInt(Date.now());
+        expect(markRead.unreadMessagesInChat(chat(now + 60_000n))).toBe(30);
+        expect(markRead.unreadMessagesInChat(chat(now - 60_000n))).toBe(0);
+    });
+
     describe("incremental unread counts", () => {
         function chat(
             groupId: string,

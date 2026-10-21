@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { trackedEffect } from "@src/utils/effects.svelte";
     import {
         Avatar,
         Body,
@@ -127,12 +126,6 @@
         updateUnreadCounts(chatSummary);
     });
 
-    trackedEffect("unarchive-chat", () => {
-        if (chatSummary.membership.archived && unreadMessages > 0) {
-            unarchiveChat();
-        }
-    });
-
     /***
      * This needs to be called both when the chatSummary changes (because that may have changed the latestMessage)
      * and when the internal state of the MessageReadTracker changes. Both are necessary to get the right value
@@ -148,10 +141,6 @@
                   );
 
             unreadMentions = getUnreadMentionCount(chatSummary);
-
-            if (chatSummary.membership.archived && unreadMessages > 0) {
-                unarchiveChat();
-            }
         });
     }
 
@@ -291,10 +280,6 @@
 
     function removeFromFavourites() {
         client.removeFromFavourites(chatSummary.id);
-    }
-
-    function unarchiveChat() {
-        publish("unarchiveChat", chatSummary.id);
     }
 
     function leaveGroup() {

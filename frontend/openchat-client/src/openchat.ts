@@ -394,6 +394,7 @@ import { get, type Unsubscriber } from "svelte/store";
 import { AndroidWebAuthnErrorCode } from "tauri-plugin-oc-api";
 import type { OpenChatConfig } from "./config";
 import { approveFromExternalWallet, type SignerWallet, type WalletAccount } from "./utils/signer";
+import { unarchiveChatsWithUnread } from "./utils/autoUnarchive";
 import {
     FilteredProposals,
     achievementsStore,
@@ -903,6 +904,8 @@ export class OpenChat {
     #inflightBalanceRefreshPromises: Map<string, Promise<bigint>> = new Map();
     #videoCallsInProgress: Set<bigint> = new Set();
     #serverVideoCallsInProgress: ChatMap<bigint> = new ChatMap();
+    // Archived chats this client is bringing out of the archive, until each request settles
+    #autoUnarchiving = new ChatSet();
     #locale!: string;
     #vapidPublicKey: string;
     #getBtcAddressPromise: Promise<string> | undefined = undefined;
@@ -8620,6 +8623,16 @@ export class OpenChat {
                 chatsResponse.premiumItems,
             );
         });
+
+        // An archived chat that has unread messages comes out of the archive. Only the chats in
+        // this answer can have gained any; each is read as merged, so a local unarchive counts
+        unarchiveChatsWithUnread(
+            chatsAddedUpdated.flatMap((chat) => chatSummariesStore.value.get(chat.id) ?? []),
+            (chat) => messagesRead.unreadMessagesInChat(chat),
+            this.#autoUnarchiving,
+            (chatId) => this.unarchiveChat(chatId),
+            () => publish("unarchiveChatFailed"),
+        );
 
         const selectedChatId = selectedChatIdStore.value;
         if (selectedChatId !== undefined) {
