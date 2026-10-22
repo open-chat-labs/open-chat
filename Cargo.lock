@@ -2128,7 +2128,6 @@ dependencies = [
  "escrow_canister",
  "escrow_canister_c2c_client",
  "event_store_types",
- "fire_and_forget_handler",
  "futures",
  "gated_groups",
  "git_commit_id",
@@ -3928,24 +3927,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5baebc0774151f905a1a2cc41989300b1e6fbb29aff0ceffa1064fdd3088d582"
 
 [[package]]
-name = "fire_and_forget_handler"
-version = "0.1.0"
-dependencies = [
- "candid",
- "canister_client",
- "canister_time",
- "constants",
- "futures",
- "ic-cdk 0.20.3",
- "per_round_timer",
- "serde",
- "serde_bytes",
- "tracing",
- "types",
- "utils",
-]
-
-[[package]]
 name = "flate2"
 version = "1.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4560,7 +4541,6 @@ dependencies = [
  "escrow_canister",
  "escrow_canister_c2c_client",
  "event_store_types",
- "fire_and_forget_handler",
  "gated_groups",
  "git_commit_id",
  "group_canister",
@@ -4705,7 +4685,6 @@ dependencies = [
  "community_canister_c2c_client",
  "constants",
  "cycles_dispenser_canister",
- "fire_and_forget_handler",
  "futures",
  "git_commit_id",
  "group_canister",
@@ -8885,7 +8864,6 @@ dependencies = [
  "community_canister",
  "community_canister_c2c_client",
  "constants",
- "fire_and_forget_handler",
  "git_commit_id",
  "group_canister",
  "group_canister_c2c_client",
@@ -10950,7 +10928,6 @@ dependencies = [
  "cycles_dispenser_client",
  "cycles_minting_canister",
  "cycles_minting_canister_c2c_client",
- "fire_and_forget_handler",
  "futures",
  "git_commit_id",
  "http_request",
@@ -12472,7 +12449,6 @@ dependencies = [
  "canister_timer_jobs",
  "canister_tracing_macros",
  "constants",
- "fire_and_forget_handler",
  "git_commit_id",
  "http_request",
  "ic-cdk 0.20.3",
@@ -12884,7 +12860,6 @@ dependencies = [
  "deep_message_links",
  "event_store_producer",
  "event_store_producer_cdk_runtime",
- "fire_and_forget_handler",
  "futures",
  "git_commit_id",
  "group_canister",

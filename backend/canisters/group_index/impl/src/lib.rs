@@ -11,7 +11,6 @@ use crate::model::public_groups::PublicGroups;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use constants::MINUTE_IN_MS;
-use fire_and_forget_handler::FireAndForgetHandler;
 use group_index_canister::ChildCanisterType;
 use local_user_index_canister::{GroupIndexEvent as LocalIndexEvent, ModerationFlagsChanged, NameChanged, VerifiedChanged};
 use model::local_index_event_batch::LocalIndexEventBatch;
@@ -363,7 +362,6 @@ struct Data {
     pub cached_hot_groups: CachedHotGroups,
     pub cached_metrics: CachedMetrics,
     pub local_index_map: LocalIndexMap,
-    pub fire_and_forget_handler: FireAndForgetHandler,
     pub video_call_operators: Vec<Principal>,
     pub upload_wasm_chunks_whitelist: HashSet<Principal>,
     pub rng_seed: [u8; 32],
@@ -420,7 +418,6 @@ impl Data {
             cached_hot_groups: CachedHotGroups::default(),
             cached_metrics: CachedMetrics::default(),
             local_index_map: LocalIndexMap::default(),
-            fire_and_forget_handler: FireAndForgetHandler::default(),
             video_call_operators,
             upload_wasm_chunks_whitelist: HashSet::default(),
             rng_seed: [0; 32],
@@ -531,7 +528,6 @@ impl Default for Data {
             cached_hot_groups: CachedHotGroups::default(),
             cached_metrics: CachedMetrics::default(),
             local_index_map: LocalIndexMap::default(),
-            fire_and_forget_handler: FireAndForgetHandler::default(),
             video_call_operators: Vec::default(),
             upload_wasm_chunks_whitelist: HashSet::default(),
             rng_seed: [0; 32],

@@ -4,7 +4,6 @@ use crate::model::storage_bucket_event_batch::StorageBucketEventBatch;
 use crate::model::user_index_event_batch::UserIndexEventBatch;
 use candid::{CandidType, Principal};
 use canister_state_macros::canister_state;
-use fire_and_forget_handler::FireAndForgetHandler;
 use rand::{Rng, prelude::StdRng};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
@@ -153,10 +152,6 @@ struct Data {
     // Created once the UserIndex is known
     #[serde(default)]
     pub user_index_event_sync_queue: Option<BatchedTimerJobQueue<UserIndexEventBatch>>,
-    // Nothing is sent through this any more. Kept for a release so that calls queued for a retry
-    // before the switch to events are still made, then removed.
-    #[serde(default)]
-    pub fire_and_forget_handler: FireAndForgetHandler,
     #[serde(default)]
     pub idempotency_checker: IdempotencyChecker,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
@@ -203,7 +198,6 @@ impl Data {
             derived_csam_hashes: BTreeMap::new(),
             user_index_canister_id: None,
             user_index_event_sync_queue: None,
-            fire_and_forget_handler: FireAndForgetHandler::default(),
             idempotency_checker: IdempotencyChecker::default(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             total_cycles_spent_on_canisters: 0,

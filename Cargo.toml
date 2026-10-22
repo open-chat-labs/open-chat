@@ -122,7 +122,6 @@ members = [
     "backend/libraries/email_magic_links",
     "backend/libraries/email_utils",
     "backend/libraries/error_codes",
-    "backend/libraries/fire_and_forget_handler",
     "backend/libraries/gated_groups",
     "backend/libraries/git_commit_id",
     "backend/libraries/governance_clients",

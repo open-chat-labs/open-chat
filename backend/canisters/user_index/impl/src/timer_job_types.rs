@@ -14,7 +14,7 @@ use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Serialize};
 use tracing::{error, info};
 use types::{
-    ChatId, CommunityId, DiamondMembershipFees, DiamondMembershipPlanDuration, MessageContentInitial, Milliseconds,
+    DiamondMembershipFees, DiamondMembershipPlanDuration, MessageContentInitial, Milliseconds,
     TextContent, TimestampMillis, UserId,
 };
 
@@ -22,10 +22,6 @@ use types::{
 pub enum TimerJob {
     RecurringDiamondMembershipPayment(RecurringDiamondMembershipPayment),
     SetUserSuspended(SetUserSuspended),
-    // No longer queued (suspensions reach the chats as events), but still run for the jobs queued
-    // before that changed. Removed after the next release.
-    SetUserSuspendedInGroup(SetUserSuspendedInGroup),
-    SetUserSuspendedInCommunity(SetUserSuspendedInCommunity),
     UnsuspendUser(UnsuspendUser),
     ProcessReportClassification(ProcessReportClassification),
     RetryPayment(Box<RetryPaymentJob>),
@@ -34,22 +30,6 @@ pub enum TimerJob {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct RecurringDiamondMembershipPayment {
     pub user_id: UserId,
-}
-
-#[derive(Serialize, Deserialize, Clone)]
-pub struct SetUserSuspendedInGroup {
-    pub user_id: UserId,
-    pub group: ChatId,
-    pub suspended: bool,
-    pub attempt: usize,
-}
-
-#[derive(Serialize, Deserialize, Clone)]
-pub struct SetUserSuspendedInCommunity {
-    pub user_id: UserId,
-    pub community: CommunityId,
-    pub suspended: bool,
-    pub attempt: usize,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -110,8 +90,6 @@ impl Job for TimerJob {
         match self {
             TimerJob::RecurringDiamondMembershipPayment(job) => job.execute(),
             TimerJob::SetUserSuspended(job) => job.execute(),
-            TimerJob::SetUserSuspendedInGroup(job) => job.execute(),
-            TimerJob::SetUserSuspendedInCommunity(job) => job.execute(),
             TimerJob::UnsuspendUser(job) => job.execute(),
             TimerJob::ProcessReportClassification(job) => job.execute(),
             TimerJob::RetryPayment(job) => job.execute(),
@@ -266,74 +244,6 @@ impl Job for SetUserSuspended {
                 } else {
                     error!(user_id = %job.user_id, ?error, "Failed to suspend user after 10 attempts");
                 }
-            }
-        }
-    }
-}
-
-impl Job for SetUserSuspendedInGroup {
-    fn execute(self) {
-        ic_cdk::futures::spawn_migratory(set_user_suspended_in_group(
-            self.user_id,
-            self.group,
-            self.suspended,
-            self.attempt,
-        ));
-
-        async fn set_user_suspended_in_group(user_id: UserId, group: ChatId, suspended: bool, attempt: usize) {
-            let args = group_canister::c2c_set_user_suspended::Args { user_id, suspended };
-            if group_canister_c2c_client::c2c_set_user_suspended(group.into(), &args)
-                .await
-                .is_err()
-                && attempt < 10
-            {
-                mutate_state(|state| {
-                    let now = state.env.now();
-                    state.data.timer_jobs.enqueue_job(
-                        TimerJob::SetUserSuspendedInGroup(SetUserSuspendedInGroup {
-                            user_id,
-                            group,
-                            suspended,
-                            attempt: attempt + 1,
-                        }),
-                        now + (30 * SECOND_IN_MS), // Try again in 30 seconds
-                        now,
-                    );
-                });
-            }
-        }
-    }
-}
-
-impl Job for SetUserSuspendedInCommunity {
-    fn execute(self) {
-        ic_cdk::futures::spawn_migratory(set_user_suspended_in_community(
-            self.user_id,
-            self.community,
-            self.suspended,
-            self.attempt,
-        ));
-
-        async fn set_user_suspended_in_community(user_id: UserId, community: CommunityId, suspended: bool, attempt: usize) {
-            let args = community_canister::c2c_set_user_suspended::Args { user_id, suspended };
-            if community_canister_c2c_client::c2c_set_user_suspended(community.into(), &args)
-                .await
-                .is_err()
-                && attempt < 10
-            {
-                mutate_state(|state| {
-                    let now = state.env.now();
-                    state.data.timer_jobs.enqueue_job(
-                        TimerJob::SetUserSuspendedInCommunity(SetUserSuspendedInCommunity {
-                            user_id,
-                            community,
-                            suspended,
-                            attempt: attempt + 1,
-                        }),
-                        now + (30 * SECOND_IN_MS), // Try again in 30 seconds
-                        now,
-                    );
-                });
             }
         }
     }

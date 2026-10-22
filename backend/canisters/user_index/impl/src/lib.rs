@@ -18,7 +18,6 @@ use canister_timer_jobs::TimerJobs;
 use constants::DAY_IN_MS;
 use event_store_producer::{EventBuilder, EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
-use fire_and_forget_handler::FireAndForgetHandler;
 use icrc_ledger_types::icrc1::account::{Account, Subaccount};
 use identity_canister::UserIdentity;
 use identity_canister::UserIndexEvent as IdentityEvent;
@@ -517,9 +516,6 @@ struct Data {
     pub authority_reporter: Option<Principal>,
     #[serde(default)]
     pub protected_actions: ProtectedActions,
-    // Nothing is sent through this any more. Kept for a release so that calls queued for a retry
-    // before the switch to events are still made, then removed.
-    pub fire_and_forget_handler: FireAndForgetHandler,
     pub nns_8_year_neuron: Option<NnsNeuron>,
     pub rng_seed: [u8; 32],
     pub diamond_membership_fees: DiamondMembershipFees,
@@ -657,7 +653,6 @@ impl Data {
             vault_reviewers: HashSet::new(),
             authority_reporter: None,
             protected_actions: ProtectedActions::default(),
-            fire_and_forget_handler: FireAndForgetHandler::default(),
             rng_seed: [0; 32],
             diamond_membership_fees: DiamondMembershipFees::default(),
             video_call_operators,
@@ -773,7 +768,6 @@ impl Default for Data {
             vault_reviewers: HashSet::new(),
             authority_reporter: None,
             protected_actions: ProtectedActions::default(),
-            fire_and_forget_handler: FireAndForgetHandler::default(),
             nns_8_year_neuron: None,
             rng_seed: [0; 32],
             diamond_membership_fees: DiamondMembershipFees::default(),
