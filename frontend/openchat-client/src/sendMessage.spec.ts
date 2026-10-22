@@ -49,7 +49,7 @@ import {
     serverCommunitiesStore,
 } from "./state";
 import { ChatDetailsState } from "./state/chat/serverDetails";
-import { currentChatVisit, startChatVisit } from "./state/selectedChat";
+import { currentChatVisit, serverEventsStore, startChatVisit } from "./state/selectedChat";
 import { captureRulesAcceptanceStore } from "./stores/rules";
 import { mostRecentStore } from "./stores/throttling";
 import { WorkerAgent } from "./workerAgent";
@@ -118,6 +118,22 @@ const transfer = {
     kind: "crypto_content",
     transfer: { kind: "pending", ledger: "ryjl3-tyaaa-aaaaa-aaaba-cai", amountE8s: 1n },
 } as unknown as AttachmentContent;
+
+type Deferred<T> = {
+    promise: Promise<T>;
+    resolve: (value: T) => void;
+    reject: (reason: unknown) => void;
+};
+
+function deferred<T>(): Deferred<T> {
+    let resolve: (value: T) => void = () => {};
+    let reject: (reason: unknown) => void = () => {};
+    const promise = new Promise<T>((res, rej) => {
+        resolve = res;
+        reject = rej;
+    });
+    return { promise, resolve, reject };
+}
 
 describe("sending from the composer", () => {
     let client: OpenChat;
@@ -287,26 +303,33 @@ describe("sending from the composer", () => {
         };
         // what was asked of the worker besides sending
         let requests: WorkerRequest[];
+        // the worker's lookup of the linked message, settled by each test
+        let lookup: Deferred<RehydratedMessagePreview[]>;
+        // where the worker's answer to the send goes
+        let subscriber: { onResult(result: unknown): void } | undefined;
 
-        // the worker loads the linked messages with `linkedMessages`, and answers nothing else
-        function worker(linkedMessages: () => Promise<RehydratedMessagePreview[]>) {
+        beforeEach(() => {
             requests = [];
+            lookup = deferred();
+            subscriber = undefined;
+            startChatVisit(chatId);
             vi.spyOn(WorkerAgent.prototype, "send").mockImplementation((async (
                 req: WorkerRequest,
             ) => {
                 requests.push(req);
                 if (req.kind !== "rehydrateMessage") return new Promise(() => {});
-                const messagePreviews = await linkedMessages();
+                const messagePreviews = await lookup.promise;
                 return { ...req.message, event: { ...req.message.event, messagePreviews } };
             }) as never);
-        }
+            vi.spyOn(WorkerAgent.prototype, "stream").mockImplementation(((req: WorkerRequest) => {
+                if (req.kind === "sendMessage") sent.push(req);
+                return { subscribe: (s: typeof subscriber) => (subscriber = s) };
+            }) as never);
+        });
 
-        async function sendLink(): Promise<SendMessageOutcome | "pending"> {
-            const outcome = await settled(
-                client.sendMessage(context, `see ${url}`, false, undefined, []),
-            );
-            await vi.advanceTimersByTimeAsync(0);
-            return outcome;
+        async function sendLink() {
+            const outcome = client.sendMessage(context, `see ${url}`, false, undefined, []);
+            expect(await settled(outcome)).toEqual({ kind: "posted" });
         }
 
         // the message the worker was given to send
@@ -314,27 +337,69 @@ describe("sending from the composer", () => {
             return sent[0]?.kind === "sendMessage" ? sent[0].event.event : undefined;
         }
 
-        test("shows the linked message's preview before it's confirmed, and keeps it", async () => {
-            worker(async () => [linked]);
-            expect(await sendLink()).toEqual({ kind: "posted" });
+        function unconfirmed(): Message | undefined {
             const messageId = sentMessage()?.messageId;
-            const unconfirmed = localUpdates
+            return localUpdates
                 .unconfirmedMessages(context)
-                .find((m) => m.event.messageId === messageId);
-            expect(unconfirmed?.event.messagePreviews).toEqual([linked]);
-            // the confirmed message is the one the worker returns, made from the one it was given
-            expect(sentMessage()?.messagePreviews).toEqual([linked]);
+                .find((m) => m.event.messageId === messageId)?.event;
+        }
+
+        function confirmed(): Message | undefined {
+            const messageId = sentMessage()?.messageId;
+            const event = serverEventsStore.value.find(
+                (e) => e.event.kind === "message" && e.event.messageId === messageId,
+            )?.event;
+            return event?.kind === "message" ? event : undefined;
+        }
+
+        // the worker says the message was sent
+        async function confirm() {
+            subscriber?.onResult([
+                { kind: "success", timestamp: 1n, messageIndex: 0, eventIndex: 1 },
+                sentMessage(),
+            ]);
+            await vi.advanceTimersByTimeAsync(0);
+        }
+
+        async function loadLinked(result: "found" | "failed") {
+            if (result === "found") lookup.resolve([linked]);
+            else lookup.reject(new Error("no access"));
+            await vi.advanceTimersByTimeAsync(0);
+        }
+
+        test("is sent without waiting for the linked message, whose preview then shows", async () => {
+            await sendLink();
+            expect(sentMessage()?.messagePreviews).toEqual([]);
+            expect(unconfirmed()?.messagePreviews).toEqual([]);
+            await loadLinked("found");
+            expect(unconfirmed()?.messagePreviews).toEqual([linked]);
         });
 
-        test("is still sent when the linked message can't be loaded", async () => {
+        test("keeps the preview once confirmed, when it was loaded first", async () => {
+            await sendLink();
+            await loadLinked("found");
+            await confirm();
+            expect(confirmed()?.messagePreviews).toEqual([linked]);
+        });
+
+        test("gets the preview once confirmed, when it's loaded after", async () => {
+            await sendLink();
+            await confirm();
+            expect(confirmed()?.messagePreviews).toEqual([]);
+            await loadLinked("found");
+            expect(confirmed()?.messagePreviews).toEqual([linked]);
+        });
+
+        test("shows none when the linked message can't be loaded", async () => {
             vi.spyOn(console, "warn").mockImplementation(() => {});
-            worker(() => Promise.reject(new Error("no access")));
-            expect(await sendLink()).toEqual({ kind: "posted" });
-            expect(sentMessage()?.messagePreviews).toEqual([]);
+            await sendLink();
+            await loadLinked("failed");
+            await confirm();
+            expect(unconfirmed()).toBeUndefined();
+            expect(confirmed()?.messagePreviews).toEqual([]);
         });
 
         test("isn't looked for in a message without one", async () => {
-            worker(async () => [linked]);
             await settled(send());
             expect(requests.filter((r) => r.kind === "rehydrateMessage")).toHaveLength(0);
             expect(sent).toHaveLength(1);

@@ -5445,11 +5445,12 @@ export class OpenChat {
         const messageEvent = createMessage(messageContext, message);
 
         // The agent fills in the previews of the OpenChat messages a message links to only for the
-        // messages it loads, so a message just sent would show none until its chat was loaded again
+        // messages it loads, so they're looked up here for a message being sent. They're only shown,
+        // never sent, so the send doesn't wait for them.
         const content = messageEvent.event.content;
         const messagePreviewsPromise =
             content.kind === "text_content" && extractMessagePreviews(content.text).length > 0
-                ? this.#loadMessagePreviews(chat, threadRootMessageIndex, messageEvent)
+                ? this.#loadMessagePreviews(chat, messageContext, messageEvent)
                 : undefined;
 
         if (!retrying) {
@@ -5465,23 +5466,14 @@ export class OpenChat {
 
         // Fetch og previews lazily so the message appears in the UI immediately.
         // We await here (after pushing to localUpdates) so the worker call still
-        // sends og_previews to the backend in the same request. Message previews
-        // are only shown, not sent, but are awaited too so that the confirmed
-        // message, which is the one the worker gets, keeps them.
-        if (ogPreviewsPromise !== undefined || messagePreviewsPromise !== undefined) {
-            const [ogPreviews, messagePreviews] = await Promise.all([
-                ogPreviewsPromise ?? [],
-                messagePreviewsPromise ?? [],
-            ]);
-            if (ogPreviews.length > 0 || messagePreviews.length > 0) {
+        // sends og_previews to the backend in the same request.
+        if (ogPreviewsPromise !== undefined) {
+            const ogPreviews = await ogPreviewsPromise;
+            if (ogPreviews.length > 0) {
                 messageEvent.event.ogPreviews = ogPreviews;
-                messageEvent.event.messagePreviews = messagePreviews;
-                localUpdates.setUnconfirmedPreviews(
-                    messageContext,
-                    messageEvent.event.messageId,
+                localUpdates.setUnconfirmedPreviews(messageContext, messageEvent.event.messageId, {
                     ogPreviews,
-                    messagePreviews,
-                );
+                });
             }
         }
 
@@ -5536,13 +5528,21 @@ export class OpenChat {
                         const [resp, msg] = response;
                         if (resp.kind === "success" || resp.kind === "transfer_success") {
                             const event = mergeSendMessageResponse(msg, resp);
+                            const visit = eventsVisitFor(chat.id, threadRootMessageIndex);
                             this.#addServerEventsToStores(
-                                eventsVisitFor(chat.id, threadRootMessageIndex),
+                                visit,
                                 chat.id,
                                 [event],
                                 threadRootMessageIndex,
                                 [],
                             );
+                            if (messagePreviewsPromise !== undefined) {
+                                void this.#addConfirmedMessagePreviews(
+                                    visit,
+                                    event.index,
+                                    messagePreviewsPromise,
+                                );
+                            }
                         } else if (resp.kind === "error") {
                             const pinNumberFailure = pinNumberFailureFromError(resp);
                             if (pinNumberFailure !== undefined) {
@@ -5618,25 +5618,50 @@ export class OpenChat {
         });
     }
 
+    // Looks up the previews of the OpenChat messages that a message being sent links to, and shows
+    // them on it while it's unconfirmed
     async #loadMessagePreviews(
         chat: ChatSummary,
-        threadRootMessageIndex: number | undefined,
+        messageContext: MessageContext,
         messageEvent: EventWrapper<Message>,
     ): Promise<RehydratedMessagePreview[]> {
+        let messagePreviews: RehydratedMessagePreview[] = [];
         try {
             const rehydrated = await this.#worker.send({
                 kind: "rehydrateMessage",
                 chatId: chat.id,
                 message: messageEvent,
-                threadRootMessageIndex,
+                threadRootMessageIndex: messageContext.threadRootMessageIndex,
                 latestKnownUpdate: chat.lastUpdated,
             });
-            return rehydrated.event.messagePreviews;
+            messagePreviews = rehydrated.event.messagePreviews;
         } catch (err) {
-            // The message is still sent, without them
             console.warn("Unable to load the messages a sent message links to", err);
-            return [];
         }
+        if (messagePreviews.length > 0) {
+            localUpdates.setUnconfirmedPreviews(messageContext, messageEvent.event.messageId, {
+                messagePreviews,
+            });
+        }
+        return messagePreviews;
+    }
+
+    // The confirmed message is made from the one the worker was given, which has no message
+    // previews, so they're added to it once both are in, whichever comes first
+    async #addConfirmedMessagePreviews(
+        visit: EventsVisit | undefined,
+        eventIndex: number,
+        messagePreviewsPromise: Promise<RehydratedMessagePreview[]>,
+    ): Promise<void> {
+        const messagePreviews = await messagePreviewsPromise;
+        if (messagePreviews.length === 0) return;
+        visit?.updateEvents((events) =>
+            events.map((e) =>
+                e.index === eventIndex && e.event.kind === "message"
+                    ? { ...e, event: { ...e.event, messagePreviews } }
+                    : e,
+            ),
+        );
     }
 
     #extractLedgerFromContent(content: MessageContent): string | undefined {

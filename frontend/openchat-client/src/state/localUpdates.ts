@@ -955,11 +955,12 @@ export class GlobalLocalState {
         );
     }
 
+    // The og previews and the message previews are each looked up when a message is sent, and
+    // arrive separately
     setUnconfirmedPreviews(
         key: MessageContext,
         messageId: bigint,
-        ogPreviews: OgPreview[],
-        messagePreviews: RehydratedMessagePreview[],
+        previews: { ogPreviews: OgPreview[] } | { messagePreviews: RehydratedMessagePreview[] },
     ) {
         this.#unconfirmed.update((map) => {
             const state = map.get(key);
@@ -968,7 +969,7 @@ export class GlobalLocalState {
                 if (msg) {
                     state.set(messageId, {
                         ...msg,
-                        event: { ...msg.event, ogPreviews, messagePreviews },
+                        event: { ...msg.event, ...previews },
                     });
                     map.set(key, state);
                 }
