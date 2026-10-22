@@ -146,10 +146,12 @@ export function throttleCountdown(
 }
 
 /**
- * Whether the message entry takes focus when a chat or thread is opened: only on a wide screen,
- * since on a narrower one it would bring up the on-screen keyboard over the messages.
+ * Whether the message entry takes focus when a chat or thread is opened: only on a wide screen
+ * that isn't a touch-only device (a tablet runs the wide layout too), since focusing would
+ * otherwise bring up the on-screen keyboard over the messages.
  */
-export function focusEntryOnOpen(width: ScreenWidth): boolean {
+export function focusEntryOnOpen(width: ScreenWidth, touchOnly: boolean): boolean {
+    if (touchOnly) return false;
     switch (width) {
         case ScreenWidth.Large:
         case ScreenWidth.ExtraLarge:

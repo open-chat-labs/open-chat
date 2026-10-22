@@ -168,15 +168,21 @@ describe("the throttle countdown", () => {
 
 describe("the entry taking focus when a chat or thread opens", () => {
     test("happens from 992px up", () => {
-        expect(focusEntryOnOpen(ScreenWidth.Large)).toBe(true);
-        expect(focusEntryOnOpen(ScreenWidth.ExtraLarge)).toBe(true);
-        expect(focusEntryOnOpen(ScreenWidth.ExtraExtraLarge)).toBe(true);
+        expect(focusEntryOnOpen(ScreenWidth.Large, false)).toBe(true);
+        expect(focusEntryOnOpen(ScreenWidth.ExtraLarge, false)).toBe(true);
+        expect(focusEntryOnOpen(ScreenWidth.ExtraExtraLarge, false)).toBe(true);
     });
 
     test("doesn't happen below that, where it would bring up the keyboard", () => {
-        expect(focusEntryOnOpen(ScreenWidth.Medium)).toBe(false);
-        expect(focusEntryOnOpen(ScreenWidth.Small)).toBe(false);
-        expect(focusEntryOnOpen(ScreenWidth.ExtraSmall)).toBe(false);
-        expect(focusEntryOnOpen(ScreenWidth.ExtraExtraSmall)).toBe(false);
+        expect(focusEntryOnOpen(ScreenWidth.Medium, false)).toBe(false);
+        expect(focusEntryOnOpen(ScreenWidth.Small, false)).toBe(false);
+        expect(focusEntryOnOpen(ScreenWidth.ExtraSmall, false)).toBe(false);
+        expect(focusEntryOnOpen(ScreenWidth.ExtraExtraSmall, false)).toBe(false);
+    });
+
+    test("doesn't happen on a touch-only device (a tablet), whatever its width", () => {
+        expect(focusEntryOnOpen(ScreenWidth.Large, true)).toBe(false);
+        expect(focusEntryOnOpen(ScreenWidth.ExtraLarge, true)).toBe(false);
+        expect(focusEntryOnOpen(ScreenWidth.ExtraExtraLarge, true)).toBe(false);
     });
 });

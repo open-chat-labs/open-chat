@@ -60,6 +60,7 @@
     import { now500 } from "@src/stores/time";
     import { toastStore } from "@src/stores/toast";
     import { detectMarkdown } from "@src/utils/detectMarkdown";
+    import { isTouchOnlyDevice } from "@src/utils/devices";
     import { copyPageUrl } from "@src/utils/urls";
     import { isSingleEmoji } from "@src/utils/emojis";
     import { buildDisplayName } from "@src/utils/user";
@@ -586,7 +587,7 @@
                 {typingNames}
                 {throttled}
                 enterSends={$enterSend}
-                autofocus={focusEntryOnOpen($screenWidth)}
+                autofocus={focusEntryOnOpen($screenWidth, isTouchOnlyDevice)}
                 onDraft={(text) =>
                     localUpdates.draftMessages.setTextContent({ chatId: chat.id }, text)}
                 onStartTyping={() => client.startTyping(chat.id, me)}

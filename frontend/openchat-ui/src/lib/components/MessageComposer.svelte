@@ -52,7 +52,7 @@
     onInput?: (text: string) => void;
     /** Whether Enter sends (Shift+Enter a new line); off, Enter is a new line and Ctrl/⌘+Enter sends. */
     enterSends?: boolean;
-    /** Whether the text box takes focus when the composer mounts (key the composer to focus it again). */
+    /** Whether the text box takes focus when the composer mounts, unless a dialog is open (key the composer to focus it again). */
     autofocus?: boolean;
     /** Send the text. Return a promise to keep the draft until it resolves (kept with an error if it rejects). */
     onSend?: (text: string) => Promise<unknown> | void;
@@ -564,7 +564,8 @@
     document.addEventListener('mousedown', down);
     // a draft the composer starts from takes the height it needs
     if (draft) tick().then(grow);
-    if (autofocus) input?.focus({ preventScroll: true });
+    // a dialog that opened first (say from a link) keeps the focus
+    if (autofocus && !document.querySelector('[aria-modal="true"]')) input?.focus({ preventScroll: true });
     // bar count follows the available width: one 3px bar per ~5px, so spacing stays tight at any size
     const fit = () => (barCount = Math.max(16, Math.min(120, Math.floor((root.getBoundingClientRect().width - 170) / 5))));
     const ro = new ResizeObserver(fit);

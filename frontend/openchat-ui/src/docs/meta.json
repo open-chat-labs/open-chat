@@ -1070,7 +1070,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Whether the text box takes focus when the composer mounts (key the composer to focus it again)."
+        "doc": "Whether the text box takes focus when the composer mounts, unless a dialog is open (key the composer to focus it again)."
       },
       {
         "name": "typingNames",
@@ -12034,7 +12034,7 @@
         "section": null,
         "required": false,
         "componentDefault": "false",
-        "doc": "Whether the text box takes focus when the composer mounts (key the composer to focus it again)."
+        "doc": "Whether the text box takes focus when the composer mounts, unless a dialog is open (key the composer to focus it again)."
       },
       {
         "name": "onSend",

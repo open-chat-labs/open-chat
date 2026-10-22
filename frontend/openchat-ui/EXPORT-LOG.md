@@ -123,5 +123,5 @@
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
 
 ## 2026-10-22 — the composer can take focus as it mounts, by hand
-- `MessageComposer` takes `autofocus` (default off): its text box takes focus when it mounts, without scrolling. `ComposerBar` passes it through. The app keys the composer per chat and turns it on where the old UI focused its entry on opening a chat (992px and up).
+- `MessageComposer` takes `autofocus` (default off): its text box takes focus when it mounts, without scrolling, unless a dialog (`aria-modal`) is open, which keeps it. `ComposerBar` passes it through. The app keys the composer per chat and turns it on where the old UI focuses its entry on opening a chat (992px and up, not on touch-only devices).
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
