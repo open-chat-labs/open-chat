@@ -32,6 +32,10 @@ import {
     type ChannelSummary,
     type CommunityIdentifier,
     type CommunitySummary,
+    type EventWrapper,
+    type Message,
+    type MessageContext,
+    type RehydratedMessagePreview,
     type RulesAcceptanceResolver,
     type SendMessageOutcome,
     type WorkerRequest,
@@ -40,6 +44,7 @@ import type { OpenChatConfig } from "./config";
 import { OpenChat } from "./openchat";
 import {
     currentUserStore,
+    eventsStore,
     localUpdates,
     pinNumberRequiredStore,
     pinNumberResolverStore,
@@ -47,7 +52,7 @@ import {
     serverCommunitiesStore,
 } from "./state";
 import { ChatDetailsState } from "./state/chat/serverDetails";
-import { currentChatVisit, startChatVisit } from "./state/selectedChat";
+import { currentChatVisit, serverEventsStore, startChatVisit } from "./state/selectedChat";
 import { captureRulesAcceptanceStore } from "./stores/rules";
 import { mostRecentStore } from "./stores/throttling";
 import { WorkerAgent } from "./workerAgent";
@@ -116,6 +121,22 @@ const transfer = {
     kind: "crypto_content",
     transfer: { kind: "pending", ledger: "ryjl3-tyaaa-aaaaa-aaaba-cai", amountE8s: 1n },
 } as unknown as AttachmentContent;
+
+type Deferred<T> = {
+    promise: Promise<T>;
+    resolve: (value: T) => void;
+    reject: (reason: unknown) => void;
+};
+
+function deferred<T>(): Deferred<T> {
+    let resolve: (value: T) => void = () => {};
+    let reject: (reason: unknown) => void = () => {};
+    const promise = new Promise<T>((res, rej) => {
+        resolve = res;
+        reject = rej;
+    });
+    return { promise, resolve, reject };
+}
 
 describe("sending from the composer", () => {
     let client: OpenChat;
@@ -260,5 +281,265 @@ describe("sending from the composer", () => {
         expect(sent).toHaveLength(1);
         // and once it's posted, the chat can send again
         expect(await settled(send())).toEqual({ kind: "posted" });
+    });
+
+    describe("a link to another message", () => {
+        const url = `https://oc.app/community/${here.communityId}/channel/1/5`;
+        const linked: RehydratedMessagePreview = {
+            url,
+            chatId,
+            threadRootMessageIndex: undefined,
+            message: {
+                kind: "message",
+                messageId: 5n,
+                messageIndex: 5,
+                sender: "them",
+                content: { kind: "text_content", text: "linked" },
+                reactions: [],
+                tips: {},
+                edited: false,
+                forwarded: false,
+                deleted: false,
+                blockLevelMarkdown: false,
+                ogPreviews: [],
+            },
+        };
+        // what was asked of the worker besides sending
+        let requests: WorkerRequest[];
+        // the worker's lookup of the linked message, settled by each test
+        let lookup: Deferred<RehydratedMessagePreview[]>;
+        // where the worker's answer to the send goes
+        let subscriber: { onResult(result: unknown): void } | undefined;
+        // the worker's answer to an edit
+        let editResult: Deferred<unknown>;
+
+        beforeEach(() => {
+            requests = [];
+            lookup = deferred();
+            subscriber = undefined;
+            editResult = deferred();
+            startChatVisit(chatId);
+            vi.spyOn(WorkerAgent.prototype, "send").mockImplementation((async (
+                req: WorkerRequest,
+            ) => {
+                requests.push(req);
+                if (req.kind === "editMessage") return editResult.promise;
+                if (req.kind !== "rehydrateMessage") return new Promise(() => {});
+                const messagePreviews = await lookup.promise;
+                return { ...req.message, event: { ...req.message.event, messagePreviews } };
+            }) as never);
+            vi.spyOn(WorkerAgent.prototype, "stream").mockImplementation(((req: WorkerRequest) => {
+                if (req.kind === "sendMessage") sent.push(req);
+                return { subscribe: (s: typeof subscriber) => (subscriber = s) };
+            }) as never);
+        });
+
+        async function sendLink() {
+            const outcome = client.sendMessage(context, `see ${url}`, false, undefined, []);
+            expect(await settled(outcome)).toEqual({ kind: "posted" });
+        }
+
+        // the message the worker was given to send
+        function sentMessage(): Message | undefined {
+            return sent[0]?.kind === "sendMessage" ? sent[0].event.event : undefined;
+        }
+
+        function unconfirmed(): Message | undefined {
+            const messageId = sentMessage()?.messageId;
+            return localUpdates
+                .unconfirmedMessages(context)
+                .find((m) => m.event.messageId === messageId)?.event;
+        }
+
+        function confirmed(): Message | undefined {
+            const messageId = sentMessage()?.messageId;
+            const event = serverEventsStore.value.find(
+                (e) => e.event.kind === "message" && e.event.messageId === messageId,
+            )?.event;
+            return event?.kind === "message" ? event : undefined;
+        }
+
+        // the worker says the message was sent
+        async function confirm() {
+            subscriber?.onResult([
+                { kind: "success", timestamp: 1n, messageIndex: 0, eventIndex: 1 },
+                sentMessage(),
+            ]);
+            await vi.advanceTimersByTimeAsync(0);
+        }
+
+        async function loadLinked(result: "found" | "failed") {
+            if (result === "found") lookup.resolve([linked]);
+            else lookup.reject(new Error("no access"));
+            await vi.advanceTimersByTimeAsync(0);
+        }
+
+        test("is sent without waiting for the linked message, whose preview then shows", async () => {
+            await sendLink();
+            expect(sentMessage()?.messagePreviews).toEqual([]);
+            expect(unconfirmed()?.messagePreviews).toEqual([]);
+            await loadLinked("found");
+            expect(unconfirmed()?.messagePreviews).toEqual([linked]);
+        });
+
+        test("keeps the preview once confirmed, when it was loaded first", async () => {
+            await sendLink();
+            await loadLinked("found");
+            await confirm();
+            expect(confirmed()?.messagePreviews).toEqual([linked]);
+        });
+
+        test("gets the preview once confirmed, when it's loaded after", async () => {
+            await sendLink();
+            await confirm();
+            expect(confirmed()?.messagePreviews).toEqual([]);
+            await loadLinked("found");
+            expect(confirmed()?.messagePreviews).toEqual([linked]);
+        });
+
+        test("shows none when the linked message can't be loaded", async () => {
+            vi.spyOn(console, "warn").mockImplementation(() => {});
+            await sendLink();
+            await loadLinked("failed");
+            await confirm();
+            expect(unconfirmed()).toBeUndefined();
+            expect(confirmed()?.messagePreviews).toEqual([]);
+        });
+
+        test("isn't looked for in a message without one", async () => {
+            await settled(send());
+            expect(requests.filter((r) => r.kind === "rehydrateMessage")).toHaveLength(0);
+            expect(sent).toHaveLength(1);
+        });
+
+        describe("edited", () => {
+            const url2 = `https://oc.app/community/${here.communityId}/channel/1/6`;
+            // each test edits a message of its own, since local updates outlive a test
+            let nextMessageId = 1000n;
+            let messageId: bigint;
+
+            // a message in the chat, with `text` and the previews it was loaded with
+            function inChat(text: string, messagePreviews: RehydratedMessagePreview[]) {
+                messageId = nextMessageId++;
+                const event: EventWrapper<Message> = {
+                    index: 1,
+                    timestamp: 1n,
+                    event: {
+                        ...linked.message,
+                        messageId,
+                        messageIndex: 0,
+                        sender: "me",
+                        content: { kind: "text_content", text },
+                        messagePreviews,
+                    },
+                };
+                currentChatVisit()?.updateEvents(() => [event]);
+            }
+
+            // the message as the chat shows it, which is what gets edited
+            function shown(): EventWrapper<Message> | undefined {
+                return eventsStore.value.find(
+                    (e): e is EventWrapper<Message> =>
+                        e.event.kind === "message" && e.event.messageId === messageId,
+                );
+            }
+
+            async function edit(text: string, messageContext: MessageContext = context) {
+                const editing = shown();
+                if (editing === undefined) throw new Error("the message isn't in the chat");
+                void client.editMessageWithAttachment(
+                    messageContext,
+                    text,
+                    false,
+                    undefined,
+                    editing,
+                );
+                await vi.advanceTimersByTimeAsync(0);
+            }
+
+            const lookups = () => requests.filter((r) => r.kind === "rehydrateMessage");
+
+            test("to link to a message, shows its preview once it's loaded", async () => {
+                inChat("hello", []);
+                await edit(`see ${url}`);
+                expect(shown()?.event.messagePreviews).toEqual([]);
+                await loadLinked("found");
+                expect(shown()?.event.messagePreviews).toEqual([linked]);
+            });
+
+            test("to drop the link, drops its preview straight away", async () => {
+                inChat(`see ${url}`, [linked]);
+                await edit("never mind");
+                expect(shown()?.event.messagePreviews).toEqual([]);
+                expect(lookups()).toHaveLength(0);
+            });
+
+            test("keeping the link, keeps its preview without looking it up", async () => {
+                inChat(`see ${url}`, [linked]);
+                await edit(`see ${url} again`);
+                expect(shown()?.event.messagePreviews).toEqual([linked]);
+                expect(lookups()).toHaveLength(0);
+            });
+
+            test("to add a link, keeps the others' previews if it can't be looked up", async () => {
+                vi.spyOn(console, "warn").mockImplementation(() => {});
+                inChat(`see ${url}`, [linked]);
+                await edit(`see ${url} and ${url2}`);
+                await loadLinked("failed");
+                expect(shown()?.event.messagePreviews).toEqual([linked]);
+            });
+
+            test("again, to drop the link before it's loaded, doesn't show it", async () => {
+                inChat("hello", []);
+                await edit(`see ${url}`);
+                await edit("hello again");
+                await loadLinked("found");
+                expect(shown()?.event.messagePreviews).toEqual([]);
+            });
+
+            test("again, keeping the link before it's loaded, shows it once it is", async () => {
+                inChat("hello", []);
+                await edit(`see ${url}`);
+                await edit(`see ${url} now`);
+                await loadLinked("found");
+                expect(shown()?.event.messagePreviews).toEqual([linked]);
+            });
+
+            test("unsuccessfully, doesn't show the preview it went on to load", async () => {
+                inChat("hello", []);
+                await edit(`see ${url}`);
+                // the edit is refused before the linked message has loaded
+                editResult.resolve({ kind: "failure" });
+                await vi.advanceTimersByTimeAsync(0);
+                await loadLinked("found");
+                expect(shown()?.event.content).toEqual({ kind: "text_content", text: "hello" });
+                expect(shown()?.event.messagePreviews).toEqual([]);
+            });
+
+            test("unsuccessfully, drops the preview it had already loaded", async () => {
+                inChat("hello", []);
+                await edit(`see ${url}`);
+                await loadLinked("found");
+                editResult.resolve({ kind: "failure" });
+                await vi.advanceTimersByTimeAsync(0);
+                expect(shown()?.event.content).toEqual({ kind: "text_content", text: "hello" });
+                expect(shown()?.event.messagePreviews).toEqual([]);
+            });
+
+            test("in a thread, looks the linked message up in the thread", async () => {
+                inChat("hello", []);
+                await edit(`see ${url}`, { chatId, threadRootMessageIndex: 3 });
+                expect(lookups()[0]).toMatchObject({ threadRootMessageIndex: 3 });
+            });
+
+            test("to drop the link before a send's lookup lands, isn't undone by it", async () => {
+                await sendLink();
+                await confirm();
+                messageId = sentMessage()?.messageId ?? 0n;
+                await edit("never mind");
+                await loadLinked("found");
+                expect(shown()?.event.messagePreviews).toEqual([]);
+            });
+        });
     });
 });

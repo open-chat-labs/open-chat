@@ -6,6 +6,7 @@ import {
     type MessageReminderCreatedContent,
     type OgPreview,
     type P2PSwapStatus,
+    type RehydratedMessagePreview,
     type Tally,
     type ThreadSummary,
 } from "@shared";
@@ -36,6 +37,7 @@ export class MessageLocalUpdates {
     proposalTally?: Tally;
     lastUpdated: number = 0;
     ogPreviews?: OgPreview[];
+    messagePreviews?: RehydratedMessagePreview[];
 
     isEmpty(): boolean {
         return Object.entries(this).every(

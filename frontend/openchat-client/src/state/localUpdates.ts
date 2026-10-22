@@ -32,6 +32,7 @@ import {
     type OptionalChatPermissions,
     type OptionUpdate,
     type P2PSwapStatus,
+    type RehydratedMessagePreview,
     type SenderContext,
     type StreakInsurance,
     type Tally,
@@ -954,7 +955,35 @@ export class GlobalLocalState {
         );
     }
 
-    setUnconfirmedOgPreviews(key: MessageContext, messageId: bigint, ogPreviews: OgPreview[]) {
+    // The content of an edit to the message that hasn't yet been refused or expired
+    editedContent(messageId: bigint): MessageContent | undefined {
+        return messageLocalUpdates.value.get(messageId)?.editedContent;
+    }
+
+    setEditedMessagePreviews(
+        messageId: bigint,
+        messagePreviews: RehydratedMessagePreview[],
+    ): UndoLocalUpdate {
+        return this.#modifyMessageUpdates(
+            messageId,
+            (upd) => {
+                upd.messagePreviews = messagePreviews;
+                return (upd) => {
+                    upd.messagePreviews = undefined;
+                    return upd;
+                };
+            },
+            "setEditedMessagePreviews",
+        );
+    }
+
+    // The og previews and the message previews are each looked up when a message is sent, and
+    // arrive separately
+    setUnconfirmedPreviews(
+        key: MessageContext,
+        messageId: bigint,
+        previews: { ogPreviews: OgPreview[] } | { messagePreviews: RehydratedMessagePreview[] },
+    ) {
         this.#unconfirmed.update((map) => {
             const state = map.get(key);
             if (state) {
@@ -962,7 +991,7 @@ export class GlobalLocalState {
                 if (msg) {
                     state.set(messageId, {
                         ...msg,
-                        event: { ...msg.event, ogPreviews },
+                        event: { ...msg.event, ...previews },
                     });
                     map.set(key, state);
                 }

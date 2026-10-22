@@ -60,6 +60,7 @@ import {
     directMessageCommandInstance,
     emptyEventsResponse,
     extractEnabledLinks,
+    extractMessagePreviews,
     extractUserIdsFromMentions,
     featureRestricted,
     fetchOgPreviews,
@@ -291,6 +292,7 @@ import {
     type Referral,
     type RegisterProposalVoteResponse,
     type RegisterUserResponse,
+    type RehydratedMessagePreview,
     type RejectReason,
     type RemoteUserSentMessage,
     type RemoteUserToggledReaction,
@@ -801,6 +803,17 @@ type SendHooks = {
     posted(): void;
     rulesDeclined(): void;
 };
+
+// The links in a message to other OpenChat messages, whose previews are shown on it
+function linkedMessageUrls(content: MessageContent): string[] {
+    return content.kind === "text_content"
+        ? extractMessagePreviews(content.text).map((p) => p.url)
+        : [];
+}
+
+function sameUrls(a: string[], b: string[]): boolean {
+    return a.length === b.length && a.every((url) => b.includes(url));
+}
 
 // The users who are known not to be members of the chat or community with this key, and the lookups
 // in flight of those who may be, so that nobody is looked up twice
@@ -5435,6 +5448,14 @@ export class OpenChat {
 
         const messageEvent = createMessage(messageContext, message);
 
+        // The agent fills in the previews of the OpenChat messages a message links to only for the
+        // messages it loads, so they're looked up here for a message being sent. They're only shown,
+        // never sent, so the send doesn't wait for them.
+        const messagePreviewsPromise =
+            linkedMessageUrls(messageEvent.event.content).length > 0
+                ? this.#loadMessagePreviews(chat, messageContext, messageEvent)
+                : undefined;
+
         if (!retrying) {
             this.#postSendMessage(chat, messageEvent, threadRootMessageIndex);
             hooks?.posted();
@@ -5453,11 +5474,9 @@ export class OpenChat {
             const ogPreviews = await ogPreviewsPromise;
             if (ogPreviews.length > 0) {
                 messageEvent.event.ogPreviews = ogPreviews;
-                localUpdates.setUnconfirmedOgPreviews(
-                    messageContext,
-                    messageEvent.event.messageId,
+                localUpdates.setUnconfirmedPreviews(messageContext, messageEvent.event.messageId, {
                     ogPreviews,
-                );
+                });
             }
         }
 
@@ -5512,13 +5531,21 @@ export class OpenChat {
                         const [resp, msg] = response;
                         if (resp.kind === "success" || resp.kind === "transfer_success") {
                             const event = mergeSendMessageResponse(msg, resp);
+                            const visit = eventsVisitFor(chat.id, threadRootMessageIndex);
                             this.#addServerEventsToStores(
-                                eventsVisitFor(chat.id, threadRootMessageIndex),
+                                visit,
                                 chat.id,
                                 [event],
                                 threadRootMessageIndex,
                                 [],
                             );
+                            if (messagePreviewsPromise !== undefined) {
+                                void this.#addConfirmedMessagePreviews(
+                                    visit,
+                                    event.index,
+                                    messagePreviewsPromise,
+                                );
+                            }
                         } else if (resp.kind === "error") {
                             const pinNumberFailure = pinNumberFailureFromError(resp);
                             if (pinNumberFailure !== undefined) {
@@ -5592,6 +5619,117 @@ export class OpenChat {
             }
             return resp;
         });
+    }
+
+    // The previews of the OpenChat messages that a message links to, which the agent otherwise fills
+    // in only for the messages it loads. Undefined if they couldn't be looked up.
+    async #lookUpMessagePreviews(
+        chat: ChatSummary,
+        threadRootMessageIndex: number | undefined,
+        event: EventWrapper<Message>,
+    ): Promise<RehydratedMessagePreview[] | undefined> {
+        try {
+            const rehydrated = await this.#worker.send({
+                kind: "rehydrateMessage",
+                chatId: chat.id,
+                // without the previews it has, which would come back unchanged if none were found
+                message: { ...event, event: { ...event.event, messagePreviews: [] } },
+                threadRootMessageIndex,
+                latestKnownUpdate: chat.lastUpdated,
+            });
+            return rehydrated.event.messagePreviews;
+        } catch (err) {
+            console.warn("Unable to load the messages a message links to", err);
+            return undefined;
+        }
+    }
+
+    // Looks up the previews of the OpenChat messages that a message being sent links to, and shows
+    // them on it while it's unconfirmed
+    async #loadMessagePreviews(
+        chat: ChatSummary,
+        messageContext: MessageContext,
+        messageEvent: EventWrapper<Message>,
+    ): Promise<RehydratedMessagePreview[]> {
+        const messagePreviews =
+            (await this.#lookUpMessagePreviews(
+                chat,
+                messageContext.threadRootMessageIndex,
+                messageEvent,
+            )) ?? [];
+        if (messagePreviews.length > 0) {
+            localUpdates.setUnconfirmedPreviews(messageContext, messageEvent.event.messageId, {
+                messagePreviews,
+            });
+        }
+        return messagePreviews;
+    }
+
+    // The confirmed message is made from the one the worker was given, which has no message
+    // previews, so they're added to it once both are in, whichever comes first
+    async #addConfirmedMessagePreviews(
+        visit: EventsVisit | undefined,
+        eventIndex: number,
+        messagePreviewsPromise: Promise<RehydratedMessagePreview[]>,
+    ): Promise<void> {
+        const messagePreviews = await messagePreviewsPromise;
+        if (messagePreviews.length === 0) return;
+        visit?.updateEvents((events) =>
+            events.map((e) =>
+                e.index === eventIndex && e.event.kind === "message"
+                    ? { ...e, event: { ...e.event, messagePreviews } }
+                    : e,
+            ),
+        );
+    }
+
+    // An edit can change which messages a message links to, and so its message previews: those of
+    // the messages it still links to stay, the rest go, and any it now links to are looked up
+    #refreshEditedMessagePreviews(
+        chat: ChatSummary,
+        messageContext: MessageContext,
+        editingEvent: EventWrapper<Message>,
+        edited: Message,
+    ): UndoLocalUpdate {
+        const urls = linkedMessageUrls(edited.content);
+        if (sameUrls(urls, linkedMessageUrls(editingEvent.event.content))) {
+            return () => {};
+        }
+        const kept = editingEvent.event.messagePreviews.filter((p) => urls.includes(p.url));
+        const refresh = { undo: localUpdates.setEditedMessagePreviews(edited.messageId, kept) };
+        if (kept.length < urls.length) {
+            void this.#lookUpEditedMessagePreviews(
+                chat,
+                messageContext,
+                editingEvent,
+                edited,
+                refresh,
+            );
+        }
+        return () => refresh.undo();
+    }
+
+    async #lookUpEditedMessagePreviews(
+        chat: ChatSummary,
+        messageContext: MessageContext,
+        editingEvent: EventWrapper<Message>,
+        edited: Message,
+        refresh: { undo: UndoLocalUpdate },
+    ): Promise<void> {
+        const messagePreviews = await this.#lookUpMessagePreviews(
+            chat,
+            messageContext.threadRootMessageIndex,
+            { ...editingEvent, event: edited },
+        );
+        // Not if the edit has since been refused, or edited again to link to other messages
+        const current = localUpdates.editedContent(edited.messageId);
+        if (
+            messagePreviews !== undefined &&
+            current !== undefined &&
+            sameUrls(linkedMessageUrls(current), linkedMessageUrls(edited.content))
+        ) {
+            refresh.undo = localUpdates.setEditedMessagePreviews(edited.messageId, messagePreviews);
+        }
     }
 
     #extractLedgerFromContent(content: MessageContent): string | undefined {
@@ -6042,6 +6180,12 @@ export class OpenChat {
 
             // Apply content update to local state immediately — don't block on og preview fetch.
             const undo = localUpdates.markMessageContentEdited(msg, updatedBlockLevelMarkdown);
+            const undoMessagePreviews = this.#refreshEditedMessagePreviews(
+                chat,
+                messageContext,
+                editingEvent,
+                msg,
+            );
             localUpdates.draftMessages.delete(messageContext);
 
             const newAchievement = !achievementsStore.value.has("edited_message");
@@ -6067,6 +6211,7 @@ export class OpenChat {
                     if (resp.kind !== "success") {
                         undo();
                         undoOgPreviews();
+                        undoMessagePreviews();
                         return false;
                     }
                     return true;
@@ -6074,6 +6219,7 @@ export class OpenChat {
                 .catch(() => {
                     undo();
                     undoOgPreviews();
+                    undoMessagePreviews();
                     return false;
                 });
         }
