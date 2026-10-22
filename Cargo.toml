@@ -141,7 +141,6 @@ members = [
     "backend/libraries/index_store",
     "backend/libraries/installed_bots",
     "backend/libraries/instruction_counts_log",
-    "backend/libraries/json",
     "backend/libraries/jwt",
     "backend/libraries/ledger_utils",
     "backend/libraries/light_up",

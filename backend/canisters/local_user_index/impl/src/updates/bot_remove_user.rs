@@ -8,7 +8,7 @@ use local_user_index_canister::bot_remove_user::*;
 use oc_error_codes::OCErrorCode;
 use types::{BotActionScope, CanisterId, ChannelId, Chat, UserId};
 
-#[update(candid = true, json = true, msgpack = true)]
+#[update(candid = true, msgpack = true)]
 async fn bot_remove_user(args: Args) -> Response {
     let context = match mutate_state(|state| {
         extract_access_context_from_community_or_group_context(args.community_or_group_context, state)

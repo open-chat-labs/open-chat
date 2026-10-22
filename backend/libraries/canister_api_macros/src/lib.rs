@@ -36,8 +36,6 @@ struct AttributeInput {
     #[serde(default)]
     pub msgpack: bool,
     #[serde(default)]
-    pub json: bool,
-    #[serde(default)]
     pub manual_reply: bool,
 }
 
@@ -150,62 +148,9 @@ fn canister_api_method(method_type: MethodType, attr: TokenStream, item: TokenSt
         quote! {}
     };
 
-    let json = if attr.json {
-        let mut json_attrs = attrs.clone();
-        let json_name = if is_lifecycle { name.clone() } else { format!("{name}_json") };
-
-        if !is_lifecycle {
-            json_attrs.push(quote! { name = #json_name });
-        }
-
-        let serializer = if is_lifecycle {
-            quote! {}
-        } else {
-            let serializer_func = if empty_return {
-                quote! { json::serialize_empty }
-            } else {
-                quote! { json::serialize_then_unwrap }
-            };
-
-            let serializer_name = format!("{json_name}_serializer");
-            let serializer_ident = Ident::new(&serializer_name, Span::call_site());
-            json_attrs.push(quote! { encode_with = #serializer_name });
-
-            quote! { use #serializer_func as #serializer_ident; }
-        };
-
-        let deserializer = {
-            let deserializer_func = if empty_args {
-                quote! { json::deserialize_empty }
-            } else {
-                quote! { json::deserialize_owned_then_unwrap }
-            };
-
-            let deserializer_name = format!("{json_name}_deserializer");
-            let deserializer_ident = Ident::new(&deserializer_name, Span::call_site());
-
-            json_attrs.push(quote! { decode_with = #deserializer_name });
-            quote! { use #deserializer_func as #deserializer_ident; }
-        };
-
-        let mut json_item = item.clone();
-        json_item.sig.ident = Ident::new(&json_name, Span::call_site());
-
-        quote! {
-            #serializer
-            #deserializer
-
-            #[ic_cdk::#method_type(#(#json_attrs),*)]
-            #json_item
-        }
-    } else {
-        quote! {}
-    };
-
     TokenStream::from(quote! {
         #candid
         #msgpack
-        #json
     })
 }
 

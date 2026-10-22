@@ -14,7 +14,7 @@ use types::{
 };
 use user_index_canister::LocalUserIndexEvent as UserIndexEvent;
 
-#[update(candid = true, json = true, msgpack = true)]
+#[update(candid = true, msgpack = true)]
 async fn bot_send_message(args: Args) -> Response {
     let context = match mutate_state(|state| {
         let context = extract_access_context_from_chat_context(args.chat_context, state)?;
