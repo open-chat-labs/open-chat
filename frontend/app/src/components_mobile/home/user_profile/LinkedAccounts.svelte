@@ -132,9 +132,10 @@
 </SlidingPageContent>
 
 <style lang="scss">
+    // The same size as the avatar
     .icon {
         flex: none;
-        width: 2rem;
-        height: 2rem;
+        width: var(--avatar-sm);
+        height: var(--avatar-sm);
     }
 </style>

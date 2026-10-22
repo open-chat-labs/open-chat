@@ -126,10 +126,11 @@
         align-items: center;
         gap: $sp3;
 
+        // The same size as the avatar
         .icon {
             flex: none;
-            width: toRem(28);
-            height: toRem(28);
+            width: toRem(35);
+            height: toRem(35);
         }
 
         .avatar {
