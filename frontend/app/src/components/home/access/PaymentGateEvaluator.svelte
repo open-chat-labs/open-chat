@@ -47,7 +47,7 @@
     }
 
     function onRefreshingBalanceFailed() {
-        error = i18nKey("Failed to refresh balance");
+        error = i18nKey("unableToRefreshAccountBalance", { token: token?.symbol ?? "" });
         refreshingBalance = false;
     }
 
