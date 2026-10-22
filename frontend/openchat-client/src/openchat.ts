@@ -759,7 +759,6 @@ import {
     nullUser,
     userAvatarUrl,
 } from "./utils/user";
-import { isDisplayNameValid, isUsernameValid } from "./utils/validation";
 import { MultiWebAuthnIdentity, createWebAuthnIdentity } from "./utils/webAuthn";
 import { WorkerAgent } from "./workerAgent";
 
@@ -876,6 +875,8 @@ export class OpenChat {
     >();
     #membershipCheck: number | undefined;
     #currentUserIdChangedPublished = false;
+    // counts the changes made here to the current user's profile, which a refresh mustn't undo
+    #currentUserProfileWrites = 0;
     #referralCode: string | undefined = undefined;
     #userLookupForMentions:
         | {
@@ -1534,13 +1535,7 @@ export class OpenChat {
             isUniquePerson: user.isUniquePerson,
             hideOnlineStatus: user.hideOnlineStatus,
         });
-        this.getPublicProfile(user.userId).subscribe({
-            onResult: (profile) => {
-                if (profile !== undefined) {
-                    currentUserProfileStore.set(profile);
-                }
-            },
-        });
+        this.#loadCurrentUserProfile(user.userId);
     }
 
     onCreatedUser(user: CreatedUser): void {
@@ -2144,7 +2139,7 @@ export class OpenChat {
         return this.#worker
             .send({ kind: "setUserAvatar", data })
             .then((resp) => {
-                currentUserProfileStore.update((profile) => ({
+                this.#updateCurrentUserProfile((profile) => ({
                     ...profile,
                     avatarId: resp.blobId,
                 }));
@@ -2157,7 +2152,7 @@ export class OpenChat {
         return this.#worker
             .send({ kind: "setProfileBackground", data })
             .then((resp) => {
-                currentUserProfileStore.update((profile) => ({
+                this.#updateCurrentUserProfile((profile) => ({
                     ...profile,
                     backgroundId: resp.blobId,
                 }));
@@ -4077,8 +4072,6 @@ export class OpenChat {
     groupMessagesByDate = groupMessagesByDate;
     fillMessage = fillMessage;
     audioRecordingMimeType = audioRecordingMimeType;
-    isDisplayNameValid = isDisplayNameValid;
-    isUsernameValid = isUsernameValid;
 
     // Returns the chat to go to, or undefined if there's no such user. That's the chat under the
     // user's latest id if `chatId` is under one they had before being migrated to a MultiUser
@@ -6430,10 +6423,7 @@ export class OpenChat {
     }
 
     checkUsername(username: string, isBot: boolean): Promise<CheckUsernameResponse> {
-        return this.#worker.send({ kind: "checkUsername", username, isBot }).then((resp) => {
-            console.log("Resp: ", resp);
-            return resp;
-        });
+        return this.#worker.send({ kind: "checkUsername", username, isBot });
     }
 
     // `pageIndex` picks which page of `maxResults` users to return, starting from 0
@@ -6889,13 +6879,7 @@ export class OpenChat {
                         userCreatedStore.set(true);
                         currentUserStore.set(user);
                         this.#setDiamondStatus(user.diamondStatus);
-                        this.getPublicProfile(user.userId).subscribe({
-                            onResult: (profile) => {
-                                if (profile !== undefined) {
-                                    currentUserProfileStore.set(profile);
-                                }
-                            },
-                        });
+                        this.#loadCurrentUserProfile(user.userId);
                     }
                     if (!resolved) {
                         // we want to resolve the promise with the first response from the stream so that
@@ -7791,8 +7775,42 @@ export class OpenChat {
     }
 
     /**
+     * Loads the current user's profile into currentUserProfileStore again, so a change made on
+     * another device shows (the profile is otherwise loaded once, at sign-in). Only the live
+     * profile counts: the cached one may be older than the store, and so may a live one asked for
+     * before a change here (a save, an image) wrote the store.
+     */
+    refreshCurrentUserProfile(): void {
+        if (anonUserStore.value || get(offlineStore)) return;
+        const writes = this.#currentUserProfileWrites;
+        this.getPublicProfile(currentUserIdStore.value).subscribe({
+            onResult: (profile, final) => {
+                if (!final || profile === undefined) return;
+                if (writes !== this.#currentUserProfileWrites) return;
+                currentUserProfileStore.set(profile);
+            },
+        });
+    }
+
+    #updateCurrentUserProfile(update: (profile: PublicProfile) => PublicProfile): void {
+        this.#currentUserProfileWrites++;
+        currentUserProfileStore.update(update);
+    }
+
+    #loadCurrentUserProfile(userId: string): void {
+        this.getPublicProfile(userId).subscribe({
+            onResult: (profile) => {
+                if (profile !== undefined) {
+                    currentUserProfileStore.set(profile);
+                }
+            },
+        });
+    }
+
+    /**
      * Saves the profile fields that differ from `original`, in parallel. A field the backend rejects keeps its
-     * unsaved value and carries the reason to show under it.
+     * unsaved value and carries the reason to show under it. Each saved field is written to
+     * currentUserProfileStore.
      */
     async saveProfile(
         original: PublicProfile,
@@ -7812,6 +7830,10 @@ export class OpenChat {
                 switch (result.kind) {
                     case "saved":
                         outcome.profile = { ...outcome.profile, [field]: candidate[field] };
+                        this.#updateCurrentUserProfile((profile) => ({
+                            ...profile,
+                            [field]: candidate[field],
+                        }));
                         break;
                     case "rejected":
                         outcome.errors[field] = result.message;
