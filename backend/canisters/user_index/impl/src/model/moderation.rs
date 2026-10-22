@@ -4,10 +4,8 @@ use crate::timer_job_types::{SetUserSuspended, TimerJob, UnsuspendUser};
 use constants::{DAY_IN_MS, OPENCHAT_BOT_USER_ID};
 use local_user_index_canister::{OpenChatBotMessageV2, UserIndexEvent};
 use rand::RngExt;
-use storage_bucket_canister::c2c_vault_sync::VaultCaptureMetadata;
-use storage_index_canister::c2c_vault_ops::{
-    ApplyVerdictOp, DestroyOp, QuarantineOp, SetLegalHoldOp, UnquarantineOp, VaultOp, VaultReviewer,
-};
+use storage_bucket_canister::VaultCaptureMetadata;
+use storage_index_canister::{ApplyVerdictOp, DestroyOp, QuarantineOp, SetLegalHoldOp, UnquarantineOp, VaultOp, VaultReviewer};
 use tracing::error;
 use types::{BlobReference, Milliseconds};
 use types::{
@@ -86,7 +84,7 @@ pub fn post_moderation_alert(alert: ModerationAlert, state: &mut RuntimeState) {
             .set_moderation_channel_message_id(report_index, channel_message_id);
     }
 
-    let args = community_canister::c2c_send_moderation_report::Args {
+    let args = community_canister::SendModerationReport {
         channel_id,
         message_id: channel_message_id,
         report,
@@ -196,7 +194,7 @@ pub fn post_moderation_notice(text: String, state: &mut RuntimeState) {
     };
 
     let message_id: MessageId = state.env.rng().random::<u128>().into();
-    let args = community_canister::c2c_send_moderation_notice::Args {
+    let args = community_canister::SendModerationNotice {
         channel_id,
         message_id,
         text,
@@ -217,7 +215,7 @@ pub fn update_moderation_alert_status(
         return;
     };
 
-    let args = community_canister::c2c_update_moderation_report_status::Args {
+    let args = community_canister::UpdateModerationReportStatus {
         channel_id,
         message_id,
         status: Some(status),
@@ -249,7 +247,7 @@ pub fn update_moderation_alert_authority_report(
     // given AuthorityReportState variant traps on decoding it (msgpack rejects an unknown enum
     // variant - it is not an unknown field which would simply be dropped), so the community
     // canister must be released before the user_index whenever a variant is added
-    let args = community_canister::c2c_update_moderation_report_status::Args {
+    let args = community_canister::UpdateModerationReportStatus {
         channel_id,
         message_id,
         status: Some(crate::model::reported_messages::ReportedMessages::report_status(
@@ -277,7 +275,7 @@ pub fn update_moderation_alert_quarantined(reported_message: &ReportedMessage, s
         return;
     };
 
-    let args = community_canister::c2c_update_moderation_report_status::Args {
+    let args = community_canister::UpdateModerationReportStatus {
         channel_id,
         message_id,
         status: Some(crate::model::reported_messages::ReportedMessages::report_status(
@@ -355,7 +353,7 @@ fn set_flags_and_maybe_delete(
 ) {
     match chat_id {
         Chat::Group(group_id) => {
-            let args = group_canister::c2c_flag_message::Args {
+            let args = group_canister::FlagMessage {
                 thread_root_message_index,
                 message_id,
                 flags,
@@ -364,7 +362,7 @@ fn set_flags_and_maybe_delete(
             state.push_event_to_group(group_id, group_canister::UserIndexEvent::FlagMessage(args));
         }
         Chat::Channel(community_id, channel_id) => {
-            let args = community_canister::c2c_flag_message::Args {
+            let args = community_canister::FlagMessage {
                 channel_id,
                 thread_root_message_index,
                 message_id,
@@ -495,14 +493,14 @@ pub fn undelete_message(
 ) {
     match chat_id {
         Chat::Group(group_id) => {
-            let args = group_canister::c2c_moderation_undelete::Args {
+            let args = group_canister::ModerationUndelete {
                 thread_root_message_index,
                 message_id,
             };
             state.push_event_to_group(group_id, group_canister::UserIndexEvent::ModerationUndelete(args));
         }
         Chat::Channel(community_id, channel_id) => {
-            let args = community_canister::c2c_moderation_undelete::Args {
+            let args = community_canister::ModerationUndelete {
                 channel_id,
                 thread_root_message_index,
                 message_id,
@@ -523,14 +521,14 @@ pub fn hard_delete_message(
 ) {
     match chat_id {
         Chat::Group(group_id) => {
-            let args = group_canister::c2c_moderation_hard_delete::Args {
+            let args = group_canister::ModerationHardDelete {
                 thread_root_message_index,
                 message_id,
             };
             state.push_event_to_group(group_id, group_canister::UserIndexEvent::ModerationHardDelete(args));
         }
         Chat::Channel(community_id, channel_id) => {
-            let args = community_canister::c2c_moderation_hard_delete::Args {
+            let args = community_canister::ModerationHardDelete {
                 channel_id,
                 thread_root_message_index,
                 message_id,
@@ -708,7 +706,7 @@ fn verdict_ops(
 // with the OC public key the buckets need to verify vault-export tokens, to every storage
 // bucket via the storage index
 pub fn sync_authority_reporter(state: &mut RuntimeState) {
-    let op = VaultOp::SetAuthorityReporter(storage_index_canister::c2c_vault_ops::SetAuthorityReporterOp {
+    let op = VaultOp::SetAuthorityReporter(storage_index_canister::SetAuthorityReporterOp {
         principal: state.data.authority_reporter,
         oc_public_key_pem: state.data.oc_key_pair.public_key_pem().to_string(),
     });

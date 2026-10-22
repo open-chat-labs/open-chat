@@ -5,11 +5,13 @@ use types::{AccessorId, FileAdded, FileId, FileRemoved, Hash};
 mod lifecycle;
 mod queries;
 mod updates;
+mod vault_ops;
 
 pub use lifecycle::*;
 pub use queries::*;
 use ts_export::ts_export;
 pub use updates::*;
+pub use vault_ops::*;
 
 #[ts_export(storage_index)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -20,11 +22,17 @@ pub struct ProjectedAllowance {
     pub bytes_used_after_operation: u64,
 }
 
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+pub struct UserConfig {
+    pub user_id: Principal,
+    pub byte_limit: u64,
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum UserIndexEvent {
-    AddOrUpdateUser(add_or_update_users::UserConfig),
+    AddOrUpdateUser(UserConfig),
     RemoveUser(Principal),
-    VaultOp(c2c_vault_ops::VaultOp),
+    VaultOp(VaultOp),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -47,7 +55,7 @@ pub enum StorageBucketEvent {
 pub struct CsamHashDenylisted {
     pub hash: Hash,
     pub report_index: u64,
-    // See storage_bucket c2c_vault_sync::DenylistHashOp::derived (Option for the same reason)
+    // See storage_bucket_canister::DenylistHashOp::derived (Option for the same reason)
     #[serde(default)]
     pub derived: Option<bool>,
 }

@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove the pushes left pending when the event queue replaced them, now that they have been sent ([#10172](https://github.com/open-chat-labs/open-chat/pull/10172))
+- Remove the old names of the endpoints which the event endpoints replaced, as nothing calls them any more ([#10172](https://github.com/open-chat-labs/open-chat/pull/10172))
+
+## [[2.0.2181](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2181-daily_puzzle)] - 2026-10-22
+
 ### Changed
 
 - Send each day's puzzles to the LocalUserIndexes as events at `c2c_daily_puzzle`, from a queue per index ([#10050](https://github.com/open-chat-labs/open-chat/pull/10050))

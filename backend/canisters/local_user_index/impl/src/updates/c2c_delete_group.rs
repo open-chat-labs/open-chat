@@ -1,21 +1,7 @@
-use crate::guards::caller_is_group_index;
 use crate::{CanisterToRefund, RuntimeState, jobs, mutate_state};
-use canister_api_macros::update;
-use canister_tracing_macros::trace;
-use local_user_index_canister::c2c_delete_group::*;
 use oc_error_codes::OCErrorCode;
 use types::{CanisterId, ChatId, OCResult};
 use utils::canister::{start, stop, uninstall};
-
-#[update(guard = "caller_is_group_index", msgpack = true)]
-#[trace]
-fn c2c_delete_group(args: Args) -> Response {
-    mutate_state(|state| c2c_delete_group_impl(args, state)).into()
-}
-
-fn c2c_delete_group_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    delete_group(args.chat_id, state)
-}
 
 pub(crate) fn delete_group(chat_id: ChatId, state: &mut RuntimeState) -> OCResult {
     if state.data.local_groups.delete(&chat_id) {

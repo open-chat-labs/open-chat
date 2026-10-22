@@ -1,2 +1,15 @@
-// Its Group canisters' events. Shares `c2c_group_canister`'s types, which move here once the old name is removed.
-pub use super::c2c_group_canister::*;
+use crate::{GroupEvent, GroupOrCommunityEvent};
+use serde::{Deserialize, Serialize};
+use types::{IdempotentEnvelope, SuccessOnly};
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct Args {
+    pub events: Vec<IdempotentEnvelope<GroupEvent>>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ArgsInternal {
+    pub events: Vec<IdempotentEnvelope<GroupOrCommunityEvent>>,
+}
+
+pub type Response = SuccessOnly;

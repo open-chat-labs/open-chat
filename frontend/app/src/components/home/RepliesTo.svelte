@@ -2,13 +2,21 @@
     import {
         type ChatIdentifier,
         type RehydratedReplyContext,
+        allUsersStore,
+        BRIDGE_PLATFORM_NAMES,
+        bridgedAuthorName,
+        bridgedFrom,
+        bridgedUserKey,
+        bridgedUsersStore,
         chatIdentifiersEqual,
         chatListScopeStore,
         currentUserIdStore,
+        linkedAuthor,
         OpenChat,
         routeForChatIdentifier,
         selectedChatWebhooksStore,
         selectedCommunityMembersStore,
+        shouldShowAsMe,
     } from "@client";
     import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
@@ -33,17 +41,35 @@
 
     const debug = false;
 
-    let me = $derived(repliesTo.senderId === $currentUserIdStore);
+    // Who the quoted message is shown as from, as in the chat: the OpenChat user who linked the
+    // account a bridge bot relayed it from, or else the account itself
+    let bridged = $derived(bridgedFrom(repliesTo.senderContext));
+    let bridgedUser = $derived(
+        bridged !== undefined ? $bridgedUsersStore.get(bridgedUserKey(bridged)!) : undefined,
+    );
+    let linkedUser = $derived(linkedAuthor(bridgedUser, $allUsersStore));
+    let me = $derived(
+        shouldShowAsMe(
+            repliesTo.senderId === $currentUserIdStore,
+            linkedUser?.userId,
+            $currentUserIdStore,
+        ),
+    );
     let isTextContent = $derived(repliesTo.content?.kind === "text_content");
     let isP2PSwap = $derived(repliesTo.content.kind === "p2p_swap_content");
     let displayName = $derived(
         me
             ? client.toTitleCase($_("you"))
-            : client.getDisplayName(
-                  repliesTo.senderId,
-                  $selectedCommunityMembersStore,
-                  $selectedChatWebhooksStore,
-              ),
+            : bridged !== undefined && linkedUser === undefined
+              ? (bridgedAuthorName(bridgedUser) ??
+                $_("bridgedUserUnknown", {
+                    values: { platform: BRIDGE_PLATFORM_NAMES[bridged.kind] },
+                }))
+              : client.getDisplayName(
+                    linkedUser?.userId ?? repliesTo.senderId,
+                    $selectedCommunityMembersStore,
+                    $selectedChatWebhooksStore,
+                ),
     );
 
     function getUrl() {

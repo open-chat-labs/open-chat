@@ -7,15 +7,16 @@
         bridgedAuthorName,
         allUsersStore,
         bridgedFrom,
-        isDeletedUser,
         bridgedUserKey,
         bridgedUsersStore,
+        linkedAuthor,
         OpenChat,
         routeForChatIdentifier,
         selectedChatMembersStore,
         selectedChatWebhooksStore,
         selectedCommunityMembersStore,
         selectedServerChatStore,
+        shouldShowAsMe,
         type ChatIdentifier,
         type ChatType,
         type Member,
@@ -108,15 +109,8 @@
     let bridgedUser = $derived(
         bridged !== undefined ? $bridgedUsersStore.get(bridgedUserKey(bridged)!) : undefined,
     );
-    // The OpenChat user who linked the account the message was relayed from, shown as its author. If
-    // they've deleted their account, the account's own profile is shown again.
-    let linkedUser = $derived.by(() => {
-        const user =
-            bridgedUser?.linkedUserId !== undefined
-                ? $allUsersStore.get(bridgedUser.linkedUserId)
-                : undefined;
-        return user !== undefined && !isDeletedUser(user) ? user : undefined;
-    });
+    // The OpenChat user who linked the account the message was relayed from, shown as its author
+    let linkedUser = $derived(linkedAuthor(bridgedUser, $allUsersStore));
     // A linked account's messages carry its OpenChat user's badges, not the bridge bot's
     let author = $derived(linkedUser ?? sender);
     let streak = $derived(author?.streak ?? 0);
@@ -143,6 +137,9 @@
     let isPrize = $derived(msg.content.kind === "prize_content");
     // let hasReactions = $derived(msg.reactions.length > 0);
     let me = $derived(msg.sender === $currentUserIdStore);
+    // One relayed from the user's own linked account looks like their own message, but keeps its
+    // header, so its platform's badge still shows
+    let showAsMe = $derived(shouldShowAsMe(me, linkedUser?.userId, $currentUserIdStore));
     let showHeader = $derived(
         first && !isProposal && !isPrize && !me && chatType !== "direct_chat",
     );
@@ -153,7 +150,7 @@
         if (placeholderContent) {
             return "transparent";
         }
-        if (me) {
+        if (showAsMe) {
             return ColourVars.chatBubbleSent;
         }
 
@@ -161,7 +158,7 @@
     });
     let borderRadius = $derived.by<Radius>(() => {
         // top, right, bottom, left
-        if (me) {
+        if (showAsMe) {
             return ["xl", "sm", hasThread || !last ? "sm" : "xl", "xl"];
         } else {
             return ["sm", "xl", "xl", hasThread || !last ? "sm" : "xl"];
@@ -186,7 +183,7 @@
 
     let classList = $derived.by(() => {
         const classes = ["message_bubble"];
-        if (me && !placeholderContent && !failed) {
+        if (showAsMe && !placeholderContent && !failed) {
             classes.push("me");
         }
         if (focused) {
@@ -248,7 +245,10 @@
             crossAxisAlignment={"center"}
             gap={"xs"}
             onClick={onOpenUserProfile}>
-            <Body fontWeight={"bold"} maxLines={1} colour={"textSecondary"}>
+            <Body
+                fontWeight={"bold"}
+                maxLines={1}
+                colour={showAsMe ? "chatTextSent" : "textSecondary"}>
                 {senderDisplayName}
             </Body>
             <Badges
@@ -286,7 +286,7 @@
             msg.repliesTo.kind === "rehydrated_reply_context" ? msg.repliesTo : undefined}
         <Container
             onClick={reply ? () => zoomToMessage(reply) : undefined}
-            supplementalClass={`reply_wrapper ${me ? "me" : ""}`}
+            supplementalClass={`reply_wrapper ${showAsMe ? "me" : ""}`}
             direction={"vertical"}>
             {#if msg.repliesTo.kind === "rehydrated_reply_context"}
                 {@render repliesTo(msg.repliesTo)}
@@ -296,7 +296,7 @@
         </Container>
     {/if}
     <div class="message_bubble_content" bind:clientWidth={contentWidth}>
-        {@render messageContent?.(me)}
+        {@render messageContent?.(showAsMe)}
     </div>
     {#if !placeholderContent}
         <MessageMetadata
@@ -304,7 +304,7 @@
             deleted={msg.deleted}
             {undeleting}
             {bot}
-            {me}
+            me={showAsMe}
             {fill}
             {accepted}
             {chatType}

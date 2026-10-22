@@ -1,11 +1,12 @@
+use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_escrow_canister;
-use crate::updates::c2c_notify_p2p_swap_status_change::c2c_notify_p2p_swap_status_change_impl;
-use crate::{RuntimeState, execute_c2c_update};
+use crate::timer_job_types::TimerJob;
+use crate::{GroupEventPusher, RuntimeState, execute_c2c_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use escrow_canister::EscrowEvent;
 use escrow_canister::c2c_escrow::*;
-use types::SuccessOnly;
+use escrow_canister::{EscrowEvent, SwapStatus, SwapStatusChange};
+use types::{EventIndex, P2PSwapCancelled, P2PSwapExpired, P2PSwapLocation, P2PSwapStatus, SuccessOnly};
 
 // Must be fed by a single queue on the Escrow canister: the idempotency check keeps one high-water
 // mark per sender, so a batch retried from a second queue after a later batch from the first had
@@ -25,9 +26,113 @@ fn c2c_escrow_impl(args: Args, state: &mut RuntimeState) -> Response {
             .check(caller, event.created_at, event.idempotency_id)
         {
             match event.value {
-                EscrowEvent::SwapStatusChanged(change) => c2c_notify_p2p_swap_status_change_impl(change, state),
+                EscrowEvent::SwapStatusChanged(change) => apply_swap_status_change(change, state),
             }
         }
     }
     SuccessOnly::Success
+}
+
+fn apply_swap_status_change(args: SwapStatusChange, state: &mut RuntimeState) {
+    let P2PSwapLocation::Message(m) = args.location else {
+        return;
+    };
+
+    // Anyone can create a swap in the escrow canister naming any message as its location, so ignore
+    // the notification unless it is for the swap on that message
+    let Some(content) = state
+        .data
+        .chat
+        .events
+        .get_p2p_swap(m.thread_root_message_index, m.message_id, EventIndex::default())
+        .filter(|c| c.swap_id == args.swap_id)
+    else {
+        return;
+    };
+
+    let mut result = None;
+
+    match args.status {
+        SwapStatus::Expired(e) => {
+            let token0_txn_out = e
+                .refunds
+                .into_iter()
+                .find(|t| t.ledger == content.token0.ledger)
+                .map(|t| t.block_index);
+
+            result = state
+                .data
+                .chat
+                .events
+                .set_p2p_swap_status(
+                    m.thread_root_message_index,
+                    m.message_id,
+                    P2PSwapStatus::Expired(P2PSwapExpired { token0_txn_out }),
+                    state.env.now(),
+                )
+                .ok();
+        }
+        SwapStatus::Cancelled(c) => {
+            let token0_txn_out = c
+                .refunds
+                .into_iter()
+                .find(|t| t.ledger == content.token0.ledger)
+                .map(|t| t.block_index);
+
+            result = state
+                .data
+                .chat
+                .events
+                .set_p2p_swap_status(
+                    m.thread_root_message_index,
+                    m.message_id,
+                    P2PSwapStatus::Cancelled(P2PSwapCancelled { token0_txn_out }),
+                    state.env.now(),
+                )
+                .ok();
+        }
+        SwapStatus::Completed(c) => {
+            let now = state.env.now();
+            // Escrow identifies the acceptor by the owner of their wallet, which the swap recorded
+            // when they reserved it. For a swap reserved before that was recorded, whose acceptor was
+            // then in their own User canister, the owner is their user id.
+            let accepted_by = state
+                .data
+                .chat
+                .events
+                .p2p_swap_reserved_by(m.thread_root_message_index, m.message_id, c.accepted_by)
+                .or_else(|| state.data.lookup_user_id(c.accepted_by))
+                .unwrap_or(c.accepted_by.into());
+            result = state
+                .data
+                .chat
+                .events
+                .complete_p2p_swap(
+                    accepted_by,
+                    m.thread_root_message_index,
+                    m.message_id,
+                    c.token0_transfer_out.block_index,
+                    c.token1_transfer_out.block_index,
+                    now,
+                    GroupEventPusher {
+                        now,
+                        rng: state.env.rng(),
+                        queue: &mut state.data.local_user_index_event_sync_queue,
+                    },
+                )
+                .map(|result| result.drop_value())
+                .ok();
+        }
+        _ => {}
+    }
+
+    if let Some(success) = result {
+        // The swap has ended, so there is no longer any need to mark it as expired
+        state.data.timer_jobs.cancel_job(|job| {
+            matches!(job, TimerJob::MarkP2PSwapExpired(j)
+                if j.thread_root_message_index == m.thread_root_message_index && j.message_id == m.message_id)
+        });
+        state.push_bot_notification(success.bot_notification);
+        handle_activity_notification(state);
+    }
 }

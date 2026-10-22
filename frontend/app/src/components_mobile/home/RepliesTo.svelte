@@ -1,10 +1,18 @@
 <script lang="ts">
     import { Column } from "component-lib";
     import {
+        allUsersStore,
+        BRIDGE_PLATFORM_NAMES,
+        bridgedAuthorName,
+        bridgedFrom,
+        bridgedUserKey,
+        bridgedUsersStore,
         currentUserIdStore,
+        linkedAuthor,
         OpenChat,
         selectedChatWebhooksStore,
         selectedCommunityMembersStore,
+        shouldShowAsMe,
         type ChatIdentifier,
         type RehydratedReplyContext,
     } from "@client";
@@ -26,15 +34,33 @@
 
     const debug = false;
 
-    let me = $derived(repliesTo.senderId === $currentUserIdStore);
+    // Who the quoted message is shown as from, as in the chat: the OpenChat user who linked the
+    // account a bridge bot relayed it from, or else the account itself
+    let bridged = $derived(bridgedFrom(repliesTo.senderContext));
+    let bridgedUser = $derived(
+        bridged !== undefined ? $bridgedUsersStore.get(bridgedUserKey(bridged)!) : undefined,
+    );
+    let linkedUser = $derived(linkedAuthor(bridgedUser, $allUsersStore));
+    let me = $derived(
+        shouldShowAsMe(
+            repliesTo.senderId === $currentUserIdStore,
+            linkedUser?.userId,
+            $currentUserIdStore,
+        ),
+    );
     let displayName = $derived(
         me
             ? client.toTitleCase($_("you"))
-            : client.getDisplayName(
-                  repliesTo.senderId,
-                  $selectedCommunityMembersStore,
-                  $selectedChatWebhooksStore,
-              ),
+            : bridged !== undefined && linkedUser === undefined
+              ? (bridgedAuthorName(bridgedUser) ??
+                $_("bridgedUserUnknown", {
+                    values: { platform: BRIDGE_PLATFORM_NAMES[bridged.kind] },
+                }))
+              : client.getDisplayName(
+                    linkedUser?.userId ?? repliesTo.senderId,
+                    $selectedCommunityMembersStore,
+                    $selectedChatWebhooksStore,
+                ),
     );
 </script>
 

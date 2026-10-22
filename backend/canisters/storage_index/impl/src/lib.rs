@@ -1,18 +1,15 @@
-use crate::model::bucket_event_batch::BucketEventBatch;
 use crate::model::buckets::{BucketRecord, Buckets};
 use crate::model::files::Files;
 use crate::model::storage_bucket_event_batch::StorageBucketEventBatch;
 use crate::model::user_index_event_batch::UserIndexEventBatch;
-use crate::model::vault_event_batch::VaultEventBatch;
 use candid::{CandidType, Principal};
 use canister_state_macros::canister_state;
-use fire_and_forget_handler::FireAndForgetHandler;
 use rand::{Rng, prelude::StdRng};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use storage_bucket_canister::StorageIndexEvent;
-use storage_index_canister::c2c_vault_ops::VaultReviewer;
+use storage_index_canister::VaultReviewer;
 use storage_index_canister::init::CyclesDispenserConfig;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
@@ -132,38 +129,29 @@ struct Data {
     pub users: HashMap<Principal, UserRecordInternal>,
     pub files: Files,
     pub buckets: Buckets,
-    // Drained into `storage_bucket_event_sync_queue` by the post_upgrade one-off, and removed with it
-    pub bucket_event_sync_queue: GroupedTimerJobQueue<BucketEventBatch>,
-    #[serde(default = "default_vault_event_sync_queue")]
-    pub vault_event_sync_queue: GroupedTimerJobQueue<VaultEventBatch>,
-    #[serde(default = "new_storage_bucket_event_sync_queue")]
     pub storage_bucket_event_sync_queue: GroupedTimerJobQueue<StorageBucketEventBatch>,
     #[serde(default)]
     pub vault_reviewers: Vec<VaultReviewer>,
     // The NCA reporting service's principal + the OC public key, held so each new bucket is
     // seeded with them (a bucket cannot verify a vault-export token without the key)
     #[serde(default)]
-    pub authority_reporter: Option<storage_index_canister::c2c_vault_ops::SetAuthorityReporterOp>,
+    pub authority_reporter: Option<storage_index_canister::SetAuthorityReporterOp>,
     // Every hash upheld as CSAM, learned from the bucket which applied the verdict. Held here
     // so the denylist survives as platform-wide state: it is pushed to all other buckets when
     // it changes, and to each new bucket when it is created.
     #[serde(default)]
     pub csam_hashes: BTreeMap<Hash, u64>,
-    // Hashes clients declared as the source of upheld content (see storage_bucket
-    // c2c_vault_sync::DenylistHashOp::derived): refused everywhere, never sanctioned
+    // Hashes clients declared as the source of upheld content (see
+    // storage_bucket_canister::DenylistHashOp::derived): refused everywhere, never sanctioned
     #[serde(default)]
     pub derived_csam_hashes: BTreeMap<Hash, u64>,
-    // Learned from the caller of c2c_vault_ops (only ever the user_index); used to report
-    // bucket-detected CSAM re-uploads back to it
+    // Learned from the caller sending vault ops to `c2c_user_index` (only ever the user_index); used
+    // to report bucket-detected CSAM re-uploads back to it
     #[serde(default)]
     pub user_index_canister_id: Option<CanisterId>,
     // Created once the UserIndex is known
     #[serde(default)]
     pub user_index_event_sync_queue: Option<BatchedTimerJobQueue<UserIndexEventBatch>>,
-    // Nothing is sent through this any more. Kept for a release so that calls queued for a retry
-    // before the switch to events are still made, then removed.
-    #[serde(default)]
-    pub fire_and_forget_handler: FireAndForgetHandler,
     #[serde(default)]
     pub idempotency_checker: IdempotencyChecker,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
@@ -173,14 +161,6 @@ struct Data {
     pub cycles_minting_canister_id: CanisterId,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
-}
-
-fn default_vault_event_sync_queue() -> GroupedTimerJobQueue<VaultEventBatch> {
-    GroupedTimerJobQueue::new(5, false)
-}
-
-fn new_storage_bucket_event_sync_queue() -> GroupedTimerJobQueue<StorageBucketEventBatch> {
-    GroupedTimerJobQueue::new(5, false)
 }
 
 fn envelope<T>(now: TimestampMillis, rng: &mut StdRng, value: T) -> IdempotentEnvelope<T> {
@@ -211,16 +191,13 @@ impl Data {
             users: HashMap::new(),
             files: Files::default(),
             buckets: Buckets::default(),
-            bucket_event_sync_queue: GroupedTimerJobQueue::new(5, false),
-            vault_event_sync_queue: default_vault_event_sync_queue(),
-            storage_bucket_event_sync_queue: new_storage_bucket_event_sync_queue(),
+            storage_bucket_event_sync_queue: GroupedTimerJobQueue::new(5, false),
             vault_reviewers: Vec::new(),
             authority_reporter: None,
             csam_hashes: BTreeMap::new(),
             derived_csam_hashes: BTreeMap::new(),
             user_index_canister_id: None,
             user_index_event_sync_queue: None,
-            fire_and_forget_handler: FireAndForgetHandler::default(),
             idempotency_checker: IdempotencyChecker::default(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             total_cycles_spent_on_canisters: 0,
@@ -316,10 +293,10 @@ impl Data {
         let mut events = Vec::new();
         if !self.vault_reviewers.is_empty() {
             events.push(StorageIndexEvent::VaultOp(Box::new(
-                storage_bucket_canister::c2c_vault_sync::VaultOp::SetReviewers(
+                storage_bucket_canister::VaultOp::SetReviewers(
                     self.vault_reviewers
                         .iter()
-                        .map(|r| storage_bucket_canister::c2c_vault_sync::VaultReviewer {
+                        .map(|r| storage_bucket_canister::VaultReviewer {
                             principal: r.principal,
                             user_id: r.user_id,
                         })
@@ -329,12 +306,10 @@ impl Data {
         }
         if let Some(op) = &self.authority_reporter {
             events.push(StorageIndexEvent::VaultOp(Box::new(
-                storage_bucket_canister::c2c_vault_sync::VaultOp::SetAuthorityReporter(
-                    storage_bucket_canister::c2c_vault_sync::SetAuthorityReporterOp {
-                        principal: op.principal,
-                        oc_public_key_pem: op.oc_public_key_pem.clone(),
-                    },
-                ),
+                storage_bucket_canister::VaultOp::SetAuthorityReporter(storage_bucket_canister::SetAuthorityReporterOp {
+                    principal: op.principal,
+                    oc_public_key_pem: op.oc_public_key_pem.clone(),
+                }),
             )));
         }
         // A new bucket starts with the full CSAM denylist, otherwise upheld content could be
@@ -343,13 +318,11 @@ impl Data {
         let derived = self.derived_csam_hashes.iter().map(|(h, r)| (*h, *r, true));
         for (hash, report_index, derived) in verified.chain(derived) {
             events.push(StorageIndexEvent::VaultOp(Box::new(
-                storage_bucket_canister::c2c_vault_sync::VaultOp::DenylistHash(
-                    storage_bucket_canister::c2c_vault_sync::DenylistHashOp {
-                        hash,
-                        report_index,
-                        derived: Some(derived),
-                    },
-                ),
+                storage_bucket_canister::VaultOp::DenylistHash(storage_bucket_canister::DenylistHashOp {
+                    hash,
+                    report_index,
+                    derived: Some(derived),
+                }),
             )));
         }
         events.extend(self.users.keys().map(|p| StorageIndexEvent::UserAdded(*p)));
@@ -406,8 +379,8 @@ impl Data {
     ) {
         self.push_event_to_bucket(
             bucket,
-            StorageIndexEvent::VaultOp(Box::new(storage_bucket_canister::c2c_vault_sync::VaultOp::DenylistHash(
-                storage_bucket_canister::c2c_vault_sync::DenylistHashOp {
+            StorageIndexEvent::VaultOp(Box::new(storage_bucket_canister::VaultOp::DenylistHash(
+                storage_bucket_canister::DenylistHashOp {
                     hash,
                     report_index,
                     derived: Some(derived),

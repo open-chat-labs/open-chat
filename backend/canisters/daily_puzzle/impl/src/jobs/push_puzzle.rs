@@ -5,7 +5,7 @@
 //! push is only ever the fast path. Each push replaces any set still queued for an index, and the
 //! index's idempotency check drops a set sent again after a later one landed.
 
-use crate::{RuntimeState, mutate_state, read_state, registry};
+use crate::{mutate_state, read_state, registry};
 use ic_cdk_timers::TimerId;
 use local_user_index_canister::DailyPuzzleEvent;
 use std::cell::Cell;
@@ -16,17 +16,6 @@ const RETRY_DELAY: Duration = Duration::from_secs(60);
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
-}
-
-// `pending_pushes` is only ever non-empty in state from before the queue: the indexes still owed the
-// day's set then, which this push covers
-pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
-    if TIMER_ID.get().is_none() && !state.data.pending_pushes.is_empty() {
-        schedule(false, Duration::ZERO);
-        true
-    } else {
-        false
-    }
 }
 
 pub(crate) fn schedule(refresh: bool, delay: Duration) {
@@ -52,8 +41,6 @@ async fn push(refresh: bool) {
     }
 
     mutate_state(|state| {
-        state.data.pending_pushes.clear();
-
         let now = state.env.now();
         let puzzles: Vec<_> = state.data.current_puzzles(now).into_iter().cloned().collect();
         let Some(number) = puzzles.first().map(|p| p.number) else {

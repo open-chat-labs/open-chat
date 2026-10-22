@@ -21,10 +21,10 @@
         currentUserStore,
         allUsersStore,
         bridgedFrom,
-        isDeletedUser,
         bridgedUserKey,
         bridgedUsersStore,
         type EnhancedReplyContext,
+        linkedAuthor,
         localUpdates,
         type Message,
         type MessageReminderCreatedContent,
@@ -36,6 +36,7 @@
         selectedChatBlockedUsersStore,
         type SelectedEmoji,
         type SenderContext,
+        shouldShowAsMe,
         translationsStore,
         unconfirmedReadByThem,
         undeletingMessagesStore,
@@ -231,6 +232,7 @@
             edited: msg.edited,
             isThreadRoot: msg.thread !== undefined,
             sourceContext: messageContext,
+            senderContext,
         };
     }
 
@@ -373,15 +375,12 @@
     let bridgedUser = $derived(
         bridged !== undefined ? $bridgedUsersStore.get(bridgedUserKey(bridged)!) : undefined,
     );
-    // The OpenChat user who linked the account the message was relayed from, shown as its author. If
-    // they've deleted their account, the account's own profile is shown again.
-    let linkedUser = $derived.by(() => {
-        const user =
-            bridgedUser?.linkedUserId !== undefined
-                ? $allUsersStore.get(bridgedUser.linkedUserId)
-                : undefined;
-        return user !== undefined && !isDeletedUser(user) ? user : undefined;
-    });
+    // The OpenChat user who linked the account the message was relayed from, shown as its author
+    let linkedUser = $derived(linkedAuthor(bridgedUser, $allUsersStore));
+    // Those relayed from the user's own linked account look like their own messages. Editing,
+    // deleting, swiping and the menu still go by `me`, as the bridge bot sent them, except for the
+    // options aimed at the author.
+    let showAsMe = $derived(shouldShowAsMe(me, linkedUser?.userId, $currentUserIdStore));
     // A tip would go to the bridge bot, not the author shown
     let canTip = $derived(
         canTipMessages && !me && confirmed && !inert && !failed && bridged === undefined,
@@ -397,7 +396,7 @@
     );
     let fill = $derived(client.fillMessage(msg));
     let showAvatar = $derived(
-        chatType !== "direct_chat" && !me && $screenWidth !== ScreenWidth.ExtraExtraSmall,
+        chatType !== "direct_chat" && !showAsMe && $screenWidth !== ScreenWidth.ExtraExtraSmall,
     );
     let translated = $derived($translationsStore.has(msg.messageId));
     let threadSummary = $derived(msg.thread);
@@ -559,6 +558,7 @@
                 {failed}
                 {canShare}
                 {me}
+                {showAsMe}
                 {canPin}
                 {canTip}
                 {pinned}
@@ -644,7 +644,7 @@
                 padding={last ? ["zero", "zero", "sm", "zero"] : "zero"}
                 gap={"sm"}
                 overflow={"visible"}
-                mainAxisAlignment={me ? "end" : "start"}
+                mainAxisAlignment={showAsMe ? "end" : "start"}
                 {pan}>
                 {#if showAvatar}
                     <div class:first class="avatar">
@@ -664,7 +664,7 @@
                 <Container
                     supplementalClass={"message_bubble_wrapper"}
                     overflow={"visible"}
-                    crossAxisAlignment={me ? "end" : "start"}
+                    crossAxisAlignment={showAsMe ? "end" : "start"}
                     width={"hug"}
                     maxWidth={chatId.kind === "direct_chat" ? "78vw" : "75vw"}
                     gap={"xxs"}
@@ -706,6 +706,7 @@
                                     {canShare}
                                     deleted={msg.deleted}
                                     {me}
+                                    {showAsMe}
                                     {canReact}
                                     {canPin}
                                     {canTip}
@@ -810,11 +811,11 @@
                             {threadSummary}
                             {chatId}
                             threadRootMessageIndex={msg.messageIndex}
-                            {me} />
+                            me={showAsMe} />
                     {/if}
                     {#if hasReactions}
                         <Reactions
-                            {me}
+                            me={showAsMe}
                             onClick={({ reaction }) => toggleReaction(false, reaction)}
                             {intersecting}
                             reactions={msg.reactions}
@@ -822,7 +823,7 @@
                     {/if}
                     {#if hasTips && !inert}
                         <Tips
-                            {me}
+                            me={showAsMe}
                             tips={msg.tips}
                             onClick={tipMessage}
                             {canTip}

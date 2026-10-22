@@ -8,7 +8,6 @@ use canister_timer_jobs::{Job, TimerJobs};
 use chat_events::{ChatEventInternal, ChatEvents, EventPusher, Reader, RemoveEventsResult};
 use constants::{DAY_IN_MS, HOUR_IN_MS, ICP_LEDGER_CANISTER_ID, OPENCHAT_BOT_USER_ID};
 use event_store_types::Event;
-use fire_and_forget_handler::FireAndForgetHandler;
 use gated_groups::{GatePayment, calculate_gate_payments};
 use group_canister::c2c_export_group::ExportExtras;
 use group_chat_core::{AddResult as AddMemberResult, GroupChatCore, GroupMemberInternal, InvitedUsersSuccess, UserInvitation};
@@ -694,9 +693,6 @@ struct Data {
     pub invite_code_enabled: bool,
     pub frozen: Timestamped<Option<FrozenGroupInfo>>,
     pub timer_jobs: TimerJobs<TimerJob>,
-    // Nothing is sent through this any more. Kept for a release so that calls queued for a retry
-    // before the switch to events are still made, then removed.
-    pub fire_and_forget_handler: FireAndForgetHandler,
     pub activity_notification_state: ActivityNotificationState,
     #[serde(skip, default = "init_instruction_counts_log")]
     pub instruction_counts_log: InstructionCountsLog,
@@ -840,7 +836,6 @@ impl Data {
             invite_code_enabled: false,
             frozen: Timestamped::default(),
             timer_jobs: TimerJobs::default(),
-            fire_and_forget_handler: FireAndForgetHandler::default(),
             instruction_counts_log: init_instruction_counts_log(),
             community_being_imported_into: None,
             serialized_chat_state: None,

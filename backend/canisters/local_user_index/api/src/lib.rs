@@ -423,7 +423,7 @@ impl<T> UserEvent<T> {
     }
 }
 
-// An event along with the user it is from, as taken by `c2c_user_canister_v2`. A MultiUser canister
+// An event along with the user it is from, as taken by `c2c_user`. A MultiUser canister
 // hosts many users, so names whichever of its users the event is from
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(bound = "T: Serialize + DeserializeOwned")]

@@ -266,10 +266,10 @@ outcome: None ──automated──► Automated { action, sanctioned, human_ver
   where an old receiver fails to decode and the fire-and-forget drops - the failure mode the
   deploy-order rules are designed around.
 - **I19 — Every cross-canister edge is at-least-once or fail-visible.** Retried edges ride
-  idempotency-checked event queues. Fire-and-forget edges (`c2c_csam_detected`,
-  quarantine/vault ops, alert cards) drop permanently on decode/method errors — the system
-  tolerates this only where a later step re-sends the effect (see I18) or where the loss is
-  logged loudly (`CSAM upload match dropped: user_index canister id not yet known`).
+  idempotency-checked event queues. Fire-and-forget edges (quarantine/vault ops, alert cards)
+  drop permanently on decode/method errors — the system tolerates this only where a later
+  step re-sends the effect (see I18) or where the loss is logged loudly (`CSAM upload match
+  dropped: user_index canister id not yet known`).
   Deploy-order rules exist because of this: receiver-first for new enum variants.
 - **I20 — Scan pipeline safety.** Media-scan job indexes are monotonic but NOT dense
   (per-source eviction): lookups are by search, never offset arithmetic. Verdict acks are

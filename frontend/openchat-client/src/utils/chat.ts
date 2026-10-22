@@ -2131,12 +2131,18 @@ export function buildCryptoTransferText(
     return formatter(`tokenTransfer.${key}`, { values });
 }
 
+// Who the selected chat's WebRTC messages go to. A DM's go to the other user, known from the chat
+// id even before they've sent anything. Other chats' go to the users seen in the loaded events.
+export function rtcMessageRecipients(chatId: ChatIdentifier): string[] {
+    return chatId.kind === "direct_chat" ? [chatId.userId] : [...selectedChatUserIdsStore.value];
+}
+
 export function stopTyping(
     id: ChatIdentifier,
     userId: string,
     threadRootMessageIndex?: number,
 ): void {
-    rtcConnectionsManager.sendMessage([...selectedChatUserIdsStore.value], {
+    rtcConnectionsManager.sendMessage(rtcMessageRecipients(id), {
         kind: "remote_user_stopped_typing",
         id,
         userId,
@@ -2149,7 +2155,7 @@ export function startTyping(
     userId: string,
     threadRootMessageIndex?: number,
 ): void {
-    rtcConnectionsManager.sendMessage([...selectedChatUserIdsStore.value], {
+    rtcConnectionsManager.sendMessage(rtcMessageRecipients(id), {
         kind: "remote_user_typing",
         id,
         userId,

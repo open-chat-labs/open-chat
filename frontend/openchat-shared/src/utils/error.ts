@@ -16,7 +16,7 @@ export function isError(value: unknown): value is OCError {
 }
 
 // Request kinds whose failures the caller always tolerates (e.g. `refreshAccountBalance`
-// falls back to a cached / zero balance).
+// resolves to undefined, keeping the cached balance).
 const callerToleratedErrorKinds = new Set<string>(["refreshAccountBalance"]);
 
 // A ledger canister that is frozen (IC0207), has no wasm module (IC0537) or has been deleted

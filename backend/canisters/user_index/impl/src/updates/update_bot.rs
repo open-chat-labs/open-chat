@@ -9,7 +9,7 @@ use canister_tracing_macros::trace;
 use constants::ONE_GB;
 use local_user_index_canister::{BotUpdated, UserIndexEvent};
 use oc_error_codes::OCErrorCode;
-use storage_index_canister::add_or_update_users::UserConfig;
+use storage_index_canister::UserConfig;
 use types::{BotDataEncoding, BotDefinitionUpdate, OptionUpdate};
 use url::Url;
 use user_index_canister::update_bot::{Response::*, *};

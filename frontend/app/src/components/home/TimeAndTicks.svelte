@@ -50,8 +50,9 @@
         prize,
     }: Props = $props();
 
-    const iconColor = me ? $currentTheme.time.me.icon : $currentTheme.time.icon;
-    const pinnedColor = crypto || me || fill ? "#ffffff" : "var(--txt)";
+    // `me` can change: a relayed message is shown as the user's own once its linked account loads
+    let iconColor = $derived(me ? $currentTheme.time.me.icon : $currentTheme.time.icon);
+    let pinnedColor = $derived(crypto || me || fill ? "#ffffff" : "var(--txt)");
 </script>
 
 <div class="time-and-ticks" class:prize class:me class:fill class:rtl={$rtlStore}>

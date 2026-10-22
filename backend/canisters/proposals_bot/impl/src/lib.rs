@@ -4,7 +4,6 @@ use crate::timer_job_types::TimerJob;
 use candid::{CandidType, Principal};
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
-use fire_and_forget_handler::FireAndForgetHandler;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::cell::RefCell;
@@ -98,9 +97,6 @@ struct Data {
     pub finished_proposals_to_process: VecDeque<(CanisterId, ProposalId)>,
     pub timer_jobs: TimerJobs<TimerJob>,
     pub registry_synced_up_to: TimestampMillis,
-    // Nothing is sent through this any more. Kept for a release so that calls queued for a retry
-    // before the switch to events are still made, then removed.
-    pub fire_and_forget_handler: FireAndForgetHandler,
     // Created on its first event
     #[serde(default)]
     pub registry_event_sync_queue: Option<BatchedTimerJobQueue<RegistryEventBatch>>,
@@ -131,7 +127,6 @@ impl Data {
             finished_proposals_to_process: VecDeque::new(),
             timer_jobs: TimerJobs::default(),
             registry_synced_up_to: 0,
-            fire_and_forget_handler: FireAndForgetHandler::default(),
             registry_event_sync_queue: None,
             nns_proposals_requiring_manual_vote: HashSet::new(),
             nns_neuron_to_vote_with: None,

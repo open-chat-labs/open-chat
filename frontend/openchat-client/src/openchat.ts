@@ -389,6 +389,7 @@ import {
     bridgedUserIdsFromEvents,
     bridgedUserKey,
     buildBlobUrl,
+    isOwnMessage,
     isAndroidTauriApp,
     isIosTauriApp,
     isPrincipalValid,
@@ -401,7 +402,7 @@ import { get, type Unsubscriber } from "svelte/store";
 import { AndroidWebAuthnErrorCode } from "tauri-plugin-oc-api";
 import type { OpenChatConfig } from "./config";
 import { approveFromExternalWallet, type SignerWallet, type WalletAccount } from "./utils/signer";
-import { unarchiveChatsWithUnread } from "./utils/autoUnarchive";
+import { unarchiveChatsReportingFailure, unarchiveChatsWithUnread } from "./utils/autoUnarchive";
 import {
     FilteredProposals,
     achievementsStore,
@@ -494,6 +495,7 @@ import {
     serverDirectChatsStore,
     serverEventsStore,
     serverFavouritesStore,
+    serverThreadEventsStore,
     serverGroupChatsStore,
     serverMessageActivitySummaryStore,
     serverPinnedChatsStore,
@@ -516,6 +518,7 @@ import {
 } from "./state";
 import {
     currentChatVisit,
+    currentThreadVisit,
     eventsVisitFor,
     expandDeletedMessages,
     SelectedChat,
@@ -625,6 +628,7 @@ import {
     newDefaultChannel,
     permittedMessagesInDirectChat,
     permittedMessagesInGroup,
+    rtcMessageRecipients,
     sameUser,
     serialiseMessageForRtc,
     startTyping,
@@ -937,11 +941,11 @@ export class OpenChat {
     > = new Map();
     #refreshBalanceSemaphore: Semaphore = new Semaphore(10);
     #movePreviousWalletFundsTimer: number | undefined;
-    #inflightBalanceRefreshPromises: Map<string, Promise<bigint>> = new Map();
+    #inflightBalanceRefreshPromises: Map<string, Promise<bigint | undefined>> = new Map();
     #videoCallsInProgress: Set<bigint> = new Set();
     #serverVideoCallsInProgress: ChatMap<bigint> = new ChatMap();
     // Archived chats this client is bringing out of the archive, until each request settles
-    #autoUnarchiving = new ChatSet();
+    #unarchiving = new ChatSet();
     #locale!: string;
     #vapidPublicKey: string;
     #getBtcAddressPromise: Promise<string> | undefined = undefined;
@@ -3279,7 +3283,7 @@ export class OpenChat {
                 return false;
             });
 
-        const messageRecipients = this.#rtcMessageRecipients(chatId);
+        const messageRecipients = rtcMessageRecipients(chatId);
         this.#sendRtcMessage(messageRecipients, {
             kind: "remote_user_toggled_reaction",
             id: chatId,
@@ -4225,7 +4229,9 @@ export class OpenChat {
         if (chat !== undefined) {
             // If an archived chat has been explicitly selected (for example by searching for it) then un-archive it
             if (chat.membership.archived) {
-                this.unarchiveChats([chat.id]);
+                void unarchiveChatsReportingFailure([chat.id], this.#unarchiving, (chatIds) =>
+                    this.unarchiveChats(chatIds),
+                );
             }
 
             // if it's a known chat let's select it
@@ -5260,6 +5266,7 @@ export class OpenChat {
         withPausedStores(() => {
             const context = { chatId, threadRootMessageIndex };
             const myUserId = currentUserIdStore.value;
+            const bridgedUsers = bridgedUsersStore.value;
             const now = BigInt(Date.now());
             const recentlyActiveCutOff = now - BigInt(12 * ONE_HOUR);
 
@@ -5310,13 +5317,7 @@ export class OpenChat {
                     if (localUpdates.deleteUnconfirmed(context, messageId)) {
                         messagesRead.confirmMessage(context, messageIndex, messageId);
                     }
-                    // If the message was sent by the current user, mark it as read
-                    if (
-                        event.event.sender === myUserId &&
-                        !messagesRead.isRead(context, messageIndex, messageId)
-                    ) {
-                        messagesRead.markMessageRead(context, messageIndex, messageId);
-                    }
+                    this.#markReadIfOwn(context, event.event, myUserId, bridgedUsers);
                     if (latestMessageIndex !== undefined && messageIndex > latestMessageIndex) {
                         newLatestMessage = event as EventWrapper<Message>;
                         latestMessageIndex = messageIndex;
@@ -5400,13 +5401,6 @@ export class OpenChat {
             messageId,
             threadRootMessageIndex,
         });
-    }
-
-    #rtcMessageRecipients(chatId: ChatIdentifier) {
-        // a DM should only ever be sent to the recipient regardless of selectedChatUserIdsStore
-        return chatId.kind === "direct_chat"
-            ? [chatId.userId]
-            : [...selectedChatUserIdsStore.value];
     }
 
     async #sendMessageCommon(
@@ -5494,7 +5488,7 @@ export class OpenChat {
         );
         const ledger = this.#extractLedgerFromContent(message.content);
 
-        const messageRecipients = this.#rtcMessageRecipients(chat.id);
+        const messageRecipients = rtcMessageRecipients(chat.id);
 
         const sendMessagePromise: Promise<SendMessageResponse> = new Promise((resolve) => {
             this.#inflightMessagePromises.set(messageId, resolve);
@@ -7513,7 +7507,12 @@ export class OpenChat {
         }
     }
 
-    refreshAccountBalance(ledger: string, allowCached: boolean = false): Promise<bigint> {
+    // Resolves with the balance, or undefined if it couldn't be refreshed (eg. offline). Never rejects,
+    // and a failure leaves the cached balance as it was.
+    refreshAccountBalance(
+        ledger: string,
+        allowCached: boolean = false,
+    ): Promise<bigint | undefined> {
         const user = currentUserStore.value;
         // The anonymous user has no wallet, and its id isn't a principal
         if (user === undefined || user.userId === ANON_USER_ID) {
@@ -7534,7 +7533,7 @@ export class OpenChat {
             return existingPromise;
         }
 
-        const promise: Promise<bigint> = new Promise((resolve) => {
+        const promise: Promise<bigint | undefined> = new Promise((resolve) => {
             this.#refreshBalanceSemaphore
                 .execute(() => {
                     // Race the request against a timeout - without it, a worker request which
@@ -7559,7 +7558,10 @@ export class OpenChat {
                             ),
                         ),
                     ])
-                        .catch(() => 0n)
+                        .catch((err) => {
+                            console.warn(`Couldn't refresh the balance of ${ledger}`, err);
+                            return undefined;
+                        })
                         .finally(() => this.#inflightBalanceRefreshPromises.delete(ledger));
                 })
                 .then(resolve);
@@ -7602,7 +7604,7 @@ export class OpenChat {
                 })),
             )
             .then(async (outcomes) => {
-                // Each refresh resolves, falling back to 0 if it fails or times out
+                // Each refresh resolves, to undefined if it fails or times out
                 const ledgers = new Set(funds.map((f) => f.ledger));
                 await Promise.all([...ledgers].map((ledger) => this.refreshAccountBalance(ledger)));
                 return outcomes;
@@ -7779,6 +7781,10 @@ export class OpenChat {
             );
         }
 
+        if (users.some((u) => u.linkedUserId === currentUserIdStore.value)) {
+            this.#markLoadedOwnMessagesRead();
+        }
+
         // A linked account's messages are shown as its OpenChat user's
         await this.getMissingUsers(users.flatMap((u) => u.linkedUserId ?? []));
     }
@@ -7804,7 +7810,7 @@ export class OpenChat {
     }
 
     // The accounts the user has linked to themself. They go in the store too, so the user's messages
-    // from a newly linked account show as theirs straight away.
+    // from a newly linked account show as theirs, and are read, straight away.
     async getLinkedBridgedUsers(): Promise<BridgedUserSummary[]> {
         const users = await this.#worker.send({ kind: "getLinkedBridgedUsers" });
         const now = Date.now();
@@ -7816,6 +7822,9 @@ export class OpenChat {
             }
             return map;
         });
+        if (users.length > 0) {
+            this.#markLoadedOwnMessagesRead();
+        }
         return users;
     }
 
@@ -8101,12 +8110,7 @@ export class OpenChat {
         }
 
         if (outcome.kind === "sent") {
-            this.refreshAccountBalance(withdrawal.ledger).catch((err) =>
-                this.logError(
-                    `Unable to refresh ${withdrawal.symbol} balance after a withdrawal`,
-                    err,
-                ),
-            );
+            this.refreshAccountBalance(withdrawal.ledger);
         }
         return outcome;
     }
@@ -8839,7 +8843,7 @@ export class OpenChat {
         // Only the chats in this answer can have gained any
         unarchiveChatsWithUnread(
             chatsAddedUpdated.map((chat) => chat.id),
-            this.#autoUnarchiving,
+            this.#unarchiving,
             (chatIds) => this.unarchiveChats(chatIds),
         );
 
@@ -9200,20 +9204,71 @@ export class OpenChat {
                     );
                 }
 
-                // If the latest message in a chat is sent by the current user, then we know they must have read up to
-                // that message, so we mark the chat as read up to that message if it isn't already. This happens when a
-                // user sends a message on one device then looks at OpenChat on another.
-                const latestMessage = chat.latestMessage?.event;
-                if (
-                    latestMessage !== undefined &&
-                    latestMessage.sender === currentUserIdStore.value &&
-                    (chat.membership?.readByMeUpTo ?? -1) < latestMessage.messageIndex &&
-                    !localUpdates.isUnconfirmed({ chatId: chat.id }, latestMessage.messageId)
-                ) {
-                    messagesRead.markReadUpTo({ chatId: chat.id }, latestMessage.messageIndex);
-                }
+                this.#markReadIfLatestMessageOwn(chat);
             }
         });
+    }
+
+    // If the latest message in a chat is the current user's, then we know they must have read up to
+    // that message, so we mark the chat as read up to that message if it isn't already. This
+    // happens when a user sends a message on one device then looks at OpenChat on another, or sends
+    // it from an account they've linked on another platform, eg. Telegram.
+    #markReadIfLatestMessageOwn(chat: ChatSummary): void {
+        const latestMessage = chat.latestMessage?.event;
+        if (
+            latestMessage !== undefined &&
+            !isPreviewing(chat) &&
+            isOwnMessage(latestMessage, currentUserIdStore.value, bridgedUsersStore.value) &&
+            (chat.membership?.readByMeUpTo ?? -1) < latestMessage.messageIndex &&
+            !localUpdates.isUnconfirmed({ chatId: chat.id }, latestMessage.messageId)
+        ) {
+            messagesRead.markReadUpTo({ chatId: chat.id }, latestMessage.messageIndex);
+        }
+    }
+
+    // The user's messages relayed from an account they've linked are read, like those they send.
+    // But the link only becomes known once the account's profile has been fetched, which can be
+    // after the messages have loaded, so they're marked read again then.
+    #markLoadedOwnMessagesRead(): void {
+        const myUserId = currentUserIdStore.value;
+        const bridgedUsers = bridgedUsersStore.value;
+        const markRead = (context: MessageContext, events: EventWrapper<ChatEvent>[]) => {
+            for (const e of events) {
+                if (e.event.kind === "message") {
+                    this.#markReadIfOwn(context, e.event, myUserId, bridgedUsers);
+                }
+            }
+        };
+        withPausedStores(() => {
+            const chatVisit = currentChatVisit();
+            if (chatVisit !== undefined) {
+                markRead({ chatId: chatVisit.chatId }, serverEventsStore.value);
+            }
+            const threadVisit = currentThreadVisit();
+            if (threadVisit !== undefined) {
+                const { chatId, threadRootMessageIndex } = threadVisit;
+                markRead({ chatId, threadRootMessageIndex }, serverThreadEventsStore.value);
+            }
+            allChatsStore.value.forEach((chat) => this.#markReadIfLatestMessageOwn(chat));
+        });
+    }
+
+    // The current user's messages are read, including those relayed from an account they've
+    // linked. Not in a chat they're only previewing, which has no read state on the server to sync
+    // with, so it would be sent again every time.
+    #markReadIfOwn(
+        context: MessageContext,
+        message: Message,
+        myUserId: string,
+        bridgedUsers: Map<string, BridgedUserSummary>,
+    ): void {
+        if (
+            isOwnMessage(message, myUserId, bridgedUsers) &&
+            !messagesRead.isRead(context, message.messageIndex, message.messageId) &&
+            !this.isPreviewing(context.chatId)
+        ) {
+            messagesRead.markMessageRead(context, message.messageIndex, message.messageId);
+        }
     }
 
     #validMouseEvent(e: MouseEvent) {
@@ -9892,9 +9947,7 @@ export class OpenChat {
         }
 
         if (resp.kind === "success") {
-            this.refreshAccountBalance(transfer.ledger, false).catch((err) =>
-                this.logError("Unable to refresh the balance after a tip", err),
-            );
+            this.refreshAccountBalance(transfer.ledger, false);
         } else {
             undo();
             if (resp.kind === "error") {
@@ -10304,16 +10357,12 @@ export class OpenChat {
             return { kind: "failed", message: i18nKey("tokenSwap.confirmUnderstanding") };
         }
 
-        let balance: bigint;
         // The output balance before the swap, to tell when its output has reached the wallet
-        let balanceOut: bigint | undefined;
-        try {
-            [balance, balanceOut] = await Promise.all([
-                this.refreshAccountBalance(quote.ledgerIn),
-                this.refreshAccountBalance(quote.ledgerOut).catch(() => undefined),
-            ]);
-        } catch (err) {
-            this.logError("Unable to check the balance before a swap", err);
+        const [balance, balanceOut] = await Promise.all([
+            this.refreshAccountBalance(quote.ledgerIn),
+            this.refreshAccountBalance(quote.ledgerOut),
+        ]);
+        if (balance === undefined) {
             return { kind: "failed", message: swapError };
         }
         if (balance < quote.amountIn) {
@@ -10342,9 +10391,7 @@ export class OpenChat {
             outcome = { kind: "failed", message: swapUnconfirmed };
         }
 
-        this.refreshAccountBalance(quote.ledgerIn).catch((err) =>
-            this.logError("Unable to refresh a balance after a swap", err),
-        );
+        this.refreshAccountBalance(quote.ledgerIn);
         this.#refreshSwapOutput(
             quote.ledgerOut,
             outcome.kind === "swapped" ? balanceOut : undefined,
@@ -10361,7 +10408,8 @@ export class OpenChat {
                 await new Promise((resolve) => setTimeout(resolve, SWAP_OUTPUT_CHECK_INTERVAL_MS));
             }
             const balance = await this.refreshAccountBalance(ledger);
-            if (balanceBefore === undefined || balance > balanceBefore) return;
+            if (balanceBefore === undefined || (balance !== undefined && balance > balanceBefore))
+                return;
         }
     }
 

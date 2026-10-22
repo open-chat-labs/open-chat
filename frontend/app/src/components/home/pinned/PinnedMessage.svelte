@@ -5,16 +5,24 @@
     import {
         allUsersStore,
         AvatarSize,
+        BRIDGE_PLATFORM_NAMES,
+        bridgedAuthorName,
+        bridgedFrom,
+        bridgedUserKey,
+        bridgedUsersStore,
         chatListScopeStore,
         fullWidth,
+        linkedAuthor,
         mobileWidth,
         routeForMessage,
         selectedChatIdStore,
         selectedChatWebhooksStore,
         selectedCommunityMembersStore,
+        shouldShowAsMe,
     } from "@client";
     import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
+    import { _ } from "svelte-i18n";
     import { rtlStore } from "../../../stores/rtl";
     import Avatar from "../../Avatar.svelte";
     import Link from "../../Link.svelte";
@@ -38,16 +46,28 @@
     const crypto = msg.content.kind === "crypto_content";
 
     let sender = $derived(findUser(msg.sender, $allUsersStore, $selectedChatWebhooksStore));
+    // Who the message is shown as from, as in the chat: the OpenChat user who linked the account a
+    // bridge bot relayed it from, or else the account itself
+    let bridged = $derived(bridgedFrom(msg.senderContext));
+    let bridgedUser = $derived(
+        bridged !== undefined ? $bridgedUsersStore.get(bridgedUserKey(bridged)!) : undefined,
+    );
+    let linkedUser = $derived(linkedAuthor(bridgedUser, $allUsersStore));
     let username = $derived(
-        client.getDisplayName(
-            msg.sender,
-            $selectedCommunityMembersStore,
-            $selectedChatWebhooksStore,
-        ),
+        bridged !== undefined && linkedUser === undefined
+            ? (bridgedAuthorName(bridgedUser) ??
+              $_("bridgedUserUnknown", {
+                  values: { platform: BRIDGE_PLATFORM_NAMES[bridged.kind] },
+              }))
+            : client.getDisplayName(
+                  linkedUser?.userId ?? msg.sender,
+                  $selectedCommunityMembersStore,
+                  $selectedChatWebhooksStore,
+              ),
     );
     let deleted = $derived(msg.content.kind === "deleted_content");
     let fill = $derived(client.fillMessage(msg));
-    let me = $derived(user.userId === senderId);
+    let me = $derived(shouldShowAsMe(user.userId === senderId, linkedUser?.userId, user.userId));
     let modal = $derived(!$fullWidth);
 
     function openUserProfile(e: Event) {
@@ -57,7 +77,7 @@
         e.target?.dispatchEvent(
             new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
                 detail: {
-                    userId: sender.userId,
+                    userId: linkedUser?.userId ?? sender.userId,
                     chatButton: !me,
                     inGlobalContext: false,
                 },
@@ -85,8 +105,12 @@
 <div class="message-row" class:me onclick={goToMessageIndex}>
     <div class="avatar" onclick={openUserProfile}>
         <Avatar
-            url={client.userAvatarUrl(sender)}
-            userId={sender?.userId}
+            url={linkedUser !== undefined
+                ? client.userAvatarUrl(linkedUser)
+                : bridged !== undefined
+                  ? client.bridgedAvatarUrl(bridged, bridgedUser)
+                  : client.userAvatarUrl(sender)}
+            userId={(linkedUser ?? sender)?.userId}
             size={$mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
     </div>
     <IntersectionObserver>

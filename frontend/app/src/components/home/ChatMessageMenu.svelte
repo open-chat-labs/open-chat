@@ -1,6 +1,7 @@
 <script lang="ts">
     import { confirmMessageDeletion } from "@src/stores/settings";
     import {
+        bridgedFrom,
         chatListScopeStore,
         cryptoLookup,
         currentUserIdStore,
@@ -71,6 +72,9 @@
         failed: boolean;
         canShare: boolean;
         me: boolean;
+        // Shown as the user's own: `me`, or relayed by a bridge bot from an account they've linked.
+        // Blocking and reporting the author go by this, as they'd act on the bridge bot.
+        showAsMe: boolean;
         canPin: boolean;
         pinned: boolean;
         supportsReply: boolean;
@@ -113,6 +117,7 @@
         failed,
         canShare,
         me,
+        showAsMe,
         canPin,
         pinned,
         supportsReply,
@@ -150,6 +155,9 @@
     const quickReactionIconSize = "1.2rem";
     let showConfirmDelete = $state(false);
 
+    // A private reply goes to the sender, which for a message relayed from another platform is the
+    // bridge bot
+    let relayed = $derived(bridgedFrom(msg.senderContext) !== undefined);
     let canRemind = $derived(
         msg.content.kind !== "message_reminder_content" &&
             msg.content.kind !== "message_reminder_created_content",
@@ -542,7 +550,7 @@
                         {/snippet}
                     </MenuItem>
                 {/if}
-                {#if confirmed && multiUserChat && !inThread && !me && !isProposal && !inert && !failed}
+                {#if confirmed && multiUserChat && !inThread && !me && !relayed && !isProposal && !inert && !failed}
                     <MenuItem onclick={onReplyPrivately}>
                         {#snippet icon()}
                             <ReplyOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />
@@ -602,7 +610,7 @@
                     </MenuItem>
                 {/if}
                 <MenuItem separator />
-                {#if confirmed && multiUserChat && !me && canBlockUser && !failed}
+                {#if confirmed && multiUserChat && !showAsMe && canBlockUser && !failed}
                     <MenuItem onclick={blockUser}>
                         {#snippet icon()}
                             <Cancel size={$iconSize} color={"var(--icon-inverted-txt)"} />
@@ -628,7 +636,7 @@
                         {/snippet}
                     </MenuItem>
                 {/if}
-                {#if confirmed && !me && !inert}
+                {#if confirmed && !showAsMe && !inert}
                     <MenuItem onclick={onReportMessage}>
                         {#snippet icon()}
                             <Flag size={$iconSize} color={"var(--error)"} />

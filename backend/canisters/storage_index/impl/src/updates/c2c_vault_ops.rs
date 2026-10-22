@@ -1,32 +1,8 @@
-use crate::guards::caller_is_user_controller;
-use crate::{RuntimeState, mutate_state};
-use canister_tracing_macros::trace;
-use ic_cdk::update;
+use crate::RuntimeState;
+use storage_bucket_canister as bucket_vault;
 use storage_bucket_canister::StorageIndexEvent;
-use storage_bucket_canister::c2c_vault_sync as bucket_vault;
-use storage_index_canister::c2c_vault_ops::{Response::*, *};
+use storage_index_canister::VaultOp;
 use types::BlobReference;
-
-// Vault control plane: routes evidence-vault operations to the bucket holding each blob, and
-// broadcasts the reviewer allowlist to every bucket. Callable only by a user controller
-// (i.e. the user_index, which mediates all authorization).
-#[update(guard = "caller_is_user_controller")]
-#[trace]
-fn c2c_vault_ops(args: Args) -> Response {
-    mutate_state(|state| c2c_vault_ops_impl(args, state))
-}
-
-fn c2c_vault_ops_impl(args: Args, state: &mut RuntimeState) -> Response {
-    // The vault control plane is only ever driven by the user_index; remember its canister id
-    // so bucket-detected CSAM re-uploads can be reported back to it (see c2c_sync_bucket)
-    state.data.user_index_canister_id = Some(state.env.caller());
-
-    for op in args.ops {
-        apply_vault_op(op, state);
-    }
-
-    Success
-}
 
 // Routes one op to the bucket holding its blob, or to every bucket
 pub(crate) fn apply_vault_op(op: VaultOp, state: &mut RuntimeState) {

@@ -1,18 +1,8 @@
+use crate::RuntimeState;
 use crate::activity_notifications::handle_activity_notification;
-use crate::guards::caller_is_user_index;
-use crate::{RuntimeState, execute_update_even_if_frozen};
-use canister_api_macros::update;
-use canister_tracing_macros::trace;
-use community_canister::c2c_moderation_undelete::*;
+use community_canister::ModerationUndelete as Args;
 use oc_error_codes::OCErrorCode;
 use types::UnitResult;
-
-// Restores a message deleted by automated moderation, after a Dismissed verdict on the report
-#[update(guard = "caller_is_user_index", msgpack = true)]
-#[trace]
-fn c2c_moderation_undelete(args: Args) -> Response {
-    execute_update_even_if_frozen(|state| c2c_moderation_undelete_impl(args, state))
-}
 
 pub(crate) fn c2c_moderation_undelete_impl(args: Args, state: &mut RuntimeState) -> UnitResult {
     let now = state.env.now();

@@ -1,8 +1,8 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
-use storage_bucket_canister::c2c_vault_sync::VaultCaptureMetadata;
-use storage_bucket_canister::c2c_vault_sync::VaultReviewer;
+use storage_bucket_canister::VaultCaptureMetadata;
+use storage_bucket_canister::VaultReviewer;
 use types::{FileId, Hash, TimestampMillis, UserId};
 use utils::hasher::hash_bytes;
 

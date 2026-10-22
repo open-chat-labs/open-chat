@@ -1,2 +1,11 @@
-// Its Community canisters' events. Shares `c2c_community_canister`'s types, which move here once the old name is removed.
-pub use super::c2c_community_canister::*;
+use crate::CommunityEvent;
+use serde::{Deserialize, Serialize};
+use types::{IdempotentEnvelope, SuccessOnly};
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct Args {
+    pub events: Vec<IdempotentEnvelope<CommunityEvent>>,
+}
+
+pub type ArgsInternal = crate::c2c_group::ArgsInternal;
+pub type Response = SuccessOnly;

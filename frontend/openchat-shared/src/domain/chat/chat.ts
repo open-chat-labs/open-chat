@@ -947,6 +947,8 @@ export type RehydratedReplyContext = {
     isThreadRoot: boolean;
     sourceContext: MessageContext;
     moderationFlags?: number;
+    // The quoted message's, eg. to show the account a bridge bot relayed it from as its author
+    senderContext?: SenderContext;
 };
 
 export type EnhancedReplyContext = RehydratedReplyContext & {
