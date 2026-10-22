@@ -3,16 +3,12 @@ use crate::model::community_event_batch::CommunityEventBatch;
 use crate::model::group_event_batch::GroupEventBatch;
 use crate::model::group_index_event_batch::GroupIndexEventBatch;
 use crate::model::identity_event_batch::IdentityEventBatch;
-use crate::model::identity_user_sync_batch::IdentityUserSyncBatch;
-use crate::model::legacy_local_user_index_event_batch::LegacyLocalUserIndexEventBatch;
 use crate::model::local_user_index_event_batch::LocalUserIndexEventBatch;
 use crate::model::local_user_index_map::LocalUserIndex;
 use crate::model::online_users_event_batch::OnlineUsersEventBatch;
 use crate::model::premium_items::{PremiumItemMetrics, PremiumItems};
 use crate::model::protected_actions::{ProtectedActionMetrics, ProtectedActions};
 use crate::model::storage_index_event_batch::StorageIndexEventBatch;
-use crate::model::storage_index_user_config_batch::StorageIndexUserConfigBatch;
-use crate::model::storage_index_users_to_remove_batch::StorageIndexUsersToRemoveBatch;
 use crate::model::streak_insurance_logs::StreakInsuranceLogs;
 use crate::model::user_map::UserMap;
 use crate::timer_job_types::TimerJob;
@@ -43,7 +39,7 @@ use rand::prelude::StdRng;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::UserIdsKeyPrefix;
 use std::cell::RefCell;
-use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::time::Duration;
 use storage_index_canister::UserIndexEvent as StorageIndexEvent;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
@@ -55,7 +51,6 @@ use types::{
 use user_ids_set::UserIdsSet;
 use user_index_canister::ChildCanisterType;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
-use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::env::Environment;
 use utils::idempotency_checker::IdempotencyChecker;
 use utils::migrated_user_ids::MigratedUserIds;
@@ -492,22 +487,9 @@ struct Data {
     pub translations_canister_id: CanisterId,
     pub registry_canister_id: CanisterId,
     pub event_store_client: EventStoreClient<CdkRuntime>,
-    // Drained into `storage_index_event_sync_queue` by the post_upgrade one-off, and removed with it
-    pub storage_index_user_sync_queue: BatchedTimerJobQueue<StorageIndexUserConfigBatch>,
-    pub storage_index_users_to_remove_queue: BatchedTimerJobQueue<StorageIndexUsersToRemoveBatch>,
-    #[serde(default = "new_storage_index_event_sync_queue")]
     pub storage_index_event_sync_queue: BatchedTimerJobQueue<StorageIndexEventBatch>,
-    #[serde(default = "new_chat_event_sync_queue")]
     pub group_event_sync_queue: GroupedTimerJobQueue<GroupEventBatch>,
-    #[serde(default = "new_chat_event_sync_queue")]
     pub community_event_sync_queue: GroupedTimerJobQueue<CommunityEventBatch>,
-    // This and `local_user_index_event_sync_queue` are drained into `local_user_index_event_sync_queue_v2`
-    // by the post_upgrade one-off, and removed with it
-    pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
-    // Live in 2.0.2155 with unwrapped events, so it keeps its name and type until it has been drained
-    #[serde(default = "new_legacy_local_user_index_event_sync_queue")]
-    pub local_user_index_event_sync_queue: GroupedTimerJobQueue<LegacyLocalUserIndexEventBatch>,
-    #[serde(default = "new_local_user_index_event_sync_queue")]
     pub local_user_index_event_sync_queue_v2: GroupedTimerJobQueue<LocalUserIndexEventBatch>,
     pub group_index_event_sync_queue: BatchedTimerJobQueue<GroupIndexEventBatch>,
     pub online_users_event_sync_queue: BatchedTimerJobQueue<OnlineUsersEventBatch>,
@@ -546,14 +528,6 @@ struct Data {
     pub empty_users: HashSet<UserId>,
     pub chit_leaderboard: ChitLeaderboard,
     pub deleted_users: Vec<DeletedUser>,
-    // This and `identity_user_sync_queue` are drained into `identity_event_sync_queue` by the
-    // post_upgrade one-off, and removed with it
-    #[serde(alias = "identity_canister_user_sync_queue_2")]
-    pub identity_canister_user_sync_queue: VecDeque<UserIdentity>,
-    // Live in 2.0.2155, so it keeps its name and type until it has been drained
-    #[serde(default = "new_identity_user_sync_queue")]
-    pub identity_user_sync_queue: BatchedTimerJobQueue<IdentityUserSyncBatch>,
-    #[serde(default = "new_identity_event_sync_queue")]
     pub identity_event_sync_queue: BatchedTimerJobQueue<IdentityEventBatch>,
     pub survey_messages_sent: usize,
     pub external_achievements: ExternalAchievements,
@@ -658,14 +632,10 @@ impl Data {
             event_store_client: EventStoreClientBuilder::new(event_relay_canister_id, CdkRuntime::default())
                 .with_flush_delay(Duration::from_secs(60))
                 .build(),
-            storage_index_user_sync_queue: BatchedTimerJobQueue::new(storage_index_canister_id, false),
-            storage_index_users_to_remove_queue: BatchedTimerJobQueue::new(storage_index_canister_id, false),
             storage_index_event_sync_queue: BatchedTimerJobQueue::new(storage_index_canister_id, false),
-            group_event_sync_queue: new_chat_event_sync_queue(),
-            community_event_sync_queue: new_chat_event_sync_queue(),
-            user_index_event_sync_queue: CanisterEventSyncQueue::default(),
-            local_user_index_event_sync_queue: new_legacy_local_user_index_event_sync_queue(),
-            local_user_index_event_sync_queue_v2: new_local_user_index_event_sync_queue(),
+            group_event_sync_queue: GroupedTimerJobQueue::new(10, false),
+            community_event_sync_queue: GroupedTimerJobQueue::new(10, false),
+            local_user_index_event_sync_queue_v2: GroupedTimerJobQueue::new(10, false),
             group_index_event_sync_queue: BatchedTimerJobQueue::new(group_index_canister_id, false),
             online_users_event_sync_queue: BatchedTimerJobQueue::new(online_users_canister_id, false),
             pending_payments_queue: PendingPaymentsQueue::default(),
@@ -695,8 +665,6 @@ impl Data {
             empty_users: HashSet::new(),
             chit_leaderboard: ChitLeaderboard::new(now),
             deleted_users: Vec::new(),
-            identity_canister_user_sync_queue: VecDeque::new(),
-            identity_user_sync_queue: new_identity_user_sync_queue(),
             identity_event_sync_queue: BatchedTimerJobQueue::new(identity_canister_id, false),
             survey_messages_sent: 0,
             external_achievements: ExternalAchievements::default(),
@@ -781,14 +749,10 @@ impl Default for Data {
             translations_canister_id: Principal::anonymous(),
             registry_canister_id: Principal::anonymous(),
             event_store_client: EventStoreClientBuilder::new(Principal::anonymous(), CdkRuntime::default()).build(),
-            storage_index_user_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
-            storage_index_users_to_remove_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             storage_index_event_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
-            group_event_sync_queue: new_chat_event_sync_queue(),
-            community_event_sync_queue: new_chat_event_sync_queue(),
-            user_index_event_sync_queue: CanisterEventSyncQueue::default(),
-            local_user_index_event_sync_queue: new_legacy_local_user_index_event_sync_queue(),
-            local_user_index_event_sync_queue_v2: new_local_user_index_event_sync_queue(),
+            group_event_sync_queue: GroupedTimerJobQueue::new(10, false),
+            community_event_sync_queue: GroupedTimerJobQueue::new(10, false),
+            local_user_index_event_sync_queue_v2: GroupedTimerJobQueue::new(10, false),
             group_index_event_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             online_users_event_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             pending_payments_queue: PendingPaymentsQueue::default(),
@@ -818,8 +782,6 @@ impl Default for Data {
             empty_users: HashSet::new(),
             chit_leaderboard: ChitLeaderboard::new(0),
             deleted_users: Vec::new(),
-            identity_canister_user_sync_queue: VecDeque::new(),
-            identity_user_sync_queue: new_identity_user_sync_queue(),
             identity_event_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             survey_messages_sent: 0,
             external_achievements: ExternalAchievements::default(),
@@ -1004,35 +966,6 @@ pub struct CanisterIds {
     pub daily_puzzle: Option<CanisterId>,
 }
 
-fn new_local_user_index_event_sync_queue() -> GroupedTimerJobQueue<LocalUserIndexEventBatch> {
-    GroupedTimerJobQueue::new(10, false)
-}
-
-// The two queues 2.0.2155 holds, which the post_upgrade one-off drains. Removed with that one-off.
-fn new_legacy_local_user_index_event_sync_queue() -> GroupedTimerJobQueue<LegacyLocalUserIndexEventBatch> {
-    GroupedTimerJobQueue::new(10, false)
-}
-
-fn new_identity_user_sync_queue() -> BatchedTimerJobQueue<IdentityUserSyncBatch> {
-    BatchedTimerJobQueue::new(Principal::anonymous(), false)
-}
-
-// Only reached when deserializing state from before the queues existed, which the post_upgrade
-// one-off then points at their canisters. Removed with that one-off.
-fn new_identity_event_sync_queue() -> BatchedTimerJobQueue<IdentityEventBatch> {
-    BatchedTimerJobQueue::new(Principal::anonymous(), false)
-}
-
-fn new_storage_index_event_sync_queue() -> BatchedTimerJobQueue<StorageIndexEventBatch> {
-    BatchedTimerJobQueue::new(Principal::anonymous(), false)
-}
-
-fn new_chat_event_sync_queue<T: timer_job_queues::TimerJobItemGroup>() -> GroupedTimerJobQueue<T>
-where
-    T::SharedState: Default,
-{
-    GroupedTimerJobQueue::new(10, false)
-}
 
 // Pushes events to a LocalUserIndex while the rest of the state is borrowed
 pub struct LocalUserIndexEventPusher<'a> {

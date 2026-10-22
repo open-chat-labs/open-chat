@@ -1,9 +1,7 @@
-use crate::model::bucket_event_batch::BucketEventBatch;
 use crate::model::buckets::{BucketRecord, Buckets};
 use crate::model::files::Files;
 use crate::model::storage_bucket_event_batch::StorageBucketEventBatch;
 use crate::model::user_index_event_batch::UserIndexEventBatch;
-use crate::model::vault_event_batch::VaultEventBatch;
 use candid::{CandidType, Principal};
 use canister_state_macros::canister_state;
 use fire_and_forget_handler::FireAndForgetHandler;
@@ -132,11 +130,6 @@ struct Data {
     pub users: HashMap<Principal, UserRecordInternal>,
     pub files: Files,
     pub buckets: Buckets,
-    // Drained into `storage_bucket_event_sync_queue` by the post_upgrade one-off, and removed with it
-    pub bucket_event_sync_queue: GroupedTimerJobQueue<BucketEventBatch>,
-    #[serde(default = "default_vault_event_sync_queue")]
-    pub vault_event_sync_queue: GroupedTimerJobQueue<VaultEventBatch>,
-    #[serde(default = "new_storage_bucket_event_sync_queue")]
     pub storage_bucket_event_sync_queue: GroupedTimerJobQueue<StorageBucketEventBatch>,
     #[serde(default)]
     pub vault_reviewers: Vec<VaultReviewer>,
@@ -175,14 +168,6 @@ struct Data {
     pub test_mode: bool,
 }
 
-fn default_vault_event_sync_queue() -> GroupedTimerJobQueue<VaultEventBatch> {
-    GroupedTimerJobQueue::new(5, false)
-}
-
-fn new_storage_bucket_event_sync_queue() -> GroupedTimerJobQueue<StorageBucketEventBatch> {
-    GroupedTimerJobQueue::new(5, false)
-}
-
 fn envelope<T>(now: TimestampMillis, rng: &mut StdRng, value: T) -> IdempotentEnvelope<T> {
     IdempotentEnvelope {
         created_at: now,
@@ -211,9 +196,7 @@ impl Data {
             users: HashMap::new(),
             files: Files::default(),
             buckets: Buckets::default(),
-            bucket_event_sync_queue: GroupedTimerJobQueue::new(5, false),
-            vault_event_sync_queue: default_vault_event_sync_queue(),
-            storage_bucket_event_sync_queue: new_storage_bucket_event_sync_queue(),
+            storage_bucket_event_sync_queue: GroupedTimerJobQueue::new(5, false),
             vault_reviewers: Vec::new(),
             authority_reporter: None,
             csam_hashes: BTreeMap::new(),

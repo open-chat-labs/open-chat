@@ -130,7 +130,6 @@ impl RuntimeState {
             results_count: self.data.results.len() as u32,
             results_by_game,
             local_user_indexes: self.data.local_user_indexes.iter().copied().collect(),
-            pending_pushes: self.data.pending_pushes.iter().copied().collect(),
             local_index_events_queue_length: self.data.local_index_event_sync_queue.len() as u32,
             last_registry_refresh: self.data.last_registry_refresh,
             master_seed_set: self.data.master_seed != 0,
@@ -210,10 +209,6 @@ struct Data {
     pub generation_started: Option<(PuzzleNumber, TimestampMillis)>,
     pub results: BTreeMap<(PuzzleNumber, GameId, UserId), DailyPuzzleResult>,
     pub local_user_indexes: HashSet<CanisterId>,
-    // Only non-empty in state from before `local_index_event_sync_queue`, and cleared by the next push.
-    // Removed in the tidy.
-    pub pending_pushes: HashSet<CanisterId>,
-    #[serde(default = "new_local_index_event_sync_queue")]
     pub local_index_event_sync_queue: GroupedTimerJobQueue<LocalIndexEventBatch>,
     #[serde(default)]
     pub idempotency_checker: IdempotencyChecker,
@@ -242,8 +237,7 @@ impl Data {
             generation_started: None,
             results: BTreeMap::new(),
             local_user_indexes: HashSet::new(),
-            pending_pushes: HashSet::new(),
-            local_index_event_sync_queue: new_local_index_event_sync_queue(),
+            local_index_event_sync_queue: GroupedTimerJobQueue::new(10, false),
             idempotency_checker: IdempotencyChecker::default(),
             last_registry_refresh: 0,
             test_mode,
@@ -764,7 +758,6 @@ pub struct Metrics {
     pub results_count: u32,
     pub results_by_game: BTreeMap<GameId, u32>,
     pub local_user_indexes: Vec<CanisterId>,
-    pub pending_pushes: Vec<CanisterId>,
     pub local_index_events_queue_length: u32,
     pub last_registry_refresh: TimestampMillis,
     pub master_seed_set: bool,
@@ -798,10 +791,6 @@ pub struct CanisterIds {
     pub registry: CanisterId,
     pub user_index: CanisterId,
     pub cycles_dispenser: CanisterId,
-}
-
-fn new_local_index_event_sync_queue() -> GroupedTimerJobQueue<LocalIndexEventBatch> {
-    GroupedTimerJobQueue::new(10, false)
 }
 
 #[cfg(test)]
@@ -1365,7 +1354,6 @@ mod tests {
         d.veto_candidate(TUESDAY, tents::GAME_ID, 0);
         d.upsert_results(vec![result(MONDAY, 1), result(MONDAY - 1, 2)], now);
         d.local_user_indexes.insert(Principal::from_slice(&[7]));
-        d.pending_pushes.insert(Principal::from_slice(&[7]));
         d.set_enabled(true);
 
         let bytes = msgpack::serialize_to_vec(&d).unwrap();
@@ -1380,7 +1368,6 @@ mod tests {
         assert_eq!(restored.results.len(), 2);
         assert_eq!(restored.results[&(MONDAY, LU.to_string(), user(1))], result(MONDAY, 1));
         assert_eq!(restored.local_user_indexes, d.local_user_indexes);
-        assert_eq!(restored.pending_pushes, d.pending_pushes);
     }
 
     #[test]

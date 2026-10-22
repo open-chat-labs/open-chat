@@ -1,5 +1,4 @@
 use crate::model::files::{Files, RemoveFileResult};
-use crate::model::index_event_batch::IndexEventBatch;
 use crate::model::storage_index_event_batch::StorageIndexEventBatch;
 use crate::model::users::{FileStatusInternal, Users};
 use crate::model::vault::Vault;
@@ -125,9 +124,6 @@ struct Data {
     files: Files,
     #[serde(default)]
     vault: Vault,
-    // Drained into `storage_index_event_sync_queue` by the post_upgrade one-off, and removed with it
-    index_event_sync_queue: BatchedTimerJobQueue<IndexEventBatch>,
-    #[serde(default = "new_storage_index_event_sync_queue")]
     storage_index_event_sync_queue: BatchedTimerJobQueue<StorageIndexEventBatch>,
     #[serde(default)]
     idempotency_checker: IdempotencyChecker,
@@ -143,7 +139,6 @@ impl Data {
             users: Users::default(),
             files: Files::default(),
             vault: Vault::default(),
-            index_event_sync_queue: BatchedTimerJobQueue::new(storage_index_canister_id, false),
             storage_index_event_sync_queue: BatchedTimerJobQueue::new(storage_index_canister_id, false),
             idempotency_checker: IdempotencyChecker::default(),
             created: now,
@@ -232,10 +227,4 @@ fn check_cycles_balance() {
     }
     LAST_CYCLES_BALANCE_CHECK.set(now);
     utils::cycles::check_cycles_balance(storage_index_canister_id);
-}
-
-// Only reached when deserializing state from before the queue existed, which the post_upgrade one-off
-// then points at the StorageIndex. Removed with that one-off.
-fn new_storage_index_event_sync_queue() -> BatchedTimerJobQueue<StorageIndexEventBatch> {
-    BatchedTimerJobQueue::new(Principal::anonymous(), false)
 }

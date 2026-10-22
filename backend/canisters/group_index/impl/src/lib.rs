@@ -16,7 +16,6 @@ use group_index_canister::ChildCanisterType;
 use local_user_index_canister::{GroupIndexEvent as LocalIndexEvent, ModerationFlagsChanged, NameChanged, VerifiedChanged};
 use model::local_index_event_batch::LocalIndexEventBatch;
 use model::local_index_map::LocalIndexMap;
-use model::storage_index_accessors_to_remove_batch::StorageIndexAccessorsToRemoveBatch;
 use model::storage_index_event_batch::StorageIndexEventBatch;
 use model::user_canister_event_batch::UserCanisterEventBatch;
 use multi_user_canister::GroupIndexEvent;
@@ -370,11 +369,8 @@ struct Data {
     pub rng_seed: [u8; 32],
     pub idempotency_checker: IdempotencyChecker,
     pub local_index_event_sync_queue: GroupedTimerJobQueue<LocalIndexEventBatch>,
-    // Drained into `storage_index_event_sync_queue` by the post_upgrade one-off, and removed with it
-    pub storage_index_accessors_to_remove_queue: BatchedTimerJobQueue<StorageIndexAccessorsToRemoveBatch>,
     // Carries the ids of deleted groups and communities, which the files sent in them name as their
     // only accessor, to the StorageIndex, which removes them from those files and so removes the files
-    #[serde(default = "new_storage_index_event_sync_queue")]
     pub storage_index_event_sync_queue: BatchedTimerJobQueue<StorageIndexEventBatch>,
     // Events for users, each sent to the MultiUser canister holding the user
     #[serde(default = "new_user_canister_events_queue")]
@@ -430,7 +426,6 @@ impl Data {
             rng_seed: [0; 32],
             idempotency_checker: IdempotencyChecker::default(),
             local_index_event_sync_queue: GroupedTimerJobQueue::new(10, false),
-            storage_index_accessors_to_remove_queue: BatchedTimerJobQueue::new(storage_index_canister_id, false),
             storage_index_event_sync_queue: BatchedTimerJobQueue::new(storage_index_canister_id, false),
             user_canister_events_queue: new_user_canister_events_queue(),
         }
@@ -542,7 +537,6 @@ impl Default for Data {
             rng_seed: [0; 32],
             idempotency_checker: IdempotencyChecker::default(),
             local_index_event_sync_queue: GroupedTimerJobQueue::new(10, false),
-            storage_index_accessors_to_remove_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             storage_index_event_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             user_canister_events_queue: new_user_canister_events_queue(),
         }
@@ -650,10 +644,4 @@ impl AccessGateMetrics {
             AccessGate::TotalChitEarned(_) => self.total_chit_earned += 1,
         }
     }
-}
-
-// Only reached when deserializing state from before the queue existed, which the post_upgrade
-// one-off then points at the StorageIndex. Removed with that one-off.
-fn new_storage_index_event_sync_queue() -> BatchedTimerJobQueue<StorageIndexEventBatch> {
-    BatchedTimerJobQueue::new(Principal::anonymous(), false)
 }

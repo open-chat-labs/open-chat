@@ -1,7 +1,6 @@
 use crate::model::community_event_batch::CommunityEventBatch;
 use crate::model::daily_puzzle_engine::{DailyPuzzleEngine, DailyPuzzleEngineMetrics};
 use crate::model::daily_puzzle_event_batch::DailyPuzzleEventBatch;
-use crate::model::daily_puzzle_result_batch::DailyPuzzleResultBatch;
 use crate::model::game_chit_credit::{GameChitCreditRetryQueue, new_retry_queue};
 use crate::model::group_event_batch::GroupEventBatch;
 use crate::model::group_index_event_batch::GroupIndexEventBatch;
@@ -958,9 +957,6 @@ struct Data {
     pub daily_puzzle_canister_id: Option<CanisterId>,
     #[serde(default)]
     pub daily_puzzle_engine: DailyPuzzleEngine,
-    // Drained into `daily_puzzle_event_sync_queue` by the post_upgrade one-off, and removed with it
-    #[serde(default)]
-    pub daily_puzzle_results_queue: Option<BatchedTimerJobQueue<DailyPuzzleResultBatch>>,
     // Created when the daily puzzle canister id is set, since the queue needs a target
     #[serde(default)]
     pub daily_puzzle_event_sync_queue: Option<BatchedTimerJobQueue<DailyPuzzleEventBatch>>,
@@ -1099,7 +1095,6 @@ impl Data {
             bridge_bots: BTreeMap::new(),
             daily_puzzle_canister_id: None,
             daily_puzzle_engine: DailyPuzzleEngine::default(),
-            daily_puzzle_results_queue: None,
             daily_puzzle_event_sync_queue: None,
             game_chit_credit_retry_queue: new_retry_queue(),
             migrated_user_ids: MigratedUserIds::default(),

@@ -57,7 +57,7 @@ cd ../..
 # upgrades from them. The release tags are needed to find them, but aren't included in shallow
 # checkouts. Worktrees share the repository, so this can fail on its lock while another worktree is
 # fetching, in which case the tags fetched before are used
-for CANISTER in multi_user storage_bucket user_index
+for CANISTER in multi_user
 do
   if ! git fetch --quiet --depth=1 origin "refs/tags/*-$CANISTER:refs/tags/*-$CANISTER"
   then
