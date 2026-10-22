@@ -371,7 +371,6 @@ struct Data {
     // only accessor, to the StorageIndex, which removes them from those files and so removes the files
     pub storage_index_event_sync_queue: BatchedTimerJobQueue<StorageIndexEventBatch>,
     // Events for users, each sent to the MultiUser canister holding the user
-    #[serde(default = "new_user_canister_events_queue")]
     pub user_canister_events_queue: GroupedTimerJobQueue<UserCanisterEventBatch>,
 }
 

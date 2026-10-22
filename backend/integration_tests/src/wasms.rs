@@ -29,11 +29,9 @@ lazy_static! {
     pub static ref SNS_GOVERNANCE: CanisterWasm = get_canister_wasm("sns_governance");
     pub static ref SNS_WASM: CanisterWasm = get_canister_wasm("sns_wasm");
     pub static ref STORAGE_BUCKET: CanisterWasm = get_canister_wasm("storage_bucket");
-    // The StorageBucket canister wasm currently in production, downloaded by `run-integration-tests.sh`
     pub static ref STORAGE_INDEX: CanisterWasm = get_canister_wasm("storage_index");
     pub static ref TRANSLATIONS: CanisterWasm = get_canister_wasm("translations");
     pub static ref USER_INDEX: CanisterWasm = get_canister_wasm("user_index");
-    // The UserIndex canister wasm currently in production, downloaded by `run-integration-tests.sh`
 }
 
 fn get_canister_wasm(canister_name: &str) -> CanisterWasm {

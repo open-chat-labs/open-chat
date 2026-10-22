@@ -32,9 +32,9 @@ fn c2c_local_index_impl(args: Args, state: &mut RuntimeState) -> Response {
     Response::Success
 }
 
-// Each is applied as the endpoint it replaces applied it when the group or community called it
-// itself. The LocalUserIndex vouches for which of its chats sent it, so each chat is checked to be
-// one of that LocalUserIndex's.
+// Each is applied as it was when the group or community called the GroupIndex itself. The
+// LocalUserIndex vouches for which of its chats sent it, so each chat is checked to be one of that
+// LocalUserIndex's.
 fn handle_event(event: LocalIndexEvent, caller: CanisterId, state: &mut RuntimeState) {
     match event {
         LocalIndexEvent::GroupActive(ev) => {

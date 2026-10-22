@@ -141,12 +141,12 @@ struct Data {
     // it changes, and to each new bucket when it is created.
     #[serde(default)]
     pub csam_hashes: BTreeMap<Hash, u64>,
-    // Hashes clients declared as the source of upheld content (see storage_bucket
-    // c2c_vault_sync::DenylistHashOp::derived): refused everywhere, never sanctioned
+    // Hashes clients declared as the source of upheld content (see
+    // storage_bucket_canister::DenylistHashOp::derived): refused everywhere, never sanctioned
     #[serde(default)]
     pub derived_csam_hashes: BTreeMap<Hash, u64>,
-    // Learned from the caller of c2c_vault_ops (only ever the user_index); used to report
-    // bucket-detected CSAM re-uploads back to it
+    // Learned from the caller sending vault ops to `c2c_user_index` (only ever the user_index); used
+    // to report bucket-detected CSAM re-uploads back to it
     #[serde(default)]
     pub user_index_canister_id: Option<CanisterId>,
     // Created once the UserIndex is known

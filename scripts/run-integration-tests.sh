@@ -53,8 +53,7 @@ cd ../..
 ./scripts/download-nns-canister-wasm.sh icrc_ledger ic-icrc1-ledger
 ./scripts/download-canister-wasm-dfx.sh event_store || exit 1
 
-# The MultiUser, StorageBucket and UserIndex canister wasms currently in production, for testing
-# upgrades from them. The release tags are needed to find them, but aren't included in shallow
+# The MultiUser canister wasm currently in production, for testing upgrades from it. The release tags are needed to find them, but aren't included in shallow
 # checkouts. Worktrees share the repository, so this can fail on its lock while another worktree is
 # fetching, in which case the tags fetched before are used
 for CANISTER in multi_user

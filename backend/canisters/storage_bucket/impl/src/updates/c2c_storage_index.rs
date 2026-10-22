@@ -21,8 +21,7 @@ fn c2c_storage_index(args: Args) -> Response {
 }
 
 // The events are applied in the order they were sent. Each run of consecutive events of one kind
-// goes to the handler of the endpoint which took that kind, so that nothing is reordered across
-// kinds: a file's quarantine lands before its removal, say, where applying the removals first would
+// goes to the handler for that kind, so that nothing is reordered across kinds: a file's quarantine lands before its removal, say, where applying the removals first would
 // lose the evidence.
 fn c2c_storage_index_impl(args: Args, state: &mut RuntimeState) -> Response {
     let mut run: Vec<StorageIndexEvent> = Vec::new();
@@ -68,8 +67,7 @@ fn apply_run(run: Vec<StorageIndexEvent>, state: &mut RuntimeState) {
         let files_removed = c2c_sync_index_impl(sync_args, state);
         state.push_events_to_index(files_removed.into_iter().map(StorageBucketEvent::FileRemoved).collect());
     } else {
-        // Quarantine failures are logged as they happen and otherwise go unreported, as from the
-        // endpoint this replaces
+        // Quarantine failures are logged as they happen and otherwise go unreported
         c2c_vault_sync_impl(ops, state);
     }
 }
