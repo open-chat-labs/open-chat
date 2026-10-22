@@ -2,6 +2,7 @@ use crate::variants::every;
 use candid::Principal;
 use ic_ledger_types::{AccountIdentifier, Subaccount};
 use icrc_ledger_types::icrc1::transfer::Memo;
+use num_traits::Bounded;
 use serde_bytes::ByteBuf;
 use std::collections::HashMap;
 use types::{
@@ -16,10 +17,6 @@ use types::{
     icrc1, icrc2, nns,
 };
 
-// Above 2^53, so OpenChat encodes them as strings
-const LARGE_U64: u64 = 1 << 60;
-const LARGE_U128: u128 = 1 << 100;
-
 /// One value of every kind of content OpenChat sends bots, and of every variant within them, with
 /// every `Option` filled in and every list non-empty so that each of their fields is encoded
 pub fn message_contents() -> Vec<MessageContent> {
@@ -28,16 +25,16 @@ pub fn message_contents() -> Vec<MessageContent> {
             text: "Hello".to_string(),
         }),
         MessageContent::Image(ImageContent {
-            width: 640,
-            height: 480,
+            width: max(),
+            height: max(),
             thumbnail_data: thumbnail(),
             caption: caption(),
             mime_type: "image/png".to_string(),
             blob_reference: Some(blob_reference()),
         }),
         MessageContent::Video(VideoContent {
-            width: 640,
-            height: 480,
+            width: max(),
+            height: max(),
             thumbnail_data: thumbnail(),
             caption: caption(),
             mime_type: "video/mp4".to_string(),
@@ -48,19 +45,19 @@ pub fn message_contents() -> Vec<MessageContent> {
             caption: caption(),
             mime_type: "audio/mpeg".to_string(),
             blob_reference: Some(blob_reference()),
-            duration_ms: Some(LARGE_U64),
+            duration_ms: Some(max()),
             samples: Some(vec![1, 2, 3]),
         }),
         MessageContent::File(FileContent {
             name: "file.pdf".to_string(),
             caption: caption(),
             mime_type: "application/pdf".to_string(),
-            file_size: 1000,
+            file_size: max(),
             blob_reference: Some(blob_reference()),
         }),
         MessageContent::Deleted(DeletedBy {
             deleted_by: user_id(1),
-            timestamp: LARGE_U64,
+            timestamp: max(),
         }),
         MessageContent::Giphy(GiphyContent {
             caption: caption(),
@@ -70,23 +67,23 @@ pub fn message_contents() -> Vec<MessageContent> {
         }),
         MessageContent::Prize(prize()),
         MessageContent::MessageReminderCreated(MessageReminderCreatedContent {
-            reminder_id: LARGE_U64,
-            remind_at: LARGE_U64,
+            reminder_id: max(),
+            remind_at: max(),
             notes: Some("Notes".to_string()),
             hidden: true,
         }),
         MessageContent::MessageReminder(MessageReminderContent {
-            reminder_id: LARGE_U64,
+            reminder_id: max(),
             notes: Some("Notes".to_string()),
         }),
         MessageContent::ReportedMessage(ReportedMessage {
             reports: vec![MessageReport {
                 reported_by: user_id(1),
-                timestamp: LARGE_U64,
-                reason_code: 3,
+                timestamp: max(),
+                reason_code: max(),
                 notes: Some("Notes".to_string()),
             }],
-            count: 1,
+            count: max(),
         }),
         MessageContent::Custom(CustomContent {
             kind: "custom".to_string(),
@@ -99,13 +96,16 @@ pub fn message_contents() -> Vec<MessageContent> {
             config: PollConfig {
                 text: Some("Question".to_string()),
                 options: vec!["Yes".to_string(), "No".to_string()],
-                end_date: Some(LARGE_U64),
+                end_date: Some(max()),
                 anonymous: false,
                 show_votes_before_end_date: true,
                 allow_multiple_votes_per_user: false,
                 allow_user_to_change_vote: true,
             },
-            votes: PollVotes { total, user: vec![0] },
+            votes: PollVotes {
+                total,
+                user: vec![max()],
+            },
             ended: false,
         })
     }));
@@ -130,7 +130,7 @@ pub fn message_contents() -> Vec<MessageContent> {
         MessageContent::PrizeWinner(PrizeWinnerContent {
             winner: user_id(2),
             transaction,
-            prize_message: 5.into(),
+            prize_message: max::<u32>().into(),
         })
     }));
 
@@ -138,14 +138,14 @@ pub fn message_contents() -> Vec<MessageContent> {
 
     contents.extend(p2p_swap_statuses().into_iter().map(|status| {
         MessageContent::P2PSwap(P2PSwapContent {
-            swap_id: 1,
+            swap_id: max(),
             token0: token_info("CHAT"),
-            token0_amount: LARGE_U128,
+            token0_amount: max(),
             token1: token_info("ICP"),
-            token1_amount: LARGE_U128,
-            expires_at: LARGE_U64,
+            token1_amount: max(),
+            expires_at: max(),
             caption: caption(),
-            token0_txn_in: LARGE_U64,
+            token0_txn_in: max(),
             status,
         })
     }));
@@ -157,12 +157,12 @@ pub fn message_contents() -> Vec<MessageContent> {
                 MessageContent::VideoCall(VideoCallContent {
                     call_type,
                     audio_only: true,
-                    ended: Some(LARGE_U64),
+                    ended: Some(max()),
                     participants: vec![CallParticipant {
                         user_id: user_id(1),
-                        joined: LARGE_U64,
+                        joined: max(),
                     }],
-                    hidden_participants: 2,
+                    hidden_participants: max(),
                 })
             }),
     );
@@ -170,7 +170,7 @@ pub fn message_contents() -> Vec<MessageContent> {
     contents.extend(encrypted_message_content_types().into_iter().map(|content_type| {
         MessageContent::Encrypted(EncryptedContent {
             content_type,
-            version: 1,
+            version: max(),
             encrypted_message_key: vec![1, 2, 3].into(),
             public_key: vec![4, 5, 6].into(),
             encrypted_data: vec![7, 8, 9],
@@ -182,9 +182,9 @@ pub fn message_contents() -> Vec<MessageContent> {
 
 fn total_votes() -> Vec<TotalVotes> {
     every(vec![
-        TotalVotes::Visible(HashMap::from([(0, vec![user_id(1)])])),
-        TotalVotes::Anonymous(HashMap::from([(0, 3)])),
-        TotalVotes::Hidden(3),
+        TotalVotes::Visible(HashMap::from([(max(), vec![user_id(1)])])),
+        TotalVotes::Anonymous(HashMap::from([(max(), max())])),
+        TotalVotes::Hidden(max()),
     ])
 }
 
@@ -206,11 +206,11 @@ fn pending_transactions() -> Vec<PendingCryptoTransaction> {
             PendingCryptoTransaction::NNS(nns::PendingCryptoTransaction {
                 ledger: canister_id(4),
                 token_symbol: "ICP".to_string(),
-                amount: nns::Tokens::from_e8s(LARGE_U64),
+                amount: nns::Tokens::from_e8s(max()),
                 to,
-                fee: Some(nns::Tokens::from_e8s(10_000)),
-                memo: Some(LARGE_U64),
-                created: LARGE_U64,
+                fee: Some(nns::Tokens::from_e8s(max())),
+                memo: Some(max()),
+                created: max(),
             })
         })
         .collect();
@@ -218,33 +218,33 @@ fn pending_transactions() -> Vec<PendingCryptoTransaction> {
     transactions.push(PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
         ledger: canister_id(5),
         token_symbol: "CHAT".to_string(),
-        amount: LARGE_U128,
+        amount: max(),
         to: account(),
-        fee: LARGE_U128,
+        fee: max(),
         memo: Some(memo()),
-        created: LARGE_U64,
+        created: max(),
     }));
     transactions.push(PendingCryptoTransaction::ICRC2(icrc2::PendingCryptoTransaction {
         ledger: canister_id(5),
         token_symbol: "CHAT".to_string(),
-        amount: LARGE_U128,
+        amount: max(),
         from: account(),
         to: account(),
-        fee: LARGE_U128,
+        fee: max(),
         memo: Some(memo()),
-        created: LARGE_U64,
+        created: max(),
     }));
     transactions.push(PendingCryptoTransaction::Certified(certified::PendingCryptoTransaction {
         ledger: canister_id(5),
         token_symbol: "CHAT".to_string(),
-        amount: LARGE_U128,
+        amount: max(),
         to: account(),
-        fee: LARGE_U128,
+        fee: max(),
         memo: Some(memo()),
-        created: LARGE_U64,
+        created: max(),
         call: certified::CertifiedCall {
             arg: vec![1, 2, 3],
-            ingress_expiry: LARGE_U64,
+            ingress_expiry: max(),
             nonce: Some(ByteBuf::from(vec![4, 5, 6])),
             certificate: vec![7, 8, 9],
         },
@@ -259,41 +259,41 @@ fn completed_transactions() -> Vec<CompletedCryptoTransaction> {
         CompletedCryptoTransaction::NNS(nns::CompletedCryptoTransaction {
             ledger: canister_id(4),
             token_symbol: "ICP".to_string(),
-            amount: nns::Tokens::from_e8s(LARGE_U64),
-            fee: nns::Tokens::from_e8s(10_000),
+            amount: nns::Tokens::from_e8s(max()),
+            fee: nns::Tokens::from_e8s(max()),
             from,
             to: nns::CryptoAccount::Account(account_identifier()),
-            memo: LARGE_U64,
-            created: LARGE_U64,
+            memo: max(),
+            created: max(),
             transaction_hash: [1; 32],
-            block_index: LARGE_U64,
+            block_index: max(),
         })
     });
     let icrc1 = icrc1_crypto_accounts().into_iter().map(|from| {
         CompletedCryptoTransaction::ICRC1(icrc1::CompletedCryptoTransaction {
             ledger: canister_id(5),
             token_symbol: "CHAT".to_string(),
-            amount: LARGE_U128,
+            amount: max(),
             from,
             to: icrc1::CryptoAccount::Account(account()),
-            fee: LARGE_U128,
+            fee: max(),
             memo: Some(memo()),
-            created: LARGE_U64,
-            block_index: LARGE_U64,
+            created: max(),
+            block_index: max(),
         })
     });
     let icrc2 = icrc1_crypto_accounts().into_iter().map(|from| {
         CompletedCryptoTransaction::ICRC2(icrc2::CompletedCryptoTransaction {
             ledger: canister_id(5),
             token_symbol: "CHAT".to_string(),
-            amount: LARGE_U128,
+            amount: max(),
             spender: user_id(1),
             from,
             to: icrc1::CryptoAccount::Account(account()),
-            fee: LARGE_U128,
+            fee: max(),
             memo: Some(memo()),
-            created: LARGE_U64,
-            block_index: LARGE_U64,
+            created: max(),
+            block_index: max(),
         })
     });
 
@@ -306,12 +306,12 @@ fn failed_transactions() -> Vec<FailedCryptoTransaction> {
         FailedCryptoTransaction::NNS(nns::FailedCryptoTransaction {
             ledger: canister_id(4),
             token_symbol: "ICP".to_string(),
-            amount: nns::Tokens::from_e8s(LARGE_U64),
-            fee: nns::Tokens::from_e8s(10_000),
+            amount: nns::Tokens::from_e8s(max()),
+            fee: nns::Tokens::from_e8s(max()),
             from,
             to: nns::CryptoAccount::Account(account_identifier()),
-            memo: LARGE_U64,
-            created: LARGE_U64,
+            memo: max(),
+            created: max(),
             transaction_hash: [1; 32],
             error_message: "Error".to_string(),
         })
@@ -320,12 +320,12 @@ fn failed_transactions() -> Vec<FailedCryptoTransaction> {
         FailedCryptoTransaction::ICRC1(icrc1::FailedCryptoTransaction {
             ledger: canister_id(5),
             token_symbol: "CHAT".to_string(),
-            amount: LARGE_U128,
-            fee: LARGE_U128,
+            amount: max(),
+            fee: max(),
             from,
             to: icrc1::CryptoAccount::Account(account()),
             memo: Some(memo()),
-            created: LARGE_U64,
+            created: max(),
             error_message: "Error".to_string(),
         })
     });
@@ -333,13 +333,13 @@ fn failed_transactions() -> Vec<FailedCryptoTransaction> {
         FailedCryptoTransaction::ICRC2(icrc2::FailedCryptoTransaction {
             ledger: canister_id(5),
             token_symbol: "CHAT".to_string(),
-            amount: LARGE_U128,
-            fee: LARGE_U128,
+            amount: max(),
+            fee: max(),
             spender: user_id(1),
             from,
             to: icrc1::CryptoAccount::Account(account()),
             memo: Some(memo()),
-            created: LARGE_U64,
+            created: max(),
             error_message: "Error".to_string(),
         })
     });
@@ -377,38 +377,38 @@ fn proposals() -> Vec<Proposal> {
 
     let nns = statuses.into_iter().map(|status| {
         Proposal::NNS(NnsProposal {
-            id: LARGE_U64,
-            topic: 4,
-            proposer: LARGE_U64,
-            created: LARGE_U64,
+            id: max(),
+            topic: min(),
+            proposer: max(),
+            created: max(),
             title: "Title".to_string(),
             summary: "Summary".to_string(),
             url: "https://example.com".to_string(),
             status,
             reward_status: ProposalRewardStatus::AcceptVotes,
             tally: tally(),
-            deadline: LARGE_U64,
+            deadline: max(),
             payload_text_rendering: Some("Payload".to_string()),
-            last_updated: LARGE_U64,
+            last_updated: max(),
         })
     });
     let sns = reward_statuses.into_iter().map(|reward_status| {
         Proposal::SNS(SnsProposal {
-            id: LARGE_U64,
-            action: LARGE_U64,
+            id: max(),
+            action: max(),
             proposer: [1; 32],
-            created: LARGE_U64,
+            created: max(),
             title: "Title".to_string(),
             summary: "Summary".to_string(),
             url: "https://example.com".to_string(),
             status: ProposalDecisionStatus::Open,
             reward_status,
             tally: tally(),
-            deadline: LARGE_U64,
+            deadline: max(),
             payload_text_rendering: Some("Payload".to_string()),
-            minimum_yes_proportion_of_total: 300,
-            minimum_yes_proportion_of_exercised: 5000,
-            last_updated: LARGE_U64,
+            minimum_yes_proportion_of_total: max(),
+            minimum_yes_proportion_of_exercised: max(),
+            last_updated: max(),
         })
     });
 
@@ -417,10 +417,10 @@ fn proposals() -> Vec<Proposal> {
 
 fn tally() -> Tally {
     Tally {
-        yes: LARGE_U64,
-        no: LARGE_U64,
-        total: LARGE_U64,
-        timestamp: LARGE_U64,
+        yes: max(),
+        no: max(),
+        total: max(),
+        timestamp: max(),
     }
 }
 
@@ -428,35 +428,35 @@ fn tally() -> Tally {
 #[allow(deprecated)]
 fn prize() -> PrizeContent {
     PrizeContent {
-        prizes_remaining: 2,
-        prizes_pending: 1,
+        prizes_remaining: max(),
+        prizes_pending: max(),
         winners: vec![user_id(1)],
-        winner_count: 3,
+        winner_count: max(),
         user_is_winner: true,
         token_symbol: "CHAT".to_string(),
         ledger: canister_id(5),
-        end_date: LARGE_U64,
+        end_date: max(),
         caption: caption(),
         diamond_only: true,
         lifetime_diamond_only: true,
         unique_person_only: true,
-        streak_only: 7,
+        streak_only: max(),
         requires_captcha: true,
-        min_chit_earned: 1000,
+        min_chit_earned: max(),
     }
 }
 
 // A report in each chat, then one in each status, then one in each authority report state
 fn moderation_reports() -> Vec<ModerationReportContent> {
     let report = ModerationReportContent {
-        report_index: Some(LARGE_U64),
+        report_index: Some(max()),
         chat_id: Chat::Group(canister_id(6).into()),
-        thread_root_message_index: Some(1.into()),
-        message_index: 2.into(),
-        message_id: LARGE_U64.into(),
+        thread_root_message_index: Some(max::<u32>().into()),
+        message_index: max::<u32>().into(),
+        message_id: max::<u64>().into(),
         sender: user_id(1),
         reporters: vec![user_id(2)],
-        flagged_categories: 3,
+        flagged_categories: max(),
         classification_failed: true,
         auto_sanctioned: true,
         content_excerpt: Some("Excerpt".to_string()),
@@ -465,16 +465,16 @@ fn moderation_reports() -> Vec<ModerationReportContent> {
             .into_iter()
             .map(|provider| MediaScanMatch {
                 provider,
-                blob_id: LARGE_U128,
+                blob_id: max(),
                 source: "Source".to_string(),
                 violations: vec!["Violation".to_string()],
-                match_distance: -1,
+                match_distance: min(),
                 match_id: Some("Match".to_string()),
                 hash: Some("Hash".to_string()),
             })
             .collect(),
         is_blocked_attempt: true,
-        reported_at: LARGE_U64,
+        reported_at: max(),
         status: ModerationReportStatus::Pending,
         authority_report: Some(AuthorityReportState::Due { urgent: true }),
     };
@@ -482,11 +482,11 @@ fn moderation_reports() -> Vec<ModerationReportContent> {
     let chats = every(vec![
         Chat::Direct(canister_id(6).into()),
         Chat::Group(canister_id(6).into()),
-        Chat::Channel(canister_id(7).into(), 8u32.into()),
+        Chat::Channel(canister_id(7).into(), max::<u32>().into()),
     ]);
     let resolution = ModerationReportResolution {
         moderator: user_id(2),
-        timestamp: LARGE_U64,
+        timestamp: max(),
     };
     let statuses = every(vec![
         ModerationReportStatus::Pending,
@@ -500,7 +500,7 @@ fn moderation_reports() -> Vec<ModerationReportContent> {
         AuthorityReportState::Filed {
             portal_reference: "Reference".to_string(),
         },
-        AuthorityReportState::Attempting { started_at: LARGE_U64 },
+        AuthorityReportState::Attempting { started_at: max() },
         AuthorityReportState::ContingencyRequired {
             error: "Error".to_string(),
             urgent: true,
@@ -532,21 +532,21 @@ fn p2p_swap_statuses() -> Vec<P2PSwapStatus> {
     every(vec![
         P2PSwapStatus::Open,
         P2PSwapStatus::Cancelled(P2PSwapCancelled {
-            token0_txn_out: Some(LARGE_U64),
+            token0_txn_out: Some(max()),
         }),
         P2PSwapStatus::Expired(P2PSwapCancelled {
-            token0_txn_out: Some(LARGE_U64),
+            token0_txn_out: Some(max()),
         }),
         P2PSwapStatus::Reserved(P2PSwapReserved { reserved_by: user_id(2) }),
         P2PSwapStatus::Accepted(P2PSwapAccepted {
             accepted_by: user_id(2),
-            token1_txn_in: LARGE_U64,
+            token1_txn_in: max(),
         }),
         P2PSwapStatus::Completed(P2PSwapCompleted {
             accepted_by: user_id(2),
-            token1_txn_in: LARGE_U64,
-            token0_txn_out: LARGE_U64,
-            token1_txn_out: LARGE_U64,
+            token1_txn_in: max(),
+            token0_txn_out: max(),
+            token1_txn_out: max(),
         }),
     ])
 }
@@ -568,15 +568,15 @@ fn token_info(symbol: &str) -> TokenInfo {
     TokenInfo {
         symbol: symbol.to_string(),
         ledger: canister_id(5),
-        decimals: 8,
-        fee: LARGE_U128,
+        decimals: max(),
+        fee: max(),
     }
 }
 
 fn giphy_image_variant() -> GiphyImageVariant {
     GiphyImageVariant {
-        width: 200,
-        height: 100,
+        width: max(),
+        height: max(),
         url: "https://giphy.com/1".to_string(),
         mime_type: "image/gif".to_string(),
     }
@@ -593,7 +593,7 @@ fn caption() -> Option<String> {
 fn blob_reference() -> BlobReference {
     BlobReference {
         canister_id: canister_id(8),
-        blob_id: LARGE_U128,
+        blob_id: max(),
     }
 }
 
@@ -618,4 +618,15 @@ fn user_id(n: u8) -> UserId {
 
 fn canister_id(n: u8) -> CanisterId {
     Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, n, 1, 1])
+}
+
+// Each integer is its type's largest value, or smallest if it's signed, so that a field OpenChat
+// widens fails to decode as the SDK's narrower type. The largest u64s and u128s are above 2^53,
+// which OpenChat sends as strings.
+fn max<T: Bounded>() -> T {
+    T::max_value()
+}
+
+fn min<T: Bounded>() -> T {
+    T::min_value()
 }

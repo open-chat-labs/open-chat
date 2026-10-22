@@ -87,9 +87,9 @@ jobs:
           command: test
           args: --workspace --exclude integration_tests --exclude bot_sdk_compat_tests --exclude open-chat --exclude tauri-plugin-oc --tests
 
-  # Fails when OpenChat sends bots content the bots SDK can't decode, or the SDK sends content
-  # OpenChat can't, which breaks bots. Fixing it needs the SDK change merged first, then
-  # `oc_bots_sdk` bumped to it.
+  # Fails on what breaks bots: content OpenChat sends which the bots SDK can't decode, or the
+  # reverse, or a field one side has which the other renamed or removed. Fixing it needs the SDK
+  # change merged first, then `oc_bots_sdk` bumped to it.
   bot_sdk_compat:
     name: check bots SDK compatibility
     needs: changes
@@ -103,7 +103,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: test
-          args: -p bot_sdk_compat_tests
+          args: -p bot_sdk_compat_tests --tests
 
   # Reports what the bots SDK lacks: content it decodes as `Unsupported`, and fields it doesn't
   # have. Bots keep working meanwhile, so this isn't a required check.
@@ -120,4 +120,4 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: test
-          args: -p bot_sdk_compat_tests -- --ignored
+          args: -p bot_sdk_compat_tests --tests -- --ignored

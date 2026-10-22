@@ -3,15 +3,16 @@ name = "bot_sdk_compat_tests"
 version.workspace = true
 edition.workspace = true
 
-# Checks the bots SDK (github.com/open-chat-labs/open-chat-bots, `rs/sdk`) still decodes what
-# OpenChat sends bots. A backend change adding a kind of content or a field fails here until the
-# SDK has it too and `oc_bots_sdk` is bumped to that rev.
+# Checks the bots SDK (github.com/open-chat-labs/open-chat-bots, `rs/sdk`) decodes what OpenChat
+# sends bots, and the reverse. A backend change which breaks the SDK fails here until the SDK is
+# fixed and `oc_bots_sdk` bumped to that rev; see lib.rs for what fails and what is only reported.
 
 [dev-dependencies]
 candid = { workspace = true }
 ic-ledger-types = { workspace = true }
 icrc-ledger-types = { workspace = true }
 msgpack = { path = "../msgpack" }
+num-traits = { workspace = true }
 oc_bots_sdk = { workspace = true }
 rmpv = { workspace = true }
 serde_bytes = { workspace = true }

@@ -58,27 +58,7 @@ variants!(
     ]
 );
 
-variants!(
-    types::MessageContentInitial,
-    [
-        Text,
-        Image,
-        Video,
-        Audio,
-        File,
-        Poll,
-        Crypto,
-        Deleted,
-        Giphy,
-        GovernanceProposal,
-        Prize,
-        MessageReminderCreated,
-        MessageReminder,
-        P2PSwap,
-        Encrypted,
-        Custom,
-    ]
-);
+variants!(types::BotMessageContent, [Text, Image, Video, Audio, File, Poll, Giphy]);
 
 variants!(types::CryptoTransaction, [Pending, Completed, Failed]);
 variants!(types::PendingCryptoTransaction, [NNS, ICRC1, ICRC2, Certified]);
@@ -116,33 +96,6 @@ variants!(
 );
 variants!(types::VideoCallType, [Broadcast, Default]);
 variants!(types::Chat, [Direct, Group, Channel]);
-
-variants!(
-    oc_bots_sdk::types::MessageContent,
-    [
-        Text,
-        Image,
-        Video,
-        Audio,
-        File,
-        Poll,
-        Crypto,
-        Deleted,
-        Giphy,
-        GovernanceProposal,
-        Prize,
-        PrizeWinner,
-        MessageReminderCreated,
-        MessageReminder,
-        ReportedMessage,
-        ModerationReport,
-        P2PSwap,
-        VideoCall,
-        Encrypted,
-        Custom,
-        Unsupported,
-    ]
-);
 
 variants!(
     oc_bots_sdk::types::MessageContentInitial,

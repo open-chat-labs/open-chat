@@ -1280,6 +1280,7 @@ dependencies = [
  "ic-ledger-types",
  "icrc-ledger-types 0.2.0",
  "msgpack",
+ "num-traits",
  "oc_bots_sdk",
  "rmpv",
  "serde_bytes",
