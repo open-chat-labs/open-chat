@@ -296,25 +296,34 @@ export function consumePendingDeepLink(): string | null {
     return url;
 }
 
+/**
+ * Opens a deep link, warm or cold start alike. Returns whether it navigated inside the app.
+ */
+export function openDeepLink(url: string): boolean {
+    try {
+        const { pathname, search } = new URL(url);
+        // Landing / marketing pages (blog, whitepaper, etc.) are not real
+        // in-app destinations. The OS delivers these oc.app links to us as
+        // deep links because oc.app is a verified associated domain - open
+        // them in an external browser tab instead of navigating in-app.
+        if (isLandingPagePath(pathname)) {
+            openUrl({ url }).catch((e) =>
+                console.error("Deep link: failed to open external URL", e),
+            );
+            return false;
+        }
+        navigate(pathname + search, "notification");
+        return true;
+    } catch {
+        console.error("Deep link: failed to parse URL", url);
+        return false;
+    }
+}
+
 export async function expectDeepLinks(): Promise<PluginListener> {
     const handleDeepLink = (url: string) => {
         console.log("Deep link: received warm-start event", url);
-        try {
-            const { pathname, search } = new URL(url);
-            // Landing / marketing pages (blog, whitepaper, etc.) are not real
-            // in-app destinations. The OS delivers these oc.app links to us as
-            // deep links because oc.app is a verified associated domain - open
-            // them in an external browser tab instead of navigating in-app.
-            if (isLandingPagePath(pathname)) {
-                openUrl({ url }).catch((e) =>
-                    console.error("Deep link: failed to open external URL", e),
-                );
-                return;
-            }
-            navigate(pathname + search, "notification");
-        } catch {
-            console.error("Deep link: failed to parse URL", url);
-        }
+        openDeepLink(url);
     };
 
     const listener = await addPluginListener(
