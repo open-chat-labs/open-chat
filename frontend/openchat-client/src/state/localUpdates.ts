@@ -955,6 +955,23 @@ export class GlobalLocalState {
         );
     }
 
+    setEditedMessagePreviews(
+        messageId: bigint,
+        messagePreviews: RehydratedMessagePreview[],
+    ): UndoLocalUpdate {
+        return this.#modifyMessageUpdates(
+            messageId,
+            (upd) => {
+                upd.messagePreviews = messagePreviews;
+                return (upd) => {
+                    upd.messagePreviews = undefined;
+                    return upd;
+                };
+            },
+            "setEditedMessagePreviews",
+        );
+    }
+
     // The og previews and the message previews are each looked up when a message is sent, and
     // arrive separately
     setUnconfirmedPreviews(

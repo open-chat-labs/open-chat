@@ -1800,6 +1800,10 @@ function mergeLocalUpdates(
         message.ogPreviews = localUpdates.ogPreviews;
     }
 
+    if (localUpdates?.messagePreviews !== undefined) {
+        message.messagePreviews = localUpdates.messagePreviews;
+    }
+
     if (localUpdates?.undeletedContent !== undefined) {
         message.content = localUpdates.undeletedContent;
         message.deleted = false;

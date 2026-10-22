@@ -32,6 +32,7 @@ import {
     type ChannelSummary,
     type CommunityIdentifier,
     type CommunitySummary,
+    type EventWrapper,
     type Message,
     type RehydratedMessagePreview,
     type RulesAcceptanceResolver,
@@ -42,6 +43,7 @@ import type { OpenChatConfig } from "./config";
 import { OpenChat } from "./openchat";
 import {
     currentUserStore,
+    eventsStore,
     localUpdates,
     pinNumberRequiredStore,
     pinNumberResolverStore,
@@ -307,16 +309,20 @@ describe("sending from the composer", () => {
         let lookup: Deferred<RehydratedMessagePreview[]>;
         // where the worker's answer to the send goes
         let subscriber: { onResult(result: unknown): void } | undefined;
+        // the worker's answer to an edit
+        let editResult: Deferred<unknown>;
 
         beforeEach(() => {
             requests = [];
             lookup = deferred();
             subscriber = undefined;
+            editResult = deferred();
             startChatVisit(chatId);
             vi.spyOn(WorkerAgent.prototype, "send").mockImplementation((async (
                 req: WorkerRequest,
             ) => {
                 requests.push(req);
+                if (req.kind === "editMessage") return editResult.promise;
                 if (req.kind !== "rehydrateMessage") return new Promise(() => {});
                 const messagePreviews = await lookup.promise;
                 return { ...req.message, event: { ...req.message.event, messagePreviews } };
@@ -403,6 +409,77 @@ describe("sending from the composer", () => {
             await settled(send());
             expect(requests.filter((r) => r.kind === "rehydrateMessage")).toHaveLength(0);
             expect(sent).toHaveLength(1);
+        });
+
+        describe("edited", () => {
+            // each test edits a message of its own, since local updates outlive a test
+            let nextMessageId = 1000n;
+            let editing: EventWrapper<Message>;
+
+            // a message in the chat, with `text` and the previews it was loaded with
+            function inChat(text: string, messagePreviews: RehydratedMessagePreview[]) {
+                editing = {
+                    index: 1,
+                    timestamp: 1n,
+                    event: {
+                        ...linked.message,
+                        messageId: nextMessageId++,
+                        messageIndex: 0,
+                        sender: "me",
+                        content: { kind: "text_content", text },
+                        messagePreviews,
+                    },
+                };
+                currentChatVisit()?.updateEvents(() => [editing]);
+            }
+
+            async function edit(text: string) {
+                void client.editMessageWithAttachment(context, text, false, undefined, editing);
+                await vi.advanceTimersByTimeAsync(0);
+            }
+
+            function shown(): Message | undefined {
+                const event = eventsStore.value.find(
+                    (e) =>
+                        e.event.kind === "message" && e.event.messageId === editing.event.messageId,
+                )?.event;
+                return event?.kind === "message" ? event : undefined;
+            }
+
+            const lookups = () => requests.filter((r) => r.kind === "rehydrateMessage");
+
+            test("to link to a message, shows its preview once it's loaded", async () => {
+                inChat("hello", []);
+                await edit(`see ${url}`);
+                expect(shown()?.messagePreviews).toEqual([]);
+                await loadLinked("found");
+                expect(shown()?.messagePreviews).toEqual([linked]);
+            });
+
+            test("to drop the link, drops its preview straight away", async () => {
+                inChat(`see ${url}`, [linked]);
+                await edit("never mind");
+                expect(shown()?.messagePreviews).toEqual([]);
+                expect(lookups()).toHaveLength(0);
+            });
+
+            test("keeping the link, keeps its preview without looking it up", async () => {
+                inChat(`see ${url}`, [linked]);
+                await edit(`see ${url} again`);
+                expect(shown()?.messagePreviews).toEqual([linked]);
+                expect(lookups()).toHaveLength(0);
+            });
+
+            test("unsuccessfully, doesn't show the preview it went on to load", async () => {
+                inChat("hello", []);
+                await edit(`see ${url}`);
+                // the edit is refused before the linked message has loaded
+                editResult.resolve({ kind: "failure" });
+                await vi.advanceTimersByTimeAsync(0);
+                await loadLinked("found");
+                expect(shown()?.content).toEqual({ kind: "text_content", text: "hello" });
+                expect(shown()?.messagePreviews).toEqual([]);
+            });
         });
     });
 });
