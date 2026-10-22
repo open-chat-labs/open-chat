@@ -20,7 +20,7 @@
         selected?: boolean;
         maxStreak?: boolean;
         // A small image over the bottom right corner, eg. the logo of the platform a message was
-        // relayed from, ringed with statusBorder
+        // relayed from
         badge?: { url: string; label: string };
     }
 
@@ -79,8 +79,7 @@
             class:rtl={$rtlStore}
             src={badge.url}
             alt={badge.label}
-            title={badge.label}
-            style={`box-shadow: ${statusBorder} 0 0 0 2px`} />
+            title={badge.label} />
     {/if}
     {#if specialisation !== "none"}
         <div class="specialised" class:maxStreak class:rtl={$rtlStore}>

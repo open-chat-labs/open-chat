@@ -590,7 +590,6 @@
                                                   label: BRIDGE_PLATFORM_NAMES[bridged.kind],
                                               }
                                             : undefined}
-                                        statusBorder={"var(--currentChat-msgs-bg)"}
                                         size={$mobileWidth
                                             ? AvatarSize.Small
                                             : AvatarSize.Default} />
