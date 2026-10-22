@@ -39,11 +39,9 @@ jobs:
           echo "tag=$TAG" >> $GITHUB_OUTPUT
           echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
 
+      # The repo's pinned toolchain, as every other workflow builds with
       - name: Set up Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
+        uses: ./.github/workflows/setup-rust
 
       - name: Install musl tools
         run: sudo apt-get update && sudo apt-get install -y musl-tools
