@@ -31,13 +31,12 @@
         selectedChatMembersStore,
         selectedCommunitySummaryStore,
         selectedCommunityUserGroupsStore,
-        subscribe,
         throttleDeadline,
         userGroupMentionRegex,
         userIdMentionRegex,
         type SendMessageOutcome,
     } from "@client";
-    import { getContext, onMount, tick, untrack } from "svelte";
+    import { getContext, tick, untrack } from "svelte";
     import {
         entryBlock,
         expandMentions as expandMentionsIn,
@@ -443,20 +442,6 @@
             }
         }
     });
-    // "Reply in thread" on the thread that's already open doesn't move the thread's entry, so it
-    // takes focus here
-    onMount(() =>
-        subscribe("openThread", ({ chat: opened, msg }) => {
-            if (
-                mode === "thread" &&
-                focusOnOpen &&
-                chatIdentifiersEqual(opened.id, messageContext.chatId) &&
-                msg.event.messageIndex === messageContext.threadRootMessageIndex
-            ) {
-                editor?.focus();
-            }
-        }),
-    );
     let placeholder = $derived(
         !canEnterText
             ? i18nKey("sendTextDisabled")
