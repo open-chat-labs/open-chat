@@ -15,11 +15,13 @@
         Switch,
     } from "component-lib";
     import {
+        cloneWalletConfig,
         cryptoLookup,
         cryptoTokensSorted,
         DEFAULT_TOKENS,
         OpenChat,
         pinNumberRequiredStore,
+        walletConfigForMode,
         walletConfigStore,
         type CryptocurrencyDetails,
         type EnhancedTokenDetails,
@@ -65,20 +67,8 @@
         }
     }
 
-    function clone(config: WalletConfig): WalletConfig {
-        switch (config.kind) {
-            case "auto_wallet":
-                return { ...config };
-            case "manual_wallet":
-                return {
-                    kind: "manual_wallet",
-                    tokens: new Set(config.tokens),
-                };
-        }
-    }
-
     onMount(() => {
-        config = clone($walletConfigStore);
+        config = cloneWalletConfig($walletConfigStore);
 
         return () => {
             if (client.walletConfigChanged($walletConfigStore, config)) {
@@ -94,20 +84,7 @@
     });
 
     function selectMode(kind: WalletConfig["kind"]) {
-        switch (kind) {
-            case "auto_wallet":
-                config =
-                    $walletConfigStore.kind === "auto_wallet"
-                        ? $walletConfigStore
-                        : { kind: "auto_wallet", minDollarValue: 0 };
-                break;
-            case "manual_wallet":
-                config =
-                    $walletConfigStore.kind === "manual_wallet"
-                        ? $walletConfigStore
-                        : { kind: "manual_wallet", tokens: defaultLedgers };
-                break;
-        }
+        config = walletConfigForMode(kind, $walletConfigStore, defaultLedgers);
     }
 
     function selectToken(token: EnhancedTokenDetails) {
@@ -117,7 +94,7 @@
             } else {
                 config.tokens.add(token.ledger);
             }
-            config = clone(config);
+            config = cloneWalletConfig(config);
         }
     }
 

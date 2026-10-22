@@ -1,9 +1,11 @@
 <script lang="ts">
     import {
+        cloneWalletConfig,
         cryptoTokensSorted as accountsSorted,
         cryptoLookup,
         DEFAULT_TOKENS,
         OpenChat,
+        walletConfigForMode,
         walletConfigStore,
         type CryptocurrencyDetails,
         type ReadonlyMap,
@@ -38,7 +40,7 @@
     let config: WalletConfig = $state({ ...$walletConfigStore });
 
     onMount(() => {
-        config = clone($walletConfigStore);
+        config = cloneWalletConfig($walletConfigStore);
 
         if (config.kind === "manual_wallet") {
             // Refresh balances of disabled tokens so that we discover which
@@ -58,18 +60,6 @@
             }
         };
     });
-
-    function clone(config: WalletConfig): WalletConfig {
-        switch (config.kind) {
-            case "auto_wallet":
-                return { ...config };
-            case "manual_wallet":
-                return {
-                    kind: "manual_wallet",
-                    tokens: new Set(config.tokens),
-                };
-        }
-    }
 
     function getDefaultLedgers(
         ledgerLookup: ReadonlyMap<string, CryptocurrencyDetails>,
@@ -103,20 +93,7 @@
     }
 
     function selectMode(kind: WalletConfig["kind"]) {
-        switch (kind) {
-            case "auto_wallet":
-                config =
-                    $walletConfigStore.kind === "auto_wallet"
-                        ? $walletConfigStore
-                        : { kind: "auto_wallet", minDollarValue: 0 };
-                break;
-            case "manual_wallet":
-                config =
-                    $walletConfigStore.kind === "manual_wallet"
-                        ? $walletConfigStore
-                        : { kind: "manual_wallet", tokens: defaultLedgers };
-                break;
-        }
+        config = walletConfigForMode(kind, $walletConfigStore, defaultLedgers);
     }
 
     function refreshDisabledTokenBalances() {
