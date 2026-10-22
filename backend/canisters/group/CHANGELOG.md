@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- Remove a member found, on being sent an event, to have deleted their account, and stop retrying their events ([#10063](https://github.com/open-chat-labs/open-chat/pull/10063))
 - Wait out a failed batch's retry delay, rather than retrying it whenever anything else is queued ([#10069](https://github.com/open-chat-labs/open-chat/pull/10069))
 
 ## [[2.0.2169](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2169-group)] - 2026-10-20
@@ -30,7 +31,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Deleting a pinned message in a frozen group no longer traps ([#10028](https://github.com/open-chat-labs/open-chat/pull/10028))
-- Remove a member found, on being sent an event, to have deleted their account, and stop retrying their events ([#10063](https://github.com/open-chat-labs/open-chat/pull/10063))
 
 ### Changed
 
