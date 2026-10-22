@@ -559,6 +559,7 @@ import {
     communityRestricted,
     moderationFlagsRestricted,
 } from "./utils/restrictedContent";
+import { cloneWalletConfig } from "./utils/walletConfig";
 import {
     defaultChat,
     activeUserIdFromEvent,
@@ -12839,7 +12840,8 @@ export class OpenChat {
     }
 
     removeTokenFromWallet(ledger: string) {
-        const config = { ...walletConfigStore.value };
+        // a copy: deleting from the stored config's own Set would also break the undo on failure
+        const config = cloneWalletConfig(walletConfigStore.value);
         if (config.kind === "manual_wallet") {
             if (config.tokens.delete(ledger)) {
                 return this.setWalletConfig(config);
