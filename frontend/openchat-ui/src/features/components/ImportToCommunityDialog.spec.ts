@@ -61,7 +61,7 @@ describe('ImportToCommunityDialog', () => {
     press(primary);
     await settle();
     esc();
-    press(target.querySelector('.veil'));
+    press(target.querySelector('.oc-veil'));
     press(target.querySelector('.text-button'));
     press(target.querySelector('.icon-button')); // back
     await vi.runAllTimersAsync();

@@ -4,6 +4,7 @@ use crate::timer_job_types::HardDeleteMessageContentJob;
 use crate::{RuntimeState, TimerJob, execute_update, execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use community_canister::DeleteMessages;
 use community_canister::{c2c_bot_delete_messages, delete_messages::*};
 use constants::MINUTE_IN_MS;
 use ic_principal::Principal;
@@ -47,6 +48,7 @@ fn c2c_bot_delete_messages_impl(args: c2c_bot_delete_messages::Args, state: &mut
     let bot_caller = BotCaller {
         bot: args.bot_id,
         initiator: args.initiator.clone(),
+        bridged_from: None,
     };
 
     let args = Args {
@@ -81,6 +83,18 @@ fn prepare(state: &RuntimeState) -> OCResult<PrepareResult> {
         caller,
         user_index_canister_id: state.data.user_index_canister_id,
     })
+}
+
+// Deletes the messages as the UserIndex does, as the platform moderator
+pub(crate) fn delete_messages_as_platform_moderator(args: DeleteMessages, state: &mut RuntimeState) -> OCResult {
+    let args = Args {
+        channel_id: args.channel_id,
+        thread_root_message_index: args.thread_root_message_index,
+        message_ids: args.message_ids,
+        as_platform_moderator: Some(true),
+        new_achievement: false,
+    };
+    commit(args, None, state)
 }
 
 fn commit(args: Args, ext_caller: Option<Caller>, state: &mut RuntimeState) -> OCResult {

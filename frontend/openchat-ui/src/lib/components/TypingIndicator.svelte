@@ -18,7 +18,7 @@
     label?: string;
   }
 
-  let { names, colors = ['violet', 'teal'], ringColor = 'var(--card,#0e0e12)', label = '' }: Props = $props();
+  let { names, colors = ['violet', 'teal'], ringColor = 'var(--card)', label = '' }: Props = $props();
   const t = useT();
 
   const text = $derived(label ? t(label) : t('ui.typingIndicator.typing', { count: names.length, name: names[0] }));
@@ -78,12 +78,12 @@
     width: 5px;
     height: 5px;
     border-radius: var(--radius-pill);
-    background: var(--ink-3, #8a8a99);
+    background: var(--ink-3);
     animation: oc-typing 1.2s infinite var(--ease-standard);
   }
 
   .label {
     font: var(--weight-medium) var(--text-sm) / 1 var(--font-sans);
-    color: var(--ink-3, #8a8a99);
+    color: var(--ink-3);
   }
 </style>

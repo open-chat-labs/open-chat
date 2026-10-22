@@ -1,6 +1,6 @@
 use crate::{
-    Achievement, BotCaller, BotCommand, CanisterId, Chat, EventIndex, MessageContent, MessageId, MessageIndex, OgPreview,
-    Reaction, ThreadSummary, UserId, is_default,
+    Achievement, BotCaller, BotCommand, BridgedUserId, CanisterId, Chat, EventIndex, MessageContent, MessageId, MessageIndex,
+    OgPreview, Reaction, ThreadSummary, UserId, is_default,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -296,6 +296,10 @@ impl SenderContext {
 pub struct BotMessageContext {
     pub command: Option<BotCommand>,
     pub finalised: bool,
+    // Set on the messages a bridge bot relays from another platform, eg. Discord: the author's account
+    // there, whose profile is in the UserIndex's registry
+    #[serde(default)]
+    pub bridged_from: Option<BridgedUserId>,
 }
 
 impl BotMessageContext {
@@ -303,6 +307,31 @@ impl BotMessageContext {
         BotMessageContext {
             command: caller.initiator.command().cloned(),
             finalised,
+            bridged_from: caller.bridged_from,
         }
+    }
+}
+
+#[cfg(test)]
+mod bot_message_context_tests {
+    use super::*;
+
+    // It's stored with every bot message, so a message which wasn't bridged mustn't store the field
+    #[test]
+    fn bridged_from_is_only_stored_when_set() {
+        let context = BotMessageContext {
+            command: None,
+            finalised: true,
+            bridged_from: None,
+        };
+        let bytes = msgpack::serialize_then_unwrap(&context);
+        assert!(!bytes.windows(12).any(|w| w == b"bridged_from"));
+
+        let bridged = BotMessageContext {
+            bridged_from: Some(BridgedUserId::Discord(1)),
+            ..context
+        };
+        let bytes = msgpack::serialize_then_unwrap(&bridged);
+        assert!(bytes.windows(12).any(|w| w == b"bridged_from"));
     }
 }

@@ -4,7 +4,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use storage_bucket_canister::delete_files::*;
 
-#[update(candid = true, json = true, msgpack = true)]
+#[update(candid = true, msgpack = true)]
 #[trace]
 fn delete_files(args: Args) -> Response {
     check_cycles_balance();
@@ -19,7 +19,7 @@ fn delete_files_impl(args: Args, state: &mut RuntimeState) -> Response {
     let mut failures = Vec::new();
 
     for file_id in args.file_ids {
-        match state.data.remove_file(caller, file_id) {
+        match state.remove_file(caller, file_id) {
             RemoveFileResult::Success(_) => success.push(file_id),
             RemoveFileResult::NotAuthorized => {
                 failures.push(DeleteFileFailure {

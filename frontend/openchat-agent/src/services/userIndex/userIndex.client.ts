@@ -3,6 +3,10 @@ import type {
     ModerationConfig,
     ProposedProtectedAction,
     BotDefinition,
+    BridgedUserId,
+    BridgedUserLinkCode,
+    BridgedUserSummary,
+    BridgePlatform,
     BotInstallationLocation,
     BotsResponse,
     CheckUsernameResponse,
@@ -85,7 +89,15 @@ import {
     UserIndexModerationConfigResponse,
     UserIndexCallPushEnabledResponse,
     UserIndexSetAlchemyApiKeyArgs,
+    UserIndexBridgedUsersArgs,
+    UserIndexBridgedUsersResponse,
+    UserIndexLinkedBridgedUsersResponse,
+    UserIndexSetBridgeBotArgs,
+    UserIndexStartBridgedUserLinkArgs,
+    UserIndexStartBridgedUserLinkResponse,
+    UserIndexUnlinkBridgedUserArgs,
     UserIndexSetCallPushEnabledArgs,
+    BridgePlatform as ApiBridgePlatform,
     UserIndexRecordAuthorityReportFiledArgs,
     UserIndexSetModerationReferralConfigArgs,
     UserIndexProposeProtectedActionArgs,
@@ -111,7 +123,13 @@ import {
     UserIndexUsersResponse,
 } from "../../typebox";
 import type { UserIndexProposeProtectedActionProtectedAction } from "../../typebox";
-import { addressToIcrcAccount, unitResult } from "../common/chatMappersV2";
+import {
+    addressToIcrcAccount,
+    apiBridgedUserId,
+    bridgedUserSummary,
+    ocError,
+    unitResult,
+} from "../common/chatMappersV2";
 import type { ChatsDb } from "../../utils/chatsDb";
 import { groupBy } from "../../utils/list";
 import {
@@ -145,6 +163,13 @@ import {
     usersApiResponse,
     userSearchResponse,
 } from "./mappers";
+
+const MAX_BRIDGED_USERS_PER_QUERY = 100;
+
+const API_BRIDGE_PLATFORMS: Record<BridgePlatform, ApiBridgePlatform> = {
+    discord: "Discord",
+    telegram: "Telegram",
+};
 
 export class UserIndexClient extends SingleCanisterMsgpackAgent {
     constructor(
@@ -450,6 +475,70 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             unitResult,
             UserIndexSetAlchemyApiKeyArgs,
             UnitResult,
+        );
+    }
+
+    // The profiles of the given bridged accounts, in batches as the query takes at most 100
+    async bridgedUsers(ids: BridgedUserId[]): Promise<BridgedUserSummary[]> {
+        const summaries: BridgedUserSummary[] = [];
+        for (let i = 0; i < ids.length; i += MAX_BRIDGED_USERS_PER_QUERY) {
+            const batch = ids.slice(i, i + MAX_BRIDGED_USERS_PER_QUERY);
+            const batchSummaries = await this.query(
+                "bridged_users",
+                { users: batch.map(apiBridgedUserId) },
+                (resp) => resp.Success.map(bridgedUserSummary),
+                UserIndexBridgedUsersArgs,
+                UserIndexBridgedUsersResponse,
+            );
+            summaries.push(...batchSummaries);
+        }
+        return summaries;
+    }
+
+    setBridgeBot(platform: BridgePlatform, botId: string | undefined): Promise<Success | OCError> {
+        return this.update(
+            "set_bridge_bot",
+            {
+                platform: API_BRIDGE_PLATFORMS[platform],
+                bot_id: mapOptional(botId, principalStringToBytes),
+            },
+            unitResult,
+            UserIndexSetBridgeBotArgs,
+            UnitResult,
+        );
+    }
+
+    startBridgedUserLink(platform: BridgePlatform): Promise<BridgedUserLinkCode | OCError> {
+        return this.update(
+            "start_bridged_user_link",
+            { platform: API_BRIDGE_PLATFORMS[platform] },
+            (resp): BridgedUserLinkCode | OCError =>
+                "Success" in resp
+                    ? { kind: "success", code: resp.Success.code, expires: resp.Success.expires }
+                    : ocError(resp.Error),
+            UserIndexStartBridgedUserLinkArgs,
+            UserIndexStartBridgedUserLinkResponse,
+        );
+    }
+
+    unlinkBridgedUser(id: BridgedUserId): Promise<Success | OCError> {
+        return this.update(
+            "unlink_bridged_user",
+            { user: apiBridgedUserId(id) },
+            unitResult,
+            UserIndexUnlinkBridgedUserArgs,
+            UnitResult,
+        );
+    }
+
+    // The accounts on other platforms which the user has linked to themself
+    linkedBridgedUsers(): Promise<BridgedUserSummary[]> {
+        return this.query(
+            "linked_bridged_users",
+            {},
+            (resp) => resp.Success.map(bridgedUserSummary),
+            Empty,
+            UserIndexLinkedBridgedUsersResponse,
         );
     }
 

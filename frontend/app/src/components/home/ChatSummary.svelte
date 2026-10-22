@@ -3,9 +3,7 @@
         ChatSummary,
         CommunitySummary,
         DiamondMembershipStatus,
-        MessageContent,
         TypersByKey,
-        UserLookup,
     } from "@client";
     import {
         allUsersStore,
@@ -19,16 +17,15 @@
         favouritesStore,
         iconSize,
         latestMessageExpired,
-        messageFlagsRestricted,
         messagesRead,
         mobileWidth,
         notificationsSupported,
         OpenChat,
+        pinChatFailureMessage,
         pinnedChatsStore,
         publish,
         ROLE_NONE,
         routeForScope,
-        selectedChatIdStore,
         selectedCommunitySummaryStore,
         suspendedUserStore,
         translationsStore,
@@ -37,6 +34,8 @@
     import { navigate } from "@utils/navigation";
     import { getContext, untrack } from "svelte";
     import { _ } from "svelte-i18n";
+    import { latestMessagePreview } from "@src/logic/chats/latestMessagePreview";
+    import { buildDisplayName } from "@src/utils/user";
     import ArchiveIcon from "svelte-material-icons/Archive.svelte";
     import BellIcon from "svelte-material-icons/Bell.svelte";
     import MutedIcon from "svelte-material-icons/BellOff.svelte";
@@ -54,7 +53,6 @@
     import { rtlStore } from "../../stores/rtl";
     import { toastStore } from "../../stores/toast";
     import { pop } from "../../utils/transition";
-    import { buildDisplayName } from "../../utils/user";
     import Avatar from "../Avatar.svelte";
     import { clamp, swipe } from "@shared_components/chatSwipe";
     import HeartMinus from "@shared_components/icons/HeartMinus.svelte";
@@ -66,7 +64,7 @@
     import Translatable from "@shared_components/Translatable.svelte";
     import Typing from "@shared_components/Typing.svelte";
     import ArchiveOffIcon from "@shared_components/home/ArchiveOffIcon.svelte";
-    import Markdown from "@shared_components/Markdown.svelte";
+    import Markdown from "@src/core/Markdown.svelte";
     import Badges from "./profile/Badges.svelte";
     import BotBadge from "./profile/BotBadge.svelte";
     import VideoCallIcon from "./video/VideoCallIcon.svelte";
@@ -90,7 +88,15 @@
     let unreadMessages = $state<number>(0);
     let unreadMentions = $state<number>(0);
     let chat = $derived(normaliseChatSummary(chatSummary, $typersByContext));
-    let lastMessage = $derived(formatLatestMessage(chatSummary, $allUsersStore));
+    let lastMessage = $derived(
+        latestMessagePreview(chatSummary, {
+            formatter: $_,
+            me: $currentUserIdStore,
+            displayName: (userId, kind) => buildDisplayName($allUsersStore, userId, kind, false),
+            translations: $translationsStore,
+            contentText: (content) => client.getContentAsText($_, content),
+        }),
+    );
     let displayDate = $derived(client.getDisplayDate(chatSummary));
     let community = $derived(
         chatSummary.kind === "channel"
@@ -132,10 +138,6 @@
                       chatSummary.latestMessage?.event.messageIndex,
                   );
             unreadMentions = getUnreadMentionCount(chatSummary);
-
-            if (chatSummary.membership.archived && unreadMessages > 0) {
-                unarchiveChat();
-            }
         });
     }
 
@@ -203,66 +205,6 @@
         ).length;
     }
 
-    function translateMessage(messageId: bigint, content: MessageContent): MessageContent {
-        const translation = $translationsStore.get(messageId);
-        return translation ? client.applyTranslation(content, translation) : content;
-    }
-
-    function formatLatestMessage(chatSummary: ChatSummary, users: UserLookup): string {
-        if (chatSummary.latestMessageIndex === undefined || externalContent) {
-            return "";
-        }
-
-        if (
-            (chatSummary.latestMessage !== undefined &&
-                chatSummary.eventsTtlLastUpdated > chatSummary.latestMessage.timestamp) ||
-            (chatSummary.latestMessage === undefined &&
-                chatSummary.eventsTTL !== undefined &&
-                chatSummary.membership.role !== ROLE_NONE)
-        ) {
-            return chatSummary.eventsTTL !== undefined
-                ? $_("disappearingMessages.timeUpdated", {
-                      values: {
-                          duration: client.formatDuration(Number(chatSummary.eventsTTL)),
-                      },
-                  })
-                : $_("disappearingMessages.disabled");
-        }
-
-        if (chatSummary.latestMessage === undefined || latestMessageExpired(chatSummary)) {
-            return "";
-        }
-
-        const latestMessageText = client.getContentAsText(
-            $_,
-            messageFlagsRestricted(chatSummary.latestMessage.event.moderationFlags)
-                ? { kind: "restricted_content" }
-                : translateMessage(
-                      chatSummary.latestMessage.event.messageId,
-                      chatSummary.latestMessage.event.content,
-                  ),
-        );
-
-        if (chatSummary.kind === "direct_chat") {
-            return latestMessageText;
-        }
-
-        let userType: "user" | "me" | "webhook" = "user";
-        if (chatSummary.latestMessage.event.senderContext?.kind === "webhook") {
-            userType = "webhook";
-        } else if (chatSummary.latestMessage.event.sender === $currentUserIdStore) {
-            userType = "me";
-        }
-
-        const user = buildDisplayName(
-            users,
-            chatSummary.latestMessage.event.sender,
-            userType,
-            false,
-        );
-
-        return `${user}: ${latestMessageText}`;
-    }
 
     function deleteEmptyChat(e: Event) {
         e.stopPropagation();
@@ -315,7 +257,7 @@
     function pinChat() {
         client.pinChat(chatSummary.id).then((success) => {
             if (!success) {
-                toastStore.showFailureToast(i18nKey("pinChat.failed"));
+                toastStore.showFailureToast(pinChatFailureMessage(true));
             }
         });
     }
@@ -323,7 +265,7 @@
     function unpinChat() {
         client.unpinChat(chatSummary.id).then((success) => {
             if (!success) {
-                toastStore.showFailureToast(i18nKey("pinChat.unpinFailed"));
+                toastStore.showFailureToast(pinChatFailureMessage(false));
             }
         });
     }
@@ -342,9 +284,6 @@
                 toastStore.showFailureToast(i18nKey("archiveChatFailed"));
             }
         });
-        if (chatSummary.id === $selectedChatIdStore) {
-            navigate(routeForScope($chatListScopeStore));
-        }
     }
 
     function selectChat() {
@@ -357,10 +296,6 @@
 
     function removeFromFavourites() {
         client.removeFromFavourites(chatSummary.id);
-    }
-
-    function unarchiveChat() {
-        publish("unarchiveChat", chatSummary.id);
     }
 
     function leaveGroup() {

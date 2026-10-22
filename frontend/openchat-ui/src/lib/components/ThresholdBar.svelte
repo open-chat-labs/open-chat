@@ -28,8 +28,8 @@
       { at: 0.75, label: 'ui.thresholdBar.immediate', strong: true },
     ],
     height = 8,
-    yesColor = 'var(--status-online,#2EE6A8)',
-    noColor = 'var(--status-danger,#FF4D4D)',
+    yesColor = 'var(--status-online)',
+    noColor = 'var(--status-danger)',
     label,
   }: Props = $props();
   const t = useT();
@@ -78,7 +78,7 @@
     margin-left: -5px;
     border-left: 5px solid transparent;
     border-right: 5px solid transparent;
-    border-top: 6px solid var(--ink, #ececf1);
+    border-top: 6px solid var(--ink);
   }
 
   .marks .soft {
@@ -88,8 +88,8 @@
     height: 7px;
     margin-left: -4.5px;
     box-sizing: border-box;
-    border-right: 2px solid var(--ink-2, #c9c9d4);
-    border-bottom: 2px solid var(--ink-2, #c9c9d4);
+    border-right: 2px solid var(--ink-2);
+    border-bottom: 2px solid var(--ink-2);
     transform: rotate(45deg);
   }
 
@@ -97,7 +97,7 @@
     position: relative;
     margin-top: -6px;
     border-radius: 4px;
-    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+    background: var(--overlay-2);
   }
 
   .yes,
@@ -125,10 +125,10 @@
     width: 2px;
     margin-left: -1px;
     border-radius: 1px;
-    background: var(--ink-2, #c9c9d4);
+    background: var(--ink-2);
   }
 
   .line.strong {
-    background: var(--ink, #ececf1);
+    background: var(--ink);
   }
 </style>

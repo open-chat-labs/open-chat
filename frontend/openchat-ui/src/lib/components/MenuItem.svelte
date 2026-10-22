@@ -56,29 +56,29 @@
     display: block;
     height: 1px;
     margin: var(--space-4) var(--space-6);
-    background: var(--line-2, rgba(255, 255, 255, 0.1));
+    background: var(--line-2);
   }
 
   .item {
     display: flex;
     align-items: center;
     gap: var(--space-10);
-    min-height: var(--control-xl, 44px);
+    min-height: var(--control-xl);
     padding: var(--space-8) var(--space-10);
     box-sizing: border-box;
     border-radius: var(--radius-sm);
     cursor: pointer;
     white-space: nowrap;
     font: var(--weight-medium) var(--text-md) / 1 var(--font-sans);
-    color: var(--ink-2, #b9b9c6);
+    color: var(--ink-2);
   }
 
   .item.danger {
-    color: var(--status-danger, #f5493d);
+    color: var(--status-danger);
   }
 
   .item:hover {
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    background: var(--overlay-1);
   }
 
   .icon {
@@ -97,12 +97,12 @@
     flex: none;
     width: 15px;
     height: 15px;
-    background: var(--accent, #ff5672);
+    background: var(--accent);
   }
 
   .shortcut {
     flex: none;
     font: var(--weight-regular) var(--text-sm) / 1 var(--font-mono);
-    color: var(--ink-4, #6e6e7c);
+    color: var(--ink-4);
   }
 </style>

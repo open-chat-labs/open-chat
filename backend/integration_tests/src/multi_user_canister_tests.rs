@@ -1,8 +1,8 @@
 use crate::chit_tests::DAY_ZERO;
 use crate::env::{ENV, VIDEO_CALL_OPERATOR};
 use crate::utils::{
-    liquid_cycle_balance, metrics, next_event_store_index, now_millis, set_freezing_threshold, tick_many, try_metrics,
-    wait_for_cycle_balance_above, wait_for_event_store_events,
+    liquid_cycle_balance, metrics, next_event_store_index, now_millis, set_freezing_threshold, tick_many, tick_until,
+    try_metrics, wait_for_cycle_balance_above, wait_for_event_store_events,
 };
 use crate::{CanisterIds, TestEnv, User, UserAuth, client, wasms};
 use candid::Principal;
@@ -12,8 +12,8 @@ use constants::{
 };
 use multi_user_canister::set_pin_number::PinNumberVerification;
 use multi_user_canister::{
-    ChatInList, LocalUserIndexEvent, MessageActivity, UserCanisterEvent, UserJoinedCommunityOrChannel, UserJoinedGroup,
-    WalletConfig,
+    ChatInList, GroupIndexEvent, LocalUserIndexEvent, MessageActivity, UserCanisterEvent, UserJoinedCommunityOrChannel,
+    UserJoinedGroup, WalletConfig,
 };
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
@@ -752,6 +752,11 @@ fn initial_state_and_updates_track_a_users_profile_blocked_users_favourites_and_
     assert_eq!(initial_state(env, a_principal, canister_id).avatar_id, Some(avatar.id));
     assert!(updates(env, b_principal, canister_id, start).is_none());
 
+    // The UserIndex learns of the avatar via the LocalUserIndex
+    tick_until(env, |env| {
+        client::user_index::happy_path::user(env, canister_ids.user_index, a).avatar_id == Some(avatar.id)
+    });
+
     // An oversized avatar is rejected, and removing the avatar is reported too
     env.advance_time(Duration::from_secs(1));
     let response = client::user::set_avatar(
@@ -771,6 +776,11 @@ fn initial_state_and_updates_track_a_users_profile_blocked_users_favourites_and_
     let a_updates = updates(env, a_principal, canister_id, after_profile).unwrap();
     let after_avatar_removed = a_updates.timestamp;
     assert_eq!(a_updates.avatar_id, OptionUpdate::SetToNone);
+    tick_until(env, |env| {
+        client::user_index::happy_path::user(env, canister_ids.user_index, a)
+            .avatar_id
+            .is_none()
+    });
 
     // Blocking B stops A messaging B, and is reported to A alone. A message from B goes into B's
     // copy of the chat but is dropped rather than delivered to A.
@@ -2935,19 +2945,16 @@ fn deleted_groups_and_communities_are_removed_from_multi_user_canister_users() {
     manage_favourite_chats(env, bob, canister_id, vec![Chat::Group(imported_group)], Vec::new());
 
     let now = now_millis(env);
-    let group_deleted_args = |chat_id: ChatId, community_imported_into: Option<CommunityImportedInto>| {
-        multi_user_canister::c2c_notify_group_deleted::Args {
-            user_id: bob_id,
-            deleted_group: DeletedGroupInfoInternal {
-                id: chat_id,
-                timestamp: now,
-                deleted_by,
-                group_name: "Group".to_string(),
-                name: "Group".to_string(),
-                public: false,
-                community_imported_into,
-            },
-        }
+    let group_deleted_event = |chat_id: ChatId, community_imported_into: Option<CommunityImportedInto>| {
+        GroupIndexEvent::GroupDeleted(Box::new(DeletedGroupInfoInternal {
+            id: chat_id,
+            timestamp: now,
+            deleted_by,
+            group_name: "Group".to_string(),
+            name: "Group".to_string(),
+            public: false,
+            community_imported_into,
+        }))
     };
 
     // Only the GroupIndex can say a group has been deleted
@@ -2955,15 +2962,16 @@ fn deleted_groups_and_communities_are_removed_from_multi_user_canister_users() {
         env,
         random_principal(),
         canister_id,
-        "c2c_notify_group_deleted",
-        &group_deleted_args(deleted_group, None)
+        "c2c_group_index",
+        &group_index_event_args(env, bob_id, group_deleted_event(deleted_group, None))
     ));
 
-    client::user::c2c_notify_group_deleted(
+    send_group_index_event(
         env,
         canister_ids.group_index,
         canister_id,
-        &group_deleted_args(deleted_group, None),
+        bob_id,
+        group_deleted_event(deleted_group, None),
     );
     assert_eq!(group_ids(&initial_state(env, bob, canister_id)), vec![imported_group]);
     assert_eq!(
@@ -2974,11 +2982,12 @@ fn deleted_groups_and_communities_are_removed_from_multi_user_canister_users() {
     // A group imported into a community is replaced by its channel, which takes its place in the
     // user's favourites
     let channel_id: ChannelId = 7u32.into();
-    client::user::c2c_notify_group_deleted(
+    send_group_index_event(
         env,
         canister_ids.group_index,
         canister_id,
-        &group_deleted_args(
+        bob_id,
+        group_deleted_event(
             imported_group,
             Some(CommunityImportedInto {
                 community_name: "Community".to_string(),
@@ -3005,20 +3014,18 @@ fn deleted_groups_and_communities_are_removed_from_multi_user_canister_users() {
     assert!(last_bot_message(env, bob, canister_id, bob_id).contains("was deleted because it was imported into"));
 
     // Then the community is deleted
-    client::user::c2c_notify_community_deleted(
+    send_group_index_event(
         env,
         canister_ids.group_index,
         canister_id,
-        &multi_user_canister::c2c_notify_community_deleted::Args {
-            user_id: bob_id,
-            deleted_community: DeletedCommunityInfo {
-                id: community,
-                timestamp: now_millis(env),
-                deleted_by,
-                name: "Community".to_string(),
-                public: true,
-            },
-        },
+        bob_id,
+        GroupIndexEvent::CommunityDeleted(Box::new(DeletedCommunityInfo {
+            id: community,
+            timestamp: now_millis(env),
+            deleted_by,
+            name: "Community".to_string(),
+            public: true,
+        })),
     );
     let bobs_state = initial_state(env, bob, canister_id);
     assert!(community_ids(&bobs_state).is_empty());
@@ -3027,6 +3034,80 @@ fn deleted_groups_and_communities_are_removed_from_multi_user_canister_users() {
         last_bot_message(env, bob, canister_id, bob_id),
         format!("The public community \"Community\" was deleted by @UserId({deleted_by})")
     );
+}
+
+// One call carries the events for every user in the canister. An event for a user in another
+// canister is dropped without failing the rest, and an envelope sent twice is only applied once.
+#[test]
+fn group_index_events_are_applied_per_user_in_a_multi_user_canister() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        platform_operator,
+        ..
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *platform_operator, canister_ids, local_user_index);
+    let (alice, alice_id) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (bob, bob_id) = create_user(env, canister_ids, local_user_index, canister_id);
+    let group: ChatId = random_principal().into();
+    let deleted_by: UserId = random_principal().into();
+
+    for user_id in [alice_id, bob_id] {
+        let joined = local_user_index_event(
+            env,
+            rand::random(),
+            LocalUserIndexEvent::UserJoinedGroup(Box::new(UserJoinedGroup {
+                chat_id: group,
+                local_user_index_canister_id: local_user_index,
+                latest_message_index: None,
+                group_canister_timestamp: now_millis(env),
+            })),
+        );
+        send_local_user_index_events(env, local_user_index, canister_id, user_id, vec![joined]);
+    }
+
+    let deleted_group = DeletedGroupInfoInternal {
+        id: group,
+        timestamp: now_millis(env),
+        deleted_by,
+        group_name: "Group".to_string(),
+        name: "Group".to_string(),
+        public: false,
+        community_imported_into: None,
+    };
+    let group_deleted = |user_id: UserId| IdempotentEnvelope {
+        created_at: now_millis(env),
+        idempotency_id: rand::random(),
+        value: (user_id, GroupIndexEvent::GroupDeleted(Box::new(deleted_group.clone()))),
+    };
+    let alices_event = group_deleted(alice_id);
+    let response = client::user::c2c_group_index(
+        env,
+        canister_ids.group_index,
+        canister_id,
+        &multi_user_canister::c2c_group_index::Args {
+            events: vec![
+                alices_event.clone(),
+                group_deleted(random_principal().into()),
+                group_deleted(bob_id),
+                alices_event,
+            ],
+        },
+    );
+    assert!(matches!(response, types::SuccessOnly::Success));
+
+    for (principal, user_id) in [(alice, alice_id), (bob, bob_id)] {
+        assert!(group_ids(&initial_state(env, principal, canister_id)).is_empty());
+        let deleted_messages = bot_messages(env, principal, canister_id, user_id)
+            .into_iter()
+            .filter(|m| matches!(&m.content, MessageContent::Text(text) if text.text.contains("was deleted by")))
+            .count();
+        assert_eq!(deleted_messages, 1);
+    }
 }
 
 #[test]
@@ -3556,6 +3637,7 @@ fn a_bot_can_send_a_direct_message_to_a_user_in_a_multi_user_canister() {
                 block_level_markdown: false,
                 finalised,
                 og_previews: None,
+                bridged_from: None,
             },
         )
     };
@@ -3790,6 +3872,34 @@ fn send_local_user_index_events(
             events: events.into_iter().map(|event| paired(user_id, event)).collect(),
         },
     );
+    assert!(matches!(response, types::SuccessOnly::Success));
+}
+
+// A single event from the GroupIndex for the user, as the GroupIndex sends it
+fn group_index_event_args(
+    env: &PocketIc,
+    user_id: UserId,
+    event: GroupIndexEvent,
+) -> multi_user_canister::c2c_group_index::Args {
+    multi_user_canister::c2c_group_index::Args {
+        events: vec![IdempotentEnvelope {
+            created_at: now_millis(env),
+            idempotency_id: rand::random(),
+            value: (user_id, event),
+        }],
+    }
+}
+
+// Sends the event for the user to the canister, as the GroupIndex
+fn send_group_index_event(
+    env: &mut PocketIc,
+    group_index: CanisterId,
+    canister_id: CanisterId,
+    user_id: UserId,
+    event: GroupIndexEvent,
+) {
+    let args = group_index_event_args(env, user_id, event);
+    let response = client::user::c2c_group_index(env, group_index, canister_id, &args);
     assert!(matches!(response, types::SuccessOnly::Success));
 }
 
@@ -6238,31 +6348,29 @@ fn private_replies_to_a_group_follow_it_into_a_community() {
 
     let now = now_millis(env);
     for user_id in [a, b] {
-        client::user::c2c_notify_group_deleted(
+        send_group_index_event(
             env,
             canister_ids.group_index,
             canister_id,
-            &multi_user_canister::c2c_notify_group_deleted::Args {
-                user_id,
-                deleted_group: DeletedGroupInfoInternal {
-                    id: group,
-                    timestamp: now,
-                    deleted_by: random_principal().into(),
-                    group_name: "Group".to_string(),
-                    name: "Group".to_string(),
-                    public: false,
-                    community_imported_into: Some(CommunityImportedInto {
-                        community_name: "Community".to_string(),
-                        community_id: community,
-                        local_user_index_canister_id: local_user_index,
-                        channel: ChannelLatestMessageIndex {
-                            channel_id,
-                            latest_message_index: None,
-                        },
-                        other_default_channels: Vec::new(),
-                    }),
-                },
-            },
+            user_id,
+            GroupIndexEvent::GroupDeleted(Box::new(DeletedGroupInfoInternal {
+                id: group,
+                timestamp: now,
+                deleted_by: random_principal().into(),
+                group_name: "Group".to_string(),
+                name: "Group".to_string(),
+                public: false,
+                community_imported_into: Some(CommunityImportedInto {
+                    community_name: "Community".to_string(),
+                    community_id: community,
+                    local_user_index_canister_id: local_user_index,
+                    channel: ChannelLatestMessageIndex {
+                        channel_id,
+                        latest_message_index: None,
+                    },
+                    other_default_channels: Vec::new(),
+                }),
+            })),
         );
     }
 

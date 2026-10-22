@@ -88,8 +88,8 @@
     width: 30px;
     height: 30px;
     border-radius: var(--radius-sm);
-    background: var(--card-2, #1b1b21);
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12));
+    background: var(--card-2);
+    box-shadow: inset 0 0 0 1px var(--line-2);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -97,12 +97,12 @@
   }
 
   .action:hover {
-    background: var(--btn-hover, rgba(255, 255, 255, 0.1));
+    background: var(--btn-hover);
   }
 
   .icon {
     width: 16px;
     height: 16px;
-    background: var(--ink-3, #9a9aa8);
+    background: var(--ink-3);
   }
 </style>

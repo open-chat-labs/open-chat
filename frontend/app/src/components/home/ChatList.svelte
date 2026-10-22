@@ -2,6 +2,7 @@
     import { scrollLimits, menuCloser } from "component-lib";
     import {
         allUsersStore,
+        chatMatchesSearch,
         type BotMatch,
         chatIdentifiersEqual,
         chatIdentifierToString,
@@ -181,7 +182,9 @@
     });
     let allMatchingChats = $derived(
         searchTerm !== ""
-            ? $chatSummariesListStore.filter((c) => client.chatMatchesSearch(lowercaseSearch, c))
+            ? $chatSummariesListStore.filter((c) =>
+                  chatMatchesSearch(lowercaseSearch, c, $allUsersStore),
+              )
             : $chatSummariesListStore,
     );
     let chats = $derived(allMatchingChats.slice(0, chatsToShow));

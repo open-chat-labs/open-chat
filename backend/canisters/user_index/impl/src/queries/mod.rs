@@ -1,6 +1,7 @@
 pub mod authority_reports;
 pub mod bot_installation_events;
 mod bot_updates;
+pub mod bridged_users;
 pub mod c2c_lookup_user;
 pub mod call_push_enabled;
 pub mod check_username;
@@ -10,6 +11,7 @@ pub mod diamond_membership_fees;
 pub mod explore_bots;
 pub mod external_achievements;
 pub mod http_request;
+pub mod linked_bridged_users;
 pub mod migrated_user_ids;
 pub mod moderation_config;
 pub mod platform_moderators;

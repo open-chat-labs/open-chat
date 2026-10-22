@@ -48,7 +48,7 @@
     import ReAuthenticateModal from "./profile/ReAuthenticateModal.svelte";
     import Streak from "./profile/Streak.svelte";
     import MessageRenderer from "./MessageRenderer.svelte";
-    import { TokenState } from "@shared_components/home/wallet/walletState.svelte";
+    import { TokenState } from "@src/logic/wallet/walletState.svelte";
     import { prizeClaimStep } from "@shared_components/home/prize/prizeClaim";
     import TransferFeesMessage from "./TransferFeesMessage.svelte";
     import TextContent from "./TextContent.svelte";

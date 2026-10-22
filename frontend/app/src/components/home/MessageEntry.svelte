@@ -8,11 +8,9 @@
     import { detectMarkdown } from "@src/utils/detectMarkdown";
     import type {
         AttachmentContent,
-        BotActionScope,
         ChatSummary,
         EnhancedReplyContext,
         EventWrapper,
-        ExternalBot,
         Message,
         MessageAction,
         MessageContext,
@@ -26,12 +24,8 @@
         anonUserStore,
         botState,
         chatIdentifiersEqual,
-        currentUserIdStore,
-        directMessageCommandInstance,
         iconSize,
-        localUpdates,
         messageContextsEqual,
-        random64,
         screenWidth,
         ScreenWidth,
         selectedChatMembersStore,
@@ -40,14 +34,21 @@
         throttleDeadline,
         userGroupMentionRegex,
         userIdMentionRegex,
+        type SendMessageOutcome,
     } from "@client";
     import { getContext, tick, untrack } from "svelte";
+    import {
+        entryBlock,
+        expandMentions as expandMentionsIn,
+        TypingNotifier,
+    } from "@src/logic/composer/composer";
     import { _ } from "svelte-i18n";
     import Alert from "svelte-material-icons/Alert.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import ContentSaveEditOutline from "svelte-material-icons/ContentSaveMoveOutline.svelte";
     import Send from "svelte-material-icons/Send.svelte";
     import { i18nKey, interpolate } from "../../i18n/i18n";
+    import { clearsEntry } from "@src/utils/sendFromEntry";
     import { enterSend } from "../../stores/settings";
     import { snowing } from "../../stores/snow";
     import AlertBoxModal from "../AlertBoxModal.svelte";
@@ -85,7 +86,10 @@
         onStartTyping: () => void;
         onStopTyping: () => void;
         onCancelEdit: () => void;
-        onSendMessage: (args: [string | undefined, User[], boolean]) => void;
+        // a send returns its outcome, which the entry waits for; an edit doesn't wait
+        onSendMessage: (
+            args: [string | undefined, User[], boolean],
+        ) => Promise<SendMessageOutcome> | "nothing_sent";
         onClearAttachment: () => void;
         onTokenTransfer: (args: { ledger?: string; amount?: bigint }) => void;
         onCreatePrizeMessage?: () => void;
@@ -125,10 +129,13 @@
         onMakeMeme,
     }: Props = $props();
 
-    const USER_TYPING_EVENT_MIN_INTERVAL_MS = 1000; // 1 second
-    const MARK_TYPING_STOPPED_INTERVAL_MS = 5000; // 5 seconds
 
     let editor = $state<RichTextEditor>();
+    // tells the others the reader is typing (at most once a second) and when they've stopped
+    const typing = new TypingNotifier(
+        () => onStartTyping(),
+        () => onStopTyping(),
+    );
     // The editor is its own chunk (see richTextEditorLoader). Normally already
     // warm; the placeholder is only visible on direct-to-chat entry while the
     // chunk is in flight. A tap on the placeholder focuses the editor once it
@@ -152,8 +159,6 @@
     let recording: boolean = $state(false);
     let percentRecorded: number = $state(0);
     let previousEditingEvent: EventWrapper<Message> | undefined = $state();
-    let lastTypingUpdate: number = 0;
-    let typingTimer: number | undefined = undefined;
     let audioSupported: boolean = $state("mediaDevices" in navigator);
     let showCommandSelector: boolean = $state(false);
     let messageEntryHeight: number = $state(0);
@@ -183,7 +188,7 @@
         const inputContent = editor?.getMarkdown() ?? "";
         syncDraft(inputContent);
         triggerCommandSelector(inputContent);
-        triggerTypingTimer();
+        typing.input(inputContent);
     }
 
     // Putting content into the editor doesn't call onInput (it isn't the user typing), so the
@@ -223,45 +228,10 @@
         }
     }
 
-    function triggerTypingTimer() {
-        requestAnimationFrame(() => {
-            const now = Date.now();
-            if (now - lastTypingUpdate > USER_TYPING_EVENT_MIN_INTERVAL_MS) {
-                lastTypingUpdate = now;
-                onStartTyping();
-            }
-            if (typingTimer !== undefined) {
-                window.clearTimeout(typingTimer);
-            }
 
-            typingTimer = window.setTimeout(onStopTyping, MARK_TYPING_STOPPED_INTERVAL_MS);
-        });
-    }
-
-    function sendADirectBotMessage(bot: ExternalBot) {
+    function sendADirectBotMessage() {
         const txt = editor?.getMarkdown() ?? "";
-        const userMessageId = random64();
-        const botMessageId = random64();
-
-        const commandInstance = directMessageCommandInstance(bot, txt);
-        if (commandInstance !== undefined) {
-            const scope: BotActionScope = {
-                kind: "chat_scope",
-                chatId: messageContext.chatId,
-                threadRootMessageIndex: messageContext.threadRootMessageIndex,
-                messageId: botMessageId,
-                userMessageId,
-            };
-            client.sendPlaceholderBotMessage(
-                scope,
-                undefined,
-                { kind: "text_content", text: txt },
-                userMessageId,
-                $currentUserIdStore,
-                containsMarkdown,
-            );
-            client.executeBotCommand(scope, commandInstance, true);
-            localUpdates.draftMessages.delete(messageContext);
+        if (client.sendDirectBotMessage(messageContext, txt, containsMarkdown).kind === "sent") {
             afterSendMessage();
         } else {
             showDirectBotChatWarning = true;
@@ -272,7 +242,7 @@
         if (e.key === "Enter" && !e.shiftKey) {
             if (directBot) {
                 if (!showCommandSelector && !messageIsEmpty) {
-                    sendADirectBotMessage(directBot);
+                    sendADirectBotMessage();
                 } else if (!commandSent && botState.selectedCommand === undefined) {
                     showDirectBotChatWarning = true;
                 }
@@ -310,31 +280,13 @@
         });
     }
 
-    // replace anything of the form @username with @UserId(xyz) or @UserGroup(abc) where
-    // xyz is the userId or abc is the user group id
-    // if we can't find the user or user group just leave it as is
+    // @username becomes @UserId(xyz) or @UserGroup(abc) for those the chat knows (shared with the
+    // other trees)
     function expandMentions(text: string): [string | undefined, User[], boolean] {
-        const mentionedMap = new Map<string, User>();
-        const expandedText = text.replace(/@(\w+)/g, (match, p1) => {
-            const userOrGroup = client.lookupUserForMention(p1, false);
-            if (userOrGroup !== undefined) {
-                switch (userOrGroup.kind) {
-                    case "user_group":
-                        return `@UserGroup(${userOrGroup.id})`;
-                    case "everyone":
-                        return "@everyone";
-                    default:
-                        mentionedMap.set(userOrGroup.userId, userOrGroup);
-                        return `@UserId(${userOrGroup.userId})`;
-                }
-            } else {
-                return match;
-            }
-        });
-
-        const mentioned = Array.from(mentionedMap, ([_, user]) => user);
-
-        return [expandedText, mentioned, containsMarkdown];
+        const expanded = expandMentionsIn(text, (username) =>
+            client.lookupUserForMention(username, false),
+        );
+        return [expanded.text, expanded.mentioned, containsMarkdown];
     }
 
     function parseCommands(txt: string): boolean {
@@ -344,8 +296,11 @@
         return false;
     }
 
-    function sendMessage() {
-        if (showCommandSelector || messageIsEmpty) return;
+    // set while a send waits for its message to show in the chat (the rules or a PIN asked for)
+    let sending = $state(false);
+
+    async function sendMessage() {
+        if (showCommandSelector || messageIsEmpty || sending) return;
 
         const txt = editor?.getMarkdown() ?? "";
 
@@ -360,7 +315,9 @@
                     mentioned.push(user);
                 }
             }
-            onSendMessage([text, mentioned, blockLevelMarkdown]);
+            const result = onSendMessage([text, mentioned, blockLevelMarkdown]);
+            // refused before it was sent (rules turned down, PIN dismissed, throttled): the text stays
+            if (!(await clearsEntry(result, (busy) => (sending = busy)))) return;
         }
 
         afterSendMessage();
@@ -371,7 +328,7 @@
         syncDraft("");
 
         messageActions?.close();
-        onStopTyping();
+        typing.stopped();
 
         // After sending a message we must force a new textbox instance to be created, otherwise on iPhone the
         // predictive text doesn't notice the text has been cleared so the suggestions don't make sense.
@@ -396,6 +353,22 @@
 
     let excessiveLinks = $derived(client.extractEnabledLinks(textContent ?? "").length > 5);
     let frozen = $derived(client.isChatOrCommunityFrozen(chat, $selectedCommunitySummaryStore));
+    // what stands in for the entry when the reader can't send (shared with the other trees). A
+    // chat's footer isn't shown to a suspended account; a thread's is, as it always was
+    let block = $derived(
+        entryBlock({
+            suspended: false,
+            frozen,
+            blocked,
+            previewing: preview,
+            lapsed,
+            direct: chat.kind === "direct_chat",
+            externalContent,
+            anonymous: $anonUserStore,
+            canSend: canSendAny,
+            thread: mode === "thread",
+        }),
+    );
     $effect(() => {
         if (editor) {
             if (editor !== lastMarkdownEditor) {
@@ -438,6 +411,8 @@
         if (!chatIdentifiersEqual(chat.id, previousChatId)) {
             messageAction = undefined;
             previousChatId = chat.id;
+            // "stopped typing" would go to this chat, not the one left; the others' runs out
+            typing.cancel();
         }
     });
     trackedEffect("attachment-focus", () => {
@@ -490,31 +465,24 @@
     class="message-entry"
     class:editing={editingEvent !== undefined}
     bind:clientHeight={messageEntryHeight}>
-    {#if frozen}
+    {#if block?.kind === "frozen"}
         <div class="frozen">
             <Translatable resourceKey={i18nKey("chatFrozen")} />
         </div>
-    {:else if blocked}
+    {:else if block?.kind === "blocked"}
         <div class="blocked">
             <Translatable resourceKey={i18nKey("userIsBlocked")} />
         </div>
-    {:else if (preview || lapsed) && chat.kind !== "direct_chat"}
-        <PreviewFooter {lapsed} {joining} {chat} />
-    {:else if externalContent}
+    {:else if block?.kind === "preview" && chat.kind !== "direct_chat"}
+        <PreviewFooter lapsed={block.lapsed} {joining} {chat} />
+    {:else if block?.kind === "external"}
         <div class="disclaimer">
             <Alert size={$iconSize} color={"var(--warn"} />
             <Translatable resourceKey={i18nKey("externalContent.disclaimer")} />
         </div>
-    {:else if !canSendAny}
+    {:else if block?.kind === "read_only"}
         <div class="disabled">
-            <Translatable
-                resourceKey={i18nKey(
-                    $anonUserStore
-                        ? "sendMessageDisabledAnon"
-                        : mode === "thread"
-                          ? "readOnlyThread"
-                          : "readOnlyChat",
-                )} />
+            <Translatable resourceKey={i18nKey(block.key)} />
         </div>
     {:else if $throttleDeadline > 0}
         <ThrottleCountdown deadline={$throttleDeadline} />

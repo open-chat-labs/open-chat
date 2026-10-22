@@ -46,6 +46,12 @@
     demo?: 'interactive' | 'idle' | 'typing' | 'plus' | 'emoji' | 'gif' | 'recording' | 'review';
     /** Resource key (or literal text). */
     placeholder?: string;
+    /** The draft to start from, read when the composer mounts (key the composer to start another). */
+    text?: string;
+    /** The draft as it changes while it's being written (typed, an emoji picked, cleared on send); not while editing. */
+    onInput?: (text: string) => void;
+    /** Whether Enter sends (Shift+Enter a new line); off, Enter is a new line and Ctrl/⌘+Enter sends. */
+    enterSends?: boolean;
     /** Send the text. Return a promise to keep the draft until it resolves (kept with an error if it rejects). */
     onSend?: (text: string) => Promise<unknown> | void;
     onAttach?: (kind: AttachKind) => void;
@@ -66,6 +72,9 @@
   let {
     demo = 'interactive',
     placeholder = 'ui.messageComposer.placeholder',
+    text = '',
+    onInput,
+    enterSends = true,
     onSend,
     onAttach,
     onGif,
@@ -88,7 +97,7 @@
   let wave = $state<HTMLDivElement>();
 
   // mounting straight into edit mode starts from the original text (later context changes are handled below)
-  let draft = $state(untrack(() => (context?.mode === 'edit' ? context.text ?? '' : '')));
+  let draft = $state(untrack(() => (context?.mode === 'edit' ? context.text ?? '' : text)));
   let menu = $state<'plus' | 'picker' | null>(null);
   let tab = $state(0);
   let query = $state('');
@@ -116,6 +125,15 @@
   let endSeek: (() => void) | null = null;
 
   const editing = $derived(context?.mode === 'edit');
+
+  // the host hears the draft as it changes, not the text it started from or an edit's
+  let reported = untrack(() => draft);
+  $effect(() => {
+    const current = draft;
+    if (current === reported || untrack(() => editing)) return;
+    reported = current;
+    untrack(() => onInput?.(current));
+  });
   const att = $derived(editing ? null : attachment);
   const hasContent = $derived(!!draft.trim() || !!att);
   const needle = $derived(query.trim().toLowerCase());
@@ -541,6 +559,8 @@
       if (menu && !root.contains(e.target as Node)) menu = null;
     };
     document.addEventListener('mousedown', down);
+    // a draft the composer starts from takes the height it needs
+    if (draft) tick().then(grow);
     // bar count follows the available width: one 3px bar per ~5px, so spacing stays tight at any size
     const fit = () => (barCount = Math.max(16, Math.min(120, Math.floor((root.getBoundingClientRect().width - 170) / 5))));
     const ro = new ResizeObserver(fit);
@@ -586,15 +606,18 @@
   {/if}
   {#if menu === 'picker'}
     <div class="popup picker" role="dialog" aria-label={t(tab ? 'ui.messageComposer.gifs' : 'ui.messageComposer.emoji')}>
-      <SegmentedTabs
-        labels={[t('ui.messageComposer.emoji'), t('ui.messageComposer.gif')]}
-        selectedIndex={tab}
-        dotOnLast={false}
-        onSelect={(i) => {
-          tab = i;
-          query = '';
-        }}
-      />
+      <!-- GIFs only for a host that takes them -->
+      {#if onGif || demo !== 'interactive'}
+        <SegmentedTabs
+          labels={[t('ui.messageComposer.emoji'), t('ui.messageComposer.gif')]}
+          selectedIndex={tab}
+          dotOnLast={false}
+          onSelect={(i) => {
+            tab = i;
+            query = '';
+          }}
+        />
+      {/if}
       {#if tab === 0}
         <div class="emoji-area">
           <div class="fill"><EmojiPicker onPick={insert} onClose={() => (menu = null)} autoFocus={demo === 'interactive'} /></div>
@@ -646,7 +669,7 @@
     {#if att?.type === 'media'}
       <div class="tray">
         {#each att.items as item, i}
-          <div class="thumb" style:background={item.src && item.kind === 'image' ? `center/cover no-repeat ${cssUrl(item.src)}` : item.bg || 'var(--surface-2,#15151b)'}>
+          <div class="thumb" style:background={item.src && item.kind === 'image' ? `center/cover no-repeat ${cssUrl(item.src)}` : item.bg || 'var(--surface-2)'}>
             {#if item.kind === 'video' && item.src}<video src={item.src} muted playsinline preload="metadata"></video>{/if}
             {#if item.kind === 'video'}<span class="duration"><span class="duration-icon"></span>{item.dur || t('ui.messageComposer.video')}</span>{/if}
             <span class="thumb-remove" onclick={() => onRemoveMediaItem?.(i)} role="button" tabindex="0" aria-label={t(item.kind === 'video' ? 'ui.messageComposer.removeVideo' : 'ui.messageComposer.removePhoto', { n: i + 1 })} title={t('ui.common.remove')}
@@ -679,7 +702,7 @@
     {#if att && chip}
       <div class="chip">
         {#if att.type === 'file'}
-          <span class="file-tile" style:background={att.tint || 'var(--overlay-2,rgba(255,255,255,.1))'}><span class="file-icon"></span></span>
+          <span class="file-tile" style:background={att.tint || 'var(--overlay-2)'}><span class="file-icon"></span></span>
         {:else if att.type === 'swap'}
           <div class="pair">
             <TokenAvatar symbol={att.pair[0].symbol} mark={att.pair[0].mark} gradient={att.pair[0].gradient} size={28} />
@@ -696,7 +719,8 @@
     {/if}
     {#if !voice}
       <div class="tools">
-        {#if !editing}
+        <!-- the + menu only offers attachments a host takes -->
+        {#if !editing && (onAttach || demo !== 'interactive')}
           <span
             class="tool"
             class:open={menu === 'plus'}
@@ -723,7 +747,7 @@
             grow();
           }}
           onkeydown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+            if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && (enterSends || e.ctrlKey || e.metaKey)) {
               e.preventDefault();
               send();
             }
@@ -817,10 +841,10 @@
     gap: var(--space-10);
     padding: var(--space-10);
     border-radius: var(--radius-lg);
-    background: var(--surface-2, #191921);
+    background: var(--surface-2);
     box-shadow:
-      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1)),
-      var(--shadow-panel, 0 8px 24px rgba(0, 0, 0, 0.28));
+      inset 0 0 0 1px var(--line-2),
+      var(--shadow-panel);
   }
 
   .emoji-area {
@@ -845,15 +869,15 @@
     height: 38px;
     padding: 0 var(--space-12);
     border-radius: var(--radius-md);
-    background: var(--field, #14141a);
-    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+    background: var(--field);
+    box-shadow: inset 0 0 0 1px var(--line-1);
   }
 
   .search-icon {
     flex: none;
     width: 15px;
     height: 15px;
-    background: var(--ink-4, #8a8a99);
+    background: var(--ink-4);
     mask: var(--icon-search) center/contain no-repeat;
   }
 
@@ -866,7 +890,7 @@
     outline: none;
     background: transparent;
     font: var(--weight-regular) var(--text-sm) / 1 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .cats {
@@ -883,16 +907,16 @@
     height: 28px;
     padding: 0 var(--space-10);
     border-radius: var(--radius-pill);
-    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+    background: var(--overlay-2);
     font: var(--weight-semibold) var(--text-xs) / 1 var(--font-sans);
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
     cursor: pointer;
     user-select: none;
   }
 
   .cat.on {
-    background: var(--ink, #ececf1);
-    color: var(--surface-1, #0e0e12);
+    background: var(--ink);
+    color: var(--surface-1);
   }
 
   .gif-scroll {
@@ -937,26 +961,26 @@
     flex-wrap: wrap;
     align-items: flex-end;
     gap: var(--space-8);
-    row-gap: var(--space-12, 12px);
+    row-gap: var(--space-12);
     min-height: 52px;
     box-sizing: border-box;
     padding: var(--space-8);
     border-radius: var(--radius-xl);
-    background: var(--field, #14141a);
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.08));
-    transition: box-shadow var(--duration-fast, 0.12s);
+    background: var(--field);
+    box-shadow: inset 0 0 0 1px var(--line-2);
+    transition: box-shadow var(--duration-fast);
   }
 
   .bar.recording {
-    box-shadow: inset 0 0 0 1px var(--status-danger-line, rgba(255, 77, 77, 0.4));
+    box-shadow: inset 0 0 0 1px var(--status-danger-line);
   }
 
   .bar.focused {
-    box-shadow: inset 0 0 0 1px var(--line-3, rgba(255, 255, 255, 0.22));
+    box-shadow: inset 0 0 0 1px var(--line-3);
   }
 
   .bar.editing {
-    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent, #ff5672) 55%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent) 55%, transparent);
   }
 
   .tray {
@@ -973,7 +997,7 @@
     flex: none;
     width: 72px;
     height: 72px;
-    border-radius: var(--radius-md, 12px);
+    border-radius: var(--radius-md);
     overflow: hidden;
   }
 
@@ -1033,19 +1057,19 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: var(--radius-md, 12px);
-    box-shadow: inset 0 0 0 1.5px var(--line-2, rgba(255, 255, 255, 0.14));
+    border-radius: var(--radius-md);
+    box-shadow: inset 0 0 0 1.5px var(--line-2);
     cursor: pointer;
   }
 
   .tray-add:hover {
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    background: var(--overlay-1);
   }
 
   .tray-add-icon {
     width: 20px;
     height: 20px;
-    background: var(--ink-3, #9a9aa8);
+    background: var(--ink-3);
     mask: var(--icon-plus) center/contain no-repeat;
   }
 
@@ -1059,7 +1083,7 @@
     box-sizing: border-box;
     padding: 4px 4px 4px 6px;
     border-radius: 16px;
-    background: var(--surface-2, #191921);
+    background: var(--surface-2);
   }
 
   .context-main {
@@ -1084,24 +1108,24 @@
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: color-mix(in oklch, var(--accent, #ff5672) 18%, transparent);
+    background: color-mix(in oklch, var(--accent) 18%, transparent);
     display: flex;
     align-items: center;
     justify-content: center;
   }
 
   .context-icon.editing {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+    background: var(--overlay-2);
   }
 
   .context-glyph {
     width: 15px;
     height: 15px;
-    background: var(--accent-bright, #ff8298);
+    background: var(--accent-bright);
   }
 
   .editing .context-glyph {
-    background: var(--ink-2, #c9c9d4);
+    background: var(--ink-2);
   }
 
   .context-text {
@@ -1114,17 +1138,17 @@
 
   .context-label {
     font: 600 12.5px/1.1 var(--font-sans);
-    color: var(--accent-bright, #ff8298);
+    color: var(--accent-bright);
   }
 
   .context-label.editing {
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
   }
 
   /* the quoted message wraps up to three lines, then ends in an ellipsis (same as the bubble's reply quote) */
   .context-quote {
     font: 400 13px/1.3 var(--font-sans);
-    color: var(--ink-3, #a3a3b2);
+    color: var(--ink-3);
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;
@@ -1145,13 +1169,13 @@
   }
 
   .round-close:hover {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.1));
+    background: var(--overlay-2);
   }
 
   .close-icon {
     width: 13px;
     height: 13px;
-    background: var(--ink-2, #c9c9d4);
+    background: var(--ink-2);
     mask: var(--icon-close) center/contain no-repeat;
   }
 
@@ -1165,8 +1189,8 @@
     box-sizing: border-box;
     padding: 0 6px;
     border-radius: 999px;
-    background: color-mix(in oklch, var(--accent, #ff5672) 14%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent, #ff5672) 32%, transparent);
+    background: color-mix(in oklch, var(--accent) 14%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent) 32%, transparent);
   }
 
   .file-tile {
@@ -1194,13 +1218,13 @@
   .pair-second {
     margin-left: -8px;
     border-radius: 50%;
-    box-shadow: 0 0 0 2px var(--field, #14141a);
+    box-shadow: 0 0 0 2px var(--field);
   }
 
   .chip-label {
     flex: none;
-    font: var(--weight-bold, 700) 14px/1 var(--font-sans);
-    color: var(--ink, #ececf1);
+    font: var(--weight-bold) 14px/1 var(--font-sans);
+    color: var(--ink);
     white-space: nowrap;
   }
 
@@ -1208,8 +1232,8 @@
   .chip-meta {
     flex: 1;
     min-width: 0;
-    font: var(--weight-medium, 500) 13px/1 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    font: var(--weight-medium) 13px/1 var(--font-sans);
+    color: var(--ink-3);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1219,13 +1243,13 @@
     flex: none;
     padding: 6px 8px;
     border-radius: var(--radius-sm);
-    font: var(--weight-semibold, 600) 13px/1 var(--font-sans);
-    color: var(--accent-bright, #ff8298);
+    font: var(--weight-semibold) 13px/1 var(--font-sans);
+    color: var(--accent-bright);
     cursor: pointer;
   }
 
   .chip-edit:hover {
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    background: var(--overlay-1);
   }
 
   .tools {
@@ -1247,22 +1271,22 @@
 
   .tool:hover,
   .tool.open {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+    background: var(--overlay-2);
   }
 
   .tool-icon {
     width: 18px;
     height: 18px;
-    background: var(--ink-3, #9a9aa8);
+    background: var(--ink-3);
   }
 
   .open .tool-icon {
-    background: var(--ink, #ececf1);
+    background: var(--ink);
   }
 
   .tool-icon.plus {
     mask: var(--icon-plus) center/contain no-repeat;
-    transition: transform var(--duration-base, 0.2s);
+    transition: transform var(--duration-base);
   }
 
   .open .tool-icon.plus {
@@ -1296,7 +1320,7 @@
     scrollbar-width: thin;
     background: transparent;
     font: var(--weight-regular) var(--text-base) / 22px var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .action {
@@ -1311,7 +1335,7 @@
   }
 
   .action.send {
-    background: var(--accent, #ff5672);
+    background: var(--accent);
   }
 
   .action.send:hover {
@@ -1320,35 +1344,35 @@
 
   .action.mic,
   .action.stop {
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    background: var(--overlay-1);
   }
 
   .action.mic:hover,
   .action.stop:hover {
-    background: var(--btn-hover, rgba(255, 255, 255, 0.1));
+    background: var(--btn-hover);
   }
 
   .action.delete:hover {
-    background: var(--status-danger-soft, rgba(255, 77, 77, 0.12));
+    background: var(--status-danger-soft);
   }
 
   .send-icon {
     width: 17px;
     height: 17px;
-    background: var(--on-accent, #2e0512);
+    background: var(--on-accent);
   }
 
   .mic-icon {
     width: 18px;
     height: 18px;
-    background: var(--ink-2, #c9c9d4);
+    background: var(--ink-2);
     mask: var(--icon-mic) center/contain no-repeat;
   }
 
   .delete-icon {
     width: 18px;
     height: 18px;
-    background: var(--status-danger, #ff4d4d);
+    background: var(--status-danger);
     mask: var(--icon-trash) center/contain no-repeat;
   }
 
@@ -1356,7 +1380,7 @@
     width: 12px;
     height: 12px;
     border-radius: 3px;
-    background: var(--ink-2, #c9c9d4);
+    background: var(--ink-2);
   }
 
   .tool:focus-visible,
@@ -1387,7 +1411,7 @@
     width: 9px;
     height: 9px;
     border-radius: 50%;
-    background: var(--status-danger, #ff4d4d);
+    background: var(--status-danger);
     animation: ocRecPulse 1.2s ease-in-out infinite;
   }
 
@@ -1399,18 +1423,18 @@
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    background: var(--overlay-2, rgba(255, 255, 255, 0.1));
+    background: var(--overlay-2);
     cursor: pointer;
   }
 
   .play:hover {
-    background: var(--btn-hover, rgba(255, 255, 255, 0.14));
+    background: var(--btn-hover);
   }
 
   .play-icon {
     width: 12px;
     height: 12px;
-    background: var(--ink, #ececf1);
+    background: var(--ink);
   }
 
   .timer {
@@ -1419,11 +1443,11 @@
     font: var(--weight-medium) var(--text-sm) / 1 var(--font-mono);
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
   }
 
   .timer.recording {
-    color: var(--status-danger, #ff4d4d);
+    color: var(--status-danger);
   }
 
   .wave {
@@ -1454,7 +1478,7 @@
     flex: none;
     width: 3px;
     border-radius: 2px;
-    background: var(--ink-2, #c9c9d4);
+    background: var(--ink-2);
     transition: height 0.12s;
     pointer-events: none;
   }
@@ -1464,11 +1488,11 @@
   }
 
   .wave-bar.review {
-    background: var(--ink-4, #8a8a99);
+    background: var(--ink-4);
   }
 
   .wave-bar.review.played {
-    background: var(--accent-bright, #ff8298);
+    background: var(--accent-bright);
   }
 
   .handle {
@@ -1486,7 +1510,7 @@
     left: -1px;
     width: 2px;
     border-radius: 1px;
-    background: var(--ink, #ececf1);
+    background: var(--ink);
   }
 
   .handle-knob {
@@ -1497,11 +1521,11 @@
     height: 12px;
     margin-top: -6px;
     border-radius: 50%;
-    background: var(--ink, #ececf1);
+    background: var(--ink);
     box-shadow:
-      0 0 0 2px var(--field, #14141a),
+      0 0 0 2px var(--field),
       0 1px 4px rgba(0, 0, 0, 0.4);
-    transition: transform var(--duration-fast, 0.12s);
+    transition: transform var(--duration-fast);
   }
 
   .handle-knob.seeking {
@@ -1515,11 +1539,11 @@
     top: calc(100% + 6px);
     text-align: center;
     font: var(--weight-regular) var(--text-xs) / 1 var(--font-sans);
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
   }
 
   .rec-hint.failure {
-    color: var(--status-danger, #f5493d);
+    color: var(--status-danger);
   }
 
   .action.delete[aria-disabled='true'] {

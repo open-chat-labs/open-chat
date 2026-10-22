@@ -6,9 +6,12 @@
      /blog/:slug …); without `page` the URL hash does (#faq, #blog/<slug>), so deep links work either way. A host that
      sets `page` also gives learnPageHref, its paths for the links (hash links otherwise); there onNavigate takes the
      click instead of the link when given. A doc sub-page the content doesn't have shows the roadmap.
-     Sign in / Create account open AuthDialog with the host's `auth` callbacks, as on Landing. -->
+     Sign in / Create account open AuthDialog with the host's `auth` callbacks, as on Landing.
+     Content text may use a small markdown subset (inlineMarkdown.ts): links, bold and code inline, and a post paragraph
+     that is only an image. `section` and `question` are deep links into a doc and the FAQs; `architecture` puts the
+     host's own content (an interactive canister map …) on the Architecture tab in place of a doc. -->
 <script lang="ts">
-  import { untrack } from 'svelte';
+  import { tick, untrack, type Snippet } from 'svelte';
   import { useT } from '../lib/i18n';
   import Icon from '../lib/components/Icon.svelte';
   import Logo from '../lib/components/Logo.svelte';
@@ -16,7 +19,22 @@
   import { PageAuthState, type PageAuth } from './pageAuth.svelte';
   import { cssUrl } from '../lib/cssUrl';
   import { prefersReducedMotion } from './heroBackground';
-  import { learnFromHash, learnHashHref, learnPagesOf, placeholderLearnContent, type LearnContent, type LearnPage, type RoadmapItem } from './learnContent';
+  import { imageOf, inlineMarkdown, plainText, searchText } from './inlineMarkdown';
+  import {
+    docOutline,
+    learnFromHash,
+    learnHashHref,
+    learnPagesOf,
+    outlinePath,
+    placeholderLearnContent,
+    readingSection,
+    sameLocation,
+    type LearnContent,
+    type LearnPage,
+    type OutlineEntry,
+    type RoadmapItem,
+  } from './learnContent';
+  import { TocOpen } from './tocOpen.svelte';
   import type { PageAccent, PageMode } from './types';
 
   interface CommonProps {
@@ -31,10 +49,19 @@
     /** Called on every sub-page or post change: a click, and in hash mode Back / Forward or an edited hash too (not the sub-page it opens on). When the host sets `page`, it handles the click (no link navigation). */
     onNavigate?: (page: LearnPage, post?: string) => void;
     content?: LearnContent;
-    /** AuthDialog's host callbacks (onMethod, onSignup, onRequestEmailLink, checkUsername …). onMethod and onSignup return a promise; when it resolves the page enters the app, even if the dialog was closed meanwhile (once per sign-in). */
+    /** AuthDialog's host callbacks (onMethod, onSignup, onRequestEmailLink, checkUsername …). onMethod and onSignup return a promise; when it resolves the page enters the app, even if the dialog was closed meanwhile (once per sign-in). onOpen hears it opening, and onClose the person closing it, so the host can read what it shows then and stop what it had going. */
     auth?: PageAuth;
-    /** Called after a successful sign-in instead of navigating to appHref. */
+    /** Called after a successful sign-in instead of navigating to appHref, and by Open app when signed in. */
     onEnterApp?: () => void;
+    /** Someone is signed in: Open app (to appHref, or onEnterApp) replaces Sign in and Create account. */
+    signedIn?: boolean;
+    /** A doc section to scroll to (its `id`), e.g. from the host's `?section=`. */
+    section?: string;
+    /** An FAQ question to open and scroll to (its `id`), e.g. from the host's `?q=`. */
+    question?: string;
+    /** The Architecture tab's content, in place of the architecture doc (the tab shows whenever this is given). It fills
+     *  the screen between the header and the footer, inset only for its rounded corners: an interactive map and the like. */
+    architecture?: Snippet;
   }
 
   /** The URL hash picks the sub-page; links are learnHref + '#page' ('#blog/<slug>'). */
@@ -72,6 +99,10 @@
     content = placeholderLearnContent,
     auth,
     onEnterApp,
+    signedIn = false,
+    section,
+    question,
+    architecture,
   }: Props = $props();
   const t = useT();
 
@@ -81,7 +112,7 @@
   // the hash route, used when the host doesn't set `page`
   type LearnRoute = { page: LearnPage; post?: string };
   let fromHash = $state<LearnRoute>({ page: 'roadmap' });
-  const tabs = $derived(learnPagesOf(content));
+  const tabs = $derived(learnPagesOf(content, architecture ? ['architecture'] : []));
   // a doc the content doesn't have (a deep link, or a stale link from Landing) falls back to the roadmap
   const current = $derived.by(() => {
     const p = page ?? fromHash.page;
@@ -96,7 +127,9 @@
 
   const authState = new PageAuthState(() => ({ auth, onEnterApp, appHref }));
 
-  const doc = $derived(current === 'whitepaper' || current === 'architecture' ? content.docs[current] : undefined);
+  const doc = $derived(current === 'whitepaper' || (current === 'architecture' && !architecture) ? content.docs[current] : undefined);
+  // the host's Architecture content takes the whole screen between the header and the footer
+  const fullBleed = $derived(current === 'architecture' && !!architecture);
   const openPost = $derived(current === 'blog' && openSlug ? (content.posts.find((p) => p.slug === openSlug) ?? null) : undefined);
 
   const roadNext = $derived(content.roadmap.filter((r) => r.status === 'next'));
@@ -124,7 +157,9 @@
     content.faq
       .map((g) => ({
         title: g.title,
-        items: g.items.filter((it) => !faqSearch || `${it.q} ${it.a}`.toLowerCase().includes(faqSearch)).map((it) => ({ ...it, key: JSON.stringify([g.title, it.q]) })),
+        items: g.items
+          .filter((it) => !faqSearch || `${plainText(it.q)} ${searchText(it.a)}`.toLowerCase().includes(faqSearch))
+          .map((it) => ({ ...it, key: JSON.stringify([g.title, it.q]) })),
       }))
       .filter((g) => g.items.length),
   );
@@ -161,8 +196,90 @@
   // ids could match the content's
   const sectionEls: HTMLElement[] = $state([]);
 
-  function jumpTo(i: number) {
-    sectionEls[i]?.scrollIntoView?.({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
+  function jumpTo(i: number, behavior: ScrollBehavior = prefersReducedMotion() ? 'auto' : 'smooth') {
+    sectionEls[i]?.scrollIntoView?.({ behavior, block: 'start' });
+  }
+
+  // the contents list is the doc's outline: sub-sections sit under their section, shown while it's open (TocOpen)
+  const outline = $derived(doc ? docOutline(doc.sections) : []);
+  const numbers = $derived.by(() => {
+    const all: Record<number, OutlineEntry> = {};
+    const walk = (entries: OutlineEntry[]) =>
+      entries.forEach((e) => {
+        all[e.index] = e;
+        walk(e.children);
+      });
+    walk(outline);
+    return all;
+  });
+  // a new doc starts with nothing opened by hand
+  const toc = $derived.by(() => {
+    void doc;
+    return new TocOpen();
+  });
+  let reading = $state(0);
+  // below this the contents list sits above the doc rather than beside it (the CSS below); hosts without matchMedia
+  // (and tests) are wide
+  const narrowQuery = typeof matchMedia === 'function' ? matchMedia('(max-width: 860px)') : undefined;
+  let narrowDoc = $state(narrowQuery?.matches ?? false);
+  $effect(() => {
+    const follow = () => (narrowDoc = narrowQuery?.matches ?? false);
+    narrowQuery?.addEventListener?.('change', follow);
+    return () => narrowQuery?.removeEventListener?.('change', follow);
+  });
+
+  // the section being read follows the scroll: the one whose heading has passed below the sticky header (where a jump
+  // to a section puts it, its scroll margin)
+  $effect(() => {
+    if (!doc) return;
+    const shown = outline;
+    const open = toc;
+    // above the doc, the list opening and closing would move the page under the reader: there only the reader opens it
+    const following = !narrowDoc;
+    let frame = 0;
+    const follow = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const tops = sectionEls.map((el) => el?.getBoundingClientRect().top ?? Infinity);
+        reading = readingSection(tops, 120);
+        open.reading(following ? outlinePath(shown, reading).map((e) => e.index) : []);
+      });
+    };
+    untrack(follow);
+    window.addEventListener('scroll', follow, { passive: true });
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', follow);
+    };
+  });
+
+  // a deep link into a doc section or an FAQ question: scrolled to (the question opened) once it shows, and again when
+  // the host passes a new one
+  const deepLink = () => (current === 'faq' ? question : doc ? section : undefined);
+  function followDeepLink(target: string) {
+    if (current === 'faq') {
+      const group = content.faq.find((g) => g.items.some((it) => it.id === target));
+      const item = group?.items.find((it) => it.id === target);
+      if (!group || !item) return;
+      faqOpen[JSON.stringify([group.title, item.q])] = true;
+      tick().then(() => document.getElementById(`learn-faq-${target}`)?.scrollIntoView?.({ block: 'start', behavior: 'instant' }));
+    } else {
+      const i = doc?.sections.findIndex((s) => s.id === target) ?? -1;
+      if (i >= 0) tick().then(() => jumpTo(i, 'instant'));
+    }
+  }
+  $effect(() => {
+    const target = deepLink();
+    if (target) untrack(() => followDeepLink(target));
+  });
+
+  // a link in the content to the page as it shows (the same section or question again, after reading on) changes
+  // nothing for the host, so the deep link is followed again here
+  function onContentLink(e: MouseEvent, href: string) {
+    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || !sameLocation(href, location.href)) return;
+    e.preventDefault();
+    const target = deepLink();
+    if (target) tick().then(() => followDeepLink(target));
   }
 
   // the hash routes only while the host doesn't set `page`, which it may start or stop doing after mount
@@ -194,7 +311,44 @@
   });
 </script>
 
-<div class="page" data-oc-page="learn" data-mode={mode} data-accent={accent}>
+<!-- content text, with the markdown subset as elements (never HTML) -->
+{#snippet rich(text: string)}{#each inlineMarkdown(text) as part}{#if part.kind === 'link'}<a
+        class="inline-link"
+        href={part.href}
+        target={/^https?:/i.test(part.href) ? '_blank' : undefined}
+        rel={/^https?:/i.test(part.href) ? 'noopener' : undefined}
+        onclick={(e) => onContentLink(e, part.href)}>{part.text}</a
+      >{:else if part.kind === 'bold'}<strong>{part.text}</strong>{:else if part.kind === 'code'}<code class="inline-code">{part.text}</code>{:else}{part.text}{/if}{/each}{/snippet}
+
+<!-- a doc's contents list: a section, and its sub-sections while it's open -->
+{#snippet tocEntries(entries: OutlineEntry[])}
+  {#each entries as e (e.index)}
+    {@const title = doc?.sections[e.index]?.title ?? ''}
+    {@const open = e.children.length > 0 && toc.isOpen(e.index)}
+    <div class="toc-entry" style:--toc-indent="{(e.depth - 1) * 14}px">
+      <button class="toc-item" class:reading={reading === e.index} aria-current={reading === e.index ? 'location' : undefined} onclick={() => jumpTo(e.index)}
+        ><span class="num">{e.number}</span>{title}</button
+      >
+      {#if e.children.length}
+        <button
+          class="toc-toggle"
+          class:open
+          aria-expanded={open}
+          aria-label={t(open ? 'ui.learn.hideSections' : 'ui.learn.showSections', { title })}
+          onclick={() => toc.toggle(e.index)}><Icon icon="chevron-down" size={16} /></button
+        >
+      {/if}
+    </div>
+    {#if e.children.length}
+      <!-- always there, so opening and closing can animate; out of reach (visibility) while closed -->
+      <div class="toc-children" class:open>
+        <div class="toc-children-inner">{@render tocEntries(e.children)}</div>
+      </div>
+    {/if}
+  {/each}
+{/snippet}
+
+<div class="page" class:full-bleed={fullBleed} data-oc-page="learn" data-mode={mode} data-accent={accent}>
   <header class="top">
     <div class="top-inner">
       <a class="brand" href={homeHref}><Logo size={30} /><span class="brand-name">OpenChat</span></a>
@@ -204,26 +358,30 @@
         {/each}
       </nav>
       <div class="auth">
-        <button class="sign-in" onclick={() => authState.open('login')}>{t('ui.landing.signIn')}</button>
-        <button class="create" onclick={() => authState.open('signup')}>{t('ui.landing.createAccount')}</button>
+        {#if signedIn}
+          <a class="create" href={appHref} onclick={authState.openApp}>{t('ui.landing.openApp')}</a>
+        {:else}
+          <button class="sign-in" onclick={() => authState.open('login')}>{t('ui.landing.signIn')}</button>
+          <button class="create" onclick={() => authState.open('signup')}>{t('ui.landing.createAccount')}</button>
+        {/if}
       </div>
     </div>
   </header>
 
-  <main class="main">
-    {#if doc}
+  <main class="main" class:full={fullBleed}>
+    {#if current === 'architecture' && architecture}
+      <div class="hosted">{@render architecture()}</div>
+    {:else if doc}
       <div class="doc">
         <aside class="toc">
           <span class="toc-heading">{t('ui.learn.onThisPage')}</span>
-          {#each doc.sections as s, i}
-            <button class="toc-item" onclick={() => jumpTo(i)}><span class="num">{String(i + 1).padStart(2, '0')}</span>{s.title}</button>
-          {/each}
+          {@render tocEntries(outline)}
         </aside>
         <article class="doc-body">
           <div class="doc-head">
             <span class="kicker">{doc.kicker}</span>
             <h1 class="h1">{doc.title}</h1>
-            <p class="doc-lede">{doc.lede}</p>
+            <p class="doc-lede">{@render rich(doc.lede)}</p>
           </div>
           {#if doc.stats?.length}
             <div class="stats">
@@ -233,9 +391,12 @@
             </div>
           {/if}
           {#each doc.sections as sec, i}
+            {@const entry = numbers[i]}
             <section class="doc-section" id="learn-{sec.id}" bind:this={sectionEls[i]}>
-              <h2 class="h2"><span class="h2-num">{String(i + 1).padStart(2, '0')}</span>{sec.title}</h2>
-              {#each sec.paras as p}<p class="para">{p}</p>{/each}
+              <svelte:element this={entry && entry.depth > 1 ? 'h3' : 'h2'} class="h2" class:sub={entry && entry.depth > 1}
+                ><span class="h2-num">{entry?.number}</span>{sec.title}</svelte:element
+              >
+              {#each sec.paras as p}<p class="para">{@render rich(p)}</p>{/each}
               {#if sec.figure === 'allocation' && doc.allocation?.length}
                 <figure class="figure" aria-label={t('ui.learn.allocation')}>
                   <div class="share-bar">
@@ -262,7 +423,7 @@
               {/if}
               {#if sec.list?.length}
                 <ul class="bullets">
-                  {#each sec.list as li}<li><span class="bullet"></span><span>{li}</span></li>{/each}
+                  {#each sec.list as li}<li><span class="bullet"></span><span>{@render rich(li)}</span></li>{/each}
                 </ul>
               {/if}
               {#if sec.code}<pre class="code">{sec.code}</pre>{/if}
@@ -281,7 +442,10 @@
             class="article-cover"
             style:background={openPost.cover ? `center/cover ${cssUrl(openPost.cover)}` : COVERS[content.posts.indexOf(openPost) % COVERS.length]}
           ></div>
-          {#each openPost.body as b}<p class="article-para">{b}</p>{/each}
+          {#each openPost.body as b}
+            {@const image = imageOf(b)}
+            {#if image}<figure class="article-figure"><img class="article-image" src={image.src} alt={image.alt} loading="lazy" /></figure>{:else}<p class="article-para">{@render rich(b)}</p>{/if}
+          {/each}
         {:else}
           <p class="article-para">{t('ui.learn.blog.notFound')}</p>
         {/if}
@@ -299,7 +463,7 @@
               <span class="post-cover" style:background={p.cover ? `center/cover ${cssUrl(p.cover)}` : COVERS[i % COVERS.length]}></span>
               <span class="post-text">
                 <span class="post-title">{p.title}</span>
-                <span class="post-excerpt">{p.excerpt}</span>
+                <span class="post-excerpt">{plainText(p.excerpt)}</span>
                 <span class="byline small"><span class="author">{p.author ?? t('ui.learn.blog.team')}</span><span class="sep"></span>{p.date ?? t('ui.learn.blog.recent')}</span>
               </span>
             </a>
@@ -342,13 +506,13 @@
                     </button>
                     {#if open && it.detail}
                       <div class="item-detail">
-                        {#each it.detail.paras ?? [] as pp}<p class="para">{pp}</p>{/each}
+                        {#each it.detail.paras ?? [] as pp}<p class="para">{@render rich(pp)}</p>{/each}
                         {#if it.detail.points?.length}
                           <ul class="points">
                             {#each it.detail.points as pt}
                               <li>
                                 <span class="bullet"></span>
-                                {#if pt.href}<a class="point-link" href={pt.href} target="_blank" rel="noopener">{pt.label}<span class="ext-glyph"><Icon icon="external" size={12} /></span></a>{:else}<span class="point-text">{pt.label}</span>{/if}
+                                {#if pt.href}<a class="point-link" href={pt.href} target="_blank" rel="noopener">{pt.label}<span class="ext-glyph"><Icon icon="external" size={12} /></span></a>{:else}<span class="point-text">{@render rich(pt.label)}</span>{/if}
                               </li>
                             {/each}
                           </ul>
@@ -377,14 +541,22 @@
         {/if}
         {#each faqGroups as g}
           <section class="faq-group">
-            <h2 class="faq-heading">{g.title}</h2>
+            {#if g.title}<h2 class="faq-heading">{g.title}</h2>{/if}
             {#each g.items as q}
               {@const open = faqSearch ? !faqClosedInSearch[q.key] : !!faqOpen[q.key]}
-              <div class="question">
+              <div class="question" id={q.id ? `learn-faq-${q.id}` : undefined}>
                 <button class="question-button" aria-expanded={open} onclick={() => toggleFaq(q.key)}
                   ><span class="question-text">{q.q}</span><span class="item-chev" class:open><Icon icon="chevron-down" size={18} /></span></button
                 >
-                {#if open}<p class="answer">{q.a}</p>{/if}
+                {#if open}
+                  <!-- a blank line starts a paragraph, a line break a new line -->
+                  <div class="answer">
+                    {#each q.a.split(/\n{2,}/) as para}
+                      {@const image = imageOf(para)}
+                      {#if image}<img class="answer-image" src={image.src} alt={image.alt} loading="lazy" />{:else}<p class="answer-para">{@render rich(para)}</p>{/if}
+                    {/each}
+                  </div>
+                {/if}
               </div>
             {/each}
           </section>
@@ -428,6 +600,49 @@
   .link {
     font-weight: var(--weight-semibold);
     color: var(--accent);
+  }
+
+  /* content text's markdown subset */
+  .inline-link {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .inline-code {
+    padding: 1px var(--space-4);
+    border-radius: var(--radius-xs);
+    background: var(--surface-1);
+    font: var(--weight-medium) 0.9em var(--font-mono);
+  }
+
+  strong {
+    font-weight: var(--weight-semibold);
+    color: var(--ink);
+  }
+
+  /* the host's own Architecture content (a framed canister map …): the whole screen between the header and the footer,
+     inset only for its rounded corners. The footer stays on screen, as the map takes scrolling for itself */
+  .page.full-bleed {
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
+  }
+
+  .main.full {
+    min-height: 0;
+    padding: var(--space-12);
+  }
+
+  .hosted {
+    width: 100%;
+  }
+
+  /* inset just enough for its corners to round */
+  .main.full .hosted {
+    overflow: hidden;
+    border-radius: var(--radius-xl);
+    box-shadow: 0 0 0 1px var(--line-1);
   }
 
   /* ── header ── */
@@ -506,6 +721,8 @@
 
   .sign-in,
   .create {
+    display: flex;
+    align-items: center;
     height: 40px;
     padding: 0 var(--space-14);
     border: 0;
@@ -651,7 +868,80 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: var(--space-4);
+    /* a long list scrolls on its own, so every entry can be reached wherever the page is */
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+    /* a chevron turning as its section opens or closes is briefly wider than its box */
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+
+  /* the space between entries is each entry's own, so a closed (empty) sub-list adds none */
+  .toc-entry {
+    display: flex;
+    align-items: flex-start;
+    padding-block-start: var(--space-4);
+    padding-inline-start: var(--toc-indent);
+  }
+
+  .toc-entry .toc-item {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .toc-item.reading {
+    color: var(--ink);
+    background: var(--overlay-1);
+  }
+
+  .toc-toggle {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    margin-top: 2px;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--ink-4);
+    cursor: pointer;
+    transition: transform var(--duration-base) var(--ease-out);
+  }
+
+  .toc-toggle:hover {
+    background: var(--overlay-1);
+    color: var(--ink);
+  }
+
+  .toc-toggle.open {
+    transform: rotate(180deg);
+  }
+
+  /* a section's sub-sections grow open and shrink closed; hidden once closed, so they leave the tab order */
+  .toc-children {
+    display: grid;
+    grid-template-rows: 0fr;
+    visibility: hidden;
+    transition:
+      grid-template-rows var(--duration-base) var(--ease-out),
+      visibility 0s linear var(--duration-base);
+  }
+
+  .toc-children.open {
+    grid-template-rows: 1fr;
+    visibility: visible;
+    transition:
+      grid-template-rows var(--duration-base) var(--ease-out),
+      visibility 0s;
+  }
+
+  .toc-children-inner {
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
 
   .toc-heading {
@@ -746,6 +1036,12 @@
   .h2-num {
     font: var(--weight-medium) var(--text-md) / 1 var(--font-mono);
     color: var(--accent);
+  }
+
+  /* a sub-section's heading */
+  .h2.sub {
+    font-size: clamp(19px, 2vw, 22px);
+    letter-spacing: -0.01em;
   }
 
   .figure {
@@ -972,6 +1268,18 @@
     font: var(--weight-regular) var(--text-lg) / 1.75 var(--font-sans);
     color: var(--ink-2);
     text-wrap: pretty;
+  }
+
+  .article-figure {
+    margin: 0;
+  }
+
+  .article-image {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius-lg);
+    box-shadow: inset 0 0 0 1px var(--line-1);
   }
 
   /* ── roadmap ── */
@@ -1240,6 +1548,8 @@
     border-radius: var(--radius-lg);
     background: var(--surface-1);
     box-shadow: inset 0 0 0 1px var(--line-1);
+    /* clear of the sticky header when a deep link scrolls to it */
+    scroll-margin-top: 96px;
   }
 
   .question-button {
@@ -1263,11 +1573,26 @@
   }
 
   .answer {
-    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-10);
     padding: 0 var(--space-18) var(--space-18);
     font: var(--weight-regular) var(--text-base) / 1.7 var(--font-sans);
     color: var(--ink-2);
     text-wrap: pretty;
+  }
+
+  .answer-para {
+    margin: 0;
+    white-space: pre-line;
+  }
+
+  .answer-image {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius-md);
+    box-shadow: inset 0 0 0 1px var(--line-1);
   }
 
   /* ── footer ── */
@@ -1306,8 +1631,12 @@
       grid-template-columns: minmax(0, 1fr);
     }
 
+    /* above the doc it's part of the page: no scroll box of its own to trap a touch scroll */
     .toc {
       position: static;
+      max-height: none;
+      overflow: visible;
+      overscroll-behavior: auto;
     }
   }
 

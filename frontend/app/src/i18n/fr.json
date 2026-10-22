@@ -190,6 +190,15 @@
         "translateFrom": "Traduire depuis : {language}",
         "translatedFrom": "Traduit sur l'appareil depuis : {language}"
     },
+    "bridgedAccounts": {
+        "info": "Associez vos comptes sur d'autres plateformes pour que les messages qu'ils envoient sur OpenChat via nos passerelles apparaissent comme les vôtres.",
+        "link": "Associer {platform}",
+        "linkFailed": "Impossible de commencer l'association de votre compte {platform}",
+        "section": "Comptes associés",
+        "unlink": "Dissocier",
+        "unlinkFailed": "Impossible de dissocier le compte"
+    },
+    "bridgedUserUnknown": "Utilisateur {platform}",
     "nativeUpdate": {
         "downloadingTitle": "Un instant ! Mise à jour ...",
         "downloadingMessage": "Nous téléchargeons une petite mise à jour et vous pourrez continuer ...",
@@ -541,6 +550,7 @@
         "descriptionPlaceholder": "Dites-nous en quoi consiste votre communauté",
         "details": "Détails",
         "directAndGroupChats": "Chats",
+        "dmsAndGroupChats": "Messages privés et discussions de groupe",
         "directChats": "Chats directs",
         "edit": "Modifier la communauté",
         "embed": "Ajouter une chaîne intégrée",
@@ -945,6 +955,7 @@
                 }
             },
             "unruly": {
+                "changeColours": "Changer les couleurs",
                 "name": "Unruly",
                 "rules": "Remplissez chaque case avec l'une de deux couleurs. Jamais trois de la même couleur à la suite dans une ligne ou une colonne, et chaque ligne et colonne finit avec moitié de chaque.",
                 "technique": {
@@ -955,10 +966,10 @@
                     "5": "Il manque à cette ligne ou colonne exactement une case d'une couleur, et la mettre hors de ces trois cases laisserait ici trois de l'autre couleur à la suite, donc chaque case vide ailleurs prend l'autre couleur."
                 },
                 "demo": {
-                    "1": "Remplissez chaque case en orange ou en violet. Les cases entourées sont données, vous ne pouvez pas les changer.",
-                    "2": "Jamais trois de la même couleur à la suite, en ligne ou en colonne. Ça fait un orange de trop.",
-                    "3": "Chaque ligne et colonne finit avec trois de chaque couleur. Cette ligne a quatre violets.",
-                    "4": "Deux oranges avec un trou. Orange au milieu en ferait trois, donc ce doit être violet.",
+                    "1": "Remplissez chaque case en clair ou en foncé. Certaines cases sont déjà remplies, vous ne pouvez pas les changer.",
+                    "2": "Jamais trois de la même couleur à la suite, en ligne ou en colonne. Ça fait un clair de trop.",
+                    "3": "Chaque ligne et colonne finit avec trois de chaque couleur. Cette ligne a quatre foncés.",
+                    "4": "Deux clairs avec un trou. Clair au milieu en ferait trois, donc ce doit être foncé.",
                     "5": "Chaque case remplie, aucune série de trois, et trois de chaque couleur dans chaque ligne et colonne."
                 },
                 "hint": {
@@ -984,8 +995,8 @@
                     }
                 },
                 "colour": {
-                    "1": "orange",
-                    "2": "violet"
+                    "1": "clair",
+                    "2": "foncé"
                 }
             },
             "chat_rooms": {
@@ -2035,6 +2046,12 @@
             "urlRules": "lien vers des détails supplémentaires"
         },
         "neuronControllerAction": "Actions du contrôleur de neurones",
+        "neuronDissolveDelayTooShort": "Son délai de dissolution ({delay} jours) est inférieur aux {minimum} jours requis pour voter",
+        "neuronNotEligible": "Il n'était pas éligible au vote lorsque la proposition a été soumise",
+        "neuronVoteCallFailed": "Impossible de joindre la gouvernance - veuillez réessayer",
+        "neuronVoteRejected": "Le vote a été rejeté : {message}",
+        "neuronVotesFailed": "Vos neurones n'ont pas pu voter",
+        "neuronVotesFailedIntro": "Aucun de vos neurones n'a pu voter sur cette proposition :",
         "noEligibleNeurons": "Aucun neurone éligible trouvé",
         "noEligibleNeuronsMoreInfo": "Pour plus d&#39;informations sur le vote et la gouvernance, lisez <a target=\"_blank\" href=\"https://oc.app/blog/governance\">cet article de blog</a> .",
         "noEligibleNeuronsPrincipalIntro": "Aucun neurone éligible ou lié trouvé. Afin de voter sur les propositions depuis OpenChat, vous devez d&#39;abord ajouter votre principal OpenChat comme raccourci clavier pour tous les neurones avec lesquels vous souhaitez voter.",
@@ -2062,7 +2079,7 @@
                 "regular": "Pour qu'une proposition soit adoptée, les deux conditions suivantes doivent être remplies :"
             }
         },
-        "proposalNotAceptingVotes": "Cette proposition n'accepte pas les votes - essayez de recharger la page",
+        "proposalNotAcceptingVotes": "Le vote sur cette proposition est clos",
         "proposalsBotAction": "Actions du robot de propositions",
         "proposedBy": "Proposé par",
         "readless": "Lire moins",
@@ -2407,12 +2424,18 @@
         },
         "quote": "Citation",
         "quoteError": "Erreur lors de l'échange des devis {tokenIn}",
+        "quotes": {
+            "best": "Meilleur taux",
+            "declined": "Impossible d'échanger ce montant",
+            "failed": "Impossible d'obtenir un devis",
+            "unsupported": "Échange non pris en charge"
+        },
         "quoteTooLow": "Le meilleur tarif indiqué est de {rate} {tokenOut} pour {tokenIn} à partir de {dex}. Cela donne {amountOut} {tokenOut} pour {amountIn} {tokenIn}. Vous ne pouvez échanger que si le montant indiqué dépasse {minAmountOut}.",
         "requote": "Re-citer",
         "swap": "Échanger",
         "swapNotAvailable": "Actuellement, il n'est pas possible d'échanger {tokenIn} contre un autre jeton",
         "swapToken": "Échanger {tokenIn}",
-        "swapTokenTo": "Remplacer {tokenIn} par {tokenOut}",
+        "swapTokenTo": "Remplacer {amountIn} {tokenIn} par {tokenOut}",
         "warningValueDropped": "En raison de la faible liquidité, la valeur de {tokenOut} que vous recevrez est < 90 % de la valeur de {tokenIn} que vous échangerez (sur la base de la valeur USD cotée de ces jetons).",
         "warningValueUnknown": "Le prix actuel en dollars d'un ou plusieurs de ces jetons n'est pas disponible, il n'est donc pas possible de déterminer si cet échange représente une bonne valeur.",
         "youWillReceive": "Vous recevrez **{amountOut}** {tokenOut} (${usdOut}) pour **{amountIn}** {tokenIn} (${usdIn})."

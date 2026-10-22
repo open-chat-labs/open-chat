@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Send events to the StorageIndex at its `c2c_storage_bucket` endpoint, in idempotent envelopes ([#10046](https://github.com/open-chat-labs/open-chat/pull/10046))
+
+### Removed
+
+- Remove the `_json` versions of `upload_chunk_v2`, `forward_file`, `delete_file` and `delete_files` ([#10152](https://github.com/open-chat-labs/open-chat/pull/10152))
+
+### Fixed
+
+- Wait out a failed batch's retry delay, rather than retrying it whenever anything else is queued ([#10069](https://github.com/open-chat-labs/open-chat/pull/10069))
+
+## [[2.0.2161](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2161-storage_bucket)] - 2026-10-20
+
+### Added
+
+- Add `c2c_storage_index` for the StorageIndex's events ([#10019](https://github.com/open-chat-labs/open-chat/pull/10019))
+
 ### Removed
 
 - Remove the rebuild of the blocked-attempt order queue on upgrade, which backfilled state from before 2.0.2032 and has had nothing to do since ([#10002](https://github.com/open-chat-labs/open-chat/pull/10002))

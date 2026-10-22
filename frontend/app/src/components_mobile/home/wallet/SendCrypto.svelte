@@ -9,7 +9,7 @@
     import SendToAddress from "./SendToAddress.svelte";
     import SendToUser from "./SendToUser.svelte";
     import TokenCard from "./TokenCard.svelte";
-    import { TokenState } from "@shared_components/home/wallet/walletState.svelte";
+    import { TokenState } from "@src/logic/wallet/walletState.svelte";
 
     interface Props {
         tokenState: TokenState;

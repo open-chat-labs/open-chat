@@ -1,4 +1,10 @@
-import type { ChannelIdentifier, ChatIdentifier, CommunityIdentifier, RouteParams } from "@shared";
+import type {
+    ChannelIdentifier,
+    ChatIdentifier,
+    CommunityIdentifier,
+    RouteParams,
+    WalletPage,
+} from "@shared";
 import { describe, expect, it } from "vitest";
 import { navigationMode, parentRoute } from "./navigation";
 
@@ -334,67 +340,61 @@ describe("navigationMode", () => {
 // The new web UI's routes (src/web)
 // ---------------------------------------------------------------------------
 
-const wallet = (view: "all" | "token" | "send", ledger?: string): RouteParams => ({
+const wallet = (page: WalletPage): RouteParams => ({
     kind: "wallet_route",
-    view,
-    ledger,
     scope: { kind: "none" },
+    ...page,
 });
-const chatsThreads: RouteParams = { kind: "threads_route", scope: { kind: "chats" } };
 
 describe("the web UI's wallet views", () => {
     it("pushes going deeper: wallet → token page → send", () => {
-        expect(navigationMode("/wallet/ledger_1", wallet("all"))).toBe("push");
-        expect(navigationMode("/wallet/send?token=ledger_1", wallet("token", "ledger_1"))).toBe(
-            "push",
-        );
-        expect(navigationMode("/wallet/send", wallet("all"))).toBe("push");
+        expect(navigationMode("/wallet/ledger_1", wallet({ view: "all" }))).toBe("push");
+        expect(
+            navigationMode(
+                "/wallet/send?token=ledger_1",
+                wallet({ view: "token", ledger: "ledger_1" }),
+            ),
+        ).toBe("push");
+        expect(navigationMode("/wallet/send", wallet({ view: "all" }))).toBe("push");
     });
 
     it("pops coming back out", () => {
-        expect(navigationMode("/wallet/ledger_1", wallet("send", "ledger_1"))).toBe("pop");
-        expect(navigationMode("/wallet", wallet("token", "ledger_1"))).toBe("pop");
+        expect(
+            navigationMode("/wallet/ledger_1", wallet({ view: "send", ledger: "ledger_1" })),
+        ).toBe("pop");
+        expect(navigationMode("/wallet", wallet({ view: "token", ledger: "ledger_1" }))).toBe(
+            "pop",
+        );
     });
 
     it("replaces moving sideways", () => {
-        expect(navigationMode("/wallet/ledger_2", wallet("token", "ledger_1"))).toBe("replace");
-        expect(navigationMode("/wallet/receive", wallet("send"))).toBe("replace");
+        expect(
+            navigationMode("/wallet/ledger_2", wallet({ view: "token", ledger: "ledger_1" })),
+        ).toBe("replace");
+        expect(navigationMode("/wallet/receive", wallet({ view: "send" }))).toBe("replace");
     });
 
     it("goes back up to /wallet from a view or token page", () => {
-        expect(parentRoute(wallet("send"))).toBe("/wallet");
-        expect(parentRoute(wallet("token", "ledger_1"))).toBe("/wallet");
-        expect(parentRoute(wallet("all"))).toBe("/chats");
+        expect(parentRoute(wallet({ view: "send" }))).toBe("/wallet");
+        expect(parentRoute(wallet({ view: "token", ledger: "ledger_1" }))).toBe("/wallet");
+        expect(parentRoute(wallet({ view: "all" }))).toBe("/chats");
     });
 });
 
-describe("the web UI's thread lists", () => {
-    it("are a tab: pushed from the chats, popped back to them", () => {
-        expect(navigationMode("/chats/threads", chats)).toBe("push");
-        expect(navigationMode("/chats", chatsThreads)).toBe("pop");
-        expect(navigationMode(P.groupThread, chatsThreads)).toBe("push");
+describe("the thread list (?threads)", () => {
+    it("gets its own entry when opened, so Back closes it", () => {
+        expect(navigationMode(`${P.group}?threads`, chat, "overlay")).toBe("push");
+        expect(navigationMode(P.group, chat, "dismiss")).toBe("pop");
     });
 
-    it("push from a community (or its channel) to its threads, and pop back", () => {
-        const communityThreads: RouteParams = {
-            kind: "threads_route",
-            scope: { kind: "community", id: communityId },
-        };
-        expect(navigationMode("/community/comm_1/threads", community)).toBe("push");
-        expect(navigationMode("/community/comm_1/threads", channel)).toBe("push");
-        expect(navigationMode(P.community, communityThreads)).toBe("pop");
-        // another community's threads are a sideways move
-        expect(navigationMode("/community/comm_2/threads", community)).toBe("replace");
+    it("is replaced, not stacked, when the list goes to its first chat", () => {
+        expect(navigationMode(`${P.group}?threads`, chats, "auto")).toBe("replace");
     });
 
-    it("go back up to their scope's list", () => {
-        expect(parentRoute(chatsThreads)).toBe("/chats");
-        expect(parentRoute({ kind: "threads_route", scope: { kind: "favourite" } })).toBe(
-            "/favourite",
+    it("doesn't change how a thread opened from it is stacked", () => {
+        expect(navigationMode(`${P.groupMsgOpen}&threads`, chat)).toBe(
+            navigationMode(P.groupMsgOpen, chat),
         );
-        expect(
-            parentRoute({ kind: "threads_route", scope: { kind: "community", id: communityId } }),
-        ).toBe("/community/comm_1");
     });
 });
 

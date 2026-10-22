@@ -1,7 +1,10 @@
 // https://stackoverflow.com/questions/10687099/how-to-test-if-a-url-string-is-absolute-or-relative
 
 import { OpenChat, routeStore, type RouteParams, type RouteType } from "@client";
+import { isStandalonePagePath } from "@shared";
 import { openUrl } from "tauri-plugin-oc-api";
+import { i18nKey } from "../i18n/i18n";
+import { toastStore } from "../stores/toast";
 
 const regex = new RegExp("^(?:[a-z]+:)?//", "i");
 
@@ -107,12 +110,26 @@ function getRedirectPath(path: string, hash: string): string {
 }
 
 export function copyToClipboard(txt: string): Promise<boolean> {
-    return new Promise((resolve) => {
-        navigator.clipboard.writeText(txt).then(
-            () => resolve(true),
-            () => resolve(false),
-        );
-    });
+    // no clipboard at all (an insecure context, an old browser) is a copy that failed
+    if (navigator.clipboard === undefined) return Promise.resolve(false);
+    return navigator.clipboard.writeText(txt).then(
+        () => true,
+        () => false,
+    );
+}
+
+/**
+ * Copies the page's address on the site's own origin (the native app's pages are served from
+ * another, which isn't a link anyone else can follow), and says whether it could.
+ */
+export async function copyPageUrl(client: OpenChat): Promise<void> {
+    const { pathname, search, hash } = window.location;
+    const url = new URL(`${pathname}${search}${hash}`, client.canonicalOrigin()).toString();
+    if (await copyToClipboard(url)) {
+        toastStore.showSuccessToast(i18nKey("urlCopiedToClipboard"));
+    } else {
+        toastStore.showFailureToast(i18nKey("failedToCopyUrlToClipboard", { url }));
+    }
 }
 
 export function scrollToSection(section: string): number | undefined {
@@ -149,8 +166,8 @@ export function scrollToSection(section: string): number | undefined {
 // content. The markdown renderer rewrites oc.app links to relative urls (see
 // utils/markdown.ts) so that links to chats/groups/users deep-link into the
 // app. In the native app these landing-page links should instead open in an
-// external browser tab. Keep in sync with the landing routes registered in
-// components/Router.svelte.
+// external browser tab. Every landing route in web/router/routeTable.ts has its
+// path here (routeTable.spec.ts checks).
 const landingPagePaths = new Set([
     "home",
     "features",
@@ -159,9 +176,11 @@ const landingPagePaths = new Set([
     "whitepaper",
     "guidelines",
     "terms",
+    "privacy",
     "faq",
     "diamond",
     "architecture",
+    "csea-reporting",
 ]);
 
 export function isLandingPagePath(pathname: string): boolean {
@@ -196,6 +215,20 @@ export async function openExternalUrl(client: OpenChat, url: string): Promise<vo
     window.open(href, "_blank", "noopener,noreferrer");
 }
 
+// An editing host: contenteditable with an editable state. "false", "inherit" and invalid values
+// aren't, so they don't count (the spec's states; attribute values are case-insensitive)
+const EDITING_HOST =
+    '[contenteditable=""], [contenteditable="true" i], [contenteditable="plaintext-only" i]';
+
+/**
+ * Whether an element sits in an editor: inside any editing host, a contenteditable="false" island
+ * in one (a mention or link chip in a rich-text composer) included. A region marked
+ * contenteditable="false" outside any editor isn't, which a plain [contenteditable] match counted.
+ */
+export function inEditor(element: Element): boolean {
+    return element.closest(EDITING_HOST) !== null;
+}
+
 export function handleLinkClick(
     client: OpenChat,
     onInternal: (url: string) => void,
@@ -215,7 +248,7 @@ export function handleLinkClick(
         if (anchor.getAttribute("role") === "button") return;
 
         // Don't navigate when clicking links inside a contenteditable editor
-        if (anchor.closest("[contenteditable]")) {
+        if (inEditor(anchor)) {
             e.preventDefault();
             return;
         }
@@ -256,8 +289,14 @@ export function handleLinkClick(
 
         // oc.app links to marketing / landing pages were rewritten to relative
         // urls by the markdown renderer. In the native app open these in an
-        // external browser tab rather than navigating inside the app.
-        if (client.isNativeApp() && isLandingPagePath(url.pathname)) {
+        // external browser tab rather than navigating inside the app. The same
+        // goes for the standalone pages served beside the app (the canister map),
+        // which on the web are whole documents of their own, so the browser
+        // navigates to them rather than the app's router (which would read
+        // "canisters" as a chat id).
+        const standalone = isStandalonePagePath(url.pathname);
+        if (standalone && !client.isNativeApp()) return;
+        if (client.isNativeApp() && (standalone || isLandingPagePath(url.pathname))) {
             e.preventDefault();
             void openExternalUrl(
                 client,

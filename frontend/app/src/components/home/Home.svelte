@@ -35,7 +35,6 @@
         chatIdentifiersEqual,
         chatListScopeStore,
         chatsInitialisedStore,
-        chatSummariesListStore,
         ANON_USER_ID,
         CURRENT_TERMS_VERSION,
         currentUserStore,
@@ -44,6 +43,7 @@
         fullWidth,
         identityStateStore,
         localUpdates,
+        muteNotificationsFailureMessage,
         offlineStore,
         pinNumberResolverStore,
         querystringStore,
@@ -56,6 +56,7 @@
         selectedChatSummaryStore,
         selectedCommunityRulesStore,
         setRightPanelHistory,
+        publish,
         subscribe,
         suspendedUserStore,
     } from "@client";
@@ -63,11 +64,11 @@
     import { getContext, onMount, tick, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
-    import { newCommunity } from "@shared_components/home/communities/createOrUpdate/community.svelte";
+    import { newCommunity } from "@src/logic/groupOrCommunity/community.svelte";
     import { messageToForwardStore } from "../../stores/messageToForward";
     import { chitPopup, disableChit } from "../../stores/settings";
     import { toastStore } from "../../stores/toast";
-    import { ringForRemoteCall, stopRingingForRemoteCall } from "../../stores/video";
+    import { dismissedRoute, subscribeAppEvents } from "@src/logic/appEvents/appEvents";
     import {
         currentTheme,
         currentThemeName,
@@ -76,7 +77,7 @@
     } from "../../theme/themes";
     import { scream } from "../../utils/scream";
     import type { Share } from "../../utils/share";
-    import { removeQueryStringParam } from "../../utils/urls";
+    import { copyPageUrl, removeQueryStringParam } from "../../utils/urls";
     import AreYouSure from "../AreYouSure.svelte";
     import BackgroundLogo from "../BackgroundLogo.svelte";
     import BotBuilderModal from "../bots/BotBuilderModal.svelte";
@@ -213,7 +214,14 @@
 
     onMount(() => {
         const unsubEvents = [
-            subscribe("chatWith", chatWith),
+            subscribeAppEvents(client, (outcome) => {
+                if (outcome.kind === "show") {
+                    modal = outcome.dialog;
+                } else {
+                    if (outcome.closeDialogs) publish("closeModalStack");
+                    navigate(outcome.path);
+                }
+            }),
             subscribe("showInviteGroupUsers", showInviteGroupUsers),
             subscribe("replyPrivatelyTo", replyPrivatelyTo),
             subscribe("showGroupMembers", showGroupMembers),
@@ -238,7 +246,7 @@
             }),
             subscribe("joinGroup", (group) => joinGroup(group)),
             subscribe("createCommunity", createCommunity),
-            subscribe("unarchiveChat", unarchiveChat),
+            subscribe("unarchiveChatFailed", unarchiveChatFailed),
             subscribe("forward", forwardMessage),
             subscribe("toggleMuteNotifications", toggleMuteNotifications),
             subscribe("newChannel", newChannel),
@@ -247,8 +255,6 @@
             subscribe("convertGroupToCommunity", convertGroupToCommunity),
             subscribe("clearSelection", () => navigate(routeForScope($chatListScopeStore))),
             subscribe("editGroup", editGroup),
-            subscribe("userSuspensionChanged", () => window.location.reload()),
-            subscribe("selectedChatInvalid", selectedChatInvalid),
             subscribe("sendMessageFailed", sendMessageFailed),
             subscribe("summonWitch", summonWitch),
             subscribe("registerBot", registerBot),
@@ -256,14 +262,7 @@
             subscribe("removeBot", removeBot),
             subscribe("registerWebhook", registerWebhook),
             subscribe("updateWebhook", updateWebhook),
-            subscribe("remoteVideoCallStarted", (ev) => ringForRemoteCall(ev)),
-            subscribe("remoteVideoCallEnded", stopRingingForRemoteCall),
-            subscribe("notification", (n) => client.notificationReceived(n)),
-            subscribe("noAccess", () => (modal = { kind: "no_access" })),
-            subscribe("notFound", () => (modal = { kind: "not_found" })),
-            subscribe("restrictedContent", () => (modal = { kind: "restricted_content" })),
-            subscribe("copyUrl", copyUrl),
-            subscribe("suspendUser", suspendUser),
+            subscribe("copyUrl", () => copyPageUrl(client)),
             subscribe("closeModalStack", () => {
                 // TODO - not 100% sure that this is all we need to do here
                 portalState.close();
@@ -283,16 +282,8 @@
         };
     });
 
-    function suspendUser(userId: string) {
-        modal = { kind: "suspending", userId };
-    }
-
     function profileClicked(event: Event) {
         profileLinkClicked(event as CustomEvent<ProfileLinkClickedEvent>);
-    }
-
-    function selectedChatInvalid() {
-        navigate(routeForScope(client.getDefaultScope()));
     }
 
     function sendMessageFailed(alert: boolean) {
@@ -397,15 +388,11 @@
 
     function closeNoAccess() {
         closeModal();
-        navigate(routeForScope(client.getDefaultScope()));
+        navigate(dismissedRoute(client));
     }
 
-    function unarchiveChat(chatId: ChatIdentifier) {
-        client.unarchiveChat(chatId).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast(i18nKey("unarchiveChatFailed"));
-            }
-        });
+    function unarchiveChatFailed() {
+        toastStore.showFailureToast(i18nKey("unarchiveChatFailed"));
     }
 
     function getConfirmMessage(
@@ -550,14 +537,6 @@
         });
 
         return Promise.resolve();
-    }
-
-    function chatWith(chatId: DirectChatIdentifier) {
-        const chat = $chatSummariesListStore.find((c) => {
-            return c.kind === "direct_chat" && c.them === chatId;
-        });
-
-        navigate(routeForChatIdentifier(chat ? $chatListScopeStore.kind : "chats", chatId));
     }
 
     function showInviteGroupUsers(show: boolean) {
@@ -741,32 +720,17 @@
         mute: boolean | undefined;
         muteAtEveryone: boolean | undefined;
     }) {
-        const op = detail.mute ? "muted" : "unmuted";
         client
             .toggleMuteNotifications(detail.chatId, detail.mute, detail.muteAtEveryone)
             .then((success) => {
                 if (!success) {
                     toastStore.showFailureToast(
-                        i18nKey("toggleMuteNotificationsFailed", {
-                            operation: $_(op),
-                        }),
+                        muteNotificationsFailureMessage(detail.mute, detail.muteAtEveryone, $_),
                     );
                 }
             });
     }
 
-    function copyUrl() {
-        const url = window.location.href;
-
-        navigator.clipboard.writeText(url).then(
-            () => {
-                toastStore.showSuccessToast(i18nKey("urlCopiedToClipboard"));
-            },
-            () => {
-                toastStore.showFailureToast(i18nKey("failedToCopyUrlToClipboard", { url }));
-            },
-        );
-    }
 
     async function createDirectChat(chatId: DirectChatIdentifier): Promise<boolean> {
         const directChatId = await client.createDirectChat(chatId);
@@ -815,7 +779,7 @@
 
     function chatWithFromProfileCard() {
         if (showProfileCard === undefined) return;
-        chatWith({ kind: "direct_chat", userId: showProfileCard.userId });
+        publish("chatWith", { kind: "direct_chat", userId: showProfileCard.userId });
         showProfileCard = undefined;
     }
 

@@ -2,13 +2,15 @@
     import { i18nKey, interpolate } from "@src/i18n/i18n";
     import { Body, CommonButton2, Container, Form, Input } from "component-lib";
     import { namedAccountsStore, type NamedAccount, type OpenChat } from "@client";
-    import { isAccountIdentifierValid, isICRCAddressValid } from "@shared";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Save from "svelte-material-icons/ContentSaveOutline.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
+    import AddressNetworkIcon from "@shared_components/home/wallet/AddressNetworkIcon.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
     import { toastStore } from "@src/stores/toast";
+    import { addressNetwork } from "@src/utils/cryptoAddress";
+    import { isRecipientNameTaken, recipientToSave } from "@src/utils/savedRecipient";
 
     const client = getContext<OpenChat>("client");
 
@@ -24,28 +26,25 @@
     let trimmedName = $derived(name.trim());
     let trimmedAddress = $derived(address.trim());
     let nameDirty = $derived(trimmedName !== account?.name);
-    let addressDirty = $derived(trimmedAddress !== account?.account);
-    let dirty = $derived(nameDirty || addressDirty);
-    // The same two forms `is_valid_account` in save_crypto_account.rs accepts: an ICRC-1 textual
-    // account, which covers a bare principal, or an ICP ledger account identifier (checksum
-    // included, as the canister checks it). Saving anything else used to succeed here and then
-    // throw out of the worker, unhandled, when the withdrawal mapper tried to decode it.
-    let validAddress = $derived(
-        isICRCAddressValid(trimmedAddress) || isAccountIdentifierValid(trimmedAddress),
-    );
+    // An existing recipient can only be renamed: its address is fixed (see recipientToSave)
+    let dirty = $derived(account === undefined || nameDirty);
+    // The network the address is for, in the same forms the canister accepts. Saving anything else
+    // used to succeed here and then throw out of the worker, unhandled, when the withdrawal mapper
+    // tried to decode it.
+    let network = $derived(addressNetwork(trimmedAddress));
+    let validAddress = $derived(network !== undefined);
+    let invalidAddress = $derived(trimmedAddress.length > 0 && !validAddress);
     let validName = $derived(
         trimmedName.length > 0 &&
-            $namedAccountsStore.find((a) => a.name.toLowerCase() === trimmedName.toLowerCase()) ===
-                undefined,
+            !isRecipientNameTaken($namedAccountsStore, trimmedName, account?.account),
     );
     let valid = $derived(validAddress && validName);
 
     async function addAccount() {
         loading = true;
-        const res = await client.saveCryptoAccount({
-            name: trimmedName,
-            account: trimmedAddress,
-        });
+        const res = await client.saveCryptoAccount(
+            recipientToSave(account, trimmedName, trimmedAddress),
+        );
 
         if (res.kind === "success") {
             const accounts = await client.loadSavedCryptoAccounts();
@@ -94,12 +93,23 @@
                 </Input>
                 <Input
                     bind:value={address}
+                    disabled={account !== undefined}
                     countdown={false}
-                    maxlength={100}
+                    maxlength={200}
+                    error={invalidAddress}
                     placeholder={interpolate($_, i18nKey("cryptoAccount.sendTarget"))}>
+                    {#snippet icon()}
+                        {#if network !== undefined}
+                            <AddressNetworkIcon {network} size={"1.5rem"} />
+                        {/if}
+                    {/snippet}
                     {#snippet subtext()}
                         <Translatable
-                            resourceKey={i18nKey("Provide an address for your recipient")} />
+                            resourceKey={i18nKey(
+                                invalidAddress
+                                    ? "addressBook.invalidAddress"
+                                    : "Provide an address for your recipient",
+                            )} />
                     {/snippet}
                 </Input>
             </Container>

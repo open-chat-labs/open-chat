@@ -1,3 +1,4 @@
+use crate::model::escrow_event_batch::EscrowEventBatch;
 use crate::model::notify_status_change_queue::NotifyStatusChangeQueue;
 use crate::model::pending_payments_queue::PendingPaymentsQueue;
 use crate::model::swaps::Swaps;
@@ -5,12 +6,15 @@ use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
+use escrow_canister::{EscrowEvent, SwapStatusChange};
 use icrc_ledger_types::icrc1::account::Account;
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet};
 use std::ops::Deref;
-use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
+use timer_job_queues::GroupedTimerJobQueue;
+use types::{BuildVersion, CanisterId, Cycles, IdempotentEnvelope, TimestampMillis, Timestamped};
 use utils::env::Environment;
 
 mod guards;
@@ -38,6 +42,33 @@ impl RuntimeState {
         RuntimeState { env, data }
     }
 
+    // Tells the canister the swap names in `canister_to_notify`, if any, of its status now
+    pub fn notify_status_change(&mut self, swap_id: u32) {
+        let now = self.env.now();
+        let Some((canister_id, change)) = self.data.swaps.get(swap_id).and_then(|swap| {
+            swap.canister_to_notify.map(|canister_id| {
+                (
+                    canister_id,
+                    SwapStatusChange {
+                        swap_id,
+                        offered_by: swap.offered_by,
+                        location: swap.location.clone(),
+                        status: swap.status(now),
+                    },
+                )
+            })
+        }) else {
+            return;
+        };
+
+        let event = IdempotentEnvelope {
+            created_at: now,
+            idempotency_id: self.env.rng().next_u64(),
+            value: EscrowEvent::SwapStatusChanged(change),
+        };
+        self.data.status_change_event_queue.push(canister_id, event);
+    }
+
     pub fn is_caller_registry_canister(&self) -> bool {
         self.env.caller() == self.data.registry_canister_id
     }
@@ -54,7 +85,7 @@ impl RuntimeState {
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: git_commit_id::git_commit_id().to_string(),
             swaps: self.data.swaps.metrics(now),
-            notify_status_change_queue_len: self.data.notify_status_change_queue.len() as u32,
+            notify_status_change_queue_len: self.data.status_change_event_queue.len() as u32,
             payments_awaiting_retry: self
                 .data
                 .timer_jobs
@@ -77,7 +108,10 @@ impl RuntimeState {
 struct Data {
     pub swaps: Swaps,
     pub pending_payments_queue: PendingPaymentsQueue,
+    // Drained into `status_change_event_queue` by the post_upgrade one-off, and removed with it
     pub notify_status_change_queue: NotifyStatusChangeQueue,
+    #[serde(default = "new_status_change_event_queue")]
+    pub status_change_event_queue: GroupedTimerJobQueue<EscrowEventBatch>,
     timer_jobs: TimerJobs<TimerJob>,
     pub registry_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
@@ -92,6 +126,7 @@ impl Data {
             swaps: Swaps::default(),
             pending_payments_queue: PendingPaymentsQueue::default(),
             notify_status_change_queue: NotifyStatusChangeQueue::default(),
+            status_change_event_queue: new_status_change_event_queue(),
             timer_jobs: TimerJobs::default(),
             registry_canister_id,
             cycles_dispenser_canister_id,
@@ -143,4 +178,8 @@ pub(crate) fn deposit_address(principal: Principal, swap_id: u32, escrow_caniste
     };
 
     account.to_string()
+}
+
+fn new_status_change_event_queue() -> GroupedTimerJobQueue<EscrowEventBatch> {
+    GroupedTimerJobQueue::new(10, false)
 }

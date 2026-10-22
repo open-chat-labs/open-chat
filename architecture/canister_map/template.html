@@ -1,0 +1,1265 @@
+<title>OpenChat Canister Map</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a full-viewport map of canisters grouped into zones, with a detail panel that a
+   selected canister expands into (right on desktop, bottom sheet on phones). */
+:root {
+  --bg: #f5f4fb;
+  --canvas: #f5f4fb;
+  --grid: #dcd9ee;
+  --surface: #ffffff;
+  --surface-2: #eeedf8;
+  --fg: #1a1930;
+  --muted: #68678a;
+  --line: #d6d3ea;
+  --line-strong: #b9b5d8;
+  --accent: #5a3cf0;
+  --accent-soft: #e8e3ff;
+  --query: #0f8a86;
+  --query-soft: #dcf3f1;
+  --update: #d4553a;
+  --update-soft: #fde6df;
+  --edge: #8d89b3;
+  --edge-hi: #5a3cf0;
+  --shadow: 0 18px 50px -20px rgba(30, 20, 90, .35);
+  --zone-identity: #f1d9ea;
+  --zone-users: #dcdcff;
+  --zone-chats: #d5ecf6;
+  --zone-storage: #e2efd8;
+  --zone-notifications: #fbe9cf;
+  --zone-tokens: #fde0d8;
+  --zone-governance: #e7dff8;
+  --zone-platform: #e3e3ec;
+  --ext: #f3f2f9;
+  --font-ui: "Plus Jakarta Sans", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", Menlo, Monaco, "Courier New", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1020; --canvas: #0f1020; --grid: #22233b; --surface: #181a30; --surface-2: #22243d;
+    --fg: #ecebf8; --muted: #9c9bbd; --line: #2d2f4c; --line-strong: #44466b;
+    --accent: #9d8bff; --accent-soft: #2a2552; --query: #3fc9c4; --query-soft: #153a3a;
+    --update: #ff8e73; --update-soft: #46251f; --edge: #5f5e86; --edge-hi: #b3a6ff;
+    --shadow: 0 18px 50px -20px rgba(0, 0, 0, .7);
+    --zone-identity: #2d1f33; --zone-users: #20224a; --zone-chats: #16303f; --zone-storage: #1f3022;
+    --zone-notifications: #3a2c18; --zone-tokens: #3b2222; --zone-governance: #27214a; --zone-platform: #1c1d2e;
+    --ext: #171828;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1020; --canvas: #0f1020; --grid: #22233b; --surface: #181a30; --surface-2: #22243d;
+  --fg: #ecebf8; --muted: #9c9bbd; --line: #2d2f4c; --line-strong: #44466b;
+  --accent: #9d8bff; --accent-soft: #2a2552; --query: #3fc9c4; --query-soft: #153a3a;
+  --update: #ff8e73; --update-soft: #46251f; --edge: #5f5e86; --edge-hi: #b3a6ff;
+  --shadow: 0 18px 50px -20px rgba(0, 0, 0, .7);
+  --zone-identity: #2d1f33; --zone-users: #20224a; --zone-chats: #16303f; --zone-storage: #1f3022;
+  --zone-notifications: #3a2c18; --zone-tokens: #3b2222; --zone-governance: #27214a; --zone-platform: #1c1d2e;
+  --ext: #171828;
+  color-scheme: dark;
+}
+
+html, body { height: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-ui); font-size: 14px;
+  line-height: 1.45; overflow: hidden; -webkit-font-smoothing: antialiased;
+}
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a { color: var(--accent); }
+code, .mono { font-family: var(--font-mono); font-size: .92em; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+#app { position: relative; height: 100%; display: flex; flex-direction: column; }
+
+/* ---- header ---- */
+header {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding-block: 10px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  border-bottom: 1px solid var(--line); background: var(--surface); z-index: 5;
+}
+header h1 { font-size: 16px; font-weight: 700; letter-spacing: -.01em; margin: 0; white-space: nowrap; }
+header h1 small { display: block; font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; }
+.search { position: relative; flex: 1 1 220px; max-width: 460px; min-width: 0; }
+.search input {
+  width: 100%; box-sizing: border-box; padding: 8px 12px 8px 34px; border-radius: 10px;
+  border: 1px solid var(--line); background: var(--bg);
+}
+.search svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: var(--muted); pointer-events: none; }
+.results {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0; max-height: 50vh; overflow: auto;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); padding: 6px;
+  z-index: 20;
+}
+.results[hidden] { display: none; }
+.results button {
+  display: flex; gap: 10px; align-items: baseline; width: 100%; text-align: left; padding: 7px 10px; border: 0;
+  background: transparent; border-radius: 8px; min-width: 0;
+}
+.results button:hover, .results button.active { background: var(--surface-2); }
+.results .where { color: var(--muted); font-size: 12px; white-space: nowrap; }
+.results .what { font-family: var(--font-mono); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.results .kind { margin-left: auto; font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); white-space: nowrap; }
+.results .empty { padding: 10px; color: var(--muted); }
+
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 999px; font-size: 12px; font-weight: 600;
+  border: 1px solid var(--line); background: var(--surface); color: var(--muted);
+}
+.chip[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.chip .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.iconbtn {
+  width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--fg);
+  display: inline-grid; place-items: center; font-weight: 700;
+}
+.iconbtn:hover { background: var(--surface-2); }
+.spacer { flex: 1 1 0; }
+.meta { font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+.meta a { color: inherit; }
+
+/* ---- canvas ---- */
+main { position: relative; flex: 1 1 auto; min-height: 0; display: flex; }
+#canvas {
+  flex: 1 1 auto; min-width: 0; touch-action: none; cursor: grab; display: block; width: 100%; height: 100%;
+  background-color: var(--canvas);
+  background-image: radial-gradient(var(--grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+#canvas.dragging { cursor: grabbing; }
+#canvas text { font-family: var(--font-ui); user-select: none; -webkit-user-select: none; }
+
+.zone { cursor: zoom-in; }
+.zone rect { fill: var(--zone-fill); stroke: none; rx: 18; }
+.zone text { fill: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+
+.node { cursor: pointer; }
+.node .stack { fill: var(--surface); stroke: var(--line-strong); stroke-width: 1.2; rx: 14; fill-opacity: .7; stroke-opacity: .7; }
+.node .card { fill: var(--surface); stroke: var(--line-strong); stroke-width: 1.4; rx: 14; transition: stroke .15s, stroke-width .15s; }
+.node.ephemeral .card { stroke-dasharray: 5 4; }
+.node:hover .card, .node.focus .card { stroke: var(--accent); stroke-width: 2.2; }
+.node.selected .card { stroke: var(--accent); stroke-width: 2.6; }
+.node .title { font-size: min(17px, var(--title-max, 17px)); font-weight: 700; fill: var(--fg); letter-spacing: -.01em; }
+.node .tag { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; fill: var(--muted); }
+.node .summary { font-size: 11.5px; fill: var(--muted); font-weight: 500; }
+.node .counts { font-size: min(10px, var(--counts-max, 10px)); fill: var(--muted); font-weight: 600; }
+.node .counts .q { fill: var(--query); }
+.node .counts .u { fill: var(--update); }
+.node .accent { fill: var(--accent); rx: 2; }
+/* Dimming uses fill-opacity / stroke-opacity, never opacity: opacity on a group turns it into
+   its own compositing layer when it starts to change, and a frame can be painted before the
+   layer is rasterised, which blanked every card for a frame on each hover. */
+.node rect, .node text, .zone rect, .zone text, .ext rect, .ext text { transition: fill-opacity .18s, stroke-opacity .18s; }
+.node.dim rect, .node.dim text { fill-opacity: .18; stroke-opacity: .18; }
+.node.dim .card { stroke: var(--line); }
+.zone.dim rect, .zone.dim text { fill-opacity: .35; }
+
+.ext { cursor: pointer; }
+.ext rect { fill: var(--ext); stroke: var(--line); stroke-width: 1.2; rx: 20; stroke-dasharray: 3 3; }
+.ext text { font-size: 11.5px; font-weight: 700; fill: var(--muted); }
+.ext.actor rect { stroke-dasharray: none; }
+.ext.webapp rect { fill: var(--accent-soft); stroke: transparent; }
+.ext.webapp text { fill: var(--accent); }
+.ext:hover rect, .ext.focus rect { stroke: var(--accent); }
+.ext.dim rect, .ext.dim text { fill-opacity: .18; stroke-opacity: .18; }
+.col-label { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; fill: var(--muted); }
+
+.edge { fill: none; stroke: var(--edge); stroke-width: 1.3; stroke-opacity: .5; marker-end: url(#arrow); pointer-events: none; transition: stroke-opacity .15s; }
+.edge.ext-edge { stroke-dasharray: 4 4; stroke-opacity: .35; }
+.edge.hi { stroke: var(--edge-hi); stroke-width: 2.2; stroke-opacity: 1; marker-end: url(#arrow-hi); }
+.edge.dim { stroke-opacity: .06; marker-end: url(#arrow-dim); }
+.edge-hit { fill: none; stroke: transparent; stroke-width: 8; pointer-events: stroke; cursor: pointer; }
+#arrow path { fill: var(--edge); fill-opacity: .5; }
+#arrow-hi path { fill: var(--edge-hi); }
+#arrow-dim path { fill: var(--edge); fill-opacity: .06; }
+
+/* semantic zoom */
+#canvas.z-far .node .summary, #canvas.z-far .node .counts, #canvas.z-far .node .tag { display: none; }
+#canvas.z-far .node .title { font-size: min(25px, var(--title-max, 25px)); }
+#canvas.z-far .zone text { font-size: 18px; }
+#canvas.z-far .ext text { font-size: 16px; }
+
+.tip {
+  position: absolute; pointer-events: none; z-index: 8; max-width: 320px; padding: 8px 10px; border-radius: 10px;
+  background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); font-size: 12px; line-height: 1.4;
+}
+.tip[hidden] { display: none; }
+.tip b { display: block; margin-bottom: 3px; }
+.tip code { color: var(--muted); font-size: 11px; }
+
+.zoomctl { position: absolute; right: max(16px, env(safe-area-inset-right, 0px)); bottom: 16px; display: flex; flex-direction: column; gap: 6px; z-index: 4; }
+.hint {
+  position: absolute; left: max(16px, env(safe-area-inset-left, 0px)); bottom: 16px; z-index: 4; font-size: 12px; color: var(--muted);
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; max-width: 60vw;
+}
+.hint kbd { font-family: var(--font-mono); font-size: 11px; border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
+
+/* ---- detail panel ---- */
+#panel {
+  position: absolute; top: 0; right: 0; bottom: 0; width: min(560px, 48vw); min-width: 0;
+  background: var(--surface); border-left: 1px solid var(--line); box-shadow: var(--shadow);
+  display: flex; flex-direction: column; z-index: 6; transform-origin: top left;
+  transition: transform .42s cubic-bezier(.2,.8,.2,1), opacity .3s;
+}
+#panel[hidden] { display: none; }
+#panel.closing { opacity: 0; }
+.panel-head { padding: 16px 18px 0; border-bottom: 1px solid var(--line); }
+.panel-head .row { display: flex; gap: 10px; align-items: flex-start; }
+.panel-head h2 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -.02em; line-height: 1.15; flex: 1 1 auto; min-width: 0; }
+.panel-head .zone-pill { display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.panel-head .zone-pill i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; background: var(--zone-fill); border: 1px solid var(--line-strong); }
+.panel-head p { margin: 8px 0 12px; color: var(--muted); }
+.tabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; margin: 0 -18px; padding: 0 12px; }
+.tabs::-webkit-scrollbar { display: none; }
+.tabs button {
+  border: 0; background: transparent; padding: 9px 10px; font-weight: 700; color: var(--muted); border-bottom: 2px solid transparent;
+  white-space: nowrap; font-size: 13px; border-radius: 0;
+}
+.tabs button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+.tabs button span { font-weight: 600; color: var(--muted); margin-left: 4px; font-size: 11.5px; }
+.panel-body { flex: 1 1 auto; overflow: auto; padding: 16px 18px 28px; min-height: 0; }
+.panel-body h3 { font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 22px 0 8px; font-weight: 700; }
+.panel-body h3:first-child { margin-top: 0; }
+.panel-body p { margin: 0 0 10px; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+.fact { background: var(--surface-2); border-radius: 10px; padding: 9px 11px; min-width: 0; }
+.fact .v { font-size: 20px; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.fact .v.small { font-size: 13px; font-family: var(--font-mono); word-break: break-all; }
+.fact .k { font-size: 11px; color: var(--muted); font-weight: 600; }
+.badges { display: flex; flex-wrap: wrap; gap: 6px; }
+.badge { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; background: var(--surface-2); color: var(--muted); white-space: nowrap; }
+.badge.accent { background: var(--accent-soft); color: var(--accent); }
+.badge.q { background: var(--query-soft); color: var(--query); }
+.badge.u { background: var(--update-soft); color: var(--update); }
+.badge.mono { font-family: var(--font-mono); font-weight: 500; }
+.linkbtn { background: none; border: 0; padding: 0; color: var(--accent); font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
+.copy { background: none; border: 1px solid var(--line); border-radius: 6px; padding: 1px 7px; font-size: 11px; color: var(--muted); margin-left: 6px; }
+
+.filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; align-items: center; }
+.filters input { flex: 1 1 140px; min-width: 0; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); }
+.ep { border-top: 1px solid var(--line); }
+.ep:last-child { border-bottom: 1px solid var(--line); }
+.ep > button {
+  display: grid; grid-template-columns: 22px 1fr auto; gap: 10px; align-items: center; width: 100%; text-align: left;
+  padding: 8px 4px; border: 0; background: transparent; min-width: 0;
+}
+.ep > button:hover { background: var(--surface-2); }
+.ep .k { width: 20px; height: 20px; border-radius: 6px; display: grid; place-items: center; font-size: 10.5px; font-weight: 700; }
+.ep .k.q { background: var(--query-soft); color: var(--query); }
+.ep .k.u { background: var(--update-soft); color: var(--update); }
+.ep .n { font-family: var(--font-mono); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.ep .n small { display: block; font-family: var(--font-ui); color: var(--muted); font-size: 11px; white-space: normal; }
+.ep .b { display: flex; gap: 4px; }
+.ep .b .badge { font-size: 10px; padding: 2px 6px; }
+.ep .detail { padding: 4px 4px 12px 32px; }
+.ep .detail[hidden] { display: none; }
+.ep .detail .comment { color: var(--muted); margin-bottom: 8px; font-size: 13px; }
+.ep .detail .who { font-size: 12.5px; margin-bottom: 8px; }
+pre.code {
+  margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--surface-2); overflow-x: auto; font-family: var(--font-mono);
+  font-size: 11.5px; line-height: 1.5; tab-size: 4;
+}
+pre.code .kw { color: var(--accent); font-weight: 600; }
+pre.code .ty { color: var(--query); }
+pre.code .cm { color: var(--muted); font-style: italic; }
+.src { font-size: 11px; color: var(--muted); margin-top: 8px; font-family: var(--font-mono); word-break: break-all; }
+.src a { color: inherit; }
+
+.fields { display: grid; }
+.field { display: flex; flex-wrap: wrap; gap: 2px 14px; padding: 7px 2px; border-top: 1px solid var(--line); align-items: baseline; min-width: 0; }
+.field .f { font-family: var(--font-mono); font-size: 12px; font-weight: 500; }
+.field .t { font-family: var(--font-mono); font-size: 11.5px; color: var(--query); overflow-wrap: anywhere; min-width: 0; }
+.field .c { flex-basis: 100%; color: var(--muted); font-size: 12px; }
+.field.dep .f, .field.dep .t { opacity: .55; text-decoration: line-through; }
+.field.skip .f::after { content: " (not persisted)"; color: var(--muted); font-family: var(--font-ui); font-weight: 500; }
+
+.list { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.list li { padding: 10px 12px; border-radius: 10px; background: var(--surface-2); }
+.list li b { font-family: var(--font-mono); font-weight: 600; font-size: 12.5px; display: block; }
+.list li span { color: var(--muted); font-size: 12.5px; }
+.calls { display: grid; gap: 10px; }
+.call { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+.call .to { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+.call .to button { font-weight: 700; font-size: 14px; }
+.call .via { font-size: 11px; color: var(--muted); }
+.methods { display: flex; flex-wrap: wrap; gap: 4px; }
+.methods span { font-family: var(--font-mono); font-size: 11px; padding: 2px 7px; border-radius: 6px; background: var(--surface-2); }
+.empty { color: var(--muted); font-style: italic; }
+.close { position: absolute; top: 12px; right: 12px; }
+
+/* about */
+#about {
+  position: absolute; top: 12px; left: max(16px, env(safe-area-inset-left, 0px)); z-index: 7; width: min(440px, calc(100vw - 32px));
+  background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 16px 18px;
+}
+#about[hidden] { display: none; }
+#about h2 { margin: 0 0 8px; font-size: 16px; }
+#about p { margin: 0 0 8px; font-size: 13px; color: var(--muted); }
+#about ul { margin: 0; padding-left: 18px; font-size: 13px; color: var(--muted); }
+#about li { margin-bottom: 4px; }
+.legend { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 10px 0; }
+.legend div { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.legend i { width: 28px; height: 16px; border-radius: 5px; border: 1.4px solid var(--line-strong); background: var(--surface); flex: none; }
+.legend i.stack { box-shadow: 4px 4px 0 -1px var(--surface), 4px 4px 0 0 var(--line-strong); }
+.legend i.dash { border-style: dashed; }
+.legend i.arrow { border: 0; height: 2px; background: var(--edge); border-radius: 0; position: relative; }
+.legend i.arrow::after { content: ""; position: absolute; right: -2px; top: -4px; border: 5px solid transparent; border-left-color: var(--edge); }
+
+@media (max-width: 760px) {
+  header { gap: 8px 10px; padding-block: 8px; }
+  header h1 { font-size: 15px; flex: 1 1 auto; }
+  header h1 small { display: none; }
+  .search { flex-basis: 100%; max-width: none; order: 3; }
+  .chip { font-size: 11px; padding: 4px 8px; }
+  .spacer { display: none; }
+  #aboutbtn { order: 2; }
+  .meta, .hint { display: none; }
+  #panel {
+    top: auto; left: 0; right: 0; width: auto; height: 68%; border-left: 0; border-top: 1px solid var(--line); border-radius: 16px 16px 0 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .panel-head { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .panel-body { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .zoomctl { bottom: auto; top: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #panel, .node .card, .edge { transition: none; }
+}
+</style>
+
+<div id="app">
+  <header>
+    <h1>OpenChat Canister Map<small id="subtitle">canisters · endpoints · state · calls</small></h1>
+    <div class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="search" type="search" placeholder="Search canisters and endpoints…" autocomplete="off" aria-label="Search canisters and endpoints">
+      <div id="results" class="results" hidden></div>
+    </div>
+    <span class="spacer"></span>
+    <span class="meta" id="meta"></span>
+    <button class="iconbtn" id="aboutbtn" title="How to read this map" aria-label="How to read this map">?</button>
+  </header>
+
+  <main>
+    <svg id="canvas" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Map of OpenChat canisters and the calls between them">
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z"/></marker>
+        <marker id="arrow-hi" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z"/></marker>
+        <marker id="arrow-dim" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z"/></marker>
+      </defs>
+      <g id="world">
+        <g id="zones"></g>
+        <g id="edges"></g>
+        <g id="exts"></g>
+        <g id="nodes"></g>
+      </g>
+    </svg>
+    <div id="tip" class="tip" hidden></div>
+    <div class="zoomctl">
+      <button class="iconbtn" id="zin" aria-label="Zoom in">+</button>
+      <button class="iconbtn" id="zout" aria-label="Zoom out">−</button>
+      <button class="iconbtn" id="zfit" aria-label="Fit the whole map" title="Fit to screen">⤢</button>
+    </div>
+    <div class="hint">Drag to pan, scroll to zoom, click a canister to open it or a zone to zoom to it. <kbd>/</kbd> searches, <kbd>Esc</kbd> goes back.</div>
+
+    <section id="about" hidden>
+      <h2>How to read this map</h2>
+      <p>Every box is a type of canister (smart contract) that OpenChat runs on the Internet Computer, grouped by what it does. An arrow from one canister to another means the first makes calls to the second. Click any canister to zoom in on its endpoints, state, background jobs and the calls it makes and receives.</p>
+      <div class="legend">
+        <div><i></i> one canister</div>
+        <div><i class="stack"></i> many canisters of this type</div>
+        <div><i class="dash"></i> installed briefly, then removed</div>
+        <div><i class="arrow"></i> calls (click an arrow to see which)</div>
+      </div>
+      <p>Everything shown is read from the source code: endpoints from the <code>#[query]</code> and <code>#[update]</code> functions, state from each canister's <code>Data</code> struct, calls from the canister-to-canister clients used. Descriptions and live counts are the only parts written or fetched by hand.</p>
+      <p id="about-meta"></p>
+      <button class="chip" id="aboutclose">Close</button>
+    </section>
+
+    <aside id="panel" hidden aria-live="polite">
+      <button class="iconbtn close" id="closebtn" aria-label="Back to the map">✕</button>
+      <div class="panel-head">
+        <span class="zone-pill" id="p-zone"></span>
+        <div class="row"><h2 id="p-title"></h2></div>
+        <p id="p-summary"></p>
+        <div class="tabs" id="tabs" role="tablist"></div>
+      </div>
+      <div class="panel-body" id="p-body"></div>
+    </aside>
+  </main>
+</div>
+
+<script>
+const DATA = /*__DATA__*/null;
+
+// ---------- layout ----------
+const NODE_W = 200, NODE_H = 96;
+const ZONE_BOXES = {
+  identity:      { x: 40,   y: 80,  w: 460, h: 280 },
+  users:         { x: 540,  y: 80,  w: 460, h: 280 },
+  chats:         { x: 1040, y: 80,  w: 460, h: 280 },
+  notifications: { x: 40,   y: 400, w: 460, h: 170 },
+  governance:    { x: 540,  y: 400, w: 460, h: 280 },
+  storage:       { x: 1040, y: 400, w: 460, h: 170 },
+  tokens:        { x: 40,   y: 610, w: 460, h: 170 },
+  platform:      { x: 540,  y: 720, w: 960, h: 280 },
+};
+const NODE_POS = {
+  identity: [60, 130], sign_in_with_email: [280, 130], online_users: [60, 246],
+  user_index: [60 + 500, 130], local_user_index: [280 + 500, 130], multi_user: [280 + 500, 246],
+  group_index: [1060, 130], group: [1280, 130], community: [1280, 246],
+  notifications_index: [60, 450],
+  proposals_bot: [560, 450], proposal_validation: [780, 450], neuron_controller: [560, 566],
+  storage_index: [1060, 450], storage_bucket: [1280, 450],
+  escrow: [60, 660],
+  registry: [560, 770], cycles_dispenser: [780, 770], openchat_installer: [1000, 770], event_relay: [1220, 770],
+  translations: [560, 886], daily_puzzle: [780, 886], call_relay: [1000, 886], cycles_refunder: [1220, 886],
+};
+const EXT_W = 190, EXT_H = 40;
+const EXT_ORDER = ["management", "cycles_minting", "nns_governance", "sns_wasm", "sns_governance", "sns_root", "sns_swap", "sns_ledger", "sns_archive", "icp_ledger", "icrc_ledger", "ckbtc_minter", "cksol_minter", "one_sec_minter", "icpswap_swap_pool", "taco_exchange", "event_store"];
+const CARD_LABEL = { single: "one canister", "per-subnet": "one per subnet", many: "many canisters", ephemeral: "installed briefly" };
+
+const canisters = DATA.canisters;
+const ids = Object.keys(canisters);
+const byTitle = {};
+ids.forEach(id => byTitle[canisters[id].title.toLowerCase()] = id);
+
+// ---------- helpers ----------
+const $ = s => document.querySelector(s);
+const svgNS = "http://www.w3.org/2000/svg";
+function el(tag, attrs = {}, parent) {
+  const e = document.createElementNS(svgNS, tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function h(tag, attrs = {}, ...children) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") e.className = v;
+    else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
+    else if (v !== null && v !== undefined) e.setAttribute(k, v);
+  }
+  for (const c of children.flat()) {
+    if (c === null || c === undefined || c === false) continue;
+    e.append(c.nodeType ? c : document.createTextNode(String(c)));
+  }
+  return e;
+}
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const fmt = n => n === null || n === undefined ? "–" : Number(n).toLocaleString("en-GB");
+function plural(n, one, many) { return n + " " + (n === 1 ? one : many); }
+function prettyGuard(c, e) {
+  if (e.proposal) return "the OpenChat SNS, by proposal";
+  if (!e.guard) {
+    if (e.name.startsWith("http_request")) return "anyone (HTTP)";
+    return e.c2c ? "other canisters (checked inside the call)" : "anyone with a signed-in principal";
+  }
+  let label = (c.guards && c.guards[e.guard]) || e.guard.replace(/^caller_is_/, "").replace(/_/g, " ");
+  for (const id of ids) label = label.replace(new RegExp("\\b" + id + "\\b( canister)?", "g"), canisters[id].title);
+  label = label.replace(/\bcanister\b\s*$/i, "").trim();
+  return /^[A-Z][a-z]/.test(label) && !ids.some(id => label.startsWith(canisters[id].title)) ? label.charAt(0).toLowerCase() + label.slice(1) : label;
+}
+function humanJob(name) { return name.replace(/_/g, " ").replace(/^\w/, c => c.toUpperCase()); }
+function highlightRust(src) {
+  let s = esc(src);
+  s = s.replace(/(\/\/[^\n]*)/g, '<span class="cm">$1</span>');
+  s = s.replace(/\b(pub|struct|enum|type|use|crate|super|self|impl|const|fn|where)\b/g, '<span class="kw">$1</span>');
+  s = s.replace(/\b([A-Z][A-Za-z0-9]+)\b/g, '<span class="ty">$1</span>');
+  return s;
+}
+function githubUrl(path) { return "https://github.com/open-chat-labs/open-chat/blob/" + (DATA.commit || "master") + "/" + path; }
+
+// ---------- build world ----------
+const world = $("#world"), gZones = $("#zones"), gEdges = $("#edges"), gNodes = $("#nodes"), gExts = $("#exts");
+const nodeEls = {}, extEls = {}, edgeEls = [];
+const rects = {}; // id -> {x,y,w,h,cx,cy}
+
+for (const [zid, box] of Object.entries(ZONE_BOXES)) {
+  const g = el("g", { class: "zone", "data-zone": zid, style: `--zone-fill: var(--zone-${zid})` }, gZones);
+  el("rect", { x: box.x, y: box.y, width: box.w, height: box.h }, g);
+  const t = el("text", { x: box.x + 18, y: box.y + 26 }, g);
+  t.textContent = DATA.zones[zid];
+}
+
+for (const id of ids) {
+  const c = canisters[id], [x, y] = NODE_POS[id] || [0, 0];
+  rects[id] = { x, y, w: NODE_W, h: NODE_H, cx: x + NODE_W / 2, cy: y + NODE_H / 2 };
+  const g = el("g", { class: "node" + (c.cardinality === "ephemeral" ? " ephemeral" : ""), "data-id": id, tabindex: 0, role: "button", "aria-label": c.title }, gNodes);
+  const stacks = c.cardinality === "many" ? 2 : c.cardinality === "per-subnet" ? 1 : 0;
+  for (let i = stacks; i >= 1; i--) el("rect", { class: "stack", x: x + i * 6, y: y + i * 6, width: NODE_W, height: NODE_H }, g);
+  el("rect", { class: "card", x, y, width: NODE_W, height: NODE_H }, g);
+  el("rect", { class: "accent", x: x + 14, y: y + 14, width: 4, height: 18 }, g);
+  const title = el("text", { class: "title", x: x + 26, y: y + 29 }, g); title.textContent = c.title;
+  const tag = el("text", { class: "tag", x: x + 14, y: y + 48 }, g); tag.textContent = CARD_LABEL[c.cardinality] || c.cardinality;
+  const q = c.endpoints.filter(e => e.kind === "query").length, u = c.endpoints.length - q;
+  const counts = el("text", { class: "counts", x: x + 14, y: y + NODE_H - 8 }, g);
+  const tq = el("tspan", { class: "q" }, counts); tq.textContent = plural(q, "query", "queries");
+  const sep = el("tspan", {}, counts); sep.textContent = " · ";
+  const tu = el("tspan", { class: "u" }, counts); tu.textContent = plural(u, "update", "updates");
+  if (c.state.length) { const s2 = el("tspan", {}, counts); s2.textContent = " · " + plural(c.state.length, "state field", "state fields"); }
+  nodeEls[id] = g;
+}
+
+// The text on a card is fitted to it by measurement (again once the font is in), since an SVG
+// text neither wraps nor clips by itself. A long title, or the counts line, is shrunk to the
+// size that would just fill the card: the cap is a size, and width grows with the size in
+// effect, whichever zoom level that comes from, so it holds at either level. The summary is
+// wrapped into at most two lines; one that needs more at its normal size is set smaller, down
+// to a limit, and cut with an ellipsis after that.
+const TEXT_W = NODE_W - 28;
+function fitText(cls, width, prop) {
+  for (const g of Object.values(nodeEls)) {
+    const t = g.querySelector("." + cls);
+    g.style.removeProperty(prop);
+    const w = t.getComputedTextLength(), size = parseFloat(getComputedStyle(t).fontSize);
+    if (w > 0 && size > 0) g.style.setProperty(prop, (size * width / w).toFixed(2) + "px");
+  }
+}
+function wrapMeasured(t, text, width) {
+  // greedy, by words; `t` is given the whole text so that one layout serves every measurement
+  // (with its spaces normalised, since the offsets below count them and SVG collapses runs)
+  text = text.replace(/\s+/g, " ").trim();
+  t.textContent = text;
+  const lines = [];
+  let lineStart = 0, pos = 0;
+  for (const word of text.split(" ")) {
+    const end = pos + word.length;
+    if (pos > lineStart && t.getSubStringLength(lineStart, end - lineStart) > width) { lines.push(text.slice(lineStart, pos - 1)); lineStart = pos; }
+    pos = end + 1;
+  }
+  lines.push(text.slice(lineStart));
+  return lines;
+}
+function layoutSummaries() {
+  for (const [id, g] of Object.entries(nodeEls)) {
+    const { x, y } = rects[id];
+    for (const old of g.querySelectorAll(".summary")) old.remove();
+    const t = el("text", { class: "summary", x: x + 14, y: y + 63 }, g);
+    let lines;
+    for (const size of [11.5, 11, 10.5, 10]) {
+      t.style.fontSize = size + "px";
+      lines = wrapMeasured(t, canisters[id].summary, TEXT_W);
+      if (lines.length <= 2) break;
+    }
+    if (lines.length > 2) {
+      const words = lines[1].split(" ");
+      t.textContent = words.join(" ") + "…";
+      while (words.length > 1 && t.getComputedTextLength() > TEXT_W) { words.pop(); t.textContent = words.join(" ") + "…"; }
+      lines = [lines[0], t.textContent];
+    }
+    t.textContent = lines[0];
+    if (lines[1]) { const t2 = el("text", { class: "summary", x: x + 14, y: y + 76 }, g); t2.style.fontSize = t.style.fontSize; t2.textContent = lines[1]; }
+  }
+}
+function fitCards() {
+  // zoomed far out the summary and counts are hidden, and a hidden text measures as nothing
+  const cv = $("#canvas"), far = cv.classList.contains("z-far");
+  cv.classList.remove("z-far");
+  fitText("title", NODE_W - 26 - 12, "--title-max");
+  fitText("counts", TEXT_W, "--counts-max");
+  layoutSummaries();
+  cv.classList.toggle("z-far", far);
+}
+fitCards();
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitCards);
+
+// external canisters (right column) and off-chain actors + web app (left column)
+const usedExt = EXT_ORDER.filter(k => ids.some(id => canisters[id].externals[k]));
+const extX = 1560, extY0 = 100;
+{
+  const lbl = el("text", { class: "col-label", x: extX, y: extY0 - 16 }, gExts); lbl.textContent = "Outside OpenChat";
+  usedExt.forEach((k, i) => {
+    const y = extY0 + i * 52, x = extX;
+    rects["ext:" + k] = { x, y, w: EXT_W, h: EXT_H, cx: x + EXT_W / 2, cy: y + EXT_H / 2 };
+    const g = el("g", { class: "ext", "data-ext": "ext:" + k, tabindex: 0 }, gExts);
+    el("rect", { x, y, width: EXT_W, height: EXT_H }, g);
+    const t = el("text", { x: x + 14, y: y + 25 }, g); t.textContent = DATA.externals[k].title;
+    extEls["ext:" + k] = g;
+  });
+}
+const actors = Object.keys(DATA.offchain).filter(a => ids.some(id => a in canisters[id].offchain));
+const actX = -230, actY0 = 100;
+{
+  const lbl = el("text", { class: "col-label", x: actX, y: actY0 - 16 }, gExts); lbl.textContent = "Callers";
+  const items = [["web", "Web app (oc.app)"], ...actors.map(a => ["actor:" + a, a])];
+  items.forEach(([k, label], i) => {
+    const y = actY0 + i * 52, x = actX;
+    rects[k] = { x, y, w: EXT_W, h: EXT_H, cx: x + EXT_W / 2, cy: y + EXT_H / 2 };
+    const g = el("g", { class: "ext actor" + (k === "web" ? " webapp" : ""), "data-ext": k, tabindex: 0 }, gExts);
+    el("rect", { x, y, width: EXT_W, height: EXT_H }, g);
+    const t = el("text", { x: x + 14, y: y + 25 }, g); t.textContent = label;
+    extEls[k] = g;
+  });
+}
+
+// edges
+function anchor(from, to) {
+  // the point where the line from `from`'s centre to `to`'s centre leaves `from`'s rectangle
+  const dx = to.cx - from.cx, dy = to.cy - from.cy;
+  if (!dx && !dy) return { x: from.cx, y: from.cy };
+  const sx = from.w / 2 / Math.abs(dx || 1e-9), sy = from.h / 2 / Math.abs(dy || 1e-9);
+  const s = Math.min(sx, sy);
+  return { x: from.cx + dx * s, y: from.cy + dy * s };
+}
+function edgePath(a, b, bend) {
+  const p1 = anchor(a, b), p2 = anchor(b, a);
+  const mx = (p1.x + p2.x) / 2, my = (p1.y + p2.y) / 2;
+  const dx = p2.x - p1.x, dy = p2.y - p1.y, len = Math.hypot(dx, dy) || 1;
+  const nx = -dy / len, ny = dx / len;
+  const off = Math.min(60, len * 0.18) * bend;
+  return `M${p1.x} ${p1.y} Q${mx + nx * off} ${my + ny * off} ${p2.x} ${p2.y}`;
+}
+function loopPath(r) {
+  const x = r.x + r.w - 36, y = r.y;
+  return `M${x} ${y} C${x - 10} ${y - 34} ${x + 46} ${y - 34} ${x + 30} ${y}`;
+}
+// tipEdge is the arrow whose tooltip is showing, if an arrow's: the arrow handlers leave a
+// tooltip a card click put up (focusExt) alone
+let tipTimer = null, tipEdge = null;
+function addEdge(from, to, methods, kind, via) {
+  if (!rects[from] || !rects[to]) return;
+  const d = from === to ? loopPath(rects[from]) : edgePath(rects[from], rects[to], 1);
+  const path = el("path", { class: "edge" + (kind !== "internal" ? " ext-edge" : ""), d, "data-kind": kind }, gEdges);
+  const hit = el("path", { class: "edge-hit", d }, gEdges);
+  const edge = { from, to, methods, kind, via, path, hit };
+  // The tooltip waits for the cursor to rest on the arrow: the arrows are dense, so crossing
+  // them on the way somewhere else would otherwise flash it on and off
+  hit.addEventListener("pointerenter", ev => {
+    clearTimeout(tipTimer);
+    const at = { clientX: ev.clientX, clientY: ev.clientY };
+    tipTimer = setTimeout(() => showEdgeTip(edge, at), 220);
+  });
+  hit.addEventListener("pointermove", ev => { if (tipEdge === edge) positionTip(ev); });
+  hit.addEventListener("pointerleave", () => { clearTimeout(tipTimer); if (tipEdge === edge) hideTip(); });
+  hit.edge = edge;
+  edgeEls.push(edge);
+}
+for (const id of ids) {
+  const c = canisters[id];
+  for (const [t, call] of Object.entries(c.calls)) addEdge(id, t, call.methods, "internal", call.via);
+  for (const [t, call] of Object.entries(c.externals)) addEdge(id, "ext:" + t, call.methods, "external", call.via);
+  for (const [a, eps] of Object.entries(c.offchain)) addEdge("actor:" + a, id, eps, "actor");
+  const fe = c.endpoints.filter(e => e.frontend).map(e => e.name);
+  if (fe.length) addEdge("web", id, fe, "web");
+}
+
+// ---------- camera ----------
+const canvas = $("#canvas");
+let view = { x: 0, y: 0, k: 1 };
+let reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+function applyView() {
+  world.setAttribute("transform", `translate(${view.x} ${view.y}) scale(${view.k})`);
+  canvas.classList.toggle("z-far", view.k < 0.55);
+  canvas.style.backgroundPosition = `${view.x}px ${view.y}px`;
+  canvas.style.backgroundSize = `${24 * Math.max(0.5, Math.min(2, view.k))}px ${24 * Math.max(0.5, Math.min(2, view.k))}px`;
+}
+function worldBounds() {
+  const all = Object.values(rects);
+  const minX = Math.min(...all.map(r => r.x)) - 40, minY = Math.min(...all.map(r => r.y)) - 60;
+  const maxX = Math.max(...all.map(r => r.x + r.w)) + 40, maxY = Math.max(...all.map(r => r.y + r.h)) + 40;
+  return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+}
+function viewport() {
+  // the part of the canvas not covered by the panel
+  const r = canvas.getBoundingClientRect();
+  let w = r.width, hgt = r.height, x0 = 0, y0 = 0;
+  if (!panel.hidden && !closing) {
+    // offsetWidth / offsetHeight are the layout size, unaffected by the open/close transform
+    if (window.innerWidth > 760) w = Math.max(200, r.width - panel.offsetWidth); else hgt = Math.max(160, r.height - panel.offsetHeight);
+  }
+  return { x: x0, y: y0, w, h: hgt };
+}
+let anim = null;
+function animateTo(target, ms = 480) {
+  dropCardTip();
+  if (anim) cancelAnimationFrame(anim);
+  if (reduced || ms === 0) { view = target; applyView(); return; }
+  const start = { ...view }, t0 = performance.now();
+  const ease = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  const step = now => {
+    const t = Math.min(1, (now - t0) / ms), e = ease(t);
+    // interpolate in log space for scale so the zoom feels even
+    const k = Math.exp(Math.log(start.k) + (Math.log(target.k) - Math.log(start.k)) * e);
+    view = { x: start.x + (target.x - start.x) * e, y: start.y + (target.y - start.y) * e, k };
+    applyView();
+    if (t < 1) anim = requestAnimationFrame(step); else anim = null;
+  };
+  anim = requestAnimationFrame(step);
+}
+function fitTo(b, pad = 40, ms) {
+  const vp = viewport();
+  const k = Math.min((vp.w - pad * 2) / b.w, (vp.h - pad * 2) / b.h, 2.2);
+  animateTo({ k, x: vp.x + (vp.w - b.w * k) / 2 - b.x * k, y: vp.y + (vp.h - b.h * k) / 2 - b.y * k }, ms);
+}
+function fitAll(ms) { fitTo(worldBounds(), 30, ms); }
+function zoomAt(factor, px, py) {
+  dropCardTip();
+  const k = Math.max(0.12, Math.min(4, view.k * factor));
+  const wx = (px - view.x) / view.k, wy = (py - view.y) / view.k;
+  view = { k, x: px - wx * k, y: py - wy * k };
+  applyView();
+}
+
+// pointer interaction: drag to pan, pinch to zoom, click to select
+let drag = null, pointers = new Map(), pinch = null;
+canvas.addEventListener("pointerdown", ev => {
+  if (ev.button !== 0 && ev.pointerType === "mouse") return;
+  pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+  if (pointers.size === 1) {
+    drag = { x: ev.clientX, y: ev.clientY, vx: view.x, vy: view.y, moved: false, target: ev.target };
+    canvas.setPointerCapture(ev.pointerId);
+  } else if (pointers.size === 2) {
+    const [a, b] = [...pointers.values()];
+    pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), k: view.k };
+    drag = null;
+  }
+});
+canvas.addEventListener("pointermove", ev => {
+  if (!pointers.has(ev.pointerId)) return;
+  pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+  if (pinch && pointers.size === 2) {
+    const [a, b] = [...pointers.values()];
+    const d = Math.hypot(a.x - b.x, a.y - b.y);
+    const r = canvas.getBoundingClientRect();
+    const cx = (a.x + b.x) / 2 - r.left, cy = (a.y + b.y) / 2 - r.top;
+    const k = Math.max(0.12, Math.min(4, pinch.k * d / pinch.d));
+    const wx = (cx - view.x) / view.k, wy = (cy - view.y) / view.k;
+    view = { k, x: cx - wx * k, y: cy - wy * k }; applyView(); dropCardTip();
+    return;
+  }
+  if (drag) {
+    const dx = ev.clientX - drag.x, dy = ev.clientY - drag.y;
+    if (Math.hypot(dx, dy) > 4) { drag.moved = true; canvas.classList.add("dragging"); }
+    if (drag.moved) { if (anim) { cancelAnimationFrame(anim); anim = null; } view.x = drag.vx + dx; view.y = drag.vy + dy; applyView(); dropCardTip(); }
+  }
+});
+function endPointer(ev) {
+  pointers.delete(ev.pointerId);
+  if (pointers.size < 2) pinch = null;
+  if (drag && ev.pointerId !== undefined) {
+    if (!drag.moved) handleClick(drag.target);
+    drag = null;
+  }
+  canvas.classList.remove("dragging");
+}
+canvas.addEventListener("pointerup", endPointer);
+canvas.addEventListener("pointercancel", endPointer);
+canvas.addEventListener("wheel", ev => {
+  ev.preventDefault();
+  const r = canvas.getBoundingClientRect();
+  const factor = Math.exp(-ev.deltaY * (ev.deltaMode === 1 ? 0.05 : 0.0015));
+  zoomAt(factor, ev.clientX - r.left, ev.clientY - r.top);
+}, { passive: false });
+canvas.addEventListener("dblclick", ev => {
+  const r = canvas.getBoundingClientRect();
+  const node = ev.target.closest(".node");
+  if (!node) zoomAt(1.6, ev.clientX - r.left, ev.clientY - r.top);
+});
+function handleClick(target) {
+  const node = target.closest && target.closest(".node");
+  const ext = target.closest && target.closest(".ext");
+  const zone = target.closest && target.closest(".zone");
+  const hit = target.closest && target.closest(".edge-hit");
+  if (node) select(node.dataset.id);
+  else if (ext) focusExt(ext.dataset.ext);
+  else if (hit && hit.edge) { const e = hit.edge; select(canisters[e.from] ? e.from : e.to, "calls"); }
+  else if (zone) { deselect(false); fitTo(ZONE_BOXES[zone.dataset.zone], 24); }
+  else deselect();
+}
+canvas.addEventListener("keydown", ev => {
+  if (ev.key === "Enter" || ev.key === " ") {
+    const node = ev.target.closest(".node"), ext = ev.target.closest(".ext");
+    if (node) { ev.preventDefault(); select(node.dataset.id); }
+    if (ext) { ev.preventDefault(); focusExt(ext.dataset.ext); }
+  }
+});
+$("#zin").onclick = () => { const vp = viewport(); zoomAt(1.4, vp.x + vp.w / 2, vp.y + vp.h / 2); };
+$("#zout").onclick = () => { const vp = viewport(); zoomAt(1 / 1.4, vp.x + vp.w / 2, vp.y + vp.h / 2); };
+$("#zfit").onclick = () => { deselect(false); fitAll(); };
+
+// hover highlights: pointerover / pointerout bubble from every part of a card (its rects and
+// texts), so a move within one card is ignored, and only entering or leaving the card as a whole
+// counts. The highlight follows the cursor only once it has rested on a card for a moment, and
+// lets go a moment after it leaves, so that passing over cards on the way somewhere else, or
+// crossing the gap between two cards, doesn't flash the whole map dim and bright. Leaving a card
+// goes back to the highlight of the side card last clicked (focusExt), if any.
+let hoverTimer = null;
+function hoverHighlight(id, delay) {
+  clearTimeout(hoverTimer);
+  hoverTimer = setTimeout(() => { hoverTimer = null; if (!selected) highlight(id || focusedExt); }, delay);
+}
+function hoverHandlers(group, selector, idOf) {
+  group.addEventListener("pointerover", ev => {
+    const n = ev.target.closest(selector);
+    if (n && !selected && !(ev.relatedTarget && n.contains(ev.relatedTarget))) hoverHighlight(idOf(n), 90);
+  });
+  group.addEventListener("pointerout", ev => {
+    const n = ev.target.closest(selector);
+    if (n && !selected && !(ev.relatedTarget && n.contains(ev.relatedTarget))) hoverHighlight(null, 160);
+  });
+}
+hoverHandlers(gNodes, ".node", n => n.dataset.id);
+hoverHandlers(gExts, ".ext", n => n.dataset.ext);
+
+let highlighted = null;
+function highlight(id, force = false) {
+  if (id === highlighted && !force) return;
+  highlighted = id;
+  const related = new Set();
+  if (id) {
+    related.add(id);
+    for (const e of edgeEls) {
+      const on = e.from === id || e.to === id;
+      e.path.classList.toggle("hi", on);
+      e.path.classList.toggle("dim", !on);
+      if (on) { related.add(e.from); related.add(e.to); }
+    }
+  } else {
+    for (const e of edgeEls) { e.path.classList.remove("hi"); e.path.classList.remove("dim"); }
+  }
+  for (const [nid, g] of Object.entries(nodeEls)) g.classList.toggle("dim", !!id && !related.has(nid));
+  for (const [eid, g] of Object.entries(extEls)) g.classList.toggle("dim", !!id && !related.has(eid));
+  for (const z of gZones.children) z.classList.toggle("dim", !!id && !ids.some(nid => related.has(nid) && canisters[nid].zone === z.dataset.zone));
+}
+
+// edge tooltip
+const tip = $("#tip");
+function labelOf(id) {
+  if (canisters[id]) return canisters[id].title;
+  if (id === "web") return "Web app";
+  if (id.startsWith("ext:")) return DATA.externals[id.slice(4)].title;
+  if (id.startsWith("actor:")) return id.slice(6);
+  return id;
+}
+// The tooltip a card click shows (focusExt) goes away by itself after a moment; the timer is
+// kept so that a later tooltip, from another click or from resting on an arrow, isn't hidden
+// when the earlier one's time is up
+let hideTimer = null;
+function showEdgeTip(edge, ev) {
+  clearTimeout(hideTimer);
+  tipEdge = edge;
+  const list = edge.methods.slice(0, 12).join(", ") + (edge.methods.length > 12 ? ` … +${edge.methods.length - 12} more` : "");
+  tip.innerHTML = `<b>${esc(labelOf(edge.from))} → ${esc(labelOf(edge.to))}</b><code>${esc(list)}</code>` + (edge.via && edge.via.length ? `<br><code>some made by the shared ${esc(edge.via.join(", "))} code</code>` : "");
+  tip.hidden = false; positionTip(ev);
+}
+function positionTip(ev) {
+  const r = $("main").getBoundingClientRect();
+  let x = ev.clientX - r.left + 14, y = ev.clientY - r.top + 14;
+  if (x + 330 > r.width) x = ev.clientX - r.left - 330;
+  if (y + 120 > r.height) y = ev.clientY - r.top - 100;
+  tip.style.left = x + "px"; tip.style.top = y + "px";
+}
+function hideTip() { tipEdge = null; tip.hidden = true; }
+// The tooltip a card click shows is placed in screen coordinates, so it is dropped when the camera
+// moves on (above). An arrow's follows the cursor, and is left to the arrow's own pointerleave.
+function dropCardTip() { if (!tipEdge) hideTip(); }
+
+// ---------- selection & panel ----------
+const panel = $("#panel");
+// focusedExt is the side card (an external canister or a caller) a click or Enter put the
+// highlight on; it stays until a canister is selected or deselect runs (Escape, a click on the
+// canvas, a zone or the fit button)
+let selected = null, focusedExt = null, currentTab = "overview", closing = null;
+
+function nodeScreenRect(id) {
+  const r = rects[id], cr = canvas.getBoundingClientRect(), mr = $("main").getBoundingClientRect();
+  return { left: cr.left - mr.left + view.x + r.x * view.k, top: cr.top - mr.top + view.y + r.y * view.k, width: r.w * view.k, height: r.h * view.k };
+}
+function select(id, tab, epFilter) {
+  if (!canisters[id]) return;
+  const wasOpen = !panel.hidden && !closing;
+  clearTimeout(hoverTimer); hoverTimer = null;
+  hideTip();
+  focusedExt = null;
+  if (closing) { clearTimeout(closing); closing = null; panel.classList.remove("closing"); }
+  const from = nodeScreenRect(id);
+  const previous = selected;
+  selected = id;
+  currentTab = tab || (wasOpen ? currentTab : "overview");
+  if (!TABS.some(([key, , count]) => key === currentTab && count(canisters[id]) !== null && count(canisters[id]) !== 0) && currentTab !== "overview") currentTab = "overview";
+  if (previous !== id) epState = { filter: "", scope: "all" };
+  for (const [nid, g] of Object.entries(nodeEls)) g.classList.toggle("selected", nid === id);
+  highlight(id);
+  renderPanel(id, epFilter);
+  panel.hidden = false;
+  if (!wasOpen && !reduced) {
+    // the panel grows out of the canister's card
+    const to = panel.getBoundingClientRect(), mr = $("main").getBoundingClientRect();
+    const sx = from.width / to.width, sy = from.height / to.height;
+    panel.style.transition = "none";
+    panel.style.transform = `translate(${from.left - (to.left - mr.left)}px, ${from.top - (to.top - mr.top)}px) scale(${sx}, ${sy})`;
+    panel.style.opacity = "0.4";
+    requestAnimationFrame(() => requestAnimationFrame(() => { panel.style.transition = ""; panel.style.transform = ""; panel.style.opacity = ""; }));
+  }
+  // zoom the camera onto the canister in the space beside the panel
+  requestAnimationFrame(() => {
+    const vp = viewport(), r = rects[id];
+    const k = Math.min(1.9, Math.max(0.8, Math.min(vp.w / (r.w * 2.6), vp.h / (r.h * 3.2))));
+    animateTo({ k, x: vp.x + vp.w / 2 - r.cx * k, y: vp.y + vp.h / 2 - r.cy * k });
+  });
+  if (location.hash !== "#" + id) history.replaceState(null, "", "#" + id);
+  announce("#" + id);
+}
+function deselect(refit = true) {
+  // With nothing selected too: Escape or a click on the canvas drops a card's tooltip, and the
+  // highlight a card click left
+  hideTip();
+  if (focusedExt) { focusedExt = null; highlight(null); }
+  if (!selected) return;
+  const id = selected; selected = null;
+  nodeEls[id].classList.remove("selected");
+  highlight(null);
+  if (!reduced) {
+    const from = nodeScreenRect(id), to = panel.getBoundingClientRect(), mr = $("main").getBoundingClientRect();
+    panel.classList.add("closing");
+    panel.style.transform = `translate(${from.left - (to.left - mr.left)}px, ${from.top - (to.top - mr.top)}px) scale(${from.width / to.width}, ${from.height / to.height})`;
+    closing = setTimeout(() => { panel.hidden = true; panel.classList.remove("closing"); panel.style.transform = ""; closing = null; }, 300);
+  } else panel.hidden = true;
+  history.replaceState(null, "", location.pathname + location.search);
+  announce("");
+  if (refit) fitAll();
+}
+function focusExt(key) {
+  deselect(false);
+  focusedExt = key;
+  highlight(key);
+  const r = rects[key], vp = viewport();
+  const k = Math.max(view.k, 0.9);
+  animateTo({ k, x: vp.x + vp.w / 2 - r.cx * k, y: vp.y + vp.h / 2 - r.cy * k });
+  const title = labelOf(key);
+  const detail = key === "web" ? "The OpenChat web app (and the Android and iOS shells around it) calls these canisters directly, signed by the user's principal." : key.startsWith("ext:") ? DATA.externals[key.slice(4)].detail : DATA.offchain[key.slice(6)];
+  const callers = edgeEls.filter(e => e.from === key || e.to === key).map(e => e.from === key ? e.to : e.from);
+  tip.innerHTML = `<b>${esc(title)}</b>${esc(detail)}<br><code>${esc(callers.map(labelOf).join(", "))}</code>`;
+  const sr = { x: vp.x + vp.w / 2, y: vp.y + vp.h / 2 - r.h * k / 2 - 10 };
+  tip.hidden = false; tip.style.left = Math.max(8, sr.x - 160) + "px"; tip.style.top = Math.max(8, sr.y - 110) + "px";
+  clearTimeout(hideTimer);
+  hideTimer = setTimeout(hideTip, 6000);
+}
+$("#closebtn").onclick = deselect;
+document.addEventListener("keydown", ev => {
+  if (ev.key === "Escape") { if (!$("#results").hidden) { closeResults(); return; } if (!$("#about").hidden) { $("#about").hidden = true; return; } deselect(); }
+  if (ev.key === "/" && document.activeElement !== $("#search")) { ev.preventDefault(); $("#search").focus(); }
+});
+
+const TABS = [
+  ["overview", "Overview", () => null],
+  ["endpoints", "Endpoints", c => c.endpoints.length],
+  ["state", "State", c => c.state.length],
+  ["jobs", "Jobs", c => c.jobs.length + c.timer_jobs.length],
+  ["calls", "Calls", c => Object.keys(c.calls).length + Object.keys(c.called_by).length + Object.keys(c.externals).length],
+  ["metrics", "Metrics", c => c.metrics.length],
+];
+function renderPanel(id, epFilter) {
+  const c = canisters[id];
+  $("#p-zone").innerHTML = `<i style="--zone-fill: var(--zone-${c.zone})"></i>${esc(DATA.zones[c.zone])} · ${esc(CARD_LABEL[c.cardinality] || c.cardinality)}`;
+  $("#p-title").textContent = c.title;
+  $("#p-summary").textContent = c.summary;
+  const tabs = $("#tabs"); tabs.innerHTML = "";
+  for (const [key, label, count] of TABS) {
+    const n = count(c);
+    if (n === 0) continue;
+    const b = h("button", { role: "tab", "aria-selected": String(key === currentTab), onclick: () => { currentTab = key; renderPanel(id); } }, label, n ? h("span", {}, fmt(n)) : null);
+    tabs.append(b);
+  }
+  const body = $("#p-body"); body.innerHTML = "";
+  ({ overview: renderOverview, endpoints: renderEndpoints, state: renderState, jobs: renderJobs, calls: renderCalls, metrics: renderMetrics })[currentTab](c, body, epFilter);
+  body.scrollTop = 0;
+  requestAnimationFrame(() => { if (!epFilter) body.scrollTop = 0; });
+}
+
+function renderOverview(c, body) {
+  body.append(h("p", {}, c.detail));
+  const facts = h("div", { class: "facts" });
+  const q = c.endpoints.filter(e => e.kind === "query").length;
+  facts.append(fact(fmt(q), "queries"), fact(fmt(c.endpoints.length - q), "updates"));
+  if (c.state.length) facts.append(fact(fmt(c.state.length), "state fields"));
+  if (c.loc) facts.append(fact(fmt(c.loc), c.readme ? "lines of wat" : "lines of Rust"));
+  const live = (DATA.live || {})[c.id] || [];
+  for (const [label, v] of live) facts.append(fact(fmt(v), label + (DATA.live_as_of ? " · prod, " + DATA.live_as_of : "")));
+  body.append(facts);
+
+  const badges = h("div", { class: "badges", style: "margin-top:12px" });
+  if (c.version) badges.append(h("a", { class: "badge accent", href: c.version.url, target: "_blank", rel: "noopener" }, "v" + c.version.version + " · " + c.version.date));
+  if (c.canister_id) {
+    const b = h("span", { class: "badge mono" }, c.canister_id);
+    const cp = h("button", { class: "copy", onclick: () => copyText(c.canister_id, cp) }, "copy");
+    b.append(cp); badges.append(b);
+  }
+  badges.append(h("a", { class: "badge", href: "https://github.com/open-chat-labs/open-chat/tree/" + (DATA.commit || "master") + "/" + c.path, target: "_blank", rel: "noopener" }, "source on GitHub"));
+  if (c.canister_id && c.metrics.length) badges.append(h("a", { class: "badge", href: `https://${c.canister_id}.raw.icp0.io/metrics`, target: "_blank", rel: "noopener" }, "live metrics"));
+  body.append(badges);
+
+  const fe = c.endpoints.filter(e => e.frontend).length, c2c = c.endpoints.filter(e => e.c2c).length, prop = c.endpoints.filter(e => e.proposal && e.kind === "update").length;
+  body.append(h("h3", {}, "Who talks to it"));
+  const who = h("ul", { class: "list" });
+  if (fe) who.append(h("li", {}, h("b", {}, `${fe} endpoints called by the web app`), h("span", {}, "signed by the user's own principal")));
+  if (c2c) who.append(h("li", {}, h("b", {}, `${c2c} canister-to-canister endpoints`), h("span", {}, "prefixed c2c_, guarded by the caller's identity")));
+  if (prop) who.append(h("li", {}, h("b", {}, `${prop} endpoints only the SNS can call`), h("span", {}, "changed by governance proposal")));
+  const callers = Object.keys(c.called_by);
+  if (callers.length) who.append(h("li", {}, h("b", {}, "Called by " + callers.map(k => canisters[k].title).join(", ")), h("span", {}, "see the Calls tab for the methods")));
+  const actorsIn = Object.keys(c.offchain);
+  if (actorsIn.length) who.append(h("li", {}, h("b", {}, "Off-chain: " + actorsIn.join(", ")), h("span", {}, actorsIn.map(a => DATA.offchain[a]).join(" · "))));
+  if (!who.children.length) who.append(h("li", {}, h("span", {}, "Only its controllers.")));
+  body.append(who);
+
+  if (c.init_args.length) {
+    body.append(h("h3", {}, "Created with"));
+    body.append(fieldsTable(c.init_args));
+  }
+  if (c.lifecycle.length) {
+    body.append(h("h3", {}, "Lifecycle hooks"));
+    body.append(h("div", { class: "badges" }, c.lifecycle.map(l => h("span", { class: "badge mono" }, l))));
+  }
+  if (c.libraries.length) {
+    body.append(h("h3", {}, "Shared libraries making calls on its behalf"));
+    body.append(h("div", { class: "badges" }, c.libraries.map(l => h("span", { class: "badge mono" }, l))));
+  }
+  if (c.readme) {
+    body.append(h("h3", {}, "README"));
+    body.append(h("pre", { class: "code", style: "white-space: pre-wrap" }, c.readme));
+  }
+}
+function fact(v, k) { return h("div", { class: "fact" }, h("div", { class: "v" + (String(v).length > 9 ? " small" : "") }, v), h("div", { class: "k" }, k)); }
+function copyText(text, btn) {
+  const done = () => { btn.textContent = "copied"; setTimeout(() => btn.textContent = "copy", 1200); };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+  else fallbackCopy(text, done);
+}
+function fallbackCopy(text, done) {
+  const ta = document.createElement("textarea"); ta.value = text; document.body.append(ta); ta.select();
+  try { document.execCommand("copy"); done(); } catch (e) {} ta.remove();
+}
+
+let epState = { filter: "", scope: "all" };
+function renderEndpoints(c, body, epFilter) {
+  if (epFilter !== undefined) epState = { filter: epFilter, scope: "all" };
+  const filters = h("div", { class: "filters" });
+  const input = h("input", { id: "ep-filter", type: "search", placeholder: "Filter endpoints…", value: epState.filter, "aria-label": "Filter endpoints" });
+  input.addEventListener("input", () => { epState.filter = input.value; draw(); });
+  filters.append(input);
+  const scopes = [["all", "All"], ["web", "Web app"], ["c2c", "c2c"], ["query", "Queries"], ["update", "Updates"], ["proposal", "Proposals"]];
+  const chips = [];
+  for (const [k, label] of scopes) {
+    if (k === "proposal" && !c.endpoints.some(e => e.proposal)) continue;
+    if (k === "web" && !c.endpoints.some(e => e.frontend)) continue;
+    const b = h("button", { class: "chip", "aria-pressed": String(epState.scope === k), onclick: () => { epState.scope = k; chips.forEach(([kk, bb]) => bb.setAttribute("aria-pressed", String(kk === k))); draw(); } }, label);
+    chips.push([k, b]);
+    filters.append(b);
+  }
+  if (!chips.some(([k]) => k === epState.scope)) epState.scope = "all";
+  body.append(filters);
+  const list = h("div", { id: "ep-list" }); body.append(list);
+  function draw() {
+    list.innerHTML = "";
+    const f = epState.filter.trim().toLowerCase();
+    const eps = c.endpoints.filter(e => {
+      if (f && !e.name.toLowerCase().includes(f) && !(e.comment || "").toLowerCase().includes(f)) return false;
+      switch (epState.scope) {
+        case "web": return e.frontend;
+        case "c2c": return e.c2c;
+        case "query": return e.kind === "query";
+        case "update": return e.kind === "update";
+        case "proposal": return e.proposal;
+        default: return true;
+      }
+    });
+    if (!eps.length) { list.append(h("p", { class: "empty" }, "No endpoints match.")); return; }
+    let lastKind = null;
+    for (const e of eps) {
+      if (e.kind !== lastKind) { list.append(h("h3", {}, e.kind === "query" ? "Queries · read only, answered by one replica" : "Updates · go through consensus")); lastKind = e.kind; }
+      list.append(endpointRow(c, e, f && e.name.toLowerCase() === f));
+    }
+  }
+  draw();
+  if (epFilter) setTimeout(() => { const first = list.querySelector(".ep.open"); if (first) first.scrollIntoView({ block: "center" }); }, 50);
+}
+function endpointRow(c, e, open) {
+  const badges = h("div", { class: "b" });
+  if (e.frontend) badges.append(h("span", { class: "badge accent" }, "web app"));
+  if (e.c2c) badges.append(h("span", { class: "badge" }, "c2c"));
+  if (e.proposal) badges.append(h("span", { class: "badge" }, "proposal"));
+  if (e.composite) badges.append(h("span", { class: "badge" }, "composite"));
+  if (e.hidden) badges.append(h("span", { class: "badge" }, "hidden"));
+  const detail = h("div", { class: "detail", hidden: open ? null : "" });
+  const row = h("div", { class: "ep" + (open ? " open" : "") },
+    h("button", { "aria-expanded": String(!!open), onclick: ev => { const o = detail.hidden; detail.hidden = !o; ev.currentTarget.setAttribute("aria-expanded", String(o)); row.classList.toggle("open", o); if (o && !detail.children.length) fillDetail(); } },
+      h("span", { class: "k " + (e.kind === "query" ? "q" : "u") }, e.kind === "query" ? "Q" : "U"),
+      h("span", { class: "n" }, e.name, e.comment ? h("small", {}, e.comment.length > 110 ? e.comment.slice(0, 110) + "…" : e.comment) : null),
+      badges),
+    detail);
+  function fillDetail() {
+    if (e.comment) detail.append(h("div", { class: "comment" }, e.comment));
+    detail.append(h("div", { class: "who" }, h("b", {}, "Callable by "), prettyGuard(c, e)));
+    const enc = [e.candid || e.in_did ? "candid" : null, e.msgpack ? "msgpack" : null].filter(Boolean);
+    detail.append(h("div", { class: "who" }, h("b", {}, "On the wire "), h("span", { class: "badges", style: "display:inline-flex" }, e.wire.map(w => h("span", { class: "badge mono" }, w))), enc.length ? " · " + enc.join(" + ") : ""));
+    const src = e.api && c.api_types[e.api];
+    if (src) { const pre = h("pre", { class: "code" }); pre.innerHTML = highlightRust(src); detail.append(pre); }
+    else if (e.name.startsWith("http_request")) detail.append(h("p", { class: "comment" }, "Serves the canister's HTTP interface: /metrics, /logs, /traces and /errors, plus avatars where it holds them."));
+    else if (e.name === "wallet_receive") detail.append(h("p", { class: "comment" }, "Accepts cycles sent to the canister."));
+    detail.append(h("div", { class: "src" }, h("a", { href: githubUrl(e.file), target: "_blank", rel: "noopener" }, e.file)));
+  }
+  if (open) fillDetail();
+  return row;
+}
+
+function classifyField(f) {
+  const t = f.type, n = f.name;
+  if (/CanisterId|Principal/.test(t) && !/Map|Set|Vec|Queue/.test(t)) return "Canister ids & principals";
+  if (/Queue|TimerJobs|Timer|Jobs|Batch|Handler|Checker|Deduper/.test(t)) return "Queues, timers & retries";
+  if (/Map|Set|Vec<|BTreeMap|HashMap|Stable|Store|Log|Leaderboard|Events|Members|Chats|Index|Pool/.test(t)) return "Collections";
+  if (/^(bool|u\d+|i\d+|f\d+|Cycles|TimestampMillis|Milliseconds|String|Option<(bool|u\d+|String|TimestampMillis)|\[u8; 32\])/.test(t) || /config|mode|enabled|threshold|max_|min_|fee|seed|version/i.test(n)) return "Configuration & counters";
+  return "Other state";
+}
+function renderState(c, body) {
+  body.append(h("p", { class: "comment", style: "color:var(--muted)" }, "The fields of the canister's Data struct, as serialised across upgrades. Comments are the ones in the source."));
+  const groups = {};
+  for (const f of c.state) (groups[classifyField(f)] ||= []).push(f);
+  for (const g of ["Collections", "Queues, timers & retries", "Canister ids & principals", "Configuration & counters", "Other state"]) {
+    if (!groups[g]) continue;
+    body.append(h("h3", {}, g + " · " + groups[g].length));
+    body.append(fieldsTable(groups[g]));
+  }
+  if (c.memory.length) {
+    body.append(h("h3", {}, "Stable memory regions"));
+    body.append(h("div", { class: "badges" }, c.memory.map(m => h("span", { class: "badge mono" }, `${m.name} #${m.id}`))));
+  }
+}
+function fieldsTable(fields) {
+  return h("div", { class: "fields" }, fields.map(f => h("div", { class: "field" + (f.deprecated ? " dep" : "") + (f.serde_skip ? " skip" : "") },
+    h("span", { class: "f" }, f.name), h("span", { class: "t" }, f.type), f.comment ? h("span", { class: "c" }, f.comment) : null)));
+}
+
+function renderJobs(c, body) {
+  if (c.jobs.length) {
+    body.append(h("h3", {}, "Background jobs"));
+    body.append(h("p", { class: "comment", style: "color:var(--muted)" }, "Run on timers between calls: syncing queued events, upgrading child canisters, topping up cycles, expiring things."));
+    body.append(h("ul", { class: "list" }, c.jobs.map(j => h("li", {}, h("b", {}, humanJob(j.name)), h("span", {}, j.comment || "")))));
+  }
+  if (c.timer_jobs.length) {
+    body.append(h("h3", {}, "Scheduled one-off jobs"));
+    body.append(h("p", { class: "comment", style: "color:var(--muted)" }, "Variants of the TimerJob enum: work scheduled for a later time and persisted across upgrades."));
+    body.append(h("div", { class: "badges" }, c.timer_jobs.map(t => h("span", { class: "badge mono", title: t.comment }, t.name))));
+  }
+  if (!c.jobs.length && !c.timer_jobs.length) body.append(h("p", { class: "empty" }, "No background work: this canister only acts when called."));
+}
+
+function callCard(label, targetId, methods, via, note) {
+  const to = h("div", { class: "to" });
+  if (targetId && canisters[targetId]) to.append(h("button", { class: "linkbtn", onclick: () => select(targetId, "calls") }, canisters[targetId].title));
+  else to.append(h("b", {}, label));
+  if (note) to.append(h("span", { class: "via" }, note));
+  if (via && via.length) to.append(h("span", { class: "via" }, "some made by the shared " + via.join(", ") + " code"));
+  return h("div", { class: "call" }, to, h("div", { class: "methods" }, methods.map(m => h("span", {}, m))));
+}
+function renderCalls(c, body) {
+  const out = Object.entries(c.calls);
+  body.append(h("h3", {}, `Calls · ${out.length} canister type${out.length === 1 ? "" : "s"}`));
+  if (!out.length) body.append(h("p", { class: "empty" }, "Makes no calls to other OpenChat canisters."));
+  body.append(h("div", { class: "calls" }, out.map(([t, call]) => callCard(null, t, call.methods, call.via))));
+  const inn = Object.entries(c.called_by);
+  body.append(h("h3", {}, `Called by · ${inn.length} canister type${inn.length === 1 ? "" : "s"}`));
+  if (!inn.length) body.append(h("p", { class: "empty" }, "No other OpenChat canister calls it."));
+  body.append(h("div", { class: "calls" }, inn.map(([t, call]) => callCard(null, t, call.methods, call.via))));
+  const ext = Object.entries(c.externals);
+  if (ext.length) {
+    body.append(h("h3", {}, "Outside OpenChat"));
+    body.append(h("div", { class: "calls" }, ext.map(([t, call]) => callCard(DATA.externals[t].title, null, call.methods, call.via, DATA.externals[t].detail))));
+  }
+  const actorsIn = Object.entries(c.offchain);
+  if (actorsIn.length) {
+    body.append(h("h3", {}, "Off-chain services calling in"));
+    body.append(h("div", { class: "calls" }, actorsIn.map(([a, eps]) => callCard(a, null, eps, [], DATA.offchain[a]))));
+  }
+}
+function renderMetrics(c, body) {
+  body.append(h("p", { class: "comment", style: "color:var(--muted)" }, "What the canister reports on its /metrics endpoint, from its Metrics struct.",
+    c.canister_id ? [" ", h("a", { href: `https://${c.canister_id}.raw.icp0.io/metrics`, target: "_blank", rel: "noopener" }, "Open the live metrics")] : null));
+  body.append(fieldsTable(c.metrics));
+}
+
+// ---------- search ----------
+const search = $("#search"), results = $("#results");
+let activeResult = -1;
+function runSearch() {
+  const q = search.value.trim().toLowerCase();
+  results.innerHTML = ""; activeResult = -1;
+  if (!q) { closeResults(); return; }
+  const hits = [];
+  for (const id of ids) {
+    const c = canisters[id];
+    if (c.title.toLowerCase().includes(q) || id.includes(q) || c.summary.toLowerCase().includes(q)) hits.push({ id, what: c.title, where: DATA.zones[c.zone], kind: "canister", score: c.title.toLowerCase().startsWith(q) ? 0 : 1 });
+  }
+  for (const id of ids) for (const e of canisters[id].endpoints) {
+    if (e.name.toLowerCase().includes(q)) hits.push({ id, ep: e.name, what: e.name, where: canisters[id].title, kind: e.kind, score: e.name.toLowerCase().startsWith(q) ? 2 : 3 });
+  }
+  for (const id of ids) for (const f of canisters[id].state) {
+    if (f.name.toLowerCase().includes(q)) hits.push({ id, what: f.name, where: canisters[id].title, kind: "state", score: 4 });
+  }
+  hits.sort((a, b) => a.score - b.score || a.what.localeCompare(b.what));
+  const matchedCanisters = new Set(hits.map(x => x.id));
+  for (const [nid, g] of Object.entries(nodeEls)) g.classList.toggle("dim", !matchedCanisters.has(nid));
+  if (!hits.length) results.append(h("div", { class: "empty" }, "Nothing matches."));
+  for (const x of hits.slice(0, 40)) {
+    results.append(h("button", { onclick: () => pick(x) }, h("span", { class: "where" }, x.where), h("span", { class: "what" }, x.what), h("span", { class: "kind" }, x.kind)));
+  }
+  results.hidden = false;
+}
+function pick(x) {
+  closeResults(); search.value = ""; search.blur();
+  if (x.ep) select(x.id, "endpoints", x.ep); else if (x.kind === "state") select(x.id, "state"); else select(x.id, "overview");
+}
+search.addEventListener("input", runSearch);
+search.addEventListener("focus", () => { if (search.value) runSearch(); });
+search.addEventListener("keydown", ev => {
+  const items = [...results.querySelectorAll("button")];
+  if (ev.key === "ArrowDown" || ev.key === "ArrowUp") {
+    ev.preventDefault();
+    activeResult = Math.max(0, Math.min(items.length - 1, activeResult + (ev.key === "ArrowDown" ? 1 : -1)));
+    items.forEach((b, i) => b.classList.toggle("active", i === activeResult));
+    items[activeResult] && items[activeResult].scrollIntoView({ block: "nearest" });
+  } else if (ev.key === "Enter" && items.length) { ev.preventDefault(); items[Math.max(0, activeResult)].click(); }
+});
+// Closing the results undoes the dimming the search applied (forced, since highlight() doesn't
+// know about it); a click while they are closed (on a card, say) leaves the highlight alone
+function closeResults() { if (results.hidden) return; results.hidden = true; highlight(selected || focusedExt, true); }
+document.addEventListener("click", ev => { if (!ev.target.closest(".search")) closeResults(); });
+
+// ---------- about ----------
+$("#aboutbtn").onclick = () => { $("#about").hidden = !$("#about").hidden; };
+$("#aboutclose").onclick = () => { $("#about").hidden = true; };
+const totalEp = ids.reduce((n, id) => n + canisters[id].endpoints.length, 0);
+$("#meta").innerHTML = `${ids.length} canister types · ${fmt(totalEp)} endpoints · <a href="https://github.com/open-chat-labs/open-chat/commit/${esc(DATA.commit || "")}" target="_blank" rel="noopener">${esc(DATA.commit || "")}</a> · ${esc(DATA.generated)}`;
+$("#about-meta").textContent = `Generated from commit ${DATA.commit} on ${DATA.generated}` + (DATA.live_as_of ? `; production counts fetched ${DATA.live_as_of}.` : ".");
+
+// ---------- framed by the website ----------
+// oc.app's Architecture page shows this page in a frame (CanisterMapFrame.svelte): it passes
+// the site's theme as ?theme= and by message, and is told which canister is selected so that it
+// can mirror it in its own url
+const framed = window.parent !== window;
+function applyTheme(theme) { if (theme === "dark" || theme === "light") document.documentElement.dataset.theme = theme; }
+applyTheme(new URLSearchParams(location.search).get("theme"));
+if (framed) window.addEventListener("message", ev => {
+  if (ev.source !== window.parent || !ev.data) return;
+  if (ev.data.type === "oc-canister-map-theme") applyTheme(ev.data.theme);
+  if (ev.data.type === "oc-canister-map-select") { const id = String(ev.data.hash || "").replace("#", ""); if (canisters[id]) { if (id !== selected) select(id, "overview"); } else deselect(); }
+});
+function announce(hash) { if (framed) window.parent.postMessage({ type: "oc-canister-map", hash }, "*"); }
+
+// ---------- boot ----------
+applyView();
+new ResizeObserver(() => { if (!selected) fitAll(0); }).observe(canvas);
+fitAll(0);
+const start = () => {
+  const hash = location.hash.replace("#", "");
+  if (hash && canisters[hash]) setTimeout(() => select(hash), 150);
+  else if (hash && byTitle[hash.toLowerCase()]) setTimeout(() => select(byTitle[hash.toLowerCase()]), 150);
+  else if (!localStorageGet("seen")) { $("#about").hidden = false; localStorageSet("seen", "1"); }
+};
+window.addEventListener("hashchange", () => { const hsh = location.hash.replace("#", ""); if (canisters[hsh] && hsh !== selected) select(hsh, "overview"); });
+function localStorageGet(k) { try { return localStorage.getItem("ocmap:" + k); } catch (e) { return null; } }
+function localStorageSet(k, v) { try { localStorage.setItem("ocmap:" + k, v); } catch (e) {} }
+start();
+</script>

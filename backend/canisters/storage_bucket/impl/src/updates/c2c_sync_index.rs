@@ -1,10 +1,10 @@
 use crate::guards::caller_is_storage_index_canister;
 use crate::model::files::RemoveFileResult;
-use crate::model::index_event_batch::EventToSync;
 use crate::{MAX_EVENTS_TO_SYNC_PER_BATCH, RuntimeState, check_cycles_balance, mutate_state};
 use canister_tracing_macros::trace;
 use ic_cdk::update;
 use storage_bucket_canister::c2c_sync_index::{Response::*, *};
+use storage_index_canister::StorageBucketEvent;
 use types::FileRemoved;
 
 #[update(guard = "caller_is_storage_index_canister")]
@@ -15,7 +15,7 @@ fn c2c_sync_index(args: Args) -> Response {
     mutate_state(|state| c2c_sync_index_impl(args, state))
 }
 
-fn c2c_sync_index_impl(args: Args, state: &mut RuntimeState) -> Response {
+pub(crate) fn c2c_sync_index_impl(args: Args, state: &mut RuntimeState) -> Response {
     for user_id in args.users_added {
         state.data.users.add(user_id);
     }
@@ -48,7 +48,7 @@ fn c2c_sync_index_impl(args: Args, state: &mut RuntimeState) -> Response {
         let excess = files_removed.split_off(MAX_EVENTS_TO_SYNC_PER_BATCH);
 
         for removed in excess {
-            state.data.push_event_to_index(EventToSync::FileRemoved(removed));
+            state.push_event_to_index(StorageBucketEvent::FileRemoved(removed));
         }
     }
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { refreshBalanceOrToast } from "@src/utils/balanceRefresh";
     import { i18nKey } from "@src/i18n/i18n";
     import { hideTokenBalances } from "@src/stores/settings";
     import {
@@ -16,7 +17,7 @@
     import MenuRight from "svelte-material-icons/MenuRight.svelte";
     import Reload from "svelte-material-icons/Reload.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
-    import { TokenState, type ConversionToken } from "@shared_components/home/wallet/walletState.svelte";
+    import { TokenState, type ConversionToken } from "@src/logic/wallet/walletState.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -93,7 +94,7 @@
         align={"end"}
         withBgEffect={true}>
         {#snippet menuItems()}
-            <MenuItem onclick={() => tokenState.refreshBalance(client)}>
+            <MenuItem onclick={() => refreshBalanceOrToast(tokenState, client)}>
                 {#snippet icon(color)}
                     <Reload {color} />
                 {/snippet}

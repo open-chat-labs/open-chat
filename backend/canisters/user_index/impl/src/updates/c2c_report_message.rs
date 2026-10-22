@@ -172,7 +172,7 @@ fn apply_csam_assertion_protection(report_index: u64, state: &mut RuntimeState) 
         report.message_id,
         ModerationCategories::SEXUAL_MINORS.bits(),
         report.already_deleted,
-        &mut state.data.fire_and_forget_handler,
+        state,
     );
     if report.moderation_channel_message_id.is_some() {
         // The alert card was posted before the media was vaulted: flip it to the quarantined
@@ -313,13 +313,7 @@ fn handle_moderation_result(
     // build (public chats only - private messages are classified but not flagged). CSAM is
     // flagged whatever the chat's visibility, in the same message as the deletion below.
     if !categories.is_empty() && is_public && !is_csam {
-        moderation::set_message_moderation_flags(
-            chat_id,
-            thread_root_message_index,
-            message_id,
-            categories.bits(),
-            &mut state.data.fire_and_forget_handler,
-        );
+        moderation::set_message_moderation_flags(chat_id, thread_root_message_index, message_id, categories.bits(), state);
     }
 
     // Store the media references on the report: verdicts may need them for quarantine even
@@ -344,7 +338,7 @@ fn handle_moderation_result(
             message_id,
             categories.bits(),
             already_deleted,
-            &mut state.data.fire_and_forget_handler,
+            state,
         );
         if suspend_sender {
             moderation::suspend_sender(sender, Some(report_index), now, state);

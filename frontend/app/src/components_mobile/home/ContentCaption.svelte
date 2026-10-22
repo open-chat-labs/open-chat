@@ -1,6 +1,6 @@
 <script lang="ts">
     import { ChatText } from "component-lib";
-    import Markdown from "@shared_components/Markdown.svelte";
+    import Markdown from "@src/core/Markdown.svelte";
 
     interface Props {
         edited: boolean;

@@ -1,16 +1,16 @@
 use crate::guards::caller_is_known_user;
 use crate::model::files::ForwardFileResult;
-use crate::model::index_event_batch::EventToSync;
 use crate::model::users::{FileStatusInternal, IndexSyncComplete};
 use crate::{RuntimeState, check_cycles_balance, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use rand::RngExt;
 use storage_bucket_canister::forward_file::{Response::*, *};
-use storage_index_canister::c2c_sync_bucket::{CsamMatch, CsamMatchKind};
+use storage_index_canister::StorageBucketEvent;
+use storage_index_canister::{CsamMatch, CsamMatchKind};
 use tracing::info;
 
-#[update(guard = "caller_is_known_user", candid = true, json = true, msgpack = true)]
+#[update(guard = "caller_is_known_user", candid = true, msgpack = true)]
 #[trace]
 fn forward_file(args: Args) -> Response {
     check_cycles_balance();
@@ -30,7 +30,7 @@ fn forward_file_impl(args: Args, state: &mut RuntimeState) -> Response {
     {
         // Report once per file id: a retry of the same refused forward is not a fresh attempt
         if state.data.vault.record_blocked_attempt(caller, args.file_id, file.hash) {
-            state.data.push_event_to_index(EventToSync::CsamMatch(CsamMatch {
+            state.push_event_to_index(StorageBucketEvent::CsamMatch(CsamMatch {
                 uploader: caller,
                 file_id: args.file_id,
                 hash: file.hash,
@@ -48,7 +48,7 @@ fn forward_file_impl(args: Args, state: &mut RuntimeState) -> Response {
         if let Some(report_index) = state.data.vault.pinned_report_index(&file.hash)
             && state.data.vault.record_blocked_attempt(caller, args.file_id, file.hash)
         {
-            state.data.push_event_to_index(EventToSync::CsamMatch(CsamMatch {
+            state.push_event_to_index(StorageBucketEvent::CsamMatch(CsamMatch {
                 uploader: caller,
                 file_id: args.file_id,
                 hash: file.hash,
@@ -86,7 +86,7 @@ fn forward_file_impl(args: Args, state: &mut RuntimeState) -> Response {
                 .users
                 .update_file_status(caller, file_id, FileStatusInternal::Complete(IndexSyncComplete::No))
                 .unwrap();
-            state.data.push_event_to_index(EventToSync::FileAdded(f));
+            state.push_event_to_index(StorageBucketEvent::FileAdded(f));
             crate::jobs::remove_expired_files::start_job_if_required(state);
             Success(file_id)
         }

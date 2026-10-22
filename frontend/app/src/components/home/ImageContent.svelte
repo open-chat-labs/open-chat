@@ -108,10 +108,11 @@
         zoomedHeight = imageHeight;
     }
     let normalised = $derived(normaliseContent(content));
-    let hidden = $state(false);
-    $effect(() => {
-        hidden = $lowBandwidth && !draft;
-    });
+    // Derived from the setting (and overridable: revealing an image assigns to
+    // it) rather than synced to it by an effect after mount: WebKit starts
+    // loading an <img> as soon as its src is set, so a first render with the
+    // full-size URL fetched the image even in low bandwidth mode.
+    let hidden = $derived($lowBandwidth && !draft);
     let zoomable = $derived(!draft && !reply && !pinned);
 
     function onError() {
@@ -126,14 +127,12 @@
     onorientationchange={recalculateZoomedDimensions} />
 
 {#if normalised.url !== undefined}
-    <div class="img-wrapper">
+    <div class="img-wrapper" class:masked={hidden && !reply && !draft} class:fill>
         {#if hidden}
             <div class="mask">
                 {#if !reply && !draft}
-                    <div class="reveal">
-                        <Button onClick={() => (hidden = false)}
-                            ><Translatable resourceKey={i18nKey(normalised.loadMsg)} /></Button>
-                    </div>
+                    <Button onClick={() => (hidden = false)}
+                        ><Translatable resourceKey={i18nKey(normalised.loadMsg)} /></Button>
                 {/if}
             </div>
         {/if}
@@ -203,6 +202,21 @@
 
     .img-wrapper {
         position: relative;
+
+        // While the mask and its reveal button are showing, keep the wrapper
+        // (and so the mask) at least as tall as the button. A short landscape
+        // image (a thin strip) would otherwise leave the button spilling over
+        // the sender row above and the caption below.
+        &.masked {
+            min-height: 60px;
+
+            // A fill message paints the sender pill over the top of the image
+            // and the time pill over the bottom, so leave room for the button
+            // between them.
+            &.fill {
+                min-height: 110px;
+            }
+        }
     }
 
     .mask {
@@ -211,16 +225,12 @@
         left: 0;
         height: 100%;
         width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
         background: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.5));
-    }
-
-    .reveal {
-        position: absolute;
-        top: calc(50% - 20px);
-        width: 100%;
-        text-align: center;
     }
 
     .body {

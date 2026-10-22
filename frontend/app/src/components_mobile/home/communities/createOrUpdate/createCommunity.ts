@@ -2,7 +2,7 @@ import { publish, type OpenChat } from "@client";
 import {
     startCommunityCreation,
     updateCommunityState,
-} from "@shared_components/home/communities/createOrUpdate/community.svelte";
+} from "@src/logic/groupOrCommunity/community.svelte";
 
 // Opens the page for creating a community, once the user is logged in and a Diamond member
 export function openCommunityCreation(client: OpenChat) {

@@ -105,17 +105,17 @@
 
   .online-now {
     font: var(--weight-bold) var(--text-lg) / 1.25 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     text-wrap: pretty;
   }
 
   .figure {
-    color: var(--accent-bright, #ff8298);
+    color: var(--accent-bright);
   }
 
   .online-prev {
     font: var(--weight-regular) var(--text-md) / 1.4 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
     text-wrap: pretty;
   }
 
@@ -130,14 +130,14 @@
     position: relative;
     width: 220px;
     height: 220px;
-    border-radius: var(--radius-circle, 50%);
+    border-radius: var(--radius-circle);
   }
 
   .hole {
     position: absolute;
     inset: 30px;
-    border-radius: var(--radius-circle, 50%);
-    background: var(--surface-1, #0e0e12);
+    border-radius: var(--radius-circle);
+    background: var(--surface-1);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -148,13 +148,13 @@
   .total {
     font: var(--weight-bold) var(--text-2xl) / 1 var(--font-sans);
     letter-spacing: var(--tracking-tight);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .caption {
     font: var(--weight-medium) var(--text-xs) / 1 var(--font-mono);
     letter-spacing: var(--tracking-wide);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .grid {
@@ -171,13 +171,13 @@
     gap: var(--space-4);
     padding: var(--space-12) var(--space-14);
     border-radius: var(--radius-lg);
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.08));
+    background: var(--overlay-1);
+    box-shadow: inset 0 0 0 1px var(--line-2);
   }
 
   .count {
     font: var(--weight-bold) var(--text-lg) / 1 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .label-row {
@@ -191,7 +191,7 @@
     flex: none;
     width: 13px;
     height: 13px;
-    background: var(--ink-4, #7c7c8c);
+    background: var(--ink-4);
   }
 
   .label {
@@ -200,7 +200,7 @@
     font: var(--weight-regular) var(--text-xs) / 1.3 var(--font-mono);
     letter-spacing: var(--tracking-wide);
     text-transform: uppercase;
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

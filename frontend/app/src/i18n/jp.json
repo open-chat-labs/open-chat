@@ -190,6 +190,15 @@
         "translateFrom": "{language}から翻訳",
         "translatedFrom": "端末で{language}から翻訳"
     },
+    "bridgedAccounts": {
+        "info": "他のプラットフォームのアカウントを連携すると、それらのアカウントがブリッジ経由で OpenChat に送ったメッセージがあなたのものとして表示されます。",
+        "link": "{platform} を連携",
+        "linkFailed": "{platform} アカウントの連携を開始できませんでした",
+        "section": "連携済みアカウント",
+        "unlink": "連携を解除",
+        "unlinkFailed": "アカウントの連携を解除できませんでした"
+    },
+    "bridgedUserUnknown": "{platform} ユーザー",
     "nativeUpdate": {
         "downloadingTitle": "少々お待ちください！更新中 ...",
         "downloadingMessage": "簡単な更新をダウンロードしています。まもなく続行できます ...",
@@ -541,6 +550,7 @@
         "descriptionPlaceholder": "あなたのコミュニティについて教えてください",
         "details": "詳細",
         "directAndGroupChats": "チャット",
+        "dmsAndGroupChats": "DMとグループチャット",
         "directChats": "ダイレクトチャット",
         "edit": "コミュニティを編集する",
         "embed": "埋め込みチャンネルを追加",
@@ -945,6 +955,7 @@
                 }
             },
             "unruly": {
+                "changeColours": "色を変更",
                 "name": "Unruly",
                 "rules": "すべてのマスを2色のどちらかで塗ります。行でも列でも同じ色を3つ続けてはいけません。最終的に各行・各列は2色が半分ずつになります。",
                 "technique": {
@@ -955,10 +966,10 @@
                     "5": "この行または列は一方の色がちょうどあと1つ必要で、それをこの3マスの外に置くとここでもう一方の色が3つ並んでしまうので、この行または列の他の空きマスはすべてもう一方の色になります。"
                 },
                 "demo": {
-                    "1": "すべてのマスをオレンジか紫で塗ります。丸で囲まれたマスは最初から決まっていて、変更できません。",
-                    "2": "横でも縦でも、同じ色を3つ続けてはいけません。ここはオレンジが1つ多すぎます。",
-                    "3": "最終的に各行・各列は各色3つずつになります。この行には紫が4つあります。",
-                    "4": "オレンジ2つの間に1マス空いています。間をオレンジにすると3つ並ぶので、紫にするしかありません。",
+                    "1": "すべてのマスを明るい色か暗い色で塗ります。最初から埋まっているマスもあり、それは変更できません。",
+                    "2": "横でも縦でも、同じ色を3つ続けてはいけません。ここは明るい色が1つ多すぎます。",
+                    "3": "最終的に各行・各列は各色3つずつになります。この行には暗い色が4つあります。",
+                    "4": "明るい色2つの間に1マス空いています。間を明るい色にすると3つ並ぶので、暗い色にするしかありません。",
                     "5": "すべてのマスが埋まり、3つ並びはなく、各行・各列に各色3つずつです。"
                 },
                 "hint": {
@@ -984,8 +995,8 @@
                     }
                 },
                 "colour": {
-                    "1": "オレンジ",
-                    "2": "紫"
+                    "1": "明るい色",
+                    "2": "暗い色"
                 }
             },
             "chat_rooms": {
@@ -2035,6 +2046,12 @@
             "urlRules": "補足詳細へのリンク"
         },
         "neuronControllerAction": "ニューロン コントローラーのアクション",
+        "neuronDissolveDelayTooShort": "解散遅延（{delay} 日）が投票に必要な {minimum} 日より短いです",
+        "neuronNotEligible": "提案が提出された時点で投票資格がありませんでした",
+        "neuronVoteCallFailed": "ガバナンスに接続できませんでした - もう一度お試しください",
+        "neuronVoteRejected": "投票が拒否されました: {message}",
+        "neuronVotesFailed": "ニューロンが投票できませんでした",
+        "neuronVotesFailedIntro": "この提案に投票できるニューロンがありませんでした:",
         "noEligibleNeurons": "適格なニューロンが見つかりません",
         "noEligibleNeuronsMoreInfo": "投票とガバナンスの詳細については、<a target=\"_blank\" href=\"https://oc.app/blog/governance\">このブログ投稿を</a>参照してください。",
         "noEligibleNeuronsPrincipalIntro": "適格なニューロンまたはリンクされたニューロンが見つかりません。 OpenChat 内から提案に投票するには、まず OpenChat プリンシパルをホットキーとして投票したいニューロンに追加する必要があります。",
@@ -2062,7 +2079,7 @@
                 "regular": "提案が採択されるためには、以下の2つの条件を満たす必要があります。"
             }
         },
-        "proposalNotAceptingVotes": "この提案は投票を受け付けていません-ページをリロードしてみてください",
+        "proposalNotAcceptingVotes": "この提案の投票は終了しました",
         "proposalsBotAction": "提案ボット アクション",
         "proposedBy": "によって提案されました",
         "readless": "もっと読む",
@@ -2407,12 +2424,18 @@
         },
         "quote": "引用",
         "quoteError": "{tokenIn} を交換するための引用符の取得中にエラーが発生しました",
+        "quotes": {
+            "best": "最良レート",
+            "declined": "この金額はスワップできません",
+            "failed": "見積もりを取得できませんでした",
+            "unsupported": "このスワップには対応していません"
+        },
         "quoteTooLow": "見積もられた最良レートは、{rate} からの {tokenOut} あたり {tokenIn} {dex} です。これにより、{amountOut} {tokenOut} の {amountIn} {tokenIn} が得られます。見積金額が {minAmountOut} を超える場合にのみ交換できます。",
         "requote": "再引用",
         "swap": "スワップ",
         "swapNotAvailable": "現在、{tokenIn} を他のトークンに交換することはできません",
         "swapToken": "{tokenIn}を交換する",
-        "swapTokenTo": "{tokenIn} を {tokenOut} に交換します",
+        "swapTokenTo": "{amountIn} {tokenIn} を {tokenOut} に交換します",
         "warningValueDropped": "流動性が低いため、受け取る {tokenOut} の価値は、スワップする {tokenIn} の価値の 90% 未満になります (これらのトークンの見積 USD 価値に基づきます)。",
         "warningValueUnknown": "これらのトークンの 1 つ以上の現在のドル価格は入手できないため、このスワップが適切な価値を表すかどうかを判断することはできません。",
         "youWillReceive": "**{amountOut}** {tokenOut} (${usdOut}) に対して **{amountIn}** {tokenIn} (${usdIn}) を受け取ります。"

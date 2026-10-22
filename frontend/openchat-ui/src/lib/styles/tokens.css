@@ -1,8 +1,7 @@
 @import "./icons.css";
 /* OpenChat design tokens. Theme is set once, on the app root ([data-mode][data-accent]);
    :where(:root) supplies dark + pink so a component previewed on its own still paints.
-   OpenChat design tokens. Every component reads these via var(--x, <literal fallback>),
-   so components still paint correctly when opened standalone. */
+   Components read them as plain var(--x), with no literal fallback: both hosts load this file. */
 
 :where(:root),[data-mode="dark"]{
   --skeleton-base:rgba(255,255,255,.06); --skeleton-sheen:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.06) 50%,transparent 100%);
@@ -74,7 +73,7 @@
   --panel-list-xs:325px; --panel-list-sm:350px; --panel-list-lg:400px; --panel-list-xl:475px; --panel-list-3xl:550px;
   --panel-info-md:325px; --panel-info-lg:350px; --panel-info-xl:400px; --panel-info-3xl:450px;
   --panel-chat-min:400px; --island-min:825px; --modal-max:600px; --root-min:900px;
-  --rail-collapsed:60px; --rail-expanded:283px;
+  --rail-collapsed:60px; --rail-expanded:283px; --rail-floating:320px;
 
   --z-base:1; --z-sticky:10; --z-backdrop:55; --z-modal:60;
 
@@ -106,6 +105,6 @@
 [dir="rtl"] [data-oc-flip]{transform:scaleX(-1)}
 
 /* Keyboard focus: one visible ring for every custom control (spans/divs with a role). */
-[role="button"]:focus-visible,[role="tab"]:focus-visible,[role="menuitem"]:focus-visible,[role="option"]:focus-visible,[role="switch"]:focus-visible,[role="checkbox"]:focus-visible,[role="radio"]:focus-visible,[role="link"]:focus-visible,a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--accent,#FF5672);outline-offset:2px}
+[role="button"]:focus-visible,[role="tab"]:focus-visible,[role="menuitem"]:focus-visible,[role="option"]:focus-visible,[role="switch"]:focus-visible,[role="checkbox"]:focus-visible,[role="radio"]:focus-visible,[role="link"]:focus-visible,a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 @media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 @keyframes oc-shimmer{0%{background-position:100% 0}100%{background-position:-100% 0}}

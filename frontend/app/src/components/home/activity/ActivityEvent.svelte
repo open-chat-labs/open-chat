@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { Message, MessageActivityEvent, ResourceKey } from "@client";
+    import type { MessageActivityEvent } from "@client";
     import {
         activityFeedShowing,
         allUsersStore,
@@ -15,10 +15,11 @@
     import { _ } from "svelte-i18n";
     import { i18nKey, interpolate } from "../../../i18n/i18n";
     import { buildDisplayName } from "../../../utils/user";
+    import { activitySummary } from "@src/logic/activity/activitySummary";
     import Avatar from "../../Avatar.svelte";
     import Link from "../../Link.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
-    import Markdown from "@shared_components/Markdown.svelte";
+    import Markdown from "@src/core/Markdown.svelte";
     import MessageReaction from "../MessageReaction.svelte";
     import TipThumbnail from "../TipThumbnail.svelte";
     import ActivityIcon from "./ActivityIcon.svelte";
@@ -64,89 +65,6 @@
         return undefined;
     }
 
-    function otherReactors(ev: MessageActivityEvent): Set<string> {
-        if (ev.message === undefined) return new Set();
-        return new Set(
-            ev.message.reactions.flatMap((r) =>
-                [...r.userIds].filter((u) => u !== ev.userId && u !== $currentUserIdStore),
-            ),
-        );
-    }
-
-    function otherTippers(ev: MessageActivityEvent): Set<string> {
-        if (ev.message === undefined) return new Set();
-        return new Set(
-            Object.values(ev.message.tips).flatMap((tips) => {
-                return Object.keys(tips).filter((u) => u !== ev.userId);
-            }),
-        );
-    }
-
-    function numberOfPeopleVoting(msg: Message | undefined): number {
-        if (msg === undefined || msg.content.kind !== "poll_content") return 1;
-        const content = msg.content;
-        if (content.votes.total.kind === "anonymous_poll_votes") {
-            return Object.values(content.votes.total.votes).reduce((total, n) => total + n, 0);
-        } else if (content.votes.total.kind === "hidden_poll_votes") {
-            return content.votes.total.votes;
-        } else if (content.votes.total.kind === "visible_poll_votes") {
-            return Object.values(content.votes.total.votes).reduce(
-                (total, n) => total + n.length,
-                0,
-            );
-        }
-        return 1;
-    }
-
-    function pluraliseMessage(
-        root: "tip" | "reaction",
-        username: string,
-        others: Set<string>,
-    ): ResourceKey {
-        switch (others.size) {
-            case 0:
-                return i18nKey(`activity.${root}One`, { username });
-            case 1: {
-                const u = [...others][0];
-                return i18nKey(`activity.${root}Two`, {
-                    username,
-                    other: buildDisplayName(
-                        $allUsersStore,
-                        u,
-                        u === $currentUserIdStore ? "me" : "user",
-                    ),
-                });
-            }
-            default:
-                return i18nKey(`activity.${root}N`, { username, n: others.size });
-        }
-    }
-
-    function buildEventSummary(event: MessageActivityEvent, username: string) {
-        switch (event.activity) {
-            case "reaction":
-                return pluraliseMessage("reaction", username, otherReactors(event));
-            case "mention":
-                return i18nKey("activity.mention", { username });
-            case "quote_reply":
-                return i18nKey("activity.quoteReply", { username });
-            case "tip":
-                return pluraliseMessage("tip", username, otherTippers(event));
-            case "crypto":
-                return i18nKey("activity.crypto", { username });
-            case "poll_vote": {
-                const numVoters = numberOfPeopleVoting(event.message);
-                if (numVoters > 1) {
-                    return i18nKey("activity.pollVoteN", { username, number: numVoters - 1 });
-                } else {
-                    return i18nKey("activity.pollVote", { username });
-                }
-            }
-            case "p2p_swap_accepted":
-                return i18nKey("activity.p2pSwapAccepted", { username });
-        }
-    }
-
     function formatLatestMessage(event: MessageActivityEvent, username: string): string {
         if (event.message === undefined) return "TODO - not sure what this means";
         const latestMessageText = client.getContentAsText($_, event.message.content);
@@ -177,7 +95,14 @@
             : $_("activity.anon"),
     );
     let lastMessage = $derived(formatLatestMessage(event, messageUsername));
-    let eventSummary = $derived(buildEventSummary(event, eventUsername));
+    let eventSummary = $derived(
+        activitySummary(event, event.message, {
+            me: $currentUserIdStore,
+            username: eventUsername,
+            displayName: (u) =>
+                buildDisplayName($allUsersStore, u, u === $currentUserIdStore ? "me" : "user"),
+        }),
+    );
     let chatName = $derived(getChatName(event.messageContext));
     let tips = $derived(event?.message?.tips ? Object.entries(event.message.tips) : []);
 </script>

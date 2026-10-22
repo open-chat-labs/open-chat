@@ -291,6 +291,13 @@ export class MessageReadTracker {
         );
     }
 
+    /** A chat's unread messages: none once its latest message has disappeared. */
+    unreadMessagesInChat(chat: ChatSummary): number {
+        return latestMessageExpired(chat)
+            ? 0
+            : this.unreadMessageCount(chat.id, chat.latestMessage?.event.messageIndex);
+    }
+
     unreadMessageCount(chatId: ChatIdentifier, latestMessageIndex: number | undefined): number {
         const { state, serverState, waiting } = this.value;
 
@@ -494,9 +501,7 @@ export class MessageReadTracker {
             contribution.chat !== chat ||
             contribution.version !== version
         ) {
-            const unreadMessages = latestMessageExpired(chat)
-                ? 0
-                : this.unreadMessageCount(chat.id, chat.latestMessage?.event.messageIndex);
+            const unreadMessages = this.unreadMessagesInChat(chat);
             contribution = {
                 chat,
                 version,

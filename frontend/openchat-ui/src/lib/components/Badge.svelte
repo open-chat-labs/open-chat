@@ -47,8 +47,8 @@
     padding: 0 var(--space-4);
     box-sizing: border-box;
     border-radius: var(--radius-pill);
-    background: var(--accent, #ff5672);
-    color: var(--on-accent, #2e0512);
+    background: var(--accent);
+    color: var(--on-accent);
     font: var(--weight-bold) var(--text-xs) / 1 var(--font-sans);
   }
 
@@ -64,20 +64,20 @@
   }
 
   .tag {
-    background: var(--accent-soft, rgba(255, 86, 114, 0.14));
-    color: var(--accent-bright, #ff8298);
+    background: var(--accent-soft);
+    color: var(--accent-bright);
   }
 
   .neutral {
-    background: var(--overlay-1, rgba(255, 255, 255, 0.06));
-    color: var(--ink-2, #b9b9c6);
+    background: var(--overlay-1);
+    color: var(--ink-2);
   }
 
   .chit {
     justify-content: flex-start;
     gap: var(--space-6);
-    background: var(--status-chit-soft, rgba(255, 159, 69, 0.14));
-    color: var(--status-chit, #ff9f45);
+    background: var(--status-chit-soft);
+    color: var(--status-chit);
   }
 
   .unit {
@@ -88,7 +88,7 @@
     flex: none;
     width: 17px;
     height: 17px;
-    background: var(--status-verified, #3d9bff);
+    background: var(--status-verified);
     mask: var(--icon-verified) center/contain no-repeat;
   }
 
@@ -96,7 +96,7 @@
     width: 8px;
     height: 8px;
     border-radius: var(--radius-pill);
-    background: var(--accent, #ff5672);
-    box-shadow: 0 0 0 2.5px var(--card-ring-1, #0e0e12);
+    background: var(--accent);
+    box-shadow: 0 0 0 2.5px var(--card-ring-1);
   }
 </style>

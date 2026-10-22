@@ -420,7 +420,7 @@
     border-radius: 10px;
     overflow: hidden;
     background: repeating-linear-gradient(135deg, #191921 0 14px, #15151b 14px 28px);
-    box-shadow: inset 0 0 0 2px var(--accent, #ff5672);
+    box-shadow: inset 0 0 0 2px var(--accent);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -428,7 +428,7 @@
 
   .shared-label {
     font: 500 13px/1 var(--font-mono);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .cell {
@@ -468,7 +468,7 @@
 
   .strip-tile.speaking {
     box-shadow:
-      inset 0 0 0 2px var(--accent, #ff5672),
+      inset 0 0 0 2px var(--accent),
       0 8px 20px rgba(0, 0, 0, 0.4);
   }
 
@@ -519,7 +519,7 @@
   }
 
   .tag-mic.muted {
-    background: var(--status-danger, #f5493d);
+    background: var(--status-danger);
   }
 
   .pip {
@@ -601,7 +601,7 @@
     width: 7px;
     height: 7px;
     border-radius: 50%;
-    background: var(--status-online, #2ee6a8);
+    background: var(--status-online);
   }
 
   .sharing {
@@ -612,8 +612,8 @@
     height: 30px;
     padding: 0 6px 0 12px;
     border-radius: 15px;
-    background: var(--accent, #ff5672);
-    color: var(--on-accent, #2e0512);
+    background: var(--accent);
+    color: var(--on-accent);
     font: 700 12.5px/1 var(--font-sans);
     cursor: pointer;
   }
@@ -678,7 +678,7 @@
     border-radius: 999px;
     background: rgba(14, 14, 18, 0.8);
     font: 500 13px/1.3 var(--font-sans);
-    color: var(--status-danger, #f5493d);
+    color: var(--status-danger);
   }
 
   .pill {

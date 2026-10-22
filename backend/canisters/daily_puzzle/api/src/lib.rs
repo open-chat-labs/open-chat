@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{GameId, LIGHT_UP_GAME_ID};
+use types::{DailyPuzzleResult, GameId, LIGHT_UP_GAME_ID};
 
 mod lifecycle;
 mod queries;
@@ -37,4 +37,9 @@ pub struct CandidateView {
 
 fn default_game_id() -> GameId {
     LIGHT_UP_GAME_ID.to_string()
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum LocalIndexEvent {
+    ReportResult(DailyPuzzleResult),
 }

@@ -52,6 +52,8 @@ describe('AuthDialog: one host call at a time', () => {
     const onSignup = vi.fn(() => d.promise);
     open({ kind: 'signup', onSignup });
     typeInto(q<HTMLInputElement>('input[autocomplete=username]'), 'newperson1');
+    q<HTMLInputElement>('.agree input')!.click();
+    flushSync();
     submit(q<HTMLFormElement>('form.form'));
     expect(onSignup).toHaveBeenCalledOnce();
     // Sign in → Create account → Continue, all while the first sign-up is still with the host

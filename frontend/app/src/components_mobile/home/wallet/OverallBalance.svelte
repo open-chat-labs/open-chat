@@ -11,7 +11,7 @@
     import Eye from "svelte-material-icons/EyeOutline.svelte";
     import Reload from "svelte-material-icons/Reload.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
-    import type { ConversionToken } from "@shared_components/home/wallet/walletState.svelte";
+    import type { ConversionToken } from "@src/logic/wallet/walletState.svelte";
     import BalanceActions from "./BalanceActions.svelte";
 
     interface Props {

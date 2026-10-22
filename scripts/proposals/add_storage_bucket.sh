@@ -1,7 +1,6 @@
 #!/bin/bash
 
-# The StorageIndex pays 1 ICP (+ fee) to the CMC to create each bucket, so send that to the
-# StorageIndex first. Without it the proposal still executes, but no bucket is created.
+# The StorageIndex pays the CMC in cycles to create the bucket, from its own balance.
 
 # Extract the args or use defaults
 SUBNET_ID=$1

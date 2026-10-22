@@ -39,8 +39,7 @@ export type RouteParams =
     | ProfileSummaryRoute
     | WelcomeRoute
     | WalletRoute
-    | NotificationsRoute
-    | ThreadsRoute;
+    | NotificationsRoute;
 
 export type MessageIndexRoute = GlobalSelectedChatRoute | FavouritesRoute | SelectedChannelRoute;
 
@@ -121,20 +120,17 @@ export type WelcomeRoute = NoScope & {
 
 // The wallet's views. The new web UI routes them (/wallet, /wallet/:ledger, /wallet/send …); the
 // mobile app only has /wallet.
-export type WalletView = "all" | "token" | "send" | "receive" | "swap" | "recipients";
+// `ledger` is a ledger canister id: the token page's token, or the token a send / receive / swap
+// starts with (?token=).
+export type WalletPage =
+    | { view: "all" }
+    | { view: "token"; ledger: string }
+    | { view: "send" | "receive" | "swap"; ledger?: string }
+    | { view: "recipients" };
 
-export type WalletRoute = NoScope & {
-    kind: "wallet_route";
-    view: WalletView;
-    // The ledger canister id: the token page's token, or the token a send / receive / swap starts
-    // with (?token=)
-    ledger?: string;
-};
+export type WalletView = WalletPage["view"];
 
-// The threads in a chat list scope (/chats/threads, /favourite/threads, /community/:id/threads)
-export type ThreadsRoute = Scoped & {
-    kind: "threads_route";
-};
+export type WalletRoute = NoScope & { kind: "wallet_route" } & WalletPage;
 
 export type NotificationsRoute = NoScope & {
     kind: "notifications_route";

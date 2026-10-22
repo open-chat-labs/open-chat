@@ -83,12 +83,12 @@
     padding: var(--space-14) var(--space-16);
     box-sizing: border-box;
     border-radius: var(--radius-lg);
-    background: var(--field, #14141a);
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1));
+    background: var(--field);
+    box-shadow: inset 0 0 0 1px var(--line-2);
   }
 
   .box.error {
-    box-shadow: inset 0 0 0 1px var(--status-danger, #f5493d);
+    box-shadow: inset 0 0 0 1px var(--status-danger);
   }
 
   textarea {
@@ -100,17 +100,17 @@
     border: 0;
     outline: none;
     font: var(--weight-regular) var(--text-md) / 1.65 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .count {
     flex: none;
     font: var(--weight-medium) var(--text-sm) / 1 var(--font-mono);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .count.low {
-    color: var(--status-warning, #ffb03d);
+    color: var(--status-warning);
   }
 
   .note {
@@ -125,7 +125,7 @@
     flex: none;
     width: 13px;
     height: 13px;
-    background: var(--status-danger, #f5493d);
+    background: var(--status-danger);
     mask: var(--icon-warning) center/contain no-repeat;
   }
 
@@ -133,12 +133,12 @@
     flex: 1;
     min-width: 0;
     font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
     text-wrap: pretty;
   }
 
   .note.error .note-text {
     font-weight: var(--weight-medium);
-    color: var(--status-danger, #f5493d);
+    color: var(--status-danger);
   }
 </style>

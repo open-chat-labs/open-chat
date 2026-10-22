@@ -1,6 +1,6 @@
-import { LocalStorageBoolStore } from "@client";
 import { configKeys } from "@shared";
 import type { ShellLayout } from "./layout";
+import { ModePreference } from "./modePreference.svelte";
 
 // Whether the right column (details, members, thread …) shows. Docked, it's a preference that
 // lasts across visits (brief §4), open unless the user closed it. As a modal, below the docking
@@ -8,12 +8,16 @@ import type { ShellLayout } from "./layout";
 // Create it while a component initialises: it follows the layout's mode from then on.
 export class RightColumnState {
     #mode: () => ShellLayout["right"];
-    #stored = new LocalStorageBoolStore(configKeys.webRightColumnOpen, true);
-    #docked = $state(this.#stored.value);
+    #docked: ModePreference;
     #modal = $state(false);
 
     constructor(mode: () => ShellLayout["right"]) {
         this.#mode = mode;
+        this.#docked = new ModePreference(
+            configKeys.webRightColumnOpen,
+            true,
+            () => mode() === "dock",
+        );
         // a modal left open when the window widened past the docking width doesn't come back by
         // itself once it narrows again
         $effect(() => {
@@ -22,7 +26,7 @@ export class RightColumnState {
     }
 
     get open(): boolean {
-        return this.#mode() === "dock" ? this.#docked : this.#modal;
+        return this.#mode() === "dock" ? this.#docked.value : this.#modal;
     }
 
     set open(open: boolean) {
@@ -30,8 +34,7 @@ export class RightColumnState {
             this.#modal = open;
             return;
         }
-        this.#docked = open;
-        this.#stored.set(open);
+        this.#docked.value = open;
     }
 
     toggle(): void {

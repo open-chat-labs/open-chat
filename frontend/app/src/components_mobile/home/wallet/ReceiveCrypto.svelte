@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { refreshBalanceOrToast } from "@src/utils/balanceRefresh";
     import MulticolourText from "@src/components_mobile/MulticolourText.svelte";
     import { Avatar, Body, Column, Row } from "component-lib";
     import { publish, type OpenChat } from "@client";
@@ -7,7 +8,7 @@
     import ErrorMessage from "../../ErrorMessage.svelte";
     import AccountInfo from "../AccountInfo.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
-    import type { TokenState } from "@shared_components/home/wallet/walletState.svelte";
+    import type { TokenState } from "@src/logic/wallet/walletState.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -22,7 +23,7 @@
     let title = $derived(i18nKey(`cryptoAccount.receiveToken`, { symbol: tokenState.symbol }));
 
     function onBack() {
-        tokenState.refreshBalance(client);
+        refreshBalanceOrToast(tokenState, client);
         publish("closeModalPage");
     }
 </script>

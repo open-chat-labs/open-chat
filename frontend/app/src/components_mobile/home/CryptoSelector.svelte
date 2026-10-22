@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { refreshBalanceOrToast } from "@src/utils/balanceRefresh";
     import { i18nKey } from "@src/i18n/i18n";
     import { hideTokenBalances } from "@src/stores/settings";
     import { Avatar, Body, BodySmall, ColourVars, Column, Row, type SizeMode } from "component-lib";
@@ -8,7 +9,7 @@
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import Refresh from "svelte-material-icons/Refresh.svelte";
     import TokenSelector from "./wallet/TokenSelector.svelte";
-    import { TokenState } from "@shared_components/home/wallet/walletState.svelte";
+    import { TokenState } from "@src/logic/wallet/walletState.svelte";
     import { getProxyAdjustedBlobUrl } from "../../utils/media";
 
     const client = getContext<OpenChat>("client");
@@ -87,7 +88,7 @@
         </Row>
         {#if showRefresh}
             <button
-                onclick={() => tokenState.refreshBalance(client)}
+                onclick={() => refreshBalanceOrToast(tokenState, client)}
                 class="refresh"
                 class:hidden={hideBalance}
                 class:refreshing={tokenState.refreshingBalance}>

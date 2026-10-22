@@ -28,6 +28,8 @@ export interface MenuItem {
 
 /** Fields every message in a MessageGroup can carry, whatever its kind. */
 interface GroupMessageBase {
+  /** The message's id: keeps its row when messages are added before it, and is written to the row's data-msg. */
+  id?: string;
   time: string;
   /** Deleted messages render as a tombstone and get no menu. */
   deleted?: boolean;

@@ -79,7 +79,7 @@
     import Converted from "./groupdetails/Converted.svelte";
     import DirectChatDetails from "./groupdetails/DirectChatDetails.svelte";
     import GroupDetails from "./groupdetails/GroupDetails.svelte";
-    import { UpdateGroupOrCommunityState } from "@shared_components/home/groupOrCommunity.svelte";
+    import { UpdateGroupOrCommunityState } from "@src/logic/groupOrCommunity/groupOrCommunity.svelte";
     import InviteAndShare from "./membership/InviteAndShare.svelte";
     import MemberManagement from "./membership/MemberManagement.svelte";
     import NewMessage from "./NewMessage.svelte";
@@ -88,6 +88,7 @@
     import PollBuilder from "./PollBuilder.svelte";
     import PollPublicVotes from "./PollPublicVotes.svelte";
     import PrizeContentBuilder from "./PrizeContentBuilder.svelte";
+    import RestrictedFeature from "./profile/RestrictedFeature.svelte";
     import ProposalGroupFilters from "./ProposalGroupFilters.svelte";
     import Rules from "./Rules.svelte";
     import SlidingPage from "./SlidingPage.svelte";
@@ -95,7 +96,7 @@
     import ThreadPreviews from "./thread/ThreadPreviews.svelte";
     import UserInformation from "./user_profile/UserInformation.svelte";
     import ActiveCallParticipants from "./video/ActiveCallParticipants.svelte";
-    import type { TokenState } from "@shared_components/home/wallet/walletState.svelte";
+    import type { TokenState } from "@src/logic/wallet/walletState.svelte";
     /**
      * It is tempting to think that this can completely replace the right panel on mobile but it's not quite so simple.
      * It can replace everything _that is not represented by it's own route_. That is because at the moment
@@ -201,6 +202,7 @@
         | { kind: "user_profile_verify" }
         | { kind: "user_profile_community" }
         | { kind: "user_profile_bot_config" }
+        | { kind: "user_profile_linked_accounts" }
         | { kind: "user_profile_chit" }
         | { kind: "user_profile_delete_account" }
         | { kind: "user_profile_cache_management" }
@@ -214,6 +216,7 @@
     const modalStack = $state<SlidingModalType[]>([]);
     let top = $derived(modalStack[modalStack.length - 1]);
     let historyDepth = $state(0);
+    let swapRestricted = $state(false);
     let recursivePop = false;
 
     function push(modal: SlidingModalType) {
@@ -446,9 +449,13 @@
             ),
             subscribe("manageRecipients", () => push({ kind: "manage_recipients" })),
             subscribe("walletSettings", () => push({ kind: "wallet_settings" })),
-            subscribe("swapToken", (tokenState) =>
-                push({ kind: "swap_token", tokenState: tokenState as unknown as TokenState }),
-            ),
+            subscribe("swapToken", async (tokenState) => {
+                if (await client.swapRestricted()) {
+                    swapRestricted = true;
+                } else {
+                    push({ kind: "swap_token", tokenState: tokenState as unknown as TokenState });
+                }
+            }),
             subscribe("sendToken", (tokenState) =>
                 push({ kind: "send_token", tokenState: tokenState as unknown as TokenState }),
             ),
@@ -545,6 +552,9 @@
                 push({ kind: "user_profile_delete_account" }),
             ),
             subscribe("userProfileBotConfig", () => push({ kind: "user_profile_bot_config" })),
+            subscribe("userProfileLinkedAccounts", () =>
+                push({ kind: "user_profile_linked_accounts" }),
+            ),
             subscribe("userProfileCacheManagement", () =>
                 push({ kind: "user_profile_cache_management" }),
             ),
@@ -581,6 +591,10 @@
         <Translatable resourceKey={i18nKey("Failed to load")} />
     </Container>
 {/snippet}
+
+{#if swapRestricted}
+    <RestrictedFeature feature="swap" onClose={() => (swapRestricted = false)} />
+{/if}
 
 {#each modalStack as page}
     <SlidingPage speed={page.kind === "open_thread" ? 500 : 300} top={page === top}>
@@ -657,6 +671,12 @@
         {:else if page.kind === "user_profile_bot_config"}
             {#await import("./user_profile/BotConfig.svelte") then { default: BotConfig }}
                 <BotConfig />
+            {:catch}
+                {@render loadFailed()}
+            {/await}
+        {:else if page.kind === "user_profile_linked_accounts"}
+            {#await import("./user_profile/LinkedAccounts.svelte") then { default: LinkedAccounts }}
+                <LinkedAccounts />
             {:catch}
                 {@render loadFailed()}
             {/await}

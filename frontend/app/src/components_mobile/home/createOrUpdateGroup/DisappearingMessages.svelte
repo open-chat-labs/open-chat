@@ -4,7 +4,7 @@
     import Setting from "../../Setting.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
     import DisappearingDuration from "../DisappearingDuration.svelte";
-    import { updateGroupState } from "@shared_components/home/createOrUpdateGroup/group.svelte";
+    import { updateGroupState } from "@src/logic/groupOrCommunity/group.svelte";
 </script>
 
 <DisappearingDuration bind:eventsTTL={updateGroupState.candidateGroup.eventsTTL}>

@@ -2,17 +2,13 @@
     import { i18nKey } from "@src/i18n/i18n";
     import { createLocalStorageStore } from "@src/utils/store";
     import EmailValidator from "email-validator";
-    import type { CreatedUser, OpenChat, UserOrUserGroup, UserSummary } from "@client";
-    import {
-        AuthProvider,
-        identityStateStore,
-        mobileWidth,
-        selectedAuthProviderStore,
-    } from "@client";
+    import type { OpenChat, SignUpOutcome, UserOrUserGroup, UserSummary } from "@client";
+    import { mobileWidth } from "@client";
     import { getContext, onMount } from "svelte";
     import AlertBox from "../AlertBox.svelte";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
+    import Checkbox from "../Checkbox.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import { Spinner } from "component-lib";
     import FindUser from "../FindUser.svelte";
@@ -27,11 +23,12 @@
     const client = getContext<OpenChat>("client");
 
     interface Props {
-        onCreatedUser: (user: CreatedUser) => void;
+        // the account is made and the client has the user
+        onSignedUp: () => void;
         error: string | undefined;
     }
 
-    let { error = $bindable(), onCreatedUser }: Props = $props();
+    let { error = $bindable(), onSignedUp }: Props = $props();
 
     let showGuidelines = $state(false);
     let username = $state("");
@@ -42,9 +39,8 @@
     let emailValid = $derived(email.length === 0 || EmailValidator.validate(email));
     let busy = $state(false);
     let badCode = $state(false);
+    let termsAccepted = $state(false);
     let referringUser: UserSummary | undefined = $state(undefined);
-    let createdUser: CreatedUser | undefined = undefined;
-    let passkeyCreated = $state(false);
 
     let TermsContent: typeof import("../landingpages/TermsContent.svelte").default | undefined =
         $state(undefined);
@@ -66,91 +62,32 @@
 
     async function register(e: Event) {
         e.preventDefault();
-        if (usernameValid && emailValid) {
-            usernameStore.set(username);
-            try {
-                busy = true;
-                selectedAuthProviderStore.set(AuthProvider.PASSKEY);
-
-                // if we are already in the registering state it means that we are somehow
-                // already signed in, but there is no user. In that case, skip the webauthn
-                // and just call registerUser
-                if ($identityStateStore.kind !== "registering") {
-                    if (!passkeyCreated) {
-                        if (client.isNativeApp()) {
-                            await client.signUpWithAndroidWebAuthn(true, username);
-                        } else {
-                            await client.signUpWithWebAuthn(true, username);
-                        }
-                    }
-                }
-                passkeyCreated = true;
-                await registerUser(username, email.length > 0 ? email : undefined);
-            } catch (err) {
-                error = `Error registering user: ${err}`;
-            } finally {
-                busy = false;
-            }
+        if (!usernameValid || !emailValid || !termsAccepted || busy) return;
+        usernameStore.set(username);
+        busy = true;
+        let outcome: SignUpOutcome;
+        try {
+            // a refused referral code isn't sent again, so "proceed" signs up without it
+            outcome = await client.signUp(
+                username,
+                email.length > 0 ? email : undefined,
+                termsAccepted,
+            );
+        } finally {
+            busy = false;
         }
-    }
-
-    async function registerUser(username: string, email: string | undefined) {
-        await client.registerUser(username, email).then((resp) => {
-            badCode = false;
-            if (resp.kind === "username_taken") {
-                error = "register.usernameTaken";
-            } else if (resp.kind === "username_too_short") {
-                error = "register.usernameTooShort";
-            } else if (resp.kind === "username_too_long") {
-                error = "register.usernameTooLong";
-            } else if (resp.kind === "username_invalid") {
-                error = "register.usernameInvalid";
-            } else if (resp.kind === "email_invalid") {
-                error = "register.emailInvalid";
-            } else if (resp.kind === "user_limit_reached") {
-                error = "register.userLimitReached";
-            } else if (resp.kind === "internal_error") {
-                error = "unexpectedError";
-            } else if (resp.kind === "referral_code_invalid") {
-                error = "register.referralCodeInvalid";
-                badCode = true;
-            } else if (resp.kind === "referral_code_already_claimed") {
-                error = "register.referralCodeAlreadyClaimed";
-                badCode = true;
-            } else if (resp.kind === "referral_code_expired") {
-                error = "register.referralCodeExpired";
-                badCode = true;
-            } else if (resp.kind === "success") {
+        badCode = outcome.kind === "referral_refused";
+        switch (outcome.kind) {
+            case "success":
                 error = undefined;
-                createdUser = {
-                    kind: "created_user",
-                    username,
-                    dateCreated: BigInt(Date.now()),
-                    displayName: undefined,
-                    cryptoAccount: resp.icpAccount,
-                    userId: resp.userId,
-                    isPlatformModerator: false,
-                    isPlatformOperator: false,
-                    suspensionDetails: undefined,
-                    isSuspectedBot: false,
-                    diamondStatus: { kind: "inactive" },
-                    moderationFlagsEnabled: 0,
-                    updated: 0n,
-                    isBot: false,
-                    isUniquePerson: false,
-                    totalChitEarned: 0,
-                    chitBalance: 0,
-                    streak: 0,
-                    maxStreak: 0,
-                    hideOnlineStatus: false,
-                };
-                onCreatedUser(createdUser);
-                busy = false;
                 usernameStore.set("");
-            } else {
-                error = `Unexpected register user response: ${resp.kind}`;
-            }
-        });
+                onSignedUp();
+                break;
+            case "referral_refused":
+            case "failed":
+                error = outcome.reason.key;
+                break;
+        }
     }
 
     function deleteUser(_: UserOrUserGroup) {
@@ -263,10 +200,21 @@
                     onSelectUser={selectUser} />
             {/if}
         </div>
-        <!-- svelte-ignore a11y_click_events_have_key_events -->
-        <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div onclick={onShowGuidelines} class="smallprint">
-            <Translatable resourceKey={i18nKey("register.disclaimer")} />
+        <div class="terms">
+            <Checkbox id="sign-up-terms" label={undefined} bind:checked={termsAccepted}>
+                <!-- the words open the terms; the box ticks -->
+                <!-- svelte-ignore a11y_click_events_have_key_events -->
+                <!-- svelte-ignore a11y_no_static_element_interactions -->
+                <span
+                    class="smallprint"
+                    onclick={(e) => {
+                        e.preventDefault();
+                        onShowGuidelines();
+                    }}>
+                    <Translatable
+                        resourceKey={i18nKey("I agree to the OpenChat terms & conditions")} />
+                </span>
+            </Checkbox>
         </div>
         {#if error !== undefined}
             <div class="error">
@@ -284,7 +232,7 @@
         {/if}
         <Button
             loading={checkingUsername || busy}
-            disabled={!usernameValid || !emailValid || busy}
+            disabled={!usernameValid || !emailValid || !termsAccepted || busy}
             onClick={register}>
             <Translatable resourceKey={i18nKey("register.proceed")} />
         </Button>
@@ -305,10 +253,18 @@
         width: 100%;
     }
 
-    .smallprint {
+    // the small print's size for the whole row, so the box (sized in em) matches its words and
+    // the two sit on one centre line
+    .terms {
         margin-top: $sp4;
-        align-self: flex-start;
-        @include font(light, normal, fs-60);
+        @include font(light, normal, fs-80);
+
+        :global(.checkbox) {
+            gap: $sp3;
+        }
+    }
+
+    .smallprint {
         color: var(--primary);
         cursor: pointer;
         text-decoration: none;

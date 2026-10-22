@@ -27,7 +27,7 @@
         MIN_SUMMARY_LENGTH,
         MIN_TITLE_LENGTH,
         ProposalForm,
-    } from "@shared_components/home/proposal/proposalForm.svelte";
+    } from "@src/logic/proposal/proposalForm.svelte";
     import Button from "../../Button.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import Input from "../../Input.svelte";
@@ -39,7 +39,7 @@
     import AccountInfo from "../AccountInfo.svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import DurationPicker from "../DurationPicker.svelte";
-    import Markdown from "@shared_components/Markdown.svelte";
+    import Markdown from "@src/core/Markdown.svelte";
     import RemoveBot from "./RemoveBot.svelte";
     import TransferSnsFunds from "./TransferSNSFunds.svelte";
     import VerificationProposal from "./VerificationProposal.svelte";

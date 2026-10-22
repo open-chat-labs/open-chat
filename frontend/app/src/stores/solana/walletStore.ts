@@ -74,6 +74,20 @@ export interface WalletStore {
 
 export const walletStore = createWalletStore();
 
+/** The wallet store's value once no connection is in flight (an auto-connect, say). */
+export function settledWallet(): Promise<WalletStore> {
+    return new Promise((resolve) => {
+        let settled = false;
+        const unsubscribe = walletStore.subscribe((store) => {
+            if (settled || store.connecting) return;
+            settled = true;
+            resolve(store);
+            // the store calls back during subscribe, before `unsubscribe` is set
+            queueMicrotask(() => unsubscribe());
+        });
+    });
+}
+
 function addAdapterEventListeners(adapter: Adapter) {
     const { onError, wallets } = get(walletStore);
 

@@ -155,10 +155,10 @@
   // the quote in three lines: what you'll get at least, what it costs, how much the price moves
   const quoteRows = $derived.by(() => {
     const impact = `${impactPct < 0.01 ? '<0.01' : impactPct.toFixed(2)}%`;
-    const impactInk = impactPct > 3 ? 'var(--status-danger,#F5493D)' : impactPct > 1 ? 'var(--status-warning,#FFB03D)' : 'var(--status-online,#2EE6A8)';
+    const impactInk = impactPct > 3 ? 'var(--status-danger)' : impactPct > 1 ? 'var(--status-warning)' : 'var(--status-online)';
     const all = [
-      { k: tr('ui.walletSwap.row.minimumReceived'), v: `${fmt(out * (1 - slip / 100), t.dp)} ${t.symbol}`, ink: 'var(--ink,#ECECF1)' },
-      { k: tr('ui.walletSwap.row.fees'), v: tr('ui.walletSwap.feesValue', { dexFee: quote?.dexFee ?? '', network: usd(quote?.networkFeeUsd ?? 0) }), ink: 'var(--ink,#ECECF1)' },
+      { k: tr('ui.walletSwap.row.minimumReceived'), v: `${fmt(out * (1 - slip / 100), t.dp)} ${t.symbol}`, ink: 'var(--ink)' },
+      { k: tr('ui.walletSwap.row.fees'), v: tr('ui.walletSwap.feesValue', { dexFee: quote?.dexFee ?? '', network: usd(quote?.networkFeeUsd ?? 0) }), ink: 'var(--ink)' },
       { k: tr('ui.walletSwap.row.priceImpact'), v: impact, ink: impactInk },
     ];
     return all.map((r, i) => ({ ...r, rule: (i < all.length - 1 ? 'bottom' : 'none') as 'bottom' | 'none' }));
@@ -470,7 +470,7 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    background: var(--surface-1, #0e0e12);
+    background: var(--surface-1);
   }
 
   .scroll {
@@ -523,13 +523,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--surface-1, #0e0e12);
+    background: var(--surface-1);
   }
 
   .arrow-icon {
     width: 14px;
     height: 14px;
-    background: var(--ink-3, #9a9aa8);
+    background: var(--ink-3);
     mask: var(--icon-arrow-down) center/contain no-repeat;
   }
 
@@ -548,19 +548,19 @@
 
   .slippage-note {
     font: 400 12.5px/1.5 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
     text-wrap: pretty;
   }
 
   .swap-error {
     font: 500 13px/1.4 var(--font-sans);
-    color: var(--status-danger, #f5493d);
+    color: var(--status-danger);
     text-wrap: pretty;
   }
 
   .quote {
     border-radius: 14px;
-    background: var(--overlay-1, rgba(255, 255, 255, 0.04));
+    background: var(--overlay-1);
   }
 
   .quote-head {
@@ -574,7 +574,7 @@
     flex: 1;
     min-width: 0;
     font: 600 13px/1.3 var(--font-mono);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     overflow-wrap: anywhere;
   }
 
@@ -582,7 +582,7 @@
     display: flex;
     flex-direction: column;
     padding: 0 16px 6px;
-    border-top: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+    border-top: 1px solid var(--line-1);
   }
 
   .cta {
@@ -593,9 +593,9 @@
     gap: 10px;
     height: 52px;
     border-radius: 12px;
-    background: var(--accent, #ff5672);
+    background: var(--accent);
     font: 700 14.5px/1 var(--font-sans);
-    color: var(--on-accent, #2e0512);
+    color: var(--on-accent);
     cursor: pointer;
     user-select: none;
   }
@@ -605,22 +605,22 @@
   }
 
   .cta.disabled {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
-    color: var(--ink-4, #8a8a99);
+    background: var(--overlay-2);
+    color: var(--ink-4);
     cursor: default;
     filter: none;
   }
 
   .cta.secondary {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+    background: var(--overlay-2);
     font-weight: 600;
     font-size: 14px;
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     filter: none;
   }
 
   .cta.secondary:hover {
-    background: var(--btn-hover, rgba(255, 255, 255, 0.14));
+    background: var(--btn-hover);
   }
 
   .cta-icon {
@@ -643,22 +643,22 @@
     gap: 10px;
     font: 500 10px/1 var(--font-mono);
     letter-spacing: 0.09em;
-    color: var(--accent-bright, #ff8298);
+    color: var(--accent-bright);
   }
 
   .kicker.done {
-    color: var(--status-online, #2ee6a8);
+    color: var(--status-online);
   }
 
   .kicker-rule {
     flex: 1;
     height: 1px;
-    background: var(--line-1, rgba(255, 255, 255, 0.07));
+    background: var(--line-1);
   }
 
   .legs {
     border-radius: 16px;
-    background: var(--overlay-1, rgba(255, 255, 255, 0.04));
+    background: var(--overlay-1);
     overflow: hidden;
   }
 
@@ -667,7 +667,7 @@
     align-items: center;
     gap: 12px;
     padding: 14px 16px;
-    border-bottom: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+    border-bottom: 1px solid var(--line-1);
   }
 
   .leg-text {
@@ -681,19 +681,19 @@
   .leg-label {
     font: 500 10px/1 var(--font-mono);
     letter-spacing: 0.09em;
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
   }
 
   .leg-amount {
     font: 700 18px/1.15 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     overflow-wrap: anywhere;
   }
 
   .leg-usd {
     flex: none;
     font: 500 12.5px/1 var(--font-mono);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .leg-rows {
@@ -710,7 +710,7 @@
 
   .progress-note {
     font: 400 12.5px/1.5 var(--font-sans);
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
     text-wrap: pretty;
   }
 </style>

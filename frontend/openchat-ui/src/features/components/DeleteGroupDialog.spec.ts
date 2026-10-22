@@ -56,7 +56,7 @@ describe('DeleteGroupDialog', () => {
     press(deleteButton);
     await settle();
     esc();
-    press(target.querySelector('.veil'));
+    press(target.querySelector('.oc-veil'));
     press(target.querySelector('.cancel'));
     await vi.runAllTimersAsync();
     expect(onCancel).not.toHaveBeenCalled();

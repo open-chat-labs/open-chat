@@ -19,12 +19,12 @@
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
-			<key>CFBundleURLName</key>
-			<string>com.oclabs.openchat.dev</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>openchat</string>
 			</array>
+			<key>CFBundleURLName</key>
+			<string>openchat</string>
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>

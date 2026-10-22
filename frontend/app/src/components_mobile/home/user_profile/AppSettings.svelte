@@ -8,11 +8,13 @@
     import Delete from "svelte-material-icons/DeleteForeverOutline.svelte";
     import Eye from "svelte-material-icons/EyeOutline.svelte";
     import FlashOutline from "svelte-material-icons/FlashOutline.svelte";
+    import LinkVariant from "svelte-material-icons/LinkVariant.svelte";
     import RobotOutline from "svelte-material-icons/RobotOutline.svelte";
     import Sync from "svelte-material-icons/Sync.svelte";
     import LinkedCard from "../../LinkedCard.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
+    import { linkablePlatforms } from "@src/utils/bridgedAccounts";
 
     function help() {
         publish("closeModalStack");
@@ -61,6 +63,14 @@
                 info={i18nKey(
                     "Set the default language or the font size. New options to adjust the app's theme will soon be added.",
                 )} />
+
+            {#if linkablePlatforms.length > 0}
+                <LinkedCard
+                    onClick={() => publish("userProfileLinkedAccounts")}
+                    Icon={LinkVariant}
+                    title={i18nKey("bridgedAccounts.section")}
+                    info={i18nKey("bridgedAccounts.info")} />
+            {/if}
 
             <LinkedCard
                 onClick={() => publish("userProfileChitRewards")}

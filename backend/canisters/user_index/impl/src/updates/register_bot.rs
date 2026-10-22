@@ -1,6 +1,7 @@
+use crate::StorageIndexEvent;
 use crate::guards::caller_is_openchat_user;
 use crate::model::user_map::Bot;
-use crate::model::{MAX_AVATAR_SIZE, MAX_COMMANDS, MAX_DESCRIPTION_LEN};
+use crate::model::{JSON_DATA_ENCODING_NOT_SUPPORTED, MAX_AVATAR_SIZE, MAX_COMMANDS, MAX_DESCRIPTION_LEN};
 use crate::{RuntimeState, mutate_state};
 use candid::Principal;
 use canister_api_macros::update;
@@ -11,7 +12,7 @@ use local_user_index_canister::{BotRegistered, UserIndexEvent};
 use rand::RngExt;
 use std::collections::HashMap;
 use storage_index_canister::add_or_update_users::UserConfig;
-use types::BotRegistrationStatus;
+use types::{BotDataEncoding, BotRegistrationStatus};
 use types::{UserId, UserType};
 use url::Url;
 use user_index_canister::register_bot::{Response::*, *};
@@ -98,10 +99,10 @@ fn register_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
         None,
     );
 
-    state.data.storage_index_user_sync_queue.push(UserConfig {
+    state.push_event_to_storage_index(StorageIndexEvent::AddOrUpdateUser(UserConfig {
         user_id: args.principal,
         byte_limit: ONE_GB,
-    });
+    }));
 
     state.data.event_store_client.push(
         EventBuilder::new("user_registered", now)
@@ -143,6 +144,10 @@ fn validate_request(args: &Args, owner_id: UserId, state: &RuntimeState) -> Resu
 
     if args.definition.commands.len() > MAX_COMMANDS {
         return Err("too many commands".to_string());
+    }
+
+    if args.definition.data_encoding == Some(BotDataEncoding::Json) {
+        return Err(JSON_DATA_ENCODING_NOT_SUPPORTED.to_string());
     }
 
     if Principal::from_text(&args.endpoint).is_err() && Url::parse(&args.endpoint).is_err() {

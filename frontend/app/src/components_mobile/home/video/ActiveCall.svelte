@@ -22,7 +22,7 @@
         dailyTheme,
         type CallFrameOptions,
         type StartCallOutcome,
-    } from "@shared_components/home/video/callSession.svelte";
+    } from "@src/logic/video/callSession.svelte";
     import AreYouSure from "../../AreYouSure.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
     import ActiveCallHeader from "./ActiveCallHeader.svelte";

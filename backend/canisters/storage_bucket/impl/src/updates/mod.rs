@@ -1,3 +1,4 @@
+mod c2c_storage_index;
 mod c2c_sync_index;
 mod c2c_vault_sync;
 mod delete_file;

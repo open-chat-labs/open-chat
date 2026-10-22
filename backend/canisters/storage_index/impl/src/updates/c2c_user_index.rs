@@ -1,0 +1,41 @@
+use crate::guards::caller_is_user_controller;
+use crate::updates::add_or_update_users::add_or_update_user;
+use crate::updates::c2c_vault_ops::apply_vault_op;
+use crate::updates::remove_users::remove_user;
+use crate::{RuntimeState, mutate_state};
+use canister_api_macros::update;
+use canister_tracing_macros::trace;
+use storage_index_canister::UserIndexEvent;
+use storage_index_canister::c2c_user_index::*;
+
+// Must be fed by a single queue on the UserIndex: the idempotency check keeps one high-water mark
+// per sender, so a batch retried from a second queue after a later batch from the first had landed
+// would be dropped as already seen
+#[update(guard = "caller_is_user_controller", msgpack = true)]
+#[trace]
+fn c2c_user_index(args: Args) -> Response {
+    mutate_state(|state| c2c_user_index_impl(args, state))
+}
+
+fn c2c_user_index_impl(args: Args, state: &mut RuntimeState) -> Response {
+    let caller = state.env.caller();
+    for event in args.events {
+        if state
+            .data
+            .idempotency_checker
+            .check(caller, event.created_at, event.idempotency_id)
+        {
+            match event.value {
+                UserIndexEvent::AddOrUpdateUser(user_config) => add_or_update_user(user_config, state),
+                UserIndexEvent::RemoveUser(user_id) => remove_user(user_id, state),
+                UserIndexEvent::VaultOp(op) => {
+                    // The vault is only ever driven by the UserIndex; its id is kept so that
+                    // bucket-detected CSAM re-uploads can be reported back to it
+                    state.data.user_index_canister_id = Some(caller);
+                    apply_vault_op(op, state)
+                }
+            }
+        }
+    }
+    Response::Success
+}

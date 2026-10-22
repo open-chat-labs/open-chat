@@ -29,7 +29,7 @@
     import Translatable from "@shared_components/Translatable.svelte";
     import ChatMessage from "../ChatMessage.svelte";
     import IntersectionObserverComponent from "../IntersectionObserver.svelte";
-    import Markdown from "@shared_components/Markdown.svelte";
+    import Markdown from "@src/core/Markdown.svelte";
 
     const client = getContext<OpenChat>("client");
 

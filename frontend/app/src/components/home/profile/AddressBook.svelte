@@ -6,7 +6,7 @@
         type OpenChat,
         type ResourceKey,
     } from "@client";
-    import { isAccountIdentifierValid, isICRCAddressValid } from "@shared";
+    import AddressNetworkIcon from "@shared_components/home/wallet/AddressNetworkIcon.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
@@ -17,6 +17,8 @@
     import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
+    import { addressNetwork } from "../../../utils/cryptoAddress";
+    import { isRecipientNameTaken } from "../../../utils/savedRecipient";
     import AreYouSure from "../../AreYouSure.svelte";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
@@ -53,27 +55,26 @@
     let trimmedAddress = $derived(address.trim());
     let trimmedNewName = $derived(newName.trim());
     let addressIsUserId = $derived(client.isAccountOfMultiUserCanisterUserId(trimmedAddress));
-    // The same two forms the canister accepts: an ICRC-1 textual account, which covers a bare
-    // principal, or an ICP ledger account identifier
-    let addressValid = $derived(
-        !addressIsUserId &&
-            (isICRCAddressValid(trimmedAddress) || isAccountIdentifierValid(trimmedAddress)),
-    );
+    // The network the new address is for, in the same forms the canister accepts
+    let newAddressNetwork = $derived(addressNetwork(trimmedAddress));
+    let addressValid = $derived(!addressIsUserId && newAddressNetwork !== undefined);
     // Saving an address which is already saved would rename it rather than add it
     let alreadySavedAs = $derived(accounts.find((a) => a.account === trimmedAddress)?.name);
-    let addNameTaken = $derived(isNameTaken(trimmedName));
+    let addNameTaken = $derived(isRecipientNameTaken(accounts, trimmedName));
     let addValid = $derived(
         trimmedName.length > 0 && !addNameTaken && addressValid && alreadySavedAs === undefined,
     );
     let addError: ResourceKey | undefined = $derived.by(() => {
         if (addNameTaken) return i18nKey("addressBook.nameTaken");
         if (addressIsUserId) return i18nKey("cryptoAccount.sendToUserId");
+        if (trimmedAddress.length > 0 && newAddressNetwork === undefined)
+            return i18nKey("addressBook.invalidAddress");
         if (alreadySavedAs !== undefined)
             return i18nKey("addressBook.alreadySaved", { name: alreadySavedAs });
         return undefined;
     });
     let renameNameTaken = $derived(
-        renaming !== undefined && isNameTaken(trimmedNewName, renaming.account),
+        renaming !== undefined && isRecipientNameTaken(accounts, trimmedNewName, renaming.account),
     );
     let renameValid = $derived(trimmedNewName.length > 0 && !renameNameTaken);
 
@@ -81,14 +82,6 @@
         accounts = await client.loadSavedCryptoAccounts();
         loading = false;
     });
-
-    // Names are unique ignoring case
-    function isNameTaken(name: string, exceptAccount?: string): boolean {
-        const nameLower = name.toLowerCase();
-        return accounts.some(
-            (a) => a.account !== exceptAccount && a.name.toLowerCase() === nameLower,
-        );
-    }
 
     // Saving an account which is already saved renames it. The list is updated here to match
     // what the canister stores, rather than loaded again.
@@ -193,12 +186,20 @@
                         invalid={addNameTaken}
                         placeholder={i18nKey("addressBook.namePlaceholder")} />
                     <Legend label={i18nKey("addressBook.address")} />
-                    <Input
-                        bind:value={address}
-                        maxlength={200}
-                        invalid={trimmedAddress.length > 0 && !addressValid}
-                        placeholder={i18nKey("addressBook.addressPlaceholder")}
-                        onEnter={add} />
+                    <div class="address-input">
+                        <Input
+                            bind:value={address}
+                            maxlength={200}
+                            invalid={trimmedAddress.length > 0 && !addressValid}
+                            placeholder={i18nKey("addressBook.addressPlaceholder")}
+                            onEnter={add}>
+                            {#if newAddressNetwork !== undefined}
+                                <div class="network">
+                                    <AddressNetworkIcon network={newAddressNetwork} size={"1.5rem"} />
+                                </div>
+                            {/if}
+                        </Input>
+                    </div>
                     {#if addError !== undefined}
                         <ErrorMessage><Translatable resourceKey={addError} /></ErrorMessage>
                     {/if}
@@ -208,7 +209,11 @@
                     </p>
                 {:else}
                     {#each accounts as account (account.account)}
+                        {@const network = addressNetwork(account.account)}
                         <div class="account">
+                            {#if network !== undefined}
+                                <AddressNetworkIcon {network} size={"1.5rem"} />
+                            {/if}
                             {#if renaming?.account === account.account}
                                 <div class="rename">
                                     <Input
@@ -312,6 +317,19 @@
         width: 80px;
         height: 80px;
         margin: auto;
+    }
+
+    // Room for the network icon at the end of the input
+    .address-input :global(.input-wrapper input) {
+        padding-right: 40px;
+    }
+
+    .network {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
     }
 
     .empty {

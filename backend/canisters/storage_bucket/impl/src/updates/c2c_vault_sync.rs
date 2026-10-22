@@ -1,11 +1,11 @@
 use crate::guards::caller_is_storage_index_canister;
-use crate::model::index_event_batch::EventToSync;
 use crate::model::vault::VaultOpOutcome;
 use crate::{RuntimeState, mutate_state};
 use canister_tracing_macros::trace;
 use ic_cdk::update;
 use storage_bucket_canister::c2c_vault_sync::{Response::*, *};
-use storage_index_canister::c2c_sync_bucket::CsamHashDenylisted;
+use storage_index_canister::CsamHashDenylisted;
+use storage_index_canister::StorageBucketEvent;
 use tracing::{error, info, warn};
 
 #[update(guard = "caller_is_storage_index_canister")]
@@ -14,7 +14,7 @@ fn c2c_vault_sync(args: Args) -> Response {
     mutate_state(|state| c2c_vault_sync_impl(args, state))
 }
 
-fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
+pub(crate) fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
     let mut quarantine_failures = Vec::new();
 
@@ -83,13 +83,11 @@ fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
                     // the same content uploads again elsewhere and is served publicly
                     VaultOpOutcome::AppliedDenylisted(hash, report_index) => {
                         state.data.vault.clear_blocked_attempts_for_hash(&hash);
-                        state
-                            .data
-                            .push_event_to_index(EventToSync::CsamHashDenylisted(CsamHashDenylisted {
-                                hash,
-                                report_index,
-                                derived: Some(false),
-                            }));
+                        state.push_event_to_index(StorageBucketEvent::CsamHashDenylisted(CsamHashDenylisted {
+                            hash,
+                            report_index,
+                            derived: Some(false),
+                        }));
                         denylist_source_hashes(&hash, report_index, state);
                     }
                     _ => (),
@@ -159,13 +157,11 @@ fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
 fn denylist_source_hashes(hash: &types::Hash, report_index: u64, state: &mut RuntimeState) {
     for source_hash in state.data.files.source_hashes(hash) {
         if state.data.vault.denylist_hash(source_hash, report_index, true) {
-            state
-                .data
-                .push_event_to_index(EventToSync::CsamHashDenylisted(CsamHashDenylisted {
-                    hash: source_hash,
-                    report_index,
-                    derived: Some(true),
-                }));
+            state.push_event_to_index(StorageBucketEvent::CsamHashDenylisted(CsamHashDenylisted {
+                hash: source_hash,
+                report_index,
+                derived: Some(true),
+            }));
             info!(report_index, "Vault: declared source of upheld content denylisted as derived");
         }
     }

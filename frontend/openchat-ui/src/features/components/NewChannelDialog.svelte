@@ -90,8 +90,8 @@
   }
 </script>
 
-<div class="layer" class:closing={flow.closing} role="dialog" aria-modal="true" use:modal={flow.escape(onCancel)}>
-  <div class="veil" onclick={dismiss} aria-hidden="true"></div>
+<div class="layer oc-dialog-layer" class:closing={flow.closing} role="dialog" aria-modal="true" use:modal={flow.escape(onCancel)}>
+  <div class="oc-veil" onclick={dismiss} aria-hidden="true"></div>
   <div class="card">
     <div class="head">
       <span class="badge"><span class="head-icon" class:embedded></span></span>
@@ -161,30 +161,15 @@
 <style>
   .error {
     font: var(--weight-medium) var(--text-sm) / 1.4 var(--font-sans);
-    color: var(--status-danger, #f5493d);
+    color: var(--status-danger);
   }
 
   .hint.bad {
-    color: var(--status-danger, #f5493d);
+    color: var(--status-danger);
   }
 
   .layer {
-    position: fixed;
-    inset: 0;
     z-index: 70;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: var(--space-22);
-  }
-
-  .veil {
-    position: absolute;
-    inset: 0;
-    background: var(--oc-veil, rgba(3, 3, 6, 0.72));
-    backdrop-filter: var(--oc-veil-blur, blur(4px));
-    -webkit-backdrop-filter: var(--oc-veil-blur, blur(4px));
-    animation: oc-veil-in var(--duration-base, 200ms) var(--ease-out) both;
   }
 
   .card {
@@ -196,21 +181,12 @@
     display: flex;
     flex-direction: column;
     border-radius: var(--radius-xl);
-    background: var(--surface-1, #0e0e12);
+    background: var(--surface-1);
     box-shadow:
-      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1)),
-      var(--shadow-modal, 0 30px 70px rgba(0, 0, 0, 0.45));
+      inset 0 0 0 1px var(--line-2),
+      var(--shadow-modal);
     overflow: hidden;
-    animation: oc-dlg-in var(--duration-slow, 280ms) var(--ease-out) both;
-  }
-
-  /* fading out: no longer catches clicks while (or after) it leaves */
-  .layer.closing {
-    pointer-events: none;
-  }
-
-  .closing .veil {
-    animation: oc-veil-out 170ms var(--ease-standard) both;
+    animation: oc-dlg-in var(--duration-slow) var(--ease-out) both;
   }
 
   .closing .card {
@@ -223,7 +199,7 @@
     align-items: center;
     gap: var(--space-12);
     padding: var(--space-16) var(--space-18);
-    border-block-end: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+    border-block-end: 1px solid var(--line-1);
   }
 
   .badge {
@@ -234,8 +210,8 @@
     width: 38px;
     height: 38px;
     border-radius: var(--radius-md);
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1));
+    background: var(--overlay-1);
+    box-shadow: inset 0 0 0 1px var(--line-2);
   }
 
   .head-icon,
@@ -251,7 +227,7 @@
   .head-icon {
     width: 19px;
     height: 19px;
-    background: var(--ink-2, #b9b9c6);
+    background: var(--ink-2);
   }
 
   .titles {
@@ -264,12 +240,12 @@
 
   .title {
     font: var(--weight-bold) var(--text-lg) / 1.25 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .subtitle {
     font: var(--weight-regular) var(--text-sm) / 1.3 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -287,13 +263,13 @@
   }
 
   .close:hover {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    background: var(--overlay-2);
   }
 
   .close-icon {
     width: 15px;
     height: 15px;
-    background: var(--ink-3, #9a9aa8);
+    background: var(--ink-3);
     mask: var(--icon-close) center/contain no-repeat;
   }
 
@@ -316,12 +292,12 @@
   .label {
     padding-inline-start: var(--space-4);
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
   }
 
   .optional {
     font-weight: var(--weight-regular);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .name-box {
@@ -332,18 +308,18 @@
     padding: 0 var(--space-14);
     box-sizing: border-box;
     border-radius: var(--radius-md);
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1));
+    background: var(--overlay-1);
+    box-shadow: inset 0 0 0 1px var(--line-2);
   }
 
   .name-box.filled {
-    box-shadow: inset 0 0 0 1px var(--line-3, rgba(255, 255, 255, 0.22));
+    box-shadow: inset 0 0 0 1px var(--line-3);
   }
 
   .hash {
     flex: none;
     font: var(--weight-bold) var(--text-base) / 1 var(--font-sans);
-    color: var(--ink-3, #8a8a99);
+    color: var(--ink-3);
   }
 
   .name-box input {
@@ -354,7 +330,7 @@
     outline: none;
     background: transparent;
     font: var(--weight-medium) var(--text-base) / 1 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .box {
@@ -362,9 +338,9 @@
     border: none;
     outline: none;
     border-radius: var(--radius-md);
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1));
-    color: var(--ink, #ececf1);
+    background: var(--overlay-1);
+    box-shadow: inset 0 0 0 1px var(--line-2);
+    color: var(--ink);
   }
 
   .box.url {
@@ -382,7 +358,7 @@
   .hint {
     padding-inline-start: var(--space-4);
     font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .hint.wrap {
@@ -396,7 +372,7 @@
     gap: var(--space-14);
     padding: var(--space-14) var(--space-16);
     border-radius: var(--radius-md);
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    background: var(--overlay-1);
   }
 
   .vis-text {
@@ -409,12 +385,12 @@
 
   .vis-title {
     font: var(--weight-semibold) var(--text-base) / 1.2 var(--font-sans);
-    color: var(--ink, #e4e4ec);
+    color: var(--ink);
   }
 
   .vis-hint {
     font: var(--weight-regular) var(--text-sm) / 1.45 var(--font-sans);
-    color: var(--ink-3, #8a8a99);
+    color: var(--ink-3);
     text-wrap: pretty;
   }
 
@@ -429,7 +405,7 @@
     align-items: center;
     gap: var(--space-8);
     padding: var(--space-16) var(--space-18);
-    border-block-start: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+    border-block-start: 1px solid var(--line-1);
   }
 
   .cancel {
@@ -440,13 +416,13 @@
     padding: 0 var(--space-14);
     border-radius: var(--radius-md);
     font: var(--weight-semibold) var(--text-base) / 1 var(--font-sans);
-    color: var(--accent, #ff5672);
+    color: var(--accent);
     cursor: pointer;
     user-select: none;
   }
 
   .cancel:hover {
-    background: var(--accent-soft, rgba(255, 86, 114, 0.1));
+    background: var(--accent-soft);
   }
 
   .grow {
@@ -462,16 +438,16 @@
     height: 44px;
     box-sizing: border-box;
     border-radius: var(--radius-md);
-    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    background: var(--overlay-2);
     font: var(--weight-semibold) var(--text-base) / 1 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
     cursor: default;
     user-select: none;
   }
 
   .cta.ok {
-    background: var(--accent, #ff5672);
-    color: var(--on-accent, #2e0512);
+    background: var(--accent);
+    color: var(--on-accent);
     cursor: pointer;
   }
 

@@ -61,6 +61,11 @@ impl Files {
         }
     }
 
+    // Whether the index holds the file, as added from `bucket`
+    pub fn contains(&self, file: &FileAdded, bucket: CanisterId) -> bool {
+        self.files_by_user.get(&file.into()).is_some_and(|f| f.bucket == bucket)
+    }
+
     pub fn remove(&mut self, file: FileRemoved, bucket: CanisterId) -> Result<RemoveFileSuccess, ()> {
         if let Some(HashAndBucket { hash, .. }) = self.files_by_user.remove(&(&file).into()) {
             let blob_reference = BlobReference {

@@ -28,15 +28,15 @@
     padding: var(--space-10) var(--space-10) var(--space-10) var(--space-14);
     box-sizing: border-box;
     border-radius: var(--radius-md);
-    background: color-mix(in oklch, var(--accent, #ff5672) 10%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent, #ff5672) 28%, transparent);
+    background: color-mix(in oklch, var(--accent) 10%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent) 28%, transparent);
   }
 
   .gem {
     flex: none;
     width: 16px;
     height: 16px;
-    background: var(--accent, #ff5672);
+    background: var(--accent);
     mask: var(--icon-gem) center/contain no-repeat;
   }
 
@@ -44,7 +44,7 @@
     flex: 1;
     min-width: 0;
     font: var(--weight-medium) var(--text-sm) / 1.4 var(--font-sans);
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
     text-wrap: pretty;
   }
 
@@ -55,9 +55,9 @@
     height: 30px;
     padding: 0 12px;
     border-radius: var(--radius-sm);
-    background: var(--accent, #ff5672);
+    background: var(--accent);
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
-    color: var(--on-accent, #fff);
+    color: var(--on-accent);
     cursor: pointer;
     user-select: none;
     white-space: nowrap;

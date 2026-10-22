@@ -28,8 +28,8 @@
     import AccountSelector from "./AccountSelector.svelte";
     import Scanner from "./Scanner.svelte";
     import SuccessIcon from "./SuccessIcon.svelte";
-    import type { TokenState } from "@shared_components/home/wallet/walletState.svelte";
-    import { WithdrawForm } from "@shared_components/home/wallet/withdrawForm.svelte";
+    import type { TokenState } from "@src/logic/wallet/walletState.svelte";
+    import { WithdrawForm } from "@src/logic/wallet/withdrawForm.svelte";
 
     interface Props {
         tokenState: TokenState;
@@ -51,6 +51,10 @@
     const form = new WithdrawForm(client, untrack(() => tokenState));
     let namedAccount = $derived(
         $namedAccountsStore.find((a) => a.account === form.targetAccount),
+    );
+    // Only the saved addresses the send could reach are offered
+    let fittingAccounts = $derived(
+        $namedAccountsStore.filter((a) => form.acceptsAddress(a.account)),
     );
     let errorMessage = $derived(error !== undefined ? error : $pinNumberErrorMessageStore);
 
@@ -108,7 +112,7 @@
     {#snippet iconButtons(color)}
         <!-- The target can't change mid-send, since the success sheet shows it as the recipient -->
         {#if !busy}
-            {#if $namedAccountsStore.length > 0}
+            {#if fittingAccounts.length > 0}
                 <InputIconButton onClick={() => (showAddressBook = true)}>
                     <Account {color} />
                 </InputIconButton>
@@ -146,7 +150,10 @@
 </TokenInput>
 
 {#if showAddressBook}
-    <AccountSelector onDismiss={() => (showAddressBook = false)} bind:targetAccount={form.targetAccount} />
+    <AccountSelector
+        accounts={fittingAccounts}
+        onDismiss={() => (showAddressBook = false)}
+        bind:targetAccount={form.targetAccount} />
 {/if}
 
 {#if errorMessage !== undefined}
@@ -253,12 +260,7 @@
             </Container>
         </Container>
         <Container gap={"sm"} direction={"vertical"} padding={["sm", "xl", "zero", "xl"]}>
-            <!-- Saved recipients are IC accounts only (principal, ICRC-1 account or ICP account
-                 identifier - what save_crypto_account accepts). A BTC or EVM address would open
-                 the recipient form with a save button that never enables and no way to see why.
-                 Keyed on the selected network, not the token: BTC sent over the ckBTC network
-                 goes to an IC principal, which can be saved. -->
-            {#if namedAccount === undefined && form.route.kind === "ledger"}
+            {#if namedAccount === undefined}
                 <Button secondary onClick={saveAddress}>
                     {#snippet icon(color)}
                         <Account {color} />

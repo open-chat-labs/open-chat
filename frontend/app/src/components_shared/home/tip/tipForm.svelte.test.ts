@@ -9,7 +9,7 @@ import {
     type OpenChat,
 } from "@client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { TipForm } from "./tipForm.svelte";
+import { TipForm } from "@src/logic/tip/tipForm.svelte";
 
 const icp = {
     name: "Internet Computer",
@@ -149,5 +149,25 @@ describe("choosing a tip", () => {
         expect(form.tokenChanging).toBe(true);
         form.balanceChecked();
         expect(form.tokenChanging).toBe(false);
+    });
+
+    // TokenState.refreshBalance returns its failure instead of toasting it, so a form that drops
+    // it would leave the user with a stale balance and no word of why
+    test("a balance refresh that fails is handed to the view, with the token's symbol", async () => {
+        const onRefreshFailed = vi.fn();
+        vi.mocked(client.refreshAccountBalance).mockRejectedValueOnce(new Error("offline"));
+        const failed = new TipForm(client, icp.ledger, { onRefreshFailed });
+        await vi.waitFor(() => expect(failed.tokenChanging).toBe(false));
+        expect(onRefreshFailed).toHaveBeenCalledWith(
+            expect.objectContaining({
+                key: "unableToRefreshAccountBalance",
+                params: { token: "ICP" },
+            }),
+        );
+
+        onRefreshFailed.mockClear();
+        const refreshed = new TipForm(client, icp.ledger, { onRefreshFailed });
+        await vi.waitFor(() => expect(refreshed.tokenChanging).toBe(false));
+        expect(onRefreshFailed).not.toHaveBeenCalled();
     });
 });

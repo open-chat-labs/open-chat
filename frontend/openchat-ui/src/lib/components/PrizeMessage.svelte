@@ -107,9 +107,9 @@
     max-width: 100%;
     padding: 4px;
     box-sizing: border-box;
-    border-radius: var(--radius-xs, 4px) 22px 22px var(--radius-xs, 4px);
-    background: var(--bubble-recv-bg, #191921);
-    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+    border-radius: var(--radius-xs) 22px 22px var(--radius-xs);
+    background: var(--bubble-recv-bg);
+    box-shadow: inset 0 0 0 1px var(--line-1);
   }
 
   .shell.last {
@@ -134,8 +134,8 @@
     padding: 22px 16px 18px;
     border-radius: 2px 18px 6px 6px;
     background:
-      radial-gradient(120% 120% at 50% 0%, color-mix(in oklch, var(--accent, #ff5672) 28%, transparent), transparent 65%),
-      var(--overlay-1, rgba(255, 255, 255, 0.045));
+      radial-gradient(120% 120% at 50% 0%, color-mix(in oklch, var(--accent) 28%, transparent), transparent 65%),
+      var(--overlay-1);
   }
 
   .coin {
@@ -149,13 +149,13 @@
   .kicker {
     margin-top: 6px;
     font: 600 11.5px/1 var(--font-sans);
-    color: var(--accent-bright, #ff8298);
+    color: var(--accent-bright);
   }
 
   .headline {
     font: 700 26px/1 var(--font-sans);
     letter-spacing: -0.02em;
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .facts {
@@ -163,7 +163,7 @@
     align-items: center;
     gap: 6px;
     font: 500 12.5px/1 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .sep {
@@ -181,7 +181,7 @@
   }
 
   .ends.soon {
-    color: var(--status-warning, #ffb03d);
+    color: var(--status-warning);
   }
 
   .clock,
@@ -205,14 +205,14 @@
     gap: 8px;
     padding: 12px 14px;
     border-radius: 6px;
-    background: var(--overlay-1, rgba(255, 255, 255, 0.045));
+    background: var(--overlay-1);
   }
 
   .tally {
     display: flex;
     justify-content: space-between;
     font: 500 12px/1 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .mono {
@@ -222,7 +222,7 @@
   .track {
     height: 6px;
     border-radius: 3px;
-    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+    background: var(--overlay-2);
     overflow: hidden;
   }
 
@@ -230,14 +230,14 @@
     display: block;
     height: 100%;
     border-radius: 3px;
-    background: var(--accent, #ff5672);
+    background: var(--accent);
     transition: width 0.5s;
   }
 
   .gates-title {
     font: 600 10.5px/1 var(--font-mono);
     letter-spacing: 0.06em;
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
   }
 
   .gates {
@@ -271,9 +271,9 @@
   }
 
   .claim {
-    background: var(--accent, #ff5672);
+    background: var(--accent);
     font: 700 14px/1 var(--font-sans);
-    color: var(--on-accent, #2e0512);
+    color: var(--on-accent);
     cursor: pointer;
     user-select: none;
   }
@@ -293,15 +293,15 @@
   }
 
   .outcome {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+    background: var(--overlay-2);
     font: 600 13px/1 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .outcome.won {
-    background: color-mix(in oklch, var(--status-online, #2ee6a8) 13%, transparent);
+    background: color-mix(in oklch, var(--status-online) 13%, transparent);
     font-size: 13.5px;
-    color: var(--status-online, #2ee6a8);
+    color: var(--status-online);
   }
 
   .outcome-icon {
@@ -319,7 +319,7 @@
 
   .time {
     font: 400 11px/1 var(--font-mono);
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
   }
 
   .foot {
@@ -333,7 +333,7 @@
     margin: 0;
     padding: 10px 10px 8px;
     font: var(--weight-regular) var(--text-base) / 1.45 var(--font-sans);
-    color: var(--bubble-recv-text, #e4e4ec);
+    color: var(--bubble-recv-text);
   }
 
   /* invisible copy reserves room on the last line so the stamp never overlaps text */

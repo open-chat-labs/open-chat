@@ -11,7 +11,7 @@ fn c2c_set_user_suspended(args: Args) -> Response {
     execute_update_even_if_frozen(|state| c2c_set_user_suspended_impl(args, state))
 }
 
-fn c2c_set_user_suspended_impl(args: Args, state: &mut RuntimeState) -> Response {
+pub(crate) fn c2c_set_user_suspended_impl(args: Args, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
     if state.data.members.set_suspended(args.user_id, args.suspended, now).is_some() {
         for channel_id in state.data.members.channels_for_member(args.user_id) {

@@ -190,6 +190,15 @@
         "translateFrom": "Przetłumacz z języka: {language}",
         "translatedFrom": "Przetłumaczono na urządzeniu z języka: {language}"
     },
+    "bridgedAccounts": {
+        "info": "Połącz swoje konta na innych platformach, aby wiadomości, które wysyłają do OpenChat przez nasze mosty, były wyświetlane jako Twoje.",
+        "link": "Połącz {platform}",
+        "linkFailed": "Nie udało się rozpocząć łączenia konta {platform}",
+        "section": "Połączone konta",
+        "unlink": "Rozłącz",
+        "unlinkFailed": "Nie udało się rozłączyć konta"
+    },
+    "bridgedUserUnknown": "Użytkownik {platform}",
     "nativeUpdate": {
         "downloadingTitle": "Chwileczkę! Aktualizowanie ...",
         "downloadingMessage": "Pobieramy szybką aktualizację i za chwilę będzie można kontynuować ...",
@@ -541,6 +550,7 @@
         "descriptionPlaceholder": "Opowiedz nam, czym zajmuje się Twoja społeczność",
         "details": "Detale",
         "directAndGroupChats": "Czat",
+        "dmsAndGroupChats": "Wiadomości prywatne i czaty grupowe",
         "directChats": "Bezpośrednie czaty",
         "edit": "Edytuj społeczność",
         "embed": "Dodaj osadzony kanał",
@@ -945,6 +955,7 @@
                 }
             },
             "unruly": {
+                "changeColours": "Zmień kolory",
                 "name": "Unruly",
                 "rules": "Wypełnij każde pole jednym z dwóch kolorów. Nigdy trzy tego samego koloru pod rząd w wierszu lub kolumnie, a w każdym wierszu i kolumnie ma być po połowie każdego koloru.",
                 "technique": {
@@ -955,10 +966,10 @@
                     "5": "Ta linia potrzebuje dokładnie jeszcze jednego pola jednego koloru, a postawienie go poza tymi trzema polami zostawiłoby tutaj trzy drugiego koloru pod rząd, więc każde inne puste pole w linii dostaje drugi kolor."
                 },
                 "demo": {
-                    "1": "Wypełnij każde pole na pomarańczowo lub fioletowo. Pola w obwódce są dane z góry, więc tych nie możesz zmienić.",
-                    "2": "Nigdy trzy tego samego koloru pod rząd, w poziomie ani w pionie. Tu jest o jedno pomarańczowe za dużo.",
-                    "3": "W każdym wierszu i kolumnie ma być po trzy każdego koloru. Ten wiersz ma cztery fioletowe.",
-                    "4": "Dwa pomarańczowe z przerwą. Pomarańczowe pomiędzy dałoby trzy, więc musi być fioletowe.",
+                    "1": "Wypełnij każde pole na jasno lub ciemno. Niektóre pola są wypełnione z góry i tych nie możesz zmienić.",
+                    "2": "Nigdy trzy tego samego koloru pod rząd, w poziomie ani w pionie. Tu jest o jedno jasne za dużo.",
+                    "3": "W każdym wierszu i kolumnie ma być po trzy każdego koloru. Ten wiersz ma cztery ciemne.",
+                    "4": "Dwa jasne z przerwą. Jasne pomiędzy dałoby trzy, więc musi być ciemne.",
                     "5": "Każde pole wypełnione, żadnej trójki pod rząd i po trzy każdego koloru w każdym wierszu i kolumnie."
                 },
                 "hint": {
@@ -984,8 +995,8 @@
                     }
                 },
                 "colour": {
-                    "1": "pomarańczowe",
-                    "2": "fioletowe"
+                    "1": "jasne",
+                    "2": "ciemne"
                 }
             },
             "chat_rooms": {
@@ -2035,6 +2046,12 @@
             "urlRules": "link do dodatkowych szczegółów"
         },
         "neuronControllerAction": "Działania kontrolera neuronów",
+        "neuronDissolveDelayTooShort": "Jego opóźnienie rozwiązania ({delay} dni) jest krótsze niż {minimum} dni wymagane do głosowania",
+        "neuronNotEligible": "Nie był uprawniony do głosowania, gdy propozycja została złożona",
+        "neuronVoteCallFailed": "Nie udało się połączyć z zarządzaniem - spróbuj ponownie",
+        "neuronVoteRejected": "Głos został odrzucony: {message}",
+        "neuronVotesFailed": "Twoje neurony nie mogły zagłosować",
+        "neuronVotesFailedIntro": "Żaden z Twoich neuronów nie mógł zagłosować nad tą propozycją:",
         "noEligibleNeurons": "Nie znaleziono odpowiednich neuronów",
         "noEligibleNeuronsMoreInfo": "Więcej informacji na temat głosowania i zarządzania znajdziesz w <a target=\"_blank\" href=\"https://oc.app/blog/governance\">tym poście na blogu</a>.",
         "noEligibleNeuronsPrincipalIntro": "Nie znaleziono odpowiednich lub połączonych neuronów. Aby głosować na propozycje z poziomu OpenChat, musisz najpierw dodać swój principal OpenChat jako klawisz skrótu do dowolnych neuronów, za pomocą których chcesz głosować.",
@@ -2062,7 +2079,7 @@
                 "regular": "Aby wniosek mógł zostać przyjęty, muszą być spełnione następujące dwa warunki:"
             }
         },
-        "proposalNotAceptingVotes": "Na tę propozycję nie można głosować — spróbuj ponownie załadować stronę",
+        "proposalNotAcceptingVotes": "Głosowanie nad tą propozycją zostało zakończone",
         "proposalsBotAction": "Propozycje działań botów",
         "proposedBy": "zaproponowany przez",
         "readless": "Mniej czytać",
@@ -2407,12 +2424,18 @@
         },
         "quote": "Cytat",
         "quoteError": "Błąd podczas pobierania ofert do zamiany {tokenIn}",
+        "quotes": {
+            "best": "Najlepszy kurs",
+            "declined": "Nie można wymienić tej kwoty",
+            "failed": "Nie udało się uzyskać oferty",
+            "unsupported": "Wymiana nieobsługiwana"
+        },
         "quoteTooLow": "Najlepsza podana stawka to {rate} {tokenOut} za {tokenIn} z {dex}. Daje to {amountOut} {tokenOut} dla {amountIn} {tokenIn}. Możesz dokonać zamiany tylko wtedy, gdy podana kwota przekracza {minAmountOut}.",
         "requote": "Zacytuj ponownie",
         "swap": "Zamieniać",
         "swapNotAvailable": "Obecnie nie ma możliwości zamiany {tokenIn} na żaden inny token",
         "swapToken": "Zamień {tokenIn}",
-        "swapTokenTo": "Zamień {tokenIn} na {tokenOut}",
+        "swapTokenTo": "Zamień {amountIn} {tokenIn} na {tokenOut}",
         "warningValueDropped": "Ze względu na niską płynność wartość {tokenOut}, którą otrzymasz, jest mniejsza niż 90% wartości {tokenIn}, którą wymienisz (w oparciu o notowaną wartość tych tokenów w USD).",
         "warningValueUnknown": "Aktualna cena dolarowa jednego lub większej liczby tych tokenów nie jest dostępna, dlatego nie można określić, czy ta zamiana jest opłacalna.",
         "youWillReceive": "Otrzymasz **{amountOut}** {tokenOut} (${usdOut}) za **{amountIn}** {tokenIn} (${usdIn})."

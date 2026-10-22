@@ -14,7 +14,7 @@ import {
     type UserSummary,
 } from "@client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { CryptoTransferForm } from "./cryptoTransferForm.svelte";
+import { CryptoTransferForm } from "@src/logic/cryptoTransfer/cryptoTransferForm.svelte";
 
 const icp = {
     name: "Internet Computer",

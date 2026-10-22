@@ -4,7 +4,7 @@
     import Typing from "@shared_components/Typing.svelte";
     import { trackedEffect } from "@src/utils/effects.svelte";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
-    import { AvatarSize, type ChatIdentifier, chatIdentifiersEqual, chatListScopeStore, type ChatType, currentUserIdStore, currentUserStore, type EnhancedReplyContext, iconSize, localUpdates, type Member, type Message, type MessageReminderCreatedContent, mobileWidth, OpenChat, publish, routeForMessage, routeStore, screenWidth, ScreenWidth, selectedChatBlockedUsersStore, selectedChatMembersStore, selectedChatWebhooksStore, selectedCommunityMembersStore, type SelectedEmoji, selectedServerChatStore, type SenderContext, translationsStore, unconfirmedReadByThem, undeletingMessagesStore, type UserSummary } from "@client";
+    import { allUsersStore, AvatarSize, isDeletedUser, type ChatIdentifier, chatIdentifiersEqual, chatListScopeStore, type ChatType, BRIDGE_PLATFORM_NAMES, bridgedAuthorName, bridgedFrom, bridgedUserKey, bridgedUsersStore, currentUserIdStore, currentUserStore, type EnhancedReplyContext, iconSize, localUpdates, type Member, type Message, type MessageReminderCreatedContent, mobileWidth, OpenChat, publish, routeForMessage, routeStore, screenWidth, ScreenWidth, selectedChatBlockedUsersStore, selectedChatMembersStore, selectedChatWebhooksStore, selectedCommunityMembersStore, type SelectedEmoji, selectedServerChatStore, type SenderContext, translationsStore, unconfirmedReadByThem, undeletingMessagesStore, type UserSummary } from "@client";
     import { getContext, onDestroy, onMount, tick } from "svelte";
     import { _, locale } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
@@ -164,9 +164,6 @@
     let botProfile: BotProfileProps | undefined = $state(undefined);
     let confirmedReadByThem = $derived(client.messageIsReadByThem(chatId, msg.messageIndex));
     let readByThem = $derived(confirmedReadByThem || $unconfirmedReadByThem.has(msg.messageId));
-    let streak = $derived(sender?.streak ?? 0);
-    let chitEarned = $derived(sender?.totalChitEarned ?? 0);
-    let hasAchievedMaxStreak = $derived((sender?.maxStreak ?? 0) >= 365);
 
     trackedEffect("read-by-them", () => {
         if (confirmedReadByThem && $unconfirmedReadByThem.has(msg.messageId)) {
@@ -361,7 +358,7 @@
     }
 
     function openUserProfile(ev: Event) {
-        if (sender?.kind === "bot") {
+        if (sender?.kind === "bot" && linkedUser === undefined) {
             botProfile = {
                 botId: sender.userId,
                 chatId,
@@ -371,7 +368,7 @@
             ev.target?.dispatchEvent(
                 new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
                     detail: {
-                        userId: msg.sender,
+                        userId: linkedUser?.userId ?? msg.sender,
                         chatButton: multiUserChat,
                         inGlobalContext: false,
                     },
@@ -414,7 +411,28 @@
             ? reservedMediaWidth(mediaDimensions.width, mediaDimensions.height)
             : undefined,
     );
-    let canTip = $derived(canTipMessages && !me && confirmed && !inert && !failed);
+    let bridged = $derived(bridgedFrom(senderContext));
+    let bridgedUser = $derived(
+        bridged !== undefined ? $bridgedUsersStore.get(bridgedUserKey(bridged)!) : undefined,
+    );
+    // The OpenChat user who linked the account the message was relayed from, shown as its author. If
+    // they've deleted their account, the account's own profile is shown again.
+    let linkedUser = $derived.by(() => {
+        const user =
+            bridgedUser?.linkedUserId !== undefined
+                ? $allUsersStore.get(bridgedUser.linkedUserId)
+                : undefined;
+        return user !== undefined && !isDeletedUser(user) ? user : undefined;
+    });
+    // A linked account's messages carry its OpenChat user's badges, not the bridge bot's
+    let author = $derived(linkedUser ?? sender);
+    let streak = $derived(author?.streak ?? 0);
+    let chitEarned = $derived(author?.totalChitEarned ?? 0);
+    let hasAchievedMaxStreak = $derived((author?.maxStreak ?? 0) >= 365);
+    // A tip would go to the bridge bot, not the author shown
+    let canTip = $derived(
+        canTipMessages && !me && confirmed && !inert && !failed && bridged === undefined,
+    );
     let inThread = $derived(threadRootMessage !== undefined);
     let threadRootMessageIndex = $derived(
         threadRootMessage?.messageId === msg.messageId
@@ -453,11 +471,14 @@
     );
     let canUndelete = $derived(msg.deleted && msg.content.kind !== "deleted_content");
     let senderDisplayName = $derived(
-        client.getDisplayName(
-            msg.sender,
-            $selectedCommunityMembersStore,
-            $selectedChatWebhooksStore,
-        ),
+        bridged !== undefined && linkedUser === undefined
+            ? (bridgedAuthorName(bridgedUser) ??
+              $_("bridgedUserUnknown", { values: { platform: BRIDGE_PLATFORM_NAMES[bridged.kind] } }))
+            : client.getDisplayName(
+                  linkedUser?.userId ?? msg.sender,
+                  $selectedCommunityMembersStore,
+                  $selectedChatWebhooksStore,
+              ),
     );
     // The details held can be for another chat, when a thread preview shows a message from a chat
     // other than the one selected
@@ -468,8 +489,12 @@
     );
     let tips = $derived(msg.tips ? Object.entries(msg.tips) : []);
     let canBlockUser = $derived(canBlockUsers && !$selectedChatBlockedUsersStore.has(msg.sender));
+    // A bot finalises a message it streams by editing it, so that isn't shown as an edit. A bridge
+    // bot sends its messages finalised, and only edits them to relay an edit made on the other
+    // platform.
     let edited = $derived(
-        msg.edited && (senderContext?.kind !== "bot" || !senderContext.finalised),
+        msg.edited &&
+            (senderContext?.kind !== "bot" || !senderContext.finalised || bridged !== undefined),
     );
     let canShare = $derived(canShareMessage(msg.content));
     let canForward = $derived(client.canForward(msg.content));
@@ -554,7 +579,11 @@
                                 <div class="avatar" onclick={openUserProfile}>
                                     <Avatar
                                         maxStreak={hasAchievedMaxStreak}
-                                        url={client.userAvatarUrl(sender)}
+                                        url={linkedUser !== undefined
+                                            ? client.userAvatarUrl(linkedUser)
+                                            : bridged !== undefined
+                                              ? client.bridgedAvatarUrl(bridged, bridgedUser)
+                                              : client.userAvatarUrl(sender)}
                                         userId={msg.sender}
                                         size={$mobileWidth
                                             ? AvatarSize.Small
@@ -598,13 +627,14 @@
                                         </h4>
 
                                         <Badges
-                                            uniquePerson={sender?.isUniquePerson}
-                                            diamondStatus={sender?.diamondStatus}
+                                            uniquePerson={author?.isUniquePerson}
+                                            diamondStatus={author?.diamondStatus}
                                             {streak}
                                             {chitEarned} />
                                         <BotBadge
                                             bot={senderContext?.kind === "bot"}
-                                            webhook={senderContext?.kind === "webhook"} />
+                                            webhook={senderContext?.kind === "webhook"}
+                                            bridge={bridged?.kind} />
                                         {#if sender !== undefined && multiUserChat}
                                             <WithRole
                                                 userId={sender.userId}

@@ -1,10 +1,13 @@
 use crate::activity_notifications::handle_activity_notification;
+use crate::guards::caller_is_local_user_index;
 use crate::{GroupEventPusher, RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::EditMessageArgs;
+use group_canister::c2c_bot_edit_message;
 use group_canister::edit_message_v2::*;
-use types::{Achievement, EventIndex, OCResult};
+use oc_error_codes::OCErrorCode;
+use types::{Achievement, BotPermissions, EventIndex, MessageContentInitial, OCResult, UserId};
 
 #[update(msgpack = true)]
 #[trace]
@@ -14,13 +17,62 @@ fn edit_message_v2(args: Args) -> Response {
 
 fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let member = state.get_calling_member(None, true)?;
-    let now = state.env.now();
     let sender = member.user_id();
     let is_bot = member.user_type().is_bot();
+    let min_visible_event_index = member.min_visible_event_index();
+
+    commit(sender, is_bot, min_visible_event_index, args, state)
+}
+
+// For now only bridge bots can do this, which the LocalUserIndex checks, to relay the edits made on
+// the other platform to the messages they relayed
+#[update(guard = "caller_is_local_user_index", msgpack = true)]
+#[trace]
+fn c2c_bot_edit_message(args: c2c_bot_edit_message::Args) -> c2c_bot_edit_message::Response {
+    execute_update(|state| c2c_bot_edit_message_impl(args, state)).into()
+}
+
+fn c2c_bot_edit_message_impl(args: c2c_bot_edit_message::Args, state: &mut RuntimeState) -> OCResult {
+    let content: MessageContentInitial = args.content.into();
+
+    if !state.data.is_bot_permitted(
+        &args.bot_id,
+        &args.initiator,
+        &BotPermissions::from_message_permission((&content).into()),
+    ) {
+        return Err(OCErrorCode::InitiatorNotAuthorized.into());
+    }
+
+    state
+        .data
+        .chat
+        .events
+        .check_relayed_edit(args.thread, args.message_id, &content, state.env.now())?;
+
+    // The bot isn't a member, and sees the whole chat. It can only edit its own messages, since the
+    // edit is made as it.
+    commit(
+        args.bot_id,
+        true,
+        EventIndex::default(),
+        Args {
+            thread_root_message_index: args.thread,
+            message_id: args.message_id,
+            content,
+            block_level_markdown: Some(args.block_level_markdown),
+            new_achievement: false,
+            og_previews: args.og_previews,
+        },
+        state,
+    )
+}
+
+fn commit(sender: UserId, is_bot: bool, min_visible_event_index: EventIndex, args: Args, state: &mut RuntimeState) -> OCResult {
+    let now = state.env.now();
 
     let edit_message_args = EditMessageArgs {
         sender,
-        min_visible_event_index: member.min_visible_event_index(),
+        min_visible_event_index,
         thread_root_message_index: args.thread_root_message_index,
         message_id: args.message_id,
         content: args.content.into(),

@@ -57,6 +57,7 @@ import {
     defaultChatPermissions,
     defaultChatRules,
     deletedUser,
+    directMessageCommandInstance,
     emptyEventsResponse,
     extractEnabledLinks,
     extractUserIdsFromMentions,
@@ -188,6 +189,7 @@ import {
     type DataContent,
     type DeleteCryptoAccountResponse,
     type DexId,
+    type DexQuote,
     type DiamondMembershipDuration,
     type DiamondMembershipFees,
     type DiamondMembershipStatus,
@@ -303,6 +305,12 @@ import {
     type SearchGroupChatResponse,
     type SelectedChannelRoute,
     type SelectedCommunityRoute,
+    type DirectBotMessageOutcome,
+    type SendMessageOutcome,
+    type SignInMethod,
+    type SignUpOutcome,
+    type EmailSignInRequest,
+    type SignInOutcome,
     type SendMessageResponse,
     type SendMessageSuccess,
     type SetDisplayNameResponse,
@@ -365,10 +373,19 @@ import {
     type WithdrawCryptocurrencyResponse,
     type OCError,
     type ProposedProtectedAction,
+    type BridgedUserId,
+    type BridgedUserLinkCode,
+    type BridgedUserSummary,
+    type BridgePlatform,
+    bridgedAuthorAvatarUrl,
+    bridgedUserId,
+    bridgedUserIdsFromEvents,
+    bridgedUserKey,
     buildBlobUrl,
     isAndroidTauriApp,
     isIosTauriApp,
     isPrincipalValid,
+    messageContextToString,
     paymentSpenderAccount,
 } from "@shared";
 import { tick } from "svelte";
@@ -377,15 +394,16 @@ import { get, type Unsubscriber } from "svelte/store";
 import { AndroidWebAuthnErrorCode } from "tauri-plugin-oc-api";
 import type { OpenChatConfig } from "./config";
 import { approveFromExternalWallet, type SignerWallet, type WalletAccount } from "./utils/signer";
+import { unarchiveChatsWithUnread } from "./utils/autoUnarchive";
 import {
     FilteredProposals,
     achievementsStore,
     allChatsStore,
     allServerChatsStore,
-    allUsersStore,
     anonUserStore,
     askForNotificationPermission,
     bitcoinAddress,
+    bridgedUsersStore,
     chatListScopeStore,
     chatSummariesListStore,
     chatSummariesStore,
@@ -480,6 +498,7 @@ import {
     storageStore,
     suspendedUserStore,
     swappableTokensStore,
+    swapProvidersStore,
     threadEventIndexesLoadedStore,
     threadEventsStore,
     translationsStore,
@@ -538,7 +557,10 @@ import {
     communityRestricted,
     moderationFlagsRestricted,
 } from "./utils/restrictedContent";
+import { walletConfigWithoutToken } from "./utils/walletConfig";
 import {
+    defaultChat,
+    navigationAfterArchivingOpenChat,
     activeUserIdFromEvent,
     applyTranslation,
     buildCryptoTransferText,
@@ -576,7 +598,6 @@ import {
     doesMessageFailFilter,
     eventIndexesLoaded,
     findMessageById,
-    getMembersString,
     getMessageText,
     getTypingString,
     groupBySender,
@@ -622,6 +643,12 @@ import {
 import { joinGroupFailureMessage } from "./utils/join";
 import { currentTip, tipResult } from "./utils/tip";
 import { cryptoTransferResult } from "./utils/cryptoTransfer";
+import { emailLinkFailure, signInOutcome, signInProvider } from "./utils/signIn";
+import {
+    createdUser as createdUserFrom,
+    referralCodeRefused,
+    registerFailureKey,
+} from "./utils/signUp";
 import {
     executionPaymentAmount,
     PROPOSAL_EXECUTION_WINDOW,
@@ -721,8 +748,6 @@ import { addQueryStringParam } from "./utils/url";
 import {
     buildReducedProfileDataList,
     buildUsernameList,
-    compareIsNotYouThenUsername,
-    compareUsername,
     formatLastOnlineDate,
     missingUserIds,
     shouldRestartForNewUserId,
@@ -740,6 +765,9 @@ const MAX_TIMEOUT_MS = Math.pow(2, 31) - 1;
 const CHAT_UPDATE_INTERVAL = 5000;
 const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE_MILLIS;
 const BOT_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
+// A bridged account's profile is fetched again once it's this old, as messages are loaded
+const BRIDGED_USER_MAX_AGE = 10 * ONE_MINUTE_MILLIS;
+const BRIDGED_USER_RETRY_DELAY = 5_000;
 const BOT_UPDATE_IDLE_INTERVAL = 5 * ONE_MINUTE_MILLIS;
 const USER_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
 // The daily puzzle changes at rollover and when an operator regenerates or enables it; an
@@ -763,6 +791,12 @@ function describeError(err: unknown): string {
         return String(err);
     }
 }
+
+// What #sendMessageCommon tells a caller that waits only until its message shows in the chat
+type SendHooks = {
+    posted(): void;
+    rulesDeclined(): void;
+};
 
 // The users who are known not to be members of the chat or community with this key, and the lookups
 // in flight of those who may be, so that nobody is looked up twice
@@ -789,6 +823,9 @@ const SWAP_OUTPUT_CHECK_INTERVAL_MS = 2000;
 const SWAP_OUTPUT_CHECKS = 10;
 
 export class OpenChat {
+    // When each bridged account's profile was last fetched, keyed by `bridgedUserKey`
+    #bridgedUsersFetchedAt = new Map<string, number>();
+    #bridgedUsersInFlight = new Set<string>();
     #mobileLayout: "v1" | "v2";
     #worker: WorkerAgent;
     #authIdentityStorage: IdentityStorage;
@@ -866,6 +903,8 @@ export class OpenChat {
     #inflightBalanceRefreshPromises: Map<string, Promise<bigint>> = new Map();
     #videoCallsInProgress: Set<bigint> = new Set();
     #serverVideoCallsInProgress: ChatMap<bigint> = new ChatMap();
+    // Archived chats this client is bringing out of the archive, until each request settles
+    #autoUnarchiving = new ChatSet();
     #locale!: string;
     #vapidPublicKey: string;
     #getBtcAddressPromise: Promise<string> | undefined = undefined;
@@ -1239,23 +1278,100 @@ export class OpenChat {
     }
 
     login(): void {
+        void this.#loginWithAuthClient();
+    }
+
+    // Signs in through the auth client's window (Internet Identity, NFID): "loaded" once the
+    // identity has loaded, "closed" if the window gave up (closed, or its own error), "load_failed"
+    // if the identity it gave couldn't be loaded
+    #loginWithAuthClient(): Promise<"loaded" | "closed" | "load_failed"> {
         this.updateIdentityState({ kind: "logging_in" });
         const authProvider = selectedAuthProviderStore.value!;
-        this.#authClient.then((c) => {
-            c.login({
-                ...this.getAuthClientOptions(authProvider),
-                onSuccess: () =>
-                    this.#authIdentityStorage
-                        .getKeyAndChain()
-                        .then((identity) =>
-                            this.#loadedAuthenticationIdentity(identity, authProvider),
-                        ),
-                onError: (err) => {
-                    this.updateIdentityState({ kind: "anon" });
-                    console.warn("Login error from auth client: ", err);
-                },
+        return new Promise((resolve) => {
+            this.#authClient.then((c) => {
+                c.login({
+                    ...this.getAuthClientOptions(authProvider),
+                    onSuccess: () =>
+                        this.#authIdentityStorage
+                            .getKeyAndChain()
+                            .then((identity) =>
+                                this.#loadedAuthenticationIdentity(identity, authProvider),
+                            )
+                            .then(
+                                () => resolve("loaded"),
+                                (err) => {
+                                    this.logError("Unable to load the signed-in identity", err);
+                                    resolve("load_failed");
+                                },
+                            ),
+                    onError: (err) => {
+                        this.updateIdentityState({ kind: "anon" });
+                        console.warn("Login error from auth client: ", err);
+                        resolve("closed");
+                    },
+                });
             });
         });
+    }
+
+    /**
+     * Signs in and settles once the identity has loaded, with how it went. The passkey is the
+     * native app's or the browser's, whichever this is. `signal` gives the sign-in up: it settles
+     * `cancelled` then, even if the identity goes on to load.
+     */
+    async signIn(method: SignInMethod, signal?: AbortSignal): Promise<SignInOutcome> {
+        if (signal?.aborted) return { kind: "cancelled" };
+        const abandoned = new Promise<SignInOutcome>((resolve) =>
+            signal?.addEventListener("abort", () => resolve({ kind: "cancelled" }), {
+                once: true,
+            }),
+        );
+        const outcome = await Promise.race([this.#signIn(method), abandoned]);
+        return signal?.aborted ? { kind: "cancelled" } : outcome;
+    }
+
+    async #signIn(method: SignInMethod): Promise<SignInOutcome> {
+        selectedAuthProviderStore.set(signInProvider(method));
+        try {
+            switch (method.kind) {
+                case "passkey":
+                    await (this.isNativeApp()
+                        ? this.signInWithAndroidWebAuthn()
+                        : this.signInWithWebAuthn());
+                    break;
+                case "auth_client": {
+                    const login = await this.#loginWithAuthClient();
+                    if (login === "closed") return { kind: "cancelled" };
+                    if (login === "load_failed") return signInOutcome(identityStateStore.value);
+                    break;
+                }
+                case "wallet": {
+                    const resp = await this.signInWithWallet(
+                        method.token,
+                        method.address,
+                        method.signature,
+                        true,
+                    );
+                    if (resp.kind !== "success") {
+                        return { kind: "failed", reason: i18nKey("loginDialog.unexpectedError") };
+                    }
+                    break;
+                }
+            }
+        } catch (err) {
+            // the native credential manager couldn't authenticate at all
+            if (err === "AUTH_FAILED") {
+                return { kind: "failed", reason: i18nKey("native.auth.errors.default") };
+            }
+            // the identity was being loaded, so it wasn't the prompt: that load failed
+            if (identityStateStore.value.kind === "loading_user") {
+                this.logError("Unable to load the signed-in identity", err);
+                return signInOutcome(identityStateStore.value);
+            }
+            // the passkey prompt dismissed, or a passkey OpenChat doesn't know
+            return { kind: "cancelled" };
+        }
+        return signInOutcome(identityStateStore.value);
     }
 
     buildAuthProviderUrl(authProvider: AuthProvider): string | undefined {
@@ -1855,7 +1971,22 @@ export class OpenChat {
     archiveChat(chatId: ChatIdentifier): Promise<boolean> {
         const undo = localUpdates.updateArchived(chatId, true);
         if (chatIdentifiersEqual(chatId, selectedChatIdStore.value)) {
-            this.selectDefaultChat();
+            // Leave it. It's the chat last opened in this scope, so forget that or the list
+            // would open it again, which un-archives it.
+            const scope = chatListScopeStore.value;
+            lastSelectedChatByScopeStore.update((map) => {
+                map.delete(scope);
+                return map;
+            });
+            publish(
+                "navigateTo",
+                navigationAfterArchivingOpenChat(
+                    chatId,
+                    scope,
+                    chatSummariesListStore.value,
+                    get(mobileWidth),
+                ),
+            );
         }
         return this.#worker
             .send({ kind: "archiveChat", chatId })
@@ -1871,10 +2002,14 @@ export class OpenChat {
             });
     }
 
-    unarchiveChat(chatId: ChatIdentifier): Promise<boolean> {
-        const undo = localUpdates.updateArchived(chatId, false);
+    // One request for all of them, shown unarchived at once and put back together if it fails
+    unarchiveChats(chatIds: ChatIdentifier[]): Promise<boolean> {
+        const undos = withPausedStores(() =>
+            chatIds.map((chatId) => localUpdates.updateArchived(chatId, false)),
+        );
+        const undo = () => withPausedStores(() => undos.forEach((undo) => undo()));
         return this.#worker
-            .send({ kind: "unarchiveChat", chatId })
+            .send({ kind: "unarchiveChats", chatIds })
             .then((resp) => {
                 if (resp.kind !== "success") {
                     undo();
@@ -2121,6 +2256,7 @@ export class OpenChat {
 
     subscribeToMessageActivityFeed(
         subscribeFn: (value: MessageActivityFeedResponse, final: boolean) => void,
+        onError?: (err: unknown) => void,
     ) {
         this.#worker
             .stream({
@@ -2138,6 +2274,7 @@ export class OpenChat {
                     this.getMissingUsers(userIds);
                     subscribeFn(response, final);
                 },
+                onError,
             });
     }
 
@@ -2517,6 +2654,11 @@ export class OpenChat {
      */
     showTrace = showTrace;
     userAvatarUrl = userAvatarUrl;
+
+    // The avatar of the author of a message a bridge bot relayed from another platform
+    bridgedAvatarUrl(id: BridgedUserId, summary: BridgedUserSummary | undefined): string {
+        return bridgedAuthorAvatarUrl(id, summary, this.config.blobUrlPattern) ?? userAvatarUrl();
+    }
     formatTokens = formatTokens;
     validateTokenInput = validateTokenInput;
     isAccountOfMultiUserCanisterUserId = isAccountOfMultiUserCanisterUserId;
@@ -3775,6 +3917,7 @@ export class OpenChat {
         }
         this.#noteUsersSeenInChat(chatId, userIds);
         userStore.addWebhookIds([...webhooks]);
+        void this.getBridgedUsers(bridgedUserIdsFromEvents(events));
         const newChatUserIds = [...allUserIds].filter(
             (u) => u !== userId && !selectedChatUserIdsStore.value.has(u),
         );
@@ -3788,9 +3931,6 @@ export class OpenChat {
     communityMessageRegex = communityMessageRegex;
     groupMessageRegex = groupMessageRegex;
     metricsEqual = metricsEqual;
-    getMembersString = getMembersString;
-    compareIsNotYouThenUsername = compareIsNotYouThenUsername;
-    compareUsername = compareUsername;
 
     #blockUserLocally(chatId: ChatIdentifier, userId: string): UndoLocalUpdate {
         const undos = [
@@ -4056,7 +4196,7 @@ export class OpenChat {
         if (chat !== undefined) {
             // If an archived chat has been explicitly selected (for example by searching for it) then un-archive it
             if (chat.membership.archived) {
-                this.unarchiveChat(chat.id);
+                this.unarchiveChats([chat.id]);
             }
 
             // if it's a known chat let's select it
@@ -5247,6 +5387,7 @@ export class OpenChat {
         mentioned: User[] = [],
         retrying: boolean,
         ogPreviewsPromise?: Promise<OgPreview[]>,
+        hooks?: SendHooks,
     ): Promise<SendMessageResponse> {
         const { chatId, threadRootMessageIndex } = messageContext;
 
@@ -5261,6 +5402,7 @@ export class OpenChat {
         if (this.#rulesNeedAccepting(chatId)) {
             acceptedRules = await this.#promptForRuleAcceptance();
             if (acceptedRules === undefined) {
+                hooks?.rulesDeclined();
                 return CommonResponses.failure();
             }
         }
@@ -5279,6 +5421,7 @@ export class OpenChat {
 
         if (!retrying) {
             this.#postSendMessage(chat, messageEvent, threadRootMessageIndex);
+            hooks?.posted();
         } else {
             // remove the *original* event from the failed store
             await this.deleteFailedMessage(chatId, message.messageId, threadRootMessageIndex);
@@ -5612,6 +5755,7 @@ export class OpenChat {
         forwarded: boolean = false,
         messageIdIfRetrying?: bigint,
         ogPreviewsPromise?: Promise<OgPreview[]>,
+        hooks?: SendHooks,
     ): Promise<SendMessageResponse> {
         const { chatId, threadRootMessageIndex } = messageContext;
         const chat = allChatsStore.value.get(chatId);
@@ -5643,7 +5787,68 @@ export class OpenChat {
             mentioned,
             messageIdIfRetrying !== undefined,
             ogPreviewsPromise,
+            hooks,
         );
+    }
+
+    // the chats and threads with a send from the composer not yet posted or refused
+    #sendsBeingPosted = new Set<string>();
+
+    /**
+     * Sends what the composer holds (its text, and an attachment it captions) and settles as soon as
+     * the message shows in the chat, or is refused before that: the rules turned down, the PIN
+     * prompt dismissed, the user throttled. A second send from the same chat or thread while one is
+     * on its way is `busy`. Never rejects.
+     */
+    async sendMessage(
+        messageContext: MessageContext,
+        textContent: string | undefined,
+        blockLevelMarkdown: boolean,
+        attachment: AttachmentContent | undefined,
+        mentioned: User[] = [],
+    ): Promise<SendMessageOutcome> {
+        const key = messageContextToString(messageContext);
+        if (this.#sendsBeingPosted.has(key)) return { kind: "busy" };
+        this.#sendsBeingPosted.add(key);
+        try {
+            return await new Promise<SendMessageOutcome>((settle) => {
+                let rulesDeclined = false;
+                this.sendMessageWithContent(
+                    messageContext,
+                    this.#getMessageContent(textContent, attachment),
+                    blockLevelMarkdown,
+                    mentioned,
+                    false,
+                    undefined,
+                    fetchOgPreviews(
+                        extractEnabledLinks(textContent),
+                        import.meta.env.OC_PREVIEW_PROXY_URL,
+                    ),
+                    {
+                        posted: () => settle({ kind: "posted" }),
+                        rulesDeclined: () => (rulesDeclined = true),
+                    },
+                ).then(
+                    // settled already if it was posted; otherwise it was refused before posting
+                    (resp) =>
+                        settle(
+                            resp.kind === "message_throttled"
+                                ? { kind: "throttled" }
+                                : rulesDeclined
+                                  ? { kind: "rules_declined" }
+                                  : { kind: "failed" },
+                        ),
+                    (err) => {
+                        // the user dismissed the PIN prompt
+                        if (err === "cancelled") return settle({ kind: "pin_cancelled" });
+                        this.logError("Unable to send a message", err);
+                        settle({ kind: "failed" });
+                    },
+                );
+            });
+        } finally {
+            this.#sendsBeingPosted.delete(key);
+        }
     }
 
     #throttleSendMessage(): boolean {
@@ -6546,6 +6751,75 @@ export class OpenChat {
             });
     }
 
+    // referral codes the backend turned down: they're never sent again
+    #refusedReferralCodes = new Set<string>();
+    // a passkey was made for the sign-up in progress; another would leave the person two
+    #passkeyMadeForSignUp = false;
+
+    /**
+     * Makes the account: a passkey first, unless the identity signed in already has no account
+     * (signed in some other way, or the passkey made on an earlier try), then the user. The
+     * referral code set (setReferralCode) goes with it, unless it was turned down before. No
+     * account is made unless the person has agreed to the terms (`termsAccepted`).
+     * `signal` gives the sign-up up before the account is asked for; once asked for, it's made.
+     */
+    async signUp(
+        username: string,
+        email: string | undefined,
+        termsAccepted: boolean,
+        signal?: AbortSignal,
+    ): Promise<SignUpOutcome> {
+        // the forms only offer sign-up once the terms are agreed to; this is the backstop
+        if (!termsAccepted) return { kind: "failed", reason: i18nKey("unexpectedError") };
+        selectedAuthProviderStore.set(AuthProvider.PASSKEY);
+        // a passkey already made for this sign-up isn't made again
+        if (identityStateStore.value.kind !== "registering" && !this.#passkeyMadeForSignUp) {
+            try {
+                await (this.isNativeApp()
+                    ? this.signUpWithAndroidWebAuthn(true, username)
+                    : this.signUpWithWebAuthn(true, username));
+                this.#passkeyMadeForSignUp = true;
+            } catch (err) {
+                // the passkey was made and its identity was being loaded when it failed
+                if (identityStateStore.value.kind === "loading_user") {
+                    this.#passkeyMadeForSignUp = true;
+                    this.logError("Unable to load the signed-up identity", err);
+                    return { kind: "failed", reason: i18nKey("unexpectedError") };
+                }
+                // the passkey prompt dismissed
+                return { kind: "cancelled" };
+            }
+        }
+        if (signal?.aborted) return { kind: "cancelled" };
+        // the passkey's identity has no account (registering), or it's still loading the user,
+        // after a failed load, which registerUser can still make the account for; signed out
+        // instead (anonymous: no OpenChat identity for the passkey), there's nothing to make it for
+        const state = identityStateStore.value.kind;
+        if (state !== "registering" && !(this.#passkeyMadeForSignUp && state === "loading_user")) {
+            return { kind: "failed", reason: i18nKey("unexpectedError") };
+        }
+        // a code turned down before is never sent again
+        const code = this.#referralCode;
+        if (code !== undefined && this.#refusedReferralCodes.has(code)) this.clearReferralCode();
+        const sent = this.#referralCode;
+        const resp = await this.registerUser(username, email);
+        if (sent !== undefined && referralCodeRefused(resp.kind)) {
+            this.#refusedReferralCodes.add(sent);
+        }
+        if (resp.kind === "success") {
+            this.#passkeyMadeForSignUp = false;
+            this.onRegisteredUser(createdUserFrom(username, resp));
+            return { kind: "success" };
+        }
+        if (referralCodeRefused(resp.kind)) {
+            return { kind: "referral_refused", reason: i18nKey("register.referralCodeInvalid") };
+        }
+        return {
+            kind: "failed",
+            reason: i18nKey(registerFailureKey(resp.kind) ?? "unexpectedError"),
+        };
+    }
+
     registerUser(username: string, email: string | undefined): Promise<RegisterUserResponse> {
         // Without an OpenChat identity the worker's agent is anonymous and can't sign the request.
         // The sign-in that got here is already signing out (see openChatIdentityOrSignOut), but a
@@ -7303,9 +7577,93 @@ export class OpenChat {
                 const { userIds, webhooks } = this.userIdsFromEvents(events);
                 this.getMissingUsers(userIds);
                 userStore.addWebhookIds([...webhooks]);
+                void this.getBridgedUsers(bridgedUserIdsFromEvents(events));
                 return threads;
             })
             .catch(() => []);
+    }
+
+    // Fetches the profiles of the bridged accounts which haven't been fetched, or not recently.
+    // One the UserIndex doesn't have yet, eg. as the message reached the chat first, or which
+    // couldn't be fetched, is tried again shortly.
+    async getBridgedUsers(ids: BridgedUserId[], retry = true): Promise<void> {
+        const now = Date.now();
+        const toFetch = ids.filter((id) => {
+            const key = bridgedUserKey(id)!;
+            const fetchedAt = this.#bridgedUsersFetchedAt.get(key);
+            return (
+                !this.#bridgedUsersInFlight.has(key) &&
+                (fetchedAt === undefined || now - fetchedAt > BRIDGED_USER_MAX_AGE)
+            );
+        });
+        if (toFetch.length === 0) return;
+
+        const keys = toFetch.map((id) => bridgedUserKey(id)!);
+        keys.forEach((key) => this.#bridgedUsersInFlight.add(key));
+        const users = await this.#worker
+            .send({ kind: "getBridgedUsers", ids: toFetch })
+            .catch(() => [] as BridgedUserSummary[])
+            .finally(() => keys.forEach((key) => this.#bridgedUsersInFlight.delete(key)));
+
+        const fetched = new Set<string>();
+        if (users.length > 0) {
+            bridgedUsersStore.update((map) => {
+                for (const u of users) {
+                    const key = bridgedUserKey(bridgedUserId(u.user))!;
+                    map.set(key, u);
+                    fetched.add(key);
+                    this.#bridgedUsersFetchedAt.set(key, now);
+                }
+                return map;
+            });
+        }
+
+        const missing = toFetch.filter((id) => !fetched.has(bridgedUserKey(id)!));
+        if (retry && missing.length > 0) {
+            window.setTimeout(
+                () => void this.getBridgedUsers(missing, false),
+                BRIDGED_USER_RETRY_DELAY,
+            );
+        }
+
+        // A linked account's messages are shown as its OpenChat user's
+        await this.getMissingUsers(users.flatMap((u) => u.linkedUserId ?? []));
+    }
+
+    // A one-time code for the user to pass to the platform's bridge bot, to link their account there
+    startBridgedUserLink(platform: BridgePlatform): Promise<BridgedUserLinkCode | OCError> {
+        return this.#worker.send({ kind: "startBridgedUserLink", platform });
+    }
+
+    async unlinkBridgedUser(id: BridgedUserId): Promise<Success | OCError> {
+        const resp = await this.#worker.send({ kind: "unlinkBridgedUser", id });
+        if (resp.kind === "success") {
+            const key = bridgedUserKey(id)!;
+            bridgedUsersStore.update((map) => {
+                const summary = map.get(key);
+                if (summary !== undefined) {
+                    map.set(key, { ...summary, linkedUserId: undefined });
+                }
+                return map;
+            });
+        }
+        return resp;
+    }
+
+    // The accounts the user has linked to themself. They go in the store too, so the user's messages
+    // from a newly linked account show as theirs straight away.
+    async getLinkedBridgedUsers(): Promise<BridgedUserSummary[]> {
+        const users = await this.#worker.send({ kind: "getLinkedBridgedUsers" });
+        const now = Date.now();
+        bridgedUsersStore.update((map) => {
+            for (const u of users) {
+                const key = bridgedUserKey(bridgedUserId(u.user))!;
+                map.set(key, u);
+                this.#bridgedUsersFetchedAt.set(key, now);
+            }
+            return map;
+        });
+        return users;
     }
 
     getMissingUsers(userIds: Iterable<string>): Promise<UsersResponse> {
@@ -8280,6 +8638,14 @@ export class OpenChat {
                 chatsResponse.premiumItems,
             );
         });
+
+        // An archived chat that has unread messages comes out of the archive, whatever the scope.
+        // Only the chats in this answer can have gained any
+        unarchiveChatsWithUnread(
+            chatsAddedUpdated.map((chat) => chat.id),
+            this.#autoUnarchiving,
+            (chatIds) => this.unarchiveChats(chatIds),
+        );
 
         const selectedChatId = selectedChatIdStore.value;
         if (selectedChatId !== undefined) {
@@ -9456,6 +9822,7 @@ export class OpenChat {
                             this.#evmContractAddresses = registry.tokenDetails.flatMap(
                                 (t) => t.evmContractAddresses,
                             );
+                            swapProvidersStore.set(registry.swapProviders);
                         }
 
                         // make sure we only resolve once so that we don't end up waiting for the downstream fetch
@@ -9674,39 +10041,56 @@ export class OpenChat {
         });
     }
 
-    // The best quote for swapping `amountIn` from the user's wallet, fees included
-    async getSwapQuote(
+    /**
+     * Quotes swapping `amountIn` from the user's wallet, fees included, on each DEX the wallet swaps
+     * with. `onQuotes` is told of every DEX's quote as each comes in, starting with all of them being
+     * asked. Resolves with the best quote once they're all in.
+     */
+    async getSwapQuotes(
         ledgerIn: string,
         ledgerOut: string,
         amountIn: bigint,
+        onQuotes?: (quotes: [DexId, DexQuote][]) => void,
     ): Promise<SwapQuoteOutcome> {
         const tokenIn = cryptoLookup.value.get(ledgerIn)!;
         const tokenOut = cryptoLookup.value.get(ledgerOut)!;
-        try {
-            // What the DEX pulls is less the fees for approving it and for its pull, and each quote is
-            // what reaches the wallet, after the fee for sending it there
-            const quotes = await this.#worker.send({
-                kind: "getTokenSwapQuotes",
-                inputTokenLedger: ledgerIn,
-                outputTokenLedger: ledgerOut,
-                amountIn: amountIn - 2n * tokenIn.transferFee,
-                outputTokenFee: tokenOut.transferFee,
-            });
-            const rates = exchangeRatesLookupStore.value;
-            return swapQuoteResult(
-                tokenIn,
-                tokenOut,
-                amountIn,
-                quotes,
-                (ledger) => rates.get(ledger)?.toUSD,
-            );
-        } catch (err) {
-            this.logError(`Error getting swap quotes for token: ${tokenIn.symbol}`, err);
-            return {
-                kind: "failed",
-                message: i18nKey("tokenSwap.quoteError", { tokenIn: tokenIn.symbol }),
-            };
-        }
+        const quotes: [DexId, DexQuote][] = swapProvidersStore.value.map((dex) => [
+            dex,
+            { kind: "quoting" },
+        ]);
+        onQuotes?.([...quotes]);
+
+        await Promise.all(
+            quotes.map(async ([dex], i) => {
+                let quote: DexQuote;
+                try {
+                    // What the DEX pulls is less the fees for approving it and for its pull, and its
+                    // quote is what reaches the wallet, after the fee for sending it there
+                    quote = await this.#worker.send({
+                        kind: "getTokenSwapQuote",
+                        dex,
+                        inputTokenLedger: ledgerIn,
+                        outputTokenLedger: ledgerOut,
+                        amountIn: amountIn - 2n * tokenIn.transferFee,
+                        outputTokenFee: tokenOut.transferFee,
+                    });
+                } catch (err) {
+                    this.logError(`Error getting a ${dex} quote to swap ${tokenIn.symbol}`, err);
+                    quote = { kind: "failed" };
+                }
+                quotes[i] = [dex, quote];
+                onQuotes?.([...quotes]);
+            }),
+        );
+
+        const rates = exchangeRatesLookupStore.value;
+        return swapQuoteResult(
+            tokenIn,
+            tokenOut,
+            amountIn,
+            quotes,
+            (ledger) => rates.get(ledger)?.toUSD,
+        );
     }
 
     /**
@@ -10875,6 +11259,69 @@ export class OpenChat {
         });
     }
 
+    /**
+     * Emails a sign-in link and, once it's sent, checks every second whether it has been followed;
+     * followed (on any device), this browser takes the identity it signs in. `signal` gives the
+     * request up: before the link is sent, nothing is waited for; after, `signedIn` settles
+     * cancelled and the checking stops.
+     */
+    async requestEmailSignIn(email: string, signal?: AbortSignal): Promise<EmailSignInRequest> {
+        selectedAuthProviderStore.set(AuthProvider.EMAIL);
+        const sessionKey = await ECDSAKeyIdentity.generate();
+        let resp: GenerateMagicLinkResponse | { kind: "unexpected_error" };
+        try {
+            resp = await this.generateMagicLink(email, sessionKey);
+        } catch (err) {
+            console.warn("generateMagicLink error", err);
+            resp = { kind: "unexpected_error" };
+        }
+        if (signal?.aborted) return { kind: "cancelled" };
+        if (resp.kind !== "success") {
+            if (resp.kind === "failed_to_send_email") {
+                console.debug("generateMagicLink failed_to_send_email", resp.error);
+            }
+            return { kind: "failed", reason: emailLinkFailure(resp.kind) };
+        }
+        this.gaTrack("generated_magic_signin_link", "registration");
+        const { userKey, expiration } = resp;
+
+        const signedIn = new Promise<SignInOutcome>((resolve) => {
+            let waiting = true;
+            const done = (outcome: SignInOutcome) => {
+                if (!waiting) return;
+                waiting = false;
+                poller.stop();
+                resolve(outcome);
+            };
+            const poller = new Poller(
+                async () => {
+                    if (!waiting) return;
+                    try {
+                        const r = await this.getSignInWithEmailDelegation(
+                            email,
+                            userKey,
+                            sessionKey,
+                            expiration,
+                            true,
+                        );
+                        if (r.kind === "success") {
+                            this.gaTrack("received_email_signin_delegation", "registration");
+                            done(signInOutcome(identityStateStore.value));
+                        } else if (r.kind === "error") {
+                            console.debug("getSignInWithEmailDelegation error", r.error);
+                        }
+                    } catch (err) {
+                        console.warn("getSignInWithEmailDelegation error", err);
+                    }
+                },
+                1000,
+                1000,
+            );
+            signal?.addEventListener("abort", () => done({ kind: "cancelled" }), { once: true });
+        });
+        return { kind: "sent", code: resp.code, signedIn };
+    }
+
     async handleMagicLink(qs: string): Promise<HandleMagicLinkResponse> {
         const signInWithEmailCanister = this.config.signInWithEmailCanister;
 
@@ -11115,36 +11562,6 @@ export class OpenChat {
         return preview;
     }
 
-    #selectLastSelectedChat(): boolean {
-        const scope = chatListScopeStore.value;
-        const mostRecentId = lastSelectedChatByScopeStore.value.get(scope);
-        const mostRecentChat = mostRecentId
-            ? chatSummariesStore.value.get(mostRecentId)
-            : undefined;
-        if (mostRecentChat !== undefined) {
-            publish("navigateTo", {
-                url: routeForChatIdentifier(scope.kind, mostRecentChat.id),
-                intent: "auto",
-            });
-            return true;
-        }
-        return false;
-    }
-
-    #selectFirstChat(): boolean {
-        const first = [...chatSummariesListStore.value.values()].find(
-            (c) => !c.membership.archived,
-        );
-        if (first !== undefined) {
-            publish("navigateTo", {
-                url: routeForChatIdentifier(chatListScopeStore.value.kind, first.id),
-                intent: "auto",
-            });
-            return true;
-        }
-        return false;
-    }
-
     #selectLastSelectedCommunity(): boolean {
         const mostRecentId = lastSelectedCommunityIdStore.value;
         const mostRecentCommunity = mostRecentId
@@ -11177,8 +11594,17 @@ export class OpenChat {
 
     selectDefaultChat(desktopOnly: boolean = true): boolean {
         if (!desktopOnly || !get(mobileWidth)) {
-            if (!this.#selectLastSelectedChat()) {
-                return this.#selectFirstChat();
+            const scope = chatListScopeStore.value;
+            const chat = defaultChat(
+                chatSummariesListStore.value,
+                lastSelectedChatByScopeStore.value.get(scope),
+            );
+            if (chat !== undefined) {
+                publish("navigateTo", {
+                    url: routeForChatIdentifier(scope.kind, chat.id),
+                    intent: "auto",
+                });
+                return true;
             }
         }
         return false;
@@ -11721,7 +12147,7 @@ export class OpenChat {
                 endpoint,
             })
             .catch((err) => {
-                this.#logger.error("Failed to get the bot definition", endpoint, err);
+                this.#logger.error("Failed to get the bot definition", err, endpoint);
                 return {
                     kind: "bot_definition_failure",
                     error: err,
@@ -12203,6 +12629,44 @@ export class OpenChat {
         }
     }
 
+    /**
+     * Sends what the user typed in a direct chat with a bot as that bot's direct-message command:
+     * the user's message shows in the chat at once, the draft is cleared and the command runs (its
+     * reply, or its failure, arrives as for any command). `no_direct_command`: the chat isn't with a
+     * bot the client knows, or the bot takes no direct messages, so nothing was sent. Never rejects.
+     */
+    sendDirectBotMessage(
+        messageContext: MessageContext,
+        text: string,
+        blockLevelMarkdown: boolean,
+    ): DirectBotMessageOutcome {
+        const chat = allChatsStore.value.get(messageContext.chatId);
+        const botId = chat === undefined ? undefined : this.directChatWithBot(chat);
+        const bot = botId === undefined ? undefined : botState.externalBots.get(botId);
+        const command = bot === undefined ? undefined : directMessageCommandInstance(bot, text);
+        if (command === undefined) return { kind: "no_direct_command" };
+
+        const userMessageId = random64();
+        const scope: BotActionScope = {
+            kind: "chat_scope",
+            chatId: messageContext.chatId,
+            threadRootMessageIndex: messageContext.threadRootMessageIndex,
+            messageId: random64(),
+            userMessageId,
+        };
+        this.sendPlaceholderBotMessage(
+            scope,
+            undefined,
+            { kind: "text_content", text },
+            userMessageId,
+            currentUserIdStore.value,
+            blockLevelMarkdown,
+        );
+        void this.executeBotCommand(scope, command, true);
+        localUpdates.draftMessages.delete(messageContext);
+        return { kind: "sent" };
+    }
+
     contentTypeSupportsEdit(contentType: MessageContent["kind"]): boolean {
         return isEditableContent(contentType);
     }
@@ -12384,11 +12848,9 @@ export class OpenChat {
     }
 
     removeTokenFromWallet(ledger: string) {
-        const config = { ...walletConfigStore.value };
-        if (config.kind === "manual_wallet") {
-            if (config.tokens.delete(ledger)) {
-                return this.setWalletConfig(config);
-            }
+        const config = walletConfigWithoutToken(walletConfigStore.value, ledger);
+        if (config !== undefined) {
+            return this.setWalletConfig(config);
         }
     }
 
@@ -12638,6 +13100,10 @@ export class OpenChat {
 
     setAlchemyApiKey(apiKey: string | undefined): Promise<Success | OCError> {
         return this.#worker.send({ kind: "setAlchemyApiKey", apiKey });
+    }
+
+    setBridgeBot(platform: BridgePlatform, botId: string | undefined): Promise<Success | OCError> {
+        return this.#worker.send({ kind: "setBridgeBot", platform, botId });
     }
     dailyPuzzleRegenerateToday(gameId: string | undefined): Promise<Success | OCError> {
         return this.#worker.send({ kind: "dailyPuzzleRegenerateToday", gameId });
@@ -13258,29 +13724,6 @@ export class OpenChat {
             userId,
             days,
         });
-    }
-
-    chatMatchesSearch(search: string, chat: ChatSummary): boolean {
-        if (chat.kind === "group_chat" || chat.kind === "channel") {
-            return (
-                chat.name.toLowerCase().indexOf(search) >= 0 ||
-                chat.description.toLowerCase().indexOf(search) >= 0
-            );
-        }
-
-        if (chat.kind === "direct_chat") {
-            const user = allUsersStore.value.get(chat.them.userId);
-            if (user !== undefined) {
-                return (
-                    user.username.toLowerCase().indexOf(search) >= 0 ||
-                    (user.displayName !== undefined &&
-                        user.displayName.toLowerCase().indexOf(search) >= 0)
-                );
-            } else {
-                return false;
-            }
-        }
-        return false;
     }
 
     createCandidateGroup(level: Level, embeddedContent: boolean): CandidateGroupChat | undefined {

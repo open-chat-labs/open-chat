@@ -31,7 +31,7 @@
     import Translatable from "@shared_components/Translatable.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
     import StreakHeadline from "../user_profile/StreakHeadline.svelte";
-    import { TokenState } from "@shared_components/home/wallet/walletState.svelte";
+    import { TokenState } from "@src/logic/wallet/walletState.svelte";
 
     const client = getContext<OpenChat>("client");
     interface Props {

@@ -76,12 +76,12 @@
 
   .label {
     font: var(--weight-semibold) var(--text-md) / 1.3 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .help {
     font: var(--weight-regular) var(--text-sm) / 1.45 var(--font-sans);
-    color: var(--ink-3, #7c7c8c);
+    color: var(--ink-3);
   }
 
   .track {
@@ -94,12 +94,12 @@
     display: flex;
     align-items: center;
     cursor: pointer;
-    transition: background var(--duration-base, 200ms) var(--ease-out);
-    background: var(--overlay-2, rgba(255, 255, 255, 0.14));
+    transition: background var(--duration-base) var(--ease-out);
+    background: var(--overlay-2);
   }
 
   .track.on {
-    background: var(--accent, #ff5672);
+    background: var(--accent);
   }
 
   .track.disabled {
@@ -113,14 +113,14 @@
     height: 18px;
     border-radius: var(--radius-pill);
     transition:
-      transform var(--duration-base, 200ms) var(--ease-out),
-      background var(--duration-base, 200ms) var(--ease-out);
+      transform var(--duration-base) var(--ease-out),
+      background var(--duration-base) var(--ease-out);
     transform: translateX(0);
-    background: var(--ink-4, #6e6e7c);
+    background: var(--ink-4);
   }
 
   .on .knob {
-    transform: translateX(calc(var(--oc-dir, 1) * 16px));
+    transform: translateX(calc(var(--oc-dir) * 16px));
     background: #fff;
   }
 </style>

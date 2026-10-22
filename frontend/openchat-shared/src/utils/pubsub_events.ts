@@ -90,7 +90,8 @@ export type PubSubEvents = {
     shareDailyResult: DailyResultContent;
     joinGroup: MultiUserChat;
     createCommunity: undefined;
-    unarchiveChat: ChatIdentifier;
+    // The client couldn't bring an archived chat with unread messages out of the archive
+    unarchiveChatFailed: undefined;
     forward: Message;
     shareMessage: unknown;
     toggleMuteNotifications: {
@@ -186,6 +187,7 @@ export type PubSubEvents = {
     userProfileAppearance: undefined;
     userProfileChitRewards: undefined;
     userProfileCommunitySettings: undefined;
+    userProfileLinkedAccounts: undefined;
     userProfileVerify: undefined;
     closeModalPage: undefined;
     closeThread: undefined;

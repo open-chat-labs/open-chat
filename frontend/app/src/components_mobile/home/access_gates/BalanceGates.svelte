@@ -2,7 +2,7 @@
     import { ColourVars } from "component-lib";
     import { OpenChat, publish, type TokenBalanceGate } from "@client";
     import { getContext } from "svelte";
-    import type { UpdateGroupOrCommunityState } from "@shared_components/home/groupOrCommunity.svelte";
+    import type { UpdateGroupOrCommunityState } from "@src/logic/groupOrCommunity/groupOrCommunity.svelte";
     import AboutBalanceGate from "./AboutBalanceGate.svelte";
     import AccessGateList from "./AccessGateList.svelte";
 

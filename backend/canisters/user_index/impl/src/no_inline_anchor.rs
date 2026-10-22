@@ -57,7 +57,7 @@ pub fn anchor() {
         let s = bytes.as_slice();
 
         // Anchor for UserIndexEvent::visit_enum itself (first call site is in post_upgrade
-        // via Data.user_index_event_sync_queue deserialization).
+        // via Data.local_user_index_event_sync_queue_v2 deserialization).
         assert!(msgpack::deserialize::<UserIndexEvent, _>(s).is_err());
 
         // Anchors for large variant-payload structs whose visit_map is otherwise unique to
@@ -65,7 +65,7 @@ pub fn anchor() {
         assert!(msgpack::deserialize::<BotRegistered, _>(s).is_err()); // 11 fields
         assert!(msgpack::deserialize::<DiamondMembershipPaymentReceived, _>(s).is_err()); // 10 fields
         assert!(msgpack::deserialize::<UserDetailsFull, _>(s).is_err()); // 10 serde-renamed fields
-        assert!(msgpack::deserialize::<BotUpdated, _>(s).is_err()); // 4 fields incl. BotDefinition
+        assert!(msgpack::deserialize::<BotUpdated, _>(s).is_err()); // 5 fields incl. BotDefinition
         assert!(msgpack::deserialize::<OpenChatBotMessageV2, _>(s).is_err()); // 4 fields incl. MessageContentInitial
         assert!(msgpack::deserialize::<UserJoinedCommunityOrChannel, _>(s).is_err()); // 5 fields
         assert!(msgpack::deserialize::<UserJoinedGroup, _>(s).is_err()); // 5 fields

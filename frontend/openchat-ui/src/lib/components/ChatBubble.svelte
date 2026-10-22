@@ -3,7 +3,7 @@
      Reaction chips are limited to maxReactionRows; the rest fold into a "+N" chip that expands them. -->
 <script lang="ts">
   import { useT } from '../i18n';
-  import { untrack } from 'svelte';
+  import { untrack, type Snippet } from 'svelte';
 
   // count grapheme clusters so flags, skin tones and ZWJ families read as one emoji
   const SEG = typeof Intl !== 'undefined' && Intl.Segmenter ? new Intl.Segmenter(undefined, { granularity: 'grapheme' }) : null;
@@ -28,6 +28,8 @@
 
   interface Props {
     text: string;
+    /** The text as the host renders it (markdown, mentions, links), shown in its place. `text` still sizes emoji-only messages. */
+    body?: Snippet;
     time: string;
     side?: 'sent' | 'received';
     lastInGroup?: boolean;
@@ -55,6 +57,7 @@
 
   let {
     text,
+    body,
     time,
     side = 'sent',
     lastInGroup = true,
@@ -89,6 +92,8 @@
   let expanded = $state(false);
   let chips = $state<HTMLDivElement>();
   let bubble = $state<HTMLDivElement>();
+  // the stamp's width, for a body ending in a list to keep its room (below)
+  let stampWidth = $state(0);
 
   const shown = $derived(fit === null || expanded ? reactions : reactions.slice(0, fit));
   const hidden = $derived(reactions.length - shown.length);
@@ -151,7 +156,11 @@
         {#if code}
           <pre class="code">{code}</pre>
         {/if}
-        <p class="text" style:font-size={scale.size} style:line-height={scale.leading}>{text}<span class="stamp spacer" aria-hidden="true">{@render stamp()}</span><span class="stamp corner">{@render stamp()}</span></p>
+        {#if body}
+          <div class="text body" style:font-size={scale.size} style:line-height={scale.leading} style:--oc-stamp-room="{stampWidth + 9}px">{@render body()}<span class="stamp spacer" aria-hidden="true">{@render stamp()}</span><span class="stamp corner" bind:offsetWidth={stampWidth}>{@render stamp()}</span></div>
+        {:else}
+          <p class="text" style:font-size={scale.size} style:line-height={scale.leading}>{text}<span class="stamp spacer" aria-hidden="true">{@render stamp()}</span><span class="stamp corner">{@render stamp()}</span></p>
+        {/if}
       </div>
       {#if status === 'failed'}
         <div class="failed">
@@ -226,7 +235,7 @@
     padding: var(--space-12) var(--space-14);
     box-sizing: border-box;
     border-radius: var(--radius-xs) var(--radius-xl) var(--radius-xl) var(--radius-xl);
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1));
+    box-shadow: inset 0 0 0 1px var(--line-2);
   }
 
   .deleted.sent {
@@ -237,27 +246,27 @@
     flex: none;
     width: 14px;
     height: 14px;
-    background: var(--ink-4, #6e6e7c);
+    background: var(--ink-4);
     mask: var(--icon-trash) center/contain no-repeat;
   }
 
   .deleted-text {
     font: var(--weight-regular) var(--text-base) / 1.4 var(--font-sans);
     font-style: italic;
-    color: var(--ink-4, #6e6e7c);
+    color: var(--ink-4);
   }
 
   .deleted-time {
     flex: none;
     margin-inline-start: var(--space-6);
     font: var(--weight-regular) var(--text-xs) / 1 var(--font-mono);
-    color: var(--ink-4, #6e6e7c);
+    color: var(--ink-4);
   }
 
   .column {
-    --msg-ink: var(--bubble-recv-text, #e4e4ec);
-    --msg-soft: var(--ink-3, #8a8a99);
-    --msg-stamp: var(--meta, #9393a2);
+    --msg-ink: var(--bubble-recv-text);
+    --msg-soft: var(--ink-3);
+    --msg-stamp: var(--meta);
     max-width: 675px;
     min-width: 0;
     display: flex;
@@ -266,9 +275,9 @@
   }
 
   .column.sent {
-    --msg-ink: var(--bubble-text, #fff);
-    --msg-soft: var(--bubble-text-soft, rgba(255, 255, 255, 0.82));
-    --msg-stamp: var(--bubble-text-soft, rgba(255, 255, 255, 0.82));
+    --msg-ink: var(--bubble-text);
+    --msg-soft: var(--bubble-text-soft);
+    --msg-stamp: var(--bubble-text-soft);
   }
 
   /* every bubble is left-aligned, so the avatar-facing edge is inline-start for both sides */
@@ -277,8 +286,8 @@
     box-sizing: border-box;
     max-width: 100%;
     text-align: start;
-    background: var(--bubble-recv-bg, #191921);
-    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+    background: var(--bubble-recv-bg);
+    box-shadow: inset 0 0 0 1px var(--line-1);
     border-start-start-radius: var(--radius-xs);
     border-start-end-radius: var(--radius-xl);
     border-end-end-radius: var(--radius-xl);
@@ -291,16 +300,16 @@
   }
 
   .sent .bubble {
-    background: var(--bubble-send-bg, #b83e52);
+    background: var(--bubble-send-bg);
     box-shadow: none;
   }
 
   /* received: a tinted panel with an accent bar; sent: the bubble's own reply shade */
   .quote {
-    --quote-bg: var(--overlay-2, rgba(255, 255, 255, 0.07));
-    --quote-bar: var(--accent, #ff5672);
-    --quote-name: var(--accent-bright, #ff8298);
-    --quote-text: var(--ink-3, #8a8a99);
+    --quote-bg: var(--overlay-2);
+    --quote-bar: var(--accent);
+    --quote-name: var(--accent-bright);
+    --quote-text: var(--ink-3);
     display: flex;
     gap: var(--space-8);
     padding: var(--space-8) var(--space-10);
@@ -310,10 +319,10 @@
   }
 
   .sent .quote {
-    --quote-bg: var(--bubble-reply, #8c2a3d);
-    --quote-bar: var(--bubble-text-soft, rgba(255, 255, 255, 0.6));
-    --quote-name: var(--bubble-text, #fff);
-    --quote-text: var(--bubble-text-soft, rgba(255, 255, 255, 0.78));
+    --quote-bg: var(--bubble-reply);
+    --quote-bar: var(--bubble-text-soft);
+    --quote-name: var(--bubble-text);
+    --quote-text: var(--bubble-text-soft);
   }
 
   .quote-bar {
@@ -378,11 +387,11 @@
     white-space: pre-wrap;
     overflow-wrap: anywhere;
     font: var(--weight-regular) var(--text-sm) / 1.55 var(--font-mono);
-    color: var(--status-online, #2ee6a8);
+    color: var(--status-online);
   }
 
   .sent .code {
-    color: var(--bubble-text, #fff);
+    color: var(--bubble-text);
   }
 
   .text {
@@ -393,6 +402,27 @@
     color: var(--msg-ink);
     text-wrap: pretty;
     overflow-wrap: anywhere;
+  }
+
+  /* a host's body flows inline where it ends (its root, and a paragraph closing it), so the
+     stamp's spacer stays on its last line rather than opening a line of its own (specific enough
+     to win over a host's own block display) */
+  .bubble .text.body > :global(:first-child),
+  .bubble .text.body > :global(:first-child > p:last-child) {
+    display: inline;
+  }
+
+  /* a body ending in a list can't flow inline: its last item keeps the stamp's room at its end
+     instead, where the corner stamp sits, and the spacer isn't needed (a code block at the end
+     still takes a line of its own: its text ends in a line break) */
+  .bubble .text.body:has(> :global(:first-child > :is(ul, ol):last-child)) > .spacer {
+    display: none;
+  }
+
+  .bubble .text.body > :global(:first-child > :is(ul, ol):last-child > li:last-child::after) {
+    content: '';
+    display: inline-block;
+    width: var(--oc-stamp-room, 0);
   }
 
   .stamp {
@@ -424,7 +454,7 @@
     width: 14px;
     height: 14px;
     margin-bottom: -2px;
-    background: var(--bubble-tick, rgba(255, 255, 255, 0.9));
+    background: var(--bubble-tick);
   }
 
   .failed {
@@ -443,7 +473,7 @@
   .failed-text,
   .retry {
     font: var(--weight-medium) var(--text-sm) / 1 var(--font-sans);
-    color: var(--status-danger, #f5493d);
+    color: var(--status-danger);
   }
 
   .retry {
@@ -457,7 +487,7 @@
     align-items: center;
     gap: var(--space-6);
     margin-top: var(--space-6);
-    min-height: var(--control-sm, 30px);
+    min-height: var(--control-sm);
     padding: var(--space-6) var(--space-10);
     box-sizing: border-box;
     border-radius: var(--radius-sm);
@@ -466,27 +496,27 @@
   }
 
   .thread:hover {
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    background: var(--overlay-1);
   }
 
   .thread-icon {
     flex: none;
     width: 14px;
     height: 14px;
-    background: var(--accent, #ff5672);
+    background: var(--accent);
     mask: var(--icon-reply) center/contain no-repeat;
   }
 
   .thread-count,
   .thread-meta {
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
-    color: var(--accent, #ff5672);
+    color: var(--accent);
     white-space: nowrap;
   }
 
   .thread-meta {
     font-weight: var(--weight-regular);
-    color: var(--ink-3, #8a8a99);
+    color: var(--ink-3);
   }
 
   .reactions {
@@ -514,18 +544,18 @@
     gap: var(--space-4);
     padding: var(--space-6) var(--space-8);
     border-radius: var(--radius-pill);
-    background: var(--card-2, #191921);
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12));
+    background: var(--card-2);
+    box-shadow: inset 0 0 0 1px var(--line-2);
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
-    color: var(--ink-2, #b9b9c6);
+    color: var(--ink-2);
     cursor: pointer;
     user-select: none;
   }
 
   .chip.mine {
-    background: color-mix(in oklch, var(--accent, #ff5672) 20%, var(--card-2, #191921));
-    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent, #ff5672) 55%, transparent);
-    color: var(--ink, #ececf1);
+    background: color-mix(in oklch, var(--accent) 20%, var(--card-2));
+    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent) 55%, transparent);
+    color: var(--ink);
   }
 
   .chip:hover {
@@ -542,15 +572,15 @@
     display: flex;
     align-items: center;
     border-radius: var(--radius-pill);
-    background: var(--card-2, #191921);
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1));
+    background: var(--card-2);
+    box-shadow: inset 0 0 0 1px var(--line-2);
     cursor: pointer;
   }
 
   .chip-more {
     padding: var(--space-6) var(--space-8);
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
-    color: var(--ink-2, #b9b9c6);
+    color: var(--ink-2);
     white-space: nowrap;
   }
 
@@ -563,13 +593,13 @@
 
   .chip-more:hover,
   .collapse:hover {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    background: var(--overlay-2);
   }
 
   .collapse-icon {
     width: 10px;
     height: 10px;
-    background: var(--ink-2, #b9b9c6);
+    background: var(--ink-2);
     mask: var(--icon-close) center/contain no-repeat;
   }
 </style>

@@ -17,6 +17,8 @@ fn accept_if_valid(state: &RuntimeState) {
         | "claim_daily_chit"
         | "create_canister"
         | "delete_user"
+        // A bridge bot is an OpenChat user too. The endpoint checks it's the platform's bridge bot.
+        | "link_bridged_user"
         | "mark_as_online"
         | "mark_suspected_bot"
         | "pay_for_diamond_membership"
@@ -26,7 +28,9 @@ fn accept_if_valid(state: &RuntimeState) {
         | "set_hide_online_status"
         | "set_moderation_flags"
         | "set_username"
+        | "start_bridged_user_link"
         | "submit_proof_of_unique_personhood"
+        | "unlink_bridged_user"
         | "update_bot"
         | "update_diamond_membership_subscription" => state.is_caller_openchat_user(),
         "resolve_moderation_report" | "suspend_user" | "unsuspend_user" => state.is_caller_platform_moderator(),
@@ -36,7 +40,7 @@ fn accept_if_valid(state: &RuntimeState) {
         // Service path (authority reporter) or operator reconciliation
         "record_authority_report_attempt" => state.is_caller_authority_reporter(),
         "clear_authority_report_attempt" => state.is_caller_authority_reporter() || state.is_caller_platform_operator(),
-        "set_alchemy_api_key" | "set_call_push_enabled" => state.is_caller_platform_operator(),
+        "set_alchemy_api_key" | "set_bridge_bot" | "set_call_push_enabled" => state.is_caller_platform_operator(),
         // The dual-authorized actions (destroy_vault_evidence, set_vault_reviewers,
         // set_openai_api_key, set_internal_moderation_channel) are no longer callable
         // directly - they are reachable only through this propose/confirm pair
@@ -66,6 +70,8 @@ fn accept_if_valid(state: &RuntimeState) {
         | "suspected_bots" => state.is_caller_governance_principal(),
         "award_external_achievement" => true,
         "remove_bot" => state.is_caller_governance_principal() || state.is_caller_openchat_user(),
+        // Canister callers bypass inspect_message; this only matters for tests that impersonate the canister
+        "c2c_translations" => state.is_caller_translations_canister(),
         _ => false,
     };
 

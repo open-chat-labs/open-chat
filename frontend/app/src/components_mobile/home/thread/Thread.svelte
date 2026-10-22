@@ -32,6 +32,7 @@
         threadsFollowedByMeStore,
         TimelineGrouper,
         unconfirmedStore,
+        type SendMessageOutcome,
     } from "@client";
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -39,7 +40,7 @@
     import { randomSentence } from "../../../utils/randomMsg";
     import AreYouSure from "../../AreYouSure.svelte";
     import Loading from "@shared_components/Loading.svelte";
-    import { TimelineFlattener } from "@shared_components/flatChatItems";
+    import { TimelineFlattener } from "@src/core/flatChatItems";
     import ChatEvent from "../ChatEvent.svelte";
     import ChatEventList from "../ChatEventList.svelte";
     import CryptoTransferBuilder from "../CryptoTransferBuilder.svelte";
@@ -142,8 +143,10 @@
         send(0);
     }
 
-    function onSendMessage(detail: [string | undefined, User[], boolean]) {
-        if (!canSendAny) return;
+    function onSendMessage(
+        detail: [string | undefined, User[], boolean],
+    ): Promise<SendMessageOutcome> | "nothing_sent" {
+        if (!canSendAny) return "nothing_sent";
         const [text, mentioned, blockLevelMarkdown] = detail;
         if (editingEvent !== undefined) {
             client
@@ -159,8 +162,16 @@
                         toastStore.showFailureToast(i18nKey("errorEditingMessage"));
                     }
                 });
+            return "nothing_sent";
         } else {
-            sendMessageWithAttachment(text, blockLevelMarkdown, attachment, mentioned);
+            // the entry keeps the text until the message shows in the thread, or keeps it if refused
+            return client.sendMessage(
+                messageContext,
+                text,
+                blockLevelMarkdown,
+                attachment,
+                mentioned,
+            );
         }
     }
 

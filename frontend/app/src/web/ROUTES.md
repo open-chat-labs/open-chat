@@ -26,14 +26,18 @@ Agreed on 2026-10-16; the tables below follow them.
    - **Profile** is a dialog, so it opens over whatever page is showing, as `?profile` (decision 6),
      not as a page of its own. Mobile's `/profile_summary` stays registered for its links and
      redirects to the default chat list with `?profile`.
-   - **Threads list, per scope:** `/chats/threads`, `/favourite/threads` and
-     `/community/:cid/threads`. The list belongs to a scope: `threadsByChatStore` is built from
-     that scope's chats. **Opening a thread is unchanged**: it stays the chat's own
-     `/…/:rootIndex?open=true` (and `/:rootIndex/:threadIndex`), which notifications and shared
-     links already use. Coming to a thread from the list keeps the list in the left column as
-     local state (brief §4).
+   - **Threads list, per scope:** `?threads` on a chat list's path (`/chats`, `/favourite`,
+     `/community/:cid`, and a chat or channel open in one). It's a view in the left column, in
+     place of the chat list, not a page: the middle keeps showing what the path says, so it
+     doesn't replace the open conversation. It's opened from the list's "Thread replies" with its
+     own history entry, so Back closes it (as `?profile`). The list belongs to the path's scope:
+     `threadsByChatStore` is built from that scope's chats. **Opening a thread is unchanged**: it
+     stays the chat's own `/…/:rootIndex?open=true` (and `/:rootIndex/:threadIndex`), which
+     notifications and shared links already use, with `?threads` kept so the list stays.
+     The paths it had before (`/chats/threads`, `/favourite/threads`, `/community/:cid/threads`)
+     redirect to `?threads` on their list's path.
    - **Route kinds:** mobile's `wallet_route` (gaining `{ view, ledger? }`),
-     `notifications_route` and `profile_summary_route`, plus a new `threads_route` with a scope.
+     `notifications_route` and `profile_summary_route`.
    - **Registration order:** these paths have to be registered ahead of the legacy
      `/:chatId/...` route, which otherwise takes any 1–3 segment path as a group id. On the
      desktop router today, `/wallet` opens the "group not found" modal.
@@ -54,14 +58,16 @@ Agreed on 2026-10-16; the tables below follow them.
    - The Learn sub-pages are host-routed on their existing paths: `/roadmap`, `/whitepaper`,
      `/architecture`, `/blog`, `/blog/:slug` and `/faq` (with `?q=` opening that question).
    - Landing's `learnPageHref` points at the same paths, so there's no `/learn`. `?section=`
-     deep links into the whitepaper and architecture docs keep working.
+     deep links into the whitepaper doc keep working; on `/architecture` it names the canister
+     to open in the framed canister map (`CanisterMapFrame.svelte`).
 5. **Pages with no new design** (`/terms`, `/privacy`, `/guidelines`, `/csea-reporting`,
    `/diamond`) **use Learn's page design.** Two library changes are needed, as their own PR before
    phase 9:
    - **Learn:** Learn's content can carry extra doc pages that use the doc layout (contents list
      plus numbered sections) without being tabs. The legal pages' existing text moves into that
-     content, and `?section=` keeps scrolling to a section. The CSEA report form
-     (`?report=`, `?urgent=`) is interactive, so that page gets a slot for it below the doc.
+     content, and `?section=` keeps scrolling to a section. The CSEA page is the
+     moderators' NCA reporting checklist (`?report=`, `?urgent=`), which is interactive, so that
+     page gets a slot for it below the doc.
    - **Diamond:** `DiamondDialog`'s body (Free vs Diamond, plans, payment) becomes a
      `DiamondContent` component, which both the dialog and the `/diamond` page render. Signed
      out, upgrading on the page opens `AuthDialog` first.
@@ -71,6 +77,23 @@ Agreed on 2026-10-16; the tables below follow them.
      and Back closes them: `?profile` (new, opened from the rail) and `?chit` (new), in the style
      of `?diamond` and `?hof`.
    - Every other dialog stays local state.
+7. **Switching the left column.**
+   - **Notifications** (activity) change only the left column: the middle keeps whatever it
+     shows, a chat (with its right column) or a wallet page (without one). The URL stays on that
+     page and notes the panel in the query (`/chats/group/:id?panel=activity`,
+     `/wallet/ICP?panel=activity`), so a reload or a shared link keeps both. `ActivityPanel`
+     gets a back button beside its title, which drops `?panel=activity`, so the left column goes
+     back to the middle's own panel (that chat's list, the wallet's tokens); it doesn't depend
+     on history, so it works from a shared link too. With nothing in the middle,
+     `/notifications` opens the panel over an empty middle, without the back button. Picking an
+     item opens its chat in the middle.
+   - **DMs and groups, favourites, a community**: switching to one selects the chat last opened
+     there for the middle, else its first (the first favourite, the community's first channel),
+     as the old UI does (decided 2026-10-21; this used to say "always the first").
+   - **The wallet** takes the whole content area (its panel on the left, its page in the middle),
+     without a right column.
+   - Built with the chat list, conversation and activity feed (phase 3); the wallet's own pages
+     come in phase 6 (6a).
 
 ## Regions
 
@@ -83,8 +106,8 @@ the thread, which comes from the URL.
 The **narrow** column is the layout below 768px: one column at a time, with Back going to the
 left column. The app tree is chosen by viewport width at page load (`mobileWidth`, any device),
 and a v3 build still falls back to v1 below 768px until the narrow pass (brief step 11). The shell
-gets a basic single column from phase 1 anyway, so a desktop window shrunk after load stays usable.
-Once the narrow design lands, `selectLayout` stops falling back and every browser width gets
+has a basic single column, but its minimum width (919px, from Fix Brief - App Shell Layout) keeps
+it from showing: a desktop window shrunk after load scrolls the shell sideways instead. Once the narrow design lands, `selectLayout` stops falling back and every browser width gets
 `src/web`.
 
 ## In-app routes
@@ -95,15 +118,14 @@ Once the narrow design lands, `selectLayout` stops falling back and every browse
 | Path | Route kind (scope) | Left | Middle | Right | Narrow | Guest |
 |---|---|---|---|---|---|---|
 | `/` (signed in) | `home_route` | – | – | – | – | redirects to `/favourite` if the user has favourites, else `/chats` |
-| `/chats` | `chat_list_route` (chats) | `ChatListPanel` | `EmptyState`; auto-selects the last or first chat (existing behaviour) | – | list | yes |
-| `/chats/user/:id/:mi?/:tmi?` · `/user/:id/…` | `global_chat_selected_route` direct (chats) | `ChatListPanel` | conversation (DM) | `DmPanel` docked, `ProfileDialog` "This chat" below 1476px; thread → `ThreadPanel` | conversation | no |
+| `/chats` | `chat_list_route` (chats) | `ChatListPanel` | selects the chat last opened in this list, else its first (decision 7); `EmptyState` without one | – | list | yes |
+| `/chats/user/:id/:mi?/:tmi?` · `/user/:id/…` | `global_chat_selected_route` direct (chats) | `ChatListPanel` | conversation (DM) | `DmPanel` docked, `UserDialog` "This chat" below 1476px; thread → `ThreadPanel` | conversation | no |
 | `/chats/group/:id/…` · `/group/:id/…` · legacy `/:id/…` | `global_chat_selected_route` group (chats) | `ChatListPanel` | conversation (group) | `GroupPanel` on demand; thread → `ThreadPanel` | conversation | preview (read-only) |
-| `/favourite` | `chat_list_route` (favourite) | `ChatListPanel` favourites | `EmptyState` / auto-select | – | list | sign in, then `/chats` |
+| `/favourite` | `chat_list_route` (favourite) | `ChatListPanel` favourites | selects the favourite last opened, else the first (decision 7); `EmptyState` without one | – | list | sign in, then `/chats` |
 | `/favourite/user/:id/…` · `/favourite/group/:id/…` · `/favourite/community/:cid/channel/:chid/…` | as above, favourite scope | `ChatListPanel` favourites | conversation | as above | conversation | – (redirects to the non-favourite URL if not a favourite) |
-| `/community/:cid` | `selected_community_route` | `ChatListPanel` community mode (channels) | redirects to the default channel | `GroupPanel` (community) on demand | list | preview |
+| `/community/:cid` | `selected_community_route` | `ChatListPanel` community mode (channels) | selects the channel last opened there, else its first (decision 7) | `GroupPanel` (community) on demand | list | preview |
 | `/community/:cid/channel/:chid/…` | `selected_channel_route` (community) | channel list | conversation (channel) | `GroupPanel` (channel) on demand; thread → `ThreadPanel` | conversation | preview |
-| `/chats/threads` · `/favourite/threads` · `/community/:cid/threads` **(new)** | `threads_route` (that scope) | `ThreadList` (All / Unread) | last opened thread's chat, else `EmptyState` | `ThreadPanel` once a thread is open | list | sign in |
-| `/notifications` **(mobile's path, new on desktop)** | `notifications_route` | `ActivityPanel` | selected item's chat | – | list | sign in |
+| `/notifications` **(mobile's path, new on desktop)** | `notifications_route`; over a chat or wallet page, `?panel=activity` on its path (decision 7) | `ActivityPanel`, with Back to the middle's own panel | what it showed stays (a chat or wallet page); an item opens its chat | a chat's details, on demand | list | sign in |
 | `/profile_summary` **(mobile's path, new on desktop)** | `profile_summary_route` | redirects to the default chat list with `?profile` | | | | sign in |
 | `/welcome` **(mobile's path, new on desktop)** | `welcome_route` | – | `ExploreCommunities` (as `/communities`) | – | full | yes |
 | `/communities` | `communities_route` | – (full width) | `ExploreCommunities` (search query in the URL, see below) | `JoinGateDialog` on join | full | yes |
@@ -128,9 +150,9 @@ until there's a setting (`GAPS.md`). Signed-in users on `/` go to the app as tod
 
 | Path | Renders | Notes |
 |---|---|---|
-| `/` (signed out), `/home` | `Landing` | `?auth` opens the magic-link sign-in (existing). `?ref=` is captured (existing). |
+| `/` (signed out), `/home` | `Landing` | `?auth&m=…` (an emailed sign-in link) asks for the link's code (existing). `?ref=` is captured (existing). |
 | `/features` | `Landing`, scrolled to `#landing-features` | The old `#hash` redirect (`?section=`) keeps working. |
-| `/roadmap` · `/whitepaper` · `/architecture` · `/blog` · `/blog/:slug` · `/faq` | `Learn`, host-routed (`page`, `post`, `learnPageHref`) | `?q=` opens that FAQ question; `?section=` scrolls to that doc section. Content: `GAPS.md` (Learn content). |
+| `/roadmap` · `/whitepaper` · `/architecture` · `/blog` · `/blog/:slug` · `/faq` | `Learn`, host-routed (`page`, `post`, `learnPageHref`) | `?q=` opens that FAQ question; `?section=` scrolls to that doc section, except on `/architecture`, which frames the canister map and where it names the canister to open. Content: `GAPS.md` (Learn content). |
 | `/terms` · `/privacy` · `/guidelines` · `/csea-reporting` | `Learn` doc pages, not tabs (decision 5) | `?section=` scrolls to a section; `/csea-reporting` keeps `?report=` / `?urgent=`. |
 | `/diamond` | Learn-style page with `DiamondContent` (decision 5) | Upgrading while signed out opens `AuthDialog` first. |
 
@@ -145,6 +167,7 @@ until there's a setting (`GAPS.md`). Signed-in users on `/` go to the app as tod
 | `?ref=` | referral; captured, then dropped from the URL |
 | `?autojoin` | join after preview |
 | `?explore` | no auto-select of a default chat |
+| `?threads` **(new)** | `ThreadList` (All / Unread) in the left column, in place of the chat list; the middle is unchanged (the list's default chat when nothing is selected, decision 7) |
 | `?profile` **(new)** | `ProfileDialog`, over the current page |
 | `?diamond` | `DiamondDialog` |
 | `?chit` **(new)** | `ChitDialog` |
@@ -164,9 +187,12 @@ Not a URL, wired as today:
 ## Things the existing router does that the new one keeps
 
 - **Auto-select.** `/chats`, `/favourite` and `/community/:cid` redirect (replace) to the last
-  selected or first chat in that scope (`selectDefaultChat`).
+  selected or first chat in that scope. Both trees choose it with `@client`'s `defaultChat`
+  (the old UI's `selectDefaultChat`, `src/web`'s `router/defaultChat.ts`).
 - **`setSelectedChat` redirects:** a non-favourite on a `/favourite` URL, a group that has moved
-  to a community, a migrated DM, and the not-found and restricted modals.
+  to a community, a migrated DM, and the not-found, no-access and restricted dialogs. Every tree
+  handles those events through `app/src/logic/appEvents`; closing a dialog goes to the default
+  scope.
 - **Threads.** Closing a thread strips `/:tmi` and `?open`. `/:mi/:tmi` opens the thread on a cold
   load even without `?open`.
 - **Previews.** Navigating away from a previewed community drops the preview.
@@ -174,24 +200,68 @@ Not a URL, wired as today:
   the modal stack to close. The new shell has to handle `closeModalStack` the way `Home.svelte`
   does, or navigations sit pending.
 
-## Built so far (phase 2)
+## Built so far
 
-`router/routeTable.ts` registers every path above in this order, and `router/Router.svelte` runs the
-existing route effects. `router/regions.ts` maps each route onto the regions above, and the regions
-are placeholders until their screens are built. Still to come:
+**Router (phase 2).** `router/routeTable.ts` registers every path above in this order, and
+`router/Router.svelte` runs the existing route effects. `router/regions.ts` maps each route onto
+the regions above, and the in-app regions are placeholders until their screens are built.
 
+**Landing, Learn and sign-in (brought forward from phase 9).** `features/marketing` renders
+`Landing` on `/` (signed out), `/home` and `/features`, and `Learn` host-routed on its sub-pages'
+paths. `features/auth` wires `AuthDialog` to the existing sign-in flows: on the pages through
+their own dialog, and in the app (`AuthScreen`) whenever the client asks for a sign-in or a
+signed-in identity has no account yet. `/home?auth&m=…` (the emailed sign-in link) asks for the
+link's code over Landing. While a sign-in or sign-up started in Landing's own dialog is going,
+`/` keeps showing Landing, so that dialog sees it through, and after a sign-up there fails, so it
+says why (`pageSignIns`, `showsSignedOut`). Leaving the app mid sign-in gives the sign-in up.
+
+**Learn content.** Learn shows the existing roadmap, whitepaper, blog posts and FAQs, converted to
+its content shapes in `features/marketing/learn` and loaded the first time a Learn page shows. The
+FAQs come from the translations, so they follow the app's language. `/faq?q=` opens that question
+and `/whitepaper?section=` scrolls to that section; `/architecture` frames the canister map
+(`CanisterMapFrame`), which keeps `?section=` itself. What the conversion couldn't keep is in
+`GAPS.md` (Learn content).
+
+**Chat list (phase 3a).** The left column's chat list is real (`features/chats`): DMs and groups,
+favourites or a community's channels, as the route's scope says, with the latest message, time,
+unread count, pinned, muted and live call, and a row menu (favourite, pin, mute, mark read).
+Picking a chat routes to it. A list with nothing selected goes to the chat last opened in it,
+else its first (`defaultChatRoute`, as the old UI), except on a narrow screen.
+
+**Conversation (phase 3b).** The middle column shows the selected chat (`features/conversation`):
+`ConversationHeader` with the panel toggle, and the messages through the old UI's list
+(`app/src/core/ChatEventList`), which loads older and newer messages as the reader scrolls,
+goes to the route's message (`/:mi`, highlighted), keeps its place and marks what's been seen
+read. Each message is a `MessageGroup`; dates are `UnreadDivider` pills, and an "Unread messages"
+divider stays above the first message that was unread when the chat was opened. A private chat
+that isn't joined shows no messages, as before.
+
+**Composer (phase 3c).** Under the messages, `ComposerBar` sends text with its mentions and
+markdown as the old composer did, keeps a draft per chat and says who's typing. Where the reader
+can't send (frozen, blocked, a preview, lapsed, signed out, no permission) the old footer's reason
+shows instead.
+
+**Activity (phase 3d).** Notifications shows the activity feed (`features/activity`). Over a
+chat or a wallet page it opens as `?panel=activity` on that page's path, from the rail, leaving
+the middle as it is, with Back to the middle's own panel (decision 7); with nothing in the
+middle it's `/notifications`. Opening an item goes to its message with the feed still open.
+
+Still to come:
+
+- **Legal pages and `/diamond`**: placeholders until Learn's doc pages and `DiamondContent` exist
+  (decision 5).
 - **Guests**: guest-only behaviour comes in the guest pass (phase 10). That covers the "sign in"
   routes in the Guest column and the composer's sign-in prompt. A guest on `/favourite` already
-  gets the existing sign-in, then `/chats`.
+  gets the sign-in, then `/chats`.
 - **Dialog params**: `?profile` opens a placeholder dialog over the page. `?diamond`, `?hof` and
   `?chit` are left in the URL until their dialogs exist (phase 8).
 - **Share**: `/share` goes to the default scope as today, but picking the chat (`ChatPicker`)
-  comes in phase 5.
-- **Marketing pages**: they render a placeholder until Landing and Learn are mounted (phase 9).
+  comes in phase 4.
 
 ## Known router issues (not fixed here)
 
 - The legacy `/:chatId` route catches unregistered 1–3 segment paths and treats them as a group id
   (`/hotgroups`, `/welcome` on desktop, `/faq` on mobile).
 - `landingPagePaths` (`utils/urls.ts`) is missing `privacy` and `csea-reporting`.
-- `favourites_route` and `explore_groups_route` are route kinds no path produces.
+- `explore_groups_route` is a route kind no path produces. `favourites_route` is used (`navigation.ts`
+  and the mobile router label `/favourite` with it); only its parser, `favouritesRoute`, is unused.

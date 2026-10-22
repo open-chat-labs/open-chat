@@ -177,6 +177,48 @@ export type IdentityState =
     | { kind: "registering"; postLogin?: PostLoginOperation }
     | { kind: "logging_in"; postLogin?: PostLoginOperation };
 
+/** How the user is signing in: the client picks the browser's or the native app's passkeys. */
+export type SignInMethod =
+    | { kind: "passkey" }
+    // Internet Identity or NFID, in the auth client's window
+    | { kind: "auth_client"; provider: "ii" | "nfid" }
+    // once the wallet has signed the message the backend prepared (siwePrepareLogin / siwsPrepareLogin)
+    | { kind: "wallet"; token: "eth" | "sol"; address: string; signature: string };
+
+/**
+ * How a sign-in went, once the identity has loaded. `needs_account`: signed in with an identity
+ * that has no OpenChat account yet, so sign-up comes next. `cancelled`: the passkey prompt or the
+ * window was dismissed (or the passkey isn't one OpenChat knows), or the caller gave it up.
+ */
+export type SignInOutcome =
+    | { kind: "logged_in" }
+    | { kind: "needs_account" }
+    | { kind: "cancelled" }
+    | { kind: "failed"; reason: ResourceKey };
+
+/**
+ * How a sign-up went. `referral_refused`: the referral code was turned down, so no account was
+ * made; the code won't be sent again, so signing up again goes ahead without it. `cancelled`: the
+ * passkey prompt was dismissed, or the caller gave the sign-up up before the account was asked
+ * for.
+ */
+export type SignUpOutcome =
+    | { kind: "success" }
+    | { kind: "referral_refused"; reason: ResourceKey }
+    | { kind: "cancelled" }
+    | { kind: "failed"; reason: ResourceKey };
+
+/**
+ * Asking for an emailed sign-in link. Sent: the code the email shows (so the person can tell it's
+ * this request's link), and `signedIn`, which settles once the link is followed and this browser
+ * has the identity, or `cancelled` when the request is given up. Given up while it was being sent,
+ * it's `cancelled` and no link is waited for.
+ */
+export type EmailSignInRequest =
+    | { kind: "sent"; code: string; signedIn: Promise<SignInOutcome> }
+    | { kind: "failed"; reason: ResourceKey }
+    | { kind: "cancelled" };
+
 export type UserLookup = ReadonlyMap<string, UserSummary>;
 
 export type User = {

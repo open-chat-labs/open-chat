@@ -44,6 +44,8 @@ fn main() {
     generate_ts_method!(user_index, diamond_membership_fees);
     generate_ts_method!(user_index, explore_bots);
     generate_ts_method!(user_index, external_achievements);
+    generate_ts_method!(user_index, bridged_users);
+    generate_ts_method!(user_index, linked_bridged_users);
     generate_ts_method!(user_index, migrated_user_ids);
     generate_ts_method!(user_index, platform_moderators);
     generate_ts_method!(user_index, platform_moderators_group);
@@ -66,6 +68,8 @@ fn main() {
     generate_ts_method!(user_index, remove_bot);
     generate_ts_method!(user_index, set_diamond_membership_fees);
     generate_ts_method!(user_index, set_alchemy_api_key);
+    generate_ts_method!(user_index, set_bridge_bot);
+    generate_ts_method!(user_index, start_bridged_user_link);
     generate_ts_method!(user_index, set_call_push_enabled);
     generate_ts_method!(user_index, set_display_name);
     generate_ts_method!(user_index, set_hide_online_status);
@@ -74,6 +78,7 @@ fn main() {
     generate_ts_method!(user_index, set_username);
     generate_ts_method!(user_index, submit_proof_of_unique_personhood);
     generate_ts_method!(user_index, suspend_user);
+    generate_ts_method!(user_index, unlink_bridged_user);
     generate_ts_method!(user_index, unsuspend_user);
     generate_ts_method!(user_index, update_bot);
     generate_ts_method!(user_index, update_diamond_membership_subscription);

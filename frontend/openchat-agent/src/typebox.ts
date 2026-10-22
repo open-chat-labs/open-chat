@@ -674,6 +674,12 @@ export const UnitResult = /* @__PURE__ */ Type.Union([
     }),
 ]);
 
+export type BridgePlatform = Static<typeof BridgePlatform>;
+export const BridgePlatform = /* @__PURE__ */ Type.Union([
+    Type.Literal("Discord"),
+    Type.Literal("Telegram"),
+]);
+
 export type AcceptSwapSuccess = Static<typeof AcceptSwapSuccess>;
 export const AcceptSwapSuccess = /* @__PURE__ */ Type.Object({
     token1_txn_in: Type.BigInt(),
@@ -696,6 +702,14 @@ export const OptionUpdateU64 = /* @__PURE__ */ Type.Union(
     ],
     { default: "NoChange" },
 );
+
+export type DiscordUser = Static<typeof DiscordUser>;
+export const DiscordUser = /* @__PURE__ */ Type.Object({
+    id: Type.BigInt(),
+    username: Type.String(),
+    display_name: Type.Optional(Type.String()),
+    avatar: Type.Optional(Type.String()),
+});
 
 export type DailyPuzzleConfig = Static<typeof DailyPuzzleConfig>;
 export const DailyPuzzleConfig = /* @__PURE__ */ Type.Object({
@@ -768,6 +782,16 @@ export const OptionUpdatePinNumberSettings = /* @__PURE__ */ Type.Union(
     ],
     { default: "NoChange" },
 );
+
+export type BridgedUserId = Static<typeof BridgedUserId>;
+export const BridgedUserId = /* @__PURE__ */ Type.Union([
+    Type.Object({
+        Discord: Type.BigInt(),
+    }),
+    Type.Object({
+        Telegram: Type.BigInt(),
+    }),
+]);
 
 export type CommunityPermissions = Static<typeof CommunityPermissions>;
 export const CommunityPermissions = /* @__PURE__ */ Type.Object({
@@ -2142,6 +2166,31 @@ export const UserIndexCheckUsernameArgs = /* @__PURE__ */ Type.Object({
     is_bot: Type.Boolean(),
 });
 
+export type UserIndexStartBridgedUserLinkArgs = Static<typeof UserIndexStartBridgedUserLinkArgs>;
+export const UserIndexStartBridgedUserLinkArgs = /* @__PURE__ */ Type.Object({
+    platform: BridgePlatform,
+});
+
+export type UserIndexStartBridgedUserLinkSuccessResult = Static<
+    typeof UserIndexStartBridgedUserLinkSuccessResult
+>;
+export const UserIndexStartBridgedUserLinkSuccessResult = /* @__PURE__ */ Type.Object({
+    code: Type.String(),
+    expires: Type.BigInt(),
+});
+
+export type UserIndexStartBridgedUserLinkResponse = Static<
+    typeof UserIndexStartBridgedUserLinkResponse
+>;
+export const UserIndexStartBridgedUserLinkResponse = /* @__PURE__ */ Type.Union([
+    Type.Object({
+        Success: UserIndexStartBridgedUserLinkSuccessResult,
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
 export type UserIndexSetModerationFlagsArgs = Static<typeof UserIndexSetModerationFlagsArgs>;
 export const UserIndexSetModerationFlagsArgs = /* @__PURE__ */ Type.Object({
     moderation_flags_enabled: Type.Number(),
@@ -2186,6 +2235,11 @@ export const UserIndexMigratedUserIdsArgs = /* @__PURE__ */ Type.Object({
 export type UserIndexMigratedUserIdsResponse = Static<typeof UserIndexMigratedUserIdsResponse>;
 export const UserIndexMigratedUserIdsResponse = /* @__PURE__ */ Type.Object({
     Success: Type.Record(UserId, UserId),
+});
+
+export type UserIndexUnlinkBridgedUserArgs = Static<typeof UserIndexUnlinkBridgedUserArgs>;
+export const UserIndexUnlinkBridgedUserArgs = /* @__PURE__ */ Type.Object({
+    user: BridgedUserId,
 });
 
 export type UserIndexSuspectedBotsSuccessResult = Static<
@@ -2368,6 +2422,11 @@ export const UserIndexSetHideOnlineStatusArgs = /* @__PURE__ */ Type.Object({
     hide_online_status: Type.Boolean(),
 });
 
+export type UserIndexBridgedUsersArgs = Static<typeof UserIndexBridgedUsersArgs>;
+export const UserIndexBridgedUsersArgs = /* @__PURE__ */ Type.Object({
+    users: Type.Array(BridgedUserId),
+});
+
 export type UserIndexUnsuspendUserArgs = Static<typeof UserIndexUnsuspendUserArgs>;
 export const UserIndexUnsuspendUserArgs = /* @__PURE__ */ Type.Object({
     user_id: UserId,
@@ -2385,6 +2444,12 @@ export const UserIndexUnsuspendUserResponse = /* @__PURE__ */ Type.Union([
         Error: OCError,
     }),
 ]);
+
+export type UserIndexSetBridgeBotArgs = Static<typeof UserIndexSetBridgeBotArgs>;
+export const UserIndexSetBridgeBotArgs = /* @__PURE__ */ Type.Object({
+    platform: BridgePlatform,
+    bot_id: Type.Optional(UserId),
+});
 
 export type UserIndexSetAlchemyApiKeyArgs = Static<typeof UserIndexSetAlchemyApiKeyArgs>;
 export const UserIndexSetAlchemyApiKeyArgs = /* @__PURE__ */ Type.Object({
@@ -6189,6 +6254,14 @@ export const GroupVisibilityChanged = /* @__PURE__ */ Type.Object({
     changed_by: UserId,
 });
 
+export type TelegramUser = Static<typeof TelegramUser>;
+export const TelegramUser = /* @__PURE__ */ Type.Object({
+    id: Type.BigInt(),
+    username: Type.Optional(Type.String()),
+    display_name: Type.String(),
+    avatar: Type.Optional(BlobReference),
+});
+
 export type MarkVideoCallAsEndedArgs = Static<typeof MarkVideoCallAsEndedArgs>;
 export const MarkVideoCallAsEndedArgs = /* @__PURE__ */ Type.Object({
     chat: Chat,
@@ -7909,6 +7982,16 @@ export const SignedDelegation = /* @__PURE__ */ Type.Object({
     signature: TSBytes,
 });
 
+export type BridgedUser = Static<typeof BridgedUser>;
+export const BridgedUser = /* @__PURE__ */ Type.Union([
+    Type.Object({
+        Discord: DiscordUser,
+    }),
+    Type.Object({
+        Telegram: TelegramUser,
+    }),
+]);
+
 export type FailedCryptoTransaction = Static<typeof FailedCryptoTransaction>;
 export const FailedCryptoTransaction = /* @__PURE__ */ Type.Union([
     Type.Object({
@@ -8846,6 +8929,13 @@ export const BotCommandInitial = /* @__PURE__ */ Type.Object({
     meta: Type.Optional(BotCommandMeta),
 });
 
+export type BridgedUserSummary = Static<typeof BridgedUserSummary>;
+export const BridgedUserSummary = /* @__PURE__ */ Type.Object({
+    user: BridgedUser,
+    linked_user_id: Type.Optional(UserId),
+    updated: Type.BigInt(),
+});
+
 export type BotCommandDefinition = Static<typeof BotCommandDefinition>;
 export const BotCommandDefinition = /* @__PURE__ */ Type.Object({
     name: Type.String(),
@@ -8880,6 +8970,7 @@ export type BotMessageContext = Static<typeof BotMessageContext>;
 export const BotMessageContext = /* @__PURE__ */ Type.Object({
     command: Type.Optional(BotCommand),
     finalised: Type.Boolean(),
+    bridged_from: Type.Optional(BridgedUserId),
 });
 
 export type BotMessageContent = Static<typeof BotMessageContent>;
@@ -9011,6 +9102,18 @@ export const UserIndexBotUpdatesBotDetails = /* @__PURE__ */ Type.Object({
     restricted_locations: Type.Optional(Type.Array(BotInstallationLocationType)),
 });
 
+export type UserIndexBridgedUsersResponse = Static<typeof UserIndexBridgedUsersResponse>;
+export const UserIndexBridgedUsersResponse = /* @__PURE__ */ Type.Object({
+    Success: Type.Array(BridgedUserSummary),
+});
+
+export type UserIndexLinkedBridgedUsersResponse = Static<
+    typeof UserIndexLinkedBridgedUsersResponse
+>;
+export const UserIndexLinkedBridgedUsersResponse = /* @__PURE__ */ Type.Object({
+    Success: Type.Array(BridgedUserSummary),
+});
+
 export type UserIndexUsersResult = Static<typeof UserIndexUsersResult>;
 export const UserIndexUsersResult = /* @__PURE__ */ Type.Object({
     users: Type.Optional(Type.Array(UserSummaryV2)),
@@ -9084,6 +9187,16 @@ export const LocalUserIndexChatEventsArgs = /* @__PURE__ */ Type.Object({
     requests: Type.Array(LocalUserIndexChatEventsEventsArgs),
 });
 
+export type LocalUserIndexBotEditMessageArgs = Static<typeof LocalUserIndexBotEditMessageArgs>;
+export const LocalUserIndexBotEditMessageArgs = /* @__PURE__ */ Type.Object({
+    chat_context: BotChatContext,
+    thread: Type.Optional(MessageIndex),
+    message_id: MessageId,
+    content: BotMessageContent,
+    block_level_markdown: Type.Boolean(),
+    og_previews: Type.Optional(Type.Array(OgPreview)),
+});
+
 export type LocalUserIndexAccessTokenV2Args = Static<typeof LocalUserIndexAccessTokenV2Args>;
 export const LocalUserIndexAccessTokenV2Args = /* @__PURE__ */ Type.Union([
     Type.Object({
@@ -9114,6 +9227,7 @@ export const LocalUserIndexBotSendMessageArgs = /* @__PURE__ */ Type.Object({
     block_level_markdown: Type.Boolean(),
     finalised: Type.Boolean(),
     og_previews: Type.Optional(Type.Array(OgPreview)),
+    bridged_from: Type.Optional(BridgedUser),
 });
 
 export type ProposalsBotSubmitProposalArgs = Static<typeof ProposalsBotSubmitProposalArgs>;
@@ -10791,4 +10905,5 @@ export const BotEventWrapper = /* @__PURE__ */ Type.Object({
     api_gateway: TSPrincipal,
     event: BotEvent,
     timestamp: Type.BigInt(),
+    notification_index: Type.BigInt(),
 });

@@ -18,6 +18,10 @@ import type {
     BlockUserResponse,
     BotCommandResponse,
     BotDefinition,
+    BridgedUserId,
+    BridgedUserLinkCode,
+    BridgedUserSummary,
+    BridgePlatform,
     BotInstallationLocation,
     BotsResponse,
     CancelP2PSwapResponse,
@@ -62,6 +66,7 @@ import type {
     DeletedDirectMessageResponse,
     DeletedGroupMessageResponse,
     DexId,
+    DexQuoteResult,
     DexSwapResult,
     DiamondMembershipDuration,
     DiamondMembershipFees,
@@ -298,6 +303,12 @@ import { createHttpAgentSync } from "../utils/httpAgent";
 import { icNowNanos } from "../utils/icTime";
 import { chunk, distinctBy, toRecord, toRecord2 } from "../utils/list";
 import { bytesToHexString, mapOptional } from "../utils/mapping";
+import {
+    needsMinimumDissolveDelay,
+    type NeuronVote,
+    neuronVotesResponse,
+    type VotingNeuron,
+} from "./common/neurons";
 import { mergeAccountTransactions } from "../utils/accountTransactions";
 import { mean } from "../utils/maths";
 import { extractMessagePreviews } from "@shared";
@@ -361,7 +372,25 @@ function emptyResolvedMessagePreviews(): ResolvedMessagePreviews {
     return { messages: new AsyncMessageContextMap(), previews: new Map() };
 }
 
-const NNS_ERROR_TYPE_NEURON_ALREADY_VOTED = 19;
+async function voteWithEach<Id>(
+    neurons: VotingNeuron<Id>[],
+    idToString: (id: Id) => string,
+    vote: (id: Id) => Promise<ManageNeuronResponse>,
+): Promise<NeuronVote[]> {
+    const outcomes = await Promise.allSettled(neurons.map((n) => vote(n.id)));
+    return neurons.map((n, i) => {
+        const outcome = outcomes[i];
+        return {
+            neuronId: idToString(n.id),
+            dissolveDelaySeconds: n.dissolveDelaySeconds,
+            outcome:
+                outcome.status === "fulfilled"
+                    ? outcome.value
+                    : { kind: "call_failed", message: String(outcome.reason) },
+        };
+    });
+}
+
 const MAX_CONCURRENT_PREVIOUS_WALLET_BALANCE_CHECKS = 10;
 // The most ledgers the LocalUserIndex moves funds from in one call
 const MAX_LEDGERS_PER_FUNDS_MOVE = 20;
@@ -3921,10 +3950,10 @@ export class OpenChatAgent extends EventTarget {
         return this.userClient.archiveChat(chatId);
     }
 
-    unarchiveChat(chatId: ChatIdentifier): Promise<ArchiveChatResponse> {
+    unarchiveChats(chatIds: ChatIdentifier[]): Promise<ArchiveChatResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
-        return this.userClient.unarchiveChat(chatId);
+        return this.userClient.unarchiveChats(chatIds);
     }
 
     async registerProposalVote(
@@ -3961,79 +3990,67 @@ export class OpenChatAgent extends EventTarget {
     }
 
     // Lists the neurons the user's principal controls or is hot-keyed to, then votes with each of
-    // them in parallel. The vote counts as cast if any neuron's vote is accepted, or if any neuron
-    // had already voted (eg. via the NNS dapp), so that the vote still gets recorded in OpenChat.
-    // Other neurons will typically have failed because they are not eligible for this proposal.
+    // them in parallel. See `neuronVotesResponse` for how their outcomes become the response.
     private async voteWithNeurons(
         governanceCanisterId: string,
         proposalId: bigint,
         isNns: boolean,
         adopt: boolean,
     ): Promise<RegisterProposalVoteResponse> {
-        let votes: PromiseSettledResult<ManageNeuronResponse>[];
+        let votes: NeuronVote[];
+        let minimumDissolveDelayToVoteSeconds: () => Promise<bigint | undefined>;
         if (isNns) {
             const client = new NnsGovernanceClient(
                 this.identity,
                 this._agent,
                 governanceCanisterId,
             );
-            const neuronIds = await client.listNeurons();
-            if (neuronIds.length === 0) return noEligibleNeurons();
-            votes = await Promise.allSettled(
-                neuronIds.map((id) => client.registerVote(id, proposalId, adopt)),
+            const neurons = await client.listNeurons();
+            if (neurons.length === 0) return noEligibleNeurons();
+            votes = await voteWithEach(
+                neurons,
+                (id) => id,
+                (id) => client.registerVote(id, proposalId, adopt),
             );
+            minimumDissolveDelayToVoteSeconds = () => client.minimumDissolveDelayToVoteSeconds();
         } else {
             const client = new SnsGovernanceClient(
                 this.identity,
                 this._agent,
                 governanceCanisterId,
             );
-            const neuronIds = await client.listNeurons();
-            if (neuronIds.length === 0) return noEligibleNeurons();
-            votes = await Promise.allSettled(
-                neuronIds.map((id) => client.registerVote(id, proposalId, adopt)),
+            const neurons = await client.listNeurons();
+            if (neurons.length === 0) return noEligibleNeurons();
+            votes = await voteWithEach(neurons, bytesToHexString, (id) =>
+                client.registerVote(id, proposalId, adopt),
             );
+            minimumDissolveDelayToVoteSeconds = () => client.minimumDissolveDelayToVoteSeconds();
         }
 
-        const outcomes: ManageNeuronResponse[] = votes.map((v) =>
-            v.status === "fulfilled"
-                ? v.value
-                : { kind: "error", type: -1, message: String(v.reason) },
-        );
-
-        if (outcomes.some((o) => o.kind === "success" || isAlreadyVoted(o, isNns))) {
-            return CommonResponses.success();
+        let minimumSeconds: bigint | undefined;
+        if (needsMinimumDissolveDelay(votes, isNns)) {
+            try {
+                minimumSeconds = await minimumDissolveDelayToVoteSeconds();
+            } catch (err) {
+                console.warn("Unable to get the minimum dissolve delay to vote", err);
+            }
         }
 
-        this.config.logger.error("Failed to vote with any neuron", outcomes);
-        const first = outcomes.find((o) => o.kind === "error");
-        return {
-            kind: "error",
-            code:
-                first !== undefined && isNotAcceptingVotes(first)
-                    ? ErrorCode.ProposalNotAcceptingVotes
-                    : ErrorCode.Unknown,
-            message: first?.kind === "error" ? first.message : undefined,
-        };
+        const response = neuronVotesResponse(votes, isNns, minimumSeconds);
+        // Only report failures nobody expects: ineligible neurons and closed proposals are the
+        // user's to deal with, and calls that didn't reach governance are worth retrying
+        if (
+            response.kind === "neuron_votes_failed" &&
+            response.failures.some((f) => f.reason.kind === "rejected")
+        ) {
+            this.config.logger.error("Failed to vote with any neuron", votes);
+        } else if (response.kind !== "success") {
+            console.warn("Failed to vote with any neuron", votes);
+        }
+        return response;
 
         function noEligibleNeurons(): RegisterProposalVoteResponse {
             return { kind: "error", code: ErrorCode.NoEligibleNeurons, message: undefined };
-        }
-
-        // NNS governance has a dedicated error type for this, SNS governance reports it as a
-        // precondition failure, so fall back to the message both of them use
-        function isAlreadyVoted(outcome: ManageNeuronResponse, isNns: boolean): boolean {
-            if (outcome.kind !== "error") return false;
-            if (isNns && outcome.type === NNS_ERROR_TYPE_NEURON_ALREADY_VOTED) return true;
-            return /already voted/i.test(outcome.message);
-        }
-
-        // Best effort: both canisters report a closed proposal as a precondition failure whose
-        // message mentions the deadline
-        function isNotAcceptingVotes(outcome: ManageNeuronResponse): boolean {
-            return (
-                outcome.kind === "error" && /deadline|not accepting votes/i.test(outcome.message)
-            );
         }
     }
 
@@ -4666,41 +4683,18 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
-    // The quote of each DEX for swapping `amountIn`, which is what it pulls from the wallet, giving
-    // what reaches the wallet, after every fee, including `outputTokenFee` for sending it there
-    getTokenSwapQuotes(
+    // What `dex` quotes for swapping `amountIn`, which is what it pulls from the wallet, giving what
+    // reaches the wallet, after every fee, including `outputTokenFee` for sending it there
+    getTokenSwapQuote(
+        dex: DexId,
         inputTokenLedger: string,
         outputTokenLedger: string,
         amountIn: bigint,
         outputTokenFee: bigint,
-    ): Promise<[DexId, bigint][]> {
+    ): Promise<DexQuoteResult> {
         return this._dexesAgent
             .get()
-            .quoteSwap(
-                inputTokenLedger,
-                outputTokenLedger,
-                amountIn,
-                outputTokenFee,
-                this.swapProviders(),
-            )
-            .then((quotes) => {
-                // Sort the quotes by amount descending so the first quote is the best
-                quotes.sort(compare);
-                return quotes;
-            });
-
-        function compare(
-            [_dexA, amountA]: [DexId, bigint],
-            [_dexB, amountB]: [DexId, bigint],
-        ): number {
-            if (amountA > amountB) {
-                return -1;
-            }
-            if (amountA < amountB) {
-                return 1;
-            }
-            return 0;
-        }
+            .quoteSwap(dex, inputTokenLedger, outputTokenLedger, amountIn, outputTokenFee);
     }
 
     // Swaps tokens, reporting each step of a swap the user makes straight from their wallet as the
@@ -6094,6 +6088,26 @@ export class OpenChatAgent extends EventTarget {
 
     setAlchemyApiKey(apiKey: string | undefined): Promise<Success | OCError> {
         return this._userIndexClient.setAlchemyApiKey(apiKey);
+    }
+
+    setBridgeBot(platform: BridgePlatform, botId: string | undefined): Promise<Success | OCError> {
+        return this._userIndexClient.setBridgeBot(platform, botId);
+    }
+
+    getBridgedUsers(ids: BridgedUserId[]): Promise<BridgedUserSummary[]> {
+        return this._userIndexClient.bridgedUsers(ids);
+    }
+
+    startBridgedUserLink(platform: BridgePlatform): Promise<BridgedUserLinkCode | OCError> {
+        return this._userIndexClient.startBridgedUserLink(platform);
+    }
+
+    unlinkBridgedUser(id: BridgedUserId): Promise<Success | OCError> {
+        return this._userIndexClient.unlinkBridgedUser(id);
+    }
+
+    getLinkedBridgedUsers(): Promise<BridgedUserSummary[]> {
+        return this._userIndexClient.linkedBridgedUsers();
     }
     dailyPuzzleRegenerateToday(gameId: string | undefined): Promise<Success | OCError> {
         return this._dailyPuzzleClient.get().regenerateToday(gameId);

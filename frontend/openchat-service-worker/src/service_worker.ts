@@ -24,6 +24,7 @@ import type {
 import { UnsupportedValueError } from "@shared/domain/error";
 import { isMessageNotification } from "@shared/utils/notifications";
 import { routeForChatIdentifier, routeForMessage, routeForMessageContext } from "@shared/utils/routes";
+import { isStandalonePagePath } from "@shared/utils/standalonePages";
 import { toTitleCase } from "@shared/utils/string";
 import { buildBlobUrl } from "@shared/utils/blobs";
 import { ExpirationPlugin } from "workbox-expiration";
@@ -82,7 +83,10 @@ function registerStaticResourceCache() {
     });
 }
 
-const matchCallback = ({ request }: { request: Request }) => request.mode === "navigate";
+// Every navigation but the standalone pages the website canister serves beside the app (the
+// canister map at /canisters), which must not replace the cached app document below
+const matchCallback = ({ url, request }: { url: URL; request: Request }) =>
+    request.mode === "navigate" && !isStandalonePagePath(url.pathname);
 const DOCUMENT_CACHE_NAME = "openchat_network_first";
 
 if (!isDevServer) {

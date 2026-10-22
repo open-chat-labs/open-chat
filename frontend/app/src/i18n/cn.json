@@ -190,6 +190,15 @@
         "translateFrom": "从{language}翻译",
         "translatedFrom": "已在设备上从{language}翻译"
     },
+    "bridgedAccounts": {
+        "info": "关联你在其他平台上的账号后，这些账号通过我们的桥接发送到 OpenChat 的消息将显示为你发送的。",
+        "link": "关联 {platform}",
+        "linkFailed": "无法开始关联你的 {platform} 账号",
+        "section": "已关联账号",
+        "unlink": "取消关联",
+        "unlinkFailed": "无法取消关联该账号"
+    },
+    "bridgedUserUnknown": "{platform} 用户",
     "nativeUpdate": {
         "downloadingTitle": "稍等！正在更新 ...",
         "downloadingMessage": "我们正在下载一个快速更新，稍后即可继续 ...",
@@ -541,6 +550,7 @@
         "descriptionPlaceholder": "告诉我们您的社区是关于什么的",
         "details": "细节",
         "directAndGroupChats": "聊天",
+        "dmsAndGroupChats": "私信和群聊",
         "directChats": "直接聊天",
         "edit": "编辑社区",
         "embed": "添加内嵌频道",
@@ -945,6 +955,7 @@
                 }
             },
             "unruly": {
+                "changeColours": "更换颜色",
                 "name": "Unruly",
                 "rules": "用两种颜色之一填满每个格子。任何行或列中不能有连续三个同色，且每行每列最终两种颜色各占一半。",
                 "technique": {
@@ -955,10 +966,10 @@
                     "5": "这一行或列的一种颜色正好还差一个，如果把它放在这三个格子之外，这里就会出现连续三个另一种颜色，所以这一行或列中其他位置的空格子都填另一种颜色。"
                 },
                 "demo": {
-                    "1": "把每个格子填成橙色或紫色。带圈的是给定的，不能更改。",
-                    "2": "横向或纵向都不能连续三个同色。这里多了一个橙色。",
-                    "3": "每行每列最终两种颜色各三个。这一行有四个紫色。",
-                    "4": "两个橙色中间隔一格。中间填橙色就会连成三个，所以必须是紫色。",
+                    "1": "把每个格子填成浅色或深色。有些格子一开始就已填好，不能更改。",
+                    "2": "横向或纵向都不能连续三个同色。这里多了一个浅色。",
+                    "3": "每行每列最终两种颜色各三个。这一行有四个深色。",
+                    "4": "两个浅色中间隔一格。中间填浅色就会连成三个，所以必须是深色。",
                     "5": "每个格子都已填满，没有连续三个同色，每行每列两种颜色各三个。"
                 },
                 "hint": {
@@ -984,8 +995,8 @@
                     }
                 },
                 "colour": {
-                    "1": "橙色",
-                    "2": "紫色"
+                    "1": "浅色",
+                    "2": "深色"
                 }
             },
             "chat_rooms": {
@@ -2035,6 +2046,12 @@
             "urlRules": "补充详细信息的链接"
         },
         "neuronControllerAction": "神经元控制器动作",
+        "neuronDissolveDelayTooShort": "其解散延迟（{delay} 天）少于投票所需的 {minimum} 天",
+        "neuronNotEligible": "提交提案时它没有投票资格",
+        "neuronVoteCallFailed": "无法连接治理系统 - 请重试",
+        "neuronVoteRejected": "投票被拒绝：{message}",
+        "neuronVotesFailed": "您的神经元无法投票",
+        "neuronVotesFailedIntro": "您的神经元都无法对此提案投票：",
         "noEligibleNeurons": "未找到符合条件的神经元",
         "noEligibleNeuronsMoreInfo": "有关投票和治理的更多信息，请阅读<a target=\"_blank\" href=\"https://oc.app/blog/governance\">这篇博文</a>。",
         "noEligibleNeuronsPrincipalIntro": "未找到合格或链接的神经元。为了在 OpenChat 内对提案进行投票，您必须首先将您的 OpenChat principal 作为热键添加到您想要投票的任何神经元。",
@@ -2062,7 +2079,7 @@
                 "regular": "提案要获得通过，必须满足以下两个条件："
             }
         },
-        "proposalNotAceptingVotes": "此提案不接受投票 - 尝试重新加载页面",
+        "proposalNotAcceptingVotes": "此提案的投票已结束",
         "proposalsBotAction": "提案机器人操作",
         "proposedBy": "提议者",
         "readless": "少读",
@@ -2407,12 +2424,18 @@
         },
         "quote": "报价",
         "quoteError": "获取兑换 {tokenIn} 的报价时出错",
+        "quotes": {
+            "best": "最佳汇率",
+            "declined": "无法兑换此金额",
+            "failed": "无法获取报价",
+            "unsupported": "不支持此兑换"
+        },
         "quoteTooLow": "所报的最佳费率是 {rate}  {tokenOut} / {tokenIn} @{dex}。这将从 {amountIn} {tokenIn} 兑换 {amountOut} {tokenOut} 。仅当报价金额超过 {minAmountOut} 时，您才可以进行交换。",
         "requote": "重新报价",
         "swap": "兑换",
         "swapNotAvailable": "目前无法将 {tokenIn} 交换为任何其他代币",
         "swapToken": "交换{tokenIn}",
-        "swapTokenTo": "将 {tokenIn} 交换为 {tokenOut}",
+        "swapTokenTo": "将 {amountIn} {tokenIn} 交换为 {tokenOut}",
         "warningValueDropped": "由于流动性低，您将收到的{tokenOut}的价值<您将交换的{tokenIn}价值的90％（基于这些代币的报价美元价值）。",
         "warningValueUnknown": "目前这些代币的美元价格尚不可用，因此无法确定这种交换是否具有良好的价值。",
         "youWillReceive": "您将收到 **{amountOut}** {tokenOut} (${usdOut})，金额为 **{amountIn}** {tokenIn} (${usdIn})。"

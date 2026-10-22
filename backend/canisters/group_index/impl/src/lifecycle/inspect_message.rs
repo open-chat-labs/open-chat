@@ -33,6 +33,8 @@ fn accept_if_valid(state: &RuntimeState) {
         | "revoke_group_verification"
         | "set_group_verification"
         | "set_community_verification" => state.is_caller_governance_principal(),
+        // Canister callers bypass inspect_message; this only matters for tests that impersonate the canisters
+        "c2c_local_index" => state.is_caller_local_user_index(),
         _ => false,
     };
 

@@ -4,6 +4,7 @@ import type {
     ApiListProposalsResponse,
     ApiManageNeuronResponse,
     ApiNervousSystemFunction,
+    ApiNervousSystemParameters,
     ApiSnsFunctionType
 } from "./candid/idl";
 import type {
@@ -15,6 +16,7 @@ import type {
 } from "@shared";
 import { identity, optional } from "../../utils/mapping";
 import { proposalVote } from "../common/chatMappers";
+import { type VotingNeuron, notDissolved } from "../common/neurons";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
 
@@ -86,16 +88,22 @@ function snsFunctionType(candid: ApiSnsFunctionType): SnsFunctionType {
     }
 }
 
-// The ids (subaccounts) of the neurons which are not dissolved, and so may be able to vote
-export function neuronIds(candid: ApiListNeuronsResponse, nowMillis: bigint): Uint8Array[] {
-    return candid.neurons
-        .filter((n) => {
-            const state = n.dissolve_state[0];
-            if (state === undefined) return false;
-            if ("WhenDissolvedTimestampSeconds" in state) {
-                return state.WhenDissolvedTimestampSeconds * BigInt(1000) >= nowMillis;
-            }
-            return state.DissolveDelaySeconds > BigInt(0);
-        })
-        .flatMap((n) => (n.id[0] !== undefined ? [new Uint8Array(n.id[0].id)] : []));
+// The neurons which are not dissolved, and so may be able to vote, keyed by their subaccounts
+export function votingNeurons(
+    candid: ApiListNeuronsResponse,
+    nowMillis: bigint,
+): VotingNeuron<Uint8Array>[] {
+    return notDissolved(
+        candid.neurons.map((n) => ({
+            id: n.id[0] !== undefined ? new Uint8Array(n.id[0].id) : undefined,
+            dissolveState: n.dissolve_state[0],
+        })),
+        nowMillis,
+    );
+}
+
+export function minimumDissolveDelayToVoteSeconds(
+    candid: ApiNervousSystemParameters,
+): bigint | undefined {
+    return candid.neuron_minimum_dissolve_delay_to_vote_seconds[0];
 }

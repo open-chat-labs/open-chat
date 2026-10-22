@@ -15,14 +15,14 @@
         Subtitle,
         Title,
     } from "component-lib";
-    import { OpenChat, type CreatedUser } from "@client";
+    import { identityStateStore, OpenChat } from "@client";
     import { ErrorCode } from "@shared";
     import { navigate } from "@utils/navigation";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import ChevronLeft from "svelte-material-icons/ChevronLeft.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
-    import Markdown from "@shared_components/Markdown.svelte";
+    import Markdown from "@src/core/Markdown.svelte";
     import Progress from "../Progress.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
     import SignUp from "./SignUp.svelte";
@@ -32,7 +32,10 @@
     const client = getContext<OpenChat>("client");
 
     type Step = "choose-auth" | "new-user" | "one-time-password";
-    let step: Step = $state("choose-auth");
+    // signed in already with an identity that has no account: sign-up is what's left
+    let step: Step = $state(
+        identityStateStore.value.kind === "registering" ? "new-user" : "choose-auth",
+    );
     let accountLinkingCode = $state("");
     let alcInput: HTMLInputElement | undefined = $state(undefined);
     let alcValid = $derived(accountLinkingCode.length === 6);
@@ -51,19 +54,17 @@
         };
     });
 
-    function signIn() {
-        (client.isNativeApp()
-            ? client.signInWithAndroidWebAuthn()
-            : client.signInWithWebAuthn()
-        ).catch(async (e) => {
-            if ("AUTH_FAILED" === e) {
-                error = "native.auth.error";
-                console.error("Auth error: ", e);
-            } else {
-                // Passkey either not found, or user cancelled auth request
-                step = "one-time-password";
-            }
-        });
+    async function signIn() {
+        const outcome = await client.signIn({ kind: "passkey" });
+        if (outcome.kind === "failed") {
+            error = outcome.reason.key;
+        } else if (outcome.kind === "needs_account") {
+            // a passkey OpenChat knows, but no account for it yet
+            step = "new-user";
+        } else if (outcome.kind === "cancelled") {
+            // Passkey either not found, or user cancelled auth request
+            step = "one-time-password";
+        }
     }
 
     function signUp() {
@@ -102,8 +103,7 @@
         }
     }
 
-    function onCreatedUser(user: CreatedUser) {
-        client.onRegisteredUser(user);
+    function onSignedUp() {
         navigate("/welcome");
     }
 
@@ -219,7 +219,7 @@
     </Container>
 
     <Container padding={["zero", "lg"]} direction={"vertical"}>
-        <SignUp {onCreatedUser} bind:error={signUpError} />
+        <SignUp {onSignedUp} bind:error={signUpError} />
     </Container>
 {/snippet}
 

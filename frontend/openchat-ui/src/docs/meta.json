@@ -574,6 +574,17 @@
         "doc": ""
       },
       {
+        "name": "body",
+        "type": "Snippet",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The text as the host renders it (markdown, mentions, links), shown in its place. `text` still sizes emoji-only messages."
+      },
+      {
         "name": "time",
         "type": "string",
         "default": "10:32",
@@ -1018,6 +1029,39 @@
         "doc": ""
       },
       {
+        "name": "text",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The draft to start from, read when the composer mounts (key the composer to start another)."
+      },
+      {
+        "name": "onInput",
+        "type": "(text: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The draft as it changes while it's being written (typed, an emoji picked, cleared on send); not while editing."
+      },
+      {
+        "name": "enterSends",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Whether Enter sends (Shift+Enter a new line); off, Enter is a new line and Ctrl/⌘+Enter sends."
+      },
+      {
         "name": "typingNames",
         "type": "string[]",
         "default": [
@@ -1039,7 +1083,7 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "'var(--surface-1,#0e0e12)'",
+        "componentDefault": "'var(--surface-1)'",
         "doc": ""
       },
       {
@@ -2345,7 +2389,7 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "'var(--card,#0e0e12)'",
+        "componentDefault": "'var(--card)'",
         "doc": "Ring around the online dot; match the surface behind."
       },
       {
@@ -2748,6 +2792,28 @@
         "required": false,
         "componentDefault": "true",
         "doc": ""
+      },
+      {
+        "name": "avatarSpace",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "With showAvatar off, keeps the avatar's space, so a sender's run split over several groups lines up."
+      },
+      {
+        "name": "endsRun",
+        "type": "boolean",
+        "default": true,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "true",
+        "doc": "Whether the last message ends the sender's run (the bubble's last-in-group shape); off when the run carries on in the next group."
       },
       {
         "name": "messages",
@@ -3395,7 +3461,7 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "'var(--accent,#FF5672)'",
+        "componentDefault": "'var(--accent)'",
         "doc": ""
       },
       {
@@ -4523,7 +4589,7 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "'var(--card,#0e0e12)'",
+        "componentDefault": "'var(--card)'",
         "doc": "Ring around each face; match the surface behind."
       },
       {
@@ -5563,6 +5629,17 @@
         "required": false,
         "componentDefault": "false",
         "doc": ""
+      },
+      {
+        "name": "onBack",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "A back button beside the title (the panel opened over another page); hidden without it."
       }
     ],
     "group": "features"
@@ -5579,17 +5656,18 @@
     "props": [
       {
         "name": "kind",
-        "type": "'login' | 'signup'",
+        "type": "'login' | 'signup' | 'link'",
         "default": "login",
         "editor": "enum",
         "options": [
           "login",
-          "signup"
+          "signup",
+          "link"
         ],
         "section": null,
         "required": false,
         "componentDefault": "'login'",
-        "doc": ""
+        "doc": "'link' is the page an email sign-in link opens: it asks for the link's code."
       },
       {
         "name": "variant",
@@ -5662,6 +5740,61 @@
         "doc": "Terms and conditions page; without it the words aren’t a link."
       },
       {
+        "name": "methods",
+        "type": "AuthOption[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The ways to sign in on offer, all of them without it; the other methods are listed in this order. Sign-up’s form is the same either way."
+      },
+      {
+        "name": "email",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Prefills the sign-in email field (e.g. the address last used)."
+      },
+      {
+        "name": "referrer",
+        "type": "AuthPerson",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Prefills sign-up’s referrer (e.g. from a referral link); applied again whenever the host passes a new one."
+      },
+      {
+        "name": "wallets",
+        "type": "Partial<Record<'eth' | 'sol', AuthWallet[] | (() => Promise<AuthWallet[]>)>>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Wallets to pick from for Ethereum / Solana. With a list, the method asks which wallet and passes its id to onMethod. A function loads the list when the method is picked (waiting meanwhile; reject to go back)."
+      },
+      {
+        "name": "passkeySignup",
+        "type": "boolean",
+        "default": true,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "true",
+        "doc": "Whether “Create an account” is on offer from sign-in: sign-up's form makes a passkey, so a host without one on offer turns it off (someone new signs in another way, and the host then opens the form with `kind`)."
+      },
+      {
         "name": "checkUsername",
         "type": "(username: string) => boolean | Promise<boolean>",
         "default": null,
@@ -5685,7 +5818,7 @@
       },
       {
         "name": "onMethod",
-        "type": "(method: AuthMethod, kind: 'login' | 'signup') => Promise<unknown> | void",
+        "type": "(method: AuthMethod, kind: 'login' | 'signup', wallet?: string) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
@@ -5696,14 +5829,36 @@
       },
       {
         "name": "onRequestEmailLink",
-        "type": "(email: string) => Promise<unknown> | void",
+        "type": "(email: string) => Promise<EmailLinkSent | void> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Send a sign-in link to this address. The dialog shows \"Check your inbox\" once it resolves; also used to resend."
+        "doc": "Send a sign-in link to this address. The dialog shows \"Check your inbox\" once it resolves (with the code, when it resolves with one); also used to resend."
+      },
+      {
+        "name": "onCancelEmailLink",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The person left “Check your inbox” (Back, close, switching mode), or the host closed or turned the dialog meanwhile: stop waiting for that link."
+      },
+      {
+        "name": "onLinkCode",
+        "type": "(code: string) => Promise<EmailLinkResult>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "kind 'link': check the code typed on the link’s page. 'signed_in' leaves closing to the host; reject reads as 'invalid'."
       },
       {
         "name": "onSignup",
@@ -5783,12 +5938,12 @@
       {
         "name": "ring",
         "type": "string",
-        "default": "var(--surface-2,#191921)",
+        "default": "var(--surface-2)",
         "editor": "text",
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "'var(--surface-2,#191921)'",
+        "componentDefault": "'var(--surface-2)'",
         "doc": ""
       }
     ],
@@ -11827,6 +11982,39 @@
         "doc": ""
       },
       {
+        "name": "text",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "''",
+        "doc": "The draft to start from, read when the composer mounts (key the composer to start another)."
+      },
+      {
+        "name": "onInput",
+        "type": "(text: string) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The draft as it changes while it's being written (typed, an emoji picked, cleared on send); not while editing."
+      },
+      {
+        "name": "enterSends",
+        "type": "boolean",
+        "default": true,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "true",
+        "doc": "Whether Enter sends (Shift+Enter a new line); off, Enter is a new line and Ctrl/⌘+Enter sends."
+      },
+      {
         "name": "onSend",
         "type": "(text: string) => Promise<unknown> | void",
         "default": null,
@@ -12193,6 +12381,28 @@
         "required": false,
         "componentDefault": "false",
         "doc": ""
+      },
+      {
+        "name": "onExpandedChange",
+        "type": "(expanded: boolean) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The user expanded or collapsed the rail (its toggle), for a host that remembers it. Not called when a floating rail closes itself."
+      },
+      {
+        "name": "floating",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Whether the expanded rail floats over the content (and closes itself on a pick or a click elsewhere). Without it, the rail measures its slot, which reads as floating while a pushing rail is still widening."
       },
       {
         "name": "activeIndex",
@@ -15281,7 +15491,7 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "'var(--status-online,#2EE6A8)'",
+        "componentDefault": "'var(--status-online)'",
         "doc": ""
       },
       {
@@ -15292,7 +15502,7 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "'var(--status-danger,#FF4D4D)'",
+        "componentDefault": "'var(--status-danger)'",
         "doc": ""
       },
       {
@@ -17284,7 +17494,7 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "'var(--accent,#FF5672)'",
+        "componentDefault": "'var(--accent)'",
         "doc": ""
       },
       {
@@ -17295,7 +17505,7 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "'var(--bubble-wave-off,#4A4A56)'",
+        "componentDefault": "'var(--bubble-wave-off)'",
         "doc": ""
       },
       {
@@ -17306,7 +17516,7 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "'var(--bubble-recv-bg,#191921)'",
+        "componentDefault": "'var(--bubble-recv-bg)'",
         "doc": "Ring around the handle; match the surface behind."
       },
       {
@@ -17620,7 +17830,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "AuthDialog's host callbacks (onMethod, onSignup, onRequestEmailLink, checkUsername …). onMethod and onSignup return a promise; when it resolves the page enters the app, even if the dialog was closed meanwhile (once per sign-in)."
+        "doc": "AuthDialog's host callbacks (onMethod, onSignup, onRequestEmailLink, checkUsername …). onMethod and onSignup return a promise; when it resolves the page enters the app, even if the dialog was closed meanwhile (once per sign-in). onOpen hears it opening, and onClose the person closing it, so the host can read what it shows then and stop what it had going."
       },
       {
         "name": "onEnterApp",
@@ -17631,7 +17841,18 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Called after a successful sign-in instead of navigating to appHref."
+        "doc": "Called after a successful sign-in instead of navigating to appHref, and by Open app when signed in."
+      },
+      {
+        "name": "signedIn",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Someone is signed in: Open app (to appHref, or onEnterApp) replaces Sign in and Create account."
       },
       {
         "name": "onModeChange",
@@ -17803,7 +18024,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "AuthDialog's host callbacks (onMethod, onSignup, onRequestEmailLink, checkUsername …). onMethod and onSignup return a promise; when it resolves the page enters the app, even if the dialog was closed meanwhile (once per sign-in)."
+        "doc": "AuthDialog's host callbacks (onMethod, onSignup, onRequestEmailLink, checkUsername …). onMethod and onSignup return a promise; when it resolves the page enters the app, even if the dialog was closed meanwhile (once per sign-in). onOpen hears it opening, and onClose the person closing it, so the host can read what it shows then and stop what it had going."
       },
       {
         "name": "onEnterApp",
@@ -17814,7 +18035,51 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Called after a successful sign-in instead of navigating to appHref."
+        "doc": "Called after a successful sign-in instead of navigating to appHref, and by Open app when signed in."
+      },
+      {
+        "name": "signedIn",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Someone is signed in: Open app (to appHref, or onEnterApp) replaces Sign in and Create account."
+      },
+      {
+        "name": "section",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "A doc section to scroll to (its `id`), e.g. from the host's `?section=`."
+      },
+      {
+        "name": "question",
+        "type": "string",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "An FAQ question to open and scroll to (its `id`), e.g. from the host's `?q=`."
+      },
+      {
+        "name": "architecture",
+        "type": "Snippet",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The Architecture tab's content, in place of the architecture doc (the tab shows whenever this is given). It fills the screen between the header and the footer, inset only for its rounded corners: an interactive map and the like."
       }
     ],
     "group": "pages"

@@ -54,7 +54,7 @@
   }
 
   .focus {
-    --ring: 0 0 0 3px var(--accent-dim, rgba(255, 86, 114, 0.35));
+    --ring: 0 0 0 3px var(--accent-dim);
   }
 
   .active {
@@ -63,62 +63,62 @@
   }
 
   .primary {
-    color: var(--on-accent, #2e0512);
-    background: var(--accent, #ff5672);
+    color: var(--on-accent);
+    background: var(--accent);
   }
 
   .primary:hover,
   .primary.hover {
-    background: var(--accent-hover, #ff6d85);
+    background: var(--accent-hover);
   }
 
   .secondary {
-    color: var(--ink, #ececf1);
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1)), var(--ring);
+    color: var(--ink);
+    background: var(--overlay-1);
+    box-shadow: inset 0 0 0 1px var(--line-2), var(--ring);
   }
 
   .secondary.default,
   .secondary.hover {
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1));
+    box-shadow: inset 0 0 0 1px var(--line-2);
   }
 
   .secondary:hover,
   .secondary.hover {
-    background: var(--btn-hover, rgba(255, 255, 255, 0.1));
+    background: var(--btn-hover);
   }
 
   .ghost {
     padding: 0 var(--space-14);
-    color: var(--ink-2, #b9b9c6);
+    color: var(--ink-2);
     background: transparent;
   }
 
   .ghost:hover,
   .ghost.hover,
   .ghost.active {
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    background: var(--overlay-1);
   }
 
   .danger {
-    color: var(--status-danger, #ff6b6b);
-    background: var(--btn-danger-bg, rgba(224, 49, 49, 0.07));
-    box-shadow: inset 0 0 0 1px var(--btn-danger-line, rgba(224, 49, 49, 0.45)), var(--ring);
+    color: var(--status-danger);
+    background: var(--btn-danger-bg);
+    box-shadow: inset 0 0 0 1px var(--btn-danger-line), var(--ring);
   }
 
   .danger.default,
   .danger.hover {
-    box-shadow: inset 0 0 0 1px var(--btn-danger-line, rgba(224, 49, 49, 0.45));
+    box-shadow: inset 0 0 0 1px var(--btn-danger-line);
   }
 
   .danger:hover,
   .danger.hover {
-    background: var(--btn-danger-bg-hover, rgba(224, 49, 49, 0.16));
+    background: var(--btn-danger-bg-hover);
   }
 
   .disabled {
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
-    color: var(--ink-4, #6e6e7c);
+    background: var(--overlay-1);
+    color: var(--ink-4);
     cursor: not-allowed;
   }
 </style>

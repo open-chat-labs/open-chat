@@ -23,6 +23,7 @@ export const configKeys = {
     storageSection: "openchat_storage_section",
     verificationSectionOpen: "openchat_verification_section",
     accountsSectionOpen: "openchat_accounts_section",
+    bridgedAccountsSectionOpen: "openchat_bridged_accounts_section",
     userStatsSection: "openchat_user_stats_section",
     userAdvancedSection: "openchat_user_advanced_section",
     userDeleteAccountSection: "openchat_user_delete_account_section",
@@ -62,4 +63,7 @@ export const configKeys = {
     hideBlocked: "openchat_hideblocked",
     minLogLevel: "openchat_min_log_level",
     webRightColumnOpen: "openchat_web_right_column_open",
+    webRailExpanded: "openchat_web_rail_expanded",
+    unrulyColours: "openchat_unruly_colours",
+    webAccent: "openchat_web_accent",
 };

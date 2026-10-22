@@ -1,4 +1,7 @@
 use crate::guards::caller_is_local_user_index_canister;
+use crate::updates::c2c_csam_detected::c2c_csam_detected_impl;
+use crate::updates::c2c_moderation_referral::c2c_moderation_referral_impl;
+use crate::{IdentityEvent, StorageIndexEvent};
 use crate::{RuntimeState, UserIdentity, UserRegisteredEventPayload, mutate_state};
 use candid::Principal;
 use canister_api_macros::update;
@@ -26,6 +29,13 @@ fn c2c_local_user_index(args: Args) -> Response {
     mutate_state(|state| c2c_local_user_index_impl(args, state))
 }
 
+// The name for the LocalUserIndex's events, which senders switch to; the old one is served until they have
+#[update(guard = "caller_is_local_user_index_canister", msgpack = true)]
+#[trace]
+fn c2c_local_index(args: Args) -> Response {
+    mutate_state(|state| c2c_local_user_index_impl(args, state))
+}
+
 fn c2c_local_user_index_impl(args: Args, state: &mut RuntimeState) -> Response {
     let caller: CanisterId = state.env.caller();
     let now = LazyCell::new(now_millis);
@@ -50,6 +60,11 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
     state: &mut RuntimeState,
 ) {
     match event {
+        LocalUserIndexEvent::CsamDetected(ev) => c2c_csam_detected_impl(*ev, state),
+        LocalUserIndexEvent::ModerationReferral(ev) => c2c_moderation_referral_impl(*ev, state),
+        LocalUserIndexEvent::BridgedUserUpdated(user) => {
+            state.data.bridged_users.update(*user, **now);
+        }
         LocalUserIndexEvent::UserRegistered(ev) => {
             process_new_user(ev.principal, ev.username, ev.email, ev.user_id, ev.referred_by, caller, state)
         }
@@ -94,6 +109,10 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 .data
                 .users
                 .set_profile_background_id(&user_id, profile_background_id, **now);
+        }
+        LocalUserIndexEvent::UserSetAvatar(ev) => {
+            let (user_id, avatar_id) = *ev;
+            state.data.users.set_avatar_id(&user_id, avatar_id, **now);
         }
         LocalUserIndexEvent::NotifyUniquePersonProof(ev) => {
             let (user_id, proof) = *ev;
@@ -300,16 +319,68 @@ You can change your username at any time by clicking \"Profile settings\" from t
         );
     }
 
-    state.data.storage_index_user_sync_queue.push(UserConfig {
+    state.push_event_to_storage_index(StorageIndexEvent::AddOrUpdateUser(UserConfig {
         user_id: principal,
         byte_limit: 100 * ONE_MB,
-    });
+    }));
 
-    state.data.identity_canister_user_sync_queue.push_back(UserIdentity {
+    state.push_event_to_identity(IdentityEvent::SetUserIdentity(UserIdentity {
         principal,
         user_id: Some(user_id),
         email,
-    });
+    }));
+}
 
-    crate::jobs::sync_users_to_identity_canister::try_run_now(state);
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::Data;
+    use crate::model::user::User;
+    use utils::env::test::TestEnv;
+
+    fn canister_id(n: u8) -> CanisterId {
+        Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, n, 1, 1])
+    }
+
+    // A user in each of two MultiUser canisters
+    fn setup() -> (RuntimeState, UserId, UserId) {
+        let user = UserId::new_indexed(canister_id(2), 1);
+        let other_user = UserId::new_indexed(canister_id(3), 1);
+
+        let mut data = Data::default();
+        for (i, user_id) in [user, other_user].into_iter().enumerate() {
+            data.users.add_test_user(User {
+                principal: Principal::from_slice(&[i as u8 + 10; 29]),
+                user_id,
+                username: format!("user{i}"),
+                ..Default::default()
+            });
+        }
+        let state = RuntimeState::new(Box::new(TestEnv::default()), data);
+        (state, user, other_user)
+    }
+
+    fn avatar_id(state: &RuntimeState, user_id: UserId) -> Option<u128> {
+        state.data.users.get_by_user_id(&user_id).unwrap().avatar_id
+    }
+
+    // The LocalUserIndex only forwards events from the users each MultiUser canister holds, so the
+    // handler can trust the user id it names
+    #[test]
+    fn user_set_avatar_updates_the_named_user() {
+        let (mut state, user, other_user) = setup();
+        let local_user_index = canister_id(1);
+        let now = LazyCell::new(|| 1000);
+
+        handle_event(
+            LocalUserIndexEvent::UserSetAvatar(Box::new((user, Some(5)))),
+            1000,
+            local_user_index,
+            &now,
+            &mut state,
+        );
+
+        assert_eq!(avatar_id(&state, user), Some(5));
+        assert_eq!(avatar_id(&state, other_user), None);
+    }
 }

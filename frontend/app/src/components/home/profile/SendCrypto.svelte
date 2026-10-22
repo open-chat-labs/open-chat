@@ -25,8 +25,8 @@
     import AccountSelector from "./AccountSelector.svelte";
     import SaveAccount from "./SaveAccount.svelte";
     import Scanner from "./Scanner.svelte";
-    import { TokenState } from "@shared_components/home/wallet/walletState.svelte";
-    import { WithdrawForm } from "@shared_components/home/wallet/withdrawForm.svelte";
+    import { TokenState } from "@src/logic/wallet/walletState.svelte";
+    import { WithdrawForm } from "@src/logic/wallet/withdrawForm.svelte";
 
     interface Props {
         ledger: string;
@@ -50,6 +50,8 @@
     // would reset the amount being typed. The balance is read live from the balance store.
     const tokenState = new TokenState(untrack(() => $enhancedCryptoLookup.get(ledger)));
     const form = new WithdrawForm(client, tokenState);
+    // Only the saved addresses the send could reach are offered
+    let fittingAccounts = $derived(accounts.filter((a) => form.acceptsAddress(a.account)));
     let symbol = $derived(tokenState.symbol);
     let valid = $derived(capturingAccount ? validAccountName : form.canSend);
     let title = $derived(i18nKey("cryptoAccount.sendToken", { symbol }));
@@ -96,9 +98,7 @@
             case "sent":
                 tokenState.draftAmount = 0n;
                 toastStore.showSuccessToast(i18nKey("cryptoAccount.sendSucceeded", { symbol }));
-                // Only an account on the token's own ledger can be saved, not eg. a BTC or Solana
-                // address, as on mobile
-                if (form.route.kind === "ledger" && unknownAccount(form.targetAccount)) {
+                if (unknownAccount(form.targetAccount)) {
                     capturingAccount = true;
                 } else {
                     onClose();
@@ -189,11 +189,13 @@
                             resourceKey={i18nKey("cryptoAccount.sendToUserId")} /></ErrorMessage>
                 {/if}
 
-                {#if accounts.length > 0 || form.networkFeeFormatted !== undefined}
+                {#if fittingAccounts.length > 0 || form.networkFeeFormatted !== undefined}
                     <div class="lower-container">
-                        {#if accounts.length > 0}
+                        {#if fittingAccounts.length > 0}
                             <div class="accounts">
-                                <AccountSelector bind:targetAccount={form.targetAccount} {accounts} />
+                                <AccountSelector
+                                    bind:targetAccount={form.targetAccount}
+                                    accounts={fittingAccounts} />
                             </div>
                         {/if}
 

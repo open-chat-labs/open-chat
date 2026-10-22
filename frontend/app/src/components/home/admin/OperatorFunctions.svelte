@@ -1,6 +1,8 @@
 <script lang="ts">
     import {
+        BRIDGE_PLATFORM_NAMES,
         MODERATION_CATEGORY_NAMES,
+        type BridgePlatform,
         type DiamondMembershipFees,
         type OpenChat,
         type ProposedProtectedAction,
@@ -46,6 +48,7 @@
     let tokenEnabled = $state(true);
     let openAiApiKey = $state("");
     let alchemyApiKey = $state("");
+    const bridgeBotIds = $state<Record<BridgePlatform, string>>({ discord: "", telegram: "" });
     let moderationCommunityId = $state("");
     let moderationChannelId = $state("");
     // sexual/minors always takes the CSAM auto-sanction path so is not offered here.
@@ -169,6 +172,35 @@
                 toastStore.showFailureToast(i18nKey("Failed to set the Alchemy API key"), err),
             )
             .finally(() => busy.delete(21));
+    }
+
+    // Sets the bot that bridges a platform, eg. Discord, on the user index, which passes it on to
+    // every LocalUserIndex. Only that bot can relay messages from the platform
+    function setBridgeBot(platform: BridgePlatform, botId: string | undefined): Promise<void> {
+        const name = BRIDGE_PLATFORM_NAMES[platform];
+        busy.add(22);
+        return client
+            .setBridgeBot(platform, botId)
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    toastStore.showSuccessToast(
+                        i18nKey(
+                            botId === undefined ? `${name} bridge bot unset` : `${name} bridge bot set`,
+                        ),
+                    );
+                    bridgeBotIds[platform] = "";
+                } else {
+                    toastStore.showFailureToast(
+                        i18nKey(
+                            `Failed to set the ${name} bridge bot: ${resp.message ?? `code ${resp.code}`}`,
+                        ),
+                    );
+                }
+            })
+            .catch((err) =>
+                toastStore.showFailureToast(i18nKey(`Failed to set the ${name} bridge bot`), err),
+            )
+            .finally(() => busy.delete(22));
     }
 
     onMount(() => {
@@ -900,6 +932,27 @@
                 onClick={() => setAlchemyApiKey(undefined)}>Unset</Button>
         </ButtonGroup>
     </section>
+
+    {#each Object.keys(BRIDGE_PLATFORM_NAMES) as BridgePlatform[] as platform}
+        <section class="operator-function">
+            <div class="title">{BRIDGE_PLATFORM_NAMES[platform]} bridge bot</div>
+            <Input bind:value={bridgeBotIds[platform]} placeholder={i18nKey("Bot id")} />
+            <ButtonGroup align="fill">
+                <Button
+                    tiny
+                    loading={busy.has(22)}
+                    disabled={busy.has(22) || bridgeBotIds[platform].trim() === ""}
+                    onClick={() => setBridgeBot(platform, bridgeBotIds[platform].trim())}
+                    >Set</Button>
+                <Button
+                    tiny
+                    secondary
+                    loading={busy.has(22)}
+                    disabled={busy.has(22)}
+                    onClick={() => setBridgeBot(platform, undefined)}>Unset</Button>
+            </ButtonGroup>
+        </section>
+    {/each}
 
     <section class="operator-function">
         <ButtonGroup align="fill">

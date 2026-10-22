@@ -8,6 +8,8 @@
         chatIdentifiersEqual,
         chatListScopeStore,
         chatsInitialisedStore,
+        chatSummariesListStore,
+        lastSelectedChatByScopeStore,
         communityIdentifiersEqual,
         exploringStore,
         messageIndexStore,
@@ -35,12 +37,16 @@
     } from "@src/utils/navigation";
     import {
         handleLinkClick,
+        inEditor,
         removeQueryStringParam,
         withoutQueryStringParams,
     } from "@src/utils/urls";
     import page from "page";
     import { getContext, onMount, untrack, type Snippet } from "svelte";
-    import { routeTable } from "./routeTable";
+    import { currentShellLayout } from "../shell/viewport.svelte";
+    import { defaultChatRoute, defaultChatUrl } from "./defaultChat";
+    import { redirectTable, routeTable } from "./routeTable";
+    import { leftToBrowser } from "./links";
 
     let { children }: { children: Snippet } = $props();
 
@@ -49,7 +55,8 @@
     function parsePathParams(fn: (ctx: PageJS.Context) => RouteParams) {
         return (ctx: PageJS.Context, next: () => void) => {
             client.setRouteParams(ctx, fn(ctx));
-            window.scrollTo({ behavior: "auto", top: 0 });
+            // instant: "auto" would follow a page's own smooth scrolling (Landing's)
+            window.scrollTo({ behavior: "instant", top: 0 });
             next();
         };
     }
@@ -60,9 +67,21 @@
     }
 
     onMount(() => {
-        const onLinkClick = handleLinkClick(client, navigate);
+        const routeLink = handleLinkClick(client, navigate);
+        // a link to a fragment of the page it's on is the browser's: it scrolls there (not one in
+        // an editor, a non-editable chip in one included, which the shared handler holds)
+        const onLinkClick = (e: MouseEvent) => {
+            const anchor = e.target instanceof Element ? e.target.closest("a") : null;
+            if (anchor?.href && leftToBrowser(anchor.href, inEditor(anchor), window.location)) {
+                return;
+            }
+            routeLink(e);
+        };
         document.addEventListener("click", onLinkClick, { capture: true });
 
+        for (const { path, to } of redirectTable) {
+            page(path, (ctx) => page.redirect(to(ctx.params)));
+        }
         for (const { path, parse } of routeTable) {
             // not found isn't a page view, as in the existing router
             const tracking = path === "*" ? [] : [track];
@@ -107,21 +126,17 @@
     $effect(() => {
         if ($chatsInitialisedStore && $selectedCommunityIdStore !== undefined) {
             const id = $selectedCommunityIdStore;
-            untrack(() => {
-                client.setSelectedCommunity(id).then((preview) => {
-                    // a previewed community's first channel has to be selected by hand, unless
-                    // its thread list is what's open
-                    if (
-                        preview &&
-                        $selectedChatIdStore === undefined &&
-                        $routeKindStore !== "threads_route"
-                    ) {
-                        client.selectDefaultChat();
-                    }
-                });
-            });
+            untrack(() => loadCommunity(id));
         }
     });
+
+    async function loadCommunity(id: CommunityIdentifier) {
+        const preview = await client.setSelectedCommunity(id);
+        // a previewed community's first channel has to be selected by hand
+        if (preview && $selectedChatIdStore === undefined) {
+            selectDefaultChat();
+        }
+    }
 
     $effect(() => {
         if (client.captureReferralCode()) {
@@ -154,17 +169,35 @@
         }
     });
 
-    // A chat list with nothing selected goes to its last (or first) chat. A thread list stays.
+    // A chat list with nothing selected goes to its default chat (ROUTES.md, decision 7): the one
+    // last opened in its scope, else its first, once there is one, with its thread list
+    // (?threads) open too. Only that chat's route is tracked (and whether the screen is narrow,
+    // where there's none), so other summary changes don't re-run it. The URL's query (an open
+    // overlay, the thread list) is kept.
+    const defaultChatPath = $derived(
+        defaultChatRoute(
+            $chatListScopeStore.kind,
+            $chatSummariesListStore,
+            $lastSelectedChatByScopeStore.get($chatListScopeStore),
+            currentShellLayout().narrow,
+        ),
+    );
     $effect(() => {
         if (
+            defaultChatPath !== undefined &&
             $selectedChatIdStore === undefined &&
             $chatListScopeStore.kind !== "none" &&
-            $routeKindStore !== "threads_route" &&
             !$exploringStore
         ) {
-            client.selectDefaultChat();
+            untrack(selectDefaultChat);
         }
     });
+
+    function selectDefaultChat() {
+        if (defaultChatPath !== undefined) {
+            navigate(defaultChatUrl(defaultChatPath, location.search), "auto");
+        }
+    }
 
     // Select the chat the route names
     $effect(() => {
@@ -214,7 +247,7 @@
             if (client.isHomeRoute(route)) {
                 client.filterRightPanelHistory((panel) => panel.kind === "user_profile");
             } else if (client.isShareRoute(route)) {
-                // TODO(phase 5): pick the chat to share into (ChatPicker), as Home.svelte does
+                // TODO(phase 4, 4d): pick the chat to share into (ChatPicker), as Home.svelte does
                 navigate(routeForScope(client.getDefaultScope()));
             }
         });

@@ -2,6 +2,7 @@ import replace from "@rollup/plugin-replace";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
 import chokidar from "chokidar";
 import fs from "fs";
+import { execFileSync } from "node:child_process";
 import path from "path";
 import execute from "rollup-plugin-shell";
 import { build, defineConfig, type Plugin, type PluginOption } from "vite";
@@ -56,6 +57,46 @@ const workerEntries: Record<string, string> = {
 };
 // Registered from the site root, so the worker's scope covers the whole app
 const serviceWorkerPath = "/service_worker.js";
+// Where the dev server serves the canister map (the production build names it by version)
+const canisterMapPath = "/canister-map-dev.html";
+
+// The canister map (architecture/canister_map), which the production build writes under the
+// website version's name and the Architecture page frames at the path in OC_CANISTER_MAP_PATH.
+// Generated once at start. Its own "pre" plugin, listed before vite-plugin-html, whose history
+// fallback (also "pre") would otherwise answer the frame's HTML request with the app itself.
+function ocCanisterMapPlugin(): Plugin {
+    return {
+        name: "oc-canister-map",
+        enforce: "pre",
+        configureServer(server) {
+            const mapPath = path.join(workerBuildDir, "canister-map.html");
+            // this runs before the workers are first built there
+            fs.mkdirSync(workerBuildDir, { recursive: true });
+            try {
+                execFileSync(
+                    "python3",
+                    [
+                        path.resolve(__dirname, "../../architecture/canister_map/extract.py"),
+                        "--out",
+                        mapPath,
+                    ],
+                    { stdio: "inherit" },
+                );
+            } catch (err) {
+                server.config.logger.error(`[oc-canister-map] generation failed: ${err}`);
+            }
+            server.middlewares.use((req, res, next) => {
+                const pathname = (req.url ?? "").split("?")[0];
+                if (pathname === canisterMapPath && fs.existsSync(mapPath)) {
+                    res.setHeader("Content-Type", "text/html; charset=utf-8");
+                    fs.createReadStream(mapPath).pipe(res);
+                    return;
+                }
+                next();
+            });
+        },
+    };
+}
 
 // Builds the workers from TypeScript source — reusing the sub-package
 // aliases so they pull agent/shared from source too — and serves them at
@@ -97,10 +138,7 @@ function ocWorkerPlugin(): Plugin {
             server.middlewares.use((req, res, next) => {
                 const fileName = path.basename((req.url ?? "").split("?")[0]);
                 const filePath = path.join(workerBuildDir, fileName);
-                if (
-                    (fileName.replace(/\.map$/, "") in workerEntries) &&
-                    fs.existsSync(filePath)
-                ) {
+                if (fileName.replace(/\.map$/, "") in workerEntries && fs.existsSync(filePath)) {
                     res.setHeader(
                         "Content-Type",
                         fileName.endsWith(".map") ? "application/json" : "text/javascript",
@@ -155,6 +193,7 @@ export default defineConfig({
         "import.meta.env.OC_WEB_LAYOUT": JSON.stringify(webLayoutFlag()),
         "import.meta.env.OC_APP_FONTS_URL": JSON.stringify(APP_FONTS_URL),
         "import.meta.env.OC_WEB_FONTS_URL": JSON.stringify(WEB_FONTS_URL),
+        "import.meta.env.OC_CANISTER_MAP_PATH": JSON.stringify(canisterMapPath),
     },
     server: {
         allowedHosts: ["host.docker.internal"],
@@ -198,6 +237,7 @@ export default defineConfig({
             preventAssignment: true,
         }) as PluginOption,
         ocWorkerPlugin(),
+        ocCanisterMapPlugin(),
         createHtmlPlugin({
             minify: true,
             entry: "./src/main.ts",

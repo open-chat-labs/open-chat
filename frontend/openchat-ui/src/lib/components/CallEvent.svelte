@@ -145,8 +145,8 @@
     max-width: 100%;
     box-sizing: border-box;
     border-radius: 31px;
-    background: var(--surface-2, #191921);
-    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+    background: var(--surface-2);
+    box-shadow: inset 0 0 0 1px var(--line-1);
   }
 
   .pill.actionable {
@@ -154,13 +154,13 @@
   }
 
   .pill.live {
-    background: color-mix(in oklch, var(--status-online, #2ee6a8) 10%, var(--surface-2, #191921));
-    box-shadow: inset 0 0 0 1.5px color-mix(in oklch, var(--status-online, #2ee6a8) 45%, transparent);
+    background: color-mix(in oklch, var(--status-online) 10%, var(--surface-2));
+    box-shadow: inset 0 0 0 1.5px color-mix(in oklch, var(--status-online) 45%, transparent);
   }
 
   .pill.missed {
-    background: color-mix(in oklch, var(--status-danger, #ff4d4d) 8%, var(--surface-2, #191921));
-    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--status-danger, #ff4d4d) 30%, transparent);
+    background: color-mix(in oklch, var(--status-danger) 8%, var(--surface-2));
+    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--status-danger) 30%, transparent);
   }
 
   .badge {
@@ -168,7 +168,7 @@
     width: 38px;
     height: 38px;
     border-radius: 50%;
-    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+    background: var(--overlay-2);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -177,26 +177,26 @@
   .badge-icon {
     width: 17px;
     height: 17px;
-    background: var(--ink-2, #c9c9d4);
+    background: var(--ink-2);
   }
 
   .missed .badge,
   .badge.missed {
-    background: var(--status-danger-soft, rgba(255, 77, 77, 0.12));
+    background: var(--status-danger-soft);
   }
 
   .missed .badge-icon,
   .badge.missed .badge-icon {
-    background: var(--status-danger, #ff4d4d);
+    background: var(--status-danger);
   }
 
   .badge.pulse {
-    background: color-mix(in oklch, var(--status-online, #2ee6a8) 22%, transparent);
+    background: color-mix(in oklch, var(--status-online) 22%, transparent);
     animation: ocCallPulse 2.4s ease-out infinite;
   }
 
   .badge.pulse .badge-icon {
-    background: var(--status-online, #2ee6a8);
+    background: var(--status-online);
   }
 
   .text {
@@ -209,26 +209,26 @@
 
   .title {
     font: 600 14px/1.1 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
   .pill.missed .title {
-    color: var(--status-danger, #ff4d4d);
+    color: var(--status-danger);
   }
 
   .sub {
     font: 500 12px/1 var(--font-mono);
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
   .pill.live .sub {
-    color: var(--status-online, #2ee6a8);
+    color: var(--status-online);
   }
 
   .faces {
@@ -245,20 +245,20 @@
     height: 38px;
     padding: 0 16px 0 13px;
     border-radius: 19px;
-    background: var(--overlay-2, rgba(255, 255, 255, 0.1));
+    background: var(--overlay-2);
     font: 600 13px/1 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     cursor: pointer;
     white-space: nowrap;
   }
 
   .action.join {
-    background: var(--accent, #ff5672);
-    color: var(--on-accent, #2e0512);
+    background: var(--accent);
+    color: var(--on-accent);
   }
 
   .action.leave {
-    background: var(--status-danger, #ff4d4d);
+    background: var(--status-danger);
     color: #fff;
   }
 
@@ -277,8 +277,8 @@
     max-width: 100%;
     box-sizing: border-box;
     border-radius: 31px;
-    background: var(--surface-2, #191921);
-    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+    background: var(--surface-2);
+    box-shadow: inset 0 0 0 1px var(--line-1);
     overflow: hidden;
   }
 
@@ -287,7 +287,7 @@
   }
 
   .summary:hover {
-    background: var(--overlay-1, rgba(255, 255, 255, 0.04));
+    background: var(--overlay-1);
   }
 
   .summary .sub {
@@ -298,7 +298,7 @@
     flex: none;
     width: 16px;
     height: 16px;
-    background: var(--ink-3, #a3a3b2);
+    background: var(--ink-3);
     mask: var(--icon-chevron-down) center/contain no-repeat;
     transition: transform 0.2s;
   }
@@ -311,7 +311,7 @@
     display: flex;
     flex-direction: column;
     padding: 6px 0 14px;
-    box-shadow: inset 0 1px 0 var(--line-1, rgba(255, 255, 255, 0.07));
+    box-shadow: inset 0 1px 0 var(--line-1);
   }
 
   .call-row {
@@ -325,31 +325,31 @@
     flex: none;
     width: 16px;
     height: 16px;
-    background: var(--ink-2, #c9c9d4);
+    background: var(--ink-2);
   }
 
   .row-title {
     flex: 1;
     min-width: 0;
     font: 500 13px/1.2 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
   .call-row.missed .row-icon {
-    background: var(--status-danger, #ff4d4d);
+    background: var(--status-danger);
   }
 
   .call-row.missed .row-title {
-    color: var(--status-danger, #ff4d4d);
+    color: var(--status-danger);
   }
 
   .row-time {
     flex: none;
     font: 500 12px/1 var(--font-mono);
-    color: var(--ink-4, #8a8a99);
+    color: var(--ink-4);
   }
 
   .call-back-row {
@@ -365,9 +365,9 @@
     height: 34px;
     padding: 0 15px 0 12px;
     border-radius: 17px;
-    background: var(--overlay-2, rgba(255, 255, 255, 0.1));
+    background: var(--overlay-2);
     font: 600 12.5px/1 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     cursor: pointer;
   }
 

@@ -1,10 +1,12 @@
 pub mod bots_map;
 pub mod community_event_batch;
 pub mod daily_puzzle_engine;
+pub mod daily_puzzle_event_batch;
 pub mod daily_puzzle_result_batch;
 pub mod game_chit_credit;
 pub mod global_user_map;
 pub mod group_event_batch;
+pub mod group_index_event_batch;
 pub mod local_community_map;
 pub mod local_group_map;
 pub mod local_multi_user_canister_map;

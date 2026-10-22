@@ -1,16 +1,20 @@
 use crate::model::files::{Files, RemoveFileResult};
-use crate::model::index_event_batch::{EventToSync, IndexEventBatch};
-use crate::model::users::Users;
+use crate::model::index_event_batch::IndexEventBatch;
+use crate::model::storage_index_event_batch::StorageIndexEventBatch;
+use crate::model::users::{FileStatusInternal, Users};
 use crate::model::vault::Vault;
 use candid::{CandidType, Principal};
 use canister_state_macros::canister_state;
 use constants::MINUTE_IN_MS;
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::cell::{Cell, RefCell};
 use std::collections::BTreeMap;
+use storage_index_canister::StorageBucketEvent;
 use timer_job_queues::BatchedTimerJobQueue;
-use types::{BuildVersion, CanisterId, Cycles, FileId, TimestampMillis, Timestamped};
+use types::{BuildVersion, CanisterId, Cycles, FileId, FileRejected, IdempotentEnvelope, TimestampMillis, Timestamped};
 use utils::env::Environment;
+use utils::idempotency_checker::IdempotencyChecker;
 
 mod guards;
 mod jobs;
@@ -40,6 +44,34 @@ impl RuntimeState {
         RuntimeState { env, data }
     }
 
+    pub fn push_event_to_index(&mut self, event: StorageBucketEvent) {
+        let event = self.envelope(event);
+        self.data.storage_index_event_sync_queue.push(event);
+    }
+
+    pub fn push_events_to_index(&mut self, events: Vec<StorageBucketEvent>) {
+        let events: Vec<_> = events.into_iter().map(|e| self.envelope(e)).collect();
+        self.data.storage_index_event_sync_queue.push_many(events);
+    }
+
+    fn envelope(&mut self, event: StorageBucketEvent) -> IdempotentEnvelope<StorageBucketEvent> {
+        IdempotentEnvelope {
+            created_at: self.env.now(),
+            idempotency_id: self.env.rng().next_u64(),
+            value: event,
+        }
+    }
+
+    pub fn remove_file(&mut self, caller: Principal, file_id: FileId) -> RemoveFileResult {
+        let result = self.data.files.remove(caller, file_id);
+
+        if let RemoveFileResult::Success(f) = &result {
+            self.push_event_to_index(StorageBucketEvent::FileRemoved(f.clone()));
+        }
+
+        result
+    }
+
     pub fn is_caller_storage_index_canister(&self) -> bool {
         let caller = self.env.caller();
         caller == self.data.storage_index_canister_id
@@ -67,7 +99,7 @@ impl RuntimeState {
             blob_count: file_metrics.blob_count,
             pending_files: file_metrics.pending_files,
             total_file_bytes: file_metrics.total_file_bytes,
-            index_sync_queue_length: self.data.index_event_sync_queue.len() as u32,
+            index_sync_queue_length: self.data.storage_index_event_sync_queue.len() as u32,
             expiration_queue_length: file_metrics.expiration_queue_len,
             source_hashes: file_metrics.source_hashes,
             accessor_removals_queued: file_metrics.accessor_removals_queued,
@@ -93,7 +125,12 @@ struct Data {
     files: Files,
     #[serde(default)]
     vault: Vault,
+    // Drained into `storage_index_event_sync_queue` by the post_upgrade one-off, and removed with it
     index_event_sync_queue: BatchedTimerJobQueue<IndexEventBatch>,
+    #[serde(default = "new_storage_index_event_sync_queue")]
+    storage_index_event_sync_queue: BatchedTimerJobQueue<StorageIndexEventBatch>,
+    #[serde(default)]
+    idempotency_checker: IdempotencyChecker,
     created: TimestampMillis,
     rng_seed: [u8; 32],
     test_mode: bool,
@@ -107,25 +144,32 @@ impl Data {
             files: Files::default(),
             vault: Vault::default(),
             index_event_sync_queue: BatchedTimerJobQueue::new(storage_index_canister_id, false),
+            storage_index_event_sync_queue: BatchedTimerJobQueue::new(storage_index_canister_id, false),
+            idempotency_checker: IdempotencyChecker::default(),
             created: now,
             rng_seed: [0; 32],
             test_mode,
         }
     }
 
-    pub fn remove_file(&mut self, caller: Principal, file_id: FileId) -> RemoveFileResult {
-        let result = self.files.remove(caller, file_id);
-
-        if let RemoveFileResult::Success(f) = &result {
-            self.push_event_to_index(EventToSync::FileRemoved(f.clone()));
+    // Removes a file the index refused, recording why against its owner, unless the file now held
+    // under that id is a newer one: an id can be used again once an upload is abandoned, so a reply
+    // can arrive after the id's next upload has begun. The index never counted the rejected file, so
+    // nothing is reported back.
+    pub fn reject_file(&mut self, rejected: FileRejected, created: TimestampMillis) {
+        let file_id = rejected.file_id;
+        if let Some((user_id, held_created)) = self.files.owner_and_created(&file_id)
+            && held_created == created
+            && let Some(old_status) =
+                self.users
+                    .update_file_status(user_id, file_id, FileStatusInternal::Rejected(rejected.reason.into()))
+        {
+            if let Some(FileStatusInternal::Uploading(_)) = old_status {
+                self.files.remove_pending_file(&file_id);
+            } else {
+                self.files.remove(user_id, file_id);
+            }
         }
-
-        result
-    }
-
-    pub fn push_event_to_index(&mut self, event_to_sync: EventToSync) {
-        self.index_event_sync_queue
-            .push((event_to_sync, self.files.total_file_bytes()));
     }
 }
 
@@ -188,4 +232,10 @@ fn check_cycles_balance() {
     }
     LAST_CYCLES_BALANCE_CHECK.set(now);
     utils::cycles::check_cycles_balance(storage_index_canister_id);
+}
+
+// Only reached when deserializing state from before the queue existed, which the post_upgrade one-off
+// then points at the StorageIndex. Removed with that one-off.
+fn new_storage_index_event_sync_queue() -> BatchedTimerJobQueue<StorageIndexEventBatch> {
+    BatchedTimerJobQueue::new(Principal::anonymous(), false)
 }

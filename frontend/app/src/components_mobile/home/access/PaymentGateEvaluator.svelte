@@ -1,6 +1,7 @@
 <script lang="ts">
+    import { refreshBalanceOrToast } from "@src/utils/balanceRefresh";
     import MulticolourText from "@src/components_mobile/MulticolourText.svelte";
-    import type { GateEvaluation } from "@shared_components/home/access/gateEvaluation.svelte";
+    import type { GateEvaluation } from "@src/logic/access/gateEvaluation.svelte";
     import {
         Avatar,
         Body,
@@ -28,8 +29,8 @@
     import Wallet from "svelte-material-icons/WalletOutline.svelte";
     import { i18nKey, interpolate } from "../../../i18n/i18n";
     import Translatable from "@shared_components/Translatable.svelte";
-    import Markdown from "@shared_components/Markdown.svelte";
-    import { TokenState } from "@shared_components/home/wallet/walletState.svelte";
+    import Markdown from "@src/core/Markdown.svelte";
+    import { TokenState } from "@src/logic/wallet/walletState.svelte";
     import AccessGateExpiry from "@shared_components/home/access/AccessGateExpiry.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -242,7 +243,7 @@
         width={"fill"}
         mode={"active"}
         size={"small_text"}
-        onClick={() => tokenState.refreshBalance(client)}>
+        onClick={() => refreshBalanceOrToast(tokenState, client)}>
         {#snippet icon(color, size)}
             <Refresh {color} {size} />
         {/snippet}

@@ -1,10 +1,7 @@
 use constants::MAX_SAVED_CRYPTO_ACCOUNTS;
-use ic_ledger_types::AccountIdentifier;
-use icrc_ledger_types::icrc1::account::Account;
 use multi_user_canister::NamedAccount;
 use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Serialize};
-use std::str::FromStr;
 use types::OCResult;
 
 const MAX_NAME_LENGTH: usize = 25;
@@ -59,10 +56,10 @@ impl SavedCryptoAccounts {
     }
 }
 
-// Either an ICRC-1 textual account, which covers a bare principal as well as an account with a
-// subaccount such as another user's wallet, or an ICP ledger account identifier.
+// An address on any of the networks the user can send to from their wallet: an ICRC-1 account
+// (which covers a bare principal), an ICP account identifier, or a Bitcoin, EVM or Solana address
 fn is_valid_account(text: &str) -> bool {
-    Account::from_str(text).is_ok() || AccountIdentifier::from_hex(text).is_ok()
+    crypto_address::detect_network(text).is_some()
 }
 
 #[cfg(test)]
@@ -94,25 +91,22 @@ mod tests {
     }
 
     #[test]
-    fn account_validity() {
-        let mut subaccount = [0; 32];
-        subaccount[31] = 7;
-        let icrc1_with_subaccount = Account {
-            owner: Principal::from_slice(&[1, 2, 3, 4, 5, 6, 7, 8, 1, 1]),
-            subaccount: Some(subaccount),
-        }
-        .to_string();
-        let account_identifier = AccountIdentifier::new(&Principal::anonymous(), &ic_ledger_types::DEFAULT_SUBACCOUNT).to_hex();
-
-        for (text, valid) in [
-            ("2vxsx-fae", true),
-            (icrc1_with_subaccount.as_str(), true),
-            (account_identifier.as_str(), true),
-            ("not an account", false),
-            ("2vxsx-fae.zz", false),
+    fn an_address_on_any_network_can_be_saved() {
+        let mut accounts = SavedCryptoAccounts::default();
+        for (name, account) in [
+            ("icrc", "2vxsx-fae"),
+            ("btc", "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq"),
+            ("eth", "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"),
+            ("sol", "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM"),
         ] {
-            assert_eq!(is_valid_account(text), valid, "{text}");
+            accounts
+                .save(NamedAccount {
+                    name: name.to_string(),
+                    account: account.to_string(),
+                })
+                .unwrap();
         }
+        assert_eq!(accounts.all().len(), 4);
     }
 
     #[test]

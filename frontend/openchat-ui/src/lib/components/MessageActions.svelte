@@ -372,7 +372,7 @@
     border-radius: 26px;
     background: var(--surface-3, #24242e);
     box-shadow:
-      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12)),
+      inset 0 0 0 1px var(--line-2),
       0 12px 30px rgba(0, 0, 0, 0.5);
     align-self: flex-start;
   }
@@ -411,22 +411,22 @@
   }
 
   .emoji.on {
-    background: var(--accent-soft, rgba(255, 86, 114, 0.16));
-    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent, #ff5672) 50%, transparent);
+    background: var(--accent-soft);
+    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent) 50%, transparent);
   }
 
   .emoji:hover {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+    background: var(--overlay-2);
     transform: scale(1.12);
   }
 
   .more {
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
   }
 
   .more:hover {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
-    color: var(--ink, #ececf1);
+    background: var(--overlay-2);
+    color: var(--ink);
   }
 
   .emoji:focus-visible,
@@ -451,7 +451,7 @@
     border-radius: 16px;
     background: var(--surface-3, #24242e);
     box-shadow:
-      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12)),
+      inset 0 0 0 1px var(--line-2),
       0 16px 40px rgba(0, 0, 0, 0.5);
     align-self: flex-start;
     width: 252px;
@@ -468,13 +468,13 @@
     justify-content: space-between;
     padding: 0 0 6px;
     margin-bottom: 4px;
-    box-shadow: inset 0 -1px 0 var(--line-1, rgba(255, 255, 255, 0.07));
+    box-shadow: inset 0 -1px 0 var(--line-1);
   }
 
   .separator {
     height: 1px;
     margin: 4px 6px;
-    background: var(--line-1, rgba(255, 255, 255, 0.07));
+    background: var(--line-1);
   }
 
   .row {
@@ -485,7 +485,7 @@
     padding: 0 10px;
     border-radius: 10px;
     font: 500 13.5px/1 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     cursor: pointer;
     user-select: none;
   }
@@ -495,12 +495,12 @@
   }
 
   .row.danger {
-    color: var(--status-danger, #ff4d4d);
+    color: var(--status-danger);
   }
 
   .row:hover,
   .row:focus-visible {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+    background: var(--overlay-2);
     outline: none;
   }
 
@@ -523,7 +523,7 @@
     border-radius: 16px;
     background: var(--surface-3, #24242e);
     box-shadow:
-      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12)),
+      inset 0 0 0 1px var(--line-2),
       0 16px 40px rgba(0, 0, 0, 0.5);
     display: grid;
     grid-template-rows: minmax(0, 1fr);

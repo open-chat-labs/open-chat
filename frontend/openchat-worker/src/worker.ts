@@ -475,7 +475,7 @@ const handlers: Handlers = {
     toggleMuteNotifications: (payload, agent) =>
         agent.toggleMuteNotifications(payload.id, payload.mute, payload.muteAtEveryone),
     archiveChat: (payload, agent) => agent.archiveChat(payload.chatId),
-    unarchiveChat: (payload, agent) => agent.unarchiveChat(payload.chatId),
+    unarchiveChats: (payload, agent) => agent.unarchiveChats(payload.chatIds),
     pinChat: (payload, agent) => agent.pinChat(payload.chatId, payload.favourite),
     unpinChat: (payload, agent) => agent.unpinChat(payload.chatId, payload.favourite),
     blockUserFromDirectChat: (payload, agent) => agent.blockUserFromDirectChat(payload.userId),
@@ -934,8 +934,9 @@ const handlers: Handlers = {
     canSwap: (payload, agent) => agent.canSwap(payload.tokenLedgers),
     getTokenSwaps: (payload, agent) =>
         agent.getTokenSwaps(payload.inputTokenLedger, payload.outputTokenLedgers),
-    getTokenSwapQuotes: (payload, agent) =>
-        agent.getTokenSwapQuotes(
+    getTokenSwapQuote: (payload, agent) =>
+        agent.getTokenSwapQuote(
+            payload.dex,
             payload.inputTokenLedger,
             payload.outputTokenLedger,
             payload.amountIn,
@@ -1159,6 +1160,11 @@ const handlers: Handlers = {
     callPushEnabled: (_payload, agent) => agent.callPushEnabled(),
     setCallPushEnabled: (payload, agent) => agent.setCallPushEnabled(payload.enabled),
     setAlchemyApiKey: (payload, agent) => agent.setAlchemyApiKey(payload.apiKey),
+    setBridgeBot: (payload, agent) => agent.setBridgeBot(payload.platform, payload.botId),
+    getBridgedUsers: (payload, agent) => agent.getBridgedUsers(payload.ids),
+    startBridgedUserLink: (payload, agent) => agent.startBridgedUserLink(payload.platform),
+    unlinkBridgedUser: (payload, agent) => agent.unlinkBridgedUser(payload.id),
+    getLinkedBridgedUsers: (_, agent) => agent.getLinkedBridgedUsers(),
     dailyPuzzleRegenerateToday: (payload, agent) =>
         agent.dailyPuzzleRegenerateToday(payload.gameId),
     setPremiumItemCost: (payload, agent) =>

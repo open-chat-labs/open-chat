@@ -1,8 +1,16 @@
+use crate::model::bridged_users::BridgedUsers;
+use crate::model::community_event_batch::CommunityEventBatch;
+use crate::model::group_event_batch::GroupEventBatch;
 use crate::model::group_index_event_batch::GroupIndexEventBatch;
+use crate::model::identity_event_batch::IdentityEventBatch;
+use crate::model::identity_user_sync_batch::IdentityUserSyncBatch;
+use crate::model::legacy_local_user_index_event_batch::LegacyLocalUserIndexEventBatch;
+use crate::model::local_user_index_event_batch::LocalUserIndexEventBatch;
 use crate::model::local_user_index_map::LocalUserIndex;
 use crate::model::online_users_event_batch::OnlineUsersEventBatch;
 use crate::model::premium_items::{PremiumItemMetrics, PremiumItems};
 use crate::model::protected_actions::{ProtectedActionMetrics, ProtectedActions};
+use crate::model::storage_index_event_batch::StorageIndexEventBatch;
 use crate::model::storage_index_user_config_batch::StorageIndexUserConfigBatch;
 use crate::model::storage_index_users_to_remove_batch::StorageIndexUsersToRemoveBatch;
 use crate::model::streak_insurance_logs::StreakInsuranceLogs;
@@ -17,6 +25,7 @@ use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use icrc_ledger_types::icrc1::account::{Account, Subaccount};
 use identity_canister::UserIdentity;
+use identity_canister::UserIndexEvent as IdentityEvent;
 use local_user_index_canister::UserIndexEvent as LocalUserIndexEvent;
 use model::authority_reports::{AuthorityReportMetrics, AuthorityReports};
 use model::chit_leaderboard::ChitLeaderboard;
@@ -26,19 +35,22 @@ use model::multi_user_canister_map::{MultiUserCanister, MultiUserCanisterMap};
 use model::pending_payments_queue::{PendingPayment, PendingPaymentsQueue};
 use model::reported_messages::{ReportedMessages, ReportingMetrics};
 use model::user::SuspensionDetails;
+use oc_error_codes::OCErrorCode;
 use online_users_canister::{UserDeleted as OnlineUsersUserDeleted, UserIndexEvent as OnlineUsersEvent};
 use p256_key_pair::P256KeyPair;
 use rand::Rng;
+use rand::prelude::StdRng;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::UserIdsKeyPrefix;
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::time::Duration;
-use timer_job_queues::BatchedTimerJobQueue;
+use storage_index_canister::UserIndexEvent as StorageIndexEvent;
+use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
-    BotInstallationLocation, BuildVersion, CanisterId, ChannelId, ChatId, ChildCanisterWasms, CommunityId, Cycles,
-    DiamondMembershipFees, IdempotentEnvelope, MediaScanConfig, Milliseconds, ModerationReferralConfig, TimestampMillis,
-    Timestamped, UserId, UserType,
+    BotInstallationLocation, BridgePlatform, BuildVersion, CanisterId, ChannelId, ChatId, ChildCanisterWasms, CommunityId,
+    Cycles, DiamondMembershipFees, IdempotentEnvelope, MediaScanConfig, Milliseconds, ModerationReferralConfig, OCResult,
+    TimestampMillis, Timestamped, UserId, UserType,
 };
 use user_ids_set::UserIdsSet;
 use user_index_canister::ChildCanisterType;
@@ -145,17 +157,63 @@ impl RuntimeState {
             .is_some_and(|user| self.data.is_platform_operator_active(&user.user_id))
     }
 
+    pub fn check_caller_is_bridge_bot(&self, platform: BridgePlatform) -> OCResult {
+        let caller = self.env.caller();
+        let is_bridge_bot = self
+            .data
+            .users
+            .get_by_principal(&caller)
+            .is_some_and(|user| self.data.bridge_bots.get(&platform) == Some(&user.user_id));
+        if is_bridge_bot {
+            Ok(())
+        } else {
+            Err(OCErrorCode::InitiatorNotAuthorized.with_message(format!("Only the {platform} bridge bot can do this")))
+        }
+    }
+
     pub fn can_caller_upload_wasm_chunks(&self) -> bool {
         let caller = self.env.caller();
         self.data.governance_principals.contains(&caller) || self.data.upload_wasm_chunks_whitelist.contains(&caller)
     }
 
+    fn envelope<T>(&mut self, value: T) -> IdempotentEnvelope<T> {
+        IdempotentEnvelope {
+            created_at: self.env.now(),
+            idempotency_id: self.env.rng().next_u64(),
+            value,
+        }
+    }
+
     // Sends the event to the LocalUserIndex holding the user
     pub fn push_event_to_local_user_index(&mut self, user_id: UserId, event: LocalUserIndexEvent) {
         if let Some(canister_id) = self.local_user_index_of_user(user_id) {
-            self.data.user_index_event_sync_queue.push(canister_id, event);
-            jobs::sync_events_to_local_user_index_canisters::try_run_now(self);
+            self.push_event_to_local_user_index_canister(canister_id, event);
         }
+    }
+
+    pub fn push_event_to_local_user_index_canister(&mut self, canister_id: CanisterId, event: LocalUserIndexEvent) {
+        let event = self.envelope(event);
+        self.data.local_user_index_event_sync_queue_v2.push(canister_id, event);
+    }
+
+    pub fn push_event_to_identity(&mut self, event: IdentityEvent) {
+        let event = self.envelope(event);
+        self.data.identity_event_sync_queue.push(event);
+    }
+
+    pub fn push_event_to_group(&mut self, group_id: ChatId, event: group_canister::UserIndexEvent) {
+        let event = self.envelope(event);
+        self.data.group_event_sync_queue.push(group_id.into(), event);
+    }
+
+    pub fn push_event_to_community(&mut self, community_id: CommunityId, event: community_canister::UserIndexEvent) {
+        let event = self.envelope(event);
+        self.data.community_event_sync_queue.push(community_id.into(), event);
+    }
+
+    pub fn push_event_to_storage_index(&mut self, event: StorageIndexEvent) {
+        let event = self.envelope(event);
+        self.data.storage_index_event_sync_queue.push(event);
     }
 
     // The LocalUserIndex holding the user. A migrated user may still be named by an old id, which no
@@ -181,21 +239,21 @@ impl RuntimeState {
     }
 
     pub fn push_event_to_all_local_user_indexes(&mut self, event: LocalUserIndexEvent, except: Option<CanisterId>) {
-        for canister_id in self.data.local_index_map.canisters() {
-            if except != Some(*canister_id) {
-                self.data.user_index_event_sync_queue.push(*canister_id, event.clone());
-            }
+        let canister_ids: Vec<_> = self
+            .data
+            .local_index_map
+            .canisters()
+            .filter(|c| except != Some(**c))
+            .copied()
+            .collect();
+        for canister_id in canister_ids {
+            self.push_event_to_local_user_index_canister(canister_id, event.clone());
         }
-        jobs::sync_events_to_local_user_index_canisters::try_run_now(self);
     }
 
     pub fn push_event_to_online_users(&mut self, event: OnlineUsersEvent) {
-        let now = self.env.now();
-        self.data.online_users_event_sync_queue.push(IdempotentEnvelope {
-            created_at: now,
-            idempotency_id: self.env.rng().next_u64(),
-            value: event,
-        });
+        let event = self.envelope(event);
+        self.data.online_users_event_sync_queue.push(event);
     }
 
     pub fn get_random_local_user_index_canister(&mut self) -> CanisterId {
@@ -215,6 +273,7 @@ impl RuntimeState {
             self.data.local_index_map.remove_user(&user_id);
             self.data.multi_user_canisters.on_user_removed(&user_id);
             self.data.empty_users.remove(&user_id);
+            self.data.bridged_users.remove_user(user_id, now);
 
             #[derive(Serialize)]
             struct EventPayload {
@@ -239,7 +298,7 @@ impl RuntimeState {
                 user_principal: user.principal,
             }));
 
-            self.data.storage_index_users_to_remove_queue.push(user.principal);
+            self.push_event_to_storage_index(StorageIndexEvent::RemoveUser(user.principal));
             true
         } else {
             false
@@ -306,11 +365,12 @@ impl RuntimeState {
             max_concurrent_canister_upgrades: self.data.max_concurrent_canister_upgrades,
             platform_moderators: self.data.platform_moderators.len() as u8,
             platform_operators: self.data.platform_operators.len() as u8,
-            user_index_events_queue_length: self.data.user_index_event_sync_queue.len(),
+            user_index_events_queue_length: self.data.local_user_index_event_sync_queue_v2.len(),
             local_user_indexes: self.data.local_index_map.iter().map(|(c, i)| (*c, i.clone())).collect(),
             multi_user_canisters: self.data.multi_user_canisters.iter().map(|(c, m)| (*c, m.clone())).collect(),
             migrated_user_ids: self.data.migrated_user_ids.len(),
             call_push_enabled: self.data.call_push_enabled,
+            bridged_users: self.data.bridged_users.len(),
             platform_moderators_group: self.data.platform_moderators_group,
             nns_8_year_neuron: self.data.nns_8_year_neuron.clone(),
             event_store_client_info,
@@ -323,7 +383,9 @@ impl RuntimeState {
                 .filter(|(_, wrapper)| matches!(wrapper.borrow().as_ref(), Some(TimerJob::RetryPayment(_))))
                 .count() as u32,
             parked_payments: self.data.pending_payments_queue.parked_len() as u32,
-            pending_users_to_sync_to_storage_index: self.data.storage_index_user_sync_queue.len(),
+            pending_users_to_sync_to_storage_index: self.data.storage_index_event_sync_queue.len(),
+            queued_group_events: self.data.group_event_sync_queue.len(),
+            queued_community_events: self.data.community_event_sync_queue.len(),
             reporting_metrics: self.data.reported_messages.metrics(),
             authority_report_metrics: self.data.authority_reports.metrics(),
             protected_action_metrics: self.data.protected_actions.metrics(),
@@ -430,9 +492,23 @@ struct Data {
     pub translations_canister_id: CanisterId,
     pub registry_canister_id: CanisterId,
     pub event_store_client: EventStoreClient<CdkRuntime>,
+    // Drained into `storage_index_event_sync_queue` by the post_upgrade one-off, and removed with it
     pub storage_index_user_sync_queue: BatchedTimerJobQueue<StorageIndexUserConfigBatch>,
     pub storage_index_users_to_remove_queue: BatchedTimerJobQueue<StorageIndexUsersToRemoveBatch>,
+    #[serde(default = "new_storage_index_event_sync_queue")]
+    pub storage_index_event_sync_queue: BatchedTimerJobQueue<StorageIndexEventBatch>,
+    #[serde(default = "new_chat_event_sync_queue")]
+    pub group_event_sync_queue: GroupedTimerJobQueue<GroupEventBatch>,
+    #[serde(default = "new_chat_event_sync_queue")]
+    pub community_event_sync_queue: GroupedTimerJobQueue<CommunityEventBatch>,
+    // This and `local_user_index_event_sync_queue` are drained into `local_user_index_event_sync_queue_v2`
+    // by the post_upgrade one-off, and removed with it
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
+    // Live in 2.0.2155 with unwrapped events, so it keeps its name and type until it has been drained
+    #[serde(default = "new_legacy_local_user_index_event_sync_queue")]
+    pub local_user_index_event_sync_queue: GroupedTimerJobQueue<LegacyLocalUserIndexEventBatch>,
+    #[serde(default = "new_local_user_index_event_sync_queue")]
+    pub local_user_index_event_sync_queue_v2: GroupedTimerJobQueue<LocalUserIndexEventBatch>,
     pub group_index_event_sync_queue: BatchedTimerJobQueue<GroupIndexEventBatch>,
     pub online_users_event_sync_queue: BatchedTimerJobQueue<OnlineUsersEventBatch>,
     pub pending_payments_queue: PendingPaymentsQueue,
@@ -459,6 +535,8 @@ struct Data {
     pub authority_reporter: Option<Principal>,
     #[serde(default)]
     pub protected_actions: ProtectedActions,
+    // Nothing is sent through this any more. Kept for a release so that calls queued for a retry
+    // before the switch to events are still made, then removed.
     pub fire_and_forget_handler: FireAndForgetHandler,
     pub nns_8_year_neuron: Option<NnsNeuron>,
     pub rng_seed: [u8; 32],
@@ -468,8 +546,15 @@ struct Data {
     pub empty_users: HashSet<UserId>,
     pub chit_leaderboard: ChitLeaderboard,
     pub deleted_users: Vec<DeletedUser>,
+    // This and `identity_user_sync_queue` are drained into `identity_event_sync_queue` by the
+    // post_upgrade one-off, and removed with it
     #[serde(alias = "identity_canister_user_sync_queue_2")]
     pub identity_canister_user_sync_queue: VecDeque<UserIdentity>,
+    // Live in 2.0.2155, so it keeps its name and type until it has been drained
+    #[serde(default = "new_identity_user_sync_queue")]
+    pub identity_user_sync_queue: BatchedTimerJobQueue<IdentityUserSyncBatch>,
+    #[serde(default = "new_identity_event_sync_queue")]
+    pub identity_event_sync_queue: BatchedTimerJobQueue<IdentityEventBatch>,
     pub survey_messages_sent: usize,
     pub external_achievements: ExternalAchievements,
     pub upload_wasm_chunks_whitelist: Vec<Principal>,
@@ -502,6 +587,13 @@ struct Data {
     // Set by proposal and fanned out to the LocalUserIndexes, including any added later
     #[serde(default)]
     pub daily_puzzle_canister_id: Option<CanisterId>,
+    // The bot that bridges each platform, eg. Discord. Set by a platform operator and fanned out to
+    // the LocalUserIndexes, including any added later
+    #[serde(default)]
+    pub bridge_bots: BTreeMap<BridgePlatform, UserId>,
+    // The latest profile of each account a bridge bot has relayed a message from
+    #[serde(default)]
+    pub bridged_users: BridgedUsers,
     // The old id -> the new id of each user migrated to a MultiUser canister. Fanned out to the
     // LocalUserIndexes, including any added later
     #[serde(default)]
@@ -568,7 +660,12 @@ impl Data {
                 .build(),
             storage_index_user_sync_queue: BatchedTimerJobQueue::new(storage_index_canister_id, false),
             storage_index_users_to_remove_queue: BatchedTimerJobQueue::new(storage_index_canister_id, false),
+            storage_index_event_sync_queue: BatchedTimerJobQueue::new(storage_index_canister_id, false),
+            group_event_sync_queue: new_chat_event_sync_queue(),
+            community_event_sync_queue: new_chat_event_sync_queue(),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
+            local_user_index_event_sync_queue: new_legacy_local_user_index_event_sync_queue(),
+            local_user_index_event_sync_queue_v2: new_local_user_index_event_sync_queue(),
             group_index_event_sync_queue: BatchedTimerJobQueue::new(group_index_canister_id, false),
             online_users_event_sync_queue: BatchedTimerJobQueue::new(online_users_canister_id, false),
             pending_payments_queue: PendingPaymentsQueue::default(),
@@ -599,6 +696,8 @@ impl Data {
             chit_leaderboard: ChitLeaderboard::new(now),
             deleted_users: Vec::new(),
             identity_canister_user_sync_queue: VecDeque::new(),
+            identity_user_sync_queue: new_identity_user_sync_queue(),
+            identity_event_sync_queue: BatchedTimerJobQueue::new(identity_canister_id, false),
             survey_messages_sent: 0,
             external_achievements: ExternalAchievements::default(),
             upload_wasm_chunks_whitelist: Vec::new(),
@@ -615,6 +714,8 @@ impl Data {
             multi_user_canisters: MultiUserCanisterMap::default(),
             call_push_enabled: false,
             daily_puzzle_canister_id: None,
+            bridge_bots: BTreeMap::new(),
+            bridged_users: BridgedUsers::default(),
             migrated_user_ids: MigratedUserIds::default(),
             alchemy_api_key: None,
         };
@@ -682,7 +783,12 @@ impl Default for Data {
             event_store_client: EventStoreClientBuilder::new(Principal::anonymous(), CdkRuntime::default()).build(),
             storage_index_user_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             storage_index_users_to_remove_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
+            storage_index_event_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
+            group_event_sync_queue: new_chat_event_sync_queue(),
+            community_event_sync_queue: new_chat_event_sync_queue(),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
+            local_user_index_event_sync_queue: new_legacy_local_user_index_event_sync_queue(),
+            local_user_index_event_sync_queue_v2: new_local_user_index_event_sync_queue(),
             group_index_event_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             online_users_event_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             pending_payments_queue: PendingPaymentsQueue::default(),
@@ -713,6 +819,8 @@ impl Default for Data {
             chit_leaderboard: ChitLeaderboard::new(0),
             deleted_users: Vec::new(),
             identity_canister_user_sync_queue: VecDeque::new(),
+            identity_user_sync_queue: new_identity_user_sync_queue(),
+            identity_event_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             survey_messages_sent: 0,
             external_achievements: ExternalAchievements::default(),
             upload_wasm_chunks_whitelist: Vec::new(),
@@ -729,6 +837,8 @@ impl Default for Data {
             multi_user_canisters: MultiUserCanisterMap::default(),
             call_push_enabled: false,
             daily_puzzle_canister_id: None,
+            bridge_bots: BTreeMap::new(),
+            bridged_users: BridgedUsers::default(),
             migrated_user_ids: MigratedUserIds::default(),
             alchemy_api_key: None,
         }
@@ -762,6 +872,7 @@ pub struct Metrics {
     pub multi_user_canisters: Vec<(CanisterId, MultiUserCanister)>,
     pub migrated_user_ids: usize,
     pub call_push_enabled: bool,
+    pub bridged_users: usize,
     pub platform_moderators_group: Option<ChatId>,
     pub nns_8_year_neuron: Option<NnsNeuron>,
     pub event_store_client_info: EventStoreClientInfo,
@@ -769,6 +880,8 @@ pub struct Metrics {
     pub payments_awaiting_retry: u32,
     pub parked_payments: u32,
     pub pending_users_to_sync_to_storage_index: usize,
+    pub queued_group_events: usize,
+    pub queued_community_events: usize,
     pub reporting_metrics: ReportingMetrics,
     pub authority_report_metrics: AuthorityReportMetrics,
     pub vault_reviewers: u32,
@@ -889,4 +1002,54 @@ pub struct CanisterIds {
     pub internet_identity: CanisterId,
     pub website: CanisterId,
     pub daily_puzzle: Option<CanisterId>,
+}
+
+fn new_local_user_index_event_sync_queue() -> GroupedTimerJobQueue<LocalUserIndexEventBatch> {
+    GroupedTimerJobQueue::new(10, false)
+}
+
+// The two queues 2.0.2155 holds, which the post_upgrade one-off drains. Removed with that one-off.
+fn new_legacy_local_user_index_event_sync_queue() -> GroupedTimerJobQueue<LegacyLocalUserIndexEventBatch> {
+    GroupedTimerJobQueue::new(10, false)
+}
+
+fn new_identity_user_sync_queue() -> BatchedTimerJobQueue<IdentityUserSyncBatch> {
+    BatchedTimerJobQueue::new(Principal::anonymous(), false)
+}
+
+// Only reached when deserializing state from before the queues existed, which the post_upgrade
+// one-off then points at their canisters. Removed with that one-off.
+fn new_identity_event_sync_queue() -> BatchedTimerJobQueue<IdentityEventBatch> {
+    BatchedTimerJobQueue::new(Principal::anonymous(), false)
+}
+
+fn new_storage_index_event_sync_queue() -> BatchedTimerJobQueue<StorageIndexEventBatch> {
+    BatchedTimerJobQueue::new(Principal::anonymous(), false)
+}
+
+fn new_chat_event_sync_queue<T: timer_job_queues::TimerJobItemGroup>() -> GroupedTimerJobQueue<T>
+where
+    T::SharedState: Default,
+{
+    GroupedTimerJobQueue::new(10, false)
+}
+
+// Pushes events to a LocalUserIndex while the rest of the state is borrowed
+pub struct LocalUserIndexEventPusher<'a> {
+    pub now: TimestampMillis,
+    pub rng: &'a mut StdRng,
+    pub queue: &'a mut GroupedTimerJobQueue<LocalUserIndexEventBatch>,
+}
+
+impl LocalUserIndexEventPusher<'_> {
+    pub fn push(&mut self, canister_id: CanisterId, event: LocalUserIndexEvent) {
+        self.queue.push(
+            canister_id,
+            IdempotentEnvelope {
+                created_at: self.now,
+                idempotency_id: self.rng.next_u64(),
+                value: event,
+            },
+        )
+    }
 }

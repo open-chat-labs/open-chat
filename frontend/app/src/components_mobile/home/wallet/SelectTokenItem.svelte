@@ -4,7 +4,7 @@
     import { OpenChat, type EnhancedTokenDetails } from "@client";
     import { getContext } from "svelte";
 
-    import { TokenState, type ConversionToken } from "@shared_components/home/wallet/walletState.svelte";
+    import { TokenState, type ConversionToken } from "@src/logic/wallet/walletState.svelte";
 
     const client = getContext<OpenChat>("client");
 

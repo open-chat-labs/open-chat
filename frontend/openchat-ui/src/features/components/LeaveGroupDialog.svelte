@@ -35,8 +35,8 @@
   const dismiss = () => flow.dismiss(onCancel);
 </script>
 
-<div class="layer" class:closing={flow.closing} role="dialog" aria-modal="true" use:modal={flow.escape(onCancel)}>
-  <div class="veil" onclick={dismiss} aria-hidden="true"></div>
+<div class="layer oc-dialog-layer" class:closing={flow.closing} role="dialog" aria-modal="true" use:modal={flow.escape(onCancel)}>
+  <div class="oc-veil" onclick={dismiss} aria-hidden="true"></div>
   <div class="card">
     <div class="head">
       <span class="badge"><span class="badge-icon"></span></span>
@@ -68,22 +68,7 @@
 
 <style>
   .layer {
-    position: fixed;
-    inset: 0;
     z-index: 70;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: var(--space-22);
-  }
-
-  .veil {
-    position: absolute;
-    inset: 0;
-    background: var(--oc-veil, rgba(3, 3, 6, 0.72));
-    backdrop-filter: var(--oc-veil-blur, blur(4px));
-    -webkit-backdrop-filter: var(--oc-veil-blur, blur(4px));
-    animation: oc-veil-in var(--duration-base, 200ms) var(--ease-out) both;
   }
 
   .card {
@@ -95,21 +80,12 @@
     display: flex;
     flex-direction: column;
     border-radius: var(--radius-xl);
-    background: var(--surface-1, #0e0e12);
+    background: var(--surface-1);
     box-shadow:
-      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1)),
-      var(--shadow-modal, 0 30px 70px rgba(0, 0, 0, 0.45));
+      inset 0 0 0 1px var(--line-2),
+      var(--shadow-modal);
     overflow: hidden;
-    animation: oc-dlg-in var(--duration-slow, 280ms) var(--ease-out) both;
-  }
-
-  /* fading out: no longer catches clicks while (or after) it leaves */
-  .layer.closing {
-    pointer-events: none;
-  }
-
-  .closing .veil {
-    animation: oc-veil-out 170ms var(--ease-standard) both;
+    animation: oc-dlg-in var(--duration-slow) var(--ease-out) both;
   }
 
   .closing .card {
@@ -122,7 +98,7 @@
     align-items: center;
     gap: var(--space-12);
     padding: var(--space-16) var(--space-18);
-    border-block-end: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+    border-block-end: 1px solid var(--line-1);
   }
 
   .badge {
@@ -133,14 +109,14 @@
     width: 38px;
     height: 38px;
     border-radius: var(--radius-md);
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1));
+    background: var(--overlay-1);
+    box-shadow: inset 0 0 0 1px var(--line-2);
   }
 
   .badge-icon {
     width: 19px;
     height: 19px;
-    background: var(--ink-2, #b9b9c6);
+    background: var(--ink-2);
     mask: var(--icon-leave) center/contain no-repeat;
   }
 
@@ -154,12 +130,12 @@
 
   .title {
     font: var(--weight-bold) var(--text-lg) / 1.25 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .subtitle {
     font: var(--weight-regular) var(--text-sm) / 1.3 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -177,13 +153,13 @@
   }
 
   .close:hover {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    background: var(--overlay-2);
   }
 
   .close-icon {
     width: 15px;
     height: 15px;
-    background: var(--ink-3, #9a9aa8);
+    background: var(--ink-3);
     mask: var(--icon-close) center/contain no-repeat;
   }
 
@@ -208,17 +184,17 @@
   .question {
     font: var(--weight-bold) var(--text-2xl) / 1.3 var(--font-sans);
     letter-spacing: var(--tracking-tight);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     text-wrap: pretty;
   }
 
   .name {
-    color: var(--accent-bright, #ff8298);
+    color: var(--accent-bright);
   }
 
   .text {
     font: var(--weight-regular) var(--text-base) / 1.55 var(--font-sans);
-    color: var(--ink-2, #b9b9c6);
+    color: var(--ink-2);
     text-wrap: pretty;
   }
 
@@ -228,7 +204,7 @@
     align-items: center;
     gap: var(--space-8);
     padding: var(--space-16) var(--space-18);
-    border-block-start: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+    border-block-start: 1px solid var(--line-1);
   }
 
   .cancel {
@@ -236,13 +212,13 @@
     padding: var(--space-10) var(--space-14);
     border-radius: var(--radius-md);
     font: var(--weight-semibold) var(--text-base) / 1 var(--font-sans);
-    color: var(--accent, #ff5672);
+    color: var(--accent);
     cursor: pointer;
     user-select: none;
   }
 
   .cancel:hover {
-    background: var(--accent-soft, rgba(255, 86, 114, 0.1));
+    background: var(--accent-soft);
   }
 
   .grow {
@@ -255,12 +231,12 @@
     align-items: center;
     gap: var(--space-8);
     padding: 0 var(--space-18);
-    height: var(--control-lg, 40px);
+    height: var(--control-lg);
     box-sizing: border-box;
     border-radius: var(--radius-md);
-    background: var(--accent, #ff5672);
+    background: var(--accent);
     font: var(--weight-semibold) var(--text-base) / 1 var(--font-sans);
-    color: var(--on-accent, #2e0512);
+    color: var(--on-accent);
     cursor: pointer;
     user-select: none;
   }
@@ -273,17 +249,17 @@
   .error {
     min-width: 0;
     font: var(--weight-medium) var(--text-sm) / 1.3 var(--font-sans);
-    color: var(--status-danger, #f5493d);
+    color: var(--status-danger);
   }
 
   .confirm:hover {
-    background: var(--accent-hover, #ff6d85);
+    background: var(--accent-hover);
   }
 
   .confirm-icon {
     width: 16px;
     height: 16px;
-    background: var(--on-accent, #2e0512);
+    background: var(--on-accent);
     mask: var(--icon-leave) center/contain no-repeat;
   }
 </style>

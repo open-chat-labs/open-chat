@@ -1088,8 +1088,9 @@ impl GroupChatCore {
                     .message_internal(message_id.into())
                     .map(|m| m.message_index)
                 {
-                    // If the message being deleted is pinned, unpin it
-                    if self.remove_pinned_message(message_index, now) {
+                    // If the message being deleted is pinned, unpin it. A frozen chat takes no events,
+                    // though a moderator can still delete messages in it, so the pin goes without one.
+                    if self.remove_pinned_message(message_index, now) && !self.events.is_frozen() {
                         self.events.push_main_event(
                             ChatEventInternal::MessageUnpinned(Box::new(MessageUnpinned {
                                 message_index,
@@ -1602,6 +1603,7 @@ impl GroupChatCore {
     ) -> UpdateSuccessResult {
         let mut result = UpdateSuccessResult {
             newly_public: false,
+            newly_private: false,
             gate_config_update: OptionUpdate::NoChange,
             rules_version: None,
             bot_notifications: Vec::new(),
@@ -1767,10 +1769,14 @@ impl GroupChatCore {
             );
             result.bot_notifications.push(push_result.bot_notification);
 
-            if public_changed && self.is_public.value {
-                self.min_visible_indexes_for_new_members =
-                    Some((push_result.index, events.main_events_list().next_message_index()));
-                result.newly_public = true;
+            if public_changed {
+                if self.is_public.value {
+                    self.min_visible_indexes_for_new_members =
+                        Some((push_result.index, events.main_events_list().next_message_index()));
+                    result.newly_public = true;
+                } else {
+                    result.newly_private = true;
+                }
             }
         }
 
@@ -2173,6 +2179,7 @@ pub struct SendMessageSuccess {
 
 pub struct UpdateSuccessResult {
     pub newly_public: bool,
+    pub newly_private: bool,
     pub gate_config_update: OptionUpdate<AccessGateConfigInternal>,
     pub rules_version: Option<Version>,
     pub bot_notifications: Vec<Option<BotNotification>>,
@@ -2412,6 +2419,29 @@ mod tests {
     }
 
     #[test]
+    fn deleting_a_pinned_message_in_a_frozen_chat_removes_the_pin_without_an_event() {
+        let (mut chat, owner, _) = setup();
+        send_bot_message(&mut chat, "hello", false);
+        chat.pin_message(owner, MessageIndex::default(), 30).unwrap();
+        chat.events.freeze(owner, None, 35);
+        let event_count = chat.events.main_events_list().latest_event_index();
+
+        let results = chat
+            .delete_messages(
+                Caller::User(UserIdAndPrincipal::new(owner, Principal::from_slice(&[1]))),
+                None,
+                vec![1u64.into()],
+                true,
+                40,
+            )
+            .unwrap();
+        assert!(results.iter().all(|(_, result)| result.is_ok()));
+
+        assert!(chat.pinned_messages(MessageIndex::default()).is_empty());
+        assert_eq!(chat.events.main_events_list().latest_event_index(), event_count);
+    }
+
+    #[test]
     fn a_thread_reply_updates_every_follower() {
         let (mut chat, owner, muted_member) = setup();
         // Of different lengths, so that their order differs from that of their keys
@@ -2519,6 +2549,7 @@ mod tests {
         let caller = Caller::BotV2(BotCaller {
             bot: bot_id(),
             initiator: BotInitiator::Autonomous,
+            bridged_from: None,
         });
         let message_id: MessageId = 1u64.into();
 

@@ -22,7 +22,7 @@
         proposalTopicsStore,
         proposalVotesStore,
     } from "@client";
-    import { type ReadonlyMap } from "@shared";
+    import { type NeuronVoteFailureMessage, type ReadonlyMap } from "@shared";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
@@ -37,7 +37,7 @@
     import { round2 } from "../../../utils/math";
     import { copyToClipboard } from "../../../utils/urls";
     import Translatable from "@shared_components/Translatable.svelte";
-    import Markdown from "@shared_components/Markdown.svelte";
+    import Markdown from "@src/core/Markdown.svelte";
     import ProposalVoteButton from "./ProposalVoteButton.svelte";
     import ProposalVotingProgress from "./ProposalVotingProgress.svelte";
     import ProposalStatusLabel from "./ProposalStatusLabel.svelte";
@@ -69,6 +69,7 @@
 
     const dashboardUrl = "https://dashboard.internetcomputer.org";
     let showNeuronInfo = $state(false);
+    let neuronVoteFailures = $state<NeuronVoteFailureMessage[] | undefined>();
     let rootCanister = $derived(
         client.tryGetNervousSystem(content.governanceCanisterId)?.rootCanisterId ?? "",
     );
@@ -91,11 +92,7 @@
             ? `${dashboardUrl}/proposal/${proposal.id}`
             : `${dashboardUrl}/sns/${rootCanister}/proposal/${proposal.id}`,
     );
-    let proposerUrl = $derived(
-        isNns
-            ? `${dashboardUrl}/neuron/${proposal.proposer}`
-            : `${dashboardUrl}/sns/${rootCanister}/neuron/${proposal.proposer}`,
-    );
+    let proposerUrl = $derived(neuronUrl(proposal.proposer));
     let adoptPercent = $derived(round2((100 * proposal.tally.yes) / proposal.tally.total));
     let rejectPercent = $derived(round2((100 * proposal.tally.no) / proposal.tally.total));
     let votingEnded = $derived(proposal.deadline <= $now);
@@ -152,6 +149,9 @@
             case "no_eligible_neurons":
                 showNeuronInfo = true;
                 break;
+            case "neuron_votes_failed":
+                neuronVoteFailures = outcome.failures;
+                break;
             case "failed":
                 toastStore.showFailureToast(outcome.message);
                 break;
@@ -164,6 +164,12 @@
         if (collapsed) {
             onExpandMessage?.();
         }
+    }
+
+    function neuronUrl(neuronId: string): string {
+        return isNns
+            ? `${dashboardUrl}/neuron/${neuronId}`
+            : `${dashboardUrl}/sns/${rootCanister}/neuron/${neuronId}`;
     }
 
     function renderNeuronId(neuronId: string): string {
@@ -497,6 +503,40 @@
                         {/snippet}
                     </IconButton>
                 </Row>
+            </Column>
+            <Body colour="textSecondary">
+                <Markdown inline={true} text={$_("proposal.noEligibleNeuronsMoreInfo")} />
+            </Body>
+        </Column>
+    </Sheet>
+{/if}
+
+{#if neuronVoteFailures !== undefined}
+    <Sheet onDismiss={() => (neuronVoteFailures = undefined)}>
+        <Column gap="xl" padding={["md", "xl", "huge"]}>
+            <Title fontWeight={"bold"}>
+                <Translatable resourceKey={i18nKey("proposal.neuronVotesFailed")} />
+            </Title>
+            <Body colour="textSecondary">
+                <Translatable resourceKey={i18nKey("proposal.neuronVotesFailedIntro")} />
+            </Body>
+            <Column gap="lg">
+                {#each neuronVoteFailures as { neuronId, reason } (neuronId)}
+                    <Column gap="xs">
+                        <Body fontWeight="semi-bold">
+                            <a
+                                target="_blank"
+                                rel="noreferrer"
+                                href={neuronUrl(neuronId)}
+                                style:color={ColourVars.primary}>
+                                {renderNeuronId(neuronId)}
+                            </a>
+                        </Body>
+                        <Body colour="textSecondary">
+                            <Translatable resourceKey={reason} />
+                        </Body>
+                    </Column>
+                {/each}
             </Column>
             <Body colour="textSecondary">
                 <Markdown inline={true} text={$_("proposal.noEligibleNeuronsMoreInfo")} />

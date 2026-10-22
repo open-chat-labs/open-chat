@@ -10,8 +10,9 @@
         allow_raw_access: false,
     },
     {
-        // Only a document takes these, and index.html is the only one in the build (public/ has
-        // its own config). The canister serves it for every route. Kept off the other assets
+        // Only a document takes these, and index.html is the only app document in the build
+        // (public/ has its own config; the canister map is a standalone page). The canister
+        // serves it for every route. Kept off the other assets
         // because a proposal to commit a release repeats each changed asset's headers, and over
         // 2KB of them on every asset took one past the 2MiB ingress limit.
         match: "index.html",
@@ -55,6 +56,18 @@
         headers: {
             "Cache-Control": "no-store",
         },
+    },
+    {
+        // The canister map, regenerated on every build (see rollup.config.mjs) under a name
+        // carrying the website version, so each release's copy is immutable like the js and css;
+        // it is one big document, so it is served compressed (see the css/js rule for why br
+        // alone). The Architecture page frames it; nothing links to the name itself.
+        match: "canister-map-*.html",
+        headers: {
+            "Cache-Control": "max-age=31536000, immutable",
+            "X-Cacheable-Resource": "true",
+        },
+        encodings: ["identity", "br"],
     },
     {
         match: ".well-known",

@@ -9,9 +9,11 @@ import { CandidCanisterAgent } from "../canisterAgent/candid";
 import {
     getProposalVoteDetails,
     manageNeuronResponse,
+    minimumDissolveDelayToVoteSeconds,
     nervousSystemFunctions,
-    neuronIds,
+    votingNeurons,
 } from "./mappers";
+import type { VotingNeuron } from "../common/neurons";
 import { apiOptional, apiProposalVote } from "../common/chatMappers";
 import { identity } from "../../utils/mapping";
 
@@ -23,10 +25,10 @@ export class SnsGovernanceClient extends CandidCanisterAgent<SnsGovernanceServic
         super(identity, agent, canisterId, idlFactory, "SnsGovernance");
     }
 
-    // The ids of the neurons controlled by, or hot-keyed to, the caller which are not dissolved.
-    // When listing by principal the canister ignores `start_page_at`, so this is a single call
-    // capped at the canister's limit.
-    listNeurons(): Promise<Uint8Array[]> {
+    // The neurons controlled by, or hot-keyed to, the caller which are not dissolved, keyed by
+    // their subaccounts. When listing by principal the canister ignores `start_page_at`, so this
+    // is a single call capped at the canister's limit.
+    listNeurons(): Promise<VotingNeuron<Uint8Array>[]> {
         const args: ApiListNeurons = {
             of_principal: apiOptional(identity, this.identity.getPrincipal()),
             limit: LIST_NEURONS_LIMIT,
@@ -34,7 +36,14 @@ export class SnsGovernanceClient extends CandidCanisterAgent<SnsGovernanceServic
         };
         return this.handleQueryResponse(
             () => this.service.list_neurons(args),
-            (resp) => neuronIds(resp, BigInt(Date.now())),
+            (resp) => votingNeurons(resp, BigInt(Date.now())),
+        );
+    }
+
+    minimumDissolveDelayToVoteSeconds(): Promise<bigint | undefined> {
+        return this.handleQueryResponse(
+            () => this.service.get_nervous_system_parameters(null),
+            minimumDissolveDelayToVoteSeconds,
         );
     }
 

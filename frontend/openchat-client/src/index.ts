@@ -21,23 +21,34 @@ export {
     type WalletAccount,
 } from "./utils/signer";
 export {
+    applyTranslation,
     buildCryptoTransferText,
     buildTransactionUrl,
+    chatMatchesSearch,
+    defaultChat,
+    getMembersString,
     subrangesCover,
     TimelineGrouper,
 } from "./utils/chat";
+export { formatDuration } from "./utils/time";
+export { compareIsNotYouThenUsername } from "./utils/user";
 export * from "./utils/cryptoFormatter";
 export { candidateGroupFromChat, groupChanges, hasAccessGateChanged } from "./utils/group.svelte";
-export { communityChanges } from "./utils/community";
+export { communityChanges, isPrivateCommunityPreview } from "./utils/community";
 export { executionPaymentAmount, proposalFundsRequired } from "./utils/proposal";
 export { inviteLinkUrl } from "./utils/inviteLink";
 export { postLoginJoin } from "./utils/join";
+export { muteNotificationsFailureMessage, pinChatFailureMessage } from "./utils/pinAndMute";
 export { profileChanges } from "./utils/profile";
+export { rightPanelView, type RightPanelInput } from "./utils/rightPanel";
+export { signInOptions } from "./utils/signIn";
+export { cloneWalletConfig, walletConfigForMode } from "./utils/walletConfig";
 export type { TrackingCategory } from "./utils/ga";
 export { toRecord } from "./utils/list";
 export { quantiseWaveform, type Dimensions } from "./utils/media";
 export * from "./utils/permissions";
 export { Poller } from "./utils/poller";
 export * from "./utils/routes";
+export { dexName } from "./utils/swap";
 export { formatTimeRemaining } from "./utils/time";
 export * from "./utils/url";

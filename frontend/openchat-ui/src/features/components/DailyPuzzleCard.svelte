@@ -90,10 +90,10 @@
   }
 
   .card {
-    --tile-bg: var(--overlay-2, rgba(255, 255, 255, 0.07));
-    --tile-ink: var(--ink-3, #9a9aa8);
-    --go-bg: var(--overlay-2, rgba(255, 255, 255, 0.09));
-    --go-ink: var(--ink, #ececf1);
+    --tile-bg: var(--overlay-2);
+    --tile-ink: var(--ink-3);
+    --go-bg: var(--overlay-2);
+    --go-ink: var(--ink);
     position: relative;
     flex: none;
     display: flex;
@@ -101,20 +101,20 @@
     gap: var(--space-12);
     padding: var(--space-12) var(--space-12) var(--space-12) var(--space-14);
     border-radius: var(--radius-lg);
-    background: var(--overlay-1, rgba(255, 255, 255, 0.045));
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12));
+    background: var(--overlay-1);
+    box-shadow: inset 0 0 0 1px var(--line-2);
   }
 
   .card.progress {
-    --tile-bg: var(--accent-soft, rgba(255, 86, 114, 0.16));
-    --tile-ink: var(--accent-bright, #ff8298);
-    --go-bg: var(--accent, #ff5672);
-    --go-ink: var(--on-accent, #2e0512);
+    --tile-bg: var(--accent-soft);
+    --tile-ink: var(--accent-bright);
+    --go-bg: var(--accent);
+    --go-ink: var(--on-accent);
   }
 
   .card.solved {
-    --tile-bg: color-mix(in oklch, var(--status-online, #2ee6a8) 16%, transparent);
-    --tile-ink: var(--status-online, #2ee6a8);
+    --tile-bg: color-mix(in oklch, var(--status-online) 16%, transparent);
+    --tile-ink: var(--status-online);
   }
 
   .tile {
@@ -142,8 +142,8 @@
     width: 17px;
     height: 17px;
     border-radius: 50%;
-    background: var(--accent, #ff5672);
-    box-shadow: 0 0 0 2px var(--surface-1, #0e0e12);
+    background: var(--accent);
+    box-shadow: 0 0 0 2px var(--surface-1);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -152,7 +152,7 @@
   .bell-icon {
     width: 10px;
     height: 10px;
-    background: var(--on-accent, #2e0512);
+    background: var(--on-accent);
     mask: var(--icon-bell) center/contain no-repeat;
   }
 
@@ -166,12 +166,12 @@
 
   .title {
     font: var(--weight-semibold) var(--text-md) / 1.25 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .sub {
     font: var(--weight-regular) var(--text-sm) / 1.35 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
     text-wrap: pretty;
   }
 
@@ -206,13 +206,13 @@
 
   .more:hover,
   .more.open {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    background: var(--overlay-2);
   }
 
   .more-icon {
     width: 15px;
     height: 15px;
-    background: var(--ink-3, #9a9aa8);
+    background: var(--ink-3);
     mask: var(--icon-more) center/contain no-repeat;
   }
 
@@ -226,7 +226,7 @@
     border-radius: var(--radius-md);
     background: var(--surface-3, #24242e);
     box-shadow:
-      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12)),
+      inset 0 0 0 1px var(--line-2),
       0 12px 30px rgba(0, 0, 0, 0.45);
     display: flex;
     flex-direction: column;
@@ -241,19 +241,19 @@
     padding: 0 10px;
     border-radius: var(--radius-sm);
     font: var(--weight-medium) var(--text-sm) / 1 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     cursor: pointer;
   }
 
   .item:hover {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    background: var(--overlay-2);
   }
 
   .item-icon {
     flex: none;
     width: 15px;
     height: 15px;
-    background: var(--ink-3, #9a9aa8);
+    background: var(--ink-3);
   }
 
   .item-label {
@@ -263,7 +263,7 @@
   .check {
     width: 14px;
     height: 14px;
-    background: var(--accent, #ff5672);
+    background: var(--accent);
     mask: var(--icon-check) center/contain no-repeat;
   }
 
@@ -275,9 +275,9 @@
     min-height: 40px;
     padding: 0 var(--space-12);
     border-radius: var(--radius-md);
-    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+    box-shadow: inset 0 0 0 1px var(--line-1);
     font: var(--weight-medium) var(--text-sm) / 1.3 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .hidden-icon {
@@ -294,7 +294,7 @@
 
   .undo {
     font-weight: var(--weight-bold);
-    color: var(--accent-bright, #ff8298);
+    color: var(--accent-bright);
     cursor: pointer;
     padding: 8px 4px;
   }

@@ -6,6 +6,7 @@ import {
     ListNeuronsResponse,
     ListProposalInfoResponse,
     ManageNeuronResponse,
+    NetworkEconomics,
 } from "./types";
 export {
     _SERVICE as NnsGovernanceService,
@@ -13,6 +14,7 @@ export {
     ListNeuronsResponse as ApiListNeuronsResponse,
     ListProposalInfoResponse as ApiListProposalInfoResponse,
     ManageNeuronResponse as ApiManageNeuronResponse,
+    NetworkEconomics as ApiNetworkEconomics,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

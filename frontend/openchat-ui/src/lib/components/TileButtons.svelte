@@ -74,37 +74,37 @@
     gap: 7px;
     padding: var(--space-16) 0;
     border-radius: var(--radius-md);
-    background: var(--overlay-1, rgba(255, 255, 255, 0.045));
+    background: var(--overlay-1);
     cursor: pointer;
     user-select: none;
   }
 
   .tile.on {
-    background: color-mix(in srgb, var(--accent, #ff5672) 14%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #ff5672) 38%, transparent);
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 38%, transparent);
   }
 
   .tile:hover {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    background: var(--overlay-2);
   }
 
   .icon {
     width: 16px;
     height: 16px;
-    background: var(--ink-2, #d8d8e2);
+    background: var(--ink-2);
   }
 
   .label {
     font: var(--weight-semibold) var(--text-xs) / 1 var(--font-sans);
-    color: var(--ink-2, #b9b9c6);
+    color: var(--ink-2);
     white-space: nowrap;
   }
 
   .on .icon {
-    background: var(--accent-bright, #ff8298);
+    background: var(--accent-bright);
   }
 
   .on .label {
-    color: var(--accent-bright, #ff8298);
+    color: var(--accent-bright);
   }
 </style>

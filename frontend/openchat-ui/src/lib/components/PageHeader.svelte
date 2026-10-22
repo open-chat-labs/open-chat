@@ -44,7 +44,7 @@
     align-items: center;
     gap: var(--space-10);
     padding: 0 var(--space-24);
-    border-bottom: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+    border-bottom: 1px solid var(--line-1);
   }
 
   .has-back {
@@ -60,7 +60,7 @@
     flex: 1;
     min-width: 0;
     font: var(--weight-bold) var(--text-lg) / 1 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

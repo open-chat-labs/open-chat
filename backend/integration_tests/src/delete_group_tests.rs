@@ -1,11 +1,10 @@
 use crate::client::{start_canister, stop_canister};
 use crate::env::ENV;
-use crate::utils::{metrics, tick_many, wait_for_deleted_canister_to_be_uninstalled};
+use crate::utils::{metrics, tick_many, tick_until, wait_for_deleted_canister_to_be_uninstalled};
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
-use std::time::Duration;
 use testing::rng::random_string;
 use types::{CanisterId, ChatId};
 
@@ -81,6 +80,7 @@ fn events_queued_for_a_deleted_group_are_dropped() {
     );
 }
 
+// Members whose canisters are stopped when the group is deleted are told once they are running again
 #[test]
 fn user_canister_notified_of_group_deleted() {
     let mut wrapper = ENV.deref().get();
@@ -115,25 +115,16 @@ fn user_canister_notified_of_group_deleted() {
 
     env.tick();
 
-    let initial_state1 = client::user::happy_path::initial_state(env, &user1);
-    assert!(!initial_state1.group_chats.summaries.iter().any(|c| c.chat_id == group_id));
+    // The deleter's canister removed the group itself
+    assert!(!holds_group(env, &user1, group_id));
 
-    env.advance_time(Duration::from_secs(9 * 60));
-    env.tick();
+    // The events for the stopped canisters are rejected and retried after a delay, so each member
+    // is told once their canister is running again
     start_canister(env, user2.local_user_index, user2.canister());
-    env.tick();
+    wait_for_group_deleted_notification(env, &user2, group_id);
 
-    let initial_state2 = client::user::happy_path::initial_state(env, &user1);
-    assert!(!initial_state2.group_chats.summaries.iter().any(|c| c.chat_id == group_id));
-
-    env.advance_time(Duration::from_secs(2 * 60));
-    env.tick();
     start_canister(env, user3.local_user_index, user3.canister());
-    env.tick();
-
-    // Only retry for 10 minutes so the notification shouldn't have made it to user3's canister
-    let initial_state3 = client::user::happy_path::initial_state(env, &user3);
-    assert!(initial_state3.group_chats.summaries.iter().any(|c| c.chat_id == group_id));
+    wait_for_group_deleted_notification(env, &user3, group_id);
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, platform_operator: Principal) -> TestData {
@@ -155,10 +146,10 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, platform_opera
 
     // The user canisters learn of the membership asynchronously (group -> local user index -> user
     // canister), and `user_canister_notified_of_group_deleted` stops user2 and user3 right after
-    // this returns. A join event which reaches a stopped canister is rejected and only retried
-    // after a 10 second delay, which never elapses while the clock stands still, so a user stopped
-    // before its join landed would never hold the group and the final assertion (that user3 still
-    // has it) would fail. Wait for the memberships to land first.
+    // this returns. A join event which reaches a stopped canister is retried, like the deletion
+    // event, once the canister is running again, in no fixed order. A join which landed after the
+    // deletion would leave the user holding the group, so the wait for the deletion to be applied
+    // would never end. Wait for the memberships to land first.
     wait_for_group_membership(env, &user2, group_id);
     wait_for_group_membership(env, &user3, group_id);
 
@@ -173,13 +164,26 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, platform_opera
 // Ticks until the user's canister lists the group, ie. the join event has been delivered
 fn wait_for_group_membership(env: &mut PocketIc, user: &User, group_id: ChatId) {
     for _ in 0..20 {
-        let initial_state = client::user::happy_path::initial_state(env, user);
-        if initial_state.group_chats.summaries.iter().any(|c| c.chat_id == group_id) {
+        if holds_group(env, user, group_id) {
             return;
         }
         env.tick();
     }
     panic!("User {} was not notified of joining the group", user.user_id);
+}
+
+// Ticks, moving time on so that the GroupIndex retries sending the event, until the user's canister
+// no longer lists the group
+fn wait_for_group_deleted_notification(env: &mut PocketIc, user: &User, group_id: ChatId) {
+    tick_until(env, |env| !holds_group(env, user, group_id));
+}
+
+fn holds_group(env: &PocketIc, user: &User, group_id: ChatId) -> bool {
+    client::user::happy_path::initial_state(env, user)
+        .group_chats
+        .summaries
+        .iter()
+        .any(|c| c.chat_id == group_id)
 }
 
 struct TestData {

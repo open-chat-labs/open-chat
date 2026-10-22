@@ -50,6 +50,12 @@ interface ImportMetaEnv {
     readonly OC_USER_INDEX_CANISTER: string;
     readonly OC_USERGEEK_APIKEY: string;
     readonly OC_VIDEO_BRIDGE_URL: string;
+    // Where a user goes to link their Discord account, with "{code}" replaced by the code the
+    // UserIndex gave them: the Discord bridge, which takes them through Discord's OAuth. Empty hides
+    // the option.
+    readonly OC_DISCORD_BRIDGE_LINK_URL: string;
+    // Likewise for Telegram, eg. a deep link to the bridge bot: https://t.me/<bot>?start={code}
+    readonly OC_TELEGRAM_BRIDGE_LINK_URL: string;
     readonly OC_WALLET_CONNECT_PROJECT_ID: string;
     readonly OC_WEBAUTHN_ORIGIN: string;
     readonly OC_WEBSITE_VERSION: string;

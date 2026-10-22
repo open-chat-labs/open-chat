@@ -7,7 +7,7 @@ WORKDIR /
 
 # Install deps!
 RUN apt-get update
-RUN apt-get install -y curl jq libunwind-dev build-essential
+RUN apt-get install -y curl jq libunwind-dev build-essential python3
 
 # Install node and confirm commands are available
 RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && apt-get install -y nodejs

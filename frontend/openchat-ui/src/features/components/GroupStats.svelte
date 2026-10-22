@@ -176,13 +176,13 @@
   .total {
     font: var(--weight-bold) 40px/1 var(--font-sans);
     letter-spacing: var(--tracking-tight);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .total-unit {
     padding-bottom: 5px;
     font: var(--weight-medium) var(--text-sm) / 1 var(--font-sans);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .delta-line {
@@ -193,7 +193,7 @@
   }
 
   .delta {
-    --delta-ink: var(--status-online, #2ee6a8);
+    --delta-ink: var(--status-online);
     display: flex;
     align-items: center;
     gap: 5px;
@@ -203,7 +203,7 @@
   }
 
   .delta.down {
-    --delta-ink: var(--status-danger, #f5493d);
+    --delta-ink: var(--status-danger);
   }
 
   .delta-icon {
@@ -224,7 +224,7 @@
 
   .delta-note {
     font: var(--weight-regular) var(--text-sm) / 1.3 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .weeks {
@@ -240,11 +240,11 @@
     flex: 1;
     min-width: 0;
     border-radius: 3px;
-    background: var(--overlay-2, rgba(255, 255, 255, 0.12));
+    background: var(--overlay-2);
   }
 
   .week.current {
-    background: var(--accent, #ff5672);
+    background: var(--accent);
   }
 
   .weeks-axis {
@@ -256,16 +256,16 @@
   .axis {
     font: var(--weight-medium) var(--text-xs) / 1 var(--font-mono);
     letter-spacing: var(--tracking-wide);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .axis.now {
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .rule {
     height: 1px;
-    background: var(--line-1, rgba(255, 255, 255, 0.07));
+    background: var(--line-1);
   }
 
   .section {
@@ -278,7 +278,7 @@
   .section-title {
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-mono);
     letter-spacing: var(--tracking-wide);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .mix-bar {
@@ -318,7 +318,7 @@
     flex: 1;
     min-width: 0;
     font: var(--weight-medium) var(--text-md) / 1.3 var(--font-sans);
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -327,7 +327,7 @@
   .mix-count {
     flex: none;
     font: var(--weight-semibold) var(--text-md) / 1.3 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .mix-pct {
@@ -335,7 +335,7 @@
     width: 44px;
     text-align: end;
     font: var(--weight-medium) var(--text-sm) / 1.3 var(--font-mono);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .people {
@@ -359,7 +359,7 @@
     justify-content: center;
     width: 34px;
     height: 34px;
-    border-radius: var(--radius-circle, 50%);
+    border-radius: var(--radius-circle);
     font: var(--weight-bold) var(--text-sm) / 1 var(--font-sans);
     color: rgba(0, 0, 0, 0.6);
   }
@@ -383,7 +383,7 @@
     flex: 1;
     min-width: 0;
     font: var(--weight-semibold) var(--text-md) / 1.2 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -392,25 +392,25 @@
   .person-count {
     flex: none;
     font: var(--weight-medium) var(--text-sm) / 1 var(--font-mono);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .person-track {
     height: 4px;
     border-radius: var(--radius-pill);
-    background: var(--overlay-1, rgba(255, 255, 255, 0.06));
+    background: var(--overlay-1);
   }
 
   .person-fill {
     height: 100%;
     border-radius: var(--radius-pill);
-    background: var(--accent, #ff5672);
+    background: var(--accent);
   }
 
   .rest,
   .online {
     font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
     text-wrap: pretty;
   }
 
@@ -424,15 +424,15 @@
   }
 
   .online-now {
-    color: var(--status-online, #2ee6a8);
+    color: var(--status-online);
   }
 
   .online-now.down {
-    color: var(--status-danger, #f5493d);
+    color: var(--status-danger);
   }
 
   .online-prev {
-    color: var(--ink-2, #c9c9d4);
+    color: var(--ink-2);
   }
 
   .engagement {
@@ -452,12 +452,12 @@
 
   .counter-value {
     font: var(--weight-bold) var(--text-xl) / 1 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .counter-label {
     font: var(--weight-regular) var(--text-sm) / 1.2 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

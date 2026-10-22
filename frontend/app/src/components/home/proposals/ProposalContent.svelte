@@ -8,7 +8,7 @@
         proposalTopicsStore,
         proposalVotesStore,
     } from "@client";
-    import { type ReadonlyMap } from "@shared";
+    import { type NeuronVoteFailureMessage, type ReadonlyMap } from "@shared";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import ExpandIcon from "svelte-material-icons/ArrowExpandDown.svelte";
@@ -26,7 +26,7 @@
     import ModalContent from "../../ModalContent.svelte";
     import Overlay from "../../Overlay.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
-    import Markdown from "@shared_components/Markdown.svelte";
+    import Markdown from "@src/core/Markdown.svelte";
     import ProposalProgressLayout from "./ProposalProgressLayout.svelte";
     import ProposalVoteButton from "./ProposalVoteButton.svelte";
     import ProposalVotingProgress from "./ProposalVotingProgress.svelte";
@@ -60,6 +60,7 @@
 
     let summaryExpanded = $state(false);
     let showNeuronInfo = $state(false);
+    let neuronVoteFailures = $state<NeuronVoteFailureMessage[] | undefined>();
     let showPayload = $state(false);
 
     // Users vote with the neurons hot-keyed to their own principal
@@ -94,6 +95,9 @@
             case "no_eligible_neurons":
                 showNeuronInfo = true;
                 break;
+            case "neuron_votes_failed":
+                neuronVoteFailures = outcome.failures;
+                break;
             case "failed":
                 toastStore.showFailureToast(outcome.message);
                 break;
@@ -106,6 +110,12 @@
         if (collapsed) {
             onExpandMessage?.();
         }
+    }
+
+    function neuronUrl(neuronId: string): string {
+        return isNns
+            ? `${dashboardUrl}/neuron/${neuronId}`
+            : `${dashboardUrl}/sns/${rootCanister}/neuron/${neuronId}`;
     }
 
     function renderNeuronId(neuronId: string): string {
@@ -155,11 +165,7 @@
             ? `${dashboardUrl}/proposal/${proposal.id}`
             : `${dashboardUrl}/sns/${rootCanister}/proposal/${proposal.id}`,
     );
-    let proposerUrl = $derived(
-        isNns
-            ? `${dashboardUrl}/neuron/${proposal.proposer}`
-            : `${dashboardUrl}/sns/${rootCanister}/neuron/${proposal.proposer}`,
-    );
+    let proposerUrl = $derived(neuronUrl(proposal.proposer));
     let adoptPercent = $derived(round2((100 * proposal.tally.yes) / proposal.tally.total));
     let rejectPercent = $derived(round2((100 * proposal.tally.no) / proposal.tally.total));
     let votingEnded = $derived(proposal.deadline <= $now);
@@ -306,6 +312,33 @@
     </Overlay>
 {/if}
 
+{#if neuronVoteFailures !== undefined}
+    <Overlay dismissible onClose={() => (neuronVoteFailures = undefined)}>
+        <ModalContent compactFooter onClose={() => (neuronVoteFailures = undefined)}>
+            {#snippet header()}
+                <Translatable resourceKey={i18nKey("proposal.neuronVotesFailed")} />
+            {/snippet}
+            {#snippet body()}
+                <div class="neuron-failures">
+                    <Translatable resourceKey={i18nKey("proposal.neuronVotesFailedIntro")} />
+                    <ul>
+                        {#each neuronVoteFailures as { neuronId, reason } (neuronId)}
+                            <li>
+                                <a target="_blank" rel="noreferrer" href={neuronUrl(neuronId)}
+                                    >{renderNeuronId(neuronId)}</a>
+                                <div class="neuron-failure-reason">
+                                    <Translatable resourceKey={reason} />
+                                </div>
+                            </li>
+                        {/each}
+                    </ul>
+                    <Markdown text={$_("proposal.noEligibleNeuronsMoreInfo")} />
+                </div>
+            {/snippet}
+        </ModalContent>
+    </Overlay>
+{/if}
+
 {#if showPayload && !payloadEmpty}
     <Overlay dismissible onClose={() => (showPayload = false)}>
         <ModalContent compactFooter onClose={() => (showPayload = false)}>
@@ -326,6 +359,25 @@
         display: flex;
         flex-direction: column;
         gap: $sp4;
+    }
+
+    .neuron-failures {
+        display: flex;
+        flex-direction: column;
+        gap: $sp4;
+
+        ul {
+            display: flex;
+            flex-direction: column;
+            gap: $sp3;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .neuron-failure-reason {
+            color: var(--txt-light);
+        }
     }
 
     .voting-hotkey {

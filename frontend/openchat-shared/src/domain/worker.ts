@@ -28,6 +28,10 @@ import type {
     AddHotGroupExclusionResponse,
     AddRemoveReactionResponse,
     BlockUserResponse,
+    BridgedUserId,
+    BridgedUserLinkCode,
+    BridgedUserSummary,
+    BridgePlatform,
     CancelP2PSwapResponse,
     CandidateGroupChat,
     ChangeRoleResponse,
@@ -163,7 +167,7 @@ import type {
     BlobReference,
     StorageStatus,
 } from "./data/data";
-import type { DexId } from "./dexes";
+import type { DexId, DexQuoteResult } from "./dexes";
 import type { GenerateMagicLinkResponse } from "./email";
 import type {
     ApproveResponse,
@@ -314,7 +318,7 @@ export type WorkerRequest = Cloneable<
     | BlockUserFromDirectChat
     | UnpinChat
     | PinChat
-    | UnArchiveChat
+    | UnArchiveChats
     | ArchiveChat
     | ToggleMuteNotifications
     | GetPublicGroupSummary
@@ -460,7 +464,7 @@ export type WorkerRequest = Cloneable<
     | TipMessage
     | CanSwap
     | GetTokenSwaps
-    | GetTokenSwapQuotes
+    | GetTokenSwapQuote
     | SwapTokens
     | RecoverUnfinishedTokenSwaps
     | ApproveTransfer
@@ -556,6 +560,11 @@ export type WorkerRequest = Cloneable<
     | CallPushEnabled
     | SetCallPushEnabled
     | SetAlchemyApiKey
+    | SetBridgeBot
+    | GetBridgedUsers
+    | StartBridgedUserLink
+    | UnlinkBridgedUser
+    | GetLinkedBridgedUsers
     | SetPremiumItemCost
     | OneSecEnableForwarding
     | OneSecGetTransferFees
@@ -690,6 +699,27 @@ type SetCallPushEnabled = {
 type SetAlchemyApiKey = {
     kind: "setAlchemyApiKey";
     apiKey: string | undefined;
+};
+// Platform operators only
+type SetBridgeBot = {
+    kind: "setBridgeBot";
+    platform: BridgePlatform;
+    botId: string | undefined;
+};
+type GetBridgedUsers = {
+    kind: "getBridgedUsers";
+    ids: BridgedUserId[];
+};
+type StartBridgedUserLink = {
+    kind: "startBridgedUserLink";
+    platform: BridgePlatform;
+};
+type UnlinkBridgedUser = {
+    kind: "unlinkBridgedUser";
+    id: BridgedUserId;
+};
+type GetLinkedBridgedUsers = {
+    kind: "getLinkedBridgedUsers";
 };
 type DailyPuzzleRegenerateToday = {
     kind: "dailyPuzzleRegenerateToday";
@@ -944,8 +974,9 @@ type GetTokenSwaps = {
     outputTokenLedgers: string[];
 };
 
-type GetTokenSwapQuotes = {
-    kind: "getTokenSwapQuotes";
+type GetTokenSwapQuote = {
+    kind: "getTokenSwapQuote";
+    dex: DexId;
     inputTokenLedger: string;
     outputTokenLedger: string;
     amountIn: bigint;
@@ -1610,9 +1641,9 @@ type PinChat = {
     kind: "pinChat";
 };
 
-type UnArchiveChat = {
-    chatId: ChatIdentifier;
-    kind: "unarchiveChat";
+type UnArchiveChats = {
+    chatIds: ChatIdentifier[];
+    kind: "unarchiveChats";
 };
 
 type ArchiveChat = {
@@ -2246,7 +2277,7 @@ export type WorkerResponseInner =
     | Record<string, bigint>
     | Record<string, DexId[]>
     | Set<string>
-    | [DexId, bigint][]
+    | DexQuoteResult
     | SwapTokensResponse
     | SwapTokensStep
     | DiamondMembershipFees[]
@@ -2624,7 +2655,7 @@ export type WorkerResults = ResultsByKind<{
     getPublicGroupSummary: PublicGroupSummaryResponse;
     toggleMuteNotifications: ToggleMuteNotificationResponse;
     archiveChat: ArchiveChatResponse;
-    unarchiveChat: ArchiveChatResponse;
+    unarchiveChats: ArchiveChatResponse;
     pinChat: PinChatResponse;
     unpinChat: UnpinChatResponse;
     blockUserFromDirectChat: BlockUserResponse;
@@ -2771,7 +2802,7 @@ export type WorkerResults = ResultsByKind<{
     followThread: FollowThreadResponse;
     getTokenSwaps: Record<string, DexId[]>;
     canSwap: Set<string>;
-    getTokenSwapQuotes: [DexId, bigint][];
+    getTokenSwapQuote: DexQuoteResult;
     swapTokens: SwapTokensResponse | SwapTokensStep;
     recoverUnfinishedTokenSwaps: void;
     deleteDirectChat: boolean;
@@ -2856,6 +2887,11 @@ export type WorkerResults = ResultsByKind<{
     callPushEnabled: boolean;
     setCallPushEnabled: Success | OCError;
     setAlchemyApiKey: Success | OCError;
+    setBridgeBot: Success | OCError;
+    getBridgedUsers: BridgedUserSummary[];
+    startBridgedUserLink: BridgedUserLinkCode | OCError;
+    unlinkBridgedUser: Success | OCError;
+    getLinkedBridgedUsers: BridgedUserSummary[];
     setPremiumItemCost: void;
     createAccountLinkingCode: AccountLinkingCode | undefined;
     getSignInProof: string | undefined;

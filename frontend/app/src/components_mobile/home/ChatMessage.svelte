@@ -19,6 +19,11 @@
         type ChatType,
         currentUserIdStore,
         currentUserStore,
+        allUsersStore,
+        bridgedFrom,
+        isDeletedUser,
+        bridgedUserKey,
+        bridgedUsersStore,
         type EnhancedReplyContext,
         localUpdates,
         type Message,
@@ -45,6 +50,7 @@
     import { scrollStatus } from "../../stores/scroll.svelte";
     import { now } from "../../stores/time";
     import { toastStore } from "../../stores/toast";
+    import { messageSwipeAction } from "../../utils/messageSwipe";
     import { canShareMessage } from "../../utils/share";
     import { removeQueryStringParam } from "../../utils/urls";
     import AreYouSure from "../AreYouSure.svelte";
@@ -310,7 +316,7 @@
 
 
     function openUserProfile(ev?: Event) {
-        if (sender?.kind === "bot") {
+        if (sender?.kind === "bot" && linkedUser === undefined) {
             botProfile = {
                 botId: sender.userId,
                 chatId,
@@ -320,7 +326,7 @@
             ev?.target?.dispatchEvent(
                 new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
                     detail: {
-                        userId: msg.sender,
+                        userId: linkedUser?.userId ?? msg.sender,
                         chatButton: multiUserChat,
                         inGlobalContext: false,
                     },
@@ -363,7 +369,23 @@
             msg.content.kind === "restricted_content" ||
             collapsed,
     );
-    let canTip = $derived(canTipMessages && !me && confirmed && !inert && !failed);
+    let bridged = $derived(bridgedFrom(senderContext));
+    let bridgedUser = $derived(
+        bridged !== undefined ? $bridgedUsersStore.get(bridgedUserKey(bridged)!) : undefined,
+    );
+    // The OpenChat user who linked the account the message was relayed from, shown as its author. If
+    // they've deleted their account, the account's own profile is shown again.
+    let linkedUser = $derived.by(() => {
+        const user =
+            bridgedUser?.linkedUserId !== undefined
+                ? $allUsersStore.get(bridgedUser.linkedUserId)
+                : undefined;
+        return user !== undefined && !isDeletedUser(user) ? user : undefined;
+    });
+    // A tip would go to the bridge bot, not the author shown
+    let canTip = $derived(
+        canTipMessages && !me && confirmed && !inert && !failed && bridged === undefined,
+    );
     let inThread = $derived(threadRootMessage !== undefined);
     let scrollingId = $derived(
         inThread ? "scrollable-list-thread-messages" : "scrollable-list-chat-messages",
@@ -406,8 +428,12 @@
     let canUndelete = $derived(msg.deleted && msg.content.kind !== "deleted_content");
     let tips = $derived(msg.tips ? Object.entries(msg.tips) : []);
     let canBlockUser = $derived(canBlockUsers && !$selectedChatBlockedUsersStore.has(msg.sender));
+    // A bot finalises a message it streams by editing it, so that isn't shown as an edit. A bridge
+    // bot sends its messages finalised, and only edits them to relay an edit made on the other
+    // platform.
     let edited = $derived(
-        msg.edited && (senderContext?.kind !== "bot" || !senderContext.finalised),
+        msg.edited &&
+            (senderContext?.kind !== "bot" || !senderContext.finalised || bridged !== undefined),
     );
     let canShare = $derived(canShareMessage(msg.content));
     let canForward = $derived(client.canForward(msg.content));
@@ -451,9 +477,14 @@
     }
 
     function onPanCommit(direction: PanDirection) {
-        if (me && direction === "left") editMessage();
-        if (!me && direction === "left") forward();
-        else reply();
+        switch (messageSwipeAction(direction, me, canEdit)) {
+            case "edit":
+                return editMessage();
+            case "forward":
+                return forward();
+            case "reply":
+                return reply();
+        }
     }
 
     function onPanMove(direction: PanDirection, factor: number) {
@@ -619,7 +650,11 @@
                     <div class:first class="avatar">
                         <Avatar
                             onClick={openUserProfile}
-                            url={client.userAvatarUrl(sender)}
+                            url={linkedUser !== undefined
+                                ? client.userAvatarUrl(linkedUser)
+                                : bridged !== undefined
+                                  ? client.bridgedAvatarUrl(bridged, bridgedUser)
+                                  : client.userAvatarUrl(sender)}
                             size={"sm"}></Avatar>
                     </div>
                 {/if}

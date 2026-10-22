@@ -79,7 +79,7 @@ describe('PuzzleDialog hints and checks', () => {
     hint();
     await settle();
     esc();
-    press(target.querySelector('.veil'));
+    press(target.querySelector('.oc-veil'));
     await vi.advanceTimersByTimeAsync(1000);
     expect(onClose).not.toHaveBeenCalled();
   });
@@ -127,7 +127,7 @@ describe('PuzzleDialog hints and checks', () => {
     await vi.advanceTimersByTimeAsync(600);
     expect(onSolved).toHaveBeenCalledOnce();
     esc();
-    press(target.querySelector('.veil'));
+    press(target.querySelector('.oc-veil'));
     await vi.advanceTimersByTimeAsync(1000);
     expect(onClose).not.toHaveBeenCalled();
     expect((target.querySelector('.island') as HTMLButtonElement).disabled).toBe(true);
@@ -147,7 +147,7 @@ describe('PuzzleDialog hints and checks', () => {
 
   test('a hint is not bought while the dialog is leaving', async () => {
     const { onHint, hint } = open({});
-    press(target.querySelector('.veil'));
+    press(target.querySelector('.oc-veil'));
     hint();
     await vi.advanceTimersByTimeAsync(1000);
     expect(onHint).not.toHaveBeenCalled();

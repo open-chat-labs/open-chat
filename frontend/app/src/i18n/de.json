@@ -190,6 +190,15 @@
         "translateFrom": "Übersetzen aus: {language}",
         "translatedFrom": "Auf dem Gerät übersetzt aus: {language}"
     },
+    "bridgedAccounts": {
+        "info": "Verknüpfe deine Konten auf anderen Plattformen, damit die Nachrichten, die sie über unsere Brücken an OpenChat senden, als deine angezeigt werden.",
+        "link": "{platform} verknüpfen",
+        "linkFailed": "Die Verknüpfung deines {platform}-Kontos konnte nicht gestartet werden",
+        "section": "Verknüpfte Konten",
+        "unlink": "Verknüpfung aufheben",
+        "unlinkFailed": "Die Verknüpfung des Kontos konnte nicht aufgehoben werden"
+    },
+    "bridgedUserUnknown": "{platform}-Nutzer",
     "nativeUpdate": {
         "downloadingTitle": "Einen Moment! Aktualisierung ...",
         "downloadingMessage": "Wir laden gerade eine kleine Aktualisierung herunter, dann kann es weitergehen ...",
@@ -541,6 +550,7 @@
         "descriptionPlaceholder": "Sagen Sie uns, worum es in Ihrer Community geht",
         "details": "Details",
         "directAndGroupChats": "Chats",
+        "dmsAndGroupChats": "DMs & Gruppenchats",
         "directChats": "Direkte Chats",
         "edit": "Community bearbeiten",
         "embed": "Eingebetteten Kanal hinzufügen",
@@ -945,6 +955,7 @@
                 }
             },
             "unruly": {
+                "changeColours": "Farben ändern",
                 "name": "Unruly",
                 "rules": "Füllen Sie jede Zelle mit einer von zwei Farben. Nie drei gleiche Farben hintereinander in einer Zeile oder Spalte, und jede Zeile und Spalte enthält am Ende von jeder Farbe die Hälfte.",
                 "technique": {
@@ -955,10 +966,10 @@
                     "5": "Diese Linie braucht genau noch eine Zelle der einen Farbe, und sie außerhalb dieser drei Zellen zu setzen würde hier drei der anderen Farbe hintereinander lassen. Also bekommt jede leere Zelle an anderer Stelle der Linie die andere Farbe."
                 },
                 "demo": {
-                    "1": "Füllen Sie jede Zelle orange oder violett. Die umrandeten sind vorgegeben, die können Sie nicht ändern.",
-                    "2": "Nie drei gleiche Farben hintereinander, waagerecht oder senkrecht. Das ist ein Orange zu viel.",
-                    "3": "Jede Zeile und Spalte enthält am Ende drei von jeder Farbe. Diese Zeile hat vier violette.",
-                    "4": "Zwei Orange mit einer Lücke. Orange dazwischen ergäbe drei, also muss es Violett sein.",
+                    "1": "Füllen Sie jede Zelle hell oder dunkel. Einige sind schon vorgegeben, die können Sie nicht ändern.",
+                    "2": "Nie drei gleiche Farben hintereinander, waagerecht oder senkrecht. Das ist eine helle zu viel.",
+                    "3": "Jede Zeile und Spalte enthält am Ende drei von jeder Farbe. Diese Zeile hat vier dunkle.",
+                    "4": "Zwei helle mit einer Lücke. Hell dazwischen ergäbe drei, also muss es dunkel sein.",
                     "5": "Jede Zelle ausgefüllt, keine Dreierreihe, und drei von jeder Farbe in jeder Zeile und Spalte."
                 },
                 "hint": {
@@ -984,8 +995,8 @@
                     }
                 },
                 "colour": {
-                    "1": "orange",
-                    "2": "violett"
+                    "1": "hell",
+                    "2": "dunkel"
                 }
             },
             "chat_rooms": {
@@ -2035,6 +2046,12 @@
             "urlRules": "Link zu ergänzenden Details"
         },
         "neuronControllerAction": "Neuron-Controller-Aktionen",
+        "neuronDissolveDelayTooShort": "Die Auflösungsverzögerung ({delay} Tage) ist kürzer als die zum Abstimmen erforderlichen {minimum} Tage",
+        "neuronNotEligible": "Es war nicht stimmberechtigt, als der Vorschlag eingereicht wurde",
+        "neuronVoteCallFailed": "Governance war nicht erreichbar - bitte versuchen Sie es erneut",
+        "neuronVoteRejected": "Die Stimme wurde abgelehnt: {message}",
+        "neuronVotesFailed": "Ihre Neuronen konnten nicht abstimmen",
+        "neuronVotesFailedIntro": "Keines Ihrer Neuronen konnte über diesen Vorschlag abstimmen:",
         "noEligibleNeurons": "Keine geeigneten Neuronen gefunden",
         "noEligibleNeuronsMoreInfo": "Weitere Informationen zu Abstimmungen und Governance finden Sie <a target=\"_blank\" href=\"https://oc.app/blog/governance\">in diesem Blogbeitrag</a> .",
         "noEligibleNeuronsPrincipalIntro": "Keine geeigneten oder verknüpften Neuronen gefunden. Um über Vorschläge in OpenChat abzustimmen, müssen Sie zunächst Ihren OpenChat-Principal als Hotkey zu allen Neuronen hinzufügen, mit denen Sie abstimmen möchten.",
@@ -2062,7 +2079,7 @@
                 "regular": "Damit ein Vorschlag angenommen werden kann, müssen folgende zwei Bedingungen erfüllt sein:"
             }
         },
-        "proposalNotAceptingVotes": "Für diesen Vorschlag werden keine Stimmen akzeptiert. Versuchen Sie, die Seite neu zu laden",
+        "proposalNotAcceptingVotes": "Die Abstimmung über diesen Vorschlag ist beendet",
         "proposalsBotAction": "Vorschläge für Bot-Aktionen",
         "proposedBy": "vorgeschlagen von",
         "readless": "Lese weniger",
@@ -2407,12 +2424,18 @@
         },
         "quote": "Quotierung",
         "quoteError": "Fehler beim Abrufen der Angebote für den Tausch von {tokenIn}",
+        "quotes": {
+            "best": "Bester Kurs",
+            "declined": "Dieser Betrag kann nicht getauscht werden",
+            "failed": "Kein Angebot erhalten",
+            "unsupported": "Tausch nicht unterstützt"
+        },
         "quoteTooLow": "Der beste angegebene Tarif ist {rate} {tokenOut} pro {tokenIn} ab {dex}. Dies ergibt {amountOut} {tokenOut} für {amountIn} {tokenIn}. Sie können nur tauschen, wenn der angegebene Betrag {minAmountOut} überschreitet.",
         "requote": "Nochmals zitieren",
         "swap": "Tauschen",
         "swapNotAvailable": "Derzeit ist es nicht möglich, {tokenIn} gegen einen anderen Token auszutauschen",
         "swapToken": "Tausche {tokenIn}",
-        "swapTokenTo": "Tauschen Sie {tokenIn} gegen {tokenOut} aus",
+        "swapTokenTo": "Tauschen Sie {amountIn} {tokenIn} gegen {tokenOut} aus",
         "warningValueDropped": "Aufgrund der geringen Liquidität beträgt der Wert von {tokenOut}, den Sie erhalten, < 90 % des Werts von {tokenIn}, den Sie tauschen (basierend auf dem angegebenen USD-Wert dieser Token).",
         "warningValueUnknown": "Der aktuelle Dollarpreis für einen oder mehrere dieser Token ist nicht verfügbar. Daher lässt sich nicht feststellen, ob dieser Tausch ein gutes Preis-Leistungs-Verhältnis darstellt.",
         "youWillReceive": "Sie erhalten **{amountOut}** {tokenOut} (${usdOut}) für **{amountIn}** {tokenIn} (${usdIn})."

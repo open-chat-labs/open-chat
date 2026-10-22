@@ -1,5 +1,5 @@
 use crate::guards::caller_is_governance_principal;
-use crate::{RuntimeState, jobs, mutate_state, read_state};
+use crate::{RuntimeState, mutate_state, read_state};
 use canister_api_macros::{proposal, update};
 use canister_tracing_macros::trace;
 use constants::OPENCHAT_BOT_USER_ID;
@@ -56,14 +56,19 @@ fn remove_bot_impl(args: Args, deleted_by: Option<UserId>, state: &mut RuntimeSt
         None,
     );
 
-    for (location, details) in bot.installations.iter() {
-        let local_user_index = state.local_user_index_of_bot_installation(*location, details.local_user_index);
-        state
-            .data
-            .user_index_event_sync_queue
-            .push(local_user_index, UserIndexEvent::BotUninstall(*location, args.bot_id));
+    let installations: Vec<_> = bot
+        .installations
+        .iter()
+        .map(|(location, details)| {
+            (
+                *location,
+                state.local_user_index_of_bot_installation(*location, details.local_user_index),
+            )
+        })
+        .collect();
+    for (location, local_user_index) in installations {
+        state.push_event_to_local_user_index_canister(local_user_index, UserIndexEvent::BotUninstall(location, args.bot_id));
     }
 
-    jobs::sync_events_to_local_user_index_canisters::try_run_now(state);
     Success
 }

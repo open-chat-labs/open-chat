@@ -1,14 +1,18 @@
 import {
+    type AccessControlled,
     type CommunityAndRules,
     type CommunityChanges,
     type CommunitySummary,
     type CreateCommunityResponse,
     ErrorCode,
     type GroupChangeConfirmation,
+    type HasMembershipRole,
     i18nKey,
     type MemberRole,
     type ResourceKey,
+    ROLE_NONE,
     ROLE_OWNER,
+    stripSuspendedGate,
     type UpdateCommunityOutcome,
     type UpdateCommunityResponse,
 } from "@shared";
@@ -59,6 +63,18 @@ export function canChangeCommunityPermissions({ membership }: CommunitySummary):
 
 export function isCommunityLapsed({ membership }: CommunitySummary): boolean {
     return membership.lapsed;
+}
+
+// A community the user hasn't joined (or whose membership has lapsed) hides its channels'
+// messages unless it is public and ungated (a suspended unique person gate counts as no gate)
+export function isPrivateCommunityPreview(
+    community: (HasMembershipRole & Pick<AccessControlled, "public" | "gateConfig">) | undefined,
+): boolean {
+    return (
+        community !== undefined &&
+        (community.membership.role === ROLE_NONE || community.membership.lapsed) &&
+        (!community.public || stripSuspendedGate(community.gateConfig.gate).kind !== "no_gate")
+    );
 }
 
 export function canDeleteCommunity({ membership }: CommunitySummary): boolean {

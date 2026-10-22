@@ -9,21 +9,24 @@
         Sheet,
         Subtitle,
     } from "component-lib";
-    import { namedAccountsStore, type NamedAccount } from "@client";
+    import type { NamedAccount } from "@client";
     import { i18nKey } from "../../../i18n/i18n";
+    import { addressNetwork } from "../../../utils/cryptoAddress";
     import Translatable from "@shared_components/Translatable.svelte";
+    import AddressNetworkIcon from "@shared_components/home/wallet/AddressNetworkIcon.svelte";
 
     interface Props {
+        accounts: NamedAccount[];
         targetAccount: string;
         onDismiss: () => void;
     }
 
-    let { targetAccount = $bindable(), onDismiss }: Props = $props();
+    let { accounts, targetAccount = $bindable(), onDismiss }: Props = $props();
     const searching = $state(false);
     let searchTerm = $state<string>("");
     let searchTermLower = $derived(searchTerm?.toLowerCase());
     let filteredAccounts = $derived(
-        $namedAccountsStore.filter(
+        accounts.filter(
             ({ account, name }) =>
                 searchTermLower === "" ||
                 name.toLowerCase().includes(searchTermLower) ||
@@ -73,6 +76,7 @@
                 maxHeight="60vh"
                 gap="md">
                 {#each filteredAccounts as account}
+                    {@const network = addressNetwork(account.account)}
                     <Option
                         padding={["sm", "lg", "sm", "sm"]}
                         selected={account.account === targetAccount}
@@ -86,8 +90,13 @@
                                 variant="filled" />
                             <Column>
                                 <Subtitle fontWeight={"bold"}>{account.name}</Subtitle>
-                                <Body ellipsisTruncate colour={"textSecondary"}
-                                    >{collapseAccount(account.account)}</Body>
+                                <Container gap="xs" crossAxisAlignment="center">
+                                    {#if network !== undefined}
+                                        <AddressNetworkIcon {network} size={"1rem"} />
+                                    {/if}
+                                    <Body ellipsisTruncate colour={"textSecondary"}
+                                        >{collapseAccount(account.account)}</Body>
+                                </Container>
                             </Column>
                         </Container>
                     </Option>

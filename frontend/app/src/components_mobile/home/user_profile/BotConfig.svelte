@@ -5,7 +5,7 @@
     import { OpenChat, type BotClientConfigData } from "@client";
     import { getContext, onMount } from "svelte";
     import Translatable from "@shared_components/Translatable.svelte";
-    import Markdown from "@shared_components/Markdown.svelte";
+    import Markdown from "@src/core/Markdown.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
 
     const client = getContext<OpenChat>("client");

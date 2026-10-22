@@ -5,7 +5,7 @@
     import Avatar from "../../../Avatar.svelte";
     import IntersectionObserver from "../../IntersectionObserver.svelte";
     import { _ } from "svelte-i18n";
-    import Markdown from "@shared_components/Markdown.svelte";
+    import Markdown from "@src/core/Markdown.svelte";
     import { AvatarSize, ModerationFlags } from "@client";
     import { getContext } from "svelte";
     import CommunityBanner from "./CommunityBanner.svelte";

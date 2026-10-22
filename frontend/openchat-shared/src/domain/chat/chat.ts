@@ -988,6 +988,57 @@ export type BotMessageContext = {
     kind: "bot";
     command?: BotContextCommand;
     finalised: boolean;
+    // Set on the messages a bridge bot relays from another platform, eg. Discord: the author's account
+    // there, whose profile comes from the UserIndex's registry
+    bridgedFrom?: BridgedUserId;
+};
+
+export type BridgePlatform = "discord" | "telegram";
+
+// An account on another platform, eg. Discord, whose messages a bridge bot relays into OpenChat
+export type BridgedUserId = {
+    kind: BridgePlatform;
+    id: string;
+};
+
+// The latest profile of a bridged account, from the UserIndex's registry
+export type BridgedUser =
+    | { kind: "discord"; profile: DiscordUser }
+    | { kind: "telegram"; profile: TelegramUser };
+
+export type BridgedUserSummary = {
+    user: BridgedUser;
+    // The OpenChat user who has linked the account to themself, if any, so its messages show as theirs
+    linkedUserId?: string;
+    // When the profile or the link last changed
+    updated: bigint;
+};
+
+// A one-time code for a user to pass to a platform's bridge bot, to link their account there to
+// their OpenChat account
+export type BridgedUserLinkCode = {
+    kind: "success";
+    code: string;
+    expires: bigint;
+};
+
+export type DiscordUser = {
+    // The user's Discord snowflake id
+    id: string;
+    username: string;
+    // Their global display name
+    displayName?: string;
+    // The hash of the user's global avatar, which the CDN url is built from
+    avatar?: string;
+};
+
+export type TelegramUser = {
+    // The sender's Telegram id, negative if a chat sent the message
+    id: string;
+    username?: string;
+    displayName: string;
+    // A copy in OpenChat's storage, since the urls of Telegram's own copies contain the bot's token
+    avatar?: BlobReference;
 };
 
 export type WebhookContext = {
@@ -2497,14 +2548,46 @@ export type Metrics = {
     reactions: number;
 };
 
-export type RegisterProposalVoteResponse = Success | OCError | Offline | Failure;
+export type RegisterProposalVoteResponse =
+    | Success
+    | OCError
+    | Offline
+    | Failure
+    | NeuronVotesFailed;
+
+/** None of the user's neurons could vote on the proposal */
+export type NeuronVotesFailed = {
+    kind: "neuron_votes_failed";
+    failures: NeuronVoteFailure[];
+};
+
+export type NeuronVoteFailure = {
+    neuronId: string;
+    reason: NeuronVoteFailureReason;
+};
+
+/**
+ * Governance only says a neuron isn't eligible, since its ballot is fixed when the proposal is
+ * submitted, so `dissolve_delay_too_short` is worked out from the neuron's current dissolve delay
+ */
+export type NeuronVoteFailureReason =
+    | { kind: "dissolve_delay_too_short"; dissolveDelaySeconds: bigint; minimumSeconds: bigint }
+    | { kind: "not_eligible" }
+    | { kind: "rejected"; message: string }
+    | { kind: "call_failed" };
 
 /** How a vote on a proposal went. `skipped` means nothing was sent because the user has already voted or a vote is in flight */
 export type ProposalVoteOutcome =
     | { kind: "voted" }
     | { kind: "skipped" }
     | { kind: "no_eligible_neurons" }
+    | { kind: "neuron_votes_failed"; failures: NeuronVoteFailureMessage[] }
     | { kind: "failed"; message: ResourceKey };
+
+export type NeuronVoteFailureMessage = {
+    neuronId: string;
+    reason: ResourceKey;
+};
 
 export type ListNervousSystemFunctionsResponse = {
     reservedIds: bigint[];
@@ -2634,6 +2717,27 @@ export type CryptoTransferOutcome =
     | { kind: "cancelled" }
     | { kind: "pin_failed" }
     | { kind: "failed"; message: ResourceKey };
+
+/**
+ * How a message sent from the composer went, up to the moment it shows in the chat. `posted`: it
+ * shows (a failure after that shows on the message, which can be retried). Anything else: nothing
+ * was sent, and the draft is the user's to keep. `busy`: a send from the same chat or thread is
+ * still on its way to the chat, so this one wasn't started.
+ */
+export type SendMessageOutcome =
+    | { kind: "posted" }
+    | { kind: "rules_declined" }
+    | { kind: "pin_cancelled" }
+    | { kind: "throttled" }
+    | { kind: "busy" }
+    | { kind: "failed" };
+
+/**
+ * How sending what the user typed in a direct chat with a bot went. `sent`: it shows in the chat
+ * and went to the bot as its direct-message command. `no_direct_command`: the bot takes no direct
+ * messages (or isn't known yet), so nothing was sent and the draft is the user's to keep.
+ */
+export type DirectBotMessageOutcome = { kind: "sent" } | { kind: "no_direct_command" };
 
 // What the app needs to enter a call's room
 export type VideoCallRoom = {

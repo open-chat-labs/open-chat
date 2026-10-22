@@ -37,9 +37,14 @@ generate_c2c_call!(c2c_upgrade_group_canister_wasm);
 generate_c2c_call!(c2c_upgrade_multi_user_canister_wasm);
 generate_c2c_call!(c2c_user_principals_v2);
 generate_c2c_call!(c2c_user_canister_v2, 300);
+generate_c2c_call!(c2c_user_index, 300);
 generate_c2c_call!(c2c_verify_sign_in_proof, 300);
 generate_c2c_call!(join_channel);
 generate_c2c_call!(join_group);
+generate_c2c_call!(c2c_group, 300);
+generate_c2c_call!(c2c_community, 300);
+generate_c2c_call!(c2c_user, 300);
+generate_c2c_call!(c2c_daily_puzzle, 300);
 
 pub async fn lookup_user(
     user_id_or_principal: Principal,

@@ -6,7 +6,7 @@
     import Save from "svelte-material-icons/ContentSaveOutline.svelte";
     import SelectUsers from "../SelectUsers.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
-    import { updateGroupState } from "@shared_components/home/createOrUpdateGroup/group.svelte";
+    import { updateGroupState } from "@src/logic/groupOrCommunity/group.svelte";
 
     const client = getContext<OpenChat>("client");
 

@@ -27,6 +27,7 @@
   import { useT } from '../../lib/i18n';
   import ActivityRow from '../../lib/components/ActivityRow.svelte';
   import EmptyState from '../../lib/components/EmptyState.svelte';
+  import IconButton from '../../lib/components/IconButton.svelte';
   import SegmentedTabs from '../../lib/components/SegmentedTabs.svelte';
   import Skeleton from '../../lib/components/Skeleton.svelte';
 
@@ -38,19 +39,30 @@
     /** "Mark all read"; hidden without it (or onMarkRead). Rolls back if it rejects. */
     onMarkAllRead?: () => Promise<unknown> | void;
     loading?: boolean;
+    /** A back button beside the title (the panel opened over another page); hidden without it. */
+    onBack?: () => void;
   }
 
-  let { items, onOpen, onMarkRead, onMarkAllRead, loading = false }: Props = $props();
+  let { items, onOpen, onMarkRead, onMarkAllRead, loading = false, onBack }: Props = $props();
   const t = useT();
 
   let tab = $state(0);
+  // what an empty tab says: All has its own, rather than Payments'
+  const EMPTY = [
+    { title: 'ui.activityPanel.noActivity', body: 'ui.activityPanel.noActivityBody' },
+    { title: 'ui.activityPanel.noMentions', body: 'ui.activityPanel.noMentionsBody' },
+    { title: 'ui.activityPanel.noPayments', body: 'ui.activityPanel.noPaymentsBody' },
+  ];
   // ids marked read here, until the host's items catch up
   let read = $state<string[]>([]);
   let failed = $state(false);
 
   const isUnread = (it: ActivityItem) => !!it.unread && !read.includes(it.id);
   const shown = $derived(items.filter((it) => tab === 0 || (tab === 1 && it.type === 'mention') || (tab === 2 && it.type === 'payment')));
-  const counts = $derived([items.length, items.filter((i) => i.type === 'mention').length, items.filter((i) => i.type === 'payment').length]);
+  // each tab's new (unread) activity; none, no badge
+  const counts = $derived(
+    [items, items.filter((i) => i.type === 'mention'), items.filter((i) => i.type === 'payment')].map((tabItems) => tabItems.filter(isUnread).length || null),
+  );
   const hasUnread = $derived(items.some(isUnread));
 
   async function markRead(ids: string[], call: () => Promise<unknown> | void) {
@@ -80,7 +92,10 @@
 
 <div class="panel" data-screen-label="Activity">
   <div class="top">
-    <div class="title-row">
+    <div class="title-row" class:with-back={!!onBack}>
+      {#if onBack}
+        <IconButton label="ui.common.back" variant="ghost" icon="back" onClick={onBack} />
+      {/if}
       <span class="title">{t('ui.activityPanel.title')}</span>
       {#if hasUnread && (onMarkAllRead || onMarkRead)}
         <span class="mark-all" onclick={markAll} role="button" tabindex="0">{t('ui.activityPanel.markAllRead')}</span>
@@ -113,12 +128,12 @@
         </div>
       {/each}
     {/if}
-    {#if shown.length === 0}
+    {#if !loading && shown.length === 0}
       <div class="empty">
         <EmptyState
           preset="no-results"
-          title={t(tab === 1 ? 'ui.activityPanel.noMentions' : 'ui.activityPanel.noPayments')}
-          body={t(tab === 1 ? 'ui.activityPanel.noMentionsBody' : 'ui.activityPanel.noPaymentsBody')}
+          title={t(EMPTY[tab].title)}
+          body={t(EMPTY[tab].body)}
         />
       </div>
     {/if}
@@ -135,7 +150,7 @@
     gap: var(--space-10);
     padding: var(--space-10);
     overflow: hidden;
-    background: var(--surface-1, #0e0e12);
+    background: var(--surface-1);
   }
 
   .top {
@@ -150,8 +165,14 @@
     align-items: center;
     gap: var(--space-12);
     min-width: 0;
-    min-height: var(--control-md, 34px);
+    min-height: var(--control-md);
     padding: var(--space-10) 0 var(--space-10) var(--space-10);
+  }
+
+  /* the back button sits where the title's inset was */
+  .title-row.with-back {
+    gap: var(--space-6);
+    padding-inline-start: 0;
   }
 
   .title {
@@ -159,30 +180,30 @@
     min-width: 0;
     font: var(--weight-bold) var(--text-xl) / 1.2 var(--font-sans);
     letter-spacing: var(--tracking-tight);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .failed {
     padding: 0 var(--space-10);
     font: var(--weight-medium) var(--text-sm) / 1.4 var(--font-sans);
-    color: var(--status-danger, #f5493d);
+    color: var(--status-danger);
   }
 
   .mark-all {
     flex: none;
     display: inline-flex;
     align-items: center;
-    height: var(--control-md, 34px);
+    height: var(--control-md);
     padding: 0 var(--space-8);
     border-radius: var(--radius-sm);
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
-    color: var(--accent, #ff5672);
+    color: var(--accent);
     cursor: pointer;
     user-select: none;
   }
 
   .mark-all:hover {
-    background: var(--accent-soft, rgba(255, 86, 114, 0.1));
+    background: var(--accent-soft);
   }
 
   .tabs,
@@ -206,7 +227,7 @@
     padding: var(--space-26) var(--space-8) var(--space-6);
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-mono);
     letter-spacing: var(--tracking-wide);
-    color: var(--ink-3, #8a8a99);
+    color: var(--ink-3);
   }
 
   .day.first {

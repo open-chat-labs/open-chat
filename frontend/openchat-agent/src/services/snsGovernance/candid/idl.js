@@ -1,19 +1,7 @@
 export const idlFactory = ({ IDL }) => {
-  const NeuronId = IDL.Record({ 'id' : IDL.Vec(IDL.Nat8) });
-  const ListNeurons = IDL.Record({
-    'of_principal' : IDL.Opt(IDL.Principal),
-    'limit' : IDL.Nat32,
-    'start_page_at' : IDL.Opt(NeuronId),
+  const NervousSystemParameters = IDL.Record({
+    'neuron_minimum_dissolve_delay_to_vote_seconds' : IDL.Opt(IDL.Nat64),
   });
-  const DissolveState = IDL.Variant({
-    'DissolveDelaySeconds' : IDL.Nat64,
-    'WhenDissolvedTimestampSeconds' : IDL.Nat64,
-  });
-  const Neuron = IDL.Record({
-    'id' : IDL.Opt(NeuronId),
-    'dissolve_state' : IDL.Opt(DissolveState),
-  });
-  const ListNeuronsResponse = IDL.Record({ 'neurons' : IDL.Vec(Neuron) });
   const GenericNervousSystemFunction = IDL.Record({
     'validator_canister_id' : IDL.Opt(IDL.Principal),
     'target_canister_id' : IDL.Opt(IDL.Principal),
@@ -34,6 +22,21 @@ export const idlFactory = ({ IDL }) => {
     'reserved_ids' : IDL.Vec(IDL.Nat64),
     'functions' : IDL.Vec(NervousSystemFunction),
   });
+  const NeuronId = IDL.Record({ 'id' : IDL.Vec(IDL.Nat8) });
+  const ListNeurons = IDL.Record({
+    'of_principal' : IDL.Opt(IDL.Principal),
+    'limit' : IDL.Nat32,
+    'start_page_at' : IDL.Opt(NeuronId),
+  });
+  const DissolveState = IDL.Variant({
+    'DissolveDelaySeconds' : IDL.Nat64,
+    'WhenDissolvedTimestampSeconds' : IDL.Nat64,
+  });
+  const Neuron = IDL.Record({
+    'id' : IDL.Opt(NeuronId),
+    'dissolve_state' : IDL.Opt(DissolveState),
+  });
+  const ListNeuronsResponse = IDL.Record({ 'neurons' : IDL.Vec(Neuron) });
   const ProposalId = IDL.Record({ 'id' : IDL.Nat64 });
   const ListProposals = IDL.Record({
     'include_reward_status' : IDL.Vec(IDL.Int32),
@@ -76,6 +79,11 @@ export const idlFactory = ({ IDL }) => {
   });
   const ManageNeuronResponse = IDL.Record({ 'command' : IDL.Opt(Command_1) });
   return IDL.Service({
+    'get_nervous_system_parameters' : IDL.Func(
+        [IDL.Null],
+        [NervousSystemParameters],
+        ['query'],
+      ),
     'list_nervous_system_functions' : IDL.Func(
         [],
         [ListNervousSystemFunctionsResponse],

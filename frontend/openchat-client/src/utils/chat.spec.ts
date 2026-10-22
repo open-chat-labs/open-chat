@@ -18,6 +18,8 @@ import {
     getMembersString,
     mergeChatMetrics,
     mergeUnconfirmedThreadsIntoSummary,
+    navigationAfterArchivingOpenChat,
+    sameUser,
     sortByTimestampThenEventIndex,
 } from "./chat";
 
@@ -361,15 +363,27 @@ describe("get members string for group chat", () => {
     const user = lookup.get("z") as UserSummary;
 
     test("up to five members get listed", () => {
-        const members = getMembersString(user, lookup, withFewerThanSix, "Unknown User", "You");
+        const members = getMembersString(
+            user.userId,
+            lookup,
+            withFewerThanSix,
+            "Unknown User",
+            "You",
+        );
         expect(members).toEqual("**Mr A**, **Mr B**, **Mr C**, **Mr D** and **You**");
     });
     test("with unknown users", () => {
-        const members = getMembersString(user, lookup, withUnknown, "Unknown User", "You");
+        const members = getMembersString(user.userId, lookup, withUnknown, "Unknown User", "You");
         expect(members).toEqual("**Mr A**, **Mr B**, **Mr D**, **You** and **Unknown User**");
     });
     test("with more than 5 members", () => {
-        const members = getMembersString(user, lookup, withMoreThanSix, "Unknown User", "You");
+        const members = getMembersString(
+            user.userId,
+            lookup,
+            withMoreThanSix,
+            "Unknown User",
+            "You",
+        );
         expect(members).toEqual("8 members");
     });
 });
@@ -395,5 +409,87 @@ describe("sortByTimestampThenEventIndex", () => {
             ev(2, 20n),
             ev(3, 30n),
         ]);
+    });
+});
+
+describe("sameUser", () => {
+    const message = (sender: string, timestamp: bigint, discordId?: string, telegramId?: string) =>
+        ({
+            index: 0,
+            timestamp,
+            event: {
+                kind: "message",
+                sender,
+                senderContext:
+                    discordId !== undefined
+                        ? {
+                              kind: "bot",
+                              finalised: true,
+                              bridgedFrom: { kind: "discord", id: discordId },
+                          }
+                        : telegramId !== undefined
+                          ? {
+                                kind: "bot",
+                                finalised: true,
+                                bridgedFrom: { kind: "telegram", id: telegramId },
+                            }
+                          : undefined,
+            },
+        }) as unknown as EventWrapper<ChatEvent>;
+
+    test("groups messages from the same sender", () => {
+        expect(sameUser(message("a", 0n), message("a", 1000n))).toBe(true);
+        expect(sameUser(message("a", 0n), message("b", 1000n))).toBe(false);
+    });
+
+    // A bridge bot sends every message it relays from another platform
+    test("groups a bridge bot's messages by their authors", () => {
+        expect(sameUser(message("bot", 0n, "1"), message("bot", 1000n, "1"))).toBe(true);
+        expect(sameUser(message("bot", 0n, "1"), message("bot", 1000n, "2"))).toBe(false);
+        expect(sameUser(message("bot", 0n), message("bot", 1000n, "1"))).toBe(false);
+        expect(
+            sameUser(message("bot", 0n, undefined, "1"), message("bot", 1000n, undefined, "1")),
+        ).toBe(true);
+        // The same id on different platforms is a different author
+        expect(sameUser(message("bot", 0n, "1"), message("bot", 1000n, undefined, "1"))).toBe(
+            false,
+        );
+    });
+});
+
+/** Invariant: archiving the open chat leaves it, on every tree and screen width. */
+describe("where archiving the open chat goes", () => {
+    const go = (...args: Parameters<typeof navigationAfterArchivingOpenChat>) =>
+        navigationAfterArchivingOpenChat(...args).url;
+    const group = (groupId: string, archived = false): GroupChatSummary => ({
+        ...defaultGroupChat,
+        id: { kind: "group_chat", groupId },
+        membership: { ...defaultGroupChat.membership, archived },
+    });
+    const archived = { kind: "group_chat", groupId: "a" } as const;
+    const chats = { kind: "chats" } as const;
+
+    test("is the next unarchived chat on a wide screen, never the archived one", () => {
+        // the list may not have marked it archived yet
+        expect(go(archived, chats, [group("a"), group("b", true), group("c")], false)).toBe(
+            "/chats/group/c",
+        );
+    });
+
+    test("is the scope's list on a narrow screen, or with no other chat to open", () => {
+        expect(go(archived, chats, [group("a"), group("b")], true)).toBe("/chats");
+        expect(go(archived, chats, [group("a", true)], false)).toBe("/chats");
+    });
+
+    test("replaces the archived chat's history entry when going to another chat, so Back can't reopen and un-archive it", () => {
+        expect(
+            navigationAfterArchivingOpenChat(archived, chats, [group("a"), group("c")], false)
+                .intent,
+        ).toBe("auto");
+        // going to the list steps back to it, which leaves the archived chat ahead, not behind
+        expect(
+            navigationAfterArchivingOpenChat(archived, chats, [group("a"), group("c")], true)
+                .intent,
+        ).toBeUndefined();
     });
 });

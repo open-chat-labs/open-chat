@@ -13,6 +13,7 @@ use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use types::{AirdropConfig, BuildVersion, CanisterId, Cycles, EvmContractAddress, ExchangeId, TimestampMillis, Timestamped};
 use utils::env::Environment;
+use utils::idempotency_checker::IdempotencyChecker;
 
 mod guards;
 mod jobs;
@@ -77,7 +78,6 @@ impl RuntimeState {
                 sns_wasm: self.data.sns_wasm_canister_id,
                 escrow: self.data.escrow_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
-                icp_ledger: self.data.icp_ledger_canister_id,
                 cmc: self.data.cycles_minting_canister_id,
             },
         }
@@ -95,7 +95,6 @@ struct Data {
     sns_wasm_canister_id: CanisterId,
     escrow_canister_id: CanisterId,
     cycles_dispenser_canister_id: CanisterId,
-    icp_ledger_canister_id: CanisterId,
     cycles_minting_canister_id: CanisterId,
     tokens: Tokens,
     nervous_systems: NervousSystems,
@@ -110,6 +109,8 @@ struct Data {
     evm_contract_addresses: HashMap<CanisterId, Vec<EvmContractAddress>>,
     rng_seed: [u8; 32],
     test_mode: bool,
+    #[serde(default)]
+    idempotency_checker: IdempotencyChecker,
 }
 
 impl Data {
@@ -124,7 +125,6 @@ impl Data {
         sns_wasm_canister_id: CanisterId,
         escrow_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
-        icp_ledger_canister_id: CanisterId,
         cycles_minting_canister_id: CanisterId,
         test_mode: bool,
     ) -> Data {
@@ -138,7 +138,6 @@ impl Data {
             sns_wasm_canister_id,
             escrow_canister_id,
             cycles_dispenser_canister_id,
-            icp_ledger_canister_id,
             cycles_minting_canister_id,
             tokens: Tokens::default(),
             nervous_systems: NervousSystems::default(),
@@ -153,6 +152,7 @@ impl Data {
             evm_contract_addresses: HashMap::new(),
             rng_seed: [0; 32],
             test_mode,
+            idempotency_checker: IdempotencyChecker::default(),
         }
     }
 
@@ -235,6 +235,5 @@ pub struct CanisterIds {
     pub sns_wasm: CanisterId,
     pub escrow: CanisterId,
     pub cycles_dispenser: CanisterId,
-    pub icp_ledger: CanisterId,
     pub cmc: CanisterId,
 }

@@ -5,8 +5,7 @@ use crate::mutate_state;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use translations_canister::mark_deployed::*;
-use user_index_canister::c2c_send_openchat_bot_messages;
-use user_index_canister::c2c_send_openchat_bot_messages::Message;
+use user_index_canister::{OpenChatBotMessage, TranslationsEvent};
 
 #[update(guard = "caller_is_deployment_operator", candid = true, msgpack = true)]
 #[trace]
@@ -29,20 +28,12 @@ fn notify_translators_of_decisions(state: &mut RuntimeState) {
     let since = state.data.user_notifications_last_sent;
 
     let summaries = state.data.translations.collate_decision_summaries(since);
-    let messages: Vec<_> = summaries
-        .into_iter()
-        .map(|(user_id, summary)| Message {
+    for (user_id, summary) in summaries {
+        state.push_event_to_user_index(TranslationsEvent::SendOpenChatBotMessage(OpenChatBotMessage {
             text: build_message_text(summary),
             recipient: user_id,
-        })
-        .collect();
-
-    let payload = c2c_send_openchat_bot_messages::Args { messages };
-    state.data.fire_and_forget_handler.send(
-        state.data.user_index_canister_id,
-        "c2c_send_openchat_bot_messages_msgpack".to_string(),
-        msgpack::serialize_then_unwrap(payload),
-    );
+        }));
+    }
 
     state.data.user_notifications_last_sent = state.env.now();
 }

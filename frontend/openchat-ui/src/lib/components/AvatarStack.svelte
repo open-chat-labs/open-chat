@@ -13,7 +13,7 @@
     ring?: string;
   }
 
-  let { people = [], max = 4, size = 28, initials = false, ring = 'var(--surface-2,#191921)' }: Props = $props();
+  let { people = [], max = 4, size = 28, initials = false, ring = 'var(--surface-2)' }: Props = $props();
   const t = useT();
 
   const faces = $derived(
@@ -80,6 +80,6 @@
     border-radius: 999px;
     background: var(--surface-3, #24242e);
     font: 600 var(--font-size) / 1 var(--font-mono);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 </style>

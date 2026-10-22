@@ -21,8 +21,8 @@
         TimelineGrouper,
         localUpdates,
         messageIndexStore,
+        isPrivateCommunityPreview,
         messagesRead,
-        ROLE_NONE,
         routeForChatIdentifier,
         selectedChatDraftMessageStore,
         selectedChatExpandedDeletedMessageStore,
@@ -30,7 +30,6 @@
         selectedChatPinnedMessagesStore,
         selectedCommunitySummaryStore,
         showMiddle,
-        stripSuspendedGate,
         subscribe,
         threadOpenStore,
         unconfirmedStore,
@@ -46,7 +45,7 @@
         chatStartItem,
         TimelineFlattener,
         type FlatChatItem,
-    } from "@shared_components/flatChatItems";
+    } from "@src/core/flatChatItems";
     import ChatEvent from "./ChatEvent.svelte";
     import ChatEventList from "./ChatEventList.svelte";
     import InitialChatMessage from "./InitialChatMessage.svelte";
@@ -253,12 +252,7 @@
         return earliestLoadedEventIndex <= indexRequired;
     }
     let privateCommunityPreview = $derived(
-        $selectedCommunitySummaryStore !== undefined &&
-            ($selectedCommunitySummaryStore.membership.role === ROLE_NONE ||
-                $selectedCommunitySummaryStore.membership.lapsed) &&
-            (!$selectedCommunitySummaryStore.public ||
-                stripSuspendedGate($selectedCommunitySummaryStore.gateConfig.gate).kind !==
-                    "no_gate"),
+        isPrivateCommunityPreview($selectedCommunitySummaryStore),
     );
     let privatePreview = $derived(privateCommunityPreview || privateChatPreview);
     let isEmptyChat = $derived(chat.latestEventIndex <= 0 || privatePreview);

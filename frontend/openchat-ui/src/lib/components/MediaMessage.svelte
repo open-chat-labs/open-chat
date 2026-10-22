@@ -121,10 +121,10 @@
 
 <style>
   .media-message {
-    --msg-bg: var(--bubble-recv-bg, #191921);
-    --msg-ink: var(--bubble-recv-text, #e4e4ec);
-    --msg-soft: var(--ink-4, #8a8a99);
-    --msg-tick: var(--ink-4, #8a8a99);
+    --msg-bg: var(--bubble-recv-bg);
+    --msg-ink: var(--bubble-recv-text);
+    --msg-soft: var(--ink-4);
+    --msg-tick: var(--ink-4);
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -133,19 +133,19 @@
   }
 
   .media-message.sent {
-    --msg-bg: var(--bubble-send-bg, #b83e52);
-    --msg-ink: var(--bubble-text, #fff);
-    --msg-soft: var(--bubble-text-soft, rgba(255, 255, 255, 0.82));
-    --msg-tick: var(--bubble-tick, #fff);
+    --msg-bg: var(--bubble-send-bg);
+    --msg-ink: var(--bubble-text);
+    --msg-soft: var(--bubble-text-soft);
+    --msg-tick: var(--bubble-tick);
   }
 
   .shell {
     max-width: 100%;
     padding: 4px;
     box-sizing: border-box;
-    border-radius: var(--radius-xs, 4px) 22px 22px var(--radius-xs, 4px);
+    border-radius: var(--radius-xs) 22px 22px var(--radius-xs);
     background: var(--msg-bg);
-    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+    box-shadow: inset 0 0 0 1px var(--line-1);
   }
 
   .shell.last {
@@ -182,7 +182,7 @@
   }
 
   .tile:focus-visible {
-    outline: 2px solid var(--accent, #ff5672);
+    outline: 2px solid var(--accent);
     outline-offset: -2px;
   }
 
@@ -375,7 +375,7 @@
     align-items: center;
     gap: 6px;
     font: 500 12.5px/1 var(--font-sans);
-    color: var(--status-danger, #ff4d4d);
+    color: var(--status-danger);
   }
 
   .failed-icon {

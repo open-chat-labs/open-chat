@@ -64,17 +64,17 @@
 
 <style>
   .shell {
-    --msg-bg: var(--bubble-recv-bg, #191921);
-    --msg-ink: var(--bubble-recv-text, #e4e4ec);
-    --msg-soft: var(--ink-4, #8a8a99);
-    --msg-seg: var(--overlay-1, rgba(255, 255, 255, 0.045));
+    --msg-bg: var(--bubble-recv-bg);
+    --msg-ink: var(--bubble-recv-text);
+    --msg-soft: var(--ink-4);
+    --msg-seg: var(--overlay-1);
     width: 300px;
     max-width: 100%;
     padding: 4px;
     box-sizing: border-box;
-    border-radius: var(--radius-xs, 4px) 22px 22px var(--radius-xs, 4px);
+    border-radius: var(--radius-xs) 22px 22px var(--radius-xs);
     background: var(--msg-bg);
-    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+    box-shadow: inset 0 0 0 1px var(--line-1);
   }
 
   .shell.last {
@@ -82,9 +82,9 @@
   }
 
   .shell.sent {
-    --msg-bg: var(--bubble-send-bg, #b83e52);
-    --msg-ink: var(--bubble-text, #fff);
-    --msg-soft: var(--bubble-text-soft, rgba(255, 255, 255, 0.82));
+    --msg-bg: var(--bubble-send-bg);
+    --msg-ink: var(--bubble-text);
+    --msg-soft: var(--bubble-text-soft);
     --msg-seg: rgba(0, 0, 0, 0.18);
     box-shadow: none;
   }
@@ -159,7 +159,7 @@
   }
 
   .shell:not(.sent) .amount.incoming {
-    color: var(--status-online, #2ee6a8);
+    color: var(--status-online);
   }
 
   .usd {
@@ -199,15 +199,15 @@
   }
 
   .action {
-    background: var(--accent, #ff5672);
+    background: var(--accent);
     font: 600 13.5px/1 var(--font-sans);
-    color: var(--on-accent, #2e0512);
+    color: var(--on-accent);
     cursor: pointer;
   }
 
   .sent .action {
     background: rgba(0, 0, 0, 0.18);
-    color: var(--bubble-text, #fff);
+    color: var(--bubble-text);
   }
 
   .action:hover {
@@ -218,7 +218,7 @@
     gap: 6px;
     background: var(--msg-seg);
     font: 600 12.5px/1 var(--font-sans);
-    color: var(--status-online, #2ee6a8);
+    color: var(--status-online);
   }
 
   .check {

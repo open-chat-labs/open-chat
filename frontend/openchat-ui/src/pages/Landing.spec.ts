@@ -332,6 +332,8 @@ describe('Landing', () => {
       input.value = 'newperson1';
       input.dispatchEvent(new Event('input', { bubbles: true }));
       flushSync();
+      document.querySelector<HTMLInputElement>('[role=dialog] .agree input')!.click();
+      flushSync();
       document.querySelector('[role=dialog] form.form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
       flushSync();
       expect(onSignup).toHaveBeenCalledWith(expect.objectContaining({ username: 'newperson1' }));
@@ -357,6 +359,8 @@ describe('Landing', () => {
       const input = document.querySelector<HTMLInputElement>('[role=dialog] input[autocomplete=username]')!;
       input.value = 'newperson1';
       input.dispatchEvent(new Event('input', { bubbles: true }));
+      flushSync();
+      document.querySelector<HTMLInputElement>('[role=dialog] .agree input')!.click();
       flushSync();
       document.querySelector('[role=dialog] form.form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
       await settle();

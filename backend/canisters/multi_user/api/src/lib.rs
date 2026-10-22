@@ -4,9 +4,9 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{
     Achievement, BotDefinitionUpdate, CanisterId, ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityId,
-    DiamondMembershipPlanDuration, EventIndex, IdempotentEnvelope, MessageContent, MessageContentInitial, MessageId,
-    MessageIndex, Milliseconds, OgPreview, P2PSwapLocation, P2PSwapStatus, PhoneNumber, Reaction, ReferralStatus,
-    SuspensionDuration, TimestampMillis, TokenInfo, UniquePersonProof, User, UserId,
+    DeletedCommunityInfo, DeletedGroupInfoInternal, DiamondMembershipPlanDuration, EventIndex, IdempotentEnvelope,
+    MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds, OgPreview, P2PSwapLocation, P2PSwapStatus,
+    PhoneNumber, Reaction, ReferralStatus, SuspensionDuration, TimestampMillis, TokenInfo, UniquePersonProof, User, UserId,
 };
 
 mod lifecycle;
@@ -479,6 +479,13 @@ pub struct RemovedFromCommunity {
     pub blocked: bool,
     pub community_name: String,
     pub public: bool,
+}
+
+// An event from the GroupIndex for one of the canister's users
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum GroupIndexEvent {
+    GroupDeleted(Box<DeletedGroupInfoInternal>),
+    CommunityDeleted(Box<DeletedCommunityInfo>),
 }
 
 // Puts the removals back among the other events, in the order they were created, since the

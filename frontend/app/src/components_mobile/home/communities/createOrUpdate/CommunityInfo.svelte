@@ -44,7 +44,7 @@
         MAX_NAME_LENGTH,
         MIN_NAME_LENGTH,
         updateCommunityState,
-    } from "@shared_components/home/communities/createOrUpdate/community.svelte";
+    } from "@src/logic/groupOrCommunity/community.svelte";
 
     const client = getContext<OpenChat>("client");
     const gradient =

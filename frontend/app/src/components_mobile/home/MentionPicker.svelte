@@ -1,5 +1,5 @@
 <script lang="ts">
-    import VirtualList from "@shared_components/VirtualList.svelte";
+    import VirtualList from "@openchat/ui/src/lib/virtual/VirtualList.svelte";
     import { Avatar, Body, ColourVars, Column, MenuItem, Row } from "component-lib";
     import type { OpenChat, UserOrUserGroup } from "@client";
     import { allUsersStore, iconSize, selectedCommunityMembersStore } from "@client";

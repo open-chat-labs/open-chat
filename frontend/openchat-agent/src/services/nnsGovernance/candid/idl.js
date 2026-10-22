@@ -1,11 +1,17 @@
 export const idlFactory = ({ IDL }) => {
+  const VotingPowerEconomics = IDL.Record({
+    'neuron_minimum_dissolve_delay_to_vote_seconds' : IDL.Opt(IDL.Nat64),
+  });
+  const NetworkEconomics = IDL.Record({
+    'voting_power_economics' : IDL.Opt(VotingPowerEconomics),
+  });
   const ListNeurons = IDL.Record({
-    'neuron_ids' : IDL.Vec(IDL.Nat64),
-    'include_neurons_readable_by_caller' : IDL.Bool,
-    'include_empty_neurons_readable_by_caller' : IDL.Opt(IDL.Bool),
-    'include_public_neurons_in_full_neurons' : IDL.Opt(IDL.Bool),
-    'page_number' : IDL.Opt(IDL.Nat64),
     'page_size' : IDL.Opt(IDL.Nat64),
+    'include_public_neurons_in_full_neurons' : IDL.Opt(IDL.Bool),
+    'neuron_ids' : IDL.Vec(IDL.Nat64),
+    'page_number' : IDL.Opt(IDL.Nat64),
+    'include_empty_neurons_readable_by_caller' : IDL.Opt(IDL.Bool),
+    'include_neurons_readable_by_caller' : IDL.Bool,
   });
   const NeuronId = IDL.Record({ 'id' : IDL.Nat64 });
   const DissolveState = IDL.Variant({
@@ -61,6 +67,11 @@ export const idlFactory = ({ IDL }) => {
   });
   const ManageNeuronResponse = IDL.Record({ 'command' : IDL.Opt(Command_1) });
   return IDL.Service({
+    'get_network_economics_parameters' : IDL.Func(
+        [],
+        [NetworkEconomics],
+        ['query'],
+      ),
     'list_neurons' : IDL.Func([ListNeurons], [ListNeuronsResponse], ['query']),
     'list_proposals' : IDL.Func(
         [ListProposalInfo],

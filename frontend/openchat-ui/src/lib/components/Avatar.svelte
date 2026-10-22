@@ -55,8 +55,8 @@
     width: 11px;
     height: 11px;
     border-radius: var(--radius-pill);
-    background: var(--status-online, #2ee6a8);
-    box-shadow: 0 0 0 3px var(--card, #0e0e12);
+    background: var(--status-online);
+    box-shadow: 0 0 0 3px var(--card);
   }
 
   .dot.big {

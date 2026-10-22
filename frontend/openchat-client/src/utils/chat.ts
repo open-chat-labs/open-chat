@@ -9,6 +9,7 @@ import type {
     ChannelSummary,
     ChatEvent,
     ChatIdentifier,
+    ChatListScope,
     ChatPermissions,
     ChatSummary,
     CreatedUser,
@@ -62,6 +63,8 @@ import {
     defaultChatPermissions,
     defaultOptionalChatPermissions,
     defaultOptionalMessagePermissions,
+    bridgedFrom,
+    bridgedUserKey,
     emptyChatMetrics,
     getContentAsFormattedText,
     getContentAsText,
@@ -77,6 +80,7 @@ import {
     ROLE_MEMBER,
     ROLE_NONE,
     ROLE_OWNER,
+    routeForChatIdentifier,
     updateFromOptions,
     type ReadonlySet,
 } from "@shared";
@@ -104,6 +108,7 @@ import { rtcConnectionsManager } from "../utils/rtcConnectionsManager";
 import { formatTokens } from "./cryptoFormatter";
 import { hasOwnerRights, isPermitted } from "./permissions";
 import { messageFlagsRestricted, messageRestricted } from "./restrictedContent";
+import { routeForScope } from "./routes";
 import { compareUsername, nullUser } from "./user";
 
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
@@ -266,7 +271,7 @@ export function messageIsReadByThem(chat: ChatSummary, messageIndex: number): bo
 }
 
 export function getMembersString(
-    user: UserSummary,
+    myUserId: string,
     userLookup: UserLookup,
     memberIds: string[],
     unknownUser: string,
@@ -280,7 +285,7 @@ export function getMembersString(
     const sorted = memberIds
         .map((id) => userLookup.get(id) ?? nullUser(unknownUser))
         .sort(compareUsersFn ?? compareUsername)
-        .map((p) => `**${p.userId === user.userId ? you : (p.displayName ?? p.username)}**`);
+        .map((p) => `**${p.userId === myUserId ? you : (p.displayName ?? p.username)}**`);
 
     // TODO Improve i18n, don't hardcode 'and'
     return sorted.length > 1
@@ -547,6 +552,9 @@ export function sameUser(a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>)
     if (a.event.kind === "message" && b.event.kind === "message") {
         return (
             a.event.sender === b.event.sender &&
+            // A bridge bot sends every message it relays, so they're grouped by their authors
+            bridgedUserKey(bridgedFrom(a.event.senderContext)) ===
+                bridgedUserKey(bridgedFrom(b.event.senderContext)) &&
             Math.abs(Number(b.timestamp - a.timestamp)) <
                 MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS
         );
@@ -738,7 +746,9 @@ function groupingEquivalent(
     if (
         am.messageId !== bm.messageId ||
         am.messageIndex !== bm.messageIndex ||
-        am.sender !== bm.sender
+        am.sender !== bm.sender ||
+        bridgedUserKey(bridgedFrom(am.senderContext)) !==
+            bridgedUserKey(bridgedFrom(bm.senderContext))
     ) {
         return false;
     }
@@ -2463,4 +2473,58 @@ function latestEventAndMessageIndexesFromEvents(
     }
 
     return [eventIndex, messageIndex];
+}
+
+/**
+ * Whether a chat matches a chat-list search (lower case): a group or channel by its name or
+ * description, a direct chat by the other person's username or display name.
+ */
+export function chatMatchesSearch(search: string, chat: ChatSummary, users: UserLookup): boolean {
+    if (chat.kind === "group_chat" || chat.kind === "channel") {
+        return (
+            chat.name.toLowerCase().indexOf(search) >= 0 ||
+            chat.description.toLowerCase().indexOf(search) >= 0
+        );
+    }
+    const user = users.get(chat.them.userId);
+    return (
+        user !== undefined &&
+        (user.username.toLowerCase().indexOf(search) >= 0 ||
+            (user.displayName !== undefined && user.displayName.toLowerCase().indexOf(search) >= 0))
+    );
+}
+
+/**
+ * The chat a chat list with nothing selected opens, in every tree: the one last opened in its
+ * scope while it's still in the list, else the first that isn't archived.
+ */
+export function defaultChat(
+    chats: readonly ChatSummary[],
+    lastSelected: ChatIdentifier | undefined,
+): ChatSummary | undefined {
+    const last =
+        lastSelected === undefined
+            ? undefined
+            : chats.find((c) => chatIdentifiersEqual(c.id, lastSelected));
+    return last ?? chats.find((c) => !c.membership.archived);
+}
+
+/**
+ * Where archiving the open chat goes: the scope's first other chat that isn't archived on a wide
+ * screen, else the scope's list. Never the archived chat itself, whether or not the list has
+ * marked it archived yet. Going to another chat replaces the archived chat's history entry, or
+ * Back would reopen the chat and so un-archive it; going to the list steps back to it as usual.
+ */
+export function navigationAfterArchivingOpenChat(
+    archived: ChatIdentifier,
+    scope: ChatListScope,
+    chats: readonly ChatSummary[],
+    narrow: boolean,
+): { url: string; intent?: "auto" } {
+    const next = narrow
+        ? undefined
+        : chats.find((c) => !c.membership.archived && !chatIdentifiersEqual(c.id, archived));
+    return next
+        ? { url: routeForChatIdentifier(scope.kind, next.id), intent: "auto" }
+        : { url: routeForScope(scope) };
 }

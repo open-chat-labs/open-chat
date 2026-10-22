@@ -29,13 +29,13 @@
 
   // group metadata stays here; the achievements themselves (ids, rewards, done) come from the host
   const GROUPS: { key: string; label: string; icon: string; ink: string }[] = [
-    { key: 'messaging', label: 'ui.achievementsDialog.groups.messaging', icon: 'chat', ink: 'var(--status-chit,#FF9F45)' },
-    { key: 'profile', label: 'ui.achievementsDialog.groups.profile', icon: 'user', ink: 'var(--accent,#FF5672)' },
-    { key: 'wallet', label: 'ui.achievementsDialog.groups.wallet', icon: 'wallet', ink: 'var(--status-verified,#3D9BFF)' },
-    { key: 'community', label: 'ui.achievementsDialog.groups.community', icon: 'users', ink: 'var(--status-online,#2EE6A8)' },
-    { key: 'streaks', label: 'ui.achievementsDialog.groups.streaks', icon: 'flame', ink: 'var(--status-chit,#FF9F45)' },
-    { key: 'referrals', label: 'ui.achievementsDialog.groups.referrals', icon: 'users', ink: 'var(--ink-3,#9A9AA8)' },
-    { key: 'partners', label: 'ui.achievementsDialog.groups.partners', icon: 'link', ink: 'var(--ink-4,#7C7C8C)' },
+    { key: 'messaging', label: 'ui.achievementsDialog.groups.messaging', icon: 'chat', ink: 'var(--status-chit)' },
+    { key: 'profile', label: 'ui.achievementsDialog.groups.profile', icon: 'user', ink: 'var(--accent)' },
+    { key: 'wallet', label: 'ui.achievementsDialog.groups.wallet', icon: 'wallet', ink: 'var(--status-verified)' },
+    { key: 'community', label: 'ui.achievementsDialog.groups.community', icon: 'users', ink: 'var(--status-online)' },
+    { key: 'streaks', label: 'ui.achievementsDialog.groups.streaks', icon: 'flame', ink: 'var(--status-chit)' },
+    { key: 'referrals', label: 'ui.achievementsDialog.groups.referrals', icon: 'users', ink: 'var(--ink-3)' },
+    { key: 'partners', label: 'ui.achievementsDialog.groups.partners', icon: 'link', ink: 'var(--ink-4)' },
   ];
 
   const fmt = (n: number) => n.toLocaleString(i18n.locale ?? 'en');
@@ -106,8 +106,8 @@
   });
 </script>
 
-<div class="layer" data-screen-label="Achievements" role="dialog" aria-modal="true" use:modal={() => onClose?.()}>
-  <div class="veil" onclick={() => onClose?.()} aria-hidden="true"></div>
+<div class="layer oc-dialog-layer" data-screen-label="Achievements" role="dialog" aria-modal="true" use:modal={() => onClose?.()}>
+  <div class="oc-veil" onclick={() => onClose?.()} aria-hidden="true"></div>
 
   <div class="card">
     <div class="head">
@@ -171,22 +171,7 @@
 
 <style>
   .layer {
-    position: fixed;
-    inset: 0;
     z-index: 73;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: var(--space-22);
-  }
-
-  .veil {
-    position: absolute;
-    inset: 0;
-    background: var(--oc-veil, rgba(3, 3, 6, 0.72));
-    backdrop-filter: var(--oc-veil-blur, blur(4px));
-    -webkit-backdrop-filter: var(--oc-veil-blur, blur(4px));
-    animation: oc-veil-in var(--duration-base, 200ms) var(--ease-out) both;
   }
 
   .card {
@@ -199,12 +184,12 @@
     max-height: 100%;
     box-sizing: border-box;
     border-radius: var(--radius-xl);
-    background: var(--surface-1, #0e0e12);
+    background: var(--surface-1);
     box-shadow:
-      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1)),
-      var(--shadow-modal, 0 30px 70px rgba(0, 0, 0, 0.45));
+      inset 0 0 0 1px var(--line-2),
+      var(--shadow-modal);
     overflow: hidden;
-    animation: oc-dlg-in var(--duration-slow, 280ms) var(--ease-out) both;
+    animation: oc-dlg-in var(--duration-slow) var(--ease-out) both;
   }
 
   .head {
@@ -213,7 +198,7 @@
     align-items: center;
     gap: var(--space-12);
     padding: var(--space-24) var(--space-32);
-    border-block-end: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+    border-block-end: 1px solid var(--line-1);
   }
 
   .icon-button {
@@ -228,7 +213,7 @@
   }
 
   .icon-button:hover {
-    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    background: var(--overlay-2);
   }
 
   .icon-button.back {
@@ -240,14 +225,14 @@
   .back-glyph {
     width: 16px;
     height: 16px;
-    background: var(--ink-2, #c9c9d4);
+    background: var(--ink-2);
     mask: var(--icon-back) center/contain no-repeat;
   }
 
   .close-glyph {
     width: 15px;
     height: 15px;
-    background: var(--ink-3, #9a9aa8);
+    background: var(--ink-3);
     mask: var(--icon-close) center/contain no-repeat;
   }
 
@@ -261,12 +246,12 @@
 
   .title {
     font: var(--weight-bold) var(--text-lg) / 1.25 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .subtitle {
     font: var(--weight-regular) var(--text-sm) / 1.3 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .body {
@@ -294,7 +279,7 @@
   .caps {
     font: var(--weight-semibold) var(--text-xs) / 1 var(--font-mono);
     letter-spacing: var(--tracking-wide);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .trio {
@@ -303,7 +288,7 @@
   }
 
   .next {
-    --next-ink: var(--accent, #ff5672);
+    --next-ink: var(--accent);
     flex: 1;
     min-width: 0;
     display: flex;
@@ -312,21 +297,21 @@
     padding: var(--space-16) var(--space-14);
     box-sizing: border-box;
     border-radius: var(--radius-lg);
-    background: var(--overlay-1, rgba(255, 255, 255, 0.045));
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12));
+    background: var(--overlay-1);
+    box-shadow: inset 0 0 0 1px var(--line-2);
   }
 
   .next-0 {
-    background: var(--accent-soft, rgba(255, 86, 114, 0.12));
-    box-shadow: inset 0 0 0 1px var(--accent, #ff5672);
+    background: var(--accent-soft);
+    box-shadow: inset 0 0 0 1px var(--accent);
   }
 
   .next-1 {
-    --next-ink: var(--status-chit, #ff9f45);
+    --next-ink: var(--status-chit);
   }
 
   .next-2 {
-    --next-ink: var(--status-online, #2ee6a8);
+    --next-ink: var(--status-online);
   }
 
   .next-icon {
@@ -338,7 +323,7 @@
   .next-label {
     flex: 1;
     font: var(--weight-semibold) var(--text-md) / 1.3 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     text-wrap: pretty;
   }
 
@@ -351,13 +336,13 @@
     display: flex;
     flex-direction: column;
     border-radius: var(--radius-md);
-    background: var(--overlay-1, rgba(255, 255, 255, 0.035));
+    background: var(--overlay-1);
     overflow: hidden;
   }
 
   .group.open {
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
-    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12));
+    background: var(--overlay-1);
+    box-shadow: inset 0 0 0 1px var(--line-2);
   }
 
   .group-head {
@@ -371,7 +356,7 @@
   }
 
   .group-head:hover {
-    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    background: var(--overlay-1);
   }
 
   .group-icon {
@@ -391,35 +376,35 @@
 
   .group-label {
     font: var(--weight-semibold) var(--text-md) / 1.25 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
   }
 
   .group-bar {
     height: 4px;
     border-radius: var(--radius-pill);
-    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    background: var(--overlay-2);
     overflow: hidden;
   }
 
   .group-fill {
     height: 100%;
     background: var(--group-ink);
-    transition: width var(--duration-slow, 280ms) var(--ease-out);
+    transition: width var(--duration-slow) var(--ease-out);
   }
 
   .group-count {
     flex: none;
     font: var(--weight-medium) var(--text-sm) / 1 var(--font-mono);
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .group-chevron {
     flex: none;
     width: 13px;
     height: 13px;
-    background: var(--ink-4, #7c7c8c);
+    background: var(--ink-4);
     mask: var(--icon-chevron-right) center/contain no-repeat;
-    transition: transform var(--duration-base, 200ms) var(--ease-out);
+    transition: transform var(--duration-base) var(--ease-out);
   }
 
   .open .group-chevron {
@@ -445,8 +430,8 @@
   }
 
   .row.hl {
-    background: color-mix(in oklch, var(--accent, #ff5672) 14%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent, #ff5672) 40%, transparent);
+    background: color-mix(in oklch, var(--accent) 14%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent) 40%, transparent);
   }
 
   .mark {
@@ -458,18 +443,18 @@
     height: 16px;
     border-radius: var(--radius-pill);
     background: transparent;
-    box-shadow: inset 0 0 0 1.5px var(--line-3, rgba(255, 255, 255, 0.24));
+    box-shadow: inset 0 0 0 1.5px var(--line-3);
   }
 
   .done .mark {
-    background: color-mix(in srgb, var(--status-online, #2ee6a8) 16%, transparent);
+    background: color-mix(in srgb, var(--status-online) 16%, transparent);
     box-shadow: none;
   }
 
   .mark-check {
     width: 10px;
     height: 10px;
-    background: var(--status-online, #2ee6a8);
+    background: var(--status-online);
     mask: var(--icon-check) center/contain no-repeat;
     opacity: 0;
   }
@@ -482,34 +467,34 @@
     flex: 1;
     min-width: 0;
     font: var(--weight-regular) var(--text-md) / 1.3 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
   .done .row-label {
-    color: var(--ink-3, #9a9aa8);
+    color: var(--ink-3);
   }
 
   .row-reward {
     flex: none;
     font: var(--weight-medium) var(--text-sm) / 1 var(--font-mono);
-    color: var(--status-chit, #ff9f45);
+    color: var(--status-chit);
   }
 
   .done .row-reward {
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
   }
 
   .hl .row-reward {
-    color: var(--accent-bright, #ff8298);
+    color: var(--accent-bright);
   }
 
   .empty {
     padding: var(--space-8);
     font: var(--weight-regular) var(--text-md) / 1.5 var(--font-sans);
-    color: var(--ink-4, #7c7c8c);
+    color: var(--ink-4);
     text-wrap: pretty;
   }
 </style>

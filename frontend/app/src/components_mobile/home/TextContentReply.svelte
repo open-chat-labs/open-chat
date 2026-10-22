@@ -3,7 +3,7 @@
     import type { TextContent } from "@client";
     import { type Snippet } from "svelte";
     import { _ } from "svelte-i18n";
-    import Markdown from "@shared_components/Markdown.svelte";
+    import Markdown from "@src/core/Markdown.svelte";
 
     const SIZE_LIMIT = 200;
 

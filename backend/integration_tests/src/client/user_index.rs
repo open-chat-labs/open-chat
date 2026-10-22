@@ -2,6 +2,8 @@ use crate::{generate_msgpack_query_call, generate_msgpack_update_call, generate_
 use user_index_canister::*;
 
 // Queries
+generate_msgpack_query_call!(bridged_users);
+generate_msgpack_query_call!(linked_bridged_users);
 generate_msgpack_query_call!(check_username);
 generate_msgpack_query_call!(call_push_enabled);
 generate_msgpack_query_call!(moderation_config);
@@ -22,6 +24,7 @@ generate_msgpack_query_call!(explore_bots);
 
 // Updates
 generate_update_call!(add_local_user_index_canister);
+generate_msgpack_update_call!(c2c_translations);
 generate_update_call!(add_platform_moderator);
 generate_update_call!(add_platform_operator);
 generate_update_call!(assign_platform_moderators_group);
@@ -42,12 +45,16 @@ generate_msgpack_update_call!(accept_terms);
 generate_msgpack_update_call!(set_moderation_referral_config);
 generate_update_call!(remove_platform_moderator);
 generate_msgpack_update_call!(set_alchemy_api_key);
+generate_msgpack_update_call!(link_bridged_user);
+generate_msgpack_update_call!(set_bridge_bot);
 generate_msgpack_update_call!(set_call_push_enabled);
 generate_msgpack_update_call!(set_display_name);
 generate_msgpack_update_call!(set_premium_item_cost);
 generate_msgpack_update_call!(set_username);
+generate_msgpack_update_call!(start_bridged_user_link);
 generate_msgpack_update_call!(suspend_user);
 generate_msgpack_update_call!(update_diamond_membership_subscription);
+generate_msgpack_update_call!(unlink_bridged_user);
 generate_msgpack_update_call!(unsuspend_user);
 generate_update_call!(upgrade_local_user_index_canister_wasm);
 generate_update_call!(upgrade_multi_user_canister_wasm);

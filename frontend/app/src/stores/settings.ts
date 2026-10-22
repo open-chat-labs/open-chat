@@ -35,6 +35,10 @@ export const accountsSectionOpen = new LocalStorageBoolStore(
     configKeys.accountsSectionOpen,
     false,
 );
+export const bridgedAccountsSectionOpen = new LocalStorageBoolStore(
+    configKeys.bridgedAccountsSectionOpen,
+    false,
+);
 export const statsSectionOpen = new LocalStorageBoolStore(configKeys.userStatsSection, false);
 export const advancedSectionOpen = new LocalStorageBoolStore(configKeys.userAdvancedSection, false);
 export const deleteAccountSectionOpen = new LocalStorageBoolStore(

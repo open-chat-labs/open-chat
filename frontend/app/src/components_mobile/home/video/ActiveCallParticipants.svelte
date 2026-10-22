@@ -16,7 +16,7 @@
     import { activeVideoCall } from "../../../stores/video";
     import FancyLoader from "../../icons/FancyLoader.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
-    import VirtualList from "@shared_components/VirtualList.svelte";
+    import VirtualList from "@openchat/ui/src/lib/virtual/VirtualList.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
     import ActiveCallParticipant from "./ActiveCallParticipant.svelte";
 

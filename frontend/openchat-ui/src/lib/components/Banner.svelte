@@ -27,7 +27,7 @@
 
 <style>
   .banner {
-    --tint: var(--accent, #ff5672);
+    --tint: var(--accent);
     width: 100%;
     box-sizing: border-box;
     display: flex;
@@ -35,21 +35,21 @@
     gap: var(--space-10);
     padding: var(--space-14) var(--space-18);
     border-radius: var(--radius-md);
-    background: var(--accent-soft, rgba(255, 86, 114, 0.09));
-    box-shadow: inset 0 0 0 1px var(--accent-dim, rgba(255, 86, 114, 0.35));
+    background: var(--accent-soft);
+    box-shadow: inset 0 0 0 1px var(--accent-dim);
   }
 
   .warning,
   .offline {
-    --tint: var(--status-chit, #ff9f45);
-    background: var(--status-chit-soft, rgba(255, 159, 69, 0.14));
-    box-shadow: inset 0 0 0 1px var(--status-chit, #ff9f45);
+    --tint: var(--status-chit);
+    background: var(--status-chit-soft);
+    box-shadow: inset 0 0 0 1px var(--status-chit);
   }
 
   .danger {
-    --tint: var(--status-danger, #f5493d);
-    background: var(--btn-danger-bg, rgba(240, 68, 56, 0.08));
-    box-shadow: inset 0 0 0 1px var(--btn-danger-line, rgba(240, 68, 56, 0.5));
+    --tint: var(--status-danger);
+    background: var(--btn-danger-bg);
+    box-shadow: inset 0 0 0 1px var(--btn-danger-line);
   }
 
   .icon {
@@ -63,7 +63,7 @@
     flex: 1;
     min-width: 0;
     font: var(--weight-medium) var(--text-md) / 1.4 var(--font-sans);
-    color: var(--ink, #ececf1);
+    color: var(--ink);
     text-wrap: pretty;
   }
 

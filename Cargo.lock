@@ -2481,6 +2481,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "crypto_address"
+version = "0.1.0"
+dependencies = [
+ "bs58",
+ "candid",
+ "ic-ledger-types",
+ "icrc-ledger-types",
+ "sha256",
+ "sha3 0.12.0",
+]
+
+[[package]]
 name = "cssparser"
 version = "0.36.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2764,6 +2776,7 @@ dependencies = [
  "slant",
  "stable_memory",
  "tents",
+ "timer_job_queues",
  "tracing",
  "types",
  "unruly",
@@ -3693,6 +3706,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "stable_memory",
+ "timer_job_queues",
  "tracing",
  "types",
  "utils",
@@ -4701,7 +4715,6 @@ dependencies = [
  "http_request",
  "human_readable",
  "ic-cdk 0.20.3",
- "ic-cdk-timers",
  "ic-stable-structures",
  "local_user_index_canister",
  "local_user_index_canister_c2c_client",
@@ -6461,14 +6474,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "json"
-version = "0.1.0"
-dependencies = [
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "json-patch"
 version = "3.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6853,7 +6858,6 @@ dependencies = [
  "event_store_producer",
  "event_store_producer_cdk_runtime",
  "event_store_utils",
- "fire_and_forget_handler",
  "futures",
  "git_commit_id",
  "group_canister",
@@ -6867,7 +6871,6 @@ dependencies = [
  "ic-cdk-timers",
  "ic-stable-structures",
  "icrc-ledger-types",
- "json",
  "jwt",
  "ledger_utils",
  "local_user_index_canister",
@@ -7483,6 +7486,7 @@ dependencies = [
  "reqwest 0.13.4",
  "rustls 0.23.45",
  "serde",
+ "serde_bytes",
  "serde_json",
  "tokio",
  "tracing",
@@ -8910,6 +8914,7 @@ dependencies = [
  "sns_governance_canister",
  "sns_governance_canister_c2c_client",
  "stable_memory",
+ "timer_job_queues",
  "tracing",
  "types",
  "user_index_canister_c2c_client",
@@ -9438,9 +9443,7 @@ dependencies = [
  "human_readable",
  "ic-cdk 0.20.3",
  "ic-cdk-timers",
- "ic-ledger-types",
  "ic-stable-structures",
- "icp_ledger_canister_c2c_client",
  "icrc-ledger-types",
  "icrc_ledger_canister",
  "icrc_ledger_canister_c2c_client",
@@ -10840,6 +10843,7 @@ dependencies = [
  "candid",
  "canister_client",
  "ic-cdk 0.20.3",
+ "msgpack",
  "storage_bucket_canister",
  "tracing",
  "types",
@@ -10861,7 +10865,6 @@ dependencies = [
  "ic-cdk 0.20.3",
  "ic-cdk-timers",
  "ic-stable-structures",
- "json",
  "jwt",
  "msgpack",
  "num-traits",
@@ -10917,6 +10920,7 @@ dependencies = [
  "candid",
  "canister_client",
  "ic-cdk 0.20.3",
+ "msgpack",
  "storage_index_canister",
  "tracing",
  "types",
@@ -10954,11 +10958,9 @@ dependencies = [
  "ic-cdk 0.20.3",
  "ic-cdk-management-canister",
  "ic-cdk-timers",
- "ic-ledger-types",
  "ic-stable-structures",
- "icp_ledger_canister_c2c_client",
- "json",
  "msgpack",
+ "oc_error_codes",
  "per_round_timer",
  "rand 0.10.2",
  "serde",
@@ -10970,6 +10972,7 @@ dependencies = [
  "tracing",
  "types",
  "user_index_canister",
+ "user_index_canister_c2c_client",
  "utils",
 ]
 
@@ -11919,6 +11922,7 @@ version = "0.1.0"
 dependencies = [
  "futures",
  "ic-cdk 0.20.3",
+ "ic-cdk-timers",
  "per_round_timer",
  "serde",
  "types",
@@ -12483,6 +12487,7 @@ dependencies = [
  "rand 0.10.2",
  "serde",
  "stable_memory",
+ "timer_job_queues",
  "tracing",
  "translations_canister",
  "types",
@@ -12775,6 +12780,7 @@ dependencies = [
  "cksol_minter_canister",
  "cksol_minter_canister_c2c_client",
  "constants",
+ "crypto_address",
  "direct_chat",
  "escrow_canister",
  "escrow_canister_c2c_client",
@@ -12802,7 +12808,6 @@ dependencies = [
  "tracing",
  "types",
  "user_index_canister",
- "user_index_canister_c2c_client",
  "utils",
 ]
 
@@ -12841,6 +12846,7 @@ dependencies = [
  "candid",
  "canister_client",
  "ic-cdk 0.20.3",
+ "local_user_index_canister_c2c_client",
  "msgpack",
  "tracing",
  "types",
