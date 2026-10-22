@@ -16,27 +16,21 @@ export type RightPanelInput = {
     inCommunity: boolean;
     /** The selected chat's events, where a thread's root message is looked for. */
     events: EventWrapper<ChatEvent>[];
-    /** Whether the URL has a thread open (`threadOpenStore`). */
-    threadOpen: boolean;
 };
 
 /**
- * What the right panel shows. An entry that doesn't fit the selected chat shows nothing, and so
- * does anything but the thread while the URL has one open: the thread shows once its root message
- * is in the chat's events.
+ * What the right panel shows. An entry that doesn't fit the selected chat shows nothing, and a
+ * thread shows once its root message is in the chat's events.
  */
 export function rightPanelView({
     panel,
     chatKind,
     inCommunity,
     events,
-    threadOpen,
 }: RightPanelInput): RightPanelView {
     const none: RightPanelView = { kind: "none" };
     const channel = chatKind === "channel" && inCommunity;
     const multiUser = chatKind === "group_chat" || chatKind === "channel";
-
-    if (threadOpen && panel.kind !== "message_thread_panel") return none;
 
     switch (panel.kind) {
         case "group_details":

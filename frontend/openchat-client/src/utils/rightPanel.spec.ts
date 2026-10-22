@@ -19,7 +19,6 @@ function view(panel: RightPanelContent, input: Partial<RightPanelInput> = {}) {
         chatKind: "group_chat",
         inCommunity: false,
         events: [],
-        threadOpen: false,
         ...input,
     });
 }
@@ -42,19 +41,22 @@ describe("rightPanelView", () => {
             kind: "channel_or_community_members",
             tab: "channel",
         });
+        const members: RightPanelContent = { kind: "show_community_members", userGroupId: 4 };
+        expect(view(members, { chatKind: "channel", inCommunity: true })).toEqual({
+            kind: "channel_or_community_members",
+            tab: "community",
+        });
+        // the usergroup deep link opens the community's members on that user group
+        expect(view(members, { chatKind: undefined, inCommunity: true })).toEqual({
+            kind: "community_members",
+            userGroupId: 4,
+        });
         expect(view({ kind: "no_panel" }).kind).toBe("none");
     });
 
-    test("invariant 2: a thread open in the URL shows once its root message is loaded, and nothing before then", () => {
-        expect(view(thread, { threadOpen: true, events: [] }).kind).toBe("none");
-        expect(view(thread, { threadOpen: true, events: [root] })).toEqual({
-            kind: "thread",
-            rootEvent: root,
-        });
-        // what the history held before the thread was pushed doesn't show meanwhile
-        expect(view({ kind: "group_details" }, { threadOpen: true, events: [root] }).kind).toBe(
-            "none",
-        );
+    test("invariant 2: a thread shows once its root message is loaded, and nothing before then", () => {
+        expect(view(thread, { events: [] }).kind).toBe("none");
+        expect(view(thread, { events: [root] })).toEqual({ kind: "thread", rootEvent: root });
     });
 
     test("invariant 3: an entry that doesn't fit the selected chat never shows", () => {
@@ -62,7 +64,10 @@ describe("rightPanelView", () => {
         expect(view({ kind: "show_group_members" }, dm).kind).toBe("none");
         expect(view({ kind: "invite_group_users" }, dm).kind).toBe("none");
         expect(view({ kind: "show_pinned" }, dm).kind).toBe("none");
+        // a community's entries outlive a move to a plain group
         expect(view({ kind: "show_community_members" }).kind).toBe("none");
+        expect(view({ kind: "community_details" }).kind).toBe("none");
+        expect(view({ kind: "invite_community_users" }).kind).toBe("none");
         expect(view({ kind: "group_details" }, { chatKind: undefined }).kind).toBe("none");
     });
 });

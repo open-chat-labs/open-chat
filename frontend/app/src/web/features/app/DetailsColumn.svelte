@@ -10,25 +10,19 @@
         selectedChatSummaryStore,
         selectedCommunitySummaryStore,
         threadOpenStore,
-        type RightPanelContent,
     } from "@client";
     import RegionScreen from "./RegionScreen.svelte";
+    import { rightColumnPanel } from "./rightPanel";
     import { rightScreens, type RightRegion, type ScreenContext } from "./screens";
 
     let { context }: { context: ScreenContext } = $props();
 
-    // with nothing asked for, the column (open by preference when docked) shows the selected
-    // chat's details
-    const panel = $derived<RightPanelContent>(
-        $lastRightPanelState.kind === "no_panel" ? { kind: "group_details" } : $lastRightPanelState,
-    );
     const view = $derived(
         rightPanelView({
-            panel,
+            panel: rightColumnPanel($lastRightPanelState, $threadOpenStore),
             chatKind: $selectedChatSummaryStore?.kind,
             inCommunity: $selectedCommunitySummaryStore !== undefined,
             events: $eventsStore,
-            threadOpen: $threadOpenStore,
         }),
     );
     const region = $derived<RightRegion | undefined>(
