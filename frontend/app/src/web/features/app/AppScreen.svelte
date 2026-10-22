@@ -7,6 +7,7 @@
         currentUserStore,
         favouritesStore,
         OpenChat,
+        pinNumberResolverStore,
         publish,
         querystringStore,
         routeStore,
@@ -42,6 +43,8 @@
     import Shell from "../../shell/Shell.svelte";
     import { currentShellLayout } from "../../shell/viewport.svelte";
     import RulesDialog from "../conversation/RulesDialog.svelte";
+    import PinPromptHost from "../pin/PinPromptHost.svelte";
+    import { waitingPrompt } from "../pin/pinPrompt";
     import AppEventDialog from "./AppEventDialogs.svelte";
     import {
         dismissedRoute,
@@ -129,6 +132,9 @@
             navigate(item.path);
         }
     }
+
+    // what the client is waiting on to send: the rules, then the PIN
+    const prompt = $derived(waitingPrompt($captureRulesAcceptanceStore, $pinNumberResolverStore));
 
     // Dialogs people link to are query params over whatever page is open (ROUTES.md)
     const profileOpen = $derived($querystringStore.has("profile"));
@@ -224,11 +230,16 @@
     </div>
 {/snippet}
 
-<!-- sending in a chat whose rules the reader hasn't accepted asks for them first -->
-{#if $captureRulesAcceptanceStore !== undefined}
+<!-- sending in a chat whose rules the reader hasn't accepted asks for them first; a transfer that
+     needs the PIN asks for it -->
+{#if prompt.kind === "rules"}
     <RulesDialog
         rules={client.combineRulesText($selectedChatRulesStore, $selectedCommunityRulesStore)}
-        answer={$captureRulesAcceptanceStore.resolve} />
+        answer={prompt.request.resolve} />
+{:else if prompt.kind === "pin"}
+    {#key prompt.request}
+        <PinPromptHost request={prompt.request} />
+    {/key}
 {/if}
 
 <!-- TODO(phase 4, 4a): suspending a user (platform moderators) has no dialog yet; GAPS.md -->

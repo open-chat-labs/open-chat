@@ -100,6 +100,12 @@ design export needs. Each entry says where it came up.
 - **Swatches**: the design's colour/cover swatches for groups, communities and avatars have no
   OpenChat equivalent (it has uploaded avatars and banners). Adapters pass images and pick a
   swatch from the id.
+- **PIN prompt** (S3, `features/pin`): the library's only PIN entry is inside `WalletSend`, so the
+  prompt the client opens for every other transfer (tips, prizes, the "+" builders, swaps, gates)
+  is a plain dialog on `DialogShell` with one masked field (`PinDialog`, `TODO(design)`), the old
+  modal's words. It wants a standalone PIN dialog, or `WalletSend`'s six boxes as a component,
+  from the design export. As in the old UIs, a wrong PIN shows on the screen that started the
+  transfer (`pinNumberErrorMessageStore`), not in the prompt.
 
 ## App
 
