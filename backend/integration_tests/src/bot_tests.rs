@@ -1819,7 +1819,7 @@ fn updating_bot_principal_and_data_encoding_reaches_local_user_indexes() {
 }
 
 #[test]
-fn bots_http_route_shows_each_bots_data_encoding() {
+fn bots_data_encoding_shown_by_user_index_and_local_user_index() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -1865,6 +1865,25 @@ fn bots_http_route_shows_each_bots_data_encoding() {
     // A bot which doesn't set one gets MsgPack
     assert_eq!(encoding(default_bot_id), Some("MsgPack".into()));
     assert_eq!(encoding(candid_bot_id), Some("Candid".into()));
+
+    // The LocalUserIndexes keep their own copy, which notifications are encoded with
+    let local_user_index = canister_ids.local_user_index(env, owner.user_id.canister_id());
+    let local_encoding = |env: &PocketIc, bot_id: UserId| {
+        metrics(env, local_user_index)["bots"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|bot| bot["user_id"] == bot_id.to_string())
+            .map(|bot| bot["data_encoding"].clone())
+    };
+    for _ in 0..30 {
+        if local_encoding(env, candid_bot_id).is_some() {
+            break;
+        }
+        env.tick();
+    }
+    assert_eq!(local_encoding(env, default_bot_id), Some("MsgPack".into()));
+    assert_eq!(local_encoding(env, candid_bot_id), Some("Candid".into()));
 }
 
 #[test]

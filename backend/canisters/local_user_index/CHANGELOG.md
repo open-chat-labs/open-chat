@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Include each bot notification's index in its signed payload, so a bot can drop one sent again ([#10065](https://github.com/open-chat-labs/open-chat/pull/10065))
 - Let a bridge bot relay messages from Discord or Telegram into groups and channels as their authors, passing their profiles on to the UserIndex ([#10052](https://github.com/open-chat-labs/open-chat/pull/10052))
 - Add `bot_edit_message` for Discord/Telegram bots to relay edits made on the other platform to the messages they relayed ([#10066](https://github.com/open-chat-labs/open-chat/pull/10066))
+- Show each bot's data encoding in `/metrics` ([#10153](https://github.com/open-chat-labs/open-chat/pull/10153))
 
 ### Changed
 

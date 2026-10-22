@@ -854,6 +854,7 @@ impl RuntimeState {
                     user_id: b.bot_id,
                     name: b.name.clone(),
                     commands: b.commands.iter().map(|c| c.name.clone()).collect(),
+                    data_encoding: b.data_encoding,
                 })
                 .collect(),
             blocked_username_patterns: self.data.blocked_username_patterns.clone(),
@@ -1228,6 +1229,7 @@ pub struct BotMetrics {
     pub user_id: UserId,
     pub name: String,
     pub commands: Vec<String>,
+    pub data_encoding: BotDataEncoding,
 }
 
 fn new_user_events_queue() -> GroupedTimerJobQueue<UserEventBatch> {
