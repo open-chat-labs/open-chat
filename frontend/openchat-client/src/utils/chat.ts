@@ -1071,10 +1071,16 @@ export function serialiseMessageForRtc(message: NewUnconfirmedMessage): NewUncon
     return message;
 }
 
+// The chat as it is once created. The community joins all its members to a public channel with no
+// gate as it's created, so that starts with the community's member count. Any other chat starts with
+// just its creator.
 export function groupChatFromCandidate(
     chatId: MultiUserChatIdentifier,
     candidate: CandidateGroupChat,
+    communityMemberCount: number | undefined,
 ): MultiUserChat {
+    const joinedByCommunity =
+        chatId.kind === "channel" && candidate.public && candidate.gateConfig.gate.kind === "no_gate";
     const chat = {
         kind: chatId.kind,
         id: chatId,
@@ -1087,7 +1093,7 @@ export function groupChatFromCandidate(
         minVisibleEventIndex: 0,
         minVisibleMessageIndex: 0,
         lastUpdated: BigInt(0),
-        memberCount: 1,
+        memberCount: joinedByCommunity ? (communityMemberCount ?? 1) : 1,
         ...candidate.avatar,
         permissions: candidate.permissions,
         metrics: emptyChatMetrics(),

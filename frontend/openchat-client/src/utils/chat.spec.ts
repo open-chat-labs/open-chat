@@ -1,9 +1,15 @@
 import {
+    defaultChatPermissions,
+    defaultChatRules,
     emptyChatMetrics,
     ROLE_ADMIN,
     ROLE_MEMBER,
     ROLE_MODERATOR,
+    ROLE_OWNER,
+    type AccessGate,
+    type CandidateGroupChat,
     type ChatEvent,
+    type MultiUserChatIdentifier,
     type EventWrapper,
     type GroupChatSummary,
     type PollConfig,
@@ -16,6 +22,7 @@ import { localUpdates } from "../state";
 import {
     addVoteToPoll,
     getMembersString,
+    groupChatFromCandidate,
     mergeChatMetrics,
     mergeUnconfirmedThreadsIntoSummary,
     navigationAfterArchivingOpenChat,
@@ -491,5 +498,60 @@ describe("where archiving the open chat goes", () => {
             navigationAfterArchivingOpenChat(archived, chats, [group("a"), group("c")], true)
                 .intent,
         ).toBeUndefined();
+    });
+});
+
+describe("a new chat's member count", () => {
+    const channelId: MultiUserChatIdentifier = { kind: "channel", communityId: "c", channelId: 1 };
+    const groupId: MultiUserChatIdentifier = { kind: "group_chat", groupId: "g" };
+
+    function candidate(
+        id: MultiUserChatIdentifier,
+        isPublic: boolean,
+        gate: AccessGate,
+    ): CandidateGroupChat {
+        const level = id.kind === "channel" ? "channel" : "group";
+        return {
+            id,
+            kind: "candidate_group_chat",
+            name: "New",
+            description: "",
+            rules: { ...defaultChatRules(level), newVersion: false },
+            members: [],
+            permissions: defaultChatPermissions(),
+            gateConfig: { gate, expiry: undefined },
+            public: isPublic,
+            frozen: false,
+            historyVisible: true,
+            level,
+            membership: { role: ROLE_OWNER, lapsed: false },
+            verified: false,
+        };
+    }
+
+    test("a public channel with no gate starts with all the community's members", () => {
+        const chat = groupChatFromCandidate(
+            channelId,
+            candidate(channelId, true, { kind: "no_gate" }),
+            4,
+        );
+        expect(chat.memberCount).toEqual(4);
+    });
+
+    test("a gated or private channel starts with just its creator", () => {
+        const gated = candidate(channelId, true, { kind: "diamond_gate" });
+        const unlisted = candidate(channelId, false, { kind: "no_gate" });
+        expect(groupChatFromCandidate(channelId, gated, 4).memberCount).toEqual(1);
+        expect(groupChatFromCandidate(channelId, unlisted, 4).memberCount).toEqual(1);
+    });
+
+    test("a group starts with just its creator", () => {
+        const group = candidate(groupId, true, { kind: "no_gate" });
+        expect(groupChatFromCandidate(groupId, group, undefined).memberCount).toEqual(1);
+    });
+
+    test("an unknown community's channel starts with just its creator", () => {
+        const channel = candidate(channelId, true, { kind: "no_gate" });
+        expect(groupChatFromCandidate(channelId, channel, undefined).memberCount).toEqual(1);
     });
 });
