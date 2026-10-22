@@ -15,15 +15,25 @@ export type ProfileImages = {
     coverUrl: string | undefined;
 };
 
-export function profileProps(user: UserSummary, profile: PublicProfile, images: ProfileImages) {
+// the user's CHIT as the client keeps it for them (chitStateStore), with a streak that has ended at 0
+export type ProfileChit = { streak: number; balance: number };
+
+/** `userId` is the current user's; their summary may still be a placeholder as they sign in. */
+export function profileProps(
+    userId: string,
+    user: UserSummary,
+    profile: PublicProfile,
+    chit: ProfileChit,
+    images: ProfileImages,
+) {
     return {
-        userId: user.userId,
+        userId,
         handle: profile.username,
         name: profile.displayName ?? "",
         about: profile.bio,
         joined: Number(profile.created),
-        streak: user.streak,
-        balance: user.chitBalance,
+        streak: chit.streak,
+        balance: chit.balance,
         isDiamond: user.diamondStatus !== "inactive",
         isVerified: user.isUniquePerson,
         avatar: cssImage(images.avatarUrl),
@@ -112,13 +122,19 @@ export function chatSettingsProps(s: AppChatSettings): ChatSettings {
     };
 }
 
-/** The settings that differ, for the dialog's change of one. */
+/**
+ * The settings the dialog changed, against what the app has stored. A ringtone is compared with
+ * the stored name, so picking the default replaces one the app no longer has.
+ */
 export function changedChatSettings(
-    previous: ChatSettings,
+    stored: AppChatSettings,
     next: ChatSettings,
 ): (keyof ChatSettings)[] {
-    return (Object.keys(next) as (keyof ChatSettings)[]).filter(
-        (key) => next[key] !== previous[key],
+    const shown = chatSettingsProps(stored);
+    return (Object.keys(next) as (keyof ChatSettings)[]).filter((key) =>
+        key === "ringtone"
+            ? ringtoneKeyOf(next.ringtone) !== stored.ringtone
+            : next[key] !== shown[key],
     );
 }
 

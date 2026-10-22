@@ -13952,14 +13952,14 @@
       },
       {
         "name": "onChatSettings",
-        "type": "(settings: ChatSettings) => void",
+        "type": "(settings: ChatSettings) => Promise<unknown> | void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "A change of one setting, with the others as the host sent them. The toggle shows the new value until this settles; then the host's `chatSettings` show, so a change it didn't take goes back."
       },
       {
         "name": "onAppearance",

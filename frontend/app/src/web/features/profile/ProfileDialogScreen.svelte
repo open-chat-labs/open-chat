@@ -9,6 +9,8 @@
         askForNotificationPermission,
         buildUserAvatarUrl,
         buildUserBackgroundUrl,
+        chitStateStore,
+        currentStreak,
         currentUserIdStore,
         currentUserProfileStore,
         fontScaleStore,
@@ -42,6 +44,7 @@
         videoMicOn,
         videoSpeakerView,
     } from "@src/stores/settings";
+    import { now500 } from "@src/stores/time";
     import { Ringtone, selectedRingtone } from "@src/stores/video";
     import { blobUrlPattern } from "@src/utils/openchatClient";
     import { themeType } from "@theme/themes";
@@ -56,6 +59,7 @@
         ringtoneKeyOf,
         statsProps,
         themePrefOf,
+        type AppChatSettings,
     } from "./profile.adapter";
 
     let { onClose }: DialogProps<Extract<LinkedDialog, { kind: "profile" }>> = $props();
@@ -81,11 +85,28 @@
     onMount(() => client.refreshCurrentUserProfile());
 
     const header = $derived(
-        profileProps(user, profile, {
-            avatarUrl: buildUserAvatarUrl(blobUrlPattern, userId, profile.avatarId),
-            coverUrl: buildUserBackgroundUrl(blobUrlPattern, userId, profile.backgroundId),
-        }),
+        profileProps(
+            userId,
+            user,
+            profile,
+            // the user's own CHIT, kept up to date as they claim, unlike their summary
+            {
+                streak: currentStreak($chitStateStore, $now500),
+                balance: $chitStateStore.chitBalance,
+            },
+            {
+                avatarUrl: buildUserAvatarUrl(blobUrlPattern, userId, profile.avatarId),
+                coverUrl: buildUserBackgroundUrl(blobUrlPattern, userId, profile.backgroundId),
+            },
+        ),
     );
+
+    // whether a username is free; a check that couldn't be made is a failure to save, not "taken"
+    async function checkHandle(handle: string): Promise<boolean> {
+        const free = await form.username.checkNow(handle);
+        if (form.username.status === "check_failed") throw new Error("username check failed");
+        return free;
+    }
 
     // the dialog saves one field at a time; the username it was given was checked (checkHandle)
     async function save(fields: { name: string; handle: string; about: string }) {
@@ -102,30 +123,42 @@
     // the engagement labels are the app's own strings, translated here
     const engagement = $derived(stats.engagement.map((e) => ({ ...e, label: $_(e.label) })));
 
-    const chatSettings = $derived(
-        chatSettingsProps({
-            enterSend: $enterSend,
-            doubleClickReply: $dclickReply,
-            notificationsGranted: $notificationStatus === "granted",
-            lowBandwidth: $lowBandwidth,
-            hideBlocked: $hideMessagesFromDirectBlocked,
-            cameraOn: $videoCameraOn,
-            micOn: $videoMicOn,
-            speakerView: $videoSpeakerView,
-            offensive: $offensiveEnabledStore,
-            adult: $adultEnabledStore,
-            underReview: $underReviewEnabledStore,
-            ringtone: $selectedRingtone,
-        }),
-    );
+    const storedChatSettings: AppChatSettings = $derived({
+        enterSend: $enterSend,
+        doubleClickReply: $dclickReply,
+        notificationsGranted: $notificationStatus === "granted",
+        lowBandwidth: $lowBandwidth,
+        hideBlocked: $hideMessagesFromDirectBlocked,
+        cameraOn: $videoCameraOn,
+        micOn: $videoMicOn,
+        speakerView: $videoSpeakerView,
+        offensive: $offensiveEnabledStore,
+        adult: $adultEnabledStore,
+        underReview: $underReviewEnabledStore,
+        ringtone: $selectedRingtone,
+    });
+    const chatSettings = $derived(chatSettingsProps(storedChatSettings));
 
-    function toggleModerationFlag(flag: ModerationFlag) {
-        client.setModerationFlags($moderationFlagsEnabledStore ^ flag);
+    function toggleModerationFlag(flag: ModerationFlag): Promise<unknown> {
+        return client.setModerationFlags($moderationFlagsEnabledStore ^ flag);
     }
 
-    // the dialog sends all its settings for a change of one
-    function changeChatSettings(next: ChatSettings) {
-        for (const key of changedChatSettings(chatSettings, next)) {
+    // as the old UI: asking turns them on, off only stops showing them here. Where there are no
+    // notifications, asking would throw
+    async function setNotifications(on: boolean): Promise<void> {
+        if (!on) return setSoftDisabled(true);
+        if ($notificationStatus === "unsupported") return;
+        try {
+            await askForNotificationPermission();
+        } catch (err) {
+            console.warn("Unable to ask for notification permission", err);
+        }
+    }
+
+    // the dialog sends its settings for a change of one, and shows the change until this settles
+    async function changeChatSettings(next: ChatSettings): Promise<void> {
+        const pending: Promise<unknown>[] = [];
+        for (const key of changedChatSettings(storedChatSettings, next)) {
             switch (key) {
                 case "enterSends":
                     enterSend.set(next.enterSends);
@@ -134,9 +167,7 @@
                     dclickReply.set(next.doubleClick);
                     break;
                 case "notifications":
-                    // as the old UI: asking turns them on, off only stops showing them here
-                    if (next.notifications) askForNotificationPermission();
-                    else setSoftDisabled(true);
+                    pending.push(setNotifications(next.notifications));
                     break;
                 case "lowBandwidth":
                     lowBandwidth.set(next.lowBandwidth);
@@ -154,19 +185,20 @@
                     videoSpeakerView.set(next.activeSpeaker);
                     break;
                 case "offensive":
-                    toggleModerationFlag(ModerationFlags.Offensive);
+                    pending.push(toggleModerationFlag(ModerationFlags.Offensive));
                     break;
                 case "adult":
-                    toggleModerationFlag(ModerationFlags.Adult);
+                    pending.push(toggleModerationFlag(ModerationFlags.Adult));
                     break;
                 case "underReview":
-                    toggleModerationFlag(ModerationFlags.UnderReview);
+                    pending.push(toggleModerationFlag(ModerationFlags.UnderReview));
                     break;
                 case "ringtone":
                     selectedRingtone.set(ringtoneKeyOf(next.ringtone));
                     break;
             }
         }
+        await Promise.allSettled(pending);
     }
 
     function previewRingtone(tone: ChatSettings["ringtone"]): () => void {
@@ -184,8 +216,20 @@
     }
 </script>
 
+<!-- each prop on its own: a spread that changes (the streak's clock) would take the dialog back to
+     its first section -->
 <ProfileDialog
-    {...header}
+    userId={header.userId}
+    handle={header.handle}
+    name={header.name}
+    about={header.about}
+    joined={header.joined}
+    streak={header.streak}
+    balance={header.balance}
+    isDiamond={header.isDiamond}
+    isVerified={header.isVerified}
+    avatar={header.avatar}
+    cover={header.cover}
     sections={SECTIONS}
     chitEnabled={!$disableChit}
     onlineMinutes={stats.onlineMinutes}
@@ -200,7 +244,7 @@
     {onClose}
     onDiamond={() => publish("upgrade")}
     onSave={save}
-    checkHandle={(handle) => form.username.checkNow(handle)}
+    {checkHandle}
     onLogout={() => client.logout()}
     onChatSettings={changeChatSettings}
     onPreviewRingtone={previewRingtone}

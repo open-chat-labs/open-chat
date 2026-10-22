@@ -46,14 +46,16 @@ const settings: AppChatSettings = {
 
 describe("the profile dialog's props", () => {
     test("the profile pane", () => {
-        expect(profileProps(user, profile, { avatarUrl: "/a.png", coverUrl: undefined })).toEqual({
-            userId: "u1",
+        const chit = { streak: 3, balance: 900 };
+        const images = { avatarUrl: "/a.png", coverUrl: undefined };
+        expect(profileProps("me", user, profile, chit, images)).toEqual({
+            userId: "me",
             handle: "julian",
             name: "",
             about: "hello",
             joined: 1_700_000_000_000,
-            streak: 7,
-            balance: 1200,
+            streak: 3,
+            balance: 900,
             isDiamond: true,
             isVerified: true,
             avatar: 'url("/a.png") center / cover no-repeat',
@@ -88,11 +90,18 @@ describe("the profile dialog's props", () => {
     });
 
     test("only the settings that changed are written", () => {
-        const before = chatSettingsProps(settings);
-        expect(changedChatSettings(before, { ...before, lowBandwidth: true })).toEqual([
+        const shown = chatSettingsProps(settings);
+        expect(changedChatSettings(settings, { ...shown, lowBandwidth: true })).toEqual([
             "lowBandwidth",
         ]);
-        expect(changedChatSettings(before, before)).toEqual([]);
+        expect(changedChatSettings(settings, shown)).toEqual([]);
+    });
+
+    test("picking the default ringtone replaces one the app no longer has", () => {
+        const retired = { ...settings, ringtone: "retired" };
+        const shown = chatSettingsProps(retired);
+        expect(shown.ringtone).toBe("boring");
+        expect(changedChatSettings(retired, shown)).toEqual(["ringtone"]);
     });
 
     test("a theme the design doesn't have shows as the system's", () => {

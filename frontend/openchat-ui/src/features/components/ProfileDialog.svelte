@@ -319,7 +319,9 @@
     onChitBribe?: () => void;
     /** Set (or clear, with null) your name in a community. Rolls back with an error on rejection. */
     onCommunityName?: (communityId: string, name: string | null) => Promise<unknown> | void;
-    onChatSettings?: (settings: ChatSettings) => void;
+    /** A change of one setting, with the others as the host sent them. The toggle shows the new value until this
+     *  settles; then the host's `chatSettings` show, so a change it didn't take goes back. */
+    onChatSettings?: (settings: ChatSettings) => Promise<unknown> | void;
     onAppearance?: (patch: { theme?: string; accent?: string; font?: string }) => void;
     /** Clear this device's cache; "Cleared" shows once it resolves. Hidden without it. */
     onClearCache?: () => Promise<unknown> | void;
@@ -631,17 +633,22 @@
   let previewTimer: ReturnType<typeof setTimeout> | undefined;
   let stopPreview: (() => void) | undefined;
   const chat = $derived<ChatSettings>({ ...CHAT_DEFAULTS, ...chatSettings, ...chatOverrides });
-  // a toggle shows its new value until the host sends settings back, which then win: one the host
-  // didn't take (a notification permission refused) goes back
-  $effect.pre(() => {
-    void chatSettings;
-    untrack(() => (chatOverrides = {}));
-  });
 
-  function setChat<K extends keyof ChatSettings>(key: K, value: ChatSettings[K]) {
-    const current = chat;
+  async function setChat<K extends keyof ChatSettings>(key: K, value: ChatSettings[K]) {
     chatOverrides = { ...chatOverrides, [key]: value };
-    onChatSettings?.({ ...current, [key]: value });
+    // without a host the toggle keeps its value (the docs)
+    if (!onChatSettings) return;
+    try {
+      // the host's settings, not other toggles still waiting on it
+      await onChatSettings({ ...CHAT_DEFAULTS, ...chatSettings, [key]: value });
+    } finally {
+      // the host's value shows from now on, unless the toggle has changed again meanwhile
+      if (chatOverrides[key] === value) {
+        const rest = { ...chatOverrides };
+        delete rest[key];
+        chatOverrides = rest;
+      }
+    }
   }
 
   function endPreview() {

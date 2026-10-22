@@ -477,6 +477,11 @@
     padding: 0 16px;
   }
 
+  /* Safari before 18.2 reads only this (global.css gives every scrollbar a width) */
+  .vibes.narrow::-webkit-scrollbar {
+    display: none;
+  }
+
   .vibe {
     display: flex;
     align-items: center;

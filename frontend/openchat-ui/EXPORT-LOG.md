@@ -131,11 +131,11 @@
 - The cover and photo edit buttons show only with `onCoverEdit` / `onPhotoEdit`, as the header says of every action ("Actions whose callback is absent are hidden").
 - `engagement` counts may be numbers, shown in the host's locale like the other figures.
 - `memberSince` is optional: without it, the profile shows the date of `joined` in the host's locale.
-- A chats & calls toggle shows its new value until the host sends `chatSettings` back, which then win. The overrides used to stay for the dialog's life, so a setting the host didn't take (a notification permission refused, a restricted-content flag that didn't save) kept showing the user's choice.
+- A chats & calls toggle shows its new value until `onChatSettings` settles (it may return a promise); then the host's `chatSettings` show. The overrides used to stay for the dialog's life, so a setting the host didn't take (a notification permission refused or dismissed, a restricted-content flag that didn't save) kept showing the user's choice. `onChatSettings` gets the host's settings with the one change, not other toggles still waiting.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists them).
 
 ## 2026-10-22 — scrollbars styled everywhere, by hand
 - `global.css` styles every scrollbar as the design's docs do (`Docs.svelte`): thin, a grey thumb (`rgba(128,128,140,.35)`) on no track. Before, only the docs chrome had it, so a host's dialogs and panels (`ProfileDialog`'s chats & calls, say) showed the browser's default.
-- Components that hide their scrollbar (`scrollbar-width: none`) or set it thin keep doing so.
+- Components that hide their scrollbar (`scrollbar-width: none`) or set it thin keep doing so. The two that hide it (`MemeFighterDialog`'s narrow vibes, Learn's narrow tabs) also hide it with `::-webkit-scrollbar { display: none }`, which is all Safari before 18.2 reads.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
 

@@ -1661,6 +1661,11 @@
       scrollbar-width: none;
     }
 
+    /* Safari before 18.2 reads only this (global.css gives every scrollbar a width) */
+    .tabs::-webkit-scrollbar {
+      display: none;
+    }
+
     .tab {
       flex: none;
     }
