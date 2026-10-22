@@ -252,7 +252,10 @@
             crossAxisAlignment={"center"}
             gap={"xs"}
             onClick={onOpenUserProfile}>
-            <Body fontWeight={"bold"} maxLines={1} colour={"textSecondary"}>
+            <Body
+                fontWeight={"bold"}
+                maxLines={1}
+                colour={mine ? "chatTextSent" : "textSecondary"}>
                 {senderDisplayName}
             </Body>
             <Badges

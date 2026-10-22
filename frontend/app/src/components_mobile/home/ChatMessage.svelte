@@ -710,6 +710,7 @@
                                     {canShare}
                                     deleted={msg.deleted}
                                     {me}
+                                    alignEnd={mine}
                                     {canReact}
                                     {canPin}
                                     {canTip}
