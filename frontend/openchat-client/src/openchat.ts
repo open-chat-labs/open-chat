@@ -805,6 +805,17 @@ type SendHooks = {
     rulesDeclined(): void;
 };
 
+// The links in a message to other OpenChat messages, whose previews are shown on it
+function linkedMessageUrls(content: MessageContent): string[] {
+    return content.kind === "text_content"
+        ? extractMessagePreviews(content.text).map((p) => p.url)
+        : [];
+}
+
+function sameUrls(a: string[], b: string[]): boolean {
+    return a.length === b.length && a.every((url) => b.includes(url));
+}
+
 // The users who are known not to be members of the chat or community with this key, and the lookups
 // in flight of those who may be, so that nobody is looked up twice
 type MemberLookups = {
@@ -5447,9 +5458,8 @@ export class OpenChat {
         // The agent fills in the previews of the OpenChat messages a message links to only for the
         // messages it loads, so they're looked up here for a message being sent. They're only shown,
         // never sent, so the send doesn't wait for them.
-        const content = messageEvent.event.content;
         const messagePreviewsPromise =
-            content.kind === "text_content" && extractMessagePreviews(content.text).length > 0
+            linkedMessageUrls(messageEvent.event.content).length > 0
                 ? this.#loadMessagePreviews(chat, messageContext, messageEvent)
                 : undefined;
 
@@ -5619,12 +5629,12 @@ export class OpenChat {
     }
 
     // The previews of the OpenChat messages that a message links to, which the agent otherwise fills
-    // in only for the messages it loads
+    // in only for the messages it loads. Undefined if they couldn't be looked up.
     async #lookUpMessagePreviews(
         chat: ChatSummary,
         threadRootMessageIndex: number | undefined,
         event: EventWrapper<Message>,
-    ): Promise<RehydratedMessagePreview[]> {
+    ): Promise<RehydratedMessagePreview[] | undefined> {
         try {
             const rehydrated = await this.#worker.send({
                 kind: "rehydrateMessage",
@@ -5637,7 +5647,7 @@ export class OpenChat {
             return rehydrated.event.messagePreviews;
         } catch (err) {
             console.warn("Unable to load the messages a message links to", err);
-            return [];
+            return undefined;
         }
     }
 
@@ -5648,11 +5658,12 @@ export class OpenChat {
         messageContext: MessageContext,
         messageEvent: EventWrapper<Message>,
     ): Promise<RehydratedMessagePreview[]> {
-        const messagePreviews = await this.#lookUpMessagePreviews(
-            chat,
-            messageContext.threadRootMessageIndex,
-            messageEvent,
-        );
+        const messagePreviews =
+            (await this.#lookUpMessagePreviews(
+                chat,
+                messageContext.threadRootMessageIndex,
+                messageEvent,
+            )) ?? [];
         if (messagePreviews.length > 0) {
             localUpdates.setUnconfirmedPreviews(messageContext, messageEvent.event.messageId, {
                 messagePreviews,
@@ -5679,52 +5690,52 @@ export class OpenChat {
         );
     }
 
-    // An edit can change which messages a message links to, so its message previews are refreshed:
-    // those of the messages it still links to stay, the rest go, and any it now links to are looked
-    // up. The undo it returns also stops a lookup still in flight from adding them.
+    // An edit can change which messages a message links to, and so its message previews: those of
+    // the messages it still links to stay, the rest go, and any it now links to are looked up
     #refreshEditedMessagePreviews(
         chat: ChatSummary,
         messageContext: MessageContext,
-        edited: EventWrapper<Message>,
+        editingEvent: EventWrapper<Message>,
+        edited: Message,
     ): UndoLocalUpdate {
-        const { content, messageId, messagePreviews } = edited.event;
-        const urls =
-            content.kind === "text_content"
-                ? extractMessagePreviews(content.text).map((p) => p.url)
-                : [];
-        const kept = messagePreviews.filter((p) => urls.includes(p.url));
-        if (kept.length === messagePreviews.length && kept.length === urls.length) {
+        const urls = linkedMessageUrls(edited.content);
+        if (sameUrls(urls, linkedMessageUrls(editingEvent.event.content))) {
             return () => {};
         }
-        const refresh = {
-            undone: false,
-            undo: localUpdates.setEditedMessagePreviews(messageId, kept),
-        };
+        const kept = editingEvent.event.messagePreviews.filter((p) => urls.includes(p.url));
+        const refresh = { undo: localUpdates.setEditedMessagePreviews(edited.messageId, kept) };
         if (kept.length < urls.length) {
-            void this.#lookUpEditedMessagePreviews(chat, messageContext, edited, refresh);
+            void this.#lookUpEditedMessagePreviews(
+                chat,
+                messageContext,
+                editingEvent,
+                edited,
+                refresh,
+            );
         }
-        return () => {
-            refresh.undone = true;
-            refresh.undo();
-        };
+        return () => refresh.undo();
     }
 
     async #lookUpEditedMessagePreviews(
         chat: ChatSummary,
         messageContext: MessageContext,
-        edited: EventWrapper<Message>,
-        refresh: { undone: boolean; undo: UndoLocalUpdate },
+        editingEvent: EventWrapper<Message>,
+        edited: Message,
+        refresh: { undo: UndoLocalUpdate },
     ): Promise<void> {
         const messagePreviews = await this.#lookUpMessagePreviews(
             chat,
             messageContext.threadRootMessageIndex,
-            edited,
+            { ...editingEvent, event: edited },
         );
-        if (!refresh.undone) {
-            refresh.undo = localUpdates.setEditedMessagePreviews(
-                edited.event.messageId,
-                messagePreviews,
-            );
+        // Not if the edit has since been refused, or edited again to link to other messages
+        const current = localUpdates.editedContent(edited.messageId);
+        if (
+            messagePreviews !== undefined &&
+            current !== undefined &&
+            sameUrls(linkedMessageUrls(current), linkedMessageUrls(edited.content))
+        ) {
+            refresh.undo = localUpdates.setEditedMessagePreviews(edited.messageId, messagePreviews);
         }
     }
 
@@ -6176,10 +6187,12 @@ export class OpenChat {
 
             // Apply content update to local state immediately — don't block on og preview fetch.
             const undo = localUpdates.markMessageContentEdited(msg, updatedBlockLevelMarkdown);
-            const undoMessagePreviews = this.#refreshEditedMessagePreviews(chat, messageContext, {
-                ...editingEvent,
-                event: msg,
-            });
+            const undoMessagePreviews = this.#refreshEditedMessagePreviews(
+                chat,
+                messageContext,
+                editingEvent,
+                msg,
+            );
             localUpdates.draftMessages.delete(messageContext);
 
             const newAchievement = !achievementsStore.value.has("edited_message");

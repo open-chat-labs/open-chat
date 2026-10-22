@@ -34,6 +34,7 @@ import {
     type CommunitySummary,
     type EventWrapper,
     type Message,
+    type MessageContext,
     type RehydratedMessagePreview,
     type RulesAcceptanceResolver,
     type SendMessageOutcome,
@@ -412,38 +413,48 @@ describe("sending from the composer", () => {
         });
 
         describe("edited", () => {
+            const url2 = `https://oc.app/community/${here.communityId}/channel/1/6`;
             // each test edits a message of its own, since local updates outlive a test
             let nextMessageId = 1000n;
-            let editing: EventWrapper<Message>;
+            let messageId: bigint;
 
             // a message in the chat, with `text` and the previews it was loaded with
             function inChat(text: string, messagePreviews: RehydratedMessagePreview[]) {
-                editing = {
+                messageId = nextMessageId++;
+                const event: EventWrapper<Message> = {
                     index: 1,
                     timestamp: 1n,
                     event: {
                         ...linked.message,
-                        messageId: nextMessageId++,
+                        messageId,
                         messageIndex: 0,
                         sender: "me",
                         content: { kind: "text_content", text },
                         messagePreviews,
                     },
                 };
-                currentChatVisit()?.updateEvents(() => [editing]);
+                currentChatVisit()?.updateEvents(() => [event]);
             }
 
-            async function edit(text: string) {
-                void client.editMessageWithAttachment(context, text, false, undefined, editing);
+            // the message as the chat shows it, which is what gets edited
+            function shown(): EventWrapper<Message> | undefined {
+                return eventsStore.value.find(
+                    (e): e is EventWrapper<Message> =>
+                        e.event.kind === "message" && e.event.messageId === messageId,
+                );
+            }
+
+            async function edit(text: string, messageContext: MessageContext = context) {
+                const editing = shown();
+                if (editing === undefined) throw new Error("the message isn't in the chat");
+                void client.editMessageWithAttachment(
+                    messageContext,
+                    text,
+                    false,
+                    undefined,
+                    editing,
+                );
                 await vi.advanceTimersByTimeAsync(0);
-            }
-
-            function shown(): Message | undefined {
-                const event = eventsStore.value.find(
-                    (e) =>
-                        e.event.kind === "message" && e.event.messageId === editing.event.messageId,
-                )?.event;
-                return event?.kind === "message" ? event : undefined;
             }
 
             const lookups = () => requests.filter((r) => r.kind === "rehydrateMessage");
@@ -451,23 +462,47 @@ describe("sending from the composer", () => {
             test("to link to a message, shows its preview once it's loaded", async () => {
                 inChat("hello", []);
                 await edit(`see ${url}`);
-                expect(shown()?.messagePreviews).toEqual([]);
+                expect(shown()?.event.messagePreviews).toEqual([]);
                 await loadLinked("found");
-                expect(shown()?.messagePreviews).toEqual([linked]);
+                expect(shown()?.event.messagePreviews).toEqual([linked]);
             });
 
             test("to drop the link, drops its preview straight away", async () => {
                 inChat(`see ${url}`, [linked]);
                 await edit("never mind");
-                expect(shown()?.messagePreviews).toEqual([]);
+                expect(shown()?.event.messagePreviews).toEqual([]);
                 expect(lookups()).toHaveLength(0);
             });
 
             test("keeping the link, keeps its preview without looking it up", async () => {
                 inChat(`see ${url}`, [linked]);
                 await edit(`see ${url} again`);
-                expect(shown()?.messagePreviews).toEqual([linked]);
+                expect(shown()?.event.messagePreviews).toEqual([linked]);
                 expect(lookups()).toHaveLength(0);
+            });
+
+            test("to add a link, keeps the others' previews if it can't be looked up", async () => {
+                vi.spyOn(console, "warn").mockImplementation(() => {});
+                inChat(`see ${url}`, [linked]);
+                await edit(`see ${url} and ${url2}`);
+                await loadLinked("failed");
+                expect(shown()?.event.messagePreviews).toEqual([linked]);
+            });
+
+            test("again, to drop the link before it's loaded, doesn't show it", async () => {
+                inChat("hello", []);
+                await edit(`see ${url}`);
+                await edit("hello again");
+                await loadLinked("found");
+                expect(shown()?.event.messagePreviews).toEqual([]);
+            });
+
+            test("again, keeping the link before it's loaded, shows it once it is", async () => {
+                inChat("hello", []);
+                await edit(`see ${url}`);
+                await edit(`see ${url} now`);
+                await loadLinked("found");
+                expect(shown()?.event.messagePreviews).toEqual([linked]);
             });
 
             test("unsuccessfully, doesn't show the preview it went on to load", async () => {
@@ -477,8 +512,33 @@ describe("sending from the composer", () => {
                 editResult.resolve({ kind: "failure" });
                 await vi.advanceTimersByTimeAsync(0);
                 await loadLinked("found");
-                expect(shown()?.content).toEqual({ kind: "text_content", text: "hello" });
-                expect(shown()?.messagePreviews).toEqual([]);
+                expect(shown()?.event.content).toEqual({ kind: "text_content", text: "hello" });
+                expect(shown()?.event.messagePreviews).toEqual([]);
+            });
+
+            test("unsuccessfully, drops the preview it had already loaded", async () => {
+                inChat("hello", []);
+                await edit(`see ${url}`);
+                await loadLinked("found");
+                editResult.resolve({ kind: "failure" });
+                await vi.advanceTimersByTimeAsync(0);
+                expect(shown()?.event.content).toEqual({ kind: "text_content", text: "hello" });
+                expect(shown()?.event.messagePreviews).toEqual([]);
+            });
+
+            test("in a thread, looks the linked message up in the thread", async () => {
+                inChat("hello", []);
+                await edit(`see ${url}`, { chatId, threadRootMessageIndex: 3 });
+                expect(lookups()[0]).toMatchObject({ threadRootMessageIndex: 3 });
+            });
+
+            test("to drop the link before a send's lookup lands, isn't undone by it", async () => {
+                await sendLink();
+                await confirm();
+                messageId = sentMessage()?.messageId ?? 0n;
+                await edit("never mind");
+                await loadLinked("found");
+                expect(shown()?.event.messagePreviews).toEqual([]);
             });
         });
     });

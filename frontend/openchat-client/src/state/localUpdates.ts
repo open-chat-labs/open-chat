@@ -955,6 +955,11 @@ export class GlobalLocalState {
         );
     }
 
+    // The content of an edit to the message that hasn't yet been refused or expired
+    editedContent(messageId: bigint): MessageContent | undefined {
+        return messageLocalUpdates.value.get(messageId)?.editedContent;
+    }
+
     setEditedMessagePreviews(
         messageId: bigint,
         messagePreviews: RehydratedMessagePreview[],
