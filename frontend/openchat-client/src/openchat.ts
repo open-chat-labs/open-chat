@@ -401,7 +401,7 @@ import { get, type Unsubscriber } from "svelte/store";
 import { AndroidWebAuthnErrorCode } from "tauri-plugin-oc-api";
 import type { OpenChatConfig } from "./config";
 import { approveFromExternalWallet, type SignerWallet, type WalletAccount } from "./utils/signer";
-import { unarchiveChatsWithUnread } from "./utils/autoUnarchive";
+import { unarchiveChatsReportingFailure, unarchiveChatsWithUnread } from "./utils/autoUnarchive";
 import {
     FilteredProposals,
     achievementsStore,
@@ -942,7 +942,7 @@ export class OpenChat {
     #videoCallsInProgress: Set<bigint> = new Set();
     #serverVideoCallsInProgress: ChatMap<bigint> = new ChatMap();
     // Archived chats this client is bringing out of the archive, until each request settles
-    #autoUnarchiving = new ChatSet();
+    #unarchiving = new ChatSet();
     #locale!: string;
     #vapidPublicKey: string;
     #getBtcAddressPromise: Promise<string> | undefined = undefined;
@@ -4226,7 +4226,9 @@ export class OpenChat {
         if (chat !== undefined) {
             // If an archived chat has been explicitly selected (for example by searching for it) then un-archive it
             if (chat.membership.archived) {
-                this.unarchiveChats([chat.id]);
+                void unarchiveChatsReportingFailure([chat.id], this.#unarchiving, (chatIds) =>
+                    this.unarchiveChats(chatIds),
+                );
             }
 
             // if it's a known chat let's select it
@@ -8828,7 +8830,7 @@ export class OpenChat {
         // Only the chats in this answer can have gained any
         unarchiveChatsWithUnread(
             chatsAddedUpdated.map((chat) => chat.id),
-            this.#autoUnarchiving,
+            this.#unarchiving,
             (chatIds) => this.unarchiveChats(chatIds),
         );
 

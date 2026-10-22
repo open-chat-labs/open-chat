@@ -155,3 +155,70 @@ describe("unarchiving archived chats that have unread messages", () => {
         expect(requests).toHaveLength(2);
     });
 });
+
+// Selecting an archived chat (from search, say) takes it out of the archive too, and a failure
+// there reaches the same `unarchiveChatFailed` toast every tree shows
+describe("unarchiving a chat by selecting it", () => {
+    let client: OpenChat;
+    let requests: WorkerRequest[];
+    let answers: ((ok: boolean) => void)[];
+    let failures: number;
+    let unsubscribe: () => void;
+
+    beforeEach(() => {
+        vi.stubGlobal("Worker", FakeWorker);
+        vi.spyOn(console, "debug").mockImplementation(() => {});
+        requests = [];
+        answers = [];
+        vi.spyOn(WorkerAgent.prototype, "send").mockImplementation(((req: WorkerRequest) => {
+            if (req.kind !== "unarchiveChats") return new Promise(() => {});
+            requests.push(req);
+            return new Promise((resolve) => {
+                answers.push((ok) => resolve({ kind: ok ? "success" : "failure" }));
+            });
+        }) as never);
+        const chats = new ChatMap<DirectChatSummary>();
+        const chat = directChat("a", true, 2);
+        chats.set(chat.id, chat);
+        serverDirectChatsStore.set(chats);
+        routeStore.set({
+            kind: "global_chat_selected_route",
+            scope: { kind: "chats" },
+            chatId: direct("a"),
+            chatType: "direct_chat",
+            open: false,
+        });
+        failures = 0;
+        unsubscribe = subscribe("unarchiveChatFailed", () => failures++);
+        client = new OpenChat(config());
+    });
+
+    afterEach(() => {
+        unsubscribe();
+        localUpdates.clearAll();
+        vi.unstubAllGlobals();
+        vi.restoreAllMocks();
+    });
+
+    const settled = () => new Promise((resolve) => setTimeout(resolve));
+
+    test("1. a failed un-archive on select is reported once and the chat stays archived", async () => {
+        void client.setSelectedChat(direct("a"));
+        expect(requests).toEqual([{ kind: "unarchiveChats", chatIds: [direct("a")] }]);
+        answers[0](false);
+        await settled();
+        expect(archived("a")).toBe(true);
+        expect(failures).toBe(1);
+    });
+
+    test("2. selecting a chat whose auto-unarchive is in flight asks once and reports once", async () => {
+        void unarchiveChatsWithUnread([direct("a")], new ChatSet(), (chatIds) =>
+            client.unarchiveChats(chatIds),
+        );
+        void client.setSelectedChat(direct("a"));
+        expect(requests).toHaveLength(1);
+        answers.forEach((answer) => answer(false));
+        await settled();
+        expect(failures).toBe(1);
+    });
+});
