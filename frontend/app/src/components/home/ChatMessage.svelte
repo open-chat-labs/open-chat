@@ -28,6 +28,7 @@
     } from "../../utils/onDeviceTranslation.svelte";
     import { removeQueryStringParam } from "../../utils/urls";
     import Avatar from "../Avatar.svelte";
+    import { BRIDGE_PLATFORM_ICONS } from "@src/utils/bridgedAccounts";
     import BotMessageContext from "../bots/BotMessageContext.svelte";
     import BotProfile, { type BotProfileProps } from "../bots/BotProfile.svelte";
     import HoverIcon from "../HoverIcon.svelte";
@@ -583,6 +584,13 @@
                                               ? client.bridgedAvatarUrl(bridged, bridgedUser)
                                               : client.userAvatarUrl(sender)}
                                         userId={msg.sender}
+                                        badge={bridged !== undefined
+                                            ? {
+                                                  url: BRIDGE_PLATFORM_ICONS[bridged.kind],
+                                                  label: BRIDGE_PLATFORM_NAMES[bridged.kind],
+                                              }
+                                            : undefined}
+                                        statusBorder={"var(--currentChat-msgs-bg)"}
                                         size={$mobileWidth
                                             ? AvatarSize.Small
                                             : AvatarSize.Default} />

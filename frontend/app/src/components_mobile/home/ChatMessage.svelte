@@ -20,6 +20,7 @@
         currentUserIdStore,
         currentUserStore,
         allUsersStore,
+        BRIDGE_PLATFORM_NAMES,
         bridgedFrom,
         bridgedUserKey,
         bridgedUsersStore,
@@ -54,6 +55,7 @@
     import { messageSwipeAction } from "../../utils/messageSwipe";
     import { canShareMessage } from "../../utils/share";
     import { removeQueryStringParam } from "../../utils/urls";
+    import { BRIDGE_PLATFORM_ICONS } from "@src/utils/bridgedAccounts";
     import AreYouSure from "../AreYouSure.svelte";
     import BotMessageContext from "../bots/BotMessageContext.svelte";
     import BotProfile, { type BotProfileProps } from "../bots/BotProfile.svelte";
@@ -655,7 +657,14 @@
                                 : bridged !== undefined
                                   ? client.bridgedAvatarUrl(bridged, bridgedUser)
                                   : client.userAvatarUrl(sender)}
-                            size={"sm"}></Avatar>
+                            size={"sm"}>
+                            {#if bridged !== undefined}
+                                <img
+                                    class="bridge-badge"
+                                    src={BRIDGE_PLATFORM_ICONS[bridged.kind]}
+                                    alt={BRIDGE_PLATFORM_NAMES[bridged.kind]} />
+                            {/if}
+                        </Avatar>
                     </div>
                 {/if}
                 {@const hasThread = threadSummary !== undefined && !inThread}
@@ -852,6 +861,17 @@
 
     .avatar:not(.first) {
         visibility: hidden;
+    }
+
+    // The logo of the platform a message was relayed from, over the avatar's bottom right corner
+    .bridge-badge {
+        border-radius: var(--rad-circle);
+        box-shadow: 0 0 0 2px var(--chat-background);
+        width: 40%;
+        height: 40%;
+        position: absolute;
+        bottom: -2px;
+        inset-inline-end: -2px;
     }
 
     // TODO is this used at all?
