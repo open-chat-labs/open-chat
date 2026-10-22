@@ -413,7 +413,16 @@ fn bridge_bots_relay_messages_as_their_authors() {
         matches!(&response, StartLinkResponse::Error(e) if e.matches_code(OCErrorCode::AlreadyAdded)),
         "{response:?}"
     );
-    start_link(env, owner.principal, user_index, BridgePlatform::Telegram);
+    let code = start_link(env, owner.principal, user_index, BridgePlatform::Telegram);
+    let response = link(env, telegram_bot_principal, user_index, from_telegram.clone(), &code);
+    assert!(matches!(response, LinkResponse::Success(_)), "{response:?}");
+    let user_index_canister::linked_bridged_users::Response::Success(linked) =
+        client::user_index::linked_bridged_users(env, owner.principal, user_index, &Empty {});
+    let mut linked: Vec<_> = linked.into_iter().map(|u| u.user.id()).collect();
+    linked.sort();
+    let mut expected = vec![renamed.id(), from_telegram.id()];
+    expected.sort();
+    assert_eq!(linked, expected);
 
     // The user can unlink it from their profile
     let response = unlink(env, owner.principal, user_index, &renamed);
