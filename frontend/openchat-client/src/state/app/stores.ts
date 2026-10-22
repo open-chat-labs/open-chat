@@ -836,7 +836,8 @@ export const pinnedChatsStore = derived(
 
         for (const [chatId, updates] of localUpdates.entries()) {
             for (const scope of updates.added) {
-                const ids = mergedPinned.get(scope) ?? [];
+                // Copy: the server's array must not be mutated, or undoing the pin can't remove it
+                const ids = [...(mergedPinned.get(scope) ?? [])];
                 if (!ids.find((id) => chatIdentifiersEqual(id, chatId))) {
                     ids.unshift(chatId);
                 }
