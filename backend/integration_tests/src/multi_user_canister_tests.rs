@@ -2777,13 +2777,13 @@ fn groups_and_communities_joined_are_held_per_user_in_a_multi_user_canister() {
     // Only a group Bob is in can send him events. Those from any other caller are dropped.
     let now = now_millis(env);
     let achievement_event = |id, achievement| {
-        multi_user_canister::c2c_group_canister_v2::Args::new(vec![IdempotentEnvelope {
+        multi_user_canister::c2c_group::Args::new(vec![IdempotentEnvelope {
             created_at: now,
             idempotency_id: id,
             value: (bob_id, multi_user_canister::GroupCanisterEvent::Achievement(achievement)),
         }])
     };
-    client::user::c2c_group_canister_v2(
+    client::user::c2c_group(
         env,
         random_principal(),
         canister_id,
@@ -2793,7 +2793,7 @@ fn groups_and_communities_joined_are_held_per_user_in_a_multi_user_canister() {
         &initial_state(env, bob, canister_id),
         Achievement::ReactedToMessage
     ));
-    client::user::c2c_group_canister_v2(
+    client::user::c2c_group(
         env,
         group.into(),
         canister_id,
@@ -2836,7 +2836,7 @@ fn groups_and_communities_joined_are_held_per_user_in_a_multi_user_canister() {
     );
 
     // Events the group had queued for Bob before removing him are dropped
-    client::user::c2c_group_canister_v2(env, group.into(), canister_id, &achievement_event(3, Achievement::SentGiphy));
+    client::user::c2c_group(env, group.into(), canister_id, &achievement_event(3, Achievement::SentGiphy));
     assert!(!has_achievement(
         &initial_state(env, bob, canister_id),
         Achievement::SentGiphy
@@ -3275,15 +3275,15 @@ fn local_user_index_events_update_the_state_each_user_holds() {
 
     // A referred user in another canister reaching a status is sent as a `SetReferralStatusV2`
     // event from their canister
-    let response = client::user::c2c_user_canister_v2(
+    let response = client::user::c2c_user(
         env,
         carol.canister(),
         canister_id,
-        &multi_user_canister::c2c_user_canister_v2::Args {
+        &multi_user_canister::c2c_user::Args {
             events: vec![IdempotentEnvelope {
                 created_at: now_millis(env),
                 idempotency_id: 1,
-                value: multi_user_canister::c2c_user_canister_v2::Event {
+                value: multi_user_canister::c2c_user::Event {
                     sender: carol.user_id,
                     recipient: alice_id,
                     event: UserCanisterEvent::SetReferralStatusV2(Box::new(multi_user_canister::SetReferralStatusV2 {
@@ -3294,7 +3294,7 @@ fn local_user_index_events_update_the_state_each_user_holds() {
         },
     );
     assert!(
-        matches!(response, multi_user_canister::c2c_user_canister_v2::Response::Success),
+        matches!(response, multi_user_canister::c2c_user::Response::Success),
         "{response:?}"
     );
     let alice_state_after = initial_state(env, alice, canister_id);
@@ -3864,11 +3864,11 @@ fn send_local_user_index_events(
     user_id: UserId,
     events: Vec<IdempotentEnvelope<LocalUserIndexEvent>>,
 ) {
-    let response = client::user::c2c_local_user_index_v2(
+    let response = client::user::c2c_local_index(
         env,
         local_user_index,
         canister_id,
-        &multi_user_canister::c2c_local_user_index_v2::Args {
+        &multi_user_canister::c2c_local_index::Args {
             events: events.into_iter().map(|event| paired(user_id, event)).collect(),
         },
     );
@@ -4132,11 +4132,11 @@ fn v2_events_are_applied_to_the_user_each_is_paired_with() {
 
     // One call from the LocalUserIndex carries events for both users, interleaved, plus one for a
     // user who isn't in this canister, which is dropped
-    let response = client::user::c2c_local_user_index_v2(
+    let response = client::user::c2c_local_index(
         env,
         local_user_index,
         canister_id,
-        &multi_user_canister::c2c_local_user_index_v2::Args {
+        &multi_user_canister::c2c_local_index::Args {
             events: vec![
                 paired(alice_id, joined_group(env, 1, group1)),
                 paired(bob_id, joined_group(env, 2, group2)),
@@ -4176,14 +4176,11 @@ fn v2_events_are_applied_to_the_user_each_is_paired_with() {
         idempotency_id: id,
         value: multi_user_canister::GroupCanisterEvent::Achievement(Achievement::ReactedToMessage),
     };
-    client::user::c2c_group_canister_v2(
+    client::user::c2c_group(
         env,
         group2.into(),
         canister_id,
-        &multi_user_canister::c2c_group_canister_v2::Args::new(vec![
-            paired(alice_id, achievement(1)),
-            paired(bob_id, achievement(2)),
-        ]),
+        &multi_user_canister::c2c_group::Args::new(vec![paired(alice_id, achievement(1)), paired(bob_id, achievement(2))]),
     );
     assert!(!has_achievement(
         &initial_state(env, alice, canister_id),
@@ -4200,11 +4197,11 @@ fn v2_events_are_applied_to_the_user_each_is_paired_with() {
         idempotency_id: id,
         value: multi_user_canister::CommunityCanisterEvent::Achievement(Achievement::SentGiphy),
     };
-    client::user::c2c_community_canister_v2(
+    client::user::c2c_community(
         env,
         community.into(),
         canister_id,
-        &multi_user_canister::c2c_community_canister_v2::Args::new(vec![
+        &multi_user_canister::c2c_community::Args::new(vec![
             paired(alice_id, community_achievement(1)),
             paired(bob_id, community_achievement(2)),
         ]),
@@ -4231,11 +4228,11 @@ fn v2_events_are_applied_to_the_user_each_is_paired_with() {
         })),
     };
     send_local_user_index_events(env, local_user_index, canister_id, bob_id, vec![joined_at(10, now, group4)]);
-    let response = client::user::c2c_local_user_index_v2(
+    let response = client::user::c2c_local_index(
         env,
         local_user_index,
         canister_id,
-        &multi_user_canister::c2c_local_user_index_v2::Args {
+        &multi_user_canister::c2c_local_index::Args {
             events: vec![
                 paired(bob_id, joined_at(10, now, group4)),
                 paired(bob_id, joined_at(11, now - 1, group5)),
@@ -4277,15 +4274,15 @@ fn events_from_users_in_other_canisters_are_applied_to_their_chats() {
     let mut next_id = 0;
     let mut send = |env: &mut PocketIc, caller: Principal, sender: UserId, event: UserCanisterEvent| {
         next_id += 1;
-        let response = client::user::c2c_user_canister_v2(
+        let response = client::user::c2c_user(
             env,
             caller,
             canister_id,
-            &multi_user_canister::c2c_user_canister_v2::Args {
+            &multi_user_canister::c2c_user::Args {
                 events: vec![IdempotentEnvelope {
                     created_at: now_millis(env),
                     idempotency_id: next_id,
-                    value: multi_user_canister::c2c_user_canister_v2::Event {
+                    value: multi_user_canister::c2c_user::Event {
                         sender,
                         recipient: bob_id,
                         event,
@@ -4426,18 +4423,18 @@ fn events_from_users_in_other_canisters_are_applied_to_their_chats() {
     let retried = IdempotentEnvelope {
         created_at: now_millis(env),
         idempotency_id: 1_000,
-        value: multi_user_canister::c2c_user_canister_v2::Event {
+        value: multi_user_canister::c2c_user::Event {
             sender: alice.user_id,
             recipient: bob_id,
             event: send_text(random_from_u128(), 1, "once"),
         },
     };
     for _ in 0..2 {
-        client::user::c2c_user_canister_v2(
+        client::user::c2c_user(
             env,
             alice.canister(),
             canister_id,
-            &multi_user_canister::c2c_user_canister_v2::Args {
+            &multi_user_canister::c2c_user::Args {
                 events: vec![retried.clone()],
             },
         );
@@ -4448,15 +4445,15 @@ fn events_from_users_in_other_canisters_are_applied_to_their_chats() {
     );
 
     // An event for a user who isn't in this canister is dropped
-    let response = client::user::c2c_user_canister_v2(
+    let response = client::user::c2c_user(
         env,
         alice.canister(),
         canister_id,
-        &multi_user_canister::c2c_user_canister_v2::Args {
+        &multi_user_canister::c2c_user::Args {
             events: vec![IdempotentEnvelope {
                 created_at: now_millis(env),
                 idempotency_id: 1_001,
-                value: multi_user_canister::c2c_user_canister_v2::Event {
+                value: multi_user_canister::c2c_user::Event {
                     sender: alice.user_id,
                     recipient: UserId::new_indexed(canister_id, 99),
                     event: send_text(random_from_u128(), 2, "nobody"),
@@ -4646,15 +4643,15 @@ fn events_for_users_in_other_canisters_are_sent_to_their_canisters() {
 
     // A canister which isn't a MultiUser canister can't send as one of its "users"
     let impostor = CanisterId::from_text("rrkah-fqaaa-aaaaa-aaaaq-cai").unwrap();
-    let response = client::user::c2c_user_canister_v2(
+    let response = client::user::c2c_user(
         env,
         impostor,
         canister_id,
-        &multi_user_canister::c2c_user_canister_v2::Args {
+        &multi_user_canister::c2c_user::Args {
             events: vec![IdempotentEnvelope {
                 created_at: now_millis(env),
                 idempotency_id: 1,
-                value: multi_user_canister::c2c_user_canister_v2::Event {
+                value: multi_user_canister::c2c_user::Event {
                     sender: UserId::new_indexed(impostor, 1),
                     recipient: bob_id,
                     event: UserCanisterEvent::SetEventsTtl(Box::new(multi_user_canister::SetEventsTtl {
@@ -4675,15 +4672,15 @@ fn events_for_users_in_other_canisters_are_sent_to_their_canisters() {
     );
 
     // Nor can a canister whose user id is its canister id but which is a bot rather than a user
-    let response = client::user::c2c_user_canister_v2(
+    let response = client::user::c2c_user(
         env,
         canister_ids.proposals_bot,
         canister_id,
-        &multi_user_canister::c2c_user_canister_v2::Args {
+        &multi_user_canister::c2c_user::Args {
             events: vec![IdempotentEnvelope {
                 created_at: now_millis(env),
                 idempotency_id: 1,
-                value: multi_user_canister::c2c_user_canister_v2::Event {
+                value: multi_user_canister::c2c_user::Event {
                     sender: canister_ids.proposals_bot.into(),
                     recipient: bob_id,
                     event: UserCanisterEvent::SetEventsTtl(Box::new(multi_user_canister::SetEventsTtl {
@@ -4731,7 +4728,7 @@ fn a_multi_user_canister_is_verified_once_then_trusted_for_any_of_its_users() {
     let message_from = |env: &PocketIc, id: u64, sender: UserId, text: &str| IdempotentEnvelope {
         created_at: now_millis(env),
         idempotency_id: id,
-        value: multi_user_canister::c2c_user_canister_v2::Event {
+        value: multi_user_canister::c2c_user::Event {
             sender,
             recipient: carol_id,
             event: UserCanisterEvent::SendMessages(Box::new(multi_user_canister::SendMessagesArgs {
@@ -4763,11 +4760,11 @@ fn a_multi_user_canister_is_verified_once_then_trusted_for_any_of_its_users() {
         message_from(env, 2, bob_id, "from bob"),
         message_from(env, 3, first.into(), "from the canister"),
     ];
-    let response = client::user::c2c_user_canister_v2(
+    let response = client::user::c2c_user(
         env,
         first,
         second,
-        &multi_user_canister::c2c_user_canister_v2::Args { events: first_batch },
+        &multi_user_canister::c2c_user::Args { events: first_batch },
     );
     assert!(matches!(response, types::SuccessOnly::Success));
     assert_eq!(known_multi_user_canisters(env, second), 1);
@@ -4783,11 +4780,11 @@ fn a_multi_user_canister_is_verified_once_then_trusted_for_any_of_its_users() {
 
     // Once Carol blocks Bob his messages are skipped, while Alice's still arrive
     block_user(env, carol, second, bob_id);
-    let response = client::user::c2c_user_canister_v2(
+    let response = client::user::c2c_user(
         env,
         first,
         second,
-        &multi_user_canister::c2c_user_canister_v2::Args {
+        &multi_user_canister::c2c_user::Args {
             events: vec![
                 message_from(env, 4, bob_id, "blocked"),
                 message_from(env, 5, alice_id, "again"),

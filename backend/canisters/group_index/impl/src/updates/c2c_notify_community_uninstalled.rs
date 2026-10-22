@@ -1,34 +1,9 @@
-use crate::updates::c2c_delete_community::{commit, remove_files};
-use crate::{RuntimeState, mutate_state};
-use canister_api_macros::update;
-use canister_tracing_macros::trace;
+use crate::RuntimeState;
+use crate::updates::c2c_delete_community::commit;
 use constants::OPENCHAT_BOT_USER_ID;
-use group_index_canister::c2c_notify_community_uninstalled::*;
 use oc_error_codes::OCErrorCode;
 use tracing::info;
 use types::{CanisterId, CommunityId, OCResult};
-
-// Called by a LocalUserIndex on finding that one of its communities' canisters has been
-// uninstalled (eg. by the IC once it ran out of cycles). The community's state went with its
-// code, so it can't delete itself and is removed here instead. Its list of members is gone too,
-// so they aren't notified. Each of them stops seeing the community once its LocalUserIndex no
-// longer knows of it.
-#[update(msgpack = true)]
-#[trace]
-fn c2c_notify_community_uninstalled(args: Args) -> Response {
-    let community_id = args.community_id;
-    mutate_state(|state| {
-        c2c_notify_community_uninstalled_impl(args, state)?;
-        remove_files(community_id, state);
-        Ok(())
-    })
-    .into()
-}
-
-fn c2c_notify_community_uninstalled_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    let caller = state.env.caller();
-    community_uninstalled(args.community_id, caller, state)
-}
 
 // Deletes a community whose canister `caller`, which must be the LocalUserIndex controlling it, has
 // found uninstalled
@@ -69,12 +44,8 @@ mod tests {
     fn community_is_deleted_when_notified_by_its_local_user_index() {
         let mut state = setup_runtime_state(local_user_index());
 
-        let result = c2c_notify_community_uninstalled_impl(
-            Args {
-                community_id: community_id(),
-            },
-            &mut state,
-        );
+        let caller = state.env.caller();
+        let result = community_uninstalled(community_id(), caller, &mut state);
 
         assert!(result.is_ok());
         assert!(state.data.private_communities.get(&community_id()).is_none());
@@ -92,12 +63,8 @@ mod tests {
     fn any_other_caller_is_not_authorized() {
         let mut state = setup_runtime_state(Principal::from_slice(&[3]));
 
-        let result = c2c_notify_community_uninstalled_impl(
-            Args {
-                community_id: community_id(),
-            },
-            &mut state,
-        );
+        let caller = state.env.caller();
+        let result = community_uninstalled(community_id(), caller, &mut state);
 
         assert!(matches!(result, Err(error) if error.matches_code(OCErrorCode::InitiatorNotAuthorized)));
         assert!(state.data.private_communities.get(&community_id()).is_some());

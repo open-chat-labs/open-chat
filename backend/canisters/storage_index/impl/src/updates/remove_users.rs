@@ -1,23 +1,6 @@
-use crate::guards::caller_is_user_controller;
-use crate::{RuntimeState, mutate_state};
+use crate::RuntimeState;
 use candid::Principal;
-use canister_tracing_macros::trace;
-use ic_cdk::update;
 use storage_bucket_canister::StorageIndexEvent;
-use storage_index_canister::remove_users::*;
-
-#[update(guard = "caller_is_user_controller")]
-#[trace]
-fn remove_users(args: Args) -> Response {
-    mutate_state(|state| remove_users_impl(args, state))
-}
-
-fn remove_users_impl(args: Args, state: &mut RuntimeState) -> Response {
-    for user_id in args.user_ids {
-        remove_user(user_id, state);
-    }
-    Response::Success
-}
 
 pub(crate) fn remove_user(user_id: Principal, state: &mut RuntimeState) {
     state.data.users.remove(&user_id);

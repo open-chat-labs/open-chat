@@ -1,19 +1,10 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::guards::caller_is_user_index;
-use crate::{CommunityEventPusher, RuntimeState, execute_update_even_if_frozen};
-use canister_api_macros::update;
-use canister_tracing_macros::trace;
+use crate::{CommunityEventPusher, RuntimeState};
 use chat_events::{MessageContentInternal, TextContentInternal};
-use community_canister::c2c_send_moderation_notice::*;
+use community_canister::SendModerationNotice as Args;
 use constants::OPENCHAT_BOT_USER_ID;
 use oc_error_codes::OCErrorCode;
 use types::{Caller, OCResult};
-
-#[update(guard = "caller_is_user_index", msgpack = true)]
-#[trace]
-fn c2c_send_moderation_notice(args: Args) -> Response {
-    execute_update_even_if_frozen(|state| c2c_send_moderation_notice_impl(args, state)).into()
-}
 
 pub(crate) fn c2c_send_moderation_notice_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let now = state.env.now();

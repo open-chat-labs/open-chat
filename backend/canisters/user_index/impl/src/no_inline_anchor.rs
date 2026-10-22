@@ -34,7 +34,7 @@ use local_user_index_canister::{
 ///
 /// Note that types already shared with other msgpack endpoints need no anchor here:
 /// - `BotDefinition` / `BotCommandDefinition` — shared via `register_bot` and `update_bot`
-/// - `MessageContentInitial` — shared via `c2c_local_user_index` (user_index_canister::LocalUserIndexEvent)
+/// - `MessageContentInitial` — shared via `c2c_local_index` (user_index_canister::LocalUserIndexEvent)
 ///
 /// The structs listed below are variant-payload types **unique** to `UserIndexEvent::visit_enum`.
 /// Even though their nested types may be shared, the wrapper struct's own `visit_map` is only

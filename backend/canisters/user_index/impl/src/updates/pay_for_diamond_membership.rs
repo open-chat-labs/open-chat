@@ -18,7 +18,7 @@ use local_user_index_canister::{DiamondMembershipPaymentReceived, UserIndexEvent
 use oc_error_codes::OCErrorCode;
 use rand::RngExt;
 use serde::Serialize;
-use storage_index_canister::add_or_update_users::UserConfig;
+use storage_index_canister::UserConfig;
 use tracing::error;
 use types::icrc2::TransferFromError;
 use types::{CLAIM_TYPE_DIAMOND_MEMBERSHIP, DiamondMembershipPlanDuration, ICP, UserId};

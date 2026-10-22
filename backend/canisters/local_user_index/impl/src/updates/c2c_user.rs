@@ -4,29 +4,19 @@ use canister_api_macros::update;
 use canister_time::now_millis;
 use canister_tracing_macros::trace;
 use local_user_index_canister::UserEvent;
-use local_user_index_canister::c2c_user_canister_v2::*;
+use local_user_index_canister::c2c_user::*;
 use stable_memory_map::StableMemoryMap;
 use std::cell::LazyCell;
 use types::{BotEvent, BotLifecycleEvent, Notification, StreakInsuranceClaim, StreakInsurancePayment, TimestampMillis, UserId};
 use user_index_canister::BotInstalled;
 
-// Takes events from MultiUser canisters. Each event names the user it is from, which must be one of
-// the users the calling canister hosts, other than an event about the canister itself, which names
-// the canister.
-#[update(guard = "caller_is_local_multi_user_canister", msgpack = true)]
-#[trace]
-fn c2c_user_canister_v2(args: ArgsInternal) -> Response {
-    mutate_state(|state| c2c_user_canister_v2_impl(args, state))
-}
-
-// The name for a MultiUser canister's events, which senders switch to; the old one is served until they have
 #[update(guard = "caller_is_local_multi_user_canister", msgpack = true)]
 #[trace]
 fn c2c_user(args: ArgsInternal) -> Response {
-    mutate_state(|state| c2c_user_canister_v2_impl(args, state))
+    mutate_state(|state| c2c_user_impl(args, state))
 }
 
-fn c2c_user_canister_v2_impl(args: ArgsInternal, state: &mut RuntimeState) -> Response {
+fn c2c_user_impl(args: ArgsInternal, state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
     let now = LazyCell::new(now_millis);
     for event in args.events {

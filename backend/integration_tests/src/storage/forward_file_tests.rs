@@ -5,7 +5,7 @@ use candid::Principal;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
-use storage_index_canister::add_or_update_users::UserConfig;
+use storage_index_canister::UserConfig;
 use testing::rng::random_principal;
 use types::{CanisterId, FileId};
 

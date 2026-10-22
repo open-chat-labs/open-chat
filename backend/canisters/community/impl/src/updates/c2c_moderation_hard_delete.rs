@@ -1,23 +1,11 @@
+use crate::RuntimeState;
 use crate::activity_notifications::handle_activity_notification;
-use crate::guards::caller_is_user_index;
 use crate::timer_job_types::DeleteFileReferencesJob;
-use crate::{RuntimeState, execute_update_even_if_frozen};
-use canister_api_macros::update;
 use canister_timer_jobs::Job;
-use canister_tracing_macros::trace;
-use community_canister::c2c_moderation_hard_delete::*;
+use community_canister::ModerationHardDelete as Args;
 use constants::OPENCHAT_BOT_USER_ID;
 use tracing::error;
 use types::{Caller, UnitResult};
-
-// Permanently removes the chat-canister copy of a message after an Upheld verdict. For CSAM the
-// blob remains pinned in the evidence vault under the retention regime; the file-reference
-// release below is ignored by the bucket for quarantined hashes.
-#[update(guard = "caller_is_user_index", msgpack = true)]
-#[trace]
-fn c2c_moderation_hard_delete(args: Args) -> Response {
-    execute_update_even_if_frozen(|state| c2c_moderation_hard_delete_impl(args, state))
-}
 
 pub(crate) fn c2c_moderation_hard_delete_impl(args: Args, state: &mut RuntimeState) -> UnitResult {
     let now = state.env.now();

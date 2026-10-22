@@ -1,12 +1,8 @@
+// The vault operations the UserIndex sends the StorageIndex, which passes them on to the buckets
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
-use storage_bucket_canister::c2c_vault_sync::VaultCaptureMetadata;
+use storage_bucket_canister::VaultCaptureMetadata;
 use types::{BlobReference, TimestampMillis, UserId};
-
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct Args {
-    pub ops: Vec<VaultOp>,
-}
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum VaultOp {
@@ -81,11 +77,6 @@ pub struct DestroyOp {
     pub proposed_by: Option<UserId>,
     #[serde(default)]
     pub confirmed_by: Option<UserId>,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

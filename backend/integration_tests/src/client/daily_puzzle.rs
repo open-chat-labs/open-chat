@@ -8,7 +8,6 @@ generate_msgpack_query_call!(results);
 
 // Updates
 generate_msgpack_update_call!(c2c_pull_puzzles);
-generate_msgpack_update_call!(c2c_report_results);
 generate_msgpack_update_call!(candidates);
 generate_msgpack_update_call!(push_now);
 generate_msgpack_update_call!(regenerate_today);

@@ -6,7 +6,6 @@ pub mod c2c_storage_bucket;
 pub mod c2c_sync_bucket;
 pub mod c2c_user_index;
 pub mod c2c_vault_ops;
-pub mod remove_accessor;
 pub mod remove_users;
 pub mod set_bucket_full;
 pub mod upgrade_bucket_canister_wasm;

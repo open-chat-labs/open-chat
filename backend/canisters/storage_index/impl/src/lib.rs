@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use storage_bucket_canister::StorageIndexEvent;
-use storage_index_canister::c2c_vault_ops::VaultReviewer;
+use storage_index_canister::VaultReviewer;
 use storage_index_canister::init::CyclesDispenserConfig;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
@@ -135,7 +135,7 @@ struct Data {
     // The NCA reporting service's principal + the OC public key, held so each new bucket is
     // seeded with them (a bucket cannot verify a vault-export token without the key)
     #[serde(default)]
-    pub authority_reporter: Option<storage_index_canister::c2c_vault_ops::SetAuthorityReporterOp>,
+    pub authority_reporter: Option<storage_index_canister::SetAuthorityReporterOp>,
     // Every hash upheld as CSAM, learned from the bucket which applied the verdict. Held here
     // so the denylist survives as platform-wide state: it is pushed to all other buckets when
     // it changes, and to each new bucket when it is created.
@@ -293,10 +293,10 @@ impl Data {
         let mut events = Vec::new();
         if !self.vault_reviewers.is_empty() {
             events.push(StorageIndexEvent::VaultOp(Box::new(
-                storage_bucket_canister::c2c_vault_sync::VaultOp::SetReviewers(
+                storage_bucket_canister::VaultOp::SetReviewers(
                     self.vault_reviewers
                         .iter()
-                        .map(|r| storage_bucket_canister::c2c_vault_sync::VaultReviewer {
+                        .map(|r| storage_bucket_canister::VaultReviewer {
                             principal: r.principal,
                             user_id: r.user_id,
                         })
@@ -306,12 +306,10 @@ impl Data {
         }
         if let Some(op) = &self.authority_reporter {
             events.push(StorageIndexEvent::VaultOp(Box::new(
-                storage_bucket_canister::c2c_vault_sync::VaultOp::SetAuthorityReporter(
-                    storage_bucket_canister::c2c_vault_sync::SetAuthorityReporterOp {
-                        principal: op.principal,
-                        oc_public_key_pem: op.oc_public_key_pem.clone(),
-                    },
-                ),
+                storage_bucket_canister::VaultOp::SetAuthorityReporter(storage_bucket_canister::SetAuthorityReporterOp {
+                    principal: op.principal,
+                    oc_public_key_pem: op.oc_public_key_pem.clone(),
+                }),
             )));
         }
         // A new bucket starts with the full CSAM denylist, otherwise upheld content could be
@@ -320,13 +318,11 @@ impl Data {
         let derived = self.derived_csam_hashes.iter().map(|(h, r)| (*h, *r, true));
         for (hash, report_index, derived) in verified.chain(derived) {
             events.push(StorageIndexEvent::VaultOp(Box::new(
-                storage_bucket_canister::c2c_vault_sync::VaultOp::DenylistHash(
-                    storage_bucket_canister::c2c_vault_sync::DenylistHashOp {
-                        hash,
-                        report_index,
-                        derived: Some(derived),
-                    },
-                ),
+                storage_bucket_canister::VaultOp::DenylistHash(storage_bucket_canister::DenylistHashOp {
+                    hash,
+                    report_index,
+                    derived: Some(derived),
+                }),
             )));
         }
         events.extend(self.users.keys().map(|p| StorageIndexEvent::UserAdded(*p)));
@@ -383,8 +379,8 @@ impl Data {
     ) {
         self.push_event_to_bucket(
             bucket,
-            StorageIndexEvent::VaultOp(Box::new(storage_bucket_canister::c2c_vault_sync::VaultOp::DenylistHash(
-                storage_bucket_canister::c2c_vault_sync::DenylistHashOp {
+            StorageIndexEvent::VaultOp(Box::new(storage_bucket_canister::VaultOp::DenylistHash(
+                storage_bucket_canister::DenylistHashOp {
                     hash,
                     report_index,
                     derived: Some(derived),

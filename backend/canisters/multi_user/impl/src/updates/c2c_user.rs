@@ -9,7 +9,7 @@ use chat_events::MessageContentInternal;
 use constants::HOUR_IN_MS;
 use direct_chat::DirectChat;
 use local_user_index_canister::is_user_or_multi_user_canister::Response as CanisterKind;
-use multi_user_canister::c2c_user_canister_v2::*;
+use multi_user_canister::c2c_user::*;
 use multi_user_canister::{
     DeleteUndeleteMessagesArgs as C2CDeleteUndeleteMessagesArgs, EditMessageArgs as C2CEditMessageArgs, SendMessagesArgs,
     SetEventsTtl, StartVideoCallArgs, TipMessageArgs as C2CTipMessageArgs, ToggleReactionArgs, UserCanisterEvent,
@@ -20,18 +20,11 @@ use user_core::updates::c2c_user_canister::{self, can_act_for};
 
 #[update(msgpack = true)]
 #[trace]
-async fn c2c_user_canister_v2(args: Args) -> Response {
-    execute_update_async(|| c2c_user_canister_v2_impl(args)).await
-}
-
-// The name for a MultiUser canister's events, which senders switch to; the old one is served until they have
-#[update(msgpack = true)]
-#[trace]
 async fn c2c_user(args: Args) -> Response {
-    execute_update_async(|| c2c_user_canister_v2_impl(args)).await
+    execute_update_async(|| c2c_user_impl(args)).await
 }
 
-async fn c2c_user_canister_v2_impl(args: Args) -> Response {
+async fn c2c_user_impl(args: Args) -> Response {
     // The caller must be a MultiUser canister, and each event is only applied if it is from one of
     // its users
     let caller_kind = verify_caller().await;
@@ -101,7 +94,7 @@ async fn verify_caller() -> CanisterKind {
 }
 
 // Applies an event from `sender` to the user at `recipient_index`, unless the recipient has blocked
-// the sender. Events from users in other canisters arrive via `c2c_user_canister_v2`, while those
+// the sender. Events from users in other canisters arrive via `c2c_user`, while those
 // from users in this canister are applied straight away (see `RuntimeState::send_user_canister_event`),
 // so an event has the same effect whichever canister its sender is in.
 pub(crate) fn apply_event(event: UserCanisterEvent, sender: UserId, recipient_index: u16, state: &mut RuntimeState) {

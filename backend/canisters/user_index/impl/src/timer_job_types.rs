@@ -14,8 +14,8 @@ use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Serialize};
 use tracing::{error, info};
 use types::{
-    DiamondMembershipFees, DiamondMembershipPlanDuration, MessageContentInitial, Milliseconds,
-    TextContent, TimestampMillis, UserId,
+    DiamondMembershipFees, DiamondMembershipPlanDuration, MessageContentInitial, Milliseconds, TextContent, TimestampMillis,
+    UserId,
 };
 
 #[derive(Serialize, Deserialize, Clone)]

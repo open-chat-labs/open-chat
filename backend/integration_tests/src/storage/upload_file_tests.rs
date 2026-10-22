@@ -1,7 +1,7 @@
 use crate::env::ENV;
 use crate::{TestEnv, client};
 use std::ops::Deref;
-use storage_index_canister::add_or_update_users::UserConfig;
+use storage_index_canister::UserConfig;
 use testing::rng::random_principal;
 use utils::hasher::hash_bytes;
 

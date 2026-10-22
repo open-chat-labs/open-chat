@@ -960,7 +960,6 @@ pub struct CanisterIds {
     pub daily_puzzle: Option<CanisterId>,
 }
 
-
 // Pushes events to a LocalUserIndex while the rest of the state is borrowed
 pub struct LocalUserIndexEventPusher<'a> {
     pub now: TimestampMillis,

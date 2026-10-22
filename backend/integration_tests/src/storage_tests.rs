@@ -5,7 +5,7 @@ use candid::Principal;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
-use storage_index_canister::add_or_update_users::UserConfig;
+use storage_index_canister::UserConfig;
 use types::BlobReference;
 
 #[test]
@@ -19,16 +19,14 @@ fn oldest_files_deleted_once_limit_exceeded() {
 
     assert!(client::storage_index::happy_path::user(env, user.principal, canister_ids.storage_index).byte_limit > 0);
 
-    client::storage_index::add_or_update_users(
+    client::storage_index::happy_path::add_or_update_users(
         env,
         canister_ids.user_index,
         canister_ids.storage_index,
-        &storage_index_canister::add_or_update_users::Args {
-            users: vec![UserConfig {
-                user_id: user.principal,
-                byte_limit: 1000,
-            }],
-        },
+        vec![UserConfig {
+            user_id: user.principal,
+            byte_limit: 1000,
+        }],
     );
 
     let mut files = Vec::new();
