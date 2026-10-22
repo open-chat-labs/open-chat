@@ -21,6 +21,7 @@
         messageIndexStore,
         messagesRead,
         muteNotificationsFailureMessage,
+        screenWidth,
         selectedChatDraftMessageStore,
         selectedChatExpandedDeletedMessageStore,
         selectedChatIdStore,
@@ -52,6 +53,7 @@
     import {
         entryBlock,
         expandMentions,
+        focusEntryOnOpen,
         throttleCountdown,
     } from "@src/logic/composer/composer";
     import { enterSend } from "@src/stores/settings";
@@ -584,6 +586,7 @@
                 {typingNames}
                 {throttled}
                 enterSends={$enterSend}
+                autofocus={focusEntryOnOpen($screenWidth)}
                 onDraft={(text) =>
                     localUpdates.draftMessages.setTextContent({ chatId: chat.id }, text)}
                 onStartTyping={() => client.startTyping(chat.id, me)}

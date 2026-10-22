@@ -26,8 +26,8 @@
         chatIdentifiersEqual,
         iconSize,
         messageContextsEqual,
+        messageContextToString,
         screenWidth,
-        ScreenWidth,
         selectedChatMembersStore,
         selectedCommunitySummaryStore,
         selectedCommunityUserGroupsStore,
@@ -40,6 +40,7 @@
     import {
         entryBlock,
         expandMentions as expandMentionsIn,
+        focusEntryOnOpen,
         TypingNotifier,
     } from "@src/logic/composer/composer";
     import { _ } from "svelte-i18n";
@@ -420,8 +421,13 @@
             editor?.focus();
         }
     });
+    // The editor takes focus when it's shown and whenever the entry moves to another chat or thread
+    // (neither view is rebuilt for it), on a screen wide enough (shared with the other trees)
+    let focusOnOpen = $derived(focusEntryOnOpen($screenWidth));
+    let messageContextKey = $derived(messageContextToString(messageContext));
     trackedEffect("screen-width-focus", () => {
-        if ($screenWidth === ScreenWidth.Large) {
+        void messageContextKey;
+        if (focusOnOpen) {
             editor?.focus();
         }
     });

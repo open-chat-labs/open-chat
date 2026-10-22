@@ -1,7 +1,8 @@
-import type { UserOrUserGroup } from "@client";
+import { ScreenWidth, type UserOrUserGroup } from "@client";
 import {
     expandMentions,
     entryBlock,
+    focusEntryOnOpen,
     throttleCountdown,
     TypingNotifier,
     type EntryState,
@@ -162,5 +163,20 @@ describe("the throttle countdown", () => {
         expect(throttleCountdown(10_000, 9_999)?.seconds).toBe(1);
         expect(throttleCountdown(10_000, 10_000)).toBeUndefined();
         expect(throttleCountdown(0, 5)).toBeUndefined();
+    });
+});
+
+describe("the entry taking focus when a chat or thread opens", () => {
+    test("happens from 992px up", () => {
+        expect(focusEntryOnOpen(ScreenWidth.Large)).toBe(true);
+        expect(focusEntryOnOpen(ScreenWidth.ExtraLarge)).toBe(true);
+        expect(focusEntryOnOpen(ScreenWidth.ExtraExtraLarge)).toBe(true);
+    });
+
+    test("doesn't happen below that, where it would bring up the keyboard", () => {
+        expect(focusEntryOnOpen(ScreenWidth.Medium)).toBe(false);
+        expect(focusEntryOnOpen(ScreenWidth.Small)).toBe(false);
+        expect(focusEntryOnOpen(ScreenWidth.ExtraSmall)).toBe(false);
+        expect(focusEntryOnOpen(ScreenWidth.ExtraExtraSmall)).toBe(false);
     });
 });

@@ -1,7 +1,7 @@
-import type { User, UserOrUserGroup } from "@client";
+import { ScreenWidth, type User, type UserOrUserGroup } from "@client";
 
 // The message entry's decisions, shared by every tree: what a typed message is sent as, why one
-// can't be sent, and when the others hear someone is typing.
+// can't be sent, when the others hear someone is typing, and when it takes focus.
 
 /**
  * A message's text as it's sent: each @username the chat knows becomes the client's mention
@@ -143,4 +143,19 @@ export function throttleCountdown(
     if (deadline <= now) return undefined;
     const seconds = Math.ceil((deadline - now) / 1000);
     return { seconds, percent: Math.floor((seconds / 60) * 100) };
+}
+
+/**
+ * Whether the message entry takes focus when a chat or thread is opened: only on a wide screen,
+ * since on a narrower one it would bring up the on-screen keyboard over the messages.
+ */
+export function focusEntryOnOpen(width: ScreenWidth): boolean {
+    switch (width) {
+        case ScreenWidth.Large:
+        case ScreenWidth.ExtraLarge:
+        case ScreenWidth.ExtraExtraLarge:
+            return true;
+        default:
+            return false;
+    }
 }
