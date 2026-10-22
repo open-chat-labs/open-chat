@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Send moderation actions and suspensions to groups and communities, and vault ops to the StorageIndex, as events ([#10033](https://github.com/open-chat-labs/open-chat/pull/10033))
 - Call the Identity canister's and StorageIndex's event endpoints best-effort ([#10050](https://github.com/open-chat-labs/open-chat/pull/10050))
 - Reject bots which use the JSON data encoding ([#10055](https://github.com/open-chat-labs/open-chat/pull/10055))
+- Let a user link one account per platform, refusing to start linking another while one is linked ([#10169](https://github.com/open-chat-labs/open-chat/pull/10169))
 
 ### Fixed
 
