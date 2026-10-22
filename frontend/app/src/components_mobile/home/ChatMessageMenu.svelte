@@ -12,22 +12,26 @@
         selectQuickReaction: (unicode: string) => void;
         showEmojiPicker: () => void;
         onOpenSheetMenu: () => void;
+        // Which side the bubble is on, when that isn't `me`'s: a message relayed from the user's
+        // linked account is shown as theirs, though `me`, which the options go by, is false
+        alignEnd?: boolean;
     }
 
     let props: Props = $props();
     const { deleted, failed, me, canReact, selectQuickReaction, showEmojiPicker, onOpenSheetMenu } =
         props;
+    const alignEnd = props.alignEnd ?? me;
 
     const padding: Padding = ["sm", "sm"];
 </script>
 
-<Column gap="sm" overflow="visible" crossAxisAlignment={me ? "end" : "start"}>
+<Column gap="sm" overflow="visible" crossAxisAlignment={alignEnd ? "end" : "start"}>
     {#if canReact && !deleted && !failed}
         <Row
             width="hug"
             maxWidth="80vw"
             backgroundColor={ColourVars.surface1}
-            supplementalClass={`message_bubble_menu ${me ? "me" : ""}`}>
+            supplementalClass={`message_bubble_menu ${alignEnd ? "me" : ""}`}>
             <!-- Reactons -->
             <Row
                 gap="xs"
@@ -63,7 +67,7 @@
         width="hug"
         maxWidth="70vw"
         backgroundColor={ColourVars.surface1}
-        supplementalClass={`message_bubble_menu second ${me ? "me" : ""}`}>
+        supplementalClass={`message_bubble_menu second ${alignEnd ? "me" : ""}`}>
         <!-- Message options -->
         <Row
             gap="sm"

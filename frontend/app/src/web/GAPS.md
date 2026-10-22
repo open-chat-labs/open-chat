@@ -199,6 +199,12 @@ design export needs. Each entry says where it came up.
   favourite, mute and copy link only: the rest open dialogs (phase 4), and calls are phase 7. The
   old list's go-to-mention button and sticky date aren't carried over; it keeps go-to-latest.
   Own messages show no name (the design's "You" would be the lower-case app string).
+- **Relayed messages** (`features/conversation`): a message a bridge bot relayed from Telegram or
+  Discord shows as the bot's (`conversation.adapter.ts` picks the side by `msg.sender`). The old
+  trees show it as the OpenChat user who linked the account, with their name, avatar and badges
+  (`linkedUser` in both `ChatMessage.svelte`s), or as the account's own profile if no one has, with
+  the platform's badge. One from the viewer's own linked account looks like their own message
+  (`shouldShowAsMe` in `@client`), though editing and deleting it still go by the sender, the bot.
 - **Composer, first cut** (`features/conversation/Composer.svelte`, phase 3c): text only.
   Attachments, GIFs, voice, replies, edits and the "+" menu are phase 5 (`MessageComposer` hides
   "+" and the GIF tab without their handlers). There's no @mention picker (typed @usernames are
