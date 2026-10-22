@@ -56,6 +56,26 @@ describe("the profile form", () => {
         expect(form.canSave).toBe(false);
     });
 
+    test("writing the saved value isn't an edit, so the field still follows the profile", () => {
+        // an input writes its initial value back as it mounts, perhaps before the profile loads
+        const { form, load } = setup();
+        form.displayName = saved.displayName;
+        form.bio = saved.bio;
+        load({ ...saved, displayName: "Jules", bio: "loaded bio" });
+        expect(form.displayName).toBe("Jules");
+        expect(form.bio).toBe("loaded bio");
+        expect(form.canSave).toBe(false);
+    });
+
+    test("nothing is sent when it can't be saved", async () => {
+        const { form, client } = setup();
+        expect(await form.save()).toEqual({ kind: "nothing" });
+        form.bio = "new bio";
+        form.displayName = "x";
+        expect(await form.save()).toEqual({ kind: "nothing" });
+        expect(client.saveProfile).not.toHaveBeenCalled();
+    });
+
     test("an empty display name is none", () => {
         const { form } = setup();
         form.displayName = "";

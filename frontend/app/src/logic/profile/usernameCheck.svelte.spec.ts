@@ -80,15 +80,14 @@ describe("a username being typed", () => {
         expect(c.checkUsername).not.toHaveBeenCalled();
     });
 
-    test("the original in another case is allowed, even one shorter than the rules now ask", async () => {
-        // the backend says it's taken: by this user
-        const check = new UsernameCheck(
-            client(async () => "username_taken"),
-            () => "abc",
-        );
+    test("the original in another case is allowed at once, even one shorter than the rules now ask", () => {
+        const c = client(async () => "username_taken");
+        const check = new UsernameCheck(c, () => "abc");
         check.set("ABC");
-        await vi.runAllTimersAsync();
+        expect(check.status).toBe("available");
         expect(check.valid).toBe(true);
+        vi.runAllTimers();
+        expect(c.checkUsername).not.toHaveBeenCalled();
     });
 
     test("a check that fails says so", async () => {

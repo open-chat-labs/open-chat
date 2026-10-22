@@ -15,6 +15,9 @@ import {
 import { UsernameCheck } from "./usernameCheck.svelte";
 
 export type ProfileSaveOutcome =
+    // nothing to send: no changes, a field not valid yet, the username still being checked, or
+    // read-only
+    | { kind: "nothing" }
     // every changed field saved
     | { kind: "saved" }
     // the backend turned down a field; its reason is in `errors`, under the field
@@ -60,17 +63,22 @@ export class ProfileForm {
             : this.#displayName.value;
     }
 
-    /** No display name, an empty one included, is none. */
+    /**
+     * No display name, an empty one included, is none. The saved name isn't an edit: the field
+     * keeps following the saved profile.
+     */
     set displayName(value: string | undefined) {
-        this.#displayName = { value: value === "" ? undefined : value };
+        const name = value === "" ? undefined : value;
+        this.#displayName = name === this.#saved().displayName ? undefined : { value: name };
     }
 
     get bio(): string {
         return this.#bio === undefined ? this.#saved().bio : this.#bio.value;
     }
 
+    /** The saved bio isn't an edit: the field keeps following the saved profile. */
     set bio(value: string) {
-        this.#bio = { value };
+        this.#bio = value === this.#saved().bio ? undefined : { value };
     }
 
     /** Why the username can't be used: the check's reason, or the backend's for the name it turned down. */
@@ -119,7 +127,7 @@ export class ProfileForm {
     }
 
     async save(): Promise<ProfileSaveOutcome> {
-        if (!this.canSave) return { kind: "saved" };
+        if (!this.canSave) return { kind: "nothing" };
         const candidate = this.candidate;
         this.saving = true;
         try {

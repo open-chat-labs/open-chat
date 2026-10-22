@@ -1533,13 +1533,7 @@ export class OpenChat {
             isUniquePerson: user.isUniquePerson,
             hideOnlineStatus: user.hideOnlineStatus,
         });
-        this.getPublicProfile(user.userId).subscribe({
-            onResult: (profile) => {
-                if (profile !== undefined) {
-                    currentUserProfileStore.set(profile);
-                }
-            },
-        });
+        this.#loadCurrentUserProfile(user.userId);
     }
 
     onCreatedUser(user: CreatedUser): void {
@@ -6883,13 +6877,7 @@ export class OpenChat {
                         userCreatedStore.set(true);
                         currentUserStore.set(user);
                         this.#setDiamondStatus(user.diamondStatus);
-                        this.getPublicProfile(user.userId).subscribe({
-                            onResult: (profile) => {
-                                if (profile !== undefined) {
-                                    currentUserProfileStore.set(profile);
-                                }
-                            },
-                        });
+                        this.#loadCurrentUserProfile(user.userId);
                     }
                     if (!resolved) {
                         // we want to resolve the promise with the first response from the stream so that
@@ -7782,6 +7770,25 @@ export class OpenChat {
 
     getPublicProfile(userId?: string): Stream<PublicProfile | undefined> {
         return this.#worker.stream({ kind: "getPublicProfile", userId });
+    }
+
+    /**
+     * Loads the current user's profile into currentUserProfileStore again, so a change made on
+     * another device shows (the profile is otherwise loaded once, at sign-in).
+     */
+    refreshCurrentUserProfile(): void {
+        if (anonUserStore.value) return;
+        this.#loadCurrentUserProfile(currentUserIdStore.value);
+    }
+
+    #loadCurrentUserProfile(userId: string): void {
+        this.getPublicProfile(userId).subscribe({
+            onResult: (profile) => {
+                if (profile !== undefined) {
+                    currentUserProfileStore.set(profile);
+                }
+            },
+        });
     }
 
     /**

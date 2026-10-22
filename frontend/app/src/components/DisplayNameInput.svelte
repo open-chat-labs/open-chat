@@ -47,7 +47,7 @@
 
 <Input
     {onChange}
-    value={originalDisplayName ?? ""}
+    value={displayName ?? ""}
     {disabled}
     {invalid}
     minlength={MIN_DISPLAY_NAME_LENGTH}

@@ -71,15 +71,19 @@ export class UsernameCheck {
             return;
         }
         this.#value = value;
-        // a name chosen before the rules tightened (3 characters, say) can still change case
-        const caseOnly = value.toLowerCase() === original.toLowerCase();
-        if (!caseOnly && !isUsernameValid(value)) {
+        // the user's own name in another case: theirs, even if it's shorter than the rules now ask
+        // (3 characters, say), so there's nothing to ask the backend
+        if (value.toLowerCase() === original.toLowerCase()) {
+            this.status = "available";
+            return;
+        }
+        if (!isUsernameValid(value)) {
             this.status = "invalid";
             return;
         }
         this.status = "checking";
         const run = this.#run;
-        this.#timer = setTimeout(() => this.#check(value, caseOnly, run), CHECK_DELAY_MS);
+        this.#timer = setTimeout(() => this.#check(value, run), CHECK_DELAY_MS);
     }
 
     /** Back to the original, as after it's saved. */
@@ -98,11 +102,11 @@ export class UsernameCheck {
         this.#run++;
     }
 
-    async #check(value: string, caseOnly: boolean, run: number): Promise<void> {
+    async #check(value: string, run: number): Promise<void> {
         try {
             const resp = await this.#client.checkUsername(value, false);
             if (run !== this.#run) return;
-            if (caseOnly || resp === "success") {
+            if (resp === "success") {
                 this.status = "available";
             } else {
                 this.status = resp === "username_taken" ? "taken" : "invalid";

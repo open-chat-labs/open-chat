@@ -32,7 +32,7 @@
         userWalletAccount,
     } from "@client";
     import { ProfileForm } from "@src/logic/profile/profileForm.svelte";
-    import { getContext, onDestroy } from "svelte";
+    import { getContext, onDestroy, onMount } from "svelte";
     import { _, locale } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
@@ -133,6 +133,8 @@
         () => readonly,
     );
     onDestroy(() => form.destroy());
+    // as it may have changed on another device since sign-in
+    onMount(() => client.refreshCurrentUserProfile());
     let verified = $derived(user.isUniquePerson);
     // The principal to add as a hotkey to the neurons the user votes with from OpenChat, which is the
     // owner of their wallet: their OpenChat principal (not the auth principal). Read from the store

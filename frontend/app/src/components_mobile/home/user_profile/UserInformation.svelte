@@ -12,7 +12,7 @@
         suspendedUserStore,
     } from "@client";
     import { ProfileForm } from "@src/logic/profile/profileForm.svelte";
-    import { getContext, onDestroy } from "svelte";
+    import { getContext, onDestroy, onMount } from "svelte";
     import Save from "svelte-material-icons/ContentSaveOutline.svelte";
     import DisplayNameInput from "../../DisplayNameInput.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
@@ -33,6 +33,8 @@
         () => readonly,
     );
     onDestroy(() => form.destroy());
+    // as it may have changed on another device since sign-in
+    onMount(() => client.refreshCurrentUserProfile());
 
     async function saveUser(e: Event) {
         e.preventDefault();
