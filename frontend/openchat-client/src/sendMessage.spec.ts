@@ -32,6 +32,8 @@ import {
     type ChannelSummary,
     type CommunityIdentifier,
     type CommunitySummary,
+    type Message,
+    type RehydratedMessagePreview,
     type RulesAcceptanceResolver,
     type SendMessageOutcome,
     type WorkerRequest,
@@ -260,5 +262,82 @@ describe("sending from the composer", () => {
         expect(sent).toHaveLength(1);
         // and once it's posted, the chat can send again
         expect(await settled(send())).toEqual({ kind: "posted" });
+    });
+
+    describe("a link to another message", () => {
+        const url = `https://oc.app/community/${here.communityId}/channel/1/5`;
+        const linked: RehydratedMessagePreview = {
+            url,
+            chatId,
+            threadRootMessageIndex: undefined,
+            message: {
+                kind: "message",
+                messageId: 5n,
+                messageIndex: 5,
+                sender: "them",
+                content: { kind: "text_content", text: "linked" },
+                reactions: [],
+                tips: {},
+                edited: false,
+                forwarded: false,
+                deleted: false,
+                blockLevelMarkdown: false,
+                ogPreviews: [],
+            },
+        };
+        // what was asked of the worker besides sending
+        let requests: WorkerRequest[];
+
+        // the worker loads the linked messages with `linkedMessages`, and answers nothing else
+        function worker(linkedMessages: () => Promise<RehydratedMessagePreview[]>) {
+            requests = [];
+            vi.spyOn(WorkerAgent.prototype, "send").mockImplementation((async (
+                req: WorkerRequest,
+            ) => {
+                requests.push(req);
+                if (req.kind !== "rehydrateMessage") return new Promise(() => {});
+                const messagePreviews = await linkedMessages();
+                return { ...req.message, event: { ...req.message.event, messagePreviews } };
+            }) as never);
+        }
+
+        async function sendLink(): Promise<SendMessageOutcome | "pending"> {
+            const outcome = await settled(
+                client.sendMessage(context, `see ${url}`, false, undefined, []),
+            );
+            await vi.advanceTimersByTimeAsync(0);
+            return outcome;
+        }
+
+        // the message the worker was given to send
+        function sentMessage(): Message | undefined {
+            return sent[0]?.kind === "sendMessage" ? sent[0].event.event : undefined;
+        }
+
+        test("shows the linked message's preview before it's confirmed, and keeps it", async () => {
+            worker(async () => [linked]);
+            expect(await sendLink()).toEqual({ kind: "posted" });
+            const messageId = sentMessage()?.messageId;
+            const unconfirmed = localUpdates
+                .unconfirmedMessages(context)
+                .find((m) => m.event.messageId === messageId);
+            expect(unconfirmed?.event.messagePreviews).toEqual([linked]);
+            // the confirmed message is the one the worker returns, made from the one it was given
+            expect(sentMessage()?.messagePreviews).toEqual([linked]);
+        });
+
+        test("is still sent when the linked message can't be loaded", async () => {
+            vi.spyOn(console, "warn").mockImplementation(() => {});
+            worker(() => Promise.reject(new Error("no access")));
+            expect(await sendLink()).toEqual({ kind: "posted" });
+            expect(sentMessage()?.messagePreviews).toEqual([]);
+        });
+
+        test("isn't looked for in a message without one", async () => {
+            worker(async () => [linked]);
+            await settled(send());
+            expect(requests.filter((r) => r.kind === "rehydrateMessage")).toHaveLength(0);
+            expect(sent).toHaveLength(1);
+        });
     });
 });

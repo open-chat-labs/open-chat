@@ -32,6 +32,7 @@ import {
     type OptionalChatPermissions,
     type OptionUpdate,
     type P2PSwapStatus,
+    type RehydratedMessagePreview,
     type SenderContext,
     type StreakInsurance,
     type Tally,
@@ -954,7 +955,12 @@ export class GlobalLocalState {
         );
     }
 
-    setUnconfirmedOgPreviews(key: MessageContext, messageId: bigint, ogPreviews: OgPreview[]) {
+    setUnconfirmedPreviews(
+        key: MessageContext,
+        messageId: bigint,
+        ogPreviews: OgPreview[],
+        messagePreviews: RehydratedMessagePreview[],
+    ) {
         this.#unconfirmed.update((map) => {
             const state = map.get(key);
             if (state) {
@@ -962,7 +968,7 @@ export class GlobalLocalState {
                 if (msg) {
                     state.set(messageId, {
                         ...msg,
-                        event: { ...msg.event, ogPreviews },
+                        event: { ...msg.event, ogPreviews, messagePreviews },
                     });
                     map.set(key, state);
                 }
