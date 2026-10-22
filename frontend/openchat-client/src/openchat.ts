@@ -562,6 +562,7 @@ import {
 import { walletConfigWithoutToken } from "./utils/walletConfig";
 import {
     defaultChat,
+    navigationAfterArchivingOpenChat,
     activeUserIdFromEvent,
     applyTranslation,
     buildCryptoTransferText,
@@ -1972,7 +1973,22 @@ export class OpenChat {
     archiveChat(chatId: ChatIdentifier): Promise<boolean> {
         const undo = localUpdates.updateArchived(chatId, true);
         if (chatIdentifiersEqual(chatId, selectedChatIdStore.value)) {
-            this.selectDefaultChat();
+            // Leave it. It's the chat last opened in this scope, so forget that or the list
+            // would open it again, which un-archives it.
+            const scope = chatListScopeStore.value;
+            lastSelectedChatByScopeStore.update((map) => {
+                map.delete(scope);
+                return map;
+            });
+            publish(
+                "navigateTo",
+                navigationAfterArchivingOpenChat(
+                    chatId,
+                    scope,
+                    chatSummariesListStore.value,
+                    get(mobileWidth),
+                ),
+            );
         }
         return this.#worker
             .send({ kind: "archiveChat", chatId })
