@@ -27,6 +27,10 @@
 
     let accounts: BridgedUserSummary[] = $state([]);
     let busy = $state(false);
+    // One account per platform, so to switch accounts the user unlinks the linked one first
+    let unlinkedPlatforms = $derived(
+        linkablePlatforms.filter((platform) => !accounts.some((a) => a.user.kind === platform)),
+    );
 
     onMount(refresh);
 
@@ -88,16 +92,18 @@
     </div>
 {/each}
 
-<ButtonGroup align="start">
-    {#each linkablePlatforms as platform}
-        <Button disabled={busy} onClick={() => link(platform)}>
-            <Translatable
-                resourceKey={i18nKey("bridgedAccounts.link", {
-                    platform: BRIDGE_PLATFORM_NAMES[platform],
-                })} />
-        </Button>
-    {/each}
-</ButtonGroup>
+{#if unlinkedPlatforms.length > 0}
+    <ButtonGroup align="start">
+        {#each unlinkedPlatforms as platform}
+            <Button disabled={busy} onClick={() => link(platform)}>
+                <Translatable
+                    resourceKey={i18nKey("bridgedAccounts.link", {
+                        platform: BRIDGE_PLATFORM_NAMES[platform],
+                    })} />
+            </Button>
+        {/each}
+    </ButtonGroup>
+{/if}
 
 <style lang="scss">
     .info {

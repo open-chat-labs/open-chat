@@ -32,6 +32,10 @@
 
     let accounts: BridgedUserSummary[] = $state([]);
     let busy = $state(false);
+    // One account per platform, so to switch accounts the user unlinks the linked one first
+    let unlinkedPlatforms = $derived(
+        linkablePlatforms.filter((platform) => !accounts.some((a) => a.user.kind === platform)),
+    );
 
     onMount(refresh);
 
@@ -102,23 +106,25 @@
                 </Column>
             {/if}
 
-            <Row mainAxisAlignment={"end"} gap={"sm"}>
-                {#each linkablePlatforms as platform}
-                    <CommonButton
-                        disabled={busy}
-                        onClick={() => link(platform)}
-                        size={"medium"}
-                        mode={"active"}>
-                        {#snippet icon(color, size)}
-                            <LinkVariant {color} {size}></LinkVariant>
-                        {/snippet}
-                        <Translatable
-                            resourceKey={i18nKey("bridgedAccounts.link", {
-                                platform: BRIDGE_PLATFORM_NAMES[platform],
-                            })}></Translatable>
-                    </CommonButton>
-                {/each}
-            </Row>
+            {#if unlinkedPlatforms.length > 0}
+                <Row mainAxisAlignment={"end"} gap={"sm"}>
+                    {#each unlinkedPlatforms as platform}
+                        <CommonButton
+                            disabled={busy}
+                            onClick={() => link(platform)}
+                            size={"medium"}
+                            mode={"active"}>
+                            {#snippet icon(color, size)}
+                                <LinkVariant {color} {size}></LinkVariant>
+                            {/snippet}
+                            <Translatable
+                                resourceKey={i18nKey("bridgedAccounts.link", {
+                                    platform: BRIDGE_PLATFORM_NAMES[platform],
+                                })}></Translatable>
+                        </CommonButton>
+                    {/each}
+                </Row>
+            {/if}
         </Column>
     </Column>
 </SlidingPageContent>
