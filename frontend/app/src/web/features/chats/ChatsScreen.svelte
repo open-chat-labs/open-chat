@@ -124,8 +124,8 @@
         scope.kind === "community" ? $selectedCommunitySummaryStore : undefined,
     );
 
-    // TODO(phase 3): the thread count, and the community header's other menu items (they open
-    // dialogs that later phases build)
+    // TODO: the thread count (L1), and the community header's other menu items, which open
+    // dialogs (phase 4, 4b)
     function onHeaderMenu(item: string) {
         if (item === "markAllRead") client.markAllReadForCurrentScope();
     }

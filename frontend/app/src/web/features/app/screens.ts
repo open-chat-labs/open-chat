@@ -36,7 +36,7 @@ export const leftScreens: Screens<LeftRegion> = {
     // the chat list: DMs and groups, favourites, a community's channels (phase 3a)
     chats: () => import("../chats/ChatsScreen.svelte"),
 
-    // the threads followed (phase 3)
+    // the threads followed (phase 4, 4c)
     threads: undefined,
 
     // notifications (phase 3d, ROUTES.md decision 7)

@@ -247,7 +247,7 @@
             if (client.isHomeRoute(route)) {
                 client.filterRightPanelHistory((panel) => panel.kind === "user_profile");
             } else if (client.isShareRoute(route)) {
-                // TODO(phase 5): pick the chat to share into (ChatPicker), as Home.svelte does
+                // TODO(phase 4, 4d): pick the chat to share into (ChatPicker), as Home.svelte does
                 navigate(routeForScope(client.getDefaultScope()));
             }
         });
