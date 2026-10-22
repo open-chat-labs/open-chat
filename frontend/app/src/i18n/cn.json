@@ -2048,6 +2048,7 @@
         "neuronControllerAction": "神经元控制器动作",
         "neuronDissolveDelayTooShort": "其解散延迟（{delay} 天）少于投票所需的 {minimum} 天",
         "neuronNotEligible": "提交提案时它没有投票资格",
+        "neuronVoteCallFailed": "无法连接治理系统 - 请重试",
         "neuronVoteRejected": "投票被拒绝：{message}",
         "neuronVotesFailed": "您的神经元无法投票",
         "neuronVotesFailedIntro": "您的神经元都无法对此提案投票：",

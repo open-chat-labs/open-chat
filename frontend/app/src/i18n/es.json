@@ -2048,6 +2048,7 @@
         "neuronControllerAction": "Acciones del controlador de neuronas",
         "neuronDissolveDelayTooShort": "Su retraso de disolución ({delay} días) es inferior a los {minimum} días necesarios para votar",
         "neuronNotEligible": "No era elegible para votar cuando se presentó la propuesta",
+        "neuronVoteCallFailed": "No se pudo contactar con la gobernanza - inténtalo de nuevo",
         "neuronVoteRejected": "El voto fue rechazado: {message}",
         "neuronVotesFailed": "Tus neuronas no pudieron votar",
         "neuronVotesFailedIntro": "Ninguna de tus neuronas pudo votar en esta propuesta:",

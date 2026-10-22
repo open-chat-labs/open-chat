@@ -56,6 +56,8 @@ function neuronVoteFailureMessage(reason: NeuronVoteFailureReason): ResourceKey 
             return i18nKey("proposal.neuronNotEligible");
         case "rejected":
             return i18nKey("proposal.neuronVoteRejected", { message: reason.message });
+        case "call_failed":
+            return i18nKey("proposal.neuronVoteCallFailed");
         default:
             return reason satisfies never;
     }

@@ -2048,6 +2048,7 @@
         "neuronControllerAction": "Hành động điều khiển nơ-ron",
         "neuronDissolveDelayTooShort": "Thời gian trì hoãn giải thể ({delay} ngày) ít hơn {minimum} ngày cần thiết để bỏ phiếu",
         "neuronNotEligible": "Nó không đủ điều kiện bỏ phiếu khi đề xuất được gửi",
+        "neuronVoteCallFailed": "Không thể kết nối với quản trị - vui lòng thử lại",
         "neuronVoteRejected": "Phiếu bầu đã bị từ chối: {message}",
         "neuronVotesFailed": "Các neuron của bạn không thể bỏ phiếu",
         "neuronVotesFailedIntro": "Không neuron nào của bạn có thể bỏ phiếu cho đề xuất này:",

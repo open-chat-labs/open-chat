@@ -2048,6 +2048,7 @@
         "neuronControllerAction": "Działania kontrolera neuronów",
         "neuronDissolveDelayTooShort": "Jego opóźnienie rozwiązania ({delay} dni) jest krótsze niż {minimum} dni wymagane do głosowania",
         "neuronNotEligible": "Nie był uprawniony do głosowania, gdy propozycja została złożona",
+        "neuronVoteCallFailed": "Nie udało się połączyć z zarządzaniem - spróbuj ponownie",
         "neuronVoteRejected": "Głos został odrzucony: {message}",
         "neuronVotesFailed": "Twoje neurony nie mogły zagłosować",
         "neuronVotesFailedIntro": "Żaden z Twoich neuronów nie mógł zagłosować nad tą propozycją:",

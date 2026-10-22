@@ -2048,6 +2048,7 @@
         "neuronControllerAction": "إجراءات وحدة التحكم العصبية",
         "neuronDissolveDelayTooShort": "تأخير الحل الخاص به ({delay} يومًا) أقل من {minimum} يومًا اللازمة للتصويت",
         "neuronNotEligible": "لم يكن مؤهلاً للتصويت عند تقديم الاقتراح",
+        "neuronVoteCallFailed": "تعذّر الوصول إلى نظام الحوكمة - يرجى المحاولة مرة أخرى",
         "neuronVoteRejected": "تم رفض التصويت: {message}",
         "neuronVotesFailed": "تعذّر على الخلايا العصبية الخاصة بك التصويت",
         "neuronVotesFailedIntro": "لم تتمكن أي من الخلايا العصبية الخاصة بك من التصويت على هذا الاقتراح:",

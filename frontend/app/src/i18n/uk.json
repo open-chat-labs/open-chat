@@ -2048,6 +2048,7 @@
         "neuronControllerAction": "Дії контролера нейронів",
         "neuronDissolveDelayTooShort": "Його затримка розпуску ({delay} дн.) менша за {minimum} дн., потрібних для голосування",
         "neuronNotEligible": "Він не мав права голосу, коли пропозицію було подано",
+        "neuronVoteCallFailed": "Не вдалося зв'язатися з управлінням - спробуйте ще раз",
         "neuronVoteRejected": "Голос було відхилено: {message}",
         "neuronVotesFailed": "Ваші нейрони не змогли проголосувати",
         "neuronVotesFailedIntro": "Жоден із ваших нейронів не зміг проголосувати за цю пропозицію:",

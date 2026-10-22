@@ -2048,6 +2048,7 @@
         "neuronControllerAction": "اقدامات کنترل کننده نورون",
         "neuronDissolveDelayTooShort": "تأخیر انحلال آن ({delay} روز) کمتر از {minimum} روز لازم برای رأی دادن است",
         "neuronNotEligible": "هنگام ارسال پیشنهاد واجد شرایط رأی دادن نبود",
+        "neuronVoteCallFailed": "دسترسی به حاکمیت ممکن نشد - لطفاً دوباره تلاش کنید",
         "neuronVoteRejected": "رأی رد شد: {message}",
         "neuronVotesFailed": "نورون‌های شما نتوانستند رأی دهند",
         "neuronVotesFailedIntro": "هیچ‌یک از نورون‌های شما نتوانست به این پیشنهاد رأی دهد:",

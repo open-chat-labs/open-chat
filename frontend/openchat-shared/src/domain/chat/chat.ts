@@ -2573,7 +2573,8 @@ export type NeuronVoteFailure = {
 export type NeuronVoteFailureReason =
     | { kind: "dissolve_delay_too_short"; dissolveDelaySeconds: bigint; minimumSeconds: bigint }
     | { kind: "not_eligible" }
-    | { kind: "rejected"; message: string };
+    | { kind: "rejected"; message: string }
+    | { kind: "call_failed" };
 
 /** How a vote on a proposal went. `skipped` means nothing was sent because the user has already voted or a vote is in flight */
 export type ProposalVoteOutcome =

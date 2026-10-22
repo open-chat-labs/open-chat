@@ -2048,6 +2048,7 @@
         "neuronControllerAction": "פעולות בקר נוירון",
         "neuronDissolveDelayTooShort": "עיכוב הפירוק שלו ({delay} ימים) קצר מ-{minimum} הימים הנדרשים להצבעה",
         "neuronNotEligible": "הוא לא היה זכאי להצביע כשההצעה הוגשה",
+        "neuronVoteCallFailed": "לא ניתן היה להתחבר לממשל - נסה שוב",
         "neuronVoteRejected": "ההצבעה נדחתה: {message}",
         "neuronVotesFailed": "הנוירונים שלך לא יכלו להצביע",
         "neuronVotesFailedIntro": "אף אחד מהנוירונים שלך לא יכול היה להצביע על ההצעה הזו:",
