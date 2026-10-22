@@ -75,7 +75,10 @@
 {#each accounts ?? [] as account (bridgedUserKey(bridgedUserId(account.user)))}
     {@const id = bridgedUserId(account.user)}
     <div class="account">
-        <Avatar url={client.bridgedAvatarUrl(id, account)} size={AvatarSize.Small} />
+        <!-- Avatar centres itself with auto margins, which in this row would take free space -->
+        <div class="avatar">
+            <Avatar url={client.bridgedAvatarUrl(id, account)} size={AvatarSize.Small} />
+        </div>
         <div class="name">{bridgedAuthorName(account)}</div>
         <BotBadge bridge={id.kind} />
         <div class="unlink">
@@ -116,6 +119,10 @@
         display: flex;
         align-items: center;
         gap: $sp3;
+
+        .avatar {
+            flex: none;
+        }
 
         .name {
             @include ellipsis();
