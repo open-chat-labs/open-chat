@@ -399,6 +399,22 @@ fn bridge_bots_relay_messages_as_their_authors() {
         "{response:?}"
     );
 
+    // A user can link one account per platform, so while their Discord account is linked they
+    // can't start linking another, but they can link a Telegram account
+    let response = client::user_index::start_bridged_user_link(
+        env,
+        owner.principal,
+        user_index,
+        &user_index_canister::start_bridged_user_link::Args {
+            platform: BridgePlatform::Discord,
+        },
+    );
+    assert!(
+        matches!(&response, StartLinkResponse::Error(e) if e.matches_code(OCErrorCode::AlreadyAdded)),
+        "{response:?}"
+    );
+    start_link(env, owner.principal, user_index, BridgePlatform::Telegram);
+
     // The user can unlink it from their profile
     let response = unlink(env, owner.principal, user_index, &renamed);
     assert!(matches!(response, UnitResult::Success), "{response:?}");
