@@ -35,7 +35,7 @@ export type Dialogs = {
 
 export const dialogs: Dialogs = {
     // the user's own profile and settings (8c)
-    profile: undefined,
+    profile: () => import("../profile/ProfileDialogScreen.svelte"),
 
     // Diamond membership (8e)
     diamond: undefined,

@@ -255,6 +255,7 @@ Still to come:
   gets the sign-in, then `/chats`.
 - **Dialog params**: `?profile`, `?diamond`, `?chit` and `?hof` open their dialogs over the page
   (`features/app/dialogs.ts`, shown by `DialogHost`), each a placeholder until it's built (phase 8).
+  `?profile` is `ProfileDialog` with the sections built so far (8c).
   So does `<profile-link>`'s `profile-clicked` (`UserDialog`, phase 4), and the `profile` and
   `upgrade` events open `?profile` and `?diamond`.
 - **Share**: `/share` goes to the default scope as today, but picking the chat (`ChatPicker`)

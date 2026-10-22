@@ -104,6 +104,16 @@ describe("a username being typed", () => {
         expect(check.status).toBe("taken");
     });
 
+    test("a name entered whole is checked at once", async () => {
+        const c = client(async (name) => (name === "julian2" ? "success" : "username_taken"));
+        const check = new UsernameCheck(c, () => "julian", { ownName: true });
+        expect(await check.checkNow("julian2")).toBe(true);
+        expect(await check.checkNow("someone")).toBe(false);
+        expect(check.error).toBe("register.usernameTaken");
+        expect(await check.checkNow("ab")).toBe(false);
+        expect(c.checkUsername).toHaveBeenCalledTimes(2);
+    });
+
     test("a check that fails says so", async () => {
         const c = client(async () => Promise.reject(new Error("offline")));
         const check = new UsernameCheck(c, () => "julian", { ownName: true });

@@ -8,7 +8,9 @@ design export needs. Each entry says where it came up.
 - **Accent setting**: done. The accent picked on Landing's theme controls is kept in this browser
   (`web/accent.ts`) and `App.svelte` puts it on `<html>`. The in-app control is Profile's (8c).
 - **Font size setting**: the app's font size setting (`fontSize` store) isn't mapped onto the
-  library's `--text-*` tokens yet.
+  library's `--text-*` tokens yet (L4). Profile's control writes it (8c): the design's four sizes
+  are the store's steps 1 to 4 (`logic/profile/appearance.ts`), and a stored 0 shows as Small and
+  stays until another size is picked. The store's fifth step has no size in the design.
 - **Shell breakpoints vs layout tokens**: the shell's breakpoints and widths (Fix Brief - App
   Shell Layout: 768 / 1200 / 1476 / 1876 / 2476px, chat list `clamp(350px, 30cqw, 550px)`, right
   column 375 / 425 / 500px) don't match the library's layout tokens (`--bp-*` 1280–2500px,
@@ -101,6 +103,24 @@ design export needs. Each entry says where it came up.
   (`oc-veil-in`, `oc-dlg-in`) as the hand-built dialogs do; the export's had no animation, so
   the dialog host's placeholders, the rules dialog and `ChatPicker` popped in. Closing has none
   still: the shell unmounts when its host closes it.
+- **`ProfileDialog`, by hand** (8c, to go back to the design export): `sections`, the sections
+  its nav offers (a host that has built only some); the cover and photo edit buttons only with
+  `onCoverEdit` / `onPhotoEdit`; `engagement` counts as numbers; `memberSince` from `joined` in the
+  host's locale; a chats & calls toggle the host didn't take goes back.
+- **`ProfileDialog` against the app** (8c):
+  - the profile fields save one at a time, and any failure shows as "couldn't save": the reason
+    the backend gave (`ProfileFieldErrors`, e.g. "display name too short") isn't shown;
+  - the username is checked against looser rules than the app's (3 characters and up, where
+    `isUsernameValid` wants 5), so a name the app can't take says "taken";
+  - no read-only state for a suspended user: an edit fails to save instead;
+  - the account's Status row always says Online;
+  - the notifications toggle has no disabled state for permission refused in the browser, and
+    shows where notifications aren't supported;
+  - the restricted-content toggles show in every build (the mobile app hides them in app-store
+    builds, which don't run this tree yet);
+  - no rows for: the language, translation edit mode, named light and dark themes, the user id's
+    and voting hotkey's "don't send tokens here" warning, the crash log, Diamond's expiry and
+    extend, referred users, Discord / Telegram accounts.
 - **Swatches**: the design's colour/cover swatches for groups, communities and avatars have no
   OpenChat equivalent (it has uploaded avatars and banners). Adapters pass images and pick a
   swatch from the id.

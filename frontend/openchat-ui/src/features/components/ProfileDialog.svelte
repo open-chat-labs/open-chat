@@ -222,7 +222,8 @@
   interface Props {
     handle: string;
     userId: string;
-    memberSince: string;
+    /** Literal text; without it, the date of `joined` in the host's locale. */
+    memberSince?: string;
     streak: number;
     /** CHIT balance. */
     balance: number;
@@ -237,6 +238,8 @@
     claimable?: boolean;
     /** Section to open on. */
     section?: ProfileSection;
+    /** The sections offered in the nav, for a host that has built only some; defaults to all. */
+    sections?: ProfileSection[];
 
     // CHIT
     chitEnabled?: boolean;
@@ -262,7 +265,8 @@
     onlineMinutes?: number;
     onlineMinutesPrev?: number;
     messageMix?: { label: string; count: number; color?: string }[];
-    engagement?: { count: string; label: string }[];
+    /** A number shows in the host's locale. */
+    engagement?: { count: number | string; label: string }[];
     reported?: number;
 
     // settings
@@ -346,6 +350,7 @@
     isVerified = false,
     claimable = false,
     section: initialSection = 'profile',
+    sections,
     chitEnabled = true,
     chitNotify = true,
     chitHideAfterClaim = false,
@@ -449,7 +454,11 @@
     flow.leave(fn);
   }
 
+  // a section the host doesn't offer is never shown
+  const offered = (s: ProfileSection) => sections === undefined || sections.includes(s);
+
   function go(next: ProfileSection) {
+    if (!offered(next)) return;
     section = next;
     if (!fieldBusy) editing = null;
   }
@@ -622,6 +631,12 @@
   let previewTimer: ReturnType<typeof setTimeout> | undefined;
   let stopPreview: (() => void) | undefined;
   const chat = $derived<ChatSettings>({ ...CHAT_DEFAULTS, ...chatSettings, ...chatOverrides });
+  // a toggle shows its new value until the host sends settings back, which then win: one the host
+  // didn't take (a notification permission refused) goes back
+  $effect.pre(() => {
+    void chatSettings;
+    untrack(() => (chatOverrides = {}));
+  });
 
   function setChat<K extends keyof ChatSettings>(key: K, value: ChatSettings[K]) {
     const current = chat;
@@ -1076,9 +1091,11 @@
     <div class="rail">
       <div class="rail-scroll">
         {#each NAV as group}
+          {@const items = group.items.filter((i) => offered(i[0]) && (i[0] !== 'chit' || chitEnabled || section === 'chit'))}
+          {#if items.length > 0}
           <div class="nav-group">
             <span class="nav-label">{t(group.label)}</span>
-            {#each group.items.filter((i) => i[0] !== 'chit' || chitEnabled || section === 'chit') as [key, title, iconName, tone]}
+            {#each items as [key, title, iconName, tone]}
               {@const on = key === section}
               <div class="nav-item {tone ?? ''}" class:on onclick={() => (key === 'diamond' ? close(onDiamond) : go(key))} role="button" tabindex="0">
                 <span class="nav-icon" style:mask={icon(iconName)}></span>
@@ -1089,6 +1106,7 @@
               </div>
             {/each}
           </div>
+          {/if}
         {/each}
       </div>
       <div class="rail-foot">
@@ -1119,11 +1137,11 @@
       {#if section === 'profile'}
         <div class="scroll gap-18">
           <div class="cover" style:background={cover}>
-            <span class="cover-edit" onclick={() => onCoverEdit?.(isDiamond)} aria-label={t('ui.profileDialog.profile.changeCover')} role="button" tabindex="0" title={t('ui.profileDialog.profile.changeCover')}>{@render glyph('edit', 'cover-edit-glyph')}</span>
+            {#if onCoverEdit}<span class="cover-edit" onclick={() => onCoverEdit(isDiamond)} aria-label={t('ui.profileDialog.profile.changeCover')} role="button" tabindex="0" title={t('ui.profileDialog.profile.changeCover')}>{@render glyph('edit', 'cover-edit-glyph')}</span>{/if}
           </div>
           <div class="identity">
             <span class="avatar" style:background={avatar}>
-              <span class="photo-edit" onclick={() => onPhotoEdit?.()} aria-label={t('ui.profileDialog.profile.changePhoto')} role="button" tabindex="0" title={t('ui.profileDialog.profile.changePhoto')}>{@render glyph('edit', 'photo-edit-glyph')}</span>
+              {#if onPhotoEdit}<span class="photo-edit" onclick={() => onPhotoEdit()} aria-label={t('ui.profileDialog.profile.changePhoto')} role="button" tabindex="0" title={t('ui.profileDialog.profile.changePhoto')}>{@render glyph('edit', 'photo-edit-glyph')}</span>{/if}
             </span>
             <div class="identity-text">
               <div class="name-line">
@@ -1216,7 +1234,7 @@
             </div>
             <div class="kv-row ruled">
               <span class="kv-label">{t('ui.profileDialog.profile.memberSince')}</span>
-              <span class="kv-plain">{memberSince}</span>
+              <span class="kv-plain">{memberSince ?? (joinedProp === undefined ? '' : new Intl.DateTimeFormat(i18n.locale ?? 'en', { day: 'numeric', month: 'short', year: 'numeric' }).format(joinedProp))}</span>
             </div>
             <div class="kv-row ruled">
               <span class="kv-label">{t('ui.profileDialog.profile.userId')}</span>
@@ -1241,7 +1259,7 @@
             </div>
           </div>
           {#each engagement as e}
-            <div class="stat-tile"><span class="tile-figure">{e.count}</span><span class="small-label">{t(e.label)}</span></div>
+            <div class="stat-tile"><span class="tile-figure">{typeof e.count === 'number' ? fmt(e.count) : e.count}</span><span class="small-label">{t(e.label)}</span></div>
           {/each}
           <div class="stat-mix">
             <div class="mix-head"><span class="small-label grow">{t('ui.profileDialog.stats.messagesSent')}</span><span class="mix-total">{fmt(mixTotal)}</span></div>

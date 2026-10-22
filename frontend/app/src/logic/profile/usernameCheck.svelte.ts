@@ -73,28 +73,47 @@ export class UsernameCheck {
         }
     }
 
+    /** The name typed: checked with the backend once typing pauses. */
     set(value: string): void {
+        if (this.#start(value)) {
+            const run = this.#run;
+            this.#timer = setTimeout(() => this.#check(value, run), CHECK_DELAY_MS);
+        }
+    }
+
+    /**
+     * The name entered whole (a dialog's field, saved at once): checked with the backend now.
+     * Resolves whether it can be used, false if another name was set meanwhile.
+     */
+    async checkNow(value: string): Promise<boolean> {
+        if (!this.#start(value)) return this.valid;
+        const run = this.#run;
+        await this.#check(value, run);
+        return run === this.#run && this.valid;
+    }
+
+    // takes the new name; true when the backend has to say whether it's free
+    #start(value: string): boolean {
         this.#cancel();
         const original = this.#original();
         if (value === original) {
             this.#value = undefined;
             this.status = "unchanged";
-            return;
+            return false;
         }
         this.#value = value;
         // the user's own name in another case: theirs, even if it's shorter than the rules now ask
         // (3 characters, say), so there's nothing to ask the backend
         if (this.#ownName && value.toLowerCase() === original.toLowerCase()) {
             this.status = "available";
-            return;
+            return false;
         }
         if (!isUsernameValid(value)) {
             this.status = "invalid";
-            return;
+            return false;
         }
         this.status = "checking";
-        const run = this.#run;
-        this.#timer = setTimeout(() => this.#check(value, run), CHECK_DELAY_MS);
+        return true;
     }
 
     /** Back to the original, as after it's saved. */

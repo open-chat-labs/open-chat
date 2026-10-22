@@ -24,6 +24,8 @@ export {
     applyTranslation,
     buildCryptoTransferText,
     buildTransactionUrl,
+    buildUserAvatarUrl,
+    buildUserBackgroundUrl,
     chatMatchesSearch,
     defaultChat,
     getMembersString,

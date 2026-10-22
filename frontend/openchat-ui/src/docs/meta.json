@@ -13200,9 +13200,9 @@
         "editor": "text",
         "options": null,
         "section": null,
-        "required": true,
+        "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Literal text; without it, the date of `joined` in the host's locale."
       },
       {
         "name": "streak",
@@ -13322,6 +13322,17 @@
         "required": false,
         "componentDefault": "'profile'",
         "doc": "Section to open on."
+      },
+      {
+        "name": "sections",
+        "type": "ProfileSection[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The sections offered in the nav, for a host that has built only some; defaults to all."
       },
       {
         "name": "chitEnabled",
@@ -13457,14 +13468,14 @@
       },
       {
         "name": "engagement",
-        "type": "{ count: string; label: string }[]",
+        "type": "{ count: number | string; label: string }[]",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": "[]",
-        "doc": ""
+        "doc": "A number shows in the host's locale."
       },
       {
         "name": "reported",
