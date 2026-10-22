@@ -95,17 +95,15 @@
                         {#if row.kind === "linked"}
                             {@const id = bridgedUserId(row.account.user)}
                             <Avatar size={"sm"} url={client.bridgedAvatarUrl(id, row.account)}></Avatar>
-                            <Body width={"hug"}>{bridgedAuthorName(row.account)}</Body>
-                            <Row mainAxisAlignment={"end"}>
-                                <IconButton
-                                    size={"md"}
-                                    disabled={busy}
-                                    onclick={() => unlink(row.account)}>
-                                    {#snippet icon()}
-                                        <LinkOff color={ColourVars.textSecondary} size="1.5rem" />
-                                    {/snippet}
-                                </IconButton>
-                            </Row>
+                            <Body ellipsisTruncate>{bridgedAuthorName(row.account)}</Body>
+                            <IconButton
+                                size={"md"}
+                                disabled={busy}
+                                onclick={() => unlink(row.account)}>
+                                {#snippet icon()}
+                                    <LinkOff color={ColourVars.textSecondary} size="1.5rem" />
+                                {/snippet}
+                            </IconButton>
                         {:else if row.kind === "linkable"}
                             <CommonButton
                                 disabled={busy}
@@ -121,7 +119,7 @@
                                     })}></Translatable>
                             </CommonButton>
                         {:else if row.kind === "unavailable"}
-                            <CommonButton disabled size={"medium"}>
+                            <CommonButton disabled size={"medium"} mode={"active"}>
                                 <Translatable resourceKey={i18nKey("bridgedAccounts.comingSoon")}
                                 ></Translatable>
                             </CommonButton>
