@@ -1,6 +1,7 @@
 import type { RouteParams } from "@client";
 import page from "page";
 import { pathToRouteKind } from "@src/utils/navigation";
+import { isLandingPagePath, isLandingPageRoute } from "@src/utils/urls";
 import { redirectTable, routeTable } from "./routeTable";
 
 // What Route needs of its page.js instance, which page.js doesn't expose: decoding the URL's parts
@@ -191,6 +192,17 @@ describe("the web UI's route table", () => {
                 continue;
             }
             expect(pathToRouteKind(url), path).toBe(kind);
+        }
+    });
+
+    // native opens a landing page link in the system browser, deciding by its path alone; a path
+    // missing from that list is taken inside the app as a group id
+    test("every landing route counts as a landing page path", () => {
+        for (const { path } of routeTable) {
+            if (path === "*") continue;
+            const url = path.replace(/\/:\w+\?/g, "").replace(/:\w+/g, "1");
+            if (!isLandingPageRoute(resolve(url))) continue;
+            expect(isLandingPagePath(url), path).toBe(true);
         }
     });
 
