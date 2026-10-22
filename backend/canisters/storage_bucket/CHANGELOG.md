@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Send events to the StorageIndex at its `c2c_storage_bucket` endpoint, in idempotent envelopes ([#10046](https://github.com/open-chat-labs/open-chat/pull/10046))
 
+### Removed
+
+- Remove the `_json` versions of `upload_chunk`, `forward_file`, `delete_file` and `delete_files` ([#10152](https://github.com/open-chat-labs/open-chat/pull/10152))
+
 ### Fixed
 
 - Wait out a failed batch's retry delay, rather than retrying it whenever anything else is queued ([#10069](https://github.com/open-chat-labs/open-chat/pull/10069))
