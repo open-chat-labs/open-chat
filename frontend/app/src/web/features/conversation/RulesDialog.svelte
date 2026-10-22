@@ -1,6 +1,6 @@
 <!-- The chat's (and its community's) rules, when sending needs them accepted first: the client asks
      through captureRulesAcceptanceStore and waits, as the old UI's AcceptRulesModal answered it, and
-     AppScreen shows this with that request's answer. Accept sends on; Reject, or closing, gives the
+     DialogHost shows this with that request's answer. Accept sends on; Reject, or closing, gives the
      send up (the composer keeps the draft). -->
 <script lang="ts">
     import Button from "@openchat/ui/src/lib/components/Button.svelte";

@@ -50,12 +50,8 @@
         return () => document.body.removeEventListener("profile-clicked", clicked);
     });
 
-    // a navigation gives up the rules prompt, as closing it would: accepting it after the chat
-    // changed would accept the new chat's rules
-    $effect(() => {
-        const prompt = $captureRulesAcceptanceStore;
-        if (prompt !== undefined) return host.holdPrompt(() => prompt.resolve(false));
-    });
+    // a navigation gives up the rules prompt, as Reject does
+    $effect(() => host.watchRulesPrompt(captureRulesAcceptanceStore));
 
     const open = $derived(host.open);
     const card = $derived(

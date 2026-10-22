@@ -1,6 +1,6 @@
-import { routerReadyStore, subscribe } from "@client";
-import { flushPendingNavigation, navigate } from "@src/utils/navigation";
-import { DialogHost } from "./dialogHost.svelte";
+import { captureRulesAcceptanceStore, routerReadyStore } from "@client";
+import { navigate } from "@src/utils/navigation";
+import { answerNavigations, DialogHost } from "./dialogHost.svelte";
 
 const pageMock = vi.hoisted(() => Object.assign(vi.fn(), { replace: vi.fn() }));
 // navigation.ts builds its route matchers with page.Route at import
@@ -22,10 +22,8 @@ describe("the dialog host", () => {
         vi.clearAllMocks();
         routerReadyStore.set(true);
         host = new DialogHost(() => "/chats");
-        // as the router answers it
-        unsubscribe = subscribe("closeModalStack", () =>
-            host.closeForNavigation(flushPendingNavigation),
-        );
+        // as the router subscribes it
+        unsubscribe = answerNavigations(host);
     });
     afterEach(() => unsubscribe());
 
@@ -48,5 +46,16 @@ describe("the dialog host", () => {
         expect(host.open).toBeUndefined();
         expect(cancelled).toHaveBeenCalledOnce();
         expect(navigations()).toEqual(["/communities"]);
+    });
+
+    test("invariant 4: a navigation declines an open rules prompt, so a message is never sent with another chat's rules accepted", () => {
+        const stopWatching = host.watchRulesPrompt(captureRulesAcceptanceStore);
+        // as the client's prompt does: answering it clears the store
+        const resolve = vi.fn(() => captureRulesAcceptanceStore.set(undefined));
+        captureRulesAcceptanceStore.set({ resolve });
+        navigate("/communities", "auto");
+        expect(resolve).toHaveBeenCalledExactlyOnceWith(false);
+        expect(navigations()).toEqual(["/communities"]);
+        stopWatching();
     });
 });

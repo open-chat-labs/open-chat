@@ -23,18 +23,13 @@
         selectedChatIdStore,
         selectedCommunityIdStore,
         setRightPanelHistory,
-        subscribe,
         threadMessageIndexStore,
         threadOpenStore,
         type ChatIdentifier,
         type CommunityIdentifier,
         type RouteParams,
     } from "@client";
-    import {
-        flushPendingNavigation,
-        initNavigationHistoryTracking,
-        navigate,
-    } from "@src/utils/navigation";
+    import { initNavigationHistoryTracking, navigate } from "@src/utils/navigation";
     import {
         handleLinkClick,
         inEditor,
@@ -44,7 +39,7 @@
     import page from "page";
     import { dismissedRoute } from "@src/logic/appEvents/appEvents";
     import { getContext, onMount, setContext, untrack, type Snippet } from "svelte";
-    import { DialogHost, dialogHostKey } from "../shell/dialogHost.svelte";
+    import { answerNavigations, DialogHost, dialogHostKey } from "../shell/dialogHost.svelte";
     import { currentShellLayout } from "../shell/viewport.svelte";
     import { defaultChatRoute, defaultChatUrl } from "./defaultChat";
     import { redirectTable, routeTable } from "./routeTable";
@@ -98,9 +93,7 @@
         page.start({ click: false });
         const stopHistoryTracking = initNavigationHistoryTracking();
         // navigate() waits for the open dialogs to close before it goes anywhere
-        const unsubscribe = subscribe("closeModalStack", () =>
-            dialogs.closeForNavigation(flushPendingNavigation),
-        );
+        const unsubscribe = answerNavigations(dialogs);
         routerReadyStore.set(true);
 
         return () => {
