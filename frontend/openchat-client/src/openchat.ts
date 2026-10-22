@@ -311,6 +311,11 @@ import {
     type SignUpOutcome,
     type EmailSignInRequest,
     type SignInOutcome,
+    type ReAuthMethod,
+    type ReAuthOutcome,
+    type EmailReAuthRequest,
+    type ResourceKey,
+    InMemoryAuthClientStorage,
     type SendMessageResponse,
     type SendMessageSuccess,
     type SetDisplayNameResponse,
@@ -645,7 +650,7 @@ import {
 import { joinGroupFailureMessage } from "./utils/join";
 import { currentTip, tipResult } from "./utils/tip";
 import { cryptoTransferResult } from "./utils/cryptoTransfer";
-import { emailLinkFailure, signInOutcome, signInProvider } from "./utils/signIn";
+import { emailLinkFailure, isOwnPrincipal, signInOutcome, signInProvider } from "./utils/signIn";
 import {
     createdUser as createdUserFrom,
     referralCodeRefused,
@@ -823,6 +828,13 @@ const MEMBERS_FOUND_TO_MENTION = 50;
 // How often, and how many times, to check for the output of a swap reaching the wallet
 const SWAP_OUTPUT_CHECK_INTERVAL_MS = 2000;
 const SWAP_OUTPUT_CHECKS = 10;
+
+// An identity the user signed in again with (reAuthenticate)
+type ReAuthIdentity = {
+    provider: AuthProvider;
+    key: ECDSAKeyIdentity;
+    delegation: DelegationChain;
+};
 
 export class OpenChat {
     // When each bridged account's profile was last fetched, keyed by `bridgedUserKey`
@@ -11275,6 +11287,59 @@ export class OpenChat {
      */
     async requestEmailSignIn(email: string, signal?: AbortSignal): Promise<EmailSignInRequest> {
         selectedAuthProviderStore.set(AuthProvider.EMAIL);
+        const resp = await this.#requestEmailLink(email, true, "registration", signal);
+        if (resp.kind !== "sent") return resp;
+        const signedIn = resp.followed.then(
+            (identity): SignInOutcome =>
+                identity === undefined
+                    ? { kind: "cancelled" }
+                    : signInOutcome(identityStateStore.value),
+        );
+        return { kind: "sent", code: resp.code, signedIn };
+    }
+
+    /**
+     * Emails a link to sign in again with (ReAuthMethod) and, once it's sent, waits for it to be
+     * followed, as requestEmailSignIn, without taking the identity it signs in.
+     */
+    async requestEmailReAuthentication(
+        email: string,
+        signal?: AbortSignal,
+    ): Promise<EmailReAuthRequest> {
+        const resp = await this.#requestEmailLink(email, false, "account_linking", signal);
+        if (resp.kind !== "sent") return resp;
+        const reAuthenticated = resp.followed.then(
+            (identity): Promise<ReAuthOutcome> | ReAuthOutcome =>
+                identity === undefined
+                    ? { kind: "cancelled" }
+                    : this.reAuthenticate({
+                          kind: "identity",
+                          provider: AuthProvider.EMAIL,
+                          ...identity,
+                      }),
+        );
+        return { kind: "sent", code: resp.code, reAuthenticated };
+    }
+
+    /**
+     * Emails a sign-in link and checks every second whether it has been followed. `followed`
+     * settles with the identity it signs in (taken by this browser if `assumeIdentity`), or
+     * undefined once `signal` gives it up.
+     */
+    async #requestEmailLink(
+        email: string,
+        assumeIdentity: boolean,
+        category: "registration" | "account_linking",
+        signal?: AbortSignal,
+    ): Promise<
+        | {
+              kind: "sent";
+              code: string;
+              followed: Promise<{ key: ECDSAKeyIdentity; delegation: DelegationChain } | undefined>;
+          }
+        | { kind: "failed"; reason: ResourceKey }
+        | { kind: "cancelled" }
+    > {
         const sessionKey = await ECDSAKeyIdentity.generate();
         let resp: GenerateMagicLinkResponse | { kind: "unexpected_error" };
         try {
@@ -11290,16 +11355,17 @@ export class OpenChat {
             }
             return { kind: "failed", reason: emailLinkFailure(resp.kind) };
         }
-        this.gaTrack("generated_magic_signin_link", "registration");
+        this.gaTrack("generated_magic_signin_link", category);
         const { userKey, expiration } = resp;
 
-        const signedIn = new Promise<SignInOutcome>((resolve) => {
+        type Followed = { key: ECDSAKeyIdentity; delegation: DelegationChain } | undefined;
+        const followed = new Promise<Followed>((resolve) => {
             let waiting = true;
-            const done = (outcome: SignInOutcome) => {
+            const done = (identity: Followed) => {
                 if (!waiting) return;
                 waiting = false;
                 poller.stop();
-                resolve(outcome);
+                resolve(identity);
             };
             const poller = new Poller(
                 async () => {
@@ -11310,11 +11376,11 @@ export class OpenChat {
                             userKey,
                             sessionKey,
                             expiration,
-                            true,
+                            assumeIdentity,
                         );
                         if (r.kind === "success") {
-                            this.gaTrack("received_email_signin_delegation", "registration");
-                            done(signInOutcome(identityStateStore.value));
+                            this.gaTrack("received_email_signin_delegation", category);
+                            done({ key: r.key, delegation: r.delegation });
                         } else if (r.kind === "error") {
                             console.debug("getSignInWithEmailDelegation error", r.error);
                         }
@@ -11325,9 +11391,100 @@ export class OpenChat {
                 1000,
                 1000,
             );
-            signal?.addEventListener("abort", () => done({ kind: "cancelled" }), { once: true });
+            signal?.addEventListener("abort", () => done(undefined), { once: true });
         });
-        return { kind: "sent", code: resp.code, signedIn };
+        return { kind: "sent", code: resp.code, followed };
+    }
+
+    /**
+     * Signs the user in again to prove it's them, without changing who's signed in. Refuses an
+     * identity that isn't theirs: one they're signed in with or one linked to their account
+     * (isOwnPrincipal). `signal` gives it up.
+     */
+    async reAuthenticate(method: ReAuthMethod, signal?: AbortSignal): Promise<ReAuthOutcome> {
+        let identity: ReAuthIdentity | "failed";
+        try {
+            identity = await this.#reAuthIdentity(method);
+        } catch (err) {
+            console.error("Unable to sign in again: ", err);
+            identity = "failed";
+        }
+        if (signal?.aborted) return { kind: "cancelled" };
+        if (identity === "failed") {
+            return { kind: "failed", reason: i18nKey("identity.failure.loginApprover") };
+        }
+        const { key, delegation } = identity;
+        const principal = DelegationIdentity.fromDelegation(key, delegation)
+            .getPrincipal()
+            .toString();
+        const own = await isOwnPrincipal(principal, this.AuthPrincipal, async () =>
+            (await this.#worker.send({ kind: "getAuthenticationPrincipals" })).map(
+                (p) => p.principal,
+            ),
+        );
+        if (!own) {
+            return { kind: "failed", reason: i18nKey("identity.failure.principalMismatch") };
+        }
+        const signInProofJwt = await this.getSignInProof(key, delegation);
+        if (signal?.aborted) return { kind: "cancelled" };
+        return {
+            kind: "success",
+            provider: identity.provider,
+            key,
+            delegation,
+            signInProofJwt,
+        };
+    }
+
+    // The identity a ReAuthMethod signs in, without taking it
+    async #reAuthIdentity(method: ReAuthMethod): Promise<ReAuthIdentity | "failed"> {
+        switch (method.kind) {
+            case "identity":
+                return method;
+            case "passkey": {
+                const [key, delegation] = await this.reSignInWithCurrentWebAuthnIdentity();
+                return { provider: AuthProvider.PASSKEY, key, delegation };
+            }
+            case "wallet": {
+                const resp = await this.signInWithWallet(
+                    method.token,
+                    method.address,
+                    method.signature,
+                    false,
+                );
+                return resp.kind === "success"
+                    ? { provider: signInProvider(method), ...resp }
+                    : "failed";
+            }
+            case "auth_client": {
+                // Internet Identity or NFID, in a window of their own: a new key, kept in memory
+                const provider = signInProvider(method);
+                const key = await ECDSAKeyIdentity.generate();
+                const storage = new InMemoryAuthClientStorage();
+                const authClient = await AuthClient.create({ storage, identity: key });
+                return new Promise((resolve) => {
+                    authClient.login({
+                        ...this.getAuthClientOptions(provider),
+                        onSuccess: async () => {
+                            const delegation = await storage.get("delegation");
+                            resolve(
+                                delegation
+                                    ? {
+                                          provider,
+                                          key,
+                                          delegation: DelegationChain.fromJSON(delegation),
+                                      }
+                                    : "failed",
+                            );
+                        },
+                        onError: (err) => {
+                            console.log("Failed to log into approver: ", err);
+                            resolve("failed");
+                        },
+                    });
+                });
+            }
+        }
     }
 
     async handleMagicLink(qs: string): Promise<HandleMagicLinkResponse> {

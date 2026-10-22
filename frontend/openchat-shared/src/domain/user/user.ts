@@ -1,5 +1,7 @@
+import type { DelegationChain, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
 import { type ReadonlyMap } from "../../utils";
 import type { ResourceKey } from "../../utils/i18n";
+import type { AuthProvider } from "../auth";
 import type { MultiUserChat, PinNumberFailures } from "../chat";
 import type { CommunitySummary } from "../community";
 import type { DataContent } from "../data/data";
@@ -216,6 +218,43 @@ export type SignUpOutcome =
  */
 export type EmailSignInRequest =
     | { kind: "sent"; code: string; signedIn: Promise<SignInOutcome> }
+    | { kind: "failed"; reason: ResourceKey }
+    | { kind: "cancelled" };
+
+/**
+ * How the signed-in user signs in again to prove it's them (resetting a forgotten PIN, claiming a
+ * prize, deleting the account): a way to sign in, or an identity signed in some other way (the
+ * old UIs' wallet buttons sign with the wallet themselves).
+ */
+export type ReAuthMethod =
+    | SignInMethod
+    | {
+          kind: "identity";
+          provider: AuthProvider;
+          key: ECDSAKeyIdentity;
+          delegation: DelegationChain;
+      };
+
+/**
+ * How signing in again went. `success`: the identity is one of the user's own (the one they're
+ * signed in with, or one linked to it), with the backend's proof of the sign-in, if it gave one.
+ * `failed`: another account (`identity.failure.principalMismatch`), or the sign-in failed.
+ * `cancelled`: the passkey prompt was dismissed, or the caller gave it up.
+ */
+export type ReAuthOutcome =
+    | {
+          kind: "success";
+          provider: AuthProvider;
+          key: ECDSAKeyIdentity;
+          delegation: DelegationChain;
+          signInProofJwt: string | undefined;
+      }
+    | { kind: "failed"; reason: ResourceKey }
+    | { kind: "cancelled" };
+
+/** Asking for an emailed link to sign in again with: as EmailSignInRequest, for ReAuthOutcome. */
+export type EmailReAuthRequest =
+    | { kind: "sent"; code: string; reAuthenticated: Promise<ReAuthOutcome> }
     | { kind: "failed"; reason: ResourceKey }
     | { kind: "cancelled" };
 

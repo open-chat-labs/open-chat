@@ -105,7 +105,10 @@ design export needs. Each entry says where it came up.
   is a plain dialog on `DialogShell` with one masked field (`PinDialog`, `TODO(design)`), the old
   modal's words. It wants a standalone PIN dialog, or `WalletSend`'s six boxes as a component,
   from the design export. As in the old UIs, a wrong PIN shows on the screen that started the
-  transfer (`pinNumberErrorMessageStore`), not in the prompt.
+  transfer (`pinNumberErrorMessageStore`), not in the prompt. "I've forgotten my pin" signs in
+  again through `AuthDialog` (its subtitle says why; a failure after an emailed link was followed
+  shows there too, as `AuthDialog` has no error prop once it's stopped waiting) and then asks for
+  the new PIN in another plain dialog (`NewPinDialog`). Neither has a design.
 
 ## App
 
