@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2179](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2179-group_index)] - 2026-10-22
+
 ### Changed
 
 - Send accessor removals to the StorageIndex at its `c2c_group_index` endpoint ([#10023](https://github.com/open-chat-labs/open-chat/pull/10023))

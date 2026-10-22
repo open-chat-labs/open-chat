@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2178](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2178-storage_bucket)] - 2026-10-22
+
 ### Changed
 
 - Send events to the StorageIndex at its `c2c_storage_bucket` endpoint, in idempotent envelopes ([#10046](https://github.com/open-chat-labs/open-chat/pull/10046))

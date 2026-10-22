@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2174](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2174-community)] - 2026-10-22
+
 ### Added
 
 - Store the author's id on messages a bridge bot relays from Discord or Telegram ([#10052](https://github.com/open-chat-labs/open-chat/pull/10052))
