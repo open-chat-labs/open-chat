@@ -49,8 +49,10 @@
         type AppEventDialog as AppEventDialogKind,
     } from "@src/logic/appEvents/appEvents";
     import { pinsFor } from "../rail/rail.adapter";
+    import DetailsColumn from "./DetailsColumn.svelte";
     import Placeholder from "./Placeholder.svelte";
     import RegionScreen from "./RegionScreen.svelte";
+    import { closeRightColumn, openOnNewPanel } from "./rightPanel";
     import { leftScreens, middleScreens, type ScreenContext } from "./screens";
 
     let { regions }: { regions: Extract<Regions, { area: "app" }> } = $props();
@@ -60,6 +62,7 @@
     const rightMode = $derived(currentShellLayout().right);
     const narrow = $derived(currentShellLayout().narrow);
     const rightColumn = new RightColumnState(() => rightMode);
+    $effect(() => openOnNewPanel(rightColumn));
     // the rail's expanded state, remembered where it pushes the layout
     const railMode = $derived(currentShellLayout().rail);
     const railState = new RailState(() => railMode);
@@ -156,9 +159,8 @@
     {/if}
 {/snippet}
 
-<!-- TODO(phase 4): GroupPanel / DmPanel / ThreadPanel -->
 {#snippet detailsColumn()}
-    <Placeholder title="Details" detail="GroupPanel / DmPanel / ThreadPanel (phase 4)" />
+    <DetailsColumn {context} />
 {/snippet}
 
 <Shell
@@ -166,7 +168,7 @@
     right={regions.rightColumn === false ? undefined : detailsColumn}
     narrowView={regions.narrowView}
     rightOpen={rightColumn.open}
-    onCloseRight={() => (rightColumn.open = false)}
+    onCloseRight={() => closeRightColumn(rightColumn)}
     rightLabel="ui.panelCover.info">
     {#snippet rail()}
         <NavRail
