@@ -7,8 +7,7 @@ use crate::utils::{now_millis, tick_many};
 use crate::{TestEnv, User, client};
 use constants::DAY_IN_MS;
 use local_user_index_canister::{
-    c2c_daily_puzzle_push, daily_puzzle_fetch, daily_puzzle_hint, daily_puzzle_start, daily_puzzle_submit,
-    set_daily_puzzle_canister_id,
+    daily_puzzle_fetch, daily_puzzle_hint, daily_puzzle_start, daily_puzzle_submit, set_daily_puzzle_canister_id,
 };
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
@@ -265,16 +264,6 @@ fn daily_puzzle_end_to_end() {
     assert_eq!(state.streak, 1);
 
     // A push from anyone but the daily canister is rejected by the guard
-    let result = env.update_call(
-        local_user_index,
-        user.principal,
-        "c2c_daily_puzzle_push_msgpack",
-        msgpack::serialize_then_unwrap(&c2c_daily_puzzle_push::Args { puzzles: Vec::new() }),
-    );
-    assert!(result.is_err(), "push from a user should be rejected");
-    assert!(puzzle_of(&fetch(env, &user, local_user_index), game_id).is_some());
-
-    // And the same at the event endpoint which replaces it
     let result = env.update_call(
         local_user_index,
         user.principal,

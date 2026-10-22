@@ -13,7 +13,7 @@ use pocket_ic::PocketIc;
 use rand::random;
 use std::ops::Deref;
 use std::time::Duration;
-use storage_index_canister::add_or_update_users::UserConfig;
+use storage_index_canister::UserConfig;
 use testing::rng::{random_from_principal, random_internet_identity_principal, random_principal, random_string};
 use types::{
     ChannelLatestMessageIndex, ChatEvent, ChatId, Empty, EventIndex, FileAdded, FileMetaData, FileRejectedReason,

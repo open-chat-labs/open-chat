@@ -1,21 +1,19 @@
-use crate::guards::caller_is_storage_index_canister;
+use crate::RuntimeState;
 use crate::model::files::RemoveFileResult;
-use crate::{MAX_EVENTS_TO_SYNC_PER_BATCH, RuntimeState, check_cycles_balance, mutate_state};
-use canister_tracing_macros::trace;
-use ic_cdk::update;
-use storage_bucket_canister::c2c_sync_index::{Response::*, *};
-use storage_index_canister::StorageBucketEvent;
-use types::FileRemoved;
+use candid::Principal;
+use types::{AccessorId, FileId, FileRemoved};
 
-#[update(guard = "caller_is_storage_index_canister")]
-#[trace]
-fn c2c_sync_index(args: Args) -> Response {
-    check_cycles_balance();
-
-    mutate_state(|state| c2c_sync_index_impl(args, state))
+// A run of the sync events the StorageIndex sends, gathered by kind
+#[derive(Default)]
+pub(crate) struct SyncArgs {
+    pub users_added: Vec<Principal>,
+    pub users_removed: Vec<Principal>,
+    pub accessors_removed: Vec<AccessorId>,
+    pub files_to_remove: Vec<FileId>,
 }
 
-pub(crate) fn c2c_sync_index_impl(args: Args, state: &mut RuntimeState) -> Response {
+// Returns the files removed
+pub(crate) fn c2c_sync_index_impl(args: SyncArgs, state: &mut RuntimeState) -> Vec<FileRemoved> {
     for user_id in args.users_added {
         state.data.users.add(user_id);
     }
@@ -42,17 +40,7 @@ pub(crate) fn c2c_sync_index_impl(args: Args, state: &mut RuntimeState) -> Respo
         }
     }
 
-    if files_removed.len() > MAX_EVENTS_TO_SYNC_PER_BATCH {
-        // If there are too many events to sync in a single batch, queue the excess events to be
-        // synced later via heartbeat
-        let excess = files_removed.split_off(MAX_EVENTS_TO_SYNC_PER_BATCH);
-
-        for removed in excess {
-            state.push_event_to_index(StorageBucketEvent::FileRemoved(removed));
-        }
-    }
-
     crate::jobs::remove_expired_files::start_job_if_required(state);
 
-    Success(SuccessResult { files_removed })
+    files_removed
 }

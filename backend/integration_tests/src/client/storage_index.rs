@@ -9,23 +9,19 @@ generate_query_call!(vault_buckets);
 
 // Updates
 generate_update_call!(add_bucket_canister);
-generate_update_call!(add_or_update_users);
 generate_msgpack_update_call!(c2c_group_index);
 generate_msgpack_update_call!(c2c_storage_bucket);
-generate_update_call!(c2c_sync_bucket);
 generate_msgpack_update_call!(c2c_user_index);
-generate_update_call!(remove_accessors);
-generate_update_call!(remove_users);
 generate_update_call!(upgrade_bucket_canister_wasm);
 
 pub mod happy_path {
-    use crate::utils::tick_many;
+    use crate::utils::{now_millis, tick_many};
     use candid::Principal;
     use pocket_ic::PocketIc;
     use rand::{Rng, rng};
-    use storage_index_canister::add_or_update_users::UserConfig;
+    use storage_index_canister::UserConfig;
     use storage_index_canister::user::UserRecord;
-    use types::{AccessorId, BlobReference, CanisterId, CanisterWasm};
+    use types::{AccessorId, BlobReference, CanisterId, CanisterWasm, IdempotentEnvelope, SuccessOnly};
     use utils::hasher::hash_bytes;
 
     pub fn add_bucket_canister(env: &mut PocketIc, sender: Principal, canister_id: CanisterId, subnet_id: Principal) {
@@ -44,18 +40,26 @@ pub mod happy_path {
         ));
     }
 
+    // Sent as the UserIndex sends them, so `sender` must be the UserIndex
     pub fn add_or_update_users(env: &mut PocketIc, sender: Principal, canister_id: CanisterId, users: Vec<UserConfig>) {
-        let response = super::add_or_update_users(
+        let now = now_millis(env);
+        let response = super::c2c_user_index(
             env,
             sender,
             canister_id,
-            &storage_index_canister::add_or_update_users::Args { users },
+            &storage_index_canister::c2c_user_index::Args {
+                events: users
+                    .into_iter()
+                    .map(|user| IdempotentEnvelope {
+                        created_at: now,
+                        idempotency_id: rand::random(),
+                        value: storage_index_canister::UserIndexEvent::AddOrUpdateUser(user),
+                    })
+                    .collect(),
+            },
         );
 
-        assert!(matches!(
-            response,
-            storage_index_canister::add_or_update_users::Response::Success
-        ));
+        assert!(matches!(response, SuccessOnly::Success));
 
         // Tick a few times to propagate the users to the buckets and finalize state
         tick_many(env, 5);

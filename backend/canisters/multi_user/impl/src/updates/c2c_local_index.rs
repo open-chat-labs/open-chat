@@ -2,24 +2,17 @@ use crate::guards::caller_is_local_user_index;
 use crate::{RuntimeState, execute_update, openchat_bot};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use multi_user_canister::c2c_local_user_index_v2::*;
+use multi_user_canister::c2c_local_index::*;
 use multi_user_canister::{LocalUserIndexEvent, SetReferralStatusV2, UserCanisterEvent};
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
-fn c2c_local_user_index_v2(args: Args) -> Response {
-    execute_update(|state| c2c_local_user_index_v2_impl(args, state))
-}
-
-// The name for the LocalUserIndex's events, which senders switch to; the old one is served until they have
-#[update(guard = "caller_is_local_user_index", msgpack = true)]
-#[trace]
 fn c2c_local_index(args: Args) -> Response {
-    execute_update(|state| c2c_local_user_index_v2_impl(args, state))
+    execute_update(|state| c2c_local_index_impl(args, state))
 }
 
 // Applies the events to the users they are for, in order, apart from those for the canister itself
-fn c2c_local_user_index_v2_impl(args: Args, state: &mut RuntimeState) -> Response {
+fn c2c_local_index_impl(args: Args, state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
 
     for event in args.events {

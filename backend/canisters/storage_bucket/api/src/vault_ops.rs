@@ -1,11 +1,7 @@
+// The vault operations the StorageIndex sends the buckets
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::{Chat, FileId, Hash, MessageId, MessageIndex, TimestampMillis, UserId};
-
-#[derive(CandidType, Serialize, Deserialize, Debug, Default)]
-pub struct Args {
-    pub ops: Vec<VaultOp>,
-}
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum VaultOp {
@@ -123,18 +119,6 @@ pub struct DenylistHashOp {
     pub derived: Option<bool>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success(SuccessResult),
-}
-
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct SuccessResult {
-    // Evidence-capture failures (eg. file deleted before the op arrived) — callers must not
-    // treat these as quarantined
-    pub quarantine_failures: Vec<FileId>,
-}
-
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct VaultReviewer {
     pub principal: Principal,
@@ -144,26 +128,6 @@ pub struct VaultReviewer {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    // The bucket hop is candid: guards against any future "compat shim" breaking candid
-    // decoding of the current shape (an untagged-enum shim was tried and killed exactly this)
-    #[test]
-    fn unquarantine_op_candid_roundtrip() {
-        let args = Args {
-            ops: vec![VaultOp::Unquarantine(UnquarantineOp {
-                file_id: 42,
-                moderator: None,
-                report_index: Some(7),
-            })],
-        };
-        let bytes = candid::encode_one(&args).unwrap();
-        let decoded: Args = candid::decode_one(&bytes).unwrap();
-        assert!(
-            matches!(&decoded.ops[0], VaultOp::Unquarantine(u) if u.file_id == 42 && u.report_index == Some(7)),
-            "{:?}",
-            decoded.ops
-        );
-    }
 
     // The new-shape op with all fields present must roundtrip through msgpack (the shape
     // persisted in storage_index's queue)

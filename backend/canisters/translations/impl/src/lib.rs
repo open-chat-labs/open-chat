@@ -1,7 +1,6 @@
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
-use fire_and_forget_handler::FireAndForgetHandler;
 use model::user_index_event_batch::UserIndexEventBatch;
 use model::{pending_payments_queue::PendingPaymentsQueue, translations::Translations};
 use rand::Rng;
@@ -92,9 +91,6 @@ struct Data {
     pub pending_payments_queue: PendingPaymentsQueue,
     #[serde(default)]
     pub timer_jobs: TimerJobs<TimerJob>,
-    // Nothing is sent through this any more. Kept for a release so that calls queued for a retry
-    // before the switch to events are still made, then removed.
-    pub fire_and_forget_handler: FireAndForgetHandler,
     // Created on its first event
     #[serde(default)]
     pub user_index_event_sync_queue: Option<BatchedTimerJobQueue<UserIndexEventBatch>>,
@@ -117,7 +113,6 @@ impl Data {
             translations: Translations::default(),
             pending_payments_queue: PendingPaymentsQueue::default(),
             timer_jobs: TimerJobs::default(),
-            fire_and_forget_handler: FireAndForgetHandler::default(),
             user_index_event_sync_queue: None,
             user_notifications_last_sent: 0,
             test_mode,

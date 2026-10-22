@@ -1,2 +1,10 @@
-// The LocalUserIndexes' events. Shares `c2c_local_user_index`'s types, which move here once the old name is removed.
-pub use super::c2c_local_user_index::*;
+use crate::LocalUserIndexEvent;
+use serde::{Deserialize, Serialize};
+use types::{IdempotentEnvelope, SuccessOnly};
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Args {
+    pub events: Vec<IdempotentEnvelope<LocalUserIndexEvent>>,
+}
+
+pub type Response = SuccessOnly;

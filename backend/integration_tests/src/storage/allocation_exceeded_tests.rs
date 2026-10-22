@@ -3,7 +3,7 @@ use crate::utils::tick_many;
 use crate::{TestEnv, client};
 use std::ops::Deref;
 use std::time::Duration;
-use storage_index_canister::add_or_update_users::UserConfig;
+use storage_index_canister::UserConfig;
 use testing::rng::random_principal;
 
 #[test]

@@ -15,7 +15,6 @@ pub mod c2c_leave_group;
 pub mod c2c_local_index;
 mod c2c_moderation_hard_delete;
 mod c2c_moderation_undelete;
-pub mod c2c_notify_p2p_swap_status_change;
 pub mod c2c_set_user_suspended;
 pub mod c2c_start_import_into_community;
 pub mod c2c_unfreeze_group;

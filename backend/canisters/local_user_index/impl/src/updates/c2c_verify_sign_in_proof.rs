@@ -1,5 +1,5 @@
 use crate::guards::caller_is_local_multi_user_canister;
-use crate::updates::c2c_user_canister_v2::is_valid_user_for_caller;
+use crate::updates::c2c_user::is_valid_user_for_caller;
 use crate::{RuntimeState, read_state};
 use candid::Principal;
 use canister_api_macros::update;

@@ -1,25 +1,12 @@
-use crate::guards::caller_is_community_canister;
-use crate::{RuntimeState, mutate_state};
-use canister_api_macros::update;
-use canister_tracing_macros::trace;
-use group_index_canister::c2c_mark_community_active::*;
+use crate::RuntimeState;
 use types::{CommunityId, Milliseconds, PublicCommunityActivity};
-
-#[update(guard = "caller_is_community_canister", msgpack = true)]
-#[trace]
-fn c2c_mark_community_active(args: Args) -> Response {
-    mutate_state(|state| {
-        let community_id = CommunityId::from(state.env.caller());
-        mark_community_active(community_id, args.duration, args.public_community_activity, state)
-    })
-}
 
 pub(crate) fn mark_community_active(
     community_id: CommunityId,
     duration: Milliseconds,
     activity: Option<PublicCommunityActivity>,
     state: &mut RuntimeState,
-) -> Response {
+) {
     let now = state.env.now();
 
     if let Some(c) = state.data.private_communities.get_mut(&community_id) {
@@ -28,5 +15,4 @@ pub(crate) fn mark_community_active(
         let activity = activity.unwrap_or_default();
         c.mark_active(now + duration, activity);
     }
-    Response::Success
 }

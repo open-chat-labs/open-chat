@@ -1,5 +1,4 @@
 use crate::model::escrow_event_batch::EscrowEventBatch;
-use crate::model::notify_status_change_queue::NotifyStatusChangeQueue;
 use crate::model::pending_payments_queue::PendingPaymentsQueue;
 use crate::model::swaps::Swaps;
 use crate::timer_job_types::TimerJob;
@@ -108,9 +107,6 @@ impl RuntimeState {
 struct Data {
     pub swaps: Swaps,
     pub pending_payments_queue: PendingPaymentsQueue,
-    // Drained into `status_change_event_queue` by the post_upgrade one-off, and removed with it
-    pub notify_status_change_queue: NotifyStatusChangeQueue,
-    #[serde(default = "new_status_change_event_queue")]
     pub status_change_event_queue: GroupedTimerJobQueue<EscrowEventBatch>,
     timer_jobs: TimerJobs<TimerJob>,
     pub registry_canister_id: CanisterId,
@@ -125,8 +121,7 @@ impl Data {
         Data {
             swaps: Swaps::default(),
             pending_payments_queue: PendingPaymentsQueue::default(),
-            notify_status_change_queue: NotifyStatusChangeQueue::default(),
-            status_change_event_queue: new_status_change_event_queue(),
+            status_change_event_queue: GroupedTimerJobQueue::new(10, false),
             timer_jobs: TimerJobs::default(),
             registry_canister_id,
             cycles_dispenser_canister_id,
@@ -178,8 +173,4 @@ pub(crate) fn deposit_address(principal: Principal, swap_id: u32, escrow_caniste
     };
 
     account.to_string()
-}
-
-fn new_status_change_event_queue() -> GroupedTimerJobQueue<EscrowEventBatch> {
-    GroupedTimerJobQueue::new(10, false)
 }

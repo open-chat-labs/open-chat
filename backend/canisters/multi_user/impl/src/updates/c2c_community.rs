@@ -2,26 +2,19 @@ use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use multi_user_canister::CommunityCanisterEvent;
-use multi_user_canister::c2c_community_canister_v2::*;
+use multi_user_canister::c2c_community::*;
 use std::collections::BTreeSet;
 
 #[update(msgpack = true)]
 #[trace]
-fn c2c_community_canister_v2(args: Args) -> Response {
-    execute_update(|state| c2c_community_canister_v2_impl(args, state))
-}
-
-// The name for a Community canister's events, which senders switch to; the old one is served until they have
-#[update(msgpack = true)]
-#[trace]
 fn c2c_community(args: Args) -> Response {
-    execute_update(|state| c2c_community_canister_v2_impl(args, state))
+    execute_update(|state| c2c_community_impl(args, state))
 }
 
 // Handles the events a community sends this canister's users, in order. Only a community the user
 // is in may send them. Events which can't be applied (the user is not here, or has left the
 // community) are dropped rather than rejected with a trap, which the community would keep retrying.
-fn c2c_community_canister_v2_impl(args: Args, state: &mut RuntimeState) -> Response {
+fn c2c_community_impl(args: Args, state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
     let now = state.env.now();
     let mut awarded_achievement = BTreeSet::new();

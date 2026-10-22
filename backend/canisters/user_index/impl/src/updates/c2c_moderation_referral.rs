@@ -1,23 +1,9 @@
-use crate::guards::caller_is_group_index;
+use crate::RuntimeState;
 use crate::model::moderation::{self, ModerationAlert};
 use crate::model::reported_messages::{AddProactiveDetectionArgs, ModerationAction, latest_chat};
-use crate::{RuntimeState, mutate_state};
-use canister_api_macros::update;
-use canister_tracing_macros::trace;
 use tracing::info;
 use types::ModerationCategories;
-use user_index_canister::c2c_moderation_referral::*;
-
-// A message whose classifier score for a configured category (other than sexual/minors)
-// exceeded the moderation-referral threshold: create a resolvable report and alert the
-// moderators. No action is taken against the message or the sender unless a human upholds
-// the report.
-#[update(guard = "caller_is_group_index", msgpack = true)]
-#[trace]
-fn c2c_moderation_referral(args: Args) -> Response {
-    mutate_state(|state| c2c_moderation_referral_impl(args, state));
-    Response::Success
-}
+use user_index_canister::ModerationReferral as Args;
 
 pub(crate) fn c2c_moderation_referral_impl(mut args: Args, state: &mut RuntimeState) {
     // Until the job replacing the ids users had before being migrated to a MultiUser canister (#9929)

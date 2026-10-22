@@ -1,19 +1,9 @@
-use crate::guards::caller_is_group_index;
+use crate::RuntimeState;
 use crate::model::moderation::{self, ModerationAlert};
 use crate::model::reported_messages::{AddProactiveDetectionArgs, ModerationAction, latest_chat};
-use crate::{RuntimeState, mutate_state};
-use canister_api_macros::update;
-use canister_tracing_macros::trace;
 use tracing::info;
 use types::ModerationCategories;
-use user_index_canister::c2c_csam_detected::*;
-
-#[update(guard = "caller_is_group_index", msgpack = true)]
-#[trace]
-fn c2c_csam_detected(args: Args) -> Response {
-    mutate_state(|state| c2c_csam_detected_impl(args, state));
-    Response::Success
-}
+use user_index_canister::CsamDetected as Args;
 
 pub(crate) fn c2c_csam_detected_impl(mut args: Args, state: &mut RuntimeState) {
     // Until the job replacing the ids users had before being migrated to a MultiUser canister (#9929)

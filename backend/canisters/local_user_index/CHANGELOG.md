@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove the `_json` versions of the bot endpoints, as bots can't use JSON any more ([#10152](https://github.com/open-chat-labs/open-chat/pull/10152))
+- Remove the one-off which moved what the replaced queue held onto the event queue, now that it has run ([#10172](https://github.com/open-chat-labs/open-chat/pull/10172))
+- Remove the old names of the endpoints which the event endpoints replaced, as nothing calls them any more ([#10172](https://github.com/open-chat-labs/open-chat/pull/10172))
+
+## [[2.0.2175](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2175-local_user_index)] - 2026-10-22
+
 ### Added
 
 - Include each bot notification's index in its signed payload, so a bot can drop one sent again ([#10065](https://github.com/open-chat-labs/open-chat/pull/10065))
@@ -17,10 +25,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Send daily puzzle results to the DailyPuzzle canister at its `c2c_local_index` endpoint ([#10023](https://github.com/open-chat-labs/open-chat/pull/10023))
 - Tell the GroupIndex of uninstalled communities through its event queue ([#10033](https://github.com/open-chat-labs/open-chat/pull/10033))
 - Send its events to the UserIndex and its MultiUser canisters at `c2c_local_index`, and call the DailyPuzzle canister's event endpoint best-effort ([#10050](https://github.com/open-chat-labs/open-chat/pull/10050))
-
-### Removed
-
-- Remove the `_json` versions of the bot endpoints, as bots can't use JSON any more ([#10152](https://github.com/open-chat-labs/open-chat/pull/10152))
 
 ### Fixed
 
