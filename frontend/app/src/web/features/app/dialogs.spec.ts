@@ -1,4 +1,4 @@
-import { linkedDialog, linkedDialogParam } from "./dialogs";
+import { linkedDialog, linkedDialogParam, openLinkedDialog } from "./dialogs";
 
 describe("the dialog a URL's query opens", () => {
     test("is the one its param names", () => {
@@ -19,5 +19,32 @@ describe("the dialog a URL's query opens", () => {
     test("closes by dropping its param", () => {
         expect(linkedDialogParam({ kind: "leaderboard" })).toBe("hof");
         expect(linkedDialogParam({ kind: "profile" })).toBe("profile");
+    });
+});
+
+describe("opening a linked dialog", () => {
+    test("adds its param to the query", () => {
+        expect(openLinkedDialog(new URLSearchParams("threads"), { kind: "leaderboard" })).toBe(
+            "?threads=&hof",
+        );
+        expect(openLinkedDialog(new URLSearchParams(""), { kind: "profile" })).toBe("?profile");
+    });
+
+    test("takes the place of the one showing", () => {
+        expect(openLinkedDialog(new URLSearchParams("profile"), { kind: "diamond" })).toBe(
+            "?diamond",
+        );
+        expect(openLinkedDialog(new URLSearchParams("hof&chit"), { kind: "profile" })).toBe(
+            "?profile",
+        );
+    });
+
+    test("is nothing when it's the one showing", () => {
+        expect(
+            openLinkedDialog(new URLSearchParams("profile"), { kind: "profile" }),
+        ).toBeUndefined();
+        expect(
+            openLinkedDialog(new URLSearchParams("profile&diamond"), { kind: "profile" }),
+        ).toBeUndefined();
     });
 });

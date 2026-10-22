@@ -7,7 +7,7 @@ import type { Component } from "svelte";
 // - linked: a query param over whatever page is open, which people link to and Back closes
 //   (ROUTES.md, decision 6): ?profile, ?chit, ?hof, ?diamond;
 // - local: opened by the app itself (a name clicked in a message …), kept in a DialogStack, and
-//   closed before any navigation (closeModalStack).
+//   closed before any navigation (closeModalStack) and on Back.
 
 export type LinkedDialog =
     | { kind: "profile" }
@@ -47,26 +47,42 @@ export const dialogs: Dialogs = {
     // the CHIT leaderboard (8d)
     leaderboard: undefined,
 
-    // someone else's profile card (4a)
+    // someone else's profile card (4a). The old card was anchored to the name clicked (alignTo);
+    // 4a adds that to the "user" dialog
     user: undefined,
 };
 
 // each linked dialog's query param, in the order they win when more than one is in the URL
-const LINKED: [LinkedDialog["kind"], string][] = [
-    ["profile", "profile"],
-    ["diamond", "diamond"],
-    ["chit", "chit"],
-    ["leaderboard", "hof"],
-];
+const PARAMS: Record<LinkedDialog["kind"], string> = {
+    profile: "profile",
+    diamond: "diamond",
+    chit: "chit",
+    leaderboard: "hof",
+};
+
+// PARAMS' keys, in its order
+const LINKED_KINDS = Object.keys(PARAMS) as LinkedDialog["kind"][];
 
 /** The linked dialog the URL's query opens, if any: one at a time. */
 export function linkedDialog(query: URLSearchParams): LinkedDialog | undefined {
-    const found = LINKED.find(([, param]) => query.has(param));
-    return found && { kind: found[0] };
+    const kind = LINKED_KINDS.find((k) => query.has(PARAMS[k]));
+    return kind && { kind };
 }
 
 /** The query param that opens a linked dialog, which closing it drops. */
 export function linkedDialogParam(dialog: LinkedDialog): string {
-    const found = LINKED.find(([kind]) => kind === dialog.kind);
-    return found === undefined ? dialog.kind : found[1];
+    return PARAMS[dialog.kind];
+}
+
+/**
+ * The query that opens a linked dialog in place of the one showing (from the profile, Diamond:
+ * Back returns to the profile), or undefined when it's already the one showing.
+ */
+export function openLinkedDialog(query: URLSearchParams, dialog: LinkedDialog): string | undefined {
+    if (linkedDialog(query)?.kind === dialog.kind) return undefined;
+    const rest = new URLSearchParams(query);
+    LINKED_KINDS.forEach((k) => rest.delete(PARAMS[k]));
+    // a flag, as withQueryStringFlag writes it: no "="
+    const others = rest.toString();
+    return `?${others === "" ? "" : `${others}&`}${encodeURIComponent(PARAMS[dialog.kind])}`;
 }

@@ -132,11 +132,11 @@
     // the list a narrow screen goes back to from the middle
     const back = $derived(narrowBack(regions));
 
-    // built once, each field read as it's used: a crossing of the narrow breakpoint doesn't touch a
-    // screen that only reads the right column
     // the dialogs the app opens itself, shown by DialogHost with the ones the URL opens
     const dialogStack = new DialogStack<LocalDialog>();
 
+    // built once, each field read as it's used: a crossing of the narrow breakpoint doesn't touch a
+    // screen that only reads the right column
     const context: ScreenContext = {
         dialogs: dialogStack,
         rightColumn,

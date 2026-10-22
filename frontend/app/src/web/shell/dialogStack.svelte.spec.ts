@@ -20,6 +20,17 @@ describe("the app's own dialogs", () => {
         expect(stack.items).toEqual([second]);
     });
 
+    test("one takes the place of those it replaces, on top", () => {
+        const stack = new DialogStack<{ kind: string; name: string }>();
+        const card = { kind: "card", name: "alice" };
+        const other = { kind: "other", name: "other" };
+        stack.open(card);
+        stack.open(other);
+        const next = { kind: "card", name: "bob" };
+        stack.replace(next, (open) => open.kind === "card");
+        expect(stack.items).toEqual([other, next]);
+    });
+
     test("all close together before a navigation", () => {
         const stack = new DialogStack<{ name: string }>();
         stack.open({ name: "first" });
