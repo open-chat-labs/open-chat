@@ -2,19 +2,15 @@
 <script lang="ts">
     import { navigate } from "@utils/navigation";
     import type {
-        ChatEvent,
         ChatIdentifier,
         CommunityIdentifier,
-        EventWrapper,
-        Level,
         MemberRole,
-        Message,
         MultiUserChat,
         MultiUserChatIdentifier,
         OpenChat,
         UserSummary,
     } from "@client";
-    import { allUsersStore, compareRoles, currentUserIdStore, eventsStore, fullWidth, lastRightPanelState, publish, rightPanelHistory, roleAsText, routeStore, selectedChatBlockedUsersStore, selectedChatBotsStore, selectedChatIdStore, selectedChatInvitedUsersStore, selectedChatLapsedMembersStore, selectedChatMembersStore, selectedChatPinnedMessagesStore, selectedChatSummaryStore, selectedChatWebhooksStore, selectedCommunityBlockedUsersStore, selectedCommunityBotsStore, selectedCommunityInvitedUsersStore, selectedCommunityLapsedMembersStore, selectedCommunityMembersStore, selectedCommunitySummaryStore, setRightPanelHistory } from "@client";
+    import { allUsersStore, compareRoles, currentUserIdStore, eventsStore, fullWidth, lastRightPanelState, publish, rightPanelHistory, rightPanelView, roleAsText, routeStore, selectedChatBlockedUsersStore, selectedChatBotsStore, selectedChatIdStore, selectedChatInvitedUsersStore, selectedChatLapsedMembersStore, selectedChatMembersStore, selectedChatPinnedMessagesStore, selectedChatSummaryStore, selectedChatWebhooksStore, selectedCommunityBlockedUsersStore, selectedCommunityBotsStore, selectedCommunityInvitedUsersStore, selectedCommunityLapsedMembersStore, selectedCommunityMembersStore, selectedCommunitySummaryStore, setRightPanelHistory, threadOpenStore } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
@@ -180,15 +176,6 @@
         activeVideoCall.threadOpen(false);
     }
 
-    function findMessage(
-        events: EventWrapper<ChatEvent>[],
-        messageId: bigint,
-    ): EventWrapper<Message> | undefined {
-        return events.find((e) => {
-            return e.event.kind === "message" && e.event.messageId === messageId;
-        }) as EventWrapper<Message> | undefined;
-    }
-
     function changeGroupRole(
         chatId: MultiUserChatIdentifier,
         userId: string,
@@ -344,18 +331,23 @@
         }
     }
 
-    let threadRootEvent = $derived(
-        $lastRightPanelState.kind === "message_thread_panel" && $selectedChatIdStore !== undefined
-            ? findMessage($eventsStore, $lastRightPanelState.threadRootMessageId)
-            : undefined,
+    let view = $derived(
+        rightPanelView({
+            panel: $lastRightPanelState,
+            chatKind: $selectedChatSummaryStore?.kind,
+            inCommunity: $selectedCommunitySummaryStore !== undefined,
+            events: $eventsStore,
+            threadOpen: $threadOpenStore,
+        }),
     );
 
+    // the level the invite panels' user search invites to
     let level = $derived(
-        ($lastRightPanelState.kind === "invite_community_users"
-            ? "community"
-            : $selectedChatSummaryStore?.kind === "channel"
-              ? "channel"
-              : "group") as Level,
+        view.kind === "invite_users"
+            ? view.level
+            : view.kind === "channel_or_community_invite"
+              ? view.tab
+              : "group",
     );
 </script>
 
@@ -367,116 +359,96 @@
     style={`--resized-width: ${resizedWidth}`}
     class:halloween={$currentTheme.name === "halloween"}
     class:empty>
-    {#if $lastRightPanelState.kind === "group_details" && $selectedChatIdStore !== undefined && $selectedChatSummaryStore !== undefined}
-        {#if $selectedChatSummaryStore.kind === "channel" && $selectedCommunitySummaryStore !== undefined}
-            <ChannelOrCommunitySummary
-                channel={$selectedChatSummaryStore}
-                memberCount={$selectedChatSummaryStore.memberCount}
-                community={$selectedCommunitySummaryStore}
-                selectedTab="channel"
-                onClose={client.popRightPanelHistory} />
-        {:else if $selectedChatSummaryStore.kind === "group_chat"}
-            <GroupDetails
-                chat={$selectedChatSummaryStore}
-                memberCount={$selectedChatSummaryStore.memberCount}
-                onClose={client.popRightPanelHistory} />
-        {:else if $selectedChatSummaryStore.kind === "direct_chat"}
-            <DirectChatDetails
-                chat={$selectedChatSummaryStore}
-                onClose={client.popRightPanelHistory} />
-        {/if}
-    {:else if $lastRightPanelState.kind === "call_participants_panel"}
+    <!-- which panel shows is rightPanelView's; the store checks below only narrow the types -->
+    {#if view.kind === "channel_summary" && multiUserChat?.kind === "channel" && $selectedCommunitySummaryStore !== undefined}
+        <ChannelOrCommunitySummary
+            channel={multiUserChat}
+            community={$selectedCommunitySummaryStore}
+            memberCount={multiUserChat.memberCount}
+            selectedTab={view.tab}
+            onClose={client.popRightPanelHistory} />
+    {:else if view.kind === "group_details" && $selectedChatSummaryStore?.kind === "group_chat"}
+        <GroupDetails
+            chat={$selectedChatSummaryStore}
+            memberCount={$selectedChatSummaryStore.memberCount}
+            onClose={client.popRightPanelHistory} />
+    {:else if view.kind === "direct_chat_details" && $selectedChatSummaryStore?.kind === "direct_chat"}
+        <DirectChatDetails chat={$selectedChatSummaryStore} onClose={client.popRightPanelHistory} />
+    {:else if view.kind === "call_participants"}
         <ActiveCallParticipants
-            isOwner={$lastRightPanelState.isOwner}
-            chatId={$lastRightPanelState.chatId}
+            isOwner={view.isOwner}
+            chatId={view.chatId}
             onClose={client.popRightPanelHistory}
-            messageId={$lastRightPanelState.messageId} />
-    {:else if $lastRightPanelState.kind === "invite_community_users" && $selectedCommunitySummaryStore !== undefined}
-        {#if multiUserChat !== undefined && multiUserChat.kind === "channel" && $selectedCommunitySummaryStore !== undefined}
-            <ChannelOrCommunityInvite
-                channel={multiUserChat}
-                community={$selectedCommunitySummaryStore}
-                userLookup={searchUsers}
-                busy={invitingUsers}
-                {closeIcon}
-                selectedTab="community"
-                {onInviteCommunityUsers}
-                onInviteChannelUsers={onInviteGroupUsers}
-                onCancelInviteUsers={client.popRightPanelHistory} />
-        {:else}
-            <InviteUsers
-                {level}
-                container={$selectedCommunitySummaryStore}
-                userLookup={searchUsers}
-                busy={invitingUsers}
-                {closeIcon}
-                isCommunityPublic={$selectedCommunitySummaryStore?.public ?? true}
-                onInviteUsers={onInviteCommunityUsers}
-                onCancelInviteUsers={client.popRightPanelHistory} />
-        {/if}
-    {:else if $lastRightPanelState.kind === "show_community_members" && $selectedCommunitySummaryStore !== undefined}
-        {#if multiUserChat !== undefined && multiUserChat.kind === "channel"}
-            <ChannelOrCommunityMembers
-                channel={multiUserChat}
-                community={$selectedCommunitySummaryStore}
-                {closeIcon}
-                selectedTab="community"
-                onShowInviteCommunityUsers={showInviteCommunityUsers}
-                {onRemoveCommunityMember}
-                {onChangeCommunityRole}
-                {onBlockCommunityUser}
-                {onUnblockCommunityUser}
-                {onBlockGroupUser}
-                {onUnblockGroupUser}
-                {onRemoveGroupMember}
-                {onChangeGroupRole}
-                {onCancelGroupInvite}
-                {onCancelCommunityInvite}
-                onClose={client.popRightPanelHistory} />
-        {:else}
-            <Members
-                {closeIcon}
-                collection={$selectedCommunitySummaryStore}
-                invited={$selectedCommunityInvitedUsersStore}
-                members={[...$selectedCommunityMembersStore.values()]}
-                blocked={$selectedCommunityBlockedUsersStore}
-                lapsed={$selectedCommunityLapsedMembersStore}
-                initialUsergroup={$lastRightPanelState.userGroupId}
-                installedBots={$selectedCommunityBotsStore}
-                onClose={client.popRightPanelHistory}
-                onBlockUser={onBlockCommunityUser}
-                onUnblockUser={onUnblockCommunityUser}
-                onShowInviteUsers={showInviteCommunityUsers}
-                onRemoveMember={onRemoveCommunityMember}
-                onChangeRole={onChangeCommunityRole}
-                onCancelInvite={onCancelCommunityInvite} />
-        {/if}
-    {:else if $lastRightPanelState.kind === "invite_group_users" && multiUserChat !== undefined}
-        {#if multiUserChat.kind === "channel" && $selectedCommunitySummaryStore !== undefined}
-            <ChannelOrCommunityInvite
-                channel={multiUserChat}
-                community={$selectedCommunitySummaryStore}
-                userLookup={searchUsers}
-                memberLookup={searchMembers}
-                busy={invitingUsers}
-                {closeIcon}
-                selectedTab="channel"
-                {onInviteCommunityUsers}
-                onInviteChannelUsers={onInviteGroupUsers}
-                onCancelInviteUsers={client.popRightPanelHistory} />
-        {:else}
-            <InviteUsers
-                container={multiUserChat}
-                {level}
-                userLookup={searchUsers}
-                memberLookup={searchMembers}
-                busy={invitingUsers}
-                {closeIcon}
-                isCommunityPublic={$selectedCommunitySummaryStore?.public ?? true}
-                onInviteUsers={onInviteGroupUsers}
-                onCancelInviteUsers={client.popRightPanelHistory} />
-        {/if}
-    {:else if $lastRightPanelState.kind === "show_group_members" && $selectedChatIdStore !== undefined && multiUserChat !== undefined && multiUserChat.kind === "group_chat"}
+            messageId={view.messageId} />
+    {:else if view.kind === "channel_or_community_invite" && multiUserChat?.kind === "channel" && $selectedCommunitySummaryStore !== undefined}
+        <ChannelOrCommunityInvite
+            channel={multiUserChat}
+            community={$selectedCommunitySummaryStore}
+            userLookup={searchUsers}
+            memberLookup={view.tab === "channel" ? searchMembers : undefined}
+            busy={invitingUsers}
+            {closeIcon}
+            selectedTab={view.tab}
+            {onInviteCommunityUsers}
+            onInviteChannelUsers={onInviteGroupUsers}
+            onCancelInviteUsers={client.popRightPanelHistory} />
+    {:else if view.kind === "invite_users" && view.level === "community" && $selectedCommunitySummaryStore !== undefined}
+        <InviteUsers
+            {level}
+            container={$selectedCommunitySummaryStore}
+            userLookup={searchUsers}
+            busy={invitingUsers}
+            {closeIcon}
+            isCommunityPublic={$selectedCommunitySummaryStore?.public ?? true}
+            onInviteUsers={onInviteCommunityUsers}
+            onCancelInviteUsers={client.popRightPanelHistory} />
+    {:else if view.kind === "invite_users" && multiUserChat !== undefined}
+        <InviteUsers
+            container={multiUserChat}
+            {level}
+            userLookup={searchUsers}
+            memberLookup={searchMembers}
+            busy={invitingUsers}
+            {closeIcon}
+            isCommunityPublic={$selectedCommunitySummaryStore?.public ?? true}
+            onInviteUsers={onInviteGroupUsers}
+            onCancelInviteUsers={client.popRightPanelHistory} />
+    {:else if view.kind === "channel_or_community_members" && multiUserChat?.kind === "channel" && $selectedCommunitySummaryStore !== undefined}
+        <ChannelOrCommunityMembers
+            channel={multiUserChat}
+            community={$selectedCommunitySummaryStore}
+            {closeIcon}
+            selectedTab={view.tab}
+            onShowInviteCommunityUsers={showInviteCommunityUsers}
+            {onRemoveCommunityMember}
+            {onChangeCommunityRole}
+            {onBlockCommunityUser}
+            {onUnblockCommunityUser}
+            {onBlockGroupUser}
+            {onUnblockGroupUser}
+            {onRemoveGroupMember}
+            {onChangeGroupRole}
+            {onCancelGroupInvite}
+            {onCancelCommunityInvite}
+            onClose={client.popRightPanelHistory} />
+    {:else if view.kind === "community_members" && $selectedCommunitySummaryStore !== undefined}
+        <Members
+            {closeIcon}
+            collection={$selectedCommunitySummaryStore}
+            invited={$selectedCommunityInvitedUsersStore}
+            members={[...$selectedCommunityMembersStore.values()]}
+            blocked={$selectedCommunityBlockedUsersStore}
+            lapsed={$selectedCommunityLapsedMembersStore}
+            initialUsergroup={view.userGroupId}
+            installedBots={$selectedCommunityBotsStore}
+            onClose={client.popRightPanelHistory}
+            onBlockUser={onBlockCommunityUser}
+            onUnblockUser={onUnblockCommunityUser}
+            onShowInviteUsers={showInviteCommunityUsers}
+            onRemoveMember={onRemoveCommunityMember}
+            onChangeRole={onChangeCommunityRole}
+            onCancelInvite={onCancelCommunityInvite} />
+    {:else if view.kind === "group_members" && multiUserChat?.kind === "group_chat"}
         <Members
             {closeIcon}
             collection={multiUserChat}
@@ -493,56 +465,29 @@
             onRemoveMember={onRemoveGroupMember}
             onChangeRole={onChangeGroupRole}
             onCancelInvite={onCancelGroupInvite} />
-    {:else if $lastRightPanelState.kind === "show_group_members" && $selectedChatIdStore !== undefined && multiUserChat !== undefined && multiUserChat.kind === "channel" && $selectedCommunitySummaryStore !== undefined}
-        <ChannelOrCommunityMembers
-            selectedTab="channel"
-            channel={multiUserChat}
-            community={$selectedCommunitySummaryStore}
-            {closeIcon}
-            onShowInviteCommunityUsers={showInviteCommunityUsers}
-            {onRemoveCommunityMember}
-            {onChangeCommunityRole}
-            {onBlockCommunityUser}
-            {onUnblockCommunityUser}
-            {onBlockGroupUser}
-            {onUnblockGroupUser}
-            {onRemoveGroupMember}
-            {onChangeGroupRole}
-            onClose={client.popRightPanelHistory}
-            {onCancelGroupInvite}
-            {onCancelCommunityInvite} />
-    {:else if $lastRightPanelState.kind === "show_pinned" && $selectedChatIdStore !== undefined && ($selectedChatIdStore.kind === "group_chat" || $selectedChatIdStore.kind === "channel") && multiUserChat !== undefined}
+    {:else if view.kind === "pinned" && multiUserChat !== undefined && $selectedChatIdStore !== undefined && ($selectedChatIdStore.kind === "group_chat" || $selectedChatIdStore.kind === "channel")}
         <PinnedMessages
             chatId={$selectedChatIdStore}
             pinned={$selectedChatPinnedMessagesStore}
             dateLastPinned={multiUserChat.dateLastPinned}
             onClose={client.popRightPanelHistory} />
-    {:else if $lastRightPanelState.kind === "user_profile"}
+    {:else if view.kind === "user_profile"}
         <UserProfile
             onUnsubscribeNotifications={() => client.setSoftDisabled(true)}
             {user}
             onCloseProfile={client.popRightPanelHistory} />
-    {:else if threadRootEvent !== undefined && $selectedChatSummaryStore !== undefined}
+    {:else if view.kind === "thread" && $selectedChatSummaryStore !== undefined}
         <Thread
-            rootEvent={threadRootEvent}
+            rootEvent={view.rootEvent}
             chat={$selectedChatSummaryStore}
             onCloseThread={closeThread} />
-    {:else if $lastRightPanelState.kind === "proposal_filters" && $selectedChatSummaryStore !== undefined}
+    {:else if view.kind === "proposal_filters" && $selectedChatSummaryStore !== undefined}
         <ProposalGroupFilters
             selectedChat={$selectedChatSummaryStore}
             onClose={client.popRightPanelHistory} />
-    {:else if $lastRightPanelState.kind === "community_details" && $selectedCommunitySummaryStore !== undefined}
-        {#if multiUserChat !== undefined && multiUserChat.kind === "channel"}
-            <ChannelOrCommunitySummary
-                channel={multiUserChat}
-                community={$selectedCommunitySummaryStore}
-                memberCount={multiUserChat.memberCount}
-                selectedTab="community"
-                onClose={client.popRightPanelHistory} />
-        {:else}
-            <CommunityDetails />
-        {/if}
-    {:else if $lastRightPanelState.kind === "community_filters"}
+    {:else if view.kind === "community_details"}
+        <CommunityDetails />
+    {:else if view.kind === "community_filters"}
         <CommunityFilters onClose={client.popRightPanelHistory} />
     {/if}
 

@@ -40,6 +40,7 @@ export { inviteLinkUrl } from "./utils/inviteLink";
 export { postLoginJoin } from "./utils/join";
 export { muteNotificationsFailureMessage, pinChatFailureMessage } from "./utils/pinAndMute";
 export { profileChanges } from "./utils/profile";
+export { rightPanelView, type RightPanelInput } from "./utils/rightPanel";
 export { signInOptions } from "./utils/signIn";
 export { cloneWalletConfig, walletConfigForMode } from "./utils/walletConfig";
 export type { TrackingCategory } from "./utils/ga";

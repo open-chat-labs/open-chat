@@ -1,3 +1,4 @@
+import type { RightPanelView } from "@client";
 import type { Component } from "svelte";
 import { LazyModule } from "../../lazyModule.svelte";
 import type { Regions } from "../../router/regions";
@@ -13,6 +14,12 @@ import type { RightColumnState } from "../../shell/rightColumn.svelte";
 type AppRegions = Extract<Regions, { area: "app" }>;
 export type LeftRegion = NonNullable<AppRegions["left"]>;
 export type MiddleRegion = AppRegions["middle"];
+/**
+ * The right column's panel: what `rightPanelView` reads from the last `rightPanelHistory` entry.
+ * `back`: its close button is Back (`client.popRightPanelHistory`), with an earlier panel to go
+ * back to; otherwise it's Close (`closeRightColumn`).
+ */
+export type RightRegion = Exclude<RightPanelView, { kind: "none" }> & { back: boolean };
 
 /** What the app gives every screen besides its region. */
 export type ScreenContext = {
@@ -61,6 +68,53 @@ export const middleScreens: Screens<MiddleRegion> = {
 
     // the platform operator console
     admin: undefined,
+};
+
+export const rightScreens: Screens<RightRegion> = {
+    // a group's details (phase 4, 4a: GroupPanel)
+    group_details: undefined,
+
+    // a DM's details (phase 4, 4a: DmPanel)
+    direct_chat_details: undefined,
+
+    // a channel's details, on its channel or community tab (phase 4, 4a: GroupPanel)
+    channel_summary: undefined,
+
+    // a community's details (phase 4, 4a: GroupPanel)
+    community_details: undefined,
+
+    // a group's members (phase 4, 4a: GroupPanel)
+    group_members: undefined,
+
+    // a community's members, or one of its user groups (?usergroup=) (phase 4, 4a: GroupPanel)
+    community_members: undefined,
+
+    // a channel's or its community's members (phase 4, 4a: GroupPanel)
+    channel_or_community_members: undefined,
+
+    // inviting users to a group, channel or community (phase 4, 4a)
+    invite_users: undefined,
+
+    // inviting users to a channel or its community (phase 4, 4a)
+    channel_or_community_invite: undefined,
+
+    // pinned messages (phase 4, 4a: GroupPanel)
+    pinned: undefined,
+
+    // the user's own profile (phase 8, 8c)
+    user_profile: undefined,
+
+    // the open thread (phase 4, 4c: ThreadPanel)
+    thread: undefined,
+
+    // a proposals group's filters (phase 4, 4a)
+    proposal_filters: undefined,
+
+    // explore's filters (phase 8, 8a)
+    community_filters: undefined,
+
+    // who's in the call (phase 7, 7b)
+    call_participants: undefined,
 };
 
 type AnyScreen = { default: Component<never> };
