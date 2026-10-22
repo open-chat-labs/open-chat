@@ -1,5 +1,6 @@
 import {
     pinNumberFailureStore,
+    selectedAuthProviderStore,
     type OpenChat,
     type ReAuthOutcome,
     type ResourceKey,
@@ -53,10 +54,7 @@ export class ForgotPin {
     onRequestEmailLink = async (email: string): Promise<EmailLinkSent> => {
         localStorage.setItem(configKeys.selectedAuthEmail, email);
         this.linkFailure = undefined;
-        const resp = await this.#client.requestEmailReAuthentication(
-            email,
-            this.#attempts.signal,
-        );
+        const resp = await this.#client.requestEmailReAuthentication(email, this.#attempts.signal);
         if (resp.kind === "cancelled") throw new Error("Email link given up");
         if (resp.kind === "failed") throw this.#failure(resp.reason);
         this.#followed(resp.reAuthenticated);
@@ -96,6 +94,8 @@ export class ForgotPin {
             case "failed":
                 throw this.#failure(outcome.reason);
             case "success":
+                // the way the user last signed in, as the old trees' sign-in again records it
+                selectedAuthProviderStore.set(outcome.provider);
                 await this.form.reauthenticated(outcome.signInProofJwt);
                 if (this.form.error !== undefined) throw this.#failure(this.form.error);
         }

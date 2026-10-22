@@ -829,6 +829,29 @@ const MEMBERS_FOUND_TO_MENTION = 50;
 const SWAP_OUTPUT_CHECK_INTERVAL_MS = 2000;
 const SWAP_OUTPUT_CHECKS = 10;
 
+// What an emailed link is for: whether this browser takes the identity it signs in, and whether a
+// failed check for it ends it
+type EmailLink = {
+    identity: "take" | "leave";
+    onCheckFailure: "keep_checking" | "stop";
+    category: "registration" | "account_linking";
+};
+const SIGN_IN_BY_EMAIL: EmailLink = {
+    identity: "take",
+    onCheckFailure: "keep_checking",
+    category: "registration",
+};
+// signing in again never takes the identity it signs in
+const REAUTH_BY_EMAIL: EmailLink = {
+    identity: "leave",
+    onCheckFailure: "stop",
+    category: "account_linking",
+};
+type EmailLinkFollowed =
+    | { kind: "followed"; key: ECDSAKeyIdentity; delegation: DelegationChain }
+    | { kind: "check_failed" }
+    | { kind: "given_up" };
+
 // An identity the user signed in again with (reAuthenticate)
 type ReAuthIdentity = {
     provider: AuthProvider;
@@ -11287,56 +11310,71 @@ export class OpenChat {
      */
     async requestEmailSignIn(email: string, signal?: AbortSignal): Promise<EmailSignInRequest> {
         selectedAuthProviderStore.set(AuthProvider.EMAIL);
-        const resp = await this.#requestEmailLink(email, true, "registration", signal);
+        const resp = await this.#requestEmailLink(email, SIGN_IN_BY_EMAIL, signal);
         if (resp.kind !== "sent") return resp;
-        const signedIn = resp.followed.then(
-            (identity): SignInOutcome =>
-                identity === undefined
-                    ? { kind: "cancelled" }
-                    : signInOutcome(identityStateStore.value),
-        );
+        const signedIn = resp.followed.then((followed): SignInOutcome => {
+            switch (followed.kind) {
+                case "given_up":
+                    return { kind: "cancelled" };
+                case "check_failed":
+                    // a sign-in keeps checking after a failed check, so this can't happen
+                    return { kind: "failed", reason: i18nKey("loginDialog.unexpectedError") };
+                case "followed":
+                    return signInOutcome(identityStateStore.value);
+            }
+        });
         return { kind: "sent", code: resp.code, signedIn };
     }
 
     /**
      * Emails a link to sign in again with (ReAuthMethod) and, once it's sent, waits for it to be
-     * followed, as requestEmailSignIn, without taking the identity it signs in.
+     * followed, as requestEmailSignIn, without taking the identity it signs in. A check for the
+     * link that fails ends it (`identity.failure.pollingError`).
      */
     async requestEmailReAuthentication(
         email: string,
         signal?: AbortSignal,
     ): Promise<EmailReAuthRequest> {
-        const resp = await this.#requestEmailLink(email, false, "account_linking", signal);
+        const resp = await this.#requestEmailLink(email, REAUTH_BY_EMAIL, signal);
         if (resp.kind !== "sent") return resp;
         const reAuthenticated = resp.followed.then(
-            (identity): Promise<ReAuthOutcome> | ReAuthOutcome =>
-                identity === undefined
-                    ? { kind: "cancelled" }
-                    : this.reAuthenticate({
-                          kind: "identity",
-                          provider: AuthProvider.EMAIL,
-                          ...identity,
-                      }),
+            (followed): Promise<ReAuthOutcome> | ReAuthOutcome => {
+                switch (followed.kind) {
+                    case "given_up":
+                        return { kind: "cancelled" };
+                    case "check_failed":
+                        return {
+                            kind: "failed",
+                            reason: i18nKey("identity.failure.pollingError"),
+                        };
+                    case "followed":
+                        return this.reAuthenticate(
+                            {
+                                kind: "identity",
+                                provider: AuthProvider.EMAIL,
+                                key: followed.key,
+                                delegation: followed.delegation,
+                            },
+                            signal,
+                        );
+                }
+            },
         );
         return { kind: "sent", code: resp.code, reAuthenticated };
     }
 
     /**
      * Emails a sign-in link and checks every second whether it has been followed. `followed`
-     * settles with the identity it signs in (taken by this browser if `assumeIdentity`), or
-     * undefined once `signal` gives it up.
+     * settles with the identity it signs in (taken by this browser only for `"take"`), with
+     * `check_failed` if a check fails and the link says to stop then, or `given_up` once `signal`
+     * gives it up.
      */
     async #requestEmailLink(
         email: string,
-        assumeIdentity: boolean,
-        category: "registration" | "account_linking",
+        link: EmailLink,
         signal?: AbortSignal,
     ): Promise<
-        | {
-              kind: "sent";
-              code: string;
-              followed: Promise<{ key: ECDSAKeyIdentity; delegation: DelegationChain } | undefined>;
-          }
+        | { kind: "sent"; code: string; followed: Promise<EmailLinkFollowed> }
         | { kind: "failed"; reason: ResourceKey }
         | { kind: "cancelled" }
     > {
@@ -11355,17 +11393,19 @@ export class OpenChat {
             }
             return { kind: "failed", reason: emailLinkFailure(resp.kind) };
         }
-        this.gaTrack("generated_magic_signin_link", category);
+        this.gaTrack("generated_magic_signin_link", link.category);
         const { userKey, expiration } = resp;
 
-        type Followed = { key: ECDSAKeyIdentity; delegation: DelegationChain } | undefined;
-        const followed = new Promise<Followed>((resolve) => {
+        const followed = new Promise<EmailLinkFollowed>((resolve) => {
             let waiting = true;
-            const done = (identity: Followed) => {
+            const done = (outcome: EmailLinkFollowed) => {
                 if (!waiting) return;
                 waiting = false;
                 poller.stop();
-                resolve(identity);
+                resolve(outcome);
+            };
+            const checkFailed = () => {
+                if (link.onCheckFailure === "stop") done({ kind: "check_failed" });
             };
             const poller = new Poller(
                 async () => {
@@ -11376,64 +11416,66 @@ export class OpenChat {
                             userKey,
                             sessionKey,
                             expiration,
-                            assumeIdentity,
+                            link.identity === "take",
                         );
                         if (r.kind === "success") {
-                            this.gaTrack("received_email_signin_delegation", category);
-                            done({ key: r.key, delegation: r.delegation });
+                            this.gaTrack("received_email_signin_delegation", link.category);
+                            done({ kind: "followed", key: r.key, delegation: r.delegation });
                         } else if (r.kind === "error") {
                             console.debug("getSignInWithEmailDelegation error", r.error);
+                            checkFailed();
                         }
                     } catch (err) {
                         console.warn("getSignInWithEmailDelegation error", err);
+                        checkFailed();
                     }
                 },
                 1000,
                 1000,
             );
-            signal?.addEventListener("abort", () => done(undefined), { once: true });
+            signal?.addEventListener("abort", () => done({ kind: "given_up" }), { once: true });
         });
         return { kind: "sent", code: resp.code, followed };
     }
 
     /**
-     * Signs the user in again to prove it's them, without changing who's signed in. Refuses an
-     * identity that isn't theirs: one they're signed in with or one linked to their account
-     * (isOwnPrincipal). `signal` gives it up.
+     * Signs the user in again to prove it's them, without changing who's signed in. Never succeeds
+     * with an identity that isn't theirs: the one they're signed in with or one linked to their
+     * account (isOwnPrincipal). Deleting the account relies on this check alone. `signal` gives it
+     * up. It doesn't reject: anything that goes wrong is `failed`.
      */
     async reAuthenticate(method: ReAuthMethod, signal?: AbortSignal): Promise<ReAuthOutcome> {
-        let identity: ReAuthIdentity | "failed";
+        const failed: ReAuthOutcome = {
+            kind: "failed",
+            reason: i18nKey("identity.failure.loginApprover"),
+        };
         try {
-            identity = await this.#reAuthIdentity(method);
+            const identity = await this.#reAuthIdentity(method);
+            if (signal?.aborted) return { kind: "cancelled" };
+            if (identity === "failed") return failed;
+            const { key, delegation } = identity;
+            const principal = DelegationIdentity.fromDelegation(key, delegation)
+                .getPrincipal()
+                .toString();
+            const own = await isOwnPrincipal(principal, this.AuthPrincipal, async () =>
+                (await this.getAuthenticationPrincipals()).map((p) => p.principal),
+            );
+            if (!own) {
+                return { kind: "failed", reason: i18nKey("identity.failure.principalMismatch") };
+            }
+            const signInProofJwt = await this.getSignInProof(key, delegation);
+            if (signal?.aborted) return { kind: "cancelled" };
+            return {
+                kind: "success",
+                provider: identity.provider,
+                key,
+                delegation,
+                signInProofJwt,
+            };
         } catch (err) {
             console.error("Unable to sign in again: ", err);
-            identity = "failed";
+            return signal?.aborted ? { kind: "cancelled" } : failed;
         }
-        if (signal?.aborted) return { kind: "cancelled" };
-        if (identity === "failed") {
-            return { kind: "failed", reason: i18nKey("identity.failure.loginApprover") };
-        }
-        const { key, delegation } = identity;
-        const principal = DelegationIdentity.fromDelegation(key, delegation)
-            .getPrincipal()
-            .toString();
-        const own = await isOwnPrincipal(principal, this.AuthPrincipal, async () =>
-            (await this.#worker.send({ kind: "getAuthenticationPrincipals" })).map(
-                (p) => p.principal,
-            ),
-        );
-        if (!own) {
-            return { kind: "failed", reason: i18nKey("identity.failure.principalMismatch") };
-        }
-        const signInProofJwt = await this.getSignInProof(key, delegation);
-        if (signal?.aborted) return { kind: "cancelled" };
-        return {
-            kind: "success",
-            provider: identity.provider,
-            key,
-            delegation,
-            signInProofJwt,
-        };
     }
 
     // The identity a ReAuthMethod signs in, without taking it

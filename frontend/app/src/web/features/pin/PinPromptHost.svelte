@@ -14,7 +14,7 @@
     import { pinNumberErrorMessageStore } from "@src/stores/pinNumber";
     import { toastStore } from "@src/stores/toast";
     import { i18nKey } from "@i18n/i18n";
-    import { getContext, untrack } from "svelte";
+    import { getContext, onDestroy, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import { OPTIONS } from "../auth/auth.adapter";
     import { AUTH_WALLETS } from "../auth/signIn";
@@ -39,6 +39,9 @@
         forgot?.dispose();
         forgot = undefined;
     }
+
+    // going away mid-way (signed out, or a new request) stops waiting on an emailed link
+    onDestroy(() => forgot?.dispose());
 
     async function saveNewPin(flow: ForgotPin) {
         const outcome = await flow.save();
