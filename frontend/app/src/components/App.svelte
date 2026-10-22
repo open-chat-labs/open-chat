@@ -27,7 +27,6 @@
         type DiamondMembershipFees,
         OpenChat,
         PremiumItem,
-        type UpdateMarketMakerConfigArgs,
         type VideoCallType,
         anonUserStore,
         botState,
@@ -157,7 +156,6 @@
             setTokenEnabled,
             stakeNeuronForSubmittingProposals,
             topUpNeuronForSubmittingProposals,
-            updateMarketMakerConfig,
             setPremiumItemCost,
             updateBlockedUsernamePatterns,
             pauseEventLoop: () => client.pauseEventLoop(),
@@ -514,16 +512,6 @@
                 console.log("Neuron topped up successfully");
             } else {
                 console.error("Failed to top up neuron");
-            }
-        });
-    }
-
-    function updateMarketMakerConfig(config: UpdateMarketMakerConfigArgs): void {
-        client.updateMarketMakerConfig(config).then((resp) => {
-            if (resp === "success") {
-                console.log("Market maker config updated");
-            } else {
-                console.error("Failed to update market maker config", resp);
             }
         });
     }

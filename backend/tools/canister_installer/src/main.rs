@@ -20,7 +20,6 @@ async fn main() {
         cycles_dispenser: opts.cycles_dispenser,
         daily_puzzle: opts.daily_puzzle,
         registry: opts.registry,
-        market_maker: opts.market_maker,
         neuron_controller: opts.neuron_controller,
         escrow: opts.escrow,
         translations: opts.translations,
@@ -90,9 +89,6 @@ struct Opts {
 
     #[arg(long)]
     registry: CanisterId,
-
-    #[arg(long)]
-    market_maker: CanisterId,
 
     #[arg(long)]
     neuron_controller: CanisterId,

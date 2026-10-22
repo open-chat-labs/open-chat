@@ -44,10 +44,6 @@
     "ic": "nq4qv-wqaaa-aaaaf-bhdgq-cai",
     "ic_test": "pecvb-tqaaa-aaaaf-bhdiq-cai"
   },
-  "market_maker": {
-    "ic": "r2pvs-tyaaa-aaaar-ajcwq-cai",
-    "ic_test": "6qpog-pyaaa-aaaar-aikyq-cai"
-  },
   "neuron_controller": {
     "ic": "tktqu-nyaaa-aaaar-qackq-cai",
     "ic_test": "tdq3i-3qaaa-aaaar-qacla-cai"

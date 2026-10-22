@@ -1623,7 +1623,6 @@ dependencies = [
  "ic-agent",
  "ic-utils",
  "identity_canister",
- "market_maker_canister",
  "neuron_controller_canister",
  "notifications_index_canister",
  "notifications_index_canister_client",
@@ -5699,39 +5698,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "icdex_canister"
-version = "0.1.0"
-dependencies = [
- "candid",
- "icrc-ledger-types",
- "serde",
- "types",
-]
-
-[[package]]
-name = "icdex_canister_c2c_client"
-version = "0.1.0"
-dependencies = [
- "candid",
- "canister_client",
- "ic-cdk 0.20.3",
- "icdex_canister",
- "types",
-]
-
-[[package]]
-name = "icdex_client"
-version = "0.1.0"
-dependencies = [
- "candid",
- "hex",
- "ic-cdk 0.20.3",
- "icdex_canister",
- "icdex_canister_c2c_client",
- "types",
-]
-
-[[package]]
 name = "ico"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7006,61 +6972,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "62bb907fe88d54d8d9ce32a3cceab4218ed2f6b7d35617cafe9adf84e43919cb"
 dependencies = [
  "libc",
-]
-
-[[package]]
-name = "market_maker_canister"
-version = "0.1.0"
-dependencies = [
- "candid",
- "candid_gen",
- "serde",
- "types",
-]
-
-[[package]]
-name = "market_maker_canister_client"
-version = "0.1.0"
-dependencies = [
- "candid",
- "canister_client",
- "ic-agent",
- "market_maker_canister",
- "types",
-]
-
-[[package]]
-name = "market_maker_canister_impl"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "candid",
- "canister_logger",
- "canister_state_macros",
- "canister_tracing_macros",
- "constants",
- "futures",
- "git_commit_id",
- "http_request",
- "ic-cdk 0.20.3",
- "ic-cdk-timers",
- "ic-stable-structures",
- "icdex_canister",
- "icdex_canister_c2c_client",
- "icdex_client",
- "icrc-ledger-types",
- "icrc_ledger_canister_c2c_client",
- "itertools 0.15.0",
- "market_maker_canister",
- "msgpack",
- "rand 0.10.2",
- "serde",
- "stable_memory",
- "test-case",
- "tracing",
- "types",
- "user_index_canister_c2c_client",
- "utils",
 ]
 
 [[package]]

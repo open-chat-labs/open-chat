@@ -737,7 +737,6 @@ const handlers: Handlers = {
             payload.fromAccount,
             payload.pin,
         ),
-    updateMarketMakerConfig: (payload, agent) => agent.updateMarketMakerConfig(payload),
     setMessageReminder: (payload, agent) =>
         agent.setMessageReminder(
             payload.chatId,

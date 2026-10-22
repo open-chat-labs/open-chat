@@ -198,7 +198,6 @@ import type {
 } from "./identity";
 import type { CommunityInvite, GroupInvite } from "./inviteCodes";
 import type { LogLevel } from "./logging";
-import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
 import type { ToggleMuteNotificationResponse } from "./notifications";
 import type {
     OneSecForwardingStatus,
@@ -399,7 +398,6 @@ export type WorkerRequest = Cloneable<
     | SetDiamondMembershipFees
     | StakeNeuronForSubmittingProposals
     | TopUpNeuronForSubmittingProposals
-    | UpdateMarketMakerConfig
     | SetMessageReminder
     | CancelMessageReminder
     | ReportMessage
@@ -2246,7 +2244,6 @@ export type WorkerResponseInner =
     | Map<string, Record<number, EventWrapper<Message>>>
     | PayForDiamondMembershipResponse
     | ClaimPrizeResponse
-    | UpdateMarketMakerConfigResponse
     | SetMessageReminderResponse
     | BlockCommunityUserResponse
     | ChangeCommunityRoleResponse
@@ -2401,10 +2398,6 @@ type PayForDiamondMembership = {
     fromAccount: string | undefined;
     pin: string | undefined;
     kind: "payForDiamondMembership";
-};
-
-type UpdateMarketMakerConfig = UpdateMarketMakerConfigArgs & {
-    kind: "updateMarketMakerConfig";
 };
 
 type SetMessageReminder = {
@@ -2748,7 +2741,6 @@ export type WorkerResults = ResultsByKind<{
     deleteFailedMessage: void;
     claimPrize: ClaimPrizeResponse;
     payForDiamondMembership: PayForDiamondMembershipResponse;
-    updateMarketMakerConfig: UpdateMarketMakerConfigResponse;
     setMessageReminder: SetMessageReminderResponse;
     cancelMessageReminder: boolean;
     reportMessage: boolean;

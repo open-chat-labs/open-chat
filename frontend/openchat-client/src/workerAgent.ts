@@ -114,7 +114,6 @@ export class WorkerAgent {
             blobUrlPattern: config.blobUrlPattern,
             canisterUrlPath: config.canisterUrlPath,
             proposalBotCanister: config.proposalBotCanister,
-            marketMakerCanister: config.marketMakerCanister,
             signInWithEmailCanister: config.signInWithEmailCanister,
             signInWithEthereumCanister: config.signInWithEthereumCanister,
             signInWithSolanaCanister: config.signInWithSolanaCanister,
