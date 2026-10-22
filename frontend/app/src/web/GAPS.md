@@ -213,6 +213,11 @@ design export needs. Each entry says where it came up.
 - **Composer draft and input** (by hand, phase 3c): `MessageComposer` kept its draft to itself.
   It now takes `text` (the draft to start from) and `onInput` (the draft as it changes), so the
   app keeps a draft per chat and tells the others someone is typing.
+- **Composer focus** (by hand): `MessageComposer` takes `autofocus`, so the composer's text box
+  takes focus when a chat is opened, on screens 992px and wider that aren't touch-only
+  (`focusEntryOnOpen`, as the old entry), unless a dialog is open. When the thread lands (4c), its
+  composer should take focus as the thread opens too, including on "Reply in thread" for the
+  thread that's already open (the old entry listens for `openThread`).
 
 - **Native apps**: this tree doesn't register the native event listeners or signal `svelteReady`,
   so native builds leave it out whatever `OC_WEB_LAYOUT` says (`webLayoutFlag` in

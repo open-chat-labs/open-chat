@@ -16,6 +16,7 @@
         typingNames,
         throttled,
         enterSends,
+        autofocus,
         onDraft,
         onStartTyping,
         onStopTyping,
@@ -30,6 +31,8 @@
         // the throttle countdown's text, "" while sending isn't throttled
         throttled: string;
         enterSends: boolean;
+        // the text box takes focus as the composer mounts (it's keyed by chat, so on each chat opened)
+        autofocus: boolean;
         // an empty or blank draft is no draft
         onDraft: (text: string | undefined) => void;
         onStartTyping: () => void;
@@ -99,6 +102,7 @@
         bannerText={throttled}
         bannerTone="warning"
         {enterSends}
+        {autofocus}
         {onInput}
         onSend={send} />
 {/if}

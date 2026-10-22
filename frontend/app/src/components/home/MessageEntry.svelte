@@ -26,20 +26,22 @@
         chatIdentifiersEqual,
         iconSize,
         messageContextsEqual,
+        messageContextToString,
         screenWidth,
-        ScreenWidth,
         selectedChatMembersStore,
         selectedCommunitySummaryStore,
         selectedCommunityUserGroupsStore,
+        subscribe,
         throttleDeadline,
         userGroupMentionRegex,
         userIdMentionRegex,
         type SendMessageOutcome,
     } from "@client";
-    import { getContext, tick, untrack } from "svelte";
+    import { getContext, onMount, tick, untrack } from "svelte";
     import {
         entryBlock,
         expandMentions as expandMentionsIn,
+        focusEntryOnOpen,
         TypingNotifier,
     } from "@src/logic/composer/composer";
     import { _ } from "svelte-i18n";
@@ -49,6 +51,7 @@
     import Send from "svelte-material-icons/Send.svelte";
     import { i18nKey, interpolate } from "../../i18n/i18n";
     import { clearsEntry } from "@src/utils/sendFromEntry";
+    import { isTouchOnlyDevice } from "@src/utils/devices";
     import { enterSend } from "../../stores/settings";
     import { snowing } from "../../stores/snow";
     import AlertBoxModal from "../AlertBoxModal.svelte";
@@ -420,11 +423,40 @@
             editor?.focus();
         }
     });
-    trackedEffect("screen-width-focus", () => {
-        if ($screenWidth === ScreenWidth.Large) {
-            editor?.focus();
+    // The editor takes focus when a chat or thread is opened, on a wide screen without an on-screen
+    // keyboard (shared with the other trees). Neither view is rebuilt for another chat or thread,
+    // so that's the first editor the entry has after moving to one: an editor rebuilt for the same
+    // chat or thread (after a throttle countdown, say) leaves focus where the reader put it
+    let focusOnOpen = $derived(focusEntryOnOpen($screenWidth, isTouchOnlyDevice));
+    let messageContextKey = $derived(messageContextToString(messageContext));
+    let openedKey: string | undefined;
+    let focusPending = false;
+    trackedEffect("focus-on-open", () => {
+        if (messageContextKey !== openedKey) {
+            openedKey = messageContextKey;
+            focusPending = true;
+        }
+        if (focusPending && editor) {
+            focusPending = false;
+            if (focusOnOpen) {
+                editor.focus();
+            }
         }
     });
+    // "Reply in thread" on the thread that's already open doesn't move the thread's entry, so it
+    // takes focus here
+    onMount(() =>
+        subscribe("openThread", ({ chat: opened, msg }) => {
+            if (
+                mode === "thread" &&
+                focusOnOpen &&
+                chatIdentifiersEqual(opened.id, messageContext.chatId) &&
+                msg.event.messageIndex === messageContext.threadRootMessageIndex
+            ) {
+                editor?.focus();
+            }
+        }),
+    );
     let placeholder = $derived(
         !canEnterText
             ? i18nKey("sendTextDisabled")

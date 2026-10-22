@@ -121,3 +121,7 @@
 ## 2026-10-22 — DialogShell opens animated, by hand
 - `DialogShell` fades its veil in (`oc-veil-in`) and lifts its card in (`oc-dlg-in`), with the hand-built dialogs' durations and easing. It had no animation, so dialogs built on it (`ChatPicker`, the app's) popped in while the hand-built ones rose. It still has no closing animation: it unmounts as soon as its host closes it.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-22 — the composer can take focus as it mounts, by hand
+- `MessageComposer` takes `autofocus` (default off): its text box takes focus when it mounts, without scrolling, unless a dialog (`aria-modal`) is open, which keeps it. `ComposerBar` passes it through. The app keys the composer per chat and turns it on where the old UI focuses its entry on opening a chat (992px and up, not on touch-only devices).
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
