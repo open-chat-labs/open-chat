@@ -39,7 +39,6 @@ jobs:
           echo "tag=$TAG" >> $GITHUB_OUTPUT
           echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
 
-      # The repo's pinned toolchain, as every other workflow builds with
       - name: Set up Rust
         uses: ./.github/workflows/setup-rust
 
