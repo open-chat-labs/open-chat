@@ -5,8 +5,8 @@ design export needs. Each entry says where it came up.
 
 ## Design / library
 
-- **Accent setting**: the design has four accents (`data-accent`), the app has no setting for it.
-  `App.svelte` uses the default (pink).
+- **Accent setting**: done. The accent picked on Landing's theme controls is kept in this browser
+  (`web/accent.ts`) and `App.svelte` puts it on `<html>`. The in-app control is Profile's (8c).
 - **Font size setting**: the app's font size setting (`fontSize` store) isn't mapped onto the
   library's `--text-*` tokens yet.
 - **Shell breakpoints vs layout tokens**: the shell's breakpoints and widths (Fix Brief - App
@@ -52,7 +52,7 @@ design export needs. Each entry says where it came up.
 - **Voice messages**: `VoiceMessage` draws a fixed waveform and has no `levels` prop, though every
   OpenChat voice note has one.
 - **GIFs**: `MessageComposer` shows placeholder GIF tiles (`GIF_WORDS`) and has no results prop;
-  only `onGif(query)` goes out. The app searches Giphy today.
+  only `onGif(query)` goes out. The app searches KLIPY today.
 - **Proposals**: `ProposalMessage` isn't in the `GroupMessage` union, so `MessageGroup` can't
   render proposal chats. When it can, a vote that comes back `neuron_votes_failed` should list each
   neuron with its reason, as the old UI does.
@@ -157,7 +157,8 @@ design export needs. Each entry says where it came up.
     translations post shows "2 Mar 2024", as the old blog did (its date is written as 31 Feb).
 - **Landing's featured communities**: none are passed yet, so the section shows only its heading
   and Browse link. The old landing page had no such list; explore's hot communities could feed it.
-- **Android APK link**: Landing's `apkHref` has no URL in the app, so that choice isn't a link.
+- **Android APK link**: Landing's `apkHref` isn't passed yet, so that choice isn't a link. The
+  old landing page links GitHub releases (`MobileBeta.svelte`), which 9b can pass.
 
 ### Wiring
 
@@ -195,7 +196,7 @@ design export needs. Each entry says where it came up.
   (`RulesDialog`, the old modal's words; no design for it), and the throttle countdown shows as the
   composer's banner. Enter follows the app's Enter-to-send setting (`enterSends`). A preview
   shows "This chat is read-only" where the old footer had Join and Leave (the join gate is
-  phase 9).
+  phase 8).
 - **Composer draft and input** (by hand, phase 3c): `MessageComposer` kept its draft to itself.
   It now takes `text` (the draft to start from) and `onInput` (the draft as it changes), so the
   app keeps a draft per chat and tells the others someone is typing.

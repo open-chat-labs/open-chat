@@ -65,8 +65,9 @@ Agreed on 2026-10-16; the tables below follow them.
    phase 9:
    - **Learn:** Learn's content can carry extra doc pages that use the doc layout (contents list
      plus numbered sections) without being tabs. The legal pages' existing text moves into that
-     content, and `?section=` keeps scrolling to a section. The CSEA report form
-     (`?report=`, `?urgent=`) is interactive, so that page gets a slot for it below the doc.
+     content, and `?section=` keeps scrolling to a section. The CSEA page is the
+     moderators' NCA reporting checklist (`?report=`, `?urgent=`), which is interactive, so that
+     page gets a slot for it below the doc.
    - **Diamond:** `DiamondDialog`'s body (Free vs Diamond, plans, payment) becomes a
      `DiamondContent` component, which both the dialog and the `/diamond` page render. Signed
      out, upgrading on the page opens `AuthDialog` first.
@@ -118,7 +119,7 @@ it from showing: a desktop window shrunk after load scrolls the shell sideways i
 |---|---|---|---|---|---|---|
 | `/` (signed in) | `home_route` | – | – | – | – | redirects to `/favourite` if the user has favourites, else `/chats` |
 | `/chats` | `chat_list_route` (chats) | `ChatListPanel` | selects the chat last opened in this list, else its first (decision 7); `EmptyState` without one | – | list | yes |
-| `/chats/user/:id/:mi?/:tmi?` · `/user/:id/…` | `global_chat_selected_route` direct (chats) | `ChatListPanel` | conversation (DM) | `DmPanel` docked, `ProfileDialog` "This chat" below 1476px; thread → `ThreadPanel` | conversation | no |
+| `/chats/user/:id/:mi?/:tmi?` · `/user/:id/…` | `global_chat_selected_route` direct (chats) | `ChatListPanel` | conversation (DM) | `DmPanel` docked, `UserDialog` "This chat" below 1476px; thread → `ThreadPanel` | conversation | no |
 | `/chats/group/:id/…` · `/group/:id/…` · legacy `/:id/…` | `global_chat_selected_route` group (chats) | `ChatListPanel` | conversation (group) | `GroupPanel` on demand; thread → `ThreadPanel` | conversation | preview (read-only) |
 | `/favourite` | `chat_list_route` (favourite) | `ChatListPanel` favourites | selects the favourite last opened, else the first (decision 7); `EmptyState` without one | – | list | sign in, then `/chats` |
 | `/favourite/user/:id/…` · `/favourite/group/:id/…` · `/favourite/community/:cid/channel/:chid/…` | as above, favourite scope | `ChatListPanel` favourites | conversation | as above | conversation | – (redirects to the non-favourite URL if not a favourite) |
@@ -255,11 +256,12 @@ Still to come:
 - **Dialog params**: `?profile` opens a placeholder dialog over the page. `?diamond`, `?hof` and
   `?chit` are left in the URL until their dialogs exist (phase 8).
 - **Share**: `/share` goes to the default scope as today, but picking the chat (`ChatPicker`)
-  comes in phase 5.
+  comes in phase 4.
 
 ## Known router issues (not fixed here)
 
 - The legacy `/:chatId` route catches unregistered 1–3 segment paths and treats them as a group id
   (`/hotgroups`, `/welcome` on desktop, `/faq` on mobile).
 - `landingPagePaths` (`utils/urls.ts`) is missing `privacy` and `csea-reporting`.
-- `favourites_route` and `explore_groups_route` are route kinds no path produces.
+- `explore_groups_route` is a route kind no path produces. `favourites_route` is used (`navigation.ts`
+  and the mobile router label `/favourite` with it); only its parser, `favouritesRoute`, is unused.
