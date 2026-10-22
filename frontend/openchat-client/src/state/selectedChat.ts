@@ -151,6 +151,11 @@ export function currentChatVisit(): SelectedChat | undefined {
     return selected;
 }
 
+// The visit to whichever thread is open, whose events are in `serverThreadEventsStore`
+export function currentThreadVisit(): SelectedThread | undefined {
+    return openThread;
+}
+
 // The selected chat's visit, if the chat is selected. For events that are true whenever they
 // arrive, such as a message just sent; anything loaded holds on to the visit it was loaded for.
 export function selectedChatFor(chatId: ChatIdentifier): SelectedChat | undefined {

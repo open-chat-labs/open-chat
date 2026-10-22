@@ -1,10 +1,19 @@
 import { describe, expect, test } from "vitest";
-import type { BridgedUserId, BridgedUserSummary, ChatEvent, EventWrapper } from "../domain";
+import {
+    deletedUser,
+    type BridgedUserId,
+    type BridgedUserSummary,
+    type ChatEvent,
+    type EventWrapper,
+    type SenderContext,
+} from "../domain";
 import {
     bridgedAuthorAvatarUrl,
     bridgedAuthorName,
     bridgedUserIdsFromEvents,
     bridgedUserKey,
+    isOwnMessage,
+    linkedAuthor,
     shouldShowAsMe,
 } from "./bridge";
 
@@ -72,15 +81,23 @@ describe("bridge", () => {
         expect(bridgedAuthorAvatarUrl(telegramId, telegram(), PATTERN)).toBeUndefined();
     });
 
-    test("collects each account a message was relayed from once", () => {
-        const message = (bridged?: BridgedUserId) =>
+    test("collects each account a message, or the one it replies to, was relayed from once", () => {
+        const relayedFrom = (bridged?: BridgedUserId) =>
+            bridged === undefined
+                ? undefined
+                : { kind: "bot", finalised: true, bridgedFrom: bridged };
+        const message = (bridged?: BridgedUserId, replyBridged?: BridgedUserId) =>
             ({
                 event: {
                     kind: "message",
-                    senderContext:
-                        bridged === undefined
+                    senderContext: relayedFrom(bridged),
+                    repliesTo:
+                        replyBridged === undefined
                             ? undefined
-                            : { kind: "bot", finalised: true, bridgedFrom: bridged },
+                            : {
+                                  kind: "rehydrated_reply_context",
+                                  senderContext: relayedFrom(replyBridged),
+                              },
                 },
             }) as unknown as EventWrapper<ChatEvent>;
 
@@ -92,6 +109,53 @@ describe("bridge", () => {
                 message(discordId),
             ]),
         ).toEqual([discordId, telegramId]);
+        expect(bridgedUserIdsFromEvents([message(undefined, telegramId)])).toEqual([telegramId]);
+    });
+
+    test("shows the user who linked the account as its author, unless they've gone", () => {
+        const linked = { ...telegram(), linkedUserId: "alice" };
+        const alice = { ...deletedUser("alice"), updated: 1n, username: "alice" };
+
+        expect(linkedAuthor(linked, new Map([["alice", alice]]))).toEqual(alice);
+        expect(linkedAuthor(linked, new Map([["alice", deletedUser("alice")]]))).toBeUndefined();
+        // Not loaded yet
+        expect(linkedAuthor(linked, new Map())).toBeUndefined();
+        expect(linkedAuthor(telegram(), new Map([["alice", alice]]))).toBeUndefined();
+        expect(linkedAuthor(undefined, new Map([["alice", alice]]))).toBeUndefined();
+    });
+
+    test("counts a message as the user's own if they sent it or linked its account", () => {
+        const fromTelegram: SenderContext = {
+            kind: "bot",
+            finalised: true,
+            bridgedFrom: telegramId,
+        };
+        const bridgedUsers = (linkedUserId?: string) =>
+            new Map([[bridgedUserKey(telegramId)!, { ...telegram(), linkedUserId }]]);
+
+        expect(isOwnMessage({ sender: "me" }, "me", new Map())).toBe(true);
+        expect(isOwnMessage({ sender: "them" }, "me", new Map())).toBe(false);
+        expect(
+            isOwnMessage(
+                { sender: "bridge", senderContext: fromTelegram },
+                "me",
+                bridgedUsers("me"),
+            ),
+        ).toBe(true);
+        expect(
+            isOwnMessage(
+                { sender: "bridge", senderContext: fromTelegram },
+                "me",
+                bridgedUsers("them"),
+            ),
+        ).toBe(false);
+        expect(
+            isOwnMessage({ sender: "bridge", senderContext: fromTelegram }, "me", bridgedUsers()),
+        ).toBe(false);
+        // Its profile not fetched yet
+        expect(
+            isOwnMessage({ sender: "bridge", senderContext: fromTelegram }, "me", new Map()),
+        ).toBe(false);
     });
 });
 

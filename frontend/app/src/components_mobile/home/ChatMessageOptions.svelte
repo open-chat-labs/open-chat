@@ -70,6 +70,9 @@
         failed: boolean;
         canShare: boolean;
         me: boolean;
+        // Shown as the user's own: `me`, or relayed by a bridge bot from an account they've linked.
+        // Options aimed at the author go by this, as they'd act on the bridge bot.
+        showAsMe: boolean;
         canPin: boolean;
         canTip: boolean;
         pinned: boolean;
@@ -114,6 +117,7 @@
         failed,
         canShare,
         me,
+        showAsMe,
         canPin,
         pinned,
         supportsReply,
@@ -737,7 +741,7 @@
 {/if}
 
 <!-- Reply privately to a message -->
-{#if confirmed && multiUserChat && !inThread && !me && !isProposal && !inert && !failed}
+{#if confirmed && multiUserChat && !inThread && !showAsMe && !isProposal && !inert && !failed}
     {@render renderMenuItem("replyPrivately")}
 {/if}
 
@@ -756,7 +760,7 @@
 {/if}
 
 <!-- Block sender -->
-{#if confirmed && multiUserChat && !me && canBlockUser && !failed}
+{#if confirmed && multiUserChat && !showAsMe && canBlockUser && !failed}
     {@render renderMenuItem("blockUser")}
 {/if}
 
@@ -771,7 +775,7 @@
 {/if}
 
 <!-- Report message (moderation) -->
-{#if confirmed && !me && !inert}
+{#if confirmed && !showAsMe && !inert}
     {@render renderMenuItem("reportMenu")}
 {/if}
 

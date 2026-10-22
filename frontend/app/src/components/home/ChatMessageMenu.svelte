@@ -71,6 +71,9 @@
         failed: boolean;
         canShare: boolean;
         me: boolean;
+        // Shown as the user's own: `me`, or relayed by a bridge bot from an account they've linked.
+        // Options aimed at the author go by this, as they'd act on the bridge bot.
+        showAsMe: boolean;
         canPin: boolean;
         pinned: boolean;
         supportsReply: boolean;
@@ -113,6 +116,7 @@
         failed,
         canShare,
         me,
+        showAsMe,
         canPin,
         pinned,
         supportsReply,
@@ -542,7 +546,7 @@
                         {/snippet}
                     </MenuItem>
                 {/if}
-                {#if confirmed && multiUserChat && !inThread && !me && !isProposal && !inert && !failed}
+                {#if confirmed && multiUserChat && !inThread && !showAsMe && !isProposal && !inert && !failed}
                     <MenuItem onclick={onReplyPrivately}>
                         {#snippet icon()}
                             <ReplyOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />
@@ -602,7 +606,7 @@
                     </MenuItem>
                 {/if}
                 <MenuItem separator />
-                {#if confirmed && multiUserChat && !me && canBlockUser && !failed}
+                {#if confirmed && multiUserChat && !showAsMe && canBlockUser && !failed}
                     <MenuItem onclick={blockUser}>
                         {#snippet icon()}
                             <Cancel size={$iconSize} color={"var(--icon-inverted-txt)"} />
@@ -628,7 +632,7 @@
                         {/snippet}
                     </MenuItem>
                 {/if}
-                {#if confirmed && !me && !inert}
+                {#if confirmed && !showAsMe && !inert}
                     <MenuItem onclick={onReportMessage}>
                         {#snippet icon()}
                             <Flag size={$iconSize} color={"var(--error)"} />
