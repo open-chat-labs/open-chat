@@ -126,6 +126,44 @@ export type AuthOptions = {
 };
 
 /**
+ * AuthDialog's wallets: the configured ones and those the browser announces (EIP-6963), as the
+ * old UI lists them; wagmi is loaded when Ethereum is picked.
+ */
+export const AUTH_WALLETS: NonNullable<PageAuth["wallets"]> = {
+    eth: async () => (await import("./ethWallet")).ethWallets(),
+    sol: WALLETS.sol,
+};
+
+/**
+ * The client's sign-in method for one AuthDialog picked: a wallet signs the backend's sign-in
+ * message here first; the rest is the client's.
+ */
+export async function signInMethod(
+    client: OpenChat,
+    method: AuthMethod,
+    wallet: string | undefined,
+    signal: AbortSignal,
+): Promise<SignInMethod> {
+    switch (method) {
+        case "passkey":
+            return { kind: "passkey" };
+        case "eth": {
+            const { signWithEthereum } = await import("./ethWallet");
+            const signed = await signWithEthereum(client, wallet ?? WALLETS.eth[0].id, signal);
+            return { kind: "wallet", token: "eth", ...signed };
+        }
+        case "sol": {
+            const { signWithSolana } = await import("./solWallet");
+            const signed = await signWithSolana(client, wallet ?? WALLETS.sol[0].id, signal);
+            return { kind: "wallet", token: "sol", ...signed };
+        }
+        default:
+            // Internet Identity and NFID open the auth client's window
+            return { kind: "auth_client", provider: method };
+    }
+}
+
+/**
  * The sign-in callbacks for one AuthDialog host. An emailed link is followed on another page, so
  * `onEmailSignedIn` is the only thing that hears of it here.
  */
@@ -151,7 +189,10 @@ export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: Aut
         resumeSignIn();
         const signal = attempts.signal;
         client.gaTrack("initiated_signin", "registration", PROVIDERS[method]);
-        const outcome = await client.signIn(await signInMethod(method, wallet, signal), signal);
+        const outcome = await client.signIn(
+            await signInMethod(client, method, wallet, signal),
+            signal,
+        );
         switch (outcome.kind) {
             case "logged_in":
                 return "logged_in";
@@ -164,38 +205,8 @@ export function createAuth(client: OpenChat, { translate, onEmailSignedIn }: Aut
         }
     }
 
-    // a wallet signs the backend's sign-in message here first; the rest is the client's
-    async function signInMethod(
-        method: AuthMethod,
-        wallet: string | undefined,
-        signal: AbortSignal,
-    ): Promise<SignInMethod> {
-        switch (method) {
-            case "passkey":
-                return { kind: "passkey" };
-            case "eth": {
-                const { signWithEthereum } = await import("./ethWallet");
-                const signed = await signWithEthereum(client, wallet ?? WALLETS.eth[0].id, signal);
-                return { kind: "wallet", token: "eth", ...signed };
-            }
-            case "sol": {
-                const { signWithSolana } = await import("./solWallet");
-                const signed = await signWithSolana(client, wallet ?? WALLETS.sol[0].id, signal);
-                return { kind: "wallet", token: "sol", ...signed };
-            }
-            default:
-                // Internet Identity and NFID open the auth client's window
-                return { kind: "auth_client", provider: method };
-        }
-    }
-
     return {
-        wallets: {
-            // the configured wallets and those the browser announces (EIP-6963), as the old UI
-            // lists them; wagmi is loaded when Ethereum is picked
-            eth: async () => (await import("./ethWallet")).ethWallets(),
-            sol: WALLETS.sol,
-        },
+        wallets: AUTH_WALLETS,
         termsUrl: "/terms",
         native: client.isNativeApp(),
 

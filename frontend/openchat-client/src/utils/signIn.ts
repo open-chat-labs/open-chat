@@ -87,3 +87,17 @@ export function signInOptions(
         ? [last, ...offered.filter((o) => o !== last)]
         : offered;
 }
+
+/**
+ * Whether an identity someone signed in again with is the user's own: the one they're signed in
+ * with, or any sign-in linked to their account (`linked` is only asked for when it isn't the
+ * first). A user who signed up one way and linked another can use either.
+ */
+export async function isOwnPrincipal(
+    principal: string,
+    current: string,
+    linked: () => Promise<string[]>,
+): Promise<boolean> {
+    if (principal === current) return true;
+    return (await linked()).includes(principal);
+}

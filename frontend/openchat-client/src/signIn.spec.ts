@@ -30,6 +30,7 @@ vi.mock("@icp-sdk/auth/client", async (importOriginal) => ({
     },
 }));
 
+import { DelegationChain, DelegationIdentity, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
 import { AuthProvider, IdentityStorage, type IdentityState } from "@shared";
 import type { OpenChat as OpenChatType } from "./openchat";
 import type { OpenChatConfig } from "./config";
@@ -207,6 +208,8 @@ describe("signing in", () => {
             expect(resp.code).toBe("123");
             await vi.advanceTimersByTimeAsync(2500);
             expect(polls).toHaveBeenCalled();
+            // signing in takes the identity the link signs in
+            expect(polls.mock.calls.every((call) => call[4] === true)).toBe(true);
             polls.mockImplementation(async () => {
                 set({ kind: "registering" });
                 return { kind: "success" };
@@ -240,6 +243,134 @@ describe("signing in", () => {
             });
             await vi.advanceTimersByTimeAsync(5000);
             expect(polls).not.toHaveBeenCalled();
+        });
+    });
+
+    describe("signing in again", () => {
+        const CURRENT = "current-principal";
+
+        // a signed-in identity of its own: a delegation from a new root key to a new session key
+        async function anIdentity() {
+            const root = await ECDSAKeyIdentity.generate();
+            const key = await ECDSAKeyIdentity.generate();
+            const delegation = await DelegationChain.create(
+                root,
+                key.getPublicKey(),
+                new Date(Date.now() + 60_000),
+            );
+            const principal = DelegationIdentity.fromDelegation(key, delegation)
+                .getPrincipal()
+                .toString();
+            return { key, delegation, principal };
+        }
+
+        let proof: ReturnType<typeof vi.fn>;
+        let linked: string[];
+
+        beforeEach(() => {
+            vi.spyOn(console, "error").mockImplementation(() => {});
+            vi.spyOn(client, "AuthPrincipal", "get").mockReturnValue(CURRENT);
+            linked = [];
+            vi.spyOn(client, "getAuthenticationPrincipals").mockImplementation(
+                async () => linked.map((principal) => ({ principal })) as never,
+            );
+            proof = vi.fn(async () => "jwt");
+            vi.spyOn(client, "getSignInProof").mockImplementation(proof as never);
+        });
+
+        /** Invariant: signing in again never succeeds with a principal that isn't the user's or
+         * linked to it (account deletion relies on this alone). */
+        test("never succeeds with a principal that isn't the user's or linked to it", async () => {
+            const someoneElse = await anIdentity();
+            const outcome = await client.reAuthenticate({
+                kind: "identity",
+                provider: AuthProvider.PASSKEY,
+                ...someoneElse,
+            });
+            expect(outcome.kind === "failed" && outcome.reason.key).toBe(
+                "identity.failure.principalMismatch",
+            );
+            expect(proof).not.toHaveBeenCalled();
+        });
+
+        test("accepts a principal linked to the user's account, with its proof", async () => {
+            const linkedIdentity = await anIdentity();
+            linked = [linkedIdentity.principal];
+            const outcome = await client.reAuthenticate({
+                kind: "identity",
+                provider: AuthProvider.II,
+                ...linkedIdentity,
+            });
+            expect(outcome.kind === "success" && outcome.signInProofJwt).toBe("jwt");
+        });
+
+        test("doesn't reject: a failed lookup is a failure to show", async () => {
+            vi.spyOn(client, "getAuthenticationPrincipals").mockRejectedValue(new Error("down"));
+            const outcome = await client.reAuthenticate({
+                kind: "identity",
+                provider: AuthProvider.PASSKEY,
+                ...(await anIdentity()),
+            });
+            expect(outcome.kind === "failed" && outcome.reason.key).toBe(
+                "identity.failure.loginApprover",
+            );
+        });
+
+        describe("by an emailed link", () => {
+            const sent = {
+                kind: "success",
+                code: "123",
+                userKey: new Uint8Array(),
+                expiration: 1n,
+            };
+            let polls: ReturnType<typeof vi.fn>;
+
+            beforeEach(() => {
+                vi.useFakeTimers({
+                    toFake: ["setTimeout", "setInterval", "clearTimeout", "clearInterval"],
+                });
+                vi.spyOn(console, "debug").mockImplementation(() => {});
+                vi.spyOn(client, "gaTrack").mockImplementation(() => {});
+                vi.spyOn(client, "generateMagicLink").mockResolvedValue(sent as never);
+                polls = vi.fn(async () => ({ kind: "not_found" }));
+                vi.spyOn(client, "getSignInWithEmailDelegation").mockImplementation(polls as never);
+            });
+            afterEach(() => vi.useRealTimers());
+
+            /** Invariant: signing in again never takes (assumes) the identity it signs in. */
+            test("never takes the identity the link signs in", async () => {
+                const resp = await client.requestEmailReAuthentication("me@example.com");
+                if (resp.kind !== "sent") throw new Error(resp.kind);
+                await vi.advanceTimersByTimeAsync(2500);
+                expect(polls).toHaveBeenCalled();
+                expect(polls.mock.calls.every((call) => call[4] === false)).toBe(true);
+            });
+
+            /** As the old trees: a failed check is reported (they show pollingError) and the
+             * checking goes on, so following the link later still signs in again. */
+            test("a failed check is reported, and the link still works once followed", async () => {
+                const identity = await anIdentity();
+                linked = [identity.principal];
+                polls.mockImplementation(async () => ({ kind: "error", error: "boom" }));
+                const checkFailed = vi.fn();
+                const resp = await client.requestEmailReAuthentication(
+                    "me@example.com",
+                    undefined,
+                    checkFailed,
+                );
+                if (resp.kind !== "sent") throw new Error(resp.kind);
+                await vi.advanceTimersByTimeAsync(1500);
+                expect(checkFailed).toHaveBeenCalled();
+
+                polls.mockImplementation(async () => ({
+                    kind: "success",
+                    key: identity.key,
+                    delegation: identity.delegation,
+                }));
+                await vi.advanceTimersByTimeAsync(1000);
+                const outcome = await resp.reAuthenticated;
+                expect(outcome.kind === "success" && outcome.signInProofJwt).toBe("jwt");
+            });
         });
     });
 

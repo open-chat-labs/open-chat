@@ -10,7 +10,9 @@
         allUsersStore,
         captureRulesAcceptanceStore,
         OpenChat,
+        pinNumberResolverStore,
         querystringStore,
+        selectedChatIdStore,
         selectedChatRulesStore,
         selectedCommunityRulesStore,
         subscribe,
@@ -23,6 +25,8 @@
     import { getContext } from "svelte";
     import { closeOnNavigation, type DialogStack } from "../../shell/dialogStack.svelte";
     import RulesDialog from "../conversation/RulesDialog.svelte";
+    import PinPromptHost from "../pin/PinPromptHost.svelte";
+    import { declineOnChatChange, declinePrompt, waitingPrompt } from "../pin/pinPrompt";
     import AppEventDialogs from "./AppEventDialogs.svelte";
     import DialogScreen from "./DialogScreen.svelte";
     import {
@@ -57,6 +61,16 @@
         if (query !== undefined) navigate(`${window.location.pathname}${query}`, "overlay");
     }
 
+    // what the client is waiting on to send: the rules, then the PIN
+    const prompt = $derived(waitingPrompt($captureRulesAcceptanceStore, $pinNumberResolverStore));
+
+    // a navigation doesn't close them, but another chat declines them (pinPrompt.ts)
+    $effect(() => {
+        const waiting = prompt;
+        if (waiting.kind === "none") return;
+        return declineOnChatChange(selectedChatIdStore, () => declinePrompt(waiting));
+    });
+
     $effect(() => closeOnNavigation(stack));
     $effect(() => subscribe("profile", () => openLinked({ kind: "profile" })));
     $effect(() => subscribe("upgrade", () => openLinked({ kind: "diamond" })));
@@ -86,12 +100,17 @@
     {/if}
 {/each}
 
-<!-- sending in a chat whose rules the reader hasn't accepted asks for them first; the client waits
-     for the answer, so it isn't one of the dialogs a navigation closes -->
-{#if $captureRulesAcceptanceStore !== undefined}
+<!-- sending in a chat whose rules the reader hasn't accepted asks for them first, and a transfer
+     that needs the PIN asks for it; the client waits for the answer, so neither is one of the
+     dialogs a navigation closes (another chat declines them, above) -->
+{#if prompt.kind === "rules"}
     <RulesDialog
         rules={client.combineRulesText($selectedChatRulesStore, $selectedCommunityRulesStore)}
-        answer={$captureRulesAcceptanceStore.resolve} />
+        answer={prompt.request.resolve} />
+{:else if prompt.kind === "pin"}
+    {#key prompt.request}
+        <PinPromptHost request={prompt.request} />
+    {/key}
 {/if}
 
 <!-- TODO(phase 4, 4a): suspending a user (platform moderators) has no dialog yet; GAPS.md -->
