@@ -15,20 +15,22 @@
     import Tooltip from "../../../components/tooltip/Tooltip.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
-    import { linkBridgedAccount, platformsToLink } from "../../../utils/bridgedAccounts";
+    import {
+        BRIDGE_PLATFORM_ICONS,
+        bridgedAccountRows,
+        linkBridgedAccount,
+    } from "../../../utils/bridgedAccounts";
     import Avatar from "../../Avatar.svelte";
     import Button from "../../Button.svelte";
-    import ButtonGroup from "../../ButtonGroup.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
-    import BotBadge from "./BotBadge.svelte";
 
     const client = getContext<OpenChat>("client");
 
     // Unset until the linked accounts have loaded, so no platform is offered before then
     let accounts: BridgedUserSummary[] | undefined = $state(undefined);
     let busy = $state(false);
-    let unlinkedPlatforms = $derived(accounts === undefined ? [] : platformsToLink(accounts));
+    let rows = $derived(bridgedAccountRows(accounts));
 
     onMount(refresh);
 
@@ -72,40 +74,43 @@
     <Translatable resourceKey={i18nKey("bridgedAccounts.info")} />
 </p>
 
-{#each accounts ?? [] as account (bridgedUserKey(bridgedUserId(account.user)))}
-    {@const id = bridgedUserId(account.user)}
-    <div class="account">
-        <!-- Avatar centres itself with auto margins, which in this row would take free space -->
-        <div class="avatar">
-            <Avatar url={client.bridgedAvatarUrl(id, account)} size={AvatarSize.Small} />
-        </div>
-        <div class="name">{bridgedAuthorName(account)}</div>
-        <BotBadge bridge={id.kind} />
-        <div class="unlink">
-            <Tooltip position="top" align="end">
-                <HoverIcon onclick={() => unlink(account)}>
-                    <LinkOff size={$iconSize} color={"var(--icon-txt)"} />
-                </HoverIcon>
-                {#snippet popupTemplate()}
-                    <Translatable resourceKey={i18nKey("bridgedAccounts.unlink")} />
-                {/snippet}
-            </Tooltip>
-        </div>
-    </div>
-{/each}
-
-{#if unlinkedPlatforms.length > 0}
-    <ButtonGroup align="start">
-        {#each unlinkedPlatforms as platform}
-            <Button disabled={busy} onClick={() => link(platform)}>
+{#each rows as row (row.platform)}
+    <div class="platform">
+        <img
+            class="icon"
+            src={BRIDGE_PLATFORM_ICONS[row.platform]}
+            alt={BRIDGE_PLATFORM_NAMES[row.platform]} />
+        {#if row.kind === "linked"}
+            {@const id = bridgedUserId(row.account.user)}
+            <!-- Avatar centres itself with auto margins, which in this row would take free space -->
+            <div class="avatar">
+                <Avatar url={client.bridgedAvatarUrl(id, row.account)} size={AvatarSize.Small} />
+            </div>
+            <div class="name">{bridgedAuthorName(row.account)}</div>
+            <div class="unlink">
+                <Tooltip position="top" align="end">
+                    <HoverIcon onclick={() => unlink(row.account)}>
+                        <LinkOff size={$iconSize} color={"var(--icon-txt)"} />
+                    </HoverIcon>
+                    {#snippet popupTemplate()}
+                        <Translatable resourceKey={i18nKey("bridgedAccounts.unlink")} />
+                    {/snippet}
+                </Tooltip>
+            </div>
+        {:else if row.kind === "linkable"}
+            <Button small disabled={busy} onClick={() => link(row.platform)}>
                 <Translatable
                     resourceKey={i18nKey("bridgedAccounts.link", {
-                        platform: BRIDGE_PLATFORM_NAMES[platform],
+                        platform: BRIDGE_PLATFORM_NAMES[row.platform],
                     })} />
             </Button>
-        {/each}
-    </ButtonGroup>
-{/if}
+        {:else if row.kind === "unavailable"}
+            <Button small disabled>
+                <Translatable resourceKey={i18nKey("bridgedAccounts.comingSoon")} />
+            </Button>
+        {/if}
+    </div>
+{/each}
 
 <style lang="scss">
     .info {
@@ -114,11 +119,18 @@
         margin-bottom: $sp4;
     }
 
-    .account {
+    .platform {
         margin-bottom: $sp3;
+        min-height: toRem(35);
         display: flex;
         align-items: center;
         gap: $sp3;
+
+        .icon {
+            flex: none;
+            width: toRem(28);
+            height: toRem(28);
+        }
 
         .avatar {
             flex: none;

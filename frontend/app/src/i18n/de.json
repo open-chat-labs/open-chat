@@ -191,6 +191,7 @@
         "translatedFrom": "Auf dem Gerät übersetzt aus: {language}"
     },
     "bridgedAccounts": {
+        "comingSoon": "Demnächst",
         "info": "Verknüpfe deine Konten auf anderen Plattformen, damit die Nachrichten, die sie über unsere Brücken an OpenChat senden, als deine angezeigt werden.",
         "link": "{platform} verknüpfen",
         "linkFailed": "Die Verknüpfung deines {platform}-Kontos konnte nicht gestartet werden",
