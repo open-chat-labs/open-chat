@@ -923,7 +923,7 @@ export class OpenChat {
     > = new Map();
     #refreshBalanceSemaphore: Semaphore = new Semaphore(10);
     #movePreviousWalletFundsTimer: number | undefined;
-    #inflightBalanceRefreshPromises: Map<string, Promise<bigint>> = new Map();
+    #inflightBalanceRefreshPromises: Map<string, Promise<bigint | undefined>> = new Map();
     #videoCallsInProgress: Set<bigint> = new Set();
     #serverVideoCallsInProgress: ChatMap<bigint> = new ChatMap();
     // Archived chats this client is bringing out of the archive, until each request settles
@@ -7383,7 +7383,12 @@ export class OpenChat {
         }
     }
 
-    refreshAccountBalance(ledger: string, allowCached: boolean = false): Promise<bigint> {
+    // Resolves with the balance, or undefined if it couldn't be refreshed (eg. offline). Never rejects,
+    // and a failure leaves the cached balance as it was.
+    refreshAccountBalance(
+        ledger: string,
+        allowCached: boolean = false,
+    ): Promise<bigint | undefined> {
         const user = currentUserStore.value;
         // The anonymous user has no wallet, and its id isn't a principal
         if (user === undefined || user.userId === ANON_USER_ID) {
@@ -7404,7 +7409,7 @@ export class OpenChat {
             return existingPromise;
         }
 
-        const promise: Promise<bigint> = new Promise((resolve) => {
+        const promise: Promise<bigint | undefined> = new Promise((resolve) => {
             this.#refreshBalanceSemaphore
                 .execute(() => {
                     // Race the request against a timeout - without it, a worker request which
@@ -7429,7 +7434,10 @@ export class OpenChat {
                             ),
                         ),
                     ])
-                        .catch(() => 0n)
+                        .catch((err) => {
+                            console.warn(`Couldn't refresh the balance of ${ledger}`, err);
+                            return undefined;
+                        })
                         .finally(() => this.#inflightBalanceRefreshPromises.delete(ledger));
                 })
                 .then(resolve);
@@ -7472,7 +7480,7 @@ export class OpenChat {
                 })),
             )
             .then(async (outcomes) => {
-                // Each refresh resolves, falling back to 0 if it fails or times out
+                // Each refresh resolves, to undefined if it fails or times out
                 const ledgers = new Set(funds.map((f) => f.ledger));
                 await Promise.all([...ledgers].map((ledger) => this.refreshAccountBalance(ledger)));
                 return outcomes;
@@ -7933,12 +7941,7 @@ export class OpenChat {
         }
 
         if (outcome.kind === "sent") {
-            this.refreshAccountBalance(withdrawal.ledger).catch((err) =>
-                this.logError(
-                    `Unable to refresh ${withdrawal.symbol} balance after a withdrawal`,
-                    err,
-                ),
-            );
+            this.refreshAccountBalance(withdrawal.ledger);
         }
         return outcome;
     }
@@ -9719,9 +9722,7 @@ export class OpenChat {
         }
 
         if (resp.kind === "success") {
-            this.refreshAccountBalance(transfer.ledger, false).catch((err) =>
-                this.logError("Unable to refresh the balance after a tip", err),
-            );
+            this.refreshAccountBalance(transfer.ledger, false);
         } else {
             undo();
             if (resp.kind === "error") {
@@ -10131,16 +10132,12 @@ export class OpenChat {
             return { kind: "failed", message: i18nKey("tokenSwap.confirmUnderstanding") };
         }
 
-        let balance: bigint;
         // The output balance before the swap, to tell when its output has reached the wallet
-        let balanceOut: bigint | undefined;
-        try {
-            [balance, balanceOut] = await Promise.all([
-                this.refreshAccountBalance(quote.ledgerIn),
-                this.refreshAccountBalance(quote.ledgerOut).catch(() => undefined),
-            ]);
-        } catch (err) {
-            this.logError("Unable to check the balance before a swap", err);
+        const [balance, balanceOut] = await Promise.all([
+            this.refreshAccountBalance(quote.ledgerIn),
+            this.refreshAccountBalance(quote.ledgerOut),
+        ]);
+        if (balance === undefined) {
             return { kind: "failed", message: swapError };
         }
         if (balance < quote.amountIn) {
@@ -10169,9 +10166,7 @@ export class OpenChat {
             outcome = { kind: "failed", message: swapUnconfirmed };
         }
 
-        this.refreshAccountBalance(quote.ledgerIn).catch((err) =>
-            this.logError("Unable to refresh a balance after a swap", err),
-        );
+        this.refreshAccountBalance(quote.ledgerIn);
         this.#refreshSwapOutput(
             quote.ledgerOut,
             outcome.kind === "swapped" ? balanceOut : undefined,
@@ -10188,7 +10183,8 @@ export class OpenChat {
                 await new Promise((resolve) => setTimeout(resolve, SWAP_OUTPUT_CHECK_INTERVAL_MS));
             }
             const balance = await this.refreshAccountBalance(ledger);
-            if (balanceBefore === undefined || balance > balanceBefore) return;
+            if (balanceBefore === undefined || (balance !== undefined && balance > balanceBefore))
+                return;
         }
     }
 

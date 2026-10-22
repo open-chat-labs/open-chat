@@ -151,11 +151,12 @@ describe("choosing a tip", () => {
         expect(form.tokenChanging).toBe(false);
     });
 
-    // TokenState.refreshBalance returns its failure instead of toasting it, so a form that drops
-    // it would leave the user with a stale balance and no word of why
+    // Invariant: a balance the client couldn't refresh comes back from TokenState.refreshBalance as
+    // "unable to refresh", which the form hands to the view; dropping it would leave the user with a
+    // stale balance and no word of why
     test("a balance refresh that fails is handed to the view, with the token's symbol", async () => {
         const onRefreshFailed = vi.fn();
-        vi.mocked(client.refreshAccountBalance).mockRejectedValueOnce(new Error("offline"));
+        vi.mocked(client.refreshAccountBalance).mockResolvedValueOnce(undefined);
         const failed = new TipForm(client, icp.ledger, { onRefreshFailed });
         await vi.waitFor(() => expect(failed.tokenChanging).toBe(false));
         expect(onRefreshFailed).toHaveBeenCalledWith(
