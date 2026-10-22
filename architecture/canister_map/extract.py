@@ -258,9 +258,6 @@ DESCRIPTIONS = {
     },
 }
 
-# Canisters still in the tree but no longer part of the system
-DEPRECATED = {"market_maker"}
-
 ZONES = {
     "identity": "Identity",
     "users": "Users",
@@ -738,8 +735,6 @@ def build():
 
     for d in sorted(CANISTERS.iterdir()):
         name = d.name
-        if name in DEPRECATED:
-            continue
         if name not in DESCRIPTIONS:
             print(f"  skipping {name}: no description", file=sys.stderr)
             continue

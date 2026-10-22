@@ -79,7 +79,6 @@ export function initEnv() {
             process.env.OC_AIRDROP_BOT_CANISTER = canisters.airdrop_bot?.[dfxNetwork] ?? "";
             process.env.OC_STORAGE_INDEX_CANISTER = canisters.storage_index[dfxNetwork];
             process.env.OC_REGISTRY_CANISTER = canisters.registry[dfxNetwork];
-            process.env.OC_MARKET_MAKER_CANISTER = canisters.market_maker[dfxNetwork];
             process.env.OC_SIGN_IN_WITH_EMAIL_CANISTER = canisters.sign_in_with_email[dfxNetwork];
             process.env.OC_SIGN_IN_WITH_ETHEREUM_CANISTER =
                 canisters.sign_in_with_ethereum[dfxNetwork];
@@ -97,7 +96,6 @@ export function initEnv() {
             console.log("AirdropBotCanisterId: ", process.env.OC_AIRDROP_BOT_CANISTER);
             console.log("StorageIndex: ", process.env.OC_STORAGE_INDEX_CANISTER);
             console.log("Registry: ", process.env.OC_REGISTRY_CANISTER);
-            console.log("MarketMaker: ", process.env.OC_MARKET_MAKER_CANISTER);
             console.log("SignInWithEmail: ", process.env.OC_SIGN_IN_WITH_EMAIL_CANISTER);
             console.log("SignInWithEthereum: ", process.env.OC_SIGN_IN_WITH_ETHEREUM_CANISTER);
             console.log("SignInWithSolana: ", process.env.OC_SIGN_IN_WITH_SOLANA_CANISTER);

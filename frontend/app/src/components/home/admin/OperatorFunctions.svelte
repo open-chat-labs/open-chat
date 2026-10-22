@@ -7,7 +7,6 @@
         type OpenChat,
         type ProposedProtectedAction,
         type ResourceKey,
-        type UpdateMarketMakerConfigArgs,
     } from "@client";
     import { Principal } from "@icp-sdk/core/principal";
     import { Body, BodySmall, ColourVars, Column, Row, Subtitle, Title } from "component-lib";
@@ -42,18 +41,6 @@
     let governanceCanisterId = $state("");
     let stake = $state("0");
 
-    let exchangeId: string = $state("");
-    let enabled: boolean = $state(true);
-    let priceIncrement: string = $state("");
-    let orderSize: string = $state("");
-    let minOrderSize: string = $state("");
-    let maxBuyPrice: string = $state("");
-    let minSellPrice: string = $state("");
-    let spread: string = $state("");
-    let minOrdersPerDirection: string = $state("");
-    let maxOrdersPerDirection: string = $state("");
-    let maxOrdersToMakePerIteration: string = $state("");
-    let maxOrdersToCancelPerIteration: string = $state("");
     let currentFees: Record<"ICP" | "CHAT", Fees> | undefined = $state();
     let originalFees: Record<"ICP" | "CHAT", DiamondMembershipFees>;
     let feesTab: "ICP" | "CHAT" = $state("ICP");
@@ -91,7 +78,6 @@
         multiUserCanisterLocalUserIndex.trim() === "" ||
             !isValidPrincipal(multiUserCanisterLocalUserIndex.trim()),
     );
-    let exchangeIdInvalid = $derived(isNaN(parseInt(exchangeId, 0)));
     let tokenLedgerValid = $derived(tokenLedger.length > 0);
 
     let openAiKeySet = $state(false);
@@ -263,41 +249,6 @@
         });
     });
 
-    function buildMarketMakerConfig(): UpdateMarketMakerConfigArgs | undefined {
-        let config;
-        if (exchangeIdInvalid) return undefined;
-
-        try {
-            config = {
-                exchangeId: parseInt(exchangeId, 0),
-                enabled: enabled,
-                priceIncrement: priceIncrement === "" ? undefined : BigInt(priceIncrement),
-                orderSize: orderSize === "" ? undefined : BigInt(orderSize),
-                minOrderSize: minOrderSize === "" ? undefined : BigInt(minOrderSize),
-                maxBuyPrice: maxBuyPrice === "" ? undefined : BigInt(maxBuyPrice),
-                minSellPrice: minSellPrice === "" ? undefined : BigInt(minSellPrice),
-                spread: spread === "" ? undefined : BigInt(spread),
-                minOrdersPerDirection:
-                    minOrdersPerDirection === "" ? undefined : Number(minOrdersPerDirection),
-                maxOrdersPerDirection:
-                    maxOrdersPerDirection === "" ? undefined : Number(maxOrdersPerDirection),
-                maxOrdersToMakePerIteration:
-                    maxOrdersToMakePerIteration === ""
-                        ? undefined
-                        : Number(maxOrdersToMakePerIteration),
-                maxOrdersToCancelPerIteration:
-                    maxOrdersToCancelPerIteration === ""
-                        ? undefined
-                        : Number(maxOrdersToCancelPerIteration),
-            };
-        } catch (err) {
-            toastStore.showFailureToast(i18nKey("Failed to create market maker config"), err);
-            return undefined;
-        }
-
-        return config;
-    }
-
     function addBusy(n: number) {
         busy.add(n);
     }
@@ -434,27 +385,6 @@
                 })
                 .finally(() => {
                     removeBusy(4);
-                });
-        }
-    }
-
-    function updateMarketMakerConfig(): void {
-        error = undefined;
-        const config = buildMarketMakerConfig();
-        if (config !== undefined) {
-            addBusy(5);
-            client
-                .updateMarketMakerConfig(config)
-                .then((resp) => {
-                    if (resp === "success") {
-                        toastStore.showSuccessToast(i18nKey("Market maker config updated"));
-                    } else {
-                        error = i18nKey(`Failed to update market maker config: ${resp}`);
-                        toastStore.showFailureToast(error);
-                    }
-                })
-                .finally(() => {
-                    removeBusy(5);
                 });
         }
     }
@@ -892,87 +822,6 @@
             disabled={busy.has(4)}
             loading={busy.has(4)}
             onClick={stakeNeuronForSubmittingProposals}>Apply</Button>
-    </section>
-
-    <section class="operator-function">
-        <div class="title">Update market maker config</div>
-        <div class="name-value">
-            <div class="label">Exchange Id:</div>
-            <div class="value">
-                <Input invalid={exchangeIdInvalid} bind:value={exchangeId} />
-            </div>
-        </div>
-        <div class="name-value">
-            <div class="label">Enabled:</div>
-            <div class="value">
-                <Toggle small id="market-maker-enabled" bind:checked={enabled} />
-            </div>
-        </div>
-        <div class="name-value">
-            <div class="label">Price increment:</div>
-            <div class="value">
-                <Input bind:value={priceIncrement} />
-            </div>
-        </div>
-        <div class="name-value">
-            <div class="label">Order size:</div>
-            <div class="value">
-                <Input bind:value={orderSize} />
-            </div>
-        </div>
-        <div class="name-value">
-            <div class="label">Min order size:</div>
-            <div class="value">
-                <Input bind:value={minOrderSize} />
-            </div>
-        </div>
-        <div class="name-value">
-            <div class="label">Max buy price:</div>
-            <div class="value">
-                <Input bind:value={maxBuyPrice} />
-            </div>
-        </div>
-        <div class="name-value">
-            <div class="label">Min sell price:</div>
-            <div class="value">
-                <Input bind:value={minSellPrice} />
-            </div>
-        </div>
-        <div class="name-value">
-            <div class="label">Spread:</div>
-            <div class="value">
-                <Input bind:value={spread} />
-            </div>
-        </div>
-        <div class="name-value">
-            <div class="label">Min orders per direction:</div>
-            <div class="value">
-                <Input bind:value={minOrdersPerDirection} />
-            </div>
-        </div>
-        <div class="name-value">
-            <div class="label">Max orders per direction:</div>
-            <div class="value">
-                <Input bind:value={maxOrdersPerDirection} />
-            </div>
-        </div>
-        <div class="name-value">
-            <div class="label">Max orders to make per iteration:</div>
-            <div class="value">
-                <Input bind:value={maxOrdersToMakePerIteration} />
-            </div>
-        </div>
-        <div class="name-value">
-            <div class="label">Max orders to cancel per iteration:</div>
-            <div class="value">
-                <Input bind:value={maxOrdersToCancelPerIteration} />
-            </div>
-        </div>
-        <Button
-            tiny
-            disabled={busy.has(5) || exchangeIdInvalid}
-            loading={busy.has(5)}
-            onClick={updateMarketMakerConfig}>Apply</Button>
     </section>
 
     <section class="operator-function">

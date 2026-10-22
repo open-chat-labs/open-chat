@@ -272,9 +272,6 @@ export default {
             "import.meta.env.OC_REGISTRY_CANISTER": JSON.stringify(
                 process.env.OC_REGISTRY_CANISTER,
             ),
-            "import.meta.env.OC_MARKET_MAKER_CANISTER": JSON.stringify(
-                process.env.OC_MARKET_MAKER_CANISTER,
-            ),
             "import.meta.env.OC_SIGN_IN_WITH_EMAIL_CANISTER": JSON.stringify(
                 process.env.OC_SIGN_IN_WITH_EMAIL_CANISTER,
             ),
