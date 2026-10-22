@@ -14,7 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Removed
 
-- Remove `allocated_bucket_json` ([#10152](https://github.com/open-chat-labs/open-chat/pull/10152))
+- Remove `allocated_bucket_v2_json` ([#10152](https://github.com/open-chat-labs/open-chat/pull/10152))
 
 ### Fixed
 

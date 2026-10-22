@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Removed
 
-- Remove the `_json` versions of `upload_chunk`, `forward_file`, `delete_file` and `delete_files` ([#10152](https://github.com/open-chat-labs/open-chat/pull/10152))
+- Remove the `_json` versions of `upload_chunk_v2`, `forward_file`, `delete_file` and `delete_files` ([#10152](https://github.com/open-chat-labs/open-chat/pull/10152))
 
 ### Fixed
 

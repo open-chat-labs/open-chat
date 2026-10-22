@@ -97,7 +97,7 @@ fn canister_api_method(method_type: MethodType, attr: TokenStream, item: TokenSt
     };
 
     let msgpack = if attr.msgpack {
-        let mut msgpack_attrs = attrs.clone();
+        let mut msgpack_attrs = attrs;
         let msgpack_name = if is_lifecycle { name.clone() } else { format!("{name}_msgpack") };
 
         if !is_lifecycle {
