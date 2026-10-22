@@ -52,7 +52,7 @@ such as `ChatEventList` and `Markdown`).
 - A dialog is plugged in the same way, by its entry in `features/app/dialogs.ts`; it gets
   `{ dialog, onClose }`. A dialog people link to is a query param (`linkedDialog`); one the app
   opens itself is a `LocalDialog`, opened with `context.dialogs.open(…)` and closed before any
-  navigation. `DialogHost` shows both.
+  navigation and on Back. `DialogHost` shows both.
 - Only `XScreen` components touch the client or the stores. Everything they render, `@openchat/ui`
   components and the screen's own sub-components alike, gets data through props and reports
   actions through callbacks.

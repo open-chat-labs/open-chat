@@ -3,14 +3,11 @@
 <script lang="ts">
     import {
         anonUserStore,
-        captureRulesAcceptanceStore,
         currentUserStore,
         favouritesStore,
         OpenChat,
         publish,
         routeStore,
-        selectedChatRulesStore,
-        selectedCommunityRulesStore,
         sortedCommunitiesStore,
         subscribe,
         type CommunitySummary,
@@ -36,15 +33,9 @@
     import { RightColumnState } from "../../shell/rightColumn.svelte";
     import Shell from "../../shell/Shell.svelte";
     import { currentShellLayout } from "../../shell/viewport.svelte";
-    import RulesDialog from "../conversation/RulesDialog.svelte";
-    import AppEventDialog from "./AppEventDialogs.svelte";
     import DialogHost from "./DialogHost.svelte";
     import type { LocalDialog } from "./dialogs";
-    import {
-        dismissedRoute,
-        subscribeAppEvents,
-        type AppEventDialog as AppEventDialogKind,
-    } from "@src/logic/appEvents/appEvents";
+    import { subscribeAppEvents } from "@src/logic/appEvents/appEvents";
     import { pinsFor } from "../rail/rail.adapter";
     import DetailsColumn from "./DetailsColumn.svelte";
     import RegionScreen from "./RegionScreen.svelte";
@@ -62,6 +53,8 @@
     // the rail's expanded state, remembered where it pushes the layout
     const railMode = $derived(currentShellLayout().rail);
     const railState = new RailState(() => railMode);
+    // the dialogs the app opens itself, shown by DialogHost with the ones the URL opens
+    const dialogStack = new DialogStack<LocalDialog>();
 
     // the activity feed opened over a page is Notifications' too
     const selection = $derived<RailSelection>(
@@ -98,23 +91,24 @@
         ),
     );
 
-    // the client's app-wide events, as every tree handles them (app/src/logic/appEvents)
-    let appDialog = $state<AppEventDialogKind | undefined>();
+    // the client's app-wide events, as every tree handles them (app/src/logic/appEvents): one
+    // dialog at a time
     $effect(() =>
         subscribeAppEvents(client, (outcome) => {
             if (outcome.kind === "show") {
-                appDialog = outcome.dialog;
+                // TODO(phase 4): suspending a user (platform moderators) has no dialog yet; GAPS.md
+                if (outcome.dialog.kind === "suspending") return;
+                const event = outcome.dialog;
+                dialogStack.replace(
+                    { kind: "app_event", event },
+                    (open) => open.kind === "app_event",
+                );
             } else {
                 if (outcome.closeDialogs) publish("closeModalStack");
                 navigate(outcome.path);
             }
         }),
     );
-
-    function closeAppDialog() {
-        appDialog = undefined;
-        navigate(dismissedRoute(client));
-    }
 
     // Notifications over a chat or a wallet page opens the feed over it (decision 7), with its
     // own history entry; the other destinations are their paths
@@ -131,9 +125,6 @@
 
     // the list a narrow screen goes back to from the middle
     const back = $derived(narrowBack(regions));
-
-    // the dialogs the app opens itself, shown by DialogHost with the ones the URL opens
-    const dialogStack = new DialogStack<LocalDialog>();
 
     // built once, each field read as it's used: a crossing of the narrow breakpoint doesn't touch a
     // screen that only reads the right column
@@ -223,19 +214,7 @@
     </div>
 {/snippet}
 
-<!-- sending in a chat whose rules the reader hasn't accepted asks for them first -->
-{#if $captureRulesAcceptanceStore !== undefined}
-    <RulesDialog
-        rules={client.combineRulesText($selectedChatRulesStore, $selectedCommunityRulesStore)}
-        answer={$captureRulesAcceptanceStore.resolve} />
-{/if}
-
-<!-- TODO(phase 4, 4a): suspending a user (platform moderators) has no dialog yet; GAPS.md -->
-{#if appDialog !== undefined && appDialog.kind !== "suspending"}
-    <AppEventDialog dialog={appDialog} onClose={closeAppDialog} />
-{/if}
-
-<!-- the dialogs: those the URL opens (?profile …) and those the app opened itself -->
+<!-- the dialogs: those the URL opens (?profile …), those the app opened itself, and the rules -->
 <DialogHost stack={dialogStack} />
 
 <style>

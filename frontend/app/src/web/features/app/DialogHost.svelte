@@ -2,13 +2,25 @@
      ?diamond), which closing drops from the URL, and the ones the app opened itself, newest on top,
      which a navigation closes first (closeModalStack), as does Back. It also opens them as the old
      Home did: a name clicked in a message (`<profile-link>`) opens that user's card in place of
-     the one open, and the `profile` and `upgrade` events open the profile and Diamond. -->
+     the one open (none for a bot), and the `profile` and `upgrade` events open the profile and
+     Diamond. And it shows the chat's rules when sending needs them accepted first. -->
 <script lang="ts">
-    import { querystringStore, subscribe } from "@client";
+    import {
+        allUsersStore,
+        captureRulesAcceptanceStore,
+        OpenChat,
+        querystringStore,
+        selectedChatRulesStore,
+        selectedCommunityRulesStore,
+        subscribe,
+    } from "@client";
+    import { profileCard, profileCardShows } from "@src/logic/profile/profileCard";
     import { navigate } from "@src/utils/navigation";
     import { removeQueryStringParam } from "@src/utils/urls";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
-    import type { DialogStack } from "../../shell/dialogStack.svelte";
+    import { getContext } from "svelte";
+    import { closeOnNavigation, type DialogStack } from "../../shell/dialogStack.svelte";
+    import RulesDialog from "../conversation/RulesDialog.svelte";
     import DialogScreen from "./DialogScreen.svelte";
     import {
         linkedDialog,
@@ -19,6 +31,8 @@
     } from "./dialogs";
 
     let { stack }: { stack: DialogStack<LocalDialog> } = $props();
+
+    const client = getContext<OpenChat>("client");
 
     const linked = $derived(linkedDialog($querystringStore));
 
@@ -32,25 +46,15 @@
         if (query !== undefined) navigate(`${window.location.pathname}${query}`, "overlay");
     }
 
-    $effect(() => subscribe("closeModalStack", () => stack.closeAll()));
+    $effect(() => closeOnNavigation(stack));
     $effect(() => subscribe("profile", () => openLinked({ kind: "profile" })));
     $effect(() => subscribe("upgrade", () => openLinked({ kind: "diamond" })));
 
-    // Back (or Forward) changes the page without navigate(), so it closes them here
-    $effect(() => {
-        const back = () => stack.closeAll();
-        window.addEventListener("popstate", back);
-        return () => window.removeEventListener("popstate", back);
-    });
-
     $effect(() => {
         const opened = (e: Event) => {
-            const { userId, chatButton, inGlobalContext } = (
-                e as CustomEvent<ProfileLinkClickedEvent>
-            ).detail;
+            const card = profileCard((e as CustomEvent<ProfileLinkClickedEvent>).detail);
             // one card at a time, as the old Home showed it
-            const card: LocalDialog = { kind: "user", userId, chatButton, inGlobalContext };
-            stack.replace(card, (open) => open.kind === "user");
+            stack.replace({ kind: "user", ...card }, (open) => open.kind === "user");
         };
         document.body.addEventListener("profile-clicked", opened);
         return () => document.body.removeEventListener("profile-clicked", opened);
@@ -65,5 +69,16 @@
 {/if}
 
 {#each stack.items as dialog (dialog)}
-    <DialogScreen {dialog} onClose={() => stack.close(dialog)} />
+    <!-- a bot has no card, checked as its user loads (as the old Home did) -->
+    {#if dialog.kind !== "user" || profileCardShows($allUsersStore.get(dialog.userId))}
+        <DialogScreen {dialog} onClose={() => stack.close(dialog)} />
+    {/if}
 {/each}
+
+<!-- sending in a chat whose rules the reader hasn't accepted asks for them first; the client waits
+     for the answer, so it isn't one of the dialogs a navigation closes -->
+{#if $captureRulesAcceptanceStore !== undefined}
+    <RulesDialog
+        rules={client.combineRulesText($selectedChatRulesStore, $selectedCommunityRulesStore)}
+        answer={$captureRulesAcceptanceStore.resolve} />
+{/if}
