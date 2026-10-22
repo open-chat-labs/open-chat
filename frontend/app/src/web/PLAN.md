@@ -130,6 +130,18 @@ owners of work that fell between rows; the rows below name the ones that land on
 A workstream is done when every line of its inventory is either built or listed in GAPS.md, and
 each of its invariants has a check.
 
+### Taking an issue
+
+More than one person, each with agents, works this pool at once. To stop two of them building
+the same thing (S2 was built twice):
+
+1. Take an issue only if it has no assignee. If it has one, leave it, even if it looks stalled,
+   and ask the assignee.
+2. Before anything else (reading code, branching, starting agents), assign it to the person
+   you're working for: `gh issue edit N --add-assignee @me`.
+3. Check the assignees again (`gh issue view N --json assignees`). If someone else is there too,
+   you both took it at once: remove yourself and pick another.
+
 ### Right column and group management (phase 4)
 
 | Id | Workstream | Size | Needs | Touches |
