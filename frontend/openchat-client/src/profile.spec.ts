@@ -22,10 +22,10 @@ vi.mock("@icp-sdk/auth/client", async (importOriginal) => ({
     AuthClient: { create: () => new Promise(() => {}) },
 }));
 
-import { ErrorCode, anonymousUser, type PublicProfile, type WorkerRequest } from "@shared";
+import { ErrorCode, Stream, anonymousUser, type PublicProfile, type WorkerRequest } from "@shared";
 import type { OpenChatConfig } from "./config";
 import { OpenChat } from "./openchat";
-import { currentUserStore } from "./state";
+import { currentUserProfileStore, currentUserStore } from "./state";
 import { WorkerAgent } from "./workerAgent";
 
 class FakeWorker {
@@ -99,6 +99,54 @@ describe("saving the user's profile", () => {
         expect(outcome).toEqual({
             profile: { ...original, bio: "new bio" },
             errors: { username: "register.usernameTaken" },
+        });
+    });
+
+    test("the fields that save are written to the user's profile, and a rejected one isn't", async () => {
+        currentUserProfileStore.set(original);
+        responses.setUsername = "username_taken";
+
+        await client.saveProfile(original, {
+            ...original,
+            username: "taken",
+            displayName: "Jules",
+            bio: "new bio",
+        });
+
+        expect(currentUserProfileStore.value).toEqual({
+            ...original,
+            displayName: "Jules",
+            bio: "new bio",
+        });
+    });
+
+    describe("refreshing the user's profile", () => {
+        // the profile stream: the cached profile, then the live one
+        let answer: (profile: PublicProfile, final: boolean) => void;
+
+        beforeEach(() => {
+            vi.spyOn(WorkerAgent.prototype, "stream").mockImplementation(
+                (() =>
+                    new Stream<PublicProfile>((resolve) => {
+                        answer = resolve;
+                    })) as never,
+            );
+            currentUserProfileStore.set(original);
+        });
+
+        test("takes the live profile, not the cached one, which may be older", () => {
+            client.refreshCurrentUserProfile();
+            answer({ ...original, bio: "cached bio" }, false);
+            expect(currentUserProfileStore.value).toEqual(original);
+            answer({ ...original, bio: "live bio" }, true);
+            expect(currentUserProfileStore.value).toEqual({ ...original, bio: "live bio" });
+        });
+
+        test("drops a live profile asked for before a save here wrote the store", async () => {
+            client.refreshCurrentUserProfile();
+            await client.saveProfile(original, { ...original, bio: "new bio" });
+            answer(original, true);
+            expect(currentUserProfileStore.value).toEqual({ ...original, bio: "new bio" });
         });
     });
 

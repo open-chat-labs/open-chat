@@ -17,12 +17,27 @@ export async function unarchiveChatsWithUnread(
     const chatIds: ChatIdentifier[] = [];
     for (const id of answerChatIds) {
         const chat = allChats.get(id);
-        if (chat === undefined || !chat.membership.archived || inFlight.has(chat.id)) continue;
+        if (chat === undefined || !chat.membership.archived) continue;
         if (messagesRead.unreadMessagesInChat(chat) === 0) continue;
-        inFlight.add(chat.id);
         chatIds.push(chat.id);
     }
+    return unarchiveChatsReportingFailure(chatIds, inFlight, unarchive);
+}
+
+/**
+ * Takes the chats out of the archive in one request, skipping any already in `inFlight` until
+ * its request settles. A failed request publishes `unarchiveChatFailed` once. Selecting an
+ * archived chat and the sync answer's auto-unarchive share `inFlight`, so they never both ask
+ * for, or both report, the same chat.
+ */
+export async function unarchiveChatsReportingFailure(
+    candidates: ChatIdentifier[],
+    inFlight: ChatSet,
+    unarchive: (chatIds: ChatIdentifier[]) => Promise<boolean>,
+): Promise<void> {
+    const chatIds = candidates.filter((id) => !inFlight.has(id));
     if (chatIds.length === 0) return;
+    chatIds.forEach((id) => inFlight.add(id));
     const success = await unarchive(chatIds).catch(() => false);
     chatIds.forEach((id) => inFlight.delete(id));
     if (!success) publish("unarchiveChatFailed");

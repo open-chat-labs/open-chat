@@ -49,14 +49,11 @@
         return client
             .refreshAccountBalance(ledger, allowCached)
             .then((val) => {
-                onRefreshed?.(val);
-            })
-            .catch((err) => {
-                const errorMessage = $_("unableToRefreshAccountBalance", {
-                    values: { token: symbol },
-                });
-                client.logError(`Failed to refresh ${symbol} account balance`, err);
-                onError?.(errorMessage);
+                if (val !== undefined) {
+                    onRefreshed?.(val);
+                } else {
+                    onError?.($_("unableToRefreshAccountBalance", { values: { token: symbol } }));
+                }
             })
             .finally(() => (refreshing = false));
     }
