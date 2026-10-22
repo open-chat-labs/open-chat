@@ -1984,65 +1984,12 @@ export function apiMaybeAccessGateConfig(domain: AccessGateConfig): TAccessGateC
     };
 }
 
+// For a chat being created, where no gate is sent as none. Every other gate goes through
+// apiAccessGate, so creating a chat sends the same gate as updating it would.
 export function apiMaybeAccessGate(domain: AccessGate): TAccessGate | undefined {
-    if (domain.kind === "composite_gate") {
-        return {
-            Composite: {
-                inner: domain.gates.map(apiLeafAccessGate),
-                and: domain.operator === "and",
-            },
-        };
-    }
-    if (domain.kind === "no_gate") return undefined;
-    if (domain.kind === "nft_gate") return undefined; // TODO
-    if (domain.kind === "unique_person_gate") return "UniquePerson";
-    if (domain.kind === "diamond_gate") return "DiamondMember";
-    if (domain.kind === "locked_gate") return "Locked";
-    if (domain.kind === "chit_earned_gate") {
-        return {
-            TotalChitEarned: {
-                min_chit_earned: domain.minEarned,
-            },
-        };
-    }
-    if (domain.kind === "credential_gate") {
-        return {
-            VerifiedCredential: {
-                credential_name: domain.credential.credentialName,
-                issuer_canister_id: principalStringToBytes(domain.credential.issuerCanisterId),
-                issuer_origin: domain.credential.issuerOrigin,
-                credential_type: domain.credential.credentialType,
-                credential_arguments: apiCredentialArguments(domain.credential.credentialArguments),
-            },
-        };
-    }
-    if (domain.kind === "neuron_gate") {
-        return {
-            SnsNeuron: {
-                governance_canister_id: principalStringToBytes(domain.governanceCanister),
-                min_dissolve_delay: mapOptional(domain.minDissolveDelay, BigInt),
-                min_stake_e8s: mapOptional(domain.minStakeE8s, BigInt),
-            },
-        };
-    }
-    if (domain.kind === "payment_gate") {
-        return {
-            Payment: {
-                ledger_canister_id: principalStringToBytes(domain.ledgerCanister),
-                amount: domain.amount,
-                fee: domain.fee,
-            },
-        };
-    }
-    if (domain.kind === "token_balance_gate") {
-        return {
-            TokenBalance: {
-                ledger_canister_id: principalStringToBytes(domain.ledgerCanister),
-                min_balance: domain.minBalance,
-            },
-        };
-    }
-    return undefined;
+    // NFT gates aren't supported yet, so they're sent as none too
+    if (domain.kind === "no_gate" || domain.kind === "nft_gate") return undefined;
+    return apiAccessGate(domain);
 }
 
 export function apiAccessGateConfig(domain: AccessGateConfig): TAccessGateConfig {

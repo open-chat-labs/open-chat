@@ -1080,7 +1080,9 @@ export function groupChatFromCandidate(
     communityMemberCount: number | undefined,
 ): MultiUserChat {
     const joinedByCommunity =
-        chatId.kind === "channel" && candidate.public && candidate.gateConfig.gate.kind === "no_gate";
+        chatId.kind === "channel" &&
+        candidate.public &&
+        candidate.gateConfig.gate.kind === "no_gate";
     const chat = {
         kind: chatId.kind,
         id: chatId,
@@ -1103,7 +1105,7 @@ export function groupChatFromCandidate(
         dateLastPinned: undefined,
         dateReadPinned: undefined,
         gateConfig: candidate.gateConfig,
-        level: "group",
+        level: candidate.level,
         membership: {
             ...nullMembership(),
             joined: BigInt(Date.now()),

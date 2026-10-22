@@ -536,6 +536,7 @@ describe("a new chat's member count", () => {
             4,
         );
         expect(chat.memberCount).toEqual(4);
+        expect(chat.level).toEqual("channel");
     });
 
     test("a gated or private channel starts with just its creator", () => {
@@ -546,8 +547,13 @@ describe("a new chat's member count", () => {
     });
 
     test("a group starts with just its creator", () => {
-        const group = candidate(groupId, true, { kind: "no_gate" });
-        expect(groupChatFromCandidate(groupId, group, undefined).memberCount).toEqual(1);
+        const group = groupChatFromCandidate(
+            groupId,
+            candidate(groupId, true, { kind: "no_gate" }),
+            undefined,
+        );
+        expect(group.memberCount).toEqual(1);
+        expect(group.level).toEqual("group");
     });
 
     test("an unknown community's channel starts with just its creator", () => {
