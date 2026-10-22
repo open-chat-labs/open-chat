@@ -1,6 +1,7 @@
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
+    import { profileCard, profileCardChat } from "@src/logic/profile/profileCard";
     import { Container, Sheet } from "component-lib";
     import type {
         ChannelIdentifier,
@@ -436,7 +437,7 @@
 
     function chatWithFromProfileCard() {
         if (showProfileCard === undefined) return;
-        publish("chatWith", { kind: "direct_chat", userId: showProfileCard.userId });
+        publish("chatWith", profileCardChat(showProfileCard));
         showProfileCard = undefined;
     }
 
@@ -522,8 +523,7 @@
 </script>
 
 {#if showProfileCard !== undefined}
-    {@const profileUser = $allUsersStore.get(showProfileCard.userId)}
-    {#if profileUser?.kind !== "bot"}
+    {#if profileCard(showProfileCard, $allUsersStore.get(showProfileCard.userId)) !== undefined}
         <ViewUserProfile
             userId={showProfileCard.userId}
             inGlobalContext={showProfileCard.inGlobalContext}

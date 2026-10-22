@@ -3,30 +3,20 @@
 <script lang="ts">
     import {
         anonUserStore,
-        captureRulesAcceptanceStore,
         currentUserStore,
         favouritesStore,
         OpenChat,
-        publish,
-        querystringStore,
         routeStore,
-        selectedChatRulesStore,
-        selectedCommunityRulesStore,
         sortedCommunitiesStore,
         subscribe,
         type CommunitySummary,
     } from "@client";
     import NavRail from "@openchat/ui/src/features/components/NavRail.svelte";
-    import DialogShell from "@openchat/ui/src/lib/components/DialogShell.svelte";
     import IconButton from "@openchat/ui/src/lib/components/IconButton.svelte";
     import { i18nKey } from "@i18n/i18n";
     import { toastStore } from "@src/stores/toast";
     import { navigate } from "@src/utils/navigation";
-    import {
-        addQueryStringParam,
-        removeQueryStringParam,
-        withQueryStringFlag,
-    } from "@src/utils/urls";
+    import { addQueryStringParam, withQueryStringFlag } from "@src/utils/urls";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import {
@@ -41,14 +31,8 @@
     import { RightColumnState } from "../../shell/rightColumn.svelte";
     import Shell from "../../shell/Shell.svelte";
     import { currentShellLayout } from "../../shell/viewport.svelte";
-    import RulesDialog from "../conversation/RulesDialog.svelte";
-    import AppEventDialog from "./AppEventDialogs.svelte";
-    import {
-        dismissedRoute,
-        subscribeAppEvents,
-        type AppEventDialog as AppEventDialogKind,
-    } from "@src/logic/appEvents/appEvents";
     import { pinsFor } from "../rail/rail.adapter";
+    import DialogHost from "./DialogHost.svelte";
     import Placeholder from "./Placeholder.svelte";
     import RegionScreen from "./RegionScreen.svelte";
     import { leftScreens, middleScreens, type ScreenContext } from "./screens";
@@ -99,24 +83,6 @@
         ),
     );
 
-    // the client's app-wide events, as every tree handles them (app/src/logic/appEvents)
-    let appDialog = $state<AppEventDialogKind | undefined>();
-    $effect(() =>
-        subscribeAppEvents(client, (outcome) => {
-            if (outcome.kind === "show") {
-                appDialog = outcome.dialog;
-            } else {
-                if (outcome.closeDialogs) publish("closeModalStack");
-                navigate(outcome.path);
-            }
-        }),
-    );
-
-    function closeAppDialog() {
-        appDialog = undefined;
-        navigate(dismissedRoute(client));
-    }
-
     // Notifications over a chat or a wallet page opens the feed over it (decision 7), with its
     // own history entry; the other destinations are their paths
     function selectRail(i: number) {
@@ -129,9 +95,6 @@
             navigate(item.path);
         }
     }
-
-    // Dialogs people link to are query params over whatever page is open (ROUTES.md)
-    const profileOpen = $derived($querystringStore.has("profile"));
 
     // the list a narrow screen goes back to from the middle
     const back = $derived(narrowBack(regions));
@@ -224,26 +187,7 @@
     </div>
 {/snippet}
 
-<!-- sending in a chat whose rules the reader hasn't accepted asks for them first -->
-{#if $captureRulesAcceptanceStore !== undefined}
-    <RulesDialog
-        rules={client.combineRulesText($selectedChatRulesStore, $selectedCommunityRulesStore)}
-        answer={$captureRulesAcceptanceStore.resolve} />
-{/if}
-
-<!-- TODO(phase 4, 4a): suspending a user (platform moderators) has no dialog yet; GAPS.md -->
-{#if appDialog !== undefined && appDialog.kind !== "suspending"}
-    <AppEventDialog dialog={appDialog} onClose={closeAppDialog} />
-{/if}
-
-{#if profileOpen}
-    <!-- TODO(phase 8): ProfileDialog -->
-    <DialogShell
-        title="Profile"
-        onClose={() => navigate(removeQueryStringParam("profile"), "dismiss")}>
-        <Placeholder title="Profile" detail="ProfileDialog (phase 8)" />
-    </DialogShell>
-{/if}
+<DialogHost />
 
 <style>
     .toolbar {

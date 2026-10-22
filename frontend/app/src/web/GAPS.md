@@ -166,6 +166,12 @@ design export needs. Each entry says where it came up.
   not-available dialogs are a `DialogShell` with the old UI's words (no design: `TODO(design)`);
   "Page not found" was never translated. Suspending a user (`suspendUser`, platform moderators
   only) opens nothing yet.
+- **Dialog host** (`shell/dialogHost.svelte.ts`, `features/app/DialogHost.svelte`, S2): a
+  `<profile-link>` click opens `UserDialog` with only the username and the Chat button until 4a's
+  user adapter fills it in. It's a centred dialog: the old desktop card was anchored to the
+  clicked link (`alignTo`), and the design has no anchored card. A navigation closes every open
+  dialog first and gives up the rules prompt, as rejecting it would; the old desktop UI left its
+  modals open over the new route.
 - **Toasts**: the app's toast (`toastStore`, e.g. "Failed to un-archive chat") shows as the
   library's `UndoToast` without its action (`shell/Toasts.svelte`). The design has no failure tone
   for a toast, so a failure looks like any other message.

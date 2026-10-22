@@ -42,7 +42,9 @@
         withoutQueryStringParams,
     } from "@src/utils/urls";
     import page from "page";
-    import { getContext, onMount, untrack, type Snippet } from "svelte";
+    import { dismissedRoute } from "@src/logic/appEvents/appEvents";
+    import { getContext, onMount, setContext, untrack, type Snippet } from "svelte";
+    import { DialogHost, dialogHostKey } from "../shell/dialogHost.svelte";
     import { currentShellLayout } from "../shell/viewport.svelte";
     import { defaultChatRoute, defaultChatUrl } from "./defaultChat";
     import { redirectTable, routeTable } from "./routeTable";
@@ -51,6 +53,10 @@
     let { children }: { children: Snippet } = $props();
 
     const client = getContext<OpenChat>("client");
+
+    // the app's local dialogs (features/app/DialogHost mounts them)
+    const dialogs = new DialogHost(() => dismissedRoute(client));
+    setContext(dialogHostKey, dialogs);
 
     function parsePathParams(fn: (ctx: PageJS.Context) => RouteParams) {
         return (ctx: PageJS.Context, next: () => void) => {
@@ -91,9 +97,10 @@
         }
         page.start({ click: false });
         const stopHistoryTracking = initNavigationHistoryTracking();
-        // navigate() waits for the modal stack to close before it goes anywhere.
-        // TODO(phase 4): close the shell's dialogs first, as Home.svelte does
-        const unsubscribe = subscribe("closeModalStack", flushPendingNavigation);
+        // navigate() waits for the open dialogs to close before it goes anywhere
+        const unsubscribe = subscribe("closeModalStack", () =>
+            dialogs.closeForNavigation(flushPendingNavigation),
+        );
         routerReadyStore.set(true);
 
         return () => {
