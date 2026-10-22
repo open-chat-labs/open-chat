@@ -2079,7 +2079,7 @@
                 "regular": "Damit ein Vorschlag angenommen werden kann, müssen folgende zwei Bedingungen erfüllt sein:"
             }
         },
-        "proposalNotAcceptingVotes": "Für diesen Vorschlag werden keine Stimmen akzeptiert. Versuchen Sie, die Seite neu zu laden",
+        "proposalNotAcceptingVotes": "Die Abstimmung über diesen Vorschlag ist beendet",
         "proposalsBotAction": "Vorschläge für Bot-Aktionen",
         "proposedBy": "vorgeschlagen von",
         "readless": "Lese weniger",

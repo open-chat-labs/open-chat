@@ -2079,7 +2079,7 @@
                 "regular": "برای تصویب یک پیشنهاد، دو شرط زیر باید رعایت شود:"
             }
         },
-        "proposalNotAcceptingVotes": "این پیشنهاد رای نمی‌پذیرد - صفحه را دوباره بارگیری کنید",
+        "proposalNotAcceptingVotes": "رأی‌گیری برای این پیشنهاد به پایان رسیده است",
         "proposalsBotAction": "Proposals Bot Actions",
         "proposedBy": "پیشنهاد شده توسط",
         "readless": "کمتر بخوان",

@@ -2079,7 +2079,7 @@
                 "regular": "提案が採択されるためには、以下の2つの条件を満たす必要があります。"
             }
         },
-        "proposalNotAcceptingVotes": "この提案は投票を受け付けていません-ページをリロードしてみてください",
+        "proposalNotAcceptingVotes": "この提案の投票は終了しました",
         "proposalsBotAction": "提案ボット アクション",
         "proposedBy": "によって提案されました",
         "readless": "もっと読む",

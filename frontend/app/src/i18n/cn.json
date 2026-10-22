@@ -2079,7 +2079,7 @@
                 "regular": "提案要获得通过，必须满足以下两个条件："
             }
         },
-        "proposalNotAcceptingVotes": "此提案不接受投票 - 尝试重新加载页面",
+        "proposalNotAcceptingVotes": "此提案的投票已结束",
         "proposalsBotAction": "提案机器人操作",
         "proposedBy": "提议者",
         "readless": "少读",

@@ -2079,7 +2079,7 @@
                 "regular": "Để một đề xuất được thông qua, cần phải đáp ứng hai điều kiện sau:"
             }
         },
-        "proposalNotAcceptingVotes": "Đề xuất này không chấp nhận phiếu bầu - hãy thử tải lại trang",
+        "proposalNotAcceptingVotes": "Cuộc bỏ phiếu cho đề xuất này đã kết thúc",
         "proposalsBotAction": "Hành động bot đề xuất",
         "proposedBy": "đề nghị bởi",
         "readless": "Đọc ít hơn",

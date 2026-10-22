@@ -2079,7 +2079,7 @@
                 "regular": "Aby wniosek mógł zostać przyjęty, muszą być spełnione następujące dwa warunki:"
             }
         },
-        "proposalNotAcceptingVotes": "Na tę propozycję nie można głosować — spróbuj ponownie załadować stronę",
+        "proposalNotAcceptingVotes": "Głosowanie nad tą propozycją zostało zakończone",
         "proposalsBotAction": "Propozycje działań botów",
         "proposedBy": "zaproponowany przez",
         "readless": "Mniej czytać",

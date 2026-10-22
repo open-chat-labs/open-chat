@@ -2079,7 +2079,7 @@
                 "regular": "يجب استيفاء الشرطين التاليين لاعتماد أي اقتراح:"
             }
         },
-        "proposalNotAcceptingVotes": "هذا الاقتراح لا يقبل الأصوات - حاول إعادة تحميل الصفحة",
+        "proposalNotAcceptingVotes": "انتهى التصويت على هذا الاقتراح",
         "proposalsBotAction": "اقتراحات إجراءات الروبوت",
         "proposedBy": "مقترح من قبل",
         "readless": "اقرأ أقل",

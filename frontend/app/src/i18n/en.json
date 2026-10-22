@@ -2131,7 +2131,7 @@
                 "regular": "The two following conditions have to be met for a proposal to be adopted:"
             }
         },
-        "proposalNotAcceptingVotes": "This proposal is not accepting votes - try reloading the page",
+        "proposalNotAcceptingVotes": "Voting on this proposal has closed",
         "proposalsBotAction": "Proposals Bot Actions",
         "proposedBy": "proposed by",
         "readless": "Read less",

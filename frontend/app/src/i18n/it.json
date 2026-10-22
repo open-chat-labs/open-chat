@@ -2079,7 +2079,7 @@
                 "regular": "Perché una proposta venga adottata, devono essere soddisfatte le due seguenti condizioni:"
             }
         },
-        "proposalNotAcceptingVotes": "Questa proposta non accetta voti: prova a ricaricare la pagina",
+        "proposalNotAcceptingVotes": "La votazione su questa proposta è chiusa",
         "proposalsBotAction": "Proposte Bot Azioni",
         "proposedBy": "proposto da",
         "readless": "Leggi di meno",

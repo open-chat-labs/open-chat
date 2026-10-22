@@ -2079,7 +2079,7 @@
                 "regular": "Pour qu'une proposition soit adoptée, les deux conditions suivantes doivent être remplies :"
             }
         },
-        "proposalNotAcceptingVotes": "Cette proposition n'accepte pas les votes - essayez de recharger la page",
+        "proposalNotAcceptingVotes": "Le vote sur cette proposition est clos",
         "proposalsBotAction": "Actions du robot de propositions",
         "proposedBy": "Proposé par",
         "readless": "Lire moins",
