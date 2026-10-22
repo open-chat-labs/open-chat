@@ -88,6 +88,7 @@
     import PollBuilder from "./PollBuilder.svelte";
     import PollPublicVotes from "./PollPublicVotes.svelte";
     import PrizeContentBuilder from "./PrizeContentBuilder.svelte";
+    import RestrictedFeature from "./profile/RestrictedFeature.svelte";
     import ProposalGroupFilters from "./ProposalGroupFilters.svelte";
     import Rules from "./Rules.svelte";
     import SlidingPage from "./SlidingPage.svelte";
@@ -215,6 +216,7 @@
     const modalStack = $state<SlidingModalType[]>([]);
     let top = $derived(modalStack[modalStack.length - 1]);
     let historyDepth = $state(0);
+    let swapRestricted = $state(false);
     let recursivePop = false;
 
     function push(modal: SlidingModalType) {
@@ -447,9 +449,13 @@
             ),
             subscribe("manageRecipients", () => push({ kind: "manage_recipients" })),
             subscribe("walletSettings", () => push({ kind: "wallet_settings" })),
-            subscribe("swapToken", (tokenState) =>
-                push({ kind: "swap_token", tokenState: tokenState as unknown as TokenState }),
-            ),
+            subscribe("swapToken", async (tokenState) => {
+                if (await client.swapRestricted()) {
+                    swapRestricted = true;
+                } else {
+                    push({ kind: "swap_token", tokenState: tokenState as unknown as TokenState });
+                }
+            }),
             subscribe("sendToken", (tokenState) =>
                 push({ kind: "send_token", tokenState: tokenState as unknown as TokenState }),
             ),
@@ -585,6 +591,10 @@
         <Translatable resourceKey={i18nKey("Failed to load")} />
     </Container>
 {/snippet}
+
+{#if swapRestricted}
+    <RestrictedFeature feature="swap" onClose={() => (swapRestricted = false)} />
+{/if}
 
 {#each modalStack as page}
     <SlidingPage speed={page.kind === "open_thread" ? 500 : 300} top={page === top}>
