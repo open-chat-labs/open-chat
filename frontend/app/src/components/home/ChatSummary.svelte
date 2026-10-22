@@ -26,7 +26,6 @@
         publish,
         ROLE_NONE,
         routeForScope,
-        selectedChatIdStore,
         selectedCommunitySummaryStore,
         suspendedUserStore,
         translationsStore,
@@ -285,9 +284,6 @@
                 toastStore.showFailureToast(i18nKey("archiveChatFailed"));
             }
         });
-        if (chatSummary.id === $selectedChatIdStore) {
-            navigate(routeForScope($chatListScopeStore));
-        }
     }
 
     function selectChat() {
