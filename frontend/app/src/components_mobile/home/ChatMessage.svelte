@@ -50,6 +50,7 @@
     import { scrollStatus } from "../../stores/scroll.svelte";
     import { now } from "../../stores/time";
     import { toastStore } from "../../stores/toast";
+    import { messageSwipeAction } from "../../utils/messageSwipe";
     import { canShareMessage } from "../../utils/share";
     import { removeQueryStringParam } from "../../utils/urls";
     import AreYouSure from "../AreYouSure.svelte";
@@ -476,9 +477,14 @@
     }
 
     function onPanCommit(direction: PanDirection) {
-        if (me && direction === "left") editMessage();
-        if (!me && direction === "left") forward();
-        else reply();
+        switch (messageSwipeAction(direction, me, canEdit)) {
+            case "edit":
+                return editMessage();
+            case "forward":
+                return forward();
+            case "reply":
+                return reply();
+        }
     }
 
     function onPanMove(direction: PanDirection, factor: number) {
