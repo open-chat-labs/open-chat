@@ -92,8 +92,8 @@ Agreed on 2026-10-16; the tables below follow them.
      as the old UI does (decided 2026-10-21; this used to say "always the first").
    - **The wallet** takes the whole content area (its panel on the left, its page in the middle),
      without a right column.
-   - To be built with the chat list and conversation (phase 3), which rework selection and the
-     default chat anyway; until then these routes behave as in the table below.
+   - Built with the chat list, conversation and activity feed (phase 3); the wallet's own pages
+     come in phase 6 (6a).
 
 ## Regions
 

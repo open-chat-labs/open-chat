@@ -231,7 +231,7 @@
         answer={$captureRulesAcceptanceStore.resolve} />
 {/if}
 
-<!-- TODO(phase 4): suspending a user (platform moderators) has no dialog yet; GAPS.md -->
+<!-- TODO(phase 4, 4a): suspending a user (platform moderators) has no dialog yet; GAPS.md -->
 {#if appDialog !== undefined && appDialog.kind !== "suspending"}
     <AppEventDialog dialog={appDialog} onClose={closeAppDialog} />
 {/if}

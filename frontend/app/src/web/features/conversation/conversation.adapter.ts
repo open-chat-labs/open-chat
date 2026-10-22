@@ -64,7 +64,7 @@ export function messageText(
 
 /**
  * A message as MessageGroup shows it, with its sender. Every kind shows as a text bubble for now:
- * the rich kinds are phase 6 (GAPS.md).
+ * the rich kinds are phase 5 (GAPS.md).
  */
 export function messageRow(
     evt: EventWrapper<Message>,

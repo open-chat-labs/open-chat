@@ -150,8 +150,8 @@
         }
     }
 
-    // TODO(phase 5): the menu's other items (block, delete, leave, invite) open dialogs, and the
-    // search action; calls are phase 8
+    // TODO(phase 4, 4b): the menu's other items (block, delete, leave, invite) open dialogs, and the
+    // search action; calls are phase 7
     function onMenu(id: string) {
         if (chat === undefined) return;
         switch (id) {

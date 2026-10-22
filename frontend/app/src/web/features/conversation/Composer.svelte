@@ -54,7 +54,7 @@
                 return { key: "chatFrozen", tone: "warning" };
             case "blocked":
                 return { key: "userIsBlocked", tone: "info" };
-            // TODO(phase 9): a preview's Join (and its access gates), as the old PreviewFooter
+            // TODO(phase 8, 8b): a preview's Join (and its access gates), as the old PreviewFooter
             case "preview":
                 return { key: block.lapsed ? "access.lapsed.label" : "readOnlyChat", tone: "info" };
             case "external":
@@ -92,7 +92,7 @@
         <Banner tone={blocked.tone} text={$_(blocked.key)} />
     </div>
 {:else}
-    <!-- TODO(phase 6): attachments, GIFs, voice, replies and edits -->
+    <!-- TODO(phase 5, 5c): attachments, GIFs, voice, replies and edits -->
     <ComposerBar
         {text}
         {typingNames}
