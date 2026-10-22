@@ -38,7 +38,7 @@
     let showGuidelines = $state(false);
     const usernameStore = createLocalStorageStore("openchat_candidate_username", "");
     // the name last tried, if sign-up didn't finish, is where it starts
-    const usernameCheck = new UsernameCheck(client, () => $usernameStore ?? "");
+    const usernameCheck = new UsernameCheck(client, () => $usernameStore ?? "", { ownName: false });
     onDestroy(() => usernameCheck.destroy());
     let email = $state("");
     let emailValid = $derived(email.length === 0 || EmailValidator.validate(email));

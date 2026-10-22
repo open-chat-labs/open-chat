@@ -22,7 +22,7 @@ vi.mock("@icp-sdk/auth/client", async (importOriginal) => ({
     AuthClient: { create: () => new Promise(() => {}) },
 }));
 
-import { ErrorCode, anonymousUser, type PublicProfile, type WorkerRequest } from "@shared";
+import { ErrorCode, Stream, anonymousUser, type PublicProfile, type WorkerRequest } from "@shared";
 import type { OpenChatConfig } from "./config";
 import { OpenChat } from "./openchat";
 import { currentUserProfileStore, currentUserStore } from "./state";
@@ -117,6 +117,36 @@ describe("saving the user's profile", () => {
             ...original,
             displayName: "Jules",
             bio: "new bio",
+        });
+    });
+
+    describe("refreshing the user's profile", () => {
+        // the profile stream: the cached profile, then the live one
+        let answer: (profile: PublicProfile, final: boolean) => void;
+
+        beforeEach(() => {
+            vi.spyOn(WorkerAgent.prototype, "stream").mockImplementation(
+                (() =>
+                    new Stream<PublicProfile>((resolve) => {
+                        answer = resolve;
+                    })) as never,
+            );
+            currentUserProfileStore.set(original);
+        });
+
+        test("takes the live profile, not the cached one, which may be older", () => {
+            client.refreshCurrentUserProfile();
+            answer({ ...original, bio: "cached bio" }, false);
+            expect(currentUserProfileStore.value).toEqual(original);
+            answer({ ...original, bio: "live bio" }, true);
+            expect(currentUserProfileStore.value).toEqual({ ...original, bio: "live bio" });
+        });
+
+        test("drops a live profile asked for before a save here wrote the store", async () => {
+            client.refreshCurrentUserProfile();
+            await client.saveProfile(original, { ...original, bio: "new bio" });
+            answer(original, true);
+            expect(currentUserProfileStore.value).toEqual({ ...original, bio: "new bio" });
         });
     });
 

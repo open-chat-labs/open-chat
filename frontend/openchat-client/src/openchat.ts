@@ -875,6 +875,8 @@ export class OpenChat {
     >();
     #membershipCheck: number | undefined;
     #currentUserIdChangedPublished = false;
+    // counts the changes made here to the current user's profile, which a refresh mustn't undo
+    #currentUserProfileWrites = 0;
     #referralCode: string | undefined = undefined;
     #userLookupForMentions:
         | {
@@ -2137,7 +2139,7 @@ export class OpenChat {
         return this.#worker
             .send({ kind: "setUserAvatar", data })
             .then((resp) => {
-                currentUserProfileStore.update((profile) => ({
+                this.#updateCurrentUserProfile((profile) => ({
                     ...profile,
                     avatarId: resp.blobId,
                 }));
@@ -2150,7 +2152,7 @@ export class OpenChat {
         return this.#worker
             .send({ kind: "setProfileBackground", data })
             .then((resp) => {
-                currentUserProfileStore.update((profile) => ({
+                this.#updateCurrentUserProfile((profile) => ({
                     ...profile,
                     backgroundId: resp.blobId,
                 }));
@@ -7774,11 +7776,25 @@ export class OpenChat {
 
     /**
      * Loads the current user's profile into currentUserProfileStore again, so a change made on
-     * another device shows (the profile is otherwise loaded once, at sign-in).
+     * another device shows (the profile is otherwise loaded once, at sign-in). Only the live
+     * profile counts: the cached one may be older than the store, and so may a live one asked for
+     * before a change here (a save, an image) wrote the store.
      */
     refreshCurrentUserProfile(): void {
-        if (anonUserStore.value) return;
-        this.#loadCurrentUserProfile(currentUserIdStore.value);
+        if (anonUserStore.value || get(offlineStore)) return;
+        const writes = this.#currentUserProfileWrites;
+        this.getPublicProfile(currentUserIdStore.value).subscribe({
+            onResult: (profile, final) => {
+                if (!final || profile === undefined) return;
+                if (writes !== this.#currentUserProfileWrites) return;
+                currentUserProfileStore.set(profile);
+            },
+        });
+    }
+
+    #updateCurrentUserProfile(update: (profile: PublicProfile) => PublicProfile): void {
+        this.#currentUserProfileWrites++;
+        currentUserProfileStore.update(update);
     }
 
     #loadCurrentUserProfile(userId: string): void {
@@ -7814,7 +7830,7 @@ export class OpenChat {
                 switch (result.kind) {
                     case "saved":
                         outcome.profile = { ...outcome.profile, [field]: candidate[field] };
-                        currentUserProfileStore.update((profile) => ({
+                        this.#updateCurrentUserProfile((profile) => ({
                             ...profile,
                             [field]: candidate[field],
                         }));

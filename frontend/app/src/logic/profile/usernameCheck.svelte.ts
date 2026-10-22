@@ -18,6 +18,7 @@ export type UsernameStatus =
 export class UsernameCheck {
     #client: Pick<OpenChat, "checkUsername" | "logError">;
     #original: () => string;
+    #ownName: boolean;
     // undefined: the original, which may change underneath (a save, the profile loading)
     #value = $state<string>();
     #timer: ReturnType<typeof setTimeout> | undefined;
@@ -26,9 +27,19 @@ export class UsernameCheck {
 
     status = $state<UsernameStatus>("unchanged");
 
-    constructor(client: Pick<OpenChat, "checkUsername" | "logError">, original: () => string) {
+    /**
+     * `original` is the name the check starts from. `ownName` says it's the user's own, as on the
+     * profile (not sign-up's last try, which may have been turned down): then a change of case
+     * alone is theirs to make, without asking the backend.
+     */
+    constructor(
+        client: Pick<OpenChat, "checkUsername" | "logError">,
+        original: () => string,
+        { ownName }: { ownName: boolean },
+    ) {
         this.#client = client;
         this.#original = original;
+        this.#ownName = ownName;
     }
 
     get value(): string {
@@ -73,7 +84,7 @@ export class UsernameCheck {
         this.#value = value;
         // the user's own name in another case: theirs, even if it's shorter than the rules now ask
         // (3 characters, say), so there's nothing to ask the backend
-        if (value.toLowerCase() === original.toLowerCase()) {
+        if (this.#ownName && value.toLowerCase() === original.toLowerCase()) {
             this.status = "available";
             return;
         }

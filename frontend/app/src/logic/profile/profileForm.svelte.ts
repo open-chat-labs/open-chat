@@ -54,7 +54,7 @@ export class ProfileForm {
         this.#client = client;
         this.#saved = saved;
         this.#readOnly = readOnly;
-        this.username = new UsernameCheck(client, () => saved().username);
+        this.username = new UsernameCheck(client, () => saved().username, { ownName: true });
     }
 
     get displayName(): string | undefined {
