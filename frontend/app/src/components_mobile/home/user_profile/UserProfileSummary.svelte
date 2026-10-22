@@ -34,9 +34,7 @@
     }
 
     function userInformation() {
-        if (profile !== undefined) {
-            publish("userInformation", profile);
-        }
+        publish("userInformation");
     }
 
     function shareProfile() {

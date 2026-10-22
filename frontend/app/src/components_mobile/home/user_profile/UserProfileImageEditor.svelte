@@ -21,7 +21,8 @@
         profile: PublicProfile;
     }
 
-    let { profile = $bindable() }: Props = $props();
+    // the user's profile, which the client updates as an image saves
+    let { profile }: Props = $props();
 
     let user = $derived($allUsersStore.get($currentUserIdStore) ?? client.nullUser("unknown"));
 
@@ -46,9 +47,7 @@
 
     function userAvatarSelected(detail: { url: string; data: Uint8Array }): void {
         client.setUserAvatar(detail.data, detail.url).then((blobId) => {
-            if (blobId !== undefined) {
-                profile.avatarId = blobId;
-            } else {
+            if (blobId === undefined) {
                 toastStore.showFailureToast(i18nKey("avatarUpdateFailed"));
             }
         });
@@ -57,9 +56,7 @@
 
     function onBackgroundImageSelected(args: { url: string; data: Uint8Array }) {
         client.setUserProfileBackground(args.data).then((blobId) => {
-            if (blobId !== undefined) {
-                profile.backgroundId = blobId;
-            } else {
+            if (blobId === undefined) {
                 toastStore.showFailureToast(i18nKey("avatarUpdateFailed"));
             }
         });

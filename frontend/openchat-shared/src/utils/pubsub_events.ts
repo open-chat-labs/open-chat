@@ -29,7 +29,6 @@ import type {
     Notification,
     PaymentGate,
     PollContent,
-    PublicProfile,
     ReadonlySet,
     ResourceKey,
     TokenBalanceGate,
@@ -178,7 +177,7 @@ export type PubSubEvents = {
     suspendUser: string;
     userProfileChatsAndVideo: undefined;
     appSettings: undefined;
-    userInformation: PublicProfile;
+    userInformation: undefined;
     userProfileShare: undefined;
     userProfileAbout: undefined;
     userProfileCacheManagement: undefined;

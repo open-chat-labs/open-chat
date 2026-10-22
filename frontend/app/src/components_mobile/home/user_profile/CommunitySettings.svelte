@@ -166,7 +166,6 @@
 
                 <DisplayNameInput
                     disabled={saving}
-                    {client}
                     errorMsg={displayNameError}
                     {originalDisplayName}
                     bind:displayName

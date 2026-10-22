@@ -37,7 +37,6 @@
         type NeuronGate,
         type PaymentGate,
         type PollContent,
-        type PublicProfile,
         type ReadonlySet,
         type TokenBalanceGate,
         type UserGroupDetails,
@@ -211,7 +210,7 @@
         | { kind: "update_bot" }
         | { kind: "register_bot" }
         | { kind: "remove_bot" }
-        | { kind: "user_information"; profile: PublicProfile };
+        | { kind: "user_information" };
 
     const modalStack = $state<SlidingModalType[]>([]);
     let top = $derived(modalStack[modalStack.length - 1]);
@@ -540,7 +539,7 @@
             ),
             subscribe("accessGatesLearnMore", () => push({ kind: "access_gates_learn_more" })),
             subscribe("appSettings", () => push({ kind: "app_settings" })),
-            subscribe("userInformation", (profile) => push({ kind: "user_information", profile })),
+            subscribe("userInformation", () => push({ kind: "user_information" })),
             subscribe("userProfileShare", () => push({ kind: "user_profile_share" })),
             subscribe("userProfileVerify", () => push({ kind: "user_profile_verify" })),
             subscribe("userProfileCommunitySettings", () =>
@@ -693,7 +692,7 @@
                 {@render loadFailed()}
             {/await}
         {:else if page.kind === "user_information"}
-            <UserInformation profile={page.profile} />
+            <UserInformation />
         {:else if page.kind === "app_settings"}
             {#await import("./user_profile/AppSettings.svelte") then { default: AppSettings }}
                 <AppSettings />

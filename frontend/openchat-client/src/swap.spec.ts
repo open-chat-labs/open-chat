@@ -123,6 +123,23 @@ describe("swapping from the wallet", () => {
         expect(swapsSent()).toEqual([]);
     });
 
+    // Invariant: a wallet whose balance can't be checked (eg. offline) sends nothing and says the swap
+    // failed, not that the funds are insufficient
+    test("a wallet whose balance can't be checked sends nothing and says it failed", async () => {
+        vi.spyOn(console, "warn").mockImplementation(() => {});
+        const send = vi.mocked(WorkerAgent.prototype.send).getMockImplementation()!;
+        vi.mocked(WorkerAgent.prototype.send).mockImplementation(((req: WorkerRequest) =>
+            req.kind === "refreshAccountBalance" && req.ledger === quote.ledgerIn
+                ? Promise.reject(new Error("offline"))
+                : send(req)) as never);
+
+        expect(await client.swapTokens(quote, false)).toEqual({
+            kind: "failed",
+            message: expect.objectContaining({ key: "tokenSwap.progress.error" }),
+        });
+        expect(swapsSent()).toEqual([]);
+    });
+
     // Invariant: the swap sends the quoted amount to the quoted DEX, and refuses less than 98% of the
     // quoted output
     test("the swap is for the quoted amount and at least 98% of the quoted output", async () => {

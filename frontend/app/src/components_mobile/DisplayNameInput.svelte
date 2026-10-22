@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Input } from "component-lib";
-    import type { OpenChat } from "@client";
+    import { isDisplayNameValid } from "@client";
     import { onMount, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey, interpolate } from "../i18n/i18n";
@@ -10,19 +10,17 @@
     const MAX_DISPLAY_NAME_LENGTH = 25;
 
     interface Props {
-        client: OpenChat;
         originalDisplayName: string | undefined;
         displayName: string | undefined;
-        displayNameValid: boolean;
+        displayNameValid?: boolean;
         disabled?: boolean;
         errorMsg?: string;
     }
 
     let {
-        client,
         originalDisplayName,
         displayName = $bindable(),
-        displayNameValid = $bindable(),
+        displayNameValid = $bindable(true),
         disabled = false,
         errorMsg = $bindable(),
     }: Props = $props();
@@ -46,7 +44,7 @@
                 return;
             }
 
-            displayNameValid = client.isDisplayNameValid(d);
+            displayNameValid = isDisplayNameValid(d);
         });
     });
 </script>

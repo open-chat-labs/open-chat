@@ -312,11 +312,10 @@ export class TokenState {
         if (this.#unknown) return undefined;
         this.#refreshingBalance = true;
         try {
-            await client.refreshAccountBalance(this.ledger, false);
-            return undefined;
-        } catch (err) {
-            console.warn(`Couldn't refresh the ${this.symbol} balance`, err);
-            return i18nKey("unableToRefreshAccountBalance", { token: this.symbol });
+            const balance = await client.refreshAccountBalance(this.ledger, false);
+            return balance === undefined
+                ? i18nKey("unableToRefreshAccountBalance", { token: this.symbol })
+                : undefined;
         } finally {
             this.#refreshingBalance = false;
         }

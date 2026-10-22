@@ -4,6 +4,7 @@ import {
     ROLE_MEMBER,
     ROLE_MODERATOR,
     type ChatEvent,
+    type ChatIdentifier,
     type EventWrapper,
     type GroupChatSummary,
     type PollConfig,
@@ -13,6 +14,7 @@ import {
     type UserSummary,
 } from "@shared";
 import { localUpdates } from "../state";
+import { currentChatVisit, startChatVisit } from "../state/selectedChat";
 import {
     addVoteToPoll,
     getMembersString,
@@ -21,7 +23,10 @@ import {
     navigationAfterArchivingOpenChat,
     sameUser,
     sortByTimestampThenEventIndex,
+    startTyping,
+    stopTyping,
 } from "./chat";
+import { rtcConnectionsManager } from "./rtcConnectionsManager";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-ignore
@@ -491,5 +496,43 @@ describe("where archiving the open chat goes", () => {
             navigationAfterArchivingOpenChat(archived, chats, [group("a"), group("c")], true)
                 .intent,
         ).toBeUndefined();
+    });
+});
+
+describe("who typing is sent to", () => {
+    const send = vi.spyOn(rtcConnectionsManager, "sendMessage").mockImplementation(() => {});
+
+    beforeEach(() => send.mockClear());
+    afterAll(() => {
+        startChatVisit(undefined);
+        send.mockRestore();
+    });
+
+    function recipients(): string[][] {
+        return send.mock.calls.map(([userIds]) => userIds);
+    }
+
+    test("in a DM, typing and stopping typing go to the other user before they have sent anything", () => {
+        const dm: ChatIdentifier = { kind: "direct_chat", userId: "them" };
+        startChatVisit(dm);
+
+        startTyping(dm, "me");
+        stopTyping(dm, "me");
+
+        expect(recipients()).toEqual([["them"], ["them"]]);
+    });
+
+    test("in a group, typing and stopping typing go to the users seen in the loaded events", () => {
+        const group: ChatIdentifier = { kind: "group_chat", groupId: "g" };
+        startChatVisit(group);
+        currentChatVisit()?.addUserIds(["a", "b"]);
+
+        startTyping(group, "me");
+        stopTyping(group, "me");
+
+        expect(recipients()).toEqual([
+            ["a", "b"],
+            ["a", "b"],
+        ]);
     });
 });
