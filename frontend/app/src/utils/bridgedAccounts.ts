@@ -1,4 +1,4 @@
-import type { BridgePlatform, OpenChat } from "@client";
+import type { BridgedUserSummary, BridgePlatform, OpenChat } from "@client";
 import { openExternalUrl } from "./urls";
 
 // Where each platform's bridge takes a user to link their account there, with "{code}" in place of
@@ -11,6 +11,15 @@ const LINK_URLS: Record<BridgePlatform, string> = {
 export const linkablePlatforms: BridgePlatform[] = (["discord", "telegram"] as const).filter(
     (platform) => LINK_URLS[platform] !== "",
 );
+
+// A user links one account per platform, so a platform is offered only while they have none linked
+// there. To switch accounts, they unlink the linked one first.
+export function platformsToLink(
+    linked: BridgedUserSummary[],
+    linkable: BridgePlatform[] = linkablePlatforms,
+): BridgePlatform[] {
+    return linkable.filter((platform) => !linked.some((account) => account.user.kind === platform));
+}
 
 // Takes the user to the platform's bridge with a new code, eg. Discord's bridge sends them through
 // Discord's OAuth. On the web the tab is opened before the code is fetched, as browsers block one

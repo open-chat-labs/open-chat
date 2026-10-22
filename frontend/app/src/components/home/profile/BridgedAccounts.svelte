@@ -15,7 +15,7 @@
     import Tooltip from "../../../components/tooltip/Tooltip.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
-    import { linkablePlatforms, linkBridgedAccount } from "../../../utils/bridgedAccounts";
+    import { linkBridgedAccount, platformsToLink } from "../../../utils/bridgedAccounts";
     import Avatar from "../../Avatar.svelte";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
@@ -25,12 +25,10 @@
 
     const client = getContext<OpenChat>("client");
 
-    let accounts: BridgedUserSummary[] = $state([]);
+    // Unset until the linked accounts have loaded, so no platform is offered before then
+    let accounts: BridgedUserSummary[] | undefined = $state(undefined);
     let busy = $state(false);
-    // One account per platform, so to switch accounts the user unlinks the linked one first
-    let unlinkedPlatforms = $derived(
-        linkablePlatforms.filter((platform) => !accounts.some((a) => a.user.kind === platform)),
-    );
+    let unlinkedPlatforms = $derived(accounts === undefined ? [] : platformsToLink(accounts));
 
     onMount(refresh);
 
@@ -39,7 +37,8 @@
         client
             .getLinkedBridgedUsers()
             .then((linked) => (accounts = linked))
-            .catch(() => undefined);
+            // Offer linking even if the linked accounts couldn't be loaded
+            .catch(() => (accounts ??= []));
     }
 
     async function link(platform: BridgePlatform) {
@@ -60,7 +59,7 @@
             .catch(() => undefined)
             .finally(() => (busy = false));
         if (resp?.kind === "success") {
-            accounts = accounts.filter((a) => bridgedUserKey(bridgedUserId(a.user)) !== bridgedUserKey(id));
+            accounts = accounts?.filter((a) => bridgedUserKey(bridgedUserId(a.user)) !== bridgedUserKey(id));
         } else {
             toastStore.showFailureToast(i18nKey("bridgedAccounts.unlinkFailed"));
         }
@@ -73,7 +72,7 @@
     <Translatable resourceKey={i18nKey("bridgedAccounts.info")} />
 </p>
 
-{#each accounts as account (bridgedUserKey(bridgedUserId(account.user)))}
+{#each accounts ?? [] as account (bridgedUserKey(bridgedUserId(account.user)))}
     {@const id = bridgedUserId(account.user)}
     <div class="account">
         <Avatar url={client.bridgedAvatarUrl(id, account)} size={AvatarSize.Small} />

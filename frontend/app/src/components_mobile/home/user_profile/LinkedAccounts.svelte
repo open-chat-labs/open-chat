@@ -1,6 +1,6 @@
 <script lang="ts">
     import { toastStore } from "@src/stores/toast";
-    import { linkablePlatforms, linkBridgedAccount } from "@src/utils/bridgedAccounts";
+    import { linkBridgedAccount, platformsToLink } from "@src/utils/bridgedAccounts";
     import {
         Avatar,
         Body,
@@ -30,12 +30,10 @@
 
     const client = getContext<OpenChat>("client");
 
-    let accounts: BridgedUserSummary[] = $state([]);
+    // Unset until the linked accounts have loaded, so no platform is offered before then
+    let accounts: BridgedUserSummary[] | undefined = $state(undefined);
     let busy = $state(false);
-    // One account per platform, so to switch accounts the user unlinks the linked one first
-    let unlinkedPlatforms = $derived(
-        linkablePlatforms.filter((platform) => !accounts.some((a) => a.user.kind === platform)),
-    );
+    let unlinkedPlatforms = $derived(accounts === undefined ? [] : platformsToLink(accounts));
 
     onMount(refresh);
 
@@ -44,7 +42,8 @@
         client
             .getLinkedBridgedUsers()
             .then((linked) => (accounts = linked))
-            .catch(() => undefined);
+            // Offer linking even if the linked accounts couldn't be loaded
+            .catch(() => (accounts ??= []));
     }
 
     async function link(platform: BridgePlatform) {
@@ -65,7 +64,7 @@
             .catch(() => undefined)
             .finally(() => (busy = false));
         if (resp?.kind === "success") {
-            accounts = accounts.filter((a) => bridgedUserKey(bridgedUserId(a.user)) !== bridgedUserKey(id));
+            accounts = accounts?.filter((a) => bridgedUserKey(bridgedUserId(a.user)) !== bridgedUserKey(id));
         } else {
             toastStore.showFailureToast(i18nKey("bridgedAccounts.unlinkFailed"));
         }
@@ -83,7 +82,7 @@
                 </BodySmall>
             </Column>
 
-            {#if accounts.length > 0}
+            {#if accounts !== undefined && accounts.length > 0}
                 <Column padding={["zero", "lg"]} gap={"md"}>
                     {#each accounts as account (bridgedUserKey(bridgedUserId(account.user)))}
                         {@const id = bridgedUserId(account.user)}
