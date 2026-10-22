@@ -561,7 +561,7 @@ import {
 } from "./utils/restrictedContent";
 import {
     defaultChat,
-    routeAfterArchivingOpenChat,
+    navigationAfterArchivingOpenChat,
     activeUserIdFromEvent,
     applyTranslation,
     buildCryptoTransferText,
@@ -1979,14 +1979,15 @@ export class OpenChat {
                 map.delete(scope);
                 return map;
             });
-            publish("navigateTo", {
-                url: routeAfterArchivingOpenChat(
+            publish(
+                "navigateTo",
+                navigationAfterArchivingOpenChat(
                     chatId,
                     scope,
                     chatSummariesListStore.value,
                     get(mobileWidth),
                 ),
-            });
+            );
         }
         return this.#worker
             .send({ kind: "archiveChat", chatId })

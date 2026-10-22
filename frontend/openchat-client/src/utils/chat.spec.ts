@@ -18,7 +18,7 @@ import {
     getMembersString,
     mergeChatMetrics,
     mergeUnconfirmedThreadsIntoSummary,
-    routeAfterArchivingOpenChat,
+    navigationAfterArchivingOpenChat,
     sameUser,
     sortByTimestampThenEventIndex,
 } from "./chat";
@@ -459,6 +459,8 @@ describe("sameUser", () => {
 
 /** Invariant: archiving the open chat leaves it, on every tree and screen width. */
 describe("where archiving the open chat goes", () => {
+    const go = (...args: Parameters<typeof navigationAfterArchivingOpenChat>) =>
+        navigationAfterArchivingOpenChat(...args).url;
     const group = (groupId: string, archived = false): GroupChatSummary => ({
         ...defaultGroupChat,
         id: { kind: "group_chat", groupId },
@@ -469,22 +471,22 @@ describe("where archiving the open chat goes", () => {
 
     test("is the next unarchived chat on a wide screen, never the archived one", () => {
         // the list may not have marked it archived yet
-        expect(
-            routeAfterArchivingOpenChat(
-                archived,
-                chats,
-                [group("a"), group("b", true), group("c")],
-                false,
-            ),
-        ).toBe("/chats/group/c");
+        expect(go(archived, chats, [group("a"), group("b", true), group("c")], false)).toBe(
+            "/chats/group/c",
+        );
     });
 
     test("is the scope's list on a narrow screen, or with no other chat to open", () => {
-        expect(routeAfterArchivingOpenChat(archived, chats, [group("a"), group("b")], true)).toBe(
-            "/chats",
-        );
-        expect(routeAfterArchivingOpenChat(archived, chats, [group("a", true)], false)).toBe(
-            "/chats",
-        );
+        expect(go(archived, chats, [group("a"), group("b")], true)).toBe("/chats");
+        expect(go(archived, chats, [group("a", true)], false)).toBe("/chats");
+    });
+
+    test("replaces the archived chat's history entry, so Back can't reopen and un-archive it", () => {
+        for (const narrow of [false, true]) {
+            expect(
+                navigationAfterArchivingOpenChat(archived, chats, [group("a"), group("c")], narrow)
+                    .intent,
+            ).toBe("auto");
+        }
     });
 });

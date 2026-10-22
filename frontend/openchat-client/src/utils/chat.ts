@@ -2490,8 +2490,7 @@ export function chatMatchesSearch(search: string, chat: ChatSummary, users: User
     return (
         user !== undefined &&
         (user.username.toLowerCase().indexOf(search) >= 0 ||
-            (user.displayName !== undefined &&
-                user.displayName.toLowerCase().indexOf(search) >= 0))
+            (user.displayName !== undefined && user.displayName.toLowerCase().indexOf(search) >= 0))
     );
 }
 
@@ -2513,16 +2512,18 @@ export function defaultChat(
 /**
  * Where archiving the open chat goes: the scope's first other chat that isn't archived on a wide
  * screen, else the scope's list. Never the archived chat itself, whether or not the list has
- * marked it archived yet.
+ * marked it archived yet. It replaces the archived chat's history entry, or Back would reopen the
+ * chat and so un-archive it.
  */
-export function routeAfterArchivingOpenChat(
+export function navigationAfterArchivingOpenChat(
     archived: ChatIdentifier,
     scope: ChatListScope,
     chats: readonly ChatSummary[],
     narrow: boolean,
-): string {
+): { url: string; intent: "auto" } {
     const next = narrow
         ? undefined
         : chats.find((c) => !c.membership.archived && !chatIdentifiersEqual(c.id, archived));
-    return next ? routeForChatIdentifier(scope.kind, next.id) : routeForScope(scope);
+    const url = next ? routeForChatIdentifier(scope.kind, next.id) : routeForScope(scope);
+    return { url, intent: "auto" };
 }
