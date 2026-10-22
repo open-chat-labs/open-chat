@@ -30,14 +30,11 @@
         pinChatFailureMessage,
         pinnedChatsStore,
         publish,
-        routeForScope,
-        selectedChatIdStore,
         selectedCommunitySummaryStore,
         suspendedUserStore,
         translationsStore,
         byContext as typersByContext,
     } from "@client";
-    import { navigate } from "@utils/navigation";
     import { getContext, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import { latestMessagePreview } from "@src/logic/chats/latestMessagePreview";
@@ -265,9 +262,6 @@
                 toastStore.showFailureToast(i18nKey("archiveChatFailed"));
             }
         });
-        if (chatSummary.id === $selectedChatIdStore) {
-            navigate(routeForScope($chatListScopeStore));
-        }
     }
 
     function selectChat() {

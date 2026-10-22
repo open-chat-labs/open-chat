@@ -9,6 +9,7 @@ import type {
     ChannelSummary,
     ChatEvent,
     ChatIdentifier,
+    ChatListScope,
     ChatPermissions,
     ChatSummary,
     CreatedUser,
@@ -79,6 +80,7 @@ import {
     ROLE_MEMBER,
     ROLE_NONE,
     ROLE_OWNER,
+    routeForChatIdentifier,
     updateFromOptions,
     type ReadonlySet,
 } from "@shared";
@@ -106,6 +108,7 @@ import { rtcConnectionsManager } from "../utils/rtcConnectionsManager";
 import { formatTokens } from "./cryptoFormatter";
 import { hasOwnerRights, isPermitted } from "./permissions";
 import { messageFlagsRestricted, messageRestricted } from "./restrictedContent";
+import { routeForScope } from "./routes";
 import { compareUsername, nullUser } from "./user";
 
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
@@ -2487,8 +2490,7 @@ export function chatMatchesSearch(search: string, chat: ChatSummary, users: User
     return (
         user !== undefined &&
         (user.username.toLowerCase().indexOf(search) >= 0 ||
-            (user.displayName !== undefined &&
-                user.displayName.toLowerCase().indexOf(search) >= 0))
+            (user.displayName !== undefined && user.displayName.toLowerCase().indexOf(search) >= 0))
     );
 }
 
@@ -2505,4 +2507,24 @@ export function defaultChat(
             ? undefined
             : chats.find((c) => chatIdentifiersEqual(c.id, lastSelected));
     return last ?? chats.find((c) => !c.membership.archived);
+}
+
+/**
+ * Where archiving the open chat goes: the scope's first other chat that isn't archived on a wide
+ * screen, else the scope's list. Never the archived chat itself, whether or not the list has
+ * marked it archived yet. Going to another chat replaces the archived chat's history entry, or
+ * Back would reopen the chat and so un-archive it; going to the list steps back to it as usual.
+ */
+export function navigationAfterArchivingOpenChat(
+    archived: ChatIdentifier,
+    scope: ChatListScope,
+    chats: readonly ChatSummary[],
+    narrow: boolean,
+): { url: string; intent?: "auto" } {
+    const next = narrow
+        ? undefined
+        : chats.find((c) => !c.membership.archived && !chatIdentifiersEqual(c.id, archived));
+    return next
+        ? { url: routeForChatIdentifier(scope.kind, next.id), intent: "auto" }
+        : { url: routeForScope(scope) };
 }

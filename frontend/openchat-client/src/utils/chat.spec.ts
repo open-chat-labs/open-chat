@@ -18,6 +18,7 @@ import {
     getMembersString,
     mergeChatMetrics,
     mergeUnconfirmedThreadsIntoSummary,
+    navigationAfterArchivingOpenChat,
     sameUser,
     sortByTimestampThenEventIndex,
 } from "./chat";
@@ -453,5 +454,42 @@ describe("sameUser", () => {
         expect(sameUser(message("bot", 0n, "1"), message("bot", 1000n, undefined, "1"))).toBe(
             false,
         );
+    });
+});
+
+/** Invariant: archiving the open chat leaves it, on every tree and screen width. */
+describe("where archiving the open chat goes", () => {
+    const go = (...args: Parameters<typeof navigationAfterArchivingOpenChat>) =>
+        navigationAfterArchivingOpenChat(...args).url;
+    const group = (groupId: string, archived = false): GroupChatSummary => ({
+        ...defaultGroupChat,
+        id: { kind: "group_chat", groupId },
+        membership: { ...defaultGroupChat.membership, archived },
+    });
+    const archived = { kind: "group_chat", groupId: "a" } as const;
+    const chats = { kind: "chats" } as const;
+
+    test("is the next unarchived chat on a wide screen, never the archived one", () => {
+        // the list may not have marked it archived yet
+        expect(go(archived, chats, [group("a"), group("b", true), group("c")], false)).toBe(
+            "/chats/group/c",
+        );
+    });
+
+    test("is the scope's list on a narrow screen, or with no other chat to open", () => {
+        expect(go(archived, chats, [group("a"), group("b")], true)).toBe("/chats");
+        expect(go(archived, chats, [group("a", true)], false)).toBe("/chats");
+    });
+
+    test("replaces the archived chat's history entry when going to another chat, so Back can't reopen and un-archive it", () => {
+        expect(
+            navigationAfterArchivingOpenChat(archived, chats, [group("a"), group("c")], false)
+                .intent,
+        ).toBe("auto");
+        // going to the list steps back to it, which leaves the archived chat ahead, not behind
+        expect(
+            navigationAfterArchivingOpenChat(archived, chats, [group("a"), group("c")], true)
+                .intent,
+        ).toBeUndefined();
     });
 });
