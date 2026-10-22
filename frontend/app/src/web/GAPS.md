@@ -203,9 +203,9 @@ design export needs. Each entry says where it came up.
   Discord shows as the bot's (`conversation.adapter.ts` picks the side by `msg.sender`), and so
   does a reply quoting one (by `senderId`). The old trees show it as the OpenChat user who linked
   the account, with their name, avatar and badges (`linkedAuthor` in `@client`), or as the
-  account's own profile if no one has, with the platform's badge; so do their reply quotes, which
-  carry the quoted message's `senderContext`, and pinned messages. The message itself also shows
-  the platform's logo over the sender's avatar. One from the viewer's own
+  account's own profile if no one has; so do their reply quotes, which carry the quoted message's
+  `senderContext`, and pinned messages. The message itself shows the platform's logo over the
+  sender's avatar, and no bot badge. One from the viewer's own
   linked account looks like their own message (`shouldShowAsMe`), though editing and deleting it
   still go by the sender, the bot, and blocking or reporting its author is hidden. No relayed
   message offers a private reply, which would go to the bot. The client marks the viewer's own

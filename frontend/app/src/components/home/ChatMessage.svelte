@@ -637,10 +637,11 @@
                                             diamondStatus={author?.diamondStatus}
                                             {streak}
                                             {chitEarned} />
+                                        <!-- A relayed message's author isn't a bot -->
                                         <BotBadge
-                                            bot={senderContext?.kind === "bot"}
-                                            webhook={senderContext?.kind === "webhook"}
-                                            bridge={bridged?.kind} />
+                                            bot={senderContext?.kind === "bot" &&
+                                                bridged === undefined}
+                                            webhook={senderContext?.kind === "webhook"} />
                                         {#if sender !== undefined && multiUserChat}
                                             <WithRole
                                                 userId={sender.userId}
