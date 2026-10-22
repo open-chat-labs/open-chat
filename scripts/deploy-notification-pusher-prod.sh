@@ -25,12 +25,13 @@ CURRENT_VERSION_PATH=$(remote_cmd readlink -f "$LATEST_VERSION_PATH" 2>/dev/null
 # still running a while later, with the same process
 service_stays_up() {
     sleep 2
+    # "MainPID=<pid>", as the host's systemd is too old for --value
     local pid
-    pid=$(remote_cmd systemctl show -p MainPID --value $SERVICE_NAME) || return 1
+    pid=$(remote_cmd systemctl show -p MainPID $SERVICE_NAME) || return 1
     sleep 15
-    [[ "$pid" != "0" ]] \
+    [[ "$pid" != "MainPID=0" ]] \
         && remote_cmd sudo systemctl is-active --quiet $SERVICE_NAME \
-        && [[ "$(remote_cmd systemctl show -p MainPID --value $SERVICE_NAME)" == "$pid" ]]
+        && [[ "$(remote_cmd systemctl show -p MainPID $SERVICE_NAME)" == "$pid" ]]
 }
 
 # If the deploy fails, the new version's directory is removed so the version can be deployed
