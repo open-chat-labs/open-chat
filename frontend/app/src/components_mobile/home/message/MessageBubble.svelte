@@ -16,6 +16,7 @@
         selectedChatWebhooksStore,
         selectedCommunityMembersStore,
         selectedServerChatStore,
+        shownAsMine,
         type ChatIdentifier,
         type ChatType,
         type Member,
@@ -143,6 +144,9 @@
     let isPrize = $derived(msg.content.kind === "prize_content");
     // let hasReactions = $derived(msg.reactions.length > 0);
     let me = $derived(msg.sender === $currentUserIdStore);
+    // One relayed from the user's own linked account looks like their own message, but keeps its
+    // header, so its platform's badge still shows
+    let mine = $derived(shownAsMine(me, linkedUser?.userId, $currentUserIdStore));
     let showHeader = $derived(
         first && !isProposal && !isPrize && !me && chatType !== "direct_chat",
     );
@@ -153,7 +157,7 @@
         if (placeholderContent) {
             return "transparent";
         }
-        if (me) {
+        if (mine) {
             return ColourVars.chatBubbleSent;
         }
 
@@ -161,7 +165,7 @@
     });
     let borderRadius = $derived.by<Radius>(() => {
         // top, right, bottom, left
-        if (me) {
+        if (mine) {
             return ["xl", "sm", hasThread || !last ? "sm" : "xl", "xl"];
         } else {
             return ["sm", "xl", "xl", hasThread || !last ? "sm" : "xl"];
@@ -186,7 +190,7 @@
 
     let classList = $derived.by(() => {
         const classes = ["message_bubble"];
-        if (me && !placeholderContent && !failed) {
+        if (mine && !placeholderContent && !failed) {
             classes.push("me");
         }
         if (focused) {
@@ -286,7 +290,7 @@
             msg.repliesTo.kind === "rehydrated_reply_context" ? msg.repliesTo : undefined}
         <Container
             onClick={reply ? () => zoomToMessage(reply) : undefined}
-            supplementalClass={`reply_wrapper ${me ? "me" : ""}`}
+            supplementalClass={`reply_wrapper ${mine ? "me" : ""}`}
             direction={"vertical"}>
             {#if msg.repliesTo.kind === "rehydrated_reply_context"}
                 {@render repliesTo(msg.repliesTo)}
@@ -296,7 +300,7 @@
         </Container>
     {/if}
     <div class="message_bubble_content" bind:clientWidth={contentWidth}>
-        {@render messageContent?.(me)}
+        {@render messageContent?.(mine)}
     </div>
     {#if !placeholderContent}
         <MessageMetadata
@@ -304,7 +308,7 @@
             deleted={msg.deleted}
             {undeleting}
             {bot}
-            {me}
+            me={mine}
             {fill}
             {accepted}
             {chatType}

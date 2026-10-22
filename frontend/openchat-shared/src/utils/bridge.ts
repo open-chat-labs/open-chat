@@ -20,6 +20,17 @@ export function bridgedFrom(senderContext: SenderContext | undefined): BridgedUs
     return senderContext?.kind === "bot" ? senderContext.bridgedFrom : undefined;
 }
 
+// Whether a message is shown as the user's own: one they sent, or one a bridge bot relayed from an
+// account they've linked. Only its look follows the link. What they can do with it, eg. edit or
+// delete it, still goes by who sent it, which for a relayed message is the bridge bot.
+export function shownAsMine(
+    sentByMe: boolean,
+    linkedUserId: string | undefined,
+    currentUserId: string,
+): boolean {
+    return sentByMe || (linkedUserId !== undefined && linkedUserId === currentUserId);
+}
+
 // Identifies an account across platforms, eg. to key the registry's profiles, and to group the
 // messages a bridge bot sends by their authors
 export function bridgedUserKey(id: BridgedUserId | undefined): string | undefined {

@@ -5,6 +5,7 @@ import {
     bridgedAuthorName,
     bridgedUserIdsFromEvents,
     bridgedUserKey,
+    shownAsMine,
 } from "./bridge";
 
 const PATTERN = "https://{canisterId}.raw.icp0.io/{blobType}";
@@ -91,5 +92,20 @@ describe("bridge", () => {
                 message(discordId),
             ]),
         ).toEqual([discordId, telegramId]);
+    });
+});
+
+describe("shownAsMine", () => {
+    test("a message the user sent is theirs", () => {
+        expect(shownAsMine(true, undefined, "me")).toBe(true);
+    });
+
+    test("a message relayed from an account the user linked is shown as theirs", () => {
+        expect(shownAsMine(false, "me", "me")).toBe(true);
+    });
+
+    test("a message relayed from someone else's account, or an unlinked one, isn't", () => {
+        expect(shownAsMine(false, "them", "me")).toBe(false);
+        expect(shownAsMine(false, undefined, "me")).toBe(false);
     });
 });
