@@ -20,8 +20,9 @@ use types::{
     AutonomousConfig, BotActionChatDetails, BotActionScope, BotChatContext, BotChatEvent, BotCommandArg, BotCommandArgValue,
     BotCommandDefinition, BotCommandParam, BotCommandParamType, BotDataEncoding, BotDefinition, BotEvent, BotEventWrapper,
     BotInstallationLocation, BotMessageContent, BotPermissions, BotSubscriptions, BridgePlatform, CanisterId, ChannelId, Chat,
-    ChatEvent, ChatEventType, ChatPermission, ChatType, CommunityEventType, CommunityPermission, EventIndex, MessageContent,
-    MessageId, MessagePermission, NotificationEnvelope, OptionUpdate, Rules, StringParam, TextContent, UpdatedRules, UserId,
+    ChatEvent, ChatEventType, ChatPermission, ChatType, CommunityEventType, CommunityPermission, EventIndex, HttpRequest,
+    MessageContent, MessageId, MessagePermission, NotificationEnvelope, OptionUpdate, Rules, StringParam, TextContent,
+    UpdatedRules, UserId,
 };
 
 #[test]
@@ -1815,6 +1816,55 @@ fn updating_bot_principal_and_data_encoding_reaches_local_user_indexes() {
         wait_for_bot_message_notification(env, *controller, local_user_index, from_index, bot_id, &text),
         vec![(BotDataEncoding::Candid, text)]
     );
+}
+
+#[test]
+fn bots_http_route_shows_each_bots_data_encoding() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+
+    let (default_bot_id, _) = register_bot(env, &owner, canister_ids.user_index, random_string(), random_string());
+
+    let mut definition = default_bot_definition(random_string());
+    definition.data_encoding = Some(BotDataEncoding::Candid);
+    let (candid_bot_id, _) = client::user_index::happy_path::register_bot(
+        env,
+        owner.principal,
+        canister_ids.user_index,
+        random_string(),
+        "https://my.bot.xyz/".to_string(),
+        definition,
+    );
+
+    let response = client::http_request(
+        env,
+        Principal::anonymous(),
+        canister_ids.user_index,
+        &HttpRequest {
+            method: "GET".to_string(),
+            url: "/bots".to_string(),
+            headers: Vec::new(),
+            body: Vec::new(),
+        },
+    );
+    assert_eq!(response.status_code, 200);
+
+    let bots: Vec<serde_json::Value> = serde_json::from_slice(&response.body).unwrap();
+    let encoding = |bot_id: UserId| {
+        bots.iter()
+            .find(|bot| bot["user_id"] == bot_id.to_string())
+            .map(|bot| bot["data_encoding"].clone())
+    };
+    // A bot which doesn't set one gets MsgPack
+    assert_eq!(encoding(default_bot_id), Some("MsgPack".into()));
+    assert_eq!(encoding(candid_bot_id), Some("Candid".into()));
 }
 
 #[test]
