@@ -92,7 +92,7 @@
         page.start({ click: false });
         const stopHistoryTracking = initNavigationHistoryTracking();
         // navigate() waits for the modal stack to close before it goes anywhere.
-        // TODO(phase 4): close the shell's dialogs first, as Home.svelte does
+        // the app's own dialogs close on the same event, in DialogHost
         const unsubscribe = subscribe("closeModalStack", flushPendingNavigation);
         routerReadyStore.set(true);
 
@@ -281,7 +281,7 @@
             } else if (handled.length > 0) {
                 navigate(withoutQueryStringParams(handled));
             }
-            // TODO(phase 8): ?diamond, ?hof and ?chit open their dialogs
+            // ?profile, ?diamond, ?chit and ?hof stay: they're dialogs over the page (DialogHost)
         });
     });
 </script>

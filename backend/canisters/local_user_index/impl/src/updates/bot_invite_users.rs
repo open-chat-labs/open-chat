@@ -9,7 +9,7 @@ use local_user_index_canister::bot_invite_users::*;
 use oc_error_codes::OCErrorCode;
 use types::{CanisterId, ChannelId, Chat, UserId};
 
-#[update(candid = true, json = true, msgpack = true)]
+#[update(candid = true, msgpack = true)]
 async fn bot_invite_users(args: Args) -> Response {
     let context = match mutate_state(|state| extract_access_context_from_chat_context(args.chat_context, state)) {
         Ok(context) => context,

@@ -28,7 +28,6 @@ ic-cdk = { workspace = true }
 ic-cdk-management-canister = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-stable-structures = { workspace = true }
-json = { path = "../../../libraries/json" }
 msgpack = { path = "../../../libraries/msgpack" }
 oc_error_codes = { path = "../../../libraries/error_codes" }
 per_round_timer = { path = "../../../libraries/per_round_timer" }

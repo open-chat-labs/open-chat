@@ -3,31 +3,21 @@
 <script lang="ts">
     import {
         anonUserStore,
-        captureRulesAcceptanceStore,
         currentUserStore,
         favouritesStore,
         OpenChat,
-        pinNumberResolverStore,
         publish,
-        querystringStore,
         routeStore,
-        selectedChatRulesStore,
-        selectedCommunityRulesStore,
         sortedCommunitiesStore,
         subscribe,
         type CommunitySummary,
     } from "@client";
     import NavRail from "@openchat/ui/src/features/components/NavRail.svelte";
-    import DialogShell from "@openchat/ui/src/lib/components/DialogShell.svelte";
     import IconButton from "@openchat/ui/src/lib/components/IconButton.svelte";
     import { i18nKey } from "@i18n/i18n";
     import { toastStore } from "@src/stores/toast";
     import { navigate } from "@src/utils/navigation";
-    import {
-        addQueryStringParam,
-        removeQueryStringParam,
-        withQueryStringFlag,
-    } from "@src/utils/urls";
+    import { addQueryStringParam, withQueryStringFlag } from "@src/utils/urls";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import {
@@ -38,22 +28,22 @@
         type RailSelection,
         type Regions,
     } from "../../router/regions";
+    import { DialogStack } from "../../shell/dialogStack.svelte";
     import { RailState } from "../../shell/railState.svelte";
     import { RightColumnState } from "../../shell/rightColumn.svelte";
     import Shell from "../../shell/Shell.svelte";
     import { currentShellLayout } from "../../shell/viewport.svelte";
-    import RulesDialog from "../conversation/RulesDialog.svelte";
-    import PinPromptHost from "../pin/PinPromptHost.svelte";
-    import { waitingPrompt } from "../pin/pinPrompt";
-    import AppEventDialog from "./AppEventDialogs.svelte";
+    import DialogHost from "./DialogHost.svelte";
+    import type { LocalDialog } from "./dialogs";
     import {
         dismissedRoute,
         subscribeAppEvents,
-        type AppEventDialog as AppEventDialogKind,
+        type AppEventDialog,
     } from "@src/logic/appEvents/appEvents";
     import { pinsFor } from "../rail/rail.adapter";
-    import Placeholder from "./Placeholder.svelte";
+    import DetailsColumn from "./DetailsColumn.svelte";
     import RegionScreen from "./RegionScreen.svelte";
+    import { closeRightColumn, openOnNewPanel } from "./rightPanel";
     import { leftScreens, middleScreens, type ScreenContext } from "./screens";
 
     let { regions }: { regions: Extract<Regions, { area: "app" }> } = $props();
@@ -63,9 +53,12 @@
     const rightMode = $derived(currentShellLayout().right);
     const narrow = $derived(currentShellLayout().narrow);
     const rightColumn = new RightColumnState(() => rightMode);
+    $effect(() => openOnNewPanel(rightColumn));
     // the rail's expanded state, remembered where it pushes the layout
     const railMode = $derived(currentShellLayout().rail);
     const railState = new RailState(() => railMode);
+    // the dialogs the app opens itself, shown by DialogHost with the ones the URL opens
+    const dialogStack = new DialogStack<LocalDialog>();
 
     // the activity feed opened over a page is Notifications' too
     const selection = $derived<RailSelection>(
@@ -102,8 +95,10 @@
         ),
     );
 
-    // the client's app-wide events, as every tree handles them (app/src/logic/appEvents)
-    let appDialog = $state<AppEventDialogKind | undefined>();
+    // the client's app-wide events, as every tree handles them (app/src/logic/appEvents). Their
+    // dialogs stay up through a navigation (the router's own, as a linked page loads, among
+    // them), as the old Home's did, until the user closes one, which leaves the page
+    let appDialog = $state<AppEventDialog | undefined>();
     $effect(() =>
         subscribeAppEvents(client, (outcome) => {
             if (outcome.kind === "show") {
@@ -133,18 +128,13 @@
         }
     }
 
-    // what the client is waiting on to send: the rules, then the PIN
-    const prompt = $derived(waitingPrompt($captureRulesAcceptanceStore, $pinNumberResolverStore));
-
-    // Dialogs people link to are query params over whatever page is open (ROUTES.md)
-    const profileOpen = $derived($querystringStore.has("profile"));
-
     // the list a narrow screen goes back to from the middle
     const back = $derived(narrowBack(regions));
 
     // built once, each field read as it's used: a crossing of the narrow breakpoint doesn't touch a
     // screen that only reads the right column
     const context: ScreenContext = {
+        dialogs: dialogStack,
         rightColumn,
         get narrow() {
             return narrow;
@@ -162,9 +152,8 @@
     {/if}
 {/snippet}
 
-<!-- TODO(phase 4): GroupPanel / DmPanel / ThreadPanel -->
 {#snippet detailsColumn()}
-    <Placeholder title="Details" detail="GroupPanel / DmPanel / ThreadPanel (phase 4)" />
+    <DetailsColumn {context} />
 {/snippet}
 
 <Shell
@@ -172,7 +161,7 @@
     right={regions.rightColumn === false ? undefined : detailsColumn}
     narrowView={regions.narrowView}
     rightOpen={rightColumn.open}
-    onCloseRight={() => (rightColumn.open = false)}
+    onCloseRight={() => closeRightColumn(rightColumn)}
     rightLabel="ui.panelCover.info">
     {#snippet rail()}
         <NavRail
@@ -230,31 +219,8 @@
     </div>
 {/snippet}
 
-<!-- sending in a chat whose rules the reader hasn't accepted asks for them first; a transfer that
-     needs the PIN asks for it -->
-{#if prompt.kind === "rules"}
-    <RulesDialog
-        rules={client.combineRulesText($selectedChatRulesStore, $selectedCommunityRulesStore)}
-        answer={prompt.request.resolve} />
-{:else if prompt.kind === "pin"}
-    {#key prompt.request}
-        <PinPromptHost request={prompt.request} />
-    {/key}
-{/if}
-
-<!-- TODO(phase 4, 4a): suspending a user (platform moderators) has no dialog yet; GAPS.md -->
-{#if appDialog !== undefined && appDialog.kind !== "suspending"}
-    <AppEventDialog dialog={appDialog} onClose={closeAppDialog} />
-{/if}
-
-{#if profileOpen}
-    <!-- TODO(phase 8): ProfileDialog -->
-    <DialogShell
-        title="Profile"
-        onClose={() => navigate(removeQueryStringParam("profile"), "dismiss")}>
-        <Placeholder title="Profile" detail="ProfileDialog (phase 8)" />
-    </DialogShell>
-{/if}
+<!-- the dialogs: those the URL opens (?profile …), those the app opened itself, and the rules -->
+<DialogHost stack={dialogStack} {appDialog} onCloseAppDialog={closeAppDialog} />
 
 <style>
     .toolbar {

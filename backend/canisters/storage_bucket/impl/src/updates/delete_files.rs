@@ -4,7 +4,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use storage_bucket_canister::delete_files::*;
 
-#[update(candid = true, json = true, msgpack = true)]
+#[update(candid = true, msgpack = true)]
 #[trace]
 fn delete_files(args: Args) -> Response {
     check_cycles_balance();

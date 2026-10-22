@@ -1093,7 +1093,7 @@ function endpointRow(c, e, open) {
   function fillDetail() {
     if (e.comment) detail.append(h("div", { class: "comment" }, e.comment));
     detail.append(h("div", { class: "who" }, h("b", {}, "Callable by "), prettyGuard(c, e)));
-    const enc = [e.candid || e.in_did ? "candid" : null, e.msgpack ? "msgpack" : null, e.json ? "json" : null].filter(Boolean);
+    const enc = [e.candid || e.in_did ? "candid" : null, e.msgpack ? "msgpack" : null].filter(Boolean);
     detail.append(h("div", { class: "who" }, h("b", {}, "On the wire "), h("span", { class: "badges", style: "display:inline-flex" }, e.wire.map(w => h("span", { class: "badge mono" }, w))), enc.length ? " · " + enc.join(" + ") : ""));
     const src = e.api && c.api_types[e.api];
     if (src) { const pre = h("pre", { class: "code" }); pre.innerHTML = highlightRust(src); detail.append(pre); }

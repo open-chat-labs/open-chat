@@ -12,6 +12,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Report CSAM upload matches to the UserIndex as events ([#10033](https://github.com/open-chat-labs/open-chat/pull/10033))
 - Call the buckets' and the UserIndex's event endpoints best-effort ([#10050](https://github.com/open-chat-labs/open-chat/pull/10050))
 
+### Removed
+
+- Remove `allocated_bucket_v2_json` ([#10152](https://github.com/open-chat-labs/open-chat/pull/10152))
+
 ### Fixed
 
 - Wait out a failed batch's retry delay, rather than retrying it whenever anything else is queued ([#10069](https://github.com/open-chat-labs/open-chat/pull/10069))

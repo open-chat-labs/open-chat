@@ -6508,14 +6508,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "json"
-version = "0.1.0"
-dependencies = [
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "json-patch"
 version = "3.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6913,7 +6905,6 @@ dependencies = [
  "ic-cdk-timers",
  "ic-stable-structures",
  "icrc-ledger-types",
- "json",
  "jwt",
  "ledger_utils",
  "local_user_index_canister",
@@ -10963,7 +10954,6 @@ dependencies = [
  "ic-cdk 0.20.3",
  "ic-cdk-timers",
  "ic-stable-structures",
- "json",
  "jwt",
  "msgpack",
  "num-traits",
@@ -11058,7 +11048,6 @@ dependencies = [
  "ic-cdk-management-canister",
  "ic-cdk-timers",
  "ic-stable-structures",
- "json",
  "msgpack",
  "oc_error_codes",
  "per_round_timer",

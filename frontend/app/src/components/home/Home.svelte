@@ -70,6 +70,12 @@
     import { toastStore } from "../../stores/toast";
     import { dismissedRoute, subscribeAppEvents } from "@src/logic/appEvents/appEvents";
     import {
+        profileCard,
+        profileCardChat,
+        profileCardShows,
+        type ProfileCard,
+    } from "@src/logic/profile/profileCard";
+    import {
         currentTheme,
         currentThemeName,
         preferredDarkThemeName,
@@ -117,12 +123,8 @@
     import SuspendModal from "./SuspendModal.svelte";
     import Upgrade from "./upgrade/Upgrade.svelte";
 
-    type ViewProfileConfig = {
-        userId: string;
-        chatButton: boolean;
-        alignTo?: HTMLElement;
-        inGlobalContext: boolean;
-    };
+    // desktop anchors the card to the name clicked
+    type ViewProfileConfig = ProfileCard & { alignTo?: HTMLElement };
 
     const client = getContext<OpenChat>("client");
 
@@ -731,7 +733,6 @@
             });
     }
 
-
     async function createDirectChat(chatId: DirectChatIdentifier): Promise<boolean> {
         const directChatId = await client.createDirectChat(chatId);
         if (directChatId === undefined) {
@@ -770,16 +771,14 @@
 
     function profileLinkClicked(ev: CustomEvent<ProfileLinkClickedEvent>) {
         showProfileCard = {
-            userId: ev.detail.userId,
-            chatButton: ev.detail.chatButton,
-            inGlobalContext: ev.detail.inGlobalContext,
+            ...profileCard(ev.detail),
             alignTo: ev.target ? (ev.target as HTMLElement) : undefined,
         };
     }
 
     function chatWithFromProfileCard() {
         if (showProfileCard === undefined) return;
-        publish("chatWith", { kind: "direct_chat", userId: showProfileCard.userId });
+        publish("chatWith", profileCardChat(showProfileCard));
         showProfileCard = undefined;
     }
 
@@ -883,7 +882,7 @@
 
 {#if showProfileCard !== undefined}
     {@const profileUser = $allUsersStore.get(showProfileCard.userId)}
-    {#if profileUser?.kind !== "bot"}
+    {#if profileCardShows(profileUser)}
         <ViewUserProfile
             userId={showProfileCard.userId}
             inGlobalContext={showProfileCard.inGlobalContext}

@@ -1,4 +1,5 @@
-import type { MultiUserChatIdentifier } from "./chat";
+import type { EventWrapper, Message, MultiUserChatIdentifier } from "./chat";
+import type { Level } from "./structure";
 
 export type FontScale = 0 | 1 | 2 | 3 | 4;
 
@@ -103,3 +104,31 @@ type CallParticipantsPanel = {
 type ShowPinnedPanel = {
     kind: "show_pinned";
 };
+
+/**
+ * What the right panel shows for the last `rightPanelHistory` entry, read for the selected chat
+ * and community (`rightPanelView` in `@client`). A `tab` is the channel-and-community view opened
+ * on that side.
+ */
+export type RightPanelView =
+    | { kind: "none" }
+    | { kind: "group_details" }
+    | { kind: "direct_chat_details" }
+    | { kind: "channel_summary"; tab: "channel" | "community" }
+    | { kind: "community_details" }
+    | { kind: "group_members" }
+    | { kind: "community_members"; userGroupId?: number }
+    | { kind: "channel_or_community_members"; tab: "channel" | "community" }
+    | { kind: "invite_users"; level: Level }
+    | { kind: "channel_or_community_invite"; tab: "channel" | "community" }
+    | { kind: "pinned" }
+    | { kind: "user_profile" }
+    | { kind: "thread"; rootEvent: EventWrapper<Message> }
+    | { kind: "proposal_filters" }
+    | { kind: "community_filters" }
+    | {
+          kind: "call_participants";
+          chatId: MultiUserChatIdentifier;
+          messageId: bigint;
+          isOwner: boolean;
+      };

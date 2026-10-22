@@ -117,3 +117,7 @@
 ## 2026-10-21 — sign-up asks for the terms to be agreed to, by hand
 - `AuthDialog`'s sign-up has an "I agree to the terms and conditions" checkbox (`ui.authDialog.termsAgree`, the link as before), in place of "By creating an account you agree to…". Continue stays disabled until it's ticked, and `SignupDetails.termsAccepted` says it was. Every OpenChat tree now requires it, as the mobile app did.
 - Not in the design export: to go back to it.
+
+## 2026-10-22 — DialogShell opens animated, by hand
+- `DialogShell` fades its veil in (`oc-veil-in`) and lifts its card in (`oc-dlg-in`), with the hand-built dialogs' durations and easing. It had no animation, so dialogs built on it (`ChatPicker`, the app's) popped in while the hand-built ones rose. It still has no closing animation: it unmounts as soon as its host closes it.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

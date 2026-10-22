@@ -97,6 +97,10 @@ design export needs. Each entry says where it came up.
   so opening one marks the older ones too). Poll votes show under All only (the design's tabs are
   mentions and payments). The chat's name comes from `ActivityScreen.chatName`, a copy of the old
   `getChatName` still to extract.
+- **`DialogShell` opens animated** (by hand, S2): it fades its veil in and lifts its card in
+  (`oc-veil-in`, `oc-dlg-in`) as the hand-built dialogs do; the export's had no animation, so
+  the dialog host's placeholders, the rules dialog and `ChatPicker` popped in. Closing has none
+  still: the shell unmounts when its host closes it.
 - **Swatches**: the design's colour/cover swatches for groups, communities and avatars have no
   OpenChat equivalent (it has uploaded avatars and banners). Adapters pass images and pick a
   swatch from the id.
@@ -218,3 +222,10 @@ design export needs. Each entry says where it came up.
   (`calculateHeight`) for mobile browsers. Not needed until the narrow layouts come in.
 - **Platform operator / moderator console hooks** (`window.platformOperator`,
   `window.platformModerator`) are only installed by the existing App trees.
+- **Right column host** (`features/app/DetailsColumn.svelte`, S1): every panel is a placeholder
+  until 4a (details, members, pinned, invites, proposal filters) and 4c (the thread) fill
+  `rightScreens`; the user profile, explore's filters and the call participants entries wait on
+  8c, 8a and 7b. With nothing in `rightPanelHistory` the column shows the selected chat's details
+  (the old docked panel showed nothing), and a new panel opens a closed column. Not carried over:
+  dragging the column wider (the old panel's `Resizable`; the design's widths are fixed) and the
+  halloween theme's cobweb. A thread's placeholder lists its whole root message.
