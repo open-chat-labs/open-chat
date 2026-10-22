@@ -1,6 +1,6 @@
 import type { WalletConfig } from "@shared";
 import { describe, expect, test } from "vitest";
-import { cloneWalletConfig, walletConfigForMode } from "./walletConfig";
+import { cloneWalletConfig, walletConfigForMode, walletConfigWithoutToken } from "./walletConfig";
 
 // Both wallet settings forms toggle tokens by mutating the form config's `tokens` Set in place,
 // then compare the form config with the stored one on close to decide whether to save.
@@ -26,5 +26,18 @@ describe("wallet settings form config", () => {
             expect(stored).toEqual({ kind: "manual_wallet", tokens: new Set(["a", "b"]) });
             expect(form).toEqual({ kind: "manual_wallet", tokens: new Set(["a", "b", "c"]) });
         }
+    });
+});
+
+describe("removing a token from the wallet", () => {
+    test("leaves the stored config unchanged, so undoing a failed save restores it", () => {
+        const stored: WalletConfig = { kind: "manual_wallet", tokens: new Set(["a", "b"]) };
+        const next = walletConfigWithoutToken(stored, "a");
+        expect(next).toEqual({ kind: "manual_wallet", tokens: new Set(["b"]) });
+        expect(stored).toEqual({ kind: "manual_wallet", tokens: new Set(["a", "b"]) });
+        expect(walletConfigWithoutToken(stored, "x")).toBeUndefined();
+        expect(
+            walletConfigWithoutToken({ kind: "auto_wallet", minDollarValue: 0 }, "a"),
+        ).toBeUndefined();
     });
 });
