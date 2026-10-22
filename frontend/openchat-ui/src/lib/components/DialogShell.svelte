@@ -1,7 +1,8 @@
 <!-- Modal frame: blurred backdrop (click closes), card with title + close, body from children.
      height "auto" sizes to content; otherwise a fixed/min() height so lists can scroll inside.
      Focus moves into the dialog on open and back to the opener on close; Tab stays inside;
-     Esc closes only the top-most dialog when several are stacked (e.g. ChatPicker over Invite). -->
+     Esc closes only the top-most dialog when several are stacked (e.g. ChatPicker over Invite).
+     It opens as the hand-built dialogs do (oc-veil-in, oc-dlg-in); it unmounts as soon as it closes. -->
 <script lang="ts" module>
   const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),textarea:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])';
   // shared with hand-built dialogs elsewhere, hence a window global
@@ -121,6 +122,7 @@
     background: var(--scrim);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
+    animation: oc-veil-in var(--duration-base) var(--ease-out) both;
   }
 
   .dialog {
@@ -136,6 +138,7 @@
       inset 0 0 0 1px var(--line-2),
       0 24px 64px rgba(0, 0, 0, 0.55);
     outline: none;
+    animation: oc-dlg-in var(--duration-slow) var(--ease-out) both;
   }
 
   .header {
