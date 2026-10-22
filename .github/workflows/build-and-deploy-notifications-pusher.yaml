@@ -1,7 +1,13 @@
 name: Deploy Notifications Pusher
 
 on:
-  workflow_dispatch: # Trigger manually!
+  workflow_dispatch: # Trigger manually! On a notification pusher tag to deploy it, or on master to deploy the latest one
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-notification-pusher
 
 jobs:
   build-and-deploy:
@@ -13,31 +19,38 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Ensure on master
-        run: |
-          branch=$(git rev-parse --abbrev-ref HEAD)
-          if [ "$branch" != "master" ]; then
-            echo "Not on master branch!"
-            exit 1
-          fi
-
-      - name: Get latest tag and extract version
+      - name: Get the tag to deploy and extract version
         id: version
         run: |
-          TAG=$(git tag --list "*-notification_pusher" "*-notifications_pusher" | sort -V | tail -1)
-
-          if [ -z "$TAG" ]; then
-            echo "No matching tag found for notification pusher!"
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            TAG="$GITHUB_REF_NAME"
+          elif [ "$GITHUB_REF_NAME" = "master" ]; then
+            TAG=$(git tag --list "*-notification_pusher" "*-notifications_pusher" | sort -V | tail -1)
+          else
+            echo "Run this on master or on a notification pusher tag!"
             exit 1
           fi
 
-          echo "Latest tag: $TAG"
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+-notifications?_pusher$ ]]; then
+            echo "No notification pusher tag to deploy (got '$TAG')!"
+            exit 1
+          fi
+
+          if ! git merge-base --is-ancestor "$TAG" origin/master; then
+            echo "$TAG isn't on master!"
+            exit 1
+          fi
+
+          echo "Tag to deploy: $TAG"
 
           NEW_VERSION=$(echo "$TAG" | sed -E 's/^v([0-9]+\.[0-9]+\.[0-9]+)-.*/\1/')
           echo "Version extracted: $NEW_VERSION"
 
           echo "tag=$TAG" >> $GITHUB_OUTPUT
           echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Check out the tag's code
+        run: git worktree add "$RUNNER_TEMP/pusher" "${{ steps.version.outputs.tag }}"
 
       - name: Set up Rust
         uses: ./.github/workflows/setup-rust
@@ -46,19 +59,21 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y musl-tools
 
       - name: Add musl target
+        working-directory: ${{ runner.temp }}/pusher
         run: rustup target add x86_64-unknown-linux-musl
 
       - name: Build and deploy to EC2
+        working-directory: ${{ runner.temp }}/pusher
+        env:
+          NP_EC2_SSH_KEY: ${{ secrets.NP_EC2_SSH_KEY }}
         run: |
           KEY_PATH=$(mktemp)
-          echo "${{ secrets.NP_EC2_SSH_KEY }}" > "$KEY_PATH"
+          trap 'rm -f "$KEY_PATH"' EXIT
+          printf '%s\n' "$NP_EC2_SSH_KEY" > "$KEY_PATH"
           chmod 600 "$KEY_PATH"
 
-          ./scripts/deploy-notification-pusher-prod.sh \
+          "$GITHUB_WORKSPACE/scripts/deploy-notification-pusher-prod.sh" \
             "${{ steps.version.outputs.version }}" \
             "${{ secrets.NP_EC2_USER }}" \
             "${{ secrets.NP_EC2_HOST }}" \
             "$KEY_PATH"
-
-          # cleanup
-          rm -f "$KEY_PATH"
