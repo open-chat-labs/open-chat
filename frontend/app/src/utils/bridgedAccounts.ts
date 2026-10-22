@@ -45,13 +45,6 @@ export function bridgedAccountRows(
     });
 }
 
-// Opens a linked account's profile page on its platform, from `bridgedProfileUrl`
-export function openBridgedProfile(client: OpenChat, url: string) {
-    openExternalUrl(client, url).catch((error) => {
-        console.error("Failed to open the account's profile", error);
-    });
-}
-
 // Takes the user to the platform's bridge with a new code, eg. Discord's bridge sends them through
 // Discord's OAuth. On the web the tab is opened before the code is fetched, as browsers block one
 // opened later than the click. Returns whether the user was sent there.

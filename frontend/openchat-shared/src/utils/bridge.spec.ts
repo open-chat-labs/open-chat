@@ -189,5 +189,4 @@ describe("shouldShowAsMe", () => {
         expect(shouldShowAsMe(false, "them", "me")).toBe(false);
         expect(shouldShowAsMe(false, undefined, "me")).toBe(false);
     });
-
 });

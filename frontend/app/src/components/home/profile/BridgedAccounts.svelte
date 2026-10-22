@@ -19,11 +19,9 @@
         BRIDGE_PLATFORM_ICONS,
         bridgedAccountRows,
         linkBridgedAccount,
-        openBridgedProfile,
     } from "../../../utils/bridgedAccounts";
     import Button from "../../Button.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
-    import Link from "../../Link.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -85,9 +83,9 @@
             {@const profileUrl = bridgedProfileUrl(row.account.user)}
             <div class="name">
                 {#if profileUrl !== undefined}
-                    <Link underline={"hover"} onClick={() => openBridgedProfile(client, profileUrl)}>
+                    <a href={profileUrl} target="_blank" rel="noopener noreferrer">
                         {bridgedAuthorName(row.account)}
-                    </Link>
+                    </a>
                 {:else}
                     {bridgedAuthorName(row.account)}
                 {/if}

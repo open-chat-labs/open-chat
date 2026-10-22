@@ -4,7 +4,6 @@
         BRIDGE_PLATFORM_ICONS,
         bridgedAccountRows,
         linkBridgedAccount,
-        openBridgedProfile,
     } from "@src/utils/bridgedAccounts";
     import {
         Body,
@@ -95,12 +94,17 @@
                             alt={BRIDGE_PLATFORM_NAMES[row.platform]} />
                         {#if row.kind === "linked"}
                             {@const profileUrl = bridgedProfileUrl(row.account.user)}
-                            <Body
-                                ellipsisTruncate
-                                colour={profileUrl !== undefined ? "primary" : undefined}
-                                onClick={profileUrl !== undefined
-                                    ? () => openBridgedProfile(client, profileUrl)
-                                    : undefined}>{bridgedAuthorName(row.account)}</Body>
+                            <Body ellipsisTruncate>
+                                {#if profileUrl !== undefined}
+                                    <a
+                                        class="profile"
+                                        href={profileUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer">{bridgedAuthorName(row.account)}</a>
+                                {:else}
+                                    {bridgedAuthorName(row.account)}
+                                {/if}
+                            </Body>
                             <IconButton
                                 size={"md"}
                                 disabled={busy}
@@ -141,5 +145,9 @@
         flex: none;
         width: var(--avatar-sm);
         height: var(--avatar-sm);
+    }
+
+    .profile {
+        color: var(--primary);
     }
 </style>
