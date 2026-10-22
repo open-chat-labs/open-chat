@@ -97,6 +97,10 @@ design export needs. Each entry says where it came up.
   so opening one marks the older ones too). Poll votes show under All only (the design's tabs are
   mentions and payments). The chat's name comes from `ActivityScreen.chatName`, a copy of the old
   `getChatName` still to extract.
+- **`DialogShell` opens animated** (by hand, S2): it fades its veil in and lifts its card in
+  (`oc-veil-in`, `oc-dlg-in`) as the hand-built dialogs do; the export's had no animation, so
+  the dialog host's placeholders, the rules dialog and `ChatPicker` popped in. Closing has none
+  still: the shell unmounts when its host closes it.
 - **Swatches**: the design's colour/cover swatches for groups, communities and avatars have no
   OpenChat equivalent (it has uploaded avatars and banners). Adapters pass images and pick a
   swatch from the id.

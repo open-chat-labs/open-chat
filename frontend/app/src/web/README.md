@@ -37,6 +37,7 @@ web/
     XScreen.svelte   reads stores / the client, renders @openchat/ui components, calls the client
     x.adapter.ts     reshapes client data into component props (see Rules), with a spec
     app/screens.ts   which screen shows in each region kind; a new screen sets its entry there
+    app/dialogs.ts   which screen each dialog shows (linked by a query param, or opened locally)
 ```
 
 Outside this folder, and shared with the legacy trees while they live (`frontend/CLAUDE.md`, "Where
@@ -48,6 +49,10 @@ such as `ChatEventList` and `Markdown`).
 - A region's screen is plugged in by setting its entry in `features/app/screens.ts`
   (`() => import("../x/XScreen.svelte")`); it gets `{ region, context }`. `AppScreen` doesn't
   change for it.
+- A dialog is plugged in the same way, by its entry in `features/app/dialogs.ts`; it gets
+  `{ dialog, onClose }`. A dialog people link to is a query param (`linkedDialog`); one the app
+  opens itself is a `LocalDialog`, opened with `context.dialogs.open(…)` and closed before any
+  navigation and on Back. `DialogHost` shows both.
 - Only `XScreen` components touch the client or the stores. Everything they render, `@openchat/ui`
   components and the screen's own sub-components alike, gets data through props and reports
   actions through callbacks.

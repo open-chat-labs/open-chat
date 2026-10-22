@@ -1,5 +1,7 @@
 import type { RightPanelView } from "@client";
 import type { Component } from "svelte";
+import type { DialogStack } from "../../shell/dialogStack.svelte";
+import type { LocalDialog } from "./dialogs";
 import { LazyModule } from "../../lazyModule.svelte";
 import type { Regions } from "../../router/regions";
 import type { RightColumnState } from "../../shell/rightColumn.svelte";
@@ -23,6 +25,8 @@ export type RightRegion = Exclude<RightPanelView, { kind: "none" }> & { back: bo
 
 /** What the app gives every screen besides its region. */
 export type ScreenContext = {
+    /** The dialogs the app opens itself (dialogs.ts): a screen opens one with `dialogs.open`. */
+    dialogs: DialogStack<LocalDialog>;
     /** The right column's open state, for a screen's own toggle (a conversation header's). */
     rightColumn: RightColumnState;
     /** Whether the shell shows one column at a time. */
