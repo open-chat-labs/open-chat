@@ -101,6 +101,19 @@ export function bridgedAuthorName(summary: BridgedUserSummary | undefined): stri
     }
 }
 
+// The account's public profile page on its platform, if it has one. A Telegram account has one only
+// with a username. Discord's isn't linked to yet.
+export function bridgedProfileUrl(user: BridgedUser): string | undefined {
+    switch (user.kind) {
+        case "telegram":
+            return user.profile.username !== undefined
+                ? `https://t.me/${encodeURIComponent(user.profile.username)}`
+                : undefined;
+        case "discord":
+            return undefined;
+    }
+}
+
 // The url of the author's avatar, if they have one
 export function bridgedAuthorAvatarUrl(
     id: BridgedUserId,

@@ -4,9 +4,9 @@
         BRIDGE_PLATFORM_ICONS,
         bridgedAccountRows,
         linkBridgedAccount,
+        openBridgedProfile,
     } from "@src/utils/bridgedAccounts";
     import {
-        Avatar,
         Body,
         BodySmall,
         ColourVars,
@@ -18,6 +18,7 @@
     import {
         BRIDGE_PLATFORM_NAMES,
         bridgedAuthorName,
+        bridgedProfileUrl,
         bridgedUserId,
         bridgedUserKey,
         i18nKey,
@@ -93,9 +94,13 @@
                             src={BRIDGE_PLATFORM_ICONS[row.platform]}
                             alt={BRIDGE_PLATFORM_NAMES[row.platform]} />
                         {#if row.kind === "linked"}
-                            {@const id = bridgedUserId(row.account.user)}
-                            <Avatar size={"sm"} url={client.bridgedAvatarUrl(id, row.account)}></Avatar>
-                            <Body ellipsisTruncate>{bridgedAuthorName(row.account)}</Body>
+                            {@const profileUrl = bridgedProfileUrl(row.account.user)}
+                            <Body
+                                ellipsisTruncate
+                                colour={profileUrl !== undefined ? "primary" : undefined}
+                                onClick={profileUrl !== undefined
+                                    ? () => openBridgedProfile(client, profileUrl)
+                                    : undefined}>{bridgedAuthorName(row.account)}</Body>
                             <IconButton
                                 size={"md"}
                                 disabled={busy}
@@ -132,7 +137,6 @@
 </SlidingPageContent>
 
 <style lang="scss">
-    // The same size as the avatar
     .icon {
         flex: none;
         width: var(--avatar-sm);
