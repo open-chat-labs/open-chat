@@ -481,12 +481,15 @@ describe("where archiving the open chat goes", () => {
         expect(go(archived, chats, [group("a", true)], false)).toBe("/chats");
     });
 
-    test("replaces the archived chat's history entry, so Back can't reopen and un-archive it", () => {
-        for (const narrow of [false, true]) {
-            expect(
-                navigationAfterArchivingOpenChat(archived, chats, [group("a"), group("c")], narrow)
-                    .intent,
-            ).toBe("auto");
-        }
+    test("replaces the archived chat's history entry when going to another chat, so Back can't reopen and un-archive it", () => {
+        expect(
+            navigationAfterArchivingOpenChat(archived, chats, [group("a"), group("c")], false)
+                .intent,
+        ).toBe("auto");
+        // going to the list steps back to it, which leaves the archived chat ahead, not behind
+        expect(
+            navigationAfterArchivingOpenChat(archived, chats, [group("a"), group("c")], true)
+                .intent,
+        ).toBeUndefined();
     });
 });

@@ -2512,18 +2512,19 @@ export function defaultChat(
 /**
  * Where archiving the open chat goes: the scope's first other chat that isn't archived on a wide
  * screen, else the scope's list. Never the archived chat itself, whether or not the list has
- * marked it archived yet. It replaces the archived chat's history entry, or Back would reopen the
- * chat and so un-archive it.
+ * marked it archived yet. Going to another chat replaces the archived chat's history entry, or
+ * Back would reopen the chat and so un-archive it; going to the list steps back to it as usual.
  */
 export function navigationAfterArchivingOpenChat(
     archived: ChatIdentifier,
     scope: ChatListScope,
     chats: readonly ChatSummary[],
     narrow: boolean,
-): { url: string; intent: "auto" } {
+): { url: string; intent?: "auto" } {
     const next = narrow
         ? undefined
         : chats.find((c) => !c.membership.archived && !chatIdentifiersEqual(c.id, archived));
-    const url = next ? routeForChatIdentifier(scope.kind, next.id) : routeForScope(scope);
-    return { url, intent: "auto" };
+    return next
+        ? { url: routeForChatIdentifier(scope.kind, next.id), intent: "auto" }
+        : { url: routeForScope(scope) };
 }
