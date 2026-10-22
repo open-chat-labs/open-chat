@@ -8,7 +8,6 @@
         favouritesStore,
         OpenChat,
         publish,
-        querystringStore,
         routeStore,
         selectedChatRulesStore,
         selectedCommunityRulesStore,
@@ -17,16 +16,11 @@
         type CommunitySummary,
     } from "@client";
     import NavRail from "@openchat/ui/src/features/components/NavRail.svelte";
-    import DialogShell from "@openchat/ui/src/lib/components/DialogShell.svelte";
     import IconButton from "@openchat/ui/src/lib/components/IconButton.svelte";
     import { i18nKey } from "@i18n/i18n";
     import { toastStore } from "@src/stores/toast";
     import { navigate } from "@src/utils/navigation";
-    import {
-        addQueryStringParam,
-        removeQueryStringParam,
-        withQueryStringFlag,
-    } from "@src/utils/urls";
+    import { addQueryStringParam, withQueryStringFlag } from "@src/utils/urls";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import {
@@ -37,12 +31,15 @@
         type RailSelection,
         type Regions,
     } from "../../router/regions";
+    import { DialogStack } from "../../shell/dialogStack.svelte";
     import { RailState } from "../../shell/railState.svelte";
     import { RightColumnState } from "../../shell/rightColumn.svelte";
     import Shell from "../../shell/Shell.svelte";
     import { currentShellLayout } from "../../shell/viewport.svelte";
     import RulesDialog from "../conversation/RulesDialog.svelte";
     import AppEventDialog from "./AppEventDialogs.svelte";
+    import DialogHost from "./DialogHost.svelte";
+    import type { LocalDialog } from "./dialogs";
     import {
         dismissedRoute,
         subscribeAppEvents,
@@ -50,7 +47,6 @@
     } from "@src/logic/appEvents/appEvents";
     import { pinsFor } from "../rail/rail.adapter";
     import DetailsColumn from "./DetailsColumn.svelte";
-    import Placeholder from "./Placeholder.svelte";
     import RegionScreen from "./RegionScreen.svelte";
     import { closeRightColumn, openOnNewPanel } from "./rightPanel";
     import { leftScreens, middleScreens, type ScreenContext } from "./screens";
@@ -133,15 +129,16 @@
         }
     }
 
-    // Dialogs people link to are query params over whatever page is open (ROUTES.md)
-    const profileOpen = $derived($querystringStore.has("profile"));
-
     // the list a narrow screen goes back to from the middle
     const back = $derived(narrowBack(regions));
 
     // built once, each field read as it's used: a crossing of the narrow breakpoint doesn't touch a
     // screen that only reads the right column
+    // the dialogs the app opens itself, shown by DialogHost with the ones the URL opens
+    const dialogStack = new DialogStack<LocalDialog>();
+
     const context: ScreenContext = {
+        dialogs: dialogStack,
         rightColumn,
         get narrow() {
             return narrow;
@@ -238,14 +235,8 @@
     <AppEventDialog dialog={appDialog} onClose={closeAppDialog} />
 {/if}
 
-{#if profileOpen}
-    <!-- TODO(phase 8): ProfileDialog -->
-    <DialogShell
-        title="Profile"
-        onClose={() => navigate(removeQueryStringParam("profile"), "dismiss")}>
-        <Placeholder title="Profile" detail="ProfileDialog (phase 8)" />
-    </DialogShell>
-{/if}
+<!-- the dialogs: those the URL opens (?profile …) and those the app opened itself -->
+<DialogHost stack={dialogStack} />
 
 <style>
     .toolbar {
