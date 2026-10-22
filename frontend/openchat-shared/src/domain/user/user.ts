@@ -238,8 +238,7 @@ export type ReAuthMethod =
 /**
  * How signing in again went. `success`: the identity is one of the user's own (the one they're
  * signed in with, or one linked to it), with the backend's proof of the sign-in, if it gave one.
- * `failed`: another account (`identity.failure.principalMismatch`), a check for an emailed link
- * that failed (`identity.failure.pollingError`), or the sign-in failed, a dismissed passkey prompt
+ * `failed`: another account (`identity.failure.principalMismatch`), or the sign-in failed, a dismissed passkey prompt
  * or Internet Identity window included (`identity.failure.loginApprover`, as the old UIs said).
  * `cancelled`: the caller gave it up.
  */

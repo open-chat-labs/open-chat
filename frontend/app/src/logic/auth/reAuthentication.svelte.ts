@@ -12,6 +12,7 @@ import {
 } from "@client";
 import type { DelegationChain, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
 import { configKeys } from "@shared";
+import { i18nKey } from "@src/i18n/i18n";
 
 export type ReAuthStep =
     | "choose_provider"
@@ -91,7 +92,12 @@ export class ReAuthentication {
         this.#emailLink = link;
         this.step = "signing_in_with_email";
         this.verificationCode = undefined;
-        const resp = await this.#client.requestEmailReAuthentication(email, link.signal);
+        // a failed check says so, and the link still works if it's followed later
+        const resp = await this.#client.requestEmailReAuthentication(
+            email,
+            link.signal,
+            () => (this.error = i18nKey("identity.failure.pollingError")),
+        );
         if (resp.kind === "cancelled") return;
         if (resp.kind === "failed") {
             this.error = resp.reason;

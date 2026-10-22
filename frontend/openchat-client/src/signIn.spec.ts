@@ -346,15 +346,30 @@ describe("signing in", () => {
                 expect(polls.mock.calls.every((call) => call[4] === false)).toBe(true);
             });
 
-            test("a failed check ends it with the polling error", async () => {
+            /** As the old trees: a failed check is reported (they show pollingError) and the
+             * checking goes on, so following the link later still signs in again. */
+            test("a failed check is reported, and the link still works once followed", async () => {
+                const identity = await anIdentity();
+                linked = [identity.principal];
                 polls.mockImplementation(async () => ({ kind: "error", error: "boom" }));
-                const resp = await client.requestEmailReAuthentication("me@example.com");
+                const checkFailed = vi.fn();
+                const resp = await client.requestEmailReAuthentication(
+                    "me@example.com",
+                    undefined,
+                    checkFailed,
+                );
                 if (resp.kind !== "sent") throw new Error(resp.kind);
                 await vi.advanceTimersByTimeAsync(1500);
+                expect(checkFailed).toHaveBeenCalled();
+
+                polls.mockImplementation(async () => ({
+                    kind: "success",
+                    key: identity.key,
+                    delegation: identity.delegation,
+                }));
+                await vi.advanceTimersByTimeAsync(1000);
                 const outcome = await resp.reAuthenticated;
-                expect(outcome.kind === "failed" && outcome.reason.key).toBe(
-                    "identity.failure.pollingError",
-                );
+                expect(outcome.kind === "success" && outcome.signInProofJwt).toBe("jwt");
             });
         });
     });

@@ -829,28 +829,16 @@ const MEMBERS_FOUND_TO_MENTION = 50;
 const SWAP_OUTPUT_CHECK_INTERVAL_MS = 2000;
 const SWAP_OUTPUT_CHECKS = 10;
 
-// What an emailed link is for: whether this browser takes the identity it signs in, and whether a
-// failed check for it ends it
+// What an emailed link is for: whether this browser takes the identity it signs in
 type EmailLink = {
     identity: "take" | "leave";
-    onCheckFailure: "keep_checking" | "stop";
     category: "registration" | "account_linking";
 };
-const SIGN_IN_BY_EMAIL: EmailLink = {
-    identity: "take",
-    onCheckFailure: "keep_checking",
-    category: "registration",
-};
+const SIGN_IN_BY_EMAIL: EmailLink = { identity: "take", category: "registration" };
 // signing in again never takes the identity it signs in
-const REAUTH_BY_EMAIL: EmailLink = {
-    identity: "leave",
-    onCheckFailure: "stop",
-    category: "account_linking",
-};
-type EmailLinkFollowed =
-    | { kind: "followed"; key: ECDSAKeyIdentity; delegation: DelegationChain }
-    | { kind: "check_failed" }
-    | { kind: "given_up" };
+const REAUTH_BY_EMAIL: EmailLink = { identity: "leave", category: "account_linking" };
+// the identity a followed link signs in, or undefined once it's given up
+type EmailLinkFollowed = { key: ECDSAKeyIdentity; delegation: DelegationChain } | undefined;
 
 // An identity the user signed in again with (reAuthenticate)
 type ReAuthIdentity = {
@@ -11312,67 +11300,51 @@ export class OpenChat {
         selectedAuthProviderStore.set(AuthProvider.EMAIL);
         const resp = await this.#requestEmailLink(email, SIGN_IN_BY_EMAIL, signal);
         if (resp.kind !== "sent") return resp;
-        const signedIn = resp.followed.then((followed): SignInOutcome => {
-            switch (followed.kind) {
-                case "given_up":
-                    return { kind: "cancelled" };
-                case "check_failed":
-                    // a sign-in keeps checking after a failed check, so this can't happen
-                    return { kind: "failed", reason: i18nKey("loginDialog.unexpectedError") };
-                case "followed":
-                    return signInOutcome(identityStateStore.value);
-            }
-        });
+        const signedIn = resp.followed.then(
+            (followed): SignInOutcome =>
+                followed === undefined
+                    ? { kind: "cancelled" }
+                    : signInOutcome(identityStateStore.value),
+        );
         return { kind: "sent", code: resp.code, signedIn };
     }
 
     /**
      * Emails a link to sign in again with (ReAuthMethod) and, once it's sent, waits for it to be
      * followed, as requestEmailSignIn, without taking the identity it signs in. A check for the
-     * link that fails ends it (`identity.failure.pollingError`).
+     * link that fails is reported to `onCheckFailed` (the old trees show
+     * `identity.failure.pollingError`) and the checking goes on, so the link still works.
      */
     async requestEmailReAuthentication(
         email: string,
         signal?: AbortSignal,
+        onCheckFailed?: () => void,
     ): Promise<EmailReAuthRequest> {
-        const resp = await this.#requestEmailLink(email, REAUTH_BY_EMAIL, signal);
+        const resp = await this.#requestEmailLink(email, REAUTH_BY_EMAIL, signal, onCheckFailed);
         if (resp.kind !== "sent") return resp;
         const reAuthenticated = resp.followed.then(
-            (followed): Promise<ReAuthOutcome> | ReAuthOutcome => {
-                switch (followed.kind) {
-                    case "given_up":
-                        return { kind: "cancelled" };
-                    case "check_failed":
-                        return {
-                            kind: "failed",
-                            reason: i18nKey("identity.failure.pollingError"),
-                        };
-                    case "followed":
-                        return this.reAuthenticate(
-                            {
-                                kind: "identity",
-                                provider: AuthProvider.EMAIL,
-                                key: followed.key,
-                                delegation: followed.delegation,
-                            },
-                            signal,
-                        );
-                }
-            },
+            (followed): Promise<ReAuthOutcome> | ReAuthOutcome =>
+                followed === undefined
+                    ? { kind: "cancelled" }
+                    : this.reAuthenticate(
+                          { kind: "identity", provider: AuthProvider.EMAIL, ...followed },
+                          signal,
+                      ),
         );
         return { kind: "sent", code: resp.code, reAuthenticated };
     }
 
     /**
      * Emails a sign-in link and checks every second whether it has been followed. `followed`
-     * settles with the identity it signs in (taken by this browser only for `"take"`), with
-     * `check_failed` if a check fails and the link says to stop then, or `given_up` once `signal`
-     * gives it up.
+     * settles with the identity it signs in (taken by this browser only for `"take"`), or
+     * undefined once `signal` gives it up. A failed check goes to `onCheckFailed` and the checking
+     * goes on.
      */
     async #requestEmailLink(
         email: string,
         link: EmailLink,
         signal?: AbortSignal,
+        onCheckFailed?: () => void,
     ): Promise<
         | { kind: "sent"; code: string; followed: Promise<EmailLinkFollowed> }
         | { kind: "failed"; reason: ResourceKey }
@@ -11405,7 +11377,7 @@ export class OpenChat {
                 resolve(outcome);
             };
             const checkFailed = () => {
-                if (link.onCheckFailure === "stop") done({ kind: "check_failed" });
+                if (waiting) onCheckFailed?.();
             };
             const poller = new Poller(
                 async () => {
@@ -11420,7 +11392,7 @@ export class OpenChat {
                         );
                         if (r.kind === "success") {
                             this.gaTrack("received_email_signin_delegation", link.category);
-                            done({ kind: "followed", key: r.key, delegation: r.delegation });
+                            done({ key: r.key, delegation: r.delegation });
                         } else if (r.kind === "error") {
                             console.debug("getSignInWithEmailDelegation error", r.error);
                             checkFailed();
@@ -11433,7 +11405,7 @@ export class OpenChat {
                 1000,
                 1000,
             );
-            signal?.addEventListener("abort", () => done({ kind: "given_up" }), { once: true });
+            signal?.addEventListener("abort", () => done(undefined), { once: true });
         });
         return { kind: "sent", code: resp.code, followed };
     }
