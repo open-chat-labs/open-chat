@@ -2046,6 +2046,12 @@
             "urlRules": "collegamento a dettagli supplementari"
         },
         "neuronControllerAction": "Azioni del controller neuronale",
+        "neuronDissolveDelayTooShort": "Il suo ritardo di scioglimento ({delay} giorni) è inferiore ai {minimum} giorni necessari per votare",
+        "neuronNotEligible": "Non era idoneo a votare quando la proposta è stata presentata",
+        "neuronVoteCallFailed": "Impossibile raggiungere la governance - riprova",
+        "neuronVoteRejected": "Il voto è stato respinto: {message}",
+        "neuronVotesFailed": "I tuoi neuroni non hanno potuto votare",
+        "neuronVotesFailedIntro": "Nessuno dei tuoi neuroni ha potuto votare su questa proposta:",
         "noEligibleNeurons": "Nessun neurone idoneo trovato",
         "noEligibleNeuronsMoreInfo": "Per ulteriori informazioni sul voto e sulla governance leggere <a target=\"_blank\" href=\"https://oc.app/blog/governance\">questo post del blog</a> .",
         "noEligibleNeuronsPrincipalIntro": "Nessun neurone idoneo o collegato trovato. Per votare proposte da OpenChat devi prima aggiungere il tuo principal OpenChat come tasto di scelta rapida a qualsiasi neurone con cui desideri votare.",
@@ -2073,7 +2079,7 @@
                 "regular": "Perché una proposta venga adottata, devono essere soddisfatte le due seguenti condizioni:"
             }
         },
-        "proposalNotAceptingVotes": "Questa proposta non accetta voti: prova a ricaricare la pagina",
+        "proposalNotAcceptingVotes": "La votazione su questa proposta è chiusa",
         "proposalsBotAction": "Proposte Bot Azioni",
         "proposedBy": "proposto da",
         "readless": "Leggi di meno",

@@ -2548,14 +2548,46 @@ export type Metrics = {
     reactions: number;
 };
 
-export type RegisterProposalVoteResponse = Success | OCError | Offline | Failure;
+export type RegisterProposalVoteResponse =
+    | Success
+    | OCError
+    | Offline
+    | Failure
+    | NeuronVotesFailed;
+
+/** None of the user's neurons could vote on the proposal */
+export type NeuronVotesFailed = {
+    kind: "neuron_votes_failed";
+    failures: NeuronVoteFailure[];
+};
+
+export type NeuronVoteFailure = {
+    neuronId: string;
+    reason: NeuronVoteFailureReason;
+};
+
+/**
+ * Governance only says a neuron isn't eligible, since its ballot is fixed when the proposal is
+ * submitted, so `dissolve_delay_too_short` is worked out from the neuron's current dissolve delay
+ */
+export type NeuronVoteFailureReason =
+    | { kind: "dissolve_delay_too_short"; dissolveDelaySeconds: bigint; minimumSeconds: bigint }
+    | { kind: "not_eligible" }
+    | { kind: "rejected"; message: string }
+    | { kind: "call_failed" };
 
 /** How a vote on a proposal went. `skipped` means nothing was sent because the user has already voted or a vote is in flight */
 export type ProposalVoteOutcome =
     | { kind: "voted" }
     | { kind: "skipped" }
     | { kind: "no_eligible_neurons" }
+    | { kind: "neuron_votes_failed"; failures: NeuronVoteFailureMessage[] }
     | { kind: "failed"; message: ResourceKey };
+
+export type NeuronVoteFailureMessage = {
+    neuronId: string;
+    reason: ResourceKey;
+};
 
 export type ListNervousSystemFunctionsResponse = {
     reservedIds: bigint[];

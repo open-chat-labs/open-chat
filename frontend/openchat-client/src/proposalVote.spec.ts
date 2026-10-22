@@ -125,6 +125,27 @@ describe("voting on a proposal", () => {
     });
 
     // Invariant 2: a failed vote leaves nothing recorded, so the user can vote again
+    test("a vote none of the user's neurons could cast is cleared and lists the neurons", async () => {
+        respondToVotesWith(() =>
+            Promise.resolve({
+                kind: "neuron_votes_failed",
+                failures: [{ neuronId: "123", reason: { kind: "not_eligible" } }],
+            }),
+        );
+
+        expect(await client.voteOnProposal(chatId, 0, messageId, content, true)).toEqual({
+            kind: "neuron_votes_failed",
+            failures: [
+                {
+                    neuronId: "123",
+                    reason: expect.objectContaining({ key: "proposal.neuronNotEligible" }),
+                },
+            ],
+        });
+        expect(proposalVotesStore.has(messageId)).toBe(false);
+    });
+
+    // Invariant 2: a failed vote leaves nothing recorded, so the user can vote again
     test("a vote whose request is rejected is cleared and reported", async () => {
         respondToVotesWith(() => Promise.reject(new Error("worker gone")));
 

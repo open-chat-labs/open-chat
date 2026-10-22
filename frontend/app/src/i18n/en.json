@@ -2098,6 +2098,12 @@
             "urlRules": "link to supplemental details"
         },
         "neuronControllerAction": "Neuron Controller Actions",
+        "neuronDissolveDelayTooShort": "Its dissolve delay ({delay} days) is less than the {minimum} days needed to vote",
+        "neuronNotEligible": "It wasn't eligible to vote when the proposal was submitted",
+        "neuronVoteCallFailed": "Couldn't reach governance - please try again",
+        "neuronVoteRejected": "The vote was rejected: {message}",
+        "neuronVotesFailed": "Your neurons couldn't vote",
+        "neuronVotesFailedIntro": "None of your neurons could vote on this proposal:",
         "noEligibleNeurons": "No eligible neurons found",
         "noEligibleNeuronsMoreInfo": "For more information on voting and governance read [this blog post](https://oc.app/blog/governance).",
         "noEligibleNeuronsPrincipalIntro": "No eligible or linked neurons found. In order to vote on proposals from within OpenChat you must first add your OpenChat principal as a hotkey to any neurons you wish to vote with.",
@@ -2125,7 +2131,7 @@
                 "regular": "The two following conditions have to be met for a proposal to be adopted:"
             }
         },
-        "proposalNotAceptingVotes": "This proposal is not accepting votes - try reloading the page",
+        "proposalNotAcceptingVotes": "Voting on this proposal has closed",
         "proposalsBotAction": "Proposals Bot Actions",
         "proposedBy": "proposed by",
         "readless": "Read less",

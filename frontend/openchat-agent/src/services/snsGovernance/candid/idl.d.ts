@@ -8,6 +8,7 @@ import {
     ListProposalsResponse,
     ManageNeuronResponse,
     NervousSystemFunction,
+    NervousSystemParameters,
     FunctionType,
 } from "./types";
 export {
@@ -18,6 +19,7 @@ export {
     ListProposalsResponse as ApiListProposalsResponse,
     ManageNeuronResponse as ApiManageNeuronResponse,
     NervousSystemFunction as ApiNervousSystemFunction,
+    NervousSystemParameters as ApiNervousSystemParameters,
     FunctionType as ApiSnsFunctionType,
 };
 

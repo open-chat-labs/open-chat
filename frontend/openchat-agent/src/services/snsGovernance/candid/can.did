@@ -52,6 +52,9 @@ type Neuron = record {
   dissolve_state : opt DissolveState;
 };
 type NeuronId = record { id : blob };
+type NervousSystemParameters = record {
+  neuron_minimum_dissolve_delay_to_vote_seconds : opt nat64;
+};
 type NervousSystemFunction = record {
   id : nat64;
   name : text;
@@ -72,6 +75,7 @@ type Tally = record {
   timestamp_seconds : nat64;
 };
 service : {
+  get_nervous_system_parameters : (null) -> (NervousSystemParameters) query;
   list_nervous_system_functions : () -> (
       ListNervousSystemFunctionsResponse,
   ) query;

@@ -2046,6 +2046,12 @@
             "urlRules": "پیوند به جزئیات تکمیلی"
         },
         "neuronControllerAction": "اقدامات کنترل کننده نورون",
+        "neuronDissolveDelayTooShort": "تأخیر انحلال آن ({delay} روز) کمتر از {minimum} روز لازم برای رأی دادن است",
+        "neuronNotEligible": "هنگام ارسال پیشنهاد واجد شرایط رأی دادن نبود",
+        "neuronVoteCallFailed": "دسترسی به حاکمیت ممکن نشد - لطفاً دوباره تلاش کنید",
+        "neuronVoteRejected": "رأی رد شد: {message}",
+        "neuronVotesFailed": "نورون‌های شما نتوانستند رأی دهند",
+        "neuronVotesFailedIntro": "هیچ‌یک از نورون‌های شما نتوانست به این پیشنهاد رأی دهد:",
         "noEligibleNeurons": "هیچ نورون واجد شرایطی یافت نشد",
         "noEligibleNeuronsMoreInfo": "برای اطلاعات بیشتر در مورد رأی‌گیری و حکومت، <a target=\"_blank\" href=\"https://oc.app/blog/governance\">این پست وبلاگ</a> را بخوانید.",
         "noEligibleNeuronsPrincipalIntro": "هیچ نورون واجد شرایط یا مرتبطی یافت نشد. برای رای دادن به پیشنهادات از داخل OpenChat، ابتدا باید principal خود در OpenChat را به عنوان کلید میانبر به هر نورونی که می خواهید با آن رای دهید اضافه کنید.",
@@ -2073,7 +2079,7 @@
                 "regular": "برای تصویب یک پیشنهاد، دو شرط زیر باید رعایت شود:"
             }
         },
-        "proposalNotAceptingVotes": "این پیشنهاد رای نمی‌پذیرد - صفحه را دوباره بارگیری کنید",
+        "proposalNotAcceptingVotes": "رأی‌گیری برای این پیشنهاد به پایان رسیده است",
         "proposalsBotAction": "Proposals Bot Actions",
         "proposedBy": "پیشنهاد شده توسط",
         "readless": "کمتر بخوان",

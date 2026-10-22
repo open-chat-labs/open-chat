@@ -2046,6 +2046,12 @@
             "urlRules": "补充详细信息的链接"
         },
         "neuronControllerAction": "神经元控制器动作",
+        "neuronDissolveDelayTooShort": "其解散延迟（{delay} 天）少于投票所需的 {minimum} 天",
+        "neuronNotEligible": "提交提案时它没有投票资格",
+        "neuronVoteCallFailed": "无法连接治理系统 - 请重试",
+        "neuronVoteRejected": "投票被拒绝：{message}",
+        "neuronVotesFailed": "您的神经元无法投票",
+        "neuronVotesFailedIntro": "您的神经元都无法对此提案投票：",
         "noEligibleNeurons": "未找到符合条件的神经元",
         "noEligibleNeuronsMoreInfo": "有关投票和治理的更多信息，请阅读<a target=\"_blank\" href=\"https://oc.app/blog/governance\">这篇博文</a>。",
         "noEligibleNeuronsPrincipalIntro": "未找到合格或链接的神经元。为了在 OpenChat 内对提案进行投票，您必须首先将您的 OpenChat principal 作为热键添加到您想要投票的任何神经元。",
@@ -2073,7 +2079,7 @@
                 "regular": "提案要获得通过，必须满足以下两个条件："
             }
         },
-        "proposalNotAceptingVotes": "此提案不接受投票 - 尝试重新加载页面",
+        "proposalNotAcceptingVotes": "此提案的投票已结束",
         "proposalsBotAction": "提案机器人操作",
         "proposedBy": "提议者",
         "readless": "少读",

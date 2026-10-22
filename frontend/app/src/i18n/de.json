@@ -2046,6 +2046,12 @@
             "urlRules": "Link zu ergänzenden Details"
         },
         "neuronControllerAction": "Neuron-Controller-Aktionen",
+        "neuronDissolveDelayTooShort": "Die Auflösungsverzögerung ({delay} Tage) ist kürzer als die zum Abstimmen erforderlichen {minimum} Tage",
+        "neuronNotEligible": "Es war nicht stimmberechtigt, als der Vorschlag eingereicht wurde",
+        "neuronVoteCallFailed": "Governance war nicht erreichbar - bitte versuchen Sie es erneut",
+        "neuronVoteRejected": "Die Stimme wurde abgelehnt: {message}",
+        "neuronVotesFailed": "Ihre Neuronen konnten nicht abstimmen",
+        "neuronVotesFailedIntro": "Keines Ihrer Neuronen konnte über diesen Vorschlag abstimmen:",
         "noEligibleNeurons": "Keine geeigneten Neuronen gefunden",
         "noEligibleNeuronsMoreInfo": "Weitere Informationen zu Abstimmungen und Governance finden Sie <a target=\"_blank\" href=\"https://oc.app/blog/governance\">in diesem Blogbeitrag</a> .",
         "noEligibleNeuronsPrincipalIntro": "Keine geeigneten oder verknüpften Neuronen gefunden. Um über Vorschläge in OpenChat abzustimmen, müssen Sie zunächst Ihren OpenChat-Principal als Hotkey zu allen Neuronen hinzufügen, mit denen Sie abstimmen möchten.",
@@ -2073,7 +2079,7 @@
                 "regular": "Damit ein Vorschlag angenommen werden kann, müssen folgende zwei Bedingungen erfüllt sein:"
             }
         },
-        "proposalNotAceptingVotes": "Für diesen Vorschlag werden keine Stimmen akzeptiert. Versuchen Sie, die Seite neu zu laden",
+        "proposalNotAcceptingVotes": "Die Abstimmung über diesen Vorschlag ist beendet",
         "proposalsBotAction": "Vorschläge für Bot-Aktionen",
         "proposedBy": "vorgeschlagen von",
         "readless": "Lese weniger",

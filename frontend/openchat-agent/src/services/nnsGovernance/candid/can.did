@@ -44,12 +44,18 @@ type Neuron = record {
   dissolve_state : opt DissolveState;
 };
 type NeuronId = record { id : nat64 };
+type NetworkEconomics = record {
+  voting_power_economics : opt VotingPowerEconomics;
+};
 type ProposalInfo = record {
   id : opt NeuronId;
   ballots : vec record { nat64; Ballot };
   latest_tally : opt Tally;
 };
 type RegisterVote = record { vote : int32; proposal : opt NeuronId };
+type VotingPowerEconomics = record {
+  neuron_minimum_dissolve_delay_to_vote_seconds : opt nat64;
+};
 type Tally = record {
   no : nat64;
   yes : nat64;
@@ -57,6 +63,7 @@ type Tally = record {
   timestamp_seconds : nat64;
 };
 service : {
+  get_network_economics_parameters : () -> (NetworkEconomics) query;
   list_neurons : (ListNeurons) -> (ListNeuronsResponse) query;
   list_proposals : (ListProposalInfo) -> (ListProposalInfoResponse) query;
   manage_neuron : (ManageNeuron) -> (ManageNeuronResponse);
