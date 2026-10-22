@@ -693,7 +693,7 @@
                 {@render loadFailed()}
             {/await}
         {:else if page.kind === "user_information"}
-            <UserInformation profile={page.profile} />
+            <UserInformation />
         {:else if page.kind === "app_settings"}
             {#await import("./user_profile/AppSettings.svelte") then { default: AppSettings }}
                 <AppSettings />

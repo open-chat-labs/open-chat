@@ -7,9 +7,6 @@
         ModerationFlags,
         MAX_BIO_LENGTH,
         type OpenChat,
-        type ProfileFieldErrors,
-        profileChanges,
-        type PublicProfile,
         ROLE_NONE,
         type UserSummary,
         adultEnabledStore,
@@ -17,6 +14,7 @@
         canExtendDiamondStore,
         communitiesStore,
         currentUserIdStore,
+        currentUserProfileStore,
         hideMessagesFromDirectBlocked,
         iconSize,
         isDiamondStore,
@@ -33,7 +31,8 @@
         userMetricsStore,
         userWalletAccount,
     } from "@client";
-    import { getContext, onMount } from "svelte";
+    import { ProfileForm } from "@src/logic/profile/profileForm.svelte";
+    import { getContext, onDestroy } from "svelte";
     import { _, locale } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
@@ -113,23 +112,13 @@
 
     let { user, onCloseProfile, onUnsubscribeNotifications }: Props = $props();
 
-    let userbio = $state("");
     let selectedLocale = $state(($locale as string).substring(0, 2));
-    let errors = $state<ProfileFieldErrors>({});
-    let saving = $state(false);
-    let username = $state("");
-    let usernameValid = $state(true);
-    let displayName: string | undefined = $state(undefined);
-    let displayNameValid = $state(true);
-    let checkingUsername: boolean = $state(false);
     let view: "global" | "communities" | "chit" = $state("global");
     let selectedCommunityId = $state("");
     let deleting = $state(false);
     let confirmDelete = $state(false);
     let botConfigData: BotClientConfigData | undefined = $state(undefined);
 
-    let originalUsername = $derived(user?.username ?? "");
-    let originalDisplayName = $derived(user?.displayName ?? undefined);
     let selectedCommunity = $derived(
         $communitiesStore.get({
             kind: "community",
@@ -137,6 +126,13 @@
         }),
     );
     let readonly = $derived($suspendedUserStore || $anonUserStore);
+    // username, display name and bio (app/src/logic/profile), saved as the client keeps them
+    const form = new ProfileForm(
+        client,
+        () => $currentUserProfileStore,
+        () => readonly,
+    );
+    onDestroy(() => form.destroy());
     let verified = $derived(user.isUniquePerson);
     // The principal to add as a hotkey to the neurons the user votes with from OpenChat, which is the
     // owner of their wallet: their OpenChat principal (not the auth principal). Read from the store
@@ -188,55 +184,8 @@
         setLocale(selectedLocale);
     });
 
-    let originalProfile = $state<PublicProfile>({
-        username: "",
-        displayName: undefined,
-        bio: "",
-        isPremium: false,
-        phoneIsVerified: false,
-        created: 0n,
-    });
-    let candidateProfile: PublicProfile = $derived.by(() => {
-        return {
-            ...originalProfile,
-            username: username,
-            displayName: displayName,
-            bio: userbio,
-        };
-    });
-    // username and display name are compared with the user record, which the client updates when they save
-    let savedProfile = $derived({
-        ...originalProfile,
-        username: originalUsername,
-        displayName: originalDisplayName,
-    });
-    let changes = $derived(profileChanges(savedProfile, candidateProfile));
-    let buttonEnabled = $derived(
-        usernameValid &&
-            displayNameValid &&
-            (changes.username || changes.displayName || changes.bio) &&
-            !saving &&
-            !readonly,
-    );
     let canEditTranslations = $derived(hasEditableTranslations($locale));
     let referredUserIds = $derived(new Set($referralsStore.map((r) => r.userId)));
-
-    onMount(() => {
-        if (!$anonUserStore) {
-            client.getPublicProfile(user.userId).subscribe({
-                onResult: (profile) => {
-                    if (profile) {
-                        originalProfile = profile;
-                        userbio = profile.bio;
-                    }
-                },
-            });
-        }
-    });
-
-    function onBackgroundImageUpdated(blobId: bigint) {
-        originalProfile.backgroundId = blobId;
-    }
 
     function toggleModerationFlag(flag: ModerationFlag) {
         client.setModerationFlags($moderationFlagsEnabledStore ^ flag);
@@ -244,17 +193,8 @@
 
     async function saveUser(e: Event) {
         e.preventDefault();
-        saving = true;
-        try {
-            const outcome = await client.saveProfile(savedProfile, candidateProfile);
-            originalProfile = outcome.profile;
-            errors = outcome.errors;
-            if (outcome.failure !== undefined) {
-                toastStore.showFailureToast(outcome.failure);
-            }
-        } finally {
-            saving = false;
-        }
+        const outcome = await form.save();
+        if (outcome.kind === "failed") toastStore.showFailureToast(outcome.reason);
     }
 
     function toggleNotifications() {
@@ -335,11 +275,8 @@
                 open={$userInfoOpen}
                 headerText={i18nKey("userInfoHeader")}>
                 <div class="profile-card">
-                    <UserProfileCard
-                        {onBackgroundImageUpdated}
-                        profile={candidateProfile}
-                        {user}
-                        userProfileMode></UserProfileCard>
+                    <UserProfileCard profile={form.candidate} {user} userProfileMode
+                    ></UserProfileCard>
                 </div>
                 {#if $anonUserStore}
                     <div class="guest">
@@ -349,50 +286,44 @@
                     </div>
                 {:else}
                     <Legend label={i18nKey("username")} rules={i18nKey("usernameRules")} />
-                    <UsernameInput
-                        {client}
-                        {originalUsername}
-                        disabled={readonly}
-                        bind:username
-                        bind:usernameValid
-                        bind:checking={checkingUsername}
-                        bind:error={errors.username}>
-                        {#if errors.username !== undefined}
+                    <UsernameInput check={form.username} disabled={readonly}>
+                        {#if form.usernameError !== undefined}
                             <ErrorMessage
                                 ><Translatable
-                                    resourceKey={i18nKey(errors.username)} /></ErrorMessage>
+                                    resourceKey={i18nKey(form.usernameError)} /></ErrorMessage>
                         {/if}
                     </UsernameInput>
                     <Legend label={i18nKey("displayName")} rules={i18nKey("displayNameRules")} />
                     <DisplayNameInput
-                        {client}
-                        {originalDisplayName}
+                        originalDisplayName={$currentUserProfileStore.displayName}
                         disabled={readonly}
-                        bind:displayName
-                        bind:displayNameValid>
-                        {#if errors.displayName !== undefined}
+                        bind:displayName={
+                            () => form.displayName, (name) => (form.displayName = name)
+                        }>
+                        {#if form.errors.displayName !== undefined}
                             <ErrorMessage
                                 ><Translatable
-                                    resourceKey={i18nKey(errors.displayName)} /></ErrorMessage>
+                                    resourceKey={i18nKey(form.errors.displayName)} /></ErrorMessage>
                         {/if}
                     </DisplayNameInput>
                     <Legend label={i18nKey("bio")} rules={i18nKey("supportsMarkdown")} />
                     <TextArea
                         rows={3}
-                        bind:value={userbio}
+                        bind:value={() => form.bio, (bio) => (form.bio = bio)}
                         invalid={false}
                         disabled={readonly}
                         maxlength={MAX_BIO_LENGTH}
                         placeholder={i18nKey("enterBio")}>
-                        {#if errors.bio !== undefined}
+                        {#if form.errors.bio !== undefined}
                             <ErrorMessage
-                                ><Translatable resourceKey={i18nKey(errors.bio)} /></ErrorMessage>
+                                ><Translatable
+                                    resourceKey={i18nKey(form.errors.bio)} /></ErrorMessage>
                         {/if}
                     </TextArea>
                     <div class="full-width-btn">
                         <Button
-                            loading={saving || checkingUsername}
-                            disabled={!buttonEnabled}
+                            loading={form.saving || form.username.checking}
+                            disabled={!form.canSave}
                             fill
                             small><Translatable resourceKey={i18nKey("update")} /></Button>
                     </div>

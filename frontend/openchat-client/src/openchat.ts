@@ -759,7 +759,6 @@ import {
     nullUser,
     userAvatarUrl,
 } from "./utils/user";
-import { isDisplayNameValid, isUsernameValid } from "./utils/validation";
 import { MultiWebAuthnIdentity, createWebAuthnIdentity } from "./utils/webAuthn";
 import { WorkerAgent } from "./workerAgent";
 
@@ -4077,8 +4076,6 @@ export class OpenChat {
     groupMessagesByDate = groupMessagesByDate;
     fillMessage = fillMessage;
     audioRecordingMimeType = audioRecordingMimeType;
-    isDisplayNameValid = isDisplayNameValid;
-    isUsernameValid = isUsernameValid;
 
     // Returns the chat to go to, or undefined if there's no such user. That's the chat under the
     // user's latest id if `chatId` is under one they had before being migrated to a MultiUser
@@ -6430,10 +6427,7 @@ export class OpenChat {
     }
 
     checkUsername(username: string, isBot: boolean): Promise<CheckUsernameResponse> {
-        return this.#worker.send({ kind: "checkUsername", username, isBot }).then((resp) => {
-            console.log("Resp: ", resp);
-            return resp;
-        });
+        return this.#worker.send({ kind: "checkUsername", username, isBot });
     }
 
     // `pageIndex` picks which page of `maxResults` users to return, starting from 0
@@ -7792,7 +7786,8 @@ export class OpenChat {
 
     /**
      * Saves the profile fields that differ from `original`, in parallel. A field the backend rejects keeps its
-     * unsaved value and carries the reason to show under it.
+     * unsaved value and carries the reason to show under it. Each saved field is written to
+     * currentUserProfileStore.
      */
     async saveProfile(
         original: PublicProfile,
@@ -7812,6 +7807,10 @@ export class OpenChat {
                 switch (result.kind) {
                     case "saved":
                         outcome.profile = { ...outcome.profile, [field]: candidate[field] };
+                        currentUserProfileStore.update((profile) => ({
+                            ...profile,
+                            [field]: candidate[field],
+                        }));
                         break;
                     case "rejected":
                         outcome.errors[field] = result.message;

@@ -4,7 +4,7 @@
     import EmailValidator from "email-validator";
     import type { OpenChat, SignUpOutcome, UserOrUserGroup, UserSummary } from "@client";
     import { mobileWidth } from "@client";
-    import { getContext, onMount } from "svelte";
+    import { getContext, onDestroy, onMount } from "svelte";
     import AlertBox from "../AlertBox.svelte";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
@@ -18,6 +18,7 @@
     import Overlay from "../Overlay.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
     import UsernameInput from "../UsernameInput.svelte";
+    import { UsernameCheck } from "@src/logic/profile/usernameCheck.svelte";
     import UserPill from "../UserPill.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -31,10 +32,12 @@
     let { error = $bindable(), onSignedUp }: Props = $props();
 
     let showGuidelines = $state(false);
-    let username = $state("");
-    let usernameValid = $state(false);
     const usernameStore = createLocalStorageStore("openchat_candidate_username", "");
-    let checkingUsername: boolean = $state(false);
+    // the name last tried, if sign-up didn't finish, is where it starts
+    const usernameCheck = new UsernameCheck(client, () => $usernameStore ?? "");
+    onDestroy(() => usernameCheck.destroy());
+    // sign-up's own failure, else why the name can't be used
+    let shownError = $derived(error ?? usernameCheck.error);
     let email = $state("");
     let emailValid = $derived(email.length === 0 || EmailValidator.validate(email));
     let busy = $state(false);
@@ -62,7 +65,8 @@
 
     async function register(e: Event) {
         e.preventDefault();
-        if (!usernameValid || !emailValid || !termsAccepted || busy) return;
+        if (!usernameCheck.valid || !emailValid || !termsAccepted || busy) return;
+        const username = usernameCheck.value;
         usernameStore.set(username);
         busy = true;
         let outcome: SignUpOutcome;
@@ -162,14 +166,10 @@
         <div class="form-element">
             <Legend label={i18nKey("username")} rules={i18nKey("usernameRules")} />
             <UsernameInput
-                {client}
+                check={usernameCheck}
                 disabled={busy}
-                originalUsername={$usernameStore ?? ""}
                 autofocus
-                bind:username
-                bind:usernameValid
-                bind:checking={checkingUsername}
-                bind:error />
+                onChange={() => (error = undefined)} />
         </div>
 
         <div class="form-element">
@@ -216,9 +216,9 @@
                 </span>
             </Checkbox>
         </div>
-        {#if error !== undefined}
+        {#if shownError !== undefined}
             <div class="error">
-                <ErrorMessage><Translatable resourceKey={i18nKey(error)} /></ErrorMessage>
+                <ErrorMessage><Translatable resourceKey={i18nKey(shownError)} /></ErrorMessage>
             </div>
         {/if}
     </form>
@@ -231,8 +231,8 @@
                 ><Translatable resourceKey={i18nKey("cancel")} /></Button>
         {/if}
         <Button
-            loading={checkingUsername || busy}
-            disabled={!usernameValid || !emailValid || !termsAccepted || busy}
+            loading={usernameCheck.checking || busy}
+            disabled={!usernameCheck.valid || !emailValid || !termsAccepted || busy}
             onClick={register}>
             <Translatable resourceKey={i18nKey("register.proceed")} />
         </Button>

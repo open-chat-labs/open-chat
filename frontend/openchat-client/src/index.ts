@@ -39,7 +39,8 @@ export { executionPaymentAmount, proposalFundsRequired } from "./utils/proposal"
 export { inviteLinkUrl } from "./utils/inviteLink";
 export { postLoginJoin } from "./utils/join";
 export { muteNotificationsFailureMessage, pinChatFailureMessage } from "./utils/pinAndMute";
-export { profileChanges } from "./utils/profile";
+export { profileChanges, type ProfileChanges } from "./utils/profile";
+export { isDisplayNameValid, isUsernameValid } from "./utils/validation";
 export { rightPanelView, type RightPanelInput } from "./utils/rightPanel";
 export { signInOptions } from "./utils/signIn";
 export { cloneWalletConfig, walletConfigForMode } from "./utils/walletConfig";

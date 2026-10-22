@@ -25,7 +25,7 @@ vi.mock("@icp-sdk/auth/client", async (importOriginal) => ({
 import { ErrorCode, anonymousUser, type PublicProfile, type WorkerRequest } from "@shared";
 import type { OpenChatConfig } from "./config";
 import { OpenChat } from "./openchat";
-import { currentUserStore } from "./state";
+import { currentUserProfileStore, currentUserStore } from "./state";
 import { WorkerAgent } from "./workerAgent";
 
 class FakeWorker {
@@ -99,6 +99,24 @@ describe("saving the user's profile", () => {
         expect(outcome).toEqual({
             profile: { ...original, bio: "new bio" },
             errors: { username: "register.usernameTaken" },
+        });
+    });
+
+    test("the fields that save are written to the user's profile, and a rejected one isn't", async () => {
+        currentUserProfileStore.set(original);
+        responses.setUsername = "username_taken";
+
+        await client.saveProfile(original, {
+            ...original,
+            username: "taken",
+            displayName: "Jules",
+            bio: "new bio",
+        });
+
+        expect(currentUserProfileStore.value).toEqual({
+            ...original,
+            displayName: "Jules",
+            bio: "new bio",
         });
     });
 
