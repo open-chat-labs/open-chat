@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Limit users to one linked account per platform (Discord/Telegram) ([#10169](https://github.com/open-chat-labs/open-chat/pull/10169))
+
 ### Removed
 
 - Remove the one-off which moved what the replaced queues held onto the event queues, now that it has run ([#10172](https://github.com/open-chat-labs/open-chat/pull/10172))
@@ -27,7 +31,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Send moderation actions and suspensions to groups and communities, and vault ops to the StorageIndex, as events ([#10033](https://github.com/open-chat-labs/open-chat/pull/10033))
 - Call the Identity canister's and StorageIndex's event endpoints best-effort ([#10050](https://github.com/open-chat-labs/open-chat/pull/10050))
 - Reject bots which use the JSON data encoding ([#10055](https://github.com/open-chat-labs/open-chat/pull/10055))
-- Limit users to one linked account per platform (Discord/Telegram) ([#10169](https://github.com/open-chat-labs/open-chat/pull/10169))
 
 ### Fixed
 
