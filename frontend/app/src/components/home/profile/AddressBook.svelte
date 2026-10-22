@@ -18,6 +18,7 @@
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
     import { addressNetwork } from "../../../utils/cryptoAddress";
+    import { isRecipientNameTaken } from "../../../utils/savedRecipient";
     import AreYouSure from "../../AreYouSure.svelte";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
@@ -59,7 +60,7 @@
     let addressValid = $derived(!addressIsUserId && newAddressNetwork !== undefined);
     // Saving an address which is already saved would rename it rather than add it
     let alreadySavedAs = $derived(accounts.find((a) => a.account === trimmedAddress)?.name);
-    let addNameTaken = $derived(isNameTaken(trimmedName));
+    let addNameTaken = $derived(isRecipientNameTaken(accounts, trimmedName));
     let addValid = $derived(
         trimmedName.length > 0 && !addNameTaken && addressValid && alreadySavedAs === undefined,
     );
@@ -73,7 +74,7 @@
         return undefined;
     });
     let renameNameTaken = $derived(
-        renaming !== undefined && isNameTaken(trimmedNewName, renaming.account),
+        renaming !== undefined && isRecipientNameTaken(accounts, trimmedNewName, renaming.account),
     );
     let renameValid = $derived(trimmedNewName.length > 0 && !renameNameTaken);
 
@@ -81,14 +82,6 @@
         accounts = await client.loadSavedCryptoAccounts();
         loading = false;
     });
-
-    // Names are unique ignoring case
-    function isNameTaken(name: string, exceptAccount?: string): boolean {
-        const nameLower = name.toLowerCase();
-        return accounts.some(
-            (a) => a.account !== exceptAccount && a.name.toLowerCase() === nameLower,
-        );
-    }
 
     // Saving an account which is already saved renames it. The list is updated here to match
     // what the canister stores, rather than loaded again.

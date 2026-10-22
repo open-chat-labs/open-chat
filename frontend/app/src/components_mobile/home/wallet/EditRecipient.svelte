@@ -10,6 +10,7 @@
     import SlidingPageContent from "../SlidingPageContent.svelte";
     import { toastStore } from "@src/stores/toast";
     import { addressNetwork } from "@src/utils/cryptoAddress";
+    import { isRecipientNameTaken, recipientToSave } from "@src/utils/savedRecipient";
 
     const client = getContext<OpenChat>("client");
 
@@ -25,8 +26,8 @@
     let trimmedName = $derived(name.trim());
     let trimmedAddress = $derived(address.trim());
     let nameDirty = $derived(trimmedName !== account?.name);
-    let addressDirty = $derived(trimmedAddress !== account?.account);
-    let dirty = $derived(nameDirty || addressDirty);
+    // An existing recipient can only be renamed: its address is fixed (see recipientToSave)
+    let dirty = $derived(account === undefined || nameDirty);
     // The network the address is for, in the same forms the canister accepts. Saving anything else
     // used to succeed here and then throw out of the worker, unhandled, when the withdrawal mapper
     // tried to decode it.
@@ -35,17 +36,15 @@
     let invalidAddress = $derived(trimmedAddress.length > 0 && !validAddress);
     let validName = $derived(
         trimmedName.length > 0 &&
-            $namedAccountsStore.find((a) => a.name.toLowerCase() === trimmedName.toLowerCase()) ===
-                undefined,
+            !isRecipientNameTaken($namedAccountsStore, trimmedName, account?.account),
     );
     let valid = $derived(validAddress && validName);
 
     async function addAccount() {
         loading = true;
-        const res = await client.saveCryptoAccount({
-            name: trimmedName,
-            account: trimmedAddress,
-        });
+        const res = await client.saveCryptoAccount(
+            recipientToSave(account, trimmedName, trimmedAddress),
+        );
 
         if (res.kind === "success") {
             const accounts = await client.loadSavedCryptoAccounts();
@@ -94,6 +93,7 @@
                 </Input>
                 <Input
                     bind:value={address}
+                    disabled={account !== undefined}
                     countdown={false}
                     maxlength={200}
                     error={invalidAddress}
