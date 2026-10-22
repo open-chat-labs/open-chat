@@ -206,9 +206,9 @@ design export needs. Each entry says where it came up.
   account's own profile if no one has, with the platform's badge; so do their reply quotes, which
   carry the quoted message's `senderContext`, and pinned messages. One from the viewer's own
   linked account looks like their own message (`shouldShowAsMe`), though editing and deleting it
-  still go by the sender, the bot, and the options aimed at its author (reply privately, block,
-  report) are hidden. The client marks it read like the viewer's own (`isOwnMessage`), so that
-  part needs nothing here.
+  still go by the sender, the bot, and blocking or reporting its author is hidden. No relayed
+  message offers a private reply, which would go to the bot. The client marks the viewer's own
+  read (`isOwnMessage`), so that part needs nothing here.
 - **Composer, first cut** (`features/conversation/Composer.svelte`, phase 3c): text only.
   Attachments, GIFs, voice, replies, edits and the "+" menu are phase 5 (`MessageComposer` hides
   "+" and the GIF tab without their handlers). There's no @mention picker (typed @usernames are

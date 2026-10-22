@@ -5317,13 +5317,7 @@ export class OpenChat {
                     if (localUpdates.deleteUnconfirmed(context, messageId)) {
                         messagesRead.confirmMessage(context, messageIndex, messageId);
                     }
-                    // If the message is the current user's, mark it as read
-                    if (
-                        isOwnMessage(event.event, myUserId, bridgedUsers) &&
-                        !messagesRead.isRead(context, messageIndex, messageId)
-                    ) {
-                        messagesRead.markMessageRead(context, messageIndex, messageId);
-                    }
+                    this.#markReadIfOwn(context, event.event, myUserId, bridgedUsers);
                     if (latestMessageIndex !== undefined && messageIndex > latestMessageIndex) {
                         newLatestMessage = event as EventWrapper<Message>;
                         latestMessageIndex = messageIndex;
@@ -9218,6 +9212,7 @@ export class OpenChat {
         const latestMessage = chat.latestMessage?.event;
         if (
             latestMessage !== undefined &&
+            !isPreviewing(chat) &&
             isOwnMessage(latestMessage, currentUserIdStore.value, bridgedUsersStore.value) &&
             (chat.membership?.readByMeUpTo ?? -1) < latestMessage.messageIndex &&
             !localUpdates.isUnconfirmed({ chatId: chat.id }, latestMessage.messageId)
@@ -9234,12 +9229,8 @@ export class OpenChat {
         const bridgedUsers = bridgedUsersStore.value;
         const markRead = (context: MessageContext, events: EventWrapper<ChatEvent>[]) => {
             for (const e of events) {
-                if (
-                    e.event.kind === "message" &&
-                    isOwnMessage(e.event, myUserId, bridgedUsers) &&
-                    !messagesRead.isRead(context, e.event.messageIndex, e.event.messageId)
-                ) {
-                    messagesRead.markMessageRead(context, e.event.messageIndex, e.event.messageId);
+                if (e.event.kind === "message") {
+                    this.#markReadIfOwn(context, e.event, myUserId, bridgedUsers);
                 }
             }
         };
@@ -9253,8 +9244,26 @@ export class OpenChat {
                 const { chatId, threadRootMessageIndex } = threadVisit;
                 markRead({ chatId, threadRootMessageIndex }, serverThreadEventsStore.value);
             }
-            chatSummariesStore.value.forEach((chat) => this.#markReadIfLatestMessageOwn(chat));
+            allChatsStore.value.forEach((chat) => this.#markReadIfLatestMessageOwn(chat));
         });
+    }
+
+    // The current user's messages are read, including those relayed from an account they've
+    // linked. Not in a chat they're only previewing, which has no read state on the server to sync
+    // with, so it would be sent again every time.
+    #markReadIfOwn(
+        context: MessageContext,
+        message: Message,
+        myUserId: string,
+        bridgedUsers: Map<string, BridgedUserSummary>,
+    ): void {
+        if (
+            isOwnMessage(message, myUserId, bridgedUsers) &&
+            !messagesRead.isRead(context, message.messageIndex, message.messageId) &&
+            !this.isPreviewing(context.chatId)
+        ) {
+            messagesRead.markMessageRead(context, message.messageIndex, message.messageId);
+        }
     }
 
     #validMouseEvent(e: MouseEvent) {
