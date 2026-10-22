@@ -2,11 +2,13 @@
     import { BRIDGE_PLATFORM_NAMES, type BridgePlatform } from "@client";
     import Robot from "svelte-material-icons/Robot.svelte";
     import Webhook from "svelte-material-icons/Webhook.svelte";
+    import { BRIDGE_PLATFORM_ICONS } from "../../../utils/bridgedAccounts";
 
     interface Props {
         bot?: boolean;
         webhook?: boolean;
-        // The platform a bridge bot relayed the message from, shown in place of the bot badge
+        // The platform a bridge bot relayed the message from, whose logo is shown in place of the bot
+        // badge
         bridge?: BridgePlatform;
     }
 
@@ -14,7 +16,11 @@
 </script>
 
 {#if bridge !== undefined}
-    <div class={`bridge ${bridge}`}>{BRIDGE_PLATFORM_NAMES[bridge]}</div>
+    <img
+        class="bridge"
+        src={BRIDGE_PLATFORM_ICONS[bridge]}
+        alt={BRIDGE_PLATFORM_NAMES[bridge]}
+        title={BRIDGE_PLATFORM_NAMES[bridge]} />
 {:else if bot}
     <div class="robot">
         <Robot viewBox={"0 2 24 24"} size={"0.8em"} color={"rgba(255,255,255,0.9)"} />
@@ -37,19 +43,8 @@
     }
 
     .bridge {
-        border-radius: toRem(4);
-        color: #ffffff;
-        padding: 0 toRem(4);
-        font-size: toRem(10);
-        line-height: toRem(16);
-
-        // Each platform's own brand colour
-        &.discord {
-            background-color: #5865f2;
-        }
-
-        &.telegram {
-            background-color: #229ed9;
-        }
+        flex: none;
+        width: toRem(16);
+        height: toRem(16);
     }
 </style>
