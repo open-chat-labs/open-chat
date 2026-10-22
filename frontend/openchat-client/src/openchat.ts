@@ -559,6 +559,7 @@ import {
     communityRestricted,
     moderationFlagsRestricted,
 } from "./utils/restrictedContent";
+import { walletConfigWithoutToken } from "./utils/walletConfig";
 import {
     defaultChat,
     navigationAfterArchivingOpenChat,
@@ -12855,11 +12856,9 @@ export class OpenChat {
     }
 
     removeTokenFromWallet(ledger: string) {
-        const config = { ...walletConfigStore.value };
-        if (config.kind === "manual_wallet") {
-            if (config.tokens.delete(ledger)) {
-                return this.setWalletConfig(config);
-            }
+        const config = walletConfigWithoutToken(walletConfigStore.value, ledger);
+        if (config !== undefined) {
+            return this.setWalletConfig(config);
         }
     }
 
