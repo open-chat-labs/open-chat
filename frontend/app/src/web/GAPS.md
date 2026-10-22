@@ -103,6 +103,8 @@ design export needs. Each entry says where it came up.
   (`oc-veil-in`, `oc-dlg-in`) as the hand-built dialogs do; the export's had no animation, so
   the dialog host's placeholders, the rules dialog and `ChatPicker` popped in. Closing has none
   still: the shell unmounts when its host closes it.
+- **Scrollbars, by hand**: `global.css` styles every scrollbar as the design's docs do (thin, a
+  grey thumb, no track). The export only styled them in its docs.
 - **`ProfileDialog`, by hand** (8c, to go back to the design export): `sections`, the sections
   its nav offers (a host that has built only some); the cover and photo edit buttons only with
   `onCoverEdit` / `onPhotoEdit`; `engagement` counts as numbers; `memberSince` from `joined` in the

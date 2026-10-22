@@ -134,3 +134,8 @@
 - A chats & calls toggle shows its new value until the host sends `chatSettings` back, which then win. The overrides used to stay for the dialog's life, so a setting the host didn't take (a notification permission refused, a restricted-content flag that didn't save) kept showing the user's choice.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists them).
 
+## 2026-10-22 — scrollbars styled everywhere, by hand
+- `global.css` styles every scrollbar as the design's docs do (`Docs.svelte`): thin, a grey thumb (`rgba(128,128,140,.35)`) on no track. Before, only the docs chrome had it, so a host's dialogs and panels (`ProfileDialog`'s chats & calls, say) showed the browser's default.
+- Components that hide their scrollbar (`scrollbar-width: none`) or set it thin keep doing so.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
