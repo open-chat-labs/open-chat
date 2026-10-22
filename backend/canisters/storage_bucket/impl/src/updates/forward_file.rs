@@ -10,7 +10,7 @@ use storage_index_canister::StorageBucketEvent;
 use storage_index_canister::{CsamMatch, CsamMatchKind};
 use tracing::info;
 
-#[update(guard = "caller_is_known_user", candid = true, json = true, msgpack = true)]
+#[update(guard = "caller_is_known_user", candid = true, msgpack = true)]
 #[trace]
 fn forward_file(args: Args) -> Response {
     check_cycles_balance();

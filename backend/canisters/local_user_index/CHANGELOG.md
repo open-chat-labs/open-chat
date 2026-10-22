@@ -18,6 +18,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Tell the GroupIndex of uninstalled communities through its event queue ([#10033](https://github.com/open-chat-labs/open-chat/pull/10033))
 - Send its events to the UserIndex and its MultiUser canisters at `c2c_local_index`, and call the DailyPuzzle canister's event endpoint best-effort ([#10050](https://github.com/open-chat-labs/open-chat/pull/10050))
 
+### Removed
+
+- Remove the `_json` versions of the bot endpoints, as bots can't use JSON any more ([#10152](https://github.com/open-chat-labs/open-chat/pull/10152))
+
 ### Fixed
 
 - Update bot record when principal or data encoding changes ([#10055](https://github.com/open-chat-labs/open-chat/pull/10055))

@@ -10,7 +10,7 @@ use types::{CanisterId, Chat};
 
 // Only bridge bots can edit their messages for now, to relay the edits made on the other platform.
 // The group or community checks the message is the bot's own.
-#[update(candid = true, json = true, msgpack = true)]
+#[update(candid = true, msgpack = true)]
 async fn bot_edit_message(args: Args) -> Response {
     let context = match mutate_state(|state| {
         let context = extract_access_context_from_chat_context(args.chat_context, state)?;
