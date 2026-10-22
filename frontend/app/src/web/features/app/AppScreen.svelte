@@ -35,7 +35,11 @@
     import { currentShellLayout } from "../../shell/viewport.svelte";
     import DialogHost from "./DialogHost.svelte";
     import type { LocalDialog } from "./dialogs";
-    import { subscribeAppEvents } from "@src/logic/appEvents/appEvents";
+    import {
+        dismissedRoute,
+        subscribeAppEvents,
+        type AppEventDialog,
+    } from "@src/logic/appEvents/appEvents";
     import { pinsFor } from "../rail/rail.adapter";
     import DetailsColumn from "./DetailsColumn.svelte";
     import RegionScreen from "./RegionScreen.svelte";
@@ -91,24 +95,25 @@
         ),
     );
 
-    // the client's app-wide events, as every tree handles them (app/src/logic/appEvents): one
-    // dialog at a time
+    // the client's app-wide events, as every tree handles them (app/src/logic/appEvents). Their
+    // dialogs stay up through a navigation (the router's own, as a linked page loads, among
+    // them), as the old Home's did, until the user closes one, which leaves the page
+    let appDialog = $state<AppEventDialog | undefined>();
     $effect(() =>
         subscribeAppEvents(client, (outcome) => {
             if (outcome.kind === "show") {
-                // TODO(phase 4): suspending a user (platform moderators) has no dialog yet; GAPS.md
-                if (outcome.dialog.kind === "suspending") return;
-                const event = outcome.dialog;
-                dialogStack.replace(
-                    { kind: "app_event", event },
-                    (open) => open.kind === "app_event",
-                );
+                appDialog = outcome.dialog;
             } else {
                 if (outcome.closeDialogs) publish("closeModalStack");
                 navigate(outcome.path);
             }
         }),
     );
+
+    function closeAppDialog() {
+        appDialog = undefined;
+        navigate(dismissedRoute(client));
+    }
 
     // Notifications over a chat or a wallet page opens the feed over it (decision 7), with its
     // own history entry; the other destinations are their paths
@@ -215,7 +220,7 @@
 {/snippet}
 
 <!-- the dialogs: those the URL opens (?profile …), those the app opened itself, and the rules -->
-<DialogHost stack={dialogStack} />
+<DialogHost stack={dialogStack} {appDialog} onCloseAppDialog={closeAppDialog} />
 
 <style>
     .toolbar {

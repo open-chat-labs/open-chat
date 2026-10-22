@@ -25,7 +25,7 @@
     }
 </script>
 
-<!-- TODO(4a): the user adapter's fields -->
+<!-- TODO(phase 4, 4a): the user adapter's fields -->
 <UserDialog
     {title}
     facts={[]}

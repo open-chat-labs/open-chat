@@ -1,4 +1,3 @@
-import type { AppEventDialog } from "@src/logic/appEvents/appEvents";
 import type { ProfileCard } from "@src/logic/profile/profileCard";
 import type { Component } from "svelte";
 
@@ -8,8 +7,11 @@ import type { Component } from "svelte";
 // Two kinds:
 // - linked: a query param over whatever page is open, which people link to and Back closes
 //   (ROUTES.md, decision 6): ?profile, ?chit, ?hof, ?diamond;
-// - local: opened by the app itself (a name clicked in a message, an app event …), kept in a
-//   DialogStack, and closed before any navigation (closeModalStack) and on Back.
+// - local: opened by the app itself (a name clicked in a message …), kept in a DialogStack, and
+//   closed before any navigation (closeModalStack) and on Back.
+//
+// The app event dialogs (not found, no access …) aren't in the table: DialogHost shows them on
+// their own, and only closing one leaves the page.
 
 export type LinkedDialog =
     | { kind: "profile" }
@@ -17,14 +19,8 @@ export type LinkedDialog =
     | { kind: "chit" }
     | { kind: "leaderboard" };
 
-export type LocalDialog =
-    // someone's profile card, for a name clicked in a message
-    | ({ kind: "user" } & ProfileCard)
-    // a link to something that doesn't exist, can't be seen, or isn't in this version of the app
-    | { kind: "app_event"; event: ShownAppEventDialog };
-
-// suspending a user (platform moderators) has no dialog yet; GAPS.md
-export type ShownAppEventDialog = Exclude<AppEventDialog, { kind: "suspending" }>;
+// someone's profile card, for a name clicked in a message
+export type LocalDialog = { kind: "user" } & ProfileCard;
 
 export type AppDialog = LinkedDialog | LocalDialog;
 
@@ -53,9 +49,6 @@ export const dialogs: Dialogs = {
     // someone else's profile card: its Chat button so far, the rest in 4a. A dialog, not anchored
     // to the name clicked as the old desktop card was
     user: () => import("../user/UserDialogScreen.svelte"),
-
-    // what the client's app events ask to show (app/src/logic/appEvents)
-    app_event: () => import("./AppEventDialogs.svelte"),
 };
 
 // each linked dialog's query param, in the order they win when more than one is in the URL

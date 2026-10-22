@@ -30,6 +30,12 @@ describe("opening a linked dialog", () => {
         expect(openLinkedDialog(new URLSearchParams(""), { kind: "profile" })).toBe("?profile");
     });
 
+    test("keeps the other params' values as they were written", () => {
+        expect(openLinkedDialog(new URLSearchParams("?code=a%26b%3Dc"), { kind: "profile" })).toBe(
+            "?code=a%26b%3Dc&profile",
+        );
+    });
+
     test("takes the place of the one showing", () => {
         expect(openLinkedDialog(new URLSearchParams("profile"), { kind: "diamond" })).toBe(
             "?diamond",
