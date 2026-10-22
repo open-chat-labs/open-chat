@@ -1,4 +1,9 @@
-import type { PinNumberResolver, RulesAcceptanceResolver } from "@shared";
+import {
+    chatIdentifiersEqual,
+    type ChatIdentifier,
+    type PinNumberResolver,
+    type RulesAcceptanceResolver,
+} from "@shared";
 
 // The prompts the client waits on while it sends: a chat's rules to accept, then the user's PIN
 // (pinNumberResolverStore), as the old UIs' Home answered them.
@@ -18,6 +23,52 @@ export function waitingPrompt(
     if (rules !== undefined) return { kind: "rules", request: rules };
     if (pin !== undefined) return { kind: "pin", request: pin };
     return { kind: "none" };
+}
+
+/**
+ * Whether a prompt that opened while `openedIn` was the selected chat is declined now `selected`
+ * is: another chat (or none, or one where there was none) declines it. The client reads the
+ * selected chat's rules when the rules are answered, and a PIN belongs to the transfer in the chat
+ * it started in. A navigation within the same chat (a thread, a query) keeps it.
+ */
+export function declinesPrompt(
+    openedIn: ChatIdentifier | undefined,
+    selected: ChatIdentifier | undefined,
+): boolean {
+    if (openedIn === undefined || selected === undefined) return openedIn !== selected;
+    return !chatIdentifiersEqual(openedIn, selected);
+}
+
+/** Declines a waiting prompt: the rules aren't accepted, the PIN isn't given. */
+export function declinePrompt(prompt: WaitingPrompt): void {
+    switch (prompt.kind) {
+        case "rules":
+            return prompt.request.resolve(false);
+        case "pin":
+            return prompt.request.reject();
+    }
+}
+
+/**
+ * Calls `decline` once when the selected chat changes from the one selected as this starts
+ * (`chats` gives it on subscribing). Returns the unsubscribe.
+ */
+export function declineOnChatChange(
+    chats: { subscribe: (fn: (chat: ChatIdentifier | undefined) => void) => () => void },
+    decline: () => void,
+): () => void {
+    let started = false;
+    let declined = false;
+    let openedIn: ChatIdentifier | undefined;
+    return chats.subscribe((chat) => {
+        if (!started) {
+            started = true;
+            openedIn = chat;
+        } else if (!declined && declinesPrompt(openedIn, chat)) {
+            declined = true;
+            decline();
+        }
+    });
 }
 
 /**

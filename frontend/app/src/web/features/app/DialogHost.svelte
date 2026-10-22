@@ -12,6 +12,7 @@
         OpenChat,
         pinNumberResolverStore,
         querystringStore,
+        selectedChatIdStore,
         selectedChatRulesStore,
         selectedCommunityRulesStore,
         subscribe,
@@ -25,7 +26,7 @@
     import { closeOnNavigation, type DialogStack } from "../../shell/dialogStack.svelte";
     import RulesDialog from "../conversation/RulesDialog.svelte";
     import PinPromptHost from "../pin/PinPromptHost.svelte";
-    import { waitingPrompt } from "../pin/pinPrompt";
+    import { declineOnChatChange, declinePrompt, waitingPrompt } from "../pin/pinPrompt";
     import AppEventDialogs from "./AppEventDialogs.svelte";
     import DialogScreen from "./DialogScreen.svelte";
     import {
@@ -63,6 +64,13 @@
     // what the client is waiting on to send: the rules, then the PIN
     const prompt = $derived(waitingPrompt($captureRulesAcceptanceStore, $pinNumberResolverStore));
 
+    // a navigation doesn't close them, but another chat declines them (pinPrompt.ts)
+    $effect(() => {
+        const waiting = prompt;
+        if (waiting.kind === "none") return;
+        return declineOnChatChange(selectedChatIdStore, () => declinePrompt(waiting));
+    });
+
     $effect(() => closeOnNavigation(stack));
     $effect(() => subscribe("profile", () => openLinked({ kind: "profile" })));
     $effect(() => subscribe("upgrade", () => openLinked({ kind: "diamond" })));
@@ -94,7 +102,7 @@
 
 <!-- sending in a chat whose rules the reader hasn't accepted asks for them first, and a transfer
      that needs the PIN asks for it; the client waits for the answer, so neither is one of the
-     dialogs a navigation closes -->
+     dialogs a navigation closes (another chat declines them, above) -->
 {#if prompt.kind === "rules"}
     <RulesDialog
         rules={client.combineRulesText($selectedChatRulesStore, $selectedCommunityRulesStore)}
