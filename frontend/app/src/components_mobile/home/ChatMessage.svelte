@@ -21,10 +21,10 @@
         currentUserStore,
         allUsersStore,
         bridgedFrom,
-        isDeletedUser,
         bridgedUserKey,
         bridgedUsersStore,
         type EnhancedReplyContext,
+        linkedAuthor,
         localUpdates,
         type Message,
         type MessageReminderCreatedContent,
@@ -232,6 +232,7 @@
             edited: msg.edited,
             isThreadRoot: msg.thread !== undefined,
             sourceContext: messageContext,
+            senderContext,
         };
     }
 
@@ -374,17 +375,11 @@
     let bridgedUser = $derived(
         bridged !== undefined ? $bridgedUsersStore.get(bridgedUserKey(bridged)!) : undefined,
     );
-    // The OpenChat user who linked the account the message was relayed from, shown as its author. If
-    // they've deleted their account, the account's own profile is shown again.
-    let linkedUser = $derived.by(() => {
-        const user =
-            bridgedUser?.linkedUserId !== undefined
-                ? $allUsersStore.get(bridgedUser.linkedUserId)
-                : undefined;
-        return user !== undefined && !isDeletedUser(user) ? user : undefined;
-    });
+    // The OpenChat user who linked the account the message was relayed from, shown as its author
+    let linkedUser = $derived(linkedAuthor(bridgedUser, $allUsersStore));
     // Those relayed from the user's own linked account look like their own messages. Editing,
-    // deleting, swiping and the menu still go by `me`, as the bridge bot sent them.
+    // deleting, swiping and the menu still go by `me`, as the bridge bot sent them, except for the
+    // options aimed at the author.
     let showAsMe = $derived(shouldShowAsMe(me, linkedUser?.userId, $currentUserIdStore));
     // A tip would go to the bridge bot, not the author shown
     let canTip = $derived(
@@ -563,6 +558,7 @@
                 {failed}
                 {canShare}
                 {me}
+                {showAsMe}
                 {canPin}
                 {canTip}
                 {pinned}
@@ -710,7 +706,7 @@
                                     {canShare}
                                     deleted={msg.deleted}
                                     {me}
-                                    alignEnd={showAsMe}
+                                    {showAsMe}
                                     {canReact}
                                     {canPin}
                                     {canTip}

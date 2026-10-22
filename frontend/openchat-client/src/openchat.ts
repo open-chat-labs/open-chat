@@ -389,6 +389,7 @@ import {
     bridgedUserIdsFromEvents,
     bridgedUserKey,
     buildBlobUrl,
+    isOwnMessage,
     isAndroidTauriApp,
     isIosTauriApp,
     isPrincipalValid,
@@ -494,6 +495,7 @@ import {
     serverDirectChatsStore,
     serverEventsStore,
     serverFavouritesStore,
+    serverThreadEventsStore,
     serverGroupChatsStore,
     serverMessageActivitySummaryStore,
     serverPinnedChatsStore,
@@ -516,6 +518,7 @@ import {
 } from "./state";
 import {
     currentChatVisit,
+    currentThreadVisit,
     eventsVisitFor,
     expandDeletedMessages,
     SelectedChat,
@@ -5263,6 +5266,7 @@ export class OpenChat {
         withPausedStores(() => {
             const context = { chatId, threadRootMessageIndex };
             const myUserId = currentUserIdStore.value;
+            const bridgedUsers = bridgedUsersStore.value;
             const now = BigInt(Date.now());
             const recentlyActiveCutOff = now - BigInt(12 * ONE_HOUR);
 
@@ -5313,13 +5317,7 @@ export class OpenChat {
                     if (localUpdates.deleteUnconfirmed(context, messageId)) {
                         messagesRead.confirmMessage(context, messageIndex, messageId);
                     }
-                    // If the message was sent by the current user, mark it as read
-                    if (
-                        event.event.sender === myUserId &&
-                        !messagesRead.isRead(context, messageIndex, messageId)
-                    ) {
-                        messagesRead.markMessageRead(context, messageIndex, messageId);
-                    }
+                    this.#markReadIfOwn(context, event.event, myUserId, bridgedUsers);
                     if (latestMessageIndex !== undefined && messageIndex > latestMessageIndex) {
                         newLatestMessage = event as EventWrapper<Message>;
                         latestMessageIndex = messageIndex;
@@ -7783,6 +7781,10 @@ export class OpenChat {
             );
         }
 
+        if (users.some((u) => u.linkedUserId === currentUserIdStore.value)) {
+            this.#markLoadedOwnMessagesRead();
+        }
+
         // A linked account's messages are shown as its OpenChat user's
         await this.getMissingUsers(users.flatMap((u) => u.linkedUserId ?? []));
     }
@@ -7808,7 +7810,7 @@ export class OpenChat {
     }
 
     // The accounts the user has linked to themself. They go in the store too, so the user's messages
-    // from a newly linked account show as theirs straight away.
+    // from a newly linked account show as theirs, and are read, straight away.
     async getLinkedBridgedUsers(): Promise<BridgedUserSummary[]> {
         const users = await this.#worker.send({ kind: "getLinkedBridgedUsers" });
         const now = Date.now();
@@ -7820,6 +7822,9 @@ export class OpenChat {
             }
             return map;
         });
+        if (users.length > 0) {
+            this.#markLoadedOwnMessagesRead();
+        }
         return users;
     }
 
@@ -9194,20 +9199,71 @@ export class OpenChat {
                     );
                 }
 
-                // If the latest message in a chat is sent by the current user, then we know they must have read up to
-                // that message, so we mark the chat as read up to that message if it isn't already. This happens when a
-                // user sends a message on one device then looks at OpenChat on another.
-                const latestMessage = chat.latestMessage?.event;
-                if (
-                    latestMessage !== undefined &&
-                    latestMessage.sender === currentUserIdStore.value &&
-                    (chat.membership?.readByMeUpTo ?? -1) < latestMessage.messageIndex &&
-                    !localUpdates.isUnconfirmed({ chatId: chat.id }, latestMessage.messageId)
-                ) {
-                    messagesRead.markReadUpTo({ chatId: chat.id }, latestMessage.messageIndex);
-                }
+                this.#markReadIfLatestMessageOwn(chat);
             }
         });
+    }
+
+    // If the latest message in a chat is the current user's, then we know they must have read up to
+    // that message, so we mark the chat as read up to that message if it isn't already. This
+    // happens when a user sends a message on one device then looks at OpenChat on another, or sends
+    // it from an account they've linked on another platform, eg. Telegram.
+    #markReadIfLatestMessageOwn(chat: ChatSummary): void {
+        const latestMessage = chat.latestMessage?.event;
+        if (
+            latestMessage !== undefined &&
+            !isPreviewing(chat) &&
+            isOwnMessage(latestMessage, currentUserIdStore.value, bridgedUsersStore.value) &&
+            (chat.membership?.readByMeUpTo ?? -1) < latestMessage.messageIndex &&
+            !localUpdates.isUnconfirmed({ chatId: chat.id }, latestMessage.messageId)
+        ) {
+            messagesRead.markReadUpTo({ chatId: chat.id }, latestMessage.messageIndex);
+        }
+    }
+
+    // The user's messages relayed from an account they've linked are read, like those they send.
+    // But the link only becomes known once the account's profile has been fetched, which can be
+    // after the messages have loaded, so they're marked read again then.
+    #markLoadedOwnMessagesRead(): void {
+        const myUserId = currentUserIdStore.value;
+        const bridgedUsers = bridgedUsersStore.value;
+        const markRead = (context: MessageContext, events: EventWrapper<ChatEvent>[]) => {
+            for (const e of events) {
+                if (e.event.kind === "message") {
+                    this.#markReadIfOwn(context, e.event, myUserId, bridgedUsers);
+                }
+            }
+        };
+        withPausedStores(() => {
+            const chatVisit = currentChatVisit();
+            if (chatVisit !== undefined) {
+                markRead({ chatId: chatVisit.chatId }, serverEventsStore.value);
+            }
+            const threadVisit = currentThreadVisit();
+            if (threadVisit !== undefined) {
+                const { chatId, threadRootMessageIndex } = threadVisit;
+                markRead({ chatId, threadRootMessageIndex }, serverThreadEventsStore.value);
+            }
+            allChatsStore.value.forEach((chat) => this.#markReadIfLatestMessageOwn(chat));
+        });
+    }
+
+    // The current user's messages are read, including those relayed from an account they've
+    // linked. Not in a chat they're only previewing, which has no read state on the server to sync
+    // with, so it would be sent again every time.
+    #markReadIfOwn(
+        context: MessageContext,
+        message: Message,
+        myUserId: string,
+        bridgedUsers: Map<string, BridgedUserSummary>,
+    ): void {
+        if (
+            isOwnMessage(message, myUserId, bridgedUsers) &&
+            !messagesRead.isRead(context, message.messageIndex, message.messageId) &&
+            !this.isPreviewing(context.chatId)
+        ) {
+            messagesRead.markMessageRead(context, message.messageIndex, message.messageId);
+        }
     }
 
     #validMouseEvent(e: MouseEvent) {

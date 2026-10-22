@@ -1542,6 +1542,7 @@ export class OpenChatAgent extends EventTarget {
                         isThreadRoot: msg.thread !== undefined,
                         sourceContext: messageContext,
                         moderationFlags: msg.moderationFlags,
+                        senderContext: msg.senderContext,
                     };
                 } else {
                     this._logger.log(
