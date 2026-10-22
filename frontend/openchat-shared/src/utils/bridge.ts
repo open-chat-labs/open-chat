@@ -23,7 +23,7 @@ export function bridgedFrom(senderContext: SenderContext | undefined): BridgedUs
 // Whether a message is shown as the user's own: one they sent, or one a bridge bot relayed from an
 // account they've linked. Only its look follows the link. What they can do with it, eg. edit or
 // delete it, still goes by who sent it, which for a relayed message is the bridge bot.
-export function shownAsMine(
+export function shouldShowAsMe(
     sentByMe: boolean,
     linkedUserId: string | undefined,
     currentUserId: string,

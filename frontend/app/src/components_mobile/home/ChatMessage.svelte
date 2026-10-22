@@ -36,7 +36,7 @@
         selectedChatBlockedUsersStore,
         type SelectedEmoji,
         type SenderContext,
-        shownAsMine,
+        shouldShowAsMe,
         translationsStore,
         unconfirmedReadByThem,
         undeletingMessagesStore,
@@ -385,7 +385,7 @@
     });
     // Those relayed from the user's own linked account look like their own messages. Editing,
     // deleting, swiping and the menu still go by `me`, as the bridge bot sent them.
-    let mine = $derived(shownAsMine(me, linkedUser?.userId, $currentUserIdStore));
+    let showAsMe = $derived(shouldShowAsMe(me, linkedUser?.userId, $currentUserIdStore));
     // A tip would go to the bridge bot, not the author shown
     let canTip = $derived(
         canTipMessages && !me && confirmed && !inert && !failed && bridged === undefined,
@@ -401,7 +401,7 @@
     );
     let fill = $derived(client.fillMessage(msg));
     let showAvatar = $derived(
-        chatType !== "direct_chat" && !mine && $screenWidth !== ScreenWidth.ExtraExtraSmall,
+        chatType !== "direct_chat" && !showAsMe && $screenWidth !== ScreenWidth.ExtraExtraSmall,
     );
     let translated = $derived($translationsStore.has(msg.messageId));
     let threadSummary = $derived(msg.thread);
@@ -648,7 +648,7 @@
                 padding={last ? ["zero", "zero", "sm", "zero"] : "zero"}
                 gap={"sm"}
                 overflow={"visible"}
-                mainAxisAlignment={mine ? "end" : "start"}
+                mainAxisAlignment={showAsMe ? "end" : "start"}
                 {pan}>
                 {#if showAvatar}
                     <div class:first class="avatar">
@@ -668,7 +668,7 @@
                 <Container
                     supplementalClass={"message_bubble_wrapper"}
                     overflow={"visible"}
-                    crossAxisAlignment={mine ? "end" : "start"}
+                    crossAxisAlignment={showAsMe ? "end" : "start"}
                     width={"hug"}
                     maxWidth={chatId.kind === "direct_chat" ? "78vw" : "75vw"}
                     gap={"xxs"}
@@ -710,7 +710,7 @@
                                     {canShare}
                                     deleted={msg.deleted}
                                     {me}
-                                    alignEnd={mine}
+                                    alignEnd={showAsMe}
                                     {canReact}
                                     {canPin}
                                     {canTip}
@@ -815,11 +815,11 @@
                             {threadSummary}
                             {chatId}
                             threadRootMessageIndex={msg.messageIndex}
-                            me={mine} />
+                            me={showAsMe} />
                     {/if}
                     {#if hasReactions}
                         <Reactions
-                            me={mine}
+                            me={showAsMe}
                             onClick={({ reaction }) => toggleReaction(false, reaction)}
                             {intersecting}
                             reactions={msg.reactions}
@@ -827,7 +827,7 @@
                     {/if}
                     {#if hasTips && !inert}
                         <Tips
-                            me={mine}
+                            me={showAsMe}
                             tips={msg.tips}
                             onClick={tipMessage}
                             {canTip}

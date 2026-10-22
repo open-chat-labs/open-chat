@@ -204,7 +204,7 @@ design export needs. Each entry says where it came up.
   trees show it as the OpenChat user who linked the account, with their name, avatar and badges
   (`linkedUser` in both `ChatMessage.svelte`s), or as the account's own profile if no one has, with
   the platform's badge. One from the viewer's own linked account looks like their own message
-  (`shownAsMine` in `@client`), though editing and deleting it still go by the sender, the bot.
+  (`shouldShowAsMe` in `@client`), though editing and deleting it still go by the sender, the bot.
 - **Composer, first cut** (`features/conversation/Composer.svelte`, phase 3c): text only.
   Attachments, GIFs, voice, replies, edits and the "+" menu are phase 5 (`MessageComposer` hides
   "+" and the GIF tab without their handlers). There's no @mention picker (typed @usernames are

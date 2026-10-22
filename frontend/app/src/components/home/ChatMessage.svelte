@@ -4,7 +4,7 @@
     import Typing from "@shared_components/Typing.svelte";
     import { trackedEffect } from "@src/utils/effects.svelte";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
-    import { allUsersStore, AvatarSize, isDeletedUser, type ChatIdentifier, chatIdentifiersEqual, chatListScopeStore, type ChatType, BRIDGE_PLATFORM_NAMES, bridgedAuthorName, bridgedFrom, bridgedUserKey, bridgedUsersStore, currentUserIdStore, currentUserStore, type EnhancedReplyContext, iconSize, localUpdates, type Member, type Message, type MessageReminderCreatedContent, mobileWidth, OpenChat, publish, routeForMessage, routeStore, screenWidth, ScreenWidth, selectedChatBlockedUsersStore, selectedChatMembersStore, selectedChatWebhooksStore, selectedCommunityMembersStore, type SelectedEmoji, selectedServerChatStore, type SenderContext, shownAsMine, translationsStore, unconfirmedReadByThem, undeletingMessagesStore, type UserSummary } from "@client";
+    import { allUsersStore, AvatarSize, isDeletedUser, type ChatIdentifier, chatIdentifiersEqual, chatListScopeStore, type ChatType, BRIDGE_PLATFORM_NAMES, bridgedAuthorName, bridgedFrom, bridgedUserKey, bridgedUsersStore, currentUserIdStore, currentUserStore, type EnhancedReplyContext, iconSize, localUpdates, type Member, type Message, type MessageReminderCreatedContent, mobileWidth, OpenChat, publish, routeForMessage, routeStore, screenWidth, ScreenWidth, selectedChatBlockedUsersStore, selectedChatMembersStore, selectedChatWebhooksStore, selectedCommunityMembersStore, type SelectedEmoji, selectedServerChatStore, type SenderContext, shouldShowAsMe, translationsStore, unconfirmedReadByThem, undeletingMessagesStore, type UserSummary } from "@client";
     import { getContext, onDestroy, onMount, tick } from "svelte";
     import { _, locale } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
@@ -428,7 +428,7 @@
     let author = $derived(linkedUser ?? sender);
     // Those relayed from the user's own linked account look like their own messages. Editing,
     // deleting and the menu still go by `me`, as the bridge bot sent them.
-    let mine = $derived(shownAsMine(me, linkedUser?.userId, $currentUserIdStore));
+    let showAsMe = $derived(shouldShowAsMe(me, linkedUser?.userId, $currentUserIdStore));
     let streak = $derived(author?.streak ?? 0);
     let chitEarned = $derived(author?.totalChitEarned ?? 0);
     let hasAchievedMaxStreak = $derived((author?.maxStreak ?? 0) >= 365);
@@ -570,7 +570,7 @@
                 <div
                     bind:this={msgElement}
                     class="message"
-                    class:me={mine}
+                    class:me={showAsMe}
                     data-index={failed ? "" : msg.messageIndex}
                     data-id={failed ? "" : msg.messageId}
                     id={failed ? "" : `event-${eventIndex}`}>
@@ -611,7 +611,7 @@
                             class:focused
                             class:editing
                             class:fill={fill && !inert}
-                            class:me={mine}
+                            class:me={showAsMe}
                             class:inert
                             class:collapsed
                             class:first
@@ -670,7 +670,7 @@
                                     <div>
                                         <ForwardIcon
                                             size={$iconSize}
-                                            color={mine
+                                            color={showAsMe
                                                 ? "var(--currentChat-msg-me-muted)"
                                                 : "var(--currentChat-msg-muted)"} />
                                     </div>
@@ -695,7 +695,7 @@
                                 senderId={msg.sender}
                                 {readonly}
                                 {fill}
-                                me={mine}
+                                me={showAsMe}
                                 {messageContext}
                                 {collapsed}
                                 {undeleting}
@@ -721,7 +721,7 @@
                                     {timestamp}
                                     {expiresAt}
                                     {percentageExpired}
-                                    me={mine}
+                                    me={showAsMe}
                                     bot={sender?.kind === "bot"}
                                     {accepted}
                                     {failed}
@@ -870,12 +870,12 @@
                             $routeStore.open}
                         {threadSummary}
                         indent={showAvatar}
-                        me={mine}
+                        me={showAsMe}
                         url={msgUrl} />
                 {/if}
 
                 {#if msg.reactions.length > 0 && !inert}
-                    <div class="message-reactions" class:me={mine} class:indent={showAvatar}>
+                    <div class="message-reactions" class:me={showAsMe} class:indent={showAvatar}>
                         {#each msg.reactions as { reaction, userIds } (reaction)}
                             <MessageReaction
                                 onClick={() => toggleReaction(false, reaction)}
