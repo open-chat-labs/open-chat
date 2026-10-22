@@ -13,12 +13,12 @@ export interface GovernanceError {
   'error_type' : number,
 }
 export interface ListNeurons {
-  'neuron_ids' : BigUint64Array | bigint[],
-  'include_neurons_readable_by_caller' : boolean,
-  'include_empty_neurons_readable_by_caller' : [] | [boolean],
-  'include_public_neurons_in_full_neurons' : [] | [boolean],
-  'page_number' : [] | [bigint],
   'page_size' : [] | [bigint],
+  'include_public_neurons_in_full_neurons' : [] | [boolean],
+  'neuron_ids' : BigUint64Array | bigint[],
+  'page_number' : [] | [bigint],
+  'include_empty_neurons_readable_by_caller' : [] | [boolean],
+  'include_neurons_readable_by_caller' : boolean,
 }
 export interface ListNeuronsResponse {
   'full_neurons' : Array<Neuron>,
@@ -39,6 +39,9 @@ export interface ManageNeuron {
   'command' : [] | [Command],
 }
 export interface ManageNeuronResponse { 'command' : [] | [Command_1] }
+export interface NetworkEconomics {
+  'voting_power_economics' : [] | [VotingPowerEconomics],
+}
 export interface Neuron {
   'id' : [] | [NeuronId],
   'dissolve_state' : [] | [DissolveState],
@@ -56,7 +59,11 @@ export interface Tally {
   'total' : bigint,
   'timestamp_seconds' : bigint,
 }
+export interface VotingPowerEconomics {
+  'neuron_minimum_dissolve_delay_to_vote_seconds' : [] | [bigint],
+}
 export interface _SERVICE {
+  'get_network_economics_parameters' : ActorMethod<[], NetworkEconomics>,
   'list_neurons' : ActorMethod<[ListNeurons], ListNeuronsResponse>,
   'list_proposals' : ActorMethod<[ListProposalInfo], ListProposalInfoResponse>,
   'manage_neuron' : ActorMethod<[ManageNeuron], ManageNeuronResponse>,

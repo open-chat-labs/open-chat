@@ -2046,6 +2046,11 @@
             "urlRules": "補足詳細へのリンク"
         },
         "neuronControllerAction": "ニューロン コントローラーのアクション",
+        "neuronDissolveDelayTooShort": "解散遅延（{delay} 日）が投票に必要な {minimum} 日より短いです",
+        "neuronNotEligible": "提案が提出された時点で投票資格がありませんでした",
+        "neuronVoteRejected": "投票が拒否されました: {message}",
+        "neuronVotesFailed": "ニューロンが投票できませんでした",
+        "neuronVotesFailedIntro": "この提案に投票できるニューロンがありませんでした:",
         "noEligibleNeurons": "適格なニューロンが見つかりません",
         "noEligibleNeuronsMoreInfo": "投票とガバナンスの詳細については、<a target=\"_blank\" href=\"https://oc.app/blog/governance\">このブログ投稿を</a>参照してください。",
         "noEligibleNeuronsPrincipalIntro": "適格なニューロンまたはリンクされたニューロンが見つかりません。 OpenChat 内から提案に投票するには、まず OpenChat プリンシパルをホットキーとして投票したいニューロンに追加する必要があります。",
@@ -2073,7 +2078,7 @@
                 "regular": "提案が採択されるためには、以下の2つの条件を満たす必要があります。"
             }
         },
-        "proposalNotAceptingVotes": "この提案は投票を受け付けていません-ページをリロードしてみてください",
+        "proposalNotAcceptingVotes": "この提案は投票を受け付けていません-ページをリロードしてみてください",
         "proposalsBotAction": "提案ボット アクション",
         "proposedBy": "によって提案されました",
         "readless": "もっと読む",

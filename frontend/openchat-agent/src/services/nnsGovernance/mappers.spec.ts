@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import type { ApiListNeuronsResponse } from "./candid/idl";
-import { neuronIds } from "./mappers";
+import { minimumDissolveDelayToVoteSeconds, votingNeurons } from "./mappers";
 
 const NOW = BigInt(1_000_000) * BigInt(1000);
 
@@ -8,8 +8,8 @@ function response(neurons: ApiListNeuronsResponse["full_neurons"]): ApiListNeuro
     return { full_neurons: neurons, total_pages_available: [BigInt(1)] };
 }
 
-describe("NNS neuronIds", () => {
-    test("keeps neurons which are not dissolved", () => {
+describe("NNS votingNeurons", () => {
+    test("keeps neurons which are not dissolved, with their dissolve delays", () => {
         const resp = response([
             { id: [{ id: BigInt(1) }], dissolve_state: [{ DissolveDelaySeconds: BigInt(100) }] },
             {
@@ -17,7 +17,10 @@ describe("NNS neuronIds", () => {
                 dissolve_state: [{ WhenDissolvedTimestampSeconds: BigInt(1_000_001) }],
             },
         ]);
-        expect(neuronIds(resp, NOW)).toEqual(["1", "2"]);
+        expect(votingNeurons(resp, NOW)).toEqual([
+            { id: "1", dissolveDelaySeconds: BigInt(100) },
+            { id: "2", dissolveDelaySeconds: BigInt(1) },
+        ]);
     });
 
     test("drops neurons which are dissolved or have no id", () => {
@@ -30,6 +33,19 @@ describe("NNS neuronIds", () => {
             { id: [{ id: BigInt(3) }], dissolve_state: [] },
             { id: [], dissolve_state: [{ DissolveDelaySeconds: BigInt(100) }] },
         ]);
-        expect(neuronIds(resp, NOW)).toEqual([]);
+        expect(votingNeurons(resp, NOW)).toEqual([]);
+    });
+});
+
+describe("NNS minimumDissolveDelayToVoteSeconds", () => {
+    test("reads the minimum from the voting power economics", () => {
+        expect(
+            minimumDissolveDelayToVoteSeconds({
+                voting_power_economics: [
+                    { neuron_minimum_dissolve_delay_to_vote_seconds: [BigInt(15_778_800)] },
+                ],
+            }),
+        ).toBe(BigInt(15_778_800));
+        expect(minimumDissolveDelayToVoteSeconds({ voting_power_economics: [] })).toBeUndefined();
     });
 });

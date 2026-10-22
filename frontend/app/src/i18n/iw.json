@@ -2046,6 +2046,11 @@
             "urlRules": "קישור לפרטים משלימים"
         },
         "neuronControllerAction": "פעולות בקר נוירון",
+        "neuronDissolveDelayTooShort": "עיכוב הפירוק שלו ({delay} ימים) קצר מ-{minimum} הימים הנדרשים להצבעה",
+        "neuronNotEligible": "הוא לא היה זכאי להצביע כשההצעה הוגשה",
+        "neuronVoteRejected": "ההצבעה נדחתה: {message}",
+        "neuronVotesFailed": "הנוירונים שלך לא יכלו להצביע",
+        "neuronVotesFailedIntro": "אף אחד מהנוירונים שלך לא יכול היה להצביע על ההצעה הזו:",
         "noEligibleNeurons": "לא נמצאו נוירונים מתאימים",
         "noEligibleNeuronsMoreInfo": "למידע נוסף על הצבעה וממשל קרא <a target=\"_blank\" href=\"https://oc.app/blog/governance\">פוסט זה בבלוג</a> .",
         "noEligibleNeuronsPrincipalIntro": "לא נמצאו נוירונים מתאימים או מקושרים. על מנת להצביע על הצעות מתוך OpenChat, עליך להוסיף תחילה את ה-principal שלך ב-OpenChat כמקש קיצור לכל נוירונים שאתה רוצה להצביע איתם.",
@@ -2073,7 +2078,7 @@
                 "regular": "שני התנאים הבאים צריכים להתקיים כדי שההצעה תתקבל:"
             }
         },
-        "proposalNotAceptingVotes": "הצעה זו אינה מקבלת הצבעות - נסה לטעון מחדש את הדף",
+        "proposalNotAcceptingVotes": "הצעה זו אינה מקבלת הצבעות - נסה לטעון מחדש את הדף",
         "proposalsBotAction": "הצעות פעולות בוט",
         "proposedBy": "הוצע על ידי",
         "readless": "תקרא פחות",

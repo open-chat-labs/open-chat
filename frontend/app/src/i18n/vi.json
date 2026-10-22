@@ -2046,6 +2046,11 @@
             "urlRules": "liên kết đến chi tiết bổ sung"
         },
         "neuronControllerAction": "Hành động điều khiển nơ-ron",
+        "neuronDissolveDelayTooShort": "Thời gian trì hoãn giải thể ({delay} ngày) ít hơn {minimum} ngày cần thiết để bỏ phiếu",
+        "neuronNotEligible": "Nó không đủ điều kiện bỏ phiếu khi đề xuất được gửi",
+        "neuronVoteRejected": "Phiếu bầu đã bị từ chối: {message}",
+        "neuronVotesFailed": "Các neuron của bạn không thể bỏ phiếu",
+        "neuronVotesFailedIntro": "Không neuron nào của bạn có thể bỏ phiếu cho đề xuất này:",
         "noEligibleNeurons": "Không tìm thấy tế bào thần kinh đủ điều kiện",
         "noEligibleNeuronsMoreInfo": "Để biết thêm thông tin về bỏ phiếu và quản trị, hãy đọc <a target=\"_blank\" href=\"https://oc.app/blog/governance\">bài đăng trên blog này</a> .",
         "noEligibleNeuronsPrincipalIntro": "Không tìm thấy tế bào thần kinh đủ điều kiện hoặc liên kết. Để bỏ phiếu cho các đề xuất từ bên trong OpenChat, trước tiên bạn phải thêm principal OpenChat của mình làm phím nóng cho bất kỳ nơ-ron nào mà bạn muốn bỏ phiếu.",
@@ -2073,7 +2078,7 @@
                 "regular": "Để một đề xuất được thông qua, cần phải đáp ứng hai điều kiện sau:"
             }
         },
-        "proposalNotAceptingVotes": "Đề xuất này không chấp nhận phiếu bầu - hãy thử tải lại trang",
+        "proposalNotAcceptingVotes": "Đề xuất này không chấp nhận phiếu bầu - hãy thử tải lại trang",
         "proposalsBotAction": "Hành động bot đề xuất",
         "proposedBy": "đề nghị bởi",
         "readless": "Đọc ít hơn",

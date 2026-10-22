@@ -2046,6 +2046,11 @@
             "urlRules": "رابط للتفاصيل التكميلية"
         },
         "neuronControllerAction": "إجراءات وحدة التحكم العصبية",
+        "neuronDissolveDelayTooShort": "تأخير الحل الخاص به ({delay} يومًا) أقل من {minimum} يومًا اللازمة للتصويت",
+        "neuronNotEligible": "لم يكن مؤهلاً للتصويت عند تقديم الاقتراح",
+        "neuronVoteRejected": "تم رفض التصويت: {message}",
+        "neuronVotesFailed": "تعذّر على الخلايا العصبية الخاصة بك التصويت",
+        "neuronVotesFailedIntro": "لم تتمكن أي من الخلايا العصبية الخاصة بك من التصويت على هذا الاقتراح:",
         "noEligibleNeurons": "لم يتم العثور على الخلايا العصبية المؤهلة",
         "noEligibleNeuronsMoreInfo": "لمزيد من المعلومات حول التصويت والحوكمة، اقرأ <a target=\"_blank\" href=\"https://oc.app/blog/governance\">منشور المدونة هذا</a>.",
         "noEligibleNeuronsPrincipalIntro": "لم يتم العثور على أي خلايا عصبية مؤهلة أو مرتبطة. للتصويت على المقترحات من داخل OpenChat، يجب عليك أولاً إضافة معرّف principal الخاص بك في OpenChat كمفتاح سريع لأي خلايا عصبية ترغب في التصويت بها.",
@@ -2073,7 +2078,7 @@
                 "regular": "يجب استيفاء الشرطين التاليين لاعتماد أي اقتراح:"
             }
         },
-        "proposalNotAceptingVotes": "هذا الاقتراح لا يقبل الأصوات - حاول إعادة تحميل الصفحة",
+        "proposalNotAcceptingVotes": "هذا الاقتراح لا يقبل الأصوات - حاول إعادة تحميل الصفحة",
         "proposalsBotAction": "اقتراحات إجراءات الروبوت",
         "proposedBy": "مقترح من قبل",
         "readless": "اقرأ أقل",

@@ -54,7 +54,8 @@ design export needs. Each entry says where it came up.
 - **GIFs**: `MessageComposer` shows placeholder GIF tiles (`GIF_WORDS`) and has no results prop;
   only `onGif(query)` goes out. The app searches Giphy today.
 - **Proposals**: `ProposalMessage` isn't in the `GroupMessage` union, so `MessageGroup` can't
-  render proposal chats.
+  render proposal chats. When it can, a vote that comes back `neuron_votes_failed` should list each
+  neuron with its reason, as the old UI does.
 - **Thread replies**: `ThreadPanel` renders replies with no react / menu / reply / edit handlers.
 - **Composer banner**: `ComposerBar` takes `bannerAction` as a label but doesn't pass a handler
   through to `Banner`.

@@ -145,6 +145,7 @@ import type {
     RegisterPollVoteResponse,
     RegisterProposalVoteResponse,
     ManageNeuronResponse,
+    NeuronVoteFailureReason,
     RegisterUserResponse,
     RegistryValue,
     RemoveHotGroupExclusionResponse,
@@ -305,6 +306,7 @@ import { createHttpAgentSync } from "../utils/httpAgent";
 import { icNowNanos } from "../utils/icTime";
 import { chunk, distinctBy, toRecord, toRecord2 } from "../utils/list";
 import { bytesToHexString, mapOptional } from "../utils/mapping";
+import type { VotingNeuron } from "./common/neurons";
 import { mergeAccountTransactions } from "../utils/accountTransactions";
 import { mean } from "../utils/maths";
 import { extractMessagePreviews } from "@shared";
@@ -370,6 +372,33 @@ function emptyResolvedMessagePreviews(): ResolvedMessagePreviews {
 }
 
 const NNS_ERROR_TYPE_NEURON_ALREADY_VOTED = 19;
+
+type ManageNeuronError = Extract<ManageNeuronResponse, { kind: "error" }>;
+
+type NeuronVote = {
+    neuronId: string;
+    dissolveDelaySeconds: bigint;
+    outcome: ManageNeuronResponse;
+};
+
+async function voteWithEach<Id>(
+    neurons: VotingNeuron<Id>[],
+    idToString: (id: Id) => string,
+    vote: (id: Id) => Promise<ManageNeuronResponse>,
+): Promise<NeuronVote[]> {
+    const outcomes = await Promise.allSettled(neurons.map((n) => vote(n.id)));
+    return neurons.map((n, i) => {
+        const outcome = outcomes[i];
+        return {
+            neuronId: idToString(n.id),
+            dissolveDelaySeconds: n.dissolveDelaySeconds,
+            outcome:
+                outcome.status === "fulfilled"
+                    ? outcome.value
+                    : { kind: "error", type: -1, message: String(outcome.reason) },
+        };
+    });
+}
 const MAX_CONCURRENT_PREVIOUS_WALLET_BALANCE_CHECKS = 10;
 // The most ledgers the LocalUserIndex moves funds from in one call
 const MAX_LEDGERS_PER_FUNDS_MOVE = 20;
@@ -3975,58 +4004,83 @@ export class OpenChatAgent extends EventTarget {
     // Lists the neurons the user's principal controls or is hot-keyed to, then votes with each of
     // them in parallel. The vote counts as cast if any neuron's vote is accepted, or if any neuron
     // had already voted (eg. via the NNS dapp), so that the vote still gets recorded in OpenChat.
-    // Other neurons will typically have failed because they are not eligible for this proposal.
+    // Otherwise each neuron is returned with the reason its vote failed, which is typically that
+    // it wasn't eligible for this proposal.
     private async voteWithNeurons(
         governanceCanisterId: string,
         proposalId: bigint,
         isNns: boolean,
         adopt: boolean,
     ): Promise<RegisterProposalVoteResponse> {
-        let votes: PromiseSettledResult<ManageNeuronResponse>[];
+        let votes: NeuronVote[];
+        let minimumDissolveDelayToVoteSeconds: () => Promise<bigint | undefined>;
         if (isNns) {
             const client = new NnsGovernanceClient(
                 this.identity,
                 this._agent,
                 governanceCanisterId,
             );
-            const neuronIds = await client.listNeurons();
-            if (neuronIds.length === 0) return noEligibleNeurons();
-            votes = await Promise.allSettled(
-                neuronIds.map((id) => client.registerVote(id, proposalId, adopt)),
+            const neurons = await client.listNeurons();
+            if (neurons.length === 0) return noEligibleNeurons();
+            votes = await voteWithEach(
+                neurons,
+                (id) => id,
+                (id) => client.registerVote(id, proposalId, adopt),
             );
+            minimumDissolveDelayToVoteSeconds = () => client.minimumDissolveDelayToVoteSeconds();
         } else {
             const client = new SnsGovernanceClient(
                 this.identity,
                 this._agent,
                 governanceCanisterId,
             );
-            const neuronIds = await client.listNeurons();
-            if (neuronIds.length === 0) return noEligibleNeurons();
-            votes = await Promise.allSettled(
-                neuronIds.map((id) => client.registerVote(id, proposalId, adopt)),
+            const neurons = await client.listNeurons();
+            if (neurons.length === 0) return noEligibleNeurons();
+            votes = await voteWithEach(neurons, bytesToHexString, (id) =>
+                client.registerVote(id, proposalId, adopt),
             );
+            minimumDissolveDelayToVoteSeconds = () => client.minimumDissolveDelayToVoteSeconds();
         }
 
-        const outcomes: ManageNeuronResponse[] = votes.map((v) =>
-            v.status === "fulfilled"
-                ? v.value
-                : { kind: "error", type: -1, message: String(v.reason) },
-        );
-
-        if (outcomes.some((o) => o.kind === "success" || isAlreadyVoted(o, isNns))) {
+        if (votes.some((v) => v.outcome.kind === "success" || isAlreadyVoted(v.outcome, isNns))) {
             return CommonResponses.success();
         }
 
-        this.config.logger.error("Failed to vote with any neuron", outcomes);
-        const first = outcomes.find((o) => o.kind === "error");
-        return {
-            kind: "error",
-            code:
-                first !== undefined && isNotAcceptingVotes(first)
-                    ? ErrorCode.ProposalNotAcceptingVotes
-                    : ErrorCode.Unknown,
-            message: first?.kind === "error" ? first.message : undefined,
-        };
+        const errors = votes.flatMap((v) =>
+            v.outcome.kind === "error" ? [{ ...v, error: v.outcome }] : [],
+        );
+
+        if (errors.some((e) => isNotAcceptingVotes(e.error))) {
+            this.config.logger.error("Failed to vote with any neuron", votes);
+            return {
+                kind: "error",
+                code: ErrorCode.ProposalNotAcceptingVotes,
+                message: errors[0]?.error.message,
+            };
+        }
+
+        // Only needed to explain why a neuron isn't eligible
+        let minimumSeconds: bigint | undefined;
+        if (errors.some((e) => isNotEligible(e.error))) {
+            try {
+                minimumSeconds = await minimumDissolveDelayToVoteSeconds();
+            } catch (err) {
+                console.warn("Unable to get the minimum dissolve delay to vote", err);
+            }
+        }
+
+        const failures = errors.map(({ neuronId, dissolveDelaySeconds, error }) => ({
+            neuronId,
+            reason: failureReason(error, dissolveDelaySeconds, minimumSeconds),
+        }));
+
+        // Ineligible neurons are the user's to fix, so only report other failures
+        if (failures.some((f) => f.reason.kind === "rejected")) {
+            this.config.logger.error("Failed to vote with any neuron", votes);
+        } else {
+            console.warn("None of the user's neurons are eligible to vote", failures);
+        }
+        return { kind: "neuron_votes_failed", failures };
 
         function noEligibleNeurons(): RegisterProposalVoteResponse {
             return { kind: "error", code: ErrorCode.NoEligibleNeurons, message: undefined };
@@ -4042,10 +4096,25 @@ export class OpenChatAgent extends EventTarget {
 
         // Best effort: both canisters report a closed proposal as a precondition failure whose
         // message mentions the deadline
-        function isNotAcceptingVotes(outcome: ManageNeuronResponse): boolean {
-            return (
-                outcome.kind === "error" && /deadline|not accepting votes/i.test(outcome.message)
-            );
+        function isNotAcceptingVotes(error: ManageNeuronError): boolean {
+            return /deadline|not accepting votes/i.test(error.message);
+        }
+
+        // The neuron has no ballot, because it wasn't eligible when the proposal was submitted.
+        // SNS governance says "not eligible", NNS governance says "not authorized".
+        function isNotEligible(error: ManageNeuronError): boolean {
+            return /not (eligible|authorized) to vote on proposal/i.test(error.message);
+        }
+
+        function failureReason(
+            error: ManageNeuronError,
+            dissolveDelaySeconds: bigint,
+            minimumSeconds: bigint | undefined,
+        ): NeuronVoteFailureReason {
+            if (!isNotEligible(error)) return { kind: "rejected", message: error.message };
+            return minimumSeconds !== undefined && dissolveDelaySeconds < minimumSeconds
+                ? { kind: "dissolve_delay_too_short", dissolveDelaySeconds, minimumSeconds }
+                : { kind: "not_eligible" };
         }
     }
 

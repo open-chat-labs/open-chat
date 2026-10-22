@@ -43,17 +43,20 @@ export interface ManageNeuron {
   'command' : [] | [Command],
 }
 export interface ManageNeuronResponse { 'command' : [] | [Command_1] }
-export interface Neuron {
-  'id' : [] | [NeuronId],
-  'dissolve_state' : [] | [DissolveState],
-}
-export interface NeuronId { 'id' : Uint8Array | number[] }
 export interface NervousSystemFunction {
   'id' : bigint,
   'name' : string,
   'description' : [] | [string],
   'function_type' : [] | [FunctionType],
 }
+export interface NervousSystemParameters {
+  'neuron_minimum_dissolve_delay_to_vote_seconds' : [] | [bigint],
+}
+export interface Neuron {
+  'id' : [] | [NeuronId],
+  'dissolve_state' : [] | [DissolveState],
+}
+export interface NeuronId { 'id' : Uint8Array | number[] }
 export interface ProposalData {
   'id' : [] | [ProposalId],
   'ballots' : Array<[string, Ballot]>,
@@ -71,6 +74,10 @@ export interface Tally {
   'timestamp_seconds' : bigint,
 }
 export interface _SERVICE {
+  'get_nervous_system_parameters' : ActorMethod<
+    [null],
+    NervousSystemParameters
+  >,
   'list_nervous_system_functions' : ActorMethod<
     [],
     ListNervousSystemFunctionsResponse

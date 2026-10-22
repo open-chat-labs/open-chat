@@ -1,6 +1,11 @@
-import type { ApiListNeuronsResponse, ApiListProposalInfoResponse } from "./candid/idl";
+import type {
+    ApiListNeuronsResponse,
+    ApiListProposalInfoResponse,
+    ApiNetworkEconomics,
+} from "./candid/idl";
 import type { ManageNeuronResponse, ProposalVoteDetails } from "@shared";
 import { proposalVote } from "../common/chatMappers";
+import { type VotingNeuron, notDissolved } from "../common/neurons";
 import type { ApiManageNeuronResponse } from "./candid/idl";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
@@ -48,16 +53,22 @@ export function getProposalVoteDetails(
     };
 }
 
-// The ids of the neurons which are not dissolved, and so may be able to vote
-export function neuronIds(candid: ApiListNeuronsResponse, nowMillis: bigint): string[] {
-    return candid.full_neurons
-        .filter((n) => {
-            const state = n.dissolve_state[0];
-            if (state === undefined) return false;
-            if ("WhenDissolvedTimestampSeconds" in state) {
-                return state.WhenDissolvedTimestampSeconds * BigInt(1000) >= nowMillis;
-            }
-            return state.DissolveDelaySeconds > BigInt(0);
-        })
-        .flatMap((n) => (n.id[0] !== undefined ? [n.id[0].id.toString()] : []));
+// The neurons which are not dissolved, and so may be able to vote
+export function votingNeurons(
+    candid: ApiListNeuronsResponse,
+    nowMillis: bigint,
+): VotingNeuron<string>[] {
+    return notDissolved(
+        candid.full_neurons.map((n) => ({
+            id: n.id[0]?.id.toString(),
+            dissolveState: n.dissolve_state[0],
+        })),
+        nowMillis,
+    );
+}
+
+export function minimumDissolveDelayToVoteSeconds(
+    candid: ApiNetworkEconomics,
+): bigint | undefined {
+    return candid.voting_power_economics[0]?.neuron_minimum_dissolve_delay_to_vote_seconds[0];
 }
