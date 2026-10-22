@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove the fire-and-forget handler, which nothing has sent through since the switch to event queues ([#10172](https://github.com/open-chat-labs/open-chat/pull/10172))
+
 ## [[2.0.2182](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2182-proposals_bot)] - 2026-10-22
 
 ### Changed

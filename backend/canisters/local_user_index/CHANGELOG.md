@@ -9,6 +9,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - Remove the `_json` versions of the bot endpoints, as bots can't use JSON any more ([#10152](https://github.com/open-chat-labs/open-chat/pull/10152))
+- Remove the one-off which moved what the replaced queue held onto the event queue, now that it has run ([#10172](https://github.com/open-chat-labs/open-chat/pull/10172))
+- Remove the old names of the endpoints which the event endpoints replaced, as nothing calls them any more ([#10172](https://github.com/open-chat-labs/open-chat/pull/10172))
 
 ## [[2.0.2175](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2175-local_user_index)] - 2026-10-22
 
