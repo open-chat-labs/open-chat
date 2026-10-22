@@ -5,6 +5,7 @@
     import {
         consumePendingDeepLink,
         consumePendingNotificationTap,
+        openDeepLink,
     } from "@utils/native/notification_channels";
     import { handleLinkClick, removeQueryStringParam } from "@src/utils/urls";
     import type { TransitionType } from "component-lib";
@@ -347,13 +348,8 @@
                 untrack(() => runCallAction(callAction));
             } else if (deepLink) {
                 untrack(() => {
-                    try {
-                        const { pathname, search } = new URL(deepLink);
-                        navigate(pathname + search, "notification");
-                    } catch {
-                        console.error("Deep link: failed to parse cold-start URL", deepLink);
-                        client.selectDefaultChat();
-                    }
+                    // a landing page link opens outside the app, so show the default chat here
+                    if (!openDeepLink(deepLink)) client.selectDefaultChat();
                 });
             } else if (tapPath) {
                 untrack(() => navigate(tapPath, "notification"));

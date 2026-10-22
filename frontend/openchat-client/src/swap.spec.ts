@@ -380,3 +380,39 @@ describe("how a swap ended", () => {
         ).toMatchObject({ kind: "failed", message: { key: "tokenSwap.progress.unknown" } });
     });
 });
+
+describe("who may open swap", () => {
+    let client: OpenChat;
+
+    beforeEach(() => {
+        vi.stubGlobal("Worker", FakeWorker);
+        client = new OpenChat(config());
+    });
+
+    afterEach(() => {
+        vi.unstubAllGlobals();
+        vi.restoreAllMocks();
+        currentUserStore.set(anonymousUser());
+    });
+
+    function from(location: string | undefined, isPlatformOperator = false) {
+        currentUserStore.set({ ...anonymousUser(), userId: "me", isPlatformOperator });
+        vi.spyOn(client, "getUserLocation").mockResolvedValue(location);
+    }
+
+    // Invariant: a user in a restricted location can't reach the swap form, operators excepted.
+    // Desktop (Accounts) and mobile (SlidingModals) both ask swapRestricted before opening swap
+    test("a user in a restricted location, or one we can't place, is refused", async () => {
+        from("GB");
+        expect(await client.swapRestricted()).toBe(true);
+        from(undefined);
+        expect(await client.swapRestricted()).toBe(true);
+    });
+
+    test("a user elsewhere, or a platform operator anywhere, may swap", async () => {
+        from("FR");
+        expect(await client.swapRestricted()).toBe(false);
+        from("GB", true);
+        expect(await client.swapRestricted()).toBe(false);
+    });
+});
