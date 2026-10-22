@@ -191,6 +191,7 @@
         "translatedFrom": "端末で{language}から翻訳"
     },
     "bridgedAccounts": {
+        "comingSoon": "近日公開",
         "info": "他のプラットフォームのアカウントを連携すると、それらのアカウントがブリッジ経由で OpenChat に送ったメッセージがあなたのものとして表示されます。",
         "link": "{platform} を連携",
         "linkFailed": "{platform} アカウントの連携を開始できませんでした",

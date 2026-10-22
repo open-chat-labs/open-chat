@@ -191,6 +191,7 @@
         "translatedFrom": "تُرجمت على الجهاز من {language}"
     },
     "bridgedAccounts": {
+        "comingSoon": "قريباً",
         "info": "اربط حساباتك على المنصات الأخرى، لتظهر الرسائل التي ترسلها إلى OpenChat عبر جسورنا باسمك.",
         "link": "ربط {platform}",
         "linkFailed": "تعذّر بدء ربط حسابك على {platform}",
