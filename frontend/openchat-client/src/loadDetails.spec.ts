@@ -29,6 +29,8 @@ import {
     ROLE_MEMBER,
     Stream,
     anonymousUser,
+    type BridgedUserId,
+    type BridgedUserSummary,
     type ChannelIdentifier,
     type ChatEvent,
     type CommunityDetailsResponse,
@@ -57,6 +59,7 @@ import {
     serverGroupChatsStore,
 } from "./state";
 import { userStore } from "./state/users/state";
+import { bridgedUsersStore } from "./state/users/stores";
 import { selectedChatIdStore } from "./state";
 import type { ChatDetailsState } from "./state/chat/serverDetails";
 import { currentChatVisit, startChatVisit } from "./state/selectedChat";
@@ -447,7 +450,8 @@ describe("looking up the members who appear in a chat when not all are held", ()
     // Only valid user ids are sent
     const userId = (n: number) =>
         Principal.fromUint8Array(new Uint8Array([n >> 8, n & 255])).toText();
-    const [me, a, b, x, y, z] = [1, 2, 3, 4, 5, 6].map(userId);
+    const [me, a, b, x, y, z, bot] = [1, 2, 3, 4, 5, 6, 7].map(userId);
+    const telegramId: BridgedUserId = { kind: "telegram", id: "42" };
     const otherChatId = { kind: "group_chat" as const, groupId: "ccccc-cc" };
 
     let client: OpenChat;
@@ -458,8 +462,10 @@ describe("looking up the members who appear in a chat when not all are held", ()
     let events: () => EventWrapper<ChatEvent>[];
     // What the details held are replaced by when next asked for, if anything
     let replacement: GroupChatDetailsResponse | undefined;
+    // The profiles of the accounts relayed messages came from, which the UserIndex has
+    let bridgedUsers: BridgedUserSummary[] | Promise<BridgedUserSummary[]>;
 
-    function messageFrom(sender: string, index: number) {
+    function messageFrom(sender: string, index: number, senderContext?: unknown) {
         return {
             index,
             timestamp: BigInt(1000 + index),
@@ -469,6 +475,7 @@ describe("looking up the members who appear in a chat when not all are held", ()
                 messageIndex: index,
                 messageId: BigInt(100 + index),
                 sender,
+                senderContext,
                 content: { kind: "text_content", text: "hello" },
                 reactions: [],
                 tips: {},
@@ -482,6 +489,23 @@ describe("looking up the members who appear in a chat when not all are held", ()
 
     function found(...members: Member[]): LookupMembersResponse {
         return { kind: "success", members };
+    }
+
+    // A message the bridge bot relayed from the Telegram account
+    function relayedBy(sender: string, index: number) {
+        return messageFrom(sender, index, {
+            kind: "bot",
+            finalised: true,
+            bridgedFrom: telegramId,
+        });
+    }
+
+    function telegramAccountLinkedTo(userId: string): BridgedUserSummary {
+        return {
+            user: { kind: "telegram", profile: { id: telegramId.id, displayName: "Nelly" } },
+            linkedUserId: userId,
+            updated: 0n,
+        };
     }
 
     async function load(id: typeof chatId | ChannelIdentifier = chatId) {
@@ -545,6 +569,8 @@ describe("looking up the members who appear in a chat when not all are held", ()
                     return Promise.resolve(lookupResponses.shift() ?? found());
                 case "getUsers":
                     return Promise.resolve({ users: [], deletedUserIds: new Set() });
+                case "getBridgedUsers":
+                    return Promise.resolve(bridgedUsers);
                 default:
                     return new Promise(() => {});
             }
@@ -566,6 +592,7 @@ describe("looking up the members who appear in a chat when not all are held", ()
         lookups = [];
         lookupResponses = [];
         replacement = undefined;
+        bridgedUsers = [];
         senders = [a, x, y];
         events = () => senders.map((s, i) => messageFrom(s, i + 1));
     });
@@ -576,6 +603,7 @@ describe("looking up the members who appear in a chat when not all are held", ()
         currentUserStore.set(anonymousUser());
         currentChatVisit()?.setDetails(undefined);
         serverGroupChatsStore.set(new ChatMap<GroupChatSummary>());
+        bridgedUsersStore.set(new Map());
         // a new visit to whatever is selected, which starts with no events
         startChatVisit(selectedChatIdStore.value);
     });
@@ -718,6 +746,50 @@ describe("looking up the members who appear in a chat when not all are held", ()
         await load(otherChatId);
 
         expect(lookups).toHaveLength(1);
+    });
+
+    // A relayed message's tips go to whoever linked the account it came from, and only if they're a
+    // member, so they're looked up as its sender would be
+    test("whoever linked a relayed message's account is looked up once its profile is fetched", async () => {
+        setup(someHeld());
+        let reply: (users: BridgedUserSummary[]) => void = () => {};
+        bridgedUsers = new Promise((resolve) => (reply = resolve));
+        events = () => [messageFrom(a, 1), relayedBy(bot, 2)];
+        lookupResponses.push(found(), found(member(z)));
+        await load();
+        expect(lookups.map((l) => new Set(l.userIds))).toEqual([new Set([me, bot])]);
+
+        reply([telegramAccountLinkedTo(z)]);
+        await new Promise((r) => setTimeout(r, 0));
+
+        expect(lookups.map((l) => new Set(l.userIds))).toEqual([new Set([me, bot]), new Set([z])]);
+        expect(selectedChatMembersStore.value.has(z)).toBe(true);
+    });
+
+    test("whoever linked an account whose profile is held already is looked up with the rest", async () => {
+        setup(someHeld());
+        bridgedUsers = [telegramAccountLinkedTo(z)];
+        await client.getBridgedUsers([telegramId]);
+        // Fetching the profile before the chat's messages are seen looks nobody up
+        expect(lookups).toHaveLength(0);
+        events = () => [messageFrom(a, 1), relayedBy(bot, 2)];
+        lookupResponses.push(found(member(z)));
+
+        await load();
+
+        expect(lookups).toHaveLength(1);
+        expect(new Set(lookups[0].userIds)).toEqual(new Set([me, bot, z]));
+        expect(selectedChatMembersStore.value.has(z)).toBe(true);
+    });
+
+    test("nobody is looked up for an account no one has linked", async () => {
+        setup(someHeld());
+        bridgedUsers = [{ ...telegramAccountLinkedTo(z), linkedUserId: undefined }];
+        events = () => [messageFrom(a, 1), relayedBy(bot, 2)];
+
+        await load();
+
+        expect(lookups.map((l) => new Set(l.userIds))).toEqual([new Set([me, bot])]);
     });
 });
 

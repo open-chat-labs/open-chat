@@ -928,11 +928,14 @@ export class OpenChat {
         | undefined = undefined;
     #communityMemberLookups = noMemberLookups();
     #chatMemberLookups = noMemberLookups();
-    // The users who have appeared in the events loaded of the chat with this key
-    #usersSeenInChat: { key: string | undefined; userIds: Set<string> } = {
-        key: undefined,
-        userIds: new Set(),
-    };
+    // The users who have appeared in the events loaded of the chat with this key, and the accounts
+    // (by key) its relayed messages came from, whose linked users are shown as their authors
+    #usersSeenInChat: { key: string | undefined; userIds: Set<string>; bridgedUsers: Set<string> } =
+        {
+            key: undefined,
+            userIds: new Set(),
+            bridgedUsers: new Set(),
+        };
     #chatsPoller: Poller | undefined = undefined;
     #stopWatchingForResume: (() => void) | undefined = undefined;
     readonly #syncPuller: SyncPuller;
@@ -3581,14 +3584,16 @@ export class OpenChat {
     // A chat or community with more members than are loaded at once has only some of them held. So
     // the current user, and the users who have appeared in the events loaded of the selected chat,
     // are looked up among the members of the chat and of its community if they aren't held, so that
-    // what is shown of them (a community display name, say) is right.
+    // what is shown of them (a community display name, say) is right. Those who linked the accounts
+    // of its relayed messages are looked up too, since a relayed message's tips go to them, and only
+    // if they're members.
     #lookupMembersSeen(): void {
         const chatId = selectedChatIdStore.value;
         // The current user comes first, since what is shown of them matters most to them
         const me = anonUserStore.value ? [] : [currentUserIdStore.value];
         const seen =
             chatId !== undefined && this.#usersSeenInChat.key === chatIdentifierToString(chatId)
-                ? this.#usersSeenInChat.userIds
+                ? [...this.#usersSeenInChat.userIds, ...this.#linkedUsersSeenInChat()]
                 : [];
         const community = selectedServerCommunityStore.value;
         if (
@@ -3615,18 +3620,33 @@ export class OpenChat {
         }
     }
 
-    #noteUsersSeenInChat(chatId: ChatIdentifier, userIds: Iterable<string>): void {
+    #noteUsersSeenInChat(
+        chatId: ChatIdentifier,
+        userIds: Iterable<string>,
+        bridgedUserIds: BridgedUserId[] = [],
+    ): void {
         // Events which arrive once another chat has been selected are left out
         if (!chatIdentifiersEqual(chatId, selectedChatIdStore.value)) {
             return;
         }
         const key = chatIdentifierToString(chatId);
         if (this.#usersSeenInChat.key !== key) {
-            this.#usersSeenInChat = { key, userIds: new Set() };
+            this.#usersSeenInChat = { key, userIds: new Set(), bridgedUsers: new Set() };
         }
         for (const userId of userIds) {
             this.#usersSeenInChat.userIds.add(userId);
         }
+        for (const id of bridgedUserIds) {
+            this.#usersSeenInChat.bridgedUsers.add(bridgedUserKey(id)!);
+        }
+    }
+
+    // Those who linked the accounts the relayed messages seen in the chat came from, of the accounts
+    // whose profiles have been fetched
+    #linkedUsersSeenInChat(): string[] {
+        return [...this.#usersSeenInChat.bridgedUsers].flatMap(
+            (key) => bridgedUsersStore.value.get(key)?.linkedUserId ?? [],
+        );
     }
 
     // Looks up those of the users who aren't held, and aren't known not to be members, among the
@@ -4056,9 +4076,10 @@ export class OpenChat {
         for (const u of userIds) {
             allUserIds.add(u);
         }
-        this.#noteUsersSeenInChat(chatId, userIds);
+        const bridgedUserIds = bridgedUserIdsFromEvents(events);
+        this.#noteUsersSeenInChat(chatId, userIds, bridgedUserIds);
         userStore.addWebhookIds([...webhooks]);
-        void this.getBridgedUsers(bridgedUserIdsFromEvents(events));
+        void this.getBridgedUsers(bridgedUserIds);
         const newChatUserIds = [...allUserIds].filter(
             (u) => u !== userId && !selectedChatUserIdsStore.value.has(u),
         );
@@ -7938,6 +7959,18 @@ export class OpenChat {
 
         if (users.some((u) => u.linkedUserId === currentUserIdStore.value)) {
             this.#markLoadedOwnMessagesRead();
+        }
+
+        // Those who linked the accounts of the selected chat's relayed messages can now be looked up
+        // among its members, if they aren't held
+        if (
+            users.some(
+                (u) =>
+                    u.linkedUserId !== undefined &&
+                    this.#usersSeenInChat.bridgedUsers.has(bridgedUserKey(bridgedUserId(u.user))!),
+            )
+        ) {
+            this.#lookupMembersSeen();
         }
 
         // A linked account's messages are shown as its OpenChat user's
