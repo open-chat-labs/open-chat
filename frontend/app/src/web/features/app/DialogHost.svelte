@@ -53,6 +53,17 @@
 
     const linked = $derived(linkedDialog($querystringStore));
 
+    // the linked dialog last shown, so one that opens in place of another (Diamond from the
+    // profile) keeps its backdrop. Not state: it's read as the next one mounts, before this updates
+    let shownKind: LinkedDialog["kind"] | undefined;
+    $effect(() => {
+        shownKind = linked?.kind;
+    });
+
+    function opensInPlace(kind: LinkedDialog["kind"]): boolean {
+        return shownKind !== undefined && shownKind !== kind;
+    }
+
     function closeLinked(dialog: LinkedDialog) {
         navigate(removeQueryStringParam(linkedDialogParam(dialog)), "dismiss");
     }
@@ -108,7 +119,10 @@
 {#if linked !== undefined}
     <!-- another linked dialog is another screen -->
     {#key linked.kind}
-        <DialogScreen dialog={linked} onClose={() => closeLinked(linked)} />
+        <DialogScreen
+            dialog={linked}
+            inPlace={opensInPlace(linked.kind)}
+            onClose={() => closeLinked(linked)} />
     {/key}
 {/if}
 
