@@ -49,6 +49,7 @@ export { currentStreak } from "./utils/chit";
 export { inviteLinkUrl } from "./utils/inviteLink";
 export { postLoginJoin } from "./utils/join";
 export { muteNotificationsFailureMessage, pinChatFailureMessage } from "./utils/pinAndMute";
+export { editableGates, gateWithHidden, type EditableGates } from "./utils/accessGates";
 export {
     compareMembers,
     knownMembers,

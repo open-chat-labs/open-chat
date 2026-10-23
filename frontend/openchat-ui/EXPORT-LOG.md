@@ -163,3 +163,7 @@
 ## 2026-10-23 — UserDialog's About can be the host's formatted text, by hand
 - `DetailSection` takes `children` for its prose variant, shown in place of `value`; `value` still decides whether the text is long enough to clamp. `UserDialog` takes `aboutContent`, passed through to its About section. The app renders a user's bio as Markdown there, as the old profile cards do.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-23 — AccessGates offers only the gate types a host names, by hand
+- `AccessGates` takes `types`, the gate types its "add a gate" list offers (default: all). A rule of another type already in `value` still shows. The locked explainer's example gates follow it too. The app leaves out the unique-person gate (that concept is suspended) and the credential gate (there's no way to pick a credential yet).
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
