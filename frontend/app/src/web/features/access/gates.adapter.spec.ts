@@ -94,6 +94,28 @@ describe("the gates adapter", () => {
         ]);
     });
 
+    // 4a invariant 7: saving without touching a gate never changes it, even one the editor can't
+    // rebuild (a token the app doesn't know, or a fee the token no longer charges)
+    test("an untouched gate saves unchanged, on an unknown token or with an old fee", () => {
+        const config: AccessGateConfig = {
+            gate: {
+                kind: "composite_gate",
+                operator: "and",
+                gates: [
+                    { kind: "payment_gate", ledgerCanister: "unknown-ledger", amount: 5n, fee: 1n },
+                    {
+                        kind: "payment_gate",
+                        ledgerCanister: icp.ledger,
+                        amount: 100_000_000n,
+                        fee: 1n,
+                    },
+                ],
+            },
+            expiry: undefined,
+        };
+        expect(gateConfig(gatesState(config, lookups), config, lookups)).toEqual(config);
+    });
+
     // 4a invariant 3: never shows a unique-person gate, and keeps a dormant one on the way back
     test("never shows a unique-person gate, and writing back keeps a dormant one", () => {
         const config: AccessGateConfig = {
