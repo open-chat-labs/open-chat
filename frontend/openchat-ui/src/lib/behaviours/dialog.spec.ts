@@ -76,6 +76,32 @@ describe('DialogFlow', () => {
     expect(then).not.toHaveBeenCalled();
   });
 
+  test('handOff opens the next dialog at once, with no exit, and not while a call is pending', async () => {
+    const flow = new DialogFlow();
+    const d = deferred();
+    const then = vi.fn();
+    const pending = flow.run(() => d.promise);
+    flow.handOff(then);
+    expect(then).not.toHaveBeenCalled();
+    d.resolve();
+    await pending;
+    flow.handOff(then);
+    expect(then).toHaveBeenCalledOnce();
+    expect(flow.closing).toBe(false);
+  });
+
+  test('handOff is ignored while the dialog is leaving, and after destroy', () => {
+    const leaving = new DialogFlow();
+    const then = vi.fn();
+    leaving.leave();
+    leaving.handOff(then);
+    const gone = new DialogFlow();
+    gone.destroy();
+    gone.handOff(then);
+    vi.runAllTimers();
+    expect(then).not.toHaveBeenCalled();
+  });
+
   test('a call that resolves after destroy never calls back', async () => {
     const flow = new DialogFlow();
     const d = deferred();
