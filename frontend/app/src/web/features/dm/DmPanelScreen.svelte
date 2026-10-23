@@ -6,7 +6,7 @@
         allUsersStore,
         blockedUsersStore,
         buildUserAvatarUrl,
-        eventsTTLUpdate,
+        disappearingMessagesUpdate,
         favouritesStore,
         lastOnlineStatus,
         OpenChat,
@@ -94,9 +94,11 @@
 
     async function disappear(setting: DisappearSetting) {
         if (chat === undefined) return;
-        const next = setting.on ? BigInt(setting.afterMs) : undefined;
         succeeded(
-            await client.updateDirectChatSettings(chat, eventsTTLUpdate(next, chat.eventsTTL)),
+            await client.updateDirectChatSettings(
+                chat,
+                disappearingMessagesUpdate(setting.on, setting.afterMs, chat.eventsTTL),
+            ),
         );
     }
 

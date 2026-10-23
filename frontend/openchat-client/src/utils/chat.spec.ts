@@ -27,6 +27,7 @@ import {
     addVoteToPoll,
     buildBridgedUserAvatarUrl,
     buildIdenticonUrl,
+    disappearingMessagesUpdate,
     eventsTTLUpdate,
     getMembersString,
     groupChatFromCandidate,
@@ -653,5 +654,18 @@ describe("eventsTTLUpdate", () => {
         expect(eventsTTLUpdate(3_600_000n, undefined)).toEqual({ value: 3_600_000n });
         expect(eventsTTLUpdate(undefined, 3_600_000n)).toBe("set_to_none");
         expect(eventsTTLUpdate(undefined, undefined)).toBeUndefined();
+    });
+});
+
+describe("disappearingMessagesUpdate", () => {
+    // a panel's choice is saved as that many milliseconds, and turning off clears the TTL
+    test("saves the chosen length in milliseconds, and clears the TTL when turned off", () => {
+        expect(disappearingMessagesUpdate(true, 3_600_000, undefined)).toEqual({
+            value: 3_600_000n,
+        });
+        expect(disappearingMessagesUpdate(true, 86_400_000, 3_600_000n)).toEqual({
+            value: 86_400_000n,
+        });
+        expect(disappearingMessagesUpdate(false, 3_600_000, 3_600_000n)).toBe("set_to_none");
     });
 });

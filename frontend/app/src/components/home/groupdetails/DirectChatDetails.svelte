@@ -21,6 +21,7 @@
         allUsersStore,
         blockedUsersStore,
         chatIdentifiersEqual,
+        DEFAULT_EVENTS_TTL,
         eventsTTLUpdate,
         favouritesStore,
         iconSize,
@@ -40,7 +41,6 @@
     import UserProfileCard from "../profile/UserProfileCard.svelte";
 
     const client = getContext<OpenChat>("client");
-    const ONE_WEEK = 604800000n;
 
     interface Props {
         chat: DirectChatSummary;
@@ -97,7 +97,7 @@
         if (!disappearingMessages) {
             eventsTTL = undefined;
         } else {
-            eventsTTL = ONE_WEEK;
+            eventsTTL = DEFAULT_EVENTS_TTL;
         }
     }
 

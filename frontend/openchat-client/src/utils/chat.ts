@@ -2576,3 +2576,21 @@ export function eventsTTLUpdate(
     if (next !== undefined) return { value: next };
     return current !== undefined ? "set_to_none" : undefined;
 }
+
+/**
+ * Disappearing messages start at a week when turned on: a long default deletes the fewest
+ * messages if they're turned on by mistake.
+ */
+export const DEFAULT_EVENTS_TTL = 604_800_000n;
+
+/**
+ * The disappearing-messages change to send for a settings panel's choice: on for `afterMs`
+ * milliseconds, or off.
+ */
+export function disappearingMessagesUpdate(
+    on: boolean,
+    afterMs: number,
+    current: bigint | undefined,
+): OptionUpdate<bigint> {
+    return eventsTTLUpdate(on ? BigInt(afterMs) : undefined, current);
+}

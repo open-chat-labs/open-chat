@@ -28,6 +28,8 @@ export {
     buildUserBackgroundUrl,
     chatMatchesSearch,
     defaultChat,
+    DEFAULT_EVENTS_TTL,
+    disappearingMessagesUpdate,
     eventsTTLUpdate,
     getMembersString,
     subrangesCover,
