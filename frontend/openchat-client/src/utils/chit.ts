@@ -81,3 +81,25 @@ export function dailyChitClaimable(
         (lastSync === undefined || lastSync > now - CLAIM_SYNC_MAX_AGE_MS)
     );
 }
+
+// what a daily claim pays, by the streak it makes, from the longest: the backend's schedule
+// (`chit_for_streak` in backend/libraries/user_core/src/updates/claim_daily_chit.rs)
+const CLAIM_SCHEDULE: [streak: number, chit: number][] = [
+    [365, 1000],
+    [100, 800],
+    [30, 600],
+    [14, 500],
+    [7, 400],
+    [3, 300],
+    [1, 200],
+];
+
+/** The streak lengths from which a daily claim pays more, shortest first (the backend's schedule). */
+export const CHIT_STREAK_MILESTONES: number[] = CLAIM_SCHEDULE.map(([streak]) => streak)
+    .filter((streak) => streak > 1)
+    .reverse();
+
+/** The CHIT a daily claim pays when it makes the streak `streak` days long, as the backend pays it. */
+export function dailyChitAmount(streak: number): number {
+    return CLAIM_SCHEDULE.find(([from]) => streak >= from)?.[1] ?? 0;
+}

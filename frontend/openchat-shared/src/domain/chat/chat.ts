@@ -995,7 +995,7 @@ export type BotMessageContext = {
     bridgedFrom?: BridgedUserId;
 };
 
-export type BridgePlatform = "discord" | "telegram";
+export type BridgePlatform = "discord" | "telegram" | "twitch";
 
 // An account on another platform, eg. Discord, whose messages a bridge bot relays into OpenChat
 export type BridgedUserId = {
@@ -1006,7 +1006,8 @@ export type BridgedUserId = {
 // The latest profile of a bridged account, from the UserIndex's registry
 export type BridgedUser =
     | { kind: "discord"; profile: DiscordUser }
-    | { kind: "telegram"; profile: TelegramUser };
+    | { kind: "telegram"; profile: TelegramUser }
+    | { kind: "twitch"; profile: TwitchUser };
 
 export type BridgedUserSummary = {
     user: BridgedUser;
@@ -1042,6 +1043,17 @@ export type TelegramUser = {
     // Telegram's `file_unique_id` for the user's profile photo, which the bridge copies to its CDN,
     // as the urls of Telegram's own copies contain the bot's token. A new photo has a new id.
     photoId?: string;
+};
+
+export type TwitchUser = {
+    // The user's Twitch id
+    id: string;
+    // Their login, which their channel's url is built from
+    login: string;
+    // The name shown in chat
+    displayName: string;
+    // The path of their profile image on Twitch's CDN, static-cdn.jtvnw.net
+    profileImage?: string;
 };
 
 export type WebhookContext = {

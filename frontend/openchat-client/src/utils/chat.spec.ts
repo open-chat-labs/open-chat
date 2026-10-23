@@ -640,6 +640,27 @@ describe("bridged user avatars", () => {
         );
     });
 
+    test("a Twitch user's profile image is used, or a generated avatar without one", () => {
+        const twitchId: BridgedUserId = { kind: "twitch", id: "141981764" };
+        const twitch = (profileImage?: string): BridgedUserSummary => ({
+            user: {
+                kind: "twitch",
+                profile: { id: twitchId.id, login: "nelly", displayName: "Nelly", profileImage },
+            },
+            updated: 0n,
+        });
+        expect(
+            buildBridgedUserAvatarUrl(
+                twitchId,
+                twitch("jtv_user_pictures/abc-profile_image-300x300.png"),
+                avatars,
+            ),
+        ).toEqual("https://static-cdn.jtvnw.net/jtv_user_pictures/abc-profile_image-300x300.png");
+        expect(buildBridgedUserAvatarUrl(twitchId, twitch(), avatars)).toEqual(
+            buildIdenticonUrl("twitch:141981764"),
+        );
+    });
+
     test("a Discord user with no avatar keeps Discord's default", () => {
         const discordId: BridgedUserId = { kind: "discord", id: "80351110224678912" };
         expect(buildBridgedUserAvatarUrl(discordId, undefined, avatars)).toMatch(

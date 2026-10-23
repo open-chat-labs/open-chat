@@ -278,21 +278,6 @@ function markerOffset(ms: number, here: number): number | undefined {
         .reduce((best, o) => (Math.abs(o - here) < Math.abs(best - here) ? o : best));
 }
 
-/** Today's claim as the calendar shows it, from what claiming answered. */
-export function claimedNow(
-    now: number,
-    streakDay: number,
-    amount: number,
-    offsetMinutes: OffsetMinutes = browserOffset,
-): ClaimDay {
-    return {
-        day: dayKey(calendarDay(now, offsetMinutes)),
-        streakDay,
-        amount,
-        minute: Math.floor((now % ONE_DAY) / MINUTE),
-    };
-}
-
 type DayEvent = { kind: ChitEvent["reason"]["kind"]; ms: number; amount: number };
 
 /**

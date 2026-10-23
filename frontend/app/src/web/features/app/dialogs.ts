@@ -15,7 +15,8 @@ import type { Component } from "svelte";
 // their own, and only closing one leaves the page.
 
 export type LinkedDialog =
-    | { kind: "profile" }
+    // `section`: the one it opens on (?profile=chit), from another dialog's link to it
+    | { kind: "profile"; section?: ProfileLinkSection }
     | { kind: "diamond" }
     | { kind: "chit" }
     | { kind: "leaderboard" };
@@ -30,6 +31,10 @@ export type LocalDialog =
 
 /** The page GroupSettingsDialog opens on. */
 export type GroupSettingsTab = "group" | "gates" | "rules" | "permissions";
+
+/** The profile's sections a link can open it on. */
+export type ProfileLinkSection = "chit";
+const PROFILE_LINK_SECTIONS: string[] = ["chit"] satisfies ProfileLinkSection[];
 
 export type AppDialog = LinkedDialog | LocalDialog;
 
@@ -49,8 +54,8 @@ export const dialogs: Dialogs = {
     // Diamond membership (8e)
     diamond: undefined,
 
-    // CHIT rewards (8d)
-    chit: undefined,
+    // the daily CHIT: the streak, today's claim, streak insurance (8d)
+    chit: () => import("../chit/ChitDialogScreen.svelte"),
 
     // the CHIT leaderboard (8d)
     leaderboard: undefined,
@@ -79,7 +84,24 @@ const LINKED_KINDS = Object.keys(PARAMS) as LinkedDialog["kind"][];
 /** The linked dialog the URL's query opens, if any: one at a time. */
 export function linkedDialog(query: URLSearchParams): LinkedDialog | undefined {
     const kind = LINKED_KINDS.find((k) => query.has(PARAMS[k]));
-    return kind && { kind };
+    if (kind !== "profile") return kind && { kind };
+    const section = query.get(PARAMS.profile);
+    return section !== null && isProfileLinkSection(section) ? { kind, section } : { kind };
+}
+
+function isProfileLinkSection(value: string): value is ProfileLinkSection {
+    return PROFILE_LINK_SECTIONS.includes(value);
+}
+
+/**
+ * The linked dialog to show for the one the URL opens: none for the CHIT dialog while CHIT is off
+ * (a link to ?chit, the old UI's prize-message link …), however it was opened.
+ */
+export function shownLinkedDialog(
+    dialog: LinkedDialog | undefined,
+    chitOff: boolean,
+): LinkedDialog | undefined {
+    return dialog?.kind === "chit" && chitOff ? undefined : dialog;
 }
 
 /** The query param that opens a linked dialog, which closing it drops. */
@@ -92,15 +114,22 @@ export function linkedDialogParam(dialog: LinkedDialog): string {
  * Back returns to the profile), or undefined when it's already the one showing.
  */
 export function openLinkedDialog(query: URLSearchParams, dialog: LinkedDialog): string | undefined {
-    if (linkedDialog(query)?.kind === dialog.kind) return undefined;
+    const showing = linkedDialog(query);
+    if (showing?.kind === dialog.kind && sectionOf(showing) === sectionOf(dialog)) return undefined;
     const rest = new URLSearchParams(query);
     LINKED_KINDS.forEach((k) => rest.delete(PARAMS[k]));
-    // a flag, as withQueryStringFlag writes it: no "="
+    // a flag, as withQueryStringFlag writes it: no "=" (the profile's section is its value)
     const others = rest.toString();
-    return `?${others === "" ? "" : `${others}&`}${encodeURIComponent(PARAMS[dialog.kind])}`;
+    const section = sectionOf(dialog);
+    const param = `${encodeURIComponent(PARAMS[dialog.kind])}${section === undefined ? "" : `=${section}`}`;
+    return `?${others === "" ? "" : `${others}&`}${param}`;
 }
 
 /** The screens of the dialogs built so far, to load ahead of their first opening. */
 export function builtDialogScreens(): (() => Promise<{ default: Component<never> }>)[] {
     return Object.values(dialogs).filter((load) => load !== undefined);
+}
+
+function sectionOf(dialog: LinkedDialog): ProfileLinkSection | undefined {
+    return dialog.kind === "profile" ? dialog.section : undefined;
 }

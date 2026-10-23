@@ -48,7 +48,11 @@
     let tokenEnabled = $state(true);
     let openAiApiKey = $state("");
     let alchemyApiKey = $state("");
-    const bridgeBotIds = $state<Record<BridgePlatform, string>>({ discord: "", telegram: "" });
+    const bridgeBotIds = $state<Record<BridgePlatform, string>>({
+        discord: "",
+        telegram: "",
+        twitch: "",
+    });
     let moderationCommunityId = $state("");
     let moderationChannelId = $state("");
     // sexual/minors always takes the CSAM auto-sanction path so is not offered here.

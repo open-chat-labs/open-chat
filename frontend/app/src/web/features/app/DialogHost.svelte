@@ -30,12 +30,14 @@
     import SuspendUserDialog from "../user/SuspendUserDialog.svelte";
     import AppEventDialogs from "./AppEventDialogs.svelte";
     import DialogScreen from "./DialogScreen.svelte";
+    import { openLinked } from "./linkedDialogs";
+    import { disableChit } from "@src/stores/settings";
     import { screenLoader } from "./screens";
     import {
         builtDialogScreens,
         linkedDialog,
         linkedDialogParam,
-        openLinkedDialog,
+        shownLinkedDialog,
         type LinkedDialog,
         type LocalDialog,
     } from "./dialogs";
@@ -51,7 +53,8 @@
 
     const client = getContext<OpenChat>("client");
 
-    const linked = $derived(linkedDialog($querystringStore));
+    // not the CHIT dialog while CHIT is off: it doesn't open, and closes if CHIT is turned off
+    const linked = $derived(shownLinkedDialog(linkedDialog($querystringStore), $disableChit));
 
     // a linked dialog replaced by another kind while it's still showing hands its backdrop over,
     // so only the next dialog animates in: Diamond from the profile (openLinked, which plays no
@@ -85,13 +88,6 @@
         navigate(removeQueryStringParam(linkedDialogParam(dialog)), "dismiss");
     }
 
-    // in place of the linked dialog showing, if any: from the profile, Diamond. From the URL as it
-    // is: the store's query is decoded, so its values can't be written back
-    function openLinked(dialog: LinkedDialog) {
-        const query = openLinkedDialog(new URLSearchParams(window.location.search), dialog);
-        if (query !== undefined) navigate(`${window.location.pathname}${query}`, "overlay");
-    }
-
     // what the client is waiting on to send: the rules, then the PIN
     const prompt = $derived(waitingPrompt($captureRulesAcceptanceStore, $pinNumberResolverStore));
 
@@ -121,6 +117,12 @@
     });
     $effect(() => subscribe("profile", () => openLinked({ kind: "profile" })));
     $effect(() => subscribe("upgrade", () => openLinked({ kind: "diamond" })));
+    // the old UI's way to the daily claim (the prize message's CHIT link …)
+    $effect(() =>
+        subscribe("claimDailyChit", () => {
+            if (!disableChit.value) openLinked({ kind: "chit" });
+        }),
+    );
 
     $effect(() => {
         const opened = (e: Event) => {

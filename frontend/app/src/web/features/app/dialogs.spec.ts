@@ -4,6 +4,7 @@ import {
     linkedDialog,
     linkedDialogParam,
     openLinkedDialog,
+    shownLinkedDialog,
 } from "./dialogs";
 
 describe("the dialog a URL's query opens", () => {
@@ -12,6 +13,14 @@ describe("the dialog a URL's query opens", () => {
         expect(linkedDialog(new URLSearchParams("diamond"))).toEqual({ kind: "diamond" });
         expect(linkedDialog(new URLSearchParams("chit"))).toEqual({ kind: "chit" });
         expect(linkedDialog(new URLSearchParams("hof"))).toEqual({ kind: "leaderboard" });
+    });
+
+    test("is the profile on a section it names, if it's one a link can open", () => {
+        expect(linkedDialog(new URLSearchParams("profile=chit"))).toEqual({
+            kind: "profile",
+            section: "chit",
+        });
+        expect(linkedDialog(new URLSearchParams("profile=nope"))).toEqual({ kind: "profile" });
     });
 
     test("is none for a query without one", () => {
@@ -25,6 +34,15 @@ describe("the dialog a URL's query opens", () => {
     test("closes by dropping its param", () => {
         expect(linkedDialogParam({ kind: "leaderboard" })).toBe("hof");
         expect(linkedDialogParam({ kind: "profile" })).toBe("profile");
+    });
+});
+
+describe("the linked dialog shown", () => {
+    test("is the one the URL opens, but the CHIT dialog while CHIT is off", () => {
+        expect(shownLinkedDialog({ kind: "chit" }, false)).toEqual({ kind: "chit" });
+        expect(shownLinkedDialog({ kind: "chit" }, true)).toBeUndefined();
+        expect(shownLinkedDialog({ kind: "profile" }, true)).toEqual({ kind: "profile" });
+        expect(shownLinkedDialog(undefined, false)).toBeUndefined();
     });
 });
 
@@ -49,6 +67,15 @@ describe("opening a linked dialog", () => {
         expect(openLinkedDialog(new URLSearchParams("hof&chit"), { kind: "profile" })).toBe(
             "?profile",
         );
+    });
+
+    test("opens the profile on a section with its value", () => {
+        expect(
+            openLinkedDialog(new URLSearchParams("chit"), { kind: "profile", section: "chit" }),
+        ).toBe("?profile=chit");
+        expect(
+            openLinkedDialog(new URLSearchParams("profile"), { kind: "profile", section: "chit" }),
+        ).toBe("?profile=chit");
     });
 
     test("is nothing when it's the one showing", () => {

@@ -10,7 +10,7 @@
 </script>
 
 <script lang="ts">
-  import { onDestroy } from 'svelte';
+  import { onDestroy, untrack } from 'svelte';
   import DailyPuzzleCard from './DailyPuzzleCard.svelte';
   import { modal } from '../../lib/behaviours/modal';
   import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
@@ -51,7 +51,8 @@
     onBack?: () => void;
     /** Resource key (or literal text). */
     backLabel?: string;
-    /** Claim today's CHIT. Reject to show an error; resolve once the host has applied it. */
+    /** Claim today's CHIT. Reject to show an error; resolve once the host has applied it, or with false when there was
+     *  nothing to claim (claimed already, elsewhere): no claim plays then, and the dialog follows `claimable`. */
     onClaim?: (r: { amount: number }) => Promise<unknown> | void;
     onAction?: (kind: ChitAction) => void;
     onClose?: () => void;
@@ -91,10 +92,21 @@
   const days = $derived(streak);
   const TIERS = $derived(milestones?.length ? [...milestones].sort((a, b) => a - b) : DEFAULT_TIERS);
   // the default schedule keeps its hand-tuned spacing; a custom one is spaced evenly
+  // the default tiers keep their hand-spaced positions, whoever passes them
+  const defaultTiers = $derived(TIERS.length === DEFAULT_TIERS.length && TIERS.every((d, i) => d === DEFAULT_TIERS[i]));
   const TIER_POS = $derived<Record<number, number>>(
-    milestones?.length ? Object.fromEntries(TIERS.map((d, i) => [d, ((i + 1) / TIERS.length) * 100])) : DEFAULT_POS,
+    defaultTiers ? DEFAULT_POS : Object.fromEntries(TIERS.map((d, i) => [d, ((i + 1) / TIERS.length) * 100])),
   );
   const claimed = $derived(claimedHere ?? !claimable);
+  // a claim made here shows as made until the next one opens (claimable again, for the next day)
+  let wasClaimable = untrack(() => claimable);
+  $effect(() => {
+    const open = claimable;
+    untrack(() => {
+      if (open && !wasClaimable) claimedHere = null;
+      wasClaimable = open;
+    });
+  });
   const insuredLeft = $derived(Math.max(insured - used, 0));
 
   const boardHint = $derived.by(() => {
@@ -131,7 +143,7 @@
   async function claim() {
     if (!onClaim || claimedHere) return;
     const result = await flow.run(() => onClaim({ amount: daily }));
-    if (result.ok) claimedHere = true;
+    if (result.ok && result.value !== false) claimedHere = true;
   }
 
   const close = () => flow.dismiss(onClose);

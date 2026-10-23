@@ -29,6 +29,8 @@ import {
     ROLE_MEMBER,
     Stream,
     anonymousUser,
+    type BridgedUserId,
+    type BridgedUserSummary,
     type ChannelIdentifier,
     type ChatEvent,
     type CommunityDetailsResponse,
@@ -57,6 +59,7 @@ import {
     serverGroupChatsStore,
 } from "./state";
 import { userStore } from "./state/users/state";
+import { bridgedUsersStore } from "./state/users/stores";
 import { selectedChatIdStore } from "./state";
 import type { ChatDetailsState } from "./state/chat/serverDetails";
 import { currentChatVisit, startChatVisit } from "./state/selectedChat";
@@ -447,7 +450,8 @@ describe("looking up the members who appear in a chat when not all are held", ()
     // Only valid user ids are sent
     const userId = (n: number) =>
         Principal.fromUint8Array(new Uint8Array([n >> 8, n & 255])).toText();
-    const [me, a, b, x, y, z] = [1, 2, 3, 4, 5, 6].map(userId);
+    const [me, a, b, x, y, z, bot] = [1, 2, 3, 4, 5, 6, 7].map(userId);
+    const telegramId: BridgedUserId = { kind: "telegram", id: "42" };
     const otherChatId = { kind: "group_chat" as const, groupId: "ccccc-cc" };
 
     let client: OpenChat;
@@ -458,8 +462,10 @@ describe("looking up the members who appear in a chat when not all are held", ()
     let events: () => EventWrapper<ChatEvent>[];
     // What the details held are replaced by when next asked for, if anything
     let replacement: GroupChatDetailsResponse | undefined;
+    // The profiles of the accounts relayed messages came from, which the UserIndex has
+    let bridgedUsers: BridgedUserSummary[] | Promise<BridgedUserSummary[]>;
 
-    function messageFrom(sender: string, index: number) {
+    function messageFrom(sender: string, index: number, senderContext?: unknown) {
         return {
             index,
             timestamp: BigInt(1000 + index),
@@ -469,6 +475,7 @@ describe("looking up the members who appear in a chat when not all are held", ()
                 messageIndex: index,
                 messageId: BigInt(100 + index),
                 sender,
+                senderContext,
                 content: { kind: "text_content", text: "hello" },
                 reactions: [],
                 tips: {},
@@ -482,6 +489,23 @@ describe("looking up the members who appear in a chat when not all are held", ()
 
     function found(...members: Member[]): LookupMembersResponse {
         return { kind: "success", members };
+    }
+
+    // A message the bridge bot relayed from the Telegram account
+    function relayedBy(sender: string, index: number) {
+        return messageFrom(sender, index, {
+            kind: "bot",
+            finalised: true,
+            bridgedFrom: telegramId,
+        });
+    }
+
+    function telegramAccountLinkedTo(userId: string): BridgedUserSummary {
+        return {
+            user: { kind: "telegram", profile: { id: telegramId.id, displayName: "Nelly" } },
+            linkedUserId: userId,
+            updated: 0n,
+        };
     }
 
     async function load(id: typeof chatId | ChannelIdentifier = chatId) {
@@ -545,6 +569,8 @@ describe("looking up the members who appear in a chat when not all are held", ()
                     return Promise.resolve(lookupResponses.shift() ?? found());
                 case "getUsers":
                     return Promise.resolve({ users: [], deletedUserIds: new Set() });
+                case "getBridgedUsers":
+                    return Promise.resolve(bridgedUsers);
                 default:
                     return new Promise(() => {});
             }
@@ -566,6 +592,7 @@ describe("looking up the members who appear in a chat when not all are held", ()
         lookups = [];
         lookupResponses = [];
         replacement = undefined;
+        bridgedUsers = [];
         senders = [a, x, y];
         events = () => senders.map((s, i) => messageFrom(s, i + 1));
     });
@@ -576,6 +603,7 @@ describe("looking up the members who appear in a chat when not all are held", ()
         currentUserStore.set(anonymousUser());
         currentChatVisit()?.setDetails(undefined);
         serverGroupChatsStore.set(new ChatMap<GroupChatSummary>());
+        bridgedUsersStore.set(new Map());
         // a new visit to whatever is selected, which starts with no events
         startChatVisit(selectedChatIdStore.value);
     });
@@ -719,15 +747,90 @@ describe("looking up the members who appear in a chat when not all are held", ()
 
         expect(lookups).toHaveLength(1);
     });
+
+    // A relayed message's tips go to whoever linked the account it came from, and only if they're a
+    // member, so they're looked up as its sender would be
+    test("whoever linked a relayed message's account is looked up once its profile is fetched", async () => {
+        setup(someHeld());
+        let reply: (users: BridgedUserSummary[]) => void = () => {};
+        bridgedUsers = new Promise((resolve) => (reply = resolve));
+        events = () => [messageFrom(a, 1), relayedBy(bot, 2)];
+        lookupResponses.push(found(), found(member(z)));
+        await load();
+        expect(lookups.map((l) => new Set(l.userIds))).toEqual([new Set([me, bot])]);
+
+        reply([telegramAccountLinkedTo(z)]);
+        await new Promise((r) => setTimeout(r, 0));
+
+        expect(lookups.map((l) => new Set(l.userIds))).toEqual([new Set([me, bot]), new Set([z])]);
+        expect(selectedChatMembersStore.value.has(z)).toBe(true);
+    });
+
+    test("whoever linked an account is looked up only once it's seen in the chat", async () => {
+        setup(someHeld());
+        bridgedUsers = [telegramAccountLinkedTo(z)];
+        await load();
+        // The profile is fetched for another reason, eg. the chat list, before the chat shows a
+        // message relayed from the account
+        await client.getBridgedUsers([telegramId]);
+        expect(lookups.flatMap((l) => l.userIds)).not.toContain(z);
+
+        events = () => [messageFrom(a, 1), relayedBy(bot, 2)];
+        lookupResponses.push(found(member(z)));
+        await load();
+
+        // It's held already, so they're looked up with the rest
+        expect(new Set(lookups.at(-1)?.userIds)).toEqual(new Set([bot, z]));
+        expect(selectedChatMembersStore.value.has(z)).toBe(true);
+    });
+
+    test("nobody is looked up for an account no one has linked", async () => {
+        setup(someHeld());
+        bridgedUsers = [{ ...telegramAccountLinkedTo(z), linkedUserId: undefined }];
+        events = () => [messageFrom(a, 1), relayedBy(bot, 2)];
+
+        await load();
+
+        expect(lookups.map((l) => new Set(l.userIds))).toEqual([new Set([me, bot])]);
+    });
 });
 
 describe("looking up the members of a community who appear in one of its channels", () => {
     const userId = (n: number) => Principal.fromUint8Array(new Uint8Array([n])).toText();
-    const [me, a, x] = [1, 2, 3].map(userId);
+    const [me, a, x, z, bot] = [1, 2, 3, 4, 5].map(userId);
     const channelId = { kind: "channel" as const, communityId: id.communityId, channelId: 1 };
+    // Those the community's members are found to include, with their display names there
+    const names = new Map([
+        [x, "X"],
+        [z, "Z"],
+    ]);
 
     let client: OpenChat;
     let lookups: Extract<WorkerRequest, { kind: "lookupMembers" }>[];
+    let events: unknown[];
+    let bridgedUsers: BridgedUserSummary[];
+
+    function messageFrom(sender: string, senderContext?: unknown) {
+        return {
+            index: 1,
+            timestamp: 1001n,
+            expiresAt: undefined,
+            event: {
+                kind: "message",
+                messageIndex: 1,
+                messageId: 101n,
+                sender,
+                senderContext,
+                content: { kind: "text_content", text: "hello" },
+                reactions: [],
+                tips: {},
+                edited: false,
+                forwarded: false,
+                deleted: false,
+                blockLevelMarkdown: false,
+            },
+        };
+    }
 
     beforeEach(() => {
         vi.stubGlobal("Worker", FakeWorker);
@@ -753,27 +856,11 @@ describe("looking up the members of a community who appear in one of its channel
         client = new OpenChat(config());
 
         lookups = [];
-        const message = {
-            index: 1,
-            timestamp: 1001n,
-            expiresAt: undefined,
-            event: {
-                kind: "message",
-                messageIndex: 1,
-                messageId: 101n,
-                sender: x,
-                content: { kind: "text_content", text: "hello" },
-                reactions: [],
-                tips: {},
-                edited: false,
-                forwarded: false,
-                deleted: false,
-                blockLevelMarkdown: false,
-            },
-        };
+        events = [messageFrom(x)];
+        bridgedUsers = [];
         vi.spyOn(WorkerAgent.prototype, "stream").mockImplementation(() => {
             const resp = {
-                events: [message],
+                events,
                 expiredEventRanges: [],
                 latestEventIndex: 1,
             } as unknown as EventsResponse<ChatEvent>;
@@ -791,12 +878,15 @@ describe("looking up the members of a community who appear in one of its channel
                     lookups.push(req);
                     return Promise.resolve({
                         kind: "success",
-                        members: req.userIds
-                            .filter((u) => u === x)
-                            .map((u) => ({ ...member(u), displayName: "X" })),
+                        members: req.userIds.flatMap((u) => {
+                            const displayName = names.get(u);
+                            return displayName === undefined ? [] : [{ ...member(u), displayName }];
+                        }),
                     });
                 case "getUsers":
                     return Promise.resolve({ users: [], deletedUserIds: new Set() });
+                case "getBridgedUsers":
+                    return Promise.resolve(bridgedUsers);
                 default:
                     return new Promise(() => {});
             }
@@ -810,6 +900,7 @@ describe("looking up the members of a community who appear in one of its channel
         currentChatVisit()?.setDetails(undefined);
         selectedServerCommunityStore.set(undefined);
         serverCommunitiesStore.set(new CommunityMap<CommunitySummary>());
+        bridgedUsersStore.set(new Map());
         // a new visit to whatever is selected, which starts with no events
         startChatVisit(selectedChatIdStore.value);
     });
@@ -827,6 +918,27 @@ describe("looking up the members of a community who appear in one of its channel
         expect(lookups.flatMap((l) => l.userIds).sort()).toEqual([me, x].sort());
         // So that their display name in the community is known
         expect(selectedCommunityMembersStore.value.get(x)?.displayName).toBe("X");
+    });
+
+    test("whoever linked a relayed message's account is looked up among the community's members", async () => {
+        const telegramId: BridgedUserId = { kind: "telegram", id: "42" };
+        events = [messageFrom(bot, { kind: "bot", finalised: true, bridgedFrom: telegramId })];
+        bridgedUsers = [
+            {
+                user: { kind: "telegram", profile: { id: telegramId.id, displayName: "Nelly" } },
+                linkedUserId: z,
+                updated: 0n,
+            },
+        ];
+
+        await client.setSelectedCommunity(id);
+        await client.setSelectedChat(channelId);
+        await new Promise((r) => setTimeout(r, 10));
+
+        expect(lookups.every((l) => l.id.kind === "community")).toBe(true);
+        expect(lookups.flatMap((l) => l.userIds)).toContain(z);
+        // So that they're shown as the message's author by their display name in the community
+        expect(selectedCommunityMembersStore.value.get(z)?.displayName).toBe("Z");
     });
 });
 

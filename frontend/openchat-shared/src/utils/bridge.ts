@@ -17,7 +17,11 @@ import {
 export const BRIDGE_PLATFORM_NAMES: Record<BridgePlatform, string> = {
     discord: "Discord",
     telegram: "Telegram",
+    twitch: "Twitch",
 };
+
+// Where Twitch serves profile images. A Twitch profile has its image's path on it.
+const TWITCH_CDN_URL = "https://static-cdn.jtvnw.net";
 
 // The account a message was relayed from, if a bridge bot relayed it from another platform
 export function bridgedFrom(senderContext: SenderContext | undefined): BridgedUserId | undefined {
@@ -122,6 +126,7 @@ export function bridgedAuthorName(summary: BridgedUserSummary | undefined): stri
         case "discord":
             return user.profile.displayName ?? user.profile.username;
         case "telegram":
+        case "twitch":
             return user.profile.displayName;
         case undefined:
             return undefined;
@@ -139,24 +144,35 @@ export function bridgedProfileUrl(user: BridgedUser): string | undefined {
                 : undefined;
         case "discord":
             return `https://discord.com/users/${user.profile.id}`;
+        case "twitch":
+            return `https://www.twitch.tv/${encodeURIComponent(user.profile.login)}`;
     }
 }
 
 // The url of the author's avatar, if they have one. A Telegram user's photo is copied to the bridges'
-// CDN, at `bridgeAvatarsUrl`, which is empty where there's none.
+// CDN, at `bridgeAvatarsUrl`, which is empty where there's none. A Twitch user's is on Twitch's CDN.
 export function bridgedAuthorAvatarUrl(
     id: BridgedUserId,
     summary: BridgedUserSummary | undefined,
     bridgeAvatarsUrl: string,
 ): string | undefined {
     const user = summary?.user;
-    if (id.kind === "discord") {
-        return discordAvatarUrl(id.id, user?.kind === "discord" ? user.profile : undefined);
+    switch (id.kind) {
+        case "discord":
+            return discordAvatarUrl(id.id, user?.kind === "discord" ? user.profile : undefined);
+        case "telegram": {
+            const photoId = user?.kind === "telegram" ? user.profile.photoId : undefined;
+            return photoId === undefined || bridgeAvatarsUrl === ""
+                ? undefined
+                : `${bridgeAvatarsUrl}/telegram/${id.id}/${encodeURIComponent(photoId)}.jpg`;
+        }
+        case "twitch": {
+            const image = user?.kind === "twitch" ? user.profile.profileImage : undefined;
+            return image === undefined
+                ? undefined
+                : `${TWITCH_CDN_URL}/${image.split("/").map(encodeURIComponent).join("/")}`;
+        }
     }
-    const photoId = user?.kind === "telegram" ? user.profile.photoId : undefined;
-    return photoId === undefined || bridgeAvatarsUrl === ""
-        ? undefined
-        : `${bridgeAvatarsUrl}/telegram/${id.id}/${encodeURIComponent(photoId)}.jpg`;
 }
 
 function discordAvatarUrl(id: string, profile: DiscordUser | undefined): string {

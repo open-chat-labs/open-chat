@@ -11,6 +11,7 @@ use ts_export::ts_export;
 pub enum BridgedUserId {
     Discord(u64),
     Telegram(i64),
+    Twitch(u64),
 }
 
 // The profile of an account on another platform. The bridge bot sends its author's with each message
@@ -21,6 +22,7 @@ pub enum BridgedUserId {
 pub enum BridgedUser {
     Discord(DiscordUser),
     Telegram(TelegramUser),
+    Twitch(TwitchUser),
 }
 
 // A bridged account's latest profile, from the UserIndex's registry
@@ -41,6 +43,7 @@ pub struct BridgedUserSummary {
 pub enum BridgePlatform {
     Discord,
     Telegram,
+    Twitch,
 }
 
 #[ts_export]
@@ -74,6 +77,21 @@ pub struct TelegramUser {
     pub photo_id: Option<String>,
 }
 
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct TwitchUser {
+    // The user's Twitch id
+    pub id: u64,
+    // The user's login, eg. "nelly", which their channel's url is built from
+    pub login: String,
+    // The name shown in chat, eg. "Nelly", or a localized name
+    pub display_name: String,
+    // The path of the user's profile image on Twitch's CDN, static-cdn.jtvnw.net, eg.
+    // "jtv_user_pictures/<id>-profile_image-300x300.png". The website builds the image's url from
+    // it, so a profile can't point at another host.
+    pub profile_image: Option<String>,
+}
+
 // Discord's own limits. Users' names are at most 32 characters, webhooks' at most 80
 const MAX_DISCORD_NAME_LENGTH: usize = 80;
 const DISCORD_AVATAR_HASH_LENGTH: usize = 32;
@@ -83,12 +101,19 @@ const MAX_TELEGRAM_USERNAME_LENGTH: usize = 32;
 const MAX_TELEGRAM_DISPLAY_NAME_LENGTH: usize = 129;
 // Telegram's file ids are base64url, and a `file_unique_id` is short
 const MAX_TELEGRAM_PHOTO_ID_LENGTH: usize = 64;
+// Twitch's logins are at most 25 characters, of letters, digits and `_`, and in lowercase. Twitch
+// doesn't publish a limit for display names, which can be localized, so this allows for long ones.
+const MAX_TWITCH_LOGIN_LENGTH: usize = 25;
+const MAX_TWITCH_DISPLAY_NAME_LENGTH: usize = 64;
+// Twitch's profile image paths are short, eg. "jtv_user_pictures/" and a uuid
+const MAX_TWITCH_PROFILE_IMAGE_LENGTH: usize = 128;
 
 impl BridgedUserId {
     pub fn platform(&self) -> BridgePlatform {
         match self {
             BridgedUserId::Discord(_) => BridgePlatform::Discord,
             BridgedUserId::Telegram(_) => BridgePlatform::Telegram,
+            BridgedUserId::Twitch(_) => BridgePlatform::Twitch,
         }
     }
 }
@@ -98,6 +123,7 @@ impl BridgedUser {
         match self {
             BridgedUser::Discord(u) => BridgedUserId::Discord(u.id),
             BridgedUser::Telegram(u) => BridgedUserId::Telegram(u.id),
+            BridgedUser::Twitch(u) => BridgedUserId::Twitch(u.id),
         }
     }
 
@@ -109,6 +135,7 @@ impl BridgedUser {
         match self {
             BridgedUser::Discord(u) => u.display_name.unwrap_or(u.username),
             BridgedUser::Telegram(u) => u.display_name,
+            BridgedUser::Twitch(u) => u.display_name,
         }
     }
 
@@ -123,6 +150,7 @@ impl BridgedUser {
         match self {
             BridgedUser::Discord(u) => u.validate(),
             BridgedUser::Telegram(u) => u.validate(),
+            BridgedUser::Twitch(u) => u.validate(),
         }
     }
 }
@@ -132,6 +160,7 @@ impl Display for BridgePlatform {
         match self {
             BridgePlatform::Discord => f.write_str("Discord"),
             BridgePlatform::Telegram => f.write_str("Telegram"),
+            BridgePlatform::Twitch => f.write_str("Twitch"),
         }
     }
 }
@@ -169,6 +198,39 @@ impl TelegramUser {
     }
 }
 
+impl TwitchUser {
+    pub fn validate(&self) -> Result<(), String> {
+        if self.login.is_empty()
+            || self.login.len() > MAX_TWITCH_LOGIN_LENGTH
+            || !self.login.chars().all(|c| matches!(c, 'a'..='z' | '0'..='9' | '_'))
+        {
+            return Err(format!(
+                "Twitch login must be 1 to {MAX_TWITCH_LOGIN_LENGTH} lowercase letters, digits or underscores"
+            ));
+        }
+        validate_name("Twitch display name", &self.display_name, MAX_TWITCH_DISPLAY_NAME_LENGTH)?;
+        if let Some(profile_image) = &self.profile_image
+            && !is_twitch_profile_image(profile_image)
+        {
+            return Err("Twitch profile image must be a path on Twitch's CDN".to_string());
+        }
+        Ok(())
+    }
+}
+
+// A relative path of letters, digits, `_`, `-` and `.`, in segments separated by `/`, so it can only
+// name a file on Twitch's CDN once the website puts the CDN's url before it
+fn is_twitch_profile_image(path: &str) -> bool {
+    path.len() <= MAX_TWITCH_PROFILE_IMAGE_LENGTH
+        && path.split('/').all(|segment| {
+            !segment.is_empty()
+                && segment.chars().any(|c| c != '.')
+                && segment
+                    .chars()
+                    .all(|c| c.is_ascii_alphanumeric() || matches!(c, '_' | '-' | '.'))
+        })
+}
+
 fn validate_name(field: &str, name: &str, max_length: usize) -> Result<(), String> {
     if name.is_empty() || name.chars().count() > max_length {
         Err(format!("{field} must be 1 to {max_length} characters"))
@@ -196,6 +258,15 @@ mod tests {
             username: Some("nelly".to_string()),
             display_name: "Nelly Smith".to_string(),
             photo_id: Some("AQADtLwxG5a_QEZ-".to_string()),
+        }
+    }
+
+    fn twitch_user() -> TwitchUser {
+        TwitchUser {
+            id: 141981764,
+            login: "nelly_99".to_string(),
+            display_name: "Nelly_99".to_string(),
+            profile_image: Some("jtv_user_pictures/8a6381c7-d0c0-4576-b179-38bd5ce1d6af-profile_image-300x300.png".to_string()),
         }
     }
 
@@ -313,6 +384,96 @@ mod tests {
     }
 
     #[test]
+    fn valid_twitch_user() {
+        assert!(twitch_user().validate().is_ok());
+        for user in [
+            TwitchUser {
+                profile_image: None,
+                ..twitch_user()
+            },
+            // A localized display name
+            TwitchUser {
+                display_name: "ネリー".to_string(),
+                ..twitch_user()
+            },
+            // As long a path as is allowed
+            TwitchUser {
+                profile_image: Some(format!("jtv_user_pictures/{}.png", "a".repeat(106))),
+                ..twitch_user()
+            },
+            // An older account's image, and Twitch's default ones
+            TwitchUser {
+                profile_image: Some("jtv_user_pictures/a_seagull-profile_image-4d2d235688c7dc66-300x300.png".to_string()),
+                ..twitch_user()
+            },
+            TwitchUser {
+                profile_image: Some(
+                    "user-default-pictures-uv/13e5fa74-defa-11e9-809c-784f43822e80-profile_image-300x300.png".to_string(),
+                ),
+                ..twitch_user()
+            },
+        ] {
+            assert!(user.validate().is_ok(), "{user:?}");
+        }
+    }
+
+    #[test]
+    fn invalid_twitch_names() {
+        for user in [
+            TwitchUser {
+                login: String::new(),
+                ..twitch_user()
+            },
+            TwitchUser {
+                login: "Nelly".to_string(),
+                ..twitch_user()
+            },
+            TwitchUser {
+                login: "nelly smith".to_string(),
+                ..twitch_user()
+            },
+            TwitchUser {
+                login: "a".repeat(26),
+                ..twitch_user()
+            },
+            TwitchUser {
+                display_name: String::new(),
+                ..twitch_user()
+            },
+            TwitchUser {
+                display_name: "a".repeat(65),
+                ..twitch_user()
+            },
+        ] {
+            assert!(user.validate().is_err(), "{user:?}");
+        }
+    }
+
+    #[test]
+    fn invalid_twitch_profile_images() {
+        for profile_image in [
+            "",
+            "https://static-cdn.jtvnw.net/jtv_user_pictures/a-profile_image-300x300.png",
+            "//evil.example.com/a.png",
+            "/jtv_user_pictures/a.png",
+            "jtv_user_pictures/../a.png",
+            "jtv_user_pictures//a.png",
+            "jtv_user_pictures/a.png?x=1",
+            "jtv_user_pictures/a%2e.png",
+            "./a.png",
+            "jtv_user_pictures/.../a.png",
+            "jtv_user_pictures/",
+            &format!("jtv_user_pictures/{}.png", "a".repeat(107)),
+        ] {
+            let user = TwitchUser {
+                profile_image: Some(profile_image.to_string()),
+                ..twitch_user()
+            };
+            assert!(user.validate().is_err(), "{profile_image}");
+        }
+    }
+
+    #[test]
     fn display_names() {
         let discord = |display_name: Option<&str>| {
             BridgedUser::Discord(DiscordUser {
@@ -324,6 +485,10 @@ mod tests {
         assert_eq!(discord(None).into_display_name(), "nelly");
         assert_eq!(BridgedUser::Telegram(telegram_user()).into_display_name(), "Nelly Smith");
         assert_eq!(discord(Some("Nelly")).into_notification_display_name(), "Nelly (Discord)");
+        assert_eq!(
+            BridgedUser::Twitch(twitch_user()).into_notification_display_name(),
+            "Nelly_99 (Twitch)"
+        );
     }
 
     #[test]
@@ -337,5 +502,7 @@ mod tests {
             BridgedUserId::Telegram(123456789)
         );
         assert_eq!(BridgedUserId::Telegram(-1).platform(), BridgePlatform::Telegram);
+        assert_eq!(BridgedUser::Twitch(twitch_user()).id(), BridgedUserId::Twitch(141981764));
+        assert_eq!(BridgedUserId::Twitch(1).platform(), BridgePlatform::Twitch);
     }
 }

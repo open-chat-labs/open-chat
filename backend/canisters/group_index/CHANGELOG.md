@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add Twitch as a supported platform for bridged chats ([#10214](https://github.com/open-chat-labs/open-chat/pull/10214))
+
 ### Removed
 
 - Remove the one-off which moved what the replaced queue held onto the event queue, now that it has run ([#10172](https://github.com/open-chat-labs/open-chat/pull/10172))

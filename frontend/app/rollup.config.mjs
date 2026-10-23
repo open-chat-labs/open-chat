@@ -302,6 +302,9 @@ export default {
             "import.meta.env.OC_TELEGRAM_BRIDGE_LINK_URL": JSON.stringify(
                 process.env.OC_TELEGRAM_BRIDGE_LINK_URL ?? "",
             ),
+            "import.meta.env.OC_TWITCH_BRIDGE_LINK_URL": JSON.stringify(
+                process.env.OC_TWITCH_BRIDGE_LINK_URL ?? "",
+            ),
             "import.meta.env.OC_NCA_REPORTER_URL": JSON.stringify(process.env.OC_NCA_REPORTER_URL),
             "import.meta.env.OC_PREVIEW_PROXY_URL": JSON.stringify(
                 process.env.OC_PREVIEW_PROXY_URL,
