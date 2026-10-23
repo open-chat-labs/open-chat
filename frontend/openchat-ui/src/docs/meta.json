@@ -15899,6 +15899,17 @@
         "doc": "Unblock after the user confirms."
       },
       {
+        "name": "moderatorAction",
+        "type": "{ label: string; onAction: () => void }",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "A platform moderator's action on this person (suspend / unsuspend). Label: resource key (or literal text). Hidden without it."
+      },
+      {
         "name": "online",
         "type": "boolean",
         "default": true,

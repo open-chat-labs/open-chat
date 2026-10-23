@@ -46,8 +46,7 @@ export const dialogs: Dialogs = {
     // the CHIT leaderboard (8d)
     leaderboard: undefined,
 
-    // someone else's profile card: its Chat button so far, the rest in 4a. A dialog, not anchored
-    // to the name clicked as the old desktop card was
+    // someone's profile card. A dialog, not anchored to the name clicked as the old desktop card was
     user: () => import("../user/UserDialogScreen.svelte"),
 };
 

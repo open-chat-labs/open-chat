@@ -67,6 +67,8 @@
     /** Block after the user confirms; the dialog closes once it resolves. Hidden without it. */
     onBlock?: () => Promise<unknown> | void;
     onUnblock?: () => Promise<unknown> | void;
+    /** A platform moderator's action on this person (suspend / unsuspend). Label: resource key (or literal text). Hidden without it. */
+    moderatorAction?: { label: string; onAction: () => void };
     onCancel?: () => void;
   }
 
@@ -96,6 +98,7 @@
     blocked = false,
     onBlock,
     onUnblock,
+    moderatorAction,
     onCancel,
   }: Props = $props();
   const t = useT();
@@ -253,10 +256,13 @@
           >{t(flow.busy ? 'ui.userDialog.working' : blocked ? 'ui.userDialog.unblock' : 'ui.userDialog.block')}</span
         >
       </div>
-    {:else if !isSelf && ((blocked ? onUnblock : onBlock) || (!dm && onMessage))}
+    {:else if !isSelf && ((blocked ? onUnblock : onBlock) || (!dm && onMessage) || moderatorAction)}
       <div class="footer">
         {#if blocked ? onUnblock : onBlock}
           <span class="block" onclick={() => (blockStep = 'confirm')} role="button" tabindex="0">{t(blocked ? 'ui.userDialog.unblock' : 'ui.userDialog.block')}</span>
+        {/if}
+        {#if moderatorAction}
+          <span class="block" onclick={() => flow.dismiss(moderatorAction.onAction)} role="button" tabindex="0">{t(moderatorAction.label)}</span>
         {/if}
         <span class="grow"></span>
         {#if !dm && onMessage && !blocked}

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { disableChit } from "@src/stores/settings";
     import { ColourVars, Container } from "component-lib";
-    import type { DiamondMembershipStatus } from "@client";
+    import { userBadges, type DiamondMembershipStatus } from "@client";
     import Diamond from "../../icons/Diamond.svelte";
     import ChitEarnedBadge from "./ChitEarnedBadge.svelte";
     import Streak from "./Streak.svelte";
@@ -29,6 +29,10 @@
         borderColor,
         forceStreakBadge = false,
     }: Props = $props();
+
+    let badges = $derived(
+        userBadges({ diamondStatus, streak, chitEarned }, $disableChit && !forceStreakBadge),
+    );
 </script>
 
 {#snippet fingerprint()}
@@ -46,11 +50,11 @@
     {#if withFingerprint}
         {@render fingerprint()}
     {/if}
-    <Diamond {size} {borderColor} status={diamondStatus} />
+    <Diamond {size} {borderColor} status={badges.diamond} />
     <!-- Verified user (DecideAI) badge is suspended - not rendered. -->
-    {#if !$disableChit || forceStreakBadge}
-        <Streak {size} {borderColor} days={streak} />
-        <ChitEarnedBadge {size} {borderColor} earned={chitEarned} />
+    {#if badges.chit !== undefined}
+        <Streak {size} {borderColor} days={badges.chit.streak} />
+        <ChitEarnedBadge {size} {borderColor} earned={badges.chit.earned} />
     {/if}
 </Container>
 

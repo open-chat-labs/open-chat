@@ -33,7 +33,14 @@ export {
     TimelineGrouper,
 } from "./utils/chat";
 export { formatDuration } from "./utils/time";
-export { botOwnerCandidates, compareIsNotYouThenUsername, directChatUsers } from "./utils/user";
+export {
+    botOwnerCandidates,
+    compareIsNotYouThenUsername,
+    directChatUsers,
+    userBadges,
+    type UserBadges,
+    unsuspendUserMessage,
+} from "./utils/user";
 export * from "./utils/cryptoFormatter";
 export { candidateGroupFromChat, groupChanges, hasAccessGateChanged } from "./utils/group.svelte";
 export { communityChanges, isPrivateCommunityPreview } from "./utils/community";
@@ -42,6 +49,12 @@ export { currentStreak } from "./utils/chit";
 export { inviteLinkUrl } from "./utils/inviteLink";
 export { postLoginJoin } from "./utils/join";
 export { muteNotificationsFailureMessage, pinChatFailureMessage } from "./utils/pinAndMute";
+export {
+    profileBlock,
+    type BlockContext,
+    type ProfileBlock,
+    type ProfileBlockInput,
+} from "./utils/profileBlock";
 export { profileChanges, type ProfileChanges } from "./utils/profile";
 export { isDisplayNameValid, isUsernameValid } from "./utils/validation";
 export { rightPanelView, type RightPanelInput } from "./utils/rightPanel";

@@ -5,7 +5,7 @@ import type { RingtoneKey } from "@src/stores/video";
 // ProfileDialog's props from the user's profile, metrics and settings.
 
 /** An image as the dialog draws its avatar and cover: a CSS background. */
-function cssImage(url: string): string {
+export function cssImage(url: string): string {
     return `url("${url}") center / cover no-repeat`;
 }
 

@@ -139,3 +139,6 @@
 - Components that hide their scrollbar (`scrollbar-width: none`) or set it thin keep doing so. The two that hide it (`MemeFighterDialog`'s narrow vibes, Learn's narrow tabs) also hide it with `::-webkit-scrollbar { display: none }`, which is all Safari before 18.2 reads.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
 
+## 2026-10-23 — UserDialog: a moderator action, by hand
+- `UserDialog` takes `moderatorAction` (`{ label, onAction }`), shown in its footer beside Block for anyone but yourself. It closes the dialog (with its exit animation) and then calls `onAction`. The app uses it for a platform moderator's suspend and unsuspend, which the design has no place for.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

@@ -403,6 +403,7 @@ import { AndroidWebAuthnErrorCode } from "tauri-plugin-oc-api";
 import type { OpenChatConfig } from "./config";
 import { approveFromExternalWallet, type SignerWallet, type WalletAccount } from "./utils/signer";
 import { unarchiveChatsReportingFailure, unarchiveChatsWithUnread } from "./utils/autoUnarchive";
+import type { BlockContext } from "./utils/profileBlock";
 import {
     FilteredProposals,
     achievementsStore,
@@ -4067,6 +4068,30 @@ export class OpenChat {
                 undo();
                 return false;
             });
+    }
+
+    /** Blocks `userId` where their profile card was opened (`profileBlock`). */
+    blockUserInContext(context: BlockContext, userId: string): Promise<boolean> {
+        switch (context.kind) {
+            case "direct_chat":
+                return this.blockUserFromDirectChat(userId);
+            case "group_chat":
+                return this.blockUser(context.id, userId);
+            case "community":
+                return this.blockCommunityUser(context.id, userId);
+        }
+    }
+
+    /** Unblocks `userId` where their profile card was opened (`profileBlock`). */
+    unblockUserInContext(context: BlockContext, userId: string): Promise<boolean> {
+        switch (context.kind) {
+            case "direct_chat":
+                return this.unblockUserFromDirectChat(userId);
+            case "group_chat":
+                return this.unblockUser(context.id, userId);
+            case "community":
+                return this.unblockCommunityUser(context.id, userId);
+        }
     }
 
     formatDisappearingMessageTime(

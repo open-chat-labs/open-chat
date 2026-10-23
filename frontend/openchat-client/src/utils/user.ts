@@ -1,5 +1,6 @@
 import type {
     ChatMap,
+    DiamondMembershipStatus,
     DirectChatSummary,
     MessageFormatter,
     PublicProfile,
@@ -7,7 +8,7 @@ import type {
     UserSummary,
     ReducedPublicProfile,
 } from "@shared";
-import { compareChats, isDeletedUser } from "@shared";
+import { compareChats, i18nKey, isDeletedUser, type ResourceKey } from "@shared";
 
 export function formatLastOnlineDate(
     formatter: MessageFormatter,
@@ -165,9 +166,7 @@ export function directChatUsers(
     return [...directChats.values()]
         .sort(compareChats)
         .map((c) => users.get(c.them.userId))
-        .filter(
-            (u): u is UserSummary => u !== undefined && u.kind !== "bot" && !isDeletedUser(u),
-        );
+        .filter((u): u is UserSummary => u !== undefined && u.kind !== "bot" && !isDeletedUser(u));
 }
 
 // Who the owner of a bot can pass it to: the users they have direct chats with, after themselves,
@@ -214,4 +213,34 @@ export function shouldRestartForNewUserId(previousUserId: string, latestUserId: 
         // Without storage there's nothing to stop a loop, so don't restart
         return false;
     }
+}
+
+/** The badges shown beside a user's name. */
+export type UserBadges = {
+    diamond: DiamondMembershipStatus["kind"] | undefined;
+    // undefined when the viewer has turned CHIT off
+    chit: { streak: number; earned: number } | undefined;
+};
+
+/**
+ * A user's badges. There is no verified badge: the unique-person gate and its badge are
+ * suspended, whatever the user's `isUniquePerson` says.
+ */
+export function userBadges(
+    user: {
+        diamondStatus: DiamondMembershipStatus["kind"] | undefined;
+        streak: number;
+        chitEarned: number;
+    },
+    disableChit: boolean,
+): UserBadges {
+    return {
+        diamond: user.diamondStatus,
+        chit: disableChit ? undefined : { streak: user.streak, earned: user.chitEarned },
+    };
+}
+
+/** The message to show once `unsuspendUser` has answered. */
+export function unsuspendUserMessage(success: boolean): ResourceKey {
+    return i18nKey(success ? "unsuspendedUser" : "failedToUnsuspendUser");
 }

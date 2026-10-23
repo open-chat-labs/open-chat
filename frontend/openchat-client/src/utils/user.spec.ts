@@ -10,6 +10,7 @@ import { get } from "svelte/store";
 import { vi } from "vitest";
 import {
     botOwnerCandidates,
+    userBadges,
     buildUsernameList,
     compareUsername,
     directChatUsers,
@@ -231,5 +232,17 @@ describe("shouldRestartForNewUserId", () => {
         } finally {
             spy.mockRestore();
         }
+    });
+});
+
+describe("userBadges", () => {
+    // 4a invariant 4: never a verified badge, and no CHIT badge when the viewer turned CHIT off
+    test("has no verified badge, and no CHIT badges when CHIT is off", () => {
+        const user = { diamondStatus: "lifetime" as const, streak: 5, chitEarned: 1000 };
+        expect(userBadges(user, false)).toEqual({
+            diamond: "lifetime",
+            chit: { streak: 5, earned: 1000 },
+        });
+        expect(userBadges(user, true)).toEqual({ diamond: "lifetime", chit: undefined });
     });
 });
