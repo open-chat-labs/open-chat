@@ -4,6 +4,7 @@ import {
     linkedDialog,
     linkedDialogParam,
     openLinkedDialog,
+    shownLinkedDialog,
 } from "./dialogs";
 
 describe("the dialog a URL's query opens", () => {
@@ -33,6 +34,15 @@ describe("the dialog a URL's query opens", () => {
     test("closes by dropping its param", () => {
         expect(linkedDialogParam({ kind: "leaderboard" })).toBe("hof");
         expect(linkedDialogParam({ kind: "profile" })).toBe("profile");
+    });
+});
+
+describe("the linked dialog shown", () => {
+    test("is the one the URL opens, but the CHIT dialog while CHIT is off", () => {
+        expect(shownLinkedDialog({ kind: "chit" }, false)).toEqual({ kind: "chit" });
+        expect(shownLinkedDialog({ kind: "chit" }, true)).toBeUndefined();
+        expect(shownLinkedDialog({ kind: "profile" }, true)).toEqual({ kind: "profile" });
+        expect(shownLinkedDialog(undefined, false)).toBeUndefined();
     });
 });
 

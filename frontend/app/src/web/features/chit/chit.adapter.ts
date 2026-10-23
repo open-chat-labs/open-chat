@@ -45,11 +45,16 @@ export type ChitRailProps = Pick<
     "chitShown" | "chitStreak" | "chitClaimable"
 >;
 
-/** ChitDialog's props, but its puzzle, achievements and leaderboard (8d's other parts). */
+/**
+ * ChitDialog's props, but its puzzle, achievements and leaderboard (8d's other parts). Unknown
+ * (undefined) until the first sync: till then the user's CHIT is a placeholder (no streak, a claim
+ * due), which would offer a claim the user may have made.
+ */
 export function chitDialogProps(
-    { chit, disabled, now }: ChitInputs,
+    { chit, lastSync, disabled, now }: ChitInputs,
     insurance: StreakInsurance,
-): ChitDialogProps {
+): ChitDialogProps | undefined {
+    if (lastSync === 0) return undefined;
     const streak = currentStreak(chit, now);
     const claimedToday = chit.nextDailyChitClaim > now;
     return {

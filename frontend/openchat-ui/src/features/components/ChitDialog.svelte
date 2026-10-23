@@ -51,7 +51,8 @@
     onBack?: () => void;
     /** Resource key (or literal text). */
     backLabel?: string;
-    /** Claim today's CHIT. Reject to show an error; resolve once the host has applied it. */
+    /** Claim today's CHIT. Reject to show an error; resolve once the host has applied it, or with false when there was
+     *  nothing to claim (claimed already, elsewhere): no claim plays then, and the dialog follows `claimable`. */
     onClaim?: (r: { amount: number }) => Promise<unknown> | void;
     onAction?: (kind: ChitAction) => void;
     onClose?: () => void;
@@ -142,7 +143,7 @@
   async function claim() {
     if (!onClaim || claimedHere) return;
     const result = await flow.run(() => onClaim({ amount: daily }));
-    if (result.ok) claimedHere = true;
+    if (result.ok && result.value !== false) claimedHere = true;
   }
 
   const close = () => flow.dismiss(onClose);

@@ -369,7 +369,8 @@ design export needs. Each entry says where it came up.
 ### Wiring
 
 - **`ChitDialog`, by hand** (8d): the default milestone tiers keep their hand-spaced positions
-  when a host passes them; a claim made in the dialog clears once the next claim opens.
+  when a host passes them; a claim made in the dialog clears once the next claim opens; `onClaim`
+  resolving `false` is nothing claimed (claimed already), and plays no claim.
 - **CHIT dialog, first cut** (`features/chit`, 8d): the streak, today's claim, the balance, the
   insurance summary, the settings (the profile's CHIT section) and the leaderboard (`?hof`, a
   placeholder until it's built). Not yet: the daily puzzle (the card is left out), "Ways to earn

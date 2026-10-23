@@ -231,3 +231,7 @@
 - A claim made in the dialog kept it in the claimed view for as long as it stayed open, so once the next claim opened it said "Come back in" with no countdown and no Claim button. It now clears when `claimable` comes back on.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
 
+## 2026-10-24 — ChitDialog: a claim with nothing to claim plays no claim, by hand
+- `onClaim` may resolve with `false` when there was nothing to claim (today's already claimed, on another device or before the dialog knew): the claim animation doesn't play, and the dialog follows `claimable`. It played as if CHIT had been added.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+

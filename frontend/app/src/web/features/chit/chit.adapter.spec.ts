@@ -1,4 +1,4 @@
-import type { ChitState } from "@client";
+import type { ChitState, StreakInsurance } from "@client";
 import { chitDialogProps, chitRailProps, type ChitInputs } from "./chit.adapter";
 
 const NOW = 10 * 24 * 60 * 60 * 1000;
@@ -25,12 +25,23 @@ function inputs(chit: Partial<ChitState> = {}, extra: Partial<ChitInputs> = {}):
 
 const noInsurance = { daysInsured: 0, daysMissed: 0 };
 
+// the dialog's props once the user's CHIT is known (after the first sync)
+function known(i: ChitInputs, insurance: StreakInsurance) {
+    const props = chitDialogProps(i, insurance);
+    if (props === undefined) throw new Error("not known");
+    return props;
+}
+
 describe("the CHIT dialog's props", () => {
+    test("are unknown till the first sync, rather than a placeholder that offers a claim", () => {
+        expect(chitDialogProps(inputs({}, { lastSync: 0 }), noInsurance)).toBeUndefined();
+    });
+
     test("a streak shows as 0 once streakEnds has passed, in the rail and ChitDialog", () => {
         const lapsed = inputs({ streakEnds: BigInt(NOW - 1) });
-        expect(chitDialogProps(lapsed, noInsurance).streak).toBe(0);
+        expect(known(lapsed, noInsurance).streak).toBe(0);
         expect(chitRailProps(lapsed, false).chitStreak).toBe(0);
-        expect(chitDialogProps(inputs(), noInsurance).streak).toBe(6);
+        expect(known(inputs(), noInsurance).streak).toBe(6);
         expect(chitRailProps(inputs(), false).chitStreak).toBe(6);
     });
 
@@ -44,7 +55,7 @@ describe("the CHIT dialog's props", () => {
     });
 
     test("the dialog offers the claim whenever it's due and CHIT is on, however old the last sync, as the old CHIT modal does", () => {
-        const offered = (i: ChitInputs) => chitDialogProps(i, noInsurance).claimable;
+        const offered = (i: ChitInputs) => known(i, noInsurance).claimable;
         expect(offered(inputs({}, { lastSync: NOW - 60 * MINUTE }))).toBe(true);
         expect(offered(inputs({ nextDailyChitClaim: BigInt(NOW + MINUTE) }))).toBe(false);
         expect(offered(inputs({}, { disabled: true }))).toBe(false);
@@ -52,28 +63,26 @@ describe("the CHIT dialog's props", () => {
 
     test("today's amount is what claiming pays now, or what today's claim paid", () => {
         // a 6-day streak: claiming makes it 7, which pays 400
-        expect(chitDialogProps(inputs(), noInsurance).daily).toBe(400);
+        expect(known(inputs(), noInsurance).daily).toBe(400);
         // claimed today, at 7 days
         const claimed = inputs({ streak: 7, nextDailyChitClaim: BigInt(NOW + 60 * MINUTE) });
-        expect(chitDialogProps(claimed, noInsurance).daily).toBe(400);
+        expect(known(claimed, noInsurance).daily).toBe(400);
         // a lapsed streak starts again at 1
-        expect(chitDialogProps(inputs({ streakEnds: BigInt(NOW - 1) }), noInsurance).daily).toBe(
-            200,
-        );
+        expect(known(inputs({ streakEnds: BigInt(NOW - 1) }), noInsurance).daily).toBe(200);
         // due, though not offered (CHIT off): still what claiming would pay
-        expect(chitDialogProps(inputs({}, { disabled: true }), noInsurance).daily).toBe(400);
+        expect(known(inputs({}, { disabled: true }), noInsurance).daily).toBe(400);
     });
 
     test("counts down to the next claim once today's is claimed", () => {
         const claimed = inputs({ nextDailyChitClaim: BigInt(NOW + 61 * MINUTE + 5000) });
-        expect(chitDialogProps(claimed, noInsurance).countdown).toBe("01:01:05");
-        expect(chitDialogProps(inputs(), noInsurance).countdown).toBe("");
+        expect(known(claimed, noInsurance).countdown).toBe("01:01:05");
+        expect(known(inputs(), noInsurance).countdown).toBe("");
         // due though not offered: nothing to count down to, never a negative time
-        expect(chitDialogProps(inputs({}, { disabled: true }), noInsurance).countdown).toBe("");
+        expect(known(inputs({}, { disabled: true }), noInsurance).countdown).toBe("");
     });
 
     test("insured days are the days bought and the days used", () => {
-        const props = chitDialogProps(inputs(), { daysInsured: 5, daysMissed: 2 });
+        const props = known(inputs(), { daysInsured: 5, daysMissed: 2 });
         expect([props.insured, props.used]).toEqual([5, 2]);
     });
 });

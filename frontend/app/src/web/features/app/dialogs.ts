@@ -93,6 +93,17 @@ function isProfileLinkSection(value: string): value is ProfileLinkSection {
     return PROFILE_LINK_SECTIONS.includes(value);
 }
 
+/**
+ * The linked dialog to show for the one the URL opens: none for the CHIT dialog while CHIT is off
+ * (a link to ?chit, the old UI's prize-message link …), however it was opened.
+ */
+export function shownLinkedDialog(
+    dialog: LinkedDialog | undefined,
+    chitOff: boolean,
+): LinkedDialog | undefined {
+    return dialog?.kind === "chit" && chitOff ? undefined : dialog;
+}
+
 /** The query param that opens a linked dialog, which closing it drops. */
 export function linkedDialogParam(dialog: LinkedDialog): string {
     return PARAMS[dialog.kind];

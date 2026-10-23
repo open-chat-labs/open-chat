@@ -37,6 +37,7 @@
         builtDialogScreens,
         linkedDialog,
         linkedDialogParam,
+        shownLinkedDialog,
         type LinkedDialog,
         type LocalDialog,
     } from "./dialogs";
@@ -52,7 +53,8 @@
 
     const client = getContext<OpenChat>("client");
 
-    const linked = $derived(linkedDialog($querystringStore));
+    // not the CHIT dialog while CHIT is off: it doesn't open, and closes if CHIT is turned off
+    const linked = $derived(shownLinkedDialog(linkedDialog($querystringStore), $disableChit));
 
     // a linked dialog replaced by another kind while it's still showing hands its backdrop over,
     // so only the next dialog animates in: Diamond from the profile (openLinked, which plays no

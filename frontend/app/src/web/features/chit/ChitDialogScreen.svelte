@@ -15,7 +15,9 @@
     } from "@openchat/ui/src/features/components/ChitDialog.svelte";
     import { disableChit } from "@src/stores/settings";
     import { now500 } from "@src/stores/time";
-    import { getContext, onMount } from "svelte";
+    import DialogShell from "@openchat/ui/src/lib/components/DialogShell.svelte";
+    import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
+    import { getContext } from "svelte";
     import type { DialogProps, LinkedDialog } from "../app/dialogs";
     import { openLinked } from "../app/linkedDialogs";
     import { chitDialogProps } from "./chit.adapter";
@@ -23,12 +25,6 @@
     let { onClose }: DialogProps<Extract<LinkedDialog, { kind: "chit" }>> = $props();
 
     const client = getContext<OpenChat>("client");
-
-    // CHIT turned off: nothing to show (a link to ?chit, the old UI's prize-message link …), so it
-    // closes as it opens
-    onMount(() => {
-        if ($disableChit) onClose();
-    });
 
     const chit = $derived(
         chitDialogProps(
@@ -42,9 +38,12 @@
         ),
     );
 
-    // the dialog shows the claim once this settles, and an error if it throws
-    async function claim(): Promise<void> {
-        await client.claimDailyChit();
+    // the dialog shows the claim once this settles, and an error if it throws; claimed already
+    // (on another device, or before the dialog knew) is nothing claimed: no claim plays, and the
+    // client moves the countdown on
+    async function claim(): Promise<boolean> {
+        const resp = await client.claimDailyChit();
+        return resp.kind === "success";
     }
 
     function act(action: ChitAction) {
@@ -60,7 +59,7 @@
     }
 </script>
 
-{#if !$disableChit}
+{#if chit !== undefined}
     <ChitDialog
         streak={chit.streak}
         balance={chit.balance}
@@ -75,4 +74,17 @@
         onClaim={claim}
         onAction={act}
         {onClose} />
+{:else}
+    <!-- till the first sync: the user's CHIT isn't known yet -->
+    <DialogShell title="ui.chitDialog.title" {onClose}>
+        <div class="loading"><Spinner /></div>
+    </DialogShell>
 {/if}
+
+<style>
+    .loading {
+        display: grid;
+        place-items: center;
+        min-height: 200px;
+    }
+</style>
