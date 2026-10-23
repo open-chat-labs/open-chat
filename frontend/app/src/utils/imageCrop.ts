@@ -48,3 +48,27 @@ export async function cropImage(
     const [url, bytes] = await Promise.all([readAsDataUrl(blob), blob.arrayBuffer()]);
     return { url, data: new Uint8Array(bytes) };
 }
+
+/**
+ * A picked image cropped to the middle of it in `size`'s shape and scaled to `size`, for a picker
+ * with no crop step (GroupSettingsDialog's avatar).
+ */
+export async function cropCentred(file: File, size: Dimensions): Promise<CroppedImage | undefined> {
+    const source = await readImageFile(file);
+    const image = new Image();
+    image.src = source;
+    await image.decode();
+    const scale = Math.min(image.naturalWidth / size.width, image.naturalHeight / size.height);
+    const width = size.width * scale;
+    const height = size.height * scale;
+    return cropImage(
+        source,
+        {
+            x: (image.naturalWidth - width) / 2,
+            y: (image.naturalHeight - height) / 2,
+            width,
+            height,
+        },
+        size,
+    );
+}

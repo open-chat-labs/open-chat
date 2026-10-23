@@ -257,6 +257,31 @@ design export needs. Each entry says where it came up.
   - the community header's Edit, Invite and new channel items, and the conversation header's
     Invite, Convert, Import and webhook items, come with 4b's later parts.
 
+- **Group and channel settings** (4b part 2a): GroupPanel's Settings opens `GroupSettingsDialog`
+  on `UpdateGroupState` (`features/group/GroupSettingsDialogScreen.svelte`, through
+  `settings.adapter.ts`). Someone who can't edit the chat gets its About page instead
+  (`chatManageAccess`), from the same menu item, which reads "About the group" for them.
+  - by hand: `GroupSettingsDialog` takes `readOnlySections`. Permissions, disappearing messages
+    and Public are read-only to a non-owner, as in the old editors (`canChangeVisibility`).
+    "Visible chat history" is always locked when editing, because the backend's update has no
+    field for it. A read-only Permissions page keeps its General / Messages / Threads tabs.
+  - a public group's "Start a call" isn't forced to admins. Old desktop did that and mobile
+    doesn't; the backend doesn't require it, so this follows mobile.
+  - a channel's settings still say "Group settings", "Group name" and "Group photo". The
+    dialog's `noun` is only `group` or `community`.
+  - a group made in the old UI counts several permissions as "changed from the defaults". The
+    dialog's defaults aren't the app's (`defaultChatPermissions`).
+  - by hand: GroupPanel offers Settings to everyone, as About for someone without edit rights.
+  - the confirm for a verified group's rename and for a change of visibility is the app's
+    (`DialogShell`, `TODO(design)`). Declining it keeps the edits, and the dialog says it
+    couldn't save.
+  - a picked avatar is cropped to its middle at 150×150, because the dialog has no crop step.
+    The colour and cover swatches aren't stored, so they come back to their defaults.
+  - the About page opens on its own until the Manage frame lands in part 3. Its rules link does
+    nothing.
+  - with edit rights, GroupPanel's menu also shows Convert, Import and the new channel items.
+    They do nothing until parts 4 and 5.
+
 ## App
 
 ### Data the design shows that the backend doesn't have

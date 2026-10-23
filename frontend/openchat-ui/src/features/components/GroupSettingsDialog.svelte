@@ -10,6 +10,9 @@
 <script lang="ts" module>
   export type NameCheck = 'ok' | 'taken' | 'invalid';
 
+  /** A part of the settings a host can make read-only (`readOnlySections`). */
+  export type ReadOnlySection = 'gates' | 'rules' | 'permissions' | 'disappearing' | 'history' | 'visibility';
+
   /** Disappearing-message durations as TimedToggle labels ("12 hours") → milliseconds. */
   const UNIT_MS: Record<string, number> = { minute: 6e4, hour: 36e5, day: 864e5, week: 6048e5, month: 2592e6, year: 31536e6 };
   export function durationMs(label: string): number | null {
@@ -152,6 +155,9 @@
     section?: Section;
     /** Embedded only: view-only (no edit permission). */
     readOnly?: boolean;
+    /** The parts the viewer may see but not change (their role doesn't allow it): those pages show plain On/Off
+     *  status, and 'disappearing', 'history' and 'visibility' lock those switches on the Group page. */
+    readOnlySections?: ReadOnlySection[];
     /** Owner-only rows under the Group page ("Move to a community"). */
     ownerMoves?: OwnerMove[];
     /** About page, resource key (or literal text): e.g. "Public group · 1,204 members". */
@@ -184,6 +190,7 @@
     embedded = false,
     section = 'group',
     readOnly: readOnlyProp = false,
+    readOnlySections = [],
     ownerMoves = [],
     aboutMeta = '',
     roleLabel = '',
@@ -362,7 +369,8 @@
   const tabIdx = $derived(embedded ? Math.max(0, TAB_KEYS.indexOf(section)) : tab);
   const isAbout = $derived(tabIdx === 0 && viewOnly);
   // pages other than the About page show plain On/Off status when view-only
-  const statusOnly = $derived(viewOnly && tabIdx !== 0);
+  const lockedSection = (key: ReadOnlySection) => readOnlySections.includes(key);
+  const statusOnly = $derived((viewOnly && tabIdx !== 0) || lockedSection(TAB_KEYS[tabIdx] as ReadOnlySection));
   const isCommunity = $derived(noun === 'community');
 
   const gateCount = $derived(gates && Array.isArray(gates.rules) ? gates.rules.length : 0);
@@ -501,9 +509,10 @@
       hint: t(isPublic ? 'ui.groupSettingsDialog.publicHintOn' : 'ui.groupSettingsDialog.publicHintOff'),
       on: isPublic,
       // going public needs Diamond; going private never does
-      locked: !isDiamond && !isPublic,
+      locked: !isDiamond && !isPublic && !lockedSection('visibility'),
+      fixed: lockedSection('visibility'),
       set: (v: boolean) => {
-        if (v && !isDiamond) return;
+        if ((v && !isDiamond) || lockedSection('visibility')) return;
         isPublic = v;
       },
       timed: false,
@@ -514,6 +523,8 @@
       on: history,
       set: (v: boolean) => (history = v),
       timed: false,
+      // the host's: can't be changed here (no Diamond banner)
+      fixed: lockedSection('history'),
     },
     { title: t('ui.groupSettingsDialog.disappearing'), hint: '', on: disappearOn, set: (v: boolean) => (disappearOn = v), timed: true },
   ]);
@@ -612,7 +623,8 @@
     {/if}
 
     <div class="body" onscroll={() => permMenu && (permMenu = null)}>
-      <div class="body-inner" inert={statusOnly ? true : undefined}>
+      <!-- a read-only Permissions page keeps its General / Messages / Threads tabs: its own controls are left out instead -->
+      <div class="body-inner" inert={statusOnly && tabIdx !== 3 ? true : undefined}>
         {#if tabIdx === 0 && !viewOnly}
           <div class="group-page">
             <div class="cover" style:height={isCommunity ? '150px' : '112px'} style:background={coverShown ? `${cssUrl(coverShown)} center/cover no-repeat` : `var(--cover-${COVERS[coverKey] ? coverKey : 'plum'})`}>
@@ -737,7 +749,7 @@
                       <div class="switch-row" class:last={i === switches.length - 1}>
                         {#if s.timed}
                           <div class="cell">
-                            <TimedToggle density="flush" label={s.title} on={s.on} value={after} offHint={t('ui.groupSettingsDialog.disappearOffHint')} readOnly={statusOnly} onChange={s.set} onDurationChange={(label) => (after = label)} />
+                            <TimedToggle density="flush" label={s.title} on={s.on} value={after} offHint={t('ui.groupSettingsDialog.disappearOffHint')} readOnly={statusOnly || lockedSection('disappearing')} onChange={s.set} onDurationChange={(label) => (after = label)} />
                           </div>
                         {:else}
                           <div class="switch-line">
@@ -745,7 +757,7 @@
                               <span class="switch-title">{s.title}</span>
                               <span class="switch-hint">{s.hint}</span>
                             </div>
-                            <div class="toggle-cell"><Toggle on={s.on} ariaLabel={s.title} disabled={!!s.locked} onChange={s.set} /></div>
+                            <div class="toggle-cell"><Toggle on={s.on} ariaLabel={s.title} disabled={!!s.locked || !!s.fixed} onChange={s.set} /></div>
                           </div>
                           {#if s.locked}
                             <UpgradeBanner text={t('ui.groupSettingsDialog.diamondOnly')} {onUpgrade} />
@@ -840,7 +852,7 @@
         {#if tabIdx === 1}
           <div class="gates-page">
             <div class="column cell">
-              <AccessGates tokens={gateTokens} nervousSystems={gateSystems} readOnly={viewOnly} {isDiamond} value={gates} onChange={(g) => (gates = g)} />
+              <AccessGates tokens={gateTokens} nervousSystems={gateSystems} readOnly={statusOnly} {isDiamond} value={gates} onChange={(g) => (gates = g)} />
             </div>
           </div>
         {/if}
@@ -884,7 +896,7 @@
                   <div class="rules-head">
                     {@render sectionLabel(t('ui.groupSettingsDialog.rules'))}
                     <span class="grow"></span>
-                    {#if rulesText.length > 0 && !viewOnly}
+                    {#if rulesText.length > 0 && !statusOnly}
                       <span
                         class="text-action"
                         onclick={() => {
@@ -908,7 +920,7 @@
                       errorText={t('ui.groupSettingsDialog.rulesError')}
                     />
                   </div>
-                  {#if rulesChanged && !viewOnly}
+                  {#if rulesChanged && !statusOnly}
                     <!-- new rules, or a real change (not a typo fix), can ask everyone to accept them -->
                     <div class="cell">
                       <Toggle label="ui.groupSettingsDialog.rulesNewVersion" help="ui.groupSettingsDialog.rulesNewVersionHint" on={rulesNewVersion} onChange={(on) => (rulesNewVersion = on)} />
@@ -941,7 +953,7 @@
                 />
               </div>
 
-              {#if permsChanged > 0}
+              {#if permsChanged > 0 && !statusOnly}
                 <div class="changed">
                   <span class="changed-text">{t('ui.groupSettingsDialog.permsChanged', { count: permsChanged })}</span>
                   <span
@@ -984,10 +996,14 @@
                       {#each group.items as p}
                         <div class="perm-row" class:last={p.last}>
                           <span class="perm-label" class:master={p.master}>{p.label}</span>
-                          <span class="perm-pill {p.tone}" onclick={(e) => p.open(e.currentTarget)} role="button" tabindex="0">
-                            <span class="perm-value">{p.valueLabel}</span>
-                            <span class="perm-chevron"></span>
-                          </span>
+                          {#if statusOnly}
+                            <span class="perm-pill static {p.tone}"><span class="perm-value">{p.valueLabel}</span></span>
+                          {:else}
+                            <span class="perm-pill {p.tone}" onclick={(e) => p.open(e.currentTarget)} role="button" tabindex="0">
+                              <span class="perm-value">{p.valueLabel}</span>
+                              <span class="perm-chevron"></span>
+                            </span>
+                          {/if}
                         </div>
                       {/each}
                     </div>
@@ -1976,6 +1992,11 @@
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 34%, transparent);
     cursor: pointer;
     user-select: none;
+  }
+
+  .perm-pill.static {
+    cursor: default;
+    pointer-events: none;
   }
 
   .perm-pill.off {

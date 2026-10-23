@@ -10256,6 +10256,17 @@
         "doc": "View-only (no edit permission): no editing and no Save, embedded or as a modal."
       },
       {
+        "name": "readOnlySections",
+        "type": "ReadOnlySection[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "[]",
+        "doc": "The parts the viewer may see but not change: those pages show plain On/Off status, and 'disappearing', 'history' and 'visibility' lock those switches."
+      },
+      {
         "name": "ownerMoves",
         "type": "OwnerMove[]",
         "default": null,

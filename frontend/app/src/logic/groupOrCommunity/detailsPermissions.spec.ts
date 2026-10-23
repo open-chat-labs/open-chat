@@ -1,7 +1,9 @@
 import type { CommunitySummary, MultiUserChat, OpenChat } from "@client";
 import { describe, expect, test } from "vitest";
+import { ROLE_ADMIN, ROLE_MEMBER, ROLE_OWNER } from "@client";
 import {
     chatDetailsPermissions,
+    chatManageAccess,
     chatRulesText,
     communityDetailsPermissions,
 } from "./detailsPermissions";
@@ -67,5 +69,56 @@ describe("chat rules text", () => {
             "chat rules + community rules",
         );
         expect(chatRulesText(rules(false), channel, undefined, undefined)).toBe("");
+    });
+});
+
+describe("chatManageAccess", () => {
+    const group = (role: number) =>
+        ({
+            kind: "group_chat",
+            id: { kind: "group_chat", groupId: "g" },
+            membership: { role },
+        }) as MultiUserChat;
+    // a viewer the group lets edit details (`edit`), who owns it or not (`owner`)
+    const viewer = ({ edit, owner }: { edit: boolean; owner: boolean }) =>
+        ({
+            ...client({}),
+            canEditGroupDetails: () => edit,
+            canChangePermissions: () => owner,
+        }) as never as OpenChat;
+
+    // 4b invariant 7: a member without edit rights gets the About page
+    test("a member who can't edit the group gets the About page", () => {
+        expect(
+            chatManageAccess(
+                viewer({ edit: false, owner: false }),
+                group(ROLE_MEMBER),
+                undefined,
+                false,
+            ),
+        ).toEqual({ kind: "about" });
+    });
+
+    // 4b invariant 7: a section the user's role can't change is read-only
+    test("an admin edits the group but not its permissions, disappearing messages or visibility", () => {
+        expect(
+            chatManageAccess(
+                viewer({ edit: true, owner: false }),
+                group(ROLE_ADMIN),
+                undefined,
+                false,
+            ),
+        ).toEqual({ kind: "edit", readOnly: ["permissions", "disappearing", "visibility"] });
+    });
+
+    test("the owner edits everything", () => {
+        expect(
+            chatManageAccess(
+                viewer({ edit: true, owner: true }),
+                group(ROLE_OWNER),
+                undefined,
+                false,
+            ),
+        ).toEqual({ kind: "edit", readOnly: [] });
     });
 });

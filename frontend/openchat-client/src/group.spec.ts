@@ -22,10 +22,16 @@ vi.mock("@icp-sdk/auth/client", async (importOriginal) => ({
     AuthClient: { create: () => new Promise(() => {}) },
 }));
 
-import { anonymousUser, type CandidateGroupChat, type WorkerRequest } from "@shared";
+import {
+    anonymousUser,
+    type CandidateGroupChat,
+    type UpdateGroupResponse,
+    type WorkerRequest,
+} from "@shared";
 import type { OpenChatConfig } from "./config";
 import { OpenChat } from "./openchat";
 import { currentUserStore } from "./state";
+import { groupUpdateResult } from "./utils/group.svelte";
 import { WorkerAgent } from "./workerAgent";
 import en from "../../app/src/i18n/en.json";
 
@@ -162,6 +168,17 @@ describe("editing and creating a group", () => {
         });
         if (outcome.kind === "created_without_invites") {
             expect(english(outcome.message.key)).toEqual(expect.any(String));
+        }
+    });
+
+    // a failed save showed the bare key "failure", which has no words
+    test("a failed update says so in words", () => {
+        for (const kind of ["failure", "error"] as const) {
+            const outcome = groupUpdateResult({ kind } as UpdateGroupResponse, "group");
+            expect(outcome.kind).toBe("failed");
+            if (outcome.kind === "failed") {
+                expect(english(outcome.message.key)).toEqual(expect.any(String));
+            }
         }
     });
 });

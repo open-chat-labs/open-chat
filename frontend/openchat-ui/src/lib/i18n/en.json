@@ -1306,6 +1306,7 @@
       "membersHeading": "{scope, select, community {COMMUNITY MEMBERS} channel {CHANNEL MEMBERS} other {MEMBERS}}",
       "mentionAll": "Mention them all with {tag}.",
       "menu": {
+        "about": "About the {scope, select, community {community} channel {channel} other {group}}",
         "addBot": "Add a bot",
         "addFavourite": "Add to favourites",
         "convert": "Convert to community",
