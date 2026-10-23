@@ -9,8 +9,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Route tips on messages relayed from Discord/Telegram to the OpenChat user who linked the account ([#10211](https://github.com/open-chat-labs/open-chat/pull/10211))
-- Route reactions and replies on messages relayed from Discord/Telegram to the OpenChat user who linked the account ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
-- Show replies relayed from Discord/Telegram in the activity feed of whoever they reply to ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+- Route reactions and replies on messages relayed from Discord/Telegram to the OpenChat user who linked the account ([#10219](https://github.com/open-chat-labs/open-chat/pull/10219))
+- Show replies relayed from Discord/Telegram in the activity feed of whoever they reply to ([#10219](https://github.com/open-chat-labs/open-chat/pull/10219))
 
 ### Removed
 
