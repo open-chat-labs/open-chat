@@ -160,7 +160,13 @@ design export needs. Each entry says where it came up.
     is the claim before a run of insured days (the day before them); any other claim is placed in
     this browser's zone, then kept before the one after it and after the one before it (the
     older moving back where two collide), so a user who claimed for a while from another zone can
-    see some of those claims a day off; no daily puzzle setting (the app has none to show or hide the puzzle, or to
+    see some of those claims a day off (low priority, display only: the exact fix is for
+    `chit_events` to give each claim's day, which the backend can work out from its offsets); the
+    backend can count one claim on two days after a move east (it claims in the old zone, then in
+    the new one), which the calendar shows as it counts it (a backend issue, older than the new
+    UI); a claim support reinstates for an older day shows once the dialog is opened again, as a
+    reload reads from two days before the newest event it has (low priority: rare, and it
+    corrects itself); no daily puzzle setting (the app has none to show or hide the puzzle, or to
     remind of it: 8d), no "Ways to earn more" (the achievements dialog is 8d), and the calendar's
     Claim claims in place (`onClaim`), where the design opens the CHIT dialog (8d); the calendar's
     `today` is the user's date too, not UTC's; the old profile's streak
