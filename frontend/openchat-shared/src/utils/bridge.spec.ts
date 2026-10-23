@@ -173,7 +173,7 @@ describe("bridge", () => {
             }),
         ).toBeUndefined();
         expect(bridgedProfileUrl(discord().user)).toEqual(
-            `https://discord.com/users/${discordId.id}`,
+            "https://discord.com/users/80351110224678912",
         );
     });
 });
