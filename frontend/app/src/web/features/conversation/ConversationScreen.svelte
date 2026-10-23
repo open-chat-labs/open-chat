@@ -3,6 +3,7 @@
      deep links, marking read, keeping the scroll), one row per event, each message in a MessageGroup
      of its own that keeps its place in the sender's run (DATA.md, Conversation). -->
 <script lang="ts">
+    import { openChatDetails } from "../app/rightPanel";
     import { muteChat } from "@src/logic/chats/muteChat";
     import {
         allUsersStore,
@@ -426,6 +427,7 @@
             showCall={false}
             actions={[]}
             {onMenu}
+            openDetails={() => openChatDetails(screen.rightColumn)}
             onTogglePanel={() => screen.rightColumn.toggle()}
             panelOpen={screen.rightColumn.open} />
 

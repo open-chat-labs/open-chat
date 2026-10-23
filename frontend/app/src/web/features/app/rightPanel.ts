@@ -50,6 +50,15 @@ export function openOnNewPanel(column: RightColumnState): () => void {
 }
 
 /**
+ * Opens the right column on the chat's details, whatever it showed before, as clicking the chat's
+ * name in the old header did.
+ */
+export function openChatDetails(column: RightColumnState): void {
+    setRightPanelHistory([{ kind: "group_details" }]);
+    column.open = true;
+}
+
+/**
  * Closes the right column and clears its history, as closing the old floating panel did (which
  * also drops an open thread from the URL).
  */
