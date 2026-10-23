@@ -234,6 +234,22 @@ design export needs. Each entry says where it came up.
   old panel's durations other than the six `DmChatSettings` offers (a TTL set elsewhere shows as
   its own length, "2 hours", and saves unchanged).
 
+- **Leave, delete, archive and block** (4b part 1): the conversation header, the chat-list rows,
+  the community header and GroupPanel open `LeaveGroupDialog` / `DeleteGroupDialog` through the
+  dialog host, and the client's `leaveOrDelete` does the rest. The menus are the app's, passed as
+  `menuItems` (the library's defaults offered Delete for the OpenChat bot, Leave to everyone, and
+  no Unblock, delete community or mute all):
+  - by hand: `DeleteGroupDialog` takes the noun `chat` and `typeToConfirm`, so deleting a DM asks
+    without the name being typed (the library had no confirm for a DM).
+  - a channel's header now offers mute and @everyone mute, as the old menu did (the library's
+    channel menu had neither).
+  - GroupPanel's menu shows Leave to everyone; the app opens the dialog only for someone who can
+    leave, so for anyone else the item does nothing.
+  - not offered: freeze and unfreeze (platform moderators, no dialog), suspend, report, and the
+    desktop row's swipe-to-remove (Remove chat is a row menu item instead).
+  - the community header's Edit, Invite and new channel items, and the conversation header's
+    Invite, Convert, Import and webhook items, come with 4b's later parts.
+
 ## App
 
 ### Data the design shows that the backend doesn't have

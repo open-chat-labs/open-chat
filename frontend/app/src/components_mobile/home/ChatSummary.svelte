@@ -260,7 +260,6 @@
     }
 
     function archiveChat() {
-        client.markAllRead(chatSummary);
         client.archiveChat(chatSummary.id).then((success) => {
             if (!success) {
                 toastStore.showFailureToast(i18nKey("archiveChatFailed"));

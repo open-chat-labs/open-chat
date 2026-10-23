@@ -4,11 +4,13 @@
      of its own that keeps its place in the sender's run (DATA.md, Conversation). -->
 <script lang="ts">
     import { showInRightColumn } from "../app/rightPanel";
+    import { chatMenuActions } from "@src/logic/chats/chatMenu";
     import { muteChat } from "@src/logic/chats/muteChat";
     import {
         allUsersStore,
         anonUserStore,
         blockedUsersStore,
+        blockOutcome,
         botState,
         byContext as typersByContext,
         chatIdentifiersEqual,
@@ -77,6 +79,7 @@
     import type { MiddleRegion, ScreenProps } from "../app/screens";
     import Composer from "./Composer.svelte";
     import {
+        headerMenuItems,
         messageStatus,
         senderColor,
         untilNextDay,
@@ -154,11 +157,66 @@
         if (failed !== undefined) toastStore.showFailureToast(failed);
     }
 
-    // TODO(phase 4, 4b): the menu's other items (block, delete, leave, invite) open dialogs, and the
-    // search action; calls are phase 7
+    const headerKind = $derived(
+        chat?.kind === "direct_chat" ? "user" : chat?.kind === "group_chat" ? "group" : "channel",
+    );
+    const them = $derived(
+        chat?.kind === "direct_chat" ? $allUsersStore.get(chat.them.userId) : undefined,
+    );
+    const menuItems = $derived(
+        chat === undefined
+            ? []
+            : headerMenuItems({
+                  kind: headerKind,
+                  favourite,
+                  muted: chat.membership.notificationsMuted,
+                  everyoneMuted: chat.membership.atEveryoneMuted,
+                  isBot: them?.kind === "bot",
+                  actions: chatMenuActions(chat, {
+                      canLeave: chat.kind !== "direct_chat" && client.canLeaveGroup(chat.id),
+                      blocked: chat.kind === "direct_chat" && $blockedUsersStore.has(chat.them.userId),
+                      isBot: them?.kind === "bot",
+                  }),
+                  unblockLabel: $_("unblockUser"),
+              }),
+    );
+
+    async function blockThem(blocking: boolean) {
+        if (chat?.kind !== "direct_chat") return;
+        const userId = chat.them.userId;
+        const success = await (blocking
+            ? client.blockUserFromDirectChat(userId)
+            : client.unblockUserFromDirectChat(userId));
+        toastStore.showOutcome(blockOutcome(blocking, success));
+    }
+
+    // TODO(4b): invite (part 3), convert, import and the webhook (parts 4 and 5); the search
+    // action; calls are phase 7
     function onMenu(id: string) {
         if (chat === undefined) return;
         switch (id) {
+            case "leave":
+                if (chat.kind !== "direct_chat") {
+                    screen.dialogs.open({
+                        kind: "leave_or_delete",
+                        action: { kind: "leave", chatId: chat.id },
+                        name: title,
+                    });
+                }
+                break;
+            case "delete":
+                if (chat.kind === "direct_chat") {
+                    screen.dialogs.open({
+                        kind: "leave_or_delete",
+                        action: { kind: "delete_direct_chat", chatId: chat.id, blockUser: false },
+                        name: title,
+                    });
+                }
+                break;
+            case "block":
+            case "unblock":
+                blockThem(id === "block");
+                break;
             case "favourite":
                 client.addToFavourites(chat.id);
                 break;
@@ -405,11 +463,7 @@
     <div class="conversation">
         <ConversationHeader
             {title}
-            kind={chat.kind === "direct_chat"
-                ? "user"
-                : chat.kind === "group_chat"
-                  ? "group"
-                  : "channel"}
+            kind={headerKind}
             color={senderColor(
                 chat.kind === "direct_chat" ? chat.them.userId : chatIdentifierToString(chat.id),
             )}
@@ -435,7 +489,9 @@
                       },
                   ]
                 : []}
+            {menuItems}
             {onMenu}
+            onLeave={() => onMenu("leave")}
             openDetails={() => showInRightColumn(screen.rightColumn, { kind: "group_details" })}
             onTogglePanel={() => screen.rightColumn.toggle()}
             panelOpen={screen.rightColumn.open} />

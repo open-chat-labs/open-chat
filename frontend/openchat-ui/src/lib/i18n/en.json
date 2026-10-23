@@ -920,12 +920,12 @@
     },
     "deleteGroupDialog": {
       "deleting": "Deleting…",
-      "failed": "{noun, select, channel {Couldn't delete the channel.} community {Couldn't delete the community.} other {Couldn't delete the group.}} Nothing was removed — try again.",
-      "keep": "{noun, select, channel {Keep my channel} community {Keep my community} other {Keep my group}}",
-      "question": "{noun, select, channel {Delete the {name} chat channel} community {Delete the {name} chat community} other {Delete the {name} chat group}}",
-      "title": "{noun, select, channel {Delete a channel} community {Delete a community} other {Delete a group}}",
+      "failed": "{noun, select, channel {Couldn't delete the channel.} community {Couldn't delete the community.} chat {Couldn't delete the chat.} other {Couldn't delete the group.}} Nothing was removed — try again.",
+      "keep": "{noun, select, channel {Keep my channel} community {Keep my community} chat {Keep my chat} other {Keep my group}}",
+      "question": "{noun, select, channel {Delete the {name} chat channel} community {Delete the {name} chat community} chat {Delete your chat with {name}} other {Delete the {name} chat group}}",
+      "title": "{noun, select, channel {Delete a channel} community {Delete a community} chat {Delete a chat} other {Delete a group}}",
       "typeName": "{noun, select, channel {Type in the name of the channel to confirm delete} community {Type in the name of the community to confirm delete} other {Type in the name of the group to confirm delete}}",
-      "warning": "{noun, select, channel {Do you definitely want to delete this channel? All of your chat history will be lost, and this cannot be undone.} community {Do you definitely want to delete this community? All of your chat history will be lost, and this cannot be undone.} other {Do you definitely want to delete this group? All of your chat history will be lost, and this cannot be undone.}}"
+      "warning": "{noun, select, channel {Do you definitely want to delete this channel? All of your chat history will be lost, and this cannot be undone.} community {Do you definitely want to delete this community? All of your chat history will be lost, and this cannot be undone.} chat {Do you definitely want to delete this chat? Its history will be lost, and this cannot be undone.} other {Do you definitely want to delete this group? All of your chat history will be lost, and this cannot be undone.}}"
     },
     "diamondDialog": {
       "addressHint": "Send {symbol} to your account address, then refresh your balance.",

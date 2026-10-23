@@ -1,7 +1,6 @@
 <script lang="ts">
     import type {
         ChatSummary,
-        CommunitySummary,
         DiamondMembershipStatus,
         TypersByKey,
     } from "@client";
@@ -10,8 +9,8 @@
         AvatarSize,
         blockedUsersStore,
         bridgedUsersStore,
-        botState,
         chatIdentifiersEqual,
+        canRemoveFromList,
         chatListScopeStore,
         communitiesStore,
         currentUserIdStore,
@@ -25,14 +24,11 @@
         pinChatFailureMessage,
         pinnedChatsStore,
         publish,
-        ROLE_NONE,
-        routeForScope,
         selectedCommunitySummaryStore,
         suspendedUserStore,
         translationsStore,
         byContext as typersByContext,
     } from "@client";
-    import { navigate } from "@utils/navigation";
     import { getContext, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import { latestMessagePreview } from "@src/logic/chats/latestMessagePreview";
@@ -111,7 +107,7 @@
         chatSummary.kind === "direct_chat" && $blockedUsersStore.has(chatSummary.them.userId),
     );
     let readonly = $derived(client.isChatReadOnly(chatSummary.id));
-    let canDelete = $derived(getCanDelete(chatSummary, community));
+    let canDelete = $derived(canRemoveFromList(chatSummary, community));
     let pinned = $derived(
         $pinnedChatsStore
             .get($chatListScopeStore.kind)
@@ -213,16 +209,7 @@
     function deleteEmptyChat(e: Event) {
         e.stopPropagation();
         e.preventDefault();
-        const directBot =
-            chatSummary.kind === "direct_chat"
-                ? botState.externalBots.get(chatSummary.them.userId)
-                : undefined;
-        if (directBot !== undefined) {
-            client.uninstallBot({ kind: "direct_chat", userId: $currentUserIdStore }, directBot.id);
-        } else {
-            client.removePreviewedChat(chatSummary.id);
-        }
-        navigate(routeForScope($chatListScopeStore));
+        client.removeFromList(chatSummary);
         delOffset = -60;
     }
 
@@ -282,7 +269,6 @@
     }
 
     function archiveChat() {
-        client.markAllRead(chatSummary);
         client.archiveChat(chatSummary.id).then((success) => {
             if (!success) {
                 toastStore.showFailureToast(i18nKey("archiveChatFailed"));
@@ -309,21 +295,6 @@
             chatId: chatSummary.id,
             level: chatSummary.level,
         });
-    }
-
-    function getCanDelete(chat: ChatSummary, community: CommunitySummary | undefined) {
-        switch (chat.kind) {
-            case "direct_chat":
-                return chat.latestMessage === undefined;
-            case "group_chat":
-                return chat.membership.role === ROLE_NONE;
-            case "channel":
-                return (
-                    community !== undefined &&
-                    community.membership.role !== ROLE_NONE &&
-                    chat.membership.role === ROLE_NONE
-                );
-        }
     }
 
     let showDeleteDirectChat = $derived(canDeleteDirectChat(chatSummary));

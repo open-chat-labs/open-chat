@@ -71,11 +71,17 @@ export {
     type MemberPermissions,
 } from "./utils/members";
 export {
+    blockOutcome,
     profileBlock,
     type BlockContext,
     type ProfileBlock,
     type ProfileBlockInput,
 } from "./utils/profileBlock";
+export {
+    canRemoveFromList,
+    type LeaveOrDelete,
+    type LeaveOrDeleteOutcome,
+} from "./utils/leaveOrDelete";
 export {
     memberDisplayNameResult,
     profileChanges,

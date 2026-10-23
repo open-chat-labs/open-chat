@@ -1,3 +1,4 @@
+import type { LeaveOrDelete } from "@client";
 import type { ProfileCard } from "@src/logic/profile/profileCard";
 import type { Component } from "svelte";
 
@@ -19,8 +20,11 @@ export type LinkedDialog =
     | { kind: "chit" }
     | { kind: "leaderboard" };
 
-// someone's profile card, for a name clicked in a message
-export type LocalDialog = { kind: "user" } & ProfileCard;
+// someone's profile card, for a name clicked in a message; or confirming leaving or deleting a
+// chat or community, called `name`
+export type LocalDialog =
+    | ({ kind: "user" } & ProfileCard)
+    | { kind: "leave_or_delete"; action: LeaveOrDelete; name: string };
 
 export type AppDialog = LinkedDialog | LocalDialog;
 
@@ -48,6 +52,9 @@ export const dialogs: Dialogs = {
 
     // someone's profile card. A dialog, not anchored to the name clicked as the old desktop card was
     user: () => import("../user/UserDialogScreen.svelte"),
+
+    // confirming leaving or deleting a group, channel, DM or community (4b)
+    leave_or_delete: () => import("../chats/LeaveOrDeleteDialogScreen.svelte"),
 };
 
 // each linked dialog's query param, in the order they win when more than one is in the URL

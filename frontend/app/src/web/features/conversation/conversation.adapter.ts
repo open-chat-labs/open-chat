@@ -1,5 +1,6 @@
 import type { EventWrapper, Message, MessageContent } from "@client";
-import type { GroupMessage } from "@openchat/ui/src/lib/types";
+import type { GroupMessage, MenuItem } from "@openchat/ui/src/lib/types";
+import type { ChatMenuAction } from "@src/logic/chats/chatMenu";
 import { pickById } from "../../pickById";
 
 // A conversation's messages to MessageGroup's messages (DATA.md, Conversation). The timeline's
@@ -113,4 +114,78 @@ export function messageRow(
 export function untilNextDay(now: Date): number {
     const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
     return next.getTime() - now.getTime();
+}
+
+// ── the header's menu ──
+
+type HeaderMenuItem = MenuItem & { id: string };
+
+const K = "ui.conversationHeader.menu.";
+const icon = (name: string) => `var(--icon-${name}) center/contain no-repeat`;
+
+export type HeaderMenuState = {
+    kind: "user" | "group" | "channel";
+    favourite: boolean;
+    muted: boolean;
+    everyoneMuted: boolean;
+    /** A DM with a bot can't be muted. */
+    isBot: boolean;
+    /** Leave, delete, block and unblock, as logic/chats/chatMenu offers them. */
+    actions: ChatMenuAction[];
+    /** "Unblock user", which the library has no words for. */
+    unblockLabel: string;
+};
+
+/**
+ * ConversationHeader's menu, its default items in its order and words, with leave, delete, block
+ * and unblock only where the app allows them. Picking one reports its id (`onMenu`, or `onLeave`).
+ */
+export function headerMenuItems(state: HeaderMenuState): HeaderMenuItem[] {
+    const items: HeaderMenuItem[] = [
+        state.favourite
+            ? { id: "unfavourite", label: K + "removeFromFavourites", mask: icon("heart") }
+            : { id: "favourite", label: K + "addToFavourites", mask: icon("heart") },
+        { id: "copyUrl", label: K + "copyUrl", mask: icon("link") },
+    ];
+    if (!state.isBot) {
+        items.push(
+            state.muted
+                ? { id: "unmute", label: K + "unmuteNotifications", mask: icon("bell") }
+                : { id: "mute", label: K + "muteNotifications", mask: icon("bell-off") },
+        );
+    }
+    if (state.kind !== "user") {
+        items.push(
+            state.everyoneMuted
+                ? { id: "unmuteEveryone", label: K + "unmuteEveryone", mask: icon("at") }
+                : { id: "muteEveryone", label: K + "muteEveryone", mask: icon("at") },
+        );
+    }
+    for (const action of state.actions) {
+        items.push(actionItem(action, state));
+    }
+    return items;
+}
+
+function actionItem(action: ChatMenuAction, state: HeaderMenuState): HeaderMenuItem {
+    switch (action) {
+        case "leave":
+            return {
+                id: "leave",
+                label: K + (state.kind === "channel" ? "leaveChannel" : "leaveGroup"),
+                mask: icon("exit"),
+                variant: "danger",
+            };
+        case "delete":
+            return {
+                id: "delete",
+                label: K + "deleteChat",
+                mask: icon("trash"),
+                variant: "danger",
+            };
+        case "block":
+            return { id: "block", label: K + "blockUser", mask: icon("ban"), variant: "danger" };
+        case "unblock":
+            return { id: "unblock", label: state.unblockLabel, mask: icon("ban") };
+    }
 }

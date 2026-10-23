@@ -9,6 +9,8 @@
         CommunityIdentifier,
         DirectChatIdentifier,
         EnhancedReplyContext,
+        LeaveOrDelete,
+        LeaveOrDeleteOutcome,
         Level,
         MultiUserChat,
         MultiUserChatIdentifier,
@@ -25,7 +27,6 @@
         CURRENT_TERMS_VERSION,
         currentUserStore,
         allChatsStore,
-        chatIdentifiersEqual,
         chatListScopeStore,
         chatsInitialisedStore,
         identityStateStore,
@@ -39,7 +40,6 @@
         routeForScope,
         routeStore,
         captureRulesAcceptanceStore as rulesAcceptanceStore,
-        selectedChatIdStore,
         selectedChatSummaryStore,
         subscribe,
         suspendedUserStore,
@@ -271,104 +271,38 @@
     function doConfirmAction(confirmActionEvent: ConfirmActionEvent): Promise<void> {
         switch (confirmActionEvent.kind) {
             case "leave":
-                return leaveGroup(confirmActionEvent.chatId, confirmActionEvent.level);
+                // not awaited, as the list already shows it gone
+                leaveOrDelete({ kind: "leave", chatId: confirmActionEvent.chatId }).then(
+                    (outcome) => {
+                        if (outcome.kind === "success") publish("closeModalStack");
+                    },
+                );
+                return Promise.resolve();
             case "delete_direct_chat":
-                return deleteDirectChat(confirmActionEvent.chatId, confirmActionEvent.blockUser);
+                return leaveOrDelete({
+                    kind: "delete_direct_chat",
+                    chatId: confirmActionEvent.chatId,
+                    blockUser: confirmActionEvent.blockUser,
+                }).then(() => undefined);
             case "leave_community":
-                return leaveCommunity(confirmActionEvent.communityId);
+                leaveOrDelete({ kind: "leave_community", id: confirmActionEvent.communityId });
+                return Promise.resolve();
             case "delete_community":
-                return deleteCommunity(confirmActionEvent.communityId);
+                leaveOrDelete({ kind: "delete_community", id: confirmActionEvent.communityId });
+                return Promise.resolve();
             case "delete":
-                return deleteGroup(confirmActionEvent.chatId, confirmActionEvent.level).then(() =>
-                    confirmActionEvent.after?.(),
+                return leaveOrDelete({ kind: "delete", chatId: confirmActionEvent.chatId }).then(
+                    () => confirmActionEvent.after?.(),
                 );
             default:
                 return Promise.reject();
         }
     }
 
-    function deleteDirectChat(chatId: DirectChatIdentifier, blockUser: boolean): Promise<void> {
-        // Only redirect when deleting the chat we're currently viewing. The
-        // delete can now be triggered from the chat list for a non-selected
-        // chat, in which case we must leave the current route untouched.
-        const viewingThisChat = chatIdentifiersEqual($selectedChatIdStore, chatId);
-        if (viewingThisChat) {
-            navigate(routeForScope($chatListScopeStore));
-        }
-        return client.deleteDirectChat(chatId, blockUser).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast(i18nKey("deleteDirectChatFailure"));
-                if (viewingThisChat) {
-                    navigate(routeForChatIdentifier($chatListScopeStore.kind, chatId));
-                }
-            }
-        });
-    }
-
-    function deleteGroup(chatId: MultiUserChatIdentifier, level: Level): Promise<void> {
-        // Only redirect when deleting the chat we're viewing: other channels can be deleted
-        // from the community's channel list without opening them.
-        const viewingThisChat = chatIdentifiersEqual($selectedChatIdStore, chatId);
-        if (viewingThisChat) {
-            navigate(routeForScope($chatListScopeStore));
-        }
-        return client.deleteGroup(chatId).then((success) => {
-            if (success) {
-                toastStore.showSuccessToast(i18nKey("deleteGroupSuccess", undefined, level));
-            } else {
-                toastStore.showFailureToast(i18nKey("deleteGroupFailure", undefined, level, true));
-                if (viewingThisChat) {
-                    navigate(routeForChatIdentifier($chatListScopeStore.kind, chatId));
-                }
-            }
-        });
-    }
-
-    function deleteCommunity(id: CommunityIdentifier): Promise<void> {
-        navigate(routeForScope(client.getDefaultScope()));
-
-        client.deleteCommunity(id).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast(i18nKey("communities.errors.deleteFailed"));
-                navigate(`/community/${id.communityId}`);
-            }
-        });
-
-        return Promise.resolve();
-    }
-
-    function leaveCommunity(id: CommunityIdentifier): Promise<void> {
-        navigate(routeForScope(client.getDefaultScope()));
-
-        client.leaveCommunity(id).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast(i18nKey("communities.errors.leaveFailed"));
-                navigate(`/community/${id.communityId}`);
-            }
-        });
-
-        return Promise.resolve();
-    }
-
-    function leaveGroup(chatId: MultiUserChatIdentifier, level: Level): Promise<void> {
-        navigate(routeForScope($chatListScopeStore));
-
-        client.leaveGroup(chatId).then((resp) => {
-            if (resp !== "success") {
-                if (resp === "owner_cannot_leave") {
-                    toastStore.showFailureToast(i18nKey("ownerCantLeave", undefined, level, true));
-                } else {
-                    toastStore.showFailureToast(
-                        i18nKey("failedToLeaveGroup", undefined, level, true),
-                    );
-                }
-                navigate(routeForChatIdentifier($chatListScopeStore.kind, chatId));
-            } else {
-                publish("closeModalStack");
-            }
-        });
-
-        return Promise.resolve();
+    async function leaveOrDelete(action: LeaveOrDelete): Promise<LeaveOrDeleteOutcome> {
+        const outcome = await client.leaveOrDelete(action);
+        toastStore.showOutcome(outcome);
+        return outcome;
     }
 
     function replyPrivatelyTo(context: EnhancedReplyContext) {

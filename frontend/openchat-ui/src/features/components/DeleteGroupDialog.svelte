@@ -1,4 +1,5 @@
-<!-- Confirm deleting a group, channel or community: Delete arms only once the name is typed (case-insensitive).
+<!-- Confirm deleting a group, channel, community or chat: Delete arms only once the name is typed (case-insensitive),
+     unless the host turns that off (a DM, by hand).
      Cancel plays the close animation, then calls back; Delete calls onConfirm and waits: the dialog closes once it resolves
      and stays open (with the typed name) and an error if it rejects.
      Success contract (same in every confirm/create dialog): once the host's promise resolves the dialog animates out and
@@ -12,17 +13,19 @@
 
   interface Props {
     groupName: string;
-    noun?: 'group' | 'channel' | 'community';
+    noun?: 'group' | 'channel' | 'community' | 'chat';
+    /** Ask for the name to be typed before Delete arms. */
+    typeToConfirm?: boolean;
     /** Delete. Reject to keep the dialog open with an error. */
     onConfirm?: () => Promise<unknown> | void;
     onCancel?: () => void;
   }
 
-  let { groupName, noun = 'group', onConfirm, onCancel }: Props = $props();
+  let { groupName, noun = 'group', typeToConfirm = true, onConfirm, onCancel }: Props = $props();
   const t = useT();
 
   let typed = $state('');
-  const armed = $derived(typed.trim().toLowerCase() === groupName.trim().toLowerCase());
+  const armed = $derived(!typeToConfirm || typed.trim().toLowerCase() === groupName.trim().toLowerCase());
 
   // busy / leaving / the exit: the shared dialog contract (lib/behaviours/dialog.svelte.ts)
   const flow = new DialogFlow();
@@ -53,10 +56,12 @@
         <span class="question"><Translate key="ui.deleteGroupDialog.question" params={{ noun }}>{#snippet name()}<span class="name">{groupName}</span>{/snippet}</Translate></span>
         <span class="text">{t('ui.deleteGroupDialog.warning', { noun })}</span>
       </div>
-      <div class="field">
-        <input class:armed bind:value={typed} placeholder={groupName} />
-        <span class="hint">{t('ui.deleteGroupDialog.typeName', { noun })}</span>
-      </div>
+      {#if typeToConfirm}
+        <div class="field">
+          <input class:armed bind:value={typed} placeholder={groupName} />
+          <span class="hint">{t('ui.deleteGroupDialog.typeName', { noun })}</span>
+        </div>
+      {/if}
     </div>
 
     <div class="foot">

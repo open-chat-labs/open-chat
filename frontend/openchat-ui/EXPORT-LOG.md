@@ -196,3 +196,7 @@
 ## 2026-10-23 — ProfileDialog: a sign-in step the host turns down can say why, by hand
 - A host step in the sign-in "add" form (`onLinkMethod`, `onRequestEmailCode`, `onVerifyEmailCode`) that rejects with `{ reason }` (a resource key or literal text, as `AuthDialog`'s `AuthFailure`) shows that reason in place of the step's generic failure line. One that rejects with `{ cancelled: true }` (the user gave the step up) goes back to the form with nothing said. The app says why linking failed, e.g. the sign-in provider limit.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-23 — DeleteGroupDialog: a DM's delete, without typing a name, by hand
+- `noun` takes `'chat'` (new `chat` branches in the `ui.deleteGroupDialog.*` strings: "Delete a chat", "Delete your chat with {name}"), and `typeToConfirm` (default true) can turn off the type-the-name step, so Delete arms at once. The app confirms deleting a DM with it; the library had no confirm for a DM.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

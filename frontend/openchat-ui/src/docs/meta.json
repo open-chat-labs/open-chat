@@ -8212,7 +8212,7 @@
       },
       {
         "name": "noun",
-        "type": "'group' | 'channel' | 'community'",
+        "type": "'group' | 'channel' | 'community' | 'chat'",
         "default": null,
         "editor": null,
         "options": null,
@@ -8220,6 +8220,17 @@
         "required": false,
         "componentDefault": "'group'",
         "doc": ""
+      },
+      {
+        "name": "typeToConfirm",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "true",
+        "doc": "Ask for the name to be typed before Delete arms. Off for a DM."
       },
       {
         "name": "onConfirm",
