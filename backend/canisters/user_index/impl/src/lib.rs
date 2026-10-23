@@ -21,6 +21,7 @@ use event_store_producer_cdk_runtime::CdkRuntime;
 use icrc_ledger_types::icrc1::account::{Account, Subaccount};
 use identity_canister::UserIdentity;
 use identity_canister::UserIndexEvent as IdentityEvent;
+use local_user_index_canister::BridgedUserLinked;
 use local_user_index_canister::UserIndexEvent as LocalUserIndexEvent;
 use model::authority_reports::{AuthorityReportMetrics, AuthorityReports};
 use model::chit_leaderboard::ChitLeaderboard;
@@ -43,9 +44,9 @@ use std::time::Duration;
 use storage_index_canister::UserIndexEvent as StorageIndexEvent;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
-    BotInstallationLocation, BridgePlatform, BuildVersion, CanisterId, ChannelId, ChatId, ChildCanisterWasms, CommunityId,
-    Cycles, DiamondMembershipFees, IdempotentEnvelope, MediaScanConfig, Milliseconds, ModerationReferralConfig, OCResult,
-    TimestampMillis, Timestamped, UserId, UserType,
+    BotInstallationLocation, BridgePlatform, BridgedUserId, BuildVersion, CanisterId, ChannelId, ChatId, ChildCanisterWasms,
+    CommunityId, Cycles, DiamondMembershipFees, IdempotentEnvelope, MediaScanConfig, Milliseconds, ModerationReferralConfig,
+    OCResult, TimestampMillis, Timestamped, UserId, UserType,
 };
 use user_ids_set::UserIdsSet;
 use user_index_canister::ChildCanisterType;
@@ -232,6 +233,15 @@ impl RuntimeState {
         }
     }
 
+    // So each LocalUserIndex knows who an account on another platform is linked to, eg. so a group
+    // can pay the tips given to the account's relayed messages to them
+    pub fn push_bridged_user_link(&mut self, user: BridgedUserId, linked_user_id: Option<UserId>) {
+        self.push_event_to_all_local_user_indexes(
+            LocalUserIndexEvent::BridgedUserLinked(BridgedUserLinked { user, linked_user_id }),
+            None,
+        );
+    }
+
     pub fn push_event_to_all_local_user_indexes(&mut self, event: LocalUserIndexEvent, except: Option<CanisterId>) {
         let canister_ids: Vec<_> = self
             .data
@@ -267,7 +277,9 @@ impl RuntimeState {
             self.data.local_index_map.remove_user(&user_id);
             self.data.multi_user_canisters.on_user_removed(&user_id);
             self.data.empty_users.remove(&user_id);
-            self.data.bridged_users.remove_user(user_id, now);
+            for unlinked in self.data.bridged_users.remove_user(user_id, now) {
+                self.push_bridged_user_link(unlinked, None);
+            }
 
             #[derive(Serialize)]
             struct EventPayload {

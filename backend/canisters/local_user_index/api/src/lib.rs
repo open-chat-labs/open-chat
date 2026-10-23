@@ -7,12 +7,12 @@ use std::collections::HashMap;
 use types::nns::CryptoAmount;
 use types::{
     AutonomousConfig, BlobReference, BotCommandDefinition, BotDataEncoding, BotDefinition, BotDefinitionUpdate,
-    BotInstallationLocation, BotSubscriptions, BridgePlatform, BuildVersion, CanisterId, ChannelId, ChannelLatestMessageIndex,
-    ChannelUserNotificationPayload, ChatId, ClassifyMessageRequest, CommunityId, CyclesTopUp, DiamondMembershipPlanDuration,
-    GroupChatUserNotificationPayload, MediaScanMatch, MessageContentInitial, MessageId, MessageIndex, Milliseconds,
-    Notification, NotifyChit, PhoneNumber, PublicCommunityActivity, PublicGroupActivity, ReferralType, SuspensionDuration,
-    TimestampMillis, UniquePersonProof, User, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId,
-    UserNotificationPayload, UserType, is_default,
+    BotInstallationLocation, BotSubscriptions, BridgePlatform, BridgedUserId, BuildVersion, CanisterId, ChannelId,
+    ChannelLatestMessageIndex, ChannelUserNotificationPayload, ChatId, ClassifyMessageRequest, CommunityId, CyclesTopUp,
+    DiamondMembershipPlanDuration, GroupChatUserNotificationPayload, MediaScanMatch, MessageContentInitial, MessageId,
+    MessageIndex, Milliseconds, Notification, NotifyChit, PhoneNumber, PublicCommunityActivity, PublicGroupActivity,
+    ReferralType, SuspensionDuration, TimestampMillis, UniquePersonProof, User, UserCanisterStreakInsuranceClaim,
+    UserCanisterStreakInsurancePayment, UserId, UserNotificationPayload, UserType, is_default,
 };
 
 mod lifecycle;
@@ -63,6 +63,7 @@ pub enum UserIndexEvent {
     SetBridgeBot(SetBridgeBot),
     UserIdMigrated(UserIdMigrated),
     SetAlchemyApiKey(SetAlchemyApiKey),
+    BridgedUserLinked(BridgedUserLinked),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -249,6 +250,14 @@ pub struct BotUpdated {
 pub struct SetBridgeBot {
     pub platform: BridgePlatform,
     pub bot_id: Option<UserId>,
+}
+
+// The OpenChat user an account on another platform is now linked to, or None once it's unlinked, eg.
+// so a group can pay the tips given to the account's relayed messages to them
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct BridgedUserLinked {
+    pub user: BridgedUserId,
+    pub linked_user_id: Option<UserId>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

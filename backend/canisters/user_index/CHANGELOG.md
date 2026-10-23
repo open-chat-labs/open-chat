@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Sync linked Discord/Telegram accounts to the LocalUserIndexes ([#10210](https://github.com/open-chat-labs/open-chat/pull/10210))
+
 ## [[2.0.2186](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2186-user_index)] - 2026-10-23
 
 ### Added

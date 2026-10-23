@@ -46,13 +46,14 @@ use std::time::Duration;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use tracing::{error, info};
 use types::{
-    BotDataEncoding, BotEventPayload, BotEventWrapper, BotNotification, BotNotificationEnvelope, BridgePlatform, BuildVersion,
-    CLAIM_TYPE_DECLINE_VIDEO_CALL, CLAIM_TYPE_DIAMOND_MEMBERSHIP, CallDismissalKind, CanisterId, ChannelLatestMessageIndex,
-    Chat, ChatId, ChildCanisterWasms, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles,
-    CyclesTopUp, DailyPuzzleResult, DeclineVideoCallClaims, DiamondMembershipDetails, DirectCallDismissedNotification, FcmData,
-    GroupCallDismissedNotification, IdempotentEnvelope, MediaScanConfig, MessageContentInitial, MessageId, Milliseconds,
-    ModerationReferralConfig, Notification, NotificationEnvelope, OCResult, ReferralType, TimestampMillis, Timestamped, UserId,
-    UserNotificationEnvelope, UserNotificationPayload, VerifiedCredentialGateArgs,
+    BotDataEncoding, BotEventPayload, BotEventWrapper, BotNotification, BotNotificationEnvelope, BridgePlatform, BridgedUserId,
+    BuildVersion, CLAIM_TYPE_DECLINE_VIDEO_CALL, CLAIM_TYPE_DIAMOND_MEMBERSHIP, CallDismissalKind, CanisterId,
+    ChannelLatestMessageIndex, Chat, ChatId, ChildCanisterWasms, CommunityCanisterChannelSummary,
+    CommunityCanisterCommunitySummary, CommunityId, Cycles, CyclesTopUp, DailyPuzzleResult, DeclineVideoCallClaims,
+    DiamondMembershipDetails, DirectCallDismissedNotification, FcmData, GroupCallDismissedNotification, IdempotentEnvelope,
+    MediaScanConfig, MessageContentInitial, MessageId, Milliseconds, ModerationReferralConfig, Notification,
+    NotificationEnvelope, OCResult, ReferralType, TimestampMillis, Timestamped, UserId, UserNotificationEnvelope,
+    UserNotificationPayload, VerifiedCredentialGateArgs,
 };
 use user_ids_set::UserIdsSet;
 use user_index_canister::LocalUserIndexEvent as UserIndexEvent;
@@ -783,6 +784,7 @@ impl RuntimeState {
             migrated_user_ids: self.data.migrated_user_ids.len(),
             call_push_enabled: self.data.call_push_enabled,
             bridge_bots: self.data.bridge_bots.clone(),
+            bridged_user_links: self.data.bridged_user_links.len(),
             group_versions: self
                 .data
                 .local_groups
@@ -954,6 +956,10 @@ struct Data {
     // The bot that bridges each platform, eg. Discord, the only bot that can relay messages from it
     #[serde(default)]
     pub bridge_bots: BTreeMap<BridgePlatform, UserId>,
+    // The OpenChat user each linked account on another platform is linked to, as the UserIndex has
+    // it, eg. so tips on the account's relayed messages can be paid to them
+    #[serde(default)]
+    pub bridged_user_links: BTreeMap<BridgedUserId, UserId>,
     #[serde(default)]
     pub daily_puzzle_canister_id: Option<CanisterId>,
     #[serde(default)]
@@ -1094,6 +1100,7 @@ impl Data {
             media_scan_job_log: MediaScanJobLog::default(),
             call_push_enabled,
             bridge_bots: BTreeMap::new(),
+            bridged_user_links: BTreeMap::new(),
             daily_puzzle_canister_id: None,
             daily_puzzle_engine: DailyPuzzleEngine::default(),
             daily_puzzle_event_sync_queue: None,
@@ -1146,6 +1153,7 @@ pub struct Metrics {
     pub migrated_user_ids: usize,
     pub call_push_enabled: bool,
     pub bridge_bots: BTreeMap<BridgePlatform, UserId>,
+    pub bridged_user_links: usize,
     pub user_events_queue_length: usize,
     // Batches currently mid-flight: len() alone cannot distinguish an idle queue from one
     // whose last batch is still awaiting its reply

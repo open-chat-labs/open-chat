@@ -132,17 +132,28 @@ impl BridgedUsers {
         true
     }
 
-    // For when the user is deleted: their accounts are unlinked, and their codes stop working
-    pub fn remove_user(&mut self, user_id: UserId, now: TimestampMillis) {
+    // For when the user is deleted: their accounts are unlinked, and their codes stop working.
+    // Returns the accounts which were unlinked.
+    pub fn remove_user(&mut self, user_id: UserId, now: TimestampMillis) -> Vec<BridgedUserId> {
         self.pending_links.retain(|_, link| link.user_id != user_id);
-        for record in self
+        let mut unlinked = Vec::new();
+        for (id, record) in self
             .users
-            .values_mut()
-            .filter(|record| record.linked_user_id == Some(user_id))
+            .iter_mut()
+            .filter(|(_, record)| record.linked_user_id == Some(user_id))
         {
             record.linked_user_id = None;
             record.updated = now;
+            unlinked.push(*id);
         }
+        unlinked
+    }
+
+    // Each linked account and who it's linked to
+    pub fn links(&self) -> impl Iterator<Item = (BridgedUserId, UserId)> + '_ {
+        self.users
+            .iter()
+            .filter_map(|(id, record)| record.linked_user_id.map(|user_id| (*id, user_id)))
     }
 
     pub fn get(&self, id: &BridgedUserId) -> Option<BridgedUserSummary> {
@@ -326,13 +337,53 @@ mod tests {
         users.start_link(alice, BridgePlatform::Telegram, "telegram".to_string(), 1);
         users.start_link(bob, BridgePlatform::Telegram, "bob".to_string(), 1);
 
-        users.remove_user(alice, 2);
+        // So the LocalUserIndexes can be told
+        assert_eq!(users.remove_user(alice, 2), [id]);
 
         let summary = users.get(&id).unwrap();
         assert_eq!(summary.linked_user_id, None);
         assert_eq!(summary.updated, 2);
         assert_eq!(users.link(telegram_user(), "telegram", 3), None);
         assert_eq!(users.link(telegram_user(), "bob", 3), Some(bob));
+    }
+
+    // As the LocalUserIndexes are given them
+    #[test]
+    fn links_lists_each_linked_account() {
+        let mut users = BridgedUsers::default();
+        let alice: UserId = Principal::from_slice(&[1]).into();
+        let bob: UserId = Principal::from_slice(&[2]).into();
+
+        users.start_link(alice, BridgePlatform::Discord, "alice".to_string(), 1);
+        users.link(discord_user("Nelly"), "alice", 1);
+        users.start_link(bob, BridgePlatform::Telegram, "bob".to_string(), 1);
+        users.link(telegram_user(), "bob", 1);
+        // Known, but not linked
+        users.update(
+            BridgedUser::Telegram(TelegramUser {
+                id: 987654321,
+                username: None,
+                display_name: "Sam".to_string(),
+                photo_id: None,
+            }),
+            1,
+        );
+
+        let mut links: Vec<_> = users.links().collect();
+        links.sort();
+        assert_eq!(
+            links,
+            [
+                (BridgedUserId::Discord(80351110224678912), alice),
+                (BridgedUserId::Telegram(123456789), bob)
+            ]
+        );
+
+        users.unlink(&BridgedUserId::Telegram(123456789), None, 2);
+        assert_eq!(
+            users.links().collect::<Vec<_>>(),
+            [(BridgedUserId::Discord(80351110224678912), alice)]
+        );
     }
 
     // The profile is left to the messages the account relays, which carry the latest

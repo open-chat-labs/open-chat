@@ -359,6 +359,8 @@ fn bridge_bots_relay_messages_as_their_authors() {
     // which the bridge bot redeems once it knows whose account it is, eg. through Discord's OAuth.
     let user_index = canister_ids.user_index;
     let code = start_link(env, owner.principal, user_index, BridgePlatform::Discord);
+    // The UserIndex tells every LocalUserIndex who each account is linked to
+    let links_before = bridged_user_links(env, canister_ids);
 
     // Only the platform's bridge bot can redeem it
     for (principal, user) in [
@@ -385,6 +387,7 @@ fn bridge_bots_relay_messages_as_their_authors() {
         "{response:?}"
     );
     assert_eq!(linked_user_id(env, user_index, &renamed), Some(owner.user_id));
+    wait_for_bridged_user_links(env, canister_ids, &links_before, 1);
     let user_index_canister::linked_bridged_users::Response::Success(linked) =
         client::user_index::linked_bridged_users(env, owner.principal, user_index, &Empty {});
     assert_eq!(linked.iter().map(|u| &u.user).collect::<Vec<_>>(), vec![&renamed]);
@@ -413,6 +416,7 @@ fn bridge_bots_relay_messages_as_their_authors() {
     let code = start_link(env, owner.principal, user_index, BridgePlatform::Telegram);
     let response = link(env, telegram_bot_principal, user_index, from_telegram.clone(), &code);
     assert!(matches!(response, LinkResponse::Success(_)), "{response:?}");
+    wait_for_bridged_user_links(env, canister_ids, &links_before, 2);
     let user_index_canister::linked_bridged_users::Response::Success(linked) =
         client::user_index::linked_bridged_users(env, owner.principal, user_index, &Empty {});
     let mut linked: Vec<_> = linked.into_iter().map(|u| u.user.id()).collect();
@@ -425,12 +429,15 @@ fn bridge_bots_relay_messages_as_their_authors() {
     let response = unlink(env, owner.principal, user_index, &renamed);
     assert!(matches!(response, UnitResult::Success), "{response:?}");
     assert_eq!(linked_user_id(env, user_index, &renamed), None);
+    wait_for_bridged_user_links(env, canister_ids, &links_before, 1);
 
     // So can the account's owner on the other platform, which the bridge bot relays, from whoever
     // it's linked to. Only the platform's bridge bot can.
     let code = start_link(env, owner.principal, user_index, BridgePlatform::Discord);
     let response = link(env, discord_bot_principal, user_index, renamed.clone(), &code);
     assert!(matches!(response, LinkResponse::Success(_)), "{response:?}");
+    // Before the bot unlinks it, so the count going back down is the bot's unlink arriving
+    wait_for_bridged_user_links(env, canister_ids, &links_before, 2);
     let response = unlink(env, telegram_bot_principal, user_index, &renamed);
     assert!(
         matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::InitiatorNotAuthorized)),
@@ -440,6 +447,7 @@ fn bridge_bots_relay_messages_as_their_authors() {
     let response = unlink(env, discord_bot_principal, user_index, &renamed);
     assert!(matches!(response, UnitResult::Success), "{response:?}");
     assert_eq!(linked_user_id(env, user_index, &renamed), None);
+    wait_for_bridged_user_links(env, canister_ids, &links_before, 1);
 
     // A bridge bot is refused once it's unset. Both are unset, which also leaves the pooled env as
     // it was
@@ -557,6 +565,33 @@ fn wait_for_bridge_bot_everywhere(
         .filter(|c| bridge_bot(env, *c) != expected)
         .collect();
     panic!("LocalUserIndexes without the {platform} bridge bot {expected:?}: {lagging:?}");
+}
+
+// Each LocalUserIndex's count of linked accounts
+fn bridged_user_links(env: &PocketIc, canister_ids: &CanisterIds) -> Vec<(CanisterId, u64)> {
+    canister_ids
+        .subnets
+        .iter()
+        .map(|s| {
+            let count = try_metrics(env, s.local_user_index).and_then(|m| m["bridged_user_links"].as_u64());
+            (s.local_user_index, count.unwrap_or_default())
+        })
+        .collect()
+}
+
+// Ticks until each LocalUserIndex knows of `added` more linked accounts than it did `before`
+fn wait_for_bridged_user_links(env: &mut PocketIc, canister_ids: &CanisterIds, before: &[(CanisterId, u64)], added: u64) {
+    let expected: Vec<_> = before.iter().map(|(c, count)| (*c, count + added)).collect();
+    for _ in 0..50 {
+        if bridged_user_links(env, canister_ids) == expected {
+            return;
+        }
+        env.tick();
+    }
+    panic!(
+        "The LocalUserIndexes know of {:?} linked accounts, rather than {expected:?}",
+        bridged_user_links(env, canister_ids)
+    );
 }
 
 fn set_bridge_bot(

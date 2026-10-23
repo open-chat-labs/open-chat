@@ -342,6 +342,13 @@ pub(crate) fn handle_event<F: FnOnce() -> TimestampMillis>(
                 state.data.bridge_bots.remove(&ev.platform);
             }
         }
+        UserIndexEvent::BridgedUserLinked(ev) => {
+            if let Some(user_id) = ev.linked_user_id {
+                state.data.bridged_user_links.insert(ev.user, user_id);
+            } else {
+                state.data.bridged_user_links.remove(&ev.user);
+            }
+        }
         // Seeds a LocalUserIndex added after users were migrated with their old ids
         UserIndexEvent::UserIdMigrated(ev) => {
             state.data.migrated_user_ids.insert(ev.old_user_id, ev.new_user_id);

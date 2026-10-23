@@ -31,6 +31,8 @@ fn unlink_bridged_user_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     };
 
     let now = state.env.now();
-    state.data.bridged_users.unlink(&args.user, from, now);
+    if state.data.bridged_users.unlink(&args.user, from, now) {
+        state.push_bridged_user_link(args.user, None);
+    }
     Ok(())
 }
