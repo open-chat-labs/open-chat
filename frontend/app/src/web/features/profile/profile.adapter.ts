@@ -305,7 +305,9 @@ type DayEvent = { kind: ChitEvent["reason"]["kind"]; ms: number; amount: number 
  *   days is on the day before the first of them;
  * - each claim or marker, in time order, is on a later day than the one before.
  * So those days are fixed, any other claim is placed in this browser's zone, and then moved, if
- * it must be, to come after the one before it and before the one after it. One a day: the first
+ * it must be, to come before the one after it and after the one before it, in that order: the
+ * newest claims are the likeliest to have been made in this browser's zone, so where two collide
+ * the older one moves back. One a day: the first
  * claim, or else the day's marker. Each one's streak day follows from the days before it: one
  * more than the day before, or 1 after a gap. A reinstated claim is a kept day with nothing
  * earned.
@@ -343,14 +345,14 @@ export function claimDays(
             item.fixed = item.day = next.fixed - ONE_DAY;
         }
     });
-    // after the one before, then before the one after
-    for (let i = 1; i < items.length; i++) {
-        const item = items[i];
-        if (item.fixed === undefined) item.day = Math.max(item.day, items[i - 1].day + ONE_DAY);
-    }
+    // before the one after, then after the one before
     for (let i = items.length - 2; i >= 0; i--) {
         const item = items[i];
         if (item.fixed === undefined) item.day = Math.min(item.day, items[i + 1].day - ONE_DAY);
+    }
+    for (let i = 1; i < items.length; i++) {
+        const item = items[i];
+        if (item.fixed === undefined) item.day = Math.max(item.day, items[i - 1].day + ONE_DAY);
     }
 
     const byDay = new Map<number, DayEvent>();

@@ -238,8 +238,9 @@ describe("the CHIT calendar's days", () => {
             ["2026-03-01", 1],
             ["2026-03-02", 2],
         ]);
-        // in UTC, both are on the 1st, but the backend counts a later claim on a later day
-        expect(claimDays(events, utc).map((d) => d.day)).toEqual(["2026-03-01", "2026-03-02"]);
+        // in UTC, both are on the 1st, but the backend counts a later claim on a later day: the
+        // newer stays on its day here and the older moves back
+        expect(claimDays(events, utc).map((d) => d.day)).toEqual(["2026-02-28", "2026-03-01"]);
     });
 
     test("today and today's claim are the same day when the user's date isn't UTC's", () => {
@@ -375,5 +376,25 @@ describe("the CHIT calendar's days", () => {
             [5, 2],
             [6, 3],
         ]);
+    });
+
+    test("after a move east, today's claim stays on today and the older ones move back", () => {
+        // claims at 20:00 in UTC-5 on the 1st to the 10th (01:00 UTC the next day), then at 20:00
+        // in UTC+9 on the 11th to the 15th (11:00 UTC), seen from UTC+9; the backend counts them on
+        // the 1st to the 15th
+        const H = 60 * 60_000;
+        const events = [
+            ...Array.from({ length: 10 }, (_, i) =>
+                at(MARCH_1 + i * DAY + 25 * H, "daily_claim", 10),
+            ),
+            ...Array.from({ length: 5 }, (_, i) =>
+                at(MARCH_1 + (10 + i) * DAY + 11 * H, "daily_claim", 10),
+            ),
+        ];
+        const days = claimDays(events, () => 540);
+        expect(days.map((d) => Number(d.day.slice(-2)))).toEqual(
+            Array.from({ length: 15 }, (_, i) => i + 1),
+        );
+        expect(days.at(-1)?.streakDay).toBe(15);
     });
 });
