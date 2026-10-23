@@ -21,11 +21,13 @@ fn link_bridged_user_impl(args: Args, state: &mut RuntimeState) -> OCResult<Succ
         .map_err(|error| OCErrorCode::InvalidRequest.with_message(error))?;
 
     let now = state.env.now();
+    let id = args.user.id();
     let user_id = state
         .data
         .bridged_users
         .link(args.user, &args.code, now)
         .ok_or_else(|| OCErrorCode::InvalidRequest.with_message("The code is unknown or has expired"))?;
+    state.push_bridged_user_link(id, Some(user_id));
 
     let username = state
         .data

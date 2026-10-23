@@ -6,8 +6,8 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use ic_cdk_management_canister::{CanisterInfoArgs, CanisterInstallMode};
 use local_user_index_canister::{
-    BotPublished, BotRegistered, SetAlchemyApiKey, SetBridgeBot, SetPremiumItemCost, UserDetailsFull, UserIdMigrated,
-    UserIndexEvent,
+    BotPublished, BotRegistered, BridgedUserLinked, SetAlchemyApiKey, SetBridgeBot, SetPremiumItemCost, UserDetailsFull,
+    UserIdMigrated, UserIndexEvent,
 };
 use rand::RngExt;
 use std::collections::HashSet;
@@ -204,6 +204,15 @@ fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut Runti
                 UserIndexEvent::SetBridgeBot(SetBridgeBot {
                     platform,
                     bot_id: Some(bot_id),
+                }),
+            );
+        }
+        for (user, linked_user_id) in state.data.bridged_users.links() {
+            pusher.push(
+                canister_id,
+                UserIndexEvent::BridgedUserLinked(BridgedUserLinked {
+                    user,
+                    linked_user_id: Some(linked_user_id),
                 }),
             );
         }
