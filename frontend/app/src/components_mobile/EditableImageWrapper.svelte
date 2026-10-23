@@ -2,6 +2,13 @@
     import { Button, ColourVars, Column, Sheet, Subtitle } from "component-lib";
     import type { Snippet } from "svelte";
     import type { OnCropCompleteEvent } from "svelte-easy-crop";
+    import {
+        AVATAR_SIZE,
+        BANNER_SIZE,
+        cropImage,
+        readImageFile,
+        type CropSize,
+    } from "@src/utils/imageCrop";
     import Cropper from "svelte-easy-crop";
     import Crop from "svelte-material-icons/Crop.svelte";
     import { i18nKey } from "../i18n/i18n";
@@ -27,24 +34,22 @@
         classString,
     }: Props = $props();
 
-    type Dimensions = { width: number; height: number };
     type Mode = "banner" | "avatar" | "profile";
     type CropShape = "round" | "rect";
 
     let fileinput: HTMLInputElement;
     let selectedImage: string | undefined = $state();
-    let originalImage = new Image();
     let showModal = $state(false);
     let cropData: OnCropCompleteEvent | undefined = undefined;
 
-    function getSaveDimensions(mode: Mode): Dimensions {
+    function getSaveDimensions(mode: Mode): CropSize {
         switch (mode) {
             case "avatar":
-                return { width: 150, height: 150 };
+                return AVATAR_SIZE;
             case "banner":
-                return { width: 600, height: 300 };
+                return BANNER_SIZE;
             case "profile":
-                return { width: 600, height: 300 };
+                return BANNER_SIZE;
         }
     }
 
@@ -54,64 +59,26 @@
         }
     }
 
-    function onFileSelected(e: { currentTarget: HTMLInputElement }) {
-        if (e.currentTarget) {
-            const target = e.currentTarget as HTMLInputElement;
-            if (target.files) {
-                const image = target.files[0];
-                const reader = new FileReader();
-                reader.readAsDataURL(image);
-                reader.onload = (e) => {
-                    selectedImage = e?.target?.result as string;
-                    originalImage.src = selectedImage;
-                    showModal = true;
-                    fileinput.value = "";
-                };
-            }
-        }
+    async function onFileSelected(e: { currentTarget: HTMLInputElement }) {
+        const file = e.currentTarget.files?.[0];
+        e.currentTarget.value = "";
+        if (file === undefined) return;
+        selectedImage = await readImageFile(file);
+        showModal = true;
     }
 
-    function cropImage() {
-        if (!cropData || !originalImage) return;
-
-        const {
-            pixels: { x, y, width, height },
-        } = cropData;
-
-        const canvas: HTMLCanvasElement = document.createElement("canvas");
-        canvas.width = SAVE_DIMS.width;
-        canvas.height = SAVE_DIMS.height;
-        canvas
-            .getContext("2d")
-            ?.drawImage(
-                originalImage,
-                x,
-                y,
-                width,
-                height,
-                0,
-                0,
-                SAVE_DIMS.width,
-                SAVE_DIMS.height,
-            );
-
-        canvas.toBlob(async (blob: Blob | null) => {
-            if (blob) {
-                const array = await blob.arrayBuffer();
-                const data = new Uint8Array(array);
-                image = canvas.toDataURL("image/jpg");
-                closeModal();
-                console.log("image size: ", data.length);
-                onImageSelected({ url: image, data });
-            }
-        }, "image/jpg");
+    async function applyCrop() {
+        if (!cropData || selectedImage === undefined) return;
+        const cropped = await cropImage(selectedImage, cropData.pixels, SAVE_DIMS);
+        if (cropped === undefined) return;
+        image = cropped.url;
+        closeModal();
+        onImageSelected(cropped);
     }
 
-    // Drop the full-resolution source copies once the crop sheet is gone
     function closeModal() {
         showModal = false;
         selectedImage = undefined;
-        originalImage = new Image();
         cropData = undefined;
     }
 
@@ -137,7 +104,7 @@
                     {aspect}
                     cropShape={CROP_SHAPE} />
             </Column>
-            <Button onClick={cropImage}>
+            <Button onClick={applyCrop}>
                 {#snippet icon(color)}
                     <Crop {color}></Crop>
                 {/snippet}

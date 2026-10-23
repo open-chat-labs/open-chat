@@ -645,6 +645,7 @@
     "copyUrl": "Copy url",
     "createAccountOrSignIn": "Tap here to **create account** or **sign in**",
     "createNewGroup": "Create a new group",
+    "cropImage": "Crop image",
     "cryptoAccount": {
         "auto": "Automatic",
         "autoInfo": "Organise your wallet automatically. Any token with a non-zero token balance or with a dollar value greater than the minimum dollar value entered below will be displayed",
@@ -1961,6 +1962,7 @@
         "customProfileBackground": "Custom profile background",
         "insufficientChit": "This feature uses {price} CHIT and you only have {balance} at the moment. Keep collecting!",
         "paymentFailure": "Sorry but we were unable to take payment.",
+        "pay": "Pay",
         "popularEmojis": "Popular emoji pack",
         "priceMessage": "Do you want to use {price} of your current CHIT balance of {balance} for this feature?",
         "priceTooltip": "{price} CHIT",

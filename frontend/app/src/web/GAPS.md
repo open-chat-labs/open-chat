@@ -116,6 +116,13 @@ design export needs. Each entry says where it came up.
     `isUsernameValid` wants 5), so a name the app can't take says "taken";
   - no read-only state for a suspended user: an edit fails to save instead;
   - the account's Status row always says Online;
+  - the cover's edit button is passed `isDiamond`, but the app's rule is a premium item: a
+    custom profile background costs 50,000 CHIT once, for anyone (`PremiumItem`), so the
+    dialog's Diamond hint doesn't apply;
+  - no design for cropping a picked avatar or cover, nor for paying CHIT for the premium item:
+    both are `DialogShell`s (`features/profile/ImageCropDialog`, `PremiumItemDialog`,
+    `TODO(design)`). The cover is cropped at desktop's 600×800 (`utils/imageCrop.ts`); the
+    mobile app saves it at 600×300;
   - the notifications toggle has no disabled state for permission refused in the browser, and
     shows where notifications aren't supported;
   - the restricted-content toggles show in every build (the mobile app hides them in app-store
