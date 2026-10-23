@@ -1,6 +1,7 @@
 <script lang="ts">
     import {
         chitStateStore,
+        dailyChitClaimable,
         currentStreak,
         dailyPuzzleStore,
         iconSize,
@@ -132,7 +133,7 @@
         e.stopPropagation();
         learnToEarn = true;
     }
-    let available = $derived($chitStateStore.nextDailyChitClaim < $now500);
+    let available = $derived(dailyChitClaimable($chitStateStore.nextDailyChitClaim, $now500));
     let streak = $derived(currentStreak($chitStateStore, $now500));
     let badgesVisible = $derived(calculateBadgesVisible(streak));
     let maxBadgeVisible = $derived(badgesVisible[badgesVisible.length - 1]);

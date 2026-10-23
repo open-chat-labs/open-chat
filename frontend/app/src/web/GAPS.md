@@ -130,7 +130,10 @@ design export needs. Each entry says where it came up.
   sign-in provider limit), and one that rejects with `{ cancelled: true }` says nothing (closing
   the confirming sign-in); Diamond opens from it without its exit (`DialogFlow.handOff`), so the
   backdrop stays while the next dialog animates in (`DialogScreen` keeps it); the CHIT claim day
-  does nothing without `onChit` (the app doesn't pass it until the CHIT dialog, 8d).
+  does nothing without `onChit` (the app doesn't pass it until the CHIT dialog, 8d);
+  `puzzleSetting`, so a host without a daily puzzle setting leaves it out; "Ways to earn more"
+  only with `onEarn`; `onClaim`, the calendar's Claim made in place with a "Claiming…" state; a
+  day before `joined` isn't a missed one.
 - **`ProfileDialog` against the app** (8c):
   - no "Hide all CHIT related features" switch: the new UI reads `disableChit` (the CHIT cards
     on the user card and the DM panel follow it) but offers no way to change it. The setting is
@@ -148,6 +151,26 @@ design export needs. Each entry says where it came up.
     no such data to show;
   - the storage section's "report a problem" isn't offered: the app has nowhere to send a report;
   - About has no metrics link: the app has no metrics page;
+  - CHIT: the calendar shows the daily claims (and insured or reinstated days), not the old
+    calendar's every CHIT event (achievements, referrals, puzzles, premium items); a day is the
+    user's own (the backend counts a streak in the user's time zone), not the UTC day the dialog
+    describes, and a claim's streak day is worked out from the days before it, so it loads the
+    whole history; the backend doesn't say which zone each claim was made in (its
+    `utc_offset_updates` aren't exposed): insured and reinstated days are known exactly, and so
+    is the claim before a run of insured days (the day before them); any other claim is placed in
+    this browser's zone, then kept before the one after it and after the one before it (the
+    older moving back where two collide), so a user who claimed for a while from another zone can
+    see some of those claims a day off (low priority, display only: the exact fix is for
+    `chit_events` to give each claim's day, which the backend can work out from its offsets); the
+    backend can count one claim on two days after a move east (it claims in the old zone, then in
+    the new one), which the calendar shows as it counts it (a backend issue, older than the new
+    UI); a claim support reinstates for an older day shows once the dialog is opened again, as a
+    reload reads from two days before the newest event it has (low priority: rare, and it
+    corrects itself); no daily puzzle setting (the app has none to show or hide the puzzle, or to
+    remind of it: 8d), no "Ways to earn more" (the achievements dialog is 8d), and the calendar's
+    Claim claims in place (`onClaim`), where the design opens the CHIT dialog (8d); the calendar's
+    `today` is the user's date too, not UTC's; the old profile's streak
+    insurance summary has no place here (8d's `StreakInsuranceDialog`);
   - sign-in methods: linking a passkey or an Internet Identity confirms it with the sign-in dialog
     (signing in again, no design), offering only the way this session signed in; the dialog's
     checklist has no step for it, so "Confirm with your …" waits while that dialog is up; the

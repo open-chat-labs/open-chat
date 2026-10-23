@@ -1291,7 +1291,7 @@ export class UserClient
         );
     }
 
-    chitEvents({ from, to, max, ascending }: ChitEventsRequest): Promise<ChitEventsResponse> {
+    chitEvents({ from, to, max, ascending, skip }: ChitEventsRequest): Promise<ChitEventsResponse> {
         return this.query(
             "chit_events",
             {
@@ -1299,7 +1299,7 @@ export class UserClient
                 to,
                 max,
                 ascending,
-                skip: undefined,
+                skip,
             },
             chitEventsResponse,
             UserChitEventsArgs,

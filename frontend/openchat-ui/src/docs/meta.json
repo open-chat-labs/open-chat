@@ -13478,6 +13478,17 @@
         "doc": ""
       },
       {
+        "name": "puzzleSetting",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "true",
+        "doc": "Offer the daily puzzle setting; false for a host that has none. Defaults to true."
+      },
+      {
         "name": "chitUtc",
         "type": "boolean",
         "default": null,
@@ -13949,6 +13960,17 @@
         "required": false,
         "componentDefault": null,
         "doc": ""
+      },
+      {
+        "name": "onClaim",
+        "type": "() => Promise<unknown>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Claim today's CHIT from the calendar, here (as ChitDialog's onClaim): the day says it's claiming until this settles. Takes the place of onChit for the calendar's Claim."
       },
       {
         "name": "onEarn",

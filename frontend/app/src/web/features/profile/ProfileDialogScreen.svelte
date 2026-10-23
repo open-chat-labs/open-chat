@@ -1,7 +1,8 @@
-<!-- The user's profile and settings (?profile), ProfileDialog over the page. So far: the profile
-     (name, username and bio, saved as the old UI's forms save them, app/src/logic/profile), stats,
-     chats & calls, appearance and log out; Diamond opens ?diamond. The other sections come with the
-     rest of 8c (#10129). -->
+<!-- The user's profile and settings (?profile), ProfileDialog over the page (8c, #10129): the
+     profile (name, username and bio, saved as the old UI's forms save them, app/src/logic/profile),
+     stats, CHIT, chats & calls, communities, sign-in methods, appearance, storage, bots, linking a
+     device, deleting the account, inviting, About and log out; Diamond opens ?diamond. What the
+     dialog has that the app doesn't is in GAPS.md. -->
 <script lang="ts">
     import {
         allUsersStore,
@@ -12,6 +13,10 @@
         buildUserBackgroundUrl,
         chitStateStore,
         currentStreak,
+        dailyChitClaimable,
+        latestSuccessfulUpdatesLoop,
+        mergeChitEvents,
+        ONE_DAY,
         currentUserIdStore,
         currentUserProfileStore,
         fontScaleStore,
@@ -41,19 +46,25 @@
         sortedCommunitiesStore,
         storageStore,
         type BotClientConfigData,
+        type ChitEvent,
     } from "@client";
     import ProfileDialog, {
         type ChatSettings,
+        type ChitSettingsPatch,
+        type ClaimDay,
         type ProfileSection,
         type SigninMethod,
     } from "@openchat/ui/src/features/components/ProfileDialog.svelte";
     import { fontScaleFor, fontSizeOf, isFontSize } from "@src/logic/profile/appearance";
     import { ProfileForm } from "@src/logic/profile/profileForm.svelte";
     import {
+        chitPopup,
         dclickReply,
         disableChit,
         enterSend,
+        hideChitIcon,
         lowBandwidth,
+        utcMode,
         videoCameraOn,
         videoMicOn,
         videoSpeakerView,
@@ -64,12 +75,15 @@
     import { themeType } from "@theme/themes";
     import { getContext, onDestroy, onMount } from "svelte";
     import { SvelteMap } from "svelte/reactivity";
-    import { _ } from "svelte-i18n";
+    import { _, locale } from "svelte-i18n";
     import { accentOf, accentStore } from "../../accent";
     import type { DialogProps, LinkedDialog } from "../app/dialogs";
     import {
         changedChatSettings,
+        calendarDay,
         chatSettingsProps,
+        claimDays,
+        claimedNow,
         profileProps,
         ringtoneKeyOf,
         statsProps,
@@ -118,6 +132,7 @@
     const SECTIONS: ProfileSection[] = [
         "profile",
         "stats",
+        "chit",
         "diamond",
         "chats",
         "communities",
@@ -327,6 +342,7 @@
 
     async function sectionShown(section: ProfileSection) {
         if (section === "signin") refreshSigninMethods();
+        if (section === "chit") loadClaimHistory();
         if (section !== "bots" || botConfig !== undefined || loadingBotConfig) return;
         loadingBotConfig = true;
         try {
@@ -341,6 +357,92 @@
     const bots = $derived(botConfig && botConfigProps(botConfig));
 
     const inviteLink = $derived(referralLink(client.canonicalOrigin(), userId));
+
+    // when the account was made, in the user's locale, as the dialog would show its `joined` (which
+    // is the calendar's day for it)
+    const memberSince = $derived(
+        new Intl.DateTimeFormat($locale ?? "en", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+        }).format(header.joined),
+    );
+
+    // ---- CHIT: its settings (the old UI's, in this browser) and the claim calendar ----
+    function changeChit(patch: ChitSettingsPatch) {
+        if (patch.enabled !== undefined) disableChit.set(!patch.enabled);
+        // the calendar shows once CHIT is on
+        if (patch.enabled) loadClaimHistory();
+        if (patch.notify !== undefined) chitPopup.set(patch.notify);
+        if (patch.hideAfterClaim !== undefined) hideChitIcon.set(patch.hideAfterClaim);
+        if (patch.utc !== undefined) utcMode.set(patch.utc);
+    }
+
+    // today's claim, as the old desktop rail offers it (only while the last sync is recent)
+    const claimable = $derived(
+        dailyChitClaimable(
+            $chitStateStore.nextDailyChitClaim,
+            $now500,
+            $latestSuccessfulUpdatesLoop,
+        ),
+    );
+
+    // the calendar's Claim: claimed here, as the old CHIT modal claims it, until the CHIT dialog
+    // it opens in the design is built (8d). The day shows claimed as soon as the answer comes (as
+    // the claim stops being offered), and stays so while the history reloads behind it
+    async function claimChit(): Promise<void> {
+        try {
+            const resp = await client.claimDailyChit();
+            if (resp.kind === "success") {
+                claimedHere = claimedNow(Date.now(), resp.streak, resp.chitEarned);
+                claimHistoryRun++;
+                claimHistory = withClaimedHere(claimHistory);
+            }
+        } catch (err) {
+            console.warn("Unable to claim the daily CHIT", err);
+            toastStore.showFailureToast(i18nKey("dailyChit.failedToClaim"));
+            throw err;
+        }
+        loadClaimHistory();
+    }
+
+    // a claim made here, kept in the calendar until the loaded history has that day
+    let claimedHere: ClaimDay | undefined;
+
+    function withClaimedHere(days: ClaimDay[]): ClaimDay[] {
+        const here = claimedHere;
+        if (here === undefined || days.some((d) => d.day === here.day)) return days;
+        return [...days, here];
+    }
+
+    // every claim since the account was made: the calendar pages through the months itself, and a
+    // claim's streak day follows from the ones before it. Loaded once CHIT's section shows (not
+    // while CHIT is off), then each time it shows again from two days before the newest event it
+    // has: an insured day is marked after midnight, and a claim reinstated, at the end of its
+    // (past) day, so either can come in older than what's loaded. A load that fails leaves the
+    // calendar as it was
+    const RELOAD_MARGIN_DAYS = 2;
+    let chitEvents: ChitEvent[] = [];
+    let claimHistory = $state<ClaimDay[]>([]);
+    let claimHistoryRun = 0;
+
+    async function loadClaimHistory() {
+        if ($disableChit) return;
+        const run = ++claimHistoryRun;
+        const newest = chitEvents.at(-1)?.timestamp;
+        try {
+            const events = await client.chitHistory(
+                newest === undefined
+                    ? BigInt(header.joined)
+                    : newest - BigInt(RELOAD_MARGIN_DAYS * ONE_DAY),
+            );
+            if (run !== claimHistoryRun) return;
+            chitEvents = mergeChitEvents(chitEvents, events);
+            claimHistory = withClaimedHere(claimDays(chitEvents));
+        } catch (err) {
+            console.warn("Unable to load the CHIT claim history", err);
+        }
+    }
 
     // ---- sign-in methods, linking a device, deleting the account ----
     // the identities linked to the account, loaded each time their section shows
@@ -599,7 +701,8 @@
     handle={header.handle}
     name={header.name}
     about={header.about}
-    joined={header.joined}
+    joined={calendarDay(header.joined)}
+    {memberSince}
     streak={header.streak}
     balance={header.balance}
     chitEarned={$chitStateStore.totalChitEarned}
@@ -609,6 +712,15 @@
     cover={header.cover}
     sections={SECTIONS}
     chitEnabled={!$disableChit}
+    chitNotify={$chitPopup}
+    chitHideAfterClaim={$hideChitIcon}
+    chitUtc={$utcMode}
+    {claimHistory}
+    {claimable}
+    today={calendarDay($now500)}
+    onClaim={readOnly ? undefined : claimChit}
+    puzzleSetting={false}
+    onChitSettings={changeChit}
     onlineMinutes={stats.onlineMinutes}
     onlineMinutesPrev={stats.onlineMinutesPrev}
     messageMix={stats.messageMix}

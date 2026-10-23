@@ -155,6 +155,8 @@ export type ChitEventsRequest = {
     to: bigint;
     max: number;
     ascending: boolean;
+    // how many of the matching events (in the order asked for) to pass over first
+    skip?: number;
 };
 
 export type ExternalAchievementsResponse =

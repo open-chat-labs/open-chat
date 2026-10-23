@@ -255,6 +255,8 @@
     chitHideAfterClaim?: boolean;
     puzzleShown?: boolean;
     puzzleRemind?: boolean;
+    /** Offer the daily puzzle setting; false for a host that has none. Defaults to true. */
+    puzzleSetting?: boolean;
     /** Calendar shows claim times in UTC instead of local time. */
     chitUtc?: boolean;
     /** Local time offset used for the calendar's claim times; defaults to this browser's. */
@@ -319,6 +321,9 @@
     onSectionChange?: (section: ProfileSection) => void;
     /** Open the CHIT dialog: it replaces this one, over the same backdrop (no exit plays). */
     onChit?: () => void;
+    /** Claim today's CHIT from the calendar, here (as ChitDialog's onClaim): the day says it's claiming until this
+     *  settles. Takes the place of onChit for the calendar's Claim. */
+    onClaim?: () => Promise<unknown>;
     onEarn?: () => void;
     /** Open the Diamond dialog: it replaces this one, over the same backdrop (no exit plays). */
     onDiamond?: () => void;
@@ -376,6 +381,7 @@
     chitHideAfterClaim = false,
     puzzleShown = true,
     puzzleRemind = false,
+    puzzleSetting = true,
     chitUtc = false,
     utcOffsetMinutes = -new Date().getTimezoneOffset(),
     claimHistory = [],
@@ -413,6 +419,7 @@
     onClose,
     onSectionChange,
     onChit,
+    onClaim,
     onEarn,
     onDiamond,
     onSave,
@@ -591,9 +598,25 @@
   let monthOffset = $state(0);
   let hoverDay = $state<number | null>(null);
   const setChit = (patch: ChitSettingsPatch) => onChitSettings?.(patch);
+
+  // the calendar's Claim: claimed here with onClaim (waiting until it settles), or the CHIT dialog
+  let claiming = $state(false);
+  async function claimToday() {
+    if (!onClaim) return handOff(onChit);
+    if (claiming) return;
+    claiming = true;
+    try {
+      await onClaim();
+    } catch {
+      // the host says why
+    } finally {
+      claiming = false;
+    }
+  }
   const puzzleMode = $derived(!puzzleShown ? 'off' : puzzleRemind ? 'remind' : 'show');
 
   const TODAY = $derived(dayStart(todayProp ?? Date.now()));
+  const JOINED_DAY = $derived(joinedProp === undefined ? 0 : dayStart(joinedProp));
   const hist = $derived(Object.fromEntries(claimHistory.map((c) => [c.day, c])) as Record<string, ClaimDay>);
 
   const calendar = $derived.by(() => {
@@ -625,7 +648,8 @@
       const ts = Date.UTC(y, mo, d), rec = hist[dayKey(ts)], col = (lead + d - 1) % 7;
       const head = t('ui.profileDialog.calendar.dayHead', { weekday: dateFmt({ weekday: 'short' }, ts), day: d, month: dateFmt({ month: 'long' }, ts) });
       if (ts === TODAY && claimable) cells.push({ day: d, kind: 'claim', col, title: t('ui.profileDialog.calendar.claimToday') });
-      else if (ts > TODAY) cells.push({ day: d, kind: 'future', col });
+      // after today, or before the account was made: nothing to claim, nothing missed
+      else if (ts > TODAY || ts < JOINED_DAY) cells.push({ day: d, kind: 'future', col });
       else if (rec?.insured) {
         insured++;
         cells.push({
@@ -1369,6 +1393,7 @@
                 )}
               </div>
             </div>
+            {#if puzzleSetting}
             <div class="block">
               <span class="caps">{t('ui.profileDialog.chit.puzzleCaps')}</span>
               <div class="list puzzle">
@@ -1396,17 +1421,20 @@
                 >
               </div>
             </div>
+            {/if}
           {:else}
             <p class="chit-off">
               {t('ui.profileDialog.chit.off', { amount: fmt(balance) })}
             </p>
           {/if}
           {#if chitEnabled}
+            {#if onEarn}
             <div class="earn" onclick={() => close(onEarn)} role="button" tabindex="0">
               {@render glyph('trophy', 'earn-glyph')}
               <div class="earn-text"><span class="earn-title">{t('ui.profileDialog.chit.earnMore')}</span><span class="earn-left">{t('ui.profileDialog.chit.achievementsLeft', { count: achievementsLeft })}</span></div>
               {@render glyph('chevron-right', 'earn-chevron')}
             </div>
+            {/if}
             <div class="month-bar">
               <span
                 class="month-step"
@@ -1448,8 +1476,9 @@
               {#each calendar.cells as cell}
                 <div
                   class="day {cell.kind}"
-                  class:inert={cell.kind === 'claim' && !onChit}
-                  onclick={cell.kind === 'claim' && onChit ? () => handOff(onChit) : undefined}
+                  class:inert={cell.kind === 'claim' && !onChit && !onClaim}
+                  class:claiming={cell.kind === 'claim' && claiming}
+                  onclick={cell.kind === 'claim' && (onChit || onClaim) ? claimToday : undefined}
                   aria-label={cell.title ?? ''}
                   role="button"
                   tabindex="0"
@@ -1459,7 +1488,7 @@
                 >
                   <span class="day-num">{cell.day ?? ''}</span>
                   <span class="day-amount"
-                    >{#if cell.kind === 'insured'}<span class="day-shield"></span>{/if}{cell.kind === 'claim' ? t('ui.profileDialog.calendar.claim') : cell.kind === 'claimed' ? cell.amount : ''}</span
+                    >{#if cell.kind === 'insured'}<span class="day-shield"></span>{/if}{cell.kind === 'claim' ? t(claiming ? 'ui.profileDialog.calendar.claiming' : 'ui.profileDialog.calendar.claim') : cell.kind === 'claimed' ? cell.amount : ''}</span
                   >
                   {#if cell.lines && hoverDay === cell.day}
                     <div class="pop" class:start={cell.col === 0} class:end={cell.col === 6}>
@@ -3160,8 +3189,9 @@
     cursor: pointer;
   }
 
-  /* nothing to open without onChit */
-  .day.claim.inert {
+  /* nothing to open without onChit (or onClaim), nor while claiming */
+  .day.claim.inert,
+  .day.claim.claiming {
     cursor: default;
   }
 

@@ -16,6 +16,7 @@
     import {
         allUsersStore,
         chitStateStore,
+        dailyChitClaimable,
         currentUserIdStore,
         favouritesStore,
         mergeListOfCombinedUnreadCounts,
@@ -55,7 +56,7 @@
     );
     const iconSize = "1.5rem";
     let claimChitAvailable = $derived(
-        !$disableChit && $chitStateStore.nextDailyChitClaim < $now500,
+        !$disableChit && dailyChitClaimable($chitStateStore.nextDailyChitClaim, $now500),
     );
 
     let chatIndicator = $derived.by(() => showIndicator($unreadDirectAndGroupCountsStore.chats));
