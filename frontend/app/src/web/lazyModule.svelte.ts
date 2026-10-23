@@ -13,12 +13,18 @@ export class LazyModule<M> {
     // still loading after a moment: a quick load shows no spinner, only what it loaded
     slow = $state(false);
     #loading = false;
+    // wanted while it was loading ahead: a failure is then one
+    #wanted = false;
 
     constructor(private readonly load: () => Promise<M>) {}
 
     /** Loads it, unless it's loaded or loading; after a failure, tries again. */
     want(): void {
-        if (this.module !== undefined || this.#loading) return;
+        if (this.module !== undefined) return;
+        if (this.#loading) {
+            this.#wanted = true;
+            return;
+        }
         this.#loading = true;
         this.failed = false;
         this.#fetch(true);
@@ -39,7 +45,7 @@ export class LazyModule<M> {
         try {
             this.module = await this.load();
         } catch (err) {
-            if (wanted) {
+            if (wanted || this.#wanted) {
                 console.error("Couldn't load a page's content", err);
                 this.failed = true;
             } else {
@@ -49,6 +55,7 @@ export class LazyModule<M> {
             clearTimeout(slow);
             this.slow = false;
             this.#loading = false;
+            this.#wanted = false;
         }
     }
 }

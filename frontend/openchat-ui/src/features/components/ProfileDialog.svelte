@@ -206,10 +206,13 @@
   const LINK_STEPS = ['ui.profileDialog.device.step1', 'ui.profileDialog.device.step2', 'ui.profileDialog.device.step3'];
   const icon = (name: string) => `var(--icon-${name}) center/contain no-repeat`;
   const BLANK_GIF = 'data:image/gif;base64,R0lGODlhAQABAAAAACw=';
-  /** A principal's first two and last two groups with the rest elided. */
+  // a principal: groups of five lower-case letters and digits, the last one shorter or not
+  const PRINCIPAL = /^([a-z0-9]{5}-){4,}[a-z0-9]{1,5}$/;
+  /** A principal's first two and last two groups with the rest elided; anything else (an email address) as it is. */
   const shortId = (id: string) => {
+    if (!PRINCIPAL.test(id)) return id;
     const groups = id.split('-');
-    return groups.length > 4 ? `${groups.slice(0, 2).join('-')}-…-${groups.slice(-2).join('-')}` : id;
+    return `${groups.slice(0, 2).join('-')}-…-${groups.slice(-2).join('-')}`;
   };
 </script>
 
@@ -1568,7 +1571,7 @@
             {#if siCurrent}
               <div class="current">
                 <span class="current-tile">{@render glyph(SI_TYPES[siCurrent.type].icon, 'current-glyph')}</span>
-                <div class="current-text"><span class="current-kicker">{t('ui.profileDialog.signin.signedInWith')}</span><span class="current-title">{siCurrent.title}</span><span class="current-id" title={siCurrent.id}>{siCurrent.type === 'email' ? siCurrent.id : shortId(siCurrent.id)}</span></div>
+                <div class="current-text"><span class="current-kicker">{t('ui.profileDialog.signin.signedInWith')}</span><span class="current-title">{siCurrent.title}</span><span class="current-id" title={siCurrent.id}>{shortId(siCurrent.id)}</span></div>
                 <span class="locked" title={t('ui.profileDialog.signin.lockedTitle')}>{@render glyph('lock', 'locked-glyph')}{t('ui.profileDialog.signin.cantUnlink')}</span>
               </div>
             {/if}

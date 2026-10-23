@@ -69,4 +69,15 @@ describe("a module loaded when it's first wanted", () => {
         await flush();
         expect(lazy.module).toEqual({ content: 5 });
     });
+
+    test("wanted while it loads ahead, a failure is one", async () => {
+        vi.spyOn(console, "error").mockImplementation(() => {});
+        let fail: (err: Error) => void = () => {};
+        const lazy = new LazyModule(() => new Promise((_, reject) => (fail = reject)));
+        lazy.prefetch();
+        lazy.want();
+        fail(new Error("chunk gone"));
+        await flush();
+        expect(lazy.failed).toBe(true);
+    });
 });
