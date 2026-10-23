@@ -30,6 +30,12 @@
         type ModerationFlag,
         PremiumItem,
         premiumItemsStore,
+        isDisplayNameValid,
+        memberDisplayNameResult,
+        referralLink,
+        sortedCommunitiesStore,
+        storageStore,
+        type BotClientConfigData,
     } from "@client";
     import ProfileDialog, {
         type ChatSettings,
@@ -62,7 +68,15 @@
         statsProps,
         themePrefOf,
         type AppChatSettings,
+        botConfigProps,
+        communitiesProps,
+        memberDisplayNameOf,
+        storageProps,
     } from "./profile.adapter";
+    import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
+    import { clearCacheAndRestart } from "@src/utils/clearCache";
+    import { shareLink } from "@src/utils/share";
+    import { websiteVersion } from "@src/utils/openchatClient";
     import { i18nKey } from "@src/i18n/i18n";
     import { toastStore } from "@src/stores/toast";
     import {
@@ -80,7 +94,28 @@
     const client = getContext<OpenChat>("client");
 
     // the sections built so far (ProfileDialog shows only these)
-    const SECTIONS: ProfileSection[] = ["profile", "stats", "diamond", "chats", "appearance"];
+    const SECTIONS: ProfileSection[] = [
+        "profile",
+        "stats",
+        "diamond",
+        "chats",
+        "communities",
+        "appearance",
+        "storage",
+        "bots",
+        "invite",
+        "about",
+    ];
+    // the About pages this app has (Learn's, and the guidelines); it has no metrics page
+    const ABOUT_PAGES = [
+        "features",
+        "roadmap",
+        "architecture",
+        "whitepaper",
+        "faq",
+        "blog",
+        "guidelines",
+    ];
 
     const userId = $derived($currentUserIdStore);
     const user = $derived($allUsersStore.get(userId) ?? client.nullUser("unknown"));
@@ -235,6 +270,53 @@
         }
     }
 
+    // ---- communities ----
+    const communities = $derived(
+        communitiesProps($sortedCommunitiesStore, (c) =>
+            client.communityAvatarUrl(c.id.communityId, c.avatar),
+        ),
+    );
+
+    // the dialog shows the name until this settles, and goes back to the saved one if it throws
+    async function setCommunityName(communityId: string, name: string | null): Promise<void> {
+        const displayName = memberDisplayNameOf(name);
+        // a name the backend would turn down isn't sent, as the old screens' DisplayNameInput
+        if (displayName !== undefined && !isDisplayNameValid(displayName)) {
+            throw new Error("community name not valid");
+        }
+        const resp = await client.setMemberDisplayName(
+            { kind: "community", communityId },
+            displayName,
+        );
+        const result = memberDisplayNameResult(resp);
+        // TODO(design): the dialog says the name couldn't be saved, not why; GAPS.md
+        if (result.kind !== "saved") throw new Error(`community name not saved: ${result.kind}`);
+    }
+
+    // ---- storage, bots, invite, about ----
+    const storage = $derived(storageProps($storageStore));
+
+    // loaded the first time its section shows, as the old UI loaded it on asking; a failure is
+    // tried again the next time
+    let botConfig = $state<BotClientConfigData>();
+    let loadingBotConfig = false;
+
+    async function sectionShown(section: ProfileSection) {
+        if (section !== "bots" || botConfig !== undefined || loadingBotConfig) return;
+        loadingBotConfig = true;
+        try {
+            botConfig = await client.getBotConfig();
+        } catch (err) {
+            // the bot configuration rows stay hidden
+            console.warn("Unable to load the bot configuration", err);
+        } finally {
+            loadingBotConfig = false;
+        }
+    }
+    const bots = $derived(botConfig && botConfigProps(botConfig));
+
+    const inviteLink = $derived(referralLink(client.canonicalOrigin(), userId));
+
     // ---- the avatar and the profile background ----
     type ImageTarget = "avatar" | "cover";
     type ImageEdit =
@@ -342,8 +424,39 @@
     onChatSettings={changeChatSettings}
     onPreviewRingtone={previewRingtone}
     onAppearance={changeAppearance}
+    communities={communities.communities}
+    communityNames={communities.communityNames}
+    onCommunityName={setCommunityName}
+    storageUsedMB={storage.storageUsedMB}
+    storageLimitMB={storage.storageLimitMB}
+    onClearCache={() => clearCacheAndRestart(client)}
+    icHost={bots?.icHost}
+    storageIndex={bots?.storageIndex}
+    publicKey={bots?.publicKey}
+    {inviteLink}
+    onShareApp={shareLink}
+    aboutBaseUrl={client.canonicalOrigin()}
+    aboutPages={ABOUT_PAGES}
+    platform="Web"
+    version={websiteVersion}
     onPhotoEdit={readOnly ? undefined : () => pick("avatar")}
-    onCoverEdit={readOnly ? undefined : editCover} />
+    onCoverEdit={readOnly ? undefined : editCover}
+    onSectionChange={sectionShown}>
+    {#snippet qrCode(link: string)}
+        <!-- as the old UI's QRCode: a spinner while it loads, and a failure says so -->
+        {#await import("svelte-qrcode-image")}
+            <div class="qr-state"><Spinner size={24} /></div>
+        {:then { QRCodeImage }}
+            <QRCodeImage
+                text={link}
+                errorCorrectionLevel="Q"
+                margin={0}
+                altText={$_("ui.profileDialog.invite.qrAlt")} />
+        {:catch}
+            <div class="qr-state">{$_("qrCodeLoadFailed")}</div>
+        {/await}
+    {/snippet}
+</ProfileDialog>
 
 <input
     hidden
@@ -371,3 +484,15 @@
         onCrop={cropped}
         onClose={() => (imageEdit = { kind: "none" })} />
 {/if}
+
+<style>
+    .qr-state {
+        display: grid;
+        place-items: center;
+        width: 100%;
+        height: 100%;
+        text-align: center;
+        font: var(--weight-regular) var(--text-sm) / 1.3 var(--font-sans);
+        color: var(--ink-3);
+    }
+</style>

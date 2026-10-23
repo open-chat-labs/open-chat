@@ -13665,6 +13665,17 @@
         "doc": "Base for the About links."
       },
       {
+        "name": "aboutPages",
+        "type": "string[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The About pages the host has (`features`, `roadmap`, `metrics` \u2026), for one without them all; defaults to all."
+      },
+      {
         "name": "botDocsUrl",
         "type": "string",
         "default": null,
@@ -13764,6 +13775,17 @@
         "doc": ""
       },
       {
+        "name": "qrCode",
+        "type": "Snippet<[string]>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The invite link's QR code, drawn by the host (given the link); without it the dialog draws one with a global `qrcode` library, if the page has loaded one."
+      },
+      {
         "name": "icHost",
         "type": "string",
         "default": null,
@@ -13828,6 +13850,17 @@
         "required": false,
         "componentDefault": null,
         "doc": ""
+      },
+      {
+        "name": "onSectionChange",
+        "type": "(section: ProfileSection) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The section shown, as it opens and each time the user moves to another (for a host that loads a section's data only when it's seen)."
       },
       {
         "name": "onChit",

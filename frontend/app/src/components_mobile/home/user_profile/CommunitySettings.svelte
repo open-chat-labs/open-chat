@@ -12,8 +12,8 @@
     } from "component-lib";
     import {
         type CommunitySummary,
-        ErrorCode,
         i18nKey,
+        memberDisplayNameResult,
         OpenChat,
         ROLE_NONE,
         sortedCommunitiesStore,
@@ -61,16 +61,11 @@
         client
             .setMemberDisplayName(community.id, displayName)
             .then((resp) => {
-                if (resp.kind === "error") {
-                    if (resp.code === ErrorCode.DisplayNameTooShort) {
-                        displayNameError = "register.displayNameTooShort";
-                    } else if (resp.code === ErrorCode.DisplayNameTooLong) {
-                        displayNameError = "register.displayNameTooLong";
-                    } else if (resp.code === ErrorCode.InvalidDisplayName) {
-                        displayNameError = "register.displayNameInvalid";
-                    } else {
-                        displayNameError = "unexpectedError";
-                    }
+                const result = memberDisplayNameResult(resp);
+                if (result.kind === "rejected") {
+                    displayNameError = result.message;
+                } else if (result.kind === "failed") {
+                    toastStore.showFailureToast(i18nKey("unableToSaveUserProfile"));
                 }
             })
             .catch(() => {

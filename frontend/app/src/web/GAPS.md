@@ -119,7 +119,11 @@ design export needs. Each entry says where it came up.
   its nav offers (a host that has built only some); the cover and photo edit buttons only with
   `onCoverEdit` / `onPhotoEdit`; `engagement` counts as numbers; `memberSince` from `joined` in the
   host's locale; a chats & calls toggle the host didn't take goes back; the cover and photo edit
-  buttons keep their surface on hover (the design's hover tint alone let the image show through).
+  buttons keep their surface on hover (the design's hover tint alone let the image show through);
+  `qrCode`, the invite's QR code drawn by the host (the dialog's own needs a global `qrcode`
+  library); the storage section's "report a problem" row only with `onReportIssue`; the storage
+  meter only with an allowance above 0; `aboutPages`, the About pages the host has; an empty
+  communities section says so.
 - **`ProfileDialog` against the app** (8c):
   - the profile fields save one at a time, and any failure shows as "couldn't save": the reason
     the backend gave (`ProfileFieldErrors`, e.g. "display name too short") isn't shown;
@@ -127,6 +131,12 @@ design export needs. Each entry says where it came up.
     `isUsernameValid` wants 5), so a name the app can't take says "taken";
   - no read-only state for a suspended user: an edit fails to save instead;
   - the account's Status row always says Online;
+  - a community name the backend turns down shows "couldn't save your name", not why (too short,
+    invalid …: `memberDisplayNameResult` has the reason);
+  - the invite section's list of what inviting earns (`inviteRewards`) stays empty: the app has
+    no such data to show;
+  - the storage section's "report a problem" isn't offered: the app has nowhere to send a report;
+  - About has no metrics link: the app has no metrics page;
   - the cover's edit button is passed `isDiamond`, but the app's rule is a premium item: a
     custom profile background costs 50,000 CHIT once, for anyone (`PremiumItem`), so the
     dialog's Diamond hint doesn't apply;

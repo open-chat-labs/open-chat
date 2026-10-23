@@ -2590,6 +2590,11 @@ export class OpenChat {
                     undo();
                 }
                 return resp;
+            })
+            .catch((err) => {
+                // the name wasn't set: don't keep showing it
+                undo();
+                throw err;
             });
     }
 

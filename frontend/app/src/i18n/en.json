@@ -2041,6 +2041,7 @@
     },
     "promoteFailed": "Unable to promote to {role}",
     "promoteTo": "Promote to {role}",
+    "qrCodeLoadFailed": "Unable to load QR code",
     "proposal": {
         "action": "action",
         "additionalContent": "addtional content",
