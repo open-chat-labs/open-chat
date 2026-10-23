@@ -108,7 +108,8 @@ design export needs. Each entry says where it came up.
 - **`ProfileDialog`, by hand** (8c, to go back to the design export): `sections`, the sections
   its nav offers (a host that has built only some); the cover and photo edit buttons only with
   `onCoverEdit` / `onPhotoEdit`; `engagement` counts as numbers; `memberSince` from `joined` in the
-  host's locale; a chats & calls toggle the host didn't take goes back.
+  host's locale; a chats & calls toggle the host didn't take goes back; the cover and photo edit
+  buttons keep their surface on hover (the design's hover tint alone let the image show through).
 - **`ProfileDialog` against the app** (8c):
   - the profile fields save one at a time, and any failure shows as "couldn't save": the reason
     the backend gave (`ProfileFieldErrors`, e.g. "display name too short") isn't shown;

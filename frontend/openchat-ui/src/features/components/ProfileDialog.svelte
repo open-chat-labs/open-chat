@@ -2358,9 +2358,11 @@
       0 0 0 3px var(--surface-1);
   }
 
+  /* the hover tint over the button's own surface: on its own it's see-through, and these sit on
+     an image */
   .cover-edit:hover,
   .photo-edit:hover {
-    background: var(--btn-hover);
+    background: linear-gradient(var(--btn-hover), var(--btn-hover)), var(--card-2);
   }
 
   .cover-edit-glyph {
