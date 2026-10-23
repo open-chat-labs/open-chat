@@ -3,26 +3,20 @@
      opened, the Chat button, and suspend / unsuspend for platform moderators. -->
 <script lang="ts">
     import {
-        blockedUsersStore,
         buildUserAvatarUrl,
         buildUserBackgroundUrl,
         currentUserIdStore,
         OpenChat,
         platformModeratorStore,
-        profileBlock,
         publish,
-        selectedChatBlockedUsersStore,
-        selectedChatSummaryStore,
         selectedChatWebhooksStore,
-        selectedCommunityBlockedUsersStore,
         selectedCommunityMembersStore,
-        selectedCommunitySummaryStore,
         unsuspendUserMessage,
         userBadges,
     } from "@client";
     import UserDialog from "@openchat/ui/src/features/components/UserDialog.svelte";
     import { profileCardChat } from "@src/logic/profile/profileCard";
-    import { ProfileCardData } from "@src/logic/profile/profileCardData.svelte";
+    import { ProfileCardBlock, ProfileCardData } from "@src/logic/profile/profileCardData.svelte";
     import { disableChit } from "@src/stores/settings";
     import { toastStore } from "@src/stores/toast";
     import { blobUrlPattern } from "@src/utils/openchatClient";
@@ -87,23 +81,12 @@
             coverUrl: buildUserBackgroundUrl(blobUrlPattern, userId, profile.backgroundId),
             online,
             joined: client.toDateString(new Date(Number(profile.created))),
-            chitEarned: badges.chit?.earned.toLocaleString(),
+            chit: badges.chit,
         });
     });
 
-    const block = $derived(
-        profileBlock({
-            userId,
-            isMe,
-            inGlobalContext: dialog.inGlobalContext,
-            chat: $selectedChatSummaryStore,
-            community: $selectedCommunitySummaryStore,
-            blockedUsers: $blockedUsersStore,
-            blockedChatUsers: $selectedChatBlockedUsersStore,
-            blockedCommunityUsers: $selectedCommunityBlockedUsersStore,
-            canBlockUsers: (id) => client.canBlockUsers(id),
-        }),
-    );
+    const cardBlock = new ProfileCardBlock(client, userId, dialog.inGlobalContext);
+    const block = $derived(cardBlock.current);
 
     // UserDialog shows its own error when the promise rejects
     async function blockUser() {

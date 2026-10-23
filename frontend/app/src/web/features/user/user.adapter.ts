@@ -1,4 +1,4 @@
-import type { PublicProfile } from "@client";
+import type { PublicProfile, UserBadges } from "@client";
 import { cssImage } from "../profile/profile.adapter";
 
 // UserDialog's props from someone's profile, as the screen has loaded and formatted it.
@@ -12,8 +12,8 @@ export type UserDialogInput = {
     coverUrl: string | undefined;
     online: boolean;
     joined: string;
-    // undefined when the viewer has turned CHIT off (userBadges)
-    chitEarned: string | undefined;
+    // their CHIT badges, which userBadges leaves out when the viewer has turned CHIT off
+    chit: UserBadges["chit"];
 };
 
 export function userDialogProps(input: UserDialogInput) {
@@ -28,9 +28,15 @@ export function userDialogProps(input: UserDialogInput) {
         verified: false,
         facts: [
             { label: "ui.dmPanel.memberSince", value: input.joined },
-            ...(input.chitEarned === undefined
+            ...(input.chit === undefined
                 ? []
-                : [{ label: "ui.dmPanel.chitEarned", value: input.chitEarned, highlight: true }]),
+                : [
+                      {
+                          label: "ui.dmPanel.chitEarned",
+                          value: input.chit.earned.toLocaleString(),
+                          highlight: true,
+                      },
+                  ]),
         ],
     };
 }

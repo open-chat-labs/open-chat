@@ -1,4 +1,17 @@
-import type { OpenChat, PublicProfile, UserSummary } from "@client";
+import {
+    blockedUsersStore,
+    currentUserIdStore,
+    profileBlock,
+    selectedChatBlockedUsersStore,
+    selectedChatSummaryStore,
+    selectedCommunityBlockedUsersStore,
+    selectedCommunitySummaryStore,
+    type OpenChat,
+    type ProfileBlock,
+    type PublicProfile,
+    type UserSummary,
+} from "@client";
+import { reactiveValue } from "@src/utils/reactiveValue";
 
 /**
  * A profile card's user and public profile, loaded as the card opens. `onGone` is called when
@@ -42,6 +55,39 @@ export class ProfileCardData {
                     loaded();
                 }
             },
+        });
+    }
+}
+
+/**
+ * What a profile card offers to block or unblock (`profileBlock`), from the selected chat and
+ * community and their blocked lists, following them as they change.
+ */
+export class ProfileCardBlock {
+    #me = reactiveValue(currentUserIdStore);
+    #chat = reactiveValue(selectedChatSummaryStore);
+    #community = reactiveValue(selectedCommunitySummaryStore);
+    #blockedUsers = reactiveValue(blockedUsersStore);
+    #blockedChatUsers = reactiveValue(selectedChatBlockedUsersStore);
+    #blockedCommunityUsers = reactiveValue(selectedCommunityBlockedUsersStore);
+
+    constructor(
+        private client: OpenChat,
+        private userId: string,
+        private inGlobalContext: boolean,
+    ) {}
+
+    get current(): ProfileBlock {
+        return profileBlock({
+            userId: this.userId,
+            isMe: this.userId === this.#me(),
+            inGlobalContext: this.inGlobalContext,
+            chat: this.#chat(),
+            community: this.#community(),
+            blockedUsers: this.#blockedUsers(),
+            blockedChatUsers: this.#blockedChatUsers(),
+            blockedCommunityUsers: this.#blockedCommunityUsers(),
+            canBlockUsers: (id) => this.client.canBlockUsers(id),
         });
     }
 }

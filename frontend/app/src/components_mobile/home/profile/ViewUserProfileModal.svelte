@@ -3,21 +3,15 @@
         type OpenChat,
         type ProfileBlock,
         type ResourceKey,
-        blockedUsersStore,
         currentUserIdStore,
         platformModeratorStore,
-        profileBlock,
         unsuspendUserMessage,
         publish,
-        selectedChatBlockedUsersStore,
-        selectedChatSummaryStore,
-        selectedCommunityBlockedUsersStore,
-        selectedCommunitySummaryStore,
     } from "@client";
 
     import { CommonButton, Container, Sheet } from "component-lib";
     import { navigate } from "@utils/navigation";
-    import { ProfileCardData } from "@src/logic/profile/profileCardData.svelte";
+    import { ProfileCardBlock, ProfileCardData } from "@src/logic/profile/profileCardData.svelte";
     import { getContext } from "svelte";
     import AccountCancel from "svelte-material-icons/AccountCancelOutline.svelte";
     import Cancel from "svelte-material-icons/Cancel.svelte";
@@ -97,19 +91,8 @@
     }
     let me = $derived(userId === $currentUserIdStore);
     let isSuspended = $derived(user?.suspended ?? false);
-    let block = $derived(
-        profileBlock({
-            userId,
-            isMe: me,
-            inGlobalContext,
-            chat: $selectedChatSummaryStore,
-            community: $selectedCommunitySummaryStore,
-            blockedUsers: $blockedUsersStore,
-            blockedChatUsers: $selectedChatBlockedUsersStore,
-            blockedCommunityUsers: $selectedCommunityBlockedUsersStore,
-            canBlockUsers: (id) => client.canBlockUsers(id),
-        }),
-    );
+    const cardBlock = new ProfileCardBlock(client, userId, inGlobalContext);
+    let block = $derived(cardBlock.current);
 </script>
 
 {#if profile !== undefined}

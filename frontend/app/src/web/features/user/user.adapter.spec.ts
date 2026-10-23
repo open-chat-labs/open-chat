@@ -9,7 +9,7 @@ const input: UserDialogInput = {
     coverUrl: undefined,
     online: false,
     joined: "1 Nov 2021",
-    chitEarned: "1,000",
+    chit: { streak: 3, earned: 1000 },
 };
 
 describe("userDialogProps", () => {
@@ -18,7 +18,7 @@ describe("userDialogProps", () => {
         expect(userDialogProps(input).verified).toBe(false);
         expect(userDialogProps(input).facts.map((f) => f.label)).toContain("ui.dmPanel.chitEarned");
         expect(
-            userDialogProps({ ...input, chitEarned: undefined }).facts.map((f) => f.label),
+            userDialogProps({ ...input, chit: undefined }).facts.map((f) => f.label),
         ).not.toContain("ui.dmPanel.chitEarned");
     });
 });

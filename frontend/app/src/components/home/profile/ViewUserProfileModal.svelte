@@ -3,21 +3,15 @@
         type OpenChat,
         type ProfileBlock,
         type ResourceKey,
-        blockedUsersStore,
         currentUserIdStore,
         mobileWidth,
         platformModeratorStore,
-        profileBlock,
         unsuspendUserMessage,
         publish,
-        selectedChatBlockedUsersStore,
-        selectedChatSummaryStore,
-        selectedCommunityBlockedUsersStore,
-        selectedCommunitySummaryStore,
         setRightPanelHistory,
     } from "@client";
 
-    import { ProfileCardData } from "@src/logic/profile/profileCardData.svelte";
+    import { ProfileCardBlock, ProfileCardData } from "@src/logic/profile/profileCardData.svelte";
     import { getContext } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
@@ -118,19 +112,8 @@
     let me = $derived(userId === $currentUserIdStore);
     let isSuspended = $derived(user?.suspended ?? false);
     let modal = $derived($mobileWidth);
-    let block = $derived(
-        profileBlock({
-            userId,
-            isMe: me,
-            inGlobalContext,
-            chat: $selectedChatSummaryStore,
-            community: $selectedCommunitySummaryStore,
-            blockedUsers: $blockedUsersStore,
-            blockedChatUsers: $selectedChatBlockedUsersStore,
-            blockedCommunityUsers: $selectedCommunityBlockedUsersStore,
-            canBlockUsers: (id) => client.canBlockUsers(id),
-        }),
-    );
+    const cardBlock = new ProfileCardBlock(client, userId, inGlobalContext);
+    let block = $derived(cardBlock.current);
 </script>
 
 <svelte:window onresize={onWindowResize} />
