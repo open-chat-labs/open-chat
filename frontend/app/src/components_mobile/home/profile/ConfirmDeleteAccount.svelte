@@ -2,6 +2,7 @@
     import type { DelegationChain, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
     import { Column, CommonButton, Container, Sheet, Title } from "component-lib";
     import { AuthProvider, i18nKey, OpenChat } from "@client";
+    import { deleteAccount as deleteSignedInAccount } from "@src/logic/auth/deleteAccount";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Delete from "svelte-material-icons/DeleteForeverOutline.svelte";
@@ -28,8 +29,8 @@
     }) {
         deleting = true;
         authenticating = false;
-        return client
-            .deleteCurrentUser(detail.key.getKeyPair(), detail.delegation.toJSON())
+        // only with the sign-in the user just made again (app/src/logic/auth)
+        return deleteSignedInAccount(client, detail)
             .then((success) => {
                 if (!success) {
                     toastStore.showFailureToast(i18nKey("danger.deleteAccountFailed"));

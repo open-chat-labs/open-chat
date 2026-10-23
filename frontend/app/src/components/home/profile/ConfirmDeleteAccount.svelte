@@ -8,6 +8,7 @@
     import Markdown from "@src/core/Markdown.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import Button from "../../Button.svelte";
+    import { deleteAccount as deleteSignedInAccount } from "@src/logic/auth/deleteAccount";
     import { getContext } from "svelte";
     import { toastStore } from "../../../stores/toast";
     import ReAuthenticate from "./ReAuthenticate.svelte";
@@ -31,8 +32,8 @@
     }) {
         deleting = true;
         authenticating = false;
-        return client
-            .deleteCurrentUser(detail.key.getKeyPair(), detail.delegation.toJSON())
+        // only with the sign-in the user just made again (app/src/logic/auth)
+        return deleteSignedInAccount(client, detail)
             .then((success) => {
                 if (!success) {
                     toastStore.showFailureToast(i18nKey("danger.deleteAccountFailed"));

@@ -123,7 +123,7 @@ design export needs. Each entry says where it came up.
   `qrCode`, the invite's QR code drawn by the host (the dialog's own needs a global `qrcode`
   library); the storage section's "report a problem" row only with `onReportIssue`; the storage
   meter only with an allowance above 0; `aboutPages`, the About pages the host has; an empty
-  communities section says so.
+  communities section says so; "Just linked" only for a sign-in method linked in the dialog.
 - **`ProfileDialog` against the app** (8c):
   - the profile fields save one at a time, and any failure shows as "couldn't save": the reason
     the backend gave (`ProfileFieldErrors`, e.g. "display name too short") isn't shown;
@@ -137,6 +137,15 @@ design export needs. Each entry says where it came up.
     no such data to show;
   - the storage section's "report a problem" isn't offered: the app has nowhere to send a report;
   - About has no metrics link: the app has no metrics page;
+  - sign-in methods: linking one isn't offered yet (the next 8c step); the dialog has no place
+    for Ethereum, Solana or NFID, so those aren't listed; unlinking that fails says it couldn't,
+    not why (`unlinkIdentityFailure` has the reason); email links by a typed code in the design,
+    by a link the app polls in the app, so the email step isn't offered;
+  - none of the sign-in methods shows as the one in use: the worker marks it by the session's
+    auth principal, which isn't a passkey's (the old desktop list shows no "current" either), so
+    unlinking it is offered, and the backend refuses it (`cannot_unlink_active_principal`);
+  - deleting the account: the third step's "stay for the CHIT" (`onChitBribe`) does nothing more
+    than staying; signing in again is the sign-in dialog (no design, as Forgot PIN's);
   - the cover's edit button is passed `isDiamond`, but the app's rule is a premium item: a
     custom profile background costs 50,000 CHIT once, for anyone (`PremiumItem`), so the
     dialog's Diamond hint doesn't apply;

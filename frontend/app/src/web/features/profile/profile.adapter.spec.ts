@@ -1,8 +1,17 @@
-import type { CommunitySummary, Metrics, PublicProfile, UserSummary } from "@client";
+import {
+    AuthProvider,
+    type CommunitySummary,
+    type LinkedAuthenticationPrincipal,
+    type Metrics,
+    type PublicProfile,
+    type UserSummary,
+} from "@client";
 import {
     botConfigProps,
     changedChatSettings,
     communitiesProps,
+    linkCodeProps,
+    signinMethodsProps,
     memberDisplayNameOf,
     storageProps,
     chatSettingsProps,
@@ -149,5 +158,42 @@ describe("the profile dialog's props", () => {
         expect(
             botConfigProps({ icHost: "h", openStorageIndexCanister: "s", ocPublicKey: "k" }),
         ).toEqual({ icHost: "h", storageIndex: "s", publicKey: "k" });
+    });
+
+    test("the sign-in methods the dialog has a place for, a passkey named by its provider", () => {
+        const linked = (provider: AuthProvider, principal: string, extra = {}) =>
+            ({
+                provider,
+                principal,
+                originatingCanister: "c",
+                isIIPrincipal: false,
+                isCurrentIdentity: false,
+                webAuthnKey: undefined,
+                ...extra,
+            }) as LinkedAuthenticationPrincipal;
+        const methods = signinMethodsProps(
+            [
+                linked(AuthProvider.PASSKEY, "p1", {
+                    passkeyProvider: "iCloud Keychain",
+                    isCurrentIdentity: true,
+                }),
+                linked(AuthProvider.PASSKEY, "p2"),
+                linked(AuthProvider.II, "i1"),
+                linked(AuthProvider.ETH, "e1"),
+            ],
+            (type) => `name:${type}`,
+        );
+        expect(methods).toEqual([
+            { type: "passkey", id: "p1", title: "iCloud Keychain", current: true },
+            { type: "passkey", id: "p2", title: "name:passkey", current: false },
+            { type: "ii", id: "i1", title: "name:ii", current: false },
+        ]);
+    });
+
+    test("a device-link code expires in ms", () => {
+        expect(linkCodeProps({ value: "ABC123", expiresAt: 1_700_000_000_000n })).toEqual({
+            code: "ABC123",
+            expiresAt: 1_700_000_000_000,
+        });
     });
 });

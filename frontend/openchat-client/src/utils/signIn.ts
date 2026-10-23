@@ -2,6 +2,7 @@ import {
     AuthProvider,
     i18nKey,
     type IdentityState,
+    type RemoveIdentityLinkResponse,
     type ResourceKey,
     type SignInMethod,
     type SignInOutcome,
@@ -100,4 +101,23 @@ export async function isOwnPrincipal(
 ): Promise<boolean> {
     if (principal === current) return true;
     return (await linked()).includes(principal);
+}
+
+/**
+ * Why a sign-in method couldn't be unlinked (removeIdentityLink), or undefined when it was. The
+ * one the user is signed in with can't be.
+ */
+export function unlinkIdentityFailure(resp: RemoveIdentityLinkResponse): ResourceKey | undefined {
+    switch (resp) {
+        case "success":
+            return undefined;
+        case "cannot_unlink_active_principal":
+            return i18nKey("identity.failure.unlinkActivePrincipal");
+        case "identity_link_not_found":
+            return i18nKey("identity.failure.identityNotFound");
+        case "user_not_found":
+            return i18nKey("identity.failure.userNotFound");
+        default:
+            return resp satisfies never;
+    }
 }

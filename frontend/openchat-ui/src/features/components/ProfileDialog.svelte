@@ -1567,7 +1567,7 @@
                   {#each items as x}
                     <div class="method">
                       {@render glyph(T.icon, 'method-glyph')}
-                      <div class="method-text"><span class="method-title">{x.title + (type === 'email' ? '' : ` · ${x.id.slice(0, 5)}`)}</span><span class="method-sub">{x.used || t('ui.profileDialog.signin.justLinked')}</span></div>
+                      <div class="method-text"><span class="method-title">{x.title + (type === 'email' ? '' : ` · ${x.id.slice(0, 5)}`)}</span><span class="method-sub">{x.used || (siAdded.some((a) => a.id === x.id) ? t('ui.profileDialog.signin.justLinked') : '')}</span></div>
                       {#if onUnlinkMethod}<span class="unlink" onclick={() => unlink(x)} role="button" tabindex="0">{@render glyph('unlink', 'unlink-glyph')}{t('ui.profileDialog.signin.unlink')}</span>{/if}
                     </div>
                   {/each}

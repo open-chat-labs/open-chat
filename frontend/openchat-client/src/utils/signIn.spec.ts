@@ -1,5 +1,5 @@
 import { AuthProvider } from "@shared";
-import { isOwnPrincipal, signInOptions } from "./signIn";
+import { isOwnPrincipal, signInOptions, unlinkIdentityFailure } from "./signIn";
 
 describe("signing in again accepts a linked principal and refuses any other", () => {
     const linked = async () => ["linked-principal"];
@@ -41,5 +41,20 @@ describe("the sign-in options", () => {
     test("put the method last signed in with first, if it's on offer", () => {
         expect(signInOptions([], browser, SOL)).toEqual([SOL, EMAIL, PASSKEY, II, ETH, NFID]);
         expect(signInOptions(["II"], browser, SOL)).toEqual([II]);
+    });
+});
+
+describe("unlinking a sign-in method", () => {
+    test("is fine when it unlinks", () => {
+        expect(unlinkIdentityFailure("success")).toBeUndefined();
+    });
+
+    test("says why it couldn't, the one in use among them", () => {
+        expect(unlinkIdentityFailure("cannot_unlink_active_principal")?.key).toBe(
+            "identity.failure.unlinkActivePrincipal",
+        );
+        expect(unlinkIdentityFailure("identity_link_not_found")?.key).toBe(
+            "identity.failure.identityNotFound",
+        );
     });
 });
