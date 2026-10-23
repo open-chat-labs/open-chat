@@ -238,8 +238,8 @@ describe("the CHIT calendar's days", () => {
             ["2026-03-01", 1],
             ["2026-03-02", 2],
         ]);
-        // in UTC, both are on the 1st: one a day
-        expect(claimDays(events, utc)).toHaveLength(1);
+        // in UTC, both are on the 1st, but the backend counts a later claim on a later day
+        expect(claimDays(events, utc).map((d) => d.day)).toEqual(["2026-03-01", "2026-03-02"]);
     });
 
     test("today and today's claim are the same day when the user's date isn't UTC's", () => {
@@ -274,17 +274,20 @@ describe("the CHIT calendar's days", () => {
         ]);
     });
 
-    test("a claim wins its day over a marker on it", () => {
+    test("a claim after a marker comes on a later day, though this browser's zone puts it on the marker's", () => {
+        // insured on the 2nd, marked at its last ms in UTC; the next claim, 02:00 UTC on the 3rd,
+        // is the 2nd at UTC-5
         const events = [
-            at(MARCH_1 + 1000, "streak_insurance_claim"),
-            at(MARCH_1 + 60 * 60_000, "daily_claim", 10),
+            at(MARCH_1 + 2 * DAY - 1, "streak_insurance_claim"),
+            at(MARCH_1 + 2 * DAY + 2 * 60 * 60_000, "daily_claim", 10),
         ];
-        expect(claimDays(events, utc)).toEqual([
-            { day: "2026-03-01", streakDay: 1, amount: 10, minute: 60 },
+        expect(claimDays(events, () => -300).map((d) => [d.day, d.insured ?? false])).toEqual([
+            ["2026-03-02", true],
+            ["2026-03-03", false],
         ]);
     });
 
-    test("a claim near a marker is taken as made in the marker's zone, so the two keep their days", () => {
+    test("the claim before insured days is on the day before them, wherever it was made", () => {
         // claimed at 08:00 each day from UTC+10 (22:00 UTC the day before), day 2 missed and
         // insured, the calendar opened from UTC-5
         const H = 60 * 60_000;
@@ -331,5 +334,46 @@ describe("the CHIT calendar's days", () => {
                 [9, 9, false],
             ],
         );
+    });
+
+    test("claims before the one before insured days stay before it, across a zone change", () => {
+        // home in UTC+9: a claim at 20:00 on the 1st; then from UTC-5, claims at 08:00 on the 2nd
+        // and 20:00 on the 3rd and 4th (01:00 UTC the next day); the 5th missed and insured
+        const H = 60 * 60_000;
+        const events = [
+            at(MARCH_1 + 11 * H, "daily_claim", 10),
+            at(MARCH_1 + DAY + 13 * H, "daily_claim", 10),
+            at(MARCH_1 + 3 * DAY + H, "daily_claim", 10),
+            at(MARCH_1 + 4 * DAY + H, "daily_claim", 10),
+            // the last ms of the 5th at UTC-5
+            at(MARCH_1 + 5 * DAY + 5 * H - 1, "streak_insurance_claim"),
+        ];
+        expect(
+            claimDays(events, () => 540).map((d) => [Number(d.day.slice(-2)), d.streakDay]),
+        ).toEqual([
+            [1, 1],
+            [2, 2],
+            [3, 3],
+            [4, 4],
+            [5, 5],
+        ]);
+    });
+
+    test("the claim that moved the user west is on the day before the insured ones", () => {
+        // a claim at 20:00 on the 4th in UTC+9; then one at 10:30 on the 4th in UTC-5 (00:30 on
+        // the 5th in UTC+9, which the backend counts it on); the 6th missed and insured in UTC-5
+        const H = 60 * 60_000;
+        const events = [
+            at(MARCH_1 + 3 * DAY + 11 * H, "daily_claim", 10),
+            at(MARCH_1 + 3 * DAY + 15.5 * H, "daily_claim", 20),
+            at(MARCH_1 + 6 * DAY + 5 * H - 1, "streak_insurance_claim"),
+        ];
+        expect(
+            claimDays(events, () => -300).map((d) => [Number(d.day.slice(-2)), d.streakDay]),
+        ).toEqual([
+            [4, 1],
+            [5, 2],
+            [6, 3],
+        ]);
     });
 });
