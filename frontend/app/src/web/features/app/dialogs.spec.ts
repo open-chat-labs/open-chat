@@ -1,4 +1,10 @@
-import { linkedDialog, linkedDialogParam, openLinkedDialog } from "./dialogs";
+import {
+    builtDialogScreens,
+    dialogs,
+    linkedDialog,
+    linkedDialogParam,
+    openLinkedDialog,
+} from "./dialogs";
 
 describe("the dialog a URL's query opens", () => {
     test("is the one its param names", () => {
@@ -52,5 +58,13 @@ describe("opening a linked dialog", () => {
         expect(
             openLinkedDialog(new URLSearchParams("profile&diamond"), { kind: "profile" }),
         ).toBeUndefined();
+    });
+});
+
+describe("the dialogs loaded ahead", () => {
+    test("are the ones built so far", () => {
+        const built = Object.values(dialogs).filter((load) => load !== undefined);
+        expect(builtDialogScreens()).toEqual(built);
+        expect(builtDialogScreens().length).toBeGreaterThan(0);
     });
 });

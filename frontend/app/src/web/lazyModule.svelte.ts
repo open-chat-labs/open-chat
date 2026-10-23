@@ -3,9 +3,15 @@
 // A load that fails (a flaky network, a chunk gone after a deploy) is remembered, so the page can
 // say so. Wanting it again calls the load again, but a browser keeps a failed import() failed for
 // the page's lifetime, so a real retry is a page reload.
+
+// how long a load runs before it's worth showing that it's loading
+const SLOW_AFTER_MS = 250;
+
 export class LazyModule<M> {
     module = $state<M | undefined>(undefined);
     failed = $state(false);
+    // still loading after a moment: a quick load shows no spinner, only what it loaded
+    slow = $state(false);
     #loading = false;
 
     constructor(private readonly load: () => Promise<M>) {}
@@ -19,12 +25,15 @@ export class LazyModule<M> {
     }
 
     async #fetch(): Promise<void> {
+        const slow = setTimeout(() => (this.slow = true), SLOW_AFTER_MS);
         try {
             this.module = await this.load();
         } catch (err) {
             console.error("Couldn't load a page's content", err);
             this.failed = true;
         } finally {
+            clearTimeout(slow);
+            this.slow = false;
             this.#loading = false;
         }
     }

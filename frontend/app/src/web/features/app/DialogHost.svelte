@@ -30,7 +30,9 @@
     import SuspendUserDialog from "../user/SuspendUserDialog.svelte";
     import AppEventDialogs from "./AppEventDialogs.svelte";
     import DialogScreen from "./DialogScreen.svelte";
+    import { screenLoader } from "./screens";
     import {
+        builtDialogScreens,
         linkedDialog,
         linkedDialogParam,
         openLinkedDialog,
@@ -73,6 +75,18 @@
     });
 
     $effect(() => closeOnNavigation(stack));
+
+    // the built dialogs' code, loaded once the app is idle, so a dialog opens at once rather than
+    // after a spinner the first time (it's still left out of the app's first download)
+    $effect(() => {
+        const prefetch = () => builtDialogScreens().forEach((load) => screenLoader(load).want());
+        if ("requestIdleCallback" in window) {
+            const id = requestIdleCallback(prefetch, { timeout: 5000 });
+            return () => cancelIdleCallback(id);
+        }
+        const id = setTimeout(prefetch, 2000);
+        return () => clearTimeout(id);
+    });
     $effect(() => subscribe("profile", () => openLinked({ kind: "profile" })));
     $effect(() => subscribe("upgrade", () => openLinked({ kind: "diamond" })));
 

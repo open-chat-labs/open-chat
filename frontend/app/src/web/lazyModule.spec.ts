@@ -30,4 +30,28 @@ describe("a module loaded when it's first wanted", () => {
         expect(lazy.module).toEqual({ content: 2 });
         expect(load).toHaveBeenCalledTimes(2);
     });
+
+    test("is slow only once it has been loading a moment", async () => {
+        vi.useFakeTimers();
+        let done: (m: { content: number }) => void = () => {};
+        const lazy = new LazyModule(() => new Promise<{ content: number }>((r) => (done = r)));
+        lazy.want();
+        await vi.advanceTimersByTimeAsync(100);
+        expect(lazy.slow).toBe(false);
+        await vi.advanceTimersByTimeAsync(200);
+        expect(lazy.slow).toBe(true);
+        done({ content: 3 });
+        await vi.advanceTimersByTimeAsync(0);
+        expect([lazy.slow, lazy.module]).toEqual([false, { content: 3 }]);
+        vi.useRealTimers();
+    });
+
+    test("a quick load is never slow", async () => {
+        vi.useFakeTimers();
+        const lazy = new LazyModule(async () => ({ content: 4 }));
+        lazy.want();
+        await vi.advanceTimersByTimeAsync(1000);
+        expect([lazy.slow, lazy.module]).toEqual([false, { content: 4 }]);
+        vi.useRealTimers();
+    });
 });

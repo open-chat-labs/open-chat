@@ -1,6 +1,6 @@
-<!-- One of the app's dialogs (dialogs.ts): its screen, loaded the first time it opens (a spinner
-     meanwhile) and kept, an error with a retry if it doesn't load, or a placeholder for a dialog
-     that isn't built yet. -->
+<!-- One of the app's dialogs (dialogs.ts): its screen, loaded the first time it opens and kept (a
+     spinner only if that takes a moment: DialogHost loads them ahead, once the app is idle), an
+     error with a retry if it doesn't load, or a placeholder for a dialog that isn't built yet. -->
 <script lang="ts" generics="D extends AppDialog">
     import DialogShell from "@openchat/ui/src/lib/components/DialogShell.svelte";
     import EmptyState from "@openchat/ui/src/lib/components/EmptyState.svelte";
@@ -26,7 +26,7 @@
 
 {#if loader?.module}
     <loader.module.default {dialog} {onClose} />
-{:else}
+{:else if loader === undefined || loader.failed || loader.slow}
     <!-- development text while there's no dialog: no translation -->
     <DialogShell title={dialog.kind} {onClose}>
         <div class="state">
