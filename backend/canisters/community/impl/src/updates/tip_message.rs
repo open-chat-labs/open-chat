@@ -1,16 +1,17 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::{CommunityEventPusher, RuntimeState, execute_update_async, mutate_state, read_state};
+use crate::{CommunityEventPusher, RuntimeState, execute_update_async, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::TipMessageArgs;
 use community_canister::tip_message::*;
 use constants::MEMO_TIP;
+use group_chat_core::TipRecipient;
 use ledger_utils::{TransferRecipient, UserTransfer, format_crypto_amount_with_symbol};
 use multi_user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
 use oc_error_codes::OCErrorCode;
 use types::{
-    Achievement, Caller, CanisterId, ChannelId, ChannelMessageTipped, ChannelUserNotificationPayload, Chat, CryptoTransaction,
-    EventIndex, MessageId, MessageIndex, OCResult, UserId, icrc2,
+    Achievement, BridgedUserId, Caller, CanisterId, ChannelId, ChannelMessageTipped, ChannelUserNotificationPayload, Chat,
+    CryptoTransaction, EventIndex, MessageId, MessageIndex, OCResult, UserId, icrc2,
 };
 
 #[update(msgpack = true)]
@@ -22,28 +23,20 @@ async fn tip_message(args: Args) -> Response {
 async fn tip_message_impl(args: Args) -> OCResult {
     let new_achievement = args.new_achievement;
 
-    // Tips on a message a bridge bot relayed go to whoever linked the account it came from, which
-    // the LocalUserIndex knows
-    let bridged_from = read_state(|state| {
-        state
-            .data
-            .channels
-            .get(&args.channel_id)
-            .and_then(|channel| {
-                channel
-                    .chat
-                    .message_bridged_from(args.thread_root_message_index, args.message_id)
-            })
-            .map(|user| (user, state.data.local_user_index_canister_id))
-    });
-    let linked_user = match bridged_from {
-        Some((user, local_user_index)) => {
-            local_user_index_canister_c2c_client::bridged_user_link(user, local_user_index).await?
+    let prepared = match mutate_state(|state| prepare(&args, None, state))? {
+        // Tips on a message a bridge bot relayed go to whoever linked the account it came from,
+        // which the LocalUserIndex knows. Everything is checked again once they're found, as
+        // anything may have changed while they were looked up.
+        PrepareResult::LookUpLinkedUser(user, local_user_index) => {
+            let linked_user = local_user_index_canister_c2c_client::bridged_user_link(user, local_user_index)
+                .await?
+                .ok_or(OCErrorCode::TargetUserNotFound)?;
+            mutate_state(|state| prepare(&args, Some(linked_user), state))?
         }
-        None => None,
+        prepared => prepared,
     };
 
-    let user_id = match mutate_state(|state| prepare(args, linked_user, state))? {
+    let user_id = match prepared {
         // The transfer was certified, so the message has been tipped already
         PrepareResult::Tipped(user_id) => user_id,
         PrepareResult::Icrc2(tip) => {
@@ -63,6 +56,8 @@ async fn tip_message_impl(args: Args) -> OCResult {
             mutate_state(|state| tip_message_with_completed_transfer(user_id, c2c_args, state))?;
             user_id
         }
+        // Only asked for when no linked user was given
+        PrepareResult::LookUpLinkedUser(..) => return Err(OCErrorCode::TargetUserNotFound.into()),
     };
 
     if new_achievement {
@@ -74,6 +69,9 @@ async fn tip_message_impl(args: Args) -> OCResult {
 enum PrepareResult {
     Tipped(UserId),
     Icrc2(Box<TipToMake>),
+    // The message was relayed by a bridge bot from this account, so who linked it is to be looked
+    // up from this LocalUserIndex, then the tip prepared again with them
+    LookUpLinkedUser(BridgedUserId, CanisterId),
 }
 
 struct TipToMake {
@@ -84,18 +82,23 @@ struct TipToMake {
     transfer: icrc2::PendingCryptoTransaction,
 }
 
-fn prepare(args: Args, linked_user: Option<UserId>, state: &mut RuntimeState) -> OCResult<PrepareResult> {
+fn prepare(args: &Args, linked_user: Option<UserId>, state: &mut RuntimeState) -> OCResult<PrepareResult> {
     let Caller::User(user) = state.verified_caller(None)? else {
         return Err(OCErrorCode::InitiatorNotAuthorized.into());
     };
     let user_id = user.user_id;
 
-    let recipient = state.data.channels.get_or_err(&args.channel_id)?.chat.check_can_tip_message(
+    let recipient = match state.data.channels.get_or_err(&args.channel_id)?.chat.check_can_tip_message(
         user_id,
         args.thread_root_message_index,
         args.message_id,
         linked_user,
-    )?;
+    )? {
+        TipRecipient::User(recipient) => recipient,
+        TipRecipient::LinkedUserOf(user) => {
+            return Ok(PrepareResult::LookUpLinkedUser(user, state.data.local_user_index_canister_id));
+        }
+    };
 
     let c2c_args = TipToRecord {
         recipient,
@@ -106,8 +109,8 @@ fn prepare(args: Args, linked_user: Option<UserId>, state: &mut RuntimeState) ->
         token_symbol: args.transfer.token_symbol().to_string(),
         amount: args.transfer.units(),
         decimals: args.decimals,
-        username: args.username,
-        display_name: args.display_name,
+        username: args.username.clone(),
+        display_name: args.display_name.clone(),
     };
 
     let this_canister_id = state.env.canister_id();
@@ -117,7 +120,7 @@ fn prepare(args: Args, linked_user: Option<UserId>, state: &mut RuntimeState) ->
     };
 
     match UserTransfer::new(
-        CryptoTransaction::Pending(args.transfer),
+        CryptoTransaction::Pending(args.transfer.clone()),
         transfer_recipient,
         &MEMO_TIP,
         this_canister_id,

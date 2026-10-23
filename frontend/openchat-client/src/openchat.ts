@@ -388,6 +388,7 @@ import {
     bridgedUserId,
     bridgedUserIdsFromEvents,
     bridgedUserIdsFromLatestMessages,
+    bridgedUserIdsFromMessages,
     bridgedUserKey,
     buildBlobUrl,
     isOwnMessage,
@@ -2399,6 +2400,10 @@ export class OpenChat {
                         }
                     }
                     this.getMissingUsers(userIds);
+                    // So the feed can show who the relayed messages are from
+                    void this.getBridgedUsers(
+                        bridgedUserIdsFromMessages(response.events.flatMap((e) => e.message ?? [])),
+                    );
                     subscribeFn(response, final);
                 },
                 onError,

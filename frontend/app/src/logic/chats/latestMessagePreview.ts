@@ -11,6 +11,7 @@ import {
     ROLE_NONE,
     type BridgedUserSummary,
     type ChatSummary,
+    type Message,
     type MessageContent,
     type MessageFormatter,
     type UserLookup,
@@ -33,19 +34,51 @@ export type PreviewText = {
     users: Pick<UserLookup, "get">;
 };
 
+/** What naming a message's author needs (see `messageAuthorName`). */
+export type AuthorNames = Pick<
+    PreviewText,
+    "formatter" | "me" | "displayName" | "bridgedUsers" | "users"
+>;
+
+/**
+ * Who a message is shown as from: you, a webhook, or the user, or for a message a bridge bot
+ * relayed, the OpenChat user who linked the account, else the account and its platform, eg.
+ * "Nelly (Telegram)".
+ */
+export function messageAuthorName(
+    { sender, senderContext }: Pick<Message, "sender" | "senderContext">,
+    { formatter, me, displayName, bridgedUsers, users }: AuthorNames,
+): string {
+    const from = bridgedFrom(senderContext);
+    if (from !== undefined) {
+        const summary = bridgedUsers.get(bridgedUserKey(from)!);
+        const linked = linkedAuthor(summary, users);
+        if (linked !== undefined) {
+            return displayName(linked.userId, linked.userId === me ? "me" : "user");
+        }
+        const platform = BRIDGE_PLATFORM_NAMES[from.kind];
+        const name = bridgedAuthorName(summary);
+        return name !== undefined
+            ? formatter("bridgedUserWithPlatform", { values: { name, platform } })
+            : formatter("bridgedUserUnknown", { values: { platform } });
+    }
+    const userType = senderContext?.kind === "webhook" ? "webhook" : sender === me ? "me" : "user";
+    return displayName(sender, userType);
+}
+
 /**
  * A chat's latest message as its row shows it, the same in every tree: in a group or channel,
- * after its sender (you, a webhook, or the user, or for a message a bridge bot relayed, the
- * OpenChat user who linked the account, else the account and its platform, eg. "Nelly (Telegram)");
+ * after its author (see `messageAuthorName`);
  * a change to disappearing messages as a notice;
  * restricted content as such; a translation if the reader has one; nothing for an external
  * channel, or for a message that has disappeared.
  */
 export function latestMessagePreview(
     chat: ChatSummary,
-    { formatter, me, displayName, translations, contentText, bridgedUsers, users }: PreviewText,
+    names: PreviewText,
     now = Date.now(),
 ): string {
+    const { formatter, translations, contentText } = names;
     const external = chat.kind === "channel" && chat.externalUrl !== undefined;
     if (chat.latestMessageIndex === undefined || external) return "";
 
@@ -77,22 +110,5 @@ export function latestMessagePreview(
 
     if (chat.kind === "direct_chat") return text;
 
-    const from = bridgedFrom(senderContext);
-    if (from !== undefined) {
-        const summary = bridgedUsers.get(bridgedUserKey(from)!);
-        const linked = linkedAuthor(summary, users);
-        if (linked !== undefined) {
-            return `${displayName(linked.userId, linked.userId === me ? "me" : "user")}: ${text}`;
-        }
-        const platform = BRIDGE_PLATFORM_NAMES[from.kind];
-        const name = bridgedAuthorName(summary);
-        const author =
-            name !== undefined
-                ? formatter("bridgedUserWithPlatform", { values: { name, platform } })
-                : formatter("bridgedUserUnknown", { values: { platform } });
-        return `${author}: ${text}`;
-    }
-
-    const userType = senderContext?.kind === "webhook" ? "webhook" : sender === me ? "me" : "user";
-    return `${displayName(sender, userType)}: ${text}`;
+    return `${messageAuthorName({ sender, senderContext }, names)}: ${text}`;
 }

@@ -110,19 +110,20 @@ describe("choosing a tip", () => {
         cryptoBalanceStore.setBalance(icp.ledger, 100_000_000n);
         const form = new TipForm(client, icp.ledger);
         form.add(10);
-        const message = { messageId: 1n, sender: "them", tips: {} } as unknown as Message;
+        // A relayed message, whose sender is the bridge bot, so the tip goes to someone else
+        const message = { messageId: 1n, sender: "bridge-bot", tips: {} } as unknown as Message;
         const context: MessageContext = {
             chatId: { kind: "group_chat", groupId: "rrkah-fqaaa-aaaaa-aaaaq-cai" },
         };
 
-        await form.tip(context, message, "them", "wallet-account");
+        await form.tip(context, message, "linked-user", "wallet-account");
 
         expect(client.tipMessage).toHaveBeenCalledWith(
             context,
             message,
             expect.objectContaining({
                 ledger: icp.ledger,
-                recipient: "them",
+                recipient: "linked-user",
                 amountE8s: 2_000_000n,
                 feeE8s: 10_000n,
                 fromAccount: "wallet-account",

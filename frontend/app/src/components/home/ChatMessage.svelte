@@ -484,6 +484,8 @@
     );
     // The sender, or for a relayed message whoever linked its account, if they're in the chat. A
     // message relayed from the user's own linked account is shown as theirs, so isn't tipped.
+    // Only the members held count, so in a chat too big for all of them to be held, or in a thread
+    // preview from another chat, a relayed message can't be tipped unless its linked user is held.
     let tipTo = $derived(tipRecipient(msg, $bridgedUsersStore, (userId) => chatMembers.has(userId)));
     let canTip = $derived(
         canTipMessages &&

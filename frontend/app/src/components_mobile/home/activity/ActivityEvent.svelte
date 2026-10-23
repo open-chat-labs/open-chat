@@ -3,6 +3,7 @@
     import type { Message, MessageActivityEvent } from "@client";
     import {
         allUsersStore,
+        bridgedUsersStore,
         communitiesStore,
         currentUserIdStore,
         OpenChat,
@@ -13,6 +14,7 @@
     import { i18nKey, interpolate } from "../../../i18n/i18n";
     import { buildDisplayName } from "../../../utils/user";
     import { activitySummary } from "@src/logic/activity/activitySummary";
+    import { messageAuthorName } from "@src/logic/chats/latestMessagePreview";
     import Translatable from "@shared_components/Translatable.svelte";
     import Markdown from "@src/core/Markdown.svelte";
     import Reaction from "../message/Reaction.svelte";
@@ -80,13 +82,17 @@
               )
             : $_("activity.anon"),
     );
+    // Bold, like the feed's other names
     let messageUsername = $derived(
         message
-            ? buildDisplayName(
-                  $allUsersStore,
-                  message.sender,
-                  message.sender === $currentUserIdStore ? "me" : "user",
-              )
+            ? `**${messageAuthorName(message, {
+                  formatter: $_,
+                  me: $currentUserIdStore,
+                  displayName: (userId, kind) =>
+                      buildDisplayName($allUsersStore, userId, kind, false),
+                  bridgedUsers: $bridgedUsersStore,
+                  users: $allUsersStore,
+              })}**`
             : $_("activity.anon"),
     );
     let lastMessage = $derived(formatLatestMessage(messageUsername));
