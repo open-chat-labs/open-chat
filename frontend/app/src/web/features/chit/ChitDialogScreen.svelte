@@ -79,7 +79,10 @@
             case "earn":
                 dialogs.open({ kind: "achievements", external });
                 return;
-            // TODO(8d): buying streak insurance and the daily puzzle; GAPS.md
+            case "insurance":
+                dialogs.open({ kind: "streak_insurance" });
+                return;
+            // TODO(8d): the daily puzzle; GAPS.md
         }
     }
 </script>

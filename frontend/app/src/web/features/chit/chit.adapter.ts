@@ -7,6 +7,9 @@ import type LeaderboardDialog from "@openchat/ui/src/features/components/Leaderb
 import type NavRail from "@openchat/ui/src/features/components/NavRail.svelte";
 import type { ComponentProps } from "svelte";
 import {
+    STREAK_INSURANCE_MAX_DAYS,
+    streakInsurancePrice,
+    walletApprovalFee,
     CHIT_STREAK_MILESTONES,
     currentStreak,
     dailyChitAmount,
@@ -231,4 +234,41 @@ export function leaderboardBoards(
         lastMonth: board(month(1), result?.lastMonth),
         allTime: board(allTime, result?.allTime),
     };
+}
+
+const CHAT_E8S = 100_000_000;
+
+/**
+ * StreakInsuranceDialog's `prices`: what each position of the user's cover costs, in CHAT. The
+ * dialog prices a position by the cover held (bought less missed days used), the backend by the
+ * days bought, so the positions are offset by the days used, and there are fewer of them as the
+ * days bought can't pass 30: what the dialog shows is what's charged.
+ */
+export function streakInsuranceDialogPrices({ daysMissed }: StreakInsurance): number[] {
+    return Array.from(
+        { length: Math.max(STREAK_INSURANCE_MAX_DAYS - daysMissed, 0) },
+        (_, position) => 2 ** (daysMissed + position),
+    );
+}
+
+/**
+ * The CHAT the dialog can spend, in CHAT: the balance less the fee for the approval the user makes
+ * before the price is taken (the price itself is burned, with no fee), so a day it offers can be
+ * paid. None for a balance not loaded, or a CHAT ledger not known.
+ */
+export function streakInsuranceBalance(balanceE8s: bigint, transferFee: bigint): number {
+    const spendable = balanceE8s - walletApprovalFee(transferFee);
+    return spendable > 0n ? Number(spendable) / CHAT_E8S : 0;
+}
+
+/**
+ * What buying `requested` more days sends: the days, capped so cover bought never passes 30, and
+ * their price worked out from the cover bought (streakInsuranceStore), never the dialog's figure.
+ */
+export function streakInsurancePurchase(
+    { daysInsured }: StreakInsurance,
+    requested: number,
+): { days: number; price: bigint } {
+    const days = Math.max(Math.min(requested, STREAK_INSURANCE_MAX_DAYS - daysInsured), 0);
+    return { days, price: streakInsurancePrice(daysInsured, days) };
 }

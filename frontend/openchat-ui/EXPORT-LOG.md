@@ -235,3 +235,7 @@
 - `onClaim` may resolve with `false` when there was nothing to claim (today's already claimed, on another device or before the dialog knew): the claim animation doesn't play, and the dialog follows `claimable`. It played as if CHIT had been added.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
 
+## 2026-10-24 — StreakInsuranceDialog: "Your cover is full", and a week of cells at a time, by hand
+- With no room left, the summary said "Covered for a full week" (`fullWeek`), but cover is capped by the length of `prices`, which for OpenChat is 30 days. It now says "Your cover is full" (`ui.streakInsuranceDialog.coverFull`).
+- The ladder drew one cell per position of `prices`, all in a row, so 30 of them crushed the prices into each other. It now shows a week of cells at a time, sliding so the last covered day, the days being added and the next to add stay in view.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

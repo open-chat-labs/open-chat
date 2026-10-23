@@ -7,6 +7,8 @@
         OpenChat,
         cryptoBalanceStore,
         cryptoLookup,
+        STREAK_INSURANCE_MAX_DAYS,
+        streakInsurancePrice,
         streakInsuranceStore,
         walletApprovalFee,
     } from "@client";
@@ -25,7 +27,7 @@
         onClose: () => void;
     }
 
-    const MAX_DAYS = 30;
+    const MAX_DAYS = STREAK_INSURANCE_MAX_DAYS;
     const ledger = LEDGER_CANISTER_CHAT;
     const currentDaysInsured = $streakInsuranceStore.daysInsured;
     const currentDaysMissed = $streakInsuranceStore.daysMissed;
@@ -38,7 +40,7 @@
     const confirming = $state(false);
     const confirmed = $state(false);
     let refreshingBalance = $state(false);
-    let priceE8s = $derived(client.streakInsurancePrice(currentDaysInsured, additionalDays));
+    let priceE8s = $derived(streakInsurancePrice(currentDaysInsured, additionalDays));
     let price = $derived(priceE8s / 100_000_000n);
     // The price is burned, which the ledger charges no fee for, but the user pays for the approval
     // they make before the price is pulled from their wallet

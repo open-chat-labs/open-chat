@@ -32,7 +32,9 @@ export type LocalDialog =
     // the ways to earn CHIT, over whatever opened it (the CHIT dialog, an achievement's toast),
     // with the one just earned picked out (`highlight`, an achievement's id or external name), and
     // the partners' achievements if the opener has them loaded (`external`)
-    | { kind: "achievements"; highlight?: string; external?: Loaded<ExternalAchievement[]> };
+    | { kind: "achievements"; highlight?: string; external?: Loaded<ExternalAchievement[]> }
+    // buying streak insurance, over the CHIT dialog
+    | { kind: "streak_insurance" };
 
 /** Something loaded, and when (ms): whatever depends on the time it was loaded goes by that. */
 export type Loaded<T> = { value: T; at: number };
@@ -86,6 +88,9 @@ export const dialogs: Dialogs = {
 
     // the ways to earn CHIT: every achievement and what it pays (8d)
     achievements: () => import("../chit/AchievementsDialogScreen.svelte"),
+
+    // buying streak insurance (8d)
+    streak_insurance: () => import("../chit/StreakInsuranceDialogScreen.svelte"),
 };
 
 // each linked dialog's query param, in the order they win when more than one is in the URL

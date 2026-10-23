@@ -44,11 +44,16 @@
   const room = $derived(MAX_DAYS - held);
   const qty = $derived(Math.min(picked, room));
   const total = $derived(STEPS.slice(held, held + qty).reduce((sum, v) => sum + v, 0));
+  // a week of cells at a time, however long the ladder: the last covered day, the ones being
+  // added and the next to add stay in view
+  const WINDOW = 7;
+  const windowStart = $derived(Math.max(0, Math.min(MAX_DAYS - WINDOW, Math.max(held - 1, held + qty - WINDOW + 1))));
+  const shown = $derived(STEPS.slice(windowStart, windowStart + WINDOW).map((price, k) => ({ price, i: windowStart + k })));
   const affordable = $derived(total <= balance);
   // nothing to pay with when the host can't take the purchase
   const canPay = $derived(qty > 0 && affordable && !!onBuy);
 
-  const summaryTitle = $derived(qty > 0 ? t('ui.streakInsuranceDialog.adding', { days: days(qty) }) : t(room === 0 ? 'ui.streakInsuranceDialog.fullWeek' : 'ui.streakInsuranceDialog.tapToAddCover'));
+  const summaryTitle = $derived(qty > 0 ? t('ui.streakInsuranceDialog.adding', { days: days(qty) }) : t(room === 0 ? 'ui.streakInsuranceDialog.coverFull' : 'ui.streakInsuranceDialog.tapToAddCover'));
   const summaryHint = $derived(
     qty > 0
       ? qty === 1
@@ -95,7 +100,7 @@
     <div class="body">
       <div class="ladder">
         <div class="cells">
-          {#each STEPS as price, i}
+          {#each shown as { price, i } (i)}
             {@const owned = i < held}
             {@const adding = !owned && i < held + qty}
             {@const title = owned ? t('ui.streakInsuranceDialog.cellOwned', { n: i + 1 }) : t('ui.streakInsuranceDialog.cellOpen', { ordinal: ordinal(i + 1), price })}

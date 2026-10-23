@@ -61,6 +61,7 @@ export {
     type AchievementEntry,
     type EarnedAchievement,
 } from "./utils/achievements";
+export { STREAK_INSURANCE_MAX_DAYS, streakInsurancePrice } from "./utils/streakInsurance";
 export {
     CHIT_STREAK_MILESTONES,
     currentStreak,

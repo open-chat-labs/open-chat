@@ -2780,7 +2780,7 @@
       "covered": "{days} covered",
       "day": "Day {n}",
       "days": "{count, plural, one {# day} other {# days}}",
-      "fullWeek": "Covered for a full week",
+      "coverFull": "Your cover is full",
       "fullyCovered": "Fully covered",
       "hintDefault": "Insured days are spent one at a time when you miss a day",
       "hintOne": "{from} day of your holding · each day dearer than the last",
