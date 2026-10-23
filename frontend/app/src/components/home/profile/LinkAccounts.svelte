@@ -1,18 +1,19 @@
 <script lang="ts">
-    import { AuthClient } from "@icp-sdk/auth/client";
-    import { DelegationChain, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
-    import { Principal } from "@icp-sdk/core/principal";
+    import type { DelegationChain, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
     import {
         AuthProvider,
-        InMemoryAuthClientStorage,
         iconSize,
         selectedAuthProviderStore,
         type LinkedAuthenticationPrincipal,
         type OpenChat,
         type ResourceKey,
-        type WebAuthnKey,
     } from "@client";
-    import { configKeys, ErrorCode } from "@shared";
+    import { configKeys } from "@shared";
+    import {
+        IdentityLinking,
+        linkingPrincipal,
+        signInWithAuthClient,
+    } from "@src/logic/auth/identityLinking.svelte";
     import { getContext, onMount } from "svelte";
     import ArrowRightBoldOutline from "svelte-material-icons/ArrowRightBoldOutline.svelte";
     import LinkVariantPlus from "svelte-material-icons/LinkVariantPlus.svelte";
@@ -50,36 +51,23 @@
         onClose,
     }: Props = $props();
 
-    type IdentityDetail = {
-        key: ECDSAKeyIdentity;
-        delegation: DelegationChain;
-        provider: AuthProvider;
-        webAuthnKey?: WebAuthnKey;
-    };
-
-    type ApproverIdentity = { kind: "approver"; initiator: IdentityDetail };
-    type InitiatorIdentity = { kind: "initiator" };
-    type ReadyToLink = {
-        kind: "ready_to_link";
-        approver: IdentityDetail;
-        initiator: IdentityDetail;
-    };
-    type LinkStage = ApproverIdentity | InitiatorIdentity | ReadyToLink;
-
     type ProviderStep =
         | "choose_provider"
         | "choose_eth_wallet"
         | "choose_sol_wallet"
         | "signing_in_with_email";
 
-    let error: string | undefined = $state();
+    // a step the view runs (an emailed link, a wallet) that went wrong; the flow says the rest
+    let localError: string | undefined = $state();
     const emailSigninHandler = new EmailSigninHandler(client, "account_linking", false);
     let step: "explain" | "linking" = $state("explain");
-    let substep = $state<LinkStage>({ kind: "initiator" });
+    const flow = new IdentityLinking(client);
+    let substep = $derived(flow.stage);
+    let error = $derived(localError ?? flow.error?.key);
     let emailInvalid = $state(false);
     let email = $state("");
     let providerStep: ProviderStep = $state("choose_provider");
-    let linking = $state(false);
+    let linking = $derived(flow.linking);
     const loggingInInitiator = false;
     let verificationCode: string | undefined = $state(undefined);
     let accounts: LinkedAuthenticationPrincipal[] = $state([]);
@@ -103,7 +91,7 @@
 
     function emailEvent(ev: Event): void {
         if (ev instanceof EmailPollerError) {
-            error = "identity.failure.pollingError";
+            localError = "identity.failure.pollingError";
         }
 
         if (ev instanceof EmailPollerSuccess) {
@@ -115,7 +103,8 @@
         step = "linking";
     }
 
-    // This is called both for the initiator and the approver
+    // This is called both for the initiator and the approver: the sign-in goes to the linking
+    // flow (app/src/logic/auth), which refuses an approver that isn't this session's
     async function loginProvider(provider: AuthProvider) {
         if (substep.kind === "ready_to_link") return;
 
@@ -126,34 +115,23 @@
         }
 
         localStorage.setItem(configKeys.selectedAuthEmail, email);
-        error = undefined;
+        localError = undefined;
 
         if (provider === AuthProvider.PASSKEY) {
-            if (substep.kind === "initiator") {
-                const [identity, delegation, webAuthnKey] = await client.signUpWithWebAuthn(false);
-                substep = {
-                    kind: "approver",
-                    initiator: {
-                        key: identity,
-                        delegation,
-                        webAuthnKey,
-                        provider: AuthProvider.PASSKEY,
-                    },
-                };
-            } else {
-                const initiator = substep.initiator;
-                const [identity, delegation, webAuthnKey] =
-                    await client.reSignInWithCurrentWebAuthnIdentity();
-                substep = {
-                    kind: "ready_to_link",
-                    initiator,
-                    approver: {
-                        key: identity,
-                        delegation,
-                        webAuthnKey,
-                        provider: AuthProvider.PASSKEY,
-                    },
-                };
+            try {
+                const [key, delegation, webAuthnKey] =
+                    substep.kind === "initiator"
+                        ? await client.signUpWithWebAuthn(false)
+                        : await client.reSignInWithCurrentWebAuthnIdentity();
+                await flow.signedIn({
+                    key,
+                    delegation,
+                    webAuthnKey,
+                    provider: AuthProvider.PASSKEY,
+                });
+            } catch (err) {
+                console.warn(`Unable to sign in with a passkey (${substep.kind})`, err);
+                localError = generalError;
             }
         } else if (provider === AuthProvider.EMAIL) {
             providerStep = "signing_in_with_email";
@@ -161,74 +139,27 @@
                 if (resp.kind === "success") {
                     verificationCode = resp.code;
                 } else if (resp.kind === "email_invalid") {
-                    error = "loginDialog.invalidEmail";
+                    localError = "loginDialog.invalidEmail";
                 } else if (resp.kind === "failed_to_send_email") {
                     console.debug("generateMagicLink failed_to_send_email", resp.error);
-                    error = "loginDialog.failedToSendEmail";
+                    localError = "loginDialog.failedToSendEmail";
                 } else {
-                    error = generalError;
+                    localError = generalError;
                 }
             });
         } else if (provider === AuthProvider.ETH) {
             providerStep = "choose_eth_wallet";
         } else if (provider === AuthProvider.SOL) {
             providerStep = "choose_sol_wallet";
-        } else {
-            // This is the II / NFID case
-            const identity = await ECDSAKeyIdentity.generate();
-            const storage = new InMemoryAuthClientStorage();
-            const authClient = AuthClient.create({
-                storage,
-                identity: identity,
-            });
-            authClient
-                .then((c) => {
-                    c.login({
-                        ...client.getAuthClientOptions(provider),
-                        onSuccess: async () => {
-                            const delegation = await storage.get("delegation");
-                            if (delegation) {
-                                const principal = c.getIdentity().getPrincipal().toString();
-                                if (
-                                    substep.kind === "approver" &&
-                                    principal !== client.AuthPrincipal
-                                ) {
-                                    error = "identity.failure.principalMismatch";
-                                } else {
-                                    if (substep.kind === "initiator") {
-                                        iiPrincipal = principal;
-                                        substep = {
-                                            kind: "approver",
-                                            initiator: {
-                                                key: identity,
-                                                delegation: DelegationChain.fromJSON(delegation),
-                                                provider: AuthProvider.II,
-                                            },
-                                        };
-                                    } else if (substep.kind === "approver") {
-                                        substep = {
-                                            kind: "ready_to_link",
-                                            initiator: substep.initiator,
-                                            approver: {
-                                                key: identity,
-                                                delegation: DelegationChain.fromJSON(delegation),
-                                                provider,
-                                            },
-                                        };
-                                    }
-                                }
-                            }
-                        },
-                        onError: (err) => {
-                            console.log(`Failed to log into ${substep.kind}: `, err);
-                            error = generalError;
-                        },
-                    });
-                })
-                .catch((err) => {
-                    console.log(`Failed to log into ${substep.kind}: `, err);
-                    error = generalError;
-                });
+        } else if (provider === AuthProvider.II || provider === AuthProvider.NFID) {
+            const initiating = substep.kind === "initiator";
+            const identity = await signInWithAuthClient(client, provider);
+            if (identity === undefined) {
+                localError = generalError;
+            } else {
+                if (initiating) iiPrincipal = linkingPrincipal(identity);
+                await flow.signedIn(identity);
+            }
         }
     }
 
@@ -242,97 +173,22 @@
         detail: { kind: "success"; key: ECDSAKeyIdentity; delegation: DelegationChain },
     ) {
         providerStep = "choose_provider";
-        if (substep.kind === "approver") {
-            substep = {
-                kind: "ready_to_link",
-                initiator: substep.initiator,
-                approver: {
-                    key: detail.key,
-                    delegation: detail.delegation,
-                    provider,
-                },
-            };
-        } else if (substep.kind === "initiator") {
-            substep = {
-                kind: "approver",
-                initiator: {
-                    key: detail.key,
-                    delegation: detail.delegation,
-                    provider,
-                },
-            };
-        }
+        // it says itself why a sign-in it can't check is refused (flow.error); it never rejects
+        void flow.signedIn({ key: detail.key, delegation: detail.delegation, provider });
     }
 
     // Link the two identities that we have built together
-    function linkIdentities() {
-        if (substep.kind !== "ready_to_link" || currentIdentity === undefined) return;
-
-        const { initiator, approver } = substep;
-
-        const approverPrincipal = Principal.selfAuthenticating(
-            new Uint8Array(approver.delegation.publicKey),
-        ).toString();
-
-        if (currentIdentity.principal !== approverPrincipal) {
-            console.log("Principal mismatch: ", currentIdentity.principal, approverPrincipal);
-            error = "identity.failure.principalMismatch";
-            substep = { kind: "initiator" };
-            return;
-        }
-
-        error = undefined;
-        linking = true;
-        client
-            .linkIdentities(
-                initiator.key,
-                initiator.delegation,
-                initiator.provider === AuthProvider.II,
-                initiator.webAuthnKey,
-                approver.key,
-                approver.delegation,
-            )
-            .then((resp) => {
-                if (typeof resp === "object") {
-                    if (resp.kind === "success") {
-                        onProceed?.();
-                    } else if (resp.code === ErrorCode.PrincipalAlreadyUsed) {
-                        console.log("Identity already linked to another OpenChat account: ", resp);
-                        error = "identity.failure.alreadyLinked";
-                        substep = { kind: "initiator" };
-                    } else {
-                        console.log("Failed to link identities: ", resp);
-                        error = "identity.failure.link";
-                        substep = { kind: "initiator" };
-                    }
-                } else {
-                    // This branch will be removed once the Identity canister is fully
-                    // migrated over to returning the standardised error codes
-                    if (resp === "success") {
-                        onProceed?.();
-                    } else if (resp === "already_linked_to_principal") {
-                        console.log("Identity already linked by you: ", resp);
-                        error = "identity.failure.alreadyLinked";
-                    } else if (resp === "already_registered") {
-                        console.log("Identity already linked by someone else: ", resp);
-                        error = "identity.failure.alreadyLinked";
-                        substep = { kind: "initiator" };
-                    } else {
-                        console.log("Failed to link identities: ", resp);
-                        error = "identity.failure.link";
-                        substep = { kind: "initiator" };
-                    }
-                }
-            })
-            .finally(() => (linking = false));
+    async function linkIdentities() {
+        const outcome = await flow.link();
+        if (outcome.kind === "linked") onProceed?.();
     }
 
     function reset() {
         emailSigninHandler.stopPolling();
         providerStep = "choose_provider";
-        error = undefined;
+        localError = undefined;
         step = "explain";
-        substep = { kind: "initiator" };
+        flow.reset();
     }
 </script>
 

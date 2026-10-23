@@ -6,6 +6,7 @@
     import {
         allUsersStore,
         anonUserStore,
+        AuthProvider,
         askForNotificationPermission,
         buildUserAvatarUrl,
         buildUserBackgroundUrl,
@@ -30,6 +31,7 @@
         type ModerationFlag,
         PremiumItem,
         premiumItemsStore,
+        selectedAuthProviderStore,
         isDisplayNameValid,
         unlinkIdentityFailure,
         type LinkedAuthenticationPrincipal,
@@ -43,6 +45,7 @@
     import ProfileDialog, {
         type ChatSettings,
         type ProfileSection,
+        type SigninMethod,
     } from "@openchat/ui/src/features/components/ProfileDialog.svelte";
     import { fontScaleFor, fontSizeOf, isFontSize } from "@src/logic/profile/appearance";
     import { ProfileForm } from "@src/logic/profile/profileForm.svelte";
@@ -60,6 +63,7 @@
     import { blobUrlPattern } from "@src/utils/openchatClient";
     import { themeType } from "@theme/themes";
     import { getContext, onDestroy, onMount } from "svelte";
+    import { SvelteMap } from "svelte/reactivity";
     import { _ } from "svelte-i18n";
     import { accentOf, accentStore } from "../../accent";
     import type { DialogProps, LinkedDialog } from "../app/dialogs";
@@ -82,7 +86,15 @@
     import { deleteAccount } from "@src/logic/auth/deleteAccount";
     import { clearCacheAndRestart } from "@src/utils/clearCache";
     import SignInAgainDialog from "../auth/SignInAgainDialog.svelte";
-    import { SignInAgain } from "../auth/signInAgain.svelte";
+    import { SignInAgain, type SignedIn } from "../auth/signInAgain.svelte";
+    import {
+        IdentityLinking,
+        linkedAs,
+        linkingPrincipal,
+        signInWithAuthClient,
+        type LinkingIdentity,
+        type LinkOutcome,
+    } from "@src/logic/auth/identityLinking.svelte";
     import { shareLink } from "@src/utils/share";
     import { websiteVersion } from "@src/utils/openchatClient";
     import { i18nKey, interpolate } from "@src/i18n/i18n";
@@ -333,9 +345,24 @@
     // ---- sign-in methods, linking a device, deleting the account ----
     // the identities linked to the account, loaded each time their section shows
     let linked = $state<LinkedAuthenticationPrincipal[]>([]);
+    // methods linked here before the list had them, shown under an id of their own: the identity
+    // canister gives a passkey a principal that can't be known from the sign-in. Once the list has
+    // one, it keeps that id (so the dialog doesn't list it twice), and unlinking it goes to its
+    // principal
+    const unlisted = new SvelteMap<string, LinkingIdentity>();
     const signinMethods = $derived(
-        signinMethodsProps(linked, (type) => $_(`ui.profileDialog.signin.${type}`)),
+        signinMethodsProps(linked, (type) => $_(`ui.profileDialog.signin.${type}`)).map((m) => ({
+            ...m,
+            id: idOf(m.id),
+        })),
     );
+
+    function idOf(principal: string): string {
+        for (const [id, identity] of unlisted) {
+            if (linkedAs(linked, identity)?.principal === principal) return id;
+        }
+        return principal;
+    }
 
     // only the latest load counts: an earlier one answering late would put back an older list
     let signinMethodsRun = 0;
@@ -351,10 +378,15 @@
     }
 
     // the dialog shows the method gone until this settles, and back with a message if it throws
-    async function unlinkMethod(principal: string): Promise<void> {
+    async function unlinkMethod(id: string): Promise<void> {
+        const identity = unlisted.get(id);
+        if (identity !== undefined) await refreshSigninMethods();
+        const principal = identity === undefined ? id : linkedAs(linked, identity)?.principal;
+        if (principal === undefined) throw new Error("the method isn't listed yet");
         const failure = unlinkIdentityFailure(await client.removeIdentityLink(principal));
         // TODO(design): the dialog says it couldn't unlink, not why; GAPS.md
         if (failure !== undefined) throw new Error(failure.key);
+        unlisted.delete(id);
         await refreshSigninMethods();
     }
 
@@ -364,32 +396,127 @@
         return linkCodeProps(code);
     }
 
+    // linking a passkey or II (logic/auth/identityLinking), as the old UI's LinkAccounts: sign in
+    // with the new method, then again the way this session signed in (only that way is offered),
+    // then link the two. A rejection says why, for the dialog to show; giving up on confirming
+    // cancels quietly.
+    async function linkMethod(type: "passkey" | "ii"): Promise<SigninMethod> {
+        const initiator = await newSignIn(type);
+        if (initiator === undefined) throw failure(i18nKey("identity.failure.loginInitiator"));
+        const flow = new IdentityLinking(client);
+        await flow.signedIn(initiator);
+        let outcome: LinkOutcome | undefined;
+        let linking: Promise<LinkOutcome> | undefined;
+        let givenUp = false;
+        const current = linked.find((p) => p.isCurrentIdentity)?.provider;
+        try {
+            await signInAgain(
+                $_("identity.signIn_approver"),
+                async (approver) => {
+                    await flow.signedIn(approver);
+                    // not this session's sign-in: the user can try again
+                    if (flow.stage.kind !== "ready_to_link") return flow.error;
+                    // given up while that was checked: the step is cancelled, so nothing's linked
+                    if (givenUp) return;
+                    linking = flow.link();
+                    outcome = await linking;
+                },
+                current ?? selectedAuthProviderStore.value,
+            );
+        } catch {
+            // given up: quietly, unless the link had started by then; that goes on regardless, so
+            // its outcome is seen through (link never rejects)
+            givenUp = true;
+            if (linking === undefined) throw CANCELLED;
+            outcome = await linking;
+        }
+        if (outcome?.kind !== "linked") {
+            throw failure(outcome?.reason ?? i18nKey("identity.failure.link"));
+        }
+        return linkedMethod(outcome.initiator, type);
+    }
+
+    // the method just linked, as the dialog lists it. It's linked whatever happens here: if the
+    // reloaded list doesn't have it (yet), it's shown from the sign-in, under an id of its own
+    // (unlisted), until the list has it
+    async function linkedMethod(
+        initiator: LinkingIdentity,
+        type: "passkey" | "ii",
+    ): Promise<SigninMethod> {
+        await refreshSigninMethods();
+        const entry = linkedAs(linked, initiator);
+        const listed = entry && signinMethods.find((m) => m.id === idOf(entry.principal));
+        if (listed !== undefined) return listed;
+        const id = linkingPrincipal(initiator);
+        unlisted.set(id, initiator);
+        return { type, id, title: $_(`ui.profileDialog.signin.${type}`) };
+    }
+
+    // what the dialog's sign-in steps reject with to cancel quietly
+    const CANCELLED = { cancelled: true };
+
+    // the new method's sign-in, undefined when it didn't go through
+    async function newSignIn(type: "passkey" | "ii"): Promise<LinkingIdentity | undefined> {
+        if (type === "ii") return signInWithAuthClient(client, AuthProvider.II);
+        try {
+            const [key, delegation, webAuthnKey] = await client.signUpWithWebAuthn(false);
+            return { key, delegation, webAuthnKey, provider: AuthProvider.PASSKEY };
+        } catch (err) {
+            console.warn("Unable to create a passkey to link", err);
+        }
+    }
+
+    // what the dialog's host calls reject with to say why (AuthFailure)
+    function failure(reason: ResourceKey): { reason: string } {
+        return { reason: translate(reason) };
+    }
+
     // deleting asks the user to sign in again (SignInAgain), then deletes with that sign-in
     // (logic/auth/deleteAccount); the client logs out once it's gone. The dialog's promise settles
     // when that's done, or rejects if they give up signing in.
-    type Deleting = { signIn: SignInAgain; giveUp: () => void };
-    let deleting = $state<Deleting>();
-
     function deleteAccountAfterSignIn(): Promise<void> {
+        return signInAgain($_("danger.reauth"), async (outcome) =>
+            (await deleteAccount(client, outcome))
+                ? undefined
+                : i18nKey("danger.deleteAccountFailed"),
+        );
+    }
+
+    // asking the user to sign in again (SignInAgainDialog), only with `only` when given; `signedIn`
+    // is what it's for and may say why that then failed. Settles once that's done, or rejects if
+    // they give up.
+    type SigningInAgain = {
+        signIn: SignInAgain;
+        reason: string;
+        only?: AuthProvider;
+        giveUp: () => void;
+    };
+    let signingInAgain = $state<SigningInAgain>();
+
+    function signInAgain(reason: string, signedIn: SignedIn, only?: AuthProvider): Promise<void> {
+        // one at a time: one still open (linking, when deleting starts) is given up, so its
+        // promise settles and its attempts stop
+        signingInAgain?.giveUp();
         return new Promise((resolve, reject) => {
             const signIn = new SignInAgain(client, translate, async (outcome) => {
-                if (!(await deleteAccount(client, outcome))) {
-                    return i18nKey("danger.deleteAccountFailed");
-                }
-                deleting = undefined;
+                const failure = await signedIn(outcome);
+                if (failure !== undefined) return failure;
+                if (signingInAgain?.signIn === signIn) signingInAgain = undefined;
                 resolve();
             });
-            deleting = {
+            signingInAgain = {
                 signIn,
+                reason,
+                only,
                 giveUp: () => {
                     signIn.dispose();
-                    deleting = undefined;
+                    if (signingInAgain?.signIn === signIn) signingInAgain = undefined;
                     reject(new Error("Signing in again given up"));
                 },
             };
         });
     }
-    onDestroy(() => deleting?.signIn.dispose());
+    onDestroy(() => signingInAgain?.signIn.dispose());
 
     // ---- the avatar and the profile background ----
     type ImageTarget = "avatar" | "cover";
@@ -518,6 +645,7 @@
     onCoverEdit={readOnly ? undefined : editCover}
     onSectionChange={sectionShown}
     {signinMethods}
+    onLinkMethod={readOnly ? undefined : linkMethod}
     onUnlinkMethod={unlinkMethod}
     onRequestLinkCode={client.accountLinkingCodeEnabled() ? requestLinkCode : undefined}
     onDeleteAccount={readOnly ? undefined : deleteAccountAfterSignIn}>
@@ -564,11 +692,12 @@
         onClose={() => (imageEdit = { kind: "none" })} />
 {/if}
 
-{#if deleting !== undefined}
+{#if signingInAgain !== undefined}
     <SignInAgainDialog
-        flow={deleting.signIn}
-        reason={$_("danger.reauth")}
-        onClose={() => deleting?.giveUp()} />
+        flow={signingInAgain.signIn}
+        reason={signingInAgain.reason}
+        only={signingInAgain.only}
+        onClose={() => signingInAgain?.giveUp()} />
 {/if}
 
 <style>
