@@ -82,7 +82,7 @@
         type MessageRow,
     } from "./conversation.adapter";
     import { RowCache } from "./rowCache";
-    import { profileClickedEvent } from "@webcomponents/profileLink";
+    import { profileClickedEvent } from "@src/web-components/profileLink";
 
     let { context: screen }: ScreenProps<Extract<MiddleRegion, { kind: "conversation" }>> =
         $props();
