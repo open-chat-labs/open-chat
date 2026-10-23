@@ -4,6 +4,7 @@
     import { urlForMediaContent } from "@src/utils/media";
     import { ColourVars, IconButton, MenuItem, type Padding } from "component-lib";
     import {
+        bridgedFrom,
         chatListScopeStore,
         cryptoLookup,
         currentUserIdStore,
@@ -70,6 +71,9 @@
         failed: boolean;
         canShare: boolean;
         me: boolean;
+        // Shown as the user's own: `me`, or relayed by a bridge bot from an account they've linked.
+        // Blocking and reporting the author go by this, as they'd act on the bridge bot.
+        showAsMe: boolean;
         canPin: boolean;
         canTip: boolean;
         pinned: boolean;
@@ -114,6 +118,7 @@
         failed,
         canShare,
         me,
+        showAsMe,
         canPin,
         pinned,
         supportsReply,
@@ -147,6 +152,9 @@
     }: Props = $props();
 
     let mediaUrl = $derived(urlForMediaContent(msg.content));
+    // A private reply goes to the sender, which for a message relayed from another platform is the
+    // bridge bot
+    let relayed = $derived(bridgedFrom(msg.senderContext) !== undefined);
     let canRemind = $derived(
         msg.content.kind !== "message_reminder_content" &&
             msg.content.kind !== "message_reminder_created_content",
@@ -737,7 +745,7 @@
 {/if}
 
 <!-- Reply privately to a message -->
-{#if confirmed && multiUserChat && !inThread && !me && !isProposal && !inert && !failed}
+{#if confirmed && multiUserChat && !inThread && !me && !relayed && !isProposal && !inert && !failed}
     {@render renderMenuItem("replyPrivately")}
 {/if}
 
@@ -756,7 +764,7 @@
 {/if}
 
 <!-- Block sender -->
-{#if confirmed && multiUserChat && !me && canBlockUser && !failed}
+{#if confirmed && multiUserChat && !showAsMe && canBlockUser && !failed}
     {@render renderMenuItem("blockUser")}
 {/if}
 
@@ -771,7 +779,7 @@
 {/if}
 
 <!-- Report message (moderation) -->
-{#if confirmed && !me && !inert}
+{#if confirmed && !showAsMe && !inert}
     {@render renderMenuItem("reportMenu")}
 {/if}
 

@@ -6,6 +6,7 @@
         anonUserStore,
         chatListScopeStore,
         compareChats,
+        directChatUsers,
         OpenChat,
         publish,
         routeForChatIdentifier,
@@ -37,11 +38,7 @@
     let searchResultsAvailable: boolean = $state(false);
 
     let dms = $derived(
-        [...$serverDirectChatsStore.values()]
-            .sort(compareChats)
-            .map((c) => $allUsersStore.get(c.them.userId))
-            .filter((u) => u?.kind !== "bot" && userMatches(u))
-            .slice(0, 30),
+        directChatUsers($serverDirectChatsStore, $allUsersStore).filter(userMatches).slice(0, 30),
     );
 
     let myGroups = $derived(

@@ -6,19 +6,12 @@ use canister_api_macros::update;
 use canister_time::now_millis;
 use canister_tracing_macros::trace;
 use local_user_index_canister::GroupOrCommunityEvent;
-use local_user_index_canister::c2c_group_canister::*;
+use local_user_index_canister::c2c_group::*;
 use std::cell::LazyCell;
 use types::{BotEvent, BotLifecycleEvent, MessageClassified, Notification, TimestampMillis};
 use types::{ChannelId, Chat};
 use user_index_canister::BotInstalled;
 
-#[update(guard = "caller_is_local_group_canister", msgpack = true)]
-#[trace]
-fn c2c_group_canister(args: ArgsInternal) -> Response {
-    mutate_state(|state| c2c_group_or_community_canister_impl(args, true, state))
-}
-
-// The name for a Group canister's events, which senders switch to; the old one is served until they have
 #[update(guard = "caller_is_local_group_canister", msgpack = true)]
 #[trace]
 fn c2c_group(args: ArgsInternal) -> Response {
@@ -27,18 +20,9 @@ fn c2c_group(args: ArgsInternal) -> Response {
 
 #[update(guard = "caller_is_local_community_canister", msgpack = true)]
 #[trace]
-fn c2c_community_canister(
-    args: local_user_index_canister::c2c_community_canister::ArgsInternal,
-) -> local_user_index_canister::c2c_community_canister::Response {
-    mutate_state(|state| c2c_group_or_community_canister_impl(args, false, state))
-}
-
-// The name for a Community canister's events, which senders switch to; the old one is served until they have
-#[update(guard = "caller_is_local_community_canister", msgpack = true)]
-#[trace]
 fn c2c_community(
-    args: local_user_index_canister::c2c_community_canister::ArgsInternal,
-) -> local_user_index_canister::c2c_community_canister::Response {
+    args: local_user_index_canister::c2c_community::ArgsInternal,
+) -> local_user_index_canister::c2c_community::Response {
     mutate_state(|state| c2c_group_or_community_canister_impl(args, false, state))
 }
 

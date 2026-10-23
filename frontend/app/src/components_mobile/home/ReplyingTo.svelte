@@ -1,7 +1,18 @@
 <script lang="ts">
     import { ChatCaption, ColourVars, Column, IconButton, Row } from "component-lib";
     import type { CreatedUser, EnhancedReplyContext, OpenChat } from "@client";
-    import { selectedChatWebhooksStore, selectedCommunityMembersStore } from "@client";
+    import {
+        allUsersStore,
+        BRIDGE_PLATFORM_NAMES,
+        bridgedAuthorName,
+        bridgedFrom,
+        bridgedUserKey,
+        bridgedUsersStore,
+        linkedAuthor,
+        selectedChatWebhooksStore,
+        selectedCommunityMembersStore,
+        shouldShowAsMe,
+    } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
@@ -20,16 +31,34 @@
 
     let { replyingTo, user, readonly, timestamp = undefined, onCancelReply }: Props = $props();
 
-    let me = $derived(replyingTo.sender?.userId === user?.userId);
+    // Who the message is shown as from, as in the chat: the OpenChat user who linked the account a
+    // bridge bot relayed it from, or else the account itself
+    let bridged = $derived(bridgedFrom(replyingTo.senderContext));
+    let bridgedUser = $derived(
+        bridged !== undefined ? $bridgedUsersStore.get(bridgedUserKey(bridged)!) : undefined,
+    );
+    let linkedUser = $derived(linkedAuthor(bridgedUser, $allUsersStore));
+    let me = $derived(
+        shouldShowAsMe(
+            replyingTo.sender?.userId === user?.userId,
+            linkedUser?.userId,
+            user?.userId,
+        ),
+    );
 
     let displayName = $derived(
         me
             ? client.toTitleCase($_("you"))
-            : client.getDisplayName(
-                  replyingTo.sender?.userId,
-                  $selectedCommunityMembersStore,
-                  $selectedChatWebhooksStore,
-              ),
+            : bridged !== undefined && linkedUser === undefined
+              ? (bridgedAuthorName(bridgedUser) ??
+                $_("bridgedUserUnknown", {
+                    values: { platform: BRIDGE_PLATFORM_NAMES[bridged.kind] },
+                }))
+              : client.getDisplayName(
+                    linkedUser?.userId ?? replyingTo.sender?.userId,
+                    $selectedCommunityMembersStore,
+                    $selectedChatWebhooksStore,
+                ),
     );
 
     let fillReplyCancel = $derived(

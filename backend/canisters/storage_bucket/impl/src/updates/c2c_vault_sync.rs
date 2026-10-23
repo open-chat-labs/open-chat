@@ -1,24 +1,14 @@
-use crate::guards::caller_is_storage_index_canister;
+use crate::RuntimeState;
 use crate::model::vault::VaultOpOutcome;
-use crate::{RuntimeState, mutate_state};
-use canister_tracing_macros::trace;
-use ic_cdk::update;
-use storage_bucket_canister::c2c_vault_sync::{Response::*, *};
+use storage_bucket_canister::*;
 use storage_index_canister::CsamHashDenylisted;
 use storage_index_canister::StorageBucketEvent;
 use tracing::{error, info, warn};
 
-#[update(guard = "caller_is_storage_index_canister")]
-#[trace]
-fn c2c_vault_sync(args: Args) -> Response {
-    mutate_state(|state| c2c_vault_sync_impl(args, state))
-}
-
-pub(crate) fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Response {
+pub(crate) fn c2c_vault_sync_impl(ops: Vec<VaultOp>, state: &mut RuntimeState) {
     let now = state.env.now();
-    let mut quarantine_failures = Vec::new();
 
-    for op in args.ops {
+    for op in ops {
         match op {
             VaultOp::Quarantine(q) => {
                 // The blob may already be vaulted: a second report can quarantine the same
@@ -36,7 +26,6 @@ pub(crate) fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Respo
                     // Loud by design: silent loss is the worst failure mode for an evidence vault.
                     error!(file_id = %q.file_id, "Vault: quarantine failed, file not found");
                     state.data.vault.record_quarantine_failure();
-                    quarantine_failures.push(q.file_id);
                 }
             }
             VaultOp::Unquarantine(u) => {
@@ -145,8 +134,6 @@ pub(crate) fn c2c_vault_sync_impl(args: Args, state: &mut RuntimeState) -> Respo
     }
 
     crate::jobs::vault_retention::start_job_if_required(state);
-
-    Success(SuccessResult { quarantine_failures })
 }
 
 // The bytes behind an upheld hash may be a client-side transcode of some original file (see

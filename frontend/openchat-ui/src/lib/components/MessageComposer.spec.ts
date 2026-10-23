@@ -94,3 +94,44 @@ describe('MessageComposer reply / edit context', () => {
     expect(box().value).toBe('my draft');
   });
 });
+
+describe('MessageComposer autofocus', () => {
+  let target: HTMLElement;
+  let app: object;
+  beforeEach(() => {
+    target = document.body.appendChild(document.createElement('div'));
+  });
+  afterEach(() => {
+    unmount(app);
+    target.remove();
+  });
+
+  function open(autofocus?: boolean) {
+    app = mount(MessageComposer, { target, props: autofocus === undefined ? {} : { autofocus } });
+    flushSync();
+    return target.querySelector<HTMLTextAreaElement>('textarea')!;
+  }
+
+  test('focuses the text box as it mounts', () => {
+    const box = open(true);
+    expect(document.activeElement).toBe(box);
+  });
+
+  test('leaves focus alone by default', () => {
+    const box = open();
+    expect(document.activeElement).not.toBe(box);
+  });
+
+  test('leaves focus in a dialog that is already open', () => {
+    const dialog = document.body.appendChild(document.createElement('div'));
+    dialog.setAttribute('aria-modal', 'true');
+    const button = dialog.appendChild(document.createElement('button'));
+    button.focus();
+    try {
+      open(true);
+      expect(document.activeElement).toBe(button);
+    } finally {
+      dialog.remove();
+    }
+  });
+});

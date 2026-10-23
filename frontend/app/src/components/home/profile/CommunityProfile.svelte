@@ -65,7 +65,6 @@
     <div class="form-fields">
         <Legend label={i18nKey("displayName")} rules={i18nKey("communityDisplayNameRules")} />
         <DisplayNameInput
-            {client}
             {originalDisplayName}
             disabled={false}
             bind:displayName

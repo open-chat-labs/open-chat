@@ -3,7 +3,7 @@
     import { Container, Column, Option, Search, Select, Subtitle } from "component-lib";
     import {
         allUsersStore,
-        compareChats,
+        directChatUsers,
         serverDirectChatsStore,
         type UserSummary,
     } from "@client";
@@ -17,18 +17,19 @@
         selected?: UserSummary;
         subtext: Snippet;
         placeholder: string;
+        // Offered instead of the users you have direct chats with
+        users?: UserSummary[];
         onSelect: (val: UserSummary) => void;
     }
 
-    let { subtext, onSelect, placeholder, selected, disabled = false }: Props = $props();
+    let { subtext, onSelect, placeholder, selected, disabled = false, users }: Props = $props();
     const searching = $state(false);
     let searchTerm = $state<string>();
 
     let dms = $derived(
-        [...$serverDirectChatsStore.values()]
-            .sort(compareChats)
-            .map((c) => $allUsersStore.get(c.them.userId))
-            .filter((u) => u?.kind !== "bot" && matchesSearchTerm(u!)),
+        (users ?? directChatUsers($serverDirectChatsStore, $allUsersStore)).filter(
+            matchesSearchTerm,
+        ),
     );
 
     function matchesSearchTerm(user: UserSummary) {

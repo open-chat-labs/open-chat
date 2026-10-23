@@ -5,6 +5,7 @@ import { describe, expect, test } from "vitest";
 import type { MessageContent as TMessageContent } from "../../typebox";
 import {
     addressToIcrcAccount,
+    apiMaybeAccessGate,
     apiMessageContent,
     groupDetailsUpdatesResponse,
     apiPendingCryptoTransaction,
@@ -223,5 +224,27 @@ describe("the details of a group or channel returned in full instead of updates"
         expect(resp.details.timestamp).toBe(30n);
         expect(resp.details.members.map((m) => m.userId)).toEqual([walletOwner, recipient]);
         expect(resp.details.moreMembersAfter).toBe(recipient);
+    });
+});
+
+describe("the gate a new chat is created with", () => {
+    test("no gate is sent as none", () => {
+        expect(apiMaybeAccessGate({ kind: "no_gate" })).toBeUndefined();
+    });
+
+    test("every gate the UI offers is sent", () => {
+        expect(apiMaybeAccessGate({ kind: "diamond_gate" })).toEqual("DiamondMember");
+        expect(apiMaybeAccessGate({ kind: "lifetime_diamond_gate" })).toEqual(
+            "LifetimeDiamondMember",
+        );
+        expect(
+            apiMaybeAccessGate({
+                kind: "composite_gate",
+                operator: "or",
+                gates: [{ kind: "lifetime_diamond_gate" }, { kind: "unique_person_gate" }],
+            }),
+        ).toEqual({
+            Composite: { and: false, inner: ["LifetimeDiamondMember", "UniquePerson"] },
+        });
     });
 });

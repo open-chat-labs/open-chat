@@ -1,5 +1,18 @@
 import { AuthProvider } from "@shared";
-import { signInOptions } from "./signIn";
+import { isOwnPrincipal, signInOptions } from "./signIn";
+
+describe("signing in again accepts a linked principal and refuses any other", () => {
+    const linked = async () => ["linked-principal"];
+
+    test("accepts the principal the user is signed in with, and one linked to the account", async () => {
+        expect(await isOwnPrincipal("current-principal", "current-principal", linked)).toBe(true);
+        expect(await isOwnPrincipal("linked-principal", "current-principal", linked)).toBe(true);
+    });
+
+    test("refuses any other", async () => {
+        expect(await isOwnPrincipal("someone-else", "current-principal", linked)).toBe(false);
+    });
+});
 
 const { EMAIL, PASSKEY, II, ETH, SOL, NFID } = AuthProvider;
 const browser = { webAuthn: true, native: false };

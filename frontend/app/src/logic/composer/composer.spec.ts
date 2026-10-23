@@ -1,7 +1,8 @@
-import type { UserOrUserGroup } from "@client";
+import { ScreenWidth, type UserOrUserGroup } from "@client";
 import {
     expandMentions,
     entryBlock,
+    focusEntryOnOpen,
     throttleCountdown,
     TypingNotifier,
     type EntryState,
@@ -162,5 +163,26 @@ describe("the throttle countdown", () => {
         expect(throttleCountdown(10_000, 9_999)?.seconds).toBe(1);
         expect(throttleCountdown(10_000, 10_000)).toBeUndefined();
         expect(throttleCountdown(0, 5)).toBeUndefined();
+    });
+});
+
+describe("the entry taking focus when a chat or thread opens", () => {
+    test("happens from 992px up", () => {
+        expect(focusEntryOnOpen(ScreenWidth.Large, false)).toBe(true);
+        expect(focusEntryOnOpen(ScreenWidth.ExtraLarge, false)).toBe(true);
+        expect(focusEntryOnOpen(ScreenWidth.ExtraExtraLarge, false)).toBe(true);
+    });
+
+    test("doesn't happen below that, where it would bring up the keyboard", () => {
+        expect(focusEntryOnOpen(ScreenWidth.Medium, false)).toBe(false);
+        expect(focusEntryOnOpen(ScreenWidth.Small, false)).toBe(false);
+        expect(focusEntryOnOpen(ScreenWidth.ExtraSmall, false)).toBe(false);
+        expect(focusEntryOnOpen(ScreenWidth.ExtraExtraSmall, false)).toBe(false);
+    });
+
+    test("doesn't happen on a touch-only device (a tablet), whatever its width", () => {
+        expect(focusEntryOnOpen(ScreenWidth.Large, true)).toBe(false);
+        expect(focusEntryOnOpen(ScreenWidth.ExtraLarge, true)).toBe(false);
+        expect(focusEntryOnOpen(ScreenWidth.ExtraExtraLarge, true)).toBe(false);
     });
 });

@@ -29,7 +29,6 @@ export function createOpenChatClient(
         blobUrlPattern: import.meta.env.OC_BLOB_URL_PATTERN!,
         canisterUrlPath: import.meta.env.OC_CANISTER_URL_PATH!,
         proposalBotCanister: import.meta.env.OC_PROPOSALS_BOT_CANISTER!,
-        marketMakerCanister: import.meta.env.OC_MARKET_MAKER_CANISTER!,
         signInWithEmailCanister: import.meta.env.OC_SIGN_IN_WITH_EMAIL_CANISTER!,
         signInWithEthereumCanister: import.meta.env.OC_SIGN_IN_WITH_ETHEREUM_CANISTER!,
         signInWithSolanaCanister: import.meta.env.OC_SIGN_IN_WITH_SOLANA_CANISTER!,

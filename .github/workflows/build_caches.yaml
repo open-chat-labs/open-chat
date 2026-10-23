@@ -44,6 +44,13 @@ jobs:
           command: check
           args: --workspace --exclude open-chat --exclude tauri-plugin-oc --tests
 
+      # The bots SDK checks build that crate on its own, which unifies the dependency features
+      # differently from the workspace-wide builds above
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: -p bot_sdk_compat_tests --tests
+
       # The candid check builds the generator binaries as a set of their own, which unifies the
       # dependency features differently from the workspace-wide builds above
       - name: Build candid generators

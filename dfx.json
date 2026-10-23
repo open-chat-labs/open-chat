@@ -97,12 +97,6 @@
       "wasm": "wasms/registry.wasm.gz",
       "build": "./scripts/generate-wasm.sh registry"
     },
-    "market_maker": {
-      "type": "custom",
-      "candid": "backend/canisters/market_maker/api/can.did",
-      "wasm": "wasms/market_maker.wasm.gz",
-      "build": "./scripts/generate-wasm.sh market_maker"
-    },
     "daily_puzzle": {
       "type": "custom",
       "candid": "backend/canisters/daily_puzzle/api/can.did",

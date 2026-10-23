@@ -16,7 +16,6 @@ generateTsAndJs() {
   didc bind "$candidFile" -t js > "$outDir/idl.js"
 }
 
-generateTsAndJs ../../backend/canisters/market_maker/api/can.did ./src/services/marketMaker/candid
 generateTsAndJs ../../backend/canisters/storage_bucket/api/can.did ./src/services/storageBucket/candid
 generateTsAndJs ../../backend/canisters/storage_index/api/can.did ./src/services/storageIndex/candid
 generateTsAndJs ../../backend/canisters/translations/api/can.did ./src/services/translations/candid

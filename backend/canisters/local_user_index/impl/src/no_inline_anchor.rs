@@ -7,7 +7,7 @@ use local_user_index_canister::{
 
 /// Creates additional wasm-level call sites for `UserIndexEvent::visit_enum` and its
 /// variant-payload struct visitors, preventing wasm-opt from inlining single-use functions into
-/// the `c2c_notify_user_index_events` args deserializer and exceeding ICP's 1,000,000
+/// the `c2c_user_index` args deserializer and exceeding ICP's 1,000,000
 /// function-complexity limit. See the identically-named module in the user_index canister for
 /// the full explanation of the mechanism (single-use inliner + the shared `ErasedReader`
 /// monomorphization which makes these dead calls hit the same code paths).

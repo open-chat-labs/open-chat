@@ -5,7 +5,10 @@ use candid::Principal;
 use constants::DAY_IN_MS;
 use oc_error_codes::OCErrorCode;
 use std::ops::Deref;
-use types::{DailyPuzzleConfig, DailyPuzzleResult, Empty, GameConfig, LIGHT_UP_GAME_ID, PuzzleNumber, UnitResult, UserId};
+use types::{
+    DailyPuzzleConfig, DailyPuzzleResult, Empty, GameConfig, IdempotentEnvelope, LIGHT_UP_GAME_ID, PuzzleNumber, UnitResult,
+    UserId,
+};
 
 /// The rota, Mon..Sun: (game_id, grid size). Mirrors `daily_puzzle_canister_impl::model::schedule`,
 /// which is the one definition (#9357); test mode runs the same rota as production.
@@ -151,24 +154,28 @@ fn daily_puzzle_canister_serves_todays_puzzle_and_guards_operator_calls() {
     // refuses them before the guard runs. A genuine caller is a canister, which never goes through
     // the ingress filter.
     let stranger = Principal::from_slice(&[4, 5, 6]);
-    let report_args = daily_puzzle_canister::c2c_report_results::Args {
-        results: vec![DailyPuzzleResult {
-            game_id: LIGHT_UP_GAME_ID.to_string(),
-            number: today,
-            user_id: UserId::from(Principal::from_slice(&[1, 2, 3])),
-            solve_time_ms: 1000,
-            hints_used: 0,
-            streak: 1,
-            solved_at: now,
+    let report_args = daily_puzzle_canister::c2c_local_index::Args {
+        events: vec![IdempotentEnvelope {
+            created_at: now,
+            idempotency_id: 1,
+            value: daily_puzzle_canister::LocalIndexEvent::ReportResult(DailyPuzzleResult {
+                game_id: LIGHT_UP_GAME_ID.to_string(),
+                number: today,
+                user_id: UserId::from(Principal::from_slice(&[1, 2, 3])),
+                solve_time_ms: 1000,
+                hints_used: 0,
+                streak: 1,
+                solved_at: now,
+            }),
         }],
     };
     let result = env.update_call(
         canister_ids.daily_puzzle,
         stranger,
-        "c2c_report_results_msgpack",
+        "c2c_local_index_msgpack",
         msgpack::serialize_then_unwrap(&report_args),
     );
-    assert!(result.is_err(), "c2c_report_results should not be reachable as ingress");
+    assert!(result.is_err(), "c2c_local_index should not be reachable as ingress");
 
     let result = env.update_call(
         canister_ids.daily_puzzle,

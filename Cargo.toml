@@ -29,9 +29,6 @@ members = [
     "backend/canisters/local_user_index/c2c_client",
     "backend/canisters/local_user_index/client",
     "backend/canisters/local_user_index/impl",
-    "backend/canisters/market_maker/api",
-    "backend/canisters/market_maker/client",
-    "backend/canisters/market_maker/impl",
     "backend/canisters/multi_user/api",
     "backend/canisters/multi_user/c2c_client",
     "backend/canisters/multi_user/impl",
@@ -77,8 +74,6 @@ members = [
     "backend/external_canisters/cksol_minter/c2c_client",
     "backend/external_canisters/cmc/api",
     "backend/external_canisters/cmc/c2c_client",
-    "backend/external_canisters/icdex/api",
-    "backend/external_canisters/icdex/c2c_client",
     "backend/external_canisters/icp_ledger/api",
     "backend/external_canisters/icp_ledger/c2c_client",
     "backend/external_canisters/icpswap_swap_pool/api",
@@ -105,6 +100,7 @@ members = [
     "backend/legacy_bots/api",
     "backend/legacy_bots/c2c_client",
     "backend/libraries/activity_notification_state",
+    "backend/libraries/bot_sdk_compat_tests",
     "backend/libraries/bridges",
     "backend/libraries/candid_gen",
     "backend/libraries/canister_agent_utils",
@@ -127,7 +123,6 @@ members = [
     "backend/libraries/email_magic_links",
     "backend/libraries/email_utils",
     "backend/libraries/error_codes",
-    "backend/libraries/fire_and_forget_handler",
     "backend/libraries/gated_groups",
     "backend/libraries/git_commit_id",
     "backend/libraries/governance_clients",
@@ -136,7 +131,6 @@ members = [
     "backend/libraries/http_request",
     "backend/libraries/human_readable",
     "backend/libraries/human_readable_derive",
-    "backend/libraries/icdex_client",
     "backend/libraries/identity_utils",
     "backend/libraries/index_store",
     "backend/libraries/installed_bots",
@@ -251,6 +245,8 @@ jwt-simple = { version = "0.12", default-features = false, features = [
 lazy_static = "1"
 leb128 = "0.2.7"
 num-traits = "0.2"
+# Pinned to the head of open-chat-labs/open-chat-bots#229 until it merges, then to its merge commit
+oc_bots_sdk = { git = "https://github.com/open-chat-labs/open-chat-bots", rev = "f35a7c1a754ca894dea6dab7c690ef13d7825d6d" }
 openssl = "0.10"
 p256 = { version = "0.14" }
 # `pocket-ic` should be pinned to an exact version so that the PocketIC server binary version
@@ -270,6 +266,7 @@ range-set = "0.1"
 regex-lite = "0.1"
 reqwest = "0.13"
 rmp-serde = "1"
+rmpv = "1"
 rsa = "=0.10.0-rc.18"
 rustls = "0.23"
 serde = "1"

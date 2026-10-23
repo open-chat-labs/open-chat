@@ -208,7 +208,8 @@ export class ProposalForm {
 
     // Tells the user what making a proposal costs, or that the balance couldn't be checked
     get depositMessage(): ResourceKey {
-        if (this.#balanceRefreshFailed) return i18nKey("Failed to refresh balance");
+        if (this.#balanceRefreshFailed)
+            return i18nKey("unableToRefreshAccountBalance", { token: this.#token.symbol });
         const cost = formatTokens(this.#fundsRequired, this.#token.decimals);
         return i18nKey("proposal.maker.message", { cost, token: this.#token.symbol });
     }

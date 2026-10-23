@@ -1,11 +1,18 @@
 import {
+    defaultChatPermissions,
+    defaultChatRules,
     emptyChatMetrics,
     ROLE_ADMIN,
     ROLE_MEMBER,
     ROLE_MODERATOR,
+    ROLE_OWNER,
+    type AccessGate,
+    type CandidateGroupChat,
     type ChatEvent,
+    type ChatIdentifier,
     type EventWrapper,
     type GroupChatSummary,
+    type MultiUserChatIdentifier,
     type PollConfig,
     type PollContent,
     type PollVotes,
@@ -13,15 +20,20 @@ import {
     type UserSummary,
 } from "@shared";
 import { localUpdates } from "../state";
+import { currentChatVisit, startChatVisit } from "../state/selectedChat";
 import {
     addVoteToPoll,
     getMembersString,
+    groupChatFromCandidate,
     mergeChatMetrics,
     mergeUnconfirmedThreadsIntoSummary,
     navigationAfterArchivingOpenChat,
     sameUser,
     sortByTimestampThenEventIndex,
+    startTyping,
+    stopTyping,
 } from "./chat";
+import { rtcConnectionsManager } from "./rtcConnectionsManager";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-ignore
@@ -491,5 +503,104 @@ describe("where archiving the open chat goes", () => {
             navigationAfterArchivingOpenChat(archived, chats, [group("a"), group("c")], true)
                 .intent,
         ).toBeUndefined();
+    });
+});
+
+describe("a new chat's member count", () => {
+    const channelId: MultiUserChatIdentifier = { kind: "channel", communityId: "c", channelId: 1 };
+    const groupId: MultiUserChatIdentifier = { kind: "group_chat", groupId: "g" };
+
+    function candidate(
+        id: MultiUserChatIdentifier,
+        isPublic: boolean,
+        gate: AccessGate,
+    ): CandidateGroupChat {
+        const level = id.kind === "channel" ? "channel" : "group";
+        return {
+            id,
+            kind: "candidate_group_chat",
+            name: "New",
+            description: "",
+            rules: { ...defaultChatRules(level), newVersion: false },
+            members: [],
+            permissions: defaultChatPermissions(),
+            gateConfig: { gate, expiry: undefined },
+            public: isPublic,
+            frozen: false,
+            historyVisible: true,
+            level,
+            membership: { role: ROLE_OWNER, lapsed: false },
+            verified: false,
+        };
+    }
+
+    test("a public channel with no gate starts with all the community's members", () => {
+        const chat = groupChatFromCandidate(
+            channelId,
+            candidate(channelId, true, { kind: "no_gate" }),
+            4,
+        );
+        expect(chat.memberCount).toEqual(4);
+        expect(chat.level).toEqual("channel");
+    });
+
+    test("a gated or private channel starts with just its creator", () => {
+        const gated = candidate(channelId, true, { kind: "diamond_gate" });
+        const unlisted = candidate(channelId, false, { kind: "no_gate" });
+        expect(groupChatFromCandidate(channelId, gated, 4).memberCount).toEqual(1);
+        expect(groupChatFromCandidate(channelId, unlisted, 4).memberCount).toEqual(1);
+    });
+
+    test("a group starts with just its creator", () => {
+        const group = groupChatFromCandidate(
+            groupId,
+            candidate(groupId, true, { kind: "no_gate" }),
+            undefined,
+        );
+        expect(group.memberCount).toEqual(1);
+        expect(group.level).toEqual("group");
+    });
+
+    test("an unknown community's channel starts with just its creator", () => {
+        const channel = candidate(channelId, true, { kind: "no_gate" });
+        expect(groupChatFromCandidate(channelId, channel, undefined).memberCount).toEqual(1);
+    });
+});
+
+describe("who typing is sent to", () => {
+    const send = vi.spyOn(rtcConnectionsManager, "sendMessage").mockImplementation(() => {});
+
+    beforeEach(() => send.mockClear());
+    afterAll(() => {
+        startChatVisit(undefined);
+        send.mockRestore();
+    });
+
+    function recipients(): string[][] {
+        return send.mock.calls.map(([userIds]) => userIds);
+    }
+
+    test("in a DM, typing and stopping typing go to the other user before they have sent anything", () => {
+        const dm: ChatIdentifier = { kind: "direct_chat", userId: "them" };
+        startChatVisit(dm);
+
+        startTyping(dm, "me");
+        stopTyping(dm, "me");
+
+        expect(recipients()).toEqual([["them"], ["them"]]);
+    });
+
+    test("in a group, typing and stopping typing go to the users seen in the loaded events", () => {
+        const group: ChatIdentifier = { kind: "group_chat", groupId: "g" };
+        startChatVisit(group);
+        currentChatVisit()?.addUserIds(["a", "b"]);
+
+        startTyping(group, "me");
+        stopTyping(group, "me");
+
+        expect(recipients()).toEqual([
+            ["a", "b"],
+            ["a", "b"],
+        ]);
     });
 });

@@ -2,9 +2,12 @@
     import { Body, BodySmall, Column, Form, Input, InputIconButton, Row } from "component-lib";
     import {
         allUsersStore,
+        botOwnerCandidates,
+        currentUserIdStore,
         debouncedDerived,
         OpenChat,
         publish,
+        serverDirectChatsStore,
         validateBot,
         ValidationErrors,
         validEndpoint,
@@ -21,7 +24,7 @@
     import EditableAvatar from "../EditableAvatar.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import Markdown from "@src/core/Markdown.svelte";
-    import SingleUserSelector from "../home/SingleUserSelector.svelte";
+    import SelectDirectUser from "../SelectDirectUser.svelte";
     import Tabs, { type Tab } from "../Tabs.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
     import BotCommands from "./BotCommands.svelte";
@@ -49,6 +52,9 @@
     }: Props = $props();
     const debug = $state(false);
     let schemaLoading = $state(false);
+    let ownerCandidates = $derived(
+        botOwnerCandidates($serverDirectChatsStore, $allUsersStore, $currentUserIdStore),
+    );
 
     let errors = $derived.by(
         debouncedDerived(
@@ -228,15 +234,15 @@
         </Input>
 
         {#if mode === "update"}
-            <SingleUserSelector
-                mentionSelf
-                onUserSelected={(user) => (candidate.ownerId = user.userId)}
-                selectedReceiver={$allUsersStore.get(candidate.ownerId)}
-                placeholder={"bots.builder.ownerLabel"}>
+            <SelectDirectUser
+                users={ownerCandidates}
+                onSelect={(user) => (candidate.ownerId = user.userId)}
+                selected={$allUsersStore.get(candidate.ownerId)}
+                placeholder={interpolate($_, i18nKey("bots.builder.ownerLabel"))}>
                 {#snippet subtext()}
                     <Translatable resourceKey={i18nKey("bots.builder.ownerRules")} />
                 {/snippet}
-            </SingleUserSelector>
+            </SelectDirectUser>
         {/if}
 
         {#if mode === "register"}

@@ -270,7 +270,7 @@ impl RuntimeState {
         if self.user_index(recipient).is_some() {
             // An index in this canister which holds no user has nobody to apply the event to
             if let Some(recipient_index) = self.index_of_local_user(recipient) {
-                updates::c2c_user_canister_v2::apply_event(event, sender, recipient_index, self);
+                updates::c2c_user::apply_event(event, sender, recipient_index, self);
             }
             return;
         }
@@ -279,7 +279,7 @@ impl RuntimeState {
             IdempotentEnvelope {
                 created_at: self.env.now(),
                 idempotency_id: self.env.rng().next_u64(),
-                value: multi_user_canister::c2c_user_canister_v2::Event {
+                value: multi_user_canister::c2c_user::Event {
                     sender,
                     recipient,
                     event,

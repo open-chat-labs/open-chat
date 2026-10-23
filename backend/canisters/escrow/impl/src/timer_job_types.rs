@@ -7,21 +7,12 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
     ExpireSwap(Box<ExpireSwapJob>),
-    NotifyStatusChange(Box<NotifyStatusChangeJob>),
     RetryPayment(Box<RetryPaymentJob>),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ExpireSwapJob {
     pub swap_id: u32,
-}
-
-// Retries notifying the swap's `canister_to_notify` of its status, after a failed attempt
-#[derive(Serialize, Deserialize, Clone)]
-pub struct NotifyStatusChangeJob {
-    pub swap_id: u32,
-    // The number of attempts at the notification which have failed so far
-    pub failures: u32,
 }
 
 // Retries a payment, after a failed attempt at it
@@ -39,7 +30,6 @@ impl Job for TimerJob {
     fn execute(self) {
         match self {
             TimerJob::ExpireSwap(job) => job.execute(),
-            TimerJob::NotifyStatusChange(job) => job.execute(),
             TimerJob::RetryPayment(job) => job.execute(),
         }
     }
@@ -55,19 +45,6 @@ impl Job for ExpireSwapJob {
                 crate::jobs::make_pending_payments::start_job_if_required(state);
             }
         });
-    }
-}
-
-// Only scheduled by versions before the event queue: a retry left over from one sends the swap's latest
-// status through the queue. Removed in the tidy, along with the variant.
-impl Job for NotifyStatusChangeJob {
-    fn execute(self) {
-        tracing::trace!(
-            swap_id = self.swap_id,
-            failures = self.failures,
-            "Retrying a swap status change notification"
-        );
-        mutate_state(|state| state.notify_status_change(self.swap_id));
     }
 }
 

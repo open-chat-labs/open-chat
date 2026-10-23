@@ -20,6 +20,7 @@ import {
     ResyncingHttpAgent,
     TIME_RESYNC_MIN_INTERVAL_MS,
 } from "./httpAgent";
+import { SLOW_QUERY_MS } from "./connectionHealth";
 
 const CANISTER_ID = Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai");
 const QUERY_URL = new URL("https://icp-api.io/api/v3/canister/rrkah-fqaaa-aaaaa-aaaaq-cai/query");
@@ -172,6 +173,101 @@ describe("createQueryAwareFetch", () => {
 
         // The stale signed request never went out again. Any later query is a new request.
         expect(sentBodies.slice(1)).not.toContain(sentBodies[0]);
+    });
+});
+
+describe("createQueryAwareFetch's connection outcomes", () => {
+    function recorder() {
+        const good = vi.fn((_responseMs: number) => undefined);
+        const bad = vi.fn(() => undefined);
+        return { good, bad };
+    }
+
+    beforeEach(() => {
+        vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+        abortInFlightQueries();
+        vi.useRealTimers();
+    });
+
+    test("a query that gets a response counts as good, once", async () => {
+        const outcomes = recorder();
+        const fn = vi.fn(async () => new Response("ok")) as unknown as typeof fetch;
+        await createQueryAwareFetch(fn, 60_000, outcomes)(QUERY_URL);
+        await vi.advanceTimersByTimeAsync(SLOW_QUERY_MS * 2);
+        expect(outcomes.good).toHaveBeenCalledTimes(1);
+        expect(outcomes.bad).not.toHaveBeenCalled();
+    });
+
+    // Update calls wait on consensus even on a good connection, so they'd make it look slow
+    test("update calls are never measured", async () => {
+        const outcomes = recorder();
+        const { fn } = hangingFetch();
+        void createQueryAwareFetch(fn, 60_000, outcomes)(CALL_URL);
+        await vi.advanceTimersByTimeAsync(SLOW_QUERY_MS * 2);
+        expect(outcomes.bad).not.toHaveBeenCalled();
+        expect(outcomes.good).not.toHaveBeenCalled();
+    });
+
+    test("a query that fails on the network counts as bad", async () => {
+        const outcomes = recorder();
+        const fn = vi.fn(async () => {
+            throw new TypeError("Failed to fetch");
+        }) as unknown as typeof fetch;
+        await expect(createQueryAwareFetch(fn, 60_000, outcomes)(QUERY_URL)).rejects.toThrow();
+        expect(outcomes.bad).toHaveBeenCalledTimes(1);
+    });
+
+    test("a query still waiting after SLOW_QUERY_MS counts as bad, once", async () => {
+        const outcomes = recorder();
+        const { fn } = hangingFetch();
+        const result = createQueryAwareFetch(fn, 60_000, outcomes)(QUERY_URL);
+        const assertion = expect(result).rejects.toMatchObject({ name: "TimeoutError" });
+        await vi.advanceTimersByTimeAsync(SLOW_QUERY_MS);
+        expect(outcomes.bad).toHaveBeenCalledTimes(1);
+        await vi.advanceTimersByTimeAsync(60_000);
+        await assertion;
+        expect(outcomes.bad).toHaveBeenCalledTimes(1);
+        expect(outcomes.good).not.toHaveBeenCalled();
+    });
+
+    // Invariant 4: a query the app aborts itself never counts towards unusable
+    test("queries aborted on resume or by the caller don't count", async () => {
+        const outcomes = recorder();
+        const { fn } = hangingFetch();
+        const wrapped = createQueryAwareFetch(fn, 60_000, outcomes);
+        const resumed = wrapped(QUERY_URL);
+        const caller = new AbortController();
+        const cancelled = wrapped(QUERY_URL, { signal: caller.signal });
+        const assertions = [
+            expect(resumed).rejects.toBeDefined(),
+            expect(cancelled).rejects.toBeDefined(),
+        ];
+
+        abortInFlightQueries();
+        caller.abort("cancelled");
+        await Promise.all(assertions);
+        await vi.advanceTimersByTimeAsync(SLOW_QUERY_MS * 2);
+
+        expect(outcomes.bad).not.toHaveBeenCalled();
+        expect(outcomes.good).not.toHaveBeenCalled();
+    });
+
+    // Invariant 4: the device sleeping with a query in flight says nothing about the connection
+    test("a query held up by the device sleeping doesn't count", async () => {
+        const outcomes = recorder();
+        const { fn } = hangingFetch();
+        const result = createQueryAwareFetch(fn, 60 * 60_000, outcomes)(QUERY_URL);
+        const assertion = expect(result).rejects.toMatchObject({ name: "AbortError" });
+        // the machine slept: the clock moves on without any timers firing, then they fire late
+        vi.setSystemTime(Date.now() + 10 * 60_000);
+        await vi.advanceTimersByTimeAsync(SLOW_QUERY_MS);
+        abortInFlightQueries();
+        await assertion;
+
+        expect(outcomes.bad).not.toHaveBeenCalled();
     });
 });
 

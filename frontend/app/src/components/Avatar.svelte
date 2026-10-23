@@ -19,6 +19,9 @@
         statusBorder?: string;
         selected?: boolean;
         maxStreak?: boolean;
+        // A small image over the bottom right corner, eg. the logo of the platform a message was
+        // relayed from
+        badge?: { url: string; label: string };
     }
 
     let {
@@ -30,6 +33,7 @@
         statusBorder = "white",
         selected = false,
         maxStreak = false,
+        badge = undefined,
     }: Props = $props();
 
     let specialisation: Specialisation = $derived(getSpecialisation());
@@ -69,6 +73,14 @@
         <div class:rtl={$rtlStore} class="online" style={`box-shadow: ${statusBorder} 0 0 0 2px`}>
         </div>
     {/if}
+    {#if badge !== undefined}
+        <img
+            class="badge"
+            class:rtl={$rtlStore}
+            src={badge.url}
+            alt={badge.label}
+            title={badge.label} />
+    {/if}
     {#if specialisation !== "none"}
         <div class="specialised" class:maxStreak class:rtl={$rtlStore}>
             {#if specialisation === "max_streak"}
@@ -94,6 +106,20 @@
         }
         &.rtl {
             left: 0;
+        }
+    }
+
+    .badge {
+        border-radius: 50%;
+        width: 40%;
+        height: 40%;
+        position: absolute;
+        bottom: -2px;
+        &:not(.rtl) {
+            right: -2px;
+        }
+        &.rtl {
+            left: -2px;
         }
     }
 

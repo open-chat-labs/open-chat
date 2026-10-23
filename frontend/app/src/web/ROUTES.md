@@ -119,7 +119,7 @@ it from showing: a desktop window shrunk after load scrolls the shell sideways i
 |---|---|---|---|---|---|---|
 | `/` (signed in) | `home_route` | – | – | – | – | redirects to `/favourite` if the user has favourites, else `/chats` |
 | `/chats` | `chat_list_route` (chats) | `ChatListPanel` | selects the chat last opened in this list, else its first (decision 7); `EmptyState` without one | – | list | yes |
-| `/chats/user/:id/:mi?/:tmi?` · `/user/:id/…` | `global_chat_selected_route` direct (chats) | `ChatListPanel` | conversation (DM) | `DmPanel` docked, `UserDialog` "This chat" below 1476px; thread → `ThreadPanel` | conversation | no |
+| `/chats/user/:id/:mi?/:tmi?` · `/user/:id/…` | `global_chat_selected_route` direct (chats) | `ChatListPanel` | conversation (DM) | `DmPanel` docked, `UserDialog` "This chat" tab (`dmTabs`) below 1476px; thread → `ThreadPanel` | conversation | no |
 | `/chats/group/:id/…` · `/group/:id/…` · legacy `/:id/…` | `global_chat_selected_route` group (chats) | `ChatListPanel` | conversation (group) | `GroupPanel` on demand; thread → `ThreadPanel` | conversation | preview (read-only) |
 | `/favourite` | `chat_list_route` (favourite) | `ChatListPanel` favourites | selects the favourite last opened, else the first (decision 7); `EmptyState` without one | – | list | sign in, then `/chats` |
 | `/favourite/user/:id/…` · `/favourite/group/:id/…` · `/favourite/community/:cid/channel/:chid/…` | as above, favourite scope | `ChatListPanel` favourites | conversation | as above | conversation | – (redirects to the non-favourite URL if not a favourite) |
@@ -253,8 +253,10 @@ Still to come:
 - **Guests**: guest-only behaviour comes in the guest pass (phase 10). That covers the "sign in"
   routes in the Guest column and the composer's sign-in prompt. A guest on `/favourite` already
   gets the sign-in, then `/chats`.
-- **Dialog params**: `?profile` opens a placeholder dialog over the page. `?diamond`, `?hof` and
-  `?chit` are left in the URL until their dialogs exist (phase 8).
+- **Dialog params**: `?profile`, `?diamond`, `?chit` and `?hof` open their dialogs over the page
+  (`features/app/dialogs.ts`, shown by `DialogHost`), each a placeholder until it's built (phase 8).
+  So does `<profile-link>`'s `profile-clicked` (`UserDialog`, phase 4), and the `profile` and
+  `upgrade` events open `?profile` and `?diamond`.
 - **Share**: `/share` goes to the default scope as today, but picking the chat (`ChatPicker`)
   comes in phase 4.
 

@@ -1,41 +1,15 @@
-use crate::guards::caller_is_storage_index;
+use crate::RuntimeState;
 use crate::model::moderation;
 use crate::model::reported_messages::{AddBlockedAttemptResult, ReportedMessages, build_upload_sanction_message_to_uploader};
-use crate::{RuntimeState, mutate_state};
-use canister_api_macros::update;
-use canister_tracing_macros::trace;
 use tracing::warn;
 use types::UserId;
-use user_index_canister::c2c_csam_upload_detected::*;
 use user_index_canister::resolve_moderation_report::ModerationVerdict;
+use user_index_canister::{CsamMatchKind, CsamUploadMatch};
 
-// A storage bucket refused an attempt to upload or forward content whose hash matches either
-// a previous UpheldAsCsam verdict or a blob quarantined awaiting its verdict. No message
-// exists (the attempt was blocked at the bucket).
-//
-// Sanctioning follows the anchor report's provenance and state, never the transport's
-// snapshot (I9, I13):
-// - Pre-verdict attempts sanction ONLY when the anchor report is machine-detected
-//   (DetectionSource::Proactive). A pin created by an unverified reporter assertion
-//   deliberately does not suspend the reported sender, so it must not suspend third parties
-//   either - those attempts are blocked and surfaced as a notice, nothing more.
-// - The consequences derive from the attempt report's verdict state at processing time: the
-//   c2c hop is async and the original can resolve in flight.
-//
-// Deliberately NOT handled here: existing pre-verdict copies of the content. Every reported
-// copy gets its own human verdict, and the denylist only gates FUTURE uploads - a verdict on
-// one report is never applied retrospectively to messages already under review.
-#[update(guard = "caller_is_storage_index", msgpack = true)]
-#[trace]
-fn c2c_csam_upload_detected(args: Args) -> Response {
-    mutate_state(|state| c2c_csam_upload_detected_impl(args, state));
-    Response::Success
-}
-
-pub(crate) fn c2c_csam_upload_detected_impl(args: Args, state: &mut RuntimeState) {
+pub(crate) fn c2c_csam_upload_detected_impl(matches: Vec<CsamUploadMatch>, state: &mut RuntimeState) {
     let now = state.env.now();
 
-    for m in args.matches {
+    for m in matches {
         let uploader = state
             .data
             .users

@@ -1,12 +1,16 @@
-import type {
-    BridgedUser,
-    BridgedUserId,
-    BridgedUserSummary,
-    BridgePlatform,
-    ChatEvent,
-    DiscordUser,
-    EventWrapper,
-    SenderContext,
+import {
+    isDeletedUser,
+    type BridgedUser,
+    type BridgedUserId,
+    type BridgedUserSummary,
+    type BridgePlatform,
+    type ChatEvent,
+    type DiscordUser,
+    type EventWrapper,
+    type Message,
+    type SenderContext,
+    type UserLookup,
+    type UserSummary,
 } from "../domain";
 import { buildBlobUrl } from "./blobs";
 
@@ -20,6 +24,40 @@ export function bridgedFrom(senderContext: SenderContext | undefined): BridgedUs
     return senderContext?.kind === "bot" ? senderContext.bridgedFrom : undefined;
 }
 
+// Whether a message is shown as the user's own: one they sent, or one a bridge bot relayed from an
+// account they've linked. Only its look follows the link. What they can do with it, eg. edit or
+// delete it, still goes by who sent it, which for a relayed message is the bridge bot.
+export function shouldShowAsMe(
+    sentByMe: boolean,
+    linkedUserId: string | undefined,
+    currentUserId: string,
+): boolean {
+    return sentByMe || (linkedUserId !== undefined && linkedUserId === currentUserId);
+}
+
+// The OpenChat user who linked the account a message was relayed from, shown as its author. If
+// they've deleted their account, the account's own profile is shown again.
+export function linkedAuthor(
+    summary: BridgedUserSummary | undefined,
+    users: UserLookup,
+): UserSummary | undefined {
+    const user = summary?.linkedUserId !== undefined ? users.get(summary.linkedUserId) : undefined;
+    return user !== undefined && !isDeletedUser(user) ? user : undefined;
+}
+
+// Whether a message counts as the user's own, so it's read without being seen: one they sent, or
+// one a bridge bot relayed from an account they've linked
+export function isOwnMessage(
+    message: Pick<Message, "sender" | "senderContext">,
+    userId: string,
+    bridgedUsers: ReadonlyMap<string, BridgedUserSummary>,
+): boolean {
+    const from = bridgedFrom(message.senderContext);
+    const linkedUserId =
+        from !== undefined ? bridgedUsers.get(bridgedUserKey(from)!)?.linkedUserId : undefined;
+    return shouldShowAsMe(message.sender === userId, linkedUserId, userId);
+}
+
 // Identifies an account across platforms, eg. to key the registry's profiles, and to group the
 // messages a bridge bot sends by their authors
 export function bridgedUserKey(id: BridgedUserId | undefined): string | undefined {
@@ -30,13 +68,21 @@ export function bridgedUserId(user: BridgedUser): BridgedUserId {
     return { kind: user.kind, id: user.profile.id };
 }
 
-// The accounts the messages in `events` were relayed from
+// The accounts the messages in `events`, and the messages they reply to, were relayed from
 export function bridgedUserIdsFromEvents(events: EventWrapper<ChatEvent>[]): BridgedUserId[] {
     const ids = new Map<string, BridgedUserId>();
     for (const e of events) {
-        const id = e.event.kind === "message" ? bridgedFrom(e.event.senderContext) : undefined;
-        if (id !== undefined) {
-            ids.set(bridgedUserKey(id)!, id);
+        if (e.event.kind !== "message") continue;
+        const repliesTo = e.event.repliesTo;
+        for (const id of [
+            bridgedFrom(e.event.senderContext),
+            repliesTo?.kind === "rehydrated_reply_context"
+                ? bridgedFrom(repliesTo.senderContext)
+                : undefined,
+        ]) {
+            if (id !== undefined) {
+                ids.set(bridgedUserKey(id)!, id);
+            }
         }
     }
     return [...ids.values()];
@@ -51,6 +97,19 @@ export function bridgedAuthorName(summary: BridgedUserSummary | undefined): stri
         case "telegram":
             return user.profile.displayName;
         case undefined:
+            return undefined;
+    }
+}
+
+// The account's public profile page on its platform, if it has one. A Telegram account has one only
+// with a username. Discord's isn't linked to yet.
+export function bridgedProfileUrl(user: BridgedUser): string | undefined {
+    switch (user.kind) {
+        case "telegram":
+            return user.profile.username !== undefined
+                ? `https://t.me/${encodeURIComponent(user.profile.username)}`
+                : undefined;
+        case "discord":
             return undefined;
     }
 }

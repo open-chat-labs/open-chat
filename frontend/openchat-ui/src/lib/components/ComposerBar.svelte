@@ -14,6 +14,7 @@
     text?: ComposerProps['text'];
     onInput?: ComposerProps['onInput'];
     enterSends?: ComposerProps['enterSends'];
+    autofocus?: ComposerProps['autofocus'];
     typingNames?: string[];
     ringColor?: string;
     /** Resource key (or literal text). */

@@ -1062,6 +1062,17 @@
         "doc": "Whether Enter sends (Shift+Enter a new line); off, Enter is a new line and Ctrl/⌘+Enter sends."
       },
       {
+        "name": "autofocus",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Whether the text box takes focus when the composer mounts, unless a dialog is open (key the composer to focus it again)."
+      },
+      {
         "name": "typingNames",
         "type": "string[]",
         "default": [
@@ -12013,6 +12024,17 @@
         "required": false,
         "componentDefault": "true",
         "doc": "Whether Enter sends (Shift+Enter a new line); off, Enter is a new line and Ctrl/⌘+Enter sends."
+      },
+      {
+        "name": "autofocus",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "Whether the text box takes focus when the composer mounts, unless a dialog is open (key the composer to focus it again)."
       },
       {
         "name": "onSend",

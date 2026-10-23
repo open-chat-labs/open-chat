@@ -1,8 +1,8 @@
 <script lang="ts">
     import {
-        AvatarSize,
         BRIDGE_PLATFORM_NAMES,
         bridgedAuthorName,
+        bridgedProfileUrl,
         bridgedUserId,
         bridgedUserKey,
         iconSize,
@@ -15,18 +15,21 @@
     import Tooltip from "../../../components/tooltip/Tooltip.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
-    import { linkablePlatforms, linkBridgedAccount } from "../../../utils/bridgedAccounts";
-    import Avatar from "../../Avatar.svelte";
+    import {
+        BRIDGE_PLATFORM_ICONS,
+        bridgedAccountRows,
+        linkBridgedAccount,
+    } from "../../../utils/bridgedAccounts";
     import Button from "../../Button.svelte";
-    import ButtonGroup from "../../ButtonGroup.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
-    import BotBadge from "./BotBadge.svelte";
 
     const client = getContext<OpenChat>("client");
 
-    let accounts: BridgedUserSummary[] = $state([]);
+    // Unset until the linked accounts have loaded, so no platform is offered before then
+    let accounts: BridgedUserSummary[] | undefined = $state(undefined);
     let busy = $state(false);
+    let rows = $derived(bridgedAccountRows(accounts));
 
     onMount(refresh);
 
@@ -35,7 +38,8 @@
         client
             .getLinkedBridgedUsers()
             .then((linked) => (accounts = linked))
-            .catch(() => undefined);
+            // Offer linking even if the linked accounts couldn't be loaded
+            .catch(() => (accounts ??= []));
     }
 
     async function link(platform: BridgePlatform) {
@@ -56,7 +60,7 @@
             .catch(() => undefined)
             .finally(() => (busy = false));
         if (resp?.kind === "success") {
-            accounts = accounts.filter((a) => bridgedUserKey(bridgedUserId(a.user)) !== bridgedUserKey(id));
+            accounts = accounts?.filter((a) => bridgedUserKey(bridgedUserId(a.user)) !== bridgedUserKey(id));
         } else {
             toastStore.showFailureToast(i18nKey("bridgedAccounts.unlinkFailed"));
         }
@@ -69,35 +73,47 @@
     <Translatable resourceKey={i18nKey("bridgedAccounts.info")} />
 </p>
 
-{#each accounts as account (bridgedUserKey(bridgedUserId(account.user)))}
-    {@const id = bridgedUserId(account.user)}
-    <div class="account">
-        <Avatar url={client.bridgedAvatarUrl(id, account)} size={AvatarSize.Small} />
-        <div class="name">{bridgedAuthorName(account)}</div>
-        <BotBadge bridge={id.kind} />
-        <div class="unlink">
-            <Tooltip position="top" align="end">
-                <HoverIcon onclick={() => unlink(account)}>
-                    <LinkOff size={$iconSize} color={"var(--icon-txt)"} />
-                </HoverIcon>
-                {#snippet popupTemplate()}
-                    <Translatable resourceKey={i18nKey("bridgedAccounts.unlink")} />
-                {/snippet}
-            </Tooltip>
-        </div>
+{#each rows as row (row.platform)}
+    <div class="platform">
+        <img
+            class="icon"
+            src={BRIDGE_PLATFORM_ICONS[row.platform]}
+            alt={BRIDGE_PLATFORM_NAMES[row.platform]} />
+        {#if row.kind === "linked"}
+            {@const profileUrl = bridgedProfileUrl(row.account.user)}
+            <div class="name">
+                {#if profileUrl !== undefined}
+                    <a href={profileUrl} target="_blank" rel="noopener noreferrer">
+                        {bridgedAuthorName(row.account)}
+                    </a>
+                {:else}
+                    {bridgedAuthorName(row.account)}
+                {/if}
+            </div>
+            <div class="unlink">
+                <Tooltip position="top" align="end">
+                    <HoverIcon onclick={() => unlink(row.account)}>
+                        <LinkOff size={$iconSize} color={"var(--icon-txt)"} />
+                    </HoverIcon>
+                    {#snippet popupTemplate()}
+                        <Translatable resourceKey={i18nKey("bridgedAccounts.unlink")} />
+                    {/snippet}
+                </Tooltip>
+            </div>
+        {:else if row.kind === "linkable"}
+            <Button small disabled={busy} onClick={() => link(row.platform)}>
+                <Translatable
+                    resourceKey={i18nKey("bridgedAccounts.link", {
+                        platform: BRIDGE_PLATFORM_NAMES[row.platform],
+                    })} />
+            </Button>
+        {:else if row.kind === "unavailable"}
+            <Button small disabled>
+                <Translatable resourceKey={i18nKey("bridgedAccounts.comingSoon")} />
+            </Button>
+        {/if}
     </div>
 {/each}
-
-<ButtonGroup align="start">
-    {#each linkablePlatforms as platform}
-        <Button disabled={busy} onClick={() => link(platform)}>
-            <Translatable
-                resourceKey={i18nKey("bridgedAccounts.link", {
-                    platform: BRIDGE_PLATFORM_NAMES[platform],
-                })} />
-        </Button>
-    {/each}
-</ButtonGroup>
 
 <style lang="scss">
     .info {
@@ -106,11 +122,18 @@
         margin-bottom: $sp4;
     }
 
-    .account {
+    .platform {
         margin-bottom: $sp3;
+        min-height: toRem(35);
         display: flex;
         align-items: center;
         gap: $sp3;
+
+        .icon {
+            flex: none;
+            width: toRem(35);
+            height: toRem(35);
+        }
 
         .name {
             @include ellipsis();

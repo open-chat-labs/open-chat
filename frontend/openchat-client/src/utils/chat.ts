@@ -1071,10 +1071,18 @@ export function serialiseMessageForRtc(message: NewUnconfirmedMessage): NewUncon
     return message;
 }
 
+// The chat as it is once created. The community joins all its members to a public channel with no
+// gate as it's created, so that starts with the community's member count. Any other chat starts with
+// just its creator.
 export function groupChatFromCandidate(
     chatId: MultiUserChatIdentifier,
     candidate: CandidateGroupChat,
+    communityMemberCount: number | undefined,
 ): MultiUserChat {
+    const joinedByCommunity =
+        chatId.kind === "channel" &&
+        candidate.public &&
+        candidate.gateConfig.gate.kind === "no_gate";
     const chat = {
         kind: chatId.kind,
         id: chatId,
@@ -1087,7 +1095,7 @@ export function groupChatFromCandidate(
         minVisibleEventIndex: 0,
         minVisibleMessageIndex: 0,
         lastUpdated: BigInt(0),
-        memberCount: 1,
+        memberCount: joinedByCommunity ? (communityMemberCount ?? 1) : 1,
         ...candidate.avatar,
         permissions: candidate.permissions,
         metrics: emptyChatMetrics(),
@@ -1097,7 +1105,7 @@ export function groupChatFromCandidate(
         dateLastPinned: undefined,
         dateReadPinned: undefined,
         gateConfig: candidate.gateConfig,
-        level: "group",
+        level: candidate.level,
         membership: {
             ...nullMembership(),
             joined: BigInt(Date.now()),
@@ -1800,6 +1808,10 @@ function mergeLocalUpdates(
         message.ogPreviews = localUpdates.ogPreviews;
     }
 
+    if (localUpdates?.messagePreviews !== undefined) {
+        message.messagePreviews = localUpdates.messagePreviews;
+    }
+
     if (localUpdates?.undeletedContent !== undefined) {
         message.content = localUpdates.undeletedContent;
         message.deleted = false;
@@ -2119,12 +2131,18 @@ export function buildCryptoTransferText(
     return formatter(`tokenTransfer.${key}`, { values });
 }
 
+// Who the selected chat's WebRTC messages go to. A DM's go to the other user, known from the chat
+// id even before they've sent anything. Other chats' go to the users seen in the loaded events.
+export function rtcMessageRecipients(chatId: ChatIdentifier): string[] {
+    return chatId.kind === "direct_chat" ? [chatId.userId] : [...selectedChatUserIdsStore.value];
+}
+
 export function stopTyping(
     id: ChatIdentifier,
     userId: string,
     threadRootMessageIndex?: number,
 ): void {
-    rtcConnectionsManager.sendMessage([...selectedChatUserIdsStore.value], {
+    rtcConnectionsManager.sendMessage(rtcMessageRecipients(id), {
         kind: "remote_user_stopped_typing",
         id,
         userId,
@@ -2137,7 +2155,7 @@ export function startTyping(
     userId: string,
     threadRootMessageIndex?: number,
 ): void {
-    rtcConnectionsManager.sendMessage([...selectedChatUserIdsStore.value], {
+    rtcConnectionsManager.sendMessage(rtcMessageRecipients(id), {
         kind: "remote_user_typing",
         id,
         userId,

@@ -202,8 +202,6 @@ import type {
     UnpinMessageResponse,
     UnsuspendUserResponse,
     UpdateGroupResponse,
-    UpdateMarketMakerConfigArgs,
-    UpdateMarketMakerConfigResponse,
     UpdateUserGroupResponse,
     UpdatedRules,
     UpdatesResult,
@@ -347,7 +345,6 @@ import { LedgerClient } from "./ledger/ledger.client";
 import { LedgerIndexClient } from "./ledgerIndex/ledgerIndex.client";
 import type { Wallets } from "./ledgerIndex/mappers";
 import { LocalUserIndexClient } from "./localUserIndex/localUserIndex.client";
-import { MarketMakerClient } from "./marketMaker/marketMaker.client";
 import { NnsGovernanceClient } from "./nnsGovernance/nns.governance.client";
 import { NotificationsClient } from "./notifications/notifications.client";
 import { OneSecForwarderClient } from "./oneSecForwarder/oneSecForwarder.client";
@@ -453,7 +450,6 @@ export class OpenChatAgent extends EventTarget {
     private _ckbtcWithdrawalMinterClient: Lazy<CkbtcMinterClient>;
     private _cksolMinterClient: Lazy<CksolMinterClient>;
     private _dexesAgent: Lazy<DexesAgent>;
-    private _marketMakerClient: Lazy<MarketMakerClient>;
     private _proposalsBotClient: Lazy<ProposalsBotClient>;
     private _signInWithEmailClient: Lazy<SignInWithEmailClient>;
     private _signInWithEthereumClient: Lazy<SignInWithEthereumClient>;
@@ -541,9 +537,6 @@ export class OpenChatAgent extends EventTarget {
         );
         this._cksolMinterClient = new Lazy(() => new CksolMinterClient(this.identity, this._agent));
         this._dexesAgent = new Lazy(() => new DexesAgent(this._agent));
-        this._marketMakerClient = new Lazy(
-            () => new MarketMakerClient(identity, this._agent, config.marketMakerCanister),
-        );
         this._proposalsBotClient = new Lazy(
             () => new ProposalsBotClient(identity, this._agent, config.proposalBotCanister),
         );
@@ -1549,6 +1542,7 @@ export class OpenChatAgent extends EventTarget {
                         isThreadRoot: msg.thread !== undefined,
                         sourceContext: messageContext,
                         moderationFlags: msg.moderationFlags,
+                        senderContext: msg.senderContext,
                     };
                 } else {
                     this._logger.log(
@@ -4413,14 +4407,6 @@ export class OpenChatAgent extends EventTarget {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
         return this._proposalsBotClient.get().topUpNeuron(governanceCanisterId, amount);
-    }
-
-    updateMarketMakerConfig(
-        config: UpdateMarketMakerConfigArgs,
-    ): Promise<UpdateMarketMakerConfigResponse> {
-        if (offline()) return Promise.resolve("offline");
-
-        return this._marketMakerClient.get().updateConfig(config);
     }
 
     setMessageReminder(

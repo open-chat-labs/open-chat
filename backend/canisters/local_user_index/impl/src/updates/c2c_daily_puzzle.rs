@@ -1,10 +1,10 @@
 use crate::guards::caller_is_daily_puzzle_canister;
-use crate::updates::c2c_daily_puzzle_push::set_puzzles;
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use local_user_index_canister::DailyPuzzleEvent;
 use local_user_index_canister::c2c_daily_puzzle::*;
-use types::SuccessOnly;
+use tracing::info;
+use types::{DailyPuzzle, SuccessOnly};
 
 // Must be fed by a single queue on the DailyPuzzle canister: the idempotency check keeps one
 // high-water mark per sender, so a batch retried from a second queue after a later batch from the
@@ -31,4 +31,16 @@ fn c2c_daily_puzzle_impl(args: Args, state: &mut RuntimeState) -> Response {
         }
     }
     SuccessOnly::Success
+}
+
+fn set_puzzles(puzzles: Vec<DailyPuzzle>, state: &mut RuntimeState) {
+    let records_dropped = state.data.daily_puzzle_engine.set_puzzles(puzzles);
+    let summary = state.data.daily_puzzle_engine.summary();
+    info!(
+        number = ?summary.number,
+        games = ?summary.games,
+        enabled = summary.enabled,
+        records_dropped,
+        "Daily puzzles received"
+    );
 }

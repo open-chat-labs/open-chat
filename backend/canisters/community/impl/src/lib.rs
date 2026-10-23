@@ -11,7 +11,6 @@ use chat_events::{ChatEventInternal, ChatEvents, ChatMetricsInternal, EventPushe
 use community_canister::add_members_to_channel::UserFailedError;
 use constants::{ICP_LEDGER_CANISTER_ID, OPENCHAT_BOT_USER_ID};
 use event_store_types::Event;
-use fire_and_forget_handler::FireAndForgetHandler;
 use gated_groups::{GatePayment, calculate_gate_payments};
 use group_chat_core::{AccessRulesInternal, AddResult, MembersToAdd};
 use group_community_common::{
@@ -690,9 +689,6 @@ struct Data {
     invite_code_enabled: Timestamped<bool>,
     frozen: Timestamped<Option<FrozenGroupInfo>>,
     timer_jobs: TimerJobs<TimerJob>,
-    // Nothing is sent through this any more. Kept for a release so that calls queued for a retry
-    // before the switch to events are still made, then removed.
-    fire_and_forget_handler: FireAndForgetHandler,
     activity_notification_state: ActivityNotificationState,
     groups_being_imported: GroupsBeingImported,
     #[serde(skip, default = "init_instruction_counts_log")]
@@ -812,7 +808,6 @@ impl Data {
             invite_code_enabled: Timestamped::default(),
             frozen: Timestamped::default(),
             timer_jobs: TimerJobs::default(),
-            fire_and_forget_handler: FireAndForgetHandler::default(),
             activity_notification_state: ActivityNotificationState::new(now, mark_active_duration),
             groups_being_imported: GroupsBeingImported::default(),
             instruction_counts_log: init_instruction_counts_log(),

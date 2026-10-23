@@ -1,8 +1,11 @@
 <script lang="ts">
     import { toastStore } from "@src/stores/toast";
-    import { linkablePlatforms, linkBridgedAccount } from "@src/utils/bridgedAccounts";
     import {
-        Avatar,
+        BRIDGE_PLATFORM_ICONS,
+        bridgedAccountRows,
+        linkBridgedAccount,
+    } from "@src/utils/bridgedAccounts";
+    import {
         Body,
         BodySmall,
         ColourVars,
@@ -14,6 +17,7 @@
     import {
         BRIDGE_PLATFORM_NAMES,
         bridgedAuthorName,
+        bridgedProfileUrl,
         bridgedUserId,
         bridgedUserKey,
         i18nKey,
@@ -25,13 +29,14 @@
     import LinkOff from "svelte-material-icons/LinkOff.svelte";
     import LinkVariant from "svelte-material-icons/LinkVariant.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
-    import BotBadge from "../profile/BotBadge.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
 
     const client = getContext<OpenChat>("client");
 
-    let accounts: BridgedUserSummary[] = $state([]);
+    // Unset until the linked accounts have loaded, so no platform is offered before then
+    let accounts: BridgedUserSummary[] | undefined = $state(undefined);
     let busy = $state(false);
+    let rows = $derived(bridgedAccountRows(accounts));
 
     onMount(refresh);
 
@@ -40,7 +45,8 @@
         client
             .getLinkedBridgedUsers()
             .then((linked) => (accounts = linked))
-            .catch(() => undefined);
+            // Offer linking even if the linked accounts couldn't be loaded
+            .catch(() => (accounts ??= []));
     }
 
     async function link(platform: BridgePlatform) {
@@ -61,7 +67,7 @@
             .catch(() => undefined)
             .finally(() => (busy = false));
         if (resp?.kind === "success") {
-            accounts = accounts.filter((a) => bridgedUserKey(bridgedUserId(a.user)) !== bridgedUserKey(id));
+            accounts = accounts?.filter((a) => bridgedUserKey(bridgedUserId(a.user)) !== bridgedUserKey(id));
         } else {
             toastStore.showFailureToast(i18nKey("bridgedAccounts.unlinkFailed"));
         }
@@ -79,46 +85,69 @@
                 </BodySmall>
             </Column>
 
-            {#if accounts.length > 0}
-                <Column padding={["zero", "lg"]} gap={"md"}>
-                    {#each accounts as account (bridgedUserKey(bridgedUserId(account.user)))}
-                        {@const id = bridgedUserId(account.user)}
-                        <Row gap={"md"} crossAxisAlignment={"center"}>
-                            <Avatar size={"sm"} url={client.bridgedAvatarUrl(id, account)}></Avatar>
-                            <Body width={"hug"}>{bridgedAuthorName(account)}</Body>
-                            <BotBadge bridge={id.kind} />
-                            <Row mainAxisAlignment={"end"}>
-                                <IconButton
-                                    size={"md"}
-                                    disabled={busy}
-                                    onclick={() => unlink(account)}>
-                                    {#snippet icon()}
-                                        <LinkOff color={ColourVars.textSecondary} size="1.5rem" />
-                                    {/snippet}
-                                </IconButton>
-                            </Row>
-                        </Row>
-                    {/each}
-                </Column>
-            {/if}
-
-            <Row mainAxisAlignment={"end"} gap={"sm"}>
-                {#each linkablePlatforms as platform}
-                    <CommonButton
-                        disabled={busy}
-                        onClick={() => link(platform)}
-                        size={"medium"}
-                        mode={"active"}>
-                        {#snippet icon(color, size)}
-                            <LinkVariant {color} {size}></LinkVariant>
-                        {/snippet}
-                        <Translatable
-                            resourceKey={i18nKey("bridgedAccounts.link", {
-                                platform: BRIDGE_PLATFORM_NAMES[platform],
-                            })}></Translatable>
-                    </CommonButton>
+            <Column padding={["zero", "lg"]} gap={"md"}>
+                {#each rows as row (row.platform)}
+                    <Row gap={"md"} crossAxisAlignment={"center"} minHeight={"3rem"}>
+                        <img
+                            class="icon"
+                            src={BRIDGE_PLATFORM_ICONS[row.platform]}
+                            alt={BRIDGE_PLATFORM_NAMES[row.platform]} />
+                        {#if row.kind === "linked"}
+                            {@const profileUrl = bridgedProfileUrl(row.account.user)}
+                            <Body ellipsisTruncate>
+                                {#if profileUrl !== undefined}
+                                    <a
+                                        class="profile"
+                                        href={profileUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer">{bridgedAuthorName(row.account)}</a>
+                                {:else}
+                                    {bridgedAuthorName(row.account)}
+                                {/if}
+                            </Body>
+                            <IconButton
+                                size={"md"}
+                                disabled={busy}
+                                onclick={() => unlink(row.account)}>
+                                {#snippet icon()}
+                                    <LinkOff color={ColourVars.textSecondary} size="1.5rem" />
+                                {/snippet}
+                            </IconButton>
+                        {:else if row.kind === "linkable"}
+                            <CommonButton
+                                disabled={busy}
+                                onClick={() => link(row.platform)}
+                                size={"medium"}
+                                mode={"active"}>
+                                {#snippet icon(color, size)}
+                                    <LinkVariant {color} {size}></LinkVariant>
+                                {/snippet}
+                                <Translatable
+                                    resourceKey={i18nKey("bridgedAccounts.link", {
+                                        platform: BRIDGE_PLATFORM_NAMES[row.platform],
+                                    })}></Translatable>
+                            </CommonButton>
+                        {:else if row.kind === "unavailable"}
+                            <CommonButton disabled size={"medium"} mode={"active"}>
+                                <Translatable resourceKey={i18nKey("bridgedAccounts.comingSoon")}
+                                ></Translatable>
+                            </CommonButton>
+                        {/if}
+                    </Row>
                 {/each}
-            </Row>
+            </Column>
         </Column>
     </Column>
 </SlidingPageContent>
+
+<style lang="scss">
+    .icon {
+        flex: none;
+        width: var(--avatar-sm);
+        height: var(--avatar-sm);
+    }
+
+    .profile {
+        color: var(--primary);
+    }
+</style>

@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { OpenChatConfig } from "./config";
+import { connectionUnusableChanged } from "./stores/network";
 import { WorkerAgent } from "./workerAgent";
+import { offline } from "@shared";
 
 class FakeWorker {
     static instance: FakeWorker | undefined;
@@ -71,5 +73,21 @@ describe("WorkerAgent", () => {
 
         expect(prestarted.posted).toHaveLength(1);
         expect(FakeWorker.instance!.posted).toEqual([expect.objectContaining({ kind: "init" })]);
+    });
+
+    // #10184 invariant 5: the main thread follows the connection health the worker measures
+    test("a connection_unusable event from the worker sets whether the app is offline", () => {
+        createAgent();
+        const worker = FakeWorker.instance!;
+        const send = (unusable: boolean) =>
+            worker.onmessage!({
+                data: { kind: "worker_event", event: { subkind: "connection_unusable", unusable } },
+            } as MessageEvent);
+
+        send(true);
+        expect(offline()).toBe(true);
+        send(false);
+        expect(offline()).toBe(false);
+        connectionUnusableChanged(false);
     });
 });

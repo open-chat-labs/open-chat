@@ -1,63 +1,8 @@
-use crate::guards::caller_is_bucket;
-use crate::{RuntimeState, mutate_state};
-use canister_tracing_macros::trace;
+use crate::RuntimeState;
 use constants::ONE_GB;
-use ic_cdk::update;
-use storage_index_canister::c2c_sync_bucket::*;
+use storage_index_canister::{CsamMatch, CsamMatchKind};
 use types::{CanisterId, FileAdded};
-use user_index_canister::c2c_csam_upload_detected as ui_csam;
-
-// Being replaced by `c2c_storage_bucket`, which takes the same events in idempotent envelopes. Served
-// until every bucket sends there.
-#[update(guard = "caller_is_bucket")]
-#[trace]
-fn c2c_sync_bucket(args: Args) -> Response {
-    mutate_state(|state| c2c_sync_bucket_impl(args, state))
-}
-
-fn c2c_sync_bucket_impl(args: Args, state: &mut RuntimeState) -> Response {
-    let bucket = state.env.caller();
-    let now = state.env.now();
-
-    for file in &args.files_added {
-        repush_denylist_if_hash_known(bucket, file, state);
-    }
-
-    let files_rejected = args
-        .files_added
-        .into_iter()
-        .filter_map(|file| state.data.add_file_reference(bucket, file, now, state.env.rng()).err())
-        .collect();
-
-    for file in args.files_removed {
-        state.data.remove_file_reference(bucket, file);
-    }
-
-    for denylisted in args.csam_hashes_denylisted {
-        state.data.denylist_csam_hash(
-            bucket,
-            denylisted.hash,
-            denylisted.report_index,
-            denylisted.derived.unwrap_or(false),
-            now,
-            state.env.rng(),
-        );
-    }
-
-    forward_csam_matches(bucket, args.csam_matches, state);
-
-    update_bucket_figures(
-        bucket,
-        args.heap_memory_used,
-        args.stable_memory_used,
-        args.total_file_bytes,
-        state,
-    );
-
-    Response::Success(SuccessResult { files_rejected })
-}
-
-// Shared with `c2c_storage_bucket`
+use user_index_canister as ui_csam;
 
 // A file arriving with a hash already upheld as CSAM means this bucket has not applied the denylist -
 // it was uploaded before the op landed, or the op was dropped. Re-push it: the bucket then refuses to

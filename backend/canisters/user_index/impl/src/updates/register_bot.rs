@@ -11,7 +11,7 @@ use event_store_producer::EventBuilder;
 use local_user_index_canister::{BotRegistered, UserIndexEvent};
 use rand::RngExt;
 use std::collections::HashMap;
-use storage_index_canister::add_or_update_users::UserConfig;
+use storage_index_canister::UserConfig;
 use types::{BotDataEncoding, BotRegistrationStatus};
 use types::{UserId, UserType};
 use url::Url;

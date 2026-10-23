@@ -1,12 +1,12 @@
 use crate::env::ENV;
-use crate::utils::{tick_many, wait_for_deleted_canister_to_be_uninstalled};
+use crate::utils::{now_millis, tick_many, wait_for_deleted_canister_to_be_uninstalled};
 use crate::{CanisterIds, TestEnv, client};
 use candid::Principal;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
-use storage_index_canister::add_or_update_users::UserConfig;
+use storage_index_canister::UserConfig;
 use testing::rng::{random_principal, random_string};
-use types::{BlobReference, SuccessOnly};
+use types::{BlobReference, IdempotentEnvelope, SuccessOnly};
 
 #[test]
 fn removing_an_accessor_removes_its_files_and_frees_their_allowance() {
@@ -23,12 +23,16 @@ fn removing_an_accessor_removes_its_files_and_frees_their_allowance() {
     let bytes_used = client::storage_index::happy_path::user(env, user_id, canister_ids.storage_index).bytes_used;
     assert_eq!(bytes_used, 500);
 
-    let response = client::storage_index::remove_accessors(
+    let response = client::storage_index::c2c_group_index(
         env,
-        canister_ids.user_index,
+        canister_ids.group_index,
         canister_ids.storage_index,
-        &storage_index_canister::remove_accessors::Args {
-            accessor_ids: vec![accessor],
+        &storage_index_canister::c2c_group_index::Args {
+            events: vec![IdempotentEnvelope {
+                created_at: now_millis(env),
+                idempotency_id: rand::random(),
+                value: storage_index_canister::GroupIndexEvent::RemoveAccessor(accessor),
+            }],
         },
     );
     assert!(matches!(response, SuccessOnly::Success));

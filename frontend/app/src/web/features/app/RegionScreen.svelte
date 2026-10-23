@@ -19,7 +19,7 @@
         screens: Screens<R>;
         context: ScreenContext;
         /** Which column, so placeholders can be told apart (both can be "wallet"). */
-        column: "left" | "middle";
+        column: "left" | "middle" | "right";
         /**
          * Shown over a placeholder, and over a screen loading or that failed to load: the buttons
          * the screen will have (Back, the panel toggle), so there's a way out meanwhile.

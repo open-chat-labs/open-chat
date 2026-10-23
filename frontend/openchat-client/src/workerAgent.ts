@@ -13,6 +13,7 @@ import type { OpenChatConfig } from "./config";
 import { snapshot } from "./snapshot.svelte";
 import { messagesRead, storageStore } from "./state";
 import { userStore } from "./state/users/state";
+import { connectionUnusableChanged } from "./stores/network";
 import { withPausedStores } from "./utils/stores";
 
 declare global {
@@ -80,6 +81,9 @@ export class WorkerAgent {
                 if (data.event.subkind === "users_loaded") {
                     userStore.addMany(data.event.users);
                 }
+                if (data.event.subkind === "connection_unusable") {
+                    connectionUnusableChanged(data.event.unusable);
+                }
                 if (data.event.subkind === "sync_head") {
                     onSyncHead({ userId: data.event.userId, version: data.event.version });
                 }
@@ -114,7 +118,6 @@ export class WorkerAgent {
             blobUrlPattern: config.blobUrlPattern,
             canisterUrlPath: config.canisterUrlPath,
             proposalBotCanister: config.proposalBotCanister,
-            marketMakerCanister: config.marketMakerCanister,
             signInWithEmailCanister: config.signInWithEmailCanister,
             signInWithEthereumCanister: config.signInWithEthereumCanister,
             signInWithSolanaCanister: config.signInWithSolanaCanister,

@@ -1,11 +1,11 @@
 use crate::env::ENV;
-use crate::utils::metrics;
+use crate::utils::{metrics, now_millis};
 use crate::{TestEnv, client};
 use constants::B;
 use local_user_index_canister::UserIndexEvent;
 use pocket_ic::{CanisterSettings, CreateCanisterParams, CreateCanisterPlacement, PocketIc};
 use std::ops::Deref;
-use types::{CanisterId, SuccessOnly};
+use types::{CanisterId, IdempotentEnvelope, SuccessOnly};
 
 // A canister taken from the pool is topped up and given the IC's default freezing threshold as it is
 // used, since the pool canisters have had their cycles refunded, which leaves each holding few
@@ -24,12 +24,16 @@ fn pool_canisters_are_topped_up_when_used() {
     let pool_canister = create_refunded_canister(env, local_user_index);
 
     // The pool never fills in the tests, so the canister is put into it as the UserIndex once did
-    let response = client::local_user_index::c2c_notify_user_index_events(
+    let response = client::local_user_index::c2c_user_index(
         env,
         canister_ids.user_index,
         local_user_index,
-        &local_user_index_canister::c2c_notify_user_index_events::Args {
-            events: vec![UserIndexEvent::AddCanisterToPool(pool_canister)],
+        &local_user_index_canister::c2c_user_index::Args {
+            events: vec![IdempotentEnvelope {
+                created_at: now_millis(env),
+                idempotency_id: rand::random(),
+                value: UserIndexEvent::AddCanisterToPool(pool_canister),
+            }],
         },
     );
     assert!(matches!(response, SuccessOnly::Success));

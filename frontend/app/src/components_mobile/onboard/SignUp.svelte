@@ -16,12 +16,13 @@
     } from "component-lib";
     import EmailValidator from "email-validator";
     import type { OpenChat, SignUpOutcome, UserOrUserGroup, UserSummary } from "@client";
-    import { getContext, onMount } from "svelte";
+    import { getContext, onDestroy, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import ErrorMessage from "../ErrorMessage.svelte";
     import FindUser from "../FindUser.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
     import UsernameInput from "../UsernameInput.svelte";
+    import { UsernameCheck } from "@src/logic/profile/usernameCheck.svelte";
     import UserPill from "../UserPill.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -35,10 +36,10 @@
     let { error = $bindable(), onSignedUp }: Props = $props();
 
     let showGuidelines = $state(false);
-    let username = $state("");
-    let usernameValid = $state(false);
     const usernameStore = createLocalStorageStore("openchat_candidate_username", "");
-    const checkingUsername: boolean = $state(false);
+    // the name last tried, if sign-up didn't finish, is where it starts
+    const usernameCheck = new UsernameCheck(client, () => $usernameStore ?? "", { ownName: false });
+    onDestroy(() => usernameCheck.destroy());
     let email = $state("");
     let emailValid = $derived(email.length === 0 || EmailValidator.validate(email));
     let busy = $state(false);
@@ -67,7 +68,8 @@
     async function register(e: Event) {
         e.preventDefault();
         // Enter submits the form too, so the switch is checked here as well as on the button
-        if (!usernameValid || !emailValid || !termsAccepted || busy) return;
+        if (!usernameCheck.valid || !emailValid || !termsAccepted || busy) return;
+        const username = usernameCheck.value;
         usernameStore.set(username);
         busy = true;
         let outcome: SignUpOutcome;
@@ -152,12 +154,10 @@
         <Form onSubmit={register}>
             <Container gap={"xl"} direction={"vertical"}>
                 <UsernameInput
-                    {client}
+                    check={usernameCheck}
                     disabled={busy}
-                    originalUsername={$usernameStore ?? ""}
-                    bind:username
-                    bind:usernameValid
-                    bind:errorMsg={error} />
+                    errorMsg={error}
+                    onChange={() => (error = undefined)} />
 
                 <Input
                     error={!emailValid}
@@ -206,8 +206,8 @@
     {/if}
     <Button
         width={"fill"}
-        disabled={!termsAccepted || !usernameValid || !emailValid || busy}
-        loading={checkingUsername || busy}
+        disabled={!termsAccepted || !usernameCheck.valid || !emailValid || busy}
+        loading={usernameCheck.checking || busy}
         onClick={register}>
         <Translatable resourceKey={i18nKey("Start my journey")} />
     </Button>

@@ -7,4 +7,3 @@ generate_c2c_call!(c2c_tokens);
 
 // Updates
 generate_c2c_call!(c2c_proposals_bot, 300);
-generate_c2c_call!(c2c_set_submitting_proposals_enabled);

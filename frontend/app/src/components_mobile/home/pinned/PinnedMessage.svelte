@@ -5,11 +5,16 @@
     import type { CreatedUser, Message, MultiUserChatIdentifier, OpenChat } from "@client";
     import {
         allUsersStore,
+        bridgedFrom,
+        bridgedUserKey,
+        bridgedUsersStore,
         chatListScopeStore,
         fullWidth,
+        linkedAuthor,
         routeForMessage,
         selectedChatIdStore,
         selectedChatWebhooksStore,
+        shouldShowAsMe,
     } from "@client";
     import { navigate } from "@utils/navigation";
     import { getContext } from "svelte";
@@ -31,8 +36,15 @@
     let { chatId, user, senderId, msg, timestamp }: Props = $props();
 
     let sender = $derived(findUser(msg.sender, $allUsersStore, $selectedChatWebhooksStore));
+    // Who the message is shown as from, as in the chat: the OpenChat user who linked the account a
+    // bridge bot relayed it from, or else the account itself
+    let bridged = $derived(bridgedFrom(msg.senderContext));
+    let bridgedUser = $derived(
+        bridged !== undefined ? $bridgedUsersStore.get(bridgedUserKey(bridged)!) : undefined,
+    );
+    let linkedUser = $derived(linkedAuthor(bridgedUser, $allUsersStore));
     let fill = $derived(client.fillMessage(msg));
-    let me = $derived(user.userId === senderId);
+    let me = $derived(shouldShowAsMe(user.userId === senderId, linkedUser?.userId, user.userId));
     let modal = $derived(!$fullWidth);
 
     function openUserProfile(e?: Event) {
@@ -42,7 +54,7 @@
         e?.target?.dispatchEvent(
             new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
                 detail: {
-                    userId: sender.userId,
+                    userId: linkedUser?.userId ?? sender.userId,
                     chatButton: !me,
                     inGlobalContext: false,
                 },
@@ -69,13 +81,21 @@
 
 <Container gap={"sm"} onClick={goToMessageIndex}>
     <div class="avatar">
-        <Avatar onClick={openUserProfile} url={client.userAvatarUrl(sender)} size={"md"} />
+        <Avatar
+            onClick={openUserProfile}
+            url={linkedUser !== undefined
+                ? client.userAvatarUrl(linkedUser)
+                : bridged !== undefined
+                  ? client.bridgedAvatarUrl(bridged, bridgedUser)
+                  : client.userAvatarUrl(sender)}
+            size={"md"} />
     </div>
     <IntersectionObserver>
         {#snippet children(intersecting)}
             <MessageBubble
                 {chatId}
                 {sender}
+                senderContext={msg.senderContext}
                 {msg}
                 {fill}
                 first

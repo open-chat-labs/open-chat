@@ -97,9 +97,22 @@ design export needs. Each entry says where it came up.
   so opening one marks the older ones too). Poll votes show under All only (the design's tabs are
   mentions and payments). The chat's name comes from `ActivityScreen.chatName`, a copy of the old
   `getChatName` still to extract.
+- **`DialogShell` opens animated** (by hand, S2): it fades its veil in and lifts its card in
+  (`oc-veil-in`, `oc-dlg-in`) as the hand-built dialogs do; the export's had no animation, so
+  the dialog host's placeholders, the rules dialog and `ChatPicker` popped in. Closing has none
+  still: the shell unmounts when its host closes it.
 - **Swatches**: the design's colour/cover swatches for groups, communities and avatars have no
   OpenChat equivalent (it has uploaded avatars and banners). Adapters pass images and pick a
   swatch from the id.
+- **PIN prompt** (S3, `features/pin`): the library's only PIN entry is inside `WalletSend`, so the
+  prompt the client opens for every other transfer (tips, prizes, the "+" builders, swaps, gates)
+  is a plain dialog on `DialogShell` with one masked field (`PinDialog`, `TODO(design)`), the old
+  modal's words. It wants a standalone PIN dialog, or `WalletSend`'s six boxes as a component,
+  from the design export. As in the old UIs, a wrong PIN shows on the screen that started the
+  transfer (`pinNumberErrorMessageStore`), not in the prompt. "I've forgotten my pin" signs in
+  again through `AuthDialog` (its subtitle says why; a failure after an emailed link was followed
+  shows there too, as `AuthDialog` has no error prop once it's stopped waiting) and then asks for
+  the new PIN in another plain dialog (`NewPinDialog`). Neither has a design.
 
 ## App
 
@@ -186,6 +199,17 @@ design export needs. Each entry says where it came up.
   favourite, mute and copy link only: the rest open dialogs (phase 4), and calls are phase 7. The
   old list's go-to-mention button and sticky date aren't carried over; it keeps go-to-latest.
   Own messages show no name (the design's "You" would be the lower-case app string).
+- **Relayed messages** (`features/conversation`): a message a bridge bot relayed from Telegram or
+  Discord shows as the bot's (`conversation.adapter.ts` picks the side by `msg.sender`), and so
+  does a reply quoting one (by `senderId`). The old trees show it as the OpenChat user who linked
+  the account, with their name, avatar and badges (`linkedAuthor` in `@client`), or as the
+  account's own profile if no one has; so do their reply quotes, which carry the quoted message's
+  `senderContext`, and pinned messages. The message itself shows the platform's logo over the
+  sender's avatar, and no bot badge. One from the viewer's own
+  linked account looks like their own message (`shouldShowAsMe`), though editing and deleting it
+  still go by the sender, the bot, and blocking or reporting its author is hidden. No relayed
+  message offers a private reply, which would go to the bot. The client marks the viewer's own
+  read (`isOwnMessage`), so that part needs nothing here.
 - **Composer, first cut** (`features/conversation/Composer.svelte`, phase 3c): text only.
   Attachments, GIFs, voice, replies, edits and the "+" menu are phase 5 (`MessageComposer` hides
   "+" and the GIF tab without their handlers). There's no @mention picker (typed @usernames are
@@ -200,6 +224,10 @@ design export needs. Each entry says where it came up.
 - **Composer draft and input** (by hand, phase 3c): `MessageComposer` kept its draft to itself.
   It now takes `text` (the draft to start from) and `onInput` (the draft as it changes), so the
   app keeps a draft per chat and tells the others someone is typing.
+- **Composer focus** (by hand): `MessageComposer` takes `autofocus`, so the composer's text box
+  takes focus when a chat is opened, on screens 992px and wider that aren't touch-only
+  (`focusEntryOnOpen`, as the old entry), unless a dialog is open. When the thread lands (4c), its
+  composer should take focus as the thread opens too.
 
 - **Native apps**: this tree doesn't register the native event listeners or signal `svelteReady`,
   so native builds leave it out whatever `OC_WEB_LAYOUT` says (`webLayoutFlag` in
@@ -209,3 +237,12 @@ design export needs. Each entry says where it came up.
   (`calculateHeight`) for mobile browsers. Not needed until the narrow layouts come in.
 - **Platform operator / moderator console hooks** (`window.platformOperator`,
   `window.platformModerator`) are only installed by the existing App trees.
+- **Right column host** (`features/app/DetailsColumn.svelte`, S1): every panel is a placeholder
+  until 4a (details, members, pinned, invites, proposal filters) and 4c (the thread) fill
+  `rightScreens`; the user profile, explore's filters and the call participants entries wait on
+  8c, 8a and 7b. With nothing in `rightPanelHistory` the column shows the selected chat's details
+  (the old docked panel showed nothing), and a new panel opens a closed column. Not carried over:
+  dragging the column wider (the old panel's `Resizable`; the design's widths are fixed) and the
+  halloween theme's cobweb. A thread's placeholder lists its whole root message.
+- **Bot builder**: no screen yet. When it's built, its owner picker offers `botOwnerCandidates`
+  (you, then the users you have direct chats with), as both old `AutoBotBuilder`s do.

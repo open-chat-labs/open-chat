@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Limit users to one linked account per platform (Discord/Telegram) ([#10169](https://github.com/open-chat-labs/open-chat/pull/10169))
+
+### Removed
+
+- Remove the one-off which moved what the replaced queues held onto the event queues, now that it has run ([#10172](https://github.com/open-chat-labs/open-chat/pull/10172))
+- Remove the fire-and-forget handler, which nothing has sent through since the switch to event queues ([#10172](https://github.com/open-chat-labs/open-chat/pull/10172))
+- Remove the old names of the endpoints which the event endpoints replaced, as nothing calls them any more ([#10172](https://github.com/open-chat-labs/open-chat/pull/10172))
+- Remove the timer jobs which set a user's suspension in each of their chats, which are no longer queued ([#10172](https://github.com/open-chat-labs/open-chat/pull/10172))
+
+## [[2.0.2176](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2176-user_index)] - 2026-10-22
+
 ### Added
 
 - Add `set_bridge_bot` for a platform operator to set the bot that bridges Discord or Telegram ([#10052](https://github.com/open-chat-labs/open-chat/pull/10052))

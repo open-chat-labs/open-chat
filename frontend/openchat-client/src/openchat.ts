@@ -60,6 +60,7 @@ import {
     directMessageCommandInstance,
     emptyEventsResponse,
     extractEnabledLinks,
+    extractMessagePreviews,
     extractUserIdsFromMentions,
     featureRestricted,
     fetchOgPreviews,
@@ -291,6 +292,7 @@ import {
     type Referral,
     type RegisterProposalVoteResponse,
     type RegisterUserResponse,
+    type RehydratedMessagePreview,
     type RejectReason,
     type RemoteUserSentMessage,
     type RemoteUserToggledReaction,
@@ -311,6 +313,11 @@ import {
     type SignUpOutcome,
     type EmailSignInRequest,
     type SignInOutcome,
+    type ReAuthMethod,
+    type ReAuthOutcome,
+    type EmailReAuthRequest,
+    type ResourceKey,
+    InMemoryAuthClientStorage,
     type SendMessageResponse,
     type SendMessageSuccess,
     type SetDisplayNameResponse,
@@ -343,8 +350,6 @@ import {
     type UpdateCommunityResponse,
     type UpdateGroupOutcome,
     type UpdateGroupResponse,
-    type UpdateMarketMakerConfigArgs,
-    type UpdateMarketMakerConfigResponse,
     type UpdateUserGroupResponse,
     type UpdatedEvent,
     type UpdatesResult,
@@ -384,6 +389,7 @@ import {
     bridgedUserIdsFromEvents,
     bridgedUserKey,
     buildBlobUrl,
+    isOwnMessage,
     isAndroidTauriApp,
     isIosTauriApp,
     isPrincipalValid,
@@ -396,7 +402,7 @@ import { get, type Unsubscriber } from "svelte/store";
 import { AndroidWebAuthnErrorCode } from "tauri-plugin-oc-api";
 import type { OpenChatConfig } from "./config";
 import { approveFromExternalWallet, type SignerWallet, type WalletAccount } from "./utils/signer";
-import { unarchiveChatsWithUnread } from "./utils/autoUnarchive";
+import { unarchiveChatsReportingFailure, unarchiveChatsWithUnread } from "./utils/autoUnarchive";
 import {
     FilteredProposals,
     achievementsStore,
@@ -489,6 +495,7 @@ import {
     serverDirectChatsStore,
     serverEventsStore,
     serverFavouritesStore,
+    serverThreadEventsStore,
     serverGroupChatsStore,
     serverMessageActivitySummaryStore,
     serverPinnedChatsStore,
@@ -511,6 +518,7 @@ import {
 } from "./state";
 import {
     currentChatVisit,
+    currentThreadVisit,
     eventsVisitFor,
     expandDeletedMessages,
     SelectedChat,
@@ -620,6 +628,7 @@ import {
     newDefaultChannel,
     permittedMessagesInDirectChat,
     permittedMessagesInGroup,
+    rtcMessageRecipients,
     sameUser,
     serialiseMessageForRtc,
     startTyping,
@@ -645,7 +654,7 @@ import {
 import { joinGroupFailureMessage } from "./utils/join";
 import { currentTip, tipResult } from "./utils/tip";
 import { cryptoTransferResult } from "./utils/cryptoTransfer";
-import { emailLinkFailure, signInOutcome, signInProvider } from "./utils/signIn";
+import { emailLinkFailure, isOwnPrincipal, signInOutcome, signInProvider } from "./utils/signIn";
 import {
     createdUser as createdUserFrom,
     referralCodeRefused,
@@ -756,7 +765,6 @@ import {
     nullUser,
     userAvatarUrl,
 } from "./utils/user";
-import { isDisplayNameValid, isUsernameValid } from "./utils/validation";
 import { MultiWebAuthnIdentity, createWebAuthnIdentity } from "./utils/webAuthn";
 import { WorkerAgent } from "./workerAgent";
 
@@ -800,6 +808,17 @@ type SendHooks = {
     rulesDeclined(): void;
 };
 
+// The links in a message to other OpenChat messages, whose previews are shown on it
+function linkedMessageUrls(content: MessageContent): string[] {
+    return content.kind === "text_content"
+        ? extractMessagePreviews(content.text).map((p) => p.url)
+        : [];
+}
+
+function sameUrls(a: string[], b: string[]): boolean {
+    return a.length === b.length && a.every((url) => b.includes(url));
+}
+
 // The users who are known not to be members of the chat or community with this key, and the lookups
 // in flight of those who may be, so that nobody is looked up twice
 type MemberLookups = {
@@ -823,6 +842,24 @@ const MEMBERS_FOUND_TO_MENTION = 50;
 // How often, and how many times, to check for the output of a swap reaching the wallet
 const SWAP_OUTPUT_CHECK_INTERVAL_MS = 2000;
 const SWAP_OUTPUT_CHECKS = 10;
+
+// What an emailed link is for: whether this browser takes the identity it signs in
+type EmailLink = {
+    identity: "take" | "leave";
+    category: "registration" | "account_linking";
+};
+const SIGN_IN_BY_EMAIL: EmailLink = { identity: "take", category: "registration" };
+// signing in again never takes the identity it signs in
+const REAUTH_BY_EMAIL: EmailLink = { identity: "leave", category: "account_linking" };
+// the identity a followed link signs in, or undefined once it's given up
+type EmailLinkFollowed = { key: ECDSAKeyIdentity; delegation: DelegationChain } | undefined;
+
+// An identity the user signed in again with (reAuthenticate)
+type ReAuthIdentity = {
+    provider: AuthProvider;
+    key: ECDSAKeyIdentity;
+    delegation: DelegationChain;
+};
 
 export class OpenChat {
     // When each bridged account's profile was last fetched, keyed by `bridgedUserKey`
@@ -855,6 +892,8 @@ export class OpenChat {
     >();
     #membershipCheck: number | undefined;
     #currentUserIdChangedPublished = false;
+    // counts the changes made here to the current user's profile, which a refresh mustn't undo
+    #currentUserProfileWrites = 0;
     #referralCode: string | undefined = undefined;
     #userLookupForMentions:
         | {
@@ -902,11 +941,11 @@ export class OpenChat {
     > = new Map();
     #refreshBalanceSemaphore: Semaphore = new Semaphore(10);
     #movePreviousWalletFundsTimer: number | undefined;
-    #inflightBalanceRefreshPromises: Map<string, Promise<bigint>> = new Map();
+    #inflightBalanceRefreshPromises: Map<string, Promise<bigint | undefined>> = new Map();
     #videoCallsInProgress: Set<bigint> = new Set();
     #serverVideoCallsInProgress: ChatMap<bigint> = new ChatMap();
     // Archived chats this client is bringing out of the archive, until each request settles
-    #autoUnarchiving = new ChatSet();
+    #unarchiving = new ChatSet();
     #locale!: string;
     #vapidPublicKey: string;
     #getBtcAddressPromise: Promise<string> | undefined = undefined;
@@ -1513,13 +1552,7 @@ export class OpenChat {
             isUniquePerson: user.isUniquePerson,
             hideOnlineStatus: user.hideOnlineStatus,
         });
-        this.getPublicProfile(user.userId).subscribe({
-            onResult: (profile) => {
-                if (profile !== undefined) {
-                    currentUserProfileStore.set(profile);
-                }
-            },
-        });
+        this.#loadCurrentUserProfile(user.userId);
     }
 
     onCreatedUser(user: CreatedUser): void {
@@ -2123,7 +2156,7 @@ export class OpenChat {
         return this.#worker
             .send({ kind: "setUserAvatar", data })
             .then((resp) => {
-                currentUserProfileStore.update((profile) => ({
+                this.#updateCurrentUserProfile((profile) => ({
                     ...profile,
                     avatarId: resp.blobId,
                 }));
@@ -2136,7 +2169,7 @@ export class OpenChat {
         return this.#worker
             .send({ kind: "setProfileBackground", data })
             .then((resp) => {
-                currentUserProfileStore.update((profile) => ({
+                this.#updateCurrentUserProfile((profile) => ({
                     ...profile,
                     backgroundId: resp.blobId,
                 }));
@@ -3250,7 +3283,7 @@ export class OpenChat {
                 return false;
             });
 
-        const messageRecipients = this.#rtcMessageRecipients(chatId);
+        const messageRecipients = rtcMessageRecipients(chatId);
         this.#sendRtcMessage(messageRecipients, {
             kind: "remote_user_toggled_reaction",
             id: chatId,
@@ -4056,8 +4089,6 @@ export class OpenChat {
     groupMessagesByDate = groupMessagesByDate;
     fillMessage = fillMessage;
     audioRecordingMimeType = audioRecordingMimeType;
-    isDisplayNameValid = isDisplayNameValid;
-    isUsernameValid = isUsernameValid;
 
     // Returns the chat to go to, or undefined if there's no such user. That's the chat under the
     // user's latest id if `chatId` is under one they had before being migrated to a MultiUser
@@ -4198,7 +4229,9 @@ export class OpenChat {
         if (chat !== undefined) {
             // If an archived chat has been explicitly selected (for example by searching for it) then un-archive it
             if (chat.membership.archived) {
-                this.unarchiveChats([chat.id]);
+                void unarchiveChatsReportingFailure([chat.id], this.#unarchiving, (chatIds) =>
+                    this.unarchiveChats(chatIds),
+                );
             }
 
             // if it's a known chat let's select it
@@ -5233,6 +5266,7 @@ export class OpenChat {
         withPausedStores(() => {
             const context = { chatId, threadRootMessageIndex };
             const myUserId = currentUserIdStore.value;
+            const bridgedUsers = bridgedUsersStore.value;
             const now = BigInt(Date.now());
             const recentlyActiveCutOff = now - BigInt(12 * ONE_HOUR);
 
@@ -5283,13 +5317,7 @@ export class OpenChat {
                     if (localUpdates.deleteUnconfirmed(context, messageId)) {
                         messagesRead.confirmMessage(context, messageIndex, messageId);
                     }
-                    // If the message was sent by the current user, mark it as read
-                    if (
-                        event.event.sender === myUserId &&
-                        !messagesRead.isRead(context, messageIndex, messageId)
-                    ) {
-                        messagesRead.markMessageRead(context, messageIndex, messageId);
-                    }
+                    this.#markReadIfOwn(context, event.event, myUserId, bridgedUsers);
                     if (latestMessageIndex !== undefined && messageIndex > latestMessageIndex) {
                         newLatestMessage = event as EventWrapper<Message>;
                         latestMessageIndex = messageIndex;
@@ -5375,13 +5403,6 @@ export class OpenChat {
         });
     }
 
-    #rtcMessageRecipients(chatId: ChatIdentifier) {
-        // a DM should only ever be sent to the recipient regardless of selectedChatUserIdsStore
-        return chatId.kind === "direct_chat"
-            ? [chatId.userId]
-            : [...selectedChatUserIdsStore.value];
-    }
-
     async #sendMessageCommon(
         chat: ChatSummary,
         messageContext: MessageContext,
@@ -5421,6 +5442,14 @@ export class OpenChat {
 
         const messageEvent = createMessage(messageContext, message);
 
+        // The agent fills in the previews of the OpenChat messages a message links to only for the
+        // messages it loads, so they're looked up here for a message being sent. They're only shown,
+        // never sent, so the send doesn't wait for them.
+        const messagePreviewsPromise =
+            linkedMessageUrls(messageEvent.event.content).length > 0
+                ? this.#loadMessagePreviews(chat, messageContext, messageEvent)
+                : undefined;
+
         if (!retrying) {
             this.#postSendMessage(chat, messageEvent, threadRootMessageIndex);
             hooks?.posted();
@@ -5439,11 +5468,9 @@ export class OpenChat {
             const ogPreviews = await ogPreviewsPromise;
             if (ogPreviews.length > 0) {
                 messageEvent.event.ogPreviews = ogPreviews;
-                localUpdates.setUnconfirmedOgPreviews(
-                    messageContext,
-                    messageEvent.event.messageId,
+                localUpdates.setUnconfirmedPreviews(messageContext, messageEvent.event.messageId, {
                     ogPreviews,
-                );
+                });
             }
         }
 
@@ -5461,7 +5488,7 @@ export class OpenChat {
         );
         const ledger = this.#extractLedgerFromContent(message.content);
 
-        const messageRecipients = this.#rtcMessageRecipients(chat.id);
+        const messageRecipients = rtcMessageRecipients(chat.id);
 
         const sendMessagePromise: Promise<SendMessageResponse> = new Promise((resolve) => {
             this.#inflightMessagePromises.set(messageId, resolve);
@@ -5498,13 +5525,21 @@ export class OpenChat {
                         const [resp, msg] = response;
                         if (resp.kind === "success" || resp.kind === "transfer_success") {
                             const event = mergeSendMessageResponse(msg, resp);
+                            const visit = eventsVisitFor(chat.id, threadRootMessageIndex);
                             this.#addServerEventsToStores(
-                                eventsVisitFor(chat.id, threadRootMessageIndex),
+                                visit,
                                 chat.id,
                                 [event],
                                 threadRootMessageIndex,
                                 [],
                             );
+                            if (messagePreviewsPromise !== undefined) {
+                                void this.#addConfirmedMessagePreviews(
+                                    visit,
+                                    event.index,
+                                    messagePreviewsPromise,
+                                );
+                            }
                         } else if (resp.kind === "error") {
                             const pinNumberFailure = pinNumberFailureFromError(resp);
                             if (pinNumberFailure !== undefined) {
@@ -5578,6 +5613,117 @@ export class OpenChat {
             }
             return resp;
         });
+    }
+
+    // The previews of the OpenChat messages that a message links to, which the agent otherwise fills
+    // in only for the messages it loads. Undefined if they couldn't be looked up.
+    async #lookUpMessagePreviews(
+        chat: ChatSummary,
+        threadRootMessageIndex: number | undefined,
+        event: EventWrapper<Message>,
+    ): Promise<RehydratedMessagePreview[] | undefined> {
+        try {
+            const rehydrated = await this.#worker.send({
+                kind: "rehydrateMessage",
+                chatId: chat.id,
+                // without the previews it has, which would come back unchanged if none were found
+                message: { ...event, event: { ...event.event, messagePreviews: [] } },
+                threadRootMessageIndex,
+                latestKnownUpdate: chat.lastUpdated,
+            });
+            return rehydrated.event.messagePreviews;
+        } catch (err) {
+            console.warn("Unable to load the messages a message links to", err);
+            return undefined;
+        }
+    }
+
+    // Looks up the previews of the OpenChat messages that a message being sent links to, and shows
+    // them on it while it's unconfirmed
+    async #loadMessagePreviews(
+        chat: ChatSummary,
+        messageContext: MessageContext,
+        messageEvent: EventWrapper<Message>,
+    ): Promise<RehydratedMessagePreview[]> {
+        const messagePreviews =
+            (await this.#lookUpMessagePreviews(
+                chat,
+                messageContext.threadRootMessageIndex,
+                messageEvent,
+            )) ?? [];
+        if (messagePreviews.length > 0) {
+            localUpdates.setUnconfirmedPreviews(messageContext, messageEvent.event.messageId, {
+                messagePreviews,
+            });
+        }
+        return messagePreviews;
+    }
+
+    // The confirmed message is made from the one the worker was given, which has no message
+    // previews, so they're added to it once both are in, whichever comes first
+    async #addConfirmedMessagePreviews(
+        visit: EventsVisit | undefined,
+        eventIndex: number,
+        messagePreviewsPromise: Promise<RehydratedMessagePreview[]>,
+    ): Promise<void> {
+        const messagePreviews = await messagePreviewsPromise;
+        if (messagePreviews.length === 0) return;
+        visit?.updateEvents((events) =>
+            events.map((e) =>
+                e.index === eventIndex && e.event.kind === "message"
+                    ? { ...e, event: { ...e.event, messagePreviews } }
+                    : e,
+            ),
+        );
+    }
+
+    // An edit can change which messages a message links to, and so its message previews: those of
+    // the messages it still links to stay, the rest go, and any it now links to are looked up
+    #refreshEditedMessagePreviews(
+        chat: ChatSummary,
+        messageContext: MessageContext,
+        editingEvent: EventWrapper<Message>,
+        edited: Message,
+    ): UndoLocalUpdate {
+        const urls = linkedMessageUrls(edited.content);
+        if (sameUrls(urls, linkedMessageUrls(editingEvent.event.content))) {
+            return () => {};
+        }
+        const kept = editingEvent.event.messagePreviews.filter((p) => urls.includes(p.url));
+        const refresh = { undo: localUpdates.setEditedMessagePreviews(edited.messageId, kept) };
+        if (kept.length < urls.length) {
+            void this.#lookUpEditedMessagePreviews(
+                chat,
+                messageContext,
+                editingEvent,
+                edited,
+                refresh,
+            );
+        }
+        return () => refresh.undo();
+    }
+
+    async #lookUpEditedMessagePreviews(
+        chat: ChatSummary,
+        messageContext: MessageContext,
+        editingEvent: EventWrapper<Message>,
+        edited: Message,
+        refresh: { undo: UndoLocalUpdate },
+    ): Promise<void> {
+        const messagePreviews = await this.#lookUpMessagePreviews(
+            chat,
+            messageContext.threadRootMessageIndex,
+            { ...editingEvent, event: edited },
+        );
+        // Not if the edit has since been refused, or edited again to link to other messages
+        const current = localUpdates.editedContent(edited.messageId);
+        if (
+            messagePreviews !== undefined &&
+            current !== undefined &&
+            sameUrls(linkedMessageUrls(current), linkedMessageUrls(edited.content))
+        ) {
+            refresh.undo = localUpdates.setEditedMessagePreviews(edited.messageId, messagePreviews);
+        }
     }
 
     #extractLedgerFromContent(content: MessageContent): string | undefined {
@@ -6028,6 +6174,12 @@ export class OpenChat {
 
             // Apply content update to local state immediately — don't block on og preview fetch.
             const undo = localUpdates.markMessageContentEdited(msg, updatedBlockLevelMarkdown);
+            const undoMessagePreviews = this.#refreshEditedMessagePreviews(
+                chat,
+                messageContext,
+                editingEvent,
+                msg,
+            );
             localUpdates.draftMessages.delete(messageContext);
 
             const newAchievement = !achievementsStore.value.has("edited_message");
@@ -6053,6 +6205,7 @@ export class OpenChat {
                     if (resp.kind !== "success") {
                         undo();
                         undoOgPreviews();
+                        undoMessagePreviews();
                         return false;
                     }
                     return true;
@@ -6060,6 +6213,7 @@ export class OpenChat {
                 .catch(() => {
                     undo();
                     undoOgPreviews();
+                    undoMessagePreviews();
                     return false;
                 });
         }
@@ -6409,10 +6563,7 @@ export class OpenChat {
     }
 
     checkUsername(username: string, isBot: boolean): Promise<CheckUsernameResponse> {
-        return this.#worker.send({ kind: "checkUsername", username, isBot }).then((resp) => {
-            console.log("Resp: ", resp);
-            return resp;
-        });
+        return this.#worker.send({ kind: "checkUsername", username, isBot });
     }
 
     // `pageIndex` picks which page of `maxResults` users to return, starting from 0
@@ -6868,13 +7019,7 @@ export class OpenChat {
                         userCreatedStore.set(true);
                         currentUserStore.set(user);
                         this.#setDiamondStatus(user.diamondStatus);
-                        this.getPublicProfile(user.userId).subscribe({
-                            onResult: (profile) => {
-                                if (profile !== undefined) {
-                                    currentUserProfileStore.set(profile);
-                                }
-                            },
-                        });
+                        this.#loadCurrentUserProfile(user.userId);
                     }
                     if (!resolved) {
                         // we want to resolve the promise with the first response from the stream so that
@@ -7362,7 +7507,12 @@ export class OpenChat {
         }
     }
 
-    refreshAccountBalance(ledger: string, allowCached: boolean = false): Promise<bigint> {
+    // Resolves with the balance, or undefined if it couldn't be refreshed (eg. offline). Never rejects,
+    // and a failure leaves the cached balance as it was.
+    refreshAccountBalance(
+        ledger: string,
+        allowCached: boolean = false,
+    ): Promise<bigint | undefined> {
         const user = currentUserStore.value;
         // The anonymous user has no wallet, and its id isn't a principal
         if (user === undefined || user.userId === ANON_USER_ID) {
@@ -7383,7 +7533,7 @@ export class OpenChat {
             return existingPromise;
         }
 
-        const promise: Promise<bigint> = new Promise((resolve) => {
+        const promise: Promise<bigint | undefined> = new Promise((resolve) => {
             this.#refreshBalanceSemaphore
                 .execute(() => {
                     // Race the request against a timeout - without it, a worker request which
@@ -7408,7 +7558,10 @@ export class OpenChat {
                             ),
                         ),
                     ])
-                        .catch(() => 0n)
+                        .catch((err) => {
+                            console.warn(`Couldn't refresh the balance of ${ledger}`, err);
+                            return undefined;
+                        })
                         .finally(() => this.#inflightBalanceRefreshPromises.delete(ledger));
                 })
                 .then(resolve);
@@ -7451,7 +7604,7 @@ export class OpenChat {
                 })),
             )
             .then(async (outcomes) => {
-                // Each refresh resolves, falling back to 0 if it fails or times out
+                // Each refresh resolves, to undefined if it fails or times out
                 const ledgers = new Set(funds.map((f) => f.ledger));
                 await Promise.all([...ledgers].map((ledger) => this.refreshAccountBalance(ledger)));
                 return outcomes;
@@ -7628,6 +7781,10 @@ export class OpenChat {
             );
         }
 
+        if (users.some((u) => u.linkedUserId === currentUserIdStore.value)) {
+            this.#markLoadedOwnMessagesRead();
+        }
+
         // A linked account's messages are shown as its OpenChat user's
         await this.getMissingUsers(users.flatMap((u) => u.linkedUserId ?? []));
     }
@@ -7653,7 +7810,7 @@ export class OpenChat {
     }
 
     // The accounts the user has linked to themself. They go in the store too, so the user's messages
-    // from a newly linked account show as theirs straight away.
+    // from a newly linked account show as theirs, and are read, straight away.
     async getLinkedBridgedUsers(): Promise<BridgedUserSummary[]> {
         const users = await this.#worker.send({ kind: "getLinkedBridgedUsers" });
         const now = Date.now();
@@ -7665,6 +7822,9 @@ export class OpenChat {
             }
             return map;
         });
+        if (users.length > 0) {
+            this.#markLoadedOwnMessagesRead();
+        }
         return users;
     }
 
@@ -7770,8 +7930,42 @@ export class OpenChat {
     }
 
     /**
+     * Loads the current user's profile into currentUserProfileStore again, so a change made on
+     * another device shows (the profile is otherwise loaded once, at sign-in). Only the live
+     * profile counts: the cached one may be older than the store, and so may a live one asked for
+     * before a change here (a save, an image) wrote the store.
+     */
+    refreshCurrentUserProfile(): void {
+        if (anonUserStore.value || get(offlineStore)) return;
+        const writes = this.#currentUserProfileWrites;
+        this.getPublicProfile(currentUserIdStore.value).subscribe({
+            onResult: (profile, final) => {
+                if (!final || profile === undefined) return;
+                if (writes !== this.#currentUserProfileWrites) return;
+                currentUserProfileStore.set(profile);
+            },
+        });
+    }
+
+    #updateCurrentUserProfile(update: (profile: PublicProfile) => PublicProfile): void {
+        this.#currentUserProfileWrites++;
+        currentUserProfileStore.update(update);
+    }
+
+    #loadCurrentUserProfile(userId: string): void {
+        this.getPublicProfile(userId).subscribe({
+            onResult: (profile) => {
+                if (profile !== undefined) {
+                    currentUserProfileStore.set(profile);
+                }
+            },
+        });
+    }
+
+    /**
      * Saves the profile fields that differ from `original`, in parallel. A field the backend rejects keeps its
-     * unsaved value and carries the reason to show under it.
+     * unsaved value and carries the reason to show under it. Each saved field is written to
+     * currentUserProfileStore.
      */
     async saveProfile(
         original: PublicProfile,
@@ -7791,6 +7985,10 @@ export class OpenChat {
                 switch (result.kind) {
                     case "saved":
                         outcome.profile = { ...outcome.profile, [field]: candidate[field] };
+                        this.#updateCurrentUserProfile((profile) => ({
+                            ...profile,
+                            [field]: candidate[field],
+                        }));
                         break;
                     case "rejected":
                         outcome.errors[field] = result.message;
@@ -7912,12 +8110,7 @@ export class OpenChat {
         }
 
         if (outcome.kind === "sent") {
-            this.refreshAccountBalance(withdrawal.ledger).catch((err) =>
-                this.logError(
-                    `Unable to refresh ${withdrawal.symbol} balance after a withdrawal`,
-                    err,
-                ),
-            );
+            this.refreshAccountBalance(withdrawal.ledger);
         }
         return outcome;
     }
@@ -8148,7 +8341,12 @@ export class OpenChat {
         }
 
         const chatId = resp.canisterId;
-        localUpdates.addChat(groupChatFromCandidate(chatId, candidate));
+        const communityMemberCount =
+            chatId.kind === "channel"
+                ? communitiesStore.value.get({ kind: "community", communityId: chatId.communityId })
+                      ?.memberCount
+                : undefined;
+        localUpdates.addChat(groupChatFromCandidate(chatId, candidate, communityMemberCount));
 
         if (invitees.length > 0) {
             const invited = await this.inviteUsers(chatId, invitees).catch((err) => {
@@ -8645,7 +8843,7 @@ export class OpenChat {
         // Only the chats in this answer can have gained any
         unarchiveChatsWithUnread(
             chatsAddedUpdated.map((chat) => chat.id),
-            this.#autoUnarchiving,
+            this.#unarchiving,
             (chatIds) => this.unarchiveChats(chatIds),
         );
 
@@ -9006,20 +9204,71 @@ export class OpenChat {
                     );
                 }
 
-                // If the latest message in a chat is sent by the current user, then we know they must have read up to
-                // that message, so we mark the chat as read up to that message if it isn't already. This happens when a
-                // user sends a message on one device then looks at OpenChat on another.
-                const latestMessage = chat.latestMessage?.event;
-                if (
-                    latestMessage !== undefined &&
-                    latestMessage.sender === currentUserIdStore.value &&
-                    (chat.membership?.readByMeUpTo ?? -1) < latestMessage.messageIndex &&
-                    !localUpdates.isUnconfirmed({ chatId: chat.id }, latestMessage.messageId)
-                ) {
-                    messagesRead.markReadUpTo({ chatId: chat.id }, latestMessage.messageIndex);
-                }
+                this.#markReadIfLatestMessageOwn(chat);
             }
         });
+    }
+
+    // If the latest message in a chat is the current user's, then we know they must have read up to
+    // that message, so we mark the chat as read up to that message if it isn't already. This
+    // happens when a user sends a message on one device then looks at OpenChat on another, or sends
+    // it from an account they've linked on another platform, eg. Telegram.
+    #markReadIfLatestMessageOwn(chat: ChatSummary): void {
+        const latestMessage = chat.latestMessage?.event;
+        if (
+            latestMessage !== undefined &&
+            !isPreviewing(chat) &&
+            isOwnMessage(latestMessage, currentUserIdStore.value, bridgedUsersStore.value) &&
+            (chat.membership?.readByMeUpTo ?? -1) < latestMessage.messageIndex &&
+            !localUpdates.isUnconfirmed({ chatId: chat.id }, latestMessage.messageId)
+        ) {
+            messagesRead.markReadUpTo({ chatId: chat.id }, latestMessage.messageIndex);
+        }
+    }
+
+    // The user's messages relayed from an account they've linked are read, like those they send.
+    // But the link only becomes known once the account's profile has been fetched, which can be
+    // after the messages have loaded, so they're marked read again then.
+    #markLoadedOwnMessagesRead(): void {
+        const myUserId = currentUserIdStore.value;
+        const bridgedUsers = bridgedUsersStore.value;
+        const markRead = (context: MessageContext, events: EventWrapper<ChatEvent>[]) => {
+            for (const e of events) {
+                if (e.event.kind === "message") {
+                    this.#markReadIfOwn(context, e.event, myUserId, bridgedUsers);
+                }
+            }
+        };
+        withPausedStores(() => {
+            const chatVisit = currentChatVisit();
+            if (chatVisit !== undefined) {
+                markRead({ chatId: chatVisit.chatId }, serverEventsStore.value);
+            }
+            const threadVisit = currentThreadVisit();
+            if (threadVisit !== undefined) {
+                const { chatId, threadRootMessageIndex } = threadVisit;
+                markRead({ chatId, threadRootMessageIndex }, serverThreadEventsStore.value);
+            }
+            allChatsStore.value.forEach((chat) => this.#markReadIfLatestMessageOwn(chat));
+        });
+    }
+
+    // The current user's messages are read, including those relayed from an account they've
+    // linked. Not in a chat they're only previewing, which has no read state on the server to sync
+    // with, so it would be sent again every time.
+    #markReadIfOwn(
+        context: MessageContext,
+        message: Message,
+        myUserId: string,
+        bridgedUsers: Map<string, BridgedUserSummary>,
+    ): void {
+        if (
+            isOwnMessage(message, myUserId, bridgedUsers) &&
+            !messagesRead.isRead(context, message.messageIndex, message.messageId) &&
+            !this.isPreviewing(context.chatId)
+        ) {
+            messagesRead.markMessageRead(context, message.messageIndex, message.messageId);
+        }
     }
 
     #validMouseEvent(e: MouseEvent) {
@@ -9468,12 +9717,6 @@ export class OpenChat {
             .catch(() => false);
     }
 
-    updateMarketMakerConfig(
-        config: UpdateMarketMakerConfigArgs,
-    ): Promise<UpdateMarketMakerConfigResponse> {
-        return this.#worker.send({ kind: "updateMarketMakerConfig", ...config });
-    }
-
     displayName(user?: UserSummary): string {
         return user !== undefined
             ? `${user?.displayName ?? user?.username}`
@@ -9704,9 +9947,7 @@ export class OpenChat {
         }
 
         if (resp.kind === "success") {
-            this.refreshAccountBalance(transfer.ledger, false).catch((err) =>
-                this.logError("Unable to refresh the balance after a tip", err),
-            );
+            this.refreshAccountBalance(transfer.ledger, false);
         } else {
             undo();
             if (resp.kind === "error") {
@@ -10116,16 +10357,12 @@ export class OpenChat {
             return { kind: "failed", message: i18nKey("tokenSwap.confirmUnderstanding") };
         }
 
-        let balance: bigint;
         // The output balance before the swap, to tell when its output has reached the wallet
-        let balanceOut: bigint | undefined;
-        try {
-            [balance, balanceOut] = await Promise.all([
-                this.refreshAccountBalance(quote.ledgerIn),
-                this.refreshAccountBalance(quote.ledgerOut).catch(() => undefined),
-            ]);
-        } catch (err) {
-            this.logError("Unable to check the balance before a swap", err);
+        const [balance, balanceOut] = await Promise.all([
+            this.refreshAccountBalance(quote.ledgerIn),
+            this.refreshAccountBalance(quote.ledgerOut),
+        ]);
+        if (balance === undefined) {
             return { kind: "failed", message: swapError };
         }
         if (balance < quote.amountIn) {
@@ -10154,9 +10391,7 @@ export class OpenChat {
             outcome = { kind: "failed", message: swapUnconfirmed };
         }
 
-        this.refreshAccountBalance(quote.ledgerIn).catch((err) =>
-            this.logError("Unable to refresh a balance after a swap", err),
-        );
+        this.refreshAccountBalance(quote.ledgerIn);
         this.#refreshSwapOutput(
             quote.ledgerOut,
             outcome.kind === "swapped" ? balanceOut : undefined,
@@ -10173,7 +10408,8 @@ export class OpenChat {
                 await new Promise((resolve) => setTimeout(resolve, SWAP_OUTPUT_CHECK_INTERVAL_MS));
             }
             const balance = await this.refreshAccountBalance(ledger);
-            if (balanceBefore === undefined || balance > balanceBefore) return;
+            if (balanceBefore === undefined || (balance !== undefined && balance > balanceBefore))
+                return;
         }
     }
 
@@ -11275,6 +11511,58 @@ export class OpenChat {
      */
     async requestEmailSignIn(email: string, signal?: AbortSignal): Promise<EmailSignInRequest> {
         selectedAuthProviderStore.set(AuthProvider.EMAIL);
+        const resp = await this.#requestEmailLink(email, SIGN_IN_BY_EMAIL, signal);
+        if (resp.kind !== "sent") return resp;
+        const signedIn = resp.followed.then(
+            (followed): SignInOutcome =>
+                followed === undefined
+                    ? { kind: "cancelled" }
+                    : signInOutcome(identityStateStore.value),
+        );
+        return { kind: "sent", code: resp.code, signedIn };
+    }
+
+    /**
+     * Emails a link to sign in again with (ReAuthMethod) and, once it's sent, waits for it to be
+     * followed, as requestEmailSignIn, without taking the identity it signs in. A check for the
+     * link that fails is reported to `onCheckFailed` (the old trees show
+     * `identity.failure.pollingError`) and the checking goes on, so the link still works.
+     */
+    async requestEmailReAuthentication(
+        email: string,
+        signal?: AbortSignal,
+        onCheckFailed?: () => void,
+    ): Promise<EmailReAuthRequest> {
+        const resp = await this.#requestEmailLink(email, REAUTH_BY_EMAIL, signal, onCheckFailed);
+        if (resp.kind !== "sent") return resp;
+        const reAuthenticated = resp.followed.then(
+            (followed): Promise<ReAuthOutcome> | ReAuthOutcome =>
+                followed === undefined
+                    ? { kind: "cancelled" }
+                    : this.reAuthenticate(
+                          { kind: "identity", provider: AuthProvider.EMAIL, ...followed },
+                          signal,
+                      ),
+        );
+        return { kind: "sent", code: resp.code, reAuthenticated };
+    }
+
+    /**
+     * Emails a sign-in link and checks every second whether it has been followed. `followed`
+     * settles with the identity it signs in (taken by this browser only for `"take"`), or
+     * undefined once `signal` gives it up. A failed check goes to `onCheckFailed` and the checking
+     * goes on.
+     */
+    async #requestEmailLink(
+        email: string,
+        link: EmailLink,
+        signal?: AbortSignal,
+        onCheckFailed?: () => void,
+    ): Promise<
+        | { kind: "sent"; code: string; followed: Promise<EmailLinkFollowed> }
+        | { kind: "failed"; reason: ResourceKey }
+        | { kind: "cancelled" }
+    > {
         const sessionKey = await ECDSAKeyIdentity.generate();
         let resp: GenerateMagicLinkResponse | { kind: "unexpected_error" };
         try {
@@ -11290,16 +11578,19 @@ export class OpenChat {
             }
             return { kind: "failed", reason: emailLinkFailure(resp.kind) };
         }
-        this.gaTrack("generated_magic_signin_link", "registration");
+        this.gaTrack("generated_magic_signin_link", link.category);
         const { userKey, expiration } = resp;
 
-        const signedIn = new Promise<SignInOutcome>((resolve) => {
+        const followed = new Promise<EmailLinkFollowed>((resolve) => {
             let waiting = true;
-            const done = (outcome: SignInOutcome) => {
+            const done = (outcome: EmailLinkFollowed) => {
                 if (!waiting) return;
                 waiting = false;
                 poller.stop();
                 resolve(outcome);
+            };
+            const checkFailed = () => {
+                if (waiting) onCheckFailed?.();
             };
             const poller = new Poller(
                 async () => {
@@ -11310,24 +11601,117 @@ export class OpenChat {
                             userKey,
                             sessionKey,
                             expiration,
-                            true,
+                            link.identity === "take",
                         );
                         if (r.kind === "success") {
-                            this.gaTrack("received_email_signin_delegation", "registration");
-                            done(signInOutcome(identityStateStore.value));
+                            this.gaTrack("received_email_signin_delegation", link.category);
+                            done({ key: r.key, delegation: r.delegation });
                         } else if (r.kind === "error") {
                             console.debug("getSignInWithEmailDelegation error", r.error);
+                            checkFailed();
                         }
                     } catch (err) {
                         console.warn("getSignInWithEmailDelegation error", err);
+                        checkFailed();
                     }
                 },
                 1000,
                 1000,
             );
-            signal?.addEventListener("abort", () => done({ kind: "cancelled" }), { once: true });
+            signal?.addEventListener("abort", () => done(undefined), { once: true });
         });
-        return { kind: "sent", code: resp.code, signedIn };
+        return { kind: "sent", code: resp.code, followed };
+    }
+
+    /**
+     * Signs the user in again to prove it's them, without changing who's signed in. Never succeeds
+     * with an identity that isn't theirs: the one they're signed in with or one linked to their
+     * account (isOwnPrincipal). Deleting the account relies on this check alone. `signal` gives it
+     * up. It doesn't reject: anything that goes wrong is `failed`.
+     */
+    async reAuthenticate(method: ReAuthMethod, signal?: AbortSignal): Promise<ReAuthOutcome> {
+        const failed: ReAuthOutcome = {
+            kind: "failed",
+            reason: i18nKey("identity.failure.loginApprover"),
+        };
+        try {
+            const identity = await this.#reAuthIdentity(method);
+            if (signal?.aborted) return { kind: "cancelled" };
+            if (identity === "failed") return failed;
+            const { key, delegation } = identity;
+            const principal = DelegationIdentity.fromDelegation(key, delegation)
+                .getPrincipal()
+                .toString();
+            const own = await isOwnPrincipal(principal, this.AuthPrincipal, async () =>
+                (await this.getAuthenticationPrincipals()).map((p) => p.principal),
+            );
+            if (!own) {
+                return { kind: "failed", reason: i18nKey("identity.failure.principalMismatch") };
+            }
+            const signInProofJwt = await this.getSignInProof(key, delegation);
+            if (signal?.aborted) return { kind: "cancelled" };
+            return {
+                kind: "success",
+                provider: identity.provider,
+                key,
+                delegation,
+                signInProofJwt,
+            };
+        } catch (err) {
+            console.error("Unable to sign in again: ", err);
+            return signal?.aborted ? { kind: "cancelled" } : failed;
+        }
+    }
+
+    // The identity a ReAuthMethod signs in, without taking it
+    async #reAuthIdentity(method: ReAuthMethod): Promise<ReAuthIdentity | "failed"> {
+        switch (method.kind) {
+            case "identity":
+                return method;
+            case "passkey": {
+                const [key, delegation] = await this.reSignInWithCurrentWebAuthnIdentity();
+                return { provider: AuthProvider.PASSKEY, key, delegation };
+            }
+            case "wallet": {
+                const resp = await this.signInWithWallet(
+                    method.token,
+                    method.address,
+                    method.signature,
+                    false,
+                );
+                return resp.kind === "success"
+                    ? { provider: signInProvider(method), ...resp }
+                    : "failed";
+            }
+            case "auth_client": {
+                // Internet Identity or NFID, in a window of their own: a new key, kept in memory
+                const provider = signInProvider(method);
+                const key = await ECDSAKeyIdentity.generate();
+                const storage = new InMemoryAuthClientStorage();
+                const authClient = await AuthClient.create({ storage, identity: key });
+                return new Promise((resolve) => {
+                    authClient.login({
+                        ...this.getAuthClientOptions(provider),
+                        onSuccess: async () => {
+                            const delegation = await storage.get("delegation");
+                            resolve(
+                                delegation
+                                    ? {
+                                          provider,
+                                          key,
+                                          delegation: DelegationChain.fromJSON(delegation),
+                                      }
+                                    : "failed",
+                            );
+                        },
+                        onError: (err) => {
+                            console.log("Failed to log into approver: ", err);
+                            resolve("failed");
+                        },
+                    });
+                });
+            }
+        }
     }
 
     async handleMagicLink(qs: string): Promise<HandleMagicLinkResponse> {
