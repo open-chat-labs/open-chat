@@ -655,7 +655,13 @@ import {
 import { joinGroupFailureMessage } from "./utils/join";
 import { currentTip, tipResult } from "./utils/tip";
 import { cryptoTransferResult } from "./utils/cryptoTransfer";
-import { emailLinkFailure, isOwnPrincipal, signInOutcome, signInProvider } from "./utils/signIn";
+import {
+    emailLinkFailure,
+    isOwnPrincipal,
+    markCurrentSignIn,
+    signInOutcome,
+    signInProvider,
+} from "./utils/signIn";
 import {
     createdUser as createdUserFrom,
     referralCodeRefused,
@@ -13213,22 +13219,22 @@ export class OpenChat {
         });
     }
 
-    getAuthenticationPrincipals(): Promise<LinkedAuthenticationPrincipal[]> {
-        return this.#worker
-            .send({
-                kind: "getAuthenticationPrincipals",
-            })
-            .then((principals) =>
-                Promise.all(
-                    principals.map(async (p) => ({
-                        ...p,
-                        provider: this.#authProviderFromAuthPrincipal(p),
-                        passkeyProvider: p.webAuthnKey
-                            ? await passkeyProviderName(p.webAuthnKey.aaguid)
-                            : undefined,
-                    })),
-                ),
-            );
+    async getAuthenticationPrincipals(): Promise<LinkedAuthenticationPrincipal[]> {
+        const principals = await this.#worker.send({ kind: "getAuthenticationPrincipals" });
+        // the passkey this session signed in with, which the backend can't tell from the others
+        const currentCredentialId = principals.some((p) => p.webAuthnKey !== undefined)
+            ? (this.#webAuthnKey ?? (await this.#worker.send({ kind: "currentUserWebAuthnKey" })))
+                  ?.credentialId
+            : undefined;
+        return Promise.all(
+            markCurrentSignIn(principals, currentCredentialId).map(async (p) => ({
+                ...p,
+                provider: this.#authProviderFromAuthPrincipal(p),
+                passkeyProvider: p.webAuthnKey
+                    ? await passkeyProviderName(p.webAuthnKey.aaguid)
+                    : undefined,
+            })),
+        );
     }
 
     getLinkedIIPrincipal(): Promise<string | undefined> {

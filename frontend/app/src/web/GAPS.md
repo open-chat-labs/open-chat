@@ -143,9 +143,6 @@ design export needs. Each entry says where it came up.
     for Ethereum, Solana or NFID, so those aren't listed; unlinking that fails says it couldn't,
     not why (`unlinkIdentityFailure` has the reason); email links by a typed code in the design,
     by a link the app polls in the app, so the email step isn't offered;
-  - none of the sign-in methods shows as the one in use: the worker marks it by the session's
-    auth principal, which isn't a passkey's (the old desktop list shows no "current" either), so
-    unlinking it is offered, and the backend refuses it (`cannot_unlink_active_principal`);
   - deleting the account: the third step's "stay for the CHIT" (`onChitBribe`) does nothing more
     than staying; signing in again is the sign-in dialog (no design, as Forgot PIN's);
   - the cover's edit button is passed `isDiamond`, but the app's rule is a premium item: a

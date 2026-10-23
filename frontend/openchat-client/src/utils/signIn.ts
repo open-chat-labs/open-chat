@@ -1,6 +1,7 @@
 import {
     AuthProvider,
     i18nKey,
+    type AuthenticationPrincipal,
     type IdentityState,
     type RemoveIdentityLinkResponse,
     type ResourceKey,
@@ -120,4 +121,27 @@ export function unlinkIdentityFailure(resp: RemoveIdentityLinkResponse): Resourc
         default:
             return resp satisfies never;
     }
+}
+
+/**
+ * The linked sign-in methods with the one this session signed in with marked (isCurrentIdentity).
+ * The backend marks it by the session's auth principal, which a passkey's linked principal never
+ * is, so a passkey is also current when its credential is the one this session used.
+ */
+export function markCurrentSignIn<T extends AuthenticationPrincipal>(
+    principals: T[],
+    currentCredentialId: Uint8Array | undefined,
+): T[] {
+    return principals.map((p) =>
+        p.isCurrentIdentity ||
+        currentCredentialId === undefined ||
+        p.webAuthnKey === undefined ||
+        !sameBytes(p.webAuthnKey.credentialId, currentCredentialId)
+            ? p
+            : { ...p, isCurrentIdentity: true },
+    );
+}
+
+function sameBytes(a: Uint8Array, b: Uint8Array): boolean {
+    return a.length === b.length && a.every((byte, i) => byte === b[i]);
 }

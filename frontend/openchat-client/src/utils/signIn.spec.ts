@@ -1,5 +1,5 @@
 import { AuthProvider } from "@shared";
-import { isOwnPrincipal, signInOptions, unlinkIdentityFailure } from "./signIn";
+import { isOwnPrincipal, markCurrentSignIn, signInOptions, unlinkIdentityFailure } from "./signIn";
 
 describe("signing in again accepts a linked principal and refuses any other", () => {
     const linked = async () => ["linked-principal"];
@@ -56,5 +56,37 @@ describe("unlinking a sign-in method", () => {
         expect(unlinkIdentityFailure("identity_link_not_found")?.key).toBe(
             "identity.failure.identityNotFound",
         );
+    });
+});
+
+describe("the sign-in method this session used", () => {
+    const passkey = (principal: string, id: number[], current = false) => ({
+        principal,
+        originatingCanister: "c",
+        isIIPrincipal: false,
+        isCurrentIdentity: current,
+        webAuthnKey: {
+            publicKey: new Uint8Array(),
+            credentialId: new Uint8Array(id),
+            origin: "o",
+            crossPlatform: false,
+            aaguid: new Uint8Array(),
+        },
+    });
+
+    test("is the passkey whose credential the session used, which the backend can't tell", () => {
+        const marked = markCurrentSignIn(
+            [passkey("a", [1, 2]), passkey("b", [3, 4])],
+            new Uint8Array([3, 4]),
+        );
+        expect(marked.map((p) => [p.principal, p.isCurrentIdentity])).toEqual([
+            ["a", false],
+            ["b", true],
+        ]);
+    });
+
+    test("stays the one the backend marked, and is none without a passkey session", () => {
+        const marked = markCurrentSignIn([passkey("a", [1], true), passkey("b", [2])], undefined);
+        expect(marked.map((p) => p.isCurrentIdentity)).toEqual([true, false]);
     });
 });
