@@ -9,7 +9,9 @@
     import ChatMessageContent from "../home/ChatMessageContent.svelte";
     import BotAvatar from "./BotAvatar.svelte";
 
-    const duration = 10_000;
+    // Long enough to read and act on a reply with several steps or a link, eg. a bridge bot's
+    // instructions. It can be closed sooner.
+    const duration = 60_000;
 
     interface Props {
         event: EphemeralMessageEvent;
@@ -24,7 +26,15 @@
     onMount(() => {
         perc.target = 0;
         timer = window.setTimeout(onClose, duration);
-        return clearTimer;
+        // Paused while the app is hidden, eg. while someone follows a link in the reply elsewhere,
+        // so it's still there when they come back
+        const visibilityChanged = () => (document.hidden ? pause() : resume());
+        if (document.hidden) pause();
+        document.addEventListener("visibilitychange", visibilityChanged);
+        return () => {
+            document.removeEventListener("visibilitychange", visibilityChanged);
+            clearTimer();
+        };
     });
 
     function clearTimer() {
@@ -38,6 +48,9 @@
     }
 
     function resume() {
+        // So a resume without a pause, eg. a mouseup from a drag which started elsewhere, doesn't
+        // leave a second timer running
+        clearTimer();
         const remainingTime = (perc.current / 100) * duration;
         perc.set(0, { duration: remainingTime });
         timer = window.setTimeout(onClose, remainingTime);
