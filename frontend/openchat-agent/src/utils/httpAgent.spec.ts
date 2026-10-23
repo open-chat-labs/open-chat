@@ -201,6 +201,16 @@ describe("createQueryAwareFetch's connection outcomes", () => {
         expect(outcomes.bad).not.toHaveBeenCalled();
     });
 
+    // Update calls wait on consensus even on a good connection, so they'd make it look slow
+    test("update calls are never measured", async () => {
+        const outcomes = recorder();
+        const { fn } = hangingFetch();
+        void createQueryAwareFetch(fn, 60_000, outcomes)(CALL_URL);
+        await vi.advanceTimersByTimeAsync(SLOW_QUERY_MS * 2);
+        expect(outcomes.bad).not.toHaveBeenCalled();
+        expect(outcomes.good).not.toHaveBeenCalled();
+    });
+
     test("a query that fails on the network counts as bad", async () => {
         const outcomes = recorder();
         const fn = vi.fn(async () => {

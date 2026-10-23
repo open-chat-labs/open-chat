@@ -1,12 +1,8 @@
 import { vi } from "vitest";
-import {
-    BAD_QUERIES_TO_UNUSABLE,
-    ConnectionHealth,
-    FAST_RESPONSE_MS,
-    PROBE_INTERVALS_MS,
-} from "./connectionHealth";
+import { BAD_QUERIES_TO_UNUSABLE, ConnectionHealth, FAST_RESPONSE_MS } from "./connectionHealth";
 
-const LONGEST_PROBE_INTERVAL_MS = Math.max(...PROBE_INTERVALS_MS);
+// The issue promises a probe at least this often while unusable
+const LONGEST_PROBE_INTERVAL_MS = 60_000;
 
 function setup(probeResults: boolean[] = [], online = true) {
     const probe = vi.fn(async () => probeResults.shift() ?? false);
@@ -64,6 +60,17 @@ describe("ConnectionHealth", () => {
         expect(probe).toHaveBeenCalledTimes(failures + 1);
         expect(health.unusable).toBe(false);
         expect(changes).toEqual([true, false]);
+    });
+
+    // Probes cost traffic and battery on a bad connection, so they never come faster than the
+    // backoff allows
+    test("probes an unusable connection no more often than the backoff allows", async () => {
+        const { health, probe } = setup();
+        makeUnusable(health);
+        await vi.advanceTimersByTimeAsync(10 * 60_000);
+        // 5s, 10s, 20s, 40s, then every 60s: 4 probes in the first 75s, then one a minute
+        expect(probe.mock.calls.length).toBeLessThanOrEqual(4 + 10);
+        expect(probe.mock.calls.length).toBeGreaterThanOrEqual(10);
     });
 
     // Invariant 1, with the browser reporting no network: the schedule keeps going without the
