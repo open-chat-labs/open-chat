@@ -206,6 +206,11 @@
   const LINK_STEPS = ['ui.profileDialog.device.step1', 'ui.profileDialog.device.step2', 'ui.profileDialog.device.step3'];
   const icon = (name: string) => `var(--icon-${name}) center/contain no-repeat`;
   const BLANK_GIF = 'data:image/gif;base64,R0lGODlhAQABAAAAACw=';
+  /** A principal's first two and last two groups with the rest elided (an email stays whole). */
+  const shortId = (id: string) => {
+    const groups = id.split('-');
+    return groups.length > 4 ? `${groups.slice(0, 2).join('-')}-…-${groups.slice(-2).join('-')}` : id;
+  };
 </script>
 
 <script lang="ts">
@@ -1563,7 +1568,7 @@
             {#if siCurrent}
               <div class="current">
                 <span class="current-tile">{@render glyph(SI_TYPES[siCurrent.type].icon, 'current-glyph')}</span>
-                <div class="current-text"><span class="current-kicker">{t('ui.profileDialog.signin.signedInWith')}</span><span class="current-title">{siCurrent.title}</span><span class="current-id">{siCurrent.id}</span></div>
+                <div class="current-text"><span class="current-kicker">{t('ui.profileDialog.signin.signedInWith')}</span><span class="current-title">{siCurrent.title}</span><span class="current-id" title={siCurrent.id}>{shortId(siCurrent.id)}</span></div>
                 <span class="locked" title={t('ui.profileDialog.signin.lockedTitle')}>{@render glyph('lock', 'locked-glyph')}{t('ui.profileDialog.signin.cantUnlink')}</span>
               </div>
             {/if}
@@ -3489,8 +3494,11 @@
   }
 
   .current-id {
+    overflow: hidden;
     font: var(--weight-regular) 11.5px/1 var(--font-mono);
     color: var(--ink-4);
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
   .locked {

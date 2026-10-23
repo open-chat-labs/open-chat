@@ -182,6 +182,7 @@
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
 
 ## 2026-10-23 — ProfileDialog: no empty "last used" line, and a delete step for a user without CHIT, by hand
+- The signed-in method's id is shortened to its first two and last two groups (`bhnj4-strvt-…-s3iwt-pae`, as the design's samples are), on one line, the whole id on hover. A real principal ran onto a second line.
 - A sign-in group's last row has no rule under it (the rule separates a row from the "add" row, when there is one), and a group with no method linked shows its note in a row as tall as a method's, centred.
 - A sign-in method shows its "last used" line only when there's something to say (`used`, or "Just linked"). An empty line (and its gap) pushed the method's name off centre.
 - The delete flow's third step ("Think of your CHIT!") tells a user who has never earned any CHIT (`balance` and `chitEarned` both 0) that they haven't discovered it yet, instead of "you'll lose 0 CHIT and your 0-day streak", and leaves out the zeroed streak and balance (new keys `ui.profileDialog.delete.step3NoChit*`).
