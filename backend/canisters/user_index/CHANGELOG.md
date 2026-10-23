@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Limit users to one linked account per platform (Discord/Telegram) ([#10169](https://github.com/open-chat-labs/open-chat/pull/10169))
+- Store each Telegram user's `photo_id` so we can display their avatars within OpenChat ([#10196](https://github.com/open-chat-labs/open-chat/pull/10196))
 
 ### Removed
 

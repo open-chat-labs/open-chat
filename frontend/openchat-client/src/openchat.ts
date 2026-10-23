@@ -2718,7 +2718,7 @@ export class OpenChat {
 
     // The avatar of the author of a message a bridge bot relayed from another platform
     bridgedAvatarUrl(id: BridgedUserId, summary: BridgedUserSummary | undefined): string {
-        return bridgedAuthorAvatarUrl(id, summary, this.config.blobUrlPattern) ?? userAvatarUrl();
+        return bridgedAuthorAvatarUrl(id, summary, this.config.bridgeAvatarsUrl) ?? userAvatarUrl();
     }
     formatTokens = formatTokens;
     validateTokenInput = validateTokenInput;

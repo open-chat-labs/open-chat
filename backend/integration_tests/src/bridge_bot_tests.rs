@@ -11,9 +11,9 @@ use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::random_string;
 use types::{
-    BlobReference, BotChatContext, BotInstallationLocation, BotMessageContent, BotPermissions, BridgePlatform, BridgedUser,
-    CanisterId, Chat, ChatEvent, DiscordUser, Empty, EventsResponse, MessageContent, MessageId, MessageIndex,
-    MessagePermission, SenderContext, TelegramUser, TextContent, UnitResult, UserId,
+    BotChatContext, BotInstallationLocation, BotMessageContent, BotPermissions, BridgePlatform, BridgedUser, CanisterId, Chat,
+    ChatEvent, DiscordUser, Empty, EventsResponse, MessageContent, MessageId, MessageIndex, MessagePermission, SenderContext,
+    TelegramUser, TextContent, UnitResult, UserId,
 };
 use user_index_canister::link_bridged_user::Response as LinkResponse;
 use user_index_canister::start_bridged_user_link::Response as StartLinkResponse;
@@ -111,10 +111,7 @@ fn bridge_bots_relay_messages_as_their_authors() {
         id: 123456789,
         username: Some("nelly".to_string()),
         display_name: "Nelly Smith".to_string(),
-        avatar: Some(BlobReference {
-            canister_id: canister_ids.user_index,
-            blob_id: 1,
-        }),
+        photo_id: Some("AQADtLwxG5a_QEZ-".to_string()),
     });
 
     // Relayed into a channel and into a group, each message keeps its author on the other platform

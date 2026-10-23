@@ -1030,6 +1030,14 @@ export const ChitEarnedGate = /* @__PURE__ */ Type.Object({
     min_chit_earned: Type.Number(),
 });
 
+export type TelegramUser = Static<typeof TelegramUser>;
+export const TelegramUser = /* @__PURE__ */ Type.Object({
+    id: Type.BigInt(),
+    username: Type.Optional(Type.String()),
+    display_name: Type.String(),
+    photo_id: Type.Optional(Type.String()),
+});
+
 export type UserId = Static<typeof UserId>;
 export const UserId = TSPrincipal;
 
@@ -5254,6 +5262,16 @@ export const CommunityMembershipUpdates = /* @__PURE__ */ Type.Object({
     lapsed: Type.Optional(Type.Boolean()),
 });
 
+export type BridgedUser = Static<typeof BridgedUser>;
+export const BridgedUser = /* @__PURE__ */ Type.Union([
+    Type.Object({
+        Discord: DiscordUser,
+    }),
+    Type.Object({
+        Telegram: TelegramUser,
+    }),
+]);
+
 export type GiphyContent = Static<typeof GiphyContent>;
 export const GiphyContent = /* @__PURE__ */ Type.Object({
     caption: Type.Optional(Type.String()),
@@ -6252,14 +6270,6 @@ export const GroupVisibilityChanged = /* @__PURE__ */ Type.Object({
     public: Type.Optional(Type.Boolean()),
     messages_visible_to_non_members: Type.Optional(Type.Boolean()),
     changed_by: UserId,
-});
-
-export type TelegramUser = Static<typeof TelegramUser>;
-export const TelegramUser = /* @__PURE__ */ Type.Object({
-    id: Type.BigInt(),
-    username: Type.Optional(Type.String()),
-    display_name: Type.String(),
-    avatar: Type.Optional(BlobReference),
 });
 
 export type MarkVideoCallAsEndedArgs = Static<typeof MarkVideoCallAsEndedArgs>;
@@ -7960,6 +7970,13 @@ export const VideoCallContent = /* @__PURE__ */ Type.Object({
     hidden_participants: Type.Number(),
 });
 
+export type BridgedUserSummary = Static<typeof BridgedUserSummary>;
+export const BridgedUserSummary = /* @__PURE__ */ Type.Object({
+    user: BridgedUser,
+    linked_user_id: Type.Optional(UserId),
+    updated: Type.BigInt(),
+});
+
 export type EventWrapperGroupFrozen = Static<typeof EventWrapperGroupFrozen>;
 export const EventWrapperGroupFrozen = /* @__PURE__ */ Type.Object({
     index: EventIndex,
@@ -7981,16 +7998,6 @@ export const SignedDelegation = /* @__PURE__ */ Type.Object({
     delegation: Delegation,
     signature: TSBytes,
 });
-
-export type BridgedUser = Static<typeof BridgedUser>;
-export const BridgedUser = /* @__PURE__ */ Type.Union([
-    Type.Object({
-        Discord: DiscordUser,
-    }),
-    Type.Object({
-        Telegram: TelegramUser,
-    }),
-]);
 
 export type FailedCryptoTransaction = Static<typeof FailedCryptoTransaction>;
 export const FailedCryptoTransaction = /* @__PURE__ */ Type.Union([
@@ -8398,6 +8405,18 @@ export const RegistryUpdatesResponse = /* @__PURE__ */ Type.Union([
     }),
     Type.Literal("SuccessNoUpdates"),
 ]);
+
+export type UserIndexBridgedUsersResponse = Static<typeof UserIndexBridgedUsersResponse>;
+export const UserIndexBridgedUsersResponse = /* @__PURE__ */ Type.Object({
+    Success: Type.Array(BridgedUserSummary),
+});
+
+export type UserIndexLinkedBridgedUsersResponse = Static<
+    typeof UserIndexLinkedBridgedUsersResponse
+>;
+export const UserIndexLinkedBridgedUsersResponse = /* @__PURE__ */ Type.Object({
+    Success: Type.Array(BridgedUserSummary),
+});
 
 export type UserIndexProposeProtectedActionProtectedAction = Static<
     typeof UserIndexProposeProtectedActionProtectedAction
@@ -8929,13 +8948,6 @@ export const BotCommandInitial = /* @__PURE__ */ Type.Object({
     meta: Type.Optional(BotCommandMeta),
 });
 
-export type BridgedUserSummary = Static<typeof BridgedUserSummary>;
-export const BridgedUserSummary = /* @__PURE__ */ Type.Object({
-    user: BridgedUser,
-    linked_user_id: Type.Optional(UserId),
-    updated: Type.BigInt(),
-});
-
 export type BotCommandDefinition = Static<typeof BotCommandDefinition>;
 export const BotCommandDefinition = /* @__PURE__ */ Type.Object({
     name: Type.String(),
@@ -9100,18 +9112,6 @@ export const UserIndexBotUpdatesBotDetails = /* @__PURE__ */ Type.Object({
     last_updated: Type.BigInt(),
     registration_status: BotRegistrationStatus,
     restricted_locations: Type.Optional(Type.Array(BotInstallationLocationType)),
-});
-
-export type UserIndexBridgedUsersResponse = Static<typeof UserIndexBridgedUsersResponse>;
-export const UserIndexBridgedUsersResponse = /* @__PURE__ */ Type.Object({
-    Success: Type.Array(BridgedUserSummary),
-});
-
-export type UserIndexLinkedBridgedUsersResponse = Static<
-    typeof UserIndexLinkedBridgedUsersResponse
->;
-export const UserIndexLinkedBridgedUsersResponse = /* @__PURE__ */ Type.Object({
-    Success: Type.Array(BridgedUserSummary),
 });
 
 export type UserIndexUsersResult = Static<typeof UserIndexUsersResult>;

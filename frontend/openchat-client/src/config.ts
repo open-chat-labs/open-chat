@@ -22,6 +22,9 @@ export type OpenChatConfig = {
     meteredApiKey: string;
     enableMultiCrypto?: boolean;
     blobUrlPattern: string;
+    // Where the bridges' CDN serves the avatars of the accounts they relay messages from, eg. a
+    // Telegram user's photo. Empty where there's none.
+    bridgeAvatarsUrl: string;
     canisterUrlPath: string;
     proposalBotCanister: string;
     signInWithEmailCanister: string;

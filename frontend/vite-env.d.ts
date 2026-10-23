@@ -14,6 +14,7 @@ interface ImportMetaEnv {
     readonly OC_WEB_FONTS_URL: string;
     readonly OC_BITCOIN_MAINNET_ENABLED: string;
     readonly OC_BLOB_URL_PATTERN: string;
+    readonly OC_BRIDGE_AVATARS_URL: string;
     readonly OC_BUILD_ENV: string;
     readonly OC_CANISTER_URL_PATH: string;
     readonly OC_DFX_NETWORK: string;
