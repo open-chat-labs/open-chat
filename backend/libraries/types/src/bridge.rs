@@ -1,4 +1,4 @@
-use crate::{BlobReference, TimestampMillis, UserId};
+use crate::{TimestampMillis, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
@@ -67,8 +67,11 @@ pub struct TelegramUser {
     pub username: Option<String>,
     // The user's first and last names, or the title of the chat which sent the message
     pub display_name: String,
-    // A copy in OpenChat's storage, since the urls of Telegram's own copies contain the bot's token
-    pub avatar: Option<BlobReference>,
+    // Telegram's `file_unique_id` for the user's profile photo, which the Telegram bridge copies to
+    // its own CDN, since the urls of Telegram's copies contain the bot's token. The website builds
+    // the photo's url from it and the user's id, as it does for a Discord avatar from its hash. It's
+    // the same whichever bot sees the photo, so a new photo has a new id, and a new url.
+    pub photo_id: Option<String>,
 }
 
 // Discord's own limits. Users' names are at most 32 characters, webhooks' at most 80
@@ -78,6 +81,8 @@ const DISCORD_AVATAR_HASH_LENGTH: usize = 32;
 // chat's title at most 128
 const MAX_TELEGRAM_USERNAME_LENGTH: usize = 32;
 const MAX_TELEGRAM_DISPLAY_NAME_LENGTH: usize = 129;
+// Telegram's file ids are base64url, and a `file_unique_id` is short
+const MAX_TELEGRAM_PHOTO_ID_LENGTH: usize = 64;
 
 impl BridgedUserId {
     pub fn platform(&self) -> BridgePlatform {
@@ -152,7 +157,15 @@ impl TelegramUser {
         if let Some(username) = &self.username {
             validate_name("Telegram username", username, MAX_TELEGRAM_USERNAME_LENGTH)?;
         }
-        validate_name("Telegram display name", &self.display_name, MAX_TELEGRAM_DISPLAY_NAME_LENGTH)
+        validate_name("Telegram display name", &self.display_name, MAX_TELEGRAM_DISPLAY_NAME_LENGTH)?;
+        if let Some(photo_id) = &self.photo_id
+            && (photo_id.is_empty()
+                || photo_id.len() > MAX_TELEGRAM_PHOTO_ID_LENGTH
+                || !photo_id.chars().all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-'))
+        {
+            return Err("Telegram photo id must be a file_unique_id".to_string());
+        }
+        Ok(())
     }
 }
 
@@ -167,7 +180,6 @@ fn validate_name(field: &str, name: &str, max_length: usize) -> Result<(), Strin
 #[cfg(test)]
 mod tests {
     use super::*;
-    use candid::Principal;
 
     fn discord_user() -> DiscordUser {
         DiscordUser {
@@ -183,10 +195,7 @@ mod tests {
             id: 123456789,
             username: Some("nelly".to_string()),
             display_name: "Nelly Smith".to_string(),
-            avatar: Some(BlobReference {
-                canister_id: Principal::from_text("rturd-qaaaa-aaaaf-aabaq-cai").unwrap(),
-                blob_id: 1,
-            }),
+            photo_id: Some("AQADtLwxG5a_QEZ-".to_string()),
         }
     }
 
@@ -260,7 +269,7 @@ mod tests {
             TelegramUser {
                 id: -1001234567890,
                 username: None,
-                avatar: None,
+                photo_id: None,
                 ..telegram_user()
             }
             .validate()
@@ -289,6 +298,17 @@ mod tests {
             },
         ] {
             assert!(user.validate().is_err(), "{user:?}");
+        }
+    }
+
+    #[test]
+    fn invalid_telegram_photo_ids() {
+        for photo_id in ["", "a b", "https://t.me/i/userpic/320/nelly.jpg", &"a".repeat(65)] {
+            let user = TelegramUser {
+                photo_id: Some(photo_id.to_string()),
+                ..telegram_user()
+            };
+            assert!(user.validate().is_err(), "{photo_id}");
         }
     }
 

@@ -1039,8 +1039,9 @@ export type TelegramUser = {
     id: string;
     username?: string;
     displayName: string;
-    // A copy in OpenChat's storage, since the urls of Telegram's own copies contain the bot's token
-    avatar?: BlobReference;
+    // Telegram's `file_unique_id` for the user's profile photo, which the bridge copies to its CDN,
+    // as the urls of Telegram's own copies contain the bot's token. A new photo has a new id.
+    photoId?: string;
 };
 
 export type WebhookContext = {

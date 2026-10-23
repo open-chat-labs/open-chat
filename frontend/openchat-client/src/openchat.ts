@@ -2720,7 +2720,7 @@ export class OpenChat {
     // user with no photo gets a generated one, as an OpenChat user with no avatar does.
     bridgedAvatarUrl(id: BridgedUserId, summary: BridgedUserSummary | undefined): string {
         return (
-            bridgedAuthorAvatarUrl(id, summary, this.config.blobUrlPattern) ??
+            bridgedAuthorAvatarUrl(id, summary, this.config.bridgeAvatarsUrl) ??
             buildIdenticonUrl(bridgedUserKey(id)!)
         );
     }
