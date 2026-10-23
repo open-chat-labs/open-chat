@@ -15,6 +15,8 @@
         currentStreak,
         dailyChitClaimable,
         latestSuccessfulUpdatesLoop,
+        mergeChitEvents,
+        ONE_DAY,
         currentUserIdStore,
         currentUserProfileStore,
         fontScaleStore,
@@ -415,8 +417,11 @@
 
     // every claim since the account was made: the calendar pages through the months itself, and a
     // claim's streak day follows from the ones before it. Loaded once CHIT's section shows (not
-    // while CHIT is off), then only what's newer each time it shows again; a load that fails
-    // leaves the calendar as it was
+    // while CHIT is off), then each time it shows again from two days before the newest event it
+    // has: an insured day is marked after midnight, and a claim reinstated, at the end of its
+    // (past) day, so either can come in older than what's loaded. A load that fails leaves the
+    // calendar as it was
+    const RELOAD_MARGIN_DAYS = 2;
     let chitEvents: ChitEvent[] = [];
     let claimHistory = $state<ClaimDay[]>([]);
     let claimHistoryRun = 0;
@@ -427,10 +432,12 @@
         const newest = chitEvents.at(-1)?.timestamp;
         try {
             const events = await client.chitHistory(
-                newest === undefined ? BigInt(header.joined) : newest + 1n,
+                newest === undefined
+                    ? BigInt(header.joined)
+                    : newest - BigInt(RELOAD_MARGIN_DAYS * ONE_DAY),
             );
             if (run !== claimHistoryRun) return;
-            chitEvents = [...chitEvents, ...events];
+            chitEvents = mergeChitEvents(chitEvents, events);
             claimHistory = withClaimedHere(claimDays(chitEvents));
         } catch (err) {
             console.warn("Unable to load the CHIT claim history", err);

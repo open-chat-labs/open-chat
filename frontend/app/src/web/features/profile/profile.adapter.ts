@@ -266,20 +266,20 @@ export function calendarDay(ms: number, offsetMinutes: OffsetMinutes = browserOf
 }
 
 // An insured or reinstated day is marked at the last ms of that day in the zone the user claimed
-// from, which needn't be this browser's (they travelled, or use another device): its day is the
-// one it ends, in the zone (whole minutes, UTC-12 to UTC+14) closest to this browser's. Anything
-// else falls on its day here.
-function markerDay(ms: number, offsetMinutes: OffsetMinutes): number {
-    // the next day's start in that zone, so `end + offset` is a whole number of days
+// from (the backend's), which needn't be this browser's: the zone (whole minutes, UTC-12 to
+// UTC+14) that makes the next ms a day's start, the one closest to `here` when two do. Undefined
+// for a timestamp that isn't a day's last ms in any zone.
+function markerOffset(ms: number, here: number): number | undefined {
     const end = ms + 1;
     const rest = ((-end % ONE_DAY) + ONE_DAY) % ONE_DAY;
-    if (rest % MINUTE !== 0) return calendarDay(ms, offsetMinutes);
-    const here = offsetMinutes(ms) * MINUTE;
-    const offset = [rest - ONE_DAY, rest]
+    if (rest % MINUTE !== 0) return undefined;
+    return [rest - ONE_DAY, rest]
         .filter((o) => o >= -12 * HOUR && o <= 14 * HOUR)
         .reduce((best, o) => (Math.abs(o - here) < Math.abs(best - here) ? o : best));
-    return end + offset - ONE_DAY;
 }
+
+// how near a claim has to be to a marker to be taken as made in the marker's zone
+const ZONE_NEAR = 3 * ONE_DAY;
 
 /** Today's claim as the calendar shows it, from what claiming answered. */
 export function claimedNow(
@@ -300,25 +300,44 @@ type DayEvent = { kind: ChitEvent["reason"]["kind"]; ms: number; amount: number 
 
 /**
  * The CHIT calendar's days from the user's CHIT events (any order): a daily claim, a claim
- * reinstated, or a day covered by streak insurance, each on the user's own day. One a day: the
- * first claim, or else the day's marker. Each one's streak day follows from the days before it:
- * one more than the day before, or 1 after a gap. A reinstated claim is a kept day with nothing
- * earned.
+ * reinstated, or a day covered by streak insurance, each on the user's own day, as the backend
+ * counts it: in the zone the user claimed from. The backend doesn't say which zone that was for
+ * a claim, but a marker (an insured or reinstated day) shows it, so a claim within three days of
+ * one is taken as made in its zone, and any other in this browser's. One a day: the first claim,
+ * or else the day's marker. Each one's streak day follows from the days before it: one more than
+ * the day before, or 1 after a gap. A reinstated claim is a kept day with nothing earned.
  */
 export function claimDays(
     events: ChitEvent[],
     offsetMinutes: OffsetMinutes = browserOffset,
 ): ClaimDay[] {
-    const byDay = new Map<number, DayEvent>();
     const sorted = [...events].sort((a, b) => (a.timestamp < b.timestamp ? -1 : 1));
+    const isMarker = (kind: ChitEvent["reason"]["kind"]) =>
+        kind === "daily_claim_reinstated" || kind === "streak_insurance_claim";
+    const zones = sorted.flatMap(({ reason, timestamp }) => {
+        const ms = Number(timestamp);
+        const offset = isMarker(reason.kind)
+            ? markerOffset(ms, offsetMinutes(ms) * MINUTE)
+            : undefined;
+        return offset === undefined ? [] : [{ ms, offset }];
+    });
+    const zoneAt = (ms: number): number => {
+        const near = zones
+            .filter((z) => Math.abs(z.ms - ms) <= ZONE_NEAR)
+            .sort((a, b) => Math.abs(a.ms - ms) - Math.abs(b.ms - ms))[0];
+        return near?.offset ?? offsetMinutes(ms) * MINUTE;
+    };
+    const byDay = new Map<number, DayEvent>();
     for (const { reason, timestamp, amount } of sorted) {
         const kind = reason.kind;
         const ms = Number(timestamp);
         let day: number;
-        if (kind === "daily_claim") day = calendarDay(ms, offsetMinutes);
-        else if (kind === "daily_claim_reinstated" || kind === "streak_insurance_claim")
-            day = markerDay(ms, offsetMinutes);
-        else continue;
+        if (kind === "daily_claim") {
+            day = Math.floor((ms + zoneAt(ms)) / ONE_DAY) * ONE_DAY;
+        } else if (isMarker(kind)) {
+            const offset = markerOffset(ms, offsetMinutes(ms) * MINUTE);
+            day = offset === undefined ? calendarDay(ms, offsetMinutes) : ms + 1 + offset - ONE_DAY;
+        } else continue;
         const had = byDay.get(day);
         if (had === undefined || (had.kind !== "daily_claim" && kind === "daily_claim")) {
             byDay.set(day, { kind, ms, amount });

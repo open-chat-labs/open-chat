@@ -283,4 +283,26 @@ describe("the CHIT calendar's days", () => {
             { day: "2026-03-01", streakDay: 1, amount: 10, minute: 60 },
         ]);
     });
+
+    test("a claim near a marker is taken as made in the marker's zone, so the two keep their days", () => {
+        // claimed at 08:00 each day from UTC+10 (22:00 UTC the day before), day 2 missed and
+        // insured, the calendar opened from UTC-5
+        const H = 60 * 60_000;
+        const claimAt = (day: number) => MARCH_1 + (day - 1) * DAY - 2 * H;
+        // the last ms of the 2nd at UTC+10
+        const marker = MARCH_1 + 2 * DAY - 10 * H - 1;
+        const minus5 = () => -300;
+        const events = [
+            at(claimAt(1), "daily_claim", 10),
+            at(marker, "streak_insurance_claim"),
+            at(claimAt(3), "daily_claim", 30),
+        ];
+        expect(
+            claimDays(events, minus5).map((d) => [d.day, d.streakDay, d.insured ?? false]),
+        ).toEqual([
+            ["2026-03-01", 1, false],
+            ["2026-03-02", 2, true],
+            ["2026-03-03", 3, false],
+        ]);
+    });
 });

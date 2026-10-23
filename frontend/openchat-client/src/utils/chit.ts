@@ -1,4 +1,4 @@
-import { ONE_MINUTE_MILLIS, type ChitEvent, type ChitState } from "@shared";
+import { ONE_MINUTE_MILLIS, type ChitEvent, type ChitEventsRequest, type ChitState } from "@shared";
 
 /** The user's streak as of `now` (ms): none once it has ended (`streakEnds`), until they claim again. */
 export function currentStreak(
@@ -9,9 +9,43 @@ export function currentStreak(
 }
 
 /**
- * Every CHIT event `page` gives, oldest first. Read newest first a page at a time (`page` takes how
- * many to pass over and the page size), each page after the ones read so far, so events that share
- * a timestamp aren't missed. Stops at a short page, or after `maxPages` (a bound no account
+ * A page of the CHIT events between `oldest` and `newest` (ms epoch), newest first, passing over
+ * `skip`. Read newest first, the backend takes `from` as the newest bound and `to` as the oldest.
+ */
+export function newestFirstChitEvents(
+    oldest: bigint,
+    newest: bigint,
+    skip: number,
+    max: number,
+): ChitEventsRequest {
+    return { kind: "getChitEvents", from: newest, to: oldest, max, ascending: false, skip };
+}
+
+// an event's identity: two events with the same are one, read twice
+function chitEventKey({ timestamp, amount, reason }: ChitEvent): string {
+    return `${timestamp}|${amount}|${JSON.stringify(reason)}`;
+}
+
+/** `events` then `more`, oldest first, each event once (a page or a load read it again). */
+export function mergeChitEvents(events: ChitEvent[], more: ChitEvent[]): ChitEvent[] {
+    const seen = new Set(events.map(chitEventKey));
+    const merged = [...events];
+    for (const event of more) {
+        const key = chitEventKey(event);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        merged.push(event);
+    }
+    return merged.sort((a, b) =>
+        a.timestamp < b.timestamp ? -1 : a.timestamp > b.timestamp ? 1 : 0,
+    );
+}
+
+/**
+ * Every CHIT event `page` gives, oldest first, each once. Read newest first a page at a time
+ * (`page` takes how many to pass over and the page size), each after the ones read so far, so
+ * events that share a timestamp aren't missed; an event added meanwhile moves the rest down one,
+ * and the one read again is dropped. Stops at a short page, or after `maxPages` (a bound no account
  * reaches), which leaves out the oldest events, not the latest.
  */
 export async function allChitEvents(
@@ -19,13 +53,14 @@ export async function allChitEvents(
     pageSize = 500,
     maxPages = 40,
 ): Promise<ChitEvent[]> {
-    const events: ChitEvent[] = [];
+    const read: ChitEvent[] = [];
     for (let n = 0; n < maxPages; n++) {
-        const got = await page(events.length, pageSize);
-        events.push(...got);
+        const got = await page(read.length, pageSize);
+        read.push(...got);
         if (got.length < pageSize) break;
     }
-    return events.reverse();
+    // oldest first, as they were made (the sort keeps events at one time in that order)
+    return mergeChitEvents([], read.reverse());
 }
 
 // how recent the last sync must be for the claim to be offered where that's checked: older, and

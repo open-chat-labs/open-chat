@@ -563,7 +563,7 @@ import {
     createAndroidWebAuthnPasskeyIdentity,
 } from "./utils/androidWebAuthn";
 import { dataToBlobUrl } from "./utils/blob";
-import { allChitEvents } from "./utils/chit";
+import { allChitEvents, newestFirstChitEvents } from "./utils/chit";
 import {
     appStoreBuild,
     chatRestricted,
@@ -13261,16 +13261,7 @@ export class OpenChat {
         const to = BigInt(Date.now() + ONE_DAY);
         return allChitEvents(
             async (skip, max) =>
-                (
-                    await this.#worker.send({
-                        kind: "getChitEvents",
-                        from,
-                        to,
-                        max,
-                        ascending: false,
-                        skip,
-                    })
-                ).events,
+                (await this.#worker.send(newestFirstChitEvents(from, to, skip, max))).events,
         );
     }
 
