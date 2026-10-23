@@ -1,6 +1,7 @@
 <script lang="ts">
     import {
         chitStateStore,
+        dailyChitClaimable,
         dailyPuzzleStore,
         i18nKey,
         OpenChat,
@@ -78,7 +79,9 @@
     let badgesVisible = $derived(calculateBadgesVisible(streak));
     let maxBadgeVisible = $derived(badgesVisible[badgesVisible.length - 1]);
     let percent = $derived(calculatePercentage(streak, maxBadgeVisible));
-    let claimChitAvailable = $derived($chitStateStore.nextDailyChitClaim < $now500);
+    let claimChitAvailable = $derived(
+        dailyChitClaimable($chitStateStore.nextDailyChitClaim, $now500),
+    );
     let remaining = $derived(
         client.formatTimeRemaining($now500, Number($chitStateStore.nextDailyChitClaim), true),
     );

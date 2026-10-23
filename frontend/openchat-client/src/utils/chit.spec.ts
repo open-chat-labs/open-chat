@@ -1,4 +1,4 @@
-import { allChitEvents, currentStreak } from "./chit";
+import { allChitEvents, currentStreak, dailyChitClaimable } from "./chit";
 
 describe("the current streak", () => {
     test("is the streak until it ends", () => {
@@ -30,5 +30,18 @@ describe("all the CHIT events", () => {
         const page = vi.fn(async (from: bigint) => [event(Number(from)), event(Number(from) + 1)]);
         expect(await allChitEvents(page, 0n, 2, 3)).toHaveLength(6);
         expect(page).toHaveBeenCalledTimes(3);
+    });
+});
+
+describe("whether today's CHIT can be claimed", () => {
+    test("once the next claim's time has come", () => {
+        expect(dailyChitClaimable(2000n, 1000)).toBe(false);
+        expect(dailyChitClaimable(2000n, 3000)).toBe(true);
+    });
+
+    test("and, given the last sync, only while that's under 10 minutes old", () => {
+        const now = 60 * 60_000;
+        expect(dailyChitClaimable(0n, now, now - 9 * 60_000)).toBe(true);
+        expect(dailyChitClaimable(0n, now, now - 11 * 60_000)).toBe(false);
     });
 });

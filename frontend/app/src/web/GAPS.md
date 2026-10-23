@@ -155,9 +155,9 @@ design export needs. Each entry says where it came up.
     user's own (the backend counts a streak in the user's time zone), not the UTC day the dialog
     describes, and a claim's streak day is worked out from the days before it, so it loads the
     whole history; no daily puzzle setting (the app has none to show or hide the puzzle, or to
-    remind of it: 8d), no "Ways to earn more" (the achievements dialog is 8d), and today can't be
-    claimed from the calendar (the CHIT dialog is 8d); the old profile's streak insurance summary
-    has no place here (8d's `StreakInsuranceDialog`);
+    remind of it: 8d), no "Ways to earn more" (the achievements dialog is 8d), and the calendar's
+    Claim claims in place, where the design opens the CHIT dialog (8d); the old profile's streak
+    insurance summary has no place here (8d's `StreakInsuranceDialog`);
   - sign-in methods: linking a passkey or an Internet Identity confirms it with the sign-in dialog
     (signing in again, no design), offering only the way this session signed in; the dialog's
     checklist has no step for it, so "Confirm with your …" waits while that dialog is up; the

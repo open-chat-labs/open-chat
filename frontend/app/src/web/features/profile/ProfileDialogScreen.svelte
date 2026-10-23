@@ -13,6 +13,8 @@
         buildUserBackgroundUrl,
         chitStateStore,
         currentStreak,
+        dailyChitClaimable,
+        latestSuccessfulUpdatesLoop,
         currentUserIdStore,
         currentUserProfileStore,
         fontScaleStore,
@@ -359,6 +361,27 @@
         if (patch.utc !== undefined) utcMode.set(patch.utc);
     }
 
+    // today's claim, as the old desktop rail offers it (only while the last sync is recent)
+    const claimable = $derived(
+        dailyChitClaimable(
+            $chitStateStore.nextDailyChitClaim,
+            $now500,
+            $latestSuccessfulUpdatesLoop,
+        ),
+    );
+
+    // the calendar's Claim: claimed here, as the old CHIT modal claims it, until the CHIT dialog
+    // it opens in the design is built (8d); then the calendar shows the day claimed
+    async function claimChit() {
+        try {
+            await client.claimDailyChit();
+        } catch (err) {
+            console.warn("Unable to claim the daily CHIT", err);
+            toastStore.showFailureToast(i18nKey("dailyChit.failedToClaim"));
+        }
+        await loadClaimHistory();
+    }
+
     // every claim since the account was made, loaded each time the section shows: the calendar
     // pages through the months itself, and a claim's streak day follows from the ones before it
     let claimHistory = $state<ClaimDay[]>([]);
@@ -645,6 +668,8 @@
     chitHideAfterClaim={$hideChitIcon}
     chitUtc={$utcMode}
     {claimHistory}
+    {claimable}
+    onChit={readOnly ? undefined : claimChit}
     puzzleSetting={false}
     onChitSettings={changeChit}
     onlineMinutes={stats.onlineMinutes}
