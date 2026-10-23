@@ -3,7 +3,8 @@
 <script lang="ts">
     import Button from "@openchat/ui/src/lib/components/Button.svelte";
     import DialogShell from "@openchat/ui/src/lib/components/DialogShell.svelte";
-    import type { CropArea, CropSize } from "@src/utils/imageCrop";
+    import type { Dimensions } from "@client";
+    import type { CropArea } from "@src/utils/imageCrop";
     import Cropper, { type OnCropCompleteEvent } from "svelte-easy-crop";
     import { _ } from "svelte-i18n";
 
@@ -11,7 +12,7 @@
         // the picked image, a data URL
         source: string;
         // the size it's saved at, whose shape the crop keeps
-        size: CropSize;
+        size: Dimensions;
         round?: boolean;
         onCrop: (area: CropArea) => void;
         onClose: () => void;

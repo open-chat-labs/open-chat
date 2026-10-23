@@ -2143,8 +2143,13 @@ export class OpenChat {
             });
     }
 
+    /**
+     * Shows the new avatar everywhere at once (`url`), and puts the previous one back if the upload
+     * fails, unless another has been set meanwhile.
+     */
     setUserAvatar(data: Uint8Array, url: string): Promise<bigint | undefined> {
-        const partialUser = userStore.get(currentUserIdStore.value);
+        const userId = currentUserIdStore.value;
+        const partialUser = userStore.get(userId);
         if (partialUser) {
             userStore.addUser({
                 ...partialUser,
@@ -2162,7 +2167,17 @@ export class OpenChat {
                 }));
                 return resp.blobId;
             })
-            .catch(() => undefined);
+            .catch(() => {
+                const shown = userStore.get(userId);
+                if (partialUser !== undefined && shown?.blobUrl === url) {
+                    userStore.addUser({
+                        ...shown,
+                        blobData: partialUser.blobData,
+                        blobUrl: partialUser.blobUrl,
+                    });
+                }
+                return undefined;
+            });
     }
 
     setUserProfileBackground(data: Uint8Array): Promise<bigint | undefined> {

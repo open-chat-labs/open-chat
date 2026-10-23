@@ -246,8 +246,16 @@
     let imageEdit = $state<ImageEdit>({ kind: "none" });
     let fileInput = $state<HTMLInputElement>();
     let picking: ImageTarget = "avatar";
+    // one upload at a time for each: another would race it to the store (and the preview)
+    const uploading = $state<Record<ImageTarget, boolean>>({ avatar: false, cover: false });
+
+    const FAILURES: Record<ImageTarget, string> = {
+        avatar: "avatarUpdateFailed",
+        cover: "profile.backgroundUpdateFailed",
+    };
 
     function pick(target: ImageTarget) {
+        if (uploading[target]) return;
         picking = target;
         fileInput?.click();
     }
@@ -261,25 +269,42 @@
         const file = e.currentTarget.files?.[0];
         e.currentTarget.value = "";
         if (file === undefined) return;
-        imageEdit = { kind: "cropping", target: picking, source: await readImageFile(file) };
+        const target = picking;
+        try {
+            imageEdit = { kind: "cropping", target, source: await readImageFile(file) };
+        } catch (err) {
+            console.warn("Unable to read the picked image", err);
+            toastStore.showFailureToast(i18nKey(FAILURES[target]));
+        }
     }
 
     async function cropped(area: CropArea) {
         if (imageEdit.kind !== "cropping") return;
         const { target, source } = imageEdit;
         imageEdit = { kind: "none" };
+        if (uploading[target]) return;
         const avatar = target === "avatar";
-        const image = await cropImage(source, area, avatar ? AVATAR_SIZE : PROFILE_BACKGROUND_SIZE);
-        if (image === undefined) return;
-        if (avatar) avatarPreview = image.url;
-        else coverPreview = image.url;
-        const blobId = avatar
-            ? await client.setUserAvatar(image.data, image.url)
-            : await client.setUserProfileBackground(image.data);
-        // the saved image's URL from now on (the client has its id), or what was there before
-        if (avatar) avatarPreview = undefined;
-        else coverPreview = undefined;
-        if (blobId === undefined) toastStore.showFailureToast(i18nKey("avatarUpdateFailed"));
+        uploading[target] = true;
+        try {
+            // a file that isn't an image after all (a corrupt one, HEIC named .jpg) fails here
+            const size = avatar ? AVATAR_SIZE : PROFILE_BACKGROUND_SIZE;
+            const image = await cropImage(source, area, size);
+            if (image === undefined) throw new Error("the cropped image couldn't be encoded");
+            if (avatar) avatarPreview = image.url;
+            else coverPreview = image.url;
+            const blobId = avatar
+                ? await client.setUserAvatar(image.data, image.url)
+                : await client.setUserProfileBackground(image.data);
+            if (blobId === undefined) throw new Error("the upload failed");
+        } catch (err) {
+            console.warn(`Unable to save the ${target} image`, err);
+            toastStore.showFailureToast(i18nKey(FAILURES[target]));
+        } finally {
+            // the saved image's URL from now on (the client has its id), or what was there before
+            if (avatar) avatarPreview = undefined;
+            else coverPreview = undefined;
+            uploading[target] = false;
+        }
     }
 </script>
 
@@ -330,7 +355,8 @@
     <PremiumItemDialog
         item={PremiumItem.CustomProfileBackground}
         balance={$chitStateStore.chitBalance}
-        onPaid={() => {
+        useLabel="chooseImage"
+        onUse={() => {
             imageEdit = { kind: "none" };
             pick("cover");
         }}

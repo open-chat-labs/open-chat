@@ -1,4 +1,5 @@
 <script lang="ts">
+    import type { Dimensions } from "@client";
     import type { Snippet } from "svelte";
     import type { OnCropCompleteEvent } from "svelte-easy-crop";
     import {
@@ -7,7 +8,6 @@
         cropImage,
         PROFILE_BACKGROUND_SIZE,
         readImageFile,
-        type CropSize,
     } from "@src/utils/imageCrop";
     import Cropper from "svelte-easy-crop";
     import { i18nKey } from "../i18n/i18n";
@@ -43,7 +43,7 @@
     let showModal = $state(false);
     let cropData: OnCropCompleteEvent | undefined = undefined;
 
-    function getSaveDimensions(mode: Mode): CropSize {
+    function getSaveDimensions(mode: Mode): Dimensions {
         switch (mode) {
             case "avatar":
                 return AVATAR_SIZE;
