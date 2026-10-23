@@ -1,5 +1,8 @@
 import { OpenChat, type OpenChatConfig } from "@client";
 
+/** Where uploaded blobs (avatars, profile backgrounds …) are served from. */
+export const blobUrlPattern: string = import.meta.env.OC_BLOB_URL_PATTERN!;
+
 // The one OpenChat client config, built from the OC_* build env. Each App tree (components,
 // components_mobile, web) creates its client with this once at startup.
 export function createOpenChatClient(
@@ -26,7 +29,7 @@ export function createOpenChatClient(
         videoBridgeUrl: import.meta.env.OC_VIDEO_BRIDGE_URL!,
         translateProxyUrl: import.meta.env.OC_TRANSLATE_PROXY_URL!,
         meteredApiKey: import.meta.env.OC_METERED_APIKEY!,
-        blobUrlPattern: import.meta.env.OC_BLOB_URL_PATTERN!,
+        blobUrlPattern,
         canisterUrlPath: import.meta.env.OC_CANISTER_URL_PATH!,
         proposalBotCanister: import.meta.env.OC_PROPOSALS_BOT_CANISTER!,
         signInWithEmailCanister: import.meta.env.OC_SIGN_IN_WITH_EMAIL_CANISTER!,

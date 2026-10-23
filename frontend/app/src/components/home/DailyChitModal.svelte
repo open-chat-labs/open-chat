@@ -1,6 +1,7 @@
 <script lang="ts">
     import {
         chitStateStore,
+        currentStreak,
         dailyPuzzleStore,
         iconSize,
         publish,
@@ -132,7 +133,7 @@
         learnToEarn = true;
     }
     let available = $derived($chitStateStore.nextDailyChitClaim < $now500);
-    let streak = $derived($chitStateStore.streakEnds < $now500 ? 0 : $chitStateStore.streak);
+    let streak = $derived(currentStreak($chitStateStore, $now500));
     let badgesVisible = $derived(calculateBadgesVisible(streak));
     let maxBadgeVisible = $derived(badgesVisible[badgesVisible.length - 1]);
     let percent = $derived(calculatePercentage(streak, maxBadgeVisible));

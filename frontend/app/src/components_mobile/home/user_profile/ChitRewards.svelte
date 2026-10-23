@@ -3,7 +3,8 @@
     import { i18nKey } from "@src/i18n/i18n";
     import { chitPopup, disableChit, utcMode } from "@src/stores/settings";
     import { Body, BodySmall, Button, Container, Subtitle, Switch } from "component-lib";
-    import { chitStateStore, OpenChat, publish, type ChitEvent } from "@client";
+    import { chitStateStore, currentStreak, OpenChat, publish, type ChitEvent } from "@client";
+    import { now500 } from "@src/stores/time";
     import { getContext } from "svelte";
     import FlashOutline from "svelte-material-icons/FlashOutline.svelte";
     import Calendar from "../../calendar/Calendar.svelte";
@@ -91,7 +92,7 @@
                 insuranceLink={false}
                 useSparkleBox={true}
                 earnMoreLink
-                streak={$chitStateStore.streak}
+                streak={currentStreak($chitStateStore, $now500)}
                 earned={$chitStateStore.totalChitEarned}
                 balance={$chitStateStore.chitBalance} />
         </Container>

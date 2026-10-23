@@ -222,7 +222,8 @@
   interface Props {
     handle: string;
     userId: string;
-    memberSince: string;
+    /** Literal text; without it, the date of `joined` in the host's locale. */
+    memberSince?: string;
     streak: number;
     /** CHIT balance. */
     balance: number;
@@ -237,6 +238,8 @@
     claimable?: boolean;
     /** Section to open on. */
     section?: ProfileSection;
+    /** The sections offered in the nav, for a host that has built only some; defaults to all. */
+    sections?: ProfileSection[];
 
     // CHIT
     chitEnabled?: boolean;
@@ -262,7 +265,8 @@
     onlineMinutes?: number;
     onlineMinutesPrev?: number;
     messageMix?: { label: string; count: number; color?: string }[];
-    engagement?: { count: string; label: string }[];
+    /** A number shows in the host's locale. */
+    engagement?: { count: number | string; label: string }[];
     reported?: number;
 
     // settings
@@ -315,7 +319,9 @@
     onChitBribe?: () => void;
     /** Set (or clear, with null) your name in a community. Rolls back with an error on rejection. */
     onCommunityName?: (communityId: string, name: string | null) => Promise<unknown> | void;
-    onChatSettings?: (settings: ChatSettings) => void;
+    /** A change of one setting, with the others as the host sent them. The toggle shows the new value until this
+     *  settles; then the host's `chatSettings` show, so a change it didn't take goes back. */
+    onChatSettings?: (settings: ChatSettings) => Promise<unknown> | void;
     onAppearance?: (patch: { theme?: string; accent?: string; font?: string }) => void;
     /** Clear this device's cache; "Cleared" shows once it resolves. Hidden without it. */
     onClearCache?: () => Promise<unknown> | void;
@@ -346,6 +352,7 @@
     isVerified = false,
     claimable = false,
     section: initialSection = 'profile',
+    sections,
     chitEnabled = true,
     chitNotify = true,
     chitHideAfterClaim = false,
@@ -449,7 +456,11 @@
     flow.leave(fn);
   }
 
+  // a section the host doesn't offer is never shown
+  const offered = (s: ProfileSection) => sections === undefined || sections.includes(s);
+
   function go(next: ProfileSection) {
+    if (!offered(next)) return;
     section = next;
     if (!fieldBusy) editing = null;
   }
@@ -623,10 +634,21 @@
   let stopPreview: (() => void) | undefined;
   const chat = $derived<ChatSettings>({ ...CHAT_DEFAULTS, ...chatSettings, ...chatOverrides });
 
-  function setChat<K extends keyof ChatSettings>(key: K, value: ChatSettings[K]) {
-    const current = chat;
+  async function setChat<K extends keyof ChatSettings>(key: K, value: ChatSettings[K]) {
     chatOverrides = { ...chatOverrides, [key]: value };
-    onChatSettings?.({ ...current, [key]: value });
+    // without a host the toggle keeps its value (the docs)
+    if (!onChatSettings) return;
+    try {
+      // the host's settings, not other toggles still waiting on it
+      await onChatSettings({ ...CHAT_DEFAULTS, ...chatSettings, [key]: value });
+    } finally {
+      // the host's value shows from now on, unless the toggle has changed again meanwhile
+      if (chatOverrides[key] === value) {
+        const rest = { ...chatOverrides };
+        delete rest[key];
+        chatOverrides = rest;
+      }
+    }
   }
 
   function endPreview() {
@@ -1076,9 +1098,11 @@
     <div class="rail">
       <div class="rail-scroll">
         {#each NAV as group}
+          {@const items = group.items.filter((i) => offered(i[0]) && (i[0] !== 'chit' || chitEnabled || section === 'chit'))}
+          {#if items.length > 0}
           <div class="nav-group">
             <span class="nav-label">{t(group.label)}</span>
-            {#each group.items.filter((i) => i[0] !== 'chit' || chitEnabled || section === 'chit') as [key, title, iconName, tone]}
+            {#each items as [key, title, iconName, tone]}
               {@const on = key === section}
               <div class="nav-item {tone ?? ''}" class:on onclick={() => (key === 'diamond' ? close(onDiamond) : go(key))} role="button" tabindex="0">
                 <span class="nav-icon" style:mask={icon(iconName)}></span>
@@ -1089,6 +1113,7 @@
               </div>
             {/each}
           </div>
+          {/if}
         {/each}
       </div>
       <div class="rail-foot">
@@ -1119,11 +1144,11 @@
       {#if section === 'profile'}
         <div class="scroll gap-18">
           <div class="cover" style:background={cover}>
-            <span class="cover-edit" onclick={() => onCoverEdit?.(isDiamond)} aria-label={t('ui.profileDialog.profile.changeCover')} role="button" tabindex="0" title={t('ui.profileDialog.profile.changeCover')}>{@render glyph('edit', 'cover-edit-glyph')}</span>
+            {#if onCoverEdit}<span class="cover-edit" onclick={() => onCoverEdit(isDiamond)} aria-label={t('ui.profileDialog.profile.changeCover')} role="button" tabindex="0" title={t('ui.profileDialog.profile.changeCover')}>{@render glyph('edit', 'cover-edit-glyph')}</span>{/if}
           </div>
           <div class="identity">
             <span class="avatar" style:background={avatar}>
-              <span class="photo-edit" onclick={() => onPhotoEdit?.()} aria-label={t('ui.profileDialog.profile.changePhoto')} role="button" tabindex="0" title={t('ui.profileDialog.profile.changePhoto')}>{@render glyph('edit', 'photo-edit-glyph')}</span>
+              {#if onPhotoEdit}<span class="photo-edit" onclick={() => onPhotoEdit()} aria-label={t('ui.profileDialog.profile.changePhoto')} role="button" tabindex="0" title={t('ui.profileDialog.profile.changePhoto')}>{@render glyph('edit', 'photo-edit-glyph')}</span>{/if}
             </span>
             <div class="identity-text">
               <div class="name-line">
@@ -1216,7 +1241,7 @@
             </div>
             <div class="kv-row ruled">
               <span class="kv-label">{t('ui.profileDialog.profile.memberSince')}</span>
-              <span class="kv-plain">{memberSince}</span>
+              <span class="kv-plain">{memberSince ?? (joinedProp === undefined ? '' : new Intl.DateTimeFormat(i18n.locale ?? 'en', { day: 'numeric', month: 'short', year: 'numeric' }).format(joinedProp))}</span>
             </div>
             <div class="kv-row ruled">
               <span class="kv-label">{t('ui.profileDialog.profile.userId')}</span>
@@ -1241,7 +1266,7 @@
             </div>
           </div>
           {#each engagement as e}
-            <div class="stat-tile"><span class="tile-figure">{e.count}</span><span class="small-label">{t(e.label)}</span></div>
+            <div class="stat-tile"><span class="tile-figure">{typeof e.count === 'number' ? fmt(e.count) : e.count}</span><span class="small-label">{t(e.label)}</span></div>
           {/each}
           <div class="stat-mix">
             <div class="mix-head"><span class="small-label grow">{t('ui.profileDialog.stats.messagesSent')}</span><span class="mix-total">{fmt(mixTotal)}</span></div>

@@ -1,6 +1,12 @@
 /* Keyframes and global rules collected from component <helmet> blocks. */
 html,body{margin:0}
 body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--surface-0)}
+/* scrollbars: thin, a grey thumb on no track, as the design's docs show them (Docs.svelte). Firefox and
+   Chrome read scrollbar-color; Safari reads the ::-webkit-scrollbar rules */
+*{scrollbar-width:thin;scrollbar-color:rgba(128,128,140,.35) transparent}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{border-radius:99px;background:rgba(128,128,140,.35)}
 @keyframes ocTypingDot{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-2px)}}
 @keyframes oc-spin{to{transform:rotate(360deg)}}
 @keyframes oc-typing{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}

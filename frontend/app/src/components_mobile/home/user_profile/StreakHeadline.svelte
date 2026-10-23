@@ -1,7 +1,8 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import { Container, H1 } from "component-lib";
-    import { chitStateStore } from "@client";
+    import { chitStateStore, currentStreak } from "@client";
+    import { now500 } from "@src/stores/time";
     import Translatable from "@shared_components/Translatable.svelte";
 </script>
 
@@ -9,7 +10,7 @@
     <H1 width={{ size: "70%" }} fontWeight={"bold"} colour={"primary"}>
         <Translatable
             resourceKey={i18nKey("You are on a {streak} day streak!", {
-                streak: $chitStateStore.streak,
+                streak: currentStreak($chitStateStore, $now500),
             })}></Translatable>
     </H1>
 </Container>

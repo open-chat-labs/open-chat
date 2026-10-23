@@ -1,7 +1,7 @@
 <script lang="ts">
     import CollapsibleCard from "@src/components/CollapsibleCard.svelte";
     import { menuCloser } from "component-lib";
-    import { chitStateStore, OpenChat, type ChitEvent } from "@client";
+    import { chitStateStore, currentStreak, OpenChat, type ChitEvent } from "@client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { chitPopup, disableChit, hideChitIcon, utcMode } from "../../../stores/settings";
@@ -18,7 +18,7 @@
     const client = getContext<OpenChat>("client");
     let events = $state<ChitEvent[]>([]);
 
-    let streak = $derived($chitStateStore.streakEnds < $now500 ? 0 : $chitStateStore.streak);
+    let streak = $derived(currentStreak($chitStateStore, $now500));
     let totalEarned = $derived(
         events.reduce((total, ev) => {
             const eventDate = new Date(Number(ev.timestamp));
