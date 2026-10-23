@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Route tips on messages relayed from Discord/Telegram to the OpenChat user who linked the account ([#10211](https://github.com/open-chat-labs/open-chat/pull/10211))
+
 ### Removed
 
 - Remove the fire-and-forget handler, which nothing has sent through since the switch to event queues ([#10172](https://github.com/open-chat-labs/open-chat/pull/10172))
