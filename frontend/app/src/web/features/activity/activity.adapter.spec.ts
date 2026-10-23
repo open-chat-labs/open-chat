@@ -7,6 +7,7 @@ const ctx: ActivityContext = {
     anon: "An anonymous user",
     missing: "Message content unavailable",
     userName: (id) => ({ alice: "Alice", bob: "Bob", carol: "Carol" })[id] ?? id,
+    author: (message) => (message.sender === "me" ? "you" : `author of ${message.sender}`),
     chatName: () => "Group",
     contentText: (content) => (content as { text: string }).text,
     text: ({ key, params }) => `${key}${params ? JSON.stringify(params) : ""}`,
@@ -48,6 +49,12 @@ describe("an activity item", () => {
             chatId: "g1",
             messageId: "42",
         });
+    });
+
+    test("shows its message after whoever it's shown as from, not its sender", () => {
+        expect(activityItem(event({}, { sender: "bridge-bot" }), ctx).preview).toBe(
+            "author of bridge-bot: hello",
+        );
     });
 
     test("names an anonymous user", () => {

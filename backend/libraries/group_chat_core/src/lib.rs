@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 use std::cmp::{Reverse, max, min};
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use types::{
-    AccessGateConfig, AccessGateConfigInternal, AvatarChanged, BotMessageContext, BotNotification, Caller, Chat,
+    AccessGateConfig, AccessGateConfigInternal, AvatarChanged, BotMessageContext, BotNotification, BridgedUserId, Caller, Chat,
     CustomPermission, DiamondMembershipStatus, Document, EventIndex, EventOrExpiredRange, EventWrapper, EventsCaller,
     EventsResponse, ExternalUrlUpdated, GroupDescriptionChanged, GroupMember, GroupNameChanged, GroupPermissions,
     GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype, GroupVisibilityChanged, HydratedMention,
@@ -1002,14 +1002,18 @@ impl GroupChatCore {
         })
     }
 
-    // Checks `user_id` could tip the message now, without tipping it, returning the message's sender,
-    // whom the tip is for. Used before making the transfer for a tip.
+    // Checks `user_id` could tip the message now, without tipping it, returning whom the tip is for:
+    // the message's sender, or for a message a bridge bot relayed, `linked_user`, who linked the
+    // account it came from and must be in the chat. That isn't known here, so without it, the
+    // caller is asked to look them up and call this again. Used before making the transfer for a
+    // tip.
     pub fn check_can_tip_message(
         &self,
         user_id: UserId,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
-    ) -> OCResult<UserId> {
+        linked_user: Option<UserId>,
+    ) -> OCResult<TipRecipient> {
         let member = self.members.get_verified_member(user_id)?;
 
         if !member.role().can_tip_messages(&self.permissions) {
@@ -1021,7 +1025,22 @@ impl GroupChatCore {
             .message_internal(member.min_visible_event_index(), thread_root_message_index, message_id.into())
             .ok_or(OCErrorCode::MessageNotFound)?;
 
-        if message.sender == user_id { Err(OCErrorCode::CannotTipSelf.into()) } else { Ok(message.sender) }
+        let recipient = match (message.bridged_from(), linked_user) {
+            (Some(bridged_from), None) => return Ok(TipRecipient::LinkedUserOf(bridged_from)),
+            (Some(_), Some(linked_user)) => {
+                if self.members.get(&linked_user).is_none() {
+                    return Err(OCErrorCode::TargetUserNotInChat.into());
+                }
+                linked_user
+            }
+            (None, _) => message.sender,
+        };
+
+        if recipient == user_id {
+            Err(OCErrorCode::CannotTipSelf.into())
+        } else {
+            Ok(TipRecipient::User(recipient))
+        }
     }
 
     pub fn tip_message<P: EventPusher>(&mut self, args: TipMessageArgs, event_pusher: P) -> OCResult<UpdateMessageSuccess> {
@@ -2326,6 +2345,14 @@ pub struct LeaveGroupSuccess {
 pub struct ChangeRoleResults {
     pub users: HashMap<UserId, Result<GroupRoleInternal, OCError>>,
     pub bot_notification: Option<BotNotification>,
+}
+
+// Whom a tip on a message is for (see `GroupChatCore::check_can_tip_message`)
+pub enum TipRecipient {
+    User(UserId),
+    // A message a bridge bot relayed, whose tips are for the OpenChat user who linked the account it
+    // came from, which the caller looks up, eg. from its LocalUserIndex
+    LinkedUserOf(BridgedUserId),
 }
 
 #[cfg(test)]

@@ -1492,7 +1492,8 @@ export class CommunityClient
     }
 
     // Tips a message with a transfer the community pulls from the account `transfer` names, which
-    // must have approved the community to, into the wallet of the message's sender
+    // must have approved the community to, into the wallet of the message's sender, or for a
+    // relayed message, of whoever linked the account it came from
     tipMessage(
         chatId: ChannelIdentifier,
         threadRootMessageIndex: number | undefined,

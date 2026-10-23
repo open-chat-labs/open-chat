@@ -1311,10 +1311,12 @@ impl ChatEvents {
         anonymized_id: String,
         mut event_pusher: Option<P>,
     ) -> Result<(), UpdateEventError<OCError>> {
-        if message.sender == args.user_id {
+        if message.sender == args.user_id || args.recipient == args.user_id {
             return Err(UpdateEventError::NoChange(OCErrorCode::CannotTipSelf.into()));
         }
-        if message.sender != args.recipient {
+        // A relayed message's tips go to whoever linked the account it was relayed from, as the
+        // caller found
+        if message.bridged_from().is_none() && message.sender != args.recipient {
             error!(
                 user = %args.user_id,
                 recipient = %args.recipient,

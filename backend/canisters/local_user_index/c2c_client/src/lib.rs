@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use types::{C2CError, CanisterId, UserId};
 
 // Queries
+generate_c2c_call!(c2c_bridged_user_link);
 generate_c2c_call!(c2c_lookup_user);
 generate_c2c_call!(c2c_lookup_users);
 generate_c2c_call!(c2c_previous_user_ids);
@@ -38,6 +39,16 @@ generate_c2c_call!(c2c_group, 300);
 generate_c2c_call!(c2c_community, 300);
 generate_c2c_call!(c2c_user, 300);
 generate_c2c_call!(c2c_daily_puzzle, 300);
+
+// The OpenChat user who has linked the account on another platform, if anyone has
+pub async fn bridged_user_link(
+    user: types::BridgedUserId,
+    local_user_index_canister_id: CanisterId,
+) -> Result<Option<UserId>, C2CError> {
+    let c2c_bridged_user_link::Response::Success(linked_user) =
+        crate::c2c_bridged_user_link(local_user_index_canister_id, &c2c_bridged_user_link::Args { user }).await?;
+    Ok(linked_user)
+}
 
 pub async fn lookup_user(
     user_id_or_principal: Principal,

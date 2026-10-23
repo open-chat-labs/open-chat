@@ -4,7 +4,7 @@
     import Typing from "@shared_components/Typing.svelte";
     import { trackedEffect } from "@src/utils/effects.svelte";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
-    import { allUsersStore, AvatarSize, type ChatIdentifier, chatIdentifiersEqual, chatListScopeStore, type ChatType, BRIDGE_PLATFORM_NAMES, bridgedAuthorName, bridgedFrom, bridgedUserKey, bridgedUsersStore, currentUserIdStore, currentUserStore, type EnhancedReplyContext, iconSize, linkedAuthor, localUpdates, type Member, type Message, type MessageReminderCreatedContent, mobileWidth, OpenChat, publish, routeForMessage, routeStore, screenWidth, ScreenWidth, selectedChatBlockedUsersStore, selectedChatMembersStore, selectedChatWebhooksStore, selectedCommunityMembersStore, type SelectedEmoji, selectedServerChatStore, type SenderContext, shouldShowAsMe, translationsStore, unconfirmedReadByThem, undeletingMessagesStore, type UserSummary } from "@client";
+    import { allUsersStore, AvatarSize, type ChatIdentifier, chatIdentifiersEqual, chatListScopeStore, type ChatType, BRIDGE_PLATFORM_NAMES, bridgedAuthorName, bridgedFrom, bridgedUserKey, bridgedUsersStore, currentUserIdStore, currentUserStore, type EnhancedReplyContext, iconSize, linkedAuthor, localUpdates, type Member, type Message, type MessageReminderCreatedContent, mobileWidth, OpenChat, publish, routeForMessage, routeStore, screenWidth, ScreenWidth, selectedChatBlockedUsersStore, selectedChatMembersStore, selectedChatWebhooksStore, selectedCommunityMembersStore, type SelectedEmoji, selectedServerChatStore, type SenderContext, shouldShowAsMe, tipRecipient, translationsStore, unconfirmedReadByThem, undeletingMessagesStore, type UserSummary } from "@client";
     import { getContext, onDestroy, onMount, tick } from "svelte";
     import { _, locale } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
@@ -428,10 +428,6 @@
     let streak = $derived(author?.streak ?? 0);
     let chitEarned = $derived(author?.totalChitEarned ?? 0);
     let hasAchievedMaxStreak = $derived((author?.maxStreak ?? 0) >= 365);
-    // A tip would go to the bridge bot, not the author shown
-    let canTip = $derived(
-        canTipMessages && !me && confirmed && !inert && !failed && bridged === undefined,
-    );
     let inThread = $derived(threadRootMessage !== undefined);
     let threadRootMessageIndex = $derived(
         threadRootMessage?.messageId === msg.messageId
@@ -486,6 +482,20 @@
             ? $selectedChatMembersStore
             : new Map<string, Member>(),
     );
+    // The sender, or for a relayed message whoever linked its account, if they're in the chat. A
+    // message relayed from the user's own linked account is shown as theirs, so isn't tipped.
+    // Only the members held count, so in a chat too big for all of them to be held, or in a thread
+    // preview from another chat, a relayed message can't be tipped unless its linked user is held.
+    let tipTo = $derived(tipRecipient(msg, $bridgedUsersStore, (userId) => chatMembers.has(userId)));
+    let canTip = $derived(
+        canTipMessages &&
+            !me &&
+            confirmed &&
+            !inert &&
+            !failed &&
+            tipTo !== undefined &&
+            tipTo !== $currentUserIdStore,
+    );
     let tips = $derived(msg.tips ? Object.entries(msg.tips) : []);
     let canBlockUser = $derived(canBlockUsers && !$selectedChatBlockedUsersStore.has(msg.sender));
     // A bot finalises a message it streams by editing it, so that isn't shown as an edit. A bridge
@@ -505,8 +515,13 @@
     <BotProfile {...botProfile} />
 {/if}
 
-{#if tipping !== undefined}
-    <TipBuilder ledger={tipping} onClose={() => (tipping = undefined)} {msg} {messageContext} />
+{#if tipping !== undefined && tipTo !== undefined}
+    <TipBuilder
+        ledger={tipping}
+        onClose={() => (tipping = undefined)}
+        {msg}
+        {messageContext}
+        recipient={tipTo} />
 {/if}
 
 {#if showEmojiPicker && canReact}

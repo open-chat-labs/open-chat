@@ -3,6 +3,7 @@ import {
     messageContextToChatListScope,
     messageContextToString,
     routeForMessage,
+    type Message,
     type MessageActivityEvent,
     type MessageContent,
     type MessageContext,
@@ -26,6 +27,8 @@ export type ActivityContext = {
     /** "Message content unavailable", for an event without its message. */
     missing: string;
     userName: (userId: string) => string;
+    /** Who a message is shown as from, which for one a bridge bot relayed isn't its sender. */
+    author: (message: Message) => string;
     /** The chat an event happened in, as the old feed named it ("Community > channel"). */
     chatName: (context: MessageContext) => string | undefined;
     contentText: (content: MessageContent) => string;
@@ -80,7 +83,7 @@ export function activityItem(event: MessageActivityEvent, ctx: ActivityContext):
         preview:
             message === undefined
                 ? ctx.missing
-                : `${name(message.sender, ctx)}: ${ctx.contentText(message.content)}`,
+                : `${ctx.author(message)}: ${ctx.contentText(message.content)}`,
         time: ctx.time(event.timestamp),
         unread: event.timestamp > ctx.readUpTo,
         color: pickById(event.userId ?? id, COLOURS),

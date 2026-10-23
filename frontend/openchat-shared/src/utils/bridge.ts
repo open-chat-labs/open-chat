@@ -58,6 +58,20 @@ export function isOwnMessage(
     return shouldShowAsMe(message.sender === userId, linkedUserId, userId);
 }
 
+// Who a tip on the message goes to: its sender, or for one a bridge bot relayed, the OpenChat user who
+// linked the account it came from, as OpenChat pays them. They must be in the chat, so a relayed
+// message from an account no one has linked, or whose user isn't in the chat, can't be tipped.
+export function tipRecipient(
+    message: Pick<Message, "sender" | "senderContext">,
+    bridgedUsers: ReadonlyMap<string, BridgedUserSummary>,
+    isMember: (userId: string) => boolean,
+): string | undefined {
+    const from = bridgedFrom(message.senderContext);
+    if (from === undefined) return message.sender;
+    const linkedUserId = bridgedUsers.get(bridgedUserKey(from)!)?.linkedUserId;
+    return linkedUserId !== undefined && isMember(linkedUserId) ? linkedUserId : undefined;
+}
+
 // Identifies an account across platforms, eg. to key the registry's profiles, and to group the
 // messages a bridge bot sends by their authors
 export function bridgedUserKey(id: BridgedUserId | undefined): string | undefined {
@@ -70,12 +84,20 @@ export function bridgedUserId(user: BridgedUser): BridgedUserId {
 
 // The accounts the messages in `events`, and the messages they reply to, were relayed from
 export function bridgedUserIdsFromEvents(events: EventWrapper<ChatEvent>[]): BridgedUserId[] {
+    return bridgedUserIdsFromMessages(
+        events.flatMap((e) => (e.event.kind === "message" ? [e.event] : [])),
+    );
+}
+
+// The accounts the messages, and the messages they reply to, were relayed from
+export function bridgedUserIdsFromMessages(
+    messages: Pick<Message, "senderContext" | "repliesTo">[],
+): BridgedUserId[] {
     const ids = new Map<string, BridgedUserId>();
-    for (const e of events) {
-        if (e.event.kind !== "message") continue;
-        const repliesTo = e.event.repliesTo;
+    for (const message of messages) {
+        const repliesTo = message.repliesTo;
         for (const id of [
-            bridgedFrom(e.event.senderContext),
+            bridgedFrom(message.senderContext),
             repliesTo?.kind === "rehydrated_reply_context"
                 ? bridgedFrom(repliesTo.senderContext)
                 : undefined,
