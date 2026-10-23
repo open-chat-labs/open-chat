@@ -19,12 +19,8 @@
     interface Props {
         autoSelect?: boolean;
         message: ResourceKey;
-        onSuccess: (args: {
-            key: ECDSAKeyIdentity;
-            delegation: DelegationChain;
-            provider: AuthProvider;
-            signInProofJwt: string | undefined;
-        }) => void;
+        // the signing in again, which only a ReAuthentication gives
+        onSuccess: (signedInAgain: ReAuthSuccess) => void;
     }
 
     let { message, onSuccess, autoSelect = false }: Props = $props();

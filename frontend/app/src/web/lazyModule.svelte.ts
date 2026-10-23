@@ -21,16 +21,30 @@ export class LazyModule<M> {
         if (this.module !== undefined || this.#loading) return;
         this.#loading = true;
         this.failed = false;
-        this.#fetch();
+        this.#fetch(true);
     }
 
-    async #fetch(): Promise<void> {
+    /**
+     * Loads it ahead of being wanted. A failure isn't one yet: nothing asked for it, and wanting it
+     * later loads it again.
+     */
+    prefetch(): void {
+        if (this.module !== undefined || this.#loading) return;
+        this.#loading = true;
+        this.#fetch(false);
+    }
+
+    async #fetch(wanted: boolean): Promise<void> {
         const slow = setTimeout(() => (this.slow = true), SLOW_AFTER_MS);
         try {
             this.module = await this.load();
         } catch (err) {
-            console.error("Couldn't load a page's content", err);
-            this.failed = true;
+            if (wanted) {
+                console.error("Couldn't load a page's content", err);
+                this.failed = true;
+            } else {
+                console.warn("Couldn't load a page's content ahead", err);
+            }
         } finally {
             clearTimeout(slow);
             this.slow = false;

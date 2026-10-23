@@ -7,7 +7,7 @@
     import type { PinNumberResolver } from "@shared";
     import { pinNumberErrorMessageStore } from "@src/stores/pinNumber";
     import { toastStore } from "@src/stores/toast";
-    import { i18nKey } from "@i18n/i18n";
+    import { i18nKey, interpolate } from "@i18n/i18n";
     import { getContext, onDestroy, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import SignInAgainDialog from "../auth/SignInAgainDialog.svelte";
@@ -20,7 +20,7 @@
 
     const client = getContext<OpenChat>("client");
     const answer = new PinAnswer(untrack(() => request));
-    const translate = (key: ResourceKey) => $_(key.key, { values: key.params });
+    const translate = (key: ResourceKey) => interpolate($_, key);
 
     let forgot = $state<ForgotPin | undefined>();
 

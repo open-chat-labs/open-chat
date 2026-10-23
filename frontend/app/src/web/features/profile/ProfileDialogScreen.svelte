@@ -85,7 +85,7 @@
     import { SignInAgain } from "../auth/signInAgain.svelte";
     import { shareLink } from "@src/utils/share";
     import { websiteVersion } from "@src/utils/openchatClient";
-    import { i18nKey } from "@src/i18n/i18n";
+    import { i18nKey, interpolate } from "@src/i18n/i18n";
     import { toastStore } from "@src/stores/toast";
     import {
         AVATAR_SIZE,
@@ -100,7 +100,7 @@
     let { onClose }: DialogProps<Extract<LinkedDialog, { kind: "profile" }>> = $props();
 
     const client = getContext<OpenChat>("client");
-    const translate = (key: ResourceKey) => $_(key.key, { values: key.params });
+    const translate = (key: ResourceKey) => interpolate($_, key);
 
     // the sections built so far (ProfileDialog shows only these)
     const SECTIONS: ProfileSection[] = [
@@ -337,9 +337,14 @@
         signinMethodsProps(linked, (type) => $_(`ui.profileDialog.signin.${type}`)),
     );
 
+    // only the latest load counts: an earlier one answering late would put back an older list
+    let signinMethodsRun = 0;
+
     async function refreshSigninMethods() {
+        const run = ++signinMethodsRun;
         try {
-            linked = await client.getAuthenticationPrincipals();
+            const principals = await client.getAuthenticationPrincipals();
+            if (run === signinMethodsRun) linked = principals;
         } catch (err) {
             console.warn("Unable to load the sign-in methods", err);
         }

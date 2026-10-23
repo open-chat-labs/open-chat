@@ -85,6 +85,14 @@ describe("the sign-in method this session used", () => {
         ]);
     });
 
+    test("is only that passkey, even if the backend marked another", () => {
+        const marked = markCurrentSignIn(
+            [passkey("a", [1], true), passkey("b", [2])],
+            new Uint8Array([2]),
+        );
+        expect(marked.map((p) => p.isCurrentIdentity)).toEqual([false, true]);
+    });
+
     test("stays the one the backend marked, and is none without a passkey session", () => {
         const marked = markCurrentSignIn([passkey("a", [1], true), passkey("b", [2])], undefined);
         expect(marked.map((p) => p.isCurrentIdentity)).toEqual([true, false]);

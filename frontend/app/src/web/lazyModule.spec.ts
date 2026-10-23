@@ -54,4 +54,19 @@ describe("a module loaded when it's first wanted", () => {
         expect([lazy.slow, lazy.module]).toEqual([false, { content: 4 }]);
         vi.useRealTimers();
     });
+
+    test("a failed load ahead isn't a failure, and wanting it loads it again", async () => {
+        vi.spyOn(console, "warn").mockImplementation(() => {});
+        const load = vi
+            .fn()
+            .mockRejectedValueOnce(new Error("offline"))
+            .mockResolvedValueOnce({ content: 5 });
+        const lazy = new LazyModule(load);
+        lazy.prefetch();
+        await flush();
+        expect(lazy.failed).toBe(false);
+        lazy.want();
+        await flush();
+        expect(lazy.module).toEqual({ content: 5 });
+    });
 });

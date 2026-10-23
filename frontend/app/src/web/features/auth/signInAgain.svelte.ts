@@ -11,6 +11,7 @@ import type {
 } from "@openchat/ui/src/features/components/AuthDialog.svelte";
 import type { ReAuthSuccess } from "@src/logic/auth/reAuthentication.svelte";
 import { configKeys } from "@shared";
+import { i18nKey } from "@src/i18n/i18n";
 import { signInMethod } from "./signIn";
 
 // Signing in again to prove it's the user, in AuthDialog (SignInAgainDialog): before resetting a
@@ -65,21 +66,24 @@ export class SignInAgain {
         return localStorage.getItem(configKeys.selectedAuthEmail) ?? "";
     }
 
+    // the dialog has stopped waiting on the link, so whatever goes wrong is said here and the dialog
+    // starts over; otherwise it would sit on "check your inbox" for good
     async #followed(reAuthenticated: Promise<ReAuthOutcome>): Promise<void> {
         try {
             await this.#reAuthenticated(await reAuthenticated);
         } catch (err) {
-            if (isAuthFailure(err)) {
-                this.linkFailure = err.reason;
-                this.attempt++;
-            }
+            if (err instanceof GivenUp) return;
+            this.linkFailure = isAuthFailure(err)
+                ? err.reason
+                : this.#translate(i18nKey("identity.failure.unexpectedError"));
+            this.attempt++;
         }
     }
 
     async #reAuthenticated(outcome: ReAuthOutcome): Promise<void> {
         switch (outcome.kind) {
             case "cancelled":
-                throw new Error("Sign-in given up");
+                throw new GivenUp();
             case "failed":
                 throw this.#failure(outcome.reason);
             case "success": {
@@ -93,6 +97,13 @@ export class SignInAgain {
 
     #failure(reason: ResourceKey): AuthFailure {
         return { reason: this.#translate(reason) };
+    }
+}
+
+// the user gave the sign-in up: nothing to say
+class GivenUp extends Error {
+    constructor() {
+        super("Sign-in given up");
     }
 }
 

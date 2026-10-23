@@ -5,6 +5,7 @@
     import DialogShell from "@openchat/ui/src/lib/components/DialogShell.svelte";
     import EmptyState from "@openchat/ui/src/lib/components/EmptyState.svelte";
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
+    import { modal } from "@openchat/ui/src/lib/behaviours/modal";
     import { untrack, type Component } from "svelte";
     import { _ } from "svelte-i18n";
     import { dialogs, type AppDialog, type DialogProps } from "./dialogs";
@@ -24,9 +25,12 @@
     });
 </script>
 
-{#if loader?.module}
+{#if loader !== undefined && loader.module === undefined && !loader.failed && !loader.slow}
+    <!-- loading, for a moment: nothing shows yet, but a click outside or Esc still closes it -->
+    <div class="pending" onclick={onClose} use:modal={onClose} aria-hidden="true"></div>
+{:else if loader?.module}
     <loader.module.default {dialog} {onClose} />
-{:else if loader === undefined || loader.failed || loader.slow}
+{:else}
     <!-- development text while there's no dialog: no translation -->
     <DialogShell title={dialog.kind} {onClose}>
         <div class="state">
@@ -48,6 +52,11 @@
 {/if}
 
 <style>
+    .pending {
+        position: fixed;
+        inset: 0;
+    }
+
     .state {
         display: grid;
         place-items: center;

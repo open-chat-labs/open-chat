@@ -77,9 +77,13 @@
     $effect(() => closeOnNavigation(stack));
 
     // the built dialogs' code, loaded once the app is idle, so a dialog opens at once rather than
-    // after a spinner the first time (it's still left out of the app's first download)
+    // after a spinner the first time (it's still left out of the app's first download). Not while
+    // offline; and one that fails ahead loads again when it's opened
     $effect(() => {
-        const prefetch = () => builtDialogScreens().forEach((load) => screenLoader(load).want());
+        const prefetch = () => {
+            if (!navigator.onLine) return;
+            builtDialogScreens().forEach((load) => screenLoader(load).prefetch());
+        };
         if ("requestIdleCallback" in window) {
             const id = requestIdleCallback(prefetch, { timeout: 5000 });
             return () => cancelIdleCallback(id);

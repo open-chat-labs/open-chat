@@ -13221,10 +13221,10 @@ export class OpenChat {
 
     async getAuthenticationPrincipals(): Promise<LinkedAuthenticationPrincipal[]> {
         const principals = await this.#worker.send({ kind: "getAuthenticationPrincipals" });
-        // the passkey this session signed in with, which the backend can't tell from the others
+        // the passkey this session signed in with, which the backend can't tell from the others;
+        // best effort: without it the list is still the list (reAuthenticate depends on it)
         const currentCredentialId = principals.some((p) => p.webAuthnKey !== undefined)
-            ? (this.#webAuthnKey ?? (await this.#worker.send({ kind: "currentUserWebAuthnKey" })))
-                  ?.credentialId
+            ? await this.#currentWebAuthnCredentialId()
             : undefined;
         return Promise.all(
             markCurrentSignIn(principals, currentCredentialId).map(async (p) => ({
@@ -13235,6 +13235,16 @@ export class OpenChat {
                     : undefined,
             })),
         );
+    }
+
+    async #currentWebAuthnCredentialId(): Promise<Uint8Array | undefined> {
+        if (this.#webAuthnKey !== undefined) return this.#webAuthnKey.credentialId;
+        try {
+            return (await this.#worker.send({ kind: "currentUserWebAuthnKey" }))?.credentialId;
+        } catch (err) {
+            console.warn("Unable to tell which passkey this session signed in with", err);
+            return undefined;
+        }
     }
 
     getLinkedIIPrincipal(): Promise<string | undefined> {

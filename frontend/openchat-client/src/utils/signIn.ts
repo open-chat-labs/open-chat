@@ -126,20 +126,19 @@ export function unlinkIdentityFailure(resp: RemoveIdentityLinkResponse): Resourc
 /**
  * The linked sign-in methods with the one this session signed in with marked (isCurrentIdentity).
  * The backend marks it by the session's auth principal, which a passkey's linked principal never
- * is, so a passkey is also current when its credential is the one this session used.
+ * is, so when a passkey's credential is the one this session used, that passkey is the one
+ * marked, and only it.
  */
 export function markCurrentSignIn<T extends AuthenticationPrincipal>(
     principals: T[],
     currentCredentialId: Uint8Array | undefined,
 ): T[] {
-    return principals.map((p) =>
-        p.isCurrentIdentity ||
-        currentCredentialId === undefined ||
-        p.webAuthnKey === undefined ||
-        !sameBytes(p.webAuthnKey.credentialId, currentCredentialId)
-            ? p
-            : { ...p, isCurrentIdentity: true },
-    );
+    const matches = (p: T) =>
+        currentCredentialId !== undefined &&
+        p.webAuthnKey !== undefined &&
+        sameBytes(p.webAuthnKey.credentialId, currentCredentialId);
+    if (!principals.some(matches)) return principals;
+    return principals.map((p) => ({ ...p, isCurrentIdentity: matches(p) }));
 }
 
 function sameBytes(a: Uint8Array, b: Uint8Array): boolean {

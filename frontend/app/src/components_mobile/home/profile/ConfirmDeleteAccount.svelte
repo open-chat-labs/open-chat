@@ -1,8 +1,8 @@
 <script lang="ts">
-    import type { DelegationChain, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
     import { Column, CommonButton, Container, Sheet, Title } from "component-lib";
-    import { AuthProvider, i18nKey, OpenChat } from "@client";
+    import { i18nKey, OpenChat } from "@client";
     import { deleteAccount as deleteSignedInAccount } from "@src/logic/auth/deleteAccount";
+    import type { ReAuthSuccess } from "@src/logic/auth/reAuthentication.svelte";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Delete from "svelte-material-icons/DeleteForeverOutline.svelte";
@@ -22,11 +22,7 @@
 
     let { deleting = $bindable(), onClose, authenticating = $bindable(false) }: Props = $props();
 
-    function deleteAccount(detail: {
-        key: ECDSAKeyIdentity;
-        delegation: DelegationChain;
-        provider: AuthProvider;
-    }) {
+    function deleteAccount(detail: ReAuthSuccess) {
         deleting = true;
         authenticating = false;
         // only with the sign-in the user just made again (app/src/logic/auth)
