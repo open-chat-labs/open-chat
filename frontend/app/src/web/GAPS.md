@@ -328,11 +328,12 @@ design export needs. Each entry says where it came up.
   - the unread marker is implicit (the window anchor).
 - **Presence**: a polled last-online time, with no status for yourself.
 - **Community stats**: counters only; there's no 12-week series for `GroupStats`.
-- **CHIT** (`ChitDialog`, 8d): no place on this month's leaderboard for the user (`boardRank`,
-  `boardScore`: the leaderboard has only the top 10), so the trophy says "Leaderboard". Today's
-  claim amount and the milestones are the backend's schedule mirrored in `@client`
-  (`dailyChitAmount`, `CHIT_STREAK_MILESTONES`, from `chit_for_streak`), so a change there needs
-  one here too.
+- **CHIT** (8d): no place on the leaderboards for the user below the top 10 (`ChitDialog`'s
+  `boardRank` / `boardScore`, `LeaderboardDialog`'s `you`), so the trophy says "Leaderboard" and
+  the dialog shows the user's place only on a board they're on. Today's claim amount, the
+  milestones and what each achievement pays are the backend's tables mirrored in `@client`
+  (`dailyChitAmount`, `CHIT_STREAK_MILESTONES` from `chit_for_streak`; `achievementReward` from
+  `Achievement::chit_reward`), so a change there needs one here too.
 - **Sign-in**: not carried over from the old sign-in yet:
   - the old form's prompt when a referral code is turned down ("proceed" without it, or cancel
     and sign out): the form says why, and signing up again goes ahead without the code (the
@@ -371,12 +372,23 @@ design export needs. Each entry says where it came up.
 - **`ChitDialog`, by hand** (8d): the default milestone tiers keep their hand-spaced positions
   when a host passes them; a claim made in the dialog clears once the next claim opens; `onClaim`
   resolving `false` is nothing claimed (claimed already), and plays no claim.
-- **CHIT dialog, first cut** (`features/chit`, 8d): the streak, today's claim, the balance, the
-  insurance summary, the settings (the profile's CHIT section) and the leaderboard (`?hof`, a
-  placeholder until it's built). Not yet: the daily puzzle (the card is left out), "Ways to earn
-  CHIT" (achievements), and buying streak insurance, whose rows do nothing yet: the rest of 8d.
-  A claim that fails shows the dialog's own error, where the old modal toasted and closed; an
-  already claimed day just moves the countdown on, as the old desktop modal does.
+- **CHIT dialog** (`features/chit`, 8d): the streak, today's claim, the balance, the insurance
+  summary, the settings (the profile's CHIT section), the leaderboard (`?hof`) and the ways to
+  earn (`AchievementsDialog`, over the CHIT dialog: there's no URL for it). Not yet: the daily
+  puzzle (the card is left out) and buying streak insurance, whose row does nothing yet: the
+  rest of 8d. A claim that fails shows the dialog's own error, where the old modal toasted and
+  closed; an already claimed day just moves the countdown on, as the old desktop modal does.
+- **Leaderboard** (`?hof`): this month's, last month's and all time's top 10, as the old hall of
+  fame shows them, without its Invaders game.
+- **Ways to earn** (`AchievementsDialog`): the old "Learn to earn" list (`achievementList`). The
+  dialog's groups and its "next up" bands are the app's (`chit.adapter.ts`: each achievement
+  given a group; quick up to 1,000 CHIT, middling up to 3,000, big above), not anything the old
+  UI had; no achievement has an icon of its own (the old UI had none).
+- **Achievement toast** (`AchievementToast`, for the client's `chitEarned`): only with the popup
+  setting on (`chitPopup`) and CHIT on, as the old earned popup; it names the first achievement
+  when several come at once (with the CHIT for them all), and the longest streak gets the flame
+  icon, where the old popup shook the page and played longer. It marks them seen as it shows,
+  as the old popup did, so with the popup off they aren't marked.
 - **App events** (`features/app/AppEventDialogs.svelte`): the not-found, no-access and
   not-available dialogs are a `DialogShell` with the old UI's words (no design: `TODO(design)`);
   "Page not found" was never translated. Suspending a user (`suspendUser`, platform moderators

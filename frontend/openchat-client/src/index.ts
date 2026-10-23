@@ -55,6 +55,13 @@ export {
 export { communityChanges, isPrivateCommunityPreview } from "./utils/community";
 export { executionPaymentAmount, proposalFundsRequired } from "./utils/proposal";
 export {
+    achievementList,
+    achievementReward,
+    chitEarnedSummary,
+    type AchievementEntry,
+    type EarnedAchievement,
+} from "./utils/achievements";
+export {
     CHIT_STREAK_MILESTONES,
     currentStreak,
     dailyChitAmount,

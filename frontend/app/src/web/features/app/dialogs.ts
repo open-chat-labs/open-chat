@@ -1,4 +1,5 @@
 import type { LeaveOrDelete, MultiUserChatIdentifier } from "@client";
+import type { DialogStack } from "../../shell/dialogStack.svelte";
 import type { ProfileCard } from "@src/logic/profile/profileCard";
 import type { Component } from "svelte";
 
@@ -27,7 +28,10 @@ export type LinkedDialog =
 export type LocalDialog =
     | ({ kind: "user" } & ProfileCard)
     | { kind: "leave_or_delete"; action: LeaveOrDelete; name: string }
-    | { kind: "group_settings"; chatId: MultiUserChatIdentifier; tab: GroupSettingsTab };
+    | { kind: "group_settings"; chatId: MultiUserChatIdentifier; tab: GroupSettingsTab }
+    // the ways to earn CHIT, over whatever opened it (the CHIT dialog, an achievement's toast),
+    // with the one just earned picked out (`highlight`, an achievement's id or external name)
+    | { kind: "achievements"; highlight?: string };
 
 /** The page GroupSettingsDialog opens on. */
 export type GroupSettingsTab = "group" | "gates" | "rules" | "permissions";
@@ -38,8 +42,15 @@ const PROFILE_LINK_SECTIONS: string[] = ["chit"] satisfies ProfileLinkSection[];
 
 export type AppDialog = LinkedDialog | LocalDialog;
 
-/** A dialog's screen gets the dialog it shows, and closes it with onClose. */
-export type DialogProps<D extends AppDialog> = { dialog: D; onClose: () => void };
+/**
+ * A dialog's screen gets the dialog it shows, closes it with onClose, and can open the app's own
+ * dialogs over itself (`dialogs`).
+ */
+export type DialogProps<D extends AppDialog> = {
+    dialog: D;
+    onClose: () => void;
+    dialogs: DialogStack<LocalDialog>;
+};
 
 type Loader<D extends AppDialog> = () => Promise<{ default: Component<DialogProps<D>> }>;
 
@@ -58,7 +69,7 @@ export const dialogs: Dialogs = {
     chit: () => import("../chit/ChitDialogScreen.svelte"),
 
     // the CHIT leaderboard (8d)
-    leaderboard: undefined,
+    leaderboard: () => import("../chit/LeaderboardDialogScreen.svelte"),
 
     // someone's profile card. A dialog, not anchored to the name clicked as the old desktop card was
     user: () => import("../user/UserDialogScreen.svelte"),
@@ -68,6 +79,9 @@ export const dialogs: Dialogs = {
 
     // a group's or channel's settings, or its About page (4b)
     group_settings: () => import("../group/GroupSettingsDialogScreen.svelte"),
+
+    // the ways to earn CHIT: every achievement and what it pays (8d)
+    achievements: () => import("../chit/AchievementsDialogScreen.svelte"),
 };
 
 // each linked dialog's query param, in the order they win when more than one is in the URL

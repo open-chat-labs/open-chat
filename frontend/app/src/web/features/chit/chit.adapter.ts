@@ -1,4 +1,9 @@
+import type {
+    Achievement as AchievementItem,
+    AchievementBand,
+} from "@openchat/ui/src/features/components/AchievementsDialog.svelte";
 import type ChitDialog from "@openchat/ui/src/features/components/ChitDialog.svelte";
+import type LeaderboardDialog from "@openchat/ui/src/features/components/LeaderboardDialog.svelte";
 import type NavRail from "@openchat/ui/src/features/components/NavRail.svelte";
 import type { ComponentProps } from "svelte";
 import {
@@ -7,7 +12,11 @@ import {
     dailyChitAmount,
     dailyChitClaimable,
     formatTimeRemaining,
+    type Achievement,
+    type AchievementEntry,
+    type ChitLeaderboardResponse,
     type ChitState,
+    type ChitUserBalance,
     type StreakInsurance,
 } from "@client";
 
@@ -84,5 +93,139 @@ export function chitRailProps(
         chitShown: !disabled && (open || !hideOnceClaimed),
         chitStreak: currentStreak(chit, now),
         chitClaimable: open,
+    };
+}
+
+// AchievementsDialog's groups, for each achievement; the partners' (external) ones are "partners"
+type AchievementGroup = "messaging" | "profile" | "wallet" | "community" | "streaks" | "referrals";
+const GROUPS: Record<Achievement, AchievementGroup> = {
+    sent_text: "messaging",
+    reacted_to_message: "messaging",
+    sent_direct_message: "messaging",
+    received_direct_message: "messaging",
+    edited_message: "messaging",
+    deleted_message: "messaging",
+    forwarded_message: "messaging",
+    tipped_message: "messaging",
+    sent_image: "messaging",
+    sent_file: "messaging",
+    sent_poll: "messaging",
+    sent_video: "messaging",
+    sent_audio: "messaging",
+    sent_giphy: "messaging",
+    sent_meme: "messaging",
+    quote_replied: "messaging",
+    replied_in_thread: "messaging",
+    received_reaction: "messaging",
+    had_message_tipped: "messaging",
+    voted_on_poll: "messaging",
+    sent_reminder: "messaging",
+    followed_thread: "messaging",
+    set_bio: "profile",
+    set_avatar: "profile",
+    set_display_name: "profile",
+    set_community_display_name: "profile",
+    changed_theme: "profile",
+    set_pin: "profile",
+    upgraded_to_diamond: "profile",
+    upgrade_to_gold_diamond: "profile",
+    proved_unique_personhood: "profile",
+    sent_crypto: "wallet",
+    received_crypto: "wallet",
+    swapped_from_wallet: "wallet",
+    sent_swap_offer: "wallet",
+    accepted_swap_offer: "wallet",
+    sent_prize: "wallet",
+    deposited_btc: "wallet",
+    joined_group: "community",
+    joined_community: "community",
+    started_call: "community",
+    joined_call: "community",
+    favourited_chat: "community",
+    pinned_chat: "community",
+    streak_3: "streaks",
+    streak_7: "streaks",
+    streak_14: "streaks",
+    streak_30: "streaks",
+    streak_100: "streaks",
+    streak_365: "streaks",
+    referred_1st_user: "referrals",
+    referred_3rd_user: "referrals",
+    referred_10th_user: "referrals",
+    referred_20th_user: "referrals",
+    referred_50th_user: "referrals",
+};
+
+// what the dialog's "next up" picks from: a quick win, a middling task or a big one, by reward
+function bandOf(reward: number): AchievementBand {
+    return reward <= 1000 ? "quick" : reward <= 3000 ? "mid" : "big";
+}
+
+/** An achievement's id in the dialog (and to pick it out): its own, or an external one's name. */
+export function achievementItemId(entry: AchievementEntry): string {
+    return entry.kind === "internal" ? entry.id : entry.name;
+}
+
+/**
+ * AchievementsDialog's achievements, from the list to show (achievementList), each named by
+ * `name` (the old UI's text for it, translated: the dialog takes text, not the app's keys).
+ */
+export function achievementItems(
+    entries: AchievementEntry[],
+    name: (achievement: Achievement) => string,
+): AchievementItem[] {
+    return entries.map((entry) => ({
+        id: achievementItemId(entry),
+        group: entry.kind === "internal" ? GROUPS[entry.id] : "partners",
+        reward: entry.reward,
+        done: entry.done,
+        band: bandOf(entry.reward),
+        // the old UI's name for it, or the partner's
+        label: entry.kind === "internal" ? name(entry.id) : entry.name,
+    }));
+}
+
+/** ChitDialog's "Ways to earn" count. */
+export function achievementsCount(entries: AchievementEntry[]): { total: number; left: number } {
+    return { total: entries.length, left: entries.filter((e) => !e.done).length };
+}
+
+type Boards = ComponentProps<typeof LeaderboardDialog>["boards"];
+
+// the most each board shows, as the old hall of fame did
+const BOARD_SIZE = 10;
+
+/**
+ * LeaderboardDialog's boards, as the old hall of fame shows them: this month's, last month's and
+ * all time's top 10, months in UTC (as the backend counts them) named in `locale`. The user's own
+ * place is shown on a board they're on (the backend has nothing for anyone below its top lists).
+ * Before the leaderboard has loaded (`result` undefined), the boards are there, empty.
+ * `allTime` is the all-time board's label, translated.
+ */
+export function leaderboardBoards(
+    result: ChitLeaderboardResponse | undefined,
+    userId: string,
+    now: number,
+    locale: string,
+    allTime: string,
+): Boards {
+    const monthName = (monthsBack: number) => {
+        const date = new Date(now);
+        const month = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() - monthsBack, 1));
+        return new Intl.DateTimeFormat(locale, { month: "long", timeZone: "UTC" }).format(month);
+    };
+    const board = (label: string, balances: ChitUserBalance[] = []) => {
+        const top = balances.slice(0, BOARD_SIZE);
+        const place = top.findIndex((b) => b.userId === userId);
+        return {
+            label,
+            rows: top.map((b): [string, number] => [b.username, b.balance]),
+            ...(place < 0 ? {} : { you: { rank: place + 1, score: top[place].balance } }),
+        };
+    };
+    return {
+        thisMonth: board(monthName(0), result?.thisMonth),
+        lastMonth: board(monthName(1), result?.lastMonth),
+        allTime: board(allTime, result?.allTime),
     };
 }

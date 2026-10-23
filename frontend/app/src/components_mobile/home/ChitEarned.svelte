@@ -1,7 +1,7 @@
 <script lang="ts">
     import { shakeElements } from "@src/utils/shake";
     import { BodySmall, Column } from "component-lib";
-    import { subscribe, type ChitEvent, type OpenChat } from "@client";
+    import { chitEarnedSummary, subscribe, type ChitEvent, type OpenChat } from "@client";
     import { getContext, onMount } from "svelte";
     import { Confetti } from "svelte-confetti";
     import { _ } from "svelte-i18n";
@@ -28,21 +28,13 @@
     let maxStreak = $state(false);
 
     function trigger(events: ChitEvent[]) {
-        maxStreak = false;
-        amount = events.reduce((total, chit) => total + chit.amount, 0);
-        labels = events.reduce((labels, c) => {
-            if (c.reason.kind === "achievement_unlocked") {
-                if (c.reason.type === "streak_365") {
-                    maxStreak = true;
-                    imageUrl = "/assets/max_streak.svg";
-                }
-                labels.push($_(`learnToEarn.${c.reason.type}`));
-            }
-            if (c.reason.kind === "external_achievement_unlocked") {
-                labels.push(c.reason.name);
-            }
-            return labels;
-        }, [] as string[]);
+        const summary = chitEarnedSummary(events);
+        amount = summary.amount;
+        maxStreak = summary.maxStreak;
+        if (maxStreak) imageUrl = "/assets/max_streak.svg";
+        labels = summary.achievements.map((a) =>
+            a.kind === "internal" ? $_(`learnToEarn.${a.id}`) : a.name,
+        );
         const showDuration = maxStreak ? LONG_DURATION : SHOW_DURATION;
         ypos.target = dimensions.height / 2;
         opacity.target = 1;

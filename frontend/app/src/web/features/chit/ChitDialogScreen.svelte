@@ -1,13 +1,17 @@
 <!-- The daily CHIT (?chit), ChitDialog over the page (8d, #10130): the streak, today's claim, the
-     balance, streak insurance, and the way to the CHIT settings (the profile's CHIT section) and
-     the leaderboard (?hof). Claiming is as the old CHIT modal's: an already claimed day just
-     moves the countdown on (the client does it). The puzzle, achievements and buying insurance
-     come with the rest of 8d. -->
+     balance, streak insurance, and the ways to the CHIT settings (the profile's CHIT section),
+     the leaderboard (?hof) and the ways to earn (AchievementsDialog, over this one). Claiming is
+     as the old CHIT modal's: an already claimed day just moves the countdown on (the client does
+     it). The puzzle and buying insurance come with the rest of 8d. -->
 <script lang="ts">
     import {
+        achievementList,
+        achievements,
+        achievementsStore,
         chitStateStore,
         latestSuccessfulUpdatesLoop,
         streakInsuranceStore,
+        type ExternalAchievement,
         type OpenChat,
     } from "@client";
     import ChitDialog, {
@@ -17,14 +21,23 @@
     import { now500 } from "@src/stores/time";
     import DialogShell from "@openchat/ui/src/lib/components/DialogShell.svelte";
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
-    import { getContext } from "svelte";
+    import { getContext, onMount } from "svelte";
     import type { DialogProps, LinkedDialog } from "../app/dialogs";
     import { openLinked } from "../app/linkedDialogs";
-    import { chitDialogProps } from "./chit.adapter";
+    import { achievementsCount, chitDialogProps } from "./chit.adapter";
 
-    let { onClose }: DialogProps<Extract<LinkedDialog, { kind: "chit" }>> = $props();
+    let { onClose, dialogs }: DialogProps<Extract<LinkedDialog, { kind: "chit" }>> = $props();
 
     const client = getContext<OpenChat>("client");
+
+    // the "Ways to earn" count: the partners' achievements are loaded as it opens
+    let external = $state<ExternalAchievement[]>([]);
+    onMount(async () => {
+        external = await client.getExternalAchievements();
+    });
+    const earn = $derived(
+        achievementsCount(achievementList(achievements, $achievementsStore, external, $now500)),
+    );
 
     const chit = $derived(
         chitDialogProps(
@@ -54,7 +67,10 @@
             case "leaderboard":
                 openLinked({ kind: "leaderboard" });
                 return;
-            // TODO(8d): achievements (earn), buying streak insurance and the daily puzzle; GAPS.md
+            case "earn":
+                dialogs.open({ kind: "achievements" });
+                return;
+            // TODO(8d): buying streak insurance and the daily puzzle; GAPS.md
         }
     }
 </script>
@@ -70,6 +86,7 @@
         countdown={chit.countdown}
         insured={chit.insured}
         used={chit.used}
+        achievements={earn}
         puzzleState="off"
         onClaim={claim}
         onAction={act}

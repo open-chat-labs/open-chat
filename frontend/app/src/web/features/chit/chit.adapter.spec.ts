@@ -1,5 +1,12 @@
-import type { ChitState, StreakInsurance } from "@client";
-import { chitDialogProps, chitRailProps, type ChitInputs } from "./chit.adapter";
+import { achievementList, achievements, type ChitState, type StreakInsurance } from "@client";
+import {
+    achievementItems,
+    achievementsCount,
+    chitDialogProps,
+    chitRailProps,
+    leaderboardBoards,
+    type ChitInputs,
+} from "./chit.adapter";
 
 const NOW = 10 * 24 * 60 * 60 * 1000;
 const MINUTE = 60_000;
@@ -94,5 +101,99 @@ describe("the rail's CHIT button", () => {
         expect(chitRailProps(claimed, true).chitShown).toBe(false);
         expect(chitRailProps(claimed, false).chitShown).toBe(true);
         expect(chitRailProps(inputs({}, { disabled: true }), false).chitShown).toBe(false);
+    });
+});
+
+describe("the ways to earn", () => {
+    const entries = achievementList(
+        achievements,
+        new Set(["sent_text"]),
+        [
+            {
+                id: 7,
+                url: "https://partner.example",
+                name: "Partner quest",
+                chitReward: 5000,
+                expires: BigInt(NOW + 1000),
+                budgetExhausted: false,
+            },
+        ],
+        NOW,
+    );
+
+    test("put each achievement in its group, with its reward, band and the old UI's name", () => {
+        const items = achievementItems(entries, (id) => `name of ${id}`);
+        expect(items.find((a) => a.id === "sent_text")).toEqual({
+            id: "sent_text",
+            group: "messaging",
+            reward: 700,
+            done: true,
+            band: "quick",
+            label: "name of sent_text",
+        });
+        expect(items.find((a) => a.id === "referred_1st_user")?.group).toBe("referrals");
+        expect(items.find((a) => a.id === "streak_30")).toMatchObject({
+            group: "streaks",
+            band: "big",
+        });
+        // a partner's, under its name
+        expect(items.find((a) => a.id === "Partner quest")).toMatchObject({
+            group: "partners",
+            reward: 5000,
+            label: "Partner quest",
+        });
+    });
+
+    test("count what's left for ChitDialog", () => {
+        expect(achievementsCount(entries)).toEqual({
+            total: entries.length,
+            left: entries.length - 1,
+        });
+    });
+});
+
+describe("the leaderboard's boards", () => {
+    // 2026-03-01, 00:30 UTC: still March in UTC, whatever the local date
+    const MARCH = Date.UTC(2026, 2, 1, 0, 30);
+    const balances = (n: number) =>
+        Array.from({ length: n }, (_, i) => ({
+            userId: `u${i}`,
+            username: `user${i}`,
+            balance: 1000 - i,
+        }));
+
+    test("are this month's, last month's and all time's top 10, months in UTC", () => {
+        const boards = leaderboardBoards(
+            { thisMonth: balances(12), lastMonth: balances(3), allTime: [] },
+            "nobody",
+            MARCH,
+            "en",
+            "All time",
+        );
+        expect(Object.keys(boards)).toEqual(["thisMonth", "lastMonth", "allTime"]);
+        expect([boards.thisMonth.label, boards.lastMonth.label, boards.allTime.label]).toEqual([
+            "March",
+            "February",
+            "All time",
+        ]);
+        expect(boards.thisMonth.rows).toHaveLength(10);
+        expect(boards.thisMonth.rows[0]).toEqual(["user0", 1000]);
+        expect(boards.thisMonth.you).toBeUndefined();
+    });
+
+    test("show the user's place on a board they're on", () => {
+        const boards = leaderboardBoards(
+            { thisMonth: balances(5), lastMonth: [], allTime: [] },
+            "u3",
+            MARCH,
+            "en",
+            "All time",
+        );
+        expect(boards.thisMonth.you).toEqual({ rank: 4, score: 997 });
+    });
+
+    test("are there, empty, before the leaderboard loads", () => {
+        const boards = leaderboardBoards(undefined, "u1", MARCH, "en", "All time");
+        expect(boards.allTime.rows).toEqual([]);
     });
 });
