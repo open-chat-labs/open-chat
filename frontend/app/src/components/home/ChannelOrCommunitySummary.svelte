@@ -1,5 +1,10 @@
 <script lang="ts">
     import {
+        chatDetailsPermissions,
+        communityDetailsPermissions,
+    } from "@src/logic/groupOrCommunity/detailsPermissions";
+    import {
+        anonUserStore,
         defaultChatRules,
         OpenChat,
         publish,
@@ -35,15 +40,16 @@
         onClose,
     }: Props = $props();
 
-    let communityFrozen = $derived(client.isCommunityFrozen(community.id));
-    let channelFrozen = $derived(client.isChatFrozen(channel.id));
-    let canEditCommunity = $derived(!communityFrozen && client.canEditCommunity(community.id));
+    let communityPermissions = $derived(
+        communityDetailsPermissions(client, community, $anonUserStore),
+    );
+    let canEditCommunity = $derived(communityPermissions.canEdit);
     let canEditChannel = $derived(
-        !channelFrozen && !communityFrozen && client.canEditGroupDetails(channel.id),
+        chatDetailsPermissions(client, channel, community, $anonUserStore).canEdit,
     );
     let rules = $derived($selectedCommunityRulesStore ?? defaultChatRules("community"));
-    let canDeleteCommunity = $derived(client.canDeleteCommunity(community.id));
-    let canInviteToCommunity = $derived(!communityFrozen && client.canInviteUsers(community.id));
+    let canDeleteCommunity = $derived(communityPermissions.canDelete);
+    let canInviteToCommunity = $derived(communityPermissions.canInvite);
 
     function editGroup() {
         if (canEditChannel) {

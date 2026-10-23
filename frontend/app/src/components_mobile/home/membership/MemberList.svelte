@@ -2,10 +2,6 @@
     import { Container } from "component-lib";
     import {
         currentUserIdStore,
-        ROLE_ADMIN,
-        ROLE_MEMBER,
-        ROLE_MODERATOR,
-        ROLE_OWNER,
         type FullMember,
     } from "@client";
     import VirtualList from "@openchat/ui/src/lib/virtual/VirtualList.svelte";
@@ -30,14 +26,7 @@
             {searchTerm}
             {me}
             {member}
-            canPromoteToOwner={me ? false : membersState.canPromote(member.role, ROLE_OWNER)}
-            canPromoteToAdmin={membersState.canPromote(member.role, ROLE_ADMIN)}
-            canDemoteToAdmin={membersState.canDemote(member.role, ROLE_ADMIN)}
-            canPromoteToModerator={membersState.canPromote(member.role, ROLE_MODERATOR)}
-            canDemoteToModerator={membersState.canDemote(member.role, ROLE_MODERATOR)}
-            canDemoteToMember={membersState.canDemote(member.role, ROLE_MEMBER)}
-            canBlockUser={membersState.canBlockUsers()}
-            canRemoveMember={me ? false : membersState.canRemoveMembers()}
+            {...membersState.actionsFor(member.role, me)}
             onBlockUser={async (userId) => toastStore.showOutcome(await membersState.blockUser(userId))}
             onChangeRole={async (args) =>
                 toastStore.showOutcome(await membersState.changeRole(args, $_))}

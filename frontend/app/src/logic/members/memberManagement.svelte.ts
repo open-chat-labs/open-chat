@@ -4,6 +4,7 @@ import {
     currentUserIdStore,
     FIND_MEMBERS_DELAY_MS,
     inviteLinkUrl,
+    memberActions,
     roleChangeFailureMessage,
     selectedChatBlockedUsersStore,
     selectedChatBotsStore,
@@ -23,6 +24,7 @@ import {
     type InviteLink,
     type InviteLinkOutcome,
     type Member,
+    type MemberActions,
     type MemberRole,
     type MessageFormatter,
     type MultiUserChat,
@@ -342,6 +344,16 @@ export class MemberManagement {
 
     canDemote(from: MemberRole, to: MemberRole) {
         return this.client.canDemote(this.collection.id, from, to);
+    }
+
+    /** The role changes, removal and blocking offered for a member with `role` (`memberActions`). */
+    actionsFor(role: MemberRole, isMe: boolean): MemberActions {
+        return memberActions(role, isMe, {
+            promote: (from, to) => this.canPromote(from, to),
+            demote: (from, to) => this.canDemote(from, to),
+            remove: this.canRemoveMembers(),
+            block: this.canBlockUsers(),
+        });
     }
 
     async initialiseSharing(): Promise<MemberActionOutcome> {

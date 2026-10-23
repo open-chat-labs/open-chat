@@ -35,7 +35,7 @@
     import Translatable from "@shared_components/Translatable.svelte";
     import SlidingPageContent from "../../SlidingPageContent.svelte";
     import User from "../../User.svelte";
-    import { CommunityState } from "./communityState.svelte";
+    import { CommunityState } from "@src/logic/groupOrCommunity/communityState.svelte";
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;

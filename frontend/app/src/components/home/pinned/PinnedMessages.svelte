@@ -9,17 +9,13 @@
     import {
         currentUserStore,
         iconSize,
-        messagesRead,
-        selectedChatPinnedMessagesStore,
-        selectedServerChatStore,
         subscribe,
     } from "@client";
-    import { isSuccessfulEventsResponse } from "@shared";
-    import { getContext, onMount, tick, untrack } from "svelte";
+    import { PinnedMessages } from "@src/logic/pinned/pinnedMessages.svelte";
+    import { getContext, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import type { RemoteData } from "../../../utils/remoteData";
     import HoverIcon from "../../HoverIcon.svelte";
     import Loading from "@shared_components/Loading.svelte";
     import SectionHeader from "../../SectionHeader.svelte";
@@ -36,30 +32,23 @@
     let { chatId, dateLastPinned, onClose }: Props = $props();
 
     const client = getContext<OpenChat>("client");
-    let unread = $state<boolean>(false);
-    // $derived is load-bearing: a plain `let` captures a one-time snapshot,
-    // and if the panel mounts before the chat details (pinned set) arrive
-    // the panel stays empty forever.
-    let pinnedMessages = $derived($selectedChatPinnedMessagesStore);
+    const pinned = new PinnedMessages(
+        client,
+        () => chatId,
+        () => dateLastPinned,
+    );
+    let messages = $derived(pinned.messages);
 
     onMount(() => {
         return subscribe("chatWith", onClose);
-    });
-
-    $effect(() => {
-        void $messagesRead;
-        unread = client.unreadPinned(chatId, dateLastPinned);
     });
 
     // bind:this sets this to null when the panel unmounts, which can happen
     // before the tick() after a load resolves (Rollbar #31953).
     let messagesDiv: HTMLDivElement | null | undefined = $state();
 
-    let messages: RemoteData<EventWrapper<Message>[][], string> = $state({ kind: "idle" });
-
     function close() {
         onClose();
-        messages = { kind: "idle" };
     }
 
     function scrollBottom() {
@@ -71,52 +60,14 @@
         }
     }
 
-    function reloadPinned(pinned: ReadonlySet<number>): void {
-        untrack(() => {
-            if (pinned.size > 0) {
-                if (messages.kind !== "success") {
-                    messages = { kind: "loading" };
-                }
-                client
-                    .getMessagesByMessageIndex(chatId, undefined, [...pinned])
-                    .then((resp) => {
-                        if (!isSuccessfulEventsResponse(resp)) {
-                            messages = { kind: "error", error: "Unable to load pinned messages" };
-                        } else {
-                            messages = {
-                                kind: "success",
-                                data: client.groupMessagesByDate(
-                                    resp.events.sort((a, b) => a.index - b.index),
-                                ),
-                            };
-
-                            if (unread) {
-                                client.markPinnedMessagesRead(chatId, dateLastPinned!);
-                            }
-
-                            tick().then(scrollBottom);
-                        }
-                    })
-                    .catch((err) => {
-                        client.logError("Unable to load pinned messages: ", err);
-                        messages = { kind: "error", error: err.toString() };
-                    });
-            } else {
-                messages = { kind: "success", data: [] };
-            }
-        });
-    }
-
     $effect(() => {
-        // Until the chat details arrive the pinned set is UNKNOWN, not empty —
-        // rendering the empty state here made the panel show "no pins" for the
-        // first second on a first open (cold cache / slow connection).
-        if ($selectedServerChatStore === undefined) {
-            messages = { kind: "loading" };
-            return;
-        }
-        reloadPinned(pinnedMessages);
-        unread = client.unreadPinned(chatId, dateLastPinned);
+        const loading = pinned.sync();
+        void (async () => {
+            if (await loading) {
+                await tick();
+                scrollBottom();
+            }
+        })();
     });
 
     function dateGroupKey(group: EventWrapper<Message>[]): string {

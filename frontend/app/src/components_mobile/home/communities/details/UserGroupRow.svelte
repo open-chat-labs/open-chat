@@ -21,7 +21,8 @@
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import Edit from "svelte-material-icons/TextBoxEditOutline.svelte";
     import AreYouSure from "../../../AreYouSure.svelte";
-    import type { CommunityState } from "./communityState.svelte";
+    import { toastStore } from "@src/stores/toast";
+    import type { CommunityState } from "@src/logic/groupOrCommunity/communityState.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -41,7 +42,10 @@
 {#if communityState.confirmingUserGroupDelete}
     <AreYouSure
         message={i18nKey("communities.confirmDeleteUserGroup")}
-        action={(answer) => communityState.deleteUserGroup(answer)} />
+        action={async (answer) => {
+            const failed = await communityState.deleteUserGroup(answer);
+            if (failed !== undefined) toastStore.showFailureToast(failed);
+        }} />
 {/if}
 
 <Container

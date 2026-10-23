@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { chatDetailsPermissions } from "@src/logic/groupOrCommunity/detailsPermissions";
     import { i18nKey } from "@src/i18n/i18n";
     import { toastStore } from "@src/stores/toast";
     import { activeVideoCall } from "@src/stores/video";
@@ -23,8 +24,10 @@
         candidateGroupFromChat,
         chatIdentifiersEqual,
         communitiesStore,
+        currentUserIdStore,
         defaultChatRules,
         favouritesStore,
+        groupDescription,
         isDiamondStore,
         publish,
         ROLE_OWNER,
@@ -85,7 +88,10 @@
             $activeVideoCall !== undefined &&
             chatIdentifiersEqual($activeVideoCall.chatId, chat.id),
     );
-    let canEdit = $derived(!$anonUserStore && client.canEditGroupDetails(chat.id));
+    let permissions = $derived(
+        chatDetailsPermissions(client, chat, $selectedCommunitySummaryStore, $anonUserStore),
+    );
+    let canEdit = $derived(permissions.canEdit);
     let canStartVideoCalls = $derived(!$anonUserStore && client.canStartVideoCalls(chat.id));
     let rules = $derived($selectedChatRulesStore ?? defaultChatRules(chat.level));
     let avatarUrl = $derived(client.groupAvatarUrl(chat, $selectedCommunitySummaryStore));
@@ -286,7 +292,7 @@
 
                 <ReadMore>
                     <Body fontWeight={"light"}>
-                        <Markdown inline={false} text={chat.description} />
+                        <Markdown inline={false} text={groupDescription(chat, $currentUserIdStore)} />
                     </Body>
                 </ReadMore>
             </Container>
@@ -378,7 +384,7 @@
             </Container>
         {/if}
 
-        {#if !$anonUserStore && client.canDeleteGroup(chat.id)}
+        {#if permissions.canDelete}
             <Separator />
 
             <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>

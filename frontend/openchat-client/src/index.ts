@@ -42,7 +42,12 @@ export {
     unsuspendUserMessage,
 } from "./utils/user";
 export * from "./utils/cryptoFormatter";
-export { candidateGroupFromChat, groupChanges, hasAccessGateChanged } from "./utils/group.svelte";
+export {
+    candidateGroupFromChat,
+    groupChanges,
+    groupDescription,
+    hasAccessGateChanged,
+} from "./utils/group.svelte";
 export { communityChanges, isPrivateCommunityPreview } from "./utils/community";
 export { executionPaymentAmount, proposalFundsRequired } from "./utils/proposal";
 export { currentStreak } from "./utils/chit";
@@ -53,9 +58,13 @@ export { editableGates, gateWithHidden, type EditableGates } from "./utils/acces
 export {
     compareMembers,
     knownMembers,
+    memberActions,
     memberMatchesSearch,
+    memberRoleChoices,
     roleChangeFailureMessage,
     usersFromIds,
+    type MemberActions,
+    type MemberPermissions,
 } from "./utils/members";
 export {
     profileBlock,

@@ -10018,6 +10018,17 @@
         "doc": "Remove a member. Offered only when given; rolls back on rejection."
       },
       {
+        "name": "onBlockMember",
+        "type": "(member: Person) => Promise<unknown> | void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Block a member (offered only where the member's `actions` allow it)."
+      },
+      {
         "name": "onUnblock",
         "type": "(member: Person) => Promise<unknown> | void",
         "default": null,
