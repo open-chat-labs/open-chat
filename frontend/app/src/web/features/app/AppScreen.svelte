@@ -3,8 +3,10 @@
 <script lang="ts">
     import {
         anonUserStore,
+        chitStateStore,
         currentUserStore,
         favouritesStore,
+        latestSuccessfulUpdatesLoop,
         OpenChat,
         publish,
         routeStore,
@@ -41,6 +43,10 @@
         type AppEventDialog,
     } from "@src/logic/appEvents/appEvents";
     import { pinsFor } from "../rail/rail.adapter";
+    import { chitRailProps } from "../chit/chit.adapter";
+    import { openLinked } from "./linkedDialogs";
+    import { disableChit, hideChitIcon } from "@src/stores/settings";
+    import { now500 } from "@src/stores/time";
     import DetailsColumn from "./DetailsColumn.svelte";
     import RegionScreen from "./RegionScreen.svelte";
     import { closeRightColumn, openOnNewPanel } from "./rightPanel";
@@ -79,6 +85,18 @@
     // the labels are the app's own strings, translated here (the rail shows other text as it is)
     const items = $derived(railShown.map((item) => ({ icon: item.icon, label: $_(item.label) })));
     const activeItem = $derived(railShown.findIndex((item) => item.id === selection.item));
+    // the rail's CHIT button, which opens ?chit (8d)
+    const chit = $derived(
+        chitRailProps(
+            {
+                chit: $chitStateStore,
+                lastSync: $latestSuccessfulUpdatesLoop,
+                disabled: $disableChit,
+                now: $now500,
+            },
+            $hideChitIcon,
+        ),
+    );
 
     // a message that couldn't be sent and can't be retried says so (as the old UI's Home); one that
     // can shows as failed, with Retry
@@ -184,6 +202,10 @@
             onSelectPin={(id) => navigate(`/community/${id}`)}
             onExplore={() => navigate("/communities")}
             onProfile={() => navigate(withQueryStringFlag("profile"), "overlay")}
+            chitShown={!$anonUserStore && chit.chitShown}
+            chitStreak={chit.chitStreak}
+            chitClaimable={chit.chitClaimable}
+            onChit={() => openLinked({ kind: "chit" })}
             onSignIn={() => client.updateIdentityState({ kind: "logging_in" })} />
     {/snippet}
     {#snippet middle()}

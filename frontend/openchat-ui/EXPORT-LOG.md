@@ -225,3 +225,13 @@
 - `ProfileDialog` takes `onClaim` (as `ChitDialog`'s): the calendar's Claim claims there, and the day says "Claiming…" (`ui.profileDialog.calendar.claiming`) until it settles, where it otherwise opens the CHIT dialog (`onChit`). `meta.json` updated.
 - A day before `joined` is shown as a future day is (no claim, no "not claimed"), where it counted as missed.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-24 — ChitDialog: the default tiers keep their spacing, and a claim made here clears for the next day, by hand
+- Passing `milestones` always spaced the bar's notches evenly, so a host passing the default tiers (3, 7, 14, 30, 100, 365) lost the hand-spaced positions (3 at 8%, 100 at 67% …). The default tiers now keep them, whoever passes them; other tiers are still spaced evenly.
+- A claim made in the dialog kept it in the claimed view for as long as it stayed open, so once the next claim opened it said "Come back in" with no countdown and no Claim button. It now clears when `claimable` comes back on.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-24 — ChitDialog: a claim with nothing to claim plays no claim, by hand
+- `onClaim` may resolve with `false` when there was nothing to claim (today's already claimed, on another device or before the dialog knew): the claim animation doesn't play, and the dialog follows `claimable`. It played as if CHIT had been added.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
