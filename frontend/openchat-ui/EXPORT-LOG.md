@@ -139,3 +139,7 @@
 - Components that hide their scrollbar (`scrollbar-width: none`) or set it thin keep doing so. The two that hide it (`MemeFighterDialog`'s narrow vibes, Learn's narrow tabs) also hide it with `::-webkit-scrollbar { display: none }`, which is all Safari before 18.2 reads.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
 
+## 2026-10-23 — ProfileDialog's edit buttons keep their surface on hover, by hand
+- The cover and photo edit buttons' hover was `--btn-hover` alone, a see-through tint, so on hover the button lost its surface and the avatar or cover showed through it. The tint now goes over the button's own surface (`--card-2`).
+- A small visual fix the app needed, not in the design export: to go back to it (the app's `GAPS.md` lists it).
+

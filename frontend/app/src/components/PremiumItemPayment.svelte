@@ -1,14 +1,9 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import { toastStore } from "@src/stores/toast";
-    import {
-        currentUserStore,
-        OpenChat,
-        PremiumItem,
-        premiumPrices,
-        type ResourceKey,
-    } from "@client";
+    import { currentUserStore, OpenChat, type PremiumItem } from "@client";
     import { getContext } from "svelte";
+    import { PremiumItemPayment } from "@src/logic/premium/premiumItemPayment.svelte";
     import AlertBox from "./AlertBox.svelte";
     import Button from "./Button.svelte";
     import ButtonGroup from "./ButtonGroup.svelte";
@@ -18,12 +13,6 @@
 
     const client = getContext<OpenChat>("client");
 
-    const labels: Record<PremiumItem, ResourceKey> = {
-        [PremiumItem.BotEmojis]: i18nKey("premiumItem.botEmojis"),
-        [PremiumItem.PopularEmojis]: i18nKey("premiumItem.popularEmojis"),
-        [PremiumItem.CustomProfileBackground]: i18nKey("premiumItem.customProfileBackground"),
-    };
-
     interface Props {
         item: PremiumItem;
         onSuccess: () => void;
@@ -31,38 +20,31 @@
     }
 
     let { item, onSuccess, onCancel }: Props = $props();
-    let paying = $state(false);
-    let price = $derived(premiumPrices[item]);
-    let insufficient = $derived($currentUserStore.chitBalance < price);
+    // its price against the user's CHIT, and the payment (app/src/logic/premium)
+    let payment = $derived(
+        new PremiumItemPayment(client, item, () => $currentUserStore.chitBalance),
+    );
 
-    function pay() {
-        paying = true;
-        client
-            .payForPremiumItem(item)
-            .then((resp) => {
-                if (resp.kind === "success") {
-                    onSuccess();
-                } else {
-                    toastStore.showFailureToast(i18nKey("premiumItem.paymentFailure"));
-                }
-            })
-            .finally(() => (paying = false));
+    async function pay() {
+        const outcome = await payment.pay();
+        if (outcome.kind === "paid") onSuccess();
+        else toastStore.showFailureToast(outcome.reason);
     }
 </script>
 
 <Overlay>
     <ModalContent>
         {#snippet header()}
-            <Translatable resourceKey={labels[item] ?? i18nKey("premiumItem.title")}></Translatable>
+            <Translatable resourceKey={payment.label}></Translatable>
         {/snippet}
 
         {#snippet body()}
             <div class="body">
-                {#if insufficient}
+                {#if payment.insufficient}
                     <AlertBox>
                         <Translatable
                             resourceKey={i18nKey("premiumItem.insufficientChit", {
-                                price: premiumPrices[item].toLocaleString(),
+                                price: payment.price.toLocaleString(),
                                 balance: $currentUserStore.chitBalance.toLocaleString(),
                             })}></Translatable>
                     </AlertBox>
@@ -71,7 +53,7 @@
                         <div class="icon"></div>
                         <Translatable
                             resourceKey={i18nKey("premiumItem.priceMessage", {
-                                price: premiumPrices[item].toLocaleString(),
+                                price: payment.price.toLocaleString(),
                                 balance: $currentUserStore.chitBalance.toLocaleString(),
                             })}></Translatable>
                     </div>
@@ -82,7 +64,7 @@
         {#snippet footer()}
             <ButtonGroup>
                 <Button onClick={onCancel} secondary>Cancel</Button>
-                <Button loading={paying} disabled={paying || insufficient} onClick={pay}
+                <Button loading={payment.paying} disabled={!payment.canPay} onClick={pay}
                     >Pay</Button>
             </ButtonGroup>
         {/snippet}

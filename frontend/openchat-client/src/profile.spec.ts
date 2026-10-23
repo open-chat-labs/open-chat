@@ -26,6 +26,7 @@ import { ErrorCode, Stream, anonymousUser, type PublicProfile, type WorkerReques
 import type { OpenChatConfig } from "./config";
 import { OpenChat } from "./openchat";
 import { currentUserProfileStore, currentUserStore } from "./state";
+import { userStore } from "./state/users/state";
 import { WorkerAgent } from "./workerAgent";
 
 class FakeWorker {
@@ -118,6 +119,36 @@ describe("saving the user's profile", () => {
             displayName: "Jules",
             bio: "new bio",
         });
+    });
+
+    test("a new avatar shows at once, and the previous one comes back if it doesn't upload", async () => {
+        userStore.addUser({
+            kind: "user",
+            userId: "me",
+            username: "julian",
+            displayName: undefined,
+            updated: 0n,
+            suspended: false,
+            diamondStatus: "inactive",
+            chitBalance: 0,
+            totalChitEarned: 0,
+            streak: 0,
+            maxStreak: 0,
+            isUniquePerson: false,
+            hideOnlineStatus: false,
+            blobUrl: "old.png",
+        });
+        let fail: (err: Error) => void = () => {};
+        vi.spyOn(WorkerAgent.prototype, "send").mockImplementation(
+            (() => new Promise((_, reject) => (fail = reject))) as never,
+        );
+
+        const saved = client.setUserAvatar(new Uint8Array([1]), "new.png");
+        expect(userStore.get("me")?.blobUrl).toBe("new.png");
+        fail(new Error("offline"));
+
+        expect(await saved).toBeUndefined();
+        expect(userStore.get("me")?.blobUrl).toBe("old.png");
     });
 
     describe("refreshing the user's profile", () => {

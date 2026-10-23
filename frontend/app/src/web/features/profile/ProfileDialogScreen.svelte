@@ -28,6 +28,8 @@
         suspendedUserStore,
         userMetricsStore,
         type ModerationFlag,
+        PremiumItem,
+        premiumItemsStore,
     } from "@client";
     import ProfileDialog, {
         type ChatSettings,
@@ -61,6 +63,17 @@
         themePrefOf,
         type AppChatSettings,
     } from "./profile.adapter";
+    import { i18nKey } from "@src/i18n/i18n";
+    import { toastStore } from "@src/stores/toast";
+    import {
+        AVATAR_SIZE,
+        cropImage,
+        PROFILE_BACKGROUND_SIZE,
+        readImageFile,
+        type CropArea,
+    } from "@src/utils/imageCrop";
+    import ImageCropDialog from "./ImageCropDialog.svelte";
+    import PremiumItemDialog from "./PremiumItemDialog.svelte";
 
     let { onClose }: DialogProps<Extract<LinkedDialog, { kind: "profile" }>> = $props();
 
@@ -84,6 +97,10 @@
     // as it may have changed on another device since sign-in
     onMount(() => client.refreshCurrentUserProfile());
 
+    // a cropped avatar or profile background, shown while it uploads
+    let avatarPreview = $state<string>();
+    let coverPreview = $state<string>();
+
     const header = $derived(
         profileProps(
             userId,
@@ -95,8 +112,11 @@
                 balance: $chitStateStore.chitBalance,
             },
             {
-                avatarUrl: buildUserAvatarUrl(blobUrlPattern, userId, profile.avatarId),
-                coverUrl: buildUserBackgroundUrl(blobUrlPattern, userId, profile.backgroundId),
+                avatarUrl:
+                    avatarPreview ?? buildUserAvatarUrl(blobUrlPattern, userId, profile.avatarId),
+                coverUrl:
+                    coverPreview ??
+                    buildUserBackgroundUrl(blobUrlPattern, userId, profile.backgroundId),
             },
         ),
     );
@@ -214,6 +234,79 @@
             fontScaleStore.set(fontScaleFor(patch.font, $fontScaleStore));
         }
     }
+
+    // ---- the avatar and the profile background ----
+    type ImageTarget = "avatar" | "cover";
+    type ImageEdit =
+        | { kind: "none" }
+        // the profile background is a premium item, paid for with CHIT before its first use
+        | { kind: "paying" }
+        | { kind: "cropping"; target: ImageTarget; source: string };
+
+    let imageEdit = $state<ImageEdit>({ kind: "none" });
+    let fileInput = $state<HTMLInputElement>();
+    let picking: ImageTarget = "avatar";
+    // one upload at a time for each: another would race it to the store (and the preview)
+    const uploading = $state<Record<ImageTarget, boolean>>({ avatar: false, cover: false });
+
+    const FAILURES: Record<ImageTarget, string> = {
+        avatar: "avatarUpdateFailed",
+        cover: "profile.backgroundUpdateFailed",
+    };
+
+    function pick(target: ImageTarget) {
+        if (uploading[target]) return;
+        picking = target;
+        fileInput?.click();
+    }
+
+    function editCover() {
+        if ($premiumItemsStore.has(PremiumItem.CustomProfileBackground)) pick("cover");
+        else imageEdit = { kind: "paying" };
+    }
+
+    async function picked(e: { currentTarget: HTMLInputElement }) {
+        const file = e.currentTarget.files?.[0];
+        e.currentTarget.value = "";
+        if (file === undefined) return;
+        const target = picking;
+        try {
+            imageEdit = { kind: "cropping", target, source: await readImageFile(file) };
+        } catch (err) {
+            console.warn("Unable to read the picked image", err);
+            toastStore.showFailureToast(i18nKey(FAILURES[target]));
+        }
+    }
+
+    async function cropped(area: CropArea) {
+        if (imageEdit.kind !== "cropping") return;
+        const { target, source } = imageEdit;
+        // its Apply waits while the same image uploads (ImageCropDialog's busy), so nothing's lost
+        if (uploading[target]) return;
+        imageEdit = { kind: "none" };
+        const avatar = target === "avatar";
+        uploading[target] = true;
+        try {
+            // a file that isn't an image after all (a corrupt one, HEIC named .jpg) fails here
+            const size = avatar ? AVATAR_SIZE : PROFILE_BACKGROUND_SIZE;
+            const image = await cropImage(source, area, size);
+            if (image === undefined) throw new Error("the cropped image couldn't be encoded");
+            if (avatar) avatarPreview = image.url;
+            else coverPreview = image.url;
+            const blobId = avatar
+                ? await client.setUserAvatar(image.data, image.url)
+                : await client.setUserProfileBackground(image.data);
+            if (blobId === undefined) throw new Error("the upload failed");
+        } catch (err) {
+            console.warn(`Unable to save the ${target} image`, err);
+            toastStore.showFailureToast(i18nKey(FAILURES[target]));
+        } finally {
+            // the saved image's URL from now on (the client has its id), or what was there before
+            if (avatar) avatarPreview = undefined;
+            else coverPreview = undefined;
+            uploading[target] = false;
+        }
+    }
 </script>
 
 <!-- each prop on its own: a spread that changes (the streak's clock) would take the dialog back to
@@ -248,4 +341,33 @@
     onLogout={() => client.logout()}
     onChatSettings={changeChatSettings}
     onPreviewRingtone={previewRingtone}
-    onAppearance={changeAppearance} />
+    onAppearance={changeAppearance}
+    onPhotoEdit={readOnly ? undefined : () => pick("avatar")}
+    onCoverEdit={readOnly ? undefined : editCover} />
+
+<input
+    hidden
+    type="file"
+    accept=".jpg, .jpeg, .png, .gif, .svg"
+    onchange={picked}
+    bind:this={fileInput} />
+
+{#if imageEdit.kind === "paying"}
+    <PremiumItemDialog
+        item={PremiumItem.CustomProfileBackground}
+        balance={$chitStateStore.chitBalance}
+        useLabel="chooseImage"
+        onUse={() => {
+            imageEdit = { kind: "none" };
+            pick("cover");
+        }}
+        onClose={() => (imageEdit = { kind: "none" })} />
+{:else if imageEdit.kind === "cropping"}
+    <ImageCropDialog
+        source={imageEdit.source}
+        size={imageEdit.target === "avatar" ? AVATAR_SIZE : PROFILE_BACKGROUND_SIZE}
+        round={imageEdit.target === "avatar"}
+        busy={uploading[imageEdit.target]}
+        onCrop={cropped}
+        onClose={() => (imageEdit = { kind: "none" })} />
+{/if}
