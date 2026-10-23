@@ -31,7 +31,7 @@ export {
     TimelineGrouper,
 } from "./utils/chat";
 export { formatDuration } from "./utils/time";
-export { compareIsNotYouThenUsername } from "./utils/user";
+export { compareIsNotYouThenUsername, directChatUsers } from "./utils/user";
 export * from "./utils/cryptoFormatter";
 export { candidateGroupFromChat, groupChanges, hasAccessGateChanged } from "./utils/group.svelte";
 export { communityChanges, isPrivateCommunityPreview } from "./utils/community";

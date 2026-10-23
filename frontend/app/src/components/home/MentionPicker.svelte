@@ -1,6 +1,6 @@
 <script lang="ts">
     import VirtualList from "@openchat/ui/src/lib/virtual/VirtualList.svelte";
-    import type { OpenChat, UserOrUserGroup } from "@client";
+    import type { OpenChat, UserOrUserGroup, UserSummary } from "@client";
     import {
         allUsersStore,
         AvatarSize,
@@ -28,6 +28,8 @@
         supportsUserGroups?: boolean;
         usersOnly?: boolean;
         inline?: boolean;
+        // Offered instead of the selected chat's members
+        users?: UserSummary[];
         onMention: (user: UserOrUserGroup) => void;
         onClose: () => void;
     }
@@ -41,6 +43,7 @@
         supportsUserGroups = false,
         usersOnly = false,
         inline = false,
+        users,
         onClose,
         onMention,
     }: Props = $props();
@@ -51,6 +54,7 @@
 
     // Rebuilt when the members change, which they do when those which weren't held are found
     let usersAndGroups = $derived.by(() => {
+        if (users !== undefined) return users;
         void [$selectedChatMembersStore, $selectedCommunityMembersStore, $allUsersStore];
         return Object.values(client.getUserLookupForMentions()).sort(
             (a: UserOrUserGroup, b: UserOrUserGroup) => {
@@ -64,7 +68,7 @@
     // typed
     $effect(() => {
         const searchFor = prefix;
-        if (searchFor === undefined || searchFor.length < 2) return;
+        if (users !== undefined || searchFor === undefined || searchFor.length < 2) return;
         const timer = setTimeout(
             () => client.findMembersToMention(searchFor),
             FIND_MEMBERS_DELAY_MS,

@@ -1,10 +1,13 @@
 import type {
+    ChatMap,
+    DirectChatSummary,
     MessageFormatter,
     PublicProfile,
     UserLookup,
     UserSummary,
     ReducedPublicProfile,
 } from "@shared";
+import { compareChats } from "@shared";
 
 export function formatLastOnlineDate(
     formatter: MessageFormatter,
@@ -151,6 +154,18 @@ export function compareIsNotYouThenUsername(
         }
         return compareUsername(u1, u2);
     };
+}
+
+// The users you have direct chats with, most recently active chat first. Bots, and users not yet
+// loaded, are left out.
+export function directChatUsers(
+    directChats: ChatMap<DirectChatSummary>,
+    users: UserLookup,
+): UserSummary[] {
+    return [...directChats.values()]
+        .sort(compareChats)
+        .map((c) => users.get(c.them.userId))
+        .filter((u): u is UserSummary => u !== undefined && u.kind !== "bot");
 }
 
 export function userAvatarUrl<T extends { blobUrl?: string }>(dataContent?: T): string {

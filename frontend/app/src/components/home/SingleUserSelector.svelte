@@ -23,6 +23,8 @@
         mentionSelf?: boolean;
         error?: ResourceKey[];
         invalid?: boolean;
+        // Offered instead of the selected chat's members
+        users?: UserSummary[];
         onUserSelected?: (user: UserSummary) => void;
         onUserRemoved?: () => void;
     }
@@ -36,6 +38,7 @@
         mentionSelf = false,
         error = [],
         invalid = false,
+        users,
         onUserSelected,
         onUserRemoved,
     }: Props = $props();
@@ -64,7 +67,10 @@
         // we need a short timeout here so that any click event is handled before the blur
         window.setTimeout(() => {
             if (selectedReceiver === undefined) {
-                selectedReceiver = client.lookupUserForMention(textValue, false);
+                selectedReceiver =
+                    users === undefined
+                        ? client.lookupUserForMention(textValue, false)
+                        : users.find((u) => u.username.toLowerCase() === textValue.toLowerCase());
             }
             showMentionPicker = false;
         }, 200);
@@ -81,6 +87,7 @@
             onClose={() => (showMentionPicker = false)}
             {border}
             usersOnly
+            {users}
             prefix={textValue.startsWith("@") ? textValue.substring(1) : textValue} />
     {/if}
     {#if selectedReceiver !== undefined}

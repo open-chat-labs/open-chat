@@ -2,8 +2,10 @@
     import {
         allUsersStore,
         debouncedDerived,
+        directChatUsers,
         iconSize,
         OpenChat,
+        serverDirectChatsStore,
         validateBot,
         ValidationErrors,
         validEndpoint,
@@ -58,6 +60,8 @@
             selectedCommandIndex < candidate.definition.commands.length - 1,
     );
     let showPrev = $derived(selectedCommandIndex !== undefined && selectedCommandIndex > 0);
+    // The owner can be passed to anyone you have a direct chat with
+    let ownerCandidates = $derived(directChatUsers($serverDirectChatsStore, $allUsersStore));
 
     let errors = $derived.by(
         debouncedDerived(
@@ -262,7 +266,7 @@
             error={errors.get("bot_owner")}
             border={false}
             direction={"up"}
-            mentionSelf
+            users={ownerCandidates}
             onUserSelected={(user) => (candidate.ownerId = user.userId)}
             onUserRemoved={() => (candidate.ownerId = "")}
             selectedReceiver={$allUsersStore.get(candidate.ownerId)}
