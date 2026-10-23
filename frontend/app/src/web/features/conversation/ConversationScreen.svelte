@@ -3,7 +3,7 @@
      deep links, marking read, keeping the scroll), one row per event, each message in a MessageGroup
      of its own that keeps its place in the sender's run (DATA.md, Conversation). -->
 <script lang="ts">
-    import { openChatDetails } from "../app/rightPanel";
+    import { showInRightColumn } from "../app/rightPanel";
     import { muteChat } from "@src/logic/chats/muteChat";
     import {
         allUsersStore,
@@ -26,6 +26,7 @@
         selectedChatDraftMessageStore,
         selectedChatExpandedDeletedMessageStore,
         selectedChatIdStore,
+        selectedChatPinnedMessagesStore,
         selectedChatSummaryStore,
         selectedCommunitySummaryStore,
         suspendedUserStore,
@@ -425,9 +426,17 @@
             isFavourite={favourite}
             showMenu={!readonly}
             showCall={false}
-            actions={[]}
+            actions={$selectedChatPinnedMessagesStore.size > 0
+                ? [
+                      {
+                          icon: "pin",
+                          onPress: () =>
+                              showInRightColumn(screen.rightColumn, { kind: "show_pinned" }),
+                      },
+                  ]
+                : []}
             {onMenu}
-            openDetails={() => openChatDetails(screen.rightColumn)}
+            openDetails={() => showInRightColumn(screen.rightColumn, { kind: "group_details" })}
             onTogglePanel={() => screen.rightColumn.toggle()}
             panelOpen={screen.rightColumn.open} />
 

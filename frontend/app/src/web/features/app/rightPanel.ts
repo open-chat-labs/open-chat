@@ -50,11 +50,11 @@ export function openOnNewPanel(column: RightColumnState): () => void {
 }
 
 /**
- * Opens the right column on the chat's details, whatever it showed before, as clicking the chat's
- * name in the old header did.
+ * Opens the right column on `panel` alone, whatever it showed before, as the old header's chat name
+ * (the chat's details) and pin icon (its pinned messages) did.
  */
-export function openChatDetails(column: RightColumnState): void {
-    setRightPanelHistory([{ kind: "group_details" }]);
+export function showInRightColumn(column: RightColumnState, panel: RightPanelContent): void {
+    setRightPanelHistory([panel]);
     column.open = true;
 }
 

@@ -212,7 +212,7 @@
                 senderId: ev.event.sender,
                 author: client.getDisplayName(ev.event.sender, $selectedCommunityMembersStore),
                 text: client.getContentAsText($_, ev.event.content),
-                date: client.toDateString(sent),
+                date: client.formatMessageDate(ev.timestamp, $_("today"), $_("yesterday")),
                 time: client.toShortTimeString(sent),
             });
         }),

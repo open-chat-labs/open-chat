@@ -204,6 +204,9 @@ design export needs. Each entry says where it came up.
   - the owner and admin counts are of the members held, which for a large chat is its first page.
   - by hand: the cover's × calls `onClose` (it had no handler), and shows as a back arrow
     (`back`) when there's an earlier panel to return to.
+  - the conversation header's pin icon (shown when the chat has pinned messages) opens the
+    pinned view; the old one also marked unread pins with a dot, and the header's extra icons have
+    no accessible label (`ConversationHeader` takes none).
 
 ## App
 
