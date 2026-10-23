@@ -143,3 +143,11 @@
 - The cover and photo edit buttons' hover was `--btn-hover` alone, a see-through tint, so on hover the button lost its surface and the avatar or cover showed through it. The tint now goes over the button's own surface (`--card-2`).
 - A small visual fix the app needed, not in the design export: to go back to it (the app's `GAPS.md` lists it).
 
+## 2026-10-23 — ProfileDialog: a host-drawn QR code, the report row with its callback, the About pages a host has, by hand
+- `qrCode` (a snippet given the invite link) draws the invite's QR code. Without it the dialog still draws one with a global `qrcode` library, which a host has to load itself; the app has its own QR component.
+- The storage section's "report a problem" row shows only with `onReportIssue`, as the header says of every action (it was always there, and did nothing without it).
+- The storage meter shows only with an allowance (`storageLimitMB` above 0): a user without one (no Diamond) gets the upsell, not a meter divided by 0.
+- With no communities, the communities section says so (`ui.profileDialog.communities.none`), rather than "No communities match “”".
+- `aboutPages` lists the About pages the host has, so the dialog doesn't link to one it hasn't (default: all). A group left with none isn't shown.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists them).
+

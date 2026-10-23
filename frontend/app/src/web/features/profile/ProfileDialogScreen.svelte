@@ -30,6 +30,11 @@
         type ModerationFlag,
         PremiumItem,
         premiumItemsStore,
+        memberDisplayNameResult,
+        referralLink,
+        sortedCommunitiesStore,
+        storageStore,
+        type BotClientConfigData,
     } from "@client";
     import ProfileDialog, {
         type ChatSettings,
@@ -62,7 +67,13 @@
         statsProps,
         themePrefOf,
         type AppChatSettings,
+        botConfigProps,
+        communitiesProps,
+        memberDisplayNameOf,
+        storageProps,
     } from "./profile.adapter";
+    import { clearCacheAndRestart } from "@src/utils/clearCache";
+    import { websiteVersion } from "@src/utils/openchatClient";
     import { i18nKey } from "@src/i18n/i18n";
     import { toastStore } from "@src/stores/toast";
     import {
@@ -80,7 +91,28 @@
     const client = getContext<OpenChat>("client");
 
     // the sections built so far (ProfileDialog shows only these)
-    const SECTIONS: ProfileSection[] = ["profile", "stats", "diamond", "chats", "appearance"];
+    const SECTIONS: ProfileSection[] = [
+        "profile",
+        "stats",
+        "diamond",
+        "chats",
+        "communities",
+        "appearance",
+        "storage",
+        "bots",
+        "invite",
+        "about",
+    ];
+    // the About pages this app has (Learn's, and the guidelines); it has no metrics page
+    const ABOUT_PAGES = [
+        "features",
+        "roadmap",
+        "architecture",
+        "whitepaper",
+        "faq",
+        "blog",
+        "guidelines",
+    ];
 
     const userId = $derived($currentUserIdStore);
     const user = $derived($allUsersStore.get(userId) ?? client.nullUser("unknown"));
@@ -235,6 +267,50 @@
         }
     }
 
+    // ---- communities ----
+    const communities = $derived(
+        communitiesProps($sortedCommunitiesStore, (c) =>
+            client.communityAvatarUrl(c.id.communityId, c.avatar),
+        ),
+    );
+
+    // the dialog shows the name until this settles, and goes back to the saved one if it throws
+    async function setCommunityName(communityId: string, name: string | null): Promise<void> {
+        const resp = await client.setMemberDisplayName(
+            { kind: "community", communityId },
+            memberDisplayNameOf(name),
+        );
+        const result = memberDisplayNameResult(resp);
+        // TODO(design): the dialog says the name couldn't be saved, not why; GAPS.md
+        if (result.kind !== "saved") throw new Error(`community name not saved: ${result.kind}`);
+    }
+
+    // ---- storage, bots, invite, about ----
+    const storage = $derived(storageProps($storageStore));
+
+    let botConfig = $state<BotClientConfigData>();
+    onMount(async () => {
+        try {
+            botConfig = await client.getBotConfig();
+        } catch (err) {
+            // the bot configuration rows stay hidden
+            console.warn("Unable to load the bot configuration", err);
+        }
+    });
+    const bots = $derived(botConfig && botConfigProps(botConfig));
+
+    const inviteLink = $derived(referralLink(client.canonicalOrigin(), userId));
+
+    // where there's no system share sheet, the link is copied
+    async function shareInvite(link: string) {
+        try {
+            await navigator.clipboard.writeText(link);
+            toastStore.showSuccessToast(i18nKey("linkCopiedToClipboard"));
+        } catch {
+            toastStore.showFailureToast(i18nKey("failedToCopyLinkToClipboard"));
+        }
+    }
+
     // ---- the avatar and the profile background ----
     type ImageTarget = "avatar" | "cover";
     type ImageEdit =
@@ -342,8 +418,29 @@
     onChatSettings={changeChatSettings}
     onPreviewRingtone={previewRingtone}
     onAppearance={changeAppearance}
+    communities={communities.communities}
+    communityNames={communities.communityNames}
+    onCommunityName={setCommunityName}
+    storageUsedMB={storage.storageUsedMB}
+    storageLimitMB={storage.storageLimitMB}
+    onClearCache={() => clearCacheAndRestart(client)}
+    icHost={bots?.icHost}
+    storageIndex={bots?.storageIndex}
+    publicKey={bots?.publicKey}
+    {inviteLink}
+    onShareApp={shareInvite}
+    aboutBaseUrl={client.canonicalOrigin()}
+    aboutPages={ABOUT_PAGES}
+    platform="Web"
+    version={websiteVersion}
     onPhotoEdit={readOnly ? undefined : () => pick("avatar")}
-    onCoverEdit={readOnly ? undefined : editCover} />
+    onCoverEdit={readOnly ? undefined : editCover}>
+    {#snippet qrCode(link: string)}
+        {#await import("svelte-qrcode-image") then { QRCodeImage }}
+            <QRCodeImage text={link} errorCorrectionLevel="Q" margin={0} />
+        {/await}
+    {/snippet}
+</ProfileDialog>
 
 <input
     hidden

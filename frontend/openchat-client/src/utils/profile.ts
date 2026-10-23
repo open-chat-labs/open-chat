@@ -3,6 +3,7 @@ import {
     type PublicProfile,
     type SetBioResponse,
     type SetDisplayNameResponse,
+    type SetMemberDisplayNameResponse,
     type SetUsernameResponse,
 } from "@shared";
 
@@ -86,4 +87,32 @@ export function bioResult(resp: SetBioResponse): ProfileFieldResult {
         default:
             return resp satisfies never;
     }
+}
+
+/** How setting the user's name in a community went (setMemberDisplayName). */
+export function memberDisplayNameResult(resp: SetMemberDisplayNameResponse): ProfileFieldResult {
+    switch (resp.kind) {
+        case "success":
+            return saved;
+        case "error":
+            switch (resp.code) {
+                case ErrorCode.DisplayNameTooShort:
+                    return rejected("register.displayNameTooShort");
+                case ErrorCode.DisplayNameTooLong:
+                    return rejected("register.displayNameTooLong");
+                case ErrorCode.InvalidDisplayName:
+                    return rejected("register.displayNameInvalid");
+                default:
+                    return rejected("unexpectedError");
+            }
+        case "offline":
+            return failed;
+        default:
+            return resp satisfies never;
+    }
+}
+
+/** The link that invites someone to OpenChat on the user's behalf: `origin` is canonicalOrigin(). */
+export function referralLink(origin: string, userId: string): string {
+    return `${origin}/?ref=${userId}`;
 }

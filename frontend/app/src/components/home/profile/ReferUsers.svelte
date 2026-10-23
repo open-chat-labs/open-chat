@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { currentUserIdStore, iconSize } from "@client";
+    import { currentUserIdStore, iconSize, referralLink, type OpenChat } from "@client";
+    import { getContext } from "svelte";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -9,7 +10,10 @@
     import QRCode from "../../QRCode.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
 
-    let link = $derived(`${window.location.origin}/?ref=${$currentUserIdStore}`);
+    const client = getContext<OpenChat>("client");
+
+    // the canonical origin, as the mobile app's: a native build doesn't share a tauri:// link
+    let link = $derived(referralLink(client.canonicalOrigin(), $currentUserIdStore));
 
     function onCopy() {
         navigator.clipboard.writeText(link).then(

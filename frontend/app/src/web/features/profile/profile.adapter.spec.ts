@@ -1,6 +1,10 @@
-import type { Metrics, PublicProfile, UserSummary } from "@client";
+import type { CommunitySummary, Metrics, PublicProfile, UserSummary } from "@client";
 import {
+    botConfigProps,
     changedChatSettings,
+    communitiesProps,
+    memberDisplayNameOf,
+    storageProps,
     chatSettingsProps,
     profileProps,
     ringtoneKeyOf,
@@ -109,5 +113,39 @@ describe("the profile dialog's props", () => {
         expect(themePrefOf("light")).toBe("light");
         expect(themePrefOf("system")).toBe("system");
         expect(themePrefOf("signals")).toBe("system");
+    });
+
+    test("the communities, and the name the user goes by in each that has one", () => {
+        const community = (id: string, displayName?: string) =>
+            ({
+                id: { kind: "community", communityId: id },
+                name: `Community ${id}`,
+                membership: { displayName },
+            }) as CommunitySummary;
+        const props = communitiesProps([community("a", "Jules"), community("b")], () => "/c.png");
+        expect(props.communities).toEqual([
+            { id: "a", name: "Community a", avatar: 'url("/c.png") center / cover no-repeat' },
+            { id: "b", name: "Community b", avatar: 'url("/c.png") center / cover no-repeat' },
+        ]);
+        expect(props.communityNames).toEqual({ a: "Jules" });
+    });
+
+    test("clearing a community name sends no name (removes it), not an empty string", () => {
+        expect(memberDisplayNameOf(null)).toBeUndefined();
+        expect(memberDisplayNameOf("")).toBeUndefined();
+        expect(memberDisplayNameOf("Jules")).toBe("Jules");
+    });
+
+    test("storage in MB, with no allowance kept at 0", () => {
+        expect(storageProps({ bytesUsed: 5 * 1024 * 1024, byteLimit: 0 })).toEqual({
+            storageUsedMB: 5,
+            storageLimitMB: 0,
+        });
+    });
+
+    test("the bot configuration", () => {
+        expect(
+            botConfigProps({ icHost: "h", openStorageIndexCanister: "s", ocPublicKey: "k" }),
+        ).toEqual({ icHost: "h", storageIndex: "s", publicKey: "k" });
     });
 });

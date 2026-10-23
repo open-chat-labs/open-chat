@@ -212,7 +212,7 @@
   import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
   import { Optimistic } from '../../lib/behaviours/optimistic.svelte';
   import { modal } from '../../lib/behaviours/modal';
-  import { onDestroy, onMount, untrack } from 'svelte';
+  import { onDestroy, onMount, untrack, type Snippet } from 'svelte';
   import Badge from '../../lib/components/Badge.svelte';
   import Toggle from '../../lib/components/Toggle.svelte';
   import { getI18n, segments, useT, type I18nParams } from '../../lib/i18n';
@@ -287,6 +287,9 @@
      *  Show code button is hidden. */
     onRequestLinkCode?: () => Promise<{ code: string; expiresAt: number }>;
     inviteLink?: string;
+    /** The invite link's QR code, drawn by the host (given the link); without it the dialog draws one with a global
+     *  `qrcode` library, if the page has loaded one. */
+    qrCode?: Snippet<[string]>;
     /** Rewards for inviting friends ("Becomes a Diamond member" → 5000); the list is hidden when empty. */
     inviteRewards?: { label: string; amount: number }[];
     /** Bot configuration values; a row is hidden when its value is absent. */
@@ -295,6 +298,8 @@
     publicKey?: string;
     /** Base for the About links (`${aboutBaseUrl}/features` …). */
     aboutBaseUrl?: string;
+    /** The About pages the host has (`features`, `roadmap`, `metrics` …), for one without them all; defaults to all. */
+    aboutPages?: string[];
     /** "Bot docs" link on the Bot configuration page. */
     botDocsUrl?: string;
     platform?: string;
@@ -382,11 +387,13 @@
     storageLimitMB,
     onRequestLinkCode,
     inviteLink,
+    qrCode,
     inviteRewards = [],
     icHost,
     storageIndex,
     publicKey,
     aboutBaseUrl = 'https://oc.app',
+    aboutPages,
     botDocsUrl = 'https://github.com/open-chat-labs/open-chat-bots',
     platform = 'Web',
     version = '',
@@ -1007,7 +1014,7 @@
   // the QR library loads as a global script; retry until it is there
   type QrFactory = (typeNumber: number, level: string) => { addData(s: string): void; make(): void; getModuleCount(): number; isDark(y: number, x: number): boolean };
   $effect(() => {
-    if (section !== 'invite' || qr?.link === link) return;
+    if (qrCode || section !== 'invite' || qr?.link === link) return;
     const target = link;
     let retry: ReturnType<typeof setTimeout> | undefined;
     const build = () => {
@@ -1517,7 +1524,9 @@
               {/if}
             {/each}
           </div>
-          {#if shownCommunities.length === 0}
+          {#if communities.length === 0}
+            <span class="no-match">{t('ui.profileDialog.communities.none')}</span>
+          {:else if shownCommunities.length === 0}
             <span class="no-match">{t('ui.profileDialog.communities.noMatch', { query: commQuery })}</span>
           {/if}
         </div>
@@ -1683,6 +1692,8 @@
           <div class="block wide-gap">
             <span class="caps">{t('ui.profileDialog.storage.remote')}</span>
             <div class="list">
+              <!-- no allowance (none without Diamond): no meter, which would divide by it -->
+              {#if storageCap > 0}
               <div class="usage">
                 <div class="usage-head">
                   <span class="usage-figure">{mb(storageUsed)}</span>
@@ -1692,6 +1703,7 @@
                 <div class="usage-track"><div class="usage-fill" style:width="{Math.round(storageRatio * 100)}%" style:background={storageTone ?? 'var(--accent)'}></div></div>
                 <span class="setting-hint">{t('ui.profileDialog.storage.left', { left: mb(storageCap - storageUsed) })}</span>
               </div>
+              {/if}
               {#if !isDiamond}
                 <div class="upsell" onclick={() => close(onDiamond)} role="button" tabindex="0">
                   <span class="upsell-text">{t('ui.profileDialog.storage.upsell')}</span>
@@ -1717,13 +1729,15 @@
                   >{/if}
               </div>
               {#if cache === 'failed'}<span class="inline-error padded" role="alert">{t('ui.profileDialog.storage.clearFailed')}</span>{/if}
+              {#if onReportIssue}
               <div class="cache-row ruled">
                 <div class="cache-text">
                   <span class="setting-title">{t(cache === 'done' ? 'ui.profileDialog.storage.fixed' : 'ui.profileDialog.storage.problems')}</span>
                   <span class="setting-hint muted3">{t('ui.profileDialog.storage.reportHint')}</span>
                 </div>
-                <span class="outline-button report" onclick={() => onReportIssue?.()} role="button" tabindex="0">{@render glyph('flag', 'outline-glyph flag')}{t('ui.profileDialog.storage.report')}</span>
+                <span class="outline-button report" onclick={() => onReportIssue()} role="button" tabindex="0">{@render glyph('flag', 'outline-glyph flag')}{t('ui.profileDialog.storage.report')}</span>
               </div>
+              {/if}
             </div>
           </div>
         </div>
@@ -1823,7 +1837,7 @@
             </div>
             <span class="version">{platform}{version ? ` · v${version}` : ''}</span>
           </div>
-          {#each ABOUT_GROUPS as group}
+          {#each ABOUT_GROUPS.map((g) => ({ ...g, keys: g.keys.filter((k) => !aboutPages || aboutPages.includes(k)) })).filter((g) => g.keys.length > 0) as group}
             <div class="block wide-gap">
               <span class="caps">{t(group.label)}</span>
               <div class="list">
@@ -1844,7 +1858,7 @@
         <div class="scroll gap-22">
           <span class="lead-text">{t('ui.profileDialog.invite.lead')}</span>
           <div class="invite">
-            <div class="qr"><img src={qr?.link === link ? qr.src : BLANK_GIF} alt={t('ui.profileDialog.invite.qrAlt')} /></div>
+            <div class="qr">{#if qrCode}{@render qrCode(link)}{:else}<img src={qr?.link === link ? qr.src : BLANK_GIF} alt={t('ui.profileDialog.invite.qrAlt')} />{/if}</div>
             <div class="invite-side">
               <span class="invite-caps">{t('ui.profileDialog.invite.caps')}</span>
               <span class="invite-link">{link}</span>
@@ -4460,7 +4474,8 @@
     background: #fff;
   }
 
-  .qr img {
+  /* the dialog's own image, or the host's (qrCode) */
+  .qr :global(img) {
     display: block;
     width: 100%;
     height: 100%;

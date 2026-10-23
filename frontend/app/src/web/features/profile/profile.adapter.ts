@@ -1,5 +1,16 @@
-import type { Metrics, MinutesOnline, PublicProfile, UserSummary } from "@client";
-import type { ChatSettings } from "@openchat/ui/src/features/components/ProfileDialog.svelte";
+import type {
+    BotClientConfigData,
+    CommunitySummary,
+    Metrics,
+    MinutesOnline,
+    PublicProfile,
+    StorageStatus,
+    UserSummary,
+} from "@client";
+import type {
+    ChatSettings,
+    ProfileCommunity,
+} from "@openchat/ui/src/features/components/ProfileDialog.svelte";
 import type { RingtoneKey } from "@src/stores/video";
 
 // ProfileDialog's props from the user's profile, metrics and settings.
@@ -143,4 +154,45 @@ export type ThemePref = "system" | "dark" | "light";
 /** The theme the appearance pane shows: themeType, which may hold a name the design doesn't have. */
 export function themePrefOf(stored: string): ThemePref {
     return stored === "dark" || stored === "light" ? stored : "system";
+}
+
+/** The communities pane: the user's communities, and the name they go by in each that has one. */
+export function communitiesProps(
+    communities: CommunitySummary[],
+    avatarUrl: (community: CommunitySummary) => string,
+): { communities: ProfileCommunity[]; communityNames: Record<string, string> } {
+    const names: Record<string, string> = {};
+    for (const c of communities) {
+        if (c.membership.displayName !== undefined)
+            names[c.id.communityId] = c.membership.displayName;
+    }
+    return {
+        communities: communities.map((c) => ({
+            id: c.id.communityId,
+            name: c.name,
+            avatar: cssImage(avatarUrl(c)),
+        })),
+        communityNames: names,
+    };
+}
+
+/** The name to set in a community: clearing it (no name, or an empty one) sends none, removing it. */
+export function memberDisplayNameOf(name: string | null): string | undefined {
+    return name === null || name === "" ? undefined : name;
+}
+
+const MB = 1024 * 1024;
+
+/** The storage pane, in MB. A limit of 0 (no allowance without Diamond) stays 0. */
+export function storageProps(storage: StorageStatus) {
+    return { storageUsedMB: storage.bytesUsed / MB, storageLimitMB: storage.byteLimit / MB };
+}
+
+/** The bot configuration pane's values. */
+export function botConfigProps(config: BotClientConfigData) {
+    return {
+        icHost: config.icHost,
+        storageIndex: config.openStorageIndexCanister,
+        publicKey: config.ocPublicKey,
+    };
 }

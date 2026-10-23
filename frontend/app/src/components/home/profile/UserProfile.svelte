@@ -32,6 +32,7 @@
         userWalletAccount,
     } from "@client";
     import { ProfileForm } from "@src/logic/profile/profileForm.svelte";
+    import { clearCacheAndRestart } from "@src/utils/clearCache";
     import { getContext, onDestroy, onMount } from "svelte";
     import { _, locale } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
@@ -603,9 +604,7 @@
                     <p class="para smallprint">
                         <Translatable resourceKey={i18nKey("clearDataCacheInfo")} />
                     </p>
-                    <Button
-                        onClick={() =>
-                            client.clearCachedData().then(() => window.location.reload())}>
+                    <Button onClick={() => clearCacheAndRestart(client)}>
                         <Translatable resourceKey={i18nKey("clearDataCache")} />
                     </Button>
                 </div>
