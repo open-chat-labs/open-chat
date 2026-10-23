@@ -1,3 +1,4 @@
+import { i18nKey, type ResourceKey } from "@shared";
 import type {
     ChatSummary,
     CommunityIdentifier,
@@ -58,4 +59,16 @@ export function profileBlock(input: ProfileBlockInput): ProfileBlock {
         };
     }
     return none;
+}
+
+export type BlockOutcome =
+    | { kind: "success"; message: ResourceKey }
+    | { kind: "failed"; message: ResourceKey };
+
+/** The toast for a block or unblock that succeeded or failed. */
+export function blockOutcome(blocking: boolean, success: boolean): BlockOutcome {
+    const action = blocking ? "block" : "unblock";
+    return success
+        ? { kind: "success", message: i18nKey(`${action}UserSucceeded`) }
+        : { kind: "failed", message: i18nKey(`${action}UserFailed`) };
 }

@@ -145,7 +145,7 @@
 
 {#each stack.items as dialog (dialog)}
     <!-- a bot has no card, checked as its user loads (as the old Home did) -->
-    {#if profileCardShows($allUsersStore.get(dialog.userId))}
+    {#if dialog.kind !== "user" || profileCardShows($allUsersStore.get(dialog.userId))}
         <DialogScreen {dialog} onClose={() => stack.close(dialog)} />
     {/if}
 {/each}

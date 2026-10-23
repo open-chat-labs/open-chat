@@ -1,11 +1,12 @@
 <!-- The right column's panel for a group, channel or community: its details, members (with what the
      viewer may do to each), pinned messages, rules, access gates and user groups. Members views
-     (?everyone, ?usergroup=) and the pinned list open as GroupPanel's own views. Editing (settings,
-     invite, delete, user groups …) opens 4b's dialogs, not built yet: those entries are off until
-     then, and 4b turns them on from detailsPermissions (TODO(4b)). -->
+     (?everyone, ?usergroup=) and the pinned list open as GroupPanel's own views. Leave and delete
+     open the confirm dialogs; the rest of editing (settings, invite, user groups …) is off until
+     4b's later parts turn it on from detailsPermissions (TODO(4b)). -->
 <script lang="ts">
     import {
         allUsersStore,
+        anonUserStore,
         chatIdentifierToString,
         chatListScopeStore,
         compareMembers,
@@ -37,7 +38,12 @@
     } from "@src/logic/members/memberManagement.svelte";
     import { PinnedMessages } from "@src/logic/pinned/pinnedMessages.svelte";
     import { muteChat } from "@src/logic/chats/muteChat";
-    import { chatRulesText } from "@src/logic/groupOrCommunity/detailsPermissions";
+    import {
+        chatDetailsPermissions,
+        chatRulesText,
+        communityDetailsPermissions,
+        communityMenuPermissions,
+    } from "@src/logic/groupOrCommunity/detailsPermissions";
     import { toastStore } from "@src/stores/toast";
     import { navigate } from "@src/utils/navigation";
     import { profileClickedEvent } from "@src/web-components/profileLink";
@@ -288,6 +294,48 @@
         if (failed !== undefined) toastStore.showFailureToast(failed);
     }
 
+    const permissions = $derived(
+        collection === undefined
+            ? undefined
+            : collection.kind === "community"
+              ? communityDetailsPermissions(client, collection, $anonUserStore)
+              : chatDetailsPermissions(client, collection, community, $anonUserStore),
+    );
+
+    // GroupPanel offers Leave to everyone, so the rules are checked here (GAPS.md). TODO(4b):
+    // settings, invite, user groups, bots, webhooks, convert, import and new channels (parts 2-5)
+    function onDialog(kind: string) {
+        if (collection === undefined) return;
+        const name = collection.name;
+        if (collection.kind === "community") {
+            if (kind === "leave" && communityMenuPermissions(client, collection).canLeave) {
+                context.dialogs.open({
+                    kind: "leave_or_delete",
+                    action: { kind: "leave_community", id: collection.id },
+                    name,
+                });
+            } else if (kind === "delete" && permissions?.canDelete) {
+                context.dialogs.open({
+                    kind: "leave_or_delete",
+                    action: { kind: "delete_community", id: collection.id },
+                    name,
+                });
+            }
+        } else if (kind === "leave" && client.canLeaveGroup(collection.id)) {
+            context.dialogs.open({
+                kind: "leave_or_delete",
+                action: { kind: "leave", chatId: collection.id },
+                name,
+            });
+        } else if (kind === "delete" && permissions?.canDelete) {
+            context.dialogs.open({
+                kind: "leave_or_delete",
+                action: { kind: "delete", chatId: collection.id },
+                name,
+            });
+        }
+    }
+
     function close() {
         if (region.back) {
             client.popRightPanelHistory();
@@ -328,7 +376,8 @@
         canChangeRoles={people.some((p) => p.actions.roles.length > 0)}
         canManageUserGroups={false}
         canEdit={false}
-        canDelete={false}
+        canDelete={permissions?.canDelete ?? false}
+        {onDialog}
         canInvite={false}
         canPin={collection.kind !== "community" && client.canPinMessages(collection.id)}
         userGroups={collection.kind === "community" ? userGroups : undefined}

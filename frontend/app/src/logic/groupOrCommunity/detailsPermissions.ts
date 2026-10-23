@@ -1,4 +1,10 @@
-import type { CommunitySummary, MultiUserChat, OpenChat, VersionedRules } from "@client";
+import {
+    ROLE_NONE,
+    type CommunitySummary,
+    type MultiUserChat,
+    type OpenChat,
+    type VersionedRules,
+} from "@client";
 
 /** What a chat's or community's details panel offers the viewer. */
 export type DetailsPermissions = { canEdit: boolean; canDelete: boolean; canInvite: boolean };
@@ -39,6 +45,30 @@ export function communityDetailsPermissions(
         canEdit: client.canEditCommunity(community.id),
         canDelete: client.canDeleteCommunity(community.id),
         canInvite: client.canInviteUsers(community.id),
+    };
+}
+
+/** What a community's menu offers: a member may leave, and the rest needs it not to be frozen. */
+export type CommunityMenuPermissions = {
+    canLeave: boolean;
+    canDelete: boolean;
+    canEdit: boolean;
+    canInvite: boolean;
+    canCreateChannel: boolean;
+};
+
+export function communityMenuPermissions(
+    client: OpenChat,
+    community: CommunitySummary,
+): CommunityMenuPermissions {
+    const member = community.membership.role !== ROLE_NONE;
+    const acting = member && !client.isCommunityFrozen(community.id);
+    return {
+        canLeave: member,
+        canDelete: acting && client.canDeleteCommunity(community.id),
+        canEdit: acting && client.canEditCommunity(community.id),
+        canInvite: acting && client.canInviteUsers(community.id),
+        canCreateChannel: acting && client.canCreateChannel(community.id),
     };
 }
 

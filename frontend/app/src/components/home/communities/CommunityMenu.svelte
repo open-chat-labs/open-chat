@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { communityMenuPermissions } from "@src/logic/groupOrCommunity/detailsPermissions";
     import type { CommunitySummary, OpenChat } from "@client";
     import {
         chatSummariesListStore,
@@ -7,7 +8,6 @@
         notificationsSupported,
         platformModeratorStore,
         publish,
-        ROLE_NONE,
         setRightPanelHistory,
     } from "@client";
     import { getContext } from "svelte";
@@ -42,13 +42,9 @@
 
     let { community, canMarkAllRead }: Props = $props();
 
-    let member = $derived(community.membership.role !== ROLE_NONE);
-    let frozen = $derived(client.isCommunityFrozen(community.id));
-    let canLeave = $derived(member);
-    let canDelete = $derived(member && !frozen && client.canDeleteCommunity(community.id));
-    let canEdit = $derived(member && !frozen && client.canEditCommunity(community.id));
-    let canInvite = $derived(member && !frozen && client.canInviteUsers(community.id));
-    let canCreateChannel = $derived(member && !frozen && client.canCreateChannel(community.id));
+    let { canLeave, canDelete, canEdit, canInvite, canCreateChannel } = $derived(
+        communityMenuPermissions(client, community),
+    );
     let isCommunityMuted = $derived(
         $chatSummariesListStore.every((c) => c.membership.notificationsMuted),
     );
@@ -255,7 +251,7 @@
                     </MenuItem>
                 {/if}
             {/if}
-            {#if member}
+            {#if canLeave}
                 <MenuItem separator />
                 {#if canDelete}
                     <MenuItem warning onclick={deleteCommunity}>

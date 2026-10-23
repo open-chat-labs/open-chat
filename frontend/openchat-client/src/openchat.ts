@@ -403,7 +403,7 @@ import { AndroidWebAuthnErrorCode } from "tauri-plugin-oc-api";
 import type { OpenChatConfig } from "./config";
 import { approveFromExternalWallet, type SignerWallet, type WalletAccount } from "./utils/signer";
 import { unarchiveChatsReportingFailure, unarchiveChatsWithUnread } from "./utils/autoUnarchive";
-import type { BlockContext } from "./utils/profileBlock";
+import { blockOutcome, type BlockContext, type BlockOutcome } from "./utils/profileBlock";
 import {
     FilteredProposals,
     achievementsStore,
@@ -569,6 +569,13 @@ import {
     moderationFlagsRestricted,
 } from "./utils/restrictedContent";
 import { walletConfigWithoutToken } from "./utils/walletConfig";
+import {
+    leaveOrDeleteNavigation,
+    leaveOrDeleteOutcome,
+    type LeaveOrDelete,
+    type LeaveOrDeleteOutcome,
+    type LeaveOrDeleteResult,
+} from "./utils/leaveOrDelete";
 import {
     defaultChat,
     navigationAfterArchivingOpenChat,
@@ -2015,6 +2022,11 @@ export class OpenChat {
     }
 
     archiveChat(chatId: ChatIdentifier): Promise<boolean> {
+        // Read first: archiving a chat with unread messages un-archives it again
+        const chat = chatSummariesStore.value.get(chatId);
+        if (chat !== undefined) {
+            this.markAllRead(chat);
+        }
         const undo = localUpdates.updateArchived(chatId, true);
         if (chatIdentifiersEqual(chatId, selectedChatIdStore.value)) {
             // Leave it. It's the chat last opened in this scope, so forget that or the list
@@ -2136,6 +2148,14 @@ export class OpenChat {
             });
     }
 
+    /** Blocks or unblocks the other person in a DM, with the message to show either way. */
+    async setBlockedInDirectChat(userId: string, blocked: boolean): Promise<BlockOutcome> {
+        const success = await (blocked
+            ? this.blockUserFromDirectChat(userId)
+            : this.unblockUserFromDirectChat(userId));
+        return blockOutcome(blocked, success);
+    }
+
     unblockUserFromDirectChat(userId: string): Promise<boolean> {
         const undo = localUpdates.unblockDirectUser(userId);
         return this.#worker
@@ -2236,6 +2256,50 @@ export class OpenChat {
                 undo();
                 return false;
             });
+    }
+
+    /**
+     * Leaves or deletes a group, channel, DM or community the user has confirmed. When it's the one
+     * being viewed, goes off it first and back if the call fails, and once it's gone clears its
+     * details from the right panel; otherwise the route and the panel stay.
+     */
+    async leaveOrDelete(action: LeaveOrDelete): Promise<LeaveOrDeleteOutcome> {
+        const navigation = leaveOrDeleteNavigation(
+            action,
+            selectedChatIdStore.value,
+            chatListScopeStore.value,
+            this.getDefaultScope(),
+        );
+        if (navigation !== undefined) {
+            publish("navigateTo", { url: navigation.away });
+        }
+        const result = await this.#leaveOrDelete(action);
+        if (navigation !== undefined) {
+            if (result === "success") {
+                rightPanelHistory.set([]);
+            } else {
+                publish("navigateTo", { url: navigation.back });
+            }
+        }
+        return leaveOrDeleteOutcome(action, result);
+    }
+
+    async #leaveOrDelete(action: LeaveOrDelete): Promise<LeaveOrDeleteResult> {
+        const ok = (success: boolean) => (success ? "success" : "failure");
+        switch (action.kind) {
+            case "leave":
+                return this.leaveGroup(action.chatId);
+            case "delete":
+                return ok(await this.deleteGroup(action.chatId));
+            case "delete_direct_chat":
+                return ok(await this.deleteDirectChat(action.chatId, action.blockUser));
+            case "leave_community":
+                return ok(await this.leaveCommunity(action.id));
+            case "delete_community":
+                return ok(await this.deleteCommunity(action.id));
+            default:
+                return action satisfies never;
+        }
     }
 
     leaveGroup(
@@ -4517,6 +4581,26 @@ export class OpenChat {
                     initialLoad,
                 });
             }
+        }
+    }
+
+    /**
+     * Takes a chat `canRemoveFromList` allows off the list: a DM with a bot uninstalls the bot,
+     * anything else is a preview dropped. Goes to the list if it was open.
+     */
+    removeFromList(chat: ChatSummary): void {
+        const directBot =
+            chat.kind === "direct_chat" ? botState.externalBots.get(chat.them.userId) : undefined;
+        if (directBot !== undefined) {
+            this.uninstallBot(
+                { kind: "direct_chat", userId: currentUserIdStore.value },
+                directBot.id,
+            );
+        } else {
+            this.removePreviewedChat(chat.id);
+        }
+        if (chatIdentifiersEqual(chat.id, selectedChatIdStore.value)) {
+            publish("navigateTo", { url: routeForScope(chatListScopeStore.value) });
         }
     }
 

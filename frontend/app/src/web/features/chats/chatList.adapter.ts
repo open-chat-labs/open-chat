@@ -7,6 +7,8 @@ import {
     type UserLookup,
 } from "@client";
 import type ChatListPanel from "@openchat/ui/src/features/components/ChatListPanel.svelte";
+import type { MenuItem } from "@openchat/ui/src/lib/types";
+import type { CommunityMenuPermissions } from "@src/logic/groupOrCommunity/detailsPermissions";
 import type { ComponentProps } from "svelte";
 import { pickById } from "../../pickById";
 
@@ -73,4 +75,63 @@ export function chatRow(chat: ChatSummary, ctx: RowContext, now = Date.now()): C
 export function listed(chat: ChatSummary, query: string, users: UserLookup): boolean {
     const q = query.trim().toLowerCase();
     return q === "" ? !chat.membership.archived : chatMatchesSearch(q, chat, users);
+}
+
+// ── a community's header menu ──
+
+const icon = (name: string) => `var(--icon-${name}) center/contain no-repeat`;
+
+export type CommunityHeaderMenuState = CommunityMenuPermissions & {
+    /** Every channel in the list is muted, or has @everyone muted. */
+    allMuted: boolean;
+    everyoneMuted: boolean;
+    /** The app's words for a key. */
+    label: (key: string) => string;
+};
+
+/**
+ * ChatListHeader's community menu as the old one was: details, members, mark all read, muting
+ * every channel, then delete and leave where the app's rules allow them. Picking one reports its
+ * id (`onMenu`).
+ */
+export function communityHeaderMenu(
+    state: CommunityHeaderMenuState,
+): (MenuItem & { id: string })[] {
+    const { label } = state;
+    const items: (MenuItem & { id: string })[] = [
+        { id: "details", label: label("communities.details"), mask: icon("info") },
+        { id: "members", label: "ui.chatListHeader.members", mask: icon("users") },
+        { id: "markAllRead", label: "ui.chatListHeader.markAllRead", mask: icon("check-double") },
+    ];
+    if (!state.allMuted) {
+        items.push({
+            id: "muteAll",
+            label: label("communities.muteAllChannels"),
+            mask: icon("bell-off"),
+        });
+    }
+    if (!state.everyoneMuted) {
+        items.push({
+            id: "muteAllEveryone",
+            label: label("communities.muteAllChannelsAtEveryone"),
+            mask: icon("at"),
+        });
+    }
+    if (state.canDelete) {
+        items.push({
+            id: "delete",
+            label: label("communities.delete"),
+            mask: icon("trash"),
+            variant: "danger",
+        });
+    }
+    if (state.canLeave) {
+        items.push({
+            id: "leave",
+            label: "ui.chatListHeader.leaveCommunity",
+            mask: icon("exit"),
+            variant: "danger",
+        });
+    }
+    return items;
 }

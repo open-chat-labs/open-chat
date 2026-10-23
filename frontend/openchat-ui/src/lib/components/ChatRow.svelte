@@ -224,20 +224,28 @@
       </div>
     </div>
   </div>
-  <ContextMenu
-    open={!!menu}
-    point={menu?.point}
-    anchor={menu?.anchor}
-    align={menu?.align}
-    items={menuItems}
-    onClose={() => {
-      menu = null;
-      hover = false;
-    }}
-  />
+  <!-- the menu sits inside the row, so a pick must not also select the row (open the chat) -->
+  <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+  <div class="menu-host" onclick={(e) => e.stopPropagation()} onpointerdown={(e) => e.stopPropagation()} onpointerup={(e) => e.stopPropagation()}>
+    <ContextMenu
+      open={!!menu}
+      point={menu?.point}
+      anchor={menu?.anchor}
+      align={menu?.align}
+      items={menuItems}
+      onClose={() => {
+        menu = null;
+        hover = false;
+      }}
+    />
+  </div>
 </div>
 
 <style>
+  .menu-host {
+    display: contents;
+  }
+
   .chat-row {
     position: relative;
     width: 100%;

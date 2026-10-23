@@ -1,18 +1,23 @@
 <!-- The left column's chat list (region "chats"): DMs and groups, favourites, or a community's channels,
      as the route's scope says (DATA.md, ChatListPanel rows). Picking a chat routes to it. -->
 <script lang="ts">
+    import { chatMenuActions } from "@src/logic/chats/chatMenu";
     import { muteChat } from "@src/logic/chats/muteChat";
+    import { communityMenuPermissions } from "@src/logic/groupOrCommunity/detailsPermissions";
     import {
         allUsersStore,
         bridgedUsersStore,
+        canRemoveFromList,
         chatIdentifierToString,
         chatsInitialisedStore,
         chatSummariesListStore,
         currentUserIdStore,
         favouritesStore,
+        i18nKey,
         messagesRead,
         pinChatFailureMessage,
         pinnedChatsStore,
+        ROLE_NONE,
         routeForChatIdentifier,
         selectedChatIdStore,
         translationsStore,
@@ -22,17 +27,26 @@
     } from "@client";
     import ChatListPanel from "@openchat/ui/src/features/components/ChatListPanel.svelte";
     import type { MenuItem } from "@openchat/ui/src/lib/types";
+    import { interpolate } from "@i18n/i18n";
     import { toastStore } from "@src/stores/toast";
     import { navigate } from "@src/utils/navigation";
     import { withQueryStringFlag } from "@src/utils/urls";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import type { LeftRegion, ScreenProps } from "../app/screens";
-    import { chatRow, listed, type ChatListRow, type RowContext } from "./chatList.adapter";
+    import { showInRightColumn } from "../app/rightPanel";
+    import {
+        chatRow,
+        communityHeaderMenu,
+        listed,
+        type ChatListRow,
+        type RowContext,
+    } from "./chatList.adapter";
     import { latestMessagePreview } from "@src/logic/chats/latestMessagePreview";
     import { buildDisplayName } from "@src/utils/user";
 
-    let { region }: ScreenProps<Extract<LeftRegion, { kind: "chats" }>> = $props();
+    let { region, context: screen }: ScreenProps<Extract<LeftRegion, { kind: "chats" }>> =
+        $props();
 
     const client = getContext<OpenChat>("client");
 
@@ -113,7 +127,53 @@
         if ((row.unreadCount ?? 0) > 0) {
             items.push({ label: $_("markAllRead"), onSelect: () => client.markAllRead(chat) });
         }
+        if (chat.kind === "direct_chat" || chat.membership.role !== ROLE_NONE) {
+            items.push(
+                chat.membership.archived
+                    ? // opening an archived chat un-archives it
+                      { label: $_("unarchiveChat"), onSelect: () => select(row.id) }
+                    : { label: $_("archiveChat"), onSelect: () => archive(chat) },
+            );
+        }
+        const actions = chatMenuActions(chat, {
+            canLeave: chat.kind !== "direct_chat" && client.canLeaveGroup(chat.id),
+            blocked: false,
+            isBot: false,
+        });
+        if (actions.includes("leave") && chat.kind !== "direct_chat") {
+            items.push({
+                label: interpolate($_, i18nKey("leaveGroup", undefined, chat.level, true)),
+                variant: "danger",
+                onSelect: () =>
+                    screen.dialogs.open({
+                        kind: "leave_or_delete",
+                        action: { kind: "leave", chatId: chat.id },
+                        name: row.title,
+                    }),
+            });
+        }
+        if (actions.includes("delete") && chat.kind === "direct_chat") {
+            items.push({
+                label: $_("deleteChat"),
+                variant: "danger",
+                onSelect: () =>
+                    screen.dialogs.open({
+                        kind: "leave_or_delete",
+                        action: { kind: "delete_direct_chat", chatId: chat.id, blockUser: false },
+                        name: row.title,
+                    }),
+            });
+        }
+        if (canRemoveFromList(chat, chat.kind === "channel" ? community : undefined)) {
+            items.push({ label: $_("removeChat"), onSelect: () => client.removeFromList(chat) });
+        }
         return items;
+    }
+
+    async function archive(chat: ChatSummary) {
+        if (!(await client.archiveChat(chat.id))) {
+            toastStore.showFailureToast(i18nKey("archiveChatFailed"));
+        }
     }
 
     function select(id: string) {
@@ -125,10 +185,51 @@
         scope.kind === "community" ? $selectedCommunitySummaryStore : undefined,
     );
 
-    // TODO: the thread count (L1), and the community header's other menu items, which open
-    // dialogs (phase 4, 4b)
+    const communityMenu = $derived(
+        community === undefined ? undefined : communityMenuPermissions(client, community),
+    );
+    const headerMenuItems = $derived(
+        community === undefined || communityMenu === undefined
+            ? undefined
+            : communityHeaderMenu({
+                  ...communityMenu,
+                  allMuted: chats.every((c) => c.membership.notificationsMuted),
+                  everyoneMuted: chats.every((c) => c.membership.atEveryoneMuted),
+                  label: $_,
+              }),
+    );
+
+    // TODO: the thread count (L1). TODO(4b): the community's edit, invite and new channel items
+    // (parts 2 to 4)
     function onHeaderMenu(item: string) {
-        if (item === "markAllRead") client.markAllReadForCurrentScope();
+        if (item === "markAllRead") {
+            client.markAllReadForCurrentScope();
+            return;
+        }
+        if (community === undefined) return;
+        switch (item) {
+            case "details":
+                showInRightColumn(screen.rightColumn, { kind: "community_details" });
+                break;
+            case "members":
+                showInRightColumn(screen.rightColumn, { kind: "show_community_members" });
+                break;
+            case "muteAll":
+            case "muteAllEveryone":
+                client.muteAllChannels(community.id, item === "muteAllEveryone");
+                break;
+            case "delete":
+            case "leave":
+                screen.dialogs.open({
+                    kind: "leave_or_delete",
+                    action: {
+                        kind: item === "delete" ? "delete_community" : "leave_community",
+                        id: community.id,
+                    },
+                    name: community.name,
+                });
+                break;
+        }
     }
 </script>
 
@@ -140,6 +241,7 @@
         (scope.kind === "favourite" ? $_("communities.favourites") : undefined)}
     headerVisibility={community?.public === false ? "Private" : "Public"}
     headerMembers={community?.memberCount ?? 0}
+    headerMenuItems={headerMenuItems}
     {onHeaderMenu}
     searchable
     onSearch={(q) => (query = q)}

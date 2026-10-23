@@ -222,28 +222,11 @@
         publish("showGroupMembers");
     }
 
-    function blockUser() {
-        if (selectedChatSummary.kind === "direct_chat") {
-            client.blockUserFromDirectChat(selectedChatSummary.them.userId).then((success) => {
-                if (success) {
-                    toastStore.showSuccessToast(i18nKey("blockUserSucceeded"));
-                } else {
-                    toastStore.showFailureToast(i18nKey("blockUserFailed"));
-                }
-            });
-        }
-    }
-
-    function unblockUser() {
-        if (selectedChatSummary.kind === "direct_chat") {
-            client.unblockUserFromDirectChat(selectedChatSummary.them.userId).then((success) => {
-                if (success) {
-                    toastStore.showSuccessToast(i18nKey("unblockUserSucceeded"));
-                } else {
-                    toastStore.showFailureToast(i18nKey("unblockUserFailed"));
-                }
-            });
-        }
+    async function blockUser(blocking: boolean) {
+        if (selectedChatSummary.kind !== "direct_chat") return;
+        toastStore.showOutcome(
+            await client.setBlockedInDirectChat(selectedChatSummary.them.userId, blocking),
+        );
     }
 
     function showInviteGroupUsers() {
@@ -717,7 +700,7 @@
                         {/if}
                     {/if}
                     {#if blocked}
-                        <MenuItem onclick={unblockUser}>
+                        <MenuItem onclick={() => blockUser(false)}>
                             {#snippet icon()}
                                 <CancelIcon size={$iconSize} color={"var(--icon-inverted-txt)"} />
                             {/snippet}
@@ -726,7 +709,7 @@
                             {/snippet}
                         </MenuItem>
                     {:else}
-                        <MenuItem onclick={blockUser}>
+                        <MenuItem onclick={() => blockUser(true)}>
                             {#snippet icon()}
                                 <CancelIcon size={$iconSize} color={"var(--icon-inverted-txt)"} />
                             {/snippet}
