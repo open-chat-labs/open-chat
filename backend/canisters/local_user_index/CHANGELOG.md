@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Replace a Telegram profile's unused `avatar` with `photo_id`, its photo's id on the bridges' CDN ([#10196](https://github.com/open-chat-labs/open-chat/pull/10196))
+- Store each Telegram user's `photo_id` so we can display their avatars within OpenChat ([#10196](https://github.com/open-chat-labs/open-chat/pull/10196))
 
 ### Removed
 
