@@ -216,3 +216,7 @@
 ## 2026-10-23 — GroupPanel: settings for everyone, as About without edit rights, by hand
 - The menu's settings item was only offered with `canEdit`. It's now offered to everyone, labelled "About the group / channel / community" (`ui.groupPanel.menu.about`) without `canEdit`, and still calls `onDialog('settings', …)`. The host opens the About page for it.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-23 — ProfileDialog's CHIT section: the puzzle setting optional, "Ways to earn more" only with onEarn, by hand
+- `ProfileDialog` takes `puzzleSetting` (default true): false leaves the daily puzzle block out, for a host that has no such setting (`meta.json` updated). "Ways to earn more" shows only with `onEarn`: without it, a click closed the dialog and opened nothing.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

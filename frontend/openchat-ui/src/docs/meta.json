@@ -13478,6 +13478,17 @@
         "doc": ""
       },
       {
+        "name": "puzzleSetting",
+        "type": "boolean",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "true",
+        "doc": "Offer the daily puzzle setting; false for a host that has none. Defaults to true."
+      },
+      {
         "name": "chitUtc",
         "type": "boolean",
         "default": null,

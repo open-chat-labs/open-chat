@@ -1,7 +1,8 @@
-<!-- The user's profile and settings (?profile), ProfileDialog over the page. So far: the profile
-     (name, username and bio, saved as the old UI's forms save them, app/src/logic/profile), stats,
-     chats & calls, appearance and log out; Diamond opens ?diamond. The other sections come with the
-     rest of 8c (#10129). -->
+<!-- The user's profile and settings (?profile), ProfileDialog over the page (8c, #10129): the
+     profile (name, username and bio, saved as the old UI's forms save them, app/src/logic/profile),
+     stats, CHIT, chats & calls, communities, sign-in methods, appearance, storage, bots, linking a
+     device, deleting the account, inviting, About and log out; Diamond opens ?diamond. What the
+     dialog has that the app doesn't is in GAPS.md. -->
 <script lang="ts">
     import {
         allUsersStore,
@@ -44,16 +45,21 @@
     } from "@client";
     import ProfileDialog, {
         type ChatSettings,
+        type ChitSettingsPatch,
+        type ClaimDay,
         type ProfileSection,
         type SigninMethod,
     } from "@openchat/ui/src/features/components/ProfileDialog.svelte";
     import { fontScaleFor, fontSizeOf, isFontSize } from "@src/logic/profile/appearance";
     import { ProfileForm } from "@src/logic/profile/profileForm.svelte";
     import {
+        chitPopup,
         dclickReply,
         disableChit,
         enterSend,
+        hideChitIcon,
         lowBandwidth,
+        utcMode,
         videoCameraOn,
         videoMicOn,
         videoSpeakerView,
@@ -70,6 +76,7 @@
     import {
         changedChatSettings,
         chatSettingsProps,
+        claimDays,
         profileProps,
         ringtoneKeyOf,
         statsProps,
@@ -118,6 +125,7 @@
     const SECTIONS: ProfileSection[] = [
         "profile",
         "stats",
+        "chit",
         "diamond",
         "chats",
         "communities",
@@ -327,6 +335,7 @@
 
     async function sectionShown(section: ProfileSection) {
         if (section === "signin") refreshSigninMethods();
+        if (section === "chit") loadClaimHistory();
         if (section !== "bots" || botConfig !== undefined || loadingBotConfig) return;
         loadingBotConfig = true;
         try {
@@ -341,6 +350,29 @@
     const bots = $derived(botConfig && botConfigProps(botConfig));
 
     const inviteLink = $derived(referralLink(client.canonicalOrigin(), userId));
+
+    // ---- CHIT: its settings (the old UI's, in this browser) and the claim calendar ----
+    function changeChit(patch: ChitSettingsPatch) {
+        if (patch.enabled !== undefined) disableChit.set(!patch.enabled);
+        if (patch.notify !== undefined) chitPopup.set(patch.notify);
+        if (patch.hideAfterClaim !== undefined) hideChitIcon.set(patch.hideAfterClaim);
+        if (patch.utc !== undefined) utcMode.set(patch.utc);
+    }
+
+    // every claim since the account was made, loaded each time the section shows: the calendar
+    // pages through the months itself, and a claim's streak day follows from the ones before it
+    let claimHistory = $state<ClaimDay[]>([]);
+    let claimHistoryRun = 0;
+
+    async function loadClaimHistory() {
+        const run = ++claimHistoryRun;
+        try {
+            const events = await client.chitHistory(BigInt(header.joined));
+            if (run === claimHistoryRun) claimHistory = claimDays(events);
+        } catch (err) {
+            console.warn("Unable to load the CHIT claim history", err);
+        }
+    }
 
     // ---- sign-in methods, linking a device, deleting the account ----
     // the identities linked to the account, loaded each time their section shows
@@ -609,6 +641,12 @@
     cover={header.cover}
     sections={SECTIONS}
     chitEnabled={!$disableChit}
+    chitNotify={$chitPopup}
+    chitHideAfterClaim={$hideChitIcon}
+    chitUtc={$utcMode}
+    {claimHistory}
+    puzzleSetting={false}
+    onChitSettings={changeChit}
     onlineMinutes={stats.onlineMinutes}
     onlineMinutesPrev={stats.onlineMinutesPrev}
     messageMix={stats.messageMix}

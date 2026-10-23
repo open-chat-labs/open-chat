@@ -130,7 +130,9 @@ design export needs. Each entry says where it came up.
   sign-in provider limit), and one that rejects with `{ cancelled: true }` says nothing (closing
   the confirming sign-in); Diamond opens from it without its exit (`DialogFlow.handOff`), so the
   backdrop stays while the next dialog animates in (`DialogScreen` keeps it); the CHIT claim day
-  does nothing without `onChit` (the app doesn't pass it until the CHIT dialog, 8d).
+  does nothing without `onChit` (the app doesn't pass it until the CHIT dialog, 8d);
+  `puzzleSetting`, so a host without a daily puzzle setting leaves it out; "Ways to earn more"
+  only with `onEarn`.
 - **`ProfileDialog` against the app** (8c):
   - no "Hide all CHIT related features" switch: the new UI reads `disableChit` (the CHIT cards
     on the user card and the DM panel follow it) but offers no way to change it. The setting is
@@ -148,6 +150,14 @@ design export needs. Each entry says where it came up.
     no such data to show;
   - the storage section's "report a problem" isn't offered: the app has nowhere to send a report;
   - About has no metrics link: the app has no metrics page;
+  - CHIT: the calendar shows the daily claims (and insured or reinstated days), not the old
+    calendar's every CHIT event (achievements, referrals, puzzles, premium items); a day is the
+    user's own (the backend counts a streak in the user's time zone), not the UTC day the dialog
+    describes, and a claim's streak day is worked out from the days before it, so it loads the
+    whole history; no daily puzzle setting (the app has none to show or hide the puzzle, or to
+    remind of it: 8d), no "Ways to earn more" (the achievements dialog is 8d), and today can't be
+    claimed from the calendar (the CHIT dialog is 8d); the old profile's streak insurance summary
+    has no place here (8d's `StreakInsuranceDialog`);
   - sign-in methods: linking a passkey or an Internet Identity confirms it with the sign-in dialog
     (signing in again, no design), offering only the way this session signed in; the dialog's
     checklist has no step for it, so "Confirm with your …" waits while that dialog is up; the

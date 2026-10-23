@@ -3,6 +3,7 @@ import {
     ONE_MB,
     type AccountLinkingCode,
     type BotClientConfigData,
+    type ChitEvent,
     type LinkedAuthenticationPrincipal,
     type CommunitySummary,
     type Metrics,
@@ -13,6 +14,7 @@ import {
 } from "@client";
 import type {
     ChatSettings,
+    ClaimDay,
     ProfileCommunity,
     SigninMethod,
 } from "@openchat/ui/src/features/components/ProfileDialog.svelte";
@@ -239,4 +241,47 @@ export function signinMethodsProps(
 /** A device-link code for the dialog: when it expires, in ms. */
 export function linkCodeProps(code: AccountLinkingCode): { code: string; expiresAt: number } {
     return { code: code.value, expiresAt: Number(code.expiresAt) };
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * The CHIT calendar's days from the user's CHIT events (any order): a daily claim, a claim
+ * reinstated, or a day covered by streak insurance, each on the user's own day (the backend counts
+ * a streak in the user's time zone; `offsetMinutes` is it at a moment, east of UTC). Each one's
+ * streak day follows from the days before it: one more than the day before, or 1 after a gap. A
+ * reinstated claim is a kept day with nothing earned.
+ */
+export function claimDays(
+    events: ChitEvent[],
+    offsetMinutes: (ms: number) => number = (ms) => -new Date(ms).getTimezoneOffset(),
+): ClaimDay[] {
+    const days: ClaimDay[] = [];
+    let last: { dayNumber: number; streakDay: number } | undefined;
+    const sorted = [...events].sort((a, b) => (a.timestamp < b.timestamp ? -1 : 1));
+    for (const { reason, timestamp, amount } of sorted) {
+        const kind = reason.kind;
+        if (
+            kind !== "daily_claim" &&
+            kind !== "daily_claim_reinstated" &&
+            kind !== "streak_insurance_claim"
+        ) {
+            continue;
+        }
+        const ms = Number(timestamp);
+        const dayNumber = Math.floor((ms + offsetMinutes(ms) * 60_000) / DAY_MS);
+        // one a day
+        if (last?.dayNumber === dayNumber) continue;
+        const streakDay = last?.dayNumber === dayNumber - 1 ? last.streakDay + 1 : 1;
+        last = { dayNumber, streakDay };
+        const day = new Date(dayNumber * DAY_MS).toISOString().slice(0, 10);
+        if (kind === "streak_insurance_claim") {
+            days.push({ day, streakDay, insured: true });
+        } else if (kind === "daily_claim_reinstated") {
+            days.push({ day, streakDay, amount: 0 });
+        } else {
+            days.push({ day, streakDay, amount, minute: Math.floor((ms % DAY_MS) / 60_000) });
+        }
+    }
+    return days;
 }

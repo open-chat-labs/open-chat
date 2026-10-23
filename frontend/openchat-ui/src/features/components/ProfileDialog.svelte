@@ -255,6 +255,8 @@
     chitHideAfterClaim?: boolean;
     puzzleShown?: boolean;
     puzzleRemind?: boolean;
+    /** Offer the daily puzzle setting; false for a host that has none. Defaults to true. */
+    puzzleSetting?: boolean;
     /** Calendar shows claim times in UTC instead of local time. */
     chitUtc?: boolean;
     /** Local time offset used for the calendar's claim times; defaults to this browser's. */
@@ -376,6 +378,7 @@
     chitHideAfterClaim = false,
     puzzleShown = true,
     puzzleRemind = false,
+    puzzleSetting = true,
     chitUtc = false,
     utcOffsetMinutes = -new Date().getTimezoneOffset(),
     claimHistory = [],
@@ -1369,6 +1372,7 @@
                 )}
               </div>
             </div>
+            {#if puzzleSetting}
             <div class="block">
               <span class="caps">{t('ui.profileDialog.chit.puzzleCaps')}</span>
               <div class="list puzzle">
@@ -1396,17 +1400,20 @@
                 >
               </div>
             </div>
+            {/if}
           {:else}
             <p class="chit-off">
               {t('ui.profileDialog.chit.off', { amount: fmt(balance) })}
             </p>
           {/if}
           {#if chitEnabled}
+            {#if onEarn}
             <div class="earn" onclick={() => close(onEarn)} role="button" tabindex="0">
               {@render glyph('trophy', 'earn-glyph')}
               <div class="earn-text"><span class="earn-title">{t('ui.profileDialog.chit.earnMore')}</span><span class="earn-left">{t('ui.profileDialog.chit.achievementsLeft', { count: achievementsLeft })}</span></div>
               {@render glyph('chevron-right', 'earn-chevron')}
             </div>
+            {/if}
             <div class="month-bar">
               <span
                 class="month-step"

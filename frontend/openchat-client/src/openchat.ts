@@ -146,6 +146,7 @@ import {
     type ChatSummary,
     type ChatUnfrozenEvent,
     type CheckUsernameResponse,
+    type ChitEvent,
     type ChitEventsRequest,
     type ChitEventsResponse,
     type ChitLeaderboardResponse,
@@ -562,6 +563,7 @@ import {
     createAndroidWebAuthnPasskeyIdentity,
 } from "./utils/androidWebAuthn";
 import { dataToBlobUrl } from "./utils/blob";
+import { allChitEvents } from "./utils/chit";
 import {
     appStoreBuild,
     chatRestricted,
@@ -13248,6 +13250,27 @@ export class OpenChat {
 
     chitLeaderboard(): Promise<ChitLeaderboardResponse> {
         return this.#worker.send({ kind: "chitLeaderboard" });
+    }
+
+    /**
+     * The user's CHIT events from `from` (ms epoch) until now, oldest first, all of them (the CHIT
+     * calendar's history). As far as it got if a page fails to load.
+     */
+    chitHistory(from: bigint): Promise<ChitEvent[]> {
+        const to = BigInt(Date.now());
+        return allChitEvents(
+            async (next, max) =>
+                (
+                    await this.chitEvents({
+                        kind: "getChitEvents",
+                        from: next,
+                        to,
+                        max,
+                        ascending: true,
+                    })
+                ).events,
+            from,
+        );
     }
 
     chitEvents(req: ChitEventsRequest): Promise<ChitEventsResponse> {

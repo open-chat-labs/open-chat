@@ -1,5 +1,6 @@
 import {
     AuthProvider,
+    type ChitEvent,
     type CommunitySummary,
     type LinkedAuthenticationPrincipal,
     type Metrics,
@@ -9,6 +10,7 @@ import {
 import {
     botConfigProps,
     changedChatSettings,
+    claimDays,
     communitiesProps,
     linkCodeProps,
     signinMethodsProps,
@@ -195,5 +197,46 @@ describe("the profile dialog's props", () => {
             code: "ABC123",
             expiresAt: 1_700_000_000_000,
         });
+    });
+});
+
+describe("the CHIT calendar's days", () => {
+    const DAY = 24 * 60 * 60 * 1000;
+    // 2026-03-01T00:00Z
+    const MARCH_1 = Date.UTC(2026, 2, 1);
+    const at = (ms: number, kind: ChitEvent["reason"]["kind"], amount = 0): ChitEvent =>
+        ({ amount, timestamp: BigInt(ms), reason: { kind } }) as ChitEvent;
+    const utc = () => 0;
+
+    test("are the claims, insured days and reinstated claims, each with its streak day", () => {
+        const events = [
+            at(MARCH_1 + 2 * DAY + 600_000, "daily_claim", 30),
+            at(MARCH_1 + 90 * 60_000, "daily_claim", 10),
+            // an achievement isn't a claim
+            at(MARCH_1 + 2 * 60 * 60_000, "achievement_unlocked", 500),
+            at(MARCH_1 + DAY + 1000, "streak_insurance_claim"),
+            at(MARCH_1 + 5 * DAY - 1, "daily_claim_reinstated"),
+        ];
+        expect(claimDays(events, utc)).toEqual([
+            { day: "2026-03-01", streakDay: 1, amount: 10, minute: 90 },
+            { day: "2026-03-02", streakDay: 2, insured: true },
+            { day: "2026-03-03", streakDay: 3, amount: 30, minute: 10 },
+            // after a gap, a streak starts again
+            { day: "2026-03-05", streakDay: 1, amount: 0 },
+        ]);
+    });
+
+    test("fall on the user's own days, which the streak follows", () => {
+        // 23:30 UTC on the 1st is the 2nd at UTC+2, the day after a claim on the 1st there
+        const events = [
+            at(MARCH_1 + 60 * 60_000, "daily_claim", 10),
+            at(MARCH_1 + DAY - 30 * 60_000, "daily_claim", 20),
+        ];
+        expect(claimDays(events, () => 120).map((d) => [d.day, d.streakDay])).toEqual([
+            ["2026-03-01", 1],
+            ["2026-03-02", 2],
+        ]);
+        // in UTC, both are on the 1st: one a day
+        expect(claimDays(events, utc)).toHaveLength(1);
     });
 });
