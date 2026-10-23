@@ -3,21 +3,14 @@
      signing in again and choosing a new PIN, which answers the request; closing that goes back to
      the prompt, still waiting. -->
 <script lang="ts">
-    import {
-        selectedAuthProviderStore,
-        signInOptions,
-        type OpenChat,
-        type ResourceKey,
-    } from "@client";
-    import AuthDialog from "@openchat/ui/src/features/components/AuthDialog.svelte";
+    import { type OpenChat, type ResourceKey } from "@client";
     import type { PinNumberResolver } from "@shared";
     import { pinNumberErrorMessageStore } from "@src/stores/pinNumber";
     import { toastStore } from "@src/stores/toast";
-    import { i18nKey } from "@i18n/i18n";
+    import { i18nKey, interpolate } from "@i18n/i18n";
     import { getContext, onDestroy, untrack } from "svelte";
     import { _ } from "svelte-i18n";
-    import { OPTIONS } from "../auth/auth.adapter";
-    import { AUTH_WALLETS } from "../auth/signIn";
+    import SignInAgainDialog from "../auth/SignInAgainDialog.svelte";
     import { ForgotPin } from "./forgotPin.svelte";
     import NewPinDialog from "./NewPinDialog.svelte";
     import PinDialog from "./PinDialog.svelte";
@@ -27,7 +20,7 @@
 
     const client = getContext<OpenChat>("client");
     const answer = new PinAnswer(untrack(() => request));
-    const translate = (key: ResourceKey) => $_(key.key, { values: key.params });
+    const translate = (key: ResourceKey) => interpolate($_, key);
 
     let forgot = $state<ForgotPin | undefined>();
 
@@ -50,13 +43,6 @@
         answer.enter(outcome.pin);
     }
 
-    // the ways to sign in again, the last one used first
-    const methods = signInOptions(
-        [],
-        { webAuthn: "PublicKeyCredential" in window, native: client.isNativeApp() },
-        selectedAuthProviderStore.value,
-    ).map((o) => OPTIONS[o]);
-
     const saveError = $derived.by(() => {
         const error = forgot?.form.error ?? $pinNumberErrorMessageStore;
         return error === undefined ? undefined : translate(error);
@@ -69,21 +55,10 @@
         onClose={() => answer.close()}
         onForgot={openForgot} />
 {:else if !forgot.signedIn}
-    {@const flow = forgot}
-    {#key flow.attempt}
-        <!-- TODO(design): signing in again has no design; the sign-in dialog, with why it's asked -->
-        <AuthDialog
-            kind="login"
-            reason={flow.linkFailure ?? $_("pinNumber.forgotPinMessage")}
-            {methods}
-            passkeySignup={false}
-            email={flow.lastEmail()}
-            wallets={AUTH_WALLETS}
-            onMethod={flow.onMethod}
-            onRequestEmailLink={flow.onRequestEmailLink}
-            onCancelEmailLink={flow.dispose}
-            onClose={closeForgot} />
-    {/key}
+    <SignInAgainDialog
+        flow={forgot.signIn}
+        reason={$_("pinNumber.forgotPinMessage")}
+        onClose={closeForgot} />
 {:else}
     {@const flow = forgot}
     <NewPinDialog

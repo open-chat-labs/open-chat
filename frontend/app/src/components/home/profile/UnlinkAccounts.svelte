@@ -3,6 +3,7 @@
         iconSize,
         type LinkedAuthenticationPrincipal,
         type OpenChat,
+        unlinkIdentityFailure,
     } from "@client";
     import { getContext } from "svelte";
     import LinkVariantOff from "svelte-material-icons/LinkVariantOff.svelte";
@@ -30,21 +31,12 @@
             .removeIdentityLink(account.principal)
             .then((res) => {
                 inProgress = false;
-                switch (res) {
-                    case "success":
-                        step = "done";
-                        break;
-                    case "cannot_unlink_active_principal":
-                        step = "error";
-                        error = "identity.failure.unlinkActivePrincipal";
-                        break;
-                    case "identity_link_not_found":
-                        step = "error";
-                        error = "identity.failure.identityNotFound";
-                        break;
-                    case "user_not_found":
-                        step = "error";
-                        error = "identity.failure.userNotFound";
+                const failure = unlinkIdentityFailure(res);
+                if (failure === undefined) {
+                    step = "done";
+                } else {
+                    step = "error";
+                    error = failure.key;
                 }
             })
             .catch((e) => {

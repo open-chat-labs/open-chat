@@ -206,6 +206,14 @@
   const LINK_STEPS = ['ui.profileDialog.device.step1', 'ui.profileDialog.device.step2', 'ui.profileDialog.device.step3'];
   const icon = (name: string) => `var(--icon-${name}) center/contain no-repeat`;
   const BLANK_GIF = 'data:image/gif;base64,R0lGODlhAQABAAAAACw=';
+  // a principal: groups of five lower-case letters and digits, the last one shorter or not
+  const PRINCIPAL = /^([a-z0-9]{5}-){4,}[a-z0-9]{1,5}$/;
+  /** A principal's first two and last two groups with the rest elided; anything else (an email address) as it is. */
+  const shortId = (id: string) => {
+    if (!PRINCIPAL.test(id)) return id;
+    const groups = id.split('-');
+    return `${groups.slice(0, 2).join('-')}-…-${groups.slice(-2).join('-')}`;
+  };
 </script>
 
 <script lang="ts">
@@ -917,6 +925,8 @@
     return n ? t('ui.profileDialog.delete.nextMilestone', { days: n - streak, n }) : t('ui.profileDialog.delete.allMilestones');
   });
   const delLocked = $derived(delStep === 3 && (!delMatch || delBusy));
+  // never earned any CHIT: nothing to lose, but all of it still to discover
+  const noChit = $derived(balance === 0 && chitEarned === 0);
 
   function openDelete() {
     delOpen = true;
@@ -979,17 +989,26 @@
       primaryIcon: 'wallet',
       secondary: t('ui.profileDialog.delete.step2Next'),
     },
-    {
-      icon: null,
-      title: t('ui.profileDialog.delete.step3Title'),
-      body: rich('ui.profileDialog.delete.step3Body', {
-        balance: t('ui.profileDialog.delete.chitAmount', { amount: fmt(balance) }),
-        streak: t('ui.profileDialog.delete.streak', { count: streak }),
-      }),
-      primary: t('ui.profileDialog.delete.step3Stay'),
-      primaryIcon: 'zap',
-      secondary: t('ui.profileDialog.delete.step3Next'),
-    },
+    noChit
+      ? {
+          icon: 'zap',
+          title: t('ui.profileDialog.delete.step3NoChitTitle'),
+          body: rich('ui.profileDialog.delete.step3NoChitBody', {}),
+          primary: t('ui.profileDialog.delete.step3NoChitStay'),
+          primaryIcon: 'zap',
+          secondary: t('ui.profileDialog.delete.step3Next'),
+        }
+      : {
+          icon: null,
+          title: t('ui.profileDialog.delete.step3Title'),
+          body: rich('ui.profileDialog.delete.step3Body', {
+            balance: t('ui.profileDialog.delete.chitAmount', { amount: fmt(balance) }),
+            streak: t('ui.profileDialog.delete.streak', { count: streak }),
+          }),
+          primary: t('ui.profileDialog.delete.step3Stay'),
+          primaryIcon: 'zap',
+          secondary: t('ui.profileDialog.delete.step3Next'),
+        },
     {
       icon: 'trash',
       title: t('ui.profileDialog.delete.step4Title'),
@@ -1552,7 +1571,7 @@
             {#if siCurrent}
               <div class="current">
                 <span class="current-tile">{@render glyph(SI_TYPES[siCurrent.type].icon, 'current-glyph')}</span>
-                <div class="current-text"><span class="current-kicker">{t('ui.profileDialog.signin.signedInWith')}</span><span class="current-title">{siCurrent.title}</span><span class="current-id">{siCurrent.id}</span></div>
+                <div class="current-text"><span class="current-kicker">{t('ui.profileDialog.signin.signedInWith')}</span><span class="current-title">{siCurrent.title}</span><span class="current-id" title={siCurrent.id}>{shortId(siCurrent.id)}</span></div>
                 <span class="locked" title={t('ui.profileDialog.signin.lockedTitle')}>{@render glyph('lock', 'locked-glyph')}{t('ui.profileDialog.signin.cantUnlink')}</span>
               </div>
             {/if}
@@ -1567,7 +1586,7 @@
                   {#each items as x}
                     <div class="method">
                       {@render glyph(T.icon, 'method-glyph')}
-                      <div class="method-text"><span class="method-title">{x.title + (type === 'email' ? '' : ` · ${x.id.slice(0, 5)}`)}</span><span class="method-sub">{x.used || t('ui.profileDialog.signin.justLinked')}</span></div>
+                      <div class="method-text"><span class="method-title">{x.title + (type === 'email' ? '' : ` · ${x.id.slice(0, 5)}`)}</span>{#if x.used || siAdded.some((a) => a.id === x.id)}<span class="method-sub">{x.used || t('ui.profileDialog.signin.justLinked')}</span>{/if}</div>
                       {#if onUnlinkMethod}<span class="unlink" onclick={() => unlink(x)} role="button" tabindex="0">{@render glyph('unlink', 'unlink-glyph')}{t('ui.profileDialog.signin.unlink')}</span>{/if}
                     </div>
                   {/each}
@@ -1932,7 +1951,7 @@
             <span class="step-title">{step.title}</span>
             <span class="step-body">{#each step.body as [text, strong]}<span class:strong>{text}</span>{/each}</span>
           </div>
-          {#if delStep === 2}
+          {#if delStep === 2 && !noChit}
             <div class="list">
               <div class="chit-pair">
                 <div class="chit-cell">
@@ -3478,8 +3497,11 @@
   }
 
   .current-id {
+    overflow: hidden;
     font: var(--weight-regular) 11.5px/1 var(--font-mono);
     color: var(--ink-4);
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
   .locked {
@@ -3503,6 +3525,12 @@
     gap: 12px;
     padding: 14px 16px;
     border-block-end: 1px solid var(--line-1);
+  }
+
+  /* the rule only separates rows: none under the last (no "add" row after it) */
+  .method:last-child,
+  .method-empty:last-child {
+    border-block-end: none;
   }
 
   .method-glyph {
@@ -3559,8 +3587,14 @@
     background: currentColor;
   }
 
+  /* as tall as a method's row (14px padding round its 28px unlink button), the note centred */
   .method-empty {
-    padding: 14px 16px 4px;
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+    min-height: 56px;
+    padding: 0 16px;
+    border-block-end: 1px solid var(--line-1);
     font: var(--weight-regular) 11.5px/1.4 var(--font-sans);
     color: var(--ink-4);
   }
