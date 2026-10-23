@@ -3,6 +3,7 @@
     import { Body, CommonButton, Container, ListAction } from "component-lib";
     import {
         botState,
+        hydrateBots,
         OpenChat,
         publish,
         type CommunitySummary,
@@ -15,7 +16,7 @@
     import WebhookMember from "../../bots/WebhookMember.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
     import Separator from "../Separator.svelte";
-    import { MemberManagement } from "./membersState.svelte";
+    import { MemberManagement } from "@src/logic/members/memberManagement.svelte";
 
     interface Props {
         collection: MultiUserChat | CommunitySummary;
@@ -29,7 +30,7 @@
     let canRegisterWebhook = $derived(membersState.canRegisterWebhook());
     let botCount = $derived(membersState.bots.size + membersState.webhooks.size);
     let installedBots = $derived(
-        membersState.hydrateBots(membersState.bots, botState.externalBots),
+        hydrateBots(membersState.bots, botState.externalBots),
     );
     let installedHooks = $derived([...membersState.webhooks.values()]);
     let empty = $derived(

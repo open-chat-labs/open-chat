@@ -4,7 +4,6 @@
     import {
         type CommunityIdentifier,
         type CommunitySummary,
-        type ExternalBot,
         type FullMember,
         type GrantedBotPermissions,
         type MemberRole,
@@ -19,13 +18,17 @@
         type WebhookDetails,
         allUsersStore,
         chatIdentifiersEqual,
+        compareMembers,
         currentUserIdStore,
-        LARGE_GROUP_THRESHOLD,
+        knownMembers,
+        memberMatchesSearch,
         ROLE_ADMIN,
         ROLE_MEMBER,
         ROLE_MODERATOR,
         ROLE_OWNER,
+        usersFromIds,
     } from "@client";
+    import { MemberManagement } from "@src/logic/members/memberManagement.svelte";
     import { getContext } from "svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
@@ -43,7 +46,6 @@
     import Member from "./Member.svelte";
     import MembersHeader from "./MembersHeader.svelte";
 
-    const MAX_SEARCH_RESULTS = 255; // irritatingly this is a nat8 in the candid
     const client = getContext<OpenChat>("client");
 
     type Tab = "users" | "groups" | "bots";
@@ -91,23 +93,8 @@
 
     let userGroups: UserGroups | undefined = $state();
 
-    function matchingUsers(
-        term: string,
-        users: UserLookup,
-        ids: ReadonlySet<string>,
-        includeMe = false,
-    ): UserSummary[] {
-        return Array.from<string>(ids).reduce((matching, id) => {
-            const user = users.get(id);
-            if (
-                user &&
-                matchesSearch(term, user) &&
-                (user.userId !== $currentUserIdStore || includeMe)
-            ) {
-                matching.push(user);
-            }
-            return matching;
-        }, [] as UserSummary[]);
+    function matchingUsers(term: string, users: UserLookup, ids: ReadonlySet<string>): UserSummary[] {
+        return usersFromIds(users, ids).filter((user) => memberMatchesSearch(term, user));
     }
 
     let searchTermEntered = $state("");
@@ -129,43 +116,6 @@
         return false;
     }
 
-    function matchesSearch(searchTermLower: string, user: UserSummary | ExternalBot): boolean {
-        if (searchTermLower === "") return true;
-        if (user.kind === "external_bot") {
-            return (
-                user.name.toLowerCase().includes(searchTermLower) ||
-                (user.definition.description !== undefined &&
-                    user.definition.description.toLocaleLowerCase().includes(searchTermLower))
-            );
-        }
-
-        if (user.username === undefined) return true;
-        return (
-            user.username.toLowerCase().includes(searchTermLower) ||
-            (user.displayName !== undefined &&
-                user.displayName.toLowerCase().includes(searchTermLower))
-        );
-    }
-
-    function getKnownUsers(userStore: UserLookup, members: MemberType[]): FullMember[] {
-        const users: FullMember[] = [];
-        members.forEach((m) => {
-            const user = userStore.get(m.userId);
-            if (user) {
-                users.push({
-                    ...user,
-                    ...m,
-                    displayName: m.displayName ?? user.displayName,
-                });
-            }
-        });
-        return users;
-    }
-
-    function compareMembers(a: FullMember, b: FullMember): number {
-        return b.role - a.role;
-    }
-
     function setView(v: View): void {
         memberView = v;
     }
@@ -176,32 +126,26 @@
     }
 
     function onSearchEntered() {
-        if (client.shouldSearchForMembers(collection.id) && searchTerm.length > 0) {
-            // Not every member, or not every member's display name in the community, is held, so
-            // search for those who match. Those found are then held, so will be in the results.
-            client.findMembers(collection.id, searchTerm, MAX_SEARCH_RESULTS);
-        } else if (largeGroup && knownUsers.length < members.length && searchTerm.length > 0) {
-            // let's kick off the universal usersearch to try to fill in any missing users
-            // no need to process the results, they will automatically get added to the userstore and that
-            // will cause the search results to be reactively recalculated
-            client.searchUsers(searchTerm, MAX_SEARCH_RESULTS);
-        }
         membersList?.reset();
     }
 
-    let knownUsers = $derived(getKnownUsers($allUsersStore, members));
-    let largeGroup = $derived(members.length > LARGE_GROUP_THRESHOLD);
+    let membersState = $derived(new MemberManagement(client, collection));
+    $effect(() => membersState.findMembers(searchTerm));
+
+    let knownUsers = $derived(knownMembers($allUsersStore, members));
     let me = $derived(knownUsers.find((u) => u.userId === $currentUserIdStore));
     let searchTerm = $derived(trimLeadingAtSymbol(searchTermEntered));
     let searchTermLower = $derived(searchTerm.toLowerCase());
     let fullMembers = $derived(
         knownUsers
-            .filter((u) => matchesSearch(searchTermLower, u) && u.userId !== $currentUserIdStore)
+            .filter(
+                (u) => memberMatchesSearch(searchTermLower, u) && u.userId !== $currentUserIdStore,
+            )
             .sort(compareMembers),
     );
-    let blockedUsers = $derived(matchingUsers(searchTermLower, $allUsersStore, blocked, true));
-    let lapsedMembers = $derived(matchingUsers(searchTermLower, $allUsersStore, lapsed, true));
-    let invitedUsers = $derived(matchingUsers(searchTermLower, $allUsersStore, invited, true));
+    let blockedUsers = $derived(matchingUsers(searchTermLower, $allUsersStore, blocked));
+    let lapsedMembers = $derived(matchingUsers(searchTermLower, $allUsersStore, lapsed));
+    let invitedUsers = $derived(matchingUsers(searchTermLower, $allUsersStore, invited));
     let showBlocked = $derived(blockedUsers.length > 0);
     let showInvited = $derived(invitedUsers.length > 0);
     let showLapsed = $derived(lapsedMembers.length > 0);

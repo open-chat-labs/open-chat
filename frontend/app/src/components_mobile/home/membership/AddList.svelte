@@ -12,7 +12,8 @@
     import ShareIcon from "svelte-material-icons/ShareOutline.svelte";
     import SelectUsers from "../SelectUsers.svelte";
     import AddUser from "./AddUser.svelte";
-    import type { MemberManagement } from "./membersState.svelte";
+    import type { MemberManagement } from "@src/logic/members/memberManagement.svelte";
+    import { toastStore } from "@src/stores/toast";
 
     const client = getContext<OpenChat>("client");
 
@@ -33,12 +34,12 @@
         return client.searchCommunityMembersToAdd(term, 20);
     }
 
-    function addUsers() {
-        membersState.addUsers().then((success) => {
-            if (success) {
-                publish("closeModalPage");
-            }
-        });
+    async function addUsers() {
+        const outcome = await membersState.addUsers();
+        toastStore.showOutcome(outcome);
+        if (outcome.kind === "success") {
+            publish("closeModalPage");
+        }
     }
 </script>
 
