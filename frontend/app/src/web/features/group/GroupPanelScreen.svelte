@@ -43,7 +43,7 @@
     import { profileClickedEvent } from "@src/web-components/profileLink";
     import { getContext, untrack } from "svelte";
     import { _ } from "svelte-i18n";
-    import { closeRightColumn } from "../app/rightPanel";
+    import { closeRightColumn, openPanelOver } from "../app/rightPanel";
     import type { RightRegion, ScreenProps } from "../app/screens";
     import { gateAssets, gatesState } from "../access/gates.adapter";
     import { pickById } from "../../pickById";
@@ -315,7 +315,7 @@
         communityName={collection.kind === "channel" ? community?.name : undefined}
         onOpenCommunity={collection.kind === "channel"
             ? (v) =>
-                  client.pushRightPanelHistory(
+                  openPanelOver(
                       v === "members"
                           ? { kind: "show_community_members" }
                           : { kind: "community_details" },
@@ -362,5 +362,6 @@
             : () => document.body.dispatchEvent(profileClickedEvent(owner.userId))}
         onOpenPinned={openPinned}
         onUnpin={unpin}
+        back={region.back}
         onClose={close} />
 {/if}

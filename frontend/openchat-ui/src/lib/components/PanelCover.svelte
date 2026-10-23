@@ -5,6 +5,7 @@
   const MASKS = {
     favourite: 'var(--icon-heart) center/contain no-repeat',
     close: 'var(--icon-close) center/contain no-repeat',
+    back: 'var(--icon-back) center/contain no-repeat',
     share: 'var(--icon-share) center/contain no-repeat',
     edit: 'var(--icon-edit) center/contain no-repeat',
     manage: 'var(--icon-manage) center/contain no-repeat',
@@ -19,6 +20,7 @@
   const LABELS: Record<Action, string> = {
     favourite: 'ui.panelCover.favourite',
     close: 'ui.common.close',
+    back: 'ui.common.back',
     share: 'ui.common.share',
     edit: 'ui.common.edit',
     manage: 'ui.panelCover.manage',

@@ -202,6 +202,8 @@ design export needs. Each entry says where it came up.
   - the Video call tile does nothing until 7b, and Favourite isn't wired;
   - `?usergroup=` opens the user groups view, not the one group (`viewRequest` can't name one);
   - the owner and admin counts are of the members held, which for a large chat is its first page.
+  - by hand: the cover's × calls `onClose` (it had no handler), and shows as a back arrow
+    (`back`) when there's an earlier panel to return to.
 
 ## App
 

@@ -9952,6 +9952,17 @@
         "doc": ""
       },
       {
+        "name": "back",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": "false",
+        "doc": "The cover's close goes back to an earlier panel: it shows a back arrow instead of ×. Both call onClose."
+      },
+      {
         "name": "onRoleChange",
         "type": "(member: Person, role: MemberRole) => Promise<unknown> | void",
         "default": null,

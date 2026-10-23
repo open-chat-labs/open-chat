@@ -323,6 +323,8 @@
     onMuteChange?: (key: MuteKey | null) => Promise<unknown> | void;
     onMuteEveryoneChange?: (on: boolean) => Promise<unknown> | void;
     onClose?: () => void;
+    /** The cover's close goes back to an earlier panel: it shows a back arrow instead of ×. Both call onClose. */
+    back?: boolean;
     /** Member actions; each item is only offered when its callback is given. The list updates at once and rolls
      *  back with an error if the promise rejects. `member` is your own row when stepping down. */
     onRoleChange?: (member: Person, role: MemberRole) => Promise<unknown> | void;
@@ -420,6 +422,7 @@
     onUnblock,
     onRemoveBlocked,
     onClose,
+    back = false,
   }: Props = $props();
   const t = useT();
   const i18n = getI18n();
@@ -966,6 +969,8 @@
 
 
   const coverHandlersAll = $derived({
+    close: () => onClose?.(),
+    back: () => onClose?.(),
     ...coverHandlers,
     more: () => (menuOpen = !menuOpen),
     manage: () => onManage?.('main'),
@@ -1017,7 +1022,7 @@
 <div class="panel" class:embedded bind:this={root} data-panel-root="true">
   {#if view === 'main'}
     <div class="main" class:quick onscroll={() => (muteMenu = null)}>
-      <div class="cover"><PanelCover cover={coverCss} actions={['close']} trailActions={quick ? [manageIcon, 'more'] : canInvite ? ['invite', 'share', 'more'] : ['more']} handlers={coverHandlersAll} /></div>
+      <div class="cover"><PanelCover cover={coverCss} actions={[back ? 'back' : 'close']} trailActions={quick ? [manageIcon, 'more'] : canInvite ? ['invite', 'share', 'more'] : ['more']} handlers={coverHandlersAll} /></div>
 
       <div class="identity" class:quick>
         <div class="avatar" class:round={scope === 'channel'} style:background={avatar ? `${cssUrl(avatar)} center/cover no-repeat` : grad(color)}></div>
