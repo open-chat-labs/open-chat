@@ -65,9 +65,7 @@ fi
 # --- Build the service ---
 # Assume Rust is all set up, just build!
 echo "Building new notification-pusher version $NEW_VERSION..."
-# The vendored OpenSSL is compiled with musl's gcc too
-CC_aarch64_unknown_linux_musl=aarch64-linux-musl-gcc \
-    cargo build --package $PACKAGE_NAME --release --target=$TARGET
+cargo build --package $PACKAGE_NAME --release --target=$TARGET
 
 # --- Create remote directory for the binary ---
 echo "Creating release folder $NEW_VERSION_PATH..."

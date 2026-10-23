@@ -14,7 +14,7 @@ their progress in the same DynamoDB table.
 In an arm64 Linux container, eg. Docker on an Apple silicon Mac, from the repo's root:
 
 ```bash
-docker run --rm --platform linux/arm64 -v "$PWD":/src -w /src rust:1.99.0-bookworm bash -c 'apt-get update && apt-get install -y musl-tools && rustup target add aarch64-unknown-linux-musl && CC_aarch64_unknown_linux_musl=aarch64-linux-musl-gcc cargo build --package notification_pusher_aws --release --target aarch64-unknown-linux-musl'
+docker run --rm --platform linux/arm64 -v "$PWD":/src -w /src rust:1.99.0-bookworm bash -c 'apt-get update && apt-get install -y musl-tools && rustup target add aarch64-unknown-linux-musl && cargo build --package notification_pusher_aws --release --target aarch64-unknown-linux-musl'
 ```
 
 The binary is `target/aarch64-unknown-linux-musl/release/notification_pusher_aws`.
