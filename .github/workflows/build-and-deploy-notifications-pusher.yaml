@@ -5,14 +5,17 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 concurrency:
   group: deploy-notification-pusher
 
 jobs:
   build-and-deploy:
-    # The pusher's host is arm64 (a t4g instance), so it's built on arm
+    # The pusher runs as an ECS service on Fargate, arm64, so it's built on arm
     runs-on: ubuntu-24.04-arm
+    env:
+      IMAGE: 253040722768.dkr.ecr.us-east-1.amazonaws.com/notification-pusher
 
     steps:
       - name: Checkout
@@ -63,18 +66,57 @@ jobs:
         working-directory: ${{ runner.temp }}/pusher
         run: rustup target add aarch64-unknown-linux-musl
 
-      - name: Build and deploy to EC2
+      - name: Build
         working-directory: ${{ runner.temp }}/pusher
-        env:
-          NP_EC2_SSH_KEY: ${{ secrets.NP_EC2_SSH_KEY }}
-        run: |
-          KEY_PATH=$(mktemp)
-          trap 'rm -f "$KEY_PATH"' EXIT
-          printf '%s\n' "$NP_EC2_SSH_KEY" > "$KEY_PATH"
-          chmod 600 "$KEY_PATH"
+        run: cargo build --locked --package notification_pusher_aws --release --target=aarch64-unknown-linux-musl
 
-          "$GITHUB_WORKSPACE/scripts/deploy-notification-pusher-prod.sh" \
-            "${{ steps.version.outputs.version }}" \
-            "${{ secrets.NP_EC2_USER }}" \
-            "${{ secrets.NP_EC2_HOST }}" \
-            "$KEY_PATH"
+      # With master's Dockerfile and entrypoint, as a tag made before the move to ECS has neither
+      - name: Build the image
+        run: |
+          CONTEXT=$(mktemp -d)
+          cp "$RUNNER_TEMP/pusher/target/aarch64-unknown-linux-musl/release/notification_pusher_aws" \
+            backend/notification_pusher/aws/Dockerfile \
+            backend/notification_pusher/aws/entrypoint.sh \
+            "$CONTEXT"
+          docker build --platform linux/arm64 -t "$IMAGE:${{ steps.version.outputs.version }}" -t "$IMAGE:latest" "$CONTEXT"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::253040722768:role/GitHubActions-DeployNotificationPusher
+          aws-region: us-east-1
+
+      - name: Log in to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Push the image
+        run: |
+          docker push "$IMAGE:${{ steps.version.outputs.version }}"
+          docker push "$IMAGE:latest"
+
+      - name: Render the task definition
+        id: task-definition
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: backend/notification_pusher/aws/task-definition.json
+          container-name: notification-pusher
+          image: ${{ env.IMAGE }}:${{ steps.version.outputs.version }}
+
+      # The service runs one task, and stops it before starting the new one, so two pushers never
+      # run at once
+      - name: Deploy
+        id: deploy
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.task-definition.outputs.task-definition }}
+          cluster: openchat
+          service: notification-pusher
+          wait-for-service-stability: true
+
+      # The service also settles if the deployment circuit breaker rolled back to the old version
+      - name: Check the new version is running
+        run: |
+          read -r RUNNING STATE <<< "$(aws ecs describe-services --cluster openchat --services notification-pusher \
+            --query 'services[0].deployments[?status==`PRIMARY`] | [0].[taskDefinition, rolloutState]' --output text)"
+          echo "Running $RUNNING ($STATE)"
+          [[ "$RUNNING" == "${{ steps.deploy.outputs.task-definition-arn }}" && "$STATE" == "COMPLETED" ]]
