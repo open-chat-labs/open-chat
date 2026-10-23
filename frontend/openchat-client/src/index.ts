@@ -49,7 +49,13 @@ export {
     roleChangeFailureMessage,
     usersFromIds,
 } from "./utils/members";
-export { profileChanges, type ProfileChanges } from "./utils/profile";
+export {
+    memberDisplayNameResult,
+    profileChanges,
+    referralLink,
+    type ProfileChanges,
+    type ProfileFieldResult,
+} from "./utils/profile";
 export { isDisplayNameValid, isUsernameValid } from "./utils/validation";
 export { rightPanelView, type RightPanelInput } from "./utils/rightPanel";
 export { signInOptions } from "./utils/signIn";

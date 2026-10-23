@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { invoke } from "@tauri-apps/api/core";
     import { i18nKey } from "@src/i18n/i18n";
     import { BodySmall, Button, Container, H2 } from "component-lib";
     import { OpenChat } from "@client";
+    import { clearCacheAndRestart } from "@src/utils/clearCache";
     import { getContext } from "svelte";
     import Sync from "svelte-material-icons/Sync.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
@@ -12,19 +12,12 @@
 
     let busy = $state(false);
 
-    function clearCache() {
+    async function clearCache() {
         busy = true;
-        client
-            .clearCachedData()
-            .then(reload)
-            .finally(() => (busy = false));
-    }
-
-    function reload() {
-        if (client.isNativeApp()) {
-            invoke("plugin:oc|restart_app");
-        } else {
-            window.location.reload();
+        try {
+            await clearCacheAndRestart(client);
+        } finally {
+            busy = false;
         }
     }
 </script>

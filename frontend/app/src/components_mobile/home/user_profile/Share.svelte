@@ -3,7 +3,7 @@
     import { toastStore } from "@src/stores/toast";
     import { shareLink } from "@src/utils/share";
     import { BodySmall, Caption, ColourVars, CommonButton, Container, H2 } from "component-lib";
-    import { allUsersStore, currentUserIdStore, OpenChat } from "@client";
+    import { currentUserIdStore, OpenChat, referralLink } from "@client";
     import { getContext } from "svelte";
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
@@ -13,11 +13,11 @@
 
     const client = getContext<OpenChat>("client");
 
-    let user = $derived($allUsersStore.get($currentUserIdStore) ?? client.nullUser("unknown"));
-    let link = $derived(`${client.canonicalOrigin()}/?ref=${$currentUserIdStore}`);
+    let link = $derived(referralLink(client.canonicalOrigin(), $currentUserIdStore));
 
+    // the link, which this used to copy the user's id in place of
     function onCopy() {
-        navigator.clipboard.writeText(user.userId).then(() => {
+        navigator.clipboard.writeText(link).then(() => {
             toastStore.showSuccessToast(i18nKey("linkCopiedToClipboard"));
         });
     }

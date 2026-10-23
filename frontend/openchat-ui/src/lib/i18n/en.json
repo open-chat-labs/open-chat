@@ -2377,6 +2377,7 @@
         "lead": "Set a different display name in each community you’ve joined. Leave it empty to use your profile name.",
         "leaveEmpty": "Leave empty to use {name}",
         "noMatch": "No communities match “{query}”.",
+        "none": "You haven’t joined any communities yet.",
         "saveFailed": "Couldn’t save your name in {community}. Try again.",
         "useDefault": "Use default name",
         "yourNameIn": "Your name in {community}"

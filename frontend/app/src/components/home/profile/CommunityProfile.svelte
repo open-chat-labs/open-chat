@@ -1,6 +1,5 @@
 <script lang="ts">
-    import type { CommunitySummary, OpenChat } from "@client";
-    import { ErrorCode } from "@shared";
+    import { memberDisplayNameResult, type CommunitySummary, type OpenChat } from "@client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
@@ -39,16 +38,11 @@
         client
             .setMemberDisplayName(community.id, displayName)
             .then((resp) => {
-                if (resp.kind === "error") {
-                    if (resp.code === ErrorCode.DisplayNameTooShort) {
-                        displayNameError = "register.displayNameTooShort";
-                    } else if (resp.code === ErrorCode.DisplayNameTooLong) {
-                        displayNameError = "register.displayNameTooLong";
-                    } else if (resp.code === ErrorCode.InvalidDisplayName) {
-                        displayNameError = "register.displayNameInvalid";
-                    } else {
-                        displayNameError = "unexpectedError";
-                    }
+                const result = memberDisplayNameResult(resp);
+                if (result.kind === "rejected") {
+                    displayNameError = result.message;
+                } else if (result.kind === "failed") {
+                    toastStore.showFailureToast(i18nKey("unableToSaveUserProfile"));
                 }
             })
             .catch((err) => {

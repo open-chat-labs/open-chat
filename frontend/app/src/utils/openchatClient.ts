@@ -3,6 +3,9 @@ import { OpenChat, type OpenChatConfig } from "@client";
 /** Where uploaded blobs (avatars, profile backgrounds …) are served from. */
 export const blobUrlPattern: string = import.meta.env.OC_BLOB_URL_PATTERN!;
 
+/** This build of the website. */
+export const websiteVersion: string = import.meta.env.OC_WEBSITE_VERSION!;
+
 // The one OpenChat client config, built from the OC_* build env. Each App tree (components,
 // components_mobile, web) creates its client with this once at startup.
 export function createOpenChatClient(
@@ -39,13 +42,12 @@ export function createOpenChatClient(
         oneSecMinterCanister: import.meta.env.OC_ONESEC_MINTER_CANISTER!,
         i18nFormatter,
         logger,
-        websiteVersion: import.meta.env.OC_WEBSITE_VERSION!,
+        websiteVersion,
         rollbarApiKey: import.meta.env.OC_ROLLBAR_ACCESS_TOKEN!,
         env: import.meta.env.OC_BUILD_ENV!,
         bitcoinMainnetEnabled: import.meta.env.OC_BITCOIN_MAINNET_ENABLED! === "true",
         vapidPublicKey: import.meta.env.OC_VAPID_PUBLIC_KEY!,
-        accountLinkingCodesEnabled:
-            import.meta.env.OC_ACCOUNT_LINKING_CODES_ENABLED! === "true",
+        accountLinkingCodesEnabled: import.meta.env.OC_ACCOUNT_LINKING_CODES_ENABLED! === "true",
         baseOrigin: import.meta.env.OC_BASE_ORIGIN!,
     });
 }
