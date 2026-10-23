@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Store messages relayed from Twitch ([#10214](https://github.com/open-chat-labs/open-chat/pull/10214))
+- Add Twitch as a supported platform for bridged chats ([#10214](https://github.com/open-chat-labs/open-chat/pull/10214))
 
 ### Removed
 
