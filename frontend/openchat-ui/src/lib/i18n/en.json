@@ -2306,6 +2306,7 @@
       },
       "calendar": {
         "claim": "Claim",
+        "claiming": "Claiming…",
         "claimedAmount": "+{amount} CHIT · day {day} of streak",
         "claimedAt": "Claimed at {time}",
         "claimToday": "Claim today’s CHIT",

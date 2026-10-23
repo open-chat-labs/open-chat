@@ -13257,7 +13257,8 @@ export class OpenChat {
      * calendar's history). As far as it got if a page fails to load.
      */
     chitHistory(from: bigint): Promise<ChitEvent[]> {
-        const to = BigInt(Date.now());
+        // a day ahead: an event just made carries the canister's time, which may be ahead of ours
+        const to = BigInt(Date.now() + ONE_DAY);
         return allChitEvents(
             async (next, max) =>
                 (

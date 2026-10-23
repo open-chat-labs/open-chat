@@ -220,3 +220,8 @@
 ## 2026-10-23 — ProfileDialog's CHIT section: the puzzle setting optional, "Ways to earn more" only with onEarn, by hand
 - `ProfileDialog` takes `puzzleSetting` (default true): false leaves the daily puzzle block out, for a host that has no such setting (`meta.json` updated). "Ways to earn more" shows only with `onEarn`: without it, a click closed the dialog and opened nothing.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-23 — ProfileDialog's calendar: claiming in place, and nothing missed before joining, by hand
+- `ProfileDialog` takes `onClaim` (as `ChitDialog`'s): the calendar's Claim claims there, and the day says "Claiming…" (`ui.profileDialog.calendar.claiming`) until it settles, where it otherwise opens the CHIT dialog (`onChit`). `meta.json` updated.
+- A day before `joined` is shown as a future day is (no claim, no "not claimed"), where it counted as missed.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

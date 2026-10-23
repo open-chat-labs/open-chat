@@ -245,16 +245,39 @@ export function linkCodeProps(code: AccountLinkingCode): { code: string; expires
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+// the user's time zone at a moment, in minutes east of UTC
+type OffsetMinutes = (ms: number) => number;
+const browserOffset: OffsetMinutes = (ms) => -new Date(ms).getTimezoneOffset();
+
+/**
+ * The user's own day `ms` falls on, as the CHIT calendar takes its days: that date's midnight in
+ * UTC (the calendar lays out UTC dates, and the backend counts a streak in the user's time zone,
+ * so its `today` and its claims both go by the user's date).
+ */
+export function calendarDay(ms: number, offsetMinutes: OffsetMinutes = browserOffset): number {
+    return Math.floor((ms + offsetMinutes(ms) * 60_000) / DAY_MS) * DAY_MS;
+}
+
+/** Today's claim as the calendar shows it, from what claiming answered. */
+export function claimedNow(
+    now: number,
+    streakDay: number,
+    amount: number,
+    offsetMinutes: OffsetMinutes = browserOffset,
+): ClaimDay {
+    const day = new Date(calendarDay(now, offsetMinutes)).toISOString().slice(0, 10);
+    return { day, streakDay, amount, minute: Math.floor((now % DAY_MS) / 60_000) };
+}
+
 /**
  * The CHIT calendar's days from the user's CHIT events (any order): a daily claim, a claim
- * reinstated, or a day covered by streak insurance, each on the user's own day (the backend counts
- * a streak in the user's time zone; `offsetMinutes` is it at a moment, east of UTC). Each one's
- * streak day follows from the days before it: one more than the day before, or 1 after a gap. A
- * reinstated claim is a kept day with nothing earned.
+ * reinstated, or a day covered by streak insurance, each on the user's own day (calendarDay). Each
+ * one's streak day follows from the days before it: one more than the day before, or 1 after a
+ * gap. A reinstated claim is a kept day with nothing earned.
  */
 export function claimDays(
     events: ChitEvent[],
-    offsetMinutes: (ms: number) => number = (ms) => -new Date(ms).getTimezoneOffset(),
+    offsetMinutes: OffsetMinutes = browserOffset,
 ): ClaimDay[] {
     const days: ClaimDay[] = [];
     let last: { dayNumber: number; streakDay: number } | undefined;
@@ -269,7 +292,7 @@ export function claimDays(
             continue;
         }
         const ms = Number(timestamp);
-        const dayNumber = Math.floor((ms + offsetMinutes(ms) * 60_000) / DAY_MS);
+        const dayNumber = calendarDay(ms, offsetMinutes) / DAY_MS;
         // one a day
         if (last?.dayNumber === dayNumber) continue;
         const streakDay = last?.dayNumber === dayNumber - 1 ? last.streakDay + 1 : 1;

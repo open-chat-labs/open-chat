@@ -77,8 +77,10 @@
     import type { DialogProps, LinkedDialog } from "../app/dialogs";
     import {
         changedChatSettings,
+        calendarDay,
         chatSettingsProps,
         claimDays,
+        claimedNow,
         profileProps,
         ringtoneKeyOf,
         statsProps,
@@ -371,15 +373,31 @@
     );
 
     // the calendar's Claim: claimed here, as the old CHIT modal claims it, until the CHIT dialog
-    // it opens in the design is built (8d); then the calendar shows the day claimed
-    async function claimChit() {
+    // it opens in the design is built (8d). The day shows claimed as soon as the answer comes (as
+    // the claim stops being offered), and stays so while the history reloads behind it
+    async function claimChit(): Promise<void> {
         try {
-            await client.claimDailyChit();
+            const resp = await client.claimDailyChit();
+            if (resp.kind === "success") {
+                claimedHere = claimedNow(Date.now(), resp.streak, resp.chitEarned);
+                claimHistoryRun++;
+                claimHistory = withClaimedHere(claimHistory);
+            }
         } catch (err) {
             console.warn("Unable to claim the daily CHIT", err);
             toastStore.showFailureToast(i18nKey("dailyChit.failedToClaim"));
+            throw err;
         }
-        await loadClaimHistory();
+        loadClaimHistory();
+    }
+
+    // a claim made here, kept in the calendar until the loaded history has that day
+    let claimedHere: ClaimDay | undefined;
+
+    function withClaimedHere(days: ClaimDay[]): ClaimDay[] {
+        const here = claimedHere;
+        if (here === undefined || days.some((d) => d.day === here.day)) return days;
+        return [...days, here];
     }
 
     // every claim since the account was made, loaded each time the section shows: the calendar
@@ -391,7 +409,7 @@
         const run = ++claimHistoryRun;
         try {
             const events = await client.chitHistory(BigInt(header.joined));
-            if (run === claimHistoryRun) claimHistory = claimDays(events);
+            if (run === claimHistoryRun) claimHistory = withClaimedHere(claimDays(events));
         } catch (err) {
             console.warn("Unable to load the CHIT claim history", err);
         }
@@ -669,7 +687,8 @@
     chitUtc={$utcMode}
     {claimHistory}
     {claimable}
-    onChit={readOnly ? undefined : claimChit}
+    today={calendarDay($now500)}
+    onClaim={readOnly ? undefined : claimChit}
     puzzleSetting={false}
     onChitSettings={changeChit}
     onlineMinutes={stats.onlineMinutes}
