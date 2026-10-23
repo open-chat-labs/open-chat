@@ -18,6 +18,7 @@ import {
     isOwnMessage,
     linkedAuthor,
     shouldShowAsMe,
+    tipRecipient,
 } from "./bridge";
 
 const AVATARS = "https://avatars.example.com";
@@ -164,6 +165,32 @@ describe("bridge", () => {
                 chat(telegramId),
             ]),
         ).toEqual([telegramId, discordId]);
+    });
+
+    test("tips a relayed message to whoever linked its account, if they're in the chat", () => {
+        const relayed = (bridged?: BridgedUserId) => ({
+            sender: "bridge-bot",
+            senderContext:
+                bridged === undefined
+                    ? undefined
+                    : ({ kind: "bot", finalised: true, bridgedFrom: bridged } as SenderContext),
+        });
+        const linked = new Map([
+            [bridgedUserKey(telegramId)!, { ...telegram(), linkedUserId: "alice" }],
+        ]);
+        const members = new Set(["alice", "bob"]);
+        const isMember = (userId: string) => members.has(userId);
+
+        // An ordinary message's tips go to its sender
+        expect(tipRecipient({ sender: "bob", senderContext: undefined }, linked, isMember)).toBe(
+            "bob",
+        );
+        expect(tipRecipient(relayed(telegramId), linked, isMember)).toBe("alice");
+        // No one has linked the account
+        expect(tipRecipient(relayed(discordId), linked, isMember)).toBeUndefined();
+        expect(tipRecipient(relayed(telegramId), new Map(), isMember)).toBeUndefined();
+        // Whoever linked it isn't in the chat
+        expect(tipRecipient(relayed(telegramId), linked, () => false)).toBeUndefined();
     });
 
     test("shows the user who linked the account as its author, unless they've gone", () => {

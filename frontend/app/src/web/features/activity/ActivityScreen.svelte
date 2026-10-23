@@ -6,6 +6,7 @@
     import {
         allChatsStore,
         allUsersStore,
+        bridgedUsersStore,
         communitiesStore,
         currentUserIdStore,
         messageActivitySummaryStore,
@@ -17,8 +18,10 @@
     import EmptyState from "@openchat/ui/src/lib/components/EmptyState.svelte";
     import { interpolate } from "@src/i18n/i18n";
     import { activityFeedState } from "@src/logic/activity/activity.svelte";
+    import { messageAuthorName } from "@src/logic/chats/latestMessagePreview";
     import { navigate } from "@src/utils/navigation";
     import { removeQueryStringParam } from "@src/utils/urls";
+    import { buildDisplayName } from "@src/utils/user";
     import { getContext, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import type { LeftRegion, ScreenProps } from "../app/screens";
@@ -98,6 +101,14 @@
             anon: $_("activity.anon"),
             missing: $_("activity.missingMessage"),
             userName: (userId) => client.displayName(users.get(userId)),
+            author: (message) =>
+                messageAuthorName(message, {
+                    formatter: $_,
+                    me: $currentUserIdStore,
+                    displayName: (userId, kind) => buildDisplayName(users, userId, kind, false),
+                    bridgedUsers: $bridgedUsersStore,
+                    users,
+                }),
             chatName,
             contentText: (content) => client.getContentAsText($_, content),
             text: (key) => interpolate($_, key),

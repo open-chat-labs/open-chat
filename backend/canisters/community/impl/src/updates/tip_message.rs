@@ -1,16 +1,18 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::{CommunityEventPusher, RuntimeState, execute_update_async, mutate_state};
+use crate::{CommunityEventPusher, RuntimeState, execute_update_async, mutate_state, read_state};
+use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::TipMessageArgs;
 use community_canister::tip_message::*;
 use constants::MEMO_TIP;
+use group_chat_core::TipRecipient;
 use ledger_utils::{TransferRecipient, UserTransfer, format_crypto_amount_with_symbol};
 use multi_user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
 use oc_error_codes::OCErrorCode;
 use types::{
-    Achievement, Caller, CanisterId, ChannelId, ChannelMessageTipped, ChannelUserNotificationPayload, Chat, CryptoTransaction,
-    EventIndex, MessageId, MessageIndex, OCResult, UserId, icrc2,
+    Achievement, BridgedUserId, Caller, CanisterId, ChannelId, ChannelMessageTipped, ChannelUserNotificationPayload, Chat,
+    CryptoTransaction, EventIndex, MessageId, MessageIndex, OCResult, UserId, icrc2,
 };
 
 #[update(msgpack = true)]
@@ -22,58 +24,85 @@ async fn tip_message(args: Args) -> Response {
 async fn tip_message_impl(args: Args) -> OCResult {
     let new_achievement = args.new_achievement;
 
-    let user_id = match mutate_state(|state| prepare(args, state))? {
-        // The transfer was certified, so the message has been tipped already
-        PrepareResult::Tipped(user_id) => user_id,
-        PrepareResult::Icrc2(tip) => {
-            let TipToMake {
-                user_id,
-                spender_subaccount,
-                c2c_args,
-                transfer,
-            } = *tip;
+    // Who's tipping is found once, before anything is awaited. Each `prepare` checks again that
+    // they can tip the message.
+    let (user, caller) = read_state(|state| -> OCResult<_> {
+        match state.verified_caller(None)? {
+            Caller::User(user) => Ok((user, state.env.caller())),
+            _ => Err(OCErrorCode::InitiatorNotAuthorized.into()),
+        }
+    })?;
 
+    let prepared = match mutate_state(|state| prepare(&args, user.user_id, caller, None, state))? {
+        // Tips on a message a bridge bot relayed go to whoever linked the account it came from,
+        // which the LocalUserIndex knows. Everything is checked again once they're found, as
+        // anything may have changed while they were looked up.
+        PrepareResult::LookUpLinkedUser(bridged_user, local_user_index) => {
+            let linked_user = local_user_index_canister_c2c_client::bridged_user_link(bridged_user, local_user_index)
+                .await?
+                .ok_or(OCErrorCode::TargetUserNotFound)?;
+            mutate_state(|state| prepare(&args, user.user_id, caller, Some(linked_user), state))?
+        }
+        prepared => prepared,
+    };
+
+    match prepared {
+        // The transfer was certified, so the message has been tipped already
+        PrepareResult::Tipped => {}
+        PrepareResult::Icrc2(tip) => {
+            let TipToMake { c2c_args, transfer } = *tip;
+
+            // The caller approved the transfer under their spender subaccount
+            let spender_subaccount = ledger_utils::spender_subaccount(user.principal);
             match ledger_utils::icrc2::process_transaction_for_user(transfer, spender_subaccount).await {
                 Ok(Ok(_)) => {}
                 Ok(Err((_, error))) => return Err(error),
                 Err(error) => return Err(error.into()),
             }
 
-            mutate_state(|state| tip_message_with_completed_transfer(user_id, c2c_args, state))?;
-            user_id
+            mutate_state(|state| tip_message_with_completed_transfer(user.user_id, c2c_args, state))?;
         }
-    };
+        // Only asked for when no linked user was given
+        PrepareResult::LookUpLinkedUser(..) => return Err(OCErrorCode::TargetUserNotFound.into()),
+    }
 
     if new_achievement {
-        mutate_state(|state| state.notify_user_of_achievement(user_id, Achievement::TippedMessage, state.env.now()));
+        mutate_state(|state| state.notify_user_of_achievement(user.user_id, Achievement::TippedMessage, state.env.now()));
     }
     Ok(())
 }
 
 enum PrepareResult {
-    Tipped(UserId),
+    Tipped,
     Icrc2(Box<TipToMake>),
+    // The message was relayed by a bridge bot from this account, so who linked it is to be looked
+    // up from this LocalUserIndex, then the tip prepared again with them
+    LookUpLinkedUser(BridgedUserId, CanisterId),
 }
 
 struct TipToMake {
-    user_id: UserId,
-    // The caller's spender subaccount, under which they approved the transfer
-    spender_subaccount: [u8; 32],
     c2c_args: TipToRecord,
     transfer: icrc2::PendingCryptoTransaction,
 }
 
-fn prepare(args: Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
-    let Caller::User(user) = state.verified_caller(None)? else {
-        return Err(OCErrorCode::InitiatorNotAuthorized.into());
-    };
-    let user_id = user.user_id;
-
-    let recipient = state.data.channels.get_or_err(&args.channel_id)?.chat.check_can_tip_message(
+fn prepare(
+    args: &Args,
+    user_id: UserId,
+    caller: Principal,
+    linked_user: Option<UserId>,
+    state: &mut RuntimeState,
+) -> OCResult<PrepareResult> {
+    let recipient = match state.data.channels.get_or_err(&args.channel_id)?.chat.check_can_tip_message(
         user_id,
         args.thread_root_message_index,
         args.message_id,
-    )?;
+        linked_user,
+    )? {
+        TipRecipient::User(recipient) => recipient,
+        TipRecipient::LinkedUserOf(user) => {
+            return Ok(PrepareResult::LookUpLinkedUser(user, state.data.local_user_index_canister_id));
+        }
+    };
 
     let c2c_args = TipToRecord {
         recipient,
@@ -84,8 +113,8 @@ fn prepare(args: Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
         token_symbol: args.transfer.token_symbol().to_string(),
         amount: args.transfer.units(),
         decimals: args.decimals,
-        username: args.username,
-        display_name: args.display_name,
+        username: args.username.clone(),
+        display_name: args.display_name.clone(),
     };
 
     let this_canister_id = state.env.canister_id();
@@ -95,22 +124,17 @@ fn prepare(args: Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
     };
 
     match UserTransfer::new(
-        CryptoTransaction::Pending(args.transfer),
+        CryptoTransaction::Pending(args.transfer.clone()),
         transfer_recipient,
         &MEMO_TIP,
         this_canister_id,
     )? {
-        UserTransfer::Icrc2(transfer) => Ok(PrepareResult::Icrc2(Box::new(TipToMake {
-            user_id,
-            spender_subaccount: ledger_utils::spender_subaccount(user.principal),
-            c2c_args,
-            transfer,
-        }))),
+        UserTransfer::Icrc2(transfer) => Ok(PrepareResult::Icrc2(Box::new(TipToMake { c2c_args, transfer }))),
         UserTransfer::Certified(transfer) => {
             let now = state.env.now();
             let completed = state.data.certified_transfers.verify(
                 transfer,
-                state.env.caller(),
+                caller,
                 &MEMO_TIP,
                 this_canister_id,
                 &state.env.ic_root_key(),
@@ -118,7 +142,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
             )?;
             tip_message_with_completed_transfer(user_id, c2c_args, state)?;
             state.data.certified_transfers.mark_used(&completed, now);
-            Ok(PrepareResult::Tipped(user_id))
+            Ok(PrepareResult::Tipped)
         }
     }
 }
@@ -167,10 +191,11 @@ fn tip_message_with_completed_transfer(user_id: UserId, args: TipToRecord, state
             .chat
             .events
             .message_internal(EventIndex::default(), args.thread_root_message_index, args.message_id.into())
-        && let sender_id = message.sender
-        && let Some(sender) = channel.chat.members.get(&sender_id)
-        && sender_id != user_id
-        && !sender.user_type().is_bot()
+        // Whoever the tip went to: its sender, or for a relayed message whoever linked its account
+        && let recipient_id = args.recipient
+        && let Some(recipient) = channel.chat.members.get(&recipient_id)
+        && recipient_id != user_id
+        && !recipient.user_type().is_bot()
     {
         let community_id = state.env.canister_id().into();
         let event = CommunityCanisterEvent::MessageActivity(MessageActivityEvent {
@@ -202,9 +227,9 @@ fn tip_message_with_completed_transfer(user_id: UserId, args: TipToRecord, state
             channel_avatar_id,
         });
 
-        state.push_notification(Some(user_id), vec![sender_id], notification);
-        state.push_event_to_user(sender_id, event, now);
-        state.notify_user_of_achievement(sender_id, Achievement::HadMessageTipped, now);
+        state.push_notification(Some(user_id), vec![recipient_id], notification);
+        state.push_event_to_user(recipient_id, event, now);
+        state.notify_user_of_achievement(recipient_id, Achievement::HadMessageTipped, now);
     }
 
     state.push_bot_notification(result.bot_notification);

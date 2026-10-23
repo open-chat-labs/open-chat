@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Store map of linked Discord/Telegram accounts, so tips on them can be routed to the linked OpenChat user's account ([#10210](https://github.com/open-chat-labs/open-chat/pull/10210))
+- Let groups and communities look up who linked a Discord/Telegram account, to route tips on its relayed messages ([#10211](https://github.com/open-chat-labs/open-chat/pull/10211))
 - Let the Twitch bridge bot relay messages from Twitch ([#10214](https://github.com/open-chat-labs/open-chat/pull/10214))
 
 ## [[2.0.2185](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2185-local_user_index)] - 2026-10-23

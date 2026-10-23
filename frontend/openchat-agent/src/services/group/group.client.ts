@@ -968,7 +968,8 @@ export class GroupClient
     }
 
     // Tips a message with a transfer the group pulls from the account `transfer` names, which
-    // must have approved the group to, into the wallet of the message's sender
+    // must have approved the group to, into the wallet of the message's sender, or for a relayed
+    // message, of whoever linked the account it came from
     tipMessage(
         groupId: string,
         threadRootMessageIndex: number | undefined,
