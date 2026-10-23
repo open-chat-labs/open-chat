@@ -105,6 +105,16 @@ design export needs. Each entry says where it came up.
   still: the shell unmounts when its host closes it.
 - **Scrollbars, by hand**: `global.css` styles every scrollbar as the design's docs do (thin, a
   grey thumb, no track). The export only styled them in its docs.
+- **Designs needed** (to ask for in the next export):
+  - **Log out confirmation**: `ProfileDialog`'s own confirmation (the avatar, name and handle, "log
+    out of … ?", Cancel / Log out) is a placeholder card that needs a proper design, including its
+    busy and failed states.
+  - **Buying with CHIT**: the dialog that asks to pay CHIT for a premium item, such as the custom
+    profile background (50,000 CHIT, `PremiumItem`), and also the emoji packs. It needs the item,
+    its price against the user's balance, Pay / Cancel and the paying state, and what to show when
+    the balance is too low (today: "Keep collecting!" with Pay disabled), e.g. how to earn more.
+    The new UI shows it as a `DialogShell` with the old UI's words for now
+    (`features/profile/PremiumItemDialog.svelte`, `TODO(design)`).
 - **`ProfileDialog`, by hand** (8c, to go back to the design export): `sections`, the sections
   its nav offers (a host that has built only some); the cover and photo edit buttons only with
   `onCoverEdit` / `onPhotoEdit`; `engagement` counts as numbers; `memberSince` from `joined` in the
