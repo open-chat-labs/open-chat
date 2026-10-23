@@ -134,6 +134,8 @@ describe("the profile dialog's props", () => {
         expect(memberDisplayNameOf(null)).toBeUndefined();
         expect(memberDisplayNameOf("")).toBeUndefined();
         expect(memberDisplayNameOf("Jules")).toBe("Jules");
+        expect(memberDisplayNameOf("   ")).toBeUndefined();
+        expect(memberDisplayNameOf(" Jules ")).toBe("Jules");
     });
 
     test("storage in MB, with no allowance kept at 0", () => {

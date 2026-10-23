@@ -306,6 +306,9 @@
     version?: string;
 
     onClose?: () => void;
+    /** The section shown, as it opens and each time the user moves to another (for a host that loads a section's data
+     *  only when it's seen). */
+    onSectionChange?: (section: ProfileSection) => void;
     onChit?: () => void;
     onEarn?: () => void;
     onDiamond?: () => void;
@@ -398,6 +401,7 @@
     platform = 'Web',
     version = '',
     onClose,
+    onSectionChange,
     onChit,
     onEarn,
     onDiamond,
@@ -462,6 +466,16 @@
     if (fieldBusy || delBusy || loBusy) return;
     flow.leave(fn);
   }
+
+  // the About links to the pages the host has (aboutPages), and a group only with some
+  const aboutGroups = $derived(
+    ABOUT_GROUPS.map((g) => ({ ...g, keys: g.keys.filter((k) => !aboutPages || aboutPages.includes(k)) })).filter((g) => g.keys.length > 0),
+  );
+
+  $effect(() => {
+    const shown = section;
+    untrack(() => onSectionChange?.(shown));
+  });
 
   // a section the host doesn't offer is never shown
   const offered = (s: ProfileSection) => sections === undefined || sections.includes(s);
@@ -1837,7 +1851,7 @@
             </div>
             <span class="version">{platform}{version ? ` · v${version}` : ''}</span>
           </div>
-          {#each ABOUT_GROUPS.map((g) => ({ ...g, keys: g.keys.filter((k) => !aboutPages || aboutPages.includes(k)) })).filter((g) => g.keys.length > 0) as group}
+          {#each aboutGroups as group}
             <div class="block wide-gap">
               <span class="caps">{t(group.label)}</span>
               <div class="list">

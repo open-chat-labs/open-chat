@@ -13841,6 +13841,17 @@
         "doc": ""
       },
       {
+        "name": "onSectionChange",
+        "type": "(section: ProfileSection) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The section shown, as it opens and each time the user moves to another (for a host that loads a section's data only when it's seen)."
+      },
+      {
         "name": "onChit",
         "type": "() => void",
         "default": null,

@@ -148,6 +148,7 @@
 - The storage section's "report a problem" row shows only with `onReportIssue`, as the header says of every action (it was always there, and did nothing without it).
 - The storage meter shows only with an allowance (`storageLimitMB` above 0): a user without one (no Diamond) gets the upsell, not a meter divided by 0.
 - With no communities, the communities section says so (`ui.profileDialog.communities.none`), rather than "No communities match “”".
+- `onSectionChange` reports the section shown, as the dialog opens and as the user moves, for a host that loads a section's data only when it's seen (the bot configuration).
 - `aboutPages` lists the About pages the host has, so the dialog doesn't link to one it hasn't (default: all). A group left with none isn't shown.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists them).
 

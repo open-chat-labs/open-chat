@@ -1,11 +1,12 @@
-import type {
-    BotClientConfigData,
-    CommunitySummary,
-    Metrics,
-    MinutesOnline,
-    PublicProfile,
-    StorageStatus,
-    UserSummary,
+import {
+    ONE_MB,
+    type BotClientConfigData,
+    type CommunitySummary,
+    type Metrics,
+    type MinutesOnline,
+    type PublicProfile,
+    type StorageStatus,
+    type UserSummary,
 } from "@client";
 import type {
     ChatSettings,
@@ -176,16 +177,21 @@ export function communitiesProps(
     };
 }
 
-/** The name to set in a community: clearing it (no name, or an empty one) sends none, removing it. */
+/**
+ * The name to set in a community, without the spaces around it: clearing it (no name, or a blank
+ * one) sends none, removing it.
+ */
 export function memberDisplayNameOf(name: string | null): string | undefined {
-    return name === null || name === "" ? undefined : name;
+    const trimmed = name?.trim() ?? "";
+    return trimmed === "" ? undefined : trimmed;
 }
-
-const MB = 1024 * 1024;
 
 /** The storage pane, in MB. A limit of 0 (no allowance without Diamond) stays 0. */
 export function storageProps(storage: StorageStatus) {
-    return { storageUsedMB: storage.bytesUsed / MB, storageLimitMB: storage.byteLimit / MB };
+    return {
+        storageUsedMB: storage.bytesUsed / ONE_MB,
+        storageLimitMB: storage.byteLimit / ONE_MB,
+    };
 }
 
 /** The bot configuration pane's values. */
