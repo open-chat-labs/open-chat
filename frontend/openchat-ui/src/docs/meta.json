@@ -5326,6 +5326,17 @@
         "doc": "State last handed out by onChange; read once, on mount."
       },
       {
+        "name": "types",
+        "type": "string[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The gate types offered to add (default: all). Rules of other types already in `value` still show."
+      },
+      {
         "name": "onUpgrade",
         "type": "() => void",
         "default": null,

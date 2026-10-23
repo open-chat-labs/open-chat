@@ -174,8 +174,8 @@
     { icon: 'payment', title: 'ui.accessGates.whyChargeTitle', body: 'ui.accessGates.whyChargeBody' },
   ];
   const LOCKED_EXAMPLE = [
-    { icon: 'balance', sentence: TYPES.balance.sentence, chip: '500 CHAT', dot: DOTS.CHAT },
-    { icon: 'person', sentence: TYPES.unique.sentence, chip: 'ui.accessGates.uniqueLabel', dot: '' },
+    { type: 'balance', icon: 'balance', sentence: TYPES.balance.sentence, chip: '500 CHAT', dot: DOTS.CHAT },
+    { type: 'unique', icon: 'person', sentence: TYPES.unique.sentence, chip: 'ui.accessGates.uniqueLabel', dot: '' },
   ];
 
   interface Props {
@@ -189,11 +189,13 @@
     readOnly?: boolean;
     /** State last handed out by onChange; read once, on mount. */
     value?: Partial<AccessGatesState> | null;
+    /** The gate types offered to add (default: all). Rules of other types already in `value` still show. */
+    types?: string[];
     onUpgrade?: () => void;
     onChange?: (state: AccessGatesState) => void;
   }
 
-  let { isDiamond = false, tokens = [], nervousSystems = [], readOnly = false, value = null, onUpgrade, onChange }: Props = $props();
+  let { isDiamond = false, tokens = [], nervousSystems = [], readOnly = false, value = null, types, onUpgrade, onChange }: Props = $props();
   const t = useT();
 
   const dirFor = (kind: 'token' | 'sns' | undefined) => (kind === 'sns' ? nervousSystems : tokens);
@@ -206,7 +208,7 @@
     return labelOf(TYPES[r.type]?.picker, r.asset);
   }
   const featuredFor = (gt: GateType) => dirFor(gt.picker).filter((a) => a.featured).map((a) => a.id);
-  const offered = (gt: GateType) => !gt.assets || dirFor(gt.picker).length > 0;
+  const offered = (key: string, gt: GateType) => (!types || types.includes(key)) && (!gt.assets || dirFor(gt.picker).length > 0);
 
 
   // the host can hand back the state it was last given, so gates survive the tab being unmounted and remounted
@@ -334,7 +336,7 @@
     <div class="section">
       <span class="label">{t('ui.accessGates.example')}</span>
       <div class="example">
-        {#each LOCKED_EXAMPLE as r, i}
+        {#each LOCKED_EXAMPLE.filter((x) => !types || types.includes(x.type)) as r, i}
           {#if i > 0}{@render joinerLine('ui.accessGates.and')}{/if}
           <div class="rule-card example-card">
             {@render badge(r.icon)}
@@ -527,7 +529,7 @@
           <span class="close" onclick={() => (addOpen = false)} role="button" tabindex="0" aria-label={t('ui.common.close')}><span class="tool-icon" style:mask={mask('close')}></span></span>
         </div>
         <div class="catalogue">
-          {#each Object.entries(TYPES).filter(([, gt]) => offered(gt)) as [key, gt]}
+          {#each Object.entries(TYPES).filter(([key, gt]) => offered(key, gt)) as [key, gt]}
             {@const used = !gt.repeatable && rules.some((r) => r.type === key)}
             <div class="option" class:unavailable={gt.soon || used} onclick={() => !used && add(key)} role="button" tabindex="0">
               <span class="option-tile"><span class="option-icon" style:mask={mask(gt.icon)}></span></span>

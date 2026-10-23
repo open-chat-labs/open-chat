@@ -154,6 +154,19 @@ design export needs. Each entry says where it came up.
   shows there too, as `AuthDialog` has no error prop once it's stopped waiting) and then asks for
   the new PIN in another plain dialog (`NewPinDialog`). Neither has a design.
 
+- **Gates editor** (4a, `features/access/gates.adapter.ts`, for 4b and 8b): `AccessGates` takes
+  `types` (by hand), and the app doesn't offer the unique-person gate (suspended) or the
+  credential gate. A credential gate already set still shows and saves unchanged, but adding one
+  wants a credential picker from the design. Also:
+  - a community's "referred by a member" gate (and any NFT gate) has no row type: it isn't shown,
+    and saving keeps it, as the old editors' hidden unique-person gate is kept;
+  - payment and balance gates share one token list, so balance gates offer only the tokens a
+    payment gate can take (ICRC-2, or a nervous system's ledger); the old balance editor offered
+    every token. A balance gate already set on another token still shows, by its ledger id;
+  - the old editors allow at most 10 gates; `AccessGates` has no limit;
+  - a gate on a token the app doesn't know shows no amount (its decimals are unknown), and saves
+    unchanged unless edited.
+
 ## App
 
 ### Data the design shows that the backend doesn't have
