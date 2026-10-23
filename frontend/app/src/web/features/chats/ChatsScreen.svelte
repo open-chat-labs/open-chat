@@ -4,6 +4,7 @@
     import { muteChat } from "@src/logic/chats/muteChat";
     import {
         allUsersStore,
+        bridgedUsersStore,
         chatIdentifierToString,
         chatsInitialisedStore,
         chatSummariesListStore,
@@ -54,6 +55,8 @@
                     displayName: (userId, kind) => buildDisplayName(users, userId, kind, false),
                     translations: $translationsStore,
                     contentText: (content) => client.getContentAsText($_, content),
+                    bridgedUsers: { get: (key) => $bridgedUsersStore.get(key) },
+                    users,
                 }),
             date: (timestamp) =>
                 client.formatMessageDate(timestamp, $_("today"), $_("yesterday"), true, true),

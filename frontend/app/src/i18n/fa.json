@@ -200,6 +200,7 @@
         "unlinkFailed": "لغو پیوند حساب ممکن نشد"
     },
     "bridgedUserUnknown": "کاربر {platform}",
+    "bridgedUserWithPlatform": "{name} ({platform})",
     "nativeUpdate": {
         "downloadingTitle": "یک لحظه! در حال به‌روزرسانی ...",
         "downloadingMessage": "در حال دانلود یک به‌روزرسانی کوچک هستیم و به‌زودی می‌توانید ادامه دهید ...",

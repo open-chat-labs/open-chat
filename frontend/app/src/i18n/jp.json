@@ -200,6 +200,7 @@
         "unlinkFailed": "アカウントの連携を解除できませんでした"
     },
     "bridgedUserUnknown": "{platform} ユーザー",
+    "bridgedUserWithPlatform": "{name}（{platform}）",
     "nativeUpdate": {
         "downloadingTitle": "少々お待ちください！更新中 ...",
         "downloadingMessage": "簡単な更新をダウンロードしています。まもなく続行できます ...",

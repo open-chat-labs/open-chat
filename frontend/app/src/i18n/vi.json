@@ -200,6 +200,7 @@
         "unlinkFailed": "Không thể hủy liên kết tài khoản"
     },
     "bridgedUserUnknown": "Người dùng {platform}",
+    "bridgedUserWithPlatform": "{name} ({platform})",
     "nativeUpdate": {
         "downloadingTitle": "Chờ một chút! Đang cập nhật ...",
         "downloadingMessage": "Chúng tôi đang tải một bản cập nhật nhanh và bạn sẽ có thể tiếp tục ngay ...",

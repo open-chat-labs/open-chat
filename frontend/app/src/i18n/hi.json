@@ -200,6 +200,7 @@
         "unlinkFailed": "खाते को अनलिंक नहीं किया जा सका"
     },
     "bridgedUserUnknown": "{platform} उपयोगकर्ता",
+    "bridgedUserWithPlatform": "{name} ({platform})",
     "nativeUpdate": {
         "downloadingTitle": "एक क्षण! अपडेट हो रहा है ...",
         "downloadingMessage": "हम एक छोटा अपडेट डाउनलोड कर रहे हैं और फिर आप आगे बढ़ सकेंगे ...",

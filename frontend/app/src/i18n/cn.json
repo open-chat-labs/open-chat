@@ -200,6 +200,7 @@
         "unlinkFailed": "无法取消关联该账号"
     },
     "bridgedUserUnknown": "{platform} 用户",
+    "bridgedUserWithPlatform": "{name}（{platform}）",
     "nativeUpdate": {
         "downloadingTitle": "稍等！正在更新 ...",
         "downloadingMessage": "我们正在下载一个快速更新，稍后即可继续 ...",

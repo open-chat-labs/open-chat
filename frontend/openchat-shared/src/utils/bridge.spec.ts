@@ -4,6 +4,7 @@ import {
     type BridgedUserId,
     type BridgedUserSummary,
     type ChatEvent,
+    type ChatSummary,
     type EventWrapper,
     type SenderContext,
 } from "../domain";
@@ -12,6 +13,7 @@ import {
     bridgedAuthorName,
     bridgedProfileUrl,
     bridgedUserIdsFromEvents,
+    bridgedUserIdsFromLatestMessages,
     bridgedUserKey,
     isOwnMessage,
     linkedAuthor,
@@ -111,6 +113,33 @@ describe("bridge", () => {
             ]),
         ).toEqual([discordId, telegramId]);
         expect(bridgedUserIdsFromEvents([message(undefined, telegramId)])).toEqual([telegramId]);
+    });
+
+    test("collects the accounts chats' latest messages were relayed from, once each", () => {
+        const chat = (bridged?: BridgedUserId, hasMessage = true) =>
+            ({
+                latestMessage: hasMessage
+                    ? {
+                          event: {
+                              kind: "message",
+                              senderContext:
+                                  bridged === undefined
+                                      ? undefined
+                                      : { kind: "bot", finalised: true, bridgedFrom: bridged },
+                          },
+                      }
+                    : undefined,
+            }) as unknown as ChatSummary;
+
+        expect(
+            bridgedUserIdsFromLatestMessages([
+                chat(telegramId),
+                chat(),
+                chat(undefined, false),
+                chat(discordId),
+                chat(telegramId),
+            ]),
+        ).toEqual([telegramId, discordId]);
     });
 
     test("shows the user who linked the account as its author, unless they've gone", () => {

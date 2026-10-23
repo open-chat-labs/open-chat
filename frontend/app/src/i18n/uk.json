@@ -200,6 +200,7 @@
         "unlinkFailed": "Не вдалося відв'язати акаунт"
     },
     "bridgedUserUnknown": "Користувач {platform}",
+    "bridgedUserWithPlatform": "{name} ({platform})",
     "nativeUpdate": {
         "downloadingTitle": "Секунду! Оновлення ...",
         "downloadingMessage": "Ми завантажуємо невелике оновлення, і ви зможете продовжити ...",

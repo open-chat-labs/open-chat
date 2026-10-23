@@ -200,6 +200,7 @@
         "unlinkFailed": "Die Verknüpfung des Kontos konnte nicht aufgehoben werden"
     },
     "bridgedUserUnknown": "{platform}-Nutzer",
+    "bridgedUserWithPlatform": "{name} ({platform})",
     "nativeUpdate": {
         "downloadingTitle": "Einen Moment! Aktualisierung ...",
         "downloadingMessage": "Wir laden gerade eine kleine Aktualisierung herunter, dann kann es weitergehen ...",

@@ -1,12 +1,19 @@
 import {
     applyTranslation,
+    BRIDGE_PLATFORM_NAMES,
+    bridgedAuthorName,
+    bridgedFrom,
+    bridgedUserKey,
     formatDuration,
     latestMessageExpired,
+    linkedAuthor,
     messageFlagsRestricted,
     ROLE_NONE,
+    type BridgedUserSummary,
     type ChatSummary,
     type MessageContent,
     type MessageFormatter,
+    type UserLookup,
 } from "@client";
 
 export type PreviewText = {
@@ -20,17 +27,23 @@ export type PreviewText = {
     translations: { get(messageId: bigint): string | undefined };
     /** A message's content as text (client.getContentAsText with the formatter). */
     contentText: (content: MessageContent) => string;
+    /** The profiles of the accounts bridge bots relay messages from (bridgedUsersStore), by key. */
+    bridgedUsers: { get(key: string): BridgedUserSummary | undefined };
+    /** The users the app knows (allUsersStore), to find who has linked an account. */
+    users: Pick<UserLookup, "get">;
 };
 
 /**
  * A chat's latest message as its row shows it, the same in every tree: in a group or channel,
- * after its sender (you, a webhook, or the user); a change to disappearing messages as a notice;
+ * after its sender (you, a webhook, or the user, or for a message a bridge bot relayed, the
+ * OpenChat user who linked the account, else the account and its platform, eg. "Nelly (Telegram)");
+ * a change to disappearing messages as a notice;
  * restricted content as such; a translation if the reader has one; nothing for an external
  * channel, or for a message that has disappeared.
  */
 export function latestMessagePreview(
     chat: ChatSummary,
-    { formatter, me, displayName, translations, contentText }: PreviewText,
+    { formatter, me, displayName, translations, contentText, bridgedUsers, users }: PreviewText,
     now = Date.now(),
 ): string {
     const external = chat.kind === "channel" && chat.externalUrl !== undefined;
@@ -63,6 +76,22 @@ export function latestMessagePreview(
     );
 
     if (chat.kind === "direct_chat") return text;
+
+    const from = bridgedFrom(senderContext);
+    if (from !== undefined) {
+        const summary = bridgedUsers.get(bridgedUserKey(from)!);
+        const linked = linkedAuthor(summary, users);
+        if (linked !== undefined) {
+            return `${displayName(linked.userId, linked.userId === me ? "me" : "user")}: ${text}`;
+        }
+        const platform = BRIDGE_PLATFORM_NAMES[from.kind];
+        const name = bridgedAuthorName(summary);
+        const author =
+            name !== undefined
+                ? formatter("bridgedUserWithPlatform", { values: { name, platform } })
+                : formatter("bridgedUserUnknown", { values: { platform } });
+        return `${author}: ${text}`;
+    }
 
     const userType = senderContext?.kind === "webhook" ? "webhook" : sender === me ? "me" : "user";
     return `${displayName(sender, userType)}: ${text}`;

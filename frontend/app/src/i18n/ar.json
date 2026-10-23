@@ -200,6 +200,7 @@
         "unlinkFailed": "تعذّر إلغاء ربط الحساب"
     },
     "bridgedUserUnknown": "مستخدم {platform}",
+    "bridgedUserWithPlatform": "{name} ({platform})",
     "nativeUpdate": {
         "downloadingTitle": "لحظة واحدة! جارٍ التحديث ...",
         "downloadingMessage": "نقوم بتنزيل تحديث سريع وستتمكن من المتابعة بعد قليل ...",

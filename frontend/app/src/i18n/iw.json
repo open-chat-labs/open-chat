@@ -200,6 +200,7 @@
         "unlinkFailed": "לא ניתן לבטל את קישור החשבון"
     },
     "bridgedUserUnknown": "משתמש {platform}",
+    "bridgedUserWithPlatform": "{name} ({platform})",
     "nativeUpdate": {
         "downloadingTitle": "רגע אחד! מתעדכן ...",
         "downloadingMessage": "אנחנו מורידים עדכון קצר ומיד אפשר יהיה להמשיך ...",

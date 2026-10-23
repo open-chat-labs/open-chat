@@ -200,6 +200,7 @@
         "unlinkFailed": "No se pudo desvincular la cuenta"
     },
     "bridgedUserUnknown": "Usuario de {platform}",
+    "bridgedUserWithPlatform": "{name} ({platform})",
     "nativeUpdate": {
         "downloadingTitle": "¡Un momento! Actualizando ...",
         "downloadingMessage": "Estamos descargando una actualización rápida y enseguida podrá continuar ...",
