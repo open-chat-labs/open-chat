@@ -14,7 +14,6 @@
     import { darkenHexColour } from "@src/theme/utils";
     import type {
         DirectChatSummary,
-        OptionUpdate,
         PublicProfile,
         VideoCallType,
     } from "@client";
@@ -22,6 +21,8 @@
         allUsersStore,
         blockedUsersStore,
         chatIdentifiersEqual,
+        DEFAULT_EVENTS_TTL,
+        eventsTTLUpdate,
         favouritesStore,
         iconSize,
         mobileWidth,
@@ -40,7 +41,6 @@
     import UserProfileCard from "../profile/UserProfileCard.svelte";
 
     const client = getContext<OpenChat>("client");
-    const ONE_WEEK = 604800000n;
 
     interface Props {
         chat: DirectChatSummary;
@@ -97,19 +97,10 @@
         if (!disappearingMessages) {
             eventsTTL = undefined;
         } else {
-            eventsTTL = ONE_WEEK;
+            eventsTTL = DEFAULT_EVENTS_TTL;
         }
     }
 
-    function getUpdate(): OptionUpdate<bigint> {
-        if (eventsTTL !== undefined) {
-            return { value: eventsTTL };
-        } else if (chat.eventsTTL !== undefined) {
-            return "set_to_none";
-        } else {
-            return undefined;
-        }
-    }
 
     async function updateDirectChatDetails(e: Event) {
         e.preventDefault();
@@ -118,7 +109,7 @@
         saving = true;
 
         const success = await client
-            .updateDirectChatSettings(chat, getUpdate())
+            .updateDirectChatSettings(chat, eventsTTLUpdate(eventsTTL, chat.eventsTTL))
             .finally(() => (saving = false));
         if (success) {
             originalTTL = originalTTL = chat.eventsTTL;

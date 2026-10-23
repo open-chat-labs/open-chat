@@ -79,7 +79,7 @@ export const rightScreens: Screens<RightRegion> = {
     group_details: () => import("../group/GroupPanelScreen.svelte"),
 
     // a DM's details (phase 4, 4a: DmPanel)
-    direct_chat_details: undefined,
+    direct_chat_details: () => import("../dm/DmPanelScreen.svelte"),
 
     // a channel's details, on its channel or community tab (phase 4, 4a: GroupPanel)
     channel_summary: () => import("../group/GroupPanelScreen.svelte"),

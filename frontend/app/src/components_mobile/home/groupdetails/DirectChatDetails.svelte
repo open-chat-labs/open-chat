@@ -5,11 +5,12 @@
     import { toastStore } from "@src/stores/toast";
     import { activeVideoCall } from "@src/stores/video";
     import { Body, Button, ColourVars, Container, IconButton, Switch } from "component-lib";
-    import type { DirectChatSummary, OptionUpdate, PublicProfile } from "@client";
+    import type { DirectChatSummary, PublicProfile } from "@client";
     import {
         allUsersStore,
         blockedUsersStore,
         chatIdentifiersEqual,
+        eventsTTLUpdate,
         favouritesStore,
         OpenChat,
         publish,
@@ -61,19 +62,10 @@
         });
     });
 
-    function getUpdate(): OptionUpdate<bigint> {
-        if (eventsTTL !== undefined) {
-            return { value: eventsTTL };
-        } else if (chat.eventsTTL !== undefined) {
-            return "set_to_none";
-        } else {
-            return undefined;
-        }
-    }
 
     onDestroy(async () => {
         if (eventsTTL !== chat.eventsTTL) {
-            await client.updateDirectChatSettings(chat, getUpdate());
+            await client.updateDirectChatSettings(chat, eventsTTLUpdate(eventsTTL, chat.eventsTTL));
         }
     });
 

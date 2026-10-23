@@ -244,3 +244,17 @@ export function userBadges(
 export function unsuspendUserMessage(success: boolean): ResourceKey {
     return i18nKey(success ? "unsuspendedUser" : "failedToUnsuspendUser");
 }
+
+/**
+ * When someone was last online as text, and whether they're online now; nothing when it isn't
+ * known (undefined or 0).
+ */
+export function lastOnlineStatus(
+    formatter: MessageFormatter,
+    now: number,
+    lastOnline: number | undefined,
+): [string, boolean] {
+    return lastOnline !== undefined && lastOnline !== 0
+        ? formatLastOnlineDate(formatter, now, lastOnline)
+        : ["", false];
+}

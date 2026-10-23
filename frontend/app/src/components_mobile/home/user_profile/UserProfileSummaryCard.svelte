@@ -18,6 +18,7 @@
     import {
         currentUserIdStore,
         i18nKey,
+        lastOnlineStatus,
         OpenChat,
         publish,
         percentageStorageUsedStore,
@@ -63,11 +64,7 @@
     });
 
     // TODO last seen
-    let [_status, online] = $derived(
-        lastOnline !== undefined && lastOnline !== 0
-            ? client.formatLastOnlineDate($_, Date.now(), lastOnline)
-            : ["", false],
-    );
+    let [_status, online] = $derived(lastOnlineStatus($_, Date.now(), lastOnline));
 
     let avatarUrl = $derived(client.userAvatarUrl(user));
 

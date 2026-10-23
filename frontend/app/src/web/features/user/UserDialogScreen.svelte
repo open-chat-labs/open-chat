@@ -5,6 +5,7 @@
     import {
         buildUserAvatarUrl,
         buildUserBackgroundUrl,
+        lastOnlineStatus,
         currentUserIdStore,
         OpenChat,
         platformModeratorStore,
@@ -33,25 +34,7 @@
     const userId = dialog.userId;
     const card = new ProfileCardData(client, userId, onClose);
 
-    // when they were last online, as the old card loads it; until then (or if it fails) not online
-    let lastOnline = $state<number>();
-    $effect(() => {
-        let live = true;
-        (async () => {
-            try {
-                const at = await client.getLastOnlineDate(userId, Date.now());
-                if (live) lastOnline = at;
-            } catch (e) {
-                console.log("Failed to load when the user was last online", e);
-            }
-        })();
-        return () => (live = false);
-    });
-    const online = $derived(
-        lastOnline !== undefined &&
-            lastOnline !== 0 &&
-            client.formatLastOnlineDate($_, Date.now(), lastOnline)[1],
-    );
+    const online = $derived(lastOnlineStatus($_, Date.now(), card.lastOnline)[1]);
 
     const isMe = $derived(userId === $currentUserIdStore);
 

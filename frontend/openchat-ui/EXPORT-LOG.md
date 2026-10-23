@@ -188,3 +188,7 @@
 - The delete flow's third step ("Think of your CHIT!") tells a user who has never earned any CHIT (`balance` and `chitEarned` both 0) that they haven't discovered it yet, instead of "you'll lose 0 CHIT and your 0-day streak", and leaves out the zeroed streak and balance (new keys `ui.profileDialog.delete.step3NoChit*`).
 - Not in the design export: to go back to it (the app's `GAPS.md` lists them).
 
+## 2026-10-23 — DmPanel and DmChatSettings: CHIT optional, a formatted bio, read receipts only with a handler, by hand
+- `DmPanel`'s `chit` is optional: without it the CHIT card is left out, for a viewer who has turned CHIT off. It also takes `aboutContent`, as `UserDialog` does, so the host can render the bio as Markdown.
+- `DmChatSettings` shows its read receipts row only with `onReadReceiptsChange`. It always showed it, and OpenChat has no read receipts setting, so the toggle saved nothing.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

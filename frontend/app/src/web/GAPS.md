@@ -127,6 +127,10 @@ design export needs. Each entry says where it came up.
   line; the delete flow's CHIT step for a user who has never earned any says they haven't
   discovered it yet.
 - **`ProfileDialog` against the app** (8c):
+  - no "Hide all CHIT related features" switch: the new UI reads `disableChit` (the CHIT cards
+    on the user card and the DM panel follow it) but offers no way to change it. The setting is
+    kept in each origin's browser storage (`openchat_disable_chit`), so turning it off in the old
+    UI doesn't reach the new one on another origin;
   - the profile fields save one at a time, and any failure shows as "couldn't save": the reason
     the backend gave (`ProfileFieldErrors`, e.g. "display name too short") isn't shown;
   - the username is checked against looser rules than the app's (3 characters and up, where
@@ -215,6 +219,14 @@ design export needs. Each entry says where it came up.
   - the conversation header's pin icon (shown when the chat has pinned messages) opens the
     pinned view; the old one also marked unread pins with a dot, and the header's extra icons have
     no accessible label (`ConversationHeader` takes none).
+
+- **DM panel** (4a, `features/dm`): `DmPanel` in the right column for a DM. Changes apply at once
+  (the old desktop panel had a Save button); turning disappearing messages on starts at a week.
+  By hand: `chit` is optional (left out when the viewer turned CHIT off), `aboutContent` renders
+  the bio as Markdown, and `DmChatSettings` hides read receipts without a handler, since OpenChat
+  has no read receipts setting. Not wired yet: the panel's ⋯ menu (no items), calls (7b), and the
+  old panel's durations other than the six `DmChatSettings` offers (a TTL set elsewhere shows as
+  its own length, "2 hours", and saves unchanged).
 
 ## App
 
