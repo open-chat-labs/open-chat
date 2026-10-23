@@ -191,6 +191,23 @@ design export needs. Each entry says where it came up.
   - a gate on a token the app doesn't know shows no amount (its decimals are unknown), and saves
     unchanged unless edited.
 
+- **Group panel** (4a, `features/group`): `GroupPanel` in the right column for groups, channels
+  and communities, with members (what the viewer may do to each comes from the app: `actions`, by
+  hand), lapsed and blocked users, pinned messages, rules, gates and user groups. Still missing:
+  - editing: settings, invite, delete, permissions, gates and user groups open 4b's dialogs, so
+    those entries are off until 4b (`detailsPermissions` is ready for them);
+  - mute: the app has no mute durations, so the panel's "8 hours" and "1 week" mute until
+    unmuted. A community mutes all its channels, and can't unmute them all from here (as in the
+    old menus);
+  - the Video call tile does nothing until 7b, and Favourite isn't wired;
+  - `?usergroup=` opens the user groups view, not the one group (`viewRequest` can't name one);
+  - the owner and admin counts are of the members held, which for a large chat is its first page.
+  - by hand: the cover's × calls `onClose` (it had no handler), and shows as a back arrow
+    (`back`) when there's an earlier panel to return to.
+  - the conversation header's pin icon (shown when the chat has pinned messages) opens the
+    pinned view; the old one also marked unread pins with a dot, and the header's extra icons have
+    no accessible label (`ConversationHeader` takes none).
+
 ## App
 
 ### Data the design shows that the backend doesn't have

@@ -1364,6 +1364,7 @@
       "recommendedBots": "RECOMMENDED BOTS · {count}",
       "registerWebhook": "Register a webhook",
       "registerWebhookShort": "Register webhook",
+      "block": "Block member",
       "removeMember": "Remove member",
       "role": "ROLE",
       "roleHeadings": {

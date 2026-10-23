@@ -47,6 +47,9 @@
     online?: boolean;
     /** "typing", "now", "2m", or last seen ("3h") for people who are offline. */
     activity?: string;
+    /** What the viewer may do to this member, as the host's permissions say: the roles it can be given, and
+     *  whether it can be removed or blocked. When given, it replaces the panel's own role ladder for this row. */
+    actions?: { roles: MemberRole[]; remove: boolean; block: boolean };
   }
 
 
@@ -320,6 +323,8 @@
     onMuteChange?: (key: MuteKey | null) => Promise<unknown> | void;
     onMuteEveryoneChange?: (on: boolean) => Promise<unknown> | void;
     onClose?: () => void;
+    /** The cover's close goes back to an earlier panel: it shows a back arrow instead of ×. Both call onClose. */
+    back?: boolean;
     /** Member actions; each item is only offered when its callback is given. The list updates at once and rolls
      *  back with an error if the promise rejects. `member` is your own row when stepping down. */
     onRoleChange?: (member: Person, role: MemberRole) => Promise<unknown> | void;
@@ -332,6 +337,8 @@
     /** Members search as the user types (server-side); the shown list is still filtered locally. */
     onSearchMembers?: (query: string) => void;
     onRemoveMember?: (member: Person) => Promise<unknown> | void;
+    /** Block a member (offered only where the member's `actions` allow it). */
+    onBlockMember?: (member: Person) => Promise<unknown> | void;
     onUnblock?: (member: Person) => Promise<unknown> | void;
     onRemoveBlocked?: (member: Person) => Promise<unknown> | void;
   }
@@ -411,9 +418,11 @@
     onUnpin,
     onSearchMembers,
     onRemoveMember,
+    onBlockMember,
     onUnblock,
     onRemoveBlocked,
     onClose,
+    back = false,
   }: Props = $props();
   const t = useT();
   const i18n = getI18n();
@@ -643,7 +652,16 @@
       const rank = LADDER.indexOf(m.tag === 'LAPSED' ? '' : m.tag || '');
       // members can't act on anyone; moderators can remove regular members; owners are only managed by owners,
       // and your own row only offers stepping down once someone else is an owner
-      const canAct = blockedTab ? canModerate : self ? viewerIsOwner : rank === 3 ? viewerIsOwner : canModerate && rank >= 0 && (canChangeRoles || rank === 0);
+      const allowed = blockedTab ? undefined : m.actions;
+      const canAct = blockedTab
+        ? canModerate
+        : allowed
+          ? allowed.roles.length > 0 || allowed.remove || allowed.block
+          : self
+            ? viewerIsOwner
+            : rank === 3
+              ? viewerIsOwner
+              : canModerate && rank >= 0 && (canChangeRoles || rank === 0);
       const current = self ? (selfRoleNow ?? hostSelfRole()) : (LADDER[rank] ?? '');
       const soleOwner = self && current === 'OWNER' && otherOwners === 0;
       const setRole = (r: string) => {
@@ -652,13 +670,14 @@
         const host = self ? hostSelfRole : () => [...members, ...lapsed].find((x) => x.handle === m.handle)?.tag ?? '';
         act(self ? 'role:\u0000you' : `role:${m.handle}`, host, r, () => onRoleChange(m, (r || 'MEMBER') as MemberRole));
       };
+      const offersRole = (r: string) => (allowed ? r === current || allowed.roles.includes((r || 'MEMBER') as MemberRole) : r !== 'OWNER' || viewerIsOwner);
       const roleItems: MenuItem[] =
-        blockedTab || !canChangeRoles || !onRoleChange
+        blockedTab || (!allowed && !canChangeRoles) || (allowed && allowed.roles.length === 0) || !onRoleChange
           ? []
           : [
               ...LADDER.slice()
                 .reverse()
-                .filter((r) => r !== 'OWNER' || viewerIsOwner)
+                .filter(offersRole)
                 .map((r) => ({
                   label: t(ROLE_NAMES[r]),
                   checkMask: r === current ? mask('check') : '',
@@ -675,7 +694,17 @@
         : !blockedTab
           ? [
               ...roleItems,
-              ...(onRemoveMember
+              ...(onBlockMember && allowed?.block
+                ? [
+                    {
+                      label: t('ui.groupPanel.block'),
+                      mask: mask('ban'),
+                      variant: 'danger' as const,
+                      onSelect: () => act(`removed:${m.handle}`, () => false, true, () => onBlockMember(m)),
+                    },
+                  ]
+                : []),
+              ...(onRemoveMember && (!allowed || allowed.remove)
                 ? [
                     {
                       label: t('ui.groupPanel.removeMember'),
@@ -940,6 +969,8 @@
 
 
   const coverHandlersAll = $derived({
+    close: () => onClose?.(),
+    back: () => onClose?.(),
     ...coverHandlers,
     more: () => (menuOpen = !menuOpen),
     manage: () => onManage?.('main'),
@@ -991,7 +1022,7 @@
 <div class="panel" class:embedded bind:this={root} data-panel-root="true">
   {#if view === 'main'}
     <div class="main" class:quick onscroll={() => (muteMenu = null)}>
-      <div class="cover"><PanelCover cover={coverCss} actions={['close']} trailActions={quick ? [manageIcon, 'more'] : canInvite ? ['invite', 'share', 'more'] : ['more']} handlers={coverHandlersAll} /></div>
+      <div class="cover"><PanelCover cover={coverCss} actions={[back ? 'back' : 'close']} trailActions={quick ? [manageIcon, 'more'] : canInvite ? ['invite', 'share', 'more'] : ['more']} handlers={coverHandlersAll} /></div>
 
       <div class="identity" class:quick>
         <div class="avatar" class:round={scope === 'channel'} style:background={avatar ? `${cssUrl(avatar)} center/cover no-repeat` : grad(color)}></div>

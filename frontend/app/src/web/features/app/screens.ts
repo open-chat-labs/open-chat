@@ -76,25 +76,25 @@ export const middleScreens: Screens<MiddleRegion> = {
 
 export const rightScreens: Screens<RightRegion> = {
     // a group's details (phase 4, 4a: GroupPanel)
-    group_details: undefined,
+    group_details: () => import("../group/GroupPanelScreen.svelte"),
 
     // a DM's details (phase 4, 4a: DmPanel)
     direct_chat_details: undefined,
 
     // a channel's details, on its channel or community tab (phase 4, 4a: GroupPanel)
-    channel_summary: undefined,
+    channel_summary: () => import("../group/GroupPanelScreen.svelte"),
 
     // a community's details (phase 4, 4a: GroupPanel)
-    community_details: undefined,
+    community_details: () => import("../group/GroupPanelScreen.svelte"),
 
     // a group's members (phase 4, 4a: GroupPanel)
-    group_members: undefined,
+    group_members: () => import("../group/GroupPanelScreen.svelte"),
 
     // a community's members, or one of its user groups (?usergroup=) (phase 4, 4a: GroupPanel)
-    community_members: undefined,
+    community_members: () => import("../group/GroupPanelScreen.svelte"),
 
     // a channel's or its community's members (phase 4, 4a: GroupPanel)
-    channel_or_community_members: undefined,
+    channel_or_community_members: () => import("../group/GroupPanelScreen.svelte"),
 
     // inviting users to a group, channel or community (phase 4, 4a)
     invite_users: undefined,
@@ -103,7 +103,7 @@ export const rightScreens: Screens<RightRegion> = {
     channel_or_community_invite: undefined,
 
     // pinned messages (phase 4, 4a: GroupPanel)
-    pinned: undefined,
+    pinned: () => import("../group/GroupPanelScreen.svelte"),
 
     // the user's own profile (phase 8, 8c)
     user_profile: undefined,

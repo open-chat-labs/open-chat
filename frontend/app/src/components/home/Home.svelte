@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { muteChat } from "@src/logic/chats/muteChat";
     import { trackedEffect } from "@src/utils/effects.svelte";
     import { flushPendingNavigation } from "@src/utils/navigation";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
@@ -43,7 +44,6 @@
         fullWidth,
         identityStateStore,
         localUpdates,
-        muteNotificationsFailureMessage,
         offlineStore,
         pinNumberResolverStore,
         querystringStore,
@@ -717,20 +717,13 @@
         };
     }
 
-    function toggleMuteNotifications(detail: {
+    async function toggleMuteNotifications(detail: {
         chatId: ChatIdentifier;
         mute: boolean | undefined;
         muteAtEveryone: boolean | undefined;
     }) {
-        client
-            .toggleMuteNotifications(detail.chatId, detail.mute, detail.muteAtEveryone)
-            .then((success) => {
-                if (!success) {
-                    toastStore.showFailureToast(
-                        muteNotificationsFailureMessage(detail.mute, detail.muteAtEveryone, $_),
-                    );
-                }
-            });
+        const failed = await muteChat(client, detail.chatId, detail.mute, detail.muteAtEveryone, $_);
+        if (failed !== undefined) toastStore.showFailureToast(failed);
     }
 
     async function createDirectChat(chatId: DirectChatIdentifier): Promise<boolean> {

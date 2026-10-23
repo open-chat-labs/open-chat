@@ -158,7 +158,7 @@
   {#if toggle && !disabled}
     <span class="toggle" class:selected><span class="toggle-icon"></span></span>
   {/if}
-  {#if icon && !toggle}
+  {#if icon && icon !== 'toggle'}
     <span class="icon-button" class:selected onclick={onIcon ?? onClick} role="button" tabindex="0">
       <span class="icon" style:mask="var(--icon-{ICONS[icon] ?? 'chevron-right'}) center/contain no-repeat"></span>
     </span>

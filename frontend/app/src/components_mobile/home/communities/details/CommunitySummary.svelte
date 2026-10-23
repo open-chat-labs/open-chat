@@ -45,7 +45,7 @@
     import Separator from "../../Separator.svelte";
     import Stats from "../../Stats.svelte";
     import { updateCommunityState } from "@src/logic/groupOrCommunity/community.svelte";
-    import { CommunityState } from "./communityState.svelte";
+    import { CommunityState } from "@src/logic/groupOrCommunity/communityState.svelte";
     import PermissionsSummary from "./PermissionsSummary.svelte";
     import UserGroupSummary from "./UserGroupSummary.svelte";
 
@@ -187,7 +187,9 @@
                             {/snippet}
                             <Translatable resourceKey={i18nKey("Mute @everyone")} />
                         </BigButton>
-                        <BigButton onClick={() => communityState.share()}>
+                        <BigButton
+                            onClick={() =>
+                                publish("inviteAndShare", { collection: community, view: "share" })}>
                             {#snippet icon(color, size)}
                                 <Share {color} {size} />
                             {/snippet}

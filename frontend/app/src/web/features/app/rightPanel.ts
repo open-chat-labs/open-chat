@@ -1,4 +1,9 @@
-import { lastRightPanelState, setRightPanelHistory, type RightPanelContent } from "@client";
+import {
+    lastRightPanelState,
+    rightPanelHistory,
+    setRightPanelHistory,
+    type RightPanelContent,
+} from "@client";
 import type { RightColumnState } from "../../shell/rightColumn.svelte";
 
 /**
@@ -10,6 +15,23 @@ import type { RightColumnState } from "../../shell/rightColumn.svelte";
 export function rightColumnPanel(last: RightPanelContent, threadOpen: boolean): RightPanelContent {
     if (threadOpen) return last.kind === "message_thread_panel" ? last : { kind: "no_panel" };
     return last.kind === "no_panel" ? { kind: "group_details" } : last;
+}
+
+/**
+ * The history with `panel` opened on top of what the column shows. With nothing asked for yet the
+ * column shows the chat's details (rightColumnPanel), so they go first: closing `panel` goes back
+ * to them rather than closing the column.
+ */
+export function historyWith(
+    history: readonly RightPanelContent[],
+    panel: RightPanelContent,
+): RightPanelContent[] {
+    return history.length === 0 ? [{ kind: "group_details" }, panel] : [...history, panel];
+}
+
+/** Opens `panel` on top of what the right column shows (historyWith). */
+export function openPanelOver(panel: RightPanelContent): void {
+    setRightPanelHistory(historyWith(rightPanelHistory.value, panel));
 }
 
 /**
@@ -25,6 +47,15 @@ export function openOnNewPanel(column: RightColumnState): () => void {
         }
         last = panel;
     });
+}
+
+/**
+ * Opens the right column on `panel` alone, whatever it showed before, as the old header's chat name
+ * (the chat's details) and pin icon (its pinned messages) did.
+ */
+export function showInRightColumn(column: RightColumnState, panel: RightPanelContent): void {
+    setRightPanelHistory([panel]);
+    column.open = true;
 }
 
 /**

@@ -3,6 +3,8 @@
      deep links, marking read, keeping the scroll), one row per event, each message in a MessageGroup
      of its own that keeps its place in the sender's run (DATA.md, Conversation). -->
 <script lang="ts">
+    import { showInRightColumn } from "../app/rightPanel";
+    import { muteChat } from "@src/logic/chats/muteChat";
     import {
         allUsersStore,
         anonUserStore,
@@ -20,11 +22,11 @@
         localUpdates,
         messageIndexStore,
         messagesRead,
-        muteNotificationsFailureMessage,
         screenWidth,
         selectedChatDraftMessageStore,
         selectedChatExpandedDeletedMessageStore,
         selectedChatIdStore,
+        selectedChatPinnedMessagesStore,
         selectedChatSummaryStore,
         selectedCommunitySummaryStore,
         suspendedUserStore,
@@ -148,10 +150,8 @@
         mute: boolean | undefined,
         muteAtEveryone: boolean | undefined,
     ) {
-        const success = await client.toggleMuteNotifications(chatId, mute, muteAtEveryone);
-        if (!success) {
-            toastStore.showFailureToast(muteNotificationsFailureMessage(mute, muteAtEveryone, $_));
-        }
+        const failed = await muteChat(client, chatId, mute, muteAtEveryone, $_);
+        if (failed !== undefined) toastStore.showFailureToast(failed);
     }
 
     // TODO(phase 4, 4b): the menu's other items (block, delete, leave, invite) open dialogs, and the
@@ -426,8 +426,17 @@
             isFavourite={favourite}
             showMenu={!readonly}
             showCall={false}
-            actions={[]}
+            actions={$selectedChatPinnedMessagesStore.size > 0
+                ? [
+                      {
+                          icon: "pin",
+                          onPress: () =>
+                              showInRightColumn(screen.rightColumn, { kind: "show_pinned" }),
+                      },
+                  ]
+                : []}
             {onMenu}
+            openDetails={() => showInRightColumn(screen.rightColumn, { kind: "group_details" })}
             onTogglePanel={() => screen.rightColumn.toggle()}
             panelOpen={screen.rightColumn.open} />
 

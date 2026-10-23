@@ -1,8 +1,14 @@
 <script lang="ts">
+    import {
+        chatDetailsPermissions,
+        chatRulesText,
+    } from "@src/logic/groupOrCommunity/detailsPermissions";
     import type { MultiUserChat, OpenChat } from "@client";
     import {
+        anonUserStore,
         AvatarSize,
         currentUserIdStore,
+        groupDescription,
         selectedChatRulesStore,
         selectedCommunityRulesStore,
         selectedCommunitySummaryStore,
@@ -41,29 +47,19 @@
 
     let { chat = $bindable(), memberCount }: Props = $props();
 
-    let canSend = $derived(client.canSendMessage(chat.id, "any"));
-    let canInvite = $derived(
-        client.canInviteUsers(chat.id) && (chat.kind !== "channel" || !client.isChatPrivate(chat)),
+    let permissions = $derived(
+        chatDetailsPermissions(client, chat, $selectedCommunitySummaryStore, $anonUserStore),
     );
+    let canInvite = $derived(permissions.canInvite);
     let avatarSrc = $derived(client.groupAvatarUrl(chat, $selectedCommunitySummaryStore));
     let combinedRulesText = $derived(
-        canSend
-            ? client.combineRulesText($selectedChatRulesStore, $selectedCommunityRulesStore)
-            : "",
+        chatRulesText(client, chat, $selectedChatRulesStore, $selectedCommunityRulesStore),
     );
     let externalUrl = $derived(chat.kind === "channel" ? chat.externalUrl : undefined);
     let externalContent = $derived(externalUrl !== undefined);
     let verified = $derived(chat.kind === "group_chat" && chat.verified);
 
-    function description(chat: MultiUserChat): string {
-        let description = chat.description;
 
-        if (chat.subtype?.kind === "governance_proposals") {
-            description = description.replace("{userId}", $currentUserIdStore);
-        }
-
-        return description;
-    }
 </script>
 
 <div class="group-details">
@@ -93,7 +89,7 @@
                     <legend>
                         <Legend label={i18nKey("groupDesc", undefined, chat.level)} />
                     </legend>
-                    <Markdown text={description(chat)} />
+                    <Markdown text={groupDescription(chat, $currentUserIdStore)} />
                 </fieldset>
             {/if}
             {#if externalUrl !== undefined && externalUrl.length > 0}
@@ -197,7 +193,7 @@
                 <Stats showReported={false} stats={chat.metrics} />
             </CollapsibleCard>
         {/if}
-        {#if client.canDeleteGroup(chat.id)}
+        {#if permissions.canDelete}
             <CollapsibleCard
                 onToggle={groupAdvancedOpen.toggle}
                 open={$groupAdvancedOpen}

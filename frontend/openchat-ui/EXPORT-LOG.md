@@ -167,3 +167,13 @@
 ## 2026-10-23 — AccessGates offers only the gate types a host names, by hand
 - `AccessGates` takes `types`, the gate types its "add a gate" list offers (default: all). A rule of another type already in `value` still shows. The locked explainer's example gates follow it too. The app leaves out the unique-person gate (that concept is suspended) and the credential gate (there's no way to pick a credential yet).
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-23 — GroupPanel: the host says what can be done to each member, by hand
+- A `Person` in `members` can carry `actions` (`{ roles, remove, block }`): the roles the viewer may give that member, and whether they may remove or block them. When a row has them, they replace the panel's own role ladder for that row (which went by `viewerRole`, `canModerate` and `canChangeRoles`, and couldn't know a group's own permission settings). `GroupPanel` also takes `onBlockMember`, offered as "Block member" (`ui.groupPanel.block`) where a row's `actions` allow it. The app fills `actions` from the chat's or community's permissions.
+- `MemberRow`'s icon test no longer narrows through a `$derived` flag, which TypeScript couldn't follow (a type error only; nothing shown changes).
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-23 — GroupPanel's cover close calls onClose, and can be Back, by hand
+- The cover's × had no handler unless the host passed `coverHandlers.close`, so it did nothing for a host that only gave `onClose`. It now calls `onClose` (a host's `coverHandlers` still win).
+- `GroupPanel` takes `back`: the cover shows a back arrow (`PanelCover`'s new `back` action, `--icon-back`, "Back") instead of × when closing returns to an earlier panel, as the old panels did. The app sets it when the right column has a panel to go back to.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

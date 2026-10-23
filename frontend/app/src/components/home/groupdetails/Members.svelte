@@ -22,10 +22,6 @@
         currentUserIdStore,
         knownMembers,
         memberMatchesSearch,
-        ROLE_ADMIN,
-        ROLE_MEMBER,
-        ROLE_MODERATOR,
-        ROLE_OWNER,
         usersFromIds,
     } from "@client";
     import { MemberManagement } from "@src/logic/members/memberManagement.svelte";
@@ -264,10 +260,7 @@
             <Member
                 me
                 member={me}
-                canPromoteToOwner={false}
-                canDemoteToAdmin={client.canDemote(collection.id, me.role, ROLE_ADMIN)}
-                canDemoteToModerator={client.canDemote(collection.id, me.role, ROLE_MODERATOR)}
-                canDemoteToMember={client.canDemote(collection.id, me.role, ROLE_MEMBER)}
+                {...membersState.actionsFor(me.role, true)}
                 {onChangeRole} />
         {/if}
 
@@ -276,22 +269,7 @@
                 <Member
                     me={false}
                     member={item}
-                    canPromoteToOwner={client.canPromote(collection.id, item.role, ROLE_OWNER)}
-                    canPromoteToAdmin={client.canPromote(collection.id, item.role, ROLE_ADMIN)}
-                    canDemoteToAdmin={client.canDemote(collection.id, item.role, ROLE_ADMIN)}
-                    canPromoteToModerator={client.canPromote(
-                        collection.id,
-                        item.role,
-                        ROLE_MODERATOR,
-                    )}
-                    canDemoteToModerator={client.canDemote(
-                        collection.id,
-                        item.role,
-                        ROLE_MODERATOR,
-                    )}
-                    canDemoteToMember={client.canDemote(collection.id, item.role, ROLE_MEMBER)}
-                    {canBlockUser}
-                    {canRemoveMember}
+                    {...membersState.actionsFor(item.role, false)}
                     {searchTerm}
                     {onBlockUser}
                     {onChangeRole}

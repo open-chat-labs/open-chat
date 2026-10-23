@@ -1,6 +1,8 @@
 <script lang="ts">
+    import { communityDetailsPermissions } from "@src/logic/groupOrCommunity/detailsPermissions";
     import {
         type OpenChat,
+        anonUserStore,
         defaultChatRules,
         selectedCommunityReferralsStore,
         selectedCommunityRulesStore,
@@ -13,23 +15,15 @@
 
     const client = getContext<OpenChat>("client");
 
-    let frozen = $derived(client.isCommunityFrozen($selectedCommunitySummaryStore?.id));
     let rules = $derived($selectedCommunityRulesStore ?? defaultChatRules("community"));
-    let canDelete = $derived(
-        $selectedCommunitySummaryStore !== undefined &&
-            !frozen &&
-            client.canDeleteCommunity($selectedCommunitySummaryStore.id),
+    let permissions = $derived(
+        $selectedCommunitySummaryStore === undefined
+            ? undefined
+            : communityDetailsPermissions(client, $selectedCommunitySummaryStore, $anonUserStore),
     );
-    let canEdit = $derived(
-        $selectedCommunitySummaryStore !== undefined &&
-            !frozen &&
-            client.canEditCommunity($selectedCommunitySummaryStore.id),
-    );
-    let canInvite = $derived(
-        $selectedCommunitySummaryStore !== undefined &&
-            !frozen &&
-            client.canInviteUsers($selectedCommunitySummaryStore.id),
-    );
+    let canDelete = $derived(permissions?.canDelete ?? false);
+    let canEdit = $derived(permissions?.canEdit ?? false);
+    let canInvite = $derived(permissions?.canInvite ?? false);
 </script>
 
 {#if $selectedCommunitySummaryStore}

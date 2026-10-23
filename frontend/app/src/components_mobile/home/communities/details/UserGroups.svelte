@@ -10,7 +10,7 @@
     import Translatable from "@shared_components/Translatable.svelte";
     import SlidingPageContent from "../../SlidingPageContent.svelte";
     import UserGroupRow from "./UserGroupRow.svelte";
-    import { CommunityState } from "./communityState.svelte";
+    import { CommunityState } from "@src/logic/groupOrCommunity/communityState.svelte";
 
     const client = getContext<OpenChat>("client");
 

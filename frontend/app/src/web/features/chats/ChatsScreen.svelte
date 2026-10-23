@@ -1,6 +1,7 @@
 <!-- The left column's chat list (region "chats"): DMs and groups, favourites, or a community's channels,
      as the route's scope says (DATA.md, ChatListPanel rows). Picking a chat routes to it. -->
 <script lang="ts">
+    import { muteChat } from "@src/logic/chats/muteChat";
     import {
         allUsersStore,
         chatIdentifierToString,
@@ -9,7 +10,6 @@
         currentUserIdStore,
         favouritesStore,
         messagesRead,
-        muteNotificationsFailureMessage,
         pinChatFailureMessage,
         pinnedChatsStore,
         routeForChatIdentifier,
@@ -80,10 +80,8 @@
     }
 
     async function toggleMute(chatId: ChatSummary["id"], mute: boolean) {
-        const success = await client.toggleMuteNotifications(chatId, mute, undefined);
-        if (!success) {
-            toastStore.showFailureToast(muteNotificationsFailureMessage(mute, undefined, $_));
-        }
+        const failed = await muteChat(client, chatId, mute, undefined, $_);
+        if (failed !== undefined) toastStore.showFailureToast(failed);
     }
 
     // the row menu, in the app's words (the old row's menu)

@@ -1,10 +1,9 @@
 import { i18nKey } from "@src/i18n/i18n";
-import { toastStore } from "@src/stores/toast";
 import {
     OpenChat,
-    publish,
     ROLE_NONE,
     type CommunitySummary,
+    type ResourceKey,
     type UserGroupDetails,
 } from "@client";
 
@@ -63,36 +62,32 @@ export class CommunityState {
         return this.client.muteAllChannels(this.community.id, muteAtEveryone);
     }
 
-    share() {
-        publish("inviteAndShare", { collection: this.community, view: "share" });
-    }
-
     confirmDeleteUserGroup(userGroup: UserGroupDetails) {
         this.#userGroupToDelete = userGroup;
         this.#confirmingUserGroupDelete = true;
     }
 
-    deleteUserGroup(yes: boolean = true): Promise<void> {
+    /** Answers the delete confirmation; resolves to the failure message if the delete fails. */
+    async deleteUserGroup(yes: boolean = true): Promise<ResourceKey | undefined> {
         if (this.#confirmingUserGroupDelete && !yes) {
             this.#userGroupToDelete = undefined;
             this.#confirmingUserGroupDelete = false;
-            return Promise.resolve();
+            return undefined;
         }
         if (this.#userGroupToDelete === undefined) {
-            return Promise.resolve();
+            return undefined;
         }
 
         this.#confirmingUserGroupDelete = false;
 
-        return this.client
-            .deleteUserGroup(this.community.id, this.#userGroupToDelete)
-            .then((success) => {
-                if (!success) {
-                    toastStore.showFailureToast(
-                        i18nKey("communities.errors.deleteUserGroupFailed"),
-                    );
-                }
-            })
-            .finally(() => (this.#userGroupToDelete = undefined));
+        try {
+            const success = await this.client.deleteUserGroup(
+                this.community.id,
+                this.#userGroupToDelete,
+            );
+            return success ? undefined : i18nKey("communities.errors.deleteUserGroupFailed");
+        } finally {
+            this.#userGroupToDelete = undefined;
+        }
     }
 }

@@ -237,3 +237,10 @@ export function groupCreationFailure(resp: CreateGroupResponse, level: Level): R
     }
     return groupMessage("groupCreationFailed", level);
 }
+
+/** A group's description as shown: a governance proposals group's names the viewer in place of `{userId}`. */
+export function groupDescription(chat: MultiUserChat, userId: string): string {
+    return chat.subtype?.kind === "governance_proposals"
+        ? chat.description.replace("{userId}", userId)
+        : chat.description;
+}
