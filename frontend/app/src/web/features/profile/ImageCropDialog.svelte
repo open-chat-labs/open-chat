@@ -3,6 +3,7 @@
 <script lang="ts">
     import Button from "@openchat/ui/src/lib/components/Button.svelte";
     import DialogShell from "@openchat/ui/src/lib/components/DialogShell.svelte";
+    import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
     import type { Dimensions } from "@client";
     import type { CropArea } from "@src/utils/imageCrop";
     import Cropper, { type OnCropCompleteEvent } from "svelte-easy-crop";
@@ -14,11 +15,13 @@
         // the size it's saved at, whose shape the crop keeps
         size: Dimensions;
         round?: boolean;
+        // the same image is still uploading: Apply waits for it
+        busy?: boolean;
         onCrop: (area: CropArea) => void;
         onClose: () => void;
     }
 
-    let { source, size, round = false, onCrop, onClose }: Props = $props();
+    let { source, size, round = false, busy = false, onCrop, onClose }: Props = $props();
 
     let area = $state<CropArea>();
 
@@ -27,7 +30,7 @@
     }
 
     function apply() {
-        if (area !== undefined) onCrop(area);
+        if (area !== undefined && !busy) onCrop(area);
     }
 </script>
 
@@ -43,7 +46,8 @@
     </div>
     <div class="actions">
         <Button label={$_("cancel")} variant="secondary" onClick={onClose} />
-        <Button label={$_("apply")} disabled={area === undefined} onClick={apply} />
+        {#if busy}<Spinner />{/if}
+        <Button label={$_("apply")} disabled={area === undefined || busy} onClick={apply} />
     </div>
 </DialogShell>
 
@@ -58,6 +62,7 @@
 
     .actions {
         display: flex;
+        align-items: center;
         justify-content: flex-end;
         gap: var(--space-10);
         margin-block-start: var(--space-16);

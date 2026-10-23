@@ -281,8 +281,9 @@
     async function cropped(area: CropArea) {
         if (imageEdit.kind !== "cropping") return;
         const { target, source } = imageEdit;
-        imageEdit = { kind: "none" };
+        // its Apply waits while the same image uploads (ImageCropDialog's busy), so nothing's lost
         if (uploading[target]) return;
+        imageEdit = { kind: "none" };
         const avatar = target === "avatar";
         uploading[target] = true;
         try {
@@ -366,6 +367,7 @@
         source={imageEdit.source}
         size={imageEdit.target === "avatar" ? AVATAR_SIZE : PROFILE_BACKGROUND_SIZE}
         round={imageEdit.target === "avatar"}
+        busy={uploading[imageEdit.target]}
         onCrop={cropped}
         onClose={() => (imageEdit = { kind: "none" })} />
 {/if}
