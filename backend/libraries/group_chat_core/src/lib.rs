@@ -890,7 +890,7 @@ impl GroupChatCore {
     // as `build_users_to_notify` mentions the sender of the message replied to. They weren't known
     // when the reply was sent, as their link had to be looked up. Returns whether they're to be
     // notified of the reply now, which they won't have been if they've muted the chat, or None if
-    // they aren't mentioned, as in a thread they don't follow.
+    // they aren't mentioned, as in a thread they don't follow, or were already, eg. by name.
     pub fn mention_linked_user_replied_to(
         &mut self,
         user_id: UserId,
@@ -913,7 +913,9 @@ impl GroupChatCore {
 
         let mut notify = None;
         self.members.update_member(&user_id, |m| {
-            m.mentions.add(thread_root_message_index, message_index, message_id, now);
+            if !m.mentions.add(thread_root_message_index, message_index, message_id, now) {
+                return false;
+            }
             notify = Some(m.notifications_muted().value && !m.lapsed().value && !m.suspended().value);
             true
         });
@@ -2556,6 +2558,19 @@ mod tests {
             // So the chat is seen to have changed for them
             assert_eq!(chat.last_updated(Some(user_id)), 30);
         }
+    }
+
+    #[test]
+    fn a_linked_user_replied_to_isnt_notified_again_if_the_reply_mentioned_them() {
+        let (mut chat, owner, muted_member) = setup();
+        send_as(&mut chat, owner, None, 1, &[muted_member], 10);
+
+        assert_eq!(
+            chat.mention_linked_user_replied_to(muted_member, None, 0.into(), 1u64.into(), 20),
+            None
+        );
+        let member = chat.members.get(&muted_member).unwrap();
+        assert_eq!(member.mentions.iter_most_recent(None).count(), 1);
     }
 
     #[test]

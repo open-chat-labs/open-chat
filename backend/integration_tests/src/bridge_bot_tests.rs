@@ -714,6 +714,11 @@ fn reactions_and_replies_on_relayed_messages_go_to_whoever_linked_the_account(in
         let channel_id =
             client::community::happy_path::create_channel(env, owner.principal, community_id, true, random_string());
         client::community::happy_path::join_channel(env, member.principal, community_id, channel_id);
+        // In the community but not the channel, so only the channel's membership keeps activity
+        // from them, as their MultiUser canister takes it from any community they're in. Joining
+        // the community joins its public channels, so they leave this one.
+        client::community::happy_path::join_community(env, outsider.principal, community_id);
+        client::community::happy_path::leave_channel(env, outsider.principal, community_id, channel_id);
         (
             Chat::Channel(community_id, channel_id),
             BotInstallationLocation::Community(community_id),

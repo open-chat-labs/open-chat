@@ -347,8 +347,7 @@ fn process_send_message_result(
 
         // A reply to a message a bridge bot relayed is for whoever linked the account it came from,
         // unless it was relayed from that account too
-        if let Some(replier) = replier
-            && let Some((_, Some(account))) = replied_to
+        if let Some((_, Some(account))) = replied_to
             && relayed_from != Some(account)
         {
             let reply = ReplyToRelayedMessage {
@@ -358,7 +357,9 @@ fn process_send_message_result(
                 message_id,
                 event_index,
                 sender,
-                replier,
+                // A bot replying unprompted counts as the replier, but makes no activity
+                replier: replier.unwrap_or(sender),
+                activity: replier.is_some(),
                 notification: (!suppressed).then(|| notification.clone()),
             };
             on_linked_user_found(account, state, move |linked_user, state| {
@@ -453,6 +454,8 @@ struct ReplyToRelayedMessage {
     event_index: EventIndex,
     sender: UserId,
     replier: UserId,
+    // Whether the reply is activity, as it is for a sender if someone made it
+    activity: bool,
     // The reply's notification, unless notifications of it were suppressed
     notification: Option<ChannelUserNotificationPayload>,
 }
@@ -490,20 +493,22 @@ fn tell_linked_user_of_reply(linked_user: UserId, reply: ReplyToRelayedMessage, 
         }
     }
 
-    state.push_event_to_user(
-        linked_user,
-        CommunityCanisterEvent::MessageActivity(MessageActivityEvent {
-            chat: Chat::Channel(state.env.canister_id().into(), reply.channel_id),
-            thread_root_message_index: reply.thread_root_message_index,
-            message_index: reply.message_index,
-            message_id: reply.message_id,
-            event_index: reply.event_index,
-            activity: MessageActivity::QuoteReply,
-            timestamp: now,
-            user_id: Some(reply.sender),
-        }),
-        now,
-    );
+    if reply.activity {
+        state.push_event_to_user(
+            linked_user,
+            CommunityCanisterEvent::MessageActivity(MessageActivityEvent {
+                chat: Chat::Channel(state.env.canister_id().into(), reply.channel_id),
+                thread_root_message_index: reply.thread_root_message_index,
+                message_index: reply.message_index,
+                message_id: reply.message_id,
+                event_index: reply.event_index,
+                activity: MessageActivity::QuoteReply,
+                timestamp: now,
+                user_id: Some(reply.sender),
+            }),
+            now,
+        );
+    }
 }
 
 fn register_timer_jobs(
