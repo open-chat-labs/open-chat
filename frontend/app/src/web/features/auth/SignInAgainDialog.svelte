@@ -26,14 +26,19 @@
 
     const client = getContext<OpenChat>("client");
 
-    // the ways to sign in again, the last one used first
-    const methods = $derived(
-        signInOptions(
-            only === undefined ? [] : [only],
-            { webAuthn: "PublicKeyCredential" in window, native: client.isNativeApp() },
-            selectedAuthProviderStore.value,
-        ).map((o) => OPTIONS[o]),
-    );
+    // the ways to sign in again, the last one used first. `only` when this platform offers it:
+    // otherwise all it does (the client still refuses another account), not none
+    const methods = $derived.by(() => {
+        const platform = {
+            webAuthn: "PublicKeyCredential" in window,
+            native: client.isNativeApp(),
+        };
+        const last = selectedAuthProviderStore.value;
+        const offered = only === undefined ? [] : signInOptions([only], platform, last);
+        return (offered.length > 0 ? offered : signInOptions([], platform, last)).map(
+            (o) => OPTIONS[o],
+        );
+    });
 </script>
 
 {#key flow.attempt}

@@ -7,6 +7,7 @@ import {
     AuthProvider,
     InMemoryAuthClientStorage,
     linkIdentitiesResult,
+    type LinkedAuthenticationPrincipal,
     type OpenChat,
     type ResourceKey,
     type WebAuthnKey,
@@ -45,6 +46,47 @@ type LinkingClient = Pick<
     "AuthPrincipal" | "getAuthenticationPrincipals" | "linkIdentities"
 >;
 
+/**
+ * Whether a confirming sign-in (its principal) is this session's: the session's auth principal, or
+ * the linked identity marked as the one it signed in with. A passkey's confirming sign-in is the
+ * linked passkey's principal, which a session that signed up with it doesn't have as its auth
+ * principal. The current passkey is only found best effort, so when no identity is marked, any of
+ * the account's own is accepted, as signing in again (reAuthenticate) accepts it.
+ */
+export function confirmsAsSession(
+    principal: string,
+    authPrincipal: string,
+    linked: LinkedAuthenticationPrincipal[],
+): boolean {
+    if (principal === authPrincipal) return true;
+    const current = linked.filter((p) => p.isCurrentIdentity);
+    return (current.length > 0 ? current : linked).some((p) => p.principal === principal);
+}
+
+/**
+ * The account's linked identity a sign-in for linking became: a passkey by its credential (the
+ * identity canister gives it a principal of its own), anything else by its principal.
+ */
+export function linkedAs(
+    linked: LinkedAuthenticationPrincipal[],
+    identity: LinkingIdentity,
+): LinkedAuthenticationPrincipal | undefined {
+    const credentialId = identity.webAuthnKey?.credentialId;
+    if (credentialId !== undefined) {
+        return linked.find(
+            (p) =>
+                p.webAuthnKey !== undefined &&
+                sameBytes(new Uint8Array(p.webAuthnKey.credentialId), credentialId),
+        );
+    }
+    const principal = linkingPrincipal(identity);
+    return linked.find((p) => p.principal === principal);
+}
+
+function sameBytes(a: Uint8Array, b: Uint8Array): boolean {
+    return a.length === b.length && a.every((byte, i) => byte === b[i]);
+}
+
 export class IdentityLinking {
     #client: LinkingClient;
 
@@ -59,7 +101,8 @@ export class IdentityLinking {
 
     /**
      * A sign-in for the current step: the new method, then the user's own confirming it. The
-     * confirming one has to be the sign-in this session is, or it's refused here.
+     * confirming one has to be the sign-in this session is, or it's refused here. Never rejects:
+     * a confirming sign-in it can't check is refused, and `error` says so.
      */
     async signedIn(identity: LinkingIdentity): Promise<void> {
         this.error = undefined;
@@ -68,8 +111,18 @@ export class IdentityLinking {
             case "initiator":
                 this.stage = { kind: "approver", initiator: identity };
                 return;
-            case "approver":
-                if (!(await this.#isSessionsOwn(identity))) {
+            case "approver": {
+                let own: boolean;
+                try {
+                    own = await this.#isSessionsOwn(identity);
+                } catch (err) {
+                    console.warn("Unable to check the confirming sign-in", err);
+                    if (this.stage === stage) {
+                        this.error = i18nKey("identity.failure.loginApprover");
+                    }
+                    return;
+                }
+                if (!own) {
                     if (this.stage === stage) {
                         this.error = i18nKey("identity.failure.principalMismatch");
                     }
@@ -83,6 +136,7 @@ export class IdentityLinking {
                     approver: identity,
                 };
                 return;
+            }
             case "ready_to_link":
                 return;
         }
@@ -94,8 +148,8 @@ export class IdentityLinking {
     }
 
     /**
-     * Links the two sign-ins. Only when the confirming one is this session's: otherwise
-     * linkIdentities is never called, and the flow starts over.
+     * Links the two sign-ins. Only once the confirming one has been found to be this session's
+     * (signedIn): the stage isn't ready to link before that, so linkIdentities is never called.
      */
     async link(): Promise<LinkOutcome> {
         if (this.stage.kind !== "ready_to_link" || this.linking) {
@@ -105,9 +159,6 @@ export class IdentityLinking {
         this.error = undefined;
         this.linking = true;
         try {
-            if (!(await this.#isSessionsOwn(approver))) {
-                return this.#startOver(i18nKey("identity.failure.principalMismatch"));
-            }
             const result = linkIdentitiesResult(
                 await this.#client.linkIdentities(
                     initiator.key,
@@ -136,14 +187,13 @@ export class IdentityLinking {
         this.error = undefined;
     }
 
-    // this session's sign-in: its auth principal, or the linked identity it signed in with (a
-    // passkey's confirming sign-in is the linked passkey's principal, which a session that signed
-    // up with that passkey doesn't have as its auth principal)
+    // this session's sign-in (confirmsAsSession); the account's identities only when needed
     async #isSessionsOwn(identity: LinkingIdentity): Promise<boolean> {
         const principal = linkingPrincipal(identity);
-        if (principal === this.#client.AuthPrincipal) return true;
+        const authPrincipal = this.#client.AuthPrincipal;
+        if (principal === authPrincipal) return true;
         const linked = await this.#client.getAuthenticationPrincipals();
-        return linked.some((p) => p.isCurrentIdentity && p.principal === principal);
+        return confirmsAsSession(principal, authPrincipal, linked);
     }
 
     #startOver(reason: ResourceKey): LinkOutcome {
@@ -161,24 +211,38 @@ export async function signInWithAuthClient(
     client: Pick<OpenChat, "getAuthClientOptions">,
     provider: AuthProvider.II | AuthProvider.NFID,
 ): Promise<LinkingIdentity | undefined> {
-    const key = await ECDSAKeyIdentity.generate();
-    const storage = new InMemoryAuthClientStorage();
-    const authClient = await AuthClient.create({ storage, identity: key });
-    return new Promise((resolve) => {
-        authClient.login({
-            ...client.getAuthClientOptions(provider),
-            onSuccess: async () => {
-                const delegation = await storage.get("delegation");
-                resolve(
-                    delegation
-                        ? { key, delegation: DelegationChain.fromJSON(delegation), provider }
-                        : undefined,
-                );
-            },
-            onError: (err) => {
-                console.log(`Failed to sign in with ${provider}: `, err);
-                resolve(undefined);
-            },
+    try {
+        const key = await ECDSAKeyIdentity.generate();
+        const storage = new InMemoryAuthClientStorage();
+        const authClient = await AuthClient.create({ storage, identity: key });
+        return await new Promise((resolve) => {
+            authClient.login({
+                ...client.getAuthClientOptions(provider),
+                onSuccess: async () => {
+                    try {
+                        const delegation = await storage.get("delegation");
+                        resolve(
+                            delegation
+                                ? {
+                                      key,
+                                      delegation: DelegationChain.fromJSON(delegation),
+                                      provider,
+                                  }
+                                : undefined,
+                        );
+                    } catch (err) {
+                        console.warn(`Unable to read the ${provider} sign-in`, err);
+                        resolve(undefined);
+                    }
+                },
+                onError: (err) => {
+                    console.log(`Failed to sign in with ${provider}: `, err);
+                    resolve(undefined);
+                },
+            });
         });
-    });
+    } catch (err) {
+        console.warn(`Unable to sign in with ${provider}`, err);
+        return undefined;
+    }
 }

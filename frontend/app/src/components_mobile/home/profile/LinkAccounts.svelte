@@ -126,11 +126,21 @@
         localError = undefined;
 
         if (provider === AuthProvider.PASSKEY) {
-            const [key, delegation, webAuthnKey] =
-                substep.kind === "initiator"
-                    ? await client.signUpWithWebAuthn(false)
-                    : await client.reSignInWithCurrentWebAuthnIdentity();
-            await flow.signedIn({ key, delegation, webAuthnKey, provider: AuthProvider.PASSKEY });
+            try {
+                const [key, delegation, webAuthnKey] =
+                    substep.kind === "initiator"
+                        ? await client.signUpWithWebAuthn(false)
+                        : await client.reSignInWithCurrentWebAuthnIdentity();
+                await flow.signedIn({
+                    key,
+                    delegation,
+                    webAuthnKey,
+                    provider: AuthProvider.PASSKEY,
+                });
+            } catch (err) {
+                console.warn(`Unable to sign in with a passkey (${substep.kind})`, err);
+                localError = generalError;
+            }
         } else if (provider === AuthProvider.EMAIL) {
             providerStep = "signing_in_with_email";
             emailSigninHandler.generateMagicLink(email).then((resp) => {
@@ -171,7 +181,8 @@
         detail: { kind: "success"; key: ECDSAKeyIdentity; delegation: DelegationChain },
     ) {
         providerStep = "choose_provider";
-        flow.signedIn({ key: detail.key, delegation: detail.delegation, provider });
+        // it says itself why a sign-in it can't check is refused (flow.error); it never rejects
+        void flow.signedIn({ key: detail.key, delegation: detail.delegation, provider });
     }
 
     // Link the two identities that we have built together

@@ -194,5 +194,5 @@
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
 
 ## 2026-10-23 — ProfileDialog: a sign-in step the host turns down can say why, by hand
-- A host step in the sign-in "add" form (`onLinkMethod`, `onRequestEmailCode`, `onVerifyEmailCode`) that rejects with `{ reason }` (a resource key or literal text, as `AuthDialog`'s `AuthFailure`) shows that reason in place of the step's generic failure line. The app says why linking failed, e.g. the sign-in provider limit.
+- A host step in the sign-in "add" form (`onLinkMethod`, `onRequestEmailCode`, `onVerifyEmailCode`) that rejects with `{ reason }` (a resource key or literal text, as `AuthDialog`'s `AuthFailure`) shows that reason in place of the step's generic failure line. One that rejects with `{ cancelled: true }` (the user gave the step up) goes back to the form with nothing said. The app says why linking failed, e.g. the sign-in provider limit.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).

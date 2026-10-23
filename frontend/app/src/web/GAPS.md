@@ -127,7 +127,8 @@ design export needs. Each entry says where it came up.
   line; the delete flow's CHIT step for a user who has never earned any says they haven't
   discovered it yet; a host step in the sign-in "add" form that rejects with `{ reason }` shows
   that reason in place of the generic one (linking a method says why it couldn't, e.g. the
-  sign-in provider limit).
+  sign-in provider limit), and one that rejects with `{ cancelled: true }` says nothing (closing
+  the confirming sign-in).
 - **`ProfileDialog` against the app** (8c):
   - no "Hide all CHIT related features" switch: the new UI reads `disableChit` (the CHIT cards
     on the user card and the DM panel follow it) but offers no way to change it. The setting is

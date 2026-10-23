@@ -88,6 +88,8 @@
     import { SignInAgain, type SignedIn } from "../auth/signInAgain.svelte";
     import {
         IdentityLinking,
+        linkedAs,
+        linkingPrincipal,
         signInWithAuthClient,
         type LinkingIdentity,
         type LinkOutcome,
@@ -375,35 +377,55 @@
 
     // linking a passkey or II (logic/auth/identityLinking), as the old UI's LinkAccounts: sign in
     // with the new method, then again the way this session signed in (only that way is offered),
-    // then link the two. A rejection says why, for the dialog to show; giving up rejects too.
+    // then link the two. A rejection says why, for the dialog to show; giving up on confirming
+    // cancels quietly.
     async function linkMethod(type: "passkey" | "ii"): Promise<SigninMethod> {
         const initiator = await newSignIn(type);
         if (initiator === undefined) throw failure(i18nKey("identity.failure.loginInitiator"));
-        const before = new Set(
-            (await client.getAuthenticationPrincipals()).map((p) => p.principal),
-        );
         const flow = new IdentityLinking(client);
         await flow.signedIn(initiator);
         let outcome: LinkOutcome | undefined;
         const current = linked.find((p) => p.isCurrentIdentity)?.provider;
-        await signInAgain(
-            $_("identity.signIn_approver"),
-            async (approver) => {
-                await flow.signedIn(approver);
-                // not this session's sign-in: the user can try again
-                if (flow.stage.kind !== "ready_to_link") return flow.error;
-                outcome = await flow.link();
-            },
-            current ?? selectedAuthProviderStore.value,
-        );
+        try {
+            await signInAgain(
+                $_("identity.signIn_approver"),
+                async (approver) => {
+                    await flow.signedIn(approver);
+                    // not this session's sign-in: the user can try again
+                    if (flow.stage.kind !== "ready_to_link") return flow.error;
+                    outcome = await flow.link();
+                },
+                current ?? selectedAuthProviderStore.value,
+            );
+        } catch {
+            throw CANCELLED;
+        }
         if (outcome?.kind !== "linked") {
             throw failure(outcome?.reason ?? i18nKey("identity.failure.link"));
         }
-        await refreshSigninMethods();
-        const added = signinMethods.find((m) => !before.has(m.id));
-        if (added === undefined) throw failure(i18nKey("identity.failure.link"));
-        return added;
+        return linkedMethod(outcome.initiator, type);
     }
+
+    // the method just linked, as the dialog lists it. It's linked whatever happens here: if the
+    // reloaded list doesn't have it (yet), it's shown from the sign-in until the list next loads
+    async function linkedMethod(
+        initiator: LinkingIdentity,
+        type: "passkey" | "ii",
+    ): Promise<SigninMethod> {
+        await refreshSigninMethods();
+        const entry = linkedAs(linked, initiator);
+        const listed = entry && signinMethods.find((m) => m.id === entry.principal);
+        return (
+            listed ?? {
+                type,
+                id: linkingPrincipal(initiator),
+                title: $_(`ui.profileDialog.signin.${type}`),
+            }
+        );
+    }
+
+    // what the dialog's sign-in steps reject with to cancel quietly
+    const CANCELLED = { cancelled: true };
 
     // the new method's sign-in, undefined when it didn't go through
     async function newSignIn(type: "passkey" | "ii"): Promise<LinkingIdentity | undefined> {
@@ -444,11 +466,14 @@
     let signingInAgain = $state<SigningInAgain>();
 
     function signInAgain(reason: string, signedIn: SignedIn, only?: AuthProvider): Promise<void> {
+        // one at a time: one still open (linking, when deleting starts) is given up, so its
+        // promise settles and its attempts stop
+        signingInAgain?.giveUp();
         return new Promise((resolve, reject) => {
             const signIn = new SignInAgain(client, translate, async (outcome) => {
                 const failure = await signedIn(outcome);
                 if (failure !== undefined) return failure;
-                signingInAgain = undefined;
+                if (signingInAgain?.signIn === signIn) signingInAgain = undefined;
                 resolve();
             });
             signingInAgain = {
@@ -457,7 +482,7 @@
                 only,
                 giveUp: () => {
                     signIn.dispose();
-                    signingInAgain = undefined;
+                    if (signingInAgain?.signIn === signIn) signingInAgain = undefined;
                     reject(new Error("Signing in again given up"));
                 },
             };

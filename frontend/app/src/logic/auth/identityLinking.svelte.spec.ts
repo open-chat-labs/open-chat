@@ -5,7 +5,13 @@ import {
     type LinkIdentitiesResponse,
 } from "@client";
 import { DelegationChain, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
-import { IdentityLinking, type LinkingIdentity } from "./identityLinking.svelte";
+import {
+    confirmsAsSession,
+    IdentityLinking,
+    linkedAs,
+    linkingPrincipal,
+    type LinkingIdentity,
+} from "./identityLinking.svelte";
 
 // a sign-in as `root`: a session key, and the delegation from `root` to it
 async function signIn(root: ECDSAKeyIdentity, provider: AuthProvider): Promise<LinkingIdentity> {
@@ -106,5 +112,72 @@ describe("linking a sign-in method", () => {
         await linking.signedIn(await signIn(session, AuthProvider.PASSKEY));
         expect((await linking.link()).kind).toBe("failed");
         expect([linking.stage.kind, linking.linking]).toEqual(["initiator", false]);
+    });
+
+    test("when no identity is marked as this session's, any of the account's confirms it, another account's doesn't", async () => {
+        const { client, linking, newMethod } = await setup();
+        const passkey = await ECDSAKeyIdentity.generate();
+        client.getAuthenticationPrincipals.mockResolvedValue([linked(passkey, false)]);
+        await linking.signedIn(newMethod);
+        await linking.signedIn(
+            await signIn(await ECDSAKeyIdentity.generate(), AuthProvider.PASSKEY),
+        );
+        expect(linking.error?.key).toBe("identity.failure.principalMismatch");
+        await linking.signedIn(await signIn(passkey, AuthProvider.PASSKEY));
+        expect(linking.stage.kind).toBe("ready_to_link");
+    });
+
+    test("a confirming sign-in that can't be checked is refused and says so, without rejecting", async () => {
+        const { client, linking, newMethod } = await setup();
+        client.getAuthenticationPrincipals.mockRejectedValue(new Error("offline"));
+        vi.spyOn(console, "warn").mockImplementation(() => {});
+        await linking.signedIn(newMethod);
+        await linking.signedIn(
+            await signIn(await ECDSAKeyIdentity.generate(), AuthProvider.PASSKEY),
+        );
+        expect(linking.stage.kind).toBe("approver");
+        expect(linking.error?.key).toBe("identity.failure.loginApprover");
+        expect(client.linkIdentities).not.toHaveBeenCalled();
+    });
+});
+
+describe("whose sign-in confirms a link", () => {
+    test("the session's auth principal, or only the identity marked as the one it signed in with", async () => {
+        const current = await ECDSAKeyIdentity.generate();
+        const other = await ECDSAKeyIdentity.generate();
+        const account = [linked(current, true), linked(other, false)];
+        const principal = (k: ECDSAKeyIdentity) => k.getPrincipal().toString();
+        expect(confirmsAsSession("auth", "auth", account)).toBe(true);
+        expect(confirmsAsSession(principal(current), "auth", account)).toBe(true);
+        expect(confirmsAsSession(principal(other), "auth", account)).toBe(false);
+        expect(confirmsAsSession("someone-else", "auth", account)).toBe(false);
+    });
+});
+
+describe("the linked identity a sign-in became", () => {
+    test("a passkey by its credential, anything else by its principal", async () => {
+        const root = await ECDSAKeyIdentity.generate();
+        const ii = await signIn(root, AuthProvider.II);
+        const credentialId = new Uint8Array([1, 2, 3]);
+        const passkey: LinkingIdentity = {
+            ...(await signIn(await ECDSAKeyIdentity.generate(), AuthProvider.PASSKEY)),
+            webAuthnKey: { publicKey: new Uint8Array([9]), credentialId },
+        };
+        const iiEntry = { ...linked(root, false), principal: linkingPrincipal(ii) };
+        const passkeyEntry = {
+            ...linked(await ECDSAKeyIdentity.generate(), false),
+            webAuthnKey: {
+                publicKey: new Uint8Array([9]),
+                credentialId: new Uint8Array([1, 2, 3]),
+                origin: "https://oc.app",
+                crossPlatform: false,
+                aaguid: new Uint8Array(16),
+            },
+        };
+        const account = [iiEntry, passkeyEntry];
+        expect(linkedAs(account, ii)).toBe(iiEntry);
+        // the identity canister gives a passkey a principal of its own
+        expect(linkedAs(account, passkey)).toBe(passkeyEntry);
+        expect(linkedAs([iiEntry], passkey)).toBeUndefined();
     });
 });
