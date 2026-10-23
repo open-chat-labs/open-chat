@@ -4,7 +4,9 @@
 // - dismissing (Esc, veil, ×, Cancel, Back) goes through dismiss(): ignored while a call is pending or the dialog
 //   is already leaving;
 // - leave() plays the exit and stays out (never comes back); `then` runs after the exit — on success the dialog
-//   calls leave(onCancel) so the host unmounts it.
+//   calls leave(onCancel) so the host unmounts it;
+// - handOff() is for a step that opens another dialog in this one's place (the profile's Diamond): no exit plays,
+//   so the backdrop stays and only the new dialog animates in.
 // Bind it as: class:closing={flow.closing}, use:modal={flow.escape(onCancel)}, and give `.closing` pointer-events: none.
 export class DialogFlow {
   busy = $state(false);
@@ -50,6 +52,12 @@ export class DialogFlow {
     if (this.closing || this.#destroyed) return;
     this.closing = true;
     this.#timer = setTimeout(() => then?.(), this.#exitMs);
+  }
+
+  /** Opens another dialog in this one's place: `then` runs at once, with no exit (ignored while a call is pending). */
+  handOff(then?: () => void) {
+    if (this.locked || this.#destroyed) return;
+    then?.();
   }
 
   /** For use:modal — off the dialog stack while leaving, otherwise Esc dismisses. */

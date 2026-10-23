@@ -317,8 +317,10 @@
     /** The section shown, as it opens and each time the user moves to another (for a host that loads a section's data
      *  only when it's seen). */
     onSectionChange?: (section: ProfileSection) => void;
+    /** Open the CHIT dialog: it replaces this one, over the same backdrop (no exit plays). */
     onChit?: () => void;
     onEarn?: () => void;
+    /** Open the Diamond dialog: it replaces this one, over the same backdrop (no exit plays). */
     onDiamond?: () => void;
     /** Save the profile fields. Reject to keep the editor open with an error. */
     onSave?: (v: { name: string; handle: string; about: string }) => Promise<unknown> | void;
@@ -473,6 +475,12 @@
   function close(fn?: () => void) {
     if (fieldBusy || delBusy || loBusy) return;
     flow.leave(fn);
+  }
+
+  // to another dialog, which opens in this one's place: the backdrop stays, only that dialog animates in
+  function handOff(fn?: () => void) {
+    if (fieldBusy || delBusy || loBusy) return;
+    flow.handOff(fn);
   }
 
   // the About links to the pages the host has (aboutPages), and a group only with some
@@ -1148,7 +1156,7 @@
             <span class="nav-label">{t(group.label)}</span>
             {#each items as [key, title, iconName, tone]}
               {@const on = key === section}
-              <div class="nav-item {tone ?? ''}" class:on onclick={() => (key === 'diamond' ? close(onDiamond) : go(key))} role="button" tabindex="0">
+              <div class="nav-item {tone ?? ''}" class:on onclick={() => (key === 'diamond' ? handOff(onDiamond) : go(key))} role="button" tabindex="0">
                 <span class="nav-icon" style:mask={icon(iconName)}></span>
                 <span class="nav-title">{t(title)}</span>
                 <span class="nav-meta" class:upgrade={tone === 'diamond' && !isDiamond}
@@ -1440,7 +1448,8 @@
               {#each calendar.cells as cell}
                 <div
                   class="day {cell.kind}"
-                  onclick={cell.kind === 'claim' ? () => close(onChit) : undefined}
+                  class:inert={cell.kind === 'claim' && !onChit}
+                  onclick={cell.kind === 'claim' && onChit ? () => handOff(onChit) : undefined}
                   aria-label={cell.title ?? ''}
                   role="button"
                   tabindex="0"
@@ -1742,7 +1751,7 @@
               </div>
               {/if}
               {#if !isDiamond}
-                <div class="upsell" onclick={() => close(onDiamond)} role="button" tabindex="0">
+                <div class="upsell" onclick={() => handOff(onDiamond)} role="button" tabindex="0">
                   <span class="upsell-text">{t('ui.profileDialog.storage.upsell')}</span>
                   <span class="upsell-cta">{t('ui.profileDialog.storage.getDiamond')}</span>
                 </div>
@@ -3149,6 +3158,11 @@
     --day-ink: var(--ink);
     box-shadow: inset 0 0 0 1.5px var(--status-chit);
     cursor: pointer;
+  }
+
+  /* nothing to open without onChit */
+  .day.claim.inert {
+    cursor: default;
   }
 
   .day.future {

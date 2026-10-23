@@ -196,3 +196,7 @@
 ## 2026-10-23 — ProfileDialog: a sign-in step the host turns down can say why, by hand
 - A host step in the sign-in "add" form (`onLinkMethod`, `onRequestEmailCode`, `onVerifyEmailCode`) that rejects with `{ reason }` (a resource key or literal text, as `AuthDialog`'s `AuthFailure`) shows that reason in place of the step's generic failure line. One that rejects with `{ cancelled: true }` (the user gave the step up) goes back to the form with nothing said. The app says why linking failed, e.g. the sign-in provider limit.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-23 — ProfileDialog hands off to Diamond and CHIT without an exit, by hand
+- `DialogFlow` has `handOff(then)`: a step that opens another dialog in this one's place runs `then` at once, with no exit (still ignored while a call is pending). `ProfileDialog`'s Diamond (nav item and upsell) and CHIT claim use it, where they played the dialog's exit first: the backdrop faded out, then the next dialog's faded back in. Now the host can keep the backdrop and only the next dialog animates in. The CHIT claim day is inert (no click, default cursor) without `onChit`, where it was a button that did nothing.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
