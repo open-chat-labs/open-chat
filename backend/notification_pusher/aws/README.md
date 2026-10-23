@@ -1,21 +1,20 @@
-### Prerequisites
+### Deploying
 
-rustup target add x86_64-unknown-linux-musl
-brew install FiloSottile/musl-cross/musl-cross
-ln -s /usr/local/opt/musl-cross/bin/x86_64-linux-musl-gcc /usr/local/bin/musl-gcc
+Run the *Deploy Notifications Pusher* workflow (`.github/workflows/build-and-deploy-notifications-pusher.yaml`)
+by hand: on a notification pusher tag to deploy it, or on master to deploy the latest one. It builds a
+static arm64 binary on an arm runner and deploys it with `scripts/deploy-notification-pusher-prod.sh`.
 
-### To build
+The host is an arm64 (t4g) EC2 instance, at the address in the repo's `NP_EC2_HOST` secret. Each
+version is in `~/notification_pusher/<version>/` with its `.env`, `latest` links to the one running,
+and the `notification-pusher` systemd unit runs it. Only one pusher may run at a time, as they keep
+their progress in the same DynamoDB table.
 
-cargo build --package notification_pusher_aws --release --target=x86_64-unknown-linux-musl
+### To build by hand
 
-### To copy to EC2
+In an arm64 Linux container, eg. Docker on an Apple silicon Mac, from the repo's root:
 
-scp -i "./backend/notification_pusher/aws/notification_pusher.pem" ./target/x86_64-unknown-linux-musl/release/notification_pusher_aws ec2-user@ec2-44-200-2-65.compute-1.amazonaws.com:~/notification_pusher
+```bash
+docker run --rm --platform linux/arm64 -v "$PWD":/src -w /src rust:1.99.0-bookworm bash -c 'apt-get update && apt-get install -y musl-tools && rustup target add aarch64-unknown-linux-musl && cargo build --package notification_pusher_aws --release --target aarch64-unknown-linux-musl'
+```
 
-### To connect to EC2
-
-ssh -i "./backend/notification_pusher/aws/notification_pusher.pem" ec2-user@ec2-44-200-2-65.compute-1.amazonaws.com
-
-### To run the service follow the readme in the notification_pusher folder
-
-cd ~/notification_pusher
+The binary is `target/aarch64-unknown-linux-musl/release/notification_pusher_aws`.
