@@ -7,7 +7,7 @@ import type {
     UserSummary,
     ReducedPublicProfile,
 } from "@shared";
-import { compareChats } from "@shared";
+import { compareChats, isDeletedUser } from "@shared";
 
 export function formatLastOnlineDate(
     formatter: MessageFormatter,
@@ -156,8 +156,8 @@ export function compareIsNotYouThenUsername(
     };
 }
 
-// The users you have direct chats with, most recently active chat first. Bots, and users not yet
-// loaded, are left out.
+// The users you have direct chats with, most recently active chat first. Bots, deleted users and
+// users not yet loaded are left out.
 export function directChatUsers(
     directChats: ChatMap<DirectChatSummary>,
     users: UserLookup,
@@ -165,7 +165,21 @@ export function directChatUsers(
     return [...directChats.values()]
         .sort(compareChats)
         .map((c) => users.get(c.them.userId))
-        .filter((u): u is UserSummary => u !== undefined && u.kind !== "bot");
+        .filter(
+            (u): u is UserSummary => u !== undefined && u.kind !== "bot" && !isDeletedUser(u),
+        );
+}
+
+// Who the owner of a bot can pass it to: the users they have direct chats with, after themselves,
+// so that they can keep it
+export function botOwnerCandidates(
+    directChats: ChatMap<DirectChatSummary>,
+    users: UserLookup,
+    ownerId: string,
+): UserSummary[] {
+    const owner = users.get(ownerId);
+    const others = directChatUsers(directChats, users);
+    return owner === undefined ? others : [owner, ...others];
 }
 
 export function userAvatarUrl<T extends { blobUrl?: string }>(dataContent?: T): string {

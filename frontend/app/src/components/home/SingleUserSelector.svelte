@@ -67,10 +67,13 @@
         // we need a short timeout here so that any click event is handled before the blur
         window.setTimeout(() => {
             if (selectedReceiver === undefined) {
-                selectedReceiver =
+                const found =
                     users === undefined
                         ? client.lookupUserForMention(textValue, false)
                         : users.find((u) => u.username.toLowerCase() === textValue.toLowerCase());
+                if (found !== undefined) {
+                    selectReceiver(found);
+                }
             }
             showMentionPicker = false;
         }, 200);

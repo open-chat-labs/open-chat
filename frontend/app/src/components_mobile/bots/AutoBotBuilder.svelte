@@ -2,9 +2,12 @@
     import { Body, BodySmall, Column, Form, Input, InputIconButton, Row } from "component-lib";
     import {
         allUsersStore,
+        botOwnerCandidates,
+        currentUserIdStore,
         debouncedDerived,
         OpenChat,
         publish,
+        serverDirectChatsStore,
         validateBot,
         ValidationErrors,
         validEndpoint,
@@ -49,6 +52,9 @@
     }: Props = $props();
     const debug = $state(false);
     let schemaLoading = $state(false);
+    let ownerCandidates = $derived(
+        botOwnerCandidates($serverDirectChatsStore, $allUsersStore, $currentUserIdStore),
+    );
 
     let errors = $derived.by(
         debouncedDerived(
@@ -229,6 +235,7 @@
 
         {#if mode === "update"}
             <SelectDirectUser
+                users={ownerCandidates}
                 onSelect={(user) => (candidate.ownerId = user.userId)}
                 selected={$allUsersStore.get(candidate.ownerId)}
                 placeholder={interpolate($_, i18nKey("bots.builder.ownerLabel"))}>
