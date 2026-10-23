@@ -10,7 +10,6 @@
         allUsersStore,
         anonUserStore,
         blockedUsersStore,
-        blockOutcome,
         botState,
         byContext as typersByContext,
         chatIdentifiersEqual,
@@ -181,13 +180,8 @@
               }),
     );
 
-    async function blockThem(blocking: boolean) {
-        if (chat?.kind !== "direct_chat") return;
-        const userId = chat.them.userId;
-        const success = await (blocking
-            ? client.blockUserFromDirectChat(userId)
-            : client.unblockUserFromDirectChat(userId));
-        toastStore.showOutcome(blockOutcome(blocking, success));
+    async function setBlocked(userId: string, blocked: boolean) {
+        toastStore.showOutcome(await client.setBlockedInDirectChat(userId, blocked));
     }
 
     // TODO(4b): invite (part 3), convert, import and the webhook (parts 4 and 5); the search
@@ -215,7 +209,7 @@
                 break;
             case "block":
             case "unblock":
-                blockThem(id === "block");
+                if (chat.kind === "direct_chat") setBlocked(chat.them.userId, id === "block");
                 break;
             case "favourite":
                 client.addToFavourites(chat.id);

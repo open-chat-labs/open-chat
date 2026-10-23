@@ -241,6 +241,11 @@ design export needs. Each entry says where it came up.
   no Unblock, delete community or mute all):
   - by hand: `DeleteGroupDialog` takes the noun `chat` and `typeToConfirm`, so deleting a DM asks
     without the name being typed (the library had no confirm for a DM).
+  - by hand: `ChatRow` stops a click on its menu reaching the row. It also opened the chat, which
+    closed the dialog the item had just opened and un-archived a chat as it was archived.
+  - after deleting or leaving the open chat, the client clears the right panel, but a wide
+    screen's column stays open and shows the chat the list opens next (with nothing in
+    `rightPanelHistory` it shows the selected chat's details, S1).
   - a channel's header now offers mute and @everyone mute, as the old menu did (the library's
     channel menu had neither).
   - GroupPanel's menu shows Leave to everyone; the app opens the dialog only for someone who can

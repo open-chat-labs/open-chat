@@ -24,15 +24,24 @@ vi.mock("@icp-sdk/auth/client", async (importOriginal) => ({
 
 import {
     ChatMap,
+    CommunityMap,
     ErrorCode,
+    ROLE_MEMBER,
     anonymousUser,
     subscribe,
+    type CommunitySummary,
     type GroupChatSummary,
     type WorkerRequest,
 } from "@shared";
 import type { OpenChatConfig } from "./config";
 import { OpenChat } from "./openchat";
-import { currentUserStore, routeStore, serverGroupChatsStore } from "./state";
+import {
+    currentUserStore,
+    rightPanelHistory,
+    routeStore,
+    serverCommunitiesStore,
+    serverGroupChatsStore,
+} from "./state";
 import { messagesRead } from "./state/unread/markRead";
 import { WorkerAgent } from "./workerAgent";
 
@@ -53,6 +62,20 @@ function config(): OpenChatConfig {
 
 const viewed = { kind: "group_chat" as const, groupId: "rrkah-fqaaa-aaaaa-aaaaq-cai" };
 const other = { kind: "group_chat" as const, groupId: "ryjl3-tyaaa-aaaaa-aaaba-cai" };
+// archived by the last test; the others leave chats, which stay gone for the rest of the file
+const toArchive = { kind: "group_chat" as const, groupId: "r7inp-6aaaa-aaaaa-aaabq-cai" };
+const community = { kind: "community" as const, communityId: "qhbym-qaaaa-aaaaa-aaafq-cai" };
+
+// the client leaves only a community it holds
+function withCommunity() {
+    const communities = new CommunityMap<CommunitySummary>();
+    communities.set(community, {
+        kind: "community",
+        id: community,
+        membership: { role: ROLE_MEMBER },
+    } as unknown as CommunitySummary);
+    serverCommunitiesStore.set(communities);
+}
 
 describe("leaving, deleting and archiving", () => {
     let client: OpenChat;
@@ -72,7 +95,7 @@ describe("leaving, deleting and archiving", () => {
             open: false,
         });
         const chats = new ChatMap<GroupChatSummary>();
-        for (const id of [viewed, other]) {
+        for (const id of [viewed, other, toArchive]) {
             chats.set(id, {
                 kind: "group_chat",
                 id,
@@ -87,7 +110,9 @@ describe("leaving, deleting and archiving", () => {
         unsubscribe = subscribe("navigateTo", ({ url }) => urls.push(url));
         vi.spyOn(WorkerAgent.prototype, "send").mockImplementation(((req: WorkerRequest) => {
             sent.push(req);
-            return req.kind === "leaveGroup" || req.kind === "archiveChat"
+            return req.kind === "leaveGroup" ||
+                req.kind === "leaveCommunity" ||
+                req.kind === "archiveChat"
                 ? Promise.resolve(response)
                 : new Promise(() => {});
         }) as never);
@@ -99,6 +124,8 @@ describe("leaving, deleting and archiving", () => {
         vi.restoreAllMocks();
         currentUserStore.set(anonymousUser());
         serverGroupChatsStore.set(new ChatMap());
+        serverCommunitiesStore.set(new CommunityMap());
+        rightPanelHistory.set([]);
     });
 
     // 4b invariant 2: leaving or deleting a chat the user isn't viewing never changes the route
@@ -119,10 +146,48 @@ describe("leaving, deleting and archiving", () => {
         expect(urls).toEqual(["/chats", `/chats/group/${viewed.groupId}`]);
     });
 
-    test("leaving the open chat stays on the list when it succeeds", async () => {
+    // and once it's gone, so are its details in the right column
+    test("leaving the open chat stays on the list and clears its details when it succeeds", async () => {
+        rightPanelHistory.set([{ kind: "group_details" }]);
+
         await client.leaveOrDelete({ kind: "leave", chatId: viewed });
 
         expect(urls).toEqual(["/chats"]);
+        expect(rightPanelHistory.value).toEqual([]);
+    });
+
+    test("leaving a chat that isn't open keeps the open chat's details", async () => {
+        rightPanelHistory.set([{ kind: "group_details" }]);
+
+        await client.leaveOrDelete({ kind: "leave", chatId: other });
+
+        expect(rightPanelHistory.value).toEqual([{ kind: "group_details" }]);
+    });
+
+    // 4b invariant 2, for a community: the route only moves when the community is the scope
+    test("leaving a community that isn't the scope leaves the route alone", async () => {
+        withCommunity();
+        response = { kind: "error", code: 0 };
+
+        await client.leaveOrDelete({ kind: "leave_community", id: community });
+
+        expect(urls).toEqual([]);
+    });
+
+    test("leaving the community in scope goes away first and back when it fails", async () => {
+        withCommunity();
+        routeStore.set({
+            kind: "selected_community_route",
+            communityId: community,
+            scope: { kind: "community", id: community },
+        });
+        response = { kind: "error", code: 0 };
+
+        await client.leaveOrDelete({ kind: "leave_community", id: community });
+
+        expect(urls.length).toBe(2);
+        expect(urls[0]).not.toBe(`/community/${community.communityId}`);
+        expect(urls[1]).toBe(`/community/${community.communityId}`);
     });
 
     // 4b invariant 3: the sole owner's failed leave says so
@@ -147,7 +212,7 @@ describe("leaving, deleting and archiving", () => {
             return Promise.resolve({ kind: "success" });
         }) as never);
 
-        await client.archiveChat(other);
+        await client.archiveChat(toArchive);
 
         expect(order.indexOf("read")).toBeGreaterThanOrEqual(0);
         expect(order.indexOf("read")).toBeLessThan(order.indexOf("archiveChat"));

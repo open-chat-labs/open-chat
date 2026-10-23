@@ -34,7 +34,6 @@
         candidateGroupFromChat,
         anonUserStore,
         allChatsStore,
-        chatIdentifiersEqual,
         chatListScopeStore,
         chatsInitialisedStore,
         ANON_USER_ID,
@@ -438,29 +437,18 @@
             case "leave_community":
                 leaveOrDelete({ kind: "leave_community", id: confirmActionEvent.communityId });
                 return Promise.resolve();
-            case "delete_direct_chat": {
-                const viewingThisChat = chatIdentifiersEqual(
-                    $selectedChatIdStore,
-                    confirmActionEvent.chatId,
-                );
+            case "delete_direct_chat":
                 return leaveOrDelete({
                     kind: "delete_direct_chat",
                     chatId: confirmActionEvent.chatId,
                     blockUser: confirmActionEvent.blockUser,
-                }).then(() => {
-                    if (viewingThisChat) setRightPanelHistory([]);
                 });
-            }
             case "delete_community":
                 leaveOrDelete({ kind: "delete_community", id: confirmActionEvent.communityId });
-                setRightPanelHistory([]);
                 return Promise.resolve();
             case "delete":
                 return leaveOrDelete({ kind: "delete", chatId: confirmActionEvent.chatId }).then(
-                    () => {
-                        setRightPanelHistory([]);
-                        confirmActionEvent.after?.();
-                    },
+                    () => confirmActionEvent.after?.(),
                 );
             default:
                 return Promise.reject();

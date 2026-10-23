@@ -1,15 +1,8 @@
 <!-- Confirming leaving or deleting a group, channel, DM or community. The client goes off it first when
      it's open and back if the call fails; the outcome is a toast, and the dialog closes either way
-     (a navigation closes it sooner). Deleting asks for the name to be typed, except for a DM. Once
-     the open chat or community is gone, so are its details in the right column (as on desktop). -->
+     (a navigation closes it sooner). Deleting asks for the name to be typed, except for a DM. -->
 <script lang="ts">
-    import {
-        chatIdentifiersEqual,
-        chatListScopeStore,
-        selectedChatIdStore,
-        setRightPanelHistory,
-        type OpenChat,
-    } from "@client";
+    import type { OpenChat } from "@client";
     import DeleteGroupDialog from "@openchat/ui/src/features/components/DeleteGroupDialog.svelte";
     import LeaveGroupDialog from "@openchat/ui/src/features/components/LeaveGroupDialog.svelte";
     import { toastStore } from "@src/stores/toast";
@@ -35,14 +28,7 @@
     });
 
     async function confirm() {
-        const open =
-            action.kind === "leave_community" || action.kind === "delete_community"
-                ? $chatListScopeStore.kind === "community" &&
-                  $chatListScopeStore.id.communityId === action.id.communityId
-                : chatIdentifiersEqual($selectedChatIdStore, action.chatId);
-        const outcome = await client.leaveOrDelete(action);
-        if (outcome.kind === "success" && open) setRightPanelHistory([]);
-        toastStore.showOutcome(outcome);
+        toastStore.showOutcome(await client.leaveOrDelete(action));
     }
 </script>
 

@@ -17,6 +17,7 @@
         messagesRead,
         pinChatFailureMessage,
         pinnedChatsStore,
+        ROLE_NONE,
         routeForChatIdentifier,
         selectedChatIdStore,
         translationsStore,
@@ -126,12 +127,14 @@
         if ((row.unreadCount ?? 0) > 0) {
             items.push({ label: $_("markAllRead"), onSelect: () => client.markAllRead(chat) });
         }
-        items.push(
-            chat.membership.archived
-                ? // opening an archived chat un-archives it
-                  { label: $_("unarchiveChat"), onSelect: () => select(row.id) }
-                : { label: $_("archiveChat"), onSelect: () => archive(chat) },
-        );
+        if (chat.kind === "direct_chat" || chat.membership.role !== ROLE_NONE) {
+            items.push(
+                chat.membership.archived
+                    ? // opening an archived chat un-archives it
+                      { label: $_("unarchiveChat"), onSelect: () => select(row.id) }
+                    : { label: $_("archiveChat"), onSelect: () => archive(chat) },
+            );
+        }
         const actions = chatMenuActions(chat, {
             canLeave: chat.kind !== "direct_chat" && client.canLeaveGroup(chat.id),
             blocked: false,

@@ -200,3 +200,7 @@
 ## 2026-10-23 — DeleteGroupDialog: a DM's delete, without typing a name, by hand
 - `noun` takes `'chat'` (new `chat` branches in the `ui.deleteGroupDialog.*` strings: "Delete a chat", "Delete your chat with {name}"), and `typeToConfirm` (default true) can turn off the type-the-name step, so Delete arms at once. The app confirms deleting a DM with it; the library had no confirm for a DM.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-23 — ChatRow: picking a menu item doesn't also open the chat, by hand
+- The row's `ContextMenu` sits inside the row, so a click on an item bubbled to the row's `onclick` and opened that chat as well. Opening it closed any dialog the item had just opened, and opening an archived chat un-archives it, so Delete, Leave and Archive did nothing. The menu is now wrapped in a `display: contents` element that stops clicks and pointer events reaching the row.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

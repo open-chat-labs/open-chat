@@ -403,7 +403,7 @@ import { AndroidWebAuthnErrorCode } from "tauri-plugin-oc-api";
 import type { OpenChatConfig } from "./config";
 import { approveFromExternalWallet, type SignerWallet, type WalletAccount } from "./utils/signer";
 import { unarchiveChatsReportingFailure, unarchiveChatsWithUnread } from "./utils/autoUnarchive";
-import type { BlockContext } from "./utils/profileBlock";
+import { blockOutcome, type BlockContext, type BlockOutcome } from "./utils/profileBlock";
 import {
     FilteredProposals,
     achievementsStore,
@@ -2148,6 +2148,14 @@ export class OpenChat {
             });
     }
 
+    /** Blocks or unblocks the other person in a DM, with the message to show either way. */
+    async setBlockedInDirectChat(userId: string, blocked: boolean): Promise<BlockOutcome> {
+        const success = await (blocked
+            ? this.blockUserFromDirectChat(userId)
+            : this.unblockUserFromDirectChat(userId));
+        return blockOutcome(blocked, success);
+    }
+
     unblockUserFromDirectChat(userId: string): Promise<boolean> {
         const undo = localUpdates.unblockDirectUser(userId);
         return this.#worker
@@ -2252,7 +2260,8 @@ export class OpenChat {
 
     /**
      * Leaves or deletes a group, channel, DM or community the user has confirmed. When it's the one
-     * being viewed, goes off it first and back if the call fails; otherwise the route stays.
+     * being viewed, goes off it first and back if the call fails, and once it's gone clears its
+     * details from the right panel; otherwise the route and the panel stay.
      */
     async leaveOrDelete(action: LeaveOrDelete): Promise<LeaveOrDeleteOutcome> {
         const navigation = leaveOrDeleteNavigation(
@@ -2265,8 +2274,12 @@ export class OpenChat {
             publish("navigateTo", { url: navigation.away });
         }
         const result = await this.#leaveOrDelete(action);
-        if (result !== "success" && navigation !== undefined) {
-            publish("navigateTo", { url: navigation.back });
+        if (navigation !== undefined) {
+            if (result === "success") {
+                rightPanelHistory.set([]);
+            } else {
+                publish("navigateTo", { url: navigation.back });
+            }
         }
         return leaveOrDeleteOutcome(action, result);
     }

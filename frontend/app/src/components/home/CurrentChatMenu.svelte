@@ -15,7 +15,6 @@
         messagesRead,
         mobileWidth,
         notificationsSupported,
-        blockOutcome,
         type OpenChat,
         platformModeratorStore,
         publish,
@@ -225,11 +224,9 @@
 
     async function blockUser(blocking: boolean) {
         if (selectedChatSummary.kind !== "direct_chat") return;
-        const userId = selectedChatSummary.them.userId;
-        const success = await (blocking
-            ? client.blockUserFromDirectChat(userId)
-            : client.unblockUserFromDirectChat(userId));
-        toastStore.showOutcome(blockOutcome(blocking, success));
+        toastStore.showOutcome(
+            await client.setBlockedInDirectChat(selectedChatSummary.them.userId, blocking),
+        );
     }
 
     function showInviteGroupUsers() {
