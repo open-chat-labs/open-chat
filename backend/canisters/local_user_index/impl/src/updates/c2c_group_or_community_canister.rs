@@ -153,6 +153,26 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 );
             }
         }
+        GroupOrCommunityEvent::BridgedUserTipped(ev) => {
+            if let Some(chat) = chat(caller, is_group, ev.channel_id) {
+                let ev = *ev;
+                state.push_event_to_user_index(
+                    crate::UserIndexEvent::BridgedUserTipped(Box::new(user_index_canister::BridgedUserTipped {
+                        chat,
+                        thread_root_message_index: ev.thread_root_message_index,
+                        message_id: ev.message_id,
+                        account: ev.account,
+                        tipper: ev.tipper,
+                        refund_to: ev.refund_to,
+                        ledger: ev.ledger,
+                        token_symbol: ev.token_symbol,
+                        amount: ev.amount,
+                        fee: ev.fee,
+                    })),
+                    **now,
+                );
+            }
+        }
         GroupOrCommunityEvent::TriggerUpgrade => {
             if is_group {
                 state.data.groups_requiring_upgrade.enqueue(caller, true);

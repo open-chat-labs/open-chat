@@ -1,9 +1,10 @@
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::{
-    BlobReference, BotInstallationLocation, BotPermissions, BridgedUser, CanisterId, ChannelLatestMessageIndex, Chat, ChatId,
-    CommunityId, FileId, Hash, MediaScanMatch, MessageContentInitial, MessageId, MessageIndex, Milliseconds, NotifyChit,
-    PremiumItemPurchase, StreakInsuranceClaim, StreakInsurancePayment, TimestampMillis, UniquePersonProof, User, UserId,
+    BlobReference, BotInstallationLocation, BotPermissions, BridgedUser, BridgedUserId, CanisterId, ChannelLatestMessageIndex,
+    Chat, ChatId, CommunityId, FileId, Hash, MediaScanMatch, MessageContentInitial, MessageId, MessageIndex, Milliseconds,
+    NotifyChit, PremiumItemPurchase, StreakInsuranceClaim, StreakInsurancePayment, TimestampMillis, UniquePersonProof, User,
+    UserId, icrc1,
 };
 
 mod lifecycle;
@@ -40,6 +41,25 @@ pub enum LocalUserIndexEvent {
     ModerationReferral(Box<ModerationReferral>),
     // The profile a bridge bot relayed a message with, for the registry of bridged accounts
     BridgedUserUpdated(Box<BridgedUser>),
+    BridgedUserTipped(Box<BridgedUserTipped>),
+}
+
+// A tip on a message relayed from an account no one had linked, paid into the account's subaccount
+// of the UserIndex (see `BridgedUserId::tips_subaccount`), which holds it for whoever links the
+// account, or else refunds it
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct BridgedUserTipped {
+    pub chat: Chat,
+    pub thread_root_message_index: Option<MessageIndex>,
+    pub message_id: MessageId,
+    pub account: BridgedUserId,
+    pub tipper: UserId,
+    // The account the tip came from, where it's refunded to if no one claims it
+    pub refund_to: icrc1::Account,
+    pub ledger: CanisterId,
+    pub token_symbol: String,
+    pub amount: u128,
+    pub fee: u128,
 }
 
 // A message a chat's classifier or media scan found to be CSAM: the auto-sanction is applied

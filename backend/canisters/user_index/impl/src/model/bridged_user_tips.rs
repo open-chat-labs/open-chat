@@ -1,0 +1,76 @@
+use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
+use types::{BridgedUserId, CanisterId, Chat, MessageId, MessageIndex, TimestampMillis, UserId, icrc1};
+
+// The tips on messages relayed from accounts no one had linked, which the groups and communities
+// paid into each account's subaccount of the UserIndex, held for whoever links the account
+#[derive(Serialize, Deserialize, Default)]
+pub struct BridgedUserTips {
+    tips: BTreeMap<u64, HeldTip>,
+    next_id: u64,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct HeldTip {
+    pub account: BridgedUserId,
+    pub chat: Chat,
+    pub thread_root_message_index: Option<MessageIndex>,
+    pub message_id: MessageId,
+    pub tipper: UserId,
+    // The account the tip came from, where it's refunded to
+    pub refund_to: icrc1::Account,
+    pub ledger: CanisterId,
+    pub token_symbol: String,
+    pub amount: u128,
+    pub fee: u128,
+    pub timestamp: TimestampMillis,
+}
+
+impl BridgedUserTips {
+    // Holds the tip, returning its id
+    pub fn hold(&mut self, tip: HeldTip) -> u64 {
+        let id = self.next_id;
+        self.next_id += 1;
+        self.tips.insert(id, tip);
+        id
+    }
+
+    pub fn len(&self) -> usize {
+        self.tips.len()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use candid::Principal;
+
+    fn tip(account: BridgedUserId, amount: u128) -> HeldTip {
+        HeldTip {
+            account,
+            chat: Chat::Group(Principal::from_slice(&[1; 10]).into()),
+            thread_root_message_index: None,
+            message_id: 1u64.into(),
+            tipper: Principal::from_slice(&[2; 10]).into(),
+            refund_to: Principal::from_slice(&[3; 29]).into(),
+            ledger: Principal::from_slice(&[4; 10]),
+            token_symbol: "CHAT".to_string(),
+            amount,
+            fee: 100_000,
+            timestamp: 0,
+        }
+    }
+
+    // Two equal tips for the same account are still two tips
+    #[test]
+    fn each_tip_is_held_with_its_own_id() {
+        let nelly = BridgedUserId::Telegram(123456789);
+        let mut tips = BridgedUserTips::default();
+
+        let first = tips.hold(tip(nelly, 1_000_000));
+        let second = tips.hold(tip(nelly, 1_000_000));
+
+        assert_ne!(first, second);
+        assert_eq!(tips.len(), 2);
+    }
+}

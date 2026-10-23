@@ -1,4 +1,5 @@
 use crate::guards::caller_is_local_user_index_canister;
+use crate::model::bridged_user_tips::HeldTip;
 use crate::updates::c2c_csam_detected::c2c_csam_detected_impl;
 use crate::updates::c2c_moderation_referral::c2c_moderation_referral_impl;
 use crate::{IdentityEvent, StorageIndexEvent};
@@ -57,6 +58,22 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         LocalUserIndexEvent::ModerationReferral(ev) => c2c_moderation_referral_impl(*ev, state),
         LocalUserIndexEvent::BridgedUserUpdated(user) => {
             state.data.bridged_users.update(*user, **now);
+        }
+        LocalUserIndexEvent::BridgedUserTipped(ev) => {
+            let ev = *ev;
+            state.data.bridged_user_tips.hold(HeldTip {
+                account: ev.account,
+                chat: ev.chat,
+                thread_root_message_index: ev.thread_root_message_index,
+                message_id: ev.message_id,
+                tipper: ev.tipper,
+                refund_to: ev.refund_to,
+                ledger: ev.ledger,
+                token_symbol: ev.token_symbol,
+                amount: ev.amount,
+                fee: ev.fee,
+                timestamp: **now,
+            });
         }
         LocalUserIndexEvent::UserRegistered(ev) => {
             process_new_user(ev.principal, ev.username, ev.email, ev.user_id, ev.referred_by, caller, state)
