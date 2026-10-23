@@ -384,7 +384,6 @@ import {
     type BridgedUserLinkCode,
     type BridgedUserSummary,
     type BridgePlatform,
-    bridgedAuthorAvatarUrl,
     bridgedUserId,
     bridgedUserIdsFromEvents,
     bridgedUserKey,
@@ -575,6 +574,7 @@ import {
     activeUserIdFromEvent,
     applyTranslation,
     buildCryptoTransferText,
+    buildBridgedUserAvatarUrl,
     buildIdenticonUrl,
     buildTransactionLink,
     buildTransactionUrlByIndex,
@@ -2718,7 +2718,7 @@ export class OpenChat {
 
     // The avatar of the author of a message a bridge bot relayed from another platform
     bridgedAvatarUrl(id: BridgedUserId, summary: BridgedUserSummary | undefined): string {
-        return bridgedAuthorAvatarUrl(id, summary, this.config.bridgeAvatarsUrl) ?? userAvatarUrl();
+        return buildBridgedUserAvatarUrl(id, summary, this.config.bridgeAvatarsUrl);
     }
     formatTokens = formatTokens;
     validateTokenInput = validateTokenInput;

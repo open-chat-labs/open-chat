@@ -4,6 +4,8 @@ import md5 from "md5";
 import type {
     AccessControlled,
     AggregateCommonEvents,
+    BridgedUserId,
+    BridgedUserSummary,
     CandidateGroupChat,
     ChannelIdentifier,
     ChannelSummary,
@@ -63,6 +65,7 @@ import {
     defaultChatPermissions,
     defaultOptionalChatPermissions,
     defaultOptionalMessagePermissions,
+    bridgedAuthorAvatarUrl,
     bridgedFrom,
     bridgedUserKey,
     emptyChatMetrics,
@@ -109,7 +112,7 @@ import { formatTokens } from "./cryptoFormatter";
 import { hasOwnerRights, isPermitted } from "./permissions";
 import { messageFlagsRestricted, messageRestricted } from "./restrictedContent";
 import { routeForScope } from "./routes";
-import { compareUsername, nullUser } from "./user";
+import { compareUsername, nullUser, userAvatarUrl } from "./user";
 
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
@@ -1552,6 +1555,21 @@ export function buildUserBackgroundUrl(
     return backgroundId !== undefined
         ? buildBlobUrl(pattern, userId, backgroundId, "profile_background")
         : undefined;
+}
+
+// The avatar of the author of a message a bridge bot relayed from another platform. Once their
+// profile has loaded, a Telegram user with no photo gets a generated avatar, as an OpenChat user with
+// no avatar does. Until then it's the unknown user's, since a linked account then shows its OpenChat
+// user's avatar, which would be a second generated one.
+export function buildBridgedUserAvatarUrl(
+    id: BridgedUserId,
+    summary: BridgedUserSummary | undefined,
+    bridgeAvatarsUrl: string,
+): string {
+    return (
+        bridgedAuthorAvatarUrl(id, summary, bridgeAvatarsUrl) ??
+        (summary === undefined ? userAvatarUrl() : buildIdenticonUrl(bridgedUserKey(id)!))
+    );
 }
 
 export function buildIdenticonUrl(id: string): string {
