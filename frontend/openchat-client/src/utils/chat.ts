@@ -1558,9 +1558,9 @@ export function buildUserBackgroundUrl(
 }
 
 // The avatar of the author of a message a bridge bot relayed from another platform. Once their
-// profile has loaded, a Telegram user with no photo gets a generated avatar, as an OpenChat user with
-// no avatar does. Until then it's the unknown user's, since a linked account then shows its OpenChat
-// user's avatar, which would be a second generated one.
+// profile has loaded, a Telegram or Twitch user with no image gets a generated avatar, as an OpenChat
+// user with no avatar does. Until then it's the unknown user's, since a linked account then shows its
+// OpenChat user's avatar, which would be a second generated one.
 export function buildBridgedUserAvatarUrl(
     id: BridgedUserId,
     summary: BridgedUserSummary | undefined,

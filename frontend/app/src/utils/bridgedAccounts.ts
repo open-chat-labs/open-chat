@@ -28,9 +28,10 @@ export type BridgedAccountRow =
     // The platform has no link URL, eg. Discord before its bridge is live
     | { kind: "unavailable"; platform: BridgePlatform };
 
-// A row per platform, Telegram first, then Discord and Twitch, whether or not it can be linked. A user links one account per
-// platform, so a platform is offered only while they have none linked there. To switch accounts,
-// they unlink the linked one first. Accounts linked before that limit show one at a time.
+// A row per platform, Telegram first, then Discord and Twitch, whether or not it can be linked. A
+// user links one account per platform, so a platform is offered only while they have none linked
+// there. To switch accounts, they unlink the linked one first. Accounts linked before that limit
+// show one at a time.
 export function bridgedAccountRows(
     linked: BridgedUserSummary[] | undefined,
     linkable: BridgePlatform[] = linkablePlatforms,

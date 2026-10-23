@@ -396,6 +396,11 @@ mod tests {
                 display_name: "ネリー".to_string(),
                 ..twitch_user()
             },
+            // As long a path as is allowed
+            TwitchUser {
+                profile_image: Some(format!("jtv_user_pictures/{}.png", "a".repeat(106))),
+                ..twitch_user()
+            },
             // An older account's image, and Twitch's default ones
             TwitchUser {
                 profile_image: Some("jtv_user_pictures/a_seagull-profile_image-4d2d235688c7dc66-300x300.png".to_string()),
@@ -455,7 +460,10 @@ mod tests {
             "jtv_user_pictures//a.png",
             "jtv_user_pictures/a.png?x=1",
             "jtv_user_pictures/a%2e.png",
-            &format!("jtv_user_pictures/{}.png", "a".repeat(110)),
+            "./a.png",
+            "jtv_user_pictures/.../a.png",
+            "jtv_user_pictures/",
+            &format!("jtv_user_pictures/{}.png", "a".repeat(107)),
         ] {
             let user = TwitchUser {
                 profile_image: Some(profile_image.to_string()),
