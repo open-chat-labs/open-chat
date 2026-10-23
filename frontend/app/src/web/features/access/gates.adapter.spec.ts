@@ -114,6 +114,20 @@ describe("the gates adapter", () => {
             expiry: undefined,
         };
         expect(gateConfig(gatesState(config, lookups), config, lookups)).toEqual(config);
+
+        // and an edited one saves the edit
+        const state = gatesState(config, lookups);
+        const edited = {
+            ...state,
+            rules: state.rules.map((r) => (r.asset === icp.ledger ? { ...r, a: "2.5" } : r)),
+        };
+        const back = gateConfig(edited, config, lookups).gate;
+        expect(back.kind === "composite_gate" && back.gates[1]).toEqual({
+            kind: "payment_gate",
+            ledgerCanister: icp.ledger,
+            amount: 250_000_000n,
+            fee: icp.transferFee,
+        });
     });
 
     // 4a invariant 3: never shows a unique-person gate, and keeps a dormant one on the way back
