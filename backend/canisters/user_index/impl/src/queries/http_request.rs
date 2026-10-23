@@ -6,7 +6,8 @@ use ic_cdk::query;
 use serde::Serialize;
 use std::collections::{BTreeMap, HashSet};
 use types::{
-    ChatPermission, CommunityPermission, HeaderField, HttpRequest, HttpResponse, MessagePermission, TimestampMillis, UserId,
+    BotDataEncoding, ChatPermission, CommunityPermission, HeaderField, HttpRequest, HttpResponse, MessagePermission,
+    TimestampMillis, UserId,
 };
 use utils::time::MonthKey;
 
@@ -62,6 +63,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
                     requested_community_permissions: total_permissions.community(),
                     requested_chat_permissions: total_permissions.chat(),
                     requested_message_permissions: total_permissions.message(),
+                    data_encoding: b.definition.encoding(),
                 }
             })
             .collect();
@@ -150,4 +152,5 @@ struct BotSummary {
     requested_community_permissions: HashSet<CommunityPermission>,
     requested_chat_permissions: HashSet<ChatPermission>,
     requested_message_permissions: HashSet<MessagePermission>,
+    data_encoding: BotDataEncoding,
 }

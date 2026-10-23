@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Show each bot's data encoding on the `/bots` page ([#10153](https://github.com/open-chat-labs/open-chat/pull/10153))
+
 ### Changed
 
 - Limit users to one linked account per platform (Discord/Telegram) ([#10169](https://github.com/open-chat-labs/open-chat/pull/10169))
