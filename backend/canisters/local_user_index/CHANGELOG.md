@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Show each bot's data encoding in `/metrics` ([#10153](https://github.com/open-chat-labs/open-chat/pull/10153))
 
+### Changed
+
+- Replace a Telegram profile's unused `avatar` with `photo_id`, its photo's id on the bridges' CDN ([#10196](https://github.com/open-chat-labs/open-chat/pull/10196))
+
 ### Removed
 
 - Remove the `_json` versions of the bot endpoints, as bots can't use JSON any more ([#10152](https://github.com/open-chat-labs/open-chat/pull/10152))
