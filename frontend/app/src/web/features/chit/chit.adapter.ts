@@ -1,3 +1,6 @@
+import type ChitDialog from "@openchat/ui/src/features/components/ChitDialog.svelte";
+import type NavRail from "@openchat/ui/src/features/components/NavRail.svelte";
+import type { ComponentProps } from "svelte";
 import {
     CHIT_STREAK_MILESTONES,
     currentStreak,
@@ -8,9 +11,11 @@ import {
     type StreakInsurance,
 } from "@client";
 
-// ChitDialog's and the rail's CHIT props from the user's CHIT, as the old desktop UI shows it: a
-// streak that has ended is none, and today's claim is offered only while the last sync is recent
-// and CHIT is on.
+// ChitDialog's and the rail's CHIT props from the user's CHIT, as the old desktop UI shows them: a
+// streak that has ended is none; the rail offers today's claim only while the last sync is recent
+// (stale CHIT could offer a claim the backend turns down), and the dialog, as the old CHIT modal
+// does, whenever it's due (a claim already made just moves the countdown on). Neither while CHIT
+// is off.
 
 /** What the CHIT props are worked out from. */
 export type ChitInputs = {
@@ -22,35 +27,57 @@ export type ChitInputs = {
     now: number;
 };
 
-function claimable({ chit, lastSync, disabled, now }: ChitInputs): boolean {
-    return !disabled && dailyChitClaimable(chit.nextDailyChitClaim, now, lastSync);
-}
+export type ChitDialogProps = Pick<
+    ComponentProps<typeof ChitDialog>,
+    | "streak"
+    | "balance"
+    | "earned"
+    | "daily"
+    | "claimable"
+    | "milestones"
+    | "countdown"
+    | "insured"
+    | "used"
+>;
+
+export type ChitRailProps = Pick<
+    ComponentProps<typeof NavRail>,
+    "chitShown" | "chitStreak" | "chitClaimable"
+>;
 
 /** ChitDialog's props, but its puzzle, achievements and leaderboard (8d's other parts). */
-export function chitDialogProps(inputs: ChitInputs, insurance: StreakInsurance) {
-    const { chit, now } = inputs;
+export function chitDialogProps(
+    { chit, disabled, now }: ChitInputs,
+    insurance: StreakInsurance,
+): ChitDialogProps {
     const streak = currentStreak(chit, now);
-    const open = claimable(inputs);
+    const claimedToday = chit.nextDailyChitClaim > now;
     return {
         streak,
         balance: chit.chitBalance,
         earned: chit.totalChitEarned,
-        // what claiming pays now, or what today's claim paid
-        daily: dailyChitAmount(open ? streak + 1 : Math.max(streak, 1)),
-        claimable: open,
+        // what today's claim pays, or paid
+        daily: dailyChitAmount(claimedToday ? Math.max(streak, 1) : streak + 1),
+        claimable: !disabled && !claimedToday,
         milestones: CHIT_STREAK_MILESTONES,
-        countdown: open ? "" : formatTimeRemaining(now, Number(chit.nextDailyChitClaim), true),
+        // until the next claim (none while one is due)
+        countdown: claimedToday
+            ? formatTimeRemaining(now, Number(chit.nextDailyChitClaim), true)
+            : "",
         insured: insurance.daysInsured,
         used: insurance.daysMissed,
     };
 }
 
 /** The rail's CHIT button: hidden while CHIT is off, and once claimed if the user hides it then. */
-export function chitRailProps(inputs: ChitInputs, hideOnceClaimed: boolean) {
-    const open = claimable(inputs);
+export function chitRailProps(
+    { chit, lastSync, disabled, now }: ChitInputs,
+    hideOnceClaimed: boolean,
+): ChitRailProps {
+    const open = !disabled && dailyChitClaimable(chit.nextDailyChitClaim, now, lastSync);
     return {
-        chitShown: !inputs.disabled && (open || !hideOnceClaimed),
-        chitStreak: currentStreak(inputs.chit, inputs.now),
+        chitShown: !disabled && (open || !hideOnceClaimed),
+        chitStreak: currentStreak(chit, now),
         chitClaimable: open,
     };
 }

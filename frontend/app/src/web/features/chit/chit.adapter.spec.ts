@@ -35,17 +35,19 @@ describe("the CHIT dialog's props", () => {
     });
 
     test("the claim is offered only when nextDailyChitClaim < now, the last sync is under 10 minutes old and disableChit is off", () => {
-        const offered = (i: ChitInputs) => [
-            chitDialogProps(i, noInsurance).claimable,
-            chitRailProps(i, false).chitClaimable,
-        ];
-        expect(offered(inputs())).toEqual([true, true]);
-        expect(offered(inputs({ nextDailyChitClaim: BigInt(NOW + MINUTE) }))).toEqual([
-            false,
-            false,
-        ]);
-        expect(offered(inputs({}, { lastSync: NOW - 11 * MINUTE }))).toEqual([false, false]);
-        expect(offered(inputs({}, { disabled: true }))).toEqual([false, false]);
+        // the rail, as the old desktop rail offers it
+        const offered = (i: ChitInputs) => chitRailProps(i, false).chitClaimable;
+        expect(offered(inputs())).toBe(true);
+        expect(offered(inputs({ nextDailyChitClaim: BigInt(NOW + MINUTE) }))).toBe(false);
+        expect(offered(inputs({}, { lastSync: NOW - 11 * MINUTE }))).toBe(false);
+        expect(offered(inputs({}, { disabled: true }))).toBe(false);
+    });
+
+    test("the dialog offers the claim whenever it's due and CHIT is on, however old the last sync, as the old CHIT modal does", () => {
+        const offered = (i: ChitInputs) => chitDialogProps(i, noInsurance).claimable;
+        expect(offered(inputs({}, { lastSync: NOW - 60 * MINUTE }))).toBe(true);
+        expect(offered(inputs({ nextDailyChitClaim: BigInt(NOW + MINUTE) }))).toBe(false);
+        expect(offered(inputs({}, { disabled: true }))).toBe(false);
     });
 
     test("today's amount is what claiming pays now, or what today's claim paid", () => {
@@ -58,12 +60,16 @@ describe("the CHIT dialog's props", () => {
         expect(chitDialogProps(inputs({ streakEnds: BigInt(NOW - 1) }), noInsurance).daily).toBe(
             200,
         );
+        // due, though not offered (CHIT off): still what claiming would pay
+        expect(chitDialogProps(inputs({}, { disabled: true }), noInsurance).daily).toBe(400);
     });
 
     test("counts down to the next claim once today's is claimed", () => {
         const claimed = inputs({ nextDailyChitClaim: BigInt(NOW + 61 * MINUTE + 5000) });
         expect(chitDialogProps(claimed, noInsurance).countdown).toBe("01:01:05");
         expect(chitDialogProps(inputs(), noInsurance).countdown).toBe("");
+        // due though not offered: nothing to count down to, never a negative time
+        expect(chitDialogProps(inputs({}, { disabled: true }), noInsurance).countdown).toBe("");
     });
 
     test("insured days are the days bought and the days used", () => {

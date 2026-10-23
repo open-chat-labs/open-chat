@@ -31,6 +31,7 @@
     import AppEventDialogs from "./AppEventDialogs.svelte";
     import DialogScreen from "./DialogScreen.svelte";
     import { openLinked } from "./linkedDialogs";
+    import { disableChit } from "@src/stores/settings";
     import { screenLoader } from "./screens";
     import {
         builtDialogScreens,
@@ -115,7 +116,11 @@
     $effect(() => subscribe("profile", () => openLinked({ kind: "profile" })));
     $effect(() => subscribe("upgrade", () => openLinked({ kind: "diamond" })));
     // the old UI's way to the daily claim (the prize message's CHIT link …)
-    $effect(() => subscribe("claimDailyChit", () => openLinked({ kind: "chit" })));
+    $effect(() =>
+        subscribe("claimDailyChit", () => {
+            if (!disableChit.value) openLinked({ kind: "chit" });
+        }),
+    );
 
     $effect(() => {
         const opened = (e: Event) => {

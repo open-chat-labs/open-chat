@@ -129,7 +129,7 @@ design export needs. Each entry says where it came up.
   sign-in provider limit), and one that rejects with `{ cancelled: true }` says nothing (closing
   the confirming sign-in); Diamond opens from it without its exit (`DialogFlow.handOff`), so the
   backdrop stays while the next dialog animates in (`DialogScreen` keeps it); the CHIT claim day
-  does nothing without `onChit` (the app's opens the CHIT dialog);
+  does nothing without `onChit` (the app's `onChit` opens the CHIT dialog);
   `puzzleSetting`, so a host without a daily puzzle setting leaves it out; "Ways to earn more"
   only with `onEarn`; `onClaim`, the calendar's Claim made in place with a "Claiming…" state; a
   day before `joined` isn't a missed one.
@@ -368,6 +368,8 @@ design export needs. Each entry says where it came up.
 
 ### Wiring
 
+- **`ChitDialog`, by hand** (8d): the default milestone tiers keep their hand-spaced positions
+  when a host passes them; a claim made in the dialog clears once the next claim opens.
 - **CHIT dialog, first cut** (`features/chit`, 8d): the streak, today's claim, the balance, the
   insurance summary, the settings (the profile's CHIT section) and the leaderboard (`?hof`, a
   placeholder until it's built). Not yet: the daily puzzle (the card is left out), "Ways to earn

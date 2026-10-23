@@ -15,7 +15,7 @@
     } from "@openchat/ui/src/features/components/ChitDialog.svelte";
     import { disableChit } from "@src/stores/settings";
     import { now500 } from "@src/stores/time";
-    import { getContext } from "svelte";
+    import { getContext, onMount } from "svelte";
     import type { DialogProps, LinkedDialog } from "../app/dialogs";
     import { openLinked } from "../app/linkedDialogs";
     import { chitDialogProps } from "./chit.adapter";
@@ -23,6 +23,12 @@
     let { onClose }: DialogProps<Extract<LinkedDialog, { kind: "chit" }>> = $props();
 
     const client = getContext<OpenChat>("client");
+
+    // CHIT turned off: nothing to show (a link to ?chit, the old UI's prize-message link …), so it
+    // closes as it opens
+    onMount(() => {
+        if ($disableChit) onClose();
+    });
 
     const chit = $derived(
         chitDialogProps(
@@ -54,17 +60,19 @@
     }
 </script>
 
-<ChitDialog
-    streak={chit.streak}
-    balance={chit.balance}
-    earned={chit.earned}
-    daily={chit.daily}
-    claimable={chit.claimable}
-    milestones={chit.milestones}
-    countdown={chit.countdown}
-    insured={chit.insured}
-    used={chit.used}
-    puzzleState="off"
-    onClaim={claim}
-    onAction={act}
-    {onClose} />
+{#if !$disableChit}
+    <ChitDialog
+        streak={chit.streak}
+        balance={chit.balance}
+        earned={chit.earned}
+        daily={chit.daily}
+        claimable={chit.claimable}
+        milestones={chit.milestones}
+        countdown={chit.countdown}
+        insured={chit.insured}
+        used={chit.used}
+        puzzleState="off"
+        onClaim={claim}
+        onAction={act}
+        {onClose} />
+{/if}
