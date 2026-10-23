@@ -39,11 +39,20 @@ describe("bridge", () => {
         },
         updated: 0n,
     });
+    const twitchId: BridgedUserId = { kind: "twitch", id: "141981764" };
+    const twitch = (profileImage?: string): BridgedUserSummary => ({
+        user: {
+            kind: "twitch",
+            profile: { id: twitchId.id, login: "nelly", displayName: "Nelly", profileImage },
+        },
+        updated: 0n,
+    });
 
     test("names the author from their profile, once it's fetched", () => {
         expect(bridgedAuthorName(discord())).toEqual("nelly");
         expect(bridgedAuthorName(discord({ displayName: "Nelly" }))).toEqual("Nelly");
         expect(bridgedAuthorName(telegram())).toEqual("Nelly Smith");
+        expect(bridgedAuthorName(twitch())).toEqual("Nelly");
         expect(bridgedAuthorName(undefined)).toBeUndefined();
     });
 
@@ -83,6 +92,21 @@ describe("bridge", () => {
         expect(
             bridgedAuthorAvatarUrl(telegramId, telegram("AQADtLwxG5a_QEZ-"), ""),
         ).toBeUndefined();
+    });
+
+    test("serves a Twitch user's profile image from Twitch's CDN", () => {
+        expect(
+            bridgedAuthorAvatarUrl(
+                twitchId,
+                twitch("jtv_user_pictures/8a6381c7-profile_image-300x300.png"),
+                AVATARS,
+            ),
+        ).toEqual(
+            "https://static-cdn.jtvnw.net/jtv_user_pictures/8a6381c7-profile_image-300x300.png",
+        );
+        // A generated avatar is shown in its place
+        expect(bridgedAuthorAvatarUrl(twitchId, twitch(), AVATARS)).toBeUndefined();
+        expect(bridgedAuthorAvatarUrl(twitchId, undefined, AVATARS)).toBeUndefined();
     });
 
     test("collects each account a message, or the one it replies to, was relayed from once", () => {
@@ -215,7 +239,7 @@ describe("bridge", () => {
         ).toBe(false);
     });
 
-    test("links to a Discord account's profile, and a Telegram account's if it has a username", () => {
+    test("links to a Discord or Twitch account's profile, and a Telegram account's if it has a username", () => {
         expect(
             bridgedProfileUrl({
                 kind: "telegram",
@@ -231,6 +255,7 @@ describe("bridge", () => {
         expect(bridgedProfileUrl(discord().user)).toEqual(
             "https://discord.com/users/80351110224678912",
         );
+        expect(bridgedProfileUrl(twitch().user)).toEqual("https://www.twitch.tv/nelly");
     });
 });
 

@@ -6,16 +6,18 @@ import { openExternalUrl } from "./urls";
 const LINK_URLS: Record<BridgePlatform, string> = {
     discord: import.meta.env.OC_DISCORD_BRIDGE_LINK_URL ?? "",
     telegram: import.meta.env.OC_TELEGRAM_BRIDGE_LINK_URL ?? "",
+    twitch: import.meta.env.OC_TWITCH_BRIDGE_LINK_URL ?? "",
 };
 
-export const linkablePlatforms: BridgePlatform[] = (["discord", "telegram"] as const).filter(
-    (platform) => LINK_URLS[platform] !== "",
-);
+export const linkablePlatforms: BridgePlatform[] = (
+    ["discord", "telegram", "twitch"] as const
+).filter((platform) => LINK_URLS[platform] !== "");
 
 // Each platform's logo, eg. at the start of its row in the user's linked accounts
 export const BRIDGE_PLATFORM_ICONS: Record<BridgePlatform, string> = {
     discord: "/assets/discord.svg",
     telegram: "/assets/telegram.svg",
+    twitch: "/assets/twitch.svg",
 };
 
 export type BridgedAccountRow =
@@ -26,14 +28,15 @@ export type BridgedAccountRow =
     // The platform has no link URL, eg. Discord before its bridge is live
     | { kind: "unavailable"; platform: BridgePlatform };
 
-// A row per platform, Telegram first, whether or not it can be linked. A user links one account per
-// platform, so a platform is offered only while they have none linked there. To switch accounts,
-// they unlink the linked one first. Accounts linked before that limit show one at a time.
+// A row per platform, Telegram first, then Discord and Twitch, whether or not it can be linked. A
+// user links one account per platform, so a platform is offered only while they have none linked
+// there. To switch accounts, they unlink the linked one first. Accounts linked before that limit
+// show one at a time.
 export function bridgedAccountRows(
     linked: BridgedUserSummary[] | undefined,
     linkable: BridgePlatform[] = linkablePlatforms,
 ): BridgedAccountRow[] {
-    return (["telegram", "discord"] as const).map((platform): BridgedAccountRow => {
+    return (["telegram", "discord", "twitch"] as const).map((platform): BridgedAccountRow => {
         const account = linked?.find((a) => a.user.kind === platform);
         if (account !== undefined) {
             return { kind: "linked", platform, account };

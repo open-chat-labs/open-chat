@@ -13,31 +13,44 @@ const discordAccount: BridgedUserSummary = {
     updated: BigInt(0),
 };
 
+const twitchAccount: BridgedUserSummary = {
+    user: { kind: "twitch", profile: { id: "141981764", login: "nelly", displayName: "Nelly" } },
+    linkedUserId: "abc",
+    updated: BigInt(0),
+};
+
 describe("bridgedAccountRows", () => {
     test("has a row per platform, Telegram first, while the accounts load", () => {
-        expect(bridgedAccountRows(undefined, ["discord", "telegram"])).toEqual([
+        expect(bridgedAccountRows(undefined, ["discord", "telegram", "twitch"])).toEqual([
             { kind: "loading", platform: "telegram" },
             { kind: "loading", platform: "discord" },
+            { kind: "loading", platform: "twitch" },
         ]);
     });
 
     test("offers every linkable platform when nothing is linked", () => {
-        expect(bridgedAccountRows([], ["discord", "telegram"])).toEqual([
+        expect(bridgedAccountRows([], ["discord", "telegram", "twitch"])).toEqual([
             { kind: "linkable", platform: "telegram" },
             { kind: "linkable", platform: "discord" },
+            { kind: "linkable", platform: "twitch" },
         ]);
     });
 
     test("shows a platform's linked account in place of its link", () => {
-        expect(bridgedAccountRows([telegramAccount], ["discord", "telegram"])).toEqual([
+        expect(bridgedAccountRows([telegramAccount], ["discord", "telegram", "twitch"])).toEqual([
             { kind: "linked", platform: "telegram", account: telegramAccount },
             { kind: "linkable", platform: "discord" },
+            { kind: "linkable", platform: "twitch" },
         ]);
         expect(
-            bridgedAccountRows([discordAccount, telegramAccount], ["discord", "telegram"]),
+            bridgedAccountRows(
+                [twitchAccount, discordAccount, telegramAccount],
+                ["discord", "telegram", "twitch"],
+            ),
         ).toEqual([
             { kind: "linked", platform: "telegram", account: telegramAccount },
             { kind: "linked", platform: "discord", account: discordAccount },
+            { kind: "linked", platform: "twitch", account: twitchAccount },
         ]);
     });
 
@@ -45,10 +58,12 @@ describe("bridgedAccountRows", () => {
         expect(bridgedAccountRows([], ["telegram"])).toEqual([
             { kind: "linkable", platform: "telegram" },
             { kind: "unavailable", platform: "discord" },
+            { kind: "unavailable", platform: "twitch" },
         ]);
         expect(bridgedAccountRows([discordAccount], ["telegram"])).toEqual([
             { kind: "linkable", platform: "telegram" },
             { kind: "linked", platform: "discord", account: discordAccount },
+            { kind: "unavailable", platform: "twitch" },
         ]);
     });
 });

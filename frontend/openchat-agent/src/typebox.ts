@@ -678,6 +678,7 @@ export type BridgePlatform = Static<typeof BridgePlatform>;
 export const BridgePlatform = /* @__PURE__ */ Type.Union([
     Type.Literal("Discord"),
     Type.Literal("Telegram"),
+    Type.Literal("Twitch"),
 ]);
 
 export type AcceptSwapSuccess = Static<typeof AcceptSwapSuccess>;
@@ -791,7 +792,18 @@ export const BridgedUserId = /* @__PURE__ */ Type.Union([
     Type.Object({
         Telegram: Type.BigInt(),
     }),
+    Type.Object({
+        Twitch: Type.BigInt(),
+    }),
 ]);
+
+export type TwitchUser = Static<typeof TwitchUser>;
+export const TwitchUser = /* @__PURE__ */ Type.Object({
+    id: Type.BigInt(),
+    login: Type.String(),
+    display_name: Type.String(),
+    profile_image: Type.Optional(Type.String()),
+});
 
 export type CommunityPermissions = Static<typeof CommunityPermissions>;
 export const CommunityPermissions = /* @__PURE__ */ Type.Object({
@@ -5269,6 +5281,9 @@ export const BridgedUser = /* @__PURE__ */ Type.Union([
     }),
     Type.Object({
         Telegram: TelegramUser,
+    }),
+    Type.Object({
+        Twitch: TwitchUser,
     }),
 ]);
 
