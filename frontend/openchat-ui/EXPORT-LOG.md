@@ -209,7 +209,8 @@
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
 
 ## 2026-10-23 — GroupSettingsDialog: parts the viewer's role can't change, by hand
-- `readOnlySections` (`'gates' | 'rules' | 'permissions' | 'disappearing' | 'history'`, exported as `ReadOnlySection`) makes those parts read-only while the rest stays editable. The Gates, Rules and Permissions pages show plain On/Off status as `readOnly` does for the whole dialog, and `'disappearing'` and `'history'` lock those switches on the Group page (no Diamond banner). The app makes permissions and disappearing messages read-only to a non-owner, and locks history, which can't change after a group is made. `readOnly` could only make the whole dialog read-only.
+- `readOnlySections` (`'gates' | 'rules' | 'permissions' | 'disappearing' | 'history' | 'visibility'`, exported as `ReadOnlySection`) makes those parts read-only while the rest stays editable. The Gates, Rules and Permissions pages show plain On/Off status as `readOnly` does for the whole dialog, and `'disappearing'`, `'history'` and `'visibility'` lock those switches on the Group page (no Diamond banner). The app makes permissions, disappearing messages and Public read-only to a non-owner, and locks history, which can't change after a group is made. `readOnly` could only make the whole dialog read-only.
+- A read-only Permissions page (either way) keeps its General / Messages / Threads tabs usable, and shows the roles as plain pills with no chevron and no "Reset to defaults". The whole page used to be `inert`, so only General could be seen.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
 
 ## 2026-10-23 — GroupPanel: settings for everyone, as About without edit rights, by hand

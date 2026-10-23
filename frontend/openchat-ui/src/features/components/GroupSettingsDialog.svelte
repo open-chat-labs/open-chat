@@ -11,7 +11,7 @@
   export type NameCheck = 'ok' | 'taken' | 'invalid';
 
   /** A part of the settings a host can make read-only (`readOnlySections`). */
-  export type ReadOnlySection = 'gates' | 'rules' | 'permissions' | 'disappearing' | 'history';
+  export type ReadOnlySection = 'gates' | 'rules' | 'permissions' | 'disappearing' | 'history' | 'visibility';
 
   /** Disappearing-message durations as TimedToggle labels ("12 hours") → milliseconds. */
   const UNIT_MS: Record<string, number> = { minute: 6e4, hour: 36e5, day: 864e5, week: 6048e5, month: 2592e6, year: 31536e6 };
@@ -156,7 +156,7 @@
     /** Embedded only: view-only (no edit permission). */
     readOnly?: boolean;
     /** The parts the viewer may see but not change (their role doesn't allow it): those pages show plain On/Off
-     *  status, and 'disappearing' and 'history' lock those switches on the Group page. */
+     *  status, and 'disappearing', 'history' and 'visibility' lock those switches on the Group page. */
     readOnlySections?: ReadOnlySection[];
     /** Owner-only rows under the Group page ("Move to a community"). */
     ownerMoves?: OwnerMove[];
@@ -509,9 +509,10 @@
       hint: t(isPublic ? 'ui.groupSettingsDialog.publicHintOn' : 'ui.groupSettingsDialog.publicHintOff'),
       on: isPublic,
       // going public needs Diamond; going private never does
-      locked: !isDiamond && !isPublic,
+      locked: !isDiamond && !isPublic && !lockedSection('visibility'),
+      fixed: lockedSection('visibility'),
       set: (v: boolean) => {
-        if (v && !isDiamond) return;
+        if ((v && !isDiamond) || lockedSection('visibility')) return;
         isPublic = v;
       },
       timed: false,
@@ -622,7 +623,8 @@
     {/if}
 
     <div class="body" onscroll={() => permMenu && (permMenu = null)}>
-      <div class="body-inner" inert={statusOnly ? true : undefined}>
+      <!-- a read-only Permissions page keeps its General / Messages / Threads tabs: its own controls are left out instead -->
+      <div class="body-inner" inert={statusOnly && tabIdx !== 3 ? true : undefined}>
         {#if tabIdx === 0 && !viewOnly}
           <div class="group-page">
             <div class="cover" style:height={isCommunity ? '150px' : '112px'} style:background={coverShown ? `${cssUrl(coverShown)} center/cover no-repeat` : `var(--cover-${COVERS[coverKey] ? coverKey : 'plum'})`}>
@@ -951,7 +953,7 @@
                 />
               </div>
 
-              {#if permsChanged > 0}
+              {#if permsChanged > 0 && !statusOnly}
                 <div class="changed">
                   <span class="changed-text">{t('ui.groupSettingsDialog.permsChanged', { count: permsChanged })}</span>
                   <span
@@ -994,10 +996,14 @@
                       {#each group.items as p}
                         <div class="perm-row" class:last={p.last}>
                           <span class="perm-label" class:master={p.master}>{p.label}</span>
-                          <span class="perm-pill {p.tone}" onclick={(e) => p.open(e.currentTarget)} role="button" tabindex="0">
-                            <span class="perm-value">{p.valueLabel}</span>
-                            <span class="perm-chevron"></span>
-                          </span>
+                          {#if statusOnly}
+                            <span class="perm-pill static {p.tone}"><span class="perm-value">{p.valueLabel}</span></span>
+                          {:else}
+                            <span class="perm-pill {p.tone}" onclick={(e) => p.open(e.currentTarget)} role="button" tabindex="0">
+                              <span class="perm-value">{p.valueLabel}</span>
+                              <span class="perm-chevron"></span>
+                            </span>
+                          {/if}
                         </div>
                       {/each}
                     </div>
@@ -1986,6 +1992,11 @@
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 34%, transparent);
     cursor: pointer;
     user-select: none;
+  }
+
+  .perm-pill.static {
+    cursor: default;
+    pointer-events: none;
   }
 
   .perm-pill.off {

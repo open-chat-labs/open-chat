@@ -104,12 +104,30 @@ function messagePermissions(value: Record<string, GroupRole | "inherit">): Messa
     return perms;
 }
 
-/** GroupSettingsDialog's value for a group or channel being edited. */
-export function groupSettings(candidate: CandidateGroupChat, lookups: GateLookups): GroupSettings {
+// The dialog saves rules switched off without their text, and switched on, trimmed. The group keeps
+// its text through both, as the old editors did, so only a real edit is a change.
+function rulesText(saved: GroupSettings["rules"], original: string): string {
+    return !saved.enabled || saved.text === original.trim() ? original : saved.text;
+}
+
+/** A group's or channel's permissions as GroupSettingsDialog and GroupPanel show them. */
+export function permissionsValue(permissions: ChatPermissions): GroupSettings["permissions"] {
     const general: Record<string, GroupRole> = {};
     for (const [key, field] of Object.entries(GENERAL)) {
-        general[key] = ROLE[candidate.permissions[field]];
+        general[key] = ROLE[permissions[field]];
     }
+    return {
+        general,
+        messages: messagesValue(permissions.messagePermissions),
+        threads:
+            permissions.threadPermissions === undefined
+                ? null
+                : messagesValue(permissions.threadPermissions),
+    };
+}
+
+/** GroupSettingsDialog's value for a group or channel being edited. */
+export function groupSettings(candidate: CandidateGroupChat, lookups: GateLookups): GroupSettings {
     const ttl = candidate.eventsTTL === undefined ? undefined : Number(candidate.eventsTTL);
     return {
         info: {
@@ -129,14 +147,7 @@ export function groupSettings(candidate: CandidateGroupChat, lookups: GateLookup
         },
         gates: gatesState(candidate.gateConfig, lookups),
         rules: { enabled: candidate.rules.enabled, text: candidate.rules.text },
-        permissions: {
-            general,
-            messages: messagesValue(candidate.permissions.messagePermissions),
-            threads:
-                candidate.permissions.threadPermissions === undefined
-                    ? null
-                    : messagesValue(candidate.permissions.threadPermissions),
-        },
+        permissions: permissionsValue(candidate.permissions),
     };
 }
 
@@ -177,7 +188,7 @@ export function candidateFromSettings(
         rules: {
             ...original.rules,
             enabled: all.rules.enabled,
-            text: all.rules.text,
+            text: rulesText(all.rules, original.rules.text),
             newVersion: all.rules.newVersion ?? false,
         },
         permissions,

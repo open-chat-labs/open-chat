@@ -177,6 +177,8 @@ export function groupUpdateResult(resp: UpdateGroupResponse, level: Level): Upda
             return failed("userNotInGroup");
         case "internal_error":
         case "not_authorized":
+        case "failure":
+        case "error":
             return failed("groupUpdateFailed");
         case "avatar_too_big":
             return failed("avatarTooBig");
@@ -190,9 +192,6 @@ export function groupUpdateResult(resp: UpdateGroupResponse, level: Level): Upda
             return failed("userLapsed");
         case "chat_frozen":
             return failed("chatFrozen");
-        case "failure":
-        case "error":
-            return failed("failure");
         case "offline":
             return failed("offlineError");
         case "access_gate_invalid":

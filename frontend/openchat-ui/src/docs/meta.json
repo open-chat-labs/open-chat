@@ -10264,7 +10264,7 @@
         "section": null,
         "required": false,
         "componentDefault": "[]",
-        "doc": "The parts the viewer may see but not change: those pages show plain On/Off status, and 'disappearing' locks that switch."
+        "doc": "The parts the viewer may see but not change: those pages show plain On/Off status, and 'disappearing', 'history' and 'visibility' lock those switches."
       },
       {
         "name": "ownerMoves",

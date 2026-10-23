@@ -7,6 +7,7 @@
     import {
         allUsersStore,
         anonUserStore,
+        favouritesStore,
         chatIdentifierToString,
         chatListScopeStore,
         compareMembers,
@@ -51,6 +52,7 @@
     import { _ } from "svelte-i18n";
     import { closeRightColumn, openPanelOver } from "../app/rightPanel";
     import type { GroupSettingsTab } from "../app/dialogs";
+    import { permissionsValue } from "./settings.adapter";
     import type { RightRegion, ScreenProps } from "../app/screens";
     import { gateAssets, gatesState } from "../access/gates.adapter";
     import { pickById } from "../../pickById";
@@ -349,6 +351,15 @@
         }
     }
 
+    function toggleFavourite() {
+        if (collection === undefined || collection.kind === "community") return;
+        if ($favouritesStore.has(collection.id)) {
+            client.removeFromFavourites(collection.id);
+        } else {
+            client.addToFavourites(collection.id);
+        }
+    }
+
     // GroupPanel's view the settings were opened from, as the dialog's page
     function settingsTab(view: string | undefined): GroupSettingsTab {
         return view === "gates" || view === "rules" || view === "permissions" ? view : "group";
@@ -395,6 +406,11 @@
         canManageUserGroups={false}
         canEdit={collection.kind !== "community" && (permissions?.canEdit ?? false)}
         canDelete={permissions?.canDelete ?? false}
+        permissions={collection.kind === "community"
+            ? undefined
+            : permissionsValue(collection.permissions)}
+        isFavourite={collection.kind !== "community" && $favouritesStore.has(collection.id)}
+        onToggleFavourite={collection.kind === "community" ? undefined : toggleFavourite}
         {onDialog}
         canInvite={false}
         canPin={collection.kind !== "community" && client.canPinMessages(collection.id)}

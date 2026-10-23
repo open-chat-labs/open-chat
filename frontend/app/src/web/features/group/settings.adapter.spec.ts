@@ -1,5 +1,6 @@
 import {
     defaultChatPermissions,
+    defaultChatRules,
     groupChanges,
     ROLE_ADMIN,
     ROLE_MODERATOR,
@@ -53,7 +54,12 @@ function savedUnchanged(value: GroupSettings): GroupSettings {
             ...settings,
             afterMs: settings.disappearOn ? durationMs(settings.after) : null,
         },
-        rules: { ...value.rules, newVersion: false },
+        // rules switched off are saved without their text, and switched on, trimmed
+        rules: {
+            enabled: value.rules.enabled,
+            text: value.rules.enabled ? value.rules.text.trim() : "",
+            newVersion: false,
+        },
     };
 }
 
@@ -64,6 +70,9 @@ describe("group settings adapter", () => {
             group(),
             group({ eventsTTL: undefined, permissions: defaultChatPermissions() }),
             group({ avatar: undefined, public: true }),
+            // the default rules come switched off with their text
+            group({ rules: { ...defaultChatRules("group"), newVersion: false } }),
+            group({ rules: { enabled: true, text: "Be kind\n", newVersion: false } }),
         ]) {
             const saved = savedUnchanged(groupSettings(original, lookups));
             const candidate = candidateFromSettings(saved, original, lookups);

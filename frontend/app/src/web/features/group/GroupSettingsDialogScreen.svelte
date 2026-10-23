@@ -31,7 +31,11 @@
     import { i18nKey, interpolate } from "@i18n/i18n";
     import { muteChat } from "@src/logic/chats/muteChat";
     import { chatManageAccess } from "@src/logic/groupOrCommunity/detailsPermissions";
-    import { UpdateGroupState } from "@src/logic/groupOrCommunity/group.svelte";
+    import {
+        MAX_NAME_LENGTH,
+        MIN_NAME_LENGTH,
+        UpdateGroupState,
+    } from "@src/logic/groupOrCommunity/group.svelte";
     import { toastStore } from "@src/stores/toast";
     import { AVATAR_SIZE, cropCentred } from "@src/utils/imageCrop";
     import { getContext, untrack } from "svelte";
@@ -112,8 +116,9 @@
 
     // UpdateGroupState's limits, which the dialog shows as an invalid name
     function checkName(name: string): Promise<NameCheck> {
-        const length = name.trim().length;
-        return Promise.resolve(length >= 3 && length <= 40 ? "ok" : "invalid");
+        return Promise.resolve(
+            name.length >= MIN_NAME_LENGTH && name.length <= MAX_NAME_LENGTH ? "ok" : "invalid",
+        );
     }
 
     // The dialog keeps the edits and says it couldn't save when this rejects

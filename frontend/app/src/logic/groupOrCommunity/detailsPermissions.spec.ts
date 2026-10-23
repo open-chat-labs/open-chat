@@ -100,7 +100,7 @@ describe("chatManageAccess", () => {
     });
 
     // 4b invariant 7: a section the user's role can't change is read-only
-    test("an admin edits the group but not its permissions or disappearing messages", () => {
+    test("an admin edits the group but not its permissions, disappearing messages or visibility", () => {
         expect(
             chatManageAccess(
                 viewer({ edit: true, owner: false }),
@@ -108,7 +108,7 @@ describe("chatManageAccess", () => {
                 undefined,
                 false,
             ),
-        ).toEqual({ kind: "edit", readOnly: ["permissions", "disappearing"] });
+        ).toEqual({ kind: "edit", readOnly: ["permissions", "disappearing", "visibility"] });
     });
 
     test("the owner edits everything", () => {

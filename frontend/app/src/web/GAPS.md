@@ -261,9 +261,16 @@ design export needs. Each entry says where it came up.
   on `UpdateGroupState` (`features/group/GroupSettingsDialogScreen.svelte`, through
   `settings.adapter.ts`). Someone who can't edit the chat gets its About page instead
   (`chatManageAccess`), from the same menu item, which reads "About the group" for them.
-  - by hand: `GroupSettingsDialog` takes `readOnlySections`. Permissions and disappearing messages
-    are read-only to a non-owner, as in the old editors. "Visible chat history" is always locked
-    when editing, because the backend's update has no field for it.
+  - by hand: `GroupSettingsDialog` takes `readOnlySections`. Permissions, disappearing messages
+    and Public are read-only to a non-owner, as in the old editors (`canChangeVisibility`).
+    "Visible chat history" is always locked when editing, because the backend's update has no
+    field for it. A read-only Permissions page keeps its General / Messages / Threads tabs.
+  - a public group's "Start a call" isn't forced to admins. Old desktop did that and mobile
+    doesn't; the backend doesn't require it, so this follows mobile.
+  - a channel's settings still say "Group settings", "Group name" and "Group photo". The
+    dialog's `noun` is only `group` or `community`.
+  - a group made in the old UI counts several permissions as "changed from the defaults". The
+    dialog's defaults aren't the app's (`defaultChatPermissions`).
   - by hand: GroupPanel offers Settings to everyone, as About for someone without edit rights.
   - the confirm for a verified group's rename and for a change of visibility is the app's
     (`DialogShell`, `TODO(design)`). Declining it keeps the edits, and the dialog says it
