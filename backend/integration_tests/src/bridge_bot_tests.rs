@@ -436,6 +436,8 @@ fn bridge_bots_relay_messages_as_their_authors() {
     let code = start_link(env, owner.principal, user_index, BridgePlatform::Discord);
     let response = link(env, discord_bot_principal, user_index, renamed.clone(), &code);
     assert!(matches!(response, LinkResponse::Success(_)), "{response:?}");
+    // Before the bot unlinks it, so the count going back down is the bot's unlink arriving
+    wait_for_bridged_user_links(env, canister_ids, &links_before, 2);
     let response = unlink(env, telegram_bot_principal, user_index, &renamed);
     assert!(
         matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::InitiatorNotAuthorized)),
