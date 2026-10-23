@@ -407,6 +407,7 @@
         await flow.signedIn(initiator);
         let outcome: LinkOutcome | undefined;
         let linking: Promise<LinkOutcome> | undefined;
+        let givenUp = false;
         const current = linked.find((p) => p.isCurrentIdentity)?.provider;
         try {
             await signInAgain(
@@ -415,6 +416,8 @@
                     await flow.signedIn(approver);
                     // not this session's sign-in: the user can try again
                     if (flow.stage.kind !== "ready_to_link") return flow.error;
+                    // given up while that was checked: the step is cancelled, so nothing's linked
+                    if (givenUp) return;
                     linking = flow.link();
                     outcome = await linking;
                 },
@@ -423,6 +426,7 @@
         } catch {
             // given up: quietly, unless the link had started by then; that goes on regardless, so
             // its outcome is seen through (link never rejects)
+            givenUp = true;
             if (linking === undefined) throw CANCELLED;
             outcome = await linking;
         }
