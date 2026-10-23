@@ -37,6 +37,7 @@
     } from "@src/logic/members/memberManagement.svelte";
     import { PinnedMessages } from "@src/logic/pinned/pinnedMessages.svelte";
     import { muteChat } from "@src/logic/chats/muteChat";
+    import { chatRulesText } from "@src/logic/groupOrCommunity/detailsPermissions";
     import { toastStore } from "@src/stores/toast";
     import { navigate } from "@src/utils/navigation";
     import { profileClickedEvent } from "@src/web-components/profileLink";
@@ -134,21 +135,16 @@
     const header = $derived(
         collection === undefined
             ? undefined
-            : panelHeader({
-                  name: collection.name,
-                  about:
-                      collection.kind === "community"
-                          ? collection.description
-                          : groupDescription(collection, me),
+            : panelHeader(
+                  collection,
+                  collection.kind === "community"
+                      ? collection.description
+                      : groupDescription(collection, me),
                   // uploaded images only: a swatch stands in otherwise, as in the chat list
-                  avatarUrl:
-                      collection.kind === "community"
-                          ? collection.avatar.blobUrl
-                          : (collection.blobUrl ?? community?.avatar.blobUrl),
-                  isPublic: collection.public,
-                  memberCount: collection.memberCount,
-                  viewerRole: collection.membership.role,
-              }),
+                  collection.kind === "community"
+                      ? collection.avatar.blobUrl
+                      : (collection.blobUrl ?? community?.avatar.blobUrl),
+              ),
     );
 
     // rules show to someone who can send, combined with the community's
@@ -162,9 +158,13 @@
                       text: $selectedCommunityRulesStore.text,
                   };
         }
-        if (!client.canSendMessage(collection.id, "any")) return undefined;
-        const text = client.combineRulesText($selectedChatRulesStore, $selectedCommunityRulesStore);
-        return { enabled: text.length > 0, text };
+        const text = chatRulesText(
+            client,
+            collection,
+            $selectedChatRulesStore,
+            $selectedCommunityRulesStore,
+        );
+        return text === "" ? undefined : { enabled: true, text };
     });
 
     const gateLookups = $derived({ tokens: $cryptoLookup, nervousSystems: $nervousSystemLookup });

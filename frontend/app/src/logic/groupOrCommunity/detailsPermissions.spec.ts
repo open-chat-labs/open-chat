@@ -1,6 +1,10 @@
 import type { CommunitySummary, MultiUserChat, OpenChat } from "@client";
 import { describe, expect, test } from "vitest";
-import { chatDetailsPermissions, communityDetailsPermissions } from "./detailsPermissions";
+import {
+    chatDetailsPermissions,
+    chatRulesText,
+    communityDetailsPermissions,
+} from "./detailsPermissions";
 
 const channel = {
     kind: "channel",
@@ -48,5 +52,20 @@ describe("details permissions", () => {
         expect(chatDetailsPermissions(client({}, true), channel, community, false).canInvite).toBe(
             false,
         );
+    });
+});
+
+describe("chat rules text", () => {
+    // #10112 "Behaviours to keep": rules show only to someone who can send, combined with the community's
+    test("shows the combined rules to someone who can send, and nothing to anyone else", () => {
+        const rules = (canSend: boolean) =>
+            ({
+                canSendMessage: () => canSend,
+                combineRulesText: () => "chat rules + community rules",
+            }) as never as OpenChat;
+        expect(chatRulesText(rules(true), channel, undefined, undefined)).toBe(
+            "chat rules + community rules",
+        );
+        expect(chatRulesText(rules(false), channel, undefined, undefined)).toBe("");
     });
 });

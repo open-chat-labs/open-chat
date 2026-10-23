@@ -1,5 +1,8 @@
 <script lang="ts">
-    import { chatDetailsPermissions } from "@src/logic/groupOrCommunity/detailsPermissions";
+    import {
+        chatDetailsPermissions,
+        chatRulesText,
+    } from "@src/logic/groupOrCommunity/detailsPermissions";
     import { i18nKey } from "@src/i18n/i18n";
     import { toastStore } from "@src/stores/toast";
     import { activeVideoCall } from "@src/stores/video";
@@ -96,11 +99,8 @@
     let rules = $derived($selectedChatRulesStore ?? defaultChatRules(chat.level));
     let avatarUrl = $derived(client.groupAvatarUrl(chat, $selectedCommunitySummaryStore));
     let busy = $state(false);
-    let canSend = $derived(client.canSendMessage(chat.id, "any"));
     let combinedRulesText = $derived(
-        canSend
-            ? client.combineRulesText($selectedChatRulesStore, $selectedCommunityRulesStore)
-            : "",
+        chatRulesText(client, chat, $selectedChatRulesStore, $selectedCommunityRulesStore),
     );
 
     function toggleFavourites() {

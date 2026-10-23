@@ -1,5 +1,8 @@
 <script lang="ts">
-    import { chatDetailsPermissions } from "@src/logic/groupOrCommunity/detailsPermissions";
+    import {
+        chatDetailsPermissions,
+        chatRulesText,
+    } from "@src/logic/groupOrCommunity/detailsPermissions";
     import type { MultiUserChat, OpenChat } from "@client";
     import {
         anonUserStore,
@@ -44,16 +47,13 @@
 
     let { chat = $bindable(), memberCount }: Props = $props();
 
-    let canSend = $derived(client.canSendMessage(chat.id, "any"));
     let permissions = $derived(
         chatDetailsPermissions(client, chat, $selectedCommunitySummaryStore, $anonUserStore),
     );
     let canInvite = $derived(permissions.canInvite);
     let avatarSrc = $derived(client.groupAvatarUrl(chat, $selectedCommunitySummaryStore));
     let combinedRulesText = $derived(
-        canSend
-            ? client.combineRulesText($selectedChatRulesStore, $selectedCommunityRulesStore)
-            : "",
+        chatRulesText(client, chat, $selectedChatRulesStore, $selectedCommunityRulesStore),
     );
     let externalUrl = $derived(chat.kind === "channel" ? chat.externalUrl : undefined);
     let externalContent = $derived(externalUrl !== undefined);

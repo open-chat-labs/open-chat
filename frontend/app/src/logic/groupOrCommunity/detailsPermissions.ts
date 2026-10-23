@@ -1,4 +1,4 @@
-import type { CommunitySummary, MultiUserChat, OpenChat } from "@client";
+import type { CommunitySummary, MultiUserChat, OpenChat, VersionedRules } from "@client";
 
 /** What a chat's or community's details panel offers the viewer. */
 export type DetailsPermissions = { canEdit: boolean; canDelete: boolean; canInvite: boolean };
@@ -40,4 +40,19 @@ export function communityDetailsPermissions(
         canDelete: client.canDeleteCommunity(community.id),
         canInvite: client.canInviteUsers(community.id),
     };
+}
+
+/**
+ * A chat's rules as its details show them: combined with its community's, and only to someone
+ * who can send in it ("" otherwise).
+ */
+export function chatRulesText(
+    client: OpenChat,
+    chat: MultiUserChat,
+    chatRules: VersionedRules | undefined,
+    communityRules: VersionedRules | undefined,
+): string {
+    return client.canSendMessage(chat.id, "any")
+        ? client.combineRulesText(chatRules, communityRules)
+        : "";
 }

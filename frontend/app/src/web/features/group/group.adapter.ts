@@ -4,9 +4,11 @@ import {
     ROLE_MEMBER,
     ROLE_MODERATOR,
     ROLE_OWNER,
+    type CommunitySummary,
     type FullMember,
     type MemberActions,
     type MemberRole,
+    type MultiUserChat,
     type UserGroupDetails,
     type UserLookup,
     type UserSummary,
@@ -108,22 +110,21 @@ export function userGroupRow(group: UserGroupDetails, users: UserLookup) {
     };
 }
 
-/** The panel's header: a group's, channel's or community's name, about, avatar and member count. */
-export function panelHeader(input: {
-    name: string;
-    about: string;
-    avatarUrl: string | undefined;
-    isPublic: boolean;
-    // the summary's count: a large chat holds only its first page of members
-    memberCount: number;
-    viewerRole: MemberRole;
-}) {
+/**
+ * The panel's header from a group's, channel's or community's summary. The member count is the
+ * summary's: a large chat holds only its first page of members.
+ */
+export function panelHeader(
+    summary: MultiUserChat | CommunitySummary,
+    about: string,
+    avatarUrl: string | undefined,
+) {
     return {
-        title: input.name,
-        about: input.about,
-        avatar: input.avatarUrl ?? "",
-        isPublic: input.isPublic,
-        memberTotal: input.memberCount,
-        viewerRole: panelRole(input.viewerRole),
+        title: summary.name,
+        about,
+        avatar: avatarUrl ?? "",
+        isPublic: summary.public,
+        memberTotal: summary.memberCount,
+        viewerRole: panelRole(summary.membership.role),
     };
 }
