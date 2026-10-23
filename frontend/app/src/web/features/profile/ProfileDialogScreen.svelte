@@ -44,6 +44,7 @@
         sortedCommunitiesStore,
         storageStore,
         type BotClientConfigData,
+        type ChitEvent,
     } from "@client";
     import ProfileDialog, {
         type ChatSettings,
@@ -72,7 +73,7 @@
     import { themeType } from "@theme/themes";
     import { getContext, onDestroy, onMount } from "svelte";
     import { SvelteMap } from "svelte/reactivity";
-    import { _ } from "svelte-i18n";
+    import { _, locale } from "svelte-i18n";
     import { accentOf, accentStore } from "../../accent";
     import type { DialogProps, LinkedDialog } from "../app/dialogs";
     import {
@@ -355,9 +356,21 @@
 
     const inviteLink = $derived(referralLink(client.canonicalOrigin(), userId));
 
+    // when the account was made, in the user's locale, as the dialog would show its `joined` (which
+    // is the calendar's day for it)
+    const memberSince = $derived(
+        new Intl.DateTimeFormat($locale ?? "en", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+        }).format(header.joined),
+    );
+
     // ---- CHIT: its settings (the old UI's, in this browser) and the claim calendar ----
     function changeChit(patch: ChitSettingsPatch) {
         if (patch.enabled !== undefined) disableChit.set(!patch.enabled);
+        // the calendar shows once CHIT is on
+        if (patch.enabled) loadClaimHistory();
         if (patch.notify !== undefined) chitPopup.set(patch.notify);
         if (patch.hideAfterClaim !== undefined) hideChitIcon.set(patch.hideAfterClaim);
         if (patch.utc !== undefined) utcMode.set(patch.utc);
@@ -400,16 +413,25 @@
         return [...days, here];
     }
 
-    // every claim since the account was made, loaded each time the section shows: the calendar
-    // pages through the months itself, and a claim's streak day follows from the ones before it
+    // every claim since the account was made: the calendar pages through the months itself, and a
+    // claim's streak day follows from the ones before it. Loaded once CHIT's section shows (not
+    // while CHIT is off), then only what's newer each time it shows again; a load that fails
+    // leaves the calendar as it was
+    let chitEvents: ChitEvent[] = [];
     let claimHistory = $state<ClaimDay[]>([]);
     let claimHistoryRun = 0;
 
     async function loadClaimHistory() {
+        if ($disableChit) return;
         const run = ++claimHistoryRun;
+        const newest = chitEvents.at(-1)?.timestamp;
         try {
-            const events = await client.chitHistory(BigInt(header.joined));
-            if (run === claimHistoryRun) claimHistory = withClaimedHere(claimDays(events));
+            const events = await client.chitHistory(
+                newest === undefined ? BigInt(header.joined) : newest + 1n,
+            );
+            if (run !== claimHistoryRun) return;
+            chitEvents = [...chitEvents, ...events];
+            claimHistory = withClaimedHere(claimDays(chitEvents));
         } catch (err) {
             console.warn("Unable to load the CHIT claim history", err);
         }
@@ -672,7 +694,8 @@
     handle={header.handle}
     name={header.name}
     about={header.about}
-    joined={header.joined}
+    joined={calendarDay(header.joined)}
+    {memberSince}
     streak={header.streak}
     balance={header.balance}
     chitEarned={$chitStateStore.totalChitEarned}

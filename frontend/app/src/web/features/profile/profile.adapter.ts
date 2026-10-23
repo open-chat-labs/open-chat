@@ -1,5 +1,6 @@
 import {
     AuthProvider,
+    ONE_DAY,
     ONE_MB,
     type AccountLinkingCode,
     type BotClientConfigData,
@@ -243,19 +244,41 @@ export function linkCodeProps(code: AccountLinkingCode): { code: string; expires
     return { code: code.value, expiresAt: Number(code.expiresAt) };
 }
 
-const DAY_MS = 24 * 60 * 60 * 1000;
-
 // the user's time zone at a moment, in minutes east of UTC
 type OffsetMinutes = (ms: number) => number;
 const browserOffset: OffsetMinutes = (ms) => -new Date(ms).getTimezoneOffset();
 
+const MINUTE = 60_000;
+const HOUR = 60 * MINUTE;
+
+// a calendar day's key, from its start (calendarDay)
+function dayKey(day: number): string {
+    return new Date(day).toISOString().slice(0, 10);
+}
+
 /**
  * The user's own day `ms` falls on, as the CHIT calendar takes its days: that date's midnight in
  * UTC (the calendar lays out UTC dates, and the backend counts a streak in the user's time zone,
- * so its `today` and its claims both go by the user's date).
+ * so its `today`, `joined` and claims all go by the user's date).
  */
 export function calendarDay(ms: number, offsetMinutes: OffsetMinutes = browserOffset): number {
-    return Math.floor((ms + offsetMinutes(ms) * 60_000) / DAY_MS) * DAY_MS;
+    return Math.floor((ms + offsetMinutes(ms) * MINUTE) / ONE_DAY) * ONE_DAY;
+}
+
+// An insured or reinstated day is marked at the last ms of that day in the zone the user claimed
+// from, which needn't be this browser's (they travelled, or use another device): its day is the
+// one it ends, in the zone (whole minutes, UTC-12 to UTC+14) closest to this browser's. Anything
+// else falls on its day here.
+function markerDay(ms: number, offsetMinutes: OffsetMinutes): number {
+    // the next day's start in that zone, so `end + offset` is a whole number of days
+    const end = ms + 1;
+    const rest = ((-end % ONE_DAY) + ONE_DAY) % ONE_DAY;
+    if (rest % MINUTE !== 0) return calendarDay(ms, offsetMinutes);
+    const here = offsetMinutes(ms) * MINUTE;
+    const offset = [rest - ONE_DAY, rest]
+        .filter((o) => o >= -12 * HOUR && o <= 14 * HOUR)
+        .reduce((best, o) => (Math.abs(o - here) < Math.abs(best - here) ? o : best));
+    return end + offset - ONE_DAY;
 }
 
 /** Today's claim as the calendar shows it, from what claiming answered. */
@@ -265,45 +288,54 @@ export function claimedNow(
     amount: number,
     offsetMinutes: OffsetMinutes = browserOffset,
 ): ClaimDay {
-    const day = new Date(calendarDay(now, offsetMinutes)).toISOString().slice(0, 10);
-    return { day, streakDay, amount, minute: Math.floor((now % DAY_MS) / 60_000) };
+    return {
+        day: dayKey(calendarDay(now, offsetMinutes)),
+        streakDay,
+        amount,
+        minute: Math.floor((now % ONE_DAY) / MINUTE),
+    };
 }
+
+type DayEvent = { kind: ChitEvent["reason"]["kind"]; ms: number; amount: number };
 
 /**
  * The CHIT calendar's days from the user's CHIT events (any order): a daily claim, a claim
- * reinstated, or a day covered by streak insurance, each on the user's own day (calendarDay). Each
- * one's streak day follows from the days before it: one more than the day before, or 1 after a
- * gap. A reinstated claim is a kept day with nothing earned.
+ * reinstated, or a day covered by streak insurance, each on the user's own day. One a day: the
+ * first claim, or else the day's marker. Each one's streak day follows from the days before it:
+ * one more than the day before, or 1 after a gap. A reinstated claim is a kept day with nothing
+ * earned.
  */
 export function claimDays(
     events: ChitEvent[],
     offsetMinutes: OffsetMinutes = browserOffset,
 ): ClaimDay[] {
-    const days: ClaimDay[] = [];
-    let last: { dayNumber: number; streakDay: number } | undefined;
+    const byDay = new Map<number, DayEvent>();
     const sorted = [...events].sort((a, b) => (a.timestamp < b.timestamp ? -1 : 1));
     for (const { reason, timestamp, amount } of sorted) {
         const kind = reason.kind;
-        if (
-            kind !== "daily_claim" &&
-            kind !== "daily_claim_reinstated" &&
-            kind !== "streak_insurance_claim"
-        ) {
-            continue;
-        }
         const ms = Number(timestamp);
-        const dayNumber = calendarDay(ms, offsetMinutes) / DAY_MS;
-        // one a day
-        if (last?.dayNumber === dayNumber) continue;
-        const streakDay = last?.dayNumber === dayNumber - 1 ? last.streakDay + 1 : 1;
-        last = { dayNumber, streakDay };
-        const day = new Date(dayNumber * DAY_MS).toISOString().slice(0, 10);
+        let day: number;
+        if (kind === "daily_claim") day = calendarDay(ms, offsetMinutes);
+        else if (kind === "daily_claim_reinstated" || kind === "streak_insurance_claim")
+            day = markerDay(ms, offsetMinutes);
+        else continue;
+        const had = byDay.get(day);
+        if (had === undefined || (had.kind !== "daily_claim" && kind === "daily_claim")) {
+            byDay.set(day, { kind, ms, amount });
+        }
+    }
+    const days: ClaimDay[] = [];
+    let last: { day: number; streakDay: number } | undefined;
+    for (const [day, { kind, ms, amount }] of [...byDay].sort(([a], [b]) => a - b)) {
+        const streakDay = last?.day === day - ONE_DAY ? last.streakDay + 1 : 1;
+        last = { day, streakDay };
+        const key = dayKey(day);
         if (kind === "streak_insurance_claim") {
-            days.push({ day, streakDay, insured: true });
+            days.push({ day: key, streakDay, insured: true });
         } else if (kind === "daily_claim_reinstated") {
-            days.push({ day, streakDay, amount: 0 });
+            days.push({ day: key, streakDay, amount: 0 });
         } else {
-            days.push({ day, streakDay, amount, minute: Math.floor((ms % DAY_MS) / 60_000) });
+            days.push({ day: key, streakDay, amount, minute: Math.floor((ms % ONE_DAY) / MINUTE) });
         }
     }
     return days;

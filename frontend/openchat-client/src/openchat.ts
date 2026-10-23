@@ -13254,23 +13254,23 @@ export class OpenChat {
 
     /**
      * The user's CHIT events from `from` (ms epoch) until now, oldest first, all of them (the CHIT
-     * calendar's history). As far as it got if a page fails to load.
+     * calendar's history). Rejects if a page fails to load: a part of the history isn't it.
      */
     chitHistory(from: bigint): Promise<ChitEvent[]> {
         // a day ahead: an event just made carries the canister's time, which may be ahead of ours
         const to = BigInt(Date.now() + ONE_DAY);
         return allChitEvents(
-            async (next, max) =>
+            async (skip, max) =>
                 (
-                    await this.chitEvents({
+                    await this.#worker.send({
                         kind: "getChitEvents",
-                        from: next,
+                        from,
                         to,
                         max,
-                        ascending: true,
+                        ascending: false,
+                        skip,
                     })
                 ).events,
-            from,
         );
     }
 

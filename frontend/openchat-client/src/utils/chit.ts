@@ -9,25 +9,23 @@ export function currentStreak(
 }
 
 /**
- * Every CHIT event from `from` (ms epoch) on, oldest first, read a page at a time with `page`
- * (`from`, the page size: up to that many events from `from`, oldest first). Stops at a short
- * page, or after `maxPages` (a bound, not a limit any account reaches).
+ * Every CHIT event `page` gives, oldest first. Read newest first a page at a time (`page` takes how
+ * many to pass over and the page size), each page after the ones read so far, so events that share
+ * a timestamp aren't missed. Stops at a short page, or after `maxPages` (a bound no account
+ * reaches), which leaves out the oldest events, not the latest.
  */
 export async function allChitEvents(
-    page: (from: bigint, max: number) => Promise<ChitEvent[]>,
-    from: bigint,
+    page: (skip: number, max: number) => Promise<ChitEvent[]>,
     pageSize = 500,
     maxPages = 40,
 ): Promise<ChitEvent[]> {
     const events: ChitEvent[] = [];
-    let next = from;
     for (let n = 0; n < maxPages; n++) {
-        const got = await page(next, pageSize);
+        const got = await page(events.length, pageSize);
         events.push(...got);
         if (got.length < pageSize) break;
-        next = got[got.length - 1].timestamp + 1n;
     }
-    return events;
+    return events.reverse();
 }
 
 // how recent the last sync must be for the claim to be offered where that's checked: older, and

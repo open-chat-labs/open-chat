@@ -256,4 +256,31 @@ describe("the CHIT calendar's days", () => {
         });
         expect(claimDays([at(now, "daily_claim", 200)], plus2)[0].day).toBe(today);
     });
+
+    test("an insured or reinstated day is the one its marker ends, in the zone it was claimed from", () => {
+        // insured on the 2nd claimed from UTC-5: marked at its last ms there, 04:59:59.999 UTC
+        // on the 3rd, which is the 3rd at UTC+2, where the browser is now
+        const marker = MARCH_1 + 2 * DAY + 5 * 60 * 60_000 - 1;
+        const plus2 = () => 120;
+        const events = [
+            at(MARCH_1 + 9 * 60 * 60_000, "daily_claim", 10),
+            at(marker, "streak_insurance_claim"),
+            at(MARCH_1 + 2 * DAY + 9 * 60 * 60_000, "daily_claim", 30),
+        ];
+        expect(claimDays(events, plus2)).toEqual([
+            { day: "2026-03-01", streakDay: 1, amount: 10, minute: 9 * 60 },
+            { day: "2026-03-02", streakDay: 2, insured: true },
+            { day: "2026-03-03", streakDay: 3, amount: 30, minute: 9 * 60 },
+        ]);
+    });
+
+    test("a claim wins its day over a marker on it", () => {
+        const events = [
+            at(MARCH_1 + 1000, "streak_insurance_claim"),
+            at(MARCH_1 + 60 * 60_000, "daily_claim", 10),
+        ];
+        expect(claimDays(events, utc)).toEqual([
+            { day: "2026-03-01", streakDay: 1, amount: 10, minute: 60 },
+        ]);
+    });
 });

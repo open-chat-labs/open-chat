@@ -16,20 +16,31 @@ describe("all the CHIT events", () => {
         timestamp: BigInt(timestamp),
         reason: { kind: "daily_claim" as const },
     });
+    // newest first, as the backend gives them, passing over `skip`
+    const newestFirst = (stored: ReturnType<typeof event>[]) =>
+        vi.fn(async (skip: number, max: number) => [...stored].reverse().slice(skip, skip + max));
 
-    test("are read a page at a time, each from just after the last one read, until a short page", async () => {
-        const stored = [1, 2, 3, 4, 5].map(event);
-        const page = vi.fn(async (from: bigint, max: number) =>
-            stored.filter((e) => e.timestamp >= from).slice(0, max),
-        );
-        expect(await allChitEvents(page, 0n, 2)).toEqual(stored);
-        expect(page.mock.calls.map(([from]) => from)).toEqual([0n, 3n, 5n]);
+    test("are read newest first a page at a time, each after the ones read, and come oldest first", async () => {
+        // two share a timestamp across a page break: neither is missed
+        const stored = [1, 2, 3, 3, 4].map(event);
+        const page = newestFirst(stored);
+        expect(await allChitEvents(page, 2)).toEqual(stored);
+        expect(page.mock.calls.map(([skip]) => skip)).toEqual([0, 2, 4]);
     });
 
-    test("stop after the page bound", async () => {
-        const page = vi.fn(async (from: bigint) => [event(Number(from)), event(Number(from) + 1)]);
-        expect(await allChitEvents(page, 0n, 2, 3)).toHaveLength(6);
+    test("stop after the page bound, leaving out the oldest", async () => {
+        const stored = [1, 2, 3, 4, 5, 6, 7, 8].map(event);
+        const page = newestFirst(stored);
+        expect(await allChitEvents(page, 2, 3)).toEqual(stored.slice(2));
         expect(page).toHaveBeenCalledTimes(3);
+    });
+
+    test("fail if a page fails", async () => {
+        const page = vi.fn(async (skip: number) => {
+            if (skip > 0) throw new Error("offline");
+            return [event(2), event(1)];
+        });
+        await expect(allChitEvents(page, 2)).rejects.toThrow("offline");
     });
 });
 
