@@ -2050,6 +2050,7 @@ type BotMessageContext = record {
 type BridgedUserId = variant {
     Discord : nat64;
     Telegram : int64;
+    Twitch : nat64;
 };
 
 type SenderContext = variant {

@@ -169,6 +169,7 @@ const MAX_BRIDGED_USERS_PER_QUERY = 100;
 const API_BRIDGE_PLATFORMS: Record<BridgePlatform, ApiBridgePlatform> = {
     discord: "Discord",
     telegram: "Telegram",
+    twitch: "Twitch",
 };
 
 export class UserIndexClient extends SingleCanisterMsgpackAgent {

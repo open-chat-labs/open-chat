@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Store messages relayed from Twitch ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+
 ### Removed
 
 - Remove the one-off which reset the channels' bot subscriptions, now that it has run ([#10172](https://github.com/open-chat-labs/open-chat/pull/10172))

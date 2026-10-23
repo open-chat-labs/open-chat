@@ -664,6 +664,9 @@ export function bridgedUserId(value: TBridgedUserId): BridgedUserId {
     if ("Telegram" in value) {
         return { kind: "telegram", id: value.Telegram.toString() };
     }
+    if ("Twitch" in value) {
+        return { kind: "twitch", id: value.Twitch.toString() };
+    }
     throw new UnsupportedValueError("Unexpected ApiBridgedUserId type received", value);
 }
 
@@ -673,6 +676,8 @@ export function apiBridgedUserId(id: BridgedUserId): TBridgedUserId {
             return { Discord: BigInt(id.id) };
         case "telegram":
             return { Telegram: BigInt(id.id) };
+        case "twitch":
+            return { Twitch: BigInt(id.id) };
     }
 }
 
@@ -706,6 +711,18 @@ function bridgedUser(value: TBridgedUser): BridgedUser {
                 username: u.username,
                 displayName: u.display_name,
                 photoId: u.photo_id,
+            },
+        };
+    }
+    if ("Twitch" in value) {
+        const u = value.Twitch;
+        return {
+            kind: "twitch",
+            profile: {
+                id: u.id.toString(),
+                login: u.login,
+                displayName: u.display_name,
+                profileImage: u.profile_image,
             },
         };
     }

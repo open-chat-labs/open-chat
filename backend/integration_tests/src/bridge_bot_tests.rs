@@ -13,7 +13,7 @@ use testing::rng::random_string;
 use types::{
     BotChatContext, BotInstallationLocation, BotMessageContent, BotPermissions, BridgePlatform, BridgedUser, CanisterId, Chat,
     ChatEvent, DiscordUser, Empty, EventsResponse, MessageContent, MessageId, MessageIndex, MessagePermission, SenderContext,
-    TelegramUser, TextContent, UnitResult, UserId,
+    TelegramUser, TextContent, TwitchUser, UnitResult, UserId,
 };
 use user_index_canister::link_bridged_user::Response as LinkResponse;
 use user_index_canister::start_bridged_user_link::Response as StartLinkResponse;
@@ -536,6 +536,94 @@ fn assert_edited_to(events: &EventsResponse, text: &str) {
         message.content
     );
     assert!(message.edited);
+}
+
+#[test]
+fn twitch_bridge_bot_relays_messages_and_links_accounts() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    env.advance_time(Duration::from_millis(1));
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let group_id = client::user::happy_path::create_group(env, &owner, &random_string(), true, true);
+    let group = Chat::Group(group_id);
+    let local_user_index = canister_ids.local_user_index(env, group_id);
+
+    let (bot_id, bot_principal) = register_bot(env, &owner, canister_ids.user_index, random_string(), random_string());
+    let permissions = BotPermissions::default().with_message(&HashSet::from_iter([MessagePermission::Text]));
+    client::local_user_index::happy_path::install_bot(
+        env,
+        owner.principal,
+        local_user_index,
+        BotInstallationLocation::Group(group_id),
+        bot_id,
+        permissions.clone(),
+        Some(permissions),
+    );
+
+    let operator = client::register_user(env, canister_ids);
+    client::user_index::happy_path::add_platform_operator(env, *controller, canister_ids.user_index, operator.user_id);
+    tick_many(env, 3);
+    let response = set_bridge_bot(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        BridgePlatform::Twitch,
+        Some(bot_id),
+    );
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    wait_for_bridge_bot_everywhere(env, canister_ids, BridgePlatform::Twitch, Some(bot_id));
+
+    let twitch_author = TwitchUser {
+        id: 141981764,
+        login: "nelly".to_string(),
+        display_name: "Nelly".to_string(),
+        profile_image: Some("jtv_user_pictures/8a6381c7-d0c0-4576-b179-38bd5ce1d6af-profile_image-300x300.png".to_string()),
+    };
+    let from_twitch = BridgedUser::Twitch(twitch_author.clone());
+
+    let response = send(env, bot_principal, local_user_index, group, from_twitch.clone());
+    let SendResponse::Success(message) = response else {
+        panic!("'bot_send_message' error: {response:?}");
+    };
+    let events = client::group::happy_path::events_by_index(env, &owner, group_id, vec![message.event_index]);
+    assert_relayed_from(&events, bot_id, &from_twitch);
+    wait_for_bridged_user(env, canister_ids.user_index, &from_twitch);
+
+    // A profile image anywhere but Twitch's CDN is rejected
+    let response = send(
+        env,
+        bot_principal,
+        local_user_index,
+        group,
+        BridgedUser::Twitch(TwitchUser {
+            profile_image: Some("https://example.com/avatar.png".to_string()),
+            ..twitch_author
+        }),
+    );
+    assert!(
+        matches!(&response, SendResponse::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
+        "{response:?}"
+    );
+
+    // A user links their Twitch account through the bridge bot
+    let user_index = canister_ids.user_index;
+    let code = start_link(env, owner.principal, user_index, BridgePlatform::Twitch);
+    let response = link(env, bot_principal, user_index, from_twitch.clone(), &code);
+    assert!(matches!(response, LinkResponse::Success(_)), "{response:?}");
+    assert_eq!(linked_user_id(env, user_index, &from_twitch), Some(owner.user_id));
+
+    // Unlinked and unset, which leaves the pooled env as it was
+    let response = unlink(env, bot_principal, user_index, &from_twitch);
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    let response = set_bridge_bot(env, operator.principal, user_index, BridgePlatform::Twitch, None);
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    wait_for_bridge_bot_everywhere(env, canister_ids, BridgePlatform::Twitch, None);
 }
 
 // The UserIndex fans the bridge bots out to every LocalUserIndex, which can take a while under load
