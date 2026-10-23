@@ -125,6 +125,10 @@ design export needs. Each entry says where it came up.
   meter only with an allowance above 0; `aboutPages`, the About pages the host has; an empty
   communities section says so.
 - **`ProfileDialog` against the app** (8c):
+  - no "Hide all CHIT related features" switch: the new UI reads `disableChit` (the CHIT cards
+    on the user card and the DM panel follow it) but offers no way to change it. The setting is
+    kept in each origin's browser storage (`openchat_disable_chit`), so turning it off in the old
+    UI doesn't reach the new one on another origin;
   - the profile fields save one at a time, and any failure shows as "couldn't save": the reason
     the backend gave (`ProfileFieldErrors`, e.g. "display name too short") isn't shown;
   - the username is checked against looser rules than the app's (3 characters and up, where
