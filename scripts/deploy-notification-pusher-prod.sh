@@ -13,6 +13,8 @@ remote_cmd() {
 # Name of the package/service being deployed
 PACKAGE_NAME="notification_pusher_aws"
 SERVICE_NAME="notification-pusher"
+# A static binary for the host, an arm64 (t4g) instance
+TARGET="aarch64-unknown-linux-musl"
 
 # Remote paths
 REMOTE_SERVICE_DIR_NAME="notification_pusher"
@@ -63,7 +65,9 @@ fi
 # --- Build the service ---
 # Assume Rust is all set up, just build!
 echo "Building new notification-pusher version $NEW_VERSION..."
-cargo build --package $PACKAGE_NAME --release --target=x86_64-unknown-linux-musl
+# The vendored OpenSSL is compiled with musl's gcc too
+CC_aarch64_unknown_linux_musl=aarch64-linux-musl-gcc \
+    cargo build --package $PACKAGE_NAME --release --target=$TARGET
 
 # --- Create remote directory for the binary ---
 echo "Creating release folder $NEW_VERSION_PATH..."
@@ -73,7 +77,7 @@ NEW_VERSION_PATH_CREATED=true
 # --- Upload the binary ---
 echo "Uploading binary..."
 scp -i "$EC2_SSH_KEY_PATH" \
-    "target/x86_64-unknown-linux-musl/release/$PACKAGE_NAME" \
+    "target/$TARGET/release/$PACKAGE_NAME" \
     "$EC2_USER@$EC2_HOST:$NEW_VERSION_PATH/$PACKAGE_NAME"
 
 # --- Make sure we have adequate permissions ---

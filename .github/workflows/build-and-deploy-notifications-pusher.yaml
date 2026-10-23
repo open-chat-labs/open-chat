@@ -11,7 +11,8 @@ concurrency:
 
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest
+    # The pusher's host is arm64 (a t4g instance), so it's built on arm
+    runs-on: ubuntu-24.04-arm
 
     steps:
       - name: Checkout
@@ -60,7 +61,7 @@ jobs:
 
       - name: Add musl target
         working-directory: ${{ runner.temp }}/pusher
-        run: rustup target add x86_64-unknown-linux-musl
+        run: rustup target add aarch64-unknown-linux-musl
 
       - name: Build and deploy to EC2
         working-directory: ${{ runner.temp }}/pusher
