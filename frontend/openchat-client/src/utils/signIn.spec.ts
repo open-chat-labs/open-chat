@@ -1,5 +1,11 @@
-import { AuthProvider } from "@shared";
-import { isOwnPrincipal, markCurrentSignIn, signInOptions, unlinkIdentityFailure } from "./signIn";
+import { AuthProvider, ErrorCode } from "@shared";
+import {
+    isOwnPrincipal,
+    linkIdentitiesResult,
+    markCurrentSignIn,
+    signInOptions,
+    unlinkIdentityFailure,
+} from "./signIn";
 
 describe("signing in again accepts a linked principal and refuses any other", () => {
     const linked = async () => ["linked-principal"];
@@ -96,5 +102,43 @@ describe("the sign-in method this session used", () => {
     test("stays the one the backend marked, and is none without a passkey session", () => {
         const marked = markCurrentSignIn([passkey("a", [1], true), passkey("b", [2])], undefined);
         expect(marked.map((p) => p.isCurrentIdentity)).toEqual([true, false]);
+    });
+});
+
+describe("linking a sign-in method", () => {
+    const error = (code: ErrorCode) => ({ kind: "error" as const, code, message: undefined });
+
+    test("links", () => {
+        expect(linkIdentitiesResult("success")).toEqual({ kind: "linked" });
+        expect(linkIdentitiesResult({ kind: "success" })).toEqual({ kind: "linked" });
+    });
+
+    test("an identity already linked to another account says so, and starts over", () => {
+        for (const resp of ["already_registered" as const, error(ErrorCode.PrincipalAlreadyUsed)]) {
+            const result = linkIdentitiesResult(resp);
+            expect(result).toMatchObject({ kind: "failed", startOver: true });
+            expect(result.kind === "failed" && result.reason.key).toBe(
+                "identity.failure.alreadyLinked",
+            );
+        }
+    });
+
+    test("one already linked to this account doesn't start over", () => {
+        expect(linkIdentitiesResult("already_linked_to_principal")).toMatchObject({
+            kind: "failed",
+            startOver: false,
+        });
+    });
+
+    test("says when the account has as many methods as it can", () => {
+        for (const resp of [
+            "linked_identities_limit_reached" as const,
+            error(ErrorCode.MaxLinkedIdentitiesLimitReached),
+        ]) {
+            const result = linkIdentitiesResult(resp);
+            expect(result.kind === "failed" && result.reason.key).toBe(
+                "identity.failure.limitReached",
+            );
+        }
     });
 });

@@ -125,7 +125,9 @@ design export needs. Each entry says where it came up.
   meter only with an allowance above 0; `aboutPages`, the About pages the host has; an empty
   communities section says so; "Just linked" only for a sign-in method linked in the dialog, and no empty "last used"
   line; the delete flow's CHIT step for a user who has never earned any says they haven't
-  discovered it yet.
+  discovered it yet; a host step in the sign-in "add" form that rejects with `{ reason }` shows
+  that reason in place of the generic one (linking a method says why it couldn't, e.g. the
+  sign-in provider limit).
 - **`ProfileDialog` against the app** (8c):
   - no "Hide all CHIT related features" switch: the new UI reads `disableChit` (the CHIT cards
     on the user card and the DM panel follow it) but offers no way to change it. The setting is
@@ -143,10 +145,13 @@ design export needs. Each entry says where it came up.
     no such data to show;
   - the storage section's "report a problem" isn't offered: the app has nowhere to send a report;
   - About has no metrics link: the app has no metrics page;
-  - sign-in methods: linking one isn't offered yet (the next 8c step); the dialog has no place
-    for Ethereum, Solana or NFID, so those aren't listed; unlinking that fails says it couldn't,
-    not why (`unlinkIdentityFailure` has the reason); email links by a typed code in the design,
-    by a link the app polls in the app, so the email step isn't offered;
+  - sign-in methods: linking a passkey or an Internet Identity confirms it with the sign-in dialog
+    (signing in again, no design), offering only the way this session signed in; the dialog's
+    checklist has no step for it, so "Confirm with your …" waits while that dialog is up; the
+    dialog has no place for Ethereum, Solana or NFID, so those aren't listed; unlinking that
+    fails says it couldn't, not why (`unlinkIdentityFailure` has the reason); email links by a
+    typed code in the design, by a link the app polls in the app, so the email step isn't
+    offered;
   - deleting the account: the third step's "stay for the CHIT" (`onChitBribe`) does nothing more
     than staying; signing in again is the sign-in dialog (no design, as Forgot PIN's);
   - the cover's edit button is passed `isDiamond`, but the app's rule is a premium item: a

@@ -85,7 +85,12 @@ export {
 } from "./utils/profile";
 export { isDisplayNameValid, isUsernameValid } from "./utils/validation";
 export { rightPanelView, type RightPanelInput } from "./utils/rightPanel";
-export { signInOptions, unlinkIdentityFailure } from "./utils/signIn";
+export {
+    linkIdentitiesResult,
+    signInOptions,
+    unlinkIdentityFailure,
+    type LinkIdentitiesResult,
+} from "./utils/signIn";
 export { cloneWalletConfig, walletConfigForMode } from "./utils/walletConfig";
 export type { TrackingCategory } from "./utils/ga";
 export { toRecord } from "./utils/list";

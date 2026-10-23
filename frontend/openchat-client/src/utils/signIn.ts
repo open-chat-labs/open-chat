@@ -1,8 +1,10 @@
 import {
     AuthProvider,
+    ErrorCode,
     i18nKey,
     type AuthenticationPrincipal,
     type IdentityState,
+    type LinkIdentitiesResponse,
     type RemoveIdentityLinkResponse,
     type ResourceKey,
     type SignInMethod,
@@ -143,4 +145,47 @@ export function markCurrentSignIn<T extends AuthenticationPrincipal>(
 
 function sameBytes(a: Uint8Array, b: Uint8Array): boolean {
     return a.length === b.length && a.every((byte, i) => byte === b[i]);
+}
+
+/**
+ * How linking a sign-in method went (linkIdentities): linked, or why not, and whether the flow
+ * starts over from signing in with the new method.
+ */
+export type LinkIdentitiesResult =
+    | { kind: "linked" }
+    | { kind: "failed"; reason: ResourceKey; startOver: boolean };
+
+export function linkIdentitiesResult(resp: LinkIdentitiesResponse): LinkIdentitiesResult {
+    const failed = (key: string, startOver = true): LinkIdentitiesResult => ({
+        kind: "failed",
+        reason: i18nKey(key),
+        startOver,
+    });
+    if (typeof resp === "object") {
+        if (resp.kind === "success") return { kind: "linked" };
+        switch (resp.code) {
+            case ErrorCode.PrincipalAlreadyUsed:
+                return failed("identity.failure.alreadyLinked");
+            case ErrorCode.MaxLinkedIdentitiesLimitReached:
+                return failed("identity.failure.limitReached");
+            default:
+                return failed("identity.failure.link");
+        }
+    }
+    switch (resp) {
+        case "success":
+            return { kind: "linked" };
+        // already linked to this account: nothing to start over
+        case "already_linked_to_principal":
+            return failed("identity.failure.alreadyLinked", false);
+        // linked to another account
+        case "already_registered":
+            return failed("identity.failure.alreadyLinked");
+        case "linked_identities_limit_reached":
+            return failed("identity.failure.limitReached");
+        case "principal_mismatch":
+            return failed("identity.failure.principalMismatch");
+        default:
+            return failed("identity.failure.link");
+    }
 }

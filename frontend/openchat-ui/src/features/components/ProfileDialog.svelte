@@ -343,7 +343,7 @@
     onClearCache?: () => Promise<unknown> | void;
     /** Play a ringtone preview; may return a function that stops it. The play buttons are hidden without it. */
     onPreviewRingtone?: (tone: ChatSettings['ringtone']) => void | (() => void);
-    /** Sign-in methods. Each control is hidden when its callback is absent; rejections show an error. */
+    /** Sign-in methods. Each control is hidden when its callback is absent; rejections show an error, the given one when they reject with { reason } (resource key or literal text). */
     /** Create a passkey / sign in with II and link it (the host also confirms with the current method). */
     onLinkMethod?: (type: 'passkey' | 'ii') => Promise<SigninMethod>;
     /** Email a one-time code to this address. */
@@ -764,8 +764,10 @@
     let value: T;
     try {
       value = await call();
-    } catch {
-      if (mine === siRun) updateAdding({ waiting: false, error: failKey });
+    } catch (e) {
+      // a host can say why, as AuthDialog's AuthFailure: { reason } (resource key or literal text)
+      const given = (e as { reason?: unknown } | null)?.reason;
+      if (mine === siRun) updateAdding({ waiting: false, error: typeof given === 'string' && given ? given : failKey });
       return;
     }
     if (mine !== siRun) return;

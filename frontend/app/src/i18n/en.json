@@ -1311,6 +1311,7 @@
             "alreadyLinked": "Sorry but it looks like that principal is already linked to an OpenChat account",
             "identityNotFound": "We could not find the linked provider, and therefore cannot continue with the unlinking process.",
             "link": "Sorry but we were unable to link this principal to your OpenChat account",
+            "limitReached": "Sign-in provider limit reached. Unlink one in Profile settings → Sign-in providers, then try again.",
             "login_approver": "Sorry we were unable to sign into your current OpenChat authentication provider",
             "login_initiator": "Sorry we were unable to sign into the new authentication provider",
             "loginApprover": "Sorry we were unable to sign into your current OpenChat authentication provider",
