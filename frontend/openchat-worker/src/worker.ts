@@ -8,8 +8,10 @@ import {
 import { Principal } from "@icp-sdk/core/principal";
 import {
     abortInFlightQueries,
+    connectionMayHaveChanged,
     getBotDefinition,
     IdentityAgent,
+    monitorConnection,
     OpenChatAgent,
     setCachedWebAuthnKey,
     setCommunityReferral,
@@ -238,6 +240,13 @@ function sendEvent(msg: Omit<WorkerEvent, "kind">): void {
 // logger.error reported every worker failure twice under two different titles - the same
 // duplication App.svelte had. Rollbar's checkIgnore filters on the rejection reason itself.
 
+// Signs that an unusable connection may be working again, so it is probed straight away. Some
+// Android WebViews expose navigator.connection without the EventTarget methods.
+self.addEventListener("online", connectionMayHaveChanged);
+if (typeof navigator.connection?.addEventListener === "function") {
+    navigator.connection.addEventListener("change", connectionMayHaveChanged);
+}
+
 self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) => {
     logger.debug("WORKER: received ", msg.data.kind, msg.data.correlationId);
     const payload = msg.data;
@@ -251,6 +260,9 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 logger,
             };
             logger = inititaliseLogger(payload.rollbarApiKey, payload.websiteVersion, payload.env);
+            monitorConnection(payload.icUrl, (unusable) =>
+                sendEvent({ event: { subkind: "connection_unusable", unusable } }),
+            );
             sendResponse(kind, correlationId, undefined);
             return;
         }
@@ -263,6 +275,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
         // Needs no agent: the queries belong to whichever agents exist
         if (kind === "abortInFlightQueries") {
             const aborted = abortInFlightQueries();
+            connectionMayHaveChanged();
             logger.debug(`WORKER: aborted ${aborted} in-flight queries after resuming`);
             sendResponse(kind, correlationId, undefined);
             return;

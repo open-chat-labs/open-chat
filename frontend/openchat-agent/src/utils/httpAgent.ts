@@ -6,6 +6,7 @@ import {
 } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
 import { isMainnet, offline } from "@shared";
+import { queryOutcomes, SLOW_QUERY_MS, type QueryOutcomes } from "./connectionHealth";
 
 // How long a query may wait for its response to start arriving. Queries normally answer well
 // within a second, so a query still waiting after this is almost always stuck on a connection
@@ -20,6 +21,10 @@ export const QUERY_RESPONSE_TIMEOUT_MS = 30_000;
 // to between 4 and 5 minutes after sending (it rounds down to the minute). Kept below that so
 // clock drift cannot push a resend past the replica's check.
 export const QUERY_EXPIRY_SAFE_AGE_MS = 3 * 60 * 1000;
+
+// A timer that fires this much later than it was due means this context was suspended (the device
+// slept, or the app was in the background), which says nothing about the connection
+const LATE_TIMER_MS = 5_000;
 
 // Recognised by the agent as an expired request, see `isIngressExpiryInvalidResponse` in
 // @icp-sdk/core
@@ -86,10 +91,15 @@ function isQueryRequest(input: RequestInfo | URL): boolean {
  * waiting longer than `timeoutMs` for the response to start. Other requests pass straight through.
  * The timeout stops once the response headers arrive, so a large response on a slow connection
  * is not cut off while its body downloads.
+ *
+ * Each query also tells `outcomes` how the connection is doing: good once its response starts
+ * arriving, bad if it fails or has waited `SLOW_QUERY_MS`. A query aborted here or by the caller
+ * says nothing about the connection, and is not counted.
  */
 export function createQueryAwareFetch(
     baseFetch: typeof fetch = (input, init) => fetch(input, init),
     timeoutMs: number = QUERY_RESPONSE_TIMEOUT_MS,
+    outcomes: QueryOutcomes = queryOutcomes,
 ): typeof fetch {
     return async (input, init) => {
         if (!isQueryRequest(input)) {
@@ -132,11 +142,31 @@ export function createQueryAwareFetch(
                 ),
             timeoutMs,
         );
+        // Each query counts once, as good or bad
+        let counted = false;
+        const slowTimer = setTimeout(() => {
+            counted = true;
+            if (Date.now() - query.sentAt < SLOW_QUERY_MS + LATE_TIMER_MS) {
+                outcomes.bad();
+            }
+        }, SLOW_QUERY_MS);
         inFlightQueries.add(query);
         try {
-            return await baseFetch(input, { ...init, signal: controller.signal });
+            const response = await baseFetch(input, { ...init, signal: controller.signal });
+            if (!counted) {
+                counted = true;
+                outcomes.good(Date.now() - query.sentAt);
+            }
+            return response;
+        } catch (err) {
+            if (!counted && !controller.signal.aborted) {
+                counted = true;
+                outcomes.bad();
+            }
+            throw err;
         } finally {
             clearTimeout(timer);
+            clearTimeout(slowTimer);
             inFlightQueries.delete(query);
         }
     };
