@@ -103,9 +103,10 @@ describe("choosing a tip", () => {
         expect(form.valid).toBe(false);
     });
 
-    // Invariant: the tip goes to the message's sender, from the wallet that approved it if there is
-    // one, with the ledger's transfer fee
-    test("a tip is sent to the message's sender from the approving wallet", async () => {
+    // Invariant: the tip goes to the recipient it's given, the message's sender or whoever linked a
+    // relayed message's account, from the wallet that approved it if there is one, with the
+    // ledger's transfer fee
+    test("a tip is sent to its recipient from the approving wallet", async () => {
         cryptoBalanceStore.setBalance(icp.ledger, 100_000_000n);
         const form = new TipForm(client, icp.ledger);
         form.add(10);
@@ -114,7 +115,7 @@ describe("choosing a tip", () => {
             chatId: { kind: "group_chat", groupId: "rrkah-fqaaa-aaaaa-aaaaq-cai" },
         };
 
-        await form.tip(context, message, "wallet-account");
+        await form.tip(context, message, "them", "wallet-account");
 
         expect(client.tipMessage).toHaveBeenCalledWith(
             context,

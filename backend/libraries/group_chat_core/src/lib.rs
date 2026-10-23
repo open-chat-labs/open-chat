@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 use std::cmp::{Reverse, max, min};
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use types::{
-    AccessGateConfig, AccessGateConfigInternal, AvatarChanged, BotMessageContext, BotNotification, Caller, Chat,
+    AccessGateConfig, AccessGateConfigInternal, AvatarChanged, BotMessageContext, BotNotification, BridgedUserId, Caller, Chat,
     CustomPermission, DiamondMembershipStatus, Document, EventIndex, EventOrExpiredRange, EventWrapper, EventsCaller,
     EventsResponse, ExternalUrlUpdated, GroupDescriptionChanged, GroupMember, GroupNameChanged, GroupPermissions,
     GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype, GroupVisibilityChanged, HydratedMention,
@@ -1004,11 +1004,27 @@ impl GroupChatCore {
 
     // Checks `user_id` could tip the message now, without tipping it, returning the message's sender,
     // whom the tip is for. Used before making the transfer for a tip.
+    // The account a message was relayed from, if a bridge bot relayed it, so the caller can look up
+    // who linked it before tipping the message
+    pub fn message_bridged_from(
+        &self,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+    ) -> Option<BridgedUserId> {
+        self.events
+            .message_internal(EventIndex::default(), thread_root_message_index, message_id.into())
+            .and_then(|(message, _)| message.bridged_from())
+    }
+
+    // Returns who a tip on the message goes to: its sender, or for a message a bridge bot relayed,
+    // the user who linked the account it came from, `linked_user`, which the caller looked up
+    // (see `message_bridged_from`). They must be in the chat.
     pub fn check_can_tip_message(
         &self,
         user_id: UserId,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
+        linked_user: Option<UserId>,
     ) -> OCResult<UserId> {
         let member = self.members.get_verified_member(user_id)?;
 
@@ -1021,7 +1037,17 @@ impl GroupChatCore {
             .message_internal(member.min_visible_event_index(), thread_root_message_index, message_id.into())
             .ok_or(OCErrorCode::MessageNotFound)?;
 
-        if message.sender == user_id { Err(OCErrorCode::CannotTipSelf.into()) } else { Ok(message.sender) }
+        let recipient = if message.bridged_from().is_some() {
+            let linked_user = linked_user.ok_or(OCErrorCode::TargetUserNotFound)?;
+            if self.members.get(&linked_user).is_none() {
+                return Err(OCErrorCode::TargetUserNotInChat.into());
+            }
+            linked_user
+        } else {
+            message.sender
+        };
+
+        if recipient == user_id { Err(OCErrorCode::CannotTipSelf.into()) } else { Ok(recipient) }
     }
 
     pub fn tip_message<P: EventPusher>(&mut self, args: TipMessageArgs, event_pusher: P) -> OCResult<UpdateMessageSuccess> {

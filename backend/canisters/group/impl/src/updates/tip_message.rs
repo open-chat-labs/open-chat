@@ -1,5 +1,5 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::{GroupEventPusher, RuntimeState, execute_update_async, mutate_state};
+use crate::{GroupEventPusher, RuntimeState, execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::TipMessageArgs;
@@ -22,7 +22,23 @@ async fn tip_message(args: Args) -> Response {
 async fn tip_message_impl(args: Args) -> OCResult {
     let new_achievement = args.new_achievement;
 
-    let user_id = match mutate_state(|state| prepare(args, state))? {
+    // Tips on a message a bridge bot relayed go to whoever linked the account it came from, which
+    // the LocalUserIndex knows
+    let bridged_from = read_state(|state| {
+        state
+            .data
+            .chat
+            .message_bridged_from(args.thread_root_message_index, args.message_id)
+            .map(|user| (user, state.data.local_user_index_canister_id))
+    });
+    let linked_user = match bridged_from {
+        Some((user, local_user_index)) => {
+            local_user_index_canister_c2c_client::bridged_user_link(user, local_user_index).await?
+        }
+        None => None,
+    };
+
+    let user_id = match mutate_state(|state| prepare(args, linked_user, state))? {
         // The transfer was certified, so the message has been tipped already
         PrepareResult::Tipped(user_id) => user_id,
         PrepareResult::Icrc2(tip) => {
@@ -63,16 +79,17 @@ struct TipToMake {
     transfer: icrc2::PendingCryptoTransaction,
 }
 
-fn prepare(args: Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
+fn prepare(args: Args, linked_user: Option<UserId>, state: &mut RuntimeState) -> OCResult<PrepareResult> {
     let Caller::User(user) = state.verified_caller(None)? else {
         return Err(OCErrorCode::InitiatorNotAuthorized.into());
     };
     let user_id = user.user_id;
 
-    let recipient = state
-        .data
-        .chat
-        .check_can_tip_message(user_id, args.thread_root_message_index, args.message_id)?;
+    let recipient =
+        state
+            .data
+            .chat
+            .check_can_tip_message(user_id, args.thread_root_message_index, args.message_id, linked_user)?;
 
     let c2c_args = TipToRecord {
         recipient,
@@ -164,10 +181,11 @@ fn tip_message_with_completed_transfer(user_id: UserId, args: TipToRecord, state
             .chat
             .events
             .message_internal(EventIndex::default(), args.thread_root_message_index, args.message_id.into())
-        && let sender_id = message.sender
-        && let Some(sender) = state.data.chat.members.get(&sender_id)
-        && sender_id != user_id
-        && !sender.user_type().is_bot()
+        // Whoever the tip went to: its sender, or for a relayed message whoever linked its account
+        && let recipient_id = args.recipient
+        && let Some(recipient) = state.data.chat.members.get(&recipient_id)
+        && recipient_id != user_id
+        && !recipient.user_type().is_bot()
     {
         let chat_id: ChatId = state.env.canister_id().into();
         let tip = format_crypto_amount_with_symbol(args.amount, args.decimals, &args.token_symbol);
@@ -184,10 +202,10 @@ fn tip_message_with_completed_transfer(user_id: UserId, args: TipToRecord, state
             group_avatar_id: state.data.chat.avatar.as_ref().map(|a| a.id),
         });
 
-        state.push_notification(Some(user_id), vec![sender_id], user_notification_payload);
+        state.push_notification(Some(user_id), vec![recipient_id], user_notification_payload);
 
         state.push_event_to_user(
-            sender_id,
+            recipient_id,
             GroupCanisterEvent::MessageActivity(MessageActivityEvent {
                 chat: Chat::Group(chat_id),
                 thread_root_message_index: args.thread_root_message_index,
@@ -201,7 +219,7 @@ fn tip_message_with_completed_transfer(user_id: UserId, args: TipToRecord, state
             now,
         );
 
-        state.notify_user_of_achievement(sender_id, Achievement::HadMessageTipped, now);
+        state.notify_user_of_achievement(recipient_id, Achievement::HadMessageTipped, now);
     }
 
     state.push_bot_notification(result.bot_notification);

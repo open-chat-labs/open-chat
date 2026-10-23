@@ -5,14 +5,14 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 use std::ops::DerefMut;
 use types::{
-    AccessGateConfigInternal, AvatarChanged, BotAdded, BotMessageContext, BotRemoved, BotUpdated, ChannelId, Chat, ChatEvent,
-    ChatEventCategory, ChatEventType, ChatId, CommunityId, DeletedBy, DirectChatCreated, EventIndex, EventWrapperInternal,
-    EventsTimeToLiveUpdated, ExternalUrlUpdated, GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated,
-    GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext, GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged,
-    HistoryDeleted, MemberJoinedInternal, MemberLeft, MembersAdded, MembersAddedToDefaultChannel, MembersRemoved, Message,
-    MessageContent, MessageContentType, MessageId, MessageIndex, MessagePinned, MessageUnpinned, MultiUserChat, OgPreview,
-    PermissionsChanged, PushIfNotContains, Reaction, ReplyContext, RoleChanged, SenderContext, ThreadSummary, TimestampMillis,
-    Tips, UserId, UserIdAndPrincipal, UsersBlocked, UsersInvited, UsersUnblocked, is_default,
+    AccessGateConfigInternal, AvatarChanged, BotAdded, BotMessageContext, BotRemoved, BotUpdated, BridgedUserId, ChannelId,
+    Chat, ChatEvent, ChatEventCategory, ChatEventType, ChatId, CommunityId, DeletedBy, DirectChatCreated, EventIndex,
+    EventWrapperInternal, EventsTimeToLiveUpdated, ExternalUrlUpdated, GroupCreated, GroupDescriptionChanged, GroupFrozen,
+    GroupGateUpdated, GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext, GroupRulesChanged, GroupUnfrozen,
+    GroupVisibilityChanged, HistoryDeleted, MemberJoinedInternal, MemberLeft, MembersAdded, MembersAddedToDefaultChannel,
+    MembersRemoved, Message, MessageContent, MessageContentType, MessageId, MessageIndex, MessagePinned, MessageUnpinned,
+    MultiUserChat, OgPreview, PermissionsChanged, PushIfNotContains, Reaction, ReplyContext, RoleChanged, SenderContext,
+    ThreadSummary, TimestampMillis, Tips, UserId, UserIdAndPrincipal, UsersBlocked, UsersInvited, UsersUnblocked, is_default,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -311,6 +311,11 @@ pub struct MessageInternal {
 }
 
 impl MessageInternal {
+    // The account on another platform a bridge bot relayed the message from, if one did
+    pub fn bridged_from(&self) -> Option<BridgedUserId> {
+        self.sender_context.as_ref()?.bot_context()?.bridged_from
+    }
+
     pub fn hydrate(self, my_user: Option<UserIdAndPrincipal>) -> Message {
         Message {
             message_index: self.message_index,

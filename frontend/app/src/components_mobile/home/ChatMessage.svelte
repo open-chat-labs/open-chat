@@ -15,6 +15,7 @@
     } from "component-lib";
     import {
         type ChatIdentifier,
+        chatIdentifiersEqual,
         chatListScopeStore,
         type ChatType,
         currentUserIdStore,
@@ -27,6 +28,7 @@
         type EnhancedReplyContext,
         linkedAuthor,
         localUpdates,
+        type Member,
         type Message,
         type MessageReminderCreatedContent,
         OpenChat,
@@ -35,9 +37,12 @@
         screenWidth,
         ScreenWidth,
         selectedChatBlockedUsersStore,
+        selectedChatMembersStore,
+        selectedServerChatStore,
         type SelectedEmoji,
         type SenderContext,
         shouldShowAsMe,
+        tipRecipient,
         translationsStore,
         unconfirmedReadByThem,
         undeletingMessagesStore,
@@ -383,9 +388,24 @@
     // deleting, swiping and the menu still go by `me`, as the bridge bot sent them, except for the
     // options aimed at the author.
     let showAsMe = $derived(shouldShowAsMe(me, linkedUser?.userId, $currentUserIdStore));
-    // A tip would go to the bridge bot, not the author shown
+    // The details held can be for another chat, when a thread preview shows a message from a chat
+    // other than the one selected
+    let chatMembers = $derived(
+        chatIdentifiersEqual($selectedServerChatStore?.chatId, chatId)
+            ? $selectedChatMembersStore
+            : new Map<string, Member>(),
+    );
+    // The sender, or for a relayed message whoever linked its account, if they're in the chat. A
+    // message relayed from the user's own linked account is shown as theirs, so isn't tipped.
+    let tipTo = $derived(tipRecipient(msg, $bridgedUsersStore, (userId) => chatMembers.has(userId)));
     let canTip = $derived(
-        canTipMessages && !me && confirmed && !inert && !failed && bridged === undefined,
+        canTipMessages &&
+            !me &&
+            confirmed &&
+            !inert &&
+            !failed &&
+            tipTo !== undefined &&
+            tipTo !== $currentUserIdStore,
     );
     let inThread = $derived(threadRootMessage !== undefined);
     let scrollingId = $derived(
@@ -509,8 +529,13 @@
     <BotProfile {...botProfile} />
 {/if}
 
-{#if tipping !== undefined}
-    <TipBuilder ledger={tipping} onClose={() => (tipping = undefined)} {msg} {messageContext} />
+{#if tipping !== undefined && tipTo !== undefined}
+    <TipBuilder
+        ledger={tipping}
+        onClose={() => (tipping = undefined)}
+        {msg}
+        {messageContext}
+        recipient={tipTo} />
 {/if}
 
 {#if showConfirmDelete}

@@ -34,10 +34,12 @@
         ledger: string;
         msg: Message;
         messageContext: MessageContext;
+        // Who the tip goes to (see `tipRecipient`)
+        recipient: string;
         onClose: () => void;
     }
 
-    let { ledger, msg, messageContext, onClose }: Props = $props();
+    let { ledger, msg, messageContext, recipient, onClose }: Props = $props();
 
     const tweenOptions = {
         duration: 800,
@@ -151,7 +153,7 @@
     }
 
     function tip(fromAccount?: string) {
-        form.tip(messageContext, msg, fromAccount).then((outcome) => {
+        form.tip(messageContext, msg, recipient, fromAccount).then((outcome) => {
             switch (outcome.kind) {
                 case "tipped":
                 case "cancelled":

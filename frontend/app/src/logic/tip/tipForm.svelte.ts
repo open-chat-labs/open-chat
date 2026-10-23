@@ -64,12 +64,14 @@ export class TipForm extends TransferForm {
     }
 
     /**
-     * Tips the message. `fromAccount` is an external wallet which has just approved us taking the
-     * tip; without it the tip comes from the user's own OpenChat account.
+     * Tips the message, paying `recipient`: its sender, or for a relayed message whoever linked the
+     * account it came from (see `tipRecipient`). `fromAccount` is an external wallet which has just
+     * approved us taking the tip; without it the tip comes from the user's own OpenChat account.
      */
     tip(
         messageContext: MessageContext,
         message: Message,
+        recipient: string,
         fromAccount?: string,
     ): Promise<TipOutcome> {
         const token = this.tokenState.token;
@@ -78,7 +80,7 @@ export class TipForm extends TransferForm {
             kind: "pending",
             ledger: token.ledger,
             token: token.symbol,
-            recipient: message.sender,
+            recipient,
             amountE8s: this.tokenState.draftAmount,
             feeE8s: token.transferFee,
             createdAtNanos: BigInt(Date.now()) * 1_000_000n,
