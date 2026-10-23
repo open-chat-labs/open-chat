@@ -208,6 +208,14 @@ design export needs. Each entry says where it came up.
     pinned view; the old one also marked unread pins with a dot, and the header's extra icons have
     no accessible label (`ConversationHeader` takes none).
 
+- **DM panel** (4a, `features/dm`): `DmPanel` in the right column for a DM. Changes apply at once
+  (the old desktop panel had a Save button); turning disappearing messages on starts at a week.
+  By hand: `chit` is optional (left out when the viewer turned CHIT off), `aboutContent` renders
+  the bio as Markdown, and `DmChatSettings` hides read receipts without a handler, since OpenChat
+  has no read receipts setting. Not wired yet: the panel's ⋯ menu (no items), calls (7b), and the
+  old panel's durations other than the six `DmChatSettings` offers (a TTL set elsewhere shows as
+  its own length, "2 hours", and saves unchanged).
+
 ## App
 
 ### Data the design shows that the backend doesn't have

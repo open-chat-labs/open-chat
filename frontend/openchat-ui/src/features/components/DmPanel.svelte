@@ -3,7 +3,7 @@
      error if the host rejects; Block asks first and waits for the host. Favourite and Block are hidden without callbacks. -->
 <script lang="ts">
   import { useT } from '../../lib/i18n';
-  import { untrack, type ComponentProps } from 'svelte';
+  import { untrack, type ComponentProps, type Snippet } from 'svelte';
   import type { MenuItem } from '../../lib/types';
   import DetailSection from '../../lib/components/DetailSection.svelte';
   import DmChatSettings from './DmChatSettings.svelte';
@@ -34,12 +34,15 @@
     title: string;
     handle?: string;
     about?: string;
+    /** Rendered in place of `about` when given (the host's formatted bio); `about` still decides whether the section shows. */
+    aboutContent?: Snippet;
     color?: keyof typeof GRADIENTS;
     /** CSS background (image URL or gradient) for the avatar; falls back to the colour gradient. */
     avatar?: string;
     online?: boolean;
     memberSince: string;
-    chit: string;
+    /** CHIT earned; its card is left out without it (the viewer has turned CHIT off). */
+    chit?: string;
     fav?: boolean;
     muted?: MuteKey | null;
     disappearOn?: boolean;
@@ -66,6 +69,7 @@
     title,
     handle = '',
     about = '',
+    aboutContent,
     color = 'violet',
     avatar,
     online = false,
@@ -207,10 +211,12 @@
       <div class="cards">
         <div class="pair">
           <div class="cell"><DetailSection label="ui.dmPanel.memberSince" value={memberSince} /></div>
-          <div class="cell"><DetailSection label="ui.dmPanel.chitEarned" value={chit} highlight={true} /></div>
+          {#if chit !== undefined}
+            <div class="cell"><DetailSection label="ui.dmPanel.chitEarned" value={chit} highlight={true} /></div>
+          {/if}
         </div>
         {#if about}
-          <div class="cell"><DetailSection label="ui.dmPanel.about" value={about} variant="prose" clamp={3} /></div>
+          <div class="cell"><DetailSection label="ui.dmPanel.about" value={about} variant="prose" clamp={3} children={aboutContent} /></div>
         {/if}
       </div>
       {#if toggleFailed && blockStep === 'idle'}<span class="error" role="alert">{t('ui.dmPanel.actionFailed')}</span>{/if}

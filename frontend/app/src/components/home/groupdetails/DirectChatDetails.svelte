@@ -14,7 +14,6 @@
     import { darkenHexColour } from "@src/theme/utils";
     import type {
         DirectChatSummary,
-        OptionUpdate,
         PublicProfile,
         VideoCallType,
     } from "@client";
@@ -22,6 +21,7 @@
         allUsersStore,
         blockedUsersStore,
         chatIdentifiersEqual,
+        eventsTTLUpdate,
         favouritesStore,
         iconSize,
         mobileWidth,
@@ -101,15 +101,6 @@
         }
     }
 
-    function getUpdate(): OptionUpdate<bigint> {
-        if (eventsTTL !== undefined) {
-            return { value: eventsTTL };
-        } else if (chat.eventsTTL !== undefined) {
-            return "set_to_none";
-        } else {
-            return undefined;
-        }
-    }
 
     async function updateDirectChatDetails(e: Event) {
         e.preventDefault();
@@ -118,7 +109,7 @@
         saving = true;
 
         const success = await client
-            .updateDirectChatSettings(chat, getUpdate())
+            .updateDirectChatSettings(chat, eventsTTLUpdate(eventsTTL, chat.eventsTTL))
             .finally(() => (saving = false));
         if (success) {
             originalTTL = originalTTL = chat.eventsTTL;

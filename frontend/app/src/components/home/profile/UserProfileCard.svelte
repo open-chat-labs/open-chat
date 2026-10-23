@@ -7,6 +7,7 @@
         type PublicProfile,
         type UserSummary,
         currentUserIdStore,
+        lastOnlineStatus,
         mobileWidth,
         selectedChatMembersStore,
         selectedChatSummaryStore,
@@ -74,11 +75,7 @@
     let me = $derived(user.userId === $currentUserIdStore);
     let isSuspended = $derived(user?.suspended ?? false);
     let modal = $derived($mobileWidth);
-    let [status, online] = $derived(
-        lastOnline !== undefined && lastOnline !== 0
-            ? client.formatLastOnlineDate($_, Date.now(), lastOnline)
-            : ["", false],
-    );
+    let [status, online] = $derived(lastOnlineStatus($_, Date.now(), lastOnline));
     let avatarUrl = $derived(
         profile !== undefined
             ? client.buildUserAvatarUrl(

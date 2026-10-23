@@ -8570,6 +8570,17 @@
         "doc": ""
       },
       {
+        "name": "aboutContent",
+        "type": "Snippet",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Rendered in place of `about` when given (the host's formatted bio); `about` still decides whether the section shows."
+      },
+      {
         "name": "color",
         "type": "keyof typeof GRADIENTS",
         "default": "violet",
@@ -8650,9 +8661,9 @@
         "editor": "text",
         "options": null,
         "section": null,
-        "required": true,
+        "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "CHIT earned; its card is left out without it (the viewer has turned CHIT off)."
       },
       {
         "name": "fav",

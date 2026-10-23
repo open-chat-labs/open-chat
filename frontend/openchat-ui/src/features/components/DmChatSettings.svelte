@@ -31,6 +31,7 @@
     disappearAfter?: string;
     readReceipts?: boolean;
     onDisappearChange?: (v: DisappearSetting) => Promise<unknown> | void;
+    /** The read receipts row shows only with it. */
     onReadReceiptsChange?: (on: boolean) => Promise<unknown> | void;
   }
 
@@ -81,6 +82,7 @@
       onDurationChange={(next) => setDisappear(true, next)}
     />
   </div>
+  {#if onReadReceiptsChange}
   <div class="row">
     <span class="eye"></span>
     <span class="text"><span class="label">{t('ui.dmChatSettings.readReceipts')}</span><span class="hint">{t('ui.dmChatSettings.readReceiptsHint', { name: peerName.split(' ')[0] })}</span></span>
@@ -94,6 +96,7 @@
       aria-label={t('ui.dmChatSettings.readReceipts')}><span class="knob"></span></span
     >
   </div>
+  {/if}
   {#if failed}<span class="error" role="alert">{t('ui.dmChatSettings.saveFailed')}</span>{/if}
 </div>
 

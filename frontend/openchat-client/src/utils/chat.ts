@@ -2564,3 +2564,15 @@ export function navigationAfterArchivingOpenChat(
         ? { url: routeForChatIdentifier(scope.kind, next.id), intent: "auto" }
         : { url: routeForScope(scope) };
 }
+
+/**
+ * The disappearing-messages change to send when the chat's TTL goes from `current` to `next`
+ * (undefined: off): the new TTL, turning it off, or nothing when it was already off.
+ */
+export function eventsTTLUpdate(
+    next: bigint | undefined,
+    current: bigint | undefined,
+): OptionUpdate<bigint> {
+    if (next !== undefined) return { value: next };
+    return current !== undefined ? "set_to_none" : undefined;
+}

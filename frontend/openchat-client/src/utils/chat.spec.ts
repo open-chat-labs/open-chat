@@ -27,6 +27,7 @@ import {
     addVoteToPoll,
     buildBridgedUserAvatarUrl,
     buildIdenticonUrl,
+    eventsTTLUpdate,
     getMembersString,
     groupChatFromCandidate,
     mergeChatMetrics,
@@ -643,5 +644,14 @@ describe("bridged user avatars", () => {
         expect(buildBridgedUserAvatarUrl(discordId, undefined, avatars)).toMatch(
             /^https:\/\/cdn\.discordapp\.com\/embed\/avatars\/\d\.png$/,
         );
+    });
+});
+
+describe("eventsTTLUpdate", () => {
+    // turning disappearing messages off must clear the chat's TTL, and leaving them off sends nothing
+    test("sets the new TTL, clears one that was on, and sends nothing when it stays off", () => {
+        expect(eventsTTLUpdate(3_600_000n, undefined)).toEqual({ value: 3_600_000n });
+        expect(eventsTTLUpdate(undefined, 3_600_000n)).toBe("set_to_none");
+        expect(eventsTTLUpdate(undefined, undefined)).toBeUndefined();
     });
 });

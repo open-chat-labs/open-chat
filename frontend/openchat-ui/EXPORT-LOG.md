@@ -177,3 +177,8 @@
 - The cover's × had no handler unless the host passed `coverHandlers.close`, so it did nothing for a host that only gave `onClose`. It now calls `onClose` (a host's `coverHandlers` still win).
 - `GroupPanel` takes `back`: the cover shows a back arrow (`PanelCover`'s new `back` action, `--icon-back`, "Back") instead of × when closing returns to an earlier panel, as the old panels did. The app sets it when the right column has a panel to go back to.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-23 — DmPanel and DmChatSettings: CHIT optional, a formatted bio, read receipts only with a handler, by hand
+- `DmPanel`'s `chit` is optional: without it the CHIT card is left out, for a viewer who has turned CHIT off. It also takes `aboutContent`, as `UserDialog` does, so the host can render the bio as Markdown.
+- `DmChatSettings` shows its read receipts row only with `onReadReceiptsChange`. It always showed it, and OpenChat has no read receipts setting, so the toggle saved nothing.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

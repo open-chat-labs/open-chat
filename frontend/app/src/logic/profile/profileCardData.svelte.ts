@@ -21,6 +21,8 @@ import { reactiveValue } from "@src/utils/reactiveValue";
 export class ProfileCardData {
     #user = $state<UserSummary>();
     #profile = $state<PublicProfile>();
+    // when they were last online (ms), once known
+    #lastOnline = $state<number>();
     /** Resolves once the public profile has loaded. */
     readonly loaded: Promise<void>;
 
@@ -38,6 +40,18 @@ export class ProfileCardData {
         return this.#profile;
     }
 
+    get lastOnline(): number | undefined {
+        return this.#lastOnline;
+    }
+
+    async #loadLastOnline(client: OpenChat, userId: string) {
+        try {
+            this.#lastOnline = await client.getLastOnlineDate(userId, Date.now());
+        } catch (e) {
+            console.log("Failed to load when the user was last online", e);
+        }
+    }
+
     async #load(client: OpenChat, userId: string, onGone: () => void, loaded: () => void) {
         try {
             this.#user = await client.getUser(userId);
@@ -46,6 +60,7 @@ export class ProfileCardData {
             onGone();
             return;
         }
+        void this.#loadLastOnline(client, userId);
         client.getPublicProfile(userId).subscribe({
             onResult: (profile) => {
                 this.#profile = profile;
