@@ -50,7 +50,7 @@ pub(crate) fn retry(pending_payment: PendingPayment, failures: u32) {
 // its ledger
 async fn process_payment(pending_payment: PendingPayment, previous_failures: u32) {
     let args = TransferArg {
-        from_subaccount: None,
+        from_subaccount: pending_payment.from_subaccount,
         to: pending_payment.recipient_account,
         fee: Some(pending_payment.fee.into()),
         created_at_time: Some(pending_payment.timestamp),

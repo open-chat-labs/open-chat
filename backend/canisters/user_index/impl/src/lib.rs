@@ -1,4 +1,4 @@
-use crate::model::bridged_user_deposits::BridgedUserDeposits;
+use crate::model::bridged_user_tips::{BridgedUserTips, HeldTip, TIP_HOLD_DURATION};
 use crate::model::bridged_users::BridgedUsers;
 use crate::model::community_event_batch::CommunityEventBatch;
 use crate::model::group_event_batch::GroupEventBatch;
@@ -12,11 +12,11 @@ use crate::model::protected_actions::{ProtectedActionMetrics, ProtectedActions};
 use crate::model::storage_index_event_batch::StorageIndexEventBatch;
 use crate::model::streak_insurance_logs::StreakInsuranceLogs;
 use crate::model::user_map::UserMap;
-use crate::timer_job_types::TimerJob;
+use crate::timer_job_types::{RefundBridgedUserTip, TimerJob};
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
-use constants::DAY_IN_MS;
+use constants::{DAY_IN_MS, MEMO_TIP_CLAIM, MEMO_TIP_REFUND};
 use event_store_producer::{EventBuilder, EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use icrc_ledger_types::icrc1::account::{Account, Subaccount};
@@ -29,7 +29,7 @@ use model::chit_leaderboard::ChitLeaderboard;
 use model::external_achievements::{ExternalAchievementMetrics, ExternalAchievements};
 use model::local_user_index_map::LocalUserIndexMap;
 use model::multi_user_canister_map::{MultiUserCanister, MultiUserCanisterMap};
-use model::pending_payments_queue::{PendingPayment, PendingPaymentsQueue};
+use model::pending_payments_queue::{PendingPayment, PendingPaymentReason, PendingPaymentsQueue};
 use model::reported_messages::{ReportedMessages, ReportingMetrics};
 use model::user::SuspensionDetails;
 use oc_error_codes::OCErrorCode;
@@ -47,7 +47,7 @@ use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     BotInstallationLocation, BridgePlatform, BridgedUserId, BuildVersion, CanisterId, ChannelId, ChatId, ChildCanisterWasms,
     CommunityId, Cycles, DiamondMembershipFees, IdempotentEnvelope, MediaScanConfig, Milliseconds, ModerationReferralConfig,
-    OCResult, TimestampMillis, Timestamped, UserId, UserType,
+    OCResult, TimestampMillis, Timestamped, UserId, UserType, icrc1,
 };
 use user_ids_set::UserIdsSet;
 use user_index_canister::ChildCanisterType;
@@ -270,6 +270,92 @@ impl RuntimeState {
     pub fn queue_payment(&mut self, pending_payment: PendingPayment) {
         self.data.pending_payments_queue.push(pending_payment);
         jobs::make_pending_payments::start_job_if_required(self);
+    }
+
+    // A tip on a message relayed from an account which, as the group or community found, no one had
+    // linked. It's paid on to whoever has linked the account since, if anyone has, else held for
+    // whoever does, and refunded if no one has within `TIP_HOLD_DURATION`.
+    pub fn receive_bridged_user_tip(&mut self, tip: HeldTip) {
+        let account = tip.account;
+        let refund_due = tip.timestamp + TIP_HOLD_DURATION;
+        let tip_id = self.data.bridged_user_tips.hold(tip);
+        if let Some(user_id) = self.data.bridged_users.linked_user_id(&account) {
+            self.claim_bridged_user_tips(&account, user_id);
+        } else {
+            let now = self.env.now();
+            self.data.timer_jobs.enqueue_job(
+                TimerJob::RefundBridgedUserTip(RefundBridgedUserTip { tip_id }),
+                refund_due,
+                now,
+            );
+        }
+    }
+
+    // Pays the tips held for the account to whoever has just linked it, into the wallet they hold
+    // their funds in, that of the principal they sign in with
+    pub fn claim_bridged_user_tips(&mut self, account: &BridgedUserId, user_id: UserId) {
+        let Some(principal) = self.data.users.get_by_user_id(&user_id).map(|user| user.principal) else {
+            return;
+        };
+        for (tip_id, tip) in self.data.bridged_user_tips.take_for(account) {
+            self.pay_out_held_tip(
+                tip_id,
+                tip,
+                principal.into(),
+                MEMO_TIP_CLAIM,
+                PendingPaymentReason::BridgedUserTipClaim,
+            );
+        }
+    }
+
+    // Refunds the tip, unless whoever linked its account has been paid it already
+    pub fn refund_bridged_user_tip(&mut self, tip_id: u64) {
+        if let Some(tip) = self.data.bridged_user_tips.take(tip_id) {
+            let refund_to = tip.refund_to;
+            self.pay_out_held_tip(
+                tip_id,
+                tip,
+                refund_to,
+                MEMO_TIP_REFUND,
+                PendingPaymentReason::BridgedUserTipRefund,
+            );
+        }
+    }
+
+    // Pays the tip out of its account's subaccount, less the ledger's fee. The memo carries the
+    // tip's id, so the ledger doesn't take two equal tips paid out at once to be the same transfer.
+    fn pay_out_held_tip(
+        &mut self,
+        tip_id: u64,
+        tip: HeldTip,
+        to: icrc1::Account,
+        memo_prefix: [u8; 8],
+        reason: PendingPaymentReason,
+    ) {
+        // The group or community only holds tips which are more than the fee, and fit
+        let Some(amount) = tip
+            .amount
+            .checked_sub(tip.fee)
+            .filter(|amount| *amount > 0)
+            .and_then(|amount| u64::try_from(amount).ok())
+        else {
+            tracing::error!(tip_id, ?tip, "Held tip can't be paid out");
+            return;
+        };
+        let mut memo = [0; 32];
+        memo[..8].copy_from_slice(&memo_prefix);
+        memo[8..16].copy_from_slice(&tip_id.to_be_bytes());
+        self.queue_payment(PendingPayment {
+            amount,
+            token_symbol: tip.token_symbol,
+            ledger: tip.ledger,
+            fee: tip.fee,
+            timestamp: self.env.now_nanos(),
+            recipient_account: to.into(),
+            memo,
+            reason,
+            from_subaccount: Some(tip.account.tips_subaccount()),
+        });
     }
 
     pub fn delete_user(&mut self, user_id: UserId, triggered_by_user: bool) -> bool {

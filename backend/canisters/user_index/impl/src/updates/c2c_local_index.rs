@@ -59,23 +59,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         LocalUserIndexEvent::BridgedUserUpdated(user) => {
             state.data.bridged_users.update(*user, **now);
         }
-        LocalUserIndexEvent::BridgedUserDeposit(ev) => {
-            let ev = *ev;
-            state.data.bridged_user_deposits.hold(HeldDeposit {
-                account: ev.account,
-                chat: ev.chat,
-                thread_root_message_index: ev.thread_root_message_index,
-                message_id: ev.message_id,
-                sender: ev.sender,
-                refund_to: ev.refund_to,
-                ledger: ev.ledger,
-                token_symbol: ev.token_symbol,
-                amount: ev.amount,
-                fee: ev.fee,
-                decimals: ev.decimals,
-                timestamp: **now,
-            });
-        }
+        LocalUserIndexEvent::BridgedUserTipped(ev) => state.receive_bridged_user_tip(held_tip(*ev, **now)),
         LocalUserIndexEvent::UserRegistered(ev) => {
             process_new_user(ev.principal, ev.username, ev.email, ev.user_id, ev.referred_by, caller, state)
         }
@@ -342,6 +326,25 @@ You can change your username at any time by clicking \"Profile settings\" from t
     }));
 }
 
+// A tip for an account no one has linked, as the group or community described it, as of when it
+// arrived
+fn held_tip(ev: user_index_canister::BridgedUserTipped, now: TimestampMillis) -> HeldTip {
+    HeldTip {
+        account: ev.account,
+        chat: ev.chat,
+        thread_root_message_index: ev.thread_root_message_index,
+        message_id: ev.message_id,
+        tipper: ev.tipper,
+        refund_to: ev.refund_to,
+        ledger: ev.ledger,
+        token_symbol: ev.token_symbol,
+        amount: ev.amount,
+        fee: ev.fee,
+        decimals: ev.decimals,
+        timestamp: now,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -395,19 +398,18 @@ mod tests {
         assert_eq!(avatar_id(&state, other_user), None);
     }
 
-    // Funds sent to an account no one has linked are held as the group or community described them,
-    // as of when they arrived
+    // A tip for an account no one has linked is held as the group or community described it, as of
+    // when it arrived. (Holding it schedules its refund, which a unit test can't do.)
     #[test]
-    fn a_bridged_user_deposit_is_held_as_described() {
-        let (mut state, sender, _) = setup();
+    fn a_tip_for_an_unlinked_account_is_held_as_described() {
         let account = types::BridgedUserId::Telegram(123456789);
         let chat = types::Chat::Group(canister_id(4).into());
+        let tipper = UserId::new_indexed(canister_id(2), 1);
         let refund_to: types::icrc1::Account = Principal::from_slice(&[7; 29]).into();
         let ledger = canister_id(5);
-        let now = LazyCell::new(|| 2000);
 
-        handle_event(
-            LocalUserIndexEvent::BridgedUserDeposit(Box::new(user_index_canister::BridgedUserDeposit {
+        let tip = held_tip(
+            user_index_canister::BridgedUserTipped {
                 chat,
                 thread_root_message_index: Some(3.into()),
                 message_id: 42u64.into(),
@@ -419,25 +421,20 @@ mod tests {
                 amount: 1_000_000,
                 fee: 100_000,
                 decimals: 8,
-            })),
-            1000,
-            canister_id(1),
-            &now,
-            &mut state,
+            },
+            2000,
         );
 
-        assert_eq!(state.data.bridged_user_deposits.len(), 1);
-        let deposit = state.data.bridged_user_deposits.get(0).unwrap();
-        assert_eq!(deposit.account, account);
-        assert_eq!(deposit.chat, chat);
-        assert_eq!(deposit.thread_root_message_index, Some(3.into()));
-        assert_eq!(deposit.message_id, 42u64.into());
-        assert_eq!(deposit.sender, sender);
-        assert_eq!(deposit.refund_to.owner, refund_to.owner);
-        assert_eq!(deposit.refund_to.subaccount, refund_to.subaccount);
-        assert_eq!(deposit.ledger, ledger);
-        assert_eq!(deposit.token_symbol, "CHAT");
-        assert_eq!((deposit.amount, deposit.fee, deposit.decimals), (1_000_000, 100_000, 8));
-        assert_eq!(deposit.timestamp, 2000);
+        assert_eq!(tip.account, account);
+        assert_eq!(tip.chat, chat);
+        assert_eq!(tip.thread_root_message_index, Some(3.into()));
+        assert_eq!(tip.message_id, 42u64.into());
+        assert_eq!(tip.tipper, tipper);
+        assert_eq!(tip.refund_to.owner, refund_to.owner);
+        assert_eq!(tip.refund_to.subaccount, refund_to.subaccount);
+        assert_eq!(tip.ledger, ledger);
+        assert_eq!(tip.token_symbol, "CHAT");
+        assert_eq!((tip.amount, tip.fee, tip.decimals), (1_000_000, 100_000, 8));
+        assert_eq!(tip.timestamp, 2000);
     }
 }

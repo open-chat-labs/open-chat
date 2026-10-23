@@ -25,6 +25,13 @@ pub enum TimerJob {
     UnsuspendUser(UnsuspendUser),
     ProcessReportClassification(ProcessReportClassification),
     RetryPayment(Box<RetryPaymentJob>),
+    RefundBridgedUserTip(RefundBridgedUserTip),
+}
+
+// Refunds a tip held for an account on another platform, if no one has linked the account since
+#[derive(Serialize, Deserialize, Clone)]
+pub struct RefundBridgedUserTip {
+    pub tip_id: u64,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -93,7 +100,14 @@ impl Job for TimerJob {
             TimerJob::UnsuspendUser(job) => job.execute(),
             TimerJob::ProcessReportClassification(job) => job.execute(),
             TimerJob::RetryPayment(job) => job.execute(),
+            TimerJob::RefundBridgedUserTip(job) => job.execute(),
         }
+    }
+}
+
+impl Job for RefundBridgedUserTip {
+    fn execute(self) {
+        mutate_state(|state| state.refund_bridged_user_tip(self.tip_id));
     }
 }
 
