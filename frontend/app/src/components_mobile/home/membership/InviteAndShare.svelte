@@ -8,7 +8,7 @@
     import Translatable from "@shared_components/Translatable.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
     import InviteList from "./InviteList.svelte";
-    import { MemberManagement } from "./membersState.svelte";
+    import { MemberManagement } from "@src/logic/members/memberManagement.svelte";
     import Share from "./Share.svelte";
 
     type View = "invite" | "share";

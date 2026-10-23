@@ -9,7 +9,8 @@
     import VirtualList from "@openchat/ui/src/lib/virtual/VirtualList.svelte";
     import NothingToSee from "../NothingToSee.svelte";
     import BlockedUser from "./BlockedUser.svelte";
-    import type { MemberManagement } from "./membersState.svelte";
+    import type { MemberManagement } from "@src/logic/members/memberManagement.svelte";
+    import { toastStore } from "@src/stores/toast";
 
     interface Props {
         users: UserSummary[];
@@ -30,7 +31,8 @@
             {searchTerm}
             {me}
             {user}
-            onUnblockUser={(userId) => membersState.onUnblockUser(userId)} />
+            onUnblockUser={async (userId) =>
+                toastStore.showOutcome(await membersState.unblockUser(userId))} />
     </Container>
 {/snippet}
 

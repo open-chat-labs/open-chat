@@ -1,16 +1,12 @@
 
 <script lang="ts">
     import { navigate } from "@utils/navigation";
-    import type {
-        ChatIdentifier,
-        CommunityIdentifier,
-        MemberRole,
-        MultiUserChat,
-        MultiUserChatIdentifier,
-        OpenChat,
-        UserSummary,
-    } from "@client";
-    import { allUsersStore, compareRoles, currentUserIdStore, eventsStore, fullWidth, lastRightPanelState, publish, rightPanelHistory, rightPanelView, roleAsText, routeStore, selectedChatBlockedUsersStore, selectedChatBotsStore, selectedChatIdStore, selectedChatInvitedUsersStore, selectedChatLapsedMembersStore, selectedChatMembersStore, selectedChatPinnedMessagesStore, selectedChatSummaryStore, selectedChatWebhooksStore, selectedCommunityBlockedUsersStore, selectedCommunityBotsStore, selectedCommunityInvitedUsersStore, selectedCommunityLapsedMembersStore, selectedCommunityMembersStore, selectedCommunitySummaryStore, setRightPanelHistory } from "@client";
+    import type { ChatIdentifier, MemberRole, MultiUserChat, OpenChat, UserSummary } from "@client";
+    import { allUsersStore, currentUserIdStore, eventsStore, fullWidth, lastRightPanelState, publish, rightPanelHistory, rightPanelView, routeStore, selectedChatBlockedUsersStore, selectedChatBotsStore, selectedChatIdStore, selectedChatInvitedUsersStore, selectedChatLapsedMembersStore, selectedChatMembersStore, selectedChatPinnedMessagesStore, selectedChatSummaryStore, selectedChatWebhooksStore, selectedCommunityBlockedUsersStore, selectedCommunityBotsStore, selectedCommunityInvitedUsersStore, selectedCommunityLapsedMembersStore, selectedCommunityMembersStore, selectedCommunitySummaryStore, setRightPanelHistory } from "@client";
+    import {
+        MemberManagement,
+        type MemberActionOutcome,
+    } from "@src/logic/members/memberManagement.svelte";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
@@ -59,45 +55,38 @@
         return client.searchCommunityMembersToAdd(term, 20);
     }
 
-    function onChangeGroupRole(args: {
-        userId: string;
-        newRole: MemberRole;
-        oldRole: MemberRole;
-    }): void {
-        if (
-            $selectedChatIdStore !== undefined &&
-            ($selectedChatIdStore.kind === "group_chat" || $selectedChatIdStore.kind === "channel")
-        ) {
-            const { userId, newRole, oldRole } = args;
-            changeGroupRole($selectedChatIdStore, userId, newRole, oldRole);
-        }
+    // The selected group or channel, and the selected community, whose members the panels act on
+    let chatMembers = $derived(
+        multiUserChat?.kind === "group_chat" || multiUserChat?.kind === "channel"
+            ? new MemberManagement(client, multiUserChat)
+            : undefined,
+    );
+    let communityMembers = $derived(
+        $selectedCommunitySummaryStore !== undefined
+            ? new MemberManagement(client, $selectedCommunitySummaryStore)
+            : undefined,
+    );
+
+    async function showOutcome(action: Promise<MemberActionOutcome> | undefined) {
+        if (action !== undefined) toastStore.showOutcome(await action);
     }
 
-    function onChangeCommunityRole(args: {
-        userId: string;
-        newRole: MemberRole;
-        oldRole: MemberRole;
-    }): void {
-        if ($selectedCommunitySummaryStore !== undefined) {
-            const { userId, newRole, oldRole } = args;
-            changeCommunityRole($selectedCommunitySummaryStore.id, userId, newRole, oldRole);
-        }
-    }
-
-    function onRemoveGroupMember(userId: string): void {
-        if (
-            $selectedChatIdStore !== undefined &&
-            ($selectedChatIdStore.kind === "group_chat" || $selectedChatIdStore.kind === "channel")
-        ) {
-            removeGroupMember($selectedChatIdStore, userId);
-        }
-    }
-
-    function onRemoveCommunityMember(userId: string): void {
-        if ($selectedCommunitySummaryStore !== undefined) {
-            removeCommunityMember($selectedCommunitySummaryStore.id, userId);
-        }
-    }
+    type RoleChange = { userId: string; newRole: MemberRole; oldRole: MemberRole };
+    const onChangeGroupRole = (args: RoleChange) => showOutcome(chatMembers?.changeRole(args, $_));
+    const onChangeCommunityRole = (args: RoleChange) =>
+        showOutcome(communityMembers?.changeRole(args, $_));
+    const onRemoveGroupMember = (userId: string) => showOutcome(chatMembers?.removeMember(userId));
+    const onRemoveCommunityMember = (userId: string) =>
+        showOutcome(communityMembers?.removeMember(userId));
+    const onBlockGroupUser = (userId: string) => showOutcome(chatMembers?.blockUser(userId));
+    const onBlockCommunityUser = (userId: string) =>
+        showOutcome(communityMembers?.blockUser(userId));
+    const onUnblockGroupUser = (userId: string) => showOutcome(chatMembers?.unblockUser(userId));
+    const onUnblockCommunityUser = (userId: string) =>
+        showOutcome(communityMembers?.unblockUser(userId));
+    const onCancelGroupInvite = (userId: string) => showOutcome(chatMembers?.cancelInvite(userId));
+    const onCancelCommunityInvite = (userId: string) =>
+        showOutcome(communityMembers?.cancelInvite(userId));
 
     async function onInviteCommunityUsers(users: UserSummary[]) {
         if ($selectedCommunitySummaryStore !== undefined) {
@@ -176,127 +165,6 @@
         activeVideoCall.threadOpen(false);
     }
 
-    function changeGroupRole(
-        chatId: MultiUserChatIdentifier,
-        userId: string,
-        newRole: MemberRole,
-        oldRole: MemberRole,
-    ): Promise<void> {
-        // Call backend to changeRole
-        return client.changeRole(chatId, userId, newRole, oldRole).then((success) => {
-            if (!success) {
-                const roleText = $_(roleAsText(newRole));
-                const promotion = compareRoles(newRole, oldRole) > 0;
-                const message = i18nKey(promotion ? "promoteFailed" : "demoteFailed", {
-                    role: roleText,
-                });
-                toastStore.showFailureToast(message);
-            }
-        });
-    }
-
-    function changeCommunityRole(
-        id: CommunityIdentifier,
-        userId: string,
-        newRole: MemberRole,
-        oldRole: MemberRole,
-    ) {
-        return client.changeCommunityRole(id, userId, newRole, oldRole).then((success) => {
-            if (!success) {
-                const roleText = $_(roleAsText(newRole));
-                const promotion = compareRoles(newRole, oldRole) > 0;
-                const message = i18nKey(promotion ? "promoteFailed" : "demoteFailed", {
-                    role: roleText,
-                });
-                toastStore.showFailureToast(message);
-            }
-        });
-    }
-
-    function removeCommunityMember(id: CommunityIdentifier, userId: string): Promise<void> {
-        return client
-            .removeCommunityMember(id, userId)
-            .then((resp) => {
-                if (resp.kind !== "success") {
-                    toastStore.showFailureToast(i18nKey("removeMemberFailed"));
-                }
-            })
-            .catch((err) => {
-                client.logError("Unable to remove member", err);
-                toastStore.showFailureToast(i18nKey("removeMemberFailed"));
-            });
-    }
-
-    function removeGroupMember(chatId: MultiUserChatIdentifier, userId: string): Promise<void> {
-        return client
-            .removeMember(chatId, userId)
-            .then((resp) => {
-                if (resp.kind !== "success") {
-                    toastStore.showFailureToast(i18nKey("removeMemberFailed"));
-                }
-            })
-            .catch((err) => {
-                client.logError("Unable to remove member", err);
-                toastStore.showFailureToast(i18nKey("removeMemberFailed"));
-            });
-    }
-
-    async function onBlockGroupUser(userId: string) {
-        if (
-            $selectedChatIdStore !== undefined &&
-            ($selectedChatIdStore.kind === "group_chat" || $selectedChatIdStore.kind === "channel")
-        ) {
-            const success = await client.blockUser($selectedChatIdStore, userId);
-            if (success) {
-                toastStore.showSuccessToast(i18nKey("blockUserSucceeded"));
-            } else {
-                toastStore.showFailureToast(i18nKey("blockUserFailed"));
-            }
-        }
-    }
-
-    async function onBlockCommunityUser(userId: string) {
-        if ($selectedCommunitySummaryStore !== undefined) {
-            const success = await client.blockCommunityUser(
-                $selectedCommunitySummaryStore.id,
-                userId,
-            );
-            if (success) {
-                toastStore.showSuccessToast(i18nKey("blockUserSucceeded"));
-            } else {
-                toastStore.showFailureToast(i18nKey("blockUserFailed"));
-            }
-        }
-    }
-
-    async function onUnblockGroupUser(userId: string) {
-        if (
-            $selectedChatIdStore !== undefined &&
-            ($selectedChatIdStore.kind === "group_chat" || $selectedChatIdStore.kind === "channel")
-        ) {
-            const success = await client.unblockUser($selectedChatIdStore, userId);
-            if (success) {
-                toastStore.showSuccessToast(i18nKey("unblockUserSucceeded"));
-            } else {
-                toastStore.showFailureToast(i18nKey("unblockUserFailed"));
-            }
-        }
-    }
-
-    async function onUnblockCommunityUser(userId: string) {
-        if ($selectedCommunitySummaryStore !== undefined) {
-            const success = await client.unblockCommunityUser(
-                $selectedCommunitySummaryStore.id,
-                userId,
-            );
-            if (success) {
-                toastStore.showSuccessToast(i18nKey("unblockUserSucceeded"));
-            } else {
-                toastStore.showFailureToast(i18nKey("unblockUserFailed"));
-            }
-        }
-    }
-
     function onShowInviteGroupUsers() {
         publish("showInviteGroupUsers", true);
     }
@@ -304,30 +172,6 @@
     function showInviteCommunityUsers() {
         if ($selectedCommunitySummaryStore !== undefined) {
             setRightPanelHistory([{ kind: "invite_community_users" }]);
-        }
-    }
-
-    function onCancelCommunityInvite(userId: string) {
-        if ($selectedCommunitySummaryStore !== undefined) {
-            cancelInvite($selectedCommunitySummaryStore.id, userId);
-        }
-    }
-
-    async function onCancelGroupInvite(userId: string) {
-        if (
-            $selectedChatIdStore !== undefined &&
-            ($selectedChatIdStore.kind === "group_chat" || $selectedChatIdStore.kind === "channel")
-        ) {
-            cancelInvite($selectedChatIdStore, userId);
-        }
-    }
-
-    async function cancelInvite(id: MultiUserChatIdentifier | CommunityIdentifier, userId: string) {
-        const success = await client.cancelInvites(id, [userId]);
-        if (success) {
-            toastStore.showSuccessToast(i18nKey("cancelInviteSucceeded"));
-        } else {
-            toastStore.showFailureToast(i18nKey("cancelInviteFailed"));
         }
     }
 

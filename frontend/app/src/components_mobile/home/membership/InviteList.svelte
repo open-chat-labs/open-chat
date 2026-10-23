@@ -7,6 +7,7 @@
         OpenChat,
         publish,
         selectedCommunitySummaryStore,
+        usersFromIds,
         type UserSummary,
     } from "@client";
     import { getContext } from "svelte";
@@ -18,7 +19,8 @@
     import SelectUsers from "../SelectUsers.svelte";
     import InvitedUser from "./InvitedUser.svelte";
     import InviteUser from "./InviteUser.svelte";
-    import type { MemberManagement } from "./membersState.svelte";
+    import type { MemberManagement } from "@src/logic/members/memberManagement.svelte";
+    import { toastStore } from "@src/stores/toast";
 
     const client = getContext<OpenChat>("client");
 
@@ -28,7 +30,7 @@
     let { membersState }: Props = $props();
 
     let invited = $derived<UserSummary[]>(
-        membersState.getUsersFromSet($allUsersStore, membersState.invited),
+        usersFromIds($allUsersStore, membersState.invited),
     );
 
     function dmFilter(user: UserSummary) {
@@ -51,7 +53,7 @@
                 {me}
                 {user}
                 onCancelInvite={invited && membersState.canUninvite()
-                    ? (userId) => membersState.cancelInvites([userId])
+                    ? async (userId) => toastStore.showOutcome(await membersState.cancelInvite(userId))
                     : undefined} />
         {:else}
             <InviteUser
@@ -123,7 +125,7 @@
 <FloatingButton
     loading={membersState.inviting}
     disabled={membersState.usersToAddOrInvite.length === 0}
-    onClick={() => membersState.inviteUsers()}
+    onClick={async () => toastStore.showOutcome(await membersState.inviteUsers())}
     pos={{ bottom: "lg", right: "lg" }}>
     {#snippet icon(color)}
         <ShareIcon {color} />

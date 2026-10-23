@@ -39,6 +39,13 @@ export { executionPaymentAmount, proposalFundsRequired } from "./utils/proposal"
 export { inviteLinkUrl } from "./utils/inviteLink";
 export { postLoginJoin } from "./utils/join";
 export { muteNotificationsFailureMessage, pinChatFailureMessage } from "./utils/pinAndMute";
+export {
+    compareMembers,
+    knownMembers,
+    memberMatchesSearch,
+    roleChangeFailureMessage,
+    usersFromIds,
+} from "./utils/members";
 export { profileChanges, type ProfileChanges } from "./utils/profile";
 export { isDisplayNameValid, isUsernameValid } from "./utils/validation";
 export { rightPanelView, type RightPanelInput } from "./utils/rightPanel";
