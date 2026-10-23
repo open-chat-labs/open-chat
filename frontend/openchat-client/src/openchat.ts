@@ -2716,9 +2716,13 @@ export class OpenChat {
     showTrace = showTrace;
     userAvatarUrl = userAvatarUrl;
 
-    // The avatar of the author of a message a bridge bot relayed from another platform
+    // The avatar of the author of a message a bridge bot relayed from another platform. A Telegram
+    // user with no photo gets a generated one, as an OpenChat user with no avatar does.
     bridgedAvatarUrl(id: BridgedUserId, summary: BridgedUserSummary | undefined): string {
-        return bridgedAuthorAvatarUrl(id, summary, this.config.blobUrlPattern) ?? userAvatarUrl();
+        return (
+            bridgedAuthorAvatarUrl(id, summary, this.config.blobUrlPattern) ??
+            buildIdenticonUrl(bridgedUserKey(id)!)
+        );
     }
     formatTokens = formatTokens;
     validateTokenInput = validateTokenInput;
