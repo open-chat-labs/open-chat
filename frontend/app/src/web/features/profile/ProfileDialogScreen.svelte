@@ -470,6 +470,7 @@
     joined={header.joined}
     streak={header.streak}
     balance={header.balance}
+    chitEarned={$chitStateStore.totalChitEarned}
     isDiamond={header.isDiamond}
     isVerified={header.isVerified}
     avatar={header.avatar}

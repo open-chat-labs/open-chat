@@ -181,3 +181,8 @@
 - A sign-in method without a `used` line said "Just linked", so every method a host listed without one (the app has no last-used date for them) looked new. "Just linked" is now only for a method linked in this dialog; another without `used` shows no line.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
 
+## 2026-10-23 — ProfileDialog: no empty "last used" line, and a delete step for a user without CHIT, by hand
+- A sign-in method shows its "last used" line only when there's something to say (`used`, or "Just linked"). An empty line (and its gap) pushed the method's name off centre.
+- The delete flow's third step ("Think of your CHIT!") tells a user who has never earned any CHIT (`balance` and `chitEarned` both 0) that they haven't discovered it yet, instead of "you'll lose 0 CHIT and your 0-day streak", and leaves out the zeroed streak and balance (new keys `ui.profileDialog.delete.step3NoChit*`).
+- Not in the design export: to go back to it (the app's `GAPS.md` lists them).
+

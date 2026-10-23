@@ -917,6 +917,8 @@
     return n ? t('ui.profileDialog.delete.nextMilestone', { days: n - streak, n }) : t('ui.profileDialog.delete.allMilestones');
   });
   const delLocked = $derived(delStep === 3 && (!delMatch || delBusy));
+  // never earned any CHIT: nothing to lose, but all of it still to discover
+  const noChit = $derived(balance === 0 && chitEarned === 0);
 
   function openDelete() {
     delOpen = true;
@@ -979,17 +981,26 @@
       primaryIcon: 'wallet',
       secondary: t('ui.profileDialog.delete.step2Next'),
     },
-    {
-      icon: null,
-      title: t('ui.profileDialog.delete.step3Title'),
-      body: rich('ui.profileDialog.delete.step3Body', {
-        balance: t('ui.profileDialog.delete.chitAmount', { amount: fmt(balance) }),
-        streak: t('ui.profileDialog.delete.streak', { count: streak }),
-      }),
-      primary: t('ui.profileDialog.delete.step3Stay'),
-      primaryIcon: 'zap',
-      secondary: t('ui.profileDialog.delete.step3Next'),
-    },
+    noChit
+      ? {
+          icon: 'zap',
+          title: t('ui.profileDialog.delete.step3NoChitTitle'),
+          body: rich('ui.profileDialog.delete.step3NoChitBody', {}),
+          primary: t('ui.profileDialog.delete.step3NoChitStay'),
+          primaryIcon: 'zap',
+          secondary: t('ui.profileDialog.delete.step3Next'),
+        }
+      : {
+          icon: null,
+          title: t('ui.profileDialog.delete.step3Title'),
+          body: rich('ui.profileDialog.delete.step3Body', {
+            balance: t('ui.profileDialog.delete.chitAmount', { amount: fmt(balance) }),
+            streak: t('ui.profileDialog.delete.streak', { count: streak }),
+          }),
+          primary: t('ui.profileDialog.delete.step3Stay'),
+          primaryIcon: 'zap',
+          secondary: t('ui.profileDialog.delete.step3Next'),
+        },
     {
       icon: 'trash',
       title: t('ui.profileDialog.delete.step4Title'),
@@ -1567,7 +1578,7 @@
                   {#each items as x}
                     <div class="method">
                       {@render glyph(T.icon, 'method-glyph')}
-                      <div class="method-text"><span class="method-title">{x.title + (type === 'email' ? '' : ` · ${x.id.slice(0, 5)}`)}</span><span class="method-sub">{x.used || (siAdded.some((a) => a.id === x.id) ? t('ui.profileDialog.signin.justLinked') : '')}</span></div>
+                      <div class="method-text"><span class="method-title">{x.title + (type === 'email' ? '' : ` · ${x.id.slice(0, 5)}`)}</span>{#if x.used || siAdded.some((a) => a.id === x.id)}<span class="method-sub">{x.used || t('ui.profileDialog.signin.justLinked')}</span>{/if}</div>
                       {#if onUnlinkMethod}<span class="unlink" onclick={() => unlink(x)} role="button" tabindex="0">{@render glyph('unlink', 'unlink-glyph')}{t('ui.profileDialog.signin.unlink')}</span>{/if}
                     </div>
                   {/each}
@@ -1932,7 +1943,7 @@
             <span class="step-title">{step.title}</span>
             <span class="step-body">{#each step.body as [text, strong]}<span class:strong>{text}</span>{/each}</span>
           </div>
-          {#if delStep === 2}
+          {#if delStep === 2 && !noChit}
             <div class="list">
               <div class="chit-pair">
                 <div class="chit-cell">

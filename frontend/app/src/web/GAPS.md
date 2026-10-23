@@ -123,7 +123,9 @@ design export needs. Each entry says where it came up.
   `qrCode`, the invite's QR code drawn by the host (the dialog's own needs a global `qrcode`
   library); the storage section's "report a problem" row only with `onReportIssue`; the storage
   meter only with an allowance above 0; `aboutPages`, the About pages the host has; an empty
-  communities section says so; "Just linked" only for a sign-in method linked in the dialog.
+  communities section says so; "Just linked" only for a sign-in method linked in the dialog, and no empty "last used"
+  line; the delete flow's CHIT step for a user who has never earned any says they haven't
+  discovered it yet.
 - **`ProfileDialog` against the app** (8c):
   - the profile fields save one at a time, and any failure shows as "couldn't save": the reason
     the backend gave (`ProfileFieldErrors`, e.g. "display name too short") isn't shown;
