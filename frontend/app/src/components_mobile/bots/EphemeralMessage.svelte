@@ -9,7 +9,9 @@
     import ChatMessageContent from "../home/ChatMessageContent.svelte";
     import BotAvatar from "./BotAvatar.svelte";
 
-    const duration = 10_000;
+    // Long enough to read and act on a reply with several steps or a link, eg. a bridge bot's
+    // instructions. It can be closed sooner.
+    const duration = 60_000;
 
     interface Props {
         event: EphemeralMessageEvent;
