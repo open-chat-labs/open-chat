@@ -7,6 +7,8 @@ import {
     ROLE_MODERATOR,
     ROLE_OWNER,
     type AccessGate,
+    type BridgedUserId,
+    type BridgedUserSummary,
     type CandidateGroupChat,
     type ChatEvent,
     type ChatIdentifier,
@@ -23,6 +25,8 @@ import { localUpdates } from "../state";
 import { currentChatVisit, startChatVisit } from "../state/selectedChat";
 import {
     addVoteToPoll,
+    buildBridgedUserAvatarUrl,
+    buildIdenticonUrl,
     getMembersString,
     groupChatFromCandidate,
     mergeChatMetrics,
@@ -602,5 +606,42 @@ describe("who typing is sent to", () => {
             ["a", "b"],
             ["a", "b"],
         ]);
+    });
+});
+
+describe("bridged user avatars", () => {
+    const avatars = "https://avatars.example.com";
+    const telegramId: BridgedUserId = { kind: "telegram", id: "123456789" };
+    const telegram = (photoId?: string): BridgedUserSummary => ({
+        user: {
+            kind: "telegram",
+            profile: { id: telegramId.id, displayName: "Nelly Smith", photoId },
+        },
+        updated: 0n,
+    });
+
+    test("a Telegram user with no photo gets a generated avatar", () => {
+        const url = buildBridgedUserAvatarUrl(telegramId, telegram(), avatars);
+        expect(url).toEqual(buildIdenticonUrl("telegram:123456789"));
+        expect(url).not.toEqual(buildIdenticonUrl("123456789"));
+    });
+
+    test("a Telegram user's photo is used if they have one", () => {
+        expect(
+            buildBridgedUserAvatarUrl(telegramId, telegram("AQADtLwxG5a_QEZ-"), avatars),
+        ).toEqual("https://avatars.example.com/telegram/123456789/AQADtLwxG5a_QEZ-.jpg");
+    });
+
+    test("until the profile loads, it's the unknown user's avatar", () => {
+        expect(buildBridgedUserAvatarUrl(telegramId, undefined, avatars)).toEqual(
+            "/assets/unknownUserAvatar.svg",
+        );
+    });
+
+    test("a Discord user with no avatar keeps Discord's default", () => {
+        const discordId: BridgedUserId = { kind: "discord", id: "80351110224678912" };
+        expect(buildBridgedUserAvatarUrl(discordId, undefined, avatars)).toMatch(
+            /^https:\/\/cdn\.discordapp\.com\/embed\/avatars\/\d\.png$/,
+        );
     });
 });
