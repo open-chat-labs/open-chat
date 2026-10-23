@@ -53,10 +53,25 @@
 
     const linked = $derived(linkedDialog($querystringStore));
 
-    // the linked dialog a showing one has handed off to (openLinked: Diamond from the profile,
-    // which plays no exit), so it keeps that one's backdrop. The screen claims it once, as it
-    // opens; any other way it opens (Back after an exit, a link) fades its backdrop in
+    // a linked dialog replaced by another kind while it's still showing hands its backdrop over,
+    // so only the next dialog animates in: Diamond from the profile (openLinked, which plays no
+    // exit), browser or hardware Back from Diamond (gone at once, with no exit). Not once it has
+    // played its own exit (closeLinked: its backdrop has faded), whatever opens next. Followed in
+    // the store's subscription, as the URL changes, before the screens render; the next screen
+    // claims it once, as it opens
     let handedOffTo: LinkedDialog["kind"] | undefined;
+    let exited = false;
+
+    $effect(() => {
+        let shown: LinkedDialog["kind"] | undefined;
+        return querystringStore.subscribe((query) => {
+            const kind = linkedDialog(query)?.kind;
+            if (kind === shown) return;
+            handedOffTo = shown !== undefined && kind !== undefined && !exited ? kind : undefined;
+            exited = false;
+            shown = kind;
+        });
+    });
 
     function claimInPlace(kind: LinkedDialog["kind"]): boolean {
         const inPlace = handedOffTo === kind;
@@ -64,7 +79,9 @@
         return inPlace;
     }
 
+    // once the dialog has played its exit
     function closeLinked(dialog: LinkedDialog) {
+        exited = true;
         navigate(removeQueryStringParam(linkedDialogParam(dialog)), "dismiss");
     }
 
@@ -72,9 +89,7 @@
     // is: the store's query is decoded, so its values can't be written back
     function openLinked(dialog: LinkedDialog) {
         const query = openLinkedDialog(new URLSearchParams(window.location.search), dialog);
-        if (query === undefined) return;
-        handedOffTo = linked !== undefined ? dialog.kind : undefined;
-        navigate(`${window.location.pathname}${query}`, "overlay");
+        if (query !== undefined) navigate(`${window.location.pathname}${query}`, "overlay");
     }
 
     // what the client is waiting on to send: the rules, then the PIN
