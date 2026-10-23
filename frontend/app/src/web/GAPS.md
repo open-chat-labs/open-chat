@@ -244,3 +244,5 @@ design export needs. Each entry says where it came up.
   (the old docked panel showed nothing), and a new panel opens a closed column. Not carried over:
   dragging the column wider (the old panel's `Resizable`; the design's widths are fixed) and the
   halloween theme's cobweb. A thread's placeholder lists its whole root message.
+- **Bot builder**: no screen yet. When it's built, its owner picker offers `botOwnerCandidates`
+  (you, then the users you have direct chats with), as both old `AutoBotBuilder`s do.

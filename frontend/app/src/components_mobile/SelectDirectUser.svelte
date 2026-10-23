@@ -17,15 +17,19 @@
         selected?: UserSummary;
         subtext: Snippet;
         placeholder: string;
+        // Offered instead of the users you have direct chats with
+        users?: UserSummary[];
         onSelect: (val: UserSummary) => void;
     }
 
-    let { subtext, onSelect, placeholder, selected, disabled = false }: Props = $props();
+    let { subtext, onSelect, placeholder, selected, disabled = false, users }: Props = $props();
     const searching = $state(false);
     let searchTerm = $state<string>();
 
     let dms = $derived(
-        directChatUsers($serverDirectChatsStore, $allUsersStore).filter(matchesSearchTerm),
+        (users ?? directChatUsers($serverDirectChatsStore, $allUsersStore)).filter(
+            matchesSearchTerm,
+        ),
     );
 
     function matchesSearchTerm(user: UserSummary) {

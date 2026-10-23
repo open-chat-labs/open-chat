@@ -1,8 +1,15 @@
-import { ChatMap, type DirectChatSummary, type UserLookup, type UserSummary } from "@shared";
+import {
+    ChatMap,
+    deletedUser,
+    type DirectChatSummary,
+    type UserLookup,
+    type UserSummary,
+} from "@shared";
 import { _, addMessages, init } from "svelte-i18n";
 import { get } from "svelte/store";
 import { vi } from "vitest";
 import {
+    botOwnerCandidates,
     buildUsernameList,
     compareUsername,
     directChatUsers,
@@ -173,21 +180,29 @@ describe("direct chat users", () => {
         } as DirectChatSummary;
     }
 
-    test("most recent first, leaving out bots and users not loaded", () => {
-        const users: UserLookup = new Map([
-            ...lookup,
-            ["bot", { ...lookup.get("a")!, kind: "bot", userId: "bot", username: "bot" }],
-        ]);
-        const chats = ChatMap.fromList([
-            directChat("a", BigInt(1)),
-            directChat("bot", BigInt(2)),
-            directChat("xyz", BigInt(3)),
-            directChat("unknown", BigInt(4)),
-        ]);
+    const users: UserLookup = new Map([
+        ...lookup,
+        ["bot", { ...lookup.get("a")!, kind: "bot", userId: "bot", username: "bot" }],
+        ["deleted", deletedUser("deleted")],
+    ]);
+    const chats = ChatMap.fromList([
+        directChat("a", BigInt(1)),
+        directChat("bot", BigInt(2)),
+        directChat("xyz", BigInt(3)),
+        directChat("unknown", BigInt(4)),
+        directChat("deleted", BigInt(5)),
+    ]);
 
+    test("most recent first, leaving out bots, deleted users and users not loaded", () => {
         const result = directChatUsers(chats, users).map((u) => u.userId);
 
         expect(result).toEqual(["xyz", "a"]);
+    });
+
+    test("a bot's owner can pass it on or keep it", () => {
+        const result = botOwnerCandidates(chats, users, "alpha").map((u) => u.userId);
+
+        expect(result).toEqual(["alpha", "xyz", "a"]);
     });
 });
 

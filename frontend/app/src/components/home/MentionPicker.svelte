@@ -163,7 +163,8 @@
                     return compareMatchNames(a.name, b.name);
                 }
                 if (a.kind === "user" && b.kind === "user") {
-                    return compareMatchNames(a.username, b.username);
+                    // Users given are kept in the order given
+                    return users !== undefined ? 0 : compareMatchNames(a.username, b.username);
                 }
                 return a.kind === "user_group" ? -1 : 1;
             }),
