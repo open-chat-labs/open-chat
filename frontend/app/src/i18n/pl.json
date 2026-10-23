@@ -200,6 +200,7 @@
         "unlinkFailed": "Nie udało się rozłączyć konta"
     },
     "bridgedUserUnknown": "Użytkownik {platform}",
+    "bridgedUserWithPlatform": "{name} ({platform})",
     "nativeUpdate": {
         "downloadingTitle": "Chwileczkę! Aktualizowanie ...",
         "downloadingMessage": "Pobieramy szybką aktualizację i za chwilę będzie można kontynuować ...",

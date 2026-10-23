@@ -8772,6 +8772,10 @@ export class OpenChat {
             .concat(chatsResponse.communitiesAddedUpdated.flatMap((c) => c.channels));
 
         const { userIds, webhooks } = this.#userIdsFromChatSummaries(chatsAddedUpdated);
+        // So the chat list can show who a relayed latest message is from
+        void this.getBridgedUsers(
+            bridgedUserIdsFromEvents(chatsAddedUpdated.flatMap((c) => c.latestMessage ?? [])),
+        );
         if (chatsResponse.referrals !== undefined) {
             for (const userId of chatsResponse.referrals.map((r) => r.userId)) {
                 userIds.add(userId);

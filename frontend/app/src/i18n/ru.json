@@ -200,6 +200,7 @@
         "unlinkFailed": "Не удалось отвязать аккаунт"
     },
     "bridgedUserUnknown": "Пользователь {platform}",
+    "bridgedUserWithPlatform": "{name} ({platform})",
     "nativeUpdate": {
         "downloadingTitle": "Секунду! Обновление ...",
         "downloadingMessage": "Мы загружаем небольшое обновление, и вы сможете продолжить ...",

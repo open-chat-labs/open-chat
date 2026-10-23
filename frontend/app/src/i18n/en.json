@@ -467,6 +467,7 @@
         "unlinkFailed": "Couldn't unlink the account"
     },
     "bridgedUserUnknown": "{platform} user",
+    "bridgedUserWithPlatform": "{name} ({platform})",
     "cancel": "Cancel",
     "cancelInvite": "Cancel invite",
     "cancelInviteFailed": "Error cancelling invite",

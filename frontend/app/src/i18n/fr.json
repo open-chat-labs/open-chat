@@ -200,6 +200,7 @@
         "unlinkFailed": "Impossible de dissocier le compte"
     },
     "bridgedUserUnknown": "Utilisateur {platform}",
+    "bridgedUserWithPlatform": "{name} ({platform})",
     "nativeUpdate": {
         "downloadingTitle": "Un instant ! Mise à jour ...",
         "downloadingMessage": "Nous téléchargeons une petite mise à jour et vous pourrez continuer ...",

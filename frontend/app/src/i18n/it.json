@@ -200,6 +200,7 @@
         "unlinkFailed": "Impossibile scollegare l'account"
     },
     "bridgedUserUnknown": "Utente {platform}",
+    "bridgedUserWithPlatform": "{name} ({platform})",
     "nativeUpdate": {
         "downloadingTitle": "Un attimo! Aggiornamento ...",
         "downloadingMessage": "Stiamo scaricando un rapido aggiornamento e poi potrai continuare ...",

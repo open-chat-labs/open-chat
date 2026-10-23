@@ -1,4 +1,12 @@
-import type { ChatSummary, MessageContent } from "@client";
+import type {
+    BridgedUserId,
+    BridgedUserSummary,
+    ChatSummary,
+    MessageContent,
+    UserLookup,
+    UserSummary,
+} from "@client";
+import { deletedUser } from "@client";
 import { describe, expect, test, vi } from "vitest";
 
 // messages are restricted only in the app store build; here any moderation flag restricts
@@ -12,7 +20,15 @@ const membership = { role: 1, archived: false, notificationsMuted: false };
 
 function chat(
     kind: "direct_chat" | "group_chat",
-    latest: { sender: string; text: string; flags?: number; webhook?: boolean } | undefined,
+    latest:
+        | {
+              sender: string;
+              text: string;
+              flags?: number;
+              webhook?: boolean;
+              bridgedFrom?: BridgedUserId;
+          }
+        | undefined,
     extra: Partial<ChatSummary> = {},
 ): ChatSummary {
     return {
@@ -29,7 +45,11 @@ function chat(
                 sender: latest.sender,
                 content: { kind: "text_content", text: latest.text },
                 moderationFlags: latest.flags,
-                senderContext: latest.webhook ? { kind: "webhook" } : undefined,
+                senderContext: latest.webhook
+                    ? { kind: "webhook" }
+                    : latest.bridgedFrom
+                      ? { kind: "bot", finalised: true, bridgedFrom: latest.bridgedFrom }
+                      : undefined,
             },
         },
         ...extra,
@@ -44,6 +64,8 @@ const text: PreviewText = {
     translations: new Map([[9n, "bonjour"]]),
     contentText: (content: MessageContent) =>
         content.kind === "text_content" ? content.text : content.kind,
+    bridgedUsers: new Map(),
+    users: new Map() as UserLookup,
 };
 const untranslated = { ...text, translations: new Map<bigint, string>() };
 
@@ -96,5 +118,44 @@ describe("a chat's latest message preview", () => {
         const gone = chat("direct_chat", { sender: "alice", text: "secret" });
         (gone.latestMessage as { expiresAt?: number }).expiresAt = 1_000;
         expect(latestMessagePreview(gone, untranslated, 2_000)).toBe("");
+    });
+
+    test("shows a relayed message as from who linked the account, else the account and its platform", () => {
+        const nelly: BridgedUserId = { kind: "telegram", id: "123" };
+        const relayed = chat("group_chat", {
+            sender: "bridge-bot",
+            text: "hi",
+            bridgedFrom: nelly,
+        });
+        const profile = (linkedUserId?: string): BridgedUserSummary => ({
+            user: { kind: "telegram", profile: { id: "123", displayName: "Nelly Smith" } },
+            linkedUserId,
+            updated: 0n,
+        });
+        const withProfile = (summary?: BridgedUserSummary, users: UserSummary[] = []) => ({
+            ...untranslated,
+            bridgedUsers: new Map(summary ? [["telegram:123", summary]] : []),
+            users: new Map(users.map((u) => [u.userId, u])) as UserLookup,
+        });
+        const user = (userId: string) =>
+            ({ kind: "user", userId, username: userId, updated: 0n }) as UserSummary;
+
+        // Before its profile has loaded
+        expect(latestMessagePreview(relayed, withProfile())).toBe(
+            'bridgedUserUnknown({"platform":"Telegram"}): hi',
+        );
+        expect(latestMessagePreview(relayed, withProfile(profile()))).toBe(
+            'bridgedUserWithPlatform({"name":"Nelly Smith","platform":"Telegram"}): hi',
+        );
+        expect(latestMessagePreview(relayed, withProfile(profile("bob"), [user("bob")]))).toBe(
+            "bob: hi",
+        );
+        expect(latestMessagePreview(relayed, withProfile(profile("me"), [user("me")]))).toBe(
+            "You: hi",
+        );
+        // Who linked it has deleted their account, so it's the account's own profile again
+        expect(
+            latestMessagePreview(relayed, withProfile(profile("bob"), [deletedUser("bob")])),
+        ).toBe('bridgedUserWithPlatform({"name":"Nelly Smith","platform":"Telegram"}): hi');
     });
 });

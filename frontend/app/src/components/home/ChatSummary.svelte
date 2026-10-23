@@ -9,6 +9,7 @@
         allUsersStore,
         AvatarSize,
         blockedUsersStore,
+        bridgedUsersStore,
         botState,
         chatIdentifiersEqual,
         chatListScopeStore,
@@ -95,6 +96,8 @@
             displayName: (userId, kind) => buildDisplayName($allUsersStore, userId, kind, false),
             translations: $translationsStore,
             contentText: (content) => client.getContentAsText($_, content),
+            bridgedUsers: $bridgedUsersStore,
+            users: $allUsersStore,
         }),
     );
     let displayDate = $derived(client.getDisplayDate(chatSummary));
