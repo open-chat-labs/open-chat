@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { AuthProvider, i18nKey, OpenChat } from "@client";
+    import { i18nKey, OpenChat } from "@client";
     import ModalContent from "../../ModalContent.svelte";
     import Overlay from "../../Overlay.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
@@ -8,10 +8,11 @@
     import Markdown from "@src/core/Markdown.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import Button from "../../Button.svelte";
+    import { deleteAccount as deleteSignedInAccount } from "@src/logic/auth/deleteAccount";
+    import type { ReAuthSuccess } from "@src/logic/auth/reAuthentication.svelte";
     import { getContext } from "svelte";
     import { toastStore } from "../../../stores/toast";
     import ReAuthenticate from "./ReAuthenticate.svelte";
-    import type { DelegationChain, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
 
     const client = getContext<OpenChat>("client");
 
@@ -24,15 +25,11 @@
 
     let authenticating = $state(false);
 
-    function deleteAccount(detail: {
-        key: ECDSAKeyIdentity;
-        delegation: DelegationChain;
-        provider: AuthProvider;
-    }) {
+    function deleteAccount(detail: ReAuthSuccess) {
         deleting = true;
         authenticating = false;
-        return client
-            .deleteCurrentUser(detail.key.getKeyPair(), detail.delegation.toJSON())
+        // only with the sign-in the user just made again (app/src/logic/auth)
+        return deleteSignedInAccount(client, detail)
             .then((success) => {
                 if (!success) {
                     toastStore.showFailureToast(i18nKey("danger.deleteAccountFailed"));

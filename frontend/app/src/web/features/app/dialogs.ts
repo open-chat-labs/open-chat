@@ -84,3 +84,8 @@ export function openLinkedDialog(query: URLSearchParams, dialog: LinkedDialog): 
     const others = rest.toString();
     return `?${others === "" ? "" : `${others}&`}${encodeURIComponent(PARAMS[dialog.kind])}`;
 }
+
+/** The screens of the dialogs built so far, to load ahead of their first opening. */
+export function builtDialogScreens(): (() => Promise<{ default: Component<never> }>)[] {
+    return Object.values(dialogs).filter((load) => load !== undefined);
+}

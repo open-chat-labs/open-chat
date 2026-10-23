@@ -69,7 +69,6 @@
 - FAQ answers take an image paragraph (`![alt](src)`) as posts do. FAQ search leaves image paragraphs out (`searchText`).
 - Deep links scroll with `behavior: 'instant'`.
 
-
 ## 2026-10-20 — the floating rail's width, by hand
 - Tokens: `--rail-floating: 320px`, the expanded nav rail's width while it floats over the app's island (below 1876px, Fix Brief - App Shell Layout). Pushing the layout, it is `--rail-expanded` (283px) as before. The app's shell sets `--rail-expanded` to it while the rail floats, as NavRail reads `--rail-expanded`.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
@@ -177,3 +176,15 @@
 - The cover's × had no handler unless the host passed `coverHandlers.close`, so it did nothing for a host that only gave `onClose`. It now calls `onClose` (a host's `coverHandlers` still win).
 - `GroupPanel` takes `back`: the cover shows a back arrow (`PanelCover`'s new `back` action, `--icon-back`, "Back") instead of × when closing returns to an earlier panel, as the old panels did. The app sets it when the right column has a panel to go back to.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-23 — ProfileDialog: "Just linked" only for a method linked here, by hand
+- A sign-in method without a `used` line said "Just linked", so every method a host listed without one (the app has no last-used date for them) looked new. "Just linked" is now only for a method linked in this dialog; another without `used` shows no line.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-23 — ProfileDialog: no empty "last used" line, and a delete step for a user without CHIT, by hand
+- The signed-in method's id, when it's a principal (whatever the method), is shortened to its first two and last two groups (`bhnj4-strvt-…-s3iwt-pae`, as the design's samples are), on one line, the whole id on hover; anything else (an email address) shows as it is. A real principal ran onto a second line.
+- A sign-in group's last row has no rule under it (the rule separates a row from the "add" row, when there is one), and a group with no method linked shows its note in a row as tall as a method's, centred.
+- A sign-in method shows its "last used" line only when there's something to say (`used`, or "Just linked"). An empty line (and its gap) pushed the method's name off centre.
+- The delete flow's third step ("Think of your CHIT!") tells a user who has never earned any CHIT (`balance` and `chitEarned` both 0) that they haven't discovered it yet, instead of "you'll lose 0 CHIT and your 0-day streak", and leaves out the zeroed streak and balance (new keys `ui.profileDialog.delete.step3NoChit*`).
+- Not in the design export: to go back to it (the app's `GAPS.md` lists them).
+

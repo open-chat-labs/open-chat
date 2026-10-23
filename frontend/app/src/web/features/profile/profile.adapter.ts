@@ -1,6 +1,9 @@
 import {
+    AuthProvider,
     ONE_MB,
+    type AccountLinkingCode,
     type BotClientConfigData,
+    type LinkedAuthenticationPrincipal,
     type CommunitySummary,
     type Metrics,
     type MinutesOnline,
@@ -11,6 +14,7 @@ import {
 import type {
     ChatSettings,
     ProfileCommunity,
+    SigninMethod,
 } from "@openchat/ui/src/features/components/ProfileDialog.svelte";
 import type { RingtoneKey } from "@src/stores/video";
 
@@ -201,4 +205,38 @@ export function botConfigProps(config: BotClientConfigData) {
         storageIndex: config.openStorageIndexCanister,
         publicKey: config.ocPublicKey,
     };
+}
+
+// the sign-in methods the dialog has a place for; Ethereum, Solana and NFID have none (GAPS.md)
+const SIGNIN_TYPES: Partial<Record<AuthProvider, SigninMethod["type"]>> = {
+    [AuthProvider.PASSKEY]: "passkey",
+    [AuthProvider.II]: "ii",
+    [AuthProvider.EMAIL]: "email",
+};
+
+/**
+ * The sign-in methods pane: the identities linked to the account. `name` is a method's name for a
+ * type (a passkey is named by its provider where it has one).
+ */
+export function signinMethodsProps(
+    linked: LinkedAuthenticationPrincipal[],
+    name: (type: SigninMethod["type"]) => string,
+): SigninMethod[] {
+    return linked.flatMap((p) => {
+        const type = SIGNIN_TYPES[p.provider];
+        if (type === undefined) return [];
+        return [
+            {
+                type,
+                id: p.principal,
+                title: (type === "passkey" ? p.passkeyProvider : undefined) ?? name(type),
+                current: p.isCurrentIdentity,
+            },
+        ];
+    });
+}
+
+/** A device-link code for the dialog: when it expires, in ms. */
+export function linkCodeProps(code: AccountLinkingCode): { code: string; expiresAt: number } {
+    return { code: code.value, expiresAt: Number(code.expiresAt) };
 }

@@ -31,6 +31,9 @@
         PremiumItem,
         premiumItemsStore,
         isDisplayNameValid,
+        unlinkIdentityFailure,
+        type LinkedAuthenticationPrincipal,
+        type ResourceKey,
         memberDisplayNameResult,
         referralLink,
         sortedCommunitiesStore,
@@ -70,14 +73,19 @@
         type AppChatSettings,
         botConfigProps,
         communitiesProps,
+        linkCodeProps,
+        signinMethodsProps,
         memberDisplayNameOf,
         storageProps,
     } from "./profile.adapter";
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
+    import { deleteAccount } from "@src/logic/auth/deleteAccount";
     import { clearCacheAndRestart } from "@src/utils/clearCache";
+    import SignInAgainDialog from "../auth/SignInAgainDialog.svelte";
+    import { SignInAgain } from "../auth/signInAgain.svelte";
     import { shareLink } from "@src/utils/share";
     import { websiteVersion } from "@src/utils/openchatClient";
-    import { i18nKey } from "@src/i18n/i18n";
+    import { i18nKey, interpolate } from "@src/i18n/i18n";
     import { toastStore } from "@src/stores/toast";
     import {
         AVATAR_SIZE,
@@ -92,6 +100,7 @@
     let { onClose }: DialogProps<Extract<LinkedDialog, { kind: "profile" }>> = $props();
 
     const client = getContext<OpenChat>("client");
+    const translate = (key: ResourceKey) => interpolate($_, key);
 
     // the sections built so far (ProfileDialog shows only these)
     const SECTIONS: ProfileSection[] = [
@@ -101,8 +110,11 @@
         "chats",
         "communities",
         "appearance",
+        "signin",
         "storage",
         "bots",
+        "device",
+        "delete",
         "invite",
         "about",
     ];
@@ -302,6 +314,7 @@
     let loadingBotConfig = false;
 
     async function sectionShown(section: ProfileSection) {
+        if (section === "signin") refreshSigninMethods();
         if (section !== "bots" || botConfig !== undefined || loadingBotConfig) return;
         loadingBotConfig = true;
         try {
@@ -316,6 +329,67 @@
     const bots = $derived(botConfig && botConfigProps(botConfig));
 
     const inviteLink = $derived(referralLink(client.canonicalOrigin(), userId));
+
+    // ---- sign-in methods, linking a device, deleting the account ----
+    // the identities linked to the account, loaded each time their section shows
+    let linked = $state<LinkedAuthenticationPrincipal[]>([]);
+    const signinMethods = $derived(
+        signinMethodsProps(linked, (type) => $_(`ui.profileDialog.signin.${type}`)),
+    );
+
+    // only the latest load counts: an earlier one answering late would put back an older list
+    let signinMethodsRun = 0;
+
+    async function refreshSigninMethods() {
+        const run = ++signinMethodsRun;
+        try {
+            const principals = await client.getAuthenticationPrincipals();
+            if (run === signinMethodsRun) linked = principals;
+        } catch (err) {
+            console.warn("Unable to load the sign-in methods", err);
+        }
+    }
+
+    // the dialog shows the method gone until this settles, and back with a message if it throws
+    async function unlinkMethod(principal: string): Promise<void> {
+        const failure = unlinkIdentityFailure(await client.removeIdentityLink(principal));
+        // TODO(design): the dialog says it couldn't unlink, not why; GAPS.md
+        if (failure !== undefined) throw new Error(failure.key);
+        await refreshSigninMethods();
+    }
+
+    async function requestLinkCode(): Promise<{ code: string; expiresAt: number }> {
+        const code = await client.createAccountLinkingCode();
+        if (code === undefined) throw new Error("no device-link code");
+        return linkCodeProps(code);
+    }
+
+    // deleting asks the user to sign in again (SignInAgain), then deletes with that sign-in
+    // (logic/auth/deleteAccount); the client logs out once it's gone. The dialog's promise settles
+    // when that's done, or rejects if they give up signing in.
+    type Deleting = { signIn: SignInAgain; giveUp: () => void };
+    let deleting = $state<Deleting>();
+
+    function deleteAccountAfterSignIn(): Promise<void> {
+        return new Promise((resolve, reject) => {
+            const signIn = new SignInAgain(client, translate, async (outcome) => {
+                if (!(await deleteAccount(client, outcome))) {
+                    return i18nKey("danger.deleteAccountFailed");
+                }
+                deleting = undefined;
+                resolve();
+            });
+            deleting = {
+                signIn,
+                giveUp: () => {
+                    signIn.dispose();
+                    deleting = undefined;
+                    reject(new Error("Signing in again given up"));
+                },
+            };
+        });
+    }
+    onDestroy(() => deleting?.signIn.dispose());
 
     // ---- the avatar and the profile background ----
     type ImageTarget = "avatar" | "cover";
@@ -401,6 +475,7 @@
     joined={header.joined}
     streak={header.streak}
     balance={header.balance}
+    chitEarned={$chitStateStore.totalChitEarned}
     isDiamond={header.isDiamond}
     isVerified={header.isVerified}
     avatar={header.avatar}
@@ -441,7 +516,11 @@
     version={websiteVersion}
     onPhotoEdit={readOnly ? undefined : () => pick("avatar")}
     onCoverEdit={readOnly ? undefined : editCover}
-    onSectionChange={sectionShown}>
+    onSectionChange={sectionShown}
+    {signinMethods}
+    onUnlinkMethod={unlinkMethod}
+    onRequestLinkCode={client.accountLinkingCodeEnabled() ? requestLinkCode : undefined}
+    onDeleteAccount={readOnly ? undefined : deleteAccountAfterSignIn}>
     {#snippet qrCode(link: string)}
         <!-- as the old UI's QRCode: a spinner while it loads, and a failure says so -->
         {#await import("svelte-qrcode-image")}
@@ -483,6 +562,13 @@
         busy={uploading[imageEdit.target]}
         onCrop={cropped}
         onClose={() => (imageEdit = { kind: "none" })} />
+{/if}
+
+{#if deleting !== undefined}
+    <SignInAgainDialog
+        flow={deleting.signIn}
+        reason={$_("danger.reauth")}
+        onClose={() => deleting?.giveUp()} />
 {/if}
 
 <style>
