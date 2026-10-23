@@ -1,5 +1,6 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_local_user_index;
+use crate::linked_users::on_linked_user_found;
 use crate::model::members::CommunityMembers;
 use crate::model::user_groups::UserGroup;
 use crate::timer_job_types::{
@@ -29,8 +30,8 @@ use tracing::error;
 use types::{
     Achievement, BotCaller, BotPermissions, Caller, CanisterId, ChannelId, ChannelMessageNotification,
     ChannelUserNotificationPayload, Chat, CommunityId, CompletedCryptoTransaction, EventIndex, EventWrapper, Message,
-    MessageContent, MessageContentInitial, MessageContentType, MessageIndex, OCResult, P2PSwapLocation, TimestampMillis, User,
-    UserId, UserIdAndPrincipal, UserType, Version, icrc2,
+    MessageContent, MessageContentInitial, MessageContentType, MessageId, MessageIndex, OCResult, P2PSwapLocation,
+    TimestampMillis, User, UserId, UserIdAndPrincipal, UserType, Version, icrc2,
 };
 
 #[update(msgpack = true)]
@@ -143,6 +144,7 @@ pub(crate) fn send_message_impl(
         channel.chat.avatar.as_ref().map(|d| d.id),
         args.thread_root_message_index,
         users_mentioned,
+        args.message_filter_failed.is_some(),
         args.new_achievement,
         now,
         state,
@@ -214,6 +216,7 @@ pub(crate) fn send_message_with_completed_transfer(
             channel.chat.avatar.as_ref().map(|d| d.id),
             args.thread_root_message_index,
             users_mentioned,
+            args.message_filter_failed.is_some(),
             new_achievement,
             now,
             state,
@@ -268,6 +271,8 @@ fn process_send_message_result(
     channel_avatar_id: Option<u128>,
     thread_root_message_index: Option<MessageIndex>,
     users_mentioned: UsersMentioned,
+    // Whether notifications of the message, and its mentions, were suppressed
+    suppressed: bool,
     new_achievement: bool,
     now: TimestampMillis,
     state: &mut RuntimeState,
@@ -321,6 +326,46 @@ fn process_send_message_result(
             crypto_transfer: content.notification_crypto_transfer_details(&users_mentioned.mentioned_directly),
             call: None,
         });
+
+        // Whoever replied, which for a reply a bridge bot relayed is the bot
+        let relayed_from = message_event.event.bot_context().and_then(|b| b.bridged_from);
+        let replier = caller.initiator().or(relayed_from.map(|_| sender));
+        // The sender of the message replied to, and the account it was relayed from, if it was
+        let replied_to = message_event
+            .event
+            .replies_to
+            .as_ref()
+            .filter(|r| r.chat_if_other.is_none())
+            .zip(state.data.channels.get(&channel_id))
+            .and_then(|(r, channel)| {
+                channel
+                    .chat
+                    .events
+                    .message_internal(EventIndex::default(), thread_root_message_index, r.event_index.into())
+            })
+            .map(|(m, _)| (m.sender, m.bridged_from()));
+
+        // A reply to a message a bridge bot relayed is for whoever linked the account it came from,
+        // unless it was relayed from that account too
+        if let Some(replier) = replier
+            && let Some((_, Some(account))) = replied_to
+            && relayed_from != Some(account)
+        {
+            let reply = ReplyToRelayedMessage {
+                channel_id,
+                thread_root_message_index,
+                message_index,
+                message_id,
+                event_index,
+                sender,
+                replier,
+                notification: (!suppressed).then(|| notification.clone()),
+            };
+            on_linked_user_found(account, state, move |linked_user, state| {
+                tell_linked_user_of_reply(linked_user, reply, state)
+            });
+        }
+
         state.push_notification(Some(sender), result.users_to_notify, notification);
 
         if new_achievement && !caller.is_bot() {
@@ -358,19 +403,9 @@ fn process_send_message_result(
                 }
             }
 
-            if let Some(replying_to_event_index) = message_event
-                .event
-                .replies_to
-                .as_ref()
-                .filter(|r| r.chat_if_other.is_none())
-                .map(|r| r.event_index)
-                && let Some((message, _)) = channel.chat.events.message_internal(
-                    EventIndex::default(),
-                    thread_root_message_index,
-                    replying_to_event_index.into(),
-                )
-                && let sender_id = message.sender
-                && caller.initiator().is_some_and(|i| i != sender_id)
+            if let Some(replier) = replier
+                && let Some((sender_id, None)) = replied_to
+                && sender_id != replier
                 && channel.chat.members.get(&sender_id).is_some_and(|m| !m.user_type().is_bot())
             {
                 activity_events.push((sender_id, MessageActivity::QuoteReply));
@@ -406,6 +441,69 @@ fn process_send_message_result(
         expires_at,
         transfer: None,
     }
+}
+
+// A reply to a message a bridge bot relayed, of which whoever linked the account it came from is to
+// be told once they're found
+struct ReplyToRelayedMessage {
+    channel_id: ChannelId,
+    thread_root_message_index: Option<MessageIndex>,
+    message_index: MessageIndex,
+    message_id: MessageId,
+    event_index: EventIndex,
+    sender: UserId,
+    replier: UserId,
+    // The reply's notification, unless notifications of it were suppressed
+    notification: Option<ChannelUserNotificationPayload>,
+}
+
+// Tells whoever linked the account the message replied to came from of the reply, as its sender
+// would have been told, if they're in the channel, unless they replied themselves or are a bot
+fn tell_linked_user_of_reply(linked_user: UserId, reply: ReplyToRelayedMessage, state: &mut RuntimeState) {
+    let now = state.env.now();
+    let Some(channel) = state.data.channels.get_mut(&reply.channel_id) else {
+        return;
+    };
+    if linked_user == reply.replier
+        || !channel
+            .chat
+            .members
+            .get(&linked_user)
+            .is_some_and(|m| !m.user_type().is_bot())
+    {
+        return;
+    }
+
+    // They're mentioned in the reply, unless notifications of it were suppressed
+    if let Some(notification) = reply.notification
+        && let Some(notify) = channel.chat.mention_linked_user_replied_to(
+            linked_user,
+            reply.thread_root_message_index,
+            reply.message_index,
+            reply.message_id,
+            now,
+        )
+    {
+        state.mark_activity_for_user(linked_user);
+        if notify {
+            state.push_notification(Some(reply.sender), vec![linked_user], notification);
+        }
+    }
+
+    state.push_event_to_user(
+        linked_user,
+        CommunityCanisterEvent::MessageActivity(MessageActivityEvent {
+            chat: Chat::Channel(state.env.canister_id().into(), reply.channel_id),
+            thread_root_message_index: reply.thread_root_message_index,
+            message_index: reply.message_index,
+            message_id: reply.message_id,
+            event_index: reply.event_index,
+            activity: MessageActivity::QuoteReply,
+            timestamp: now,
+            user_id: Some(reply.sender),
+        }),
+        now,
+    );
 }
 
 fn register_timer_jobs(
