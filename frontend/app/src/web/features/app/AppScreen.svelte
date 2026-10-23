@@ -111,8 +111,10 @@
     );
 
     function closeAppDialog() {
+        const closing = appDialog;
         appDialog = undefined;
-        navigate(dismissedRoute(client));
+        // the others go away from what couldn't be shown; suspending a user stays where it was
+        if (closing?.kind !== "suspending") navigate(dismissedRoute(client));
     }
 
     // Notifications over a chat or a wallet page opens the feed over it (decision 7), with its

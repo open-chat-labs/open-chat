@@ -152,6 +152,18 @@
 - `aboutPages` lists the About pages the host has, so the dialog doesn't link to one it hasn't (default: all). A group left with none isn't shown.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists them).
 
+## 2026-10-23 — UserDialog: a moderator action, by hand
+- `UserDialog` takes `moderatorAction` (`{ label, onAction }`), shown in its footer beside Block for anyone but yourself. It closes the dialog (with its exit animation) and then calls `onAction`. The app uses it for a platform moderator's suspend and unsuspend, which the design has no place for.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-23 — MessageGroup: the sender's avatar and name can be clicked, by hand
+- `MessageGroup` takes `onSenderClick`, called with the element when the sender's avatar or name is clicked, or focused and pressed with Enter or Space. Only those two elements: a click on a message doesn't call it. Without it both stay as they were. The app opens the sender's profile card, as the old UI does.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-23 — UserDialog's About can be the host's formatted text, by hand
+- `DetailSection` takes `children` for its prose variant, shown in place of `value`; `value` still decides whether the text is long enough to clamp. `UserDialog` takes `aboutContent`, passed through to its About section. The app renders a user's bio as Markdown there, as the old profile cards do.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
 ## 2026-10-23 — AccessGates offers only the gate types a host names, by hand
 - `AccessGates` takes `types`, the gate types its "add a gate" list offers (default: all). A rule of another type already in `value` still shows. The locked explainer's example gates follow it too. The app leaves out the unique-person gate (that concept is suspended) and the credential gate (there's no way to pick a credential yet).
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).

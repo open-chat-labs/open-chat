@@ -4,7 +4,7 @@
      Mute / favourite / chat settings apply at once and roll back with an error if the host rejects. Block asks first and
      waits for the host; Block, Message and Favourite are hidden when their callbacks are absent. -->
 <script lang="ts">
-  import { onDestroy, untrack, type ComponentProps } from 'svelte';
+  import { onDestroy, untrack, type ComponentProps, type Snippet } from 'svelte';
   import Badge from '../../lib/components/Badge.svelte';
   import DetailSection from '../../lib/components/DetailSection.svelte';
   import DmChatSettings from './DmChatSettings.svelte';
@@ -39,6 +39,8 @@
     title: string;
     handle?: string;
     about?: string;
+    /** Rendered in place of `about` when given (the host's formatted bio); `about` still decides whether the section shows. */
+    aboutContent?: Snippet;
     color?: keyof typeof GRADIENTS;
     /** CSS background (image URL or gradient) for the avatar; falls back to the colour gradient. */
     avatar?: string;
@@ -67,6 +69,8 @@
     /** Block after the user confirms; the dialog closes once it resolves. Hidden without it. */
     onBlock?: () => Promise<unknown> | void;
     onUnblock?: () => Promise<unknown> | void;
+    /** A platform moderator's action on this person (suspend / unsuspend). Label: resource key (or literal text). Hidden without it. */
+    moderatorAction?: { label: string; onAction: () => void };
     onCancel?: () => void;
   }
 
@@ -74,6 +78,7 @@
     title,
     handle = '',
     about = '',
+    aboutContent,
     color = 'violet',
     avatar,
     online = false,
@@ -96,6 +101,7 @@
     blocked = false,
     onBlock,
     onUnblock,
+    moderatorAction,
     onCancel,
   }: Props = $props();
   const t = useT();
@@ -234,7 +240,7 @@
             {/each}
           </div>
           {#if about}
-            <div class="cell"><DetailSection label={t('ui.userDialog.about')} value={about} variant="prose" /></div>
+            <div class="cell"><DetailSection label={t('ui.userDialog.about')} value={about} variant="prose" children={aboutContent} /></div>
           {/if}
         </div>
       {:else}
@@ -253,10 +259,13 @@
           >{t(flow.busy ? 'ui.userDialog.working' : blocked ? 'ui.userDialog.unblock' : 'ui.userDialog.block')}</span
         >
       </div>
-    {:else if !isSelf && ((blocked ? onUnblock : onBlock) || (!dm && onMessage))}
+    {:else if !isSelf && ((blocked ? onUnblock : onBlock) || (!dm && onMessage) || moderatorAction)}
       <div class="footer">
         {#if blocked ? onUnblock : onBlock}
           <span class="block" onclick={() => (blockStep = 'confirm')} role="button" tabindex="0">{t(blocked ? 'ui.userDialog.unblock' : 'ui.userDialog.block')}</span>
+        {/if}
+        {#if moderatorAction}
+          <span class="block" onclick={() => flow.dismiss(moderatorAction.onAction)} role="button" tabindex="0">{t(moderatorAction.label)}</span>
         {/if}
         <span class="grow"></span>
         {#if !dm && onMessage && !blocked}

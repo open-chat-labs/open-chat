@@ -164,6 +164,20 @@ design export needs. Each entry says where it came up.
   shows there too, as `AuthDialog` has no error prop once it's stopped waiting) and then asks for
   the new PIN in another plain dialog (`NewPinDialog`). Neither has a design.
 
+- **User card** (4a, `features/user`): `UserDialog` has no badges, so the old card's Diamond,
+  streak and CHIT-earned badges (`userBadges`) don't show; CHIT earned is one of its facts
+  instead, left out when the viewer has turned CHIT off. Also missing from the old card: the
+  member's role in the chat (`WithRole`), the "last online" wording (only the online dot shows),
+  and a way to your own profile from your own card (the old card's Settings button; `?profile`
+  is 8c's). The bio is Markdown, as in the old cards: `UserDialog` takes `aboutContent` and
+  `DetailSection` `children` (by hand).
+- **Sender click** (4a, by hand): `MessageGroup` takes `onSenderClick`, so a sender's avatar or
+  name opens their card, as in the old UI. The design doesn't show them as clickable.
+- **Suspend and unsuspend** (4a, by hand): platform moderators suspend or unsuspend a user from
+  their card. `UserDialog` takes `moderatorAction` (a label and a callback) and shows it in its
+  footer as a second danger action; the design has no place for it (`TODO(design)`). Suspending
+  opens a plain dialog on `DialogShell` with the old modal's words and a reason
+  (`SuspendUserDialog`, `TODO(design)`).
 - **Gates editor** (4a, `features/access/gates.adapter.ts`, for 4b and 8b): `AccessGates` takes
   `types` (by hand), and the app doesn't offer the unique-person gate (suspended) or the
   credential gate. A credential gate already set still shows and saves unchanged, but adding one
@@ -241,7 +255,7 @@ design export needs. Each entry says where it came up.
 - **App events** (`features/app/AppEventDialogs.svelte`): the not-found, no-access and
   not-available dialogs are a `DialogShell` with the old UI's words (no design: `TODO(design)`);
   "Page not found" was never translated. Suspending a user (`suspendUser`, platform moderators
-  only) opens nothing yet.
+  only) opens `SuspendUserDialog` (see "Suspend and unsuspend").
 - **Toasts**: the app's toast (`toastStore`, e.g. "Failed to un-archive chat") shows as the
   library's `UndoToast` without its action (`shell/Toasts.svelte`). The design has no failure tone
   for a toast, so a failure looks like any other message.
