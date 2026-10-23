@@ -2,7 +2,7 @@
     import { Body, Container, Label, Search } from "component-lib";
     import {
         allUsersStore,
-        compareChats,
+        directChatUsers,
         serverDirectChatsStore,
         type BotMatch,
         type UserSummary,
@@ -86,13 +86,8 @@
     }
 
     let dms = $derived(
-        [...$serverDirectChatsStore.values()]
-            .sort(compareChats)
-            .map((c) => $allUsersStore.get(c.them.userId))
-            .filter(
-                (u) =>
-                    u !== undefined && u.kind !== "bot" && (dmFilter === undefined || dmFilter(u)),
-            )
+        directChatUsers($serverDirectChatsStore, $allUsersStore)
+            .filter((u) => dmFilter === undefined || dmFilter(u))
             .slice(0, 30),
     );
 </script>

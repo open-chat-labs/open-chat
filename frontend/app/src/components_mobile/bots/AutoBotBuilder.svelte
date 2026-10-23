@@ -21,7 +21,7 @@
     import EditableAvatar from "../EditableAvatar.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import Markdown from "@src/core/Markdown.svelte";
-    import SingleUserSelector from "../home/SingleUserSelector.svelte";
+    import SelectDirectUser from "../SelectDirectUser.svelte";
     import Tabs, { type Tab } from "../Tabs.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
     import BotCommands from "./BotCommands.svelte";
@@ -228,15 +228,14 @@
         </Input>
 
         {#if mode === "update"}
-            <SingleUserSelector
-                mentionSelf
-                onUserSelected={(user) => (candidate.ownerId = user.userId)}
-                selectedReceiver={$allUsersStore.get(candidate.ownerId)}
-                placeholder={"bots.builder.ownerLabel"}>
+            <SelectDirectUser
+                onSelect={(user) => (candidate.ownerId = user.userId)}
+                selected={$allUsersStore.get(candidate.ownerId)}
+                placeholder={interpolate($_, i18nKey("bots.builder.ownerLabel"))}>
                 {#snippet subtext()}
                     <Translatable resourceKey={i18nKey("bots.builder.ownerRules")} />
                 {/snippet}
-            </SingleUserSelector>
+            </SelectDirectUser>
         {/if}
 
         {#if mode === "register"}

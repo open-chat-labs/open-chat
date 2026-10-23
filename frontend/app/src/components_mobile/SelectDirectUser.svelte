@@ -3,7 +3,7 @@
     import { Container, Column, Option, Search, Select, Subtitle } from "component-lib";
     import {
         allUsersStore,
-        compareChats,
+        directChatUsers,
         serverDirectChatsStore,
         type UserSummary,
     } from "@client";
@@ -25,10 +25,7 @@
     let searchTerm = $state<string>();
 
     let dms = $derived(
-        [...$serverDirectChatsStore.values()]
-            .sort(compareChats)
-            .map((c) => $allUsersStore.get(c.them.userId))
-            .filter((u) => u?.kind !== "bot" && matchesSearchTerm(u!)),
+        directChatUsers($serverDirectChatsStore, $allUsersStore).filter(matchesSearchTerm),
     );
 
     function matchesSearchTerm(user: UserSummary) {
