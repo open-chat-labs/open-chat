@@ -3516,6 +3516,12 @@
     border-block-end: 1px solid var(--line-1);
   }
 
+  /* the rule only separates rows: none under the last (no "add" row after it) */
+  .method:last-child,
+  .method-empty:last-child {
+    border-block-end: none;
+  }
+
   .method-glyph {
     flex: none;
     width: 16px;
@@ -3570,8 +3576,14 @@
     background: currentColor;
   }
 
+  /* as tall as a method's row (14px padding round its 28px unlink button), the note centred */
   .method-empty {
-    padding: 14px 16px 4px;
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+    min-height: 56px;
+    padding: 0 16px;
+    border-block-end: 1px solid var(--line-1);
     font: var(--weight-regular) 11.5px/1.4 var(--font-sans);
     color: var(--ink-4);
   }
