@@ -10,6 +10,7 @@ import {
 import {
     bridgedAuthorAvatarUrl,
     bridgedAuthorName,
+    bridgedProfileUrl,
     bridgedUserIdsFromEvents,
     bridgedUserKey,
     isOwnMessage,
@@ -156,6 +157,22 @@ describe("bridge", () => {
         expect(
             isOwnMessage({ sender: "bridge", senderContext: fromTelegram }, "me", new Map()),
         ).toBe(false);
+    });
+
+    test("a Telegram account's profile page needs a username", () => {
+        expect(
+            bridgedProfileUrl({
+                kind: "telegram",
+                profile: { id: telegramId.id, username: "nelly", displayName: "Nelly" },
+            }),
+        ).toEqual("https://t.me/nelly");
+        expect(
+            bridgedProfileUrl({
+                kind: "telegram",
+                profile: { id: telegramId.id, displayName: "Nelly" },
+            }),
+        ).toBeUndefined();
+        expect(bridgedProfileUrl(discord().user)).toBeUndefined();
     });
 });
 

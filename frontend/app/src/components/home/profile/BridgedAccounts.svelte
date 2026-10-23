@@ -1,8 +1,8 @@
 <script lang="ts">
     import {
-        AvatarSize,
         BRIDGE_PLATFORM_NAMES,
         bridgedAuthorName,
+        bridgedProfileUrl,
         bridgedUserId,
         bridgedUserKey,
         iconSize,
@@ -20,7 +20,6 @@
         bridgedAccountRows,
         linkBridgedAccount,
     } from "../../../utils/bridgedAccounts";
-    import Avatar from "../../Avatar.svelte";
     import Button from "../../Button.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
@@ -81,12 +80,16 @@
             src={BRIDGE_PLATFORM_ICONS[row.platform]}
             alt={BRIDGE_PLATFORM_NAMES[row.platform]} />
         {#if row.kind === "linked"}
-            {@const id = bridgedUserId(row.account.user)}
-            <!-- Avatar centres itself with auto margins, which in this row would take free space -->
-            <div class="avatar">
-                <Avatar url={client.bridgedAvatarUrl(id, row.account)} size={AvatarSize.Small} />
+            {@const profileUrl = bridgedProfileUrl(row.account.user)}
+            <div class="name">
+                {#if profileUrl !== undefined}
+                    <a href={profileUrl} target="_blank" rel="noopener noreferrer">
+                        {bridgedAuthorName(row.account)}
+                    </a>
+                {:else}
+                    {bridgedAuthorName(row.account)}
+                {/if}
             </div>
-            <div class="name">{bridgedAuthorName(row.account)}</div>
             <div class="unlink">
                 <Tooltip position="top" align="end">
                     <HoverIcon onclick={() => unlink(row.account)}>
@@ -126,15 +129,10 @@
         align-items: center;
         gap: $sp3;
 
-        // The same size as the avatar
         .icon {
             flex: none;
             width: toRem(35);
             height: toRem(35);
-        }
-
-        .avatar {
-            flex: none;
         }
 
         .name {
