@@ -96,8 +96,9 @@
             displayName: (userId, kind) => buildDisplayName($allUsersStore, userId, kind, false),
             translations: $translationsStore,
             contentText: (content) => client.getContentAsText($_, content),
-            bridgedUsers: $bridgedUsersStore,
-            users: $allUsersStore,
+            // Looked up only for a relayed message, so other rows don't follow these stores
+            bridgedUsers: { get: (key) => $bridgedUsersStore.get(key) },
+            users: { get: (userId) => $allUsersStore.get(userId) },
         }),
     );
     let displayDate = $derived(client.getDisplayDate(chatSummary));

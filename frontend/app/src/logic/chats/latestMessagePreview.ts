@@ -27,10 +27,10 @@ export type PreviewText = {
     translations: { get(messageId: bigint): string | undefined };
     /** A message's content as text (client.getContentAsText with the formatter). */
     contentText: (content: MessageContent) => string;
-    /** The profiles of the accounts bridge bots relay messages from (bridgedUsersStore). */
-    bridgedUsers: ReadonlyMap<string, BridgedUserSummary>;
+    /** The profiles of the accounts bridge bots relay messages from (bridgedUsersStore), by key. */
+    bridgedUsers: { get(key: string): BridgedUserSummary | undefined };
     /** The users the app knows (allUsersStore), to find who has linked an account. */
-    users: UserLookup;
+    users: Pick<UserLookup, "get">;
 };
 
 /**

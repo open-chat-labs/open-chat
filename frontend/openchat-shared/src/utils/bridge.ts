@@ -5,6 +5,7 @@ import {
     type BridgedUserSummary,
     type BridgePlatform,
     type ChatEvent,
+    type ChatSummary,
     type DiscordUser,
     type EventWrapper,
     type Message,
@@ -38,7 +39,7 @@ export function shouldShowAsMe(
 // they've deleted their account, the account's own profile is shown again.
 export function linkedAuthor(
     summary: BridgedUserSummary | undefined,
-    users: UserLookup,
+    users: Pick<UserLookup, "get">,
 ): UserSummary | undefined {
     const user = summary?.linkedUserId !== undefined ? users.get(summary.linkedUserId) : undefined;
     return user !== undefined && !isDeletedUser(user) ? user : undefined;
@@ -85,6 +86,11 @@ export function bridgedUserIdsFromEvents(events: EventWrapper<ChatEvent>[]): Bri
         }
     }
     return [...ids.values()];
+}
+
+// The accounts the chats' latest messages were relayed from, so the chat list can show who sent them
+export function bridgedUserIdsFromLatestMessages(chats: ChatSummary[]): BridgedUserId[] {
+    return bridgedUserIdsFromEvents(chats.flatMap((chat) => chat.latestMessage ?? []));
 }
 
 // Undefined until the profile has been fetched

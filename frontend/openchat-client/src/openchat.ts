@@ -386,6 +386,7 @@ import {
     type BridgePlatform,
     bridgedUserId,
     bridgedUserIdsFromEvents,
+    bridgedUserIdsFromLatestMessages,
     bridgedUserKey,
     buildBlobUrl,
     isOwnMessage,
@@ -1913,6 +1914,7 @@ export class OpenChat {
                         }
                         if (resp.kind === "success" && !resp.group.frozen) {
                             localUpdates.addGroupPreview(resp.group);
+                            this.#getLatestMessagesBridgedUsers([resp.group]);
                             return CommonResponses.success();
                         } else if (resp.kind === "group_moved") {
                             return resp;
@@ -1940,6 +1942,7 @@ export class OpenChat {
                                 }
                             }
                             localUpdates.addGroupPreview(resp);
+                            this.#getLatestMessagesBridgedUsers([resp]);
                             return CommonResponses.success();
                         }
                         return CommonResponses.failure();
@@ -7791,6 +7794,11 @@ export class OpenChat {
     // Fetches the profiles of the bridged accounts which haven't been fetched, or not recently.
     // One the UserIndex doesn't have yet, eg. as the message reached the chat first, or which
     // couldn't be fetched, is tried again shortly.
+    // So the chat list can show who the chats' relayed latest messages are from
+    #getLatestMessagesBridgedUsers(chats: ChatSummary[]): void {
+        void this.getBridgedUsers(bridgedUserIdsFromLatestMessages(chats));
+    }
+
     async getBridgedUsers(ids: BridgedUserId[], retry = true): Promise<void> {
         const now = Date.now();
         const toFetch = ids.filter((id) => {
@@ -8772,10 +8780,7 @@ export class OpenChat {
             .concat(chatsResponse.communitiesAddedUpdated.flatMap((c) => c.channels));
 
         const { userIds, webhooks } = this.#userIdsFromChatSummaries(chatsAddedUpdated);
-        // So the chat list can show who a relayed latest message is from
-        void this.getBridgedUsers(
-            bridgedUserIdsFromEvents(chatsAddedUpdated.flatMap((c) => c.latestMessage ?? [])),
-        );
+        this.#getLatestMessagesBridgedUsers(chatsAddedUpdated);
         if (chatsResponse.referrals !== undefined) {
             for (const userId of chatsResponse.referrals.map((r) => r.userId)) {
                 userIds.add(userId);
@@ -11988,6 +11993,7 @@ export class OpenChat {
                 resp.membership.index = nextCommunityIndexStore.value;
                 community = resp;
                 localUpdates.addCommunityPreview(community);
+                this.#getLatestMessagesBridgedUsers(community.channels);
                 preview = true;
             } else {
                 // if we get here it means we're not a member of the community and we can't look it up

@@ -153,9 +153,39 @@ describe("a chat's latest message preview", () => {
         expect(latestMessagePreview(relayed, withProfile(profile("me"), [user("me")]))).toBe(
             "You: hi",
         );
+        // Linked, but the OpenChat user hasn't loaded yet
+        expect(latestMessagePreview(relayed, withProfile(profile("bob")))).toBe(
+            'bridgedUserWithPlatform({"name":"Nelly Smith","platform":"Telegram"}): hi',
+        );
         // Who linked it has deleted their account, so it's the account's own profile again
         expect(
             latestMessagePreview(relayed, withProfile(profile("bob"), [deletedUser("bob")])),
         ).toBe('bridgedUserWithPlatform({"name":"Nelly Smith","platform":"Telegram"}): hi');
+    });
+
+    test("names a Discord account by its display name, else its username", () => {
+        const mish: BridgedUserId = { kind: "discord", id: "273575371251908627" };
+        const relayed = chat("group_chat", { sender: "bridge-bot", text: "hi", bridgedFrom: mish });
+        const withProfile = (displayName?: string) => ({
+            ...untranslated,
+            bridgedUsers: new Map<string, BridgedUserSummary>([
+                [
+                    "discord:273575371251908627",
+                    {
+                        user: {
+                            kind: "discord",
+                            profile: { id: mish.id, username: "mish6", displayName },
+                        },
+                        updated: 0n,
+                    },
+                ],
+            ]),
+        });
+        expect(latestMessagePreview(relayed, withProfile("Mish"))).toBe(
+            'bridgedUserWithPlatform({"name":"Mish","platform":"Discord"}): hi',
+        );
+        expect(latestMessagePreview(relayed, withProfile())).toBe(
+            'bridgedUserWithPlatform({"name":"mish6","platform":"Discord"}): hi',
+        );
     });
 });

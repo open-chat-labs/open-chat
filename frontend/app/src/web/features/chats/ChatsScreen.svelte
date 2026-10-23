@@ -55,7 +55,7 @@
                     displayName: (userId, kind) => buildDisplayName(users, userId, kind, false),
                     translations: $translationsStore,
                     contentText: (content) => client.getContentAsText($_, content),
-                    bridgedUsers: $bridgedUsersStore,
+                    bridgedUsers: { get: (key) => $bridgedUsersStore.get(key) },
                     users,
                 }),
             date: (timestamp) =>
