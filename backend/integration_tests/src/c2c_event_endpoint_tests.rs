@@ -5,7 +5,7 @@
 //! the group or community and their effect read from the index. The DailyPuzzle canister refuses
 //! every `c2c_` call made by ingress, so its endpoint is covered once its caller switches over.
 use crate::env::ENV;
-use crate::utils::{now_millis, tick_until};
+use crate::utils::{metrics, now_millis, tick_until};
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use constants::{HOUR_IN_MS, OPENCHAT_BOT_USER_ID};
@@ -16,8 +16,8 @@ use std::time::Duration;
 use storage_index_canister::UserConfig;
 use testing::rng::{random_from_principal, random_internet_identity_principal, random_principal, random_string};
 use types::{
-    ChannelLatestMessageIndex, ChatEvent, ChatId, Empty, EventIndex, FileAdded, FileMetaData, FileRejectedReason,
-    IdempotentEnvelope, MessageContent, SuccessOnly, TimestampMillis, UserId,
+    BridgedUserId, ChannelId, ChannelLatestMessageIndex, ChatEvent, ChatId, Empty, EventIndex, FileAdded, FileMetaData,
+    FileRejectedReason, IdempotentEnvelope, MessageContent, SuccessOnly, TimestampMillis, UserId,
 };
 
 #[test]
@@ -138,6 +138,72 @@ fn local_user_index_relays_group_activity_to_the_group_index() {
             .active_groups
             .contains(&group_id)
     });
+}
+
+// A tip on a message from an account no one has linked, which the group or community has paid into
+// the UserIndex, is relayed by its LocalUserIndex to the UserIndex, which holds it
+#[test]
+fn local_user_index_relays_tips_for_unlinked_accounts_to_the_user_index() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let user = client::register_diamond_user(env, canister_ids, *controller);
+    let group_id = client::user::happy_path::create_group(env, &user, &random_string(), false, true);
+    let community_id = client::user::happy_path::create_community(env, &user, &random_string(), false, vec![random_string()]);
+    let tips_held = |env: &PocketIc| {
+        metrics(env, canister_ids.user_index)["bridged_user_tips_held"]
+            .as_u64()
+            .unwrap()
+    };
+    let held_before = tips_held(env);
+
+    let response = client::local_user_index::c2c_group(
+        env,
+        group_id.into(),
+        canister_ids.local_user_index(env, group_id),
+        &local_user_index_canister::c2c_group::Args {
+            events: vec![envelope(env, bridged_user_tipped(&user, canister_ids, None))],
+        },
+    );
+    assert!(matches!(response, SuccessOnly::Success));
+    let response = client::local_user_index::c2c_community(
+        env,
+        community_id.into(),
+        canister_ids.local_user_index(env, community_id),
+        &local_user_index_canister::c2c_community::Args {
+            events: vec![envelope(env, bridged_user_tipped(&user, canister_ids, Some(1u32.into())))],
+        },
+    );
+    assert!(matches!(response, SuccessOnly::Success));
+
+    tick_until(env, |env| tips_held(env) == held_before + 2);
+}
+
+fn bridged_user_tipped<T>(
+    tipper: &User,
+    canister_ids: &CanisterIds,
+    channel_id: Option<ChannelId>,
+) -> local_user_index_canister::GroupOrCommunityEvent<T> {
+    local_user_index_canister::GroupOrCommunityEvent::BridgedUserTipped(Box::new(
+        local_user_index_canister::BridgedUserTipped {
+            channel_id,
+            thread_root_message_index: None,
+            message_id: random::<u64>().into(),
+            account: BridgedUserId::Telegram(random::<u32>() as i64 + 1),
+            tipper: tipper.user_id,
+            refund_to: tipper.principal.into(),
+            ledger: canister_ids.icp_ledger,
+            token_symbol: "ICP".to_string(),
+            amount: 1_0000_0000,
+            fee: 10_000,
+            decimals: 8,
+        },
+    ))
 }
 
 #[test]

@@ -21,8 +21,12 @@ pub struct HeldTip {
     pub refund_to: icrc1::Account,
     pub ledger: CanisterId,
     pub token_symbol: String,
+    // What arrived in the account's subaccount. The tipper paid the fee on top.
     pub amount: u128,
+    // The ledger's fee when the tip was made, which a payout of the tip is less
     pub fee: u128,
+    // The token's, so a payout's amount can be shown
+    pub decimals: u8,
     pub timestamp: TimestampMillis,
 }
 
@@ -37,6 +41,11 @@ impl BridgedUserTips {
 
     pub fn len(&self) -> usize {
         self.tips.len()
+    }
+
+    #[cfg(test)]
+    pub fn get(&self, id: u64) -> Option<&HeldTip> {
+        self.tips.get(&id)
     }
 }
 
@@ -57,6 +66,7 @@ mod tests {
             token_symbol: "CHAT".to_string(),
             amount,
             fee: 100_000,
+            decimals: 8,
             timestamp: 0,
         }
     }

@@ -72,6 +72,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 token_symbol: ev.token_symbol,
                 amount: ev.amount,
                 fee: ev.fee,
+                decimals: ev.decimals,
                 timestamp: **now,
             });
         }
@@ -392,5 +393,51 @@ mod tests {
 
         assert_eq!(avatar_id(&state, user), Some(5));
         assert_eq!(avatar_id(&state, other_user), None);
+    }
+
+    // A tip for an account no one has linked is held as the group or community described it, as of
+    // when it arrived
+    #[test]
+    fn bridged_user_tipped_holds_the_tip() {
+        let (mut state, tipper, _) = setup();
+        let account = types::BridgedUserId::Telegram(123456789);
+        let chat = types::Chat::Group(canister_id(4).into());
+        let refund_to: types::icrc1::Account = Principal::from_slice(&[7; 29]).into();
+        let ledger = canister_id(5);
+        let now = LazyCell::new(|| 2000);
+
+        handle_event(
+            LocalUserIndexEvent::BridgedUserTipped(Box::new(user_index_canister::BridgedUserTipped {
+                chat,
+                thread_root_message_index: Some(3.into()),
+                message_id: 42u64.into(),
+                account,
+                tipper,
+                refund_to,
+                ledger,
+                token_symbol: "CHAT".to_string(),
+                amount: 1_000_000,
+                fee: 100_000,
+                decimals: 8,
+            })),
+            1000,
+            canister_id(1),
+            &now,
+            &mut state,
+        );
+
+        assert_eq!(state.data.bridged_user_tips.len(), 1);
+        let tip = state.data.bridged_user_tips.get(0).unwrap();
+        assert_eq!(tip.account, account);
+        assert_eq!(tip.chat, chat);
+        assert_eq!(tip.thread_root_message_index, Some(3.into()));
+        assert_eq!(tip.message_id, 42u64.into());
+        assert_eq!(tip.tipper, tipper);
+        assert_eq!(tip.refund_to.owner, refund_to.owner);
+        assert_eq!(tip.refund_to.subaccount, refund_to.subaccount);
+        assert_eq!(tip.ledger, ledger);
+        assert_eq!(tip.token_symbol, "CHAT");
+        assert_eq!((tip.amount, tip.fee, tip.decimals), (1_000_000, 100_000, 8));
+        assert_eq!(tip.timestamp, 2000);
     }
 }
