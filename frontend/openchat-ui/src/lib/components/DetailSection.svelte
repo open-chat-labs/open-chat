@@ -1,6 +1,7 @@
 <!-- Labelled detail card for side panels. variant: value (one bold line, optional online dot / accent highlight)
      | prose (paragraph; `clamp` lines with a More / Less toggle when the text is long). -->
 <script lang="ts">
+  import type { Snippet } from 'svelte';
   import { useT } from '../i18n';
   interface Props {
     /** Resource key (or literal text). */
@@ -11,9 +12,11 @@
     clamp?: number;
     dot?: boolean;
     highlight?: boolean;
+    /** Prose only: rendered in place of `value` (the host's formatted text, say); `value` still decides the clamp. */
+    children?: Snippet;
   }
 
-  let { label, value, variant = 'value', clamp = 0, dot = false, highlight = false }: Props = $props();
+  let { label, value, variant = 'value', clamp = 0, dot = false, highlight = false, children }: Props = $props();
   const t = useT();
 
   let open = $state(false);
@@ -24,7 +27,11 @@
 <div class="section">
   <span class="label">{t(label)}</span>
   {#if variant === 'prose'}
-    <span class="prose" style:-webkit-line-clamp={long && !open ? String(clamp) : 'unset'}>{value}</span>
+    {#if children}
+      <div class="prose" style:-webkit-line-clamp={long && !open ? String(clamp) : 'unset'}>{@render children()}</div>
+    {:else}
+      <span class="prose" style:-webkit-line-clamp={long && !open ? String(clamp) : 'unset'}>{value}</span>
+    {/if}
     {#if long}
       <span class="more" onclick={() => (open = !open)} role="button" tabindex="0">{t(open ? 'ui.common.less' : 'ui.common.more')}</span>
     {/if}

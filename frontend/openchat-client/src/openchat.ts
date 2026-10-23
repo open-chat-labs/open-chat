@@ -703,6 +703,7 @@ import {
     toDatetimeString,
     toLongDateString,
     toMonthString,
+    toMonthYearString,
     toRelativeTime,
     toShortTimeString,
 } from "./utils/date";
@@ -2648,6 +2649,10 @@ export class OpenChat {
 
     toMonthString(date: Date): string {
         return toMonthString(date, this.#locale);
+    }
+
+    toMonthYearString(date: Date): string {
+        return toMonthYearString(date, this.#locale);
     }
 
     formatMessageDate(

@@ -1668,6 +1668,17 @@
         "required": false,
         "componentDefault": "false",
         "doc": ""
+      },
+      {
+        "name": "children",
+        "type": "Snippet",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Prose only: rendered in place of `value` (the host's formatted text, say); `value` still decides the clamp."
       }
     ],
     "group": "library"
@@ -15856,6 +15867,17 @@
         "required": false,
         "componentDefault": "''",
         "doc": ""
+      },
+      {
+        "name": "aboutContent",
+        "type": "Snippet",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Rendered in place of `about` when given (the host's formatted bio); `about` still decides whether the section shows."
       },
       {
         "name": "color",

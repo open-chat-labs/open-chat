@@ -146,3 +146,7 @@
 ## 2026-10-23 — MessageGroup: the sender's avatar and name can be clicked, by hand
 - `MessageGroup` takes `onSenderClick`, called with the element when the sender's avatar or name is clicked, or focused and pressed with Enter or Space. Only those two elements: a click on a message doesn't call it. Without it both stay as they were. The app opens the sender's profile card, as the old UI does.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-23 — UserDialog's About can be the host's formatted text, by hand
+- `DetailSection` takes `children` for its prose variant, shown in place of `value`; `value` still decides whether the text is long enough to clamp. `UserDialog` takes `aboutContent`, passed through to its About section. The app renders a user's bio as Markdown there, as the old profile cards do.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

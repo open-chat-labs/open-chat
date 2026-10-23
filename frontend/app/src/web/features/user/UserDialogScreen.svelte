@@ -15,6 +15,7 @@
         userBadges,
     } from "@client";
     import UserDialog from "@openchat/ui/src/features/components/UserDialog.svelte";
+    import Markdown from "@src/core/Markdown.svelte";
     import { profileCardChat } from "@src/logic/profile/profileCard";
     import { ProfileCardBlock, ProfileCardData } from "@src/logic/profile/profileCardData.svelte";
     import { disableChit } from "@src/stores/settings";
@@ -80,7 +81,7 @@
             avatarUrl: buildUserAvatarUrl(blobUrlPattern, userId, profile.avatarId),
             coverUrl: buildUserBackgroundUrl(blobUrlPattern, userId, profile.backgroundId),
             online,
-            joined: client.toDateString(new Date(Number(profile.created))),
+            joined: client.toMonthYearString(new Date(Number(profile.created))),
             chit: badges.chit,
         });
     });
@@ -138,5 +139,9 @@
         onUnblock={block.kind === "unblock" ? unblockUser : undefined}
         onMessage={dialog.chatButton && !isMe ? chat : undefined}
         {moderatorAction}
-        onCancel={onClose} />
+        onCancel={onClose}>
+        {#snippet aboutContent()}
+            <Markdown inline={false} text={userProps.about} />
+        {/snippet}
+    </UserDialog>
 {/if}

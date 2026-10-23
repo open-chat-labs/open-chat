@@ -140,8 +140,9 @@ design export needs. Each entry says where it came up.
   streak and CHIT-earned badges (`userBadges`) don't show; CHIT earned is one of its facts
   instead, left out when the viewer has turned CHIT off. Also missing from the old card: the
   member's role in the chat (`WithRole`), the "last online" wording (only the online dot shows),
-  the bio as Markdown, and a way to your own profile from your own card (the old card's Settings
-  button; `?profile` is 8c's).
+  and a way to your own profile from your own card (the old card's Settings button; `?profile`
+  is 8c's). The bio is Markdown, as in the old cards: `UserDialog` takes `aboutContent` and
+  `DetailSection` `children` (by hand).
 - **Sender click** (4a, by hand): `MessageGroup` takes `onSenderClick`, so a sender's avatar or
   name opens their card, as in the old UI. The design doesn't show them as clickable.
 - **Suspend and unsuspend** (4a, by hand): platform moderators suspend or unsuspend a user from

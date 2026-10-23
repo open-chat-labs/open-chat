@@ -4,7 +4,7 @@
      Mute / favourite / chat settings apply at once and roll back with an error if the host rejects. Block asks first and
      waits for the host; Block, Message and Favourite are hidden when their callbacks are absent. -->
 <script lang="ts">
-  import { onDestroy, untrack, type ComponentProps } from 'svelte';
+  import { onDestroy, untrack, type ComponentProps, type Snippet } from 'svelte';
   import Badge from '../../lib/components/Badge.svelte';
   import DetailSection from '../../lib/components/DetailSection.svelte';
   import DmChatSettings from './DmChatSettings.svelte';
@@ -39,6 +39,8 @@
     title: string;
     handle?: string;
     about?: string;
+    /** Rendered in place of `about` when given (the host's formatted bio); `about` still decides whether the section shows. */
+    aboutContent?: Snippet;
     color?: keyof typeof GRADIENTS;
     /** CSS background (image URL or gradient) for the avatar; falls back to the colour gradient. */
     avatar?: string;
@@ -76,6 +78,7 @@
     title,
     handle = '',
     about = '',
+    aboutContent,
     color = 'violet',
     avatar,
     online = false,
@@ -237,7 +240,7 @@
             {/each}
           </div>
           {#if about}
-            <div class="cell"><DetailSection label={t('ui.userDialog.about')} value={about} variant="prose" /></div>
+            <div class="cell"><DetailSection label={t('ui.userDialog.about')} value={about} variant="prose" children={aboutContent} /></div>
           {/if}
         </div>
       {:else}
