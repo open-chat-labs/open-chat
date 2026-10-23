@@ -2926,6 +2926,17 @@
         "doc": "Own text messages only."
       },
       {
+        "name": "onSenderClick",
+        "type": "(el: HTMLElement) => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The sender's avatar or name was clicked (or pressed with Enter / Space); gets the element clicked. Plain text without it."
+      },
+      {
         "name": "onSwipeLeft",
         "type": "(index: number) => void",
         "default": null,

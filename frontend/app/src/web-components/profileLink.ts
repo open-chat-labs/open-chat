@@ -4,6 +4,14 @@ export type ProfileLinkClickedEvent = {
     inGlobalContext: boolean;
 };
 
+/** The event that opens `userId`'s profile card, from a name clicked in a chat. */
+export function profileClickedEvent(userId: string): CustomEvent<ProfileLinkClickedEvent> {
+    return new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
+        detail: { userId, chatButton: true, inGlobalContext: false },
+        bubbles: true,
+    });
+}
+
 class ProfileLink extends HTMLElement {
     constructor() {
         super();
@@ -36,15 +44,7 @@ class ProfileLink extends HTMLElement {
     }
 
     handleClick() {
-        const event = new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
-            detail: {
-                userId: this.userId,
-                chatButton: true,
-                inGlobalContext: false,
-            },
-            bubbles: true,
-        });
-        this.dispatchEvent(event);
+        this.dispatchEvent(profileClickedEvent(this.userId));
     }
 
     // Called when the element is connected to the DOM

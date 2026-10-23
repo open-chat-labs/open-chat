@@ -142,6 +142,8 @@ design export needs. Each entry says where it came up.
   member's role in the chat (`WithRole`), the "last online" wording (only the online dot shows),
   the bio as Markdown, and a way to your own profile from your own card (the old card's Settings
   button; `?profile` is 8c's).
+- **Sender click** (4a, by hand): `MessageGroup` takes `onSenderClick`, so a sender's avatar or
+  name opens their card, as in the old UI. The design doesn't show them as clickable.
 - **Suspend and unsuspend** (4a, by hand): platform moderators suspend or unsuspend a user from
   their card. `UserDialog` takes `moderatorAction` (a label and a callback) and shows it in its
   footer as a second danger action; the design has no place for it (`TODO(design)`). Suspending

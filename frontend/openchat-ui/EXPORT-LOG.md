@@ -142,3 +142,7 @@
 ## 2026-10-23 — UserDialog: a moderator action, by hand
 - `UserDialog` takes `moderatorAction` (`{ label, onAction }`), shown in its footer beside Block for anyone but yourself. It closes the dialog (with its exit animation) and then calls `onAction`. The app uses it for a platform moderator's suspend and unsuspend, which the design has no place for.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-23 — MessageGroup: the sender's avatar and name can be clicked, by hand
+- `MessageGroup` takes `onSenderClick`, called with the element when the sender's avatar or name is clicked, or focused and pressed with Enter or Space. Only those two elements: a click on a message doesn't call it. Without it both stay as they were. The app opens the sender's profile card, as the old UI does.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
