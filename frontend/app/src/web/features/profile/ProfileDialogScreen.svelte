@@ -29,7 +29,6 @@
         adultEnabledStore,
         underReviewEnabledStore,
         OpenChat,
-        publish,
         setSoftDisabled,
         suspendedUserStore,
         userMetricsStore,
@@ -78,12 +77,12 @@
     import { _, locale } from "svelte-i18n";
     import { accentOf, accentStore } from "../../accent";
     import type { DialogProps, LinkedDialog } from "../app/dialogs";
+    import { openLinked } from "../app/linkedDialogs";
     import {
         changedChatSettings,
         calendarDay,
         chatSettingsProps,
         claimDays,
-        claimedNow,
         profileProps,
         ringtoneKeyOf,
         statsProps,
@@ -123,7 +122,7 @@
     import ImageCropDialog from "./ImageCropDialog.svelte";
     import PremiumItemDialog from "./PremiumItemDialog.svelte";
 
-    let { onClose }: DialogProps<Extract<LinkedDialog, { kind: "profile" }>> = $props();
+    let { dialog, onClose }: DialogProps<Extract<LinkedDialog, { kind: "profile" }>> = $props();
 
     const client = getContext<OpenChat>("client");
     const translate = (key: ResourceKey) => interpolate($_, key);
@@ -378,7 +377,8 @@
         if (patch.utc !== undefined) utcMode.set(patch.utc);
     }
 
-    // today's claim, as the old desktop rail offers it (only while the last sync is recent)
+    // today's claim, as the old desktop rail offers it (only while the last sync is recent); the
+    // calendar's Claim opens the CHIT dialog, where it's claimed
     const claimable = $derived(
         dailyChitClaimable(
             $chitStateStore.nextDailyChitClaim,
@@ -386,34 +386,6 @@
             $latestSuccessfulUpdatesLoop,
         ),
     );
-
-    // the calendar's Claim: claimed here, as the old CHIT modal claims it, until the CHIT dialog
-    // it opens in the design is built (8d). The day shows claimed as soon as the answer comes (as
-    // the claim stops being offered), and stays so while the history reloads behind it
-    async function claimChit(): Promise<void> {
-        try {
-            const resp = await client.claimDailyChit();
-            if (resp.kind === "success") {
-                claimedHere = claimedNow(Date.now(), resp.streak, resp.chitEarned);
-                claimHistoryRun++;
-                claimHistory = withClaimedHere(claimHistory);
-            }
-        } catch (err) {
-            console.warn("Unable to claim the daily CHIT", err);
-            toastStore.showFailureToast(i18nKey("dailyChit.failedToClaim"));
-            throw err;
-        }
-        loadClaimHistory();
-    }
-
-    // a claim made here, kept in the calendar until the loaded history has that day
-    let claimedHere: ClaimDay | undefined;
-
-    function withClaimedHere(days: ClaimDay[]): ClaimDay[] {
-        const here = claimedHere;
-        if (here === undefined || days.some((d) => d.day === here.day)) return days;
-        return [...days, here];
-    }
 
     // every claim since the account was made: the calendar pages through the months itself, and a
     // claim's streak day follows from the ones before it. Loaded once CHIT's section shows (not
@@ -438,7 +410,7 @@
             );
             if (run !== claimHistoryRun) return;
             chitEvents = mergeChitEvents(chitEvents, events);
-            claimHistory = withClaimedHere(claimDays(chitEvents));
+            claimHistory = claimDays(chitEvents);
         } catch (err) {
             console.warn("Unable to load the CHIT claim history", err);
         }
@@ -711,6 +683,7 @@
     avatar={header.avatar}
     cover={header.cover}
     sections={SECTIONS}
+    section={dialog.section}
     chitEnabled={!$disableChit}
     chitNotify={$chitPopup}
     chitHideAfterClaim={$hideChitIcon}
@@ -718,7 +691,7 @@
     {claimHistory}
     {claimable}
     today={calendarDay($now500)}
-    onClaim={readOnly ? undefined : claimChit}
+    onChit={readOnly ? undefined : () => openLinked({ kind: "chit" })}
     puzzleSetting={false}
     onChitSettings={changeChit}
     onlineMinutes={stats.onlineMinutes}
@@ -731,7 +704,7 @@
     accentPref={$accentStore}
     fontSize={fontSizeOf($fontScaleStore)}
     {onClose}
-    onDiamond={() => publish("upgrade")}
+    onDiamond={() => openLinked({ kind: "diamond" })}
     onSave={save}
     {checkHandle}
     onLogout={() => client.logout()}

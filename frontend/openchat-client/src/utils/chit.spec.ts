@@ -1,6 +1,8 @@
 import {
     allChitEvents,
+    CHIT_STREAK_MILESTONES,
     currentStreak,
+    dailyChitAmount,
     dailyChitClaimable,
     mergeChitEvents,
     newestFirstChitEvents,
@@ -111,5 +113,20 @@ describe("merging CHIT events", () => {
         expect(
             mergeChitEvents([event(1, "daily_claim")], [event(1, "streak_insurance_claim")]),
         ).toHaveLength(2);
+    });
+});
+
+describe("what a daily claim pays", () => {
+    test("follows the backend's schedule, by the streak the claim makes", () => {
+        expect(
+            [0, 1, 2, 3, 6, 7, 13, 14, 29, 30, 99, 100, 364, 365, 1000].map(dailyChitAmount),
+        ).toEqual([0, 200, 200, 300, 300, 400, 400, 500, 500, 600, 600, 800, 800, 1000, 1000]);
+    });
+
+    test("goes up at the milestones", () => {
+        expect(CHIT_STREAK_MILESTONES).toEqual([3, 7, 14, 30, 100, 365]);
+        for (const m of CHIT_STREAK_MILESTONES) {
+            expect(dailyChitAmount(m)).toBeGreaterThan(dailyChitAmount(m - 1));
+        }
     });
 });

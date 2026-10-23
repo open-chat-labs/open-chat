@@ -63,8 +63,7 @@ design export needs. Each entry says where it came up.
   through to `Banner`.
 - **Calls**: `CallPanel` / `VideoTile` render `MediaStream`s. The app uses Daily's prebuilt
   iframe, which doesn't expose them; it needs Daily's call-object mode (phase 7 decision).
-- **Built-in fallbacks** that should come from the app: CHIT milestone tiers (`ChitDialog`),
-  Diamond limits and feature matrix (`DiamondDialog`), storage caps and about URLs
+- **Built-in fallbacks** that should come from the app: Diamond limits and feature matrix (`DiamondDialog`), storage caps and about URLs
   (`ProfileDialog`), the language list (`CreateGroupDialog`), the token colour map
   (`AccessGates`).
 - **Types not exported** from `src/features/index.ts` that adapters need: `WalletActivity`,
@@ -130,15 +129,14 @@ design export needs. Each entry says where it came up.
   sign-in provider limit), and one that rejects with `{ cancelled: true }` says nothing (closing
   the confirming sign-in); Diamond opens from it without its exit (`DialogFlow.handOff`), so the
   backdrop stays while the next dialog animates in (`DialogScreen` keeps it); the CHIT claim day
-  does nothing without `onChit` (the app doesn't pass it until the CHIT dialog, 8d);
+  does nothing without `onChit` (the app's opens the CHIT dialog);
   `puzzleSetting`, so a host without a daily puzzle setting leaves it out; "Ways to earn more"
   only with `onEarn`; `onClaim`, the calendar's Claim made in place with a "Claiming…" state; a
   day before `joined` isn't a missed one.
 - **`ProfileDialog` against the app** (8c):
-  - no "Hide all CHIT related features" switch: the new UI reads `disableChit` (the CHIT cards
-    on the user card and the DM panel follow it) but offers no way to change it. The setting is
-    kept in each origin's browser storage (`openchat_disable_chit`), so turning it off in the old
-    UI doesn't reach the new one on another origin;
+  - the CHIT settings (`disableChit` and the others) are kept in each origin's browser storage,
+    as the old UI keeps them, so turning CHIT off in the old UI doesn't reach the new one on
+    another origin;
   - the profile fields save one at a time, and any failure shows as "couldn't save": the reason
     the backend gave (`ProfileFieldErrors`, e.g. "display name too short") isn't shown;
   - the username is checked against looser rules than the app's (3 characters and up, where
@@ -168,7 +166,6 @@ design export needs. Each entry says where it came up.
     reload reads from two days before the newest event it has (low priority: rare, and it
     corrects itself); no daily puzzle setting (the app has none to show or hide the puzzle, or to
     remind of it: 8d), no "Ways to earn more" (the achievements dialog is 8d), and the calendar's
-    Claim claims in place (`onClaim`), where the design opens the CHIT dialog (8d); the calendar's
     `today` is the user's date too, not UTC's; the old profile's streak
     insurance summary has no place here (8d's `StreakInsuranceDialog`);
   - sign-in methods: linking a passkey or an Internet Identity confirms it with the sign-in dialog
@@ -331,6 +328,11 @@ design export needs. Each entry says where it came up.
   - the unread marker is implicit (the window anchor).
 - **Presence**: a polled last-online time, with no status for yourself.
 - **Community stats**: counters only; there's no 12-week series for `GroupStats`.
+- **CHIT** (`ChitDialog`, 8d): no place on this month's leaderboard for the user (`boardRank`,
+  `boardScore`: the leaderboard has only the top 10), so the trophy says "Leaderboard". Today's
+  claim amount and the milestones are the backend's schedule mirrored in `@client`
+  (`dailyChitAmount`, `CHIT_STREAK_MILESTONES`, from `chit_for_streak`), so a change there needs
+  one here too.
 - **Sign-in**: not carried over from the old sign-in yet:
   - the old form's prompt when a referral code is turned down ("proceed" without it, or cancel
     and sign out): the form says why, and signing up again goes ahead without the code (the
@@ -366,6 +368,12 @@ design export needs. Each entry says where it came up.
 
 ### Wiring
 
+- **CHIT dialog, first cut** (`features/chit`, 8d): the streak, today's claim, the balance, the
+  insurance summary, the settings (the profile's CHIT section) and the leaderboard (`?hof`, a
+  placeholder until it's built). Not yet: the daily puzzle (the card is left out), "Ways to earn
+  CHIT" (achievements), and buying streak insurance, whose rows do nothing yet: the rest of 8d.
+  A claim that fails shows the dialog's own error, where the old modal toasted and closed; an
+  already claimed day just moves the countdown on, as the old desktop modal does.
 - **App events** (`features/app/AppEventDialogs.svelte`): the not-found, no-access and
   not-available dialogs are a `DialogShell` with the old UI's words (no design: `TODO(design)`);
   "Page not found" was never translated. Suspending a user (`suspendUser`, platform moderators

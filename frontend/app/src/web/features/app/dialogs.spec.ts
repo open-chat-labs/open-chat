@@ -14,6 +14,14 @@ describe("the dialog a URL's query opens", () => {
         expect(linkedDialog(new URLSearchParams("hof"))).toEqual({ kind: "leaderboard" });
     });
 
+    test("is the profile on a section it names, if it's one a link can open", () => {
+        expect(linkedDialog(new URLSearchParams("profile=chit"))).toEqual({
+            kind: "profile",
+            section: "chit",
+        });
+        expect(linkedDialog(new URLSearchParams("profile=nope"))).toEqual({ kind: "profile" });
+    });
+
     test("is none for a query without one", () => {
         expect(linkedDialog(new URLSearchParams("threads&open=true"))).toBeUndefined();
     });
@@ -49,6 +57,15 @@ describe("opening a linked dialog", () => {
         expect(openLinkedDialog(new URLSearchParams("hof&chit"), { kind: "profile" })).toBe(
             "?profile",
         );
+    });
+
+    test("opens the profile on a section with its value", () => {
+        expect(
+            openLinkedDialog(new URLSearchParams("chit"), { kind: "profile", section: "chit" }),
+        ).toBe("?profile=chit");
+        expect(
+            openLinkedDialog(new URLSearchParams("profile"), { kind: "profile", section: "chit" }),
+        ).toBe("?profile=chit");
     });
 
     test("is nothing when it's the one showing", () => {

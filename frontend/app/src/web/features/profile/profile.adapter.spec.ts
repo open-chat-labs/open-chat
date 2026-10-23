@@ -12,7 +12,6 @@ import {
     calendarDay,
     changedChatSettings,
     claimDays,
-    claimedNow,
     communitiesProps,
     linkCodeProps,
     signinMethodsProps,
@@ -243,18 +242,12 @@ describe("the CHIT calendar's days", () => {
         expect(claimDays(events, utc).map((d) => d.day)).toEqual(["2026-02-28", "2026-03-01"]);
     });
 
-    test("today and today's claim are the same day when the user's date isn't UTC's", () => {
+    test("today and a claim made now are the same day when the user's date isn't UTC's", () => {
         // 00:30 on the 2nd at UTC+2 is 22:30 on the 1st in UTC
         const now = MARCH_1 + DAY - 90 * 60_000;
         const plus2 = () => 120;
         const today = new Date(calendarDay(now, plus2)).toISOString().slice(0, 10);
         expect(today).toBe("2026-03-02");
-        expect(claimedNow(now, 4, 200, plus2)).toEqual({
-            day: today,
-            streakDay: 4,
-            amount: 200,
-            minute: 22 * 60 + 30,
-        });
         expect(claimDays([at(now, "daily_claim", 200)], plus2)[0].day).toBe(today);
     });
 

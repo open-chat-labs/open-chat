@@ -54,7 +54,13 @@ export {
 } from "./utils/group.svelte";
 export { communityChanges, isPrivateCommunityPreview } from "./utils/community";
 export { executionPaymentAmount, proposalFundsRequired } from "./utils/proposal";
-export { currentStreak, dailyChitClaimable, mergeChitEvents } from "./utils/chit";
+export {
+    CHIT_STREAK_MILESTONES,
+    currentStreak,
+    dailyChitAmount,
+    dailyChitClaimable,
+    mergeChitEvents,
+} from "./utils/chit";
 export { inviteLinkUrl } from "./utils/inviteLink";
 export { postLoginJoin } from "./utils/join";
 export { muteNotificationsFailureMessage, pinChatFailureMessage } from "./utils/pinAndMute";
