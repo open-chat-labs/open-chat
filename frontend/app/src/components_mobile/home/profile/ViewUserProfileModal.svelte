@@ -1,25 +1,18 @@
 <script lang="ts">
     import {
-        type ChatSummary,
-        type CommunitySummary,
         type OpenChat,
-        type PublicProfile,
-        type ReadonlySet,
+        type ProfileBlock,
         type ResourceKey,
-        type UserSummary,
-        blockedUsersStore,
         currentUserIdStore,
         platformModeratorStore,
+        unsuspendUserMessage,
         publish,
-        selectedChatBlockedUsersStore,
-        selectedChatSummaryStore,
-        selectedCommunityBlockedUsersStore,
-        selectedCommunitySummaryStore,
     } from "@client";
 
     import { CommonButton, Container, Sheet } from "component-lib";
     import { navigate } from "@utils/navigation";
-    import { getContext, onMount } from "svelte";
+    import { ProfileCardBlock, ProfileCardData } from "@src/logic/profile/profileCardData.svelte";
+    import { getContext } from "svelte";
     import AccountCancel from "svelte-material-icons/AccountCancelOutline.svelte";
     import Cancel from "svelte-material-icons/Cancel.svelte";
     import ChatOutline from "svelte-material-icons/ChatOutline.svelte";
@@ -47,27 +40,9 @@
         onClose,
     }: Props = $props();
 
-    let profile: PublicProfile | undefined = $state();
-    let user: UserSummary | undefined = $state();
-    onMount(async () => {
-        // the prop reads through to the parent's card state, which is undefined again if the
-        // card was closed while getUser was in flight
-        const id = userId;
-        try {
-            user = await client.getUser(id);
-            client.getPublicProfile(id).subscribe({
-                onResult: (result) => {
-                    profile = result;
-                    if (profile === undefined) {
-                        onClose();
-                    }
-                },
-            });
-        } catch (e) {
-            client.logError("Failed to load user profile", e);
-            onClose();
-        }
-    });
+    const card = new ProfileCardData(client, userId, onClose);
+    let profile = $derived(card.profile);
+    let user = $derived(card.user);
 
     function afterBlock(result: boolean, success: ResourceKey, failure: ResourceKey) {
         if (!result) {
@@ -77,111 +52,22 @@
         }
     }
 
-    function blockUser() {
-        if ($selectedChatSummaryStore !== undefined) {
-            if ($selectedChatSummaryStore.kind === "direct_chat") {
-                client.blockUserFromDirectChat(userId).then((success) => {
-                    afterBlock(success, i18nKey("blockUserSucceeded"), i18nKey("blockUserFailed"));
-                });
-                onClose();
-                return;
-            }
-            if ($selectedChatSummaryStore.kind === "group_chat") {
-                client.blockUser($selectedChatSummaryStore.id, userId).then((success) => {
-                    afterBlock(success, i18nKey("blockUserSucceeded"), i18nKey("blockUserFailed"));
-                });
-                onClose();
-                return;
-            }
+    async function blockUser(block: ProfileBlock) {
+        if (block.kind === "none") return;
+        onClose();
+        if (block.kind === "block") {
+            afterBlock(
+                await client.blockUserInContext(block.context, userId),
+                i18nKey("blockUserSucceeded"),
+                i18nKey("blockUserFailed"),
+            );
+        } else {
+            afterBlock(
+                await client.unblockUserInContext(block.context, userId),
+                i18nKey("unblockUserSucceeded"),
+                i18nKey("unblockUserFailed"),
+            );
         }
-        if ($selectedCommunitySummaryStore !== undefined) {
-            client
-                .blockCommunityUser($selectedCommunitySummaryStore.id, userId)
-                .then((success) =>
-                    afterBlock(success, i18nKey("blockUserSucceeded"), i18nKey("blockUserFailed")),
-                );
-            onClose();
-            return;
-        }
-    }
-
-    function unblockUser() {
-        if ($selectedChatSummaryStore !== undefined) {
-            if ($selectedChatSummaryStore.kind === "direct_chat") {
-                client.unblockUserFromDirectChat(userId).then((success) => {
-                    afterBlock(
-                        success,
-                        i18nKey("unblockUserSucceeded"),
-                        i18nKey("unblockUserFailed"),
-                    );
-                });
-                onClose();
-                return;
-            }
-            if ($selectedChatSummaryStore.kind === "group_chat") {
-                client.unblockUser($selectedChatSummaryStore.id, userId).then((success) => {
-                    afterBlock(
-                        success,
-                        i18nKey("unblockUserSucceeded"),
-                        i18nKey("unblockUserFailed"),
-                    );
-                });
-                onClose();
-                return;
-            }
-        }
-        if ($selectedCommunitySummaryStore !== undefined) {
-            client
-                .unblockCommunityUser($selectedCommunitySummaryStore.id, userId)
-                .then((success) =>
-                    afterBlock(
-                        success,
-                        i18nKey("unblockUserSucceeded"),
-                        i18nKey("unblockUserFailed"),
-                    ),
-                );
-            onClose();
-            return;
-        }
-    }
-
-    function canBlockUser(
-        chat: ChatSummary | undefined,
-        community: CommunitySummary | undefined,
-        blockedUsers: ReadonlySet<string>,
-        blockedChatUsers: ReadonlySet<string>,
-        blockedCommunityUsers: ReadonlySet<string>,
-    ) {
-        if (me || inGlobalContext) return false;
-
-        if (chat !== undefined) {
-            if (chat.kind === "direct_chat") return !blockedUsers.has(userId);
-            if (chat.kind === "group_chat")
-                return !blockedChatUsers.has(userId) && client.canBlockUsers(chat.id);
-        }
-        if (community !== undefined) {
-            return !blockedCommunityUsers.has(userId) && client.canBlockUsers(community.id);
-        }
-        return false;
-    }
-
-    function canUnblockUser(
-        chat: ChatSummary | undefined,
-        community: CommunitySummary | undefined,
-        blockedUsers: ReadonlySet<string>,
-        blockedChatUsers: ReadonlySet<string>,
-        blockedCommunityUsers: ReadonlySet<string>,
-    ) {
-        if (me || inGlobalContext) return false;
-        if (chat !== undefined) {
-            if (chat.kind === "direct_chat") return blockedUsers.has(userId);
-            if (chat.kind === "group_chat")
-                return blockedChatUsers.has(userId) && client.canBlockUsers(chat.id);
-        }
-        if (community !== undefined) {
-            return blockedCommunityUsers.has(userId) && client.canBlockUsers(community.id);
-        }
-        return false;
     }
 
     function handleOpenDirectChat() {
@@ -193,15 +79,10 @@
         onClose();
     }
 
-    function unsuspendUser() {
-        client.unsuspendUser(userId).then((success) => {
-            if (success) {
-                toastStore.showSuccessToast(i18nKey("unsuspendedUser"));
-                onClose();
-            } else {
-                toastStore.showFailureToast(i18nKey("failedToUnsuspendUser"));
-            }
-        });
+    async function unsuspendUser() {
+        const success = await client.unsuspendUser(userId);
+        afterBlock(success, unsuspendUserMessage(true), unsuspendUserMessage(false));
+        if (success) onClose();
     }
 
     function suspendUser() {
@@ -210,24 +91,8 @@
     }
     let me = $derived(userId === $currentUserIdStore);
     let isSuspended = $derived(user?.suspended ?? false);
-    let canBlock = $derived(
-        canBlockUser(
-            $selectedChatSummaryStore,
-            $selectedCommunitySummaryStore,
-            $blockedUsersStore,
-            $selectedChatBlockedUsersStore,
-            $selectedCommunityBlockedUsersStore,
-        ),
-    );
-    let canUnblock = $derived(
-        canUnblockUser(
-            $selectedChatSummaryStore,
-            $selectedCommunitySummaryStore,
-            $blockedUsersStore,
-            $selectedChatBlockedUsersStore,
-            $selectedCommunityBlockedUsersStore,
-        ),
-    );
+    const cardBlock = new ProfileCardBlock(client, userId, inGlobalContext);
+    let block = $derived(cardBlock.current);
 </script>
 
 {#if profile !== undefined}
@@ -253,20 +118,15 @@
                             <Translatable resourceKey={i18nKey("profile.label")} />
                         </CommonButton>
                     {/if}
-                    {#if canBlock}
-                        <CommonButton onClick={blockUser} mode={"active"}>
+                    {#if block.kind !== "none"}
+                        <CommonButton onClick={() => blockUser(block)} mode={"active"}>
                             {#snippet icon(color, size)}
                                 <Cancel {color} {size} />
                             {/snippet}
-                            <Translatable resourceKey={i18nKey("profile.block")} />
-                        </CommonButton>
-                    {/if}
-                    {#if canUnblock}
-                        <CommonButton onClick={unblockUser} mode={"active"}>
-                            {#snippet icon(color, size)}
-                                <Cancel {color} {size} />
-                            {/snippet}
-                            <Translatable resourceKey={i18nKey("profile.unblock")} />
+                            <Translatable
+                                resourceKey={i18nKey(
+                                    block.kind === "block" ? "profile.block" : "profile.unblock",
+                                )} />
                         </CommonButton>
                     {/if}
                     {#if $platformModeratorStore}

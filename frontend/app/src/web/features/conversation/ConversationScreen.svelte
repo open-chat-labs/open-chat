@@ -82,6 +82,7 @@
         type MessageRow,
     } from "./conversation.adapter";
     import { RowCache } from "./rowCache";
+    import { profileClickedEvent } from "@src/web-components/profileLink";
 
     let { context: screen }: ScreenProps<Extract<MiddleRegion, { kind: "conversation" }>> =
         $props();
@@ -499,6 +500,8 @@
                                             chat.kind !== "direct_chat"}
                                         avatarSpace
                                         endsRun={item.last}
+                                        onSenderClick={(el) =>
+                                            el.dispatchEvent(profileClickedEvent(msg.sender))}
                                         marked={args.focusIndex === msg.messageIndex && !failed
                                             ? 0
                                             : -1}

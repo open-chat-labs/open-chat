@@ -56,6 +56,8 @@
     /** Own text messages only. */
     onEdit?: (index: number, el?: HTMLElement) => void;
     onSwipeLeft?: (index: number) => void;
+    /** The sender's avatar or name was clicked (or pressed with Enter / Space); gets the element clicked. Plain text without it. */
+    onSenderClick?: (el: HTMLElement) => void;
   }
 
   let {
@@ -67,6 +69,7 @@
     avatarSpace = false,
     endsRun = true,
     messages,
+    onSenderClick,
     onMessageMenu,
     activeMenu = -1,
     marked = -1,
@@ -110,6 +113,12 @@
   const quickReactions = $derived((recentReactions.length ? recentReactions : ['👍', '❤️', '😂']).slice(0, 3));
   const isText = (m: GroupMessage) => !m.kind || m.kind === 'text';
   const menuable = (m: GroupMessage) => !!onMessageMenu && !m.deleted;
+
+  function senderKey(e: KeyboardEvent & { currentTarget: HTMLElement }) {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    onSenderClick?.(e.currentTarget);
+  }
 
   function rectOf(el: Element | null | undefined): Rect | null {
     if (!el) return null;
@@ -369,13 +378,23 @@
 
 <div class="group">
   {#if showAvatar}
-    <span class="avatar"><Avatar size={34} {color} online={false} /></span>
+    {#if onSenderClick}
+      <span class="avatar sender" onclick={(e) => onSenderClick(e.currentTarget)} onkeydown={(e) => senderKey(e)} role="button" tabindex="0" aria-label={senderName}
+        ><Avatar size={34} {color} online={false} /></span
+      >
+    {:else}
+      <span class="avatar"><Avatar size={34} {color} online={false} /></span>
+    {/if}
   {:else if avatarSpace}
     <span class="avatar-space" aria-hidden="true"></span>
   {/if}
   <div class="column">
     {#if showName}
-      <span class="name">{senderName}</span>
+      {#if onSenderClick}
+        <span class="name sender" onclick={(e) => onSenderClick(e.currentTarget)} onkeydown={(e) => senderKey(e)} role="button" tabindex="0">{senderName}</span>
+      {:else}
+        <span class="name">{senderName}</span>
+      {/if}
     {/if}
     {#each messages as m, i (m.id ?? i)}
       {@const last = i === messages.length - 1 && endsRun}
@@ -531,6 +550,14 @@
     padding: 0 var(--space-4);
     font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
     color: var(--ink-3);
+  }
+
+  .sender {
+    cursor: pointer;
+  }
+
+  .name.sender:hover {
+    text-decoration: underline;
   }
 
   .message {

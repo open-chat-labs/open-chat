@@ -92,9 +92,17 @@ const dayOfWeekFormatters: Record<string, Intl.DateTimeFormat> = {};
 const dateFormatters: Record<string, Intl.DateTimeFormat> = {};
 const longDateFormatters: Record<string, Intl.DateTimeFormat> = {};
 const shortTimeFormatters: Record<string, Intl.DateTimeFormat> = {};
+const monthYearFormatters: Record<string, Intl.DateTimeFormat> = {};
 
 export function toMonthString(date: Date, locale: string): string {
     return memoisedFormatter(longMonthFormatters, locale, { month: "long" }).format(date);
+}
+
+/** "Oct 2026": when someone joined, on their profile card. */
+export function toMonthYearString(date: Date, locale: string): string {
+    return memoisedFormatter(monthYearFormatters, locale, { month: "short", year: "numeric" }).format(
+        date,
+    );
 }
 
 export function toDayOfWeekString(date: Date, locale: string): string {

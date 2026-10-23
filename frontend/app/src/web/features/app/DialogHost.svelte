@@ -27,6 +27,7 @@
     import RulesDialog from "../conversation/RulesDialog.svelte";
     import PinPromptHost from "../pin/PinPromptHost.svelte";
     import { declineOnChatChange, declinePrompt, waitingPrompt } from "../pin/pinPrompt";
+    import SuspendUserDialog from "../user/SuspendUserDialog.svelte";
     import AppEventDialogs from "./AppEventDialogs.svelte";
     import DialogScreen from "./DialogScreen.svelte";
     import {
@@ -113,7 +114,8 @@
     {/key}
 {/if}
 
-<!-- TODO(phase 4, 4a): suspending a user (platform moderators) has no dialog yet; GAPS.md -->
-{#if appDialog !== undefined && appDialog.kind !== "suspending"}
+{#if appDialog?.kind === "suspending"}
+    <SuspendUserDialog userId={appDialog.userId} onClose={onCloseAppDialog} />
+{:else if appDialog !== undefined}
     <AppEventDialogs dialog={appDialog} onClose={onCloseAppDialog} />
 {/if}

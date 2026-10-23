@@ -80,11 +80,7 @@
     );
 
     function formatDate(timestamp: bigint): string {
-        const date = new Date(Number(timestamp));
-        return date.toLocaleDateString(undefined, {
-            month: "short",
-            year: "numeric",
-        });
+        return client.toMonthYearString(new Date(Number(timestamp)));
     }
 
     function onCopy() {
