@@ -305,4 +305,31 @@ describe("the CHIT calendar's days", () => {
             ["2026-03-03", 3, false],
         ]);
     });
+
+    test("a zone change at a claim doesn't move the claims after it off their days", () => {
+        // home in UTC-5, claiming at 20:00 there (01:00 UTC the next day); day 5 claimed at 20:00
+        // from UTC+9, day 6 missed and insured (marked in UTC+9), then home again for days 7-9
+        const H = 60 * 60_000;
+        const atHome = (day: number) => at(MARCH_1 + (day - 1) * DAY + 25 * H, "daily_claim", 10);
+        const events = [
+            ...[1, 2, 3, 4].map(atHome),
+            at(MARCH_1 + 4 * DAY + 11 * H, "daily_claim", 10),
+            at(MARCH_1 + 5 * DAY + 15 * H - 1, "streak_insurance_claim"),
+            ...[7, 8, 9].map(atHome),
+        ];
+        const days = claimDays(events, () => -300);
+        expect(days.map((d) => [Number(d.day.slice(-2)), d.streakDay, d.insured ?? false])).toEqual(
+            [
+                [1, 1, false],
+                [2, 2, false],
+                [3, 3, false],
+                [4, 4, false],
+                [5, 5, false],
+                [6, 6, true],
+                [7, 7, false],
+                [8, 8, false],
+                [9, 9, false],
+            ],
+        );
+    });
 });

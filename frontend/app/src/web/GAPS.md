@@ -156,9 +156,9 @@ design export needs. Each entry says where it came up.
     user's own (the backend counts a streak in the user's time zone), not the UTC day the dialog
     describes, and a claim's streak day is worked out from the days before it, so it loads the
     whole history; the backend doesn't say which zone each claim was made in (its
-    `utc_offset_updates` aren't exposed), so a claim is placed in the zone of an insured or
-    reinstated day near it, or this browser's, and a user who has moved can have a claim far from
-    any such day show a day off; no daily puzzle setting (the app has none to show or hide the puzzle, or to
+    `utc_offset_updates` aren't exposed): the claim before an insured or reinstated day is placed
+    in that day's zone, which it set, and any other in this browser's (or a nearby marker's, where
+    this browser's can't be right), so a user who has moved can have a claim show a day off; no daily puzzle setting (the app has none to show or hide the puzzle, or to
     remind of it: 8d), no "Ways to earn more" (the achievements dialog is 8d), and the calendar's
     Claim claims in place (`onClaim`), where the design opens the CHIT dialog (8d); the calendar's
     `today` is the user's date too, not UTC's; the old profile's streak

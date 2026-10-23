@@ -278,7 +278,7 @@ function markerOffset(ms: number, here: number): number | undefined {
         .reduce((best, o) => (Math.abs(o - here) < Math.abs(best - here) ? o : best));
 }
 
-// how near a claim has to be to a marker to be taken as made in the marker's zone
+// how near a claim has to be to a marker to try the marker's zone for it
 const ZONE_NEAR = 3 * ONE_DAY;
 
 /** Today's claim as the calendar shows it, from what claiming answered. */
@@ -301,48 +301,69 @@ type DayEvent = { kind: ChitEvent["reason"]["kind"]; ms: number; amount: number 
 /**
  * The CHIT calendar's days from the user's CHIT events (any order): a daily claim, a claim
  * reinstated, or a day covered by streak insurance, each on the user's own day, as the backend
- * counts it: in the zone the user claimed from. The backend doesn't say which zone that was for
- * a claim, but a marker (an insured or reinstated day) shows it, so a claim within three days of
- * one is taken as made in its zone, and any other in this browser's. One a day: the first claim,
- * or else the day's marker. Each one's streak day follows from the days before it: one more than
- * the day before, or 1 after a gap. A reinstated claim is a kept day with nothing earned.
+ * counts it: in the zone the user claimed from. A marker (an insured or reinstated day) shows its
+ * zone, which the claim before it set (the backend changes zone at a claim), so that claim goes in
+ * it. Any other claim goes in this browser's zone, unless that puts it on a marker's day or not
+ * after the claim before (which the backend never does): then in the zone of a marker near it, if
+ * that doesn't. One a day: the first claim, or else the day's marker. Each one's streak day
+ * follows from the days before it: one more than the day before, or 1 after a gap. A reinstated
+ * claim is a kept day with nothing earned.
  */
 export function claimDays(
     events: ChitEvent[],
     offsetMinutes: OffsetMinutes = browserOffset,
 ): ClaimDay[] {
-    const sorted = [...events].sort((a, b) => (a.timestamp < b.timestamp ? -1 : 1));
     const isMarker = (kind: ChitEvent["reason"]["kind"]) =>
         kind === "daily_claim_reinstated" || kind === "streak_insurance_claim";
-    const zones = sorted.flatMap(({ reason, timestamp }) => {
-        const ms = Number(timestamp);
-        const offset = isMarker(reason.kind)
-            ? markerOffset(ms, offsetMinutes(ms) * MINUTE)
-            : undefined;
-        return offset === undefined ? [] : [{ ms, offset }];
-    });
-    const zoneAt = (ms: number): number => {
-        const near = zones
-            .filter((z) => Math.abs(z.ms - ms) <= ZONE_NEAR)
-            .sort((a, b) => Math.abs(a.ms - ms) - Math.abs(b.ms - ms))[0];
-        return near?.offset ?? offsetMinutes(ms) * MINUTE;
-    };
+    const items = [...events]
+        .sort((a, b) => (a.timestamp < b.timestamp ? -1 : 1))
+        .filter(({ reason }) => reason.kind === "daily_claim" || isMarker(reason.kind))
+        .map(({ reason, timestamp, amount }) => {
+            const ms = Number(timestamp);
+            const offset = isMarker(reason.kind)
+                ? markerOffset(ms, offsetMinutes(ms) * MINUTE)
+                : undefined;
+            const day =
+                offset !== undefined
+                    ? ms + 1 + offset - ONE_DAY
+                    : isMarker(reason.kind)
+                      ? calendarDay(ms, offsetMinutes)
+                      : undefined;
+            return { kind: reason.kind, ms, amount, offset, day };
+        });
+    const markerDays = new Set(items.flatMap((m) => (m.day === undefined ? [] : [m.day])));
+    const dayIn = (ms: number, offset: number) => Math.floor((ms + offset) / ONE_DAY) * ONE_DAY;
+    const nearMarkerOffset = (ms: number): number | undefined =>
+        items
+            .filter((m) => m.offset !== undefined && Math.abs(m.ms - ms) <= ZONE_NEAR)
+            .sort((a, b) => Math.abs(a.ms - ms) - Math.abs(b.ms - ms))[0]?.offset;
+
     const byDay = new Map<number, DayEvent>();
-    for (const { reason, timestamp, amount } of sorted) {
-        const kind = reason.kind;
-        const ms = Number(timestamp);
+    let lastClaimDay = -Infinity;
+    items.forEach(({ kind, ms, amount, day: markerDay }, i) => {
         let day: number;
-        if (kind === "daily_claim") {
-            day = Math.floor((ms + zoneAt(ms)) / ONE_DAY) * ONE_DAY;
-        } else if (isMarker(kind)) {
-            const offset = markerOffset(ms, offsetMinutes(ms) * MINUTE);
-            day = offset === undefined ? calendarDay(ms, offsetMinutes) : ms + 1 + offset - ONE_DAY;
-        } else continue;
+        if (markerDay !== undefined) {
+            day = markerDay;
+        } else {
+            const next = items[i + 1];
+            const set = next !== undefined && isMarker(next.kind) ? next.offset : undefined;
+            if (set !== undefined) {
+                day = dayIn(ms, set);
+            } else {
+                day = dayIn(ms, offsetMinutes(ms) * MINUTE);
+                const near = nearMarkerOffset(ms);
+                if ((day <= lastClaimDay || markerDays.has(day)) && near !== undefined) {
+                    const there = dayIn(ms, near);
+                    if (there > lastClaimDay && !markerDays.has(there)) day = there;
+                }
+            }
+            lastClaimDay = Math.max(lastClaimDay, day);
+        }
         const had = byDay.get(day);
         if (had === undefined || (had.kind !== "daily_claim" && kind === "daily_claim")) {
             byDay.set(day, { kind, ms, amount });
         }
-    }
+    });
     const days: ClaimDay[] = [];
     let last: { day: number; streakDay: number } | undefined;
     for (const [day, { kind, ms, amount }] of [...byDay].sort(([a], [b]) => a - b)) {
