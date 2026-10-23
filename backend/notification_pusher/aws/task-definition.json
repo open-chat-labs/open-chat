@@ -1,0 +1,54 @@
+{
+  "family": "notification-pusher",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "cpu": "512",
+  "memory": "1024",
+  "runtimePlatform": {
+    "cpuArchitecture": "ARM64",
+    "operatingSystemFamily": "LINUX"
+  },
+  "executionRoleArn": "arn:aws:iam::253040722768:role/oc-notification-pusher-execution",
+  "taskRoleArn": "arn:aws:iam::253040722768:role/oc-notification-pusher",
+  "containerDefinitions": [
+    {
+      "name": "notification-pusher",
+      "image": "253040722768.dkr.ecr.us-east-1.amazonaws.com/notification-pusher",
+      "essential": true,
+      "environment": [
+        {
+          "name": "AWS_REGION",
+          "value": "us-east-1"
+        },
+        {
+          "name": "NO_COLOR",
+          "value": "1"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "ENV_FILE",
+          "valueFrom": "arn:aws:ssm:us-east-1:253040722768:parameter/notification-pusher/ENV_FILE"
+        },
+        {
+          "name": "GCLOUD_SA_JSON",
+          "valueFrom": "arn:aws:ssm:us-east-1:253040722768:parameter/notification-pusher/GCLOUD_SA_JSON"
+        }
+      ],
+      "linuxParameters": {
+        "initProcessEnabled": true
+      },
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/oc/notification-pusher",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "pusher"
+        }
+      },
+      "stopTimeout": 30
+    }
+  ]
+}
