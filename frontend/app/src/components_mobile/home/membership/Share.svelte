@@ -20,7 +20,8 @@
     import { type Level } from "@client";
     import { onMount } from "svelte";
     import { _ } from "svelte-i18n";
-    import type { MemberManagement } from "./membersState.svelte";
+    import type { MemberManagement } from "@src/logic/members/memberManagement.svelte";
+    import { toastStore } from "@src/stores/toast";
 
     interface Props {
         membersState: MemberManagement;
@@ -28,22 +29,27 @@
     }
     let { membersState, level }: Props = $props();
 
-    onMount(() => membersState.initialiseSharing());
+    onMount(async () => toastStore.showOutcome(await membersState.initialiseSharing()));
 
     let link = $derived(membersState.sharingLink);
     let hasCode = $derived(
         membersState.inviteLink?.kind === "enabled" || membersState.inviteLink?.kind === "disabled",
     );
 
-    function onShare() {
-        if (link !== undefined) membersState.shareLink(link);
+    async function toggleInviteLink() {
+        toastStore.showOutcome(await membersState.toggleInviteLink());
+    }
+
+    async function onShare() {
+        if (link !== undefined) toastStore.showOutcome(await membersState.shareLink(link));
     }
 </script>
 
 {#if membersState.confirmingResetLink}
     <AreYouSure
         message={i18nKey("invite.confirmReset", undefined, membersState.level, true)}
-        action={(answer) => membersState.confirmResetLinkResponse(answer)} />
+        action={async (answer) =>
+            toastStore.showOutcome(await membersState.confirmResetLinkResponse(answer))} />
 {/if}
 
 {#snippet action()}
@@ -65,11 +71,11 @@
     {#if hasCode}
         <Container padding={["zero", "md"]} gap={"xl"} direction={"vertical"}>
             <Setting
-                toggle={() => membersState.toggleInviteLink()}
+                toggle={() => toggleInviteLink()}
                 info={"When enabled, a link and a QR code will be available to share with any user you would like to invite to become a member of this group."}>
                 <Switch
                     loading={membersState.togglingSharingLink}
-                    onChange={() => membersState.toggleInviteLink()}
+                    onChange={() => toggleInviteLink()}
                     width={"fill"}
                     reverse
                     bound={false}

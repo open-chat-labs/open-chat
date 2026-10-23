@@ -9,8 +9,10 @@
         type FullMember,
     } from "@client";
     import VirtualList from "@openchat/ui/src/lib/virtual/VirtualList.svelte";
+    import { _ } from "svelte-i18n";
     import Member from "./Member.svelte";
-    import type { MemberManagement } from "./membersState.svelte";
+    import type { MemberManagement } from "@src/logic/members/memberManagement.svelte";
+    import { toastStore } from "@src/stores/toast";
 
     interface Props {
         members: FullMember[];
@@ -36,9 +38,11 @@
             canDemoteToMember={membersState.canDemote(member.role, ROLE_MEMBER)}
             canBlockUser={membersState.canBlockUsers()}
             canRemoveMember={me ? false : membersState.canRemoveMembers()}
-            onBlockUser={(userId) => membersState.onBlockUser(userId)}
-            onChangeRole={(args) => membersState.onChangeRole(args)}
-            onRemoveMember={(userId) => membersState.onRemoveMember(userId)} />
+            onBlockUser={async (userId) => toastStore.showOutcome(await membersState.blockUser(userId))}
+            onChangeRole={async (args) =>
+                toastStore.showOutcome(await membersState.changeRole(args, $_))}
+            onRemoveMember={async (userId) =>
+                toastStore.showOutcome(await membersState.removeMember(userId))} />
     </Container>
 {/snippet}
 

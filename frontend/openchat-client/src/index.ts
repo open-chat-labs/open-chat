@@ -50,12 +50,25 @@ export { inviteLinkUrl } from "./utils/inviteLink";
 export { postLoginJoin } from "./utils/join";
 export { muteNotificationsFailureMessage, pinChatFailureMessage } from "./utils/pinAndMute";
 export {
+    compareMembers,
+    knownMembers,
+    memberMatchesSearch,
+    roleChangeFailureMessage,
+    usersFromIds,
+} from "./utils/members";
+export {
     profileBlock,
     type BlockContext,
     type ProfileBlock,
     type ProfileBlockInput,
 } from "./utils/profileBlock";
-export { profileChanges, type ProfileChanges } from "./utils/profile";
+export {
+    memberDisplayNameResult,
+    profileChanges,
+    referralLink,
+    type ProfileChanges,
+    type ProfileFieldResult,
+} from "./utils/profile";
 export { isDisplayNameValid, isUsernameValid } from "./utils/validation";
 export { rightPanelView, type RightPanelInput } from "./utils/rightPanel";
 export { signInOptions } from "./utils/signIn";

@@ -159,7 +159,7 @@ describe("bridge", () => {
         ).toBe(false);
     });
 
-    test("a Telegram account's profile page needs a username", () => {
+    test("links to a Discord account's profile, and a Telegram account's if it has a username", () => {
         expect(
             bridgedProfileUrl({
                 kind: "telegram",
@@ -172,7 +172,9 @@ describe("bridge", () => {
                 profile: { id: telegramId.id, displayName: "Nelly" },
             }),
         ).toBeUndefined();
-        expect(bridgedProfileUrl(discord().user)).toBeUndefined();
+        expect(bridgedProfileUrl(discord().user)).toEqual(
+            "https://discord.com/users/80351110224678912",
+        );
     });
 });
 

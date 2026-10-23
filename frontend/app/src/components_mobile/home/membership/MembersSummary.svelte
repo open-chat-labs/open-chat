@@ -5,7 +5,9 @@
         allChatsStore,
         allUsersStore,
         communitiesStore,
+        knownMembers,
         OpenChat,
+        publish,
         type CommunitySummary,
         type FullMember,
         type MultiUserChat,
@@ -15,7 +17,7 @@
     import Translatable from "@shared_components/Translatable.svelte";
     import Separator from "../Separator.svelte";
     import MemberList from "./MemberList.svelte";
-    import { MemberManagement } from "./membersState.svelte";
+    import { MemberManagement } from "@src/logic/members/memberManagement.svelte";
 
     const TO_SHOW = 5;
 
@@ -39,10 +41,7 @@
     });
 
     let subset = $derived<FullMember[]>(
-        membersState.getKnownUsers(
-            $allUsersStore,
-            [...membersState.members.values()].slice(0, TO_SHOW),
-        ),
+        knownMembers($allUsersStore, [...membersState.members.values()].slice(0, TO_SHOW)),
     );
 </script>
 
@@ -55,7 +54,7 @@
         </Body>
 
         <CommonButton
-            onClick={() => membersState.showAllMembers()}
+            onClick={() => publish("showMembers", { collection, view: "members" })}
             size={"small_text"}
             mode={"active"}>
             <Translatable resourceKey={i18nKey(`View all (${memberCount})`)}
@@ -63,7 +62,7 @@
         </CommonButton>
     </Container>
 
-    <ListAction onClick={() => membersState.showInviteUsers()}>
+    <ListAction onClick={() => publish("inviteAndShare", { collection, view: "invite" })}>
         {#snippet icon(color)}
             <AccountPlus {color} />
         {/snippet}
@@ -71,7 +70,7 @@
     </ListAction>
 
     {#if membersState.canAdd()}
-        <ListAction colour={"tertiary"} onClick={() => membersState.showAllMembers("add")}>
+        <ListAction colour={"tertiary"} onClick={() => publish("showMembers", { collection, view: "add" })}>
             {#snippet icon(color)}
                 <AccountPlus {color} />
             {/snippet}

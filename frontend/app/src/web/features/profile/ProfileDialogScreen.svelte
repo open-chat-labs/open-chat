@@ -28,6 +28,14 @@
         suspendedUserStore,
         userMetricsStore,
         type ModerationFlag,
+        PremiumItem,
+        premiumItemsStore,
+        isDisplayNameValid,
+        memberDisplayNameResult,
+        referralLink,
+        sortedCommunitiesStore,
+        storageStore,
+        type BotClientConfigData,
     } from "@client";
     import ProfileDialog, {
         type ChatSettings,
@@ -60,14 +68,54 @@
         statsProps,
         themePrefOf,
         type AppChatSettings,
+        botConfigProps,
+        communitiesProps,
+        memberDisplayNameOf,
+        storageProps,
     } from "./profile.adapter";
+    import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
+    import { clearCacheAndRestart } from "@src/utils/clearCache";
+    import { shareLink } from "@src/utils/share";
+    import { websiteVersion } from "@src/utils/openchatClient";
+    import { i18nKey } from "@src/i18n/i18n";
+    import { toastStore } from "@src/stores/toast";
+    import {
+        AVATAR_SIZE,
+        cropImage,
+        PROFILE_BACKGROUND_SIZE,
+        readImageFile,
+        type CropArea,
+    } from "@src/utils/imageCrop";
+    import ImageCropDialog from "./ImageCropDialog.svelte";
+    import PremiumItemDialog from "./PremiumItemDialog.svelte";
 
     let { onClose }: DialogProps<Extract<LinkedDialog, { kind: "profile" }>> = $props();
 
     const client = getContext<OpenChat>("client");
 
     // the sections built so far (ProfileDialog shows only these)
-    const SECTIONS: ProfileSection[] = ["profile", "stats", "diamond", "chats", "appearance"];
+    const SECTIONS: ProfileSection[] = [
+        "profile",
+        "stats",
+        "diamond",
+        "chats",
+        "communities",
+        "appearance",
+        "storage",
+        "bots",
+        "invite",
+        "about",
+    ];
+    // the About pages this app has (Learn's, and the guidelines); it has no metrics page
+    const ABOUT_PAGES = [
+        "features",
+        "roadmap",
+        "architecture",
+        "whitepaper",
+        "faq",
+        "blog",
+        "guidelines",
+    ];
 
     const userId = $derived($currentUserIdStore);
     const user = $derived($allUsersStore.get(userId) ?? client.nullUser("unknown"));
@@ -84,6 +132,10 @@
     // as it may have changed on another device since sign-in
     onMount(() => client.refreshCurrentUserProfile());
 
+    // a cropped avatar or profile background, shown while it uploads
+    let avatarPreview = $state<string>();
+    let coverPreview = $state<string>();
+
     const header = $derived(
         profileProps(
             userId,
@@ -95,8 +147,11 @@
                 balance: $chitStateStore.chitBalance,
             },
             {
-                avatarUrl: buildUserAvatarUrl(blobUrlPattern, userId, profile.avatarId),
-                coverUrl: buildUserBackgroundUrl(blobUrlPattern, userId, profile.backgroundId),
+                avatarUrl:
+                    avatarPreview ?? buildUserAvatarUrl(blobUrlPattern, userId, profile.avatarId),
+                coverUrl:
+                    coverPreview ??
+                    buildUserBackgroundUrl(blobUrlPattern, userId, profile.backgroundId),
             },
         ),
     );
@@ -214,6 +269,126 @@
             fontScaleStore.set(fontScaleFor(patch.font, $fontScaleStore));
         }
     }
+
+    // ---- communities ----
+    const communities = $derived(
+        communitiesProps($sortedCommunitiesStore, (c) =>
+            client.communityAvatarUrl(c.id.communityId, c.avatar),
+        ),
+    );
+
+    // the dialog shows the name until this settles, and goes back to the saved one if it throws
+    async function setCommunityName(communityId: string, name: string | null): Promise<void> {
+        const displayName = memberDisplayNameOf(name);
+        // a name the backend would turn down isn't sent, as the old screens' DisplayNameInput
+        if (displayName !== undefined && !isDisplayNameValid(displayName)) {
+            throw new Error("community name not valid");
+        }
+        const resp = await client.setMemberDisplayName(
+            { kind: "community", communityId },
+            displayName,
+        );
+        const result = memberDisplayNameResult(resp);
+        // TODO(design): the dialog says the name couldn't be saved, not why; GAPS.md
+        if (result.kind !== "saved") throw new Error(`community name not saved: ${result.kind}`);
+    }
+
+    // ---- storage, bots, invite, about ----
+    const storage = $derived(storageProps($storageStore));
+
+    // loaded the first time its section shows, as the old UI loaded it on asking; a failure is
+    // tried again the next time
+    let botConfig = $state<BotClientConfigData>();
+    let loadingBotConfig = false;
+
+    async function sectionShown(section: ProfileSection) {
+        if (section !== "bots" || botConfig !== undefined || loadingBotConfig) return;
+        loadingBotConfig = true;
+        try {
+            botConfig = await client.getBotConfig();
+        } catch (err) {
+            // the bot configuration rows stay hidden
+            console.warn("Unable to load the bot configuration", err);
+        } finally {
+            loadingBotConfig = false;
+        }
+    }
+    const bots = $derived(botConfig && botConfigProps(botConfig));
+
+    const inviteLink = $derived(referralLink(client.canonicalOrigin(), userId));
+
+    // ---- the avatar and the profile background ----
+    type ImageTarget = "avatar" | "cover";
+    type ImageEdit =
+        | { kind: "none" }
+        // the profile background is a premium item, paid for with CHIT before its first use
+        | { kind: "paying" }
+        | { kind: "cropping"; target: ImageTarget; source: string };
+
+    let imageEdit = $state<ImageEdit>({ kind: "none" });
+    let fileInput = $state<HTMLInputElement>();
+    let picking: ImageTarget = "avatar";
+    // one upload at a time for each: another would race it to the store (and the preview)
+    const uploading = $state<Record<ImageTarget, boolean>>({ avatar: false, cover: false });
+
+    const FAILURES: Record<ImageTarget, string> = {
+        avatar: "avatarUpdateFailed",
+        cover: "profile.backgroundUpdateFailed",
+    };
+
+    function pick(target: ImageTarget) {
+        if (uploading[target]) return;
+        picking = target;
+        fileInput?.click();
+    }
+
+    function editCover() {
+        if ($premiumItemsStore.has(PremiumItem.CustomProfileBackground)) pick("cover");
+        else imageEdit = { kind: "paying" };
+    }
+
+    async function picked(e: { currentTarget: HTMLInputElement }) {
+        const file = e.currentTarget.files?.[0];
+        e.currentTarget.value = "";
+        if (file === undefined) return;
+        const target = picking;
+        try {
+            imageEdit = { kind: "cropping", target, source: await readImageFile(file) };
+        } catch (err) {
+            console.warn("Unable to read the picked image", err);
+            toastStore.showFailureToast(i18nKey(FAILURES[target]));
+        }
+    }
+
+    async function cropped(area: CropArea) {
+        if (imageEdit.kind !== "cropping") return;
+        const { target, source } = imageEdit;
+        // its Apply waits while the same image uploads (ImageCropDialog's busy), so nothing's lost
+        if (uploading[target]) return;
+        imageEdit = { kind: "none" };
+        const avatar = target === "avatar";
+        uploading[target] = true;
+        try {
+            // a file that isn't an image after all (a corrupt one, HEIC named .jpg) fails here
+            const size = avatar ? AVATAR_SIZE : PROFILE_BACKGROUND_SIZE;
+            const image = await cropImage(source, area, size);
+            if (image === undefined) throw new Error("the cropped image couldn't be encoded");
+            if (avatar) avatarPreview = image.url;
+            else coverPreview = image.url;
+            const blobId = avatar
+                ? await client.setUserAvatar(image.data, image.url)
+                : await client.setUserProfileBackground(image.data);
+            if (blobId === undefined) throw new Error("the upload failed");
+        } catch (err) {
+            console.warn(`Unable to save the ${target} image`, err);
+            toastStore.showFailureToast(i18nKey(FAILURES[target]));
+        } finally {
+            // the saved image's URL from now on (the client has its id), or what was there before
+            if (avatar) avatarPreview = undefined;
+            else coverPreview = undefined;
+            uploading[target] = false;
+        }
+    }
 </script>
 
 <!-- each prop on its own: a spread that changes (the streak's clock) would take the dialog back to
@@ -248,4 +423,76 @@
     onLogout={() => client.logout()}
     onChatSettings={changeChatSettings}
     onPreviewRingtone={previewRingtone}
-    onAppearance={changeAppearance} />
+    onAppearance={changeAppearance}
+    communities={communities.communities}
+    communityNames={communities.communityNames}
+    onCommunityName={setCommunityName}
+    storageUsedMB={storage.storageUsedMB}
+    storageLimitMB={storage.storageLimitMB}
+    onClearCache={() => clearCacheAndRestart(client)}
+    icHost={bots?.icHost}
+    storageIndex={bots?.storageIndex}
+    publicKey={bots?.publicKey}
+    {inviteLink}
+    onShareApp={shareLink}
+    aboutBaseUrl={client.canonicalOrigin()}
+    aboutPages={ABOUT_PAGES}
+    platform="Web"
+    version={websiteVersion}
+    onPhotoEdit={readOnly ? undefined : () => pick("avatar")}
+    onCoverEdit={readOnly ? undefined : editCover}
+    onSectionChange={sectionShown}>
+    {#snippet qrCode(link: string)}
+        <!-- as the old UI's QRCode: a spinner while it loads, and a failure says so -->
+        {#await import("svelte-qrcode-image")}
+            <div class="qr-state"><Spinner size={24} /></div>
+        {:then { QRCodeImage }}
+            <QRCodeImage
+                text={link}
+                errorCorrectionLevel="Q"
+                margin={0}
+                altText={$_("ui.profileDialog.invite.qrAlt")} />
+        {:catch}
+            <div class="qr-state">{$_("qrCodeLoadFailed")}</div>
+        {/await}
+    {/snippet}
+</ProfileDialog>
+
+<input
+    hidden
+    type="file"
+    accept=".jpg, .jpeg, .png, .gif, .svg"
+    onchange={picked}
+    bind:this={fileInput} />
+
+{#if imageEdit.kind === "paying"}
+    <PremiumItemDialog
+        item={PremiumItem.CustomProfileBackground}
+        balance={$chitStateStore.chitBalance}
+        useLabel="chooseImage"
+        onUse={() => {
+            imageEdit = { kind: "none" };
+            pick("cover");
+        }}
+        onClose={() => (imageEdit = { kind: "none" })} />
+{:else if imageEdit.kind === "cropping"}
+    <ImageCropDialog
+        source={imageEdit.source}
+        size={imageEdit.target === "avatar" ? AVATAR_SIZE : PROFILE_BACKGROUND_SIZE}
+        round={imageEdit.target === "avatar"}
+        busy={uploading[imageEdit.target]}
+        onCrop={cropped}
+        onClose={() => (imageEdit = { kind: "none" })} />
+{/if}
+
+<style>
+    .qr-state {
+        display: grid;
+        place-items: center;
+        width: 100%;
+        height: 100%;
+        text-align: center;
+        font: var(--weight-regular) var(--text-sm) / 1.3 var(--font-sans);
+        color: var(--ink-3);
+    }
+</style>

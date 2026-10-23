@@ -9,7 +9,15 @@
         OpenChat,
         UserSummary,
     } from "@client";
-    import { allChatsStore, allUsersStore, communitiesStore, FIND_MEMBERS_DELAY_MS } from "@client";
+    import {
+        allChatsStore,
+        allUsersStore,
+        communitiesStore,
+        compareMembers,
+        knownMembers,
+        memberMatchesSearch,
+        usersFromIds,
+    } from "@client";
     import { getContext } from "svelte";
     import AccountAlert from "svelte-material-icons/AccountAlertOutline.svelte";
     import AccountCancel from "svelte-material-icons/AccountCancelOutline.svelte";
@@ -21,7 +29,7 @@
     import BlockedList from "./BlockedList.svelte";
     import LapsedList from "./LapsedList.svelte";
     import MemberList from "./MemberList.svelte";
-    import { MemberManagement } from "./membersState.svelte";
+    import { MemberManagement } from "@src/logic/members/memberManagement.svelte";
 
     type View = "members" | "lapsed" | "blocked" | "add";
 
@@ -34,7 +42,6 @@
     let searchTermEntered = $state<string>();
     let searchTerm = $derived(trimLeadingAtSymbol(searchTermEntered ?? ""));
     let searchTermLower = $derived(searchTerm.toLowerCase());
-    const MAX_SEARCH_RESULTS = 255;
     const client = getContext<OpenChat>("client");
     const membersState = new MemberManagement(client, collection);
     // The collection is as it was when the page was opened, so the count is read from its summary
@@ -49,38 +56,30 @@
             : collection.memberCount;
     });
     let members = $derived<FullMember[]>(
-        membersState.getKnownUsers($allUsersStore, [...membersState.members.values()]),
+        knownMembers($allUsersStore, membersState.members.values()),
     );
     let canAdd = $derived(membersState.canAdd());
     let filteredMembers = $derived(
         members
-            .filter((u) => membersState.matchesSearch(searchTermLower, u))
-            .sort(membersState.compareMembers),
+            .filter((u) => memberMatchesSearch(searchTermLower, u))
+            .sort(compareMembers),
     );
     let lapsed = $derived<UserSummary[]>(
-        membersState.getUsersFromSet($allUsersStore, membersState.lapsed),
+        usersFromIds($allUsersStore, membersState.lapsed),
     );
     let filteredLapsed = $derived<UserSummary[]>(
-        lapsed.filter((u) => membersState.matchesSearch(searchTermLower, u)),
+        lapsed.filter((u) => memberMatchesSearch(searchTermLower, u)),
     );
     let blocked = $derived<UserSummary[]>(
-        membersState.getUsersFromSet($allUsersStore, membersState.blocked),
+        usersFromIds($allUsersStore, membersState.blocked),
     );
     let filteredBlocked = $derived<UserSummary[]>(
-        blocked.filter((u) => membersState.matchesSearch(searchTermLower, u)),
+        blocked.filter((u) => memberMatchesSearch(searchTermLower, u)),
     );
     // If not every member, or not every member's display name in the community, is held, those who
     // match what has been typed are searched for. Those found are then held, so will be in the
     // search results.
-    $effect(() => {
-        const searchFor = searchTerm;
-        if (searchFor.length < 2 || !client.shouldSearchForMembers(collection.id)) return;
-        const timer = setTimeout(
-            () => client.findMembers(collection.id, searchFor, MAX_SEARCH_RESULTS),
-            FIND_MEMBERS_DELAY_MS,
-        );
-        return () => clearTimeout(timer);
-    });
+    $effect(() => membersState.findMembers(searchTerm));
 
     function setView(v: View) {
         transition(["fade"], () => {

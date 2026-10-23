@@ -9,7 +9,8 @@
     import VirtualList from "@openchat/ui/src/lib/virtual/VirtualList.svelte";
     import NothingToSee from "../NothingToSee.svelte";
     import LapsedUser from "./LapsedUser.svelte";
-    import type { MemberManagement } from "./membersState.svelte";
+    import type { MemberManagement } from "@src/logic/members/memberManagement.svelte";
+    import { toastStore } from "@src/stores/toast";
 
     interface Props {
         users: UserSummary[];
@@ -31,10 +32,10 @@
             {me}
             {user}
             onBlockUser={membersState.canBlockUsers()
-                ? (userId) => membersState.onBlockUser(userId)
+                ? async (userId) => toastStore.showOutcome(await membersState.blockUser(userId))
                 : undefined}
             onRemoveMember={membersState.canRemoveMembers()
-                ? (userId) => membersState.onRemoveMember(userId)
+                ? async (userId) => toastStore.showOutcome(await membersState.removeMember(userId))
                 : undefined} />
     </Container>
 {/snippet}
