@@ -214,7 +214,7 @@ mod tests {
             id: 123456789,
             username: Some("nelly".to_string()),
             display_name: "Nelly".to_string(),
-            avatar: None,
+            photo_id: None,
         })
     }
 

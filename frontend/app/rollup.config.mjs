@@ -288,6 +288,9 @@ export default {
                 process.env.OC_ONESEC_MINTER_CANISTER,
             ),
             "import.meta.env.OC_BLOB_URL_PATTERN": JSON.stringify(process.env.OC_BLOB_URL_PATTERN),
+            "import.meta.env.OC_BRIDGE_AVATARS_URL": JSON.stringify(
+                process.env.OC_BRIDGE_AVATARS_URL ?? "",
+            ),
             "import.meta.env.OC_CANISTER_URL_PATH": JSON.stringify(
                 process.env.OC_CANISTER_URL_PATH,
             ),

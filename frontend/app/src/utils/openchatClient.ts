@@ -30,6 +30,7 @@ export function createOpenChatClient(
         translateProxyUrl: import.meta.env.OC_TRANSLATE_PROXY_URL!,
         meteredApiKey: import.meta.env.OC_METERED_APIKEY!,
         blobUrlPattern,
+        bridgeAvatarsUrl: import.meta.env.OC_BRIDGE_AVATARS_URL ?? "",
         canisterUrlPath: import.meta.env.OC_CANISTER_URL_PATH!,
         proposalBotCanister: import.meta.env.OC_PROPOSALS_BOT_CANISTER!,
         signInWithEmailCanister: import.meta.env.OC_SIGN_IN_WITH_EMAIL_CANISTER!,

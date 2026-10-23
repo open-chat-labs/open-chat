@@ -18,7 +18,7 @@ import {
     shouldShowAsMe,
 } from "./bridge";
 
-const PATTERN = "https://{canisterId}.raw.icp0.io/{blobType}";
+const AVATARS = "https://avatars.example.com";
 
 describe("bridge", () => {
     const discordId: BridgedUserId = { kind: "discord", id: "80351110224678912" };
@@ -29,10 +29,10 @@ describe("bridge", () => {
         user: { kind: "discord", profile: { id: discordId.id, username: "nelly", ...profile } },
         updated: 0n,
     });
-    const telegram = (avatar?: { canisterId: string; blobId: bigint }): BridgedUserSummary => ({
+    const telegram = (photoId?: string): BridgedUserSummary => ({
         user: {
             kind: "telegram",
-            profile: { id: telegramId.id, displayName: "Nelly Smith", avatar },
+            profile: { id: telegramId.id, displayName: "Nelly Smith", photoId },
         },
         updated: 0n,
     });
@@ -57,7 +57,7 @@ describe("bridge", () => {
             bridgedAuthorAvatarUrl(
                 discordId,
                 discord({ avatar: "8342729096ea3675442027381ff50dfe" }),
-                PATTERN,
+                AVATARS,
             ),
         ).toEqual(
             "https://cdn.discordapp.com/avatars/80351110224678912/8342729096ea3675442027381ff50dfe.png?size=128",
@@ -67,19 +67,19 @@ describe("bridge", () => {
     test("falls back to Discord's default avatar picked from the id", () => {
         // (80351110224678912 >> 22) % 6 = 5
         const expected = "https://cdn.discordapp.com/embed/avatars/5.png";
-        expect(bridgedAuthorAvatarUrl(discordId, discord(), PATTERN)).toEqual(expected);
-        expect(bridgedAuthorAvatarUrl(discordId, undefined, PATTERN)).toEqual(expected);
+        expect(bridgedAuthorAvatarUrl(discordId, discord(), AVATARS)).toEqual(expected);
+        expect(bridgedAuthorAvatarUrl(discordId, undefined, AVATARS)).toEqual(expected);
     });
 
-    test("serves a Telegram avatar from OpenChat's storage", () => {
+    test("serves a Telegram user's photo from the bridges' CDN", () => {
+        expect(bridgedAuthorAvatarUrl(telegramId, telegram("AQADtLwxG5a_QEZ-"), AVATARS)).toEqual(
+            "https://avatars.example.com/telegram/123456789/AQADtLwxG5a_QEZ-.jpg",
+        );
+        expect(bridgedAuthorAvatarUrl(telegramId, telegram(), AVATARS)).toBeUndefined();
+        // Without a CDN, eg. on a test environment
         expect(
-            bridgedAuthorAvatarUrl(
-                telegramId,
-                telegram({ canisterId: "rturd-qaaaa-aaaaf-aabaq-cai", blobId: 7n }),
-                PATTERN,
-            ),
-        ).toEqual("https://rturd-qaaaa-aaaaf-aabaq-cai.raw.icp0.io/blobs/7");
-        expect(bridgedAuthorAvatarUrl(telegramId, telegram(), PATTERN)).toBeUndefined();
+            bridgedAuthorAvatarUrl(telegramId, telegram("AQADtLwxG5a_QEZ-"), ""),
+        ).toBeUndefined();
     });
 
     test("collects each account a message, or the one it replies to, was relayed from once", () => {

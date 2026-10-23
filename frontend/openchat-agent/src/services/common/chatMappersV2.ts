@@ -705,7 +705,7 @@ function bridgedUser(value: TBridgedUser): BridgedUser {
                 id: u.id.toString(),
                 username: u.username,
                 displayName: u.display_name,
-                avatar: mapOptional(u.avatar, blobReference),
+                photoId: u.photo_id,
             },
         };
     }

@@ -12,7 +12,6 @@ import {
     type UserLookup,
     type UserSummary,
 } from "../domain";
-import { buildBlobUrl } from "./blobs";
 
 export const BRIDGE_PLATFORM_NAMES: Record<BridgePlatform, string> = {
     discord: "Discord",
@@ -115,20 +114,21 @@ export function bridgedProfileUrl(user: BridgedUser): string | undefined {
     }
 }
 
-// The url of the author's avatar, if they have one
+// The url of the author's avatar, if they have one. A Telegram user's photo is copied to the bridges'
+// CDN, at `bridgeAvatarsUrl`, which is empty where there's none.
 export function bridgedAuthorAvatarUrl(
     id: BridgedUserId,
     summary: BridgedUserSummary | undefined,
-    blobUrlPattern: string,
+    bridgeAvatarsUrl: string,
 ): string | undefined {
     const user = summary?.user;
     if (id.kind === "discord") {
         return discordAvatarUrl(id.id, user?.kind === "discord" ? user.profile : undefined);
     }
-    const avatar = user?.kind === "telegram" ? user.profile.avatar : undefined;
-    return avatar === undefined
+    const photoId = user?.kind === "telegram" ? user.profile.photoId : undefined;
+    return photoId === undefined || bridgeAvatarsUrl === ""
         ? undefined
-        : buildBlobUrl(blobUrlPattern, avatar.canisterId, avatar.blobId, "blobs");
+        : `${bridgeAvatarsUrl}/telegram/${id.id}/${encodeURIComponent(photoId)}.jpg`;
 }
 
 function discordAvatarUrl(id: string, profile: DiscordUser | undefined): string {
