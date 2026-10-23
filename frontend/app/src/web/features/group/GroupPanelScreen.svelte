@@ -1,8 +1,8 @@
 <!-- The right column's panel for a group, channel or community: its details, members (with what the
      viewer may do to each), pinned messages, rules, access gates and user groups. Members views
      (?everyone, ?usergroup=) and the pinned list open as GroupPanel's own views. Leave and delete
-     open the confirm dialogs; the rest of editing (settings, invite, user groups …) is off until
-     4b's later parts turn it on from detailsPermissions (TODO(4b)). -->
+     open the confirm dialogs, and a group's or channel's settings open GroupSettingsDialog; a
+     community's settings, invite, user groups … are off until 4b's later parts (TODO(4b)). -->
 <script lang="ts">
     import {
         allUsersStore,
@@ -50,6 +50,7 @@
     import { getContext, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import { closeRightColumn, openPanelOver } from "../app/rightPanel";
+    import type { GroupSettingsTab } from "../app/dialogs";
     import type { RightRegion, ScreenProps } from "../app/screens";
     import { gateAssets, gatesState } from "../access/gates.adapter";
     import { pickById } from "../../pickById";
@@ -302,10 +303,22 @@
               : chatDetailsPermissions(client, collection, community, $anonUserStore),
     );
 
-    // GroupPanel offers Leave to everyone, so the rules are checked here (GAPS.md). TODO(4b):
-    // settings, invite, user groups, bots, webhooks, convert, import and new channels (parts 2-5)
-    function onDialog(kind: string) {
+    // GroupPanel offers Leave to everyone, so the rules are checked here (GAPS.md). Settings open
+    // as the editor or, for someone who can't edit, the About page (GroupSettingsDialogScreen).
+    // TODO(4b): a community's settings (part 2b), invite, user groups, bots, webhooks, convert,
+    // import and new channels (parts 3-5)
+    function onDialog(kind: string, _payload?: unknown, tab?: string) {
         if (collection === undefined) return;
+        if (kind === "settings") {
+            if (collection.kind !== "community") {
+                context.dialogs.open({
+                    kind: "group_settings",
+                    chatId: collection.id,
+                    tab: settingsTab(tab),
+                });
+            }
+            return;
+        }
         const name = collection.name;
         if (collection.kind === "community") {
             if (kind === "leave" && communityMenuPermissions(client, collection).canLeave) {
@@ -334,6 +347,11 @@
                 name,
             });
         }
+    }
+
+    // GroupPanel's view the settings were opened from, as the dialog's page
+    function settingsTab(view: string | undefined): GroupSettingsTab {
+        return view === "gates" || view === "rules" || view === "permissions" ? view : "group";
     }
 
     function close() {
@@ -375,7 +393,7 @@
         canModerate={members.canRemoveMembers() || members.canUnblockUsers()}
         canChangeRoles={people.some((p) => p.actions.roles.length > 0)}
         canManageUserGroups={false}
-        canEdit={false}
+        canEdit={collection.kind !== "community" && (permissions?.canEdit ?? false)}
         canDelete={permissions?.canDelete ?? false}
         {onDialog}
         canInvite={false}

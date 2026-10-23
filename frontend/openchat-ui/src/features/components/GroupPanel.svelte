@@ -924,7 +924,7 @@
     };
     // manager-only entries need the matching capability
     const allowed = (a?: string) =>
-      a === 'settings' || a === 'convert' || a === 'import' || a === 'newchannel' || a === 'embed'
+      a === 'convert' || a === 'import' || a === 'newchannel' || a === 'embed'
         ? canEdit
         : a === 'addbot' || a === 'webhook'
           ? canManageBots
@@ -946,7 +946,13 @@
     }
     if (tidy.length && tidy[tidy.length - 1].variant === 'separator') tidy.pop();
     return tidy.map((it): MenuItem => {
-        const label = it.action === 'favourite' ? t(isFavourite ? 'ui.groupPanel.menu.removeFavourite' : 'ui.groupPanel.menu.addFavourite') : t(it.label, { scope });
+        // settings are for everyone: read-only (About) without the right to edit
+        const label =
+          it.action === 'favourite'
+            ? t(isFavourite ? 'ui.groupPanel.menu.removeFavourite' : 'ui.groupPanel.menu.addFavourite')
+            : it.action === 'settings' && !canEdit
+              ? t('ui.groupPanel.menu.about', { scope })
+              : t(it.label, { scope });
         const a = it.action;
         const onSelect = it.view
           ? () => go(it.view!)

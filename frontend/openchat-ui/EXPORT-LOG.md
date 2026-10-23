@@ -207,3 +207,11 @@
 ## 2026-10-23 — ChatRow: picking a menu item doesn't also open the chat, by hand
 - The row's `ContextMenu` sits inside the row, so a click on an item bubbled to the row's `onclick` and opened that chat as well. Opening it closed any dialog the item had just opened, and opening an archived chat un-archives it, so Delete, Leave and Archive did nothing. The menu is now wrapped in a `display: contents` element that stops clicks and pointer events reaching the row.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-23 — GroupSettingsDialog: parts the viewer's role can't change, by hand
+- `readOnlySections` (`'gates' | 'rules' | 'permissions' | 'disappearing' | 'history'`, exported as `ReadOnlySection`) makes those parts read-only while the rest stays editable. The Gates, Rules and Permissions pages show plain On/Off status as `readOnly` does for the whole dialog, and `'disappearing'` and `'history'` lock those switches on the Group page (no Diamond banner). The app makes permissions and disappearing messages read-only to a non-owner, and locks history, which can't change after a group is made. `readOnly` could only make the whole dialog read-only.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-23 — GroupPanel: settings for everyone, as About without edit rights, by hand
+- The menu's settings item was only offered with `canEdit`. It's now offered to everyone, labelled "About the group / channel / community" (`ui.groupPanel.menu.about`) without `canEdit`, and still calls `onDialog('settings', …)`. The host opens the About page for it.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

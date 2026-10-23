@@ -1,4 +1,4 @@
-import type { LeaveOrDelete } from "@client";
+import type { LeaveOrDelete, MultiUserChatIdentifier } from "@client";
 import type { ProfileCard } from "@src/logic/profile/profileCard";
 import type { Component } from "svelte";
 
@@ -20,11 +20,16 @@ export type LinkedDialog =
     | { kind: "chit" }
     | { kind: "leaderboard" };
 
-// someone's profile card, for a name clicked in a message; or confirming leaving or deleting a
-// chat or community, called `name`
+// someone's profile card, for a name clicked in a message; confirming leaving or deleting a chat or
+// community, called `name`; or a group's or channel's settings (its About page for someone who
+// can't edit it)
 export type LocalDialog =
     | ({ kind: "user" } & ProfileCard)
-    | { kind: "leave_or_delete"; action: LeaveOrDelete; name: string };
+    | { kind: "leave_or_delete"; action: LeaveOrDelete; name: string }
+    | { kind: "group_settings"; chatId: MultiUserChatIdentifier; tab: GroupSettingsTab };
+
+/** The page GroupSettingsDialog opens on. */
+export type GroupSettingsTab = "group" | "gates" | "rules" | "permissions";
 
 export type AppDialog = LinkedDialog | LocalDialog;
 
@@ -55,6 +60,9 @@ export const dialogs: Dialogs = {
 
     // confirming leaving or deleting a group, channel, DM or community (4b)
     leave_or_delete: () => import("../chats/LeaveOrDeleteDialogScreen.svelte"),
+
+    // a group's or channel's settings, or its About page (4b)
+    group_settings: () => import("../group/GroupSettingsDialogScreen.svelte"),
 };
 
 // each linked dialog's query param, in the order they win when more than one is in the URL

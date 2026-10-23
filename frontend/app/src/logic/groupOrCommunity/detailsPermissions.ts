@@ -1,4 +1,5 @@
 import {
+    hasOwnerRights,
     ROLE_NONE,
     type CommunitySummary,
     type MultiUserChat,
@@ -46,6 +47,29 @@ export function communityDetailsPermissions(
         canDelete: client.canDeleteCommunity(community.id),
         canInvite: client.canInviteUsers(community.id),
     };
+}
+
+/** A part of a chat's settings someone may see but not change. */
+export type ReadOnlySetting = "gates" | "rules" | "permissions" | "disappearing";
+
+/**
+ * What a chat's settings dialog is for this viewer: the About page when they can't edit the chat,
+ * else the editor with the parts their role can't change read-only. Permissions and disappearing
+ * messages are the owner's, as in the old editors.
+ */
+export type ManageAccess = { kind: "about" } | { kind: "edit"; readOnly: ReadOnlySetting[] };
+
+export function chatManageAccess(
+    client: OpenChat,
+    chat: MultiUserChat,
+    community: CommunitySummary | undefined,
+    anon: boolean,
+): ManageAccess {
+    if (!chatDetailsPermissions(client, chat, community, anon).canEdit) return { kind: "about" };
+    const readOnly: ReadOnlySetting[] = [];
+    if (!client.canChangePermissions(chat.id)) readOnly.push("permissions");
+    if (!hasOwnerRights(chat.membership.role)) readOnly.push("disappearing");
+    return { kind: "edit", readOnly };
 }
 
 /** What a community's menu offers: a member may leave, and the rest needs it not to be frozen. */
