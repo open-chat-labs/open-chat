@@ -63,6 +63,7 @@
     import { blobUrlPattern } from "@src/utils/openchatClient";
     import { themeType } from "@theme/themes";
     import { getContext, onDestroy, onMount } from "svelte";
+    import { SvelteMap } from "svelte/reactivity";
     import { _ } from "svelte-i18n";
     import { accentOf, accentStore } from "../../accent";
     import type { DialogProps, LinkedDialog } from "../app/dialogs";
@@ -344,9 +345,24 @@
     // ---- sign-in methods, linking a device, deleting the account ----
     // the identities linked to the account, loaded each time their section shows
     let linked = $state<LinkedAuthenticationPrincipal[]>([]);
+    // methods linked here before the list had them, shown under an id of their own: the identity
+    // canister gives a passkey a principal that can't be known from the sign-in. Once the list has
+    // one, it keeps that id (so the dialog doesn't list it twice), and unlinking it goes to its
+    // principal
+    const unlisted = new SvelteMap<string, LinkingIdentity>();
     const signinMethods = $derived(
-        signinMethodsProps(linked, (type) => $_(`ui.profileDialog.signin.${type}`)),
+        signinMethodsProps(linked, (type) => $_(`ui.profileDialog.signin.${type}`)).map((m) => ({
+            ...m,
+            id: idOf(m.id),
+        })),
     );
+
+    function idOf(principal: string): string {
+        for (const [id, identity] of unlisted) {
+            if (linkedAs(linked, identity)?.principal === principal) return id;
+        }
+        return principal;
+    }
 
     // only the latest load counts: an earlier one answering late would put back an older list
     let signinMethodsRun = 0;
@@ -362,10 +378,15 @@
     }
 
     // the dialog shows the method gone until this settles, and back with a message if it throws
-    async function unlinkMethod(principal: string): Promise<void> {
+    async function unlinkMethod(id: string): Promise<void> {
+        const identity = unlisted.get(id);
+        if (identity !== undefined) await refreshSigninMethods();
+        const principal = identity === undefined ? id : linkedAs(linked, identity)?.principal;
+        if (principal === undefined) throw new Error("the method isn't listed yet");
         const failure = unlinkIdentityFailure(await client.removeIdentityLink(principal));
         // TODO(design): the dialog says it couldn't unlink, not why; GAPS.md
         if (failure !== undefined) throw new Error(failure.key);
+        unlisted.delete(id);
         await refreshSigninMethods();
     }
 
@@ -385,6 +406,7 @@
         const flow = new IdentityLinking(client);
         await flow.signedIn(initiator);
         let outcome: LinkOutcome | undefined;
+        let linking: Promise<LinkOutcome> | undefined;
         const current = linked.find((p) => p.isCurrentIdentity)?.provider;
         try {
             await signInAgain(
@@ -393,12 +415,16 @@
                     await flow.signedIn(approver);
                     // not this session's sign-in: the user can try again
                     if (flow.stage.kind !== "ready_to_link") return flow.error;
-                    outcome = await flow.link();
+                    linking = flow.link();
+                    outcome = await linking;
                 },
                 current ?? selectedAuthProviderStore.value,
             );
         } catch {
-            throw CANCELLED;
+            // given up: quietly, unless the link had started by then; that goes on regardless, so
+            // its outcome is seen through (link never rejects)
+            if (linking === undefined) throw CANCELLED;
+            outcome = await linking;
         }
         if (outcome?.kind !== "linked") {
             throw failure(outcome?.reason ?? i18nKey("identity.failure.link"));
@@ -407,21 +433,19 @@
     }
 
     // the method just linked, as the dialog lists it. It's linked whatever happens here: if the
-    // reloaded list doesn't have it (yet), it's shown from the sign-in until the list next loads
+    // reloaded list doesn't have it (yet), it's shown from the sign-in, under an id of its own
+    // (unlisted), until the list has it
     async function linkedMethod(
         initiator: LinkingIdentity,
         type: "passkey" | "ii",
     ): Promise<SigninMethod> {
         await refreshSigninMethods();
         const entry = linkedAs(linked, initiator);
-        const listed = entry && signinMethods.find((m) => m.id === entry.principal);
-        return (
-            listed ?? {
-                type,
-                id: linkingPrincipal(initiator),
-                title: $_(`ui.profileDialog.signin.${type}`),
-            }
-        );
+        const listed = entry && signinMethods.find((m) => m.id === idOf(entry.principal));
+        if (listed !== undefined) return listed;
+        const id = linkingPrincipal(initiator);
+        unlisted.set(id, initiator);
+        return { type, id, title: $_(`ui.profileDialog.signin.${type}`) };
     }
 
     // what the dialog's sign-in steps reject with to cancel quietly

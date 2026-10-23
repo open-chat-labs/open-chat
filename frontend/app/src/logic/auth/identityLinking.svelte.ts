@@ -51,7 +51,9 @@ type LinkingClient = Pick<
  * the linked identity marked as the one it signed in with. A passkey's confirming sign-in is the
  * linked passkey's principal, which a session that signed up with it doesn't have as its auth
  * principal. The current passkey is only found best effort, so when no identity is marked, any of
- * the account's own is accepted, as signing in again (reAuthenticate) accepts it.
+ * the account's own is accepted, as signing in again (reAuthenticate) accepts it. The guarantee is
+ * then "a method on this account", not "this session's method": no wider, since whoever holds one of
+ * the account's methods can already sign in with it and link anything.
  */
 export function confirmsAsSession(
     principal: string,
