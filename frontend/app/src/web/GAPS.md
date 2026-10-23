@@ -318,7 +318,9 @@ design export needs. Each entry says where it came up.
   still sent as mentions), no rich-text editor (the old one showed markdown as it was typed) and
   no link-count warning. In a bot DM, what's typed goes to the bot as its direct-message command,
   but there's no `/` command selector, and a bot that takes no direct messages gets the
-  composer's error instead of the old warning. A chat's rules are asked for in a plain dialog
+  composer's error instead of the old warning. A bot's private (ephemeral) reply isn't shown:
+  nothing here subscribes to `ephemeralMessage`, so it's dropped. The old trees show it above the
+  composer for a minute, or until it's closed, paused while the app is hidden. A chat's rules are asked for in a plain dialog
   (`RulesDialog`, the old modal's words; no design for it), and the throttle countdown shows as the
   composer's banner. Enter follows the app's Enter-to-send setting (`enterSends`). A preview
   shows "This chat is read-only" where the old footer had Join and Leave (the join gate is
