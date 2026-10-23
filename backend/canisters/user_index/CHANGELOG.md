@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Sync linked Discord/Telegram accounts to the LocalUserIndexes ([#10210](https://github.com/open-chat-labs/open-chat/pull/10210))
 - Add Twitch as a bridged platform, so users can link their Twitch accounts ([#10214](https://github.com/open-chat-labs/open-chat/pull/10214))
+- Hold tips on messages from unlinked Discord/Telegram/Twitch accounts, for whoever links them ([#10218](https://github.com/open-chat-labs/open-chat/pull/10218))
 
 ## [[2.0.2186](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2186-user_index)] - 2026-10-23
 
