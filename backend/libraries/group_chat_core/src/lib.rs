@@ -1003,16 +1003,16 @@ impl GroupChatCore {
     }
 
     // Checks `user_id` could tip the message now, without tipping it, returning whom the tip is for:
-    // the message's sender, or for a message a bridge bot relayed, `linked_user`, who linked the
-    // account it came from and must be in the chat. That isn't known here, so without it, the
-    // caller is asked to look them up and call this again. Used before making the transfer for a
-    // tip.
+    // the message's sender, or for a message a bridge bot relayed, whoever linked the account it came
+    // from, who must be in the chat, or if no one has, the account itself. Who linked it isn't known
+    // here, so until `link` is given, the caller is asked to look it up and call this again. Used
+    // before making the transfer for a tip.
     pub fn check_can_tip_message(
         &self,
         user_id: UserId,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
-        linked_user: Option<UserId>,
+        link: Option<AccountLink>,
     ) -> OCResult<TipRecipient> {
         let member = self.members.get_verified_member(user_id)?;
 
@@ -1025,13 +1025,21 @@ impl GroupChatCore {
             .message_internal(member.min_visible_event_index(), thread_root_message_index, message_id.into())
             .ok_or(OCErrorCode::MessageNotFound)?;
 
-        let recipient = match (message.bridged_from(), linked_user) {
+        let recipient = match (message.bridged_from(), link) {
             (Some(bridged_from), None) => return Ok(TipRecipient::LinkedUserOf(bridged_from)),
-            (Some(_), Some(linked_user)) => {
+            (Some(_), Some(AccountLink::Linked(linked_user))) => {
                 if self.members.get(&linked_user).is_none() {
                     return Err(OCErrorCode::TargetUserNotInChat.into());
                 }
                 linked_user
+            }
+            // No one could ever claim the tips of an account which can't be linked
+            (Some(bridged_from), Some(AccountLink::Unlinked)) => {
+                return if bridged_from.can_be_linked() {
+                    Ok(TipRecipient::UnlinkedAccount(bridged_from))
+                } else {
+                    Err(OCErrorCode::TargetUserNotFound.into())
+                };
             }
             (None, _) => message.sender,
         };
@@ -2353,6 +2361,16 @@ pub enum TipRecipient {
     // A message a bridge bot relayed, whose tips are for the OpenChat user who linked the account it
     // came from, which the caller looks up, eg. from its LocalUserIndex
     LinkedUserOf(BridgedUserId),
+    // A message relayed from an account no one has linked, whose tips the UserIndex holds for it
+    // (see `BridgedUserId::tips_subaccount`), for whoever links it, or else to refund
+    UnlinkedAccount(BridgedUserId),
+}
+
+// Who linked the account a relayed message came from, as the caller looked it up
+#[derive(Clone, Copy)]
+pub enum AccountLink {
+    Linked(UserId),
+    Unlinked,
 }
 
 #[cfg(test)]
