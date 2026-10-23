@@ -29,9 +29,17 @@ by hand, on master to deploy the latest notification pusher tag, or on a tag mad
 ECS to deploy that one. It:
 
 1. builds the tag's pusher as a static arm64 binary, on an arm runner;
-2. builds the image with `Dockerfile` and `entrypoint.sh`, from master;
-3. pushes it to ECR's `notification-pusher`, tagged with the version and `latest`;
-4. deploys `task-definition.json` with that image.
+2. builds the image with `Dockerfile` and `entrypoint.sh`, from the checkout it runs from;
+3. pushes it to ECR's `notification-pusher`, tagged with the version;
+4. deploys `task-definition.json` with that image;
+5. waits for ECS to complete the deployment, and if it doesn't within 10 minutes, eg. as the new
+   version keeps crashing, rolls back to the version that was running.
+
+To roll back by hand, point the service at an earlier revision of the task definition:
+
+```bash
+aws ecs update-service --cluster openchat --service notification-pusher --task-definition notification-pusher:<revision>
+```
 
 ### To build by hand
 

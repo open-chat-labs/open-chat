@@ -1,7 +1,7 @@
 name: Deploy Notifications Pusher
 
 on:
-  workflow_dispatch: # Trigger manually! On a notification pusher tag to deploy it, or on master to deploy the latest one
+  workflow_dispatch: # Trigger manually! On master to deploy the latest notification pusher tag, or on a tag made after the move to ECS to deploy it
 
 permissions:
   contents: read
@@ -70,7 +70,8 @@ jobs:
         working-directory: ${{ runner.temp }}/pusher
         run: cargo build --locked --package notification_pusher_aws --release --target=aarch64-unknown-linux-musl
 
-      # With master's Dockerfile and entrypoint, as a tag made before the move to ECS has neither
+      # With the Dockerfile and entrypoint of the checkout the workflow runs from, eg. master, as a tag
+      # made before the move to ECS has neither
       - name: Build the image
         run: |
           CONTEXT=$(mktemp -d)
@@ -78,7 +79,7 @@ jobs:
             backend/notification_pusher/aws/Dockerfile \
             backend/notification_pusher/aws/entrypoint.sh \
             "$CONTEXT"
-          docker build --platform linux/arm64 -t "$IMAGE:${{ steps.version.outputs.version }}" -t "$IMAGE:latest" "$CONTEXT"
+          docker build --platform linux/arm64 -t "$IMAGE:${{ steps.version.outputs.version }}" "$CONTEXT"
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -90,9 +91,13 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Push the image
+        run: docker push "$IMAGE:${{ steps.version.outputs.version }}"
+
+      - name: Note the version running now
+        id: previous
         run: |
-          docker push "$IMAGE:${{ steps.version.outputs.version }}"
-          docker push "$IMAGE:latest"
+          echo "task-definition=$(aws ecs describe-services --cluster openchat --services notification-pusher \
+            --query 'services[0].taskDefinition' --output text)" >> "$GITHUB_OUTPUT"
 
       - name: Render the task definition
         id: task-definition
@@ -113,10 +118,27 @@ jobs:
           service: notification-pusher
           wait-for-service-stability: true
 
-      # The service also settles if the deployment circuit breaker rolled back to the old version
-      - name: Check the new version is running
+      # The deploy waits for the new task to run, but ECS only completes the deployment once the task
+      # has stayed up, so this waits for that. With no health check, ECS doesn't roll back a version
+      # which starts and then crashes, so if it doesn't complete, this rolls back to the old one.
+      - name: Check the new version stays up
+        env:
+          NEW: ${{ steps.deploy.outputs.task-definition-arn }}
+          PREVIOUS: ${{ steps.previous.outputs.task-definition }}
         run: |
-          read -r RUNNING STATE <<< "$(aws ecs describe-services --cluster openchat --services notification-pusher \
-            --query 'services[0].deployments[?status==`PRIMARY`] | [0].[taskDefinition, rolloutState]' --output text)"
+          for _ in $(seq 40); do
+            read -r RUNNING STATE <<< "$(aws ecs describe-services --cluster openchat --services notification-pusher \
+              --query 'services[0].deployments[?status==`PRIMARY`] | [0].[taskDefinition, rolloutState]' --output text)"
+            [[ "$STATE" != "IN_PROGRESS" ]] && break
+            sleep 15
+          done
           echo "Running $RUNNING ($STATE)"
-          [[ "$RUNNING" == "${{ steps.deploy.outputs.task-definition-arn }}" && "$STATE" == "COMPLETED" ]]
+          if [[ "$RUNNING" == "$NEW" && "$STATE" == "COMPLETED" ]]; then
+            exit 0
+          fi
+          if [[ "$RUNNING" == "$NEW" && -n "$PREVIOUS" && "$PREVIOUS" != "$NEW" ]]; then
+            echo "Rolling back to $PREVIOUS..."
+            aws ecs update-service --cluster openchat --service notification-pusher --task-definition "$PREVIOUS" >/dev/null
+            aws ecs wait services-stable --cluster openchat --services notification-pusher
+          fi
+          exit 1

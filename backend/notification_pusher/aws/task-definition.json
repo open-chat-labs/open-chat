@@ -21,6 +21,10 @@
         {
           "name": "AWS_REGION",
           "value": "us-east-1"
+        },
+        {
+          "name": "NO_COLOR",
+          "value": "1"
         }
       ],
       "secrets": [
@@ -33,6 +37,9 @@
           "valueFrom": "arn:aws:ssm:us-east-1:253040722768:parameter/notification-pusher/GCLOUD_SA_JSON"
         }
       ],
+      "linuxParameters": {
+        "initProcessEnabled": true
+      },
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
