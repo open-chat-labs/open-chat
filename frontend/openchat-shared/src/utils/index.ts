@@ -1,5 +1,4 @@
 export * from "./array";
-export * from "./bandwidthMonitor";
 export * from "./bigint";
 export * from "./blobs";
 export * from "./bridge";

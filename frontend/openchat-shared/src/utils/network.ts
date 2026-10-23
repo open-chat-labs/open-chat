@@ -1,4 +1,11 @@
-import { MIN_DOWNLINK } from "../constants";
+// Whether the app's own traffic says the connection is unusable, though the browser reports it
+// online, as cellular connections often do. Measured in the worker, see `ConnectionHealth` in
+// openchat-agent, and passed on to the main thread.
+let connectionUnusable = false;
+
+export function setConnectionUnusable(unusable: boolean): void {
+    connectionUnusable = unusable;
+}
 
 // The official API domains of the IC mainnet, whose root key is baked into the agent libraries.
 // Every other network has its own, which has to be fetched before any certificate can be
@@ -18,13 +25,5 @@ export function isMainnet(icUrl: string): boolean {
 }
 
 export function offline(): boolean {
-    return !navigator.onLine || criticalBandwith();
-}
-
-function criticalBandwith(): boolean {
-    return (
-        "connection" in navigator &&
-        navigator.connection !== undefined &&
-        navigator.connection.downlink < MIN_DOWNLINK
-    );
+    return !navigator.onLine || connectionUnusable;
 }

@@ -2348,7 +2348,8 @@ export type WorkerEvent =
     | RelayedMessagesReadFromServer
     | RelayedStorageUpdated
     | RelayedUsersLoaded
-    | RelayedSyncHead;
+    | RelayedSyncHead
+    | RelayedConnectionUnusable;
 
 export type RelayedMessagesReadFromServer = WorkerEventCommon<{
     subkind: "messages_read_from_server";
@@ -2364,6 +2365,10 @@ export type RelayedStorageUpdated = WorkerEventCommon<{
 export type RelayedUsersLoaded = WorkerEventCommon<{
     subkind: "users_loaded";
     users: UserSummary[];
+}>;
+export type RelayedConnectionUnusable = WorkerEventCommon<{
+    subkind: "connection_unusable";
+    unusable: boolean;
 }>;
 export type RelayedSyncHead = WorkerEventCommon<{
     subkind: "sync_head";
