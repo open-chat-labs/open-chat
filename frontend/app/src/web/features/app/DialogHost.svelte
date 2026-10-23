@@ -53,15 +53,15 @@
 
     const linked = $derived(linkedDialog($querystringStore));
 
-    // the linked dialog last shown, so one that opens in place of another (Diamond from the
-    // profile) keeps its backdrop. Not state: it's read as the next one mounts, before this updates
-    let shownKind: LinkedDialog["kind"] | undefined;
-    $effect(() => {
-        shownKind = linked?.kind;
-    });
+    // the linked dialog a showing one has handed off to (openLinked: Diamond from the profile,
+    // which plays no exit), so it keeps that one's backdrop. The screen claims it once, as it
+    // opens; any other way it opens (Back after an exit, a link) fades its backdrop in
+    let handedOffTo: LinkedDialog["kind"] | undefined;
 
-    function opensInPlace(kind: LinkedDialog["kind"]): boolean {
-        return shownKind !== undefined && shownKind !== kind;
+    function claimInPlace(kind: LinkedDialog["kind"]): boolean {
+        const inPlace = handedOffTo === kind;
+        handedOffTo = undefined;
+        return inPlace;
     }
 
     function closeLinked(dialog: LinkedDialog) {
@@ -72,7 +72,9 @@
     // is: the store's query is decoded, so its values can't be written back
     function openLinked(dialog: LinkedDialog) {
         const query = openLinkedDialog(new URLSearchParams(window.location.search), dialog);
-        if (query !== undefined) navigate(`${window.location.pathname}${query}`, "overlay");
+        if (query === undefined) return;
+        handedOffTo = linked !== undefined ? dialog.kind : undefined;
+        navigate(`${window.location.pathname}${query}`, "overlay");
     }
 
     // what the client is waiting on to send: the rules, then the PIN
@@ -121,7 +123,7 @@
     {#key linked.kind}
         <DialogScreen
             dialog={linked}
-            inPlace={opensInPlace(linked.kind)}
+            claimInPlace={() => claimInPlace(linked.kind)}
             onClose={() => closeLinked(linked)} />
     {/key}
 {/if}

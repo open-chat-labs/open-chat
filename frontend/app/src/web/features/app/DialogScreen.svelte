@@ -1,7 +1,7 @@
 <!-- One of the app's dialogs (dialogs.ts): its screen, loaded the first time it opens and kept (a
      spinner only if that takes a moment: DialogHost loads them ahead, once the app is idle), an
      error with a retry if it doesn't load, or a placeholder for a dialog that isn't built yet. One
-     opened in place of another (Diamond from the profile) keeps the backdrop that one showed: only
+     another has handed off to (Diamond from the profile) keeps the backdrop that one showed: only
      the dialog animates in. -->
 <script lang="ts" generics="D extends AppDialog">
     import DialogShell from "@openchat/ui/src/lib/components/DialogShell.svelte";
@@ -17,19 +17,24 @@
     let {
         dialog,
         onClose,
-        inPlace = false,
+        claimInPlace,
     }: DialogProps<D> & {
-        // opened in place of another dialog, whose backdrop is showing
-        inPlace?: boolean;
+        // whether another dialog, its backdrop still showing, handed off to this one (once)
+        claimInPlace?: () => boolean;
     } = $props();
-
-    // as it opened: the backdrop's fade only ever plays (or doesn't) then
-    const keepBackdrop = untrack(() => inPlace);
 
     // the table is keyed by kind, and the entry for D's kind takes a D
     type Loaded = { default: Component<DialogProps<D>> };
     const load = $derived(dialogs[dialog.kind as D["kind"]] as (() => Promise<Loaded>) | undefined);
     const loader = $derived(load && screenLoader(load));
+
+    // as it opens: the backdrop's fade only ever plays (or doesn't) then. Only when the dialog
+    // shows at once (loaded ahead, or a placeholder): a backdrop kept over a blank, still loading
+    // screen would vanish, without a fade, if that's closed
+    const keepBackdrop = untrack(() => {
+        const handedOff = claimInPlace?.() ?? false;
+        return handedOff && (loader === undefined || loader.module !== undefined);
+    });
 
     $effect(() => {
         const wanted = loader;
@@ -39,15 +44,8 @@
 
 <div class="screen" class:keep-backdrop={keepBackdrop}>
     {#if loader !== undefined && loader.module === undefined && !loader.failed && !loader.slow}
-        <!-- loading, for a moment: nothing shows yet (but the backdrop, in place of another dialog),
-         but a click outside or Esc still closes it -->
-        <div
-            class="pending"
-            class:oc-veil={keepBackdrop}
-            onclick={onClose}
-            use:modal={onClose}
-            aria-hidden="true">
-        </div>
+        <!-- loading, for a moment: nothing shows yet, but a click outside or Esc still closes it -->
+        <div class="pending" onclick={onClose} use:modal={onClose} aria-hidden="true"></div>
     {:else if loader?.module}
         <loader.module.default {dialog} {onClose} />
     {:else}
@@ -86,7 +84,6 @@
     .pending {
         position: fixed;
         inset: 0;
-        animation: none;
     }
 
     .state {

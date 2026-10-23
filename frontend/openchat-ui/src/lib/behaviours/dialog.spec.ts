@@ -90,6 +90,18 @@ describe('DialogFlow', () => {
     expect(flow.closing).toBe(false);
   });
 
+  test('handOff is ignored while the dialog is leaving, and after destroy', () => {
+    const leaving = new DialogFlow();
+    const then = vi.fn();
+    leaving.leave();
+    leaving.handOff(then);
+    const gone = new DialogFlow();
+    gone.destroy();
+    gone.handOff(then);
+    vi.runAllTimers();
+    expect(then).not.toHaveBeenCalled();
+  });
+
   test('a call that resolves after destroy never calls back', async () => {
     const flow = new DialogFlow();
     const d = deferred();

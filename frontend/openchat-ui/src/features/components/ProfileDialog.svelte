@@ -1448,7 +1448,8 @@
               {#each calendar.cells as cell}
                 <div
                   class="day {cell.kind}"
-                  onclick={cell.kind === 'claim' ? () => handOff(onChit) : undefined}
+                  class:inert={cell.kind === 'claim' && !onChit}
+                  onclick={cell.kind === 'claim' && onChit ? () => handOff(onChit) : undefined}
                   aria-label={cell.title ?? ''}
                   role="button"
                   tabindex="0"
@@ -3157,6 +3158,11 @@
     --day-ink: var(--ink);
     box-shadow: inset 0 0 0 1.5px var(--status-chit);
     cursor: pointer;
+  }
+
+  /* nothing to open without onChit */
+  .day.claim.inert {
+    cursor: default;
   }
 
   .day.future {
