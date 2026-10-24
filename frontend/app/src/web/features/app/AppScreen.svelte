@@ -46,7 +46,7 @@
     import { pinsFor } from "../rail/rail.adapter";
     import { chitRailProps } from "../chit/chit.adapter";
     import AchievementToastHost from "../chit/AchievementToastHost.svelte";
-    import { openLinked } from "./linkedDialogs";
+    import { openLinked } from "./linkedDialogs.svelte";
     import { disableChit, hideChitIcon } from "@src/stores/settings";
     import { now500 } from "@src/stores/time";
     import { playableDailyPuzzleRows } from "@src/core/dailyPuzzle/playable";

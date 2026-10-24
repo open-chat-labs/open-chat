@@ -48,7 +48,7 @@
     unlocked?: string[];
     /** Id of the achievement just earned. */
     highlight?: string;
-    /** Defaults to onClose. */
+    /** Opened from another dialog: a back arrow, back to it (none without). */
     onBack?: () => void;
     onClose?: () => void;
   }
@@ -111,7 +111,7 @@
 
   <div class="card">
     <div class="head">
-      <span class="icon-button back" onclick={() => (onBack ?? onClose)?.()} role="button" tabindex="0" aria-label={t('ui.achievementsDialog.backToChit')} title={t('ui.achievementsDialog.backToChit')}><span class="back-glyph"></span></span>
+      {#if onBack}<span class="icon-button back" onclick={() => onBack?.()} role="button" tabindex="0" aria-label={t('ui.achievementsDialog.backToChit')} title={t('ui.achievementsDialog.backToChit')}><span class="back-glyph"></span></span>{/if}
       <div class="heading">
         <span class="title">{t('ui.achievementsDialog.title')}</span>
         <span class="subtitle">{t('ui.achievementsDialog.subtitle', { done: doneCount, total: all.length, earned: fmt(earned), onOffer: fmt(onOffer) })}</span>

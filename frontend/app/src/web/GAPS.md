@@ -394,6 +394,10 @@ design export needs. Each entry says where it came up.
 
 ### Wiring
 
+- **Dialogs opened from dialogs, by hand** (the app's rule): a back arrow only for a dialog opened
+  from another (`AchievementsDialog`, `LeaderboardDialog` and `StreakInsuranceDialog` drew one
+  always), and one for `DialogShell` and `ProfileDialog` (`onBack`). The design has no rule for
+  it.
 - **`StreakInsuranceDialog`, by hand** (8d): a week of cells at a time, sliding along the ladder
   (30 in a row crushed the prices together); "Your cover is full" for "Covered for a full week",
   as cover caps at 30 days; Back with `onBack` hands off with no exit, so the backdrop stays;

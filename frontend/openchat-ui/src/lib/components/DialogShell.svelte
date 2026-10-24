@@ -1,4 +1,4 @@
-<!-- Modal frame: blurred backdrop (click closes), card with title + close, body from children.
+<!-- Modal frame: blurred backdrop (click closes), card with title + close (and a back arrow with onBack), body from children.
      height "auto" sizes to content; otherwise a fixed/min() height so lists can scroll inside.
      Focus moves into the dialog on open and back to the opener on close; Tab stays inside;
      Esc closes only the top-most dialog when several are stacked (e.g. ChatPicker over Invite).
@@ -23,11 +23,13 @@
     /** No body padding (lists that run edge to edge). */
     flush?: boolean;
     z?: number;
+    /** Opened from another dialog: a back arrow before the title, back to it. */
+    onBack?: () => void;
     onClose?: () => void;
     children?: Snippet;
   }
 
-  let { title, width = 440, height = 'min(560px,100%)', flush = false, z = 80, onClose, children }: Props = $props();
+  let { title, width = 440, height = 'min(560px,100%)', flush = false, z = 80, onBack, onClose, children }: Props = $props();
   const t = useT();
 
   let box: HTMLDivElement;
@@ -98,7 +100,8 @@
     aria-modal="true"
     aria-label={t(title)}
   >
-    <div class="header">
+    <div class="header" class:back={!!onBack}>
+      {#if onBack}<div class="back-button"><IconButton label="ui.common.back" variant="ghost" icon="back" onClick={onBack}></IconButton></div>{/if}
       <span class="title">{t(title)}</span>
       <div class="close"><IconButton label="ui.common.close" variant="ghost" icon="close" onClick={onClose}></IconButton></div>
     </div>
@@ -162,9 +165,15 @@
     text-overflow: ellipsis;
   }
 
-  .close {
+  .close,
+  .back-button {
     flex: none;
     display: flex;
+  }
+
+  /* the arrow sits where the title's padding was */
+  .header.back {
+    padding-inline-start: var(--space-12);
   }
 
   .body {

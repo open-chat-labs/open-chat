@@ -11,7 +11,8 @@ import type { Component } from "svelte";
 //   (ROUTES.md, decision 6): ?profile, ?chit, ?hof, ?diamond. The CHIT dialog's own views, the
 //   ways to earn (?chit=earn), buying streak insurance (?chit=insurance) and today's puzzle
 //   (?chit=puzzle), are linked dialogs too, so one takes the CHIT dialog's place over the same
-//   backdrop, and Back returns to it;
+//   backdrop. A dialog opened from another (linkedDialogs.svelte.ts) has a back arrow to it, the
+//   only way back; ×, the backdrop and Back close them all;
 // - local: opened by the app itself (a name clicked in a message …), kept in a DialogStack, and
 //   closed before any navigation (closeModalStack) and on Back.
 //

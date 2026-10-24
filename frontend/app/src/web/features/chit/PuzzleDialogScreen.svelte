@@ -19,7 +19,7 @@
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import type { DialogProps, LinkedDialog } from "../app/dialogs";
-    import { backToLinked, openedFrom } from "../app/linkedDialogs";
+    import { canGoBack, goBack } from "../app/linkedDialogs.svelte";
     import { puzzleTitle } from "./puzzle.adapter";
     import PuzzleSession from "./PuzzleSession.svelte";
 
@@ -62,23 +62,19 @@
         puzzleTitle(available ? playing : undefined, (key: ResourceKey) => interpolate($_, key)),
     );
 
-    // back to the CHIT dialog in its place when it opened this one (a frame has no exit of its own
-    // to play), else closed
-    function close() {
-        if (openedFrom({ kind: "chit" })) backToLinked({ kind: "chit" });
-        else onClose();
-    }
+    // opened from the CHIT dialog: its back arrow returns to it in its place
+    const back = $derived(canGoBack() ? goBack : undefined);
 </script>
 
 <!-- TODO(design): the design's PuzzleDialog plays Bridges only; GAPS.md -->
-<DialogShell {title} width={560} height="auto" onClose={close}>
+<DialogShell {title} width={560} height="auto" onBack={back} {onClose}>
     {#if available}
         {#key sessionKey}
             <PuzzleSession
                 gameId={dialog.gameId}
                 {how}
                 onPuzzle={(puzzle) => (reported = { key: sessionKey, puzzle })}
-                onClose={close} />
+                {onClose} />
         {/key}
     {:else if ready}
         <p class="text">{$_("dailyPuzzle.unavailable")}</p>

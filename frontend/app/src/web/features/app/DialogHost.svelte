@@ -30,7 +30,7 @@
     import SuspendUserDialog from "../user/SuspendUserDialog.svelte";
     import AppEventDialogs from "./AppEventDialogs.svelte";
     import DialogScreen from "./DialogScreen.svelte";
-    import { openLinked, urlChanged } from "./linkedDialogs";
+    import { openLinked, urlChanged } from "./linkedDialogs.svelte";
     import { disableChit } from "@src/stores/settings";
     import { screenLoader } from "./screens";
     import {

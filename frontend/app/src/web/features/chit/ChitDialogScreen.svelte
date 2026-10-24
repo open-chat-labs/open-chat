@@ -26,7 +26,7 @@
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
     import { getContext, onMount } from "svelte";
     import type { DialogProps, LinkedDialog } from "../app/dialogs";
-    import { openLinked } from "../app/linkedDialogs";
+    import { canGoBack, goBack, openFromDialog } from "../app/linkedDialogs.svelte";
     import { achievementsCount, chitDialogProps } from "./chit.adapter";
     import { puzzleCardProps } from "./puzzle.adapter";
     import { playableDailyPuzzleRows } from "@src/core/dailyPuzzle/playable";
@@ -84,25 +84,28 @@
         ),
     );
 
+    // opened from another dialog (the profile's CHIT section): its back arrow returns to it
+    const back = $derived(canGoBack() ? goBack : undefined);
+
     function act(action: ChitAction) {
         switch (action) {
             case "settings":
-                openLinked({ kind: "profile", section: "chit" });
+                openFromDialog({ kind: "profile", section: "chit" });
                 return;
             case "leaderboard":
-                openLinked({ kind: "leaderboard" });
+                openFromDialog({ kind: "leaderboard" });
                 return;
             case "earn":
-                openLinked({ kind: "achievements" });
+                openFromDialog({ kind: "achievements" });
                 return;
             case "insurance":
-                openLinked({ kind: "streak_insurance" });
+                openFromDialog({ kind: "streak_insurance" });
                 return;
             case "puzzle":
-                if (puzzle.opens !== undefined) openLinked(puzzle.opens);
+                if (puzzle.opens !== undefined) openFromDialog(puzzle.opens);
                 return;
             case "puzzleHow":
-                openLinked({ kind: "puzzle", gameId: puzzle.gameId, how: true });
+                openFromDialog({ kind: "puzzle", gameId: puzzle.gameId, how: true });
                 return;
             // a reminder and hiding the puzzle: not offered (puzzleMenu), the app has neither
         }
@@ -128,6 +131,7 @@
         puzzleMenu={["puzzleHow"]}
         onClaim={claim}
         onAction={act}
+        onBack={back}
         {onClose} />
 {:else}
     <!-- till the first sync: the user's CHIT isn't known yet -->

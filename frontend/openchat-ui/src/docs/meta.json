@@ -1749,6 +1749,17 @@
         "doc": ""
       },
       {
+        "name": "onBack",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Opened from another dialog: a back arrow before the title, back to it."
+      },
+      {
         "name": "onClose",
         "type": "() => void",
         "default": null,
@@ -5593,7 +5604,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Defaults to onClose."
+        "doc": "Opened from another dialog: a back arrow, back to it (none without)."
       },
       {
         "name": "onClose",
@@ -11407,7 +11418,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Defaults to onClose."
+        "doc": "Opened from another dialog: a back arrow, back to it (none without)."
       },
       {
         "name": "onClose",
@@ -13996,6 +14007,17 @@
         "doc": ""
       },
       {
+        "name": "onBack",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Opened from another dialog: a back arrow before the section's title, back to it in this one's place (no exit plays, so the backdrop stays)."
+      },
+      {
         "name": "onSectionChange",
         "type": "(section: ProfileSection) => void",
         "default": null,
@@ -15223,7 +15245,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Opened from another dialog: a back arrow, back to it (none without)."
       },
       {
         "name": "onClose",

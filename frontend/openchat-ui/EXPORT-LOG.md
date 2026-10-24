@@ -270,3 +270,10 @@
 ## 2026-10-24 — ChitDialog: a claim bursts confetti, by hand
 - A claim made in the dialog (`onClaim` resolving with anything but `false`) bursts the library's `Confetti` from the claim area as the ring pops, as `AchievementToast` and `PrizeMessage` do theirs. The old CHIT modal rained coins on a claim; the design had nothing.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-24 — A back arrow only for a dialog opened from another, and one for DialogShell and ProfileDialog, by hand
+- The app's rule for a dialog opened from another: it has a back arrow, the only way back to the one it was opened from; ×, the backdrop and Escape close them all.
+- `AchievementsDialog`, `LeaderboardDialog` and `StreakInsuranceDialog` drew their back arrow always, falling back to `onClose` (the insurance dialog to its exit). It now shows only with `onBack`; `LeaderboardDialog` keeps its place empty, so the title doesn't move.
+- `DialogShell` takes `onBack`: a back arrow before the title. `ProfileDialog` takes `onBack`: one before the section's title, which hands off with no exit (`DialogFlow.handOff`), so the backdrop stays.
+- `meta.json` updated.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

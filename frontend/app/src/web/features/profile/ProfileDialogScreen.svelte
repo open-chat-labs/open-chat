@@ -77,7 +77,7 @@
     import { _, locale } from "svelte-i18n";
     import { accentOf, accentStore } from "../../accent";
     import type { DialogProps, LinkedDialog } from "../app/dialogs";
-    import { openLinked } from "../app/linkedDialogs";
+    import { canGoBack, goBack, openFromDialog } from "../app/linkedDialogs.svelte";
     import {
         changedChatSettings,
         calendarDay,
@@ -664,6 +664,9 @@
             uploading[target] = false;
         }
     }
+
+    // opened from another dialog (the CHIT dialog's settings): its back arrow returns to it
+    const back = $derived(canGoBack() ? goBack : undefined);
 </script>
 
 <!-- each prop on its own: a spread that changes (the streak's clock) would take the dialog back to
@@ -691,7 +694,7 @@
     {claimHistory}
     {claimable}
     today={calendarDay($now500)}
-    onChit={readOnly ? undefined : () => openLinked({ kind: "chit" })}
+    onChit={readOnly ? undefined : () => openFromDialog({ kind: "chit" })}
     puzzleSetting={false}
     onChitSettings={changeChit}
     onlineMinutes={stats.onlineMinutes}
@@ -704,7 +707,8 @@
     accentPref={$accentStore}
     fontSize={fontSizeOf($fontScaleStore)}
     {onClose}
-    onDiamond={() => openLinked({ kind: "diamond" })}
+    onBack={back}
+    onDiamond={() => openFromDialog({ kind: "diamond" })}
     onSave={save}
     {checkHandle}
     onLogout={() => client.logout()}
