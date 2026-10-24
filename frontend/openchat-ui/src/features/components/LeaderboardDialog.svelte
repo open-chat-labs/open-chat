@@ -23,7 +23,7 @@
     handle: string;
     /** Your standing: one for every board, or per period key. */
     you?: Standing | Record<string, Standing> | null;
-    /** Defaults to onClose. */
+    /** Opened from another dialog: a back arrow, back to it (none without). */
     onBack?: () => void;
     onClose?: () => void;
   }
@@ -47,7 +47,8 @@
 
   <div class="card">
     <div class="head">
-      <span class="icon-button back" onclick={() => (onBack ?? onClose)?.()} role="button" tabindex="0" aria-label={t('ui.leaderboardDialog.backToChit')} title={t('ui.leaderboardDialog.backToChit')}><span class="back-icon"></span></span>
+      {#if onBack}<span class="icon-button back" onclick={() => onBack?.()} role="button" tabindex="0" aria-label={t('ui.leaderboardDialog.backToChit')} title={t('ui.leaderboardDialog.backToChit')}><span class="back-icon"></span></span
+        >{:else}<span class="icon-button back spacer" aria-hidden="true"></span>{/if}
       <span class="title">{t('ui.leaderboardDialog.title')}</span>
       <span class="icon-button" title={t('ui.leaderboardDialog.playSoon')}><span class="joystick"></span></span>
       <span class="icon-button" onclick={() => onClose?.()} role="button" tabindex="0" aria-label={t('ui.common.close')}><span class="close-icon"></span></span>
@@ -128,6 +129,11 @@
     height: 30px;
     border-radius: var(--radius-sm);
     cursor: pointer;
+  }
+
+  /* the arrow's place kept with no arrow, so the title stays where it is */
+  .icon-button.spacer {
+    cursor: default;
   }
 
   .icon-button.back {

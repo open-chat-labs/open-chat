@@ -14,7 +14,7 @@
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import type { DialogProps, LinkedDialog } from "../app/dialogs";
-    import { backToLinked } from "../app/linkedDialogs";
+    import { canGoBack, goBack } from "../app/linkedDialogs.svelte";
     import { achievementItems } from "./chit.adapter";
     import { loadExternalAchievements, type Loaded } from "./externalAchievements";
 
@@ -53,6 +53,6 @@
     <AchievementsDialog
         achievements={items}
         highlight={dialog.highlight}
-        onBack={() => backToLinked({ kind: "chit" })}
+        onBack={canGoBack() ? goBack : undefined}
         {onClose} />
 {/if}

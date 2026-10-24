@@ -13,11 +13,23 @@ import {
 } from "@client";
 import { flushSync } from "svelte";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { toastStore } from "../stores/toast";
-import { DailyPuzzleGame, type HintButton } from "./dailyPuzzle.svelte";
-import { dailyPuzzleGame } from "./dailyPuzzleGames";
+import {
+    DailyPuzzleGame,
+    hintButtonKeys,
+    type HintButton,
+    type PuzzleHost,
+} from "./dailyPuzzle.svelte";
+import { dailyPuzzleGame } from "@src/core/dailyPuzzle/registry";
 
 const NUMBER = 20706;
+
+// what the screen would toast: the flow's failures, through its host
+let failures = vi.fn();
+const host: PuzzleHost = {
+    onFailure: (reason, detail) => failures(reason, detail),
+    translate: (key) => key,
+    locale: () => "en",
+};
 const USER = "user1";
 
 // Light Up, 3x3, every cell white. Bulbs on the diagonal (0, 4, 8) light every cell and none of
@@ -89,7 +101,7 @@ function build(
     hasDemo = false,
 ): DailyPuzzleGame {
     dailyPuzzleStore.set({ puzzles: [puzzle], states: state === undefined ? [] : [state] });
-    return new DailyPuzzleGame(client, puzzle, USER, lightUpDef, hasDemo);
+    return new DailyPuzzleGame(client, puzzle, USER, lightUpDef, hasDemo, host);
 }
 
 function saveLocal(
@@ -123,7 +135,7 @@ function hintClient(hint: ServedHint, state: Partial<DailyPuzzleUserState> = {})
 beforeEach(() => {
     localStorage.clear();
     vi.restoreAllMocks();
-    vi.spyOn(toastStore, "showFailureToast").mockImplementation(() => {});
+    failures = vi.fn();
 });
 
 describe("DailyPuzzleGame", () => {
@@ -165,7 +177,7 @@ describe("DailyPuzzleGame", () => {
         g.tap(0);
         g.tap(4);
         g.tap(8);
-        await vi.waitFor(() => expect(toastStore.showFailureToast).toHaveBeenCalled());
+        await vi.waitFor(() => expect(failures).toHaveBeenCalled());
         expect(g.userState?.solved).toBeUndefined();
         expect(g.inputDisabled).toBe(false);
     });
@@ -405,7 +417,7 @@ describe("DailyPuzzleGame", () => {
             expect.anything(),
             20,
         );
-        expect(toastStore.showFailureToast).not.toHaveBeenCalled();
+        expect(failures).not.toHaveBeenCalled();
         expect(g.lastHint).toEqual(hint);
         expect(g.busy).toBe(false);
     });
@@ -417,7 +429,7 @@ describe("DailyPuzzleGame", () => {
         const g = build(userState(), client);
         await g.hint();
         expect(client.dailyPuzzleHint).toHaveBeenCalledTimes(2);
-        expect(toastStore.showFailureToast).toHaveBeenCalled();
+        expect(failures).toHaveBeenCalled();
     });
 
     test("a price mismatch quoting more than the button showed is not retried", async () => {
@@ -428,7 +440,7 @@ describe("DailyPuzzleGame", () => {
         expect(g.hintButton).toMatchObject({ kind: "hint", price: 25 });
         await g.hint();
         expect(client.dailyPuzzleHint).toHaveBeenCalledTimes(1);
-        expect(toastStore.showFailureToast).toHaveBeenCalled();
+        expect(failures).toHaveBeenCalled();
         expect(g.lastHint).toBeUndefined();
     });
 
@@ -456,7 +468,7 @@ describe("DailyPuzzleGame", () => {
             const grid = slant.toBytes(model, st);
             const state = userState({ gameId: "slant", number: 20709, grid, gridSavedAt: 5n });
             dailyPuzzleStore.set({ puzzles: [slantPuzzle], states: [state] });
-            return new DailyPuzzleGame(client, slantPuzzle, USER, slantDef);
+            return new DailyPuzzleGame(client, slantPuzzle, USER, slantDef, false, host);
         }
         const hintClient = () =>
             fakeClient({
@@ -552,7 +564,7 @@ describe("out of hints", () => {
         g.tap(0);
         await g.hint();
         expect(g.hintButton).toEqual({ kind: "noneLeft" });
-        expect(toastStore.showFailureToast).toHaveBeenCalledWith(
+        expect(failures).toHaveBeenCalledWith(
             expect.objectContaining({ key: "dailyPuzzle.noHintsLeft" }),
             expect.anything(),
         );
@@ -576,7 +588,7 @@ describe("a game that shows more than the player's marks (chat_rooms)", () => {
         const client = hintClient(served([1]));
         const state = userState({ gameId: "chat_rooms", number: 20726 });
         dailyPuzzleStore.set({ puzzles: [roomsPuzzle], states: [state] });
-        const g = new DailyPuzzleGame(client, roomsPuzzle, USER, chatRoomsDef);
+        const g = new DailyPuzzleGame(client, roomsPuzzle, USER, chatRoomsDef, false, host);
         g.tap(20);
         g.tap(20);
         await g.hint();
@@ -708,11 +720,11 @@ describe("hint states (#9360)", () => {
         const g = build(userState(), client);
         g.tap(0);
         await g.hint();
-        expect(toastStore.showFailureToast).toHaveBeenCalledWith(
+        expect(failures).toHaveBeenCalledWith(
             expect.objectContaining({ key: "dailyPuzzle.noFreeChecks" }),
             expect.anything(),
         );
-        expect(toastStore.showFailureToast).not.toHaveBeenCalledWith(
+        expect(failures).not.toHaveBeenCalledWith(
             expect.objectContaining({ key: "dailyPuzzle.failedHint" }),
             expect.anything(),
         );
@@ -894,7 +906,7 @@ describe("a Bridges hint clears in its own key space (#9370)", () => {
                 state: userState({ gameId: "bridges", number: 20710, hints: [hint] }),
             })),
         });
-        return new DailyPuzzleGame(client, bridgesPuzzle, USER, bridgesDef);
+        return new DailyPuzzleGame(client, bridgesPuzzle, USER, bridgesDef, false, host);
     }
 
     // invariant 1
@@ -940,7 +952,7 @@ describe("a Bridges hint clears in its own key space (#9370)", () => {
                 state: userState({ gameId: "bridges", number: 20710, hints: [island] }),
             })),
         });
-        const g = new DailyPuzzleGame(client, bridgesPuzzle, USER, bridgesDef);
+        const g = new DailyPuzzleGame(client, bridgesPuzzle, USER, bridgesDef, false, host);
         await g.hint();
         expect([...g.focus].sort()).toEqual([0, 1, 2, 5, 8]);
         // an edge elsewhere (6 -> 8, over cell 7) changes nothing; island 0 collides with its key
@@ -1119,5 +1131,120 @@ describe("DailyPuzzleGame is the one source of truth for a play session (#9824)"
             expect(g.lastHint).toBeUndefined();
             expect(g.mistakes.size).toBe(0);
         }
+    });
+});
+
+describe("what a hint shows and when a result is shared (8d, #10130)", () => {
+    test("a hint draws the step's outline and sentence, never its answer: the board's marks don't change", async () => {
+        // bought at level 3, with the answer in its conclusions: they are ignored
+        const hint: ServedHint = {
+            hint: {
+                technique: 1,
+                focus: [0, 1, 2],
+                target: [0],
+                conclusions: [
+                    [0, 1],
+                    [4, 1],
+                    [8, 1],
+                ],
+            },
+            level: 3,
+            mistake: false,
+        };
+        const g = build(userState(), hintClient(hint));
+        await g.hint();
+        expect([...g.focus].sort()).toEqual([0, 1, 2]);
+        expect(g.board.filled()).toEqual([]);
+        expect(g.board.solved).toBe(false);
+    });
+
+    test("a result can be shared only once solveTimeMs >= minCardedSolveMs", () => {
+        const solvedIn = (solveTimeMs: bigint, minCardedSolveMs: bigint): boolean => {
+            const carded = { ...puzzle, minCardedSolveMs };
+            dailyPuzzleStore.set({
+                puzzles: [carded],
+                states: [
+                    userState({
+                        solved: { solvedAt: 2n, solveTimeMs, reward: 250, hintsUsed: 0, streak: 1 },
+                    }),
+                ],
+            });
+            return new DailyPuzzleGame(fakeClient(), carded, USER, lightUpDef, false, host)
+                .canShare;
+        };
+        expect(solvedIn(30_000n, 30_000n)).toBe(true);
+        expect(solvedIn(29_999n, 30_000n)).toBe(false);
+        expect(solvedIn(1n, 0n)).toBe(true);
+        // not solved: nothing to share
+        expect(build(userState()).canShare).toBe(false);
+    });
+});
+
+describe("the hint button's label", () => {
+    test("says why there's no hint, or what one costs and what's left", () => {
+        expect(hintButtonKeys({ kind: "mistake" }).map((k) => k.key)).toEqual([
+            "dailyPuzzle.fixMistakeFirst",
+        ]);
+        expect(hintButtonKeys({ kind: "noneLeft" }).map((k) => k.key)).toEqual([
+            "dailyPuzzle.noHintsLeft",
+        ]);
+        expect(
+            hintButtonKeys({ kind: "hint", price: 50, hintsLeft: 2, checksLeft: 3 }).map(
+                (k) => `${k.key}${JSON.stringify(k.params)}`,
+            ),
+        ).toEqual([
+            'dailyPuzzle.hintCost{"price":50}',
+            'dailyPuzzle.hintsLeft{"count":2}',
+            'dailyPuzzle.checksLeft{"count":3}',
+        ]);
+        expect(hintButtonKeys({ kind: "hint", price: 50, hintsLeft: 0 }).map((k) => k.key)).toEqual(
+            ["dailyPuzzle.hintCost"],
+        );
+    });
+});
+
+describe("a session opened on how to play", () => {
+    test("shows the tutorial over a game under way, and again for a replacement under way", () => {
+        const g = build(userState(), fakeClient(), true);
+        g.openTutorial();
+        expect(g.tutorialOpen).toBe(true);
+        const next = { ...puzzle, number: NUMBER + 1 };
+        dailyPuzzleStore.set({ puzzles: [next], states: [userState({ number: NUMBER + 1 })] });
+        flushSync();
+        expect(g.replaced).toBe(true);
+        expect(g.tutorialOpen).toBe(true);
+    });
+
+    test("leaves a replacement not yet started on its demo", () => {
+        const g = build(userState(), fakeClient(), true);
+        g.openTutorial();
+        const next = { ...puzzle, number: NUMBER + 1 };
+        dailyPuzzleStore.set({ puzzles: [next], states: [] });
+        flushSync();
+        expect(g.tutorialOpen).toBe(false);
+        expect(g.showsDemo).toBe(true);
+    });
+
+    test("opened before Start, asks for nothing once the player is under way", () => {
+        const g = build(undefined, fakeClient(), true);
+        g.openTutorial();
+        expect(g.showsDemo).toBe(true);
+        // started, then the poll swaps in a replacement under way
+        const next = { ...puzzle, number: NUMBER + 1 };
+        dailyPuzzleStore.set({ puzzles: [next], states: [userState({ number: NUMBER + 1 })] });
+        flushSync();
+        expect(g.started).toBe(true);
+        expect(g.tutorialOpen).toBe(false);
+    });
+
+    test("stops asking once the player closes the tutorial", () => {
+        const g = build(userState(), fakeClient(), true);
+        g.openTutorial();
+        g.toggleTutorial();
+        expect(g.tutorialOpen).toBe(false);
+        const next = { ...puzzle, number: NUMBER + 1 };
+        dailyPuzzleStore.set({ puzzles: [next], states: [userState({ number: NUMBER + 1 })] });
+        flushSync();
+        expect(g.tutorialOpen).toBe(false);
     });
 });

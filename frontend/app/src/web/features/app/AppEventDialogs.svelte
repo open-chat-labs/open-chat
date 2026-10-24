@@ -23,7 +23,10 @@
             case "no_access":
                 return { title: $_("noAccess"), text: $_("noAccessText") };
             case "restricted_content":
-                return { title: $_("appStore.notAvailableTitle"), text: $_("appStore.notAvailable") };
+                return {
+                    title: $_("appStore.notAvailableTitle"),
+                    text: $_("appStore.notAvailable"),
+                };
         }
     });
 </script>

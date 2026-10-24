@@ -145,6 +145,40 @@ export function stateFor(
     return state.states.find((s) => s.gameId === gameId);
 }
 
+/** Where the user is with a puzzle: not started, started, or solved. */
+export type DailyPuzzleStatus = "play" | "continue" | "solved";
+
+/** One of today's puzzles, with the user's state on it. */
+export type DailyPuzzleRow = {
+    puzzle: PublicDailyPuzzle;
+    state: DailyPuzzleUserState | undefined;
+    status: DailyPuzzleStatus;
+};
+
+/** One row per puzzle on today's rota (the enabled ones: one, with the weekday rotation). */
+export function dailyPuzzleRows(state: DailyPuzzleState): DailyPuzzleRow[] {
+    return state.puzzles
+        .filter((p) => p.enabled)
+        .map((puzzle) => {
+            const userState = stateFor(state, puzzle.gameId);
+            return { puzzle, state: userState, status: dailyPuzzleStatus(userState) };
+        });
+}
+
+/** Where the user is with a puzzle, from their state on it. */
+export function dailyPuzzleStatus(state: DailyPuzzleUserState | undefined): DailyPuzzleStatus {
+    return state?.solved !== undefined
+        ? "solved"
+        : state?.startedAt !== undefined
+          ? "continue"
+          : "play";
+}
+
+/** The i18n key for a status: "Play", "Continue", "Solved". */
+export function dailyPuzzleStatusKey(status: DailyPuzzleStatus): string {
+    return `dailyPuzzle.${status}`;
+}
+
 /** `state` with the user state for `next.gameId` replaced (or appended). */
 export function withUserState(
     state: DailyPuzzleState,

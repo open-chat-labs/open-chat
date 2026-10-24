@@ -12,7 +12,7 @@ import type {
     BoardPropsFor,
     PictogramProps,
     PictogramPropsFor,
-} from "../components/home/dailypuzzle/games/types";
+} from "@src/core/dailyPuzzle/games/types";
 
 /**
  * One puzzle's board as everything outside a game sees it: what to draw, and moves to make on

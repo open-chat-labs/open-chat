@@ -12,6 +12,7 @@
 <script lang="ts">
   import { onDestroy, untrack } from 'svelte';
   import DailyPuzzleCard from './DailyPuzzleCard.svelte';
+  import Confetti from '../../lib/components/Confetti.svelte';
   import { modal } from '../../lib/behaviours/modal';
   import { DialogFlow } from '../../lib/behaviours/dialog.svelte';
   import { getI18n, useT } from '../../lib/i18n';
@@ -44,9 +45,14 @@
     /** This month's leaderboard place and score, for the trophy button's label. */
     boardRank?: number;
     boardScore?: number;
-    puzzleState?: 'new' | 'progress' | 'solved' | 'hidden' | 'off';
+    puzzleState?: 'new' | 'progress' | 'solved' | 'unavailable' | 'hidden' | 'off';
     puzzleSub?: string;
     puzzleRemind?: boolean;
+    /** DailyPuzzleCard's title and "⋯" menu (see there). */
+    puzzleTitle?: string;
+    puzzleMenu?: PuzzleAction[];
+    /** The solved puzzle card's "Next puzzle in": defaults to `countdown`. */
+    puzzleCountdown?: string;
     /** Shows a back arrow (opened from another dialog). */
     onBack?: () => void;
     /** Resource key (or literal text). */
@@ -74,6 +80,9 @@
     puzzleState = 'new',
     puzzleSub,
     puzzleRemind = false,
+    puzzleTitle,
+    puzzleMenu,
+    puzzleCountdown,
     onBack,
     backLabel = 'ui.common.back',
     onClaim,
@@ -143,8 +152,13 @@
   async function claim() {
     if (!onClaim || claimedHere) return;
     const result = await flow.run(() => onClaim({ amount: daily }));
-    if (result.ok && result.value !== false) claimedHere = true;
+    if (result.ok && result.value !== false) {
+      claimedHere = true;
+      claimBurst++;
+    }
   }
+  // a claim made here bursts confetti from the claim area, as the ring pops
+  let claimBurst = $state(0);
 
   const close = () => flow.dismiss(onClose);
   // other dialogs open from here: not while a claim is pending or the dialog is leaving
@@ -225,10 +239,11 @@
           </div>
           <span class="note strong">{t('ui.chitDialog.comeBackTomorrow')}</span>
         {/if}
+        <div class="burst" aria-hidden="true"><Confetti fire={claimBurst} /></div>
       </div>
 
       <div class="extras">
-        <DailyPuzzleCard state={puzzleState} sub={puzzleSub} {countdown} remind={puzzleRemind} onAction={(k) => act(k)} />
+        <DailyPuzzleCard state={puzzleState} sub={puzzleSub} countdown={puzzleCountdown ?? countdown} remind={puzzleRemind} title={puzzleTitle} menu={puzzleMenu} onAction={(k) => act(k)} />
         <div class="row cover" class:insured={insuredLeft > 0} onclick={() => act('insurance')} role="button" tabindex="0">
           <span class="tile cover-tile"><span class="tile-glyph shield"></span></span>
           <div class="row-text">
@@ -511,10 +526,18 @@
   }
 
   .claim-area {
+    position: relative;
     flex: none;
     display: flex;
     flex-direction: column;
     gap: var(--space-8);
+  }
+
+  /* the confetti's box: the claim area's, out of its flow */
+  .burst {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
   }
 
   .claim,

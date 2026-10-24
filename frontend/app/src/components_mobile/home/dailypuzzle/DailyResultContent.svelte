@@ -8,8 +8,8 @@
         type DailyResultContent,
         type OpenChat,
     } from "@client";
-    import { formatSolveTime, gameNameKey, tierKey } from "@src/utils/dailyPuzzle.svelte";
-    import { dailyPuzzleGame } from "@src/utils/dailyPuzzleGames";
+    import { formatSolveTime, gameNameKey, tierKey } from "@src/logic/dailyPuzzle/dailyPuzzle.svelte";
+    import { dailyPuzzleGame } from "@src/core/dailyPuzzle/registry";
     import {
         cardNumbers,
         verificationFrom,

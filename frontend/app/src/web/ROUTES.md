@@ -76,6 +76,10 @@ Agreed on 2026-10-16; the tables below follow them.
    - Dialogs people link to are query params over the current page, so the page stays behind them
      and Back closes them: `?profile` (new, opened from the rail) and `?chit` (new), in the style
      of `?diamond` and `?hof`.
+   - A dialog opened from another takes its place over the same backdrop, in the same history
+     entry, with a back arrow to it: the arrow is the only way back, a step at a time along a
+     chain (A → B → C). ×, the backdrop, Escape and Back close the whole chain
+     (`linkedDialogs.svelte.ts`).
    - Every other dialog stays local state.
 7. **Switching the left column.**
    - **Notifications** (activity) change only the left column: the middle keeps whatever it
@@ -170,7 +174,7 @@ until there's a setting (`GAPS.md`). Signed-in users on `/` go to the app as tod
 | `?threads` **(new)** | `ThreadList` (All / Unread) in the left column, in place of the chat list; the middle is unchanged (the list's default chat when nothing is selected, decision 7) |
 | `?profile` **(new)** | `ProfileDialog`, over the current page |
 | `?diamond` | `DiamondDialog` |
-| `?chit` **(new)** | `ChitDialog`; `?chit=earn` (`AchievementsDialog`, `?chit=earn:<id>` with that achievement picked out) and `?chit=insurance` (`StreakInsuranceDialog`) in its place, over the same backdrop, Back returning to it |
+| `?chit` **(new)** | `ChitDialog`; `?chit=earn` (`AchievementsDialog`, `?chit=earn:<id>` with that achievement picked out) `?chit=insurance` (`StreakInsuranceDialog`) and `?chit=puzzle` (today's puzzle, `?chit=puzzle:<gameId>` for that game's, `?chit=howto[:<gameId>]` opened on how to play) in its place, over the same backdrop, with a back arrow to it (×, the backdrop and Back close both) |
 | `?profile=chit` **(new)** | `ProfileDialog` on its CHIT section (the CHIT dialog's settings) |
 | `?hof` | `LeaderboardDialog` |
 | `?faq=<topic>` | navigates to `/faq?q=<topic>` |

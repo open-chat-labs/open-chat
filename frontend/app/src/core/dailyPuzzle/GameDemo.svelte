@@ -2,9 +2,9 @@
     import { _ } from "svelte-i18n";
     import ChevronLeft from "svelte-material-icons/ChevronLeft.svelte";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
-    import { i18nKey } from "../../../i18n/i18n";
+    import { i18nKey } from "@src/i18n/i18n";
     import type { Violation } from "@client";
-    import type { DailyPuzzleGameDef } from "../../../utils/dailyPuzzleGames";
+    import type { DailyPuzzleGameDef } from "./registry";
     import type { DemoFrame } from "./games/types";
     import Translatable from "@shared_components/Translatable.svelte";
 

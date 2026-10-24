@@ -8,7 +8,7 @@
     import { chitPopup, disableChit } from "@src/stores/settings";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
-    import { openLinked } from "../app/linkedDialogs";
+    import { openLinked } from "../app/linkedDialogs.svelte";
 
     const client = getContext<OpenChat>("client");
 
