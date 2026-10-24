@@ -2,6 +2,7 @@
     import { currentUserIdStore, publish, type OpenChat } from "@client";
     import Link from "@src/components/Link.svelte";
     import { getContext, onDestroy, tick } from "svelte";
+    import { _, locale } from "svelte-i18n";
     import Fire from "svelte-material-icons/Fire.svelte";
     import LightbulbOutline from "svelte-material-icons/LightbulbOutline.svelte";
     import Refresh from "svelte-material-icons/Refresh.svelte";
@@ -12,15 +13,17 @@
     import {
         formatSolveTime,
         gameNameKey,
-        openDailyPuzzle,
         tierKey,
         type HintButton,
-    } from "../../../utils/dailyPuzzle.svelte";
+        type PuzzleHost,
+    } from "@src/logic/dailyPuzzle/dailyPuzzle.svelte";
+    import { openDailyPuzzle } from "@src/core/dailyPuzzle/registry";
+    import { toastStore } from "@src/stores/toast";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
-    import GameDemo from "./GameDemo.svelte";
+    import GameDemo from "@src/core/dailyPuzzle/GameDemo.svelte";
 
     interface Props {
         gameId?: string;
@@ -31,7 +34,13 @@
 
     const client = getContext<OpenChat>("client");
     // undefined `def` = a game this build does not know how to render
-    const opened = openDailyPuzzle(client, gameId, $currentUserIdStore);
+    // what the puzzle needs from this screen: failures toasted, and the game's strings translated
+    const host: PuzzleHost = {
+        onFailure: (reason, detail) => toastStore.showFailureToast(reason, detail),
+        translate: (key) => $_(key),
+        locale: () => $locale ?? "en",
+    };
+    const opened = openDailyPuzzle(client, gameId, $currentUserIdStore, host);
     const { def, game } = opened;
     // the session's puzzle, which the poll may have replaced since this opened
     let puzzle = $derived(game?.puzzle ?? opened.puzzle);
@@ -110,11 +119,16 @@
                     <div class="stat">
                         <LightbulbOutline size={"1.2em"} color={"var(--icon-txt)"} />
                         <Translatable
-                            resourceKey={i18nKey("dailyPuzzle.hintsUsed", { count: game.hintsUsed })} />
+                            resourceKey={i18nKey("dailyPuzzle.hintsUsed", {
+                                count: game.hintsUsed,
+                            })} />
                     </div>
                     <div class="stat">
                         <Fire size={"1.2em"} color={"var(--icon-txt)"} />
-                        <Translatable resourceKey={i18nKey("dailyPuzzle.streakDays", { streak: game.streak })} />
+                        <Translatable
+                            resourceKey={i18nKey("dailyPuzzle.streakDays", {
+                                streak: game.streak,
+                            })} />
                     </div>
                     {#if def?.Settings !== undefined}
                         <def.Settings />

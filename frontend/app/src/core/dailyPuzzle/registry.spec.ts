@@ -1,13 +1,13 @@
 import type { HintCaption } from "@client";
 import { describe, expect, test } from "vitest";
-import bridgesHints from "../../../openchat-shared/src/utils/dailyGames/bridgesHints.json";
-import chatRoomsHints from "../../../openchat-shared/src/utils/dailyGames/chatRoomsHints.json";
-import lightUpHints from "../../../openchat-shared/src/utils/dailyGames/lightUpHints.json";
-import slantHints from "../../../openchat-shared/src/utils/dailyGames/slantHints.json";
-import tentsHints from "../../../openchat-shared/src/utils/dailyGames/tentsHints.json";
-import unrulyHints from "../../../openchat-shared/src/utils/dailyGames/unrulyHints.json";
-import en from "../i18n/en.json";
-import { dailyPuzzleGames } from "./dailyPuzzleGames";
+import bridgesHints from "../../../../openchat-shared/src/utils/dailyGames/bridgesHints.json";
+import chatRoomsHints from "../../../../openchat-shared/src/utils/dailyGames/chatRoomsHints.json";
+import lightUpHints from "../../../../openchat-shared/src/utils/dailyGames/lightUpHints.json";
+import slantHints from "../../../../openchat-shared/src/utils/dailyGames/slantHints.json";
+import tentsHints from "../../../../openchat-shared/src/utils/dailyGames/tentsHints.json";
+import unrulyHints from "../../../../openchat-shared/src/utils/dailyGames/unrulyHints.json";
+import en from "../../i18n/en.json";
+import { dailyPuzzleGames } from "./registry";
 
 function flatten(obj: unknown, prefix = ""): Record<string, string> {
     const out: Record<string, string> = {};

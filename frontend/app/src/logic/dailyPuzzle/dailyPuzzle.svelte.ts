@@ -4,7 +4,6 @@ import {
     chitStateStore,
     dailyPuzzleStore,
     descriptionToHex,
-    publish,
     puzzleFingerprint,
     puzzleReplaced,
     stateFor,
@@ -20,29 +19,57 @@ import {
     type ServedHint,
     type Violation,
 } from "@client";
-import { _, locale } from "svelte-i18n";
-import { get } from "svelte/store";
-import { i18nKey } from "../i18n/i18n";
-import { toastStore } from "../stores/toast";
-import { dailyPuzzleGame, gameI18nPrefix, type DailyPuzzleGameDef } from "./dailyPuzzleGames";
+import { i18nKey } from "@src/i18n/i18n";
 import type { PuzzleBoard } from "./puzzleBoard.svelte";
+
+/** A game as the puzzle flow needs it: its strings, and boards on a puzzle's description. */
+export type PuzzleGameDef = {
+    /** GameId as the backend names it, e.g. "light_up". */
+    id: string;
+    /** en.json prefix for the game's strings: `${i18nPrefix}.name`, `.rules`, `.technique.<id>`. */
+    i18nPrefix: string;
+    /** A board on `description`, with `filled` already marked. Throws on bad bytes. */
+    newBoard(description: Uint8Array, filled?: [number, number][]): PuzzleBoard;
+};
+
+/** The en.json prefix for a game's strings. */
+export function gameI18nPrefix(gameId: string): string {
+    return `dailyPuzzle.games.${gameId}`;
+}
+
+/**
+ * What the view showing a puzzle gives it: how to say a step failed (start, submit, a hint; the
+ * old trees toast it), and how to translate a game's string and join a list in the player's
+ * language, for a hint's sentence.
+ */
+export type PuzzleHost = {
+    onFailure(reason: ResourceKey, detail?: unknown): void;
+    translate(key: string): string;
+    locale(): string;
+};
+
+const NO_HOST: PuzzleHost = {
+    onFailure: () => {},
+    translate: (key) => key,
+    locale: () => "en",
+};
 
 // A game's own sentence for a step, with its values made readable: a string of the game's
 // translated first (a room's colour, "the orange room"), a list joined as the player's language
 // joins one ("3 and 5")
-function captionKey(prefix: string, caption: HintCaption): ResourceKey {
+function captionKey(prefix: string, caption: HintCaption, host: PuzzleHost): ResourceKey {
     const params: Record<string, string | number> = {};
     for (const [name, value] of Object.entries(caption.params ?? {})) {
         if (typeof value === "number") params[name] = value;
-        else if (Array.isArray(value)) params[name] = joinList(value.map(String));
-        else params[name] = get(_)(`${prefix}.${value.key}`);
+        else if (Array.isArray(value)) params[name] = joinList(value.map(String), host.locale());
+        else params[name] = host.translate(`${prefix}.${value.key}`);
     }
     return i18nKey(`${prefix}.${caption.key}`, params);
 }
 
-function joinList(items: string[]): string {
+function joinList(items: string[], locale: string): string {
     try {
-        return new Intl.ListFormat(get(locale) ?? "en", { type: "conjunction" }).format(items);
+        return new Intl.ListFormat(locale, { type: "conjunction" }).format(items);
     } catch {
         return items.join(", ");
     }
@@ -133,25 +160,6 @@ export function gameNameKey(gameId: string): string {
     return `${gameI18nPrefix(gameId)}.name`;
 }
 
-/**
- * Today's puzzle for `gameId` (with no id, the first enabled one) and a play session on it. No
- * session when there is no puzzle, or when this build cannot render its game (`def` undefined).
- */
-export function openDailyPuzzle(
-    client: OpenChat,
-    gameId: string | undefined,
-    userId: string,
-): { puzzle?: PublicDailyPuzzle; def?: DailyPuzzleGameDef; game?: DailyPuzzleGame } {
-    const puzzle = todaysPuzzle(dailyPuzzleStore.value, gameId);
-    const def = puzzle !== undefined ? dailyPuzzleGame(puzzle.gameId) : undefined;
-    if (puzzle === undefined || def === undefined) return { puzzle, def };
-    return {
-        puzzle,
-        def,
-        game: new DailyPuzzleGame(client, puzzle, userId, def, def.demo !== undefined),
-    };
-}
-
 // Everything the puzzle screen needs that is not layout: the marks, rule state, hint flow,
 // saving and the submit path. Both the desktop modal and the mobile page render this, and read
 // nothing about the session from anywhere else (#9824). The shell knows nothing about the game
@@ -219,9 +227,10 @@ export class DailyPuzzleGame {
         private client: OpenChat,
         puzzle: PublicDailyPuzzle,
         private userId: string,
-        private def: DailyPuzzleGameDef,
+        private def: PuzzleGameDef,
         // whether this game has a step-through demo to teach its rules
         readonly hasDemo = false,
+        private host: PuzzleHost = NO_HOST,
     ) {
         this.puzzle = $state.raw(puzzle);
         this.#fingerprint = puzzleFingerprint(puzzle);
@@ -363,11 +372,11 @@ export class DailyPuzzleGame {
             .dailyPuzzleStart(this.puzzle.gameId, this.entryFee)
             .then((resp) => {
                 if (resp.kind === "error") {
-                    toastStore.showFailureToast(i18nKey("dailyPuzzle.failedToStart"), resp);
+                    this.host.onFailure(i18nKey("dailyPuzzle.failedToStart"), resp);
                 }
             })
             .catch((err) => {
-                toastStore.showFailureToast(i18nKey("dailyPuzzle.failedToStart"), err);
+                this.host.onFailure(i18nKey("dailyPuzzle.failedToStart"), err);
             })
             .finally(() => {
                 this.busy = false;
@@ -557,7 +566,7 @@ export class DailyPuzzleGame {
             .dailyPuzzleSubmit(this.puzzle.gameId, this.board.toBytes())
             .then((resp) => {
                 if (resp.kind === "error") {
-                    toastStore.showFailureToast(
+                    this.host.onFailure(
                         i18nKey(
                             resp.message === "wrong"
                                 ? "dailyPuzzle.wrong"
@@ -568,7 +577,7 @@ export class DailyPuzzleGame {
                 }
             })
             .catch((err) => {
-                toastStore.showFailureToast(i18nKey("dailyPuzzle.failedToSubmit"), err);
+                this.host.onFailure(i18nKey("dailyPuzzle.failedToSubmit"), err);
             })
             .finally(() => {
                 if (!this.#disposed) this.submitting = false;
@@ -621,7 +630,7 @@ export class DailyPuzzleGame {
                     const outOfHints =
                         resp.code === ErrorCode.Throttled && resp.message === "max_hints";
                     if (outOfHints) this.#outOfHints = true;
-                    toastStore.showFailureToast(
+                    this.host.onFailure(
                         i18nKey(
                             outOfHints
                                 ? "dailyPuzzle.noHintsLeft"
@@ -655,7 +664,7 @@ export class DailyPuzzleGame {
                 this.#applyHint(resp.hint);
             })
             .catch((err) => {
-                toastStore.showFailureToast(i18nKey("dailyPuzzle.failedHint"), err);
+                this.host.onFailure(i18nKey("dailyPuzzle.failedHint"), err);
             });
     }
 
@@ -680,7 +689,7 @@ export class DailyPuzzleGame {
         const own = technique === 0 ? undefined : this.board.hintCaption(hint.hint);
         this.#caption =
             own !== undefined
-                ? captionKey(prefix, own)
+                ? captionKey(prefix, own, this.host)
                 : technique === 0
                   ? undefined
                   : i18nKey(`${prefix}.technique.${technique}`);
@@ -705,10 +714,5 @@ export class DailyPuzzleGame {
     get canShare(): boolean {
         const solved = this.solved;
         return solved !== undefined && solved.solveTimeMs >= this.puzzle.minCardedSolveMs;
-    }
-
-    share(): void {
-        const card = this.resultCard();
-        if (card !== undefined) publish("shareDailyResult", card);
     }
 }

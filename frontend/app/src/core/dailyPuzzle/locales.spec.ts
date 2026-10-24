@@ -1,19 +1,19 @@
 import { describe, expect, test } from "vitest";
-import ar from "../i18n/ar.json";
-import cn from "../i18n/cn.json";
-import de from "../i18n/de.json";
-import en from "../i18n/en.json";
-import es from "../i18n/es.json";
-import fa from "../i18n/fa.json";
-import fr from "../i18n/fr.json";
-import hi from "../i18n/hi.json";
-import it from "../i18n/it.json";
-import iw from "../i18n/iw.json";
-import jp from "../i18n/jp.json";
-import pl from "../i18n/pl.json";
-import ru from "../i18n/ru.json";
-import uk from "../i18n/uk.json";
-import vi from "../i18n/vi.json";
+import ar from "../../i18n/ar.json";
+import cn from "../../i18n/cn.json";
+import de from "../../i18n/de.json";
+import en from "../../i18n/en.json";
+import es from "../../i18n/es.json";
+import fa from "../../i18n/fa.json";
+import fr from "../../i18n/fr.json";
+import hi from "../../i18n/hi.json";
+import it from "../../i18n/it.json";
+import iw from "../../i18n/iw.json";
+import jp from "../../i18n/jp.json";
+import pl from "../../i18n/pl.json";
+import ru from "../../i18n/ru.json";
+import uk from "../../i18n/uk.json";
+import vi from "../../i18n/vi.json";
 
 // Every locale the app ships (frontend/app/src/i18n/*.json) other than English
 const locales: Record<string, unknown> = { ar, cn, de, es, fa, fr, hi, it, iw, jp, pl, ru, uk, vi };

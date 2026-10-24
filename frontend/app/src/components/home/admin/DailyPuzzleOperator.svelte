@@ -10,7 +10,7 @@
     import { SvelteSet } from "svelte/reactivity";
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
-    import { dailyPuzzleGames } from "../../../utils/dailyPuzzleGames";
+    import { dailyPuzzleGames } from "@src/core/dailyPuzzle/registry";
     import { regenerateOptions } from "../../../utils/dailyPuzzleOperator";
     import Button from "../../Button.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";

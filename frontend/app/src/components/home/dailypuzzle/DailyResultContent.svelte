@@ -13,8 +13,8 @@
     import AlertCircleOutline from "svelte-material-icons/AlertCircleOutline.svelte";
     import CheckCircleOutline from "svelte-material-icons/CheckCircleOutline.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import { formatSolveTime, gameNameKey, tierKey } from "../../../utils/dailyPuzzle.svelte";
-    import { dailyPuzzleGame } from "../../../utils/dailyPuzzleGames";
+    import { formatSolveTime, gameNameKey, tierKey } from "@src/logic/dailyPuzzle/dailyPuzzle.svelte";
+    import { dailyPuzzleGame } from "@src/core/dailyPuzzle/registry";
     import {
         cardNumbers,
         verificationFrom,

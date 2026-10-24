@@ -20,7 +20,7 @@
     import { i18nKey } from "../../i18n/i18n";
     import { now500 } from "../../stores/time";
     import { toastStore } from "../../stores/toast";
-    import { gameNameKey } from "../../utils/dailyPuzzle.svelte";
+    import { gameNameKey } from "@src/logic/dailyPuzzle/dailyPuzzle.svelte";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import HoverIcon from "../HoverIcon.svelte";

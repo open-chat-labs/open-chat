@@ -12,7 +12,7 @@
     import SparkleBoxOutline from "@src/components_mobile/SparkleBoxOutline.svelte";
     import { now500 } from "@src/stores/time";
     import { toastStore } from "@src/stores/toast";
-    import { gameNameKey } from "@src/utils/dailyPuzzle.svelte";
+    import { gameNameKey } from "@src/logic/dailyPuzzle/dailyPuzzle.svelte";
     import {
         Body,
         BodySmall,
