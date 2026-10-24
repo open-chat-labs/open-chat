@@ -132,7 +132,7 @@ pub struct GroupImportComplete {
 }
 
 // A tip on a message relayed from an account no one had linked, which the group or community paid
-// into the account's subaccount of the UserIndex (see `BridgedUserId::tips_subaccount`)
+// into the account's subaccount of the UserIndex (see `BridgedUserId::subaccount`)
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct BridgedUserTipped {
     // Set by a community canister, identifying the channel within it

@@ -108,22 +108,23 @@ const MAX_TWITCH_DISPLAY_NAME_LENGTH: usize = 64;
 // Twitch's profile image paths are short, eg. "jtv_user_pictures/" and a uuid
 const MAX_TWITCH_PROFILE_IMAGE_LENGTH: usize = 128;
 
-// The start of each subaccount of the UserIndex which holds the tips for an account no one has linked
-const TIPS_SUBACCOUNT_PREFIX: &[u8; 7] = b"OC_TIPS";
+// The start of each subaccount of the UserIndex which holds the funds for an account no one has
+// linked
+const SUBACCOUNT_PREFIX: &[u8; 7] = b"BRIDGED";
 
 impl BridgedUserId {
-    // The subaccount of the UserIndex in which tips on the account's relayed messages are held
-    // until someone links it, when they're paid to them, or else refunded. It's "OC_TIPS", then the
-    // platform, then zeros, then the id (big-endian), so the website can build it too. It must
-    // never change, or tips held under the old one would be lost.
-    pub fn tips_subaccount(&self) -> [u8; 32] {
+    // The account's subaccount of the UserIndex, which holds any funds sent to the account, eg. tips
+    // on its relayed messages, until someone links it, when they're paid to them, or else refunded.
+    // It's "BRIDGED", then the platform, then zeros, then the id (big-endian), so the website can
+    // build it too. It must never change, or funds held under the old one would be lost.
+    pub fn subaccount(&self) -> [u8; 32] {
         let (platform, id) = match self {
             BridgedUserId::Discord(id) => (1, id.to_be_bytes()),
             BridgedUserId::Telegram(id) => (2, id.to_be_bytes()),
             BridgedUserId::Twitch(id) => (3, id.to_be_bytes()),
         };
         let mut subaccount = [0; 32];
-        subaccount[..7].copy_from_slice(TIPS_SUBACCOUNT_PREFIX);
+        subaccount[..7].copy_from_slice(SUBACCOUNT_PREFIX);
         subaccount[7] = platform;
         subaccount[24..].copy_from_slice(&id);
         subaccount
@@ -264,19 +265,19 @@ mod tests {
     use super::*;
 
     #[test]
-    fn tips_subaccounts_are_the_same_as_ever() {
+    fn subaccounts_are_the_same_as_ever() {
         let mut expected = [0; 32];
-        expected[..8].copy_from_slice(b"OC_TIPS\x02");
+        expected[..8].copy_from_slice(b"BRIDGED\x02");
         expected[24..].copy_from_slice(&123456789i64.to_be_bytes());
-        assert_eq!(BridgedUserId::Telegram(123456789).tips_subaccount(), expected);
+        assert_eq!(BridgedUserId::Telegram(123456789).subaccount(), expected);
     }
 
     #[test]
-    fn tips_subaccounts_differ_by_platform_and_id() {
-        let discord = BridgedUserId::Discord(80351110224678912).tips_subaccount();
-        let telegram = BridgedUserId::Telegram(80351110224678912).tips_subaccount();
-        let twitch = BridgedUserId::Twitch(80351110224678912).tips_subaccount();
-        let another = BridgedUserId::Discord(80351110224678913).tips_subaccount();
+    fn subaccounts_differ_by_platform_and_id() {
+        let discord = BridgedUserId::Discord(80351110224678912).subaccount();
+        let telegram = BridgedUserId::Telegram(80351110224678912).subaccount();
+        let twitch = BridgedUserId::Twitch(80351110224678912).subaccount();
+        let another = BridgedUserId::Discord(80351110224678913).subaccount();
         assert_ne!(discord, telegram);
         assert_ne!(discord, twitch);
         assert_ne!(telegram, twitch);

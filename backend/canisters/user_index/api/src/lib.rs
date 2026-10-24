@@ -45,7 +45,7 @@ pub enum LocalUserIndexEvent {
 }
 
 // A tip on a message relayed from an account no one had linked, paid into the account's subaccount
-// of the UserIndex (see `BridgedUserId::tips_subaccount`), which holds it for whoever links the
+// of the UserIndex (see `BridgedUserId::subaccount`), which holds it for whoever links the
 // account, or else refunds it
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct BridgedUserTipped {
