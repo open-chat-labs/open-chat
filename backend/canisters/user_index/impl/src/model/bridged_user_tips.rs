@@ -1,9 +1,15 @@
+use constants::DAY_IN_MS;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
-use types::{BridgedUserId, CanisterId, Chat, MessageId, MessageIndex, TimestampMillis, UserId, icrc1};
+use types::{BridgedUserId, CanisterId, Chat, MessageId, MessageIndex, Milliseconds, TimestampMillis, UserId, icrc1};
 
-// The tips on messages relayed from accounts no one had linked, which the groups and communities
-// paid into each account's subaccount of the UserIndex, held for whoever links the account
+// How long a tip is held for whoever links its account, before it's settled (see
+// `RuntimeState::settle_bridged_user_tip`)
+pub const TIP_HOLD_DURATION: Milliseconds = 30 * DAY_IN_MS;
+
+// The tips on messages relayed from accounts no one had linked. Each is held in its account's
+// subaccount of the UserIndex (see `BridgedUserId::subaccount`) until someone links the
+// account, when it's paid to them, or until it's settled, `TIP_HOLD_DURATION` after it was made.
 #[derive(Serialize, Deserialize, Default)]
 pub struct BridgedUserTips {
     tips: BTreeMap<u64, HeldTip>,
@@ -39,13 +45,21 @@ impl BridgedUserTips {
         id
     }
 
-    pub fn len(&self) -> usize {
-        self.tips.len()
+    // Takes those of the tips held for the account which can be paid, with their ids, to pay to
+    // whoever has linked it
+    pub fn take_for(&mut self, account: &BridgedUserId, can_pay: impl Fn(&HeldTip) -> bool) -> Vec<(u64, HeldTip)> {
+        self.tips
+            .extract_if(.., |_, tip| tip.account == *account && can_pay(tip))
+            .collect()
     }
 
-    #[cfg(test)]
-    pub fn get(&self, id: u64) -> Option<&HeldTip> {
-        self.tips.get(&id)
+    // Takes the tip, if it's still held, to settle it
+    pub fn take(&mut self, id: u64) -> Option<HeldTip> {
+        self.tips.remove(&id)
+    }
+
+    pub fn len(&self) -> usize {
+        self.tips.len()
     }
 }
 
@@ -82,5 +96,49 @@ mod tests {
 
         assert_ne!(first, second);
         assert_eq!(tips.len(), 2);
+    }
+
+    #[test]
+    fn whoever_links_an_account_is_given_only_its_tips() {
+        let nelly = BridgedUserId::Telegram(123456789);
+        let bob = BridgedUserId::Discord(80351110224678912);
+        let mut tips = BridgedUserTips::default();
+        let first = tips.hold(tip(nelly, 1_000_000));
+        tips.hold(tip(bob, 2_000_000));
+        let second = tips.hold(tip(nelly, 3_000_000));
+
+        let taken = tips.take_for(&nelly, |_| true);
+
+        let taken: Vec<_> = taken.into_iter().map(|(id, tip)| (id, tip.account, tip.amount)).collect();
+        assert_eq!(taken, vec![(first, nelly, 1_000_000), (second, nelly, 3_000_000)]);
+        assert!(tips.take_for(&nelly, |_| true).is_empty());
+        assert_eq!(tips.len(), 1);
+    }
+
+    // eg. a tip in a ledger the UserIndex doesn't know yet, which waits to be settled
+    #[test]
+    fn a_tip_which_cant_be_paid_yet_stays_held() {
+        let nelly = BridgedUserId::Telegram(123456789);
+        let mut tips = BridgedUserTips::default();
+        tips.hold(tip(nelly, 1_000_000));
+        let unknown = tips.hold(tip(nelly, 2_000_000));
+
+        let taken = tips.take_for(&nelly, |tip| tip.amount < 2_000_000);
+
+        assert_eq!(taken.len(), 1);
+        assert_eq!(tips.take(unknown).map(|tip| tip.amount), Some(2_000_000));
+    }
+
+    #[test]
+    fn a_tip_claimed_already_isnt_refunded() {
+        let nelly = BridgedUserId::Telegram(123456789);
+        let mut tips = BridgedUserTips::default();
+        let claimed = tips.hold(tip(nelly, 1_000_000));
+        tips.take_for(&nelly, |_| true);
+        let unclaimed = tips.hold(tip(nelly, 2_000_000));
+
+        assert!(tips.take(claimed).is_none());
+        assert_eq!(tips.take(unclaimed).map(|tip| tip.amount), Some(2_000_000));
+        assert!(tips.take(unclaimed).is_none());
     }
 }

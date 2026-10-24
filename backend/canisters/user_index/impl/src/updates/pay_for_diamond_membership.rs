@@ -212,6 +212,7 @@ fn process_charge(
             recipient_account,
             memo: state.env.rng().random(),
             reason,
+            from_subaccount: None,
         };
         state.queue_payment(treasury_payment);
 

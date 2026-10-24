@@ -45,7 +45,7 @@ pub fn direct_tip_args(user: &User, my_user_id: UserId, args: &Args, now: Timest
     }
     Ok(TipMessageArgs {
         user_id: my_user_id,
-        recipient: args.recipient,
+        recipient: Some(args.recipient),
         thread_root_message_index: args.thread_root_message_index,
         message_id: args.message_id,
         ledger: args.ledger,
@@ -63,9 +63,11 @@ pub fn tip_direct_chat_message<P: EventPusher>(
     decimals: u8,
     event_pusher: Option<P>,
 ) -> OCResult<multi_user_canister::TipMessageArgs> {
+    // A direct chat's tips always go to the other user
+    let recipient = args.recipient.ok_or(OCErrorCode::TargetUserNotFound)?;
     let mut chat = user
         .direct_chats
-        .get_mut(&args.recipient.into())
+        .get_mut(&recipient.into())
         .ok_or(OCErrorCode::ChatNotFound)?;
     chat.tip_message(args.clone(), event_pusher)?;
     let thread_root_message_id = chat.thread_root_message_id(args.thread_root_message_index)?;

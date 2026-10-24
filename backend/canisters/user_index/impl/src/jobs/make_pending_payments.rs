@@ -3,13 +3,13 @@ use crate::timer_job_types::{RetryPaymentJob, TimerJob};
 use crate::{RuntimeState, mutate_state, read_state};
 use constants::NANOS_PER_MILLISECOND;
 use ic_cdk_timers::TimerId;
-use icrc_ledger_types::icrc1::transfer::TransferArg;
+use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
 use ledger_utils::icrc1::make_transfer;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::{error, trace};
-use types::C2CError;
-use utils::payment_retries::{retry_delay, retry_due};
+use types::{C2CError, Milliseconds};
+use utils::payment_retries::{backoff, retry_delay, retry_due};
 
 // The number of a payment's failed calls into its ledger which are logged
 const MAX_FAILURES_LOGGED: u32 = 3;
@@ -50,7 +50,7 @@ pub(crate) fn retry(pending_payment: PendingPayment, failures: u32) {
 // its ledger
 async fn process_payment(pending_payment: PendingPayment, previous_failures: u32) {
     let args = TransferArg {
-        from_subaccount: None,
+        from_subaccount: pending_payment.from_subaccount,
         to: pending_payment.recipient_account,
         fee: Some(pending_payment.fee.into()),
         created_at_time: Some(pending_payment.timestamp),
@@ -61,8 +61,22 @@ async fn process_payment(pending_payment: PendingPayment, previous_failures: u32
     let result = make_transfer(pending_payment.ledger, &args, true).await;
 
     mutate_state(|state| {
-        if let Err(error) = result {
-            on_failed_to_call_ledger(pending_payment, previous_failures, error, state);
+        match result {
+            Ok(Ok(_)) => {}
+            // An earlier attempt, whose reply was lost, made the payment already
+            Ok(Err(TransferError::Duplicate { .. })) => {}
+            // The ledger is busy, or its clock is behind, so the payment is tried again later
+            Ok(Err(TransferError::TemporarilyUnavailable | TransferError::CreatedInFuture { .. })) => {
+                let failures = previous_failures.saturating_add(1);
+                retry_later(pending_payment, failures, backoff(0, failures), state);
+            }
+            // Any other refusal won't change by itself. The payment may be of users' funds, eg. a
+            // tip held for them, so rather than being dropped, it's parked, to be made by hand.
+            Ok(Err(error)) => {
+                error!(ledger = %pending_payment.ledger, ?error, "Parked payment, as its ledger refused it");
+                state.data.pending_payments_queue.park(pending_payment);
+            }
+            Err(error) => on_failed_to_call_ledger(pending_payment, previous_failures, error, state),
         }
         start_job_if_required(state);
     });
@@ -91,18 +105,7 @@ fn on_failed_to_call_ledger(
                     "Failed to call into ledger to make payment, will retry"
                 );
             }
-            let now = state.env.now();
-            // The transfer keeps its `created_at_time` across attempts, which lets the ledger
-            // deduplicate it, so it must be retried before the ledger would reject it as too old
-            let due = retry_due(pending_payment.timestamp / NANOS_PER_MILLISECOND, delay, now);
-            state.data.timer_jobs.enqueue_job(
-                TimerJob::RetryPayment(Box::new(RetryPaymentJob {
-                    payment: pending_payment,
-                    failures,
-                })),
-                due,
-                now,
-            );
+            retry_later(pending_payment, failures, delay, state);
         }
         None => {
             error!(
@@ -113,4 +116,19 @@ fn on_failed_to_call_ledger(
             state.data.pending_payments_queue.park(pending_payment);
         }
     }
+}
+
+fn retry_later(pending_payment: PendingPayment, failures: u32, delay: Milliseconds, state: &mut RuntimeState) {
+    let now = state.env.now();
+    // The transfer keeps its `created_at_time` across attempts, which lets the ledger deduplicate
+    // it, so it must be retried before the ledger would reject it as too old
+    let due = retry_due(pending_payment.timestamp / NANOS_PER_MILLISECOND, delay, now);
+    state.data.timer_jobs.enqueue_job(
+        TimerJob::RetryPayment(Box::new(RetryPaymentJob {
+            payment: pending_payment,
+            failures,
+        })),
+        due,
+        now,
+    );
 }

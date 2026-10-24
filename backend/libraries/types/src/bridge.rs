@@ -137,6 +137,15 @@ impl BridgedUserId {
             BridgedUserId::Twitch(_) => BridgePlatform::Twitch,
         }
     }
+
+    // Whether anyone could link the account. A Telegram chat which sends messages as itself, eg. a
+    // channel, has a negative id, and can't be linked.
+    pub fn can_be_linked(&self) -> bool {
+        match self {
+            BridgedUserId::Discord(_) | BridgedUserId::Twitch(_) => true,
+            BridgedUserId::Telegram(id) => *id > 0,
+        }
+    }
 }
 
 impl BridgedUser {
@@ -282,6 +291,14 @@ mod tests {
         assert_ne!(discord, twitch);
         assert_ne!(telegram, twitch);
         assert_ne!(discord, another);
+    }
+
+    #[test]
+    fn telegram_chats_cant_be_linked() {
+        assert!(BridgedUserId::Telegram(123456789).can_be_linked());
+        assert!(!BridgedUserId::Telegram(-1001234567890).can_be_linked());
+        assert!(BridgedUserId::Discord(80351110224678912).can_be_linked());
+        assert!(BridgedUserId::Twitch(80351110224678912).can_be_linked());
     }
 
     fn discord_user() -> DiscordUser {

@@ -25,6 +25,13 @@ pub enum TimerJob {
     UnsuspendUser(UnsuspendUser),
     ProcessReportClassification(ProcessReportClassification),
     RetryPayment(Box<RetryPaymentJob>),
+    SettleBridgedUserTip(SettleBridgedUserTip),
+}
+
+// Settles a tip held for an account on another platform, if it's still held
+#[derive(Serialize, Deserialize, Clone)]
+pub struct SettleBridgedUserTip {
+    pub tip_id: u64,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -93,7 +100,14 @@ impl Job for TimerJob {
             TimerJob::UnsuspendUser(job) => job.execute(),
             TimerJob::ProcessReportClassification(job) => job.execute(),
             TimerJob::RetryPayment(job) => job.execute(),
+            TimerJob::SettleBridgedUserTip(job) => job.execute(),
         }
+    }
+}
+
+impl Job for SettleBridgedUserTip {
+    fn execute(self) {
+        mutate_state(|state| state.settle_bridged_user_tip(self.tip_id));
     }
 }
 
