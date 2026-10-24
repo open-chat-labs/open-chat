@@ -342,6 +342,8 @@ design export needs. Each entry says where it came up.
     share its link), as the old header menu did (`canOpenInvite`).
   - a failed invite or add shows two toasts: the dialog's "That didn't go through" and the app's
     reason.
+  - the Add tab shows an empty "<community> members" heading until you search, because the app
+    passes no members up front.
   - a public chat's link shows a switch locked on, and the warning that access gates are skipped
     for people joining by link. Switching a private link on takes a few seconds with nothing
     shown meanwhile.
