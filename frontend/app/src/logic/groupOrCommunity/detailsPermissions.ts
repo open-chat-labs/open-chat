@@ -10,13 +10,14 @@ import {
 /**
  * What a chat's or community's details panel offers the viewer. `canInvite` is inviting by link or
  * by name; `canOpenInvite` is opening the invite dialog at all, which also covers adding members to
- * a private channel and a public chat's member sharing its link.
+ * a private channel and a public chat's member sharing its link. User groups are a community's.
  */
 export type DetailsPermissions = {
     canEdit: boolean;
     canDelete: boolean;
     canInvite: boolean;
     canOpenInvite: boolean;
+    canManageUserGroups: boolean;
 };
 
 const nothing: DetailsPermissions = {
@@ -24,6 +25,7 @@ const nothing: DetailsPermissions = {
     canDelete: false,
     canInvite: false,
     canOpenInvite: false,
+    canManageUserGroups: false,
 };
 
 /**
@@ -47,6 +49,7 @@ export function chatDetailsPermissions(
         canInvite: canInviteUsers && (chat.kind !== "channel" || !client.isChatPrivate(chat)),
         // as the old header menu offered it (`public || canInviteUsers`), and adding members
         canOpenInvite: chat.public || canInviteUsers || client.canAddMembers(chat.id),
+        canManageUserGroups: false,
     };
 }
 
@@ -62,6 +65,7 @@ export function communityDetailsPermissions(
         canDelete: client.canDeleteCommunity(community.id),
         canInvite: client.canInviteUsers(community.id),
         canOpenInvite: client.canInviteUsers(community.id),
+        canManageUserGroups: client.canManageUserGroups(community.id),
     };
 }
 

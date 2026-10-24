@@ -79,6 +79,9 @@
         }
     >;
 
+    // what GroupPanel's user group actions send with onDialog("usergroup")
+    type UserGroupDialogRequest = { dialogMode: "create" | "edit" | "delete"; key: string | null };
+
     let { region, context }: ScreenProps<GroupRegion> = $props();
 
     const PANEL_COLORS = ["violet", "amber", "teal", "blue"] as const;
@@ -206,7 +209,11 @@
         () => chat?.dateLastPinned,
     );
     $effect(() => {
-        if ((view === "pinned" || viewRequest === "pinned") && chat !== undefined && !communityScope) {
+        if (
+            (view === "pinned" || viewRequest === "pinned") &&
+            chat !== undefined &&
+            !communityScope
+        ) {
             void pinned.sync();
         }
     });
@@ -307,9 +314,21 @@
 
     // GroupPanel offers Leave to everyone, so the rules are checked here (GAPS.md). Settings open
     // as the editor or, for someone who can't edit, the About page (GroupSettingsDialogScreen).
-    // TODO(4b): user groups, bots, webhooks, convert, import and new channels (parts 3b-5)
-    function onDialog(kind: string, _payload?: unknown, tab?: string) {
+    // TODO(4b): bots, webhooks, convert, import and new channels (parts 4-5)
+    function onDialog(kind: string, payload?: unknown, tab?: string) {
         if (collection === undefined) return;
+        if (kind === "usergroup") {
+            if (collection.kind === "community" && permissions?.canManageUserGroups) {
+                const { dialogMode, key } = payload as UserGroupDialogRequest;
+                context.dialogs.open({
+                    kind: "user_group",
+                    communityId: collection.id,
+                    mode: dialogMode,
+                    userGroupId: key === null ? undefined : Number(key),
+                });
+            }
+            return;
+        }
         if (kind === "invite") {
             if (permissions?.canOpenInvite) {
                 context.dialogs.open({
@@ -410,7 +429,7 @@
         {blocked}
         canModerate={members.canRemoveMembers() || members.canUnblockUsers()}
         canChangeRoles={people.some((p) => p.actions.roles.length > 0)}
-        canManageUserGroups={false}
+        canManageUserGroups={permissions?.canManageUserGroups ?? false}
         canEdit={permissions?.canEdit ?? false}
         canDelete={permissions?.canDelete ?? false}
         permissions={collection.kind === "community"
@@ -454,5 +473,6 @@
         onOpenPinned={openPinned}
         onUnpin={unpin}
         back={region.back}
-        onClose={close} />
+        onClose={close}
+    />
 {/if}

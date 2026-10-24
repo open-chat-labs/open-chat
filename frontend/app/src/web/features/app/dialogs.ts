@@ -35,7 +35,8 @@ export type LinkedDialog =
 
 // someone's profile card, for a name clicked in a message; confirming leaving or deleting a chat or
 // community, called `name`; a group's, channel's or community's settings (its About page for
-// someone who can't edit it); or inviting people to one, or sharing its link
+// someone who can't edit it); inviting people to one, or sharing its link; or creating, editing or
+// deleting one of a community's user groups
 export type LocalDialog =
     | ({ kind: "user" } & ProfileCard)
     | { kind: "leave_or_delete"; action: LeaveOrDelete; name: string }
@@ -48,6 +49,12 @@ export type LocalDialog =
           kind: "invite";
           target: MultiUserChatIdentifier | CommunityIdentifier;
           tab: "people" | "share";
+      }
+    | {
+          kind: "user_group";
+          communityId: CommunityIdentifier;
+          mode: "create" | "edit" | "delete";
+          userGroupId?: number;
       };
 
 /** The page GroupSettingsDialog opens on. */
@@ -100,6 +107,9 @@ export const dialogs: Dialogs = {
     // inviting people to a group, channel or community, or adding community members to a
     // channel, and its invite link (4b)
     invite: () => import("../group/InviteDialogScreen.svelte"),
+
+    // creating, editing or deleting a community's user group (4b)
+    user_group: () => import("../group/UserGroupDialogScreen.svelte"),
 
     // the ways to earn CHIT: every achievement and what it pays (8d)
     achievements: () => import("../chit/AchievementsDialogScreen.svelte"),

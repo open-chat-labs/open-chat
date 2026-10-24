@@ -29,11 +29,19 @@ function client(frozen: { chat?: boolean; community?: boolean }, privateChat = f
         canAddMembers: () => true,
         canEditCommunity: () => true,
         canDeleteCommunity: () => true,
+        canManageUserGroups: () => true,
     } as never as OpenChat;
 }
 
-const all = { canEdit: true, canDelete: true, canInvite: true, canOpenInvite: true };
-const none = { canEdit: false, canDelete: false, canInvite: false, canOpenInvite: false };
+// a channel's panel has no user groups: they're its community's
+const all = {
+    canEdit: true,
+    canDelete: true,
+    canInvite: true,
+    canOpenInvite: true,
+    canManageUserGroups: false,
+};
+const none = { ...all, canEdit: false, canDelete: false, canInvite: false, canOpenInvite: false };
 
 describe("details permissions", () => {
     // #10112 "Desktop vs mobile": a frozen chat or community, and a guest, get no edit, delete or invite
@@ -46,6 +54,10 @@ describe("details permissions", () => {
         expect(
             chatDetailsPermissions(client({ community: true }), channel, community, false),
         ).toEqual(none);
+        expect(communityDetailsPermissions(client({}), community, false)).toEqual({
+            ...all,
+            canManageUserGroups: true,
+        });
         expect(communityDetailsPermissions(client({ community: true }), community, false)).toEqual(
             none,
         );
