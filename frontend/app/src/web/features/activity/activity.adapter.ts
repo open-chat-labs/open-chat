@@ -75,11 +75,12 @@ export function activityItem(event: MessageActivityEvent, ctx: ActivityContext):
         title: ctx.text(
             activitySummary(event, message, {
                 me: ctx.me,
-                username: isByRelayedAuthor(event, message)
-                    ? ctx.author(message)
-                    : event.userId === undefined
-                      ? ctx.anon
-                      : name(event.userId, ctx),
+                username:
+                    message !== undefined && isByRelayedAuthor(event, message)
+                        ? ctx.author(message)
+                        : event.userId === undefined
+                          ? ctx.anon
+                          : name(event.userId, ctx),
                 displayName: (userId) => name(userId, ctx),
             }),
         ),

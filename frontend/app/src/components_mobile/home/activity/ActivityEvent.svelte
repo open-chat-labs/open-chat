@@ -119,7 +119,7 @@
             <Container direction={"horizontal"} gap={"lg"}>
                 <Container width={"fill"}>
                     <Subtitle fontWeight={"bold"}>
-                        <Markdown text={interpolate($_, eventSummary)} />
+                        <Markdown text={interpolate($_, eventSummary)} suppressLinks />
                     </Subtitle>
                 </Container>
                 <Container width={"hug"} padding={["xs", "zero"]}>

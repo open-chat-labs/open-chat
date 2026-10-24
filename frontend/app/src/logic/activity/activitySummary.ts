@@ -53,12 +53,13 @@ const SENT_BY_ACTOR: ReadonlySet<MessageActivityEvent["activity"]> = new Set<
  * Whether the event's user is a bridge bot which relayed the event's message from another
  * platform, so whoever did it is the message's relayed author, and is named as the message's
  * author is (see `messageAuthorName`), not as the bot. Only for an activity whose message is the
- * one its user sent: a reaction's or a tip's message is the reader's own.
+ * one its user sent: a reaction's or a tip's message is the reader's own. A name from another
+ * platform is only checked for length, so wherever it's rendered as Markdown, links are suppressed.
  */
 export function isByRelayedAuthor(
     event: Omit<MessageActivityEvent, "message">,
     message: Message | undefined,
-): message is Message {
+): boolean {
     return (
         message !== undefined &&
         SENT_BY_ACTOR.has(event.activity) &&

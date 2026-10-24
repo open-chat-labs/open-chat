@@ -137,7 +137,7 @@
         <div class="details">
             <div class="event-sumary">
                 <h4>
-                    <Markdown text={interpolate($_, eventSummary)} />
+                    <Markdown text={interpolate($_, eventSummary)} suppressLinks />
                 </h4>
             </div>
             <div class="chat-msg">
