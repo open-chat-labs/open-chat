@@ -244,3 +244,8 @@
 - Back played the dialog's exit (its backdrop fading out) before calling `onBack`, so the CHIT dialog it went back to faded its own backdrop in. With `onBack` it now hands off with no exit (`DialogFlow.handOff`), as `AchievementsDialog`'s Back already did, so the host keeps the backdrop and only the dialog changes. Without `onBack`, Back still closes with the exit.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
 
+## 2026-10-24 — StreakInsuranceDialog: a host's cap, and a purchase backed out of, by hand
+- `cap` (default: the length of `prices`) is what the foot's "cover caps at {max} days" says. OpenChat's `prices` count what can still be held after missed days, so the label read a cap that dropped with each miss; it now shows the 30 days that can be bought. `meta.json` updated.
+- `onBuy` resolving `false` is nothing bought by choice (the user backed out of the PIN prompt): the dialog stays open with no error, where it closed as if bought.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+

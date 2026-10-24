@@ -371,7 +371,8 @@ design export needs. Each entry says where it came up.
 
 - **`StreakInsuranceDialog`, by hand** (8d): a week of cells at a time, sliding along the ladder
   (30 in a row crushed the prices together); "Your cover is full" for "Covered for a full week",
-  as cover caps at 30 days; Back with `onBack` hands off with no exit, so the backdrop stays.
+  as cover caps at 30 days; Back with `onBack` hands off with no exit, so the backdrop stays;
+  `cap` for the foot's "cover caps at"; `onBuy` resolving `false` is nothing bought by choice.
 - **`ChitDialog`, by hand** (8d): the default milestone tiers keep their hand-spaced positions
   when a host passes them; a claim made in the dialog clears once the next claim opens; `onClaim`
   resolving `false` is nothing claimed (claimed already), and plays no claim.
@@ -385,8 +386,8 @@ design export needs. Each entry says where it came up.
 - **Streak insurance** (`StreakInsuranceDialog`): paid in CHAT as the old dialog pays it (the
   PIN first, if set, through the PIN prompt), what's sent worked out from the cover bought. The
   dialog prices a day by the cover held and the backend by the days bought, so the app offsets
-  its prices by the days used; its "cover caps at N days" then counts what can still be held
-  (30 less the days used), not the 30 days that can be bought.
+  its prices by the days used (and passes `cap`, so "cover caps at" says 30). The PIN prompt given
+  up leaves the dialog open with nothing said.
 - **Leaderboard** (`?hof`): this month's, last month's and all time's top 10, as the old hall of
   fame shows them, without its Invaders game.
 - **Ways to earn** (`AchievementsDialog`): the old "Learn to earn" list (`achievementList`). The

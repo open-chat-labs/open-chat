@@ -15137,6 +15137,17 @@
         "doc": "Price in CHAT of each position in your holding (1st day, 2nd …); its length is the most you can hold."
       },
       {
+        "name": "cap",
+        "type": "number",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The most days of cover there can be, for the foot's \"cover caps at\"; defaults to the length of `prices`."
+      },
+      {
         "name": "onBuy",
         "type": "(req: { days: number; cost: number; fromPosition: number }) => Promise<unknown> | void",
         "default": null,

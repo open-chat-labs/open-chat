@@ -22,13 +22,16 @@
     balance: number;
     /** Price in CHAT of each position in your holding (1st day, 2nd …); its length is the most you can hold. */
     prices: number[];
-    /** Buy `days` more days of cover from `fromPosition` (0-based) for `cost` CHAT. Reject to keep the dialog open. */
+    /** Buy `days` more days of cover from `fromPosition` (0-based) for `cost` CHAT. Reject to keep the dialog open with
+     *  an error; resolve with false when nothing was bought by choice (the user backed out), to keep it open with none. */
     onBuy?: (req: { days: number; cost: number; fromPosition: number }) => Promise<unknown> | void;
+    /** The most days of cover there can be, for the foot's "cover caps at"; defaults to the length of `prices`. */
+    cap?: number;
     onBack?: () => void;
     onClose?: () => void;
   }
 
-  let { streak, insured = 0, used = 0, balance, prices, onBuy, onBack, onClose }: Props = $props();
+  let { streak, insured = 0, used = 0, balance, prices, cap, onBuy, onBack, onClose }: Props = $props();
   const STEPS = $derived(prices);
   const MAX_DAYS = $derived(prices.length);
   const t = useT();
@@ -45,8 +48,9 @@
   const room = $derived(MAX_DAYS - held);
   const qty = $derived(Math.min(picked, room));
   const total = $derived(STEPS.slice(held, held + qty).reduce((sum, v) => sum + v, 0));
-  // a week of cells at a time, however long the ladder: the last covered day, the ones being
-  // added and the next to add stay in view
+  // a week of cells at a time, however long the ladder: the next to add and the latest added stay in
+  // view, with the last covered day while there's room (more than a week added scrolls the earliest
+  // added off)
   const WINDOW = 7;
   const windowStart = $derived(Math.max(0, Math.min(MAX_DAYS - WINDOW, Math.max(held - 1, held + qty - WINDOW + 1))));
   const shown = $derived(STEPS.slice(windowStart, windowStart + WINDOW).map((price, k) => ({ price, i: windowStart + k })));
@@ -75,7 +79,7 @@
   async function pay() {
     if (!canPay) return;
     const result = await flow.run(() => onBuy?.({ days: qty, cost: total, fromPosition: held }));
-    if (result.ok) flow.leave(onClose);
+    if (result.ok && result.value !== false) flow.leave(onClose);
   }
 
   // tapping the last added cell takes it back off again
@@ -132,7 +136,7 @@
         <span class="balance short" role="alert">{t('ui.streakInsuranceDialog.buyFailed')}</span>
       {:else}
         <span class="balance" class:short={!affordable}
-          >{t(affordable ? 'ui.streakInsuranceDialog.balanceCap' : 'ui.streakInsuranceDialog.balanceShort', { amount: fmt(balance), max: MAX_DAYS })}</span
+          >{t(affordable ? 'ui.streakInsuranceDialog.balanceCap' : 'ui.streakInsuranceDialog.balanceShort', { amount: fmt(balance), max: cap ?? MAX_DAYS })}</span
         >
       {/if}
       <span class="pay" class:ready={canPay && !flow.busy} onclick={pay} role="button" tabindex="0" aria-disabled={!canPay || flow.locked}>{flow.busy ? t('ui.streakInsuranceDialog.paying') : payLabel}</span>

@@ -7,7 +7,9 @@ import type LeaderboardDialog from "@openchat/ui/src/features/components/Leaderb
 import type NavRail from "@openchat/ui/src/features/components/NavRail.svelte";
 import type { ComponentProps } from "svelte";
 import {
+    CHAT_E8S,
     STREAK_INSURANCE_MAX_DAYS,
+    streakInsuranceDayPrice,
     streakInsurancePrice,
     walletApprovalFee,
     CHIT_STREAK_MILESTONES,
@@ -236,7 +238,10 @@ export function leaderboardBoards(
     };
 }
 
-const CHAT_E8S = 100_000_000;
+// CHAT e8s as CHAT
+function chat(e8s: bigint): number {
+    return Number(e8s) / Number(CHAT_E8S);
+}
 
 /**
  * StreakInsuranceDialog's `prices`: what each position of the user's cover costs, in CHAT. The
@@ -247,18 +252,23 @@ const CHAT_E8S = 100_000_000;
 export function streakInsuranceDialogPrices({ daysMissed }: StreakInsurance): number[] {
     return Array.from(
         { length: Math.max(STREAK_INSURANCE_MAX_DAYS - daysMissed, 0) },
-        (_, position) => 2 ** (daysMissed + position),
+        (_, position) => chat(streakInsuranceDayPrice(daysMissed + position)),
     );
 }
 
 /**
  * The CHAT the dialog can spend, in CHAT: the balance less the fee for the approval the user makes
  * before the price is taken (the price itself is burned, with no fee), so a day it offers can be
- * paid. None for a balance not loaded, or a CHAT ledger not known.
+ * paid. None for a balance not loaded, or while CHAT's fee isn't known (without it, nothing is
+ * known to be left for the approval).
  */
-export function streakInsuranceBalance(balanceE8s: bigint, transferFee: bigint): number {
+export function streakInsuranceBalance(
+    balanceE8s: bigint,
+    transferFee: bigint | undefined,
+): number {
+    if (transferFee === undefined) return 0;
     const spendable = balanceE8s - walletApprovalFee(transferFee);
-    return spendable > 0n ? Number(spendable) / CHAT_E8S : 0;
+    return spendable > 0n ? chat(spendable) : 0;
 }
 
 /**

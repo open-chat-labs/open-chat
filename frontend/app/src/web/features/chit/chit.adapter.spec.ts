@@ -237,6 +237,8 @@ describe("streak insurance", () => {
         // 2 CHAT less the fee can't pay a 2 CHAT day
         expect(streakInsuranceBalance(2n * CHAT, fee)).toBeLessThan(2);
         expect(streakInsuranceBalance(0n, fee)).toBe(0);
+        // CHAT's fee not known yet: nothing known to be spendable
+        expect(streakInsuranceBalance(5n * CHAT, undefined)).toBe(0);
     });
 
     test("the dialog's prices are what the backend charges, after missed days too", () => {

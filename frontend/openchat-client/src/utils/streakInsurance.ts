@@ -5,7 +5,13 @@
 /** The most days of cover a user can buy (the backend's `Streak::MAX_DAYS_INSURED`). */
 export const STREAK_INSURANCE_MAX_DAYS = 30;
 
-const CHAT_E8S = 100_000_000n;
+/** CHAT's e8s: what insurance prices are in. */
+export const CHAT_E8S = 100_000_000n;
+
+/** What the day of cover bought after `daysBought` others costs, in CHAT e8s. */
+export function streakInsuranceDayPrice(daysBought: number): bigint {
+    return 2n ** BigInt(daysBought) * CHAT_E8S;
+}
 
 /**
  * What `additionalDays` more days of cover cost, in CHAT e8s, with `daysInsured` bought already:
@@ -14,7 +20,7 @@ const CHAT_E8S = 100_000_000n;
 export function streakInsurancePrice(daysInsured: number, additionalDays: number): bigint {
     let total = 0n;
     for (let i = 0; i < additionalDays; i++) {
-        total += 2n ** BigInt(daysInsured + i) * CHAT_E8S;
+        total += streakInsuranceDayPrice(daysInsured + i);
     }
     return total;
 }
