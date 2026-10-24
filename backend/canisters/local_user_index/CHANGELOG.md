@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Let groups and communities look up who linked a Discord/Telegram account, to route tips on its relayed messages ([#10211](https://github.com/open-chat-labs/open-chat/pull/10211))
 - Let the Twitch bridge bot relay messages from Twitch ([#10214](https://github.com/open-chat-labs/open-chat/pull/10214))
 - Pass tips on messages from unlinked Discord/Telegram/Twitch accounts on to the UserIndex, which holds them ([#10218](https://github.com/open-chat-labs/open-chat/pull/10218))
+- Tell groups and communities which accounts no one can link, eg. Discord bots and webhooks ([#10225](https://github.com/open-chat-labs/open-chat/pull/10225))
 
 ## [[2.0.2185](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2185-local_user_index)] - 2026-10-23
 

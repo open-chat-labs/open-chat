@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Route tips on messages relayed from Discord/Telegram to the OpenChat user who linked the account ([#10211](https://github.com/open-chat-labs/open-chat/pull/10211))
 - Add Twitch as a supported platform for bridged chats ([#10214](https://github.com/open-chat-labs/open-chat/pull/10214))
 - Let messages from unlinked Discord/Telegram/Twitch accounts be tipped, holding the tips for whoever links the account ([#10220](https://github.com/open-chat-labs/open-chat/pull/10220))
+- Refuse tips on messages from Discord bots and webhooks, which no one can link ([#10225](https://github.com/open-chat-labs/open-chat/pull/10225))
 
 ### Removed
 

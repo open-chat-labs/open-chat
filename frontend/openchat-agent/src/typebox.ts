@@ -710,6 +710,7 @@ export const DiscordUser = /* @__PURE__ */ Type.Object({
     username: Type.String(),
     display_name: Type.Optional(Type.String()),
     avatar: Type.Optional(Type.String()),
+    bot: Type.Optional(Type.Boolean()),
 });
 
 export type DailyPuzzleConfig = Static<typeof DailyPuzzleConfig>;

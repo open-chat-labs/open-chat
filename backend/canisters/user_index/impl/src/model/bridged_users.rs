@@ -200,6 +200,7 @@ mod tests {
             username: "nelly".to_string(),
             display_name: Some(display_name.to_string()),
             avatar: None,
+            bot: false,
         })
     }
 

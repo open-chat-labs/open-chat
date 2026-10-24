@@ -110,6 +110,7 @@ fn bridge_bots_relay_messages_as_their_authors() {
         username: "nelly".to_string(),
         display_name: Some("Nelly".to_string()),
         avatar: Some("8342729096ea3675442027381ff50dfe".to_string()),
+        bot: false,
     };
     let from_discord = BridgedUser::Discord(discord_author.clone());
     let from_telegram = BridgedUser::Telegram(TelegramUser {
@@ -324,6 +325,7 @@ fn bridge_bots_relay_messages_as_their_authors() {
         channel,
         BridgedUser::Discord(DiscordUser {
             avatar: Some("https://example.com/avatar.png".to_string()),
+            bot: false,
             ..discord_author.clone()
         }),
     );
@@ -513,7 +515,14 @@ fn tips_on_relayed_messages_go_to_whoever_linked_the_account(in_community: bool)
     let tipper = client::register_user(env, canister_ids);
     let outsider = client::register_user(env, canister_ids);
     client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, &tipper, 10_000_000_000);
-    let bridged = set_up_bridged_chat(env, canister_ids, *controller, in_community, &[&tipper]);
+    let bridged = set_up_bridged_chat(
+        env,
+        canister_ids,
+        *controller,
+        BridgePlatform::Telegram,
+        in_community,
+        &[&tipper],
+    );
     let owner = &bridged.owner;
     let (chat, spender) = (bridged.chat, bridged.spender);
     let user_index = canister_ids.user_index;
@@ -633,7 +642,14 @@ fn tips_for_unlinked_accounts_are_held_for_whoever_links_them(in_community: bool
     env.advance_time(Duration::from_millis(1));
     let tipper = client::register_user(env, canister_ids);
     client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, &tipper, 10_000_000_000);
-    let bridged = set_up_bridged_chat(env, canister_ids, *controller, in_community, &[&tipper]);
+    let bridged = set_up_bridged_chat(
+        env,
+        canister_ids,
+        *controller,
+        BridgePlatform::Telegram,
+        in_community,
+        &[&tipper],
+    );
     let (chat, spender) = (bridged.chat, bridged.spender);
     let (user_index, ledger) = (canister_ids.user_index, canister_ids.icp_ledger);
     let tip_amount = 1_0000_0000;
@@ -738,7 +754,7 @@ fn a_tip_held_for_an_account_linked_since_is_paid_on_at_once() {
 
     env.advance_time(Duration::from_millis(1));
     let tipper = client::register_user(env, canister_ids);
-    let bridged = set_up_bridged_chat(env, canister_ids, *controller, false, &[&tipper]);
+    let bridged = set_up_bridged_chat(env, canister_ids, *controller, BridgePlatform::Telegram, false, &[&tipper]);
     let Chat::Group(group_id) = bridged.chat else { unreachable!() };
     let (user_index, ledger) = (canister_ids.user_index, canister_ids.icp_ledger);
     let tip_amount = 1_0000_0000;
@@ -809,7 +825,7 @@ fn tips_held_in_ledgers_the_registry_doesnt_know_arent_paid_out() {
 
     env.advance_time(Duration::from_millis(1));
     let tipper = client::register_user(env, canister_ids);
-    let bridged = set_up_bridged_chat(env, canister_ids, *controller, false, &[&tipper]);
+    let bridged = set_up_bridged_chat(env, canister_ids, *controller, BridgePlatform::Telegram, false, &[&tipper]);
     let user_index = canister_ids.user_index;
     let tip_amount = 1_0000_0000;
     let ledger = install_icrc_ledger(
@@ -859,6 +875,81 @@ fn tips_held_in_ledgers_the_registry_doesnt_know_arent_paid_out() {
     clear_bridge_bot(env, canister_ids, &bridged);
 }
 
+// No one can link a Discord bot or webhook, so a tip on one of their messages is refused, rather
+// than held for 30 days and then refunded
+#[test_case(true; "in a channel")]
+#[test_case(false; "in a group")]
+fn messages_from_discord_bots_cant_be_tipped(in_community: bool) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    env.advance_time(Duration::from_millis(1));
+    let tipper = client::register_user(env, canister_ids);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, &tipper, 10_000_000_000);
+    let bridged = set_up_bridged_chat(
+        env,
+        canister_ids,
+        *controller,
+        BridgePlatform::Discord,
+        in_community,
+        &[&tipper],
+    );
+    let ledger = canister_ids.icp_ledger;
+    let tip_amount = 1_0000_0000;
+    let discord_account = |bot| {
+        BridgedUser::Discord(DiscordUser {
+            id: random_from_u128::<u128>() as u64,
+            username: random_string(),
+            display_name: None,
+            avatar: None,
+            bot,
+        })
+    };
+    let held_for = |account: &BridgedUser| icrc1::Account {
+        owner: canister_ids.user_index,
+        subaccount: Some(account.id().subaccount()),
+    };
+
+    let bots_account = discord_account(true);
+    let (message_id, _) = relay(env, &bridged, &bots_account);
+    let response = tip_to(
+        env,
+        &tipper,
+        bridged.chat,
+        message_id,
+        held_for(&bots_account),
+        ledger,
+        tip_amount,
+    );
+    assert!(
+        matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::TargetUserNotFound)),
+        "{response:?}"
+    );
+
+    // A Discord user's message can still be tipped, the tip being held for whoever links them
+    let users_account = discord_account(false);
+    let (message_id, _) = relay(env, &bridged, &users_account);
+    client::approve_spender(env, &tipper, ledger, bridged.spender, tip_amount + ICP_TRANSFER_FEE);
+    let response = tip_to(
+        env,
+        &tipper,
+        bridged.chat,
+        message_id,
+        held_for(&users_account),
+        ledger,
+        tip_amount,
+    );
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+
+    // Leaves the pooled env as it was
+    clear_bridge_bot(env, canister_ids, &bridged);
+}
+
 // The UserIndex refreshes the tokens it pays held tips out of from the Registry daily
 #[test]
 fn user_index_refreshes_the_registrys_tokens_daily() {
@@ -873,7 +964,7 @@ fn user_index_refreshes_the_registrys_tokens_daily() {
     });
 }
 
-// A group, or a channel in a community, with a Telegram bridge bot installed, and `members` in it
+// A group, or a channel in a community, with a bridge bot for `platform` installed, and `members` in it
 struct BridgedChat {
     owner: User,
     chat: Chat,
@@ -883,12 +974,14 @@ struct BridgedChat {
     bot_principal: Principal,
     // The platform operator who set the bridge bot
     operator: User,
+    platform: BridgePlatform,
 }
 
 fn set_up_bridged_chat(
     env: &mut PocketIc,
     canister_ids: &CanisterIds,
     controller: Principal,
+    platform: BridgePlatform,
     in_community: bool,
     members: &[&User],
 ) -> BridgedChat {
@@ -934,9 +1027,9 @@ fn set_up_bridged_chat(
     let operator = client::register_user(env, canister_ids);
     client::user_index::happy_path::add_platform_operator(env, controller, user_index, operator.user_id);
     tick_many(env, 3);
-    let response = set_bridge_bot(env, operator.principal, user_index, BridgePlatform::Telegram, Some(bot_id));
+    let response = set_bridge_bot(env, operator.principal, user_index, platform, Some(bot_id));
     assert!(matches!(response, UnitResult::Success), "{response:?}");
-    wait_for_bridge_bot_everywhere(env, canister_ids, BridgePlatform::Telegram, Some(bot_id));
+    wait_for_bridge_bot_everywhere(env, canister_ids, platform, Some(bot_id));
 
     BridgedChat {
         owner,
@@ -945,20 +1038,21 @@ fn set_up_bridged_chat(
         local_user_index,
         bot_principal,
         operator,
+        platform,
     }
 }
 
-// Leaves the pooled env without a Telegram bridge bot, as it was
+// Leaves the pooled env without a bridge bot for the platform, as it was
 fn clear_bridge_bot(env: &mut PocketIc, canister_ids: &CanisterIds, bridged: &BridgedChat) {
     let response = set_bridge_bot(
         env,
         bridged.operator.principal,
         canister_ids.user_index,
-        BridgePlatform::Telegram,
+        bridged.platform,
         None,
     );
     assert!(matches!(response, UnitResult::Success), "{response:?}");
-    wait_for_bridge_bot_everywhere(env, canister_ids, BridgePlatform::Telegram, None);
+    wait_for_bridge_bot_everywhere(env, canister_ids, bridged.platform, None);
 }
 
 fn telegram_account(id: i64) -> BridgedUser {
