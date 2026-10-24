@@ -1,4 +1,4 @@
-import { backIntent } from "./linkedDialogs";
+import { backIntent, handOffAt, sameUrl } from "./linkedDialogs";
 
 describe("going back to a linked dialog", () => {
     test("goes back in history when this one was opened from it", () => {
@@ -29,5 +29,39 @@ describe("going back to a linked dialog", () => {
             ),
         ).toBe("auto");
         expect(backIntent(undefined, "/chats?chit=earn", "/chats?chit")).toBe("auto");
+    });
+});
+
+describe("the same URL", () => {
+    test("is the same path and query once parsed, flags with or without =", () => {
+        expect(sameUrl("/chats?threads&chit", "/chats?threads=&chit")).toBe(true);
+        expect(sameUrl("/chats?chit&threads", "/chats?threads=&chit")).toBe(true);
+        expect(sameUrl("/chats?chit", "/chats?chit=earn")).toBe(false);
+        expect(sameUrl("/chats?chit", "/communities?chit")).toBe(false);
+    });
+
+    test("so another flag in the URL still goes back in history to the CHIT dialog", () => {
+        expect(
+            backIntent(
+                { to: "/chats?threads&chit=earn", from: "/chats?threads&chit" },
+                "/chats?threads&chit=earn",
+                "/chats?threads=&chit",
+            ),
+        ).toBe("dismiss");
+    });
+});
+
+describe("a hand-off", () => {
+    const handOff = { to: "/chats?chit=earn", from: "/chats?chit" };
+
+    test("is kept on its way to its URL, and while it shows", () => {
+        // the URL told again as it was, before the navigation lands
+        expect(handOffAt(handOff, "/chats?chit")).toBe(handOff);
+        expect(handOffAt(handOff, "/chats?chit=earn")).toEqual({ ...handOff, reached: true });
+    });
+
+    test("is forgotten once its URL has been left, so coming back to it later some other way isn't taken for it", () => {
+        expect(handOffAt({ ...handOff, reached: true }, "/chats")).toBeUndefined();
+        expect(handOffAt(undefined, "/chats?chit=earn")).toBeUndefined();
     });
 });

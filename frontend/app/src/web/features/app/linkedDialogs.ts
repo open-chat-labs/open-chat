@@ -1,12 +1,32 @@
 import { navigate, type NavigationIntent } from "@src/utils/navigation";
 import { openLinkedDialog, type LinkedDialog } from "./dialogs";
 
-/** A linked dialog opened in another's place: the URL it was opened at, and the one it was opened from. */
-export type HandOff = { to: string; from: string };
+/**
+ * A linked dialog opened in another's place: the URL it was opened at, the one it was opened from,
+ * and whether the URL has got there yet (it hasn't as the hand-off is made).
+ */
+export type HandOff = { to: string; from: string; reached?: boolean };
 
 // the last linked dialog opened in another's place, so going back to that one can go back in
-// history to it (a navigation's own history entries keep only the path, not the query)
+// history to it (a navigation's own history entries keep only the path, not the query). Forgotten
+// once the URL leaves it (urlChanged), so the same URL reached later some other way isn't taken
+// for it
 let lastHandOff: HandOff | undefined;
+
+/** The URL has changed (DialogHost follows it): a hand-off left is forgotten. */
+export function urlChanged(url: string): void {
+    lastHandOff = handOffAt(lastHandOff, url);
+}
+
+/**
+ * What's left of a hand-off at `url`: kept while its URL shows, and on its way there (the URL can
+ * be told of again as it was before the navigation lands), forgotten once that URL has been left.
+ */
+export function handOffAt(handOff: HandOff | undefined, url: string): HandOff | undefined {
+    if (handOff === undefined) return undefined;
+    if (sameUrl(handOff.to, url)) return { ...handOff, reached: true };
+    return handOff.reached ? undefined : handOff;
+}
 
 /**
  * Opens a linked dialog in place of the one showing, if any (from the profile, Diamond; from the
@@ -44,9 +64,24 @@ export function backIntent(
     current: string,
     to: string,
 ): NavigationIntent {
-    return handOff !== undefined && handOff.to === current && handOff.from === to
+    return handOff !== undefined && sameUrl(handOff.to, current) && sameUrl(handOff.from, to)
         ? "dismiss"
         : "auto";
+}
+
+/**
+ * Whether two URLs (a path and a query) are the same once parsed: `?threads&chit` is
+ * `?threads=&chit`, as the query is written back with its flags given `=`.
+ */
+export function sameUrl(a: string, b: string): boolean {
+    const [pathA, queryA = ""] = a.split("?", 2);
+    const [pathB, queryB = ""] = b.split("?", 2);
+    const sorted = (query: string) => {
+        const params = new URLSearchParams(query);
+        params.sort();
+        return params.toString();
+    };
+    return pathA === pathB && sorted(queryA) === sorted(queryB);
 }
 
 function currentUrl(): string {

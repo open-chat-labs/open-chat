@@ -30,7 +30,7 @@
     import SuspendUserDialog from "../user/SuspendUserDialog.svelte";
     import AppEventDialogs from "./AppEventDialogs.svelte";
     import DialogScreen from "./DialogScreen.svelte";
-    import { openLinked } from "./linkedDialogs";
+    import { openLinked, urlChanged } from "./linkedDialogs";
     import { disableChit } from "@src/stores/settings";
     import { screenLoader } from "./screens";
     import {
@@ -68,6 +68,7 @@
     $effect(() => {
         let shown: LinkedDialog["kind"] | undefined;
         return querystringStore.subscribe((query) => {
+            urlChanged(`${window.location.pathname}${window.location.search}`);
             const kind = linkedDialog(query)?.kind;
             if (kind === shown) return;
             handedOffTo = shown !== undefined && kind !== undefined && !exited ? kind : undefined;
