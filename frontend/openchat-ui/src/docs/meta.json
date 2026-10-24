@@ -11062,6 +11062,17 @@
         "doc": "Everyone you can invite ({ id, name, handle, color, frequent? })."
       },
       {
+        "name": "onSearch",
+        "type": "(query: string, tab: 'add' | 'invite') => Promise<InvitePerson[]>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Searches for people to add or invite as the query changes (debounced, latest query wins); the results stand in for filtering communityMembers / people."
+      },
+      {
         "name": "pending",
         "type": "{ title: string; handle: string; color: Color }[]",
         "default": null,

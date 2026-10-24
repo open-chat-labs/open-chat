@@ -327,6 +327,27 @@ design export needs. Each entry says where it came up.
     message permissions included, so it reads far more than the dialog's badge.
   - Esc while the dialog's role picker is open closes the whole dialog, and drops unsaved edits.
 
+- **Invite** (4b part 3a): `InviteDialog`, on `MemberManagement`, opens from GroupPanel's invite
+  and share buttons, the conversation header's Invite and the community header's Invite.
+  - by hand: `InviteDialog` takes `onSearch`. Invite searches the community's members and then
+    everyone (`searchUsersForInvite`), and Add searches the community (`searchCommunityMembersToAdd`),
+    as both old trees did.
+  - the dialog says how many invites went or failed. The app adds its own toast only for a
+    partial add ("group.addMembersPartialSuccess") and a failure's reason.
+  - nobody is listed before you search; the old pages listed nobody either.
+  - resetting the link doesn't ask first; the old pages did ("invite.confirmReset").
+  - no QR code, no "share to a chat" (the chat picker is 4d), and invited-but-not-joined people
+    aren't listed.
+  - it opens for a private channel too (its Add tab) and for any member of a public chat (to
+    share its link), as the old header menu did (`canOpenInvite`).
+  - a failed invite or add shows two toasts: the dialog's "That didn't go through" and the app's
+    reason.
+  - the Add tab shows an empty "<community> members" heading until you search, because the app
+    passes no members up front.
+  - a public chat's link shows a switch locked on, and the warning that access gates are skipped
+    for people joining by link. Switching a private link on takes a few seconds with nothing
+    shown meanwhile.
+
 ## App
 
 ### Data the design shows that the backend doesn't have

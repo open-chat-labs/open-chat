@@ -133,3 +133,51 @@ test("each failed member action gives its failure message, and a community's go 
     expect(blockCommunityUser).toHaveBeenCalledWith(community.id, "u");
     expect(blockUser).not.toHaveBeenCalled();
 });
+
+// 4b invariant 3: a failed invite or add gives its failure ResourceKey, and a partial add says so
+test("a failed invite or add to a channel gives its failure message", async () => {
+    const channel = {
+        kind: "channel",
+        id: { kind: "channel", communityId: "ccccc-cc", channelId: 1 },
+        level: "channel",
+        public: false,
+    } as MultiUserChat;
+    const outcomes = (add: unknown) =>
+        new MemberManagement(
+            {
+                inviteUsers: async () => false,
+                addMembersToChannel: async () => add,
+            } as never,
+            channel,
+        );
+
+    expect(await outcomes({}).inviteUsers(["u"])).toMatchObject({
+        kind: "failed",
+        message: { key: "group.inviteUsersFailed" },
+    });
+    expect(await outcomes({ kind: "add_to_channel_failed" }).addUsers(["u"])).toMatchObject({
+        kind: "failed",
+        message: { key: "group.addMembersFailed" },
+    });
+    expect(
+        await outcomes({ kind: "add_to_channel_partial_success" }).addUsers(["u", "v"]),
+    ).toMatchObject({ kind: "success", message: { key: "group.addMembersPartialSuccess" } });
+});
+
+// the users the dialog picked are the ones sent (the old pages' own picks are empty there)
+test("an invite or add sends the users it's given", async () => {
+    const channel = {
+        kind: "channel",
+        id: { kind: "channel", communityId: "ccccc-cc", channelId: 1 },
+        level: "channel",
+    } as MultiUserChat;
+    const inviteUsers = vi.fn(async () => true);
+    const addMembersToChannel = vi.fn(async () => ({ kind: "success" }));
+    const members = new MemberManagement({ inviteUsers, addMembersToChannel } as never, channel);
+
+    await members.inviteUsers(["u"]);
+    await members.addUsers(["u", "v"]);
+
+    expect(inviteUsers).toHaveBeenCalledWith(channel.id, ["u"]);
+    expect(addMembersToChannel).toHaveBeenCalledWith(channel.id, ["u", "v"]);
+});

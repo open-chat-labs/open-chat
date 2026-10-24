@@ -70,6 +70,10 @@
     inChannel?: string[];
     /** Everyone you can invite. */
     people: InvitePerson[];
+    /** Searches for people to add ('add') or invite ('invite') as the query changes (debounced, latest query
+     *  wins); the results stand in for filtering `communityMembers` / `people`. A failed search falls back to
+     *  that filter. */
+    onSearch?: (query: string, tab: 'add' | 'invite') => Promise<InvitePerson[]>;
     /** Invited but not accepted yet. */
     pending?: { title: string; handle: string; color: Color }[];
     /** Invite rights. Without them (the default) the page is view-only: no footer, no sharing switch. */
@@ -102,6 +106,7 @@
     communityMembers = [],
     inChannel = [],
     people,
+    onSearch,
     pending = [],
     canInvite = false,
     embedded = false,
@@ -170,12 +175,41 @@
   const key = $derived(keys[tab] ?? keys[0]);
   const matches = (p: { name: string; handle: string }, q: string) => `${p.name} ${p.handle}`.toLowerCase().includes(q);
 
+  // the host's search results for the current query of each tab (null: none yet, or it failed), and everyone a search
+  // has turned up, so a pick stays shown as its person
+  let addFound = $state<{ query: string; people: InvitePerson[] } | null>(null);
+  let inviteFound = $state<{ query: string; people: InvitePerson[] } | null>(null);
+  let found = $state<InvitePerson[]>([]);
+  function searchSoon(tabKey: 'add' | 'invite', asked: string) {
+    if (!onSearch || !asked) return;
+    const timer = setTimeout(async () => {
+      try {
+        const results = await onSearch(asked, tabKey);
+        // a later query has taken over: its own search answers it
+        const now = (tabKey === 'add' ? addQuery : query).trim().toLowerCase();
+        if (now !== asked) return;
+        found = [...found.filter((f) => !results.some((p) => p.id === f.id)), ...results];
+        if (tabKey === 'add') addFound = { query: asked, people: results };
+        else inviteFound = { query: asked, people: results };
+      } catch {
+        // the local filter stands
+      }
+    }, 250);
+    return () => clearTimeout(timer);
+  }
+
   const aq = $derived(addQuery.trim().toLowerCase());
-  const addPool = $derived((aq ? communityMembers.filter((p) => matches(p, aq)) : communityMembers).slice(0, 30));
+  $effect(() => searchSoon('add', aq));
+  const addPool = $derived(
+    (aq ? (addFound?.query === aq ? addFound.people : communityMembers.filter((p) => matches(p, aq))) : communityMembers).slice(0, 30),
+  );
   const outsideMatch = $derived(!!aq && people.some((p) => !communityMembers.some((m) => m.id === p.id) && matches(p, aq)));
 
   const q = $derived(query.trim().toLowerCase());
-  const pool = $derived(q ? people.filter((p) => matches(p, q)) : people.filter((p) => p.frequent));
+  $effect(() => searchSoon('invite', q));
+  const pool = $derived(q ? (inviteFound?.query === q ? inviteFound.people : people.filter((p) => matches(p, q))) : people.filter((p) => p.frequent));
+  const knownPeople = $derived([...people, ...found.filter((f) => !people.some((p) => p.id === f.id))]);
+  const knownMembers = $derived([...communityMembers, ...found.filter((f) => !communityMembers.some((p) => p.id === f.id))]);
 
   // copied exactly as issued; shown without the scheme
   const link = $derived(linkOverride ?? shareLink ?? '');
@@ -330,7 +364,7 @@
           <span class="hint">{t('ui.inviteDialog.addHint', { group: groupName, community: communityName })}</span>
 
           {#if addPicked.length > 0}
-            {@render chips(addPicked, communityMembers, t('ui.inviteDialog.selected', { count: addPicked.length }), () => (addPicked = []), (h) => (addPicked = toggleIn(addPicked, h)))}
+            {@render chips(addPicked, knownMembers, t('ui.inviteDialog.selected', { count: addPicked.length }), () => (addPicked = []), (h) => (addPicked = toggleIn(addPicked, h)))}
           {/if}
 
           <div class="list-block">
@@ -377,11 +411,11 @@
           </div>
 
           {#if picked.length > 0}
-            {@render chips(picked, people, t('ui.inviteDialog.selected', { count: picked.length }), () => (picked = []), (h) => (picked = toggleIn(picked, h)))}
+            {@render chips(picked, knownPeople, t('ui.inviteDialog.selected', { count: picked.length }), () => (picked = []), (h) => (picked = toggleIn(picked, h)))}
           {/if}
 
           <div class="list-block">
-            <span class="list-label start">{t(q ? 'ui.inviteDialog.searchResults' : 'ui.inviteDialog.frequent')}</span>
+            {#if q || pool.length > 0}<span class="list-label start">{t(q ? 'ui.inviteDialog.searchResults' : 'ui.inviteDialog.frequent')}</span>{/if}
             <div class="rows">
               {#each pool as u}
                 <div class="row">
@@ -454,7 +488,8 @@
       </div>
     </div>
 
-    {#if canInvite && !(embedded && key === 'share')}
+    <!-- the Add tab is sent with add rights (canAdd), the others with invite rights -->
+    {#if (key === 'add' ? canAdd : canInvite) && !(embedded && key === 'share')}
       <div class="footer">
         {#if !embedded}
           <span class="cancel" onclick={cancel} role="button" tabindex="0" aria-disabled={flow.locked || share.pending}>{t(key === 'share' ? 'ui.common.done' : 'ui.common.cancel')}</span>
