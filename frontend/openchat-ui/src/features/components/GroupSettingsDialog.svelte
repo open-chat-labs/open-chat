@@ -76,11 +76,12 @@
   ];
   const VALUE_LABEL: Record<GroupRole, string> = { member: 'ui.groupSettingsDialog.value.member', moderator: 'ui.groupSettingsDialog.value.moderator', admin: 'ui.groupSettingsDialog.value.admin', owner: 'ui.groupSettingsDialog.value.owner', nobody: 'ui.groupSettingsDialog.value.nobody' };
   // only: the rows a community or a group doesn't have (a community has no messages of its own)
-  // communityDef: a community's default where it differs (a community has no moderators)
+  // communityDef: a community's default where it differs. A community's defaults are all admin, as the backend's
+  // (a community has no moderators)
   const GENERAL: { key: string; label: string; group: string; def: GroupRole; communityDef?: GroupRole; only?: 'community' | 'group' }[] = [
-    { key: 'roles', label: 'ui.groupSettingsDialog.perm.roles', group: 'Members', def: 'owner' },
+    { key: 'roles', label: 'ui.groupSettingsDialog.perm.roles', group: 'Members', def: 'owner', communityDef: 'admin' },
     { key: 'edit', label: 'ui.groupSettingsDialog.perm.edit', group: 'Members', def: 'admin' },
-    { key: 'invite', label: 'ui.groupSettingsDialog.perm.invite', group: 'Members', def: 'member' },
+    { key: 'invite', label: 'ui.groupSettingsDialog.perm.invite', group: 'Members', def: 'member', communityDef: 'admin' },
     { key: 'remove', label: 'ui.groupSettingsDialog.perm.remove', group: 'Members', def: 'moderator', communityDef: 'admin' },
     { key: 'delete', label: 'ui.groupSettingsDialog.perm.delete', group: 'Moderation', def: 'moderator', only: 'group' },
     { key: 'pin', label: 'ui.groupSettingsDialog.perm.pin', group: 'Moderation', def: 'moderator', only: 'group' },
@@ -89,8 +90,8 @@
     { key: 'calls', label: 'ui.groupSettingsDialog.perm.calls', group: 'Moderation', def: 'member', only: 'group' },
     // communities only, matching CreateGroupDialog
     { key: 'pubChannels', label: 'ui.groupSettingsDialog.perm.pubChannels', group: 'Channels', def: 'admin', only: 'community' },
-    { key: 'privChannels', label: 'ui.groupSettingsDialog.perm.privChannels', group: 'Channels', def: 'member', only: 'community' },
-    { key: 'userGroups', label: 'ui.groupSettingsDialog.perm.userGroups', group: 'Channels', def: 'owner', only: 'community' },
+    { key: 'privChannels', label: 'ui.groupSettingsDialog.perm.privChannels', group: 'Channels', def: 'admin', only: 'community' },
+    { key: 'userGroups', label: 'ui.groupSettingsDialog.perm.userGroups', group: 'Channels', def: 'admin', only: 'community' },
   ];
   const PERM_GROUP_LABEL: Record<string, string> = {
     Members: 'ui.groupSettingsDialog.permGroup.members',

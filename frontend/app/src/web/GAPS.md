@@ -312,7 +312,10 @@ design export needs. Each entry says where it came up.
     moderator and nobody roles.
   - a picked banner is cropped to its middle at 600×300.
   - the community About page's Mute mutes every channel and can't unmute (as in the old menus).
-    It has no Favourite, because a community can't be a favourite.
+    Tapping it while muted says "That didn't go through" when it can't, not why. It has no
+    Favourite, because a community can't be a favourite.
+  - `CreateGroupDialog` still has the old community defaults (invite and private channels for
+    everyone, roles and user groups for owners). Part 4 brings them in line.
   - the primary language isn't in the dialog, and is kept as it was.
   - removing an avatar or banner in the dialog saves nothing. `groupChanges` and
     `communityChanges` turn a removed image into "no change", because the client has no way to
