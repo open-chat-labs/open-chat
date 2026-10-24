@@ -381,7 +381,7 @@ impl RuntimeState {
             recipient_account: to.into(),
             memo,
             reason,
-            from_subaccount: Some(tip.account.tips_subaccount()),
+            from_subaccount: Some(tip.account.subaccount()),
         });
     }
 

@@ -131,7 +131,7 @@ fn prepare(
         },
         Payee::UnlinkedAccount(account) => TransferRecipient::Account(icrc1::Account {
             owner: state.data.user_index_canister_id,
-            subaccount: Some(account.tips_subaccount()),
+            subaccount: Some(account.subaccount()),
         }),
     };
 
@@ -142,7 +142,7 @@ fn prepare(
         this_canister_id,
     )? {
         UserTransfer::Icrc2(transfer) => Ok(PrepareResult::Icrc2(Box::new(TipToMake { c2c_args, transfer }))),
-        // A certified transfer has been made already, so one into an account's tips subaccount
+        // A certified transfer has been made already, so one into an account's subaccount
         // would be stranded there if the tip were then refused, eg. as someone had linked it since
         UserTransfer::Certified(_) if matches!(payee, Payee::UnlinkedAccount(_)) => {
             Err(OCErrorCode::InvalidRequest.with_message("A tip for an account no one has linked must be an ICRC2 transfer"))

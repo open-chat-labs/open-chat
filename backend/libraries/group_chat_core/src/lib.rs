@@ -2362,7 +2362,7 @@ pub enum TipRecipient {
     // came from, which the caller looks up, eg. from its LocalUserIndex
     LinkedUserOf(BridgedUserId),
     // A message relayed from an account no one has linked, whose tips the UserIndex holds for it
-    // (see `BridgedUserId::tips_subaccount`), for whoever links it, or else to refund
+    // (see `BridgedUserId::subaccount`), for whoever links it, or else to refund
     UnlinkedAccount(BridgedUserId),
 }
 
