@@ -55,7 +55,7 @@ export type ReadOnlySetting = "gates" | "rules" | "permissions" | "disappearing"
 /**
  * What a chat's settings dialog is for this viewer: the About page when they can't edit the chat,
  * else the editor with the parts their role can't change read-only. Permissions, disappearing
- * messages and who can see the chat are the owner's (`canChangeVisibility`).
+ * messages and who can see the chat are the owner's, as the backend has it.
  */
 export type ManageAccess = { kind: "about" } | { kind: "edit"; readOnly: ReadOnlySetting[] };
 
@@ -69,6 +69,23 @@ export function chatManageAccess(
     const readOnly: ReadOnlySetting[] = [];
     if (!client.canChangePermissions(chat.id)) readOnly.push("permissions");
     if (!hasOwnerRights(chat.membership.role)) readOnly.push("disappearing", "visibility");
+    return { kind: "edit", readOnly };
+}
+
+/**
+ * The same for a community: its permissions and who can see it are the owner's
+ * (`canChangeCommunityPermissions`, and owner rights for visibility). A community has no history or
+ * disappearing messages to lock.
+ */
+export function communityManageAccess(
+    client: OpenChat,
+    community: CommunitySummary,
+    anon: boolean,
+): ManageAccess {
+    if (!communityDetailsPermissions(client, community, anon).canEdit) return { kind: "about" };
+    const readOnly: ReadOnlySetting[] = [];
+    if (!client.canChangeCommunityPermissions(community.id)) readOnly.push("permissions");
+    if (!hasOwnerRights(community.membership.role)) readOnly.push("visibility");
     return { kind: "edit", readOnly };
 }
 

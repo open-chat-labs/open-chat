@@ -1,8 +1,8 @@
 <!-- The right column's panel for a group, channel or community: its details, members (with what the
      viewer may do to each), pinned messages, rules, access gates and user groups. Members views
      (?everyone, ?usergroup=) and the pinned list open as GroupPanel's own views. Leave and delete
-     open the confirm dialogs, and a group's or channel's settings open GroupSettingsDialog; a
-     community's settings, invite, user groups … are off until 4b's later parts (TODO(4b)). -->
+     open the confirm dialogs, and settings open GroupSettingsDialog; invite, user groups … are off
+     until 4b's later parts (TODO(4b)). -->
 <script lang="ts">
     import {
         allUsersStore,
@@ -52,7 +52,7 @@
     import { _ } from "svelte-i18n";
     import { closeRightColumn, openPanelOver } from "../app/rightPanel";
     import type { GroupSettingsTab } from "../app/dialogs";
-    import { permissionsValue } from "./settings.adapter";
+    import { communityPermissionsValue, permissionsValue } from "./settings.adapter";
     import type { RightRegion, ScreenProps } from "../app/screens";
     import { gateAssets, gatesState } from "../access/gates.adapter";
     import { pickById } from "../../pickById";
@@ -307,18 +307,15 @@
 
     // GroupPanel offers Leave to everyone, so the rules are checked here (GAPS.md). Settings open
     // as the editor or, for someone who can't edit, the About page (GroupSettingsDialogScreen).
-    // TODO(4b): a community's settings (part 2b), invite, user groups, bots, webhooks, convert,
-    // import and new channels (parts 3-5)
+    // TODO(4b): invite, user groups, bots, webhooks, convert, import and new channels (parts 3-5)
     function onDialog(kind: string, _payload?: unknown, tab?: string) {
         if (collection === undefined) return;
         if (kind === "settings") {
-            if (collection.kind !== "community") {
-                context.dialogs.open({
-                    kind: "group_settings",
-                    chatId: collection.id,
-                    tab: settingsTab(tab),
-                });
-            }
+            context.dialogs.open({
+                kind: "group_settings",
+                target: collection.id,
+                tab: settingsTab(tab),
+            });
             return;
         }
         const name = collection.name;
@@ -404,12 +401,13 @@
         canModerate={members.canRemoveMembers() || members.canUnblockUsers()}
         canChangeRoles={people.some((p) => p.actions.roles.length > 0)}
         canManageUserGroups={false}
-        canEdit={collection.kind !== "community" && (permissions?.canEdit ?? false)}
+        canEdit={permissions?.canEdit ?? false}
         canDelete={permissions?.canDelete ?? false}
         permissions={collection.kind === "community"
-            ? undefined
+            ? communityPermissionsValue(collection.permissions)
             : permissionsValue(collection.permissions)}
         isFavourite={collection.kind !== "community" && $favouritesStore.has(collection.id)}
+        coverUrl={collection.kind === "community" ? collection.banner.blobUrl : undefined}
         onToggleFavourite={collection.kind === "community" ? undefined : toggleFavourite}
         {onDialog}
         canInvite={false}

@@ -7,6 +7,8 @@ import {
     type CandidateGroupChat,
     type ChatPermissionRole,
     type ChatPermissions,
+    type CommunityAndRules,
+    type CommunityPermissions,
     type DataContent,
     type MessagePermissions,
 } from "@client";
@@ -14,8 +16,8 @@ import { durationMs } from "@openchat/ui/src/features/components/GroupSettingsDi
 import type { GroupRole, GroupSettings } from "@openchat/ui/src/lib/types";
 import { gateConfig, gatesState, type GateLookups } from "../access/gates.adapter";
 
-// A group or channel being edited (UpdateGroupState's candidate) to GroupSettingsDialog's value, and
-// the dialog's save back to a candidate. What the dialog has no place for (tips, adding members,
+// A group or channel being edited (UpdateGroupState's candidate), or a community (UpdateCommunityState's),
+// to GroupSettingsDialog's value, and the dialog's save back to a candidate. What the dialog has no place for (tips, adding members,
 // the colour and cover swatches) is kept from the group as it was, so opening the dialog and saving
 // without changes changes nothing (4b invariant 6).
 
@@ -153,7 +155,8 @@ export function groupSettings(candidate: CandidateGroupChat, lookups: GateLookup
 
 /**
  * The candidate GroupSettingsDialog's save makes from the group as it was (`original`). `avatar` is
- * a newly picked image, read by the caller; the dialog's empty `avatar` without one removes it.
+ * a newly picked image, read by the caller. The dialog's empty `avatar` without one clears it here,
+ * but the client can't send a removal, so the avatar stays (GAPS.md).
  */
 export function candidateFromSettings(
     all: GroupSettings,
@@ -192,5 +195,100 @@ export function candidateFromSettings(
             newVersion: all.rules.newVersion ?? false,
         },
         permissions,
+    };
+}
+
+// ── communities ──
+
+// the dialog's community permissions, by the community's
+const COMMUNITY_GENERAL = {
+    roles: "changeRoles",
+    edit: "updateDetails",
+    invite: "inviteUsers",
+    remove: "removeMembers",
+    pubChannels: "createPublicChannel",
+    privChannels: "createPrivateChannel",
+    userGroups: "manageUserGroups",
+} as const satisfies Record<string, keyof CommunityPermissions>;
+
+/** A community's permissions as GroupSettingsDialog and GroupPanel show them (general only). */
+export function communityPermissionsValue(
+    permissions: CommunityPermissions,
+): GroupSettings["permissions"] {
+    const general: Record<string, GroupRole> = {};
+    for (const [key, field] of Object.entries(COMMUNITY_GENERAL)) {
+        general[key] = ROLE[permissions[field]];
+    }
+    return { general, messages: { default: "member" }, threads: null };
+}
+
+/** GroupSettingsDialog's value (with `noun: "community"`) for a community being edited. */
+export function communitySettings(
+    { community, rules }: CommunityAndRules,
+    lookups: GateLookups,
+): GroupSettings {
+    return {
+        info: {
+            name: community.name,
+            about: community.description,
+            color: "teal",
+            coverKey: "plum",
+            coverUrl: community.banner.blobUrl ?? null,
+            avatar: community.avatar.blobUrl ?? "",
+        },
+        settings: {
+            isPublic: community.public,
+            history: false,
+            disappearOn: false,
+            after: "12 hours",
+            afterMs: null,
+        },
+        gates: gatesState(community.gateConfig, lookups),
+        rules: { enabled: rules.enabled, text: rules.text },
+        permissions: communityPermissionsValue(community.permissions),
+    };
+}
+
+/**
+ * The community GroupSettingsDialog's save makes from the community as it was (`original`).
+ * `avatar` and `banner` are newly picked images, read by the caller. The dialog's empty `avatar`
+ * or `coverUrl` without one clears that image here, but the client can't send a removal, so the
+ * image stays (GAPS.md).
+ */
+export function candidateCommunityFromSettings(
+    all: GroupSettings,
+    original: CommunityAndRules,
+    lookups: GateLookups,
+    images: { avatar?: DataContent; banner?: DataContent } = {},
+): CommunityAndRules {
+    const { community } = original;
+    const permissions: CommunityPermissions = { ...community.permissions };
+    for (const [key, field] of Object.entries(COMMUNITY_GENERAL)) {
+        const role = all.permissions.general[key];
+        // a community's roles are member, admin and owner
+        if (role === "member" || role === "admin" || role === "owner") {
+            permissions[field] = PERMISSION_ROLE[role] as CommunityPermissions[typeof field];
+        }
+    }
+    return {
+        community: {
+            ...community,
+            name: all.info.name,
+            description: all.info.about,
+            avatar: images.avatar ?? (all.info.avatar === "" ? {} : community.avatar),
+            banner: images.banner ?? (all.info.coverUrl === null ? {} : community.banner),
+            public: all.settings.isPublic,
+            gateConfig:
+                all.gates === null
+                    ? community.gateConfig
+                    : gateConfig(all.gates, community.gateConfig, lookups),
+            permissions,
+        },
+        rules: {
+            ...original.rules,
+            enabled: all.rules.enabled,
+            text: rulesText(all.rules, original.rules.text),
+            newVersion: all.rules.newVersion ?? false,
+        },
     };
 }

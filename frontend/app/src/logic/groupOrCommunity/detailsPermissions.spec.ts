@@ -4,6 +4,7 @@ import { ROLE_ADMIN, ROLE_MEMBER, ROLE_OWNER } from "@client";
 import {
     chatDetailsPermissions,
     chatManageAccess,
+    communityManageAccess,
     chatRulesText,
     communityDetailsPermissions,
 } from "./detailsPermissions";
@@ -119,6 +120,35 @@ describe("chatManageAccess", () => {
                 undefined,
                 false,
             ),
+        ).toEqual({ kind: "edit", readOnly: [] });
+    });
+});
+
+describe("communityManageAccess", () => {
+    const owned = (role: number) => ({ ...community, membership: { role } }) as CommunitySummary;
+    const viewer = ({ edit, owner }: { edit: boolean; owner: boolean }) =>
+        ({
+            ...client({}),
+            canEditCommunity: () => edit,
+            canChangeCommunityPermissions: () => owner,
+        }) as never as OpenChat;
+
+    // 4b invariant 7, for a community
+    test("a member who can't edit the community gets the About page", () => {
+        expect(
+            communityManageAccess(viewer({ edit: false, owner: false }), owned(ROLE_MEMBER), false),
+        ).toEqual({ kind: "about" });
+    });
+
+    test("an admin edits the community but not its permissions or visibility", () => {
+        expect(
+            communityManageAccess(viewer({ edit: true, owner: false }), owned(ROLE_ADMIN), false),
+        ).toEqual({ kind: "edit", readOnly: ["permissions", "visibility"] });
+    });
+
+    test("the owner edits everything", () => {
+        expect(
+            communityManageAccess(viewer({ edit: true, owner: true }), owned(ROLE_OWNER), false),
         ).toEqual({ kind: "edit", readOnly: [] });
     });
 });
