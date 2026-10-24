@@ -55,6 +55,13 @@ export {
 export { communityChanges, isPrivateCommunityPreview } from "./utils/community";
 export { executionPaymentAmount, proposalFundsRequired } from "./utils/proposal";
 export {
+    achievementList,
+    achievementReward,
+    chitEarnedSummary,
+    type AchievementEntry,
+    type EarnedAchievement,
+} from "./utils/achievements";
+export {
     CHIT_STREAK_MILESTONES,
     currentStreak,
     dailyChitAmount,
@@ -112,4 +119,5 @@ export { Poller } from "./utils/poller";
 export * from "./utils/routes";
 export { dexName } from "./utils/swap";
 export { formatTimeRemaining } from "./utils/time";
+export { toMonthString } from "./utils/date";
 export * from "./utils/url";

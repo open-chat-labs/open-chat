@@ -1,12 +1,12 @@
 <script lang="ts">
     import {
         OpenChat,
+        achievementList,
         achievements,
         achievementsStore,
         currentUserIdStore,
         currentUserStore,
         iconSize,
-        type Achievement,
         type ExternalAchievement,
     } from "@client";
     import { getContext, onMount } from "svelte";
@@ -24,60 +24,6 @@
     import ExternalLink from "../../landingpages/ExternalLink.svelte";
 
     const client = getContext<OpenChat>("client");
-    const enabled = new Set<string>([
-        "streak_3",
-        "streak_7",
-        "streak_14",
-        "streak_30",
-        "streak_100",
-        "streak_365",
-        "set_bio",
-        "set_avatar",
-        "joined_group",
-        "joined_community",
-        "sent_direct_message",
-        "received_direct_message",
-        "upgraded_to_diamond",
-        "set_display_name",
-        "sent_text",
-        "reacted_to_message",
-        "sent_file",
-        "sent_image",
-        "sent_poll",
-        "sent_crypto",
-        "sent_video",
-        "sent_audio",
-        "sent_giphy",
-        "sent_prize",
-        "sent_meme",
-        "sent_swap_offer",
-        "quote_replied",
-        "replied_in_thread",
-        "edited_message",
-        "deleted_message",
-        "tipped_message",
-        "forwarded_message",
-        "received_crypto",
-        "received_reaction",
-        "had_message_tipped",
-        "voted_on_poll",
-        "sent_reminder",
-        "set_community_display_name",
-        "joined_call",
-        "set_pin",
-        "favourited_chat",
-        "pinned_chat",
-        "followed_thread",
-        "swapped_from_wallet",
-        "accepted_swap_offer",
-        "referred_1st_user",
-        "referred_3rd_user",
-        "referred_10th_user",
-        "referred_20th_user",
-        "referred_50th_user",
-        "upgrade_to_gold_diamond",
-    ]);
-
     interface Props {
         onClose: () => void;
     }
@@ -85,37 +31,38 @@
 
     let selectedTab: "todo" | "done" | "external" = $state("todo");
 
-    function filter(achievement: Achievement): boolean {
-        return enabled.has(achievement) || $achievementsStore.has(achievement);
-    }
-
     function selectTab(tab: "todo" | "done" | "external") {
         selectedTab = tab;
     }
 
     onMount(() => {
         client.getExternalAchievements().then((achievements) => {
-            externalAchievements = achievements.sort((a, b) => b.chitReward - a.chitReward);
+            externalAchievements = achievements;
         });
     });
-    let filtered = $derived([...achievements].filter(filter));
-    let [internalAchieved, internalNotAchieved] = $derived(
-        client.partition(filtered, (a) => $achievementsStore.has(a)),
-    );
     let externalAchievements: ExternalAchievement[] = $state([]);
-    let totalAchievements = $derived(filtered.length + externalAchievements.length);
-    let [externalAchieved, externalNotAchieved] = $derived(
-        client.partition(externalAchievements, (a) => {
-            return $achievementsStore.has(a.name);
-        }),
+    // the old "Learn to earn" list, and what each pays (achievementList in @client)
+    let list = $derived(
+        achievementList(achievements, $achievementsStore, externalAchievements, $now),
     );
-    let achieved = $derived([
-        ...internalAchieved.map((a) => `learnToEarn.${a}`),
-        ...externalAchieved.map((a) => a.name),
-    ]);
-    let percComplete = $derived(Math.round((achieved.length / totalAchievements) * 100));
+    let internalNotAchieved = $derived(
+        list.flatMap((a) => (a.kind === "internal" && !a.done ? [a.id] : [])),
+    );
+    let achieved = $derived(
+        list.flatMap((a) =>
+            !a.done ? [] : a.kind === "internal" ? [`learnToEarn.${a.id}`] : [a.achievement.name],
+        ),
+    );
+    // of every achievement offered or earned and every partner one, as the old list counted them
+    let percComplete = $derived(
+        Math.round(
+            (achieved.length /
+                (list.filter((a) => a.kind === "internal").length + externalAchievements.length)) *
+                100,
+        ),
+    );
     let validExternalNotAchieved = $derived(
-        externalNotAchieved.filter((a) => !a.budgetExhausted && BigInt($now) < a.expires),
+        list.flatMap((a) => (a.kind === "external" && !a.done ? [a.achievement] : [])),
     );
 </script>
 

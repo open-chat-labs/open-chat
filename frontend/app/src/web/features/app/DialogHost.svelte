@@ -141,14 +141,15 @@
         <DialogScreen
             dialog={linked}
             claimInPlace={() => claimInPlace(linked.kind)}
-            onClose={() => closeLinked(linked)} />
+            onClose={() => closeLinked(linked)}
+            dialogs={stack} />
     {/key}
 {/if}
 
 {#each stack.items as dialog (dialog)}
     <!-- a bot has no card, checked as its user loads (as the old Home did) -->
     {#if dialog.kind !== "user" || profileCardShows($allUsersStore.get(dialog.userId))}
-        <DialogScreen {dialog} onClose={() => stack.close(dialog)} />
+        <DialogScreen {dialog} onClose={() => stack.close(dialog)} dialogs={stack} />
     {/if}
 {/each}
 

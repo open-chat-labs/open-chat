@@ -17,6 +17,7 @@
     let {
         dialog,
         onClose,
+        dialogs: stack,
         claimInPlace,
     }: DialogProps<D> & {
         // whether another dialog, its backdrop still showing, handed off to this one (once)
@@ -47,7 +48,7 @@
         <!-- loading, for a moment: nothing shows yet, but a click outside or Esc still closes it -->
         <div class="pending" onclick={onClose} use:modal={onClose} aria-hidden="true"></div>
     {:else if loader?.module}
-        <loader.module.default {dialog} {onClose} />
+        <loader.module.default {dialog} {onClose} dialogs={stack} />
     {:else}
         <!-- development text while there's no dialog: no translation -->
         <DialogShell title={dialog.kind} {onClose}>

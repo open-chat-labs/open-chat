@@ -44,6 +44,7 @@
     } from "@src/logic/appEvents/appEvents";
     import { pinsFor } from "../rail/rail.adapter";
     import { chitRailProps } from "../chit/chit.adapter";
+    import AchievementToastHost from "../chit/AchievementToastHost.svelte";
     import { openLinked } from "./linkedDialogs";
     import { disableChit, hideChitIcon } from "@src/stores/settings";
     import { now500 } from "@src/stores/time";
@@ -245,6 +246,7 @@
 
 <!-- the dialogs: those the URL opens (?profile …), those the app opened itself, and the rules -->
 <DialogHost stack={dialogStack} {appDialog} onCloseAppDialog={closeAppDialog} />
+<AchievementToastHost dialogs={dialogStack} />
 
 <style>
     .toolbar {
