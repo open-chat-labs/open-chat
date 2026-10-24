@@ -2,7 +2,8 @@
      profile's CHIT section, and under it the streak insurance (onInsurance). Title bar: a back arrow when it was opened
      from another dialog (onBack, labelled backLabel), the calendar's icon, the title with the streak, and close. Back
      and the insurance hand off with no exit (DialogFlow.handOff), so the next dialog takes this one's place over the
-     same backdrop; close plays the exit. -->
+     same backdrop; close plays the exit. A claim from the calendar runs through the dialog (onClaim): nothing else
+     may happen until it settles, and a claim that fails says so under the calendar. -->
 <script lang="ts">
   import { onDestroy } from 'svelte';
   import ClaimCalendar, { type ClaimDay } from './ClaimCalendar.svelte';
@@ -65,6 +66,14 @@
   const close = () => flow.dismiss(onClose);
   const back = () => onBack && flow.handOff(onBack);
   const insurance = () => onInsurance && flow.handOff(onInsurance);
+  // back, the insurance and close wait on it (DialogFlow), and its failure shows here
+  const claim = $derived(
+    onClaim
+      ? async () => {
+          await flow.run(() => onClaim());
+        }
+      : undefined,
+  );
 </script>
 
 <div class="layer oc-dialog-layer" class:closing={flow.closing} data-screen-label="Claim history" role="dialog" aria-modal="true" use:modal={flow.escape(onClose)}>
@@ -82,7 +91,10 @@
     </div>
 
     <div class="body">
-      <ClaimCalendar {claimHistory} {today} {joined} {claimable} {utc} {utcOffsetMinutes} {onClaim} {onUtcChange} />
+      <div class="calendar">
+        <ClaimCalendar {claimHistory} {today} {joined} {claimable} {utc} {utcOffsetMinutes} onClaim={claim} {onUtcChange} />
+        {#if flow.failed}<span class="error" role="alert">{t('ui.claimHistoryDialog.claimFailed')}</span>{/if}
+      </div>
 
       <div class="row cover" class:insured={insuredLeft > 0} class:inert={!onInsurance} onclick={insurance} role="button" tabindex="0">
         <span class="tile"><span class="shield"></span></span>
@@ -213,6 +225,18 @@
     flex-direction: column;
     gap: 28px;
     padding: 20px;
+  }
+
+  .calendar {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-12);
+  }
+
+  .error {
+    font: var(--weight-regular) var(--text-sm) / 1.5 var(--font-sans);
+    color: var(--status-danger);
+    text-align: center;
   }
 
   .row {

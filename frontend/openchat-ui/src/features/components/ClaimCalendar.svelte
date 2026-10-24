@@ -16,6 +16,8 @@
     amount?: number;
     /** Minute of the UTC day the claim was made. */
     minute?: number;
+    /** When the claim was made, ms epoch: its local time is that day's (daylight saving), not today's. */
+    at?: number;
     /** Covered by streak insurance instead of a claim. */
     insured?: boolean;
   }
@@ -37,7 +39,7 @@
     claimable?: boolean;
     /** Claim times in UTC instead of local time. */
     utc?: boolean;
-    /** Local time offset for the claim times; defaults to this browser's. */
+    /** Local time offset for the claim times; defaults to this browser's on each claim's day (by its `at`). */
     utcOffsetMinutes?: number;
     /** Claim today's CHIT: today says it's claiming until this settles. Without it, today offers no Claim. */
     onClaim?: () => Promise<unknown> | void;
@@ -50,7 +52,7 @@
     joined: joinedProp,
     claimable = false,
     utc = false,
-    utcOffsetMinutes = -new Date().getTimezoneOffset(),
+    utcOffsetMinutes,
     onClaim,
     onUtcChange,
   }: Props = $props();
@@ -67,6 +69,9 @@
     m = ((m % 1440) + 1440) % 1440;
     return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
   };
+
+  // the local offset for a claim's time: the host's, or this browser's on the day it was made
+  const localOffset = (at?: number) => utcOffsetMinutes ?? -new Date(at ?? Date.now()).getTimezoneOffset();
 
   // months back from today's
   let monthOffset = $state(0);
@@ -148,7 +153,7 @@
             ? null
             : utc
               ? t('ui.claimCalendar.timeUtc', { time: hhmm(rec.minute) })
-              : t('ui.claimCalendar.timeLocal', { time: hhmm(rec.minute + utcOffsetMinutes) });
+              : t('ui.claimCalendar.timeLocal', { time: hhmm(rec.minute + localOffset(rec.at)) });
         cells.push({
           key,
           day: d,
@@ -168,9 +173,11 @@
     return { cells, label: dateFmt({ month: 'long', year: 'numeric' }, first), chit, claimed, insured, canPrev: view > minTotal, canNext: view < total, maxOffset: total - minTotal };
   });
 
-  // a tap shows a day's popover, or hides it again (a mouse shows it on hover, so its click leaves it be)
-  function tapped(e: MouseEvent, key: string) {
-    if (e instanceof PointerEvent && e.pointerType === 'mouse') return;
+  // a tap shows a day's popover, or hides it again (a mouse shows it on hover, so its click leaves it be). The pointer
+  // is told by its pointerdown: some browsers' click isn't a PointerEvent
+  let lastPointer = '';
+  function tapped(key: string) {
+    if (lastPointer === 'mouse') return;
     openDay = openDay === key ? null : key;
   }
 
@@ -231,7 +238,8 @@
           class:today={cell.today}
           class:inert={cell.kind === 'claim' && !onClaim}
           class:claiming={cell.kind === 'claim' && claiming}
-          onclick={cell.kind === 'claim' ? claim : cell.lines ? (e) => tapped(e, cell.key) : undefined}
+          onpointerdown={(e) => (lastPointer = e.pointerType)}
+          onclick={cell.kind === 'claim' ? claim : cell.lines ? () => tapped(cell.key) : undefined}
           onpointerenter={cell.lines ? (e) => e.pointerType === 'mouse' && (openDay = cell.key) : undefined}
           onpointerleave={cell.lines ? (e) => e.pointerType === 'mouse' && openDay === cell.key && (openDay = null) : undefined}
           aria-label={cell.title ?? cell.head ?? ''}

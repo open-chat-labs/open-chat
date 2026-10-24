@@ -71,9 +71,9 @@
     import { accentOf, accentStore } from "../../accent";
     import type { DialogProps, LinkedDialog } from "../app/dialogs";
     import { canGoBack, goBack, openFromDialog } from "../app/linkedDialogs.svelte";
+    import { calendarDay } from "@src/logic/chit/claimDays";
     import {
         changedChatSettings,
-        calendarDay,
         chatSettingsProps,
         profileProps,
         ringtoneKeyOf,

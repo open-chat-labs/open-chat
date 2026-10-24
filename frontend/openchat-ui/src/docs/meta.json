@@ -1081,7 +1081,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Local time offset for the claim times; defaults to this browser's."
+        "doc": "Local time offset for the claim times; defaults to this browser's on each claim's day."
       },
       {
         "name": "onClaim",
@@ -1215,7 +1215,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Local time offset for the claim times; defaults to this browser's."
+        "doc": "Local time offset for the claim times; defaults to this browser's on each claim's day."
       },
       {
         "name": "backLabel",
@@ -1248,7 +1248,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Claim today's CHIT from the calendar: today says it's claiming until this settles."
+        "doc": "Claim today's CHIT from the calendar: back, the insurance and close wait on it, and a failure (a rejection) shows under the calendar."
       },
       {
         "name": "onInsurance",

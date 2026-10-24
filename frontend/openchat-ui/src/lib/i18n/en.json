@@ -572,6 +572,7 @@
     "claimHistoryDialog": {
       "backToChit": "Back to CHIT",
       "backToProfile": "Back to profile",
+      "claimFailed": "That claim didn't go through. Try again.",
       "insurance": "Streak insurance",
       "insuranceHint": "{insured, plural, one {# day insured} other {# days insured}} · {used} used",
       "noInsurance": "No insurance",

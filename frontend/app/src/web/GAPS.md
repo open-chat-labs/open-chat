@@ -417,12 +417,12 @@ design export needs. Each entry says where it came up.
 
 ### Wiring
 
-- **The claim calendar, by hand** (8e, the design's changes of 2026-10-22, from its brief: no
-  export of them yet): `ClaimCalendar` (the profile's calendar taken out of it, always six weeks
-  with the months either side dimmed, a popover on tap as well as hover) in `ClaimHistoryDialog`,
-  with the streak insurance under it; `ChitDialog`'s "View claim calendar" link
-  (`onAction('calendar')`); `ProfileDialog`'s "Claim history" row (`onChitHistory`) where its
-  calendar was; the `calendar` and `minus` icons. The brief's calendar props (`streak`,
+- **The claim calendar, by hand** (8e, the design's changes of 2026-10-22, from its brief: no export
+  of them yet): `ClaimCalendar` (the profile's calendar taken out of it, always six weeks with the
+  months either side dimmed, a popover on tap as well as hover) in `ClaimHistoryDialog`, with the
+  streak insurance under it; `ChitDialog`'s "View claim calendar" link (`onAction('calendar')`);
+  `ProfileDialog`'s "Claim history" row (`onChitHistory`) where its calendar was; the `calendar`
+  icon (the brief's `minus` waits until something uses it). The brief's calendar props (`streak`,
   `claimMinute`) are the design's demo data: the library's take the real claim history
   (`claimHistory`, `today`, `joined`). Its back arrow says which dialog it returns to ("Back to
   CHIT", "Back to profile").

@@ -6,23 +6,21 @@
     import {
         chitStateStore,
         currentUserStore,
+        dailyChitClaimable,
         latestSuccessfulUpdatesLoop,
-        mergeChitEvents,
-        ONE_DAY,
         streakInsuranceStore,
-        type ChitEvent,
         type OpenChat,
     } from "@client";
     import ClaimHistoryDialog from "@openchat/ui/src/features/components/ClaimHistoryDialog.svelte";
     import DialogShell from "@openchat/ui/src/lib/components/DialogShell.svelte";
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
-    import type { ClaimDay } from "@openchat/ui/src/features/components/ClaimCalendar.svelte";
     import { disableChit, utcMode } from "@src/stores/settings";
     import { now500 } from "@src/stores/time";
     import { getContext, onMount } from "svelte";
     import type { DialogProps, LinkedDialog } from "../app/dialogs";
     import { behindDialog, canGoBack, goBack, openFromDialog } from "../app/linkedDialogs.svelte";
-    import { calendarDay, claimDays } from "../profile/profile.adapter";
+    import { calendarDay } from "@src/logic/chit/claimDays";
+    import { ClaimHistory } from "@src/logic/chit/claimHistory.svelte";
     import { chitDialogProps } from "./chit.adapter";
 
     let { onClose }: DialogProps<Extract<LinkedDialog, { kind: "claim_history" }>> = $props();
@@ -42,42 +40,24 @@
         ),
     );
 
-    const joined = $derived(Number($currentUserStore.dateCreated));
+    const joined = Number($currentUserStore.dateCreated);
 
-    // every claim since the account was made: the calendar pages through the months itself, and a
-    // claim's streak day follows from the ones before it. Loaded as it opens, and again after a claim
-    // here from two days before the newest event it has: an insured day is marked after midnight, and
-    // a claim reinstated, at the end of its (past) day, so either can come in older than what's
-    // loaded. A load that fails leaves the calendar as it was
-    const RELOAD_MARGIN_DAYS = 2;
-    let chitEvents: ChitEvent[] = [];
-    let claimHistory = $state<ClaimDay[]>([]);
-    let run = 0;
+    // today's claim, offered only while the last sync is recent, as the profile's calendar offered
+    // it: with a stale one, today may have been claimed elsewhere already
+    const claimable = $derived(
+        !$disableChit &&
+            dailyChitClaimable(
+                $chitStateStore.nextDailyChitClaim,
+                $now500,
+                $latestSuccessfulUpdatesLoop,
+            ),
+    );
 
-    async function loadClaimHistory() {
-        const mine = ++run;
-        const newest = chitEvents.at(-1)?.timestamp;
-        try {
-            const events = await client.chitHistory(
-                newest === undefined
-                    ? BigInt(joined)
-                    : newest - BigInt(RELOAD_MARGIN_DAYS * ONE_DAY),
-            );
-            if (mine !== run) return;
-            chitEvents = mergeChitEvents(chitEvents, events);
-            claimHistory = claimDays(chitEvents);
-        } catch (err) {
-            console.warn("Unable to load the CHIT claim history", err);
-        }
-    }
-    onMount(loadClaimHistory);
-
-    // the CHIT dialog's claim: the streak, balance and rail follow from the client; an already
-    // claimed day just moves the countdown on
-    async function claim(): Promise<void> {
-        const resp = await client.claimDailyChit();
-        if (resp.kind === "success") await loadClaimHistory();
-    }
+    // every claim since the account was made, loaded as it opens; claiming here is the CHIT
+    // dialog's claim (the streak, balance and rail follow from the client), which shows on today at
+    // once and reloads the history whatever the answer
+    const history = new ClaimHistory(client, joined);
+    onMount(() => history.load());
 
     // opened from another dialog: its back arrow returns to it, named for it
     const back = $derived(canGoBack() ? goBack : undefined);
@@ -91,16 +71,16 @@
 {#if chit !== undefined}
     <ClaimHistoryDialog
         streak={chit.streak}
-        {claimHistory}
+        claimHistory={history.days}
         today={calendarDay($now500)}
         joined={calendarDay(joined)}
-        claimable={chit.claimable}
+        {claimable}
         insured={chit.insured}
         used={chit.used}
         utc={$utcMode}
         {backLabel}
         onUtcChange={(utc) => utcMode.set(utc)}
-        onClaim={claim}
+        onClaim={() => history.claim()}
         onInsurance={() => openFromDialog({ kind: "streak_insurance" })}
         onBack={back}
         {onClose} />
