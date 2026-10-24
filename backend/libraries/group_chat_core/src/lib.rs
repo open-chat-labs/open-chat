@@ -886,6 +886,42 @@ impl GroupChatCore {
         users_to_notify.iter().copied().collect()
     }
 
+    // Mentions `user_id` in a reply to a message a bridge bot relayed from an account they linked,
+    // as `build_users_to_notify` mentions the sender of the message replied to. They weren't known
+    // when the reply was sent, as their link had to be looked up. Returns whether they're to be
+    // notified of the reply now, which they won't have been if they've muted the chat, or None if
+    // they aren't mentioned, as in a thread they don't follow, or were already, eg. by name.
+    pub fn mention_linked_user_replied_to(
+        &mut self,
+        user_id: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_index: MessageIndex,
+        message_id: MessageId,
+        now: TimestampMillis,
+    ) -> Option<bool> {
+        // In a thread, only its followers are mentioned
+        if let Some(root_message_index) = thread_root_message_index
+            && !self
+                .events
+                .main_events_reader()
+                .message_internal(root_message_index.into())
+                .and_then(|m| m.thread_summary)
+                .is_some_and(|s| s.followers.contains(&user_id))
+        {
+            return None;
+        }
+
+        let mut notify = None;
+        self.members.update_member(&user_id, |m| {
+            if !m.mentions.add(thread_root_message_index, message_index, message_id, now) {
+                return false;
+            }
+            notify = Some(m.notifications_muted().value && !m.lapsed().value && !m.suspended().value);
+            true
+        });
+        notify
+    }
+
     fn prepare_send_message(
         &mut self,
         caller: &Caller,
@@ -2498,6 +2534,72 @@ mod tests {
             assert_eq!(mentioned, if user_id == owner || user_id == member2 { 1 } else { 0 });
         }
         assert_eq!(sorted(result.users_to_notify), sorted(vec![owner, member1, member2]));
+    }
+
+    #[test]
+    fn a_linked_user_replied_to_is_mentioned_and_notified_if_they_muted_the_chat() {
+        let (mut chat, owner, muted_member) = setup();
+        send_bot_message(&mut chat, "hello", false);
+
+        // The owner was notified of the reply already, as they haven't muted the chat
+        assert_eq!(
+            chat.mention_linked_user_replied_to(owner, None, 1.into(), 2u64.into(), 30),
+            Some(false)
+        );
+        assert_eq!(
+            chat.mention_linked_user_replied_to(muted_member, None, 1.into(), 2u64.into(), 30),
+            Some(true)
+        );
+
+        for user_id in [owner, muted_member] {
+            let mentions: Vec<_> = chat.members.get(&user_id).unwrap().mentions.iter_most_recent(None).collect();
+            assert_eq!(mentions.len(), 1);
+            assert_eq!(mentions[0].message_index, 1.into());
+            // So the chat is seen to have changed for them
+            assert_eq!(chat.last_updated(Some(user_id)), 30);
+        }
+    }
+
+    #[test]
+    fn a_linked_user_replied_to_isnt_notified_again_if_the_reply_mentioned_them() {
+        let (mut chat, owner, muted_member) = setup();
+        send_as(&mut chat, owner, None, 1, &[muted_member], 10);
+
+        assert_eq!(
+            chat.mention_linked_user_replied_to(muted_member, None, 0.into(), 1u64.into(), 20),
+            None
+        );
+        let member = chat.members.get(&muted_member).unwrap();
+        assert_eq!(member.mentions.iter_most_recent(None).count(), 1);
+    }
+
+    #[test]
+    fn a_linked_user_replied_to_in_a_thread_is_mentioned_only_if_they_follow_it() {
+        let (mut chat, owner, muted_member) = setup();
+        let root = MessageIndex::default();
+        send_as(&mut chat, owner, None, 1, &[], 10);
+        send_as(&mut chat, owner, Some(root), 2, &[], 20);
+
+        assert_eq!(
+            chat.mention_linked_user_replied_to(muted_member, Some(root), 1.into(), 3u64.into(), 30),
+            None
+        );
+        let mentioned =
+            |chat: &GroupChatCore, user_id| chat.members.get(&user_id).unwrap().mentions.iter_most_recent(None).count();
+        assert_eq!(mentioned(&chat, muted_member), 0);
+
+        // Once they follow it, they're mentioned, and notified as they've muted the chat
+        send_as(&mut chat, muted_member, Some(root), 3, &[], 30);
+        assert_eq!(
+            chat.mention_linked_user_replied_to(muted_member, Some(root), 2.into(), 4u64.into(), 40),
+            Some(true)
+        );
+        assert_eq!(
+            chat.mention_linked_user_replied_to(owner, Some(root), 2.into(), 4u64.into(), 40),
+            Some(false)
+        );
+        assert_eq!(mentioned(&chat, muted_member), 1);
+        assert_eq!(mentioned(&chat, owner), 1);
     }
 
     #[test]
