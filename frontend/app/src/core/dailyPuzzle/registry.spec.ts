@@ -1,13 +1,14 @@
-import type { HintCaption } from "@client";
+import type { DailyPuzzleState, HintCaption, PublicDailyPuzzle } from "@client";
 import { describe, expect, test } from "vitest";
-import bridgesHints from "../../../openchat-shared/src/utils/dailyGames/bridgesHints.json";
-import chatRoomsHints from "../../../openchat-shared/src/utils/dailyGames/chatRoomsHints.json";
-import lightUpHints from "../../../openchat-shared/src/utils/dailyGames/lightUpHints.json";
-import slantHints from "../../../openchat-shared/src/utils/dailyGames/slantHints.json";
-import tentsHints from "../../../openchat-shared/src/utils/dailyGames/tentsHints.json";
-import unrulyHints from "../../../openchat-shared/src/utils/dailyGames/unrulyHints.json";
-import en from "../i18n/en.json";
-import { dailyPuzzleGames } from "./dailyPuzzleGames";
+import bridgesHints from "../../../../openchat-shared/src/utils/dailyGames/bridgesHints.json";
+import chatRoomsHints from "../../../../openchat-shared/src/utils/dailyGames/chatRoomsHints.json";
+import lightUpHints from "../../../../openchat-shared/src/utils/dailyGames/lightUpHints.json";
+import slantHints from "../../../../openchat-shared/src/utils/dailyGames/slantHints.json";
+import tentsHints from "../../../../openchat-shared/src/utils/dailyGames/tentsHints.json";
+import unrulyHints from "../../../../openchat-shared/src/utils/dailyGames/unrulyHints.json";
+import en from "../../i18n/en.json";
+import { DRAWN_GAMES, playableDailyPuzzleRows } from "./playable";
+import { dailyPuzzleGames, openablePuzzle } from "./registry";
 
 function flatten(obj: unknown, prefix = ""): Record<string, string> {
     const out: Record<string, string> = {};
@@ -127,4 +128,62 @@ describe("daily puzzle hint sentences match their strings", () => {
             expect(checked).toBeGreaterThan(0);
         });
     }
+});
+
+const puzzle = (gameId: string, enabled = true): PublicDailyPuzzle => ({
+    gameId,
+    number: 7,
+    tier: 0,
+    description: new Uint8Array(),
+    startsAt: 0n,
+    expiresAt: 0n,
+    enabled,
+    entryFee: 0,
+    firstPlayFree: false,
+    hintPrices: [],
+    maxHints: 0,
+    maxFreeChecks: 0,
+    minCardedSolveMs: 0n,
+});
+
+describe("today's puzzles", () => {
+    test("the games counted as drawn are the ones with a board", () => {
+        expect(new Set(Object.keys(dailyPuzzleGames))).toEqual(DRAWN_GAMES);
+    });
+
+    test("are unknown till the first fetch, so none isn't said while they load", () => {
+        expect(playableDailyPuzzleRows({ puzzles: [], states: [] })).toBeUndefined();
+        expect(playableDailyPuzzleRows({ puzzles: [], states: [], lastFetched: 1 })).toEqual([]);
+    });
+
+    test("leave out a game this build can't draw, and one that's off today", () => {
+        const state: DailyPuzzleState = {
+            puzzles: [puzzle("bridges"), puzzle("not_a_game"), puzzle("tents", false)],
+            states: [],
+            lastFetched: 1,
+        };
+        expect(playableDailyPuzzleRows(state)?.map((r) => r.puzzle.gameId)).toEqual(["bridges"]);
+    });
+
+    test("a link naming a game that's off today opens no puzzle", () => {
+        const state: DailyPuzzleState = {
+            puzzles: [puzzle("tents", false), puzzle("bridges")],
+            states: [],
+        };
+        expect(openablePuzzle(state, "tents")).toBeUndefined();
+        expect(openablePuzzle(state, "bridges")?.gameId).toBe("bridges");
+        expect(openablePuzzle(state, undefined)?.gameId).toBe("bridges");
+    });
+
+    test("with no game named, opens the first this build can draw, as the card offers", () => {
+        const state: DailyPuzzleState = {
+            puzzles: [puzzle("not_a_game"), puzzle("bridges")],
+            states: [],
+        };
+        expect(openablePuzzle(state, undefined)?.gameId).toBe("bridges");
+        // none it can draw: the first, to say it needs a newer app
+        expect(
+            openablePuzzle({ ...state, puzzles: [puzzle("not_a_game")] }, undefined)?.gameId,
+        ).toBe("not_a_game");
+    });
 });

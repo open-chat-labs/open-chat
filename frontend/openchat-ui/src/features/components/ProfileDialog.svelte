@@ -316,6 +316,9 @@
     version?: string;
 
     onClose?: () => void;
+    /** Opened from another dialog: a back arrow before the section's title, back to it in this one's place (no exit
+     *  plays, so the backdrop stays). */
+    onBack?: () => void;
     /** The section shown, as it opens and each time the user moves to another (for a host that loads a section's data
      *  only when it's seen). */
     onSectionChange?: (section: ProfileSection) => void;
@@ -417,6 +420,7 @@
     platform = 'Web',
     version = '',
     onClose,
+    onBack,
     onSectionChange,
     onChit,
     onClaim,
@@ -1213,6 +1217,7 @@
 
     <div class="main">
       <div class="main-head">
+        {#if onBack}<span class="head-back" onclick={() => handOff(onBack)} aria-label={t('ui.common.back')} role="button" tabindex="0" title={t('ui.common.back')}>{@render glyph('back', 'head-close-glyph')}</span>{/if}
         <span class="section-title">{t(TITLES[section] ?? 'ui.profileDialog.nav.profile')}</span>
         <span class="head-close" onclick={() => close(onClose)} aria-label={t('ui.common.close')} role="button" tabindex="0" title={t('ui.common.close')}>{@render glyph('close', 'head-close-glyph')}</span>
       </div>
@@ -2226,6 +2231,22 @@
     flex: 1;
     font: var(--weight-bold) var(--text-lg) / 1 var(--font-sans);
     color: var(--ink);
+  }
+
+  .head-back {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    margin-inline-start: -8px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+
+  .head-back:hover {
+    background: var(--btn-hover);
   }
 
   .head-close {

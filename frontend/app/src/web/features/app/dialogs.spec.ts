@@ -32,6 +32,20 @@ describe("the dialog a URL's query opens", () => {
         expect(linkedDialog(new URLSearchParams("chit=insurance"))).toEqual({
             kind: "streak_insurance",
         });
+        expect(linkedDialog(new URLSearchParams("chit=puzzle"))).toEqual({ kind: "puzzle" });
+        expect(linkedDialog(new URLSearchParams("chit=puzzle%3Abridges"))).toEqual({
+            kind: "puzzle",
+            gameId: "bridges",
+        });
+        expect(linkedDialog(new URLSearchParams("chit=howto%3Abridges"))).toEqual({
+            kind: "puzzle",
+            gameId: "bridges",
+            how: true,
+        });
+        expect(linkedDialog(new URLSearchParams("chit=howto"))).toEqual({
+            kind: "puzzle",
+            how: true,
+        });
         expect(linkedDialog(new URLSearchParams("chit=nope"))).toEqual({ kind: "chit" });
     });
 
@@ -56,6 +70,7 @@ describe("the linked dialog shown", () => {
         expect(shownLinkedDialog({ kind: "profile" }, true)).toEqual({ kind: "profile" });
         expect(shownLinkedDialog({ kind: "achievements" }, true)).toBeUndefined();
         expect(shownLinkedDialog({ kind: "streak_insurance" }, true)).toBeUndefined();
+        expect(shownLinkedDialog({ kind: "puzzle" }, true)).toBeUndefined();
         expect(shownLinkedDialog(undefined, false)).toBeUndefined();
     });
 });
@@ -106,6 +121,21 @@ describe("opening a linked dialog", () => {
         expect(
             openLinkedDialog(new URLSearchParams("chit=insurance"), { kind: "streak_insurance" }),
         ).toBeUndefined();
+        expect(
+            openLinkedDialog(new URLSearchParams("chit"), {
+                kind: "puzzle",
+                gameId: "tents",
+                how: true,
+            }),
+        ).toBe("?chit=howto%3Atents");
+        // how to play is another view of the same puzzle
+        expect(
+            openLinkedDialog(new URLSearchParams("chit=puzzle%3Atents"), {
+                kind: "puzzle",
+                gameId: "tents",
+                how: true,
+            }),
+        ).toBe("?chit=howto%3Atents");
         // the same param, so closing any of them drops it
         expect(linkedDialogParam({ kind: "streak_insurance" })).toBe("chit");
     });

@@ -18,7 +18,7 @@
     import { now500 } from "@src/stores/time";
     import { getContext, onMount } from "svelte";
     import type { DialogProps, LinkedDialog } from "../app/dialogs";
-    import { backToLinked } from "../app/linkedDialogs";
+    import { canGoBack, goBack } from "../app/linkedDialogs.svelte";
     import {
         streakInsuranceBalance,
         streakInsuranceDialogPrices,
@@ -69,5 +69,5 @@
     prices={streakInsuranceDialogPrices($streakInsuranceStore)}
     cap={STREAK_INSURANCE_MAX_DAYS}
     onBuy={buy}
-    onBack={() => backToLinked({ kind: "chit" })}
+    onBack={canGoBack() ? goBack : undefined}
     {onClose} />

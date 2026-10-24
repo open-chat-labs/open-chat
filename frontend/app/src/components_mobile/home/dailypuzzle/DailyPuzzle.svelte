@@ -1,13 +1,15 @@
 <script lang="ts">
-    import { currentUserIdStore, type OpenChat } from "@client";
+    import { currentUserIdStore, publish, type OpenChat } from "@client";
     import { now500 } from "@src/stores/time";
     import {
         formatSolveTime,
         gameNameKey,
-        openDailyPuzzle,
         tierKey,
         type HintButton,
-    } from "@src/utils/dailyPuzzle.svelte";
+        hintButtonKeys,
+    } from "@src/logic/dailyPuzzle/dailyPuzzle.svelte";
+    import { openDailyPuzzle } from "@src/core/dailyPuzzle/registry";
+    import { toastingPuzzleHost } from "@src/core/dailyPuzzle/puzzleHost";
     import {
         Body,
         BodySmall,
@@ -20,13 +22,13 @@
         transition,
     } from "component-lib";
     import { getContext, onDestroy } from "svelte";
-    import { _ } from "svelte-i18n";
+    import { _, locale } from "svelte-i18n";
     import Fire from "svelte-material-icons/Fire.svelte";
     import LightbulbOutline from "svelte-material-icons/LightbulbOutline.svelte";
     import Refresh from "svelte-material-icons/Refresh.svelte";
     import ShareVariant from "svelte-material-icons/ShareVariant.svelte";
     import TimerOutline from "svelte-material-icons/TimerOutline.svelte";
-    import GameDemo from "../../../components/home/dailypuzzle/GameDemo.svelte";
+    import GameDemo from "@src/core/dailyPuzzle/GameDemo.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "@shared_components/Translatable.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
@@ -40,7 +42,12 @@
 
     const client = getContext<OpenChat>("client");
     // undefined `def` = a game this build does not know how to render
-    const opened = openDailyPuzzle(client, gameId, $currentUserIdStore);
+    // what the puzzle needs from this screen: failures toasted, and the game's strings translated
+    const host = toastingPuzzleHost(
+        (key) => $_(key),
+        () => $locale,
+    );
+    const opened = openDailyPuzzle(client, gameId, $currentUserIdStore, host);
     const { def, game } = opened;
     // the session's puzzle, which the poll may have replaced since this opened
     let puzzle = $derived(game?.puzzle ?? opened.puzzle);
@@ -49,7 +56,8 @@
     let hintButton: HintButton = $derived(game?.hintButton ?? { kind: "noneLeft" });
 
     function share() {
-        game?.share();
+        const card = game?.resultCard();
+        if (card !== undefined) publish("shareDailyResult", card);
     }
 
     function toggleDemo() {
@@ -112,19 +120,25 @@
                 <div class="stat">
                     <TimerOutline size={"1.2em"} color={ColourVars.textSecondary} />
                     <BodySmall width={"hug"}
-                        ><span class="mono">{formatSolveTime(game.elapsed($now500))}</span></BodySmall>
+                        ><span class="mono">{formatSolveTime(game.elapsed($now500))}</span
+                        ></BodySmall>
                 </div>
                 <div class="stat">
                     <LightbulbOutline size={"1.2em"} color={ColourVars.textSecondary} />
                     <BodySmall width={"hug"}>
                         <Translatable
-                            resourceKey={i18nKey("dailyPuzzle.hintsUsed", { count: game.hintsUsed })} />
+                            resourceKey={i18nKey("dailyPuzzle.hintsUsed", {
+                                count: game.hintsUsed,
+                            })} />
                     </BodySmall>
                 </div>
                 <div class="stat">
                     <Fire size={"1.2em"} color={ColourVars.textSecondary} />
                     <BodySmall width={"hug"}>
-                        <Translatable resourceKey={i18nKey("dailyPuzzle.streakDays", { streak: game.streak })} />
+                        <Translatable
+                            resourceKey={i18nKey("dailyPuzzle.streakDays", {
+                                streak: game.streak,
+                            })} />
                     </BodySmall>
                 </div>
                 {#if def?.Settings !== undefined}
@@ -210,28 +224,9 @@
                         {#snippet icon(color, size)}
                             <LightbulbOutline {color} {size} />
                         {/snippet}
-                        {#if hintButton.kind === "mistake"}
-                            <Translatable resourceKey={i18nKey("dailyPuzzle.fixMistakeFirst")} />
-                        {:else if hintButton.kind === "noneLeft"}
-                            <Translatable resourceKey={i18nKey("dailyPuzzle.noHintsLeft")} />
-                        {:else}
-                            <Translatable
-                                resourceKey={i18nKey("dailyPuzzle.hintCost", {
-                                    price: hintButton.price,
-                                })} />
-                            {#if hintButton.hintsLeft > 0}
-                                · <Translatable
-                                    resourceKey={i18nKey("dailyPuzzle.hintsLeft", {
-                                        count: hintButton.hintsLeft,
-                                    })} />
-                            {/if}
-                            {#if hintButton.checksLeft !== undefined}
-                                · <Translatable
-                                    resourceKey={i18nKey("dailyPuzzle.checksLeft", {
-                                        count: hintButton.checksLeft,
-                                    })} />
-                            {/if}
-                        {/if}
+                        {#each hintButtonKeys(hintButton) as key, i (key.key)}{#if i > 0}
+                                ·
+                            {/if}<Translatable resourceKey={key} />{/each}
                     </CommonButton2>
                 {/if}
                 {@render howToPlay()}

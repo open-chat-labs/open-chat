@@ -199,8 +199,7 @@
               }),
     );
 
-    // TODO: the thread count (L1). TODO(4b): the community's edit, invite and new channel items
-    // (parts 2 to 4)
+    // TODO: the thread count (L1). TODO(4b): the community's new channel items (part 4)
     function onHeaderMenu(item: string) {
         if (item === "markAllRead") {
             client.markAllReadForCurrentScope();
@@ -213,6 +212,12 @@
                 break;
             case "members":
                 showInRightColumn(screen.rightColumn, { kind: "show_community_members" });
+                break;
+            case "invite":
+                screen.dialogs.open({ kind: "invite", target: community.id, tab: "people" });
+                break;
+            case "editCommunity":
+                screen.dialogs.open({ kind: "group_settings", target: community.id, tab: "group" });
                 break;
             case "muteAll":
             case "muteAllEveryone":

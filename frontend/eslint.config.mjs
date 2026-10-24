@@ -169,7 +169,6 @@ export default defineConfig([
             "app/src/theme/themeV2.ts",
             "app/src/theme/themes.ts",
             "app/src/utils/access.ts",
-            "app/src/utils/dailyPuzzle.svelte.ts",
             "app/src/utils/native/call_bridge.spec.ts",
             "app/src/utils/native/share_target.ts",
             "app/src/utils/navigation.ts",

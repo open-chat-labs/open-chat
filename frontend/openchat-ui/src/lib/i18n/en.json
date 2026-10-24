@@ -915,7 +915,9 @@
       "solved": "Solved",
       "teaser": "A 5-minute logic puzzle",
       "title": "Today's puzzle · Bridges",
+      "titleToday": "Today's puzzle",
       "tryIt": "Try it",
+      "unavailable": "No puzzle today. Check back tomorrow.",
       "view": "View"
     },
     "deleteGroupDialog": {

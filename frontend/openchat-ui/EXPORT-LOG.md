@@ -249,3 +249,36 @@
 - `onBuy` resolving `false` is nothing bought by choice (the user backed out of the PIN prompt): the dialog stays open with no error, where it closed as if bought.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
 
+
+## 2026-10-24 — GroupSettingsDialog: community mode shows only what a community has, by hand
+- With `noun: 'community'` the dialog showed group-only settings, which a community doesn't have, so editing them saved nothing:
+  - the message-related general permissions (delete, pin, react, @everyone, calls);
+  - the Messages and Threads permission tabs;
+  - the history and disappearing-messages switches, and their About facts;
+  - the moderator and nobody roles.
+- Those are now left out for a community. The `GENERAL` rows carry `only: 'group'` the way the channel rows carry `only: 'community'`. The role picker offers member, admin and owner, and the "changed" count counts only general permissions.
+- A community's permissions all default to admin (`communityDef` on the shared rows), as the backend's `CommunityPermissions::default()` has them. "Reset to defaults" set Remove members to moderator, a role a community can't hold, and let every member invite and create private channels. A fresh community also showed four permissions "changed from the defaults".
+- Save waits for a name check that's still running (400ms after typing) instead of ignoring the click. Saving straight after renaming did nothing until a second click.
+
+## 2026-10-24 — DailyPuzzleCard: a host's title and menu, and ChitDialog passing them on, by hand
+- `title` (resource key or literal text) is the new / progress title, which was always "Today's puzzle · Bridges" (`ui.dailyPuzzleCard.title`, still the default), for a host whose puzzle is another game.
+- `menu` lists the "⋯" menu's items by their action (`puzzleRemindOn` stands for the reminder either way); left out, all three show, as before. With none, there's no "⋯".
+- `state: 'unavailable'`: no puzzle today. The card says so (`title`, default `ui.dailyPuzzleCard.titleToday`; `sub`, default `ui.dailyPuzzleCard.unavailable`) with no button and no "⋯", so there's nothing to press.
+- `ChitDialog` passes them on as `puzzleTitle` and `puzzleMenu`, and takes the new state as `puzzleState`. Its `puzzleCountdown` is the solved card's "Next puzzle in" (it was `countdown`, the next claim, which is empty while a claim is due); left out, still `countdown`. `meta.json` updated.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-24 — ChitDialog: a claim bursts confetti, by hand
+- A claim made in the dialog (`onClaim` resolving with anything but `false`) bursts the library's `Confetti` from the claim area as the ring pops, as `AchievementToast` and `PrizeMessage` do theirs. The old CHIT modal rained coins on a claim; the design had nothing.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-24 — A back arrow only for a dialog opened from another, and one for DialogShell and ProfileDialog, by hand
+- The app's rule for a dialog opened from another: it has a back arrow, the only way back to the one it was opened from; ×, the backdrop and Escape close them all.
+- `AchievementsDialog`, `LeaderboardDialog` and `StreakInsuranceDialog` drew their back arrow always, falling back to `onClose` (the insurance dialog to its exit). It now shows only with `onBack`; `LeaderboardDialog` keeps its place empty, so the title doesn't move.
+- `DialogShell` takes `onBack`: a back arrow before the title. `ProfileDialog` takes `onBack`: one before the section's title, which hands off with no exit (`DialogFlow.handOff`), so the backdrop stays.
+- `meta.json` updated.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-24 — InviteDialog: the host searches, by hand
+- `onSearch?: (query, tab: 'add' | 'invite') => Promise<InvitePerson[]>`. As the Add or Invite query changes, the host searches (250ms debounce, latest query wins), and its results stand in for filtering `communityMembers` / `people`; a failed search falls back to that filter. A picked person found by a search stays shown in the chips. The dialog could only filter the lists it was given, so it couldn't find anyone the app hadn't loaded.
+- The footer (Send / Add) is shown on the Add tab with `canAdd` and on the others with `canInvite`; it followed `canInvite` alone, so someone who could add but not invite couldn't send. "Frequently contacted" isn't shown over an empty list.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).

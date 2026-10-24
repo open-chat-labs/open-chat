@@ -4,6 +4,7 @@ import { ROLE_ADMIN, ROLE_MEMBER, ROLE_OWNER } from "@client";
 import {
     chatDetailsPermissions,
     chatManageAccess,
+    communityManageAccess,
     chatRulesText,
     communityDetailsPermissions,
 } from "./detailsPermissions";
@@ -25,13 +26,14 @@ function client(frozen: { chat?: boolean; community?: boolean }, privateChat = f
         canEditGroupDetails: () => true,
         canDeleteGroup: () => true,
         canInviteUsers: () => true,
+        canAddMembers: () => true,
         canEditCommunity: () => true,
         canDeleteCommunity: () => true,
     } as never as OpenChat;
 }
 
-const all = { canEdit: true, canDelete: true, canInvite: true };
-const none = { canEdit: false, canDelete: false, canInvite: false };
+const all = { canEdit: true, canDelete: true, canInvite: true, canOpenInvite: true };
+const none = { canEdit: false, canDelete: false, canInvite: false, canOpenInvite: false };
 
 describe("details permissions", () => {
     // #10112 "Desktop vs mobile": a frozen chat or community, and a guest, get no edit, delete or invite
@@ -54,6 +56,27 @@ describe("details permissions", () => {
         expect(chatDetailsPermissions(client({}, true), channel, community, false).canInvite).toBe(
             false,
         );
+    });
+
+    // 4b: the invite dialog is still offered for a private channel (its Add tab), and to any
+    // member of a public chat (to share its link), as the old menus did
+    test("the invite dialog opens for a private channel's inviter and a public chat's member", () => {
+        expect(
+            chatDetailsPermissions(client({}, true), channel, community, false).canOpenInvite,
+        ).toBe(true);
+        const member = {
+            ...client({}),
+            canInviteUsers: () => false,
+            canAddMembers: () => false,
+        } as never as OpenChat;
+        const open = (isPublic: boolean) =>
+            chatDetailsPermissions(member, { ...channel, public: isPublic }, community, false)
+                .canOpenInvite;
+        expect(open(true)).toBe(true);
+        expect(open(false)).toBe(false);
+        // someone who may add members but not invite still gets the dialog's Add tab
+        const adder = { ...member, canAddMembers: () => true } as never as OpenChat;
+        expect(chatDetailsPermissions(adder, channel, community, false).canOpenInvite).toBe(true);
     });
 });
 
@@ -119,6 +142,35 @@ describe("chatManageAccess", () => {
                 undefined,
                 false,
             ),
+        ).toEqual({ kind: "edit", readOnly: [] });
+    });
+});
+
+describe("communityManageAccess", () => {
+    const owned = (role: number) => ({ ...community, membership: { role } }) as CommunitySummary;
+    const viewer = ({ edit, owner }: { edit: boolean; owner: boolean }) =>
+        ({
+            ...client({}),
+            canEditCommunity: () => edit,
+            canChangeCommunityPermissions: () => owner,
+        }) as never as OpenChat;
+
+    // 4b invariant 7, for a community
+    test("a member who can't edit the community gets the About page", () => {
+        expect(
+            communityManageAccess(viewer({ edit: false, owner: false }), owned(ROLE_MEMBER), false),
+        ).toEqual({ kind: "about" });
+    });
+
+    test("an admin edits the community but not its permissions or visibility", () => {
+        expect(
+            communityManageAccess(viewer({ edit: true, owner: false }), owned(ROLE_ADMIN), false),
+        ).toEqual({ kind: "edit", readOnly: ["permissions", "visibility"] });
+    });
+
+    test("the owner edits everything", () => {
+        expect(
+            communityManageAccess(viewer({ edit: true, owner: true }), owned(ROLE_OWNER), false),
         ).toEqual({ kind: "edit", readOnly: [] });
     });
 });

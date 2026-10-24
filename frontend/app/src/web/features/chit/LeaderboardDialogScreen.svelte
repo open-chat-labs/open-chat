@@ -1,6 +1,7 @@
 <!-- The CHIT leaderboard (?hof), LeaderboardDialog over the page (8d, #10130): this month's, last
      month's and all time's top 10, as the old hall of fame shows them (its Invaders game isn't
-     carried over), the user's own place where they're on a board. -->
+     carried over), the user's own place where they're on a board. Opened from the CHIT dialog, its
+     back arrow returns to it in its place over the same backdrop. -->
 <script lang="ts">
     import {
         currentUserIdStore,
@@ -13,6 +14,7 @@
     import { getContext, onMount } from "svelte";
     import { _, locale } from "svelte-i18n";
     import type { DialogProps, LinkedDialog } from "../app/dialogs";
+    import { canGoBack, goBack } from "../app/linkedDialogs.svelte";
     import { leaderboardBoards } from "./chit.adapter";
 
     let { onClose }: DialogProps<Extract<LinkedDialog, { kind: "leaderboard" }>> = $props();
@@ -40,4 +42,8 @@
     );
 </script>
 
-<LeaderboardDialog {boards} handle={$currentUserStore.username} {onClose} />
+<LeaderboardDialog
+    {boards}
+    handle={$currentUserStore.username}
+    onBack={canGoBack() ? goBack : undefined}
+    {onClose} />

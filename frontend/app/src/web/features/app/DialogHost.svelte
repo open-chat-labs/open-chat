@@ -30,7 +30,7 @@
     import SuspendUserDialog from "../user/SuspendUserDialog.svelte";
     import AppEventDialogs from "./AppEventDialogs.svelte";
     import DialogScreen from "./DialogScreen.svelte";
-    import { openLinked, urlChanged } from "./linkedDialogs";
+    import { chitTurnedOff, openLinked, urlChanged } from "./linkedDialogs.svelte";
     import { disableChit } from "@src/stores/settings";
     import { screenLoader } from "./screens";
     import {
@@ -101,6 +101,9 @@
 
     $effect(() => closeOnNavigation(stack));
 
+    // a back arrow to a CHIT dialog is offered only while CHIT is on (linkedDialogs.svelte.ts)
+    $effect(() => disableChit.subscribe(chitTurnedOff, undefined));
+
     // the built dialogs' code, loaded once the app is idle, so a dialog opens at once rather than
     // after a spinner the first time (it's still left out of the app's first download). Not while
     // offline; and one that fails ahead loads again when it's opened
@@ -118,6 +121,12 @@
     });
     $effect(() => subscribe("profile", () => openLinked({ kind: "profile" })));
     $effect(() => subscribe("upgrade", () => openLinked({ kind: "diamond" })));
+    // the old UI's way to a daily puzzle (a daily result message's Play …)
+    $effect(() =>
+        subscribe("dailyPuzzle", ({ gameId }) => {
+            if (!disableChit.value) openLinked({ kind: "puzzle", gameId });
+        }),
+    );
     // the old UI's way to the daily claim (the prize message's CHIT link …)
     $effect(() =>
         subscribe("claimDailyChit", () => {

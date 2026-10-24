@@ -1749,6 +1749,17 @@
         "doc": ""
       },
       {
+        "name": "onBack",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Opened from another dialog: a back arrow before the title, back to it."
+      },
+      {
         "name": "onClose",
         "type": "() => void",
         "default": null,
@@ -5593,7 +5604,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Defaults to onClose."
+        "doc": "Opened from another dialog: a back arrow, back to it (none without)."
       },
       {
         "name": "onClose",
@@ -7264,7 +7275,7 @@
       },
       {
         "name": "puzzleState",
-        "type": "'new' | 'progress' | 'solved' | 'hidden' | 'off'",
+        "type": "'new' | 'progress' | 'solved' | 'unavailable' | 'hidden' | 'off'",
         "default": null,
         "editor": null,
         "options": null,
@@ -7294,6 +7305,39 @@
         "required": false,
         "componentDefault": "false",
         "doc": ""
+      },
+      {
+        "name": "puzzleTitle",
+        "type": "string",
+        "default": null,
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "DailyPuzzleCard's title (see there)."
+      },
+      {
+        "name": "puzzleMenu",
+        "type": "PuzzleAction[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "DailyPuzzleCard's \"⋯\" menu (see there)."
+      },
+      {
+        "name": "puzzleCountdown",
+        "type": "string",
+        "default": null,
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The solved puzzle card's \"Next puzzle in\": defaults to `countdown`."
       },
       {
         "name": "onBack",
@@ -8119,7 +8163,7 @@
     "name": "DailyPuzzleCard",
     "source": "lib/DailyPuzzleCard.dc.html",
     "hash": "022361e6",
-    "description": "Daily puzzle entry (opt-in). state: new | progress | solved | hidden (one-line \"hidden\" + Undo) | off (renders nothing).",
+    "description": "Daily puzzle entry (opt-in). state: new | progress | solved | unavailable (no puzzle today: says so, nothing to press) | hidden (one-line \"hidden\" + Undo) | off (renders nothing).",
     "preview": {
       "width": 460,
       "height": 120
@@ -8127,13 +8171,14 @@
     "props": [
       {
         "name": "state",
-        "type": "'new' | 'progress' | 'solved' | 'hidden' | 'off'",
+        "type": "'new' | 'progress' | 'solved' | 'unavailable' | 'hidden' | 'off'",
         "default": "new",
         "editor": "enum",
         "options": [
           "new",
           "progress",
           "solved",
+          "unavailable",
           "hidden",
           "off"
         ],
@@ -8174,6 +8219,28 @@
         "required": false,
         "componentDefault": "false",
         "doc": "Daily reminder is on: bell badge on the tile, checked menu item."
+      },
+      {
+        "name": "title",
+        "type": "string",
+        "default": null,
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Resource key (or literal text). New / progress: the title; defaults to \"Today's puzzle · Bridges\"."
+      },
+      {
+        "name": "menu",
+        "type": "PuzzleAction[]",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The \"⋯\" menu's items, by their action; defaults to all three. With none, there's no menu."
       },
       {
         "name": "onAction",
@@ -10995,6 +11062,17 @@
         "doc": "Everyone you can invite ({ id, name, handle, color, frequent? })."
       },
       {
+        "name": "onSearch",
+        "type": "(query: string, tab: 'add' | 'invite') => Promise<InvitePerson[]>",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Searches for people to add or invite as the query changes (debounced, latest query wins); the results stand in for filtering communityMembers / people."
+      },
+      {
         "name": "pending",
         "type": "{ title: string; handle: string; color: Color }[]",
         "default": null,
@@ -11351,7 +11429,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": "Defaults to onClose."
+        "doc": "Opened from another dialog: a back arrow, back to it (none without)."
       },
       {
         "name": "onClose",
@@ -13940,6 +14018,17 @@
         "doc": ""
       },
       {
+        "name": "onBack",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "Opened from another dialog: a back arrow before the section's title, back to it in this one's place (no exit plays, so the backdrop stays)."
+      },
+      {
         "name": "onSectionChange",
         "type": "(section: ProfileSection) => void",
         "default": null,
@@ -15167,7 +15256,7 @@
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Opened from another dialog: a back arrow, back to it (none without)."
       },
       {
         "name": "onClose",

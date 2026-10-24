@@ -274,8 +274,8 @@ design export needs. Each entry says where it came up.
     leave, so for anyone else the item does nothing.
   - not offered: freeze and unfreeze (platform moderators, no dialog), suspend, report, and the
     desktop row's swipe-to-remove (Remove chat is a row menu item instead).
-  - the community header's Edit, Invite and new channel items, and the conversation header's
-    Invite, Convert, Import and webhook items, come with 4b's later parts.
+  - the community header's Invite and new channel items, and the conversation header's Invite,
+    Convert, Import and webhook items, come with 4b's later parts.
 
 - **Group and channel settings** (4b part 2a): GroupPanel's Settings opens `GroupSettingsDialog`
   on `UpdateGroupState` (`features/group/GroupSettingsDialogScreen.svelte`, through
@@ -301,6 +301,52 @@ design export needs. Each entry says where it came up.
     nothing.
   - with edit rights, GroupPanel's menu also shows Convert, Import and the new channel items.
     They do nothing until parts 4 and 5.
+
+- **Community settings** (4b part 2b): the same dialog, with `noun: "community"`, on
+  `UpdateCommunityState`. It opens from GroupPanel's Settings and from the community header's Edit
+  community. `communityManageAccess` makes permissions and Public read-only to a non-owner, and
+  gives the About page to someone who can't edit.
+  - by hand: in community mode the dialog leaves out what a community doesn't have: the
+    message-related general permissions (delete, pin, react, @everyone, calls), the Messages and
+    Threads tabs, the history and disappearing switches and their About facts, and the
+    moderator and nobody roles.
+  - a picked banner is cropped to its middle at 600×300.
+  - the community About page's Mute mutes every channel and can't unmute (as in the old menus).
+    Tapping it while muted says "That didn't go through" when it can't, not why. It has no
+    Favourite, because a community can't be a favourite.
+  - `CreateGroupDialog` still has the old community defaults (invite and private channels for
+    everyone, roles and user groups for owners). Part 4 brings them in line.
+  - the primary language isn't in the dialog, and is kept as it was.
+  - removing an avatar or banner in the dialog saves nothing. `groupChanges` and
+    `communityChanges` turn a removed image into "no change", because the client has no way to
+    send a removal. Groups have the same gap.
+  - community mode still says "Group settings", "Group photo", "Group name", "Public group" and
+    "Enable rules for the group". The dialog's community words are only for the cover and the
+    permissions.
+  - GroupPanel's community Permissions summary counts changes against the group defaults,
+    message permissions included, so it reads far more than the dialog's badge.
+  - Esc while the dialog's role picker is open closes the whole dialog, and drops unsaved edits.
+
+- **Invite** (4b part 3a): `InviteDialog`, on `MemberManagement`, opens from GroupPanel's invite
+  and share buttons, the conversation header's Invite and the community header's Invite.
+  - by hand: `InviteDialog` takes `onSearch`. Invite searches the community's members and then
+    everyone (`searchUsersForInvite`), and Add searches the community (`searchCommunityMembersToAdd`),
+    as both old trees did.
+  - the dialog says how many invites went or failed. The app adds its own toast only for a
+    partial add ("group.addMembersPartialSuccess") and a failure's reason.
+  - nobody is listed before you search; the old pages listed nobody either.
+  - resetting the link doesn't ask first; the old pages did ("invite.confirmReset").
+  - no QR code, no "share to a chat" (the chat picker is 4d), and invited-but-not-joined people
+    aren't listed.
+  - it opens for a private channel too (its Add tab) and for any member of a public chat (to
+    share its link), as the old header menu did (`canOpenInvite`).
+  - a failed invite or add shows two toasts: the dialog's "That didn't go through" and the app's
+    reason.
+  - the Add tab shows an empty "<community> members" heading until you search, because the app
+    passes no members up front.
+  - a public chat's link shows a switch locked on, and the warning that access gates are skipped
+    for people joining by link. Switching a private link on takes a few seconds with nothing
+    shown meanwhile.
 
 ## App
 
@@ -369,6 +415,10 @@ design export needs. Each entry says where it came up.
 
 ### Wiring
 
+- **Dialogs opened from dialogs, by hand** (the app's rule): a back arrow only for a dialog opened
+  from another (`AchievementsDialog`, `LeaderboardDialog` and `StreakInsuranceDialog` drew one
+  always), and one for `DialogShell` and `ProfileDialog` (`onBack`). The design has no rule for
+  it.
 - **`StreakInsuranceDialog`, by hand** (8d): a week of cells at a time, sliding along the ladder
   (30 in a row crushed the prices together); "Your cover is full" for "Covered for a full week",
   as cover caps at 30 days; Back with `onBack` hands off with no exit, so the backdrop stays;
@@ -376,18 +426,37 @@ design export needs. Each entry says where it came up.
 - **`ChitDialog`, by hand** (8d): the default milestone tiers keep their hand-spaced positions
   when a host passes them; a claim made in the dialog clears once the next claim opens; `onClaim`
   resolving `false` is nothing claimed (claimed already), and plays no claim.
+- **`DailyPuzzleCard` and `ChitDialog`, by hand** (8d): the card takes a `title` (it always said
+  "Today's puzzle · Bridges") and the items of its "⋯" menu (`menu`, no "⋯" with none), and
+  `ChitDialog` passes them on (`puzzleTitle`, `puzzleMenu`); an `unavailable` state says there's
+  no puzzle today, with no button or menu.
 - **CHIT dialog** (`features/chit`, 8d): the streak, today's claim, the balance, the insurance
   summary, the settings (the profile's CHIT section), the leaderboard (`?hof`) and the ways to
   earn (`?chit=earn`, `AchievementsDialog`) and buying streak insurance (`?chit=insurance`,
   `StreakInsuranceDialog`), each in the CHIT dialog's place over the same backdrop, Back
-  returning to it. Not yet: the daily puzzle (the card is left out),
-  the rest of 8d. A claim that fails shows the dialog's own error, where the old modal toasted and
-  closed; an already claimed day just moves the countdown on, as the old desktop modal does.
+  returning to it, as is today's puzzle (below). A claim that fails shows the dialog's own error, where the old modal toasted and
+  closed; an already claimed day just moves the countdown on, as the old desktop modal does. A
+  claim made bursts confetti from the claim area (`ChitDialog`'s, by hand, with the library's
+  `Confetti`), where the old modal rained CHIT coins.
 - **Streak insurance** (`StreakInsuranceDialog`): paid in CHAT as the old dialog pays it (the
   PIN first, if set, through the PIN prompt), what's sent worked out from the cover bought. The
   dialog prices a day by the cover held and the backend by the days bought, so the app offsets
   its prices by the days used (and passes `cap`, so "cover caps at" says 30). The PIN prompt given
   up leaves the dialog open with nothing said.
+- **Daily puzzle** (`?chit=puzzle`, `?chit=puzzle:<gameId>`, `PuzzleDialogScreen`): the design's
+  `PuzzleDialog` plays Bridges only, so it isn't used: the puzzle is a plain `DialogShell` frame
+  (`TODO(design)`) around the app's own boards (`core/dailyPuzzle`), driven by the old screens'
+  flow (`DailyPuzzleGame`), in the CHIT dialog's place over the same backdrop (`DialogScreen`
+  gives the frame's lighter scrim the dialogs' veil while it takes over). The CHIT dialog's card
+  shows the first puzzle not yet solved (the old modal listed every game's row); once all are
+  solved it says so and opens the leaderboard; with no puzzle today it stays, saying so, where the
+  old modal showed no row (and none while they're still loading). A game this build can't draw
+  is left out, and a link to a game that's off today opens no puzzle. The rail's puzzle dot shows
+  while one is still to play. Not yet:
+  - sharing a result (the old "Share" button), which waits on the chat picker (4d), and the
+    result card in a chat (`DailyResultContent`), which waits on the message kinds;
+  - the card's reminder and hide (its "⋯" menu has only "How to play", `?chit=howto`): the old UI
+    has neither.
 - **Leaderboard** (`?hof`): this month's, last month's and all time's top 10, as the old hall of
   fame shows them, without its Invaders game.
 - **Ways to earn** (`AchievementsDialog`): the old "Learn to earn" list (`achievementList`). The

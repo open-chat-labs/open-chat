@@ -1,5 +1,6 @@
 
 <script lang="ts">
+    import { searchToInvite } from "@src/logic/members/memberManagement.svelte";
     import { navigate } from "@utils/navigation";
     import type { ChatIdentifier, MemberRole, MultiUserChat, OpenChat, UserSummary } from "@client";
     import { allUsersStore, currentUserIdStore, eventsStore, fullWidth, lastRightPanelState, publish, rightPanelHistory, rightPanelView, routeStore, selectedChatBlockedUsersStore, selectedChatBotsStore, selectedChatIdStore, selectedChatInvitedUsersStore, selectedChatLapsedMembersStore, selectedChatMembersStore, selectedChatPinnedMessagesStore, selectedChatSummaryStore, selectedChatWebhooksStore, selectedCommunityBlockedUsersStore, selectedCommunityBotsStore, selectedCommunityInvitedUsersStore, selectedCommunityLapsedMembersStore, selectedCommunityMembersStore, selectedCommunitySummaryStore, setRightPanelHistory } from "@client";
@@ -45,10 +46,7 @@
     let closeIcon = $derived<"back" | "close">($rightPanelHistory.length > 1 ? "back" : "close");
 
     function searchUsers(term: string): Promise<[UserSummary[], UserSummary[]]> {
-        const canInvite =
-            $selectedCommunitySummaryStore !== undefined &&
-            client.canInviteUsers($selectedCommunitySummaryStore.id);
-        return client.searchUsersForInvite(term, 20, level, false, canInvite);
+        return searchToInvite(client, level, term);
     }
 
     function searchMembers(term: string): Promise<[UserSummary[], UserSummary[]]> {

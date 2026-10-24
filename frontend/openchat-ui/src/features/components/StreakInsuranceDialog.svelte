@@ -1,8 +1,8 @@
 <!-- Buy streak insurance: a week of day-cells (covered / adding now / tap to add) on a rising price ladder, a summary
      and Pay. Priced on each day's position in your holding, so buying one day at a time costs the same as several at once.
      Prices come from the host (`prices`, one per position; its length is the cap). Pay calls onBuy and waits: the dialog
-     closes once it resolves and stays open with an error if it rejects. Back returns to CHIT (onBack, else onClose):
-     onBack opens it in this one's place, with no exit, so the backdrop can stay. -->
+     closes once it resolves and stays open with an error if it rejects. Opened from another dialog (onBack), a back
+     arrow returns to it in this one's place, with no exit, so the backdrop can stay; none without. -->
 <script lang="ts">
   import { getI18n, useT } from '../../lib/i18n';
   import { onDestroy } from 'svelte';
@@ -93,7 +93,7 @@
 
   <div class="card">
     <div class="head">
-      <span class="icon-button back" onclick={() => (onBack ? flow.handOff(onBack) : leave(onClose))} role="button" tabindex="0" aria-label={t('ui.streakInsuranceDialog.backToChit')} title={t('ui.streakInsuranceDialog.backToChit')}><span class="back-icon"></span></span>
+      {#if onBack}<span class="icon-button back" onclick={() => onBack && flow.handOff(onBack)} role="button" tabindex="0" aria-label={t('ui.streakInsuranceDialog.backToChit')} title={t('ui.streakInsuranceDialog.backToChit')}><span class="back-icon"></span></span>{/if}
       <span class="badge"><span class="badge-icon"></span></span>
       <div class="titles">
         <span class="title">{t('ui.streakInsuranceDialog.title')}</span>

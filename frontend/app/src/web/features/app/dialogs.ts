@@ -1,4 +1,4 @@
-import type { LeaveOrDelete, MultiUserChatIdentifier } from "@client";
+import type { CommunityIdentifier, LeaveOrDelete, MultiUserChatIdentifier } from "@client";
 import type { DialogStack } from "../../shell/dialogStack.svelte";
 import type { ProfileCard } from "@src/logic/profile/profileCard";
 import type { Component } from "svelte";
@@ -9,8 +9,10 @@ import type { Component } from "svelte";
 // Two kinds:
 // - linked: a query param over whatever page is open, which people link to and Back closes
 //   (ROUTES.md, decision 6): ?profile, ?chit, ?hof, ?diamond. The CHIT dialog's own views, the
-//   ways to earn (?chit=earn) and buying streak insurance (?chit=insurance), are linked dialogs
-//   too, so one takes the CHIT dialog's place over the same backdrop, and Back returns to it;
+//   ways to earn (?chit=earn), buying streak insurance (?chit=insurance) and today's puzzle
+//   (?chit=puzzle), are linked dialogs too, so one takes the CHIT dialog's place over the same
+//   backdrop. A dialog opened from another (linkedDialogs.svelte.ts) has a back arrow to it, the
+//   only way back; ×, the backdrop and Back close them all;
 // - local: opened by the app itself (a name clicked in a message …), kept in a DialogStack, and
 //   closed before any navigation (closeModalStack) and on Back.
 //
@@ -26,15 +28,27 @@ export type LinkedDialog =
     // partner's achievement's name: ?chit=earn:<highlight>)
     | { kind: "achievements"; highlight?: string }
     | { kind: "streak_insurance" }
+    // today's puzzle (with no `gameId`, the first on the rota: ?chit=puzzle), or that game's
+    // (?chit=puzzle:<gameId>); `how`: opened on how to play (?chit=howto, ?chit=howto:<gameId>)
+    | { kind: "puzzle"; gameId?: string; how?: boolean }
     | { kind: "leaderboard" };
 
 // someone's profile card, for a name clicked in a message; confirming leaving or deleting a chat or
-// community, called `name`; or a group's or channel's settings (its About page for someone who
-// can't edit it)
+// community, called `name`; a group's, channel's or community's settings (its About page for
+// someone who can't edit it); or inviting people to one, or sharing its link
 export type LocalDialog =
     | ({ kind: "user" } & ProfileCard)
     | { kind: "leave_or_delete"; action: LeaveOrDelete; name: string }
-    | { kind: "group_settings"; chatId: MultiUserChatIdentifier; tab: GroupSettingsTab };
+    | {
+          kind: "group_settings";
+          target: MultiUserChatIdentifier | CommunityIdentifier;
+          tab: GroupSettingsTab;
+      }
+    | {
+          kind: "invite";
+          target: MultiUserChatIdentifier | CommunityIdentifier;
+          tab: "people" | "share";
+      };
 
 /** The page GroupSettingsDialog opens on. */
 export type GroupSettingsTab = "group" | "gates" | "rules" | "permissions";
@@ -80,14 +94,21 @@ export const dialogs: Dialogs = {
     // confirming leaving or deleting a group, channel, DM or community (4b)
     leave_or_delete: () => import("../chats/LeaveOrDeleteDialogScreen.svelte"),
 
-    // a group's or channel's settings, or its About page (4b)
+    // a group's, channel's or community's settings, or its About page (4b)
     group_settings: () => import("../group/GroupSettingsDialogScreen.svelte"),
+
+    // inviting people to a group, channel or community, or adding community members to a
+    // channel, and its invite link (4b)
+    invite: () => import("../group/InviteDialogScreen.svelte"),
 
     // the ways to earn CHIT: every achievement and what it pays (8d)
     achievements: () => import("../chit/AchievementsDialogScreen.svelte"),
 
     // buying streak insurance (8d)
     streak_insurance: () => import("../chit/StreakInsuranceDialogScreen.svelte"),
+
+    // today's daily puzzle (8d)
+    puzzle: () => import("../chit/PuzzleDialogScreen.svelte"),
 };
 
 // each linked dialog's query param; the CHIT dialog's views share its param, told apart by its value
@@ -97,6 +118,7 @@ const PARAMS: Record<LinkedDialog["kind"], string> = {
     chit: "chit",
     achievements: "chit",
     streak_insurance: "chit",
+    puzzle: "chit",
     leaderboard: "hof",
 };
 
@@ -106,6 +128,8 @@ const PARAM_ORDER = ["profile", "diamond", "chit", "hof"];
 // the CHIT dialog's views' values
 const EARN = "earn";
 const INSURANCE = "insurance";
+const PUZZLE = "puzzle";
+const HOW_TO = "howto";
 
 /** The linked dialog the URL's query opens, if any: one at a time. */
 export function linkedDialog(query: URLSearchParams): LinkedDialog | undefined {
@@ -124,6 +148,14 @@ export function linkedDialog(query: URLSearchParams): LinkedDialog | undefined {
             return { kind: "leaderboard" };
         default:
             if (value === INSURANCE) return { kind: "streak_insurance" };
+            if (value === PUZZLE) return { kind: "puzzle" };
+            if (value.startsWith(`${PUZZLE}:`)) {
+                return { kind: "puzzle", gameId: value.slice(PUZZLE.length + 1) };
+            }
+            if (value === HOW_TO) return { kind: "puzzle", how: true };
+            if (value.startsWith(`${HOW_TO}:`)) {
+                return { kind: "puzzle", gameId: value.slice(HOW_TO.length + 1), how: true };
+            }
             if (value === EARN) return { kind: "achievements" };
             if (value.startsWith(`${EARN}:`)) {
                 return { kind: "achievements", highlight: value.slice(EARN.length + 1) };
@@ -145,6 +177,10 @@ function valueOf(dialog: LinkedDialog): string | undefined {
             return dialog.highlight === undefined ? EARN : `${EARN}:${dialog.highlight}`;
         case "streak_insurance":
             return INSURANCE;
+        case "puzzle": {
+            const view = dialog.how ? HOW_TO : PUZZLE;
+            return dialog.gameId === undefined ? view : `${view}:${dialog.gameId}`;
+        }
         default:
             return undefined;
     }
@@ -161,7 +197,8 @@ export function shownLinkedDialog(
     const chit =
         dialog?.kind === "chit" ||
         dialog?.kind === "achievements" ||
-        dialog?.kind === "streak_insurance";
+        dialog?.kind === "streak_insurance" ||
+        dialog?.kind === "puzzle";
     return chit && chitOff ? undefined : dialog;
 }
 
