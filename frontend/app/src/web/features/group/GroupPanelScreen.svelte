@@ -311,7 +311,7 @@
     function onDialog(kind: string, _payload?: unknown, tab?: string) {
         if (collection === undefined) return;
         if (kind === "invite") {
-            if (permissions?.canInvite) {
+            if (permissions?.canOpenInvite) {
                 context.dialogs.open({
                     kind: "invite",
                     target: collection.id,
@@ -420,7 +420,7 @@
         coverUrl={collection.kind === "community" ? collection.banner.blobUrl : undefined}
         onToggleFavourite={collection.kind === "community" ? undefined : toggleFavourite}
         {onDialog}
-        canInvite={permissions?.canInvite ?? false}
+        canInvite={permissions?.canOpenInvite ?? false}
         canPin={collection.kind !== "community" && client.canPinMessages(collection.id)}
         userGroups={collection.kind === "community" ? userGroups : undefined}
         gateState={gates}

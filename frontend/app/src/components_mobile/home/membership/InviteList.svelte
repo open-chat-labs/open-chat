@@ -6,7 +6,6 @@
         currentUserIdStore,
         OpenChat,
         publish,
-        selectedCommunitySummaryStore,
         usersFromIds,
         type UserSummary,
     } from "@client";
@@ -19,7 +18,10 @@
     import SelectUsers from "../SelectUsers.svelte";
     import InvitedUser from "./InvitedUser.svelte";
     import InviteUser from "./InviteUser.svelte";
-    import type { MemberManagement } from "@src/logic/members/memberManagement.svelte";
+    import {
+        searchToInvite,
+        type MemberManagement,
+    } from "@src/logic/members/memberManagement.svelte";
     import { toastStore } from "@src/stores/toast";
 
     const client = getContext<OpenChat>("client");
@@ -38,10 +40,7 @@
     }
 
     function searchUsers(term: string): Promise<[UserSummary[], UserSummary[]]> {
-        const canInvite =
-            $selectedCommunitySummaryStore !== undefined &&
-            client.canInviteUsers($selectedCommunitySummaryStore.id);
-        return client.searchUsersForInvite(term, 20, membersState.level, false, canInvite);
+        return searchToInvite(client, membersState.level, term);
     }
 </script>
 

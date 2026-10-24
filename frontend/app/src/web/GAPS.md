@@ -338,6 +338,13 @@ design export needs. Each entry says where it came up.
   - resetting the link doesn't ask first; the old pages did ("invite.confirmReset").
   - no QR code, no "share to a chat" (the chat picker is 4d), and invited-but-not-joined people
     aren't listed.
+  - it opens for a private channel too (its Add tab) and for any member of a public chat (to
+    share its link), as the old header menu did (`canOpenInvite`).
+  - a failed invite or add shows two toasts: the dialog's "That didn't go through" and the app's
+    reason.
+  - a public chat's link shows a switch locked on, and the warning that access gates are skipped
+    for people joining by link. Switching a private link on takes a few seconds with nothing
+    shown meanwhile.
 
 ## App
 

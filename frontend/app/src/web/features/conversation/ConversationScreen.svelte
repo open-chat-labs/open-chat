@@ -185,7 +185,7 @@
                           chat,
                           $selectedCommunitySummaryStore,
                           $anonUserStore,
-                      ).canInvite,
+                      ).canOpenInvite,
               }),
     );
 

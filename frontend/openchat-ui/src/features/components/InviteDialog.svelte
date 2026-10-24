@@ -415,7 +415,7 @@
           {/if}
 
           <div class="list-block">
-            <span class="list-label start">{t(q ? 'ui.inviteDialog.searchResults' : 'ui.inviteDialog.frequent')}</span>
+            {#if q || pool.length > 0}<span class="list-label start">{t(q ? 'ui.inviteDialog.searchResults' : 'ui.inviteDialog.frequent')}</span>{/if}
             <div class="rows">
               {#each pool as u}
                 <div class="row">
@@ -488,7 +488,8 @@
       </div>
     </div>
 
-    {#if canInvite && !(embedded && key === 'share')}
+    <!-- the Add tab is sent with add rights (canAdd), the others with invite rights -->
+    {#if (key === 'add' ? canAdd : canInvite) && !(embedded && key === 'share')}
       <div class="footer">
         {#if !embedded}
           <span class="cancel" onclick={cancel} role="button" tabindex="0" aria-disabled={flow.locked || share.pending}>{t(key === 'share' ? 'ui.common.done' : 'ui.common.cancel')}</span>

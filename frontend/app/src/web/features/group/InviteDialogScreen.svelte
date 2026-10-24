@@ -13,7 +13,7 @@
     import InviteDialog, {
         type InvitePerson,
     } from "@openchat/ui/src/features/components/InviteDialog.svelte";
-    import { MemberManagement } from "@src/logic/members/memberManagement.svelte";
+    import { MemberManagement, searchToInvite } from "@src/logic/members/memberManagement.svelte";
     import { toastStore } from "@src/stores/toast";
     import { getContext, onMount, untrack } from "svelte";
     import type { DialogProps, LocalDialog } from "../app/dialogs";
@@ -56,13 +56,7 @@
             const [matches] = await client.searchCommunityMembersToAdd(query, 20);
             return people(matches);
         }
-        const [inCommunity, everyone] = await client.searchUsersForInvite(
-            query,
-            20,
-            target.level,
-            false,
-            community !== undefined && client.canInviteUsers(community.id),
-        );
+        const [inCommunity, everyone] = await searchToInvite(client, target.level, query);
         return people([...inCommunity, ...everyone]);
     }
 
@@ -88,9 +82,9 @@
         if (outcome.kind === "failed") throw new Error("not added");
     }
 
-    async function toggleLink() {
+    async function toggleLink(on: boolean) {
         if (members === undefined) return;
-        const outcome = await members.toggleInviteLink();
+        const outcome = await members.toggleInviteLink(on);
         if (outcome.kind === "failed") {
             toastStore.showOutcome(outcome);
             throw new Error("not changed");
