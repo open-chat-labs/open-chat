@@ -1,4 +1,5 @@
 use crate::guards::caller_is_local_user_index_canister;
+use crate::model::bridged_user_tips::HeldTip;
 use crate::updates::c2c_csam_detected::c2c_csam_detected_impl;
 use crate::updates::c2c_moderation_referral::c2c_moderation_referral_impl;
 use crate::{IdentityEvent, StorageIndexEvent};
@@ -57,6 +58,23 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         LocalUserIndexEvent::ModerationReferral(ev) => c2c_moderation_referral_impl(*ev, state),
         LocalUserIndexEvent::BridgedUserUpdated(user) => {
             state.data.bridged_users.update(*user, **now);
+        }
+        LocalUserIndexEvent::BridgedUserTipped(ev) => {
+            let ev = *ev;
+            state.data.bridged_user_tips.hold(HeldTip {
+                account: ev.account,
+                chat: ev.chat,
+                thread_root_message_index: ev.thread_root_message_index,
+                message_id: ev.message_id,
+                tipper: ev.tipper,
+                refund_to: ev.refund_to,
+                ledger: ev.ledger,
+                token_symbol: ev.token_symbol,
+                amount: ev.amount,
+                fee: ev.fee,
+                decimals: ev.decimals,
+                timestamp: **now,
+            });
         }
         LocalUserIndexEvent::UserRegistered(ev) => {
             process_new_user(ev.principal, ev.username, ev.email, ev.user_id, ev.referred_by, caller, state)
@@ -375,5 +393,51 @@ mod tests {
 
         assert_eq!(avatar_id(&state, user), Some(5));
         assert_eq!(avatar_id(&state, other_user), None);
+    }
+
+    // A tip for an account no one has linked is held as the group or community described it, as of
+    // when it arrived
+    #[test]
+    fn bridged_user_tipped_holds_the_tip() {
+        let (mut state, tipper, _) = setup();
+        let account = types::BridgedUserId::Telegram(123456789);
+        let chat = types::Chat::Group(canister_id(4).into());
+        let refund_to: types::icrc1::Account = Principal::from_slice(&[7; 29]).into();
+        let ledger = canister_id(5);
+        let now = LazyCell::new(|| 2000);
+
+        handle_event(
+            LocalUserIndexEvent::BridgedUserTipped(Box::new(user_index_canister::BridgedUserTipped {
+                chat,
+                thread_root_message_index: Some(3.into()),
+                message_id: 42u64.into(),
+                account,
+                tipper,
+                refund_to,
+                ledger,
+                token_symbol: "CHAT".to_string(),
+                amount: 1_000_000,
+                fee: 100_000,
+                decimals: 8,
+            })),
+            1000,
+            canister_id(1),
+            &now,
+            &mut state,
+        );
+
+        assert_eq!(state.data.bridged_user_tips.len(), 1);
+        let tip = state.data.bridged_user_tips.get(0).unwrap();
+        assert_eq!(tip.account, account);
+        assert_eq!(tip.chat, chat);
+        assert_eq!(tip.thread_root_message_index, Some(3.into()));
+        assert_eq!(tip.message_id, 42u64.into());
+        assert_eq!(tip.tipper, tipper);
+        assert_eq!(tip.refund_to.owner, refund_to.owner);
+        assert_eq!(tip.refund_to.subaccount, refund_to.subaccount);
+        assert_eq!(tip.ledger, ledger);
+        assert_eq!(tip.token_symbol, "CHAT");
+        assert_eq!((tip.amount, tip.fee, tip.decimals), (1_000_000, 100_000, 8));
+        assert_eq!(tip.timestamp, 2000);
     }
 }
