@@ -1311,15 +1311,15 @@ impl ChatEvents {
         anonymized_id: String,
         mut event_pusher: Option<P>,
     ) -> Result<(), UpdateEventError<OCError>> {
-        if message.sender == args.user_id || args.recipient == args.user_id {
+        if message.sender == args.user_id || args.recipient == Some(args.user_id) {
             return Err(UpdateEventError::NoChange(OCErrorCode::CannotTipSelf.into()));
         }
         // A relayed message's tips go to whoever linked the account it was relayed from, as the
-        // caller found
-        if message.bridged_from().is_none() && message.sender != args.recipient {
+        // caller found, or are held for the account if no one has
+        if message.bridged_from().is_none() && args.recipient != Some(message.sender) {
             error!(
                 user = %args.user_id,
-                recipient = %args.recipient,
+                recipient = ?args.recipient,
                 sender = %message.sender,
                 message_index = ?message.message_index,
                 message_id = ?message.message_id,
@@ -3081,7 +3081,8 @@ pub struct AddRemoveReactionArgs {
 #[derive(Clone)]
 pub struct TipMessageArgs {
     pub user_id: UserId,
-    pub recipient: UserId,
+    // None for a message relayed from an account no one has linked, whose tips are held for it
+    pub recipient: Option<UserId>,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
     pub ledger: CanisterId,

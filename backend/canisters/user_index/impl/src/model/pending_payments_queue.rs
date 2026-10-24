@@ -48,6 +48,9 @@ pub struct PendingPayment {
     pub recipient_account: Account,
     pub memo: [u8; 32],
     pub reason: PendingPaymentReason,
+    // The subaccount of the UserIndex the payment is made from, if not its default one
+    #[serde(default)]
+    pub from_subaccount: Option<[u8; 32]>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -55,6 +58,10 @@ pub enum PendingPaymentReason {
     Treasury,
     TopUpNeuron,
     Burn,
+    // Funds held for an account on another platform, paid to whoever linked it
+    BridgedUserDepositClaim,
+    // Funds held for an account no one linked in time, refunded to their sender
+    BridgedUserDepositRefund,
 }
 
 #[cfg(test)]
@@ -80,6 +87,7 @@ mod tests {
                 recipient_account: Account::from(CanisterId::anonymous()),
                 memo: [0; 32],
                 reason: PendingPaymentReason::Treasury,
+                from_subaccount: None,
             }]),
         });
 

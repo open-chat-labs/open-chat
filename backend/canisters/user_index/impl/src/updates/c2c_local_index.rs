@@ -59,23 +59,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         LocalUserIndexEvent::BridgedUserUpdated(user) => {
             state.data.bridged_users.update(*user, **now);
         }
-        LocalUserIndexEvent::BridgedUserDeposit(ev) => {
-            let ev = *ev;
-            state.data.bridged_user_deposits.hold(HeldDeposit {
-                account: ev.account,
-                chat: ev.chat,
-                thread_root_message_index: ev.thread_root_message_index,
-                message_id: ev.message_id,
-                sender: ev.sender,
-                refund_to: ev.refund_to,
-                ledger: ev.ledger,
-                token_symbol: ev.token_symbol,
-                amount: ev.amount,
-                fee: ev.fee,
-                decimals: ev.decimals,
-                timestamp: **now,
-            });
-        }
+        LocalUserIndexEvent::BridgedUserDeposit(ev) => state.receive_bridged_user_deposit(held_deposit(*ev, **now)),
         LocalUserIndexEvent::UserRegistered(ev) => {
             process_new_user(ev.principal, ev.username, ev.email, ev.user_id, ev.referred_by, caller, state)
         }
@@ -342,6 +326,25 @@ You can change your username at any time by clicking \"Profile settings\" from t
     }));
 }
 
+// Funds sent to an account no one has linked, as the group or community described them, as of when
+// they arrived
+fn held_deposit(ev: user_index_canister::BridgedUserDeposit, now: TimestampMillis) -> HeldDeposit {
+    HeldDeposit {
+        account: ev.account,
+        chat: ev.chat,
+        thread_root_message_index: ev.thread_root_message_index,
+        message_id: ev.message_id,
+        sender: ev.sender,
+        refund_to: ev.refund_to,
+        ledger: ev.ledger,
+        token_symbol: ev.token_symbol,
+        amount: ev.amount,
+        fee: ev.fee,
+        decimals: ev.decimals,
+        timestamp: now,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -396,18 +399,17 @@ mod tests {
     }
 
     // Funds sent to an account no one has linked are held as the group or community described them,
-    // as of when they arrived
+    // as of when they arrived. (Holding them schedules their settling, which a unit test can't do.)
     #[test]
-    fn a_bridged_user_deposit_is_held_as_described() {
-        let (mut state, sender, _) = setup();
+    fn a_deposit_for_an_unlinked_account_is_held_as_described() {
         let account = types::BridgedUserId::Telegram(123456789);
         let chat = types::Chat::Group(canister_id(4).into());
+        let sender = UserId::new_indexed(canister_id(2), 1);
         let refund_to: types::icrc1::Account = Principal::from_slice(&[7; 29]).into();
         let ledger = canister_id(5);
-        let now = LazyCell::new(|| 2000);
 
-        handle_event(
-            LocalUserIndexEvent::BridgedUserDeposit(Box::new(user_index_canister::BridgedUserDeposit {
+        let deposit = held_deposit(
+            user_index_canister::BridgedUserDeposit {
                 chat,
                 thread_root_message_index: Some(3.into()),
                 message_id: 42u64.into(),
@@ -419,15 +421,10 @@ mod tests {
                 amount: 1_000_000,
                 fee: 100_000,
                 decimals: 8,
-            })),
-            1000,
-            canister_id(1),
-            &now,
-            &mut state,
+            },
+            2000,
         );
 
-        assert_eq!(state.data.bridged_user_deposits.len(), 1);
-        let deposit = state.data.bridged_user_deposits.get(0).unwrap();
         assert_eq!(deposit.account, account);
         assert_eq!(deposit.chat, chat);
         assert_eq!(deposit.thread_root_message_index, Some(3.into()));

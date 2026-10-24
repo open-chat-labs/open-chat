@@ -107,7 +107,10 @@ fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<PrepareOk> {
 
 // Records the tip in the tipper's copy of the chat, then sends it to the recipient
 fn tip_direct_chat_message(my_index: u16, args: TipMessageArgs, decimals: u8, state: &mut RuntimeState) -> Response {
-    let recipient = args.recipient;
+    // A direct chat's tips always go to the other user
+    let Some(recipient) = args.recipient else {
+        return Error(OCErrorCode::TargetUserNotFound.into());
+    };
     let event_pusher = MultiUserEventPusher {
         user_id: state.user_id(my_index),
         now: args.now,

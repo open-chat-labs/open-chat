@@ -1,10 +1,16 @@
+use constants::DAY_IN_MS;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
-use types::{BridgedUserId, CanisterId, Chat, MessageId, MessageIndex, TimestampMillis, UserId, icrc1};
+use types::{BridgedUserId, CanisterId, Chat, MessageId, MessageIndex, Milliseconds, TimestampMillis, UserId, icrc1};
+
+// How long funds are held for whoever links their account, before they're settled (see
+// `RuntimeState::settle_bridged_user_deposit`)
+pub const DEPOSIT_HOLD_DURATION: Milliseconds = 30 * DAY_IN_MS;
 
 // The funds sent to accounts on other platforms which no one had linked, eg. tips on their relayed
-// messages, which the groups and communities paid into each account's subaccount of the UserIndex,
-// held for whoever links the account
+// messages. Each deposit is held in its account's subaccount of the UserIndex (see
+// `BridgedUserId::subaccount`) until someone links the account, when it's paid to them, or until
+// it's settled, `DEPOSIT_HOLD_DURATION` after it was made.
 #[derive(Serialize, Deserialize, Default)]
 pub struct BridgedUserDeposits {
     deposits: BTreeMap<u64, HeldDeposit>,
@@ -41,13 +47,21 @@ impl BridgedUserDeposits {
         id
     }
 
-    pub fn len(&self) -> usize {
-        self.deposits.len()
+    // Takes those of the deposits held for the account which can be paid, with their ids, to pay to
+    // whoever has linked it
+    pub fn take_for(&mut self, account: &BridgedUserId, can_pay: impl Fn(&HeldDeposit) -> bool) -> Vec<(u64, HeldDeposit)> {
+        self.deposits
+            .extract_if(.., |_, deposit| deposit.account == *account && can_pay(deposit))
+            .collect()
     }
 
-    #[cfg(test)]
-    pub fn get(&self, id: u64) -> Option<&HeldDeposit> {
-        self.deposits.get(&id)
+    // Takes the deposit, if it's still held, to settle it
+    pub fn take(&mut self, id: u64) -> Option<HeldDeposit> {
+        self.deposits.remove(&id)
+    }
+
+    pub fn len(&self) -> usize {
+        self.deposits.len()
     }
 }
 
@@ -84,5 +98,49 @@ mod tests {
 
         assert_ne!(first, second);
         assert_eq!(deposits.len(), 2);
+    }
+
+    #[test]
+    fn whoever_links_an_account_is_given_only_its_deposits() {
+        let nelly = BridgedUserId::Telegram(123456789);
+        let bob = BridgedUserId::Discord(80351110224678912);
+        let mut deposits = BridgedUserDeposits::default();
+        let first = deposits.hold(deposit(nelly, 1_000_000));
+        deposits.hold(deposit(bob, 2_000_000));
+        let second = deposits.hold(deposit(nelly, 3_000_000));
+
+        let taken = deposits.take_for(&nelly, |_| true);
+
+        let taken: Vec<_> = taken.into_iter().map(|(id, d)| (id, d.account, d.amount)).collect();
+        assert_eq!(taken, vec![(first, nelly, 1_000_000), (second, nelly, 3_000_000)]);
+        assert!(deposits.take_for(&nelly, |_| true).is_empty());
+        assert_eq!(deposits.len(), 1);
+    }
+
+    // eg. funds in a ledger the UserIndex doesn't know yet, which wait to be settled
+    #[test]
+    fn a_deposit_which_cant_be_paid_yet_stays_held() {
+        let nelly = BridgedUserId::Telegram(123456789);
+        let mut deposits = BridgedUserDeposits::default();
+        deposits.hold(deposit(nelly, 1_000_000));
+        let unknown = deposits.hold(deposit(nelly, 2_000_000));
+
+        let taken = deposits.take_for(&nelly, |d| d.amount < 2_000_000);
+
+        assert_eq!(taken.len(), 1);
+        assert_eq!(deposits.take(unknown).map(|d| d.amount), Some(2_000_000));
+    }
+
+    #[test]
+    fn a_deposit_claimed_already_isnt_refunded() {
+        let nelly = BridgedUserId::Telegram(123456789);
+        let mut deposits = BridgedUserDeposits::default();
+        let claimed = deposits.hold(deposit(nelly, 1_000_000));
+        deposits.take_for(&nelly, |_| true);
+        let unclaimed = deposits.hold(deposit(nelly, 2_000_000));
+
+        assert!(deposits.take(claimed).is_none());
+        assert_eq!(deposits.take(unclaimed).map(|d| d.amount), Some(2_000_000));
+        assert!(deposits.take(unclaimed).is_none());
     }
 }
