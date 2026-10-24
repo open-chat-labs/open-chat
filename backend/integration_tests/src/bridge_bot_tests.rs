@@ -1,5 +1,6 @@
 use crate::bot_tests::register_bot;
 use crate::env::ENV;
+use crate::setup::install_icrc_ledger;
 use crate::utils::{now_millis, tick_many, try_metrics};
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
@@ -791,6 +792,85 @@ fn a_tip_held_for_an_account_linked_since_is_paid_on_at_once() {
     let response = unlink(env, bridged.bot_principal, user_index, &nellys_account);
     assert!(matches!(response, UnitResult::Success), "{response:?}");
     clear_bridge_bot(env, canister_ids, &bridged);
+}
+
+// Only tips in tokens the UserIndex knows, from the Registry, are paid out, as a "ledger" which a
+// tipper names could be a canister which never replies. Such a tip is held, but neither claimed nor
+// refunded.
+#[test]
+fn tips_held_in_ledgers_the_registry_doesnt_know_arent_paid_out() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    env.advance_time(Duration::from_millis(1));
+    let tipper = client::register_user(env, canister_ids);
+    let bridged = set_up_bridged_chat(env, canister_ids, *controller, false, &[&tipper]);
+    let user_index = canister_ids.user_index;
+    let tip_amount = 1_0000_0000;
+    let ledger = install_icrc_ledger(
+        env,
+        *controller,
+        random_string(),
+        random_string(),
+        ICP_TRANSFER_FEE as u64,
+        None,
+        vec![(tipper.principal.into(), 10_000_000_000)],
+    );
+    let balance = |env: &PocketIc, account: icrc1::Account| client::ledger::happy_path::balance_of(env, ledger, account);
+
+    let nellys_account = telegram_account(random_telegram_id());
+    let held_for = icrc1::Account {
+        owner: user_index,
+        subaccount: Some(nellys_account.id().tips_subaccount()),
+    };
+    let (message_id, _) = relay(env, &bridged, &nellys_account);
+    let held_before = bridged_user_tips_held(env, user_index);
+    client::approve_spender(env, &tipper, ledger, bridged.spender, tip_amount + ICP_TRANSFER_FEE);
+    let response = tip_to(env, &tipper, bridged.chat, message_id, held_for, ledger, tip_amount);
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    wait_until(env, "the tip to be held", |env| {
+        bridged_user_tips_held(env, user_index) == held_before + 1
+    });
+    let tippers_balance = balance(env, tipper.principal.into());
+
+    // Whoever links the account isn't paid it
+    let nelly = client::register_user(env, canister_ids);
+    let code = start_link(env, nelly.principal, user_index, BridgePlatform::Telegram);
+    let response = link(env, bridged.bot_principal, user_index, nellys_account.clone(), &code);
+    assert!(matches!(response, LinkResponse::Success(_)), "{response:?}");
+    tick_many(env, 10);
+    assert_eq!(balance(env, nelly.principal.into()), 0);
+
+    // Nor is it refunded
+    env.advance_time(Duration::from_millis(30 * DAY_IN_MS));
+    tick_many(env, 10);
+    assert_eq!(balance(env, nelly.principal.into()), 0);
+    assert_eq!(balance(env, tipper.principal.into()), tippers_balance);
+    assert_eq!(balance(env, held_for), tip_amount);
+
+    // Leaves the pooled env as it was
+    let response = unlink(env, bridged.bot_principal, user_index, &nellys_account);
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    clear_bridge_bot(env, canister_ids, &bridged);
+}
+
+// The UserIndex refreshes the tokens it pays held tips out of from the Registry daily
+#[test]
+fn user_index_refreshes_the_registrys_tokens_daily() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    env.advance_time(Duration::from_millis(DAY_IN_MS));
+    wait_until(env, "the tokens to be refreshed", |env| {
+        try_metrics(env, canister_ids.user_index)
+            .and_then(|metrics| metrics["registry_tokens"].as_u64())
+            .is_some_and(|tokens| tokens > 0)
+    });
 }
 
 // A group, or a channel in a community, with a Telegram bridge bot installed, and `members` in it

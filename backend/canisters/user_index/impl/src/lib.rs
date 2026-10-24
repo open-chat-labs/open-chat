@@ -9,10 +9,11 @@ use crate::model::local_user_index_map::LocalUserIndex;
 use crate::model::online_users_event_batch::OnlineUsersEventBatch;
 use crate::model::premium_items::{PremiumItemMetrics, PremiumItems};
 use crate::model::protected_actions::{ProtectedActionMetrics, ProtectedActions};
+use crate::model::registry_tokens::RegistryTokens;
 use crate::model::storage_index_event_batch::StorageIndexEventBatch;
 use crate::model::streak_insurance_logs::StreakInsuranceLogs;
 use crate::model::user_map::UserMap;
-use crate::timer_job_types::{RefundBridgedUserTip, TimerJob};
+use crate::timer_job_types::{SettleBridgedUserTip, TimerJob};
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
@@ -273,17 +274,17 @@ impl RuntimeState {
     }
 
     // A tip on a message relayed from an account which, as the group or community found, no one had
-    // linked. It's held for whoever links the account, and refunded if no one has within
-    // `TIP_HOLD_DURATION`, or paid on at once if someone has linked it since. (The refund does
-    // nothing once the tip has been paid.)
+    // linked. It's held for whoever links the account, or paid on at once if someone has linked it
+    // since, and settled `TIP_HOLD_DURATION` after it was made if it's still held then. Whatever
+    // ledger the tip names is accepted, but only those the UserIndex knows are paid out of.
     pub fn receive_bridged_user_tip(&mut self, tip: HeldTip) {
         let account = tip.account;
-        let refund_due = tip.timestamp + TIP_HOLD_DURATION;
+        let settle_due = tip.timestamp + TIP_HOLD_DURATION;
         let tip_id = self.data.bridged_user_tips.hold(tip);
         let now = self.env.now();
         self.data.timer_jobs.enqueue_job(
-            TimerJob::RefundBridgedUserTip(RefundBridgedUserTip { tip_id }),
-            refund_due,
+            TimerJob::SettleBridgedUserTip(SettleBridgedUserTip { tip_id }),
+            settle_due,
             now,
         );
         if let Some(user_id) = self.data.bridged_users.linked_user_id(&account) {
@@ -291,39 +292,60 @@ impl RuntimeState {
         }
     }
 
-    // Pays the tips held for the account to whoever has just linked it, into the wallet they hold
-    // their funds in, that of the principal they sign in with
+    // Pays whoever has just linked the account the tips held for it. A tip in a ledger the UserIndex
+    // doesn't know yet, eg. a token listed since the tokens were last refreshed, is left to be settled.
     pub fn claim_bridged_user_tips(&mut self, account: &BridgedUserId, user_id: UserId) {
-        let Some(principal) = self.data.users.get_by_user_id(&user_id).map(|user| user.principal) else {
+        let Some(wallet) = self.wallet_of(user_id) else {
             return;
         };
-        for (tip_id, tip) in self.data.bridged_user_tips.take_for(account) {
-            self.pay_out_held_tip(
-                tip_id,
-                tip,
-                principal.into(),
-                MEMO_TIP_CLAIM,
-                PendingPaymentReason::BridgedUserTipClaim,
-            );
+        let tokens = &self.data.registry_tokens;
+        let claimable = self
+            .data
+            .bridged_user_tips
+            .take_for(account, |tip| tokens.payout_fees(&tip.ledger, tip.fee).is_some());
+        for (tip_id, tip) in claimable {
+            self.pay_out_held_tip(tip_id, tip, wallet, MEMO_TIP_CLAIM, PendingPaymentReason::BridgedUserTipClaim);
         }
     }
 
-    // Refunds the tip, unless whoever linked its account has been paid it already
-    pub fn refund_bridged_user_tip(&mut self, tip_id: u64) {
-        if let Some(tip) = self.data.bridged_user_tips.take(tip_id) {
-            let refund_to = tip.refund_to;
-            self.pay_out_held_tip(
-                tip_id,
-                tip,
-                refund_to,
-                MEMO_TIP_REFUND,
-                PendingPaymentReason::BridgedUserTipRefund,
-            );
+    // Settles a tip still held `TIP_HOLD_DURATION` after it was made, by when the tokens have been
+    // refreshed from the Registry since. It's paid to whoever has linked its account, if anyone has,
+    // eg. as its token wasn't known yet when they did, or else refunded to the tipper. A tip in a
+    // ledger the Registry still doesn't know can't be paid out, so is dropped.
+    pub fn settle_bridged_user_tip(&mut self, tip_id: u64) {
+        let Some(tip) = self.data.bridged_user_tips.take(tip_id) else {
+            return;
+        };
+        let linked_user_wallet = self
+            .data
+            .bridged_users
+            .linked_user_id(&tip.account)
+            .and_then(|user_id| self.wallet_of(user_id));
+        match linked_user_wallet {
+            Some(wallet) => {
+                self.pay_out_held_tip(tip_id, tip, wallet, MEMO_TIP_CLAIM, PendingPaymentReason::BridgedUserTipClaim)
+            }
+            None => {
+                let refund_to = tip.refund_to;
+                self.pay_out_held_tip(
+                    tip_id,
+                    tip,
+                    refund_to,
+                    MEMO_TIP_REFUND,
+                    PendingPaymentReason::BridgedUserTipRefund,
+                )
+            }
         }
     }
 
-    // Pays the tip out of its account's subaccount, less the ledger's fee. The memo carries the
-    // tip's id, so the ledger doesn't take two equal tips paid out at once to be the same transfer.
+    // The wallet a user holds their funds in, that of the principal they sign in with
+    fn wallet_of(&self, user_id: UserId) -> Option<icrc1::Account> {
+        self.data.users.get_by_user_id(&user_id).map(|user| user.principal.into())
+    }
+
+    // Pays the tip out of its account's subaccount, less the ledger's fees, if it's a ledger the
+    // UserIndex knows. The memo carries the tip's id, so the ledger doesn't take two equal tips paid
+    // out at once to be the same transfer.
     fn pay_out_held_tip(
         &mut self,
         tip_id: u64,
@@ -332,14 +354,19 @@ impl RuntimeState {
         memo_prefix: [u8; 8],
         reason: PendingPaymentReason,
     ) {
-        // The group or community only holds tips which are more than the fee, and fit
+        let Some(fees) = self.data.registry_tokens.payout_fees(&tip.ledger, tip.fee) else {
+            tracing::error!(tip_id, ?tip, "Dropped a held tip in a ledger the Registry doesn't know");
+            return;
+        };
+        // The group or community only holds tips which are more than the fee, and fit, but the
+        // ledger may burn a fee too, or have raised its fee since
         let Some(amount) = tip
             .amount
-            .checked_sub(tip.fee)
+            .checked_sub(fees.fee + fees.burn_fee)
             .filter(|amount| *amount > 0)
             .and_then(|amount| u64::try_from(amount).ok())
         else {
-            tracing::error!(tip_id, ?tip, "Held tip can't be paid out");
+            tracing::error!(tip_id, ?tip, ?fees, "Held tip can't be paid out");
             return;
         };
         let mut memo = [0; 32];
@@ -349,7 +376,7 @@ impl RuntimeState {
             amount,
             token_symbol: tip.token_symbol,
             ledger: tip.ledger,
-            fee: tip.fee,
+            fee: fees.fee,
             timestamp: self.env.now_nanos(),
             recipient_account: to.into(),
             memo,
@@ -464,7 +491,8 @@ impl RuntimeState {
             migrated_user_ids: self.data.migrated_user_ids.len(),
             call_push_enabled: self.data.call_push_enabled,
             bridged_users: self.data.bridged_users.len(),
-            bridged_user_deposits_held: self.data.bridged_user_deposits.len(),
+            bridged_user_tips_held: self.data.bridged_user_tips.len(),
+            registry_tokens: self.data.registry_tokens.len(),
             platform_moderators_group: self.data.platform_moderators_group,
             nns_8_year_neuron: self.data.nns_8_year_neuron.clone(),
             event_store_client_info,
@@ -667,7 +695,10 @@ struct Data {
     // The funds sent to accounts on other platforms which no one had linked, eg. tips on their
     // relayed messages, held for whoever links them
     #[serde(default)]
-    pub bridged_user_deposits: BridgedUserDeposits,
+    pub bridged_user_tips: BridgedUserTips,
+    // The tokens known to the Registry, the only ones held tips are paid out of
+    #[serde(default)]
+    pub registry_tokens: RegistryTokens,
     // The old id -> the new id of each user migrated to a MultiUser canister. Fanned out to the
     // LocalUserIndexes, including any added later
     #[serde(default)]
@@ -783,7 +814,8 @@ impl Data {
             daily_puzzle_canister_id: None,
             bridge_bots: BTreeMap::new(),
             bridged_users: BridgedUsers::default(),
-            bridged_user_deposits: BridgedUserDeposits::default(),
+            bridged_user_tips: BridgedUserTips::default(),
+            registry_tokens: RegistryTokens::default(),
             migrated_user_ids: MigratedUserIds::default(),
             alchemy_api_key: None,
         };
@@ -900,7 +932,8 @@ impl Default for Data {
             daily_puzzle_canister_id: None,
             bridge_bots: BTreeMap::new(),
             bridged_users: BridgedUsers::default(),
-            bridged_user_deposits: BridgedUserDeposits::default(),
+            bridged_user_tips: BridgedUserTips::default(),
+            registry_tokens: RegistryTokens::default(),
             migrated_user_ids: MigratedUserIds::default(),
             alchemy_api_key: None,
         }
@@ -935,7 +968,8 @@ pub struct Metrics {
     pub migrated_user_ids: usize,
     pub call_push_enabled: bool,
     pub bridged_users: usize,
-    pub bridged_user_deposits_held: usize,
+    pub bridged_user_tips_held: usize,
+    pub registry_tokens: usize,
     pub platform_moderators_group: Option<ChatId>,
     pub nns_8_year_neuron: Option<NnsNeuron>,
     pub event_store_client_info: EventStoreClientInfo,

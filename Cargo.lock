@@ -13035,6 +13035,8 @@ dependencies = [
  "per_round_timer",
  "proof_of_unique_personhood",
  "rand 0.10.2",
+ "registry_canister",
+ "registry_canister_c2c_client",
  "search",
  "serde",
  "serde_bytes",

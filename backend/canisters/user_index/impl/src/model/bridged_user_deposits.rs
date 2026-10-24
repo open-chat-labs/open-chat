@@ -3,12 +3,13 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use types::{BridgedUserId, CanisterId, Chat, MessageId, MessageIndex, Milliseconds, TimestampMillis, UserId, icrc1};
 
-// How long a tip is held for whoever links its account, before it's refunded
+// How long a tip is held for whoever links its account, before it's settled (see
+// `RuntimeState::settle_bridged_user_tip`)
 pub const TIP_HOLD_DURATION: Milliseconds = 30 * DAY_IN_MS;
 
 // The tips on messages relayed from accounts no one had linked. Each is held in its account's
 // subaccount of the UserIndex (see `BridgedUserId::tips_subaccount`) until someone links the
-// account, when it's paid to them, or until it's refunded, `TIP_HOLD_DURATION` after it was made.
+// account, when it's paid to them, or until it's settled, `TIP_HOLD_DURATION` after it was made.
 #[derive(Serialize, Deserialize, Default)]
 pub struct BridgedUserDeposits {
     deposits: BTreeMap<u64, HeldDeposit>,
@@ -45,12 +46,15 @@ impl BridgedUserDeposits {
         id
     }
 
-    // Takes the tips held for the account, with their ids, to pay to whoever has linked it
-    pub fn take_for(&mut self, account: &BridgedUserId) -> Vec<(u64, HeldTip)> {
-        self.tips.extract_if(.., |_, tip| tip.account == *account).collect()
+    // Takes those of the tips held for the account which can be paid, with their ids, to pay to
+    // whoever has linked it
+    pub fn take_for(&mut self, account: &BridgedUserId, can_pay: impl Fn(&HeldTip) -> bool) -> Vec<(u64, HeldTip)> {
+        self.tips
+            .extract_if(.., |_, tip| tip.account == *account && can_pay(tip))
+            .collect()
     }
 
-    // Takes the tip, if it's still held, to refund it
+    // Takes the tip, if it's still held, to settle it
     pub fn take(&mut self, id: u64) -> Option<HeldTip> {
         self.tips.remove(&id)
     }
@@ -104,12 +108,26 @@ mod tests {
         tips.hold(tip(bob, 2_000_000));
         let second = tips.hold(tip(nelly, 3_000_000));
 
-        let taken = tips.take_for(&nelly);
+        let taken = tips.take_for(&nelly, |_| true);
 
         let taken: Vec<_> = taken.into_iter().map(|(id, tip)| (id, tip.account, tip.amount)).collect();
         assert_eq!(taken, vec![(first, nelly, 1_000_000), (second, nelly, 3_000_000)]);
-        assert!(tips.take_for(&nelly).is_empty());
+        assert!(tips.take_for(&nelly, |_| true).is_empty());
         assert_eq!(tips.len(), 1);
+    }
+
+    // eg. a tip in a ledger the UserIndex doesn't know yet, which waits to be settled
+    #[test]
+    fn a_tip_which_cant_be_paid_yet_stays_held() {
+        let nelly = BridgedUserId::Telegram(123456789);
+        let mut tips = BridgedUserTips::default();
+        tips.hold(tip(nelly, 1_000_000));
+        let unknown = tips.hold(tip(nelly, 2_000_000));
+
+        let taken = tips.take_for(&nelly, |tip| tip.amount < 2_000_000);
+
+        assert_eq!(taken.len(), 1);
+        assert_eq!(tips.take(unknown).map(|tip| tip.amount), Some(2_000_000));
     }
 
     #[test]
@@ -117,7 +135,7 @@ mod tests {
         let nelly = BridgedUserId::Telegram(123456789);
         let mut tips = BridgedUserTips::default();
         let claimed = tips.hold(tip(nelly, 1_000_000));
-        tips.take_for(&nelly);
+        tips.take_for(&nelly, |_| true);
         let unclaimed = tips.hold(tip(nelly, 2_000_000));
 
         assert!(tips.take(claimed).is_none());
