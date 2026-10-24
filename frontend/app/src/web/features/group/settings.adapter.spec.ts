@@ -151,6 +151,19 @@ describe("community settings adapter", () => {
         }
     });
 
+    // each of the dialog's rows is the community permission it says
+    test("shows each community permission on its own row", () => {
+        expect(communitySettings(community(), lookups).permissions.general).toEqual({
+            roles: "owner",
+            edit: "admin",
+            invite: "member",
+            remove: "admin",
+            pubChannels: "admin",
+            privChannels: "member",
+            userGroups: "admin",
+        });
+    });
+
     test("an edit in the dialog is the only change sent", () => {
         const original = community();
         const saved = savedUnchanged(communitySettings(original, lookups));

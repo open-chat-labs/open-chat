@@ -314,6 +314,15 @@ design export needs. Each entry says where it came up.
   - the community About page's Mute mutes every channel and can't unmute (as in the old menus).
     It has no Favourite, because a community can't be a favourite.
   - the primary language isn't in the dialog, and is kept as it was.
+  - removing an avatar or banner in the dialog saves nothing. `groupChanges` and
+    `communityChanges` turn a removed image into "no change", because the client has no way to
+    send a removal. Groups have the same gap.
+  - community mode still says "Group settings", "Group photo", "Group name", "Public group" and
+    "Enable rules for the group". The dialog's community words are only for the cover and the
+    permissions.
+  - GroupPanel's community Permissions summary counts changes against the group defaults,
+    message permissions included, so it reads far more than the dialog's badge.
+  - Esc while the dialog's role picker is open closes the whole dialog, and drops unsaved edits.
 
 ## App
 

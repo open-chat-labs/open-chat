@@ -76,11 +76,12 @@
   ];
   const VALUE_LABEL: Record<GroupRole, string> = { member: 'ui.groupSettingsDialog.value.member', moderator: 'ui.groupSettingsDialog.value.moderator', admin: 'ui.groupSettingsDialog.value.admin', owner: 'ui.groupSettingsDialog.value.owner', nobody: 'ui.groupSettingsDialog.value.nobody' };
   // only: the rows a community or a group doesn't have (a community has no messages of its own)
-  const GENERAL: { key: string; label: string; group: string; def: GroupRole; only?: 'community' | 'group' }[] = [
+  // communityDef: a community's default where it differs (a community has no moderators)
+  const GENERAL: { key: string; label: string; group: string; def: GroupRole; communityDef?: GroupRole; only?: 'community' | 'group' }[] = [
     { key: 'roles', label: 'ui.groupSettingsDialog.perm.roles', group: 'Members', def: 'owner' },
     { key: 'edit', label: 'ui.groupSettingsDialog.perm.edit', group: 'Members', def: 'admin' },
     { key: 'invite', label: 'ui.groupSettingsDialog.perm.invite', group: 'Members', def: 'member' },
-    { key: 'remove', label: 'ui.groupSettingsDialog.perm.remove', group: 'Members', def: 'moderator' },
+    { key: 'remove', label: 'ui.groupSettingsDialog.perm.remove', group: 'Members', def: 'moderator', communityDef: 'admin' },
     { key: 'delete', label: 'ui.groupSettingsDialog.perm.delete', group: 'Moderation', def: 'moderator', only: 'group' },
     { key: 'pin', label: 'ui.groupSettingsDialog.perm.pin', group: 'Moderation', def: 'moderator', only: 'group' },
     { key: 'react', label: 'ui.groupSettingsDialog.perm.react', group: 'Moderation', def: 'member', only: 'group' },
@@ -113,7 +114,7 @@
 
   function defaultPerms(community: boolean): Perms {
     const o: Perms = { general: {}, messages: { default: 'member' }, threads: { default: 'member' } };
-    GENERAL.filter((p) => !p.only || p.only === (community ? 'community' : 'group')).forEach((p) => (o.general[p.key] = p.def));
+    GENERAL.filter((p) => !p.only || p.only === (community ? 'community' : 'group')).forEach((p) => (o.general[p.key] = (community && p.communityDef) || p.def));
     CONTENT.forEach((c) => {
       o.messages[c.key] = INHERIT;
       o.threads[c.key] = INHERIT;
@@ -306,12 +307,17 @@
   // name availability (only once the name differs from the saved one)
   let nameState = $state<{ name: string; result: NameCheck | 'pending' } | null>(null);
   let nameTimer: ReturnType<typeof setTimeout> | undefined;
+  // the check in progress, which Save waits for rather than ignoring the click
+  let nameChecked: Promise<void> = Promise.resolve();
+  let settleNameCheck = () => {};
   function checkNameSoon(value: string) {
     clearTimeout(nameTimer);
+    settleNameCheck();
     nameState = null;
     const asked = value.trim();
     if (!checkName || !asked || asked === savedName.trim()) return;
     nameState = { name: asked, result: 'pending' };
+    nameChecked = new Promise((resolve) => (settleNameCheck = resolve));
     nameTimer = setTimeout(async () => {
       let result: NameCheck | null;
       try {
@@ -320,6 +326,7 @@
         result = null; // can't tell; the host still validates on save
       }
       if (name.trim() === asked) nameState = result ? { name: asked, result } : null;
+      settleNameCheck();
     }, 400);
   }
   const nameResult = $derived(nameState?.name === name.trim() ? nameState.result : null);
@@ -380,7 +387,7 @@
   const ruleLines = $derived(rulesOn ? rulesText.split('\n').map((l) => l.replace(/^[•\-\s]+/, '').trim()).filter(Boolean).length : 0);
   const generalList = $derived(GENERAL.filter((p) => !p.only || p.only === (isCommunity ? 'community' : 'group')));
   const permGroups = $derived([...new Set(generalList.map((p) => p.group))]);
-  const generalChanged = $derived(generalList.filter((p) => perms.general[p.key] !== p.def).length);
+  const generalChanged = $derived(generalList.filter((p) => perms.general[p.key] !== ((isCommunity && p.communityDef) || p.def)).length);
   // the text changed from the saved rules: offer making members accept them again
   // new rules (turned on, or the text changed) can ask members to accept them
   const rulesChanged = $derived(rulesOn && !!rulesText.trim() && (!savedRulesOn || rulesText.trim() !== savedRulesText.trim()));
@@ -461,6 +468,7 @@
 
   async function save() {
     if (!dirty || flow.locked || viewOnly) return;
+    if (nameResult === 'pending') await nameChecked;
     if (nameTaken || nameResult === 'pending') {
       tab = 0;
       return;

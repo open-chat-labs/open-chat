@@ -7,6 +7,7 @@
     import {
         anonUserStore,
         candidateGroupFromChat,
+        chatSummariesListStore,
         chatIdentifiersEqual,
         cryptoLookup,
         defaultChatRules,
@@ -236,6 +237,22 @@
 
     // ── the About page ──
 
+    // rules switched off aren't in force, so the About page doesn't count them
+    const aboutValue = $derived(
+        editor === undefined || editor.value.rules.enabled
+            ? editor?.value
+            : { ...editor.value, rules: { enabled: false, text: "" } },
+    );
+
+    // a community is muted when every one of its channels is (as the old community menu had it)
+    const muted = $derived(
+        target === undefined
+            ? false
+            : target.kind === "community"
+              ? $chatSummariesListStore.every((c) => c.membership.notificationsMuted)
+              : target.membership.notificationsMuted,
+    );
+
     const aboutMeta = $derived(
         target === undefined
             ? ""
@@ -286,14 +303,14 @@
             <div class="oc-veil" onclick={onClose} aria-hidden="true"></div>
             <div class="card">
                 <GroupSettingsDialog
-                    value={editor.value}
+                    value={aboutValue}
                     noun={target.kind === "community" ? "community" : "group"}
                     embedded
                     readOnly
                     section="group"
                     {aboutMeta}
                     roleLabel={$_(roleAsText(target.membership.role))}
-                    isMuted={target.kind !== "community" && target.membership.notificationsMuted}
+                    isMuted={muted}
                     isFavourite={target.kind !== "community" && $favouritesStore.has(target.id)}
                     onMuteChange={mute}
                     onFavouriteChange={target.kind === "community" ? undefined : favourite}

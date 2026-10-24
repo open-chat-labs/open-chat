@@ -257,4 +257,6 @@
   - the history and disappearing-messages switches, and their About facts;
   - the moderator and nobody roles.
 - Those are now left out for a community. The `GENERAL` rows carry `only: 'group'` the way the channel rows carry `only: 'community'`. The role picker offers member, admin and owner, and the "changed" count counts only general permissions.
+- A community's "Remove members" defaults to admin (`communityDef`), not moderator: a community has no moderators. "Reset to defaults" set it to a role the community can't hold, and the "changed" count was off by one.
+- Save waits for a name check that's still running (400ms after typing) instead of ignoring the click. Saving straight after renaming did nothing until a second click.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).

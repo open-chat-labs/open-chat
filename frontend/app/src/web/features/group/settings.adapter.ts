@@ -155,7 +155,8 @@ export function groupSettings(candidate: CandidateGroupChat, lookups: GateLookup
 
 /**
  * The candidate GroupSettingsDialog's save makes from the group as it was (`original`). `avatar` is
- * a newly picked image, read by the caller; the dialog's empty `avatar` without one removes it.
+ * a newly picked image, read by the caller. The dialog's empty `avatar` without one clears it here,
+ * but the client can't send a removal, so the avatar stays (GAPS.md).
  */
 export function candidateFromSettings(
     all: GroupSettings,
@@ -250,8 +251,9 @@ export function communitySettings(
 
 /**
  * The community GroupSettingsDialog's save makes from the community as it was (`original`).
- * `avatar` and `banner` are newly picked images, read by the caller; the dialog's empty `avatar`
- * or `coverUrl` without one removes that image.
+ * `avatar` and `banner` are newly picked images, read by the caller. The dialog's empty `avatar`
+ * or `coverUrl` without one clears that image here, but the client can't send a removal, so the
+ * image stays (GAPS.md).
  */
 export function candidateCommunityFromSettings(
     all: GroupSettings,

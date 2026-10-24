@@ -407,6 +407,7 @@
             ? communityPermissionsValue(collection.permissions)
             : permissionsValue(collection.permissions)}
         isFavourite={collection.kind !== "community" && $favouritesStore.has(collection.id)}
+        coverUrl={collection.kind === "community" ? collection.banner.blobUrl : undefined}
         onToggleFavourite={collection.kind === "community" ? undefined : toggleFavourite}
         {onDialog}
         canInvite={false}
