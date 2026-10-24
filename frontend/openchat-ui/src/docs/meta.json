@@ -7264,7 +7264,7 @@
       },
       {
         "name": "puzzleState",
-        "type": "'new' | 'progress' | 'solved' | 'hidden' | 'off'",
+        "type": "'new' | 'progress' | 'solved' | 'unavailable' | 'hidden' | 'off'",
         "default": null,
         "editor": null,
         "options": null,
@@ -8141,7 +8141,7 @@
     "name": "DailyPuzzleCard",
     "source": "lib/DailyPuzzleCard.dc.html",
     "hash": "022361e6",
-    "description": "Daily puzzle entry (opt-in). state: new | progress | solved | hidden (one-line \"hidden\" + Undo) | off (renders nothing).",
+    "description": "Daily puzzle entry (opt-in). state: new | progress | solved | unavailable (no puzzle today: says so, nothing to press) | hidden (one-line \"hidden\" + Undo) | off (renders nothing).",
     "preview": {
       "width": 460,
       "height": 120
@@ -8149,13 +8149,14 @@
     "props": [
       {
         "name": "state",
-        "type": "'new' | 'progress' | 'solved' | 'hidden' | 'off'",
+        "type": "'new' | 'progress' | 'solved' | 'unavailable' | 'hidden' | 'off'",
         "default": "new",
         "editor": "enum",
         "options": [
           "new",
           "progress",
           "solved",
+          "unavailable",
           "hidden",
           "off"
         ],

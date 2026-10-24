@@ -46,8 +46,11 @@ const translate = ({ key, params }: ResourceKey) =>
     params === undefined ? key : `${key}${JSON.stringify(params)}`;
 
 describe("the CHIT dialog's puzzle card", () => {
-    test("is off without a puzzle today", () => {
-        expect(puzzleCardProps([], translate)).toEqual({ puzzleState: "off" });
+    test("without a puzzle today still shows, saying so, and opens nothing", () => {
+        expect(puzzleCardProps([], translate)).toEqual({
+            puzzleState: "unavailable",
+            puzzleTitle: "dailyPuzzle.todaysPuzzle",
+        });
     });
 
     test("opens the first puzzle not solved, to play or to go on with, naming its game", () => {
@@ -57,18 +60,20 @@ describe("the CHIT dialog's puzzle card", () => {
             puzzleState: "new",
             puzzleTitle: "dailyPuzzle.todaysPuzzle · dailyPuzzle.games.tents.name",
             gameId: "tents",
+            opens: { kind: "puzzle", gameId: "tents" },
         });
         expect(puzzleCardProps([row("slant", "continue")], translate)).toMatchObject({
             puzzleState: "progress",
-            gameId: "slant",
+            opens: { kind: "puzzle", gameId: "slant" },
         });
     });
 
-    test("once all are solved, shows the last one solved and its time", () => {
+    test("once all are solved, shows the last one solved and its time, and opens the leaderboard", () => {
         expect(puzzleCardProps([row("loopy", "solved", 252_000n)], translate)).toEqual({
             puzzleState: "solved",
             puzzleSub: "dailyPuzzle.solved · 4:12",
             gameId: "loopy",
+            opens: { kind: "leaderboard" },
         });
     });
 });

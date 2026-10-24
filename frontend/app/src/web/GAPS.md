@@ -403,13 +403,16 @@ design export needs. Each entry says where it came up.
   resolving `false` is nothing claimed (claimed already), and plays no claim.
 - **`DailyPuzzleCard` and `ChitDialog`, by hand** (8d): the card takes a `title` (it always said
   "Today's puzzle · Bridges") and the items of its "⋯" menu (`menu`, no "⋯" with none), and
-  `ChitDialog` passes them on (`puzzleTitle`, `puzzleMenu`).
+  `ChitDialog` passes them on (`puzzleTitle`, `puzzleMenu`); an `unavailable` state says there's
+  no puzzle today, with no button or menu.
 - **CHIT dialog** (`features/chit`, 8d): the streak, today's claim, the balance, the insurance
   summary, the settings (the profile's CHIT section), the leaderboard (`?hof`) and the ways to
   earn (`?chit=earn`, `AchievementsDialog`) and buying streak insurance (`?chit=insurance`,
   `StreakInsuranceDialog`), each in the CHIT dialog's place over the same backdrop, Back
   returning to it, as is today's puzzle (below). A claim that fails shows the dialog's own error, where the old modal toasted and
-  closed; an already claimed day just moves the countdown on, as the old desktop modal does.
+  closed; an already claimed day just moves the countdown on, as the old desktop modal does. A
+  claim made rains CHIT coins as the old modal's did (`svelte-confetti`, from the app's screen,
+  since the library can't use it).
 - **Streak insurance** (`StreakInsuranceDialog`): paid in CHAT as the old dialog pays it (the
   PIN first, if set, through the PIN prompt), what's sent worked out from the cover bought. The
   dialog prices a day by the cover held and the backend by the days bought, so the app offsets
@@ -420,8 +423,9 @@ design export needs. Each entry says where it came up.
   (`TODO(design)`) around the app's own boards (`core/dailyPuzzle`), driven by the old screens'
   flow (`DailyPuzzleGame`), in the CHIT dialog's place over the same backdrop (`DialogScreen`
   gives the frame's lighter scrim the dialogs' veil while it takes over). The CHIT dialog's card
-  shows the first puzzle not yet solved (the old modal listed every game's row), and the rail's
-  puzzle dot shows while one is still to play. Not yet:
+  shows the first puzzle not yet solved (the old modal listed every game's row); once all are
+  solved it says so and opens the leaderboard; with no puzzle today it stays, saying so, where the
+  old modal showed no row. The rail's puzzle dot shows while one is still to play. Not yet:
   - sharing a result (the old "Share" button), which waits on the chat picker (4d), and the
     result card in a chat (`DailyResultContent`), which waits on the message kinds;
   - the card's reminder and hide (its "⋯" menu has only "How to play"): the old UI has neither;

@@ -44,7 +44,7 @@
     /** This month's leaderboard place and score, for the trophy button's label. */
     boardRank?: number;
     boardScore?: number;
-    puzzleState?: 'new' | 'progress' | 'solved' | 'hidden' | 'off';
+    puzzleState?: 'new' | 'progress' | 'solved' | 'unavailable' | 'hidden' | 'off';
     puzzleSub?: string;
     puzzleRemind?: boolean;
     /** DailyPuzzleCard's title and "⋯" menu (see there). */

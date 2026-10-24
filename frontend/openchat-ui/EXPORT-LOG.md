@@ -263,5 +263,6 @@
 ## 2026-10-24 — DailyPuzzleCard: a host's title and menu, and ChitDialog passing them on, by hand
 - `title` (resource key or literal text) is the new / progress title, which was always "Today's puzzle · Bridges" (`ui.dailyPuzzleCard.title`, still the default), for a host whose puzzle is another game.
 - `menu` lists the "⋯" menu's items by their action (`puzzleRemindOn` stands for the reminder either way); left out, all three show, as before. With none, there's no "⋯".
-- `ChitDialog` passes them on as `puzzleTitle` and `puzzleMenu`. `meta.json` updated.
+- `state: 'unavailable'`: no puzzle today. The card says so (`title`, default `ui.dailyPuzzleCard.titleToday`; `sub`, default `ui.dailyPuzzleCard.unavailable`) with no button and no "⋯", so there's nothing to press.
+- `ChitDialog` passes them on as `puzzleTitle` and `puzzleMenu`, and takes the new state as `puzzleState`. `meta.json` updated.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
