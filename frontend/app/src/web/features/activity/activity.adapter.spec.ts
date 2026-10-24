@@ -57,6 +57,25 @@ describe("an activity item", () => {
         );
     });
 
+    test("names a relayed reply's author, not the bridge bot which relayed it", () => {
+        const relayed = {
+            sender: "bridge-bot",
+            senderContext: {
+                kind: "bot",
+                finalised: true,
+                bridgedFrom: { kind: "telegram", id: "1234" },
+            },
+        } as Partial<Message>;
+        expect(
+            activityItem(event({ activity: "quote_reply", userId: "bridge-bot" }, relayed), ctx)
+                .title,
+        ).toBe('activity.quoteReply{"username":"author of bridge-bot"}');
+        // A reaction's message is the reader's, so whoever reacted is named as usual
+        expect(
+            activityItem(event({ activity: "reaction", userId: "bridge-bot" }, relayed), ctx).title,
+        ).toBe('activity.reactionOne{"username":"bridge-bot"}');
+    });
+
     test("names an anonymous user", () => {
         expect(activityItem(event({ userId: undefined }), ctx).title).toBe(
             'activity.mention{"username":"An anonymous user"}',

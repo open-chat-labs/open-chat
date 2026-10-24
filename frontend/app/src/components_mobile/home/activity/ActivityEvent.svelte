@@ -13,7 +13,7 @@
     import { _ } from "svelte-i18n";
     import { i18nKey, interpolate } from "../../../i18n/i18n";
     import { buildDisplayName } from "../../../utils/user";
-    import { activitySummary } from "@src/logic/activity/activitySummary";
+    import { activitySummary, isByRelayedAuthor } from "@src/logic/activity/activitySummary";
     import { messageAuthorName } from "@src/logic/chats/latestMessagePreview";
     import Translatable from "@shared_components/Translatable.svelte";
     import Markdown from "@src/core/Markdown.svelte";
@@ -73,15 +73,6 @@
     }
 
     let sender = $derived(event.userId ? $allUsersStore.get(event.userId) : undefined);
-    let eventUsername = $derived(
-        event.userId
-            ? buildDisplayName(
-                  $allUsersStore,
-                  event.userId,
-                  event.userId === $currentUserIdStore ? "me" : "user",
-              )
-            : $_("activity.anon"),
-    );
     // Bold, like the feed's other names
     let messageUsername = $derived(
         message
@@ -94,6 +85,17 @@
                   users: $allUsersStore,
               })}**`
             : $_("activity.anon"),
+    );
+    let eventUsername = $derived(
+        isByRelayedAuthor(event, message)
+            ? messageUsername
+            : event.userId
+              ? buildDisplayName(
+                    $allUsersStore,
+                    event.userId,
+                    event.userId === $currentUserIdStore ? "me" : "user",
+                )
+              : $_("activity.anon"),
     );
     let lastMessage = $derived(formatLatestMessage(messageUsername));
     let eventSummary = $derived(
@@ -117,7 +119,7 @@
             <Container direction={"horizontal"} gap={"lg"}>
                 <Container width={"fill"}>
                     <Subtitle fontWeight={"bold"}>
-                        <Markdown text={interpolate($_, eventSummary)} />
+                        <Markdown text={interpolate($_, eventSummary)} suppressLinks />
                     </Subtitle>
                 </Container>
                 <Container width={"hug"} padding={["xs", "zero"]}>
