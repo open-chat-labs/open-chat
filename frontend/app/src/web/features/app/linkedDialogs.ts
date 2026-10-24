@@ -10,3 +10,12 @@ export function openLinked(dialog: LinkedDialog): void {
     const query = openLinkedDialog(new URLSearchParams(window.location.search), dialog);
     if (query !== undefined) navigate(`${window.location.pathname}${query}`, "overlay");
 }
+
+/**
+ * Goes back to a linked dialog from one opened in its place (the ways to earn, back to the CHIT
+ * dialog): to the history entry it was opened from when there is one, else to it, in place.
+ */
+export function backToLinked(dialog: LinkedDialog): void {
+    const query = openLinkedDialog(new URLSearchParams(window.location.search), dialog);
+    if (query !== undefined) navigate(`${window.location.pathname}${query}`, "dismiss");
+}

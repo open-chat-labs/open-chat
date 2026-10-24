@@ -23,6 +23,18 @@ describe("the dialog a URL's query opens", () => {
         expect(linkedDialog(new URLSearchParams("profile=nope"))).toEqual({ kind: "profile" });
     });
 
+    test("is one of the CHIT dialog's views its value names", () => {
+        expect(linkedDialog(new URLSearchParams("chit=earn"))).toEqual({ kind: "achievements" });
+        expect(linkedDialog(new URLSearchParams("chit=earn%3Asent_text"))).toEqual({
+            kind: "achievements",
+            highlight: "sent_text",
+        });
+        expect(linkedDialog(new URLSearchParams("chit=insurance"))).toEqual({
+            kind: "streak_insurance",
+        });
+        expect(linkedDialog(new URLSearchParams("chit=nope"))).toEqual({ kind: "chit" });
+    });
+
     test("is none for a query without one", () => {
         expect(linkedDialog(new URLSearchParams("threads&open=true"))).toBeUndefined();
     });
@@ -42,6 +54,8 @@ describe("the linked dialog shown", () => {
         expect(shownLinkedDialog({ kind: "chit" }, false)).toEqual({ kind: "chit" });
         expect(shownLinkedDialog({ kind: "chit" }, true)).toBeUndefined();
         expect(shownLinkedDialog({ kind: "profile" }, true)).toEqual({ kind: "profile" });
+        expect(shownLinkedDialog({ kind: "achievements" }, true)).toBeUndefined();
+        expect(shownLinkedDialog({ kind: "streak_insurance" }, true)).toBeUndefined();
         expect(shownLinkedDialog(undefined, false)).toBeUndefined();
     });
 });
@@ -76,6 +90,24 @@ describe("opening a linked dialog", () => {
         expect(
             openLinkedDialog(new URLSearchParams("profile"), { kind: "profile", section: "chit" }),
         ).toBe("?profile=chit");
+    });
+
+    test("opens a CHIT view in the CHIT dialog's place, and back again", () => {
+        expect(openLinkedDialog(new URLSearchParams("chit"), { kind: "achievements" })).toBe(
+            "?chit=earn",
+        );
+        expect(
+            openLinkedDialog(new URLSearchParams(""), {
+                kind: "achievements",
+                highlight: "Partner quest",
+            }),
+        ).toBe("?chit=earn%3APartner%20quest");
+        expect(openLinkedDialog(new URLSearchParams("chit=earn"), { kind: "chit" })).toBe("?chit");
+        expect(
+            openLinkedDialog(new URLSearchParams("chit=insurance"), { kind: "streak_insurance" }),
+        ).toBeUndefined();
+        // the same param, so closing any of them drops it
+        expect(linkedDialogParam({ kind: "streak_insurance" })).toBe("chit");
     });
 
     test("is nothing when it's the one showing", () => {

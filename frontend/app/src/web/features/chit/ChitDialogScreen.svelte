@@ -1,8 +1,9 @@
 <!-- The daily CHIT (?chit), ChitDialog over the page (8d, #10130): the streak, today's claim, the
-     balance, streak insurance, and the ways to the CHIT settings (the profile's CHIT section),
-     the leaderboard (?hof) and the ways to earn (AchievementsDialog, over this one). Claiming is
-     as the old CHIT modal's: an already claimed day just moves the countdown on (the client does
-     it). The puzzle and buying insurance come with the rest of 8d. -->
+     balance, and the ways to the CHIT settings (the profile's CHIT section), the leaderboard
+     (?hof), the ways to earn (?chit=earn) and buying streak insurance (?chit=insurance), each
+     opened in its place over the same backdrop. Claiming is as the old CHIT modal's: an already
+     claimed day just moves the countdown on (the client does it). The puzzle comes with the rest
+     of 8d. -->
 <script lang="ts">
     import {
         achievementList,
@@ -22,11 +23,12 @@
     import DialogShell from "@openchat/ui/src/lib/components/DialogShell.svelte";
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
     import { getContext, onMount } from "svelte";
-    import type { DialogProps, Loaded, LinkedDialog } from "../app/dialogs";
+    import type { DialogProps, LinkedDialog } from "../app/dialogs";
     import { openLinked } from "../app/linkedDialogs";
     import { achievementsCount, chitDialogProps } from "./chit.adapter";
+    import { loadExternalAchievements, type Loaded } from "./externalAchievements";
 
-    let { onClose, dialogs }: DialogProps<Extract<LinkedDialog, { kind: "chit" }>> = $props();
+    let { onClose }: DialogProps<Extract<LinkedDialog, { kind: "chit" }>> = $props();
 
     const client = getContext<OpenChat>("client");
 
@@ -35,7 +37,7 @@
     // worked out when they're loaded
     let external = $state<Loaded<ExternalAchievement[]>>();
     onMount(async () => {
-        external = { value: await client.getExternalAchievements(), at: Date.now() };
+        external = await loadExternalAchievements(client);
     });
     const earn = $derived(
         achievementsCount(
@@ -77,10 +79,10 @@
                 openLinked({ kind: "leaderboard" });
                 return;
             case "earn":
-                dialogs.open({ kind: "achievements", external });
+                openLinked({ kind: "achievements" });
                 return;
             case "insurance":
-                dialogs.open({ kind: "streak_insurance" });
+                openLinked({ kind: "streak_insurance" });
                 return;
             // TODO(8d): the daily puzzle; GAPS.md
         }

@@ -8,14 +8,7 @@
     import { chitPopup, disableChit } from "@src/stores/settings";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
-    import type { DialogStack } from "../../shell/dialogStack.svelte";
-    import type { LocalDialog } from "../app/dialogs";
-
-    interface Props {
-        dialogs: DialogStack<LocalDialog>;
-    }
-
-    let { dialogs }: Props = $props();
+    import { openLinked } from "../app/linkedDialogs";
 
     const client = getContext<OpenChat>("client");
 
@@ -44,7 +37,7 @@
     function open(toast: Toast) {
         // the ways to earn show them all
         queue = [];
-        dialogs.open({ kind: "achievements", highlight: toast.highlight });
+        openLinked({ kind: "achievements", highlight: toast.highlight });
     }
 
     $effect(() => subscribe("chitEarned", earned));

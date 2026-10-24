@@ -246,7 +246,7 @@
 
 <!-- the dialogs: those the URL opens (?profile …), those the app opened itself, and the rules -->
 <DialogHost stack={dialogStack} {appDialog} onCloseAppDialog={closeAppDialog} />
-<AchievementToastHost dialogs={dialogStack} />
+<AchievementToastHost />
 
 <style>
     .toolbar {

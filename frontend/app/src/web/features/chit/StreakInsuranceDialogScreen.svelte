@@ -1,4 +1,5 @@
-<!-- Buying streak insurance (8d, #10130), StreakInsuranceDialog over the CHIT dialog, as the old
+<!-- Buying streak insurance (?chit=insurance, 8d, #10130), StreakInsuranceDialog in the CHIT
+     dialog's place, over the same backdrop, Back returning to it, as the old
      streak insurance dialog: paid in CHAT (the price burned, the approval's fee on top), asking for
      the PIN first if the user has one (the client does, through the PIN prompt). What's sent is
      worked out from the cover bought, never the dialog's figure. -->
@@ -15,14 +16,15 @@
     import StreakInsuranceDialog from "@openchat/ui/src/features/components/StreakInsuranceDialog.svelte";
     import { now500 } from "@src/stores/time";
     import { getContext } from "svelte";
-    import type { DialogProps, LocalDialog } from "../app/dialogs";
+    import type { DialogProps, LinkedDialog } from "../app/dialogs";
+    import { backToLinked } from "../app/linkedDialogs";
     import {
         streakInsuranceBalance,
         streakInsuranceDialogPrices,
         streakInsurancePurchase,
     } from "./chit.adapter";
 
-    let { onClose }: DialogProps<Extract<LocalDialog, { kind: "streak_insurance" }>> = $props();
+    let { onClose }: DialogProps<Extract<LinkedDialog, { kind: "streak_insurance" }>> = $props();
 
     const client = getContext<OpenChat>("client");
 
@@ -49,4 +51,5 @@
     {balance}
     prices={streakInsuranceDialogPrices($streakInsuranceStore)}
     onBuy={buy}
+    onBack={() => backToLinked({ kind: "chit" })}
     {onClose} />

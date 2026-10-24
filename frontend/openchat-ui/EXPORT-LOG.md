@@ -239,3 +239,8 @@
 - With no room left, the summary said "Covered for a full week" (`fullWeek`), but cover is capped by the length of `prices`, which for OpenChat is 30 days. It now says "Your cover is full" (`ui.streakInsuranceDialog.coverFull`).
 - The ladder drew one cell per position of `prices`, all in a row, so 30 of them crushed the prices into each other. It now shows a week of cells at a time, sliding so the last covered day, the days being added and the next to add stay in view.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-24 — StreakInsuranceDialog: Back hands off to the CHIT dialog, by hand
+- Back played the dialog's exit (its backdrop fading out) before calling `onBack`, so the CHIT dialog it went back to faded its own backdrop in. With `onBack` it now hands off with no exit (`DialogFlow.handOff`), as `AchievementsDialog`'s Back already did, so the host keeps the backdrop and only the dialog changes. Without `onBack`, Back still closes with the exit.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
