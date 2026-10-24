@@ -1,5 +1,5 @@
-import type { Message, MessageActivityEvent, PollContent } from "@client";
-import { activitySummary, type SummaryNames } from "./activitySummary";
+import type { Message, MessageActivityEvent, PollContent, SenderContext } from "@client";
+import { activitySummary, isByRelayedAuthor, type SummaryNames } from "./activitySummary";
 
 const names: SummaryNames = {
     me: "me",
@@ -70,5 +70,43 @@ describe("an activity's summary", () => {
             key: "activity.pollVote",
             params: { username: "Alice" },
         });
+    });
+});
+
+describe("whether an activity is by a message's relayed author", () => {
+    const fromTelegram: SenderContext = {
+        kind: "bot",
+        finalised: true,
+        bridgedFrom: { kind: "telegram", id: "1234" },
+    };
+    const byBot = (
+        activity: MessageActivityEvent["activity"],
+        message: Partial<Message> = { sender: "bridge-bot", senderContext: fromTelegram },
+    ) =>
+        isByRelayedAuthor(
+            { activity, userId: "bridge-bot" } as MessageActivityEvent,
+            message as Message,
+        );
+
+    test("is when the bot relayed the reply, mention or transfer the activity is for", () => {
+        expect(byBot("quote_reply")).toBe(true);
+        expect(byBot("mention")).toBe(true);
+        expect(byBot("crypto")).toBe(true);
+    });
+
+    test("isn't for a reaction or a tip, whose message is the reader's", () => {
+        expect(byBot("reaction")).toBe(false);
+        expect(byBot("tip")).toBe(false);
+    });
+
+    test("isn't when the message wasn't relayed, or someone else sent it", () => {
+        expect(byBot("quote_reply", { sender: "bridge-bot" })).toBe(false);
+        expect(byBot("quote_reply", { sender: "alice", senderContext: fromTelegram })).toBe(false);
+        expect(
+            isByRelayedAuthor(
+                { activity: "quote_reply", userId: "bridge-bot" } as MessageActivityEvent,
+                undefined,
+            ),
+        ).toBe(false);
     });
 });

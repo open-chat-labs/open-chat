@@ -16,7 +16,7 @@
     import { _ } from "svelte-i18n";
     import { i18nKey, interpolate } from "../../../i18n/i18n";
     import { buildDisplayName } from "../../../utils/user";
-    import { activitySummary } from "@src/logic/activity/activitySummary";
+    import { activitySummary, isByRelayedAuthor } from "@src/logic/activity/activitySummary";
     import { messageAuthorName } from "@src/logic/chats/latestMessagePreview";
     import Avatar from "../../Avatar.svelte";
     import Link from "../../Link.svelte";
@@ -78,15 +78,6 @@
         navigate(routeForMessageContext("none", event.messageContext, true));
     }
     let sender = $derived(event.userId ? $allUsersStore.get(event.userId) : undefined);
-    let eventUsername = $derived(
-        event.userId
-            ? buildDisplayName(
-                  $allUsersStore,
-                  event.userId,
-                  event.userId === $currentUserIdStore ? "me" : "user",
-              )
-            : $_("activity.anon"),
-    );
     // Bold, like the feed's other names
     let messageUsername = $derived(
         event.message
@@ -99,6 +90,17 @@
                   users: $allUsersStore,
               })}**`
             : $_("activity.anon"),
+    );
+    let eventUsername = $derived(
+        isByRelayedAuthor(event, event.message)
+            ? messageUsername
+            : event.userId
+              ? buildDisplayName(
+                    $allUsersStore,
+                    event.userId,
+                    event.userId === $currentUserIdStore ? "me" : "user",
+                )
+              : $_("activity.anon"),
     );
     let lastMessage = $derived(formatLatestMessage(event, messageUsername));
     let eventSummary = $derived(
@@ -135,7 +137,7 @@
         <div class="details">
             <div class="event-sumary">
                 <h4>
-                    <Markdown text={interpolate($_, eventSummary)} />
+                    <Markdown text={interpolate($_, eventSummary)} suppressLinks />
                 </h4>
             </div>
             <div class="chat-msg">
