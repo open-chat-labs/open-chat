@@ -13526,14 +13526,6 @@ export class OpenChat {
             });
     }
 
-    streakInsurancePrice(daysInsured: number, additionalDays: number): bigint {
-        let total = 0n;
-        for (let i = 0; i < additionalDays; i++) {
-            total += 2n ** BigInt(daysInsured + i) * 100_000_000n;
-        }
-        return total;
-    }
-
     setPremiumItemCost(item: PremiumItem, chitCost: number): Promise<void> {
         return this.#worker.send({
             kind: "setPremiumItemCost",

@@ -235,3 +235,17 @@
 - `onClaim` may resolve with `false` when there was nothing to claim (today's already claimed, on another device or before the dialog knew): the claim animation doesn't play, and the dialog follows `claimable`. It played as if CHIT had been added.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
 
+## 2026-10-24 — StreakInsuranceDialog: "Your cover is full", and a week of cells at a time, by hand
+- With no room left, the summary said "Covered for a full week" (`fullWeek`), but cover is capped by the length of `prices`, which for OpenChat is 30 days. It now says "Your cover is full" (`ui.streakInsuranceDialog.coverFull`).
+- The ladder drew one cell per position of `prices`, all in a row, so 30 of them crushed the prices into each other. It now shows a week of cells at a time, sliding so the last covered day, the days being added and the next to add stay in view.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-24 — StreakInsuranceDialog: Back hands off to the CHIT dialog, by hand
+- Back played the dialog's exit (its backdrop fading out) before calling `onBack`, so the CHIT dialog it went back to faded its own backdrop in. With `onBack` it now hands off with no exit (`DialogFlow.handOff`), as `AchievementsDialog`'s Back already did, so the host keeps the backdrop and only the dialog changes. Without `onBack`, Back still closes with the exit.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+
+## 2026-10-24 — StreakInsuranceDialog: a host's cap, and a purchase backed out of, by hand
+- `cap` (default: the length of `prices`) is what the foot's "cover caps at {max} days" says. OpenChat's `prices` count what can still be held after missed days, so the label read a cap that dropped with each miss; it now shows the 30 days that can be bought. `meta.json` updated.
+- `onBuy` resolving `false` is nothing bought by choice (the user backed out of the PIN prompt): the dialog stays open with no error, where it closed as if bought.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
+

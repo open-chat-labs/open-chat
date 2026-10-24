@@ -1,7 +1,8 @@
 <!-- Buy streak insurance: a week of day-cells (covered / adding now / tap to add) on a rising price ladder, a summary
      and Pay. Priced on each day's position in your holding, so buying one day at a time costs the same as several at once.
      Prices come from the host (`prices`, one per position; its length is the cap). Pay calls onBuy and waits: the dialog
-     closes once it resolves and stays open with an error if it rejects. Back returns to CHIT (onBack, else onClose). -->
+     closes once it resolves and stays open with an error if it rejects. Back returns to CHIT (onBack, else onClose):
+     onBack opens it in this one's place, with no exit, so the backdrop can stay. -->
 <script lang="ts">
   import { getI18n, useT } from '../../lib/i18n';
   import { onDestroy } from 'svelte';
@@ -21,13 +22,16 @@
     balance: number;
     /** Price in CHAT of each position in your holding (1st day, 2nd …); its length is the most you can hold. */
     prices: number[];
-    /** Buy `days` more days of cover from `fromPosition` (0-based) for `cost` CHAT. Reject to keep the dialog open. */
+    /** Buy `days` more days of cover from `fromPosition` (0-based) for `cost` CHAT. Reject to keep the dialog open with
+     *  an error; resolve with false when nothing was bought by choice (the user backed out), to keep it open with none. */
     onBuy?: (req: { days: number; cost: number; fromPosition: number }) => Promise<unknown> | void;
+    /** The most days of cover there can be, for the foot's "cover caps at"; defaults to the length of `prices`. */
+    cap?: number;
     onBack?: () => void;
     onClose?: () => void;
   }
 
-  let { streak, insured = 0, used = 0, balance, prices, onBuy, onBack, onClose }: Props = $props();
+  let { streak, insured = 0, used = 0, balance, prices, cap, onBuy, onBack, onClose }: Props = $props();
   const STEPS = $derived(prices);
   const MAX_DAYS = $derived(prices.length);
   const t = useT();
@@ -44,11 +48,17 @@
   const room = $derived(MAX_DAYS - held);
   const qty = $derived(Math.min(picked, room));
   const total = $derived(STEPS.slice(held, held + qty).reduce((sum, v) => sum + v, 0));
+  // a week of cells at a time, however long the ladder: the next to add and the latest added stay in
+  // view, with the last covered day while there's room (more than a week added scrolls the earliest
+  // added off)
+  const WINDOW = 7;
+  const windowStart = $derived(Math.max(0, Math.min(MAX_DAYS - WINDOW, Math.max(held - 1, held + qty - WINDOW + 1))));
+  const shown = $derived(STEPS.slice(windowStart, windowStart + WINDOW).map((price, k) => ({ price, i: windowStart + k })));
   const affordable = $derived(total <= balance);
   // nothing to pay with when the host can't take the purchase
   const canPay = $derived(qty > 0 && affordable && !!onBuy);
 
-  const summaryTitle = $derived(qty > 0 ? t('ui.streakInsuranceDialog.adding', { days: days(qty) }) : t(room === 0 ? 'ui.streakInsuranceDialog.fullWeek' : 'ui.streakInsuranceDialog.tapToAddCover'));
+  const summaryTitle = $derived(qty > 0 ? t('ui.streakInsuranceDialog.adding', { days: days(qty) }) : t(room === 0 ? 'ui.streakInsuranceDialog.coverFull' : 'ui.streakInsuranceDialog.tapToAddCover'));
   const summaryHint = $derived(
     qty > 0
       ? qty === 1
@@ -69,7 +79,7 @@
   async function pay() {
     if (!canPay) return;
     const result = await flow.run(() => onBuy?.({ days: qty, cost: total, fromPosition: held }));
-    if (result.ok) flow.leave(onClose);
+    if (result.ok && result.value !== false) flow.leave(onClose);
   }
 
   // tapping the last added cell takes it back off again
@@ -83,7 +93,7 @@
 
   <div class="card">
     <div class="head">
-      <span class="icon-button back" onclick={() => leave(onBack ?? onClose)} role="button" tabindex="0" aria-label={t('ui.streakInsuranceDialog.backToChit')} title={t('ui.streakInsuranceDialog.backToChit')}><span class="back-icon"></span></span>
+      <span class="icon-button back" onclick={() => (onBack ? flow.handOff(onBack) : leave(onClose))} role="button" tabindex="0" aria-label={t('ui.streakInsuranceDialog.backToChit')} title={t('ui.streakInsuranceDialog.backToChit')}><span class="back-icon"></span></span>
       <span class="badge"><span class="badge-icon"></span></span>
       <div class="titles">
         <span class="title">{t('ui.streakInsuranceDialog.title')}</span>
@@ -95,7 +105,7 @@
     <div class="body">
       <div class="ladder">
         <div class="cells">
-          {#each STEPS as price, i}
+          {#each shown as { price, i } (i)}
             {@const owned = i < held}
             {@const adding = !owned && i < held + qty}
             {@const title = owned ? t('ui.streakInsuranceDialog.cellOwned', { n: i + 1 }) : t('ui.streakInsuranceDialog.cellOpen', { ordinal: ordinal(i + 1), price })}
@@ -126,7 +136,7 @@
         <span class="balance short" role="alert">{t('ui.streakInsuranceDialog.buyFailed')}</span>
       {:else}
         <span class="balance" class:short={!affordable}
-          >{t(affordable ? 'ui.streakInsuranceDialog.balanceCap' : 'ui.streakInsuranceDialog.balanceShort', { amount: fmt(balance), max: MAX_DAYS })}</span
+          >{t(affordable ? 'ui.streakInsuranceDialog.balanceCap' : 'ui.streakInsuranceDialog.balanceShort', { amount: fmt(balance), max: cap ?? MAX_DAYS })}</span
         >
       {/if}
       <span class="pay" class:ready={canPay && !flow.busy} onclick={pay} role="button" tabindex="0" aria-disabled={!canPay || flow.locked}>{flow.busy ? t('ui.streakInsuranceDialog.paying') : payLabel}</span>

@@ -7,6 +7,11 @@ import type LeaderboardDialog from "@openchat/ui/src/features/components/Leaderb
 import type NavRail from "@openchat/ui/src/features/components/NavRail.svelte";
 import type { ComponentProps } from "svelte";
 import {
+    CHAT_E8S,
+    STREAK_INSURANCE_MAX_DAYS,
+    streakInsuranceDayPrice,
+    streakInsurancePrice,
+    walletApprovalFee,
     CHIT_STREAK_MILESTONES,
     currentStreak,
     dailyChitAmount,
@@ -231,4 +236,49 @@ export function leaderboardBoards(
         lastMonth: board(month(1), result?.lastMonth),
         allTime: board(allTime, result?.allTime),
     };
+}
+
+// CHAT e8s as CHAT
+function chat(e8s: bigint): number {
+    return Number(e8s) / Number(CHAT_E8S);
+}
+
+/**
+ * StreakInsuranceDialog's `prices`: what each position of the user's cover costs, in CHAT. The
+ * dialog prices a position by the cover held (bought less missed days used), the backend by the
+ * days bought, so the positions are offset by the days used, and there are fewer of them as the
+ * days bought can't pass 30: what the dialog shows is what's charged.
+ */
+export function streakInsuranceDialogPrices({ daysMissed }: StreakInsurance): number[] {
+    return Array.from(
+        { length: Math.max(STREAK_INSURANCE_MAX_DAYS - daysMissed, 0) },
+        (_, position) => chat(streakInsuranceDayPrice(daysMissed + position)),
+    );
+}
+
+/**
+ * The CHAT the dialog can spend, in CHAT: the balance less the fee for the approval the user makes
+ * before the price is taken (the price itself is burned, with no fee), so a day it offers can be
+ * paid. None for a balance not loaded, or while CHAT's fee isn't known (without it, nothing is
+ * known to be left for the approval).
+ */
+export function streakInsuranceBalance(
+    balanceE8s: bigint,
+    transferFee: bigint | undefined,
+): number {
+    if (transferFee === undefined) return 0;
+    const spendable = balanceE8s - walletApprovalFee(transferFee);
+    return spendable > 0n ? chat(spendable) : 0;
+}
+
+/**
+ * What buying `requested` more days sends: the days, capped so cover bought never passes 30, and
+ * their price worked out from the cover bought (streakInsuranceStore), never the dialog's figure.
+ */
+export function streakInsurancePurchase(
+    { daysInsured }: StreakInsurance,
+    requested: number,
+): { days: number; price: bigint } {
+    const days = Math.max(Math.min(requested, STREAK_INSURANCE_MAX_DAYS - daysInsured), 0);
+    return { days, price: streakInsurancePrice(daysInsured, days) };
 }

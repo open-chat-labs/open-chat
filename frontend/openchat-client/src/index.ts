@@ -62,6 +62,12 @@ export {
     type EarnedAchievement,
 } from "./utils/achievements";
 export {
+    CHAT_E8S,
+    STREAK_INSURANCE_MAX_DAYS,
+    streakInsuranceDayPrice,
+    streakInsurancePrice,
+} from "./utils/streakInsurance";
+export {
     CHIT_STREAK_MILESTONES,
     currentStreak,
     dailyChitAmount,
