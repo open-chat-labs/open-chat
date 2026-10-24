@@ -25,13 +25,13 @@ pub enum TimerJob {
     UnsuspendUser(UnsuspendUser),
     ProcessReportClassification(ProcessReportClassification),
     RetryPayment(Box<RetryPaymentJob>),
-    SettleBridgedUserTip(SettleBridgedUserTip),
+    SettleBridgedUserDeposit(SettleBridgedUserDeposit),
 }
 
-// Settles a tip held for an account on another platform, if it's still held
+// Settles funds held for an account on another platform, if they're still held
 #[derive(Serialize, Deserialize, Clone)]
-pub struct SettleBridgedUserTip {
-    pub tip_id: u64,
+pub struct SettleBridgedUserDeposit {
+    pub deposit_id: u64,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -100,14 +100,14 @@ impl Job for TimerJob {
             TimerJob::UnsuspendUser(job) => job.execute(),
             TimerJob::ProcessReportClassification(job) => job.execute(),
             TimerJob::RetryPayment(job) => job.execute(),
-            TimerJob::SettleBridgedUserTip(job) => job.execute(),
+            TimerJob::SettleBridgedUserDeposit(job) => job.execute(),
         }
     }
 }
 
-impl Job for SettleBridgedUserTip {
+impl Job for SettleBridgedUserDeposit {
     fn execute(self) {
-        mutate_state(|state| state.settle_bridged_user_tip(self.tip_id));
+        mutate_state(|state| state.settle_bridged_user_deposit(self.deposit_id));
     }
 }
 

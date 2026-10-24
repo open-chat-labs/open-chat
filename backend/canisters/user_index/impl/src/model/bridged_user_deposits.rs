@@ -3,13 +3,14 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use types::{BridgedUserId, CanisterId, Chat, MessageId, MessageIndex, Milliseconds, TimestampMillis, UserId, icrc1};
 
-// How long a tip is held for whoever links its account, before it's settled (see
-// `RuntimeState::settle_bridged_user_tip`)
-pub const TIP_HOLD_DURATION: Milliseconds = 30 * DAY_IN_MS;
+// How long funds are held for whoever links their account, before they're settled (see
+// `RuntimeState::settle_bridged_user_deposit`)
+pub const DEPOSIT_HOLD_DURATION: Milliseconds = 30 * DAY_IN_MS;
 
-// The tips on messages relayed from accounts no one had linked. Each is held in its account's
-// subaccount of the UserIndex (see `BridgedUserId::subaccount`) until someone links the
-// account, when it's paid to them, or until it's settled, `TIP_HOLD_DURATION` after it was made.
+// The funds sent to accounts on other platforms which no one had linked, eg. tips on their relayed
+// messages. Each deposit is held in its account's subaccount of the UserIndex (see
+// `BridgedUserId::subaccount`) until someone links the account, when it's paid to them, or until
+// it's settled, `DEPOSIT_HOLD_DURATION` after it was made.
 #[derive(Serialize, Deserialize, Default)]
 pub struct BridgedUserDeposits {
     deposits: BTreeMap<u64, HeldDeposit>,
@@ -46,21 +47,21 @@ impl BridgedUserDeposits {
         id
     }
 
-    // Takes those of the tips held for the account which can be paid, with their ids, to pay to
+    // Takes those of the deposits held for the account which can be paid, with their ids, to pay to
     // whoever has linked it
-    pub fn take_for(&mut self, account: &BridgedUserId, can_pay: impl Fn(&HeldTip) -> bool) -> Vec<(u64, HeldTip)> {
-        self.tips
-            .extract_if(.., |_, tip| tip.account == *account && can_pay(tip))
+    pub fn take_for(&mut self, account: &BridgedUserId, can_pay: impl Fn(&HeldDeposit) -> bool) -> Vec<(u64, HeldDeposit)> {
+        self.deposits
+            .extract_if(.., |_, deposit| deposit.account == *account && can_pay(deposit))
             .collect()
     }
 
-    // Takes the tip, if it's still held, to settle it
-    pub fn take(&mut self, id: u64) -> Option<HeldTip> {
-        self.tips.remove(&id)
+    // Takes the deposit, if it's still held, to settle it
+    pub fn take(&mut self, id: u64) -> Option<HeldDeposit> {
+        self.deposits.remove(&id)
     }
 
     pub fn len(&self) -> usize {
-        self.tips.len()
+        self.deposits.len()
     }
 }
 
@@ -100,46 +101,46 @@ mod tests {
     }
 
     #[test]
-    fn whoever_links_an_account_is_given_only_its_tips() {
+    fn whoever_links_an_account_is_given_only_its_deposits() {
         let nelly = BridgedUserId::Telegram(123456789);
         let bob = BridgedUserId::Discord(80351110224678912);
-        let mut tips = BridgedUserTips::default();
-        let first = tips.hold(tip(nelly, 1_000_000));
-        tips.hold(tip(bob, 2_000_000));
-        let second = tips.hold(tip(nelly, 3_000_000));
+        let mut deposits = BridgedUserDeposits::default();
+        let first = deposits.hold(deposit(nelly, 1_000_000));
+        deposits.hold(deposit(bob, 2_000_000));
+        let second = deposits.hold(deposit(nelly, 3_000_000));
 
-        let taken = tips.take_for(&nelly, |_| true);
+        let taken = deposits.take_for(&nelly, |_| true);
 
-        let taken: Vec<_> = taken.into_iter().map(|(id, tip)| (id, tip.account, tip.amount)).collect();
+        let taken: Vec<_> = taken.into_iter().map(|(id, d)| (id, d.account, d.amount)).collect();
         assert_eq!(taken, vec![(first, nelly, 1_000_000), (second, nelly, 3_000_000)]);
-        assert!(tips.take_for(&nelly, |_| true).is_empty());
-        assert_eq!(tips.len(), 1);
+        assert!(deposits.take_for(&nelly, |_| true).is_empty());
+        assert_eq!(deposits.len(), 1);
     }
 
-    // eg. a tip in a ledger the UserIndex doesn't know yet, which waits to be settled
+    // eg. funds in a ledger the UserIndex doesn't know yet, which wait to be settled
     #[test]
-    fn a_tip_which_cant_be_paid_yet_stays_held() {
+    fn a_deposit_which_cant_be_paid_yet_stays_held() {
         let nelly = BridgedUserId::Telegram(123456789);
-        let mut tips = BridgedUserTips::default();
-        tips.hold(tip(nelly, 1_000_000));
-        let unknown = tips.hold(tip(nelly, 2_000_000));
+        let mut deposits = BridgedUserDeposits::default();
+        deposits.hold(deposit(nelly, 1_000_000));
+        let unknown = deposits.hold(deposit(nelly, 2_000_000));
 
-        let taken = tips.take_for(&nelly, |tip| tip.amount < 2_000_000);
+        let taken = deposits.take_for(&nelly, |d| d.amount < 2_000_000);
 
         assert_eq!(taken.len(), 1);
-        assert_eq!(tips.take(unknown).map(|tip| tip.amount), Some(2_000_000));
+        assert_eq!(deposits.take(unknown).map(|d| d.amount), Some(2_000_000));
     }
 
     #[test]
-    fn a_tip_claimed_already_isnt_refunded() {
+    fn a_deposit_claimed_already_isnt_refunded() {
         let nelly = BridgedUserId::Telegram(123456789);
-        let mut tips = BridgedUserTips::default();
-        let claimed = tips.hold(tip(nelly, 1_000_000));
-        tips.take_for(&nelly, |_| true);
-        let unclaimed = tips.hold(tip(nelly, 2_000_000));
+        let mut deposits = BridgedUserDeposits::default();
+        let claimed = deposits.hold(deposit(nelly, 1_000_000));
+        deposits.take_for(&nelly, |_| true);
+        let unclaimed = deposits.hold(deposit(nelly, 2_000_000));
 
-        assert!(tips.take(claimed).is_none());
-        assert_eq!(tips.take(unclaimed).map(|tip| tip.amount), Some(2_000_000));
-        assert!(tips.take(unclaimed).is_none());
+        assert!(deposits.take(claimed).is_none());
+        assert_eq!(deposits.take(unclaimed).map(|d| d.amount), Some(2_000_000));
+        assert!(deposits.take(unclaimed).is_none());
     }
 }

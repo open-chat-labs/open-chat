@@ -6,7 +6,7 @@ use tracing::{error, info};
 use types::{CanisterId, Empty};
 use utils::canister_timers::run_now_then_interval;
 
-// Refreshes the tokens on start (so after every upgrade) and then daily, so that tips held for
+// Refreshes the tokens on start (so after every upgrade) and then daily, so that funds held for
 // accounts are only paid out of ledgers the Registry knows. A failed refresh leaves the previous
 // tokens in place until the next.
 pub fn start_job() {

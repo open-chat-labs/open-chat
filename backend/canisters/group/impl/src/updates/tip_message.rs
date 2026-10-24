@@ -8,7 +8,7 @@ use constants::MEMO_TIP;
 use group_canister::tip_message::*;
 use group_chat_core::{AccountLink, TipRecipient, check_tip_can_be_held};
 use ledger_utils::{TransferRecipient, UserTransfer, format_crypto_amount_with_symbol};
-use local_user_index_canister::{BridgedUserTipped, GroupEvent};
+use local_user_index_canister::{BridgedUserDeposit, GroupEvent};
 use multi_user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 use oc_error_codes::OCErrorCode;
 use types::{
@@ -202,12 +202,12 @@ fn tip_message_with_completed_transfer(
     // there already, so even if the tip can't be recorded on the message, eg. as the tipper has left
     // since, it's still claimed or refunded.
     if let Payee::UnlinkedAccount(account) = args.payee {
-        state.push_event_to_local_user_index(GroupEvent::BridgedUserTipped(Box::new(BridgedUserTipped {
+        state.push_event_to_local_user_index(GroupEvent::BridgedUserDeposit(Box::new(BridgedUserDeposit {
             channel_id: None,
             thread_root_message_index: args.thread_root_message_index,
             message_id: args.message_id,
             account,
-            tipper: user_id,
+            sender: user_id,
             refund_to: from,
             ledger: args.ledger,
             token_symbol: args.token_symbol.clone(),

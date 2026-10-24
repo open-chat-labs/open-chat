@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::CanisterId;
 
-// The fees of the tokens known to the Registry, refreshed from it daily. Tips held for accounts are
-// only paid out of these ledgers, as a "ledger" which a tipper names could be a canister which never
+// The fees of the tokens known to the Registry, refreshed from it daily. Funds held for accounts are
+// only paid out of these ledgers, as a "ledger" which a sender names could be a canister which never
 // replies, which would stop the UserIndex being upgraded.
 #[derive(Serialize, Deserialize, Default)]
 pub struct RegistryTokens {

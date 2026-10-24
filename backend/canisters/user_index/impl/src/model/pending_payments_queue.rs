@@ -58,10 +58,10 @@ pub enum PendingPaymentReason {
     Treasury,
     TopUpNeuron,
     Burn,
-    // A tip held for an account on another platform, paid to whoever linked it
-    BridgedUserTipClaim,
-    // A tip held for an account no one linked in time, refunded to the tipper
-    BridgedUserTipRefund,
+    // Funds held for an account on another platform, paid to whoever linked it
+    BridgedUserDepositClaim,
+    // Funds held for an account no one linked in time, refunded to their sender
+    BridgedUserDepositRefund,
 }
 
 #[cfg(test)]

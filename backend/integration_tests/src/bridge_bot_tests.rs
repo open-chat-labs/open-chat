@@ -646,14 +646,14 @@ fn tips_for_unlinked_accounts_are_held_for_whoever_links_them(in_community: bool
     // The tip is paid into the UserIndex, and recorded on the message
     let nellys_account = telegram_account(random_telegram_id());
     let (message_id, event_index) = relay(env, &bridged, &nellys_account);
-    let held_before = bridged_user_tips_held(env, user_index);
+    let held_before = bridged_user_deposits_held(env, user_index);
     client::approve_spender(env, &tipper, ledger, spender, tip_amount + ICP_TRANSFER_FEE);
     let response = tip_to(env, &tipper, chat, message_id, held_for(&nellys_account), ledger, tip_amount);
     assert!(matches!(response, UnitResult::Success), "{response:?}");
     assert_eq!(balance(env, held_for(&nellys_account)), tip_amount);
     assert_tipped(env, &bridged.owner, chat, event_index, tipper.user_id, ledger, tip_amount);
     wait_until(env, "the tip to be held", |env| {
-        bridged_user_tips_held(env, user_index) == held_before + 1
+        bridged_user_deposits_held(env, user_index) == held_before + 1
     });
 
     // Whoever links the account is paid it
@@ -665,7 +665,7 @@ fn tips_for_unlinked_accounts_are_held_for_whoever_links_them(in_community: bool
         balance(env, nelly.principal.into()) == tip_amount - ICP_TRANSFER_FEE
     });
     assert_eq!(balance(env, held_for(&nellys_account)), 0);
-    assert_eq!(bridged_user_tips_held(env, user_index), held_before);
+    assert_eq!(bridged_user_deposits_held(env, user_index), held_before);
 
     // A tip no one claims is refunded to the account it came from, after 30 days. One which isn't
     // more than the fee can't be held, as it couldn't be paid out.
@@ -689,7 +689,7 @@ fn tips_for_unlinked_accounts_are_held_for_whoever_links_them(in_community: bool
     assert!(matches!(response, UnitResult::Success), "{response:?}");
     let tippers_balance = balance(env, tipper.principal.into());
     wait_until(env, "the tip to be held", |env| {
-        bridged_user_tips_held(env, user_index) == held_before + 1
+        bridged_user_deposits_held(env, user_index) == held_before + 1
     });
     env.advance_time(Duration::from_millis(29 * DAY_IN_MS));
     // Enough for a refund which was due to be paid: its timer job, the payment's, and the transfer
@@ -763,13 +763,13 @@ fn a_tip_held_for_an_account_linked_since_is_paid_on_at_once() {
             events: vec![IdempotentEnvelope {
                 created_at: now_millis(env),
                 idempotency_id: random_from_u128::<u128>() as u64,
-                value: local_user_index_canister::GroupOrCommunityEvent::BridgedUserTipped(Box::new(
-                    local_user_index_canister::BridgedUserTipped {
+                value: local_user_index_canister::GroupOrCommunityEvent::BridgedUserDeposit(Box::new(
+                    local_user_index_canister::BridgedUserDeposit {
                         channel_id: None,
                         thread_root_message_index: None,
                         message_id: random_from_u128(),
                         account: nellys_account.id(),
-                        tipper: tipper.user_id,
+                        sender: tipper.user_id,
                         refund_to: tipper.principal.into(),
                         ledger,
                         token_symbol: ICP_SYMBOL.to_string(),
@@ -829,12 +829,12 @@ fn tips_held_in_ledgers_the_registry_doesnt_know_arent_paid_out() {
         subaccount: Some(nellys_account.id().subaccount()),
     };
     let (message_id, _) = relay(env, &bridged, &nellys_account);
-    let held_before = bridged_user_tips_held(env, user_index);
+    let held_before = bridged_user_deposits_held(env, user_index);
     client::approve_spender(env, &tipper, ledger, bridged.spender, tip_amount + ICP_TRANSFER_FEE);
     let response = tip_to(env, &tipper, bridged.chat, message_id, held_for, ledger, tip_amount);
     assert!(matches!(response, UnitResult::Success), "{response:?}");
     wait_until(env, "the tip to be held", |env| {
-        bridged_user_tips_held(env, user_index) == held_before + 1
+        bridged_user_deposits_held(env, user_index) == held_before + 1
     });
     let tippers_balance = balance(env, tipper.principal.into());
 
@@ -1016,9 +1016,9 @@ fn assert_tipped(
     assert_eq!(*message.tips.first().unwrap(), (ledger, vec![(tipper, amount)]));
 }
 
-fn bridged_user_tips_held(env: &PocketIc, user_index: CanisterId) -> u64 {
+fn bridged_user_deposits_held(env: &PocketIc, user_index: CanisterId) -> u64 {
     try_metrics(env, user_index)
-        .and_then(|metrics| metrics["bridged_user_tips_held"].as_u64())
+        .and_then(|metrics| metrics["bridged_user_deposits_held"].as_u64())
         .unwrap()
 }
 
