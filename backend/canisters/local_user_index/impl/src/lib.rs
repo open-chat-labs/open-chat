@@ -41,7 +41,7 @@ use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use stable_memory_map::UserIdsKeyPrefix;
 use std::cell::RefCell;
-use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet, VecDeque};
 use std::time::Duration;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use tracing::{error, info};
@@ -785,6 +785,7 @@ impl RuntimeState {
             call_push_enabled: self.data.call_push_enabled,
             bridge_bots: self.data.bridge_bots.clone(),
             bridged_user_links: self.data.bridged_user_links.len(),
+            unlinkable_bridged_users: self.data.unlinkable_bridged_users.len(),
             group_versions: self
                 .data
                 .local_groups
@@ -960,6 +961,11 @@ struct Data {
     // it, eg. so tips on the account's relayed messages can be paid to them
     #[serde(default)]
     pub bridged_user_links: BTreeMap<BridgedUserId, UserId>,
+    // The accounts on other platforms which no one can link, eg. Discord bots and webhooks, as
+    // their profiles say when a bridge bot relays their messages through this canister, so tips on
+    // their messages are refused rather than held for no one
+    #[serde(default)]
+    pub unlinkable_bridged_users: BTreeSet<BridgedUserId>,
     #[serde(default)]
     pub daily_puzzle_canister_id: Option<CanisterId>,
     #[serde(default)]
@@ -1101,6 +1107,7 @@ impl Data {
             call_push_enabled,
             bridge_bots: BTreeMap::new(),
             bridged_user_links: BTreeMap::new(),
+            unlinkable_bridged_users: BTreeSet::new(),
             daily_puzzle_canister_id: None,
             daily_puzzle_engine: DailyPuzzleEngine::default(),
             daily_puzzle_event_sync_queue: None,
@@ -1154,6 +1161,7 @@ pub struct Metrics {
     pub call_push_enabled: bool,
     pub bridge_bots: BTreeMap<BridgePlatform, UserId>,
     pub bridged_user_links: usize,
+    pub unlinkable_bridged_users: usize,
     pub user_events_queue_length: usize,
     // Batches currently mid-flight: len() alone cannot distinguish an idle queue from one
     // whose last batch is still awaiting its reply

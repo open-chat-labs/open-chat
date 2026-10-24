@@ -1,4 +1,4 @@
-use crate::{TimestampMillis, UserId};
+use crate::{TimestampMillis, UserId, is_default};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
@@ -59,6 +59,10 @@ pub struct DiscordUser {
     // The hash of the user's global avatar, not their server one, which the CDN url is built from.
     // "a_" followed by 32 hex chars if animated
     pub avatar: Option<String>,
+    // A bot or a webhook, which no one can link, so whose messages can't be tipped
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<bool>", optional)]
+    pub bot: bool,
 }
 
 #[ts_export]
@@ -149,6 +153,12 @@ impl BridgedUserId {
 }
 
 impl BridgedUser {
+    // Whether anyone could link the account. No one can link a Discord bot or webhook, nor a
+    // Telegram chat which sends messages as itself.
+    pub fn can_be_linked(&self) -> bool {
+        self.id().can_be_linked() && !matches!(self, BridgedUser::Discord(user) if user.bot)
+    }
+
     pub fn id(&self) -> BridgedUserId {
         match self {
             BridgedUser::Discord(u) => BridgedUserId::Discord(u.id),
@@ -294,6 +304,25 @@ mod tests {
     }
 
     #[test]
+    fn discord_bots_and_webhooks_cant_be_linked() {
+        assert!(BridgedUser::Discord(discord_user()).can_be_linked());
+        assert!(
+            !BridgedUser::Discord(DiscordUser {
+                bot: true,
+                ..discord_user()
+            })
+            .can_be_linked()
+        );
+        assert!(
+            !BridgedUser::Telegram(TelegramUser {
+                id: -1001234567890,
+                ..telegram_user()
+            })
+            .can_be_linked()
+        );
+    }
+
+    #[test]
     fn telegram_chats_cant_be_linked() {
         assert!(BridgedUserId::Telegram(123456789).can_be_linked());
         assert!(!BridgedUserId::Telegram(-1001234567890).can_be_linked());
@@ -307,6 +336,7 @@ mod tests {
             username: "nelly".to_string(),
             display_name: Some("Nelly".to_string()),
             avatar: Some("8342729096ea3675442027381ff50dfe".to_string()),
+            bot: false,
         }
     }
 
@@ -335,6 +365,7 @@ mod tests {
             DiscordUser {
                 display_name: None,
                 avatar: None,
+                bot: false,
                 ..discord_user()
             }
             .validate()
@@ -343,6 +374,7 @@ mod tests {
         assert!(
             DiscordUser {
                 avatar: Some("a_8342729096ea3675442027381ff50dfe".to_string()),
+                bot: false,
                 ..discord_user()
             }
             .validate()
@@ -381,6 +413,7 @@ mod tests {
             assert!(
                 DiscordUser {
                     avatar: Some(avatar.to_string()),
+                    bot: false,
                     ..discord_user()
                 }
                 .validate()

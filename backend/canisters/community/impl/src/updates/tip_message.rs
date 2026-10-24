@@ -8,7 +8,7 @@ use community_canister::tip_message::*;
 use constants::MEMO_TIP;
 use group_chat_core::{AccountLink, TipRecipient, check_tip_can_be_held};
 use ledger_utils::{TransferRecipient, UserTransfer, format_crypto_amount_with_symbol};
-use local_user_index_canister::{BridgedUserDeposit, CommunityEvent};
+use local_user_index_canister::{BridgedUserDeposit, CommunityEvent, c2c_bridged_user_link};
 use multi_user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
 use oc_error_codes::OCErrorCode;
 use types::{
@@ -40,8 +40,9 @@ async fn tip_message_impl(args: Args) -> OCResult {
         // anything may have changed while they were looked up.
         PrepareResult::LookUpLinkedUser(bridged_user, local_user_index) => {
             let link = match local_user_index_canister_c2c_client::bridged_user_link(bridged_user, local_user_index).await? {
-                Some(linked_user) => AccountLink::Linked(linked_user),
-                None => AccountLink::Unlinked,
+                c2c_bridged_user_link::Response::Success(Some(linked_user)) => AccountLink::Linked(linked_user),
+                c2c_bridged_user_link::Response::Success(None) => AccountLink::Unlinked,
+                c2c_bridged_user_link::Response::CantBeLinked => AccountLink::CantBeLinked,
             };
             mutate_state(|state| prepare(&args, user.user_id, caller, Some(link), state))?
         }
