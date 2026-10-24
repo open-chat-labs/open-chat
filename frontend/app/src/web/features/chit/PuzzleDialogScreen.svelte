@@ -46,8 +46,18 @@
     const available = $derived(
         ready && openablePuzzle($dailyPuzzleStore, dialog.gameId) !== undefined,
     );
-    // the puzzle the session plays (one the poll swapped in included), which it reports
-    let playing = $state<PublicDailyPuzzle | undefined>(undefined);
+    // a session per game and view
+    const sessionKey = $derived(`${dialog.gameId ?? ""}|${how}`);
+    // the puzzle the session plays (one the poll swapped in included), as it reports it, with the
+    // session it came from
+    let reported = $state<{ key: string; puzzle: PublicDailyPuzzle | undefined }>();
+    // till this session has reported, the puzzle it opens (the same pick), so the title never
+    // shows the generic heading or the last game's for a render
+    const playing = $derived(
+        reported?.key === sessionKey
+            ? reported.puzzle
+            : openablePuzzle($dailyPuzzleStore, dialog.gameId),
+    );
     const title = $derived(
         puzzleTitle(available ? playing : undefined, (key: ResourceKey) => interpolate($_, key)),
     );
@@ -63,8 +73,12 @@
 <!-- TODO(design): the design's PuzzleDialog plays Bridges only; GAPS.md -->
 <DialogShell {title} width={560} height="auto" onClose={close}>
     {#if available}
-        {#key `${dialog.gameId ?? ""}|${how}`}
-            <PuzzleSession gameId={dialog.gameId} {how} bind:puzzle={playing} onClose={close} />
+        {#key sessionKey}
+            <PuzzleSession
+                gameId={dialog.gameId}
+                {how}
+                onPuzzle={(puzzle) => (reported = { key: sessionKey, puzzle })}
+                onClose={close} />
         {/key}
     {:else if ready}
         <p class="text">{$_("dailyPuzzle.unavailable")}</p>

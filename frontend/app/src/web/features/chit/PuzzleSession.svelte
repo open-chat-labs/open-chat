@@ -28,12 +28,12 @@
         gameId: string | undefined;
         // opened on how to play
         how: boolean;
-        // the puzzle it plays, for the frame's title
-        puzzle?: PublicDailyPuzzle;
+        // told the puzzle it plays, for the frame's title
+        onPuzzle: (puzzle: PublicDailyPuzzle | undefined) => void;
         onClose: () => void;
     };
 
-    let { gameId, how, puzzle = $bindable(), onClose }: Props = $props();
+    let { gameId, how, onPuzzle, onClose }: Props = $props();
 
     const client = getContext<OpenChat>("client");
     const tr = (key: ResourceKey) => interpolate($_, key);
@@ -54,9 +54,7 @@
     if (untrack(() => how)) game?.openTutorial();
     // the session's puzzle, which the poll may have replaced since this opened, told to the frame
     const current = $derived(game?.puzzle ?? opened.puzzle);
-    $effect.pre(() => {
-        puzzle = current;
-    });
+    $effect.pre(() => onPuzzle(current));
     onDestroy(() => game?.dispose());
 
     const hintLabel = $derived(
