@@ -877,8 +877,9 @@ fn tips_held_in_ledgers_the_registry_doesnt_know_arent_paid_out() {
 
 // No one can link a Discord bot or webhook, so a tip on one of their messages is refused, rather
 // than held for 30 days and then refunded
-#[test]
-fn messages_from_discord_bots_cant_be_tipped() {
+#[test_case(true; "in a channel")]
+#[test_case(false; "in a group")]
+fn messages_from_discord_bots_cant_be_tipped(in_community: bool) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -890,7 +891,14 @@ fn messages_from_discord_bots_cant_be_tipped() {
     env.advance_time(Duration::from_millis(1));
     let tipper = client::register_user(env, canister_ids);
     client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, &tipper, 10_000_000_000);
-    let bridged = set_up_bridged_chat(env, canister_ids, *controller, BridgePlatform::Discord, false, &[&tipper]);
+    let bridged = set_up_bridged_chat(
+        env,
+        canister_ids,
+        *controller,
+        BridgePlatform::Discord,
+        in_community,
+        &[&tipper],
+    );
     let ledger = canister_ids.icp_ledger;
     let tip_amount = 1_0000_0000;
     let discord_account = |bot| {
