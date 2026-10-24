@@ -72,6 +72,23 @@ export function chatManageAccess(
     return { kind: "edit", readOnly };
 }
 
+/**
+ * The same for a community: its permissions and who can see it are the owner's
+ * (`canChangeCommunityPermissions`, `canChangeVisibility`). A community has no history or
+ * disappearing messages to lock.
+ */
+export function communityManageAccess(
+    client: OpenChat,
+    community: CommunitySummary,
+    anon: boolean,
+): ManageAccess {
+    if (!communityDetailsPermissions(client, community, anon).canEdit) return { kind: "about" };
+    const readOnly: ReadOnlySetting[] = [];
+    if (!client.canChangeCommunityPermissions(community.id)) readOnly.push("permissions");
+    if (!hasOwnerRights(community.membership.role)) readOnly.push("visibility");
+    return { kind: "edit", readOnly };
+}
+
 /** What a community's menu offers: a member may leave, and the rest needs it not to be frozen. */
 export type CommunityMenuPermissions = {
     canLeave: boolean;

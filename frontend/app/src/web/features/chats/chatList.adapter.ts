@@ -90,7 +90,7 @@ export type CommunityHeaderMenuState = CommunityMenuPermissions & {
 };
 
 /**
- * ChatListHeader's community menu as the old one was: details, members, mark all read, muting
+ * ChatListHeader's community menu as the old one was: details, members, edit, mark all read, muting
  * every channel, then delete and leave where the app's rules allow them. Picking one reports its
  * id (`onMenu`).
  */
@@ -103,6 +103,13 @@ export function communityHeaderMenu(
         { id: "members", label: "ui.chatListHeader.members", mask: icon("users") },
         { id: "markAllRead", label: "ui.chatListHeader.markAllRead", mask: icon("check-double") },
     ];
+    if (state.canEdit) {
+        items.splice(2, 0, {
+            id: "editCommunity",
+            label: "ui.chatListHeader.editCommunity",
+            mask: icon("edit"),
+        });
+    }
     if (!state.allMuted) {
         items.push({
             id: "muteAll",

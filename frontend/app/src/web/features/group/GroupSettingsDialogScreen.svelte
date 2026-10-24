@@ -1,13 +1,15 @@
-<!-- A group's or channel's settings (GroupSettingsDialog) on UpdateGroupState, as the old editors
-     were: the parts the viewer's role can't change are read-only, and someone who can't edit the
-     chat gets its About page (chatManageAccess). A change that has to be confirmed (renaming a
-     verified group, changing who can see it) asks first; declining keeps the edits to change. -->
+<!-- A group's, channel's or community's settings (GroupSettingsDialog) on UpdateGroupState or
+     UpdateCommunityState, as the old editors were: the parts the viewer's role can't change are
+     read-only, and someone who can't edit it gets its About page (chatManageAccess,
+     communityManageAccess). A change that has to be confirmed (renaming a verified group, changing
+     who can see it) asks first; declining keeps the edits to change. -->
 <script lang="ts">
     import {
         anonUserStore,
         candidateGroupFromChat,
         chatIdentifiersEqual,
         cryptoLookup,
+        defaultChatRules,
         favouritesStore,
         isDiamondStore,
         nervousSystemLookup,
@@ -15,8 +17,11 @@
         roleAsText,
         selectedChatRulesStore,
         selectedChatSummaryStore,
+        selectedCommunityRulesStore,
         selectedCommunitySummaryStore,
+        type CommunitySummary,
         type GroupChangeConfirmation,
+        type Level,
         type MultiUserChat,
         type OpenChat,
         type ResourceKey,
@@ -30,54 +35,138 @@
     import type { GroupSettings } from "@openchat/ui/src/lib/types";
     import { i18nKey, interpolate } from "@i18n/i18n";
     import { muteChat } from "@src/logic/chats/muteChat";
-    import { chatManageAccess } from "@src/logic/groupOrCommunity/detailsPermissions";
+    import {
+        MAX_NAME_LENGTH as MAX_COMMUNITY_NAME,
+        MIN_NAME_LENGTH as MIN_COMMUNITY_NAME,
+        UpdateCommunityState,
+        type SaveCommunityOutcome,
+    } from "@src/logic/groupOrCommunity/community.svelte";
+    import {
+        chatManageAccess,
+        communityManageAccess,
+        type ManageAccess,
+    } from "@src/logic/groupOrCommunity/detailsPermissions";
     import {
         MAX_NAME_LENGTH,
         MIN_NAME_LENGTH,
         UpdateGroupState,
+        type SaveGroupOutcome,
     } from "@src/logic/groupOrCommunity/group.svelte";
     import { toastStore } from "@src/stores/toast";
-    import { AVATAR_SIZE, cropCentred } from "@src/utils/imageCrop";
+    import { AVATAR_SIZE, BANNER_SIZE, cropCentred, type CroppedImage } from "@src/utils/imageCrop";
     import { getContext, untrack } from "svelte";
     import { _ } from "svelte-i18n";
-    import { gateAssets } from "../access/gates.adapter";
+    import { gateAssets, type GateLookups } from "../access/gates.adapter";
     import type { DialogProps, LocalDialog } from "../app/dialogs";
-    import { candidateFromSettings, groupSettings } from "./settings.adapter";
+    import {
+        candidateCommunityFromSettings,
+        candidateFromSettings,
+        communitySettings,
+        groupSettings,
+    } from "./settings.adapter";
 
     let { dialog, onClose }: DialogProps<Extract<LocalDialog, { kind: "group_settings" }>> =
         $props();
 
     const client = getContext<OpenChat>("client");
 
-    // the chat it was opened for; another chat being opened closes the dialog (a navigation does)
-    const chat = $derived<MultiUserChat | undefined>(
-        ($selectedChatSummaryStore?.kind === "group_chat" ||
-            $selectedChatSummaryStore?.kind === "channel") &&
-            chatIdentifiersEqual($selectedChatSummaryStore.id, dialog.chatId)
-            ? $selectedChatSummaryStore
-            : undefined,
-    );
+    // what it was opened for; another chat or community being opened closes the dialog (a
+    // navigation does)
+    const target = $derived.by((): MultiUserChat | CommunitySummary | undefined => {
+        const id = dialog.target;
+        if (id.kind === "community") {
+            const community = $selectedCommunitySummaryStore;
+            return community?.id.communityId === id.communityId ? community : undefined;
+        }
+        const chat = $selectedChatSummaryStore;
+        return (chat?.kind === "group_chat" || chat?.kind === "channel") &&
+            chatIdentifiersEqual(chat.id, id)
+            ? chat
+            : undefined;
+    });
 
     const lookups = $derived({ tokens: $cryptoLookup, nervousSystems: $nervousSystemLookup });
     const assets = $derived(gateAssets(lookups));
 
-    // the group as it was when opened: a save is measured against it, and a successful one moves it
-    const editor = new UpdateGroupState();
-    untrack(() => {
-        if (chat !== undefined)
-            editor.initialise(candidateGroupFromChat(chat, $selectedChatRulesStore));
-    });
-    const value = $state<GroupSettings | undefined>(
-        untrack(() => (chat === undefined ? undefined : groupSettings(editor.original, lookups))),
-    );
+    type SaveOutcome = SaveGroupOutcome | SaveCommunityOutcome;
 
-    const access = $derived(
-        chat === undefined
-            ? undefined
-            : chatManageAccess(client, chat, $selectedCommunitySummaryStore, $anonUserStore),
-    );
-    // who can see the history before they joined is set when the group is made (groupChanges has
-    // no field for it)
+    // The chat or community as it was when opened, in its own editor: a save is measured against
+    // it, and a successful one moves it on
+    type Editor = {
+        level: Level;
+        value: GroupSettings;
+        nameLength: [min: number, max: number];
+        isPublic: () => boolean;
+        // saves the dialog's settings, with any images picked cropped
+        save: (all: GroupSettings, images: Images) => Promise<SaveOutcome>;
+        // the user's answer to the confirmation the last save asked for
+        answer: (yes: boolean) => Promise<SaveOutcome>;
+    };
+    type Images = { avatar?: CroppedImage; banner?: CroppedImage };
+
+    const content = (image: CroppedImage | undefined) =>
+        image && { blobUrl: image.url, blobData: image.data, blobReference: undefined };
+
+    function chatEditor(chat: MultiUserChat, lookups: GateLookups): Editor {
+        const editor = new UpdateGroupState();
+        editor.initialise(candidateGroupFromChat(chat, $selectedChatRulesStore));
+        return {
+            level: chat.level,
+            value: groupSettings(editor.original, lookups),
+            nameLength: [MIN_NAME_LENGTH, MAX_NAME_LENGTH],
+            isPublic: () => editor.candidate.public,
+            save: (all, images) => {
+                editor.candidateGroup = candidateFromSettings(
+                    all,
+                    editor.original,
+                    lookups,
+                    content(images.avatar),
+                );
+                return editor.saveGroup(client);
+            },
+            answer: (yes) => editor.saveGroup(client, yes),
+        };
+    }
+
+    function communityEditor(community: CommunitySummary, lookups: GateLookups): Editor {
+        const editor = new UpdateCommunityState();
+        editor.initialise(community, $selectedCommunityRulesStore ?? defaultChatRules("community"));
+        const original = () => ({ community: editor.original, rules: editor.originalRules });
+        return {
+            level: "community",
+            value: communitySettings(original(), lookups),
+            nameLength: [MIN_COMMUNITY_NAME, MAX_COMMUNITY_NAME],
+            isPublic: () => editor.candidate.public,
+            save: (all, images) => {
+                const { community, rules } = candidateCommunityFromSettings(
+                    all,
+                    original(),
+                    lookups,
+                    { avatar: content(images.avatar), banner: content(images.banner) },
+                );
+                editor.candidateCommunity = community;
+                editor.rules = rules;
+                return editor.saveCommunity(client);
+            },
+            answer: (yes) => editor.saveCommunity(client, yes),
+        };
+    }
+
+    const editor: Editor | undefined = untrack(() => {
+        if (target === undefined) return undefined;
+        return target.kind === "community"
+            ? communityEditor(target, lookups)
+            : chatEditor(target, lookups);
+    });
+
+    const access = $derived.by((): ManageAccess | undefined => {
+        if (target === undefined) return undefined;
+        return target.kind === "community"
+            ? communityManageAccess(client, target, $anonUserStore)
+            : chatManageAccess(client, target, $selectedCommunitySummaryStore, $anonUserStore);
+    });
+    // who can see a group's history from before they joined is set when it's made (groupChanges
+    // has no field for it)
     const readOnlySections = $derived(
         access?.kind === "edit" ? [...access.readOnly, "history" as const] : [],
     );
@@ -101,40 +190,36 @@
     }
 
     const confirmText = $derived.by((): ResourceKey | undefined => {
-        if (confirming === undefined || chat === undefined) return undefined;
+        if (confirming === undefined || editor === undefined) return undefined;
         return confirming.confirmation === "verified_name"
-            ? i18nKey("verified.nameChangeWarning", undefined, chat.level, true)
+            ? i18nKey("verified.nameChangeWarning", undefined, editor.level, true)
             : i18nKey(
-                  `confirmMakeGroup${editor.candidate.public ? "Public" : "Private"}`,
+                  `confirmMakeGroup${editor.isPublic() ? "Public" : "Private"}`,
                   undefined,
-                  chat.level,
+                  editor.level,
                   true,
               );
     });
 
     // ── saving ──
 
-    // UpdateGroupState's limits, which the dialog shows as an invalid name
+    // the editor's limits, which the dialog shows as an invalid name
     function checkName(name: string): Promise<NameCheck> {
-        return Promise.resolve(
-            name.length >= MIN_NAME_LENGTH && name.length <= MAX_NAME_LENGTH ? "ok" : "invalid",
-        );
+        const [min, max] = editor?.nameLength ?? [0, 0];
+        return Promise.resolve(name.length >= min && name.length <= max ? "ok" : "invalid");
     }
 
     // The dialog keeps the edits and says it couldn't save when this rejects
     async function save(all: GroupSettings) {
-        const picked = all.info.avatarFile;
-        const cropped = picked ? await cropCentred(picked, AVATAR_SIZE) : undefined;
-        editor.candidateGroup = candidateFromSettings(
-            all,
-            editor.original,
-            lookups,
-            cropped && { blobUrl: cropped.url, blobData: cropped.data, blobReference: undefined },
-        );
+        if (editor === undefined) return;
+        const [avatar, banner] = await Promise.all([
+            all.info.avatarFile ? cropCentred(all.info.avatarFile, AVATAR_SIZE) : undefined,
+            all.info.coverFile ? cropCentred(all.info.coverFile, BANNER_SIZE) : undefined,
+        ]);
 
-        let outcome = await editor.saveGroup(client);
+        let outcome = await editor.save(all, { avatar, banner });
         while (outcome.kind === "needs_confirmation") {
-            outcome = await editor.saveGroup(client, await confirm(outcome.confirmation));
+            outcome = await editor.answer(await confirm(outcome.confirmation));
         }
         switch (outcome.kind) {
             case "success":
@@ -144,7 +229,7 @@
                 toastStore.showFailureToast(outcome.message);
                 throw new Error("not saved");
             default:
-                // declined, or a name UpdateGroupState wouldn't send
+                // declined, or details the editor wouldn't send
                 throw new Error(outcome.kind);
         }
     }
@@ -152,30 +237,38 @@
     // ── the About page ──
 
     const aboutMeta = $derived(
-        chat === undefined
+        target === undefined
             ? ""
-            : `${$_(chat.public ? "access.public" : "access.private")} · ${$_("memberCount", { values: { count: chat.memberCount } })}`,
+            : `${$_(target.public ? "access.public" : "access.private")} · ${$_("memberCount", { values: { count: target.memberCount } })}`,
     );
 
+    // a community mutes all its channels, which can't be undone from here (as in the old menus)
     async function mute(mute: "forever" | null) {
-        if (chat === undefined) return;
-        const failed = await muteChat(client, chat.id, mute !== null, undefined, $_);
+        if (target === undefined) return;
+        if (target.kind === "community") {
+            if (mute === null || !(await client.muteAllChannels(target.id, false))) {
+                throw new Error("can't unmute every channel");
+            }
+            return;
+        }
+        const failed = await muteChat(client, target.id, mute !== null, undefined, $_);
         if (failed !== undefined) throw new Error("not muted");
     }
 
     async function favourite(on: boolean) {
-        if (chat === undefined) return;
+        if (target === undefined || target.kind === "community") return;
         const done = await (on
-            ? client.addToFavourites(chat.id)
-            : client.removeFromFavourites(chat.id));
+            ? client.addToFavourites(target.id)
+            : client.removeFromFavourites(target.id));
         if (!done) throw new Error("not saved");
     }
 </script>
 
-{#if chat !== undefined && value !== undefined && access !== undefined}
+{#if target !== undefined && editor !== undefined && access !== undefined}
     {#if access.kind === "edit"}
         <GroupSettingsDialog
-            {value}
+            value={editor.value}
+            noun={target.kind === "community" ? "community" : "group"}
             initialTab={dialog.tab}
             isDiamond={$isDiamondStore}
             onUpgrade={() => publish("upgrade")}
@@ -193,16 +286,17 @@
             <div class="oc-veil" onclick={onClose} aria-hidden="true"></div>
             <div class="card">
                 <GroupSettingsDialog
-                    {value}
+                    value={editor.value}
+                    noun={target.kind === "community" ? "community" : "group"}
                     embedded
                     readOnly
                     section="group"
                     {aboutMeta}
-                    roleLabel={$_(roleAsText(chat.membership.role))}
-                    isMuted={chat.membership.notificationsMuted}
-                    isFavourite={$favouritesStore.has(chat.id)}
+                    roleLabel={$_(roleAsText(target.membership.role))}
+                    isMuted={target.kind !== "community" && target.membership.notificationsMuted}
+                    isFavourite={target.kind !== "community" && $favouritesStore.has(target.id)}
                     onMuteChange={mute}
-                    onFavouriteChange={favourite}
+                    onFavouriteChange={target.kind === "community" ? undefined : favourite}
                     {onClose}
                 />
             </div>

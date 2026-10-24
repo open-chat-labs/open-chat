@@ -274,8 +274,8 @@ design export needs. Each entry says where it came up.
     leave, so for anyone else the item does nothing.
   - not offered: freeze and unfreeze (platform moderators, no dialog), suspend, report, and the
     desktop row's swipe-to-remove (Remove chat is a row menu item instead).
-  - the community header's Edit, Invite and new channel items, and the conversation header's
-    Invite, Convert, Import and webhook items, come with 4b's later parts.
+  - the community header's Invite and new channel items, and the conversation header's Invite,
+    Convert, Import and webhook items, come with 4b's later parts.
 
 - **Group and channel settings** (4b part 2a): GroupPanel's Settings opens `GroupSettingsDialog`
   on `UpdateGroupState` (`features/group/GroupSettingsDialogScreen.svelte`, through
@@ -301,6 +301,19 @@ design export needs. Each entry says where it came up.
     nothing.
   - with edit rights, GroupPanel's menu also shows Convert, Import and the new channel items.
     They do nothing until parts 4 and 5.
+
+- **Community settings** (4b part 2b): the same dialog, with `noun: "community"`, on
+  `UpdateCommunityState`. It opens from GroupPanel's Settings and from the community header's Edit
+  community. `communityManageAccess` makes permissions and Public read-only to a non-owner, and
+  gives the About page to someone who can't edit.
+  - by hand: in community mode the dialog leaves out what a community doesn't have: the
+    message-related general permissions (delete, pin, react, @everyone, calls), the Messages and
+    Threads tabs, the history and disappearing switches and their About facts, and the
+    moderator and nobody roles.
+  - a picked banner is cropped to its middle at 600×300.
+  - the community About page's Mute mutes every channel and can't unmute (as in the old menus).
+    It has no Favourite, because a community can't be a favourite.
+  - the primary language isn't in the dialog, and is kept as it was.
 
 ## App
 

@@ -1,17 +1,26 @@
 import {
     defaultChatPermissions,
     defaultChatRules,
+    communityChanges,
     groupChanges,
     ROLE_ADMIN,
     ROLE_MODERATOR,
     ROLE_OWNER,
+    ROLE_MEMBER,
     type CandidateGroupChat,
+    type CommunityAndRules,
+    type CommunitySummary,
 } from "@client";
 import { durationMs } from "@openchat/ui/src/features/components/GroupSettingsDialog.svelte";
 import type { GroupSettings } from "@openchat/ui/src/lib/types";
 import { describe, expect, test } from "vitest";
 import type { GateLookups } from "../access/gates.adapter";
-import { candidateFromSettings, groupSettings } from "./settings.adapter";
+import {
+    candidateCommunityFromSettings,
+    candidateFromSettings,
+    communitySettings,
+    groupSettings,
+} from "./settings.adapter";
 
 const lookups: GateLookups = { tokens: new Map(), nervousSystems: new Map() };
 
@@ -91,5 +100,70 @@ describe("group settings adapter", () => {
         expect(changes.name).toBe("Ramblers");
         expect(changes.permissions?.pinMessages).toBe(1);
         expect(Object.keys(changes).sort()).toEqual(["name", "permissions"]);
+    });
+});
+
+function community(
+    overrides: Partial<CommunitySummary> = {},
+    rules = { ...defaultChatRules("community"), newVersion: false },
+): CommunityAndRules {
+    return {
+        community: {
+            kind: "community",
+            id: { kind: "community", communityId: "c" },
+            name: "Walkers",
+            description: "All the walking groups",
+            public: true,
+            verified: false,
+            frozen: false,
+            avatar: { blobUrl: "blob:avatar" },
+            banner: { blobUrl: "blob:banner" },
+            gateConfig: { gate: { kind: "no_gate" }, expiry: undefined },
+            permissions: {
+                changeRoles: ROLE_OWNER,
+                updateDetails: ROLE_ADMIN,
+                inviteUsers: ROLE_MEMBER,
+                removeMembers: ROLE_ADMIN,
+                createPublicChannel: ROLE_ADMIN,
+                createPrivateChannel: ROLE_MEMBER,
+                manageUserGroups: ROLE_ADMIN,
+            },
+            primaryLanguage: "en",
+            membership: { role: ROLE_OWNER },
+            level: "community",
+            ...overrides,
+        } as CommunitySummary,
+        rules,
+    };
+}
+
+describe("community settings adapter", () => {
+    // 4b invariant 6, for a community
+    test("a community opened in the dialog and saved unchanged has no changes", () => {
+        for (const original of [
+            community(),
+            community({ avatar: {}, banner: {}, public: false }),
+            community({}, { enabled: true, text: "Be kind\n", version: 1, newVersion: false }),
+        ]) {
+            const saved = savedUnchanged(communitySettings(original, lookups));
+            const candidate = candidateCommunityFromSettings(saved, original, lookups);
+            expect(communityChanges(original, candidate)).toEqual({});
+        }
+    });
+
+    test("an edit in the dialog is the only change sent", () => {
+        const original = community();
+        const saved = savedUnchanged(communitySettings(original, lookups));
+        saved.info.about = "Walking, mostly";
+        saved.permissions.general.invite = "admin";
+
+        const changes = communityChanges(
+            original,
+            candidateCommunityFromSettings(saved, original, lookups),
+        );
+
+        expect(changes.description).toBe("Walking, mostly");
+        expect(changes.permissions?.inviteUsers).toBe(ROLE_ADMIN);
+        expect(Object.keys(changes).sort()).toEqual(["description", "permissions"]);
     });
 });

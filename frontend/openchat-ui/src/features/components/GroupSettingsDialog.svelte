@@ -75,16 +75,17 @@
     { key: 'nobody', label: 'ui.groupSettingsDialog.role.nobody' },
   ];
   const VALUE_LABEL: Record<GroupRole, string> = { member: 'ui.groupSettingsDialog.value.member', moderator: 'ui.groupSettingsDialog.value.moderator', admin: 'ui.groupSettingsDialog.value.admin', owner: 'ui.groupSettingsDialog.value.owner', nobody: 'ui.groupSettingsDialog.value.nobody' };
-  const GENERAL: { key: string; label: string; group: string; def: GroupRole; only?: 'community' }[] = [
+  // only: the rows a community or a group doesn't have (a community has no messages of its own)
+  const GENERAL: { key: string; label: string; group: string; def: GroupRole; only?: 'community' | 'group' }[] = [
     { key: 'roles', label: 'ui.groupSettingsDialog.perm.roles', group: 'Members', def: 'owner' },
     { key: 'edit', label: 'ui.groupSettingsDialog.perm.edit', group: 'Members', def: 'admin' },
     { key: 'invite', label: 'ui.groupSettingsDialog.perm.invite', group: 'Members', def: 'member' },
     { key: 'remove', label: 'ui.groupSettingsDialog.perm.remove', group: 'Members', def: 'moderator' },
-    { key: 'delete', label: 'ui.groupSettingsDialog.perm.delete', group: 'Moderation', def: 'moderator' },
-    { key: 'pin', label: 'ui.groupSettingsDialog.perm.pin', group: 'Moderation', def: 'moderator' },
-    { key: 'react', label: 'ui.groupSettingsDialog.perm.react', group: 'Moderation', def: 'member' },
-    { key: 'everyone', label: 'ui.groupSettingsDialog.perm.everyone', group: 'Moderation', def: 'admin' },
-    { key: 'calls', label: 'ui.groupSettingsDialog.perm.calls', group: 'Moderation', def: 'member' },
+    { key: 'delete', label: 'ui.groupSettingsDialog.perm.delete', group: 'Moderation', def: 'moderator', only: 'group' },
+    { key: 'pin', label: 'ui.groupSettingsDialog.perm.pin', group: 'Moderation', def: 'moderator', only: 'group' },
+    { key: 'react', label: 'ui.groupSettingsDialog.perm.react', group: 'Moderation', def: 'member', only: 'group' },
+    { key: 'everyone', label: 'ui.groupSettingsDialog.perm.everyone', group: 'Moderation', def: 'admin', only: 'group' },
+    { key: 'calls', label: 'ui.groupSettingsDialog.perm.calls', group: 'Moderation', def: 'member', only: 'group' },
     // communities only, matching CreateGroupDialog
     { key: 'pubChannels', label: 'ui.groupSettingsDialog.perm.pubChannels', group: 'Channels', def: 'admin', only: 'community' },
     { key: 'privChannels', label: 'ui.groupSettingsDialog.perm.privChannels', group: 'Channels', def: 'member', only: 'community' },
@@ -112,7 +113,7 @@
 
   function defaultPerms(community: boolean): Perms {
     const o: Perms = { general: {}, messages: { default: 'member' }, threads: { default: 'member' } };
-    GENERAL.filter((p) => community || !p.only).forEach((p) => (o.general[p.key] = p.def));
+    GENERAL.filter((p) => !p.only || p.only === (community ? 'community' : 'group')).forEach((p) => (o.general[p.key] = p.def));
     CONTENT.forEach((c) => {
       o.messages[c.key] = INHERIT;
       o.threads[c.key] = INHERIT;
@@ -377,7 +378,7 @@
   // a gate still missing its token or amount can't be saved (the host would get a malformed gate)
   const gatesBad = $derived(gates?.complete === false);
   const ruleLines = $derived(rulesOn ? rulesText.split('\n').map((l) => l.replace(/^[•\-\s]+/, '').trim()).filter(Boolean).length : 0);
-  const generalList = $derived(GENERAL.filter((p) => isCommunity || !p.only));
+  const generalList = $derived(GENERAL.filter((p) => !p.only || p.only === (isCommunity ? 'community' : 'group')));
   const permGroups = $derived([...new Set(generalList.map((p) => p.group))]);
   const generalChanged = $derived(generalList.filter((p) => perms.general[p.key] !== p.def).length);
   // the text changed from the saved rules: offer making members accept them again
@@ -385,11 +386,14 @@
   const rulesChanged = $derived(rulesOn && !!rulesText.trim() && (!savedRulesOn || rulesText.trim() !== savedRulesText.trim()));
   const msgExceptions = $derived(CONTENT.filter((c) => perms.messages[c.key] !== INHERIT).length);
   const thrExceptions = $derived(CONTENT.filter((c) => perms.threads[c.key] !== INHERIT).length);
+  // a community has only general permissions
   const permsChanged = $derived(
-    generalChanged +
-      (perms.messages.default !== 'member' ? 1 : 0) +
-      msgExceptions +
-      (threadsOverride ? 1 + (perms.threads.default !== 'member' ? 1 : 0) + thrExceptions : 0),
+    isCommunity
+      ? generalChanged
+      : generalChanged +
+          (perms.messages.default !== 'member' ? 1 : 0) +
+          msgExceptions +
+          (threadsOverride ? 1 + (perms.threads.default !== 'member' ? 1 : 0) + thrExceptions : 0),
   );
   const scope = $derived<Scope>(permSub === 2 ? 'threads' : 'messages');
 
@@ -527,15 +531,15 @@
       fixed: lockedSection('history'),
     },
     { title: t('ui.groupSettingsDialog.disappearing'), hint: '', on: disappearOn, set: (v: boolean) => (disappearOn = v), timed: true },
-  ]);
+  ].filter((_, i) => !isCommunity || i === 0)); // a community has no history or messages of its own
 
   // --- About page (embedded + view-only Overview)
   const muted = $derived(muteState.current);
   const favourite = $derived(favState.current);
   const ruleCount = $derived(rulesText.split('\n').map((l) => l.trim()).filter(Boolean).length);
   const facts = $derived([
-    history ? { text: t('ui.groupSettingsDialog.factHistory'), icon: 'history' } : { text: t('ui.groupSettingsDialog.factNoHistory'), icon: 'hidden' },
-    ...(disappearOn ? [{ text: t('ui.groupSettingsDialog.factDisappear', { duration: durationText(t, after) }), icon: 'timer' }] : []),
+    ...(isCommunity ? [] : [history ? { text: t('ui.groupSettingsDialog.factHistory'), icon: 'history' } : { text: t('ui.groupSettingsDialog.factNoHistory'), icon: 'hidden' }]),
+    ...(disappearOn && !isCommunity ? [{ text: t('ui.groupSettingsDialog.factDisappear', { duration: durationText(t, after) }), icon: 'timer' }] : []),
     isPublic ? { text: t('ui.groupSettingsDialog.factPublic', { noun }), icon: 'globe' } : { text: t('ui.groupSettingsDialog.factPrivate'), icon: 'lock' },
     ...(ruleCount
       ? [{ text: t(rulesOn ? 'ui.groupSettingsDialog.factRulesAccept' : 'ui.groupSettingsDialog.factRules', { count: ruleCount }), icon: 'rules', link: true }]
@@ -572,7 +576,9 @@
     return [{ label: '', items: [master, ...content] }];
   });
 
-  const permOptions = $derived(permMenu ? [...(permMenu.allowInherit ? [{ key: INHERIT as PermValue, label: 'ui.groupSettingsDialog.sameAsDefault' }] : []), ...ROLES] : []);
+  // a community's roles are member, admin and owner
+  const roles = $derived(isCommunity ? ROLES.filter((r) => r.key === 'member' || r.key === 'admin' || r.key === 'owner') : ROLES);
+  const permOptions = $derived(permMenu ? [...(permMenu.allowInherit ? [{ key: INHERIT as PermValue, label: 'ui.groupSettingsDialog.sameAsDefault' }] : []), ...roles] : []);
 
   const showNote = $derived((submitted && (!nameOk || gatesBad || rulesBad)) || dirty);
   const noteError = $derived(submitted && (!nameOk || gatesBad || rulesBad));
@@ -940,6 +946,7 @@
                 <span class="switch-hint">{t('ui.groupSettingsDialog.whoCanDoWhatHint')}</span>
               </div>
 
+              {#if !isCommunity}
               <div class="cell">
                 <SegmentedTabs
                   labels={[t('ui.groupSettingsDialog.permGeneral'), t('ui.groupSettingsDialog.permMessages'), t('ui.groupSettingsDialog.permThreads')]}
@@ -952,6 +959,7 @@
                   }}
                 />
               </div>
+              {/if}
 
               {#if permsChanged > 0 && !statusOnly}
                 <div class="changed">

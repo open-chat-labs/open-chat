@@ -249,3 +249,12 @@
 - `onBuy` resolving `false` is nothing bought by choice (the user backed out of the PIN prompt): the dialog stays open with no error, where it closed as if bought.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).
 
+
+## 2026-10-24 — GroupSettingsDialog: community mode shows only what a community has, by hand
+- With `noun: 'community'` the dialog showed group-only settings, which a community doesn't have, so editing them saved nothing:
+  - the message-related general permissions (delete, pin, react, @everyone, calls);
+  - the Messages and Threads permission tabs;
+  - the history and disappearing-messages switches, and their About facts;
+  - the moderator and nobody roles.
+- Those are now left out for a community. The `GENERAL` rows carry `only: 'group'` the way the channel rows carry `only: 'community'`. The role picker offers member, admin and owner, and the "changed" count counts only general permissions.
+- Not in the design export: to go back to it (the app's `GAPS.md` lists it).
