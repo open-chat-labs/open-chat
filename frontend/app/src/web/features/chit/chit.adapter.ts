@@ -163,7 +163,7 @@ function bandOf(reward: number): AchievementBand {
 
 /** An achievement's id in the dialog (and to pick it out): its own, or an external one's name. */
 export function achievementItemId(entry: AchievementEntry): string {
-    return entry.kind === "internal" ? entry.id : entry.name;
+    return entry.kind === "internal" ? entry.id : entry.achievement.name;
 }
 
 /**
@@ -181,7 +181,7 @@ export function achievementItems(
         done: entry.done,
         band: bandOf(entry.reward),
         // the old UI's name for it, or the partner's
-        label: entry.kind === "internal" ? name(entry.id) : entry.name,
+        label: entry.kind === "internal" ? name(entry.id) : entry.achievement.name,
     }));
 }
 
@@ -197,7 +197,8 @@ const BOARD_SIZE = 10;
 
 /**
  * LeaderboardDialog's boards, as the old hall of fame shows them: this month's, last month's and
- * all time's top 10, months in UTC (as the backend counts them) named in `locale`. The user's own
+ * all time's top 10, months in UTC (as the backend counts them) named by `monthName` (the client's
+ * toMonthString, as the old hall of fame names them). The user's own
  * place is shown on a board they're on (the backend has nothing for anyone below its top lists).
  * Before the leaderboard has loaded (`result` undefined), the boards are there, empty.
  * `allTime` is the all-time board's label, translated.
@@ -206,13 +207,15 @@ export function leaderboardBoards(
     result: ChitLeaderboardResponse | undefined,
     userId: string,
     now: number,
-    locale: string,
+    monthName: (date: Date) => string,
     allTime: string,
 ): Boards {
-    const monthName = (monthsBack: number) => {
+    // the UTC month `monthsBack` before now's, named from its middle so no zone moves it
+    const month = (monthsBack: number) => {
         const date = new Date(now);
-        const month = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() - monthsBack, 1));
-        return new Intl.DateTimeFormat(locale, { month: "long", timeZone: "UTC" }).format(month);
+        return monthName(
+            new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() - monthsBack, 15)),
+        );
     };
     const board = (label: string, balances: ChitUserBalance[] = []) => {
         const top = balances.slice(0, BOARD_SIZE);
@@ -224,8 +227,8 @@ export function leaderboardBoards(
         };
     };
     return {
-        thisMonth: board(monthName(0), result?.thisMonth),
-        lastMonth: board(monthName(1), result?.lastMonth),
+        thisMonth: board(month(0), result?.thisMonth),
+        lastMonth: board(month(1), result?.lastMonth),
         allTime: board(allTime, result?.allTime),
     };
 }

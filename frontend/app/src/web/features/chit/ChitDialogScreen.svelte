@@ -22,7 +22,7 @@
     import DialogShell from "@openchat/ui/src/lib/components/DialogShell.svelte";
     import Spinner from "@openchat/ui/src/lib/components/Spinner.svelte";
     import { getContext, onMount } from "svelte";
-    import type { DialogProps, LinkedDialog } from "../app/dialogs";
+    import type { DialogProps, Loaded, LinkedDialog } from "../app/dialogs";
     import { openLinked } from "../app/linkedDialogs";
     import { achievementsCount, chitDialogProps } from "./chit.adapter";
 
@@ -31,12 +31,21 @@
     const client = getContext<OpenChat>("client");
 
     // the "Ways to earn" count: the partners' achievements are loaded as it opens
-    let external = $state<ExternalAchievement[]>([]);
+    // (and passed on to the ways to earn, which needn't load them again); which are still open is
+    // worked out when they're loaded
+    let external = $state<Loaded<ExternalAchievement[]>>();
     onMount(async () => {
-        external = await client.getExternalAchievements();
+        external = { value: await client.getExternalAchievements(), at: Date.now() };
     });
     const earn = $derived(
-        achievementsCount(achievementList(achievements, $achievementsStore, external, $now500)),
+        achievementsCount(
+            achievementList(
+                achievements,
+                $achievementsStore,
+                external?.value ?? [],
+                external?.at ?? Date.now(),
+            ),
+        ),
     );
 
     const chit = $derived(
@@ -68,7 +77,7 @@
                 openLinked({ kind: "leaderboard" });
                 return;
             case "earn":
-                dialogs.open({ kind: "achievements" });
+                dialogs.open({ kind: "achievements", external });
                 return;
             // TODO(8d): buying streak insurance and the daily puzzle; GAPS.md
         }

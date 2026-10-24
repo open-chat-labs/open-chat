@@ -27,7 +27,7 @@ describe("the achievements to show", () => {
 
     test("are the offered ones and any other already earned, each with its reward", () => {
         const list = achievementList(achievements, new Set(["changed_theme"]), [], NOW);
-        const ids = list.map((a) => (a.kind === "internal" ? a.id : a.name));
+        const ids = list.map((a) => (a.kind === "internal" ? a.id : a.achievement.name));
         expect(ids).toContain("sent_text");
         // not offered, but earned
         expect(ids).toContain("changed_theme");
@@ -55,12 +55,9 @@ describe("the achievements to show", () => {
             ],
             NOW,
         );
-        expect(list.map((a) => (a.kind === "internal" ? a.id : [a.name, a.done]))).toEqual([
-            "sent_text",
-            ["Big", false],
-            ["Old", true],
-            ["Small", false],
-        ]);
+        expect(
+            list.map((a) => (a.kind === "internal" ? a.id : [a.achievement.name, a.done])),
+        ).toEqual(["sent_text", ["Big", false], ["Old", true], ["Small", false]]);
     });
 });
 
@@ -81,8 +78,8 @@ describe("the earned popup", () => {
         ).toEqual({
             amount: 1200,
             achievements: [
-                { kind: "internal", id: "sent_text" },
-                { kind: "external", name: "Partner" },
+                { kind: "internal", id: "sent_text", amount: 700 },
+                { kind: "external", name: "Partner", amount: 300 },
             ],
             maxStreak: false,
         });

@@ -1,4 +1,10 @@
-import { achievementList, achievements, type ChitState, type StreakInsurance } from "@client";
+import {
+    achievementList,
+    achievements,
+    toMonthString,
+    type ChitState,
+    type StreakInsurance,
+} from "@client";
 import {
     achievementItems,
     achievementsCount,
@@ -167,7 +173,7 @@ describe("the leaderboard's boards", () => {
             { thisMonth: balances(12), lastMonth: balances(3), allTime: [] },
             "nobody",
             MARCH,
-            "en",
+            (d) => toMonthString(d, "en"),
             "All time",
         );
         expect(Object.keys(boards)).toEqual(["thisMonth", "lastMonth", "allTime"]);
@@ -186,14 +192,20 @@ describe("the leaderboard's boards", () => {
             { thisMonth: balances(5), lastMonth: [], allTime: [] },
             "u3",
             MARCH,
-            "en",
+            (d) => toMonthString(d, "en"),
             "All time",
         );
         expect(boards.thisMonth.you).toEqual({ rank: 4, score: 997 });
     });
 
     test("are there, empty, before the leaderboard loads", () => {
-        const boards = leaderboardBoards(undefined, "u1", MARCH, "en", "All time");
+        const boards = leaderboardBoards(
+            undefined,
+            "u1",
+            MARCH,
+            (d) => toMonthString(d, "en"),
+            "All time",
+        );
         expect(boards.allTime.rows).toEqual([]);
     });
 });

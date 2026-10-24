@@ -126,7 +126,7 @@ const OFFERED = new Set<Achievement>([
 /** One of the achievements the user can earn, or has. */
 export type AchievementEntry =
     | { kind: "internal"; id: Achievement; reward: number; done: boolean }
-    | { kind: "external"; id: number; name: string; url: string; reward: number; done: boolean };
+    | { kind: "external"; achievement: ExternalAchievement; reward: number; done: boolean };
 
 /**
  * The achievements to show, as the old "Learn to earn" lists them: the offered ones and any
@@ -156,9 +156,7 @@ export function achievementList(
         .map(
             (a): AchievementEntry => ({
                 kind: "external",
-                id: a.id,
-                name: a.name,
-                url: a.url,
+                achievement: a,
                 reward: a.chitReward,
                 done: earned.has(a.name),
             }),
@@ -166,10 +164,10 @@ export function achievementList(
     return [...internal, ...others];
 }
 
-/** An achievement just earned, as the earned popup names it. */
+/** An achievement just earned, as the earned popup names it, and the CHIT it paid. */
 export type EarnedAchievement =
-    | { kind: "internal"; id: Achievement }
-    | { kind: "external"; name: string };
+    | { kind: "internal"; id: Achievement; amount: number }
+    | { kind: "external"; name: string; amount: number };
 
 /**
  * What the earned popup shows for CHIT just earned: the amount, the achievements earned, and
@@ -180,10 +178,12 @@ export function chitEarnedSummary(events: ChitEvent[]): {
     achievements: EarnedAchievement[];
     maxStreak: boolean;
 } {
-    const achievements = events.flatMap(({ reason }): EarnedAchievement[] => {
-        if (reason.kind === "achievement_unlocked") return [{ kind: "internal", id: reason.type }];
+    const achievements = events.flatMap(({ reason, amount }): EarnedAchievement[] => {
+        if (reason.kind === "achievement_unlocked") {
+            return [{ kind: "internal", id: reason.type, amount }];
+        }
         if (reason.kind === "external_achievement_unlocked") {
-            return [{ kind: "external", name: reason.name }];
+            return [{ kind: "external", name: reason.name, amount }];
         }
         return [];
     });

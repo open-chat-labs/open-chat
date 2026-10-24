@@ -1,4 +1,4 @@
-import type { LeaveOrDelete, MultiUserChatIdentifier } from "@client";
+import type { ExternalAchievement, LeaveOrDelete, MultiUserChatIdentifier } from "@client";
 import type { DialogStack } from "../../shell/dialogStack.svelte";
 import type { ProfileCard } from "@src/logic/profile/profileCard";
 import type { Component } from "svelte";
@@ -30,8 +30,12 @@ export type LocalDialog =
     | { kind: "leave_or_delete"; action: LeaveOrDelete; name: string }
     | { kind: "group_settings"; chatId: MultiUserChatIdentifier; tab: GroupSettingsTab }
     // the ways to earn CHIT, over whatever opened it (the CHIT dialog, an achievement's toast),
-    // with the one just earned picked out (`highlight`, an achievement's id or external name)
-    | { kind: "achievements"; highlight?: string };
+    // with the one just earned picked out (`highlight`, an achievement's id or external name), and
+    // the partners' achievements if the opener has them loaded (`external`)
+    | { kind: "achievements"; highlight?: string; external?: Loaded<ExternalAchievement[]> };
+
+/** Something loaded, and when (ms): whatever depends on the time it was loaded goes by that. */
+export type Loaded<T> = { value: T; at: number };
 
 /** The page GroupSettingsDialog opens on. */
 export type GroupSettingsTab = "group" | "gates" | "rules" | "permissions";

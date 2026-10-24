@@ -62,16 +62,19 @@
     );
     let achieved = $derived(
         list.flatMap((a) =>
-            !a.done ? [] : a.kind === "internal" ? [`learnToEarn.${a.id}`] : [a.name],
+            !a.done ? [] : a.kind === "internal" ? [`learnToEarn.${a.id}`] : [a.achievement.name],
         ),
     );
-    let percComplete = $derived(Math.round((achieved.length / list.length) * 100));
-    let validExternalNotAchieved = $derived(
-        list.flatMap((a) =>
-            a.kind === "external" && !a.done
-                ? externalAchievements.filter((e) => e.id === a.id)
-                : [],
+    // of every achievement offered or earned and every partner one, as the old list counted them
+    let percComplete = $derived(
+        Math.round(
+            (achieved.length /
+                (list.filter((a) => a.kind === "internal").length + externalAchievements.length)) *
+                100,
         ),
+    );
+    let validExternalNotAchieved = $derived(
+        list.flatMap((a) => (a.kind === "external" && !a.done ? [a.achievement] : [])),
     );
 </script>
 

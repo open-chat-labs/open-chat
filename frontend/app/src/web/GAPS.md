@@ -385,10 +385,10 @@ design export needs. Each entry says where it came up.
   given a group; quick up to 1,000 CHIT, middling up to 3,000, big above), not anything the old
   UI had; no achievement has an icon of its own (the old UI had none).
 - **Achievement toast** (`AchievementToast`, for the client's `chitEarned`): only with the popup
-  setting on (`chitPopup`) and CHIT on, as the old earned popup; it names the first achievement
-  when several come at once (with the CHIT for them all), and the longest streak gets the flame
-  icon, where the old popup shook the page and played longer. It marks them seen as it shows,
-  as the old popup did, so with the popup off they aren't marked.
+  setting on (`chitPopup`) and CHIT on, as the old earned popup; one toast for each achievement,
+  in turn, with the CHIT it paid (the old popup listed them all in one, with the total), and the
+  longest streak gets the flame icon, where the old popup shook the page and played longer. A
+  batch is marked seen as it comes, as the old popup did, so with the popup off it isn't.
 - **App events** (`features/app/AppEventDialogs.svelte`): the not-found, no-access and
   not-available dialogs are a `DialogShell` with the old UI's words (no design: `TODO(design)`);
   "Page not found" was never translated. Suspending a user (`suspendUser`, platform moderators

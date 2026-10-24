@@ -5,6 +5,7 @@
     import {
         currentUserIdStore,
         currentUserStore,
+        toMonthString,
         type ChitLeaderboardResponse,
         type OpenChat,
     } from "@client";
@@ -33,7 +34,7 @@
             result,
             $currentUserIdStore,
             Date.now(),
-            $locale ?? "en",
+            (date) => toMonthString(date, $locale ?? "en"),
             $_("halloffame.allTime"),
         ),
     );
