@@ -140,10 +140,11 @@ fn local_user_index_relays_group_activity_to_the_group_index() {
     });
 }
 
-// A tip on a message from an account no one has linked, which the group or community has paid into
-// the UserIndex, is relayed by its LocalUserIndex to the UserIndex, which holds it
+// Funds sent to an account no one has linked, eg. a tip on a message from it, which the group or
+// community has paid into the UserIndex, are relayed by its LocalUserIndex to the UserIndex, which
+// holds them
 #[test]
-fn local_user_index_relays_tips_for_unlinked_accounts_to_the_user_index() {
+fn local_user_index_relays_deposits_for_unlinked_accounts_to_the_user_index() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -155,19 +156,19 @@ fn local_user_index_relays_tips_for_unlinked_accounts_to_the_user_index() {
     let user = client::register_diamond_user(env, canister_ids, *controller);
     let group_id = client::user::happy_path::create_group(env, &user, &random_string(), false, true);
     let community_id = client::user::happy_path::create_community(env, &user, &random_string(), false, vec![random_string()]);
-    let tips_held = |env: &PocketIc| {
-        metrics(env, canister_ids.user_index)["bridged_user_tips_held"]
+    let deposits_held = |env: &PocketIc| {
+        metrics(env, canister_ids.user_index)["bridged_user_deposits_held"]
             .as_u64()
             .unwrap()
     };
-    let held_before = tips_held(env);
+    let held_before = deposits_held(env);
 
     let response = client::local_user_index::c2c_group(
         env,
         group_id.into(),
         canister_ids.local_user_index(env, group_id),
         &local_user_index_canister::c2c_group::Args {
-            events: vec![envelope(env, bridged_user_tipped(&user, canister_ids, None))],
+            events: vec![envelope(env, bridged_user_deposit(&user, canister_ids, None))],
         },
     );
     assert!(matches!(response, SuccessOnly::Success));
@@ -176,27 +177,27 @@ fn local_user_index_relays_tips_for_unlinked_accounts_to_the_user_index() {
         community_id.into(),
         canister_ids.local_user_index(env, community_id),
         &local_user_index_canister::c2c_community::Args {
-            events: vec![envelope(env, bridged_user_tipped(&user, canister_ids, Some(1u32.into())))],
+            events: vec![envelope(env, bridged_user_deposit(&user, canister_ids, Some(1u32.into())))],
         },
     );
     assert!(matches!(response, SuccessOnly::Success));
 
-    tick_until(env, |env| tips_held(env) == held_before + 2);
+    tick_until(env, |env| deposits_held(env) == held_before + 2);
 }
 
-fn bridged_user_tipped<T>(
-    tipper: &User,
+fn bridged_user_deposit<T>(
+    sender: &User,
     canister_ids: &CanisterIds,
     channel_id: Option<ChannelId>,
 ) -> local_user_index_canister::GroupOrCommunityEvent<T> {
-    local_user_index_canister::GroupOrCommunityEvent::BridgedUserTipped(Box::new(
-        local_user_index_canister::BridgedUserTipped {
+    local_user_index_canister::GroupOrCommunityEvent::BridgedUserDeposit(Box::new(
+        local_user_index_canister::BridgedUserDeposit {
             channel_id,
             thread_root_message_index: None,
             message_id: random::<u64>().into(),
             account: BridgedUserId::Telegram(random::<u32>() as i64 + 1),
-            tipper: tipper.user_id,
-            refund_to: tipper.principal.into(),
+            sender: sender.user_id,
+            refund_to: sender.principal.into(),
             ledger: canister_ids.icp_ledger,
             token_symbol: "ICP".to_string(),
             amount: 1_0000_0000,

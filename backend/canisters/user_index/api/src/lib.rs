@@ -41,26 +41,27 @@ pub enum LocalUserIndexEvent {
     ModerationReferral(Box<ModerationReferral>),
     // The profile a bridge bot relayed a message with, for the registry of bridged accounts
     BridgedUserUpdated(Box<BridgedUser>),
-    BridgedUserTipped(Box<BridgedUserTipped>),
+    BridgedUserDeposit(Box<BridgedUserDeposit>),
 }
 
-// A tip on a message relayed from an account no one had linked, paid into the account's subaccount
-// of the UserIndex (see `BridgedUserId::subaccount`), which holds it for whoever links the
-// account, or else refunds it
+// Funds sent to an account on another platform which no one had linked, eg. a tip on a message
+// relayed from it, paid into the account's subaccount of the UserIndex (see
+// `BridgedUserId::subaccount`), which holds them for whoever links the account, or else refunds them
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct BridgedUserTipped {
+pub struct BridgedUserDeposit {
     pub chat: Chat,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
     pub account: BridgedUserId,
-    pub tipper: UserId,
-    // The account the tip came from, where it's refunded to if no one claims it
+    // Who sent the funds
+    pub sender: UserId,
+    // The account the funds came from, where they're refunded to if no one claims them
     pub refund_to: icrc1::Account,
     pub ledger: CanisterId,
     pub token_symbol: String,
-    // What arrived in the account's subaccount. The tipper paid the fee on top.
+    // What arrived in the account's subaccount. The sender paid the fee on top.
     pub amount: u128,
-    // The ledger's fee when the tip was made, which a payout of the tip is less
+    // The ledger's fee when the funds were sent, which a payout of them is less
     pub fee: u128,
     // The token's, so a payout's amount can be shown
     pub decimals: u8,

@@ -1,4 +1,4 @@
-use crate::model::bridged_user_tips::BridgedUserTips;
+use crate::model::bridged_user_deposits::BridgedUserDeposits;
 use crate::model::bridged_users::BridgedUsers;
 use crate::model::community_event_batch::CommunityEventBatch;
 use crate::model::group_event_batch::GroupEventBatch;
@@ -378,7 +378,7 @@ impl RuntimeState {
             migrated_user_ids: self.data.migrated_user_ids.len(),
             call_push_enabled: self.data.call_push_enabled,
             bridged_users: self.data.bridged_users.len(),
-            bridged_user_tips_held: self.data.bridged_user_tips.len(),
+            bridged_user_deposits_held: self.data.bridged_user_deposits.len(),
             platform_moderators_group: self.data.platform_moderators_group,
             nns_8_year_neuron: self.data.nns_8_year_neuron.clone(),
             event_store_client_info,
@@ -578,9 +578,10 @@ struct Data {
     // The latest profile of each account a bridge bot has relayed a message from
     #[serde(default)]
     pub bridged_users: BridgedUsers,
-    // The tips on messages relayed from accounts no one had linked, held for whoever links them
+    // The funds sent to accounts on other platforms which no one had linked, eg. tips on their
+    // relayed messages, held for whoever links them
     #[serde(default)]
-    pub bridged_user_tips: BridgedUserTips,
+    pub bridged_user_deposits: BridgedUserDeposits,
     // The old id -> the new id of each user migrated to a MultiUser canister. Fanned out to the
     // LocalUserIndexes, including any added later
     #[serde(default)]
@@ -696,7 +697,7 @@ impl Data {
             daily_puzzle_canister_id: None,
             bridge_bots: BTreeMap::new(),
             bridged_users: BridgedUsers::default(),
-            bridged_user_tips: BridgedUserTips::default(),
+            bridged_user_deposits: BridgedUserDeposits::default(),
             migrated_user_ids: MigratedUserIds::default(),
             alchemy_api_key: None,
         };
@@ -813,7 +814,7 @@ impl Default for Data {
             daily_puzzle_canister_id: None,
             bridge_bots: BTreeMap::new(),
             bridged_users: BridgedUsers::default(),
-            bridged_user_tips: BridgedUserTips::default(),
+            bridged_user_deposits: BridgedUserDeposits::default(),
             migrated_user_ids: MigratedUserIds::default(),
             alchemy_api_key: None,
         }
@@ -848,7 +849,7 @@ pub struct Metrics {
     pub migrated_user_ids: usize,
     pub call_push_enabled: bool,
     pub bridged_users: usize,
-    pub bridged_user_tips_held: usize,
+    pub bridged_user_deposits_held: usize,
     pub platform_moderators_group: Option<ChatId>,
     pub nns_8_year_neuron: Option<NnsNeuron>,
     pub event_store_client_info: EventStoreClientInfo,

@@ -153,21 +153,21 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 );
             }
         }
-        GroupOrCommunityEvent::BridgedUserTipped(ev) => {
-            // The tip has been paid into the UserIndex already, so if it can't be held, its funds
+        GroupOrCommunityEvent::BridgedUserDeposit(ev) => {
+            // The funds have been paid into the UserIndex already, so if they can't be held, they
             // are left there, and need finding
             let Some(chat) = chat(caller, is_group, ev.channel_id) else {
-                tracing::error!(community = %caller, ?ev, "Tip for an unlinked account sent without a channel");
+                tracing::error!(community = %caller, ?ev, "Deposit for an unlinked account sent without a channel");
                 return;
             };
             let ev = *ev;
             state.push_event_to_user_index(
-                crate::UserIndexEvent::BridgedUserTipped(Box::new(user_index_canister::BridgedUserTipped {
+                crate::UserIndexEvent::BridgedUserDeposit(Box::new(user_index_canister::BridgedUserDeposit {
                     chat,
                     thread_root_message_index: ev.thread_root_message_index,
                     message_id: ev.message_id,
                     account: ev.account,
-                    tipper: ev.tipper,
+                    sender: ev.sender,
                     refund_to: ev.refund_to,
                     ledger: ev.ledger,
                     token_symbol: ev.token_symbol,
