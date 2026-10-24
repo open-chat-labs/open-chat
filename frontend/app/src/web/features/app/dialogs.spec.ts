@@ -37,6 +37,15 @@ describe("the dialog a URL's query opens", () => {
             kind: "puzzle",
             gameId: "bridges",
         });
+        expect(linkedDialog(new URLSearchParams("chit=howto%3Abridges"))).toEqual({
+            kind: "puzzle",
+            gameId: "bridges",
+            how: true,
+        });
+        expect(linkedDialog(new URLSearchParams("chit=howto"))).toEqual({
+            kind: "puzzle",
+            how: true,
+        });
         expect(linkedDialog(new URLSearchParams("chit=nope"))).toEqual({ kind: "chit" });
     });
 
@@ -112,6 +121,21 @@ describe("opening a linked dialog", () => {
         expect(
             openLinkedDialog(new URLSearchParams("chit=insurance"), { kind: "streak_insurance" }),
         ).toBeUndefined();
+        expect(
+            openLinkedDialog(new URLSearchParams("chit"), {
+                kind: "puzzle",
+                gameId: "tents",
+                how: true,
+            }),
+        ).toBe("?chit=howto%3Atents");
+        // how to play is another view of the same puzzle
+        expect(
+            openLinkedDialog(new URLSearchParams("chit=puzzle%3Atents"), {
+                kind: "puzzle",
+                gameId: "tents",
+                how: true,
+            }),
+        ).toBe("?chit=howto%3Atents");
         // the same param, so closing any of them drops it
         expect(linkedDialogParam({ kind: "streak_insurance" })).toBe("chit");
     });

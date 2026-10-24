@@ -13,7 +13,12 @@ import {
 } from "@client";
 import { flushSync } from "svelte";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { DailyPuzzleGame, type HintButton, type PuzzleHost } from "./dailyPuzzle.svelte";
+import {
+    DailyPuzzleGame,
+    hintButtonKeys,
+    type HintButton,
+    type PuzzleHost,
+} from "./dailyPuzzle.svelte";
 import { dailyPuzzleGame } from "@src/core/dailyPuzzle/registry";
 
 const NUMBER = 20706;
@@ -1172,5 +1177,28 @@ describe("what a hint shows and when a result is shared (8d, #10130)", () => {
         expect(solvedIn(1n, 0n)).toBe(true);
         // not solved: nothing to share
         expect(build(userState()).canShare).toBe(false);
+    });
+});
+
+describe("the hint button's label", () => {
+    test("says why there's no hint, or what one costs and what's left", () => {
+        expect(hintButtonKeys({ kind: "mistake" }).map((k) => k.key)).toEqual([
+            "dailyPuzzle.fixMistakeFirst",
+        ]);
+        expect(hintButtonKeys({ kind: "noneLeft" }).map((k) => k.key)).toEqual([
+            "dailyPuzzle.noHintsLeft",
+        ]);
+        expect(
+            hintButtonKeys({ kind: "hint", price: 50, hintsLeft: 2, checksLeft: 3 }).map(
+                (k) => `${k.key}${JSON.stringify(k.params)}`,
+            ),
+        ).toEqual([
+            'dailyPuzzle.hintCost{"price":50}',
+            'dailyPuzzle.hintsLeft{"count":2}',
+            'dailyPuzzle.checksLeft{"count":3}',
+        ]);
+        expect(hintButtonKeys({ kind: "hint", price: 50, hintsLeft: 0 }).map((k) => k.key)).toEqual(
+            ["dailyPuzzle.hintCost"],
+        );
     });
 });

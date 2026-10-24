@@ -5,7 +5,6 @@
         anonUserStore,
         chitStateStore,
         currentUserStore,
-        dailyPuzzleRows,
         dailyPuzzleStore,
         favouritesStore,
         latestSuccessfulUpdatesLoop,
@@ -50,6 +49,7 @@
     import { openLinked } from "./linkedDialogs";
     import { disableChit, hideChitIcon } from "@src/stores/settings";
     import { now500 } from "@src/stores/time";
+    import { playableDailyPuzzleRows } from "@src/core/dailyPuzzle/playable";
     import DetailsColumn from "./DetailsColumn.svelte";
     import RegionScreen from "./RegionScreen.svelte";
     import { closeRightColumn, openOnNewPanel } from "./rightPanel";
@@ -209,7 +209,7 @@
             chitStreak={chit.chitStreak}
             chitClaimable={chit.chitClaimable}
             puzzleDue={!$disableChit &&
-                dailyPuzzleRows($dailyPuzzleStore).some((r) => r.status === "play")}
+                (playableDailyPuzzleRows($dailyPuzzleStore) ?? []).some((r) => r.status === "play")}
             onChit={() => openLinked({ kind: "chit" })}
             onSignIn={() => client.updateIdentityState({ kind: "logging_in" })} />
     {/snippet}

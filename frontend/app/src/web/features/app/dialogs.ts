@@ -28,8 +28,8 @@ export type LinkedDialog =
     | { kind: "achievements"; highlight?: string }
     | { kind: "streak_insurance" }
     // today's puzzle (with no `gameId`, the first on the rota: ?chit=puzzle), or that game's
-    // (?chit=puzzle:<gameId>)
-    | { kind: "puzzle"; gameId?: string }
+    // (?chit=puzzle:<gameId>); `how`: opened on how to play (?chit=howto, ?chit=howto:<gameId>)
+    | { kind: "puzzle"; gameId?: string; how?: boolean }
     | { kind: "leaderboard" };
 
 // someone's profile card, for a name clicked in a message; confirming leaving or deleting a chat or
@@ -119,6 +119,7 @@ const PARAM_ORDER = ["profile", "diamond", "chit", "hof"];
 const EARN = "earn";
 const INSURANCE = "insurance";
 const PUZZLE = "puzzle";
+const HOW_TO = "howto";
 
 /** The linked dialog the URL's query opens, if any: one at a time. */
 export function linkedDialog(query: URLSearchParams): LinkedDialog | undefined {
@@ -141,6 +142,10 @@ export function linkedDialog(query: URLSearchParams): LinkedDialog | undefined {
             if (value.startsWith(`${PUZZLE}:`)) {
                 return { kind: "puzzle", gameId: value.slice(PUZZLE.length + 1) };
             }
+            if (value === HOW_TO) return { kind: "puzzle", how: true };
+            if (value.startsWith(`${HOW_TO}:`)) {
+                return { kind: "puzzle", gameId: value.slice(HOW_TO.length + 1), how: true };
+            }
             if (value === EARN) return { kind: "achievements" };
             if (value.startsWith(`${EARN}:`)) {
                 return { kind: "achievements", highlight: value.slice(EARN.length + 1) };
@@ -162,8 +167,10 @@ function valueOf(dialog: LinkedDialog): string | undefined {
             return dialog.highlight === undefined ? EARN : `${EARN}:${dialog.highlight}`;
         case "streak_insurance":
             return INSURANCE;
-        case "puzzle":
-            return dialog.gameId === undefined ? PUZZLE : `${PUZZLE}:${dialog.gameId}`;
+        case "puzzle": {
+            const view = dialog.how ? HOW_TO : PUZZLE;
+            return dialog.gameId === undefined ? view : `${view}:${dialog.gameId}`;
+        }
         default:
             return undefined;
     }

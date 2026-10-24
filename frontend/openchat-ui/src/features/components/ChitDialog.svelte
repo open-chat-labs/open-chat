@@ -50,6 +50,8 @@
     /** DailyPuzzleCard's title and "⋯" menu (see there). */
     puzzleTitle?: string;
     puzzleMenu?: PuzzleAction[];
+    /** The solved puzzle card's "Next puzzle in": defaults to `countdown`. */
+    puzzleCountdown?: string;
     /** Shows a back arrow (opened from another dialog). */
     onBack?: () => void;
     /** Resource key (or literal text). */
@@ -79,6 +81,7 @@
     puzzleRemind = false,
     puzzleTitle,
     puzzleMenu,
+    puzzleCountdown,
     onBack,
     backLabel = 'ui.common.back',
     onClaim,
@@ -233,7 +236,7 @@
       </div>
 
       <div class="extras">
-        <DailyPuzzleCard state={puzzleState} sub={puzzleSub} {countdown} remind={puzzleRemind} title={puzzleTitle} menu={puzzleMenu} onAction={(k) => act(k)} />
+        <DailyPuzzleCard state={puzzleState} sub={puzzleSub} countdown={puzzleCountdown ?? countdown} remind={puzzleRemind} title={puzzleTitle} menu={puzzleMenu} onAction={(k) => act(k)} />
         <div class="row cover" class:insured={insuredLeft > 0} onclick={() => act('insurance')} role="button" tabindex="0">
           <span class="tile cover-tile"><span class="tile-glyph shield"></span></span>
           <div class="row-text">

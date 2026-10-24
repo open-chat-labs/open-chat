@@ -6,10 +6,10 @@
         gameNameKey,
         tierKey,
         type HintButton,
-        type PuzzleHost,
+        hintButtonKeys,
     } from "@src/logic/dailyPuzzle/dailyPuzzle.svelte";
     import { openDailyPuzzle } from "@src/core/dailyPuzzle/registry";
-    import { toastStore } from "@src/stores/toast";
+    import { toastingPuzzleHost } from "@src/core/dailyPuzzle/puzzleHost";
     import {
         Body,
         BodySmall,
@@ -43,11 +43,10 @@
     const client = getContext<OpenChat>("client");
     // undefined `def` = a game this build does not know how to render
     // what the puzzle needs from this screen: failures toasted, and the game's strings translated
-    const host: PuzzleHost = {
-        onFailure: (reason, detail) => toastStore.showFailureToast(reason, detail),
-        translate: (key) => $_(key),
-        locale: () => $locale ?? "en",
-    };
+    const host = toastingPuzzleHost(
+        (key) => $_(key),
+        () => $locale,
+    );
     const opened = openDailyPuzzle(client, gameId, $currentUserIdStore, host);
     const { def, game } = opened;
     // the session's puzzle, which the poll may have replaced since this opened
@@ -225,28 +224,9 @@
                         {#snippet icon(color, size)}
                             <LightbulbOutline {color} {size} />
                         {/snippet}
-                        {#if hintButton.kind === "mistake"}
-                            <Translatable resourceKey={i18nKey("dailyPuzzle.fixMistakeFirst")} />
-                        {:else if hintButton.kind === "noneLeft"}
-                            <Translatable resourceKey={i18nKey("dailyPuzzle.noHintsLeft")} />
-                        {:else}
-                            <Translatable
-                                resourceKey={i18nKey("dailyPuzzle.hintCost", {
-                                    price: hintButton.price,
-                                })} />
-                            {#if hintButton.hintsLeft > 0}
-                                · <Translatable
-                                    resourceKey={i18nKey("dailyPuzzle.hintsLeft", {
-                                        count: hintButton.hintsLeft,
-                                    })} />
-                            {/if}
-                            {#if hintButton.checksLeft !== undefined}
-                                · <Translatable
-                                    resourceKey={i18nKey("dailyPuzzle.checksLeft", {
-                                        count: hintButton.checksLeft,
-                                    })} />
-                            {/if}
-                        {/if}
+                        {#each hintButtonKeys(hintButton) as key, i (key.key)}{#if i > 0}
+                                ·
+                            {/if}<Translatable resourceKey={key} />{/each}
                     </CommonButton2>
                 {/if}
                 {@render howToPlay()}

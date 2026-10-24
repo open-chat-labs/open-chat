@@ -1,5 +1,7 @@
 import type { DailyPuzzleRow, DailyPuzzleStatus, PublicDailyPuzzle, ResourceKey } from "@client";
-import { hintButtonKeys, puzzleCardProps } from "./puzzle.adapter";
+import { puzzleCardProps } from "./puzzle.adapter";
+
+const NOW = 1_000_000_000;
 
 const puzzle = (gameId: string): PublicDailyPuzzle => ({
     gameId,
@@ -7,7 +9,7 @@ const puzzle = (gameId: string): PublicDailyPuzzle => ({
     tier: 0,
     description: new Uint8Array(),
     startsAt: 0n,
-    expiresAt: 0n,
+    expiresAt: BigInt(NOW + 61 * 60_000 + 5000),
     enabled: true,
     entryFee: 0,
     firstPlayFree: false,
@@ -46,8 +48,12 @@ const translate = ({ key, params }: ResourceKey) =>
     params === undefined ? key : `${key}${JSON.stringify(params)}`;
 
 describe("the CHIT dialog's puzzle card", () => {
+    test("is off while today's puzzles are still loading, rather than saying there's none", () => {
+        expect(puzzleCardProps(undefined, NOW, translate)).toEqual({ puzzleState: "off" });
+    });
+
     test("without a puzzle today still shows, saying so, and opens nothing", () => {
-        expect(puzzleCardProps([], translate)).toEqual({
+        expect(puzzleCardProps([], NOW, translate)).toEqual({
             puzzleState: "unavailable",
             puzzleTitle: "dailyPuzzle.todaysPuzzle",
         });
@@ -55,46 +61,31 @@ describe("the CHIT dialog's puzzle card", () => {
 
     test("opens the first puzzle not solved, to play or to go on with, naming its game", () => {
         expect(
-            puzzleCardProps([row("bridges", "solved", 1000n), row("tents", "play")], translate),
+            puzzleCardProps(
+                [row("bridges", "solved", 1000n), row("tents", "play")],
+                NOW,
+                translate,
+            ),
         ).toEqual({
             puzzleState: "new",
             puzzleTitle: "dailyPuzzle.todaysPuzzle · dailyPuzzle.games.tents.name",
             gameId: "tents",
             opens: { kind: "puzzle", gameId: "tents" },
         });
-        expect(puzzleCardProps([row("slant", "continue")], translate)).toMatchObject({
+        expect(puzzleCardProps([row("slant", "continue")], NOW, translate)).toMatchObject({
             puzzleState: "progress",
             opens: { kind: "puzzle", gameId: "slant" },
         });
     });
 
     test("once all are solved, shows the last one solved and its time, and opens the leaderboard", () => {
-        expect(puzzleCardProps([row("loopy", "solved", 252_000n)], translate)).toEqual({
+        expect(puzzleCardProps([row("loopy", "solved", 252_000n)], NOW, translate)).toEqual({
             puzzleState: "solved",
             puzzleSub: "dailyPuzzle.solved · 4:12",
+            // the puzzle's own end, not the CHIT claim's
+            puzzleCountdown: "01:01:05",
             gameId: "loopy",
             opens: { kind: "leaderboard" },
         });
-    });
-});
-
-describe("the puzzle dialog's hint button", () => {
-    test("says why there's no hint, or what one costs and what's left", () => {
-        expect(hintButtonKeys({ kind: "mistake" }).map((k) => k.key)).toEqual([
-            "dailyPuzzle.fixMistakeFirst",
-        ]);
-        expect(hintButtonKeys({ kind: "noneLeft" }).map((k) => k.key)).toEqual([
-            "dailyPuzzle.noHintsLeft",
-        ]);
-        expect(
-            hintButtonKeys({ kind: "hint", price: 50, hintsLeft: 2, checksLeft: 3 }).map(translate),
-        ).toEqual([
-            'dailyPuzzle.hintCost{"price":50}',
-            'dailyPuzzle.hintsLeft{"count":2}',
-            'dailyPuzzle.checksLeft{"count":3}',
-        ]);
-        expect(hintButtonKeys({ kind: "hint", price: 50, hintsLeft: 0 }).map((k) => k.key)).toEqual(
-            ["dailyPuzzle.hintCost"],
-        );
     });
 });

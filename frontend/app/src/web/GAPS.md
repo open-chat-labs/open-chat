@@ -425,12 +425,13 @@ design export needs. Each entry says where it came up.
   gives the frame's lighter scrim the dialogs' veil while it takes over). The CHIT dialog's card
   shows the first puzzle not yet solved (the old modal listed every game's row); once all are
   solved it says so and opens the leaderboard; with no puzzle today it stays, saying so, where the
-  old modal showed no row. The rail's puzzle dot shows while one is still to play. Not yet:
+  old modal showed no row (and none while they're still loading). A game this build can't draw
+  is left out, and a link to a game that's off today opens no puzzle. The rail's puzzle dot shows
+  while one is still to play. Not yet:
   - sharing a result (the old "Share" button), which waits on the chat picker (4d), and the
     result card in a chat (`DailyResultContent`), which waits on the message kinds;
-  - the card's reminder and hide (its "⋯" menu has only "How to play"): the old UI has neither;
-  - a solved card counts down with `ChitDialog`'s claim countdown (the next claim, not the next
-    puzzle), and with nothing while today's claim is due.
+  - the card's reminder and hide (its "⋯" menu has only "How to play", `?chit=howto`): the old UI
+    has neither.
 - **Leaderboard** (`?hof`): this month's, last month's and all time's top 10, as the old hall of
   fame shows them, without its Invaders game.
 - **Ways to earn** (`AchievementsDialog`): the old "Learn to earn" list (`achievementList`). The

@@ -264,5 +264,5 @@
 - `title` (resource key or literal text) is the new / progress title, which was always "Today's puzzle · Bridges" (`ui.dailyPuzzleCard.title`, still the default), for a host whose puzzle is another game.
 - `menu` lists the "⋯" menu's items by their action (`puzzleRemindOn` stands for the reminder either way); left out, all three show, as before. With none, there's no "⋯".
 - `state: 'unavailable'`: no puzzle today. The card says so (`title`, default `ui.dailyPuzzleCard.titleToday`; `sub`, default `ui.dailyPuzzleCard.unavailable`) with no button and no "⋯", so there's nothing to press.
-- `ChitDialog` passes them on as `puzzleTitle` and `puzzleMenu`, and takes the new state as `puzzleState`. `meta.json` updated.
+- `ChitDialog` passes them on as `puzzleTitle` and `puzzleMenu`, and takes the new state as `puzzleState`. Its `puzzleCountdown` is the solved card's "Next puzzle in" (it was `countdown`, the next claim, which is empty while a claim is due); left out, still `countdown`. `meta.json` updated.
 - Not in the design export: to go back to it (the app's `GAPS.md` lists it).

@@ -10,7 +10,6 @@
         achievements,
         achievementsStore,
         chitStateStore,
-        dailyPuzzleRows,
         dailyPuzzleStore,
         latestSuccessfulUpdatesLoop,
         streakInsuranceStore,
@@ -31,6 +30,7 @@
     import { openLinked } from "../app/linkedDialogs";
     import { achievementsCount, chitDialogProps } from "./chit.adapter";
     import { puzzleCardProps } from "./puzzle.adapter";
+    import { playableDailyPuzzleRows } from "@src/core/dailyPuzzle/playable";
     import { interpolate } from "@src/i18n/i18n";
     import { _ } from "svelte-i18n";
     import { loadExternalAchievements, type Loaded } from "./externalAchievements";
@@ -92,7 +92,7 @@
     // today's puzzle card: the first not solved, or the last solved once all are (which opens the
     // leaderboard), or that there's none today
     const puzzle = $derived(
-        puzzleCardProps(dailyPuzzleRows($dailyPuzzleStore), (key: ResourceKey) =>
+        puzzleCardProps(playableDailyPuzzleRows($dailyPuzzleStore), $now500, (key: ResourceKey) =>
             interpolate($_, key),
         ),
     );
@@ -115,7 +115,7 @@
                 if (puzzle.opens !== undefined) openLinked(puzzle.opens);
                 return;
             case "puzzleHow":
-                openLinked({ kind: "puzzle", gameId: puzzle.gameId });
+                openLinked({ kind: "puzzle", gameId: puzzle.gameId, how: true });
                 return;
             // a reminder and hiding the puzzle: not offered (puzzleMenu), the app has neither
         }
@@ -137,6 +137,7 @@
         puzzleState={puzzle.puzzleState}
         puzzleSub={puzzle.puzzleSub}
         puzzleTitle={puzzle.puzzleTitle}
+        puzzleCountdown={puzzle.puzzleCountdown}
         puzzleMenu={["puzzleHow"]}
         onClaim={claim}
         onAction={act}

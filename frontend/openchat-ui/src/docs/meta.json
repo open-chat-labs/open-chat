@@ -7318,6 +7318,17 @@
         "doc": "DailyPuzzleCard's \"⋯\" menu (see there)."
       },
       {
+        "name": "puzzleCountdown",
+        "type": "string",
+        "default": null,
+        "editor": "text",
+        "options": null,
+        "section": null,
+        "required": false,
+        "componentDefault": null,
+        "doc": "The solved puzzle card's \"Next puzzle in\": defaults to `countdown`."
+      },
+      {
         "name": "onBack",
         "type": "() => void",
         "default": null,

@@ -9,6 +9,7 @@ import {
     todaysPuzzle,
     unruly,
     type DailyGame,
+    type DailyPuzzleState,
     type OpenChat,
     type PublicDailyPuzzle,
 } from "@client";
@@ -124,9 +125,21 @@ export function dailyPuzzleGame(gameId: string): DailyPuzzleGameDef | undefined 
 }
 
 /**
+ * Today's puzzle for `gameId` (with no id, the first enabled one), if it's on today: a link or an
+ * old result message can name any game, and one that's off today isn't offered.
+ */
+export function openablePuzzle(
+    state: DailyPuzzleState,
+    gameId: string | undefined,
+): PublicDailyPuzzle | undefined {
+    const puzzle = todaysPuzzle(state, gameId);
+    return puzzle?.enabled ? puzzle : undefined;
+}
+
+/**
  * Today's puzzle for `gameId` (with no id, the first enabled one) and a play session on it, told
- * by `host` how to say a step failed and how to translate. No session when there is no puzzle, or
- * when this build cannot render its game (`def` undefined).
+ * by `host` how to say a step failed and how to translate. No puzzle when there is none on today
+ * (openablePuzzle); no session when this build cannot render its game (`def` undefined).
  */
 export function openDailyPuzzle(
     client: OpenChat,
@@ -134,7 +147,7 @@ export function openDailyPuzzle(
     userId: string,
     host: PuzzleHost,
 ): { puzzle?: PublicDailyPuzzle; def?: DailyPuzzleGameDef; game?: DailyPuzzleGame } {
-    const puzzle = todaysPuzzle(dailyPuzzleStore.value, gameId);
+    const puzzle = openablePuzzle(dailyPuzzleStore.value, gameId);
     const def = puzzle !== undefined ? dailyPuzzleGame(puzzle.gameId) : undefined;
     if (puzzle === undefined || def === undefined) return { puzzle, def };
     return {

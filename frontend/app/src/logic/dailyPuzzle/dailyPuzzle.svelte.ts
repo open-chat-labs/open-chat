@@ -151,6 +151,26 @@ export type HintButton =
     | { kind: "noneLeft" }
     | { kind: "hint"; price: number; hintsLeft: number; checksLeft?: number };
 
+/** The hint button's label, in parts each tree joins with " · ". */
+export function hintButtonKeys(button: HintButton): ResourceKey[] {
+    switch (button.kind) {
+        case "mistake":
+            return [i18nKey("dailyPuzzle.fixMistakeFirst")];
+        case "noneLeft":
+            return [i18nKey("dailyPuzzle.noHintsLeft")];
+        case "hint":
+            return [
+                i18nKey("dailyPuzzle.hintCost", { price: button.price }),
+                ...(button.hintsLeft > 0
+                    ? [i18nKey("dailyPuzzle.hintsLeft", { count: button.hintsLeft })]
+                    : []),
+                ...(button.checksLeft !== undefined
+                    ? [i18nKey("dailyPuzzle.checksLeft", { count: button.checksLeft })]
+                    : []),
+            ];
+    }
+}
+
 export function tierKey(tier: number): string {
     return `dailyPuzzle.tier.${tier}`;
 }

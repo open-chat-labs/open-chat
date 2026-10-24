@@ -1,20 +1,15 @@
-import type { DailyPuzzleRow, ResourceKey } from "@client";
+import { formatTimeRemaining, type DailyPuzzleRow, type ResourceKey } from "@client";
 import type ChitDialog from "@openchat/ui/src/features/components/ChitDialog.svelte";
 import { i18nKey } from "@src/i18n/i18n";
-import {
-    formatSolveTime,
-    gameNameKey,
-    type HintButton,
-} from "@src/logic/dailyPuzzle/dailyPuzzle.svelte";
+import { formatSolveTime, gameNameKey } from "@src/logic/dailyPuzzle/dailyPuzzle.svelte";
 import type { ComponentProps } from "svelte";
 import type { LinkedDialog } from "../app/dialogs";
 
-// The daily puzzle's props for ChitDialog's card and the puzzle dialog's hint button, from today's
-// rota (dailyPuzzleRows) and the puzzle flow (logic/dailyPuzzle).
+// The daily puzzle's props for ChitDialog's card, from today's rota (playableDailyPuzzleRows).
 
 export type PuzzleCardProps = Pick<
     ComponentProps<typeof ChitDialog>,
-    "puzzleState" | "puzzleSub" | "puzzleTitle"
+    "puzzleState" | "puzzleSub" | "puzzleTitle" | "puzzleCountdown"
 > & {
     // the game its "How to play" opens, if any
     gameId?: string;
@@ -25,14 +20,17 @@ export type PuzzleCardProps = Pick<
 
 /**
  * ChitDialog's puzzle card: the first puzzle on today's rota not yet solved (to play, or to go on
- * with), or, once all are, the last solved, which opens the leaderboard. Without a puzzle today it
- * still shows, saying so, with nothing to press. Text is given translated (`translate`), as the
- * card takes text.
+ * with), or, once all are, the last solved, which opens the leaderboard and counts down to when it
+ * ends (`now`, ms). Without a puzzle today it still shows, saying so, with nothing to press; none
+ * while today's are still loading (`rows` undefined). Text is given translated (`translate`), as
+ * the card takes text.
  */
 export function puzzleCardProps(
-    rows: DailyPuzzleRow[],
+    rows: DailyPuzzleRow[] | undefined,
+    now: number,
     translate: (key: ResourceKey) => string,
 ): PuzzleCardProps {
+    if (rows === undefined) return { puzzleState: "off" };
     if (rows.length === 0) {
         return {
             puzzleState: "unavailable",
@@ -58,27 +56,9 @@ export function puzzleCardProps(
             time === undefined
                 ? undefined
                 : `${translate(i18nKey("dailyPuzzle.solved"))} · ${formatSolveTime(Number(time))}`,
+        // the next puzzle comes out as this one ends
+        puzzleCountdown: formatTimeRemaining(now, Number(done.puzzle.expiresAt), true),
         gameId: done.puzzle.gameId,
         opens: { kind: "leaderboard" },
     };
-}
-
-/** The hint button's label, in parts joined with " · ", as the old puzzle screens write it. */
-export function hintButtonKeys(button: HintButton): ResourceKey[] {
-    switch (button.kind) {
-        case "mistake":
-            return [i18nKey("dailyPuzzle.fixMistakeFirst")];
-        case "noneLeft":
-            return [i18nKey("dailyPuzzle.noHintsLeft")];
-        case "hint":
-            return [
-                i18nKey("dailyPuzzle.hintCost", { price: button.price }),
-                ...(button.hintsLeft > 0
-                    ? [i18nKey("dailyPuzzle.hintsLeft", { count: button.hintsLeft })]
-                    : []),
-                ...(button.checksLeft !== undefined
-                    ? [i18nKey("dailyPuzzle.checksLeft", { count: button.checksLeft })]
-                    : []),
-            ];
-    }
 }
