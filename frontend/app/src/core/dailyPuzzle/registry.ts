@@ -14,6 +14,7 @@ import {
     type PublicDailyPuzzle,
 } from "@client";
 import type { Component } from "svelte";
+import { DRAWN_GAMES } from "./playable";
 import BridgesBoard from "./games/bridges/Board.svelte";
 import bridgesDemo from "./games/bridges/demo";
 import BridgesPictogram from "./games/bridges/Pictogram.svelte";
@@ -125,13 +126,20 @@ export function dailyPuzzleGame(gameId: string): DailyPuzzleGameDef | undefined 
 }
 
 /**
- * Today's puzzle for `gameId` (with no id, the first enabled one), if it's on today: a link or an
- * old result message can name any game, and one that's off today isn't offered.
+ * Today's puzzle for `gameId`, if it's on today: a link or an old result message can name any
+ * game, and one that's off today isn't offered. With no id, the first enabled one this build can
+ * draw, as the CHIT dialog's card offers (playableDailyPuzzleRows), or failing that the first
+ * enabled one, to say it needs a newer app.
  */
 export function openablePuzzle(
     state: DailyPuzzleState,
     gameId: string | undefined,
 ): PublicDailyPuzzle | undefined {
+    if (gameId === undefined) {
+        return (
+            state.puzzles.find((p) => p.enabled && DRAWN_GAMES.has(p.gameId)) ?? todaysPuzzle(state)
+        );
+    }
     const puzzle = todaysPuzzle(state, gameId);
     return puzzle?.enabled ? puzzle : undefined;
 }

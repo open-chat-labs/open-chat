@@ -174,4 +174,16 @@ describe("today's puzzles", () => {
         expect(openablePuzzle(state, "bridges")?.gameId).toBe("bridges");
         expect(openablePuzzle(state, undefined)?.gameId).toBe("bridges");
     });
+
+    test("with no game named, opens the first this build can draw, as the card offers", () => {
+        const state: DailyPuzzleState = {
+            puzzles: [puzzle("not_a_game"), puzzle("bridges")],
+            states: [],
+        };
+        expect(openablePuzzle(state, undefined)?.gameId).toBe("bridges");
+        // none it can draw: the first, to say it needs a newer app
+        expect(
+            openablePuzzle({ ...state, puzzles: [puzzle("not_a_game")] }, undefined)?.gameId,
+        ).toBe("not_a_game");
+    });
 });

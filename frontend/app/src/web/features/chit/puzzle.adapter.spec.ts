@@ -1,5 +1,5 @@
 import type { DailyPuzzleRow, DailyPuzzleStatus, PublicDailyPuzzle, ResourceKey } from "@client";
-import { puzzleCardProps } from "./puzzle.adapter";
+import { puzzleCardProps, puzzleTitle } from "./puzzle.adapter";
 
 const NOW = 1_000_000_000;
 
@@ -87,5 +87,21 @@ describe("the CHIT dialog's puzzle card", () => {
             gameId: "loopy",
             opens: { kind: "leaderboard" },
         });
+    });
+
+    test("a solved puzzle past its end counts down to 0, never a negative time", () => {
+        const later = NOW + 2 * 60 * 60_000;
+        expect(
+            puzzleCardProps([row("loopy", "solved", 1000n)], later, translate).puzzleCountdown,
+        ).toBe("00:00:00");
+    });
+});
+
+describe("the puzzle dialog's title", () => {
+    test("is the puzzle's number, game and tier, or The Daily with none", () => {
+        expect(puzzleTitle(puzzle("tents"), translate)).toBe(
+            'dailyPuzzle.number{"number":7} · dailyPuzzle.games.tents.name · dailyPuzzle.tier.0',
+        );
+        expect(puzzleTitle(undefined, translate)).toBe("dailyPuzzle.title");
     });
 });

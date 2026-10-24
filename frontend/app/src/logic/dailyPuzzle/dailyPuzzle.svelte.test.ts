@@ -1202,3 +1202,37 @@ describe("the hint button's label", () => {
         );
     });
 });
+
+describe("a session opened on how to play", () => {
+    test("shows the tutorial over a game under way, and again for a replacement under way", () => {
+        const g = build(userState(), fakeClient(), true);
+        g.openTutorial();
+        expect(g.tutorialOpen).toBe(true);
+        const next = { ...puzzle, number: NUMBER + 1 };
+        dailyPuzzleStore.set({ puzzles: [next], states: [userState({ number: NUMBER + 1 })] });
+        flushSync();
+        expect(g.replaced).toBe(true);
+        expect(g.tutorialOpen).toBe(true);
+    });
+
+    test("leaves a replacement not yet started on its demo", () => {
+        const g = build(userState(), fakeClient(), true);
+        g.openTutorial();
+        const next = { ...puzzle, number: NUMBER + 1 };
+        dailyPuzzleStore.set({ puzzles: [next], states: [] });
+        flushSync();
+        expect(g.tutorialOpen).toBe(false);
+        expect(g.showsDemo).toBe(true);
+    });
+
+    test("stops asking once the player closes the tutorial", () => {
+        const g = build(userState(), fakeClient(), true);
+        g.openTutorial();
+        g.toggleTutorial();
+        expect(g.tutorialOpen).toBe(false);
+        const next = { ...puzzle, number: NUMBER + 1 };
+        dailyPuzzleStore.set({ puzzles: [next], states: [userState({ number: NUMBER + 1 })] });
+        flushSync();
+        expect(g.tutorialOpen).toBe(false);
+    });
+});

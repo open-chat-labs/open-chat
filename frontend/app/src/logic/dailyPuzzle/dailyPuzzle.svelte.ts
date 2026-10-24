@@ -216,6 +216,9 @@ export class DailyPuzzleGame {
     // The player asked for the tutorial over a started game. It only takes effect while the game
     // is unsolved (see `tutorialOpen`), so a solve that lands meanwhile shows the board (#9822).
     #tutorialRequested = $state(false);
+    // Opened on how to play (openTutorial): a puzzle the poll swaps in under way asks for the
+    // tutorial again, so the view still teaches. Closing it by hand ends that.
+    #tutorialPinned = false;
     // the most recent hint step served for this puzzle (a mistake hint is not a step)
     lastHint = $state<ServedHint | undefined>(undefined);
     // The server refused a hint for `max_hints`: it has the last word on which step is next, so
@@ -289,6 +292,7 @@ export class DailyPuzzleGame {
         this.#outOfHints = false;
         this.board = this.#resume();
         this.lastHint = this.#lastHintServed();
+        this.#tutorialRequested = this.#tutorialPinned && this.canToggleTutorial;
     }
 
     // Once solved, the server holds the grid that was submitted. A board still showing an earlier
@@ -472,6 +476,17 @@ export class DailyPuzzleGame {
     toggleTutorial(): void {
         if (!this.canToggleTutorial) return;
         this.#tutorialRequested = !this.#tutorialRequested;
+        this.#tutorialPinned = false;
+    }
+
+    /**
+     * Opens the session on how to play: the tutorial over a game under way, kept for a puzzle the
+     * poll swaps in under way. Before Start, and for a replacement not yet started, the demo
+     * already stands in for the board; a solved puzzle shows its result, never the tutorial.
+     */
+    openTutorial(): void {
+        this.#tutorialPinned = true;
+        this.#tutorialRequested = this.canToggleTutorial;
     }
 
     tap(key: number): void {

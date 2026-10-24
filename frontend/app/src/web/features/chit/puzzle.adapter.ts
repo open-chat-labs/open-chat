@@ -1,11 +1,17 @@
-import { formatTimeRemaining, type DailyPuzzleRow, type ResourceKey } from "@client";
+import {
+    formatTimeRemaining,
+    type DailyPuzzleRow,
+    type PublicDailyPuzzle,
+    type ResourceKey,
+} from "@client";
 import type ChitDialog from "@openchat/ui/src/features/components/ChitDialog.svelte";
 import { i18nKey } from "@src/i18n/i18n";
-import { formatSolveTime, gameNameKey } from "@src/logic/dailyPuzzle/dailyPuzzle.svelte";
+import { formatSolveTime, gameNameKey, tierKey } from "@src/logic/dailyPuzzle/dailyPuzzle.svelte";
 import type { ComponentProps } from "svelte";
 import type { LinkedDialog } from "../app/dialogs";
 
-// The daily puzzle's props for ChitDialog's card, from today's rota (playableDailyPuzzleRows).
+// The daily puzzle's props for ChitDialog's card, from today's rota (playableDailyPuzzleRows), and
+// the puzzle dialog's title.
 
 export type PuzzleCardProps = Pick<
     ComponentProps<typeof ChitDialog>,
@@ -56,9 +62,30 @@ export function puzzleCardProps(
             time === undefined
                 ? undefined
                 : `${translate(i18nKey("dailyPuzzle.solved"))} · ${formatSolveTime(Number(time))}`,
-        // the next puzzle comes out as this one ends
-        puzzleCountdown: formatTimeRemaining(now, Number(done.puzzle.expiresAt), true),
+        // the next puzzle comes out as this one ends; never a negative time while the store still
+        // holds it after its end (till the rollover fetch lands)
+        puzzleCountdown: formatTimeRemaining(
+            now,
+            Math.max(now, Number(done.puzzle.expiresAt)),
+            true,
+        ),
         gameId: done.puzzle.gameId,
         opens: { kind: "leaderboard" },
     };
+}
+
+/**
+ * The puzzle dialog's title: the puzzle's number, game and tier, as the old puzzle screens head
+ * it, or "The Daily" with no puzzle. Given translated (`translate`).
+ */
+export function puzzleTitle(
+    puzzle: PublicDailyPuzzle | undefined,
+    translate: (key: ResourceKey) => string,
+): string {
+    if (puzzle === undefined) return translate(i18nKey("dailyPuzzle.title"));
+    return [
+        translate(i18nKey("dailyPuzzle.number", { number: puzzle.number })),
+        translate(i18nKey(gameNameKey(puzzle.gameId))),
+        translate(i18nKey(tierKey(puzzle.tier))),
+    ].join(" · ");
 }
