@@ -359,6 +359,8 @@ design export needs. Each entry says where it came up.
     taken, the member limit) as a toast.
   - a member whose user hasn't loaded shows their id until it does.
   - `?usergroup=` still opens the list of user groups, not the one group.
+  - by hand: `MemberRow` stops a click on its ⋮, action button or icon reaching the row. The
+    user group row's ⋮ opened the group instead of its Edit / Delete menu.
 
 ## App
 

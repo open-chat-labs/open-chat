@@ -101,6 +101,12 @@
 
   const invite = $derived(variant === 'invite');
   const toggle = $derived(icon === 'toggle');
+
+  // the row's own buttons sit inside it: a click on one doesn't also reach the row's onClick
+  const only = (fn?: () => void) => (e: MouseEvent) => {
+    e.stopPropagation();
+    fn?.();
+  };
 </script>
 
 <div
@@ -142,7 +148,7 @@
     {/if}
   </div>
   {#if actionLabel}
-    <span class="action" onclick={onAction} role="button" tabindex="0">
+    <span class="action" onclick={only(onAction)} role="button" tabindex="0">
       <span class="action-icon"></span>
       <span class="action-label">{t(actionLabel)}</span>
     </span>
@@ -159,12 +165,12 @@
     <span class="toggle" class:selected><span class="toggle-icon"></span></span>
   {/if}
   {#if icon && icon !== 'toggle'}
-    <span class="icon-button" class:selected onclick={onIcon ?? onClick} role="button" tabindex="0">
+    <span class="icon-button" class:selected onclick={only(onIcon ?? onClick)} role="button" tabindex="0">
       <span class="icon" style:mask="var(--icon-{ICONS[icon] ?? 'chevron-right'}) center/contain no-repeat"></span>
     </span>
   {/if}
   {#if showMenu && !invite && !actionLabel && !icon && !badge}
-    <span class="kebab" onclick={onMenu} role="button" tabindex="0">
+    <span class="kebab" onclick={only(onMenu)} role="button" tabindex="0">
       <span class="kebab-icon"></span>
     </span>
   {/if}
