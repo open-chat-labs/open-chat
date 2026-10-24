@@ -8,7 +8,7 @@ use community_canister::tip_message::*;
 use constants::MEMO_TIP;
 use group_chat_core::{AccountLink, TipRecipient, check_tip_can_be_held};
 use ledger_utils::{TransferRecipient, UserTransfer, format_crypto_amount_with_symbol};
-use local_user_index_canister::{BridgedUserTipped, CommunityEvent, c2c_bridged_user_link};
+use local_user_index_canister::{BridgedUserDeposit, CommunityEvent, c2c_bridged_user_link};
 use multi_user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
 use oc_error_codes::OCErrorCode;
 use types::{
