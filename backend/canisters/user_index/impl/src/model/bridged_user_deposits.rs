@@ -8,7 +8,7 @@ use types::{BridgedUserId, CanisterId, Chat, MessageId, MessageIndex, Millisecon
 pub const TIP_HOLD_DURATION: Milliseconds = 30 * DAY_IN_MS;
 
 // The tips on messages relayed from accounts no one had linked. Each is held in its account's
-// subaccount of the UserIndex (see `BridgedUserId::tips_subaccount`) until someone links the
+// subaccount of the UserIndex (see `BridgedUserId::subaccount`) until someone links the
 // account, when it's paid to them, or until it's settled, `TIP_HOLD_DURATION` after it was made.
 #[derive(Serialize, Deserialize, Default)]
 pub struct BridgedUserDeposits {

@@ -640,7 +640,7 @@ fn tips_for_unlinked_accounts_are_held_for_whoever_links_them(in_community: bool
     let balance = |env: &PocketIc, account: icrc1::Account| client::ledger::happy_path::balance_of(env, ledger, account);
     let held_for = |account: &BridgedUser| icrc1::Account {
         owner: user_index,
-        subaccount: Some(account.id().tips_subaccount()),
+        subaccount: Some(account.id().subaccount()),
     };
 
     // The tip is paid into the UserIndex, and recorded on the message
@@ -752,7 +752,7 @@ fn a_tip_held_for_an_account_linked_since_is_paid_on_at_once() {
     // The group pays the tip into the UserIndex, then tells it, as if it hadn't heard of the link
     let held_for = icrc1::Account {
         owner: user_index,
-        subaccount: Some(nellys_account.id().tips_subaccount()),
+        subaccount: Some(nellys_account.id().subaccount()),
     };
     client::ledger::happy_path::transfer(env, *controller, ledger, held_for, tip_amount);
     let response = client::local_user_index::c2c_group(
@@ -826,7 +826,7 @@ fn tips_held_in_ledgers_the_registry_doesnt_know_arent_paid_out() {
     let nellys_account = telegram_account(random_telegram_id());
     let held_for = icrc1::Account {
         owner: user_index,
-        subaccount: Some(nellys_account.id().tips_subaccount()),
+        subaccount: Some(nellys_account.id().subaccount()),
     };
     let (message_id, _) = relay(env, &bridged, &nellys_account);
     let held_before = bridged_user_tips_held(env, user_index);
